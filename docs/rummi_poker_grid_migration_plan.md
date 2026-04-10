@@ -42,7 +42,7 @@
 | `lib/game/bingo_card_game.dart` 및 `game/components/*` (큐브·기존 HUD) | **Rummi Poker Grid 전용** `FlameGame` + 컴포넌트로 대체. 기존 파일은 `lib/game/legacy_taptap/` 등으로 이동하거나 브랜치 보관 (아래 폴더안 참고) |
 | `GameView`의 `GameWidget<BingoCardGame>` | `GameWidget<새FlameGame>` 또는 전용 뷰 |
 | `app_config.dart` 문구·타이틀 | 앱 스토어/타이틀을 새 게임에 맞게 수정 (기능 키 구조는 유지) |
-| `docs/game_flow.md`, `code-flow-analysis.md` | **구 게임 기준** 문서 → 새 게임은 `rummi_poker_grid_*` 문서가 소스 오브 트루스. 구 문서는 “Legacy” 표기 또는 링크만 |
+| (삭제됨) `game_flow.md`, `code-flow-analysis.md` | 구 탭 게임 분석 문서는 제거. 진행은 `rummi_poker_grid_execution_checklist.md` 사용 |
 
 ---
 
@@ -93,7 +93,9 @@ lib/
 |------|------|
 | `docs/rummi_poker_grid_gdd.md` | 기획·UX·철학 (단일 진실 원천) |
 | `docs/rummi_poker_grid_game_logic.md` | **구현용** 규칙·상태·판정 (엔진 스펙) |
+| `docs/rummi_poker_grid_execution_checklist.md` | **실행 순서** 체크리스트 (일정·진행 상태) |
 | `docs/riverpod_architecture.md` | Riverpod 계층·Flame 연동 패턴 |
+| `docs/responsive-phone-frame-layout.md` | 세로·폰/태블릿 프레임 레이아웃 |
 | 본 문서 (`…migration_plan.md`) | 보존/전환·폴더·단계 |
 
 ---
