@@ -1,0 +1,3 @@
+/* App display name under icon */
+CFBundleDisplayName = "按顺序 TapTap";
+CFBundleName = "按顺序 TapTap";
