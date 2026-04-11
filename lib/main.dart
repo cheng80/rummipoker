@@ -26,16 +26,12 @@ void main() async {
   runApp(
     ProviderScope(
       child: EasyLocalization(
-        supportedLocales: const [
-          Locale('ko'),
-          Locale('en'),
-          Locale('ja'),
-          Locale('zh', 'CN'),
-          Locale('zh', 'TW'),
-        ],
+        // v1: 한글만. 다국어·추가 로케일은 번역 작업 후 확장.
+        supportedLocales: const [Locale('ko')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),
-        saveLocale: true,
+        startLocale: const Locale('ko'),
+        saveLocale: false,
         child: const App(),
       ),
     ),

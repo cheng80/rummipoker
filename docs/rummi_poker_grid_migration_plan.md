@@ -1,6 +1,6 @@
 # Rummi Poker Grid — 마이그레이션·구조 플랜
 
-> 목표: **Flame 뷰 위주**로 새 게임을 붙이되, 앱 골격·공용 서비스는 재사용하고, 기존 “순서 탭” 게임은 **코드베이스에서 분리·보존** 전략을 명확히 한다.
+> 목표: **Flutter 위젯 기반 전투 화면**으로 루미 포커 그리드를 우선 완성하고, Flame은 필요 시 **연출 레이어**로만 부분 도입한다. 앱 골격·공용 서비스는 재사용한다. 레거시 “순서 탭” 게임 코드는 **제거됨** (히스토리는 Git).
 
 ---
 
@@ -8,8 +8,24 @@
 
 1. **앱 = 셸**, **게임 = 플러그인**: `main` / `app` / `router` / 다국어 / 저장소 / 사운드는 유지, 게임만 교체 가능하게 경계를 둔다.
 2. **상태: Riverpod**: 세션·게임 단계·점수 요약 등은 `lib/providers/features/`의 `Notifier`로 관리한다. **코드젠 없음**(`riverpod_annotation` 미사용). 상세는 `docs/riverpod_architecture.md`.
-3. **Flame**: 보드·타일·라인·입력은 `FlameGame` + `Component`. Flutter는 라우트·설정·모달 오버레이 위주.
-4. **기존 `BingoCardGame` 코드**: 당장 삭제하지 않고 **네임스페이스(폴더)로 격리** 후, 라우트에서 새 게임으로 전환한다 (롤백·비교 용이).
+3. **Flutter-first**: 보드·타일·라인·입력·HUD·상점은 Flutter 위젯으로 우선 정리한다. Flame은 드로우/정산/이펙트가 필요할 때만 별도 레이어 후보로 둔다.
+4. **레거시 탭탭 게임**: 제거됨. 새 게임은 현재 `lib/views/game_view.dart` 중심으로 유지하고, Flame 재도입이 필요하면 범위를 좁혀 추가한다.
+5. **비주얼**: 루미 타일은 **동일 렌더링 클래스(색·비율)** 를 재사용하는 전제에서, **기존 다른 게임의 팔레트·UI 톤**을 참고한다. **Google Stitch MCP**로 프롬프트를 넣어 **참고용 목업(세로 화면·구획·버튼)** 을 만든 뒤, Flutter 테마/간격 상수로 이식한다 (코드와 병행, 스티치 산출물은 레퍼런스).
+
+### 1.1 현재 룰 스냅샷 (문서 기준 — 플랜·구현과 정합)
+
+> 상세는 `rummi_poker_grid_gdd.md` / `rummi_poker_grid_game_logic.md` / `rummi_poker_grid_v1_assumptions.md`.
+
+| 영역 | 확정 방향 |
+|------|-----------|
+| 덱 | `copiesPerTile` 기반(`4슈트×13랭크×copiesPerTile`), 리셔플 없음. 구현은 52/104 공용 |
+| 보드·라인 | 5×5, **12줄** 평가, 일괄 확정·공유 타일 동시 제거 |
+| 블라인드 자원 | 목표 **\(T\)**, 버림 **\(D\)** — **족보 확정 횟수 제한 없음** |
+| 턴 | 배치 사이클 **무제한**; 압박은 \(D\)·\(T\)·덱 |
+| 만료 | **\(D=0\)** 후 **25칸 만재**, 또는 **현재 덱 전부 소모** |
+| 조커 | **메타 슬롯만** — 보드 타일 아님 |
+| 메타 흐름 | **실시간 줄 정산 → Stage Clear 판정 → Cash Out 바텀시트 → 상점 전체 화면 → 다음 스테이지** |
+| 스테이지 전환 | 다음 스테이지 진입 시 **덱 전체 리셋 + runSeed 기반 파생 셔플** |
 
 ---
 
@@ -24,14 +40,14 @@
 | 로케일 헬퍼 | `lib/utils/app_locale.dart` | 다국어 구조 유지 |
 | Flutter 화면 | `lib/views/setting_view.dart` | 설정 UI 그대로 |
 | 에셋 선언 | `pubspec.yaml` `flutter.assets` | 타일·사운드 경로 추가만 |
-| 플랫폼 설정 | `android/`, `ios/`, `web/` 등 번들·빌드 | 앱 ID는 이미 `binggocard` 기준 |
+| 플랫폼 설정 | `android/`, `ios/`, `web/` 등 번들·빌드 | 앱 ID `com.cheng80.rummipoker` |
 
 **조건부 보존**
 
 | 영역 | 조건 |
 |------|------|
 | `lib/views/title_view.dart` | 메뉴 카피·모드 선택이 새 게임과 다르면 **UI만 개편**, 라우팅 패턴은 유지 |
-| `lib/views/game_view.dart` | **패턴**(GameWidget + overlays)은 보존, 내부는 `BingoCardGame` → 새 `FlameGame`으로 교체하거나 **별도 `RummiGameView`** 로 분리 |
+| `lib/views/game_view.dart` | 현재 전투 화면 본체. 이후 필요 시 일부 연출만 Flame 레이어로 분리 가능 |
 
 ---
 
@@ -39,8 +55,8 @@
 
 | 현재 | 전환 방향 |
 |------|-----------|
-| `lib/game/bingo_card_game.dart` 및 `game/components/*` (큐브·기존 HUD) | **Rummi Poker Grid 전용** `FlameGame` + 컴포넌트로 대체. 기존 파일은 `lib/game/legacy_taptap/` 등으로 이동하거나 브랜치 보관 (아래 폴더안 참고) |
-| `GameView`의 `GameWidget<BingoCardGame>` | `GameWidget<새FlameGame>` 또는 전용 뷰 |
+| (삭제됨) `bingo_card_game.dart`, `game/components/*` | 제거 유지. 새 전투 화면은 Flutter 위젯 기준으로 계속 다듬고, 필요 시 효과 전용 Flame 레이어만 추가 |
+| `GameView` | 현재 메인 전투/메타 진입점. 상점, 제스터 오버레이, 정산 흐름 포함 |
 | `app_config.dart` 문구·타이틀 | 앱 스토어/타이틀을 새 게임에 맞게 수정 (기능 키 구조는 유지) |
 | (삭제됨) `game_flow.md`, `code-flow-analysis.md` | 구 탭 게임 분석 문서는 제거. 진행은 `rummi_poker_grid_execution_checklist.md` 사용 |
 
@@ -57,20 +73,15 @@ lib/
 │   └── rummi_poker_grid/     # 순수 Dart: 덱, 핸드 판정, 점수, 턴 상태 (Flame 무관)
 │       ├── models/           # Tile, BoardState, LineId, HandRank …
 │       └── rummi_poker_grid_engine.dart  # (선택) 퍼사드
-├── game/
-│   ├── rummi_poker_grid/     # Flame 전용
-│   │   ├── rummi_poker_grid_game.dart    # FlameGame
-│   │   └── components/       # 타일, 보드, 라인 하이라이트, 웨이스트 슬롯 …
-│   └── legacy_taptap/        # (선택) 기존 BingoCardGame 일괄 이동 시
-│       └── ...
 ├── views/
-│   ├── game_view.dart        # 공통 래퍼 또는 legacy 진입
+│   ├── game_view.dart        # 현재 메인 게임 화면 (전투/HUD/상점 흐름)
 │   └── rummi_game_view.dart  # (선택) 새 게임 전용 뷰
 └── resources/, services/, utils/  # 위 Preserve와 동일
 ```
 
 - **`logic/`**: 단위 테스트하기 쉬움 (GDD의 핸드·점수·버림 규칙).
-- **`game/rummi_poker_grid/`**: 렌더링·터치·오버레이 이름만 Flame에 종속.
+- **`views/game_view.dart`**: 현재 렌더링·입력·메타 UI 중심.
+- **Flame 레이어**: 필요 시 정산/드로우/제스터 효과 전용으로만 좁게 추가.
 
 ---
 
@@ -78,12 +89,15 @@ lib/
 
 | 단계 | 내용 | 산출물 |
 |------|------|--------|
-| **0** | GDD 확정 (라인 정의, Straight 색 규칙, 죽은 줄 vs 방치 패널티 중복 여부) | GDD 패치 |
-| **1** | `logic/rummi_poker_grid`: 타일·보드 5×5·덱·웨이스트·턴 상태 + **핸드 판정 단위 테스트** | 테스트 통과 |
-| **2** | `game/rummi_poker_grid`: 빈 보드 + 타일 컴포넌트 + 터치 한 줄 (Flame) | 화면 프로토타입 |
-| **3** | 버림·슬롯 보충·라인 클릭 제거·점수 HUD | GDD 3~5장 구현 |
-| **4** | 조커·유지 보너스·방치 패널티 (GDD 6~7) | 밸런스 튜닝 |
+| **0** | 룰 문서 동기화 유지: §1.1 스냅샷·`v1_assumptions` — **`copiesPerTile`·\(T,D\)·죽은 줄 버림 처리·만료** 등 변경 시 본 표·체크리스트 갱신 | 문서만 |
+| **0.5** | **비주얼·Stitch**: 기존 게임 색상/타일 스타일 정리 → **Google Stitch MCP** 프롬프트로 참고 목업 생성 → 색·간격 토큰 초안 | Stitch 화면·`DESIGN.md` 또는 메모에 팔레트 표 |
+| **1** | `logic/rummi_poker_grid`: (완료) 타일·보드·12줄·`HandEvaluator` — **추가** `Deck`·웨이스트·`RummiBlindState`(\(T,D\), 누적 점수)·드로우/배치/버림/일괄 확정 퍼사드·만료(25칸·덱 소진) 이벤트 | 테스트 + 엔진 이벤트 표 |
+| **2** | `views/game_view.dart`: HUD + Jester 5슬롯 + 5x5 보드 + 단일 손패 + 액션 버튼 + 옵션/시드 UI | 화면 프로토타입 |
+| **3** | 실시간 줄 정산·캐시아웃·상점 전체 화면·죽은 줄 버림 완화 연동 | GDD §2~5·§8 핵심 루프 |
+| **4** | 조커 메타·경제·방치 패널티 (`LineHazardTuning`)·미구현 Jester 계열 | 밸런스 튜닝 |
 | **5** | `TitleView`·`app_config`·번역·스토어 문구 정리 | 출시 준비 |
+
+**체크**: 세부 진행은 `rummi_poker_grid_execution_checklist.md` — 본 절과 **주기적으로 대조**한다.
 
 ---
 
@@ -102,5 +116,6 @@ lib/
 
 ## 7. 리스크·메모
 
-- **두 게임 병행**: `RoutePaths.game` 쿼리로 `mode=legacy` vs `rummi` 분기 가능하나, 유지 비용 증가. 초기에는 **한 게임만** 라우트에 연결하는 편이 효율적이다.
-- **에셋**: 루미 타일 비주얼은 스프라이트 또는 `Canvas` 도형; 기존 Flutter `BattleTileCard`는 **레이아웃·색 참고** 후 Flame `render`로 이식.
+- **라우트**: `/game?seed=` 단일 진입; 레거시 모드 분기는 없음.
+- **에셋**: 루미 타일 비주얼은 현재 Flutter 렌더링 클래스 기준을 유지하고, 필요 시 효과 레이어만 별도 구현한다.
+- **Stitch MCP**: 생성 목업은 **최종 UI가 아님**. 색·구획·타이포만 추출하고, 실제 구현은 현재 Flutter 위젯 레이아웃 기준으로 맞춘다.

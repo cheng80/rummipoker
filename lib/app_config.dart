@@ -6,10 +6,10 @@ class AppConfig {
   /// iOS/MacOS: App Store Connect > General > App Information > Apple ID. 출시 시 설정.
   static const String appStoreId = '';
 
-  static const String appTitle = '순서대로 TapTap';
-  static const String gameTitle = '순서대로';
-  static const String gameTitleSub = 'TapTap';
-  static const String gameSubtitle = '숫자와 알파벳을 순서대로 눌러보자!';
+  static const String appTitle = 'RummiPoker';
+  /// 타이틀 화면 메인 로고 (줄바꿈 포함).
+  static const String gameTitleBlock = 'Rummi\nPoker';
+  static const String gameSubtitle = '5×5 그리드 · 12줄 포커 족보';
 }
 
 /// 로컬 저장소(GetStorage) 키 상수.
@@ -21,7 +21,6 @@ class StorageKeys {
   static const String bgmMuted = 'bgm_muted';
   static const String sfxMuted = 'sfx_muted';
   static const String keepScreenOn = 'keep_screen_on';
-  static const String bestScorePrefix = 'best_score_mode_';
   static const String firstLaunchDate = 'first_launch_date';
   static const String reviewRequestedAfterFirstClear = 'review_requested_after_first_clear';
   static const String reviewRequestedOnTitle = 'review_requested_on_title';

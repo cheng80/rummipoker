@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/in_app_review_service.dart';
@@ -68,21 +69,13 @@ class _TitleViewState extends State<TitleView>
                       children: [
                         const Spacer(flex: 3),
                         Text(
-                          context.tr('gameTitle'),
-                          style: TextStyle(
-                            fontFamily: AssetPaths.fontAngduIpsul140,
-                            fontSize: 64,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white.withValues(alpha: 0.9),
-                            letterSpacing: 8,
-                          ),
-                        ),
-                        Text(
-                          AppConfig.gameTitleSub,
+                          context.tr('gameTitleBlock'),
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: AssetPaths.fontAngduIpsul140,
                             fontSize: 88,
                             fontWeight: FontWeight.bold,
+                            height: 1.05,
                             color: const Color(0xFFFFD54F),
                             letterSpacing: 6,
                             shadows: [
@@ -110,23 +103,22 @@ class _TitleViewState extends State<TitleView>
                         ),
                         const Spacer(flex: 3),
                         _RoundButton(
-                          label: context.tr('modeNumber'),
+                          label: context.tr('entryRandomSeed'),
                           color: const Color(0xFF3CAEE0),
+                          fontSize: 26,
                           onPressed: () {
                             SoundManager.unlockForWeb();
                             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                            context.go('${RoutePaths.game}?mode=0');
+                            final s = RummiPokerGridSession.rollNewRunSeed();
+                            context.go('${RoutePaths.game}?seed=$s');
                           },
                         ),
                         const SizedBox(height: 20),
                         _RoundButton(
-                          label: context.tr('modeAlphabet'),
+                          label: context.tr('entryInputSeed'),
                           color: const Color(0xFF2DB872),
-                          onPressed: () {
-                            SoundManager.unlockForWeb();
-                            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                            context.go('${RoutePaths.game}?mode=1');
-                          },
+                          fontSize: 26,
+                          onPressed: () => _openSeedInputDialog(context),
                         ),
                         const SizedBox(height: 20),
                         _RoundButton(
@@ -174,6 +166,59 @@ class _TitleViewState extends State<TitleView>
       ),
     );
   }
+
+  Future<void> _openSeedInputDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.tr('seedDialogTitle')),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(
+            signed: true,
+            decimal: false,
+          ),
+          decoration: InputDecoration(
+            hintText: context.tr('seedHint'),
+          ),
+          autofocus: true,
+          onSubmitted: (_) =>
+              _trySubmitSeed(context, dialogContext, controller),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.tr('cancel')),
+          ),
+          TextButton(
+            onPressed: () =>
+                _trySubmitSeed(context, dialogContext, controller),
+            child: Text(context.tr('ok')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+  }
+
+  void _trySubmitSeed(
+    BuildContext titleContext,
+    BuildContext dialogContext,
+    TextEditingController controller,
+  ) {
+    final v = int.tryParse(controller.text.trim());
+    if (v == null) {
+      ScaffoldMessenger.of(titleContext).showSnackBar(
+        SnackBar(content: Text(titleContext.tr('seedInvalid'))),
+      );
+      return;
+    }
+    Navigator.of(dialogContext).pop();
+    SoundManager.unlockForWeb();
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    titleContext.go('${RoutePaths.game}?seed=$v');
+  }
 }
 
 /// 참조 이미지 스타일의 둥글고 큼지막한 버튼.
@@ -182,18 +227,19 @@ class _RoundButton extends StatelessWidget {
     required this.label,
     required this.color,
     required this.onPressed,
+    this.fontSize = 32,
   });
 
   final String label;
   final Color color;
   final VoidCallback onPressed;
+  final double fontSize;
 
   /// 그라데이션·테두리·그림자가 적용된 둥근 버튼을 반환한다.
   @override
   Widget build(BuildContext context) {
-    const width = 260.0;
+    const width = 300.0;
     const height = 68.0;
-    const fontSize = 32.0;
     final darkerColor = HSLColor.fromColor(color)
         .withLightness(
           (HSLColor.fromColor(color).lightness - 0.15).clamp(0.0, 1.0),
@@ -234,6 +280,7 @@ class _RoundButton extends StatelessWidget {
         child: Center(
           child: Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: AssetPaths.fontAngduIpsul140,
               fontSize: fontSize,

@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = flame_binggo_card
+PRODUCT_NAME = rummipoker
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.cheng80.binggocard
+PRODUCT_BUNDLE_IDENTIFIER = com.cheng80.rummipoker
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.cheng80. All rights reserved.

@@ -1,5 +1,5 @@
-import 'package:flame_binggo_card/providers/features/rummi_poker_grid/rummi_session_notifier.dart';
-import 'package:flame_binggo_card/providers/features/rummi_poker_grid/rummi_session_state.dart';
+import 'package:rummipoker/providers/features/rummi_poker_grid/rummi_session_notifier.dart';
+import 'package:rummipoker/providers/features/rummi_poker_grid/rummi_session_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

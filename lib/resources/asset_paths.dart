@@ -17,4 +17,7 @@ class AssetPaths {
 
   /// 폰트 family 이름 (pubspec.yaml에 등록된 이름과 동일)
   static const String fontAngduIpsul140 = 'HUAngduIpsul140';
+
+  /// 데이터 에셋 경로.
+  static const String jestersCommon = 'data/common/jesters_common.json';
 }

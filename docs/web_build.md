@@ -1,13 +1,13 @@
 # Web 릴리즈 빌드
 
-## /binggocard/ 서브패스에서 실행
+## /rummipoker/ 서브패스에서 실행
 
-앱을 `https://example.com/binggocard/` 같은 서브패스에서 서비스할 때 사용합니다.
+앱을 `https://example.com/rummipoker/` 같은 서브패스에서 서비스할 때 사용합니다.
 
 ### 빌드 명령어
 
 ```bash
-flutter build web --release --base-href "/binggocard/"
+flutter build web --release --base-href "/rummipoker/"
 ```
 
 ### 용량 줄이기 옵션
@@ -15,7 +15,7 @@ flutter build web --release --base-href "/binggocard/"
 번들 크기를 줄이려면 다음 옵션을 추가할 수 있습니다:
 
 ```bash
-flutter build web --release --base-href "/binggocard/" \
+flutter build web --release --base-href "/rummipoker/" \
   --tree-shake-icons \
   --no-source-maps
 ```
@@ -28,7 +28,7 @@ flutter build web --release --base-href "/binggocard/" \
 
 **용량 분석:**
 ```bash
-flutter build web --release --base-href "/binggocard/" --analyze-size
+flutter build web --release --base-href "/rummipoker/" --analyze-size
 ```
 빌드 후 `build/web/` 내 `.json` 리포트로 어떤 모듈이 용량을 차지하는지 확인할 수 있습니다.
 
@@ -40,43 +40,43 @@ flutter build web --release --base-href "/binggocard/" --analyze-size
 
 **방법 A: 정적 호스팅 (GitHub Pages, Netlify 등)**
 
-서버 설정을 할 수 없는 경우, `binggocard` 폴더를 만들고 빌드 결과물을 그 안에 복사합니다:
+서버 설정을 할 수 없는 경우, `rummipoker` 폴더를 만들고 빌드 결과물을 그 안에 복사합니다:
 
 ```bash
-# 빌드 후 binggocard 폴더 생성 및 복사
-flutter build web --release --base-href "/binggocard/"
-mkdir -p binggocard
-cp -r build/web/* binggocard/
+# 빌드 후 rummipoker 폴더 생성 및 복사
+flutter build web --release --base-href "/rummipoker/"
+mkdir -p rummipoker
+cp -r build/web/* rummipoker/
 ```
 
-`binggocard/` 폴더를 업로드하면 `https://example.com/binggocard/` 에서 서비스됩니다.
+`rummipoker/` 폴더를 업로드하면 `https://example.com/rummipoker/` 에서 서비스됩니다.
 
 **방법 B: Nginx/Apache 등 직접 설정 가능한 서버**
 
 1. `build/web/` 폴더 전체를 웹 서버에 업로드합니다.
-2. 서버에서 `/binggocard/` 경로가 `build/web/` 내용을 가리키도록 설정합니다.
+2. 서버에서 `/rummipoker/` 경로가 `build/web/` 내용을 가리키도록 설정합니다.
 
 **예시 (Nginx):**
 ```nginx
-location /binggocard/ {
+location /rummipoker/ {
     alias /path/to/build/web/;
-    try_files $uri $uri/ /binggocard/index.html;
+    try_files $uri $uri/ /rummipoker/index.html;
 }
 ```
 
 **예시 (Apache):**
 ```apache
-Alias /binggocard /path/to/build/web
+Alias /rummipoker /path/to/build/web
 <Directory /path/to/build/web>
     Options Indexes FollowSymLinks
     AllowOverride All
     Require all granted
     RewriteEngine On
-    RewriteBase /binggocard/
+    RewriteBase /rummipoker/
     RewriteRule ^index\.html$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule . /binggocard/index.html [L]
+    RewriteRule . /rummipoker/index.html [L]
 </Directory>
 ```
 
@@ -90,15 +90,15 @@ cd build/web
 python3 -m http.server 8080
 ```
 
-그 다음 브라우저에서 `http://localhost:8080/binggocard/` 로 접속합니다.
+그 다음 브라우저에서 `http://localhost:8080/rummipoker/` 로 접속합니다.
 
 > **참고:** Python http.server는 서브패스 리다이렉트를 완벽히 처리하지 못할 수 있습니다. 실제 배포 환경과 비슷하게 테스트하려면 Nginx/Apache 등으로 확인하는 것이 좋습니다.
 
 ### base-href 규칙
 
 - 반드시 `/`로 시작하고 `/`로 끝나야 합니다.
-- 예: `"/binggocard/"` ✅
-- 예: `"/binggocard"` ❌ (끝에 `/` 없음)
+- 예: `"/rummipoker/"` ✅
+- 예: `"/rummipoker"` ❌ (끝에 `/` 없음)
 - 루트에서 서비스할 경우: `"/"`
 
 ### 관련 파일

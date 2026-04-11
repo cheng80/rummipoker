@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.cheng80" "\0"
-            VALUE "FileDescription", "flame_binggo_card" "\0"
+            VALUE "FileDescription", "rummipoker" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "flame_binggo_card" "\0"
+            VALUE "InternalName", "rummipoker" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.cheng80. All rights reserved." "\0"
-            VALUE "OriginalFilename", "flame_binggo_card.exe" "\0"
-            VALUE "ProductName", "flame_binggo_card" "\0"
+            VALUE "OriginalFilename", "rummipoker.exe" "\0"
+            VALUE "ProductName", "rummipoker" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

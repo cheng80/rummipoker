@@ -1,0 +1,311 @@
+{
+  "data": {
+    "jesters": {
+      "jester": {
+        "displayName": "제스터",
+        "effectText": "+4 멀트",
+        "notes": "기본 배수 증가 카드"
+      },
+      "greedy_jester": {
+        "displayName": "탐욕의 제스터",
+        "effectText": "플레이된 다이아몬드는 멀트 +3",
+        "notes": "슈트 기반 보너스"
+      },
+      "lusty_jester": {
+        "displayName": "색욕의 제스터",
+        "effectText": "플레이된 하트는 멀트 +3",
+        "notes": "슈트 기반 보너스"
+      },
+      "wrathful_jester": {
+        "displayName": "분노의 제스터",
+        "effectText": "플레이된 스페이드는 멀트 +3",
+        "notes": "슈트 기반 보너스"
+      },
+      "gluttonous_jester": {
+        "displayName": "폭식의 제스터",
+        "effectText": "플레이된 클럽은 멀트 +3",
+        "notes": "슈트 기반 보너스"
+      },
+      "jolly_jester": {
+        "displayName": "유쾌한 제스터",
+        "effectText": "Pair가 포함된 핸드를 플레이하면 멀트 +8",
+        "notes": "핸드 타입 기반 추가 멀트 제스터"
+      },
+      "zany_jester": {
+        "displayName": "익살스러운 제스터",
+        "effectText": "Three of a Kind가 포함된 핸드를 플레이하면 멀트 +12",
+        "notes": "같은 랭크 3장이 포함된 핸드에 적용된다. Full House도 포함된다."
+      },
+      "mad_jester": {
+        "displayName": "광기의 제스터",
+        "effectText": "Two Pair가 포함된 핸드를 플레이하면 멀트 +10",
+        "notes": "핸드 타입 기반 추가 멀트 제스터"
+      },
+      "crazy_jester": {
+        "displayName": "미친 제스터",
+        "effectText": "Straight가 포함된 핸드를 플레이하면 멀트 +12",
+        "notes": "핸드 타입 기반 추가 멀트 제스터"
+      },
+      "droll_jester": {
+        "displayName": "능청스러운 제스터",
+        "effectText": "Flush가 포함된 핸드를 플레이하면 멀트 +10",
+        "notes": "핸드 타입 기반 추가 멀트 제스터"
+      },
+      "sly_jester": {
+        "displayName": "교활한 제스터",
+        "effectText": "Pair가 포함된 핸드를 플레이하면 칩 +50",
+        "notes": "핸드 타입 기반 칩 제스터"
+      },
+      "wily_jester": {
+        "displayName": "노련한 제스터",
+        "effectText": "Three of a Kind가 포함된 핸드를 플레이하면 칩 +100",
+        "notes": "핸드 타입 기반 칩 제스터"
+      },
+      "clever_jester": {
+        "displayName": "영리한 제스터",
+        "effectText": "Two Pair가 포함된 핸드를 플레이하면 칩 +80",
+        "notes": "핸드 타입 기반 칩 제스터"
+      },
+      "devious_jester": {
+        "displayName": "음흉한 제스터",
+        "effectText": "Straight가 포함된 핸드를 플레이하면 칩 +100",
+        "notes": "핸드 타입 기반 칩 제스터"
+      },
+      "crafty_jester": {
+        "displayName": "재빠른 제스터",
+        "effectText": "Flush가 포함된 핸드를 플레이하면 칩 +80",
+        "notes": "핸드 타입 기반 칩 제스터"
+      },
+      "half_jester": {
+        "displayName": "하프 제스터",
+        "effectText": "플레이한 핸드가 3장 이하라면 멀트 +20",
+        "notes": "핸드 크기 제한형 추가 멀트 제스터"
+      },
+      "jester_stencil": {
+        "displayName": "제스터 스텐실",
+        "effectText": "비어 있는 제스터 슬롯마다 X1 멀트",
+        "notes": "빈 슬롯을 유지할수록 보상이 커진다"
+      },
+      "four_fingers": {
+        "displayName": "포 핑거스",
+        "effectText": "모든 Straight와 Flush를 4장으로 만들 수 있다",
+        "notes": "룰 변경 카드"
+      },
+      "mime": {
+        "displayName": "마임",
+        "effectText": "손에 들고 있는 모든 능력을 다시 발동한다",
+        "notes": "재발동 엔진"
+      },
+      "hack": {
+        "displayName": "핵",
+        "effectText": "플레이한 모든 카드를 다시 발동한다",
+        "notes": "플레이 카드 재발동"
+      },
+      "misprint": {
+        "displayName": "오인쇄",
+        "effectText": "0에서 23 사이의 무작위 멀트",
+        "notes": "변동성이 큰 카드"
+      },
+      "credit_card": {
+        "displayName": "신용 카드",
+        "effectText": "부채를 -$20까지 질 수 있다",
+        "notes": "경제형 제스터. 산 뒤 같은 가격으로 다시 팔 수 있다."
+      },
+      "abstract_jester": {
+        "displayName": "추상 제스터",
+        "effectText": "보유한 제스터 카드 1장마다 멀트 +3 (현재 +0 멀트)",
+        "notes": "자기 자신도 포함하므로 최소 멀트 +3을 제공한다."
+      },
+      "green_jester": {
+        "displayName": "그린 제스터",
+        "effectText": "플레이한 핸드마다 멀트 +1, 버릴 때마다 멀트 -1 (현재 +0 멀트)",
+        "notes": "플레이로는 성장하고 버리기로는 감소하는 혼합형 스케일링 제스터"
+      },
+      "blue_jester": {
+        "displayName": "블루 제스터",
+        "effectText": "덱에 남아 있는 카드 1장마다 칩 +2",
+        "notes": "라운드가 진행되며 카드가 덱에서 빠질수록 가치가 감소한다."
+      },
+      "scary_face": {
+        "displayName": "스케어리 페이스",
+        "effectText": "플레이된 페이스 카드는 점수 계산 시 칩 +30",
+        "notes": "페이스 카드는 잭, 퀸, 킹이며 타일 기준으로는 11, 12, 13이다."
+      },
+      "smiley_face": {
+        "displayName": "스마일리 페이스",
+        "effectText": "플레이된 페이스 카드는 점수 계산 시 멀트 +5",
+        "notes": "페이스 카드는 잭, 퀸, 킹이며 타일 기준으로는 11, 12, 13이다."
+      },
+      "faceless_jester": {
+        "displayName": "페이스리스 제스터",
+        "effectText": "페이스 카드 3장 이상을 동시에 버리면 $5 획득",
+        "notes": "디버프된 페이스 카드는 집계되지 않는다. 페이스 카드는 11, 12, 13에 대응한다."
+      },
+      "egg": {
+        "displayName": "에그",
+        "effectText": "라운드 종료 시 $3 획득",
+        "notes": "단순한 경제 생성 카드"
+      },
+      "business_card": {
+        "displayName": "명함",
+        "effectText": "플레이된 페이스 카드는 50% 확률로 $2를 준다",
+        "notes": "페이스 카드 기반 경제 RNG"
+      },
+      "bonus_jester": {
+        "displayName": "보너스 제스터",
+        "effectText": "칩 +10",
+        "notes": "고정 칩 증가"
+      },
+      "popcorn": {
+        "displayName": "팝콘",
+        "effectText": "멀트 +20, 라운드마다 멀트 4 감소",
+        "notes": "시간이 지날수록 약해지는 멀트 제스터"
+      },
+      "shoot_the_moon": {
+        "displayName": "슈트 더 문",
+        "effectText": "손에 들고 있는 퀸 1장마다 멀트 +13",
+        "notes": "퀸 시너지"
+      },
+      "ice_cream": {
+        "displayName": "아이스크림",
+        "effectText": "칩 +100, 핸드를 플레이할 때마다 칩 5 감소",
+        "notes": "강하게 시작하지만 핸드를 사용할수록 줄어드는 칩 제스터"
+      },
+      "splash": {
+        "displayName": "스플래시",
+        "effectText": "플레이한 모든 카드가 점수 계산에 포함된다",
+        "notes": "기본 핸드 규칙을 넘어 점수 계산 카드를 확장하는 룰 변경 카드"
+      },
+      "8_ball": {
+        "displayName": "8 볼",
+        "effectText": "플레이한 8은 일정 확률로 타로 카드를 생성한다",
+        "notes": "타로 생성 RNG 카드"
+      },
+      "delayed_gratification": {
+        "displayName": "지연된 만족",
+        "effectText": "라운드 종료 시 사용하지 않은 버리기 1회마다 $2 획득",
+        "notes": "버리기를 아끼도록 유도한다"
+      },
+      "raised_fist": {
+        "displayName": "치켜든 주먹",
+        "effectText": "손에 들고 있는 가장 낮은 카드의 랭크만큼 멀트에 추가",
+        "notes": "손패에서 가장 낮은 랭크를 이용해 스케일링한다"
+      },
+      "square_jester": {
+        "displayName": "스퀘어 제스터",
+        "effectText": "플레이한 핸드가 정확히 4장이라면 칩 +4를 얻는다",
+        "notes": "정확한 핸드 크기 조건"
+      },
+      "photograph": {
+        "displayName": "사진",
+        "effectText": "처음 점수 계산되는 페이스 카드가 X2 멀트를 준다",
+        "notes": "핸드당 한 번만 발동한다"
+      },
+      "walkie_talkie": {
+        "displayName": "워키토키",
+        "effectText": "플레이한 10 또는 4는 각각 멀트 +4",
+        "notes": "특정 랭크 조합 시너지"
+      },
+      "golden_jester": {
+        "displayName": "골든 제스터",
+        "effectText": "각 블라인드 종료 시 $4 획득",
+        "notes": "기본 경제형 제스터. 팬덤 페이지 기준 판매가가 $3이므로 구매가는 $6로 추정된다."
+      },
+      "juggler": {
+        "displayName": "저글러",
+        "effectText": "손패 크기 +1",
+        "notes": "손패 크기 증가형 제스터"
+      },
+      "drunkard": {
+        "displayName": "주정뱅이",
+        "effectText": "매 라운드마다 버리기 +1",
+        "notes": "버리기 횟수 증가형 제스터"
+      },
+      "mystic_summit": {
+        "displayName": "신비한 정상",
+        "effectText": "남은 버리기가 0일 때 멀트 +15",
+        "notes": "조건부 추가 멀트 제스터"
+      },
+      "red_card": {
+        "displayName": "레드 카드",
+        "effectText": "부스터 팩을 건너뛸 때마다 이 제스터가 멀트 +3을 얻는다 (현재 +0 멀트)",
+        "notes": "부스터와 연동되는 스케일링 멀트 제스터. 현재 런타임에서 부스터가 비활성화돼 있어도 원본 동작은 보존한다."
+      },
+      "mail_in_rebate": {
+        "displayName": "우편 환급",
+        "effectText": "지정된 랭크의 카드를 버릴 때마다 카드 1장당 $5 획득",
+        "notes": "대상 랭크는 매 라운드마다 바뀌며, 덱 내 빈도 가중치를 반영한 무작위 랭크로 선택된다."
+      },
+      "to_do_list": {
+        "displayName": "할 일 목록",
+        "effectText": "포커 핸드가 [포커 핸드]라면 $4 획득, 포커 핸드는 라운드 종료 시 변경된다",
+        "notes": "목표 핸드가 바뀌는 동적 경제형 제스터"
+      },
+      "reserved_parking": {
+        "displayName": "전용 주차",
+        "effectText": "손에 들고 있는 페이스 카드 1장마다 라운드 종료 시 $1 획득",
+        "notes": "손패의 페이스 카드 수에 비례해 경제가 늘어난다."
+      },
+      "trading_card": {
+        "displayName": "트레이딩 카드",
+        "effectText": "라운드의 첫 버리기가 정확히 1장이라면 그 카드를 파괴하고 $3 획득",
+        "notes": "단일 카드 버리기를 보상으로 바꾸는 카드"
+      },
+      "even_steven": {
+        "displayName": "이븐 스티븐",
+        "effectText": "짝수 랭크의 플레이 카드가 점수 계산 시 멀트 +4",
+        "notes": "Balatro 기준 짝수 랭크는 2, 4, 6, 8, 10이다."
+      },
+      "odd_todd": {
+        "displayName": "오드 토드",
+        "effectText": "홀수 랭크의 플레이 카드가 점수 계산 시 칩 +31",
+        "notes": "Balatro 기준 홀수 랭크는 A, 3, 5, 7, 9이다."
+      },
+      "scholar": {
+        "displayName": "학자",
+        "effectText": "플레이된 에이스는 점수 계산 시 칩 +20, 멀트 +4",
+        "notes": "에이스 전용 복합 보너스 제스터. 타일 매핑에서 Ace는 1이다."
+      },
+      "fortune_teller": {
+        "displayName": "점쟁이",
+        "effectText": "이번 런에서 사용한 타로 카드 1장마다 멀트 +1 (현재 +0)",
+        "notes": "누적형 스케일링. 현재 프로젝트 런타임에서 타로 카드가 비활성화돼 있어도 원본 동작은 유지한다."
+      },
+      "fibonacci": {
+        "displayName": "피보나치",
+        "effectText": "플레이한 Ace, 2, 3, 5, 8은 점수 계산 시 각각 멀트 +8",
+        "notes": "고전 수열 시너지"
+      },
+      "banner": {
+        "displayName": "배너",
+        "effectText": "남아 있는 버리기 1회마다 칩 +30",
+        "notes": "버리기를 아끼도록 유도한다"
+      },
+      "gros_michel": {
+        "displayName": "그로 미셸",
+        "effectText": "멀트 +15",
+        "notes": "조건 없는 추가 멀트 바나나 제스터. 파괴/확률 동작은 추후 전체 카드 페이지 검증에서 보강해야 한다."
+      },
+      "supernova": {
+        "displayName": "초신성",
+        "effectText": "이번 런에서 해당 포커 핸드를 플레이한 횟수만큼 멀트에 추가",
+        "notes": "현재 점수 계산 중인 핸드 타입을 기준으로 누적 스케일링되는 추가 멀트 제스터"
+      },
+      "ride_the_bus": {
+        "displayName": "버스를 타라",
+        "effectText": "점수 계산되는 페이스 카드 없이 연속으로 핸드를 플레이할 때마다 이 제스터가 멀트 +1을 얻는다 (현재 +0 멀트)",
+        "notes": "점수 계산되는 페이스 카드가 포함되면 초기화된다. 페이스 카드는 11, 12, 13에 대응한다."
+      },
+      "constellation": {
+        "displayName": "별자리",
+        "effectText": "사용한 행성 카드 1장마다 이 제스터가 X0.1 멀트를 얻는다 (현재 X1 멀트)",
+        "notes": "행성 카드 사용량에 의존한다. 현재 런타임에서 행성 카드가 비활성화돼 있어도 원본 데이터는 유지한다."
+      },
+      "hanging_chad": {
+        "displayName": "행잉 채드",
+        "effectText": "점수 계산에 사용된 첫 번째 플레이 카드를 다시 발동한다",
+        "notes": "첫 번째 점수 카드 재발동"
+      }
+    }
+  }
+}

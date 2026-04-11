@@ -1,6 +1,6 @@
 {
-    "name": "flame_binggo_card",
-    "short_name": "flame_binggo_card",
+    "name": "RummiPoker",
+    "short_name": "RummiPoker",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",

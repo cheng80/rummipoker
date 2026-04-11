@@ -154,73 +154,7 @@ class _SettingViewState extends State<SettingView> {
                   }
                 },
               ),
-              Divider(color: Colors.white.withValues(alpha: 0.3), height: 1),
-              _SectionTitle(icon: Icons.public, title: context.tr('language')),
-              ListTile(
-                title: Text(
-                  context.tr('langKo'),
-                  style: const TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
-                    fontSize: 16,
-                  ),
-                ),
-                trailing: context.locale == const Locale('ko')
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : null,
-                onTap: () => context.setLocale(const Locale('ko')),
-              ),
-              ListTile(
-                title: Text(
-                  context.tr('langEn'),
-                  style: const TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
-                    fontSize: 16,
-                  ),
-                ),
-                trailing: context.locale == const Locale('en')
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : null,
-                onTap: () => context.setLocale(const Locale('en')),
-              ),
-              ListTile(
-                title: Text(
-                  context.tr('langJa'),
-                  style: const TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
-                    fontSize: 16,
-                  ),
-                ),
-                trailing: context.locale == const Locale('ja')
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : null,
-                onTap: () => context.setLocale(const Locale('ja')),
-              ),
-              ListTile(
-                title: Text(
-                  context.tr('langZhCN'),
-                  style: const TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
-                    fontSize: 16,
-                  ),
-                ),
-                trailing: context.locale == const Locale('zh', 'CN')
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : null,
-                onTap: () => context.setLocale(const Locale('zh', 'CN')),
-              ),
-              ListTile(
-                title: Text(
-                  context.tr('langZhTW'),
-                  style: const TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
-                    fontSize: 16,
-                  ),
-                ),
-                trailing: context.locale == const Locale('zh', 'TW')
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : null,
-                onTap: () => context.setLocale(const Locale('zh', 'TW')),
-              ),
+              // 언어 선택: 번역 추가 시 복원 (현재 ko.json 한글만 사용).
             ],
           ),
         ),

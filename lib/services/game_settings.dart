@@ -39,17 +39,4 @@ class GameSettings {
 
   static set keepScreenOn(bool v) =>
       StorageHelper.write(StorageKeys.keepScreenOn, v);
-
-  /// [gameMode]에 해당하는 베스트 스코어(초). 없으면 null.
-  static double? getBestScore(int gameMode) =>
-      StorageHelper.read<double>(StorageKeys.bestScorePrefix + gameMode.toString());
-
-  /// [gameMode]의 베스트 스코어를 [seconds]로 갱신. 기존보다 좋을 때만 저장.
-  static void saveBestScoreIfBetter(int gameMode, double seconds) {
-    final current = getBestScore(gameMode);
-    if (current == null || seconds < current) {
-      StorageHelper.write(StorageKeys.bestScorePrefix + gameMode.toString(), seconds);
-    }
-  }
-
 }
