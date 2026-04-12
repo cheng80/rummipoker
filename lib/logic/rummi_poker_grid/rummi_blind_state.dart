@@ -4,31 +4,61 @@
 class RummiBlindState {
   RummiBlindState({
     required this.targetScore,
-    required this.discardsRemaining,
-    this.discardsMax = 4,
+    int? boardDiscardsRemaining,
+    int? boardDiscardsMax,
+    int? handDiscardsRemaining,
+    int? handDiscardsMax,
+    int? discardsRemaining,
+    int? discardsMax,
     this.scoreTowardBlind = 0,
-  });
+  }) : boardDiscardsRemaining =
+           boardDiscardsRemaining ?? discardsRemaining ?? 4,
+       boardDiscardsMax = boardDiscardsMax ?? discardsMax ?? 4,
+       handDiscardsRemaining = handDiscardsRemaining ?? 2,
+       handDiscardsMax = handDiscardsMax ?? 2;
 
   int targetScore;
-  int discardsRemaining;
+  int boardDiscardsRemaining;
+  int handDiscardsRemaining;
 
-  /// 초기 버림(D) 횟수 상한 — UI `남음/최대` 표기용.
-  final int discardsMax;
+  /// 초기 보드 버림(D) 횟수 상한 — UI `남음/최대` 표기용.
+  final int boardDiscardsMax;
+
+  /// 초기 손패 버림 횟수 상한 — UI `남음/최대` 표기용.
+  final int handDiscardsMax;
 
   int scoreTowardBlind;
+
+  /// 기존 코드/문서 호환용 별칭. 현재는 보드 버림 자원을 가리킨다.
+  int get discardsRemaining => boardDiscardsRemaining;
+  set discardsRemaining(int value) => boardDiscardsRemaining = value;
+
+  /// 기존 코드/문서 호환용 별칭. 현재는 보드 버림 상한을 가리킨다.
+  int get discardsMax => boardDiscardsMax;
 
   bool get isTargetMet => scoreTowardBlind >= targetScore;
 
   RummiBlindState copyWith({
     int? targetScore,
+    int? boardDiscardsRemaining,
+    int? boardDiscardsMax,
+    int? handDiscardsRemaining,
+    int? handDiscardsMax,
     int? discardsRemaining,
     int? discardsMax,
     int? scoreTowardBlind,
   }) {
     return RummiBlindState(
       targetScore: targetScore ?? this.targetScore,
-      discardsRemaining: discardsRemaining ?? this.discardsRemaining,
-      discardsMax: discardsMax ?? this.discardsMax,
+      boardDiscardsRemaining:
+          boardDiscardsRemaining ??
+          discardsRemaining ??
+          this.boardDiscardsRemaining,
+      boardDiscardsMax:
+          boardDiscardsMax ?? discardsMax ?? this.boardDiscardsMax,
+      handDiscardsRemaining:
+          handDiscardsRemaining ?? this.handDiscardsRemaining,
+      handDiscardsMax: handDiscardsMax ?? this.handDiscardsMax,
       scoreTowardBlind: scoreTowardBlind ?? this.scoreTowardBlind,
     );
   }

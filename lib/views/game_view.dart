@@ -22,6 +22,13 @@ import '../widgets/starry_background.dart';
 
 enum _StageFlowPhase { none, confirmSettlement, cleared, settlement }
 
+const double _kFrameRefW = 390.0;
+const double _kFrameRefH = 750.0;
+const double _kFrameRefAspect = _kFrameRefW / _kFrameRefH;
+const double _kTabletShortSideThreshold = 500.0;
+const double _kWebMinScale = 0.83;
+const double _kWebMaxScale = 1.5;
+
 class GameView extends StatefulWidget {
   const GameView({super.key, required this.runSeed});
 
@@ -32,12 +39,16 @@ class GameView extends StatefulWidget {
 }
 
 class _GameViewState extends State<GameView> {
-  static const double _refW = 390.0;
-  static const double _refH = 750.0;
-  static const double _refAspect = _refW / _refH;
-  static const double _tabletShortSideThreshold = 500.0;
-  static const double _webMinScale = 0.83;
-  static const double _webMaxScale = 1.5;
+  static const List<String> _shopInspectOfferIds = [
+    'green_jester',
+    'popcorn',
+    'ice_cream',
+    'supernova',
+    'ride_the_bus',
+    'golden_jester',
+    'egg',
+    'delayed_gratification',
+  ];
 
   late final RummiPokerGridSession _session;
   final RummiRunProgress _runProgress = RummiRunProgress();
@@ -95,22 +106,48 @@ class _GameViewState extends State<GameView> {
   void _showGameOver(List<RummiExpirySignal> signals) {
     if (!mounted) return;
     final text = signals.map(_expiryLabel).join('\n');
-    showDialog<void>(
+    _showFramedDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: Text(context.tr('gameResult')),
-        content: Text(text),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              context.go(RoutePaths.title);
-            },
-            child: Text(context.tr('exit')),
-          ),
-        ],
+      builder: (ctx) => _ModalCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              context.tr('gameResult'),
+              style: TextStyle(
+                fontFamily: AssetPaths.fontAngduIpsul140,
+                color: Colors.white.withValues(alpha: 0.95),
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              text,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.82),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                context.go(RoutePaths.title);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFF4A81D),
+                foregroundColor: Colors.black,
+                minimumSize: const Size.fromHeight(50),
+              ),
+              child: Text(context.tr('exit')),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -239,11 +276,37 @@ class _GameViewState extends State<GameView> {
     final result = _session.tryDiscardFromBoard(row, col);
     if (result.fail != null) {
       _showSnack(switch (result.fail!) {
-        DiscardFailReason.noDiscardsLeft => '버림 횟수가 없습니다.',
+        DiscardFailReason.noBoardDiscardsLeft => '보드패 버림 횟수가 없습니다.',
+        DiscardFailReason.noHandDiscardsLeft => '손패 버림 횟수가 없습니다.',
         DiscardFailReason.cellEmpty => '해당 칸이 비어 있습니다.',
+        DiscardFailReason.tileNotInHand => '손패에서 버릴 카드를 찾지 못했습니다.',
       });
       return;
     }
+    _runProgress.onDiscardUsed();
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    setState(_clearSelections);
+    _afterAction();
+  }
+
+  void _discardSelectedHandTile() {
+    if (_isUiLocked) return;
+    final tile = _selectedHandTile;
+    if (tile == null) {
+      _showSnack('손패에서 버릴 카드를 먼저 선택하세요.');
+      return;
+    }
+    final result = _session.tryDiscardFromHand(tile);
+    if (result.fail != null) {
+      _showSnack(switch (result.fail!) {
+        DiscardFailReason.noBoardDiscardsLeft => '보드패 버림 횟수가 없습니다.',
+        DiscardFailReason.noHandDiscardsLeft => '손패 버림 횟수가 없습니다.',
+        DiscardFailReason.cellEmpty => '해당 칸이 비어 있습니다.',
+        DiscardFailReason.tileNotInHand => '손패에서 버릴 카드를 찾지 못했습니다.',
+      });
+      return;
+    }
+    _runProgress.onDiscardUsed();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     setState(_clearSelections);
     _afterAction();
@@ -262,11 +325,13 @@ class _GameViewState extends State<GameView> {
     }
     final out = _session.confirmAllFullLines(
       jesters: _runProgress.ownedJesters,
+      runtimeSnapshot: _runProgress.buildRuntimeSnapshot(),
     );
     if (!out.result.ok) {
       _showSnack('확정할 족보 줄이 없습니다.');
       return;
     }
+    _runProgress.onConfirmedLines(out.result.lineBreakdowns);
     setState(() {
       _clearSelections();
       _settlementBoardSnapshot = settlementSnapshot;
@@ -409,8 +474,11 @@ class _GameViewState extends State<GameView> {
     _runProgress.openShop(
       catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
       rng: _session.runRandom,
+      preferredOfferIds: _shopInspectOfferIds,
+      offerCountOverride: _shopInspectOfferIds.length,
     );
     _refresh();
+    _showSnack('검사용 상점 오퍼 ${_shopInspectOfferIds.length}장 표시');
     await _showShopScreen();
     if (!mounted) return;
     _refresh();
@@ -419,37 +487,35 @@ class _GameViewState extends State<GameView> {
   Future<void> _openGameOptions(BuildContext context) async {
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    await showDialog<void>(
+    await _showFramedDialog<void>(
       context: context,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2E24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titlePadding: const EdgeInsets.fromLTRB(20, 18, 12, 0),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.tr('gameOptions'),
-                style: TextStyle(
-                  fontFamily: AssetPaths.fontAngduIpsul140,
-                  color: Colors.white.withValues(alpha: 0.95),
-                ),
-              ),
-            ),
-            IconButton(
-              tooltip: context.tr('cancel'),
-              onPressed: () {
-                SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                Navigator.of(dialogContext).pop();
-              },
-              icon: const Icon(Icons.close_rounded),
-            ),
-          ],
-        ),
-        content: Column(
+      builder: (dialogContext) => _ModalCard(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.tr('gameOptions'),
+                    style: TextStyle(
+                      fontFamily: AssetPaths.fontAngduIpsul140,
+                      color: Colors.white.withValues(alpha: 0.95),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: context.tr('cancel'),
+                  onPressed: () {
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    Navigator.of(dialogContext).pop();
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                  color: Colors.white,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -495,6 +561,7 @@ class _GameViewState extends State<GameView> {
                           );
                         },
                         icon: const Icon(Icons.copy_rounded),
+                        color: Colors.white,
                       ),
                     ],
                   ),
@@ -591,7 +658,8 @@ class _GameViewState extends State<GameView> {
                   onHandTileTap: _toggleHandTile,
                   onBoardCellTap: _onBoardCellTap,
                   onDraw: _drawTile,
-                  onDiscard: _discardSelectedBoardTile,
+                  onBoardDiscard: _discardSelectedBoardTile,
+                  onHandDiscard: _discardSelectedHandTile,
                   onConfirm: _confirmLines,
                   onClearSelection: () => setState(_clearSelections),
                 ),
@@ -629,6 +697,12 @@ class _GameViewState extends State<GameView> {
                       child: _JesterInfoOverlay(
                         card: _runProgress
                             .ownedJesters[_selectedJesterOverlayIndex!],
+                        runtimeValueText: _jesterRuntimeValueText(
+                          _runProgress
+                              .ownedJesters[_selectedJesterOverlayIndex!],
+                          _runProgress.buildRuntimeSnapshot(),
+                          slotIndex: _selectedJesterOverlayIndex!,
+                        ),
                         sellGold: _runProgress.sellPriceAt(
                           _selectedJesterOverlayIndex!,
                         ),
@@ -647,72 +721,129 @@ class _GameViewState extends State<GameView> {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            const Positioned.fill(child: StarryBackground()),
-            SafeArea(
-              child: Center(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final fittedScale = min(
-                      constraints.maxWidth / _refW,
-                      constraints.maxHeight / _refH,
-                    );
-                    final scale = fittedScale < _webMinScale
-                        ? fittedScale
-                        : fittedScale.clamp(_webMinScale, _webMaxScale);
-                    final width = _refW * scale;
-                    final height = _refH * scale;
-                    return SizedBox(
-                      width: width,
-                      height: height,
-                      child: _buildGameSurface(),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    return _ResponsiveFrameScaffold(child: _buildGameSurface());
+  }
+}
 
+class _ResponsiveFrameScaffold extends StatelessWidget {
+  const _ResponsiveFrameScaffold({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final maxW = constraints.maxWidth;
-            final maxH = constraints.maxHeight;
-            final shortSide = min(maxW, maxH);
-            final needsTabletFrame = shortSide > _tabletShortSideThreshold;
-            final frameH = maxH;
-            final frameW = needsTabletFrame ? frameH * _refAspect : maxW;
+      body: Stack(
+        children: [
+          const Positioned.fill(child: StarryBackground()),
+          SafeArea(
+            child: Center(child: _AdaptiveFrame(child: child)),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-            final framed = needsTabletFrame
-                ? FittedBox(
-                    fit: BoxFit.contain,
-                    child: MediaQuery(
-                      data: MediaQuery.of(
-                        context,
-                      ).copyWith(size: const Size(_refW, _refH)),
-                      child: SizedBox(
-                        width: _refW,
-                        height: _refH,
-                        child: _buildGameSurface(),
-                      ),
-                    ),
-                  )
-                : _buildGameSurface();
+class _AdaptiveFrame extends StatelessWidget {
+  const _AdaptiveFrame({required this.child});
 
-            return Center(
-              child: SizedBox(width: frameW, height: frameH, child: framed),
-            );
-          },
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (kIsWeb) {
+          final fittedScale = min(
+            constraints.maxWidth / _kFrameRefW,
+            constraints.maxHeight / _kFrameRefH,
+          );
+          final scale = fittedScale < _kWebMinScale
+              ? fittedScale
+              : fittedScale.clamp(_kWebMinScale, _kWebMaxScale);
+          return SizedBox(
+            width: _kFrameRefW * scale,
+            height: _kFrameRefH * scale,
+            child: child,
+          );
+        }
+
+        final maxW = constraints.maxWidth;
+        final maxH = constraints.maxHeight;
+        final shortSide = min(maxW, maxH);
+        final needsTabletFrame = shortSide > _kTabletShortSideThreshold;
+        final frameH = maxH;
+        final frameW = needsTabletFrame ? frameH * _kFrameRefAspect : maxW;
+
+        final framed = needsTabletFrame
+            ? FittedBox(
+                fit: BoxFit.contain,
+                child: MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(size: const Size(_kFrameRefW, _kFrameRefH)),
+                  child: SizedBox(
+                    width: _kFrameRefW,
+                    height: _kFrameRefH,
+                    child: child,
+                  ),
+                ),
+              )
+            : child;
+
+        return SizedBox(width: frameW, height: frameH, child: framed);
+      },
+    );
+  }
+}
+
+Future<T?> _showFramedDialog<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool barrierDismissible = true,
+}) {
+  return showDialog<T>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    barrierColor: Colors.black54,
+    builder: (dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: builder(dialogContext),
         ),
+      );
+    },
+  );
+}
+
+class _ModalCard extends StatelessWidget {
+  const _ModalCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2E24),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: child,
       ),
     );
   }
@@ -735,7 +866,8 @@ class _GameLayout extends StatelessWidget {
     required this.onHandTileTap,
     required this.onBoardCellTap,
     required this.onDraw,
-    required this.onDiscard,
+    required this.onBoardDiscard,
+    required this.onHandDiscard,
     required this.onConfirm,
     required this.onClearSelection,
   });
@@ -755,7 +887,8 @@ class _GameLayout extends StatelessWidget {
   final ValueChanged<Tile> onHandTileTap;
   final void Function(int row, int col) onBoardCellTap;
   final VoidCallback onDraw;
-  final VoidCallback onDiscard;
+  final VoidCallback onBoardDiscard;
+  final VoidCallback onHandDiscard;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
 
@@ -826,6 +959,7 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 4),
             _JesterStrip(
               cards: runProgress.ownedJesters,
+              runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
               activeEffects: activeSettlementEffects,
               settlementSequenceTick: settlementSequenceTick,
               onTapCard: onJesterTap,
@@ -852,32 +986,48 @@ class _GameLayout extends StatelessWidget {
               tileWidth: tileWidth,
             ),
             const SizedBox(height: 8),
-            Row(
+            Column(
               children: [
-                Expanded(
-                  child: _ActionButton(
-                    label: '버림',
-                    background: const Color(0xFF44554C),
-                    onPressed: onDiscard,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        label: '보드패 버림',
+                        background: const Color(0xFF44554C),
+                        onPressed: onBoardDiscard,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActionButton(
+                        label: '손패 버림',
+                        background: const Color(0xFF5B4D33),
+                        onPressed: onHandDiscard,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 2,
-                  child: _ActionButton(
-                    label: '줄 확정',
-                    background: const Color(0xFFF4A81D),
-                    foreground: Colors.black,
-                    onPressed: onConfirm,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionButton(
-                    label: '선택 해제',
-                    background: const Color(0xFF44554C),
-                    onPressed: onClearSelection,
-                  ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _ActionButton(
+                        label: '줄 확정',
+                        background: const Color(0xFFF4A81D),
+                        foreground: Colors.black,
+                        onPressed: onConfirm,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActionButton(
+                        label: '선택 해제',
+                        background: const Color(0xFF44554C),
+                        onPressed: onClearSelection,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1103,7 +1253,7 @@ class _BottomInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '버림 ${session.blind.discardsRemaining}/${session.blind.discardsMax}',
+            '보드패 버림 ${session.blind.boardDiscardsRemaining}/${session.blind.boardDiscardsMax}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -1116,7 +1266,7 @@ class _BottomInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '손패 ${session.hand.length}/${RummiPokerGridSession.kMaxHandSize}',
+            '손패 ${session.hand.length}/${RummiPokerGridSession.kMaxHandSize} · 버림 ${session.blind.handDiscardsRemaining}/${session.blind.handDiscardsMax}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
@@ -1158,12 +1308,14 @@ class _HudChip extends StatelessWidget {
 class _JesterStrip extends StatelessWidget {
   const _JesterStrip({
     required this.cards,
+    required this.runtimeSnapshot,
     required this.activeEffects,
     required this.settlementSequenceTick,
     required this.onTapCard,
   });
 
   final List<RummiJesterCard> cards;
+  final RummiJesterRuntimeSnapshot runtimeSnapshot;
   final List<RummiJesterEffectBreakdown> activeEffects;
   final int settlementSequenceTick;
   final ValueChanged<int> onTapCard;
@@ -1183,6 +1335,13 @@ class _JesterStrip extends StatelessWidget {
               padding: EdgeInsets.only(right: index == 4 ? 0 : 6),
               child: _JesterSlot(
                 card: index < cards.length ? cards[index] : null,
+                runtimeValueText: index < cards.length
+                    ? _jesterRuntimeValueText(
+                        cards[index],
+                        runtimeSnapshot,
+                        slotIndex: index,
+                      )
+                    : null,
                 extended: index == 4,
                 activeEffect: index < cards.length
                     ? effectById[cards[index].id]
@@ -1201,6 +1360,7 @@ class _JesterStrip extends StatelessWidget {
 class _JesterSlot extends StatelessWidget {
   const _JesterSlot({
     required this.card,
+    required this.runtimeValueText,
     required this.extended,
     required this.activeEffect,
     required this.settlementSequenceTick,
@@ -1208,6 +1368,7 @@ class _JesterSlot extends StatelessWidget {
   });
 
   final RummiJesterCard? card;
+  final String? runtimeValueText;
   final bool extended;
   final RummiJesterEffectBreakdown? activeEffect;
   final int settlementSequenceTick;
@@ -1272,7 +1433,6 @@ class _JesterSlot extends StatelessWidget {
     };
     final isActive = activeEffect != null;
     final displayName = _localizedJesterName(context, card!);
-    final effectText = _localizedJesterEffect(context, card!);
 
     return GestureDetector(
       onTap: onTap,
@@ -1307,7 +1467,9 @@ class _JesterSlot extends StatelessWidget {
                   Container(
                     height: 8,
                     decoration: BoxDecoration(
-                      color: card == null ? const Color(0xFF385248) : rarityColor,
+                      color: card == null
+                          ? const Color(0xFF385248)
+                          : rarityColor,
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
@@ -1325,19 +1487,29 @@ class _JesterSlot extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Text(
-                    effectText,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF3F5148),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      height: 1.15,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF20312B).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _jesterCategoryLabel(card!),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF1B3A31),
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
+                      ),
                     ),
                   ),
                   if (activeEffect != null) ...[
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
@@ -1383,10 +1555,7 @@ class _JesterSlot extends StatelessWidget {
 }
 
 class _JesterEffectBurst extends StatelessWidget {
-  const _JesterEffectBurst({
-    super.key,
-    required this.effect,
-  });
+  const _JesterEffectBurst({super.key, required this.effect});
 
   final RummiJesterEffectBreakdown effect;
 
@@ -1405,10 +1574,7 @@ class _JesterEffectBurst extends StatelessWidget {
         final dy = lerpDouble(10, -12, Curves.easeOut.transform(value))!;
         return Opacity(
           opacity: fade.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, dy),
-            child: child,
-          ),
+          child: Transform.translate(offset: Offset(0, dy), child: child),
         );
       },
       child: Center(
@@ -1446,12 +1612,14 @@ class _JesterEffectBurst extends StatelessWidget {
 class _JesterInfoOverlay extends StatelessWidget {
   const _JesterInfoOverlay({
     required this.card,
+    this.runtimeValueText,
     required this.sellGold,
     required this.onSell,
     required this.onClose,
   });
 
   final RummiJesterCard card;
+  final String? runtimeValueText;
   final int sellGold;
   final VoidCallback onSell;
   final VoidCallback onClose;
@@ -1509,6 +1677,27 @@ class _JesterInfoOverlay extends StatelessWidget {
                   height: 1.3,
                 ),
               ),
+              if (runtimeValueText != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    runtimeValueText!,
+                    style: const TextStyle(
+                      color: Color(0xFFF4E6B1),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
               if (notes != null && notes.trim().isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
@@ -1764,11 +1953,16 @@ class _HandZoneState extends State<_HandZone>
     final oldKeys = oldWidget.hand.map(_handTileKey).toSet();
     final newKeys = widget.hand.map(_handTileKey).toSet();
     final addedKeys = newKeys.difference(oldKeys);
+    final removedKeys = oldKeys.difference(newKeys);
     final isSimpleAppend =
         widget.hand.length == oldWidget.hand.length + 1 &&
         addedKeys.length == 1;
+    final isOneForOneReplacement =
+        widget.hand.length == oldWidget.hand.length &&
+        addedKeys.length == 1 &&
+        removedKeys.length == 1;
 
-    if (!isSimpleAppend) {
+    if (!isSimpleAppend && !isOneForOneReplacement) {
       _controller.stop();
       setState(() {
         _settledHand = List<Tile>.from(widget.hand);
@@ -1789,7 +1983,11 @@ class _HandZoneState extends State<_HandZone>
       ..value = 0;
 
     setState(() {
-      _fromHand = List<Tile>.from(oldWidget.hand);
+      _fromHand = isOneForOneReplacement
+          ? oldWidget.hand
+                .where((tile) => !removedKeys.contains(_handTileKey(tile)))
+                .toList(growable: false)
+          : List<Tile>.from(oldWidget.hand);
       _toHand = List<Tile>.from(widget.hand);
       _incomingTile = incoming;
       _animating = true;
@@ -2350,6 +2548,12 @@ class _CashOutSheetState extends State<_CashOutSheet> {
     await Future<void>.delayed(const Duration(milliseconds: 260));
     if (!mounted) return;
     setState(() => _step = 3);
+    await Future<void>.delayed(const Duration(milliseconds: 260));
+    if (!mounted) return;
+    setState(() => _step = 4);
+    await Future<void>.delayed(const Duration(milliseconds: 260));
+    if (!mounted) return;
+    setState(() => _step = 5);
   }
 
   @override
@@ -2394,15 +2598,46 @@ class _CashOutSheetState extends State<_CashOutSheet> {
                   opacity: _step >= 2 ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
                   child: _CashOutLine(
-                    leading: '${b.remainingDiscards}',
+                    leading: '${b.remainingBoardDiscards}',
                     text:
-                        '남은 버림 ${b.remainingDiscards}회 x ${b.perDiscardBonus}',
-                    gold: b.discardGold,
+                        '남은 보드 버림 ${b.remainingBoardDiscards}회 x ${b.perBoardDiscardBonus}',
+                    gold: b.boardDiscardGold,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 AnimatedOpacity(
                   opacity: _step >= 3 ? 1 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: _CashOutLine(
+                    leading: '${b.remainingHandDiscards}',
+                    text:
+                        '남은 손패 버림 ${b.remainingHandDiscards}회 x ${b.perHandDiscardBonus}',
+                    gold: b.handDiscardGold,
+                  ),
+                ),
+                if (b.economyBonuses.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  AnimatedOpacity(
+                    opacity: _step >= 4 ? 1 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Column(
+                      children: [
+                        for (final bonus in b.economyBonuses) ...[
+                          _CashOutLine(
+                            leading: 'J',
+                            text:
+                                '${JesterTranslationScope.of(context).resolveDisplayName(bonus.jesterId, bonus.displayName)} 보너스',
+                            gold: bonus.gold,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                AnimatedOpacity(
+                  opacity: _step >= (b.economyBonuses.isNotEmpty ? 5 : 4) ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -2570,6 +2805,11 @@ class _ShopScreenState extends State<_ShopScreen> {
     final card = widget.runProgress.ownedJesters[index];
     final notes = JesterTranslationScope.of(context).notes(card.id);
     final sellGold = widget.runProgress.sellPriceAt(index);
+    final runtimeValueText = _jesterRuntimeValueText(
+      card,
+      widget.runProgress.buildRuntimeSnapshot(),
+      slotIndex: index,
+    );
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -2619,6 +2859,7 @@ class _ShopScreenState extends State<_ShopScreen> {
                           height: 100,
                           child: _JesterSlot(
                             card: card,
+                            runtimeValueText: runtimeValueText,
                             extended: false,
                             activeEffect: null,
                             settlementSequenceTick: 0,
@@ -2638,6 +2879,27 @@ class _ShopScreenState extends State<_ShopScreen> {
                                   height: 1.3,
                                 ),
                               ),
+                              if (runtimeValueText != null) ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    runtimeValueText,
+                                    style: const TextStyle(
+                                      color: Color(0xFFF4E6B1),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ],
                               if (notes != null && notes.trim().isNotEmpty) ...[
                                 const SizedBox(height: 10),
                                 Text(
@@ -2698,46 +2960,58 @@ class _ShopScreenState extends State<_ShopScreen> {
   }
 
   Future<void> _reroll() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showFramedDialog<bool>(
       context: context,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2E24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          '리롤 확인',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        content: const Text(
-          '정말 리롤할까요?',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            height: 1.35,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFF4A81D),
-              foregroundColor: Colors.black,
+      builder: (dialogContext) => _ModalCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '리롤 확인',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-            child: const Text(
-              '리롤',
-              style: TextStyle(fontWeight: FontWeight.w900),
+            const SizedBox(height: 12),
+            const Text(
+              '정말 리롤할까요?',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('취소'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFF4A81D),
+                      foregroundColor: Colors.black,
+                    ),
+                    child: const Text(
+                      '리롤',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
     if (!mounted || confirmed != true) return;
@@ -2753,10 +3027,10 @@ class _ShopScreenState extends State<_ShopScreen> {
       return;
     }
     setState(() {
-      _selectedOfferIndex =
-          widget.runProgress.shopOffers.isEmpty ? null : 0;
-      _selectedOwnedIndex ??=
-          widget.runProgress.ownedJesters.isEmpty ? null : 0;
+      _selectedOfferIndex = widget.runProgress.shopOffers.isEmpty ? null : 0;
+      _selectedOwnedIndex ??= widget.runProgress.ownedJesters.isEmpty
+          ? null
+          : 0;
     });
   }
 
@@ -2770,9 +3044,7 @@ class _ShopScreenState extends State<_ShopScreen> {
               RummiRunProgress.maxJesterSlots
           ? '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.'
           : '골드가 부족합니다.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(text)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
       return;
     }
     setState(() {
@@ -2780,8 +3052,7 @@ class _ShopScreenState extends State<_ShopScreen> {
         _selectedOwnedIndex = widget.runProgress.ownedJesters.length - 1;
         _selectedOfferIndex = null;
       } else {
-        _selectedOfferIndex =
-            widget.runProgress.shopOffers.isEmpty ? null : 0;
+        _selectedOfferIndex = widget.runProgress.shopOffers.isEmpty ? null : 0;
       }
     });
   }
@@ -2795,8 +3066,7 @@ class _ShopScreenState extends State<_ShopScreen> {
     setState(() {
       if (widget.runProgress.ownedJesters.isEmpty) {
         _selectedOwnedIndex = null;
-        _selectedOfferIndex =
-            widget.runProgress.shopOffers.isEmpty ? null : 0;
+        _selectedOfferIndex = widget.runProgress.shopOffers.isEmpty ? null : 0;
       } else {
         _selectedOwnedIndex = index.clamp(
           0,
@@ -2807,34 +3077,32 @@ class _ShopScreenState extends State<_ShopScreen> {
   }
 
   Future<void> _openOptions() async {
-    await showDialog<void>(
+    await _showFramedDialog<void>(
       context: context,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2E24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titlePadding: const EdgeInsets.fromLTRB(20, 18, 12, 0),
-        title: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                '상점 옵션',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            IconButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              icon: const Icon(Icons.close_rounded),
-            ),
-          ],
-        ),
-        content: Column(
+      builder: (dialogContext) => _ModalCard(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '상점 옵션',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  color: Colors.white,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -2880,6 +3148,7 @@ class _ShopScreenState extends State<_ShopScreen> {
                           );
                         },
                         icon: const Icon(Icons.copy_rounded),
+                        color: Colors.white,
                       ),
                     ],
                   ),
@@ -2930,311 +3199,361 @@ class _ShopScreenState extends State<_ShopScreen> {
   @override
   Widget build(BuildContext context) {
     final pendingSellIndex = _draggingOwnedIndex ?? _selectedOwnedIndex;
-    final pendingSellPrice = pendingSellIndex != null &&
+    final pendingSellPrice =
+        pendingSellIndex != null &&
             pendingSellIndex >= 0 &&
             pendingSellIndex < widget.runProgress.ownedJesters.length
         ? widget.runProgress.sellPriceAt(pendingSellIndex)
         : null;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF091D19),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return _ResponsiveFrameScaffold(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF123B32), Color(0xFF102E27), Color(0xFF0A1F1A)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.36),
+              blurRadius: 28,
+              spreadRadius: 4,
+            ),
+          ],
+          border: Border.all(
+            color: const Color(0xFF507564).withValues(alpha: 0.55),
+            width: 1.2,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
             children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Jester Shop',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white10),
-                    ),
-                    child: Text(
-                      'Gold ${widget.runProgress.gold}',
-                      style: const TextStyle(
-                        color: Color(0xFFF2C14E),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: _openOptions,
-                    icon: const Icon(Icons.more_horiz_rounded),
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '보유 Jester 5슬롯',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 108,
-                child: Row(
-                  children: List.generate(RummiRunProgress.maxJesterSlots, (
-                    index,
-                  ) {
-                    final card = index < widget.runProgress.ownedJesters.length
-                        ? widget.runProgress.ownedJesters[index]
-                        : null;
-                    final selected = _selectedOwnedIndex == index;
-                    final child = AnimatedContainer(
-                      duration: const Duration(milliseconds: 120),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: selected
-                            ? Border.all(
-                                color: const Color(0xFFF2C14E),
-                                width: 2,
-                              )
-                            : null,
-                      ),
-                      padding: selected ? const EdgeInsets.all(2) : null,
-                      child: _JesterSlot(
-                        card: card,
-                        extended: index == 4,
-                        activeEffect: null,
-                        settlementSequenceTick: 0,
-                      ),
-                    );
-
-                    return Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          right: index == RummiRunProgress.maxJesterSlots - 1
-                              ? 0
-                              : 6,
+              const Positioned.fill(child: _TableBackdrop()),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Jester Shop',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
                         ),
-                        child: card == null
-                            ? child
-                            : LongPressDraggable<int>(
-                                data: index,
-                                onDragStarted: () {
-                                  setState(() {
-                                    _sellTargetActive = true;
-                                    _draggingOwnedIndex = index;
-                                  });
-                                },
-                                onDragEnd: (_) {
-                                  if (mounted) {
-                                    setState(() {
-                                      _sellTargetActive = false;
-                                      _draggingOwnedIndex = null;
-                                    });
-                                  }
-                                },
-                                feedback: SizedBox(
-                                  width: 72,
-                                  height: 96,
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: _JesterSlot(
-                                      card: card,
-                                      extended: index == 4,
-                                      activeEffect: null,
-                                      settlementSequenceTick: 0,
-                                    ),
-                                  ),
-                                ),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    _selectOwned(index);
-                                    _showOwnedJesterDetail(index);
-                                  },
-                                  child: child,
-                                ),
-                              ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              const SizedBox(height: 10),
-              DragTarget<int>(
-                onWillAcceptWithDetails: (_) {
-                  setState(() => _sellTargetActive = true);
-                  return true;
-                },
-                onLeave: (_) {
-                  setState(() {
-                    _sellTargetActive = false;
-                  });
-                },
-                onAcceptWithDetails: (details) {
-                  setState(() {
-                    _sellTargetActive = false;
-                    _draggingOwnedIndex = null;
-                  });
-                  _sellOwned(details.data);
-                },
-                builder: (context, candidateData, rejectedData) {
-                  final active = _sellTargetActive || candidateData.isNotEmpty;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Text(
+                            'Gold ${widget.runProgress.gold}',
+                            style: const TextStyle(
+                              color: Color(0xFFF2C14E),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: _openOptions,
+                          icon: const Icon(Icons.more_horiz_rounded),
+                          color: Colors.white,
+                        ),
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color: active
-                          ? const Color(0xFF5A1E1E)
-                          : Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: active
-                            ? const Color(0xFFFF8A65)
-                            : Colors.white10,
-                      ),
-                    ),
-                    child: Text(
-                      active
-                          ? pendingSellPrice == null
-                                ? '여기에 놓으면 판매'
-                                : '여기에 놓으면 판매 +$pendingSellPrice Gold'
-                          : pendingSellPrice == null
-                          ? '보유 Jester를 길게 눌러 여기로 드래그하면 판매'
-                          : '길게 눌러 드래그 판매 가능 · 예상 판매가 +$pendingSellPrice Gold',
-                      textAlign: TextAlign.center,
+                    const SizedBox(height: 10),
+                    Text(
+                      '보유 Jester 5슬롯',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '오퍼 목록',
-                      style: TextStyle(
-                        color: Colors.white70,
+                        color: Colors.white.withValues(alpha: 0.72),
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: _reroll,
-                    child: Text(
-                      '리롤 ${widget.runProgress.rerollCost}',
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: widget.runProgress.shopOffers.isEmpty
-                    ? Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(16),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 108,
+                      child: Row(
+                        children: List.generate(
+                          RummiRunProgress.maxJesterSlots,
+                          (index) {
+                            final card =
+                                index < widget.runProgress.ownedJesters.length
+                                ? widget.runProgress.ownedJesters[index]
+                                : null;
+                            final selected = _selectedOwnedIndex == index;
+                            final child = AnimatedContainer(
+                              duration: const Duration(milliseconds: 120),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                border: selected
+                                    ? Border.all(
+                                        color: const Color(0xFFF2C14E),
+                                        width: 2,
+                                      )
+                                    : null,
+                              ),
+                              padding: selected
+                                  ? const EdgeInsets.all(2)
+                                  : null,
+                              child: _JesterSlot(
+                                card: card,
+                                runtimeValueText: card == null
+                                    ? null
+                                    : _jesterRuntimeValueText(
+                                        card,
+                                        widget.runProgress.buildRuntimeSnapshot(),
+                                        slotIndex: index,
+                                      ),
+                                extended: index == 4,
+                                activeEffect: null,
+                                settlementSequenceTick: 0,
+                              ),
+                            );
+
+                            return Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  right:
+                                      index ==
+                                          RummiRunProgress.maxJesterSlots - 1
+                                      ? 0
+                                      : 6,
+                                ),
+                                child: card == null
+                                    ? child
+                                    : LongPressDraggable<int>(
+                                        data: index,
+                                        onDragStarted: () {
+                                          setState(() {
+                                            _sellTargetActive = true;
+                                            _draggingOwnedIndex = index;
+                                          });
+                                        },
+                                        onDragEnd: (_) {
+                                          if (mounted) {
+                                            setState(() {
+                                              _sellTargetActive = false;
+                                              _draggingOwnedIndex = null;
+                                            });
+                                          }
+                                        },
+                                        feedback: SizedBox(
+                                          width: 72,
+                                          height: 96,
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: _JesterSlot(
+                                              card: card,
+                                              runtimeValueText:
+                                                  _jesterRuntimeValueText(
+                                                    card,
+                                                    widget.runProgress
+                                                        .buildRuntimeSnapshot(),
+                                                    slotIndex: index,
+                                                  ),
+                                              extended: index == 4,
+                                              activeEffect: null,
+                                              settlementSequenceTick: 0,
+                                            ),
+                                          ),
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            _selectOwned(index);
+                                            _showOwnedJesterDetail(index);
+                                          },
+                                          child: child,
+                                        ),
+                                      ),
+                              ),
+                            );
+                          },
                         ),
-                        child: const Center(
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    DragTarget<int>(
+                      onWillAcceptWithDetails: (_) {
+                        setState(() => _sellTargetActive = true);
+                        return true;
+                      },
+                      onLeave: (_) {
+                        setState(() {
+                          _sellTargetActive = false;
+                        });
+                      },
+                      onAcceptWithDetails: (details) {
+                        setState(() {
+                          _sellTargetActive = false;
+                          _draggingOwnedIndex = null;
+                        });
+                        _sellOwned(details.data);
+                      },
+                      builder: (context, candidateData, rejectedData) {
+                        final active =
+                            _sellTargetActive || candidateData.isNotEmpty;
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 120),
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? const Color(0xFF5A1E1E)
+                                : Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: active
+                                  ? const Color(0xFFFF8A65)
+                                  : Colors.white10,
+                            ),
+                          ),
                           child: Text(
-                            '이번 상점에 노출된 Jester가 없습니다.',
+                            active
+                                ? pendingSellPrice == null
+                                      ? '여기에 놓으면 판매'
+                                      : '여기에 놓으면 판매 +$pendingSellPrice Gold'
+                                : pendingSellPrice == null
+                                ? '보유 Jester를 길게 눌러 여기로 드래그하면 판매'
+                                : '길게 눌러 드래그 판매 가능 · 예상 판매가 +$pendingSellPrice Gold',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            '오퍼 목록',
                             style: TextStyle(
                               color: Colors.white70,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
-                      )
-                    : ListView.separated(
-                        itemCount: widget.runProgress.shopOffers.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final offer = widget.runProgress.shopOffers[index];
-                          return _ShopOfferCard(
-                            offer: offer,
-                            selected: _selectedOfferIndex == index,
-                            canAfford: widget.runProgress.canAfford(
-                              offer.price,
+                        TextButton(
+                          onPressed: _reroll,
+                          child: Text(
+                            '리롤 ${widget.runProgress.rerollCost}',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: widget.runProgress.shopOffers.isEmpty
+                          ? Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  '이번 상점에 노출된 Jester가 없습니다.',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: widget.runProgress.shopOffers.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final offer =
+                                    widget.runProgress.shopOffers[index];
+                                return _ShopOfferCard(
+                                  offer: offer,
+                                  selected: _selectedOfferIndex == index,
+                                  canAfford: widget.runProgress.canAfford(
+                                    offer.price,
+                                  ),
+                                  onTap: () => _selectOffer(index),
+                                  onBuy: () {
+                                    _selectOffer(index);
+                                    _buySelected();
+                                  },
+                                );
+                              },
                             ),
-                            onTap: () => _selectOffer(index),
-                            onBuy: () {
-                              _selectOffer(index);
-                              _buySelected();
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(false);
+                              context.go(RoutePaths.title);
                             },
-                          );
-                        },
-                      ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(false);
-                        context.go(RoutePaths.title);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white24),
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white24),
+                              minimumSize: const Size.fromHeight(52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                            ),
+                            child: const Text(
+                              '메인 메뉴',
+                              style: TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        '메인 메뉴',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF267B67),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                            ),
+                            child: const Text(
+                              '다음 스테이지',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF267B67),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      child: const Text(
-                        '다음 스테이지',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -3285,6 +3604,7 @@ class _ShopOfferCard extends StatelessWidget {
               height: 78,
               child: _JesterSlot(
                 card: offer.card,
+                runtimeValueText: null,
                 extended: false,
                 activeEffect: null,
                 settlementSequenceTick: 0,
@@ -3566,6 +3886,42 @@ String _localizedJesterName(BuildContext context, RummiJesterCard card) {
 String _localizedJesterEffect(BuildContext context, RummiJesterCard card) {
   final translations = JesterTranslationScope.of(context);
   return translations.resolveEffectText(card.id, card.effectText);
+}
+
+String _jesterCategoryLabel(RummiJesterCard card) {
+  return switch (card.effectType) {
+    'economy' => '경제형',
+    'stateful_growth' => '상태형',
+    'chips_bonus' || 'mult_bonus' || 'xmult_bonus' || 'other' => '점수형',
+    _ => '기타',
+  };
+}
+
+String? _jesterRuntimeValueText(
+  RummiJesterCard card,
+  RummiJesterRuntimeSnapshot snapshot, {
+  required int slotIndex,
+}) {
+  final stateValue = snapshot.stateValueForSlot(slotIndex);
+  final playedHandTotal = snapshot.playedHandCounts.values.fold<int>(
+    0,
+    (sum, value) => sum + value,
+  );
+  return switch (card.id) {
+    'green_jester' => '현재 ${_signedValueToken(stateValue, "Mult")}',
+    'popcorn' => '현재 +$stateValue Mult',
+    'ice_cream' => '현재 +$stateValue Chips',
+    'supernova' => '누적 확정 $playedHandTotal회',
+    'ride_the_bus' => '현재 ${_signedValueToken(stateValue, "Mult")}',
+    _ => null,
+  };
+}
+
+String _signedValueToken(int value, String suffix) {
+  if (value >= 0) {
+    return '+$value $suffix';
+  }
+  return '$value $suffix';
 }
 
 String? _settlementJesterNames(ConfirmedLineBreakdown line) {

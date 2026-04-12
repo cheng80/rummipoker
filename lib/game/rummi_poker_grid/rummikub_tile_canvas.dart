@@ -41,9 +41,10 @@ void paintRummikubTile(
     Rect.fromLTWH(inner.left, inner.top, inner.width, barH),
     Radius.circular(r * 0.55),
   );
-  canvas.drawRRect(barR, Paint()..color = _suitColor(tile.color));
+  final suitColor = _suitColor(tile.color);
+  canvas.drawRRect(barR, Paint()..color = suitColor);
 
-  final digitColor = _suitColor(tile.color);
+  final digitColor = suitColor;
   final bodyH = inner.height - barH;
   final fontSize = bodyH * 0.72;
   final tp = TextPainter(
@@ -67,6 +68,20 @@ void paintRummikubTile(
       digitTop,
     ),
   );
+
+  if (_isFaceRank(tile.number)) {
+    final dotRadius = rect.shortestSide * 0.075;
+    final dotCenter = Offset(
+      inner.left + inner.width / 2,
+      inner.bottom - dotRadius * 1.2,
+    );
+    canvas.drawCircle(
+      dotCenter,
+      dotRadius + 1.8,
+      Paint()..color = Colors.white.withValues(alpha: 0.92),
+    );
+    canvas.drawCircle(dotCenter, dotRadius, Paint()..color = digitColor);
+  }
 
   if (selected) {
     final ring = RRect.fromRectAndRadius(
@@ -92,3 +107,5 @@ Color _suitColor(TileColor c) {
     TileColor.black => const Color(0xFF212121),
   };
 }
+
+bool _isFaceRank(int number) => number >= 11 && number <= 13;

@@ -1,11 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../services/in_app_review_service.dart';
+import '../widgets/phone_frame_scaffold.dart';
 
 /// 설정 화면. 볼륨, 음소거, 화면 꺼짐 방지 설정.
 class SettingView extends StatefulWidget {
@@ -48,114 +50,184 @@ class _SettingViewState extends State<SettingView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('settings')),
-        titleTextStyle: const TextStyle(
-          fontFamily: AssetPaths.fontAngduIpsul140,
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
+    return PhoneFrameScaffold(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF153E34), Color(0xFF102E27), Color(0xFF0A201A)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.36),
+              blurRadius: 28,
+              spreadRadius: 4,
+            ),
+          ],
+          border: Border.all(
+            color: const Color(0xFF507564).withValues(alpha: 0.55),
+            width: 1.2,
+          ),
         ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            spacing: 8,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _SectionTitle(
-                icon: Icons.phone_android,
-                title: context.tr('sectionScreen'),
-              ),
-              _MuteSwitch(
-                label: context.tr('keepScreenOn'),
-                value: _keepScreenOn,
-                onChanged: (v) {
-                  setState(() {
-                    _keepScreenOn = v;
-                    GameSettings.keepScreenOn = v;
-                    _applyKeepScreenOn();
-                  });
-                },
-              ),
-              Divider(color: Colors.white.withValues(alpha: 0.3), height: 1),
-              _SectionTitle(
-                icon: Icons.volume_up,
-                title: context.tr('sectionSound'),
-              ),
-              _VolumeSlider(
-                label: context.tr('bgmVolume'),
-                value: _bgmVolume,
-                enabled: !_bgmMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _bgmVolume = v;
-                    GameSettings.bgmVolume = v;
-                    SoundManager.applyBgmVolume();
-                  });
-                },
-              ),
-              _MuteSwitch(
-                label: context.tr('bgm'),
-                value: _bgmMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _bgmMuted = v;
-                    GameSettings.bgmMuted = v;
-                    if (v) {
-                      SoundManager.pauseBgm();
-                    } else {
-                      SoundManager.playBgmIfUnmuted();
-                    }
-                  });
-                },
-              ),
-              _VolumeSlider(
-                label: context.tr('sfxVolume'),
-                value: _sfxVolume,
-                enabled: !_sfxMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _sfxVolume = v;
-                    GameSettings.sfxVolume = v;
-                  });
-                },
-              ),
-              _MuteSwitch(
-                label: context.tr('sfx'),
-                value: _sfxMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _sfxMuted = v;
-                    GameSettings.sfxMuted = v;
-                  });
-                },
-              ),
-              Divider(color: Colors.white.withValues(alpha: 0.3), height: 1),
-              _SectionTitle(icon: Icons.star, title: context.tr('rateApp')),
-              ListTile(
-                leading: const Icon(Icons.star_border, color: Colors.amber),
-                title: Text(
-                  context.tr('rateApp'),
-                  style: const TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
-                    fontSize: 16,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.tr('settings'),
+                        style: const TextStyle(
+                          fontFamily: AssetPaths.fontAngduIpsul140,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                        context.pop();
+                      },
+                      icon: const Icon(Icons.close_rounded),
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _SectionTitle(
+                            icon: Icons.phone_android,
+                            title: context.tr('sectionScreen'),
+                          ),
+                          _MuteSwitch(
+                            label: context.tr('keepScreenOn'),
+                            value: _keepScreenOn,
+                            onChanged: (v) {
+                              setState(() {
+                                _keepScreenOn = v;
+                                GameSettings.keepScreenOn = v;
+                                _applyKeepScreenOn();
+                              });
+                            },
+                          ),
+                          Divider(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            height: 1,
+                          ),
+                          _SectionTitle(
+                            icon: Icons.volume_up,
+                            title: context.tr('sectionSound'),
+                          ),
+                          _VolumeSlider(
+                            label: context.tr('bgmVolume'),
+                            value: _bgmVolume,
+                            enabled: !_bgmMuted,
+                            onChanged: (v) {
+                              setState(() {
+                                _bgmVolume = v;
+                                GameSettings.bgmVolume = v;
+                                SoundManager.applyBgmVolume();
+                              });
+                            },
+                          ),
+                          _MuteSwitch(
+                            label: context.tr('bgm'),
+                            value: _bgmMuted,
+                            onChanged: (v) {
+                              setState(() {
+                                _bgmMuted = v;
+                                GameSettings.bgmMuted = v;
+                                if (v) {
+                                  SoundManager.pauseBgm();
+                                } else {
+                                  SoundManager.playBgmIfUnmuted();
+                                }
+                              });
+                            },
+                          ),
+                          _VolumeSlider(
+                            label: context.tr('sfxVolume'),
+                            value: _sfxVolume,
+                            enabled: !_sfxMuted,
+                            onChanged: (v) {
+                              setState(() {
+                                _sfxVolume = v;
+                                GameSettings.sfxVolume = v;
+                              });
+                            },
+                          ),
+                          _MuteSwitch(
+                            label: context.tr('sfx'),
+                            value: _sfxMuted,
+                            onChanged: (v) {
+                              setState(() {
+                                _sfxMuted = v;
+                                GameSettings.sfxMuted = v;
+                              });
+                            },
+                          ),
+                          Divider(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            height: 1,
+                          ),
+                          _SectionTitle(
+                            icon: Icons.star,
+                            title: context.tr('rateApp'),
+                          ),
+                          ListTile(
+                            leading: const Icon(
+                              Icons.star_border,
+                              color: Colors.amber,
+                            ),
+                            title: Text(
+                              context.tr('rateApp'),
+                              style: const TextStyle(
+                                fontFamily: AssetPaths.fontAngduIpsul140,
+                                fontSize: 16,
+                              ),
+                            ),
+                            onTap: () async {
+                              final result =
+                                  await InAppReviewService.openStoreListing();
+                              if (!context.mounted) return;
+                              if (result == false) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      context.tr('rateAppAfterRelease'),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          // 언어 선택: 번역 추가 시 복원 (현재 ko.json 한글만 사용).
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                onTap: () async {
-                  final result = await InAppReviewService.openStoreListing();
-                  if (!context.mounted) return;
-                  if (result == false) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(context.tr('rateAppAfterRelease'))),
-                    );
-                  }
-                },
-              ),
-              // 언어 선택: 번역 추가 시 복원 (현재 ko.json 한글만 사용).
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -2,14 +2,14 @@ import 'dart:math';
 
 import 'board.dart';
 import 'tile.dart';
-import 'waste_tray.dart';
 
 const int kTileRanks = 13;
 const int kTileColors = 4;
 const int kBasePokerTileCount = kTileRanks * kTileColors;
 const int kDefaultCopiesPerTile = 1;
 
-int totalDeckSizeForCopies(int copiesPerTile) => kBasePokerTileCount * copiesPerTile;
+int totalDeckSizeForCopies(int copiesPerTile) =>
+    kBasePokerTileCount * copiesPerTile;
 
 /// 럼미 스타일 포커 덱. `(색, 랭크)` 조합당 [copiesPerTile]장.
 List<Tile> buildStandardPokerDeck({int copiesPerTile = kDefaultCopiesPerTile}) {
@@ -26,11 +26,10 @@ List<Tile> buildStandardPokerDeck({int copiesPerTile = kDefaultCopiesPerTile}) {
   return out;
 }
 
-/// 표준 덱에서 보드·손·웨이스트에 이미 있는 타일을 제외한 드로우 더미.
+/// 표준 덱에서 보드·손패에 이미 있는 타일을 제외한 드로우 더미.
 List<Tile> tilesRemainingForBoardAndHand({
   required RummiBoard board,
   List<Tile> hand = const [],
-  WasteTray? waste,
   int copiesPerTile = kDefaultCopiesPerTile,
 }) {
   final all = List<Tile>.from(
@@ -41,6 +40,7 @@ List<Tile> tilesRemainingForBoardAndHand({
     final i = all.indexWhere((t) => t == tile);
     if (i >= 0) all.removeAt(i);
   }
+
   for (var r = 0; r < kBoardSize; r++) {
     for (var c = 0; c < kBoardSize; c++) {
       takeAway(board.cellAt(r, c));
@@ -49,15 +49,10 @@ List<Tile> tilesRemainingForBoardAndHand({
   for (final t in hand) {
     takeAway(t);
   }
-  if (waste != null) {
-    for (var i = 0; i < waste.capacity; i++) {
-      takeAway(waste[i]);
-    }
-  }
   return all;
 }
 
-/// 드로우 전용 더미. 뽑힌 카드는 세션(손·보드·웨이스트 등)이 보관한다.
+/// 드로우 전용 더미. 뽑힌 카드는 세션(손·보드 등)이 보관한다.
 class PokerDeck {
   PokerDeck._(List<Tile> pile) : _pile = pile;
 
@@ -78,14 +73,12 @@ class PokerDeck {
   factory PokerDeck.remainingAfterPlaced({
     required RummiBoard board,
     List<Tile> hand = const [],
-    WasteTray? waste,
     Random? random,
     int copiesPerTile = kDefaultCopiesPerTile,
   }) {
     final remaining = tilesRemainingForBoardAndHand(
       board: board,
       hand: hand,
-      waste: waste,
       copiesPerTile: copiesPerTile,
     );
     remaining.shuffle(random ?? Random());

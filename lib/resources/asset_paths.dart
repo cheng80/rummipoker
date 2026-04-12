@@ -19,5 +19,5 @@ class AssetPaths {
   static const String fontAngduIpsul140 = 'HUAngduIpsul140';
 
   /// 데이터 에셋 경로.
-  static const String jestersCommon = 'data/common/jesters_common.json';
+  static const String jestersCommon = 'data/common/jesters_common_phase5.json';
 }

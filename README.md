@@ -32,7 +32,9 @@ lib/
 
 - [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md) — 실행 체크리스트
 - [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md) — GDD
-- [`docs/rummi_poker_grid_migration_plan.md`](docs/rummi_poker_grid_migration_plan.md) — 마이그레이션 플랜
+- [`START_HERE.md`](START_HERE.md) — 현재 상태 / 다음 작업 진입점
+- [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md) — 구현 스펙
+- [`docs/DESIGN.md`](docs/DESIGN.md) — UI/레이아웃 기준
 - [`docs/web_build.md`](docs/web_build.md) — Web 빌드
 
 ## 실행

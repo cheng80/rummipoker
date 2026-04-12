@@ -67,4 +67,4 @@
 ## 5. 참고
 
 - 공식: [Riverpod](https://riverpod.dev/)
-- 마이그레이션 플랜: `docs/rummi_poker_grid_migration_plan.md`
+- 세션 재개/작업 인덱스: `START_HERE.md`

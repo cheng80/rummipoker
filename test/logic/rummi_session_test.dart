@@ -14,6 +14,7 @@ RummiJesterCard jester({
   required String id,
   required String effectType,
   required String conditionType,
+  String trigger = 'passive',
   Object? conditionValue,
   int? value,
   double? xValue,
@@ -27,7 +28,7 @@ RummiJesterCard jester({
     baseCost: 3,
     effectText: id,
     effectType: effectType,
-    trigger: 'passive',
+    trigger: trigger,
     conditionType: conditionType,
     conditionValue: conditionValue,
     value: value,
@@ -77,6 +78,29 @@ void main() {
     expect(session.conservationTotal, 52);
   });
 
+  test('손패 버림: 별도 손패 버림 횟수를 소모하고 즉시 1장 보충한다', () {
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 9999,
+        boardDiscardsRemaining: 4,
+        handDiscardsRemaining: 2,
+      ),
+    );
+    final first = session.drawToHand();
+    expect(first, isNotNull);
+    final beforeHandDiscard = session.blind.handDiscardsRemaining;
+    final beforeBoardDiscard = session.blind.boardDiscardsRemaining;
+
+    final result = session.tryDiscardFromHand(first!);
+
+    expect(result.fail, isNull);
+    expect(session.blind.handDiscardsRemaining, beforeHandDiscard - 1);
+    expect(session.blind.boardDiscardsRemaining, beforeBoardDiscard);
+    expect(session.hand.length, 1);
+    expect(session.hand.first, isNot(first));
+    expect(session.conservationTotal, 52);
+  });
+
   test('손패는 최대 1장까지만 드로우', () {
     final session = RummiPokerGridSession(
       blind: RummiBlindState(targetScore: 9999, discardsRemaining: 4),
@@ -110,12 +134,14 @@ void main() {
     final stageSeed = RummiPokerGridSession.deriveStageShuffleSeed(4242, 2);
     a.prepareNextBlind(
       targetScore: 480,
-      discardsRemaining: 4,
+      boardDiscardsRemaining: 4,
+      handDiscardsRemaining: 2,
       shuffleSeed: stageSeed,
     );
     b.prepareNextBlind(
       targetScore: 480,
-      discardsRemaining: 4,
+      boardDiscardsRemaining: 4,
+      handDiscardsRemaining: 2,
       shuffleSeed: stageSeed,
     );
 
@@ -315,6 +341,540 @@ void main() {
     expect(out.result.baseScore, 70);
     expect(out.result.scoreAdded, 102);
     expect(out.result.jesterBonus, 32);
+  });
+
+  test('상점 카탈로그는 현재 점수 정산 지원 Jester만 노출한다', () {
+    final catalog = RummiJesterCatalog.fromJsonString('''
+[
+  {
+    "id": "chips_ok",
+    "displayName": "chips_ok",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "chips_bonus",
+    "trigger": "passive",
+    "conditionType": "none"
+  },
+  {
+    "id": "scholar",
+    "displayName": "scholar",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "rule_modifier",
+    "trigger": "passive",
+    "conditionType": "rank_scored"
+  },
+  {
+    "id": "economy_future",
+    "displayName": "economy_future",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "economy",
+    "trigger": "passive",
+    "conditionType": "none"
+  }
+]
+''');
+
+    expect(catalog.shopCatalog.map((card) => card.id).toList(), [
+      'chips_ok',
+      'scholar',
+    ]);
+    expect(catalog.findById('chips_ok')!.isSupportedInCurrentScoringMeta, true);
+    expect(
+      catalog.findById('economy_future')!.isSupportedInCurrentScoringMeta,
+      false,
+    );
+  });
+
+  test('캐시아웃은 보드 버림과 손패 버림을 따로 계산해 합산한다', () {
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 300,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+      ),
+    );
+    final progress = RummiRunProgress();
+
+    final breakdown = progress.buildCashOutBreakdown(session);
+
+    expect(breakdown.blindReward, RummiRunProgress.stageClearGoldBase);
+    expect(
+      breakdown.boardDiscardGold,
+      3 * RummiRunProgress.remainingBoardDiscardGoldBonus,
+    );
+    expect(
+      breakdown.handDiscardGold,
+      2 * RummiRunProgress.remainingHandDiscardGoldBonus,
+    );
+    expect(
+      breakdown.totalGold,
+      breakdown.blindReward +
+          breakdown.boardDiscardGold +
+          breakdown.handDiscardGold,
+    );
+  });
+
+  test('라운드 종료 economy Jester 보너스가 캐시아웃에 합산된다', () {
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 300,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+      ),
+    );
+    final progress = RummiRunProgress()
+      ..ownedJesters.addAll([
+        jester(
+          id: 'golden_jester',
+          effectType: 'economy',
+          trigger: 'onRoundEnd',
+          conditionType: 'none',
+          value: 4,
+        ),
+        jester(
+          id: 'egg',
+          effectType: 'economy',
+          trigger: 'onRoundEnd',
+          conditionType: 'none',
+          value: 3,
+        ),
+        jester(
+          id: 'delayed_gratification',
+          effectType: 'economy',
+          trigger: 'onRoundEnd',
+          conditionType: 'other',
+          conditionValue: 'unused_discards',
+          value: 2,
+        ),
+      ]);
+
+    final breakdown = progress.buildCashOutBreakdown(session);
+
+    expect(breakdown.economyBonuses.map((e) => e.jesterId).toList(), [
+      'golden_jester',
+      'egg',
+      'delayed_gratification',
+    ]);
+    expect(breakdown.economyGold, 17);
+    expect(
+      breakdown.totalGold,
+      breakdown.blindReward +
+          breakdown.boardDiscardGold +
+          breakdown.handDiscardGold +
+          breakdown.economyGold,
+    );
+  });
+
+  test('상점은 기본적으로 3개의 오퍼를 생성한다', () {
+    final progress = RummiRunProgress();
+    final catalog = List<RummiJesterCard>.generate(
+      5,
+      (index) => jester(
+        id: 'shop_$index',
+        effectType: 'chips_bonus',
+        conditionType: 'none',
+        value: 5 + index,
+      ),
+    );
+
+    progress.openShop(catalog: catalog, rng: Random(7));
+
+    expect(progress.shopOffers.length, 3);
+  });
+
+  test('상점은 preferredOfferIds가 있으면 해당 Jester를 우선 노출한다', () {
+    final progress = RummiRunProgress();
+    final catalog = [
+      jester(
+        id: 'green_jester',
+        effectType: 'stateful_growth',
+        conditionType: 'stateful',
+      ),
+      jester(
+        id: 'popcorn',
+        effectType: 'stateful_growth',
+        conditionType: 'stateful',
+      ),
+      jester(
+        id: 'ice_cream',
+        effectType: 'stateful_growth',
+        conditionType: 'stateful',
+      ),
+      jester(
+        id: 'filler_one',
+        effectType: 'chips_bonus',
+        conditionType: 'none',
+        value: 10,
+      ),
+      jester(
+        id: 'filler_two',
+        effectType: 'mult_bonus',
+        conditionType: 'none',
+        value: 4,
+      ),
+    ];
+
+    progress.openShop(
+      catalog: catalog,
+      rng: Random(3),
+      preferredOfferIds: const ['green_jester', 'popcorn', 'ice_cream'],
+    );
+
+    expect(progress.shopOffers.map((offer) => offer.card.id).toList(), [
+      'green_jester',
+      'popcorn',
+      'ice_cream',
+    ]);
+  });
+
+  test('상점은 offerCountOverride가 있으면 3장보다 많이 노출할 수 있다', () {
+    final progress = RummiRunProgress();
+    final catalog = List<RummiJesterCard>.generate(
+      6,
+      (index) => jester(
+        id: 'inspect_$index',
+        effectType: 'chips_bonus',
+        conditionType: 'none',
+        value: 5 + index,
+      ),
+    );
+
+    progress.openShop(
+      catalog: catalog,
+      rng: Random(1),
+      preferredOfferIds: const [
+        'inspect_0',
+        'inspect_1',
+        'inspect_2',
+        'inspect_3',
+        'inspect_4',
+      ],
+      offerCountOverride: 5,
+    );
+
+    expect(progress.shopOffers.length, 5);
+    expect(
+      progress.shopOffers.take(5).map((offer) => offer.card.id).toList(),
+      ['inspect_0', 'inspect_1', 'inspect_2', 'inspect_3', 'inspect_4'],
+    );
+  });
+
+  test('상점 카탈로그는 지원된 라운드 종료 economy Jester도 노출한다', () {
+    final catalog = RummiJesterCatalog.fromJsonString('''
+[
+  {
+    "id": "chips_ok",
+    "displayName": "chips_ok",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "chips_bonus",
+    "trigger": "passive",
+    "conditionType": "none"
+  },
+  {
+    "id": "golden_jester",
+    "displayName": "golden_jester",
+    "rarity": "common",
+    "baseCost": 6,
+    "effectText": "",
+    "effectType": "economy",
+    "trigger": "onRoundEnd",
+    "conditionType": "none",
+    "value": 4
+  },
+  {
+    "id": "credit_card",
+    "displayName": "credit_card",
+    "rarity": "common",
+    "baseCost": 1,
+    "effectText": "",
+    "effectType": "economy",
+    "trigger": "passive",
+    "conditionType": "none",
+    "value": -20
+  }
+]
+''');
+
+    expect(catalog.shopCatalog.map((card) => card.id).toList(), [
+      'chips_ok',
+      'golden_jester',
+    ]);
+  });
+
+  test('Supernova는 같은 족보를 다시 확정할수록 mult가 증가한다', () {
+    final progress = RummiRunProgress()
+      ..ownedJesters.add(
+        jester(
+          id: 'supernova',
+          effectType: 'stateful_growth',
+          conditionType: 'stateful',
+        ),
+      );
+
+    RummiPokerGridSession buildSession() {
+      final board = RummiBoard();
+      board.setCell(1, 0, t(TileColor.red, 4));
+      board.setCell(1, 1, t(TileColor.blue, 4));
+      board.setCell(1, 2, t(TileColor.yellow, 9));
+      board.setCell(1, 3, t(TileColor.black, 9));
+      board.setCell(1, 4, t(TileColor.red, 12));
+      return RummiPokerGridSession(
+        blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+        deck: PokerDeck.remainingAfterPlaced(board: board),
+        board: board,
+      );
+    }
+
+    final firstSession = buildSession();
+    final first = firstSession.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+    progress.onConfirmedLines(first.result.lineBreakdowns);
+
+    final secondSession = buildSession();
+    final second = secondSession.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+
+    expect(first.result.scoreAdded, 26);
+    expect(second.result.scoreAdded, 28);
+    expect(second.result.jesterBonus, greaterThan(first.result.jesterBonus));
+  });
+
+  test('장착 Jester는 슬롯 인덱스 순서대로 조건 검사와 효과 적용을 기록한다', () {
+    final board = RummiBoard();
+    board.setCell(1, 0, t(TileColor.red, 4));
+    board.setCell(1, 1, t(TileColor.blue, 4));
+    board.setCell(1, 2, t(TileColor.yellow, 9));
+    board.setCell(1, 3, t(TileColor.black, 9));
+    board.setCell(1, 4, t(TileColor.red, 12));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(
+      jesters: [
+        jester(
+          id: 'slot_0_first',
+          effectType: 'mult_bonus',
+          conditionType: 'none',
+          value: 4,
+        ),
+        jester(
+          id: 'slot_1_second',
+          effectType: 'chips_bonus',
+          conditionType: 'none',
+          value: 20,
+        ),
+      ],
+    );
+
+    expect(
+      out.result.lineBreakdowns.single.effects.map((e) => e.jesterId).toList(),
+      ['slot_0_first', 'slot_1_second'],
+    );
+  });
+
+  test('Popcorn은 초기 state mult를 주고 스테이지 종료 후 감소한다', () {
+    final progress = RummiRunProgress()
+      ..shopOffers.add(
+        RummiShopOffer(
+          slotIndex: 0,
+          card: jester(
+            id: 'popcorn',
+            effectType: 'stateful_growth',
+            conditionType: 'stateful',
+            value: 20,
+          ),
+        ),
+      );
+    expect(progress.buyOffer(0), true);
+
+    final board = RummiBoard();
+    board.setCell(1, 0, t(TileColor.red, 4));
+    board.setCell(1, 1, t(TileColor.blue, 4));
+    board.setCell(1, 2, t(TileColor.yellow, 9));
+    board.setCell(1, 3, t(TileColor.black, 9));
+    board.setCell(1, 4, t(TileColor.red, 12));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final before = session.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+
+    progress.advanceStage(session, runSeed: 1234);
+
+    expect(before.result.scoreAdded, 50);
+    expect(progress.buildRuntimeSnapshot().stateValueForSlot(0), 16);
+  });
+
+  test('Ice Cream은 확정 액션마다 chips state가 감소한다', () {
+    final progress = RummiRunProgress()
+      ..shopOffers.add(
+        RummiShopOffer(
+          slotIndex: 0,
+          card: jester(
+            id: 'ice_cream',
+            effectType: 'stateful_growth',
+            conditionType: 'stateful',
+            value: 100,
+          ),
+        ),
+      );
+    expect(progress.buyOffer(0), true);
+
+    final board = RummiBoard();
+    board.setCell(1, 0, t(TileColor.red, 4));
+    board.setCell(1, 1, t(TileColor.blue, 4));
+    board.setCell(1, 2, t(TileColor.yellow, 9));
+    board.setCell(1, 3, t(TileColor.black, 9));
+    board.setCell(1, 4, t(TileColor.red, 12));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+    progress.onConfirmedLines(out.result.lineBreakdowns);
+
+    expect(out.result.scoreAdded, 125);
+    expect(progress.buildRuntimeSnapshot().stateValueForSlot(0), 95);
+  });
+
+  test('Green Jester는 줄 확정 액션마다 +1, 버림마다 -1을 누적한다', () {
+    final progress = RummiRunProgress()
+      ..shopOffers.add(
+        RummiShopOffer(
+          slotIndex: 0,
+          card: jester(
+            id: 'green_jester',
+            effectType: 'stateful_growth',
+            conditionType: 'stateful',
+            value: 1,
+          ),
+        ),
+      );
+    expect(progress.buyOffer(0), true);
+
+    final board = RummiBoard();
+    board.setCell(1, 0, t(TileColor.red, 4));
+    board.setCell(1, 1, t(TileColor.blue, 4));
+    board.setCell(1, 2, t(TileColor.yellow, 9));
+    board.setCell(1, 3, t(TileColor.black, 9));
+    board.setCell(1, 4, t(TileColor.red, 12));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final first = session.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+    progress.onConfirmedLines(first.result.lineBreakdowns);
+    expect(progress.buildRuntimeSnapshot().stateValueForSlot(0), 1);
+
+    progress.onDiscardUsed();
+    expect(progress.buildRuntimeSnapshot().stateValueForSlot(0), 0);
+
+    final nextBoard = RummiBoard();
+    nextBoard.setCell(1, 0, t(TileColor.red, 4));
+    nextBoard.setCell(1, 1, t(TileColor.blue, 4));
+    nextBoard.setCell(1, 2, t(TileColor.yellow, 9));
+    nextBoard.setCell(1, 3, t(TileColor.black, 9));
+    nextBoard.setCell(1, 4, t(TileColor.red, 12));
+    final nextSession = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: nextBoard),
+      board: nextBoard,
+    );
+
+    final second = nextSession.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+
+    expect(first.result.scoreAdded, 25);
+    expect(second.result.scoreAdded, 25);
+  });
+
+  test('Ride the Bus는 페이스 카드 없는 확정에서 증가하고 페이스 카드가 나오면 초기화된다', () {
+    final progress = RummiRunProgress()
+      ..shopOffers.add(
+        RummiShopOffer(
+          slotIndex: 0,
+          card: jester(
+            id: 'ride_the_bus',
+            effectType: 'stateful_growth',
+            conditionType: 'face_card',
+            conditionValue: 'consecutive_hands_without_scoring_face_card',
+            value: 1,
+          ),
+        ),
+      );
+    expect(progress.buyOffer(0), true);
+
+    final firstBoard = RummiBoard();
+    firstBoard.setCell(1, 0, t(TileColor.red, 4));
+    firstBoard.setCell(1, 1, t(TileColor.blue, 4));
+    firstBoard.setCell(1, 2, t(TileColor.yellow, 9));
+    firstBoard.setCell(1, 3, t(TileColor.black, 9));
+    firstBoard.setCell(1, 4, t(TileColor.red, 10));
+    final firstSession = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: firstBoard),
+      board: firstBoard,
+    );
+
+    final first = firstSession.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+    progress.onConfirmedLines(first.result.lineBreakdowns);
+    expect(progress.buildRuntimeSnapshot().stateValueForSlot(0), 1);
+
+    final secondBoard = RummiBoard();
+    secondBoard.setCell(1, 0, t(TileColor.red, 12));
+    secondBoard.setCell(1, 1, t(TileColor.blue, 12));
+    secondBoard.setCell(1, 2, t(TileColor.yellow, 9));
+    secondBoard.setCell(1, 3, t(TileColor.black, 9));
+    secondBoard.setCell(1, 4, t(TileColor.red, 10));
+    final secondSession = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: secondBoard),
+      board: secondBoard,
+    );
+
+    final second = secondSession.confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+    );
+    progress.onConfirmedLines(second.result.lineBreakdowns);
+
+    expect(progress.buildRuntimeSnapshot().stateValueForSlot(0), 0);
+    expect(first.result.scoreAdded, 25);
+    expect(second.result.scoreAdded, 26);
   });
 
   test('Scholar는 scored ace에 chips와 mult를 함께 준다', () {

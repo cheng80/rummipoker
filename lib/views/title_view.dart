@@ -10,6 +10,7 @@ import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/in_app_review_service.dart';
+import '../widgets/phone_frame_scaffold.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
 class TitleView extends StatefulWidget {
@@ -19,8 +20,7 @@ class TitleView extends StatefulWidget {
   State<TitleView> createState() => _TitleViewState();
 }
 
-class _TitleViewState extends State<TitleView>
-    with WidgetsBindingObserver {
+class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -57,108 +57,115 @@ class _TitleViewState extends State<TitleView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           const _StarryBackground(),
           Positioned.fill(
             child: SafeArea(
-              child: Stack(
-                children: [
-                  Center(
-                    child: Column(
-                      children: [
-                        const Spacer(flex: 3),
-                        Text(
-                          context.tr('gameTitleBlock'),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: AssetPaths.fontAngduIpsul140,
-                            fontSize: 88,
-                            fontWeight: FontWeight.bold,
-                            height: 1.05,
-                            color: const Color(0xFFFFD54F),
-                            letterSpacing: 6,
-                            shadows: [
-                              Shadow(
-                                color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
-                                blurRadius: 24,
-                              ),
-                              const Shadow(
-                                color: Color(0xFFE65100),
-                                offset: Offset(2, 2),
-                                blurRadius: 0,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          context.tr('gameSubtitle'),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: AssetPaths.fontAngduIpsul140,
-                            fontSize: 22,
-                            color: Colors.white.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        const Spacer(flex: 3),
-                        _RoundButton(
-                          label: context.tr('entryRandomSeed'),
-                          color: const Color(0xFF3CAEE0),
-                          fontSize: 26,
-                          onPressed: () {
-                            SoundManager.unlockForWeb();
-                            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                            final s = RummiPokerGridSession.rollNewRunSeed();
-                            context.go('${RoutePaths.game}?seed=$s');
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        _RoundButton(
-                          label: context.tr('entryInputSeed'),
-                          color: const Color(0xFF2DB872),
-                          fontSize: 26,
-                          onPressed: () => _openSeedInputDialog(context),
-                        ),
-                        const SizedBox(height: 20),
-                        _RoundButton(
-                          label: context.tr('settings'),
-                          color: const Color(0xFF1976D2),
-                          onPressed: () {
-                            SoundManager.unlockForWeb();
-                            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                            context.push(RoutePaths.setting);
-                          },
-                        ),
-                        const Spacer(flex: 2),
-                      ],
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                      child: FutureBuilder<PackageInfo>(
-                        future: PackageInfo.fromPlatform(),
-                        builder: (context, snapshot) {
-                          final v = snapshot.data;
-                          final text = v != null
-                              ? 'Ver ${v.version}+${v.buildNumber}'
-                              : 'Ver';
-                          return Center(
-                            child: Text(
-                              text,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
-                                fontSize: 12,
-                              ),
+              child: Center(
+                child: PhoneFrame(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Spacer(flex: 3),
+                          Text(
+                            context.tr('gameTitleBlock'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: AssetPaths.fontAngduIpsul140,
+                              fontSize: 88,
+                              fontWeight: FontWeight.bold,
+                              height: 1.05,
+                              color: const Color(0xFFFFD54F),
+                              letterSpacing: 6,
+                              shadows: [
+                                Shadow(
+                                  color: const Color(
+                                    0xFFFFD54F,
+                                  ).withValues(alpha: 0.5),
+                                  blurRadius: 24,
+                                ),
+                                const Shadow(
+                                  color: Color(0xFFE65100),
+                                  offset: Offset(2, 2),
+                                  blurRadius: 0,
+                                ),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            context.tr('gameSubtitle'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: AssetPaths.fontAngduIpsul140,
+                              fontSize: 22,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          const Spacer(flex: 3),
+                          _RoundButton(
+                            label: context.tr('entryRandomSeed'),
+                            color: const Color(0xFF3CAEE0),
+                            fontSize: 26,
+                            onPressed: () {
+                              SoundManager.unlockForWeb();
+                              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                              final s = RummiPokerGridSession.rollNewRunSeed();
+                              context.go('${RoutePaths.game}?seed=$s');
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          _RoundButton(
+                            label: context.tr('entryInputSeed'),
+                            color: const Color(0xFF2DB872),
+                            fontSize: 26,
+                            onPressed: () => _openSeedInputDialog(context),
+                          ),
+                          const SizedBox(height: 20),
+                          _RoundButton(
+                            label: context.tr('settings'),
+                            color: const Color(0xFF1976D2),
+                            onPressed: () {
+                              SoundManager.unlockForWeb();
+                              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                              context.push(RoutePaths.setting);
+                            },
+                          ),
+                          const Spacer(flex: 2),
+                        ],
                       ),
-                    ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                          child: FutureBuilder<PackageInfo>(
+                            future: PackageInfo.fromPlatform(),
+                            builder: (context, snapshot) {
+                              final v = snapshot.data;
+                              final text = v != null
+                                  ? 'Ver ${v.version}+${v.buildNumber}'
+                                  : 'Ver';
+                              return Center(
+                                child: Text(
+                                  text,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -179,9 +186,7 @@ class _TitleViewState extends State<TitleView>
             signed: true,
             decimal: false,
           ),
-          decoration: InputDecoration(
-            hintText: context.tr('seedHint'),
-          ),
+          decoration: InputDecoration(hintText: context.tr('seedHint')),
           autofocus: true,
           onSubmitted: (_) =>
               _trySubmitSeed(context, dialogContext, controller),
@@ -192,8 +197,7 @@ class _TitleViewState extends State<TitleView>
             child: Text(context.tr('cancel')),
           ),
           TextButton(
-            onPressed: () =>
-                _trySubmitSeed(context, dialogContext, controller),
+            onPressed: () => _trySubmitSeed(context, dialogContext, controller),
             child: Text(context.tr('ok')),
           ),
         ],
@@ -209,9 +213,9 @@ class _TitleViewState extends State<TitleView>
   ) {
     final v = int.tryParse(controller.text.trim());
     if (v == null) {
-      ScaffoldMessenger.of(titleContext).showSnackBar(
-        SnackBar(content: Text(titleContext.tr('seedInvalid'))),
-      );
+      ScaffoldMessenger.of(
+        titleContext,
+      ).showSnackBar(SnackBar(content: Text(titleContext.tr('seedInvalid'))));
       return;
     }
     Navigator.of(dialogContext).pop();
@@ -255,10 +259,7 @@ class _RoundButton extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              color,
-              darkerColor,
-            ],
+            colors: [color, darkerColor],
           ),
           borderRadius: BorderRadius.circular(height / 2),
           border: Border.all(
@@ -271,10 +272,7 @@ class _RoundButton extends StatelessWidget {
               offset: const Offset(0, 4),
               blurRadius: 0,
             ),
-            BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 16,
-            ),
+            BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 16),
           ],
         ),
         child: Center(
@@ -361,7 +359,7 @@ class _StarPainter extends CustomPainter {
         x: rng.nextDouble(),
         y: rng.nextDouble(),
         radius: rng.nextDouble() * 1.6 + 0.3, // 0.3~1.9
-        speed: rng.nextDouble() * 2.0 + 0.5,  // 0.5~2.5
+        speed: rng.nextDouble() * 2.0 + 0.5, // 0.5~2.5
         offset: rng.nextDouble() * 2 * pi,
         colorIndex: rng.nextInt(4),
       );

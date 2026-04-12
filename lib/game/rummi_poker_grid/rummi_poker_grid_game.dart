@@ -47,6 +47,7 @@ class RummiPokerGridGame extends FlameGame {
   final VoidCallback? onSessionChanged;
   final void Function(String message)? onMessage;
   final void Function(List<RummiExpirySignal> signals)? onGameOver;
+
   /// 드로우 비행 등 연출 중 Flutter 쪽 전체 입력 차단용.
   final ValueChanged<bool>? onInteractionLocked;
 
@@ -216,8 +217,10 @@ class RummiPokerGridGame extends FlameGame {
     final r = session.tryDiscardFromBoard(br, bc);
     if (r.fail != null) {
       _msg(switch (r.fail!) {
-        DiscardFailReason.noDiscardsLeft => '버림 횟수(D)가 없습니다.',
+        DiscardFailReason.noBoardDiscardsLeft => '보드패 버림 횟수(D)가 없습니다.',
+        DiscardFailReason.noHandDiscardsLeft => '손패 버림 횟수가 없습니다.',
         DiscardFailReason.cellEmpty => '해당 칸에 타일이 없습니다.',
+        DiscardFailReason.tileNotInHand => '손패에서 카드를 찾지 못했습니다.',
       });
       return;
     }
@@ -278,6 +281,7 @@ class _PlayfieldLayout {
   final double handTop;
   final double handH;
   final double areaW;
+
   /// 하단 액션 한 줄(줄 확정·버림·선택 해제 3칸) + 여백. 드로우는 손패 왼쪽 열.
   final double btnBlock;
 
@@ -309,10 +313,7 @@ class _PlayfieldLayout {
         boardGap -
         handGap -
         jesterGap;
-    final boardSide = areaW.clamp(
-      120.0,
-      boardMaxByHeight.clamp(120.0, 360.0),
-    );
+    final boardSide = areaW.clamp(120.0, boardMaxByHeight.clamp(120.0, 360.0));
     final jesterTop = pad + hudH + jesterGap;
     final boardTop = jesterTop + jesterH + boardGap;
     final handTop = boardTop + boardSide + handGap;
@@ -360,10 +361,7 @@ double _handTileCenterYLocal(double handAreaH, double tileH, int index) {
 }
 
 /// 손패 슬롯 중심 (게임 전역 좌표, 앵커 center 기준).
-Vector2 _handSlotCenterInGame(
-  RummiPokerGridGame game, {
-  required int index,
-}) {
+Vector2 _handSlotCenterInGame(RummiPokerGridGame game, {required int index}) {
   final m = _PlayfieldLayout.fromSize(game.size);
   final slotN = _kHandSlotCount;
   if (index < 0 || index >= slotN) {
@@ -380,8 +378,7 @@ Vector2 _handSlotCenterInGame(
   final totalW = (slotN - 1) * step + tileW;
   final startLeft = ((stripW - totalW).clamp(0.0, double.infinity)) / 2;
   final left = startLeft + index * step;
-  final cx =
-      m.pad + _kDrawBandW + _kDrawHandGap + left + tileW / 2;
+  final cx = m.pad + _kDrawBandW + _kDrawHandGap + left + tileW / 2;
   final cy = m.handTop + _handTileCenterYLocal(m.handH, tileH, index);
   return Vector2(cx, cy);
 }
@@ -392,19 +389,20 @@ double _handSlotRotationForIndex(int index) {
 }
 
 String _handRankKo(RummiHandRank r) => switch (r) {
-      RummiHandRank.highCard => '하이',
-      RummiHandRank.onePair => '원페어',
-      RummiHandRank.twoPair => '투페어',
-      RummiHandRank.threeOfAKind => '트리플',
-      RummiHandRank.straight => '스트레이트',
-      RummiHandRank.flush => '플러시',
-      RummiHandRank.fullHouse => '풀하우스',
-      RummiHandRank.fourOfAKind => '포카드',
-      RummiHandRank.straightFlush => '스티플',
-    };
+  RummiHandRank.highCard => '하이',
+  RummiHandRank.onePair => '원페어',
+  RummiHandRank.twoPair => '투페어',
+  RummiHandRank.threeOfAKind => '트리플',
+  RummiHandRank.straight => '스트레이트',
+  RummiHandRank.flush => '플러시',
+  RummiHandRank.fullHouse => '풀하우스',
+  RummiHandRank.fourOfAKind => '포카드',
+  RummiHandRank.straightFlush => '스티플',
+};
 
 /// 보드·손패·버튼 영역 레이아웃.
-class RummiPlayfield extends Component with HasGameReference<RummiPokerGridGame> {
+class RummiPlayfield extends Component
+    with HasGameReference<RummiPokerGridGame> {
   RummiPokerGridGame? gameRef;
 
   Future<void> rebuild() async {
@@ -459,10 +457,7 @@ class RummiPlayfield extends Component with HasGameReference<RummiPokerGridGame>
 
     await add(
       _HandArea(
-        position: Vector2(
-          m.pad + _kDrawBandW + _kDrawHandGap,
-          m.handTop,
-        ),
+        position: Vector2(m.pad + _kDrawBandW + _kDrawHandGap, m.handTop),
         size: Vector2(m.handStripW, m.handH),
         game: g,
       ),
@@ -509,8 +504,7 @@ class RummiPlayfield extends Component with HasGameReference<RummiPokerGridGame>
 }
 
 class _BackdropChrome extends PositionComponent {
-  _BackdropChrome({required Vector2 size})
-      : super(size: size, priority: -10);
+  _BackdropChrome({required Vector2 size}) : super(size: size, priority: -10);
 
   @override
   void render(Canvas canvas) {
@@ -521,11 +515,7 @@ class _BackdropChrome extends PositionComponent {
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF13281C),
-            _UiTheme.felt,
-            Color(0xFF0A1710),
-          ],
+          colors: [Color(0xFF13281C), _UiTheme.felt, Color(0xFF0A1710)],
         ).createShader(rect),
     );
 
@@ -557,11 +547,7 @@ class _BackdropChrome extends PositionComponent {
 }
 
 class _HudPanel extends PositionComponent {
-  _HudPanel({
-    required super.position,
-    required super.size,
-    required this.game,
-  });
+  _HudPanel({required super.position, required super.size, required this.game});
 
   final RummiPokerGridGame game;
 
@@ -735,10 +721,7 @@ class _HudPanel extends PositionComponent {
         ..shader = const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1B3728),
-            _UiTheme.panel,
-          ],
+          colors: [Color(0xFF1B3728), _UiTheme.panel],
         ).createShader(bodyRect),
     );
     canvas.drawRRect(
@@ -768,7 +751,7 @@ class _HudPanel extends PositionComponent {
     final ratio = game.session.blind.targetScore <= 0
         ? 0.0
         : (game.session.blind.scoreTowardBlind / game.session.blind.targetScore)
-            .clamp(0.0, 1.0);
+              .clamp(0.0, 1.0);
     final progressWidth = progressRect.width * ratio;
     if (progressWidth > 0) {
       final progressFill = RRect.fromRectAndRadius(
@@ -778,19 +761,17 @@ class _HudPanel extends PositionComponent {
       canvas.drawRRect(
         progressFill,
         Paint()
-          ..shader = const LinearGradient(
-            colors: [
-              Color(0xFFE6A63C),
-              _UiTheme.score,
-            ],
-          ).createShader(
-            Rect.fromLTWH(
-              progressRect.left,
-              progressRect.top,
-              progressWidth,
-              progressRect.height,
-            ),
-          ),
+          ..shader =
+              const LinearGradient(
+                colors: [Color(0xFFE6A63C), _UiTheme.score],
+              ).createShader(
+                Rect.fromLTWH(
+                  progressRect.left,
+                  progressRect.top,
+                  progressWidth,
+                  progressRect.height,
+                ),
+              ),
       );
     }
   }
@@ -833,11 +814,7 @@ class _BoardGrid extends PositionComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    add(
-      _BoardPanelFrame(
-        size: size.clone(),
-      ),
-    );
+    add(_BoardPanelFrame(size: size.clone()));
     final board = game.session.board;
     for (var r = 0; r < kBoardSize; r++) {
       for (var c = 0; c < kBoardSize; c++) {
@@ -855,20 +832,13 @@ class _BoardGrid extends PositionComponent {
       }
     }
     await add(
-      _BoardLineOverlays(
-        cellSize: cellSize,
-        game: game,
-        size: size.clone(),
-      ),
+      _BoardLineOverlays(cellSize: cellSize, game: game, size: size.clone()),
     );
   }
 }
 
 class _JesterSlots extends PositionComponent {
-  _JesterSlots({
-    required super.position,
-    required super.size,
-  });
+  _JesterSlots({required super.position, required super.size});
 
   @override
   void render(Canvas canvas) {
@@ -899,10 +869,7 @@ class _JesterSlots extends PositionComponent {
           ..shader = const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF173326),
-              Color(0xFF11261D),
-            ],
+            colors: [Color(0xFF173326), Color(0xFF11261D)],
           ).createShader(rect),
       );
       canvas.drawRRect(
@@ -968,8 +935,7 @@ class _JesterSlots extends PositionComponent {
 }
 
 class _BoardPanelFrame extends PositionComponent {
-  _BoardPanelFrame({required Vector2 size})
-      : super(size: size, priority: -2);
+  _BoardPanelFrame({required Vector2 size}) : super(size: size, priority: -2);
 
   @override
   void render(Canvas canvas) {
@@ -987,14 +953,14 @@ class _BoardPanelFrame extends PositionComponent {
     canvas.drawRRect(
       outer,
       Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF184434),
-            Color(0xFF102B21),
-          ],
-        ).createShader(Rect.fromLTWH(-pad, -pad, width + pad * 2, height + pad * 2)),
+        ..shader =
+            const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF184434), Color(0xFF102B21)],
+            ).createShader(
+              Rect.fromLTWH(-pad, -pad, width + pad * 2, height + pad * 2),
+            ),
     );
     canvas.drawRRect(
       outer,
@@ -1175,12 +1141,7 @@ class _BoardCell extends PositionComponent with TapCallbacks {
       const inset = 2.5;
       paintRummikubTile(
         canvas,
-        Rect.fromLTWH(
-          inset,
-          inset,
-          width - inset * 2,
-          height - inset * 2,
-        ),
+        Rect.fromLTWH(inset, inset, width - inset * 2, height - inset * 2),
         tile!,
         selected: game.boardCellSelected(row, col),
         shadowElevation: 1.5,
@@ -1199,11 +1160,7 @@ class _BoardCell extends PositionComponent with TapCallbacks {
 }
 
 class _HandArea extends PositionComponent {
-  _HandArea({
-    required super.position,
-    required super.size,
-    required this.game,
-  });
+  _HandArea({required super.position, required super.size, required this.game});
 
   final RummiPokerGridGame game;
 
@@ -1220,10 +1177,7 @@ class _HandArea extends PositionComponent {
         width: lay.tileW + 10,
         height: lay.tileH + 4,
       );
-      final slot = RRect.fromRectAndRadius(
-        slotRect,
-        const Radius.circular(14),
-      );
+      final slot = RRect.fromRectAndRadius(slotRect, const Radius.circular(14));
       canvas.drawRRect(slot, Paint()..color = Colors.transparent);
     }
   }
@@ -1313,14 +1267,14 @@ class _FlyingDrawTile extends PositionComponent {
     required Vector2 size,
     required double angle,
     required this.onDone,
-  })  : _start = start.clone(),
-        super(
-          position: start.clone(),
-          size: size,
-          anchor: Anchor.center,
-          angle: angle,
-          priority: 62,
-        );
+  }) : _start = start.clone(),
+       super(
+         position: start.clone(),
+         size: size,
+         anchor: Anchor.center,
+         angle: angle,
+         priority: 62,
+       );
 
   final Tile tile;
   final Vector2 end;
@@ -1442,7 +1396,6 @@ class _TextButton extends PositionComponent with TapCallbacks {
         ..color = glowColor,
     );
     canvas.drawRRect(rr, border);
-
   }
 
   @override

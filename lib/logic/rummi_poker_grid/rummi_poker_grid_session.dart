@@ -6,7 +6,6 @@ import 'line_ref.dart';
 import 'models/board.dart';
 import 'models/poker_deck.dart';
 import 'models/tile.dart';
-import 'models/waste_tray.dart';
 import 'rummi_blind_state.dart';
 import 'rummi_poker_grid_engine.dart';
 
@@ -69,6 +68,7 @@ class ConfirmedLineBreakdown {
     required this.baseScore,
     required this.finalScore,
     required this.jesterBonus,
+    required this.hasScoringFaceCard,
     required this.effects,
   });
 
@@ -77,10 +77,11 @@ class ConfirmedLineBreakdown {
   final int baseScore;
   final int finalScore;
   final int jesterBonus;
+  final bool hasScoringFaceCard;
   final List<RummiJesterEffectBreakdown> effects;
 }
 
-/// 덱·손패·보드·웨이스트·제거 더미를 묶은 퍼사드 (마이그레이션 플랜 단계 1).
+/// 덱·손패·보드·제거 더미를 묶은 퍼사드 (마이그레이션 플랜 단계 1).
 class RummiPokerGridSession {
   RummiPokerGridSession._({
     required this.runSeed,
@@ -90,7 +91,6 @@ class RummiPokerGridSession {
     required this.deck,
     required this.board,
     required this.hand,
-    required this.waste,
     required this.eliminated,
     required this.engine,
   });
@@ -116,11 +116,16 @@ class RummiPokerGridSession {
       runSeed: s,
       runRandom: rng,
       deckCopiesPerTile: deckCopiesPerTile,
-      blind: blind ?? RummiBlindState(targetScore: 300, discardsRemaining: 4),
+      blind:
+          blind ??
+          RummiBlindState(
+            targetScore: 300,
+            boardDiscardsRemaining: 4,
+            handDiscardsRemaining: 2,
+          ),
       deck: deck ?? PokerDeck.shuffled(rng, null, deckCopiesPerTile),
       board: board ?? RummiBoard(),
       hand: <Tile>[],
-      waste: WasteTray(),
       eliminated: <Tile>[],
       engine: RummiPokerGridEngine(),
     );
@@ -129,8 +134,8 @@ class RummiPokerGridSession {
   static int _rollSeed() => Random().nextInt(0x7fffffff);
 
   static int deriveStageShuffleSeed(int runSeed, int stageIndex) {
-    final mixed = (runSeed * 1103515245 + 12345 + stageIndex * 1013904223) &
-        0x7fffffff;
+    final mixed =
+        (runSeed * 1103515245 + 12345 + stageIndex * 1013904223) & 0x7fffffff;
     return mixed == 0 ? stageIndex + 1 : mixed;
   }
 
@@ -141,7 +146,6 @@ class RummiPokerGridSession {
   final PokerDeck deck;
   final RummiBoard board;
   final List<Tile> hand;
-  final WasteTray waste;
 
   /// 확정·버림으로 영구 제거된 타일(다시 드로우되지 않음).
   final List<Tile> eliminated;
@@ -166,11 +170,10 @@ class RummiPokerGridSession {
     return n;
   }
 
-  /// 덱 + 손 + 보드 + 웨이스트 + 제거 더미 = 전체 덱 장수 유지 검증용.
+  /// 덱 + 손 + 보드 + 제거 더미 = 전체 덱 장수 유지 검증용.
   int get conservationTotal =>
       deck.remaining +
       hand.length +
-      waste.occupiedCount +
       eliminated.length +
       countTilesOnBoard(board);
 
@@ -200,14 +203,14 @@ class RummiPokerGridSession {
     int row,
     int col,
   ) {
-    if (blind.discardsRemaining <= 0) {
-      return (drew: null, fail: DiscardFailReason.noDiscardsLeft);
+    if (blind.boardDiscardsRemaining <= 0) {
+      return (drew: null, fail: DiscardFailReason.noBoardDiscardsLeft);
     }
     final tile = board.cellAt(row, col);
     if (tile == null) {
       return (drew: null, fail: DiscardFailReason.cellEmpty);
     }
-    blind.discardsRemaining--;
+    blind.boardDiscardsRemaining--;
     board.setCell(row, col, null);
     eliminated.add(tile);
     Tile? drew;
@@ -220,10 +223,39 @@ class RummiPokerGridSession {
     return (drew: drew, fail: null);
   }
 
+  /// 손패 버림: 손패 버림 자원 1 소모 후 선택한 손패 타일을 제거하고 즉시 1장 보충한다.
+  ({Tile? drew, DiscardFailReason? fail}) tryDiscardFromHand(Tile tile) {
+    if (blind.handDiscardsRemaining <= 0) {
+      return (drew: null, fail: DiscardFailReason.noHandDiscardsLeft);
+    }
+    final index = hand.indexWhere((candidate) => candidate == tile);
+    if (index < 0) {
+      return (drew: null, fail: DiscardFailReason.tileNotInHand);
+    }
+
+    blind.handDiscardsRemaining--;
+    eliminated.add(hand.removeAt(index));
+
+    final drew = deck.draw();
+    if (drew != null) {
+      hand.add(drew);
+    }
+    return (drew: drew, fail: null);
+  }
+
   /// 현재 보드에서 5칸 완성된 **족보(점수) 줄만** 일괄 확정한다.
+  ///
+  /// 이 메서드의 책임은 전투 중 실시간 정산까지만이다.
+  /// - 줄별 기본 점수/Jester 보정을 계산한다.
+  /// - 족보 성립 카드만 제거한다.
+  /// - 블라인드 누적 점수와 클리어 여부를 갱신한다.
+  ///
+  /// `Cash Out`, 상점 진입, 다음 스테이지 준비는 UI/메타 레이어가 후속으로 처리한다.
   /// 죽은 줄은 **한 줄씩 일괄 제거 없음** — 칸을 비우려면 **보드 버림(D)** 만 사용.
   ({ConfirmClearResult result, BlindCleared? cleared}) confirmAllFullLines({
     List<RummiJesterCard> jesters = const [],
+    RummiJesterRuntimeSnapshot runtimeSnapshot =
+        const RummiJesterRuntimeSnapshot(),
   }) {
     final lines = engine.listFullLines(board);
     final scoringLines = [
@@ -239,10 +271,11 @@ class RummiPokerGridSession {
     var jesterBonusSum = 0;
     final lineBreakdowns = <ConfirmedLineBreakdown>[];
     final jesterContext = RummiJesterScoreContext(
-      discardsRemaining: blind.discardsRemaining,
+      discardsRemaining: blind.boardDiscardsRemaining,
       cardsRemainingInDeck: deck.remaining,
       ownedJesterCount: jesters.length,
     );
+    final currentConfirmRankCounts = <RummiHandRank, int>{};
 
     for (final e in scoringLines) {
       final evaluation = e.report.evaluation;
@@ -256,16 +289,36 @@ class RummiPokerGridSession {
           scoringTiles.add(tile);
         }
       }
+      final hasScoringFaceCard = scoringTiles.any(
+        (tile) => tile.number >= 11 && tile.number <= 13,
+      );
 
       var lineScore = evaluation.baseScore;
       final baseLineScore = evaluation.baseScore;
       final effects = <RummiJesterEffectBreakdown>[];
-      for (final jester in jesters) {
+      currentConfirmRankCounts.update(
+        evaluation.rank,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
+      // Jester는 항상 장착 슬롯 인덱스(0 -> N-1) 순서대로 순차 적용한다.
+      // 각 카드의 조건 판정과 상태 조회도 같은 인덱스를 기준으로 맞춘다.
+      for (var jesterIndex = 0; jesterIndex < jesters.length; jesterIndex++) {
+        final jester = jesters[jesterIndex];
         final scored = jester.applyToLine(
           rank: evaluation.rank,
           baseScore: evaluation.baseScore,
           scoringTiles: scoringTiles,
-          context: jesterContext,
+          context: RummiJesterScoreContext(
+            discardsRemaining: jesterContext.discardsRemaining,
+            cardsRemainingInDeck: jesterContext.cardsRemainingInDeck,
+            ownedJesterCount: jesterContext.ownedJesterCount,
+            maxJesterSlots: jesterContext.maxJesterSlots,
+            stateValue: runtimeSnapshot.stateValueForSlot(jesterIndex),
+            currentHandPlayedCount:
+                runtimeSnapshot.playedCountForRank(evaluation.rank) +
+                currentConfirmRankCounts[evaluation.rank]!,
+          ),
         );
         if (scored.effect != null) {
           effects.add(scored.effect!);
@@ -282,6 +335,7 @@ class RummiPokerGridSession {
           baseScore: baseLineScore,
           finalScore: lineScore,
           jesterBonus: lineScore - baseLineScore,
+          hasScoringFaceCard: hasScoringFaceCard,
           effects: List<RummiJesterEffectBreakdown>.unmodifiable(effects),
         ),
       );
@@ -332,7 +386,7 @@ class RummiPokerGridSession {
     if (deck.isEmpty) {
       s.add(RummiExpirySignal.drawPileExhausted);
     }
-    if (blind.discardsRemaining <= 0 &&
+    if (blind.boardDiscardsRemaining <= 0 &&
         countTilesOnBoard(board) == kBoardSize * kBoardSize) {
       s.add(RummiExpirySignal.boardFullAfterDcExhausted);
     }
@@ -365,20 +419,27 @@ class RummiPokerGridSession {
   /// 다음 블라인드 진입을 위해 목표/자원을 초기화한다.
   void prepareNextBlind({
     required int targetScore,
-    required int discardsRemaining,
+    required int boardDiscardsRemaining,
+    int? handDiscardsRemaining,
     int? shuffleSeed,
   }) {
     discardStageRemainder();
     eliminated.clear();
-    waste.clear();
     deck.resetShuffled(
       random: Random(shuffleSeed ?? deriveStageShuffleSeed(runSeed, 1)),
       copiesPerTile: deckCopiesPerTile,
     );
     blind.targetScore = targetScore;
-    blind.discardsRemaining = discardsRemaining;
+    blind.boardDiscardsRemaining = boardDiscardsRemaining;
+    blind.handDiscardsRemaining =
+        handDiscardsRemaining ?? blind.handDiscardsMax;
     blind.scoreTowardBlind = 0;
   }
 }
 
-enum DiscardFailReason { noDiscardsLeft, cellEmpty }
+enum DiscardFailReason {
+  noBoardDiscardsLeft,
+  noHandDiscardsLeft,
+  cellEmpty,
+  tileNotInHand,
+}
