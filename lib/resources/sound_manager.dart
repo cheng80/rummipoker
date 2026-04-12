@@ -12,6 +12,8 @@ class SoundManager {
   static String? _currentBgm;
   static bool _webUnlocked = false;
   static String? _pendingBgm;
+  static Future<void> _bgmOp = Future<void>.value();
+  static int _bgmRequestSerial = 0;
 
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
   /// playBgm(path) 대신 playBgmIfUnmuted() 사용: 이미 _currentBgm이 설정된 상태에서
@@ -20,8 +22,9 @@ class SoundManager {
     if (!kIsWeb || _webUnlocked) return;
     _webUnlocked = true;
     if (_pendingBgm != null) {
+      final pending = _pendingBgm!;
       _pendingBgm = null;
-      playBgmIfUnmuted();
+      playBgm(pending);
     }
   }
 
@@ -42,23 +45,30 @@ class SoundManager {
   /// BGM 재생. 음소거 시에는 _currentBgm만 갱신하고 재생하지 않음.
   /// 웹: unlock 전이면 대기 후 첫 탭 시 재생.
   static Future<void> playBgm(String path) async {
-    if (_currentBgm == path) return;
-    await stopBgm();
-    _currentBgm = path;
-    if (GameSettings.bgmMuted) return;
-    if (kIsWeb && !_webUnlocked) {
-      _pendingBgm = path;
-      return;
-    }
-    try {
-      await FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume);
-    } catch (_) {
-      _pendingBgm = path;
-    }
+    final requestId = ++_bgmRequestSerial;
+    _bgmOp = _bgmOp.then((_) async {
+      if (_currentBgm == path && FlameAudio.bgm.isPlaying) return;
+      FlameAudio.bgm.stop();
+      _currentBgm = path;
+      if (GameSettings.bgmMuted) return;
+      if (kIsWeb && !_webUnlocked) {
+        _pendingBgm = path;
+        return;
+      }
+      if (requestId != _bgmRequestSerial) return;
+      try {
+        await FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume);
+      } catch (_) {
+        _pendingBgm = path;
+      }
+    });
+    await _bgmOp;
   }
 
   /// BGM 중지.
   static Future<void> stopBgm() async {
+    _bgmRequestSerial++;
+    _pendingBgm = null;
     FlameAudio.bgm.stop();
     _currentBgm = null;
   }
@@ -83,13 +93,9 @@ class SoundManager {
 
   /// 음소거 해제 시 BGM 재생. pause 상태면 resume, stop 상태면 play.
   static Future<void> playBgmIfUnmuted() async {
-    if (GameSettings.bgmMuted) return;
-    if (_currentBgm == null) return;
-    if (FlameAudio.bgm.isPlaying) return;
-    if (kIsWeb && !_webUnlocked) return;
-    try {
-      await FlameAudio.bgm.play(_currentBgm!, volume: GameSettings.bgmVolume);
-    } catch (_) {}
+    final current = _currentBgm;
+    if (current == null) return;
+    await playBgm(current);
   }
 
   /// BGM 볼륨을 설정에 맞게 적용. 볼륨 슬라이더 변경 시 호출.

@@ -272,36 +272,34 @@ Scaffold
 
 ### 프레임 계산 규칙
 
-- 기준 논리 크기: `refW`, `refH`
-- 기준 비율: `refAspect = refW / refH`
-- 태블릿 판정: `shortSide > tabletThreshold`
-- 폰:
-  - `frameWidth = maxWidth`
-  - `frameHeight = maxHeight`
-- 태블릿:
-  - `frameHeight = maxHeight`
-  - `frameWidth = maxHeight * refAspect`
-
-즉, 태블릿에서는 세로 높이를 기준으로 폰 비율의 세로 슬롯을 만든 뒤 `Center`에 둔다.
+- 기준 논리 크기: `390 x 750`
+- 기준 비율: `13:25`
+- 플랫폼별 분기 없이, **항상 같은 논리 크기**를 사용한다.
+- 실제 프레임 크기는 `min(maxWidth / 390, maxHeight / 750)` 스케일로 계산한다.
+- 즉 웹 / iPad / 폰 모두:
+  - 바깥은 현재 화면에 맞는 `13:25` 프레임만 계산
+  - 안쪽은 항상 `390 x 750` 기준으로 레이아웃
+  - 남는 좌우 또는 상하 영역은 배경으로만 채운다
 
 ### 논리 해상도 고정
 
-- 태블릿 경로에서는 `SizedBox(width: refW, height: refH)`로 기준 화면을 고정한다.
-- 자식은 `MediaQuery.copyWith(size: Size(refW, refH))`를 통해 항상 폰 기준 논리 크기를 보게 한다.
-- 바깥 프레임과 실제 콘텐츠는 `FittedBox(fit: BoxFit.contain)`로 연결한다.
+- `SizedBox(width: 390, height: 750)` 로 기준 화면을 고정한다.
+- 자식은 `MediaQuery.copyWith(size: Size(390, 750))` 를 통해 항상 같은 논리 크기를 보게 한다.
+- 바깥 프레임과 실제 콘텐츠는 `FittedBox(fit: BoxFit.contain)` 로 연결한다.
 
 ### 현재 적용 원칙
 
-- `GameView`, `TitleView`, `SettingView`, 상점/옵션 계열은 같은 phone-frame 계열 규칙을 공유한다.
+- `GameView`, `TitleView`, `SettingView`, 상점/옵션 계열은 같은 `PhoneFrameScaffold` 규칙을 공유한다.
 - 타이틀 화면은 중앙 정렬만 유지하고, 별도 외곽선/그림자 패널 없이 배경 위에 내용만 올린다.
 - 설정/상점 화면은 일반 `Scaffold` 관성 대신, 게임 화면과 동일한 안전 영역·폭·정렬 기준을 사용한다.
+- 내부 콘텐츠는 화면 실제 픽셀 크기가 아니라 **고정 논리 해상도**를 기준으로 폰트와 비율을 유지한다.
 
 ### 체크 포인트
 
-1. 큰 화면에서 콘텐츠가 프레임 내부에서도 다시 왼쪽 정렬되지 않는지 확인한다.
+1. 큰 화면에서도 콘텐츠가 프레임 내부에서 다시 왼쪽 정렬되지 않는지 확인한다.
 2. 배경이 프레임과 함께 줄어들지 않고 SafeArea 전체를 채우는지 확인한다.
 3. `MediaQuery`를 덮어쓸 때 `size`만 바꾸고 나머지 접근성 정보는 유지한다.
-4. 키보드, 분할 화면, 웹 브라우저 리사이즈 시에도 같은 비율이 유지되는지 확인한다.
+4. 키보드, 분할 화면, 웹 브라우저 리사이즈 시에도 `13:25` 비율과 내부 밀도가 유지되는지 확인한다.
 
 ### Seed / Options
 

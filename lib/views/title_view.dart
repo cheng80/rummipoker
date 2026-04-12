@@ -112,10 +112,12 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
                             label: context.tr('entryRandomSeed'),
                             color: const Color(0xFF3CAEE0),
                             fontSize: 26,
-                            onPressed: () {
+                            onPressed: () async {
                               SoundManager.unlockForWeb();
                               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                               final s = RummiPokerGridSession.rollNewRunSeed();
+                              await SoundManager.stopBgm();
+                              if (!context.mounted) return;
                               context.go('${RoutePaths.game}?seed=$s');
                             },
                           ),
@@ -210,7 +212,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     BuildContext titleContext,
     BuildContext dialogContext,
     TextEditingController controller,
-  ) {
+  ) async {
     final v = int.tryParse(controller.text.trim());
     if (v == null) {
       ScaffoldMessenger.of(
@@ -221,6 +223,8 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     Navigator.of(dialogContext).pop();
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    await SoundManager.stopBgm();
+    if (!titleContext.mounted) return;
     titleContext.go('${RoutePaths.game}?seed=$v');
   }
 }
