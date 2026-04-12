@@ -863,47 +863,30 @@ class _GameLayout extends StatelessWidget {
                           'JESTER',
                           style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 10,
+                            fontSize: 14,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 1.0,
+                            letterSpacing: 0.85,
+                            height: 1.05,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Text(
                           '${runProgress.ownedJesters.length}/${RummiRunProgress.maxJesterSlots}',
-                          style: _hudSubStyle,
+                          style: _hudSubStyle.copyWith(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            height: 1.05,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: onShopTestTap,
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF4A81D),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'SHOP',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  _DebugHandSizeSegment(
-                    value: session.maxHandSize,
-                    onChanged: onDebugHandSizeChanged,
+                  _DebugShopHandCluster(
+                    onShopTap: onShopTestTap,
+                    handSize: session.maxHandSize,
+                    onHandSizeChanged: onDebugHandSizeChanged,
                   ),
                 ],
               ),
@@ -1223,6 +1206,84 @@ class _BottomInfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// SHOP(테스트) + 손패 상한 디버그를 한 영역으로 묶음.
+class _DebugShopHandCluster extends StatelessWidget {
+  const _DebugShopHandCluster({
+    required this.onShopTap,
+    required this.handSize,
+    required this.onHandSizeChanged,
+  });
+
+  final VoidCallback onShopTap;
+  final int handSize;
+  final ValueChanged<int> onHandSizeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 5, 8, 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: IntrinsicWidth(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'DEBUG',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.42),
+                fontSize: 7.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.9,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+              GestureDetector(
+                onTap: onShopTap,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4A81D),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'SHOP',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _DebugHandSizeSegment(
+                value: handSize,
+                onChanged: onHandSizeChanged,
+              ),
+            ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
