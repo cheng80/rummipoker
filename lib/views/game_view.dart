@@ -1768,47 +1768,56 @@ class _BoardCell extends StatelessWidget {
         ? const Color(0xFFF4C45A)
         : Colors.white.withValues(alpha: 0.1);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF2A3B34)
-                : settlementActive
-                ? const Color(0xFF285A49)
-                : const Color(0xFF204E3C).withValues(alpha: 0.88),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: borderColor,
-              width: selected || settlementActive ? 2 : 1,
-            ),
-            boxShadow: settlementActive
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF86F4C3).withValues(alpha: 0.18),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-          child: tile == null
-              ? null
-              : Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: _RummiTileCard(
-                    tile: tile!,
-                    selected: selected,
-                    accent: false,
-                    aspectRatio: _kTileAspectRatio,
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = min(constraints.maxWidth, constraints.maxHeight);
+        final cornerRadius = rummikubTileCornerRadiusForSide(side);
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(cornerRadius),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              decoration: BoxDecoration(
+                color: selected
+                    ? const Color(0xFF2A3B34)
+                    : settlementActive
+                    ? const Color(0xFF285A49)
+                    : const Color(0xFF204E3C).withValues(alpha: 0.88),
+                borderRadius: BorderRadius.circular(cornerRadius),
+                border: Border.all(
+                  color: borderColor,
+                  width: selected || settlementActive ? 2 : 1,
                 ),
-        ),
-      ),
+                boxShadow: settlementActive
+                    ? [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF86F4C3,
+                          ).withValues(alpha: 0.18),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: tile == null
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: _RummiTileCard(
+                        tile: tile!,
+                        selected: selected,
+                        accent: false,
+                        aspectRatio: _kTileAspectRatio,
+                      ),
+                    ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

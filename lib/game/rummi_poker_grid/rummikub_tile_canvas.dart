@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../logic/rummi_poker_grid/models/tile.dart';
 
+const double kRummikubTileCornerRadiusFactor = 0.11;
+
+double rummikubTileCornerRadiusForSide(double side) {
+  return side * kRummikubTileCornerRadiusFactor;
+}
+
 /// 루미큐브 실물 타일 느낌: 크림 면, 상단 컬러 띠, 숫자는 슈트 색.
 void paintRummikubTile(
   Canvas canvas,
@@ -10,7 +16,7 @@ void paintRummikubTile(
   bool selected = false,
   double shadowElevation = 2.5,
 }) {
-  final r = rect.shortestSide * 0.11;
+  final r = rummikubTileCornerRadiusForSide(rect.shortestSide);
   final rr = RRect.fromRectAndRadius(rect, Radius.circular(r));
 
   if (shadowElevation > 0) {
