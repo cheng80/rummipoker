@@ -151,7 +151,7 @@ class RummiPokerGridGame extends FlameGame {
         _msg('덱이 비었습니다.');
       } else {
         _msg(
-          '손패는 최대 ${RummiPokerGridSession.kMaxHandSize}장입니다. 보드에 놓은 뒤 드로우하세요.',
+          '손패는 최대 ${session.maxHandSize}장입니다. 보드에 놓은 뒤 드로우하세요.',
         );
       }
       return;
@@ -332,8 +332,8 @@ class _PlayfieldLayout {
   }
 }
 
-/// 손패는 항상 [kMaxHandSize]칸 고정 슬롯(1·2·3) — 장수가 늘어나도 위치가 밀리지 않음.
-int get _kHandSlotCount => RummiPokerGridSession.kMaxHandSize;
+/// 손패는 항상 [kMaxDebugMaxHandSize]칸 고정 슬롯(1·2·3) — 장수가 늘어나도 위치가 밀리지 않음.
+int get _kHandSlotCount => RummiPokerGridSession.kMaxDebugMaxHandSize;
 
 /// 손패 **왼쪽** 드로우 버튼 전용 폭 + 손패와의 간격(겹침 없음).
 const double _kDrawBandW = 58.0;
@@ -676,7 +676,7 @@ class _HudPanel extends PositionComponent {
     );
     add(
       TextComponent(
-        text: '손패 ${s.hand.length}/${RummiPokerGridSession.kMaxHandSize}',
+        text: '손패 ${s.hand.length}/${s.maxHandSize}',
         position: Vector2(width - 96, 50),
         textRenderer: TextPaint(
           style: const TextStyle(
@@ -1197,18 +1197,34 @@ class _HandArea extends PositionComponent {
     final totalW = (slotN - 1) * step + tileW;
     final startLeft = ((width - totalW).clamp(0.0, double.infinity)) / 2;
 
+    final sel = game.selectedHandTile;
+    // 자식 추가 순서 + priority: 선택 패가 겹침에서 맨 앞에 오도록 마지막에 add.
+    final paintOrder = <({int index, Tile tile})>[];
     for (var i = 0; i < hand.length; i++) {
-      if (fi != null && i == fi) {
-        continue;
-      }
+      if (fi != null && i == fi) continue;
       final t = hand[i];
-      final sel = game.selectedHandTile;
+      if (sel == null || t != sel) {
+        paintOrder.add((index: i, tile: t));
+      }
+    }
+    if (sel != null) {
+      for (var i = 0; i < hand.length; i++) {
+        if (fi != null && i == fi) continue;
+        if (hand[i] == sel) {
+          paintOrder.add((index: i, tile: sel));
+          break;
+        }
+      }
+    }
+
+    for (final entry in paintOrder) {
+      final i = entry.index;
+      final t = entry.tile;
       final isSel = sel != null && sel == t;
       final left = startLeft + i * step;
       final cx = left + tileW / 2;
       final cy = height * 0.58;
       final rot = _handSlotRotationForIndex(i);
-      // 선택 패를 나머지보다 위에 그림(Flame priority).
       final z = isSel ? 60 : 48;
 
       add(

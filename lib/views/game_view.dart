@@ -88,6 +88,15 @@ class _GameViewState extends State<GameView> {
     setState(() {});
   }
 
+  void _setDebugMaxHandSize(int value) {
+    setState(() {
+      _session.setDebugMaxHandSize(value);
+      if (_selectedHandTile != null && !_session.hand.contains(_selectedHandTile)) {
+        _selectedHandTile = null;
+      }
+    });
+  }
+
   void _showSnack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -252,7 +261,7 @@ class _GameViewState extends State<GameView> {
       if (_session.deck.isEmpty) {
         _showSnack('덱이 비었습니다.');
       } else {
-        _showSnack('손패는 최대 ${RummiPokerGridSession.kMaxHandSize}장입니다.');
+        _showSnack('손패는 최대 ${_session.maxHandSize}장입니다.');
       }
       return;
     }
@@ -652,6 +661,7 @@ class _GameViewState extends State<GameView> {
                   selectedBoardCol: _selectedBoardCol,
                   onOptionsTap: () => _openGameOptions(context),
                   onShopTestTap: _openShopForTest,
+                  onDebugHandSizeChanged: _setDebugMaxHandSize,
                   onJesterTap: _openJesterOverlay,
                   onHandTileTap: _toggleHandTile,
                   onBoardCellTap: _onBoardCellTap,
@@ -786,6 +796,7 @@ class _GameLayout extends StatelessWidget {
     required this.selectedBoardCol,
     required this.onOptionsTap,
     required this.onShopTestTap,
+    required this.onDebugHandSizeChanged,
     required this.onJesterTap,
     required this.onHandTileTap,
     required this.onBoardCellTap,
@@ -807,6 +818,7 @@ class _GameLayout extends StatelessWidget {
   final int? selectedBoardCol;
   final VoidCallback onOptionsTap;
   final VoidCallback onShopTestTap;
+  final ValueChanged<int> onDebugHandSizeChanged;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
   final void Function(int row, int col) onBoardCellTap;
@@ -844,15 +856,26 @@ class _GameLayout extends StatelessWidget {
               padding: const EdgeInsets.only(left: 2),
               child: Row(
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'JESTER',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                      ),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Text(
+                          'JESTER',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${runProgress.ownedJesters.length}/${RummiRunProgress.maxJesterSlots}',
+                          style: _hudSubStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                   GestureDetector(
@@ -876,6 +899,11 @@ class _GameLayout extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 6),
+                  _DebugHandSizeSegment(
+                    value: session.maxHandSize,
+                    onChanged: onDebugHandSizeChanged,
                   ),
                 ],
               ),
@@ -1117,13 +1145,6 @@ class _TopHud extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '제스터 ${runProgress.ownedJesters.length}/${RummiRunProgress.maxJesterSlots}',
-                    style: _hudSubStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
             ),
@@ -1190,7 +1211,7 @@ class _BottomInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '손패 ${session.hand.length}/${RummiPokerGridSession.kMaxHandSize} · 버림 ${session.blind.handDiscardsRemaining}/${session.blind.handDiscardsMax}',
+            '손패 ${session.hand.length}/${session.maxHandSize} · 버림 ${session.blind.handDiscardsRemaining}/${session.blind.handDiscardsMax}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
@@ -1202,6 +1223,73 @@ class _BottomInfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DebugHandSizeSegment extends StatelessWidget {
+  const _DebugHandSizeSegment({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 4, right: 6),
+            child: Text(
+              'Hand',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          for (final option in const [1, 2, 3])
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: GestureDetector(
+                onTap: () => onChanged(option),
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: value == option
+                        ? const Color(0xFF4AA78D)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$option',
+                    style: TextStyle(
+                      color: value == option ? Colors.white : Colors.white70,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -1974,10 +2062,17 @@ class _HandZoneState extends State<_HandZone>
                         animation: _controller,
                         builder: (context, _) {
                           final t = _animating ? _controller.value : 1.0;
+                          // Stack은 뒤에 온 자식이 위에 그려짐 — 선택 패를 마지막에 두어 겹침에서 앞으로.
+                          final sel = widget.selectedHandTile;
+                          final handPaintOrder = <Tile>[
+                            for (final tile in displayedHand)
+                              if (sel == null || tile != sel) tile,
+                            if (sel != null && displayedHand.contains(sel)) sel,
+                          ];
                           return Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              for (final tile in displayedHand)
+                              for (final tile in handPaintOrder)
                                 _buildSettledTile(
                                   tile,
                                   fromLayouts: fromLayouts,

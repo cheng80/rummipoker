@@ -52,7 +52,7 @@ void main() {
     for (var i = 0; i < 10; i++) {
       session.drawToHand();
     }
-    expect(session.hand.length, RummiPokerGridSession.kMaxHandSize);
+    expect(session.hand.length, session.maxHandSize);
     expect(session.conservationTotal, 52);
 
     expect(session.tryPlaceFromHand(session.hand.first, 0, 0), true);

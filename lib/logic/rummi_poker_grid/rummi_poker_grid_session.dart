@@ -83,10 +83,15 @@ class ConfirmedLineBreakdown {
 
 /// 덱·손패·보드·제거 더미를 묶은 퍼사드 (마이그레이션 플랜 단계 1).
 class RummiPokerGridSession {
+  static const int kDefaultMaxHandSize = 1;
+  static const int kMinDebugMaxHandSize = 1;
+  static const int kMaxDebugMaxHandSize = 3;
+
   RummiPokerGridSession._({
     required this.runSeed,
     required this.runRandom,
     required this.deckCopiesPerTile,
+    required this.maxHandSize,
     required this.blind,
     required this.deck,
     required this.board,
@@ -98,6 +103,7 @@ class RummiPokerGridSession {
   /// 저장·공유용. 실제 난수 스트림은 [runRandom] 한 개로 이어진다.
   final int runSeed;
   final int deckCopiesPerTile;
+  int maxHandSize;
 
   /// [runSeed]로 시드된 단일 RNG — 덱 셔플 이후에도 **같은 스트림**으로 이어짐(턴 재현).
   final Random runRandom;
@@ -116,6 +122,7 @@ class RummiPokerGridSession {
       runSeed: s,
       runRandom: rng,
       deckCopiesPerTile: deckCopiesPerTile,
+      maxHandSize: kDefaultMaxHandSize,
       blind:
           blind ??
           RummiBlindState(
@@ -153,11 +160,8 @@ class RummiPokerGridSession {
 
   int get totalDeckSize => totalDeckSizeForCopies(deckCopiesPerTile);
 
-  /// 손패 최대 장수. 임시 테스트용으로 1장 허용.
-  static const int kMaxHandSize = 1;
-
   /// 드로우 버튼 활성 조건: 덱 잔량 + 손패 여유.
-  bool get canDrawFromDeck => hand.length < kMaxHandSize && !deck.isEmpty;
+  bool get canDrawFromDeck => hand.length < maxHandSize && !deck.isEmpty;
 
   /// 보드 위 타일 수.
   static int countTilesOnBoard(RummiBoard b) {
@@ -177,10 +181,10 @@ class RummiPokerGridSession {
       eliminated.length +
       countTilesOnBoard(board);
 
-  /// 드로우 더미에서 손으로 1장. 손패가 [kMaxHandSize]장이면 추가하지 않고 `null`.
+  /// 드로우 더미에서 손으로 1장. 손패가 [maxHandSize]장이면 추가하지 않고 `null`.
   /// 덱이 비면 `null`.
   Tile? drawToHand() {
-    if (hand.length >= kMaxHandSize) return null;
+    if (hand.length >= maxHandSize) return null;
     final t = deck.draw();
     if (t != null) {
       hand.add(t);
@@ -214,7 +218,7 @@ class RummiPokerGridSession {
     board.setCell(row, col, null);
     eliminated.add(tile);
     Tile? drew;
-    if (hand.length < kMaxHandSize) {
+    if (hand.length < maxHandSize) {
       drew = deck.draw();
       if (drew != null) {
         hand.add(drew);
@@ -241,6 +245,10 @@ class RummiPokerGridSession {
       hand.add(drew);
     }
     return (drew: drew, fail: null);
+  }
+
+  void setDebugMaxHandSize(int value) {
+    maxHandSize = value.clamp(kMinDebugMaxHandSize, kMaxDebugMaxHandSize);
   }
 
   /// 현재 보드에서 5칸 완성된 **족보(점수) 줄만** 일괄 확정한다.
