@@ -258,6 +258,147 @@ UI 임시 상태는 저장하지 않는다.
 
 ## 10. autosave 정책
 
+autosave는 아래 시점에 수행한다.
+
+- 드로우 후
+- 보드 배치 후
+- 보드 버림 후
+- 손패 버림 후
+- 줄 확정 후
+- 상점 구매/판매/리롤 후
+- 스테이지 전환 직전과 직후
+- 앱 lifecycle이 `paused` / `inactive` 로 내려갈 때
+
+원칙:
+
+- 저장은 항상 **현재 시점 스냅샷 + 현재 스테이지 시작 스냅샷**을 같이 갱신한다.
+- `stageStartSession` / `stageStartRunProgress` 는 스테이지 시작 직후 기준으로만 바뀐다.
+- 따라서 전투 중간 저장이 여러 번 일어나도, 옵션의 `재시작` 기준점은 유지된다.
+
+---
+
+## 11. 웹 검증 흐름
+
+웹에서는 `flutter run -d chrome` 개발 세션에 Playwright가 직접 붙을 때, Flutter가 스플래시에서 멈추는 경우가 있었다.  
+현재 프로젝트의 웹 저장/이어하기 검증은 **정적 빌드 결과물(`build/web`)을 로컬 서버에 올린 뒤 Playwright로 검증**하는 절차를 기준으로 삼는다.
+
+### 11.1 검증 목적
+
+- 웹에서도 `active_run_payload_v1` 가 정상 저장되는지 확인
+- 게임에서 `옵션 -> 나가기` 이후 타이틀이 **새로고침 없이 즉시** 갱신되는지 확인
+- 타이틀에 `이어하기` 버튼이 즉시 노출되는지 확인
+
+### 11.2 사전 조건
+
+- `flutter build web` 이 성공해야 한다
+- Playwright가 설치되어 있어야 한다
+- 검증 대상은 `build/web` 정적 산출물이다
+
+### 11.3 로컬 검증 절차
+
+1. 웹 빌드
+
+```bash
+flutter build web
+```
+
+2. 정적 서버 실행
+
+```bash
+python3 -m http.server 8787 --directory build/web
+```
+
+3. Playwright가 없다면 별도 임시 디렉터리에서 설치
+
+```bash
+mkdir -p /tmp/rummipoker_pw
+cd /tmp/rummipoker_pw
+npm init -y
+npm install playwright
+npx playwright install chromium
+```
+
+4. 검증 스크립트 실행
+
+핵심 흐름은 아래 순서다.
+
+- `localStorage.clear()`
+- 타이틀 진입
+- Flutter semantics 활성화
+- `랜덤 시작`
+- 인게임 옵션 열기
+- `나가기`
+- 타이틀 복귀 후 `이어하기` 노출 확인
+
+실제 검증에 사용한 예시는 아래와 같다.
+
+```js
+const { chromium } = require('playwright');
+
+(async() => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({
+    viewport: { width: 430, height: 932 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+
+  await page.goto('http://127.0.0.1:8787/', {
+    waitUntil: 'networkidle',
+    timeout: 120000,
+  });
+  await page.waitForTimeout(6000);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle', timeout: 120000 });
+  await page.waitForTimeout(6000);
+
+  await page.locator('flt-semantics-placeholder').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(1000);
+
+  await page.getByRole('button', { name: '랜덤 시작' }).click();
+  await page.waitForTimeout(5000);
+
+  await page.locator('flt-semantics[role="button"]').first().click();
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: '나가기' }).click();
+  await page.waitForTimeout(3000);
+
+  const bodyHtml = await page.locator('body').innerHTML();
+  console.log(bodyHtml.includes('이어하기') ? 'HAS_CONTINUE' : 'NO_CONTINUE');
+  console.log(
+    'storage_len=',
+    (await page.evaluate(() => localStorage.getItem('GetStorage') || '')).length,
+  );
+
+  await page.screenshot({ path: '/tmp/rummipoker_pw/verify_continue_title.png' });
+  await browser.close();
+})();
+```
+
+### 11.4 판정 기준
+
+검증 성공 기준은 아래다.
+
+- 게임 진입 후 `GetStorage` 길이가 증가한다
+- 옵션 메뉴에 `나가기` 가 노출된다
+- 타이틀 복귀 후 본문 HTML 또는 semantics 트리에 `이어하기` 가 존재한다
+- 최종 스크린샷에서 `이어하기` 버튼이 보인다
+
+### 11.5 현재 확인 결과
+
+2026-04-13 기준, 정적 빌드 + Playwright 경로에서 아래를 확인했다.
+
+- `랜덤 시작 -> 옵션 나가기 -> 타이틀 즉시 이어하기 표시` 성공
+- 웹 `localStorage` 에 active run payload 유지 확인
+- 검증 스크린샷: `/tmp/rummipoker_pw/verify_continue_title.png`
+
+주의:
+
+- 개발용 `flutter run -d chrome` 세션은 Playwright 재현성이 낮을 수 있다.
+- 웹 회귀 검증은 우선 **정적 빌드 기준**으로 반복하는 것이 안전하다.
+
 자동 저장은 **상태 변경 직후 저장**을 기본으로 한다.
 
 저장 트리거:

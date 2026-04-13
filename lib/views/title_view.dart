@@ -31,6 +31,10 @@ class _TitleViewState extends ConsumerState<TitleView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(titleNotifierProvider.notifier).refreshAvailability();
+    });
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) InAppReviewService.maybeRequestReviewOnTitleIfEligible();
     });

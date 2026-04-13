@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -255,9 +256,7 @@ class ActiveRunSaveService {
     if (payload.isEmpty || signature.isEmpty) {
       return ActiveRunAvailability.none;
     }
-    final deviceKey = await _secureStorage.read(
-      key: StorageKeys.saveDeviceKeyV1,
-    );
+    final deviceKey = await _readDeviceKey();
     if (deviceKey == null || deviceKey.isEmpty) {
       return ActiveRunAvailability.invalid;
     }
@@ -358,14 +357,33 @@ class ActiveRunSaveService {
   }
 
   static Future<String> _ensureDeviceKey() async {
-    final existing = await _secureStorage.read(key: StorageKeys.saveDeviceKeyV1);
+    final existing = await _readDeviceKey();
     if (existing != null && existing.isNotEmpty) {
       return existing;
     }
     final bytes = List<int>.generate(32, (_) => _secureRandom().nextInt(256));
     final key = base64UrlEncode(bytes);
-    await _secureStorage.write(key: StorageKeys.saveDeviceKeyV1, value: key);
+    await _writeDeviceKey(key);
     return key;
+  }
+
+  static Future<String?> _readDeviceKey() async {
+    if (kIsWeb) {
+      final key = StorageHelper.readString(
+        StorageKeys.saveDeviceKeyV1,
+        defaultValue: '',
+      ).trim();
+      return key.isEmpty ? null : key;
+    }
+    return _secureStorage.read(key: StorageKeys.saveDeviceKeyV1);
+  }
+
+  static Future<void> _writeDeviceKey(String key) async {
+    if (kIsWeb) {
+      await StorageHelper.write(StorageKeys.saveDeviceKeyV1, key);
+      return;
+    }
+    await _secureStorage.write(key: StorageKeys.saveDeviceKeyV1, value: key);
   }
 
   static Random _secureRandom() {

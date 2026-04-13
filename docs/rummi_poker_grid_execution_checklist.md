@@ -107,6 +107,8 @@
 - [x] autosave 트리거 연결: 드로우/배치/버림/확정/상점/스테이지 전환/lifecycle
 - [x] 타이틀 `이어하기` 진입 및 손상 세이브 처리 UX
 - [x] 푸시 대비 키 분리 정책 유지: `saveDeviceKey` / `installationId` / `pushToken`
+- [x] 웹 저장/이어하기 회귀 검증 절차 문서화: `flutter build web` + 정적 서버 + Playwright
+- [x] 웹에서 `랜덤 시작 -> 옵션 나가기 -> 타이틀 즉시 이어하기 표시` 검증
 
 ---
 
@@ -132,6 +134,7 @@
 - 메타 진행: 스테이지 클리어 후 정산/상점/Jester 매매 흐름이 현재 Flutter 쪽에 연결되어 있다.
 - 스테이지 전환: 다음 스테이지 진입 시 **현재 덱 전체 리셋 + 시드 파생 셔플**로 재현 가능하게 맞췄다.
 - 이어하기 저장: 1차 구현 완료. `docs/save_resume_architecture.md` 기준으로 하이브리드(`GetStorage` payload + secure storage key + HMAC) 저장, 타이틀 `이어하기`, 손상 세이브 삭제, 기본 autosave가 연결되어 있다.
+- 웹 검증: 개발용 `flutter run -d chrome` 세션 대신, 현재는 `build/web` 정적 서빙 + Playwright 경로를 표준 회귀 검증 절차로 본다.
 - Riverpod 분리: `GameView`는 `GameSessionNotifier`, `TitleView`는 `TitleNotifier` 기준으로 주요 UI 상태를 읽는다.
 - 알림 정책: 현재는 **상단 오버레이 알림을 기본값**으로 사용한다. 하단 `SnackBar`는 CTA가 필요하거나, 폼/키보드와 맥락상 더 적합한 경우만 예외적으로 검토한다.
 - 모듈화 진행: 상점 / 캐시아웃 / 손패 / Jester / 공용 HUD 위젯은 별도 파일로 분리되었고, 다음 배치는 `GameView` 잔여 orchestration 정리다.
