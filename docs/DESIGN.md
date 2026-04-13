@@ -290,10 +290,11 @@ Scaffold
 
 ### 현재 적용 원칙
 
-- `GameView`, `TitleView`, `SettingView`, 상점/옵션 계열은 같은 `PhoneFrameScaffold` 규칙을 공유한다.
+- `GameView`, `TitleView`, `SettingView`, 상점/옵션 계열은 **모두** 같은 `PhoneFrameScaffold`를 사용한다.
 - 타이틀 화면은 중앙 정렬만 유지하고, 별도 외곽선/그림자 패널 없이 배경 위에 내용만 올린다.
 - 설정/상점 화면은 일반 `Scaffold` 관성 대신, 게임 화면과 동일한 안전 영역·폭·정렬 기준을 사용한다.
 - 내부 콘텐츠는 화면 실제 픽셀 크기가 아니라 **고정 논리 해상도**를 기준으로 폰트와 비율을 유지한다.
+- 어떤 뷰도 `StarryBackground`를 직접 사용하지 않는다. `PhoneFrameScaffold`가 내부에서 배경을 관리한다.
 
 ### 체크 포인트
 
@@ -301,6 +302,15 @@ Scaffold
 2. 배경이 프레임과 함께 줄어들지 않고 SafeArea 전체를 채우는지 확인한다.
 3. `MediaQuery`를 덮어쓸 때 `size`만 바꾸고 나머지 접근성 정보는 유지한다.
 4. 키보드, 분할 화면, 웹 브라우저 리사이즈 시에도 `13:25` 비율과 내부 밀도가 유지되는지 확인한다.
+
+### 배경 성능 최적화
+
+`StarryBackground`는 `PhoneFrameScaffold` 안에서 항상 렌더링되지만, 성능 비용은 무시할 수 있다.
+
+- 그라데이션과 별을 **3 그룹**으로 나눠 각각 `RepaintBoundary`로 래스터 캐싱한다.
+- 깜빡임은 `FadeTransition`(GPU 컴포지터 alpha)으로만 처리하므로, `paint()`가 최초 1회 이후 다시 호출되지 않는다.
+- 별 좌표는 **정규화(0~1)**로 저장하므로, 리사이즈 시에도 별 데이터를 재생성하지 않는다.
+- `AnimationController`는 전체 배경에서 **단 1개**만 사용한다.
 
 ### Seed / Options
 

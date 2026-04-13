@@ -710,3 +710,109 @@ class _GameRummiTilePainter extends CustomPainter {
         oldDelegate.accent != accent;
   }
 }
+
+/// 게임·상점 화면 공통 테이블 배경. 정적이므로 repaint 없음.
+class GameTableBackdrop extends StatelessWidget {
+  const GameTableBackdrop({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: const _GameTableBackdropPainter());
+  }
+}
+
+class _GameTableBackdropPainter extends CustomPainter {
+  const _GameTableBackdropPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final basePaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF1B5644), Color(0xFF12392E), Color(0xFF0A211B)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, basePaint);
+
+    final ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..color = Colors.white.withValues(alpha: 0.035);
+    final shadowPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = Colors.black.withValues(alpha: 0.08);
+
+    final seeds = [
+      Offset(size.width * 0.18, size.height * 0.16),
+      Offset(size.width * 0.82, size.height * 0.2),
+      Offset(size.width * 0.28, size.height * 0.48),
+      Offset(size.width * 0.72, size.height * 0.62),
+      Offset(size.width * 0.22, size.height * 0.82),
+    ];
+
+    for (final center in seeds) {
+      final rect = Rect.fromCenter(
+        center: center,
+        width: size.width * 0.22,
+        height: size.width * 0.22,
+      );
+      canvas.drawOval(rect.shift(const Offset(16, 12)), shadowPaint);
+      canvas.drawOval(rect, ringPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// 게임·상점 다이얼로그 공통 카드 컨테이너.
+class GameModalCard extends StatelessWidget {
+  const GameModalCard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2E24),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// 게임·상점 다이얼로그를 표시한다. barrierDismissible 기본 true.
+Future<T?> showGameFramedDialog<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool barrierDismissible = true,
+}) {
+  return showDialog<T>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    barrierColor: Colors.black54,
+    builder: (dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: builder(dialogContext),
+        ),
+      );
+    },
+  );
+}

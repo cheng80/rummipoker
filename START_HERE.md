@@ -94,6 +94,10 @@
   - 웹에서는 `flutter run -d chrome` 직접 검증 대신, 현재 **`flutter build web` + 정적 서버 + Playwright** 절차로 저장/이어하기 회귀를 확인한다.
   - 2026-04-13 기준 웹에서 **`랜덤 시작 -> 옵션 나가기 -> 타이틀 즉시 이어하기 표시`** 까지 검증했다.
   - 보드 5x5 강조는 **셀 단위 강조 방식**을 유지하되, 빈 슬롯 / 배치 카드 / 기여 표시 / 정산 글로우가 같은 곡률로 읽히도록 **카드와 동일한 라운드 계산 기준**으로 통일했다.
+  - `StarryBackground`를 **그룹 Opacity 방식**으로 최적화했다. 별을 3 그룹으로 나눠 `RepaintBoundary`로 래스터 캐싱하고, 깜빡임은 `FadeTransition`(GPU alpha)으로만 처리한다. `paint()` 재호출 0회/프레임, 별 좌표는 정규화(0~1)로 리사이즈 시 재생성 불필요.
+  - `TitleView`가 자체 `Scaffold + StarryBackground + PhoneFrame`을 조합하던 것을 **`PhoneFrameScaffold`**로 통일했다. 이제 모든 뷰(`GameView`, `TitleView`, `SettingView`, 상점)가 같은 `PhoneFrameScaffold`를 사용한다.
+  - 중복 UI 클래스를 공용 위젯으로 통합했다: `GameTableBackdrop`, `GameModalCard`, `showGameFramedDialog`.
+  - `GameView.initState`에서 BGM/카탈로그 로딩을 `addPostFrameCallback`으로 지연하여 타이틀→게임 전환 시 버벅임을 해결했다.
 
 ---
 
@@ -166,6 +170,7 @@
 - 저장 스키마 버전은 현재 **v2** 다. 이전 v1 세이브는 구버전으로 간주되어 복원이 거부될 수 있다.
 - 웹 저장/이어하기 회귀는 현재 `docs/save_resume_architecture.md` 의 정적 빌드 + Playwright 절차를 기준으로 검증한다.
 - 알림/다이얼로그는 `lib/utils/common_ui.dart` 기준으로 공용화했다.
+- `StarryBackground`는 그룹 Opacity 방식으로 최적화되어 있다. 그라데이션+별을 `RepaintBoundary`로 래스터 캐싱하고, 깜빡임은 `FadeTransition`(GPU alpha)만 사용한다.
 - Riverpod 1차 분리가 들어갔다.
   - `GameSessionNotifier`
   - `TitleNotifier`
@@ -196,7 +201,7 @@
   - 상점 오퍼 수 기본 `3`
   - 판매가 `floor(baseCost / 2)`, 최소 `1`
 - 상점/옵션/설정/타이틀은 현재 게임 화면과 동일한 **중앙 정렬 phone-frame 기준**으로 동작한다.
-- `PhoneFrameScaffold` 는 항상 **`390 x 750` 고정 논리 크기 + `13:25` 비율**을 사용한다.
+- `PhoneFrameScaffold` 는 항상 **`390 x 750` 고정 논리 크기 + `13:25` 비율**을 사용한다. 모든 뷰가 `PhoneFrameScaffold`를 사용하며, `StarryBackground`를 직접 참조하는 뷰는 없다.
 - 현재 남은 큰 묶음은 아래 두 가지다.
   - `rule_modifier`
   - `retrigger`

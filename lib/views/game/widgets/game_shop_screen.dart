@@ -9,6 +9,7 @@ import '../../../resources/jester_translation_scope.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
 import 'game_jester_widgets.dart';
+import 'game_shared_widgets.dart';
 
 class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
@@ -219,9 +220,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 
   Future<void> _reroll() async {
-    final confirmed = await _showShopDialog<bool>(
+    final confirmed = await showGameFramedDialog<bool>(
       context: context,
-      builder: (dialogContext) => _ShopModalCard(
+      builder: (dialogContext) => GameModalCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -363,9 +364,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 
   Future<void> _openOptions() async {
-    await _showShopDialog<void>(
+    await showGameFramedDialog<void>(
       context: context,
-      builder: (dialogContext) => _ShopModalCard(
+      builder: (dialogContext) => GameModalCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -531,7 +532,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
           borderRadius: BorderRadius.circular(28),
           child: Stack(
             children: [
-              const Positioned.fill(child: _ShopTableBackdrop()),
+              const Positioned.fill(child: GameTableBackdrop()),
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
                 child: Column(
@@ -1008,103 +1009,4 @@ class _GameShopOfferCard extends StatelessWidget {
   }
 }
 
-Future<T?> _showShopDialog<T>({
-  required BuildContext context,
-  required WidgetBuilder builder,
-  bool barrierDismissible = true,
-}) {
-  return showDialog<T>(
-    context: context,
-    barrierDismissible: barrierDismissible,
-    barrierColor: Colors.black54,
-    builder: (dialogContext) {
-      return Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: builder(dialogContext),
-        ),
-      );
-    },
-  );
-}
 
-class _ShopModalCard extends StatelessWidget {
-  const _ShopModalCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2E24),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _ShopTableBackdrop extends StatelessWidget {
-  const _ShopTableBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _ShopTableBackdropPainter());
-  }
-}
-
-class _ShopTableBackdropPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final basePaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF1B5644), Color(0xFF12392E), Color(0xFF0A211B)],
-      ).createShader(Offset.zero & size);
-    canvas.drawRect(Offset.zero & size, basePaint);
-
-    final ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10
-      ..color = Colors.white.withValues(alpha: 0.035);
-    final shadowPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = Colors.black.withValues(alpha: 0.08);
-
-    final seeds = [
-      Offset(size.width * 0.18, size.height * 0.16),
-      Offset(size.width * 0.82, size.height * 0.2),
-      Offset(size.width * 0.28, size.height * 0.48),
-      Offset(size.width * 0.72, size.height * 0.62),
-      Offset(size.width * 0.22, size.height * 0.82),
-    ];
-
-    for (final center in seeds) {
-      final rect = Rect.fromCenter(
-        center: center,
-        width: size.width * 0.22,
-        height: size.width * 0.22,
-      );
-      canvas.drawOval(rect.shift(const Offset(16, 12)), shadowPaint);
-      canvas.drawOval(rect, ringPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

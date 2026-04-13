@@ -79,6 +79,10 @@
 - [x] Jester 슬롯 카드 표현 단순화: 제목 + 분류 배지 + 활성 표시만 노출, 상세 패널에서 설명/현재 값 확인
 - [x] 숫자 타일 face 표시: `11/12/13` 하단 중앙 점으로 구분
 - [x] 뷰 모듈화 1차: `game_shared_widgets.dart`, `game_jester_widgets.dart`, `game_hand_zone.dart`, `game_cashout_widgets.dart`, `game_shop_screen.dart` 로 분리
+- [x] 중복 UI 클래스 공용화: `GameTableBackdrop`, `GameModalCard`, `showGameFramedDialog`를 `game_shared_widgets.dart`로 통합
+- [x] `StarryBackground` 성능 최적화: 그룹 Opacity 방식 (래스터 캐싱 + FadeTransition GPU alpha, paint() 재호출 0회/프레임)
+- [x] `TitleView` → `PhoneFrameScaffold` 통일: 모든 뷰가 동일한 `PhoneFrameScaffold` 패턴 사용
+- [x] `GameView` 전환 버벅임 해소: BGM/카탈로그 로딩을 `addPostFrameCallback`으로 지연
 - [ ] `GameView` 추가 경량화 2차
   - stage flow/cashout/shop coordinator 추출 검토
   - save/load/lifecycle handler 추출 검토
@@ -147,4 +151,5 @@
 - 검사 메모: 현재 `SHOP` 버튼은 테스트 편의를 위해 8장 검사 오퍼를 한 번에 띄우는 상태다.
 - Stitch: `Rummi Poker Grid - Flame UI Mockups` 프로젝트에서 1차/2차 플레이 화면 생성 완료. 2차안은 에메랄드 필드·보드 지배력·라인 배지 차등이 더 적합함. 다음은 색/간격 토큰 추출 후 Flutter 화면 미세조정에 반영.
 - UI 재배치: 모바일 `SafeArea` 중복 패딩 제거, 상단 오버레이 최소화, HUD 압축, Jester 슬롯 카드형 정리, 보드 최대화, 단일 손패 단순화, 하단 버튼 우선순위 재배치 적용.
+- 성능 최적화: `StarryBackground`를 그룹 Opacity 방식(래스터 캐싱 + FadeTransition)으로 전환, `GameView` 전환 시 BGM/카탈로그 로딩 지연, 중복 UI 클래스(`TableBackdrop`, `ModalCard`) 공용화. 모든 뷰가 `PhoneFrameScaffold`를 일관되게 사용하도록 통일.
 - 정합성 메모: 사용자 확정 규칙은 **죽은 줄을 버림(D)으로만 완화**하고, **줄 확정 시에는 족보 성립에 기여한 카드만 제거**하는 것이다. 세션/테스트는 이 방향으로 갱신되었고, 남은 작업은 문서/UI 표현을 이 기준으로 맞추는 쪽이다.

@@ -1,5 +1,3 @@
-import 'dart:ui' show lerpDouble;
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
-import '../logic/rummi_poker_grid/hand_rank.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
@@ -82,12 +79,16 @@ class _GameViewState extends ConsumerState<GameView>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    SoundManager.playBgm(AssetPaths.bgmMain);
     _gameArgs = GameSessionArgs(
       runSeed: widget.runSeed,
       restoredRun: widget.restoredRun,
     );
-    _loadJesterCatalog();
+    // BGM·카탈로그 로드를 첫 프레임 이후로 지연 — 전환 시 프레임 드롭 방지
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      SoundManager.playBgm(AssetPaths.bgmMain);
+      _loadJesterCatalog();
+    });
   }
 
   @override
@@ -216,10 +217,10 @@ class _GameViewState extends ConsumerState<GameView>
   void _showGameOver(List<RummiExpirySignal> signals) {
     if (!mounted) return;
     final text = signals.map(_expiryLabel).join('\n');
-    _showFramedDialog<void>(
+    showGameFramedDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => _ModalCard(
+      builder: (ctx) => GameModalCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -600,9 +601,9 @@ class _GameViewState extends ConsumerState<GameView>
   Future<void> _openGameOptions(BuildContext context) async {
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    await _showFramedDialog<void>(
+    await showGameFramedDialog<void>(
       context: context,
-      builder: (dialogContext) => _ModalCard(
+      builder: (dialogContext) => GameModalCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -739,7 +740,101 @@ class _GameViewState extends ConsumerState<GameView>
     );
   }
 
-  Widget _buildGameSurface() {
+  @override
+  Widget build(BuildContext context) {
+    final gameState = ref.watch(gameSessionNotifierProvider(_gameArgs));
+    if (!gameState.isReady) {
+      return const PhoneFrameScaffold(
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return PhoneFrameScaffold(
+      child: _GameSurface(
+        session: _session,
+        runProgress: _runProgress,
+        stageFlowPhase: _stageFlowPhase,
+        stageScoreAdded: _stageScoreAdded,
+        activeSettlementLine: _activeSettlementLine,
+        settlementSequenceTick: _settlementSequenceTick,
+        settlementBoardSnapshot: _settlementBoardSnapshot,
+        selectedHandTile: _selectedHandTile,
+        selectedBoardRow: _selectedBoardRow,
+        selectedBoardCol: _selectedBoardCol,
+        selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
+        onOptionsTap: () => _openGameOptions(context),
+        onShopTestTap: _openShopForTest,
+        onDebugHandSizeChanged: _setDebugMaxHandSize,
+        onJesterTap: _openJesterOverlay,
+        onHandTileTap: _toggleHandTile,
+        onBoardCellTap: _onBoardCellTap,
+        onDraw: _drawTile,
+        onBoardDiscard: _discardSelectedBoardTile,
+        onHandDiscard: _discardSelectedHandTile,
+        onConfirm: _confirmLines,
+        onClearSelection: _clearSelections,
+        onJesterSell: _sellOwnedJesterFromOverlay,
+        onJesterOverlayClose: _closeJesterOverlay,
+      ),
+    );
+  }
+}
+
+
+class _GameSurface extends StatelessWidget {
+  const _GameSurface({
+    required this.session,
+    required this.runProgress,
+    required this.stageFlowPhase,
+    required this.stageScoreAdded,
+    required this.activeSettlementLine,
+    required this.settlementSequenceTick,
+    required this.settlementBoardSnapshot,
+    required this.selectedHandTile,
+    required this.selectedBoardRow,
+    required this.selectedBoardCol,
+    required this.selectedJesterOverlayIndex,
+    required this.onOptionsTap,
+    required this.onShopTestTap,
+    required this.onDebugHandSizeChanged,
+    required this.onJesterTap,
+    required this.onHandTileTap,
+    required this.onBoardCellTap,
+    required this.onDraw,
+    required this.onBoardDiscard,
+    required this.onHandDiscard,
+    required this.onConfirm,
+    required this.onClearSelection,
+    required this.onJesterSell,
+    required this.onJesterOverlayClose,
+  });
+
+  final RummiPokerGridSession session;
+  final RummiRunProgress runProgress;
+  final GameStageFlowPhase stageFlowPhase;
+  final int stageScoreAdded;
+  final ConfirmedLineBreakdown? activeSettlementLine;
+  final int settlementSequenceTick;
+  final Map<String, Tile> settlementBoardSnapshot;
+  final Tile? selectedHandTile;
+  final int? selectedBoardRow;
+  final int? selectedBoardCol;
+  final int? selectedJesterOverlayIndex;
+  final VoidCallback onOptionsTap;
+  final VoidCallback onShopTestTap;
+  final ValueChanged<int> onDebugHandSizeChanged;
+  final ValueChanged<int> onJesterTap;
+  final ValueChanged<Tile> onHandTileTap;
+  final void Function(int row, int col) onBoardCellTap;
+  final VoidCallback onDraw;
+  final VoidCallback onBoardDiscard;
+  final VoidCallback onHandDiscard;
+  final VoidCallback onConfirm;
+  final VoidCallback onClearSelection;
+  final VoidCallback onJesterSell;
+  final VoidCallback onJesterOverlayClose;
+
+  @override
+  Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
@@ -764,53 +859,53 @@ class _GameViewState extends ConsumerState<GameView>
         borderRadius: BorderRadius.circular(28),
         child: Stack(
           children: [
-            const Positioned.fill(child: _TableBackdrop()),
+            const Positioned.fill(child: GameTableBackdrop()),
             Positioned.fill(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
                 child: _GameLayout(
-                  session: _session,
-                  runProgress: _runProgress,
+                  session: session,
+                  runProgress: runProgress,
                   activeSettlementEffects:
-                      _activeSettlementLine?.effects ?? const [],
-                  activeSettlementLine: _activeSettlementLine,
-                  settlementSequenceTick: _settlementSequenceTick,
-                  settlementBoardSnapshot: _settlementBoardSnapshot,
-                  selectedHandTile: _selectedHandTile,
-                  selectedBoardRow: _selectedBoardRow,
-                  selectedBoardCol: _selectedBoardCol,
-                  onOptionsTap: () => _openGameOptions(context),
-                  onShopTestTap: _openShopForTest,
-                  onDebugHandSizeChanged: _setDebugMaxHandSize,
-                  onJesterTap: _openJesterOverlay,
-                  onHandTileTap: _toggleHandTile,
-                  onBoardCellTap: _onBoardCellTap,
-                  onDraw: _drawTile,
-                  onBoardDiscard: _discardSelectedBoardTile,
-                  onHandDiscard: _discardSelectedHandTile,
-                  onConfirm: _confirmLines,
-                  onClearSelection: _clearSelections,
+                      activeSettlementLine?.effects ?? const [],
+                  activeSettlementLine: activeSettlementLine,
+                  settlementSequenceTick: settlementSequenceTick,
+                  settlementBoardSnapshot: settlementBoardSnapshot,
+                  selectedHandTile: selectedHandTile,
+                  selectedBoardRow: selectedBoardRow,
+                  selectedBoardCol: selectedBoardCol,
+                  onOptionsTap: onOptionsTap,
+                  onShopTestTap: onShopTestTap,
+                  onDebugHandSizeChanged: onDebugHandSizeChanged,
+                  onJesterTap: onJesterTap,
+                  onHandTileTap: onHandTileTap,
+                  onBoardCellTap: onBoardCellTap,
+                  onDraw: onDraw,
+                  onBoardDiscard: onBoardDiscard,
+                  onHandDiscard: onHandDiscard,
+                  onConfirm: onConfirm,
+                  onClearSelection: onClearSelection,
                 ),
               ),
             ),
-            if (_stageFlowPhase == GameStageFlowPhase.confirmSettlement)
+            if (stageFlowPhase == GameStageFlowPhase.confirmSettlement)
               Positioned.fill(
                 child: GameFloatingSettlementBurst(
-                  key: ValueKey('settlement-$_settlementSequenceTick'),
-                  line: _activeSettlementLine,
+                  key: ValueKey('settlement-$settlementSequenceTick'),
+                  line: activeSettlementLine,
                 ),
               ),
-            if (_stageFlowPhase == GameStageFlowPhase.cleared ||
-                _stageFlowPhase == GameStageFlowPhase.settlement)
+            if (stageFlowPhase == GameStageFlowPhase.cleared ||
+                stageFlowPhase == GameStageFlowPhase.settlement)
               Positioned.fill(
                 child: GameStageClearOverlay(
-                  phase: _stageFlowPhase,
-                  stageIndex: _runProgress.stageIndex,
-                  scoreAdded: _stageScoreAdded,
+                  phase: stageFlowPhase,
+                  stageIndex: runProgress.stageIndex,
+                  scoreAdded: stageScoreAdded,
                 ),
               ),
-            if (_selectedJesterOverlayIndex != null &&
-                _selectedJesterOverlayIndex! < _runProgress.ownedJesters.length)
+            if (selectedJesterOverlayIndex != null &&
+                selectedJesterOverlayIndex! < runProgress.ownedJesters.length)
               Positioned.fill(
                 child: Stack(
                   children: [
@@ -823,19 +918,19 @@ class _GameViewState extends ConsumerState<GameView>
                       right: 12,
                       bottom: 118,
                       child: GameJesterInfoOverlay(
-                        card: _runProgress
-                            .ownedJesters[_selectedJesterOverlayIndex!],
+                        card: runProgress
+                            .ownedJesters[selectedJesterOverlayIndex!],
                         runtimeValueText: jesterRuntimeValueText(
-                          _runProgress
-                              .ownedJesters[_selectedJesterOverlayIndex!],
-                          _runProgress.buildRuntimeSnapshot(),
-                          slotIndex: _selectedJesterOverlayIndex!,
+                          runProgress
+                              .ownedJesters[selectedJesterOverlayIndex!],
+                          runProgress.buildRuntimeSnapshot(),
+                          slotIndex: selectedJesterOverlayIndex!,
                         ),
-                        sellGold: _runProgress.sellPriceAt(
-                          _selectedJesterOverlayIndex!,
+                        sellGold: runProgress.sellPriceAt(
+                          selectedJesterOverlayIndex!,
                         ),
-                        onSell: _sellOwnedJesterFromOverlay,
-                        onClose: _closeJesterOverlay,
+                        onSell: onJesterSell,
+                        onClose: onJesterOverlayClose,
                       ),
                     ),
                   ],
@@ -843,67 +938,6 @@ class _GameViewState extends ConsumerState<GameView>
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final gameState = ref.watch(gameSessionNotifierProvider(_gameArgs));
-    if (!gameState.isReady) {
-      return const PhoneFrameScaffold(
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    return PhoneFrameScaffold(child: _buildGameSurface());
-  }
-}
-
-Future<T?> _showFramedDialog<T>({
-  required BuildContext context,
-  required WidgetBuilder builder,
-  bool barrierDismissible = true,
-}) {
-  return showDialog<T>(
-    context: context,
-    barrierDismissible: barrierDismissible,
-    barrierColor: Colors.black54,
-    builder: (dialogContext) {
-      return Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: builder(dialogContext),
-        ),
-      );
-    },
-  );
-}
-
-class _ModalCard extends StatelessWidget {
-  const _ModalCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2E24),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        child: child,
       ),
     );
   }
@@ -1089,422 +1123,6 @@ class _GameLayout extends StatelessWidget {
   }
 }
 
-class _HandZone extends StatefulWidget {
-  const _HandZone({
-    required this.session,
-    required this.hand,
-    required this.selectedHandTile,
-    required this.onHandTileTap,
-    required this.onDraw,
-    required this.tileWidth,
-  });
-
-  final RummiPokerGridSession session;
-  final List<Tile> hand;
-  final Tile? selectedHandTile;
-  final ValueChanged<Tile> onHandTileTap;
-  final VoidCallback onDraw;
-  final double tileWidth;
-
-  @override
-  State<_HandZone> createState() => _HandZoneState();
-}
-
-class _HandZoneState extends State<_HandZone>
-    with SingleTickerProviderStateMixin {
-  static const Duration _handAnimDuration = Duration(milliseconds: 260);
-
-  late final AnimationController _controller;
-  List<Tile> _settledHand = <Tile>[];
-  List<Tile> _fromHand = <Tile>[];
-  List<Tile> _toHand = <Tile>[];
-  Tile? _incomingTile;
-  bool _animating = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _settledHand = List<Tile>.from(widget.hand);
-    _controller = AnimationController(vsync: this, duration: _handAnimDuration)
-      ..addStatusListener((status) {
-        if (status != AnimationStatus.completed) return;
-        if (!mounted) return;
-        setState(() {
-          _settledHand = List<Tile>.from(_toHand);
-          _fromHand = List<Tile>.from(_toHand);
-          _incomingTile = null;
-          _animating = false;
-        });
-      });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant _HandZone oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (_sameTileKeys(oldWidget.hand, widget.hand)) {
-      return;
-    }
-
-    final oldKeys = oldWidget.hand.map(_handTileKey).toSet();
-    final newKeys = widget.hand.map(_handTileKey).toSet();
-    final addedKeys = newKeys.difference(oldKeys);
-    final removedKeys = oldKeys.difference(newKeys);
-    final isSimpleAppend =
-        widget.hand.length == oldWidget.hand.length + 1 &&
-        addedKeys.length == 1;
-    final isOneForOneReplacement =
-        widget.hand.length == oldWidget.hand.length &&
-        addedKeys.length == 1 &&
-        removedKeys.length == 1;
-
-    if (!isSimpleAppend && !isOneForOneReplacement) {
-      _controller.stop();
-      setState(() {
-        _settledHand = List<Tile>.from(widget.hand);
-        _fromHand = List<Tile>.from(widget.hand);
-        _toHand = List<Tile>.from(widget.hand);
-        _incomingTile = null;
-        _animating = false;
-      });
-      return;
-    }
-
-    final incoming = widget.hand.firstWhere(
-      (tile) => addedKeys.contains(_handTileKey(tile)),
-    );
-
-    _controller
-      ..stop()
-      ..value = 0;
-
-    setState(() {
-      _fromHand = isOneForOneReplacement
-          ? oldWidget.hand
-                .where((tile) => !removedKeys.contains(_handTileKey(tile)))
-                .toList(growable: false)
-          : List<Tile>.from(oldWidget.hand);
-      _toHand = List<Tile>.from(widget.hand);
-      _incomingTile = incoming;
-      _animating = true;
-    });
-    _controller.forward();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final displayedHand = _animating ? _fromHand : _settledHand;
-    return Column(
-      children: [
-        GameBottomInfoRow(session: widget.session),
-        const SizedBox(height: 4),
-        SizedBox(
-          height: 76,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 72,
-                child: GameActionButton(
-                  label: '드로우',
-                  background: const Color(0xFF267B67),
-                  onPressed: widget.onDraw,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final fromLayouts = _layoutByKey(
-                        _fromHand,
-                        size: constraints.biggest,
-                        tileWidth: widget.tileWidth,
-                      );
-                      final toLayouts = _layoutByKey(
-                        _toHand.isEmpty ? displayedHand : _toHand,
-                        size: constraints.biggest,
-                        tileWidth: widget.tileWidth,
-                      );
-                      return AnimatedBuilder(
-                        animation: _controller,
-                        builder: (context, _) {
-                          final t = _animating ? _controller.value : 1.0;
-                          // Stack은 뒤에 온 자식이 위에 그려짐 — 선택 패를 마지막에 두어 겹침에서 앞으로.
-                          final sel = widget.selectedHandTile;
-                          final handPaintOrder = <Tile>[
-                            for (final tile in displayedHand)
-                              if (sel == null || tile != sel) tile,
-                            if (sel != null && displayedHand.contains(sel)) sel,
-                          ];
-                          return Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              for (final tile in handPaintOrder)
-                                _buildSettledTile(
-                                  tile,
-                                  fromLayouts: fromLayouts,
-                                  toLayouts: toLayouts,
-                                  areaSize: constraints.biggest,
-                                  t: t,
-                                ),
-                              if (_incomingTile != null)
-                                _buildIncomingTile(
-                                  _incomingTile!,
-                                  toLayouts: toLayouts,
-                                  areaSize: constraints.biggest,
-                                  t: t,
-                                ),
-                              if (displayedHand.isEmpty &&
-                                  _incomingTile == null)
-                                Center(
-                                  child: Text(
-                                    '손패 비어 있음',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.38,
-                                      ),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettledTile(
-    Tile tile, {
-    required Map<String, _HandSlotLayout> fromLayouts,
-    required Map<String, _HandSlotLayout> toLayouts,
-    required Size areaSize,
-    required double t,
-  }) {
-    final key = _handTileKey(tile);
-    final from = fromLayouts[key] ?? toLayouts[key];
-    final to = toLayouts[key] ?? fromLayouts[key];
-    if (from == null || to == null) {
-      return const SizedBox.shrink();
-    }
-    final left = lerpDouble(from.left, to.left, t)!;
-    final top = lerpDouble(from.top, to.top, t)!;
-    final angle = lerpDouble(from.angle, to.angle, t)!;
-
-    return Positioned(
-      key: ValueKey('settled-$key'),
-      left: left,
-      top: top,
-      width: to.width,
-      height: to.height,
-      child: Transform.rotate(
-        angle: angle,
-        child: GestureDetector(
-          onTap: () => widget.onHandTileTap(tile),
-          child: GameRummiTileCard(
-            tile: tile,
-            selected: widget.selectedHandTile == tile,
-            accent: false,
-            aspectRatio: kGameTileAspectRatio,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIncomingTile(
-    Tile tile, {
-    required Map<String, _HandSlotLayout> toLayouts,
-    required Size areaSize,
-    required double t,
-  }) {
-    final to = toLayouts[_handTileKey(tile)];
-    if (to == null) {
-      return const SizedBox.shrink();
-    }
-    final startLeft = areaSize.width + 12;
-    final startTop = (areaSize.height - to.height) / 2;
-    final left = lerpDouble(startLeft, to.left, t)!;
-    final top = lerpDouble(startTop, to.top, t)!;
-    final angle = lerpDouble(0.18, to.angle, t)!;
-
-    return Positioned(
-      key: ValueKey('incoming-${_handTileKey(tile)}'),
-      left: left,
-      top: top,
-      width: to.width,
-      height: to.height,
-      child: Transform.rotate(
-        angle: angle,
-        child: GestureDetector(
-          onTap: () => widget.onHandTileTap(tile),
-          child: GameRummiTileCard(
-            tile: tile,
-            selected: widget.selectedHandTile == tile,
-            accent: false,
-            aspectRatio: kGameTileAspectRatio,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HandSlotLayout {
-  const _HandSlotLayout({
-    required this.left,
-    required this.top,
-    required this.width,
-    required this.height,
-    required this.angle,
-  });
-
-  final double left;
-  final double top;
-  final double width;
-  final double height;
-  final double angle;
-}
 
 
-List<_HandSlotLayout> _buildHandSlotLayouts(
-  Size size, {
-  required double tileWidth,
-  required int cardCount,
-}) {
-  final slotCount = cardCount.clamp(1, 3);
-  final cardWidth = tileWidth;
-  final cardHeight = cardWidth / kGameTileAspectRatio;
-  final step = cardWidth * 0.88;
-  final usedWidth = cardWidth + step * (slotCount - 1);
-  final startLeft = (size.width - usedWidth) / 2;
-  final centerY = (size.height - cardHeight) / 2;
-  final mid = (slotCount - 1) / 2;
 
-  return List<_HandSlotLayout>.generate(slotCount, (index) {
-    final delta = index - mid;
-    final angle = delta * 0.055;
-    final lift = delta.abs() * 3.0;
-    return _HandSlotLayout(
-      left: startLeft + step * index,
-      top: centerY + lift,
-      width: cardWidth,
-      height: cardHeight,
-      angle: angle,
-    );
-  });
-}
-
-String _handTileKey(Tile tile) => tile.toString();
-
-bool _sameTileKeys(List<Tile> a, List<Tile> b) {
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (_handTileKey(a[i]) != _handTileKey(b[i])) return false;
-  }
-  return true;
-}
-
-Map<String, _HandSlotLayout> _layoutByKey(
-  List<Tile> hand, {
-  required Size size,
-  required double tileWidth,
-}) {
-  final layouts = _buildHandSlotLayouts(
-    size,
-    tileWidth: tileWidth,
-    cardCount: hand.length,
-  );
-  final out = <String, _HandSlotLayout>{};
-  for (var i = 0; i < hand.length && i < layouts.length; i++) {
-    out[_handTileKey(hand[i])] = layouts[i];
-  }
-  return out;
-}
-
-
-class _TableBackdrop extends StatelessWidget {
-  const _TableBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _TableBackdropPainter());
-  }
-}
-
-class _TableBackdropPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final basePaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF1B5644), Color(0xFF12392E), Color(0xFF0A211B)],
-      ).createShader(Offset.zero & size);
-    canvas.drawRect(Offset.zero & size, basePaint);
-
-    final ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10
-      ..color = Colors.white.withValues(alpha: 0.035);
-    final shadowPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = Colors.black.withValues(alpha: 0.08);
-
-    final seeds = [
-      Offset(size.width * 0.18, size.height * 0.16),
-      Offset(size.width * 0.82, size.height * 0.2),
-      Offset(size.width * 0.28, size.height * 0.48),
-      Offset(size.width * 0.72, size.height * 0.62),
-      Offset(size.width * 0.22, size.height * 0.82),
-    ];
-
-    for (final center in seeds) {
-      final rect = Rect.fromCenter(
-        center: center,
-        width: size.width * 0.22,
-        height: size.width * 0.22,
-      );
-      canvas.drawOval(rect.shift(const Offset(16, 12)), shadowPaint);
-      canvas.drawOval(rect, ringPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-String handRankLabel(RummiHandRank rank) {
-  return switch (rank) {
-    RummiHandRank.highCard => '하이',
-    RummiHandRank.onePair => '원페어',
-    RummiHandRank.twoPair => '투페어',
-    RummiHandRank.threeOfAKind => '트리플',
-    RummiHandRank.straight => '스트레이트',
-    RummiHandRank.flush => '플러시',
-    RummiHandRank.fullHouse => '풀하우스',
-    RummiHandRank.fourOfAKind => '포카드',
-    RummiHandRank.straightFlush => '스티플',
-  };
-}
