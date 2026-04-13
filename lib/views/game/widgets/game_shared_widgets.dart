@@ -1,0 +1,712 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+import '../../../game/rummi_poker_grid/rummikub_tile_canvas.dart';
+import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/models/board.dart';
+import '../../../logic/rummi_poker_grid/models/tile.dart';
+import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+
+const double kGameTileAspectRatio = 1.0;
+const double kBoardFrameInset = 10.0;
+const double kBoardGridGap = 1.5;
+const double kBoardTileInnerPadding = 2.0;
+
+const TextStyle gameHudLabelStyle = TextStyle(
+  color: Colors.white70,
+  fontSize: 9,
+  fontWeight: FontWeight.w800,
+  letterSpacing: 0.35,
+);
+
+final TextStyle gameHudValueStyle = TextStyle(
+  color: Colors.white.withValues(alpha: 0.96),
+  fontWeight: FontWeight.w900,
+  height: 1,
+);
+
+const TextStyle gameHudSubStyle = TextStyle(
+  color: Colors.white70,
+  fontSize: 10,
+  fontWeight: FontWeight.w700,
+  height: 1.1,
+);
+
+/// 보드 가로 폭 기준 실제 카드 렌더 폭을 계산한다.
+double boardTileVisualWidth(double boardSide) {
+  final gridSide = boardSide - (kBoardFrameInset * 2);
+  final cellSide =
+      (gridSide - (kBoardGridGap * (kBoardSize - 1))) / kBoardSize;
+  return cellSide - (kBoardTileInnerPadding * 2);
+}
+
+/// 확정 가능한 족보 줄에 실제 기여하는 셀만 강조 대상으로 반환한다.
+Set<String> scoringCellSet(RummiPokerGridSession session) {
+  final cells = <String>{};
+  final lines = session.engine.listFullLines(session.board);
+  for (final line in lines) {
+    if (line.report.evaluation.isDeadLine) continue;
+    final refs = line.ref.cells();
+    for (final index in line.report.evaluation.contributingIndexes) {
+      if (index < 0 || index >= refs.length) continue;
+      final (row, col) = refs[index];
+      cells.add('$row:$col');
+    }
+  }
+  return cells;
+}
+
+class GameTopHud extends StatelessWidget {
+  const GameTopHud({
+    super.key,
+    required this.session,
+    required this.runProgress,
+    required this.onOptionsTap,
+  });
+
+  final RummiPokerGridSession session;
+  final RummiRunProgress runProgress;
+  final VoidCallback onOptionsTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final blind = session.blind;
+    final progress = blind.targetScore <= 0
+        ? 0.0
+        : (blind.scoreTowardBlind / blind.targetScore).clamp(0.0, 1.0);
+
+    return SizedBox(
+      height: 76,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 9,
+            child: GameHudChip(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'STAGE',
+                    style: gameHudLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${runProgress.stageIndex}',
+                          maxLines: 1,
+                          style: gameHudValueStyle.copyWith(fontSize: 22),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    '보상 +${RummiRunProgress.stageClearGoldBase}',
+                    style: gameHudSubStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 14,
+            child: GameHudChip(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'BLIND SCORE',
+                          style: gameHudLabelStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${blind.scoreTowardBlind} / ${blind.targetScore}',
+                          maxLines: 1,
+                          style: gameHudValueStyle.copyWith(fontSize: 22),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 7,
+                      backgroundColor: Colors.black.withValues(alpha: 0.3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFFF4A81D),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 9,
+            child: GameHudChip(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'GOLD',
+                          style: gameHudLabelStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: onOptionsTap,
+                        behavior: HitTestBehavior.opaque,
+                        child: Icon(
+                          Icons.more_vert_rounded,
+                          color: Colors.white.withValues(alpha: 0.88),
+                          size: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${runProgress.gold}',
+                          maxLines: 1,
+                          style: gameHudValueStyle.copyWith(fontSize: 22),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GameBottomInfoRow extends StatelessWidget {
+  const GameBottomInfoRow({super.key, required this.session});
+
+  final RummiPokerGridSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            '덱 ${session.deck.remaining}/${session.totalDeckSize}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            '보드패 버림 ${session.blind.boardDiscardsRemaining}/${session.blind.boardDiscardsMax}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            '손패 ${session.hand.length}/${session.maxHandSize} · 버림 ${session.blind.handDiscardsRemaining}/${session.blind.handDiscardsMax}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class GameDebugShopHandCluster extends StatelessWidget {
+  const GameDebugShopHandCluster({
+    super.key,
+    required this.onShopTap,
+    required this.handSize,
+    required this.onHandSizeChanged,
+  });
+
+  final VoidCallback onShopTap;
+  final int handSize;
+  final ValueChanged<int> onHandSizeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: IntrinsicWidth(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'DEBUG',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.42),
+                fontSize: 7.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.9,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                GestureDetector(
+                  onTap: onShopTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4A81D),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'SHOP',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GameDebugHandSizeSegment(
+                  value: handSize,
+                  onChanged: onHandSizeChanged,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GameDebugHandSizeSegment extends StatelessWidget {
+  const GameDebugHandSizeSegment({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 4, right: 6),
+            child: Text(
+              'Hand',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          for (final option in const [1, 2, 3])
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: GestureDetector(
+                onTap: () => onChanged(option),
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: value == option
+                        ? const Color(0xFF4AA78D)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$option',
+                    style: TextStyle(
+                      color: value == option ? Colors.white : Colors.white70,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class GameHudChip extends StatelessWidget {
+  const GameHudChip({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A4D3C).withValues(alpha: 0.68),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFF6A8E7C).withValues(alpha: 0.45),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 7),
+        child: child,
+      ),
+    );
+  }
+}
+
+class GameBoardGrid extends StatelessWidget {
+  const GameBoardGrid({
+    super.key,
+    required this.board,
+    required this.scoringCells,
+    required this.activeSettlementCells,
+    required this.settlementBoardSnapshot,
+    required this.selectedRow,
+    required this.selectedCol,
+    required this.onTapCell,
+  });
+
+  final RummiBoard board;
+  final Set<String> scoringCells;
+  final Set<String> activeSettlementCells;
+  final Map<String, Tile> settlementBoardSnapshot;
+  final int? selectedRow;
+  final int? selectedCol;
+  final void Function(int row, int col) onTapCell;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = min(constraints.maxWidth, constraints.maxHeight);
+
+        return Center(
+          child: SizedBox(
+            width: side,
+            height: side,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A4B3A).withValues(alpha: 0.48),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF739785).withValues(alpha: 0.45),
+                  width: 1,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(kBoardFrameInset),
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: kBoardSize,
+                    mainAxisSpacing: kBoardGridGap,
+                    crossAxisSpacing: kBoardGridGap,
+                  ),
+                  itemCount: kBoardSize * kBoardSize,
+                  itemBuilder: (context, index) {
+                    final row = index ~/ kBoardSize;
+                    final col = index % kBoardSize;
+                    final tile =
+                        board.cellAt(row, col) ??
+                        settlementBoardSnapshot['$row:$col'];
+                    final selected = selectedRow == row && selectedCol == col;
+                    final scoring = scoringCells.contains('$row:$col');
+                    final settlementActive = activeSettlementCells.contains(
+                      '$row:$col',
+                    );
+                    return GameBoardCell(
+                      tile: tile,
+                      selected: selected,
+                      scoring: scoring,
+                      settlementActive: settlementActive,
+                      onTap: () => onTapCell(row, col),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class GameBoardCell extends StatelessWidget {
+  const GameBoardCell({
+    super.key,
+    required this.tile,
+    required this.selected,
+    required this.scoring,
+    required this.settlementActive,
+    required this.onTap,
+  });
+
+  final Tile? tile;
+  final bool selected;
+  final bool scoring;
+  final bool settlementActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = selected
+        ? const Color(0xFFF76D5E)
+        : settlementActive
+        ? const Color(0xFF86F4C3)
+        : scoring
+        ? const Color(0xFFF4C45A)
+        : Colors.white.withValues(alpha: 0.1);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = min(constraints.maxWidth, constraints.maxHeight);
+        final cornerRadius = rummikubTileCornerRadiusForSide(side);
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(cornerRadius),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              decoration: BoxDecoration(
+                color: selected
+                    ? const Color(0xFF2A3B34)
+                    : settlementActive
+                    ? const Color(0xFF285A49)
+                    : const Color(0xFF204E3C).withValues(alpha: 0.88),
+                borderRadius: BorderRadius.circular(cornerRadius),
+                border: Border.all(
+                  color: borderColor,
+                  width: selected || settlementActive ? 2 : 1,
+                ),
+                boxShadow: settlementActive
+                    ? [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF86F4C3,
+                          ).withValues(alpha: 0.18),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: tile == null
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: GameRummiTileCard(
+                        tile: tile!,
+                        selected: selected,
+                        accent: false,
+                        aspectRatio: kGameTileAspectRatio,
+                      ),
+                    ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class GameActionButton extends StatelessWidget {
+  const GameActionButton({
+    super.key,
+    required this.label,
+    required this.background,
+    required this.onPressed,
+    this.foreground = Colors.white,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          backgroundColor: background,
+          foregroundColor: foreground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+        ),
+        child: FittedBox(fit: BoxFit.scaleDown, child: Text(label)),
+      ),
+    );
+  }
+}
+
+class GameRummiTileCard extends StatelessWidget {
+  const GameRummiTileCard({
+    super.key,
+    required this.tile,
+    required this.selected,
+    required this.accent,
+    this.aspectRatio = kGameTileAspectRatio,
+  });
+
+  final Tile tile;
+  final bool selected;
+  final bool accent;
+  final double aspectRatio;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: aspectRatio,
+      child: CustomPaint(
+        painter: _GameRummiTilePainter(
+          tile: tile,
+          selected: selected,
+          accent: accent,
+        ),
+      ),
+    );
+  }
+}
+
+class _GameRummiTilePainter extends CustomPainter {
+  const _GameRummiTilePainter({
+    required this.tile,
+    required this.selected,
+    required this.accent,
+  });
+
+  final Tile tile;
+  final bool selected;
+  final bool accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    paintRummikubTile(
+      canvas,
+      rect,
+      tile,
+      selected: selected,
+      shadowElevation: selected ? 4 : 2.4,
+    );
+
+    if (!accent) return;
+    final accentRect = rect.deflate(3.5);
+    final rr = RRect.fromRectAndRadius(
+      accentRect,
+      Radius.circular(size.shortestSide * 0.11),
+    );
+    canvas.drawRRect(
+      rr,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = const Color(0xFFF2C14E).withValues(alpha: 0.75),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GameRummiTilePainter oldDelegate) {
+    return oldDelegate.tile != tile ||
+        oldDelegate.selected != selected ||
+        oldDelegate.accent != accent;
+  }
+}

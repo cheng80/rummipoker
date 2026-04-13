@@ -2,10 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+enum _NoticeStyle {
+  topBanner,
+  bottomToast,
+}
+
 void showTopNotice(
   BuildContext context,
   String message, {
-  Duration duration = const Duration(milliseconds: 1800),
+  Duration duration = const Duration(milliseconds: 2200),
 }) {
   final overlay = Overlay.maybeOf(context, rootOverlay: true);
   if (overlay == null) {
@@ -20,10 +25,11 @@ void showTopNotice(
           child: Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: _NoticeCard(
                 message: message,
                 beginOffsetY: -18,
+                style: _NoticeStyle.topBanner,
               ),
             ),
           ),
@@ -65,6 +71,7 @@ void showBottomNotice(
               child: _NoticeCard(
                 message: message,
                 beginOffsetY: 18,
+                style: _NoticeStyle.bottomToast,
               ),
             ),
           ),
@@ -126,13 +133,30 @@ class _NoticeCard extends StatelessWidget {
   const _NoticeCard({
     required this.message,
     required this.beginOffsetY,
+    required this.style,
   });
 
   final String message;
   final double beginOffsetY;
+  final _NoticeStyle style;
 
   @override
   Widget build(BuildContext context) {
+    final isTopBanner = style == _NoticeStyle.topBanner;
+    final backgroundColor = isTopBanner
+        ? const Color(0xFFF4B326)
+        : const Color(0xEE102D25);
+    final borderColor = isTopBanner
+        ? const Color(0xFFFFE08A)
+        : Colors.white12;
+    final textColor = isTopBanner
+        ? const Color(0xFF1F1600)
+        : Colors.white.withValues(alpha: 0.94);
+    final shadowColor = isTopBanner
+        ? const Color(0xAA000000)
+        : Colors.black.withValues(alpha: 0.22);
+    final icon = isTopBanner ? Icons.campaign_rounded : Icons.info_rounded;
+
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(milliseconds: 220),
@@ -146,33 +170,51 @@ class _NoticeCard extends StatelessWidget {
         );
       },
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320),
+        constraints: BoxConstraints(
+          maxWidth: isTopBanner ? 360 : 320,
+        ),
         child: Material(
           color: Colors.transparent,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: const Color(0xEE102D25),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white12),
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(isTopBanner ? 18 : 16),
+              border: Border.all(color: borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.22),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
+                  color: shadowColor,
+                  blurRadius: isTopBanner ? 18 : 14,
+                  offset: Offset(0, isTopBanner ? 8 : 6),
                 ),
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.94),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
-                ),
+              padding: EdgeInsets.symmetric(
+                horizontal: isTopBanner ? 16 : 14,
+                vertical: isTopBanner ? 12 : 10,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    color: textColor,
+                    size: isTopBanner ? 20 : 16,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      message,
+                      textAlign: isTopBanner ? TextAlign.left : TextAlign.center,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: isTopBanner ? 14 : 13,
+                        fontWeight: FontWeight.w900,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

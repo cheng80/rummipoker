@@ -498,6 +498,26 @@ class RummiRunProgress {
   Map<RummiHandRank, int> snapshotPlayedHandCounts() =>
       Map<RummiHandRank, int>.unmodifiable(_playedHandCounts);
 
+  RummiRunProgress copySnapshot() {
+    return RummiRunProgress.restore(
+      stageIndex: stageIndex,
+      gold: gold,
+      rerollCost: rerollCost,
+      ownedJesters: List<RummiJesterCard>.from(ownedJesters),
+      shopOffers: shopOffers
+          .map(
+            (offer) => RummiShopOffer(
+              slotIndex: offer.slotIndex,
+              card: offer.card,
+              price: offer.price,
+            ),
+          )
+          .toList(growable: false),
+      statefulValuesBySlot: Map<int, int>.from(_statefulValuesBySlot),
+      playedHandCounts: Map<RummiHandRank, int>.from(_playedHandCounts),
+    );
+  }
+
   int targetForStage(int stageNumber) {
     if (stageNumber <= 1) {
       return 300;

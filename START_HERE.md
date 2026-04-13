@@ -43,14 +43,17 @@
 현재 구현 상태 요약:
 - 순수 로직: `lib/logic/rummi_poker_grid/` 에 기본 엔진/세션/덱/보드/테스트가 들어와 있다.
 - 게임 로직: `lib/logic/rummi_poker_grid/` 의 세션/엔진이 플레이 규칙을 담당한다.
-- Flutter 화면: `lib/views/game_view.dart` 에서 **상단 HUD / Jester 5슬롯 / 5x5 보드 / 단일 손패 / 액션 버튼**을 직접 그린다.
-- 공용 UI 유틸: `lib/utils/common_ui.dart` 에서 **상단 알림(`showTopNotice`) / 공통 다이얼로그(`showAppDialog`, `showConfirmDialog`)** 를 관리한다.
+- Flutter 화면: `lib/views/game_view.dart` 를 중심으로 쓰되, **상단 HUD / Jester 5슬롯 / 5x5 보드 / 손패 / 캐시아웃 / 상점**은 `lib/views/game/widgets/` 하위 위젯으로 1차 분리되었다.
+- Riverpod 상태: `GameView` 는 `GameSessionNotifier`, `TitleView` 는 `TitleNotifier` 기준으로 UI 상태를 읽는다.
+- 공용 UI 유틸: `lib/utils/common_ui.dart` 에서 **상단 알림(`showTopNotice`) / 하단 알림(`showBottomNotice`) / 공통 다이얼로그(`showAppDialog`, `showConfirmDialog`)** 를 관리한다.
 - Flame 코드는 당장 핵심 화면 책임에서 한 발 물러났고, 이후 필요 시 **드로우/정산/조커 연출 레이어**로만 재도입하는 방향이 현재 판단이다.
 - 디자인 문서: [`docs/DESIGN.md`](docs/DESIGN.md) 를 현재 코드/룰 기준으로 최신화했다.
 - 최근 작업:
   - `RummiPokerGridSession.confirmAllFullLines()` 를 **족보 기여 카드만 제거**하도록 수정했다.
   - 손패 기본 한도를 `1장`으로 두되, 디버그 메뉴에서 `1~3장` 조절이 가능하도록 유지했고, 관련 테스트/문서 기준도 함께 갱신했다.
   - `GameView` 를 **Flutter 위젯 기반 전투 화면**으로 전환했다.
+  - `GameView` 는 현재 `GameSessionNotifier` 기반으로 세션/선택/stage flow/UI 잠금 상태를 읽도록 정리했다.
+  - `TitleView` 는 현재 `TitleNotifier` 기반으로 이어하기 가능 여부/손상 세이브 분기/삭제 흐름을 처리한다.
   - 시드 번호는 상단 HUD에서 제거하고 **옵션 다이얼로그에서만 복사 가능**하게 정리했다.
   - Jester 슬롯 5장, 5x5 보드, 단일 손패, 하단 액션 버튼의 밀도를 다시 맞췄다.
   - 액션 버튼은 이제 **보드 버림 / 손패 버림 / 줄 확정 / 선택 해제**로 분리되어, 보드 타일 버림과 손패 버림을 혼동하지 않게 정리했다.
@@ -85,26 +88,38 @@
   - Jester 슬롯 카드는 지금 **제목 + 분류 배지 + 활성 표시만** 노출하고, 실제 효과 설명/현재 값은 상세 패널에서 확인한다.
   - 숫자 타일은 현재 **11/12/13만 하단 중앙 점 표시**로 face card 여부를 구분한다.
   - Jester 슬롯 / 상점 오퍼 / 보유 5슬롯의 선택 외곽선은 최신 바깥 링 방식으로 정리했다.
+  - 상점 오퍼 리스트는 현재 **선택 외곽선만 유지**하고, 배경색 애니메이션에 따른 번쩍임 효과는 제거했다.
+  - 저장 스키마는 현재 **v2** 이고, 현재 시점 상태와 함께 **현재 스테이지 시작 시점 스냅샷**도 저장한다.
+  - 게임/상점 옵션의 `재시작`은 현재 **같은 시드 새 런**이 아니라, **현재 스테이지 시작 시점 복원**으로 동작한다.
   - 보드 5x5 강조는 **셀 단위 강조 방식**을 유지하되, 빈 슬롯 / 배치 카드 / 기여 표시 / 정산 글로우가 같은 곡률로 읽히도록 **카드와 동일한 라운드 계산 기준**으로 통일했다.
 
 ---
 
 ## 3. 지금 가장 중요한 작업
 
-**현재 1순위는 “문구/표현 정리 + 다음 batch 설계가 바로 이어지게 문서 기준을 고정”하는 것이다.**
+**현재 1순위는 “Riverpod 분리 이후 남은 GameView orchestration 리팩토링 범위를 고정하고, 다음 batch가 바로 이어지게 문서 기준을 최신 상태로 유지하는 것”이다.**
 
 즉, 새 세션에서 바로 이어야 할 일:
 
-1. [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md), [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md), [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md) 의 덱/만료/메타 진행 기준이 코드와 맞는지 먼저 확인한다.
+1. [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md), [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md) 를 먼저 보고, 현재 리팩토링 배치와 저장 정책 기준을 확인한다.
 2. 특히 아래 파일을 우선 본다.
    - [`lib/logic/rummi_poker_grid/jester_meta.dart`](lib/logic/rummi_poker_grid/jester_meta.dart)
    - [`lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`](lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)
    - [`lib/views/game_view.dart`](lib/views/game_view.dart)
+   - [`lib/providers/features/rummi_poker_grid/game_session_notifier.dart`](lib/providers/features/rummi_poker_grid/game_session_notifier.dart)
+   - [`lib/providers/features/rummi_poker_grid/title_notifier.dart`](lib/providers/features/rummi_poker_grid/title_notifier.dart)
+   - [`lib/views/game/widgets/`](lib/views/game/widgets/)
    - 참고용 [`/Users/cheng80/Desktop/FlutterFrame_work/flame_rummideck/lib/`](</Users/cheng80/Desktop/FlutterFrame_work/flame_rummideck/lib/>)
 3. 다음 구현 우선순위는 이 순서다.
+   - `GameView` 내부 저장/autosave/lifecycle/화면전환 handler를 한 번 더 분리할지 결정
+   - 캐시아웃 -> 상점 -> 다음 스테이지 진행 체인의 coordinator 성격 코드를 어디에 둘지 결정
+   - `현재 스테이지 재시작` 검증
+     - 전투 중 누적된 골드/Jester/stateful 값이 정확히 롤백되는지
+     - 상점에서 구매/판매 후 재시작 시 stage-start 기준으로 되돌아가는지
+     - 앱 재실행 후에도 같은 기준으로 재시작되는지
+   - 현재 검사 전용 상점 오퍼를 유지할지, 다음 작업 시작 전에 다시 랜덤 3장 정책으로 되돌릴지 결정
    - 유저 노출 문구에서 `멀트` 같은 내부 용어를 `배율` 등으로 바꿀지 정리
    - `rule_modifier` 후보 common Jester를 id 인덱스 순서대로 다시 분류하고, 현재 룰에서 즉시 적용 가능한 것만 추린다
-   - 현재 검사 전용 상점 오퍼를 유지할지, 다음 작업 시작 전에 다시 랜덤 3장 정책으로 되돌릴지 결정
    - 필요 시 전투/정산 연출만 Flame 레이어로 분리
 4. 디자인 작업은 계속 중요하지만, 현재는 **문서 기준과 실제 코드 상태가 다시 어긋나지 않게 유지하는 것**이 우선이다.
 
@@ -145,9 +160,26 @@
 - 정산 체인은 붙어 있고, **economy 2차 1차분**과 **stateful 1차**도 이미 코드에 반영되었다.
 - 이어하기 기능 1차 구현이 들어갔다.
 - 저장 방식은 **GetStorage payload + secure storage key + HMAC 서명** 하이브리드다.
+- 저장 포맷은 이제 **현재 시점 + 현재 스테이지 시작 시점(stageStartSnapshot)** 을 함께 가진다.
+- 저장 스키마 버전은 현재 **v2** 다. 이전 v1 세이브는 구버전으로 간주되어 복원이 거부될 수 있다.
 - 알림/다이얼로그는 `lib/utils/common_ui.dart` 기준으로 공용화했다.
+- Riverpod 1차 분리가 들어갔다.
+  - `GameSessionNotifier`
+  - `TitleNotifier`
+- 위젯 모듈화 1차가 들어갔다.
+  - `game_shared_widgets.dart`
+  - `game_jester_widgets.dart`
+  - `game_hand_zone.dart`
+  - `game_cashout_widgets.dart`
+  - `game_shop_screen.dart`
 - 타이틀은 이제 **이어하기 / 랜덤 시작 / 시드 시작**을 분리한다.
 - `이어하기`는 저장된 현재 런 복원이고, `랜덤 시작`/`시드 시작`은 모두 새 런 시작이다.
+- 인게임 옵션의 `재시작`은 이제 **런 전체 재시작이 아니라 현재 스테이지 재시작**이다.
+- 현재 스테이지 재시작은 아래 상태를 stage-start 기준으로 되돌린다.
+  - 보드 / 손패 / 제거 더미 / 덱 순서
+  - 현재 스테이지 골드
+  - 장착 Jester / 상점 상태
+  - stateful Jester 값 (`Ride the Bus` 등)
 - `이어하기`를 누르면 **이어하기 / 삭제하기 / 취소** 메뉴가 먼저 나오고, 손상 세이브는 삭제 유도 다이얼로그로 분기한다.
 - 인게임은 **드로우/배치/버림/확정/상점/스테이지 전환/lifecycle autosave**가 연결되어 있다.
 - 정보성 피드백은 현재 **하단 `SnackBar` 대신 상단 오버레이 알림**을 기본으로 사용한다.
@@ -165,6 +197,10 @@
 - 현재 남은 큰 묶음은 아래 두 가지다.
   - `rule_modifier`
   - `retrigger`
+- 현재 남은 리팩토링 큰 묶음은 아래 순서다.
+  - `GameView` 잔여 orchestration 정리
+  - 저장/autosave handler 분리 여부 결정
+  - 설정/전역 상태 Riverpod 범위 재검토
 - 외부 시스템이 필요한 항목은 계속 보류다.
   - `square_jester`
   - `red_card`
@@ -173,20 +209,26 @@
 
 ## 7. 다음 작업 순서 메모
 
-1. 이어하기 저장 1차 실기기 검증
+1. `GameView` orchestration 리팩토링 2차
+   - 저장/autosave/lifecycle 호출 묶음 정리
+   - 캐시아웃 -> 상점 -> 다음 스테이지 진행 체인 정리
+   - 옵션/타이틀 이동/알림 호출 정리
+2. 이어하기/재시작 실기기 검증
    - 앱 강제 종료 / 상점 열린 상태 / 다음 스테이지 직전 / 손상 세이브 삭제 동선이 실제 기기에서 기대대로 동작하는지 확인
-2. 알림 정책 실기기 점검
+   - 현재 스테이지 재시작 시 골드/Jester/stateful 값이 stage-start 기준으로 롤백되는지 확인
+   - 상점에서 재시작했을 때도 같은 복원 기준을 유지하는지 확인
+3. 알림 정책 실기기 점검
    - 현재 상단 오버레이 알림이 모든 주요 화면에서 버튼/HUD를 과하게 가리지 않는지 확인
    - CTA가 필요한 예외 케이스만 하단 variant가 필요한지 검토
-3. 유저 노출 문구 정리
+4. 유저 노출 문구 정리
    - 상세 패널 설명에서 `멀트` 같은 내부 용어를 유지할지, `배율`/`추가 배율`로 바꿀지 결정
-4. `rule_modifier` common 분류 착수
+5. `rule_modifier` common 분류 착수
    - id 인덱스 순서대로 전수 확인
    - 즉시 적용 가능 / 후순위 / 외부 시스템 의존으로 한 번에 분리
-5. 검사 상점 상태 정리
+6. 검사 상점 상태 정리
    - 지금은 8장 검사 오퍼 강제 노출 상태
    - 다음 작업 전에 유지 여부를 결정
-6. 보류 유지
+7. 보류 유지
    - `retrigger`
    - 외부 시스템 의존 `stateful_growth`
 
@@ -199,10 +241,12 @@
 3. [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md)
 4. [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md)
 5. [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md)
-6. [`lib/views/game_view.dart`](lib/views/game_view.dart)
-7. [`lib/logic/rummi_poker_grid/jester_meta.dart`](lib/logic/rummi_poker_grid/jester_meta.dart)
-8. [`lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`](lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)
-9. 필요할 때만 [`docs/DESIGN.md`](docs/DESIGN.md)
+6. [`lib/providers/features/rummi_poker_grid/game_session_notifier.dart`](lib/providers/features/rummi_poker_grid/game_session_notifier.dart)
+7. [`lib/views/game_view.dart`](lib/views/game_view.dart)
+8. [`lib/views/game/widgets/`](lib/views/game/widgets/)
+9. [`lib/logic/rummi_poker_grid/jester_meta.dart`](lib/logic/rummi_poker_grid/jester_meta.dart)
+10. [`lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`](lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)
+11. 필요할 때만 [`docs/DESIGN.md`](docs/DESIGN.md)
 
 ## 9. 세션 종료 전 갱신 규칙
 
@@ -217,4 +261,4 @@
 
 ## 10. 한 줄 요약
 
-**다음 세션은 `START_HERE.md`와 `docs/save_resume_architecture.md`로 시작하고, 현재는 `copiesPerTile` 기반 덱 + Flutter 위젯 전투 화면 + 실시간 정산/캐시아웃/전체화면 상점 흐름 + economy 2차 1차분 + stateful 1차 + phase5 curated common 38종 + 하이브리드 이어하기 저장 1차 구현 기준으로 문서와 코드를 함께 유지하면 된다.**
+**다음 세션은 `START_HERE.md`와 `docs/save_resume_architecture.md`로 시작하고, 현재는 `copiesPerTile` 기반 덱 + Riverpod 1차 분리(`GameSessionNotifier`, `TitleNotifier`) + Flutter 위젯 전투 화면 모듈화 1차 + 실시간 정산/캐시아웃/전체화면 상점 흐름 + economy 2차 1차분 + stateful 1차 + phase5 curated common 38종 + 하이브리드 이어하기 저장 v2 + 현재 스테이지 재시작(stage-start snapshot) 기준으로 문서와 코드를 함께 유지하면 된다.**

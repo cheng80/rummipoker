@@ -25,9 +25,21 @@ class ActiveRunRuntimeState {
     required this.activeScene,
     required this.session,
     required this.runProgress,
+    required this.stageStartSnapshot,
   });
 
   final ActiveRunScene activeScene;
+  final RummiPokerGridSession session;
+  final RummiRunProgress runProgress;
+  final ActiveRunStageSnapshot stageStartSnapshot;
+}
+
+class ActiveRunStageSnapshot {
+  const ActiveRunStageSnapshot({
+    required this.session,
+    required this.runProgress,
+  });
+
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
 }
@@ -39,6 +51,8 @@ class ActiveRunSaveData {
     required this.activeScene,
     required this.session,
     required this.runProgress,
+    required this.stageStartSession,
+    required this.stageStartRunProgress,
   });
 
   final int schemaVersion;
@@ -46,6 +60,8 @@ class ActiveRunSaveData {
   final String activeScene;
   final SavedSessionData session;
   final SavedRunProgressData runProgress;
+  final SavedSessionData stageStartSession;
+  final SavedRunProgressData stageStartRunProgress;
 
   Map<String, dynamic> toJson() => {
     'schemaVersion': schemaVersion,
@@ -53,6 +69,8 @@ class ActiveRunSaveData {
     'activeScene': activeScene,
     'session': session.toJson(),
     'runProgress': runProgress.toJson(),
+    'stageStartSession': stageStartSession.toJson(),
+    'stageStartRunProgress': stageStartRunProgress.toJson(),
   };
 
   static ActiveRunSaveData fromJson(Map<String, dynamic> json) {
@@ -65,6 +83,12 @@ class ActiveRunSaveData {
       ),
       runProgress: SavedRunProgressData.fromJson(
         json['runProgress'] as Map<String, dynamic>,
+      ),
+      stageStartSession: SavedSessionData.fromJson(
+        json['stageStartSession'] as Map<String, dynamic>,
+      ),
+      stageStartRunProgress: SavedRunProgressData.fromJson(
+        json['stageStartRunProgress'] as Map<String, dynamic>,
       ),
     );
   }
@@ -216,7 +240,7 @@ class SavedRunProgressData {
 class ActiveRunSaveService {
   ActiveRunSaveService._();
 
-  static const int schemaVersion = 1;
+  static const int schemaVersion = 2;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   static Future<ActiveRunAvailability> inspectActiveRun() async {
@@ -268,52 +292,19 @@ class ActiveRunSaveService {
     required ActiveRunScene activeScene,
     required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
+    required ActiveRunStageSnapshot stageStartSnapshot,
   }) async {
+    final savedSession = _buildSavedSessionData(session);
+    final savedRunProgress = _buildSavedRunProgressData(runProgress);
     final save = ActiveRunSaveData(
       schemaVersion: schemaVersion,
       savedAtIso8601: DateTime.now().toUtc().toIso8601String(),
       activeScene: activeScene.name,
-      session: SavedSessionData(
-        runSeed: session.runSeed,
-        deckCopiesPerTile: session.deckCopiesPerTile,
-        maxHandSize: session.maxHandSize,
-        runRandomState: session.runRandom.state,
-        blind: session.blind.toJson(),
-        deckPile: session.deck.snapshotPile().map((tile) => tile.toJson()).toList(
-          growable: false,
-        ),
-        boardCells: session.board
-            .snapshotCells()
-            .map((tile) => tile?.toJson())
-            .toList(growable: false),
-        hand: session.hand.map((tile) => tile.toJson()).toList(growable: false),
-        eliminated: session.eliminated
-            .map((tile) => tile.toJson())
-            .toList(growable: false),
-      ),
-      runProgress: SavedRunProgressData(
-        stageIndex: runProgress.stageIndex,
-        gold: runProgress.gold,
-        rerollCost: runProgress.rerollCost,
-        ownedJesterIds:
-            runProgress.ownedJesters.map((card) => card.id).toList(
-                  growable: false,
-                ),
-        shopOffers: runProgress.shopOffers
-            .map(
-              (offer) => SavedShopOfferData(
-                slotIndex: offer.slotIndex,
-                cardId: offer.card.id,
-                price: offer.price,
-              ),
-            )
-            .toList(growable: false),
-        statefulValuesBySlot: runProgress.snapshotStatefulValuesBySlot().map(
-          (key, value) => MapEntry('$key', value),
-        ),
-        playedHandCounts: runProgress.snapshotPlayedHandCounts().map(
-          (key, value) => MapEntry(key.name, value),
-        ),
+      session: savedSession,
+      runProgress: savedRunProgress,
+      stageStartSession: _buildSavedSessionData(stageStartSnapshot.session),
+      stageStartRunProgress: _buildSavedRunProgressData(
+        stageStartSnapshot.runProgress,
       ),
     );
     final payload = jsonEncode(save.toJson());
@@ -341,62 +332,18 @@ class ActiveRunSaveService {
     final save = ActiveRunSaveData.fromJson(decoded);
     final catalog = await _loadCatalog();
 
-    final board = RummiBoard.fromSnapshot(
-      save.session.boardCells
-          .map((cell) => cell == null ? null : Tile.fromJson(cell))
-          .toList(growable: false),
-    );
-    final deck = PokerDeck.fromSnapshot(
-      save.session.deckPile.map(Tile.fromJson).toList(growable: false),
-    );
-    final hand = save.session.hand.map(Tile.fromJson).toList(growable: false);
-    final eliminated = save.session.eliminated
-        .map(Tile.fromJson)
-        .toList(growable: false);
-    final session = RummiPokerGridSession.restored(
-      runSeed: save.session.runSeed,
-      deckCopiesPerTile: save.session.deckCopiesPerTile,
-      maxHandSize: save.session.maxHandSize,
-      runRandomState: save.session.runRandomState,
-      blind: RummiBlindState.fromJson(save.session.blind),
-      deck: deck,
-      board: board,
-      hand: hand,
-      eliminated: eliminated,
-    );
-
-    final ownedJesters = save.runProgress.ownedJesterIds
-        .map((id) => _findCardOrThrow(catalog, id))
-        .toList(growable: false);
-    final shopOffers = save.runProgress.shopOffers
-        .map(
-          (offer) => RummiShopOffer(
-            slotIndex: offer.slotIndex,
-            card: _findCardOrThrow(catalog, offer.cardId),
-            price: offer.price,
-          ),
-        )
-        .toList(growable: false);
-    final statefulValuesBySlot = save.runProgress.statefulValuesBySlot.map(
-      (key, value) => MapEntry(int.parse(key), value),
-    );
-    final playedHandCounts = save.runProgress.playedHandCounts.map(
-      (key, value) => MapEntry(RummiHandRank.values.byName(key), value),
-    );
-    final runProgress = RummiRunProgress.restore(
-      stageIndex: save.runProgress.stageIndex,
-      gold: save.runProgress.gold,
-      rerollCost: save.runProgress.rerollCost,
-      ownedJesters: ownedJesters,
-      shopOffers: shopOffers,
-      statefulValuesBySlot: statefulValuesBySlot,
-      playedHandCounts: playedHandCounts,
+    final session = _restoreSession(save.session);
+    final runProgress = _restoreRunProgress(save.runProgress, catalog);
+    final stageStartSnapshot = ActiveRunStageSnapshot(
+      session: _restoreSession(save.stageStartSession),
+      runProgress: _restoreRunProgress(save.stageStartRunProgress, catalog),
     );
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.values.byName(save.activeScene),
       session: session,
       runProgress: runProgress,
+      stageStartSnapshot: stageStartSnapshot,
     );
   }
 
@@ -447,5 +394,123 @@ class ActiveRunSaveService {
       throw StateError('저장 데이터에 없는 Jester id: $id');
     }
     return card;
+  }
+
+  static ActiveRunStageSnapshot captureStageStartSnapshot({
+    required RummiPokerGridSession session,
+    required RummiRunProgress runProgress,
+  }) {
+    return ActiveRunStageSnapshot(
+      session: session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    );
+  }
+
+  static SavedSessionData _buildSavedSessionData(RummiPokerGridSession session) {
+    return SavedSessionData(
+      runSeed: session.runSeed,
+      deckCopiesPerTile: session.deckCopiesPerTile,
+      maxHandSize: session.maxHandSize,
+      runRandomState: session.runRandom.state,
+      blind: session.blind.toJson(),
+      deckPile: session.deck.snapshotPile().map((tile) => tile.toJson()).toList(
+        growable: false,
+      ),
+      boardCells: session.board
+          .snapshotCells()
+          .map((tile) => tile?.toJson())
+          .toList(growable: false),
+      hand: session.hand.map((tile) => tile.toJson()).toList(growable: false),
+      eliminated: session.eliminated
+          .map((tile) => tile.toJson())
+          .toList(growable: false),
+    );
+  }
+
+  static SavedRunProgressData _buildSavedRunProgressData(
+    RummiRunProgress runProgress,
+  ) {
+    return SavedRunProgressData(
+      stageIndex: runProgress.stageIndex,
+      gold: runProgress.gold,
+      rerollCost: runProgress.rerollCost,
+      ownedJesterIds: runProgress.ownedJesters
+          .map((card) => card.id)
+          .toList(growable: false),
+      shopOffers: runProgress.shopOffers
+          .map(
+            (offer) => SavedShopOfferData(
+              slotIndex: offer.slotIndex,
+              cardId: offer.card.id,
+              price: offer.price,
+            ),
+          )
+          .toList(growable: false),
+      statefulValuesBySlot: runProgress.snapshotStatefulValuesBySlot().map(
+        (key, value) => MapEntry('$key', value),
+      ),
+      playedHandCounts: runProgress.snapshotPlayedHandCounts().map(
+        (key, value) => MapEntry(key.name, value),
+      ),
+    );
+  }
+
+  static RummiPokerGridSession _restoreSession(SavedSessionData data) {
+    final board = RummiBoard.fromSnapshot(
+      data.boardCells
+          .map((cell) => cell == null ? null : Tile.fromJson(cell))
+          .toList(growable: false),
+    );
+    final deck = PokerDeck.fromSnapshot(
+      data.deckPile.map(Tile.fromJson).toList(growable: false),
+    );
+    final hand = data.hand.map(Tile.fromJson).toList(growable: false);
+    final eliminated = data.eliminated
+        .map(Tile.fromJson)
+        .toList(growable: false);
+    return RummiPokerGridSession.restored(
+      runSeed: data.runSeed,
+      deckCopiesPerTile: data.deckCopiesPerTile,
+      maxHandSize: data.maxHandSize,
+      runRandomState: data.runRandomState,
+      blind: RummiBlindState.fromJson(data.blind),
+      deck: deck,
+      board: board,
+      hand: hand,
+      eliminated: eliminated,
+    );
+  }
+
+  static RummiRunProgress _restoreRunProgress(
+    SavedRunProgressData data,
+    RummiJesterCatalog catalog,
+  ) {
+    final ownedJesters = data.ownedJesterIds
+        .map((id) => _findCardOrThrow(catalog, id))
+        .toList(growable: false);
+    final shopOffers = data.shopOffers
+        .map(
+          (offer) => RummiShopOffer(
+            slotIndex: offer.slotIndex,
+            card: _findCardOrThrow(catalog, offer.cardId),
+            price: offer.price,
+          ),
+        )
+        .toList(growable: false);
+    final statefulValuesBySlot = data.statefulValuesBySlot.map(
+      (key, value) => MapEntry(int.parse(key), value),
+    );
+    final playedHandCounts = data.playedHandCounts.map(
+      (key, value) => MapEntry(RummiHandRank.values.byName(key), value),
+    );
+    return RummiRunProgress.restore(
+      stageIndex: data.stageIndex,
+      gold: data.gold,
+      rerollCost: data.rerollCost,
+      ownedJesters: ownedJesters,
+      shopOffers: shopOffers,
+      statefulValuesBySlot: statefulValuesBySlot,
+      playedHandCounts: playedHandCounts,
+    );
   }
 }

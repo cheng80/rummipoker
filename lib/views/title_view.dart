@@ -2,11 +2,13 @@ import 'dart:math';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../providers/features/rummi_poker_grid/title_notifier.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/in_app_review_service.dart';
@@ -15,47 +17,35 @@ import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
-class TitleView extends StatefulWidget {
+class TitleView extends ConsumerStatefulWidget {
   const TitleView({super.key});
 
   @override
-  State<TitleView> createState() => _TitleViewState();
+  ConsumerState<TitleView> createState() => _TitleViewState();
 }
 
-class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
-  bool _hasStoredActiveRun = false;
-
+class _TitleViewState extends ConsumerState<TitleView>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
-    _loadActiveRunAvailability();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) InAppReviewService.maybeRequestReviewOnTitleIfEligible();
     });
   }
 
-  Future<void> _loadActiveRunAvailability() async {
-    await ActiveRunSaveService.inspectActiveRun();
-    if (!mounted) return;
-    setState(() {
-      _hasStoredActiveRun = ActiveRunSaveService.hasStoredActiveRun();
-    });
-  }
-
   Future<void> _openContinueMenu() async {
-    final availability = await ActiveRunSaveService.inspectActiveRun();
+    final notifier = ref.read(titleNotifierProvider.notifier);
+    final titleState = await notifier.refreshAvailability();
     if (!mounted) return;
-    setState(() {
-      _hasStoredActiveRun = ActiveRunSaveService.hasStoredActiveRun();
-    });
 
-    if (!_hasStoredActiveRun) {
+    if (!titleState.hasStoredActiveRun) {
       return;
     }
 
-    if (availability == ActiveRunAvailability.available) {
+    if (titleState.lastAvailability == ActiveRunAvailability.available) {
       final action = await showAppDialog<String>(
         context,
         builder: (dialogContext) => AlertDialog(
@@ -84,7 +74,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
         await _deleteStoredRun(showMessage: true);
         return;
       }
-      final restoredRun = await ActiveRunSaveService.loadActiveRun();
+      final restoredRun = await notifier.loadStoredRun();
       if (!mounted) return;
       if (restoredRun == null) {
         await _showCorruptedSaveDialog();
@@ -127,11 +117,8 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   }
 
   Future<void> _deleteStoredRun({required bool showMessage}) async {
-    await ActiveRunSaveService.clearActiveRun();
+    await ref.read(titleNotifierProvider.notifier).clearStoredRun();
     if (!mounted) return;
-    setState(() {
-      _hasStoredActiveRun = false;
-    });
     if (showMessage) {
       showTopNotice(context, '저장 데이터를 삭제했습니다.');
     }
@@ -162,6 +149,8 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   /// 우주 배경 위에 제목·버튼을 배치한다.
   @override
   Widget build(BuildContext context) {
+    final titleState = ref.watch(titleNotifierProvider).valueOrNull;
+    final hasStoredActiveRun = titleState?.hasStoredActiveRun ?? false;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -211,7 +200,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
                         ),
                       ),
                       const SizedBox(height: 52),
-                      if (_hasStoredActiveRun) ...[
+                      if (hasStoredActiveRun) ...[
                         _RoundButton(
                           label: '이어하기',
                           color: const Color(0xFFF4A81D),

@@ -277,6 +277,20 @@ class RummiPokerGridSession {
     maxHandSize = value.clamp(kMinDebugMaxHandSize, kMaxDebugMaxHandSize);
   }
 
+  RummiPokerGridSession copySnapshot() {
+    return RummiPokerGridSession.restored(
+      runSeed: runSeed,
+      deckCopiesPerTile: deckCopiesPerTile,
+      maxHandSize: maxHandSize,
+      runRandomState: runRandom.state,
+      blind: blind.copyWith(),
+      deck: PokerDeck.fromSnapshot(deck.snapshotPile()),
+      board: RummiBoard.fromSnapshot(board.snapshotCells()),
+      hand: List<Tile>.from(hand),
+      eliminated: List<Tile>.from(eliminated),
+    );
+  }
+
   /// 현재 보드에서 5칸 완성된 **족보(점수) 줄만** 일괄 확정한다.
   ///
   /// 이 메서드의 책임은 전투 중 실시간 정산까지만이다.

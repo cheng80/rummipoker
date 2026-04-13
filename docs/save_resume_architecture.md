@@ -93,11 +93,13 @@
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "savedAt": "2026-04-13T12:34:56.000Z",
   "activeScene": "battle",
   "session": { },
-  "runProgress": { }
+  "runProgress": { },
+  "stageStartSession": { },
+  "stageStartRunProgress": { }
 }
 ```
 
@@ -114,6 +116,11 @@ UI 임시 상태는 저장하지 않는다.
 
 이유:
 - 이어하기의 본질은 **게임 상태 복원**이지 **일시 UI 상태 재현**이 아니다.
+
+추가 메모:
+- 현재 저장 포맷은 **현재 시점 상태**와 함께 **현재 스테이지 시작 시점 스냅샷**도 저장한다.
+- 옵션의 `재시작`은 세이브 삭제나 런 전체 재시작이 아니라, `stageStartSession` / `stageStartRunProgress` 복원으로 처리한다.
+- 따라서 앱을 껐다 켜도 같은 기준으로 **현재 스테이지 재시작**이 가능하다.
 
 알림 정책 메모:
 - 현재 앱의 기본 정보성 피드백은 `lib/utils/common_ui.dart` 의 `showTopNotice(...)` 를 사용한다.
@@ -147,6 +154,8 @@ UI 임시 상태는 저장하지 않는다.
 - `hand`
 - `eliminated`
 
+동일한 구조를 `stageStartSession`에도 저장한다.
+
 중요:
 - 덱 복원은 RNG 상태를 되살리는 방식이 아니라, **현재 남은 카드 순서 자체를 저장**하는 방식으로 고정한다.
 - `deckPile` 순서가 이어하기 정확도를 결정한다.
@@ -168,6 +177,8 @@ UI 임시 상태는 저장하지 않는다.
   - `price`
 - `statefulValuesBySlot`
 - `playedHandCounts`
+
+동일한 구조를 `stageStartRunProgress`에도 저장한다.
 
 중요:
 - 상태형 Jester는 슬롯 인덱스가 규칙이다.
@@ -345,6 +356,7 @@ UI 임시 상태는 저장하지 않는다.
 ## 15. 테스트 기준
 
 - 세이브 후 즉시 로드하면 `session`과 `runProgress`가 동일해야 한다
+- 세이브 후 로드한 `stageStartSession` / `stageStartRunProgress`로 현재 스테이지 재시작이 가능해야 한다
 - 덱 순서가 저장/복원 후 변하지 않아야 한다
 - `ownedJesterIds` 순서와 `statefulValuesBySlot`가 같이 복원되어야 한다
 - payload 한 필드라도 수정되면 서명 검증이 실패해야 한다
@@ -356,6 +368,7 @@ UI 임시 상태는 저장하지 않는다.
 ## 16. 현재 결정 사항 요약
 
 - 이어하기는 **런 전체 스냅샷 1개**를 저장한다
+- 그 스냅샷 안에 **현재 시점 + 현재 스테이지 시작 시점**을 함께 저장한다
 - 저장소는 **GetStorage + flutter_secure_storage + HMAC** 하이브리드 구조다
 - 세이브용 키와 푸시용 식별자는 **분리**한다
 - 1차 목표는 **단일 로컬 이어하기 + 무결성 검증**이다

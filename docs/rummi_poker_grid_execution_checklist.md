@@ -46,7 +46,13 @@
 
 ## 2. Riverpod
 
-- [ ] 세션·점수 요약 등 UI 스냅샷을 `Notifier`에 연결 (기존 `rummi_session` 확장 또는 신규)
+- [x] `GameSessionNotifier` 도입: `RummiPokerGridSession` / `RummiRunProgress` / 선택 상태 / stage flow / Jester catalog / 디버그 손패 크기를 `GameSessionState`로 관리
+- [x] `TitleNotifier` 도입: 이어하기 가능 여부 / 손상 세이브 분기 / 삭제 액션을 `TitleState`로 관리
+- [ ] `GameView` 내부 액션 핸들러를 추가 분리
+  - 저장/autosave 트리거
+  - 캐시아웃 -> 상점 -> 다음 스테이지 진행 체인
+  - 옵션/이동/알림 호출
+- [ ] 전역 설정/환경 상태 Riverpod 정리 범위 재검토
 - [ ] Flame ↔ `ref.read` 주입 패턴 확정 (`docs/riverpod_architecture.md` 참고)
 
 ---
@@ -72,13 +78,18 @@
 - [ ] rule_modifier / retrigger는 이벤트 경계 정리 전까지 보류
 - [x] Jester 슬롯 카드 표현 단순화: 제목 + 분류 배지 + 활성 표시만 노출, 상세 패널에서 설명/현재 값 확인
 - [x] 숫자 타일 face 표시: `11/12/13` 하단 중앙 점으로 구분
+- [x] 뷰 모듈화 1차: `game_shared_widgets.dart`, `game_jester_widgets.dart`, `game_hand_zone.dart`, `game_cashout_widgets.dart`, `game_shop_screen.dart` 로 분리
+- [ ] `GameView` 추가 경량화 2차
+  - stage flow/cashout/shop coordinator 추출 검토
+  - save/load/lifecycle handler 추출 검토
+  - 남은 로컬 헬퍼/레이아웃 클래스 재배치 검토
 
 ---
 
 ## 4. Flutter 셸
 
 - [x] `GameView` — `RummiPokerGridSession(runSeed)` 직결 + 만료 다이얼로그·상단 알림 + 옵션 다이얼로그 시드 복사
-- [x] 공용 UI 유틸 정리: `lib/utils/common_ui.dart` 기준 상단 알림(`showTopNotice`) + 공통 다이얼로그 래퍼로 통일
+- [x] 공용 UI 유틸 정리: `lib/utils/common_ui.dart` 기준 상단 알림(`showTopNotice`) + 하단 알림(`showBottomNotice`) + 공통 다이얼로그 래퍼로 통일
 - [ ] `TitleView` 카피·진입 문구 최종 다듬기
 - [x] 오버레이/바텀시트: 옵션 다이얼로그, 스테이지 클리어 오버레이, 캐시아웃 바텀시트
 - [x] 상점 전체 화면 라우트 + 보유 슬롯 상세/판매 + 리롤 확인 다이얼로그
@@ -121,7 +132,9 @@
 - 메타 진행: 스테이지 클리어 후 정산/상점/Jester 매매 흐름이 현재 Flutter 쪽에 연결되어 있다.
 - 스테이지 전환: 다음 스테이지 진입 시 **현재 덱 전체 리셋 + 시드 파생 셔플**로 재현 가능하게 맞췄다.
 - 이어하기 저장: 1차 구현 완료. `docs/save_resume_architecture.md` 기준으로 하이브리드(`GetStorage` payload + secure storage key + HMAC) 저장, 타이틀 `이어하기`, 손상 세이브 삭제, 기본 autosave가 연결되어 있다.
+- Riverpod 분리: `GameView`는 `GameSessionNotifier`, `TitleView`는 `TitleNotifier` 기준으로 주요 UI 상태를 읽는다.
 - 알림 정책: 현재는 **상단 오버레이 알림을 기본값**으로 사용한다. 하단 `SnackBar`는 CTA가 필요하거나, 폼/키보드와 맥락상 더 적합한 경우만 예외적으로 검토한다.
+- 모듈화 진행: 상점 / 캐시아웃 / 손패 / Jester / 공용 HUD 위젯은 별도 파일로 분리되었고, 다음 배치는 `GameView` 잔여 orchestration 정리다.
 - Jester 점수: 현재는 전투 점수에 직접 반영 가능한 조건형 효과에 더해, `economy` 1차 종료형과 `stateful_growth` 1차까지 반영되었다. 남은 큰 묶음은 `rule_modifier / retrigger`다.
 - 상점 정책: 현재는 **실시간 점수 정산에 실제 반영 가능한 Jester만 오퍼로 노출**한다. 미구현 계열은 데이터에 있어도 상점 풀에서 제외한다.
 - 카탈로그 운영: 원본 전체 common은 `jesters_common.json`, 현재 런타임용 curated 풀은 `jesters_common_phase5.json`으로 분리한다. 현재 사용 가능 common Jester는 38종이다.
