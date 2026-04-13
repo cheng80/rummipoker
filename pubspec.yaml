@@ -45,9 +45,11 @@ dependencies:
   go_router: ^17.1.0
   flame_audio: ^2.11.14
   get_storage: ^2.1.1
+  flutter_secure_storage: ^9.2.4
   wakelock_plus: ^1.2.8
   easy_localization: ^3.0.8
   intl: ^0.20.2
+  crypto: ^3.0.6
 
   package_info_plus: ^9.0.0
   in_app_review: ^2.0.11

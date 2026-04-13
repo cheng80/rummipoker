@@ -10,7 +10,7 @@
 - [x] **덱**: `copiesPerTile` 기반 (`총 장수 = 4×13×copiesPerTile`) — **52/104 공용 처리 가능**
 - [x] **평가 라인**: 행·열·주/반 대각 = **12줄** (`rummi_poker_grid_gdd.md` §1.1)
 - [x] **Straight**: 일반 연속 + 휠 **10–11–12–13–1** (`HandEvaluator._isStraight`)
-- [x] **손패 한도**: **최대 1장** — 드로우/버림 보충/UI 모두 이 기준
+- [x] **손패 한도**: 기본값은 **1장**, 현재 구현은 디버그 메뉴에서 **1~3장 조절 가능** — 드로우/버림 보충/UI가 `maxHandSize` 기준으로 동작
 - [x] **죽은 줄 / 방치**: 죽은 줄 = 하이카드·원페어; **방치·대기 ±** 미확정 — `LineHazardTuning` 기본 0 (추후 수식 가능)
 - [x] **일괄 확정**: 완성 줄 **개수 제한 없음**; 전용 버튼·완성줄 탭 동일 → 대기 줄 **전부** 한 번에
 - [x] **확정 제거 범위**: 줄 전체가 아니라 **족보 성립에 실제 기여한 카드만 제거**
@@ -77,11 +77,25 @@
 
 ## 4. Flutter 셸
 
-- [x] `GameView` — `RummiPokerGridSession(runSeed)` 직결 + 만료 다이얼로그·스낵바 + 옵션 다이얼로그 시드 복사
+- [x] `GameView` — `RummiPokerGridSession(runSeed)` 직결 + 만료 다이얼로그·상단 알림 + 옵션 다이얼로그 시드 복사
+- [x] 공용 UI 유틸 정리: `lib/utils/common_ui.dart` 기준 상단 알림(`showTopNotice`) + 공통 다이얼로그 래퍼로 통일
 - [ ] `TitleView` 카피·진입 문구 최종 다듬기
 - [x] 오버레이/바텀시트: 옵션 다이얼로그, 스테이지 클리어 오버레이, 캐시아웃 바텀시트
 - [x] 상점 전체 화면 라우트 + 보유 슬롯 상세/판매 + 리롤 확인 다이얼로그
 - [x] 상점/옵션 화면도 게임 화면과 같은 **중앙 정렬 phone-frame 레이아웃** 기준 적용
+- [ ] 하단 알림이 꼭 필요한 예외 케이스가 있는지 실기기에서 검토하고, 필요 시 `common_ui`에 하단 variant를 추가
+
+---
+
+## 4.5 이어하기 저장
+
+- [x] 이어하기 저장 아키텍처 문서화: `docs/save_resume_architecture.md`
+- [x] 저장 포맷 고정: `payload + signature + schemaVersion` 구조
+- [x] 보안 경로 고정: `GetStorage` payload + `flutter_secure_storage` 설치별 키 + `HMAC-SHA256`
+- [x] `RummiPokerGridSession` / `RummiRunProgress` 세이브 DTO 설계
+- [x] autosave 트리거 연결: 드로우/배치/버림/확정/상점/스테이지 전환/lifecycle
+- [x] 타이틀 `이어하기` 진입 및 손상 세이브 처리 UX
+- [x] 푸시 대비 키 분리 정책 유지: `saveDeviceKey` / `installationId` / `pushToken`
 
 ---
 
@@ -101,11 +115,13 @@
 
 ## 현재 진행 메모
 
-- 룰: **`copiesPerTile` 기반 포커 덱**·**손패 최대 1장**·**\(T,D_board,D_hand\)**·죽은 줄은 **보드 버림으로만 완화**·만료 **25칸 / 현재 덱 전부 소모** — `rummi_poker_grid_gdd.md` §1.1·§2.2·§8, `game_logic`
+- 룰: **`copiesPerTile` 기반 포커 덱**·**손패 기본 1장(디버그 `1~3` 조절 가능)**·**\(T,D_board,D_hand\)**·죽은 줄은 **보드 버림으로만 완화**·만료 **25칸 / 현재 덱 전부 소모** — `rummi_poker_grid_gdd.md` §1.1·§2.2·§8, `game_logic`
 - 구조 방향: **Flutter-first 전투 화면 + Flame은 필요 시 연출 레이어만 재도입** 기준 유지
 - 코드: 핸드·보드·**`PokerDeck`·`RummiPokerGridSession`**·테스트 + **`GameView` Flutter 전환** 완료. HUD 대시보드/Jester 5슬롯/5×5 보드/단일 손패/하단 액션을 위젯으로 재구성했고, Flame은 후속 효과 레이어 후보로 남겨둠.
 - 메타 진행: 스테이지 클리어 후 정산/상점/Jester 매매 흐름이 현재 Flutter 쪽에 연결되어 있다.
 - 스테이지 전환: 다음 스테이지 진입 시 **현재 덱 전체 리셋 + 시드 파생 셔플**로 재현 가능하게 맞췄다.
+- 이어하기 저장: 1차 구현 완료. `docs/save_resume_architecture.md` 기준으로 하이브리드(`GetStorage` payload + secure storage key + HMAC) 저장, 타이틀 `이어하기`, 손상 세이브 삭제, 기본 autosave가 연결되어 있다.
+- 알림 정책: 현재는 **상단 오버레이 알림을 기본값**으로 사용한다. 하단 `SnackBar`는 CTA가 필요하거나, 폼/키보드와 맥락상 더 적합한 경우만 예외적으로 검토한다.
 - Jester 점수: 현재는 전투 점수에 직접 반영 가능한 조건형 효과에 더해, `economy` 1차 종료형과 `stateful_growth` 1차까지 반영되었다. 남은 큰 묶음은 `rule_modifier / retrigger`다.
 - 상점 정책: 현재는 **실시간 점수 정산에 실제 반영 가능한 Jester만 오퍼로 노출**한다. 미구현 계열은 데이터에 있어도 상점 풀에서 제외한다.
 - 카탈로그 운영: 원본 전체 common은 `jesters_common.json`, 현재 런타임용 curated 풀은 `jesters_common_phase5.json`으로 분리한다. 현재 사용 가능 common Jester는 38종이다.

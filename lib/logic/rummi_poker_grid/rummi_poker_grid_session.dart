@@ -8,6 +8,7 @@ import 'models/poker_deck.dart';
 import 'models/tile.dart';
 import 'rummi_blind_state.dart';
 import 'rummi_poker_grid_engine.dart';
+import '../../utils/seeded_random.dart';
 
 /// 블라인드 목표 달성.
 class BlindCleared {
@@ -106,7 +107,7 @@ class RummiPokerGridSession {
   int maxHandSize;
 
   /// [runSeed]로 시드된 단일 RNG — 덱 셔플 이후에도 **같은 스트림**으로 이어짐(턴 재현).
-  final Random runRandom;
+  final SeededRandom runRandom;
 
   /// [runSeed] 생략 시 무작위. [deck] 생략 시 `PokerDeck.shuffled(Random(runSeed))`.
   factory RummiPokerGridSession({
@@ -117,7 +118,7 @@ class RummiPokerGridSession {
     RummiBoard? board,
   }) {
     final s = runSeed ?? _rollSeed();
-    final rng = Random(s);
+    final rng = SeededRandom(s);
     return RummiPokerGridSession._(
       runSeed: s,
       runRandom: rng,
@@ -139,6 +140,31 @@ class RummiPokerGridSession {
   }
 
   static int _rollSeed() => Random().nextInt(0x7fffffff);
+
+  factory RummiPokerGridSession.restored({
+    required int runSeed,
+    required int deckCopiesPerTile,
+    required int maxHandSize,
+    required int runRandomState,
+    required RummiBlindState blind,
+    required PokerDeck deck,
+    required RummiBoard board,
+    required List<Tile> hand,
+    required List<Tile> eliminated,
+  }) {
+    return RummiPokerGridSession._(
+      runSeed: runSeed,
+      runRandom: SeededRandom.fromState(runRandomState),
+      deckCopiesPerTile: deckCopiesPerTile,
+      maxHandSize: maxHandSize,
+      blind: blind,
+      deck: deck,
+      board: board,
+      hand: List<Tile>.from(hand),
+      eliminated: List<Tile>.from(eliminated),
+      engine: RummiPokerGridEngine(),
+    );
+  }
 
   static int deriveStageShuffleSeed(int runSeed, int stageIndex) {
     final mixed =
@@ -434,7 +460,7 @@ class RummiPokerGridSession {
     discardStageRemainder();
     eliminated.clear();
     deck.resetShuffled(
-      random: Random(shuffleSeed ?? deriveStageShuffleSeed(runSeed, 1)),
+      random: SeededRandom(shuffleSeed ?? deriveStageShuffleSeed(runSeed, 1)),
       copiesPerTile: deckCopiesPerTile,
     );
     blind.targetScore = targetScore;

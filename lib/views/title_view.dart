@@ -10,6 +10,8 @@ import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/in_app_review_service.dart';
+import '../services/active_run_save_service.dart';
+import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
@@ -21,14 +23,118 @@ class TitleView extends StatefulWidget {
 }
 
 class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
+  bool _hasStoredActiveRun = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
+    _loadActiveRunAvailability();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) InAppReviewService.maybeRequestReviewOnTitleIfEligible();
     });
+  }
+
+  Future<void> _loadActiveRunAvailability() async {
+    await ActiveRunSaveService.inspectActiveRun();
+    if (!mounted) return;
+    setState(() {
+      _hasStoredActiveRun = ActiveRunSaveService.hasStoredActiveRun();
+    });
+  }
+
+  Future<void> _openContinueMenu() async {
+    final availability = await ActiveRunSaveService.inspectActiveRun();
+    if (!mounted) return;
+    setState(() {
+      _hasStoredActiveRun = ActiveRunSaveService.hasStoredActiveRun();
+    });
+
+    if (!_hasStoredActiveRun) {
+      return;
+    }
+
+    if (availability == ActiveRunAvailability.available) {
+      final action = await showAppDialog<String>(
+        context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('이어하기'),
+          content: const Text(
+            '이어하기는 저장된 현재 런을 복원합니다.\n삭제하거나 그대로 이어할지 선택하세요.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop('delete'),
+              child: const Text('삭제하기'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop('continue'),
+              child: const Text('이어하기'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || action == null) return;
+      if (action == 'delete') {
+        await _deleteStoredRun(showMessage: true);
+        return;
+      }
+      final restoredRun = await ActiveRunSaveService.loadActiveRun();
+      if (!mounted) return;
+      if (restoredRun == null) {
+        await _showCorruptedSaveDialog();
+        return;
+      }
+      SoundManager.unlockForWeb();
+      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+      final router = GoRouter.of(context);
+      await SoundManager.stopBgm();
+      if (!mounted) return;
+      router.go(RoutePaths.game, extra: restoredRun);
+      return;
+    }
+
+    await _showCorruptedSaveDialog();
+  }
+
+  Future<void> _showCorruptedSaveDialog() async {
+    final action = await showAppDialog<String>(
+      context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('저장 데이터 확인'),
+        content: const Text(
+          '이어하기용 저장 데이터가 손상되었거나 현재 버전과 호환되지 않습니다.\n삭제 후 새 런을 시작하는 것을 권장합니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop('delete'),
+            child: const Text('삭제하기'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || action != 'delete') return;
+    await _deleteStoredRun(showMessage: true);
+  }
+
+  Future<void> _deleteStoredRun({required bool showMessage}) async {
+    await ActiveRunSaveService.clearActiveRun();
+    if (!mounted) return;
+    setState(() {
+      _hasStoredActiveRun = false;
+    });
+    if (showMessage) {
+      showTopNotice(context, '저장 데이터를 삭제했습니다.');
+    }
   }
 
   @override
@@ -65,104 +171,107 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
             child: SafeArea(
               child: Center(
                 child: PhoneFrame(
-                  child: Stack(
-                    fit: StackFit.expand,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Spacer(flex: 3),
-                          Text(
-                            context.tr('gameTitleBlock'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: AssetPaths.fontAngduIpsul140,
-                              fontSize: 88,
-                              fontWeight: FontWeight.bold,
-                              height: 1.05,
-                              color: const Color(0xFFFFD54F),
-                              letterSpacing: 6,
-                              shadows: [
-                                Shadow(
-                                  color: const Color(
-                                    0xFFFFD54F,
-                                  ).withValues(alpha: 0.5),
-                                  blurRadius: 24,
-                                ),
-                                const Shadow(
-                                  color: Color(0xFFE65100),
-                                  offset: Offset(2, 2),
-                                  blurRadius: 0,
-                                ),
-                              ],
+                      const SizedBox(height: 44),
+                      Text(
+                        context.tr('gameTitleBlock'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AssetPaths.fontAngduIpsul140,
+                          fontSize: 88,
+                          fontWeight: FontWeight.bold,
+                          height: 1.05,
+                          color: const Color(0xFFFFD54F),
+                          letterSpacing: 6,
+                          shadows: [
+                            Shadow(
+                              color: const Color(
+                                0xFFFFD54F,
+                              ).withValues(alpha: 0.5),
+                              blurRadius: 24,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            context.tr('gameSubtitle'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: AssetPaths.fontAngduIpsul140,
-                              fontSize: 22,
-                              color: Colors.white.withValues(alpha: 0.6),
+                            const Shadow(
+                              color: Color(0xFFE65100),
+                              offset: Offset(2, 2),
+                              blurRadius: 0,
                             ),
-                          ),
-                          const Spacer(flex: 3),
-                          _RoundButton(
-                            label: context.tr('entryRandomSeed'),
-                            color: const Color(0xFF3CAEE0),
-                            fontSize: 26,
-                            onPressed: () async {
-                              SoundManager.unlockForWeb();
-                              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                              final s = RummiPokerGridSession.rollNewRunSeed();
-                              await SoundManager.stopBgm();
-                              if (!context.mounted) return;
-                              context.go('${RoutePaths.game}?seed=$s');
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          _RoundButton(
-                            label: context.tr('entryInputSeed'),
-                            color: const Color(0xFF2DB872),
-                            fontSize: 26,
-                            onPressed: () => _openSeedInputDialog(context),
-                          ),
-                          const SizedBox(height: 20),
-                          _RoundButton(
-                            label: context.tr('settings'),
-                            color: const Color(0xFF1976D2),
-                            onPressed: () {
-                              SoundManager.unlockForWeb();
-                              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                              context.push(RoutePaths.setting);
-                            },
-                          ),
-                          const Spacer(flex: 2),
-                        ],
+                          ],
+                        ),
                       ),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                          child: FutureBuilder<PackageInfo>(
-                            future: PackageInfo.fromPlatform(),
-                            builder: (context, snapshot) {
-                              final v = snapshot.data;
-                              final text = v != null
-                                  ? 'Ver ${v.version}+${v.buildNumber}'
-                                  : 'Ver';
-                              return Center(
-                                child: Text(
-                                  text,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.5),
-                                    fontSize: 12,
-                                  ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.tr('gameSubtitle'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AssetPaths.fontAngduIpsul140,
+                          fontSize: 20,
+                          color: Colors.white.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 52),
+                      if (_hasStoredActiveRun) ...[
+                        _RoundButton(
+                          label: '이어하기',
+                          color: const Color(0xFFF4A81D),
+                          fontSize: 26,
+                          onPressed: _openContinueMenu,
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      _RoundButton(
+                        label: context.tr('entryRandomSeed'),
+                        color: const Color(0xFF3CAEE0),
+                        fontSize: 26,
+                        onPressed: () async {
+                          SoundManager.unlockForWeb();
+                          SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                          final s = RummiPokerGridSession.rollNewRunSeed();
+                          await ActiveRunSaveService.clearActiveRun();
+                          await SoundManager.stopBgm();
+                          if (!context.mounted) return;
+                          context.go('${RoutePaths.game}?seed=$s');
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _RoundButton(
+                        label: context.tr('entryInputSeed'),
+                        color: const Color(0xFF2DB872),
+                        fontSize: 26,
+                        onPressed: () => _openSeedInputDialog(context),
+                      ),
+                      const SizedBox(height: 20),
+                      _RoundButton(
+                        label: context.tr('settings'),
+                        color: const Color(0xFF1976D2),
+                        onPressed: () {
+                          SoundManager.unlockForWeb();
+                          SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                          context.push(RoutePaths.setting);
+                        },
+                      ),
+                      const Spacer(),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+                        child: FutureBuilder<PackageInfo>(
+                          future: PackageInfo.fromPlatform(),
+                          builder: (context, snapshot) {
+                            final v = snapshot.data;
+                            final text = v != null
+                                ? 'Ver ${v.version}+${v.buildNumber}'
+                                : 'Ver';
+                            return Center(
+                              child: Text(
+                                text,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.58),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -178,8 +287,8 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
 
   Future<void> _openSeedInputDialog(BuildContext context) async {
     final controller = TextEditingController();
-    await showDialog<void>(
-      context: context,
+    await showAppDialog<void>(
+      context,
       builder: (dialogContext) => AlertDialog(
         title: Text(context.tr('seedDialogTitle')),
         content: TextField(
@@ -215,14 +324,13 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   ) async {
     final v = int.tryParse(controller.text.trim());
     if (v == null) {
-      ScaffoldMessenger.of(
-        titleContext,
-      ).showSnackBar(SnackBar(content: Text(titleContext.tr('seedInvalid'))));
+      showTopNotice(titleContext, titleContext.tr('seedInvalid'));
       return;
     }
     Navigator.of(dialogContext).pop();
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    await ActiveRunSaveService.clearActiveRun();
     await SoundManager.stopBgm();
     if (!titleContext.mounted) return;
     titleContext.go('${RoutePaths.game}?seed=$v');

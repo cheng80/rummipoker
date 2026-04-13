@@ -7,6 +7,7 @@ import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../services/in_app_review_service.dart';
+import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 /// 설정 화면. 볼륨, 음소거, 화면 꺼짐 방지 설정.
@@ -210,12 +211,9 @@ class _SettingViewState extends State<SettingView> {
                                   await InAppReviewService.openStoreListing();
                               if (!context.mounted) return;
                               if (result == false) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      context.tr('rateAppAfterRelease'),
-                                    ),
-                                  ),
+                                showTopNotice(
+                                  context,
+                                  context.tr('rateAppAfterRelease'),
                                 );
                               }
                             },

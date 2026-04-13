@@ -56,6 +56,10 @@ List<Tile> tilesRemainingForBoardAndHand({
 class PokerDeck {
   PokerDeck._(List<Tile> pile) : _pile = pile;
 
+  factory PokerDeck.fromSnapshot(List<Tile> pile) {
+    return PokerDeck._(List<Tile>.from(pile));
+  }
+
   /// [source]를 섞아 새 덱을 만든다. 기본은 표준 덱.
   factory PokerDeck.shuffled([
     Random? random,
@@ -86,6 +90,8 @@ class PokerDeck {
   }
 
   final List<Tile> _pile;
+
+  List<Tile> snapshotPile() => List<Tile>.unmodifiable(_pile);
 
   int get remaining => _pile.length;
 

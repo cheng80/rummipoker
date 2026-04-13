@@ -33,6 +33,20 @@ class Tile {
 
   String get code => '${color.code}$number';
 
+  Map<String, dynamic> toJson() => {
+    'color': color.name,
+    'number': number,
+    'id': id,
+  };
+
+  static Tile fromJson(Map<String, dynamic> json) {
+    return Tile(
+      color: TileColor.values.byName(json['color'] as String),
+      number: (json['number'] as num).toInt(),
+      id: (json['id'] as num?)?.toInt() ?? 0,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       other is Tile &&

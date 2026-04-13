@@ -2,6 +2,8 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'dart:math';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
@@ -905,5 +907,70 @@ void main() {
     expect(out.result.baseScore, 25);
     expect(out.result.scoreAdded, 91);
     expect(out.result.jesterBonus, 66);
+  });
+
+  test('세션 RNG 상태를 복원하면 다음 난수 흐름이 이어진다', () {
+    final session = RummiPokerGridSession(runSeed: 98765);
+    final first = session.runRandom.nextInt(100000);
+    final second = session.runRandom.nextInt(100000);
+
+    final restored = RummiPokerGridSession.restored(
+      runSeed: session.runSeed,
+      deckCopiesPerTile: session.deckCopiesPerTile,
+      maxHandSize: session.maxHandSize,
+      runRandomState: session.runRandom.state,
+      blind: session.blind.copyWith(),
+      deck: PokerDeck.fromSnapshot(session.deck.snapshotPile()),
+      board: session.board.copy(),
+      hand: List<Tile>.from(session.hand),
+      eliminated: List<Tile>.from(session.eliminated),
+    );
+
+    expect(first, isNot(equals(second)));
+    expect(
+      restored.runRandom.nextInt(100000),
+      session.runRandom.nextInt(100000),
+    );
+  });
+
+  test('RummiRunProgress.restore는 stateful 값과 누적 족보 카운트를 유지한다', () {
+    final original = RummiRunProgress();
+    original.ownedJesters.addAll([
+      jester(
+        id: 'ride_the_bus',
+        effectType: 'stateful_growth',
+        conditionType: 'none',
+      ),
+      jester(
+        id: 'supernova',
+        effectType: 'stateful_growth',
+        conditionType: 'none',
+      ),
+    ]);
+    original.onConfirmedLines([
+      ConfirmedLineBreakdown(
+        ref: LineRef.row(0),
+        rank: RummiHandRank.straight,
+        baseScore: 70,
+        finalScore: 70,
+        jesterBonus: 0,
+        hasScoringFaceCard: false,
+        effects: [],
+      ),
+    ]);
+
+    final restored = RummiRunProgress.restore(
+      stageIndex: original.stageIndex,
+      gold: original.gold,
+      rerollCost: original.rerollCost,
+      ownedJesters: List<RummiJesterCard>.from(original.ownedJesters),
+      shopOffers: List<RummiShopOffer>.from(original.shopOffers),
+      statefulValuesBySlot: original.snapshotStatefulValuesBySlot(),
+      playedHandCounts: original.snapshotPlayedHandCounts(),
+    );
+
+    final snapshot = restored.buildRuntimeSnapshot();
+    expect(snapshot.stateValueForSlot(0), 1);
+    expect(snapshot.playedCountForRank(RummiHandRank.straight), 1);
   });
 }

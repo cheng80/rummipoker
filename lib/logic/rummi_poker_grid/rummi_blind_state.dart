@@ -38,6 +38,30 @@ class RummiBlindState {
 
   bool get isTargetMet => scoreTowardBlind >= targetScore;
 
+  Map<String, dynamic> toJson() {
+    return {
+      'targetScore': targetScore,
+      'boardDiscardsRemaining': boardDiscardsRemaining,
+      'boardDiscardsMax': boardDiscardsMax,
+      'handDiscardsRemaining': handDiscardsRemaining,
+      'handDiscardsMax': handDiscardsMax,
+      'scoreTowardBlind': scoreTowardBlind,
+    };
+  }
+
+  static RummiBlindState fromJson(Map<String, dynamic> json) {
+    return RummiBlindState(
+      targetScore: (json['targetScore'] as num).toInt(),
+      boardDiscardsRemaining:
+          (json['boardDiscardsRemaining'] as num?)?.toInt(),
+      boardDiscardsMax: (json['boardDiscardsMax'] as num?)?.toInt(),
+      handDiscardsRemaining:
+          (json['handDiscardsRemaining'] as num?)?.toInt(),
+      handDiscardsMax: (json['handDiscardsMax'] as num?)?.toInt(),
+      scoreTowardBlind: (json['scoreTowardBlind'] as num?)?.toInt() ?? 0,
+    );
+  }
+
   RummiBlindState copyWith({
     int? targetScore,
     int? boardDiscardsRemaining,

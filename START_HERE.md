@@ -7,7 +7,7 @@
 
 ## 대화 시작 시 한 줄
 
-**「`START_HERE.md`와 `docs/rummi_poker_grid_execution_checklist.md`를 보고, 현재 우선 작업인 Jester 문구 정리 / rule_modifier 분류 / 후속 메타 설계부터 이어가자.」**
+**「`START_HERE.md`, `docs/rummi_poker_grid_execution_checklist.md`, `docs/save_resume_architecture.md`를 보고, 이어하기 저장 아키텍처와 현재 우선 작업을 같이 확인한 뒤 진행하자.」**
 
 ---
 
@@ -18,8 +18,9 @@
 | 1 | **이 파일** (`START_HERE.md`) | 아래 §2, §3만 먼저 확인 |
 | 2 | [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md) | 체크 안 된 다음 작업 확인 |
 | 3 | [`docs/DESIGN.md`](docs/DESIGN.md) | 현재 화면에 적용할 디자인 기준 확인 |
-| 4 | [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md) | 룰 충돌이 생길 때만 확인 |
-| 5 | [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md) | 구현 세부 기준 확인 |
+| 4 | [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md) | 이어하기 저장/복원/키 분리 정책 확인 |
+| 5 | [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md) | 룰 충돌이 생길 때만 확인 |
+| 6 | [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md) | 구현 세부 기준 확인 |
 
 ---
 
@@ -31,7 +32,8 @@
   - `12줄` 평가
   - 덱은 `copiesPerTile` 기반 (`총 장수 = 4색 × 13랭크 × copiesPerTile`)
   - 현재 기본값은 `copiesPerTile = 1` 이라 `52장`, 필요 시 `2`로 올리면 `104장`
-  - 손패 최대 `1장`
+  - 손패 기본값은 `1장`
+  - 현재 구현에는 디버그용 `maxHandSize` 변수가 있고, 게임 화면에서 `1~3장`까지 조절 가능
   - 목표 점수 `T`
   - 버림 자원은 **보드 버림 `D_board` / 손패 버림 `D_hand`** 으로 분리
   - 죽은 줄은 **줄 확정으로 제거하지 않고**, **보드 타일 하나를 버려서 완화**
@@ -42,11 +44,12 @@
 - 순수 로직: `lib/logic/rummi_poker_grid/` 에 기본 엔진/세션/덱/보드/테스트가 들어와 있다.
 - 게임 로직: `lib/logic/rummi_poker_grid/` 의 세션/엔진이 플레이 규칙을 담당한다.
 - Flutter 화면: `lib/views/game_view.dart` 에서 **상단 HUD / Jester 5슬롯 / 5x5 보드 / 단일 손패 / 액션 버튼**을 직접 그린다.
+- 공용 UI 유틸: `lib/utils/common_ui.dart` 에서 **상단 알림(`showTopNotice`) / 공통 다이얼로그(`showAppDialog`, `showConfirmDialog`)** 를 관리한다.
 - Flame 코드는 당장 핵심 화면 책임에서 한 발 물러났고, 이후 필요 시 **드로우/정산/조커 연출 레이어**로만 재도입하는 방향이 현재 판단이다.
 - 디자인 문서: [`docs/DESIGN.md`](docs/DESIGN.md) 를 현재 코드/룰 기준으로 최신화했다.
 - 최근 작업:
   - `RummiPokerGridSession.confirmAllFullLines()` 를 **족보 기여 카드만 제거**하도록 수정했다.
-  - 손패 한도를 **최대 1장**으로 유지했고, 테스트/문서도 같이 갱신했다.
+  - 손패 기본 한도를 `1장`으로 두되, 디버그 메뉴에서 `1~3장` 조절이 가능하도록 유지했고, 관련 테스트/문서 기준도 함께 갱신했다.
   - `GameView` 를 **Flutter 위젯 기반 전투 화면**으로 전환했다.
   - 시드 번호는 상단 HUD에서 제거하고 **옵션 다이얼로그에서만 복사 가능**하게 정리했다.
   - Jester 슬롯 5장, 5x5 보드, 단일 손패, 하단 액션 버튼의 밀도를 다시 맞췄다.
@@ -111,7 +114,7 @@
 - 줄 확정 시 **기본 점수 + 제스터 보너스**가 어떻게 합산되는지 설명이 필요한지
 - 스테이지 클리어 후 **상점이 전체 화면**이라는 점과, 다음 스테이지 진입 시 **시드 기반 덱 리셋/셔플**이 문서에 반영되어 있는지
 - Jester 한글화/정보 패널/판매 동선이 실제 UI와 같은 말로 정리되어 있는지
-- 손패 최대 1장 규칙이 계속 유지되는지
+- 손패 기본값 `1장`과 디버그 조절 범위 `1~3장` 설명이 문서 전체에 일관되게 반영되어 있는지
 
 ---
 
@@ -140,6 +143,15 @@
 - 웨이스트 슬롯은 현재 룰상 불필요하다고 판단하여 **폐기**했다.
 - common Jester 전체를 그대로 쓰지 않고, 현재 룰에 맞는 curated 런타임 카탈로그 `data/common/jesters_common_phase5.json`만 분리해 사용한다.
 - 정산 체인은 붙어 있고, **economy 2차 1차분**과 **stateful 1차**도 이미 코드에 반영되었다.
+- 이어하기 기능 1차 구현이 들어갔다.
+- 저장 방식은 **GetStorage payload + secure storage key + HMAC 서명** 하이브리드다.
+- 알림/다이얼로그는 `lib/utils/common_ui.dart` 기준으로 공용화했다.
+- 타이틀은 이제 **이어하기 / 랜덤 시작 / 시드 시작**을 분리한다.
+- `이어하기`는 저장된 현재 런 복원이고, `랜덤 시작`/`시드 시작`은 모두 새 런 시작이다.
+- `이어하기`를 누르면 **이어하기 / 삭제하기 / 취소** 메뉴가 먼저 나오고, 손상 세이브는 삭제 유도 다이얼로그로 분기한다.
+- 인게임은 **드로우/배치/버림/확정/상점/스테이지 전환/lifecycle autosave**가 연결되어 있다.
+- 정보성 피드백은 현재 **하단 `SnackBar` 대신 상단 오버레이 알림**을 기본으로 사용한다.
+- 푸시를 붙이더라도 세이브용 `saveDeviceKey`는 푸시 토큰/설치 ID와 분리한다.
 - 경제 고정값은 현재 아래 값으로 유지 중이다.
   - 시작 골드 `10`
   - 스테이지 클리어 기본 보상 `10`
@@ -161,15 +173,20 @@
 
 ## 7. 다음 작업 순서 메모
 
-1. 유저 노출 문구 정리
+1. 이어하기 저장 1차 실기기 검증
+   - 앱 강제 종료 / 상점 열린 상태 / 다음 스테이지 직전 / 손상 세이브 삭제 동선이 실제 기기에서 기대대로 동작하는지 확인
+2. 알림 정책 실기기 점검
+   - 현재 상단 오버레이 알림이 모든 주요 화면에서 버튼/HUD를 과하게 가리지 않는지 확인
+   - CTA가 필요한 예외 케이스만 하단 variant가 필요한지 검토
+3. 유저 노출 문구 정리
    - 상세 패널 설명에서 `멀트` 같은 내부 용어를 유지할지, `배율`/`추가 배율`로 바꿀지 결정
-2. `rule_modifier` common 분류 착수
+4. `rule_modifier` common 분류 착수
    - id 인덱스 순서대로 전수 확인
    - 즉시 적용 가능 / 후순위 / 외부 시스템 의존으로 한 번에 분리
-3. 검사 상점 상태 정리
+5. 검사 상점 상태 정리
    - 지금은 8장 검사 오퍼 강제 노출 상태
    - 다음 작업 전에 유지 여부를 결정
-4. 보류 유지
+6. 보류 유지
    - `retrigger`
    - 외부 시스템 의존 `stateful_growth`
 
@@ -179,12 +196,13 @@
 
 1. [`START_HERE.md`](START_HERE.md)
 2. [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md)
-3. [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md)
-4. [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md)
-5. [`lib/views/game_view.dart`](lib/views/game_view.dart)
-6. [`lib/logic/rummi_poker_grid/jester_meta.dart`](lib/logic/rummi_poker_grid/jester_meta.dart)
-7. [`lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`](lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)
-8. 필요할 때만 [`docs/DESIGN.md`](docs/DESIGN.md)
+3. [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md)
+4. [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md)
+5. [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md)
+6. [`lib/views/game_view.dart`](lib/views/game_view.dart)
+7. [`lib/logic/rummi_poker_grid/jester_meta.dart`](lib/logic/rummi_poker_grid/jester_meta.dart)
+8. [`lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`](lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)
+9. 필요할 때만 [`docs/DESIGN.md`](docs/DESIGN.md)
 
 ## 9. 세션 종료 전 갱신 규칙
 
@@ -192,9 +210,11 @@
 
 1. 끝낸 항목이 있으면 [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md) 체크 상태를 갱신
 2. 덱 장수, 만료, 메타 루프, Jester 효과 범위를 건드렸으면 [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md), [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md) 같이 수정
-3. 디자인 방향이 바뀌었으면 [`docs/DESIGN.md`](docs/DESIGN.md) 수정
-4. 새 세션이 바로 이어질 수 있게 이 문서의 §3 “지금 가장 중요한 작업”을 최신 상태로 유지
+3. 이어하기 저장/복원/키 정책을 건드렸으면 [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md) 를 같이 수정
+4. 디자인 방향이 바뀌었으면 [`docs/DESIGN.md`](docs/DESIGN.md) 수정
+5. 알림/다이얼로그 정책을 건드렸으면 `lib/utils/common_ui.dart` 와 체크리스트 메모를 같이 갱신
+6. 새 세션이 바로 이어질 수 있게 이 문서의 §3 “지금 가장 중요한 작업”을 최신 상태로 유지
 
 ## 10. 한 줄 요약
 
-**다음 세션은 `START_HERE.md`로 시작하고, 현재는 `copiesPerTile` 기반 덱 + Flutter 위젯 전투 화면 + 실시간 정산/캐시아웃/전체화면 상점 흐름 + economy 2차 1차분 + stateful 1차 + phase5 curated common 38종 기준으로 문서와 코드를 함께 유지하면 된다.**
+**다음 세션은 `START_HERE.md`와 `docs/save_resume_architecture.md`로 시작하고, 현재는 `copiesPerTile` 기반 덱 + Flutter 위젯 전투 화면 + 실시간 정산/캐시아웃/전체화면 상점 흐름 + economy 2차 1차분 + stateful 1차 + phase5 curated common 38종 + 하이브리드 이어하기 저장 1차 구현 기준으로 문서와 코드를 함께 유지하면 된다.**

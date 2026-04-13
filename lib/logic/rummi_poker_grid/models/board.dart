@@ -8,7 +8,14 @@ class RummiBoard {
 
   RummiBoard._(this._cells);
 
+  factory RummiBoard.fromSnapshot(List<Tile?> cells) {
+    assert(cells.length == kBoardSize * kBoardSize);
+    return RummiBoard._(List<Tile?>.from(cells));
+  }
+
   final List<Tile?> _cells;
+
+  List<Tile?> snapshotCells() => List<Tile?>.unmodifiable(_cells);
 
   /// 깊은 복사 (타일은 불변이라 참조 복사).
   RummiBoard copy() => RummiBoard._(List<Tile?>.from(_cells));

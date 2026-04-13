@@ -394,12 +394,15 @@ class RummiJesterCatalog {
 }
 
 class RummiShopOffer {
-  const RummiShopOffer({required this.slotIndex, required this.card});
+  RummiShopOffer({
+    required this.slotIndex,
+    required this.card,
+    int? price,
+  }) : price = price ?? card.baseCost;
 
   final int slotIndex;
   final RummiJesterCard card;
-
-  int get price => card.baseCost;
+  final int price;
 }
 
 class RummiCashOutBreakdown {
@@ -456,6 +459,23 @@ class RummiEconomyConfig {
 }
 
 class RummiRunProgress {
+  RummiRunProgress();
+
+  RummiRunProgress.restore({
+    required this.stageIndex,
+    required this.gold,
+    required this.rerollCost,
+    required List<RummiJesterCard> ownedJesters,
+    required List<RummiShopOffer> shopOffers,
+    required Map<int, int> statefulValuesBySlot,
+    required Map<RummiHandRank, int> playedHandCounts,
+  }) {
+    this.ownedJesters.addAll(ownedJesters);
+    this.shopOffers.addAll(shopOffers);
+    _statefulValuesBySlot.addAll(statefulValuesBySlot);
+    _playedHandCounts.addAll(playedHandCounts);
+  }
+
   static const int maxJesterSlots = 5;
   static const int stageClearGoldBase = RummiEconomyConfig.stageClearGoldBase;
   static const int remainingBoardDiscardGoldBonus =
@@ -471,6 +491,12 @@ class RummiRunProgress {
   final List<RummiShopOffer> shopOffers = <RummiShopOffer>[];
   final Map<int, int> _statefulValuesBySlot = <int, int>{};
   final Map<RummiHandRank, int> _playedHandCounts = <RummiHandRank, int>{};
+
+  Map<int, int> snapshotStatefulValuesBySlot() =>
+      Map<int, int>.unmodifiable(_statefulValuesBySlot);
+
+  Map<RummiHandRank, int> snapshotPlayedHandCounts() =>
+      Map<RummiHandRank, int>.unmodifiable(_playedHandCounts);
 
   int targetForStage(int stageNumber) {
     if (stageNumber <= 1) {

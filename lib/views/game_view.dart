@@ -17,20 +17,27 @@ import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../resources/asset_paths.dart';
 import '../resources/jester_translation_scope.dart';
 import '../resources/sound_manager.dart';
+import '../services/active_run_save_service.dart';
+import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 enum _StageFlowPhase { none, confirmSettlement, cleared, settlement }
 
 class GameView extends StatefulWidget {
-  const GameView({super.key, required this.runSeed});
+  const GameView({
+    super.key,
+    required this.runSeed,
+    this.restoredRun,
+  });
 
   final int runSeed;
+  final ActiveRunRuntimeState? restoredRun;
 
   @override
   State<GameView> createState() => _GameViewState();
 }
 
-class _GameViewState extends State<GameView> {
+class _GameViewState extends State<GameView> with WidgetsBindingObserver {
   static const List<String> _shopInspectOfferIds = [
     'green_jester',
     'popcorn',
@@ -43,7 +50,9 @@ class _GameViewState extends State<GameView> {
   ];
 
   late final RummiPokerGridSession _session;
-  final RummiRunProgress _runProgress = RummiRunProgress();
+  late final RummiRunProgress _runProgress;
+  late ActiveRunScene _activeRunScene;
+  bool _pendingResumeShop = false;
 
   Tile? _selectedHandTile;
   int? _selectedBoardRow;
@@ -61,9 +70,40 @@ class _GameViewState extends State<GameView> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMain);
-    _session = RummiPokerGridSession(runSeed: widget.runSeed);
+    final restoredRun = widget.restoredRun;
+    if (restoredRun != null) {
+      _session = restoredRun.session;
+      _runProgress = restoredRun.runProgress;
+      _activeRunScene = restoredRun.activeScene;
+      _pendingResumeShop = restoredRun.activeScene == ActiveRunScene.shop;
+    } else {
+      _session = RummiPokerGridSession(runSeed: widget.runSeed);
+      _runProgress = RummiRunProgress();
+      _activeRunScene = ActiveRunScene.battle;
+    }
     _loadJesterCatalog();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+        _saveActiveRun();
+        break;
+      case AppLifecycleState.detached:
+      case AppLifecycleState.resumed:
+        break;
+    }
   }
 
   Future<void> _loadJesterCatalog() async {
@@ -75,6 +115,24 @@ class _GameViewState extends State<GameView> {
       setState(() {
         _jesterCatalog = catalog;
       });
+      await _saveActiveRun();
+      if (_pendingResumeShop) {
+        _pendingResumeShop = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          final nextStage = await _showShopScreen();
+          if (!mounted) return;
+          if (nextStage == true) {
+            setState(() {
+              _runProgress.advanceStage(_session, runSeed: widget.runSeed);
+              _clearSelections();
+            });
+            _showSnack('스테이지 ${_runProgress.stageIndex} 시작');
+          }
+          await _saveActiveRun(scene: ActiveRunScene.battle);
+          _refresh();
+        });
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -88,6 +146,15 @@ class _GameViewState extends State<GameView> {
     setState(() {});
   }
 
+  Future<void> _saveActiveRun({ActiveRunScene? scene}) async {
+    _activeRunScene = scene ?? _activeRunScene;
+    await ActiveRunSaveService.saveActiveRun(
+      activeScene: _activeRunScene,
+      session: _session,
+      runProgress: _runProgress,
+    );
+  }
+
   void _setDebugMaxHandSize(int value) {
     setState(() {
       _session.setDebugMaxHandSize(value);
@@ -95,13 +162,12 @@ class _GameViewState extends State<GameView> {
         _selectedHandTile = null;
       }
     });
+    _saveActiveRun();
   }
 
   void _showSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showTopNotice(context, message);
   }
 
   void _showGameOver(List<RummiExpirySignal> signals) {
@@ -135,9 +201,11 @@ class _GameViewState extends State<GameView> {
             ),
             const SizedBox(height: 18),
             FilledButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
                 SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                await ActiveRunSaveService.clearActiveRun();
+                if (!mounted) return;
                 context.go(RoutePaths.title);
               },
               style: FilledButton.styleFrom(
@@ -237,6 +305,7 @@ class _GameViewState extends State<GameView> {
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
       setState(_clearSelections);
       _afterAction();
+      _saveActiveRun();
       return;
     }
 
@@ -270,6 +339,7 @@ class _GameViewState extends State<GameView> {
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     _refresh();
     _afterAction();
+    _saveActiveRun();
   }
 
   void _discardSelectedBoardTile() {
@@ -294,6 +364,7 @@ class _GameViewState extends State<GameView> {
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     setState(_clearSelections);
     _afterAction();
+    _saveActiveRun();
   }
 
   void _discardSelectedHandTile() {
@@ -317,6 +388,7 @@ class _GameViewState extends State<GameView> {
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     setState(_clearSelections);
     _afterAction();
+    _saveActiveRun();
   }
 
   void _confirmLines() {
@@ -350,6 +422,7 @@ class _GameViewState extends State<GameView> {
       shouldClearAfter: out.cleared != null,
     );
     _afterAction();
+    _saveActiveRun();
   }
 
   Future<void> _runConfirmSettlementFlow({
@@ -422,6 +495,7 @@ class _GameViewState extends State<GameView> {
     _session.discardStageRemainder();
     final breakdown = _runProgress.buildCashOutBreakdown(_session);
     _runProgress.applyCashOut(breakdown);
+    await _saveActiveRun();
 
     setState(() {
       _stageFlowPhase = _StageFlowPhase.none;
@@ -434,6 +508,7 @@ class _GameViewState extends State<GameView> {
       catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
       rng: _session.runRandom,
     );
+    await _saveActiveRun(scene: ActiveRunScene.shop);
     _refresh();
 
     final nextStage = await _showShopScreen();
@@ -443,6 +518,7 @@ class _GameViewState extends State<GameView> {
       _runProgress.advanceStage(_session, runSeed: widget.runSeed);
       _clearSelections();
     });
+    await _saveActiveRun(scene: ActiveRunScene.battle);
     _showSnack('스테이지 ${_runProgress.stageIndex} 시작');
   }
 
@@ -471,6 +547,7 @@ class _GameViewState extends State<GameView> {
           catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
           rng: _session.runRandom,
           runSeed: widget.runSeed,
+          onStateChanged: _saveActiveRun,
         ),
       ),
     );
@@ -484,10 +561,12 @@ class _GameViewState extends State<GameView> {
       preferredOfferIds: _shopInspectOfferIds,
       offerCountOverride: _shopInspectOfferIds.length,
     );
+    await _saveActiveRun(scene: ActiveRunScene.shop);
     _refresh();
     _showSnack('검사용 상점 오퍼 ${_shopInspectOfferIds.length}장 표시');
     await _showShopScreen();
     if (!mounted) return;
+    await _saveActiveRun(scene: ActiveRunScene.battle);
     _refresh();
   }
 
@@ -563,9 +642,7 @@ class _GameViewState extends State<GameView> {
                             ClipboardData(text: '${widget.runSeed}'),
                           );
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('시드 번호를 복사했습니다.')),
-                          );
+                          showTopNotice(context, '시드 번호를 복사했습니다.');
                         },
                         icon: const Icon(Icons.copy_rounded),
                         color: Colors.white,
@@ -851,7 +928,7 @@ class _GameLayout extends StatelessWidget {
               onOptionsTap: onOptionsTap,
               onShopTestTap: onShopTestTap,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.only(left: 2),
               child: Row(
@@ -891,7 +968,7 @@ class _GameLayout extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             _JesterStrip(
               cards: runProgress.ownedJesters,
               runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
@@ -899,7 +976,7 @@ class _GameLayout extends StatelessWidget {
               settlementSequenceTick: settlementSequenceTick,
               onTapCard: onJesterTap,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Expanded(
               child: _BoardGrid(
                 board: session.board,
@@ -911,7 +988,7 @@ class _GameLayout extends StatelessWidget {
                 onTapCell: onBoardCellTap,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             _HandZone(
               session: session,
               hand: List<Tile>.from(session.hand),
@@ -920,49 +997,40 @@ class _GameLayout extends StatelessWidget {
               onDraw: onDraw,
               tileWidth: tileWidth,
             ),
-            const SizedBox(height: 8),
-            Column(
+            const SizedBox(height: 6),
+            Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ActionButton(
-                        label: '보드패 버림',
-                        background: const Color(0xFF44554C),
-                        onPressed: onBoardDiscard,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ActionButton(
-                        label: '손패 버림',
-                        background: const Color(0xFF5B4D33),
-                        onPressed: onHandDiscard,
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  child: _ActionButton(
+                    label: '줄 확정',
+                    background: const Color(0xFFF4A81D),
+                    foreground: Colors.black,
+                    onPressed: onConfirm,
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _ActionButton(
-                        label: '줄 확정',
-                        background: const Color(0xFFF4A81D),
-                        foreground: Colors.black,
-                        onPressed: onConfirm,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ActionButton(
-                        label: '선택 해제',
-                        background: const Color(0xFF44554C),
-                        onPressed: onClearSelection,
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionButton(
+                    label: '보드 버림',
+                    background: const Color(0xFF44554C),
+                    onPressed: onBoardDiscard,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionButton(
+                    label: '손패 버림',
+                    background: const Color(0xFF5B4D33),
+                    onPressed: onHandDiscard,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionButton(
+                    label: '선택 해제',
+                    background: const Color(0xFF4C5A55),
+                    onPressed: onClearSelection,
+                  ),
                 ),
               ],
             ),
@@ -994,7 +1062,7 @@ class _TopHud extends StatelessWidget {
         : (blind.scoreTowardBlind / blind.targetScore).clamp(0.0, 1.0);
 
     return SizedBox(
-      height: 84,
+      height: 76,
       child: Row(
         children: [
           Expanded(
@@ -1009,7 +1077,7 @@ class _TopHud extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Expanded(
                     child: Align(
                       alignment: Alignment.centerLeft,
@@ -1024,7 +1092,7 @@ class _TopHud extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     '보상 +${RummiRunProgress.stageClearGoldBase}',
                     style: _hudSubStyle,
@@ -1054,7 +1122,7 @@ class _TopHud extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Expanded(
                     child: Align(
                       alignment: Alignment.centerLeft,
@@ -1069,7 +1137,7 @@ class _TopHud extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(99),
                     child: LinearProgressIndicator(
@@ -1174,7 +1242,7 @@ class _BottomInfoRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white70,
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1187,7 +1255,7 @@ class _BottomInfoRow extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white70,
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1200,7 +1268,7 @@ class _BottomInfoRow extends StatelessWidget {
             textAlign: TextAlign.right,
             style: const TextStyle(
               color: Colors.white70,
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1225,7 +1293,7 @@ class _DebugShopHandCluster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 5, 8, 6),
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 5),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
@@ -1247,7 +1315,7 @@ class _DebugShopHandCluster extends StatelessWidget {
                 height: 1,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               mainAxisSize: MainAxisSize.max,
@@ -2084,25 +2152,25 @@ class _HandZoneState extends State<_HandZone>
     return Column(
       children: [
         _BottomInfoRow(session: widget.session),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         SizedBox(
-          height: 88,
+          height: 76,
           child: Row(
             children: [
               SizedBox(
-                width: 82,
+                width: 72,
                 child: _ActionButton(
                   label: '드로우',
                   background: const Color(0xFF267B67),
                   onPressed: widget.onDraw,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.08),
                     ),
@@ -2858,12 +2926,14 @@ class _ShopScreen extends StatefulWidget {
     required this.catalog,
     required this.rng,
     required this.runSeed,
+    required this.onStateChanged,
   });
 
   final RummiRunProgress runProgress;
   final List<RummiJesterCard> catalog;
   final Random rng;
   final int runSeed;
+  final Future<void> Function() onStateChanged;
 
   @override
   State<_ShopScreen> createState() => _ShopScreenState();
@@ -3119,9 +3189,7 @@ class _ShopScreenState extends State<_ShopScreen> {
       rng: widget.rng,
     );
     if (!ok) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('리롤 골드가 부족합니다.')));
+      showTopNotice(context, '리롤 골드가 부족합니다.');
       return;
     }
     setState(() {
@@ -3130,6 +3198,7 @@ class _ShopScreenState extends State<_ShopScreen> {
           ? null
           : 0;
     });
+    await widget.onStateChanged();
   }
 
   void _buySelected() {
@@ -3142,7 +3211,7 @@ class _ShopScreenState extends State<_ShopScreen> {
               RummiRunProgress.maxJesterSlots
           ? '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.'
           : '골드가 부족합니다.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+      showTopNotice(context, text);
       return;
     }
     setState(() {
@@ -3153,14 +3222,13 @@ class _ShopScreenState extends State<_ShopScreen> {
         _selectedOfferIndex = widget.runProgress.shopOffers.isEmpty ? null : 0;
       }
     });
+    widget.onStateChanged();
   }
 
   void _sellOwned(int index) {
     final ok = widget.runProgress.sellOwnedJester(index);
     if (!ok) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('제스터를 판매했습니다.')));
+    showTopNotice(context, '제스터를 판매했습니다.');
     setState(() {
       if (widget.runProgress.ownedJesters.isEmpty) {
         _selectedOwnedIndex = null;
@@ -3172,6 +3240,7 @@ class _ShopScreenState extends State<_ShopScreen> {
         );
       }
     });
+    widget.onStateChanged();
   }
 
   Future<void> _openOptions() async {
@@ -3241,9 +3310,7 @@ class _ShopScreenState extends State<_ShopScreen> {
                             ClipboardData(text: '${widget.runSeed}'),
                           );
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('시드 번호를 복사했습니다.')),
-                          );
+                          showTopNotice(context, '시드 번호를 복사했습니다.');
                         },
                         icon: const Icon(Icons.copy_rounded),
                         color: Colors.white,
@@ -3830,7 +3897,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 54,
+      height: 48,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -3839,9 +3906,10 @@ class _ActionButton extends StatelessWidget {
           backgroundColor: background,
           foregroundColor: foreground,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
         ),
         child: FittedBox(fit: BoxFit.scaleDown, child: Text(label)),
       ),
