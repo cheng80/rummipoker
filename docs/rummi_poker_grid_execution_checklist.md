@@ -48,11 +48,20 @@
 
 - [x] `GameSessionNotifier` 도입: `RummiPokerGridSession` / `RummiRunProgress` / 선택 상태 / stage flow / Jester catalog / 디버그 손패 크기를 `GameSessionState`로 관리
 - [x] `TitleNotifier` 도입: 이어하기 가능 여부 / 손상 세이브 분기 / 삭제 액션을 `TitleState`로 관리
-- [ ] `GameView` 내부 액션 핸들러를 추가 분리
-  - 저장/autosave 트리거
-  - 캐시아웃 -> 상점 -> 다음 스테이지 진행 체인
-  - 옵션/이동/알림 호출
-- [ ] 전역 설정/환경 상태 Riverpod 정리 범위 재검토
+- [x] `GameView` 내부 액션 핸들러를 추가 분리
+  - 옵션 다이얼로그 → `game_options_dialog.dart`
+  - 게임오버 다이얼로그 → `game_shared_widgets.dart` (`showGameOverDialog`)
+  - 줄 확정/보드 스냅샷/정산 준비 → `GameSessionNotifier.confirmLines()`
+  - 캐시아웃 계산/적용 → `GameSessionNotifier.prepareCashOut()`
+  - 상점 오픈 → `GameSessionNotifier.openShop()`
+  - 다음 스테이지 진입 → `GameSessionNotifier.advanceToNextStage()`
+  - 현재 스테이지 재시작 → `GameSessionNotifier.restartCurrentStage()`
+  - JESTER 헤더 행 → `GameJesterHeaderRow` 위젯
+- [x] 전역 설정/환경 상태 Riverpod 정리: `SettingsNotifier` + `SettingsState` 도입
+  - `SettingView` → `ConsumerWidget`으로 전환 (로컬 setState 제거)
+  - `App` → `ConsumerWidget`으로 전환, Wakelock 초기 적용을 Notifier로 통합
+  - `main.dart`에서 중복 `_applyKeepScreenOn()` 제거
+  - 설정 변경 흐름: `SettingsNotifier` → `GameSettings`(영구 저장) + `SoundManager`(런타임) + `WakelockPlus`
 - [ ] Flame ↔ `ref.read` 주입 패턴 확정 (`docs/riverpod_architecture.md` 참고)
 
 ---
@@ -83,10 +92,18 @@
 - [x] `StarryBackground` 성능 최적화: 그룹 Opacity 방식 (래스터 캐싱 + FadeTransition GPU alpha, paint() 재호출 0회/프레임)
 - [x] `TitleView` → `PhoneFrameScaffold` 통일: 모든 뷰가 동일한 `PhoneFrameScaffold` 패턴 사용
 - [x] `GameView` 전환 버벅임 해소: BGM/카탈로그 로딩을 `addPostFrameCallback`으로 지연
-- [ ] `GameView` 추가 경량화 2차
-  - stage flow/cashout/shop coordinator 추출 검토
-  - save/load/lifecycle handler 추출 검토
-  - 남은 로컬 헬퍼/레이아웃 클래스 재배치 검토
+- [x] `GameView` 추가 경량화 2차
+  - stage flow coordinator 비즈니스 로직을 `GameSessionNotifier`로 이전
+  - 옵션 다이얼로그 / 게임오버 다이얼로그를 별도 위젯·함수로 추출
+  - JESTER 헤더 행을 `GameJesterHeaderRow`로 추출
+  - `game_view.dart`: 1129행 → 846행 (25% 축소)
+- [x] `GameView` 전투 액션 Notifier 이전 3차
+  - 전투 액션 6종 (`tryPlaceTile`, `drawTile`, `discardBoardTile`, `discardHandTile`, `sellOwnedJester`, `evaluateExpiry`) + 검사 상점 (`openShopForTest`)을 `GameSessionNotifier`로 이전
+  - View는 SFX + snack + save 트리거만 담당, 세션/보드/손패 직접 조작 제거
+  - `game_view.dart`: 846행 → 813행
+  - `GameSessionNotifier`: 295행 → 402행
+- [x] 미사용 레거시 `rummi_poker_grid_game.dart` (1,420행) 삭제
+- [ ] 추후 추가 검토: `_GameSurface`/`_GameLayout`을 별도 파일로 분리 여부
 
 ---
 

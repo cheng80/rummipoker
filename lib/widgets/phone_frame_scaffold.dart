@@ -2,12 +2,14 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'starry_background.dart';
-
 const double kPhoneFrameRefW = 390.0;
 const double kPhoneFrameRefH = 750.0;
 const double kPhoneFrameRefAspect = kPhoneFrameRefW / kPhoneFrameRefH;
 
+/// 전체 화면에 phone-frame 레이아웃을 적용하는 Scaffold.
+///
+/// [StarryBackground]는 [App] 레벨(Router 바깥)에 한 번만 존재하므로,
+/// 여기서는 배경을 투명하게 두고 콘텐츠만 중앙 정렬한다.
 class PhoneFrameScaffold extends StatelessWidget {
   const PhoneFrameScaffold({
     super.key,
@@ -22,16 +24,10 @@ class PhoneFrameScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final framedChild = Center(child: PhoneFrame(child: child));
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: StarryBackground()),
-          if (useSafeArea)
-            SafeArea(child: framedChild)
-          else
-            Positioned.fill(child: framedChild),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
+      body: useSafeArea
+          ? SafeArea(child: framedChild)
+          : framedChild,
     );
   }
 }

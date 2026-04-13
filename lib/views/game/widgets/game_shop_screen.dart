@@ -344,6 +344,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
       confirmLabel: '재시작',
     );
     if (!mounted || !confirmed) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
 
     Navigator.of(context).pop(false);
     await widget.onRestartRun();
@@ -358,6 +360,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
       confirmLabel: '나가기',
     );
     if (!mounted || !confirmed) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
 
     Navigator.of(context).pop(false);
     await widget.onExitToTitle();

@@ -1,12 +1,9 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
-import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../providers/features/rummi_poker_grid/game_session_notifier.dart';
@@ -18,6 +15,7 @@ import '../utils/common_ui.dart';
 import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
+import 'game/widgets/game_options_dialog.dart';
 import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
 import '../widgets/phone_frame_scaffold.dart';
@@ -126,15 +124,7 @@ class _GameViewState extends ConsumerState<GameView>
           final nextStage = await _showShopScreen();
           if (!mounted) return;
           if (nextStage == true) {
-            _runProgress.advanceStage(_session, runSeed: widget.runSeed);
-            _clearSelections();
-            _gameNotifier.setStageStartSnapshot(
-              ActiveRunSaveService.captureStageStartSnapshot(
-                session: _session,
-                runProgress: _runProgress,
-              ),
-            );
-            _gameNotifier.markDirty();
+            _gameNotifier.advanceToNextStage(widget.runSeed);
             _showSnack('스테이지 ${_runProgress.stageIndex} 시작');
           }
           await _saveActiveRun(scene: ActiveRunScene.battle);
@@ -145,11 +135,6 @@ class _GameViewState extends ConsumerState<GameView>
       if (!mounted) return;
       _gameNotifier.setJesterCatalog(null);
     }
-  }
-
-  void _refresh() {
-    if (!mounted) return;
-    _gameNotifier.markDirty();
   }
 
   Future<void> _saveActiveRun({ActiveRunScene? scene}) async {
@@ -183,20 +168,11 @@ class _GameViewState extends ConsumerState<GameView>
       confirmLabel: '재시작',
     );
     if (!mounted || !confirmed) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
 
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    final restoredSession = _stageStartSnapshot.session.copySnapshot();
-    final restoredRunProgress = _stageStartSnapshot.runProgress.copySnapshot();
-    final refreshedSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
-      session: restoredSession,
-      runProgress: restoredRunProgress,
-    );
-    _gameNotifier.replaceRuntimeState(
-      session: restoredSession,
-      runProgress: restoredRunProgress,
-      stageStartSnapshot: refreshedSnapshot,
-      activeRunScene: ActiveRunScene.battle,
-    );
+    _gameNotifier.restartCurrentStage();
     await _saveActiveRun(scene: ActiveRunScene.battle);
   }
 
@@ -209,6 +185,8 @@ class _GameViewState extends ConsumerState<GameView>
       confirmLabel: '나가기',
     );
     if (!mounted || !confirmed) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
 
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await _goToTitleAfterStoppingBgm();
@@ -216,65 +194,15 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _showGameOver(List<RummiExpirySignal> signals) {
     if (!mounted) return;
-    final text = signals.map(_expiryLabel).join('\n');
-    showGameFramedDialog<void>(
+    showGameOverDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => GameModalCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              context.tr('gameResult'),
-              style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
-                color: Colors.white.withValues(alpha: 0.95),
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              text,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.82),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 18),
-            FilledButton(
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                await ActiveRunSaveService.clearActiveRun();
-                if (!mounted) return;
-                context.go(RoutePaths.title);
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF4A81D),
-                foregroundColor: Colors.black,
-                minimumSize: const Size.fromHeight(50),
-              ),
-              child: Text(context.tr('exit')),
-            ),
-          ],
-        ),
-      ),
+      signals: signals,
+      onExitToTitle: _goToTitleAfterStoppingBgm,
     );
   }
 
-  String _expiryLabel(RummiExpirySignal s) {
-    return switch (s) {
-      RummiExpirySignal.boardFullAfterDcExhausted =>
-        '버림이 모두 소진된 상태에서 보드 25칸이 가득 찼습니다.',
-      RummiExpirySignal.drawPileExhausted => '드로우 덱이 소진되었습니다.',
-    };
-  }
-
   void _afterAction() {
-    final signals = _session.evaluateExpirySignals();
+    final signals = _gameNotifier.evaluateExpiry();
     if (signals.isNotEmpty) {
       _showGameOver(signals);
     }
@@ -297,15 +225,9 @@ class _GameViewState extends ConsumerState<GameView>
   void _sellOwnedJesterFromOverlay() {
     final index = _selectedJesterOverlayIndex;
     if (index == null) return;
-    final ok = _runProgress.sellOwnedJester(index);
+    final ok = _gameNotifier.sellOwnedJester(index);
     if (!ok) return;
     _showSnack('제스터를 판매했습니다.');
-    _gameNotifier.setSelectedJesterOverlayIndex(
-      _runProgress.ownedJesters.isEmpty
-          ? null
-          : index.clamp(0, _runProgress.ownedJesters.length - 1),
-    );
-    _gameNotifier.markDirty();
   }
 
   void _toggleHandTile(Tile tile) {
@@ -323,20 +245,19 @@ class _GameViewState extends ConsumerState<GameView>
     if (_isUiLocked) return;
     final selectedHand = _selectedHandTile;
     if (selectedHand != null) {
-      final placed = _session.tryPlaceFromHand(selectedHand, row, col);
+      final placed = _gameNotifier.tryPlaceTile(selectedHand, row, col);
       if (!placed) {
         _showSnack('이 칸에 둘 수 없습니다.');
         return;
       }
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-      _clearSelections();
-      _gameNotifier.markDirty();
       _afterAction();
       _saveActiveRun();
       return;
     }
 
-    if (_session.board.cellAt(row, col) == null) {
+    final session = _session;
+    if (session.board.cellAt(row, col) == null) {
       return;
     }
     if (_selectedBoardRow == row && _selectedBoardCol == col) {
@@ -348,18 +269,12 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _drawTile() {
     if (_isUiLocked) return;
-    if (!_session.canDrawFromDeck) {
-      if (_session.deck.isEmpty) {
-        _showSnack('덱이 비었습니다.');
-      } else {
-        _showSnack('손패는 최대 ${_session.maxHandSize}장입니다.');
-      }
+    final failReason = _gameNotifier.drawTile();
+    if (failReason != null) {
+      _showSnack(failReason);
       return;
     }
-    final drawn = _session.drawToHand();
-    if (drawn == null) return;
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _gameNotifier.markDirty();
     _afterAction();
     _saveActiveRun();
   }
@@ -372,20 +287,12 @@ class _GameViewState extends ConsumerState<GameView>
       _showSnack('보드에서 버릴 타일을 먼저 선택하세요.');
       return;
     }
-    final result = _session.tryDiscardFromBoard(row, col);
-    if (result.fail != null) {
-      _showSnack(switch (result.fail!) {
-        DiscardFailReason.noBoardDiscardsLeft => '보드패 버림 횟수가 없습니다.',
-        DiscardFailReason.noHandDiscardsLeft => '손패 버림 횟수가 없습니다.',
-        DiscardFailReason.cellEmpty => '해당 칸이 비어 있습니다.',
-        DiscardFailReason.tileNotInHand => '손패에서 버릴 카드를 찾지 못했습니다.',
-      });
+    final failReason = _gameNotifier.discardBoardTile(row, col);
+    if (failReason != null) {
+      _showSnack(failReason);
       return;
     }
-    _runProgress.onDiscardUsed();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _clearSelections();
-    _gameNotifier.markDirty();
     _afterAction();
     _saveActiveRun();
   }
@@ -397,71 +304,35 @@ class _GameViewState extends ConsumerState<GameView>
       _showSnack('손패에서 버릴 카드를 먼저 선택하세요.');
       return;
     }
-    final result = _session.tryDiscardFromHand(tile);
-    if (result.fail != null) {
-      _showSnack(switch (result.fail!) {
-        DiscardFailReason.noBoardDiscardsLeft => '보드패 버림 횟수가 없습니다.',
-        DiscardFailReason.noHandDiscardsLeft => '손패 버림 횟수가 없습니다.',
-        DiscardFailReason.cellEmpty => '해당 칸이 비어 있습니다.',
-        DiscardFailReason.tileNotInHand => '손패에서 버릴 카드를 찾지 못했습니다.',
-      });
+    final failReason = _gameNotifier.discardHandTile(tile);
+    if (failReason != null) {
+      _showSnack(failReason);
       return;
     }
-    _runProgress.onDiscardUsed();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _clearSelections();
-    _gameNotifier.markDirty();
     _afterAction();
     _saveActiveRun();
   }
 
   void _confirmLines() {
     if (_isUiLocked) return;
-    final settlementSnapshot = <String, Tile>{};
-    for (var row = 0; row < kBoardSize; row++) {
-      for (var col = 0; col < kBoardSize; col++) {
-        final tile = _session.board.cellAt(row, col);
-        if (tile != null) {
-          settlementSnapshot['$row:$col'] = tile;
-        }
-      }
-    }
-    final out = _session.confirmAllFullLines(
-      jesters: _runProgress.ownedJesters,
-      runtimeSnapshot: _runProgress.buildRuntimeSnapshot(),
-    );
-    if (!out.result.ok) {
+    final result = _gameNotifier.confirmLines();
+    if (result == null) {
       _showSnack('확정할 족보 줄이 없습니다.');
       return;
     }
-    _runProgress.onConfirmedLines(out.result.lineBreakdowns);
-    _clearSelections();
-    _gameNotifier.setSettlementBoardSnapshot(settlementSnapshot);
     SoundManager.playSfx(AssetPaths.sfxCollect);
-    _runConfirmSettlementFlow(
-      totalScore: out.result.scoreAdded,
-      lineBreakdowns: out.result.lineBreakdowns,
-      shouldClearAfter: out.cleared != null,
+    _runSettlementSequence(
+      lines: result.lineBreakdowns,
+      totalScore: result.totalScore,
+      shouldClearAfter: result.stageCleared,
     );
     _afterAction();
     _saveActiveRun();
   }
 
-  Future<void> _runConfirmSettlementFlow({
-    required int totalScore,
-    required List<ConfirmedLineBreakdown> lineBreakdowns,
-    required bool shouldClearAfter,
-  }) async {
-    final lines = List<ConfirmedLineBreakdown>.from(lineBreakdowns);
-    await _playSettlementSequence(
-      lines,
-      totalScore: totalScore,
-      shouldClearAfter: shouldClearAfter,
-    );
-  }
-
-  Future<void> _playSettlementSequence(
-    List<ConfirmedLineBreakdown> lines, {
+  Future<void> _runSettlementSequence({
+    required List<ConfirmedLineBreakdown> lines,
     required int totalScore,
     required bool shouldClearAfter,
     int index = 0,
@@ -489,8 +360,8 @@ class _GameViewState extends ConsumerState<GameView>
 
     await Future<void>.delayed(const Duration(milliseconds: 1080));
     if (!mounted) return;
-    await _playSettlementSequence(
-      lines,
+    await _runSettlementSequence(
+      lines: lines,
       totalScore: totalScore,
       shouldClearAfter: shouldClearAfter,
       index: index + 1,
@@ -512,9 +383,7 @@ class _GameViewState extends ConsumerState<GameView>
     await Future<void>.delayed(const Duration(milliseconds: 950));
     if (!mounted) return;
 
-    _session.discardStageRemainder();
-    final breakdown = _runProgress.buildCashOutBreakdown(_session);
-    _runProgress.applyCashOut(breakdown);
+    final breakdown = _gameNotifier.prepareCashOut();
     await _saveActiveRun();
 
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.none);
@@ -522,25 +391,13 @@ class _GameViewState extends ConsumerState<GameView>
     final enterShop = await _showCashOutSheet(breakdown);
     if (!mounted || enterShop != true) return;
 
-    _runProgress.openShop(
-      catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
-      rng: _session.runRandom,
-    );
+    _gameNotifier.openShop();
     await _saveActiveRun(scene: ActiveRunScene.shop);
-    _refresh();
 
     final nextStage = await _showShopScreen();
     if (!mounted || nextStage != true) return;
 
-    _runProgress.advanceStage(_session, runSeed: widget.runSeed);
-    _clearSelections();
-    _gameNotifier.setStageStartSnapshot(
-      ActiveRunSaveService.captureStageStartSnapshot(
-        session: _session,
-        runProgress: _runProgress,
-      ),
-    );
-    _gameNotifier.markDirty();
+    _gameNotifier.advanceToNextStage(widget.runSeed);
     await _saveActiveRun(scene: ActiveRunScene.battle);
     _showSnack('스테이지 ${_runProgress.stageIndex} 시작');
   }
@@ -583,14 +440,10 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _openShopForTest() async {
     if (_isUiLocked) return;
-    _runProgress.openShop(
-      catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
-      rng: _session.runRandom,
+    _gameNotifier.openShopForTest(
       preferredOfferIds: _shopInspectOfferIds,
-      offerCountOverride: _shopInspectOfferIds.length,
     );
     await _saveActiveRun(scene: ActiveRunScene.shop);
-    _gameNotifier.markDirty();
     _showSnack('검사용 상점 오퍼 ${_shopInspectOfferIds.length}장 표시');
     await _showShopScreen();
     if (!mounted) return;
@@ -599,144 +452,12 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _openGameOptions(BuildContext context) async {
-    SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    await showGameFramedDialog<void>(
+    await showGameOptionsDialog(
       context: context,
-      builder: (dialogContext) => GameModalCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    context.tr('gameOptions'),
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontAngduIpsul140,
-                      color: Colors.white.withValues(alpha: 0.95),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: context.tr('cancel'),
-                  onPressed: () {
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                    Navigator.of(dialogContext).pop();
-                  },
-                  icon: const Icon(Icons.close_rounded),
-                  color: Colors.white,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.tr('runSeedLabel'),
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontAngduIpsul140,
-                      color: Colors.white.withValues(alpha: 0.72),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SelectableText(
-                          '${widget.runSeed}',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: context.tr('copy'),
-                        onPressed: () async {
-                          await Clipboard.setData(
-                            ClipboardData(text: '${widget.runSeed}'),
-                          );
-                          if (!context.mounted) return;
-                          showTopNotice(context, '시드 번호를 복사했습니다.');
-                        },
-                        icon: const Icon(Icons.copy_rounded),
-                        color: Colors.white,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.refresh_rounded,
-                color: Colors.amber.shade200,
-              ),
-              title: Text(
-                '재시작',
-                style: TextStyle(
-                  fontFamily: AssetPaths.fontAngduIpsul140,
-                  color: Colors.white.withValues(alpha: 0.92),
-                ),
-              ),
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                await _restartCurrentRun();
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.logout_rounded,
-                color: Colors.redAccent.shade100,
-              ),
-              title: Text(
-                context.tr('exit'),
-                style: TextStyle(
-                  fontFamily: AssetPaths.fontAngduIpsul140,
-                  color: Colors.white.withValues(alpha: 0.92),
-                ),
-              ),
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                await _exitToTitleWithConfirm();
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.settings_rounded,
-                color: Colors.lightBlueAccent.shade100,
-              ),
-              title: Text(
-                context.tr('settings'),
-                style: TextStyle(
-                  fontFamily: AssetPaths.fontAngduIpsul140,
-                  color: Colors.white.withValues(alpha: 0.92),
-                ),
-              ),
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                await context.push(RoutePaths.setting);
-                if (!mounted) return;
-                await _openGameOptions(this.context);
-              },
-            ),
-          ],
-        ),
-      ),
+      runSeed: widget.runSeed,
+      onRestartRun: _restartCurrentRun,
+      onExitToTitle: _exitToTitleWithConfirm,
+      onReopenOptions: _openGameOptions,
     );
   }
 
@@ -1011,44 +732,12 @@ class _GameLayout extends StatelessWidget {
               onOptionsTap: onOptionsTap,
             ),
             const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(left: 2),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Text(
-                          'JESTER',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.85,
-                            height: 1.05,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${runProgress.ownedJesters.length}/${RummiRunProgress.maxJesterSlots}',
-                          style: gameHudSubStyle.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            height: 1.05,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  GameDebugShopHandCluster(
-                    onShopTap: onShopTestTap,
-                    handSize: session.maxHandSize,
-                    onHandSizeChanged: onDebugHandSizeChanged,
-                  ),
-                ],
-              ),
+            GameJesterHeaderRow(
+              ownedCount: runProgress.ownedJesters.length,
+              maxSlots: RummiRunProgress.maxJesterSlots,
+              onShopTap: onShopTestTap,
+              handSize: session.maxHandSize,
+              onHandSizeChanged: onDebugHandSizeChanged,
             ),
             const SizedBox(height: 2),
             GameJesterStrip(

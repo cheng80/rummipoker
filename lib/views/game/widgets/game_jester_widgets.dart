@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../resources/jester_translation_scope.dart';
+import 'game_shared_widgets.dart';
 
 const double kJesterCardWidth = 58.0;
 const double kJesterCardHeight = 78.0;
@@ -568,6 +569,66 @@ class _GameOutlinedLabel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class GameJesterHeaderRow extends StatelessWidget {
+  const GameJesterHeaderRow({
+    super.key,
+    required this.ownedCount,
+    required this.maxSlots,
+    required this.onShopTap,
+    required this.handSize,
+    required this.onHandSizeChanged,
+  });
+
+  final int ownedCount;
+  final int maxSlots;
+  final VoidCallback onShopTap;
+  final int handSize;
+  final ValueChanged<int> onHandSizeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                const Text(
+                  'JESTER',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.85,
+                    height: 1.05,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '$ownedCount/$maxSlots',
+                  style: gameHudSubStyle.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          GameDebugShopHandCluster(
+            onShopTap: onShopTap,
+            handSize: handSize,
+            onHandSizeChanged: onHandSizeChanged,
+          ),
+        ],
+      ),
     );
   }
 }

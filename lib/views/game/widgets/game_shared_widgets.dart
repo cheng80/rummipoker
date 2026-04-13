@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../game/rummi_poker_grid/rummikub_tile_canvas.dart';
@@ -7,6 +8,9 @@ import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../../../resources/asset_paths.dart';
+import '../../../resources/sound_manager.dart';
+import '../../../services/active_run_save_service.dart';
 
 const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
@@ -814,5 +818,69 @@ Future<T?> showGameFramedDialog<T>({
         ),
       );
     },
+  );
+}
+
+String expirySignalLabel(RummiExpirySignal signal) {
+  return switch (signal) {
+    RummiExpirySignal.boardFullAfterDcExhausted =>
+      '버림이 모두 소진된 상태에서 보드 25칸이 가득 찼습니다.',
+    RummiExpirySignal.drawPileExhausted => '드로우 덱이 소진되었습니다.',
+  };
+}
+
+/// 만료 신호 목록으로 게임오버 다이얼로그를 표시한다.
+/// [onExitToTitle]은 세이브 삭제 후 타이틀로 이동하는 콜백이다.
+void showGameOverDialog({
+  required BuildContext context,
+  required List<RummiExpirySignal> signals,
+  required Future<void> Function() onExitToTitle,
+}) {
+  final text = signals.map(expirySignalLabel).join('\n');
+  showGameFramedDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => GameModalCard(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            context.tr('gameResult'),
+            style: TextStyle(
+              fontFamily: AssetPaths.fontAngduIpsul140,
+              color: Colors.white.withValues(alpha: 0.95),
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            text,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 18),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await WidgetsBinding.instance.endOfFrame;
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              await ActiveRunSaveService.clearActiveRun();
+              await onExitToTitle();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFF4A81D),
+              foregroundColor: Colors.black,
+              minimumSize: const Size.fromHeight(50),
+            ),
+            child: Text(context.tr('exit')),
+          ),
+        ],
+      ),
+    ),
   );
 }

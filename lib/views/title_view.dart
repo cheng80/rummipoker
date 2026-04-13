@@ -87,6 +87,8 @@ class _TitleViewState extends ConsumerState<TitleView>
       final router = GoRouter.of(context);
       await SoundManager.stopBgm();
       if (!mounted) return;
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
       router.go(RoutePaths.game, extra: restoredRun);
       return;
     }
@@ -305,6 +307,8 @@ class _TitleViewState extends ConsumerState<TitleView>
       return;
     }
     Navigator.of(dialogContext).pop();
+    await WidgetsBinding.instance.endOfFrame;
+    if (!titleContext.mounted) return;
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await ActiveRunSaveService.clearActiveRun();

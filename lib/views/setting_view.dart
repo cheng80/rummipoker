@@ -1,56 +1,24 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../providers/features/settings/settings_notifier.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
-import '../services/game_settings.dart';
 import '../services/in_app_review_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 /// 설정 화면. 볼륨, 음소거, 화면 꺼짐 방지 설정.
-class SettingView extends StatefulWidget {
+class SettingView extends ConsumerWidget {
   const SettingView({super.key});
 
   @override
-  State<SettingView> createState() => _SettingViewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsNotifierProvider);
+    final notifier = ref.read(settingsNotifierProvider.notifier);
 
-class _SettingViewState extends State<SettingView> {
-  late double _bgmVolume;
-  late double _sfxVolume;
-  late bool _bgmMuted;
-  late bool _sfxMuted;
-  late bool _keepScreenOn;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
-  }
-
-  void _loadSettings() {
-    setState(() {
-      _bgmVolume = GameSettings.bgmVolume;
-      _sfxVolume = GameSettings.sfxVolume;
-      _bgmMuted = GameSettings.bgmMuted;
-      _sfxMuted = GameSettings.sfxMuted;
-      _keepScreenOn = GameSettings.keepScreenOn;
-    });
-  }
-
-  void _applyKeepScreenOn() {
-    if (GameSettings.keepScreenOn) {
-      WakelockPlus.enable();
-    } else {
-      WakelockPlus.disable();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return PhoneFrameScaffold(
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -121,14 +89,8 @@ class _SettingViewState extends State<SettingView> {
                           ),
                           _MuteSwitch(
                             label: context.tr('keepScreenOn'),
-                            value: _keepScreenOn,
-                            onChanged: (v) {
-                              setState(() {
-                                _keepScreenOn = v;
-                                GameSettings.keepScreenOn = v;
-                                _applyKeepScreenOn();
-                              });
-                            },
+                            value: settings.keepScreenOn,
+                            onChanged: notifier.setKeepScreenOn,
                           ),
                           Divider(
                             color: Colors.white.withValues(alpha: 0.18),
@@ -140,51 +102,25 @@ class _SettingViewState extends State<SettingView> {
                           ),
                           _VolumeSlider(
                             label: context.tr('bgmVolume'),
-                            value: _bgmVolume,
-                            enabled: !_bgmMuted,
-                            onChanged: (v) {
-                              setState(() {
-                                _bgmVolume = v;
-                                GameSettings.bgmVolume = v;
-                                SoundManager.applyBgmVolume();
-                              });
-                            },
+                            value: settings.bgmVolume,
+                            enabled: !settings.bgmMuted,
+                            onChanged: notifier.setBgmVolume,
                           ),
                           _MuteSwitch(
                             label: context.tr('bgm'),
-                            value: _bgmMuted,
-                            onChanged: (v) {
-                              setState(() {
-                                _bgmMuted = v;
-                                GameSettings.bgmMuted = v;
-                                if (v) {
-                                  SoundManager.pauseBgm();
-                                } else {
-                                  SoundManager.playBgmIfUnmuted();
-                                }
-                              });
-                            },
+                            value: settings.bgmMuted,
+                            onChanged: notifier.setBgmMuted,
                           ),
                           _VolumeSlider(
                             label: context.tr('sfxVolume'),
-                            value: _sfxVolume,
-                            enabled: !_sfxMuted,
-                            onChanged: (v) {
-                              setState(() {
-                                _sfxVolume = v;
-                                GameSettings.sfxVolume = v;
-                              });
-                            },
+                            value: settings.sfxVolume,
+                            enabled: !settings.sfxMuted,
+                            onChanged: notifier.setSfxVolume,
                           ),
                           _MuteSwitch(
                             label: context.tr('sfx'),
-                            value: _sfxMuted,
-                            onChanged: (v) {
-                              setState(() {
-                                _sfxMuted = v;
-                                GameSettings.sfxMuted = v;
-                              });
-                            },
+                            value: settings.sfxMuted,
+                            onChanged: notifier.setSfxMuted,
                           ),
                           Divider(
                             color: Colors.white.withValues(alpha: 0.18),
@@ -218,7 +154,6 @@ class _SettingViewState extends State<SettingView> {
                               }
                             },
                           ),
-                          // 언어 선택: 번역 추가 시 복원 (현재 ko.json 한글만 사용).
                         ],
                       ),
                     ),

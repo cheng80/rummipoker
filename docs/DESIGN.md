@@ -257,17 +257,22 @@ Stitch용 해석 우선순위:
 ### 위젯 레이어
 
 ```text
-Scaffold
-└─ SafeArea
-   └─ 전체 배경
-      └─ LayoutBuilder
-         └─ Center
-            └─ SizedBox(frameWidth, frameHeight)
-               └─ 필요 시 FittedBox + 고정 논리 해상도 + MediaQuery(size override)
-                  └─ 실제 화면 콘텐츠
+App (ConsumerWidget)
+└─ MaterialApp.router
+   └─ builder: Stack
+      ├─ ColoredBox(black)          ← 최하단 폴백
+      ├─ StarryBackground           ← 앱 전체에서 딱 1개, Router 바깥
+      └─ Navigator (GoRouter)
+         └─ PhoneFrameScaffold (Scaffold, backgroundColor: transparent)
+            └─ SafeArea
+               └─ Center
+                  └─ PhoneFrame
+                     └─ FittedBox + 고정 논리 해상도 + MediaQuery(size override)
+                        └─ 실제 화면 콘텐츠
 ```
 
-- 배경은 항상 `Center` 바깥에서 SafeArea 전체를 채운다.
+- `StarryBackground`는 `App.build`의 `MaterialApp.router(builder:)`에서 **단 한 번만** 생성된다.
+- 페이지 전환 시에도 배경이 파괴/재생성되지 않는다 (AnimationController, RepaintBoundary 래스터 캐시 유지).
 - 실제 콘텐츠는 중앙의 세로형 프레임 안에서만 그린다.
 - 태블릿에서는 프레임만 중앙 정렬되고, 좌우는 늘어난 배경만 보여야 한다.
 
@@ -294,7 +299,7 @@ Scaffold
 - 타이틀 화면은 중앙 정렬만 유지하고, 별도 외곽선/그림자 패널 없이 배경 위에 내용만 올린다.
 - 설정/상점 화면은 일반 `Scaffold` 관성 대신, 게임 화면과 동일한 안전 영역·폭·정렬 기준을 사용한다.
 - 내부 콘텐츠는 화면 실제 픽셀 크기가 아니라 **고정 논리 해상도**를 기준으로 폰트와 비율을 유지한다.
-- 어떤 뷰도 `StarryBackground`를 직접 사용하지 않는다. `PhoneFrameScaffold`가 내부에서 배경을 관리한다.
+- 어떤 뷰도 `StarryBackground`를 직접 사용하지 않는다. `App`의 `builder`가 Router 바깥에서 유일한 인스턴스를 관리한다.
 
 ### 체크 포인트
 
@@ -305,12 +310,13 @@ Scaffold
 
 ### 배경 성능 최적화
 
-`StarryBackground`는 `PhoneFrameScaffold` 안에서 항상 렌더링되지만, 성능 비용은 무시할 수 있다.
+`StarryBackground`는 `App`의 `MaterialApp.router(builder:)` 안에서 **앱 전체에 단 1개**만 존재한다. 페이지 전환에도 파괴되지 않으므로 래스터 캐시가 유지된다.
 
 - 그라데이션과 별을 **3 그룹**으로 나눠 각각 `RepaintBoundary`로 래스터 캐싱한다.
 - 깜빡임은 `FadeTransition`(GPU 컴포지터 alpha)으로만 처리하므로, `paint()`가 최초 1회 이후 다시 호출되지 않는다.
 - 별 좌표는 **정규화(0~1)**로 저장하므로, 리사이즈 시에도 별 데이터를 재생성하지 않는다.
-- `AnimationController`는 전체 배경에서 **단 1개**만 사용한다.
+- `AnimationController`는 앱 전체에서 **단 1개**만 사용한다.
+- `PhoneFrameScaffold`는 `Scaffold(backgroundColor: transparent)`로 배경을 투과시킨다.
 
 ### Seed / Options
 

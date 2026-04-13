@@ -44,7 +44,7 @@
 - 순수 로직: `lib/logic/rummi_poker_grid/` 에 기본 엔진/세션/덱/보드/테스트가 들어와 있다.
 - 게임 로직: `lib/logic/rummi_poker_grid/` 의 세션/엔진이 플레이 규칙을 담당한다.
 - Flutter 화면: `lib/views/game_view.dart` 를 중심으로 쓰되, **상단 HUD / Jester 5슬롯 / 5x5 보드 / 손패 / 캐시아웃 / 상점**은 `lib/views/game/widgets/` 하위 위젯으로 1차 분리되었다.
-- Riverpod 상태: `GameView` 는 `GameSessionNotifier`, `TitleView` 는 `TitleNotifier` 기준으로 UI 상태를 읽는다.
+- Riverpod 상태: `GameView` 는 `GameSessionNotifier`, `TitleView` 는 `TitleNotifier`, `SettingView` 는 `SettingsNotifier` 기준으로 UI 상태를 읽는다.
 - 공용 UI 유틸: `lib/utils/common_ui.dart` 에서 **상단 알림(`showTopNotice`) / 하단 알림(`showBottomNotice`) / 공통 다이얼로그(`showAppDialog`, `showConfirmDialog`)** 를 관리한다.
 - Flame 코드는 당장 핵심 화면 책임에서 한 발 물러났고, 이후 필요 시 **드로우/정산/조커 연출 레이어**로만 재도입하는 방향이 현재 판단이다.
 - 디자인 문서: [`docs/DESIGN.md`](docs/DESIGN.md) 를 현재 코드/룰 기준으로 최신화했다.
@@ -98,27 +98,37 @@
   - `TitleView`가 자체 `Scaffold + StarryBackground + PhoneFrame`을 조합하던 것을 **`PhoneFrameScaffold`**로 통일했다. 이제 모든 뷰(`GameView`, `TitleView`, `SettingView`, 상점)가 같은 `PhoneFrameScaffold`를 사용한다.
   - 중복 UI 클래스를 공용 위젯으로 통합했다: `GameTableBackdrop`, `GameModalCard`, `showGameFramedDialog`.
   - `GameView.initState`에서 BGM/카탈로그 로딩을 `addPostFrameCallback`으로 지연하여 타이틀→게임 전환 시 버벅임을 해결했다.
+  - **GameView orchestration 2차 리팩토링 완료** (2026-04-14):
+    - 옵션 다이얼로그를 `game_options_dialog.dart`(`showGameOptionsDialog`)로 추출
+    - 게임오버 다이얼로그를 `game_shared_widgets.dart`(`showGameOverDialog`)로 추출
+    - 줄 확정/캐시아웃/상점/스테이지진입/재시작 비즈니스 로직을 `GameSessionNotifier`로 이전 (`confirmLines`, `prepareCashOut`, `openShop`, `advanceToNextStage`, `restartCurrentStage`)
+    - JESTER 헤더 행을 `GameJesterHeaderRow` 위젯으로 추출
+    - `game_view.dart` 1129행 → 846행 (25% 축소)
+  - **GameView 전투 액션 Notifier 이전 + 레거시 삭제** (2026-04-14):
+    - 전투 액션 6종을 `GameSessionNotifier`로 이전: `tryPlaceTile`, `drawTile`, `discardBoardTile`, `discardHandTile`, `sellOwnedJester`, `evaluateExpiry`
+    - 검사 상점 열기도 `openShopForTest`로 이전
+    - View는 이제 **SFX 재생 + UI 피드백(snack) + 저장 트리거**만 담당하고, 세션/보드/손패 직접 조작 없음
+    - `game_view.dart` 846행 → 813행 추가 축소
+    - `GameSessionNotifier` 295행 → 402행 (전투 액션 포함)
+    - 미사용 레거시 `rummi_poker_grid_game.dart` (1,420행) 삭제
 
 ---
 
 ## 3. 지금 가장 중요한 작업
 
-**현재 1순위는 “Riverpod 분리 이후 남은 GameView orchestration 리팩토링 범위를 고정하고, 다음 batch가 바로 이어지게 문서 기준을 최신 상태로 유지하는 것”이다.**
+**현재 1순위는 “GameView orchestration 2차 리팩토링이 완료되었으므로, 남은 기능 작업(재시작 검증, rule_modifier 분류, 검사 상점 정리, 유저 문구 정리)을 이어가는 것”이다.**
 
 즉, 새 세션에서 바로 이어야 할 일:
 
 1. [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md), [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md) 를 먼저 보고, 현재 리팩토링 배치와 저장 정책 기준을 확인한다.
 2. 특히 아래 파일을 우선 본다.
+   - [`lib/providers/features/rummi_poker_grid/game_session_notifier.dart`](lib/providers/features/rummi_poker_grid/game_session_notifier.dart) — 비즈니스 로직 (`confirmLines`, `prepareCashOut`, `openShop`, `advanceToNextStage`, `restartCurrentStage`, `tryPlaceTile`, `drawTile`, `discardBoardTile`, `discardHandTile`, `sellOwnedJester`, `evaluateExpiry`, `openShopForTest`). 402행.
+   - [`lib/views/game_view.dart`](lib/views/game_view.dart) — orchestration (SFX, snack 피드백, settlement sequence 타이밍, 네비게이션, save 트리거). 813행.
+   - [`lib/views/game/widgets/`](lib/views/game/widgets/) — `game_options_dialog.dart`(신규), `game_jester_widgets.dart`(`GameJesterHeaderRow` 신규), `game_shared_widgets.dart`(`showGameOverDialog` 신규)
    - [`lib/logic/rummi_poker_grid/jester_meta.dart`](lib/logic/rummi_poker_grid/jester_meta.dart)
    - [`lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`](lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)
-   - [`lib/views/game_view.dart`](lib/views/game_view.dart)
-   - [`lib/providers/features/rummi_poker_grid/game_session_notifier.dart`](lib/providers/features/rummi_poker_grid/game_session_notifier.dart)
-   - [`lib/providers/features/rummi_poker_grid/title_notifier.dart`](lib/providers/features/rummi_poker_grid/title_notifier.dart)
-   - [`lib/views/game/widgets/`](lib/views/game/widgets/)
    - 참고용 [`/Users/cheng80/Desktop/FlutterFrame_work/flame_rummideck/lib/`](</Users/cheng80/Desktop/FlutterFrame_work/flame_rummideck/lib/>)
 3. 다음 구현 우선순위는 이 순서다.
-   - `GameView` 내부 저장/autosave/lifecycle/화면전환 handler를 한 번 더 분리할지 결정
-   - 캐시아웃 -> 상점 -> 다음 스테이지 진행 체인의 coordinator 성격 코드를 어디에 둘지 결정
    - `현재 스테이지 재시작` 검증
      - 전투 중 누적된 골드/Jester/stateful 값이 정확히 롤백되는지
      - 상점에서 구매/판매 후 재시작 시 stage-start 기준으로 되돌아가는지
@@ -170,10 +180,11 @@
 - 저장 스키마 버전은 현재 **v2** 다. 이전 v1 세이브는 구버전으로 간주되어 복원이 거부될 수 있다.
 - 웹 저장/이어하기 회귀는 현재 `docs/save_resume_architecture.md` 의 정적 빌드 + Playwright 절차를 기준으로 검증한다.
 - 알림/다이얼로그는 `lib/utils/common_ui.dart` 기준으로 공용화했다.
-- `StarryBackground`는 그룹 Opacity 방식으로 최적화되어 있다. 그라데이션+별을 `RepaintBoundary`로 래스터 캐싱하고, 깜빡임은 `FadeTransition`(GPU alpha)만 사용한다.
-- Riverpod 1차 분리가 들어갔다.
-  - `GameSessionNotifier`
-  - `TitleNotifier`
+- `StarryBackground`는 `App`의 `MaterialApp.router(builder:)`에서 **앱 전체에 단 1개**만 존재한다. 페이지 전환에도 파괴/재생성되지 않아 AnimationController와 RepaintBoundary 래스터 캐시가 유지된다.
+- Riverpod 분리가 들어갔다.
+  - `GameSessionNotifier` — 전투 세션/선택/stage flow/Jester 관리 + 모든 전투 액션 비즈니스 로직 (402행)
+  - `TitleNotifier` — 타이틀 화면 이어하기/삭제 흐름
+  - `SettingsNotifier` — 볼륨/음소거/화면꺼짐방지 설정 (SettingView → ConsumerWidget, App → ConsumerWidget)
 - 위젯 모듈화 1차가 들어갔다.
   - `game_shared_widgets.dart`
   - `game_jester_widgets.dart`
@@ -201,14 +212,18 @@
   - 상점 오퍼 수 기본 `3`
   - 판매가 `floor(baseCost / 2)`, 최소 `1`
 - 상점/옵션/설정/타이틀은 현재 게임 화면과 동일한 **중앙 정렬 phone-frame 기준**으로 동작한다.
-- `PhoneFrameScaffold` 는 항상 **`390 x 750` 고정 논리 크기 + `13:25` 비율**을 사용한다. 모든 뷰가 `PhoneFrameScaffold`를 사용하며, `StarryBackground`를 직접 참조하는 뷰는 없다.
+- `PhoneFrameScaffold` 는 항상 **`390 x 750` 고정 논리 크기 + `13:25` 비율**을 사용한다. 모든 뷰가 `PhoneFrameScaffold`를 사용하며, 배경은 `App` 레벨에서 한 번만 생성된 `StarryBackground`를 투과시킨다.
 - 현재 남은 큰 묶음은 아래 두 가지다.
   - `rule_modifier`
   - `retrigger`
-- 현재 남은 리팩토링 큰 묶음은 아래 순서다.
-  - `GameView` 잔여 orchestration 정리
-  - 저장/autosave handler 분리 여부 결정
-  - 설정/전역 상태 Riverpod 범위 재검토
+- Riverpod + MVVM 리팩토링 2차 완료 (2026-04-14):
+  - `GameSessionNotifier`에 비즈니스 로직 이전: `confirmLines`, `prepareCashOut`, `openShop`, `advanceToNextStage`, `restartCurrentStage`
+  - `game_view.dart` 1129행 → 846행 (25% 축소): 옵션 다이얼로그, 게임오버 다이얼로그, JESTER 헤더 행 위젯 추출
+  - 신규 파일: `game_options_dialog.dart`
+  - 신규 위젯: `GameJesterHeaderRow`, `showGameOverDialog`, `showGameOptionsDialog`
+- 현재 남은 리팩토링은 아래 순서다.
+  - `_GameSurface`/`_GameLayout`을 별도 파일로 분리 여부 검토 (현재 각각 162행/147행으로, 급하지 않음)
+  - `game_shared_widgets.dart` (885행) / `game_shop_screen.dart` (1012행) 분리는 해당 기능 수정 시 같이 진행
 - 외부 시스템이 필요한 항목은 계속 보류다.
   - `square_jester`
   - `red_card`
@@ -217,10 +232,7 @@
 
 ## 7. 다음 작업 순서 메모
 
-1. `GameView` orchestration 리팩토링 2차
-   - 저장/autosave/lifecycle 호출 묶음 정리
-   - 캐시아웃 -> 상점 -> 다음 스테이지 진행 체인 정리
-   - 옵션/타이틀 이동/알림 호출 정리
+1. ~~`GameView` orchestration 리팩토링 2차~~ — **완료** (2026-04-14)
 2. 이어하기/재시작 실기기 검증
    - 앱 강제 종료 / 상점 열린 상태 / 다음 스테이지 직전 / 손상 세이브 삭제 동선이 실제 기기에서 기대대로 동작하는지 확인
    - 현재 스테이지 재시작 시 골드/Jester/stateful 값이 stage-start 기준으로 롤백되는지 확인
