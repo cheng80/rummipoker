@@ -106,12 +106,26 @@ class SoundManager {
 
   /// 효과음 재생. 음소거 시 무시, 볼륨은 GameSettings.sfxVolume 적용.
   /// 웹: unlock 전이면 무시 (카운트다운 등 자동 재생 방지).
+  ///
+  /// **웹(kIsWeb):** [FlameAudio.play]는 내부적으로 [PlayerMode.lowLatency]를 쓰는데,
+  /// 브라우저에서는 자주 묵음/재생 실패가 난다. HTML5 `<audio>`에 가까운
+  /// [PlayerMode.mediaPlayer] 경로인 [FlameAudio.playLongAudio]로 재생한다.
+  /// BGM은 기존처럼 [FlameAudio.bgm]을 그대로 사용한다.
   static void playSfx(String path) {
     if (GameSettings.sfxMuted) return;
     if (kIsWeb && !_webUnlocked) return;
+    final vol = GameSettings.sfxVolume;
     try {
-      final vol = GameSettings.sfxVolume;
-      FlameAudio.play(path, volume: vol);
+      if (kIsWeb) {
+        _playSfxWeb(path, vol);
+      } else {
+        FlameAudio.play(path, volume: vol);
+      }
     } catch (_) {}
+  }
+
+  /// 웹 전용 SFX — [FlameAudio.playLongAudio] = mediaPlayer 모드 (짧은 클립에도 사용 가능).
+  static void _playSfxWeb(String path, double volume) {
+    FlameAudio.playLongAudio(path, volume: volume);
   }
 }
