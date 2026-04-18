@@ -27,16 +27,9 @@ class RummiJesterCard {
   });
 
   factory RummiJesterCard.fromJson(Map<String, dynamic> json) {
-    final mappedColors =
-        (json['mappedTileColors'] as List<dynamic>? ?? const [])
-            .map((value) => _tileColorFromString(value as String?))
-            .whereType<TileColor>()
-            .toList(growable: false);
-    final mappedNumbers =
-        (json['mappedTileNumbers'] as List<dynamic>? ?? const [])
-            .whereType<num>()
-            .map((value) => value.toInt())
-            .toList(growable: false);
+    final conditionType = json['conditionType'] as String? ?? '';
+    final mappedColors = _resolveTileColorsFromJson(json, conditionType);
+    final mappedNumbers = _resolveTileNumbersFromJson(json, conditionType);
 
     return RummiJesterCard(
       id: json['id'] as String? ?? '',
@@ -47,7 +40,7 @@ class RummiJesterCard {
       effectText: json['effectText'] as String? ?? '',
       effectType: json['effectType'] as String? ?? '',
       trigger: json['trigger'] as String? ?? '',
-      conditionType: json['conditionType'] as String? ?? '',
+      conditionType: conditionType,
       conditionValue: json['conditionValue'],
       value: (json['value'] as num?)?.toInt(),
       xValue: (json['xValue'] as num?)?.toDouble(),
@@ -185,6 +178,125 @@ class RummiJesterCard {
     );
   }
 
+  /// 타일 컬러 후보를 JSON에서 합성한다. 우선순위:
+  /// 1. `mappedTileColors` — 엔진 컬러 문자열 배열
+  /// 2. `originalSuitRefs` — 포커 슈트(`diamonds` 등) → [TileColor]로 변환
+  /// 3. `tile_color_scored`이고 위가 비었을 때 `conditionValue`(타일 컬러명 또는 슈트명)
+  static List<TileColor> _resolveTileColorsFromJson(
+    Map<String, dynamic> json,
+    String conditionType,
+  ) {
+    final fromMapped = (json['mappedTileColors'] as List<dynamic>? ?? const [])
+        .map((value) => _parseJsonTileColor(value as String?))
+        .whereType<TileColor>()
+        .toList(growable: false);
+    if (fromMapped.isNotEmpty) {
+      return fromMapped;
+    }
+
+    final fromSuitRefs = <TileColor>[];
+    for (final e in json['originalSuitRefs'] as List<dynamic>? ?? const []) {
+      if (e is! String) continue;
+      final c = _parseJsonTileColor(e) ?? _pokerSuitRefToTileColor(e);
+      if (c != null) {
+        fromSuitRefs.add(c);
+      }
+    }
+    if (fromSuitRefs.isNotEmpty) {
+      return fromSuitRefs;
+    }
+
+    if (conditionType != 'tile_color_scored') {
+      return const [];
+    }
+    final cv = json['conditionValue'];
+    if (cv is String) {
+      final c = _parseJsonTileColor(cv) ?? _pokerSuitRefToTileColor(cv);
+      return c != null ? <TileColor>[c] : const [];
+    }
+    if (cv is List) {
+      return cv
+          .map((e) {
+            if (e is! String) return null;
+            return _parseJsonTileColor(e) ?? _pokerSuitRefToTileColor(e);
+          })
+          .whereType<TileColor>()
+          .toList(growable: false);
+    }
+    return const [];
+  }
+
+  /// 원본 데이터 포커 슈트명 → 루미 타일 [TileColor].
+  static TileColor? _pokerSuitRefToTileColor(String raw) {
+    return switch (raw.toLowerCase()) {
+      'diamonds' => TileColor.yellow,
+      'hearts' => TileColor.red,
+      'spades' => TileColor.blue,
+      'clubs' => TileColor.black,
+      _ => null,
+    };
+  }
+
+  /// 스코어에 쓸 랭크(1–13) 목록. 우선순위:
+  /// 1. `mappedTileNumbers` — 정수 또는 `"face_card"` 등 토큰 문자열
+  /// 2. `originalRankRefs` — `"ace"`, `"10"`, `"jack"` 등
+  /// 3. `rank_scored`이고 위가 비었을 때 `conditionValue`의 숫자 배열
+  static List<int> _resolveTileNumbersFromJson(
+    Map<String, dynamic> json,
+    String conditionType,
+  ) {
+    final ranks = <int>{};
+
+    for (final e in json['mappedTileNumbers'] as List<dynamic>? ?? const []) {
+      if (e is num) {
+        ranks.add(e.toInt());
+      } else if (e is String) {
+        ranks.addAll(_expandRankRefToken(e));
+      }
+    }
+    for (final e in json['originalRankRefs'] as List<dynamic>? ?? const []) {
+      if (e is String) {
+        ranks.addAll(_expandRankRefToken(e));
+      }
+    }
+    if (ranks.isEmpty && conditionType == 'rank_scored') {
+      final cv = json['conditionValue'];
+      if (cv is List) {
+        for (final e in cv) {
+          if (e is num) {
+            ranks.add(e.toInt());
+          }
+        }
+      }
+    }
+
+    final out = ranks.toList()..sort();
+    return out;
+  }
+
+  /// `originalRankRefs` / `mappedTileNumbers` 안의 랭크 토큰을 1–13 정수로 펼친다.
+  static List<int> _expandRankRefToken(String raw) {
+    final s = raw.trim().toLowerCase();
+    switch (s) {
+      case 'ace':
+        return [1];
+      case 'jack':
+        return [11];
+      case 'queen':
+        return [12];
+      case 'king':
+        return [13];
+      case 'face_card':
+        return [11, 12, 13];
+      default:
+        final n = int.tryParse(s);
+        if (n != null && n >= 1 && n <= 13) {
+          return [n];
+        }
+        return [];
+    }
+  }
+
   static RummiJesterRarity _rarityFromString(String? value) {
     return switch (value) {
       'uncommon' => RummiJesterRarity.uncommon,
@@ -194,7 +306,7 @@ class RummiJesterCard {
     };
   }
 
-  static TileColor? _tileColorFromString(String? value) {
+  static TileColor? _parseJsonTileColor(String? value) {
     return switch (value) {
       'red' => TileColor.red,
       'blue' => TileColor.blue,
@@ -212,7 +324,7 @@ class RummiJesterCard {
     final bonus = value ?? 0;
     return switch (conditionType) {
       'none' => bonus,
-      'suit_scored' => _countSuitMatches(scoringTiles) * bonus,
+      'tile_color_scored' => _countTileColorMatches(scoringTiles) * bonus,
       'pair' ||
       'two_pair' ||
       'three_of_a_kind' ||
@@ -233,7 +345,7 @@ class RummiJesterCard {
     final bonus = value ?? 0;
     return switch (conditionType) {
       'none' => bonus,
-      'suit_scored' => _countSuitMatches(scoringTiles) * bonus,
+      'tile_color_scored' => _countTileColorMatches(scoringTiles) * bonus,
       'pair' ||
       'two_pair' ||
       'three_of_a_kind' ||
@@ -283,14 +395,20 @@ class RummiJesterCard {
     };
   }
 
-  int _countSuitMatches(List<Tile> scoringTiles) {
+  int _countTileColorMatches(List<Tile> scoringTiles) {
     if (mappedTileColors.isEmpty) return 0;
     return scoringTiles
         .where((tile) => mappedTileColors.contains(tile.color))
         .length;
   }
 
+  /// JSON에서 채운 [mappedTileNumbers]가 있으면 그 랭크만, 없으면 11–13(페이스) 기본.
   int _countFaceCards(List<Tile> scoringTiles) {
+    if (mappedTileNumbers.isNotEmpty) {
+      return scoringTiles
+          .where((tile) => mappedTileNumbers.contains(tile.number))
+          .length;
+    }
     return scoringTiles.where(_isFaceCard).length;
   }
 

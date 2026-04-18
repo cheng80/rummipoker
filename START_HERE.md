@@ -73,7 +73,7 @@
     - `mult_bonus`
     - `xmult_bonus`
     - `scholar` 특수 처리
-    - 조건: `none`, `suit_scored`, `pair`, `two_pair`, `three_of_a_kind`, `straight`, `flush`, `face_card`, `rank_scored`, `cards_remaining_in_deck`, `remaining_discards`, `owned_jester_count`, `zero_discards_remaining`, `empty_jester_slots`
+    - 조건: `none`, `tile_color_scored`, `pair`, `two_pair`, `three_of_a_kind`, `straight`, `flush`, `face_card`, `rank_scored`, `cards_remaining_in_deck`, `remaining_discards`, `owned_jester_count`, `zero_discards_remaining`, `empty_jester_slots`
   - economy 2차 1차분은 구현되었다.
     - `egg`
     - `golden_jester`

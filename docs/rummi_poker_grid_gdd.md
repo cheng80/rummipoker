@@ -187,7 +187,7 @@
   - `scholar` 특수 처리
 - 지원 조건
   - `none`
-  - `suit_scored`
+  - `tile_color_scored`
   - `pair`
   - `two_pair`
   - `three_of_a_kind`

@@ -15,10 +15,6 @@
     "conditionType": "none",
     "value": 4,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -38,27 +34,22 @@
     "editionAllowed": true,
     "stickersAllowed": true,
     "unlockCondition": null,
-    "notes": "Suit-based bonus",
+    "notes": "Tile color bonus",
     "effectType": "mult_bonus",
-    "conditionType": "suit_scored",
-    "conditionValue": "diamonds",
+    "conditionType": "tile_color_scored",
+    "conditionValue": "yellow",
     "value": 3,
     "xValue": null,
-    "originalSuitRefs": [
-      "diamonds"
-    ],
-    "mappedTileColors": [
-      "yellow"
-    ],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
     },
     "displayNameKey": "data.jesters.greedy_jester.displayName",
     "effectTextKey": "data.jesters.greedy_jester.effectText",
-    "notesKey": "data.jesters.greedy_jester.notes"
+    "notesKey": "data.jesters.greedy_jester.notes",
+    "originalSuitRefs": [
+      "diamonds"
+    ]
   },
   {
     "id": "lusty_jester",
@@ -71,27 +62,22 @@
     "editionAllowed": true,
     "stickersAllowed": true,
     "unlockCondition": null,
-    "notes": "Suit-based bonus",
+    "notes": "Tile color bonus",
     "effectType": "mult_bonus",
-    "conditionType": "suit_scored",
-    "conditionValue": "hearts",
+    "conditionType": "tile_color_scored",
+    "conditionValue": "red",
     "value": 3,
     "xValue": null,
-    "originalSuitRefs": [
-      "hearts"
-    ],
-    "mappedTileColors": [
-      "red"
-    ],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
     },
     "displayNameKey": "data.jesters.lusty_jester.displayName",
     "effectTextKey": "data.jesters.lusty_jester.effectText",
-    "notesKey": "data.jesters.lusty_jester.notes"
+    "notesKey": "data.jesters.lusty_jester.notes",
+    "originalSuitRefs": [
+      "hearts"
+    ]
   },
   {
     "id": "wrathful_jester",
@@ -104,27 +90,22 @@
     "editionAllowed": true,
     "stickersAllowed": true,
     "unlockCondition": null,
-    "notes": "Suit-based bonus",
+    "notes": "Tile color bonus",
     "effectType": "mult_bonus",
-    "conditionType": "suit_scored",
-    "conditionValue": "spades",
+    "conditionType": "tile_color_scored",
+    "conditionValue": "blue",
     "value": 3,
     "xValue": null,
-    "originalSuitRefs": [
-      "spades"
-    ],
-    "mappedTileColors": [
-      "blue"
-    ],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
     },
     "displayNameKey": "data.jesters.wrathful_jester.displayName",
     "effectTextKey": "data.jesters.wrathful_jester.effectText",
-    "notesKey": "data.jesters.wrathful_jester.notes"
+    "notesKey": "data.jesters.wrathful_jester.notes",
+    "originalSuitRefs": [
+      "spades"
+    ]
   },
   {
     "id": "gluttonous_jester",
@@ -137,27 +118,22 @@
     "editionAllowed": true,
     "stickersAllowed": true,
     "unlockCondition": null,
-    "notes": "Suit-based bonus",
+    "notes": "Tile color bonus",
     "effectType": "mult_bonus",
-    "conditionType": "suit_scored",
-    "conditionValue": "clubs",
+    "conditionType": "tile_color_scored",
+    "conditionValue": "black",
     "value": 3,
     "xValue": null,
-    "originalSuitRefs": [
-      "clubs"
-    ],
-    "mappedTileColors": [
-      "black"
-    ],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
     },
     "displayNameKey": "data.jesters.gluttonous_jester.displayName",
     "effectTextKey": "data.jesters.gluttonous_jester.effectText",
-    "notesKey": "data.jesters.gluttonous_jester.notes"
+    "notesKey": "data.jesters.gluttonous_jester.notes",
+    "originalSuitRefs": [
+      "clubs"
+    ]
   },
   {
     "id": "jolly_jester",
@@ -176,10 +152,6 @@
     "conditionValue": "pair_or_contains_pair",
     "value": 8,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -205,10 +177,6 @@
     "conditionValue": "contains_three_of_a_kind",
     "value": 12,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": true,
@@ -235,10 +203,6 @@
     "conditionValue": "contains_two_pair",
     "value": 10,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -264,10 +228,6 @@
     "conditionValue": "contains_straight",
     "value": 12,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -293,10 +253,6 @@
     "conditionValue": "contains_flush",
     "value": 10,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -322,10 +278,6 @@
     "conditionValue": "contains_pair",
     "value": 50,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -351,10 +303,6 @@
     "conditionValue": "contains_three_of_a_kind",
     "value": 100,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -380,10 +328,6 @@
     "conditionValue": "contains_two_pair",
     "value": 80,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -409,10 +353,6 @@
     "conditionValue": "contains_straight",
     "value": 100,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -438,10 +378,6 @@
     "conditionValue": "contains_flush",
     "value": 80,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -467,10 +403,6 @@
     "conditionValue": "played_hand_size_lte_3",
     "value": 20,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -496,10 +428,6 @@
     "conditionValue": "empty_jester_slots",
     "value": null,
     "xValue": 1.0,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -525,10 +453,6 @@
     "conditionValue": "owned_jester_count",
     "value": 3,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": true,
@@ -555,10 +479,6 @@
     "conditionValue": "hands_plus_discards_minus",
     "value": 1,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": true,
@@ -585,10 +505,6 @@
     "conditionValue": "cards_remaining_in_deck",
     "value": 2,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": true,
@@ -615,14 +531,6 @@
     "conditionValue": "jack_queen_king",
     "value": 30,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "jack",
-      "queen",
-      "king",
-      "face_card"
-    ],
     "mappedTileNumbers": [
       11,
       12,
@@ -636,7 +544,12 @@
     },
     "displayNameKey": "data.jesters.scary_face.displayName",
     "effectTextKey": "data.jesters.scary_face.effectText",
-    "notesKey": "data.jesters.scary_face.notes"
+    "notesKey": "data.jesters.scary_face.notes",
+    "originalRankRefs": [
+      "jack",
+      "queen",
+      "king"
+    ]
   },
   {
     "id": "smiley_face",
@@ -655,14 +568,6 @@
     "conditionValue": "jack_queen_king",
     "value": 5,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "jack",
-      "queen",
-      "king",
-      "face_card"
-    ],
     "mappedTileNumbers": [
       11,
       12,
@@ -676,7 +581,12 @@
     },
     "displayNameKey": "data.jesters.smiley_face.displayName",
     "effectTextKey": "data.jesters.smiley_face.effectText",
-    "notesKey": "data.jesters.smiley_face.notes"
+    "notesKey": "data.jesters.smiley_face.notes",
+    "originalRankRefs": [
+      "jack",
+      "queen",
+      "king"
+    ]
   },
   {
     "id": "egg",
@@ -695,10 +605,6 @@
     "conditionValue": null,
     "value": 3,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -724,10 +630,6 @@
     "conditionValue": null,
     "value": 10,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -753,10 +655,6 @@
     "conditionValue": "mult_decay",
     "value": 20,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -782,10 +680,6 @@
     "conditionValue": "chips_decay_per_hand_played",
     "value": 100,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -811,10 +705,6 @@
     "conditionValue": "unused_discards",
     "value": 2,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -843,12 +733,6 @@
     ],
     "value": 4,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "10",
-      "4"
-    ],
     "mappedTileNumbers": [
       10,
       4
@@ -859,7 +743,11 @@
     },
     "displayNameKey": "data.jesters.walkie_talkie.displayName",
     "effectTextKey": "data.jesters.walkie_talkie.effectText",
-    "notesKey": "data.jesters.walkie_talkie.notes"
+    "notesKey": "data.jesters.walkie_talkie.notes",
+    "originalRankRefs": [
+      "10",
+      "4"
+    ]
   },
   {
     "id": "golden_jester",
@@ -878,10 +766,6 @@
     "conditionValue": null,
     "value": 4,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": true,
@@ -908,10 +792,6 @@
     "conditionValue": "zero_discards_remaining",
     "value": 15,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": true,
@@ -944,15 +824,6 @@
     ],
     "value": 4,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "2",
-      "4",
-      "6",
-      "8",
-      "10"
-    ],
     "mappedTileNumbers": [
       2,
       4,
@@ -967,7 +838,14 @@
     },
     "displayNameKey": "data.jesters.even_steven.displayName",
     "effectTextKey": "data.jesters.even_steven.effectText",
-    "notesKey": "data.jesters.even_steven.notes"
+    "notesKey": "data.jesters.even_steven.notes",
+    "originalRankRefs": [
+      "2",
+      "4",
+      "6",
+      "8",
+      "10"
+    ]
   },
   {
     "id": "odd_todd",
@@ -992,15 +870,6 @@
     ],
     "value": 31,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "ace",
-      "3",
-      "5",
-      "7",
-      "9"
-    ],
     "mappedTileNumbers": [
       1,
       3,
@@ -1015,7 +884,14 @@
     },
     "displayNameKey": "data.jesters.odd_todd.displayName",
     "effectTextKey": "data.jesters.odd_todd.effectText",
-    "notesKey": "data.jesters.odd_todd.notes"
+    "notesKey": "data.jesters.odd_todd.notes",
+    "originalRankRefs": [
+      "ace",
+      "3",
+      "5",
+      "7",
+      "9"
+    ]
   },
   {
     "id": "scholar",
@@ -1034,11 +910,6 @@
     "conditionValue": "ace",
     "value": 20,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "ace"
-    ],
     "mappedTileNumbers": [
       1
     ],
@@ -1049,7 +920,10 @@
     },
     "displayNameKey": "data.jesters.scholar.displayName",
     "effectTextKey": "data.jesters.scholar.effectText",
-    "notesKey": "data.jesters.scholar.notes"
+    "notesKey": "data.jesters.scholar.notes",
+    "originalRankRefs": [
+      "ace"
+    ]
   },
   {
     "id": "fibonacci",
@@ -1074,15 +948,6 @@
     ],
     "value": 8,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "ace",
-      "2",
-      "3",
-      "5",
-      "8"
-    ],
     "mappedTileNumbers": [
       1,
       2,
@@ -1096,7 +961,14 @@
     },
     "displayNameKey": "data.jesters.fibonacci.displayName",
     "effectTextKey": "data.jesters.fibonacci.effectText",
-    "notesKey": "data.jesters.fibonacci.notes"
+    "notesKey": "data.jesters.fibonacci.notes",
+    "originalRankRefs": [
+      "ace",
+      "2",
+      "3",
+      "5",
+      "8"
+    ]
   },
   {
     "id": "banner",
@@ -1115,10 +987,6 @@
     "conditionValue": "remaining_discards",
     "value": 30,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false
@@ -1144,10 +1012,6 @@
     "conditionValue": null,
     "value": 15,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": false,
@@ -1174,10 +1038,6 @@
     "conditionValue": "times_current_hand_played_this_run",
     "value": null,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [],
-    "mappedTileNumbers": [],
     "source": {
       "origin": "fandom",
       "verified": true,
@@ -1204,14 +1064,6 @@
     "conditionValue": "consecutive_hands_without_scoring_face_card",
     "value": 1,
     "xValue": null,
-    "originalSuitRefs": [],
-    "mappedTileColors": [],
-    "originalRankRefs": [
-      "jack",
-      "queen",
-      "king",
-      "face_card"
-    ],
     "mappedTileNumbers": [
       11,
       12,
@@ -1225,6 +1077,11 @@
     },
     "displayNameKey": "data.jesters.ride_the_bus.displayName",
     "effectTextKey": "data.jesters.ride_the_bus.effectText",
-    "notesKey": "data.jesters.ride_the_bus.notes"
+    "notesKey": "data.jesters.ride_the_bus.notes",
+    "originalRankRefs": [
+      "jack",
+      "queen",
+      "king"
+    ]
   }
 ]

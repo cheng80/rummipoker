@@ -973,4 +973,38 @@ void main() {
     expect(snapshot.stateValueForSlot(0), 1);
     expect(snapshot.playedCountForRank(RummiHandRank.straight), 1);
   });
+
+  test('fromJson: originalSuitRefs만으로 tile_color 색을 합성한다', () {
+    final card = RummiJesterCard.fromJson({
+      'id': 'greedy_jester',
+      'displayName': 'Greedy Jester',
+      'rarity': 'common',
+      'baseCost': 5,
+      'effectText': '',
+      'effectType': 'mult_bonus',
+      'trigger': 'onScore',
+      'conditionType': 'tile_color_scored',
+      'conditionValue': null,
+      'value': 3,
+      'originalSuitRefs': ['diamonds'],
+    });
+    expect(card.mappedTileColors, [TileColor.yellow]);
+  });
+
+  test('fromJson: originalRankRefs와 토큰 문자열로 랭크를 합성한다', () {
+    final card = RummiJesterCard.fromJson({
+      'id': 'walkie_talkie',
+      'displayName': 'Walkie Talkie',
+      'rarity': 'common',
+      'baseCost': 4,
+      'effectText': '',
+      'effectType': 'mult_bonus',
+      'trigger': 'onScore',
+      'conditionType': 'rank_scored',
+      'conditionValue': [10, 4],
+      'value': 4,
+      'originalRankRefs': ['10', '4'],
+    });
+    expect(card.mappedTileNumbers, [4, 10]);
+  });
 }

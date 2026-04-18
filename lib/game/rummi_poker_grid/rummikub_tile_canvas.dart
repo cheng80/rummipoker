@@ -8,7 +8,7 @@ double rummikubTileCornerRadiusForSide(double side) {
   return side * kRummikubTileCornerRadiusFactor;
 }
 
-/// 루미큐브 실물 타일 느낌: 크림 면, 상단 컬러 띠, 숫자는 슈트 색.
+/// 루미큐브 실물 타일 느낌: 크림 면, 상단 컬러 띠, 숫자는 타일 컬러.
 void paintRummikubTile(
   Canvas canvas,
   Rect rect,
@@ -47,10 +47,10 @@ void paintRummikubTile(
     Rect.fromLTWH(inner.left, inner.top, inner.width, barH),
     Radius.circular(r * 0.55),
   );
-  final suitColor = _suitColor(tile.color);
-  canvas.drawRRect(barR, Paint()..color = suitColor);
+  final tilePaintColor = _colorForTileColor(tile.color);
+  canvas.drawRRect(barR, Paint()..color = tilePaintColor);
 
-  final digitColor = suitColor;
+  final digitColor = tilePaintColor;
   final bodyH = inner.height - barH;
   final fontSize = bodyH * 0.72;
   final tp = TextPainter(
@@ -104,8 +104,8 @@ void paintRummikubTile(
   }
 }
 
-/// 루미큐브 4색에 가깝게: 검·파·빨·주황(노랑 슈트).
-Color _suitColor(TileColor c) {
+/// 루미큐브 4색에 가깝게: 검·파·빨·주황(노랑 타일).
+Color _colorForTileColor(TileColor c) {
   return switch (c) {
     TileColor.red => const Color(0xFFC62828),
     TileColor.blue => const Color(0xFF1565C0),
