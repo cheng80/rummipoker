@@ -152,5 +152,112 @@ void main() {
       ]);
       expect(e.rank, isNot(RummiHandRank.straight));
     });
+
+    test('evaluateLine: gap이 있어도 2장 원페어를 평가한다', () {
+      final e = HandEvaluator.evaluateLine([
+        t(TileColor.red, 9),
+        null,
+        null,
+        t(TileColor.blue, 9),
+        null,
+      ]);
+      expect(e.rank, RummiHandRank.onePair);
+      expect(e.baseScore, 0);
+      expect(e.isDeadLine, true);
+      expect(e.contributingIndexes, [0, 3]);
+    });
+
+    test('evaluateLine: 3장 트리플을 평가한다', () {
+      final e = HandEvaluator.evaluateLine([
+        null,
+        t(TileColor.red, 6),
+        t(TileColor.blue, 6),
+        null,
+        t(TileColor.yellow, 6),
+      ]);
+      expect(e.rank, RummiHandRank.threeOfAKind);
+      expect(e.baseScore, 40);
+      expect(e.contributingIndexes, [1, 2, 4]);
+    });
+
+    test('evaluateLine: 4장에 트리플이 있으면 트리플을 평가한다', () {
+      final e = HandEvaluator.evaluateLine([
+        t(TileColor.red, 3),
+        t(TileColor.blue, 3),
+        t(TileColor.yellow, 3),
+        t(TileColor.black, 10),
+        null,
+      ]);
+      expect(e.rank, RummiHandRank.threeOfAKind);
+      expect(e.baseScore, 40);
+      expect(e.contributingIndexes, [0, 1, 2]);
+    });
+
+    test('evaluateLine: 3장에 원페어가 있으면 원페어를 평가한다', () {
+      final e = HandEvaluator.evaluateLine([
+        t(TileColor.blue, 5),
+        null,
+        t(TileColor.black, 5),
+        null,
+        t(TileColor.red, 12),
+      ]);
+      expect(e.rank, RummiHandRank.onePair);
+      expect(e.baseScore, 0);
+      expect(e.isDeadLine, true);
+      expect(e.contributingIndexes, [0, 2]);
+    });
+
+    test('evaluateLine: 4장에 원페어 하나만 있으면 원페어를 평가한다', () {
+      final e = HandEvaluator.evaluateLine([
+        t(TileColor.red, 4),
+        t(TileColor.blue, 4),
+        t(TileColor.yellow, 1),
+        t(TileColor.black, 8),
+        null,
+      ]);
+      expect(e.rank, RummiHandRank.onePair);
+      expect(e.baseScore, 0);
+      expect(e.isDeadLine, true);
+      expect(e.contributingIndexes, [0, 1]);
+    });
+
+    test('evaluateLine: 4장 투페어를 평가한다', () {
+      final e = HandEvaluator.evaluateLine([
+        t(TileColor.red, 4),
+        t(TileColor.blue, 4),
+        t(TileColor.yellow, 9),
+        t(TileColor.black, 9),
+        null,
+      ]);
+      expect(e.rank, RummiHandRank.twoPair);
+      expect(e.baseScore, 25);
+      expect(e.contributingIndexes, [0, 1, 2, 3]);
+    });
+
+    test('evaluateLine: 4장 포카드를 평가한다', () {
+      final e = HandEvaluator.evaluateLine([
+        t(TileColor.red, 8),
+        t(TileColor.blue, 8),
+        t(TileColor.yellow, 8),
+        t(TileColor.black, 8),
+        null,
+      ]);
+      expect(e.rank, RummiHandRank.fourOfAKind);
+      expect(e.baseScore, 100);
+      expect(e.contributingIndexes, [0, 1, 2, 3]);
+    });
+
+    test('evaluateLine: 3장이지만 족보가 없으면 하이카드다', () {
+      final e = HandEvaluator.evaluateLine([
+        t(TileColor.red, 2),
+        null,
+        t(TileColor.blue, 5),
+        null,
+        t(TileColor.black, 11),
+      ]);
+      expect(e.rank, RummiHandRank.highCard);
+      expect(e.baseScore, 0);
+      expect(e.contributingIndexes, isEmpty);
+    });
   });
 }

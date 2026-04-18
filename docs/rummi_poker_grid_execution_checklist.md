@@ -11,13 +11,14 @@
 - [x] **평가 라인**: 행·열·주/반 대각 = **12줄** (`rummi_poker_grid_gdd.md` §1.1)
 - [x] **Straight**: 일반 연속 + 휠 **10–11–12–13–1** (`HandEvaluator._isStraight`)
 - [x] **손패 한도**: 기본값은 **1장**, 현재 구현은 디버그 메뉴에서 **1~3장 조절 가능** — 드로우/버림 보충/UI가 `maxHandSize` 기준으로 동작
-- [x] **죽은 줄 / 방치**: 죽은 줄 = 하이카드·원페어; **방치·대기 ±** 미확정 — `LineHazardTuning` 기본 0 (추후 수식 가능)
-- [x] **일괄 확정**: 완성 줄 **개수 제한 없음**; 전용 버튼·완성줄 탭 동일 → 대기 줄 **전부** 한 번에
+- [x] **죽은 줄 / 방치**: 죽은 줄 = 하이카드 + 원페어; 투페어 이상만 즉시 확정 가능
+- [x] **일괄 확정**: 현재 점수 성립 줄 **개수 제한 없음**; 확정 버튼으로 성립 줄 **전부** 한 번에
 - [x] **확정 제거 범위**: 줄 전체가 아니라 **족보 성립에 실제 기여한 카드만 제거**
+- [x] **겹침 보너스**: 기여 카드의 최고 `k` 기준으로 `α = 0.3`, `cap = 2.0` 배수 적용
 - [x] **블라인드 자원**: §8 — **\(T\)·\(D\)** · 족보 확정 **횟수 제한 없음** · 배치 턴 무제한
 - [x] **만료**: **\(D=0\)** 후 **25칸 만재**, 또는 **현재 덱 전부 소모** (`copiesPerTile` 값과 무관하게 동일 로직)
 - [x] **`RummiBlindState`** + **`PokerDeck`(`copiesPerTile` 기반)** + **`RummiPokerGridSession`** (드로우·배치·버림·일괄 확정·만료 신호) — `lib/logic/rummi_poker_grid/` (`test/logic/rummi_session_test.dart`)
-- [x] **빈 칸이 있는 줄**: **5칸 다 찰 때만** 판정
+- [x] **빈 칸이 있는 줄**: **현재 놓인 카드만으로 즉시 판정**
 - [x] **조커**: **메타(장착 슬롯)만** — 보드 타일 아님
 
 ---
@@ -37,8 +38,8 @@
 
 - [x] 모델: `Tile` / `TileColor`, 보드 5×5, **대각 2줄** (`diagMain` / `diagAnti`)
 - [x] **덱 공용화** `PokerDeck`·`buildStandardPokerDeck({copiesPerTile})`·`remainingAfterPlaced`; **`RummiBlindState`**(\(T,D\), 누적 점수)
-- [x] `HandEvaluator`: 5장 → 족보·점수 (단위 테스트) — 휠 스트레이트·죽은 줄 플래그 반영
-- [x] 엔진: 행·열·**주/반 대각** 평가 + **`listFullLines`** (12줄) (`RummiPokerGridEngine`)
+- [x] `HandEvaluator`: 2~5장 부분 족보·점수 (단위 테스트) — 휠 스트레이트·원페어 dead-line 판정·기여 인덱스 반영
+- [x] 엔진: 행·열·**주/반 대각** 현재 카드 평가 + **`listEvaluatedLines`** (12줄) (`RummiPokerGridEngine`)
 - [x] **`RummiPokerGridSession`**: 드로우·배치·버림(\(D\))·**일괄 확정**·`evaluateExpirySignals` — 세부는 `rummi_poker_grid_session.dart`
 - [x] GDD §3·§8과 엔진 이벤트 **대응표** (`docs/` 또는 `game_logic` 부록) — 정산 체인/메타 후속 책임 기준 반영
 
@@ -68,7 +69,7 @@
 
 ## 3. Runtime / Effects
 
-- [x] `GameView` Flutter 위젯 기반 화면 — HUD·Jester 5슬롯·5×5 보드·단일 손패·드로우/줄 확정/버림/선택 해제
+- [x] `GameView` Flutter 위젯 기반 화면 — HUD·Jester 5슬롯·5×5 보드·단일 손패·드로우/확정/버림/선택 해제
 - [x] 액션 분리: **보드 버림**과 **손패 버림**을 별도 버튼/별도 카운트로 분리
 - [x] 타일 렌더 재사용 (`rummikub_tile_canvas.dart`) + 손패 탭(선택) + 빈 칸 탭(배치)
 - [x] 점수 줄 기여 카드 하이라이트 및 선택/버림 상태색 반영
@@ -127,6 +128,9 @@
 - [x] `RummiPokerGridSession` / `RummiRunProgress` 세이브 DTO 설계
 - [x] autosave 트리거 연결: 드로우/배치/버림/확정/상점/스테이지 전환/lifecycle
 - [x] 타이틀 `이어하기` 진입 및 손상 세이브 처리 UX
+- [x] 게임오버 `다시하기 / 종료` UX
+  - `다시하기`: `stageStartSnapshot` 즉시 복원
+  - `종료`: 저장 삭제 후 타이틀 이동
 - [x] 푸시 대비 키 분리 정책 유지: `saveDeviceKey` / `installationId` / `pushToken`
 - [x] 웹 저장/이어하기 회귀 검증 절차 문서화: `flutter build web` + 정적 서버 + Playwright
 - [x] 웹에서 `랜덤 시작 -> 옵션 나가기 -> 타이틀 즉시 이어하기 표시` 검증
@@ -149,12 +153,13 @@
 
 ## 현재 진행 메모
 
-- 룰: **`copiesPerTile` 기반 포커 덱**·**손패 기본 1장(디버그 `1~3` 조절 가능)**·**\(T,D_board,D_hand\)**·죽은 줄은 **보드 버림으로만 완화**·만료 **25칸 / 현재 덱 전부 소모** — `rummi_poker_grid_gdd.md` §1.1·§2.2·§8, `game_logic`
+- 룰: **`copiesPerTile` 기반 포커 덱**·**손패 기본 1장(디버그 `1~3` 조절 가능)**·**\(T,D_board,D_hand\)**·**즉시 확정 + 부분 줄 평가 + overlap 보너스**·**원페어는 dead line(0점)**·만료 **25칸 / 현재 덱 전부 소모** — `rummi_poker_grid_v2_instant_confirm_overlap.md`, `game_logic`
 - 구조 방향: **Flutter-first 전투 화면 + Flame은 필요 시 연출 레이어만 재도입** 기준 유지
 - 코드: 핸드·보드·**`PokerDeck`·`RummiPokerGridSession`**·테스트 + **`GameView` Flutter 전환** 완료. HUD 대시보드/Jester 5슬롯/5×5 보드/단일 손패/하단 액션을 위젯으로 재구성했고, Flame은 후속 효과 레이어 후보로 남겨둠.
 - 메타 진행: 스테이지 클리어 후 정산/상점/Jester 매매 흐름이 현재 Flutter 쪽에 연결되어 있다.
 - 스테이지 전환: 다음 스테이지 진입 시 **현재 덱 전체 리셋 + 시드 파생 셔플**로 재현 가능하게 맞췄다.
 - 이어하기 저장: 1차 구현 완료. `docs/save_resume_architecture.md` 기준으로 하이브리드(`GetStorage` payload + secure storage key + HMAC) 저장, 타이틀 `이어하기`, 손상 세이브 삭제, 기본 autosave가 연결되어 있다.
+- 게임오버 저장 정책: 게임오버 직전에는 현재 스테이지 시작 스냅샷 기준으로 재시도 상태를 보존하고, 팝업에서 `다시하기 / 종료`를 선택한다.
 - 웹 검증: 개발용 `flutter run -d chrome` 세션 대신, 현재는 `build/web` 정적 서빙 + Playwright 경로를 표준 회귀 검증 절차로 본다.
 - Riverpod 분리: `GameView`는 `GameSessionNotifier`, `TitleView`는 `TitleNotifier` 기준으로 주요 UI 상태를 읽는다.
 - 알림 정책: 현재는 **상단 오버레이 알림을 기본값**으로 사용한다. 하단 `SnackBar`는 CTA가 필요하거나, 폼/키보드와 맥락상 더 적합한 경우만 예외적으로 검토한다.
@@ -169,4 +174,4 @@
 - Stitch: `Rummi Poker Grid - Flame UI Mockups` 프로젝트에서 1차/2차 플레이 화면 생성 완료. 2차안은 에메랄드 필드·보드 지배력·라인 배지 차등이 더 적합함. 다음은 색/간격 토큰 추출 후 Flutter 화면 미세조정에 반영.
 - UI 재배치: 모바일 `SafeArea` 중복 패딩 제거, 상단 오버레이 최소화, HUD 압축, Jester 슬롯 카드형 정리, 보드 최대화, 단일 손패 단순화, 하단 버튼 우선순위 재배치 적용.
 - 성능 최적화: `StarryBackground`를 그룹 Opacity 방식(래스터 캐싱 + FadeTransition)으로 전환, `GameView` 전환 시 BGM/카탈로그 로딩 지연, 중복 UI 클래스(`TableBackdrop`, `ModalCard`) 공용화. 모든 뷰가 `PhoneFrameScaffold`를 일관되게 사용하도록 통일.
-- 정합성 메모: 사용자 확정 규칙은 **죽은 줄을 버림(D)으로만 완화**하고, **줄 확정 시에는 족보 성립에 기여한 카드만 제거**하는 것이다. 세션/테스트는 이 방향으로 갱신되었고, 남은 작업은 문서/UI 표현을 이 기준으로 맞추는 쪽이다.
+- 정합성 메모: 사용자 확정 규칙은 **현재 성립 줄 즉시 확정**, **overlap 배수 적용**, **줄 확정 시 족보 성립 기여 카드만 제거**다. 세션/테스트는 이 기준으로 갱신되었고, 남은 작업은 하위 문서/UI 표현을 이 기준으로 맞추는 쪽이다.

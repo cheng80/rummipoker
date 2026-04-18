@@ -10,7 +10,6 @@ import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/sound_manager.dart';
-import '../../../services/active_run_save_service.dart';
 
 const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
@@ -40,15 +39,14 @@ const TextStyle gameHudSubStyle = TextStyle(
 /// 보드 가로 폭 기준 실제 카드 렌더 폭을 계산한다.
 double boardTileVisualWidth(double boardSide) {
   final gridSide = boardSide - (kBoardFrameInset * 2);
-  final cellSide =
-      (gridSide - (kBoardGridGap * (kBoardSize - 1))) / kBoardSize;
+  final cellSide = (gridSide - (kBoardGridGap * (kBoardSize - 1))) / kBoardSize;
   return cellSide - (kBoardTileInnerPadding * 2);
 }
 
 /// 확정 가능한 족보 줄에 실제 기여하는 셀만 강조 대상으로 반환한다.
 Set<String> scoringCellSet(RummiPokerGridSession session) {
   final cells = <String>{};
-  final lines = session.engine.listFullLines(session.board);
+  final lines = session.engine.listEvaluatedLines(session.board);
   for (final line in lines) {
     if (line.report.evaluation.isDeadLine) continue;
     final refs = line.ref.cells();
@@ -611,17 +609,19 @@ class GameActionButton extends StatelessWidget {
     required this.background,
     required this.onPressed,
     this.foreground = Colors.white,
+    this.compact = false,
   });
 
   final String label;
   final Color background;
   final Color foreground;
   final VoidCallback onPressed;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: compact ? 34 : 48,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -632,8 +632,14 @@ class GameActionButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 6 : 8,
+            vertical: compact ? 4 : 7,
+          ),
+          textStyle: TextStyle(
+            fontSize: compact ? 10 : 12,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         child: FittedBox(fit: BoxFit.scaleDown, child: Text(label)),
       ),
@@ -825,18 +831,23 @@ String expirySignalLabel(RummiExpirySignal signal) {
   return switch (signal) {
     RummiExpirySignal.boardFullAfterDcExhausted =>
       '버림이 모두 소진된 상태에서 보드 25칸이 가득 찼습니다.',
-    RummiExpirySignal.drawPileExhausted => '드로우 덱이 소진되었습니다.',
+    RummiExpirySignal.drawPileExhausted =>
+      '드로우 덱이 소진되었고 더 이상 사용할 손패나 확정할 줄이 없습니다.',
   };
 }
 
 /// 만료 신호 목록으로 게임오버 다이얼로그를 표시한다.
-/// [onExitToTitle]은 세이브 삭제 후 타이틀로 이동하는 콜백이다.
+/// [onRetry]는 현재 스테이지 시작 스냅샷으로 즉시 복원한다.
+/// [onExit]는 저장을 정리하고 타이틀로 이동한다.
 void showGameOverDialog({
   required BuildContext context,
   required List<RummiExpirySignal> signals,
-  required Future<void> Function() onExitToTitle,
+  required Future<void> Function() onRetry,
+  required Future<void> Function() onExit,
 }) {
-  final text = signals.map(expirySignalLabel).join('\n');
+  final text =
+      '${signals.map(expirySignalLabel).join('\n')}\n\n'
+      '현재 스테이지 시작 상태로 다시 시도하거나 종료할 수 있습니다.';
   showGameFramedDialog<void>(
     context: context,
     barrierDismissible: false,
@@ -864,20 +875,42 @@ void showGameOverDialog({
             ),
           ),
           const SizedBox(height: 18),
-          FilledButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              await WidgetsBinding.instance.endOfFrame;
-              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              await ActiveRunSaveService.clearActiveRun();
-              await onExitToTitle();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFF4A81D),
-              foregroundColor: Colors.black,
-              minimumSize: const Size.fromHeight(50),
-            ),
-            child: Text(context.tr('exit')),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await WidgetsBinding.instance.endOfFrame;
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    await onRetry();
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFF4A81D),
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  child: const Text('다시하기'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await WidgetsBinding.instance.endOfFrame;
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    await onExit();
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF5D6B68),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  child: Text(context.tr('exit')),
+                ),
+              ),
+            ],
           ),
         ],
       ),

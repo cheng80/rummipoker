@@ -45,8 +45,7 @@ flutter build web --release --base-href "/rummipoker/" --analyze-size
 ```bash
 # 빌드 후 rummipoker 폴더 생성 및 복사
 flutter build web --release --base-href "/rummipoker/"
-mkdir -p rummipoker
-cp -r build/web/* rummipoker/
+mkdir -p rummipoker && cp -r build/web/* rummipoker/
 ```
 
 `rummipoker/` 폴더를 업로드하면 `https://example.com/rummipoker/` 에서 서비스됩니다.

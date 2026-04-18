@@ -113,7 +113,7 @@ void main() {
     expect(session.hand.length, 1);
   });
 
-  test('덱이 비면 drawPileExhausted', () {
+  test('덱이 비고 손패/확정 줄도 없을 때만 drawPileExhausted', () {
     final emptyDeck = PokerDeck.shuffled(Random(1), <Tile>[]);
     final session = RummiPokerGridSession(
       blind: RummiBlindState(targetScore: 9999, discardsRemaining: 4),
@@ -122,6 +122,45 @@ void main() {
     expect(session.drawToHand(), isNull);
     final sig = session.evaluateExpirySignals();
     expect(sig.contains(RummiExpirySignal.drawPileExhausted), true);
+  });
+
+  test('덱이 비어도 손패가 남아 있으면 drawPileExhausted가 아니다', () {
+    final lastCard = t(TileColor.red, 7);
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 9999, discardsRemaining: 4),
+      deck: PokerDeck.fromSnapshot([lastCard]),
+    );
+
+    expect(session.drawToHand(), lastCard);
+    expect(session.deck.isEmpty, true);
+    expect(session.hand, [lastCard]);
+    expect(
+      session.evaluateExpirySignals().contains(
+        RummiExpirySignal.drawPileExhausted,
+      ),
+      false,
+    );
+  });
+
+  test('덱이 비고 원페어만 있으면 drawPileExhausted다', () {
+    final board = RummiBoard();
+    board.setCell(4, 2, t(TileColor.blue, 5));
+    board.setCell(4, 3, t(TileColor.black, 5));
+    board.setCell(4, 4, t(TileColor.red, 12));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 9999, discardsRemaining: 4),
+      deck: PokerDeck.shuffled(Random(1), <Tile>[]),
+      board: board,
+    );
+
+    expect(session.hand, isEmpty);
+    expect(session.canConfirmAllFullLines, false);
+    expect(
+      session.evaluateExpirySignals().contains(
+        RummiExpirySignal.drawPileExhausted,
+      ),
+      true,
+    );
   });
 
   test('다음 스테이지 진입 시 덱이 시드 기반으로 리셋·셔플된다', () {
@@ -179,6 +218,27 @@ void main() {
     }
   });
 
+  test('확정 점수 적용을 지연할 수 있고, 이후 줄별로 누적할 수 있다', () {
+    final board = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(2, i, t(i.isEven ? TileColor.red : TileColor.blue, i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 40, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.ok, true);
+    expect(out.result.scoreAdded, 70);
+    expect(session.blind.scoreTowardBlind, 0);
+
+    session.addScoreToBlind(out.result.lineBreakdowns.single.finalScore);
+    expect(session.blind.scoreTowardBlind, 70);
+  });
+
   test('투페어 확정 시 매칭된 4장만 제거되고 키커는 남는다', () {
     final board = RummiBoard();
     board.setCell(1, 0, t(TileColor.red, 4));
@@ -230,11 +290,10 @@ void main() {
     expect(session.board.cellAt(3, 4), same(kicker));
   });
 
-  test('죽은 줄만 있으면 족보 확정 없음 — 죽은 줄은 버림으로만 칸 비움', () {
+  test('하이카드만 있으면 족보 확정 없음', () {
     final board = RummiBoard();
-    // 원페어(죽은 줄) — 포커 덱에서 가능한 5장.
     board.setCell(0, 0, t(TileColor.red, 7));
-    board.setCell(0, 1, t(TileColor.blue, 7));
+    board.setCell(0, 1, t(TileColor.blue, 2));
     board.setCell(0, 2, t(TileColor.yellow, 3));
     board.setCell(0, 3, t(TileColor.black, 9));
     board.setCell(0, 4, t(TileColor.red, 11));
@@ -249,6 +308,107 @@ void main() {
     expect(out.result.ok, false);
     expect(out.result.scoreAdded, 0);
     expect(session.board.cellAt(0, 0), isNotNull);
+  });
+
+  test('부분 줄 원페어는 더 이상 즉시 확정되지 않는다', () {
+    final board = RummiBoard();
+    board.setCell(2, 0, t(TileColor.red, 7));
+    board.setCell(2, 3, t(TileColor.blue, 7));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    expect(session.canConfirmAllFullLines, false);
+
+    final out = session.confirmAllFullLines();
+
+    expect(out.result.ok, false);
+    expect(out.result.baseScore, 0);
+    expect(out.result.scoreAdded, 0);
+    expect(session.board.cellAt(2, 0), isNotNull);
+    expect(session.board.cellAt(2, 3), isNotNull);
+  });
+
+  test('3장 줄 원페어도 더 이상 즉시 확정되지 않는다', () {
+    final board = RummiBoard();
+    board.setCell(4, 2, t(TileColor.blue, 5));
+    board.setCell(4, 3, t(TileColor.black, 5));
+    board.setCell(4, 4, t(TileColor.red, 12));
+    final kicker = board.cellAt(4, 4);
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines();
+
+    expect(out.result.ok, false);
+    expect(out.result.baseScore, 0);
+    expect(out.result.scoreAdded, 0);
+    expect(session.board.cellAt(4, 2), isNotNull);
+    expect(session.board.cellAt(4, 3), isNotNull);
+    expect(session.board.cellAt(4, 4), same(kicker));
+  });
+
+  test('4장 줄 트리플도 즉시 확정되고 키커는 남는다', () {
+    final board = RummiBoard();
+    board.setCell(2, 0, t(TileColor.red, 3));
+    board.setCell(2, 1, t(TileColor.blue, 3));
+    board.setCell(2, 2, t(TileColor.yellow, 3));
+    board.setCell(2, 3, t(TileColor.black, 10));
+    final kicker = board.cellAt(2, 3);
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines();
+
+    expect(out.result.ok, true);
+    expect(out.result.baseScore, 40);
+    expect(out.result.scoreAdded, 40);
+    expect(session.board.cellAt(2, 0), isNull);
+    expect(session.board.cellAt(2, 1), isNull);
+    expect(session.board.cellAt(2, 2), isNull);
+    expect(session.board.cellAt(2, 3), same(kicker));
+  });
+
+  test('겹침 기여 타일이 있으면 각 라인에 overlap 배수가 적용된다', () {
+    final board = RummiBoard();
+    board.setCell(1, 2, t(TileColor.yellow, 7));
+    board.setCell(2, 1, t(TileColor.blue, 7));
+    board.setCell(2, 2, t(TileColor.red, 7));
+    board.setCell(2, 3, t(TileColor.black, 7));
+    board.setCell(3, 2, t(TileColor.red, 7));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines();
+
+    expect(out.result.ok, true);
+    expect(out.result.lineBreakdowns.length, 2);
+    expect(out.result.baseScore, 104);
+    expect(out.result.scoreAdded, 104);
+    expect(
+      out.result.lineBreakdowns.map((line) => line.overlapMultiplier),
+      everyElement(1.3),
+    );
+    expect(
+      out.result.lineBreakdowns.map((line) => line.overlapBonus),
+      everyElement(12),
+    );
+    expect(session.board.cellAt(1, 2), isNull);
+    expect(session.board.cellAt(2, 1), isNull);
+    expect(session.board.cellAt(2, 2), isNull);
+    expect(session.board.cellAt(2, 3), isNull);
+    expect(session.board.cellAt(3, 2), isNull);
   });
 
   test('기본 Jester의 mult_bonus가 줄 확정 점수에 반영된다', () {
@@ -560,10 +720,13 @@ void main() {
     );
 
     expect(progress.shopOffers.length, 5);
-    expect(
-      progress.shopOffers.take(5).map((offer) => offer.card.id).toList(),
-      ['inspect_0', 'inspect_1', 'inspect_2', 'inspect_3', 'inspect_4'],
-    );
+    expect(progress.shopOffers.take(5).map((offer) => offer.card.id).toList(), [
+      'inspect_0',
+      'inspect_1',
+      'inspect_2',
+      'inspect_3',
+      'inspect_4',
+    ]);
   });
 
   test('상점 카탈로그는 지원된 라운드 종료 economy Jester도 노출한다', () {

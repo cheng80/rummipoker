@@ -8,10 +8,7 @@ import '../../../services/active_run_save_service.dart';
 import 'game_session_state.dart';
 
 class GameSessionArgs {
-  const GameSessionArgs({
-    required this.runSeed,
-    this.restoredRun,
-  });
+  const GameSessionArgs({required this.runSeed, this.restoredRun});
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
@@ -28,11 +25,14 @@ class GameSessionArgs {
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
 final gameSessionNotifierProvider =
-    NotifierProvider.family<GameSessionNotifier, GameSessionState, GameSessionArgs>(
-  GameSessionNotifier.new,
-);
+    NotifierProvider.family<
+      GameSessionNotifier,
+      GameSessionState,
+      GameSessionArgs
+    >(GameSessionNotifier.new);
 
-class GameSessionNotifier extends FamilyNotifier<GameSessionState, GameSessionArgs> {
+class GameSessionNotifier
+    extends FamilyNotifier<GameSessionState, GameSessionArgs> {
   @override
   GameSessionState build(GameSessionArgs args) {
     final restoredRun = args.restoredRun;
@@ -71,10 +71,7 @@ class GameSessionNotifier extends FamilyNotifier<GameSessionState, GameSessionAr
   }
 
   void setActiveRunScene(ActiveRunScene scene) {
-    state = state.copyWith(
-      activeRunScene: scene,
-      revision: state.revision + 1,
-    );
+    state = state.copyWith(activeRunScene: scene, revision: state.revision + 1);
   }
 
   void setPendingResumeShop(bool value) {
@@ -170,7 +167,9 @@ class GameSessionNotifier extends FamilyNotifier<GameSessionState, GameSessionAr
     state = state.copyWith(
       selectedBoardRow: row,
       selectedBoardCol: col,
-      selectedHandTile: row == null && col == null ? state.selectedHandTile : null,
+      selectedHandTile: row == null && col == null
+          ? state.selectedHandTile
+          : null,
       revision: state.revision + 1,
     );
   }
@@ -230,6 +229,7 @@ class GameSessionNotifier extends FamilyNotifier<GameSessionState, GameSessionAr
     final out = session.confirmAllFullLines(
       jesters: runProgress.ownedJesters,
       runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+      applyScoreToBlind: false,
     );
     if (!out.result.ok) return null;
 
@@ -241,6 +241,13 @@ class GameSessionNotifier extends FamilyNotifier<GameSessionState, GameSessionAr
       lineBreakdowns: out.result.lineBreakdowns,
       stageCleared: out.cleared != null,
     );
+  }
+
+  void applyConfirmedLineScore(int score) {
+    final session = state.session;
+    if (session == null) return;
+    session.addScoreToBlind(score);
+    state = state.copyWith(revision: state.revision + 1);
   }
 
   /// 스테이지 잔여물 처리 + 캐시아웃 계산/적용. 결과 breakdown 반환.
@@ -371,9 +378,7 @@ class GameSessionNotifier extends FamilyNotifier<GameSessionState, GameSessionAr
   }
 
   /// 검사용 상점 열기 (특정 오퍼 ID 지정).
-  void openShopForTest({
-    required List<String> preferredOfferIds,
-  }) {
+  void openShopForTest({required List<String> preferredOfferIds}) {
     final session = state.session;
     final runProgress = state.runProgress;
     final catalog = state.jesterCatalog;

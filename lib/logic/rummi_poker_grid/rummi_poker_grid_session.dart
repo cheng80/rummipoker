@@ -1,5 +1,6 @@
-import 'dart:math' show Random;
+import 'dart:math' show Random, max, min;
 
+import 'hand_evaluator.dart';
 import 'hand_rank.dart';
 import 'jester_meta.dart';
 import 'line_ref.dart';
@@ -20,7 +21,7 @@ enum RummiExpirySignal {
   /// 버림(D)이 없는데 보드 25칸이 모두 찼을 때(칸을 비울 수 없음).
   boardFullAfterDcExhausted,
 
-  /// 드로우 더미 소진.
+  /// 드로우 더미가 비었고, 손패/확정 가능한 줄도 더 이상 없어 진행할 카드가 없음.
   drawPileExhausted,
 }
 
@@ -71,15 +72,23 @@ class ConfirmedLineBreakdown {
     required this.jesterBonus,
     required this.hasScoringFaceCard,
     required this.effects,
+    this.rankBaseScore,
+    this.overlapMultiplier = 1.0,
+    this.overlapBonus = 0,
+    this.contributingCells = const [],
   });
 
   final LineRef ref;
   final RummiHandRank rank;
+  final int? rankBaseScore;
   final int baseScore;
   final int finalScore;
   final int jesterBonus;
   final bool hasScoringFaceCard;
   final List<RummiJesterEffectBreakdown> effects;
+  final double overlapMultiplier;
+  final int overlapBonus;
+  final List<(int, int)> contributingCells;
 }
 
 /// 덱·손패·보드·제거 더미를 묶은 퍼사드 (마이그레이션 플랜 단계 1).
@@ -87,6 +96,8 @@ class RummiPokerGridSession {
   static const int kDefaultMaxHandSize = 1;
   static const int kMinDebugMaxHandSize = 1;
   static const int kMaxDebugMaxHandSize = 3;
+  static const double kOverlapAlpha = 0.3;
+  static const double kOverlapMultiplierCap = 2.0;
 
   RummiPokerGridSession._({
     required this.runSeed,
@@ -291,7 +302,7 @@ class RummiPokerGridSession {
     );
   }
 
-  /// 현재 보드에서 5칸 완성된 **족보(점수) 줄만** 일괄 확정한다.
+  /// 현재 보드의 점수 성립 라인을 즉시 확정한다.
   ///
   /// 이 메서드의 책임은 전투 중 실시간 정산까지만이다.
   /// - 줄별 기본 점수/Jester 보정을 계산한다.
@@ -299,19 +310,35 @@ class RummiPokerGridSession {
   /// - 블라인드 누적 점수와 클리어 여부를 갱신한다.
   ///
   /// `Cash Out`, 상점 진입, 다음 스테이지 준비는 UI/메타 레이어가 후속으로 처리한다.
-  /// 죽은 줄은 **한 줄씩 일괄 제거 없음** — 칸을 비우려면 **보드 버림(D)** 만 사용.
+  /// 하이카드 줄은 제거하지 않으며, 칸을 비우려면 **보드 버림(D)** 만 사용한다.
   ({ConfirmClearResult result, BlindCleared? cleared}) confirmAllFullLines({
     List<RummiJesterCard> jesters = const [],
     RummiJesterRuntimeSnapshot runtimeSnapshot =
         const RummiJesterRuntimeSnapshot(),
+    bool applyScoreToBlind = true,
   }) {
-    final lines = engine.listFullLines(board);
-    final scoringLines = [
-      for (final e in lines)
-        if (!e.report.evaluation.isDeadLine) e,
+    final lines = engine.listEvaluatedLines(board);
+    final scoringLines = <_ScoringLineCandidate>[
+      for (final entry in lines)
+        if (!entry.report.evaluation.isDeadLine)
+          _buildScoringLineCandidate(
+            ref: entry.ref,
+            evaluation: entry.report.evaluation,
+          ),
     ];
     if (scoringLines.isEmpty) {
       return (result: ConfirmClearResult.nothing(), cleared: null);
+    }
+
+    final contributionCounts = <(int, int), int>{};
+    for (final line in scoringLines) {
+      for (final cell in line.contributingCells) {
+        contributionCounts.update(
+          cell,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
+      }
     }
 
     var scoreSum = 0;
@@ -325,24 +352,21 @@ class RummiPokerGridSession {
     );
     final currentConfirmRankCounts = <RummiHandRank, int>{};
 
-    for (final e in scoringLines) {
-      final evaluation = e.report.evaluation;
-      final lineCells = e.ref.cells();
-      final scoringTiles = <Tile>[];
-      for (final index in evaluation.contributingIndexes) {
-        if (index < 0 || index >= lineCells.length) continue;
-        final (r, c) = lineCells[index];
-        final tile = board.cellAt(r, c);
-        if (tile != null) {
-          scoringTiles.add(tile);
-        }
-      }
-      final hasScoringFaceCard = scoringTiles.any(
+    for (final line in scoringLines) {
+      final evaluation = line.evaluation;
+      final hasScoringFaceCard = line.scoringTiles.any(
         (tile) => tile.number >= 11 && tile.number <= 13,
       );
 
-      var lineScore = evaluation.baseScore;
-      final baseLineScore = evaluation.baseScore;
+      final peakContribution = line.contributingCells.fold<int>(
+        1,
+        (currentMax, cell) => max(currentMax, contributionCounts[cell] ?? 1),
+      );
+      final overlapMultiplier = _overlapMultiplierForCount(peakContribution);
+      final int baseLineScore = (evaluation.baseScore * overlapMultiplier)
+          .round();
+      final int overlapBonus = baseLineScore - evaluation.baseScore;
+      int lineScore = baseLineScore;
       final effects = <RummiJesterEffectBreakdown>[];
       currentConfirmRankCounts.update(
         evaluation.rank,
@@ -355,8 +379,8 @@ class RummiPokerGridSession {
         final jester = jesters[jesterIndex];
         final scored = jester.applyToLine(
           rank: evaluation.rank,
-          baseScore: evaluation.baseScore,
-          scoringTiles: scoringTiles,
+          baseScore: baseLineScore,
+          scoringTiles: line.scoringTiles,
           context: RummiJesterScoreContext(
             discardsRemaining: jesterContext.discardsRemaining,
             cardsRemainingInDeck: jesterContext.cardsRemainingInDeck,
@@ -378,26 +402,31 @@ class RummiPokerGridSession {
       jesterBonusSum += lineScore - baseLineScore;
       lineBreakdowns.add(
         ConfirmedLineBreakdown(
-          ref: e.ref,
+          ref: line.ref,
           rank: evaluation.rank,
+          rankBaseScore: evaluation.baseScore,
           baseScore: baseLineScore,
           finalScore: lineScore,
           jesterBonus: lineScore - baseLineScore,
           hasScoringFaceCard: hasScoringFaceCard,
           effects: List<RummiJesterEffectBreakdown>.unmodifiable(effects),
+          overlapMultiplier: overlapMultiplier,
+          overlapBonus: overlapBonus,
+          contributingCells: List<(int, int)>.unmodifiable(
+            line.contributingCells,
+          ),
         ),
       );
     }
 
-    blind.scoreTowardBlind += scoreSum;
+    final nextBlindScore = blind.scoreTowardBlind + scoreSum;
+    if (applyScoreToBlind) {
+      blind.scoreTowardBlind = nextBlindScore;
+    }
 
     final cells = <(int, int)>{};
-    for (final e in scoringLines) {
-      final lineCells = e.ref.cells();
-      for (final index in e.report.evaluation.contributingIndexes) {
-        if (index < 0 || index >= lineCells.length) continue;
-        cells.add(lineCells[index]);
-      }
+    for (final line in scoringLines) {
+      cells.addAll(line.contributingCells);
     }
     for (final rc in cells) {
       final (r, c) = rc;
@@ -411,7 +440,7 @@ class RummiPokerGridSession {
     }
 
     BlindCleared? cleared;
-    if (blind.isTargetMet) {
+    if (nextBlindScore >= blind.targetScore) {
       cleared = const BlindCleared();
     }
 
@@ -428,10 +457,15 @@ class RummiPokerGridSession {
     );
   }
 
+  void addScoreToBlind(int score) {
+    if (score <= 0) return;
+    blind.scoreTowardBlind += score;
+  }
+
   /// 드로우/배치/버림 직후 등 호출 — GDD §8.4 만료 트리거 감지.
   List<RummiExpirySignal> evaluateExpirySignals() {
     final s = <RummiExpirySignal>[];
-    if (deck.isEmpty) {
+    if (_isOutOfCards()) {
       s.add(RummiExpirySignal.drawPileExhausted);
     }
     if (blind.boardDiscardsRemaining <= 0 &&
@@ -443,8 +477,15 @@ class RummiPokerGridSession {
 
   /// 확정 가능: 완성된 **족보(점수) 줄**이 하나라도 있을 때.
   bool get canConfirmAllFullLines {
-    final lines = engine.listFullLines(board);
+    final lines = engine.listEvaluatedLines(board);
     return lines.any((e) => !e.report.evaluation.isDeadLine);
+  }
+
+  bool _isOutOfCards() {
+    if (!deck.isEmpty) return false;
+    if (hand.isNotEmpty) return false;
+    if (canConfirmAllFullLines) return false;
+    return true;
   }
 
   /// 스테이지 종료 시 남은 보드/손패를 정리한다.
@@ -483,6 +524,34 @@ class RummiPokerGridSession {
         handDiscardsRemaining ?? blind.handDiscardsMax;
     blind.scoreTowardBlind = 0;
   }
+
+  _ScoringLineCandidate _buildScoringLineCandidate({
+    required LineRef ref,
+    required HandEvaluation evaluation,
+  }) {
+    final lineCells = ref.cells();
+    final contributingCells = <(int, int)>[];
+    final scoringTiles = <Tile>[];
+    for (final index in evaluation.contributingIndexes) {
+      if (index < 0 || index >= lineCells.length) continue;
+      final (row, col) = lineCells[index];
+      final tile = board.cellAt(row, col);
+      if (tile == null) continue;
+      contributingCells.add((row, col));
+      scoringTiles.add(tile);
+    }
+    return _ScoringLineCandidate(
+      ref: ref,
+      evaluation: evaluation,
+      contributingCells: List<(int, int)>.unmodifiable(contributingCells),
+      scoringTiles: List<Tile>.unmodifiable(scoringTiles),
+    );
+  }
+
+  static double _overlapMultiplierForCount(int contributionCount) {
+    final overlapCount = max(1, contributionCount);
+    return min(1 + (kOverlapAlpha * (overlapCount - 1)), kOverlapMultiplierCap);
+  }
 }
 
 enum DiscardFailReason {
@@ -490,4 +559,18 @@ enum DiscardFailReason {
   noHandDiscardsLeft,
   cellEmpty,
   tileNotInHand,
+}
+
+class _ScoringLineCandidate {
+  const _ScoringLineCandidate({
+    required this.ref,
+    required this.evaluation,
+    required this.contributingCells,
+    required this.scoringTiles,
+  });
+
+  final LineRef ref;
+  final HandEvaluation evaluation;
+  final List<(int, int)> contributingCells;
+  final List<Tile> scoringTiles;
 }

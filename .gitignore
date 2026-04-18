@@ -9,6 +9,7 @@
 *.tmp
 .DS_Store
 /rummipoker/
+/rummipoker.zip
 
 ############################################################
 # VS Code / Editor / Local history / AI Coding Tools

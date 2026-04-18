@@ -11,20 +11,20 @@ enum RummiHandRank {
   straightFlush,
 }
 
-/// GDD 표의 기본 점수. High Card / One Pair는 0 (양수 점수 없음).
+/// 현재 룰 기준 기본 점수. 투페어 이상만 점수를 준다.
 int gddBaseScore(RummiHandRank r) => switch (r) {
-      RummiHandRank.highCard => 0,
-      RummiHandRank.onePair => 0,
-      RummiHandRank.twoPair => 25,
-      RummiHandRank.threeOfAKind => 40,
-      RummiHandRank.straight => 70,
-      RummiHandRank.flush => 50,
-      RummiHandRank.fullHouse => 80,
-      RummiHandRank.fourOfAKind => 100,
-      RummiHandRank.straightFlush => 150,
-    };
+  RummiHandRank.highCard => 0,
+  RummiHandRank.onePair => 0,
+  RummiHandRank.twoPair => 25,
+  RummiHandRank.threeOfAKind => 40,
+  RummiHandRank.straight => 70,
+  RummiHandRank.flush => 50,
+  RummiHandRank.fullHouse => 80,
+  RummiHandRank.fourOfAKind => 100,
+  RummiHandRank.straightFlush => 150,
+};
 
-/// 하이카드·원페어는 **죽은 줄**(양의 점수 없음). UI·밸런스에서 동일 그룹으로 취급.
+/// 현재는 하이카드와 원페어를 점수 없는 줄로 취급한다.
 bool isDeadLineRank(RummiHandRank r) =>
     r == RummiHandRank.highCard || r == RummiHandRank.onePair;
 

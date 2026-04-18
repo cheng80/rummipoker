@@ -21,11 +21,7 @@ import 'game/widgets/game_shared_widgets.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 class GameView extends ConsumerStatefulWidget {
-  const GameView({
-    super.key,
-    required this.runSeed,
-    this.restoredRun,
-  });
+  const GameView({super.key, required this.runSeed, this.restoredRun});
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
@@ -48,10 +44,12 @@ class _GameViewState extends ConsumerState<GameView>
   ];
 
   late final GameSessionArgs _gameArgs;
+  bool _persistRetrySnapshotOnSave = false;
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
-  GameSessionState get _gameState => ref.read(gameSessionNotifierProvider(_gameArgs));
+  GameSessionState get _gameState =>
+      ref.read(gameSessionNotifierProvider(_gameArgs));
   RummiPokerGridSession get _session => _gameState.session!;
   RummiRunProgress get _runProgress => _gameState.runProgress!;
   ActiveRunStageSnapshot get _stageStartSnapshot =>
@@ -62,8 +60,7 @@ class _GameViewState extends ConsumerState<GameView>
   int? get _selectedBoardRow => _gameState.selectedBoardRow;
   int? get _selectedBoardCol => _gameState.selectedBoardCol;
   RummiJesterCatalog? get _jesterCatalog => _gameState.jesterCatalog;
-  int? get _selectedJesterOverlayIndex =>
-      _gameState.selectedJesterOverlayIndex;
+  int? get _selectedJesterOverlayIndex => _gameState.selectedJesterOverlayIndex;
   GameStageFlowPhase get _stageFlowPhase => _gameState.stageFlowPhase;
   int get _stageScoreAdded => _gameState.stageScoreAdded;
   ConfirmedLineBreakdown? get _activeSettlementLine =>
@@ -141,6 +138,19 @@ class _GameViewState extends ConsumerState<GameView>
     if (scene != null) {
       _gameNotifier.setActiveRunScene(scene);
     }
+    if (_persistRetrySnapshotOnSave) {
+      final retrySnapshot = ActiveRunStageSnapshot(
+        session: _stageStartSnapshot.session.copySnapshot(),
+        runProgress: _stageStartSnapshot.runProgress.copySnapshot(),
+      );
+      await ActiveRunSaveService.saveActiveRun(
+        activeScene: ActiveRunScene.battle,
+        session: retrySnapshot.session,
+        runProgress: retrySnapshot.runProgress,
+        stageStartSnapshot: retrySnapshot,
+      );
+      return;
+    }
     await ActiveRunSaveService.saveActiveRun(
       activeScene: _activeRunScene,
       session: _session,
@@ -172,8 +182,7 @@ class _GameViewState extends ConsumerState<GameView>
     if (!mounted) return;
 
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _gameNotifier.restartCurrentStage();
-    await _saveActiveRun(scene: ActiveRunScene.battle);
+    await _restartFromStageSnapshot();
   }
 
   Future<void> _exitToTitleWithConfirm() async {
@@ -192,20 +201,36 @@ class _GameViewState extends ConsumerState<GameView>
     await _goToTitleAfterStoppingBgm();
   }
 
+  Future<void> _restartFromStageSnapshot() async {
+    _persistRetrySnapshotOnSave = false;
+    _gameNotifier.restartCurrentStage();
+    await _saveActiveRun(scene: ActiveRunScene.battle);
+  }
+
+  Future<void> _exitAfterGameOver() async {
+    _persistRetrySnapshotOnSave = false;
+    await ActiveRunSaveService.clearActiveRun();
+    await _goToTitleAfterStoppingBgm();
+  }
+
   void _showGameOver(List<RummiExpirySignal> signals) {
     if (!mounted) return;
     showGameOverDialog(
       context: context,
       signals: signals,
-      onExitToTitle: _goToTitleAfterStoppingBgm,
+      onRetry: _restartFromStageSnapshot,
+      onExit: _exitAfterGameOver,
     );
   }
 
-  void _afterAction() {
+  Future<bool> _afterAction() async {
     final signals = _gameNotifier.evaluateExpiry();
-    if (signals.isNotEmpty) {
-      _showGameOver(signals);
-    }
+    if (signals.isEmpty) return false;
+    _persistRetrySnapshotOnSave = true;
+    await _saveActiveRun(scene: ActiveRunScene.battle);
+    if (!mounted) return true;
+    _showGameOver(signals);
+    return true;
   }
 
   void _clearSelections() {
@@ -241,7 +266,7 @@ class _GameViewState extends ConsumerState<GameView>
     context.go(RoutePaths.title);
   }
 
-  void _onBoardCellTap(int row, int col) {
+  void _onBoardCellTap(int row, int col) async {
     if (_isUiLocked) return;
     final selectedHand = _selectedHandTile;
     if (selectedHand != null) {
@@ -251,8 +276,9 @@ class _GameViewState extends ConsumerState<GameView>
         return;
       }
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-      _afterAction();
-      _saveActiveRun();
+      final didGameOver = await _afterAction();
+      if (didGameOver) return;
+      await _saveActiveRun();
       return;
     }
 
@@ -267,7 +293,7 @@ class _GameViewState extends ConsumerState<GameView>
     }
   }
 
-  void _drawTile() {
+  void _drawTile() async {
     if (_isUiLocked) return;
     final failReason = _gameNotifier.drawTile();
     if (failReason != null) {
@@ -275,11 +301,12 @@ class _GameViewState extends ConsumerState<GameView>
       return;
     }
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _afterAction();
-    _saveActiveRun();
+    final didGameOver = await _afterAction();
+    if (didGameOver) return;
+    await _saveActiveRun();
   }
 
-  void _discardSelectedBoardTile() {
+  void _discardSelectedBoardTile() async {
     if (_isUiLocked) return;
     final row = _selectedBoardRow;
     final col = _selectedBoardCol;
@@ -293,11 +320,12 @@ class _GameViewState extends ConsumerState<GameView>
       return;
     }
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _afterAction();
-    _saveActiveRun();
+    final didGameOver = await _afterAction();
+    if (didGameOver) return;
+    await _saveActiveRun();
   }
 
-  void _discardSelectedHandTile() {
+  void _discardSelectedHandTile() async {
     if (_isUiLocked) return;
     final tile = _selectedHandTile;
     if (tile == null) {
@@ -310,25 +338,24 @@ class _GameViewState extends ConsumerState<GameView>
       return;
     }
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _afterAction();
-    _saveActiveRun();
+    final didGameOver = await _afterAction();
+    if (didGameOver) return;
+    await _saveActiveRun();
   }
 
-  void _confirmLines() {
+  void _confirmLines() async {
     if (_isUiLocked) return;
     final result = _gameNotifier.confirmLines();
     if (result == null) {
       _showSnack('확정할 족보 줄이 없습니다.');
       return;
     }
-    SoundManager.playSfx(AssetPaths.sfxCollect);
     _runSettlementSequence(
       lines: result.lineBreakdowns,
       totalScore: result.totalScore,
       shouldClearAfter: result.stageCleared,
     );
-    _afterAction();
-    _saveActiveRun();
+    await _afterAction();
   }
 
   Future<void> _runSettlementSequence({
@@ -358,7 +385,16 @@ class _GameViewState extends ConsumerState<GameView>
       bumpSettlementSequence: true,
     );
 
-    await Future<void>.delayed(const Duration(milliseconds: 1080));
+    await Future<void>.delayed(const Duration(milliseconds: 780));
+    if (!mounted) return;
+
+    final lineScore = lines[index].finalScore;
+    _gameNotifier.applyConfirmedLineScore(lineScore);
+    SoundManager.playSfx(AssetPaths.sfxCollect);
+    await _saveActiveRun();
+    if (!mounted) return;
+
+    await Future<void>.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     await _runSettlementSequence(
       lines: lines,
@@ -409,7 +445,7 @@ class _GameViewState extends ConsumerState<GameView>
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-        builder: (sheetContext) {
+      builder: (sheetContext) {
         return GameCashOutSheet(
           breakdown: breakdown,
           currentGold: _runProgress.gold,
@@ -440,9 +476,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _openShopForTest() async {
     if (_isUiLocked) return;
-    _gameNotifier.openShopForTest(
-      preferredOfferIds: _shopInspectOfferIds,
-    );
+    _gameNotifier.openShopForTest(preferredOfferIds: _shopInspectOfferIds);
     await _saveActiveRun(scene: ActiveRunScene.shop);
     _showSnack('검사용 상점 오퍼 ${_shopInspectOfferIds.length}장 표시');
     await _showShopScreen();
@@ -499,7 +533,6 @@ class _GameViewState extends ConsumerState<GameView>
     );
   }
 }
-
 
 class _GameSurface extends StatelessWidget {
   const _GameSurface({
@@ -642,8 +675,7 @@ class _GameSurface extends StatelessWidget {
                         card: runProgress
                             .ownedJesters[selectedJesterOverlayIndex!],
                         runtimeValueText: jesterRuntimeValueText(
-                          runProgress
-                              .ownedJesters[selectedJesterOverlayIndex!],
+                          runProgress.ownedJesters[selectedJesterOverlayIndex!],
                           runProgress.buildRuntimeSnapshot(),
                           slotIndex: selectedJesterOverlayIndex!,
                         ),
@@ -715,7 +747,7 @@ class _GameLayout extends StatelessWidget {
     final activeSettlementCells = activeSettlementLine == null
         ? <String>{}
         : {
-            for (final (row, col) in activeSettlementLine!.ref.cells())
+            for (final (row, col) in activeSettlementLine!.contributingCells)
               '$row:$col',
           };
 
@@ -773,7 +805,7 @@ class _GameLayout extends StatelessWidget {
               children: [
                 Expanded(
                   child: GameActionButton(
-                    label: '줄 확정',
+                    label: '확정',
                     background: const Color(0xFFF4A81D),
                     foreground: Colors.black,
                     onPressed: onConfirm,
@@ -811,7 +843,3 @@ class _GameLayout extends StatelessWidget {
     );
   }
 }
-
-
-
-

@@ -24,6 +24,17 @@ String gameHandRankLabel(RummiHandRank rank) {
   };
 }
 
+String gameScoreBreakdownLabel(ConfirmedLineBreakdown line) {
+  final parts = <String>['기본 ${line.rankBaseScore ?? line.baseScore}'];
+  if (line.overlapBonus > 0) {
+    parts.add('겹침 +${line.overlapBonus}');
+  }
+  if (line.jesterBonus > 0) {
+    parts.add('제스터 +${line.jesterBonus}');
+  }
+  return parts.join(' · ');
+}
+
 String gameLineRefShortLabel(LineRef ref) {
   return switch (ref.kind) {
     LineKind.row => '가로',
@@ -145,10 +156,7 @@ class GameStageClearOverlay extends StatelessWidget {
 }
 
 class GameFloatingSettlementBurst extends StatelessWidget {
-  const GameFloatingSettlementBurst({
-    super.key,
-    required this.line,
-  });
+  const GameFloatingSettlementBurst({super.key, required this.line});
 
   final ConfirmedLineBreakdown? line;
 
@@ -160,11 +168,11 @@ class GameFloatingSettlementBurst extends StatelessWidget {
         : '${gameHandRankLabel(currentLine.rank)} · ${gameLineRefShortLabel(currentLine.ref)}';
     final subLabel = currentLine == null
         ? null
-        : currentLine.jesterBonus > 0
-        ? '기본 ${currentLine.baseScore} + 가중 ${currentLine.jesterBonus}'
-        : '기본 ${currentLine.baseScore}';
+        : gameScoreBreakdownLabel(currentLine);
     final displayedScore = currentLine?.finalScore ?? 0;
-    final jesterLabel = currentLine == null ? null : settlementJesterNames(currentLine);
+    final jesterLabel = currentLine == null
+        ? null
+        : settlementJesterNames(currentLine);
 
     return IgnorePointer(
       child: TweenAnimationBuilder<double>(
@@ -366,7 +374,9 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                 ],
                 const SizedBox(height: 12),
                 AnimatedOpacity(
-                  opacity: _step >= (b.economyBonuses.isNotEmpty ? 5 : 4) ? 1 : 0,
+                  opacity: _step >= (b.economyBonuses.isNotEmpty ? 5 : 4)
+                      ? 1
+                      : 0,
                   duration: const Duration(milliseconds: 180),
                   child: Container(
                     padding: const EdgeInsets.symmetric(

@@ -7,21 +7,32 @@ import 'package:flutter_test/flutter_test.dart';
 Tile t(TileColor c, int n) => Tile(color: c, number: n);
 
 void main() {
-  test('빈 칸이 있으면 행 평가 null', () {
+  test('1장만 있으면 행은 하이카드로 평가된다', () {
     final board = RummiBoard();
     board.setCell(0, 0, t(TileColor.red, 1));
     final engine = RummiPokerGridEngine();
-    expect(engine.evaluateRow(board, 0), isNull);
+    final report = engine.evaluateRow(board, 0);
+    expect(report, isNotNull);
+    expect(report!.occupiedCount, 1);
+    expect(report.evaluation.rank, RummiHandRank.highCard);
+  });
+
+  test('부분 줄도 현재 카드만으로 평가한다', () {
+    final board = RummiBoard();
+    board.setCell(1, 0, t(TileColor.red, 7));
+    board.setCell(1, 3, t(TileColor.blue, 7));
+    final engine = RummiPokerGridEngine();
+    final report = engine.evaluateRow(board, 1);
+    expect(report, isNotNull);
+    expect(report!.occupiedCount, 2);
+    expect(report.evaluation.rank, RummiHandRank.onePair);
+    expect(report.evaluation.contributingIndexes, [0, 3]);
   });
 
   test('가득 찬 행은 스트레이트로 평가 (색 혼합)', () {
     final board = RummiBoard();
     for (var i = 0; i < kBoardSize; i++) {
-      board.setCell(
-        2,
-        i,
-        t(i.isEven ? TileColor.red : TileColor.blue, i + 1),
-      );
+      board.setCell(2, i, t(i.isEven ? TileColor.red : TileColor.blue, i + 1));
     }
     final engine = RummiPokerGridEngine();
     final r = engine.evaluateRow(board, 2);
