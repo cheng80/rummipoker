@@ -5,7 +5,9 @@ import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
+import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 
 void main() {
@@ -21,7 +23,36 @@ void main() {
       expect(state.isReady, isTrue);
       expect(state.session?.runSeed, 12345);
       expect(state.runProgress, isNotNull);
+      expect(state.stationView, isNotNull);
+      expect(state.marketView, isNotNull);
+      expect(state.activeRunSaveView, isNotNull);
       expect(state.pendingResumeShop, isFalse);
+    });
+
+    test('파생 facade state가 orchestration 변경과 함께 갱신된다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 77);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final initial = container.read(gameSessionNotifierProvider(args));
+
+      expect(initial.stationView, isNotNull);
+      expect(initial.marketView, isNotNull);
+      expect(initial.activeRunSaveView, isNotNull);
+      expect(initial.stationView!.objective.targetScore, 300);
+      expect(initial.marketView!.gold, RummiEconomyConfig.startingGold);
+      expect(initial.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.battle);
+
+      initial.runProgress!.gold += 9;
+      notifier.setActiveRunScene(ActiveRunScene.shop);
+
+      final updated = container.read(gameSessionNotifierProvider(args));
+      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold + 9);
+      expect(updated.activeRunSaveView!.currentGold, 19);
+      expect(updated.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.market);
     });
 
     test('손패 선택과 선택 해제를 상태에서 관리한다', () {
@@ -59,6 +90,88 @@ void main() {
 
       final state = container.read(gameSessionNotifierProvider(args));
       expect(state.session?.maxHandSize, 3);
+    });
+
+    test('ruleset currentDefaults가 provider 초기 세션 값과 parity를 유지한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 19);
+
+      final state = container.read(gameSessionNotifierProvider(args));
+      final ruleset = state.ruleset;
+
+      expect(ruleset, RummiRuleset.currentDefaults);
+      expect(state.session?.deckCopiesPerTile, ruleset.copiesPerTile);
+      expect(state.session?.maxHandSize, ruleset.defaultMaxHandSize);
+      expect(
+        state.session?.blind.boardDiscardsRemaining,
+        ruleset.defaultBoardDiscards,
+      );
+      expect(
+        state.session?.blind.handDiscardsRemaining,
+        ruleset.defaultHandDiscards,
+      );
+    });
+
+    test('ruleset debug hand-size bounds clamp provider mutations', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 21);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      notifier.setDebugMaxHandSize(99);
+      expect(
+        container.read(gameSessionNotifierProvider(args)).session?.maxHandSize,
+        RummiRuleset.currentDefaults.maxDebugMaxHandSize,
+      );
+
+      notifier.setDebugMaxHandSize(0);
+      expect(
+        container.read(gameSessionNotifierProvider(args)).session?.maxHandSize,
+        RummiRuleset.currentDefaults.minDebugMaxHandSize,
+      );
+    });
+
+    test('게임 화면 Jester 판매 후 상세 오버레이 선택은 닫힌다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 31);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final runProgress = state.runProgress!;
+
+      runProgress.ownedJesters.add(
+        RummiJesterCard(
+          id: 'green_jester',
+          displayName: 'Green Jester',
+          rarity: RummiJesterRarity.common,
+          baseCost: 3,
+          effectText: '',
+          effectType: 'mult_bonus',
+          trigger: 'passive',
+          conditionType: 'none',
+          conditionValue: null,
+          value: 4,
+          xValue: null,
+          mappedTileColors: const [],
+          mappedTileNumbers: const [],
+        ),
+      );
+      notifier.markDirty();
+      notifier.setSelectedJesterOverlayIndex(0);
+
+      final sold = notifier.sellOwnedJester(0);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(sold, isTrue);
+      expect(updated.selectedJesterOverlayIndex, isNull);
+      expect(updated.runProgress!.ownedJesters, isEmpty);
     });
 
     test('restartCurrentStage는 변경된 전투 상태와 골드를 stage-start 기준으로 되돌린다', () {

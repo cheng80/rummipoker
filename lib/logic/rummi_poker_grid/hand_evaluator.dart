@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 
 import 'hand_rank.dart';
 import 'models/tile.dart';
+import 'rummi_ruleset.dart';
 
 /// 2~5장 부분 족보 판정. Flutter/Flame 의존 없음.
 ///
@@ -12,29 +13,35 @@ class HandEvaluation {
     required this.baseScore,
     required this.canClearLine,
     required this.contributingIndexes,
+    required this.isDeadLine,
   });
 
   final RummiHandRank rank;
   final int baseScore;
   final bool canClearLine;
   final List<int> contributingIndexes;
-
-  /// 현재 룰에서 점수 없는 줄은 하이카드만이다.
-  bool get isDeadLine => isDeadLineRank(rank);
+  final bool isDeadLine;
 }
 
 class HandEvaluator {
   HandEvaluator._();
 
   /// 한 줄의 5칸을 평가한다. 빈 칸은 허용하되, 기여 인덱스는 원래 줄 좌표 기준으로 반환한다.
-  static HandEvaluation evaluateLine(List<Tile?> line) {
+  static HandEvaluation evaluateLine(
+    List<Tile?> line, {
+    RummiRuleset ruleset = RummiRuleset.currentDefaults,
+  }) {
     assert(line.length == 5);
     final present = <({int index, Tile tile})>[
       for (var i = 0; i < line.length; i++)
         if (line[i] != null) (index: i, tile: line[i]!),
     ];
     if (present.length <= 1) {
-      return _result(RummiHandRank.highCard, contributingIndexes: const []);
+      return _result(
+        RummiHandRank.highCard,
+        contributingIndexes: const [],
+        ruleset: ruleset,
+      );
     }
 
     final tiles = [for (final entry in present) entry.tile];
@@ -50,7 +57,10 @@ class HandEvaluator {
     final counts = byRank.values.toList()..sort((a, b) => b.compareTo(a));
     final colors = tiles.map((t) => t.color).toSet();
     final flush = colors.length == 1;
-    final straight = _isStraight(ranks);
+    final straight = _isStraight(
+      ranks,
+      wheelStraightAllowed: ruleset.wheelStraightAllowed,
+    );
 
     switch (tiles.length) {
       case 5:
@@ -58,6 +68,7 @@ class HandEvaluator {
           return _result(
             RummiHandRank.straightFlush,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[4, 1])) {
@@ -67,24 +78,28 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 4),
             ),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[3, 2])) {
           return _result(
             RummiHandRank.fullHouse,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
           );
         }
         if (flush) {
           return _result(
             RummiHandRank.flush,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
           );
         }
         if (straight) {
           return _result(
             RummiHandRank.straight,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[3, 1, 1])) {
@@ -94,6 +109,7 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 3),
             ),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[2, 2, 1])) {
@@ -103,6 +119,7 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 2),
             ),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[2, 1, 1, 1])) {
@@ -112,6 +129,7 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 2),
             ),
+            ruleset: ruleset,
           );
         }
       case 4:
@@ -119,6 +137,7 @@ class HandEvaluator {
           return _result(
             RummiHandRank.fourOfAKind,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[2, 2])) {
@@ -128,6 +147,7 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 2),
             ),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[3, 1])) {
@@ -137,6 +157,7 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 3),
             ),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[2, 1, 1])) {
@@ -146,6 +167,7 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 2),
             ),
+            ruleset: ruleset,
           );
         }
       case 3:
@@ -153,6 +175,7 @@ class HandEvaluator {
           return _result(
             RummiHandRank.threeOfAKind,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
           );
         }
         if (listEquals(counts, <int>[2, 1])) {
@@ -162,6 +185,7 @@ class HandEvaluator {
               originalIndexes,
               _indexesForCount(indexesByRank, 2),
             ),
+            ruleset: ruleset,
           );
         }
       case 2:
@@ -169,28 +193,46 @@ class HandEvaluator {
           return _result(
             RummiHandRank.onePair,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
           );
         }
     }
 
-    return _result(RummiHandRank.highCard, contributingIndexes: const []);
+    return _result(
+      RummiHandRank.highCard,
+      contributingIndexes: const [],
+      ruleset: ruleset,
+    );
   }
 
-  static HandEvaluation evaluateFive(List<Tile> tiles) {
+  static HandEvaluation evaluateFive(
+    List<Tile> tiles, {
+    RummiRuleset ruleset = RummiRuleset.currentDefaults,
+  }) {
     assert(tiles.length == 5);
-    return evaluateLine(tiles);
+    return evaluateLine(tiles, ruleset: ruleset);
   }
 
   static HandEvaluation _result(
     RummiHandRank rank, {
     required List<int> contributingIndexes,
+    required RummiRuleset ruleset,
   }) {
     return HandEvaluation(
       rank: rank,
-      baseScore: gddBaseScore(rank),
+      baseScore: ruleset.baseScoreFor(rank),
       canClearLine: gddCanClearLine(rank),
       contributingIndexes: List.unmodifiable(contributingIndexes),
+      isDeadLine: _isDeadLine(rank, ruleset),
     );
+  }
+
+  static bool _isDeadLine(RummiHandRank rank, RummiRuleset ruleset) {
+    return switch (rank) {
+      RummiHandRank.highCard => ruleset.highCardIsDeadLine,
+      RummiHandRank.onePair => ruleset.onePairIsDeadLine,
+      _ => false,
+    };
   }
 
   static List<int> _indexesForCount(
@@ -221,11 +263,15 @@ class HandEvaluator {
   }
 
   /// 5장 숫자가 모두 다를 때: 일반 연속 `n..n+4` 또는 휠 `1,10,11,12,13`.
-  static bool _isStraight(List<int> sortedRanks) {
+  static bool _isStraight(
+    List<int> sortedRanks, {
+    required bool wheelStraightAllowed,
+  }) {
     if (sortedRanks.length != 5) return false;
     if (sortedRanks.toSet().length != 5) return false;
     // 정렬 후 [1,10,11,12,13] 이면 휠 스트레이트 (10–J–Q–K–A, A=1).
-    if (sortedRanks[0] == 1 &&
+    if (wheelStraightAllowed &&
+        sortedRanks[0] == 1 &&
         sortedRanks[1] == 10 &&
         sortedRanks[2] == 11 &&
         sortedRanks[3] == 12 &&

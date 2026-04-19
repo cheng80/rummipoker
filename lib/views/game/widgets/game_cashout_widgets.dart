@@ -257,10 +257,12 @@ class GameCashOutSheet extends StatefulWidget {
     super.key,
     required this.breakdown,
     required this.currentGold,
+    this.autoEnterMarketOnLoad = false,
   });
 
   final RummiCashOutBreakdown breakdown;
   final int currentGold;
+  final bool autoEnterMarketOnLoad;
 
   @override
   State<GameCashOutSheet> createState() => _GameCashOutSheetState();
@@ -276,21 +278,36 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
   }
 
   Future<void> _runSteps() async {
-    await Future<void>.delayed(const Duration(milliseconds: 220));
+    final stepDelay = widget.autoEnterMarketOnLoad
+        ? const Duration(milliseconds: 80)
+        : const Duration(milliseconds: 260);
+    final initialDelay = widget.autoEnterMarketOnLoad
+        ? const Duration(milliseconds: 80)
+        : const Duration(milliseconds: 220);
+    final autoAdvanceDelay = widget.autoEnterMarketOnLoad
+        ? const Duration(milliseconds: 120)
+        : const Duration(milliseconds: 300);
+
+    await Future<void>.delayed(initialDelay);
     if (!mounted) return;
     setState(() => _step = 1);
-    await Future<void>.delayed(const Duration(milliseconds: 260));
+    await Future<void>.delayed(stepDelay);
     if (!mounted) return;
     setState(() => _step = 2);
-    await Future<void>.delayed(const Duration(milliseconds: 260));
+    await Future<void>.delayed(stepDelay);
     if (!mounted) return;
     setState(() => _step = 3);
-    await Future<void>.delayed(const Duration(milliseconds: 260));
+    await Future<void>.delayed(stepDelay);
     if (!mounted) return;
     setState(() => _step = 4);
-    await Future<void>.delayed(const Duration(milliseconds: 260));
+    await Future<void>.delayed(stepDelay);
     if (!mounted) return;
     setState(() => _step = 5);
+    if (widget.autoEnterMarketOnLoad) {
+      await Future<void>.delayed(autoAdvanceDelay);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    }
   }
 
   @override

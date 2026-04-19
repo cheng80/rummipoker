@@ -3,7 +3,9 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/jester_translation_scope.dart';
 import 'game_shared_widgets.dart';
 
@@ -80,15 +82,13 @@ String _signedValueToken(int value, String suffix) {
 class GameJesterStrip extends StatelessWidget {
   const GameJesterStrip({
     super.key,
-    required this.cards,
-    required this.runtimeSnapshot,
+    required this.market,
     required this.activeEffects,
     required this.settlementSequenceTick,
     required this.onTapCard,
   });
 
-  final List<RummiJesterCard> cards;
-  final RummiJesterRuntimeSnapshot runtimeSnapshot;
+  final RummiMarketRuntimeFacade market;
   final List<RummiJesterEffectBreakdown> activeEffects;
   final int settlementSequenceTick;
   final ValueChanged<int> onTapCard;
@@ -104,24 +104,26 @@ class GameJesterStrip extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(5, (index) {
+          final ownedEntry = index < market.ownedEntries.length
+              ? market.ownedEntries[index]
+              : null;
+          final card = ownedEntry?.card;
           return SizedBox(
             width: kJesterCardWidth,
             height: kJesterCardHeight,
             child: GameJesterSlot(
-              card: index < cards.length ? cards[index] : null,
-              runtimeValueText: index < cards.length
+              card: card,
+              runtimeValueText: card != null
                   ? jesterRuntimeValueText(
-                      cards[index],
-                      runtimeSnapshot,
+                      card,
+                      market.runtimeSnapshot,
                       slotIndex: index,
                     )
                   : null,
               extended: index == 4,
-              activeEffect: index < cards.length
-                  ? effectById[cards[index].id]
-                  : null,
+              activeEffect: card != null ? effectById[card.id] : null,
               settlementSequenceTick: settlementSequenceTick,
-              onTap: index < cards.length ? () => onTapCard(index) : null,
+              onTap: card != null ? () => onTapCard(index) : null,
             ),
           );
         }),
@@ -256,9 +258,9 @@ class GameJesterSlot extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: const Color(0xFF20312B).withValues(
-                            alpha: 0.92,
-                          ),
+                          color: const Color(
+                            0xFF20312B,
+                          ).withValues(alpha: 0.92),
                           fontSize: 8.5,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.15,
@@ -576,17 +578,15 @@ class _GameOutlinedLabel extends StatelessWidget {
 class GameJesterHeaderRow extends StatelessWidget {
   const GameJesterHeaderRow({
     super.key,
-    required this.ownedCount,
-    required this.maxSlots,
+    required this.station,
+    required this.market,
     required this.onShopTap,
-    required this.handSize,
     required this.onHandSizeChanged,
   });
 
-  final int ownedCount;
-  final int maxSlots;
+  final RummiStationRuntimeFacade station;
+  final RummiMarketRuntimeFacade market;
   final VoidCallback onShopTap;
-  final int handSize;
   final ValueChanged<int> onHandSizeChanged;
 
   @override
@@ -610,7 +610,7 @@ class GameJesterHeaderRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '$ownedCount/$maxSlots',
+                  '${market.ownedEntries.length}/${market.maxOwnedSlots}',
                   style: gameHudSubStyle.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
@@ -624,7 +624,7 @@ class GameJesterHeaderRow extends StatelessWidget {
           ),
           GameDebugShopHandCluster(
             onShopTap: onShopTap,
-            handSize: handSize,
+            handSize: station.resources.maxHandSize,
             onHandSizeChanged: onHandSizeChanged,
           ),
         ],

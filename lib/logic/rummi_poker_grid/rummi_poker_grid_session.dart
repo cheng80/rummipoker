@@ -9,6 +9,7 @@ import 'models/poker_deck.dart';
 import 'models/tile.dart';
 import 'rummi_blind_state.dart';
 import 'rummi_poker_grid_engine.dart';
+import 'rummi_ruleset.dart';
 import '../../utils/seeded_random.dart';
 
 /// 블라인드 목표 달성.
@@ -102,6 +103,7 @@ class RummiPokerGridSession {
   RummiPokerGridSession._({
     required this.runSeed,
     required this.runRandom,
+    required this.ruleset,
     required this.deckCopiesPerTile,
     required this.maxHandSize,
     required this.blind,
@@ -114,6 +116,7 @@ class RummiPokerGridSession {
 
   /// 저장·공유용. 실제 난수 스트림은 [runRandom] 한 개로 이어진다.
   final int runSeed;
+  final RummiRuleset ruleset;
   final int deckCopiesPerTile;
   int maxHandSize;
 
@@ -124,6 +127,7 @@ class RummiPokerGridSession {
   factory RummiPokerGridSession({
     int? runSeed,
     int deckCopiesPerTile = kDefaultCopiesPerTile,
+    RummiRuleset ruleset = RummiRuleset.currentDefaults,
     RummiBlindState? blind,
     PokerDeck? deck,
     RummiBoard? board,
@@ -133,8 +137,9 @@ class RummiPokerGridSession {
     return RummiPokerGridSession._(
       runSeed: s,
       runRandom: rng,
+      ruleset: ruleset,
       deckCopiesPerTile: deckCopiesPerTile,
-      maxHandSize: kDefaultMaxHandSize,
+      maxHandSize: ruleset.defaultMaxHandSize,
       blind:
           blind ??
           RummiBlindState(
@@ -157,6 +162,7 @@ class RummiPokerGridSession {
     required int deckCopiesPerTile,
     required int maxHandSize,
     required int runRandomState,
+    RummiRuleset ruleset = RummiRuleset.currentDefaults,
     required RummiBlindState blind,
     required PokerDeck deck,
     required RummiBoard board,
@@ -166,6 +172,7 @@ class RummiPokerGridSession {
     return RummiPokerGridSession._(
       runSeed: runSeed,
       runRandom: SeededRandom.fromState(runRandomState),
+      ruleset: ruleset,
       deckCopiesPerTile: deckCopiesPerTile,
       maxHandSize: maxHandSize,
       blind: blind,
@@ -285,7 +292,10 @@ class RummiPokerGridSession {
   }
 
   void setDebugMaxHandSize(int value) {
-    maxHandSize = value.clamp(kMinDebugMaxHandSize, kMaxDebugMaxHandSize);
+    maxHandSize = value.clamp(
+      ruleset.minDebugMaxHandSize,
+      ruleset.maxDebugMaxHandSize,
+    );
   }
 
   RummiPokerGridSession copySnapshot() {
@@ -294,6 +304,7 @@ class RummiPokerGridSession {
       deckCopiesPerTile: deckCopiesPerTile,
       maxHandSize: maxHandSize,
       runRandomState: runRandom.state,
+      ruleset: ruleset,
       blind: blind.copyWith(),
       deck: PokerDeck.fromSnapshot(deck.snapshotPile()),
       board: RummiBoard.fromSnapshot(board.snapshotCells()),
@@ -317,7 +328,7 @@ class RummiPokerGridSession {
         const RummiJesterRuntimeSnapshot(),
     bool applyScoreToBlind = true,
   }) {
-    final lines = engine.listEvaluatedLines(board);
+    final lines = engine.listEvaluatedLines(board, ruleset: ruleset);
     final scoringLines = <_ScoringLineCandidate>[
       for (final entry in lines)
         if (!entry.report.evaluation.isDeadLine)
@@ -362,7 +373,10 @@ class RummiPokerGridSession {
         1,
         (currentMax, cell) => max(currentMax, contributionCounts[cell] ?? 1),
       );
-      final overlapMultiplier = _overlapMultiplierForCount(peakContribution);
+      final overlapMultiplier = _overlapMultiplierForCount(
+        peakContribution,
+        ruleset: ruleset,
+      );
       final int baseLineScore = (evaluation.baseScore * overlapMultiplier)
           .round();
       final int overlapBonus = baseLineScore - evaluation.baseScore;
@@ -477,7 +491,7 @@ class RummiPokerGridSession {
 
   /// 확정 가능: 완성된 **족보(점수) 줄**이 하나라도 있을 때.
   bool get canConfirmAllFullLines {
-    final lines = engine.listEvaluatedLines(board);
+    final lines = engine.listEvaluatedLines(board, ruleset: ruleset);
     return lines.any((e) => !e.report.evaluation.isDeadLine);
   }
 
@@ -548,9 +562,15 @@ class RummiPokerGridSession {
     );
   }
 
-  static double _overlapMultiplierForCount(int contributionCount) {
+  static double _overlapMultiplierForCount(
+    int contributionCount, {
+    required RummiRuleset ruleset,
+  }) {
     final overlapCount = max(1, contributionCount);
-    return min(1 + (kOverlapAlpha * (overlapCount - 1)), kOverlapMultiplierCap);
+    return min(
+      1 + (ruleset.overlapAlpha * (overlapCount - 1)),
+      ruleset.overlapMultiplierCap,
+    );
   }
 }
 

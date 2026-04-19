@@ -8,9 +8,28 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Tile t(TileColor c, int n) => Tile(color: c, number: n);
+
+const _pairScoringTightHandRuleset = RummiRuleset(
+  boardSize: 5,
+  evaluationLineCount: 12,
+  copiesPerTile: 1,
+  defaultMaxHandSize: 2,
+  minDebugMaxHandSize: 2,
+  maxDebugMaxHandSize: 2,
+  defaultBoardDiscards: 4,
+  defaultHandDiscards: 2,
+  overlapAlpha: 0.1,
+  overlapMultiplierCap: 1.1,
+  instantConfirmAllScoringLines: true,
+  removeContributorUnionOnly: true,
+  wheelStraightAllowed: true,
+  highCardIsDeadLine: true,
+  onePairIsDeadLine: false,
+);
 
 RummiJesterCard jester({
   required String id,
@@ -111,6 +130,19 @@ void main() {
     expect(session.hand.length, 1);
     expect(session.drawToHand(), isNull);
     expect(session.hand.length, 1);
+  });
+
+  test('ruleset default hand size and debug clamp are session 내부에 적용된다', () {
+    final session = RummiPokerGridSession(
+      ruleset: _pairScoringTightHandRuleset,
+      blind: RummiBlindState(targetScore: 9999, discardsRemaining: 4),
+    );
+
+    expect(session.maxHandSize, 2);
+    session.setDebugMaxHandSize(99);
+    expect(session.maxHandSize, 2);
+    session.setDebugMaxHandSize(0);
+    expect(session.maxHandSize, 2);
   });
 
   test('덱이 비고 손패/확정 줄도 없을 때만 drawPileExhausted', () {
@@ -350,6 +382,32 @@ void main() {
     expect(out.result.scoreAdded, 0);
     expect(session.board.cellAt(4, 2), isNotNull);
     expect(session.board.cellAt(4, 3), isNotNull);
+    expect(session.board.cellAt(4, 4), same(kicker));
+  });
+
+  test('ruleset이 one pair dead-line을 해제하면 session 확정 판단도 따라온다', () {
+    final board = RummiBoard();
+    board.setCell(4, 2, t(TileColor.blue, 5));
+    board.setCell(4, 3, t(TileColor.black, 5));
+    board.setCell(4, 4, t(TileColor.red, 12));
+    final kicker = board.cellAt(4, 4);
+    final session = RummiPokerGridSession(
+      ruleset: _pairScoringTightHandRuleset,
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    expect(session.canConfirmAllFullLines, true);
+
+    final out = session.confirmAllFullLines();
+
+    expect(out.result.ok, true);
+    expect(out.result.baseScore, 0);
+    expect(out.result.lineBreakdowns.single.rank, RummiHandRank.onePair);
+    expect(out.result.lineBreakdowns.single.overlapMultiplier, 1.0);
+    expect(session.board.cellAt(4, 2), isNull);
+    expect(session.board.cellAt(4, 3), isNull);
     expect(session.board.cellAt(4, 4), same(kicker));
   });
 

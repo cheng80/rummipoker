@@ -28,14 +28,22 @@ class DebugRunFixtureService {
   DebugRunFixtureService._();
 
   static const String stage2ScoringSnapshot = 'stage2_scoring_snapshot';
+  static const String stage2MarketResume = 'stage2_market_resume';
 
   /// 새 디버그 픽스처는 여기에 등록하고, 아래에 대응하는 builder를 추가한다.
   static final List<DebugRunFixtureDefinition> _fixtures = [
     DebugRunFixtureDefinition(
       id: stage2ScoringSnapshot,
       label: 'Stage 2 점수 스냅샷',
-      description: 'Stage 2 / Gold 36 / Crazy Jester + Scary Face / Hand 비어 있음 / Deck 34',
+      description:
+          'Stage 2 / Gold 36 / Crazy Jester + Scary Face / Hand 비어 있음 / Deck 34',
       builder: _buildStage2ScoringSnapshot,
+    ),
+    DebugRunFixtureDefinition(
+      id: stage2MarketResume,
+      label: 'Stage 2 Market 복귀',
+      description: 'Stage 2 / Shop scene 복귀 / Gold 46 / 다음 Station 자동 진행 검증용',
+      builder: _buildStage2MarketResume,
     ),
   ];
 
@@ -147,6 +155,59 @@ class DebugRunFixtureService {
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildStage2MarketResume() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..gold = 46
+      ..shopOffers.addAll([
+        RummiShopOffer(
+          slotIndex: 0,
+          card: RummiJesterCard(
+            id: 'green_jester',
+            displayName: 'Green Jester',
+            rarity: RummiJesterRarity.common,
+            baseCost: 4,
+            effectText: 'Every discard changes current Mult by +1',
+            effectType: 'stateful_growth',
+            trigger: 'onDiscard',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 0,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 7,
+        ),
+        RummiShopOffer(
+          slotIndex: 1,
+          card: RummiJesterCard(
+            id: 'popcorn',
+            displayName: 'Popcorn',
+            rarity: RummiJesterRarity.common,
+            baseCost: 5,
+            effectText: 'Starts at +20 Mult, decreases by 4 each round',
+            effectType: 'stateful_growth',
+            trigger: 'onScore',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 20,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 8,
+        ),
+      ]);
+
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: base.stageStartSnapshot,
     );
   }
 

@@ -1,7 +1,6 @@
 import 'hand_rank.dart';
 import 'models/board.dart';
 import 'models/poker_deck.dart';
-import 'rummi_poker_grid_session.dart';
 
 /// Current build line count: rows 5 + cols 5 + diagonals 2.
 const int kCurrentEvaluationLineCount = 12;
@@ -51,13 +50,13 @@ class RummiRuleset {
     boardSize: kBoardSize,
     evaluationLineCount: kCurrentEvaluationLineCount,
     copiesPerTile: kDefaultCopiesPerTile,
-    defaultMaxHandSize: RummiPokerGridSession.kDefaultMaxHandSize,
-    minDebugMaxHandSize: RummiPokerGridSession.kMinDebugMaxHandSize,
-    maxDebugMaxHandSize: RummiPokerGridSession.kMaxDebugMaxHandSize,
+    defaultMaxHandSize: 1,
+    minDebugMaxHandSize: 1,
+    maxDebugMaxHandSize: 3,
     defaultBoardDiscards: 4,
     defaultHandDiscards: 2,
-    overlapAlpha: RummiPokerGridSession.kOverlapAlpha,
-    overlapMultiplierCap: RummiPokerGridSession.kOverlapMultiplierCap,
+    overlapAlpha: 0.3,
+    overlapMultiplierCap: 2.0,
     instantConfirmAllScoringLines: true,
     removeContributorUnionOnly: true,
     wheelStraightAllowed: true,

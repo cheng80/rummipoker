@@ -6,12 +6,14 @@ import 'package:go_router/go_router.dart';
 import '../../../app_config.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/sound_manager.dart';
+import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import 'game_shared_widgets.dart';
 
 Future<void> showGameOptionsDialog({
   required BuildContext context,
   required int runSeed,
+  RummiActiveRunSaveFacade? activeRunSaveView,
   required Future<void> Function() onRestartRun,
   required Future<void> Function() onExitToTitle,
   required Future<void> Function(BuildContext context) onReopenOptions,
@@ -98,6 +100,39 @@ Future<void> showGameOptionsDialog({
               ],
             ),
           ),
+          if (activeRunSaveView != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Run Snapshot',
+                    style: TextStyle(
+                      fontFamily: AssetPaths.fontAngduIpsul140,
+                      color: Colors.white.withValues(alpha: 0.72),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _activeRunSummaryLabel(activeRunSaveView),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ListTile(
             leading: Icon(Icons.refresh_rounded, color: Colors.amber.shade200),
             title: Text(
@@ -157,4 +192,13 @@ Future<void> showGameOptionsDialog({
       ),
     ),
   );
+}
+
+String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
+  final sceneLabel = switch (summary.sceneAlias) {
+    RummiSaveSceneAlias.market => 'Market',
+    RummiSaveSceneAlias.battle => 'Battle',
+  };
+  return '현재 Station ${summary.currentStationIndex} · $sceneLabel · Gold ${summary.currentGold}\n'
+      '체크포인트 Station ${summary.checkpoint.stationIndex}';
 }

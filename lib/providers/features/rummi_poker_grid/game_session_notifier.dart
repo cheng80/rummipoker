@@ -1,9 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../../../logic/rummi_poker_grid/rummi_blind_state.dart';
+import '../../../logic/rummi_poker_grid/rummi_ruleset.dart';
+import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
+import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
 import 'game_session_state.dart';
 
@@ -12,21 +17,25 @@ class GameSessionArgs {
     required this.runSeed,
     this.restoredRun,
     this.debugFixtureId,
+    this.ruleset = RummiRuleset.currentDefaults,
   });
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
   final String? debugFixtureId;
+  final RummiRuleset ruleset;
 
   @override
   bool operator ==(Object other) =>
       other is GameSessionArgs &&
       other.runSeed == runSeed &&
       identical(other.restoredRun, restoredRun) &&
-      other.debugFixtureId == debugFixtureId;
+      other.debugFixtureId == debugFixtureId &&
+      other.ruleset == ruleset;
 
   @override
-  int get hashCode => Object.hash(runSeed, restoredRun, debugFixtureId);
+  int get hashCode =>
+      Object.hash(runSeed, restoredRun, debugFixtureId, ruleset);
 }
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
@@ -43,56 +52,74 @@ class GameSessionNotifier
   GameSessionState build(GameSessionArgs args) {
     final restoredRun = args.restoredRun;
     if (restoredRun != null) {
-      return GameSessionState(
-        session: restoredRun.session,
-        runProgress: restoredRun.runProgress,
-        stageStartSnapshot: restoredRun.stageStartSnapshot,
-        activeRunScene: restoredRun.activeScene,
-        pendingResumeShop: restoredRun.activeScene == ActiveRunScene.shop,
-        debugFixtureId: args.debugFixtureId,
+      return _withDerivedViews(
+        GameSessionState(
+          session: restoredRun.session,
+          runProgress: restoredRun.runProgress,
+          stageStartSnapshot: restoredRun.stageStartSnapshot,
+          ruleset: args.ruleset,
+          activeRunScene: restoredRun.activeScene,
+          pendingResumeShop: restoredRun.activeScene == ActiveRunScene.shop,
+          debugFixtureId: args.debugFixtureId,
+        ),
       );
     }
 
-    final session = RummiPokerGridSession(runSeed: args.runSeed);
+    final ruleset = args.ruleset;
+    final session = RummiPokerGridSession(
+      runSeed: args.runSeed,
+      deckCopiesPerTile: ruleset.copiesPerTile,
+      ruleset: ruleset,
+      blind: RummiBlindState(
+        targetScore: 300,
+        boardDiscardsRemaining: ruleset.defaultBoardDiscards,
+        handDiscardsRemaining: ruleset.defaultHandDiscards,
+      ),
+    );
     final runProgress = RummiRunProgress();
-    return GameSessionState(
-      session: session,
-      runProgress: runProgress,
-      stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
+    return _withDerivedViews(
+      GameSessionState(
         session: session,
         runProgress: runProgress,
+        ruleset: ruleset,
+        stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
+          session: session,
+          runProgress: runProgress,
+        ),
+        activeRunScene: ActiveRunScene.battle,
+        debugFixtureId: args.debugFixtureId,
       ),
-      activeRunScene: ActiveRunScene.battle,
-      debugFixtureId: args.debugFixtureId,
     );
   }
 
   void markDirty() {
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
   void setJesterCatalog(RummiJesterCatalog? catalog) {
-    state = state.copyWith(
-      jesterCatalog: catalog,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(jesterCatalog: catalog, revision: state.revision + 1),
     );
   }
 
   void setActiveRunScene(ActiveRunScene scene) {
-    state = state.copyWith(activeRunScene: scene, revision: state.revision + 1);
+    _replaceState(
+      state.copyWith(activeRunScene: scene, revision: state.revision + 1),
+    );
   }
 
   void setPendingResumeShop(bool value) {
-    state = state.copyWith(
-      pendingResumeShop: value,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(pendingResumeShop: value, revision: state.revision + 1),
     );
   }
 
   void setStageStartSnapshot(ActiveRunStageSnapshot snapshot) {
-    state = state.copyWith(
-      stageStartSnapshot: snapshot,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        stageStartSnapshot: snapshot,
+        revision: state.revision + 1,
+      ),
     );
   }
 
@@ -102,23 +129,25 @@ class GameSessionNotifier
     required ActiveRunStageSnapshot stageStartSnapshot,
     ActiveRunScene activeRunScene = ActiveRunScene.battle,
   }) {
-    state = state.copyWith(
-      session: session,
-      runProgress: runProgress,
-      stageStartSnapshot: stageStartSnapshot,
-      activeRunScene: activeRunScene,
-      pendingResumeShop: false,
-      debugFixtureId: state.debugFixtureId,
-      selectedHandTile: null,
-      selectedBoardRow: null,
-      selectedBoardCol: null,
-      selectedJesterOverlayIndex: null,
-      stageFlowPhase: GameStageFlowPhase.none,
-      stageScoreAdded: 0,
-      activeSettlementLine: null,
-      settlementBoardSnapshot: const {},
-      settlementSequenceTick: 0,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: stageStartSnapshot,
+        activeRunScene: activeRunScene,
+        pendingResumeShop: false,
+        debugFixtureId: state.debugFixtureId,
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        selectedJesterOverlayIndex: null,
+        stageFlowPhase: GameStageFlowPhase.none,
+        stageScoreAdded: 0,
+        activeSettlementLine: null,
+        settlementBoardSnapshot: const {},
+        settlementSequenceTick: 0,
+        revision: state.revision + 1,
+      ),
     );
   }
 
@@ -143,57 +172,74 @@ class GameSessionNotifier
   void setDebugMaxHandSize(int value) {
     final session = state.session;
     if (session == null) return;
-    session.setDebugMaxHandSize(value);
+    final ruleset = state.ruleset;
+    final clamped = value.clamp(
+      ruleset.minDebugMaxHandSize,
+      ruleset.maxDebugMaxHandSize,
+    );
+    session.setDebugMaxHandSize(clamped);
     final selectedHandTile = state.selectedHandTile;
-    state = state.copyWith(
-      selectedHandTile:
-          selectedHandTile != null && !session.hand.contains(selectedHandTile)
-          ? null
-          : selectedHandTile,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        selectedHandTile:
+            selectedHandTile != null && !session.hand.contains(selectedHandTile)
+            ? null
+            : selectedHandTile,
+        revision: state.revision + 1,
+      ),
     );
   }
 
   void clearSelections() {
-    state = state.copyWith(
-      selectedHandTile: null,
-      selectedBoardRow: null,
-      selectedBoardCol: null,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        revision: state.revision + 1,
+      ),
     );
   }
 
   void setSelectedHandTile(Tile? tile) {
-    state = state.copyWith(
-      selectedHandTile: tile,
-      selectedBoardRow: tile == null ? state.selectedBoardRow : null,
-      selectedBoardCol: tile == null ? state.selectedBoardCol : null,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: tile,
+        selectedBoardRow: tile == null ? state.selectedBoardRow : null,
+        selectedBoardCol: tile == null ? state.selectedBoardCol : null,
+        revision: state.revision + 1,
+      ),
     );
   }
 
   void setSelectedBoardCell(int? row, int? col) {
-    state = state.copyWith(
-      selectedBoardRow: row,
-      selectedBoardCol: col,
-      selectedHandTile: row == null && col == null
-          ? state.selectedHandTile
-          : null,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        selectedBoardRow: row,
+        selectedBoardCol: col,
+        selectedHandTile: row == null && col == null
+            ? state.selectedHandTile
+            : null,
+        revision: state.revision + 1,
+      ),
     );
   }
 
   void setSelectedJesterOverlayIndex(int? index) {
-    state = state.copyWith(
-      selectedJesterOverlayIndex: index,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        selectedJesterOverlayIndex: index,
+        revision: state.revision + 1,
+      ),
     );
   }
 
   void setSettlementBoardSnapshot(Map<String, Tile> snapshot) {
-    state = state.copyWith(
-      settlementBoardSnapshot: snapshot,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        settlementBoardSnapshot: snapshot,
+        revision: state.revision + 1,
+      ),
     );
   }
 
@@ -204,15 +250,17 @@ class GameSessionNotifier
     Map<String, Tile>? settlementBoardSnapshot,
     bool bumpSettlementSequence = false,
   }) {
-    state = state.copyWith(
-      stageFlowPhase: phase,
-      stageScoreAdded: stageScoreAdded,
-      activeSettlementLine: activeSettlementLine,
-      settlementBoardSnapshot: settlementBoardSnapshot,
-      settlementSequenceTick: bumpSettlementSequence
-          ? state.settlementSequenceTick + 1
-          : state.settlementSequenceTick,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        stageFlowPhase: phase,
+        stageScoreAdded: stageScoreAdded,
+        activeSettlementLine: activeSettlementLine,
+        settlementBoardSnapshot: settlementBoardSnapshot,
+        settlementSequenceTick: bumpSettlementSequence
+            ? state.settlementSequenceTick + 1
+            : state.settlementSequenceTick,
+        revision: state.revision + 1,
+      ),
     );
   }
 
@@ -256,7 +304,7 @@ class GameSessionNotifier
     final session = state.session;
     if (session == null) return;
     session.addScoreToBlind(score);
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
   /// 스테이지 잔여물 처리 + 캐시아웃 계산/적용. 결과 breakdown 반환.
@@ -266,6 +314,7 @@ class GameSessionNotifier
     session.discardStageRemainder();
     final breakdown = runProgress.buildCashOutBreakdown(session);
     runProgress.applyCashOut(breakdown);
+    _replaceState(state.copyWith(revision: state.revision + 1));
     return breakdown;
   }
 
@@ -278,7 +327,7 @@ class GameSessionNotifier
       catalog: catalog?.shopCatalog ?? const <RummiJesterCard>[],
       rng: session.runRandom,
     );
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
   /// 다음 스테이지로 진입 처리.
@@ -287,12 +336,14 @@ class GameSessionNotifier
     final runProgress = state.runProgress!;
     runProgress.advanceStage(session, runSeed: runSeed);
     clearSelections();
-    state = state.copyWith(
-      stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
-        session: session,
-        runProgress: runProgress,
+    _replaceState(
+      state.copyWith(
+        stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
+          session: session,
+          runProgress: runProgress,
+        ),
+        revision: state.revision + 1,
       ),
-      revision: state.revision + 1,
     );
   }
 
@@ -305,7 +356,7 @@ class GameSessionNotifier
     final placed = session.tryPlaceFromHand(tile, row, col);
     if (!placed) return false;
     clearSelections();
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(state.copyWith(revision: state.revision + 1));
     return true;
   }
 
@@ -319,7 +370,7 @@ class GameSessionNotifier
     }
     final drawn = session.drawToHand();
     if (drawn == null) return '드로우에 실패했습니다.';
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }
 
@@ -339,7 +390,7 @@ class GameSessionNotifier
     }
     runProgress.onDiscardUsed();
     clearSelections();
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }
 
@@ -369,12 +420,11 @@ class GameSessionNotifier
     if (runProgress == null) return false;
     final ok = runProgress.sellOwnedJester(index);
     if (!ok) return false;
-    final newIndex = runProgress.ownedJesters.isEmpty
-        ? null
-        : index.clamp(0, runProgress.ownedJesters.length - 1);
-    state = state.copyWith(
-      selectedJesterOverlayIndex: newIndex,
-      revision: state.revision + 1,
+    _replaceState(
+      state.copyWith(
+        selectedJesterOverlayIndex: null,
+        revision: state.revision + 1,
+      ),
     );
     return true;
   }
@@ -398,7 +448,41 @@ class GameSessionNotifier
       preferredOfferIds: preferredOfferIds,
       offerCountOverride: preferredOfferIds.length,
     );
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(state.copyWith(revision: state.revision + 1));
+  }
+
+  void _replaceState(GameSessionState next) {
+    state = _withDerivedViews(next);
+  }
+
+  GameSessionState _withDerivedViews(GameSessionState next) {
+    final session = next.session;
+    final runProgress = next.runProgress;
+    if (session == null || runProgress == null) {
+      return next.copyWith(
+        stationView: null,
+        marketView: null,
+        activeRunSaveView: null,
+      );
+    }
+
+    return next.copyWith(
+      stationView: RummiStationRuntimeFacade.fromSession(session),
+      marketView: RummiMarketRuntimeFacade.fromRunProgress(runProgress),
+      activeRunSaveView: RummiActiveRunSaveFacade.fromRuntimeState(
+        ActiveRunRuntimeState(
+          activeScene: next.activeRunScene,
+          session: session,
+          runProgress: runProgress,
+          stageStartSnapshot:
+              next.stageStartSnapshot ??
+              ActiveRunSaveService.captureStageStartSnapshot(
+                session: session,
+                runProgress: runProgress,
+              ),
+        ),
+      ),
+    );
   }
 }
 

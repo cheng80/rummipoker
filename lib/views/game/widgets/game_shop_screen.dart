@@ -16,7 +16,6 @@ class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
     required this.runProgress,
-    required this.marketViewBuilder,
     required this.catalog,
     required this.rng,
     required this.runSeed,
@@ -25,10 +24,10 @@ class GameShopScreen extends StatefulWidget {
     required this.onExitToTitle,
     required this.onRestartRun,
     required this.isDebugFixtureRun,
+    this.autoAdvanceOnLoad = false,
   });
 
   final RummiRunProgress runProgress;
-  final RummiMarketRuntimeFacade Function() marketViewBuilder;
   final List<RummiJesterCard> catalog;
   final Random rng;
   final int runSeed;
@@ -37,6 +36,7 @@ class GameShopScreen extends StatefulWidget {
   final Future<void> Function() onExitToTitle;
   final Future<void> Function() onRestartRun;
   final bool isDebugFixtureRun;
+  final bool autoAdvanceOnLoad;
 
   @override
   State<GameShopScreen> createState() => _GameShopScreenState();
@@ -48,7 +48,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
   bool _sellTargetActive = false;
   int? _draggingOwnedIndex;
 
-  RummiMarketRuntimeFacade get _market => widget.marketViewBuilder();
+  RummiMarketRuntimeFacade get _market =>
+      RummiMarketRuntimeFacade.fromRunProgress(widget.runProgress);
 
   @override
   void initState() {
@@ -57,6 +58,13 @@ class _GameShopScreenState extends State<GameShopScreen> {
       _selectedOwnedIndex = 0;
     } else if (_market.offers.isNotEmpty) {
       _selectedOfferIndex = 0;
+    }
+    if (widget.autoAdvanceOnLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+        if (!mounted) return;
+        Navigator.of(context).pop(true);
+      });
     }
   }
 

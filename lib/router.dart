@@ -26,6 +26,12 @@ final GoRouter appRouter = GoRouter(
             ? DebugRunFixtureService.build(fixtureId)
             : null;
         final seedStr = state.uri.queryParameters['seed'];
+        final autoAdvanceMarketOnLoad =
+            state.uri.queryParameters['auto_advance_market'] == '1';
+        final autoEnterMarketOnCashOut =
+            state.uri.queryParameters['auto_enter_market'] == '1';
+        final autoCashOutLoopOnLoad =
+            state.uri.queryParameters['auto_cashout_loop'] == '1';
         final runSeed =
             restoredRun?.session.runSeed ??
             int.tryParse(seedStr ?? '') ??
@@ -34,6 +40,9 @@ final GoRouter appRouter = GoRouter(
           runSeed: runSeed,
           restoredRun: restoredRun,
           debugFixtureId: fixtureId,
+          autoAdvanceMarketOnLoad: autoAdvanceMarketOnLoad,
+          autoEnterMarketOnCashOut: autoEnterMarketOnCashOut,
+          autoCashOutLoopOnLoad: autoCashOutLoopOnLoad,
         );
       },
     ),

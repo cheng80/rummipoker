@@ -1,6 +1,10 @@
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../../../logic/rummi_poker_grid/rummi_ruleset.dart';
+import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
+import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
 
 /// `GameView`가 구독하는 현재 런의 UI 상태 스냅샷이다.
@@ -12,6 +16,10 @@ class GameSessionState {
     this.session,
     this.runProgress,
     this.stageStartSnapshot,
+    this.ruleset = RummiRuleset.currentDefaults,
+    this.stationView,
+    this.marketView,
+    this.activeRunSaveView,
     this.activeRunScene = ActiveRunScene.battle,
     this.pendingResumeShop = false,
     this.debugFixtureId,
@@ -31,6 +39,10 @@ class GameSessionState {
   final RummiPokerGridSession? session;
   final RummiRunProgress? runProgress;
   final ActiveRunStageSnapshot? stageStartSnapshot;
+  final RummiRuleset ruleset;
+  final RummiStationRuntimeFacade? stationView;
+  final RummiMarketRuntimeFacade? marketView;
+  final RummiActiveRunSaveFacade? activeRunSaveView;
   final ActiveRunScene activeRunScene;
   final bool pendingResumeShop;
   final String? debugFixtureId;
@@ -55,6 +67,10 @@ class GameSessionState {
     Object? session = _unset,
     Object? runProgress = _unset,
     Object? stageStartSnapshot = _unset,
+    RummiRuleset? ruleset,
+    Object? stationView = _unset,
+    Object? marketView = _unset,
+    Object? activeRunSaveView = _unset,
     ActiveRunScene? activeRunScene,
     bool? pendingResumeShop,
     Object? debugFixtureId = _unset,
@@ -80,6 +96,16 @@ class GameSessionState {
       stageStartSnapshot: stageStartSnapshot == _unset
           ? this.stageStartSnapshot
           : stageStartSnapshot as ActiveRunStageSnapshot?,
+      ruleset: ruleset ?? this.ruleset,
+      stationView: stationView == _unset
+          ? this.stationView
+          : stationView as RummiStationRuntimeFacade?,
+      marketView: marketView == _unset
+          ? this.marketView
+          : marketView as RummiMarketRuntimeFacade?,
+      activeRunSaveView: activeRunSaveView == _unset
+          ? this.activeRunSaveView
+          : activeRunSaveView as RummiActiveRunSaveFacade?,
       activeRunScene: activeRunScene ?? this.activeRunScene,
       pendingResumeShop: pendingResumeShop ?? this.pendingResumeShop,
       debugFixtureId: debugFixtureId == _unset

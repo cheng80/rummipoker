@@ -28,7 +28,7 @@
 - [x] `docs/V4/V4_IMPLEMENTATION_PLAN.md` 작성/갱신
 - [x] `docs/V4/V4_PLAN_RISK_REGISTER.md` 작성
 - [x] `docs/V4/V4_PLAN_TRACEABILITY_MATRIX.md` 작성
-- [ ] 사용자가 plan/risk/traceability 3문서를 읽고 방향 승인
+- [x] 사용자가 plan/risk/traceability 3문서를 읽고 방향 승인
 
 완료 기준:
 금지 작업, 보호 규칙, 첫 구현 단계가 명확해야 한다.
@@ -41,7 +41,7 @@
 - [x] contributor union removal 보호
 - [x] `stageStartSnapshot` restart semantics 보호
 - [x] 관련 테스트 묶음 통과 확인
-- [ ] 사용자가 회귀 보호 범위를 검토하고 승인
+- [x] 사용자가 회귀 보호 범위를 검토하고 승인
 
 완료 기준:
 현재 코어 동작은 문서가 아니라 테스트로 보호되어야 한다.
@@ -63,11 +63,17 @@
 
 - [x] `RummiRuleset.currentDefaults` 추가
 - [x] current default mirror 테스트 추가
-- [ ] ruleset을 실제 session/provider에 연결할지 여부 결정
-- [ ] 연결 시 기본값 parity test 확대
+- [x] ruleset을 실제 session/provider에 연결할지 여부 결정
+- [x] 연결 시 기본값 parity test 확대
 
 완료 기준:
 ruleset 계층이 생겨도 current defaults는 그대로 유지되어야 한다.
+
+현재 결정:
+
+- 현재 단계에서는 ruleset을 provider/session 생성 경로에 더해 `HandEvaluator`, `RummiPokerGridEngine`, `RummiPokerGridSession` 내부 판정까지 연결했다.
+- 구체적으로 `wheel straight 허용`, `high card / one pair dead-line 여부`, `overlap alpha / cap`, `default/debug hand-size clamp`가 세션의 `ruleset` 값을 직접 읽는다.
+- 아직 `RummiRuleset.currentDefaults`만 쓰므로 실사용 동작은 유지되고, custom ruleset 테스트로 내부 판정이 실제로 따라오는지 고정했다.
 
 ### A5. UI Terminology Bridge
 
@@ -88,10 +94,17 @@ ruleset 계층이 생겨도 current defaults는 그대로 유지되어야 한다
 - [x] current shop과 target market 차이 정리
 - [x] shop UI read path에 market facade 실제 연결
 - [x] `GameView -> GameShopScreen` 경계에 market read model 전달
-- [ ] shop UI의 direct runtime reads 추가 축소
+- [x] shop UI의 direct runtime reads 추가 축소
 
 완료 기준:
 현 shop을 깨지 않고 target market 구조를 실제 코드에서 읽기 시작해야 한다.
+
+현재 상태:
+
+- shop UI read path의 가격/보유 슬롯/오퍼/affordability/runtime snapshot 표시는 market facade 기준으로 읽는다.
+- 남은 direct runtime 참조는 `buy/sell/reroll` mutation 호출뿐이다.
+- notifier/orchestration state도 `stationView / marketView / activeRunSaveView`를 함께 보관하며, 일부 runtime UI는 그 파생 facade를 직접 소비한다.
+- game options dialog도 active run save facade 기준의 run snapshot 요약을 직접 소비한다.
 
 ### A7. Save Adapter Preparation
 
@@ -109,10 +122,15 @@ ruleset 계층이 생겨도 current defaults는 그대로 유지되어야 한다
 - [x] debug fixture와 active run 의미 분리
 - [x] fixture 모드 restart 문구 분리
 - [x] fixture 모드 active run 저장 차단
-- [ ] debug 경로의 장기 정리 시점 결정
+- [x] debug 경로의 장기 정리 시점 결정
 
 완료 기준:
 debug fixture 흐름이 일반 런 의미를 오염시키지 않아야 한다.
+
+현재 결정:
+
+- debug fixture/auto smoke 경로는 A9 app run validation과 migration read-path 검증이 끝날 때까지 유지한다.
+- Station target prototype 또는 별도 QA harness가 생기면 현재 debug route/query hook을 그 단계에서 정리한다.
 
 ### A9. App Run Validation
 
@@ -122,8 +140,8 @@ debug fixture 흐름이 일반 런 의미를 오염시키지 않아야 한다.
 - [x] background save / continue 감지 확인
 - [x] 일반 런 restart 동작 확인
 - [x] iOS 시뮬레이터 실구동/스크린샷 검증 절차를 재사용 가능한 프로세스로 정리
-- [ ] `cash-out -> market -> next station` 전체 루프 실기기 확인
-- [ ] Chrome 2차 확인 필요 여부 결정
+- [x] `cash-out -> market -> next station` 전체 루프 실기기 확인
+- [x] Chrome 2차 확인 필요 여부 결정
 
 완료 기준:
 mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 함께 견뎌야 한다.
@@ -135,6 +153,8 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - fixture battle 확인: `tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot"`
 - background save / relaunch 확인:
   `tools/ios_sim_smoke.sh --open-url "https://example.com" --relaunch`
+- full loop 확인:
+  `tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1"`
 - 의미 있는 실구동 검증은 스크린샷/로그 산출물 경로까지 남긴다.
 
 최근 검증 산출물:
@@ -145,6 +165,14 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   `/tmp/rummipoker_ios_smoke/fixture_stage2_smoke_20260420_0230/`
 - background save / relaunch 확인:
   `/tmp/rummipoker_ios_smoke/background_relaunch_smoke_20260420_0230/`
+- `cash-out -> market -> next station` 확인:
+  `/tmp/rummipoker_ios_smoke/cashout_market_next_station_smoke_20260420_0252/`
+
+현재 결정:
+
+- Chrome 기기는 현재 연결 가능 상태를 확인했다.
+- 이번 단계에서는 mobile-first/iOS smoke가 핵심 acceptance를 충족하므로 Chrome 실구동은 필수 게이트로 두지 않는다.
+- 다만 web 저장/라우팅/입력 경계가 바뀌는 PR이나 release 전 점검 단계에서는 Chrome 2차 smoke를 다시 수행한다.
 
 ## 3. B. Target Product Checklist
 
@@ -271,7 +299,7 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [x] market adapter preparation
 - [x] save adapter preparation
 - [x] debug fixture / active run separation
-- [ ] full app run validation complete
+- [x] full app run validation complete
 
 ### Target Snapshot
 
@@ -290,10 +318,10 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 현재 가장 자연스러운 다음 작업은 아래 둘 중 하나다.
 
-- [ ] shop UI의 남은 direct runtime reads를 더 축소
-  이유: market read model 계층을 더 일관되게 만들 수 있다.
-- [ ] save facade 소비처 확대 필요 여부 결정
-  이유: save/runtime/orchestration 경계의 current-only 결합을 더 낮출 다음 후보다.
+- [ ] active run save payload에 `ruleset version/id`를 저장할지 결정
+  이유: 지금은 restore 시 `currentDefaults`에 암묵적으로 기대고 있어서, 이후 ruleset variation이 생기면 저장본이 어떤 룰셋을 기준으로 만들어졌는지 보존해야 한다.
+- [ ] `GameView`/shop/settlement 쪽 mutation 호출을 notifier command로 더 감쌀지 결정
+  이유: facade read path는 1차 정리됐고, 이제 남은 경계는 UI가 `session/runProgress` mutation 세부를 직접 아는 쓰기 경로다.
 
 현재 추천:
-`shop UI의 남은 direct runtime reads를 더 축소`하는 쪽이 다음 단계로 가장 균형이 좋다.
+`active run save payload에 ruleset version/id를 저장할지 결정`하는 쪽이 다음 단계로 가장 안전하다. 지금 ruleset이 combat 내부까지 들어갔기 때문에, 다음 위험 지점은 "저장/복원 시 어떤 ruleset으로 만든 런인가"를 잃는 부분이다.

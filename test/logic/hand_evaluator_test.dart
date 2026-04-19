@@ -1,9 +1,28 @@
 import 'package:rummipoker/logic/rummi_poker_grid/hand_evaluator.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Tile t(TileColor c, int n) => Tile(color: c, number: n);
+
+const _noWheelPairScoresRuleset = RummiRuleset(
+  boardSize: 5,
+  evaluationLineCount: 12,
+  copiesPerTile: 1,
+  defaultMaxHandSize: 1,
+  minDebugMaxHandSize: 1,
+  maxDebugMaxHandSize: 3,
+  defaultBoardDiscards: 4,
+  defaultHandDiscards: 2,
+  overlapAlpha: 0.3,
+  overlapMultiplierCap: 2.0,
+  instantConfirmAllScoringLines: true,
+  removeContributorUnionOnly: true,
+  wheelStraightAllowed: false,
+  highCardIsDeadLine: true,
+  onePairIsDeadLine: false,
+);
 
 void main() {
   group('HandEvaluator', () {
@@ -53,6 +72,20 @@ void main() {
       ]);
       expect(e.rank, RummiHandRank.straight);
       expect(e.baseScore, 70);
+    });
+
+    test('ruleset can disable wheel straight recognition', () {
+      final e = HandEvaluator.evaluateFive([
+        t(TileColor.red, 10),
+        t(TileColor.blue, 11),
+        t(TileColor.yellow, 12),
+        t(TileColor.black, 13),
+        t(TileColor.red, 1),
+      ], ruleset: _noWheelPairScoresRuleset);
+
+      expect(e.rank, RummiHandRank.highCard);
+      expect(e.baseScore, 0);
+      expect(e.isDeadLine, true);
     });
 
     test('straight flush wheel same color', () {
@@ -140,6 +173,20 @@ void main() {
       expect(e.baseScore, 0);
       expect(e.isDeadLine, true);
       expect(e.canClearLine, true);
+    });
+
+    test('ruleset can make one pair a scoring line', () {
+      final e = HandEvaluator.evaluateFive([
+        t(TileColor.red, 4),
+        t(TileColor.blue, 4),
+        t(TileColor.yellow, 1),
+        t(TileColor.black, 8),
+        t(TileColor.red, 12),
+      ], ruleset: _noWheelPairScoresRuleset);
+
+      expect(e.rank, RummiHandRank.onePair);
+      expect(e.baseScore, 0);
+      expect(e.isDeadLine, false);
     });
 
     test('high card', () {

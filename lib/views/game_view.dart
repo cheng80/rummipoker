@@ -28,11 +28,17 @@ class GameView extends ConsumerStatefulWidget {
     required this.runSeed,
     this.restoredRun,
     this.debugFixtureId,
+    this.autoAdvanceMarketOnLoad = false,
+    this.autoEnterMarketOnCashOut = false,
+    this.autoCashOutLoopOnLoad = false,
   });
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
   final String? debugFixtureId;
+  final bool autoAdvanceMarketOnLoad;
+  final bool autoEnterMarketOnCashOut;
+  final bool autoCashOutLoopOnLoad;
 
   @override
   ConsumerState<GameView> createState() => _GameViewState();
@@ -53,6 +59,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   late final GameSessionArgs _gameArgs;
   bool _persistRetrySnapshotOnSave = false;
+  bool _autoCashOutLoopStarted = false;
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
@@ -62,6 +69,8 @@ class _GameViewState extends ConsumerState<GameView>
   RummiRunProgress get _runProgress => _gameState.runProgress!;
   ActiveRunStageSnapshot get _stageStartSnapshot =>
       _gameState.stageStartSnapshot!;
+  RummiStationRuntimeFacade get _stationView => _gameState.stationView!;
+  RummiMarketRuntimeFacade get _marketView => _gameState.marketView!;
   ActiveRunScene get _activeRunScene => _gameState.activeRunScene;
   bool get _pendingResumeShop => _gameState.pendingResumeShop;
   Tile? get _selectedHandTile => _gameState.selectedHandTile;
@@ -127,6 +136,15 @@ class _GameViewState extends ConsumerState<GameView>
       if (!mounted) return;
       _gameNotifier.setJesterCatalog(catalog);
       await _saveActiveRun();
+      if (widget.autoCashOutLoopOnLoad &&
+          _isDebugFixtureRun &&
+          !_autoCashOutLoopStarted) {
+        _autoCashOutLoopStarted = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          await _runAutoCashOutLoopOnLoad();
+        });
+      }
       if (_pendingResumeShop) {
         _gameNotifier.setPendingResumeShop(false);
         WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -465,10 +483,29 @@ class _GameViewState extends ConsumerState<GameView>
       builder: (sheetContext) {
         return GameCashOutSheet(
           breakdown: breakdown,
-          currentGold: _runProgress.gold,
+          currentGold: _marketView.gold,
+          autoEnterMarketOnLoad: widget.autoEnterMarketOnCashOut,
         );
       },
     );
+  }
+
+  Future<void> _runAutoCashOutLoopOnLoad() async {
+    final breakdown = _gameNotifier.prepareCashOut();
+    await _saveActiveRun();
+
+    final enterShop = await _showCashOutSheet(breakdown);
+    if (!mounted || enterShop != true) return;
+
+    _gameNotifier.openShop();
+    await _saveActiveRun(scene: ActiveRunScene.shop);
+
+    final nextStage = await _showShopScreen();
+    if (!mounted || nextStage != true) return;
+
+    _gameNotifier.advanceToNextStage(widget.runSeed);
+    await _saveActiveRun(scene: ActiveRunScene.battle);
+    _showSnack('Station ${_runProgress.stageIndex} 시작');
   }
 
   Future<bool?> _showShopScreen() {
@@ -477,8 +514,6 @@ class _GameViewState extends ConsumerState<GameView>
         fullscreenDialog: true,
         builder: (context) => GameShopScreen(
           runProgress: _runProgress,
-          marketViewBuilder: () =>
-              RummiMarketRuntimeFacade.fromRunProgress(_runProgress),
           catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
           rng: _session.runRandom,
           runSeed: widget.runSeed,
@@ -489,6 +524,7 @@ class _GameViewState extends ConsumerState<GameView>
           onExitToTitle: _goToTitleAfterStoppingBgm,
           onRestartRun: _restartCurrentRun,
           isDebugFixtureRun: _isDebugFixtureRun,
+          autoAdvanceOnLoad: widget.autoAdvanceMarketOnLoad,
         ),
       ),
     );
@@ -509,6 +545,7 @@ class _GameViewState extends ConsumerState<GameView>
     await showGameOptionsDialog(
       context: context,
       runSeed: widget.runSeed,
+      activeRunSaveView: _gameState.activeRunSaveView,
       onRestartRun: _restartCurrentRun,
       onExitToTitle: _exitToTitleWithConfirm,
       onReopenOptions: _openGameOptions,
@@ -528,7 +565,8 @@ class _GameViewState extends ConsumerState<GameView>
       child: _GameSurface(
         session: _session,
         runProgress: _runProgress,
-        station: RummiStationRuntimeFacade.fromSession(_session),
+        station: _stationView,
+        market: _marketView,
         stageFlowPhase: _stageFlowPhase,
         stageScoreAdded: _stageScoreAdded,
         activeSettlementLine: _activeSettlementLine,
@@ -561,6 +599,7 @@ class _GameSurface extends StatelessWidget {
     required this.session,
     required this.runProgress,
     required this.station,
+    required this.market,
     required this.stageFlowPhase,
     required this.stageScoreAdded,
     required this.activeSettlementLine,
@@ -588,6 +627,7 @@ class _GameSurface extends StatelessWidget {
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
   final RummiStationRuntimeFacade station;
+  final RummiMarketRuntimeFacade market;
   final GameStageFlowPhase stageFlowPhase;
   final int stageScoreAdded;
   final ConfirmedLineBreakdown? activeSettlementLine;
@@ -645,6 +685,7 @@ class _GameSurface extends StatelessWidget {
                   session: session,
                   runProgress: runProgress,
                   station: station,
+                  market: market,
                   activeSettlementEffects:
                       activeSettlementLine?.effects ?? const [],
                   activeSettlementLine: activeSettlementLine,
@@ -684,7 +725,7 @@ class _GameSurface extends StatelessWidget {
                 ),
               ),
             if (selectedJesterOverlayIndex != null &&
-                selectedJesterOverlayIndex! < runProgress.ownedJesters.length)
+                selectedJesterOverlayIndex! < market.ownedEntries.length)
               Positioned.fill(
                 child: Stack(
                   children: [
@@ -697,16 +738,17 @@ class _GameSurface extends StatelessWidget {
                       right: 12,
                       bottom: 118,
                       child: GameJesterInfoOverlay(
-                        card: runProgress
-                            .ownedJesters[selectedJesterOverlayIndex!],
+                        card: market
+                            .ownedEntries[selectedJesterOverlayIndex!]
+                            .card,
                         runtimeValueText: jesterRuntimeValueText(
-                          runProgress.ownedJesters[selectedJesterOverlayIndex!],
-                          runProgress.buildRuntimeSnapshot(),
+                          market.ownedEntries[selectedJesterOverlayIndex!].card,
+                          market.runtimeSnapshot,
                           slotIndex: selectedJesterOverlayIndex!,
                         ),
-                        sellGold: runProgress.sellPriceAt(
-                          selectedJesterOverlayIndex!,
-                        ),
+                        sellGold: market
+                            .ownedEntries[selectedJesterOverlayIndex!]
+                            .sellPrice,
                         onSell: onJesterSell,
                         onClose: onJesterOverlayClose,
                       ),
@@ -726,6 +768,7 @@ class _GameLayout extends StatelessWidget {
     required this.session,
     required this.runProgress,
     required this.station,
+    required this.market,
     required this.activeSettlementEffects,
     required this.activeSettlementLine,
     required this.settlementSequenceTick,
@@ -749,6 +792,7 @@ class _GameLayout extends StatelessWidget {
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
   final RummiStationRuntimeFacade station;
+  final RummiMarketRuntimeFacade market;
   final List<RummiJesterEffectBreakdown> activeSettlementEffects;
   final ConfirmedLineBreakdown? activeSettlementLine;
   final int settlementSequenceTick;
@@ -792,16 +836,14 @@ class _GameLayout extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             GameJesterHeaderRow(
-              ownedCount: runProgress.ownedJesters.length,
-              maxSlots: RummiRunProgress.maxJesterSlots,
+              station: station,
+              market: market,
               onShopTap: onShopTestTap,
-              handSize: session.maxHandSize,
               onHandSizeChanged: onDebugHandSizeChanged,
             ),
             const SizedBox(height: 2),
             GameJesterStrip(
-              cards: runProgress.ownedJesters,
-              runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+              market: market,
               activeEffects: activeSettlementEffects,
               settlementSequenceTick: settlementSequenceTick,
               onTapCard: onJesterTap,
