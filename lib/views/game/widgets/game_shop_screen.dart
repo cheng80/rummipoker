@@ -19,6 +19,9 @@ class GameShopScreen extends StatefulWidget {
     required this.catalog,
     required this.rng,
     required this.runSeed,
+    required this.onReroll,
+    required this.onBuyOffer,
+    required this.onSellOwnedJester,
     required this.onStateChanged,
     required this.onOpenSettings,
     required this.onExitToTitle,
@@ -31,6 +34,9 @@ class GameShopScreen extends StatefulWidget {
   final List<RummiJesterCard> catalog;
   final Random rng;
   final int runSeed;
+  final String? Function() onReroll;
+  final String? Function(int offerIndex) onBuyOffer;
+  final bool Function(int ownedIndex) onSellOwnedJester;
   final Future<void> Function() onStateChanged;
   final Future<void> Function() onOpenSettings;
   final Future<void> Function() onExitToTitle;
@@ -292,12 +298,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
     );
     if (!mounted || confirmed != true) return;
 
-    final ok = widget.runProgress.rerollShop(
-      catalog: widget.catalog,
-      rng: widget.rng,
-    );
-    if (!ok) {
-      showBottomNotice(context, '리롤 골드가 부족합니다.');
+    final failMessage = widget.onReroll();
+    if (failMessage != null) {
+      showBottomNotice(context, failMessage);
       return;
     }
     setState(() {
@@ -311,13 +314,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
   void _buySelected() {
     final index = _selectedOfferIndex;
     if (index == null) return;
-    final ok = widget.runProgress.buyOffer(index);
-    if (!ok) {
-      final market = _market;
-      final text = market.ownedEntries.length >= market.maxOwnedSlots
-          ? '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.'
-          : '골드가 부족합니다.';
-      showBottomNotice(context, text);
+    final failMessage = widget.onBuyOffer(index);
+    if (failMessage != null) {
+      showBottomNotice(context, failMessage);
       return;
     }
     setState(() {
@@ -333,7 +332,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 
   void _sellOwned(int index) {
-    final ok = widget.runProgress.sellOwnedJester(index);
+    final ok = widget.onSellOwnedJester(index);
     if (!ok) return;
     showTopNotice(context, '제스터를 판매했습니다.');
     setState(() {

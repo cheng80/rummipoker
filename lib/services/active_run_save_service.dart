@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/hand_rank.dart';
@@ -14,9 +12,11 @@ import '../logic/rummi_poker_grid/models/poker_deck.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_blind_state.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../resources/asset_paths.dart';
 import '../utils/storage_helper.dart';
 import 'active_run_save_facade.dart';
+import 'device_key_store.dart';
 
 enum ActiveRunScene { battle, shop }
 
@@ -99,6 +99,7 @@ class ActiveRunSaveData {
 class SavedSessionData {
   const SavedSessionData({
     required this.runSeed,
+    this.rulesetId = RummiRuleset.currentDefaultsPersistenceId,
     required this.deckCopiesPerTile,
     required this.maxHandSize,
     required this.runRandomState,
@@ -110,6 +111,7 @@ class SavedSessionData {
   });
 
   final int runSeed;
+  final String rulesetId;
   final int deckCopiesPerTile;
   final int maxHandSize;
   final int runRandomState;
@@ -121,6 +123,7 @@ class SavedSessionData {
 
   Map<String, dynamic> toJson() => {
     'runSeed': runSeed,
+    'rulesetId': rulesetId,
     'deckCopiesPerTile': deckCopiesPerTile,
     'maxHandSize': maxHandSize,
     'runRandomState': runRandomState,
@@ -134,6 +137,9 @@ class SavedSessionData {
   static SavedSessionData fromJson(Map<String, dynamic> json) {
     return SavedSessionData(
       runSeed: (json['runSeed'] as num).toInt(),
+      rulesetId:
+          json['rulesetId'] as String? ??
+          RummiRuleset.currentDefaultsPersistenceId,
       deckCopiesPerTile: (json['deckCopiesPerTile'] as num).toInt(),
       maxHandSize: (json['maxHandSize'] as num).toInt(),
       runRandomState: (json['runRandomState'] as num).toInt(),
@@ -243,7 +249,6 @@ class ActiveRunSaveService {
   ActiveRunSaveService._();
 
   static const int schemaVersion = 2;
-  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   static Future<ActiveRunAvailability> inspectActiveRun() async {
     final payload = StorageHelper.readString(
@@ -380,22 +385,11 @@ class ActiveRunSaveService {
   }
 
   static Future<String?> _readDeviceKey() async {
-    if (kIsWeb) {
-      final key = StorageHelper.readString(
-        StorageKeys.saveDeviceKeyV1,
-        defaultValue: '',
-      ).trim();
-      return key.isEmpty ? null : key;
-    }
-    return _secureStorage.read(key: StorageKeys.saveDeviceKeyV1);
+    return getDeviceKeyStore().read();
   }
 
   static Future<void> _writeDeviceKey(String key) async {
-    if (kIsWeb) {
-      await StorageHelper.write(StorageKeys.saveDeviceKeyV1, key);
-      return;
-    }
-    await _secureStorage.write(key: StorageKeys.saveDeviceKeyV1, value: key);
+    await getDeviceKeyStore().write(key);
   }
 
   static Random _secureRandom() {
@@ -441,6 +435,7 @@ class ActiveRunSaveService {
   ) {
     return SavedSessionData(
       runSeed: session.runSeed,
+      rulesetId: session.ruleset.persistenceId,
       deckCopiesPerTile: session.deckCopiesPerTile,
       maxHandSize: session.maxHandSize,
       runRandomState: session.runRandom.state,
@@ -506,6 +501,7 @@ class ActiveRunSaveService {
       deckCopiesPerTile: data.deckCopiesPerTile,
       maxHandSize: data.maxHandSize,
       runRandomState: data.runRandomState,
+      ruleset: RummiRuleset.fromPersistenceId(data.rulesetId),
       blind: RummiBlindState.fromJson(data.blind),
       deck: deck,
       board: board,

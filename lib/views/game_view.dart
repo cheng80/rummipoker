@@ -517,6 +517,12 @@ class _GameViewState extends ConsumerState<GameView>
           catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
           rng: _session.runRandom,
           runSeed: widget.runSeed,
+          onReroll: () => _gameNotifier.rerollShop(
+            catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
+            rng: _session.runRandom,
+          ),
+          onBuyOffer: _gameNotifier.buyShopOffer,
+          onSellOwnedJester: _gameNotifier.sellOwnedJester,
           onStateChanged: _saveActiveRun,
           onOpenSettings: () async {
             await context.push(RoutePaths.setting);

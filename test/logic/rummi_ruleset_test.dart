@@ -11,6 +11,7 @@ void main() {
     test('mirrors current board, deck, hand-size, and overlap constants', () {
       const ruleset = RummiRuleset.currentDefaults;
 
+      expect(ruleset.persistenceId, RummiRuleset.currentDefaultsPersistenceId);
       expect(ruleset.boardSize, kBoardSize);
       expect(ruleset.evaluationLineCount, kCurrentEvaluationLineCount);
       expect(ruleset.copiesPerTile, kDefaultCopiesPerTile);
@@ -56,5 +57,25 @@ void main() {
       expect(ruleset.baseScoreFor(RummiHandRank.fourOfAKind), 100);
       expect(ruleset.baseScoreFor(RummiHandRank.straightFlush), 150);
     });
+
+    test(
+      'restores current defaults from persisted id and unknown fallback',
+      () {
+        expect(
+          RummiRuleset.fromPersistenceId(
+            RummiRuleset.currentDefaultsPersistenceId,
+          ),
+          same(RummiRuleset.currentDefaults),
+        );
+        expect(
+          RummiRuleset.fromPersistenceId('unknown_ruleset'),
+          same(RummiRuleset.currentDefaults),
+        );
+        expect(
+          RummiRuleset.fromPersistenceId(null),
+          same(RummiRuleset.currentDefaults),
+        );
+      },
+    );
   });
 }

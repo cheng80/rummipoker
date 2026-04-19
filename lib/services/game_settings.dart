@@ -1,7 +1,7 @@
 import '../app_config.dart';
 import '../utils/storage_helper.dart';
 
-/// 게임 설정 저장/로드. StorageHelper(GetStorage)로 로컬에 영구 저장한다.
+/// 게임 설정 저장/로드. StorageHelper(SharedPreferences)로 로컬에 영구 저장한다.
 class GameSettings {
   GameSettings._();
 

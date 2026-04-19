@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
@@ -328,6 +330,41 @@ class GameSessionNotifier
       rng: session.runRandom,
     );
     _replaceState(state.copyWith(revision: state.revision + 1));
+  }
+
+  String? rerollShop({
+    required List<RummiJesterCard> catalog,
+    required Random rng,
+  }) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    final ok = runProgress.rerollShop(catalog: catalog, rng: rng);
+    if (!ok) {
+      return '리롤 골드가 부족합니다.';
+    }
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
+  String? buyShopOffer(int offerIndex) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (offerIndex < 0 || offerIndex >= runProgress.shopOffers.length) {
+      return '구매할 오퍼를 찾지 못했습니다.';
+    }
+    if (runProgress.ownedJesters.length >= RummiRunProgress.maxJesterSlots) {
+      return '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.';
+    }
+    final offer = runProgress.shopOffers[offerIndex];
+    if (runProgress.gold < offer.price) {
+      return '골드가 부족합니다.';
+    }
+    final ok = runProgress.buyOffer(offerIndex);
+    if (!ok) {
+      return '구매 처리에 실패했습니다.';
+    }
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
   }
 
   /// 다음 스테이지로 진입 처리.

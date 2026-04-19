@@ -1,15 +1,47 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
+import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
+import 'package:rummipoker/services/device_key_store.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 
+class _MemoryDeviceKeyStore implements DeviceKeyStore {
+  String? value;
+
+  @override
+  Future<String?> read() async => value;
+
+  @override
+  Future<void> write(String nextValue) async {
+    value = nextValue;
+  }
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('ActiveRunSaveService', () {
+    late _MemoryDeviceKeyStore deviceKeyStore;
+
+    setUp(() async {
+      deviceKeyStore = _MemoryDeviceKeyStore();
+      overrideDeviceKeyStoreForTest(deviceKeyStore);
+      StorageHelper.resetForTest();
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await StorageHelper.init();
+    });
+
+    tearDown(() {
+      overrideDeviceKeyStoreForTest(null);
+    });
+
     test('captureStageStartSnapshot은 이후 원본 변경과 분리된 복사본을 만든다', () {
       final session = RummiPokerGridSession(runSeed: 4242);
       final runProgress = RummiRunProgress();
@@ -37,6 +69,7 @@ void main() {
           activeScene: ActiveRunScene.shop.name,
           session: const SavedSessionData(
             runSeed: 11,
+            rulesetId: 'current_defaults_v1',
             deckCopiesPerTile: 1,
             maxHandSize: 1,
             runRandomState: 77,
@@ -75,6 +108,7 @@ void main() {
           ),
           stageStartSession: const SavedSessionData(
             runSeed: 11,
+            rulesetId: 'current_defaults_v1',
             deckCopiesPerTile: 1,
             maxHandSize: 1,
             runRandomState: 55,
@@ -110,8 +144,10 @@ void main() {
         expect(restored.schemaVersion, 2);
         expect(restored.activeScene, ActiveRunScene.shop.name);
         expect(restored.session.runSeed, 11);
+        expect(restored.session.rulesetId, 'current_defaults_v1');
         expect(restored.runProgress.gold, 42);
         expect(restored.stageStartSession.runRandomState, 55);
+        expect(restored.stageStartSession.rulesetId, 'current_defaults_v1');
         expect(restored.stageStartRunProgress.gold, 10);
         expect(restored.stageStartRunProgress.rerollCost, 5);
       },
@@ -124,6 +160,7 @@ void main() {
         activeScene: ActiveRunScene.shop.name,
         session: const SavedSessionData(
           runSeed: 11,
+          rulesetId: 'current_defaults_v1',
           deckCopiesPerTile: 1,
           maxHandSize: 1,
           runRandomState: 77,
@@ -151,6 +188,7 @@ void main() {
         ),
         stageStartSession: const SavedSessionData(
           runSeed: 11,
+          rulesetId: 'current_defaults_v1',
           deckCopiesPerTile: 1,
           maxHandSize: 1,
           runRandomState: 55,
@@ -186,5 +224,100 @@ void main() {
       expect(summary.checkpoint.stationIndex, 3);
       expect(summary.checkpoint.gold, 10);
     });
+
+    test(
+      'saved session dto without rulesetId falls back to current defaults',
+      () {
+        final restored = SavedSessionData.fromJson(const <String, dynamic>{
+          'runSeed': 11,
+          'deckCopiesPerTile': 1,
+          'maxHandSize': 1,
+          'runRandomState': 77,
+          'blind': <String, dynamic>{
+            'targetScore': 300,
+            'boardDiscardsRemaining': 4,
+            'boardDiscardsMax': 4,
+            'handDiscardsRemaining': 2,
+            'handDiscardsMax': 2,
+            'scoreTowardBlind': 25,
+          },
+          'deckPile': <Map<String, dynamic>>[],
+          'boardCells': <Map<String, dynamic>?>[],
+          'hand': <Map<String, dynamic>>[],
+          'eliminated': <Map<String, dynamic>>[],
+        });
+
+        expect(restored.rulesetId, RummiRuleset.currentDefaultsPersistenceId);
+      },
+    );
+
+    test(
+      'save -> inspect -> summary/load -> clear 전체 active run 저장 흐름이 동작한다',
+      () async {
+        final session = RummiPokerGridSession(runSeed: 4242);
+        final runProgress = RummiRunProgress();
+        runProgress.gold += 12;
+        final drawn = session.drawToHand();
+        expect(drawn, isNotNull);
+        expect(session.tryPlaceFromHand(drawn!, 0, 0), isTrue);
+
+        final stageStartSnapshot =
+            ActiveRunSaveService.captureStageStartSnapshot(
+              session: session,
+              runProgress: runProgress,
+            );
+
+        session.drawToHand();
+        runProgress.gold += 5;
+
+        await ActiveRunSaveService.saveActiveRun(
+          activeScene: ActiveRunScene.shop,
+          session: session,
+          runProgress: runProgress,
+          stageStartSnapshot: stageStartSnapshot,
+        );
+
+        expect(
+          await ActiveRunSaveService.inspectActiveRun(),
+          ActiveRunAvailability.available,
+        );
+        expect(ActiveRunSaveService.hasStoredActiveRun(), isTrue);
+
+        final summary = await ActiveRunSaveService.loadActiveRunSummary();
+        expect(summary, isNotNull);
+        expect(summary!.sceneAlias, RummiSaveSceneAlias.market);
+        expect(summary.currentRunSeed, 4242);
+        expect(summary.currentGold, RummiEconomyConfig.startingGold + 17);
+
+        final restored = await ActiveRunSaveService.loadActiveRun();
+        expect(restored, isNotNull);
+        expect(restored!.activeScene, ActiveRunScene.shop);
+        expect(restored.session.runSeed, 4242);
+        expect(
+          restored.session.ruleset.persistenceId,
+          RummiRuleset.currentDefaultsPersistenceId,
+        );
+        expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 17);
+        expect(restored.session.board.cellAt(0, 0), isNotNull);
+        expect(
+          restored.stageStartSnapshot.session.board.cellAt(0, 0),
+          isNotNull,
+        );
+        expect(
+          restored.stageStartSnapshot.runProgress.gold,
+          RummiEconomyConfig.startingGold + 12,
+        );
+
+        await ActiveRunSaveService.clearActiveRun();
+
+        expect(
+          await ActiveRunSaveService.inspectActiveRun(),
+          ActiveRunAvailability.none,
+        );
+        expect(ActiveRunSaveService.hasStoredActiveRun(), isFalse);
+        expect(await ActiveRunSaveService.loadActiveRunSummary(), isNull);
+        expect(await ActiveRunSaveService.loadActiveRun(), isNull);
+      },
+    );
   });
 }

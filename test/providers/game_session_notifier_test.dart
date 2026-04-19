@@ -174,6 +174,70 @@ void main() {
       expect(updated.runProgress!.ownedJesters, isEmpty);
     });
 
+    test('buyShopOffer는 골드와 market facade를 함께 갱신한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 37);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!.shopOffers.add(
+        RummiShopOffer(
+          slotIndex: 0,
+          card: const RummiJesterCard(
+            id: 'green_jester',
+            displayName: 'Green Jester',
+            rarity: RummiJesterRarity.common,
+            baseCost: 3,
+            effectText: '',
+            effectType: 'mult_bonus',
+            trigger: 'passive',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 4,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 3,
+        ),
+      );
+      notifier.markDirty();
+
+      final failMessage = notifier.buyShopOffer(0);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold - 3);
+      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold - 3);
+      expect(updated.runProgress!.ownedJesters.length, 1);
+      expect(updated.marketView!.ownedEntries.length, 1);
+      expect(updated.runProgress!.shopOffers, isEmpty);
+    });
+
+    test('rerollShop는 골드 부족 시 에러 문구를 반환한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 39);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!
+        ..gold = 0
+        ..rerollCost = 1;
+
+      final message = notifier.rerollShop(
+        catalog: const <RummiJesterCard>[],
+        rng: state.session!.runRandom,
+      );
+
+      expect(message, '리롤 골드가 부족합니다.');
+    });
+
     test('restartCurrentStage는 변경된 전투 상태와 골드를 stage-start 기준으로 되돌린다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

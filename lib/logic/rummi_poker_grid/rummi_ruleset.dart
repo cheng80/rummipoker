@@ -13,6 +13,7 @@ const int kCurrentEvaluationLineCount = 12;
 ///   single, explicit source of default combat constants.
 class RummiRuleset {
   const RummiRuleset({
+    required this.persistenceId,
     required this.boardSize,
     required this.evaluationLineCount,
     required this.copiesPerTile,
@@ -30,6 +31,9 @@ class RummiRuleset {
     required this.onePairIsDeadLine,
   });
 
+  static const String currentDefaultsPersistenceId = 'current_defaults_v1';
+
+  final String persistenceId;
   final int boardSize;
   final int evaluationLineCount;
   final int copiesPerTile;
@@ -47,6 +51,7 @@ class RummiRuleset {
   final bool onePairIsDeadLine;
 
   static const RummiRuleset currentDefaults = RummiRuleset(
+    persistenceId: currentDefaultsPersistenceId,
     boardSize: kBoardSize,
     evaluationLineCount: kCurrentEvaluationLineCount,
     copiesPerTile: kDefaultCopiesPerTile,
@@ -65,4 +70,11 @@ class RummiRuleset {
   );
 
   int baseScoreFor(RummiHandRank rank) => gddBaseScore(rank);
+
+  static RummiRuleset fromPersistenceId(String? persistenceId) {
+    return switch (persistenceId) {
+      currentDefaultsPersistenceId => currentDefaults,
+      _ => currentDefaults,
+    };
+  }
 }

@@ -7,12 +7,13 @@ class AppConfig {
   static const String appStoreId = '';
 
   static const String appTitle = 'RummiPoker';
+
   /// 타이틀 화면 메인 로고 (줄바꿈 포함).
   static const String gameTitleBlock = 'Rummi\nPoker';
   static const String gameSubtitle = '5×5 그리드 · 12줄 포커 족보';
 }
 
-/// 로컬 저장소(GetStorage) 키 상수.
+/// 로컬 저장소(SharedPreferences) 키 상수.
 class StorageKeys {
   StorageKeys._();
 
@@ -22,7 +23,8 @@ class StorageKeys {
   static const String sfxMuted = 'sfx_muted';
   static const String keepScreenOn = 'keep_screen_on';
   static const String firstLaunchDate = 'first_launch_date';
-  static const String reviewRequestedAfterFirstClear = 'review_requested_after_first_clear';
+  static const String reviewRequestedAfterFirstClear =
+      'review_requested_after_first_clear';
   static const String reviewRequestedOnTitle = 'review_requested_on_title';
   static const String activeRunPayloadV1 = 'active_run_payload_v1';
   static const String activeRunSignatureV1 = 'active_run_signature_v1';
