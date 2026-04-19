@@ -149,12 +149,15 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 현재 기준 프로세스:
 
 - 기본 스크립트: `tools/ios_sim_smoke.sh`
+- 웹 빌드 smoke 스크립트: `tools/web_build_smoke.sh`
 - launch/title 확인: `tools/ios_sim_smoke.sh`
 - fixture battle 확인: `tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot"`
 - background save / relaunch 확인:
   `tools/ios_sim_smoke.sh --open-url "https://example.com" --relaunch`
 - full loop 확인:
   `tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1"`
+- web build 확인: `tools/web_build_smoke.sh --web-only`
+- web wasm build 확인: `tools/web_build_smoke.sh --wasm-only`
 - 의미 있는 실구동 검증은 스크린샷/로그 산출물 경로까지 남긴다.
 
 최근 검증 산출물:
@@ -172,7 +175,7 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 - Chrome 기기는 현재 연결 가능 상태를 확인했다.
 - 이번 단계에서는 mobile-first/iOS smoke가 핵심 acceptance를 충족하므로 Chrome 실구동은 필수 게이트로 두지 않는다.
-- 다만 web 저장/라우팅/입력 경계가 바뀌는 PR이나 release 전 점검 단계에서는 Chrome 2차 smoke를 다시 수행한다.
+- 다만 web 저장/라우팅/입력 경계가 바뀌는 PR이나 release 전 점검 단계에서는 `tools/web_build_smoke.sh`를 먼저 돌리고, 필요 시 Chrome 2차 smoke를 다시 수행한다.
 
 ## 3. B. Target Product Checklist
 

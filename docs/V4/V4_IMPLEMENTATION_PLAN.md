@@ -23,7 +23,7 @@
 - stage → cash-out → full-screen Jester shop → next stage
 - active run save v2
 - `stageStartSnapshot` 기반 현재 stage 재시작
-- GetStorage + flutter_secure_storage + HMAC-SHA256 무결성
+- shared_preferences + device key store(native secure storage / web local storage) + HMAC-SHA256 무결성
 
 [DO-NOT-DO] [DOC VERIFIED]
 
@@ -106,7 +106,7 @@
 | `lib/views/game_view.dart` | runtime UI flow / save trigger / navigation | High | UI PR separate from rules PR |
 | `lib/views/game/widgets/game_shop_screen.dart` | current full-screen shop UX | Medium | preserve route/UX in early phases |
 | `lib/providers/features/rummi_poker_grid/title_notifier.dart` | continue availability / clear stored run | Medium | protect continue flow |
-| `lib/utils/storage_helper.dart` | GetStorage wrapper | Medium | preserve as backend until adapter layer exists |
+| `lib/utils/storage_helper.dart` | SharedPreferences wrapper | Medium | preserve as backend until adapter layer exists |
 
 ## 6. Risk Register
 
@@ -424,6 +424,7 @@ PR2와 PR3에서 부족한 회귀 테스트를 추가하는 것이 전체 마이
 
 앱 실구동 검증이 필요한 단계에서는 iOS 시뮬레이터 수동 검증을 ad-hoc으로 반복하지 않고 `tools/ios_sim_smoke.sh` 기준으로 실행한다.
 스크린샷과 로그는 `/tmp/rummipoker_ios_smoke/<timestamp>/` 산출물을 기준으로 남기고, 체크리스트에는 검증 route/시나리오를 함께 적는다.
+web 저장/플러그인 경계 검증은 `tools/web_build_smoke.sh` 기준으로 `flutter build web` / `flutter build web --wasm`를 재사용 가능한 절차로 실행한다.
 
 ## 10. Save Compatibility Strategy
 
