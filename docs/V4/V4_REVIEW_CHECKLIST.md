@@ -83,13 +83,19 @@ ruleset 계층이 생겨도 현재 기본 동작은 절대 바뀌면 안 된다.
 
 ### F. Market Adapter Preparation
 
-- [ ] `jester_meta.dart`를 직접 분해하지 않고 read model/adapter 범위 정의
-- [ ] buy/sell/reroll/current offer semantics 보호 테스트 점검
-- [ ] current Jester id 유지 정책 재확인
-- [ ] market 확장 문서와 실제 current shop 간 차이 정리
+- [x] `jester_meta.dart`를 직접 분해하지 않고 read model/adapter 범위 정의
+- [x] buy/sell/reroll/current offer semantics 보호 테스트 점검
+- [x] current Jester id 유지 정책 재확인
+- [x] market 확장 문서와 실제 current shop 간 차이 정리
 
 완료 기준:
 현 shop을 깨지 않고 future market 구조를 읽을 수 있어야 한다.
+
+현재 차이 요약:
+- current shop은 `Jester` 전용이고, V4 target market은 다중 콘텐츠 카테고리를 전제한다.
+- current offer는 `RummiShopOffer(card)` 구조이고, target은 `MarketOffer(category/contentId/availabilityReason)` 구조를 지향한다.
+- current runtime은 `ownedJesters/shopOffers`를 source of truth로 유지하고, 이번 단계에서는 facade로만 `Market` 용어를 읽는다.
+- buy/sell/reroll 로직은 모두 현재 `RummiRunProgress`에 남겨 둔다.
 
 ### G. Save Adapter Preparation
 
@@ -119,8 +125,8 @@ ruleset 계층이 생겨도 현재 기본 동작은 절대 바뀌면 안 된다.
 - [x] Phase 1 Regression protection
 - [x] Phase 2 Compatibility wrapper skeleton
 - [x] Phase 3 Ruleset skeleton
-- [ ] Phase 4 UI terminology bridge
-- [ ] Phase 5 Market adapter preparation
+- [x] Phase 4 UI terminology bridge
+- [x] Phase 5 Market adapter preparation
 - [ ] Phase 6 Save adapter preparation
 - [ ] 실제 앱 실행 테스트
 
