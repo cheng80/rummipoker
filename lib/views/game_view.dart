@@ -122,7 +122,7 @@ class _GameViewState extends ConsumerState<GameView>
           if (!mounted) return;
           if (nextStage == true) {
             _gameNotifier.advanceToNextStage(widget.runSeed);
-            _showSnack('스테이지 ${_runProgress.stageIndex} 시작');
+            _showSnack('Station ${_runProgress.stageIndex} 시작');
           }
           await _saveActiveRun(scene: ActiveRunScene.battle);
           _gameNotifier.markDirty();
@@ -173,7 +173,8 @@ class _GameViewState extends ConsumerState<GameView>
     final confirmed = await showConfirmDialog(
       context,
       title: '재시작',
-      message: '현재 스테이지 시작 시점으로 되돌릴까요?\n이 스테이지에서 얻은 골드, 제스터, 진행 상태는 취소됩니다.',
+      message:
+          '현재 Station 시작 시점으로 되돌릴까요?\n이 Station에서 얻은 골드, 제스터, 진행 상태는 취소됩니다.',
       cancelLabel: '취소',
       confirmLabel: '재시작',
     );
@@ -435,7 +436,7 @@ class _GameViewState extends ConsumerState<GameView>
 
     _gameNotifier.advanceToNextStage(widget.runSeed);
     await _saveActiveRun(scene: ActiveRunScene.battle);
-    _showSnack('스테이지 ${_runProgress.stageIndex} 시작');
+    _showSnack('Station ${_runProgress.stageIndex} 시작');
   }
 
   Future<bool?> _showCashOutSheet(RummiCashOutBreakdown breakdown) {
@@ -478,7 +479,7 @@ class _GameViewState extends ConsumerState<GameView>
     if (_isUiLocked) return;
     _gameNotifier.openShopForTest(preferredOfferIds: _shopInspectOfferIds);
     await _saveActiveRun(scene: ActiveRunScene.shop);
-    _showSnack('검사용 상점 오퍼 ${_shopInspectOfferIds.length}장 표시');
+    _showSnack('검사용 Market 오퍼 ${_shopInspectOfferIds.length}장 표시');
     await _showShopScreen();
     if (!mounted) return;
     await _saveActiveRun(scene: ActiveRunScene.battle);

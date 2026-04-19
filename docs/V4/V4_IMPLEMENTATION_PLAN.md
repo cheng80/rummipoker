@@ -1,5 +1,7 @@
 # Rummi Poker Grid V4 Implementation Plan
 
+검토용 순서/진행 체크는 [V4_REVIEW_CHECKLIST.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/V4_REVIEW_CHECKLIST.md)에서 함께 본다.
+
 ## 1. Plan Scope
 
 [CURRENT] [DOC VERIFIED]

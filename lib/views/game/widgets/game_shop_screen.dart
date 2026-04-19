@@ -378,7 +378,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
               children: [
                 const Expanded(
                   child: Text(
-                    '상점 옵션',
+                    'Market 옵션',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -546,7 +546,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                       children: [
                         const Expanded(
                           child: Text(
-                            'Jester Shop',
+                            'Jester Market',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -612,7 +612,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                       child: IgnorePointer(
                                         child: DecoratedBox(
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(17),
+                                            borderRadius: BorderRadius.circular(
+                                              17,
+                                            ),
                                             border: Border.all(
                                               color: const Color(0xFFF2C14E),
                                               width: 2,
@@ -629,7 +631,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                           ? null
                                           : jesterRuntimeValueText(
                                               card,
-                                              widget.runProgress.buildRuntimeSnapshot(),
+                                              widget.runProgress
+                                                  .buildRuntimeSnapshot(),
                                               slotIndex: index,
                                             ),
                                       extended: index == 4,
@@ -671,11 +674,13 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                             padding: const EdgeInsets.all(3),
                                             child: GameJesterSlot(
                                               card: card,
-                                              runtimeValueText: jesterRuntimeValueText(
-                                                card,
-                                                widget.runProgress.buildRuntimeSnapshot(),
-                                                slotIndex: index,
-                                              ),
+                                              runtimeValueText:
+                                                  jesterRuntimeValueText(
+                                                    card,
+                                                    widget.runProgress
+                                                        .buildRuntimeSnapshot(),
+                                                    slotIndex: index,
+                                                  ),
                                               extended: index == 4,
                                               activeEffect: null,
                                               settlementSequenceTick: 0,
@@ -738,11 +743,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           child: Text(
                             active
                                 ? pendingSellPrice == null
-                                    ? '여기에 놓으면 판매'
-                                    : '여기에 놓으면 판매 +$pendingSellPrice Gold'
+                                      ? '여기에 놓으면 판매'
+                                      : '여기에 놓으면 판매 +$pendingSellPrice Gold'
                                 : pendingSellPrice == null
-                                    ? '보유 Jester를 길게 눌러 여기로 드래그하면 판매'
-                                    : '길게 눌러 드래그 판매 가능 · 예상 판매가 +$pendingSellPrice Gold',
+                                ? '보유 Jester를 길게 눌러 여기로 드래그하면 판매'
+                                : '길게 눌러 드래그 판매 가능 · 예상 판매가 +$pendingSellPrice Gold',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.9),
@@ -757,7 +762,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                       children: [
                         const Expanded(
                           child: Text(
-                            '오퍼 목록',
+                            'Market 오퍼',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
@@ -784,7 +789,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                               ),
                               child: const Center(
                                 child: Text(
-                                  '이번 상점에 노출된 Jester가 없습니다.',
+                                  '이번 Market에 노출된 Jester가 없습니다.',
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 13,
@@ -795,9 +800,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
                             )
                           : ListView.separated(
                               itemCount: widget.runProgress.shopOffers.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: 8),
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 8),
                               itemBuilder: (context, index) {
-                                final offer = widget.runProgress.shopOffers[index];
+                                final offer =
+                                    widget.runProgress.shopOffers[index];
                                 return _GameShopOfferCard(
                                   offer: offer,
                                   selected: _selectedOfferIndex == index,
@@ -849,7 +856,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                               ),
                             ),
                             child: const Text(
-                              '다음 스테이지',
+                              '다음 Station',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,
@@ -983,7 +990,9 @@ class _GameShopOfferCard extends StatelessWidget {
                             child: FilledButton(
                               onPressed: canAfford ? onBuy : null,
                               style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
                                 backgroundColor: const Color(0xFFF4A81D),
                                 foregroundColor: Colors.black,
                                 shape: RoundedRectangleBorder(
@@ -1012,5 +1021,3 @@ class _GameShopOfferCard extends StatelessWidget {
     );
   }
 }
-
-

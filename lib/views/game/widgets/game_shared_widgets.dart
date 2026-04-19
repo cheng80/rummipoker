@@ -89,7 +89,7 @@ class GameTopHud extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'STAGE',
+                    'STATION',
                     style: gameHudLabelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -131,7 +131,7 @@ class GameTopHud extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'BLIND SCORE',
+                          'STATION GOAL',
                           style: gameHudLabelStyle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -330,7 +330,7 @@ class GameDebugShopHandCluster extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Text(
-                      'SHOP',
+                      'MARKET',
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 9,

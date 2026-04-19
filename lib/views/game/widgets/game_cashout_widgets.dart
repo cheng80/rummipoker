@@ -91,7 +91,7 @@ class GameStageClearOverlay extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isSettlement ? 'SCORE SETTLED' : 'STAGE CLEAR',
+                  isSettlement ? 'SCORE SETTLED' : 'STATION CLEAR',
                   style: TextStyle(
                     color: isSettlement
                         ? Colors.white.withValues(alpha: 0.78)
@@ -103,7 +103,7 @@ class GameStageClearOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '스테이지 $stageIndex',
+                  'Station $stageIndex',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.96),
                     fontSize: 26,
@@ -130,7 +130,7 @@ class GameStageClearOverlay extends StatelessWidget {
                   )
                 else
                   Text(
-                    '목표 점수 달성',
+                    'Station Goal 달성',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 18,
@@ -325,8 +325,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   opacity: _step >= 1 ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
                   child: _GameCashOutLine(
-                    leading: 'Stage ${b.stageIndex}',
-                    text: '목표 ${b.targetScore} 달성 보상',
+                    leading: 'Station ${b.stageIndex}',
+                    text: 'Station Goal ${b.targetScore} 달성 보상',
                     gold: b.blindReward,
                   ),
                 ),
@@ -425,7 +425,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                     ),
                   ),
                   child: const Text(
-                    '상점으로',
+                    'Market으로',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                   ),
                 ),
