@@ -1,6 +1,6 @@
 # Rummi Poker Grid — 게임 로직 (구현 스펙)
 
-> 본 문서는 `docs/rummi_poker_grid_gdd.md`를 **코드 작성 기준**으로 풀어 쓴 것이다.  
+> 본 문서는 `docs/OLD/rummi_poker_grid_gdd.md`를 **코드 작성 기준**으로 풀어 쓴 것이다.  
 > GDD와 충돌 시 **GDD를 먼저 수정**한 뒤 본 문서를 맞춘다.
 
 ---

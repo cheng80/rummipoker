@@ -7,7 +7,7 @@
 
 ## 대화 시작 시 한 줄
 
-**「`START_HERE.md`, `docs/rummi_poker_grid_execution_checklist.md`, `docs/save_resume_architecture.md`를 보고, 이어하기 저장 아키텍처와 현재 우선 작업을 같이 확인한 뒤 진행하자.」**
+**「`START_HERE.md`, `docs/archive/rummi_poker_grid_execution_checklist.md`, `docs/archive/save_resume_architecture.md`를 보고, 이어하기 저장 아키텍처와 현재 우선 작업을 같이 확인한 뒤 진행하자.」**
 
 ---
 
@@ -16,11 +16,11 @@
 | 순서 | 문서 | 할 일 |
 |:---:|:---|:---|
 | 1 | **이 파일** (`START_HERE.md`) | 아래 §2, §3만 먼저 확인 |
-| 2 | [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md) | 체크 안 된 다음 작업 확인 |
-| 3 | [`docs/DESIGN.md`](docs/DESIGN.md) | 현재 화면에 적용할 디자인 기준 확인 |
-| 4 | [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md) | 이어하기 저장/복원/키 분리 정책 확인 |
-| 5 | [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md) | 룰 충돌이 생길 때만 확인 |
-| 6 | [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md) | 구현 세부 기준 확인 |
+| 2 | [`docs/archive/rummi_poker_grid_execution_checklist.md`](docs/archive/rummi_poker_grid_execution_checklist.md) | 체크 안 된 다음 작업 확인 |
+| 3 | [`docs/archive/DESIGN.md`](docs/archive/DESIGN.md) | 현재 화면에 적용할 디자인 기준 확인 |
+| 4 | [`docs/archive/save_resume_architecture.md`](docs/archive/save_resume_architecture.md) | 이어하기 저장/복원/키 분리 정책 확인 |
+| 5 | [`docs/archive/rummi_poker_grid_gdd.md`](docs/archive/rummi_poker_grid_gdd.md) | 룰 충돌이 생길 때만 확인 |
+| 6 | [`docs/archive/rummi_poker_grid_game_logic.md`](docs/archive/rummi_poker_grid_game_logic.md) | 구현 세부 기준 확인 |
 
 ---
 
@@ -49,7 +49,7 @@
 - Riverpod 상태: `GameView` 는 `GameSessionNotifier`, `TitleView` 는 `TitleNotifier`, `SettingView` 는 `SettingsNotifier` 기준으로 UI 상태를 읽는다.
 - 공용 UI 유틸: `lib/utils/common_ui.dart` 에서 **상단 알림(`showTopNotice`) / 하단 알림(`showBottomNotice`) / 공통 다이얼로그(`showAppDialog`, `showConfirmDialog`)** 를 관리한다.
 - Flame 코드는 당장 핵심 화면 책임에서 한 발 물러났고, 이후 필요 시 **드로우/정산/조커 연출 레이어**로만 재도입하는 방향이 현재 판단이다.
-- 디자인 문서: [`docs/DESIGN.md`](docs/DESIGN.md) 를 현재 코드/룰 기준으로 최신화했다.
+- 디자인 문서: [`docs/archive/DESIGN.md`](docs/archive/DESIGN.md) 를 현재 코드/룰 기준으로 최신화했다.
 - 최근 작업:
   - `RummiPokerGridSession.confirmAllFullLines()` 를 **족보 기여 카드만 제거**하도록 수정했다.
   - 손패 기본 한도를 `1장`으로 두되, 디버그 메뉴에서 `1~3장` 조절이 가능하도록 유지했고, 관련 테스트/문서 기준도 함께 갱신했다.
@@ -126,7 +126,7 @@
 
 즉, 새 세션에서 바로 이어야 할 일:
 
-1. [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md), [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md) 를 먼저 보고, 현재 리팩토링 배치와 저장 정책 기준을 확인한다.
+1. [`docs/archive/rummi_poker_grid_execution_checklist.md`](docs/archive/rummi_poker_grid_execution_checklist.md), [`docs/archive/save_resume_architecture.md`](docs/archive/save_resume_architecture.md) 를 먼저 보고, 현재 리팩토링 배치와 저장 정책 기준을 확인한다.
 2. 특히 아래 파일을 우선 본다.
    - [`lib/providers/features/rummi_poker_grid/game_session_notifier.dart`](lib/providers/features/rummi_poker_grid/game_session_notifier.dart) — 비즈니스 로직 (`confirmLines`, `prepareCashOut`, `openShop`, `advanceToNextStage`, `restartCurrentStage`, `tryPlaceTile`, `drawTile`, `discardBoardTile`, `discardHandTile`, `sellOwnedJester`, `evaluateExpiry`, `openShopForTest`). 402행.
    - [`lib/views/game_view.dart`](lib/views/game_view.dart) — orchestration (SFX, snack 피드백, settlement sequence 타이밍, 네비게이션, save 트리거). 813행.
@@ -186,7 +186,7 @@
 - 저장 방식은 **GetStorage payload + secure storage key + HMAC 서명** 하이브리드다.
 - 저장 포맷은 이제 **현재 시점 + 현재 스테이지 시작 시점(stageStartSnapshot)** 을 함께 가진다.
 - 저장 스키마 버전은 현재 **v2** 다. 이전 v1 세이브는 구버전으로 간주되어 복원이 거부될 수 있다.
-- 웹 저장/이어하기 회귀는 현재 `docs/save_resume_architecture.md` 의 정적 빌드 + Playwright 절차를 기준으로 검증한다.
+- 웹 저장/이어하기 회귀는 현재 `docs/archive/save_resume_architecture.md` 의 정적 빌드 + Playwright 절차를 기준으로 검증한다.
 - 알림/다이얼로그는 `lib/utils/common_ui.dart` 기준으로 공용화했다.
 - `StarryBackground`는 `App`의 `MaterialApp.router(builder:)`에서 **앱 전체에 단 1개**만 존재한다. 페이지 전환에도 파괴/재생성되지 않아 AnimationController와 RepaintBoundary 래스터 캐시가 유지된다.
 - Riverpod 분리가 들어갔다.
@@ -269,28 +269,28 @@
 새 세션에서 코드 읽기 순서는 아래가 가장 효율적이다.
 
 1. [`START_HERE.md`](START_HERE.md)
-2. [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md)
-3. [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md)
-4. [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md)
-5. [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md)
+2. [`docs/archive/rummi_poker_grid_execution_checklist.md`](docs/archive/rummi_poker_grid_execution_checklist.md)
+3. [`docs/archive/save_resume_architecture.md`](docs/archive/save_resume_architecture.md)
+4. [`docs/archive/rummi_poker_grid_gdd.md`](docs/archive/rummi_poker_grid_gdd.md)
+5. [`docs/archive/rummi_poker_grid_game_logic.md`](docs/archive/rummi_poker_grid_game_logic.md)
 6. [`lib/providers/features/rummi_poker_grid/game_session_notifier.dart`](lib/providers/features/rummi_poker_grid/game_session_notifier.dart)
 7. [`lib/views/game_view.dart`](lib/views/game_view.dart)
 8. [`lib/views/game/widgets/`](lib/views/game/widgets/)
 9. [`lib/logic/rummi_poker_grid/jester_meta.dart`](lib/logic/rummi_poker_grid/jester_meta.dart)
 10. [`lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`](lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)
-11. 필요할 때만 [`docs/DESIGN.md`](docs/DESIGN.md)
+11. 필요할 때만 [`docs/archive/DESIGN.md`](docs/archive/DESIGN.md)
 
 ## 9. 세션 종료 전 갱신 규칙
 
 작업을 끊기 전에 최소한 아래는 갱신한다.
 
-1. 끝낸 항목이 있으면 [`docs/rummi_poker_grid_execution_checklist.md`](docs/rummi_poker_grid_execution_checklist.md) 체크 상태를 갱신
-2. 덱 장수, 만료, 메타 루프, Jester 효과 범위를 건드렸으면 [`docs/rummi_poker_grid_gdd.md`](docs/rummi_poker_grid_gdd.md), [`docs/rummi_poker_grid_game_logic.md`](docs/rummi_poker_grid_game_logic.md) 같이 수정
-3. 이어하기 저장/복원/키 정책을 건드렸으면 [`docs/save_resume_architecture.md`](docs/save_resume_architecture.md) 를 같이 수정
-4. 디자인 방향이 바뀌었으면 [`docs/DESIGN.md`](docs/DESIGN.md) 수정
+1. 끝낸 항목이 있으면 [`docs/archive/rummi_poker_grid_execution_checklist.md`](docs/archive/rummi_poker_grid_execution_checklist.md) 체크 상태를 갱신
+2. 덱 장수, 만료, 메타 루프, Jester 효과 범위를 건드렸으면 [`docs/archive/rummi_poker_grid_gdd.md`](docs/archive/rummi_poker_grid_gdd.md), [`docs/archive/rummi_poker_grid_game_logic.md`](docs/archive/rummi_poker_grid_game_logic.md) 같이 수정
+3. 이어하기 저장/복원/키 정책을 건드렸으면 [`docs/archive/save_resume_architecture.md`](docs/archive/save_resume_architecture.md) 를 같이 수정
+4. 디자인 방향이 바뀌었으면 [`docs/archive/DESIGN.md`](docs/archive/DESIGN.md) 수정
 5. 알림/다이얼로그 정책을 건드렸으면 `lib/utils/common_ui.dart` 와 체크리스트 메모를 같이 갱신
 6. 새 세션이 바로 이어질 수 있게 이 문서의 §3 “지금 가장 중요한 작업”을 최신 상태로 유지
 
 ## 10. 한 줄 요약
 
-**다음 세션은 `START_HERE.md`와 `docs/save_resume_architecture.md`로 시작하고, 현재는 `copiesPerTile` 기반 덱 + Riverpod 1차 분리(`GameSessionNotifier`, `TitleNotifier`) + Flutter 위젯 전투 화면 모듈화 1차 + 실시간 정산/캐시아웃/전체화면 상점 흐름 + economy 2차 1차분 + stateful 1차 + phase5 curated common 38종 + 하이브리드 이어하기 저장 v2 + 현재 스테이지 재시작(stage-start snapshot) 기준으로 문서와 코드를 함께 유지하면 된다.**
+**다음 세션은 `START_HERE.md`와 `docs/archive/save_resume_architecture.md`로 시작하고, 현재는 `copiesPerTile` 기반 덱 + Riverpod 1차 분리(`GameSessionNotifier`, `TitleNotifier`) + Flutter 위젯 전투 화면 모듈화 1차 + 실시간 정산/캐시아웃/전체화면 상점 흐름 + economy 2차 1차분 + stateful 1차 + phase5 curated common 38종 + 하이브리드 이어하기 저장 v2 + 현재 스테이지 재시작(stage-start snapshot) 기준으로 문서와 코드를 함께 유지하면 된다.**

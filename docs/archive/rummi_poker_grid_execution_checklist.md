@@ -25,7 +25,7 @@
 
 ## 0.5 비주얼·Stitch (참고 디자인)
 
-> 기존 루미큐브 계열 게임과 **동일 타일 렌더링 클래스**를 쓰는 전제에서, **색·비율**을 맞추고 Stitch로 목업을 뽑는다. 레이아웃 기준은 `docs/DESIGN.md`의 responsive frame 규칙을 따른다.
+> 기존 루미큐브 계열 게임과 **동일 타일 렌더링 클래스**를 쓰는 전제에서, **색·비율**을 맞추고 Stitch로 목업을 뽑는다. 레이아웃 기준은 `docs/OLD/DESIGN.md`의 responsive frame 규칙을 따른다.
 
 - [ ] **참고 소스**: 다른 프로젝트(예: `flame_rummideck`)의 타일 색(`TileColor` → 앱 팔레트), `BattleTileCard` 시각 규칙(테두리·그라데이션·숫자 대비) 정리
 - [ ] **톤**: 다크 그린 필·세로 모바일·상단 스코어·하단 손패·액션 버튼 구획 등 레퍼런스 스크린과의 대응표 (발라트로식 HUD 등은 **참고만**)
@@ -63,7 +63,7 @@
   - `App` → `ConsumerWidget`으로 전환, Wakelock 초기 적용을 Notifier로 통합
   - `main.dart`에서 중복 `_applyKeepScreenOn()` 제거
   - 설정 변경 흐름: `SettingsNotifier` → `GameSettings`(영구 저장) + `SoundManager`(런타임) + `WakelockPlus`
-- [ ] Flame ↔ `ref.read` 주입 패턴 확정 (`docs/riverpod_architecture.md` 참고)
+- [ ] Flame ↔ `ref.read` 주입 패턴 확정 (`docs/OLD/riverpod_architecture.md` 참고)
 
 ---
 
@@ -82,7 +82,7 @@
 - [x] 경제 수치 v1 고정: 시작 골드 / 캐시아웃 / 리롤 / 판매가 / 상점 오퍼 수 규칙을 문서·코드에서 공통화
 - [ ] Flame는 필요 시 드로우/정산/조커 연출 전용 레이어로 재도입
 - [x] 웨이스트 슬롯 폐기: 손패 1장이 이미 대기/보류 역할을 대체하므로 별도 UI를 두지 않음
-- [ ] 태블릿 `FittedBox`+`MediaQuery` 경로에서 실기기 확인 (`docs/DESIGN.md` §6)
+- [ ] 태블릿 `FittedBox`+`MediaQuery` 경로에서 실기기 확인 (`docs/OLD/DESIGN.md` §6)
 - [x] economy 2차 1차분: `delayed_gratification` / `golden_jester` / `egg` 라운드 종료형 도입
 - [x] stateful_growth 1차: 카드별 단일 카운터 상태 모델 추가 (`green_jester`, `supernova`, `popcorn`, `ice_cream`, `ride_the_bus`)
 - [ ] rule_modifier / retrigger는 이벤트 경계 정리 전까지 보류
@@ -122,7 +122,7 @@
 
 ## 4.5 이어하기 저장
 
-- [x] 이어하기 저장 아키텍처 문서화: `docs/save_resume_architecture.md`
+- [x] 이어하기 저장 아키텍처 문서화: `docs/OLD/save_resume_architecture.md`
 - [x] 저장 포맷 고정: `payload + signature + schemaVersion` 구조
 - [x] 보안 경로 고정: `GetStorage` payload + `flutter_secure_storage` 설치별 키 + `HMAC-SHA256`
 - [x] `RummiPokerGridSession` / `RummiRunProgress` 세이브 DTO 설계
@@ -158,7 +158,7 @@
 - 코드: 핸드·보드·**`PokerDeck`·`RummiPokerGridSession`**·테스트 + **`GameView` Flutter 전환** 완료. HUD 대시보드/Jester 5슬롯/5×5 보드/단일 손패/하단 액션을 위젯으로 재구성했고, Flame은 후속 효과 레이어 후보로 남겨둠.
 - 메타 진행: 스테이지 클리어 후 정산/상점/Jester 매매 흐름이 현재 Flutter 쪽에 연결되어 있다.
 - 스테이지 전환: 다음 스테이지 진입 시 **현재 덱 전체 리셋 + 시드 파생 셔플**로 재현 가능하게 맞췄다.
-- 이어하기 저장: 1차 구현 완료. `docs/save_resume_architecture.md` 기준으로 하이브리드(`GetStorage` payload + secure storage key + HMAC) 저장, 타이틀 `이어하기`, 손상 세이브 삭제, 기본 autosave가 연결되어 있다.
+- 이어하기 저장: 1차 구현 완료. `docs/OLD/save_resume_architecture.md` 기준으로 하이브리드(`GetStorage` payload + secure storage key + HMAC) 저장, 타이틀 `이어하기`, 손상 세이브 삭제, 기본 autosave가 연결되어 있다.
 - 게임오버 저장 정책: 게임오버 직전에는 현재 스테이지 시작 스냅샷 기준으로 재시도 상태를 보존하고, 팝업에서 `다시하기 / 종료`를 선택한다.
 - 웹 검증: 개발용 `flutter run -d chrome` 세션 대신, 현재는 `build/web` 정적 서빙 + Playwright 경로를 표준 회귀 검증 절차로 본다.
 - Riverpod 분리: `GameView`는 `GameSessionNotifier`, `TitleView`는 `TitleNotifier` 기준으로 주요 UI 상태를 읽는다.
