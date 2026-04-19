@@ -16,6 +16,7 @@ class RummiMarketOwnedEntryView {
     required this.contentId,
     required this.displayName,
     required this.sellPrice,
+    required this.card,
   });
 
   factory RummiMarketOwnedEntryView.fromRunProgress(
@@ -29,6 +30,7 @@ class RummiMarketOwnedEntryView {
       contentId: card.id,
       displayName: card.displayName,
       sellPrice: progress.sellPriceAt(slotIndex),
+      card: card,
     );
   }
 
@@ -37,6 +39,7 @@ class RummiMarketOwnedEntryView {
   final String contentId;
   final String displayName;
   final int sellPrice;
+  final RummiJesterCard card;
 }
 
 class RummiMarketOfferView {
@@ -48,6 +51,7 @@ class RummiMarketOfferView {
     required this.displayName,
     required this.price,
     required this.currency,
+    required this.card,
   });
 
   factory RummiMarketOfferView.fromShopOffer(RummiShopOffer offer) {
@@ -59,6 +63,7 @@ class RummiMarketOfferView {
       displayName: offer.card.displayName,
       price: offer.price,
       currency: 'gold',
+      card: offer.card,
     );
   }
 
@@ -69,6 +74,7 @@ class RummiMarketOfferView {
   final String displayName;
   final int price;
   final String currency;
+  final RummiJesterCard card;
 }
 
 class RummiMarketRuntimeFacade {

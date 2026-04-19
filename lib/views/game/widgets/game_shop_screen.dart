@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
@@ -15,6 +16,7 @@ class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
     required this.runProgress,
+    required this.marketViewBuilder,
     required this.catalog,
     required this.rng,
     required this.runSeed,
@@ -26,6 +28,7 @@ class GameShopScreen extends StatefulWidget {
   });
 
   final RummiRunProgress runProgress;
+  final RummiMarketRuntimeFacade Function() marketViewBuilder;
   final List<RummiJesterCard> catalog;
   final Random rng;
   final int runSeed;
@@ -45,12 +48,14 @@ class _GameShopScreenState extends State<GameShopScreen> {
   bool _sellTargetActive = false;
   int? _draggingOwnedIndex;
 
+  RummiMarketRuntimeFacade get _market => widget.marketViewBuilder();
+
   @override
   void initState() {
     super.initState();
-    if (widget.runProgress.ownedJesters.isNotEmpty) {
+    if (_market.ownedEntries.isNotEmpty) {
       _selectedOwnedIndex = 0;
-    } else if (widget.runProgress.shopOffers.isNotEmpty) {
+    } else if (_market.offers.isNotEmpty) {
       _selectedOfferIndex = 0;
     }
   }
@@ -63,10 +68,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 
   Future<void> _showOwnedJesterDetail(int index) async {
-    if (index < 0 || index >= widget.runProgress.ownedJesters.length) return;
-    final card = widget.runProgress.ownedJesters[index];
+    if (index < 0 || index >= _market.ownedEntries.length) return;
+    final ownedEntry = _market.ownedEntries[index];
+    final card = ownedEntry.card;
     final notes = JesterTranslationScope.of(context).notes(card.id);
-    final sellGold = widget.runProgress.sellPriceAt(index);
+    final sellGold = ownedEntry.sellPrice;
     final runtimeValueText = jesterRuntimeValueText(
       card,
       widget.runProgress.buildRuntimeSnapshot(),
@@ -287,10 +293,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
       return;
     }
     setState(() {
-      _selectedOfferIndex = widget.runProgress.shopOffers.isEmpty ? null : 0;
-      _selectedOwnedIndex ??= widget.runProgress.ownedJesters.isEmpty
-          ? null
-          : 0;
+      final market = _market;
+      _selectedOfferIndex = market.offers.isEmpty ? null : 0;
+      _selectedOwnedIndex ??= market.ownedEntries.isEmpty ? null : 0;
     });
     await widget.onStateChanged();
   }
@@ -300,20 +305,20 @@ class _GameShopScreenState extends State<GameShopScreen> {
     if (index == null) return;
     final ok = widget.runProgress.buyOffer(index);
     if (!ok) {
-      final text =
-          widget.runProgress.ownedJesters.length >=
-              RummiRunProgress.maxJesterSlots
+      final market = _market;
+      final text = market.ownedEntries.length >= market.maxOwnedSlots
           ? '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.'
           : '골드가 부족합니다.';
       showBottomNotice(context, text);
       return;
     }
     setState(() {
-      if (widget.runProgress.ownedJesters.isNotEmpty) {
-        _selectedOwnedIndex = widget.runProgress.ownedJesters.length - 1;
+      final market = _market;
+      if (market.ownedEntries.isNotEmpty) {
+        _selectedOwnedIndex = market.ownedEntries.length - 1;
         _selectedOfferIndex = null;
       } else {
-        _selectedOfferIndex = widget.runProgress.shopOffers.isEmpty ? null : 0;
+        _selectedOfferIndex = market.offers.isEmpty ? null : 0;
       }
     });
     widget.onStateChanged();
@@ -324,14 +329,12 @@ class _GameShopScreenState extends State<GameShopScreen> {
     if (!ok) return;
     showTopNotice(context, '제스터를 판매했습니다.');
     setState(() {
-      if (widget.runProgress.ownedJesters.isEmpty) {
+      final market = _market;
+      if (market.ownedEntries.isEmpty) {
         _selectedOwnedIndex = null;
-        _selectedOfferIndex = widget.runProgress.shopOffers.isEmpty ? null : 0;
+        _selectedOfferIndex = market.offers.isEmpty ? null : 0;
       } else {
-        _selectedOwnedIndex = index.clamp(
-          0,
-          widget.runProgress.ownedJesters.length - 1,
-        );
+        _selectedOwnedIndex = index.clamp(0, market.ownedEntries.length - 1);
       }
     });
     widget.onStateChanged();
@@ -507,12 +510,13 @@ class _GameShopScreenState extends State<GameShopScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final market = _market;
     final pendingSellIndex = _draggingOwnedIndex ?? _selectedOwnedIndex;
     final pendingSellPrice =
         pendingSellIndex != null &&
             pendingSellIndex >= 0 &&
-            pendingSellIndex < widget.runProgress.ownedJesters.length
-        ? widget.runProgress.sellPriceAt(pendingSellIndex)
+            pendingSellIndex < market.ownedEntries.length
+        ? market.ownedEntries[pendingSellIndex].sellPrice
         : null;
 
     return PhoneFrameScaffold(
@@ -569,7 +573,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                             border: Border.all(color: Colors.white10),
                           ),
                           child: Text(
-                            'Gold ${widget.runProgress.gold}',
+                            'Gold ${market.gold}',
                             style: const TextStyle(
                               color: Color(0xFFF2C14E),
                               fontSize: 16,
@@ -587,7 +591,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      '보유 Jester 5슬롯',
+                      '보유 Jester ${market.ownedEntries.length}/${market.maxOwnedSlots}슬롯',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.72),
                         fontSize: 11,
@@ -599,110 +603,107 @@ class _GameShopScreenState extends State<GameShopScreen> {
                       height: kJesterCardHeight + 18,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(
-                          RummiRunProgress.maxJesterSlots,
-                          (index) {
-                            final card =
-                                index < widget.runProgress.ownedJesters.length
-                                ? widget.runProgress.ownedJesters[index]
-                                : null;
-                            final selected = _selectedOwnedIndex == index;
-                            final child = Padding(
-                              padding: const EdgeInsets.all(3),
-                              child: Stack(
-                                children: [
-                                  if (selected)
-                                    Positioned.fill(
-                                      child: IgnorePointer(
-                                        child: DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              17,
-                                            ),
-                                            border: Border.all(
-                                              color: const Color(0xFFF2C14E),
-                                              width: 2,
-                                            ),
+                        children: List.generate(market.maxOwnedSlots, (index) {
+                          final ownedEntry = index < market.ownedEntries.length
+                              ? market.ownedEntries[index]
+                              : null;
+                          final card = ownedEntry?.card;
+                          final selected = _selectedOwnedIndex == index;
+                          final child = Padding(
+                            padding: const EdgeInsets.all(3),
+                            child: Stack(
+                              children: [
+                                if (selected)
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            17,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFFF2C14E),
+                                            width: 2,
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: GameJesterSlot(
-                                      card: card,
-                                      runtimeValueText: card == null
-                                          ? null
-                                          : jesterRuntimeValueText(
-                                              card,
-                                              widget.runProgress
-                                                  .buildRuntimeSnapshot(),
-                                              slotIndex: index,
-                                            ),
-                                      extended: index == 4,
-                                      activeEffect: null,
-                                      settlementSequenceTick: 0,
                                     ),
                                   ),
-                                ],
-                              ),
-                            );
+                                Padding(
+                                  padding: const EdgeInsets.all(3),
+                                  child: GameJesterSlot(
+                                    card: card,
+                                    runtimeValueText: card == null
+                                        ? null
+                                        : jesterRuntimeValueText(
+                                            card,
+                                            widget.runProgress
+                                                .buildRuntimeSnapshot(),
+                                            slotIndex: index,
+                                          ),
+                                    extended: index == 4,
+                                    activeEffect: null,
+                                    settlementSequenceTick: 0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
 
-                            return SizedBox(
-                              width: kJesterCardWidth + 6,
-                              height: kJesterCardHeight + 6,
-                              child: card == null
-                                  ? child
-                                  : LongPressDraggable<int>(
-                                      data: index,
-                                      onDragStarted: () {
+                          return SizedBox(
+                            width: kJesterCardWidth + 6,
+                            height: kJesterCardHeight + 6,
+                            child: card == null
+                                ? child
+                                : LongPressDraggable<int>(
+                                    data: index,
+                                    onDragStarted: () {
+                                      setState(() {
+                                        _sellTargetActive = true;
+                                        _draggingOwnedIndex = index;
+                                      });
+                                    },
+                                    onDragEnd: (_) {
+                                      if (mounted) {
                                         setState(() {
-                                          _sellTargetActive = true;
-                                          _draggingOwnedIndex = index;
+                                          _sellTargetActive = false;
+                                          _draggingOwnedIndex = null;
                                         });
-                                      },
-                                      onDragEnd: (_) {
-                                        if (mounted) {
-                                          setState(() {
-                                            _sellTargetActive = false;
-                                            _draggingOwnedIndex = null;
-                                          });
-                                        }
-                                      },
-                                      feedback: SizedBox(
-                                        width: kJesterCardWidth + 6,
-                                        height: kJesterCardHeight + 6,
-                                        child: Material(
-                                          color: Colors.transparent,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(3),
-                                            child: GameJesterSlot(
-                                              card: card,
-                                              runtimeValueText:
-                                                  jesterRuntimeValueText(
-                                                    card,
-                                                    widget.runProgress
-                                                        .buildRuntimeSnapshot(),
-                                                    slotIndex: index,
-                                                  ),
-                                              extended: index == 4,
-                                              activeEffect: null,
-                                              settlementSequenceTick: 0,
-                                            ),
+                                      }
+                                    },
+                                    feedback: SizedBox(
+                                      width: kJesterCardWidth + 6,
+                                      height: kJesterCardHeight + 6,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(3),
+                                          child: GameJesterSlot(
+                                            card: card,
+                                            runtimeValueText:
+                                                jesterRuntimeValueText(
+                                                  card,
+                                                  widget.runProgress
+                                                      .buildRuntimeSnapshot(),
+                                                  slotIndex: index,
+                                                ),
+                                            extended: index == 4,
+                                            activeEffect: null,
+                                            settlementSequenceTick: 0,
                                           ),
                                         ),
                                       ),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _selectOwned(index);
-                                          _showOwnedJesterDetail(index);
-                                        },
-                                        child: child,
-                                      ),
                                     ),
-                            );
-                          },
-                        ),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        _selectOwned(index);
+                                        _showOwnedJesterDetail(index);
+                                      },
+                                      child: child,
+                                    ),
+                                  ),
+                          );
+                        }),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -777,14 +778,14 @@ class _GameShopScreenState extends State<GameShopScreen> {
                         TextButton(
                           onPressed: _reroll,
                           child: Text(
-                            '리롤 ${widget.runProgress.rerollCost}',
+                            '리롤 ${market.rerollCost}',
                             style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
                       ],
                     ),
                     Expanded(
-                      child: widget.runProgress.shopOffers.isEmpty
+                      child: market.offers.isEmpty
                           ? Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
@@ -803,12 +804,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
                               ),
                             )
                           : ListView.separated(
-                              itemCount: widget.runProgress.shopOffers.length,
+                              itemCount: market.offers.length,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
                               itemBuilder: (context, index) {
-                                final offer =
-                                    widget.runProgress.shopOffers[index];
+                                final offer = market.offers[index];
                                 return _GameShopOfferCard(
                                   offer: offer,
                                   selected: _selectedOfferIndex == index,
@@ -890,7 +890,7 @@ class _GameShopOfferCard extends StatelessWidget {
     required this.onBuy,
   });
 
-  final RummiShopOffer offer;
+  final RummiMarketOfferView offer;
   final bool selected;
   final bool canAfford;
   final VoidCallback onTap;

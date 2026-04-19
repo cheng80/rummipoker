@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
+import '../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../providers/features/rummi_poker_grid/game_session_notifier.dart';
@@ -475,6 +476,8 @@ class _GameViewState extends ConsumerState<GameView>
         fullscreenDialog: true,
         builder: (context) => GameShopScreen(
           runProgress: _runProgress,
+          marketViewBuilder: () =>
+              RummiMarketRuntimeFacade.fromRunProgress(_runProgress),
           catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
           rng: _session.runRandom,
           runSeed: widget.runSeed,
