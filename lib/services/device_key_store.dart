@@ -1,6 +1,4 @@
-import 'device_key_store_default.dart'
-    if (dart.library.io) 'device_key_store_native.dart'
-    as impl;
+import 'device_key_store_default.dart' as impl;
 
 abstract class DeviceKeyStore {
   Future<String?> read();
