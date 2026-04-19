@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import 'game_shared_widgets.dart';
 
 class GameHandZone extends StatefulWidget {
   const GameHandZone({
     super.key,
     required this.session,
+    required this.station,
     required this.hand,
     required this.selectedHandTile,
     required this.onHandTileTap,
@@ -18,6 +20,7 @@ class GameHandZone extends StatefulWidget {
   });
 
   final RummiPokerGridSession session;
+  final RummiStationRuntimeFacade station;
   final List<Tile> hand;
   final Tile? selectedHandTile;
   final ValueChanged<Tile> onHandTileTap;
@@ -119,7 +122,11 @@ class _GameHandZoneState extends State<GameHandZone>
     final displayedHand = _animating ? _fromHand : _settledHand;
     return Column(
       children: [
-        GameBottomInfoRow(session: widget.session),
+        GameBottomInfoRow(
+          station: widget.station,
+          totalDeckSize: widget.session.totalDeckSize,
+          currentHandSize: widget.hand.length,
+        ),
         const SizedBox(height: 4),
         SizedBox(
           height: 76,

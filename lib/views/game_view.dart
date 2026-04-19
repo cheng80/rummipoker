@@ -7,6 +7,7 @@ import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../providers/features/rummi_poker_grid/game_session_notifier.dart';
 import '../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../resources/asset_paths.dart';
@@ -527,6 +528,7 @@ class _GameViewState extends ConsumerState<GameView>
       child: _GameSurface(
         session: _session,
         runProgress: _runProgress,
+        station: RummiStationRuntimeFacade.fromSession(_session),
         stageFlowPhase: _stageFlowPhase,
         stageScoreAdded: _stageScoreAdded,
         activeSettlementLine: _activeSettlementLine,
@@ -558,6 +560,7 @@ class _GameSurface extends StatelessWidget {
   const _GameSurface({
     required this.session,
     required this.runProgress,
+    required this.station,
     required this.stageFlowPhase,
     required this.stageScoreAdded,
     required this.activeSettlementLine,
@@ -584,6 +587,7 @@ class _GameSurface extends StatelessWidget {
 
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
+  final RummiStationRuntimeFacade station;
   final GameStageFlowPhase stageFlowPhase;
   final int stageScoreAdded;
   final ConfirmedLineBreakdown? activeSettlementLine;
@@ -640,6 +644,7 @@ class _GameSurface extends StatelessWidget {
                 child: _GameLayout(
                   session: session,
                   runProgress: runProgress,
+                  station: station,
                   activeSettlementEffects:
                       activeSettlementLine?.effects ?? const [],
                   activeSettlementLine: activeSettlementLine,
@@ -720,6 +725,7 @@ class _GameLayout extends StatelessWidget {
   const _GameLayout({
     required this.session,
     required this.runProgress,
+    required this.station,
     required this.activeSettlementEffects,
     required this.activeSettlementLine,
     required this.settlementSequenceTick,
@@ -742,6 +748,7 @@ class _GameLayout extends StatelessWidget {
 
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
+  final RummiStationRuntimeFacade station;
   final List<RummiJesterEffectBreakdown> activeSettlementEffects;
   final ConfirmedLineBreakdown? activeSettlementLine;
   final int settlementSequenceTick;
@@ -779,7 +786,7 @@ class _GameLayout extends StatelessWidget {
         return Column(
           children: [
             GameTopHud(
-              session: session,
+              station: station,
               runProgress: runProgress,
               onOptionsTap: onOptionsTap,
             ),
@@ -814,6 +821,7 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 6),
             GameHandZone(
               session: session,
+              station: station,
               hand: List<Tile>.from(session.hand),
               selectedHandTile: selectedHandTile,
               onHandTileTap: onHandTileTap,

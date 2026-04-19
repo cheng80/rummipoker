@@ -8,6 +8,7 @@ import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/sound_manager.dart';
 
@@ -62,21 +63,24 @@ Set<String> scoringCellSet(RummiPokerGridSession session) {
 class GameTopHud extends StatelessWidget {
   const GameTopHud({
     super.key,
-    required this.session,
+    required this.station,
     required this.runProgress,
     required this.onOptionsTap,
   });
 
-  final RummiPokerGridSession session;
+  final RummiStationRuntimeFacade station;
   final RummiRunProgress runProgress;
   final VoidCallback onOptionsTap;
 
   @override
   Widget build(BuildContext context) {
-    final blind = session.blind;
-    final progress = blind.targetScore <= 0
+    final objective = station.objective;
+    final progress = objective.targetScore <= 0
         ? 0.0
-        : (blind.scoreTowardBlind / blind.targetScore).clamp(0.0, 1.0);
+        : (objective.scoreTowardObjective / objective.targetScore).clamp(
+            0.0,
+            1.0,
+          );
 
     return SizedBox(
       height: 76,
@@ -147,7 +151,7 @@ class GameTopHud extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '${blind.scoreTowardBlind} / ${blind.targetScore}',
+                          '${objective.scoreTowardObjective} / ${objective.targetScore}',
                           maxLines: 1,
                           style: gameHudValueStyle.copyWith(fontSize: 22),
                         ),
@@ -224,17 +228,25 @@ class GameTopHud extends StatelessWidget {
 }
 
 class GameBottomInfoRow extends StatelessWidget {
-  const GameBottomInfoRow({super.key, required this.session});
+  const GameBottomInfoRow({
+    super.key,
+    required this.station,
+    required this.totalDeckSize,
+    required this.currentHandSize,
+  });
 
-  final RummiPokerGridSession session;
+  final RummiStationRuntimeFacade station;
+  final int totalDeckSize;
+  final int currentHandSize;
 
   @override
   Widget build(BuildContext context) {
+    final resources = station.resources;
     return Row(
       children: [
         Expanded(
           child: Text(
-            '덱 ${session.deck.remaining}/${session.totalDeckSize}',
+            '덱 ${resources.drawPileRemaining}/$totalDeckSize',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -246,7 +258,7 @@ class GameBottomInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '보드패 버림 ${session.blind.boardDiscardsRemaining}/${session.blind.boardDiscardsMax}',
+            '보드패 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -259,7 +271,7 @@ class GameBottomInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '손패 ${session.hand.length}/${session.maxHandSize} · 버림 ${session.blind.handDiscardsRemaining}/${session.blind.handDiscardsMax}',
+            '손패 $currentHandSize/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,

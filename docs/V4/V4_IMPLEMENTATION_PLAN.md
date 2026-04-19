@@ -422,6 +422,9 @@ single revertable rename PR
 
 PR2와 PR3에서 부족한 회귀 테스트를 추가하는 것이 전체 마이그레이션의 선행 조건이다.
 
+앱 실구동 검증이 필요한 단계에서는 iOS 시뮬레이터 수동 검증을 ad-hoc으로 반복하지 않고 `tools/ios_sim_smoke.sh` 기준으로 실행한다.
+스크린샷과 로그는 `/tmp/rummipoker_ios_smoke/<timestamp>/` 산출물을 기준으로 남기고, 체크리스트에는 검증 route/시나리오를 함께 적는다.
+
 ## 10. Save Compatibility Strategy
 
 [PROTECT] [CODE VERIFIED]

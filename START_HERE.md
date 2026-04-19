@@ -109,6 +109,36 @@
 
 실행 테스트 기준도 mobile-first로 본다.
 
+## 재사용 검증 프로세스
+
+iOS 시뮬레이터 실구동/스크린샷 검증은 필요할 때마다 ad-hoc으로 하지 않고 아래 스크립트를 우선 사용한다.
+
+- `tools/ios_sim_smoke.sh`
+
+기본 예시:
+
+```bash
+tools/ios_sim_smoke.sh
+tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot"
+tools/ios_sim_smoke.sh --open-url "https://example.com" --relaunch
+```
+
+이 스크립트는 아래를 재사용 가능하게 묶는다.
+
+- iPhone simulator 기준 `flutter run`
+- 지정 route 진입
+- 실행 후 스크린샷 저장
+- URL 전환을 통한 background-save 확인
+- 앱 relaunch 후 스크린샷 저장
+- 실행 로그 보관
+
+실행 산출물은 기본적으로 `/tmp/rummipoker_ios_smoke/<timestamp>/` 아래에 남긴다.
+
+의미 있는 앱 실구동 검증을 했으면, 체크리스트 갱신 시 아래도 함께 남긴다.
+
+- 어떤 route/시나리오를 검증했는지
+- 스크린샷과 로그 산출물 위치
+
 ## 참고
 
 기존 archive 문서는 레거시 참고 자료다.
