@@ -332,6 +332,16 @@ class GameSessionNotifier
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
+  String? rerollShopFromState() {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null) {
+      return '상점 진행 정보가 없습니다.';
+    }
+    final catalog = state.jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[];
+    return rerollShop(catalog: catalog, rng: session.runRandom);
+  }
+
   String? rerollShop({
     required List<RummiJesterCard> catalog,
     required Random rng,

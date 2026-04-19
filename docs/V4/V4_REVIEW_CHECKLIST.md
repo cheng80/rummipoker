@@ -102,7 +102,8 @@ ruleset 계층이 생겨도 current defaults는 그대로 유지되어야 한다
 현재 상태:
 
 - shop UI read path의 가격/보유 슬롯/오퍼/affordability/runtime snapshot 표시는 market facade 기준으로 읽는다.
-- 남은 direct runtime 참조는 `buy/sell/reroll` mutation 호출뿐이다.
+- shop UI의 `reroll`은 `GameSessionNotifier.rerollShopFromState()`를 통해 notifier 내부 state만 읽도록 정리했다.
+- 남은 direct runtime 쓰기 경계는 주로 `cash-out -> openShop -> next stage` 시퀀스를 UI가 직접 조립하는 부분이다.
 - notifier/orchestration state도 `stationView / marketView / activeRunSaveView`를 함께 보관하며, 일부 runtime UI는 그 파생 facade를 직접 소비한다.
 - game options dialog도 active run save facade 기준의 run snapshot 요약을 직접 소비한다.
 
@@ -319,12 +320,25 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 ## 5. Recommended Next Decision
 
-현재 가장 자연스러운 다음 작업은 아래 둘 중 하나다.
+최근 반영:
 
-- [ ] active run save payload에 `ruleset version/id`를 저장할지 결정
-  이유: 지금은 restore 시 `currentDefaults`에 암묵적으로 기대고 있어서, 이후 ruleset variation이 생기면 저장본이 어떤 룰셋을 기준으로 만들어졌는지 보존해야 한다.
-- [ ] `GameView`/shop/settlement 쪽 mutation 호출을 notifier command로 더 감쌀지 결정
-  이유: facade read path는 1차 정리됐고, 이제 남은 경계는 UI가 `session/runProgress` mutation 세부를 직접 아는 쓰기 경로다.
+- [x] active run save payload에 `rulesetId` 저장/복원 경로 반영
+- [x] shop `reroll` mutation을 notifier command로 1차 이관
+
+현재 가장 자연스러운 다음 작업:
+
+- [ ] `GameView`가 직접 조립하는 `cash-out -> openShop -> next stage` 시퀀스를 notifier command로 더 감쌀지 결정
+  이유: facade read path와 shop reroll mutation은 1차 정리됐고, 이제 가장 큰 남은 쓰기 경계는 UI가 정산/시장 진입/다음 스테이지 진입 순서를 직접 알고 있는 부분이다.
 
 현재 추천:
-`active run save payload에 ruleset version/id를 저장할지 결정`하는 쪽이 다음 단계로 가장 안전하다. 지금 ruleset이 combat 내부까지 들어갔기 때문에, 다음 위험 지점은 "저장/복원 시 어떤 ruleset으로 만든 런인가"를 잃는 부분이다.
+`lib/views/game_view.dart`에 남은 아래 호출 묶음을 `GameSessionNotifier` command로 접는 쪽이 다음 단계로 가장 안전하다.
+
+- `prepareCashOut()`
+- `openShop()`
+- `advanceToNextStage(widget.runSeed)`
+
+구체적인 다음 PR 범위:
+
+- `GameView._runStageClearFlow()`와 `_runAutoCashOutLoopOnLoad()`에서 중복되는 stage transition orchestration 정리
+- notifier 쪽에 stage settlement / market entry / next-stage advance command 추가
+- `test/providers/game_session_notifier_test.dart`에 stage transition 및 `stageStartSnapshot` 갱신 회귀 테스트 추가

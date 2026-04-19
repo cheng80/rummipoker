@@ -238,6 +238,73 @@ void main() {
       expect(message, '리롤 골드가 부족합니다.');
     });
 
+    test('rerollShopFromState는 notifier 내부 session/catalog를 사용해 상점을 갱신한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 41);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+
+      notifier.setJesterCatalog(
+        RummiJesterCatalog.fromJsonString('''
+[
+  {
+    "id": "green_jester",
+    "displayName": "Green Jester",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "stateful_growth",
+    "trigger": "passive",
+    "conditionType": "none",
+    "conditionValue": null,
+    "value": 1,
+    "xValue": null,
+    "mappedTileColors": [],
+    "mappedTileNumbers": []
+  }
+]
+'''),
+      );
+      state.runProgress!
+        ..gold = 10
+        ..rerollCost = 5;
+      state.runProgress!.shopOffers.add(
+        RummiShopOffer(
+          slotIndex: 0,
+          card: const RummiJesterCard(
+            id: 'popcorn',
+            displayName: 'Popcorn',
+            rarity: RummiJesterRarity.common,
+            baseCost: 3,
+            effectText: '',
+            effectType: 'stateful_growth',
+            trigger: 'passive',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 1,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 3,
+        ),
+      );
+      notifier.markDirty();
+
+      final message = notifier.rerollShopFromState();
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(message, isNull);
+      expect(updated.runProgress!.gold, 5);
+      expect(updated.marketView!.gold, 5);
+      expect(updated.runProgress!.shopOffers, hasLength(1));
+      expect(updated.runProgress!.shopOffers.first.card.id, 'green_jester');
+    });
+
     test('restartCurrentStage는 변경된 전투 상태와 골드를 stage-start 기준으로 되돌린다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

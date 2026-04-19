@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,8 +14,6 @@ class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
     required this.runProgress,
-    required this.catalog,
-    required this.rng,
     required this.runSeed,
     required this.onReroll,
     required this.onBuyOffer,
@@ -31,8 +27,6 @@ class GameShopScreen extends StatefulWidget {
   });
 
   final RummiRunProgress runProgress;
-  final List<RummiJesterCard> catalog;
-  final Random rng;
   final int runSeed;
   final String? Function() onReroll;
   final String? Function(int offerIndex) onBuyOffer;

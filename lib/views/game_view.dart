@@ -76,7 +76,6 @@ class _GameViewState extends ConsumerState<GameView>
   Tile? get _selectedHandTile => _gameState.selectedHandTile;
   int? get _selectedBoardRow => _gameState.selectedBoardRow;
   int? get _selectedBoardCol => _gameState.selectedBoardCol;
-  RummiJesterCatalog? get _jesterCatalog => _gameState.jesterCatalog;
   int? get _selectedJesterOverlayIndex => _gameState.selectedJesterOverlayIndex;
   GameStageFlowPhase get _stageFlowPhase => _gameState.stageFlowPhase;
   int get _stageScoreAdded => _gameState.stageScoreAdded;
@@ -514,13 +513,8 @@ class _GameViewState extends ConsumerState<GameView>
         fullscreenDialog: true,
         builder: (context) => GameShopScreen(
           runProgress: _runProgress,
-          catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
-          rng: _session.runRandom,
           runSeed: widget.runSeed,
-          onReroll: () => _gameNotifier.rerollShop(
-            catalog: _jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[],
-            rng: _session.runRandom,
-          ),
+          onReroll: _gameNotifier.rerollShopFromState,
           onBuyOffer: _gameNotifier.buyShopOffer,
           onSellOwnedJester: _gameNotifier.sellOwnedJester,
           onStateChanged: _saveActiveRun,
