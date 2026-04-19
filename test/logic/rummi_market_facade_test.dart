@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
 RummiJesterCard _jester({
   required String id,
@@ -57,6 +60,9 @@ void main() {
       expect(facade.offers.first.displayName, 'Green Jester');
       expect(facade.offers.first.price, 8);
       expect(facade.offers.first.currency, 'gold');
+      expect(facade.offers.first.isAffordable, isTrue);
+      expect(facade.offers.last.isAffordable, isTrue);
+      expect(facade.runtimeSnapshot.playedHandCounts, isEmpty);
     });
 
     test('maps owned jesters into sellable market entries', () {
@@ -79,6 +85,44 @@ void main() {
       expect(facade.ownedEntries[1].slotIndex, 1);
       expect(facade.ownedEntries[1].contentId, 'golden_jester');
       expect(facade.ownedEntries[1].sellPrice, 4);
+    });
+
+    test('marks unaffordable offers and carries runtime snapshot values', () {
+      final progress = RummiRunProgress()
+        ..gold = 6
+        ..shopOffers.add(
+          RummiShopOffer(
+            slotIndex: 0,
+            card: _jester(id: 'supernova', displayName: 'Supernova'),
+            price: 8,
+          ),
+        )
+        ..ownedJesters.add(
+          _jester(id: 'green_jester', displayName: 'Green Jester'),
+        );
+
+      progress.onConfirmedLines([
+        ConfirmedLineBreakdown(
+          ref: LineRef.row(0),
+          rank: RummiHandRank.twoPair,
+          rankBaseScore: 20,
+          baseScore: 20,
+          finalScore: 20,
+          jesterBonus: 0,
+          contributingCells: [],
+          effects: [],
+          hasScoringFaceCard: false,
+        ),
+      ]);
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(facade.offers.single.isAffordable, isFalse);
+      expect(facade.runtimeSnapshot.stateValueForSlot(0), 1);
+      expect(
+        facade.runtimeSnapshot.playedCountForRank(RummiHandRank.twoPair),
+        1,
+      );
     });
 
     test(

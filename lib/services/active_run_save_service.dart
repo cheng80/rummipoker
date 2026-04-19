@@ -16,6 +16,7 @@ import '../logic/rummi_poker_grid/rummi_blind_state.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../resources/asset_paths.dart';
 import '../utils/storage_helper.dart';
+import 'active_run_save_facade.dart';
 
 enum ActiveRunScene { battle, shop }
 
@@ -143,9 +144,8 @@ class SavedSessionData {
           .toList(growable: false),
       boardCells: (json['boardCells'] as List<dynamic>)
           .map(
-            (cell) => cell == null
-                ? null
-                : Map<String, dynamic>.from(cell as Map),
+            (cell) =>
+                cell == null ? null : Map<String, dynamic>.from(cell as Map),
           )
           .toList(growable: false),
       hand: (json['hand'] as List<dynamic>)
@@ -229,8 +229,9 @@ class SavedRunProgressData {
                 SavedShopOfferData.fromJson(Map<String, dynamic>.from(value)),
           )
           .toList(growable: false),
-      statefulValuesBySlot: (json['statefulValuesBySlot'] as Map)
-          .map((key, value) => MapEntry(key as String, (value as num).toInt())),
+      statefulValuesBySlot: (json['statefulValuesBySlot'] as Map).map(
+        (key, value) => MapEntry(key as String, (value as num).toInt()),
+      ),
       playedHandCounts: (json['playedHandCounts'] as Map).map(
         (key, value) => MapEntry(key as String, (value as num).toInt()),
       ),
@@ -314,21 +315,8 @@ class ActiveRunSaveService {
   }
 
   static Future<ActiveRunRuntimeState?> loadActiveRun() async {
-    final availability = await inspectActiveRun();
-    if (availability != ActiveRunAvailability.available) {
-      return null;
-    }
-
-    final payload = StorageHelper.readString(
-      StorageKeys.activeRunPayloadV1,
-      defaultValue: '',
-    );
-    if (payload.isEmpty) {
-      return null;
-    }
-
-    final decoded = jsonDecode(payload) as Map<String, dynamic>;
-    final save = ActiveRunSaveData.fromJson(decoded);
+    final save = await _loadVerifiedSaveData();
+    if (save == null) return null;
     final catalog = await _loadCatalog();
 
     final session = _restoreSession(save.session);
@@ -346,6 +334,12 @@ class ActiveRunSaveService {
     );
   }
 
+  static Future<RummiActiveRunSaveFacade?> loadActiveRunSummary() async {
+    final save = await _loadVerifiedSaveData();
+    if (save == null) return null;
+    return RummiActiveRunSaveFacade.fromSaveData(save);
+  }
+
   static Future<void> clearActiveRun() async {
     await StorageHelper.remove(StorageKeys.activeRunPayloadV1);
     await StorageHelper.remove(StorageKeys.activeRunSignatureV1);
@@ -354,6 +348,24 @@ class ActiveRunSaveService {
   static String _signPayload(String payload, String deviceKey) {
     final hmac = Hmac(sha256, utf8.encode(deviceKey));
     return hmac.convert(utf8.encode(payload)).toString();
+  }
+
+  static Future<ActiveRunSaveData?> _loadVerifiedSaveData() async {
+    final availability = await inspectActiveRun();
+    if (availability != ActiveRunAvailability.available) {
+      return null;
+    }
+
+    final payload = StorageHelper.readString(
+      StorageKeys.activeRunPayloadV1,
+      defaultValue: '',
+    );
+    if (payload.isEmpty) {
+      return null;
+    }
+
+    final decoded = jsonDecode(payload) as Map<String, dynamic>;
+    return ActiveRunSaveData.fromJson(decoded);
   }
 
   static Future<String> _ensureDeviceKey() async {
@@ -424,16 +436,19 @@ class ActiveRunSaveService {
     );
   }
 
-  static SavedSessionData _buildSavedSessionData(RummiPokerGridSession session) {
+  static SavedSessionData _buildSavedSessionData(
+    RummiPokerGridSession session,
+  ) {
     return SavedSessionData(
       runSeed: session.runSeed,
       deckCopiesPerTile: session.deckCopiesPerTile,
       maxHandSize: session.maxHandSize,
       runRandomState: session.runRandom.state,
       blind: session.blind.toJson(),
-      deckPile: session.deck.snapshotPile().map((tile) => tile.toJson()).toList(
-        growable: false,
-      ),
+      deckPile: session.deck
+          .snapshotPile()
+          .map((tile) => tile.toJson())
+          .toList(growable: false),
       boardCells: session.board
           .snapshotCells()
           .map((tile) => tile?.toJson())

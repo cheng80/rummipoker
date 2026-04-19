@@ -75,7 +75,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
     final sellGold = ownedEntry.sellPrice;
     final runtimeValueText = jesterRuntimeValueText(
       card,
-      widget.runProgress.buildRuntimeSnapshot(),
+      _market.runtimeSnapshot,
       slotIndex: index,
     );
     await showModalBottomSheet<void>(
@@ -637,8 +637,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                         ? null
                                         : jesterRuntimeValueText(
                                             card,
-                                            widget.runProgress
-                                                .buildRuntimeSnapshot(),
+                                            market.runtimeSnapshot,
                                             slotIndex: index,
                                           ),
                                     extended: index == 4,
@@ -683,8 +682,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                             runtimeValueText:
                                                 jesterRuntimeValueText(
                                                   card,
-                                                  widget.runProgress
-                                                      .buildRuntimeSnapshot(),
+                                                  market.runtimeSnapshot,
                                                   slotIndex: index,
                                                 ),
                                             extended: index == 4,
@@ -812,9 +810,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                 return _GameShopOfferCard(
                                   offer: offer,
                                   selected: _selectedOfferIndex == index,
-                                  canAfford: widget.runProgress.canAfford(
-                                    offer.price,
-                                  ),
+                                  canAfford: offer.isAffordable,
                                   onTap: () => _selectOffer(index),
                                   onBuy: () {
                                     _selectOffer(index);

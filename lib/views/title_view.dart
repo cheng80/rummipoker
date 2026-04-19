@@ -10,6 +10,7 @@ import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../providers/features/rummi_poker_grid/title_notifier.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
+import '../services/active_run_save_facade.dart';
 import '../services/in_app_review_service.dart';
 import '../services/active_run_save_service.dart';
 import '../services/debug_run_fixture_service.dart';
@@ -52,11 +53,14 @@ class _TitleViewState extends ConsumerState<TitleView>
     }
 
     if (titleState.lastAvailability == ActiveRunAvailability.available) {
+      final summary =
+          titleState.storedRunSummary ?? await notifier.loadStoredRunSummary();
+      if (!mounted) return;
       final action = await showAppDialog<String>(
         context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('이어하기'),
-          content: const Text('이어하기는 저장된 현재 런을 복원합니다.\n삭제하거나 그대로 이어할지 선택하세요.'),
+          content: Text(_continueDialogMessage(summary)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop('delete'),
@@ -466,6 +470,20 @@ class _RoundButton extends StatelessWidget {
       ),
     );
   }
+}
+
+String _continueDialogMessage(RummiActiveRunSaveFacade? summary) {
+  if (summary == null) {
+    return '이어하기는 저장된 현재 런을 복원합니다.\n삭제하거나 그대로 이어할지 선택하세요.';
+  }
+  final sceneLabel = switch (summary.sceneAlias) {
+    RummiSaveSceneAlias.market => 'Market',
+    RummiSaveSceneAlias.battle => 'Battle',
+  };
+  return '저장된 현재 런을 복원합니다.\n'
+      '현재 Station ${summary.currentStationIndex} · $sceneLabel · Gold ${summary.currentGold}\n'
+      '체크포인트 Station ${summary.checkpoint.stationIndex}\n'
+      '삭제하거나 그대로 이어할지 선택하세요.';
 }
 
 class _DebugFixtureOption extends StatelessWidget {

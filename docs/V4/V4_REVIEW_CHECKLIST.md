@@ -54,7 +54,7 @@
 - [x] market facade smoke test 추가
 - [x] `RummiActiveRunSaveFacade` 추가
 - [x] save facade smoke test 추가
-- [ ] station facade를 실제 HUD/read path에 연결
+- [x] station facade를 실제 HUD/read path에 연결
 
 완료 기준:
 `stage/blind/shop/save` current runtime을 유지한 채 `Station/Market/Checkpoint` 용어로 읽을 수 있어야 한다.
@@ -75,7 +75,7 @@ ruleset 계층이 생겨도 current defaults는 그대로 유지되어야 한다
 - [x] code symbol rename 없이 가능한 alias 범위 정의
 - [x] title/game/shop 화면별 적용 범위 분리
 - [x] `game/shop/cash-out/HUD` 카피 1차 반영
-- [ ] UI smoke 검증 완료
+- [x] UI smoke 검증 완료
 
 완료 기준:
 용어는 바뀌어도 save/code/runtime 의미는 그대로여야 한다.
@@ -99,7 +99,7 @@ ruleset 계층이 생겨도 current defaults는 그대로 유지되어야 한다
 - [x] adapter/read model shadow mode 범위 정의
 - [x] save payload field rename 금지 재검토
 - [x] continue/corrupt save/restart parity 테스트 유지
-- [ ] save facade 소비처 확대 필요 여부 결정
+- [x] save facade 소비처 확대 필요 여부 결정
 
 완료 기준:
 저장 구조 확장은 가능하되 기존 continue/save는 그대로 살아 있어야 한다.
@@ -136,6 +136,15 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - background save / relaunch 확인:
   `tools/ios_sim_smoke.sh --open-url "https://example.com" --relaunch`
 - 의미 있는 실구동 검증은 스크린샷/로그 산출물 경로까지 남긴다.
+
+최근 검증 산출물:
+
+- title launch 확인:
+  `/tmp/rummipoker_ios_smoke/title_smoke_20260420_0230/`
+- fixture battle 확인:
+  `/tmp/rummipoker_ios_smoke/fixture_stage2_smoke_20260420_0230/`
+- background save / relaunch 확인:
+  `/tmp/rummipoker_ios_smoke/background_relaunch_smoke_20260420_0230/`
 
 ## 3. B. Target Product Checklist
 
@@ -281,10 +290,10 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 현재 가장 자연스러운 다음 작업은 아래 둘 중 하나다.
 
-- [ ] `Station facade`를 HUD/read path에 실제 연결
-  이유: current `stage/blind` 직접 읽기를 줄이고 V4 station 구조를 실제 UI에서 소비하기 시작할 수 있다.
 - [ ] shop UI의 남은 direct runtime reads를 더 축소
   이유: market read model 계층을 더 일관되게 만들 수 있다.
+- [ ] save facade 소비처 확대 필요 여부 결정
+  이유: save/runtime/orchestration 경계의 current-only 결합을 더 낮출 다음 후보다.
 
 현재 추천:
-`Station facade를 HUD/read path에 실제 연결`하는 쪽이 다음 단계로 가장 균형이 좋다.
+`shop UI의 남은 direct runtime reads를 더 축소`하는 쪽이 다음 단계로 가장 균형이 좋다.

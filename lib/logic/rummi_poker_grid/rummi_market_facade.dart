@@ -51,10 +51,14 @@ class RummiMarketOfferView {
     required this.displayName,
     required this.price,
     required this.currency,
+    required this.isAffordable,
     required this.card,
   });
 
-  factory RummiMarketOfferView.fromShopOffer(RummiShopOffer offer) {
+  factory RummiMarketOfferView.fromShopOffer(
+    RummiShopOffer offer, {
+    required int currentGold,
+  }) {
     return RummiMarketOfferView(
       offerId: 'jester:${offer.slotIndex}:${offer.card.id}',
       slotIndex: offer.slotIndex,
@@ -63,6 +67,7 @@ class RummiMarketOfferView {
       displayName: offer.card.displayName,
       price: offer.price,
       currency: 'gold',
+      isAffordable: currentGold >= offer.price,
       card: offer.card,
     );
   }
@@ -74,6 +79,7 @@ class RummiMarketOfferView {
   final String displayName;
   final int price;
   final String currency;
+  final bool isAffordable;
   final RummiJesterCard card;
 }
 
@@ -82,6 +88,7 @@ class RummiMarketRuntimeFacade {
     required this.gold,
     required this.rerollCost,
     required this.maxOwnedSlots,
+    required this.runtimeSnapshot,
     required this.ownedEntries,
     required this.offers,
   });
@@ -91,13 +98,19 @@ class RummiMarketRuntimeFacade {
       gold: progress.gold,
       rerollCost: progress.rerollCost,
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
       ownedEntries: List<RummiMarketOwnedEntryView>.generate(
         progress.ownedJesters.length,
         (index) => RummiMarketOwnedEntryView.fromRunProgress(progress, index),
         growable: false,
       ),
       offers: progress.shopOffers
-          .map(RummiMarketOfferView.fromShopOffer)
+          .map(
+            (offer) => RummiMarketOfferView.fromShopOffer(
+              offer,
+              currentGold: progress.gold,
+            ),
+          )
           .toList(growable: false),
     );
   }
@@ -105,6 +118,7 @@ class RummiMarketRuntimeFacade {
   final int gold;
   final int rerollCost;
   final int maxOwnedSlots;
+  final RummiJesterRuntimeSnapshot runtimeSnapshot;
   final List<RummiMarketOwnedEntryView> ownedEntries;
   final List<RummiMarketOfferView> offers;
 }

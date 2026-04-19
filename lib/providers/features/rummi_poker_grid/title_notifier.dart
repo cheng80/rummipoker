@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
 import 'title_state.dart';
 
-final titleNotifierProvider =
-    AsyncNotifierProvider<TitleNotifier, TitleState>(TitleNotifier.new);
+final titleNotifierProvider = AsyncNotifierProvider<TitleNotifier, TitleState>(
+  TitleNotifier.new,
+);
 
 /// 타이틀 화면의 이어하기/삭제용 저장 상태를 관리한다.
 class TitleNotifier extends AsyncNotifier<TitleState> {
@@ -23,20 +25,29 @@ class TitleNotifier extends AsyncNotifier<TitleState> {
     return ActiveRunSaveService.loadActiveRun();
   }
 
+  Future<RummiActiveRunSaveFacade?> loadStoredRunSummary() {
+    return ActiveRunSaveService.loadActiveRunSummary();
+  }
+
   Future<void> clearStoredRun() async {
     await ActiveRunSaveService.clearActiveRun();
     final next = const TitleState(
       hasStoredActiveRun: false,
       lastAvailability: ActiveRunAvailability.none,
+      storedRunSummary: null,
     );
     state = AsyncData(next);
   }
 
   Future<TitleState> _inspectState() async {
     final availability = await ActiveRunSaveService.inspectActiveRun();
+    final summary = availability == ActiveRunAvailability.available
+        ? await ActiveRunSaveService.loadActiveRunSummary()
+        : null;
     return TitleState(
       hasStoredActiveRun: ActiveRunSaveService.hasStoredActiveRun(),
       lastAvailability: availability,
+      storedRunSummary: summary,
     );
   }
 }
