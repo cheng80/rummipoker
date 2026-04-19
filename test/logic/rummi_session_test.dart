@@ -377,6 +377,52 @@ void main() {
     expect(session.board.cellAt(2, 3), same(kicker));
   });
 
+  test('플러시 확정 시 contributor 5장 전체가 제거된다', () {
+    final board = RummiBoard();
+    board.setCell(0, 0, t(TileColor.blue, 1));
+    board.setCell(0, 1, t(TileColor.blue, 3));
+    board.setCell(0, 2, t(TileColor.blue, 5));
+    board.setCell(0, 3, t(TileColor.blue, 7));
+    board.setCell(0, 4, t(TileColor.blue, 9));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines();
+
+    expect(out.result.ok, true);
+    expect(out.result.baseScore, 50);
+    expect(out.result.scoreAdded, 50);
+    for (var col = 0; col < kBoardSize; col++) {
+      expect(session.board.cellAt(0, col), isNull);
+    }
+  });
+
+  test('풀하우스 확정 시 contributor 5장 전체가 제거된다', () {
+    final board = RummiBoard();
+    board.setCell(4, 0, t(TileColor.red, 8));
+    board.setCell(4, 1, t(TileColor.blue, 8));
+    board.setCell(4, 2, t(TileColor.yellow, 8));
+    board.setCell(4, 3, t(TileColor.black, 4));
+    board.setCell(4, 4, t(TileColor.red, 4));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines();
+
+    expect(out.result.ok, true);
+    expect(out.result.baseScore, 80);
+    expect(out.result.scoreAdded, 80);
+    for (var col = 0; col < kBoardSize; col++) {
+      expect(session.board.cellAt(4, col), isNull);
+    }
+  });
+
   test('겹침 기여 타일이 있으면 각 라인에 overlap 배수가 적용된다', () {
     final board = RummiBoard();
     board.setCell(1, 2, t(TileColor.yellow, 7));

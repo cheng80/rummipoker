@@ -7,6 +7,17 @@ Tile t(TileColor c, int n) => Tile(color: c, number: n);
 
 void main() {
   group('HandEvaluator', () {
+    test('current dead-line rule keeps one pair at 0 points', () {
+      expect(gddBaseScore(RummiHandRank.onePair), 0);
+      expect(isDeadLineRank(RummiHandRank.onePair), isTrue);
+    });
+
+    test('current dead-line rule keeps high card and one pair non-scoring', () {
+      expect(isDeadLineRank(RummiHandRank.highCard), isTrue);
+      expect(isDeadLineRank(RummiHandRank.onePair), isTrue);
+      expect(isDeadLineRank(RummiHandRank.twoPair), isFalse);
+    });
+
     test('straight flush 9–13 same color', () {
       final e = HandEvaluator.evaluateFive([
         t(TileColor.red, 9),
@@ -65,6 +76,7 @@ void main() {
       ]);
       expect(e.rank, RummiHandRank.flush);
       expect(e.baseScore, 50);
+      expect(e.contributingIndexes, [0, 1, 2, 3, 4]);
     });
 
     test('four of a kind', () {
@@ -89,6 +101,7 @@ void main() {
       ]);
       expect(e.rank, RummiHandRank.fullHouse);
       expect(e.baseScore, 80);
+      expect(e.contributingIndexes, [0, 1, 2, 3, 4]);
     });
 
     test('three of a kind', () {
