@@ -99,13 +99,18 @@ ruleset 계층이 생겨도 현재 기본 동작은 절대 바뀌면 안 된다.
 
 ### G. Save Adapter Preparation
 
-- [ ] active run save v2를 source of truth로 유지
-- [ ] adapter/read model shadow mode 범위 정의
-- [ ] save payload field rename 금지 재검토
-- [ ] continue/corrupt save/restart parity 테스트 유지
+- [x] active run save v2를 source of truth로 유지
+- [x] adapter/read model shadow mode 범위 정의
+- [x] save payload field rename 금지 재검토
+- [x] continue/corrupt save/restart parity 테스트 유지
 
 완료 기준:
 저장 구조 확장은 가능하되 기존 continue/save는 그대로 살아 있어야 한다.
+
+현재 적용 범위:
+- save key, payload field, schema version은 그대로 유지
+- `stageIndex/stageStartSnapshot/activeScene`를 future 용어로 읽는 facade만 추가
+- 실제 save/load/restore/HMAC 검증 로직은 `ActiveRunSaveService`에 그대로 유지
 
 ### H. App Run Validation
 
@@ -127,7 +132,7 @@ ruleset 계층이 생겨도 현재 기본 동작은 절대 바뀌면 안 된다.
 - [x] Phase 3 Ruleset skeleton
 - [x] Phase 4 UI terminology bridge
 - [x] Phase 5 Market adapter preparation
-- [ ] Phase 6 Save adapter preparation
+- [x] Phase 6 Save adapter preparation
 - [ ] 실제 앱 실행 테스트
 
 ## 4. Recommended Next Decision
