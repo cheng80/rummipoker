@@ -30,7 +30,11 @@ final GoRouter appRouter = GoRouter(
             restoredRun?.session.runSeed ??
             int.tryParse(seedStr ?? '') ??
             RummiPokerGridSession.rollNewRunSeed();
-        return GameView(runSeed: runSeed, restoredRun: restoredRun);
+        return GameView(
+          runSeed: runSeed,
+          restoredRun: restoredRun,
+          debugFixtureId: fixtureId,
+        );
       },
     ),
     GoRoute(

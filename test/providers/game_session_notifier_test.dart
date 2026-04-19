@@ -2,8 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
+import 'package:rummipoker/services/active_run_save_service.dart';
 
 void main() {
   group('GameSessionNotifier', () {
@@ -12,8 +15,7 @@ void main() {
       addTearDown(container.dispose);
       const args = GameSessionArgs(runSeed: 12345);
 
-      container
-          .read(gameSessionNotifierProvider(args).notifier);
+      container.read(gameSessionNotifierProvider(args).notifier);
 
       final state = container.read(gameSessionNotifierProvider(args));
       expect(state.isReady, isTrue);
@@ -27,7 +29,9 @@ void main() {
       addTearDown(container.dispose);
       const args = GameSessionArgs(runSeed: 7);
 
-      final notifier = container.read(gameSessionNotifierProvider(args).notifier);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
 
       const tile = Tile(id: 1, color: TileColor.red, number: 1);
       notifier.setSelectedHandTile(tile);
@@ -48,7 +52,9 @@ void main() {
       addTearDown(container.dispose);
       const args = GameSessionArgs(runSeed: 9);
 
-      final notifier = container.read(gameSessionNotifierProvider(args).notifier);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
       notifier.setDebugMaxHandSize(3);
 
       final state = container.read(gameSessionNotifierProvider(args));
@@ -60,7 +66,9 @@ void main() {
       addTearDown(container.dispose);
       const args = GameSessionArgs(runSeed: 99);
 
-      final notifier = container.read(gameSessionNotifierProvider(args).notifier);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
       final initialState = container.read(gameSessionNotifierProvider(args));
       final session = initialState.session!;
       final runProgress = initialState.runProgress!;
@@ -91,5 +99,51 @@ void main() {
         RummiEconomyConfig.startingGold,
       );
     });
+
+    test(
+      'restored run에서도 restartCurrentStage는 saved stageStartSnapshot 기준으로 되돌린다',
+      () {
+        final stageStartSession = RummiPokerGridSession(
+          runSeed: 500,
+          blind: RummiBlindState(targetScore: 300),
+        );
+        final stageStartProgress = RummiRunProgress();
+        final currentSession = stageStartSession.copySnapshot();
+        final currentProgress = stageStartProgress.copySnapshot();
+
+        final drawn = currentSession.drawToHand();
+        expect(drawn, isNotNull);
+        expect(currentSession.tryPlaceFromHand(drawn!, 0, 0), isTrue);
+        currentProgress.gold += 23;
+
+        final restoredRun = ActiveRunRuntimeState(
+          activeScene: ActiveRunScene.battle,
+          session: currentSession,
+          runProgress: currentProgress,
+          stageStartSnapshot: ActiveRunStageSnapshot(
+            session: stageStartSession.copySnapshot(),
+            runProgress: stageStartProgress.copySnapshot(),
+          ),
+        );
+
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final args = GameSessionArgs(runSeed: 500, restoredRun: restoredRun);
+
+        final before = container.read(gameSessionNotifierProvider(args));
+        expect(before.session!.board.cellAt(0, 0), isNotNull);
+        expect(before.runProgress!.gold, RummiEconomyConfig.startingGold + 23);
+
+        container
+            .read(gameSessionNotifierProvider(args).notifier)
+            .restartCurrentStage();
+
+        final restarted = container.read(gameSessionNotifierProvider(args));
+        expect(restarted.session!.board.cellAt(0, 0), isNull);
+        expect(restarted.session!.hand, isEmpty);
+        expect(restarted.runProgress!.gold, RummiEconomyConfig.startingGold);
+        expect(restarted.activeRunScene, ActiveRunScene.battle);
+      },
+    );
   });
 }

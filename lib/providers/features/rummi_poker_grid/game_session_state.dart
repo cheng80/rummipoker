@@ -14,6 +14,7 @@ class GameSessionState {
     this.stageStartSnapshot,
     this.activeRunScene = ActiveRunScene.battle,
     this.pendingResumeShop = false,
+    this.debugFixtureId,
     this.selectedHandTile,
     this.selectedBoardRow,
     this.selectedBoardCol,
@@ -32,6 +33,7 @@ class GameSessionState {
   final ActiveRunStageSnapshot? stageStartSnapshot;
   final ActiveRunScene activeRunScene;
   final bool pendingResumeShop;
+  final String? debugFixtureId;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
@@ -55,6 +57,7 @@ class GameSessionState {
     Object? stageStartSnapshot = _unset,
     ActiveRunScene? activeRunScene,
     bool? pendingResumeShop,
+    Object? debugFixtureId = _unset,
     Object? selectedHandTile = _unset,
     Object? selectedBoardRow = _unset,
     Object? selectedBoardCol = _unset,
@@ -79,6 +82,9 @@ class GameSessionState {
           : stageStartSnapshot as ActiveRunStageSnapshot?,
       activeRunScene: activeRunScene ?? this.activeRunScene,
       pendingResumeShop: pendingResumeShop ?? this.pendingResumeShop,
+      debugFixtureId: debugFixtureId == _unset
+          ? this.debugFixtureId
+          : debugFixtureId as String?,
       selectedHandTile: selectedHandTile == _unset
           ? this.selectedHandTile
           : selectedHandTile as Tile?,
@@ -109,9 +115,4 @@ class GameSessionState {
 }
 
 /// 전투 화면의 잠금/연출 단계.
-enum GameStageFlowPhase {
-  none,
-  confirmSettlement,
-  cleared,
-  settlement,
-}
+enum GameStageFlowPhase { none, confirmSettlement, cleared, settlement }

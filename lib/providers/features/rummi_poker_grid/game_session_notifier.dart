@@ -8,19 +8,25 @@ import '../../../services/active_run_save_service.dart';
 import 'game_session_state.dart';
 
 class GameSessionArgs {
-  const GameSessionArgs({required this.runSeed, this.restoredRun});
+  const GameSessionArgs({
+    required this.runSeed,
+    this.restoredRun,
+    this.debugFixtureId,
+  });
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
+  final String? debugFixtureId;
 
   @override
   bool operator ==(Object other) =>
       other is GameSessionArgs &&
       other.runSeed == runSeed &&
-      identical(other.restoredRun, restoredRun);
+      identical(other.restoredRun, restoredRun) &&
+      other.debugFixtureId == debugFixtureId;
 
   @override
-  int get hashCode => Object.hash(runSeed, restoredRun);
+  int get hashCode => Object.hash(runSeed, restoredRun, debugFixtureId);
 }
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
@@ -43,6 +49,7 @@ class GameSessionNotifier
         stageStartSnapshot: restoredRun.stageStartSnapshot,
         activeRunScene: restoredRun.activeScene,
         pendingResumeShop: restoredRun.activeScene == ActiveRunScene.shop,
+        debugFixtureId: args.debugFixtureId,
       );
     }
 
@@ -56,6 +63,7 @@ class GameSessionNotifier
         runProgress: runProgress,
       ),
       activeRunScene: ActiveRunScene.battle,
+      debugFixtureId: args.debugFixtureId,
     );
   }
 
@@ -100,6 +108,7 @@ class GameSessionNotifier
       stageStartSnapshot: stageStartSnapshot,
       activeRunScene: activeRunScene,
       pendingResumeShop: false,
+      debugFixtureId: state.debugFixtureId,
       selectedHandTile: null,
       selectedBoardRow: null,
       selectedBoardCol: null,

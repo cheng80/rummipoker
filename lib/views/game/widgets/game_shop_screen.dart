@@ -22,6 +22,7 @@ class GameShopScreen extends StatefulWidget {
     required this.onOpenSettings,
     required this.onExitToTitle,
     required this.onRestartRun,
+    required this.isDebugFixtureRun,
   });
 
   final RummiRunProgress runProgress;
@@ -32,6 +33,7 @@ class GameShopScreen extends StatefulWidget {
   final Future<void> Function() onOpenSettings;
   final Future<void> Function() onExitToTitle;
   final Future<void> Function() onRestartRun;
+  final bool isDebugFixtureRun;
 
   @override
   State<GameShopScreen> createState() => _GameShopScreenState();
@@ -338,10 +340,12 @@ class _GameShopScreenState extends State<GameShopScreen> {
   Future<void> _restartCurrentRun() async {
     final confirmed = await showConfirmDialog(
       context,
-      title: '재시작',
-      message: '현재 진행 상황을 버리고 같은 시드로 처음부터 다시 시작할까요?',
+      title: widget.isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
+      message: widget.isDebugFixtureRun
+          ? '디버그 픽스처 시작 상태로 다시 불러올까요?\n현재 화면에서 만든 변경 사항은 취소됩니다.'
+          : '현재 Station 시작 시점으로 되돌릴까요?\n이 Station에서 얻은 골드, 제스터, 진행 상태는 취소됩니다.',
       cancelLabel: '취소',
-      confirmLabel: '재시작',
+      confirmLabel: widget.isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
     );
     if (!mounted || !confirmed) return;
     await WidgetsBinding.instance.endOfFrame;
@@ -467,7 +471,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                 color: Colors.amber.shade200,
               ),
               title: Text(
-                '재시작',
+                widget.isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.92),
                   fontWeight: FontWeight.w700,

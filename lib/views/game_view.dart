@@ -21,10 +21,16 @@ import 'game/widgets/game_shared_widgets.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 class GameView extends ConsumerStatefulWidget {
-  const GameView({super.key, required this.runSeed, this.restoredRun});
+  const GameView({
+    super.key,
+    required this.runSeed,
+    this.restoredRun,
+    this.debugFixtureId,
+  });
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
+  final String? debugFixtureId;
 
   @override
   ConsumerState<GameView> createState() => _GameViewState();
@@ -69,6 +75,7 @@ class _GameViewState extends ConsumerState<GameView>
       _gameState.settlementBoardSnapshot;
   int get _settlementSequenceTick => _gameState.settlementSequenceTick;
   bool get _isUiLocked => _gameState.isUiLocked;
+  bool get _isDebugFixtureRun => _gameState.debugFixtureId != null;
 
   @override
   void initState() {
@@ -77,12 +84,16 @@ class _GameViewState extends ConsumerState<GameView>
     _gameArgs = GameSessionArgs(
       runSeed: widget.runSeed,
       restoredRun: widget.restoredRun,
+      debugFixtureId: widget.debugFixtureId,
     );
     // BGM·카탈로그 로드를 첫 프레임 이후로 지연 — 전환 시 프레임 드롭 방지
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       SoundManager.playBgm(AssetPaths.bgmMain);
       _loadJesterCatalog();
+      if (_isDebugFixtureRun) {
+        showTopNotice(context, '디버그 픽스처 모드: 이어하기 저장은 남기지 않습니다.');
+      }
     });
   }
 
@@ -135,6 +146,9 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _saveActiveRun({ActiveRunScene? scene}) async {
+    if (_isDebugFixtureRun) {
+      return;
+    }
     if (scene != null) {
       _gameNotifier.setActiveRunScene(scene);
     }
@@ -172,11 +186,11 @@ class _GameViewState extends ConsumerState<GameView>
   Future<void> _restartCurrentRun() async {
     final confirmed = await showConfirmDialog(
       context,
-      title: '재시작',
+      title: '현재 Station 재시작',
       message:
           '현재 Station 시작 시점으로 되돌릴까요?\n이 Station에서 얻은 골드, 제스터, 진행 상태는 취소됩니다.',
       cancelLabel: '취소',
-      confirmLabel: '재시작',
+      confirmLabel: '현재 Station 재시작',
     );
     if (!mounted || !confirmed) return;
     await WidgetsBinding.instance.endOfFrame;
@@ -470,6 +484,7 @@ class _GameViewState extends ConsumerState<GameView>
           },
           onExitToTitle: _goToTitleAfterStoppingBgm,
           onRestartRun: _restartCurrentRun,
+          isDebugFixtureRun: _isDebugFixtureRun,
         ),
       ),
     );
@@ -493,6 +508,7 @@ class _GameViewState extends ConsumerState<GameView>
       onRestartRun: _restartCurrentRun,
       onExitToTitle: _exitToTitleWithConfirm,
       onReopenOptions: _openGameOptions,
+      isDebugFixtureRun: _isDebugFixtureRun,
     );
   }
 

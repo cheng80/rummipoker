@@ -12,9 +12,10 @@ import 'game_shared_widgets.dart';
 Future<void> showGameOptionsDialog({
   required BuildContext context,
   required int runSeed,
-  required VoidCallback onRestartRun,
+  required Future<void> Function() onRestartRun,
   required Future<void> Function() onExitToTitle,
   required Future<void> Function(BuildContext context) onReopenOptions,
+  required bool isDebugFixtureRun,
 }) async {
   SoundManager.unlockForWeb();
   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
@@ -98,12 +99,9 @@ Future<void> showGameOptionsDialog({
             ),
           ),
           ListTile(
-            leading: Icon(
-              Icons.refresh_rounded,
-              color: Colors.amber.shade200,
-            ),
+            leading: Icon(Icons.refresh_rounded, color: Colors.amber.shade200),
             title: Text(
-              '재시작',
+              isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
               style: TextStyle(
                 fontFamily: AssetPaths.fontAngduIpsul140,
                 color: Colors.white.withValues(alpha: 0.92),
@@ -112,7 +110,7 @@ Future<void> showGameOptionsDialog({
             onTap: () async {
               Navigator.of(dialogContext).pop();
               await WidgetsBinding.instance.endOfFrame;
-              onRestartRun();
+              await onRestartRun();
             },
           ),
           ListTile(
