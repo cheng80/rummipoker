@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../game/rummi_poker_grid/rummikub_tile_canvas.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -44,32 +45,16 @@ double boardTileVisualWidth(double boardSide) {
   return cellSide - (kBoardTileInnerPadding * 2);
 }
 
-/// 확정 가능한 족보 줄에 실제 기여하는 셀만 강조 대상으로 반환한다.
-Set<String> scoringCellSet(RummiPokerGridSession session) {
-  final cells = <String>{};
-  final lines = session.engine.listEvaluatedLines(session.board);
-  for (final line in lines) {
-    if (line.report.evaluation.isDeadLine) continue;
-    final refs = line.ref.cells();
-    for (final index in line.report.evaluation.contributingIndexes) {
-      if (index < 0 || index >= refs.length) continue;
-      final (row, col) = refs[index];
-      cells.add('$row:$col');
-    }
-  }
-  return cells;
-}
-
 class GameTopHud extends StatelessWidget {
   const GameTopHud({
     super.key,
     required this.station,
-    required this.runProgress,
+    required this.battle,
     required this.onOptionsTap,
   });
 
   final RummiStationRuntimeFacade station;
-  final RummiRunProgress runProgress;
+  final RummiBattleRuntimeFacade battle;
   final VoidCallback onOptionsTap;
 
   @override
@@ -106,7 +91,7 @@ class GameTopHud extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '${runProgress.stageIndex}',
+                          '${battle.stageIndex}',
                           maxLines: 1,
                           style: gameHudValueStyle.copyWith(fontSize: 22),
                         ),
@@ -210,7 +195,7 @@ class GameTopHud extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '${runProgress.gold}',
+                          '${battle.currentGold}',
                           maxLines: 1,
                           style: gameHudValueStyle.copyWith(fontSize: 22),
                         ),
@@ -231,13 +216,11 @@ class GameBottomInfoRow extends StatelessWidget {
   const GameBottomInfoRow({
     super.key,
     required this.station,
-    required this.totalDeckSize,
-    required this.currentHandSize,
+    required this.battle,
   });
 
   final RummiStationRuntimeFacade station;
-  final int totalDeckSize;
-  final int currentHandSize;
+  final RummiBattleRuntimeFacade battle;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +229,7 @@ class GameBottomInfoRow extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            '덱 ${resources.drawPileRemaining}/$totalDeckSize',
+            '덱 ${resources.drawPileRemaining}/${battle.totalDeckSize}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -271,7 +254,7 @@ class GameBottomInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '손패 $currentHandSize/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
+            '손패 ${battle.hand.length}/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,

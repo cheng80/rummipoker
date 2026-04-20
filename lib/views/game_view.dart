@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
+import '../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -65,8 +66,7 @@ class _GameViewState extends ConsumerState<GameView>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
   GameSessionState get _gameState =>
       ref.read(gameSessionNotifierProvider(_gameArgs));
-  RummiPokerGridSession get _session => _gameState.session!;
-  RummiRunProgress get _runProgress => _gameState.runProgress!;
+  RummiBattleRuntimeFacade get _battleView => _gameState.battleView!;
   ActiveRunStageSnapshot get _stageStartSnapshot =>
       _gameState.stageStartSnapshot!;
   RummiStationRuntimeFacade get _stationView => _gameState.stationView!;
@@ -151,10 +151,10 @@ class _GameViewState extends ConsumerState<GameView>
           final nextStage = await _showShopScreen();
           if (!mounted) return;
           if (nextStage == true) {
-            _gameNotifier.advanceToNextStage(widget.runSeed);
-            _showSnack('Station ${_runProgress.stageIndex} 시작');
+            _gameNotifier.advanceToNextStation(widget.runSeed);
+            _showSnack('Station ${_battleView.stageIndex} 시작');
           }
-          await _saveActiveRun(scene: ActiveRunScene.battle);
+          await _saveActiveRun();
           _gameNotifier.markDirty();
         });
       }
@@ -171,25 +171,11 @@ class _GameViewState extends ConsumerState<GameView>
     if (scene != null) {
       _gameNotifier.setActiveRunScene(scene);
     }
-    if (_persistRetrySnapshotOnSave) {
-      final retrySnapshot = ActiveRunStageSnapshot(
-        session: _stageStartSnapshot.session.copySnapshot(),
-        runProgress: _stageStartSnapshot.runProgress.copySnapshot(),
-      );
-      await ActiveRunSaveService.saveActiveRun(
-        activeScene: ActiveRunScene.battle,
-        session: retrySnapshot.session,
-        runProgress: retrySnapshot.runProgress,
-        stageStartSnapshot: retrySnapshot,
-      );
-      return;
-    }
-    await ActiveRunSaveService.saveActiveRun(
-      activeScene: _activeRunScene,
-      session: _session,
-      runProgress: _runProgress,
-      stageStartSnapshot: _stageStartSnapshot,
+    final runtime = _gameNotifier.buildSaveRuntimeState(
+      scene: scene,
+      useStageStartSnapshotAsCurrent: _persistRetrySnapshotOnSave,
     );
+    await ActiveRunSaveService.saveRuntimeState(runtime);
   }
 
   void _setDebugMaxHandSize(int value) {
@@ -282,16 +268,14 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _sellOwnedJesterFromOverlay() {
-    final index = _selectedJesterOverlayIndex;
-    if (index == null) return;
-    final ok = _gameNotifier.sellOwnedJester(index);
+    final ok = _gameNotifier.sellSelectedJesterOverlayFromState();
     if (!ok) return;
     _showSnack('제스터를 판매했습니다.');
   }
 
   void _toggleHandTile(Tile tile) {
     if (_isUiLocked) return;
-    _gameNotifier.setSelectedHandTile(_selectedHandTile == tile ? null : tile);
+    _gameNotifier.toggleSelectedHandTile(tile);
   }
 
   Future<void> _goToTitleAfterStoppingBgm() async {
@@ -302,28 +286,16 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _onBoardCellTap(int row, int col) async {
     if (_isUiLocked) return;
-    final selectedHand = _selectedHandTile;
-    if (selectedHand != null) {
-      final placed = _gameNotifier.tryPlaceTile(selectedHand, row, col);
-      if (!placed) {
-        _showSnack('이 칸에 둘 수 없습니다.');
-        return;
-      }
+    final result = _gameNotifier.tapBoardCell(row, col);
+    if (result.failMessage != null) {
+      _showSnack(result.failMessage!);
+      return;
+    }
+    if (result.didPlaceTile) {
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
       final didGameOver = await _afterAction();
       if (didGameOver) return;
       await _saveActiveRun();
-      return;
-    }
-
-    final session = _session;
-    if (session.board.cellAt(row, col) == null) {
-      return;
-    }
-    if (_selectedBoardRow == row && _selectedBoardCol == col) {
-      _gameNotifier.setSelectedBoardCell(null, null);
-    } else {
-      _gameNotifier.setSelectedBoardCell(row, col);
     }
   }
 
@@ -342,13 +314,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _discardSelectedBoardTile() async {
     if (_isUiLocked) return;
-    final row = _selectedBoardRow;
-    final col = _selectedBoardCol;
-    if (row == null || col == null) {
-      _showSnack('보드에서 버릴 타일을 먼저 선택하세요.');
-      return;
-    }
-    final failReason = _gameNotifier.discardBoardTile(row, col);
+    final failReason = _gameNotifier.discardSelectedBoardTileFromState();
     if (failReason != null) {
       _showSnack(failReason);
       return;
@@ -361,12 +327,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _discardSelectedHandTile() async {
     if (_isUiLocked) return;
-    final tile = _selectedHandTile;
-    if (tile == null) {
-      _showSnack('손패에서 버릴 카드를 먼저 선택하세요.');
-      return;
-    }
-    final failReason = _gameNotifier.discardHandTile(tile);
+    final failReason = _gameNotifier.discardSelectedHandTileFromState();
     if (failReason != null) {
       _showSnack(failReason);
       return;
@@ -453,7 +414,7 @@ class _GameViewState extends ConsumerState<GameView>
     await Future<void>.delayed(const Duration(milliseconds: 950));
     if (!mounted) return;
 
-    final breakdown = _gameNotifier.prepareCashOut();
+    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
     await _saveActiveRun();
 
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.none);
@@ -461,15 +422,15 @@ class _GameViewState extends ConsumerState<GameView>
     final enterShop = await _showCashOutSheet(breakdown);
     if (!mounted || enterShop != true) return;
 
-    _gameNotifier.openShop();
-    await _saveActiveRun(scene: ActiveRunScene.shop);
+    _gameNotifier.enterMarketAfterCashOut();
+    await _saveActiveRun();
 
     final nextStage = await _showShopScreen();
     if (!mounted || nextStage != true) return;
 
-    _gameNotifier.advanceToNextStage(widget.runSeed);
-    await _saveActiveRun(scene: ActiveRunScene.battle);
-    _showSnack('Station ${_runProgress.stageIndex} 시작');
+    _gameNotifier.advanceToNextStation(widget.runSeed);
+    await _saveActiveRun();
+    _showSnack('Station ${_battleView.stageIndex} 시작');
   }
 
   Future<bool?> _showCashOutSheet(RummiCashOutBreakdown breakdown) {
@@ -490,21 +451,21 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _runAutoCashOutLoopOnLoad() async {
-    final breakdown = _gameNotifier.prepareCashOut();
+    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
     await _saveActiveRun();
 
     final enterShop = await _showCashOutSheet(breakdown);
     if (!mounted || enterShop != true) return;
 
-    _gameNotifier.openShop();
-    await _saveActiveRun(scene: ActiveRunScene.shop);
+    _gameNotifier.enterMarketAfterCashOut();
+    await _saveActiveRun();
 
     final nextStage = await _showShopScreen();
     if (!mounted || nextStage != true) return;
 
-    _gameNotifier.advanceToNextStage(widget.runSeed);
-    await _saveActiveRun(scene: ActiveRunScene.battle);
-    _showSnack('Station ${_runProgress.stageIndex} 시작');
+    _gameNotifier.advanceToNextStation(widget.runSeed);
+    await _saveActiveRun();
+    _showSnack('Station ${_battleView.stageIndex} 시작');
   }
 
   Future<bool?> _showShopScreen() {
@@ -512,12 +473,16 @@ class _GameViewState extends ConsumerState<GameView>
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (context) => GameShopScreen(
-          runProgress: _runProgress,
           runSeed: widget.runSeed,
+          readMarketView: () =>
+              ref.read(gameSessionNotifierProvider(_gameArgs)).marketView!,
           onReroll: _gameNotifier.rerollShopFromState,
           onBuyOffer: _gameNotifier.buyShopOffer,
           onSellOwnedJester: _gameNotifier.sellOwnedJester,
           onStateChanged: _saveActiveRun,
+          readActiveRunSaveView: () => ref
+              .read(gameSessionNotifierProvider(_gameArgs))
+              .activeRunSaveView,
           onOpenSettings: () async {
             await context.push(RoutePaths.setting);
           },
@@ -563,8 +528,7 @@ class _GameViewState extends ConsumerState<GameView>
     }
     return PhoneFrameScaffold(
       child: _GameSurface(
-        session: _session,
-        runProgress: _runProgress,
+        battle: _battleView,
         station: _stationView,
         market: _marketView,
         stageFlowPhase: _stageFlowPhase,
@@ -596,8 +560,7 @@ class _GameViewState extends ConsumerState<GameView>
 
 class _GameSurface extends StatelessWidget {
   const _GameSurface({
-    required this.session,
-    required this.runProgress,
+    required this.battle,
     required this.station,
     required this.market,
     required this.stageFlowPhase,
@@ -624,8 +587,7 @@ class _GameSurface extends StatelessWidget {
     required this.onJesterOverlayClose,
   });
 
-  final RummiPokerGridSession session;
-  final RummiRunProgress runProgress;
+  final RummiBattleRuntimeFacade battle;
   final RummiStationRuntimeFacade station;
   final RummiMarketRuntimeFacade market;
   final GameStageFlowPhase stageFlowPhase;
@@ -682,8 +644,7 @@ class _GameSurface extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
                 child: _GameLayout(
-                  session: session,
-                  runProgress: runProgress,
+                  battle: battle,
                   station: station,
                   market: market,
                   activeSettlementEffects:
@@ -720,7 +681,7 @@ class _GameSurface extends StatelessWidget {
               Positioned.fill(
                 child: GameStageClearOverlay(
                   phase: stageFlowPhase,
-                  stageIndex: runProgress.stageIndex,
+                  stageIndex: battle.stageIndex,
                   scoreAdded: stageScoreAdded,
                 ),
               ),
@@ -765,8 +726,7 @@ class _GameSurface extends StatelessWidget {
 
 class _GameLayout extends StatelessWidget {
   const _GameLayout({
-    required this.session,
-    required this.runProgress,
+    required this.battle,
     required this.station,
     required this.market,
     required this.activeSettlementEffects,
@@ -789,8 +749,7 @@ class _GameLayout extends StatelessWidget {
     required this.onClearSelection,
   });
 
-  final RummiPokerGridSession session;
-  final RummiRunProgress runProgress;
+  final RummiBattleRuntimeFacade battle;
   final RummiStationRuntimeFacade station;
   final RummiMarketRuntimeFacade market;
   final List<RummiJesterEffectBreakdown> activeSettlementEffects;
@@ -814,7 +773,7 @@ class _GameLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scoringCells = scoringCellSet(session);
+    final scoringCells = battle.scoringCellKeys;
     final activeSettlementCells = activeSettlementLine == null
         ? <String>{}
         : {
@@ -831,7 +790,7 @@ class _GameLayout extends StatelessWidget {
           children: [
             GameTopHud(
               station: station,
-              runProgress: runProgress,
+              battle: battle,
               onOptionsTap: onOptionsTap,
             ),
             const SizedBox(height: 8),
@@ -851,7 +810,7 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 8),
             Expanded(
               child: GameBoardGrid(
-                board: session.board,
+                board: battle.board,
                 scoringCells: scoringCells,
                 activeSettlementCells: activeSettlementCells,
                 settlementBoardSnapshot: settlementBoardSnapshot,
@@ -862,9 +821,9 @@ class _GameLayout extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             GameHandZone(
-              session: session,
+              battle: battle,
               station: station,
-              hand: List<Tile>.from(session.hand),
+              hand: battle.hand,
               selectedHandTile: selectedHandTile,
               onHandTileTap: onHandTileTap,
               onDraw: onDraw,

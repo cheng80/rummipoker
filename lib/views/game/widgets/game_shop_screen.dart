@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/jester_translation_scope.dart';
+import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
 import 'game_jester_widgets.dart';
@@ -13,8 +14,8 @@ import 'game_shared_widgets.dart';
 class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
-    required this.runProgress,
     required this.runSeed,
+    required this.readMarketView,
     required this.onReroll,
     required this.onBuyOffer,
     required this.onSellOwnedJester,
@@ -23,11 +24,12 @@ class GameShopScreen extends StatefulWidget {
     required this.onExitToTitle,
     required this.onRestartRun,
     required this.isDebugFixtureRun,
+    this.readActiveRunSaveView,
     this.autoAdvanceOnLoad = false,
   });
 
-  final RummiRunProgress runProgress;
   final int runSeed;
+  final RummiMarketRuntimeFacade Function() readMarketView;
   final String? Function() onReroll;
   final String? Function(int offerIndex) onBuyOffer;
   final bool Function(int ownedIndex) onSellOwnedJester;
@@ -36,6 +38,7 @@ class GameShopScreen extends StatefulWidget {
   final Future<void> Function() onExitToTitle;
   final Future<void> Function() onRestartRun;
   final bool isDebugFixtureRun;
+  final RummiActiveRunSaveFacade? Function()? readActiveRunSaveView;
   final bool autoAdvanceOnLoad;
 
   @override
@@ -48,8 +51,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
   bool _sellTargetActive = false;
   int? _draggingOwnedIndex;
 
-  RummiMarketRuntimeFacade get _market =>
-      RummiMarketRuntimeFacade.fromRunProgress(widget.runProgress);
+  RummiMarketRuntimeFacade get _market => widget.readMarketView();
 
   @override
   void initState() {
@@ -376,6 +378,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 
   Future<void> _openOptions() async {
+    final activeRunSaveView = widget.readActiveRunSaveView?.call();
     await showGameFramedDialog<void>(
       context: context,
       builder: (dialogContext) => GameModalCard(
@@ -452,6 +455,40 @@ class _GameShopScreenState extends State<GameShopScreen> {
                 ],
               ),
             ),
+            if (activeRunSaveView != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Run Snapshot',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _activeRunSummaryLabel(activeRunSaveView),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ListTile(
               leading: Icon(
                 Icons.settings_rounded,
@@ -876,6 +913,15 @@ class _GameShopScreenState extends State<GameShopScreen> {
       ),
     );
   }
+}
+
+String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
+  final sceneLabel = switch (summary.sceneAlias) {
+    RummiSaveSceneAlias.market => 'Market',
+    RummiSaveSceneAlias.battle => 'Battle',
+  };
+  return '현재 Station ${summary.currentStationIndex} · $sceneLabel · Gold ${summary.currentGold}\n'
+      '체크포인트 Station ${summary.checkpoint.stationIndex}';
 }
 
 class _GameShopOfferCard extends StatelessWidget {

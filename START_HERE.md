@@ -75,6 +75,10 @@
 - debug fixture 런과 active run 의미 분리
 - market facade를 shop UI read path에 실제 연결
 - `GameView -> GameShopScreen` 경계에서 market read model 전달 구조 정리
+- `cash-out -> market -> next station` 시퀀스를 notifier command로 정리
+- battle 화면 read path를 `RummiBattleRuntimeFacade` 기준으로 묶어서 HUD/board/hand가 raw runtime 전체를 직접 받지 않게 정리
+- battle 화면의 board tap / selected discard / overlay sell도 notifier 내부 state 기준 command로 옮겨서 `GameView`가 선택 상태를 직접 해석하는 범위를 더 줄임
+- active run 저장도 notifier가 만드는 runtime snapshot과 `ActiveRunSaveService.saveRuntimeState()` 기준으로 정리해서 `GameView`의 저장 조립 책임을 줄임
 - active run save에 `rulesetId` 저장/복원 경로 반영
 - 저장소를 `shared_preferences + device key store` 기준으로 정리하고 web/wasm 빌드 통과
 - shop 리롤 mutation을 `GameSessionNotifier.rerollShopFromState()`로 감싸서 UI가 catalog/rng를 직접 알지 않게 정리
@@ -89,36 +93,30 @@
 
 현재 맥락상 가장 자연스러운 다음 후보는 이런 부류다.
 
-- Station facade를 HUD/read path에 실제 연결
-- Market facade 소비 범위를 더 넓혀 direct runtime reads를 줄이기
+- battle/game 화면의 남은 direct runtime read를 더 줄이기
 - save/runtime/orchestration 경계의 current-only 결합을 더 낮추기
+- `jester_meta.dart`, station, save 쪽 read model 분리를 더 잘게 준비하기
 
 현재 바로 이어서 할 작업은 아래처럼 구체적으로 고정한다.
 
-1. `lib/views/game_view.dart`에서 정산 후 단계 전환 시퀀스 정리
-2. `GameSessionNotifier`에 아래 orchestration command 추가 여부를 우선 검토
-   - `prepareSettlementAndCashOut()`
-   - `enterMarketAfterCashOut()`
-   - `advanceToNextStation()` 또는 동등한 의미의 command
-3. 목표는 UI가 아래 내부 순서를 직접 조립하지 않게 만드는 것이다.
-   - `prepareCashOut()`
-   - `openShop()`
-   - `advanceToNextStage(widget.runSeed)`
-4. 위 변경 후 회귀 테스트를 추가한다.
-   - 정산 후 gold 반영 유지
-   - market 진입 상태 저장 유지
-   - market 종료 후 다음 station 진입 시 `stageStartSnapshot` 갱신 유지
+1. battle 화면에서 facade로 충분히 읽을 수 있는 값과 아직 raw runtime이 필요한 값을 다시 분리한다.
+2. 가능하면 `GameView`/battle widgets 쪽 direct runtime read를 더 줄인다.
+3. provider/widget 테스트로 facade 동기화가 유지되는지 계속 고정한다.
+4. 문서는 체크박스를 바꾸기보다, 상태 설명이 코드와 어긋나지 않게 최소 수정으로 갱신한다.
 
-즉, 다음 세션에서 애매하게 “runtime UI 경계를 넓힌다”라고 적지 말고 아래 파일/함수 기준으로 바로 시작한다.
+즉, 다음 세션에서는 아래 파일/경계부터 바로 본다.
 
 - 대상 파일:
   - `lib/views/game_view.dart`
-  - `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`
+  - `lib/views/game/widgets/game_shared_widgets.dart`
+  - `lib/views/game/widgets/game_hand_zone.dart`
+  - `lib/providers/features/rummi_poker_grid/game_session_state.dart`
   - `test/providers/game_session_notifier_test.dart`
+  - `test/views/game/widgets/game_station_read_path_test.dart`
 - 대상 경계:
-  - cash-out sheet 진입 전후
-  - market open/close
-  - next stage 진입
+  - battle HUD / board / hand read path
+  - facade 파생값과 widget 표시값의 동기화
+  - save/runtime/orchestration read boundary
 
 ## 하지 말아야 할 것
 

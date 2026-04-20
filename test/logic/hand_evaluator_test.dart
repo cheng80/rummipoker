@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 Tile t(TileColor c, int n) => Tile(color: c, number: n);
 
 const _noWheelPairScoresRuleset = RummiRuleset(
+  persistenceId: 'test_no_wheel_pair_scoring_v1',
   boardSize: 5,
   evaluationLineCount: 12,
   copiesPerTile: 1,

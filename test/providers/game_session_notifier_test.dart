@@ -25,6 +25,7 @@ void main() {
       expect(state.runProgress, isNotNull);
       expect(state.stationView, isNotNull);
       expect(state.marketView, isNotNull);
+      expect(state.battleView, isNotNull);
       expect(state.activeRunSaveView, isNotNull);
       expect(state.pendingResumeShop, isFalse);
     });
@@ -41,9 +42,12 @@ void main() {
 
       expect(initial.stationView, isNotNull);
       expect(initial.marketView, isNotNull);
+      expect(initial.battleView, isNotNull);
       expect(initial.activeRunSaveView, isNotNull);
       expect(initial.stationView!.objective.targetScore, 300);
       expect(initial.marketView!.gold, RummiEconomyConfig.startingGold);
+      expect(initial.battleView!.stageIndex, 1);
+      expect(initial.battleView!.currentGold, RummiEconomyConfig.startingGold);
       expect(initial.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.battle);
 
       initial.runProgress!.gold += 9;
@@ -51,8 +55,113 @@ void main() {
 
       final updated = container.read(gameSessionNotifierProvider(args));
       expect(updated.marketView!.gold, RummiEconomyConfig.startingGold + 9);
+      expect(
+        updated.battleView!.currentGold,
+        RummiEconomyConfig.startingGold + 9,
+      );
       expect(updated.activeRunSaveView!.currentGold, 19);
       expect(updated.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.market);
+    });
+
+    test('battle facade state가 draw와 배치 후에도 함께 갱신된다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 57);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final before = container.read(gameSessionNotifierProvider(args));
+
+      expect(before.battleView!.hand, isEmpty);
+      expect(before.battleView!.board.cellAt(0, 0), isNull);
+
+      expect(notifier.drawTile(), isNull);
+      final drawn = container
+          .read(gameSessionNotifierProvider(args))
+          .battleView!;
+      final tile = drawn.hand.single;
+
+      expect(notifier.tryPlaceTile(tile, 0, 0), isTrue);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(updated.battleView!.hand, isEmpty);
+      expect(updated.battleView!.board.cellAt(0, 0), isNotNull);
+      expect(updated.battleView!.scoringCellKeys, isEmpty);
+    });
+
+    test('tapBoardCell은 내부 선택 상태만으로 배치와 선택 토글을 처리한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 59);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      expect(notifier.drawTile(), isNull);
+      final drawn = container
+          .read(gameSessionNotifierProvider(args))
+          .battleView!
+          .hand
+          .single;
+
+      notifier.toggleSelectedHandTile(drawn);
+      final placed = notifier.tapBoardCell(0, 0);
+      final afterPlace = container.read(gameSessionNotifierProvider(args));
+
+      expect(placed.failMessage, isNull);
+      expect(placed.didPlaceTile, isTrue);
+      expect(afterPlace.battleView!.board.cellAt(0, 0), isNotNull);
+      expect(afterPlace.selectedHandTile, isNull);
+
+      final selected = notifier.tapBoardCell(0, 0);
+      expect(selected.didChangeSelection, isTrue);
+      expect(
+        container.read(gameSessionNotifierProvider(args)).selectedBoardRow,
+        0,
+      );
+
+      final unselected = notifier.tapBoardCell(0, 0);
+      expect(unselected.didChangeSelection, isTrue);
+      final finalState = container.read(gameSessionNotifierProvider(args));
+      expect(finalState.selectedBoardRow, isNull);
+      expect(finalState.selectedBoardCol, isNull);
+    });
+
+    test('discard selected commands는 내부 선택 상태만으로 버림을 처리한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 61);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      expect(notifier.drawTile(), isNull);
+      final initial = container.read(gameSessionNotifierProvider(args));
+      final tile = initial.battleView!.hand.single;
+
+      notifier.toggleSelectedHandTile(tile);
+      expect(notifier.discardSelectedHandTileFromState(), isNull);
+      final afterHandDiscard = container.read(
+        gameSessionNotifierProvider(args),
+      );
+      expect(afterHandDiscard.battleView!.hand, hasLength(1));
+      expect(afterHandDiscard.selectedHandTile, isNull);
+
+      final replacement = afterHandDiscard.battleView!.hand.single;
+      notifier.toggleSelectedHandTile(replacement);
+      expect(notifier.tapBoardCell(0, 0).didPlaceTile, isTrue);
+      expect(notifier.tapBoardCell(0, 0).didChangeSelection, isTrue);
+      expect(notifier.discardSelectedBoardTileFromState(), isNull);
+
+      final afterBoardDiscard = container.read(
+        gameSessionNotifierProvider(args),
+      );
+      expect(afterBoardDiscard.battleView!.board.cellAt(0, 0), isNull);
+      expect(afterBoardDiscard.selectedBoardRow, isNull);
+      expect(afterBoardDiscard.selectedBoardCol, isNull);
     });
 
     test('손패 선택과 선택 해제를 상태에서 관리한다', () {
@@ -172,6 +281,41 @@ void main() {
       expect(sold, isTrue);
       expect(updated.selectedJesterOverlayIndex, isNull);
       expect(updated.runProgress!.ownedJesters, isEmpty);
+    });
+
+    test('sellSelectedJesterOverlayFromState는 선택된 오버레이 슬롯을 판매한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 33);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!.ownedJesters.add(
+        const RummiJesterCard(
+          id: 'egg',
+          displayName: 'Egg',
+          rarity: RummiJesterRarity.common,
+          baseCost: 5,
+          effectText: '',
+          effectType: 'chips_bonus',
+          trigger: 'onScore',
+          conditionType: 'none',
+          conditionValue: null,
+          value: 5,
+          xValue: null,
+          mappedTileColors: [],
+          mappedTileNumbers: [],
+        ),
+      );
+      notifier.markDirty();
+      notifier.setSelectedJesterOverlayIndex(0);
+
+      expect(notifier.sellSelectedJesterOverlayFromState(), isTrue);
+      final updated = container.read(gameSessionNotifierProvider(args));
+      expect(updated.runProgress!.ownedJesters, isEmpty);
+      expect(updated.selectedJesterOverlayIndex, isNull);
     });
 
     test('buyShopOffer는 골드와 market facade를 함께 갱신한다', () {
@@ -304,6 +448,152 @@ void main() {
       expect(updated.runProgress!.shopOffers, hasLength(1));
       expect(updated.runProgress!.shopOffers.first.card.id, 'green_jester');
     });
+
+    test(
+      'settlement/market/next station command가 gold, scene, checkpoint를 함께 갱신한다',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        const args = GameSessionArgs(runSeed: 43);
+
+        final notifier = container.read(
+          gameSessionNotifierProvider(args).notifier,
+        );
+        notifier.setJesterCatalog(
+          RummiJesterCatalog.fromJsonString('''
+[
+  {
+    "id": "green_jester",
+    "displayName": "Green Jester",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "mult_bonus",
+    "trigger": "passive",
+    "conditionType": "none",
+    "conditionValue": null,
+    "value": 4,
+    "xValue": null,
+    "mappedTileColors": [],
+    "mappedTileNumbers": []
+  }
+]
+'''),
+        );
+
+        final before = container.read(gameSessionNotifierProvider(args));
+        final initialStage = before.runProgress!.stageIndex;
+        final initialGold = before.runProgress!.gold;
+
+        before.session!.blind.boardDiscardsRemaining = 2;
+        before.session!.blind.handDiscardsRemaining = 1;
+
+        final breakdown = notifier.prepareSettlementAndCashOut();
+        final afterCashOut = container.read(gameSessionNotifierProvider(args));
+
+        expect(breakdown.totalGold, greaterThan(0));
+        expect(
+          afterCashOut.runProgress!.gold,
+          initialGold + breakdown.totalGold,
+        );
+        expect(
+          afterCashOut.activeRunSaveView!.sceneAlias,
+          RummiSaveSceneAlias.battle,
+        );
+
+        notifier.enterMarketAfterCashOut();
+        final inMarket = container.read(gameSessionNotifierProvider(args));
+
+        expect(inMarket.activeRunScene, ActiveRunScene.shop);
+        expect(
+          inMarket.activeRunSaveView!.sceneAlias,
+          RummiSaveSceneAlias.market,
+        );
+        expect(inMarket.marketView!.offers, isNotEmpty);
+
+        notifier.advanceToNextStation(args.runSeed);
+        final advanced = container.read(gameSessionNotifierProvider(args));
+
+        expect(advanced.activeRunScene, ActiveRunScene.battle);
+        expect(
+          advanced.activeRunSaveView!.sceneAlias,
+          RummiSaveSceneAlias.battle,
+        );
+        expect(advanced.runProgress!.stageIndex, initialStage + 1);
+        expect(
+          advanced.stageStartSnapshot!.runProgress.stageIndex,
+          advanced.runProgress!.stageIndex,
+        );
+        expect(
+          advanced.stageStartSnapshot!.runProgress.gold,
+          advanced.runProgress!.gold,
+        );
+        expect(
+          advanced.stageStartSnapshot!.session.blind.targetScore,
+          advanced.session!.blind.targetScore,
+        );
+      },
+    );
+
+    test('buildSaveRuntimeState는 현재 runtime과 active scene을 그대로 반영한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 45);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+
+      state.runProgress!.gold += 7;
+      notifier.setActiveRunScene(ActiveRunScene.shop);
+
+      final runtime = notifier.buildSaveRuntimeState();
+
+      expect(runtime.activeScene, ActiveRunScene.shop);
+      expect(runtime.session, same(state.session));
+      expect(runtime.runProgress, same(state.runProgress));
+      expect(runtime.stageStartSnapshot, same(state.stageStartSnapshot));
+    });
+
+    test(
+      'buildSaveRuntimeState retry mode는 stageStartSnapshot 복사본을 current로 만든다',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        const args = GameSessionArgs(runSeed: 47);
+
+        final notifier = container.read(
+          gameSessionNotifierProvider(args).notifier,
+        );
+        final state = container.read(gameSessionNotifierProvider(args));
+
+        expect(notifier.drawTile(), isNull);
+        final tile = container
+            .read(gameSessionNotifierProvider(args))
+            .battleView!
+            .hand
+            .single;
+        expect(notifier.tryPlaceTile(tile, 0, 0), isTrue);
+        state.runProgress!.gold += 13;
+        notifier.markDirty();
+
+        final runtime = notifier.buildSaveRuntimeState(
+          useStageStartSnapshotAsCurrent: true,
+        );
+
+        expect(runtime.activeScene, ActiveRunScene.battle);
+        expect(runtime.session.board.cellAt(0, 0), isNull);
+        expect(runtime.runProgress.gold, RummiEconomyConfig.startingGold);
+        expect(runtime.stageStartSnapshot.session.board.cellAt(0, 0), isNull);
+        expect(
+          runtime.stageStartSnapshot.runProgress.gold,
+          RummiEconomyConfig.startingGold,
+        );
+        expect(runtime.session, isNot(same(state.session)));
+        expect(runtime.runProgress, isNot(same(state.runProgress)));
+      },
+    );
 
     test('restartCurrentStage는 변경된 전투 상태와 골드를 stage-start 기준으로 되돌린다', () {
       final container = ProviderContainer();

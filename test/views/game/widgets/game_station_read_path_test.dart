@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_station_facade.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
@@ -8,9 +10,6 @@ void main() {
   testWidgets('GameTopHud renders station facade objective values', (
     tester,
   ) async {
-    final runProgress = RummiRunProgress()
-      ..stageIndex = 4
-      ..gold = 27;
     const station = RummiStationRuntimeFacade(
       stationType: RummiStationType.currentStage,
       objective: RummiStationObjectiveView(
@@ -26,13 +25,21 @@ void main() {
         drawPileRemaining: 18,
       ),
     );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: GameTopHud(
             station: station,
-            runProgress: runProgress,
+            battle: battle,
             onOptionsTap: () {},
           ),
         ),
@@ -62,15 +69,22 @@ void main() {
         drawPileRemaining: 14,
       ),
     );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [
+        Tile(id: 1, color: TileColor.red, number: 1),
+        Tile(id: 2, color: TileColor.blue, number: 2),
+      ],
+      scoringCellKeys: {},
+    );
 
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          body: GameBottomInfoRow(
-            station: station,
-            totalDeckSize: 52,
-            currentHandSize: 2,
-          ),
+          body: GameBottomInfoRow(station: station, battle: battle),
         ),
       ),
     );

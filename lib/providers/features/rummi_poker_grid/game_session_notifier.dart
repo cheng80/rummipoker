@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
@@ -110,6 +111,33 @@ class GameSessionNotifier
     );
   }
 
+  ActiveRunRuntimeState buildSaveRuntimeState({
+    ActiveRunScene? scene,
+    bool useStageStartSnapshotAsCurrent = false,
+  }) {
+    final currentScene = scene ?? state.activeRunScene;
+    if (useStageStartSnapshotAsCurrent) {
+      final stageStartSnapshot = state.stageStartSnapshot!;
+      final retrySnapshot = ActiveRunStageSnapshot(
+        session: stageStartSnapshot.session.copySnapshot(),
+        runProgress: stageStartSnapshot.runProgress.copySnapshot(),
+      );
+      return ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.battle,
+        session: retrySnapshot.session,
+        runProgress: retrySnapshot.runProgress,
+        stageStartSnapshot: retrySnapshot,
+      );
+    }
+
+    return ActiveRunRuntimeState(
+      activeScene: currentScene,
+      session: state.session!,
+      runProgress: state.runProgress!,
+      stageStartSnapshot: state.stageStartSnapshot!,
+    );
+  }
+
   void setPendingResumeShop(bool value) {
     _replaceState(
       state.copyWith(pendingResumeShop: value, revision: state.revision + 1),
@@ -214,6 +242,10 @@ class GameSessionNotifier
     );
   }
 
+  void toggleSelectedHandTile(Tile tile) {
+    setSelectedHandTile(state.selectedHandTile == tile ? null : tile);
+  }
+
   void setSelectedBoardCell(int? row, int? col) {
     _replaceState(
       state.copyWith(
@@ -268,6 +300,32 @@ class GameSessionNotifier
 
   // -- Business logic --
 
+  BattleBoardTapResult tapBoardCell(int row, int col) {
+    final session = state.session;
+    if (session == null) {
+      return const BattleBoardTapResult.fail('세션이 없습니다.');
+    }
+
+    final selectedHand = state.selectedHandTile;
+    if (selectedHand != null) {
+      final placed = tryPlaceTile(selectedHand, row, col);
+      if (!placed) {
+        return const BattleBoardTapResult.fail('이 칸에 둘 수 없습니다.');
+      }
+      return const BattleBoardTapResult.placed();
+    }
+
+    if (session.board.cellAt(row, col) == null) {
+      return const BattleBoardTapResult.ignored();
+    }
+    if (state.selectedBoardRow == row && state.selectedBoardCol == col) {
+      setSelectedBoardCell(null, null);
+    } else {
+      setSelectedBoardCell(row, col);
+    }
+    return const BattleBoardTapResult.selectionChanged();
+  }
+
   /// 보드 스냅샷을 캡처하고 모든 완성 줄을 확정한다.
   /// 성공 시 결과를 반환하고, 확정할 줄이 없으면 null.
   ConfirmLinesResult? confirmLines() {
@@ -320,6 +378,19 @@ class GameSessionNotifier
     return breakdown;
   }
 
+  /// 전투 정산 직후 캐시아웃 준비를 notifier 경계로 모은다.
+  RummiCashOutBreakdown prepareSettlementAndCashOut() {
+    final breakdown = prepareCashOut();
+    _replaceState(
+      state.copyWith(
+        activeRunScene: ActiveRunScene.battle,
+        pendingResumeShop: false,
+        revision: state.revision + 1,
+      ),
+    );
+    return breakdown;
+  }
+
   /// 상점 열기: 오퍼 생성.
   void openShop() {
     final session = state.session!;
@@ -332,13 +403,26 @@ class GameSessionNotifier
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
+  /// 캐시아웃 뒤 market 진입 준비를 notifier 경계에서 처리한다.
+  void enterMarketAfterCashOut() {
+    openShop();
+    _replaceState(
+      state.copyWith(
+        activeRunScene: ActiveRunScene.shop,
+        pendingResumeShop: false,
+        revision: state.revision + 1,
+      ),
+    );
+  }
+
   String? rerollShopFromState() {
     final session = state.session;
     final runProgress = state.runProgress;
     if (session == null || runProgress == null) {
       return '상점 진행 정보가 없습니다.';
     }
-    final catalog = state.jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[];
+    final catalog =
+        state.jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[];
     return rerollShop(catalog: catalog, rng: session.runRandom);
   }
 
@@ -394,6 +478,18 @@ class GameSessionNotifier
     );
   }
 
+  /// market 종료 후 다음 station 진입까지를 notifier command로 감싼다.
+  void advanceToNextStation(int runSeed) {
+    advanceToNextStage(runSeed);
+    _replaceState(
+      state.copyWith(
+        activeRunScene: ActiveRunScene.battle,
+        pendingResumeShop: false,
+        revision: state.revision + 1,
+      ),
+    );
+  }
+
   // -- 전투 액션 (View에서 직접 session을 조작하던 것을 이관) --
 
   /// 손패 타일을 보드에 배치. 성공 시 true.
@@ -441,6 +537,15 @@ class GameSessionNotifier
     return null;
   }
 
+  String? discardSelectedBoardTileFromState() {
+    final row = state.selectedBoardRow;
+    final col = state.selectedBoardCol;
+    if (row == null || col == null) {
+      return '보드에서 버릴 타일을 먼저 선택하세요.';
+    }
+    return discardBoardTile(row, col);
+  }
+
   /// 손패 타일 버림. 실패 사유를 문자열로 반환 (성공 시 null).
   String? discardHandTile(Tile tile) {
     final session = state.session;
@@ -461,6 +566,14 @@ class GameSessionNotifier
     return null;
   }
 
+  String? discardSelectedHandTileFromState() {
+    final tile = state.selectedHandTile;
+    if (tile == null) {
+      return '손패에서 버릴 카드를 먼저 선택하세요.';
+    }
+    return discardHandTile(tile);
+  }
+
   /// 장착 제스터 판매. 성공 시 true.
   bool sellOwnedJester(int index) {
     final runProgress = state.runProgress;
@@ -474,6 +587,12 @@ class GameSessionNotifier
       ),
     );
     return true;
+  }
+
+  bool sellSelectedJesterOverlayFromState() {
+    final index = state.selectedJesterOverlayIndex;
+    if (index == null) return false;
+    return sellOwnedJester(index);
   }
 
   /// 만료 신호 평가. 만료 시 신호 리스트 반환 (아니면 빈 리스트).
@@ -509,6 +628,7 @@ class GameSessionNotifier
       return next.copyWith(
         stationView: null,
         marketView: null,
+        battleView: null,
         activeRunSaveView: null,
       );
     }
@@ -516,6 +636,10 @@ class GameSessionNotifier
     return next.copyWith(
       stationView: RummiStationRuntimeFacade.fromSession(session),
       marketView: RummiMarketRuntimeFacade.fromRunProgress(runProgress),
+      battleView: RummiBattleRuntimeFacade.fromRuntime(
+        session: session,
+        runProgress: runProgress,
+      ),
       activeRunSaveView: RummiActiveRunSaveFacade.fromRuntimeState(
         ActiveRunRuntimeState(
           activeScene: next.activeRunScene,
@@ -544,4 +668,32 @@ class ConfirmLinesResult {
   final int totalScore;
   final List<ConfirmedLineBreakdown> lineBreakdowns;
   final bool stageCleared;
+}
+
+class BattleBoardTapResult {
+  const BattleBoardTapResult._({
+    required this.didPlaceTile,
+    required this.didChangeSelection,
+    this.failMessage,
+  });
+
+  const BattleBoardTapResult.placed()
+    : this._(didPlaceTile: true, didChangeSelection: false);
+
+  const BattleBoardTapResult.selectionChanged()
+    : this._(didPlaceTile: false, didChangeSelection: true);
+
+  const BattleBoardTapResult.ignored()
+    : this._(didPlaceTile: false, didChangeSelection: false);
+
+  const BattleBoardTapResult.fail(String message)
+    : this._(
+        didPlaceTile: false,
+        didChangeSelection: false,
+        failMessage: message,
+      );
+
+  final bool didPlaceTile;
+  final bool didChangeSelection;
+  final String? failMessage;
 }

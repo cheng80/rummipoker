@@ -103,9 +103,12 @@ ruleset 계층이 생겨도 current defaults는 그대로 유지되어야 한다
 
 - shop UI read path의 가격/보유 슬롯/오퍼/affordability/runtime snapshot 표시는 market facade 기준으로 읽는다.
 - shop UI의 `reroll`은 `GameSessionNotifier.rerollShopFromState()`를 통해 notifier 내부 state만 읽도록 정리했다.
-- 남은 direct runtime 쓰기 경계는 주로 `cash-out -> openShop -> next stage` 시퀀스를 UI가 직접 조립하는 부분이다.
-- notifier/orchestration state도 `stationView / marketView / activeRunSaveView`를 함께 보관하며, 일부 runtime UI는 그 파생 facade를 직접 소비한다.
-- game options dialog도 active run save facade 기준의 run snapshot 요약을 직접 소비한다.
+- `cash-out -> market -> next station` 시퀀스는 `GameSessionNotifier.prepareSettlementAndCashOut()`, `enterMarketAfterCashOut()`, `advanceToNextStation()` command로 옮겨서 UI가 내부 순서를 직접 조립하지 않게 정리했다.
+- `GameView -> GameShopScreen` 경계도 mutable `runProgress` 직접 전달 대신 market/save facade read path를 다시 읽는 방식으로 줄였다.
+- battle 화면도 `RummiBattleRuntimeFacade`를 통해 `stage/gold/board/hand/scoring cells` read path를 묶어서 HUD/board/hand UI가 raw runtime 전체를 직접 받지 않게 정리했다.
+- battle action도 `tapBoardCell()`, `discardSelectedBoardTileFromState()`, `discardSelectedHandTileFromState()`, `sellSelectedJesterOverlayFromState()` command로 옮겨서 `GameView`가 선택 상태를 직접 해석하는 범위를 더 줄였다.
+- active run 저장도 notifier가 만드는 runtime snapshot과 `ActiveRunSaveService.saveRuntimeState()` 기준으로 정리해서 view가 save payload를 직접 조립하는 범위를 줄였다.
+- notifier/orchestration state는 `stationView / marketView / battleView / activeRunSaveView`를 함께 보관하며, runtime UI와 options dialog가 그 파생 facade를 직접 소비한다.
 
 ### A7. Save Adapter Preparation
 
@@ -324,21 +327,24 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 - [x] active run save payload에 `rulesetId` 저장/복원 경로 반영
 - [x] shop `reroll` mutation을 notifier command로 1차 이관
+- [x] `cash-out -> market -> next station` 시퀀스를 notifier command로 정리
+- [x] `GameView -> GameShopScreen` 경계를 market/save facade read path 기준으로 축소
+- [x] battle HUD/board/hand read path를 `RummiBattleRuntimeFacade` 기준으로 정리
 
 현재 가장 자연스러운 다음 작업:
 
-- [ ] `GameView`가 직접 조립하는 `cash-out -> openShop -> next stage` 시퀀스를 notifier command로 더 감쌀지 결정
-  이유: facade read path와 shop reroll mutation은 1차 정리됐고, 이제 가장 큰 남은 쓰기 경계는 UI가 정산/시장 진입/다음 스테이지 진입 순서를 직접 알고 있는 부분이다.
+- [ ] battle/game 화면에 남아 있는 direct runtime read를 더 줄일지 결정
+  이유: settlement/shop/stage transition 쓰기 경계와 shop route read 경계는 1차 정리됐고, 이제 남은 중심 과제는 battle UI read path를 더 얇게 유지하는 것이다.
 
 현재 추천:
-`lib/views/game_view.dart`에 남은 아래 호출 묶음을 `GameSessionNotifier` command로 접는 쪽이 다음 단계로 가장 안전하다.
+`GameView`와 battle widgets에서 facade로 충분히 읽을 수 있는 값과 raw runtime이 꼭 필요한 값을 다시 나눠 보는 쪽이 다음 단계로 가장 안전하다.
 
-- `prepareCashOut()`
-- `openShop()`
-- `advanceToNextStage(widget.runSeed)`
+- `stage / gold / board / hand / scoring cells`
+- `save summary / checkpoint`
+- `runtime mutation에 필요한 최소 current object`
 
 구체적인 다음 PR 범위:
 
-- `GameView._runStageClearFlow()`와 `_runAutoCashOutLoopOnLoad()`에서 중복되는 stage transition orchestration 정리
-- notifier 쪽에 stage settlement / market entry / next-stage advance command 추가
-- `test/providers/game_session_notifier_test.dart`에 stage transition 및 `stageStartSnapshot` 갱신 회귀 테스트 추가
+- `lib/views/game_view.dart`, `game_shared_widgets.dart`, `game_hand_zone.dart` 기준으로 battle read path 재점검
+- provider 쪽 facade 파생값과 widget 표시값 동기화 테스트 추가
+- 체크리스트/진입 문서 상태 설명을 코드 기준으로 최소 갱신

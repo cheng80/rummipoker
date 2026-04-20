@@ -104,6 +104,7 @@
 | `lib/services/active_run_save_service.dart` | active run save/load / checkpoint snapshot | Critical | compatibility first |
 | `lib/providers/features/rummi_poker_grid/game_session_notifier.dart` | orchestration for confirm/cash-out/shop/stage | High | keep flow stable, isolate new adapters |
 | `lib/views/game_view.dart` | runtime UI flow / save trigger / navigation | High | UI PR separate from rules PR |
+| `lib/logic/rummi_poker_grid/rummi_battle_facade.dart` | battle HUD/board/hand read model | Medium | expand read path without replacing session runtime |
 | `lib/views/game/widgets/game_shop_screen.dart` | current full-screen shop UX | Medium | preserve route/UX in early phases |
 | `lib/providers/features/rummi_poker_grid/title_notifier.dart` | continue availability / clear stored run | Medium | protect continue flow |
 | `lib/utils/storage_helper.dart` | SharedPreferences wrapper | Medium | preserve as backend until adapter layer exists |

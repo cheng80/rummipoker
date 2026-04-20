@@ -319,6 +319,15 @@ class ActiveRunSaveService {
     await StorageHelper.write(StorageKeys.activeRunSignatureV1, signature);
   }
 
+  static Future<void> saveRuntimeState(ActiveRunRuntimeState runtime) {
+    return saveActiveRun(
+      activeScene: runtime.activeScene,
+      session: runtime.session,
+      runProgress: runtime.runProgress,
+      stageStartSnapshot: runtime.stageStartSnapshot,
+    );
+  }
+
   static Future<ActiveRunRuntimeState?> loadActiveRun() async {
     final save = await _loadVerifiedSaveData();
     if (save == null) return null;

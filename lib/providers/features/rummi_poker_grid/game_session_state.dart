@@ -1,4 +1,5 @@
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -19,6 +20,7 @@ class GameSessionState {
     this.ruleset = RummiRuleset.currentDefaults,
     this.stationView,
     this.marketView,
+    this.battleView,
     this.activeRunSaveView,
     this.activeRunScene = ActiveRunScene.battle,
     this.pendingResumeShop = false,
@@ -42,6 +44,7 @@ class GameSessionState {
   final RummiRuleset ruleset;
   final RummiStationRuntimeFacade? stationView;
   final RummiMarketRuntimeFacade? marketView;
+  final RummiBattleRuntimeFacade? battleView;
   final RummiActiveRunSaveFacade? activeRunSaveView;
   final ActiveRunScene activeRunScene;
   final bool pendingResumeShop;
@@ -70,6 +73,7 @@ class GameSessionState {
     RummiRuleset? ruleset,
     Object? stationView = _unset,
     Object? marketView = _unset,
+    Object? battleView = _unset,
     Object? activeRunSaveView = _unset,
     ActiveRunScene? activeRunScene,
     bool? pendingResumeShop,
@@ -103,6 +107,9 @@ class GameSessionState {
       marketView: marketView == _unset
           ? this.marketView
           : marketView as RummiMarketRuntimeFacade?,
+      battleView: battleView == _unset
+          ? this.battleView
+          : battleView as RummiBattleRuntimeFacade?,
       activeRunSaveView: activeRunSaveView == _unset
           ? this.activeRunSaveView
           : activeRunSaveView as RummiActiveRunSaveFacade?,

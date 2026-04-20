@@ -319,5 +319,32 @@ void main() {
         expect(await ActiveRunSaveService.loadActiveRun(), isNull);
       },
     );
+
+    test('saveRuntimeState는 ActiveRunRuntimeState를 그대로 저장한다', () async {
+      final session = RummiPokerGridSession(runSeed: 5151);
+      final runProgress = RummiRunProgress()..gold += 9;
+      final drawn = session.drawToHand();
+      expect(drawn, isNotNull);
+      expect(session.tryPlaceFromHand(drawn!, 0, 0), isTrue);
+
+      final runtime = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.shop,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
+          session: session,
+          runProgress: runProgress,
+        ),
+      );
+
+      await ActiveRunSaveService.saveRuntimeState(runtime);
+
+      final restored = await ActiveRunSaveService.loadActiveRun();
+      expect(restored, isNotNull);
+      expect(restored!.activeScene, ActiveRunScene.shop);
+      expect(restored.session.runSeed, 5151);
+      expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 9);
+      expect(restored.session.board.cellAt(0, 0), isNotNull);
+    });
   });
 }

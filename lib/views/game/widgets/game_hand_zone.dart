@@ -2,15 +2,15 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
+import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
-import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import 'game_shared_widgets.dart';
 
 class GameHandZone extends StatefulWidget {
   const GameHandZone({
     super.key,
-    required this.session,
+    required this.battle,
     required this.station,
     required this.hand,
     required this.selectedHandTile,
@@ -19,7 +19,7 @@ class GameHandZone extends StatefulWidget {
     required this.tileWidth,
   });
 
-  final RummiPokerGridSession session;
+  final RummiBattleRuntimeFacade battle;
   final RummiStationRuntimeFacade station;
   final List<Tile> hand;
   final Tile? selectedHandTile;
@@ -122,11 +122,7 @@ class _GameHandZoneState extends State<GameHandZone>
     final displayedHand = _animating ? _fromHand : _settledHand;
     return Column(
       children: [
-        GameBottomInfoRow(
-          station: widget.station,
-          totalDeckSize: widget.session.totalDeckSize,
-          currentHandSize: widget.hand.length,
-        ),
+        GameBottomInfoRow(station: widget.station, battle: widget.battle),
         const SizedBox(height: 4),
         SizedBox(
           height: 76,
