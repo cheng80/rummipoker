@@ -12,6 +12,7 @@ import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/sound_manager.dart';
+import '../../../utils/common_ui.dart';
 
 const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
@@ -266,6 +267,131 @@ class GameBottomInfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class GameItemZoneSkeleton extends StatelessWidget {
+  const GameItemZoneSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF173126).withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ITEM',
+                    style: gameHudLabelStyle.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Consumable / Equipment / Relic 자리',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                _GameItemPocketChip(
+                  label: 'Q1',
+                  subtitle: 'Quick',
+                  accent: Color(0xFF267B67),
+                ),
+                SizedBox(width: 8),
+                _GameItemPocketChip(
+                  label: 'Q2',
+                  subtitle: 'Quick',
+                  accent: Color(0xFF267B67),
+                ),
+                SizedBox(width: 8),
+                _GameItemPocketChip(
+                  label: 'P',
+                  subtitle: 'Passive',
+                  accent: Color(0xFF4C5A55),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GameItemPocketChip extends StatelessWidget {
+  const _GameItemPocketChip({
+    required this.label,
+    required this.subtitle,
+    required this.accent,
+  });
+
+  final String label;
+  final String subtitle;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.48)),
+      ),
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.62),
+                  fontSize: 7,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -615,37 +741,17 @@ class GameActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isEnabled = onPressed != null;
-    final baseColor = isEnabled
-        ? background
-        : background.withValues(alpha: 0.34);
-    final textColor = isEnabled
-        ? foreground
-        : foreground.withValues(alpha: 0.56);
     return SizedBox(
-      height: compact ? 34 : 48,
-      child: ElevatedButton(
+      child: GameChromeButton(
+        label: label,
+        backgroundColor: background,
+        foregroundColor: foreground,
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          backgroundColor: baseColor,
-          disabledBackgroundColor: baseColor,
-          foregroundColor: textColor,
-          disabledForegroundColor: textColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 6 : 8,
-            vertical: compact ? 4 : 7,
-          ),
-          textStyle: TextStyle(
-            fontSize: compact ? 10 : 12,
-            fontWeight: FontWeight.w900,
-          ),
+        height: compact ? 30 : 40,
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 6 : 8,
+          vertical: compact ? 4 : 6,
         ),
-        child: FittedBox(fit: BoxFit.scaleDown, child: Text(label)),
       ),
     );
   }
@@ -792,13 +898,6 @@ class GameModalCard extends StatelessWidget {
         color: const Color(0xFF1A2E24),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),

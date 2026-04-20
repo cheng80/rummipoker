@@ -182,6 +182,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
             HomeSnapshotCard(
               title: '현재 선택',
               summary:
+                  '상태: ${_availabilityLabel(_selectedSpec)}\n'
                   '난이도: ${NewRunSetup(difficulty: _effectiveDifficulty).difficultyLabel}\n'
                   '블라인드: ${_selectedSpec.title}\n'
                   '목표: ${_selectedSpec.targetScore} · 손패 ${_selectedSpec.maxHandSize} · 보드 버림 ${_selectedSpec.boardDiscards} · 손패 버림 ${_selectedSpec.handDiscards}',
@@ -192,9 +193,13 @@ class _BlindSelectViewState extends State<BlindSelectView> {
               description: _selectedSpec.isSelectable
                   ? '${_selectedSpec.title}으로 전투에 들어갑니다.'
                   : _selectedSpec.isCleared
-                  ? '${_selectedSpec.title}는 이미 클리어했습니다.'
+                  ? '${_selectedSpec.title}는 이미 클리어했습니다. 다음 블라인드를 선택하세요.'
                   : _selectedSpec.lockReason ?? '아직 선택할 수 없습니다.',
-              accent: const Color(0xFF3CAEE0),
+              accent: _selectedSpec.isSelectable
+                  ? const Color(0xFFF4A81D)
+                  : _selectedSpec.isCleared
+                  ? const Color(0xFF557062)
+                  : const Color(0xFF5B4D33),
               enabled: _selectedSpec.isSelectable,
               onTap: _startSelectedBlind,
             ),
@@ -218,18 +223,8 @@ class _BlindOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected
-        ? const Color(0xFF4FC3F7)
-        : spec.isSelectable
-        ? Colors.white.withValues(alpha: 0.08)
-        : spec.isCleared
-        ? const Color(0xFF8BC34A).withValues(alpha: 0.50)
-        : const Color(0xFFFFD166).withValues(alpha: 0.46);
-    final fillColor = selected
-        ? const Color(0xFF4FC3F7).withValues(alpha: 0.16)
-        : spec.isCleared
-        ? const Color(0xFF8BC34A).withValues(alpha: 0.14)
-        : Colors.white.withValues(alpha: 0.04);
+    final status = _statusStyleFor(spec, selected: selected);
+    final isInteractive = spec.isSelectable && onTap != null;
 
     return InkWell(
       onTap: onTap,
@@ -238,9 +233,12 @@ class _BlindOptionCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
-          color: fillColor,
+          color: status.fillColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
+          border: Border.all(
+            color: status.borderColor,
+            width: selected ? 1.8 : 1.2,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,49 +251,53 @@ class _BlindOptionCard extends StatelessWidget {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: spec.isSelectable
-                        ? const Color(0xFF1D85C7).withValues(alpha: 0.82)
-                        : spec.isCleared
-                        ? const Color(0xFF6FAE2E).withValues(alpha: 0.82)
-                        : Colors.white.withValues(alpha: 0.12),
+                    color: status.badgeColor,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    spec.isCleared
-                        ? '${spec.badgeLabel} CLEAR'
-                        : spec.badgeLabel,
+                    status.badgeLabel,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.92),
+                      color: status.badgeTextColor,
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.8,
                     ),
                   ),
                 ),
-                const Spacer(),
-                Icon(
-                  spec.isCleared
-                      ? Icons.check_rounded
-                      : spec.isLocked
-                      ? Icons.lock_rounded
-                      : selected
-                      ? Icons.check_circle_rounded
-                      : Icons.circle_outlined,
-                  color: spec.isCleared
-                      ? const Color(0xFF8BC34A)
-                      : spec.isLocked
-                      ? const Color(0xFFFFD166)
-                      : selected
-                      ? const Color(0xFF4FC3F7)
-                      : Colors.white.withValues(alpha: 0.5),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: status.borderColor.withValues(alpha: 0.72),
+                    ),
+                  ),
+                  child: Text(
+                    status.stateLabel,
+                    style: TextStyle(
+                      color: status.stateColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
+                const Spacer(),
+                Icon(status.trailingIcon, color: status.stateColor),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               spec.title,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.95),
+                color: Colors.white.withValues(
+                  alpha: isInteractive ? 0.95 : 0.84,
+                ),
                 fontFamily: AssetPaths.fontAngduIpsul140,
                 fontSize: 22,
                 letterSpacing: 1.1,
@@ -305,7 +307,9 @@ class _BlindOptionCard extends StatelessWidget {
             Text(
               spec.description,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: Colors.white.withValues(
+                  alpha: isInteractive ? 0.72 : 0.62,
+                ),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 height: 1.35,
@@ -325,10 +329,10 @@ class _BlindOptionCard extends StatelessWidget {
             ),
             if (spec.isCleared) ...[
               const SizedBox(height: 10),
-              const Text(
-                '이 블라인드는 이미 클리어했습니다.',
+              Text(
+                '이 블라인드는 이미 클리어 완료 상태입니다. 다시 선택할 수는 없습니다.',
                 style: TextStyle(
-                  color: Color(0xFF8BC34A),
+                  color: status.stateColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   height: 1.3,
@@ -338,8 +342,19 @@ class _BlindOptionCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 spec.lockReason!,
-                style: const TextStyle(
-                  color: Color(0xFFFFD166),
+                style: TextStyle(
+                  color: status.stateColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
+                ),
+              ),
+            ] else if (selected) ...[
+              const SizedBox(height: 10),
+              Text(
+                '현재 선택된 블라인드입니다. 아래 버튼으로 바로 진입할 수 있습니다.',
+                style: TextStyle(
+                  color: status.stateColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   height: 1.3,
@@ -377,4 +392,84 @@ class _BlindStatChip extends StatelessWidget {
       ),
     );
   }
+}
+
+String _availabilityLabel(BlindSelectionSpec spec) {
+  if (spec.isSelectable) return '선택 가능';
+  if (spec.isCleared) return '클리어 완료';
+  return '잠금';
+}
+
+_BlindStatusStyle _statusStyleFor(
+  BlindSelectionSpec spec, {
+  required bool selected,
+}) {
+  if (spec.isCleared) {
+    return const _BlindStatusStyle(
+      fillColor: Color(0x1629B36A),
+      borderColor: Color(0x8A6CCB8C),
+      badgeColor: Color(0xFF2E7D4B),
+      badgeTextColor: Colors.white,
+      stateColor: Color(0xFF8EE0AB),
+      stateLabel: '클리어 완료',
+      badgeLabel: 'CLEAR',
+      trailingIcon: Icons.check_circle_rounded,
+    );
+  }
+  if (spec.isLocked) {
+    return const _BlindStatusStyle(
+      fillColor: Color(0x10A57A1E),
+      borderColor: Color(0x72C8A24B),
+      badgeColor: Color(0x7A6B5A32),
+      badgeTextColor: Color(0xFFF5DA96),
+      stateColor: Color(0xFFF0C96A),
+      stateLabel: '잠금',
+      badgeLabel: 'LOCKED',
+      trailingIcon: Icons.lock_rounded,
+    );
+  }
+  if (selected) {
+    return const _BlindStatusStyle(
+      fillColor: Color(0x1840BDE8),
+      borderColor: Color(0xFF4FC3F7),
+      badgeColor: Color(0xFF1D85C7),
+      badgeTextColor: Colors.white,
+      stateColor: Color(0xFF82D9FF),
+      stateLabel: '현재 선택',
+      badgeLabel: 'OPEN',
+      trailingIcon: Icons.radio_button_checked_rounded,
+    );
+  }
+  return const _BlindStatusStyle(
+    fillColor: Color(0x08000000),
+    borderColor: Color(0x20FFFFFF),
+    badgeColor: Color(0xFF275B49),
+    badgeTextColor: Colors.white,
+    stateColor: Color(0xFFA9F3CE),
+    stateLabel: '선택 가능',
+    badgeLabel: 'OPEN',
+    trailingIcon: Icons.circle_outlined,
+  );
+}
+
+class _BlindStatusStyle {
+  const _BlindStatusStyle({
+    required this.fillColor,
+    required this.borderColor,
+    required this.badgeColor,
+    required this.badgeTextColor,
+    required this.stateColor,
+    required this.stateLabel,
+    required this.badgeLabel,
+    required this.trailingIcon,
+  });
+
+  final Color fillColor;
+  final Color borderColor;
+  final Color badgeColor;
+  final Color badgeTextColor;
+  final Color stateColor;
+  final String stateLabel;
+  final String badgeLabel;
+  final IconData trailingIcon;
 }

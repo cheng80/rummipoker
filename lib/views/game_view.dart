@@ -286,6 +286,10 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<bool> _afterAction() async {
+    if (_stageFlowPhase != GameStageFlowPhase.none ||
+        _stationView.objective.isMet) {
+      return false;
+    }
     final signals = _gameNotifier.evaluateExpiry();
     if (signals.isEmpty) return false;
     _persistRetrySnapshotOnSave = true;
@@ -599,6 +603,9 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _openGameOptions(BuildContext context) async {
+    if (_stageFlowPhase != GameStageFlowPhase.none) {
+      return;
+    }
     await showGameOptionsDialog(
       context: context,
       runSeed: widget.runSeed,
@@ -903,6 +910,8 @@ class _GameLayout extends StatelessWidget {
               onTapCard: onJesterTap,
             ),
             const SizedBox(height: 8),
+            const GameItemZoneSkeleton(),
+            const SizedBox(height: 8),
             Expanded(
               child: GameBoardGrid(
                 board: battle.board,
@@ -929,9 +938,10 @@ class _GameLayout extends StatelessWidget {
               children: [
                 Expanded(
                   child: GameActionButton(
-                    label: '선택 해제',
-                    background: const Color(0xFF4C5A55),
-                    onPressed: onClearSelection,
+                    label: '확정',
+                    background: const Color(0xFFF4A81D),
+                    foreground: Colors.black,
+                    onPressed: onConfirm,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -953,10 +963,9 @@ class _GameLayout extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: GameActionButton(
-                    label: '확정',
-                    background: const Color(0xFFF4A81D),
-                    foreground: Colors.black,
-                    onPressed: onConfirm,
+                    label: '선택 해제',
+                    background: const Color(0xFF4C5A55),
+                    onPressed: onClearSelection,
                   ),
                 ),
               ],

@@ -10,6 +10,13 @@ import '../../../widgets/phone_frame_scaffold.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';
 
+const double _marketOwnedCardWidth = 52.0;
+const double _marketOwnedCardHeight = 72.0;
+const double _marketOfferCardWidth = 54.0;
+const double _marketOfferCardHeight = 74.0;
+
+enum _MarketShopTab { jesters, items }
+
 class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
@@ -47,8 +54,8 @@ class GameShopScreen extends StatefulWidget {
 class _GameShopScreenState extends State<GameShopScreen> {
   int? _selectedOwnedIndex;
   int? _selectedOfferIndex;
-  bool _sellTargetActive = false;
-  int? _draggingOwnedIndex;
+  _MarketShopTab _shopTab = _MarketShopTab.jesters;
+  int _selectedItemOfferIndex = 0;
 
   RummiMarketRuntimeFacade get _market => widget.readMarketView();
 
@@ -73,6 +80,33 @@ class _GameShopScreenState extends State<GameShopScreen> {
     setState(() {
       _selectedOwnedIndex = index;
       _selectedOfferIndex = null;
+    });
+  }
+
+  void _selectOffer(int index) {
+    setState(() {
+      _shopTab = _MarketShopTab.jesters;
+      _selectedOfferIndex = index;
+      _selectedOwnedIndex = null;
+    });
+  }
+
+  void _selectItemOffer(int index) {
+    setState(() {
+      _shopTab = _MarketShopTab.items;
+      _selectedItemOfferIndex = index;
+      _selectedOwnedIndex = null;
+      _selectedOfferIndex = null;
+    });
+  }
+
+  void _selectShopTab(_MarketShopTab tab) {
+    setState(() {
+      _shopTab = tab;
+      _selectedOwnedIndex = null;
+      if (tab == _MarketShopTab.jesters) {
+        _selectedOfferIndex ??= _market.offers.isEmpty ? null : 0;
+      }
     });
   }
 
@@ -132,8 +166,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          width: 74,
-                          height: 100,
+                          width: 68,
+                          height: 92,
                           child: GameJesterSlot(
                             card: card,
                             runtimeValueText: runtimeValueText,
@@ -214,13 +248,6 @@ class _GameShopScreenState extends State<GameShopScreen> {
         );
       },
     );
-  }
-
-  void _selectOffer(int index) {
-    setState(() {
-      _selectedOfferIndex = index;
-      _selectedOwnedIndex = null;
-    });
   }
 
   Future<void> _reroll() async {
@@ -379,35 +406,19 @@ class _GameShopScreenState extends State<GameShopScreen> {
                     ),
                   ),
                 ),
-                IconButton(
+                GameIconButtonChip(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  color: Colors.white,
+                  icon: Icons.close_rounded,
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
+            GameDialogSection(
+              title: 'Run Seed',
               margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white10),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Run Seed',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.72),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
                   Row(
                     children: [
                       Expanded(
@@ -421,7 +432,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           ),
                         ),
                       ),
-                      IconButton(
+                      GameIconButtonChip(
                         onPressed: () async {
                           await Clipboard.setData(
                             ClipboardData(text: '${widget.runSeed}'),
@@ -429,8 +440,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           if (!mounted) return;
                           showTopNotice(context, '시드 번호를 복사했습니다.');
                         },
-                        icon: const Icon(Icons.copy_rounded),
-                        color: Colors.white,
+                        icon: Icons.copy_rounded,
+                        backgroundColor: const Color(0xFF21423A),
                       ),
                     ],
                   ),
@@ -438,27 +449,12 @@ class _GameShopScreenState extends State<GameShopScreen> {
               ),
             ),
             if (activeRunSaveView != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
+              GameDialogSection(
+                title: 'Run Snapshot',
                 margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white10),
-                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Run Snapshot',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
                     Text(
                       _activeRunSummaryLabel(activeRunSaveView),
                       style: TextStyle(
@@ -471,52 +467,35 @@ class _GameShopScreenState extends State<GameShopScreen> {
                   ],
                 ),
               ),
-            ListTile(
-              leading: Icon(
-                Icons.settings_rounded,
-                color: Colors.lightBlueAccent.shade100,
-              ),
-              title: Text(
-                context.tr('settings'),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.92),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+            GameMenuActionTile(
+              title: context.tr('settings'),
+              subtitle: '설정 화면을 열고, Market으로 다시 돌아옵니다.',
+              icon: Icons.settings_rounded,
+              accentColor: Colors.lightBlueAccent.shade100,
               onTap: () async {
                 Navigator.of(dialogContext).pop();
                 await widget.onOpenSettings();
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.refresh_rounded,
-                color: Colors.amber.shade200,
-              ),
-              title: Text(
-                widget.isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.92),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+            const SizedBox(height: 8),
+            GameMenuActionTile(
+              title: widget.isDebugFixtureRun
+                  ? '디버그 픽스처 재로드'
+                  : '현재 Station 재시작',
+              subtitle: '현재 Station 시작 시점으로 되돌립니다.',
+              icon: Icons.refresh_rounded,
+              accentColor: Colors.amber.shade200,
               onTap: () async {
                 Navigator.of(dialogContext).pop();
                 await _restartCurrentRun();
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.logout_rounded,
-                color: Colors.redAccent.shade100,
-              ),
-              title: Text(
-                context.tr('exit'),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.92),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+            const SizedBox(height: 8),
+            GameMenuActionTile(
+              title: context.tr('exit'),
+              subtitle: '현재 진행을 멈추고 메인 메뉴로 돌아갑니다.',
+              icon: Icons.logout_rounded,
+              accentColor: Colors.redAccent.shade100,
               onTap: () async {
                 Navigator.of(dialogContext).pop();
                 await _exitToTitleWithConfirm();
@@ -531,13 +510,32 @@ class _GameShopScreenState extends State<GameShopScreen> {
   @override
   Widget build(BuildContext context) {
     final market = _market;
-    final pendingSellIndex = _draggingOwnedIndex ?? _selectedOwnedIndex;
-    final pendingSellPrice =
-        pendingSellIndex != null &&
-            pendingSellIndex >= 0 &&
-            pendingSellIndex < market.ownedEntries.length
-        ? market.ownedEntries[pendingSellIndex].sellPrice
+    final selectedOwned =
+        _selectedOwnedIndex != null &&
+            _selectedOwnedIndex! >= 0 &&
+            _selectedOwnedIndex! < market.ownedEntries.length
+        ? market.ownedEntries[_selectedOwnedIndex!]
         : null;
+    final selectedOffer =
+        _shopTab == _MarketShopTab.jesters &&
+            _selectedOfferIndex != null &&
+            _selectedOfferIndex! >= 0 &&
+            _selectedOfferIndex! < market.offers.length
+        ? market.offers[_selectedOfferIndex!]
+        : null;
+    final selectedItemOffer =
+        _shopTab == _MarketShopTab.items &&
+            _selectedItemOfferIndex >= 0 &&
+            _selectedItemOfferIndex < _marketGhostItemOffers.length
+        ? _marketGhostItemOffers[_selectedItemOfferIndex]
+        : null;
+    final selectedOwnedRuntimeValue = selectedOwned == null
+        ? null
+        : jesterRuntimeValueText(
+            selectedOwned.card,
+            market.runtimeSnapshot,
+            slotIndex: selectedOwned.slotIndex,
+          );
 
     return PhoneFrameScaffold(
       child: DecoratedBox(
@@ -602,25 +600,21 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        IconButton(
+                        GameIconButtonChip(
                           onPressed: _openOptions,
-                          icon: const Icon(Icons.more_horiz_rounded),
-                          color: Colors.white,
+                          icon: Icons.more_horiz_rounded,
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      '보유 Jester ${market.ownedEntries.length}/${market.maxOwnedSlots}슬롯',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    _MarketSectionLabel(
+                      title:
+                          '보유 Jester ${market.ownedEntries.length}/${market.maxOwnedSlots}슬롯',
+                      subtitle: '구매 순서대로 슬롯에 배치되며, 가득 차면 더 이상 살 수 없습니다.',
                     ),
                     const SizedBox(height: 8),
                     SizedBox(
-                      height: kJesterCardHeight + 18,
+                      height: _marketOwnedCardHeight + 18,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: List.generate(market.maxOwnedSlots, (index) {
@@ -670,180 +664,207 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           );
 
                           return SizedBox(
-                            width: kJesterCardWidth + 6,
-                            height: kJesterCardHeight + 6,
+                            width: _marketOwnedCardWidth + 6,
+                            height: _marketOwnedCardHeight + 6,
                             child: card == null
                                 ? child
-                                : LongPressDraggable<int>(
-                                    data: index,
-                                    onDragStarted: () {
-                                      setState(() {
-                                        _sellTargetActive = true;
-                                        _draggingOwnedIndex = index;
-                                      });
-                                    },
-                                    onDragEnd: (_) {
-                                      if (mounted) {
-                                        setState(() {
-                                          _sellTargetActive = false;
-                                          _draggingOwnedIndex = null;
-                                        });
-                                      }
-                                    },
-                                    feedback: SizedBox(
-                                      width: kJesterCardWidth + 6,
-                                      height: kJesterCardHeight + 6,
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(3),
-                                          child: GameJesterSlot(
-                                            card: card,
-                                            runtimeValueText:
-                                                jesterRuntimeValueText(
-                                                  card,
-                                                  market.runtimeSnapshot,
-                                                  slotIndex: index,
-                                                ),
-                                            extended: index == 4,
-                                            activeEffect: null,
-                                            settlementSequenceTick: 0,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        _selectOwned(index);
-                                        _showOwnedJesterDetail(index);
-                                      },
-                                      child: child,
-                                    ),
+                                : GestureDetector(
+                                    onTap: () => _selectOwned(index),
+                                    onLongPress: () =>
+                                        _showOwnedJesterDetail(index),
+                                    child: child,
                                   ),
                           );
                         }),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    DragTarget<int>(
-                      onWillAcceptWithDetails: (_) {
-                        setState(() => _sellTargetActive = true);
-                        return true;
-                      },
-                      onLeave: (_) {
-                        setState(() {
-                          _sellTargetActive = false;
-                        });
-                      },
-                      onAcceptWithDetails: (details) {
-                        setState(() {
-                          _sellTargetActive = false;
-                          _draggingOwnedIndex = null;
-                        });
-                        _sellOwned(details.data);
-                      },
-                      builder: (context, candidateData, rejectedData) {
-                        final active =
-                            _sellTargetActive || candidateData.isNotEmpty;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 120),
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: active
-                                ? const Color(0xFF5A1E1E)
-                                : Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: active
-                                  ? const Color(0xFFFF8A65)
-                                  : Colors.white10,
-                            ),
-                          ),
-                          child: Text(
-                            active
-                                ? pendingSellPrice == null
-                                      ? '여기에 놓으면 판매'
-                                      : '여기에 놓으면 판매 +$pendingSellPrice Gold'
-                                : pendingSellPrice == null
-                                ? '보유 Jester를 길게 눌러 여기로 드래그하면 판매'
-                                : '길게 눌러 드래그 판매 가능 · 예상 판매가 +$pendingSellPrice Gold',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        );
-                      },
+                    const SizedBox(height: 12),
+                    _MarketSectionLabel(
+                      title: '보유 Item 슬롯',
+                      subtitle: 'Jester와 분리된 슬롯 시스템입니다.',
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Market 오퍼',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 118,
-                          child: GameActionButton(
-                            label: '리롤 ${market.rerollCost}',
-                            background: const Color(0xFF2D6F9E),
-                            onPressed: _reroll,
-                            compact: true,
-                          ),
-                        ),
+                      children: const [
+                        _MarketItemGhostChip(label: 'Q1'),
+                        SizedBox(width: 8),
+                        _MarketItemGhostChip(label: 'Q2'),
+                        SizedBox(width: 8),
+                        _MarketItemGhostChip(label: 'Passive'),
                       ],
                     ),
-                    Expanded(
-                      child: market.offers.isEmpty
-                          ? Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  '이번 Market에 노출된 Jester가 없습니다.',
-                                  style: TextStyle(
+                    const SizedBox(height: 14),
+                    _MarketSpeechPanel(
+                      title: selectedOwned != null
+                          ? localizedJesterName(context, selectedOwned.card)
+                          : selectedOffer != null
+                          ? localizedJesterName(context, selectedOffer.card)
+                          : selectedItemOffer != null
+                          ? selectedItemOffer.title
+                          : '선택된 카드 없음',
+                      subtitle: selectedOwned != null
+                          ? '보유 슬롯'
+                          : selectedOffer != null
+                          ? 'Jester Shop'
+                          : selectedItemOffer != null
+                          ? 'Item Shop'
+                          : '아래 카드 진열에서 대상을 선택하세요.',
+                      body: selectedOwned != null
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  localizedJesterEffect(
+                                    context,
+                                    selectedOwned.card,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
                                     color: Colors.white70,
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w700,
+                                    height: 1.25,
                                   ),
                                 ),
+                                if (selectedOwnedRuntimeValue != null) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    selectedOwnedRuntimeValue,
+                                    style: const TextStyle(
+                                      color: Color(0xFFF2C14E),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            )
+                          : selectedOffer != null
+                          ? Text(
+                              localizedJesterEffect(
+                                context,
+                                selectedOffer.card,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                height: 1.25,
                               ),
                             )
-                          : ListView.separated(
-                              itemCount: market.offers.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final offer = market.offers[index];
-                                return _GameShopOfferCard(
-                                  offer: offer,
-                                  selected: _selectedOfferIndex == index,
-                                  canAfford: offer.isAffordable,
-                                  onTap: () => _selectOffer(index),
-                                  onBuy: () {
-                                    _selectOffer(index);
-                                    _buySelected();
-                                  },
-                                );
-                              },
+                          : selectedItemOffer != null
+                          ? Text(
+                              selectedItemOffer.description,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                height: 1.25,
+                              ),
+                            )
+                          : Text(
+                              '카드형 오퍼를 누르면 여기서 정보를 보고 구매나 판매를 결정합니다.',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.68),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                height: 1.25,
+                              ),
                             ),
+                      trailing: selectedOwned != null
+                          ? _MarketActionPane(
+                              priceLabel: '+${selectedOwned.sellPrice}',
+                              buttonLabel: '판매',
+                              buttonColor: const Color(0xFFB74B3B),
+                              onPressed: () =>
+                                  _sellOwned(selectedOwned.slotIndex),
+                            )
+                          : selectedOffer != null
+                          ? _MarketActionPane(
+                              priceLabel: '${selectedOffer.price}',
+                              buttonLabel: '구매',
+                              buttonColor: const Color(0xFFF4A81D),
+                              foreground: Colors.black,
+                              onPressed: selectedOffer.isAffordable
+                                  ? _buySelected
+                                  : null,
+                            )
+                          : selectedItemOffer != null
+                          ? const _MarketActionPane(
+                              priceLabel: 'TBD',
+                              buttonLabel: '준비 중',
+                              buttonColor: Color(0xFF586463),
+                            )
+                          : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
+                    _MarketTabBar(
+                      currentTab: _shopTab,
+                      rerollCost: market.rerollCost,
+                      onChanged: _selectShopTab,
+                      onReroll: _shopTab == _MarketShopTab.jesters
+                          ? _reroll
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: _MarketOfferShelf(
+                        child: _shopTab == _MarketShopTab.jesters
+                            ? (market.offers.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        '이번 Market에 노출된 Jester가 없습니다.',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.68,
+                                          ),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    )
+                                  : Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      children: [
+                                        for (
+                                          var i = 0;
+                                          i < market.offers.length;
+                                          i++
+                                        )
+                                          _GameShopOfferCard(
+                                            offer: market.offers[i],
+                                            selected: _selectedOfferIndex == i,
+                                            canAfford:
+                                                market.offers[i].isAffordable,
+                                            onTap: () => _selectOffer(i),
+                                          ),
+                                      ],
+                                    ))
+                            : Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  for (
+                                    var i = 0;
+                                    i < _marketGhostItemOffers.length;
+                                    i++
+                                  )
+                                    _MarketItemOfferCard(
+                                      offer: _marketGhostItemOffers[i],
+                                      selected: _selectedItemOfferIndex == i,
+                                      onTap: () => _selectItemOffer(i),
+                                    ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
                         Expanded(
@@ -877,6 +898,277 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 }
 
+class _MarketSectionLabel extends StatelessWidget {
+  const _MarketSectionLabel({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.62),
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MarketSpeechPanel extends StatelessWidget {
+  const _MarketSpeechPanel({
+    required this.title,
+    required this.subtitle,
+    required this.body,
+    this.trailing,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget body;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: -7,
+          left: 24,
+          child: Transform.rotate(
+            angle: 0.785398,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: const Color(0xFF173126),
+                border: Border.all(color: Colors.white10),
+              ),
+            ),
+          ),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFF173126),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.62),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      body,
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...[const SizedBox(width: 10), trailing!],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MarketActionPane extends StatelessWidget {
+  const _MarketActionPane({
+    required this.priceLabel,
+    required this.buttonLabel,
+    required this.buttonColor,
+    this.foreground = Colors.white,
+    this.onPressed,
+  });
+
+  final String priceLabel;
+  final String buttonLabel;
+  final Color buttonColor;
+  final Color foreground;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 88,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            priceLabel,
+            style: const TextStyle(
+              color: Color(0xFFF2C14E),
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          GameActionButton(
+            label: buttonLabel,
+            background: buttonColor,
+            foreground: foreground,
+            compact: true,
+            onPressed: onPressed,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketTabBar extends StatelessWidget {
+  const _MarketTabBar({
+    required this.currentTab,
+    required this.rerollCost,
+    required this.onChanged,
+    required this.onReroll,
+  });
+
+  final _MarketShopTab currentTab;
+  final int rerollCost;
+  final ValueChanged<_MarketShopTab> onChanged;
+  final VoidCallback? onReroll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: GameChromeButton(
+            label: 'Jester Shop',
+            backgroundColor: currentTab == _MarketShopTab.jesters
+                ? const Color(0xFFF4A81D)
+                : const Color(0xFF29453A),
+            foregroundColor: currentTab == _MarketShopTab.jesters
+                ? Colors.black
+                : Colors.white,
+            onPressed: () => onChanged(_MarketShopTab.jesters),
+            height: 34,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: GameChromeButton(
+            label: 'Item Shop',
+            backgroundColor: currentTab == _MarketShopTab.items
+                ? const Color(0xFFF4A81D)
+                : const Color(0xFF29453A),
+            foregroundColor: currentTab == _MarketShopTab.items
+                ? Colors.black
+                : Colors.white,
+            onPressed: () => onChanged(_MarketShopTab.items),
+            height: 34,
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 84,
+          child: GameActionButton(
+            label: '리롤 $rerollCost',
+            background: const Color(0xFF2D6F9E),
+            compact: true,
+            onPressed: onReroll,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MarketOfferShelf extends StatelessWidget {
+  const _MarketOfferShelf({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+        child: Align(alignment: Alignment.topCenter, child: child),
+      ),
+    );
+  }
+}
+
+class _MarketItemGhostChip extends StatelessWidget {
+  const _MarketItemGhostChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.68),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
   return summary.snapshotSummaryLabel();
 }
@@ -887,128 +1179,193 @@ class _GameShopOfferCard extends StatelessWidget {
     required this.selected,
     required this.canAfford,
     required this.onTap,
-    required this.onBuy,
   });
 
   final RummiMarketOfferView offer;
   final bool selected;
   final bool canAfford;
   final VoidCallback onTap;
-  final VoidCallback onBuy;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(3),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Stack(
-          children: [
-            if (selected)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(17),
-                      border: Border.all(
-                        color: const Color(0xFFF2C14E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(3),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: selected
-                      ? const Color(0xFF173C31)
-                      : Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: kJesterCardWidth,
-                        height: kJesterCardHeight,
-                        child: GameJesterSlot(
-                          card: offer.card,
-                          runtimeValueText: null,
-                          extended: false,
-                          activeEffect: null,
-                          settlementSequenceTick: 0,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              localizedJesterName(context, offer.card),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              localizedJesterEffect(context, offer.card),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${offer.price}',
-                            style: TextStyle(
-                              color: canAfford
-                                  ? const Color(0xFFF2C14E)
-                                  : Colors.white38,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 34,
-                            child: GameActionButton(
-                              label: '구매',
-                              background: const Color(0xFFF4A81D),
-                              foreground: Colors.black,
-                              compact: true,
-                              onPressed: canAfford ? onBuy : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 94,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: selected
+                ? const Color(0xFF173C31)
+                : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFFF2C14E)
+                  : Colors.white.withValues(alpha: 0.08),
+              width: selected ? 1.8 : 1.0,
             ),
-          ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: _marketOfferCardWidth,
+                  height: _marketOfferCardHeight,
+                  child: GameJesterSlot(
+                    card: offer.card,
+                    runtimeValueText: null,
+                    extended: false,
+                    activeEffect: null,
+                    settlementSequenceTick: 0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  localizedJesterName(context, offer.card),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${offer.price}G',
+                  style: TextStyle(
+                    color: canAfford ? const Color(0xFFF2C14E) : Colors.white38,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
+
+class _MarketItemOfferCard extends StatelessWidget {
+  const _MarketItemOfferCard({
+    required this.offer,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _MarketGhostItemOffer offer;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 94,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: selected
+                ? const Color(0xFF173C31)
+                : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFFF2C14E)
+                  : Colors.white.withValues(alpha: 0.08),
+              width: selected ? 1.8 : 1.0,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            child: Column(
+              children: [
+                Container(
+                  width: _marketOfferCardWidth,
+                  height: _marketOfferCardHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      offer.slotLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  offer.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${offer.price}G',
+                  style: const TextStyle(
+                    color: Color(0xFFF2C14E),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketGhostItemOffer {
+  const _MarketGhostItemOffer({
+    required this.title,
+    required this.description,
+    required this.price,
+    required this.slotLabel,
+  });
+
+  final String title;
+  final String description;
+  final int price;
+  final String slotLabel;
+}
+
+const List<_MarketGhostItemOffer> _marketGhostItemOffers = [
+  _MarketGhostItemOffer(
+    title: '리롤 토큰',
+    description: '다음 리롤 비용을 1 줄이는 1회성 아이템 자리입니다.',
+    price: 3,
+    slotLabel: 'UTIL',
+  ),
+  _MarketGhostItemOffer(
+    title: '멀트 캡슐',
+    description: '이번 Station 동안 사용할 수 있는 소모품 슬롯 예시입니다.',
+    price: 4,
+    slotLabel: 'Q1',
+  ),
+  _MarketGhostItemOffer(
+    title: '패시브 렐릭',
+    description: '전투 중 직접 쓰지 않는 지속 효과 아이템 자리입니다.',
+    price: 5,
+    slotLabel: 'PASS',
+  ),
+];

@@ -127,6 +127,12 @@ V3의 30 Station은 후보일 뿐이다.
 - domain / save / runtime / UI는 분리한다.
 - economy 본격 조정은 이 분리 기준과 UI 시안이 먼저 고정된 뒤 진행한다.
 
+추가 열린 질문:
+
+- Balatro-style 상점 분류를 참고할 때 `Permit / Run Kit upgrade / Sigil`을 `Meta Shop`으로 묶을 것인가?
+- `Glyph / Echo`를 `Pack`형 구매층으로 묶을 것인가, 독립 상점으로 둘 것인가?
+- `Service`는 `Item Shop`에 흡수할 것인가, 독립 Utility Shop으로 둘 것인가?
+
 ### 2.5 Jester Instance Identity
 
 [WATCH]

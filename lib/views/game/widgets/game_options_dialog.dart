@@ -41,38 +41,23 @@ Future<void> showGameOptionsDialog({
                   ),
                 ),
               ),
-              IconButton(
+              GameIconButtonChip(
                 tooltip: context.tr('cancel'),
                 onPressed: () {
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   Navigator.of(dialogContext).pop();
                 },
-                icon: const Icon(Icons.close_rounded),
-                color: Colors.white,
+                icon: Icons.close_rounded,
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
+          GameDialogSection(
+            title: context.tr('runSeedLabel'),
             margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white10),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  context.tr('runSeedLabel'),
-                  style: TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
-                    color: Colors.white.withValues(alpha: 0.72),
-                  ),
-                ),
-                const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
@@ -86,7 +71,7 @@ Future<void> showGameOptionsDialog({
                         ),
                       ),
                     ),
-                    IconButton(
+                    GameIconButtonChip(
                       tooltip: context.tr('copy'),
                       onPressed: () async {
                         await Clipboard.setData(
@@ -95,8 +80,8 @@ Future<void> showGameOptionsDialog({
                         if (!context.mounted) return;
                         showTopNotice(context, '시드 번호를 복사했습니다.');
                       },
-                      icon: const Icon(Icons.copy_rounded),
-                      color: Colors.white,
+                      icon: Icons.copy_rounded,
+                      backgroundColor: const Color(0xFF21423A),
                     ),
                   ],
                 ),
@@ -104,26 +89,12 @@ Future<void> showGameOptionsDialog({
             ),
           ),
           if (activeRunSaveView != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
+            GameDialogSection(
+              title: 'Run Snapshot',
               margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white10),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Run Snapshot',
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontAngduIpsul140,
-                      color: Colors.white.withValues(alpha: 0.72),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
                   Text(
                     _activeRunSummaryLabel(activeRunSaveView),
                     style: TextStyle(
@@ -136,51 +107,23 @@ Future<void> showGameOptionsDialog({
                 ],
               ),
             ),
-          ListTile(
-            leading: Icon(Icons.refresh_rounded, color: Colors.amber.shade200),
-            title: Text(
-              isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
-              style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
-                color: Colors.white.withValues(alpha: 0.92),
-              ),
-            ),
+          GameMenuActionTile(
+            title: isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
+            subtitle: '현재 진행을 유지한 채 이번 Station 시작 시점으로 되돌립니다.',
+            icon: Icons.refresh_rounded,
+            accentColor: Colors.amber.shade200,
             onTap: () async {
               Navigator.of(dialogContext).pop();
               await WidgetsBinding.instance.endOfFrame;
               await onRestartRun();
             },
           ),
-          ListTile(
-            leading: Icon(
-              Icons.logout_rounded,
-              color: Colors.redAccent.shade100,
-            ),
-            title: Text(
-              context.tr('exit'),
-              style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
-                color: Colors.white.withValues(alpha: 0.92),
-              ),
-            ),
-            onTap: () async {
-              Navigator.of(dialogContext).pop();
-              await WidgetsBinding.instance.endOfFrame;
-              await onExitToTitle();
-            },
-          ),
-          ListTile(
-            leading: Icon(
-              Icons.settings_rounded,
-              color: Colors.lightBlueAccent.shade100,
-            ),
-            title: Text(
-              context.tr('settings'),
-              style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
-                color: Colors.white.withValues(alpha: 0.92),
-              ),
-            ),
+          const SizedBox(height: 8),
+          GameMenuActionTile(
+            title: context.tr('settings'),
+            subtitle: '설정 화면을 열고 복귀 후 현재 메뉴를 다시 엽니다.',
+            icon: Icons.settings_rounded,
+            accentColor: Colors.lightBlueAccent.shade100,
             onTap: () async {
               Navigator.of(dialogContext).pop();
               await WidgetsBinding.instance.endOfFrame;
@@ -191,39 +134,39 @@ Future<void> showGameOptionsDialog({
               await onReopenOptions(context);
             },
           ),
+          const SizedBox(height: 8),
+          GameMenuActionTile(
+            title: context.tr('exit'),
+            subtitle: '현재 런을 종료하고 타이틀 화면으로 돌아갑니다.',
+            icon: Icons.logout_rounded,
+            accentColor: Colors.redAccent.shade100,
+            onTap: () async {
+              Navigator.of(dialogContext).pop();
+              await WidgetsBinding.instance.endOfFrame;
+              await onExitToTitle();
+            },
+          ),
           if (kDebugMode) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 10),
             Divider(color: Colors.white.withValues(alpha: 0.08)),
-            ListTile(
-              leading: Icon(
-                Icons.bug_report_rounded,
-                color: Colors.orange.shade200,
-              ),
-              title: Text(
-                '현재 Blind 즉시 클리어',
-                style: TextStyle(
-                  fontFamily: AssetPaths.fontAngduIpsul140,
-                  color: Colors.white.withValues(alpha: 0.92),
-                ),
-              ),
+            const SizedBox(height: 8),
+            GameMenuActionTile(
+              title: '현재 Blind 즉시 클리어',
+              subtitle: '현재 선택된 블라인드를 즉시 정산 완료 상태로 넘깁니다.',
+              icon: Icons.bug_report_rounded,
+              accentColor: Colors.orange.shade200,
               onTap: () async {
                 Navigator.of(dialogContext).pop();
                 await WidgetsBinding.instance.endOfFrame;
                 await onDebugForceBlindClear();
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.skip_next_rounded,
-                color: Colors.lightGreenAccent.shade100,
-              ),
-              title: Text(
-                '보스 클리어 후 다음 Blind Select',
-                style: TextStyle(
-                  fontFamily: AssetPaths.fontAngduIpsul140,
-                  color: Colors.white.withValues(alpha: 0.92),
-                ),
-              ),
+            const SizedBox(height: 8),
+            GameMenuActionTile(
+              title: '보스 클리어 후 다음 Blind Select',
+              subtitle: '다음 스테이션의 블라인드 선택으로 바로 이행합니다.',
+              icon: Icons.skip_next_rounded,
+              accentColor: Colors.lightGreenAccent.shade100,
               onTap: () async {
                 Navigator.of(dialogContext).pop();
                 await WidgetsBinding.instance.endOfFrame;

@@ -225,6 +225,65 @@ Market 상품 후보:
 - temporary consumable
 - reroll / remove / upgrade service
 
+### 8.1 Balatro-style Market Mapping
+
+[TARGET]
+
+발라트로의 상점 분류를 현재 V4 상품 후보에 직접 1:1 복제하지는 않지만,
+유저가 읽는 상점 카테고리는 아래처럼 대응시킬 수 있다.
+
+```text
+Balatro Joker Store
+→ Jester
+
+Balatro Voucher
+→ Permit
+→ Run Kit upgrade
+→ 일부 Service
+→ 일부 Sigil
+
+Balatro Pack
+→ Item
+→ Glyph
+→ Echo
+→ 일부 Service
+```
+
+설명:
+
+- `Jester`는 가장 직접적으로 조커 계층에 대응한다.
+- `Permit`, `Run Kit upgrade`는 전투 카드보다 메타/접근 권한에 가까우므로 바우처 계층으로 본다.
+- `Item`, `Glyph`, `Echo`는 즉시 선택지 확장 또는 중간 변형 기회에 가까워 팩 계층 후보로 본다.
+
+[V4_DECISION]
+
+도메인 모델은 위 대응표에 맞춰 억지로 합치지 않는다.
+
+즉:
+
+- 내부 도메인 경계는 `Jester / Item / Permit / Glyph / Echo / Service`를 유지한다.
+- 상점 UI 카테고리는 유저 이해를 위해 상위 그룹으로 다시 묶을 수 있다.
+
+권장 UI 카테고리 묶음:
+
+```text
+Jester Shop
+- Jester
+
+Utility Shop
+- Item
+- Service
+
+Meta Shop
+- Permit
+- Run Kit upgrade
+- Sigil
+
+Modifier / Pack
+- Glyph
+- Echo
+```
+
 [MIGRATION]
 
 Market은 기존 `RummiRunProgress.shopOffers`를 깨지 않고 확장한다.

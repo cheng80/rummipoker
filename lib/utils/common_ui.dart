@@ -20,6 +20,287 @@ class GameDialogAction<T> {
   final Color textColor;
 }
 
+class GameChromeButton extends StatelessWidget {
+  const GameChromeButton({
+    super.key,
+    required this.label,
+    required this.backgroundColor,
+    this.foregroundColor = Colors.white,
+    this.onPressed,
+    this.icon,
+    this.height = 38,
+    this.borderRadius = 16,
+    this.padding,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final double height;
+  final double borderRadius;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+    final baseColor = isEnabled
+        ? backgroundColor
+        : backgroundColor.withValues(alpha: 0.34);
+    final borderColor = _toneBorderColor(baseColor, enabled: isEnabled);
+    final baseForeground = isEnabled
+        ? foregroundColor
+        : foregroundColor.withValues(alpha: 0.58);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Ink(
+          height: height,
+          decoration: BoxDecoration(
+            color: baseColor,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderColor, width: 1.5),
+          ),
+          child: Padding(
+            padding:
+                padding ??
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 16, color: baseForeground),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: AssetPaths.fontAngduIpsul140,
+                        fontSize: 15,
+                        color: baseForeground,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GameIconButtonChip extends StatelessWidget {
+  const GameIconButtonChip({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    this.backgroundColor = const Color(0xFF29453A),
+    this.foregroundColor = Colors.white,
+    this.size = 38,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final double size;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: onPressed != null
+                ? backgroundColor
+                : backgroundColor.withValues(alpha: 0.34),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: _toneBorderColor(
+                backgroundColor,
+                enabled: onPressed != null,
+              ),
+              width: 1.4,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: onPressed != null
+                ? foregroundColor
+                : foregroundColor.withValues(alpha: 0.58),
+          ),
+        ),
+      ),
+    );
+    if (tooltip == null || tooltip!.isEmpty) {
+      return child;
+    }
+    return Tooltip(message: tooltip!, child: child);
+  }
+}
+
+class GameDialogSection extends StatelessWidget {
+  const GameDialogSection({
+    super.key,
+    this.title,
+    required this.child,
+    this.margin = const EdgeInsets.only(bottom: 10),
+  });
+
+  final String? title;
+  final Widget child;
+  final EdgeInsetsGeometry margin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: margin,
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Text(
+              title!,
+              style: TextStyle(
+                fontFamily: AssetPaths.fontAngduIpsul140,
+                color: Colors.white.withValues(alpha: 0.72),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class GameMenuActionTile extends StatelessWidget {
+  const GameMenuActionTile({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.accentColor,
+    required this.onTap,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData icon;
+  final Color accentColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onTap != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: const Color(
+              0xFF173126,
+            ).withValues(alpha: isEnabled ? 1 : 0.5),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: accentColor.withValues(alpha: isEnabled ? 0.55 : 0.22),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.42),
+                  ),
+                ),
+                child: Icon(icon, color: accentColor, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontFamily: AssetPaths.fontAngduIpsul140,
+                        color: Colors.white.withValues(
+                          alpha: isEnabled ? 0.94 : 0.7,
+                        ),
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle!,
+                        style: TextStyle(
+                          color: Colors.white.withValues(
+                            alpha: isEnabled ? 0.7 : 0.46,
+                          ),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white.withValues(alpha: isEnabled ? 0.82 : 0.46),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 void showTopNotice(
   BuildContext context,
   String message, {
@@ -228,23 +509,12 @@ class _GameDialogFrame extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 348),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF152820), Color(0xFF102019)],
-            ),
+            color: const Color(0xFF13251E),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: const Color(0xFFE6D4A1).withValues(alpha: 0.24),
               width: 1.2,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.46),
-                blurRadius: 34,
-                offset: const Offset(0, 18),
-              ),
-            ],
           ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
@@ -283,62 +553,12 @@ class _GameDialogActionButton<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final darkerColor = HSLColor.fromColor(action.accent)
-        .withLightness(
-          (HSLColor.fromColor(action.accent).lightness - 0.16).clamp(0.0, 1.0),
-        )
-        .toColor();
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => Navigator.of(context).pop(action.value),
-        borderRadius: BorderRadius.circular(16),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [action.accent, darkerColor],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: darkerColor.withValues(alpha: 0.62),
-              width: 1.8,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: darkerColor.withValues(alpha: 0.58),
-                offset: const Offset(0, 3),
-                blurRadius: 0,
-              ),
-            ],
-          ),
-          child: SizedBox(
-            height: _buttonHeight,
-            child: Center(
-              child: Text(
-                action.label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: AssetPaths.fontAngduIpsul140,
-                  fontSize: 16,
-                  color: action.textColor,
-                  letterSpacing: 0.6,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(
-                        alpha: action.textColor == Colors.black ? 0.10 : 0.24,
-                      ),
-                      offset: const Offset(1, 1),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return GameChromeButton(
+      label: action.label,
+      backgroundColor: action.accent,
+      foregroundColor: action.textColor,
+      height: _buttonHeight,
+      onPressed: () => Navigator.of(context).pop(action.value),
     );
   }
 }
@@ -364,9 +584,6 @@ class _NoticeCard extends StatelessWidget {
     final textColor = isTopBanner
         ? const Color(0xFF1F1600)
         : Colors.white.withValues(alpha: 0.94);
-    final shadowColor = isTopBanner
-        ? const Color(0xAA000000)
-        : Colors.black.withValues(alpha: 0.22);
     final icon = isTopBanner ? Icons.campaign_rounded : Icons.info_rounded;
 
     return TweenAnimationBuilder<double>(
@@ -390,13 +607,6 @@ class _NoticeCard extends StatelessWidget {
               color: backgroundColor,
               borderRadius: BorderRadius.circular(isTopBanner ? 18 : 16),
               border: Border.all(color: borderColor),
-              boxShadow: [
-                BoxShadow(
-                  color: shadowColor,
-                  blurRadius: isTopBanner ? 18 : 14,
-                  offset: Offset(0, isTopBanner ? 8 : 6),
-                ),
-              ],
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -430,4 +640,14 @@ class _NoticeCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Color _toneBorderColor(Color color, {required bool enabled}) {
+  final hsl = HSLColor.fromColor(color);
+  final adjusted = hsl
+      .withLightness((hsl.lightness - 0.14).clamp(0.0, 1.0))
+      .toColor();
+  return enabled
+      ? adjusted.withValues(alpha: 0.88)
+      : adjusted.withValues(alpha: 0.34);
 }

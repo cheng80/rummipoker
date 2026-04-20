@@ -347,6 +347,44 @@ Market 확장 후에는 다음 category를 표시한다.
 - battle 화면도 `Jester strip + Item zone`으로 분리 재설계 필요
 - item 4분류 표현 규칙과 market 정보 구조는 `13_ITEM_SYSTEM_CONTRACT.md`를 기준으로 확정한다
 
+### 6.1 Market Category Grouping
+
+[TARGET]
+
+상점 UI는 내부 도메인 타입을 그대로 노출하기보다,
+유저가 이해하기 쉬운 상위 카테고리로 묶을 수 있다.
+
+권장 묶음:
+
+```text
+Jester Shop
+- Jester
+
+Utility Shop
+- Item
+- Service
+
+Meta Shop
+- Permit
+- Run Kit upgrade
+- Sigil
+
+Modifier / Pack
+- Glyph
+- Echo
+```
+
+[V4_DECISION]
+
+단, 현재 단계에서 가장 먼저 구현할 상점 분리는 아래 두 축이다.
+
+```text
+1. Jester Shop
+2. Item Shop
+```
+
+이후 multi-content market이 확장되면 `Meta Shop`, `Modifier / Pack` 계층을 추가한다.
+
 ## 7. Target Product Flow
 
 [TARGET]
