@@ -109,6 +109,24 @@ V3의 30 Station은 후보일 뿐이다.
 - 현재 값은 baseline으로 보존한다.
 - target economy pass는 Station prototype 후 진행한다.
 
+### 2.4.1 Jester / Item Economy Split
+
+[WATCH]
+
+열린 질문:
+
+- Item 하위 타입을 consumable / equipment / passive_relic / utility로 고정할 것인가?
+- Jester와 Item을 같은 market list에 섞되 section만 나눌 것인가, 아예 다른 panel로 둘 것인가?
+- GameView에서 item은 quick-use slot인가, inventory panel인가?
+- save에서 ownedItems와 equippedItems를 어떻게 나눌 것인가?
+
+현재 결정:
+
+- Jester와 Item은 같은 부류로 다루지 않는다.
+- market 진열 레벨에서만 공통 wrapper를 둘 수 있다.
+- domain / save / runtime / UI는 분리한다.
+- economy 본격 조정은 이 분리 기준과 UI 시안이 먼저 고정된 뒤 진행한다.
+
 ### 2.5 Jester Instance Identity
 
 [WATCH]
@@ -128,6 +146,27 @@ Target:
 
 - `ownedJesterInstanceId` 추가 후보
 - 기존 `ownedJesterIds`와 adapter 필요
+
+### 2.6 Balatro-style Blind Skip
+
+[WATCH]
+
+Balatro의 `Small / Big Blind Skip -> Tag 보상 -> 다음 Blind 직행` 구조를
+현재 station/blind select 흐름에 언제 도입할지 아직 정하지 않았다.
+
+열린 질문:
+
+- skip이 `Blind Select` 이전 선택인가, `Market 이후` 선택인가?
+- skip 보상은 Tag 그대로 가져오는가, 현재 economy/read model에 맞게 adapter로 바꾸는가?
+- skip 시 shop/checkpoint/save scene이 어떻게 바뀌는가?
+- boss blind / station reset / continue 복원과 충돌 없이 저장 가능한가?
+
+현재 결정:
+
+- 이번 단계에서는 구현하지 않는다.
+- 우선순위는 `small -> big -> boss -> next station small reset`과
+  station별 blind scaling, save/continue 복원 안정화가 더 높다.
+- blind progression/save scene이 안정화된 뒤 별도 작업으로 검토한다.
 
 결정:
 

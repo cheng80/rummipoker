@@ -45,15 +45,14 @@ class GameSessionArgs {
       other.blindTier == blindTier;
 
   @override
-  int get hashCode =>
-      Object.hash(
-        runSeed,
-        restoredRun,
-        debugFixtureId,
-        ruleset,
-        difficulty,
-        blindTier,
-      );
+  int get hashCode => Object.hash(
+    runSeed,
+    restoredRun,
+    debugFixtureId,
+    ruleset,
+    difficulty,
+    blindTier,
+  );
 }
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
@@ -86,6 +85,7 @@ class GameSessionNotifier
     final ruleset = args.ruleset;
     final initialBlind = BlindSelectionSetup.resolveSpec(
       tier: args.blindTier,
+      stationIndex: 1,
       difficulty: args.difficulty,
       ruleset: ruleset,
     );
@@ -101,6 +101,7 @@ class GameSessionNotifier
     );
     session.maxHandSize = initialBlind.maxHandSize;
     final runProgress = RummiRunProgress()
+      ..currentStationBlindTierIndex = args.blindTier.index
       ..gold = _initialGold(args.difficulty)
       ..rerollCost = _initialRerollCost(args.difficulty);
     return _withDerivedViews(
@@ -156,6 +157,7 @@ class GameSessionNotifier
 
   ActiveRunRuntimeState buildSaveRuntimeState({
     ActiveRunScene? scene,
+    required NewRunDifficulty difficulty,
     bool useStageStartSnapshotAsCurrent = false,
   }) {
     final currentScene = scene ?? state.activeRunScene;
@@ -167,6 +169,7 @@ class GameSessionNotifier
       );
       return ActiveRunRuntimeState(
         activeScene: ActiveRunScene.battle,
+        difficulty: difficulty,
         session: retrySnapshot.session,
         runProgress: retrySnapshot.runProgress,
         stageStartSnapshot: retrySnapshot,
@@ -175,6 +178,7 @@ class GameSessionNotifier
 
     return ActiveRunRuntimeState(
       activeScene: currentScene,
+      difficulty: difficulty,
       session: state.session!,
       runProgress: state.runProgress!,
       stageStartSnapshot: state.stageStartSnapshot!,
@@ -426,6 +430,23 @@ class GameSessionNotifier
       ),
     );
     return breakdown;
+  }
+
+  /// 디버그용: 현재 블라인드를 즉시 클리어 상태로 만든다.
+  int debugForceBlindClear({BlindTier? overrideTier}) {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null) return 0;
+    final remainingScore = max(
+      0,
+      session.blind.targetScore - session.blind.scoreTowardBlind,
+    );
+    session.blind.scoreTowardBlind = session.blind.targetScore;
+    if (overrideTier != null) {
+      runProgress.currentStationBlindTierIndex = overrideTier.index;
+    }
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return remainingScore;
   }
 
   /// 상점 열기: 오퍼 생성.
@@ -690,6 +711,7 @@ class GameSessionNotifier
       activeRunSaveView: RummiActiveRunSaveFacade.fromRuntimeState(
         ActiveRunRuntimeState(
           activeScene: next.activeRunScene,
+          difficulty: arg.difficulty,
           session: session,
           runProgress: runProgress,
           stageStartSnapshot:
@@ -706,6 +728,7 @@ class GameSessionNotifier
   GameRunLoopPhase _sceneToLoopPhase(ActiveRunScene scene) {
     return switch (scene) {
       ActiveRunScene.shop => GameRunLoopPhase.market,
+      ActiveRunScene.blindSelect => GameRunLoopPhase.nextStationTransition,
       ActiveRunScene.battle => GameRunLoopPhase.battle,
     };
   }

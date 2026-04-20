@@ -11,6 +11,9 @@ class AppConfig {
   /// 타이틀 화면 메인 로고 (줄바꿈 포함).
   static const String gameTitleBlock = 'Rummi\nPoker';
   static const String gameSubtitle = '5×5 그리드 · 12줄 포커 족보';
+
+  /// Station/Blind 목표 점수를 한 번에 미세 조정하는 전역 스케일.
+  static const double stationTargetScoreScale = 0.9;
 }
 
 /// 로컬 저장소(SharedPreferences) 키 상수.

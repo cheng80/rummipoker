@@ -9,6 +9,7 @@ import '../../../logic/rummi_poker_grid/line_ref.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../../../resources/jester_translation_scope.dart';
 import 'game_jester_widgets.dart';
+import 'game_shared_widgets.dart';
 
 String gameHandRankLabel(RummiHandRank rank) {
   return switch (rank) {
@@ -384,9 +385,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                 ],
                 const SizedBox(height: 12),
                 AnimatedOpacity(
-                  opacity: _step >= (hasEconomyBonuses ? 5 : 4)
-                      ? 1
-                      : 0,
+                  opacity: _step >= (hasEconomyBonuses ? 5 : 4) ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -422,22 +421,13 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                FilledButton(
+                GameActionButton(
+                  label: 'Market으로',
+                  background: const Color(0xFFF4A81D),
+                  foreground: Colors.black,
                   onPressed: _step < 3
                       ? null
                       : () => Navigator.of(context).pop(true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFF4A81D),
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size.fromHeight(54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: const Text(
-                    'Market으로',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                  ),
                 ),
               ],
             ),
@@ -455,9 +445,7 @@ class _GameCashOutLine extends StatelessWidget {
     required this.gold,
   });
 
-  factory _GameCashOutLine.fromSettlementEntry(
-    RummiSettlementEntryView entry,
-  ) {
+  factory _GameCashOutLine.fromSettlementEntry(RummiSettlementEntryView entry) {
     return _GameCashOutLine(
       leading: entry.leadingLabel,
       text: entry.description,

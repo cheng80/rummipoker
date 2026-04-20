@@ -197,26 +197,13 @@ class _GameShopScreenState extends State<GameShopScreen> {
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      child: GameActionButton(
+                        label: '판매 +$sellGold Gold',
+                        background: const Color(0xFFB74B3B),
                         onPressed: () {
                           Navigator.of(sheetContext).pop();
                           _sellOwned(index);
                         },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFB74B3B),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          '판매 +$sellGold Gold',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
                       ),
                     ),
                   ],
@@ -266,23 +253,19 @@ class _GameShopScreenState extends State<GameShopScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextButton(
+                  child: GameActionButton(
+                    label: '취소',
+                    background: const Color(0xFF586463),
                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: const Text('취소'),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: FilledButton(
+                  child: GameActionButton(
+                    label: '리롤',
+                    background: const Color(0xFFF4A81D),
+                    foreground: Colors.black,
                     onPressed: () => Navigator.of(dialogContext).pop(true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4A81D),
-                      foregroundColor: Colors.black,
-                    ),
-                    child: const Text(
-                      '리롤',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
                   ),
                 ),
               ],
@@ -798,6 +781,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                         );
                       },
                     ),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         const Expanded(
@@ -810,11 +794,13 @@ class _GameShopScreenState extends State<GameShopScreen> {
                             ),
                           ),
                         ),
-                        TextButton(
-                          onPressed: _reroll,
-                          child: Text(
-                            '리롤 ${market.rerollCost}',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
+                        SizedBox(
+                          width: 118,
+                          child: GameActionButton(
+                            label: '리롤 ${market.rerollCost}',
+                            background: const Color(0xFF2D6F9E),
+                            onPressed: _reroll,
+                            compact: true,
                           ),
                         ),
                       ],
@@ -861,44 +847,21 @@ class _GameShopScreenState extends State<GameShopScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
+                          child: GameActionButton(
+                            label: '메인 메뉴',
+                            background: const Color(0xFF586463),
                             onPressed: () async {
                               Navigator.of(context).pop(false);
                               await widget.onExitToTitle();
                             },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white24),
-                              minimumSize: const Size.fromHeight(52),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                            ),
-                            child: const Text(
-                              '메인 메뉴',
-                              style: TextStyle(fontWeight: FontWeight.w900),
-                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: FilledButton(
+                          child: GameActionButton(
+                            label: '다음 Station',
+                            background: const Color(0xFF267B67),
                             onPressed: () => Navigator.of(context).pop(true),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF267B67),
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size.fromHeight(52),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                            ),
-                            child: const Text(
-                              '다음 Station',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
                           ),
                         ),
                       ],
@@ -1028,25 +991,12 @@ class _GameShopOfferCard extends StatelessWidget {
                           const SizedBox(height: 8),
                           SizedBox(
                             height: 34,
-                            child: FilledButton(
+                            child: GameActionButton(
+                              label: '구매',
+                              background: const Color(0xFFF4A81D),
+                              foreground: Colors.black,
+                              compact: true,
                               onPressed: canAfford ? onBuy : null,
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                backgroundColor: const Color(0xFFF4A81D),
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                '구매',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
                             ),
                           ),
                         ],

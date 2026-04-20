@@ -11,6 +11,7 @@ import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/services/device_key_store.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
+import 'package:rummipoker/services/new_run_setup.dart';
 
 class _MemoryDeviceKeyStore implements DeviceKeyStore {
   String? value;
@@ -67,6 +68,7 @@ void main() {
           schemaVersion: 2,
           savedAtIso8601: '2026-04-19T00:00:00.000Z',
           activeScene: ActiveRunScene.shop.name,
+          difficulty: NewRunDifficulty.standard.name,
           session: const SavedSessionData(
             runSeed: 11,
             rulesetId: 'current_defaults_v1',
@@ -97,6 +99,7 @@ void main() {
           ),
           runProgress: const SavedRunProgressData(
             stageIndex: 3,
+            currentStationBlindTierIndex: 1,
             gold: 42,
             rerollCost: 6,
             ownedJesterIds: <String>['jester'],
@@ -127,6 +130,7 @@ void main() {
           ),
           stageStartRunProgress: const SavedRunProgressData(
             stageIndex: 3,
+            currentStationBlindTierIndex: 0,
             gold: 10,
             rerollCost: 5,
             ownedJesterIds: <String>[],
@@ -143,12 +147,15 @@ void main() {
 
         expect(restored.schemaVersion, 2);
         expect(restored.activeScene, ActiveRunScene.shop.name);
+        expect(restored.difficulty, NewRunDifficulty.standard.name);
         expect(restored.session.runSeed, 11);
+        expect(restored.runProgress.currentStationBlindTierIndex, 1);
         expect(restored.session.rulesetId, 'current_defaults_v1');
         expect(restored.runProgress.gold, 42);
         expect(restored.stageStartSession.runRandomState, 55);
         expect(restored.stageStartSession.rulesetId, 'current_defaults_v1');
         expect(restored.stageStartRunProgress.gold, 10);
+        expect(restored.stageStartRunProgress.currentStationBlindTierIndex, 0);
         expect(restored.stageStartRunProgress.rerollCost, 5);
       },
     );
@@ -158,6 +165,7 @@ void main() {
         schemaVersion: 2,
         savedAtIso8601: '2026-04-19T00:00:00.000Z',
         activeScene: ActiveRunScene.shop.name,
+        difficulty: NewRunDifficulty.standard.name,
         session: const SavedSessionData(
           runSeed: 11,
           rulesetId: 'current_defaults_v1',
@@ -272,6 +280,7 @@ void main() {
 
         await ActiveRunSaveService.saveActiveRun(
           activeScene: ActiveRunScene.shop,
+          difficulty: NewRunDifficulty.standard,
           session: session,
           runProgress: runProgress,
           stageStartSnapshot: stageStartSnapshot,
@@ -292,6 +301,7 @@ void main() {
         final restored = await ActiveRunSaveService.loadActiveRun();
         expect(restored, isNotNull);
         expect(restored!.activeScene, ActiveRunScene.shop);
+        expect(restored.difficulty, NewRunDifficulty.standard);
         expect(restored.session.runSeed, 4242);
         expect(
           restored.session.ruleset.persistenceId,
@@ -329,6 +339,7 @@ void main() {
 
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.shop,
+        difficulty: NewRunDifficulty.standard,
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
@@ -342,6 +353,7 @@ void main() {
       final restored = await ActiveRunSaveService.loadActiveRun();
       expect(restored, isNotNull);
       expect(restored!.activeScene, ActiveRunScene.shop);
+      expect(restored.difficulty, NewRunDifficulty.standard);
       expect(restored.session.runSeed, 5151);
       expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 9);
       expect(restored.session.board.cellAt(0, 0), isNotNull);

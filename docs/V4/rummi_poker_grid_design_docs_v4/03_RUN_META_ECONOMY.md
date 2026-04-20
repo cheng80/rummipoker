@@ -237,6 +237,17 @@ Market은 기존 `RummiRunProgress.shopOffers`를 깨지 않고 확장한다.
 4. UI는 기존 shop card를 유지한 채 category badge만 추가
 5. 이후 새 상품 타입 추가
 
+[V4_DECISION]
+
+경제 확장은 `Jester 강화`와 `Item 도입`을 같은 축으로 취급하지 않는다.
+
+정책:
+
+- Jester economy는 `장착/판매/시너지 자산` 기준으로 본다.
+- Item economy는 `구매/소모/장착/서비스` 기준으로 별도 본다.
+- 장기 수치 조정은 Jester price curve와 Item price curve를 분리해서 잡는다.
+- economy pass는 multi-content market 구조가 잡힌 뒤 진행한다.
+
 ## 9. Economy Target Policy
 
 [TARGET]

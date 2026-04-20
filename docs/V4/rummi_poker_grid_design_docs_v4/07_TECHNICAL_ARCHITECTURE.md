@@ -95,7 +95,10 @@ core/run
 core/content
 - ContentDefinition
 - JesterDefinition
+- ItemDefinition
 - MarketOffer
+- ItemOffer
+- OwnedItemEntry
 - EffectDefinition
 
 core/effects
@@ -120,6 +123,25 @@ views
 - StationMap
 - Archive
 ```
+
+[V4_DECISION]
+
+Jester / Item 분리 구현 시 최소 새 경계는 아래처럼 잡는다.
+
+```text
+core/content
+- jester_definition.dart
+- item_definition.dart
+- market_offer.dart
+
+core/run
+- run_inventory_state.dart
+
+services/market
+- market_offer_adapter.dart
+```
+
+상세 필드 계약은 `13_ITEM_SYSTEM_CONTRACT.md`를 따른다.
 
 [MIGRATION]
 

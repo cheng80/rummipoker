@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
@@ -47,7 +48,7 @@ void main() {
       expect(initial.marketView, isNotNull);
       expect(initial.battleView, isNotNull);
       expect(initial.activeRunSaveView, isNotNull);
-      expect(initial.stationView!.objective.targetScore, 300);
+      expect(initial.stationView!.objective.targetScore, 270);
       expect(initial.marketView!.gold, RummiEconomyConfig.startingGold);
       expect(initial.battleView!.stageIndex, 1);
       expect(initial.battleView!.currentGold, RummiEconomyConfig.startingGold);
@@ -242,7 +243,7 @@ void main() {
         state.runProgress?.rerollCost,
         RummiRunProgress.shopBaseRerollCost - 1,
       );
-      expect(state.session?.blind.targetScore, 240);
+      expect(state.session?.blind.targetScore, 216);
       expect(
         state.session?.blind.boardDiscardsRemaining,
         RummiRuleset.currentDefaults.defaultBoardDiscards + 1,
@@ -263,7 +264,7 @@ void main() {
       );
 
       final state = container.read(gameSessionNotifierProvider(args));
-      expect(state.session?.blind.targetScore, 450);
+      expect(state.session?.blind.targetScore, 405);
       expect(
         state.session?.blind.boardDiscardsRemaining,
         RummiRuleset.currentDefaults.defaultBoardDiscards - 1,
@@ -272,7 +273,10 @@ void main() {
         state.session?.blind.handDiscardsRemaining,
         RummiRuleset.currentDefaults.defaultHandDiscards,
       );
-      expect(state.session?.maxHandSize, RummiRuleset.currentDefaults.defaultMaxHandSize);
+      expect(
+        state.session?.maxHandSize,
+        RummiRuleset.currentDefaults.defaultMaxHandSize,
+      );
     });
 
     test('ruleset debug hand-size bounds clamp provider mutations', () {
@@ -611,7 +615,9 @@ void main() {
       state.runProgress!.gold += 7;
       notifier.setActiveRunScene(ActiveRunScene.shop);
 
-      final runtime = notifier.buildSaveRuntimeState();
+      final runtime = notifier.buildSaveRuntimeState(
+        difficulty: NewRunDifficulty.standard,
+      );
 
       expect(runtime.activeScene, ActiveRunScene.shop);
       expect(runtime.session, same(state.session));
@@ -642,6 +648,7 @@ void main() {
         notifier.markDirty();
 
         final runtime = notifier.buildSaveRuntimeState(
+          difficulty: NewRunDifficulty.standard,
           useStageStartSnapshotAsCurrent: true,
         );
 
@@ -657,6 +664,56 @@ void main() {
         expect(runtime.runProgress, isNot(same(state.runProgress)));
       },
     );
+
+    test('debugForceBlindClear는 현재 블라인드를 즉시 목표 점수까지 올린다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 141);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final before = container.read(gameSessionNotifierProvider(args));
+      final session = before.session!;
+      final runProgress = before.runProgress!;
+      session.blind.scoreTowardBlind = session.blind.targetScore - 37;
+
+      final added = notifier.debugForceBlindClear();
+      final after = container.read(gameSessionNotifierProvider(args));
+
+      expect(added, 37);
+      expect(
+        after.session!.blind.scoreTowardBlind,
+        after.session!.blind.targetScore,
+      );
+      expect(
+        after.runProgress!.currentStationBlindTierIndex,
+        runProgress.currentStationBlindTierIndex,
+      );
+    });
+
+    test('debugForceBlindClear는 override tier를 함께 반영한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 142);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      final added = notifier.debugForceBlindClear(overrideTier: BlindTier.boss);
+      final after = container.read(gameSessionNotifierProvider(args));
+
+      expect(added, greaterThanOrEqualTo(0));
+      expect(
+        after.runProgress!.currentStationBlindTierIndex,
+        BlindTier.boss.index,
+      );
+      expect(
+        after.session!.blind.scoreTowardBlind,
+        after.session!.blind.targetScore,
+      );
+    });
 
     test('restartCurrentStage는 변경된 전투 상태와 골드를 stage-start 기준으로 되돌린다', () {
       final container = ProviderContainer();
@@ -715,6 +772,7 @@ void main() {
 
         final restoredRun = ActiveRunRuntimeState(
           activeScene: ActiveRunScene.battle,
+          difficulty: NewRunDifficulty.standard,
           session: currentSession,
           runProgress: currentProgress,
           stageStartSnapshot: ActiveRunStageSnapshot(
@@ -743,5 +801,76 @@ void main() {
         expect(restarted.runLoopPhase, GameRunLoopPhase.battle);
       },
     );
+
+    test('clear confirm 직후에도 expiry 신호가 동시에 나올 수 있는 상태를 재현한다', () {
+      final session = RummiPokerGridSession(
+        runSeed: 700,
+        blind: RummiBlindState(
+          targetScore: 40,
+          boardDiscardsRemaining: 4,
+          handDiscardsRemaining: 2,
+        ),
+        deck: PokerDeck.fromSnapshot(const []),
+      );
+      final runProgress = RummiRunProgress();
+
+      final drawnA = session.drawToHand();
+      final drawnB = session.drawToHand();
+      expect(drawnA, isNull);
+      expect(drawnB, isNull);
+
+      session.board.setCell(
+        0,
+        0,
+        const Tile(id: 1, color: TileColor.red, number: 1),
+      );
+      session.board.setCell(
+        0,
+        1,
+        const Tile(id: 2, color: TileColor.blue, number: 2),
+      );
+      session.board.setCell(
+        0,
+        2,
+        const Tile(id: 3, color: TileColor.yellow, number: 3),
+      );
+      session.board.setCell(
+        0,
+        3,
+        const Tile(id: 4, color: TileColor.black, number: 4),
+      );
+      session.board.setCell(
+        0,
+        4,
+        const Tile(id: 5, color: TileColor.red, number: 5),
+      );
+
+      final restoredRun = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: session.copySnapshot(),
+          runProgress: runProgress.copySnapshot(),
+        ),
+      );
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final args = GameSessionArgs(runSeed: 700, restoredRun: restoredRun);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      final result = notifier.confirmLines();
+
+      expect(result, isNotNull);
+      expect(result!.stageCleared, isTrue);
+      expect(
+        notifier.evaluateExpiry(),
+        contains(RummiExpirySignal.drawPileExhausted),
+      );
+    });
   });
 }

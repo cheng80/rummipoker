@@ -5,6 +5,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
+import 'package:rummipoker/services/new_run_setup.dart';
 
 void main() {
   group('RummiActiveRunSaveFacade', () {
@@ -13,6 +14,7 @@ void main() {
         schemaVersion: 2,
         savedAtIso8601: '2026-04-19T00:00:00.000Z',
         activeScene: 'shop',
+        difficulty: 'standard',
         session: SavedSessionData(
           runSeed: 41,
           deckCopiesPerTile: 1,
@@ -98,6 +100,7 @@ void main() {
       final checkpointProgress = runProgress.copySnapshot()..gold = 10;
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: ActiveRunStageSnapshot(
@@ -129,6 +132,7 @@ void main() {
         ..gold = 27;
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.shop,
+        difficulty: NewRunDifficulty.standard,
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: ActiveRunStageSnapshot(
@@ -140,10 +144,7 @@ void main() {
       final facade = RummiActiveRunSaveFacade.fromRuntimeState(runtime);
 
       expect(rummiSaveSceneLabel(facade.sceneAlias), 'Market');
-      expect(
-        facade.currentLocationSummary,
-        '현재 Station 3 · Market · Gold 27',
-      );
+      expect(facade.currentLocationSummary, '현재 Station 3 · Market · Gold 27');
       expect(facade.checkpointSummary, '체크포인트 Station 3');
       expect(
         facade.snapshotSummaryLabel(),

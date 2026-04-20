@@ -19,10 +19,7 @@ import 'home_entry_widgets.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
 class TitleView extends ConsumerStatefulWidget {
-  const TitleView({
-    super.key,
-    this.debugScrollPreset,
-  });
+  const TitleView({super.key, this.debugScrollPreset});
 
   final String? debugScrollPreset;
 
@@ -72,28 +69,30 @@ class _TitleViewState extends ConsumerState<TitleView>
       final summary =
           titleState.storedRunSummary ?? await notifier.loadStoredRunSummary();
       if (!mounted) return;
-      final action = await showAppDialog<String>(
+      final action = await showGameChoiceDialog<String>(
         context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('이어하기'),
-          content: Text(_continueDialogMessage(summary)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop('delete'),
-              child: const Text('삭제하기'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('취소'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop('continue'),
-              child: const Text('이어하기'),
-            ),
-          ],
-        ),
+        title: '이어하기',
+        message: _continueDialogMessage(summary),
+        actions: const [
+          GameDialogAction<String>(
+            label: '삭제',
+            value: 'delete',
+            accent: Color(0xFF9C4735),
+          ),
+          GameDialogAction<String>(
+            label: '취소',
+            value: 'cancel',
+            accent: Color(0xFF55615F),
+          ),
+          GameDialogAction<String>(
+            label: '이어하기',
+            value: 'continue',
+            accent: Color(0xFFF4A81D),
+            textColor: Colors.black,
+          ),
+        ],
       );
-      if (!mounted || action == null) return;
+      if (!mounted || action == null || action == 'cancel') return;
       if (action == 'delete') {
         await _deleteStoredRun(showMessage: true);
         return;
@@ -111,7 +110,10 @@ class _TitleViewState extends ConsumerState<TitleView>
       if (!mounted) return;
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
-      router.go(RoutePaths.game, extra: restoredRun);
+      final route = restoredRun.activeScene == ActiveRunScene.blindSelect
+          ? '${RoutePaths.blindSelect}?difficulty=${restoredRun.difficulty.name}'
+          : '${RoutePaths.game}?difficulty=${restoredRun.difficulty.name}';
+      router.go(route, extra: restoredRun);
       return;
     }
 
@@ -119,24 +121,23 @@ class _TitleViewState extends ConsumerState<TitleView>
   }
 
   Future<void> _showCorruptedSaveDialog() async {
-    final action = await showAppDialog<String>(
+    final action = await showGameChoiceDialog<String>(
       context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('저장 데이터 확인'),
-        content: const Text(
+      title: '저장 데이터 확인',
+      message:
           '이어하기용 저장 데이터가 손상되었거나 현재 버전과 호환되지 않습니다.\n삭제 후 새 런을 시작하는 것을 권장합니다.',
+      actions: const [
+        GameDialogAction<String>(
+          label: '취소',
+          value: 'cancel',
+          accent: Color(0xFF55615F),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop('delete'),
-            child: const Text('삭제하기'),
-          ),
-        ],
-      ),
+        GameDialogAction<String>(
+          label: '삭제',
+          value: 'delete',
+          accent: Color(0xFF9C4735),
+        ),
+      ],
     );
     if (!mounted || action != 'delete') return;
     await _deleteStoredRun(showMessage: true);
@@ -157,37 +158,38 @@ class _TitleViewState extends ConsumerState<TitleView>
       return;
     }
 
-    final fixtureId = await showAppDialog<String>(
+    final fixtureId = await showGameChoiceDialog<String>(
       context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('디버그 픽스처'),
-        content: SizedBox(
-          width: 360,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final fixture in fixtures) ...[
-                  _DebugFixtureOption(
-                    label: fixture.label,
-                    description: fixture.description,
-                    onTap: () => Navigator.of(dialogContext).pop(fixture.id),
+      title: '디버그 픽스처',
+      content: SizedBox(
+        width: 360,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: fixtures
+                .map(
+                  (fixture) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _DebugFixtureOption(
+                      label: fixture.label,
+                      description: fixture.description,
+                      onTap: () => Navigator.of(context).pop(fixture.id),
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                ],
-              ],
-            ),
+                )
+                .toList(),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('취소'),
-          ),
-        ],
       ),
+      actions: const [
+        GameDialogAction<String>(
+          label: '취소',
+          value: 'cancel',
+          accent: Color(0xFF55615F),
+        ),
+      ],
     );
-    if (!mounted || fixtureId == null) return;
+    if (!mounted || fixtureId == null || fixtureId == 'cancel') return;
     await _startDebugFixture(fixtureId);
   }
 

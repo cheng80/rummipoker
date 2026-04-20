@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,8 @@ Future<void> showGameOptionsDialog({
   required Future<void> Function() onRestartRun,
   required Future<void> Function() onExitToTitle,
   required Future<void> Function(BuildContext context) onReopenOptions,
+  required Future<void> Function() onDebugForceBlindClear,
+  required Future<void> Function() onDebugForceBossClearToNextBlindSelect,
   required bool isDebugFixtureRun,
 }) async {
   SoundManager.unlockForWeb();
@@ -188,6 +191,46 @@ Future<void> showGameOptionsDialog({
               await onReopenOptions(context);
             },
           ),
+          if (kDebugMode) ...[
+            const SizedBox(height: 4),
+            Divider(color: Colors.white.withValues(alpha: 0.08)),
+            ListTile(
+              leading: Icon(
+                Icons.bug_report_rounded,
+                color: Colors.orange.shade200,
+              ),
+              title: Text(
+                '현재 Blind 즉시 클리어',
+                style: TextStyle(
+                  fontFamily: AssetPaths.fontAngduIpsul140,
+                  color: Colors.white.withValues(alpha: 0.92),
+                ),
+              ),
+              onTap: () async {
+                Navigator.of(dialogContext).pop();
+                await WidgetsBinding.instance.endOfFrame;
+                await onDebugForceBlindClear();
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.skip_next_rounded,
+                color: Colors.lightGreenAccent.shade100,
+              ),
+              title: Text(
+                '보스 클리어 후 다음 Blind Select',
+                style: TextStyle(
+                  fontFamily: AssetPaths.fontAngduIpsul140,
+                  color: Colors.white.withValues(alpha: 0.92),
+                ),
+              ),
+              onTap: () async {
+                Navigator.of(dialogContext).pop();
+                await WidgetsBinding.instance.endOfFrame;
+                await onDebugForceBossClearToNextBlindSelect();
+              },
+            ),
+          ],
         ],
       ),
     ),

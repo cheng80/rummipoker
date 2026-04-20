@@ -27,15 +27,21 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: RoutePaths.blindSelect,
       builder: (context, state) {
+        final restoredRun = state.extra is ActiveRunRuntimeState
+            ? state.extra as ActiveRunRuntimeState
+            : null;
         final seed =
+            restoredRun?.session.runSeed ??
             int.tryParse(state.uri.queryParameters['seed'] ?? '') ??
             RummiPokerGridSession.rollNewRunSeed();
         final difficulty = NewRunSetup.parseDifficulty(
-          state.uri.queryParameters['difficulty'],
+          restoredRun?.difficulty.name ??
+              state.uri.queryParameters['difficulty'],
         );
         return BlindSelectView(
           runSeed: seed,
           difficulty: difficulty,
+          restoredRun: restoredRun,
         );
       },
     ),

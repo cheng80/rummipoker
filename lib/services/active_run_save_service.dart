@@ -14,23 +14,26 @@ import '../logic/rummi_poker_grid/rummi_blind_state.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../resources/asset_paths.dart';
+import 'new_run_setup.dart';
 import '../utils/storage_helper.dart';
 import 'active_run_save_facade.dart';
 import 'device_key_store.dart';
 
-enum ActiveRunScene { battle, shop }
+enum ActiveRunScene { battle, shop, blindSelect }
 
 enum ActiveRunAvailability { none, available, invalid }
 
 class ActiveRunRuntimeState {
   const ActiveRunRuntimeState({
     required this.activeScene,
+    required this.difficulty,
     required this.session,
     required this.runProgress,
     required this.stageStartSnapshot,
   });
 
   final ActiveRunScene activeScene;
+  final NewRunDifficulty difficulty;
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
   final ActiveRunStageSnapshot stageStartSnapshot;
@@ -51,6 +54,7 @@ class ActiveRunSaveData {
     required this.schemaVersion,
     required this.savedAtIso8601,
     required this.activeScene,
+    required this.difficulty,
     required this.session,
     required this.runProgress,
     required this.stageStartSession,
@@ -60,6 +64,7 @@ class ActiveRunSaveData {
   final int schemaVersion;
   final String savedAtIso8601;
   final String activeScene;
+  final String difficulty;
   final SavedSessionData session;
   final SavedRunProgressData runProgress;
   final SavedSessionData stageStartSession;
@@ -69,6 +74,7 @@ class ActiveRunSaveData {
     'schemaVersion': schemaVersion,
     'savedAt': savedAtIso8601,
     'activeScene': activeScene,
+    'difficulty': difficulty,
     'session': session.toJson(),
     'runProgress': runProgress.toJson(),
     'stageStartSession': stageStartSession.toJson(),
@@ -80,6 +86,8 @@ class ActiveRunSaveData {
       schemaVersion: (json['schemaVersion'] as num).toInt(),
       savedAtIso8601: json['savedAt'] as String,
       activeScene: json['activeScene'] as String,
+      difficulty:
+          json['difficulty'] as String? ?? NewRunDifficulty.standard.name,
       session: SavedSessionData.fromJson(
         json['session'] as Map<String, dynamic>,
       ),
@@ -195,6 +203,7 @@ class SavedShopOfferData {
 class SavedRunProgressData {
   const SavedRunProgressData({
     required this.stageIndex,
+    this.currentStationBlindTierIndex = 0,
     required this.gold,
     required this.rerollCost,
     required this.ownedJesterIds,
@@ -204,6 +213,7 @@ class SavedRunProgressData {
   });
 
   final int stageIndex;
+  final int currentStationBlindTierIndex;
   final int gold;
   final int rerollCost;
   final List<String> ownedJesterIds;
@@ -213,6 +223,7 @@ class SavedRunProgressData {
 
   Map<String, dynamic> toJson() => {
     'stageIndex': stageIndex,
+    'currentStationBlindTierIndex': currentStationBlindTierIndex,
     'gold': gold,
     'rerollCost': rerollCost,
     'ownedJesterIds': ownedJesterIds,
@@ -224,6 +235,8 @@ class SavedRunProgressData {
   static SavedRunProgressData fromJson(Map<String, dynamic> json) {
     return SavedRunProgressData(
       stageIndex: (json['stageIndex'] as num).toInt(),
+      currentStationBlindTierIndex:
+          (json['currentStationBlindTierIndex'] as num?)?.toInt() ?? 0,
       gold: (json['gold'] as num).toInt(),
       rerollCost: (json['rerollCost'] as num).toInt(),
       ownedJesterIds: (json['ownedJesterIds'] as List<dynamic>)
@@ -295,6 +308,7 @@ class ActiveRunSaveService {
 
   static Future<void> saveActiveRun({
     required ActiveRunScene activeScene,
+    required NewRunDifficulty difficulty,
     required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
     required ActiveRunStageSnapshot stageStartSnapshot,
@@ -305,6 +319,7 @@ class ActiveRunSaveService {
       schemaVersion: schemaVersion,
       savedAtIso8601: DateTime.now().toUtc().toIso8601String(),
       activeScene: activeScene.name,
+      difficulty: difficulty.name,
       session: savedSession,
       runProgress: savedRunProgress,
       stageStartSession: _buildSavedSessionData(stageStartSnapshot.session),
@@ -322,6 +337,7 @@ class ActiveRunSaveService {
   static Future<void> saveRuntimeState(ActiveRunRuntimeState runtime) {
     return saveActiveRun(
       activeScene: runtime.activeScene,
+      difficulty: runtime.difficulty,
       session: runtime.session,
       runProgress: runtime.runProgress,
       stageStartSnapshot: runtime.stageStartSnapshot,
@@ -342,6 +358,7 @@ class ActiveRunSaveService {
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.values.byName(save.activeScene),
+      difficulty: NewRunSetup.parseDifficulty(save.difficulty),
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
@@ -469,6 +486,7 @@ class ActiveRunSaveService {
   ) {
     return SavedRunProgressData(
       stageIndex: runProgress.stageIndex,
+      currentStationBlindTierIndex: runProgress.currentStationBlindTierIndex,
       gold: runProgress.gold,
       rerollCost: runProgress.rerollCost,
       ownedJesterIds: runProgress.ownedJesters
@@ -543,6 +561,7 @@ class ActiveRunSaveService {
     );
     return RummiRunProgress.restore(
       stageIndex: data.stageIndex,
+      currentStationBlindTierIndex: data.currentStationBlindTierIndex,
       gold: data.gold,
       rerollCost: data.rerollCost,
       ownedJesters: ownedJesters,

@@ -7,12 +7,13 @@ import 'active_run_save_service.dart';
 /// - It does not change save keys, schema version, or restore behavior.
 /// - It lets future Station/checkpoint terminology read the current active run
 ///   payload without forcing an early save migration.
-enum RummiSaveSceneAlias { battle, market }
+enum RummiSaveSceneAlias { battle, market, blindSelect }
 
 String rummiSaveSceneLabel(RummiSaveSceneAlias sceneAlias) {
   return switch (sceneAlias) {
     RummiSaveSceneAlias.market => 'Market',
     RummiSaveSceneAlias.battle => 'Battle',
+    RummiSaveSceneAlias.blindSelect => 'Blind Select',
   };
 }
 
@@ -120,6 +121,7 @@ class RummiActiveRunSaveFacade {
   static RummiSaveSceneAlias _sceneAliasFromName(String scene) {
     return switch (scene) {
       'shop' => RummiSaveSceneAlias.market,
+      'blindSelect' => RummiSaveSceneAlias.blindSelect,
       _ => RummiSaveSceneAlias.battle,
     };
   }
@@ -128,6 +130,7 @@ class RummiActiveRunSaveFacade {
     return switch (scene) {
       ActiveRunScene.shop => RummiSaveSceneAlias.market,
       ActiveRunScene.battle => RummiSaveSceneAlias.battle,
+      ActiveRunScene.blindSelect => RummiSaveSceneAlias.blindSelect,
     };
   }
 }

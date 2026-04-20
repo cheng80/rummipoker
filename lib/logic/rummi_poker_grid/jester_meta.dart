@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../../app_config.dart';
 import 'hand_rank.dart';
 import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
@@ -512,11 +513,8 @@ class RummiJesterCatalog {
 }
 
 class RummiShopOffer {
-  RummiShopOffer({
-    required this.slotIndex,
-    required this.card,
-    int? price,
-  }) : price = price ?? card.baseCost;
+  RummiShopOffer({required this.slotIndex, required this.card, int? price})
+    : price = price ?? card.baseCost;
 
   final int slotIndex;
   final RummiJesterCard card;
@@ -581,6 +579,7 @@ class RummiRunProgress {
 
   RummiRunProgress.restore({
     required this.stageIndex,
+    this.currentStationBlindTierIndex = 0,
     required this.gold,
     required this.rerollCost,
     required List<RummiJesterCard> ownedJesters,
@@ -603,6 +602,7 @@ class RummiRunProgress {
   static const int shopBaseRerollCost = RummiEconomyConfig.shopBaseRerollCost;
 
   int stageIndex = 1;
+  int currentStationBlindTierIndex = 0;
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
@@ -619,6 +619,7 @@ class RummiRunProgress {
   RummiRunProgress copySnapshot() {
     return RummiRunProgress.restore(
       stageIndex: stageIndex,
+      currentStationBlindTierIndex: currentStationBlindTierIndex,
       gold: gold,
       rerollCost: rerollCost,
       ownedJesters: List<RummiJesterCard>.from(ownedJesters),
@@ -638,10 +639,35 @@ class RummiRunProgress {
 
   int targetForStage(int stageNumber) {
     if (stageNumber <= 1) {
-      return 300;
+      return (300 * AppConfig.stationTargetScoreScale).round();
     }
     final scaled = 300 * pow(1.6, stageNumber - 1);
-    return scaled.floor();
+    return (scaled * AppConfig.stationTargetScoreScale).round();
+  }
+
+  void startBlind(
+    RummiPokerGridSession session, {
+    required int stationIndex,
+    required int blindTierIndex,
+    required int shuffleSeed,
+    required int targetScore,
+    required int boardDiscards,
+    required int handDiscards,
+    required int maxHandSize,
+    bool applyRoundEndDecay = true,
+  }) {
+    stageIndex = stationIndex;
+    currentStationBlindTierIndex = blindTierIndex;
+    if (applyRoundEndDecay) {
+      _applyRoundEndStateDecay();
+    }
+    session.prepareNextBlind(
+      targetScore: targetScore,
+      boardDiscardsRemaining: boardDiscards,
+      handDiscardsRemaining: handDiscards,
+      shuffleSeed: shuffleSeed,
+    );
+    session.maxHandSize = maxHandSize;
   }
 
   RummiCashOutBreakdown buildCashOutBreakdown(RummiPokerGridSession session) {
@@ -678,8 +704,7 @@ class RummiRunProgress {
       handDiscardGold: handDiscardGold,
       economyBonuses: economyBonuses,
       economyGold: economyGold,
-      totalGold:
-          blindReward + boardDiscardGold + handDiscardGold + economyGold,
+      totalGold: blindReward + boardDiscardGold + handDiscardGold + economyGold,
     );
   }
 
@@ -768,18 +793,30 @@ class RummiRunProgress {
     return _sellPriceFor(ownedJesters[slotIndex]);
   }
 
-  void advanceStage(RummiPokerGridSession session, {required int runSeed}) {
+  void advanceStage(
+    RummiPokerGridSession session, {
+    required int runSeed,
+    int? targetScoreOverride,
+    int? boardDiscardsOverride,
+    int? handDiscardsOverride,
+    int? maxHandSizeOverride,
+  }) {
     stageIndex += 1;
     _applyRoundEndStateDecay();
     session.prepareNextBlind(
-      targetScore: targetForStage(stageIndex),
-      boardDiscardsRemaining: session.blind.boardDiscardsMax,
-      handDiscardsRemaining: session.blind.handDiscardsMax,
+      targetScore: targetScoreOverride ?? targetForStage(stageIndex),
+      boardDiscardsRemaining:
+          boardDiscardsOverride ?? session.blind.boardDiscardsMax,
+      handDiscardsRemaining:
+          handDiscardsOverride ?? session.blind.handDiscardsMax,
       shuffleSeed: RummiPokerGridSession.deriveStageShuffleSeed(
         runSeed,
         stageIndex,
       ),
     );
+    if (maxHandSizeOverride != null) {
+      session.maxHandSize = maxHandSizeOverride;
+    }
   }
 
   void onConfirmedLines(List<ConfirmedLineBreakdown> lineBreakdowns) {
@@ -827,7 +864,11 @@ class RummiRunProgress {
   void onDiscardUsed() {
     for (var slot = 0; slot < ownedJesters.length; slot++) {
       if (ownedJesters[slot].id == 'green_jester') {
-        _statefulValuesBySlot.update(slot, (value) => value - 1, ifAbsent: () => -1);
+        _statefulValuesBySlot.update(
+          slot,
+          (value) => value - 1,
+          ifAbsent: () => -1,
+        );
       }
     }
   }

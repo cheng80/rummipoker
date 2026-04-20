@@ -15,10 +15,7 @@ import '../widgets/phone_frame_scaffold.dart';
 import 'home_entry_widgets.dart';
 
 class NewRunView extends StatefulWidget {
-  const NewRunView({
-    super.key,
-    this.debugScrollPreset,
-  });
+  const NewRunView({super.key, this.debugScrollPreset});
 
   final String? debugScrollPreset;
 
@@ -79,32 +76,55 @@ class _NewRunViewState extends State<NewRunView> {
 
   Future<void> _openSeedInputDialog() async {
     _seedInputController.clear();
-    await showAppDialog<void>(
+    final action = await showGameChoiceDialog<String>(
       context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.tr('seedDialogTitle')),
-        content: TextField(
-          controller: _seedInputController,
-          keyboardType: const TextInputType.numberWithOptions(
-            signed: true,
-            decimal: false,
-          ),
-          decoration: InputDecoration(hintText: context.tr('seedHint')),
-          autofocus: true,
-          onSubmitted: (_) => _trySubmitSeed(dialogContext),
+      title: context.tr('seedDialogTitle'),
+      content: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.tr('cancel')),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+          child: TextField(
+            controller: _seedInputController,
+            keyboardType: const TextInputType.numberWithOptions(
+              signed: true,
+              decimal: false,
+            ),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+            decoration: InputDecoration(
+              hintText: context.tr('seedHint'),
+              hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.34),
+                fontWeight: FontWeight.w700,
+              ),
+              border: InputBorder.none,
+            ),
+            autofocus: true,
+            onSubmitted: (_) => Navigator.of(context).pop('submit'),
           ),
-          TextButton(
-            onPressed: () => _trySubmitSeed(dialogContext),
-            child: Text(context.tr('ok')),
-          ),
-        ],
+        ),
       ),
+      actions: [
+        GameDialogAction<String>(
+          label: context.tr('cancel'),
+          value: 'cancel',
+          accent: const Color(0xFF55615F),
+        ),
+        GameDialogAction<String>(
+          label: context.tr('ok'),
+          value: 'submit',
+          accent: const Color(0xFF2DB872),
+        ),
+      ],
     );
+    if (!mounted || action != 'submit') return;
+    await _trySubmitSeed(context);
   }
 
   Future<void> _trySubmitSeed(BuildContext dialogContext) async {
@@ -230,16 +250,18 @@ class _NewRunViewState extends State<NewRunView> {
                       ),
                       _OptionItem(
                         label: '완화',
-                        description: '목표 240 / 시작 Gold +3 / 첫 리롤 -1 / 보드+1 / 손패+1',
+                        description:
+                            '목표 240 / 시작 Gold +3 / 첫 리롤 -1 / 보드+1 / 손패+1',
                         selected:
                             _selectedDifficulty == NewRunDifficulty.relaxed,
                         isLocked: !_unlockState.isDifficultyUnlocked(
                           NewRunDifficulty.relaxed,
                         ),
                         lockReason: '기본 난이도 클리어 후 해금 예정',
-                        onTap: _unlockState.isDifficultyUnlocked(
-                          NewRunDifficulty.relaxed,
-                        )
+                        onTap:
+                            _unlockState.isDifficultyUnlocked(
+                              NewRunDifficulty.relaxed,
+                            )
                             ? () => setState(() {
                                 _selectedDifficulty = NewRunDifficulty.relaxed;
                               })
@@ -254,9 +276,10 @@ class _NewRunViewState extends State<NewRunView> {
                           NewRunDifficulty.pressure,
                         ),
                         lockReason: '완화보다 늦게 해금 예정',
-                        onTap: _unlockState.isDifficultyUnlocked(
-                          NewRunDifficulty.pressure,
-                        )
+                        onTap:
+                            _unlockState.isDifficultyUnlocked(
+                              NewRunDifficulty.pressure,
+                            )
                             ? () => setState(() {
                                 _selectedDifficulty = NewRunDifficulty.pressure;
                               })
@@ -282,10 +305,7 @@ class _NewRunViewState extends State<NewRunView> {
 }
 
 class _SelectableOptionCard extends StatelessWidget {
-  const _SelectableOptionCard({
-    required this.title,
-    required this.options,
-  });
+  const _SelectableOptionCard({required this.title, required this.options});
 
   final String title;
   final List<_OptionItem> options;
@@ -346,7 +366,10 @@ class _SelectableOptionTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: fillColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor, width: item.selected ? 1.6 : 1),
+          border: Border.all(
+            color: borderColor,
+            width: item.selected ? 1.6 : 1,
+          ),
         ),
         child: Row(
           children: [

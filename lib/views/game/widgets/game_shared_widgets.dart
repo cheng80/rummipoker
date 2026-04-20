@@ -610,11 +610,18 @@ class GameActionButton extends StatelessWidget {
   final String label;
   final Color background;
   final Color foreground;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+    final baseColor = isEnabled
+        ? background
+        : background.withValues(alpha: 0.34);
+    final textColor = isEnabled
+        ? foreground
+        : foreground.withValues(alpha: 0.56);
     return SizedBox(
       height: compact ? 34 : 48,
       child: ElevatedButton(
@@ -622,8 +629,10 @@ class GameActionButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           elevation: 0,
           shadowColor: Colors.transparent,
-          backgroundColor: background,
-          foregroundColor: foreground,
+          backgroundColor: baseColor,
+          disabledBackgroundColor: baseColor,
+          foregroundColor: textColor,
+          disabledForegroundColor: textColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -873,36 +882,29 @@ void showGameOverDialog({
           Row(
             children: [
               Expanded(
-                child: FilledButton(
+                child: GameActionButton(
+                  label: '다시하기',
+                  background: const Color(0xFFF4A81D),
+                  foreground: Colors.black,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                     await onRetry();
                   },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFF4A81D),
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size.fromHeight(50),
-                  ),
-                  child: const Text('다시하기'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: FilledButton(
+                child: GameActionButton(
+                  label: context.tr('exit'),
+                  background: const Color(0xFF5D6B68),
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                     await onExit();
                   },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF5D6B68),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(50),
-                  ),
-                  child: Text(context.tr('exit')),
                 ),
               ),
             ],

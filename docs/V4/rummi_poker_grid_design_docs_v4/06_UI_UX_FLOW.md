@@ -249,6 +249,20 @@ UI 구성:
 7. stage clear overlay
 8. Jester detail overlay
 
+[V4_DECISION]
+
+Item 시스템 추가 후 battle 정보 구조는 다음 순서로 읽힌다.
+
+1. top HUD
+2. Jester strip
+3. Item zone
+4. 5x5 board
+5. hand/draw zone
+6. bottom action buttons
+7. overlays
+
+상세 계약은 `13_ITEM_SYSTEM_CONTRACT.md`를 기준으로 한다.
+
 ## 4. Current Confirm UX
 
 [CURRENT]
@@ -312,6 +326,7 @@ Shop은 bottom sheet가 아니라 full-screen route다.
 Market 확장 후에는 다음 category를 표시한다.
 
 - Jester
+- Item
 - Upgrade
 - Permit
 - Glyph
@@ -319,6 +334,18 @@ Market 확장 후에는 다음 category를 표시한다.
 - Service
 
 단, 기존 Jester shop UX를 먼저 유지한다.
+
+[V4_DECISION]
+
+`Item`은 `Jester`와 별도 섹션으로 취급한다.
+
+예상 UI 변화:
+
+- Market 상단 또는 본문에서 `Jester` / `Item` section 분리
+- Jester는 현재처럼 보유 슬롯과 연결된 카드 진열형 유지 가능
+- Item은 `inventory`, `quick slot`, `service card`, `consumable row` 중 하나로 별도 표현
+- battle 화면도 `Jester strip + Item zone`으로 분리 재설계 필요
+- item 4분류 표현 규칙과 market 정보 구조는 `13_ITEM_SYSTEM_CONTRACT.md`를 기준으로 확정한다
 
 ## 7. Target Product Flow
 

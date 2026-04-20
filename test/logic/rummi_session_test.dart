@@ -1203,6 +1203,7 @@ void main() {
 
   test('RummiRunProgress.restore는 stateful 값과 누적 족보 카운트를 유지한다', () {
     final original = RummiRunProgress();
+    original.currentStationBlindTierIndex = 1;
     original.ownedJesters.addAll([
       jester(
         id: 'ride_the_bus',
@@ -1229,6 +1230,7 @@ void main() {
 
     final restored = RummiRunProgress.restore(
       stageIndex: original.stageIndex,
+      currentStationBlindTierIndex: original.currentStationBlindTierIndex,
       gold: original.gold,
       rerollCost: original.rerollCost,
       ownedJesters: List<RummiJesterCard>.from(original.ownedJesters),
@@ -1238,6 +1240,7 @@ void main() {
     );
 
     final snapshot = restored.buildRuntimeSnapshot();
+    expect(restored.currentStationBlindTierIndex, 1);
     expect(snapshot.stateValueForSlot(0), 1);
     expect(snapshot.playedCountForRank(RummiHandRank.straight), 1);
   });

@@ -5,8 +5,10 @@ import '../app_config.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
+import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/new_run_setup.dart';
+import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'home_entry_widgets.dart';
 
@@ -15,10 +17,12 @@ class BlindSelectView extends StatefulWidget {
     super.key,
     required this.runSeed,
     required this.difficulty,
+    this.restoredRun,
   });
 
   final int runSeed;
   final NewRunDifficulty difficulty;
+  final ActiveRunRuntimeState? restoredRun;
 
   @override
   State<BlindSelectView> createState() => _BlindSelectViewState();
@@ -26,15 +30,45 @@ class BlindSelectView extends StatefulWidget {
 
 class _BlindSelectViewState extends State<BlindSelectView> {
   late final List<BlindSelectionSpec> _options;
-  BlindTier _selectedTier = BlindTier.small;
+  late BlindTier _selectedTier;
 
   @override
   void initState() {
     super.initState();
-    _options = BlindSelectionSetup.buildStageOne(
-      difficulty: widget.difficulty,
-      ruleset: RummiRuleset.currentDefaults,
+    _options = BlindSelectionSetup.buildForStation(
+      stationIndex: _stationIndex,
+      clearedBlindTierIndex: _clearedBlindTierIndex,
+      difficulty: _effectiveDifficulty,
+      ruleset: _effectiveRuleset,
     );
+    _selectedTier = _options
+        .firstWhere(
+          (option) => option.isSelectable,
+          orElse: () => _options.first,
+        )
+        .tier;
+  }
+
+  NewRunDifficulty get _effectiveDifficulty =>
+      widget.restoredRun?.difficulty ?? widget.difficulty;
+
+  RummiRuleset get _effectiveRuleset =>
+      widget.restoredRun?.session.ruleset ?? RummiRuleset.currentDefaults;
+
+  int get _stationIndex {
+    final restoredRun = widget.restoredRun;
+    if (restoredRun == null) return 1;
+    return restoredRun.runProgress.stageIndex;
+  }
+
+  int get _clearedBlindTierIndex =>
+      widget.restoredRun?.runProgress.currentStationBlindTierIndex ?? -1;
+
+  String get _stationSubtitle {
+    if (widget.restoredRun == null) {
+      return '새 게임 시작 직후 첫 블라인드를 고르는 화면입니다.';
+    }
+    return '이전 Station 클리어 이후 다음 블라인드를 고르는 화면입니다.';
   }
 
   BlindSelectionSpec get _selectedSpec => _options.firstWhere(
@@ -42,15 +76,44 @@ class _BlindSelectViewState extends State<BlindSelectView> {
     orElse: () => _options.first,
   );
 
+  Future<bool> _confirmStartSelectedBlind() async {
+    final selected = _selectedSpec;
+    return showConfirmDialog(
+      context,
+      title: '${selected.title} 시작',
+      message:
+          'Station $_stationIndex의 ${selected.title}에 진입합니다.\n'
+          '목표 ${selected.targetScore} · 손패 ${selected.maxHandSize} · 보드 버림 ${selected.boardDiscards} · 손패 버림 ${selected.handDiscards}',
+      cancelLabel: '취소',
+      confirmLabel: '시작',
+    );
+  }
+
   Future<void> _startSelectedBlind() async {
     final selected = _selectedSpec;
-    if (!selected.isUnlocked) return;
+    if (!selected.isSelectable) return;
+    final confirmed = await _confirmStartSelectedBlind();
+    if (!mounted || !confirmed) return;
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     if (!mounted) return;
+    final restoredRun = widget.restoredRun;
+    if (restoredRun != null) {
+      final nextRuntime =
+          BlindSelectionSetup.prepareContinuedRunForSelectedBlind(
+            runtime: restoredRun,
+            tier: selected.tier,
+          );
+      context.go(
+        '${RoutePaths.game}?difficulty=${_effectiveDifficulty.name}'
+        '&blind_tier=${selected.tier.name}',
+        extra: nextRuntime,
+      );
+      return;
+    }
     context.go(
       '${RoutePaths.game}?seed=${widget.runSeed}'
-      '&difficulty=${widget.difficulty.name}'
+      '&difficulty=${_effectiveDifficulty.name}'
       '&blind_tier=${selected.tier.name}',
     );
   }
@@ -96,15 +159,15 @@ class _BlindSelectViewState extends State<BlindSelectView> {
             ),
             const SizedBox(height: 22),
             HomeSection(
-              title: 'Station 1',
-              subtitle: '현재는 새 게임 시작 시 진입하는 첫 블라인드 선택 화면입니다.',
+              title: 'Station $_stationIndex',
+              subtitle: _stationSubtitle,
               child: Column(
                 children: [
                   for (var i = 0; i < _options.length; i++) ...[
                     _BlindOptionCard(
                       spec: _options[i],
                       selected: _selectedTier == _options[i].tier,
-                      onTap: _options[i].isUnlocked
+                      onTap: _options[i].isSelectable
                           ? () => setState(() {
                               _selectedTier = _options[i].tier;
                             })
@@ -119,18 +182,20 @@ class _BlindSelectViewState extends State<BlindSelectView> {
             HomeSnapshotCard(
               title: '현재 선택',
               summary:
-                  '난이도: ${NewRunSetup(difficulty: widget.difficulty).difficultyLabel}\n'
+                  '난이도: ${NewRunSetup(difficulty: _effectiveDifficulty).difficultyLabel}\n'
                   '블라인드: ${_selectedSpec.title}\n'
                   '목표: ${_selectedSpec.targetScore} · 손패 ${_selectedSpec.maxHandSize} · 보드 버림 ${_selectedSpec.boardDiscards} · 손패 버림 ${_selectedSpec.handDiscards}',
             ),
             const SizedBox(height: 16),
             HomeEntryCard(
               title: '이 블라인드 시작',
-              description: _selectedSpec.isUnlocked
+              description: _selectedSpec.isSelectable
                   ? '${_selectedSpec.title}으로 전투에 들어갑니다.'
+                  : _selectedSpec.isCleared
+                  ? '${_selectedSpec.title}는 이미 클리어했습니다.'
                   : _selectedSpec.lockReason ?? '아직 선택할 수 없습니다.',
               accent: const Color(0xFF3CAEE0),
-              enabled: _selectedSpec.isUnlocked,
+              enabled: _selectedSpec.isSelectable,
               onTap: _startSelectedBlind,
             ),
           ],
@@ -155,11 +220,15 @@ class _BlindOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = selected
         ? const Color(0xFF4FC3F7)
-        : spec.isUnlocked
+        : spec.isSelectable
         ? Colors.white.withValues(alpha: 0.08)
+        : spec.isCleared
+        ? const Color(0xFF8BC34A).withValues(alpha: 0.50)
         : const Color(0xFFFFD166).withValues(alpha: 0.46);
     final fillColor = selected
         ? const Color(0xFF4FC3F7).withValues(alpha: 0.16)
+        : spec.isCleared
+        ? const Color(0xFF8BC34A).withValues(alpha: 0.14)
         : Colors.white.withValues(alpha: 0.04);
 
     return InkWell(
@@ -184,13 +253,17 @@ class _BlindOptionCard extends StatelessWidget {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: spec.isUnlocked
+                    color: spec.isSelectable
                         ? const Color(0xFF1D85C7).withValues(alpha: 0.82)
+                        : spec.isCleared
+                        ? const Color(0xFF6FAE2E).withValues(alpha: 0.82)
                         : Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    spec.badgeLabel,
+                    spec.isCleared
+                        ? '${spec.badgeLabel} CLEAR'
+                        : spec.badgeLabel,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.92),
                       fontSize: 11,
@@ -201,12 +274,16 @@ class _BlindOptionCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Icon(
-                  !spec.isUnlocked
+                  spec.isCleared
+                      ? Icons.check_rounded
+                      : spec.isLocked
                       ? Icons.lock_rounded
                       : selected
                       ? Icons.check_circle_rounded
                       : Icons.circle_outlined,
-                  color: !spec.isUnlocked
+                  color: spec.isCleared
+                      ? const Color(0xFF8BC34A)
+                      : spec.isLocked
                       ? const Color(0xFFFFD166)
                       : selected
                       ? const Color(0xFF4FC3F7)
@@ -246,7 +323,18 @@ class _BlindOptionCard extends StatelessWidget {
                 _BlindStatChip(label: '보상 +${spec.rewardPreview}'),
               ],
             ),
-            if (spec.lockReason != null) ...[
+            if (spec.isCleared) ...[
+              const SizedBox(height: 10),
+              const Text(
+                '이 블라인드는 이미 클리어했습니다.',
+                style: TextStyle(
+                  color: Color(0xFF8BC34A),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
+                ),
+              ),
+            ] else if (spec.lockReason != null) ...[
               const SizedBox(height: 10),
               Text(
                 spec.lockReason!,

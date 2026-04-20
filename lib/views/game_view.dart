@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -193,6 +194,7 @@ class _GameViewState extends ConsumerState<GameView>
     }
     final runtime = _gameNotifier.buildSaveRuntimeState(
       scene: scene,
+      difficulty: widget.difficulty,
       useStageStartSnapshotAsCurrent: _persistRetrySnapshotOnSave,
     );
     await ActiveRunSaveService.saveRuntimeState(runtime);
@@ -390,6 +392,9 @@ class _GameViewState extends ConsumerState<GameView>
       totalScore: result.totalScore,
       shouldClearAfter: result.stageCleared,
     );
+    if (result.stageCleared) {
+      return;
+    }
     await _afterAction();
   }
 
@@ -450,6 +455,27 @@ class _GameViewState extends ConsumerState<GameView>
     await _runSettlementToNextStationLoop(breakdown);
   }
 
+  Future<void> _debugForceBlindClear() async {
+    if (!kDebugMode || _isUiLocked) return;
+    final scoreAdded = _gameNotifier.debugForceBlindClear();
+    await _runStageClearFlow(scoreAdded);
+  }
+
+  Future<void> _debugForceBossClearToNextBlindSelect() async {
+    if (!kDebugMode || _isUiLocked) return;
+    final scoreAdded = _gameNotifier.debugForceBlindClear(
+      overrideTier: BlindTier.boss,
+    );
+    final canContinue = await _runStageClearPresentation(scoreAdded);
+    if (!canContinue) return;
+    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
+    await _runSettlementToNextStationLoop(
+      breakdown,
+      autoEnterMarketOnLoad: true,
+      autoAdvanceMarketOnLoad: true,
+    );
+  }
+
   Future<bool> _runStageClearPresentation(int scoreAdded) async {
     if (!mounted) return false;
     _gameNotifier.setStageFlow(
@@ -466,7 +492,10 @@ class _GameViewState extends ConsumerState<GameView>
     return mounted;
   }
 
-  Future<bool?> _showCashOutSheet(RummiCashOutBreakdown breakdown) {
+  Future<bool?> _showCashOutSheet(
+    RummiCashOutBreakdown breakdown, {
+    bool autoEnterMarketOnLoad = false,
+  }) {
     final settlementView = RummiSettlementRuntimeFacade.fromCashOut(
       breakdown: breakdown,
       currentGold: _marketView.gold,
@@ -480,7 +509,8 @@ class _GameViewState extends ConsumerState<GameView>
       builder: (sheetContext) {
         return GameCashOutSheet(
           settlement: settlementView,
-          autoEnterMarketOnLoad: widget.autoEnterMarketOnCashOut,
+          autoEnterMarketOnLoad:
+              autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut,
         );
       },
     );
@@ -492,28 +522,44 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _runSettlementToNextStationLoop(
-    RummiCashOutBreakdown breakdown,
-  ) async {
+    RummiCashOutBreakdown breakdown, {
+    bool autoEnterMarketOnLoad = false,
+    bool autoAdvanceMarketOnLoad = false,
+  }) async {
     await _saveActiveRun();
 
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.none);
 
-    final enterShop = await _showCashOutSheet(breakdown);
+    final enterShop = await _showCashOutSheet(
+      breakdown,
+      autoEnterMarketOnLoad: autoEnterMarketOnLoad,
+    );
     if (!mounted || enterShop != true) return;
 
     _gameNotifier.enterMarketAfterCashOut();
     await _saveActiveRun();
 
-    final nextStage = await _showShopScreen();
+    final nextStage = await _showShopScreen(
+      autoAdvanceOnLoad: autoAdvanceMarketOnLoad,
+    );
     if (!mounted || nextStage != true) return;
 
     _gameNotifier.beginNextStationTransition();
-    _gameNotifier.advanceToNextStation(widget.runSeed);
-    await _saveActiveRun();
-    _showSnack('Station ${_battleView.stageIndex} 시작');
+    final blindSelectRuntime = BlindSelectionSetup.prepareRuntimeForBlindSelect(
+      runtime: _gameNotifier.buildSaveRuntimeState(
+        scene: ActiveRunScene.blindSelect,
+        difficulty: widget.difficulty,
+      ),
+    );
+    await ActiveRunSaveService.saveRuntimeState(blindSelectRuntime);
+    if (!mounted) return;
+    context.go(
+      '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
+      extra: blindSelectRuntime,
+    );
   }
 
-  Future<bool?> _showShopScreen() {
+  Future<bool?> _showShopScreen({bool autoAdvanceOnLoad = false}) {
     return Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
@@ -534,7 +580,8 @@ class _GameViewState extends ConsumerState<GameView>
           onExitToTitle: _goToTitleAfterStoppingBgm,
           onRestartRun: _restartCurrentRun,
           isDebugFixtureRun: _isDebugFixtureRun,
-          autoAdvanceOnLoad: widget.autoAdvanceMarketOnLoad,
+          autoAdvanceOnLoad:
+              autoAdvanceOnLoad || widget.autoAdvanceMarketOnLoad,
         ),
       ),
     );
@@ -559,6 +606,9 @@ class _GameViewState extends ConsumerState<GameView>
       onRestartRun: _restartCurrentRun,
       onExitToTitle: _exitToTitleWithConfirm,
       onReopenOptions: _openGameOptions,
+      onDebugForceBlindClear: _debugForceBlindClear,
+      onDebugForceBossClearToNextBlindSelect:
+          _debugForceBossClearToNextBlindSelect,
       isDebugFixtureRun: _isDebugFixtureRun,
     );
   }
@@ -879,10 +929,9 @@ class _GameLayout extends StatelessWidget {
               children: [
                 Expanded(
                   child: GameActionButton(
-                    label: '확정',
-                    background: const Color(0xFFF4A81D),
-                    foreground: Colors.black,
-                    onPressed: onConfirm,
+                    label: '선택 해제',
+                    background: const Color(0xFF4C5A55),
+                    onPressed: onClearSelection,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -904,9 +953,10 @@ class _GameLayout extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: GameActionButton(
-                    label: '선택 해제',
-                    background: const Color(0xFF4C5A55),
-                    onPressed: onClearSelection,
+                    label: '확정',
+                    background: const Color(0xFFF4A81D),
+                    foreground: Colors.black,
+                    onPressed: onConfirm,
                   ),
                 ),
               ],

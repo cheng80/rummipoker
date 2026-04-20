@@ -9,6 +9,7 @@ import '../logic/rummi_poker_grid/rummi_blind_state.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../utils/seeded_random.dart';
 import 'active_run_save_service.dart';
+import 'new_run_setup.dart';
 
 class DebugRunFixtureDefinition {
   const DebugRunFixtureDefinition({
@@ -152,6 +153,7 @@ class DebugRunFixtureService {
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
@@ -205,6 +207,7 @@ class DebugRunFixtureService {
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
       session: base.session.copySnapshot(),
       runProgress: runProgress,
       stageStartSnapshot: base.stageStartSnapshot,

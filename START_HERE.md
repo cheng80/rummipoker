@@ -89,36 +89,45 @@
 - active run summary 문구를 save facade 한 군데에서 재사용하도록 정리
 - `새 게임 시작`은 이제 `난이도 선택 -> 블라인드 선택 -> 전투 시작`의 2단계 진입 구조로 이동하기 시작함
 - `BlindSelectView`와 `blind_selection_setup.dart`를 추가해서 `스몰/빅/보스` 블라인드 card와 조건 preview를 실제 코드에 연결
-- 현재는 `스몰 블라인드`만 실제 전투 진입 가능하고, `빅/보스`는 잠금 card로 먼저 노출
+- station별 blind 진행은 이제 `스몰 -> 빅 -> 보스 -> 다음 station의 스몰`로 실제 연결된다
+- `스몰 클리어 = small card clear/disabled + big selectable`, `빅 클리어 = boss selectable`, `보스 클리어 = 다음 station blind select 복귀` 규칙이 코드에 반영됐다
 - 선택한 `blind tier`가 실제 전투 시작값(target score / hand size / discard count)에 반영되도록 `GameSessionArgs`와 notifier 생성 경로 확장
+- station target score는 `AppConfig.stationTargetScoreScale` 한 군데에서 일괄 미세 조정할 수 있게 정리했다
 - 난이도 해금은 내부 `run unlock state` 저장 구조로 관리되며, 개발용 완료 경로로 iOS 스모크까지 확인함
+- `confirm` 직후 stage clear와 expiry/game over가 동시에 겹치던 회귀는 provider/widget test로 재현 후 수정했다
+- debug 전용 `현재 Blind 즉시 클리어`, `보스 클리어 후 다음 Blind Select` 액션을 options dialog에 추가해 다음 station 루프 테스트 경로를 보강했다
+- title / blind select / new run / market / cash-out / game over에서 Flutter 기본 text button 성격을 줄이고 게임용 커스텀 dialog/button 톤으로 정리했다
+- web build + local server + Playwright 경로로 `이어하기` dialog / `블라인드 시작` dialog 버튼 렌더 스모크를 실제 캡처로 재검증했다
+- battle 하단 action row는 `선택 해제 / 보드 버림 / 손패 버림 / 확정` 순서로 조정했다
+- market 상단의 drag-sell 안내와 `Market 오퍼 / 리롤` 줄 사이 간격을 넓혀 오동작/오인식을 줄였다
 
 ## 다음 작업 기본 방향
 
 현재 A 단계 잔여 `current-only` 결합은 큰 줄기 기준으로 한 번 더 점검했다.
 
 - shop/battle/save의 큰 read/write 경계는 이미 facade/notifier 쪽으로 1차 이동 완료
-- 이제 우선순위는 `B2 Run Setup`과 `B7 Next Station Loop`를 실제 사용자 흐름으로 연결하는 것
-- 특히 `새 게임 시작 -> 블라인드 선택 -> 전투 시작` 1차 구현이 들어갔으므로, 다음 작업은 이 화면을 `continue`와 `next station`까지 잇는 쪽이 맞다
+- `새 게임 시작 -> 블라인드 선택 -> 전투 시작`, `continue -> blind select 복귀`, `settlement -> market -> blind select` 1차 연결은 들어갔다
+- 다음 우선순위는 blind/station pacing 보정, market interaction polish, dialog/button visual polish, skip 같은 미뤄 둔 run rule의 설계 고정 쪽이다
 
 다음 작업 우선순위는 아래처럼 고정한다.
 
-1. `B7. Next Station Loop`
-   `Market -> 블라인드 선택 -> 전투 시작` 연결
-2. `B2. Run Setup Layer`
-   `이어하기 -> 블라인드 선택` 복귀 구조와 `blind select` scene 저장/복원 추가
-3. `B1. Home Layer`
-   continue/delete/corrupt save 동선을 새 중간 화면 구조에 맞게 정리
+1. blind/station pacing polish
+   target score scale, station별 체감 난도, blind unlock 템포 추가 보정
+2. market/battle interaction polish
+   버튼 배치, drag area, confirm safety, dialog/button visual consistency 보정
+3. deferred run rule 정리
+   blind skip 같은 미룬 규칙을 문서 기준으로 다시 고정
 
 현재 바로 이어서 볼 범위는 아래다.
 
-- `B7` 핵심:
-  - `Settlement -> Market -> Next Station` 다음 단계가 더 이상 바로 전투가 아니라 `블라인드 선택`으로 가도록 연결
-  - `current next stage` helper를 `next station blind select` 구조로 옮김
-- `B2` 핵심:
-  - active run save에 `blind select` scene을 추가할지 결정
-  - `continue`가 battle/shop뿐 아니라 `blind select`도 복원하도록 확장
-  - `빅/보스 블라인드` 잠금 해제/실제 진입 규칙은 그 다음 단계에서 붙임
+- blind/station:
+  - station target scale 기본값과 station별 체감 난도를 다시 점검
+  - small/big/boss 보상/압박 수치가 장기 밸런스 기준에 맞는지 재조정
+- market/battle:
+  - 하단 action row 오동작 방지 배치와 market 상단 조작 간격을 계속 다듬기
+  - game dialog/button 컴포넌트를 나머지 화면까지 일관되게 적용할지 판단
+- 검증:
+  - web 저장/라우팅/interaction이 바뀌는 PR은 `web build + local server + Playwright` 캡처 경로까지 같이 본다
 
 즉, 다음 세션에서는 아래 문서와 파일부터 바로 본다.
 

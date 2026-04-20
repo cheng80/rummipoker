@@ -496,23 +496,10 @@ class GameJesterInfoOverlay extends StatelessWidget {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton(
+                child: GameActionButton(
+                  label: '판매 +$sellGold Gold',
+                  background: const Color(0xFFB74B3B),
                   onPressed: onSell,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFB74B3B),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(44),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    '판매 +$sellGold Gold',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
                 ),
               ),
             ],

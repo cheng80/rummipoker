@@ -173,6 +173,8 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   `tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1"`
 - web build 확인: `tools/web_build_smoke.sh --web-only`
 - web wasm build 확인: `tools/web_build_smoke.sh --wasm-only`
+- web interaction/dialog 확인:
+  `flutter build web` 산출물을 정적 서버로 열고 Playwright로 실제 route/interaction을 눌러 screenshot 확보
 - 의미 있는 실구동 검증은 스크린샷/로그 산출물 경로까지 남긴다.
 
 최근 검증 산출물:
@@ -201,12 +203,17 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   `/tmp/rummipoker_ios_smoke/background_relaunch_smoke_20260420_0230/`
 - `cash-out -> market -> next station` 확인:
   `/tmp/rummipoker_ios_smoke/cashout_market_next_station_smoke_20260420_0252/`
+- web dialog/button smoke 확인:
+  `/tmp/rummipoker_web_smoke/browser_buttons_20260420_fix/`
+- Playwright screenshot 산출물:
+  `/tmp/rp_playwright_smoke/title_continue_dialog_fixed.png`
+  `/tmp/rp_playwright_smoke/blind_start_dialog_fixed.png`
 
 현재 결정:
 
 - Chrome 기기는 현재 연결 가능 상태를 확인했다.
 - 이번 단계에서는 mobile-first/iOS smoke가 핵심 acceptance를 충족하므로 Chrome 실구동은 필수 게이트로 두지 않는다.
-- 다만 web 저장/라우팅/입력 경계가 바뀌는 PR이나 release 전 점검 단계에서는 `tools/web_build_smoke.sh`를 먼저 돌리고, 필요 시 Chrome 2차 smoke를 다시 수행한다.
+- 다만 web 저장/라우팅/입력 경계가 바뀌는 PR이나 release 전 점검 단계에서는 `tools/web_build_smoke.sh`를 먼저 돌리고, 필요 시 `local server + Playwright` interaction screenshot까지 같이 수행한다.
 
 ## 3. B. Target Product Checklist
 
@@ -249,12 +256,16 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   현재 상태: `implemented`
 - [ ] 손상 세이브 / continue / delete 동선이 최종 Home 구조와 맞게 정리
   현재 상태: `partial`
+- [x] continue/delete/corrupt save dialog를 게임 톤의 custom dialog로 1차 교체
+  현재 상태: `implemented`
 
 ### B2. Run Setup Layer
 
 - [x] `새 게임 시작` 전용 route 분리
   현재 상태: `implemented`
 - [x] `Random Start / Seed Start`를 `새 게임 시작` 화면으로 이동
+  현재 상태: `implemented`
+- [x] blind select에서 `블라인드 시작` 확인 dialog를 custom dialog로 연결
   현재 상태: `implemented`
 - [x] `덱 선택` 플레이스홀더 card 유지
   현재 상태: `implemented`
@@ -268,12 +279,15 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   현재 상태: `implemented`
 - [x] 선택한 `blind tier`가 실제 전투 시작값에 반영
   현재 상태: `implemented`
-- [ ] `빅/보스 블라인드` 실제 선택 해금
-  현재 상태: `partial`
-- [ ] `이어하기 -> 블라인드 선택` 복귀 구조 연결
-  현재 상태: `not started`
+- [x] `빅/보스 블라인드` 실제 선택 해금
+  현재 상태: `implemented`
+- [x] `이어하기 -> 블라인드 선택` 복귀 구조 연결
+  현재 상태: `implemented`
 - [ ] `Seed / Difficulty / Blind` 선택 흐름 정리
   현재 상태: `partial`
+- [ ] `Balatro식 Blind Skip` 도입 여부/조건 정의
+  현재 상태: `not started`
+  현재 결정: blind tier/station progression/save 복원이 먼저이며, skip은 그 뒤 단계에서 분리 검토
 - [ ] `Run Setup -> Station Map` 전환 구조 정의
   현재 상태: `not started`
 
@@ -324,6 +338,26 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   현재 상태: `defined`
 
 ### B7. Next Station Loop
+
+- [x] `small -> big -> boss -> next station small` blind progression 반영
+  현재 상태: `implemented`
+- [x] `보스 클리어 -> settlement -> market -> 다음 station blind select` 연결
+  현재 상태: `implemented`
+- [x] `blind select` scene save/continue 경로 반영
+  현재 상태: `implemented`
+- [x] 다음 station 루프 디버그 강제 진입 액션 추가
+  현재 상태: `implemented`
+
+### B8. Runtime Polish / Safety
+
+- [x] stage clear settlement와 game over dialog 동시 노출 회귀 수정
+  현재 상태: `implemented`
+- [x] confirm/selection 하단 버튼 오동작 완화 배치 조정
+  현재 상태: `implemented`
+- [x] market drag-sell 안내와 reroll 영역 간격 보정
+  현재 상태: `implemented`
+- [x] game dialog / home button glow 제거와 높이 재조정
+  현재 상태: `implemented`
 
 - [ ] `Settlement -> Market -> Next Station` 장기 루프 정의
   현재 상태: `partial`

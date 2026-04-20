@@ -104,10 +104,6 @@ class HomeEntryCard extends StatelessWidget {
               offset: const Offset(0, 3),
               blurRadius: 0,
             ),
-            BoxShadow(
-              color: baseColor.withValues(alpha: enabled ? 0.24 : 0.08),
-              blurRadius: 14,
-            ),
           ],
         ),
         child: Row(
@@ -137,7 +133,9 @@ class HomeEntryCard extends StatelessWidget {
                   Text(
                     description,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: enabled ? 0.82 : 0.6),
+                      color: Colors.white.withValues(
+                        alpha: enabled ? 0.82 : 0.6,
+                      ),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       height: 1.3,

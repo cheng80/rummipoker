@@ -193,6 +193,64 @@ MarketOffer
 RummiShopOffer(card) -> MarketOffer(category: jester, contentId: card.id)
 ```
 
+## 8.1 Jester / Item Split Policy
+
+[V4_DECISION]
+
+Jester와 Item은 같은 콘텐츠 묶음으로 보지 않는다.
+
+분리 이유:
+
+- Jester는 기본적으로 `지속 장착형 시너지 자산`이다.
+- Item은 `소비형`, `전투 보조형`, `패시브 장비형`, `런 중간 개조형`처럼 수명이 다르다.
+- 슬롯 규칙, 판매 가능 여부, 중복 허용, 저장 방식, 전투 중 사용 여부가 다르다.
+- UI도 동일한 카드 진열 구조로 두면 장기 확장이 꼬인다.
+
+초기 target 분리:
+
+```text
+Jester
+- equipped / fixed slot / run-long synergy
+
+Item
+- Consumable
+- Equipment
+- PassiveRelic
+- Utility
+```
+
+Market 진열 레벨에서는 공통 wrapper를 둘 수 있지만,
+도메인 / 저장 / 전투 UI는 분리한다.
+
+## 8.2 Multi-content Market Target
+
+[TARGET]
+
+장기 Market은 아래처럼 분리된 상품군을 가진다.
+
+```text
+MarketOffer
+- JesterOffer
+- ItemOffer
+```
+
+ItemOffer는 최소한 아래 하위 타입을 구분 가능해야 한다.
+
+```text
+ItemOffer(type: consumable)
+ItemOffer(type: equipment)
+ItemOffer(type: passive_relic)
+ItemOffer(type: utility)
+```
+
+정책:
+
+- 현재 shop card list에 Jester와 Item을 임시로 같이 보여줄 수는 있다.
+- 그러나 내부 save/runtime에서는 `ownedJesters`와 `ownedItems`를 분리한다.
+- 전투 중 사용 가능한 item은 `inventory / quick slot` 계층에서 읽고,
+  Jester strip과 같은 컴포넌트로 다루지 않는다.
+- sell / use / consume / persist 규칙은 Jester와 별도 정의한다.
+
 ## 9. Content ID Policy
 
 [V4_DECISION]
@@ -221,3 +279,29 @@ jester_meta.dart
 ```
 
 단, 첫 PR에서 분리하지 않는다. 현재 프로토타입 안정성을 위해 테스트를 먼저 보강한다.
+
+## 11. UI Consequence
+
+[V4_DECISION]
+
+Jester / Item 분리는 UI 재설계를 전제로 한다.
+
+필수 방향:
+
+- `GameView`
+  - Jester 영역과 Item 영역을 분리
+  - Item이 consumable이면 quick-use zone 또는 inventory zone 필요
+  - passive/equipment item은 Jester strip과 다른 표현을 사용
+- `MarketView`
+  - Jester 섹션과 Item 섹션을 분리
+  - category badge 수준이 아니라 정보 구조 자체를 나눌 수 있어야 함
+- `Save / Runtime`
+  - ownedJesters / ownedItems 분리
+  - item 사용/소모/장착 상태 분리
+
+현재 화면은 Jester-only 기준선으로 유지하되,
+시안 확보 단계에서는 `battle 화면`과 `market 화면`을 item 확장 전제로 다시 잡는다.
+
+참조:
+
+- Item subtype UI 계약, battle / market 정보 구조, 도메인 모델 초안은 `13_ITEM_SYSTEM_CONTRACT.md`를 기준으로 본다.
