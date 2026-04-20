@@ -7,6 +7,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
+import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 
@@ -27,7 +28,7 @@ void main() {
       expect(state.marketView, isNotNull);
       expect(state.battleView, isNotNull);
       expect(state.activeRunSaveView, isNotNull);
-      expect(state.pendingResumeShop, isFalse);
+      expect(state.runLoopPhase, GameRunLoopPhase.battle);
     });
 
     test('파생 facade state가 orchestration 변경과 함께 갱신된다', () {
@@ -49,6 +50,7 @@ void main() {
       expect(initial.battleView!.stageIndex, 1);
       expect(initial.battleView!.currentGold, RummiEconomyConfig.startingGold);
       expect(initial.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.battle);
+      expect(initial.runLoopPhase, GameRunLoopPhase.battle);
 
       initial.runProgress!.gold += 9;
       notifier.setActiveRunScene(ActiveRunScene.shop);
@@ -59,6 +61,7 @@ void main() {
         updated.battleView!.currentGold,
         RummiEconomyConfig.startingGold + 9,
       );
+      expect(updated.runLoopPhase, GameRunLoopPhase.market);
       expect(updated.activeRunSaveView!.currentGold, 19);
       expect(updated.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.market);
     });
@@ -500,21 +503,31 @@ void main() {
           afterCashOut.activeRunSaveView!.sceneAlias,
           RummiSaveSceneAlias.battle,
         );
+        expect(afterCashOut.runLoopPhase, GameRunLoopPhase.settlement);
 
         notifier.enterMarketAfterCashOut();
         final inMarket = container.read(gameSessionNotifierProvider(args));
 
         expect(inMarket.activeRunScene, ActiveRunScene.shop);
+        expect(inMarket.runLoopPhase, GameRunLoopPhase.market);
         expect(
           inMarket.activeRunSaveView!.sceneAlias,
           RummiSaveSceneAlias.market,
         );
         expect(inMarket.marketView!.offers, isNotEmpty);
 
+        notifier.beginNextStationTransition();
+        final transitioning = container.read(gameSessionNotifierProvider(args));
+        expect(
+          transitioning.runLoopPhase,
+          GameRunLoopPhase.nextStationTransition,
+        );
+
         notifier.advanceToNextStation(args.runSeed);
         final advanced = container.read(gameSessionNotifierProvider(args));
 
         expect(advanced.activeRunScene, ActiveRunScene.battle);
+        expect(advanced.runLoopPhase, GameRunLoopPhase.battle);
         expect(
           advanced.activeRunSaveView!.sceneAlias,
           RummiSaveSceneAlias.battle,
@@ -677,6 +690,7 @@ void main() {
         expect(restarted.session!.hand, isEmpty);
         expect(restarted.runProgress!.gold, RummiEconomyConfig.startingGold);
         expect(restarted.activeRunScene, ActiveRunScene.battle);
+        expect(restarted.runLoopPhase, GameRunLoopPhase.battle);
       },
     );
   });

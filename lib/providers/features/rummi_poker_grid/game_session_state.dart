@@ -22,8 +22,8 @@ class GameSessionState {
     this.marketView,
     this.battleView,
     this.activeRunSaveView,
+    this.runLoopPhase = GameRunLoopPhase.battle,
     this.activeRunScene = ActiveRunScene.battle,
-    this.pendingResumeShop = false,
     this.debugFixtureId,
     this.selectedHandTile,
     this.selectedBoardRow,
@@ -46,8 +46,8 @@ class GameSessionState {
   final RummiMarketRuntimeFacade? marketView;
   final RummiBattleRuntimeFacade? battleView;
   final RummiActiveRunSaveFacade? activeRunSaveView;
+  final GameRunLoopPhase runLoopPhase;
   final ActiveRunScene activeRunScene;
-  final bool pendingResumeShop;
   final String? debugFixtureId;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
@@ -75,8 +75,8 @@ class GameSessionState {
     Object? marketView = _unset,
     Object? battleView = _unset,
     Object? activeRunSaveView = _unset,
+    GameRunLoopPhase? runLoopPhase,
     ActiveRunScene? activeRunScene,
-    bool? pendingResumeShop,
     Object? debugFixtureId = _unset,
     Object? selectedHandTile = _unset,
     Object? selectedBoardRow = _unset,
@@ -113,8 +113,8 @@ class GameSessionState {
       activeRunSaveView: activeRunSaveView == _unset
           ? this.activeRunSaveView
           : activeRunSaveView as RummiActiveRunSaveFacade?,
+      runLoopPhase: runLoopPhase ?? this.runLoopPhase,
       activeRunScene: activeRunScene ?? this.activeRunScene,
-      pendingResumeShop: pendingResumeShop ?? this.pendingResumeShop,
       debugFixtureId: debugFixtureId == _unset
           ? this.debugFixtureId
           : debugFixtureId as String?,
@@ -146,6 +146,9 @@ class GameSessionState {
     );
   }
 }
+
+/// 장기 `Battle -> Settlement -> Market -> Next Station` 루프를 읽기 위한 단계 구분.
+enum GameRunLoopPhase { battle, settlement, market, nextStationTransition }
 
 /// 전투 화면의 잠금/연출 단계.
 enum GameStageFlowPhase { none, confirmSettlement, cleared, settlement }

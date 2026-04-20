@@ -61,8 +61,8 @@ class GameSessionNotifier
           runProgress: restoredRun.runProgress,
           stageStartSnapshot: restoredRun.stageStartSnapshot,
           ruleset: args.ruleset,
+          runLoopPhase: _sceneToLoopPhase(restoredRun.activeScene),
           activeRunScene: restoredRun.activeScene,
-          pendingResumeShop: restoredRun.activeScene == ActiveRunScene.shop,
           debugFixtureId: args.debugFixtureId,
         ),
       );
@@ -89,6 +89,7 @@ class GameSessionNotifier
           session: session,
           runProgress: runProgress,
         ),
+        runLoopPhase: GameRunLoopPhase.battle,
         activeRunScene: ActiveRunScene.battle,
         debugFixtureId: args.debugFixtureId,
       ),
@@ -107,7 +108,11 @@ class GameSessionNotifier
 
   void setActiveRunScene(ActiveRunScene scene) {
     _replaceState(
-      state.copyWith(activeRunScene: scene, revision: state.revision + 1),
+      state.copyWith(
+        runLoopPhase: _sceneToLoopPhase(scene),
+        activeRunScene: scene,
+        revision: state.revision + 1,
+      ),
     );
   }
 
@@ -138,12 +143,6 @@ class GameSessionNotifier
     );
   }
 
-  void setPendingResumeShop(bool value) {
-    _replaceState(
-      state.copyWith(pendingResumeShop: value, revision: state.revision + 1),
-    );
-  }
-
   void setStageStartSnapshot(ActiveRunStageSnapshot snapshot) {
     _replaceState(
       state.copyWith(
@@ -164,8 +163,8 @@ class GameSessionNotifier
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: stageStartSnapshot,
+        runLoopPhase: _sceneToLoopPhase(activeRunScene),
         activeRunScene: activeRunScene,
-        pendingResumeShop: false,
         debugFixtureId: state.debugFixtureId,
         selectedHandTile: null,
         selectedBoardRow: null,
@@ -383,8 +382,8 @@ class GameSessionNotifier
     final breakdown = prepareCashOut();
     _replaceState(
       state.copyWith(
+        runLoopPhase: GameRunLoopPhase.settlement,
         activeRunScene: ActiveRunScene.battle,
-        pendingResumeShop: false,
         revision: state.revision + 1,
       ),
     );
@@ -408,8 +407,8 @@ class GameSessionNotifier
     openShop();
     _replaceState(
       state.copyWith(
+        runLoopPhase: GameRunLoopPhase.market,
         activeRunScene: ActiveRunScene.shop,
-        pendingResumeShop: false,
         revision: state.revision + 1,
       ),
     );
@@ -461,6 +460,16 @@ class GameSessionNotifier
     return null;
   }
 
+  /// market 종료 후 다음 station 로딩 직전의 짧은 전환 단계를 기록한다.
+  void beginNextStationTransition() {
+    _replaceState(
+      state.copyWith(
+        runLoopPhase: GameRunLoopPhase.nextStationTransition,
+        revision: state.revision + 1,
+      ),
+    );
+  }
+
   /// 다음 스테이지로 진입 처리.
   void advanceToNextStage(int runSeed) {
     final session = state.session!;
@@ -473,6 +482,7 @@ class GameSessionNotifier
           session: session,
           runProgress: runProgress,
         ),
+        runLoopPhase: GameRunLoopPhase.battle,
         revision: state.revision + 1,
       ),
     );
@@ -484,7 +494,6 @@ class GameSessionNotifier
     _replaceState(
       state.copyWith(
         activeRunScene: ActiveRunScene.battle,
-        pendingResumeShop: false,
         revision: state.revision + 1,
       ),
     );
@@ -654,6 +663,13 @@ class GameSessionNotifier
         ),
       ),
     );
+  }
+
+  GameRunLoopPhase _sceneToLoopPhase(ActiveRunScene scene) {
+    return switch (scene) {
+      ActiveRunScene.shop => GameRunLoopPhase.market,
+      ActiveRunScene.battle => GameRunLoopPhase.battle,
+    };
   }
 }
 

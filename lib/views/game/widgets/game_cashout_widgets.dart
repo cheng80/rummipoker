@@ -3,9 +3,9 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/hand_rank.dart';
+import '../../../logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/line_ref.dart';
-import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../../../resources/jester_translation_scope.dart';
 import 'game_jester_widgets.dart';
@@ -255,13 +255,11 @@ class GameFloatingSettlementBurst extends StatelessWidget {
 class GameCashOutSheet extends StatefulWidget {
   const GameCashOutSheet({
     super.key,
-    required this.breakdown,
-    required this.currentGold,
+    required this.settlement,
     this.autoEnterMarketOnLoad = false,
   });
 
-  final RummiCashOutBreakdown breakdown;
-  final int currentGold;
+  final RummiSettlementRuntimeFacade settlement;
   final bool autoEnterMarketOnLoad;
 
   @override
@@ -312,7 +310,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final b = widget.breakdown;
+    final settlement = widget.settlement;
+    final hasEconomyBonuses = settlement.entries.any((e) => e.isEconomyBonus);
     return SafeArea(
       top: false,
       child: Padding(
@@ -341,47 +340,41 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                 AnimatedOpacity(
                   opacity: _step >= 1 ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
-                  child: _GameCashOutLine(
-                    leading: 'Station ${b.stageIndex}',
-                    text: 'Station Goal ${b.targetScore} 달성 보상',
-                    gold: b.blindReward,
+                  child: _GameCashOutLine.fromSettlementEntry(
+                    settlement.entries[0],
                   ),
                 ),
                 const SizedBox(height: 8),
                 AnimatedOpacity(
                   opacity: _step >= 2 ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
-                  child: _GameCashOutLine(
-                    leading: '${b.remainingBoardDiscards}',
-                    text:
-                        '남은 보드 버림 ${b.remainingBoardDiscards}회 x ${b.perBoardDiscardBonus}',
-                    gold: b.boardDiscardGold,
+                  child: _GameCashOutLine.fromSettlementEntry(
+                    settlement.entries[1],
                   ),
                 ),
                 const SizedBox(height: 8),
                 AnimatedOpacity(
                   opacity: _step >= 3 ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
-                  child: _GameCashOutLine(
-                    leading: '${b.remainingHandDiscards}',
-                    text:
-                        '남은 손패 버림 ${b.remainingHandDiscards}회 x ${b.perHandDiscardBonus}',
-                    gold: b.handDiscardGold,
+                  child: _GameCashOutLine.fromSettlementEntry(
+                    settlement.entries[2],
                   ),
                 ),
-                if (b.economyBonuses.isNotEmpty) ...[
+                if (hasEconomyBonuses) ...[
                   const SizedBox(height: 8),
                   AnimatedOpacity(
                     opacity: _step >= 4 ? 1 : 0,
                     duration: const Duration(milliseconds: 180),
                     child: Column(
                       children: [
-                        for (final bonus in b.economyBonuses) ...[
+                        for (final entry in settlement.entries.where(
+                          (entry) => entry.isEconomyBonus,
+                        )) ...[
                           _GameCashOutLine(
-                            leading: 'J',
+                            leading: entry.leadingLabel,
                             text:
-                                '${JesterTranslationScope.of(context).resolveDisplayName(bonus.jesterId, bonus.displayName)} 보너스',
-                            gold: bonus.gold,
+                                '${JesterTranslationScope.of(context).resolveDisplayName(entry.jesterId!, entry.displayName!)} 보너스',
+                            gold: entry.gold,
                           ),
                           const SizedBox(height: 8),
                         ],
@@ -391,7 +384,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                 ],
                 const SizedBox(height: 12),
                 AnimatedOpacity(
-                  opacity: _step >= (b.economyBonuses.isNotEmpty ? 5 : 4)
+                  opacity: _step >= (hasEconomyBonuses ? 5 : 4)
                       ? 1
                       : 0,
                   duration: const Duration(milliseconds: 180),
@@ -408,7 +401,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                       children: [
                         Expanded(
                           child: Text(
-                            '보유 골드 ${widget.currentGold}',
+                            '보유 골드 ${settlement.currentGold}',
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
@@ -417,7 +410,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                           ),
                         ),
                         Text(
-                          '+${b.totalGold}',
+                          '+${settlement.totalGold}',
                           style: const TextStyle(
                             color: Color(0xFFF2C14E),
                             fontSize: 20,
@@ -461,6 +454,16 @@ class _GameCashOutLine extends StatelessWidget {
     required this.text,
     required this.gold,
   });
+
+  factory _GameCashOutLine.fromSettlementEntry(
+    RummiSettlementEntryView entry,
+  ) {
+    return _GameCashOutLine(
+      leading: entry.leadingLabel,
+      text: entry.description,
+      gold: entry.gold,
+    );
+  }
 
   final String leading;
   final String text;

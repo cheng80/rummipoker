@@ -6,6 +6,7 @@ import '../app_config.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../logic/rummi_poker_grid/rummi_market_facade.dart';
+import '../logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../logic/rummi_poker_grid/rummi_station_facade.dart';
@@ -61,18 +62,15 @@ class _GameViewState extends ConsumerState<GameView>
   late final GameSessionArgs _gameArgs;
   bool _persistRetrySnapshotOnSave = false;
   bool _autoCashOutLoopStarted = false;
+  late bool _shouldResumeMarketOnCatalogLoad;
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
   GameSessionState get _gameState =>
       ref.read(gameSessionNotifierProvider(_gameArgs));
   RummiBattleRuntimeFacade get _battleView => _gameState.battleView!;
-  ActiveRunStageSnapshot get _stageStartSnapshot =>
-      _gameState.stageStartSnapshot!;
   RummiStationRuntimeFacade get _stationView => _gameState.stationView!;
   RummiMarketRuntimeFacade get _marketView => _gameState.marketView!;
-  ActiveRunScene get _activeRunScene => _gameState.activeRunScene;
-  bool get _pendingResumeShop => _gameState.pendingResumeShop;
   Tile? get _selectedHandTile => _gameState.selectedHandTile;
   int? get _selectedBoardRow => _gameState.selectedBoardRow;
   int? get _selectedBoardCol => _gameState.selectedBoardCol;
@@ -96,6 +94,8 @@ class _GameViewState extends ConsumerState<GameView>
       restoredRun: widget.restoredRun,
       debugFixtureId: widget.debugFixtureId,
     );
+    _shouldResumeMarketOnCatalogLoad =
+        widget.restoredRun?.activeScene == ActiveRunScene.shop;
     // BGM·카탈로그 로드를 첫 프레임 이후로 지연 — 전환 시 프레임 드롭 방지
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -144,8 +144,8 @@ class _GameViewState extends ConsumerState<GameView>
           await _runAutoCashOutLoopOnLoad();
         });
       }
-      if (_pendingResumeShop) {
-        _gameNotifier.setPendingResumeShop(false);
+      if (_shouldResumeMarketOnCatalogLoad) {
+        _shouldResumeMarketOnCatalogLoad = false;
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (!mounted) return;
           final nextStage = await _showShopScreen();
@@ -428,12 +428,17 @@ class _GameViewState extends ConsumerState<GameView>
     final nextStage = await _showShopScreen();
     if (!mounted || nextStage != true) return;
 
+    _gameNotifier.beginNextStationTransition();
     _gameNotifier.advanceToNextStation(widget.runSeed);
     await _saveActiveRun();
     _showSnack('Station ${_battleView.stageIndex} 시작');
   }
 
   Future<bool?> _showCashOutSheet(RummiCashOutBreakdown breakdown) {
+    final settlementView = RummiSettlementRuntimeFacade.fromCashOut(
+      breakdown: breakdown,
+      currentGold: _marketView.gold,
+    );
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -442,8 +447,7 @@ class _GameViewState extends ConsumerState<GameView>
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return GameCashOutSheet(
-          breakdown: breakdown,
-          currentGold: _marketView.gold,
+          settlement: settlementView,
           autoEnterMarketOnLoad: widget.autoEnterMarketOnCashOut,
         );
       },
@@ -463,6 +467,7 @@ class _GameViewState extends ConsumerState<GameView>
     final nextStage = await _showShopScreen();
     if (!mounted || nextStage != true) return;
 
+    _gameNotifier.beginNextStationTransition();
     _gameNotifier.advanceToNextStation(widget.runSeed);
     await _saveActiveRun();
     _showSnack('Station ${_battleView.stageIndex} 시작');
