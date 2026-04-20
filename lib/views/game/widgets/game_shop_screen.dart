@@ -12,8 +12,10 @@ import 'game_shared_widgets.dart';
 
 const double _marketOwnedCardWidth = 52.0;
 const double _marketOwnedCardHeight = 72.0;
-const double _marketOfferCardWidth = 54.0;
-const double _marketOfferCardHeight = 74.0;
+const double _marketOfferCardWidth = 52.0;
+const double _marketOfferCardHeight = 72.0;
+const double _marketShopCellWidth = 72.0;
+const double _marketShopCellHeight = 98.0;
 
 enum _MarketShopTab { jesters, items }
 
@@ -56,6 +58,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
   int? _selectedOfferIndex;
   _MarketShopTab _shopTab = _MarketShopTab.jesters;
   int _selectedItemOfferIndex = 0;
+  int _jesterOfferPage = 0;
+  int _itemOfferPage = 0;
 
   RummiMarketRuntimeFacade get _market => widget.readMarketView();
 
@@ -108,6 +112,30 @@ class _GameShopScreenState extends State<GameShopScreen> {
         _selectedOfferIndex ??= _market.offers.isEmpty ? null : 0;
       }
     });
+  }
+
+  void _shiftJesterOfferPage(int delta) {
+    final pageCount = _pageCount(_market.offers.length);
+    if (pageCount <= 1) return;
+    setState(() {
+      _jesterOfferPage = (_jesterOfferPage + delta).clamp(0, pageCount - 1);
+    });
+  }
+
+  void _shiftItemOfferPage(int delta) {
+    final pageCount = _pageCount(_marketGhostItemOffers.length);
+    if (pageCount <= 1) return;
+    setState(() {
+      _itemOfferPage = (_itemOfferPage + delta).clamp(0, pageCount - 1);
+    });
+  }
+
+  int _pageCount(int total) => total == 0 ? 1 : ((total - 1) ~/ 3) + 1;
+
+  List<T> _pagedItems<T>(List<T> items, int page) {
+    final start = (page * 3).clamp(0, items.length);
+    final end = (start + 3).clamp(0, items.length);
+    return items.sublist(start, end);
   }
 
   Future<void> _showOwnedJesterDetail(int index) async {
@@ -529,6 +557,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
             _selectedItemOfferIndex < _marketGhostItemOffers.length
         ? _marketGhostItemOffers[_selectedItemOfferIndex]
         : null;
+    final visibleJesterOffers = _pagedItems(market.offers, _jesterOfferPage);
+    final visibleItemOffers = _pagedItems(
+      _marketGhostItemOffers,
+      _itemOfferPage,
+    );
     final selectedOwnedRuntimeValue = selectedOwned == null
         ? null
         : jesterRuntimeValueText(
@@ -564,7 +597,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
             children: [
               const Positioned.fill(child: GameTableBackdrop()),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -582,8 +615,8 @@ class _GameShopScreenState extends State<GameShopScreen> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                            horizontal: 11,
+                            vertical: 7,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.22),
@@ -599,101 +632,104 @@ class _GameShopScreenState extends State<GameShopScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         GameIconButtonChip(
                           onPressed: _openOptions,
                           icon: Icons.more_horiz_rounded,
+                          size: 36,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    _MarketSectionLabel(
-                      title:
-                          '보유 Jester ${market.ownedEntries.length}/${market.maxOwnedSlots}슬롯',
-                      subtitle: '구매 순서대로 슬롯에 배치되며, 가득 차면 더 이상 살 수 없습니다.',
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: _marketOwnedCardHeight + 18,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(market.maxOwnedSlots, (index) {
-                          final ownedEntry = index < market.ownedEntries.length
-                              ? market.ownedEntries[index]
-                              : null;
-                          final card = ownedEntry?.card;
-                          final selected = _selectedOwnedIndex == index;
-                          final child = Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: Stack(
-                              children: [
-                                if (selected)
-                                  Positioned.fill(
-                                    child: IgnorePointer(
-                                      child: DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            17,
-                                          ),
-                                          border: Border.all(
-                                            color: const Color(0xFFF2C14E),
-                                            width: 2,
+                    const SizedBox(height: 6),
+                    _MarketSectionBox(
+                      title: 'Jester Slots',
+                      trailing:
+                          '${market.ownedEntries.length}/${market.maxOwnedSlots}',
+                      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+                      child: SizedBox(
+                        height: _marketOwnedCardHeight + 6,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(market.maxOwnedSlots, (
+                            index,
+                          ) {
+                            final ownedEntry =
+                                index < market.ownedEntries.length
+                                ? market.ownedEntries[index]
+                                : null;
+                            final card = ownedEntry?.card;
+                            final selected = _selectedOwnedIndex == index;
+                            final child = Padding(
+                              padding: const EdgeInsets.all(3),
+                              child: Stack(
+                                children: [
+                                  if (selected)
+                                    Positioned.fill(
+                                      child: IgnorePointer(
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              17,
+                                            ),
+                                            border: Border.all(
+                                              color: const Color(0xFFF2C14E),
+                                              width: 2,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(3),
+                                    child: GameJesterSlot(
+                                      card: card,
+                                      runtimeValueText: card == null
+                                          ? null
+                                          : jesterRuntimeValueText(
+                                              card,
+                                              market.runtimeSnapshot,
+                                              slotIndex: index,
+                                            ),
+                                      extended: index == 4,
+                                      activeEffect: null,
+                                      settlementSequenceTick: 0,
+                                    ),
                                   ),
-                                Padding(
-                                  padding: const EdgeInsets.all(3),
-                                  child: GameJesterSlot(
-                                    card: card,
-                                    runtimeValueText: card == null
-                                        ? null
-                                        : jesterRuntimeValueText(
-                                            card,
-                                            market.runtimeSnapshot,
-                                            slotIndex: index,
-                                          ),
-                                    extended: index == 4,
-                                    activeEffect: null,
-                                    settlementSequenceTick: 0,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
+                                ],
+                              ),
+                            );
 
-                          return SizedBox(
-                            width: _marketOwnedCardWidth + 6,
-                            height: _marketOwnedCardHeight + 6,
-                            child: card == null
-                                ? child
-                                : GestureDetector(
-                                    onTap: () => _selectOwned(index),
-                                    onLongPress: () =>
-                                        _showOwnedJesterDetail(index),
-                                    child: child,
-                                  ),
-                          );
-                        }),
+                            return SizedBox(
+                              width: _marketOwnedCardWidth + 6,
+                              height: _marketOwnedCardHeight + 6,
+                              child: card == null
+                                  ? child
+                                  : GestureDetector(
+                                      onTap: () => _selectOwned(index),
+                                      onLongPress: () =>
+                                          _showOwnedJesterDetail(index),
+                                      child: child,
+                                    ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _MarketSectionBox(
+                      title: 'Item Slots',
+                      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+                      child: Row(
+                        children: const [
+                          _MarketItemGhostChip(label: 'Q1'),
+                          SizedBox(width: 8),
+                          _MarketItemGhostChip(label: 'Q2'),
+                          SizedBox(width: 8),
+                          _MarketItemGhostChip(label: 'Passive'),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _MarketSectionLabel(
-                      title: '보유 Item 슬롯',
-                      subtitle: 'Jester와 분리된 슬롯 시스템입니다.',
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: const [
-                        _MarketItemGhostChip(label: 'Q1'),
-                        SizedBox(width: 8),
-                        _MarketItemGhostChip(label: 'Q2'),
-                        SizedBox(width: 8),
-                        _MarketItemGhostChip(label: 'Passive'),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
                     _MarketSpeechPanel(
                       title: selectedOwned != null
                           ? localizedJesterName(context, selectedOwned.card)
@@ -708,7 +744,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           ? 'Jester Shop'
                           : selectedItemOffer != null
                           ? 'Item Shop'
-                          : '아래 카드 진열에서 대상을 선택하세요.',
+                          : '카드를 선택하세요',
                       body: selectedOwned != null
                           ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -718,7 +754,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                     context,
                                     selectedOwned.card,
                                   ),
-                                  maxLines: 3,
+                                  maxLines: 5,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Colors.white70,
@@ -746,7 +782,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                 context,
                                 selectedOffer.card,
                               ),
-                              maxLines: 3,
+                              maxLines: 5,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Colors.white70,
@@ -758,7 +794,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           : selectedItemOffer != null
                           ? Text(
                               selectedItemOffer.description,
-                              maxLines: 3,
+                              maxLines: 5,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Colors.white70,
@@ -768,7 +804,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                               ),
                             )
                           : Text(
-                              '카드형 오퍼를 누르면 여기서 정보를 보고 구매나 판매를 결정합니다.',
+                              '선택한 카드의 정보와 액션이 여기에 표시됩니다.',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.68),
                                 fontSize: 12,
@@ -802,69 +838,118 @@ class _GameShopScreenState extends State<GameShopScreen> {
                             )
                           : null,
                     ),
-                    const SizedBox(height: 14),
-                    _MarketTabBar(
-                      currentTab: _shopTab,
-                      rerollCost: market.rerollCost,
-                      onChanged: _selectShopTab,
-                      onReroll: _shopTab == _MarketShopTab.jesters
-                          ? _reroll
-                          : null,
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: _MarketOfferShelf(
-                        child: _shopTab == _MarketShopTab.jesters
-                            ? (market.offers.isEmpty
-                                  ? Center(
-                                      child: Text(
-                                        '이번 Market에 노출된 Jester가 없습니다.',
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.68,
-                                          ),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                    const SizedBox(height: 8),
+                    _MarketSectionBox(
+                      title: null,
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                      child: SizedBox(
+                        height: 176,
+                        child: Column(
+                          children: [
+                            _MarketTabBar(
+                              currentTab: _shopTab,
+                              onChanged: _selectShopTab,
+                            ),
+                            const SizedBox(height: 8),
+                            _MarketPagerBar(
+                              currentPage: _shopTab == _MarketShopTab.jesters
+                                  ? _jesterOfferPage
+                                  : _itemOfferPage,
+                              pageCount: _shopTab == _MarketShopTab.jesters
+                                  ? _pageCount(market.offers.length)
+                                  : _pageCount(_marketGhostItemOffers.length),
+                              onPrev: _shopTab == _MarketShopTab.jesters
+                                  ? () => _shiftJesterOfferPage(-1)
+                                  : () => _shiftItemOfferPage(-1),
+                              onNext: _shopTab == _MarketShopTab.jesters
+                                  ? () => _shiftJesterOfferPage(1)
+                                  : () => _shiftItemOfferPage(1),
+                              rerollCost: market.rerollCost,
+                              onReroll: _shopTab == _MarketShopTab.jesters
+                                  ? _reroll
+                                  : null,
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 0,
+                                  vertical: 2,
+                                ),
+                                child: _shopTab == _MarketShopTab.jesters
+                                    ? (visibleJesterOffers.isEmpty
+                                          ? Center(
+                                              child: Text(
+                                                '이번 Market에 노출된 Jester가 없습니다.',
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.68),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            )
+                                          : _MarketOfferLane(
+                                              itemCount:
+                                                  visibleJesterOffers.length,
+                                              children: [
+                                                for (
+                                                  var i = 0;
+                                                  i <
+                                                      visibleJesterOffers
+                                                          .length;
+                                                  i++
+                                                )
+                                                  _GameShopOfferCard(
+                                                    offer:
+                                                        visibleJesterOffers[i],
+                                                    selected:
+                                                        _selectedOfferIndex ==
+                                                        market.offers.indexOf(
+                                                          visibleJesterOffers[i],
+                                                        ),
+                                                    canAfford:
+                                                        visibleJesterOffers[i]
+                                                            .isAffordable,
+                                                    onTap: () => _selectOffer(
+                                                      market.offers.indexOf(
+                                                        visibleJesterOffers[i],
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ))
+                                    : _MarketOfferLane(
+                                        itemCount: visibleItemOffers.length,
+                                        children: [
+                                          for (
+                                            var i = 0;
+                                            i < visibleItemOffers.length;
+                                            i++
+                                          )
+                                            _MarketItemOfferCard(
+                                              offer: visibleItemOffers[i],
+                                              selected:
+                                                  _selectedItemOfferIndex ==
+                                                  _marketGhostItemOffers
+                                                      .indexOf(
+                                                        visibleItemOffers[i],
+                                                      ),
+                                              onTap: () => _selectItemOffer(
+                                                _marketGhostItemOffers.indexOf(
+                                                  visibleItemOffers[i],
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
-                                    )
-                                  : Wrap(
-                                      spacing: 10,
-                                      runSpacing: 10,
-                                      children: [
-                                        for (
-                                          var i = 0;
-                                          i < market.offers.length;
-                                          i++
-                                        )
-                                          _GameShopOfferCard(
-                                            offer: market.offers[i],
-                                            selected: _selectedOfferIndex == i,
-                                            canAfford:
-                                                market.offers[i].isAffordable,
-                                            onTap: () => _selectOffer(i),
-                                          ),
-                                      ],
-                                    ))
-                            : Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  for (
-                                    var i = 0;
-                                    i < _marketGhostItemOffers.length;
-                                    i++
-                                  )
-                                    _MarketItemOfferCard(
-                                      offer: _marketGhostItemOffers[i],
-                                      selected: _selectedItemOfferIndex == i,
-                                      onTap: () => _selectItemOffer(i),
-                                    ),
-                                ],
                               ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
@@ -898,35 +983,62 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 }
 
-class _MarketSectionLabel extends StatelessWidget {
-  const _MarketSectionLabel({required this.title, required this.subtitle});
+class _MarketSectionBox extends StatelessWidget {
+  const _MarketSectionBox({
+    required this.title,
+    required this.child,
+    this.trailing,
+    this.padding = const EdgeInsets.fromLTRB(8, 6, 8, 6),
+  });
 
-  final String title;
-  final String subtitle;
+  final String? title;
+  final String? trailing;
+  final Widget child;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Padding(
+        padding: padding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null || trailing != null) ...[
+              Row(
+                children: [
+                  if (title != null)
+                    Text(
+                      title!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  const Spacer(),
+                  if (trailing != null)
+                    Text(
+                      trailing!,
+                      style: const TextStyle(
+                        color: Color(0xFFF2C14E),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+            ],
+            child,
+          ],
         ),
-        const SizedBox(height: 3),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.62),
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -946,71 +1058,54 @@ class _MarketSpeechPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          top: -7,
-          left: 24,
-          child: Transform.rotate(
-            angle: 0.785398,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: const Color(0xFF173126),
-                border: Border.all(color: Colors.white10),
-              ),
-            ),
-          ),
-        ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: const Color(0xFF173126),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white10),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                        ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF173126),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 112),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.62),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.62),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                       ),
-                      const SizedBox(height: 8),
-                      body,
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    body,
+                  ],
                 ),
-                if (trailing != null) ...[const SizedBox(width: 10), trailing!],
-              ],
-            ),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 10), trailing!],
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -1045,7 +1140,7 @@ class _MarketActionPane extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           GameActionButton(
             label: buttonLabel,
             background: buttonColor,
@@ -1060,17 +1155,10 @@ class _MarketActionPane extends StatelessWidget {
 }
 
 class _MarketTabBar extends StatelessWidget {
-  const _MarketTabBar({
-    required this.currentTab,
-    required this.rerollCost,
-    required this.onChanged,
-    required this.onReroll,
-  });
+  const _MarketTabBar({required this.currentTab, required this.onChanged});
 
   final _MarketShopTab currentTab;
-  final int rerollCost;
   final ValueChanged<_MarketShopTab> onChanged;
-  final VoidCallback? onReroll;
 
   @override
   Widget build(BuildContext context) {
@@ -1086,7 +1174,7 @@ class _MarketTabBar extends StatelessWidget {
                 ? Colors.black
                 : Colors.white,
             onPressed: () => onChanged(_MarketShopTab.jesters),
-            height: 34,
+            height: 30,
           ),
         ),
         const SizedBox(width: 8),
@@ -1100,17 +1188,7 @@ class _MarketTabBar extends StatelessWidget {
                 ? Colors.black
                 : Colors.white,
             onPressed: () => onChanged(_MarketShopTab.items),
-            height: 34,
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 84,
-          child: GameActionButton(
-            label: '리롤 $rerollCost',
-            background: const Color(0xFF2D6F9E),
-            compact: true,
-            onPressed: onReroll,
+            height: 30,
           ),
         ),
       ],
@@ -1118,23 +1196,62 @@ class _MarketTabBar extends StatelessWidget {
   }
 }
 
-class _MarketOfferShelf extends StatelessWidget {
-  const _MarketOfferShelf({required this.child});
+class _MarketPagerBar extends StatelessWidget {
+  const _MarketPagerBar({
+    required this.currentPage,
+    required this.pageCount,
+    required this.onPrev,
+    required this.onNext,
+    required this.rerollCost,
+    required this.onReroll,
+  });
 
-  final Widget child;
+  final int currentPage;
+  final int pageCount;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final int rerollCost;
+  final VoidCallback? onReroll;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-        child: Align(alignment: Alignment.topCenter, child: child),
-      ),
+    return Row(
+      children: [
+        GameIconButtonChip(
+          icon: Icons.chevron_left_rounded,
+          onPressed: currentPage > 0 ? onPrev : null,
+          size: 32,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Center(
+            child: Text(
+              '${currentPage + 1} / $pageCount',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.72),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 86,
+          child: GameActionButton(
+            label: '리롤 $rerollCost',
+            background: const Color(0xFF2D6F9E),
+            compact: true,
+            onPressed: onReroll,
+          ),
+        ),
+        const SizedBox(width: 8),
+        GameIconButtonChip(
+          icon: Icons.chevron_right_rounded,
+          onPressed: currentPage < pageCount - 1 ? onNext : null,
+          size: 32,
+        ),
+      ],
     );
   }
 }
@@ -1147,24 +1264,62 @@ class _MarketItemGhostChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.68),
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
+      child: Center(
+        child: SizedBox(
+          width: _marketOwnedCardWidth + 6,
+          height: _marketOwnedCardHeight + 6,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.68),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MarketOfferLane extends StatelessWidget {
+  const _MarketOfferLane({required this.itemCount, required this.children});
+
+  final int itemCount;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (itemCount <= 3) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            Expanded(child: Center(child: children[i])),
+            if (i < children.length - 1) const SizedBox(width: 8),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
     );
   }
 }
@@ -1191,60 +1346,62 @@ class _GameShopOfferCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 94,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF173C31)
-                : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFFF2C14E)
-                  : Colors.white.withValues(alpha: 0.08),
-              width: selected ? 1.8 : 1.0,
+        width: _marketShopCellWidth,
+        height: _marketShopCellHeight,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: _marketOfferCardWidth + 6,
+              height: _marketOfferCardHeight + 6,
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: Stack(
+                  children: [
+                    if (selected)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(17),
+                              border: Border.all(
+                                color: const Color(0xFFF2C14E),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: SizedBox(
+                        width: _marketOfferCardWidth,
+                        height: _marketOfferCardHeight,
+                        child: GameJesterSlot(
+                          card: offer.card,
+                          runtimeValueText: null,
+                          extended: false,
+                          activeEffect: null,
+                          settlementSequenceTick: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-            child: Column(
-              children: [
-                SizedBox(
-                  width: _marketOfferCardWidth,
-                  height: _marketOfferCardHeight,
-                  child: GameJesterSlot(
-                    card: offer.card,
-                    runtimeValueText: null,
-                    extended: false,
-                    activeEffect: null,
-                    settlementSequenceTick: 0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  localizedJesterName(context, offer.card),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    height: 1.15,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${offer.price}G',
-                  style: TextStyle(
-                    color: canAfford ? const Color(0xFFF2C14E) : Colors.white38,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 1),
+            Text(
+              '${offer.price}G',
+              style: TextStyle(
+                color: canAfford ? const Color(0xFFF2C14E) : Colors.white38,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -1267,68 +1424,70 @@ class _MarketItemOfferCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 94,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF173C31)
-                : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFFF2C14E)
-                  : Colors.white.withValues(alpha: 0.08),
-              width: selected ? 1.8 : 1.0,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-            child: Column(
-              children: [
-                Container(
-                  width: _marketOfferCardWidth,
-                  height: _marketOfferCardHeight,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Center(
-                    child: Text(
-                      offer.slotLabel,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
+        width: _marketShopCellWidth,
+        height: _marketShopCellHeight,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: _marketOfferCardWidth + 6,
+              height: _marketOfferCardHeight + 6,
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: Stack(
+                  children: [
+                    if (selected)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(17),
+                              border: Border.all(
+                                color: const Color(0xFFF2C14E),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: Container(
+                        width: _marketOfferCardWidth,
+                        height: _marketOfferCardHeight,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            offer.slotLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  offer.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    height: 1.15,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${offer.price}G',
-                  style: const TextStyle(
-                    color: Color(0xFFF2C14E),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 1),
+            Text(
+              '${offer.price}G',
+              style: const TextStyle(
+                color: Color(0xFFF2C14E),
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+              ),
+            ),
+          ],
         ),
       ),
     );
