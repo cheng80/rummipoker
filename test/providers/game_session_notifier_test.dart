@@ -10,6 +10,8 @@ import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_noti
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
+import 'package:rummipoker/services/blind_selection_setup.dart';
+import 'package:rummipoker/services/new_run_setup.dart';
 
 void main() {
   group('GameSessionNotifier', () {
@@ -223,6 +225,54 @@ void main() {
         state.session?.blind.handDiscardsRemaining,
         ruleset.defaultHandDiscards,
       );
+    });
+
+    test('완화 난이도는 시작 보정과 blind 조건을 함께 반영한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(
+        runSeed: 23,
+        difficulty: NewRunDifficulty.relaxed,
+      );
+
+      final state = container.read(gameSessionNotifierProvider(args));
+
+      expect(state.runProgress?.gold, RummiEconomyConfig.startingGold + 3);
+      expect(
+        state.runProgress?.rerollCost,
+        RummiRunProgress.shopBaseRerollCost - 1,
+      );
+      expect(state.session?.blind.targetScore, 240);
+      expect(
+        state.session?.blind.boardDiscardsRemaining,
+        RummiRuleset.currentDefaults.defaultBoardDiscards + 1,
+      );
+      expect(
+        state.session?.blind.handDiscardsRemaining,
+        RummiRuleset.currentDefaults.defaultHandDiscards + 1,
+      );
+    });
+
+    test('빅 블라인드 시작은 목표 점수와 자원 조건을 더 강하게 반영한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(
+        runSeed: 24,
+        difficulty: NewRunDifficulty.standard,
+        blindTier: BlindTier.big,
+      );
+
+      final state = container.read(gameSessionNotifierProvider(args));
+      expect(state.session?.blind.targetScore, 450);
+      expect(
+        state.session?.blind.boardDiscardsRemaining,
+        RummiRuleset.currentDefaults.defaultBoardDiscards - 1,
+      );
+      expect(
+        state.session?.blind.handDiscardsRemaining,
+        RummiRuleset.currentDefaults.defaultHandDiscards,
+      );
+      expect(state.session?.maxHandSize, RummiRuleset.currentDefaults.defaultMaxHandSize);
     });
 
     test('ruleset debug hand-size bounds clamp provider mutations', () {

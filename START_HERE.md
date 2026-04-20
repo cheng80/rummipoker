@@ -82,30 +82,43 @@
 - active run save에 `rulesetId` 저장/복원 경로 반영
 - 저장소를 `shared_preferences + device key store` 기준으로 정리하고 web/wasm 빌드 통과
 - shop 리롤 mutation을 `GameSessionNotifier.rerollShopFromState()`로 감싸서 UI가 catalog/rng를 직접 알지 않게 정리
+- `cash-out` 결과를 `RummiSettlementRuntimeFacade`로 읽게 해서 settlement summary 경계를 얇게 정리
+- market 복귀 판단을 provider 상태에서 빼고 `GameView` 로컬 책임으로 내려서 상태 의미를 단순화
+- `GameView`의 `settlement -> market -> next station` 중복 조립을 helper 기준으로 줄임
+- `TitleView`를 `B1 Home` 1차 구조처럼 재구성해서 `Continue / New Run / Trial / Archive / Settings` 섹션을 드러냄
+- active run summary 문구를 save facade 한 군데에서 재사용하도록 정리
+- `새 게임 시작`은 이제 `난이도 선택 -> 블라인드 선택 -> 전투 시작`의 2단계 진입 구조로 이동하기 시작함
+- `BlindSelectView`와 `blind_selection_setup.dart`를 추가해서 `스몰/빅/보스` 블라인드 card와 조건 preview를 실제 코드에 연결
+- 현재는 `스몰 블라인드`만 실제 전투 진입 가능하고, `빅/보스`는 잠금 card로 먼저 노출
+- 선택한 `blind tier`가 실제 전투 시작값(target score / hand size / discard count)에 반영되도록 `GameSessionArgs`와 notifier 생성 경로 확장
+- 난이도 해금은 내부 `run unlock state` 저장 구조로 관리되며, 개발용 완료 경로로 iOS 스모크까지 확인함
 
 ## 다음 작업 기본 방향
 
-현재 A 단계 잔여 `current-only` 결합은 한 번 더 점검했다.
+현재 A 단계 잔여 `current-only` 결합은 큰 줄기 기준으로 한 번 더 점검했다.
 
 - shop/battle/save의 큰 read/write 경계는 이미 facade/notifier 쪽으로 1차 이동 완료
-- 남아 있는 것은 주로 `GameView` 내부 UI state 조립과 settlement 표시용 값들
-- 즉, A 단계의 큰 migration 작업을 더 미는 것보다 이제 B 구조 설계를 시작하는 쪽이 맞다
+- 이제 우선순위는 `B2 Run Setup`과 `B7 Next Station Loop`를 실제 사용자 흐름으로 연결하는 것
+- 특히 `새 게임 시작 -> 블라인드 선택 -> 전투 시작` 1차 구현이 들어갔으므로, 다음 작업은 이 화면을 `continue`와 `next station`까지 잇는 쪽이 맞다
 
 다음 작업 우선순위는 아래처럼 고정한다.
 
-1. `B7. Next Station Loop` 설계를 먼저 시작한다.
-2. 필요하면 그 설계에 맞춰 battle/settlement/market 사이 UI 책임만 소규모로 다시 나눈다.
-3. 그 다음 `B1. Home Layer` 설계를 이어서 정리한다.
+1. `B7. Next Station Loop`
+   `Market -> 블라인드 선택 -> 전투 시작` 연결
+2. `B2. Run Setup Layer`
+   `이어하기 -> 블라인드 선택` 복귀 구조와 `blind select` scene 저장/복원 추가
+3. `B1. Home Layer`
+   continue/delete/corrupt save 동선을 새 중간 화면 구조에 맞게 정리
 
 현재 바로 이어서 볼 범위는 아래다.
 
 - `B7` 핵심:
-  - `Settlement -> Market -> Next Station`을 화면/상태/저장 기준으로 다시 나눈다.
-  - current loop에서 유지할 것과 target loop에서 추가할 것을 분리한다.
-  - `GameView` 단일 route 유지 여부와 future station map 진입 지점을 정한다.
-- `B1` 준비:
-  - `Continue / New Run / Trial / Archive` 진입 구조를 title 기준으로 다시 정리한다.
-  - 손상 세이브, 이어하기, 삭제 동선을 Home 기준으로 재배치할 틀을 만든다.
+  - `Settlement -> Market -> Next Station` 다음 단계가 더 이상 바로 전투가 아니라 `블라인드 선택`으로 가도록 연결
+  - `current next stage` helper를 `next station blind select` 구조로 옮김
+- `B2` 핵심:
+  - active run save에 `blind select` scene을 추가할지 결정
+  - `continue`가 battle/shop뿐 아니라 `blind select`도 복원하도록 확장
+  - `빅/보스 블라인드` 잠금 해제/실제 진입 규칙은 그 다음 단계에서 붙임
 
 즉, 다음 세션에서는 아래 문서와 파일부터 바로 본다.
 
@@ -114,9 +127,11 @@
   - `docs/V4/V4_IMPLEMENTATION_PLAN.md`
   - `docs/V4/rummi_poker_grid_design_docs_v4/06_UI_UX_FLOW.md`
 - 코드 경계:
+  - `lib/views/blind_select_view.dart`
+  - `lib/services/blind_selection_setup.dart`
+  - `lib/services/active_run_save_service.dart`
+  - `lib/router.dart`
   - `lib/views/game_view.dart`
-  - `lib/views/game/widgets/game_cashout_widgets.dart`
-  - `lib/views/game/widgets/game_shop_screen.dart`
   - `lib/views/title_view.dart`
 
 ## 하지 말아야 할 것

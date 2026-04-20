@@ -13,6 +13,7 @@ OPEN_URL_AFTER_LAUNCH=""
 RELAUNCH_AFTER_URL=0
 NO_TERMINATE=0
 TIMEOUT_SECONDS=90
+SETTLE_SECONDS=4
 APP_READY_PATTERN="Dart VM Service|Flutter run key commands|Syncing files to device|A Dart VM Service on"
 
 usage() {
@@ -28,6 +29,7 @@ Options:
   --relaunch            Relaunch app after opening URL.
   --bundle-id <id>       App bundle id. Default: com.cheng80.rummipoker
   --timeout <seconds>    Launch wait timeout. Default: 90
+  --settle <seconds>     Wait after launch/open-url/relaunch before screenshot. Default: 4
   --no-terminate         Leave flutter run session alive when script ends.
   -h, --help             Show this help.
 
@@ -66,6 +68,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --timeout)
       TIMEOUT_SECONDS="${2:?missing timeout}"
+      shift 2
+      ;;
+    --settle)
+      SETTLE_SECONDS="${2:?missing settle seconds}"
       shift 2
       ;;
     --no-terminate)
@@ -120,6 +126,7 @@ echo "Device: $DEVICE_ID"
 echo "Bundle ID: $BUNDLE_ID"
 echo "Output: $OUTPUT_DIR"
 echo "Route: ${ROUTE:-<default>}"
+echo "Settle wait: ${SETTLE_SECONDS}s"
 
 "${RUN_CMD[@]}" >"$LOG_FILE" 2>&1 &
 FLUTTER_PID=$!
@@ -138,20 +145,20 @@ until grep -Eq "$APP_READY_PATTERN" "$LOG_FILE"; do
   SECONDS_WAITED=$((SECONDS_WAITED + 1))
 done
 
-sleep 2
+sleep "$SETTLE_SECONDS"
 xcrun simctl io "$DEVICE_ID" screenshot "$TITLE_SHOT" >/dev/null
 echo "Saved launch screenshot: $TITLE_SHOT"
 
 if [[ -n "$OPEN_URL_AFTER_LAUNCH" ]]; then
   xcrun simctl openurl "$DEVICE_ID" "$OPEN_URL_AFTER_LAUNCH"
-  sleep 2
+  sleep "$SETTLE_SECONDS"
   xcrun simctl io "$DEVICE_ID" screenshot "$URL_SHOT" >/dev/null
   echo "Saved post-URL screenshot: $URL_SHOT"
 
   if [[ "$RELAUNCH_AFTER_URL" -eq 1 ]]; then
     xcrun simctl terminate "$DEVICE_ID" "$BUNDLE_ID" >/dev/null 2>&1 || true
     xcrun simctl launch "$DEVICE_ID" "$BUNDLE_ID" >/dev/null
-    sleep 2
+    sleep "$SETTLE_SECONDS"
     xcrun simctl io "$DEVICE_ID" screenshot "$RELAUNCH_SHOT" >/dev/null
     echo "Saved relaunch screenshot: $RELAUNCH_SHOT"
   fi

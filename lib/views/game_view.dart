@@ -15,6 +15,9 @@ import '../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
+import '../services/blind_selection_setup.dart';
+import '../services/new_run_setup.dart';
+import '../services/run_progression_service.dart';
 import '../utils/common_ui.dart';
 import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
@@ -30,17 +33,25 @@ class GameView extends ConsumerStatefulWidget {
     required this.runSeed,
     this.restoredRun,
     this.debugFixtureId,
+    this.difficulty = NewRunDifficulty.standard,
+    this.blindTier = BlindTier.small,
     this.autoAdvanceMarketOnLoad = false,
     this.autoEnterMarketOnCashOut = false,
     this.autoCashOutLoopOnLoad = false,
+    this.debugCompleteRunOnClear = false,
+    this.debugCompleteRunOnLoad = false,
   });
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
   final String? debugFixtureId;
+  final NewRunDifficulty difficulty;
+  final BlindTier blindTier;
   final bool autoAdvanceMarketOnLoad;
   final bool autoEnterMarketOnCashOut;
   final bool autoCashOutLoopOnLoad;
+  final bool debugCompleteRunOnClear;
+  final bool debugCompleteRunOnLoad;
 
   @override
   ConsumerState<GameView> createState() => _GameViewState();
@@ -93,6 +104,8 @@ class _GameViewState extends ConsumerState<GameView>
       runSeed: widget.runSeed,
       restoredRun: widget.restoredRun,
       debugFixtureId: widget.debugFixtureId,
+      difficulty: widget.difficulty,
+      blindTier: widget.blindTier,
     );
     _shouldResumeMarketOnCatalogLoad =
         widget.restoredRun?.activeScene == ActiveRunScene.shop;
@@ -135,6 +148,13 @@ class _GameViewState extends ConsumerState<GameView>
       if (!mounted) return;
       _gameNotifier.setJesterCatalog(catalog);
       await _saveActiveRun();
+      if (widget.debugCompleteRunOnLoad) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          await _completeRunAndReturnToTitle();
+        });
+        return;
+      }
       if (widget.autoCashOutLoopOnLoad &&
           _isDebugFixtureRun &&
           !_autoCashOutLoopStarted) {
@@ -229,6 +249,26 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _exitAfterGameOver() async {
     _persistRetrySnapshotOnSave = false;
+    await RunProgressionService.handleRunEnded(
+      RunEndSummary(
+        result: RunEndResult.expired,
+        difficulty: widget.difficulty,
+        reachedStageIndex: _battleView.stageIndex,
+      ),
+    );
+    await ActiveRunSaveService.clearActiveRun();
+    await _goToTitleAfterStoppingBgm();
+  }
+
+  Future<void> _completeRunAndReturnToTitle() async {
+    _persistRetrySnapshotOnSave = false;
+    await RunProgressionService.handleRunEnded(
+      RunEndSummary(
+        result: RunEndResult.completed,
+        difficulty: widget.difficulty,
+        reachedStageIndex: _battleView.stageIndex,
+      ),
+    );
     await ActiveRunSaveService.clearActiveRun();
     await _goToTitleAfterStoppingBgm();
   }
@@ -402,6 +442,10 @@ class _GameViewState extends ConsumerState<GameView>
   Future<void> _runStageClearFlow(int scoreAdded) async {
     final canContinue = await _runStageClearPresentation(scoreAdded);
     if (!canContinue) return;
+    if (widget.debugCompleteRunOnClear) {
+      await _completeRunAndReturnToTitle();
+      return;
+    }
     final breakdown = _gameNotifier.prepareSettlementAndCashOut();
     await _runSettlementToNextStationLoop(breakdown);
   }

@@ -542,6 +542,7 @@ web 저장/플러그인 경계 검증은 `tools/web_build_smoke.sh` 기준으로
 - market은 full-screen route다
 - next station 진입은 notifier command로 이미 감싸져 있다
 - active run 저장은 scene/runtime snapshot 기준으로 유지된다
+- market resume는 provider 전역 상태가 아니라 `GameView` 로컬 복귀 책임으로 정리됐다
 
 이번 설계에서 먼저 나눌 축:
 
@@ -589,7 +590,7 @@ Questions:
 
 - current full-screen shop route를 그대로 `Market`으로 승격할지
 - market에서 뒤로 가기/중단/저장 semantics를 어떻게 둘지
-- `pendingResumeShop`이 장기적으로 어떤 navigation state를 대신하는지
+- `GameView` 로컬 market resume 판단을 장기적으로 어떤 navigation state로 치환할지
 
 Likely files:
 
@@ -656,6 +657,42 @@ continue/delete/corrupt save 동선을 망가뜨리지 않는 것이다.
 - 새 런 진입 세부 단계는 `B2`로 넘기고, `B1`에서는 entry layout만 정리
 - active run summary는 save facade read model 재사용
 - archive/trial은 눌렀을 때 placeholder여도 route 구조는 먼저 정리 가능
+
+현재 코드 반영 메모:
+
+- `TitleView`는 이미 `Continue / New Run / Trial / Archive / Settings` 섹션을 가진 Home 1차 구조로 재구성됐다.
+- `Continue`는 active run summary를 화면에서 바로 보여 준다.
+- `New Run`은 전용 route로 분리됐고, 현재 가능한 `Random / Input Seed` entry와 future setup 축을 같이 노출한다.
+- `새 게임 시작`은 이제 `난이도 선택 -> 블라인드 선택 -> 전투 시작`의 2단계 진입 구조로 이동하기 시작했다.
+- `블라인드 선택`은 별도 route로 분리됐고, 현재는 `스몰/빅/보스` 조건 card를 먼저 보여 준다.
+- `Trial`/`Archive`는 현재 dedicated placeholder route 수준까지 분리됐다.
+- `Archive`는 이제 `기록 / 수집 / 통계` 3블록을 가진 첫 shell 화면으로 올라왔다.
+- 다음 구현 전에는 `06_UI_UX_FLOW.md`에 있는 ASCII stencil을 먼저 source of truth로 본다.
+
+현재 구현 가드레일:
+
+- 유저에게 내부 구조명 `Trial`, `Archive`, `New Run`, `Home`를 직접 보여주지 않는다.
+- 개발/검증용 entry는 `디버그` 섹션으로만 모은다.
+- 화면 작업 전에는 stencil을 먼저 고정하고, 그다음에 코드 레이아웃을 맞춘다.
+- `덱 선택`은 플레이스홀더로 두고, 실제 시작 분기는 `난이도`와 다음 `블라인드 선택` 화면에 붙인다.
+- `빅/보스 블라인드`, `이어하기 -> 블라인드 선택`, `Market -> 블라인드 선택`은 다음 단계에서 잇는다.
+
+세부 작업 단위:
+
+1. `B1-1` Home 진입 섹션 구조 정리
+   - `이어하기 / 새 시작 / 다른 메뉴 / 디버그 / 설정`
+2. `B1-2` Continue summary/read model 정리
+   - save facade 기반 summary 재사용
+3. `B1-3` New Run route 분리
+   - Title는 entry만 들고, 시작 방식 상세는 별도 route로 이동
+4. `B1-4` placeholder route 분리
+   - `특별 모드`, `기록실`
+5. `B1-5` placeholder shell을 stencil 기준으로 정리
+   - 안내 카드, bullet block, back flow
+6. `B1-6` first real shell 결정
+   - `기록실` 또는 `특별 모드` 중 무엇을 먼저 실제 block으로 올릴지 결정
+7. `B1-7` Archive first shell 고정
+   - `기록 / 수집 / 통계` 3블록을 가진 전용 route로 전환
 
 ## 17. Acceptance Criteria
 

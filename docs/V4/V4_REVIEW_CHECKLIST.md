@@ -153,8 +153,19 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 현재 기준 프로세스:
 
 - 기본 스크립트: `tools/ios_sim_smoke.sh`
+- 기본 캡처 대기 시간: `4초`
+- 느린 화면/첫 프레임 안정화가 필요하면 `--settle 5` 이상으로 완화
 - 웹 빌드 smoke 스크립트: `tools/web_build_smoke.sh`
 - launch/title 확인: `tools/ios_sim_smoke.sh`
+- home/new-run/archive/trial shell 확인:
+  `tools/ios_sim_smoke.sh --route "/new-run" --settle 5`
+  `tools/ios_sim_smoke.sh --route "/archive" --settle 5`
+  `tools/ios_sim_smoke.sh --route "/trial" --settle 5`
+- 스크롤이 필요한 shell 하단 확인:
+  `tools/ios_sim_smoke.sh --route "/?debug_scroll=bottom" --settle 8`
+  `tools/ios_sim_smoke.sh --route "/new-run?debug_scroll=bottom" --settle 8`
+  `tools/ios_sim_smoke.sh --route "/archive?debug_scroll=bottom" --settle 8`
+  `tools/ios_sim_smoke.sh --route "/trial?debug_scroll=bottom" --settle 8`
 - fixture battle 확인: `tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot"`
 - background save / relaunch 확인:
   `tools/ios_sim_smoke.sh --open-url "https://example.com" --relaunch`
@@ -168,6 +179,22 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 - title launch 확인:
   `/tmp/rummipoker_ios_smoke/title_smoke_20260420_0230/`
+- home shell 확인:
+  `/tmp/rummipoker_ios_smoke/home_shell_check_20260420/`
+- home shell 하단 확인:
+  `/tmp/rummipoker_ios_smoke/home_bottom_direct_20260420_seq/`
+- new run shell 확인:
+  `/tmp/rummipoker_ios_smoke/new_run_shell_check_20260420/`
+- new run shell 하단 확인:
+  `/tmp/rummipoker_ios_smoke/new_run_bottom_direct_20260420_seq/`
+- archive shell 확인:
+  `/tmp/rummipoker_ios_smoke/archive_shell_check_20260420/`
+- archive shell 하단 확인:
+  `/tmp/rummipoker_ios_smoke/archive_bottom_direct_20260420_seq/`
+- trial shell 확인:
+  `/tmp/rummipoker_ios_smoke/trial_shell_check_20260420/`
+- trial shell 하단 확인:
+  `/tmp/rummipoker_ios_smoke/trial_bottom_direct_20260420_seq/`
 - fixture battle 확인:
   `/tmp/rummipoker_ios_smoke/fixture_stage2_smoke_20260420_0230/`
 - background save / relaunch 확인:
@@ -198,18 +225,54 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 - [ ] `Home` 구조 정의 완료
   현재 상태: `partial`
+- [x] `TitleView`를 Home 1차 구조로 재구성
+  현재 상태: `implemented`
+- [x] `이어하기` block에 저장 진행 summary 노출
+  현재 상태: `implemented`
+- [x] `새 시작` entry를 전용 route로 분리
+  현재 상태: `implemented`
+- [x] `특별 모드` placeholder route 분리
+  현재 상태: `implemented`
+- [x] `기록실` placeholder route 분리
+  현재 상태: `implemented`
+- [x] `기록실` 전용 route/view 분리
+  현재 상태: `implemented`
+- [x] 개발/검증용 진입을 `디버그` 섹션으로만 분리
+  현재 상태: `implemented`
 - [ ] `Continue / New Run / Trial / Archive` 4갈래 진입 정리
   현재 상태: `partial`
+- [ ] `특별 모드`를 실제 유저 모드로 둘지 placeholder로 유지할지 결정
+  현재 상태: `not started`
+- [x] `기록실` 첫 실제 블록(예: 기록/수집/통계 shell) 연결
+  현재 상태: `implemented`
+- [x] `기록 / 수집 / 통계` 3블록을 각각 독립 section으로 노출
+  현재 상태: `implemented`
 - [ ] 손상 세이브 / continue / delete 동선이 최종 Home 구조와 맞게 정리
   현재 상태: `partial`
 
 ### B2. Run Setup Layer
 
-- [ ] `Run Kit` 선택 구조 정의
+- [x] `새 게임 시작` 전용 route 분리
+  현재 상태: `implemented`
+- [x] `Random Start / Seed Start`를 `새 게임 시작` 화면으로 이동
+  현재 상태: `implemented`
+- [x] `덱 선택` 플레이스홀더 card 유지
+  현재 상태: `implemented`
+- [x] `난이도 선택` 잠금 구조/해금 상태 읽기 연결
+  현재 상태: `implemented`
+- [x] `새 게임 시작 -> 블라인드 선택` route 분리
+  현재 상태: `implemented`
+- [x] `블라인드 선택` 1차 shell/UI 연결
+  현재 상태: `implemented`
+- [x] `스몰/빅/보스 블라인드` 조건 미리보기 데이터 구조 추가
+  현재 상태: `implemented`
+- [x] 선택한 `blind tier`가 실제 전투 시작값에 반영
+  현재 상태: `implemented`
+- [ ] `빅/보스 블라인드` 실제 선택 해금
+  현재 상태: `partial`
+- [ ] `이어하기 -> 블라인드 선택` 복귀 구조 연결
   현재 상태: `not started`
-- [ ] `Risk Grade` 선택 구조 정의
-  현재 상태: `not started`
-- [ ] `Seed / Mode` 선택 구조 정리
+- [ ] `Seed / Difficulty / Blind` 선택 흐름 정리
   현재 상태: `partial`
 - [ ] `Run Setup -> Station Map` 전환 구조 정의
   현재 상태: `not started`
@@ -266,6 +329,10 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   현재 상태: `partial`
 - [ ] `current next stage loop`와 `target next station loop` 차이 정리
   현재 상태: `partial`
+- [ ] `Market -> 블라인드 선택 -> 전투 시작` 연결
+  현재 상태: `not started`
+- [ ] active run save가 `blind select` scene을 복원
+  현재 상태: `not started`
 
 ### B8. Sector Boss / Final Station
 
@@ -331,21 +398,26 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [x] `GameView -> GameShopScreen` 경계를 market/save facade read path 기준으로 축소
 - [x] battle HUD/board/hand read path를 `RummiBattleRuntimeFacade` 기준으로 정리
 - [x] active run 저장을 notifier runtime snapshot + `saveRuntimeState()` 기준으로 정리
+- [x] settlement summary를 `RummiSettlementRuntimeFacade`로 읽게 정리
+- [x] `pendingResumeShop`를 제거하고 market resume를 `GameView` 로컬 책임으로 단순화
+- [x] `TitleView`를 `Continue / New Run / Trial / Archive / Settings` 기준 Home 1차 구조로 재구성
+- [x] active run summary 문구를 save facade 한 군데에서 재사용하도록 정리
 
 현재 재점검 결론:
 
 - [x] A 단계 잔여 `current-only` 결합은 다시 확인했다.
 - [x] 남은 직접 참조는 주로 `GameView` 내부 UI state/settlement 표현 범위다.
 - [x] 코드 상태 기준으로 A의 핵심 migration 목표는 이미 충족한 편이다.
+- [x] `B1`은 이제 설계 착수가 아니라 `TitleView` 기준 1차 구현 단계에 들어갔다.
 
 현재 가장 자연스러운 다음 작업:
 
-- [ ] `B7. Next Station Loop` 설계를 시작
-  이유: current loop는 이미 notifier/facade 경계로 1차 정리됐고, 이제는 이 흐름을 장기 제품 구조로 어떻게 나눌지 정의하는 편이 더 큰 진전이다.
+- [x] `B1/B10` 기준으로 `기록실` 첫 shell block을 실제 화면 구조로 올리기
+  이유: `새 게임 시작`은 비활성 setup card 수준까지 자리 정리가 됐고, `기록실`도 이제 placeholder를 넘어 첫 실제 block을 가진다.
 
 구체적인 다음 PR 범위:
 
-- `Settlement -> Market -> Next Station`을 `current loop`와 `target loop`로 분리해 정의
-- `GameView` 단일 route 유지 범위와 future station map/preview 진입 지점 확정
-- `cash-out sheet`, `shop route`, `next station CTA`를 어떤 상태 모델로 묶을지 문서화
-- 이어서 `B1. Home Layer` 진입 구조 초안 착수
+- `기록실` 각 block에 실제 데이터 소스 중 무엇을 먼저 연결할지 결정
+- `기록 / 수집 / 통계` 중 첫 실제 데이터 block 우선순위 고정
+- `특별 모드`는 여전히 placeholder로 둘지, 더 중립적인 entry로 낮출지 결정
+- `새 게임 시작`의 비활성 setup card는 유지하고 B2 문서 기준만 더 세분화

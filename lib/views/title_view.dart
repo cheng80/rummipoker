@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../app_config.dart';
-import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../providers/features/rummi_poker_grid/title_notifier.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
@@ -16,10 +15,16 @@ import '../services/active_run_save_service.dart';
 import '../services/debug_run_fixture_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'home_entry_widgets.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
 class TitleView extends ConsumerStatefulWidget {
-  const TitleView({super.key});
+  const TitleView({
+    super.key,
+    this.debugScrollPreset,
+  });
+
+  final String? debugScrollPreset;
 
   @override
   ConsumerState<TitleView> createState() => _TitleViewState();
@@ -27,7 +32,7 @@ class TitleView extends ConsumerStatefulWidget {
 
 class _TitleViewState extends ConsumerState<TitleView>
     with WidgetsBindingObserver {
-  final TextEditingController _seedInputController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -40,6 +45,17 @@ class _TitleViewState extends ConsumerState<TitleView>
     });
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) InAppReviewService.maybeRequestReviewOnTitleIfEligible();
+    });
+    _applyDebugScrollPreset();
+  }
+
+  void _applyDebugScrollPreset() {
+    if (!kDebugMode || widget.debugScrollPreset != 'bottom') return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(const Duration(milliseconds: 150), () {
+        if (!mounted || !_scrollController.hasClients) return;
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
     });
   }
 
@@ -175,25 +191,6 @@ class _TitleViewState extends ConsumerState<TitleView>
     await _startDebugFixture(fixtureId);
   }
 
-  Future<void> _showHomePreviewDialog({
-    required String title,
-    required String message,
-  }) {
-    return showAppDialog<void>(
-      context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _startDebugFixture(String fixtureId) async {
     final fixture = DebugRunFixtureService.find(fixtureId);
     if (fixture == null) {
@@ -212,7 +209,7 @@ class _TitleViewState extends ConsumerState<TitleView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _seedInputController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -241,6 +238,7 @@ class _TitleViewState extends ConsumerState<TitleView>
     return PhoneFrameScaffold(
       child: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
+          controller: _scrollController,
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Padding(
@@ -283,14 +281,14 @@ class _TitleViewState extends ConsumerState<TitleView>
                     ),
                   ),
                   const SizedBox(height: 34),
-                  _HomeSection(
-                    title: 'Continue',
+                  HomeSection(
+                    title: '이어하기',
                     subtitle: hasStoredActiveRun
-                        ? '저장된 런을 이어서 Market/Battle 위치로 복귀합니다.'
-                        : '현재 이어할 저장 런이 없습니다.',
+                        ? '저장된 진행과 체크포인트를 확인한 뒤 이어서 들어갑니다.'
+                        : '현재 이어서 들어갈 저장 진행이 없습니다.',
                     child: Column(
                       children: [
-                        _HomeEntryCard(
+                        HomeEntryCard(
                           title: '이어하기',
                           description: hasStoredActiveRun
                               ? '저장된 현재 런 복원'
@@ -301,8 +299,8 @@ class _TitleViewState extends ConsumerState<TitleView>
                         ),
                         if (storedRunSummary != null) ...[
                           const SizedBox(height: 10),
-                          _HomeSnapshotCard(
-                            title: 'Saved Run',
+                          HomeSnapshotCard(
+                            title: '저장된 진행',
                             summary: storedRunSummary.snapshotSummaryLabel(),
                           ),
                         ],
@@ -310,77 +308,55 @@ class _TitleViewState extends ConsumerState<TitleView>
                     ),
                   ),
                   const SizedBox(height: 18),
-                  _HomeSection(
-                    title: 'New Run',
-                    subtitle: '현재 Title을 Home의 1차 구조로 보고 새 런 진입을 먼저 분리합니다.',
+                  HomeSection(
+                    title: '새 시작',
+                    subtitle: '새 게임 시작 화면으로 이동합니다.',
                     child: Column(
                       children: [
-                        _HomeEntryCard(
-                          title: context.tr('entryRandomSeed'),
-                          description: '무작위 시드로 바로 시작',
+                        HomeEntryCard(
+                          title: '새 게임 시작',
+                          description: '시작 방식 선택 화면으로 이동',
                           accent: const Color(0xFF3CAEE0),
-                          onTap: () async {
-                            SoundManager.unlockForWeb();
-                            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                            final s = RummiPokerGridSession.rollNewRunSeed();
-                            await ActiveRunSaveService.clearActiveRun();
-                            await SoundManager.stopBgm();
-                            if (!context.mounted) return;
-                            context.go('${RoutePaths.game}?seed=$s');
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        _HomeEntryCard(
-                          title: context.tr('entryInputSeed'),
-                          description: '시드를 직접 입력해 시작',
-                          accent: const Color(0xFF2DB872),
-                          onTap: () => _openSeedInputDialog(context),
+                          onTap: () => context.push(RoutePaths.newRun),
                         ),
                         const SizedBox(height: 10),
-                        const _HomeSnapshotCard(
-                          title: 'Next Setup',
+                        const HomeSnapshotCard(
+                          title: '안내',
                           summary:
-                              'Run Kit · 준비 중\nRisk Grade · 준비 중\nSeed / Mode · 현재 Random / Input Seed 사용',
+                              '다음 화면에서 무작위 시작 또는 시드 시작을 고를 수 있습니다.\n'
+                              '준비 중인 시작 옵션은 그 아래에서 따로 보입니다.',
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 18),
-                  _HomeSection(
-                    title: 'More',
-                    subtitle: 'Trial / Archive는 아직 구조만 먼저 노출합니다.',
+                  HomeSection(
+                    title: '다른 메뉴',
+                    subtitle: '본편 진행과 분리된 별도 메뉴입니다.',
                     child: Column(
                       children: [
-                        _HomeEntryCard(
-                          title: 'Trial',
-                          description: '고정 조건 런과 테스트용 진입 예정',
+                        HomeEntryCard(
+                          title: '특별 모드',
+                          description: '별도 규칙으로 즐기는 추가 모드',
                           accent: const Color(0xFF8E5CF6),
-                          onTap: () => _showHomePreviewDialog(
-                            title: 'Trial',
-                            message:
-                                'Trial 진입 구조는 B1/B2에서 이어서 정리합니다.\n현재는 일반 New Run만 바로 시작할 수 있습니다.',
-                          ),
+                          onTap: () => context.push(RoutePaths.trial),
                         ),
                         const SizedBox(height: 12),
-                        _HomeEntryCard(
-                          title: 'Archive',
-                          description: '기록/컬렉션/통계 진입 예정',
+                        HomeEntryCard(
+                          title: '기록실',
+                          description: '기록, 수집, 통계 확인',
                           accent: const Color(0xFF5C7CFA),
-                          onTap: () => _showHomePreviewDialog(
-                            title: 'Archive',
-                            message:
-                                'Archive 구조는 B1/B10에서 이어서 정리합니다.\n현재는 Home entry만 먼저 드러낸 상태입니다.',
-                          ),
+                          onTap: () => context.push(RoutePaths.archive),
                         ),
                       ],
                     ),
                   ),
                   if (kDebugMode) ...[
                     const SizedBox(height: 18),
-                    _HomeSection(
-                      title: 'Developer',
-                      subtitle: '디버그/검증용 진입',
-                      child: _HomeEntryCard(
+                    HomeSection(
+                      title: '디버그',
+                      subtitle: '개발과 검증용 진입만 모아 둔 영역',
+                      child: HomeEntryCard(
                         title: '디버그 픽스처',
                         description: '검증용 런 상태로 바로 시작',
                         accent: const Color(0xFF7E57C2),
@@ -389,10 +365,10 @@ class _TitleViewState extends ConsumerState<TitleView>
                     ),
                   ],
                   const SizedBox(height: 18),
-                  _HomeSection(
-                    title: 'Settings',
+                  HomeSection(
+                    title: '설정',
                     subtitle: '앱 설정과 환경 옵션',
-                    child: _HomeEntryCard(
+                    child: HomeEntryCard(
                       title: context.tr('settings'),
                       description: '사운드/환경 설정 열기',
                       accent: const Color(0xFF1976D2),
@@ -431,257 +407,6 @@ class _TitleViewState extends ConsumerState<TitleView>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Future<void> _openSeedInputDialog(BuildContext context) async {
-    _seedInputController.clear();
-    await showAppDialog<void>(
-      context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.tr('seedDialogTitle')),
-        content: TextField(
-          controller: _seedInputController,
-          keyboardType: const TextInputType.numberWithOptions(
-            signed: true,
-            decimal: false,
-          ),
-          decoration: InputDecoration(hintText: context.tr('seedHint')),
-          autofocus: true,
-          onSubmitted: (_) =>
-              _trySubmitSeed(context, dialogContext, _seedInputController),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.tr('cancel')),
-          ),
-          TextButton(
-            onPressed: () =>
-                _trySubmitSeed(context, dialogContext, _seedInputController),
-            child: Text(context.tr('ok')),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _trySubmitSeed(
-    BuildContext titleContext,
-    BuildContext dialogContext,
-    TextEditingController controller,
-  ) async {
-    final v = int.tryParse(controller.text.trim());
-    if (v == null) {
-      showTopNotice(titleContext, titleContext.tr('seedInvalid'));
-      return;
-    }
-    Navigator.of(dialogContext).pop();
-    await WidgetsBinding.instance.endOfFrame;
-    if (!titleContext.mounted) return;
-    SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    await ActiveRunSaveService.clearActiveRun();
-    await SoundManager.stopBgm();
-    if (!titleContext.mounted) return;
-    titleContext.go('${RoutePaths.game}?seed=$v');
-  }
-}
-
-class _HomeSection extends StatelessWidget {
-  const _HomeSection({
-    required this.title,
-    required this.subtitle,
-    required this.child,
-  });
-
-  final String title;
-  final String subtitle;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 332,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: AssetPaths.fontAngduIpsul140,
-              fontSize: 20,
-              color: Colors.white.withValues(alpha: 0.95),
-              letterSpacing: 1.1,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.66),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 14),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeEntryCard extends StatelessWidget {
-  const _HomeEntryCard({
-    required this.title,
-    required this.description,
-    required this.accent,
-    required this.onTap,
-    this.enabled = true,
-  });
-
-  final String title;
-  final String description;
-  final Color accent;
-  final VoidCallback onTap;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final baseColor = enabled ? accent : Colors.white24;
-    final darkerColor = HSLColor.fromColor(baseColor)
-        .withLightness(
-          (HSLColor.fromColor(baseColor).lightness - 0.15).clamp(0.0, 1.0),
-        )
-        .toColor();
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(20),
-      child: Ink(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              baseColor.withValues(alpha: enabled ? 1 : 0.35),
-              darkerColor.withValues(alpha: enabled ? 1 : 0.35),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: darkerColor.withValues(alpha: 0.6),
-            width: 2.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: darkerColor.withValues(alpha: 0.5),
-              offset: const Offset(0, 3),
-              blurRadius: 0,
-            ),
-            BoxShadow(
-              color: baseColor.withValues(alpha: enabled ? 0.24 : 0.08),
-              blurRadius: 14,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontAngduIpsul140,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white.withValues(alpha: enabled ? 1 : 0.72),
-                      letterSpacing: 2.2,
-                      shadows: [
-                        Shadow(
-                          color: darkerColor.withValues(alpha: 0.8),
-                          offset: const Offset(1, 1),
-                          blurRadius: 0,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: enabled ? 0.82 : 0.6),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              enabled ? Icons.arrow_forward_rounded : Icons.lock_clock_rounded,
-              color: Colors.white.withValues(alpha: enabled ? 0.92 : 0.65),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeSnapshotCard extends StatelessWidget {
-  const _HomeSnapshotCard({required this.title, required this.summary});
-
-  final String title;
-  final String summary;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.64),
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.6,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            summary,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              height: 1.35,
-            ),
-          ),
-        ],
       ),
     );
   }

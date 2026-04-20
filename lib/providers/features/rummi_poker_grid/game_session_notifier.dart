@@ -13,6 +13,8 @@ import '../../../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
+import '../../../services/blind_selection_setup.dart';
+import '../../../services/new_run_setup.dart';
 import 'game_session_state.dart';
 
 class GameSessionArgs {
@@ -21,12 +23,16 @@ class GameSessionArgs {
     this.restoredRun,
     this.debugFixtureId,
     this.ruleset = RummiRuleset.currentDefaults,
+    this.difficulty = NewRunDifficulty.standard,
+    this.blindTier = BlindTier.small,
   });
 
   final int runSeed;
   final ActiveRunRuntimeState? restoredRun;
   final String? debugFixtureId;
   final RummiRuleset ruleset;
+  final NewRunDifficulty difficulty;
+  final BlindTier blindTier;
 
   @override
   bool operator ==(Object other) =>
@@ -34,11 +40,20 @@ class GameSessionArgs {
       other.runSeed == runSeed &&
       identical(other.restoredRun, restoredRun) &&
       other.debugFixtureId == debugFixtureId &&
-      other.ruleset == ruleset;
+      other.ruleset == ruleset &&
+      other.difficulty == difficulty &&
+      other.blindTier == blindTier;
 
   @override
   int get hashCode =>
-      Object.hash(runSeed, restoredRun, debugFixtureId, ruleset);
+      Object.hash(
+        runSeed,
+        restoredRun,
+        debugFixtureId,
+        ruleset,
+        difficulty,
+        blindTier,
+      );
 }
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
@@ -69,17 +84,25 @@ class GameSessionNotifier
     }
 
     final ruleset = args.ruleset;
+    final initialBlind = BlindSelectionSetup.resolveSpec(
+      tier: args.blindTier,
+      difficulty: args.difficulty,
+      ruleset: ruleset,
+    );
     final session = RummiPokerGridSession(
       runSeed: args.runSeed,
       deckCopiesPerTile: ruleset.copiesPerTile,
       ruleset: ruleset,
       blind: RummiBlindState(
-        targetScore: 300,
-        boardDiscardsRemaining: ruleset.defaultBoardDiscards,
-        handDiscardsRemaining: ruleset.defaultHandDiscards,
+        targetScore: initialBlind.targetScore,
+        boardDiscardsRemaining: initialBlind.boardDiscards,
+        handDiscardsRemaining: initialBlind.handDiscards,
       ),
     );
-    final runProgress = RummiRunProgress();
+    session.maxHandSize = initialBlind.maxHandSize;
+    final runProgress = RummiRunProgress()
+      ..gold = _initialGold(args.difficulty)
+      ..rerollCost = _initialRerollCost(args.difficulty);
     return _withDerivedViews(
       GameSessionState(
         session: session,
@@ -94,6 +117,21 @@ class GameSessionNotifier
         debugFixtureId: args.debugFixtureId,
       ),
     );
+  }
+
+  static int _initialGold(NewRunDifficulty difficulty) {
+    return switch (difficulty) {
+      NewRunDifficulty.standard => RummiEconomyConfig.startingGold,
+      NewRunDifficulty.relaxed => RummiEconomyConfig.startingGold + 3,
+      NewRunDifficulty.pressure => RummiEconomyConfig.startingGold,
+    };
+  }
+
+  static int _initialRerollCost(NewRunDifficulty difficulty) {
+    return switch (difficulty) {
+      NewRunDifficulty.relaxed => RummiRunProgress.shopBaseRerollCost - 1,
+      _ => RummiRunProgress.shopBaseRerollCost,
+    };
   }
 
   void markDirty() {

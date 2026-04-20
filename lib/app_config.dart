@@ -29,6 +29,7 @@ class StorageKeys {
   static const String activeRunPayloadV1 = 'active_run_payload_v1';
   static const String activeRunSignatureV1 = 'active_run_signature_v1';
   static const String saveDeviceKeyV1 = 'save_device_key_v1';
+  static const String runUnlockStateV1 = 'run_unlock_state_v1';
 }
 
 /// 인앱 리뷰: TitleView에서 일정 기간(일) 경과 후 requestReview 호출.
@@ -42,4 +43,8 @@ class RoutePaths {
   static const String title = '/';
   static const String game = '/game';
   static const String setting = '/setting';
+  static const String newRun = '/new-run';
+  static const String blindSelect = '/blind-select';
+  static const String trial = '/trial';
+  static const String archive = '/archive';
 }
