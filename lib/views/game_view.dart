@@ -400,7 +400,14 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _runStageClearFlow(int scoreAdded) async {
-    if (!mounted) return;
+    final canContinue = await _runStageClearPresentation(scoreAdded);
+    if (!canContinue) return;
+    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
+    await _runSettlementToNextStationLoop(breakdown);
+  }
+
+  Future<bool> _runStageClearPresentation(int scoreAdded) async {
+    if (!mounted) return false;
     _gameNotifier.setStageFlow(
       phase: GameStageFlowPhase.cleared,
       stageScoreAdded: scoreAdded,
@@ -408,30 +415,11 @@ class _GameViewState extends ConsumerState<GameView>
     );
 
     await Future<void>.delayed(const Duration(milliseconds: 850));
-    if (!mounted) return;
+    if (!mounted) return false;
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.settlement);
 
     await Future<void>.delayed(const Duration(milliseconds: 950));
-    if (!mounted) return;
-
-    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
-    await _saveActiveRun();
-
-    _gameNotifier.setStageFlow(phase: GameStageFlowPhase.none);
-
-    final enterShop = await _showCashOutSheet(breakdown);
-    if (!mounted || enterShop != true) return;
-
-    _gameNotifier.enterMarketAfterCashOut();
-    await _saveActiveRun();
-
-    final nextStage = await _showShopScreen();
-    if (!mounted || nextStage != true) return;
-
-    _gameNotifier.beginNextStationTransition();
-    _gameNotifier.advanceToNextStation(widget.runSeed);
-    await _saveActiveRun();
-    _showSnack('Station ${_battleView.stageIndex} 시작');
+    return mounted;
   }
 
   Future<bool?> _showCashOutSheet(RummiCashOutBreakdown breakdown) {
@@ -456,7 +444,15 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _runAutoCashOutLoopOnLoad() async {
     final breakdown = _gameNotifier.prepareSettlementAndCashOut();
+    await _runSettlementToNextStationLoop(breakdown);
+  }
+
+  Future<void> _runSettlementToNextStationLoop(
+    RummiCashOutBreakdown breakdown,
+  ) async {
     await _saveActiveRun();
+
+    _gameNotifier.setStageFlow(phase: GameStageFlowPhase.none);
 
     final enterShop = await _showCashOutSheet(breakdown);
     if (!mounted || enterShop != true) return;

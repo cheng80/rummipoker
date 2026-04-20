@@ -175,6 +175,25 @@ class _TitleViewState extends ConsumerState<TitleView>
     await _startDebugFixture(fixtureId);
   }
 
+  Future<void> _showHomePreviewDialog({
+    required String title,
+    required String message,
+  }) {
+    return showAppDialog<void>(
+      context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _startDebugFixture(String fixtureId) async {
     final fixture = DebugRunFixtureService.find(fixtureId);
     if (fixture == null) {
@@ -218,12 +237,14 @@ class _TitleViewState extends ConsumerState<TitleView>
   Widget build(BuildContext context) {
     final titleState = ref.watch(titleNotifierProvider).valueOrNull;
     final hasStoredActiveRun = titleState?.hasStoredActiveRun ?? false;
+    final storedRunSummary = titleState?.storedRunSummary;
     return PhoneFrameScaffold(
       child: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -261,57 +282,128 @@ class _TitleViewState extends ConsumerState<TitleView>
                       color: Colors.white.withValues(alpha: 0.6),
                     ),
                   ),
-                  const SizedBox(height: 52),
-                  if (hasStoredActiveRun) ...[
-                    _RoundButton(
-                      label: '이어하기',
-                      color: const Color(0xFFF4A81D),
-                      fontSize: 26,
-                      onPressed: _openContinueMenu,
+                  const SizedBox(height: 34),
+                  _HomeSection(
+                    title: 'Continue',
+                    subtitle: hasStoredActiveRun
+                        ? '저장된 런을 이어서 Market/Battle 위치로 복귀합니다.'
+                        : '현재 이어할 저장 런이 없습니다.',
+                    child: Column(
+                      children: [
+                        _HomeEntryCard(
+                          title: '이어하기',
+                          description: hasStoredActiveRun
+                              ? '저장된 현재 런 복원'
+                              : '저장 런이 생기면 여기서 복귀',
+                          accent: const Color(0xFFF4A81D),
+                          enabled: hasStoredActiveRun,
+                          onTap: _openContinueMenu,
+                        ),
+                        if (storedRunSummary != null) ...[
+                          const SizedBox(height: 10),
+                          _HomeSnapshotCard(
+                            title: 'Saved Run',
+                            summary: storedRunSummary.snapshotSummaryLabel(),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                  ],
-                  _RoundButton(
-                    label: context.tr('entryRandomSeed'),
-                    color: const Color(0xFF3CAEE0),
-                    fontSize: 26,
-                    onPressed: () async {
-                      SoundManager.unlockForWeb();
-                      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                      final s = RummiPokerGridSession.rollNewRunSeed();
-                      await ActiveRunSaveService.clearActiveRun();
-                      await SoundManager.stopBgm();
-                      if (!context.mounted) return;
-                      context.go('${RoutePaths.game}?seed=$s');
-                    },
                   ),
-                  const SizedBox(height: 20),
-                  _RoundButton(
-                    label: context.tr('entryInputSeed'),
-                    color: const Color(0xFF2DB872),
-                    fontSize: 26,
-                    onPressed: () => _openSeedInputDialog(context),
+                  const SizedBox(height: 18),
+                  _HomeSection(
+                    title: 'New Run',
+                    subtitle: '현재 Title을 Home의 1차 구조로 보고 새 런 진입을 먼저 분리합니다.',
+                    child: Column(
+                      children: [
+                        _HomeEntryCard(
+                          title: context.tr('entryRandomSeed'),
+                          description: '무작위 시드로 바로 시작',
+                          accent: const Color(0xFF3CAEE0),
+                          onTap: () async {
+                            SoundManager.unlockForWeb();
+                            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                            final s = RummiPokerGridSession.rollNewRunSeed();
+                            await ActiveRunSaveService.clearActiveRun();
+                            await SoundManager.stopBgm();
+                            if (!context.mounted) return;
+                            context.go('${RoutePaths.game}?seed=$s');
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeEntryCard(
+                          title: context.tr('entryInputSeed'),
+                          description: '시드를 직접 입력해 시작',
+                          accent: const Color(0xFF2DB872),
+                          onTap: () => _openSeedInputDialog(context),
+                        ),
+                        const SizedBox(height: 10),
+                        const _HomeSnapshotCard(
+                          title: 'Next Setup',
+                          summary:
+                              'Run Kit · 준비 중\nRisk Grade · 준비 중\nSeed / Mode · 현재 Random / Input Seed 사용',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _HomeSection(
+                    title: 'More',
+                    subtitle: 'Trial / Archive는 아직 구조만 먼저 노출합니다.',
+                    child: Column(
+                      children: [
+                        _HomeEntryCard(
+                          title: 'Trial',
+                          description: '고정 조건 런과 테스트용 진입 예정',
+                          accent: const Color(0xFF8E5CF6),
+                          onTap: () => _showHomePreviewDialog(
+                            title: 'Trial',
+                            message:
+                                'Trial 진입 구조는 B1/B2에서 이어서 정리합니다.\n현재는 일반 New Run만 바로 시작할 수 있습니다.',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeEntryCard(
+                          title: 'Archive',
+                          description: '기록/컬렉션/통계 진입 예정',
+                          accent: const Color(0xFF5C7CFA),
+                          onTap: () => _showHomePreviewDialog(
+                            title: 'Archive',
+                            message:
+                                'Archive 구조는 B1/B10에서 이어서 정리합니다.\n현재는 Home entry만 먼저 드러낸 상태입니다.',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (kDebugMode) ...[
-                    const SizedBox(height: 20),
-                    _RoundButton(
-                      label: '디버그',
-                      color: const Color(0xFF7E57C2),
-                      fontSize: 24,
-                      onPressed: _openDebugFixtureMenu,
+                    const SizedBox(height: 18),
+                    _HomeSection(
+                      title: 'Developer',
+                      subtitle: '디버그/검증용 진입',
+                      child: _HomeEntryCard(
+                        title: '디버그 픽스처',
+                        description: '검증용 런 상태로 바로 시작',
+                        accent: const Color(0xFF7E57C2),
+                        onTap: _openDebugFixtureMenu,
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  _RoundButton(
-                    label: context.tr('settings'),
-                    color: const Color(0xFF1976D2),
-                    onPressed: () {
-                      SoundManager.unlockForWeb();
-                      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                      context.push(RoutePaths.setting);
-                    },
+                  const SizedBox(height: 18),
+                  _HomeSection(
+                    title: 'Settings',
+                    subtitle: '앱 설정과 환경 옵션',
+                    child: _HomeEntryCard(
+                      title: context.tr('settings'),
+                      description: '사운드/환경 설정 열기',
+                      accent: const Color(0xFF1976D2),
+                      onTap: () {
+                        SoundManager.unlockForWeb();
+                        SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                        context.push(RoutePaths.setting);
+                      },
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 24),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
                     child: FutureBuilder<PackageInfo>(
@@ -397,76 +489,199 @@ class _TitleViewState extends ConsumerState<TitleView>
   }
 }
 
-/// 참조 이미지 스타일의 둥글고 큼지막한 버튼.
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({
-    required this.label,
-    required this.color,
-    required this.onPressed,
-    this.fontSize = 32,
+class _HomeSection extends StatelessWidget {
+  const _HomeSection({
+    required this.title,
+    required this.subtitle,
+    required this.child,
   });
 
-  final String label;
-  final Color color;
-  final VoidCallback onPressed;
-  final double fontSize;
+  final String title;
+  final String subtitle;
+  final Widget child;
 
-  /// 그라데이션·테두리·그림자가 적용된 둥근 버튼을 반환한다.
   @override
   Widget build(BuildContext context) {
-    const width = 300.0;
-    const height = 68.0;
-    final darkerColor = HSLColor.fromColor(color)
+    return Container(
+      width: 332,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: AssetPaths.fontAngduIpsul140,
+              fontSize: 20,
+              color: Colors.white.withValues(alpha: 0.95),
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.66),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeEntryCard extends StatelessWidget {
+  const _HomeEntryCard({
+    required this.title,
+    required this.description,
+    required this.accent,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String description;
+  final Color accent;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = enabled ? accent : Colors.white24;
+    final darkerColor = HSLColor.fromColor(baseColor)
         .withLightness(
-          (HSLColor.fromColor(color).lightness - 0.15).clamp(0.0, 1.0),
+          (HSLColor.fromColor(baseColor).lightness - 0.15).clamp(0.0, 1.0),
         )
         .toColor();
-
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: width,
-        height: height,
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(20),
+      child: Ink(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [color, darkerColor],
+            colors: [
+              baseColor.withValues(alpha: enabled ? 1 : 0.35),
+              darkerColor.withValues(alpha: enabled ? 1 : 0.35),
+            ],
           ),
-          borderRadius: BorderRadius.circular(height / 2),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: darkerColor.withValues(alpha: 0.6),
-            width: 3,
+            width: 2.2,
           ),
           boxShadow: [
             BoxShadow(
               color: darkerColor.withValues(alpha: 0.5),
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 3),
               blurRadius: 0,
             ),
-            BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 16),
+            BoxShadow(
+              color: baseColor.withValues(alpha: enabled ? 0.24 : 0.08),
+              blurRadius: 14,
+            ),
           ],
         ),
-        child: Center(
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: AssetPaths.fontAngduIpsul140,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white.withValues(alpha: enabled ? 1 : 0.72),
+                      letterSpacing: 2.2,
+                      shadows: [
+                        Shadow(
+                          color: darkerColor.withValues(alpha: 0.8),
+                          offset: const Offset(1, 1),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: enabled ? 0.82 : 0.6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              enabled ? Icons.arrow_forward_rounded : Icons.lock_clock_rounded,
+              color: Colors.white.withValues(alpha: enabled ? 0.92 : 0.65),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeSnapshotCard extends StatelessWidget {
+  const _HomeSnapshotCard({required this.title, required this.summary});
+
+  final String title;
+  final String summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
             style: TextStyle(
-              fontFamily: AssetPaths.fontAngduIpsul140,
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 6,
-              shadows: [
-                Shadow(
-                  color: darkerColor.withValues(alpha: 0.8),
-                  offset: const Offset(1, 1),
-                  blurRadius: 0,
-                ),
-              ],
+              color: Colors.white.withValues(alpha: 0.64),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
             ),
           ),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            summary,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -476,14 +691,7 @@ String _continueDialogMessage(RummiActiveRunSaveFacade? summary) {
   if (summary == null) {
     return '이어하기는 저장된 현재 런을 복원합니다.\n삭제하거나 그대로 이어할지 선택하세요.';
   }
-  final sceneLabel = switch (summary.sceneAlias) {
-    RummiSaveSceneAlias.market => 'Market',
-    RummiSaveSceneAlias.battle => 'Battle',
-  };
-  return '저장된 현재 런을 복원합니다.\n'
-      '현재 Station ${summary.currentStationIndex} · $sceneLabel · Gold ${summary.currentGold}\n'
-      '체크포인트 Station ${summary.checkpoint.stationIndex}\n'
-      '삭제하거나 그대로 이어할지 선택하세요.';
+  return summary.continueDialogMessage();
 }
 
 class _DebugFixtureOption extends StatelessWidget {

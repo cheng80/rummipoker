@@ -195,10 +195,5 @@ Future<void> showGameOptionsDialog({
 }
 
 String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
-  final sceneLabel = switch (summary.sceneAlias) {
-    RummiSaveSceneAlias.market => 'Market',
-    RummiSaveSceneAlias.battle => 'Battle',
-  };
-  return '현재 Station ${summary.currentStationIndex} · $sceneLabel · Gold ${summary.currentGold}\n'
-      '체크포인트 Station ${summary.checkpoint.stationIndex}';
+  return summary.snapshotSummaryLabel();
 }

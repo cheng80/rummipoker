@@ -9,6 +9,13 @@ import 'active_run_save_service.dart';
 ///   payload without forcing an early save migration.
 enum RummiSaveSceneAlias { battle, market }
 
+String rummiSaveSceneLabel(RummiSaveSceneAlias sceneAlias) {
+  return switch (sceneAlias) {
+    RummiSaveSceneAlias.market => 'Market',
+    RummiSaveSceneAlias.battle => 'Battle',
+  };
+}
+
 class RummiStationCheckpointSaveView {
   const RummiStationCheckpointSaveView({
     required this.stageIndex,
@@ -91,6 +98,24 @@ class RummiActiveRunSaveFacade {
   final int currentRunSeed;
   final int currentGold;
   final RummiStationCheckpointSaveView checkpoint;
+
+  String get currentLocationSummary =>
+      '현재 Station $currentStationIndex · ${rummiSaveSceneLabel(sceneAlias)} · Gold $currentGold';
+
+  String get checkpointSummary => '체크포인트 Station ${checkpoint.stationIndex}';
+
+  String snapshotSummaryLabel({bool includeCheckpoint = true}) {
+    if (!includeCheckpoint) {
+      return currentLocationSummary;
+    }
+    return '$currentLocationSummary\n$checkpointSummary';
+  }
+
+  String continueDialogMessage() {
+    return '저장된 현재 런을 복원합니다.\n'
+        '${snapshotSummaryLabel()}\n'
+        '삭제하거나 그대로 이어할지 선택하세요.';
+  }
 
   static RummiSaveSceneAlias _sceneAliasFromName(String scene) {
     return switch (scene) {

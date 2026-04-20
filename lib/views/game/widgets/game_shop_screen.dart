@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../../../services/active_run_save_facade.dart';
@@ -916,12 +915,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
 }
 
 String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
-  final sceneLabel = switch (summary.sceneAlias) {
-    RummiSaveSceneAlias.market => 'Market',
-    RummiSaveSceneAlias.battle => 'Battle',
-  };
-  return '현재 Station ${summary.currentStationIndex} · $sceneLabel · Gold ${summary.currentGold}\n'
-      '체크포인트 Station ${summary.checkpoint.stationIndex}';
+  return summary.snapshotSummaryLabel();
 }
 
 class _GameShopOfferCard extends StatelessWidget {

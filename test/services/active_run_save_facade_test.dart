@@ -118,5 +118,44 @@ void main() {
       expect(facade.checkpoint.stationIndex, 3);
       expect(facade.checkpoint.gold, 10);
     });
+
+    test('provides centralized summary labels for continue/home UI', () {
+      final session = RummiPokerGridSession(
+        runSeed: 99,
+        blind: RummiBlindState(targetScore: 500, scoreTowardBlind: 140),
+      );
+      final runProgress = RummiRunProgress()
+        ..stageIndex = 3
+        ..gold = 27;
+      final runtime = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.shop,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: session.copySnapshot(),
+          runProgress: runProgress.copySnapshot()..gold = 10,
+        ),
+      );
+
+      final facade = RummiActiveRunSaveFacade.fromRuntimeState(runtime);
+
+      expect(rummiSaveSceneLabel(facade.sceneAlias), 'Market');
+      expect(
+        facade.currentLocationSummary,
+        '현재 Station 3 · Market · Gold 27',
+      );
+      expect(facade.checkpointSummary, '체크포인트 Station 3');
+      expect(
+        facade.snapshotSummaryLabel(),
+        '현재 Station 3 · Market · Gold 27\n체크포인트 Station 3',
+      );
+      expect(
+        facade.continueDialogMessage(),
+        '저장된 현재 런을 복원합니다.\n'
+        '현재 Station 3 · Market · Gold 27\n'
+        '체크포인트 Station 3\n'
+        '삭제하거나 그대로 이어할지 선택하세요.',
+      );
+    });
   });
 }
