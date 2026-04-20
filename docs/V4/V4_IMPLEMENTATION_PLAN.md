@@ -525,7 +525,139 @@ web 저장/플러그인 경계 검증은 `tools/web_build_smoke.sh` 기준으로
 7. code rename 시점
 8. Market가 Jester-only를 벗어나는 최소 단계
 
-## 15. Acceptance Criteria
+## 15. B7 Next Station Loop UI Plan
+
+[NEXT] [DOC VERIFIED]
+
+다음 구현/설계 시작점은 `B7. Next Station Loop`다.
+
+이 단계 목표는 current loop를 갈아엎는 것이 아니라, 이미 돌아가는
+`settlement -> shop -> next stage` 흐름을 장기 `Settlement -> Market -> Next Station`
+구조로 다시 읽을 수 있게 만드는 것이다.
+
+현재 코드 기준 고정점:
+
+- battle 종료 후 settlement 연출이 있다
+- cash-out sheet가 보상 요약과 gold 반영을 맡는다
+- market은 full-screen route다
+- next station 진입은 notifier command로 이미 감싸져 있다
+- active run 저장은 scene/runtime snapshot 기준으로 유지된다
+
+이번 설계에서 먼저 나눌 축:
+
+1. 화면 축
+   - `Battle`
+   - `Settlement`
+   - `Market`
+   - `Next Station Transition`
+2. 상태 축
+   - battle 결과 표시 상태
+   - settlement 보상 확정 상태
+   - market 체류 상태
+   - next station 진입 준비 상태
+3. 저장 축
+   - battle 중 저장
+   - settlement 직후 저장
+   - market 체류 중 저장
+   - next station 진입 직후 checkpoint 갱신
+
+세부 UI 분해 순서:
+
+### Step 1. Settlement 경계 명확화
+
+Goal:
+cash-out 연출/보상 합산/다음 버튼의 책임을 `Settlement` 단계로 명시한다.
+
+Questions:
+
+- 현재 `cash-out sheet`가 담당하는 정보 중 무엇이 장기 settlement read model로 남아야 하는가
+- `confirm settlement`와 `cash-out complete`를 같은 단계로 둘지 분리할지
+- settlement 종료 시 저장 scene을 어디로 둘지
+
+Likely files:
+
+- `lib/views/game_view.dart`
+- `lib/views/game/widgets/game_cashout_widgets.dart`
+- `lib/providers/features/rummi_poker_grid/game_session_state.dart`
+
+### Step 2. Market 진입/복귀 구조 정리
+
+Goal:
+market route가 단순 shop 화면인지, station loop의 정식 단계인지 명확히 한다.
+
+Questions:
+
+- current full-screen shop route를 그대로 `Market`으로 승격할지
+- market에서 뒤로 가기/중단/저장 semantics를 어떻게 둘지
+- `pendingResumeShop`이 장기적으로 어떤 navigation state를 대신하는지
+
+Likely files:
+
+- `lib/views/game/widgets/game_shop_screen.dart`
+- `lib/views/game_view.dart`
+- `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`
+
+### Step 3. Next Station CTA/Transition 정의
+
+Goal:
+현재 `next stage` 버튼을 장기 `Next Station` 전환 단계로 재정의한다.
+
+Questions:
+
+- next station 진입 전에 preview 또는 map entry가 필요한지
+- 없으면 현재처럼 즉시 진입하되 어떤 facade/state 이름으로 감쌀지
+- checkpoint 갱신 시점을 settlement 완료 기준으로 둘지, station 진입 완료 기준으로 둘지
+
+Likely files:
+
+- `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`
+- `lib/services/active_run_save_service.dart`
+- `docs/V4/rummi_poker_grid_design_docs_v4/06_UI_UX_FLOW.md`
+
+### Step 4. 검증 기준
+
+Required verification:
+
+- provider test: settlement -> market -> next station 상태 전이
+- widget test: market resume/read path 유지
+- iOS smoke: full loop 재실행 가능
+
+Acceptance:
+
+- current loop를 유지한 채 `B7` 문서와 코드 용어가 서로 맞는다
+- `GameView`가 모든 단계를 직접 조립하지 않아도 된다
+- 이후 `B1 Home Layer`, `B3 Station Map`로 자연스럽게 이어질 수 있다
+
+## 16. B1 Home Layer UI Plan
+
+[NEXT] [DOC VERIFIED]
+
+`B7` 바로 다음 후보는 `B1. Home Layer`다.
+
+핵심은 현재 `TitleView` 중심 진입을 장기 Home 구조로 확장하되,
+continue/delete/corrupt save 동선을 망가뜨리지 않는 것이다.
+
+우선 나눌 화면 블록:
+
+1. `Continue`
+2. `New Run`
+3. `Trial`
+4. `Archive`
+5. `Settings`
+
+초기 설계 질문:
+
+- 지금 `TitleView`를 Home의 1차 구현으로 볼지, 새 route를 둘지
+- `continue / delete / corrupted save` dialog를 Home card/action 구조로 흡수할지
+- debug fixture 진입을 release-visible Home에서 완전히 분리할지
+
+초기 구현 원칙:
+
+- 새 런 진입 세부 단계는 `B2`로 넘기고, `B1`에서는 entry layout만 정리
+- active run summary는 save facade read model 재사용
+- archive/trial은 눌렀을 때 placeholder여도 route 구조는 먼저 정리 가능
+
+## 17. Acceptance Criteria
 
 [DOC VERIFIED]
 
@@ -539,7 +671,7 @@ web 저장/플러그인 경계 검증은 `tools/web_build_smoke.sh` 기준으로
 6. One Pair 0점 규칙이 보호 대상임이 분명하다
 7. current-to-target migration이 단계별로 되돌릴 수 있다
 
-## 16. First 3 PR Detailed Plan
+## 18. First 3 PR Detailed Plan
 
 ### PR 1: V4 implementation plan lock
 
@@ -623,7 +755,7 @@ Review checklist:
 Abort conditions:
 - 테스트 추가만으로 save schema 변경이 필요함
 
-## 17. Explicitly Deferred Work
+## 19. Explicitly Deferred Work
 
 [FUTURE] [DOC VERIFIED]
 

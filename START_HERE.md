@@ -85,38 +85,39 @@
 
 ## 다음 작업 기본 방향
 
-다음 작업은 아래 성격을 우선한다.
+현재 A 단계 잔여 `current-only` 결합은 한 번 더 점검했다.
 
-- facade/read model을 실제 UI나 orchestration에 연결
-- current runtime의 직접 참조를 줄이고 V4 용어 계층으로 읽게 만들기
-- `jester_meta.dart`, save, station, market 쪽 책임을 작게 분리할 준비를 진행
+- shop/battle/save의 큰 read/write 경계는 이미 facade/notifier 쪽으로 1차 이동 완료
+- 남아 있는 것은 주로 `GameView` 내부 UI state 조립과 settlement 표시용 값들
+- 즉, A 단계의 큰 migration 작업을 더 미는 것보다 이제 B 구조 설계를 시작하는 쪽이 맞다
 
-현재 맥락상 가장 자연스러운 다음 후보는 이런 부류다.
+다음 작업 우선순위는 아래처럼 고정한다.
 
-- battle/game 화면의 남은 direct runtime read를 더 줄이기
-- save/runtime/orchestration 경계의 current-only 결합을 더 낮추기
-- `jester_meta.dart`, station, save 쪽 read model 분리를 더 잘게 준비하기
+1. `B7. Next Station Loop` 설계를 먼저 시작한다.
+2. 필요하면 그 설계에 맞춰 battle/settlement/market 사이 UI 책임만 소규모로 다시 나눈다.
+3. 그 다음 `B1. Home Layer` 설계를 이어서 정리한다.
 
-현재 바로 이어서 할 작업은 아래처럼 구체적으로 고정한다.
+현재 바로 이어서 볼 범위는 아래다.
 
-1. battle 화면에서 facade로 충분히 읽을 수 있는 값과 아직 raw runtime이 필요한 값을 다시 분리한다.
-2. 가능하면 `GameView`/battle widgets 쪽 direct runtime read를 더 줄인다.
-3. provider/widget 테스트로 facade 동기화가 유지되는지 계속 고정한다.
-4. 문서는 체크박스를 바꾸기보다, 상태 설명이 코드와 어긋나지 않게 최소 수정으로 갱신한다.
+- `B7` 핵심:
+  - `Settlement -> Market -> Next Station`을 화면/상태/저장 기준으로 다시 나눈다.
+  - current loop에서 유지할 것과 target loop에서 추가할 것을 분리한다.
+  - `GameView` 단일 route 유지 여부와 future station map 진입 지점을 정한다.
+- `B1` 준비:
+  - `Continue / New Run / Trial / Archive` 진입 구조를 title 기준으로 다시 정리한다.
+  - 손상 세이브, 이어하기, 삭제 동선을 Home 기준으로 재배치할 틀을 만든다.
 
-즉, 다음 세션에서는 아래 파일/경계부터 바로 본다.
+즉, 다음 세션에서는 아래 문서와 파일부터 바로 본다.
 
-- 대상 파일:
+- 설계 문서:
+  - `docs/V4/V4_REVIEW_CHECKLIST.md`
+  - `docs/V4/V4_IMPLEMENTATION_PLAN.md`
+  - `docs/V4/rummi_poker_grid_design_docs_v4/06_UI_UX_FLOW.md`
+- 코드 경계:
   - `lib/views/game_view.dart`
-  - `lib/views/game/widgets/game_shared_widgets.dart`
-  - `lib/views/game/widgets/game_hand_zone.dart`
-  - `lib/providers/features/rummi_poker_grid/game_session_state.dart`
-  - `test/providers/game_session_notifier_test.dart`
-  - `test/views/game/widgets/game_station_read_path_test.dart`
-- 대상 경계:
-  - battle HUD / board / hand read path
-  - facade 파생값과 widget 표시값의 동기화
-  - save/runtime/orchestration read boundary
+  - `lib/views/game/widgets/game_cashout_widgets.dart`
+  - `lib/views/game/widgets/game_shop_screen.dart`
+  - `lib/views/title_view.dart`
 
 ## 하지 말아야 할 것
 

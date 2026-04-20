@@ -330,21 +330,22 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [x] `cash-out -> market -> next station` 시퀀스를 notifier command로 정리
 - [x] `GameView -> GameShopScreen` 경계를 market/save facade read path 기준으로 축소
 - [x] battle HUD/board/hand read path를 `RummiBattleRuntimeFacade` 기준으로 정리
+- [x] active run 저장을 notifier runtime snapshot + `saveRuntimeState()` 기준으로 정리
+
+현재 재점검 결론:
+
+- [x] A 단계 잔여 `current-only` 결합은 다시 확인했다.
+- [x] 남은 직접 참조는 주로 `GameView` 내부 UI state/settlement 표현 범위다.
+- [x] 코드 상태 기준으로 A의 핵심 migration 목표는 이미 충족한 편이다.
 
 현재 가장 자연스러운 다음 작업:
 
-- [ ] battle/game 화면에 남아 있는 direct runtime read를 더 줄일지 결정
-  이유: settlement/shop/stage transition 쓰기 경계와 shop route read 경계는 1차 정리됐고, 이제 남은 중심 과제는 battle UI read path를 더 얇게 유지하는 것이다.
-
-현재 추천:
-`GameView`와 battle widgets에서 facade로 충분히 읽을 수 있는 값과 raw runtime이 꼭 필요한 값을 다시 나눠 보는 쪽이 다음 단계로 가장 안전하다.
-
-- `stage / gold / board / hand / scoring cells`
-- `save summary / checkpoint`
-- `runtime mutation에 필요한 최소 current object`
+- [ ] `B7. Next Station Loop` 설계를 시작
+  이유: current loop는 이미 notifier/facade 경계로 1차 정리됐고, 이제는 이 흐름을 장기 제품 구조로 어떻게 나눌지 정의하는 편이 더 큰 진전이다.
 
 구체적인 다음 PR 범위:
 
-- `lib/views/game_view.dart`, `game_shared_widgets.dart`, `game_hand_zone.dart` 기준으로 battle read path 재점검
-- provider 쪽 facade 파생값과 widget 표시값 동기화 테스트 추가
-- 체크리스트/진입 문서 상태 설명을 코드 기준으로 최소 갱신
+- `Settlement -> Market -> Next Station`을 `current loop`와 `target loop`로 분리해 정의
+- `GameView` 단일 route 유지 범위와 future station map/preview 진입 지점 확정
+- `cash-out sheet`, `shop route`, `next station CTA`를 어떤 상태 모델로 묶을지 문서화
+- 이어서 `B1. Home Layer` 진입 구조 초안 착수
