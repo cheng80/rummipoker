@@ -146,6 +146,7 @@ debug fixture 흐름이 일반 런 의미를 오염시키지 않아야 한다.
 - [x] iOS 시뮬레이터 실구동/스크린샷 검증 절차를 재사용 가능한 프로세스로 정리
 - [x] `cash-out -> market -> next station` 전체 루프 실기기 확인
 - [x] Chrome 2차 확인 필요 여부 결정
+- [x] battle / market interaction polish의 현재 1차 방향 문서화
 
 완료 기준:
 mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 함께 견뎌야 한다.
@@ -214,6 +215,13 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - Chrome 기기는 현재 연결 가능 상태를 확인했다.
 - 이번 단계에서는 mobile-first/iOS smoke가 핵심 acceptance를 충족하므로 Chrome 실구동은 필수 게이트로 두지 않는다.
 - 다만 web 저장/라우팅/입력 경계가 바뀌는 PR이나 release 전 점검 단계에서는 `tools/web_build_smoke.sh`를 먼저 돌리고, 필요 시 `local server + Playwright` interaction screenshot까지 같이 수행한다.
+
+최근 UI 정리 메모:
+
+- market는 scroll list 대신 `카드 선택 + 상세 패널 + page/reroll` 구조로 재정리됐다.
+- market 상단 `Jester Slots / Item Slots` 분리와 card-only shop 표현이 반영됐다.
+- battle item zone은 설명형 bar 대신 큰 slot 3개 중심으로 정리 중이다.
+- battle debug 조작은 inline cluster를 제거하고 small debug button + bottom sheet 구조로 이동했다.
 
 ## 3. B. Target Product Checklist
 

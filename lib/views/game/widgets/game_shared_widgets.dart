@@ -18,6 +18,8 @@ const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
 const double kBoardGridGap = 1.5;
 const double kBoardTileInnerPadding = 2.0;
+const double kBattleItemSlotWidth = 58.0;
+const double kBattleItemSlotHeight = 78.0;
 
 const TextStyle gameHudLabelStyle = TextStyle(
   color: Colors.white70,
@@ -283,59 +285,13 @@ class GameItemZoneSkeleton extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Row(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Expanded(
-              flex: 6,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ITEM',
-                    style: gameHudLabelStyle.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Consumable / Equipment / Relic 자리',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                _GameItemPocketChip(
-                  label: 'Q1',
-                  subtitle: 'Quick',
-                  accent: Color(0xFF267B67),
-                ),
-                SizedBox(width: 8),
-                _GameItemPocketChip(
-                  label: 'Q2',
-                  subtitle: 'Quick',
-                  accent: Color(0xFF267B67),
-                ),
-                SizedBox(width: 8),
-                _GameItemPocketChip(
-                  label: 'P',
-                  subtitle: 'Passive',
-                  accent: Color(0xFF4C5A55),
-                ),
-              ],
-            ),
+            _GameItemPocketChip(label: 'Q1', accent: Color(0xFF267B67)),
+            _GameItemPocketChip(label: 'Q2', accent: Color(0xFF267B67)),
+            _GameItemPocketChip(label: 'P', accent: Color(0xFF4C5A55)),
           ],
         ),
       ),
@@ -344,51 +300,31 @@ class GameItemZoneSkeleton extends StatelessWidget {
 }
 
 class _GameItemPocketChip extends StatelessWidget {
-  const _GameItemPocketChip({
-    required this.label,
-    required this.subtitle,
-    required this.accent,
-  });
+  const _GameItemPocketChip({required this.label, required this.accent});
 
   final String label;
-  final String subtitle;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 36,
+      width: kBattleItemSlotWidth,
+      height: kBattleItemSlotHeight,
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.48)),
       ),
       child: Center(
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.62),
-                  fontSize: 7,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),
@@ -486,50 +422,46 @@ class GameDebugHandSizeSegment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
+    return SizedBox(
+      height: double.infinity,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Padding(
-            padding: EdgeInsets.only(left: 4, right: 6),
+            padding: EdgeInsets.only(left: 4, right: 8),
             child: Text(
               'Hand',
               style: TextStyle(
                 color: Colors.white70,
-                fontSize: 9,
+                fontSize: 10,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
           for (final option in const [1, 2, 3])
             Padding(
-              padding: const EdgeInsets.only(left: 2),
+              padding: const EdgeInsets.only(left: 6),
               child: GestureDetector(
                 onTap: () => onChanged(option),
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 120),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 10,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: value == option
                         ? const Color(0xFF4AA78D)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '$option',
                     style: TextStyle(
                       color: value == option ? Colors.white : Colors.white70,
-                      fontSize: 9,
+                      fontSize: 10,
                       fontWeight: FontWeight.w900,
                     ),
                   ),

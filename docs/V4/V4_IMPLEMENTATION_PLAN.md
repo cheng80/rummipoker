@@ -58,6 +58,14 @@
 
 현재 `confirmAllFullLines`라는 이름은 legacy지만, 실제 동작은 “현재 scoring line 즉시 확정”이다.
 
+[WATCH] [DOC VERIFIED]
+
+최근 UI 쪽 current baseline 변화:
+
+- market는 full-screen shop route를 유지하되 내부 표현은 `카드 선택 + 상세 패널 + page/reroll` 구조로 이동 중이다.
+- battle item zone은 `가로 3-slot` 구조를 유지하면서 slot 체급을 키우는 쪽으로 조정 중이다.
+- battle debug 조작은 options dialog/in-line HUD에서 분리해 작은 진입 버튼과 modal bottom sheet로 모으는 방향을 채택했다.
+
 ## 3. Non-Negotiable Protection Rules
 
 [PROTECT] [CODE VERIFIED]

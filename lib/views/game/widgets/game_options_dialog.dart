@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -18,8 +17,6 @@ Future<void> showGameOptionsDialog({
   required Future<void> Function() onRestartRun,
   required Future<void> Function() onExitToTitle,
   required Future<void> Function(BuildContext context) onReopenOptions,
-  required Future<void> Function() onDebugForceBlindClear,
-  required Future<void> Function() onDebugForceBossClearToNextBlindSelect,
   required bool isDebugFixtureRun,
 }) async {
   SoundManager.unlockForWeb();
@@ -146,34 +143,6 @@ Future<void> showGameOptionsDialog({
               await onExitToTitle();
             },
           ),
-          if (kDebugMode) ...[
-            const SizedBox(height: 10),
-            Divider(color: Colors.white.withValues(alpha: 0.08)),
-            const SizedBox(height: 8),
-            GameMenuActionTile(
-              title: '현재 Blind 즉시 클리어',
-              subtitle: '현재 선택된 블라인드를 즉시 정산 완료 상태로 넘깁니다.',
-              icon: Icons.bug_report_rounded,
-              accentColor: Colors.orange.shade200,
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                await WidgetsBinding.instance.endOfFrame;
-                await onDebugForceBlindClear();
-              },
-            ),
-            const SizedBox(height: 8),
-            GameMenuActionTile(
-              title: '보스 클리어 후 다음 Blind Select',
-              subtitle: '다음 스테이션의 블라인드 선택으로 바로 이행합니다.',
-              icon: Icons.skip_next_rounded,
-              accentColor: Colors.lightGreenAccent.shade100,
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                await WidgetsBinding.instance.endOfFrame;
-                await onDebugForceBossClearToNextBlindSelect();
-              },
-            ),
-          ],
         ],
       ),
     ),

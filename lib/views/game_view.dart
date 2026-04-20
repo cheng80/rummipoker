@@ -613,10 +613,146 @@ class _GameViewState extends ConsumerState<GameView>
       onRestartRun: _restartCurrentRun,
       onExitToTitle: _exitToTitleWithConfirm,
       onReopenOptions: _openGameOptions,
-      onDebugForceBlindClear: _debugForceBlindClear,
-      onDebugForceBossClearToNextBlindSelect:
-          _debugForceBossClearToNextBlindSelect,
       isDebugFixtureRun: _isDebugFixtureRun,
+    );
+  }
+
+  Future<void> _openDebugBottomSheet(BuildContext context) async {
+    if (!kDebugMode || _stageFlowPhase != GameStageFlowPhase.none) {
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        var handSize = _stationView.resources.maxHandSize;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              top: false,
+              child: FractionallySizedBox(
+                heightFactor: 0.72,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: GameModalCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'DEBUG',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                            GameIconButtonChip(
+                              tooltip: '닫기',
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              icon: Icons.close_rounded,
+                              size: 34,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 108,
+                              child: GameActionButton(
+                                label: 'MARKET',
+                                background: const Color(0xFFF4A81D),
+                                foreground: Colors.black,
+                                onPressed: () async {
+                                  Navigator.of(sheetContext).pop();
+                                  await WidgetsBinding.instance.endOfFrame;
+                                  await _openShopForTest();
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: SizedBox(
+                                  width: 228,
+                                  height: 40,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                      ),
+                                    ),
+                                    child: GameDebugHandSizeSegment(
+                                      value: handSize,
+                                      onChanged: (value) {
+                                        setModalState(() => handSize = value);
+                                        _setDebugMaxHandSize(value);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                GameMenuActionTile(
+                                  title: '현재 Blind 즉시 클리어',
+                                  subtitle: '현재 선택된 블라인드를 즉시 정산 완료 상태로 넘깁니다.',
+                                  icon: Icons.bug_report_rounded,
+                                  accentColor: Colors.orange.shade200,
+                                  onTap: () async {
+                                    Navigator.of(sheetContext).pop();
+                                    await WidgetsBinding.instance.endOfFrame;
+                                    await _debugForceBlindClear();
+                                  },
+                                ),
+                                const SizedBox(height: 8),
+                                GameMenuActionTile(
+                                  title: '보스 클리어 후 다음 Blind Select',
+                                  subtitle: '다음 스테이션의 블라인드 선택으로 바로 이행합니다.',
+                                  icon: Icons.skip_next_rounded,
+                                  accentColor: Colors.lightGreenAccent.shade100,
+                                  onTap: () async {
+                                    Navigator.of(sheetContext).pop();
+                                    await WidgetsBinding.instance.endOfFrame;
+                                    await _debugForceBossClearToNextBlindSelect();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -643,8 +779,7 @@ class _GameViewState extends ConsumerState<GameView>
         selectedBoardCol: _selectedBoardCol,
         selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
         onOptionsTap: () => _openGameOptions(context),
-        onShopTestTap: _openShopForTest,
-        onDebugHandSizeChanged: _setDebugMaxHandSize,
+        onDebugTap: () => _openDebugBottomSheet(context),
         onJesterTap: _openJesterOverlay,
         onHandTileTap: _toggleHandTile,
         onBoardCellTap: _onBoardCellTap,
@@ -675,8 +810,7 @@ class _GameSurface extends StatelessWidget {
     required this.selectedBoardCol,
     required this.selectedJesterOverlayIndex,
     required this.onOptionsTap,
-    required this.onShopTestTap,
-    required this.onDebugHandSizeChanged,
+    required this.onDebugTap,
     required this.onJesterTap,
     required this.onHandTileTap,
     required this.onBoardCellTap,
@@ -702,8 +836,7 @@ class _GameSurface extends StatelessWidget {
   final int? selectedBoardCol;
   final int? selectedJesterOverlayIndex;
   final VoidCallback onOptionsTap;
-  final VoidCallback onShopTestTap;
-  final ValueChanged<int> onDebugHandSizeChanged;
+  final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
   final void Function(int row, int col) onBoardCellTap;
@@ -757,9 +890,9 @@ class _GameSurface extends StatelessWidget {
                   selectedHandTile: selectedHandTile,
                   selectedBoardRow: selectedBoardRow,
                   selectedBoardCol: selectedBoardCol,
+                  selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   onOptionsTap: onOptionsTap,
-                  onShopTestTap: onShopTestTap,
-                  onDebugHandSizeChanged: onDebugHandSizeChanged,
+                  onDebugTap: onDebugTap,
                   onJesterTap: onJesterTap,
                   onHandTileTap: onHandTileTap,
                   onBoardCellTap: onBoardCellTap,
@@ -838,9 +971,9 @@ class _GameLayout extends StatelessWidget {
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
+    required this.selectedJesterOverlayIndex,
     required this.onOptionsTap,
-    required this.onShopTestTap,
-    required this.onDebugHandSizeChanged,
+    required this.onDebugTap,
     required this.onJesterTap,
     required this.onHandTileTap,
     required this.onBoardCellTap,
@@ -861,9 +994,9 @@ class _GameLayout extends StatelessWidget {
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
+  final int? selectedJesterOverlayIndex;
   final VoidCallback onOptionsTap;
-  final VoidCallback onShopTestTap;
-  final ValueChanged<int> onDebugHandSizeChanged;
+  final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
   final void Function(int row, int col) onBoardCellTap;
@@ -896,31 +1029,45 @@ class _GameLayout extends StatelessWidget {
               onOptionsTap: onOptionsTap,
             ),
             const SizedBox(height: 8),
-            GameJesterHeaderRow(
-              station: station,
-              market: market,
-              onShopTap: onShopTestTap,
-              onHandSizeChanged: onDebugHandSizeChanged,
-            ),
+            GameJesterHeaderRow(station: station, market: market),
             const SizedBox(height: 2),
             GameJesterStrip(
               market: market,
               activeEffects: activeSettlementEffects,
               settlementSequenceTick: settlementSequenceTick,
+              selectedIndex: selectedJesterOverlayIndex,
               onTapCard: onJesterTap,
             ),
             const SizedBox(height: 8),
             const GameItemZoneSkeleton(),
             const SizedBox(height: 8),
             Expanded(
-              child: GameBoardGrid(
-                board: battle.board,
-                scoringCells: scoringCells,
-                activeSettlementCells: activeSettlementCells,
-                settlementBoardSnapshot: settlementBoardSnapshot,
-                selectedRow: selectedBoardRow,
-                selectedCol: selectedBoardCol,
-                onTapCell: onBoardCellTap,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: GameBoardGrid(
+                      board: battle.board,
+                      scoringCells: scoringCells,
+                      activeSettlementCells: activeSettlementCells,
+                      settlementBoardSnapshot: settlementBoardSnapshot,
+                      selectedRow: selectedBoardRow,
+                      selectedCol: selectedBoardCol,
+                      onTapCell: onBoardCellTap,
+                    ),
+                  ),
+                  if (kDebugMode)
+                    Positioned(
+                      top: 6,
+                      right: 0,
+                      child: GameIconButtonChip(
+                        tooltip: '디버그',
+                        onPressed: onDebugTap,
+                        icon: Icons.bug_report_rounded,
+                        size: 30,
+                        backgroundColor: const Color(0xFF29453A),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 6),
@@ -938,10 +1085,9 @@ class _GameLayout extends StatelessWidget {
               children: [
                 Expanded(
                   child: GameActionButton(
-                    label: '확정',
-                    background: const Color(0xFFF4A81D),
-                    foreground: Colors.black,
-                    onPressed: onConfirm,
+                    label: '선택 해제',
+                    background: const Color(0xFF4C5A55),
+                    onPressed: onClearSelection,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -963,9 +1109,10 @@ class _GameLayout extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: GameActionButton(
-                    label: '선택 해제',
-                    background: const Color(0xFF4C5A55),
-                    onPressed: onClearSelection,
+                    label: '확정',
+                    background: const Color(0xFFF4A81D),
+                    foreground: Colors.black,
+                    onPressed: onConfirm,
                   ),
                 ),
               ],

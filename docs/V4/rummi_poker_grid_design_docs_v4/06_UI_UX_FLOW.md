@@ -242,12 +242,13 @@ UI 구성:
 
 1. top HUD
 2. Jester 5-slot strip
-3. 5x5 board
-4. hand/draw zone
-5. bottom action buttons
-6. settlement overlay
-7. stage clear overlay
-8. Jester detail overlay
+3. compact item zone
+4. 5x5 board
+5. hand/draw zone
+6. bottom action buttons
+7. settlement overlay
+8. stage clear overlay
+9. Jester detail overlay
 
 [V4_DECISION]
 
@@ -258,6 +259,24 @@ Item 시스템 추가 후 battle 정보 구조는 다음 순서로 읽힌다.
 3. Item zone
 4. 5x5 board
 5. hand/draw zone
+
+현재 반영 메모:
+
+- `JESTER 4/5`형 긴 헤더는 축소하고, item zone이 더 많은 가로 폭을 쓰도록 정리 중이다.
+- item zone은 설명형 bar보다 `큰 슬롯 3개`를 우선 보여 주는 방식으로 이동 중이다.
+- battle debug 진입은 상단 inline cluster 대신 `보드 우측 small debug button -> modal bottom sheet` 구조로 이동했다.
+- debug bottom sheet에는 `MARKET`, `Hand size`, blind clear 류 조작을 모아 일반 HUD와 의미가 섞이지 않게 분리한다.
+- 하단 action row 기본 순서는 `선택 해제 / 보드 버림 / 손패 버림 / 확정`이다.
+
+[WATCH]
+
+전투 화면에서 item을 `5x5 보드 우측 세로 column`으로 이동하는 안은 상세 패널 충돌 때문에 현재 보류한다.
+
+이유:
+
+- item 선택 상세와 grid/jester 선택 상세가 같은 공용 정보 패널을 써야 한다.
+- 우측 세로 column을 고정하면 detail overlay/panel과 충돌하거나 phone frame에서 읽기성이 떨어진다.
+- 현재 방향은 `가로 item zone 유지 + 슬롯 체급 확대 + 공용 상세 패널 유지`다.
 6. bottom action buttons
 7. overlays
 

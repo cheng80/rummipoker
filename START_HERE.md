@@ -95,11 +95,20 @@
 - station target score는 `AppConfig.stationTargetScoreScale` 한 군데에서 일괄 미세 조정할 수 있게 정리했다
 - 난이도 해금은 내부 `run unlock state` 저장 구조로 관리되며, 개발용 완료 경로로 iOS 스모크까지 확인함
 - `confirm` 직후 stage clear와 expiry/game over가 동시에 겹치던 회귀는 provider/widget test로 재현 후 수정했다
-- debug 전용 `현재 Blind 즉시 클리어`, `보스 클리어 후 다음 Blind Select` 액션을 options dialog에 추가해 다음 station 루프 테스트 경로를 보강했다
+- debug 전용 `현재 Blind 즉시 클리어`, `보스 클리어 후 다음 Blind Select` 액션을 battle debug bottom sheet에 모아 다음 station 루프 테스트 경로를 보강했다
 - title / blind select / new run / market / cash-out / game over에서 Flutter 기본 text button 성격을 줄이고 게임용 커스텀 dialog/button 톤으로 정리했다
 - web build + local server + Playwright 경로로 `이어하기` dialog / `블라인드 시작` dialog 버튼 렌더 스모크를 실제 캡처로 재검증했다
 - battle 하단 action row는 `선택 해제 / 보드 버림 / 손패 버림 / 확정` 순서로 조정했다
 - market 상단의 drag-sell 안내와 `Market 오퍼 / 리롤` 줄 사이 간격을 넓혀 오동작/오인식을 줄였다
+- market 화면은 Balatro식 카드 선택 구조를 따라 scroll list 대신 `카드 선택 + 상세 패널 + 페이지/리롤` 구조로 재정리했다
+- market 상단 `Jester Slots / Item Slots`는 분리된 슬롯 시스템으로 정리했고, 상점 카드는 이름 텍스트를 제거하고 `카드 + 가격`만 보여 주도록 축소했다
+- market 설명 패널은 말풍선 꼬리를 제거하고 독립 정보 패널로 정리했으며, 긴 설명을 위해 최소 높이와 줄 수를 늘렸다
+- market 카드 간격은 카드 수 기반으로 조정해 3장일 때는 item-slot 수준의 간격, 확장 시에는 jester-slot 수준의 간격으로 맞출 준비를 했다
+- battle 화면의 제스터 선택 외곽선은 overlay 선택 상태와 실제 strip 렌더를 다시 연결해 상단 카드에 선택 강조가 보이도록 복구했다
+- battle 상단 `JESTER 4/5` 헤더는 `4/5`만 남기도록 축약했고, 확보한 폭을 item zone 확장에 사용하기 시작했다
+- battle item zone은 부가 설명을 제거하고 슬롯 3개만 남겨 제스터 카드와 비슷한 체급의 카드형 슬롯으로 키웠다
+- battle 디버그 조작은 상단 HUD의 inline cluster 대신 `5x5 영역 우측의 작은 debug 버튼 -> modal bottom sheet` 구조로 이동했다
+- debug bottom sheet 안에는 `MARKET`, `Hand size`, `현재 Blind 즉시 클리어`, `보스 클리어 후 다음 Blind Select`를 모았고, options dialog에서는 debug 액션을 제거했다
 
 ## 다음 작업 기본 방향
 
@@ -108,6 +117,7 @@
 - shop/battle/save의 큰 read/write 경계는 이미 facade/notifier 쪽으로 1차 이동 완료
 - `새 게임 시작 -> 블라인드 선택 -> 전투 시작`, `continue -> blind select 복귀`, `settlement -> market -> blind select` 1차 연결은 들어갔다
 - 다음 우선순위는 blind/station pacing 보정, market interaction polish, dialog/button visual polish, skip 같은 미뤄 둔 run rule의 설계 고정 쪽이다
+- battle 레이아웃은 `item zone 존재감 확대`와 `공용 상세 패널 유지` 방향으로 조정 중이며, 우측 세로 item column 배치는 상세창 충돌 때문에 보류했다
 
 다음 작업 우선순위는 아래처럼 고정한다.
 

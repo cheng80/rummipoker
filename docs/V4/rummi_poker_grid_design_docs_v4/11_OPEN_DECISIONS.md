@@ -133,6 +133,42 @@ V3의 30 Station은 후보일 뿐이다.
 - `Glyph / Echo`를 `Pack`형 구매층으로 묶을 것인가, 독립 상점으로 둘 것인가?
 - `Service`는 `Item Shop`에 흡수할 것인가, 독립 Utility Shop으로 둘 것인가?
 
+### 2.4.2 Battle Item Zone Layout
+
+[WATCH]
+
+열린 질문:
+
+- item zone을 battle 상단 가로 bar로 유지할 것인가?
+- item slot을 제스터 카드급 체급으로 키울 때, `Q1 / Q2 / Passive` 라벨 외에 어떤 정보까지 남길 것인가?
+- item detail은 전용 overlay를 둘 것인가, 현재 jester/detail 공용 패널을 계속 쓸 것인가?
+
+현재 결정:
+
+- battle item zone은 우선 `가로 슬롯 3개` 구조를 유지한다.
+- item slot은 제스터 카드와 비슷한 체급으로 키우되, 부가 설명 문구는 제거하고 slot 정체성만 남긴다.
+- detail은 battle 공용 정보 패널을 계속 사용한다.
+
+보류 이유:
+
+- `5x5` 보드 우측 세로 item column 안은 detail panel/overlay와 충돌 위험이 커서 현재 phone frame에서 안정적이지 않다.
+- 먼저 `slot 체급`, `공용 detail`, `battle HUD 압축`을 고정한 뒤에 다시 검토한다.
+
+### 2.4.3 Debug Entry Placement
+
+[WATCH]
+
+현재 결정:
+
+- debug 조작은 일반 HUD/action 영역과 섞지 않는다.
+- battle 화면에서는 `작은 debug button -> modal bottom sheet` 구조로 모은다.
+- `MARKET`, `Hand size`, `현재 Blind 즉시 클리어`, `보스 클리어 후 다음 Blind Select`는 이 bottom sheet 안에서만 제공한다.
+
+의도:
+
+- 일반 플레이 의미와 debug 의미를 화면 수준에서 분리한다.
+- options dialog는 런/설정/종료 중심으로 남기고, debug는 별도 surface로 격리한다.
+
 ### 2.5 Jester Instance Identity
 
 [WATCH]
