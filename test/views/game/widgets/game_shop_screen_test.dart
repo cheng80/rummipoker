@@ -1,11 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
+import 'package:rummipoker/resources/item_translation_scope.dart';
+import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
-import 'package:rummipoker/resources/jester_translation_scope.dart';
 
 RummiJesterCard _jester({
   required String id,
@@ -34,6 +36,7 @@ Future<void> _pumpShopScreen(
   required RummiMarketRuntimeFacade Function() readMarketView,
   required RummiActiveRunSaveFacade Function() readActiveRunSaveView,
   required String? Function(int offerIndex) onBuyOffer,
+  String? Function(RummiMarketItemOfferView offer)? onBuyItemOffer,
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
@@ -49,18 +52,21 @@ Future<void> _pumpShopScreen(
             supportedLocales: context.supportedLocales,
             localizationsDelegates: context.localizationDelegates,
             home: JesterTranslationScope(
-              child: GameShopScreen(
-                runSeed: 77,
-                readMarketView: readMarketView,
-                readActiveRunSaveView: readActiveRunSaveView,
-                onReroll: () => null,
-                onBuyOffer: onBuyOffer,
-                onSellOwnedJester: (_) => false,
-                onStateChanged: () async {},
-                onOpenSettings: () async {},
-                onExitToTitle: () async {},
-                onRestartRun: () async {},
-                isDebugFixtureRun: false,
+              child: ItemTranslationScope(
+                child: GameShopScreen(
+                  runSeed: 77,
+                  readMarketView: readMarketView,
+                  readActiveRunSaveView: readActiveRunSaveView,
+                  onReroll: () => null,
+                  onBuyOffer: onBuyOffer,
+                  onBuyItemOffer: onBuyItemOffer ?? ((_) => null),
+                  onSellOwnedJester: (_) => false,
+                  onStateChanged: () async {},
+                  onOpenSettings: () async {},
+                  onExitToTitle: () async {},
+                  onRestartRun: () async {},
+                  isDebugFixtureRun: false,
+                ),
               ),
             ),
           );
@@ -94,6 +100,35 @@ void main() {
     });
 
     final offerCard = _jester(id: 'test_card', displayName: 'T');
+    final itemOffer = RummiMarketItemOfferView.fromItemDefinition(
+      ItemDefinition.fromJson(const <String, dynamic>{
+        'id': 'reroll_token',
+        'displayName': 'Reroll Token',
+        'displayNameKey': 'data.items.reroll_token.displayName',
+        'type': 'utility',
+        'rarity': 'common',
+        'basePrice': 3,
+        'sellPrice': 1,
+        'stackable': true,
+        'maxStack': 3,
+        'sellable': true,
+        'usableInBattle': false,
+        'placement': 'inventory',
+        'slotHint': 'utility',
+        'effectText': 'Reduce the next Market reroll cost by 1.',
+        'effectTextKey': 'data.items.reroll_token.effectText',
+        'effect': <String, dynamic>{
+          'timing': 'market_reroll',
+          'op': 'discount_next_reroll',
+          'amount': 1,
+          'consume': true,
+        },
+        'tags': <String>['market', 'economy', 'discount'],
+        'sourceNotes': 'Test fixture.',
+      }),
+      slotIndex: 0,
+      currentGold: 12,
+    );
     var currentMarket = RummiMarketRuntimeFacade(
       gold: 12,
       rerollCost: 5,
@@ -106,6 +141,7 @@ void main() {
           currentGold: 12,
         ),
       ],
+      itemOffers: [itemOffer],
     );
     var currentSave = const RummiActiveRunSaveFacade(
       schemaVersion: 2,
@@ -122,15 +158,50 @@ void main() {
         gold: 10,
       ),
     );
+    String? boughtItemId;
 
     await _pumpShopScreen(
       tester,
       readMarketView: () => currentMarket,
       readActiveRunSaveView: () => currentSave,
+      onBuyItemOffer: (offer) {
+        boughtItemId = offer.contentId;
+        final nextItemOffer = RummiMarketItemOfferView.fromItemDefinition(
+          offer.item,
+          slotIndex: offer.slotIndex,
+          currentGold: 9,
+          price: offer.price,
+        );
+        currentMarket = RummiMarketRuntimeFacade(
+          gold: 9,
+          rerollCost: currentMarket.rerollCost,
+          maxOwnedSlots: currentMarket.maxOwnedSlots,
+          runtimeSnapshot: currentMarket.runtimeSnapshot,
+          ownedEntries: currentMarket.ownedEntries,
+          offers: currentMarket.offers,
+          itemOffers: [nextItemOffer],
+        );
+        currentSave = const RummiActiveRunSaveFacade(
+          schemaVersion: 2,
+          activeScene: 'shop',
+          sceneAlias: RummiSaveSceneAlias.market,
+          currentStageIndex: 2,
+          currentStationIndex: 2,
+          currentRunSeed: 77,
+          currentGold: 9,
+          checkpoint: RummiStationCheckpointSaveView(
+            stageIndex: 2,
+            stationIndex: 2,
+            runSeed: 77,
+            gold: 10,
+          ),
+        );
+        return null;
+      },
       onBuyOffer: (offerIndex) {
         expect(offerIndex, 0);
         currentMarket = RummiMarketRuntimeFacade(
-          gold: 8,
+          gold: 5,
           rerollCost: 5,
           maxOwnedSlots: RummiRunProgress.maxJesterSlots,
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
@@ -145,6 +216,7 @@ void main() {
             ),
           ],
           offers: const [],
+          itemOffers: currentMarket.itemOffers,
         );
         currentSave = const RummiActiveRunSaveFacade(
           schemaVersion: 2,
@@ -153,7 +225,7 @@ void main() {
           currentStageIndex: 2,
           currentStationIndex: 2,
           currentRunSeed: 77,
-          currentGold: 8,
+          currentGold: 5,
           checkpoint: RummiStationCheckpointSaveView(
             stageIndex: 2,
             stationIndex: 2,
@@ -166,21 +238,37 @@ void main() {
     );
 
     expect(find.text('Gold 12'), findsOneWidget);
-    expect(find.text('보유 Jester 0/5슬롯'), findsOneWidget);
+    expect(find.text('Jester Slots'), findsOneWidget);
+    expect(find.text('0/5'), findsOneWidget);
     expect(find.text('구매'), findsOneWidget);
+
+    await tester.tap(find.text('Item Shop'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('리롤 토큰'), findsOneWidget);
+    expect(find.text('다음 상점 리롤 비용이 1 줄어듭니다.'), findsOneWidget);
 
     await tester.tap(find.text('구매'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Gold 8'), findsOneWidget);
-    expect(find.text('보유 Jester 1/5슬롯'), findsOneWidget);
+    expect(boughtItemId, 'reroll_token');
+    expect(find.text('Gold 9'), findsOneWidget);
+
+    await tester.tap(find.text('Jester Shop'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('구매'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gold 5'), findsOneWidget);
+    expect(find.text('1/5'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.more_horiz_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('Run Snapshot'), findsOneWidget);
     expect(
-      find.text('현재 Station 2 · Market · Gold 8\n체크포인트 Station 2'),
+      find.text('현재 Station 2 · Market · Gold 5\n체크포인트 Station 2'),
       findsOneWidget,
     );
   });

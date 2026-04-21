@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -416,6 +418,117 @@ void main() {
       expect(updated.runProgress!.ownedJesters.length, 1);
       expect(updated.marketView!.ownedEntries.length, 1);
       expect(updated.runProgress!.shopOffers, isEmpty);
+    });
+
+    test('buyItemOffer는 골드와 owned item inventory를 갱신한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 38);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final item = ItemDefinition.fromJson(const <String, dynamic>{
+        'id': 'board_scrap',
+        'displayName': 'Board Scrap',
+        'displayNameKey': 'data.items.board_scrap.displayName',
+        'type': 'consumable',
+        'rarity': 'common',
+        'basePrice': 4,
+        'sellPrice': 2,
+        'stackable': true,
+        'maxStack': 2,
+        'sellable': true,
+        'usableInBattle': true,
+        'placement': 'quickSlot',
+        'slotHint': 'q',
+        'effectText': 'Gain +1 board discard for this Station.',
+        'effectTextKey': 'data.items.board_scrap.effectText',
+        'effect': <String, dynamic>{
+          'timing': 'use_battle',
+          'op': 'add_board_discard',
+          'amount': 1,
+          'consume': true,
+        },
+        'tags': <String>['battle', 'discard', 'safety'],
+        'sourceNotes': 'Test fixture.',
+      });
+      final offer = RummiMarketItemOfferView.fromItemDefinition(
+        item,
+        slotIndex: 0,
+        currentGold: RummiEconomyConfig.startingGold,
+      );
+
+      final failMessage = notifier.buyItemOffer(offer);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold - 4);
+      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold - 4);
+      expect(updated.runProgress!.itemInventory.ownedItems.length, 1);
+      expect(
+        updated.runProgress!.itemInventory.ownedItems.first.itemId,
+        item.id,
+      );
+      expect(updated.runProgress!.itemInventory.quickSlotItemIds, [item.id]);
+    });
+
+    test('useBattleItem은 discard 자원을 올리고 consumable stack을 소모한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 40);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final item = ItemDefinition.fromJson(const <String, dynamic>{
+        'id': 'board_scrap',
+        'displayName': 'Board Scrap',
+        'displayNameKey': 'data.items.board_scrap.displayName',
+        'type': 'consumable',
+        'rarity': 'common',
+        'basePrice': 4,
+        'sellPrice': 2,
+        'stackable': true,
+        'maxStack': 2,
+        'sellable': true,
+        'usableInBattle': true,
+        'placement': 'quickSlot',
+        'slotHint': 'q',
+        'effectText': 'Gain +1 board discard for this Station.',
+        'effectTextKey': 'data.items.board_scrap.effectText',
+        'effect': <String, dynamic>{
+          'timing': 'use_battle',
+          'op': 'add_board_discard',
+          'amount': 1,
+          'consume': true,
+        },
+        'tags': <String>['battle', 'discard', 'safety'],
+        'sourceNotes': 'Test fixture.',
+      });
+      state.runProgress!.itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'board_scrap',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['board_scrap'],
+      );
+      final beforeDiscards = state.session!.blind.boardDiscardsRemaining;
+
+      final failMessage = notifier.useBattleItem(item);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(
+        updated.stationView!.resources.boardDiscardsRemaining,
+        beforeDiscards + 1,
+      );
+      expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
+      expect(updated.runProgress!.itemInventory.quickSlotItemIds, isEmpty);
     });
 
     test('rerollShop는 골드 부족 시 에러 문구를 반환한다', () {

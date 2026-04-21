@@ -44,11 +44,11 @@ String? jesterRuntimeValueText(
     (sum, value) => sum + value,
   );
   return switch (card.id) {
-    'green_jester' => '현재 ${_signedValueToken(stateValue, "Mult")}',
-    'popcorn' => '현재 +$stateValue Mult',
-    'ice_cream' => '현재 +$stateValue Chips',
+    'green_jester' => '현재 ${_signedValueToken(stateValue, "배수")}',
+    'popcorn' => '현재 +$stateValue 배수',
+    'ice_cream' => '현재 +$stateValue 칩',
     'supernova' => '누적 확정 $playedHandTotal회',
-    'ride_the_bus' => '현재 ${_signedValueToken(stateValue, "Mult")}',
+    'ride_the_bus' => '현재 ${_signedValueToken(stateValue, "배수")}',
     _ => null,
   };
 }
@@ -528,7 +528,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: GameActionButton(
-                  label: '판매 +$sellGold Gold',
+                  label: '판매 +$sellGold 골드',
                   background: const Color(0xFFB74B3B),
                   onPressed: onSell,
                 ),

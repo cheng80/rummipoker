@@ -1,7 +1,57 @@
 import 'models/board.dart';
 import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
+import 'item_definition.dart';
 import 'jester_meta.dart';
+
+class RummiBattleItemSlotView {
+  const RummiBattleItemSlotView({
+    required this.slotIndex,
+    required this.slotLabel,
+    required this.contentId,
+    required this.displayName,
+    required this.displayNameKey,
+    required this.effectText,
+    required this.effectTextKey,
+    required this.count,
+    required this.placement,
+    required this.usableInBattle,
+    required this.item,
+  });
+
+  factory RummiBattleItemSlotView.fromOwnedItem({
+    required int slotIndex,
+    required String slotLabel,
+    required OwnedItemEntry entry,
+    required ItemDefinition item,
+  }) {
+    return RummiBattleItemSlotView(
+      slotIndex: slotIndex,
+      slotLabel: slotLabel,
+      contentId: item.id,
+      displayName: item.displayName,
+      displayNameKey: item.displayNameKey,
+      effectText: item.effectText,
+      effectTextKey: item.effectTextKey,
+      count: entry.count,
+      placement: entry.placement,
+      usableInBattle: item.usableInBattle,
+      item: item,
+    );
+  }
+
+  final int slotIndex;
+  final String slotLabel;
+  final String contentId;
+  final String displayName;
+  final String displayNameKey;
+  final String effectText;
+  final String effectTextKey;
+  final int count;
+  final ItemPlacement placement;
+  final bool usableInBattle;
+  final ItemDefinition item;
+}
 
 /// Read-only facade for the current battle screen.
 ///
@@ -16,6 +66,7 @@ class RummiBattleRuntimeFacade {
     required this.board,
     required this.hand,
     required this.scoringCellKeys,
+    this.itemSlots = const [],
   });
 
   factory RummiBattleRuntimeFacade.fromRuntime({
@@ -41,6 +92,21 @@ class RummiBattleRuntimeFacade {
       board: session.board,
       hand: List<Tile>.unmodifiable(session.hand),
       scoringCellKeys: Set<String>.unmodifiable(scoringCellKeys),
+      itemSlots: const [],
+    );
+  }
+
+  RummiBattleRuntimeFacade withItemSlots(
+    List<RummiBattleItemSlotView> nextItemSlots,
+  ) {
+    return RummiBattleRuntimeFacade(
+      stageIndex: stageIndex,
+      currentGold: currentGold,
+      totalDeckSize: totalDeckSize,
+      board: board,
+      hand: hand,
+      scoringCellKeys: scoringCellKeys,
+      itemSlots: List<RummiBattleItemSlotView>.unmodifiable(nextItemSlots),
     );
   }
 
@@ -50,4 +116,5 @@ class RummiBattleRuntimeFacade {
   final RummiBoard board;
   final List<Tile> hand;
   final Set<String> scoringCellKeys;
+  final List<RummiBattleItemSlotView> itemSlots;
 }

@@ -30,6 +30,7 @@
 3. [V4_IMPLEMENTATION_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/V4_IMPLEMENTATION_PLAN.md)
 4. [V4_PLAN_RISK_REGISTER.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/V4_PLAN_RISK_REGISTER.md)
 5. [V4_PLAN_TRACEABILITY_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/V4_PLAN_TRACEABILITY_MATRIX.md)
+6. [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md)
 
 필요할 때만 추가로 본다.
 
@@ -44,13 +45,13 @@
 - current prototype의 핵심 루프와 save/restart는 회귀 테스트와 smoke 절차로 보호되고 있다.
 - facade/read model/ruleset/save adapter 기반은 실제 코드 경로에 1차 연결됐다.
 - Home / New Run / Blind Select / Market / Battle UI는 V4 구조 쪽으로 이동 중이다.
-- B. Target Product는 부분 구현 상태이며, Item은 실제 v1 데이터 카탈로그가 작성됐지만 loader/market/runtime 연결은 아직 남아 있다. Station Map, Run Result, Sector Boss / Final Station, Archive 실제 데이터 연결도 큰 미완성 축이다.
+- B. Target Product는 부분 구현 상태이며, Item은 실제 v1 데이터 카탈로그, ko localization key 참조, `ItemDefinition` loader, market item offer read model, `OwnedItemEntry` / quick slot / passive rack 저장 shape, Market Item Shop read path, Item 구매 command, owned item inventory 반영, battle item zone read path, quick slot consumable의 discard 자원 effect runtime까지 준비됐다. 전투 item은 슬롯 탭 즉시 사용하지 않고 정보 overlay의 `사용` 버튼으로 확정한다. 더 많은 item effect op 연결은 아직 남아 있다. Station Map, Run Result, Sector Boss / Final Station, Archive 실제 데이터 연결도 큰 미완성 축이다.
 
 현재 진행률 감각:
 
 - migration readiness: 약 `90-95%`
 - current playable prototype: 약 `70%`
-- V4 target product 전체: 약 `57-62%`
+- V4 target product 전체: 약 `58-63%`
 
 ## 현재 작업 원칙
 
@@ -70,6 +71,7 @@
 - 이 변경이 V4 이행을 직접 쉽게 만드는가
 - 현재 코어를 깨지 않고 adapter/read model/ruleset/save facade 같은 구조 경계를 늘리는가
 - current runtime을 유지한 채 target 구조를 얹을 수 있게 만드는가
+- item/Jester effect 적용처럼 애니메이션/후속 콜백이 붙을 작업은 전담 runtime/result/event 경계를 먼저 두는가
 
 ## 다음 작업 기본 방향
 
@@ -77,20 +79,22 @@
 
 - shop/battle/save read path는 facade/notifier 쪽으로 이동했다.
 - `새 게임 시작 -> 블라인드 선택 -> 전투 시작`은 연결됐다.
-- `settlement -> market -> next blind select` 1차 루프도 연결됐다.
+- `settlement -> market -> next blind select`는 debug/runtime 기준 1차 루프가 연결됐고, target loop/save 복원은 아직 남아 있다.
 - battle/market UI는 카드 슬롯 체급과 선택 외곽선 기준을 고정하는 중이다.
 
 다음 우선순위:
 
-1. Item system runtime 착수
-   `data/common/items_common_v1.json` loader, ItemDefinition, market offer adapter, battle quick slot 연결
-2. market/battle interaction polish
+1. Item system runtime 계속
+   다음은 item effect runtime을 small op 단위로 넓힌다. 우선 `draw_if_hand_empty` 같은 조건부 quick slot op를 별도 command/test로 연결한다.
+2. 보드 이동 / 손패 한도 / Item-Jester runtime 통합 작업
+   `보드 이동`을 `보드 버림`/`손패 버림`과 같은 전투 자원으로 추가하고, 이동/손패 한도 관련 Item/Jester 및 기존 item 미구현 effect를 [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md) 순서로 진행한다.
+3. market/battle interaction polish
    아이템 상점/전투 슬롯 기준 유지, 상세 패널, dialog/button visual consistency 보정
-3. blind/station pacing polish
+4. blind/station pacing polish
    target score scale, station별 체감 난도, blind unlock 템포 보정
-4. deferred run rule 정리
+5. deferred run rule 정리
    blind skip 같은 미룬 규칙을 문서 기준으로 다시 고정
-5. target product 기능 착수
+6. target product 기능 착수
    Station Map, Archive data, Run Result 중 첫 범위 결정
 
 ## 바로 볼 코드 범위
@@ -105,6 +109,8 @@
 - `lib/views/game/widgets/game_jester_widgets.dart`
 - `data/common/items_common_v1.json`
 - `docs/V4/rummi_poker_grid_design_docs_v4/13_ITEM_SYSTEM_CONTRACT.md`
+- `docs/V4/ITEM_EFFECT_RUNTIME_MATRIX.md`
+- `docs/V4/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md`
 
 ## 하지 말아야 할 것
 

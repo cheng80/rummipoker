@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../logic/rummi_poker_grid/rummi_market_facade.dart';
@@ -14,6 +15,7 @@ import '../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../providers/features/rummi_poker_grid/game_session_notifier.dart';
 import '../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../resources/asset_paths.dart';
+import '../resources/item_translation_scope.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
@@ -75,12 +77,61 @@ class _GameViewState extends ConsumerState<GameView>
   bool _persistRetrySnapshotOnSave = false;
   bool _autoCashOutLoopStarted = false;
   late bool _shouldResumeMarketOnCatalogLoad;
+  ItemCatalog? _itemCatalog;
+  RummiBattleItemSlotView? _selectedBattleItemSlot;
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
   GameSessionState get _gameState =>
       ref.read(gameSessionNotifierProvider(_gameArgs));
   RummiBattleRuntimeFacade get _battleView => _gameState.battleView!;
+  RummiBattleRuntimeFacade get _battleViewWithItemSlots {
+    final battle = _battleView;
+    final catalog = _itemCatalog;
+    final inventory = _gameState.runProgress?.itemInventory;
+    if (catalog == null || inventory == null || inventory.ownedItems.isEmpty) {
+      return battle;
+    }
+
+    final entriesById = {
+      for (final entry in inventory.ownedItems) entry.itemId: entry,
+    };
+    final itemSlots = <RummiBattleItemSlotView>[];
+    var slotIndex = 0;
+
+    for (final itemId in inventory.quickSlotItemIds.take(2)) {
+      final entry = entriesById[itemId];
+      final item = catalog.findById(itemId);
+      if (entry == null || item == null) continue;
+      itemSlots.add(
+        RummiBattleItemSlotView.fromOwnedItem(
+          slotIndex: slotIndex,
+          slotLabel: 'Q${slotIndex + 1}',
+          entry: entry,
+          item: item,
+        ),
+      );
+      slotIndex += 1;
+    }
+
+    for (final itemId in inventory.passiveRelicIds.take(1)) {
+      final entry = entriesById[itemId];
+      final item = catalog.findById(itemId);
+      if (entry == null || item == null) continue;
+      itemSlots.add(
+        RummiBattleItemSlotView.fromOwnedItem(
+          slotIndex: slotIndex,
+          slotLabel: 'P',
+          entry: entry,
+          item: item,
+        ),
+      );
+      slotIndex += 1;
+    }
+
+    return battle.withItemSlots(itemSlots);
+  }
+
   RummiStationRuntimeFacade get _stationView => _gameState.stationView!;
   RummiMarketRuntimeFacade get _marketView => _gameState.marketView!;
   Tile? get _selectedHandTile => _gameState.selectedHandTile;
@@ -115,6 +166,7 @@ class _GameViewState extends ConsumerState<GameView>
       if (!mounted) return;
       SoundManager.playBgm(AssetPaths.bgmMain);
       _loadJesterCatalog();
+      _loadItemCatalog();
       if (_isDebugFixtureRun) {
         showTopNotice(context, '디버그 픽스처 모드: 이어하기 저장은 남기지 않습니다.');
       }
@@ -183,6 +235,39 @@ class _GameViewState extends ConsumerState<GameView>
       if (!mounted) return;
       _gameNotifier.setJesterCatalog(null);
     }
+  }
+
+  Future<void> _loadItemCatalog() async {
+    try {
+      final catalog = await ItemCatalog.loadFromAsset(AssetPaths.itemsCommon);
+      if (!mounted) return;
+      setState(() => _itemCatalog = catalog);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _itemCatalog = null);
+    }
+  }
+
+  RummiMarketRuntimeFacade _readMarketViewWithItemOffers() {
+    final market = ref.read(gameSessionNotifierProvider(_gameArgs)).marketView!;
+    final catalog = _itemCatalog;
+    if (catalog == null) {
+      return market;
+    }
+    final itemOffers = catalog.all
+        .take(3)
+        .toList(growable: false)
+        .asMap()
+        .entries
+        .map(
+          (entry) => RummiMarketItemOfferView.fromItemDefinition(
+            entry.value,
+            slotIndex: entry.key,
+            currentGold: market.gold,
+          ),
+        )
+        .toList(growable: false);
+    return market.withItemOffers(itemOffers);
   }
 
   Future<void> _saveActiveRun({ActiveRunScene? scene}) async {
@@ -305,6 +390,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _openJesterOverlay(int index) {
     if (_isUiLocked) return;
+    setState(() => _selectedBattleItemSlot = null);
     _gameNotifier.setSelectedJesterOverlayIndex(index);
   }
 
@@ -317,6 +403,17 @@ class _GameViewState extends ConsumerState<GameView>
     final ok = _gameNotifier.sellSelectedJesterOverlayFromState();
     if (!ok) return;
     _showSnack('제스터를 판매했습니다.');
+  }
+
+  void _openBattleItemOverlay(RummiBattleItemSlotView slot) {
+    if (_isUiLocked) return;
+    _gameNotifier.setSelectedJesterOverlayIndex(null);
+    setState(() => _selectedBattleItemSlot = slot);
+  }
+
+  void _closeBattleItemOverlay() {
+    if (!mounted) return;
+    setState(() => _selectedBattleItemSlot = null);
   }
 
   void _toggleHandTile(Tile tile) {
@@ -381,6 +478,24 @@ class _GameViewState extends ConsumerState<GameView>
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final didGameOver = await _afterAction();
     if (didGameOver) return;
+    await _saveActiveRun();
+  }
+
+  void _useBattleItem(RummiBattleItemSlotView slot) async {
+    if (_isUiLocked) return;
+    final failReason = _gameNotifier.useBattleItem(slot.item);
+    if (failReason != null) {
+      _showSnack(failReason);
+      return;
+    }
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    final itemName = ItemTranslationScope.of(
+      context,
+    ).resolveDisplayName(slot.contentId, slot.displayName);
+    _showSnack('$itemName 사용');
+    if (mounted) {
+      setState(() => _selectedBattleItemSlot = null);
+    }
     await _saveActiveRun();
   }
 
@@ -569,10 +684,10 @@ class _GameViewState extends ConsumerState<GameView>
         fullscreenDialog: true,
         builder: (context) => GameShopScreen(
           runSeed: widget.runSeed,
-          readMarketView: () =>
-              ref.read(gameSessionNotifierProvider(_gameArgs)).marketView!,
+          readMarketView: _readMarketViewWithItemOffers,
           onReroll: _gameNotifier.rerollShopFromState,
           onBuyOffer: _gameNotifier.buyShopOffer,
+          onBuyItemOffer: _gameNotifier.buyItemOffer,
           onSellOwnedJester: _gameNotifier.sellOwnedJester,
           onStateChanged: _saveActiveRun,
           readActiveRunSaveView: () => ref
@@ -766,7 +881,7 @@ class _GameViewState extends ConsumerState<GameView>
     }
     return PhoneFrameScaffold(
       child: _GameSurface(
-        battle: _battleView,
+        battle: _battleViewWithItemSlots,
         station: _stationView,
         market: _marketView,
         stageFlowPhase: _stageFlowPhase,
@@ -778,6 +893,7 @@ class _GameViewState extends ConsumerState<GameView>
         selectedBoardRow: _selectedBoardRow,
         selectedBoardCol: _selectedBoardCol,
         selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
+        selectedBattleItemSlot: _selectedBattleItemSlot,
         onOptionsTap: () => _openGameOptions(context),
         onDebugTap: () => _openDebugBottomSheet(context),
         onJesterTap: _openJesterOverlay,
@@ -786,10 +902,13 @@ class _GameViewState extends ConsumerState<GameView>
         onDraw: _drawTile,
         onBoardDiscard: _discardSelectedBoardTile,
         onHandDiscard: _discardSelectedHandTile,
+        onBattleItemTap: _openBattleItemOverlay,
         onConfirm: _confirmLines,
         onClearSelection: _clearSelections,
         onJesterSell: _sellOwnedJesterFromOverlay,
         onJesterOverlayClose: _closeJesterOverlay,
+        onBattleItemUse: _useBattleItem,
+        onBattleItemOverlayClose: _closeBattleItemOverlay,
       ),
     );
   }
@@ -809,6 +928,7 @@ class _GameSurface extends StatelessWidget {
     required this.selectedBoardRow,
     required this.selectedBoardCol,
     required this.selectedJesterOverlayIndex,
+    required this.selectedBattleItemSlot,
     required this.onOptionsTap,
     required this.onDebugTap,
     required this.onJesterTap,
@@ -817,10 +937,13 @@ class _GameSurface extends StatelessWidget {
     required this.onDraw,
     required this.onBoardDiscard,
     required this.onHandDiscard,
+    required this.onBattleItemTap,
     required this.onConfirm,
     required this.onClearSelection,
     required this.onJesterSell,
     required this.onJesterOverlayClose,
+    required this.onBattleItemUse,
+    required this.onBattleItemOverlayClose,
   });
 
   final RummiBattleRuntimeFacade battle;
@@ -835,6 +958,7 @@ class _GameSurface extends StatelessWidget {
   final int? selectedBoardRow;
   final int? selectedBoardCol;
   final int? selectedJesterOverlayIndex;
+  final RummiBattleItemSlotView? selectedBattleItemSlot;
   final VoidCallback onOptionsTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
@@ -843,10 +967,13 @@ class _GameSurface extends StatelessWidget {
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
   final VoidCallback onHandDiscard;
+  final ValueChanged<RummiBattleItemSlotView> onBattleItemTap;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
   final VoidCallback onJesterSell;
   final VoidCallback onJesterOverlayClose;
+  final ValueChanged<RummiBattleItemSlotView> onBattleItemUse;
+  final VoidCallback onBattleItemOverlayClose;
 
   @override
   Widget build(BuildContext context) {
@@ -899,6 +1026,7 @@ class _GameSurface extends StatelessWidget {
                   onDraw: onDraw,
                   onBoardDiscard: onBoardDiscard,
                   onHandDiscard: onHandDiscard,
+                  onBattleItemTap: onBattleItemTap,
                   onConfirm: onConfirm,
                   onClearSelection: onClearSelection,
                 ),
@@ -952,6 +1080,27 @@ class _GameSurface extends StatelessWidget {
                   ],
                 ),
               ),
+            if (selectedBattleItemSlot != null)
+              Positioned.fill(
+                child: Stack(
+                  children: [
+                    const ModalBarrier(
+                      dismissible: false,
+                      color: Color(0x70000000),
+                    ),
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      bottom: 118,
+                      child: GameBattleItemInfoOverlay(
+                        itemSlot: selectedBattleItemSlot!,
+                        onUse: () => onBattleItemUse(selectedBattleItemSlot!),
+                        onClose: onBattleItemOverlayClose,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -980,6 +1129,7 @@ class _GameLayout extends StatelessWidget {
     required this.onDraw,
     required this.onBoardDiscard,
     required this.onHandDiscard,
+    required this.onBattleItemTap,
     required this.onConfirm,
     required this.onClearSelection,
   });
@@ -1003,6 +1153,7 @@ class _GameLayout extends StatelessWidget {
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
   final VoidCallback onHandDiscard;
+  final ValueChanged<RummiBattleItemSlotView> onBattleItemTap;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
 
@@ -1039,7 +1190,10 @@ class _GameLayout extends StatelessWidget {
               onTapCard: onJesterTap,
             ),
             const SizedBox(height: 8),
-            const GameItemZoneSkeleton(),
+            GameItemZoneSkeleton(
+              battle: battle,
+              onItemSlotTap: onBattleItemTap,
+            ),
             const SizedBox(height: 8),
             Expanded(
               child: Stack(

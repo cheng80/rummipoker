@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../logic/rummi_poker_grid/item_definition.dart';
+import '../../../logic/rummi_poker_grid/item_effect_runtime.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
@@ -519,6 +521,23 @@ class GameSessionNotifier
     return null;
   }
 
+  String? buyItemOffer(RummiMarketItemOfferView offer) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress.gold < offer.price) {
+      return '골드가 부족합니다.';
+    }
+    if (!runProgress.itemInventory.canAcquire(offer.item)) {
+      return '이미 보유 한도에 도달한 아이템입니다.';
+    }
+    final ok = runProgress.buyItem(offer.item, price: offer.price);
+    if (!ok) {
+      return '아이템 구매 처리에 실패했습니다.';
+    }
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
   /// market 종료 후 다음 station 로딩 직전의 짧은 전환 단계를 기록한다.
   void beginNextStationTransition() {
     _replaceState(
@@ -640,6 +659,21 @@ class GameSessionNotifier
       return '손패에서 버릴 카드를 먼저 선택하세요.';
     }
     return discardHandTile(tile);
+  }
+
+  String? useBattleItem(ItemDefinition item) {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null) return '세션이 없습니다.';
+
+    final result = ItemEffectRuntime.useBattleItem(
+      item: item,
+      session: session,
+      runProgress: runProgress,
+    );
+    if (!result.isSuccess) return result.failMessage;
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
   }
 
   /// 장착 제스터 판매. 성공 시 true.

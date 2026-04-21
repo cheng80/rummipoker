@@ -25,7 +25,7 @@
   "items": [
     {
       "id": "reroll_token",
-      "displayName": "리롤 토큰",
+      "displayName": "Reroll Token",
       "type": "utility",
       "rarity": "common",
       "basePrice": 3,
@@ -36,7 +36,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "다음 Market 리롤 비용을 1 줄입니다.",
+      "effectText": "Reduce the next Market reroll cost by 1.",
       "effect": {
         "timing": "market_reroll",
         "op": "discount_next_reroll",
@@ -44,11 +44,13 @@
         "consume": true
       },
       "tags": ["market", "economy", "discount"],
-      "sourceNotes": "Inspired by shop discount and reroll economy patterns, implemented as a one-use market utility."
+      "sourceNotes": "Inspired by shop discount and reroll economy patterns, implemented as a one-use market utility.",
+      "displayNameKey": "data.items.reroll_token.displayName",
+      "effectTextKey": "data.items.reroll_token.effectText"
     },
     {
       "id": "coupon_stamp",
-      "displayName": "쿠폰 스탬프",
+      "displayName": "Coupon Stamp",
       "type": "utility",
       "rarity": "common",
       "basePrice": 4,
@@ -59,7 +61,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "다음 구매하는 Item 또는 Jester 가격을 2 줄입니다.",
+      "effectText": "Reduce the next Item or Jester purchase cost by 2.",
       "effect": {
         "timing": "market_buy",
         "op": "discount_next_purchase",
@@ -67,11 +69,13 @@
         "consume": true
       },
       "tags": ["market", "economy", "discount"],
-      "sourceNotes": "Voucher-style price pressure reducer adapted to one purchase."
+      "sourceNotes": "Voucher-style price pressure reducer adapted to one purchase.",
+      "displayNameKey": "data.items.coupon_stamp.displayName",
+      "effectTextKey": "data.items.coupon_stamp.effectText"
     },
     {
       "id": "coin_cache",
-      "displayName": "동전 보관함",
+      "displayName": "Coin Cache",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 3,
@@ -82,7 +86,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "q",
-      "effectText": "즉시 Gold +3.",
+      "effectText": "Gain +3 Gold immediately.",
       "effect": {
         "timing": "use_market",
         "op": "gain_gold",
@@ -90,11 +94,13 @@
         "consume": true
       },
       "tags": ["gold", "economy"],
-      "sourceNotes": "Small direct economy consumable for early-shop decisions."
+      "sourceNotes": "Small direct economy consumable for early-shop decisions.",
+      "displayNameKey": "data.items.coin_cache.displayName",
+      "effectTextKey": "data.items.coin_cache.effectText"
     },
     {
       "id": "board_scrap",
-      "displayName": "보드 스크랩",
+      "displayName": "Board Scrap",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -105,7 +111,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "이번 Station의 보드 버림 +1.",
+      "effectText": "Gain +1 board discard for this Station.",
       "effect": {
         "timing": "use_battle",
         "op": "add_board_discard",
@@ -114,11 +120,13 @@
         "consume": true
       },
       "tags": ["battle", "discard", "safety"],
-      "sourceNotes": "Maps potion-like emergency value to the current board discard resource."
+      "sourceNotes": "Maps potion-like emergency value to the current board discard resource.",
+      "displayNameKey": "data.items.board_scrap.displayName",
+      "effectTextKey": "data.items.board_scrap.effectText"
     },
     {
       "id": "hand_scrap",
-      "displayName": "손패 스크랩",
+      "displayName": "Hand Scrap",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -129,7 +137,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "이번 Station의 손패 버림 +1.",
+      "effectText": "Gain +1 hand discard for this Station.",
       "effect": {
         "timing": "use_battle",
         "op": "add_hand_discard",
@@ -138,11 +146,13 @@
         "consume": true
       },
       "tags": ["battle", "discard", "safety"],
-      "sourceNotes": "Companion to board_scrap, tuned for current hand discard resource."
+      "sourceNotes": "Companion to board_scrap, tuned for current hand discard resource.",
+      "displayNameKey": "data.items.hand_scrap.displayName",
+      "effectTextKey": "data.items.hand_scrap.effectText"
     },
     {
       "id": "chip_capsule",
-      "displayName": "칩 캡슐",
+      "displayName": "Chip Capsule",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -153,7 +163,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에 Chips +25.",
+      "effectText": "Gain +25 Chips on the next confirm.",
       "effect": {
         "timing": "next_confirm",
         "op": "chips_bonus",
@@ -161,11 +171,13 @@
         "consume": true
       },
       "tags": ["battle", "score", "chips"],
-      "sourceNotes": "Balatro-style one-use scoring modifier adapted to confirm scoring."
+      "sourceNotes": "Balatro-style one-use scoring modifier adapted to confirm scoring.",
+      "displayNameKey": "data.items.chip_capsule.displayName",
+      "effectTextKey": "data.items.chip_capsule.effectText"
     },
     {
       "id": "mult_capsule",
-      "displayName": "멀트 캡슐",
+      "displayName": "Mult Capsule",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -176,7 +188,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에 Mult +6.",
+      "effectText": "Gain +6 Mult on the next confirm.",
       "effect": {
         "timing": "next_confirm",
         "op": "mult_bonus",
@@ -184,11 +196,13 @@
         "consume": true
       },
       "tags": ["battle", "score", "mult"],
-      "sourceNotes": "Direct one-use multiplier boost sized below permanent Jester value."
+      "sourceNotes": "Direct one-use multiplier boost sized below permanent Jester value.",
+      "displayNameKey": "data.items.mult_capsule.displayName",
+      "effectTextKey": "data.items.mult_capsule.effectText"
     },
     {
       "id": "line_polish",
-      "displayName": "라인 광택제",
+      "displayName": "Line Polish",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 6,
@@ -199,7 +213,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정의 최종 점수를 x1.25 합니다.",
+      "effectText": "Multiply the final score of the next confirm by x1.25.",
       "effect": {
         "timing": "next_confirm",
         "op": "xmult_bonus",
@@ -207,11 +221,13 @@
         "consume": true
       },
       "tags": ["battle", "score", "xmult"],
-      "sourceNotes": "Risk-timed burst comparable to stronger consumables, kept modest for early balance."
+      "sourceNotes": "Risk-timed burst comparable to stronger consumables, kept modest for early balance.",
+      "displayNameKey": "data.items.line_polish.displayName",
+      "effectTextKey": "data.items.line_polish.effectText"
     },
     {
       "id": "straight_oil",
-      "displayName": "스트레이트 오일",
+      "displayName": "Straight Oil",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 5,
@@ -222,7 +238,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 Straight 이상 확정에 Chips +40.",
+      "effectText": "Gain +40 Chips on the next Straight-or-better confirm.",
       "effect": {
         "timing": "next_confirm_if_rank_at_least",
         "op": "chips_bonus",
@@ -231,11 +247,13 @@
         "consume": true
       },
       "tags": ["battle", "score", "rank", "straight"],
-      "sourceNotes": "Hand-type targeted boost inspired by poker-hand upgrade consumables."
+      "sourceNotes": "Hand-type targeted boost inspired by poker-hand upgrade consumables.",
+      "displayNameKey": "data.items.straight_oil.displayName",
+      "effectTextKey": "data.items.straight_oil.effectText"
     },
     {
       "id": "flush_powder",
-      "displayName": "플러시 파우더",
+      "displayName": "Flush Powder",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 5,
@@ -246,7 +264,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 Flush 이상 확정에 Mult +8.",
+      "effectText": "Gain +8 Mult on the next Flush-or-better confirm.",
       "effect": {
         "timing": "next_confirm_if_rank_at_least",
         "op": "mult_bonus",
@@ -255,11 +273,13 @@
         "consume": true
       },
       "tags": ["battle", "score", "rank", "flush"],
-      "sourceNotes": "Hand-type targeted boost tuned to reward suit planning."
+      "sourceNotes": "Hand-type targeted boost tuned to reward suit planning.",
+      "displayNameKey": "data.items.flush_powder.displayName",
+      "effectTextKey": "data.items.flush_powder.effectText"
     },
     {
       "id": "pair_splint",
-      "displayName": "페어 부목",
+      "displayName": "Pair Splint",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 5,
@@ -270,7 +290,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 Two Pair 확정에 Chips +35.",
+      "effectText": "Gain +35 Chips on the next Two Pair confirm.",
       "effect": {
         "timing": "next_confirm_if_rank",
         "op": "chips_bonus",
@@ -279,11 +299,13 @@
         "consume": true
       },
       "tags": ["battle", "score", "rank", "two_pair"],
-      "sourceNotes": "Supports low-mid hand recovery without changing One Pair dead-line policy."
+      "sourceNotes": "Supports low-mid hand recovery without changing One Pair dead-line policy.",
+      "displayNameKey": "data.items.pair_splint.displayName",
+      "effectTextKey": "data.items.pair_splint.effectText"
     },
     {
       "id": "overlap_pin",
-      "displayName": "오버랩 핀",
+      "displayName": "Overlap Pin",
       "type": "consumable",
       "rarity": "rare",
       "basePrice": 8,
@@ -294,7 +316,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에서 overlap 보너스 cap을 +0.25 올립니다.",
+      "effectText": "Increase the next confirm's overlap bonus slightly.",
       "effect": {
         "timing": "next_confirm",
         "op": "temporary_overlap_cap_bonus",
@@ -302,11 +324,13 @@
         "consume": true
       },
       "tags": ["battle", "overlap", "score"],
-      "sourceNotes": "Uses this game's unique overlap mechanic instead of copying external effects."
+      "sourceNotes": "Uses this game's unique overlap mechanic instead of copying external effects.",
+      "displayNameKey": "data.items.overlap_pin.displayName",
+      "effectTextKey": "data.items.overlap_pin.effectText"
     },
     {
       "id": "emergency_draw",
-      "displayName": "비상 드로우",
+      "displayName": "Emergency Draw",
       "type": "consumable",
       "rarity": "rare",
       "basePrice": 7,
@@ -317,7 +341,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "손패가 비어 있고 덱이 남아 있으면 즉시 1장 드로우합니다.",
+      "effectText": "If your hand is empty and the deck has cards, draw 1 tile immediately.",
       "effect": {
         "timing": "use_battle",
         "op": "draw_if_hand_empty",
@@ -325,11 +349,13 @@
         "consume": true
       },
       "tags": ["battle", "draw", "safety"],
-      "sourceNotes": "Emergency potion analogue for the current one-card hand loop."
+      "sourceNotes": "Emergency potion analogue for the current one-card hand loop.",
+      "displayNameKey": "data.items.emergency_draw.displayName",
+      "effectTextKey": "data.items.emergency_draw.effectText"
     },
     {
       "id": "ledger_clip",
-      "displayName": "장부 클립",
+      "displayName": "Ledger Clip",
       "type": "equipment",
       "rarity": "common",
       "basePrice": 5,
@@ -340,18 +366,20 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Market 진입 시 Gold +1.",
+      "effectText": "Gain +1 Gold when entering the Market.",
       "effect": {
         "timing": "enter_market",
         "op": "gain_gold",
         "amount": 1
       },
       "tags": ["equipment", "economy", "market"],
-      "sourceNotes": "Small recurring economy equipment inspired by passive relic income."
+      "sourceNotes": "Small recurring economy equipment inspired by passive relic income.",
+      "displayNameKey": "data.items.ledger_clip.displayName",
+      "effectTextKey": "data.items.ledger_clip.effectText"
     },
     {
       "id": "discard_glove",
-      "displayName": "버림 장갑",
+      "displayName": "Discard Glove",
       "type": "equipment",
       "rarity": "common",
       "basePrice": 6,
@@ -362,7 +390,7 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "각 Station 시작 시 보드 버림 +1.",
+      "effectText": "Gain +1 board discard at the start of each Station.",
       "effect": {
         "timing": "station_start",
         "op": "add_board_discard",
@@ -370,11 +398,13 @@
         "capIncrease": false
       },
       "tags": ["equipment", "discard", "station_start"],
-      "sourceNotes": "Permanent safety equipment for board pressure."
+      "sourceNotes": "Permanent safety equipment for board pressure.",
+      "displayNameKey": "data.items.discard_glove.displayName",
+      "effectTextKey": "data.items.discard_glove.effectText"
     },
     {
       "id": "mulligan_sleeve",
-      "displayName": "멀리건 슬리브",
+      "displayName": "Mulligan Sleeve",
       "type": "equipment",
       "rarity": "uncommon",
       "basePrice": 7,
@@ -385,7 +415,7 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "각 Station 시작 시 손패 버림 +1.",
+      "effectText": "Gain +1 hand discard at the start of each Station.",
       "effect": {
         "timing": "station_start",
         "op": "add_hand_discard",
@@ -393,11 +423,13 @@
         "capIncrease": false
       },
       "tags": ["equipment", "discard", "station_start"],
-      "sourceNotes": "Equipment counterpart to discard_glove."
+      "sourceNotes": "Equipment counterpart to discard_glove.",
+      "displayNameKey": "data.items.mulligan_sleeve.displayName",
+      "effectTextKey": "data.items.mulligan_sleeve.effectText"
     },
     {
       "id": "shop_lens",
-      "displayName": "상점 렌즈",
+      "displayName": "Shop Lens",
       "type": "equipment",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -408,18 +440,20 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Item Shop 오퍼 +1.",
+      "effectText": "Item Shop offers +1 item.",
       "effect": {
         "timing": "market_build_offers",
         "op": "extra_item_offer_slot",
         "amount": 1
       },
       "tags": ["equipment", "market", "offer"],
-      "sourceNotes": "Overstock-like shop width increase, restricted to items."
+      "sourceNotes": "Overstock-like shop width increase, restricted to items.",
+      "displayNameKey": "data.items.shop_lens.displayName",
+      "effectTextKey": "data.items.shop_lens.effectText"
     },
     {
       "id": "jester_hook",
-      "displayName": "제스터 후크",
+      "displayName": "Jester Hook",
       "type": "equipment",
       "rarity": "rare",
       "basePrice": 10,
@@ -430,18 +464,20 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Jester 판매가 +1.",
+      "effectText": "Jester sell value +1.",
       "effect": {
         "timing": "sell_jester",
         "op": "sell_price_bonus",
         "amount": 1
       },
       "tags": ["equipment", "jester", "economy"],
-      "sourceNotes": "Light build pivot tool for Jester economy."
+      "sourceNotes": "Light build pivot tool for Jester economy.",
+      "displayNameKey": "data.items.jester_hook.displayName",
+      "effectTextKey": "data.items.jester_hook.effectText"
     },
     {
       "id": "score_abacus",
-      "displayName": "점수 주판",
+      "displayName": "Score Abacus",
       "type": "equipment",
       "rarity": "rare",
       "basePrice": 9,
@@ -452,18 +488,20 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "각 Station의 첫 확정에 Chips +30.",
+      "effectText": "Gain +30 Chips on the first confirm of each Station.",
       "effect": {
         "timing": "first_confirm_each_station",
         "op": "chips_bonus",
         "amount": 30
       },
       "tags": ["equipment", "battle", "score"],
-      "sourceNotes": "First-turn relic pattern adapted to first confirm."
+      "sourceNotes": "First-turn relic pattern adapted to first confirm.",
+      "displayNameKey": "data.items.score_abacus.displayName",
+      "effectTextKey": "data.items.score_abacus.effectText"
     },
     {
       "id": "thin_caliper",
-      "displayName": "얇은 캘리퍼",
+      "displayName": "Thin Caliper",
       "type": "equipment",
       "rarity": "rare",
       "basePrice": 9,
@@ -474,7 +512,7 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "3장 이하로 만든 확정에 Mult +4.",
+      "effectText": "Gain +4 Mult on confirms made with 3 or fewer tiles.",
       "effect": {
         "timing": "on_confirm_if_played_hand_size_lte",
         "op": "mult_bonus",
@@ -482,11 +520,13 @@
         "amount": 4
       },
       "tags": ["equipment", "battle", "small_hand"],
-      "sourceNotes": "Rewards compact scoring without changing hand-rank rules."
+      "sourceNotes": "Rewards compact scoring without changing hand-rank rules.",
+      "displayNameKey": "data.items.thin_caliper.displayName",
+      "effectTextKey": "data.items.thin_caliper.effectText"
     },
     {
       "id": "stage_map",
-      "displayName": "스테이션 지도",
+      "displayName": "Station Map",
       "type": "passive_relic",
       "rarity": "common",
       "basePrice": 6,
@@ -497,18 +537,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Boss Blind 클리어 보상 Gold +1.",
+      "effectText": "Boss Blind clear reward gives +1 Gold.",
       "effect": {
         "timing": "boss_blind_clear_reward",
         "op": "gain_gold",
         "amount": 1
       },
       "tags": ["relic", "gold", "boss"],
-      "sourceNotes": "Run-long reward relic for station progression."
+      "sourceNotes": "Run-long reward relic for station progression.",
+      "displayNameKey": "data.items.stage_map.displayName",
+      "effectTextKey": "data.items.stage_map.effectText"
     },
     {
       "id": "spare_pouch",
-      "displayName": "예비 주머니",
+      "displayName": "Spare Pouch",
       "type": "passive_relic",
       "rarity": "common",
       "basePrice": 6,
@@ -519,18 +561,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "소모품 quick slot +1.",
+      "effectText": "Battle item slots +1.",
       "effect": {
         "timing": "inventory_capacity",
         "op": "extra_quick_slot",
         "amount": 1
       },
       "tags": ["relic", "capacity", "consumable"],
-      "sourceNotes": "Consumable-slot expansion inspired by limited consumable slot systems."
+      "sourceNotes": "Consumable-slot expansion inspired by limited consumable slot systems.",
+      "displayNameKey": "data.items.spare_pouch.displayName",
+      "effectTextKey": "data.items.spare_pouch.effectText"
     },
     {
       "id": "merchant_stamp",
-      "displayName": "상인 도장",
+      "displayName": "Merchant Stamp",
       "type": "passive_relic",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -541,18 +585,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Market 진입 시 첫 리롤 비용 -1.",
+      "effectText": "The first reroll costs 1 less when entering the Market.",
       "effect": {
         "timing": "enter_market",
         "op": "discount_first_reroll",
         "amount": 1
       },
       "tags": ["relic", "market", "reroll"],
-      "sourceNotes": "Persistent version of reroll_token, weaker than broad shop discounts."
+      "sourceNotes": "Persistent version of reroll_token, weaker than broad shop discounts.",
+      "displayNameKey": "data.items.merchant_stamp.displayName",
+      "effectTextKey": "data.items.merchant_stamp.effectText"
     },
     {
       "id": "safety_net",
-      "displayName": "안전망",
+      "displayName": "Safety Net",
       "type": "passive_relic",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -563,18 +609,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Station마다 처음 실패한 확정 시도 1회를 되돌립니다.",
+      "effectText": "Undo the first failed confirm attempt once per Station.",
       "effect": {
         "timing": "failed_confirm",
         "op": "refund_first_failed_confirm_each_station",
         "amount": 1
       },
       "tags": ["relic", "safety", "battle"],
-      "sourceNotes": "Defensive relic pattern translated into failed-confirm forgiveness."
+      "sourceNotes": "Defensive relic pattern translated into failed-confirm forgiveness.",
+      "displayNameKey": "data.items.safety_net.displayName",
+      "effectTextKey": "data.items.safety_net.effectText"
     },
     {
       "id": "coin_funnel",
-      "displayName": "코인 깔때기",
+      "displayName": "Coin Funnel",
       "type": "passive_relic",
       "rarity": "uncommon",
       "basePrice": 9,
@@ -585,18 +633,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "남은 보드 버림 보상 Gold +1.",
+      "effectText": "Remaining board discards reward +1 Gold.",
       "effect": {
         "timing": "settlement",
         "op": "board_discard_reward_bonus",
         "amount": 1
       },
       "tags": ["relic", "settlement", "gold"],
-      "sourceNotes": "Rewards conservative resource play at settlement."
+      "sourceNotes": "Rewards conservative resource play at settlement.",
+      "displayNameKey": "data.items.coin_funnel.displayName",
+      "effectTextKey": "data.items.coin_funnel.effectText"
     },
     {
       "id": "hand_funnel",
-      "displayName": "손패 깔때기",
+      "displayName": "Hand Funnel",
       "type": "passive_relic",
       "rarity": "uncommon",
       "basePrice": 9,
@@ -607,18 +657,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "남은 손패 버림 보상 Gold +1.",
+      "effectText": "Remaining hand discards reward +1 Gold.",
       "effect": {
         "timing": "settlement",
         "op": "hand_discard_reward_bonus",
         "amount": 1
       },
       "tags": ["relic", "settlement", "gold"],
-      "sourceNotes": "Parallel settlement reward for hand discard conservation."
+      "sourceNotes": "Parallel settlement reward for hand discard conservation.",
+      "displayNameKey": "data.items.hand_funnel.displayName",
+      "effectTextKey": "data.items.hand_funnel.effectText"
     },
     {
       "id": "lucky_counter",
-      "displayName": "행운 카운터",
+      "displayName": "Lucky Counter",
       "type": "passive_relic",
       "rarity": "rare",
       "basePrice": 11,
@@ -629,7 +681,7 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Rare Item 오퍼 등장 가중치가 증가합니다.",
+      "effectText": "Rare Items appear more often in Item Shop offers.",
       "effect": {
         "timing": "market_build_offers",
         "op": "rarity_weight_bonus",
@@ -637,11 +689,13 @@
         "amount": 5
       },
       "tags": ["relic", "market", "rarity"],
-      "sourceNotes": "Luck/rarity manipulation pattern adapted to item offers."
+      "sourceNotes": "Luck/rarity manipulation pattern adapted to item offers.",
+      "displayNameKey": "data.items.lucky_counter.displayName",
+      "effectTextKey": "data.items.lucky_counter.effectText"
     },
     {
       "id": "echo_bell",
-      "displayName": "에코 벨",
+      "displayName": "Echo Bell",
       "type": "passive_relic",
       "rarity": "rare",
       "basePrice": 12,
@@ -652,18 +706,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "각 Station의 두 번째 확정에 첫 확정 점수의 10%를 추가합니다.",
+      "effectText": "The second confirm of each Station adds 10% of the first confirm score.",
       "effect": {
         "timing": "second_confirm_each_station",
         "op": "add_percent_of_first_confirm_score",
         "percent": 0.1
       },
       "tags": ["relic", "battle", "score", "echo"],
-      "sourceNotes": "Echo-style memory effect grounded in current station scoring."
+      "sourceNotes": "Echo-style memory effect grounded in current station scoring.",
+      "displayNameKey": "data.items.echo_bell.displayName",
+      "effectTextKey": "data.items.echo_bell.effectText"
     },
     {
       "id": "boss_trophy",
-      "displayName": "보스 트로피",
+      "displayName": "Boss Trophy",
       "type": "passive_relic",
       "rarity": "legendary",
       "basePrice": 15,
@@ -674,18 +730,20 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Boss Blind 클리어 후 다음 Market의 Jester 오퍼 +1.",
+      "effectText": "After clearing a Boss Blind, the next Market has +1 Jester offer.",
       "effect": {
         "timing": "boss_blind_clear_market",
         "op": "extra_jester_offer_next_market",
         "amount": 1
       },
       "tags": ["relic", "boss", "market", "jester"],
-      "sourceNotes": "Boss reward relic that increases post-boss build options."
+      "sourceNotes": "Boss reward relic that increases post-boss build options.",
+      "displayNameKey": "data.items.boss_trophy.displayName",
+      "effectTextKey": "data.items.boss_trophy.effectText"
     },
     {
       "id": "thin_wallet",
-      "displayName": "얇은 지갑",
+      "displayName": "Thin Wallet",
       "type": "utility",
       "rarity": "uncommon",
       "basePrice": 5,
@@ -696,7 +754,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "Gold가 3 이하일 때만 사용 가능. Gold +5.",
+      "effectText": "Usable only at 3 Gold or less. Gain +5 Gold.",
       "effect": {
         "timing": "use_market_if_gold_lte",
         "op": "gain_gold",
@@ -705,11 +763,13 @@
         "consume": true
       },
       "tags": ["utility", "economy", "comeback"],
-      "sourceNotes": "Comeback economy lever for low-gold states."
+      "sourceNotes": "Comeback economy lever for low-gold states.",
+      "displayNameKey": "data.items.thin_wallet.displayName",
+      "effectTextKey": "data.items.thin_wallet.effectText"
     },
     {
       "id": "trade_ticket",
-      "displayName": "교환 티켓",
+      "displayName": "Trade Ticket",
       "type": "utility",
       "rarity": "uncommon",
       "basePrice": 6,
@@ -720,18 +780,20 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "Item Shop 오퍼만 다시 뽑습니다.",
+      "effectText": "Reroll only Item Shop offers.",
       "effect": {
         "timing": "use_market",
         "op": "reroll_item_offers_only",
         "consume": true
       },
       "tags": ["utility", "market", "reroll"],
-      "sourceNotes": "Separates item economy from Jester reroll pressure."
+      "sourceNotes": "Separates item economy from Jester reroll pressure.",
+      "displayNameKey": "data.items.trade_ticket.displayName",
+      "effectTextKey": "data.items.trade_ticket.effectText"
     },
     {
       "id": "jester_invoice",
-      "displayName": "제스터 청구서",
+      "displayName": "Jester Invoice",
       "type": "utility",
       "rarity": "rare",
       "basePrice": 8,
@@ -742,7 +804,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "다음 Jester 구매 비용 -4. 사용 후 사라집니다.",
+      "effectText": "The next Jester purchase costs 4 less. Consumed after use.",
       "effect": {
         "timing": "market_buy_if_category",
         "op": "discount_next_purchase",
@@ -751,11 +813,13 @@
         "consume": true
       },
       "tags": ["utility", "market", "jester", "discount"],
-      "sourceNotes": "Targeted voucher-like discount for build-defining purchases."
+      "sourceNotes": "Targeted voucher-like discount for build-defining purchases.",
+      "displayNameKey": "data.items.jester_invoice.displayName",
+      "effectTextKey": "data.items.jester_invoice.effectText"
     },
     {
       "id": "item_invoice",
-      "displayName": "아이템 청구서",
+      "displayName": "Item Invoice",
       "type": "utility",
       "rarity": "rare",
       "basePrice": 8,
@@ -766,7 +830,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "다음 Item 구매 비용 -4. 사용 후 사라집니다.",
+      "effectText": "The next Item purchase costs 4 less. Consumed after use.",
       "effect": {
         "timing": "market_buy_if_category",
         "op": "discount_next_purchase",
@@ -775,11 +839,13 @@
         "consume": true
       },
       "tags": ["utility", "market", "item", "discount"],
-      "sourceNotes": "Counterpart to jester_invoice so Item Shop has its own economy identity."
+      "sourceNotes": "Counterpart to jester_invoice so Item Shop has its own economy identity.",
+      "displayNameKey": "data.items.item_invoice.displayName",
+      "effectTextKey": "data.items.item_invoice.effectText"
     },
     {
       "id": "red_swatch",
-      "displayName": "붉은 견본",
+      "displayName": "Red Swatch",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -790,7 +856,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에서 red 타일마다 Mult +2.",
+      "effectText": "On the next confirm, each red tile gives +2 Mult.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",
@@ -799,11 +865,13 @@
         "consume": true
       },
       "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Suit/color targeted consumable adapted to Rummi tile colors."
+      "sourceNotes": "Suit/color targeted consumable adapted to Rummi tile colors.",
+      "displayNameKey": "data.items.red_swatch.displayName",
+      "effectTextKey": "data.items.red_swatch.effectText"
     },
     {
       "id": "blue_swatch",
-      "displayName": "푸른 견본",
+      "displayName": "Blue Swatch",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -814,7 +882,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에서 blue 타일마다 Mult +2.",
+      "effectText": "On the next confirm, each blue tile gives +2 Mult.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",
@@ -823,11 +891,13 @@
         "consume": true
       },
       "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Color cycle consumable for tile-color planning."
+      "sourceNotes": "Color cycle consumable for tile-color planning.",
+      "displayNameKey": "data.items.blue_swatch.displayName",
+      "effectTextKey": "data.items.blue_swatch.effectText"
     },
     {
       "id": "black_swatch",
-      "displayName": "검은 견본",
+      "displayName": "Black Swatch",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -838,7 +908,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에서 black 타일마다 Mult +2.",
+      "effectText": "On the next confirm, each black tile gives +2 Mult.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",
@@ -847,11 +917,13 @@
         "consume": true
       },
       "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Color cycle consumable for tile-color planning."
+      "sourceNotes": "Color cycle consumable for tile-color planning.",
+      "displayNameKey": "data.items.black_swatch.displayName",
+      "effectTextKey": "data.items.black_swatch.effectText"
     },
     {
       "id": "yellow_swatch",
-      "displayName": "노란 견본",
+      "displayName": "Yellow Swatch",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -862,7 +934,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에서 yellow 타일마다 Mult +2.",
+      "effectText": "On the next confirm, each yellow tile gives +2 Mult.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",
@@ -871,11 +943,13 @@
         "consume": true
       },
       "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Color cycle consumable for tile-color planning."
+      "sourceNotes": "Color cycle consumable for tile-color planning.",
+      "displayNameKey": "data.items.yellow_swatch.displayName",
+      "effectTextKey": "data.items.yellow_swatch.effectText"
     },
     {
       "id": "rank_chalk",
-      "displayName": "랭크 초크",
+      "displayName": "Rank Chalk",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 6,
@@ -886,7 +960,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "다음 확정에서 같은 숫자 타일마다 Chips +12.",
+      "effectText": "On the next confirm, each tile with the same number gives +12 Chips.",
       "effect": {
         "timing": "next_confirm_per_repeated_rank_tile",
         "op": "chips_bonus",
@@ -894,11 +968,13 @@
         "consume": true
       },
       "tags": ["consumable", "rank", "chips"],
-      "sourceNotes": "Supports pair/triple/four-kind lines without changing rank scoring constants."
+      "sourceNotes": "Supports pair/triple/four-kind lines without changing rank scoring constants.",
+      "displayNameKey": "data.items.rank_chalk.displayName",
+      "effectTextKey": "data.items.rank_chalk.effectText"
     },
     {
       "id": "deck_needle",
-      "displayName": "덱 바늘",
+      "displayName": "Deck Needle",
       "type": "utility",
       "rarity": "rare",
       "basePrice": 9,
@@ -909,7 +985,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "덱 위 3장을 보고 1장을 버립니다.",
+      "effectText": "Look at the top 3 deck tiles and discard 1.",
       "effect": {
         "timing": "use_battle",
         "op": "peek_deck_discard_one",
@@ -918,11 +994,13 @@
         "consume": true
       },
       "tags": ["utility", "deck", "selection"],
-      "sourceNotes": "Deck manipulation utility inspired by draft/selection consumables."
+      "sourceNotes": "Deck manipulation utility inspired by draft/selection consumables.",
+      "displayNameKey": "data.items.deck_needle.displayName",
+      "effectTextKey": "data.items.deck_needle.effectText"
     },
     {
       "id": "tile_polisher",
-      "displayName": "타일 광택기",
+      "displayName": "Tile Polisher",
       "type": "equipment",
       "rarity": "legendary",
       "basePrice": 14,
@@ -933,18 +1011,20 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "각 Station에서 처음 scoring된 타일 1장은 Chips +20.",
+      "effectText": "The first scored tile in each Station gains +20 Chips.",
       "effect": {
         "timing": "first_scored_tile_each_station",
         "op": "chips_bonus",
         "amount": 20
       },
       "tags": ["equipment", "score", "legendary"],
-      "sourceNotes": "Legendary equipment with broad but limited scoring value."
+      "sourceNotes": "Legendary equipment with broad but limited scoring value.",
+      "displayNameKey": "data.items.tile_polisher.displayName",
+      "effectTextKey": "data.items.tile_polisher.effectText"
     },
     {
       "id": "market_compass",
-      "displayName": "마켓 나침반",
+      "displayName": "Market Compass",
       "type": "passive_relic",
       "rarity": "legendary",
       "basePrice": 16,
@@ -955,14 +1035,16 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Market 진입 시 Item Shop과 Jester Shop 중 더 싼 첫 오퍼 하나를 1 할인합니다.",
+      "effectText": "When entering the Market, discount the cheaper first offer between Item Shop and Jester Shop by 1.",
       "effect": {
         "timing": "enter_market",
         "op": "discount_cheapest_first_offer",
         "amount": 1
       },
       "tags": ["relic", "market", "legendary", "discount"],
-      "sourceNotes": "High-tier market consistency relic with low direct score power."
+      "sourceNotes": "High-tier market consistency relic with low direct score power.",
+      "displayNameKey": "data.items.market_compass.displayName",
+      "effectTextKey": "data.items.market_compass.effectText"
     }
   ]
 }

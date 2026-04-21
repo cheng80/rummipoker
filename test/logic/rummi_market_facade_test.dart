@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
@@ -63,7 +64,77 @@ void main() {
       expect(facade.offers.first.isAffordable, isTrue);
       expect(facade.offers.last.isAffordable, isTrue);
       expect(facade.runtimeSnapshot.playedHandCounts, isEmpty);
+      expect(facade.itemOffers, isEmpty);
     });
+
+    test(
+      'maps item definitions into item market offers without jester slots',
+      () {
+        final catalog = ItemCatalog.fromJsonString('''
+{
+  "schemaVersion": 1,
+  "catalogId": "items_test",
+  "rarityWeights": {"common": 48},
+  "items": [
+    {
+      "id": "reroll_token",
+      "displayName": "Reroll Token",
+      "displayNameKey": "data.items.reroll_token.displayName",
+      "type": "utility",
+      "rarity": "common",
+      "basePrice": 3,
+      "sellPrice": 1,
+      "stackable": true,
+      "maxStack": 3,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Reduce the next Market reroll cost by 1.",
+      "effectTextKey": "data.items.reroll_token.effectText",
+      "effect": {
+        "timing": "market_reroll",
+        "op": "discount_next_reroll",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": ["market", "economy", "discount"],
+      "sourceNotes": "Test fixture."
+    }
+  ]
+}
+''');
+        final itemOffer = RummiMarketItemOfferView.fromItemDefinition(
+          catalog.findById('reroll_token')!,
+          slotIndex: 0,
+          currentGold: 2,
+        );
+        final facade = RummiMarketRuntimeFacade(
+          gold: 2,
+          rerollCost: 5,
+          maxOwnedSlots: RummiRunProgress.maxJesterSlots,
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+          ownedEntries: const [],
+          offers: const [],
+          itemOffers: [itemOffer],
+        );
+
+        expect(facade.maxOwnedSlots, RummiRunProgress.maxJesterSlots);
+        expect(facade.offers, isEmpty);
+        expect(facade.itemOffers.single.offerId, 'item:0:reroll_token');
+        expect(facade.itemOffers.single.category, RummiMarketCategory.item);
+        expect(facade.itemOffers.single.contentId, 'reroll_token');
+        expect(facade.itemOffers.single.displayName, 'Reroll Token');
+        expect(
+          facade.itemOffers.single.displayNameKey,
+          'data.items.reroll_token.displayName',
+        );
+        expect(facade.itemOffers.single.price, 3);
+        expect(facade.itemOffers.single.currency, 'gold');
+        expect(facade.itemOffers.single.isAffordable, isFalse);
+        expect(facade.itemOffers.single.item.type, ItemType.utility);
+      },
+    );
 
     test('maps owned jesters into sellable market entries', () {
       final progress = RummiRunProgress()

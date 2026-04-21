@@ -2,6 +2,7 @@ import 'dart:math' show Random, max, min;
 
 import 'hand_evaluator.dart';
 import 'hand_rank.dart';
+import 'jester_effect_runtime.dart';
 import 'jester_meta.dart';
 import 'line_ref.dart';
 import 'models/board.dart';
@@ -391,7 +392,9 @@ class RummiPokerGridSession {
       // 각 카드의 조건 판정과 상태 조회도 같은 인덱스를 기준으로 맞춘다.
       for (var jesterIndex = 0; jesterIndex < jesters.length; jesterIndex++) {
         final jester = jesters[jesterIndex];
-        final scored = jester.applyToLine(
+        final resolved = JesterEffectRuntime.applyToLine(
+          slotIndex: jesterIndex,
+          jester: jester,
           rank: evaluation.rank,
           baseScore: baseLineScore,
           scoringTiles: line.scoringTiles,
@@ -406,6 +409,7 @@ class RummiPokerGridSession {
                 currentConfirmRankCounts[evaluation.rank]!,
           ),
         );
+        final scored = resolved.score;
         if (scored.effect != null) {
           effects.add(scored.effect!);
         }

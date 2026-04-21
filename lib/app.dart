@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_config.dart';
 import 'providers/features/settings/settings_notifier.dart';
+import 'resources/item_translation_scope.dart';
 import 'resources/jester_translation_scope.dart';
 import 'resources/sound_manager.dart';
 import 'router.dart';
@@ -36,37 +37,39 @@ class _AppState extends ConsumerState<App> {
   @override
   Widget build(BuildContext context) {
     final app = JesterTranslationScope(
-      child: MaterialApp.router(
-        title: AppConfig.appTitle,
-        debugShowCheckedModeBanner: false,
-        localizationsDelegates: context.localizationDelegates,
-        supportedLocales: context.supportedLocales,
-        locale: context.locale,
-        theme: ThemeData.dark().copyWith(
-          colorScheme: ColorScheme.dark(
-            primary: const Color(0xFF42A5F5),
-            secondary: const Color(0xFF64B5F6),
+      child: ItemTranslationScope(
+        child: MaterialApp.router(
+          title: AppConfig.appTitle,
+          debugShowCheckedModeBanner: false,
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
+          theme: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: const Color(0xFF42A5F5),
+              secondary: const Color(0xFF64B5F6),
+            ),
           ),
-        ),
-        scrollBehavior: const MaterialScrollBehavior().copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-            PointerDeviceKind.stylus,
-            PointerDeviceKind.invertedStylus,
-            PointerDeviceKind.unknown,
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.stylus,
+              PointerDeviceKind.invertedStylus,
+              PointerDeviceKind.unknown,
+            },
+          ),
+          routerConfig: appRouter,
+          builder: (context, child) {
+            return Stack(
+              children: [
+                const Positioned.fill(child: ColoredBox(color: Colors.black)),
+                const Positioned.fill(child: StarryBackground()),
+                if (child != null) Positioned.fill(child: child),
+              ],
+            );
           },
         ),
-        routerConfig: appRouter,
-        builder: (context, child) {
-          return Stack(
-            children: [
-              const Positioned.fill(child: ColoredBox(color: Colors.black)),
-              const Positioned.fill(child: StarryBackground()),
-              if (child != null) Positioned.fill(child: child),
-            ],
-          );
-        },
       ),
     );
     if (kIsWeb) {

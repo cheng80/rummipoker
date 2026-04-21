@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/hand_rank.dart';
+import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/poker_deck.dart';
@@ -210,6 +211,7 @@ class SavedRunProgressData {
     required this.shopOffers,
     required this.statefulValuesBySlot,
     required this.playedHandCounts,
+    this.itemInventory = const RunInventoryState(),
   });
 
   final int stageIndex;
@@ -220,6 +222,7 @@ class SavedRunProgressData {
   final List<SavedShopOfferData> shopOffers;
   final Map<String, int> statefulValuesBySlot;
   final Map<String, int> playedHandCounts;
+  final RunInventoryState itemInventory;
 
   Map<String, dynamic> toJson() => {
     'stageIndex': stageIndex,
@@ -230,6 +233,7 @@ class SavedRunProgressData {
     'shopOffers': shopOffers.map((offer) => offer.toJson()).toList(),
     'statefulValuesBySlot': statefulValuesBySlot,
     'playedHandCounts': playedHandCounts,
+    'itemInventory': itemInventory.toJson(),
   };
 
   static SavedRunProgressData fromJson(Map<String, dynamic> json) {
@@ -253,6 +257,10 @@ class SavedRunProgressData {
       ),
       playedHandCounts: (json['playedHandCounts'] as Map).map(
         (key, value) => MapEntry(key as String, (value as num).toInt()),
+      ),
+      itemInventory: RunInventoryState.fromJson(
+        (json['itemInventory'] as Map?)?.cast<String, dynamic>() ??
+            const <String, dynamic>{},
       ),
     );
   }
@@ -507,6 +515,7 @@ class ActiveRunSaveService {
       playedHandCounts: runProgress.snapshotPlayedHandCounts().map(
         (key, value) => MapEntry(key.name, value),
       ),
+      itemInventory: runProgress.itemInventory,
     );
   }
 
@@ -568,6 +577,7 @@ class ActiveRunSaveService {
       shopOffers: shopOffers,
       statefulValuesBySlot: statefulValuesBySlot,
       playedHandCounts: playedHandCounts,
+      itemInventory: data.itemInventory,
     );
   }
 }

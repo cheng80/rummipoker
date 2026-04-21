@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../../app_config.dart';
 import 'hand_rank.dart';
+import 'item_definition.dart';
 import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
 
@@ -586,6 +587,7 @@ class RummiRunProgress {
     required List<RummiShopOffer> shopOffers,
     required Map<int, int> statefulValuesBySlot,
     required Map<RummiHandRank, int> playedHandCounts,
+    this.itemInventory = const RunInventoryState(),
   }) {
     this.ownedJesters.addAll(ownedJesters);
     this.shopOffers.addAll(shopOffers);
@@ -605,6 +607,7 @@ class RummiRunProgress {
   int currentStationBlindTierIndex = 0;
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
+  RunInventoryState itemInventory = const RunInventoryState();
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
   final List<RummiShopOffer> shopOffers = <RummiShopOffer>[];
   final Map<int, int> _statefulValuesBySlot = <int, int>{};
@@ -634,6 +637,7 @@ class RummiRunProgress {
           .toList(growable: false),
       statefulValuesBySlot: Map<int, int>.from(_statefulValuesBySlot),
       playedHandCounts: Map<RummiHandRank, int>.from(_playedHandCounts),
+      itemInventory: itemInventory,
     );
   }
 
@@ -773,6 +777,19 @@ class RummiRunProgress {
     ownedJesters.add(offer.card);
     _initializeStateForSlot(ownedJesters.length - 1, offer.card);
     shopOffers.removeAt(offerIndex);
+    return true;
+  }
+
+  bool buyItem(ItemDefinition item, {int? price}) {
+    final resolvedPrice = price ?? item.basePrice;
+    if (gold < resolvedPrice) {
+      return false;
+    }
+    if (!itemInventory.canAcquire(item)) {
+      return false;
+    }
+    gold -= resolvedPrice;
+    itemInventory = itemInventory.withAcquiredItem(item);
     return true;
   }
 
@@ -1047,7 +1064,7 @@ class RummiJesterEffectBreakdown {
 
   String get displayToken {
     if (hasIntegerMultiplierToken) {
-      return 'x${xmultBonus.round()}';
+      return '${xmultBonus.round()}배';
     }
     if (chipsBonus > 0) {
       return '+$chipsBonus';
@@ -1063,10 +1080,10 @@ class RummiJesterEffectBreakdown {
       return '';
     }
     if (chipsBonus > 0) {
-      return 'Chips';
+      return '칩';
     }
     if (multBonus > 0) {
-      return 'Mult';
+      return '배수';
     }
     return '점수';
   }

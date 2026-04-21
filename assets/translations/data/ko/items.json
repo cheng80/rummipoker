@@ -1,0 +1,170 @@
+{
+  "data": {
+    "items": {
+      "reroll_token": {
+        "displayName": "리롤 토큰",
+        "effectText": "다음 상점 리롤 비용이 1 줄어듭니다."
+      },
+      "coupon_stamp": {
+        "displayName": "쿠폰 스탬프",
+        "effectText": "다음 아이템 또는 제스터 구매 가격이 2 줄어듭니다."
+      },
+      "coin_cache": {
+        "displayName": "동전 보관함",
+        "effectText": "즉시 골드 +3."
+      },
+      "board_scrap": {
+        "displayName": "보드 스크랩",
+        "effectText": "이번 스테이션의 보드 버림 +1."
+      },
+      "hand_scrap": {
+        "displayName": "손패 스크랩",
+        "effectText": "이번 스테이션의 손패 버림 +1."
+      },
+      "chip_capsule": {
+        "displayName": "칩 캡슐",
+        "effectText": "다음 확정 점수에 칩 +25."
+      },
+      "mult_capsule": {
+        "displayName": "멀트 캡슐",
+        "effectText": "다음 확정 점수에 배수 +6."
+      },
+      "line_polish": {
+        "displayName": "라인 광택제",
+        "effectText": "다음 확정의 최종 점수가 1.25배가 됩니다."
+      },
+      "straight_oil": {
+        "displayName": "스트레이트 오일",
+        "effectText": "다음 스트레이트 이상 확정에 칩 +40."
+      },
+      "flush_powder": {
+        "displayName": "플러시 파우더",
+        "effectText": "다음 플러시 이상 확정에 배수 +8."
+      },
+      "pair_splint": {
+        "displayName": "페어 부목",
+        "effectText": "다음 투 페어 확정에 칩 +35."
+      },
+      "overlap_pin": {
+        "displayName": "오버랩 핀",
+        "effectText": "다음 확정의 겹침 보너스 한도가 조금 증가합니다."
+      },
+      "emergency_draw": {
+        "displayName": "비상 드로우",
+        "effectText": "손패가 비어 있고 덱이 남아 있으면 즉시 타일 1장을 뽑습니다."
+      },
+      "ledger_clip": {
+        "displayName": "장부 클립",
+        "effectText": "상점에 들어갈 때 골드 +1."
+      },
+      "discard_glove": {
+        "displayName": "버림 장갑",
+        "effectText": "각 스테이션 시작 시 보드 버림 +1."
+      },
+      "mulligan_sleeve": {
+        "displayName": "멀리건 슬리브",
+        "effectText": "각 스테이션 시작 시 손패 버림 +1."
+      },
+      "shop_lens": {
+        "displayName": "상점 렌즈",
+        "effectText": "아이템 상점 상품이 1개 늘어납니다."
+      },
+      "jester_hook": {
+        "displayName": "제스터 후크",
+        "effectText": "제스터 판매 가격 +1."
+      },
+      "score_abacus": {
+        "displayName": "점수 주판",
+        "effectText": "각 스테이션의 첫 확정 점수에 칩 +30."
+      },
+      "thin_caliper": {
+        "displayName": "얇은 캘리퍼",
+        "effectText": "3장 이하로 만든 확정 점수에 배수 +4."
+      },
+      "stage_map": {
+        "displayName": "스테이션 지도",
+        "effectText": "보스 블라인드 클리어 보상 골드 +1."
+      },
+      "spare_pouch": {
+        "displayName": "예비 주머니",
+        "effectText": "전투 아이템 칸 +1."
+      },
+      "merchant_stamp": {
+        "displayName": "상인 도장",
+        "effectText": "상점에 들어갈 때 첫 리롤 비용이 1 줄어듭니다."
+      },
+      "safety_net": {
+        "displayName": "안전망",
+        "effectText": "스테이션마다 첫 확정 실패를 1회 무효화합니다."
+      },
+      "coin_funnel": {
+        "displayName": "코인 깔때기",
+        "effectText": "남은 보드 버림마다 보상 골드 +1."
+      },
+      "hand_funnel": {
+        "displayName": "손패 깔때기",
+        "effectText": "남은 손패 버림마다 보상 골드 +1."
+      },
+      "lucky_counter": {
+        "displayName": "행운 카운터",
+        "effectText": "희귀 아이템이 상점에 더 잘 등장합니다."
+      },
+      "echo_bell": {
+        "displayName": "에코 벨",
+        "effectText": "각 스테이션의 두 번째 확정에 첫 확정 점수의 10%를 더합니다."
+      },
+      "boss_trophy": {
+        "displayName": "보스 트로피",
+        "effectText": "보스 블라인드 클리어 후 다음 상점의 제스터 상품이 1개 늘어납니다."
+      },
+      "thin_wallet": {
+        "displayName": "얇은 지갑",
+        "effectText": "골드가 3 이하일 때만 사용 가능. 골드 +5."
+      },
+      "trade_ticket": {
+        "displayName": "교환 티켓",
+        "effectText": "아이템 상점 상품만 다시 뽑습니다."
+      },
+      "jester_invoice": {
+        "displayName": "제스터 청구서",
+        "effectText": "다음 제스터 구매 가격이 4 줄어듭니다."
+      },
+      "item_invoice": {
+        "displayName": "아이템 청구서",
+        "effectText": "다음 아이템 구매 가격이 4 줄어듭니다."
+      },
+      "red_swatch": {
+        "displayName": "붉은 견본",
+        "effectText": "다음 확정에서 빨간 타일마다 배수 +2."
+      },
+      "blue_swatch": {
+        "displayName": "푸른 견본",
+        "effectText": "다음 확정에서 파란 타일마다 배수 +2."
+      },
+      "black_swatch": {
+        "displayName": "검은 견본",
+        "effectText": "다음 확정에서 검은 타일마다 배수 +2."
+      },
+      "yellow_swatch": {
+        "displayName": "노란 견본",
+        "effectText": "다음 확정에서 노란 타일마다 배수 +2."
+      },
+      "rank_chalk": {
+        "displayName": "랭크 초크",
+        "effectText": "다음 확정에서 같은 숫자 타일마다 칩 +12."
+      },
+      "deck_needle": {
+        "displayName": "덱 바늘",
+        "effectText": "덱 위 3장을 보고 1장을 버립니다."
+      },
+      "tile_polisher": {
+        "displayName": "타일 광택기",
+        "effectText": "각 스테이션에서 처음 점수에 포함된 타일에 칩 +20."
+      },
+      "market_compass": {
+        "displayName": "마켓 나침반",
+        "effectText": "상점에 들어갈 때 아이템 상점과 제스터 상점의 첫 상품 중 더 싼 쪽을 1 할인합니다."
+      }
+    }
+  }
+}

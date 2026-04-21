@@ -25,11 +25,11 @@
 |---|---:|---|
 | Migration readiness | 90-95% | 코어 보호, facade/read model, ruleset/save adapter, app smoke 절차가 대부분 갖춰졌다. |
 | Current playable prototype | 약 70% | title/new-run/blind/battle/settlement/market/next loop가 플레이 가능하다. |
-| V4 target product 전체 | 약 57-62% | Item v1 데이터 카탈로그는 작성됐고, loader/market/runtime 연결은 남아 있다. Station Map, Sector/Final, Run Result, Archive data도 남아 있다. |
+| V4 target product 전체 | 약 59-64% | Item v1 데이터 카탈로그, loader, market read path, 구매 command, owned item inventory 저장 경로, battle item zone read path, quick slot discard resource effect는 연결됐고, 나머지 effect runtime은 남아 있다. Station Map, Sector/Final, Run Result, Archive data도 남아 있다. |
 
 현재 한 줄 결론:
 
-> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, Item은 실제 v1 데이터 작성이 끝났으며, 이제 loader/market/runtime 연결로 넘어가는 중이다.
+> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, Item은 실제 v1 데이터, loader, market read path, 구매 command, battle item zone read path, quick slot discard resource effect까지 연결됐으며, 이제 effect op 범위를 넓히는 중이다.
 
 ## 1. Recommended Reading Order
 
@@ -356,12 +356,20 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [x] `Item` v1 실제 데이터 카탈로그 작성
   현재 상태: `implemented`
   기준 파일: `data/common/items_common_v1.json`
-- [ ] `ItemDefinition` loader / repository 연결
-  현재 상태: `not started`
-- [ ] `ItemOffer` market adapter 연결
-  현재 상태: `not started`
-- [ ] `OwnedItemEntry` / quick slot / passive rack runtime 연결
-  현재 상태: `not started`
+- [x] `ItemDefinition` model / catalog loader 연결
+  현재 상태: `implemented`
+- [x] `ItemOffer` market read model 1차 연결
+  현재 상태: `implemented`
+- [x] `OwnedItemEntry` / quick slot / passive rack save shape 연결
+  현재 상태: `implemented`
+- [x] `Market Item Shop` read path를 실제 `ItemCatalog` 기반 offer로 연결
+  현재 상태: `implemented`
+- [x] `Item` 구매 command와 owned item inventory 반영
+  현재 상태: `implemented`
+- [x] `battle item zone` read path를 owned item inventory 기반으로 연결
+  현재 상태: `implemented`
+- [x] quick slot consumable `add_board_discard` / `add_hand_discard` effect runtime 연결
+  현재 상태: `implemented`
 - [ ] `Permit` 카테고리 정의
   현재 상태: `not started`
 - [ ] `Glyph` 카테고리 정의
@@ -472,13 +480,22 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [x] `small -> big -> boss -> market -> next station blind select` 1차 루프가 연결됐다.
 - [x] battle/market UI는 카드 슬롯 체급과 선택 외곽선 기준을 고정하는 중이다.
 - [x] Item은 `data/common/items_common_v1.json`에 41개 v1 실사용 후보 데이터로 작성됐다.
+- [x] Item 표시명/효과 문구는 `assets/translations/data/ko/items.json`과 `displayNameKey` / `effectTextKey` 참조로 분리 준비됐다.
+- [x] `ItemDefinition` / `ItemCatalog` loader와 market item offer read model이 테스트로 고정됐다.
+- [x] `OwnedItemEntry` / `RunInventoryState`가 active run save/copy/restore 경로에 optional shape로 연결됐다.
+- [x] `GameShopScreen` Item Shop 탭은 ghost sample 대신 실제 `ItemCatalog` offer와 ko item translation scope를 읽는다.
+- [x] Item 구매 command가 gold 차감과 `RunInventoryState` 획득/stack/placement id 반영까지 처리한다.
+- [x] Battle item zone은 quick slot/passive rack item을 `RummiBattleRuntimeFacade` read model로 표시한다.
+- [x] quick slot consumable은 전투 화면 item 정보 overlay의 `사용` 확정으로 discard 자원을 올리고 stack을 소모한다.
+- [x] item effect 적용은 `ItemEffectRuntime`이 담당하며, 애니메이션/이펙트/후속 콜백 연결용 event list를 결과로 반환한다.
+- [x] `ITEM_EFFECT_RUNTIME_MATRIX.md`에 v1 41개 item의 timing/op, 실질 효과, handler, 적용 상태를 정리했다.
+- [x] Jester score effect 적용도 `JesterEffectRuntime` 경유로 정리되어, 향후 발동 애니메이션/후속 콜백용 event 경계를 갖는다.
+- [x] 보드 이동을 `보드 버림`/`손패 버림`과 같은 제한 자원으로 추가하고, 손패 한도 증가 및 관련 Item/Jester를 기존 item 미구현 effect와 함께 처리하는 세부 실행 계획을 [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md)에 고정했다.
 
 현재 가장 자연스러운 다음 작업 축:
 
 1. `B6` Item system runtime 연결
-   - `items_common_v1.json` loader / `ItemDefinition` 모델 추가
-   - market item offer adapter 연결
-   - quick slot / equipment / passive rack 저장 구조 연결
+   - item effect runtime을 small op 단위로 확장
 2. `B2/B7` blind/station pacing polish
    - station target scale 기본값 재점검
    - small/big/boss 보상/압박 수치 재조정
@@ -497,8 +514,7 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 다음 PR 후보:
 
-- `Item catalog loader + ItemDefinition` 작은 런타임 PR
-- `ItemOffer market adapter` 작은 연결 PR
+- `item effect runtime draw/conditional op` 작은 연결 PR
 - `blind/station pacing` 작은 수치 PR
 - `market/battle UI stability` 작은 polish PR
 - `Blind Skip decision` 문서 + 최소 코드 hook PR

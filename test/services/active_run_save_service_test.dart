@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
-import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
@@ -108,6 +108,16 @@ void main() {
             ],
             statefulValuesBySlot: <String, int>{'0': 2},
             playedHandCounts: <String, int>{'straight': 1},
+            itemInventory: RunInventoryState(
+              ownedItems: <OwnedItemEntry>[
+                OwnedItemEntry(
+                  itemId: 'board_scrap',
+                  count: 2,
+                  placement: ItemPlacement.quickSlot,
+                ),
+              ],
+              quickSlotItemIds: <String>['board_scrap'],
+            ),
           ),
           stageStartSession: const SavedSessionData(
             runSeed: 11,
@@ -152,6 +162,13 @@ void main() {
         expect(restored.runProgress.currentStationBlindTierIndex, 1);
         expect(restored.session.rulesetId, 'current_defaults_v1');
         expect(restored.runProgress.gold, 42);
+        expect(
+          restored.runProgress.itemInventory.ownedItems.single.itemId,
+          'board_scrap',
+        );
+        expect(restored.runProgress.itemInventory.quickSlotItemIds, [
+          'board_scrap',
+        ]);
         expect(restored.stageStartSession.runRandomState, 55);
         expect(restored.stageStartSession.rulesetId, 'current_defaults_v1');
         expect(restored.stageStartRunProgress.gold, 10);
@@ -260,11 +277,38 @@ void main() {
     );
 
     test(
+      'saved run progress without itemInventory falls back to empty shape',
+      () {
+        final restored = SavedRunProgressData.fromJson(const <String, dynamic>{
+          'stageIndex': 3,
+          'gold': 42,
+          'rerollCost': 6,
+          'ownedJesterIds': <String>['jester'],
+          'shopOffers': <SavedShopOfferData>[],
+          'statefulValuesBySlot': <String, int>{},
+          'playedHandCounts': <String, int>{},
+        });
+
+        expect(restored.itemInventory.isEmpty, isTrue);
+      },
+    );
+
+    test(
       'save -> inspect -> summary/load -> clear 전체 active run 저장 흐름이 동작한다',
       () async {
         final session = RummiPokerGridSession(runSeed: 4242);
         final runProgress = RummiRunProgress();
         runProgress.gold += 12;
+        runProgress.itemInventory = const RunInventoryState(
+          ownedItems: <OwnedItemEntry>[
+            OwnedItemEntry(
+              itemId: 'board_scrap',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: <String>['board_scrap'],
+        );
         final drawn = session.drawToHand();
         expect(drawn, isNotNull);
         expect(session.tryPlaceFromHand(drawn!, 0, 0), isTrue);
@@ -277,6 +321,22 @@ void main() {
 
         session.drawToHand();
         runProgress.gold += 5;
+        runProgress.itemInventory = const RunInventoryState(
+          ownedItems: <OwnedItemEntry>[
+            OwnedItemEntry(
+              itemId: 'board_scrap',
+              count: 2,
+              placement: ItemPlacement.quickSlot,
+            ),
+            OwnedItemEntry(
+              itemId: 'market_compass',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          passiveRelicIds: <String>['market_compass'],
+          quickSlotItemIds: <String>['board_scrap'],
+        );
 
         await ActiveRunSaveService.saveActiveRun(
           activeScene: ActiveRunScene.shop,
@@ -308,6 +368,10 @@ void main() {
           RummiRuleset.currentDefaultsPersistenceId,
         );
         expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 17);
+        expect(restored.runProgress.itemInventory.ownedItems.length, 2);
+        expect(restored.runProgress.itemInventory.passiveRelicIds, <String>[
+          'market_compass',
+        ]);
         expect(restored.session.board.cellAt(0, 0), isNotNull);
         expect(
           restored.stageStartSnapshot.session.board.cellAt(0, 0),
@@ -316,6 +380,16 @@ void main() {
         expect(
           restored.stageStartSnapshot.runProgress.gold,
           RummiEconomyConfig.startingGold + 12,
+        );
+        expect(
+          restored
+              .stageStartSnapshot
+              .runProgress
+              .itemInventory
+              .ownedItems
+              .single
+              .count,
+          1,
         );
 
         await ActiveRunSaveService.clearActiveRun();

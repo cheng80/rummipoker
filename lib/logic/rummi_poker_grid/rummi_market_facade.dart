@@ -1,3 +1,4 @@
+import 'item_definition.dart';
 import 'jester_meta.dart';
 
 /// V4 target-term facade over the current Jester-only shop runtime.
@@ -7,7 +8,7 @@ import 'jester_meta.dart';
 /// - It does not replace `RummiShopOffer`, `ownedJesters`, or shop logic.
 /// - It lets future Market-oriented docs/UI inspect current runtime state
 ///   without forcing an early refactor of `jester_meta.dart`.
-enum RummiMarketCategory { jester }
+enum RummiMarketCategory { jester, item }
 
 class RummiMarketOwnedEntryView {
   const RummiMarketOwnedEntryView({
@@ -83,6 +84,59 @@ class RummiMarketOfferView {
   final RummiJesterCard card;
 }
 
+class RummiMarketItemOfferView {
+  const RummiMarketItemOfferView({
+    required this.offerId,
+    required this.slotIndex,
+    required this.category,
+    required this.contentId,
+    required this.displayName,
+    required this.displayNameKey,
+    required this.effectText,
+    required this.effectTextKey,
+    required this.price,
+    required this.currency,
+    required this.isAffordable,
+    required this.item,
+  });
+
+  factory RummiMarketItemOfferView.fromItemDefinition(
+    ItemDefinition item, {
+    required int slotIndex,
+    required int currentGold,
+    int? price,
+  }) {
+    final resolvedPrice = price ?? item.basePrice;
+    return RummiMarketItemOfferView(
+      offerId: 'item:$slotIndex:${item.id}',
+      slotIndex: slotIndex,
+      category: RummiMarketCategory.item,
+      contentId: item.id,
+      displayName: item.displayName,
+      displayNameKey: item.displayNameKey,
+      effectText: item.effectText,
+      effectTextKey: item.effectTextKey,
+      price: resolvedPrice,
+      currency: 'gold',
+      isAffordable: currentGold >= resolvedPrice,
+      item: item,
+    );
+  }
+
+  final String offerId;
+  final int slotIndex;
+  final RummiMarketCategory category;
+  final String contentId;
+  final String displayName;
+  final String displayNameKey;
+  final String effectText;
+  final String effectTextKey;
+  final int price;
+  final String currency;
+  final bool isAffordable;
+  final ItemDefinition item;
+}
+
 class RummiMarketRuntimeFacade {
   const RummiMarketRuntimeFacade({
     required this.gold,
@@ -91,6 +145,7 @@ class RummiMarketRuntimeFacade {
     required this.runtimeSnapshot,
     required this.ownedEntries,
     required this.offers,
+    this.itemOffers = const [],
   });
 
   factory RummiMarketRuntimeFacade.fromRunProgress(RummiRunProgress progress) {
@@ -112,6 +167,21 @@ class RummiMarketRuntimeFacade {
             ),
           )
           .toList(growable: false),
+      itemOffers: const [],
+    );
+  }
+
+  RummiMarketRuntimeFacade withItemOffers(
+    List<RummiMarketItemOfferView> nextItemOffers,
+  ) {
+    return RummiMarketRuntimeFacade(
+      gold: gold,
+      rerollCost: rerollCost,
+      maxOwnedSlots: maxOwnedSlots,
+      runtimeSnapshot: runtimeSnapshot,
+      ownedEntries: ownedEntries,
+      offers: offers,
+      itemOffers: nextItemOffers,
     );
   }
 
@@ -121,4 +191,5 @@ class RummiMarketRuntimeFacade {
   final RummiJesterRuntimeSnapshot runtimeSnapshot;
   final List<RummiMarketOwnedEntryView> ownedEntries;
   final List<RummiMarketOfferView> offers;
+  final List<RummiMarketItemOfferView> itemOffers;
 }

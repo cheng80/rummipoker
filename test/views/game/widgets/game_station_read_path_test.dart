@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -92,5 +93,144 @@ void main() {
     expect(find.text('덱 14/52'), findsOneWidget);
     expect(find.text('보드패 버림 3/4'), findsOneWidget);
     expect(find.text('손패 2/3 · 버림 1/2'), findsOneWidget);
+  });
+
+  testWidgets('GameItemZoneSkeleton renders owned battle item slots', (
+    tester,
+  ) async {
+    final item = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'board_scrap',
+      'displayName': 'Board Scrap',
+      'displayNameKey': 'data.items.board_scrap.displayName',
+      'type': 'consumable',
+      'rarity': 'common',
+      'basePrice': 4,
+      'sellPrice': 2,
+      'stackable': true,
+      'maxStack': 2,
+      'sellable': true,
+      'usableInBattle': true,
+      'placement': 'quickSlot',
+      'slotHint': 'q',
+      'effectText': 'Gain +1 board discard for this Station.',
+      'effectTextKey': 'data.items.board_scrap.effectText',
+      'effect': <String, dynamic>{
+        'timing': 'use_battle',
+        'op': 'add_board_discard',
+        'amount': 1,
+        'consume': true,
+      },
+      'tags': <String>['battle', 'discard', 'safety'],
+      'sourceNotes': 'Test fixture.',
+    });
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+      itemSlots: [
+        RummiBattleItemSlotView.fromOwnedItem(
+          slotIndex: 0,
+          slotLabel: 'Q1',
+          entry: const OwnedItemEntry(
+            itemId: 'board_scrap',
+            count: 2,
+            placement: ItemPlacement.quickSlot,
+          ),
+          item: item,
+        ),
+      ],
+    );
+
+    RummiBattleItemSlotView? tappedSlot;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameItemZoneSkeleton(
+            battle: battle,
+            onItemSlotTap: (slot) => tappedSlot = slot,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Board Scrap'), findsOneWidget);
+    expect(find.text('Q1'), findsOneWidget);
+    expect(find.text('x2'), findsOneWidget);
+    expect(find.text('Q2'), findsOneWidget);
+    expect(find.text('P'), findsOneWidget);
+
+    await tester.tap(find.text('Board Scrap'));
+    expect(tappedSlot?.contentId, 'board_scrap');
+  });
+
+  testWidgets('GameBattleItemInfoOverlay confirms use from explicit button', (
+    tester,
+  ) async {
+    final item = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'board_scrap',
+      'displayName': 'Board Scrap',
+      'displayNameKey': 'data.items.board_scrap.displayName',
+      'type': 'consumable',
+      'rarity': 'common',
+      'basePrice': 4,
+      'sellPrice': 2,
+      'stackable': true,
+      'maxStack': 2,
+      'sellable': true,
+      'usableInBattle': true,
+      'placement': 'quickSlot',
+      'slotHint': 'q',
+      'effectText': 'Gain +1 board discard for this Station.',
+      'effectTextKey': 'data.items.board_scrap.effectText',
+      'effect': <String, dynamic>{
+        'timing': 'use_battle',
+        'op': 'add_board_discard',
+        'amount': 1,
+        'consume': true,
+      },
+      'tags': <String>['battle', 'discard', 'safety'],
+      'sourceNotes': 'Test fixture.',
+    });
+    final itemSlot = RummiBattleItemSlotView.fromOwnedItem(
+      slotIndex: 0,
+      slotLabel: 'Q1',
+      entry: const OwnedItemEntry(
+        itemId: 'board_scrap',
+        count: 1,
+        placement: ItemPlacement.quickSlot,
+      ),
+      item: item,
+    );
+    var useCount = 0;
+    var closeCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameBattleItemInfoOverlay(
+            itemSlot: itemSlot,
+            onUse: () => useCount += 1,
+            onClose: () => closeCount += 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Board Scrap'), findsOneWidget);
+    expect(
+      find.text('Gain +1 board discard for this Station.'),
+      findsOneWidget,
+    );
+    expect(useCount, 0);
+
+    await tester.tap(find.text('사용'));
+    expect(useCount, 1);
+
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    expect(closeCount, 1);
   });
 }

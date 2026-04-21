@@ -11,6 +11,7 @@ import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/asset_paths.dart';
+import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../utils/common_ui.dart';
 
@@ -274,10 +275,18 @@ class GameBottomInfoRow extends StatelessWidget {
 }
 
 class GameItemZoneSkeleton extends StatelessWidget {
-  const GameItemZoneSkeleton({super.key});
+  const GameItemZoneSkeleton({
+    super.key,
+    required this.battle,
+    this.onItemSlotTap,
+  });
+
+  final RummiBattleRuntimeFacade battle;
+  final ValueChanged<RummiBattleItemSlotView>? onItemSlotTap;
 
   @override
   Widget build(BuildContext context) {
+    final slots = battle.itemSlots;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFF173126).withValues(alpha: 0.78),
@@ -286,12 +295,18 @@ class GameItemZoneSkeleton extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _GameItemPocketChip(label: 'Q1', accent: Color(0xFF267B67)),
-            _GameItemPocketChip(label: 'Q2', accent: Color(0xFF267B67)),
-            _GameItemPocketChip(label: 'P', accent: Color(0xFF4C5A55)),
+            for (var index = 0; index < 3; index++)
+              _GameItemPocketChip(
+                label: index < 2 ? 'Q${index + 1}' : 'P',
+                accent: index < 2
+                    ? const Color(0xFF267B67)
+                    : const Color(0xFF4C5A55),
+                itemSlot: index < slots.length ? slots[index] : null,
+                onTap: onItemSlotTap,
+              ),
           ],
         ),
       ),
@@ -299,34 +314,256 @@ class GameItemZoneSkeleton extends StatelessWidget {
   }
 }
 
-class _GameItemPocketChip extends StatelessWidget {
-  const _GameItemPocketChip({required this.label, required this.accent});
+class GameBattleItemInfoOverlay extends StatelessWidget {
+  const GameBattleItemInfoOverlay({
+    super.key,
+    required this.itemSlot,
+    required this.onUse,
+    required this.onClose,
+  });
 
-  final String label;
-  final Color accent;
+  final RummiBattleItemSlotView itemSlot;
+  final VoidCallback onUse;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: kBattleItemSlotWidth,
-      height: kBattleItemSlotHeight,
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.48)),
-      ),
-      child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
+    final translations = ItemTranslationScope.of(context);
+    final name = translations.resolveDisplayName(
+      itemSlot.contentId,
+      itemSlot.displayName,
+    );
+    final effectText = translations.resolveEffectText(
+      itemSlot.contentId,
+      itemSlot.effectText,
+    );
+    return Material(
+      color: Colors.transparent,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF123126).withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close_rounded),
+                    color: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+              Text(
+                effectText,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _GameItemOverlayTag(text: itemSlot.slotLabel),
+                  const SizedBox(width: 8),
+                  _GameItemOverlayTag(text: 'x${itemSlot.count}'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: GameActionButton(
+                  label: '사용',
+                  background: const Color(0xFFF4A81D),
+                  foreground: Colors.black,
+                  onPressed: onUse,
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _GameItemOverlayTag extends StatelessWidget {
+  const _GameItemOverlayTag({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GameItemPocketChip extends StatelessWidget {
+  const _GameItemPocketChip({
+    required this.label,
+    required this.accent,
+    this.itemSlot,
+    this.onTap,
+  });
+
+  final String label;
+  final Color accent;
+  final RummiBattleItemSlotView? itemSlot;
+  final ValueChanged<RummiBattleItemSlotView>? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final itemSlot = this.itemSlot;
+    final itemName = itemSlot == null
+        ? null
+        : ItemTranslationScope.of(
+            context,
+          ).resolveDisplayName(itemSlot.contentId, itemSlot.displayName);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: itemSlot == null || onTap == null ? null : () => onTap!(itemSlot),
+      child: Stack(
+        children: [
+          Container(
+            width: kBattleItemSlotWidth,
+            height: kBattleItemSlotHeight,
+            decoration: BoxDecoration(
+              color: itemSlot == null
+                  ? Colors.black.withValues(alpha: 0.16)
+                  : accent.withValues(alpha: 0.20),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: itemSlot == null
+                    ? accent.withValues(alpha: 0.48)
+                    : accent.withValues(alpha: 0.82),
+                width: itemSlot == null ? 1 : 1.3,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(5, 6, 5, 5),
+              child: itemSlot == null
+                  ? Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          itemSlot.slotLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              itemName!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                height: 1.05,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          if (itemSlot != null && itemSlot.count > 1)
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.42),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  child: Text(
+                    'x${itemSlot.count}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

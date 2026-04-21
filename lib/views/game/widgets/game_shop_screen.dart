@@ -2,7 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../logic/rummi_poker_grid/item_definition.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
+import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
@@ -30,6 +32,7 @@ class GameShopScreen extends StatefulWidget {
     required this.readMarketView,
     required this.onReroll,
     required this.onBuyOffer,
+    required this.onBuyItemOffer,
     required this.onSellOwnedJester,
     required this.onStateChanged,
     required this.onOpenSettings,
@@ -44,6 +47,7 @@ class GameShopScreen extends StatefulWidget {
   final RummiMarketRuntimeFacade Function() readMarketView;
   final String? Function() onReroll;
   final String? Function(int offerIndex) onBuyOffer;
+  final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
   final bool Function(int ownedIndex) onSellOwnedJester;
   final Future<void> Function() onStateChanged;
   final Future<void> Function() onOpenSettings;
@@ -127,7 +131,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
   }
 
   void _shiftItemOfferPage(int delta) {
-    final pageCount = _pageCount(_marketGhostItemOffers.length);
+    final pageCount = _pageCount(_market.itemOffers.length);
     if (pageCount <= 1) return;
     setState(() {
       _itemOfferPage = (_itemOfferPage + delta).clamp(0, pageCount - 1);
@@ -368,6 +372,26 @@ class _GameShopScreenState extends State<GameShopScreen> {
     widget.onStateChanged();
   }
 
+  void _buySelectedItem() {
+    final offers = _market.itemOffers;
+    final index = _selectedItemOfferIndex;
+    if (index < 0 || index >= offers.length) return;
+    final failMessage = widget.onBuyItemOffer(offers[index]);
+    if (failMessage != null) {
+      showBottomNotice(context, failMessage);
+      return;
+    }
+    setState(() {
+      final nextOffers = _market.itemOffers;
+      if (nextOffers.isEmpty) {
+        _selectedItemOfferIndex = 0;
+      } else if (_selectedItemOfferIndex >= nextOffers.length) {
+        _selectedItemOfferIndex = nextOffers.length - 1;
+      }
+    });
+    widget.onStateChanged();
+  }
+
   void _sellOwned(int index) {
     final ok = widget.onSellOwnedJester(index);
     if (!ok) return;
@@ -558,14 +582,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
     final selectedItemOffer =
         _shopTab == _MarketShopTab.items &&
             _selectedItemOfferIndex >= 0 &&
-            _selectedItemOfferIndex < _marketGhostItemOffers.length
-        ? _marketGhostItemOffers[_selectedItemOfferIndex]
+            _selectedItemOfferIndex < market.itemOffers.length
+        ? market.itemOffers[_selectedItemOfferIndex]
         : null;
     final visibleJesterOffers = _pagedItems(market.offers, _jesterOfferPage);
-    final visibleItemOffers = _pagedItems(
-      _marketGhostItemOffers,
-      _itemOfferPage,
-    );
+    final visibleItemOffers = _pagedItems(market.itemOffers, _itemOfferPage);
     final selectedOwnedRuntimeValue = selectedOwned == null
         ? null
         : jesterRuntimeValueText(
@@ -724,7 +745,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           : selectedOffer != null
                           ? localizedJesterName(context, selectedOffer.card)
                           : selectedItemOffer != null
-                          ? selectedItemOffer.title
+                          ? localizedItemName(context, selectedItemOffer)
                           : '선택된 카드 없음',
                       subtitle: selectedOwned != null
                           ? '보유 슬롯'
@@ -783,7 +804,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                             )
                           : selectedItemOffer != null
                           ? Text(
-                              selectedItemOffer.description,
+                              localizedItemEffect(context, selectedItemOffer),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -823,10 +844,14 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                   : null,
                             )
                           : selectedItemOffer != null
-                          ? const _MarketActionPane(
-                              priceLabel: 'TBD',
-                              buttonLabel: '준비 중',
-                              buttonColor: Color(0xFF586463),
+                          ? _MarketActionPane(
+                              priceLabel: '${selectedItemOffer.price}',
+                              buttonLabel: '구매',
+                              buttonColor: const Color(0xFFF4A81D),
+                              foreground: Colors.black,
+                              onPressed: selectedItemOffer.isAffordable
+                                  ? _buySelectedItem
+                                  : null,
                             )
                           : null,
                     ),
@@ -849,7 +874,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                   : _itemOfferPage,
                               pageCount: _shopTab == _MarketShopTab.jesters
                                   ? _pageCount(market.offers.length)
-                                  : _pageCount(_marketGhostItemOffers.length),
+                                  : _pageCount(market.itemOffers.length),
                               onPrev: _shopTab == _MarketShopTab.jesters
                                   ? () => _shiftJesterOfferPage(-1)
                                   : () => _shiftItemOfferPage(-1),
@@ -923,12 +948,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                               offer: visibleItemOffers[i],
                                               selected:
                                                   _selectedItemOfferIndex ==
-                                                  _marketGhostItemOffers
-                                                      .indexOf(
-                                                        visibleItemOffers[i],
-                                                      ),
+                                                  market.itemOffers.indexOf(
+                                                    visibleItemOffers[i],
+                                                  ),
                                               onTap: () => _selectItemOffer(
-                                                _marketGhostItemOffers.indexOf(
+                                                market.itemOffers.indexOf(
                                                   visibleItemOffers[i],
                                                 ),
                                               ),
@@ -1385,7 +1409,7 @@ class _MarketItemOfferCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final _MarketGhostItemOffer offer;
+  final RummiMarketItemOfferView offer;
   final bool selected;
   final VoidCallback onTap;
 
@@ -1415,7 +1439,7 @@ class _MarketItemOfferCard extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      offer.slotLabel,
+                      _itemSlotLabel(offer),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -1429,8 +1453,10 @@ class _MarketItemOfferCard extends StatelessWidget {
             const SizedBox(height: 1),
             Text(
               '${offer.price}G',
-              style: const TextStyle(
-                color: Color(0xFFF2C14E),
+              style: TextStyle(
+                color: offer.isAffordable
+                    ? const Color(0xFFF2C14E)
+                    : Colors.white38,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
                 height: 1.0,
@@ -1486,37 +1512,26 @@ class _MarketSelectableCardFrame extends StatelessWidget {
   }
 }
 
-class _MarketGhostItemOffer {
-  const _MarketGhostItemOffer({
-    required this.title,
-    required this.description,
-    required this.price,
-    required this.slotLabel,
-  });
-
-  final String title;
-  final String description;
-  final int price;
-  final String slotLabel;
+String localizedItemName(BuildContext context, RummiMarketItemOfferView offer) {
+  return ItemTranslationScope.of(
+    context,
+  ).resolveDisplayName(offer.contentId, offer.displayName);
 }
 
-const List<_MarketGhostItemOffer> _marketGhostItemOffers = [
-  _MarketGhostItemOffer(
-    title: '리롤 토큰',
-    description: '다음 리롤 비용을 1 줄이는 1회성 아이템 자리입니다.',
-    price: 3,
-    slotLabel: 'UTIL',
-  ),
-  _MarketGhostItemOffer(
-    title: '멀트 캡슐',
-    description: '이번 Station 동안 사용할 수 있는 소모품 슬롯 예시입니다.',
-    price: 4,
-    slotLabel: 'Q1',
-  ),
-  _MarketGhostItemOffer(
-    title: '패시브 렐릭',
-    description: '전투 중 직접 쓰지 않는 지속 효과 아이템 자리입니다.',
-    price: 5,
-    slotLabel: 'PASS',
-  ),
-];
+String localizedItemEffect(
+  BuildContext context,
+  RummiMarketItemOfferView offer,
+) {
+  return ItemTranslationScope.of(
+    context,
+  ).resolveEffectText(offer.contentId, offer.effectText);
+}
+
+String _itemSlotLabel(RummiMarketItemOfferView offer) {
+  return switch (offer.item.placement) {
+    ItemPlacement.quickSlot => 'Q',
+    ItemPlacement.passiveRack => 'PASS',
+    ItemPlacement.equipped => 'GEAR',
+    ItemPlacement.inventory => 'UTIL',
+  };
+}
