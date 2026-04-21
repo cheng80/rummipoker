@@ -84,10 +84,10 @@
 
 다음 우선순위:
 
-1. Item system runtime 계속
-   다음은 item effect runtime을 small op 단위로 넓힌다. 우선 `draw_if_hand_empty` 같은 조건부 quick slot op를 별도 command/test로 연결한다.
-2. 보드 이동 / 손패 한도 / Item-Jester runtime 통합 작업
-   `보드 이동`을 `보드 버림`/`손패 버림`과 같은 전투 자원으로 추가하고, 이동/손패 한도 관련 Item/Jester 및 기존 item 미구현 effect를 [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md) 순서로 진행한다.
+1. 보드 이동 / 손패 한도 / Item-Jester runtime 통합 작업
+   다음 작업은 [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md)의 `Phase A: Resource Model`부터 진행한다. UI 쪽은 하단 액션 버튼을 `선택 해제 / 이동 / 보드 버림 / 손패 버림` compact row와 `확정` full-width primary row로 재배치하는 계획을 따른다.
+2. Item system runtime 계속
+   보드 이동 자원과 하단 버튼 배치가 들어간 뒤, 이동/손패 관련 신규 item과 기존 미구현 item effect를 같은 `ItemEffectRuntime` 확장 흐름에서 처리한다.
 3. market/battle interaction polish
    아이템 상점/전투 슬롯 기준 유지, 상세 패널, dialog/button visual consistency 보정
 4. blind/station pacing polish
