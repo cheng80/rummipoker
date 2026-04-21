@@ -10,12 +10,16 @@ import '../../../widgets/phone_frame_scaffold.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';
 
-const double _marketOwnedCardWidth = 52.0;
-const double _marketOwnedCardHeight = 72.0;
-const double _marketOfferCardWidth = 52.0;
-const double _marketOfferCardHeight = 72.0;
+const double _marketOwnedCardWidth = kBattleItemSlotWidth;
+const double _marketOwnedCardHeight = kBattleItemSlotHeight;
+const double _marketOfferCardWidth = kBattleItemSlotWidth;
+const double _marketOfferCardHeight = kBattleItemSlotHeight;
+const double _marketCardSelectionInset = kJesterSelectionOutset;
 const double _marketShopCellWidth = 72.0;
-const double _marketShopCellHeight = 98.0;
+const double _marketShopCellHeight =
+    kBattleItemSlotHeight + (kJesterSelectionOutset * 2) + 16.0;
+const double _marketShopPanelHeight = 184.0;
+const double _marketSpeechPanelHeight = 116.0;
 
 enum _MarketShopTab { jesters, items }
 
@@ -659,49 +663,33 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                 : null;
                             final card = ownedEntry?.card;
                             final selected = _selectedOwnedIndex == index;
-                            final child = Padding(
-                              padding: const EdgeInsets.all(3),
-                              child: Stack(
-                                children: [
-                                  if (selected)
-                                    Positioned.fill(
-                                      child: IgnorePointer(
-                                        child: DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              17,
-                                            ),
-                                            border: Border.all(
-                                              color: const Color(0xFFF2C14E),
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
+                            final child = _MarketSelectableCardFrame(
+                              selected: false,
+                              width: _marketOwnedCardWidth,
+                              height: _marketOwnedCardHeight,
+                              child: GameJesterSlot(
+                                card: card,
+                                runtimeValueText: card == null
+                                    ? null
+                                    : jesterRuntimeValueText(
+                                        card,
+                                        market.runtimeSnapshot,
+                                        slotIndex: index,
                                       ),
-                                    ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: GameJesterSlot(
-                                      card: card,
-                                      runtimeValueText: card == null
-                                          ? null
-                                          : jesterRuntimeValueText(
-                                              card,
-                                              market.runtimeSnapshot,
-                                              slotIndex: index,
-                                            ),
-                                      extended: index == 4,
-                                      activeEffect: null,
-                                      settlementSequenceTick: 0,
-                                    ),
-                                  ),
-                                ],
+                                extended: index == 4,
+                                activeEffect: null,
+                                settlementSequenceTick: 0,
+                                selected: selected,
                               ),
                             );
 
                             return SizedBox(
-                              width: _marketOwnedCardWidth + 6,
-                              height: _marketOwnedCardHeight + 6,
+                              width:
+                                  _marketOwnedCardWidth +
+                                  (_marketCardSelectionInset * 2),
+                              height:
+                                  _marketOwnedCardHeight +
+                                  (_marketCardSelectionInset * 2),
                               child: card == null
                                   ? child
                                   : GestureDetector(
@@ -754,19 +742,21 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                     context,
                                     selectedOwned.card,
                                   ),
-                                  maxLines: 5,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    height: 1.25,
+                                    height: 1.18,
                                   ),
                                 ),
                                 if (selectedOwnedRuntimeValue != null) ...[
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 4),
                                   Text(
                                     selectedOwnedRuntimeValue,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Color(0xFFF2C14E),
                                       fontSize: 11,
@@ -782,34 +772,36 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                 context,
                                 selectedOffer.card,
                               ),
-                              maxLines: 5,
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                height: 1.25,
+                                height: 1.18,
                               ),
                             )
                           : selectedItemOffer != null
                           ? Text(
                               selectedItemOffer.description,
-                              maxLines: 5,
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                height: 1.25,
+                                height: 1.18,
                               ),
                             )
                           : Text(
                               '선택한 카드의 정보와 액션이 여기에 표시됩니다.',
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.68),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                height: 1.25,
+                                height: 1.18,
                               ),
                             ),
                       trailing: selectedOwned != null
@@ -843,7 +835,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                       title: null,
                       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                       child: SizedBox(
-                        height: 176,
+                        height: _marketShopPanelHeight,
                         child: Column(
                           children: [
                             _MarketTabBar(
@@ -1064,10 +1056,10 @@ class _MarketSpeechPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white10),
       ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 112),
+      child: SizedBox(
+        height: _marketSpeechPanelHeight,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1085,7 +1077,7 @@ class _MarketSpeechPanel extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
                       maxLines: 1,
@@ -1096,8 +1088,8 @@ class _MarketSpeechPanel extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    body,
+                    const SizedBox(height: 5),
+                    Expanded(child: body),
                   ],
                 ),
               ),
@@ -1353,41 +1345,19 @@ class _GameShopOfferCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-              width: _marketOfferCardWidth + 6,
-              height: _marketOfferCardHeight + 6,
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Stack(
-                  children: [
-                    if (selected)
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(17),
-                              border: Border.all(
-                                color: const Color(0xFFF2C14E),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.all(3),
-                      child: SizedBox(
-                        width: _marketOfferCardWidth,
-                        height: _marketOfferCardHeight,
-                        child: GameJesterSlot(
-                          card: offer.card,
-                          runtimeValueText: null,
-                          extended: false,
-                          activeEffect: null,
-                          settlementSequenceTick: 0,
-                        ),
-                      ),
-                    ),
-                  ],
+              width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+              height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+              child: _MarketSelectableCardFrame(
+                selected: false,
+                width: _marketOfferCardWidth,
+                height: _marketOfferCardHeight,
+                child: GameJesterSlot(
+                  card: offer.card,
+                  runtimeValueText: null,
+                  extended: false,
+                  activeEffect: null,
+                  settlementSequenceTick: 0,
+                  selected: selected,
                 ),
               ),
             ),
@@ -1431,49 +1401,28 @@ class _MarketItemOfferCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-              width: _marketOfferCardWidth + 6,
-              height: _marketOfferCardHeight + 6,
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Stack(
-                  children: [
-                    if (selected)
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(17),
-                              border: Border.all(
-                                color: const Color(0xFFF2C14E),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.all(3),
-                      child: Container(
-                        width: _marketOfferCardWidth,
-                        height: _marketOfferCardHeight,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            offer.slotLabel,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
+              width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+              height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+              child: _MarketSelectableCardFrame(
+                selected: selected,
+                width: _marketOfferCardWidth,
+                height: _marketOfferCardHeight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      offer.slotLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1490,6 +1439,49 @@ class _MarketItemOfferCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MarketSelectableCardFrame extends StatelessWidget {
+  const _MarketSelectableCardFrame({
+    required this.selected,
+    required this.width,
+    required this.height,
+    required this.child,
+  });
+
+  final bool selected;
+  final double width;
+  final double height;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.all(_marketCardSelectionInset),
+            child: SizedBox(width: width, height: height, child: child),
+          ),
+        ),
+        if (selected)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(
+                    color: const Color(0xFFF2C14E),
+                    width: kJesterSelectionBorderWidth,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

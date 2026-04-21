@@ -10,6 +10,27 @@
 이 문서는 세부 설계 문서가 아니다.  
 새 세션에서 “어디까지 왔고, 다음에 무엇을 해야 하는가”를 빠르게 판단하는 용도다.
 
+## 0. Status Summary
+
+마지막 정리 기준:
+
+- A. Migration Checklist: 거의 완료
+- B. Target Product Checklist: 부분 구현
+- current playable prototype: 주요 루프 플레이 가능
+- V4 target product: Item v1 데이터 카탈로그 작성, 장기 기능 축 일부 미구현
+
+진행률 감각:
+
+| 기준 | 진행률 | 판단 |
+|---|---:|---|
+| Migration readiness | 90-95% | 코어 보호, facade/read model, ruleset/save adapter, app smoke 절차가 대부분 갖춰졌다. |
+| Current playable prototype | 약 70% | title/new-run/blind/battle/settlement/market/next loop가 플레이 가능하다. |
+| V4 target product 전체 | 약 57-62% | Item v1 데이터 카탈로그는 작성됐고, loader/market/runtime 연결은 남아 있다. Station Map, Sector/Final, Run Result, Archive data도 남아 있다. |
+
+현재 한 줄 결론:
+
+> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, Item은 실제 v1 데이터 작성이 끝났으며, 이제 loader/market/runtime 연결로 넘어가는 중이다.
+
 ## 1. Recommended Reading Order
 
 - [ ] `docs/V4/CODEX_V4_PLAN_INSTRUCTION.md`
@@ -330,8 +351,17 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 ### B6. Market Layer
 
-- [ ] `Jester` market 카테고리
+- [x] `Jester` market 카테고리
   현재 상태: `implemented`
+- [x] `Item` v1 실제 데이터 카탈로그 작성
+  현재 상태: `implemented`
+  기준 파일: `data/common/items_common_v1.json`
+- [ ] `ItemDefinition` loader / repository 연결
+  현재 상태: `not started`
+- [ ] `ItemOffer` market adapter 연결
+  현재 상태: `not started`
+- [ ] `OwnedItemEntry` / quick slot / passive rack runtime 연결
+  현재 상태: `not started`
 - [ ] `Permit` 카테고리 정의
   현재 상태: `not started`
 - [ ] `Glyph` 카테고리 정의
@@ -376,7 +406,7 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [ ] active run save가 `blind select` scene을 복원
   현재 상태: `not started`
 
-### B8. Sector Boss / Final Station
+### B9. Sector Boss / Final Station
 
 - [ ] `Sector Boss` 구조 정의
   현재 상태: `not started`
@@ -385,14 +415,14 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [ ] 일반 station과 boss/final station 차이 규칙 정의
   현재 상태: `not started`
 
-### B9. Run Result Layer
+### B10. Run Result Layer
 
 - [ ] `Run Result` 화면/도메인 정의
   현재 상태: `not started`
 - [ ] reached station / result / reward summary 구조 정의
   현재 상태: `not started`
 
-### B10. Archive / Stats / Unlock Layer
+### B11. Archive / Stats / Unlock Layer
 
 - [ ] `Archive` 구조 정의
   현재 상태: `defined`
@@ -420,46 +450,56 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 ### Target Snapshot
 
 - `Home`: partial
-- `Run Setup`: not started
+- `Run Setup`: partial
 - `Station Map`: defined
 - `Station Battle`: partial
 - `Station Settlement`: partial
-- `Market`: partial
+- `Market`: partial, Item v1 data catalog implemented
 - `Next Station Loop`: partial
+- `Runtime Polish / Safety`: partial
 - `Sector Boss / Final Station`: not started
 - `Run Result`: not started
 - `Archive / Stats / Unlock`: partial
 
 ## 5. Recommended Next Decision
 
-최근 반영:
-
-- [x] active run save payload에 `rulesetId` 저장/복원 경로 반영
-- [x] shop `reroll` mutation을 notifier command로 1차 이관
-- [x] `cash-out -> market -> next station` 시퀀스를 notifier command로 정리
-- [x] `GameView -> GameShopScreen` 경계를 market/save facade read path 기준으로 축소
-- [x] battle HUD/board/hand read path를 `RummiBattleRuntimeFacade` 기준으로 정리
-- [x] active run 저장을 notifier runtime snapshot + `saveRuntimeState()` 기준으로 정리
-- [x] settlement summary를 `RummiSettlementRuntimeFacade`로 읽게 정리
-- [x] `pendingResumeShop`를 제거하고 market resume를 `GameView` 로컬 책임으로 단순화
-- [x] `TitleView`를 `Continue / New Run / Trial / Archive / Settings` 기준 Home 1차 구조로 재구성
-- [x] active run summary 문구를 save facade 한 군데에서 재사용하도록 정리
-
 현재 재점검 결론:
 
-- [x] A 단계 잔여 `current-only` 결합은 다시 확인했다.
-- [x] 남은 직접 참조는 주로 `GameView` 내부 UI state/settlement 표현 범위다.
-- [x] 코드 상태 기준으로 A의 핵심 migration 목표는 이미 충족한 편이다.
-- [x] `B1`은 이제 설계 착수가 아니라 `TitleView` 기준 1차 구현 단계에 들어갔다.
+- [x] A 단계 핵심 migration 목표는 충족한 편이다.
+- [x] 코어 전투/save/restart는 regression과 smoke 절차로 보호된다.
+- [x] battle/shop/save read path는 facade/notifier 기반으로 1차 정리됐다.
+- [x] `새 게임 시작 -> 블라인드 선택 -> 전투 시작` 흐름은 실제 코드에 연결됐다.
+- [x] `small -> big -> boss -> market -> next station blind select` 1차 루프가 연결됐다.
+- [x] battle/market UI는 카드 슬롯 체급과 선택 외곽선 기준을 고정하는 중이다.
+- [x] Item은 `data/common/items_common_v1.json`에 41개 v1 실사용 후보 데이터로 작성됐다.
 
-현재 가장 자연스러운 다음 작업:
+현재 가장 자연스러운 다음 작업 축:
 
-- [x] `B1/B10` 기준으로 `기록실` 첫 shell block을 실제 화면 구조로 올리기
-  이유: `새 게임 시작`은 비활성 setup card 수준까지 자리 정리가 됐고, `기록실`도 이제 placeholder를 넘어 첫 실제 block을 가진다.
+1. `B6` Item system runtime 연결
+   - `items_common_v1.json` loader / `ItemDefinition` 모델 추가
+   - market item offer adapter 연결
+   - quick slot / equipment / passive rack 저장 구조 연결
+2. `B2/B7` blind/station pacing polish
+   - station target scale 기본값 재점검
+   - small/big/boss 보상/압박 수치 재조정
+   - blind unlock 템포와 continue 복귀 동선 확인
+3. `B6/B8` market/battle interaction polish
+   - market 카드/아이템 슬롯 기준 유지
+   - 설명 패널 고정 높이와 텍스트 말줄임 기준 안정화
+   - button/dialog visual consistency 유지
+4. `B2` deferred run rule 정리
+   - Balatro식 blind skip 도입 여부와 조건 결정
+   - skip을 넣는다면 save/checkpoint/보상 규칙을 먼저 문서화
+5. `B3/B10/B11` target product 첫 기능 착수 결정
+   - Station Map
+   - Archive 실제 데이터 연결
+   - Run Result
 
-구체적인 다음 PR 범위:
+다음 PR 후보:
 
-- `기록실` 각 block에 실제 데이터 소스 중 무엇을 먼저 연결할지 결정
-- `기록 / 수집 / 통계` 중 첫 실제 데이터 block 우선순위 고정
-- `특별 모드`는 여전히 placeholder로 둘지, 더 중립적인 entry로 낮출지 결정
-- `새 게임 시작`의 비활성 setup card는 유지하고 B2 문서 기준만 더 세분화
+- `Item catalog loader + ItemDefinition` 작은 런타임 PR
+- `ItemOffer market adapter` 작은 연결 PR
+- `blind/station pacing` 작은 수치 PR
+- `market/battle UI stability` 작은 polish PR
+- `Blind Skip decision` 문서 + 최소 코드 hook PR
+- `Archive first data block` 착수 PR

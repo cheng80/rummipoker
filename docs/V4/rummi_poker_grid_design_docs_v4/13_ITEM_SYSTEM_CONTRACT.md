@@ -1,7 +1,7 @@
 # 13. Item System Contract
 
 > 문서 성격: target contract for Jester / Item split
-> 코드 반영 상태: not implemented
+> 코드 반영 상태: Item v1 catalog written, runtime not implemented
 > 핵심 정책: 이 문서는 `영역 방향성 확정`과 `구현 전 계약 고정`을 위한 기준이다.
 
 ## 1. Purpose
@@ -41,6 +41,40 @@ Item
 - Item은 `도구 / 장비 / 소모품 / 유물` 계층으로 읽혀야 한다.
 - Item은 Jester의 빈 슬롯을 재활용하지 않는다.
 - Item은 Jester 카드의 축소판으로 보이면 안 된다.
+
+## 2.1 Concrete Data Catalog
+
+[V4_DECISION]
+
+실제 런에 투입할 첫 아이템 데이터 기준은 아래 파일이다.
+
+```text
+data/common/items_common_v1.json
+```
+
+이 파일은 placeholder 샘플이 아니라 `common run`에서 사용할 v1 후보 카탈로그다.
+현재 수록 범위는 41개 아이템이며, 분포는 다음과 같다.
+
+```text
+utility: 7
+consumable: 16
+equipment: 8
+passive_relic: 10
+```
+
+데이터 작성 기준:
+
+- Balatro의 `consumable / voucher / shop economy` 구조를 참고하되, 효과와 명칭은 본 게임 규칙에 맞춘 원본 데이터로 작성한다.
+- Slay the Spire의 `relic`처럼 런 전체에 영향을 주는 패시브 효과를 `passive_relic`으로 분리한다.
+- Luck be a Landlord의 `reroll / removal / capsule / item synergy` 계열처럼 선택지 조정, 경제, 보드 상태 변화 도구를 `utility / consumable`에 반영한다.
+- 모든 아이템은 `effect.op` 기반으로 런타임 구현이 가능해야 하며, 텍스트만 있는 아이템은 허용하지 않는다.
+- 가격과 희귀도는 초기 실사용 밸런스 후보이며, 실제 플레이 로그 기반으로 조정한다.
+
+asset path:
+
+```dart
+AssetPaths.itemsCommon
+```
 
 ## 3. Item Subtype UI Contract
 

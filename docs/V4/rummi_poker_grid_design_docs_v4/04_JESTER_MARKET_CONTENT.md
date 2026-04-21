@@ -1,7 +1,7 @@
 # 04. Jester, Market & Content System
 
 > 문서 성격: current baseline + target content architecture
-> 코드 반영 상태: Jester current implemented, multi-content market not implemented
+> 코드 반영 상태: Jester current implemented, Item v1 catalog written, multi-content market not implemented
 > 핵심 정책: 현재 Jester는 초기 제품의 중심축으로 유지하되, 장기 콘텐츠 계층과 분리 가능한 구조로 확장한다.
 
 ## 1. 현재 Jester 구현
@@ -125,6 +125,7 @@ V4 장기 콘텐츠는 다음 계층으로 나눈다.
 | Content | 역할 | 현재 상태 |
 |---|---|---|
 | Jester | 전투 점수/경제/상태 보정 | partial implemented |
+| Item | 소비형 / 장비형 / 패시브 유물 / 유틸리티 | catalog implemented, runtime not implemented |
 | Run Kit | run 시작 loadout / 초기 규칙 | not implemented |
 | Permit | 콘텐츠/Station 접근 권한 | not implemented |
 | Glyph | 특정 scoring 패턴/타일/라인 modifier | not implemented |
@@ -251,6 +252,17 @@ ItemOffer(type: utility)
   Jester strip과 같은 컴포넌트로 다루지 않는다.
 - sell / use / consume / persist 규칙은 Jester와 별도 정의한다.
 
+현재 Item 데이터 기준:
+
+```text
+data/common/items_common_v1.json
+```
+
+- 41개 v1 실사용 후보 아이템
+- `consumable / equipment / passive_relic / utility` 4분류
+- 모든 항목은 `effect.op`를 포함해 런타임 연결 가능한 형태로 작성
+- 현재 상태는 데이터 카탈로그 작성 완료이며, loader / market offer adapter / owned item runtime은 아직 미구현
+
 ## 9. Content ID Policy
 
 [V4_DECISION]
@@ -305,3 +317,4 @@ Jester / Item 분리는 UI 재설계를 전제로 한다.
 참조:
 
 - Item subtype UI 계약, battle / market 정보 구조, 도메인 모델 초안은 `13_ITEM_SYSTEM_CONTRACT.md`를 기준으로 본다.
+- 실제 v1 Item 카탈로그는 `data/common/items_common_v1.json`을 기준으로 본다.

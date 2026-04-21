@@ -51,6 +51,7 @@
 - Run: stage → cash-out → full-screen Jester shop → next stage
 - Economy: start gold 10, stage clear base 10, reroll 5
 - Jester: curated common catalog, equipped slots 5, buy/sell/reroll, stateful 일부
+- Item: v1 data catalog written, loader/market/runtime not connected yet
 - Save: active run save v2, `stageStartSnapshot`, HMAC
 - UI: title, game, full-screen shop, settings
 
@@ -96,6 +97,7 @@
 | Combat scoring | `lib/logic/rummi_poker_grid/hand_rank.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | One Pair 0 |
 | Confirm/removal | `lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | contributor union |
 | Jester/shop | `lib/logic/rummi_poker_grid/jester_meta.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/04_JESTER_MARKET_CONTENT.md` | [CODE VERIFIED] | current Jester 중심 |
+| Item catalog | `data/common/items_common_v1.json` | `docs/V4/rummi_poker_grid_design_docs_v4/13_ITEM_SYSTEM_CONTRACT.md` | [DATA VERIFIED] | v1 catalog written, runtime 연결 전 |
 | Save/checkpoint | `lib/services/active_run_save_service.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/05_SAVE_CHECKPOINT_DATA.md` | [CODE VERIFIED] | save v2 유지 |
 | UI flow | `lib/views/game_view.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/06_UI_UX_FLOW.md` | [CODE VERIFIED] | battle → shop |
 

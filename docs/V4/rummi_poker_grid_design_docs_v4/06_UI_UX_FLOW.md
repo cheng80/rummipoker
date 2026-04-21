@@ -268,6 +268,38 @@ Item 시스템 추가 후 battle 정보 구조는 다음 순서로 읽힌다.
 - debug bottom sheet에는 `MARKET`, `Hand size`, blind clear 류 조작을 모아 일반 HUD와 의미가 섞이지 않게 분리한다.
 - 하단 action row 기본 순서는 `선택 해제 / 보드 버림 / 손패 버림 / 확정`이다.
 
+### 3.1 Card Slot Visual Contract
+
+[CURRENT]
+
+Battle과 Market의 Jester / Item 슬롯은 같은 카드 체급을 기준으로 한다.
+
+기준 크기:
+
+- Jester card body: `58 x 78`
+- Item slot body: `58 x 78`
+- Jester strip: 5 slots
+- Item zone: 3 large slots
+- Selection outline outset: card body 바깥 `3px`
+- Selection outline stroke: `3px`
+
+구조 규칙:
+
+- 카드 body는 슬롯 전체를 채운다. 선택 표시를 위해 카드 body 자체를 축소하지 않는다.
+- 선택 외곽선은 카드 안쪽 padding이 아니라 카드 바깥 overlay로 그린다.
+- 선택 외곽선 공간이 필요한 화면은 카드 주변 layout cell에 별도 여백을 예약한다.
+- Jester 실제 카드와 빈 Jester 슬롯은 같은 외곽 체급으로 보여야 한다.
+- Market의 Jester card는 battle의 `GameJesterSlot` 기준을 따른다. Market 전용 wrapper는 위치/여백 예약만 맡고 카드 구조를 다시 만들지 않는다.
+- Market의 Item offer card도 같은 `58 x 78` 체급을 따른다. 다만 Item의 내부 표현은 Jester와 별도 구현할 수 있다.
+- 가격 라벨처럼 카드 아래에 붙는 텍스트가 있으면 cell height는 `card height + selection outset * 2 + label line budget`으로 계산한다.
+
+코드 기준:
+
+- Jester body size: `kJesterCardWidth`, `kJesterCardHeight`
+- Battle item slot size: `kBattleItemSlotWidth`, `kBattleItemSlotHeight`
+- Selection outline: `kJesterSelectionOutset`, `kJesterSelectionBorderWidth`
+- Market offer cell height는 위 상수를 조합한 식으로 유지하고, magic number로 되돌리지 않는다.
+
 [WATCH]
 
 전투 화면에서 item을 `5x5 보드 우측 세로 column`으로 이동하는 안은 상세 패널 충돌 때문에 현재 보류한다.

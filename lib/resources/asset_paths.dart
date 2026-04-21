@@ -20,4 +20,5 @@ class AssetPaths {
 
   /// 데이터 에셋 경로.
   static const String jestersCommon = 'data/common/jesters_common_phase5.json';
+  static const String itemsCommon = 'data/common/items_common_v1.json';
 }

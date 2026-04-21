@@ -11,6 +11,8 @@ import 'game_shared_widgets.dart';
 
 const double kJesterCardWidth = 58.0;
 const double kJesterCardHeight = 78.0;
+const double kJesterSelectionOutset = 3.0;
+const double kJesterSelectionBorderWidth = 3.0;
 
 String localizedJesterName(BuildContext context, RummiJesterCard card) {
   final translations = JesterTranslationScope.of(context);
@@ -174,11 +176,14 @@ class GameJesterSlot extends StatelessWidget {
             children: [
               Text(
                 extended ? 'EXT' : 'JESTER',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.62),
                   fontSize: 8,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.55,
+                  height: 1,
                 ),
               ),
               const Spacer(),
@@ -193,10 +198,13 @@ class GameJesterSlot extends StatelessWidget {
               Center(
                 child: Text(
                   extended ? '5th' : '+',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.42),
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
+                    height: 1,
                   ),
                 ),
               ),
@@ -217,147 +225,143 @@ class GameJesterSlot extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(3),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            if (selected)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(17),
-                      border: Border.all(
-                        color: const Color(0xFFF2C14E),
-                        width: 2,
-                      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          if (selected)
+            Positioned(
+              left: -kJesterSelectionOutset,
+              right: -kJesterSelectionOutset,
+              top: -kJesterSelectionOutset,
+              bottom: -kJesterSelectionOutset,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(17),
+                    border: Border.all(
+                      color: const Color(0xFFF2C14E),
+                      width: kJesterSelectionBorderWidth,
                     ),
                   ),
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.all(3),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDE7DB),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isActive
-                        ? const Color(0xFFF2C14E)
-                        : rarityColor.withValues(alpha: 0.72),
-                    width: isActive ? 2 : 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isActive
-                          ? const Color(0xFFF2C14E).withValues(alpha: 0.3)
-                          : Colors.black.withValues(alpha: 0.18),
-                      blurRadius: isActive ? 12 : 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+            ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFFEDE7DB),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isActive
+                    ? const Color(0xFFF2C14E)
+                    : rarityColor.withValues(alpha: 0.72),
+                width: isActive ? 2 : 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isActive
+                      ? const Color(0xFFF2C14E).withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.18),
+                  blurRadius: isActive ? 12 : 7,
+                  offset: const Offset(0, 3),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: card == null
-                              ? const Color(0xFF385248)
-                              : rarityColor,
-                          borderRadius: BorderRadius.circular(6),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: card == null
+                          ? const Color(0xFF385248)
+                          : rarityColor,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        displayName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: const Color(
+                            0xFF20312B,
+                          ).withValues(alpha: 0.92),
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.15,
+                          height: 1.0,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: Text(
-                            displayName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: const Color(
-                                0xFF20312B,
-                              ).withValues(alpha: 0.92),
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.15,
-                              height: 1.0,
-                            ),
-                          ),
-                        ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF20312B).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      jesterCategoryLabel(card!),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF1B3A31),
+                        fontSize: 7.5,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
                       ),
-                      Container(
+                    ),
+                  ),
+                  if (activeEffect != null) ...[
+                    const SizedBox(height: 3),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 5,
                           vertical: 2.5,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF20312B,
-                          ).withValues(alpha: 0.08),
+                          color: const Color(0xFF1E4A3B),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          jesterCategoryLabel(card!),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          jesterEffectBadge(activeEffect!),
                           style: const TextStyle(
-                            color: Color(0xFF1B3A31),
+                            color: Colors.white,
                             fontSize: 7.5,
                             fontWeight: FontWeight.w900,
-                            height: 1.0,
                           ),
                         ),
                       ),
-                      if (activeEffect != null) ...[
-                        const SizedBox(height: 3),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 2.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E4A3B),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              jesterEffectBadge(activeEffect!),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 7.5,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            if (activeEffect != null)
-              Positioned(
-                left: 4,
-                right: 4,
-                top: -16,
-                child: GameJesterEffectBurst(
-                  key: ValueKey(
-                    'jester-burst-${activeEffect!.jesterId}-$settlementSequenceTick',
-                  ),
-                  effect: activeEffect!,
+          ),
+          if (activeEffect != null)
+            Positioned(
+              left: 4,
+              right: 4,
+              top: -16,
+              child: GameJesterEffectBurst(
+                key: ValueKey(
+                  'jester-burst-${activeEffect!.jesterId}-$settlementSequenceTick',
                 ),
+                effect: activeEffect!,
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

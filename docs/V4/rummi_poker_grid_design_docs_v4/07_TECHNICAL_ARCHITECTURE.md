@@ -132,6 +132,7 @@ Jester / Item 분리 구현 시 최소 새 경계는 아래처럼 잡는다.
 core/content
 - jester_definition.dart
 - item_definition.dart
+- item_catalog.dart
 - market_offer.dart
 
 core/run
@@ -142,10 +143,11 @@ services/market
 ```
 
 상세 필드 계약은 `13_ITEM_SYSTEM_CONTRACT.md`를 따른다.
+v1 데이터 소스는 `data/common/items_common_v1.json`이며, asset path는 `AssetPaths.itemsCommon`을 사용한다.
 
 [MIGRATION]
 
-이 구조는 한 번에 만들지 않는다. 먼저 adapter와 테스트를 추가한 뒤 파일 분리를 진행한다.
+이 구조는 한 번에 만들지 않는다. 먼저 `ItemDefinition` loader와 catalog parse test를 추가하고, 그 다음 market offer adapter와 runtime inventory 저장을 연결한다.
 
 ## 5. Ruleset Config Target
 
