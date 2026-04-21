@@ -271,14 +271,43 @@ Files:
 
 작업 순서:
 
+완료된 축:
+
 1. `add_board_move` 적용
 2. `increase_hand_size` 적용
 3. `increase_hand_size_with_discard_penalty` 적용
-4. `undo_last_board_move` pending hook 및 UI state 추가
-5. 기존 `station_start` item 적용
-6. 기존 `settlement` item 적용
-7. 기존 `market_*` item 적용
-8. 기존 `next_confirm*` item modifier 저장/소비 적용
+4. `undo_last_board_move` 적용
+5. 기존 `station_start` 자원 item 적용
+6. `deck_needle` 덱 확인/선택 버림 dialog 적용
+
+남은 축은 item 단건이 아니라 공통 runtime hook 단위로 진행한다. 세부 대상은 [ITEM_EFFECT_RUNTIME_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/ITEM_EFFECT_RUNTIME_MATRIX.md)의 "공통 구현 묶음 플랜"을 따른다.
+
+다음 작업 순서:
+
+1. Confirm modifier queue/save/scoring hook 추가
+   - 대상: `chip_capsule`, `mult_capsule`, `line_polish`, `straight_oil`, `flush_powder`, `pair_splint`, `score_abacus`, `thin_caliper`, `echo_bell`, `red_swatch`, `blue_swatch`, `black_swatch`, `yellow_swatch`, `rank_chalk`, `tile_polisher`, `overlap_pin`
+   - 공통 결과: confirm 시 chips/mult/xmult/조건부 보너스 평가 후 소비
+2. Market discount/offer modifier state 추가
+   - 대상: `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`, `market_compass`, `shop_lens`, `lucky_counter`, `trade_ticket`
+   - 공통 결과: reroll/buy/offer build command에서 modifier 적용 후 소비
+3. Direct gold/economy hooks 추가
+   - 대상: `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`
+   - 공통 결과: use market, enter market, boss clear reward에서 gold delta/event/save 반영
+4. Settlement reward modifier hook 추가
+   - 대상: `coin_funnel`, `hand_funnel`
+   - 공통 결과: 남은 discard 자원 기반 추가 gold와 settlement breakdown line 반영
+5. Inventory/sell hook 추가
+   - 대상: `spare_pouch`, `jester_hook`
+   - 공통 결과: quick slot capacity 및 Jester sell price read/write path 반영
+6. Failed confirm hook 추가
+   - 대상: `safety_net`
+   - 공통 결과: 스테이션당 1회 실패 확정 refund
+7. Boss delayed market hook 추가
+   - 대상: `boss_trophy`
+   - 공통 결과: boss clear 후 다음 market Jester offer +1 적용 후 소비
+8. Board move follow-up marker 추가
+   - 대상: `slide_wax`
+   - 공통 결과: 다음 board move bonus marker 저장/소비
 
 Acceptance:
 

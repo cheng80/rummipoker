@@ -27,6 +27,36 @@ enum RummiExpirySignal {
   drawPileExhausted,
 }
 
+class BoardMoveRecord {
+  const BoardMoveRecord({
+    required this.fromRow,
+    required this.fromCol,
+    required this.toRow,
+    required this.toCol,
+  });
+
+  factory BoardMoveRecord.fromJson(Map<String, dynamic> json) {
+    return BoardMoveRecord(
+      fromRow: (json['fromRow'] as num).toInt(),
+      fromCol: (json['fromCol'] as num).toInt(),
+      toRow: (json['toRow'] as num).toInt(),
+      toCol: (json['toCol'] as num).toInt(),
+    );
+  }
+
+  final int fromRow;
+  final int fromCol;
+  final int toRow;
+  final int toCol;
+
+  Map<String, dynamic> toJson() => {
+    'fromRow': fromRow,
+    'fromCol': fromCol,
+    'toRow': toRow,
+    'toCol': toCol,
+  };
+}
+
 /// 족보 줄 일괄 확정 결과.
 class ConfirmClearResult {
   ConfirmClearResult._({
@@ -112,6 +142,7 @@ class RummiPokerGridSession {
     required this.board,
     required this.hand,
     required this.eliminated,
+    required this.boardMoveHistory,
     required this.engine,
   });
 
@@ -152,6 +183,7 @@ class RummiPokerGridSession {
       board: board ?? RummiBoard(),
       hand: <Tile>[],
       eliminated: <Tile>[],
+      boardMoveHistory: <BoardMoveRecord>[],
       engine: RummiPokerGridEngine(),
     );
   }
@@ -169,6 +201,7 @@ class RummiPokerGridSession {
     required RummiBoard board,
     required List<Tile> hand,
     required List<Tile> eliminated,
+    List<BoardMoveRecord> boardMoveHistory = const [],
   }) {
     return RummiPokerGridSession._(
       runSeed: runSeed,
@@ -181,6 +214,7 @@ class RummiPokerGridSession {
       board: board,
       hand: List<Tile>.from(hand),
       eliminated: List<Tile>.from(eliminated),
+      boardMoveHistory: List<BoardMoveRecord>.from(boardMoveHistory),
       engine: RummiPokerGridEngine(),
     );
   }
@@ -201,6 +235,7 @@ class RummiPokerGridSession {
 
   /// 확정·버림으로 영구 제거된 타일(다시 드로우되지 않음).
   final List<Tile> eliminated;
+  final List<BoardMoveRecord> boardMoveHistory;
   final RummiPokerGridEngine engine;
 
   int get totalDeckSize => totalDeckSizeForCopies(deckCopiesPerTile);
@@ -237,11 +272,28 @@ class RummiPokerGridSession {
     return t;
   }
 
+  List<Tile> peekDeckTop(int count) => deck.peekTop(count);
+
+  Tile? discardFromDeckTopWindow({
+    required int topIndex,
+    required int windowSize,
+  }) {
+    final tile = deck.discardFromTopWindow(
+      topIndex: topIndex,
+      windowSize: windowSize,
+    );
+    if (tile != null) {
+      eliminated.add(tile);
+    }
+    return tile;
+  }
+
   /// 손패의 타일을 보드 빈 칸에 놓는다.
   bool tryPlaceFromHand(Tile tile, int row, int col) {
     final i = hand.indexWhere((t) => t == tile);
     if (i < 0) return false;
     if (board.cellAt(row, col) != null) return false;
+    boardMoveHistory.clear();
     hand.removeAt(i);
     board.setCell(row, col, tile);
     return true;
@@ -260,6 +312,7 @@ class RummiPokerGridSession {
       return (drew: null, fail: DiscardFailReason.cellEmpty);
     }
     blind.boardDiscardsRemaining--;
+    boardMoveHistory.clear();
     board.setCell(row, col, null);
     eliminated.add(tile);
     Tile? drew;
@@ -314,7 +367,38 @@ class RummiPokerGridSession {
       toCol: toCol,
     );
     if (!moved) return BoardMoveFailReason.sourceCellEmpty;
+    boardMoveHistory.add(
+      BoardMoveRecord(
+        fromRow: fromRow,
+        fromCol: fromCol,
+        toRow: toRow,
+        toCol: toCol,
+      ),
+    );
     blind.boardMovesRemaining--;
+    return null;
+  }
+
+  BoardMoveUndoFailReason? undoLastBoardMove() {
+    if (boardMoveHistory.isEmpty) {
+      return BoardMoveUndoFailReason.noMoveHistory;
+    }
+    final last = boardMoveHistory.last;
+    if (board.cellAt(last.fromRow, last.fromCol) != null) {
+      return BoardMoveUndoFailReason.sourceOccupied;
+    }
+    if (board.cellAt(last.toRow, last.toCol) == null) {
+      return BoardMoveUndoFailReason.destinationEmpty;
+    }
+    final moved = board.moveCell(
+      fromRow: last.toRow,
+      fromCol: last.toCol,
+      toRow: last.fromRow,
+      toCol: last.fromCol,
+    );
+    if (!moved) return BoardMoveUndoFailReason.sourceOccupied;
+    boardMoveHistory.removeLast();
+    blind.boardMovesRemaining++;
     return null;
   }
 
@@ -337,6 +421,7 @@ class RummiPokerGridSession {
       board: RummiBoard.fromSnapshot(board.snapshotCells()),
       hand: List<Tile>.from(hand),
       eliminated: List<Tile>.from(eliminated),
+      boardMoveHistory: List<BoardMoveRecord>.from(boardMoveHistory),
     );
   }
 
@@ -482,6 +567,9 @@ class RummiPokerGridSession {
         board.setCell(r, c, null);
       }
     }
+    if (cells.isNotEmpty) {
+      boardMoveHistory.clear();
+    }
 
     BlindCleared? cleared;
     if (nextBlindScore >= blind.targetScore) {
@@ -534,6 +622,7 @@ class RummiPokerGridSession {
 
   /// 스테이지 종료 시 남은 보드/손패를 정리한다.
   void discardStageRemainder() {
+    boardMoveHistory.clear();
     for (final tile in hand) {
       eliminated.add(tile);
     }
@@ -617,6 +706,8 @@ enum BoardMoveFailReason {
   sourceCellEmpty,
   destinationOccupied,
 }
+
+enum BoardMoveUndoFailReason { noMoveHistory, sourceOccupied, destinationEmpty }
 
 class _ScoringLineCandidate {
   const _ScoringLineCandidate({

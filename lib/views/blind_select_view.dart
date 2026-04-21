@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
@@ -31,6 +32,7 @@ class BlindSelectView extends StatefulWidget {
 class _BlindSelectViewState extends State<BlindSelectView> {
   late final List<BlindSelectionSpec> _options;
   late BlindTier _selectedTier;
+  ItemCatalog? _itemCatalog;
 
   @override
   void initState() {
@@ -47,6 +49,18 @@ class _BlindSelectViewState extends State<BlindSelectView> {
           orElse: () => _options.first,
         )
         .tier;
+    _loadItemCatalog();
+  }
+
+  Future<void> _loadItemCatalog() async {
+    try {
+      final catalog = await ItemCatalog.loadFromAsset(AssetPaths.itemsCommon);
+      if (!mounted) return;
+      setState(() => _itemCatalog = catalog);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _itemCatalog = null);
+    }
   }
 
   NewRunDifficulty get _effectiveDifficulty =>
@@ -103,6 +117,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
           BlindSelectionSetup.prepareContinuedRunForSelectedBlind(
             runtime: restoredRun,
             tier: selected.tier,
+            itemCatalog: _itemCatalog,
           );
       context.go(
         '${RoutePaths.game}?difficulty=${_effectiveDifficulty.name}'

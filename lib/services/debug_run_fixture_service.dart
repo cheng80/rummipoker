@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../logic/rummi_poker_grid/hand_rank.dart';
+import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/poker_deck.dart';
@@ -30,6 +31,7 @@ class DebugRunFixtureService {
 
   static const String stage2ScoringSnapshot = 'stage2_scoring_snapshot';
   static const String stage2MarketResume = 'stage2_market_resume';
+  static const String deckNeedleBattle = 'deck_needle_battle';
 
   /// 새 디버그 픽스처는 여기에 등록하고, 아래에 대응하는 builder를 추가한다.
   static final List<DebugRunFixtureDefinition> _fixtures = [
@@ -45,6 +47,12 @@ class DebugRunFixtureService {
       label: 'Stage 2 Market 복귀',
       description: 'Stage 2 / Shop scene 복귀 / Gold 46 / 다음 Station 자동 진행 검증용',
       builder: _buildStage2MarketResume,
+    ),
+    DebugRunFixtureDefinition(
+      id: deckNeedleBattle,
+      label: 'Deck Needle 전투 아이템',
+      description: 'Deck Needle 보유 / 덱 상단 3장 확인 dialog 검증용',
+      builder: _buildDeckNeedleBattle,
     ),
   ];
 
@@ -211,6 +219,52 @@ class DebugRunFixtureService {
       session: base.session.copySnapshot(),
       runProgress: runProgress,
       stageStartSnapshot: base.stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildDeckNeedleBattle() {
+    final base = _buildStage2ScoringSnapshot();
+    final deckTop = [
+      _tile(TileColor.black, 4),
+      _tile(TileColor.yellow, 3),
+      _tile(TileColor.blue, 2),
+      _tile(TileColor.red, 1),
+    ];
+    final session = RummiPokerGridSession.restored(
+      runSeed: base.session.runSeed,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: base.session.maxHandSize,
+      runRandomState: base.session.runRandom.state,
+      ruleset: base.session.ruleset,
+      blind: base.session.blind.copyWith(),
+      deck: PokerDeck.fromSnapshot(deckTop),
+      board: base.session.board.copy(),
+      hand: List<Tile>.from(base.session.hand),
+      eliminated: List<Tile>.from(base.session.eliminated),
+      boardMoveHistory: List<BoardMoveRecord>.from(
+        base.session.boardMoveHistory,
+      ),
+    );
+    final runProgress = base.runProgress.copySnapshot()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'deck_needle',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['deck_needle'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
     );
   }
 

@@ -201,6 +201,61 @@ void main() {
     expect(session.blind.boardMovesRemaining, 2);
     expect(session.blind.boardDiscardsRemaining, 4);
     expect(session.blind.handDiscardsRemaining, 2);
+    expect(session.boardMoveHistory.single.toRow, 2);
+  });
+
+  test('마지막 보드 이동은 되돌릴 수 있고 이동 자원도 복원된다', () {
+    final board = RummiBoard();
+    final tile = t(TileColor.red, 7);
+    board.setCell(0, 0, tile);
+    final session = RummiPokerGridSession(
+      runSeed: 303,
+      blind: RummiBlindState(
+        targetScore: 9999,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+      ),
+      board: board,
+    );
+
+    expect(
+      session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 2, toCol: 2),
+      isNull,
+    );
+
+    expect(session.undoLastBoardMove(), isNull);
+    expect(session.board.cellAt(0, 0), tile);
+    expect(session.board.cellAt(2, 2), isNull);
+    expect(session.blind.boardMovesRemaining, 3);
+    expect(session.boardMoveHistory, isEmpty);
+    expect(session.undoLastBoardMove(), BoardMoveUndoFailReason.noMoveHistory);
+  });
+
+  test('보드가 다른 액션으로 바뀌면 이동 되돌리기 이력을 지운다', () {
+    final board = RummiBoard();
+    final tile = t(TileColor.red, 7);
+    board.setCell(0, 0, tile);
+    final session = RummiPokerGridSession(
+      runSeed: 305,
+      blind: RummiBlindState(
+        targetScore: 9999,
+        boardDiscardsRemaining: 4,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+      ),
+      board: board,
+    );
+
+    expect(
+      session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 2, toCol: 2),
+      isNull,
+    );
+
+    final discard = session.tryDiscardFromBoard(2, 2);
+
+    expect(discard.fail, isNull);
+    expect(session.boardMoveHistory, isEmpty);
+    expect(session.undoLastBoardMove(), BoardMoveUndoFailReason.noMoveHistory);
   });
 
   test('보드 이동은 빈 출발칸, 찬 도착칸, 횟수 0을 실패 처리한다', () {

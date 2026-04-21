@@ -117,6 +117,7 @@ class SavedSessionData {
     required this.boardCells,
     required this.hand,
     required this.eliminated,
+    this.boardMoveHistory = const [],
   });
 
   final int runSeed;
@@ -129,6 +130,7 @@ class SavedSessionData {
   final List<Map<String, dynamic>?> boardCells;
   final List<Map<String, dynamic>> hand;
   final List<Map<String, dynamic>> eliminated;
+  final List<Map<String, dynamic>> boardMoveHistory;
 
   Map<String, dynamic> toJson() => {
     'runSeed': runSeed,
@@ -141,6 +143,7 @@ class SavedSessionData {
     'boardCells': boardCells,
     'hand': hand,
     'eliminated': eliminated,
+    'boardMoveHistory': boardMoveHistory,
   };
 
   static SavedSessionData fromJson(Map<String, dynamic> json) {
@@ -168,6 +171,10 @@ class SavedSessionData {
           .map(Map<String, dynamic>.from)
           .toList(growable: false),
       eliminated: (json['eliminated'] as List<dynamic>)
+          .cast<Map<String, dynamic>>()
+          .map(Map<String, dynamic>.from)
+          .toList(growable: false),
+      boardMoveHistory: (json['boardMoveHistory'] as List<dynamic>? ?? const [])
           .cast<Map<String, dynamic>>()
           .map(Map<String, dynamic>.from)
           .toList(growable: false),
@@ -486,6 +493,9 @@ class ActiveRunSaveService {
       eliminated: session.eliminated
           .map((tile) => tile.toJson())
           .toList(growable: false),
+      boardMoveHistory: session.boardMoveHistory
+          .map((record) => record.toJson())
+          .toList(growable: false),
     );
   }
 
@@ -543,6 +553,9 @@ class ActiveRunSaveService {
       board: board,
       hand: hand,
       eliminated: eliminated,
+      boardMoveHistory: data.boardMoveHistory
+          .map(BoardMoveRecord.fromJson)
+          .toList(growable: false),
     );
   }
 

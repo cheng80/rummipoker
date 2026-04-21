@@ -65,6 +65,21 @@ final gameSessionNotifierProvider =
       GameSessionArgs
     >(GameSessionNotifier.new);
 
+class DeckPeekBattleUseResult {
+  const DeckPeekBattleUseResult._({required this.candidates, this.failMessage});
+
+  const DeckPeekBattleUseResult.success(List<Tile> candidates)
+    : this._(candidates: candidates);
+
+  const DeckPeekBattleUseResult.failure(String message)
+    : this._(candidates: const [], failMessage: message);
+
+  final List<Tile> candidates;
+  final String? failMessage;
+
+  bool get isSuccess => failMessage == null;
+}
+
 class GameSessionNotifier
     extends FamilyNotifier<GameSessionState, GameSessionArgs> {
   @override
@@ -549,10 +564,17 @@ class GameSessionNotifier
   }
 
   /// 다음 스테이지로 진입 처리.
-  void advanceToNextStage(int runSeed) {
+  void advanceToNextStage(int runSeed, {ItemCatalog? itemCatalog}) {
     final session = state.session!;
     final runProgress = state.runProgress!;
     runProgress.advanceStage(session, runSeed: runSeed);
+    if (itemCatalog != null) {
+      ItemEffectRuntime.applyOwnedStationStartItems(
+        catalog: itemCatalog,
+        session: session,
+        runProgress: runProgress,
+      );
+    }
     clearSelections();
     _replaceState(
       state.copyWith(
@@ -567,8 +589,8 @@ class GameSessionNotifier
   }
 
   /// market 종료 후 다음 station 진입까지를 notifier command로 감싼다.
-  void advanceToNextStation(int runSeed) {
-    advanceToNextStage(runSeed);
+  void advanceToNextStation(int runSeed, {ItemCatalog? itemCatalog}) {
+    advanceToNextStage(runSeed, itemCatalog: itemCatalog);
     _replaceState(
       state.copyWith(
         activeRunScene: ActiveRunScene.battle,
@@ -713,6 +735,45 @@ class GameSessionNotifier
       item: item,
       session: session,
       runProgress: runProgress,
+    );
+    if (!result.isSuccess) return result.failMessage;
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
+  DeckPeekBattleUseResult consumeBattleDeckPeekItem(ItemDefinition item) {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null) {
+      return const DeckPeekBattleUseResult.failure('세션이 없습니다.');
+    }
+    final result = ItemEffectRuntime.consumeBattleDeckPeekItem(
+      item: item,
+      session: session,
+      runProgress: runProgress,
+    );
+    if (!result.isSuccess) {
+      return DeckPeekBattleUseResult.failure(
+        result.failMessage ?? '아이템을 사용할 수 없습니다.',
+      );
+    }
+    final count =
+        (item.effect.value('lookAt') as num?)?.toInt() ??
+        (item.effect.value('peek') as num?)?.toInt() ??
+        3;
+    final candidates = session.peekDeckTop(count);
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return DeckPeekBattleUseResult.success(candidates);
+  }
+
+  String? useBattleDeckPeekDiscardItem(ItemDefinition item, int topIndex) {
+    final session = state.session;
+    if (session == null) return '세션이 없습니다.';
+
+    final result = ItemEffectRuntime.useBattleDeckPeekDiscardItem(
+      item: item,
+      session: session,
+      topIndex: topIndex,
     );
     if (!result.isSuccess) return result.failMessage;
     _replaceState(state.copyWith(revision: state.revision + 1));

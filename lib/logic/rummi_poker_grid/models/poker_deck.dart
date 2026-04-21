@@ -97,6 +97,14 @@ class PokerDeck {
 
   bool get isEmpty => _pile.isEmpty;
 
+  List<Tile> peekTop(int count) {
+    if (count <= 0 || _pile.isEmpty) return const [];
+    final takeCount = count > _pile.length ? _pile.length : count;
+    return List<Tile>.unmodifiable(
+      List.generate(takeCount, (index) => _pile[_pile.length - 1 - index]),
+    );
+  }
+
   void resetShuffled({
     Random? random,
     List<Tile>? source,
@@ -112,5 +120,12 @@ class PokerDeck {
   Tile? draw() {
     if (_pile.isEmpty) return null;
     return _pile.removeLast();
+  }
+
+  Tile? discardFromTopWindow({required int topIndex, required int windowSize}) {
+    if (topIndex < 0 || windowSize <= 0) return null;
+    final visible = peekTop(windowSize);
+    if (topIndex >= visible.length) return null;
+    return _pile.removeAt(_pile.length - 1 - topIndex);
   }
 }

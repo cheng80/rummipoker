@@ -28,6 +28,7 @@ import 'game/widgets/game_jester_widgets.dart';
 import 'game/widgets/game_options_dialog.dart';
 import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
+import 'game/widgets/game_tile_choice_dialog.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 class GameView extends ConsumerStatefulWidget {
@@ -43,6 +44,7 @@ class GameView extends ConsumerStatefulWidget {
     this.autoCashOutLoopOnLoad = false,
     this.debugCompleteRunOnClear = false,
     this.debugCompleteRunOnLoad = false,
+    this.debugAutoUseItemId,
   });
 
   final int runSeed;
@@ -55,6 +57,7 @@ class GameView extends ConsumerStatefulWidget {
   final bool autoCashOutLoopOnLoad;
   final bool debugCompleteRunOnClear;
   final bool debugCompleteRunOnLoad;
+  final String? debugAutoUseItemId;
 
   @override
   ConsumerState<GameView> createState() => _GameViewState();
@@ -76,6 +79,7 @@ class _GameViewState extends ConsumerState<GameView>
   late final GameSessionArgs _gameArgs;
   bool _persistRetrySnapshotOnSave = false;
   bool _autoCashOutLoopStarted = false;
+  bool _debugAutoUseItemStarted = false;
   late bool _shouldResumeMarketOnCatalogLoad;
   ItemCatalog? _itemCatalog;
   RummiBattleItemSlotView? _selectedBattleItemSlot;
@@ -228,7 +232,10 @@ class _GameViewState extends ConsumerState<GameView>
           final nextStage = await _showShopScreen();
           if (!mounted) return;
           if (nextStage == true) {
-            _gameNotifier.advanceToNextStation(widget.runSeed);
+            _gameNotifier.advanceToNextStation(
+              widget.runSeed,
+              itemCatalog: _itemCatalog,
+            );
             _showSnack('Station ${_battleView.stageIndex} 시작');
           }
           await _saveActiveRun();
@@ -246,10 +253,34 @@ class _GameViewState extends ConsumerState<GameView>
       final catalog = await ItemCatalog.loadFromAsset(AssetPaths.itemsCommon);
       if (!mounted) return;
       setState(() => _itemCatalog = catalog);
+      _scheduleDebugAutoUseItem();
     } catch (_) {
       if (!mounted) return;
       setState(() => _itemCatalog = null);
     }
+  }
+
+  void _scheduleDebugAutoUseItem() {
+    final itemId = widget.debugAutoUseItemId;
+    if (itemId == null || !_isDebugFixtureRun || _debugAutoUseItemStarted) {
+      return;
+    }
+    _debugAutoUseItemStarted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      RummiBattleItemSlotView? slot;
+      for (final candidate in _battleViewWithItemSlots.itemSlots) {
+        if (candidate.contentId == itemId) {
+          slot = candidate;
+          break;
+        }
+      }
+      if (slot == null) {
+        _showSnack('디버그 아이템을 찾지 못했습니다: $itemId');
+        return;
+      }
+      _useBattleItem(slot);
+    });
   }
 
   RummiMarketRuntimeFacade _readMarketViewWithItemOffers() {
@@ -496,6 +527,10 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _useBattleItem(RummiBattleItemSlotView slot) async {
     if (_isBattleInputLocked) return;
+    if (slot.item.effect.op == 'peek_deck_discard_one') {
+      await _useDeckNeedleItem(slot);
+      return;
+    }
     final failReason = _gameNotifier.useBattleItem(slot.item);
     if (failReason != null) {
       _showSnack(failReason);
@@ -509,6 +544,51 @@ class _GameViewState extends ConsumerState<GameView>
     if (mounted) {
       setState(() => _selectedBattleItemSlot = null);
     }
+    await _saveActiveRun();
+  }
+
+  Future<void> _useDeckNeedleItem(RummiBattleItemSlotView slot) async {
+    final useResult = _gameNotifier.consumeBattleDeckPeekItem(slot.item);
+    if (!useResult.isSuccess) {
+      _showSnack(useResult.failMessage ?? '아이템을 사용할 수 없습니다.');
+      return;
+    }
+    final itemName = ItemTranslationScope.of(
+      context,
+    ).resolveDisplayName(slot.contentId, slot.displayName);
+    if (mounted) {
+      setState(() => _selectedBattleItemSlot = null);
+    }
+    await _saveActiveRun();
+    if (!mounted) return;
+
+    final selectedIndex = await showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => GameTileChoiceDialog(
+        title: '덱 확인',
+        message: '선택한 한 장을 버리거나, 버림 없이 닫을 수 있습니다.',
+        tiles: useResult.candidates,
+        closeLabel: '닫기',
+      ),
+    );
+    if (!mounted) return;
+    if (selectedIndex == null) {
+      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+      _showSnack('$itemName 사용');
+      return;
+    }
+
+    final failReason = _gameNotifier.useBattleDeckPeekDiscardItem(
+      slot.item,
+      selectedIndex,
+    );
+    if (failReason != null) {
+      _showSnack(failReason);
+      return;
+    }
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    _showSnack('$itemName 사용');
     await _saveActiveRun();
   }
 

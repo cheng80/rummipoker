@@ -99,6 +99,9 @@ void main() {
             eliminated: <Map<String, dynamic>>[
               {'color': 'black', 'number': 3, 'id': 0},
             ],
+            boardMoveHistory: <Map<String, dynamic>>[
+              {'fromRow': 0, 'fromCol': 0, 'toRow': 1, 'toCol': 1},
+            ],
           ),
           runProgress: const SavedRunProgressData(
             stageIndex: 3,
@@ -169,6 +172,7 @@ void main() {
         expect(restored.runProgress.gold, 42);
         expect(restored.session.blind['boardMovesRemaining'], 1);
         expect(restored.session.blind['boardMovesMax'], 3);
+        expect(restored.session.boardMoveHistory.single['toRow'], 1);
         expect(
           restored.runProgress.itemInventory.ownedItems.single.itemId,
           'board_scrap',
@@ -440,6 +444,10 @@ void main() {
       final drawn = session.drawToHand();
       expect(drawn, isNotNull);
       expect(session.tryPlaceFromHand(drawn!, 0, 0), isTrue);
+      expect(
+        session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 1, toCol: 1),
+        isNull,
+      );
 
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.shop,
@@ -460,7 +468,15 @@ void main() {
       expect(restored.difficulty, NewRunDifficulty.standard);
       expect(restored.session.runSeed, 5151);
       expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 9);
+      expect(restored.session.board.cellAt(0, 0), isNull);
+      expect(restored.session.board.cellAt(1, 1), isNotNull);
+      expect(restored.session.boardMoveHistory.single.toRow, 1);
+      expect(restored.session.undoLastBoardMove(), isNull);
       expect(restored.session.board.cellAt(0, 0), isNotNull);
+      expect(
+        restored.stageStartSnapshot.session.boardMoveHistory.single.toRow,
+        1,
+      );
     });
   });
 }

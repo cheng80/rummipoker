@@ -1119,7 +1119,7 @@
         "consume": true
       },
       "tags": ["battle", "move", "undo"],
-      "sourceNotes": "Rare safety valve for movement mistakes; requires pending move history hook.",
+      "sourceNotes": "Rare safety valve for movement mistakes; uses the saved last board move history.",
       "displayNameKey": "data.items.undo_seal.displayName",
       "effectTextKey": "data.items.undo_seal.effectText"
     },

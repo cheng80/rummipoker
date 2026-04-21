@@ -6,9 +6,14 @@ enum ItemEffectApplicationStatus { applied, pendingHook, rejected }
 
 enum ItemEffectEventKind {
   boardDiscardAdded,
+  boardDiscardRemoved,
   handDiscardAdded,
+  handDiscardRemoved,
   boardMoveAdded,
+  boardMoveUndone,
+  maxHandSizeIncreased,
   tileDrawn,
+  deckTileDiscarded,
   goldGained,
   itemConsumed,
   nextConfirmModifierQueued,
@@ -138,6 +143,11 @@ class ItemEffectRuntime {
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;
+      case 'undo_last_board_move':
+        final applied = _applyUndoLastBoardMove(item, session);
+        if (!applied.isSuccess) return applied;
+        events.addAll(applied.events);
+        break;
       case 'draw_if_hand_empty':
         final applied = _applyDrawIfHandEmpty(item, session);
         if (!applied.isSuccess) return applied;
@@ -146,7 +156,7 @@ class ItemEffectRuntime {
       case 'peek_deck_discard_one':
         return ItemUseResult.pendingHook(
           itemId: item.id,
-          message: '덱 확인/버림 선택 UI 연결이 필요합니다.',
+          message: '버릴 덱 타일 선택이 필요합니다.',
           events: [
             ItemEffectEvent(
               kind: ItemEffectEventKind.interactionRequired,
@@ -174,6 +184,73 @@ class ItemEffectRuntime {
     return _pendingHook(item, 'applyMarketUseItem');
   }
 
+  static ItemUseResult useBattleDeckPeekDiscardItem({
+    required ItemDefinition item,
+    required RummiPokerGridSession session,
+    required int topIndex,
+  }) {
+    if (item.effect.op != 'peek_deck_discard_one') {
+      return ItemUseResult.failure(itemId: item.id, message: '덱 확인 아이템이 아닙니다.');
+    }
+    final windowSize =
+        _positiveIntValue(item, 'lookAt') ??
+        _positiveIntValue(item, 'peek') ??
+        3;
+    final discarded = session.discardFromDeckTopWindow(
+      topIndex: topIndex,
+      windowSize: windowSize,
+    );
+    if (discarded == null) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '버릴 덱 타일을 찾지 못했습니다.',
+      );
+    }
+    final events = <ItemEffectEvent>[
+      ItemEffectEvent(
+        kind: ItemEffectEventKind.deckTileDiscarded,
+        itemId: item.id,
+        amount: 1,
+        detail: discarded.code,
+      ),
+    ];
+    return ItemUseResult.success(itemId: item.id, events: events);
+  }
+
+  static ItemUseResult consumeBattleDeckPeekItem({
+    required ItemDefinition item,
+    required RummiPokerGridSession session,
+    required RummiRunProgress runProgress,
+  }) {
+    final validationMessage = _validateBattleUse(item, runProgress);
+    if (validationMessage != null) {
+      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+    }
+    if (item.effect.op != 'peek_deck_discard_one') {
+      return ItemUseResult.failure(itemId: item.id, message: '덱 확인 아이템이 아닙니다.');
+    }
+    final windowSize =
+        _positiveIntValue(item, 'lookAt') ??
+        _positiveIntValue(item, 'peek') ??
+        3;
+    if (session.peekDeckTop(windowSize).isEmpty) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '덱에 확인할 타일이 없습니다.',
+      );
+    }
+    final events = <ItemEffectEvent>[
+      ItemEffectEvent(
+        kind: ItemEffectEventKind.interactionRequired,
+        itemId: item.id,
+        amount: windowSize,
+        detail: 'peek_deck_discard_one',
+      ),
+    ];
+    _consumeIfNeeded(item, runProgress, events);
+    return ItemUseResult.success(itemId: item.id, events: events);
+  }
+
   static ItemUseResult applyMarketRerollItem({
     required ItemDefinition item,
     required RummiRunProgress runProgress,
@@ -192,7 +269,14 @@ class ItemEffectRuntime {
     required ItemDefinition item,
     required RummiPokerGridSession session,
   }) {
-    return _pendingHook(item, 'applyStationStartItem');
+    return switch (item.effect.op) {
+      'add_board_discard' => _applyAddBoardDiscard(item, session),
+      'add_hand_discard' => _applyAddHandDiscard(item, session),
+      'add_board_move' => _applyAddBoardMove(item, session),
+      'increase_hand_size_with_discard_penalty' =>
+        _applyIncreaseHandSizeWithDiscardPenalty(item, session),
+      _ => _pendingHook(item, 'applyStationStartItem'),
+    };
   }
 
   static ItemUseResult applyEnterMarketItem({
@@ -225,9 +309,52 @@ class ItemEffectRuntime {
 
   static ItemUseResult applyInventoryCapacityItem({
     required ItemDefinition item,
+    required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applyInventoryCapacityItem');
+    return switch (item.effect.op) {
+      'increase_hand_size' => _applyIncreaseHandSize(item, session),
+      _ => _pendingHook(item, 'applyInventoryCapacityItem'),
+    };
+  }
+
+  static List<ItemUseResult> applyOwnedStationStartItems({
+    required ItemCatalog catalog,
+    required RummiPokerGridSession session,
+    required RummiRunProgress runProgress,
+  }) {
+    final activeIds = <String>{
+      for (final entry in runProgress.itemInventory.ownedItems)
+        if (entry.count > 0) entry.itemId,
+    };
+    final results = <ItemUseResult>[];
+    for (final itemId in activeIds) {
+      final item = catalog.findById(itemId);
+      if (item == null) continue;
+      switch (item.effect.timing) {
+        case 'station_start':
+          results.add(applyStationStartItem(item: item, session: session));
+          if (results.last.isSuccess && item.effect.consume) {
+            runProgress.itemInventory = runProgress.itemInventory
+                .withConsumedItem(item.id);
+          }
+          break;
+        case 'inventory_capacity':
+          results.add(
+            applyInventoryCapacityItem(
+              item: item,
+              session: session,
+              runProgress: runProgress,
+            ),
+          );
+          if (results.last.isSuccess && item.effect.consume) {
+            runProgress.itemInventory = runProgress.itemInventory
+                .withConsumedItem(item.id);
+          }
+          break;
+      }
+    }
+    return List<ItemUseResult>.unmodifiable(results);
   }
 
   static ItemUseResult applySellJesterItem({
@@ -252,7 +379,15 @@ class ItemEffectRuntime {
       'use_battle:add_board_discard' ||
       'use_battle:add_hand_discard' ||
       'use_battle:add_board_move' ||
-      'use_battle:draw_if_hand_empty' => ItemEffectApplicationStatus.applied,
+      'use_battle:undo_last_board_move' ||
+      'use_battle:peek_deck_discard_one' ||
+      'use_battle:draw_if_hand_empty' ||
+      'station_start:add_board_discard' ||
+      'station_start:add_hand_discard' ||
+      'station_start:add_board_move' ||
+      'station_start:increase_hand_size_with_discard_penalty' ||
+      'inventory_capacity:increase_hand_size' =>
+        ItemEffectApplicationStatus.applied,
       _ => ItemEffectApplicationStatus.pendingHook,
     };
     return ItemEffectCatalogRow(
@@ -382,6 +517,92 @@ class ItemEffectRuntime {
     );
   }
 
+  static ItemUseResult _applyUndoLastBoardMove(
+    ItemDefinition item,
+    RummiPokerGridSession session,
+  ) {
+    final fail = session.undoLastBoardMove();
+    if (fail != null) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: switch (fail) {
+          BoardMoveUndoFailReason.noMoveHistory => '되돌릴 보드 이동이 없습니다.',
+          BoardMoveUndoFailReason.sourceOccupied => '이동 전 칸이 비어 있지 않습니다.',
+          BoardMoveUndoFailReason.destinationEmpty => '이동한 타일을 찾지 못했습니다.',
+        },
+      );
+    }
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.boardMoveUndone,
+          itemId: item.id,
+          amount: 1,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applyIncreaseHandSize(
+    ItemDefinition item,
+    RummiPokerGridSession session,
+  ) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    session.maxHandSize += amount;
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.maxHandSizeIncreased,
+          itemId: item.id,
+          amount: amount,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applyIncreaseHandSizeWithDiscardPenalty(
+    ItemDefinition item,
+    RummiPokerGridSession session,
+  ) {
+    final base = _applyIncreaseHandSize(item, session);
+    if (!base.isSuccess) return base;
+
+    final events = <ItemEffectEvent>[...base.events];
+    final boardPenalty = _nonNegativeIntValue(item, 'boardDiscardPenalty');
+    if (boardPenalty > 0) {
+      final removed = boardPenalty.clamp(
+        0,
+        session.blind.boardDiscardsRemaining,
+      );
+      session.blind.boardDiscardsRemaining -= removed;
+      events.add(
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.boardDiscardRemoved,
+          itemId: item.id,
+          amount: removed,
+        ),
+      );
+    }
+
+    final handPenalty = _nonNegativeIntValue(item, 'handDiscardPenalty');
+    if (handPenalty > 0) {
+      final removed = handPenalty.clamp(0, session.blind.handDiscardsRemaining);
+      session.blind.handDiscardsRemaining -= removed;
+      events.add(
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.handDiscardRemoved,
+          itemId: item.id,
+          amount: removed,
+        ),
+      );
+    }
+
+    return ItemUseResult.success(itemId: item.id, events: events);
+  }
+
   static void _consumeIfNeeded(
     ItemDefinition item,
     RummiRunProgress runProgress,
@@ -418,6 +639,16 @@ class ItemEffectRuntime {
   static int? _positiveIntAmount(ItemDefinition item) {
     final amount = (item.effect.amount ?? 0).toInt();
     return amount > 0 ? amount : null;
+  }
+
+  static int? _positiveIntValue(ItemDefinition item, String key) {
+    final value = (item.effect.value(key) as num?)?.toInt() ?? 0;
+    return value > 0 ? value : null;
+  }
+
+  static int _nonNegativeIntValue(ItemDefinition item, String key) {
+    final value = (item.effect.value(key) as num?)?.toInt() ?? 0;
+    return value < 0 ? 0 : value;
   }
 
   static ItemUseResult _invalidAmount(ItemDefinition item) {

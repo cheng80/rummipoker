@@ -1,4 +1,6 @@
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/item_definition.dart';
+import '../logic/rummi_poker_grid/item_effect_runtime.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'active_run_save_service.dart';
@@ -198,6 +200,7 @@ class BlindSelectionSetup {
   static ActiveRunRuntimeState prepareContinuedRunForSelectedBlind({
     required ActiveRunRuntimeState runtime,
     required BlindTier tier,
+    ItemCatalog? itemCatalog,
   }) {
     final session = runtime.session.copySnapshot();
     final runProgress = runtime.runProgress.copySnapshot();
@@ -223,6 +226,13 @@ class BlindSelectionSetup {
       handDiscards: selected.handDiscards,
       maxHandSize: selected.maxHandSize,
     );
+    if (itemCatalog != null) {
+      ItemEffectRuntime.applyOwnedStationStartItems(
+        catalog: itemCatalog,
+        session: session,
+        runProgress: runProgress,
+      );
+    }
     final stageStartSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
       session: session,
       runProgress: runProgress,

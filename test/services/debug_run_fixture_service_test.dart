@@ -62,4 +62,24 @@ void main() {
       ['green_jester', 'popcorn'],
     );
   });
+
+  test(
+    'deck needle battle fixture starts with quick slot item and known deck top',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.deckNeedleBattle,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.battle);
+      expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+        'deck_needle',
+      ]);
+      expect(fixture.session.peekDeckTop(3).map((tile) => tile.number), [
+        1,
+        2,
+        3,
+      ]);
+    },
+  );
 }
