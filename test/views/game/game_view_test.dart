@@ -122,7 +122,7 @@ void main() {
     );
 
     await tester.pump();
-    await tester.tap(find.text('확정'));
+    await tester.tap(find.byTooltip('확정'));
     await tester.pump();
     for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 250));

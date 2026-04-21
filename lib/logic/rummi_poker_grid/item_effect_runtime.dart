@@ -7,6 +7,7 @@ enum ItemEffectApplicationStatus { applied, pendingHook, rejected }
 enum ItemEffectEventKind {
   boardDiscardAdded,
   handDiscardAdded,
+  boardMoveAdded,
   tileDrawn,
   goldGained,
   itemConsumed,
@@ -132,6 +133,11 @@ class ItemEffectRuntime {
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;
+      case 'add_board_move':
+        final applied = _applyAddBoardMove(item, session);
+        if (!applied.isSuccess) return applied;
+        events.addAll(applied.events);
+        break;
       case 'draw_if_hand_empty':
         final applied = _applyDrawIfHandEmpty(item, session);
         if (!applied.isSuccess) return applied;
@@ -245,6 +251,7 @@ class ItemEffectRuntime {
     final status = switch ('$timing:$op') {
       'use_battle:add_board_discard' ||
       'use_battle:add_hand_discard' ||
+      'use_battle:add_board_move' ||
       'use_battle:draw_if_hand_empty' => ItemEffectApplicationStatus.applied,
       _ => ItemEffectApplicationStatus.pendingHook,
     };
@@ -316,6 +323,25 @@ class ItemEffectRuntime {
       events: [
         ItemEffectEvent(
           kind: ItemEffectEventKind.handDiscardAdded,
+          itemId: item.id,
+          amount: amount,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applyAddBoardMove(
+    ItemDefinition item,
+    RummiPokerGridSession session,
+  ) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    session.blind.boardMovesRemaining += amount;
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.boardMoveAdded,
           itemId: item.id,
           amount: amount,
         ),

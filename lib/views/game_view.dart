@@ -79,6 +79,9 @@ class _GameViewState extends ConsumerState<GameView>
   late bool _shouldResumeMarketOnCatalogLoad;
   ItemCatalog? _itemCatalog;
   RummiBattleItemSlotView? _selectedBattleItemSlot;
+  bool _boardMoveMode = false;
+  int? _pendingBoardMoveSourceRow;
+  int? _pendingBoardMoveSourceCol;
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
@@ -147,6 +150,7 @@ class _GameViewState extends ConsumerState<GameView>
   int get _settlementSequenceTick => _gameState.settlementSequenceTick;
   bool get _isUiLocked => _gameState.isUiLocked;
   bool get _isDebugFixtureRun => _gameState.debugFixtureId != null;
+  bool get _isBattleInputLocked => _isUiLocked || _boardMoveMode;
 
   @override
   void initState() {
@@ -385,11 +389,16 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _clearSelections() {
+    setState(() {
+      _boardMoveMode = false;
+      _pendingBoardMoveSourceRow = null;
+      _pendingBoardMoveSourceCol = null;
+    });
     _gameNotifier.clearSelections();
   }
 
   void _openJesterOverlay(int index) {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     setState(() => _selectedBattleItemSlot = null);
     _gameNotifier.setSelectedJesterOverlayIndex(index);
   }
@@ -406,7 +415,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _openBattleItemOverlay(RummiBattleItemSlotView slot) {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     _gameNotifier.setSelectedJesterOverlayIndex(null);
     setState(() => _selectedBattleItemSlot = slot);
   }
@@ -417,7 +426,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _toggleHandTile(Tile tile) {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     _gameNotifier.toggleSelectedHandTile(tile);
   }
 
@@ -429,6 +438,10 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _onBoardCellTap(int row, int col) async {
     if (_isUiLocked) return;
+    if (_boardMoveMode) {
+      await _handleBoardMoveModeTap(row, col);
+      return;
+    }
     final result = _gameNotifier.tapBoardCell(row, col);
     if (result.failMessage != null) {
       _showSnack(result.failMessage!);
@@ -443,7 +456,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _drawTile() async {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     final failReason = _gameNotifier.drawTile();
     if (failReason != null) {
       _showSnack(failReason);
@@ -456,7 +469,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _discardSelectedBoardTile() async {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     final failReason = _gameNotifier.discardSelectedBoardTileFromState();
     if (failReason != null) {
       _showSnack(failReason);
@@ -469,7 +482,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _discardSelectedHandTile() async {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     final failReason = _gameNotifier.discardSelectedHandTileFromState();
     if (failReason != null) {
       _showSnack(failReason);
@@ -482,7 +495,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _useBattleItem(RummiBattleItemSlotView slot) async {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     final failReason = _gameNotifier.useBattleItem(slot.item);
     if (failReason != null) {
       _showSnack(failReason);
@@ -500,7 +513,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _confirmLines() async {
-    if (_isUiLocked) return;
+    if (_isBattleInputLocked) return;
     final result = _gameNotifier.confirmLines();
     if (result == null) {
       _showSnack('확정할 족보 줄이 없습니다.');
@@ -515,6 +528,77 @@ class _GameViewState extends ConsumerState<GameView>
       return;
     }
     await _afterAction();
+  }
+
+  void _startBoardMoveMode() {
+    if (_isUiLocked) return;
+    final row = _selectedBoardRow;
+    final col = _selectedBoardCol;
+    if (row == null || col == null) {
+      _showSnack('이동할 보드 타일을 먼저 선택하세요.');
+      return;
+    }
+    if (_stationView.resources.boardMovesRemaining <= 0) {
+      _showSnack('보드 이동 횟수가 없습니다.');
+      return;
+    }
+    setState(() {
+      _selectedBattleItemSlot = null;
+      _boardMoveMode = true;
+      _pendingBoardMoveSourceRow = row;
+      _pendingBoardMoveSourceCol = col;
+    });
+  }
+
+  void _cancelBoardMoveMode() {
+    if (!mounted) return;
+    setState(() {
+      _boardMoveMode = false;
+      _pendingBoardMoveSourceRow = null;
+      _pendingBoardMoveSourceCol = null;
+    });
+  }
+
+  Future<void> _handleBoardMoveModeTap(int row, int col) async {
+    final fromRow = _pendingBoardMoveSourceRow;
+    final fromCol = _pendingBoardMoveSourceCol;
+    if (fromRow == null || fromCol == null) {
+      _cancelBoardMoveMode();
+      return;
+    }
+    if (row == fromRow && col == fromCol) {
+      _cancelBoardMoveMode();
+      return;
+    }
+    if (_battleView.board.cellAt(row, col) != null) {
+      _showSnack('빈 칸으로만 이동할 수 있습니다.');
+      return;
+    }
+
+    final confirmed = await showConfirmDialog(
+      context,
+      title: '보드 이동',
+      message: '선택한 타일을 빈 칸으로 이동합니다.\n이동 횟수 1회를 사용합니다.',
+      cancelLabel: '취소',
+      confirmLabel: '이동',
+      barrierDismissible: false,
+    );
+    if (!confirmed || !mounted) return;
+
+    final failReason = _gameNotifier.moveBoardTile(
+      fromRow: fromRow,
+      fromCol: fromCol,
+      toRow: row,
+      toCol: col,
+    );
+    if (failReason != null) {
+      _showSnack(failReason);
+      return;
+    }
+    _cancelBoardMoveMode();
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    _showSnack('타일을 이동했습니다.');
+    await _saveActiveRun();
   }
 
   Future<void> _runSettlementSequence({
@@ -892,6 +976,9 @@ class _GameViewState extends ConsumerState<GameView>
         selectedHandTile: _selectedHandTile,
         selectedBoardRow: _selectedBoardRow,
         selectedBoardCol: _selectedBoardCol,
+        boardMoveMode: _boardMoveMode,
+        pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
+        pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
         selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
         selectedBattleItemSlot: _selectedBattleItemSlot,
         onOptionsTap: () => _openGameOptions(context),
@@ -902,6 +989,7 @@ class _GameViewState extends ConsumerState<GameView>
         onDraw: _drawTile,
         onBoardDiscard: _discardSelectedBoardTile,
         onHandDiscard: _discardSelectedHandTile,
+        onStartBoardMove: _startBoardMoveMode,
         onBattleItemTap: _openBattleItemOverlay,
         onConfirm: _confirmLines,
         onClearSelection: _clearSelections,
@@ -927,6 +1015,9 @@ class _GameSurface extends StatelessWidget {
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
+    required this.boardMoveMode,
+    required this.pendingBoardMoveSourceRow,
+    required this.pendingBoardMoveSourceCol,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
     required this.onOptionsTap,
@@ -937,6 +1028,7 @@ class _GameSurface extends StatelessWidget {
     required this.onDraw,
     required this.onBoardDiscard,
     required this.onHandDiscard,
+    required this.onStartBoardMove,
     required this.onBattleItemTap,
     required this.onConfirm,
     required this.onClearSelection,
@@ -957,6 +1049,9 @@ class _GameSurface extends StatelessWidget {
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
+  final bool boardMoveMode;
+  final int? pendingBoardMoveSourceRow;
+  final int? pendingBoardMoveSourceCol;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final VoidCallback onOptionsTap;
@@ -967,6 +1062,7 @@ class _GameSurface extends StatelessWidget {
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
   final VoidCallback onHandDiscard;
+  final VoidCallback onStartBoardMove;
   final ValueChanged<RummiBattleItemSlotView> onBattleItemTap;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
@@ -1017,6 +1113,9 @@ class _GameSurface extends StatelessWidget {
                   selectedHandTile: selectedHandTile,
                   selectedBoardRow: selectedBoardRow,
                   selectedBoardCol: selectedBoardCol,
+                  boardMoveMode: boardMoveMode,
+                  pendingBoardMoveSourceRow: pendingBoardMoveSourceRow,
+                  pendingBoardMoveSourceCol: pendingBoardMoveSourceCol,
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   onOptionsTap: onOptionsTap,
                   onDebugTap: onDebugTap,
@@ -1026,6 +1125,7 @@ class _GameSurface extends StatelessWidget {
                   onDraw: onDraw,
                   onBoardDiscard: onBoardDiscard,
                   onHandDiscard: onHandDiscard,
+                  onStartBoardMove: onStartBoardMove,
                   onBattleItemTap: onBattleItemTap,
                   onConfirm: onConfirm,
                   onClearSelection: onClearSelection,
@@ -1120,6 +1220,9 @@ class _GameLayout extends StatelessWidget {
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
+    required this.boardMoveMode,
+    required this.pendingBoardMoveSourceRow,
+    required this.pendingBoardMoveSourceCol,
     required this.selectedJesterOverlayIndex,
     required this.onOptionsTap,
     required this.onDebugTap,
@@ -1129,6 +1232,7 @@ class _GameLayout extends StatelessWidget {
     required this.onDraw,
     required this.onBoardDiscard,
     required this.onHandDiscard,
+    required this.onStartBoardMove,
     required this.onBattleItemTap,
     required this.onConfirm,
     required this.onClearSelection,
@@ -1144,6 +1248,9 @@ class _GameLayout extends StatelessWidget {
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
+  final bool boardMoveMode;
+  final int? pendingBoardMoveSourceRow;
+  final int? pendingBoardMoveSourceCol;
   final int? selectedJesterOverlayIndex;
   final VoidCallback onOptionsTap;
   final VoidCallback onDebugTap;
@@ -1153,6 +1260,7 @@ class _GameLayout extends StatelessWidget {
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
   final VoidCallback onHandDiscard;
+  final VoidCallback onStartBoardMove;
   final ValueChanged<RummiBattleItemSlotView> onBattleItemTap;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
@@ -1206,24 +1314,58 @@ class _GameLayout extends StatelessWidget {
                       settlementBoardSnapshot: settlementBoardSnapshot,
                       selectedRow: selectedBoardRow,
                       selectedCol: selectedBoardCol,
+                      boardMoveMode: boardMoveMode,
+                      moveSourceRow: pendingBoardMoveSourceRow,
+                      moveSourceCol: pendingBoardMoveSourceCol,
                       onTapCell: onBoardCellTap,
                     ),
                   ),
                   if (kDebugMode)
                     Positioned(
-                      top: 6,
                       right: 0,
+                      bottom: 16,
                       child: GameIconButtonChip(
                         tooltip: '디버그',
-                        onPressed: onDebugTap,
+                        size: 34,
                         icon: Icons.bug_report_rounded,
-                        size: 30,
+                        iconSize: 16,
+                        borderRadius: 8,
                         backgroundColor: const Color(0xFF29453A),
+                        onPressed: onDebugTap,
                       ),
                     ),
                 ],
               ),
             ),
+            const SizedBox(height: 6),
+            _BattleActionBar(
+              canStartBoardMove:
+                  !boardMoveMode &&
+                  selectedBoardRow != null &&
+                  selectedBoardCol != null &&
+                  station.resources.boardMovesRemaining > 0,
+              onConfirm: onConfirm,
+              onClearSelection: onClearSelection,
+              onStartBoardMove: onStartBoardMove,
+              onBoardDiscard: onBoardDiscard,
+              onHandDiscard: onHandDiscard,
+              confirmEnabled: !boardMoveMode,
+              utilityEnabled: !boardMoveMode,
+            ),
+            if (boardMoveMode) ...[
+              const SizedBox(height: 4),
+              Text(
+                '빈 칸을 선택해 이동을 확정하세요. 원본 타일을 누르면 취소됩니다.',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.74),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
             const SizedBox(height: 6),
             GameHandZone(
               battle: battle,
@@ -1234,46 +1376,173 @@ class _GameLayout extends StatelessWidget {
               onDraw: onDraw,
               tileWidth: tileWidth,
             ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: GameActionButton(
-                    label: '선택 해제',
-                    background: const Color(0xFF4C5A55),
-                    onPressed: onClearSelection,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GameActionButton(
-                    label: '보드 버림',
-                    background: const Color(0xFF44554C),
-                    onPressed: onBoardDiscard,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GameActionButton(
-                    label: '손패 버림',
-                    background: const Color(0xFF5B4D33),
-                    onPressed: onHandDiscard,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GameActionButton(
-                    label: '확정',
-                    background: const Color(0xFFF4A81D),
-                    foreground: Colors.black,
-                    onPressed: onConfirm,
-                  ),
-                ),
-              ],
-            ),
           ],
         );
       },
+    );
+  }
+}
+
+class _BattleActionBar extends StatelessWidget {
+  const _BattleActionBar({
+    required this.canStartBoardMove,
+    required this.onConfirm,
+    required this.onClearSelection,
+    required this.onStartBoardMove,
+    required this.onBoardDiscard,
+    required this.onHandDiscard,
+    required this.confirmEnabled,
+    required this.utilityEnabled,
+  });
+
+  final bool canStartBoardMove;
+  final VoidCallback onConfirm;
+  final VoidCallback onClearSelection;
+  final VoidCallback onStartBoardMove;
+  final VoidCallback onBoardDiscard;
+  final VoidCallback onHandDiscard;
+  final bool confirmEnabled;
+  final bool utilityEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 10.0;
+        const confirmGap = 18.0;
+        const buttonSide = 42.0;
+
+        return SizedBox(
+          height: buttonSide,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _BattleRailButton(
+                tooltip: '선택 해제',
+                label: '선택\n해제',
+                size: buttonSide,
+                borderRadius: 7,
+                backgroundColor: const Color(0xFF4C5A55),
+                onPressed: utilityEnabled ? onClearSelection : null,
+              ),
+              const SizedBox(width: gap),
+              _BattleRailButton(
+                tooltip: '이동',
+                label: '타일\n이동',
+                size: buttonSide,
+                borderRadius: 7,
+                backgroundColor: const Color(0xFF315F68),
+                onPressed: canStartBoardMove ? onStartBoardMove : null,
+              ),
+              const SizedBox(width: gap),
+              _BattleRailButton(
+                tooltip: '보드 버림',
+                label: '보드\n버림',
+                size: buttonSide,
+                borderRadius: 7,
+                backgroundColor: const Color(0xFF44554C),
+                onPressed: utilityEnabled ? onBoardDiscard : null,
+              ),
+              const SizedBox(width: gap),
+              _BattleRailButton(
+                tooltip: '손패 버림',
+                label: '손패\n버림',
+                size: buttonSide,
+                borderRadius: 7,
+                backgroundColor: const Color(0xFF5B4D33),
+                onPressed: utilityEnabled ? onHandDiscard : null,
+              ),
+              const SizedBox(width: confirmGap),
+              _BattleRailButton(
+                tooltip: '확정',
+                label: '확정\n하기',
+                size: buttonSide,
+                borderRadius: 7,
+                backgroundColor: const Color(0xFFF4A81D),
+                foregroundColor: Colors.black,
+                onPressed: confirmEnabled ? onConfirm : null,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BattleRailButton extends StatelessWidget {
+  const _BattleRailButton({
+    required this.tooltip,
+    required this.label,
+    required this.backgroundColor,
+    required this.onPressed,
+    this.foregroundColor = Colors.white,
+    this.size = 58,
+    this.borderRadius = 9,
+  });
+
+  final String tooltip;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final VoidCallback? onPressed;
+  final double size;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+    final baseColor = isEnabled
+        ? backgroundColor
+        : backgroundColor.withValues(alpha: 0.34);
+    final textColor = isEnabled
+        ? foregroundColor
+        : foregroundColor.withValues(alpha: 0.58);
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Ink(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: baseColor,
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: isEnabled
+                    ? foregroundColor.withValues(alpha: 0.28)
+                    : foregroundColor.withValues(alpha: 0.12),
+                width: 1.4,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.0,
+                      fontWeight: FontWeight.w400,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

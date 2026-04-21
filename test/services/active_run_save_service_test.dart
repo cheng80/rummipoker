@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
@@ -81,6 +82,8 @@ void main() {
               'boardDiscardsMax': 4,
               'handDiscardsRemaining': 2,
               'handDiscardsMax': 2,
+              'boardMovesRemaining': 1,
+              'boardMovesMax': 3,
               'scoreTowardBlind': 25,
             },
             deckPile: <Map<String, dynamic>>[
@@ -131,6 +134,8 @@ void main() {
               'boardDiscardsMax': 4,
               'handDiscardsRemaining': 2,
               'handDiscardsMax': 2,
+              'boardMovesRemaining': 3,
+              'boardMovesMax': 3,
               'scoreTowardBlind': 0,
             },
             deckPile: <Map<String, dynamic>>[],
@@ -162,6 +167,8 @@ void main() {
         expect(restored.runProgress.currentStationBlindTierIndex, 1);
         expect(restored.session.rulesetId, 'current_defaults_v1');
         expect(restored.runProgress.gold, 42);
+        expect(restored.session.blind['boardMovesRemaining'], 1);
+        expect(restored.session.blind['boardMovesMax'], 3);
         expect(
           restored.runProgress.itemInventory.ownedItems.single.itemId,
           'board_scrap',
@@ -276,6 +283,20 @@ void main() {
       },
     );
 
+    test('blind json without board move fields falls back to 3/3', () {
+      final restored = RummiBlindState.fromJson(const <String, dynamic>{
+        'targetScore': 300,
+        'boardDiscardsRemaining': 4,
+        'boardDiscardsMax': 4,
+        'handDiscardsRemaining': 2,
+        'handDiscardsMax': 2,
+        'scoreTowardBlind': 25,
+      });
+
+      expect(restored.boardMovesRemaining, 3);
+      expect(restored.boardMovesMax, 3);
+    });
+
     test(
       'saved run progress without itemInventory falls back to empty shape',
       () {
@@ -299,6 +320,7 @@ void main() {
         final session = RummiPokerGridSession(runSeed: 4242);
         final runProgress = RummiRunProgress();
         runProgress.gold += 12;
+        session.blind.boardMovesRemaining = 2;
         runProgress.itemInventory = const RunInventoryState(
           ownedItems: <OwnedItemEntry>[
             OwnedItemEntry(
@@ -320,6 +342,7 @@ void main() {
             );
 
         session.drawToHand();
+        session.blind.boardMovesRemaining = 1;
         runProgress.gold += 5;
         runProgress.itemInventory = const RunInventoryState(
           ownedItems: <OwnedItemEntry>[
@@ -369,6 +392,8 @@ void main() {
         );
         expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 17);
         expect(restored.runProgress.itemInventory.ownedItems.length, 2);
+        expect(restored.session.blind.boardMovesRemaining, 1);
+        expect(restored.session.blind.boardMovesMax, 3);
         expect(restored.runProgress.itemInventory.passiveRelicIds, <String>[
           'market_compass',
         ]);
@@ -381,6 +406,11 @@ void main() {
           restored.stageStartSnapshot.runProgress.gold,
           RummiEconomyConfig.startingGold + 12,
         );
+        expect(
+          restored.stageStartSnapshot.session.blind.boardMovesRemaining,
+          2,
+        );
+        expect(restored.stageStartSnapshot.session.blind.boardMovesMax, 3);
         expect(
           restored
               .stageStartSnapshot

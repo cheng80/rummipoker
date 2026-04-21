@@ -22,6 +22,8 @@ void main() {
         boardDiscardsMax: 4,
         handDiscardsRemaining: 1,
         handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
         maxHandSize: 3,
         drawPileRemaining: 18,
       ),
@@ -66,6 +68,8 @@ void main() {
         boardDiscardsMax: 4,
         handDiscardsRemaining: 1,
         handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
         maxHandSize: 3,
         drawPileRemaining: 14,
       ),
@@ -91,9 +95,49 @@ void main() {
     );
 
     expect(find.text('덱 14/52'), findsOneWidget);
-    expect(find.text('보드패 버림 3/4'), findsOneWidget);
+    expect(find.text('이동 3/3'), findsOneWidget);
+    expect(find.text('보드 버림 3/4'), findsOneWidget);
     expect(find.text('손패 2/3 · 버림 1/2'), findsOneWidget);
   });
+
+  testWidgets(
+    'GameBoardGrid marks source, locked cells, and empty move targets',
+    (tester) async {
+      final board = RummiBoard();
+      board.setCell(0, 0, Tile(id: 1, color: TileColor.red, number: 7));
+      board.setCell(1, 1, Tile(id: 2, color: TileColor.blue, number: 8));
+      final taps = <(int, int)>[];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox.square(
+              dimension: 320,
+              child: GameBoardGrid(
+                board: board,
+                scoringCells: const {},
+                activeSettlementCells: const {},
+                settlementBoardSnapshot: const {},
+                selectedRow: 0,
+                selectedCol: 0,
+                boardMoveMode: true,
+                moveSourceRow: 0,
+                moveSourceCol: 0,
+                onTapCell: (row, col) => taps.add((row, col)),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.open_with_rounded), findsWidgets);
+
+      await tester.tap(find.byKey(const ValueKey('board-cell-0-0')));
+      await tester.tap(find.byKey(const ValueKey('board-cell-2-2')));
+
+      expect(taps, <(int, int)>[(0, 0), (2, 2)]);
+    },
+  );
 
   testWidgets('GameItemZoneSkeleton renders owned battle item slots', (
     tester,

@@ -2,7 +2,7 @@
 
 기준 데이터: `data/common/items_common_v1.json`
 
-이 문서는 v1 Item 41개의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.  
+이 문서는 v1 Item 49개의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
 상태 의미:
 
 - `applied`: 현재 runtime에서 실제 상태 변경까지 적용된다.
@@ -69,17 +69,28 @@
 | `rank_chalk` | 반복 rank tile마다 chips +12 | `next_confirm_per_repeated_rank_tile` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
 | `deck_needle` | deck top 3 확인 후 1장 버림 | `use_battle` / `peek_deck_discard_one` | `useBattleItem` | `pendingHook` |
 | `tile_polisher` | Station 첫 scored tile chips +20 | `first_scored_tile_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
+| `move_token` | 현재 Station 보드 이동 +1 | `use_battle` / `add_board_move` | `useBattleItem` | `applied` |
+| `slide_wax` | 다음 board move bonus trigger 등록 | `use_battle` / `mark_next_board_move_bonus` | `useBattleItem` | `pendingHook` |
+| `board_lift` | 다음 Station 보드 이동 +1 예약 | `station_start` / `add_board_move` | `applyStationStartItem` | `pendingHook` |
+| `undo_seal` | 마지막 board move 1회 되돌리기 | `use_battle` / `undo_last_board_move` | `useBattleItem` | `pendingHook` |
+| `organizer_glove` | Station 시작 시 보드 이동 +1 | `station_start` / `add_board_move` | `applyStationStartItem` | `pendingHook` |
+| `travel_pouch` | 손패 한도 +1 | `inventory_capacity` / `increase_hand_size` | `applyInventoryCapacityItem` | `pendingHook` |
+| `wide_grip` | 손패 한도 +1, 보드 버림 -1 | `station_start` / `increase_hand_size_with_discard_penalty` | `applyStationStartItem` | `pendingHook` |
+| `grand_satchel` | 손패 한도 +2, 손패 버림 -1 | `station_start` / `increase_hand_size_with_discard_penalty` | `applyStationStartItem` | `pendingHook` |
 | `market_compass` | market 진입 시 가장 싼 첫 offer 할인 -1 | `enter_market` / `discount_cheapest_first_offer` | `applyEnterMarketItem` | `pendingHook` |
 
 ## 현재 실제 적용 완료
 
 - `board_scrap`: 보드 버림 +1, consume
 - `hand_scrap`: 손패 버림 +1, consume
+- `move_token`: 보드 이동 +1, consume
 - `emergency_draw`: 손패가 비었을 때 1장 draw, consume
 
 ## 다음 구현 우선순위
 
-1. `deck_needle`: `peek_deck_discard_one` 선택 UI와 deck 조작 API 필요
-2. `next_confirm*`: 다음 confirm modifier 저장 state 필요
-3. `station_start` / `enter_market` / `settlement`: run transition hook에 passive/equipment 적용 지점 연결 필요
-4. `market_*`: market offer builder와 purchase/reroll command에 discount/modifier state 연결 필요
+1. `increase_hand_size*`: station start / inventory capacity에서 손패 한도 보정 연결
+2. `undo_last_board_move`: move history 저장과 선택 UI 연결
+3. `deck_needle`: `peek_deck_discard_one` 선택 UI와 deck 조작 API 필요
+4. `next_confirm*`: 다음 confirm modifier 저장 state 필요
+5. `station_start` / `enter_market` / `settlement`: run transition hook에 passive/equipment 적용 지점 연결 필요
+6. `market_*`: market offer builder와 purchase/reroll command에 discount/modifier state 연결 필요

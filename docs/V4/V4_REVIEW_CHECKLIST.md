@@ -230,6 +230,34 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - Playwright screenshot 산출물:
   `/tmp/rp_playwright_smoke/title_continue_dialog_fixed.png`
   `/tmp/rp_playwright_smoke/blind_start_dialog_fixed.png`
+- board move resource/action bar iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_000706/`
+- confirm button separated from bottom action cluster iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_001347/`
+- battle board left alignment + vertical icon action rail iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_002149/`
+- compact square battle action rail iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_002429/`
+- compact text battle action rail iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_002709/`
+- two-line text battle action rail iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_003001/`
+- unified text-only battle action rail with bottom debug iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_003329/`
+- centered regular-weight action rail text + bottom debug icon iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_004155/`
+- single-row bottom battle action bar iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_004512/`
+- bottom action bar with debug in board-side empty space iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_004849/`
+- compact bottom action bar + debug outside board frame iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_005351/`
+- compact 2/3 bottom action bar + centered enlarged board iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_005630/`
+- 42px bottom action buttons + centered board iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_005936/`
+- centered compact 5-button action group with explicit spacing iOS fixture 확인:
+  `/tmp/rummipoker_ios_smoke/20260422_010216/`
 
 현재 결정:
 
@@ -243,6 +271,8 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - market 상단 `Jester Slots / Item Slots` 분리와 card-only shop 표현이 반영됐다.
 - battle item zone은 설명형 bar 대신 큰 slot 3개 중심으로 정리 중이다.
 - battle debug 조작은 inline cluster를 제거하고 small debug button + bottom sheet 구조로 이동했다.
+- battle 하단 resource row에 `이동 X/Y`가 추가됐고, 하단 액션 버튼은 compact utility row로 재배치됐다.
+- `확정`은 실수 입력을 줄이기 위해 하단 action cluster에서 분리해 board 위쪽의 별도 노란 버튼으로 배치했다.
 
 ## 3. B. Target Product Checklist
 

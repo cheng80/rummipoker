@@ -292,6 +292,32 @@ class RummiPokerGridSession {
     return (drew: drew, fail: null);
   }
 
+  BoardMoveFailReason? tryMoveBoardTile({
+    required int fromRow,
+    required int fromCol,
+    required int toRow,
+    required int toCol,
+  }) {
+    if (blind.boardMovesRemaining <= 0) {
+      return BoardMoveFailReason.noBoardMovesLeft;
+    }
+    if (board.cellAt(fromRow, fromCol) == null) {
+      return BoardMoveFailReason.sourceCellEmpty;
+    }
+    if (board.cellAt(toRow, toCol) != null) {
+      return BoardMoveFailReason.destinationOccupied;
+    }
+    final moved = board.moveCell(
+      fromRow: fromRow,
+      fromCol: fromCol,
+      toRow: toRow,
+      toCol: toCol,
+    );
+    if (!moved) return BoardMoveFailReason.sourceCellEmpty;
+    blind.boardMovesRemaining--;
+    return null;
+  }
+
   void setDebugMaxHandSize(int value) {
     maxHandSize = value.clamp(
       ruleset.minDebugMaxHandSize,
@@ -540,6 +566,7 @@ class RummiPokerGridSession {
     blind.boardDiscardsRemaining = boardDiscardsRemaining;
     blind.handDiscardsRemaining =
         handDiscardsRemaining ?? blind.handDiscardsMax;
+    blind.boardMovesRemaining = blind.boardMovesMax;
     blind.scoreTowardBlind = 0;
   }
 
@@ -583,6 +610,12 @@ enum DiscardFailReason {
   noHandDiscardsLeft,
   cellEmpty,
   tileNotInHand,
+}
+
+enum BoardMoveFailReason {
+  noBoardMovesLeft,
+  sourceCellEmpty,
+  destinationOccupied,
 }
 
 class _ScoringLineCandidate {

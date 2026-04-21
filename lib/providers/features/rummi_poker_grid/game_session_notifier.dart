@@ -661,6 +661,49 @@ class GameSessionNotifier
     return discardHandTile(tile);
   }
 
+  String? moveBoardTile({
+    required int fromRow,
+    required int fromCol,
+    required int toRow,
+    required int toCol,
+  }) {
+    final session = state.session;
+    if (session == null) return '세션이 없습니다.';
+    final fail = session.tryMoveBoardTile(
+      fromRow: fromRow,
+      fromCol: fromCol,
+      toRow: toRow,
+      toCol: toCol,
+    );
+    if (fail != null) {
+      return switch (fail) {
+        BoardMoveFailReason.noBoardMovesLeft => '보드 이동 횟수가 없습니다.',
+        BoardMoveFailReason.sourceCellEmpty => '이동할 타일이 없습니다.',
+        BoardMoveFailReason.destinationOccupied => '이동할 칸이 비어 있지 않습니다.',
+      };
+    }
+    clearSelections();
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
+  String? moveSelectedBoardTileToFromState({
+    required int toRow,
+    required int toCol,
+  }) {
+    final fromRow = state.selectedBoardRow;
+    final fromCol = state.selectedBoardCol;
+    if (fromRow == null || fromCol == null) {
+      return '이동할 보드 타일을 먼저 선택하세요.';
+    }
+    return moveBoardTile(
+      fromRow: fromRow,
+      fromCol: fromCol,
+      toRow: toRow,
+      toCol: toCol,
+    );
+  }
+
   String? useBattleItem(ItemDefinition item) {
     final session = state.session;
     final runProgress = state.runProgress;

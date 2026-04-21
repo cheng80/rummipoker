@@ -245,7 +245,20 @@ class GameBottomInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '보드패 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
+            '이동 ${resources.boardMovesRemaining}/${resources.boardMovesMax}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            '보드 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -743,7 +756,11 @@ class GameBoardGrid extends StatelessWidget {
     required this.settlementBoardSnapshot,
     required this.selectedRow,
     required this.selectedCol,
+    required this.boardMoveMode,
+    required this.moveSourceRow,
+    required this.moveSourceCol,
     required this.onTapCell,
+    this.alignment = Alignment.center,
   });
 
   final RummiBoard board;
@@ -752,7 +769,11 @@ class GameBoardGrid extends StatelessWidget {
   final Map<String, Tile> settlementBoardSnapshot;
   final int? selectedRow;
   final int? selectedCol;
+  final bool boardMoveMode;
+  final int? moveSourceRow;
+  final int? moveSourceCol;
   final void Function(int row, int col) onTapCell;
+  final AlignmentGeometry alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -760,7 +781,8 @@ class GameBoardGrid extends StatelessWidget {
       builder: (context, constraints) {
         final side = min(constraints.maxWidth, constraints.maxHeight);
 
-        return Center(
+        return Align(
+          alignment: alignment,
           child: SizedBox(
             width: side,
             height: side,
@@ -794,11 +816,22 @@ class GameBoardGrid extends StatelessWidget {
                     final settlementActive = activeSettlementCells.contains(
                       '$row:$col',
                     );
+                    final isMoveSource =
+                        boardMoveMode &&
+                        moveSourceRow == row &&
+                        moveSourceCol == col;
+                    final isMoveAvailable = boardMoveMode && tile == null;
+                    final isMoveLocked =
+                        boardMoveMode && tile != null && !isMoveSource;
                     return GameBoardCell(
+                      key: ValueKey('board-cell-$row-$col'),
                       tile: tile,
                       selected: selected,
                       scoring: scoring,
                       settlementActive: settlementActive,
+                      moveSource: isMoveSource,
+                      moveAvailable: isMoveAvailable,
+                      moveLocked: isMoveLocked,
                       onTap: () => onTapCell(row, col),
                     );
                   },
@@ -819,6 +852,9 @@ class GameBoardCell extends StatelessWidget {
     required this.selected,
     required this.scoring,
     required this.settlementActive,
+    required this.moveSource,
+    required this.moveAvailable,
+    required this.moveLocked,
     required this.onTap,
   });
 
@@ -826,11 +862,20 @@ class GameBoardCell extends StatelessWidget {
   final bool selected;
   final bool scoring;
   final bool settlementActive;
+  final bool moveSource;
+  final bool moveAvailable;
+  final bool moveLocked;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected
+    final borderColor = moveSource
+        ? const Color(0xFF5EE7F7)
+        : moveAvailable
+        ? const Color(0xFF85E9B8)
+        : moveLocked
+        ? Colors.white.withValues(alpha: 0.18)
+        : selected
         ? const Color(0xFFF76D5E)
         : settlementActive
         ? const Color(0xFF86F4C3)
@@ -853,13 +898,23 @@ class GameBoardCell extends StatelessWidget {
               decoration: BoxDecoration(
                 color: selected
                     ? const Color(0xFF2A3B34)
+                    : moveAvailable
+                    ? const Color(0xFF23654A).withValues(alpha: 0.86)
+                    : moveLocked
+                    ? const Color(0xFF24312D).withValues(alpha: 0.78)
                     : settlementActive
                     ? const Color(0xFF285A49)
                     : const Color(0xFF204E3C).withValues(alpha: 0.88),
                 borderRadius: BorderRadius.circular(cornerRadius),
                 border: Border.all(
                   color: borderColor,
-                  width: selected || settlementActive ? 2 : 1,
+                  width:
+                      selected ||
+                          settlementActive ||
+                          moveSource ||
+                          moveAvailable
+                      ? 2
+                      : 1,
                 ),
                 boxShadow: settlementActive
                     ? [
@@ -874,14 +929,25 @@ class GameBoardCell extends StatelessWidget {
                     : null,
               ),
               child: tile == null
-                  ? null
+                  ? moveAvailable
+                        ? Center(
+                            child: Icon(
+                              Icons.open_with_rounded,
+                              color: Colors.white.withValues(alpha: 0.58),
+                              size: side * 0.32,
+                            ),
+                          )
+                        : null
                   : Padding(
                       padding: const EdgeInsets.all(4),
-                      child: GameRummiTileCard(
-                        tile: tile!,
-                        selected: selected,
-                        accent: false,
-                        aspectRatio: kGameTileAspectRatio,
+                      child: Opacity(
+                        opacity: moveLocked ? 0.42 : 1,
+                        child: GameRummiTileCard(
+                          tile: tile!,
+                          selected: selected || moveSource,
+                          accent: false,
+                          aspectRatio: kGameTileAspectRatio,
+                        ),
                       ),
                     ),
             ),

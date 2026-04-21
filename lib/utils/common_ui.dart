@@ -111,6 +111,8 @@ class GameIconButtonChip extends StatelessWidget {
     this.backgroundColor = const Color(0xFF29453A),
     this.foregroundColor = Colors.white,
     this.size = 38,
+    this.iconSize = 18,
+    this.borderRadius = 14,
     this.tooltip,
   });
 
@@ -119,6 +121,8 @@ class GameIconButtonChip extends StatelessWidget {
   final Color backgroundColor;
   final Color foregroundColor;
   final double size;
+  final double iconSize;
+  final double borderRadius;
   final String? tooltip;
 
   @override
@@ -127,7 +131,7 @@ class GameIconButtonChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(borderRadius),
         child: Ink(
           width: size,
           height: size,
@@ -135,7 +139,7 @@ class GameIconButtonChip extends StatelessWidget {
             color: onPressed != null
                 ? backgroundColor
                 : backgroundColor.withValues(alpha: 0.34),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
               color: _toneBorderColor(
                 backgroundColor,
@@ -146,7 +150,7 @@ class GameIconButtonChip extends StatelessWidget {
           ),
           child: Icon(
             icon,
-            size: 18,
+            size: iconSize,
             color: onPressed != null
                 ? foregroundColor
                 : foregroundColor.withValues(alpha: 0.58),

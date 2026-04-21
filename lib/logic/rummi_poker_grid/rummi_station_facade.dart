@@ -8,12 +8,7 @@ import 'rummi_poker_grid_session.dart';
 /// - It does not rename or replace current runtime symbols.
 /// - It lets future Station-oriented code and docs read current values without
 ///   forcing an early `Blind -> Station` refactor.
-enum RummiStationType {
-  currentStage,
-  entry,
-  pressure,
-  lock,
-}
+enum RummiStationType { currentStage, entry, pressure, lock }
 
 class RummiStationObjectiveView {
   const RummiStationObjectiveView({
@@ -40,18 +35,20 @@ class RummiStationResourceView {
     required this.boardDiscardsMax,
     required this.handDiscardsRemaining,
     required this.handDiscardsMax,
+    required this.boardMovesRemaining,
+    required this.boardMovesMax,
     required this.maxHandSize,
     required this.drawPileRemaining,
   });
 
-  factory RummiStationResourceView.fromSession(
-    RummiPokerGridSession session,
-  ) {
+  factory RummiStationResourceView.fromSession(RummiPokerGridSession session) {
     return RummiStationResourceView(
       boardDiscardsRemaining: session.blind.boardDiscardsRemaining,
       boardDiscardsMax: session.blind.boardDiscardsMax,
       handDiscardsRemaining: session.blind.handDiscardsRemaining,
       handDiscardsMax: session.blind.handDiscardsMax,
+      boardMovesRemaining: session.blind.boardMovesRemaining,
+      boardMovesMax: session.blind.boardMovesMax,
       maxHandSize: session.maxHandSize,
       drawPileRemaining: session.deck.remaining,
     );
@@ -61,6 +58,8 @@ class RummiStationResourceView {
   final int boardDiscardsMax;
   final int handDiscardsRemaining;
   final int handDiscardsMax;
+  final int boardMovesRemaining;
+  final int boardMovesMax;
   final int maxHandSize;
   final int drawPileRemaining;
 }

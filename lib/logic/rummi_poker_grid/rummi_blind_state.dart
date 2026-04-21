@@ -8,6 +8,8 @@ class RummiBlindState {
     int? boardDiscardsMax,
     int? handDiscardsRemaining,
     int? handDiscardsMax,
+    int? boardMovesRemaining,
+    int? boardMovesMax,
     int? discardsRemaining,
     int? discardsMax,
     this.scoreTowardBlind = 0,
@@ -15,17 +17,23 @@ class RummiBlindState {
            boardDiscardsRemaining ?? discardsRemaining ?? 4,
        boardDiscardsMax = boardDiscardsMax ?? discardsMax ?? 4,
        handDiscardsRemaining = handDiscardsRemaining ?? 2,
-       handDiscardsMax = handDiscardsMax ?? 2;
+       handDiscardsMax = handDiscardsMax ?? 2,
+       boardMovesRemaining = boardMovesRemaining ?? 3,
+       boardMovesMax = boardMovesMax ?? 3;
 
   int targetScore;
   int boardDiscardsRemaining;
   int handDiscardsRemaining;
+  int boardMovesRemaining;
 
   /// 초기 보드 버림(D) 횟수 상한 — UI `남음/최대` 표기용.
   final int boardDiscardsMax;
 
   /// 초기 손패 버림 횟수 상한 — UI `남음/최대` 표기용.
   final int handDiscardsMax;
+
+  /// 초기 보드 이동 횟수 상한 — UI `남음/최대` 표기용.
+  final int boardMovesMax;
 
   int scoreTowardBlind;
 
@@ -45,6 +53,8 @@ class RummiBlindState {
       'boardDiscardsMax': boardDiscardsMax,
       'handDiscardsRemaining': handDiscardsRemaining,
       'handDiscardsMax': handDiscardsMax,
+      'boardMovesRemaining': boardMovesRemaining,
+      'boardMovesMax': boardMovesMax,
       'scoreTowardBlind': scoreTowardBlind,
     };
   }
@@ -52,12 +62,12 @@ class RummiBlindState {
   static RummiBlindState fromJson(Map<String, dynamic> json) {
     return RummiBlindState(
       targetScore: (json['targetScore'] as num).toInt(),
-      boardDiscardsRemaining:
-          (json['boardDiscardsRemaining'] as num?)?.toInt(),
+      boardDiscardsRemaining: (json['boardDiscardsRemaining'] as num?)?.toInt(),
       boardDiscardsMax: (json['boardDiscardsMax'] as num?)?.toInt(),
-      handDiscardsRemaining:
-          (json['handDiscardsRemaining'] as num?)?.toInt(),
+      handDiscardsRemaining: (json['handDiscardsRemaining'] as num?)?.toInt(),
       handDiscardsMax: (json['handDiscardsMax'] as num?)?.toInt(),
+      boardMovesRemaining: (json['boardMovesRemaining'] as num?)?.toInt(),
+      boardMovesMax: (json['boardMovesMax'] as num?)?.toInt(),
       scoreTowardBlind: (json['scoreTowardBlind'] as num?)?.toInt() ?? 0,
     );
   }
@@ -68,6 +78,8 @@ class RummiBlindState {
     int? boardDiscardsMax,
     int? handDiscardsRemaining,
     int? handDiscardsMax,
+    int? boardMovesRemaining,
+    int? boardMovesMax,
     int? discardsRemaining,
     int? discardsMax,
     int? scoreTowardBlind,
@@ -83,6 +95,8 @@ class RummiBlindState {
       handDiscardsRemaining:
           handDiscardsRemaining ?? this.handDiscardsRemaining,
       handDiscardsMax: handDiscardsMax ?? this.handDiscardsMax,
+      boardMovesRemaining: boardMovesRemaining ?? this.boardMovesRemaining,
+      boardMovesMax: boardMovesMax ?? this.boardMovesMax,
       scoreTowardBlind: scoreTowardBlind ?? this.scoreTowardBlind,
     );
   }

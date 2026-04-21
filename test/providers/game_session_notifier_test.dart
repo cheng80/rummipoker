@@ -172,6 +172,97 @@ void main() {
       expect(afterBoardDiscard.selectedBoardCol, isNull);
     });
 
+    test('move selected board tile command는 이동 후 선택과 facade를 갱신한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 62);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      expect(notifier.drawTile(), isNull);
+      final tile = container
+          .read(gameSessionNotifierProvider(args))
+          .battleView!
+          .hand
+          .single;
+      notifier.toggleSelectedHandTile(tile);
+      expect(notifier.tapBoardCell(0, 0).didPlaceTile, isTrue);
+      expect(notifier.tapBoardCell(0, 0).didChangeSelection, isTrue);
+
+      expect(
+        notifier.moveSelectedBoardTileToFromState(toRow: 2, toCol: 2),
+        isNull,
+      );
+
+      final moved = container.read(gameSessionNotifierProvider(args));
+      expect(moved.battleView!.board.cellAt(0, 0), isNull);
+      expect(moved.battleView!.board.cellAt(2, 2), tile);
+      expect(moved.stationView!.resources.boardMovesRemaining, 2);
+      expect(moved.stationView!.resources.boardMovesMax, 3);
+      expect(moved.session!.blind.boardDiscardsRemaining, 4);
+      expect(moved.session!.blind.handDiscardsRemaining, 2);
+      expect(moved.selectedBoardRow, isNull);
+      expect(moved.selectedBoardCol, isNull);
+    });
+
+    test('move selected board tile command는 실패 시 보드와 선택을 유지한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 63);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      expect(notifier.drawTile(), isNull);
+      final first = container
+          .read(gameSessionNotifierProvider(args))
+          .battleView!
+          .hand
+          .single;
+      notifier.toggleSelectedHandTile(first);
+      expect(notifier.tapBoardCell(0, 0).didPlaceTile, isTrue);
+
+      expect(notifier.drawTile(), isNull);
+      final second = container
+          .read(gameSessionNotifierProvider(args))
+          .battleView!
+          .hand
+          .single;
+      notifier.toggleSelectedHandTile(second);
+      expect(notifier.tapBoardCell(1, 1).didPlaceTile, isTrue);
+
+      expect(notifier.tapBoardCell(0, 0).didChangeSelection, isTrue);
+      expect(
+        notifier.moveSelectedBoardTileToFromState(toRow: 1, toCol: 1),
+        '이동할 칸이 비어 있지 않습니다.',
+      );
+
+      final afterOccupiedFail = container.read(
+        gameSessionNotifierProvider(args),
+      );
+      expect(afterOccupiedFail.battleView!.board.cellAt(0, 0), first);
+      expect(afterOccupiedFail.battleView!.board.cellAt(1, 1), second);
+      expect(afterOccupiedFail.session!.blind.boardMovesRemaining, 3);
+      expect(afterOccupiedFail.selectedBoardRow, 0);
+      expect(afterOccupiedFail.selectedBoardCol, 0);
+
+      afterOccupiedFail.session!.blind.boardMovesRemaining = 0;
+      expect(
+        notifier.moveSelectedBoardTileToFromState(toRow: 2, toCol: 2),
+        '보드 이동 횟수가 없습니다.',
+      );
+      final afterNoMovesFail = container.read(
+        gameSessionNotifierProvider(args),
+      );
+      expect(afterNoMovesFail.battleView!.board.cellAt(0, 0), first);
+      expect(afterNoMovesFail.battleView!.board.cellAt(2, 2), isNull);
+      expect(afterNoMovesFail.selectedBoardRow, 0);
+      expect(afterNoMovesFail.selectedBoardCol, 0);
+    });
+
     test('손패 선택과 선택 해제를 상태에서 관리한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -527,6 +618,62 @@ void main() {
         updated.stationView!.resources.boardDiscardsRemaining,
         beforeDiscards + 1,
       );
+      expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
+      expect(updated.runProgress!.itemInventory.quickSlotItemIds, isEmpty);
+    });
+
+    test('useBattleItem은 board move 자원을 올리고 facade를 갱신한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 42);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final item = ItemDefinition.fromJson(const <String, dynamic>{
+        'id': 'move_token',
+        'displayName': 'Move Token',
+        'displayNameKey': 'data.items.move_token.displayName',
+        'type': 'consumable',
+        'rarity': 'common',
+        'basePrice': 5,
+        'sellPrice': 2,
+        'stackable': true,
+        'maxStack': 2,
+        'sellable': true,
+        'usableInBattle': true,
+        'placement': 'quickSlot',
+        'slotHint': 'q',
+        'effectText': 'Gain +1 board move for this Station.',
+        'effectTextKey': 'data.items.move_token.effectText',
+        'effect': <String, dynamic>{
+          'timing': 'use_battle',
+          'op': 'add_board_move',
+          'amount': 1,
+          'consume': true,
+        },
+        'tags': <String>['battle', 'move', 'safety'],
+        'sourceNotes': 'Test fixture.',
+      });
+      state.session!.blind.boardMovesRemaining = 1;
+      state.runProgress!.itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'move_token',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['move_token'],
+      );
+
+      final failMessage = notifier.useBattleItem(item);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.stationView!.resources.boardMovesRemaining, 2);
+      expect(updated.stationView!.resources.boardMovesMax, 3);
       expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
       expect(updated.runProgress!.itemInventory.quickSlotItemIds, isEmpty);
     });

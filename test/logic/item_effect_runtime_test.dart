@@ -115,6 +115,45 @@ void main() {
       ]);
     });
 
+    test('useBattleItem applies board move effect and consumes stack', () {
+      final item = _item(id: 'move_token', op: 'add_board_move', amount: 1);
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(
+          targetScore: 999,
+          boardMovesRemaining: 1,
+          boardMovesMax: 3,
+        ),
+      );
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'move_token',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['move_token'],
+        );
+
+      final result = ItemEffectRuntime.useBattleItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(session.blind.boardMovesRemaining, 2);
+      expect(session.blind.boardMovesMax, 3);
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+      expect(result.events.map((event) => event.kind), [
+        ItemEffectEventKind.boardMoveAdded,
+        ItemEffectEventKind.itemConsumed,
+      ]);
+      expect(result.events.first.amount, 1);
+    });
+
     test('catalogEffectRows assigns every v1 item to a runtime handler', () {
       final catalog = ItemCatalog.fromJsonString(
         File('data/common/items_common_v1.json').readAsStringSync(),
@@ -135,6 +174,7 @@ void main() {
         {
           'use_battle:add_board_discard',
           'use_battle:add_hand_discard',
+          'use_battle:add_board_move',
           'use_battle:draw_if_hand_empty',
         },
       );

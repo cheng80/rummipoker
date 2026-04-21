@@ -65,6 +65,13 @@ void main() {
     expect(buildStandardPokerDeck().length, 52);
   });
 
+  test('새 세션은 보드 이동 자원을 기본 3/3으로 시작한다', () {
+    final session = RummiPokerGridSession(runSeed: 101);
+
+    expect(session.blind.boardMovesRemaining, 3);
+    expect(session.blind.boardMovesMax, 3);
+  });
+
   test('세션 보존: 덱+손+보드+제거 = 52', () {
     final session = RummiPokerGridSession(
       blind: RummiBlindState(targetScore: 9999, discardsRemaining: 4),
@@ -146,6 +153,97 @@ void main() {
     expect(session.maxHandSize, 2);
   });
 
+  test('세션 스냅샷은 보드 이동 자원을 보존한다', () {
+    final session = RummiPokerGridSession(
+      runSeed: 202,
+      blind: RummiBlindState(
+        targetScore: 9999,
+        boardMovesRemaining: 1,
+        boardMovesMax: 3,
+      ),
+    );
+
+    final snapshot = session.copySnapshot();
+
+    expect(snapshot.blind.boardMovesRemaining, 1);
+    expect(snapshot.blind.boardMovesMax, 3);
+
+    session.blind.boardMovesRemaining = 0;
+    expect(snapshot.blind.boardMovesRemaining, 1);
+  });
+
+  test('보드 이동은 타일을 빈 칸으로 옮기고 이동 자원만 1 소모한다', () {
+    final board = RummiBoard();
+    final tile = t(TileColor.red, 7);
+    board.setCell(0, 0, tile);
+    final session = RummiPokerGridSession(
+      runSeed: 303,
+      blind: RummiBlindState(
+        targetScore: 9999,
+        boardDiscardsRemaining: 4,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+      ),
+      board: board,
+    );
+
+    final fail = session.tryMoveBoardTile(
+      fromRow: 0,
+      fromCol: 0,
+      toRow: 2,
+      toCol: 2,
+    );
+
+    expect(fail, isNull);
+    expect(session.board.cellAt(0, 0), isNull);
+    expect(session.board.cellAt(2, 2), tile);
+    expect(session.blind.boardMovesRemaining, 2);
+    expect(session.blind.boardDiscardsRemaining, 4);
+    expect(session.blind.handDiscardsRemaining, 2);
+  });
+
+  test('보드 이동은 빈 출발칸, 찬 도착칸, 횟수 0을 실패 처리한다', () {
+    final board = RummiBoard();
+    final source = t(TileColor.red, 7);
+    final blocker = t(TileColor.blue, 8);
+    board.setCell(0, 0, source);
+    board.setCell(1, 1, blocker);
+    final session = RummiPokerGridSession(
+      runSeed: 304,
+      blind: RummiBlindState(
+        targetScore: 9999,
+        boardMovesRemaining: 1,
+        boardMovesMax: 3,
+      ),
+      board: board,
+    );
+
+    expect(
+      session.tryMoveBoardTile(fromRow: 4, fromCol: 4, toRow: 2, toCol: 2),
+      BoardMoveFailReason.sourceCellEmpty,
+    );
+    expect(
+      session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 1, toCol: 1),
+      BoardMoveFailReason.destinationOccupied,
+    );
+    expect(session.blind.boardMovesRemaining, 1);
+    expect(session.board.cellAt(0, 0), source);
+    expect(session.board.cellAt(1, 1), blocker);
+
+    expect(
+      session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 2, toCol: 2),
+      isNull,
+    );
+    expect(session.blind.boardMovesRemaining, 0);
+    expect(
+      session.tryMoveBoardTile(fromRow: 2, fromCol: 2, toRow: 3, toCol: 3),
+      BoardMoveFailReason.noBoardMovesLeft,
+    );
+    expect(session.board.cellAt(2, 2), source);
+    expect(session.board.cellAt(3, 3), isNull);
+  });
+
   test('덱이 비고 손패/확정 줄도 없을 때만 drawPileExhausted', () {
     final emptyDeck = PokerDeck.shuffled(Random(1), <Tile>[]);
     final session = RummiPokerGridSession(
@@ -222,6 +320,8 @@ void main() {
     expect(a.hand, isEmpty);
     expect(a.board.cellAt(0, 0), isNull);
     expect(a.eliminated, isEmpty);
+    expect(a.blind.boardMovesRemaining, 3);
+    expect(a.blind.boardMovesMax, 3);
     expect(a.deck.remaining, 52);
     expect(a.conservationTotal, 52);
     expect(a.drawToHand(), isNotNull);

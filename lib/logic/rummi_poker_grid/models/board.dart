@@ -32,17 +32,28 @@ class RummiBoard {
     _cells[row * kBoardSize + col] = tile;
   }
 
+  bool moveCell({
+    required int fromRow,
+    required int fromCol,
+    required int toRow,
+    required int toCol,
+  }) {
+    final tile = cellAt(fromRow, fromCol);
+    if (tile == null) return false;
+    if (cellAt(toRow, toCol) != null) return false;
+    setCell(fromRow, fromCol, null);
+    setCell(toRow, toCol, tile);
+    return true;
+  }
+
   /// 행 0~4, 왼쪽→오른쪽 5장.
-  List<Tile?> row(int r) =>
-      List.generate(kBoardSize, (c) => cellAt(r, c));
+  List<Tile?> row(int r) => List.generate(kBoardSize, (c) => cellAt(r, c));
 
   /// 열 0~4, 위→아래 5장.
-  List<Tile?> col(int c) =>
-      List.generate(kBoardSize, (r) => cellAt(r, c));
+  List<Tile?> col(int c) => List.generate(kBoardSize, (r) => cellAt(r, c));
 
   /// 주 대각선 (0,0) → (4,4).
-  List<Tile?> diagMain() =>
-      List.generate(kBoardSize, (i) => cellAt(i, i));
+  List<Tile?> diagMain() => List.generate(kBoardSize, (i) => cellAt(i, i));
 
   /// 반대 대각선 (0,4) → (4,0).
   List<Tile?> diagAnti() =>

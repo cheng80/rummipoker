@@ -161,6 +161,38 @@
         "displayName": "타일 광택기",
         "effectText": "각 스테이션에서 처음 점수에 포함된 타일에 칩 +20."
       },
+      "move_token": {
+        "displayName": "이동 토큰",
+        "effectText": "이번 스테이션의 보드 이동 +1."
+      },
+      "slide_wax": {
+        "displayName": "슬라이드 왁스",
+        "effectText": "다음 보드 이동이 이동 보너스 발동 조건을 만족합니다."
+      },
+      "board_lift": {
+        "displayName": "보드 리프트",
+        "effectText": "다음 스테이션의 보드 이동 +1을 예약합니다."
+      },
+      "undo_seal": {
+        "displayName": "되돌림 봉인",
+        "effectText": "마지막 보드 이동을 1회 되돌립니다."
+      },
+      "organizer_glove": {
+        "displayName": "정리 장갑",
+        "effectText": "각 스테이션 시작 시 보드 이동 +1."
+      },
+      "travel_pouch": {
+        "displayName": "여행 주머니",
+        "effectText": "손패 한도 +1."
+      },
+      "wide_grip": {
+        "displayName": "넓은 손잡이",
+        "effectText": "각 스테이션 시작 시 손패 한도 +1, 보드 버림 -1."
+      },
+      "grand_satchel": {
+        "displayName": "큰 가방",
+        "effectText": "각 스테이션 시작 시 손패 한도 +2, 손패 버림 -1."
+      },
       "market_compass": {
         "displayName": "마켓 나침반",
         "effectText": "상점에 들어갈 때 아이템 상점과 제스터 상점의 첫 상품 중 더 싼 쪽을 1 할인합니다."
