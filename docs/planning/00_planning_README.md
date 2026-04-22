@@ -19,6 +19,7 @@ GCSE 역할: `Execution`
 - item effect runtime matrix
 - open decisions and experiments
 - smoke/build verification guide
+- daily verification history
 - test/QA acceptance criteria
 
 Risk register와 traceability matrix는 별도 파일로 늘리지 않고 `IMPLEMENTATION_PLAN.md` 안에 둔다.

@@ -76,6 +76,7 @@
 - [x] `02_CORE_COMBAT_RULES.md`의 규칙 표기 라벨을 `[CURRENT]` 중심에서 `[V4_DECISION]` 중심으로 정리
 - [x] `STATUS.md`는 최신 상태만 남기고 기존 상세 이력은 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`로 이동
 - [x] `archive`를 기존 이력/맥락 검색용 참고 자료로 정의 보강
+- [x] 검증/산출물 히스토리는 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 하루 단위 파일로 기록하도록 분리
 
 ## Guardrails
 

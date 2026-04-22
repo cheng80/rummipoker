@@ -3,7 +3,7 @@
 > GCSE role: `Execution`
 > Source of truth: 최신 진행 상태, 다음 작업 판단.
 
-이 문서는 최신 상태만 유지한다. 이전 상세 체크리스트와 긴 검증 이력은 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색한다.
+이 문서는 최신 상태만 유지한다. 이전 상세 체크리스트는 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색하고, 검증/산출물 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에서 검색한다.
 
 ## 1. Status Summary
 
@@ -46,7 +46,7 @@
 - `tools/ios_sim_smoke.sh`
 - `tools/web_build_smoke.sh`
 
-과거 iOS/web smoke 산출물 경로 전체 목록은 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색한다.
+검증/산출물 이력은 `docs/planning/verification/daily_logs/`의 날짜별 파일에 남긴다.
 
 ## 4. Recommended Reading
 
