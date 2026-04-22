@@ -116,6 +116,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
           ownedEntries: const [],
           offers: const [],
+          itemOfferSlotCount: 3,
           itemOffers: [itemOffer],
         );
 
@@ -135,6 +136,31 @@ void main() {
         expect(facade.itemOffers.single.item.type, ItemType.utility);
       },
     );
+
+    test('maps market modifiers into displayed reroll and offer prices', () {
+      final progress = RummiRunProgress()
+        ..gold = 10
+        ..rerollCost = 5
+        ..shopOffers.add(
+          RummiShopOffer(
+            slotIndex: 0,
+            card: _jester(id: 'discounted', displayName: 'Discounted'),
+            price: 6,
+          ),
+        );
+      progress.queueMarketModifier(op: 'discount_next_reroll', amount: 2);
+      progress.queueMarketModifier(
+        op: 'discount_next_purchase',
+        amount: 3,
+        category: 'jester',
+      );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(facade.rerollCost, 3);
+      expect(facade.offers.single.price, 3);
+      expect(facade.offers.single.isAffordable, isTrue);
+    });
 
     test('maps owned jesters into sellable market entries', () {
       final progress = RummiRunProgress()

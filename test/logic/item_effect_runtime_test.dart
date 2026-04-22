@@ -228,6 +228,56 @@ void main() {
       expect(result.events.first.amount, 1);
     });
 
+    test(
+      'useBattleItem queues next confirm chips modifier and consumes stack',
+      () {
+        final item = _item(
+          id: 'chip_capsule',
+          timing: 'next_confirm',
+          op: 'chips_bonus',
+          amount: 25,
+        );
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+        );
+        _placeTwoPair(session);
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'chip_capsule',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['chip_capsule'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(session.confirmModifiers.single.itemId, 'chip_capsule');
+        expect(runProgress.itemInventory.ownedItems, isEmpty);
+        expect(result.events.map((event) => event.kind), [
+          ItemEffectEventKind.nextConfirmModifierQueued,
+          ItemEffectEventKind.itemConsumed,
+        ]);
+
+        final confirmed = session.confirmAllFullLines();
+        expect(confirmed.result.scoreAdded, 50);
+        expect(session.confirmModifiers, isEmpty);
+        expect(
+          confirmed.result.lineBreakdowns.single.effects.single.jesterId,
+          'chip_capsule',
+        );
+      },
+    );
+
     test('useBattleItem undoes last board move and consumes stack', () {
       final item = _item(id: 'undo_seal', op: 'undo_last_board_move');
       final session = RummiPokerGridSession(
@@ -412,6 +462,231 @@ void main() {
       },
     );
 
+    test('owned confirm modifier equipment queues at station start', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          _itemJson(
+            id: 'score_abacus',
+            timing: 'first_confirm_each_station',
+            op: 'chips_bonus',
+            placement: 'equipped',
+            consume: false,
+            amount: 30,
+          ),
+        ],
+      });
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      _placeTwoPair(session);
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'score_abacus',
+              count: 1,
+              placement: ItemPlacement.equipped,
+            ),
+          ],
+          equippedItemIds: ['score_abacus'],
+        );
+
+      final results = ItemEffectRuntime.applyOwnedStationStartItems(
+        catalog: catalog,
+        session: session,
+        runProgress: runProgress,
+      );
+
+      expect(results.single.isSuccess, isTrue);
+      expect(session.confirmModifiers.single.itemId, 'score_abacus');
+      final confirmed = session.confirmAllFullLines();
+      expect(confirmed.result.scoreAdded, 55);
+      expect(session.confirmModifiers, isEmpty);
+    });
+
+    test(
+      'owned quick slot confirm consumables are not queued at station start',
+      () {
+        final catalog = ItemCatalog.fromJson({
+          'schemaVersion': 1,
+          'catalogId': 'test',
+          'items': [
+            _itemJson(
+              id: 'chip_capsule',
+              timing: 'next_confirm',
+              op: 'chips_bonus',
+              placement: 'quickSlot',
+              consume: true,
+              amount: 25,
+            ),
+          ],
+        });
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'chip_capsule',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['chip_capsule'],
+          );
+
+        final results = ItemEffectRuntime.applyOwnedStationStartItems(
+          catalog: catalog,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(results, isEmpty);
+        expect(session.confirmModifiers, isEmpty);
+        expect(
+          runProgress.itemInventory.ownedItems.single.itemId,
+          'chip_capsule',
+        );
+      },
+    );
+
+    test('market reroll item queues discount and consumes inventory stack', () {
+      final item = _item(
+        id: 'reroll_token',
+        timing: 'market_reroll',
+        op: 'discount_next_reroll',
+        placement: ItemPlacement.inventory,
+        amount: 1,
+        consume: true,
+      );
+      final runProgress = RummiRunProgress()
+        ..rerollCost = 5
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'reroll_token',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+
+      final result = ItemEffectRuntime.applyMarketRerollItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(runProgress.effectiveRerollCost(), 4);
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+      expect(result.events.map((event) => event.kind), [
+        ItemEffectEventKind.marketModifierQueued,
+        ItemEffectEventKind.itemConsumed,
+      ]);
+    });
+
+    test(
+      'market buy item queues category discount and consumes on purchase',
+      () {
+        final discountItem = _item(
+          id: 'item_invoice',
+          timing: 'market_buy_if_category',
+          op: 'discount_next_purchase',
+          placement: ItemPlacement.inventory,
+          amount: 4,
+          consume: true,
+          rawEffect: const {'category': 'item'},
+        );
+        final bought = _item(
+          id: 'board_scrap',
+          op: 'add_board_discard',
+          placement: ItemPlacement.quickSlot,
+          amount: 1,
+        );
+        final runProgress = RummiRunProgress()
+          ..gold = 10
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'item_invoice',
+                count: 1,
+                placement: ItemPlacement.inventory,
+              ),
+            ],
+          );
+
+        final result = ItemEffectRuntime.applyMarketBuyItem(
+          item: discountItem,
+          runProgress: runProgress,
+        );
+        final boughtOk = runProgress.buyItem(bought);
+
+        expect(result.isSuccess, isTrue);
+        expect(boughtOk, isTrue);
+        expect(runProgress.gold, 10);
+        expect(runProgress.marketModifiers.nextItemPurchaseDiscount, 0);
+        expect(
+          runProgress.itemInventory.ownedItems.map((entry) => entry.itemId),
+          contains('board_scrap'),
+        );
+      },
+    );
+
+    test('owned enter market items queue first reroll and offer modifiers', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          _itemJson(
+            id: 'merchant_stamp',
+            timing: 'enter_market',
+            op: 'discount_first_reroll',
+            placement: 'passiveRack',
+            consume: false,
+          ),
+          _itemJson(
+            id: 'shop_lens',
+            timing: 'market_build_offers',
+            op: 'extra_item_offer_slot',
+            placement: 'equipped',
+            consume: false,
+          ),
+        ],
+      });
+      final runProgress = RummiRunProgress()
+        ..rerollCost = 5
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'merchant_stamp',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+            OwnedItemEntry(
+              itemId: 'shop_lens',
+              count: 1,
+              placement: ItemPlacement.equipped,
+            ),
+          ],
+          passiveRelicIds: ['merchant_stamp'],
+          equippedItemIds: ['shop_lens'],
+        );
+
+      final results = ItemEffectRuntime.applyOwnedEnterMarketItems(
+        catalog: catalog,
+        runProgress: runProgress,
+      );
+
+      expect(results.every((result) => result.isSuccess), isTrue);
+      expect(runProgress.effectiveRerollCost(), 4);
+      expect(runProgress.marketModifiers.itemOfferSlotCount, 4);
+    });
+
     test('catalogEffectRows assigns every v1 item to a runtime handler', () {
       final catalog = ItemCatalog.fromJsonString(
         File('data/common/items_common_v1.json').readAsStringSync(),
@@ -436,6 +711,26 @@ void main() {
           'use_battle:undo_last_board_move',
           'use_battle:peek_deck_discard_one',
           'use_battle:draw_if_hand_empty',
+          'market_reroll:discount_next_reroll',
+          'market_buy:discount_next_purchase',
+          'market_buy_if_category:discount_next_purchase',
+          'enter_market:discount_first_reroll',
+          'enter_market:discount_cheapest_first_offer',
+          'market_build_offers:extra_item_offer_slot',
+          'market_build_offers:rarity_weight_bonus',
+          'next_confirm:chips_bonus',
+          'next_confirm:mult_bonus',
+          'next_confirm:xmult_bonus',
+          'next_confirm:temporary_overlap_cap_bonus',
+          'next_confirm_if_rank:chips_bonus',
+          'next_confirm_if_rank_at_least:chips_bonus',
+          'next_confirm_if_rank_at_least:mult_bonus',
+          'next_confirm_per_tile_color:mult_bonus',
+          'next_confirm_per_repeated_rank_tile:chips_bonus',
+          'first_confirm_each_station:chips_bonus',
+          'first_scored_tile_each_station:chips_bonus',
+          'on_confirm_if_played_hand_size_lte:mult_bonus',
+          'second_confirm_each_station:add_percent_of_first_confirm_score',
           'station_start:add_board_discard',
           'station_start:add_hand_discard',
           'station_start:add_board_move',
@@ -447,12 +742,20 @@ void main() {
   });
 }
 
+void _placeTwoPair(RummiPokerGridSession session) {
+  session.board.setCell(0, 0, Tile(color: TileColor.red, number: 2));
+  session.board.setCell(0, 1, Tile(color: TileColor.blue, number: 2));
+  session.board.setCell(0, 2, Tile(color: TileColor.red, number: 3));
+  session.board.setCell(0, 3, Tile(color: TileColor.blue, number: 3));
+}
+
 ItemDefinition _item({
   required String id,
   required String op,
   String timing = 'use_battle',
   int amount = 1,
   ItemPlacement placement = ItemPlacement.quickSlot,
+  bool? consume,
   Map<String, dynamic> rawEffect = const {},
 }) {
   return ItemDefinition.fromJson(
@@ -462,6 +765,7 @@ ItemDefinition _item({
       op: op,
       amount: amount,
       placement: _placementName(placement),
+      consume: consume,
       rawEffect: rawEffect,
     ),
   );
@@ -487,7 +791,8 @@ Map<String, dynamic> _itemJson({
     'stackable': true,
     'maxStack': 2,
     'sellable': true,
-    'usableInBattle': timing == 'use_battle',
+    'usableInBattle':
+        timing == 'use_battle' || timing.startsWith('next_confirm'),
     'placement': placement,
     'slotHint': 'q',
     'effectText': 'Test effect.',
@@ -496,7 +801,9 @@ Map<String, dynamic> _itemJson({
       'timing': timing,
       'op': op,
       'amount': amount,
-      'consume': consume ?? timing == 'use_battle',
+      'consume':
+          consume ??
+          timing == 'use_battle' || timing.startsWith('next_confirm'),
       ...rawEffect,
     },
     'tags': <String>['battle'],

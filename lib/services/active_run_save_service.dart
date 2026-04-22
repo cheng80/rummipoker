@@ -118,6 +118,9 @@ class SavedSessionData {
     required this.hand,
     required this.eliminated,
     this.boardMoveHistory = const [],
+    this.confirmModifiers = const [],
+    this.confirmCountThisStation = 0,
+    this.firstConfirmScoreThisStation = 0,
   });
 
   final int runSeed;
@@ -131,6 +134,9 @@ class SavedSessionData {
   final List<Map<String, dynamic>> hand;
   final List<Map<String, dynamic>> eliminated;
   final List<Map<String, dynamic>> boardMoveHistory;
+  final List<Map<String, dynamic>> confirmModifiers;
+  final int confirmCountThisStation;
+  final int firstConfirmScoreThisStation;
 
   Map<String, dynamic> toJson() => {
     'runSeed': runSeed,
@@ -144,6 +150,9 @@ class SavedSessionData {
     'hand': hand,
     'eliminated': eliminated,
     'boardMoveHistory': boardMoveHistory,
+    'confirmModifiers': confirmModifiers,
+    'confirmCountThisStation': confirmCountThisStation,
+    'firstConfirmScoreThisStation': firstConfirmScoreThisStation,
   };
 
   static SavedSessionData fromJson(Map<String, dynamic> json) {
@@ -178,6 +187,14 @@ class SavedSessionData {
           .cast<Map<String, dynamic>>()
           .map(Map<String, dynamic>.from)
           .toList(growable: false),
+      confirmModifiers: (json['confirmModifiers'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(Map<String, dynamic>.from)
+          .toList(growable: false),
+      confirmCountThisStation:
+          (json['confirmCountThisStation'] as num?)?.toInt() ?? 0,
+      firstConfirmScoreThisStation:
+          (json['firstConfirmScoreThisStation'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -219,6 +236,7 @@ class SavedRunProgressData {
     required this.statefulValuesBySlot,
     required this.playedHandCounts,
     this.itemInventory = const RunInventoryState(),
+    this.marketModifiers = const RummiMarketModifierState(),
   });
 
   final int stageIndex;
@@ -230,6 +248,7 @@ class SavedRunProgressData {
   final Map<String, int> statefulValuesBySlot;
   final Map<String, int> playedHandCounts;
   final RunInventoryState itemInventory;
+  final RummiMarketModifierState marketModifiers;
 
   Map<String, dynamic> toJson() => {
     'stageIndex': stageIndex,
@@ -241,6 +260,7 @@ class SavedRunProgressData {
     'statefulValuesBySlot': statefulValuesBySlot,
     'playedHandCounts': playedHandCounts,
     'itemInventory': itemInventory.toJson(),
+    'marketModifiers': marketModifiers.toJson(),
   };
 
   static SavedRunProgressData fromJson(Map<String, dynamic> json) {
@@ -267,6 +287,10 @@ class SavedRunProgressData {
       ),
       itemInventory: RunInventoryState.fromJson(
         (json['itemInventory'] as Map?)?.cast<String, dynamic>() ??
+            const <String, dynamic>{},
+      ),
+      marketModifiers: RummiMarketModifierState.fromJson(
+        (json['marketModifiers'] as Map?)?.cast<String, dynamic>() ??
             const <String, dynamic>{},
       ),
     );
@@ -496,6 +520,11 @@ class ActiveRunSaveService {
       boardMoveHistory: session.boardMoveHistory
           .map((record) => record.toJson())
           .toList(growable: false),
+      confirmModifiers: session.confirmModifiers
+          .map((modifier) => modifier.toJson())
+          .toList(growable: false),
+      confirmCountThisStation: session.confirmCountThisStation,
+      firstConfirmScoreThisStation: session.firstConfirmScoreThisStation,
     );
   }
 
@@ -526,6 +555,7 @@ class ActiveRunSaveService {
         (key, value) => MapEntry(key.name, value),
       ),
       itemInventory: runProgress.itemInventory,
+      marketModifiers: runProgress.marketModifiers,
     );
   }
 
@@ -556,6 +586,11 @@ class ActiveRunSaveService {
       boardMoveHistory: data.boardMoveHistory
           .map(BoardMoveRecord.fromJson)
           .toList(growable: false),
+      confirmModifiers: data.confirmModifiers
+          .map(RummiConfirmModifier.fromJson)
+          .toList(growable: false),
+      confirmCountThisStation: data.confirmCountThisStation,
+      firstConfirmScoreThisStation: data.firstConfirmScoreThisStation,
     );
   }
 
@@ -591,6 +626,7 @@ class ActiveRunSaveService {
       statefulValuesBySlot: statefulValuesBySlot,
       playedHandCounts: playedHandCounts,
       itemInventory: data.itemInventory,
+      marketModifiers: data.marketModifiers,
     );
   }
 }

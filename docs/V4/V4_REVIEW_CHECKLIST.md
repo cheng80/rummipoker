@@ -258,6 +258,14 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
   `/tmp/rummipoker_ios_smoke/20260422_005936/`
 - centered compact 5-button action group with explicit spacing iOS fixture 확인:
   `/tmp/rummipoker_ios_smoke/20260422_010216/`
+- market modifier shop 할인 가격 iPhone 17 fixture 확인:
+  `/tmp/rummipoker_ios_smoke/market_modifier_shop_20260422/`
+- deck needle 덱 상단 고정 iPhone 17 fixture 확인:
+  `/tmp/rummipoker_ios_smoke/deck_needle_battle_20260422/`
+- market modifier item tab / item offer card label / 4 item offers pagination iPhone 17 fixture 확인:
+  `/tmp/rummipoker_ios_smoke/market_modifier_item_tab_fixed_20260422/`
+- market modifier item tab / item offer color separation from board/Jester iPhone 17 fixture 확인:
+  `/tmp/rummipoker_ios_smoke/market_modifier_item_tab_color_20260422/`
 - deck needle command/dialog addition baseline iOS fixture 확인:
   `/tmp/rummipoker_ios_smoke/20260422_013146/`
 - deck needle auto-open dialog iOS fixture 확인:
@@ -538,19 +546,22 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [x] Phase E 일부로 Station 시작 시 `add_board_move`, `increase_hand_size`, `increase_hand_size_with_discard_penalty` item effect를 runtime/blind select 진입 경로에 연결했다.
 - [x] `undo_seal`의 `undo_last_board_move`를 보드 이동 이력/save restore 경로와 함께 연결했다.
 - [x] `deck_needle`의 `peek_deck_discard_one`을 덱 상단 선택 dialog와 전용 command로 연결했다.
+- [x] Group 1 `Confirm Modifier Runtime`을 `RummiConfirmModifier` queue, active run save/restore, confirm scoring hook, quick slot consume, station-start 장비/passive queue 경로로 1차 연결했다.
+- [x] Group 2 `Market Discount and Offer Modifier Runtime`을 `RummiMarketModifierState`, active run save/restore, market facade 표시 가격, reroll/buy 가격 적용, enter-market owned item queue 경로로 1차 연결했다.
 
 현재 가장 자연스러운 다음 작업 축:
 
 1. `B6` Item system runtime 연결
-   - item effect runtime을 small op 단위로 확장
-2. `B2/B7` blind/station pacing polish
-   - station target scale 기본값 재점검
-   - small/big/boss 보상/압박 수치 재조정
-   - blind unlock 템포와 continue 복귀 동선 확인
-3. `B6/B8` market/battle interaction polish
+   - Group 3 `Direct Gold and Economy Hooks`
+   - Group 4 `Settlement Reward Modifiers`
+2. `B6/B8` market/battle interaction polish
    - market 카드/아이템 슬롯 기준 유지
    - 설명 패널 고정 높이와 텍스트 말줄임 기준 안정화
    - button/dialog visual consistency 유지
+3. `B2/B7` blind/station pacing polish
+   - station target scale 기본값 재점검
+   - small/big/boss 보상/압박 수치 재조정
+   - blind unlock 템포와 continue 복귀 동선 확인
 4. `B2` deferred run rule 정리
    - Balatro식 blind skip 도입 여부와 조건 결정
    - skip을 넣는다면 save/checkpoint/보상 규칙을 먼저 문서화
@@ -561,7 +572,8 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 
 다음 PR 후보:
 
-- `item effect runtime draw/conditional op` 작은 연결 PR
+- `item effect runtime market modifier` 연결 PR
+- `item effect runtime direct economy hook` 작은 연결 PR
 - `blind/station pacing` 작은 수치 PR
 - `market/battle UI stability` 작은 polish PR
 - `Blind Skip decision` 문서 + 최소 코드 hook PR

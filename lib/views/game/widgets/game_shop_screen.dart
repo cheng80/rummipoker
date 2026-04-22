@@ -40,6 +40,7 @@ class GameShopScreen extends StatefulWidget {
     required this.onRestartRun,
     required this.isDebugFixtureRun,
     this.readActiveRunSaveView,
+    this.initialItemShopTab = false,
     this.autoAdvanceOnLoad = false,
   });
 
@@ -55,6 +56,7 @@ class GameShopScreen extends StatefulWidget {
   final Future<void> Function() onRestartRun;
   final bool isDebugFixtureRun;
   final RummiActiveRunSaveFacade? Function()? readActiveRunSaveView;
+  final bool initialItemShopTab;
   final bool autoAdvanceOnLoad;
 
   @override
@@ -78,6 +80,12 @@ class _GameShopScreenState extends State<GameShopScreen> {
       _selectedOwnedIndex = 0;
     } else if (_market.offers.isNotEmpty) {
       _selectedOfferIndex = 0;
+    }
+    if (widget.initialItemShopTab && _market.itemOffers.isNotEmpty) {
+      _shopTab = _MarketShopTab.items;
+      _selectedItemOfferIndex = 0;
+      _selectedOwnedIndex = null;
+      _selectedOfferIndex = null;
     }
     if (widget.autoAdvanceOnLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1415,6 +1423,8 @@ class _MarketItemOfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final itemName = localizedItemName(context, offer);
+    final accent = _itemOfferAccent(offer.item.placement);
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -1433,18 +1443,65 @@ class _MarketItemOfferCard extends StatelessWidget {
                 height: _marketOfferCardHeight,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _itemOfferSurface(offer.item.placement),
+                        const Color(0xFF17212D),
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _itemSlotLabel(offer),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
+                    border: Border.all(color: accent.withValues(alpha: 0.72)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withValues(alpha: selected ? 0.26 : 0.12),
+                        blurRadius: selected ? 10 : 6,
+                        offset: const Offset(0, 3),
                       ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            _itemSlotLabel(offer),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _itemOfferBadgeTextColor(
+                                offer.item.placement,
+                              ),
+                              fontSize: 7,
+                              fontWeight: FontWeight.w900,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          itemName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            height: 1.05,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1529,9 +1586,34 @@ String localizedItemEffect(
 
 String _itemSlotLabel(RummiMarketItemOfferView offer) {
   return switch (offer.item.placement) {
-    ItemPlacement.quickSlot => 'Q',
-    ItemPlacement.passiveRack => 'PASS',
+    ItemPlacement.quickSlot => 'Q-SLOT',
+    ItemPlacement.passiveRack => 'RELIC',
     ItemPlacement.equipped => 'GEAR',
-    ItemPlacement.inventory => 'UTIL',
+    ItemPlacement.inventory => 'TOOL',
+  };
+}
+
+Color _itemOfferSurface(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => const Color(0xFF263A77),
+    ItemPlacement.passiveRack => const Color(0xFF4A285F),
+    ItemPlacement.equipped => const Color(0xFF5A3B1E),
+    ItemPlacement.inventory => const Color(0xFF203D62),
+  };
+}
+
+Color _itemOfferAccent(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => const Color(0xFF78A6FF),
+    ItemPlacement.passiveRack => const Color(0xFFD48CFF),
+    ItemPlacement.equipped => const Color(0xFFFFC15A),
+    ItemPlacement.inventory => const Color(0xFF7DE1FF),
+  };
+}
+
+Color _itemOfferBadgeTextColor(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.equipped => const Color(0xFF241505),
+    _ => const Color(0xFF07111F),
   };
 }

@@ -564,6 +564,62 @@ void main() {
       expect(updated.runProgress!.itemInventory.quickSlotItemIds, [item.id]);
     });
 
+    test('buyItemOffer는 market item discount를 적용하고 소비한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3801);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final item = ItemDefinition.fromJson(const <String, dynamic>{
+        'id': 'board_scrap',
+        'displayName': 'Board Scrap',
+        'displayNameKey': 'data.items.board_scrap.displayName',
+        'type': 'consumable',
+        'rarity': 'common',
+        'basePrice': 4,
+        'sellPrice': 2,
+        'stackable': true,
+        'maxStack': 2,
+        'sellable': true,
+        'usableInBattle': true,
+        'placement': 'quickSlot',
+        'slotHint': 'q',
+        'effectText': 'Gain +1 board discard for this Station.',
+        'effectTextKey': 'data.items.board_scrap.effectText',
+        'effect': <String, dynamic>{
+          'timing': 'use_battle',
+          'op': 'add_board_discard',
+          'amount': 1,
+          'consume': true,
+        },
+        'tags': <String>['battle'],
+        'sourceNotes': 'Test fixture.',
+      });
+      state.runProgress!.queueMarketModifier(
+        op: 'discount_next_purchase',
+        amount: 2,
+        category: 'item',
+      );
+      notifier.markDirty();
+      final offer = RummiMarketItemOfferView.fromItemDefinition(
+        item,
+        slotIndex: 0,
+        currentGold: RummiEconomyConfig.startingGold,
+        price: state.runProgress!.effectiveItemPrice(item),
+      );
+
+      final failMessage = notifier.buyItemOffer(offer);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold - 2);
+      expect(updated.runProgress!.marketModifiers.nextItemPurchaseDiscount, 0);
+      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold - 2);
+    });
+
     test('useBattleItem은 discard 자원을 올리고 consumable stack을 소모한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

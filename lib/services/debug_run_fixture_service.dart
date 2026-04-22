@@ -32,6 +32,7 @@ class DebugRunFixtureService {
   static const String stage2ScoringSnapshot = 'stage2_scoring_snapshot';
   static const String stage2MarketResume = 'stage2_market_resume';
   static const String deckNeedleBattle = 'deck_needle_battle';
+  static const String marketModifierShop = 'market_modifier_shop';
 
   /// 새 디버그 픽스처는 여기에 등록하고, 아래에 대응하는 builder를 추가한다.
   static final List<DebugRunFixtureDefinition> _fixtures = [
@@ -53,6 +54,12 @@ class DebugRunFixtureService {
       label: 'Deck Needle 전투 아이템',
       description: 'Deck Needle 보유 / 덱 상단 3장 확인 dialog 검증용',
       builder: _buildDeckNeedleBattle,
+    ),
+    DebugRunFixtureDefinition(
+      id: marketModifierShop,
+      label: 'Market Modifier 상점',
+      description: '리롤/구매 할인 + Item offer 4칸 검증용',
+      builder: _buildMarketModifierShop,
     ),
   ];
 
@@ -265,6 +272,108 @@ class DebugRunFixtureService {
         session: session.copySnapshot(),
         runProgress: runProgress.copySnapshot(),
       ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildMarketModifierShop() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..gold = 18
+      ..rerollCost = RummiRunProgress.shopBaseRerollCost
+      ..shopOffers.addAll([
+        RummiShopOffer(
+          slotIndex: 0,
+          card: RummiJesterCard(
+            id: 'green_jester',
+            displayName: 'Green Jester',
+            rarity: RummiJesterRarity.common,
+            baseCost: 4,
+            effectText: 'Every discard changes current Mult by +1',
+            effectType: 'stateful_growth',
+            trigger: 'onDiscard',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 0,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 7,
+        ),
+        RummiShopOffer(
+          slotIndex: 1,
+          card: RummiJesterCard(
+            id: 'popcorn',
+            displayName: 'Popcorn',
+            rarity: RummiJesterRarity.common,
+            baseCost: 5,
+            effectText: 'Starts at +20 Mult, decreases by 4 each round',
+            effectType: 'stateful_growth',
+            trigger: 'onScore',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 20,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 8,
+        ),
+      ])
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'reroll_token',
+            count: 1,
+            placement: ItemPlacement.inventory,
+          ),
+          OwnedItemEntry(
+            itemId: 'item_invoice',
+            count: 1,
+            placement: ItemPlacement.inventory,
+          ),
+          OwnedItemEntry(
+            itemId: 'merchant_stamp',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+          OwnedItemEntry(
+            itemId: 'shop_lens',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+          OwnedItemEntry(
+            itemId: 'market_compass',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        passiveRelicIds: ['merchant_stamp', 'market_compass'],
+        equippedItemIds: ['shop_lens'],
+      );
+    runProgress.queueMarketModifier(op: 'discount_next_reroll', amount: 1);
+    runProgress.queueMarketModifier(
+      op: 'discount_next_purchase',
+      amount: 2,
+      category: 'item',
+    );
+    runProgress.queueMarketModifier(
+      op: 'discount_next_purchase',
+      amount: 2,
+      category: 'jester',
+    );
+    runProgress.queueMarketModifier(
+      op: 'discount_cheapest_first_offer',
+      amount: 1,
+    );
+    runProgress.queueMarketModifier(op: 'extra_item_offer_slot', amount: 1);
+
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: base.stageStartSnapshot,
     );
   }
 

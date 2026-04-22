@@ -467,7 +467,7 @@ class GameSessionNotifier
   }
 
   /// 상점 열기: 오퍼 생성.
-  void openShop() {
+  void openShop({ItemCatalog? itemCatalog}) {
     final session = state.session!;
     final runProgress = state.runProgress!;
     final catalog = state.jesterCatalog;
@@ -475,12 +475,18 @@ class GameSessionNotifier
       catalog: catalog?.shopCatalog ?? const <RummiJesterCard>[],
       rng: session.runRandom,
     );
+    if (itemCatalog != null) {
+      ItemEffectRuntime.applyOwnedEnterMarketItems(
+        catalog: itemCatalog,
+        runProgress: runProgress,
+      );
+    }
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
   /// 캐시아웃 뒤 market 진입 준비를 notifier 경계에서 처리한다.
-  void enterMarketAfterCashOut() {
-    openShop();
+  void enterMarketAfterCashOut({ItemCatalog? itemCatalog}) {
+    openShop(itemCatalog: itemCatalog);
     _replaceState(
       state.copyWith(
         runLoopPhase: GameRunLoopPhase.market,
@@ -524,8 +530,8 @@ class GameSessionNotifier
     if (runProgress.ownedJesters.length >= RummiRunProgress.maxJesterSlots) {
       return '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.';
     }
-    final offer = runProgress.shopOffers[offerIndex];
-    if (runProgress.gold < offer.price) {
+    final price = runProgress.effectiveJesterOfferPrice(offerIndex);
+    if (runProgress.gold < price) {
       return '골드가 부족합니다.';
     }
     final ok = runProgress.buyOffer(offerIndex);
@@ -539,13 +545,14 @@ class GameSessionNotifier
   String? buyItemOffer(RummiMarketItemOfferView offer) {
     final runProgress = state.runProgress;
     if (runProgress == null) return '상점 진행 정보가 없습니다.';
-    if (runProgress.gold < offer.price) {
+    final price = runProgress.effectiveItemPrice(offer.item);
+    if (runProgress.gold < price) {
       return '골드가 부족합니다.';
     }
     if (!runProgress.itemInventory.canAcquire(offer.item)) {
       return '이미 보유 한도에 도달한 아이템입니다.';
     }
-    final ok = runProgress.buyItem(offer.item, price: offer.price);
+    final ok = runProgress.buyItem(offer.item, price: price);
     if (!ok) {
       return '아이템 구매 처리에 실패했습니다.';
     }

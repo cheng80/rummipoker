@@ -1,5 +1,7 @@
 import 'item_definition.dart';
+import 'hand_rank.dart';
 import 'jester_meta.dart';
+import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
 
 enum ItemEffectApplicationStatus { applied, pendingHook, rejected }
@@ -153,6 +155,19 @@ class ItemEffectRuntime {
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;
+      case 'chips_bonus':
+      case 'mult_bonus':
+      case 'xmult_bonus':
+      case 'temporary_overlap_cap_bonus':
+      case 'add_percent_of_first_confirm_score':
+        final applied = applyConfirmModifierItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+        if (!applied.isSuccess) return applied;
+        events.addAll(applied.events);
+        break;
       case 'peek_deck_discard_one':
         return ItemUseResult.pendingHook(
           itemId: item.id,
@@ -255,14 +270,26 @@ class ItemEffectRuntime {
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applyMarketRerollItem');
+    final result = _applyMarketModifier(item, runProgress);
+    if (result.isSuccess) {
+      final events = <ItemEffectEvent>[...result.events];
+      _consumeIfNeeded(item, runProgress, events);
+      return ItemUseResult.success(itemId: item.id, events: events);
+    }
+    return result;
   }
 
   static ItemUseResult applyMarketBuyItem({
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applyMarketBuyItem');
+    final result = _applyMarketModifier(item, runProgress);
+    if (result.isSuccess) {
+      final events = <ItemEffectEvent>[...result.events];
+      _consumeIfNeeded(item, runProgress, events);
+      return ItemUseResult.success(itemId: item.id, events: events);
+    }
+    return result;
   }
 
   static ItemUseResult applyStationStartItem({
@@ -283,7 +310,7 @@ class ItemEffectRuntime {
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applyEnterMarketItem');
+    return _applyMarketModifier(item, runProgress);
   }
 
   static ItemUseResult applySettlementItem({
@@ -295,9 +322,25 @@ class ItemEffectRuntime {
 
   static ItemUseResult applyConfirmModifierItem({
     required ItemDefinition item,
+    required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applyConfirmModifierItem');
+    final modifier = _buildConfirmModifier(item);
+    if (modifier == null) {
+      return _pendingHook(item, 'applyConfirmModifierItem');
+    }
+    session.addConfirmModifier(modifier);
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.nextConfirmModifierQueued,
+          itemId: item.id,
+          amount: modifier.amount == 0 ? modifier.percent : modifier.amount,
+          detail: '${modifier.timing}:${modifier.op}',
+        ),
+      ],
+    );
   }
 
   static ItemUseResult applyBossClearItem({
@@ -352,6 +395,61 @@ class ItemEffectRuntime {
                 .withConsumedItem(item.id);
           }
           break;
+        case 'next_confirm':
+        case 'next_confirm_if_rank':
+        case 'next_confirm_if_rank_at_least':
+        case 'next_confirm_per_tile_color':
+        case 'next_confirm_per_repeated_rank_tile':
+        case 'first_confirm_each_station':
+        case 'first_scored_tile_each_station':
+        case 'on_confirm_if_played_hand_size_lte':
+        case 'second_confirm_each_station':
+          if (item.placement == ItemPlacement.quickSlot) {
+            break;
+          }
+          results.add(
+            applyConfirmModifierItem(
+              item: item,
+              session: session,
+              runProgress: runProgress,
+            ),
+          );
+          if (results.last.isSuccess && item.effect.consume) {
+            runProgress.itemInventory = runProgress.itemInventory
+                .withConsumedItem(item.id);
+          }
+          break;
+      }
+    }
+    return List<ItemUseResult>.unmodifiable(results);
+  }
+
+  static List<ItemUseResult> applyOwnedEnterMarketItems({
+    required ItemCatalog catalog,
+    required RummiRunProgress runProgress,
+  }) {
+    final activeIds = <String>{
+      for (final entry in runProgress.itemInventory.ownedItems)
+        if (entry.count > 0) entry.itemId,
+    };
+    final results = <ItemUseResult>[];
+    for (final itemId in activeIds) {
+      final item = catalog.findById(itemId);
+      if (item == null) continue;
+      switch (item.effect.timing) {
+        case 'enter_market':
+        case 'market_build_offers':
+          if (item.placement == ItemPlacement.quickSlot) {
+            break;
+          }
+          results.add(
+            applyEnterMarketItem(item: item, runProgress: runProgress),
+          );
+          if (results.last.isSuccess && item.effect.consume) {
+            runProgress.itemInventory = runProgress.itemInventory
+                .withConsumedItem(item.id);
+          }
+          break;
       }
     }
     return List<ItemUseResult>.unmodifiable(results);
@@ -382,6 +480,26 @@ class ItemEffectRuntime {
       'use_battle:undo_last_board_move' ||
       'use_battle:peek_deck_discard_one' ||
       'use_battle:draw_if_hand_empty' ||
+      'market_reroll:discount_next_reroll' ||
+      'market_buy:discount_next_purchase' ||
+      'market_buy_if_category:discount_next_purchase' ||
+      'enter_market:discount_first_reroll' ||
+      'enter_market:discount_cheapest_first_offer' ||
+      'market_build_offers:extra_item_offer_slot' ||
+      'market_build_offers:rarity_weight_bonus' ||
+      'next_confirm:chips_bonus' ||
+      'next_confirm:mult_bonus' ||
+      'next_confirm:xmult_bonus' ||
+      'next_confirm:temporary_overlap_cap_bonus' ||
+      'next_confirm_if_rank:chips_bonus' ||
+      'next_confirm_if_rank_at_least:chips_bonus' ||
+      'next_confirm_if_rank_at_least:mult_bonus' ||
+      'next_confirm_per_tile_color:mult_bonus' ||
+      'next_confirm_per_repeated_rank_tile:chips_bonus' ||
+      'first_confirm_each_station:chips_bonus' ||
+      'first_scored_tile_each_station:chips_bonus' ||
+      'on_confirm_if_played_hand_size_lte:mult_bonus' ||
+      'second_confirm_each_station:add_percent_of_first_confirm_score' ||
       'station_start:add_board_discard' ||
       'station_start:add_hand_discard' ||
       'station_start:add_board_move' ||
@@ -397,6 +515,75 @@ class ItemEffectRuntime {
       status: status,
       handlerName: handlerName,
     );
+  }
+
+  static RummiConfirmModifier? _buildConfirmModifier(ItemDefinition item) {
+    final timing = item.effect.timing;
+    final op = item.effect.op;
+    if (_handlerNameFor(timing) != 'applyConfirmModifierItem') {
+      return null;
+    }
+    if (!_supportedConfirmOps.contains(op)) {
+      return null;
+    }
+    final amount = (item.effect.value('amount') as num?)?.toDouble() ?? 0;
+    final percent = (item.effect.value('percent') as num?)?.toDouble() ?? 0;
+    return RummiConfirmModifier(
+      itemId: item.id,
+      timing: timing,
+      op: op,
+      amount: amount,
+      percent: percent,
+      rank: _parseRank(item.effect.value('rank')),
+      tileColor: _parseTileColor(item.effect.value('tileColor')),
+      maxTiles: (item.effect.value('maxTiles') as num?)?.toInt(),
+      consumeOnApply:
+          item.effect.consume || _oneShotConfirmTimings.contains(timing),
+    );
+  }
+
+  static const Set<String> _supportedConfirmOps = {
+    'chips_bonus',
+    'mult_bonus',
+    'xmult_bonus',
+    'temporary_overlap_cap_bonus',
+    'add_percent_of_first_confirm_score',
+  };
+
+  static const Set<String> _oneShotConfirmTimings = {
+    'next_confirm',
+    'next_confirm_if_rank',
+    'next_confirm_if_rank_at_least',
+    'next_confirm_per_tile_color',
+    'next_confirm_per_repeated_rank_tile',
+    'first_confirm_each_station',
+    'first_scored_tile_each_station',
+    'second_confirm_each_station',
+  };
+
+  static RummiHandRank? _parseRank(Object? value) {
+    if (value is! String) return null;
+    return switch (value) {
+      'twoPair' => RummiHandRank.twoPair,
+      'threeOfAKind' => RummiHandRank.threeOfAKind,
+      'straight' => RummiHandRank.straight,
+      'flush' => RummiHandRank.flush,
+      'fullHouse' => RummiHandRank.fullHouse,
+      'fourOfAKind' => RummiHandRank.fourOfAKind,
+      'straightFlush' => RummiHandRank.straightFlush,
+      _ => null,
+    };
+  }
+
+  static TileColor? _parseTileColor(Object? value) {
+    if (value is! String) return null;
+    return switch (value) {
+      'red' => TileColor.red,
+      'blue' => TileColor.blue,
+      'yellow' => TileColor.yellow,
+      'black' => TileColor.black,
+      _ => null,
+    };
   }
 
   static String _handlerNameFor(String timing) {
@@ -444,6 +631,42 @@ class ItemEffectRuntime {
         ),
       ],
     );
+  }
+
+  static ItemUseResult _applyMarketModifier(
+    ItemDefinition item,
+    RummiRunProgress runProgress,
+  ) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    final category = item.effect.value('category') as String?;
+    switch (item.effect.op) {
+      case 'discount_next_reroll':
+      case 'discount_first_reroll':
+      case 'discount_next_purchase':
+      case 'discount_cheapest_first_offer':
+      case 'extra_item_offer_slot':
+      case 'rarity_weight_bonus':
+        runProgress.queueMarketModifier(
+          op: item.effect.op,
+          amount: amount,
+          category: category,
+        );
+        return ItemUseResult.success(
+          itemId: item.id,
+          events: [
+            ItemEffectEvent(
+              kind: ItemEffectEventKind.marketModifierQueued,
+              itemId: item.id,
+              amount: amount,
+              detail: category == null
+                  ? item.effect.op
+                  : '${item.effect.op}:$category',
+            ),
+          ],
+        );
+    }
+    return _pendingHook(item, 'applyMarketModifier');
   }
 
   static ItemUseResult _applyAddHandDiscard(
@@ -624,7 +847,8 @@ class ItemEffectRuntime {
     if (item.placement != ItemPlacement.quickSlot || !item.usableInBattle) {
       return '전투에서 사용할 수 없는 아이템입니다.';
     }
-    if (item.effect.timing != 'use_battle') {
+    if (item.effect.timing != 'use_battle' &&
+        _handlerNameFor(item.effect.timing) != 'applyConfirmModifierItem') {
       return '지금 사용할 수 없는 아이템입니다.';
     }
     final hasItem = runProgress.itemInventory.ownedItems.any(

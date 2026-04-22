@@ -66,6 +66,7 @@ Future<void> _pumpShopScreen(
                   onExitToTitle: () async {},
                   onRestartRun: () async {},
                   isDebugFixtureRun: false,
+                  initialItemShopTab: true,
                 ),
               ),
             ),
@@ -141,6 +142,7 @@ void main() {
           currentGold: 12,
         ),
       ],
+      itemOfferSlotCount: 3,
       itemOffers: [itemOffer],
     );
     var currentSave = const RummiActiveRunSaveFacade(
@@ -179,6 +181,7 @@ void main() {
           runtimeSnapshot: currentMarket.runtimeSnapshot,
           ownedEntries: currentMarket.ownedEntries,
           offers: currentMarket.offers,
+          itemOfferSlotCount: currentMarket.itemOfferSlotCount,
           itemOffers: [nextItemOffer],
         );
         currentSave = const RummiActiveRunSaveFacade(
@@ -216,6 +219,7 @@ void main() {
             ),
           ],
           offers: const [],
+          itemOfferSlotCount: 3,
           itemOffers: currentMarket.itemOffers,
         );
         currentSave = const RummiActiveRunSaveFacade(
@@ -242,10 +246,7 @@ void main() {
     expect(find.text('0/5'), findsOneWidget);
     expect(find.text('구매'), findsOneWidget);
 
-    await tester.tap(find.text('Item Shop'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('리롤 토큰'), findsOneWidget);
+    expect(find.text('리롤 토큰'), findsWidgets);
     expect(find.text('다음 상점 리롤 비용이 1 줄어듭니다.'), findsOneWidget);
 
     await tester.tap(find.text('구매'));

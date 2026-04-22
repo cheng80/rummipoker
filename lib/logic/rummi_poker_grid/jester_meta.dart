@@ -575,6 +575,101 @@ class RummiEconomyConfig {
   static const int shopOfferCount = 3;
 }
 
+class RummiMarketModifierState {
+  const RummiMarketModifierState({
+    this.nextRerollDiscount = 0,
+    this.firstRerollDiscount = 0,
+    this.nextPurchaseDiscount = 0,
+    this.nextJesterPurchaseDiscount = 0,
+    this.nextItemPurchaseDiscount = 0,
+    this.cheapestFirstOfferDiscount = 0,
+    this.extraItemOfferSlots = 0,
+    this.rarityWeightBonus = 0,
+  });
+
+  factory RummiMarketModifierState.fromJson(Map<String, dynamic> json) {
+    return RummiMarketModifierState(
+      nextRerollDiscount: _nonNegativeJsonInt(json['nextRerollDiscount']),
+      firstRerollDiscount: _nonNegativeJsonInt(json['firstRerollDiscount']),
+      nextPurchaseDiscount: _nonNegativeJsonInt(json['nextPurchaseDiscount']),
+      nextJesterPurchaseDiscount: _nonNegativeJsonInt(
+        json['nextJesterPurchaseDiscount'],
+      ),
+      nextItemPurchaseDiscount: _nonNegativeJsonInt(
+        json['nextItemPurchaseDiscount'],
+      ),
+      cheapestFirstOfferDiscount: _nonNegativeJsonInt(
+        json['cheapestFirstOfferDiscount'],
+      ),
+      extraItemOfferSlots: _nonNegativeJsonInt(json['extraItemOfferSlots']),
+      rarityWeightBonus: _nonNegativeJsonInt(json['rarityWeightBonus']),
+    );
+  }
+
+  final int nextRerollDiscount;
+  final int firstRerollDiscount;
+  final int nextPurchaseDiscount;
+  final int nextJesterPurchaseDiscount;
+  final int nextItemPurchaseDiscount;
+  final int cheapestFirstOfferDiscount;
+  final int extraItemOfferSlots;
+  final int rarityWeightBonus;
+
+  bool get isEmpty =>
+      nextRerollDiscount == 0 &&
+      firstRerollDiscount == 0 &&
+      nextPurchaseDiscount == 0 &&
+      nextJesterPurchaseDiscount == 0 &&
+      nextItemPurchaseDiscount == 0 &&
+      cheapestFirstOfferDiscount == 0 &&
+      extraItemOfferSlots == 0 &&
+      rarityWeightBonus == 0;
+
+  int get itemOfferSlotCount =>
+      RummiEconomyConfig.shopOfferCount + extraItemOfferSlots;
+
+  Map<String, dynamic> toJson() => {
+    'nextRerollDiscount': nextRerollDiscount,
+    'firstRerollDiscount': firstRerollDiscount,
+    'nextPurchaseDiscount': nextPurchaseDiscount,
+    'nextJesterPurchaseDiscount': nextJesterPurchaseDiscount,
+    'nextItemPurchaseDiscount': nextItemPurchaseDiscount,
+    'cheapestFirstOfferDiscount': cheapestFirstOfferDiscount,
+    'extraItemOfferSlots': extraItemOfferSlots,
+    'rarityWeightBonus': rarityWeightBonus,
+  };
+
+  RummiMarketModifierState copyWith({
+    int? nextRerollDiscount,
+    int? firstRerollDiscount,
+    int? nextPurchaseDiscount,
+    int? nextJesterPurchaseDiscount,
+    int? nextItemPurchaseDiscount,
+    int? cheapestFirstOfferDiscount,
+    int? extraItemOfferSlots,
+    int? rarityWeightBonus,
+  }) {
+    return RummiMarketModifierState(
+      nextRerollDiscount: nextRerollDiscount ?? this.nextRerollDiscount,
+      firstRerollDiscount: firstRerollDiscount ?? this.firstRerollDiscount,
+      nextPurchaseDiscount: nextPurchaseDiscount ?? this.nextPurchaseDiscount,
+      nextJesterPurchaseDiscount:
+          nextJesterPurchaseDiscount ?? this.nextJesterPurchaseDiscount,
+      nextItemPurchaseDiscount:
+          nextItemPurchaseDiscount ?? this.nextItemPurchaseDiscount,
+      cheapestFirstOfferDiscount:
+          cheapestFirstOfferDiscount ?? this.cheapestFirstOfferDiscount,
+      extraItemOfferSlots: extraItemOfferSlots ?? this.extraItemOfferSlots,
+      rarityWeightBonus: rarityWeightBonus ?? this.rarityWeightBonus,
+    );
+  }
+
+  static int _nonNegativeJsonInt(Object? value) {
+    final parsed = (value as num?)?.toInt() ?? 0;
+    return parsed < 0 ? 0 : parsed;
+  }
+}
+
 class RummiRunProgress {
   RummiRunProgress();
 
@@ -588,6 +683,7 @@ class RummiRunProgress {
     required Map<int, int> statefulValuesBySlot,
     required Map<RummiHandRank, int> playedHandCounts,
     this.itemInventory = const RunInventoryState(),
+    this.marketModifiers = const RummiMarketModifierState(),
   }) {
     this.ownedJesters.addAll(ownedJesters);
     this.shopOffers.addAll(shopOffers);
@@ -608,6 +704,7 @@ class RummiRunProgress {
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
   RunInventoryState itemInventory = const RunInventoryState();
+  RummiMarketModifierState marketModifiers = const RummiMarketModifierState();
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
   final List<RummiShopOffer> shopOffers = <RummiShopOffer>[];
   final Map<int, int> _statefulValuesBySlot = <int, int>{};
@@ -638,6 +735,7 @@ class RummiRunProgress {
       statefulValuesBySlot: Map<int, int>.from(_statefulValuesBySlot),
       playedHandCounts: Map<RummiHandRank, int>.from(_playedHandCounts),
       itemInventory: itemInventory,
+      marketModifiers: marketModifiers,
     );
   }
 
@@ -732,6 +830,14 @@ class RummiRunProgress {
     int? offerCountOverride,
   }) {
     rerollCost = shopBaseRerollCost;
+    marketModifiers = marketModifiers.copyWith(
+      nextRerollDiscount: 0,
+      firstRerollDiscount: 0,
+      nextPurchaseDiscount: 0,
+      nextJesterPurchaseDiscount: 0,
+      nextItemPurchaseDiscount: 0,
+      cheapestFirstOfferDiscount: 0,
+    );
     _generateOffers(
       catalog: catalog,
       rng: rng,
@@ -742,17 +848,112 @@ class RummiRunProgress {
 
   bool canAfford(int cost) => gold >= cost;
 
+  int effectiveRerollCost() {
+    return max(
+      0,
+      rerollCost -
+          marketModifiers.nextRerollDiscount -
+          marketModifiers.firstRerollDiscount,
+    );
+  }
+
+  int effectiveJesterOfferPrice(int offerIndex) {
+    if (offerIndex < 0 || offerIndex >= shopOffers.length) return 0;
+    return effectivePurchasePrice(
+      basePrice: shopOffers[offerIndex].price,
+      category: 'jester',
+    );
+  }
+
+  int effectiveItemPrice(ItemDefinition item) {
+    return effectivePurchasePrice(basePrice: item.basePrice, category: 'item');
+  }
+
+  int effectivePurchasePrice({
+    required int basePrice,
+    required String category,
+  }) {
+    final categoryDiscount = switch (category) {
+      'jester' => marketModifiers.nextJesterPurchaseDiscount,
+      'item' => marketModifiers.nextItemPurchaseDiscount,
+      _ => 0,
+    };
+    final cheapestDiscount =
+        _cheapestFirstOfferDiscountApplies(basePrice, category)
+        ? marketModifiers.cheapestFirstOfferDiscount
+        : 0;
+    return max(
+      0,
+      basePrice -
+          marketModifiers.nextPurchaseDiscount -
+          categoryDiscount -
+          cheapestDiscount,
+    );
+  }
+
+  void queueMarketModifier({
+    required String op,
+    required int amount,
+    String? category,
+  }) {
+    if (amount <= 0) return;
+    switch (op) {
+      case 'discount_next_reroll':
+        marketModifiers = marketModifiers.copyWith(
+          nextRerollDiscount: marketModifiers.nextRerollDiscount + amount,
+        );
+      case 'discount_first_reroll':
+        marketModifiers = marketModifiers.copyWith(
+          firstRerollDiscount: marketModifiers.firstRerollDiscount + amount,
+        );
+      case 'discount_next_purchase':
+        if (category == 'jester') {
+          marketModifiers = marketModifiers.copyWith(
+            nextJesterPurchaseDiscount:
+                marketModifiers.nextJesterPurchaseDiscount + amount,
+          );
+        } else if (category == 'item') {
+          marketModifiers = marketModifiers.copyWith(
+            nextItemPurchaseDiscount:
+                marketModifiers.nextItemPurchaseDiscount + amount,
+          );
+        } else {
+          marketModifiers = marketModifiers.copyWith(
+            nextPurchaseDiscount: marketModifiers.nextPurchaseDiscount + amount,
+          );
+        }
+      case 'discount_cheapest_first_offer':
+        marketModifiers = marketModifiers.copyWith(
+          cheapestFirstOfferDiscount:
+              marketModifiers.cheapestFirstOfferDiscount + amount,
+        );
+      case 'extra_item_offer_slot':
+        marketModifiers = marketModifiers.copyWith(
+          extraItemOfferSlots: marketModifiers.extraItemOfferSlots + amount,
+        );
+      case 'rarity_weight_bonus':
+        marketModifiers = marketModifiers.copyWith(
+          rarityWeightBonus: marketModifiers.rarityWeightBonus + amount,
+        );
+    }
+  }
+
   bool rerollShop({
     required List<RummiJesterCard> catalog,
     required Random rng,
     List<String> preferredOfferIds = const [],
     int? offerCountOverride,
   }) {
-    if (gold < rerollCost) {
+    final cost = effectiveRerollCost();
+    if (gold < cost) {
       return false;
     }
-    gold -= rerollCost;
+    gold -= cost;
     rerollCost += 1;
+    marketModifiers = marketModifiers.copyWith(
+      nextRerollDiscount: 0,
+      firstRerollDiscount: 0,
+    );
     _generateOffers(
       catalog: catalog,
       rng: rng,
@@ -770,18 +971,20 @@ class RummiRunProgress {
       return false;
     }
     final offer = shopOffers[offerIndex];
-    if (gold < offer.price) {
+    final price = effectiveJesterOfferPrice(offerIndex);
+    if (gold < price) {
       return false;
     }
-    gold -= offer.price;
+    gold -= price;
     ownedJesters.add(offer.card);
     _initializeStateForSlot(ownedJesters.length - 1, offer.card);
     shopOffers.removeAt(offerIndex);
+    _consumePurchaseDiscounts('jester');
     return true;
   }
 
   bool buyItem(ItemDefinition item, {int? price}) {
-    final resolvedPrice = price ?? item.basePrice;
+    final resolvedPrice = price ?? effectiveItemPrice(item);
     if (gold < resolvedPrice) {
       return false;
     }
@@ -790,6 +993,7 @@ class RummiRunProgress {
     }
     gold -= resolvedPrice;
     itemInventory = itemInventory.withAcquiredItem(item);
+    _consumePurchaseDiscounts('item');
     return true;
   }
 
@@ -931,6 +1135,34 @@ class RummiRunProgress {
   static int _sellPriceFor(RummiJesterCard card) {
     final value = card.baseCost ~/ 2;
     return value < 1 ? 1 : value;
+  }
+
+  bool _cheapestFirstOfferDiscountApplies(int basePrice, String category) {
+    if (marketModifiers.cheapestFirstOfferDiscount <= 0) return false;
+    final firstJesterPrice = shopOffers.isEmpty ? null : shopOffers.first.price;
+    final firstItemPrice = category == 'item' ? basePrice : null;
+    return switch (category) {
+      'jester' =>
+        firstJesterPrice != null &&
+            (firstItemPrice == null || firstJesterPrice <= firstItemPrice),
+      'item' =>
+        firstItemPrice != null &&
+            (firstJesterPrice == null || firstItemPrice < firstJesterPrice),
+      _ => false,
+    };
+  }
+
+  void _consumePurchaseDiscounts(String category) {
+    marketModifiers = marketModifiers.copyWith(
+      nextPurchaseDiscount: 0,
+      nextJesterPurchaseDiscount: category == 'jester'
+          ? 0
+          : marketModifiers.nextJesterPurchaseDiscount,
+      nextItemPurchaseDiscount: category == 'item'
+          ? 0
+          : marketModifiers.nextItemPurchaseDiscount,
+      cheapestFirstOfferDiscount: 0,
+    );
   }
 
   void _initializeStateForSlot(int slotIndex, RummiJesterCard card) {

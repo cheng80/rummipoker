@@ -57,6 +57,60 @@ class BoardMoveRecord {
   };
 }
 
+class RummiConfirmModifier {
+  const RummiConfirmModifier({
+    required this.itemId,
+    required this.timing,
+    required this.op,
+    this.amount = 0,
+    this.percent = 0,
+    this.rank,
+    this.tileColor,
+    this.maxTiles,
+    this.consumeOnApply = true,
+  });
+
+  factory RummiConfirmModifier.fromJson(Map<String, dynamic> json) {
+    return RummiConfirmModifier(
+      itemId: json['itemId'] as String,
+      timing: json['timing'] as String,
+      op: json['op'] as String,
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      percent: (json['percent'] as num?)?.toDouble() ?? 0,
+      rank: json['rank'] == null
+          ? null
+          : RummiHandRank.values.byName(json['rank'] as String),
+      tileColor: json['tileColor'] == null
+          ? null
+          : TileColor.values.byName(json['tileColor'] as String),
+      maxTiles: (json['maxTiles'] as num?)?.toInt(),
+      consumeOnApply: json['consumeOnApply'] as bool? ?? true,
+    );
+  }
+
+  final String itemId;
+  final String timing;
+  final String op;
+  final double amount;
+  final double percent;
+  final RummiHandRank? rank;
+  final TileColor? tileColor;
+  final int? maxTiles;
+  final bool consumeOnApply;
+
+  Map<String, dynamic> toJson() => {
+    'itemId': itemId,
+    'timing': timing,
+    'op': op,
+    'amount': amount,
+    'percent': percent,
+    if (rank != null) 'rank': rank!.name,
+    if (tileColor != null) 'tileColor': tileColor!.name,
+    if (maxTiles != null) 'maxTiles': maxTiles,
+    'consumeOnApply': consumeOnApply,
+  };
+}
+
 /// 족보 줄 일괄 확정 결과.
 class ConfirmClearResult {
   ConfirmClearResult._({
@@ -143,6 +197,9 @@ class RummiPokerGridSession {
     required this.hand,
     required this.eliminated,
     required this.boardMoveHistory,
+    required this.confirmModifiers,
+    required this.confirmCountThisStation,
+    required this.firstConfirmScoreThisStation,
     required this.engine,
   });
 
@@ -184,6 +241,9 @@ class RummiPokerGridSession {
       hand: <Tile>[],
       eliminated: <Tile>[],
       boardMoveHistory: <BoardMoveRecord>[],
+      confirmModifiers: <RummiConfirmModifier>[],
+      confirmCountThisStation: 0,
+      firstConfirmScoreThisStation: 0,
       engine: RummiPokerGridEngine(),
     );
   }
@@ -202,6 +262,9 @@ class RummiPokerGridSession {
     required List<Tile> hand,
     required List<Tile> eliminated,
     List<BoardMoveRecord> boardMoveHistory = const [],
+    List<RummiConfirmModifier> confirmModifiers = const [],
+    int confirmCountThisStation = 0,
+    int firstConfirmScoreThisStation = 0,
   }) {
     return RummiPokerGridSession._(
       runSeed: runSeed,
@@ -215,6 +278,9 @@ class RummiPokerGridSession {
       hand: List<Tile>.from(hand),
       eliminated: List<Tile>.from(eliminated),
       boardMoveHistory: List<BoardMoveRecord>.from(boardMoveHistory),
+      confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
+      confirmCountThisStation: confirmCountThisStation,
+      firstConfirmScoreThisStation: firstConfirmScoreThisStation,
       engine: RummiPokerGridEngine(),
     );
   }
@@ -236,6 +302,9 @@ class RummiPokerGridSession {
   /// 확정·버림으로 영구 제거된 타일(다시 드로우되지 않음).
   final List<Tile> eliminated;
   final List<BoardMoveRecord> boardMoveHistory;
+  final List<RummiConfirmModifier> confirmModifiers;
+  int confirmCountThisStation;
+  int firstConfirmScoreThisStation;
   final RummiPokerGridEngine engine;
 
   int get totalDeckSize => totalDeckSizeForCopies(deckCopiesPerTile);
@@ -409,6 +478,10 @@ class RummiPokerGridSession {
     );
   }
 
+  void addConfirmModifier(RummiConfirmModifier modifier) {
+    confirmModifiers.add(modifier);
+  }
+
   RummiPokerGridSession copySnapshot() {
     return RummiPokerGridSession.restored(
       runSeed: runSeed,
@@ -422,6 +495,9 @@ class RummiPokerGridSession {
       hand: List<Tile>.from(hand),
       eliminated: List<Tile>.from(eliminated),
       boardMoveHistory: List<BoardMoveRecord>.from(boardMoveHistory),
+      confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
+      confirmCountThisStation: confirmCountThisStation,
+      firstConfirmScoreThisStation: firstConfirmScoreThisStation,
     );
   }
 
@@ -474,8 +550,11 @@ class RummiPokerGridSession {
       ownedJesterCount: jesters.length,
     );
     final currentConfirmRankCounts = <RummiHandRank, int>{};
+    final consumedConfirmModifiers = <RummiConfirmModifier>{};
+    final confirmOrdinal = confirmCountThisStation + 1;
 
-    for (final line in scoringLines) {
+    for (var lineIndex = 0; lineIndex < scoringLines.length; lineIndex++) {
+      final line = scoringLines[lineIndex];
       final evaluation = line.evaluation;
       final hasScoringFaceCard = line.scoringTiles.any(
         (tile) => tile.number >= 11 && tile.number <= 13,
@@ -526,6 +605,16 @@ class RummiPokerGridSession {
         }
         lineScore += scored.finalScore - scored.baseScore;
       }
+      final itemResult = _applyConfirmModifiersToLine(
+        lineScore: lineScore,
+        rank: evaluation.rank,
+        scoringTiles: line.scoringTiles,
+        lineIndex: lineIndex,
+        confirmOrdinal: confirmOrdinal,
+        consumedModifiers: consumedConfirmModifiers,
+      );
+      lineScore = itemResult.score;
+      effects.addAll(itemResult.effects);
       baseScoreSum += baseLineScore;
       scoreSum += lineScore;
       jesterBonusSum += lineScore - baseLineScore;
@@ -569,6 +658,13 @@ class RummiPokerGridSession {
     }
     if (cells.isNotEmpty) {
       boardMoveHistory.clear();
+    }
+    if (consumedConfirmModifiers.isNotEmpty) {
+      confirmModifiers.removeWhere(consumedConfirmModifiers.contains);
+    }
+    confirmCountThisStation += 1;
+    if (confirmCountThisStation == 1) {
+      firstConfirmScoreThisStation = scoreSum;
     }
 
     BlindCleared? cleared;
@@ -657,6 +753,171 @@ class RummiPokerGridSession {
         handDiscardsRemaining ?? blind.handDiscardsMax;
     blind.boardMovesRemaining = blind.boardMovesMax;
     blind.scoreTowardBlind = 0;
+    confirmModifiers.clear();
+    confirmCountThisStation = 0;
+    firstConfirmScoreThisStation = 0;
+  }
+
+  ({int score, List<RummiJesterEffectBreakdown> effects})
+  _applyConfirmModifiersToLine({
+    required int lineScore,
+    required RummiHandRank rank,
+    required List<Tile> scoringTiles,
+    required int lineIndex,
+    required int confirmOrdinal,
+    required Set<RummiConfirmModifier> consumedModifiers,
+  }) {
+    var score = lineScore;
+    final effects = <RummiJesterEffectBreakdown>[];
+    for (final modifier in List<RummiConfirmModifier>.from(confirmModifiers)) {
+      final applied = _scoreWithConfirmModifier(
+        modifier: modifier,
+        lineScore: score,
+        rank: rank,
+        scoringTiles: scoringTiles,
+        lineIndex: lineIndex,
+        confirmOrdinal: confirmOrdinal,
+      );
+      if (applied == null) continue;
+      score = applied.score;
+      effects.add(applied.effect);
+      if (modifier.consumeOnApply) {
+        consumedModifiers.add(modifier);
+      }
+    }
+    return (score: score, effects: effects);
+  }
+
+  ({int score, RummiJesterEffectBreakdown effect})? _scoreWithConfirmModifier({
+    required RummiConfirmModifier modifier,
+    required int lineScore,
+    required RummiHandRank rank,
+    required List<Tile> scoringTiles,
+    required int lineIndex,
+    required int confirmOrdinal,
+  }) {
+    if (!_confirmModifierMatches(
+      modifier,
+      rank: rank,
+      scoringTiles: scoringTiles,
+      lineIndex: lineIndex,
+      confirmOrdinal: confirmOrdinal,
+    )) {
+      return null;
+    }
+
+    var chipsBonus = 0;
+    var multBonus = 0;
+    var xmultBonus = 1.0;
+    var scoreBonus = 0;
+    switch (modifier.op) {
+      case 'chips_bonus':
+        chipsBonus =
+            _confirmModifierUnitCount(modifier, scoringTiles) *
+            modifier.amount.round();
+      case 'mult_bonus':
+        multBonus =
+            _confirmModifierUnitCount(modifier, scoringTiles) *
+            modifier.amount.round();
+      case 'xmult_bonus':
+        xmultBonus = modifier.amount <= 0 ? 1.0 : modifier.amount;
+      case 'temporary_overlap_cap_bonus':
+        xmultBonus = 1 + modifier.amount;
+      case 'add_percent_of_first_confirm_score':
+        scoreBonus = (firstConfirmScoreThisStation * modifier.percent).round();
+      default:
+        return null;
+    }
+
+    final nextScore = scoreBonus > 0
+        ? lineScore + scoreBonus
+        : _composeScore(
+            baseScore: lineScore,
+            chipsBonus: chipsBonus,
+            multBonus: multBonus,
+            xmultBonus: xmultBonus,
+          );
+    final delta = max(0, nextScore - lineScore);
+    if (delta <= 0) return null;
+    return (
+      score: nextScore,
+      effect: RummiJesterEffectBreakdown(
+        jesterId: modifier.itemId,
+        displayName: modifier.itemId,
+        chipsBonus: chipsBonus + scoreBonus,
+        multBonus: multBonus,
+        xmultBonus: xmultBonus,
+        scoreDelta: delta,
+      ),
+    );
+  }
+
+  bool _confirmModifierMatches(
+    RummiConfirmModifier modifier, {
+    required RummiHandRank rank,
+    required List<Tile> scoringTiles,
+    required int lineIndex,
+    required int confirmOrdinal,
+  }) {
+    switch (modifier.timing) {
+      case 'next_confirm':
+        return true;
+      case 'next_confirm_if_rank':
+        return modifier.rank == rank;
+      case 'next_confirm_if_rank_at_least':
+        final threshold = modifier.rank;
+        return threshold != null && rank.index >= threshold.index;
+      case 'next_confirm_per_tile_color':
+        final color = modifier.tileColor;
+        return color != null && scoringTiles.any((tile) => tile.color == color);
+      case 'next_confirm_per_repeated_rank_tile':
+        return _repeatedRankTileCount(scoringTiles) > 0;
+      case 'first_confirm_each_station':
+        return confirmOrdinal == 1;
+      case 'first_scored_tile_each_station':
+        return confirmOrdinal == 1 && lineIndex == 0;
+      case 'on_confirm_if_played_hand_size_lte':
+        final maxTiles = modifier.maxTiles;
+        return maxTiles != null && scoringTiles.length <= maxTiles;
+      case 'second_confirm_each_station':
+        return confirmOrdinal == 2 && firstConfirmScoreThisStation > 0;
+      default:
+        return false;
+    }
+  }
+
+  int _confirmModifierUnitCount(
+    RummiConfirmModifier modifier,
+    List<Tile> scoringTiles,
+  ) {
+    return switch (modifier.timing) {
+      'next_confirm_per_tile_color' =>
+        scoringTiles.where((tile) => tile.color == modifier.tileColor).length,
+      'next_confirm_per_repeated_rank_tile' => _repeatedRankTileCount(
+        scoringTiles,
+      ),
+      _ => 1,
+    };
+  }
+
+  static int _repeatedRankTileCount(List<Tile> tiles) {
+    final counts = <int, int>{};
+    for (final tile in tiles) {
+      counts.update(tile.number, (value) => value + 1, ifAbsent: () => 1);
+    }
+    return tiles.where((tile) => (counts[tile.number] ?? 0) >= 2).length;
+  }
+
+  static int _composeScore({
+    required int baseScore,
+    required int chipsBonus,
+    required int multBonus,
+    required double xmultBonus,
+  }) {
+    final chips = baseScore + chipsBonus;
+    if (chips <= 0) return 0;
+    final multFactor = 1 + (multBonus / 20.0);
+    return max(0, (chips * multFactor * xmultBonus).round());
   }
 
   _ScoringLineCandidate _buildScoringLineCandidate({

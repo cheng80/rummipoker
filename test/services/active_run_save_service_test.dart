@@ -102,6 +102,18 @@ void main() {
             boardMoveHistory: <Map<String, dynamic>>[
               {'fromRow': 0, 'fromCol': 0, 'toRow': 1, 'toCol': 1},
             ],
+            confirmModifiers: <Map<String, dynamic>>[
+              {
+                'itemId': 'chip_capsule',
+                'timing': 'next_confirm',
+                'op': 'chips_bonus',
+                'amount': 25.0,
+                'percent': 0.0,
+                'consumeOnApply': true,
+              },
+            ],
+            confirmCountThisStation: 1,
+            firstConfirmScoreThisStation: 50,
           ),
           runProgress: const SavedRunProgressData(
             stageIndex: 3,
@@ -123,6 +135,11 @@ void main() {
                 ),
               ],
               quickSlotItemIds: <String>['board_scrap'],
+            ),
+            marketModifiers: RummiMarketModifierState(
+              nextRerollDiscount: 1,
+              nextItemPurchaseDiscount: 2,
+              extraItemOfferSlots: 1,
             ),
           ),
           stageStartSession: const SavedSessionData(
@@ -170,9 +187,21 @@ void main() {
         expect(restored.runProgress.currentStationBlindTierIndex, 1);
         expect(restored.session.rulesetId, 'current_defaults_v1');
         expect(restored.runProgress.gold, 42);
+        expect(restored.runProgress.marketModifiers.nextRerollDiscount, 1);
+        expect(
+          restored.runProgress.marketModifiers.nextItemPurchaseDiscount,
+          2,
+        );
+        expect(restored.runProgress.marketModifiers.extraItemOfferSlots, 1);
         expect(restored.session.blind['boardMovesRemaining'], 1);
         expect(restored.session.blind['boardMovesMax'], 3);
         expect(restored.session.boardMoveHistory.single['toRow'], 1);
+        expect(
+          restored.session.confirmModifiers.single['itemId'],
+          'chip_capsule',
+        );
+        expect(restored.session.confirmCountThisStation, 1);
+        expect(restored.session.firstConfirmScoreThisStation, 50);
         expect(
           restored.runProgress.itemInventory.ownedItems.single.itemId,
           'board_scrap',
@@ -335,6 +364,7 @@ void main() {
           ],
           quickSlotItemIds: <String>['board_scrap'],
         );
+        runProgress.queueMarketModifier(op: 'discount_next_reroll', amount: 1);
         final drawn = session.drawToHand();
         expect(drawn, isNotNull);
         expect(session.tryPlaceFromHand(drawn!, 0, 0), isTrue);
@@ -345,6 +375,16 @@ void main() {
               runProgress: runProgress,
             );
 
+        session.addConfirmModifier(
+          const RummiConfirmModifier(
+            itemId: 'chip_capsule',
+            timing: 'next_confirm',
+            op: 'chips_bonus',
+            amount: 25,
+          ),
+        );
+        session.confirmCountThisStation = 1;
+        session.firstConfirmScoreThisStation = 50;
         session.drawToHand();
         session.blind.boardMovesRemaining = 1;
         runProgress.gold += 5;
@@ -396,8 +436,12 @@ void main() {
         );
         expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 17);
         expect(restored.runProgress.itemInventory.ownedItems.length, 2);
+        expect(restored.runProgress.marketModifiers.nextRerollDiscount, 1);
         expect(restored.session.blind.boardMovesRemaining, 1);
         expect(restored.session.blind.boardMovesMax, 3);
+        expect(restored.session.confirmModifiers.single.itemId, 'chip_capsule');
+        expect(restored.session.confirmCountThisStation, 1);
+        expect(restored.session.firstConfirmScoreThisStation, 50);
         expect(restored.runProgress.itemInventory.passiveRelicIds, <String>[
           'market_compass',
         ]);
@@ -415,6 +459,7 @@ void main() {
           2,
         );
         expect(restored.stageStartSnapshot.session.blind.boardMovesMax, 3);
+        expect(restored.stageStartSnapshot.session.confirmModifiers, isEmpty);
         expect(
           restored
               .stageStartSnapshot

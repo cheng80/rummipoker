@@ -82,4 +82,21 @@ void main() {
       ]);
     },
   );
+
+  test('market modifier fixture opens shop with discounted market state', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.marketModifierShop,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
+    expect(fixture.runProgress.gold, 18);
+    expect(fixture.runProgress.effectiveRerollCost(), 4);
+    expect(fixture.runProgress.effectiveJesterOfferPrice(0), 4);
+    expect(fixture.runProgress.marketModifiers.itemOfferSlotCount, 4);
+    expect(fixture.runProgress.itemInventory.passiveRelicIds, [
+      'merchant_stamp',
+      'market_compass',
+    ]);
+  });
 }

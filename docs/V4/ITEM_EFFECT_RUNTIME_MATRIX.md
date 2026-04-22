@@ -29,46 +29,46 @@
 
 | Item | 실질 효과 | Timing / Op | Handler | 상태 |
 |---|---|---|---|---|
-| `reroll_token` | 다음 market reroll 비용 -1 | `market_reroll` / `discount_next_reroll` | `applyMarketRerollItem` | `pendingHook` |
-| `coupon_stamp` | 다음 구매 가격 -2 | `market_buy` / `discount_next_purchase` | `applyMarketBuyItem` | `pendingHook` |
+| `reroll_token` | 다음 market reroll 비용 -1 | `market_reroll` / `discount_next_reroll` | `applyMarketRerollItem` | `applied` |
+| `coupon_stamp` | 다음 구매 가격 -2 | `market_buy` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
 | `coin_cache` | Gold +3 | `use_market` / `gain_gold` | `applyMarketUseItem` | `pendingHook` |
 | `board_scrap` | 현재 Station 보드 버림 +1 | `use_battle` / `add_board_discard` | `useBattleItem` | `applied` |
 | `hand_scrap` | 현재 Station 손패 버림 +1 | `use_battle` / `add_hand_discard` | `useBattleItem` | `applied` |
-| `chip_capsule` | 다음 confirm chips +25 | `next_confirm` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `mult_capsule` | 다음 confirm mult +6 | `next_confirm` / `mult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `line_polish` | 다음 confirm xmult x1.25 | `next_confirm` / `xmult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `straight_oil` | 다음 Straight 이상 confirm chips +40 | `next_confirm_if_rank_at_least` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `flush_powder` | 다음 Flush 이상 confirm mult +8 | `next_confirm_if_rank_at_least` / `mult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `pair_splint` | 다음 Two Pair confirm chips +35 | `next_confirm_if_rank` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `overlap_pin` | 다음 confirm overlap cap bonus +0.25 | `next_confirm` / `temporary_overlap_cap_bonus` | `applyConfirmModifierItem` | `pendingHook` |
+| `chip_capsule` | 다음 confirm chips +25 | `next_confirm` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
+| `mult_capsule` | 다음 confirm mult +6 | `next_confirm` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
+| `line_polish` | 다음 confirm xmult x1.25 | `next_confirm` / `xmult_bonus` | `applyConfirmModifierItem` | `applied` |
+| `straight_oil` | 다음 Straight 이상 confirm chips +40 | `next_confirm_if_rank_at_least` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
+| `flush_powder` | 다음 Flush 이상 confirm mult +8 | `next_confirm_if_rank_at_least` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
+| `pair_splint` | 다음 Two Pair confirm chips +35 | `next_confirm_if_rank` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
+| `overlap_pin` | 다음 confirm overlap cap bonus +0.25 | `next_confirm` / `temporary_overlap_cap_bonus` | `applyConfirmModifierItem` | `applied` |
 | `emergency_draw` | 손패가 비었으면 즉시 1장 draw | `use_battle` / `draw_if_hand_empty` | `useBattleItem` | `applied` |
 | `ledger_clip` | market 진입 시 Gold +1 | `enter_market` / `gain_gold` | `applyEnterMarketItem` | `pendingHook` |
 | `discard_glove` | Station 시작 시 보드 버림 +1 | `station_start` / `add_board_discard` | `applyStationStartItem` | `applied` |
 | `mulligan_sleeve` | Station 시작 시 손패 버림 +1 | `station_start` / `add_hand_discard` | `applyStationStartItem` | `applied` |
-| `shop_lens` | item offer slot +1 | `market_build_offers` / `extra_item_offer_slot` | `applyEnterMarketItem` | `pendingHook` |
+| `shop_lens` | item offer slot +1 | `market_build_offers` / `extra_item_offer_slot` | `applyEnterMarketItem` | `applied` |
 | `jester_hook` | Jester 판매 가격 +1 | `sell_jester` / `sell_price_bonus` | `applySellJesterItem` | `pendingHook` |
-| `score_abacus` | Station 첫 confirm chips +30 | `first_confirm_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `thin_caliper` | 작은 hand confirm mult +4 | `on_confirm_if_played_hand_size_lte` / `mult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
+| `score_abacus` | Station 첫 confirm chips +30 | `first_confirm_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
+| `thin_caliper` | 작은 hand confirm mult +4 | `on_confirm_if_played_hand_size_lte` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
 | `stage_map` | boss blind clear reward Gold +1 | `boss_blind_clear_reward` / `gain_gold` | `applyBossClearItem` | `pendingHook` |
 | `spare_pouch` | quick slot +1 | `inventory_capacity` / `extra_quick_slot` | `applyInventoryCapacityItem` | `pendingHook` |
-| `merchant_stamp` | market 진입 시 첫 reroll 할인 -1 | `enter_market` / `discount_first_reroll` | `applyEnterMarketItem` | `pendingHook` |
+| `merchant_stamp` | market 진입 시 첫 reroll 할인 -1 | `enter_market` / `discount_first_reroll` | `applyEnterMarketItem` | `applied` |
 | `safety_net` | Station 첫 failed confirm refund | `failed_confirm` / `refund_first_failed_confirm_each_station` | `applyFailedConfirmItem` | `pendingHook` |
 | `coin_funnel` | 남은 보드 버림 보상 Gold +1씩 추가 | `settlement` / `board_discard_reward_bonus` | `applySettlementItem` | `pendingHook` |
 | `hand_funnel` | 남은 손패 버림 보상 Gold +1씩 추가 | `settlement` / `hand_discard_reward_bonus` | `applySettlementItem` | `pendingHook` |
-| `lucky_counter` | rare item weight +5 | `market_build_offers` / `rarity_weight_bonus` | `applyEnterMarketItem` | `pendingHook` |
-| `echo_bell` | 두 번째 confirm에 첫 confirm 점수 10% 추가 | `second_confirm_each_station` / `add_percent_of_first_confirm_score` | `applyConfirmModifierItem` | `pendingHook` |
+| `lucky_counter` | rare item weight +5 | `market_build_offers` / `rarity_weight_bonus` | `applyEnterMarketItem` | `applied` |
+| `echo_bell` | 두 번째 confirm에 첫 confirm 점수 10% 추가 | `second_confirm_each_station` / `add_percent_of_first_confirm_score` | `applyConfirmModifierItem` | `applied` |
 | `boss_trophy` | 다음 market Jester offer +1 | `boss_blind_clear_market` / `extra_jester_offer_next_market` | `applyBossClearItem` | `pendingHook` |
 | `thin_wallet` | Gold 2 이하이면 Gold +5 | `use_market_if_gold_lte` / `gain_gold` | `applyMarketUseItem` | `pendingHook` |
 | `trade_ticket` | item offer만 reroll | `use_market` / `reroll_item_offers_only` | `applyMarketUseItem` | `pendingHook` |
-| `jester_invoice` | 다음 Jester 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `pendingHook` |
-| `item_invoice` | 다음 Item 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `pendingHook` |
-| `red_swatch` | 다음 confirm red tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `blue_swatch` | 다음 confirm blue tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `black_swatch` | 다음 confirm black tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `yellow_swatch` | 다음 confirm yellow tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `pendingHook` |
-| `rank_chalk` | 반복 rank tile마다 chips +12 | `next_confirm_per_repeated_rank_tile` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
+| `jester_invoice` | 다음 Jester 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
+| `item_invoice` | 다음 Item 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
+| `red_swatch` | 다음 confirm red tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
+| `blue_swatch` | 다음 confirm blue tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
+| `black_swatch` | 다음 confirm black tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
+| `yellow_swatch` | 다음 confirm yellow tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
+| `rank_chalk` | 반복 rank tile마다 chips +12 | `next_confirm_per_repeated_rank_tile` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
 | `deck_needle` | deck top 3 확인 후 1장 버림 | `use_battle` / `peek_deck_discard_one` | `useBattleItem` | `applied` |
-| `tile_polisher` | Station 첫 scored tile chips +20 | `first_scored_tile_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `pendingHook` |
+| `tile_polisher` | Station 첫 scored tile chips +20 | `first_scored_tile_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
 | `move_token` | 현재 Station 보드 이동 +1 | `use_battle` / `add_board_move` | `useBattleItem` | `applied` |
 | `slide_wax` | 다음 board move bonus trigger 등록 | `use_battle` / `mark_next_board_move_bonus` | `useBattleItem` | `pendingHook` |
 | `board_lift` | 다음 Station 보드 이동 +1 예약 | `station_start` / `add_board_move` | `applyStationStartItem` | `applied` |
@@ -77,7 +77,7 @@
 | `travel_pouch` | 손패 한도 +1 | `inventory_capacity` / `increase_hand_size` | `applyInventoryCapacityItem` | `applied` |
 | `wide_grip` | 손패 한도 +1, 보드 버림 -1 | `station_start` / `increase_hand_size_with_discard_penalty` | `applyStationStartItem` | `applied` |
 | `grand_satchel` | 손패 한도 +2, 손패 버림 -1 | `station_start` / `increase_hand_size_with_discard_penalty` | `applyStationStartItem` | `applied` |
-| `market_compass` | market 진입 시 가장 싼 첫 offer 할인 -1 | `enter_market` / `discount_cheapest_first_offer` | `applyEnterMarketItem` | `pendingHook` |
+| `market_compass` | market 진입 시 가장 싼 첫 offer 할인 -1 | `enter_market` / `discount_cheapest_first_offer` | `applyEnterMarketItem` | `applied` |
 
 ## 현재 실제 적용 완료
 
@@ -93,11 +93,18 @@
 - `wide_grip`: Station 시작 시 손패 한도 +1, 보드 버림 -1
 - `grand_satchel`: Station 시작 시 손패 한도 +2, 손패 버림 -1
 - `undo_seal`: 마지막 보드 이동을 되돌리고 이동 자원 1회 복원, consume
+- Confirm modifier queue/save/scoring hook:
+  `chip_capsule`, `mult_capsule`, `line_polish`, `straight_oil`, `flush_powder`, `pair_splint`,
+  `overlap_pin`, `score_abacus`, `thin_caliper`, `echo_bell`, `red_swatch`, `blue_swatch`,
+  `black_swatch`, `yellow_swatch`, `rank_chalk`, `tile_polisher`
+- Market modifier state/save/facade hook:
+  `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`,
+  `market_compass`, `shop_lens`, `lucky_counter`
 
 현재 실제 런타임 기준:
 
-- 총 49개 중 `applied` 13개
-- 남은 `pendingHook` 36개
+- 총 49개 중 `applied` 37개
+- 남은 `pendingHook` 12개
 
 ## 공통 구현 묶음 플랜
 
@@ -228,8 +235,13 @@
 
 ## 다음 구현 우선순위
 
-1. Group 1 `Confirm Modifier Runtime`: 16개를 가장 많이 줄일 수 있고 scoring 경계가 명확하다.
-2. Group 2 `Market Discount and Offer Modifier Runtime`: market state/facade를 한 번에 정리한다.
-3. Group 3 `Direct Gold and Economy Hooks`: 작은 단위라 Group 2 전후로 빠르게 닫을 수 있다.
-4. Group 4 `Settlement Reward Modifiers`: settlement breakdown UX와 같이 처리한다.
-5. Group 5-8: capacity/sell/failed confirm/boss delayed/board move follow-up처럼 각각 별도 hook이 필요한 단건 묶음으로 처리한다.
+현재 실행 기준:
+
+- 보드 이동, 손패 한도, station start 자원, deck peek/discard 계열은 1차 runtime 적용 완료
+- Group 1 `Confirm Modifier Runtime`은 queue/save/restore/scoring hook까지 1차 적용 완료
+- Group 2 `Market Discount and Offer Modifier Runtime`은 modifier state/save/facade/가격 적용까지 1차 적용 완료
+- 다음 최우선은 Group 3 `Direct Gold and Economy Hooks`
+
+1. Group 3 `Direct Gold and Economy Hooks`: `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`을 gold delta/event/save 경계에 연결한다.
+2. Group 4 `Settlement Reward Modifiers`: settlement breakdown UX와 같이 처리한다.
+3. Group 5-8: capacity/sell/failed confirm/boss delayed/board move follow-up처럼 각각 별도 hook이 필요한 단건 묶음으로 처리한다.

@@ -45,6 +45,7 @@ class GameView extends ConsumerStatefulWidget {
     this.debugCompleteRunOnClear = false,
     this.debugCompleteRunOnLoad = false,
     this.debugAutoUseItemId,
+    this.debugStartItemShop = false,
   });
 
   final int runSeed;
@@ -58,6 +59,7 @@ class GameView extends ConsumerStatefulWidget {
   final bool debugCompleteRunOnClear;
   final bool debugCompleteRunOnLoad;
   final String? debugAutoUseItemId;
+  final bool debugStartItemShop;
 
   @override
   ConsumerState<GameView> createState() => _GameViewState();
@@ -289,8 +291,10 @@ class _GameViewState extends ConsumerState<GameView>
     if (catalog == null) {
       return market;
     }
+    final state = ref.read(gameSessionNotifierProvider(_gameArgs));
+    final progress = state.runProgress;
     final itemOffers = catalog.all
-        .take(3)
+        .take(market.itemOfferSlotCount)
         .toList(growable: false)
         .asMap()
         .entries
@@ -299,6 +303,7 @@ class _GameViewState extends ConsumerState<GameView>
             entry.value,
             slotIndex: entry.key,
             currentGold: market.gold,
+            price: progress?.effectiveItemPrice(entry.value),
           ),
         )
         .toList(growable: false);
@@ -819,7 +824,7 @@ class _GameViewState extends ConsumerState<GameView>
     );
     if (!mounted || enterShop != true) return;
 
-    _gameNotifier.enterMarketAfterCashOut();
+    _gameNotifier.enterMarketAfterCashOut(itemCatalog: _itemCatalog);
     await _saveActiveRun();
 
     final nextStage = await _showShopScreen(
@@ -863,6 +868,7 @@ class _GameViewState extends ConsumerState<GameView>
           onExitToTitle: _goToTitleAfterStoppingBgm,
           onRestartRun: _restartCurrentRun,
           isDebugFixtureRun: _isDebugFixtureRun,
+          initialItemShopTab: widget.debugStartItemShop,
           autoAdvanceOnLoad:
               autoAdvanceOnLoad || widget.autoAdvanceMarketOnLoad,
         ),

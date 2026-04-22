@@ -282,20 +282,28 @@ Files:
 
 남은 축은 item 단건이 아니라 공통 runtime hook 단위로 진행한다. 세부 대상은 [ITEM_EFFECT_RUNTIME_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/ITEM_EFFECT_RUNTIME_MATRIX.md)의 "공통 구현 묶음 플랜"을 따른다.
 
+현재 기준:
+
+- Phase A `Resource Model`: 완료
+- Phase B `Board Move Command`: 완료
+- Phase C `UI Move Mode + Confirm`: 1차 완료
+- Phase D `Item Data Additions`: 완료
+- Phase E `Item Effect Runtime Expansion`: 이동/손패/덱 선택/confirm modifier/market modifier 축 완료, direct economy/settlement hook은 진행 대상
+
 다음 작업 순서:
 
-1. Confirm modifier queue/save/scoring hook 추가
-   - 대상: `chip_capsule`, `mult_capsule`, `line_polish`, `straight_oil`, `flush_powder`, `pair_splint`, `score_abacus`, `thin_caliper`, `echo_bell`, `red_swatch`, `blue_swatch`, `black_swatch`, `yellow_swatch`, `rank_chalk`, `tile_polisher`, `overlap_pin`
-   - 공통 결과: confirm 시 chips/mult/xmult/조건부 보너스 평가 후 소비
-2. Market discount/offer modifier state 추가
-   - 대상: `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`, `market_compass`, `shop_lens`, `lucky_counter`, `trade_ticket`
-   - 공통 결과: reroll/buy/offer build command에서 modifier 적용 후 소비
-3. Direct gold/economy hooks 추가
+1. Direct gold/economy hooks 추가
    - 대상: `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`
    - 공통 결과: use market, enter market, boss clear reward에서 gold delta/event/save 반영
-4. Settlement reward modifier hook 추가
+2. Settlement reward modifier hook 추가
    - 대상: `coin_funnel`, `hand_funnel`
    - 공통 결과: 남은 discard 자원 기반 추가 gold와 settlement breakdown line 반영
+3. Market discount/offer modifier state 추가
+   - 대상: `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`, `market_compass`, `shop_lens`, `lucky_counter`
+   - 상태: 1차 완료
+4. Confirm modifier queue/save/scoring hook 추가
+   - 대상: `chip_capsule`, `mult_capsule`, `line_polish`, `straight_oil`, `flush_powder`, `pair_splint`, `score_abacus`, `thin_caliper`, `echo_bell`, `red_swatch`, `blue_swatch`, `black_swatch`, `yellow_swatch`, `rank_chalk`, `tile_polisher`, `overlap_pin`
+   - 상태: 1차 완료
 5. Inventory/sell hook 추가
    - 대상: `spare_pouch`, `jester_hook`
    - 공통 결과: quick slot capacity 및 Jester sell price read/write path 반영

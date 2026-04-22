@@ -67,6 +67,7 @@ final GoRouter appRouter = GoRouter(
             state.uri.queryParameters['debug_complete_run_on_load'] == '1';
         final debugAutoUseItemId =
             state.uri.queryParameters['debug_auto_use_item'];
+        final debugShopTab = state.uri.queryParameters['debug_shop_tab'];
         final difficulty = NewRunSetup.parseDifficulty(
           state.uri.queryParameters['difficulty'],
         );
@@ -89,6 +90,7 @@ final GoRouter appRouter = GoRouter(
           debugCompleteRunOnClear: debugCompleteRunOnClear,
           debugCompleteRunOnLoad: debugCompleteRunOnLoad,
           debugAutoUseItemId: debugAutoUseItemId,
+          debugStartItemShop: debugShopTab == 'items',
         );
       },
     ),

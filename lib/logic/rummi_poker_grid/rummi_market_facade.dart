@@ -59,16 +59,18 @@ class RummiMarketOfferView {
   factory RummiMarketOfferView.fromShopOffer(
     RummiShopOffer offer, {
     required int currentGold,
+    int? price,
   }) {
+    final resolvedPrice = price ?? offer.price;
     return RummiMarketOfferView(
       offerId: 'jester:${offer.slotIndex}:${offer.card.id}',
       slotIndex: offer.slotIndex,
       category: RummiMarketCategory.jester,
       contentId: offer.card.id,
       displayName: offer.card.displayName,
-      price: offer.price,
+      price: resolvedPrice,
       currency: 'gold',
-      isAffordable: currentGold >= offer.price,
+      isAffordable: currentGold >= resolvedPrice,
       card: offer.card,
     );
   }
@@ -145,13 +147,14 @@ class RummiMarketRuntimeFacade {
     required this.runtimeSnapshot,
     required this.ownedEntries,
     required this.offers,
+    required this.itemOfferSlotCount,
     this.itemOffers = const [],
   });
 
   factory RummiMarketRuntimeFacade.fromRunProgress(RummiRunProgress progress) {
     return RummiMarketRuntimeFacade(
       gold: progress.gold,
-      rerollCost: progress.rerollCost,
+      rerollCost: progress.effectiveRerollCost(),
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
       runtimeSnapshot: progress.buildRuntimeSnapshot(),
       ownedEntries: List<RummiMarketOwnedEntryView>.generate(
@@ -164,9 +167,11 @@ class RummiMarketRuntimeFacade {
             (offer) => RummiMarketOfferView.fromShopOffer(
               offer,
               currentGold: progress.gold,
+              price: progress.effectiveJesterOfferPrice(offer.slotIndex),
             ),
           )
           .toList(growable: false),
+      itemOfferSlotCount: progress.marketModifiers.itemOfferSlotCount,
       itemOffers: const [],
     );
   }
@@ -181,6 +186,7 @@ class RummiMarketRuntimeFacade {
       runtimeSnapshot: runtimeSnapshot,
       ownedEntries: ownedEntries,
       offers: offers,
+      itemOfferSlotCount: itemOfferSlotCount,
       itemOffers: nextItemOffers,
     );
   }
@@ -191,5 +197,6 @@ class RummiMarketRuntimeFacade {
   final RummiJesterRuntimeSnapshot runtimeSnapshot;
   final List<RummiMarketOwnedEntryView> ownedEntries;
   final List<RummiMarketOfferView> offers;
+  final int itemOfferSlotCount;
   final List<RummiMarketItemOfferView> itemOffers;
 }

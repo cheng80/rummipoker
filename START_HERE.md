@@ -84,10 +84,11 @@
 
 다음 우선순위:
 
-1. 보드 이동 / 손패 한도 / Item-Jester runtime 통합 작업
-   다음 작업은 [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md)의 `Phase A: Resource Model`부터 진행한다. UI 쪽은 하단 액션 버튼을 `선택 해제 / 이동 / 보드 버림 / 손패 버림` compact row와 `확정` full-width primary row로 재배치하는 계획을 따른다.
-2. Item system runtime 계속
-   보드 이동 자원과 하단 버튼 배치가 들어간 뒤, 이동/손패 관련 신규 item과 기존 미구현 item effect를 같은 `ItemEffectRuntime` 확장 흐름에서 처리한다.
+1. Item Group 3 `Direct Gold and Economy Hooks`
+   보드 이동 / 손패 한도 / Group 1 `Confirm Modifier Runtime` / Group 2 `Market Discount and Offer Modifier Runtime`은 1차 연결됐다. 다음 작업은 [ITEM_EFFECT_RUNTIME_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/ITEM_EFFECT_RUNTIME_MATRIX.md)의 Group 3부터 진행한다.
+   `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`처럼 작은 economy hook을 닫는다.
+2. Item Group 4 `Settlement Reward Modifiers`
+   남은 discard 자원 기반 추가 gold와 settlement breakdown line을 연결한다.
 3. market/battle interaction polish
    아이템 상점/전투 슬롯 기준 유지, 상세 패널, dialog/button visual consistency 보정
 4. blind/station pacing polish
