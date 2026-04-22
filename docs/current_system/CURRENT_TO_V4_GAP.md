@@ -1,5 +1,8 @@
 # Current To V4 Gap
 
+> GCSE role: `Context`
+> Source of truth: 현재 프로토타입과 V4 목표 사이의 차이.
+
 문서 목적: 현재 프로토타입과 앞으로 작성할 `V4` 목표 문서 사이의 차이를 정리한다.
 
 이 문서는 아래 질문에 답하기 위해 만든다.

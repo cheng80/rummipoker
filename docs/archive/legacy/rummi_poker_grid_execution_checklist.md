@@ -147,7 +147,7 @@
 ## 6. 출시 전
 
 - [ ] `docs/STORE_METADATA_PLAY_APPSTORE_2026.md` 패키지명·스크린샷·설명
-- [ ] 웹 빌드 `base-href` 확인 (`docs/web_build.md`)
+- [ ] 웹 빌드 `base-href` 확인 (`docs/planning/verification/web_build.md`)
 
 ---
 

@@ -1,70 +1,27 @@
 # 07. Technical Architecture
 
-> 문서 성격: current code map + target architecture
+> 문서 성격: target architecture and refactor contract
 > 코드 반영 상태: current implemented, target refactor planned
 > 핵심 정책: 현재 프로토타입을 보호하기 위해 한 PR에서 한 축만 바꾼다.
 
-## 1. Current Layers
+현재 코드 파일별 책임과 read order는 `docs/current_system/CURRENT_CODE_MAP.md`를 기준으로 본다.
+이 문서는 target 경계와 refactor 제한만 정의한다.
+
+## 1. Current Boundary Reference
 
 [CURRENT]
 
-현재 코드는 다음 계층으로 읽는다.
+현재 구현에서 보호해야 할 경계만 요약한다.
 
-```text
-lib/logic/rummi_poker_grid/
-  순수 전투 로직에 가까운 계층
+- 전투 규칙은 `lib/logic/rummi_poker_grid/`에 집중되어 있다.
+- Jester / economy / run progress / shop은 아직 일부 복합 계층이다.
+- Riverpod provider는 전투 flow orchestration을 담당한다.
+- view 계층은 UI orchestration, navigation, save trigger를 포함한다.
+- services 계층은 persistence, debug fixture, platform service를 포함한다.
 
-lib/logic/rummi_poker_grid/jester_meta.dart
-  Jester + economy + run progress 복합 계층
+세부 파일 책임은 `CURRENT_CODE_MAP.md`를 중복하지 않는다.
 
-lib/providers/features/rummi_poker_grid/
-  Riverpod orchestration 계층
-
-lib/views/
-  UI orchestration + navigation + save trigger 계층
-
-lib/services/
-  persistence / debug fixture / platform service 계층
-```
-
-## 2. Current Core Boundaries
-
-[CURRENT]
-
-| 파일 | 현재 책임 |
-|---|---|
-| `tile.dart` | 타일 값 객체 |
-| `poker_deck.dart` | 덱 생성, 셔플, 스냅샷 |
-| `board.dart` | 5x5 cell storage |
-| `hand_rank.dart` | rank enum, score, dead line |
-| `hand_evaluator.dart` | 라인 평가, contributor index |
-| `rummi_poker_grid_engine.dart` | 12줄 평가 |
-| `rummi_poker_grid_session.dart` | 전투 session 퍼사드 |
-| `rummi_blind_state.dart` | 현재 전투 목표와 discard 자원 |
-| `jester_meta.dart` | Jester/economy/run/shop |
-| `active_run_save_service.dart` | active run save/load |
-| `game_session_notifier.dart` | 전투 flow orchestration |
-| `game_view.dart` | 전투 UI, 정산 시퀀스, 저장 호출 |
-
-## 3. Current State Management
-
-[CURRENT]
-
-`GameSessionState`는 mutable `session`, mutable `runProgress`를 보관하고 `revision` 증가로 redraw를 유도한다.
-
-장점:
-
-- 프로토타입 속도가 빠르다.
-- 기존 session 객체를 그대로 조작할 수 있다.
-- save snapshot을 만들기 쉽다.
-
-주의:
-
-- pure immutable state는 아니다.
-- state mutation 후 `revision` 누락 시 UI 갱신이 빠질 수 있다.
-- 장기적으로 action/reducer 형태로 나눌 수 있다.
-
-## 4. Target Domain Split
+## 2. Target Domain Split
 
 [TARGET]
 
@@ -124,6 +81,10 @@ views
 - Archive
 ```
 
+이 구조는 목표 경계이며, 현재 디렉터리 구조를 즉시 바꾸라는 지시가 아니다.
+
+## 3. Content / Market Minimum Boundary
+
 [V4_DECISION]
 
 Jester / Item 분리 구현 시 최소 새 경계는 아래처럼 잡는다.
@@ -145,11 +106,7 @@ services/market
 상세 필드 계약은 `13_ITEM_SYSTEM_CONTRACT.md`를 따른다.
 v1 데이터 소스는 `data/common/items_common_v1.json`이며, asset path는 `AssetPaths.itemsCommon`을 사용한다.
 
-[MIGRATION]
-
-이 구조는 한 번에 만들지 않는다. 먼저 `ItemDefinition` loader와 catalog parse test를 추가하고, 그 다음 market offer adapter와 runtime inventory 저장을 연결한다.
-
-## 5. Ruleset Config Target
+## 4. Ruleset Config Target
 
 [TARGET]
 
@@ -167,7 +124,7 @@ class RummiRulesetConfig {
 }
 ```
 
-기본값:
+기본값은 current prototype과 parity를 유지한다.
 
 ```dart
 const currentPrototypeRuleset = RummiRulesetConfig(
@@ -181,15 +138,13 @@ const currentPrototypeRuleset = RummiRulesetConfig(
 );
 ```
 
-[V4_DECISION]
-
 ruleset config 도입 전까지 현재 코드 상수를 기본값으로 유지한다.
 
-## 6. Confirm Transaction Refactor
+## 5. Confirm Transaction Refactor
 
 [MIGRATION]
 
-현재 `confirmAllFullLines`를 다음 구조로 점진 분리한다.
+`confirmAllFullLines`는 legacy name이므로 다음 구조로 점진 분리한다.
 
 ```text
 ConfirmScoringLinesUseCase
@@ -210,23 +165,25 @@ ConfirmClearResult confirmScoringLines(...);
 ConfirmClearResult confirmAllFullLines(...) => confirmScoringLines(...);
 ```
 
-단, 현재 Provider와 UI가 의존하므로 한 PR에서 이름 변경과 로직 변경을 동시에 하지 않는다.
+Provider와 UI가 의존하므로 한 PR에서 이름 변경과 로직 변경을 동시에 하지 않는다.
 
-## 7. Jester Meta Refactor
+## 6. Jester Meta Refactor
 
 [MIGRATION]
 
-현재 `jester_meta.dart`는 크지만 작동한다. 분리 순서:
+복합 Jester/economy/run/shop 계층은 아래 순서로만 분리한다.
 
 1. 테스트 보강
 2. `RummiEconomyConfig` 분리
 3. `RummiRunProgress` 분리
-4. `RummiJesterCard` / `Catalog` 분리
+4. `RummiJesterCard` / catalog 분리
 5. `JesterEffectEngine` 분리
 6. `MarketOffer` adapter 추가
 7. 기존 import compatibility 유지
 
-## 8. Persistence Refactor
+기존 Jester id와 save restore 경로는 변경하지 않는다.
+
+## 7. Persistence Refactor
 
 [MIGRATION]
 
@@ -239,7 +196,9 @@ ConfirmClearResult confirmAllFullLines(...) => confirmScoringLines(...);
 - stageStartSnapshot equivalent 유지
 - activeScene restore 유지
 
-## 9. Naming Refactor Policy
+저장 target 계약은 `05_SAVE_CHECKPOINT_DATA.md`를 기준으로 본다.
+
+## 8. Naming Refactor Policy
 
 [V4_DECISION]
 
@@ -259,11 +218,9 @@ ConfirmClearResult confirmAllFullLines(...) => confirmScoringLines(...);
 - `confirmScoringLines`
 - `stationIndex`
 
-[MIGRATION]
-
 이름 변경은 save schema, provider, tests가 준비된 뒤 compatibility adapter와 함께 수행한다.
 
-## 10. PR Safety Rule
+## 9. PR Safety Rule
 
 [V4_DECISION]
 

@@ -494,5 +494,5 @@ You are a senior game UI designer. Create a high-fidelity portrait mobile game m
 ## 9. Implementation Notes
 
 - 현재 타일 외형 기준은 [`lib/game/rummi_poker_grid/rummikub_tile_canvas.dart`](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/lib/game/rummi_poker_grid/rummikub_tile_canvas.dart) 이다.
-- 현재 레이아웃 구조 기준은 [`lib/game/rummi_poker_grid/rummi_poker_grid_game.dart`](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/lib/game/rummi_poker_grid/rummi_poker_grid_game.dart) 와 [`lib/views/game_view.dart`](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/lib/views/game_view.dart) 이다.
+- 현재 레이아웃 구조 기준은 [`lib/views/game_view.dart`](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/lib/views/game_view.dart) 이다. 과거 `rummi_poker_grid_game.dart` Flame 경로는 삭제된 레거시 경로다.
 - Stitch 결과물은 **레퍼런스 목업**으로만 사용하고, 실제 구현은 현재 Flutter 위젯 레이아웃과 타일 렌더링 규칙을 우선한다.

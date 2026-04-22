@@ -1,5 +1,8 @@
 # Rummi Poker Grid V4 Combined Documentation
 
+> Archive role: `generated snapshot`
+> Role: 병합 스냅샷. 최신 기준은 개별 원본 문서와 실제 코드다.
+
 이 파일은 `rummi_poker_grid_design_docs_v4/` 문서 세트를 하나로 합친 버전이다. 원본 파일 단위 문서가 우선이다.
 
 
@@ -103,7 +106,7 @@ V4 작성 기준으로 사용한 실제 저장소 입력은 다음이다.
 - `START_HERE.md`
 - `docs/archive/`
   - 기존 설계/구현 배경 문서 묶음
-- `docs/V4/rummi_poker_grid_design_docs_v4/`
+- `docs/specs/V4/`
   - V4 원본 파일 단위 문서 세트
 
 ## 7. 입력 파일 / 디렉터리 스냅샷 해시
@@ -114,14 +117,14 @@ V4 작성 기준으로 사용한 실제 저장소 입력은 다음이다.
 |---|---|
 | `lib/` manifest | `a46a846294fd726a9dcb7db3f68393d740d33e0a191a12098c97afd5f12270c5` |
 | `docs/archive/` manifest | `84207b219ef8ca03d1847de7fd63459e5033bf2d39c85cd747834448effa4e55` |
-| `docs/V4/rummi_poker_grid_design_docs_v4/` manifest | `bfdd2ce05a1d385142cdd8a5915c3ae5ff2e336b7281c1a2da4817532ee979d8` |
+| `docs/specs/V4/` manifest | `bfdd2ce05a1d385142cdd8a5915c3ae5ff2e336b7281c1a2da4817532ee979d8` |
 | `START_HERE.md` | `acbb8f5937f2bde709661c03c79719f3fd43d0013fc0119e7f3df0aea701ef91` |
 | `docs/current_system/CURRENT_CODE_MAP.md` | `40fb5b2269d21fc28c8c00a70d42c668242fe17e6c3991473307ee57a0a5fe7a` |
 | `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md` | `a087e8c397374a930f55214baf0de2ff968e850beb0c0e5a8e7130bd4eec32e6` |
 | `docs/current_system/CURRENT_TO_V4_GAP.md` | `313376c89896eba0ba753ab5fc11b3e4c88e8181b5a0cbecab5859e050df666e` |
-| `docs/archive/rummi_poker_grid_gdd.md` | `ac774448caf286ce0d91ee18bd793da53330e468a8005f3c11c179eb91c1e202` |
-| `docs/archive/rummi_poker_grid_game_logic.md` | `579be5edcaee84b62c3aafbdc6851d0d695958904e70d75846eb2b3e8dec44f7` |
-| `docs/archive/save_resume_architecture.md` | `550be359831548581e4f6172a8d9fbb4e8e920afd811033efd097872c6cacd36` |
+| `docs/archive/legacy/rummi_poker_grid_gdd.md` | `ac774448caf286ce0d91ee18bd793da53330e468a8005f3c11c179eb91c1e202` |
+| `docs/archive/legacy/rummi_poker_grid_game_logic.md` | `579be5edcaee84b62c3aafbdc6851d0d695958904e70d75846eb2b3e8dec44f7` |
+| `docs/archive/legacy/save_resume_architecture.md` | `550be359831548581e4f6172a8d9fbb4e8e920afd811033efd097872c6cacd36` |
 
 
 ---

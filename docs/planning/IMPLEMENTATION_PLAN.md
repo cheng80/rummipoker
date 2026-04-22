@@ -1,6 +1,9 @@
 # Rummi Poker Grid V4 Implementation Plan
 
-검토용 순서/진행 체크는 [V4_REVIEW_CHECKLIST.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/V4_REVIEW_CHECKLIST.md)에서 함께 본다.
+> GCSE role: `Execution`
+> Source of truth: V4 구현 순서, PR 분해, migration plan.
+
+검토용 순서/진행 체크는 [STATUS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/STATUS.md)에서 함께 본다.
 
 ## 1. Plan Scope
 
@@ -88,18 +91,26 @@
 
 [CURRENT] [DOC VERIFIED]
 
-상세 표는 [V4_PLAN_TRACEABILITY_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/V4_PLAN_TRACEABILITY_MATRIX.md)에 정리한다.
-
-핵심 연결만 요약하면 아래와 같다.
-
 | Area | Current Source | V4 Source | Status | Notes |
 |---|---|---|---|---|
-| Combat scoring | `lib/logic/rummi_poker_grid/hand_rank.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | One Pair 0 |
-| Confirm/removal | `lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | contributor union |
-| Jester/shop | `lib/logic/rummi_poker_grid/jester_meta.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/04_JESTER_MARKET_CONTENT.md` | [CODE VERIFIED] | current Jester 중심 |
-| Item catalog | `data/common/items_common_v1.json` | `docs/V4/rummi_poker_grid_design_docs_v4/13_ITEM_SYSTEM_CONTRACT.md` | [DATA VERIFIED] | v1 catalog written, runtime 연결 전 |
-| Save/checkpoint | `lib/services/active_run_save_service.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/05_SAVE_CHECKPOINT_DATA.md` | [CODE VERIFIED] | save v2 유지 |
-| UI flow | `lib/views/game_view.dart` | `docs/V4/rummi_poker_grid_design_docs_v4/06_UI_UX_FLOW.md` | [CODE VERIFIED] | battle → shop |
+| Combat board size | `lib/logic/rummi_poker_grid/models/board.dart` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | 5x5 고정 |
+| Hand rank scoring | `lib/logic/rummi_poker_grid/hand_rank.dart` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | One Pair 0점 |
+| Partial line evaluation | `lib/logic/rummi_poker_grid/hand_evaluator.dart` | `docs/current_system/CURRENT_BUILD_BASELINE.md` | [CODE VERIFIED] | 2~5장 평가 |
+| Line scan scope | `lib/logic/rummi_poker_grid/rummi_poker_grid_engine.dart` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | 행/열/대각 12줄 |
+| Confirm removal policy | `lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | contributor union만 제거 |
+| Overlap constants | `lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CODE VERIFIED] | alpha 0.3, cap 2.0 |
+| Stage resource model | `lib/logic/rummi_poker_grid/rummi_blind_state.dart` | `docs/specs/V4/03_RUN_META_ECONOMY.md` | [CODE VERIFIED] | `Blind` 명칭 유지 |
+| Jester/economy/shop | `lib/logic/rummi_poker_grid/jester_meta.dart` | `docs/specs/V4/04_JESTER_MARKET_CONTENT.md` | [CODE VERIFIED] | Jester 중심 shop |
+| Active run save | `lib/services/active_run_save_service.dart` | `docs/specs/V4/05_SAVE_CHECKPOINT_DATA.md` | [CODE VERIFIED] | save v2 + stageStartSnapshot |
+| Save storage backend | `lib/utils/storage_helper.dart` | `docs/specs/V4/05_SAVE_CHECKPOINT_DATA.md` | [CODE VERIFIED] | GetStorage wrapper |
+| Runtime orchestration | `lib/providers/features/rummi_poker_grid/game_session_notifier.dart` | `docs/specs/V4/07_TECHNICAL_ARCHITECTURE.md` | [CODE VERIFIED] | confirm/cash-out/shop/stage flow |
+| Title continue flow | `lib/providers/features/rummi_poker_grid/title_notifier.dart`, `lib/views/title_view.dart` | `docs/specs/V4/06_UI_UX_FLOW.md` | [CODE VERIFIED] | continue/delete/corrupt save 분기 |
+| Game UI flow | `lib/views/game_view.dart` | `docs/specs/V4/06_UI_UX_FLOW.md` | [CODE VERIFIED] | battle -> cash-out -> shop |
+| Shop UI | `lib/views/game/widgets/game_shop_screen.dart` | `docs/specs/V4/06_UI_UX_FLOW.md` | [CODE VERIFIED] | full-screen shop 유지 |
+| Current baseline summary | `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md` | `docs/current_system/CURRENT_BUILD_BASELINE.md` | [DOC VERIFIED] | current baseline 보조 문서 |
+| Code ownership map | `docs/current_system/CURRENT_CODE_MAP.md` | `docs/specs/V4/07_TECHNICAL_ARCHITECTURE.md` | [DOC VERIFIED] | 파일 책임 정리 |
+| Current-to-target gap | `docs/current_system/CURRENT_TO_V4_GAP.md` | `docs/planning/MIGRATION_ROADMAP.md` | [DOC VERIFIED] | target 단계화 근거 |
+| One Pair future pressure | `docs/planning/OPEN_DECISIONS.md` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CONFLICT] | 일부 타겟 논의와 current code 충돌 가능, 초기 계획에서는 보호 대상 |
 
 ## 5. Current Code Anchors
 
@@ -123,282 +134,50 @@
 
 [CURRENT] [DOC VERIFIED]
 
-상세 표는 [V4_PLAN_RISK_REGISTER.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/V4/V4_PLAN_RISK_REGISTER.md)에 정리한다.
-
-핵심 리스크 요약:
-
 | Risk | Impact | Likelihood | Mitigation | Guardrail Test |
 |---|---|---|---|---|
-| One Pair 10점 오도입 | Critical | Medium | baseline lock | One Pair 0 regression |
-| contributor 제거 회귀 | Critical | Medium | wrapper before refactor | Two Pair/Four of a Kind removal tests |
-| overlap 상수 변경 | High | Medium | current defaults lock | overlap parity test |
-| `stageStartSnapshot` 손상 | Critical | Medium | save adapter shadow mode | restart parity |
-| save/load 호환성 파손 | Critical | Medium | save v2 유지 | HMAC + restore tests |
-| code rename 파손 | High | Medium | terminology migration last | provider/route smoke tests |
-
-## 7. Migration Phases
-
-### Phase 0: Plan lock
-
-Goal:
-V4 기준 구현 순서를 문서로 고정하고 금지 규칙을 명시한다.
-
-Files likely touched:
-`docs/V4/V4_IMPLEMENTATION_PLAN.md`
-`docs/V4/V4_PLAN_RISK_REGISTER.md`
-`docs/V4/V4_PLAN_TRACEABILITY_MATRIX.md`
-
-Allowed changes:
-docs only
-
-Forbidden changes:
-`lib/`, `test/`, `data/`, save schema
-
-Required tests:
-없음. 문서 리뷰만
-
-Acceptance criteria:
-첫 3개 PR과 금지 작업이 명확하다.
-
-Rollback strategy:
-문서 revert
-
-### Phase 1: Regression tests
-
-Goal:
-현재 코어 전투와 save/restart를 테스트로 먼저 보호한다.
-
-Files likely touched:
-`test/logic/*`
-`test/providers/*`
-
-Allowed changes:
-current behavior를 고정하는 regression test 추가
-
-Forbidden changes:
-behavior 변경, economy 변경, save schema 변경
-
-Required tests:
-combat / expiry / restart / save-load parity
-
-Acceptance criteria:
-One Pair 0, contributor removal, overlap, restart semantics가 테스트로 식별된다.
-
-Rollback strategy:
-추가 테스트만 되돌리면 됨
-
-### Phase 2: Compatibility wrappers
-
-Goal:
-현재 코드 심볼과 target 문서 사이의 용어/구조 차이를 wrapper로 흡수한다.
-
-Files likely touched:
-new adapter/wrapper docs and thin Dart wrappers around existing state
-
-Allowed changes:
-read-only adapter, alias, facade
-
-Forbidden changes:
-핵심 session 로직 교체
-
-Required tests:
-existing tests + adapter smoke
-
-Acceptance criteria:
-target 문서가 current runtime을 직접 깨지 않고 읽을 수 있다.
-
-Rollback strategy:
-wrapper 제거, core untouched
-
-### Phase 3: Ruleset config skeleton
-
-Goal:
-current combat default를 보존하는 ruleset/config 뼈대를 만든다.
-
-Files likely touched:
-new ruleset config files or models
-
-Allowed changes:
-default mirror constants only
-
-Forbidden changes:
-default behavior change, One Pair score change
-
-Required tests:
-config enabled/disabled parity
-
-Acceptance criteria:
-ruleset 계층이 생겨도 current defaults가 유지된다.
-
-Rollback strategy:
-feature flag off
-
-### Phase 4: UI-only terminology bridge
-
-Goal:
-Station/Market/Archive 용어를 UI copy 또는 docs alias로만 부분 도입한다.
-
-Files likely touched:
-copy resources, docs, UI labels
-
-Allowed changes:
-player-facing text only
-
-Forbidden changes:
-save field rename, code symbol rename
-
-Required tests:
-title/game/shop smoke tests
-
-Acceptance criteria:
-용어 전환이 런타임 구조 변경 없이 가능하다.
-
-Rollback strategy:
-text revert
-
-### Phase 5: Market/Jester adapter preparation
-
-Goal:
-current Jester-only shop를 장기 Market 구조와 연결할 adapter/read model 준비를 한다.
-
-Files likely touched:
-new market adapter models, docs
-
-Allowed changes:
-adapter layer, read model, mapping
-
-Forbidden changes:
-`jester_meta.dart` 즉시 분해, id rename
-
-Required tests:
-shop buy/sell/reroll smoke
-
-Acceptance criteria:
-current shop를 유지한 채 future market slot 확장 준비가 된다.
-
-Rollback strategy:
-adapter layer 제거
-
-### Phase 6: Save/checkpoint adapter preparation
-
-Goal:
-active run save v2를 유지하면서 future domain model과 연결할 adapter를 준비한다.
-
-Files likely touched:
-save DTO mapper, migration doc/tests
-
-Allowed changes:
-read model, mapper, compatibility validator
-
-Forbidden changes:
-backend 교체, persistence key rename
-
-Required tests:
-save/load, corrupt save, restart parity
-
-Acceptance criteria:
-current save stays source of truth, future domain mapping 가능
-
-Rollback strategy:
-adapter 제거, save v2 유지
-
-### Phase 7: Station target prototype behind feature flag
-
-Goal:
-stage 기반 current loop 위에 Station target 구조를 feature flag 뒤에서만 실험한다.
-
-Files likely touched:
-new prototype files only
-
-Allowed changes:
-feature-flagged prototype path
-
-Forbidden changes:
-default runtime replacement
-
-Required tests:
-flag off parity, flag on isolated smoke
-
-Acceptance criteria:
-current stage loop가 기본값으로 유지된다.
-
-Rollback strategy:
-flag off
-
-### Phase 8: Archive/stats read model
-
-Goal:
-active run과 분리된 archive/stats read model을 추가한다.
-
-Files likely touched:
-new stats/archive models and readers
-
-Allowed changes:
-append-only or derived models
-
-Forbidden changes:
-active run schema replacement
-
-Required tests:
-read model generation tests
-
-Acceptance criteria:
-archive/stats가 current save를 깨지 않고 읽힌다.
-
-Rollback strategy:
-read model 비활성화
-
-### Phase 9: Balance pass
-
-Goal:
-구조가 안정된 뒤 economy와 target 수치를 조정한다.
-
-Files likely touched:
-config/data/docs
-
-Allowed changes:
-수치 조정
-
-Forbidden changes:
-combat core semantics 변경
-
-Required tests:
-combat/save regression 전부
-
-Acceptance criteria:
-balance 조정이 구조 회귀 없이 가능하다.
-
-Rollback strategy:
-data revert
-
-### Phase 10: Optional code rename
-
-Goal:
-충분히 안정된 뒤 `Blind/Stage` 계열 code symbol을 rename할지 검토한다.
-
-Files likely touched:
-wide but intentional rename PR
-
-Allowed changes:
-mechanical rename only
-
-Forbidden changes:
-logic change 동시 진행
-
-Required tests:
-full suite
-
-Acceptance criteria:
-rename only PR, no behavior change
-
-Rollback strategy:
-single revertable rename PR
+| One Pair 10점 오도입 | Critical | Medium | `hand_rank.dart` 기준을 baseline lock, PR 체크리스트에 명시 | `One Pair == 0`, confirm 후보 아님 |
+| contributor 제거 대신 line 전체 제거 회귀 | Critical | Medium | confirm 변경은 compatibility wrapper 뒤에서만 수행 | Two Pair 키커 유지 테스트 |
+| overlap multiplier 상수 변경 | High | Medium | alpha/cap을 ruleset default에 명시하되 current default 보호 | overlap alpha/cap regression test |
+| Jester 발동 순서 변경 | High | Medium | 슬롯 순서 처리 정책 문서화, refactor 전 snapshot test | Jester effect ordering test |
+| `stageStartSnapshot` 손상 | Critical | Medium | save/restart adapter는 read-only shadow mode부터 시작 | restart returns exact stage-start state |
+| active run save/load 호환성 파손 | Critical | Medium | save schema 교체 금지, adapter layer만 허용 | save/load parity + HMAC verify |
+| 코드 rename으로 Provider/UI/save 연결 파손 | High | Medium | terminology 전환은 docs -> UI copy -> code rename 순서 고정 | route + provider smoke tests |
+| Station 용어가 current runtime으로 오해됨 | Medium | High | plan/docs에 target label 강제, feature flag 전까지 UI-only 용어 제한 | review checklist for labels |
+| DB 도입으로 continue 깨짐 | Critical | Medium | DB는 read model 또는 adapter 준비 단계까지만 허용 | continue load existing save v2 |
+| Jester catalog id 변경 | Critical | Low | id rename 금지 정책 명시 | catalog load + saved state restore |
+| economy 수치와 전투 룰 동시 변경 | High | Medium | combat PR과 balance PR 분리 | PR scope checklist |
+| UI-only 변경이 도메인 변경으로 번짐 | High | Medium | 전투 로직 수정과 UI 리디자인 PR 분리 | UI PR must not touch logic files |
+| `Blind`/`Stage` alias 도입이 저장 필드 rename으로 이어짐 | High | Medium | alias 문서화만 먼저, persistence key rename 금지 | save payload field snapshot |
+| ruleset config skeleton이 current behavior를 바꿈 | High | Medium | default config는 current constants mirror only | current ruleset parity tests |
+| shop adapter 작업 중 기존 reroll/buy/sell 흐름 파손 | High | Medium | adapter는 `jester_meta.dart` 앞단에 얇게 두기 | shop buy/sell/reroll smoke test |
+| archive/stats read model이 active run과 결합됨 | Medium | Medium | read model은 append-only summary from existing state | no active run schema diff review |
+
+## 7. Migration Phase Source
+
+상세 phase 정의는 [MIGRATION_ROADMAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/MIGRATION_ROADMAP.md)를 단일 기준으로 둔다.
+
+이 문서는 phase별 상세 작업을 반복하지 않고, 아래 실행 판단만 유지한다.
+
+| Phase | Execution focus | Implementation-plan concern |
+|---|---|---|
+| 0 | Docs lock | 문서 권한과 금지 규칙 고정 |
+| 1 | Regression tests | 전투/save/restart 보호망 선행 |
+| 2 | Compatibility wrappers | 기존 runtime 교체 없이 alias/facade 추가 |
+| 3 | Ruleset config skeleton | default behavior parity 유지 |
+| 4 | UI-only terminology bridge | UI copy 전환과 code/save rename 분리 |
+| 5 | Market/Jester adapter | Jester id와 shop flow 보호 |
+| 6 | Save/checkpoint adapter | active run save v2 유지 |
+| 7 | Station prototype | feature flag 뒤에서만 실험 |
+| 8 | Archive/stats read model | active run schema와 결합 금지 |
+| 9 | Balance pass | 구조 안정 후 수치 조정 |
+| 10 | Optional code rename | behavior change 없는 별도 rename PR |
 
 ## 8. PR Breakdown
 
 | PR | Type | Goal | Files | Risk | Must Pass | Not Allowed |
 |---|---|---|---|---|---|---|
-| PR1 | docs-only | V4 implementation plan lock | `docs/V4/*plan*.md` | Low | doc review | code change |
+| PR1 | docs-only | V4 implementation plan lock | `docs/planning/*PLAN*.md` | Low | doc review | code change |
 | PR2 | test | combat regression tests | `test/logic/*` | Medium | hand/session tests | scoring change |
 | PR3 | test | save/restart regression tests | `test/providers/*`, save tests | High | restart/save tests | save schema change |
 | PR4 | compat | confirm compatibility wrapper | new wrapper + minimal glue | Medium | all current tests | session rewrite |
@@ -623,7 +402,7 @@ Likely files:
 
 - `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`
 - `lib/services/active_run_save_service.dart`
-- `docs/V4/rummi_poker_grid_design_docs_v4/06_UI_UX_FLOW.md`
+- `docs/specs/V4/06_UI_UX_FLOW.md`
 
 ### Step 4. 검증 기준
 
@@ -728,12 +507,11 @@ V4 마이그레이션 계획을 문서로 고정한다.
 Files to inspect:
 `START_HERE.md`
 `docs/current_system/*`
-`docs/V4/*`
+`docs/specs/V4/*`
+`docs/planning/*`
 
 Files to change:
-`docs/V4/V4_IMPLEMENTATION_PLAN.md`
-`docs/V4/V4_PLAN_RISK_REGISTER.md`
-`docs/V4/V4_PLAN_TRACEABILITY_MATRIX.md`
+`docs/planning/IMPLEMENTATION_PLAN.md`
 
 Tests to add or run:
 없음. 문서 리뷰

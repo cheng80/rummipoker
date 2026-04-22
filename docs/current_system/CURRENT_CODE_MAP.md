@@ -1,305 +1,321 @@
 # Current Code Map
 
-문서 목적: `V4` 작성 AI 또는 후속 구현자가 **어디를 먼저 읽어야 하는지** 빠르게 판단하게 하는 코드 맵이다.
+> GCSE role: `Context`
+> Source of truth: 현재 코드 탐색 순서, 책임 경계, 작업 재개 기준.
 
-이 문서는 “파일 목록”이 아니라 “책임 경계”를 설명한다.
+이 문서는 코드 기준 문서 3종 중 하나다.
+
+- `CURRENT_SYSTEM_OVERVIEW.md`: 현재 앱이 실제로 무엇을 구현했는가
+- `CURRENT_CODE_MAP.md`: 어디를 읽고 어디를 고쳐야 하는가
+- `CURRENT_TO_V4_GAP.md`: 현재 코드와 V4 목표 사이의 차이는 무엇인가
+
+새 작업자는 이 3개 문서만 읽어도 코드 작업을 이어갈 수 있어야 한다. 진행률과 다음 작업은 `planning` 문서에서 보완하지만, 코드 사실은 이 문서를 우선한다.
 
 ---
 
-## 1. 가장 먼저 볼 파일
+## 1. Read Order
 
-우선순위는 아래 순서가 좋다.
+문서 읽기 순서:
 
 1. `START_HERE.md`
-2. `docs/CURRENT_SYSTEM_OVERVIEW.md`
-3. `lib/logic/rummi_poker_grid/`
-4. `lib/providers/features/rummi_poker_grid/`
+2. `docs/00_docs_README.md`
+3. `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md`
+4. `docs/current_system/CURRENT_CODE_MAP.md`
+5. `docs/current_system/CURRENT_TO_V4_GAP.md`
+6. `docs/planning/STATUS.md`
+7. `docs/planning/IMPLEMENTATION_PLAN.md`
+
+코드 읽기 순서:
+
+1. `lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`
+2. `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`
+3. `lib/providers/features/rummi_poker_grid/game_session_state.dart`
+4. `lib/services/active_run_save_service.dart`
 5. `lib/views/game_view.dart`
-6. `lib/services/active_run_save_service.dart`
-7. `docs/archive/`
+6. `lib/views/game/widgets/`
+7. `lib/views/title_view.dart`
+8. `lib/router.dart`
+
+Item/Market/Station 작업이면 아래 파일을 추가로 먼저 본다.
+
+- `lib/logic/rummi_poker_grid/item_definition.dart`
+- `lib/logic/rummi_poker_grid/item_effect_runtime.dart`
+- `lib/logic/rummi_poker_grid/rummi_market_facade.dart`
+- `lib/logic/rummi_poker_grid/rummi_battle_facade.dart`
+- `lib/logic/rummi_poker_grid/rummi_settlement_facade.dart`
+- `lib/logic/rummi_poker_grid/rummi_station_facade.dart`
+- `data/common/items_common_v1.json`
 
 ---
 
-## 2. 코어 전투 로직
+## 2. Core Combat
 
-### 2.1 `lib/logic/rummi_poker_grid/models/tile.dart`
+### `lib/logic/rummi_poker_grid/models/tile.dart`
 
-역할:
+- tile model
+- color/rank representation
+- physical tile identity basis
 
-- 타일 모델
-- 색과 숫자 표현
-- `copiesPerTile` 기반 물리 타일 개념의 기초
+### `lib/logic/rummi_poker_grid/models/poker_deck.dart`
 
-여기서 확인할 것:
+- standard deck generation
+- shuffle
+- draw pile snapshot/restore
+- `copiesPerTile` deck size support
 
-- 타일 identity
-- 색 enum
-- 타일 snapshot 기초 구조
+### `lib/logic/rummi_poker_grid/models/board.dart`
 
-### 2.2 `lib/logic/rummi_poker_grid/models/poker_deck.dart`
+- 5x5 board storage
+- cell read/write
+- board snapshot/restore
 
-역할:
+### `lib/logic/rummi_poker_grid/hand_rank.dart`
 
-- 표준 덱 생성
-- 셔플
-- 남은 카드 스냅샷
-- `copiesPerTile` 기반 덱 총량 유지
+- hand rank enum
+- base score table
+- dead-line score definition
 
-여기서 확인할 것:
+Protection rule:
 
-- 52/104 대응 구조
-- 표준 덱 생성 순서
-- draw pile snapshot 방식
+- `onePair = 0` is the current baseline.
+- Do not change One Pair scoring unless the user explicitly asks for a rules change.
 
-### 2.3 `lib/logic/rummi_poker_grid/models/board.dart`
+### `lib/logic/rummi_poker_grid/hand_evaluator.dart`
 
-역할:
+- best hand evaluation per line
+- contributor index calculation
+- partial-line evaluation
+- `10-11-12-13-1` straight handling
 
-- 5x5 보드 저장
-- 셀 접근
-- 스냅샷 / 복원
+### `lib/logic/rummi_poker_grid/rummi_poker_grid_engine.dart`
 
-### 2.4 `lib/logic/rummi_poker_grid/hand_rank.dart`
+- row/column/diagonal scan
+- 12-line evaluation
+- occupied-count handling
 
-역할:
+### `lib/logic/rummi_poker_grid/rummi_blind_state.dart`
 
-- 현재 족보 enum
-- 현재 기본 점수표
-- dead line 정의
+- current battle target score
+- board discard / hand discard resources
 
-중요:
+Current naming caveat:
 
-- 현재는 `onePair = 0`
-- V4 작성 시 현재 구현 사실 확인의 기준 파일 중 하나다.
+- `blind` is still used in code, but much of the current meaning is battle/stage objective state.
 
-### 2.5 `lib/logic/rummi_poker_grid/hand_evaluator.dart`
+### `lib/logic/rummi_poker_grid/rummi_ruleset.dart`
 
-역할:
+- runtime ruleset values
+- hand-size and combat rule toggles
+- migration bridge for target rules without broad symbol rename
 
-- 줄 단위 최고 족보 판정
-- contributor index 계산
-- Straight / Flush / Full House 등 현재 규칙 구현
+### `lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`
 
-여기서 확인할 것:
+Main runtime facade for the battle session.
 
-- 부분 줄 판정 방식
-- contributor 계산 방식
-- `10-11-12-13-1` 처리 여부
+Responsibilities:
 
-### 2.6 `lib/logic/rummi_poker_grid/rummi_poker_grid_engine.dart`
+- draw
+- place tile
+- board discard
+- hand discard
+- confirm scoring lines
+- contributor removal
+- overlap multiplier application
+- expiry signal
+- next-stage preparation
+- session snapshot/restore
 
-역할:
-
-- 행/열/대각선 평가
-- 현재 보드의 평가 가능한 라인 목록 생성
-
-여기서 확인할 것:
-
-- 줄 스캔 범위
-- occupied count 처리
-- 부분 줄도 평가하는 구조
-
-### 2.7 `lib/logic/rummi_poker_grid/rummi_blind_state.dart`
-
-역할:
-
-- 현재 stage 목표 점수
-- board discard / hand discard 자원 상태
-
-중요:
-
-- 이름은 `blind`지만 현재 의미는 stage 전투 자원 상태다.
-
-### 2.8 `lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart`
-
-역할:
-
-- 현재 전투 세션의 핵심 퍼사드
-- 드로우
-- 배치
-- 버림
-- 확정
-- 만료 신호
-- 다음 stage 준비
-- 세션 snapshot/restore
-
-이 파일이 담당하는 핵심:
-
-1. 현재 session 상태의 truth source
-2. confirm 결과 계산과 contributor 제거
-3. overlap 배수 적용
-4. draw / board discard / hand discard 규칙
-5. stage 전환 시 덱 리셋/셔플
-
-`V4` 작성 시 가장 중요하게 읽어야 하는 파일 중 하나다.
+If a behavior changes battle state, this file or a facade around it is usually involved.
 
 ---
 
-## 3. Jester / economy / run progress
+## 3. Jester, Item, Market, Economy
 
-### 3.1 `lib/logic/rummi_poker_grid/jester_meta.dart`
+### `lib/logic/rummi_poker_grid/jester_meta.dart`
 
-역할:
+Current combined runtime for:
 
-- Jester 카드 모델
-- 카탈로그 로드
-- 상점 오퍼
-- 런 진행도
-- economy 보상
-- stateful Jester 값
-- played hand count
-- 상점 구매/판매/리롤
+- Jester model/catalog interpretation
+- run progress
+- stage target curve
+- gold/economy
+- shop offer generation
+- buy/sell/reroll
+- stateful Jester values
 
-이 파일이 실질적으로 품는 것:
+Boundary caveat:
 
-1. Jester 데이터 해석
-2. 점수 보정 계산
-3. stage clear cash-out 계산
-4. stage 인덱스와 목표 점수 계산
-5. shop flow의 핵심 상태
+- This file still combines several long-term domains. Prefer adding adapter/facade boundaries over broad rewrites.
 
-주의:
+### `lib/logic/rummi_poker_grid/jester_effect_runtime.dart`
 
-- 장기적으로는 분리될 가능성이 높지만, **현재는 Jester + economy + run progress가 한 축에 모여 있다.**
+- Jester runtime effect application
+- scoring/economy/stateful hooks
 
-### 3.2 `data/common/jesters_common_phase5.json`
+### `lib/logic/rummi_poker_grid/item_definition.dart`
 
-역할:
+- Item data model
+- item catalog loading
+- effect operation definitions
 
-- 현재 curated runtime common Jester 카탈로그
+### `lib/logic/rummi_poker_grid/item_effect_runtime.dart`
 
-여기서 확인할 것:
+- Item effect handlers
+- battle/market/settlement/station timing hooks
+- owned item runtime effect application
 
-- 실제 사용 카드 id
-- rarity / baseCost / effectType / conditionType
+When implementing new item behavior, check `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md` after reading this file.
 
----
+### Facades
 
-## 4. 저장 / 이어하기
+- `rummi_battle_facade.dart`: battle read model boundary
+- `rummi_market_facade.dart`: market/shop read model boundary
+- `rummi_settlement_facade.dart`: settlement/cash-out read model boundary
+- `rummi_station_facade.dart`: station/blind selection read model boundary
 
-### 4.1 `lib/services/active_run_save_service.dart`
+These are migration bridges. Prefer routing UI reads through facades instead of reintroducing direct mutable runtime reads in widgets.
 
-역할:
+### Data
 
-- active run 저장
-- active run 로드
-- 무결성 검증
-- stage start snapshot 캡처
-- save schema version 관리
-
-핵심 개념:
-
-1. `ActiveRunRuntimeState`
-2. `ActiveRunStageSnapshot`
-3. `SavedSessionData`
-4. `SavedRunProgressData`
-
-이 파일이 의미하는 것:
-
-- 현재 저장은 단일 active run snapshot 중심
-- `stageStartSnapshot`이 구조적으로 중요
-- `V4` DB/저장 설계 시 반드시 먼저 읽어야 한다
-
-### 4.2 `lib/utils/storage_helper.dart`
-
-역할:
-
-- 실제 로컬 저장 래퍼
-
-### 4.3 `docs/archive/save_resume_architecture.md`
-
-역할:
-
-- 현재 저장 정책의 배경 설명
-- save scope
-- integrity layer 설계 의도
+- `data/common/jesters_common_phase5.json`: current curated Jester runtime catalog
+- `data/common/items_common_v1.json`: current Item v1 runtime catalog
+- `assets/translations/data/`: localized names/effect copy
 
 ---
 
-## 5. 상태 관리
+## 4. Save, Continue, Run Setup
 
-### 5.1 `lib/providers/features/rummi_poker_grid/game_session_state.dart`
+### `lib/services/active_run_save_service.dart`
 
-역할:
+Main active run persistence service.
 
-- 전투 화면이 구독하는 런타임 UI 상태 스냅샷
-- mutable session/runProgress를 품고 revision으로 redraw 트리거
+Responsibilities:
 
-포함 상태:
+- active run save/load
+- integrity check
+- schema version handling
+- stage start snapshot
+- saved session DTOs
+- saved run progress DTOs
+
+Protection rule:
+
+- Current save is active-run snapshot based.
+- Do not replace the save schema or persistence engine as part of unrelated gameplay work.
+
+### `lib/services/active_run_save_facade.dart`
+
+- smaller read/write boundary around active run save
+- used to reduce direct service coupling
+
+### `lib/services/new_run_setup.dart`
+
+- new run creation setup
+- target flow entry support
+
+### `lib/services/blind_selection_setup.dart`
+
+- blind/station selection setup
+- connects selection flow to battle startup
+
+### `lib/services/run_progression_service.dart`
+
+- run/stage progression helper logic
+
+### `lib/services/run_unlock_state_service.dart`
+
+- unlock state support for run selection flows
+
+### `lib/services/debug_run_fixture_service.dart`
+
+- debug fixture entry support
+- useful for smoke and targeted UI checks
+
+### `lib/utils/storage_helper.dart`
+
+- lower-level local storage wrapper
+
+---
+
+## 5. State Management
+
+### `lib/providers/features/rummi_poker_grid/game_session_state.dart`
+
+Runtime UI state snapshot for battle/shop/settlement.
+
+Contains:
 
 - session
-- runProgress
-- stageStartSnapshot
-- activeRunScene
-- 선택 상태
-- Jester overlay 선택
-- settlement flow 상태
+- run progress
+- stage start snapshot
+- active run scene
+- selection state
+- Jester overlay state
+- settlement flow state
+- item/battle/market state that must trigger redraw
 
-### 5.2 `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`
+### `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`
 
-역할:
+Primary app orchestration layer for the current playable loop.
 
-- 현재 전투 화면의 핵심 비즈니스 오케스트레이터
+Responsibilities:
 
-책임:
+- create/restore session
+- restart current stage
+- handle selection state
+- place/discard/confirm actions
+- open settlement/cash-out
+- shop reroll/buy/sell
+- item commands
+- next battle/stage transition
+- save runtime state
 
-1. 새 세션 시작 / restore
-2. restart current stage
-3. 선택 상태 변경
-4. confirmLines
-5. cash-out 준비
-6. shop open / reroll / buy / sell
-7. 다음 stage 진입
-8. 배치 / 드로우 / 버림 액션 처리
+Rule:
 
-주의:
+- UI should call notifier commands.
+- Avoid moving command logic back into widgets.
 
-- 순수 로직 파일은 아니지만, 현재 프로토타입의 실제 흐름은 이 파일을 읽어야 보인다.
+### `lib/providers/features/rummi_poker_grid/title_notifier.dart`
 
-### 5.3 `lib/providers/features/rummi_poker_grid/title_notifier.dart`
+- continue availability
+- save deletion
+- stored run load entry
+- title screen state decisions
 
-역할:
+### `lib/providers/features/rummi_poker_grid/rummi_session_notifier.dart`
 
-- continue availability 검사
-- 저장 삭제
-- stored run 로드 진입
-
-### 5.4 `lib/providers/features/settings/`
-
-역할:
-
-- 음량 / 설정 상태
+- older or narrower session provider path
+- verify current usage before extending it
 
 ---
 
-## 6. 화면 계층
+## 6. Views And Routing
 
-### 6.1 `lib/views/title_view.dart`
+### `lib/views/title_view.dart`
 
-역할:
+- home/title UI
+- continue/new run/debug fixture entry
 
-- 타이틀 UI
-- 이어하기 / 랜덤 시작 / 시드 시작
-- 디버그 픽스처 시작
+### `lib/views/game_view.dart`
 
-### 6.2 `lib/views/game_view.dart`
-
-역할:
-
-- 전투 화면 orchestration
-- notifier 호출
+- battle screen orchestration
+- notifier command calls
 - save trigger
-- SFX / overlay / 네비게이션
-- shop 화면 전환
+- SFX/overlay/navigation wiring
+- transition to shop/settlement related UI
 
-현재 의미:
+Rule:
 
-- UI와 비즈니스 분리가 어느 정도 되었지만,
-- 실제 런타임 흐름을 보려면 이 파일도 반드시 같이 봐야 한다.
+- `game_view.dart` should coordinate UI flow, not own core game rules.
 
-### 6.3 `lib/views/game/widgets/`
+### `lib/views/blind_select_view.dart`
 
-주요 파일:
+- blind/station selection UI
+- next battle setup entry
+
+### `lib/views/game/widgets/`
+
+Important widgets:
 
 - `game_shared_widgets.dart`
 - `game_jester_widgets.dart`
@@ -307,106 +323,75 @@
 - `game_cashout_widgets.dart`
 - `game_shop_screen.dart`
 - `game_options_dialog.dart`
+- `game_tile_choice_dialog.dart`
 
-역할:
+Widget rule:
 
-- 전투 화면 조각 위젯
-- 상점 전체 화면
-- game over / 옵션 / HUD / 보드 / 액션 버튼
+- Widgets should render read models and dispatch commands.
+- They should not become new sources of game truth.
 
-### 6.4 `lib/widgets/phone_frame_scaffold.dart`
+### Shared UI
 
-역할:
+- `lib/widgets/phone_frame_scaffold.dart`: common phone frame layout
+- `lib/widgets/starry_background.dart`: common background
 
-- 공통 phone frame 레이아웃
+### Routing
 
-### 6.5 `lib/widgets/starry_background.dart`
-
-역할:
-
-- 공통 배경
+- `lib/router.dart`: route definitions and navigation targets
 
 ---
 
-## 7. 테스트 파일
+## 7. Tests And Smoke
 
-### 7.1 `test/logic/rummi_board_engine_test.dart`
+Core tests to check before/after risky work:
 
-검증 내용:
+- `test/logic/rummi_board_engine_test.dart`
+- `test/logic/rummi_session_test.dart`
+- `test/providers/game_session_notifier_test.dart`
+- `test/services/active_run_save_service_test.dart`
 
-- 부분 줄 평가
-- 줄 판정 결과
-- 대각선 / 스트레이트 기본 동작
+Smoke scripts:
 
-### 7.2 `test/logic/rummi_session_test.dart`
+- `tools/ios_sim_smoke.sh`
+- `tools/web_build_smoke.sh`
 
-검증 내용:
-
-- 덱 보존 총량
-- draw / discard
-- confirm
-- contributor 제거
-- stage transition
-- expiry signal
-
-### 7.3 `test/providers/game_session_notifier_test.dart`
-
-검증 내용:
-
-- notifier 수준 상태 변경
-- debug hand size 반영 등
-
-이 테스트들은 `V4` 문서 작성 시 “현재 구현 사실”의 보조 근거로 쓸 수 있다.
+Use iOS smoke for user-facing mobile flow changes. Use web smoke when routing, storage, or web build boundaries change.
 
 ---
 
-## 8. 코드 경계 정리
+## 8. Change Boundary Rules
 
-현재 경계는 아래처럼 이해하면 된다.
-
-### 8.1 순수 로직에 가까운 층
-
-- `lib/logic/rummi_poker_grid/`
-
-### 8.2 프로토타입 런 메타와 점수 보정 층
-
-- `lib/logic/rummi_poker_grid/jester_meta.dart`
-
-### 8.3 앱 상태 오케스트레이션 층
-
-- `lib/providers/features/...`
-
-### 8.4 UI orchestration 층
-
-- `lib/views/`
-- `lib/views/game/widgets/`
-
-### 8.5 persistence 층
-
-- `lib/services/active_run_save_service.dart`
-- `lib/utils/storage_helper.dart`
+- Combat rule changes start in `lib/logic/rummi_poker_grid/` and require logic tests.
+- UI state command changes start in `game_session_notifier.dart`, not widgets.
+- Save/restore changes start in `active_run_save_service.dart` and require save tests.
+- Market/shop read changes should prefer `rummi_market_facade.dart`.
+- Battle read changes should prefer `rummi_battle_facade.dart`.
+- Settlement reward/read changes should prefer `rummi_settlement_facade.dart`.
+- Station/blind setup changes should check `blind_selection_setup.dart`, `new_run_setup.dart`, and `rummi_station_facade.dart`.
+- Item effect changes should update `item_effect_runtime.dart` and `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md` together.
 
 ---
 
-## 9. V4 작성 시 같이 봐야 하는 보조 문서
+## 9. Do Not Change Casually
 
-1. `START_HERE.md`
-2. `docs/CURRENT_SYSTEM_OVERVIEW.md`
-3. `docs/CURRENT_TO_V4_GAP.md`
-4. `docs/archive/rummi_poker_grid_gdd.md`
-5. `docs/archive/rummi_poker_grid_game_logic.md`
-6. `docs/archive/save_resume_architecture.md`
-7. `docs/archive/rummi_poker_grid_execution_checklist.md`
+- One Pair score
+- save schema
+- Jester ids
+- item ids
+- broad symbol names such as `stage`/`blind`
+- persistence engine
+- current prototype helper paths used by smoke/debug flows
 
 ---
 
-## 10. 짧은 결론
+## 10. Short Summary
 
-현재 코드에서 가장 중요한 축은 아래 4개다.
+The current runtime is anchored by five files:
 
 1. `rummi_poker_grid_session.dart`
-2. `jester_meta.dart`
-3. `game_session_notifier.dart`
-4. `active_run_save_service.dart`
+2. `game_session_notifier.dart`
+3. `active_run_save_service.dart`
+4. `jester_meta.dart`
+5. `item_effect_runtime.dart`
 
-`V4`를 다시 쓰는 AI는 이 4개와 `START_HERE.md`만 정확히 읽어도 현재 시스템의 뼈대를 거의 파악할 수 있다.
+Most work should start by identifying which of these owns the behavior, then checking the relevant facade/read model and widget boundary.

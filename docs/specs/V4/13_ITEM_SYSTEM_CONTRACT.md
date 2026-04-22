@@ -1,7 +1,7 @@
 # 13. Item System Contract
 
 > 문서 성격: target contract for Jester / Item split
-> 코드 반영 상태: Item v1 catalog written, runtime not implemented
+> 코드 반영 상태: Item v1 catalog written, runtime partially implemented
 > 핵심 정책: 이 문서는 `영역 방향성 확정`과 `구현 전 계약 고정`을 위한 기준이다.
 
 ## 1. Purpose
@@ -53,14 +53,16 @@ data/common/items_common_v1.json
 ```
 
 이 파일은 placeholder 샘플이 아니라 `common run`에서 사용할 v1 후보 카탈로그다.
-현재 수록 범위는 41개 아이템이며, 분포는 다음과 같다.
+현재 수록 범위는 49개 아이템이며, 분포는 다음과 같다.
 
 ```text
-utility: 7
-consumable: 16
-equipment: 8
-passive_relic: 10
+utility: 8
+consumable: 19
+equipment: 10
+passive_relic: 12
 ```
+
+런타임 연결 상태는 이 명세에 중복 기록하지 않는다. 실제 적용/미적용 상태는 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
 
 데이터 작성 기준:
 

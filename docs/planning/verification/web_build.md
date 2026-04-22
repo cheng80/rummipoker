@@ -1,5 +1,8 @@
 # Web 릴리즈 빌드
 
+> GCSE role: `Execution`
+> Role: Web 빌드와 로컬 검증 절차.
+
 ## /rummipoker/ 서브패스에서 실행
 
 앱을 `https://example.com/rummipoker/` 같은 서브패스에서 서비스할 때 사용합니다.

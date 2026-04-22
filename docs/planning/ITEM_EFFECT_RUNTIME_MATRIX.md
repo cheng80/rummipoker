@@ -1,5 +1,8 @@
 # Item Effect Runtime Matrix
 
+> GCSE role: `Execution`
+> Source of truth: Item effect runtime 연결 상태와 다음 구현 묶음.
+
 기준 데이터: `data/common/items_common_v1.json`
 
 이 문서는 v1 Item 49개의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
