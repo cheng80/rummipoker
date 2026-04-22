@@ -8,7 +8,7 @@
 - `current_system`: Context, 현재 코드/시스템 상태와 배경 맥락
 - `specs`: Spec, 기능 규칙, UX, 데이터 계약, 아키텍처 명세
 - `planning`: Execution, 진행 상태, 구현 계획, 체크리스트, 검증 절차
-- `archive`: 최신 판단 기준이 아닌 과거 자료, 생성 산출물, 과거 프롬프트
+- `archive`: 최신 판단 기준은 아니지만 이력 검색에 사용할 수 있는 과거 자료, 생성 산출물, 과거 프롬프트
 
 ## Source of Truth
 
