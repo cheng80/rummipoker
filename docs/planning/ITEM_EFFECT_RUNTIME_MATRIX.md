@@ -34,7 +34,7 @@
 |---|---|---|---|---|
 | `reroll_token` | 다음 market reroll 비용 -1 | `market_reroll` / `discount_next_reroll` | `applyMarketRerollItem` | `applied` |
 | `coupon_stamp` | 다음 구매 가격 -2 | `market_buy` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
-| `coin_cache` | Gold +3 | `use_market` / `gain_gold` | `applyMarketUseItem` | `pendingHook` |
+| `coin_cache` | Gold +3 | `use_market` / `gain_gold` | `applyMarketUseItem` | `applied` |
 | `board_scrap` | 현재 Station 보드 버림 +1 | `use_battle` / `add_board_discard` | `useBattleItem` | `applied` |
 | `hand_scrap` | 현재 Station 손패 버림 +1 | `use_battle` / `add_hand_discard` | `useBattleItem` | `applied` |
 | `chip_capsule` | 다음 confirm chips +25 | `next_confirm` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
@@ -45,23 +45,23 @@
 | `pair_splint` | 다음 Two Pair confirm chips +35 | `next_confirm_if_rank` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
 | `overlap_pin` | 다음 confirm overlap cap bonus +0.25 | `next_confirm` / `temporary_overlap_cap_bonus` | `applyConfirmModifierItem` | `applied` |
 | `emergency_draw` | 손패가 비었으면 즉시 1장 draw | `use_battle` / `draw_if_hand_empty` | `useBattleItem` | `applied` |
-| `ledger_clip` | market 진입 시 Gold +1 | `enter_market` / `gain_gold` | `applyEnterMarketItem` | `pendingHook` |
+| `ledger_clip` | market 진입 시 Gold +1 | `enter_market` / `gain_gold` | `applyEnterMarketItem` | `applied` |
 | `discard_glove` | Station 시작 시 보드 버림 +1 | `station_start` / `add_board_discard` | `applyStationStartItem` | `applied` |
 | `mulligan_sleeve` | Station 시작 시 손패 버림 +1 | `station_start` / `add_hand_discard` | `applyStationStartItem` | `applied` |
 | `shop_lens` | item offer slot +1 | `market_build_offers` / `extra_item_offer_slot` | `applyEnterMarketItem` | `applied` |
-| `jester_hook` | Jester 판매 가격 +1 | `sell_jester` / `sell_price_bonus` | `applySellJesterItem` | `pendingHook` |
+| `jester_hook` | Jester 판매 가격 +1 | `sell_jester` / `sell_price_bonus` | `applySellJesterItem` | `applied` |
 | `score_abacus` | Station 첫 confirm chips +30 | `first_confirm_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
 | `thin_caliper` | 작은 hand confirm mult +4 | `on_confirm_if_played_hand_size_lte` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
-| `stage_map` | boss blind clear reward Gold +1 | `boss_blind_clear_reward` / `gain_gold` | `applyBossClearItem` | `pendingHook` |
-| `spare_pouch` | quick slot +1 | `inventory_capacity` / `extra_quick_slot` | `applyInventoryCapacityItem` | `pendingHook` |
+| `stage_map` | boss blind clear reward Gold +1 | `boss_blind_clear_reward` / `gain_gold` | `applyBossClearItem` | `applied` |
+| `spare_pouch` | quick slot +1 | `inventory_capacity` / `extra_quick_slot` | `applyInventoryCapacityItem` | `applied` |
 | `merchant_stamp` | market 진입 시 첫 reroll 할인 -1 | `enter_market` / `discount_first_reroll` | `applyEnterMarketItem` | `applied` |
 | `safety_net` | Station 첫 failed confirm refund | `failed_confirm` / `refund_first_failed_confirm_each_station` | `applyFailedConfirmItem` | `pendingHook` |
-| `coin_funnel` | 남은 보드 버림 보상 Gold +1씩 추가 | `settlement` / `board_discard_reward_bonus` | `applySettlementItem` | `pendingHook` |
-| `hand_funnel` | 남은 손패 버림 보상 Gold +1씩 추가 | `settlement` / `hand_discard_reward_bonus` | `applySettlementItem` | `pendingHook` |
+| `coin_funnel` | 남은 보드 버림 보상 Gold +1씩 추가 | `settlement` / `board_discard_reward_bonus` | `applySettlementItem` | `applied` |
+| `hand_funnel` | 남은 손패 버림 보상 Gold +1씩 추가 | `settlement` / `hand_discard_reward_bonus` | `applySettlementItem` | `applied` |
 | `lucky_counter` | rare item weight +5 | `market_build_offers` / `rarity_weight_bonus` | `applyEnterMarketItem` | `applied` |
 | `echo_bell` | 두 번째 confirm에 첫 confirm 점수 10% 추가 | `second_confirm_each_station` / `add_percent_of_first_confirm_score` | `applyConfirmModifierItem` | `applied` |
 | `boss_trophy` | 다음 market Jester offer +1 | `boss_blind_clear_market` / `extra_jester_offer_next_market` | `applyBossClearItem` | `pendingHook` |
-| `thin_wallet` | Gold 2 이하이면 Gold +5 | `use_market_if_gold_lte` / `gain_gold` | `applyMarketUseItem` | `pendingHook` |
+| `thin_wallet` | Gold 3 이하이면 Gold +5 | `use_market_if_gold_lte` / `gain_gold` | `applyMarketUseItem` | `applied` |
 | `trade_ticket` | item offer만 reroll | `use_market` / `reroll_item_offers_only` | `applyMarketUseItem` | `pendingHook` |
 | `jester_invoice` | 다음 Jester 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
 | `item_invoice` | 다음 Item 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
@@ -103,11 +103,17 @@
 - Market modifier state/save/facade hook:
   `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`,
   `market_compass`, `shop_lens`, `lucky_counter`
+- Direct economy hook:
+  `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`
+- Settlement reward modifier hook:
+  `coin_funnel`, `hand_funnel`
+- Inventory and sell hook:
+  `spare_pouch`, `jester_hook`
 
 현재 실제 런타임 기준:
 
-- 총 49개 중 `applied` 37개
-- 남은 `pendingHook` 12개
+- 총 49개 중 `applied` 45개
+- 남은 `pendingHook` 4개
 
 ## 공통 구현 묶음 플랜
 
@@ -191,9 +197,9 @@
 
 공통 작업:
 
-- quick slot capacity read model 추가 및 acquisition/placement validation 반영
-- jester sell price modifier hook 추가
-- market/game facade에 변경된 capacity/가격 노출
+- quick slot capacity read model 추가 및 acquisition/placement validation 반영 완료
+- jester sell price modifier hook 추가 완료
+- market/game facade에 변경된 capacity/가격 노출 완료
 
 ### Group 6. Failed Confirm Hook
 
@@ -243,8 +249,10 @@
 - 보드 이동, 손패 한도, station start 자원, deck peek/discard 계열은 1차 runtime 적용 완료
 - Group 1 `Confirm Modifier Runtime`은 queue/save/restore/scoring hook까지 1차 적용 완료
 - Group 2 `Market Discount and Offer Modifier Runtime`은 modifier state/save/facade/가격 적용까지 1차 적용 완료
-- 다음 최우선은 Group 3 `Direct Gold and Economy Hooks`
+- Group 3 `Direct Gold and Economy Hooks`는 gold delta/event/save 경계까지 1차 적용 완료
+- Group 4 `Settlement Reward Modifiers`는 settlement breakdown UX와 gold total 반영까지 1차 적용 완료
+- B7 `Next Station Loop`의 next station transition command 정리는 1차 적용 완료
+- 다음 최우선은 Group 6 `Failed Confirm Hook`
 
-1. Group 3 `Direct Gold and Economy Hooks`: `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`을 gold delta/event/save 경계에 연결한다.
-2. Group 4 `Settlement Reward Modifiers`: settlement breakdown UX와 같이 처리한다.
-3. Group 5-8: capacity/sell/failed confirm/boss delayed/board move follow-up처럼 각각 별도 hook이 필요한 단건 묶음으로 처리한다.
+1. Group 6 `Failed Confirm Hook`: `safety_net`의 confirm 실패 감지와 station-scoped refund를 처리한다.
+2. Group 7-8: boss delayed/board move follow-up처럼 각각 별도 hook이 필요한 단건 묶음으로 처리한다.

@@ -22,15 +22,16 @@ class RummiMarketOwnedEntryView {
 
   factory RummiMarketOwnedEntryView.fromRunProgress(
     RummiRunProgress progress,
-    int slotIndex,
-  ) {
+    int slotIndex, {
+    ItemCatalog? itemCatalog,
+  }) {
     final card = progress.ownedJesters[slotIndex];
     return RummiMarketOwnedEntryView(
       slotIndex: slotIndex,
       category: RummiMarketCategory.jester,
       contentId: card.id,
       displayName: card.displayName,
-      sellPrice: progress.sellPriceAt(slotIndex),
+      sellPrice: progress.sellPriceAt(slotIndex, itemCatalog: itemCatalog),
       card: card,
     );
   }
@@ -148,10 +149,14 @@ class RummiMarketRuntimeFacade {
     required this.ownedEntries,
     required this.offers,
     required this.itemOfferSlotCount,
+    required this.quickSlotCapacity,
     this.itemOffers = const [],
   });
 
-  factory RummiMarketRuntimeFacade.fromRunProgress(RummiRunProgress progress) {
+  factory RummiMarketRuntimeFacade.fromRunProgress(
+    RummiRunProgress progress, {
+    ItemCatalog? itemCatalog,
+  }) {
     return RummiMarketRuntimeFacade(
       gold: progress.gold,
       rerollCost: progress.effectiveRerollCost(),
@@ -159,7 +164,11 @@ class RummiMarketRuntimeFacade {
       runtimeSnapshot: progress.buildRuntimeSnapshot(),
       ownedEntries: List<RummiMarketOwnedEntryView>.generate(
         progress.ownedJesters.length,
-        (index) => RummiMarketOwnedEntryView.fromRunProgress(progress, index),
+        (index) => RummiMarketOwnedEntryView.fromRunProgress(
+          progress,
+          index,
+          itemCatalog: itemCatalog,
+        ),
         growable: false,
       ),
       offers: progress.shopOffers
@@ -172,6 +181,7 @@ class RummiMarketRuntimeFacade {
           )
           .toList(growable: false),
       itemOfferSlotCount: progress.marketModifiers.itemOfferSlotCount,
+      quickSlotCapacity: progress.quickSlotCapacity(itemCatalog: itemCatalog),
       itemOffers: const [],
     );
   }
@@ -187,6 +197,7 @@ class RummiMarketRuntimeFacade {
       ownedEntries: ownedEntries,
       offers: offers,
       itemOfferSlotCount: itemOfferSlotCount,
+      quickSlotCapacity: quickSlotCapacity,
       itemOffers: nextItemOffers,
     );
   }
@@ -198,5 +209,6 @@ class RummiMarketRuntimeFacade {
   final List<RummiMarketOwnedEntryView> ownedEntries;
   final List<RummiMarketOfferView> offers;
   final int itemOfferSlotCount;
+  final int quickSlotCapacity;
   final List<RummiMarketItemOfferView> itemOffers;
 }

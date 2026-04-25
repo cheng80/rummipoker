@@ -426,19 +426,31 @@ class GameSessionNotifier
   }
 
   /// 스테이지 잔여물 처리 + 캐시아웃 계산/적용. 결과 breakdown 반환.
-  RummiCashOutBreakdown prepareCashOut() {
+  RummiCashOutBreakdown prepareCashOut({ItemCatalog? itemCatalog}) {
     final session = state.session!;
     final runProgress = state.runProgress!;
     session.discardStageRemainder();
-    final breakdown = runProgress.buildCashOutBreakdown(session);
+    final breakdown = runProgress.buildCashOutBreakdown(
+      session,
+      itemCatalog: itemCatalog,
+    );
     runProgress.applyCashOut(breakdown);
+    if (itemCatalog != null &&
+        runProgress.currentStationBlindTierIndex == BlindTier.boss.index) {
+      ItemEffectRuntime.applyOwnedBossClearItems(
+        catalog: itemCatalog,
+        runProgress: runProgress,
+      );
+    }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return breakdown;
   }
 
   /// 전투 정산 직후 캐시아웃 준비를 notifier 경계로 모은다.
-  RummiCashOutBreakdown prepareSettlementAndCashOut() {
-    final breakdown = prepareCashOut();
+  RummiCashOutBreakdown prepareSettlementAndCashOut({
+    ItemCatalog? itemCatalog,
+  }) {
+    final breakdown = prepareCashOut(itemCatalog: itemCatalog);
     _replaceState(
       state.copyWith(
         runLoopPhase: GameRunLoopPhase.settlement,
@@ -542,17 +554,30 @@ class GameSessionNotifier
     return null;
   }
 
-  String? buyItemOffer(RummiMarketItemOfferView offer) {
+  String? buyItemOffer(
+    RummiMarketItemOfferView offer, {
+    ItemCatalog? itemCatalog,
+  }) {
     final runProgress = state.runProgress;
     if (runProgress == null) return '상점 진행 정보가 없습니다.';
     final price = runProgress.effectiveItemPrice(offer.item);
     if (runProgress.gold < price) {
       return '골드가 부족합니다.';
     }
-    if (!runProgress.itemInventory.canAcquire(offer.item)) {
+    final quickSlotCapacity = runProgress.quickSlotCapacity(
+      itemCatalog: itemCatalog,
+    );
+    if (!runProgress.itemInventory.canAcquire(
+      offer.item,
+      quickSlotCapacity: quickSlotCapacity,
+    )) {
       return '이미 보유 한도에 도달한 아이템입니다.';
     }
-    final ok = runProgress.buyItem(offer.item, price: price);
+    final ok = runProgress.buyItem(
+      offer.item,
+      price: price,
+      itemCatalog: itemCatalog,
+    );
     if (!ok) {
       return '아이템 구매 처리에 실패했습니다.';
     }
@@ -565,7 +590,21 @@ class GameSessionNotifier
     _replaceState(
       state.copyWith(
         runLoopPhase: GameRunLoopPhase.nextStationTransition,
+        activeRunScene: ActiveRunScene.blindSelect,
         revision: state.revision + 1,
+      ),
+    );
+  }
+
+  /// Market 종료 뒤 blind select route로 넘길 runtime을 station-loop 경계에서 만든다.
+  ActiveRunRuntimeState prepareNextStationBlindSelectRuntime({
+    required NewRunDifficulty difficulty,
+  }) {
+    beginNextStationTransition();
+    return BlindSelectionSetup.prepareRuntimeForBlindSelect(
+      runtime: buildSaveRuntimeState(
+        scene: ActiveRunScene.blindSelect,
+        difficulty: difficulty,
       ),
     );
   }
@@ -748,6 +787,19 @@ class GameSessionNotifier
     return null;
   }
 
+  String? useMarketItem(ItemDefinition item) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+
+    final result = ItemEffectRuntime.applyMarketUseItem(
+      item: item,
+      runProgress: runProgress,
+    );
+    if (!result.isSuccess) return result.failMessage;
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
   DeckPeekBattleUseResult consumeBattleDeckPeekItem(ItemDefinition item) {
     final session = state.session;
     final runProgress = state.runProgress;
@@ -788,10 +840,10 @@ class GameSessionNotifier
   }
 
   /// 장착 제스터 판매. 성공 시 true.
-  bool sellOwnedJester(int index) {
+  bool sellOwnedJester(int index, {ItemCatalog? itemCatalog}) {
     final runProgress = state.runProgress;
     if (runProgress == null) return false;
-    final ok = runProgress.sellOwnedJester(index);
+    final ok = runProgress.sellOwnedJester(index, itemCatalog: itemCatalog);
     if (!ok) return false;
     _replaceState(
       state.copyWith(

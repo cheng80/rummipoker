@@ -27,6 +27,7 @@
 - `ItemDefinition` / `ItemCatalog` loader, market item offer read model, owned item inventory save/restore, item purchase command가 연결됐다.
 - battle item zone은 quick slot/passive rack item을 read model로 표시한다.
 - `ItemEffectRuntime`은 현재 적용 완료와 pending hook을 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`에서 관리한다.
+- Group 5 inventory/sell hook 적용 완료: `spare_pouch` quick slot capacity와 `jester_hook` Jester 판매가 보너스가 구매/판매/read facade에 반영된다.
 - Jester score effect는 `JesterEffectRuntime` 경유로 정리되어 animation/event 경계를 갖는다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
@@ -35,10 +36,10 @@
 최근 문서 정리 및 정합성 검증 기준:
 
 - `flutter analyze`: 통과
-- `flutter test`: 통과, 188 tests passed
+- `flutter test`: 통과, 207 tests passed
 - Markdown absolute link check: 통과
 - `git diff --check`: 통과
-- item catalog: 49 items / 49 ko translations
+- item catalog: 49 items / 49 ko translations, runtime applied 45 / pendingHook 4
 - phase5 jester catalog: 38 jesters / 61 ko translations, phase5 기준 누락 없음
 
 의미 있는 앱 실구동 검증이 필요한 경우 아래 스크립트를 먼저 사용한다.
@@ -47,6 +48,13 @@
 - `tools/web_build_smoke.sh`
 
 검증/산출물 이력은 `docs/planning/verification/daily_logs/`의 날짜별 파일에 남긴다.
+
+최근 iOS smoke:
+
+- 2026-04-25: default launch, auto cash-out loop to Blind Select, market resume, cash-out sheet route 확인.
+- 2026-04-25 추가: `settlement_item_bonus` fixture로 `coin_funnel` / `hand_funnel` item bonus row까지 iOS 화면 확인.
+- 2026-04-25 추가: `inventory_sell_hook_shop` fixture에서 `jester_hook` 판매가 `+3` 표시, `inventory_quick_slot_battle` fixture에서 `spare_pouch` quick slot 3칸 표시 확인.
+- 확인 필요: title launch에서 iOS in-app review prompt가 화면을 가림. item bonus row leading label `I`는 추후 product/design 판단 가능.
 
 ## 4. Recommended Reading
 
@@ -73,23 +81,29 @@
 우선순위:
 
 1. Item effect runtime 남은 hook 처리
-   - Group 3: Direct Gold and Economy Hooks
-   - Group 4: Settlement Reward Modifiers
-   - Group 5 이후 pending hook은 `ITEM_EFFECT_RUNTIME_MATRIX.md` 기준으로 진행
-2. Market / battle interaction polish
+   - 다음은 Group 6 `safety_net` failed confirm hook
+2. B7 Next Station Loop follow-up
+   - next station transition command와 blindSelect save scene 연결은 1차 완료
+   - 남은 작업은 iOS smoke와 station map/preview가 붙을 때 재개
+3. Market / battle interaction polish
    - market card/item slot 기준 유지
    - 설명 패널 높이와 텍스트 말줄임 기준 안정화
    - button/dialog visual consistency 유지
-3. Blind / station pacing polish
+4. UI animation polish pass
+   - 기존 적용 유지: cash-out sheet의 단계별 보상 라인 등장, Jester scoring burst
+   - 현재 진행분 적용 후보: settlement item bonus row 등장 타이밍, total gold 강조, Market route 진입/복귀, Next Station/Blind Select 전환
+   - 다음 UI 작업 기본 규칙: 새 modal/sheet/route/보상/아이템 효과는 120~260ms 범위의 짧은 fade/slide/step animation을 우선 검토
+   - 과하지 않게 적용: 입력 대기, 반복 플레이 속도, 정보 가독성을 방해하면 애니메이션을 줄이거나 생략
+5. Blind / station pacing polish
    - station target scale 기본값 재점검
    - small/big/boss 보상/압박 수치 재조정
    - blind unlock tempo와 continue 복귀 동선 확인
-4. Deferred run rule decision
+6. Deferred run rule decision
    - Balatro식 blind skip 도입 여부와 조건 결정
    - 도입 시 save/checkpoint/reward 규칙을 먼저 문서화
 
 다음 PR 후보:
 
-- `item effect runtime direct economy hook`
-- `item effect runtime settlement reward hook`
+- `item effect runtime inventory and sell hook`
+- `ui animation polish pass`
 - `blind/station pacing polish`

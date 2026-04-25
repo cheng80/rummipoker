@@ -97,10 +97,17 @@ class _GameViewState extends ConsumerState<GameView>
   RummiBattleRuntimeFacade get _battleViewWithItemSlots {
     final battle = _battleView;
     final catalog = _itemCatalog;
-    final inventory = _gameState.runProgress?.itemInventory;
-    if (catalog == null || inventory == null || inventory.ownedItems.isEmpty) {
+    final runProgress = _gameState.runProgress;
+    final inventory = runProgress?.itemInventory;
+    if (catalog == null ||
+        runProgress == null ||
+        inventory == null ||
+        inventory.ownedItems.isEmpty) {
       return battle;
     }
+    final quickSlotCapacity = runProgress.quickSlotCapacity(
+      itemCatalog: catalog,
+    );
 
     final entriesById = {
       for (final entry in inventory.ownedItems) entry.itemId: entry,
@@ -108,7 +115,7 @@ class _GameViewState extends ConsumerState<GameView>
     final itemSlots = <RummiBattleItemSlotView>[];
     var slotIndex = 0;
 
-    for (final itemId in inventory.quickSlotItemIds.take(2)) {
+    for (final itemId in inventory.quickSlotItemIds.take(quickSlotCapacity)) {
       final entry = entriesById[itemId];
       final item = catalog.findById(itemId);
       if (entry == null || item == null) continue;
@@ -286,13 +293,18 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   RummiMarketRuntimeFacade _readMarketViewWithItemOffers() {
-    final market = ref.read(gameSessionNotifierProvider(_gameArgs)).marketView!;
     final catalog = _itemCatalog;
+    final state = ref.read(gameSessionNotifierProvider(_gameArgs));
+    final progress = state.runProgress;
+    final market = progress == null
+        ? state.marketView!
+        : RummiMarketRuntimeFacade.fromRunProgress(
+            progress,
+            itemCatalog: catalog,
+          );
     if (catalog == null) {
       return market;
     }
-    final state = ref.read(gameSessionNotifierProvider(_gameArgs));
-    final progress = state.runProgress;
     final itemOffers = catalog.all
         .take(market.itemOfferSlotCount)
         .toList(growable: false)
@@ -739,7 +751,9 @@ class _GameViewState extends ConsumerState<GameView>
       await _completeRunAndReturnToTitle();
       return;
     }
-    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
+    final breakdown = _gameNotifier.prepareSettlementAndCashOut(
+      itemCatalog: _itemCatalog,
+    );
     await _runSettlementToNextStationLoop(breakdown);
   }
 
@@ -756,7 +770,9 @@ class _GameViewState extends ConsumerState<GameView>
     );
     final canContinue = await _runStageClearPresentation(scoreAdded);
     if (!canContinue) return;
-    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
+    final breakdown = _gameNotifier.prepareSettlementAndCashOut(
+      itemCatalog: _itemCatalog,
+    );
     await _runSettlementToNextStationLoop(
       breakdown,
       autoEnterMarketOnLoad: true,
@@ -805,7 +821,9 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _runAutoCashOutLoopOnLoad() async {
-    final breakdown = _gameNotifier.prepareSettlementAndCashOut();
+    final breakdown = _gameNotifier.prepareSettlementAndCashOut(
+      itemCatalog: _itemCatalog,
+    );
     await _runSettlementToNextStationLoop(breakdown);
   }
 
@@ -832,13 +850,8 @@ class _GameViewState extends ConsumerState<GameView>
     );
     if (!mounted || nextStage != true) return;
 
-    _gameNotifier.beginNextStationTransition();
-    final blindSelectRuntime = BlindSelectionSetup.prepareRuntimeForBlindSelect(
-      runtime: _gameNotifier.buildSaveRuntimeState(
-        scene: ActiveRunScene.blindSelect,
-        difficulty: widget.difficulty,
-      ),
-    );
+    final blindSelectRuntime = _gameNotifier
+        .prepareNextStationBlindSelectRuntime(difficulty: widget.difficulty);
     await ActiveRunSaveService.saveRuntimeState(blindSelectRuntime);
     if (!mounted) return;
     context.go(
@@ -856,8 +869,10 @@ class _GameViewState extends ConsumerState<GameView>
           readMarketView: _readMarketViewWithItemOffers,
           onReroll: _gameNotifier.rerollShopFromState,
           onBuyOffer: _gameNotifier.buyShopOffer,
-          onBuyItemOffer: _gameNotifier.buyItemOffer,
-          onSellOwnedJester: _gameNotifier.sellOwnedJester,
+          onBuyItemOffer: (offer) =>
+              _gameNotifier.buyItemOffer(offer, itemCatalog: _itemCatalog),
+          onSellOwnedJester: (index) =>
+              _gameNotifier.sellOwnedJester(index, itemCatalog: _itemCatalog),
           onStateChanged: _saveActiveRun,
           readActiveRunSaveView: () => ref
               .read(gameSessionNotifierProvider(_gameArgs))

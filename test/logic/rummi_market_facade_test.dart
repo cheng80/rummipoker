@@ -117,6 +117,7 @@ void main() {
           ownedEntries: const [],
           offers: const [],
           itemOfferSlotCount: 3,
+          quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
           itemOffers: [itemOffer],
         );
 
@@ -182,6 +183,56 @@ void main() {
       expect(facade.ownedEntries[1].slotIndex, 1);
       expect(facade.ownedEntries[1].contentId, 'golden_jester');
       expect(facade.ownedEntries[1].sellPrice, 4);
+    });
+
+    test('applies owned sell and quick slot item modifiers', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'jester_hook',
+            timing: 'sell_jester',
+            op: 'sell_price_bonus',
+            placement: 'passiveRack',
+          ),
+          _itemJson(
+            id: 'spare_pouch',
+            timing: 'inventory_capacity',
+            op: 'extra_quick_slot',
+            placement: 'passiveRack',
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..gold = 0
+        ..ownedJesters.add(_jester(id: 'egg', displayName: 'Egg', baseCost: 5))
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'jester_hook',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+            OwnedItemEntry(
+              itemId: 'spare_pouch',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          passiveRelicIds: ['jester_hook', 'spare_pouch'],
+        );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(facade.ownedEntries.single.sellPrice, 3);
+      expect(facade.quickSlotCapacity, 3);
+
+      expect(progress.sellOwnedJester(0, itemCatalog: catalog), isTrue);
+      expect(progress.gold, 3);
     });
 
     test('marks unaffordable offers and carries runtime snapshot values', () {
@@ -250,4 +301,37 @@ void main() {
       },
     );
   });
+}
+
+Map<String, dynamic> _itemJson({
+  required String id,
+  required String timing,
+  required String op,
+  required String placement,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'displayName': id,
+    'displayNameKey': 'data.items.$id.displayName',
+    'type': 'utility',
+    'rarity': 'common',
+    'basePrice': 4,
+    'sellPrice': 2,
+    'stackable': false,
+    'maxStack': 1,
+    'sellable': true,
+    'usableInBattle': false,
+    'placement': placement,
+    'slotHint': 'p',
+    'effectText': 'Test effect.',
+    'effectTextKey': 'data.items.$id.effectText',
+    'effect': <String, dynamic>{
+      'timing': timing,
+      'op': op,
+      'amount': 1,
+      'consume': false,
+    },
+    'tags': <String>['market'],
+    'sourceNotes': 'Test fixture.',
+  };
 }

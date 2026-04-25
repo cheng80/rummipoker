@@ -196,7 +196,18 @@ class ItemEffectRuntime {
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applyMarketUseItem');
+    final validationMessage = _validateMarketUse(item, runProgress);
+    if (validationMessage != null) {
+      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+    }
+    final result = switch (item.effect.op) {
+      'gain_gold' => _applyGainGold(item, runProgress),
+      _ => _pendingHook(item, 'applyMarketUseItem'),
+    };
+    if (!result.isSuccess) return result;
+    final events = <ItemEffectEvent>[...result.events];
+    _consumeIfNeeded(item, runProgress, events);
+    return ItemUseResult.success(itemId: item.id, events: events);
   }
 
   static ItemUseResult useBattleDeckPeekDiscardItem({
@@ -310,6 +321,9 @@ class ItemEffectRuntime {
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
+    if (item.effect.op == 'gain_gold') {
+      return _applyGainGold(item, runProgress);
+    }
     return _applyMarketModifier(item, runProgress);
   }
 
@@ -317,6 +331,23 @@ class ItemEffectRuntime {
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    switch (item.effect.op) {
+      case 'board_discard_reward_bonus':
+      case 'hand_discard_reward_bonus':
+        return ItemUseResult.success(
+          itemId: item.id,
+          events: [
+            ItemEffectEvent(
+              kind: ItemEffectEventKind.settlementModifierQueued,
+              itemId: item.id,
+              amount: amount,
+              detail: item.effect.op,
+            ),
+          ],
+        );
+    }
     return _pendingHook(item, 'applySettlementItem');
   }
 
@@ -347,7 +378,10 @@ class ItemEffectRuntime {
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applyBossClearItem');
+    return switch (item.effect.op) {
+      'gain_gold' => _applyGainGold(item, runProgress),
+      _ => _pendingHook(item, 'applyBossClearItem'),
+    };
   }
 
   static ItemUseResult applyInventoryCapacityItem({
@@ -357,6 +391,7 @@ class ItemEffectRuntime {
   }) {
     return switch (item.effect.op) {
       'increase_hand_size' => _applyIncreaseHandSize(item, session),
+      'extra_quick_slot' => _applyCapacityModifier(item),
       _ => _pendingHook(item, 'applyInventoryCapacityItem'),
     };
   }
@@ -455,11 +490,43 @@ class ItemEffectRuntime {
     return List<ItemUseResult>.unmodifiable(results);
   }
 
+  static List<ItemUseResult> applyOwnedBossClearItems({
+    required ItemCatalog catalog,
+    required RummiRunProgress runProgress,
+  }) {
+    final activeIds = <String>{
+      for (final entry in runProgress.itemInventory.ownedItems)
+        if (entry.count > 0) entry.itemId,
+    };
+    final results = <ItemUseResult>[];
+    for (final itemId in activeIds) {
+      final item = catalog.findById(itemId);
+      if (item == null) continue;
+      switch (item.effect.timing) {
+        case 'boss_blind_clear_reward':
+        case 'boss_blind_clear_market':
+          if (item.placement == ItemPlacement.quickSlot) {
+            break;
+          }
+          results.add(applyBossClearItem(item: item, runProgress: runProgress));
+          if (results.last.isSuccess && item.effect.consume) {
+            runProgress.itemInventory = runProgress.itemInventory
+                .withConsumedItem(item.id);
+          }
+          break;
+      }
+    }
+    return List<ItemUseResult>.unmodifiable(results);
+  }
+
   static ItemUseResult applySellJesterItem({
     required ItemDefinition item,
     required RummiRunProgress runProgress,
   }) {
-    return _pendingHook(item, 'applySellJesterItem');
+    return switch (item.effect.op) {
+      'sell_price_bonus' => _applySellJesterModifier(item),
+      _ => _pendingHook(item, 'applySellJesterItem'),
+    };
   }
 
   static ItemUseResult applyFailedConfirmItem({
@@ -483,10 +550,16 @@ class ItemEffectRuntime {
       'market_reroll:discount_next_reroll' ||
       'market_buy:discount_next_purchase' ||
       'market_buy_if_category:discount_next_purchase' ||
+      'use_market:gain_gold' ||
+      'use_market_if_gold_lte:gain_gold' ||
+      'enter_market:gain_gold' ||
       'enter_market:discount_first_reroll' ||
       'enter_market:discount_cheapest_first_offer' ||
       'market_build_offers:extra_item_offer_slot' ||
       'market_build_offers:rarity_weight_bonus' ||
+      'boss_blind_clear_reward:gain_gold' ||
+      'settlement:board_discard_reward_bonus' ||
+      'settlement:hand_discard_reward_bonus' ||
       'next_confirm:chips_bonus' ||
       'next_confirm:mult_bonus' ||
       'next_confirm:xmult_bonus' ||
@@ -504,8 +577,9 @@ class ItemEffectRuntime {
       'station_start:add_hand_discard' ||
       'station_start:add_board_move' ||
       'station_start:increase_hand_size_with_discard_penalty' ||
-      'inventory_capacity:increase_hand_size' =>
-        ItemEffectApplicationStatus.applied,
+      'inventory_capacity:increase_hand_size' ||
+      'inventory_capacity:extra_quick_slot' ||
+      'sell_jester:sell_price_bonus' => ItemEffectApplicationStatus.applied,
       _ => ItemEffectApplicationStatus.pendingHook,
     };
     return ItemEffectCatalogRow(
@@ -667,6 +741,57 @@ class ItemEffectRuntime {
         );
     }
     return _pendingHook(item, 'applyMarketModifier');
+  }
+
+  static ItemUseResult _applyCapacityModifier(ItemDefinition item) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.capacityModifierQueued,
+          itemId: item.id,
+          amount: amount,
+          detail: item.effect.op,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applySellJesterModifier(ItemDefinition item) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.marketModifierQueued,
+          itemId: item.id,
+          amount: amount,
+          detail: item.effect.op,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applyGainGold(
+    ItemDefinition item,
+    RummiRunProgress runProgress,
+  ) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    runProgress.gold += amount;
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.goldGained,
+          itemId: item.id,
+          amount: amount,
+        ),
+      ],
+    );
   }
 
   static ItemUseResult _applyAddHandDiscard(
@@ -856,6 +981,29 @@ class ItemEffectRuntime {
     );
     if (!hasItem) {
       return '보유 중인 아이템을 찾지 못했습니다.';
+    }
+    return null;
+  }
+
+  static String? _validateMarketUse(
+    ItemDefinition item,
+    RummiRunProgress runProgress,
+  ) {
+    if (item.effect.timing != 'use_market' &&
+        item.effect.timing != 'use_market_if_gold_lte') {
+      return '상점에서 사용할 수 없는 아이템입니다.';
+    }
+    final hasItem = runProgress.itemInventory.ownedItems.any(
+      (entry) => entry.itemId == item.id && entry.count > 0,
+    );
+    if (!hasItem) {
+      return '보유 중인 아이템을 찾지 못했습니다.';
+    }
+    if (item.effect.timing == 'use_market_if_gold_lte') {
+      final threshold = (item.effect.value('threshold') as num?)?.toInt();
+      if (threshold != null && runProgress.gold > threshold) {
+        return '현재 골드가 사용 조건보다 많습니다.';
+      }
     }
     return null;
   }

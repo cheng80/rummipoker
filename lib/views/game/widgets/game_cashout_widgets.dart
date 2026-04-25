@@ -7,6 +7,7 @@ import '../../../logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/line_ref.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
+import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';
@@ -312,7 +313,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
   @override
   Widget build(BuildContext context) {
     final settlement = widget.settlement;
-    final hasEconomyBonuses = settlement.entries.any((e) => e.isEconomyBonus);
+    final hasBonuses = settlement.entries.any((e) => e.isBonus);
     return SafeArea(
       top: false,
       child: Padding(
@@ -361,7 +362,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                     settlement.entries[2],
                   ),
                 ),
-                if (hasEconomyBonuses) ...[
+                if (hasBonuses) ...[
                   const SizedBox(height: 8),
                   AnimatedOpacity(
                     opacity: _step >= 4 ? 1 : 0,
@@ -369,12 +370,11 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                     child: Column(
                       children: [
                         for (final entry in settlement.entries.where(
-                          (entry) => entry.isEconomyBonus,
+                          (entry) => entry.isBonus,
                         )) ...[
                           _GameCashOutLine(
                             leading: entry.leadingLabel,
-                            text:
-                                '${JesterTranslationScope.of(context).resolveDisplayName(entry.jesterId!, entry.displayName!)} 보너스',
+                            text: _bonusEntryDescription(context, entry),
                             gold: entry.gold,
                           ),
                           const SizedBox(height: 8),
@@ -385,7 +385,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                 ],
                 const SizedBox(height: 12),
                 AnimatedOpacity(
-                  opacity: _step >= (hasEconomyBonuses ? 5 : 4) ? 1 : 0,
+                  opacity: _step >= (hasBonuses ? 5 : 4) ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -436,6 +436,22 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
       ),
     );
   }
+}
+
+String _bonusEntryDescription(
+  BuildContext context,
+  RummiSettlementEntryView entry,
+) {
+  final displayName = entry.displayName ?? '';
+  final jesterId = entry.jesterId;
+  if (jesterId != null) {
+    return '${JesterTranslationScope.of(context).resolveDisplayName(jesterId, displayName)} 보너스';
+  }
+  final itemId = entry.itemId;
+  if (itemId != null) {
+    return '${ItemTranslationScope.of(context).resolveDisplayName(itemId, displayName)} 보너스';
+  }
+  return entry.description;
 }
 
 class _GameCashOutLine extends StatelessWidget {

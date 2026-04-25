@@ -33,6 +33,9 @@ class DebugRunFixtureService {
   static const String stage2MarketResume = 'stage2_market_resume';
   static const String deckNeedleBattle = 'deck_needle_battle';
   static const String marketModifierShop = 'market_modifier_shop';
+  static const String settlementItemBonus = 'settlement_item_bonus';
+  static const String inventorySellHookShop = 'inventory_sell_hook_shop';
+  static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
 
   /// 새 디버그 픽스처는 여기에 등록하고, 아래에 대응하는 builder를 추가한다.
   static final List<DebugRunFixtureDefinition> _fixtures = [
@@ -60,6 +63,24 @@ class DebugRunFixtureService {
       label: 'Market Modifier 상점',
       description: '리롤/구매 할인 + Item offer 4칸 검증용',
       builder: _buildMarketModifierShop,
+    ),
+    DebugRunFixtureDefinition(
+      id: settlementItemBonus,
+      label: 'Settlement Item 보너스',
+      description: 'Coin Funnel + Hand Funnel 보유 / cash-out 보너스 라인 검증용',
+      builder: _buildSettlementItemBonus,
+    ),
+    DebugRunFixtureDefinition(
+      id: inventorySellHookShop,
+      label: 'Inventory Sell Hook 상점',
+      description: 'Jester Hook 보유 / Market 판매가 +1 표시 검증용',
+      builder: _buildInventorySellHookShop,
+    ),
+    DebugRunFixtureDefinition(
+      id: inventoryQuickSlotBattle,
+      label: 'Inventory Quick Slot 전투',
+      description: 'Spare Pouch 보유 / quick slot 3칸 표시 검증용',
+      builder: _buildInventoryQuickSlotBattle,
     ),
   ];
 
@@ -374,6 +395,119 @@ class DebugRunFixtureService {
       session: base.session.copySnapshot(),
       runProgress: runProgress,
       stageStartSnapshot: base.stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildSettlementItemBonus() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'coin_funnel',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+          OwnedItemEntry(
+            itemId: 'hand_funnel',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+        ],
+        equippedItemIds: ['coin_funnel', 'hand_funnel'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildInventorySellHookShop() {
+    final base = _buildStage2MarketResume();
+    final runProgress = base.runProgress.copySnapshot()
+      ..gold = 24
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'jester_hook',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        passiveRelicIds: ['jester_hook'],
+      );
+    runProgress.ownedJesters
+      ..clear()
+      ..add(
+        RummiJesterCard(
+          id: 'egg',
+          displayName: 'Egg',
+          rarity: RummiJesterRarity.common,
+          baseCost: 5,
+          effectText: 'Test sell hook fixture.',
+          effectType: 'chips_bonus',
+          trigger: 'onScore',
+          conditionType: 'none',
+          conditionValue: null,
+          value: 10,
+          xValue: null,
+          mappedTileColors: [],
+          mappedTileNumbers: [],
+        ),
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: base.stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildInventoryQuickSlotBattle() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'board_scrap',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'hand_scrap',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'move_token',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'spare_pouch',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        quickSlotItemIds: ['board_scrap', 'hand_scrap', 'move_token'],
+        passiveRelicIds: ['spare_pouch'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
     );
   }
 

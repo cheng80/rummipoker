@@ -23,7 +23,15 @@ void main() {
             gold: 4,
           ),
         ],
-        totalGold: 22,
+        itemGold: 3,
+        itemBonuses: [
+          RummiRoundEndItemBonus(
+            itemId: 'coin_funnel',
+            displayName: 'Coin Funnel',
+            gold: 3,
+          ),
+        ],
+        totalGold: 25,
       );
 
       final facade = RummiSettlementRuntimeFacade.fromCashOut(
@@ -34,24 +42,30 @@ void main() {
       expect(facade.stageIndex, 3);
       expect(facade.targetScore, 300);
       expect(facade.currentGold, 34);
-      expect(facade.totalGold, 22);
-      expect(facade.entries, hasLength(4));
+      expect(facade.totalGold, 25);
+      expect(facade.entries, hasLength(5));
 
-      expect(
-        facade.entries.first.kind,
-        RummiSettlementEntryKind.stationReward,
-      );
+      expect(facade.entries.first.kind, RummiSettlementEntryKind.stationReward);
       expect(facade.entries.first.leadingLabel, 'Station 3');
       expect(facade.entries.first.description, 'Station Goal 300 달성 보상');
       expect(facade.entries.first.gold, 10);
 
-      final economy = facade.entries.last;
+      final economy = facade.entries[3];
       expect(economy.kind, RummiSettlementEntryKind.economyBonus);
       expect(economy.leadingLabel, 'J');
       expect(economy.jesterId, 'green_jester');
       expect(economy.displayName, 'Green Jester');
       expect(economy.gold, 4);
       expect(economy.isEconomyBonus, isTrue);
+
+      final item = facade.entries.last;
+      expect(item.kind, RummiSettlementEntryKind.itemBonus);
+      expect(item.leadingLabel, 'I');
+      expect(item.itemId, 'coin_funnel');
+      expect(item.displayName, 'Coin Funnel');
+      expect(item.gold, 3);
+      expect(item.isItemBonus, isTrue);
+      expect(item.isBonus, isTrue);
     });
   });
 }

@@ -418,6 +418,29 @@ Acceptance:
 - `GameView`가 모든 단계를 직접 조립하지 않아도 된다
 - 이후 `B1 Home Layer`, `B3 Station Map`로 자연스럽게 이어질 수 있다
 
+Current applied note:
+
+- Group 4 settlement item reward가 cash-out breakdown과 settlement read model에 연결됐다.
+- Group 5 inventory/sell hook이 적용됐다. `spare_pouch`는 quick slot 구매/표시 capacity를 늘리고, `jester_hook`은 Market 판매가와 실제 판매 골드를 함께 보정한다.
+- next station blind-select runtime 생성은 `GameSessionNotifier.prepareNextStationBlindSelectRuntime`로 이동했다.
+- `beginNextStationTransition`은 `activeRunScene = blindSelect`와 `nextStationTransition` phase를 함께 기록한다.
+
+Animation polish backlog:
+
+- Already applied:
+  - cash-out sheet reward lines use short staggered opacity steps.
+  - Jester scoring feedback uses burst/fade style animation.
+- Apply to current progressed surfaces:
+  - settlement item bonus rows should keep the same stagger rhythm as base reward rows.
+  - total gold row should get a subtle emphasis when all reward rows have appeared.
+  - Market route entry/resume should use a short fade/slide that does not delay purchases or reroll.
+  - Next Station / Blind Select transition should get a brief transition affordance before route change or on arrival.
+  - item/Jester effect activation should prefer small toast/badge/count feedback over large blocking animation.
+- Acceptance:
+  - animation duration generally stays in the 120~260ms range.
+  - no text overlap, no delayed input for repeated actions, and no layout shift after animation completes.
+  - iOS smoke screenshot or developer eye-check is required for route/sheet/modal animation changes.
+
 ## 16. B1 Home Layer UI Plan
 
 [NEXT] [DOC VERIFIED]

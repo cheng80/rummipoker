@@ -224,6 +224,65 @@ void main() {
       },
     );
 
+    test('quick slot acquisition respects dynamic slot capacity', () {
+      ItemDefinition quickItem(String id) =>
+          ItemDefinition.fromJson(<String, dynamic>{
+            'id': id,
+            'displayName': id,
+            'displayNameKey': 'data.items.$id.displayName',
+            'type': 'consumable',
+            'rarity': 'common',
+            'basePrice': 4,
+            'sellPrice': 2,
+            'stackable': true,
+            'maxStack': 2,
+            'sellable': true,
+            'usableInBattle': true,
+            'placement': 'quickSlot',
+            'slotHint': 'q',
+            'effectText': 'Test effect.',
+            'effectTextKey': 'data.items.$id.effectText',
+            'effect': <String, dynamic>{
+              'timing': 'use_battle',
+              'op': 'add_board_discard',
+              'amount': 1,
+              'consume': true,
+            },
+            'tags': <String>['battle'],
+            'sourceNotes': 'Test fixture.',
+          });
+      final thirdItem = quickItem('third_quick_item');
+      const inventory = RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'board_scrap',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'peek_chip',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['board_scrap', 'peek_chip'],
+      );
+
+      expect(inventory.canAcquire(thirdItem), isFalse);
+      expect(inventory.canAcquire(thirdItem, quickSlotCapacity: 3), isTrue);
+
+      final expanded = inventory.withAcquiredItem(
+        thirdItem,
+        quickSlotCapacity: 3,
+      );
+
+      expect(expanded.quickSlotItemIds, [
+        'board_scrap',
+        'peek_chip',
+        'third_quick_item',
+      ]);
+    });
+
     test('owned item inventory consumes stacks and removes empty slot ids', () {
       const inventory = RunInventoryState(
         ownedItems: [

@@ -590,6 +590,80 @@ void main() {
       ]);
     });
 
+    test('market use item gains gold and consumes inventory stack', () {
+      final item = _item(
+        id: 'coin_cache',
+        timing: 'use_market',
+        op: 'gain_gold',
+        placement: ItemPlacement.inventory,
+        amount: 3,
+        consume: true,
+      );
+      final runProgress = RummiRunProgress()
+        ..gold = 4
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'coin_cache',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+
+      final result = ItemEffectRuntime.applyMarketUseItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(runProgress.gold, 7);
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+      expect(result.events.map((event) => event.kind), [
+        ItemEffectEventKind.goldGained,
+        ItemEffectEventKind.itemConsumed,
+      ]);
+    });
+
+    test('market use item respects low-gold threshold', () {
+      final item = _item(
+        id: 'thin_wallet',
+        timing: 'use_market_if_gold_lte',
+        op: 'gain_gold',
+        placement: ItemPlacement.inventory,
+        amount: 5,
+        consume: true,
+        rawEffect: const {'threshold': 3},
+      );
+      final runProgress = RummiRunProgress()
+        ..gold = 4
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'thin_wallet',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+
+      final rejected = ItemEffectRuntime.applyMarketUseItem(
+        item: item,
+        runProgress: runProgress,
+      );
+      runProgress.gold = 3;
+      final applied = ItemEffectRuntime.applyMarketUseItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(rejected.isSuccess, isFalse);
+      expect(rejected.failMessage, '현재 골드가 사용 조건보다 많습니다.');
+      expect(applied.isSuccess, isTrue);
+      expect(runProgress.gold, 8);
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+    });
+
     test(
       'market buy item queues category discount and consumes on purchase',
       () {
@@ -636,6 +710,60 @@ void main() {
         );
       },
     );
+
+    test('inventory capacity item reports extra quick slot modifier', () {
+      final item = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'spare_pouch',
+          timing: 'inventory_capacity',
+          op: 'extra_quick_slot',
+          placement: 'passiveRack',
+        ),
+      );
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      final runProgress = RummiRunProgress();
+
+      final result = ItemEffectRuntime.applyInventoryCapacityItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(
+        result.events.single.kind,
+        ItemEffectEventKind.capacityModifierQueued,
+      );
+      expect(result.events.single.amount, 1);
+      expect(result.events.single.detail, 'extra_quick_slot');
+    });
+
+    test('sell jester item reports sell price bonus modifier', () {
+      final item = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'jester_hook',
+          timing: 'sell_jester',
+          op: 'sell_price_bonus',
+          placement: 'passiveRack',
+        ),
+      );
+
+      final result = ItemEffectRuntime.applySellJesterItem(
+        item: item,
+        runProgress: RummiRunProgress(),
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(
+        result.events.single.kind,
+        ItemEffectEventKind.marketModifierQueued,
+      );
+      expect(result.events.single.amount, 1);
+      expect(result.events.single.detail, 'sell_price_bonus');
+    });
 
     test('owned enter market items queue first reroll and offer modifiers', () {
       final catalog = ItemCatalog.fromJson({
@@ -687,6 +815,104 @@ void main() {
       expect(runProgress.marketModifiers.itemOfferSlotCount, 4);
     });
 
+    test('owned enter market gain-gold item applies immediately', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          _itemJson(
+            id: 'ledger_clip',
+            timing: 'enter_market',
+            op: 'gain_gold',
+            placement: 'equipped',
+            consume: false,
+          ),
+        ],
+      });
+      final runProgress = RummiRunProgress()
+        ..gold = 10
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'ledger_clip',
+              count: 1,
+              placement: ItemPlacement.equipped,
+            ),
+          ],
+          equippedItemIds: ['ledger_clip'],
+        );
+
+      final results = ItemEffectRuntime.applyOwnedEnterMarketItems(
+        catalog: catalog,
+        runProgress: runProgress,
+      );
+
+      expect(results.single.isSuccess, isTrue);
+      expect(runProgress.gold, 11);
+      expect(results.single.events.single.kind, ItemEffectEventKind.goldGained);
+    });
+
+    test('owned boss clear gain-gold item applies on boss reward hook', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          _itemJson(
+            id: 'stage_map',
+            timing: 'boss_blind_clear_reward',
+            op: 'gain_gold',
+            placement: 'passiveRack',
+            consume: false,
+          ),
+        ],
+      });
+      final runProgress = RummiRunProgress()
+        ..gold = 10
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'stage_map',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          passiveRelicIds: ['stage_map'],
+        );
+
+      final results = ItemEffectRuntime.applyOwnedBossClearItems(
+        catalog: catalog,
+        runProgress: runProgress,
+      );
+
+      expect(results.single.isSuccess, isTrue);
+      expect(runProgress.gold, 11);
+      expect(results.single.events.single.kind, ItemEffectEventKind.goldGained);
+    });
+
+    test('settlement item returns settlement modifier event', () {
+      final item = _item(
+        id: 'coin_funnel',
+        timing: 'settlement',
+        op: 'board_discard_reward_bonus',
+        placement: ItemPlacement.equipped,
+        amount: 1,
+        consume: false,
+      );
+      final runProgress = RummiRunProgress();
+
+      final result = ItemEffectRuntime.applySettlementItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(
+        result.events.single.kind,
+        ItemEffectEventKind.settlementModifierQueued,
+      );
+      expect(result.events.single.detail, 'board_discard_reward_bonus');
+    });
+
     test('catalogEffectRows assigns every v1 item to a runtime handler', () {
       final catalog = ItemCatalog.fromJsonString(
         File('data/common/items_common_v1.json').readAsStringSync(),
@@ -714,10 +940,16 @@ void main() {
           'market_reroll:discount_next_reroll',
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',
+          'use_market:gain_gold',
+          'use_market_if_gold_lte:gain_gold',
+          'enter_market:gain_gold',
           'enter_market:discount_first_reroll',
           'enter_market:discount_cheapest_first_offer',
           'market_build_offers:extra_item_offer_slot',
           'market_build_offers:rarity_weight_bonus',
+          'boss_blind_clear_reward:gain_gold',
+          'settlement:board_discard_reward_bonus',
+          'settlement:hand_discard_reward_bonus',
           'next_confirm:chips_bonus',
           'next_confirm:mult_bonus',
           'next_confirm:xmult_bonus',
@@ -736,6 +968,8 @@ void main() {
           'station_start:add_board_move',
           'station_start:increase_hand_size_with_discard_penalty',
           'inventory_capacity:increase_hand_size',
+          'inventory_capacity:extra_quick_slot',
+          'sell_jester:sell_price_bonus',
         },
       );
     });

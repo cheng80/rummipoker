@@ -11,6 +11,7 @@ enum RummiSettlementEntryKind {
   boardDiscardReward,
   handDiscardReward,
   economyBonus,
+  itemBonus,
 }
 
 class RummiSettlementEntryView {
@@ -20,6 +21,7 @@ class RummiSettlementEntryView {
     required this.description,
     required this.gold,
     this.jesterId,
+    this.itemId,
     this.displayName,
   });
 
@@ -28,9 +30,12 @@ class RummiSettlementEntryView {
   final String description;
   final int gold;
   final String? jesterId;
+  final String? itemId;
   final String? displayName;
 
   bool get isEconomyBonus => kind == RummiSettlementEntryKind.economyBonus;
+  bool get isItemBonus => kind == RummiSettlementEntryKind.itemBonus;
+  bool get isBonus => isEconomyBonus || isItemBonus;
 }
 
 class RummiSettlementRuntimeFacade {
@@ -74,6 +79,16 @@ class RummiSettlementRuntimeFacade {
           description: '${bonus.displayName} 보너스',
           gold: bonus.gold,
           jesterId: bonus.jesterId,
+          displayName: bonus.displayName,
+        ),
+      ),
+      ...breakdown.itemBonuses.map(
+        (bonus) => RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.itemBonus,
+          leadingLabel: 'I',
+          description: '${bonus.displayName} 보너스',
+          gold: bonus.gold,
+          itemId: bonus.itemId,
           displayName: bonus.displayName,
         ),
       ),

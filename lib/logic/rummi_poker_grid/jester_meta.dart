@@ -536,6 +536,8 @@ class RummiCashOutBreakdown {
     required this.economyBonuses,
     required this.economyGold,
     required this.totalGold,
+    this.itemBonuses = const [],
+    this.itemGold = 0,
   });
 
   final int stageIndex;
@@ -549,6 +551,8 @@ class RummiCashOutBreakdown {
   final int handDiscardGold;
   final List<RummiRoundEndEconomyBonus> economyBonuses;
   final int economyGold;
+  final List<RummiRoundEndItemBonus> itemBonuses;
+  final int itemGold;
   final int totalGold;
 }
 
@@ -560,6 +564,18 @@ class RummiRoundEndEconomyBonus {
   });
 
   final String jesterId;
+  final String displayName;
+  final int gold;
+}
+
+class RummiRoundEndItemBonus {
+  const RummiRoundEndItemBonus({
+    required this.itemId,
+    required this.displayName,
+    required this.gold,
+  });
+
+  final String itemId;
   final String displayName;
   final int gold;
 }
@@ -772,7 +788,10 @@ class RummiRunProgress {
     session.maxHandSize = maxHandSize;
   }
 
-  RummiCashOutBreakdown buildCashOutBreakdown(RummiPokerGridSession session) {
+  RummiCashOutBreakdown buildCashOutBreakdown(
+    RummiPokerGridSession session, {
+    ItemCatalog? itemCatalog,
+  }) {
     final blindReward = stageClearGoldBase;
     final remainingBoardDiscards = session.blind.boardDiscardsRemaining;
     final remainingHandDiscards = session.blind.handDiscardsRemaining;
@@ -794,6 +813,14 @@ class RummiRunProgress {
       0,
       (sum, bonus) => sum + bonus.gold,
     );
+    final itemBonuses = itemCatalog == null
+        ? const <RummiRoundEndItemBonus>[]
+        : _buildRoundEndItemBonuses(
+            catalog: itemCatalog,
+            remainingBoardDiscards: remainingBoardDiscards,
+            remainingHandDiscards: remainingHandDiscards,
+          );
+    final itemGold = itemBonuses.fold<int>(0, (sum, bonus) => sum + bonus.gold);
     return RummiCashOutBreakdown(
       stageIndex: stageIndex,
       targetScore: session.blind.targetScore,
@@ -806,8 +833,49 @@ class RummiRunProgress {
       handDiscardGold: handDiscardGold,
       economyBonuses: economyBonuses,
       economyGold: economyGold,
-      totalGold: blindReward + boardDiscardGold + handDiscardGold + economyGold,
+      itemBonuses: itemBonuses,
+      itemGold: itemGold,
+      totalGold:
+          blindReward +
+          boardDiscardGold +
+          handDiscardGold +
+          economyGold +
+          itemGold,
     );
+  }
+
+  List<RummiRoundEndItemBonus> _buildRoundEndItemBonuses({
+    required ItemCatalog catalog,
+    required int remainingBoardDiscards,
+    required int remainingHandDiscards,
+  }) {
+    final activeIds = <String>{
+      for (final entry in itemInventory.ownedItems)
+        if (entry.count > 0) entry.itemId,
+    };
+    final bonuses = <RummiRoundEndItemBonus>[];
+    for (final itemId in activeIds) {
+      final item = catalog.findById(itemId);
+      if (item == null || item.effect.timing != 'settlement') {
+        continue;
+      }
+      final amount = (item.effect.amount ?? 0).toInt();
+      if (amount <= 0) continue;
+      final gold = switch (item.effect.op) {
+        'board_discard_reward_bonus' => remainingBoardDiscards * amount,
+        'hand_discard_reward_bonus' => remainingHandDiscards * amount,
+        _ => 0,
+      };
+      if (gold <= 0) continue;
+      bonuses.add(
+        RummiRoundEndItemBonus(
+          itemId: item.id,
+          displayName: item.displayName,
+          gold: gold,
+        ),
+      );
+    }
+    return List<RummiRoundEndItemBonus>.unmodifiable(bonuses);
   }
 
   void applyCashOut(RummiCashOutBreakdown breakdown) {
@@ -983,35 +1051,58 @@ class RummiRunProgress {
     return true;
   }
 
-  bool buyItem(ItemDefinition item, {int? price}) {
+  bool buyItem(ItemDefinition item, {int? price, ItemCatalog? itemCatalog}) {
     final resolvedPrice = price ?? effectiveItemPrice(item);
     if (gold < resolvedPrice) {
       return false;
     }
-    if (!itemInventory.canAcquire(item)) {
+    final capacity = quickSlotCapacity(itemCatalog: itemCatalog);
+    if (!itemInventory.canAcquire(item, quickSlotCapacity: capacity)) {
       return false;
     }
     gold -= resolvedPrice;
-    itemInventory = itemInventory.withAcquiredItem(item);
+    itemInventory = itemInventory.withAcquiredItem(
+      item,
+      quickSlotCapacity: capacity,
+    );
     _consumePurchaseDiscounts('item');
     return true;
   }
 
-  bool sellOwnedJester(int slotIndex) {
+  bool sellOwnedJester(int slotIndex, {ItemCatalog? itemCatalog}) {
     if (slotIndex < 0 || slotIndex >= ownedJesters.length) {
       return false;
     }
     final sold = ownedJesters.removeAt(slotIndex);
     _removeStateAtSlot(slotIndex);
-    gold += _sellPriceFor(sold);
+    gold +=
+        _sellPriceFor(sold) + jesterSellPriceBonus(itemCatalog: itemCatalog);
     return true;
   }
 
-  int sellPriceAt(int slotIndex) {
+  int sellPriceAt(int slotIndex, {ItemCatalog? itemCatalog}) {
     if (slotIndex < 0 || slotIndex >= ownedJesters.length) {
       return 0;
     }
-    return _sellPriceFor(ownedJesters[slotIndex]);
+    return _sellPriceFor(ownedJesters[slotIndex]) +
+        jesterSellPriceBonus(itemCatalog: itemCatalog);
+  }
+
+  int quickSlotCapacity({ItemCatalog? itemCatalog}) {
+    return RunInventoryState.defaultQuickSlotCapacity +
+        _sumOwnedItemEffectAmount(
+          itemCatalog: itemCatalog,
+          timing: 'inventory_capacity',
+          op: 'extra_quick_slot',
+        );
+  }
+
+  int jesterSellPriceBonus({ItemCatalog? itemCatalog}) {
+    return _sumOwnedItemEffectAmount(
+      itemCatalog: itemCatalog,
+      timing: 'sell_jester',
+      op: 'sell_price_bonus',
+    );
   }
 
   void advanceStage(
@@ -1135,6 +1226,24 @@ class RummiRunProgress {
   static int _sellPriceFor(RummiJesterCard card) {
     final value = card.baseCost ~/ 2;
     return value < 1 ? 1 : value;
+  }
+
+  int _sumOwnedItemEffectAmount({
+    required ItemCatalog? itemCatalog,
+    required String timing,
+    required String op,
+  }) {
+    if (itemCatalog == null) return 0;
+    var total = 0;
+    for (final entry in itemInventory.ownedItems) {
+      if (entry.count <= 0 || !entry.isActive) continue;
+      final item = itemCatalog.findById(entry.itemId);
+      if (item == null) continue;
+      if (item.effect.timing != timing || item.effect.op != op) continue;
+      final amount = (item.effect.amount ?? 0).toInt();
+      if (amount > 0) total += amount * entry.count;
+    }
+    return total;
   }
 
   bool _cheapestFirstOfferDiscountApplies(int basePrice, String category) {

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -889,6 +890,104 @@ void main() {
           breakdown.boardDiscardGold +
           breakdown.handDiscardGold +
           breakdown.economyGold,
+    );
+  });
+
+  test('라운드 종료 item 보너스가 남은 버림 자원 기준으로 캐시아웃에 합산된다', () {
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 300,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+      ),
+    );
+    final catalog = ItemCatalog.fromJson(const {
+      'schemaVersion': 1,
+      'catalogId': 'test',
+      'items': [
+        {
+          'id': 'coin_funnel',
+          'displayName': 'Coin Funnel',
+          'displayNameKey': 'data.items.coin_funnel.displayName',
+          'type': 'equipment',
+          'rarity': 'common',
+          'basePrice': 6,
+          'sellPrice': 3,
+          'stackable': false,
+          'maxStack': 1,
+          'sellable': true,
+          'usableInBattle': false,
+          'placement': 'equipped',
+          'slotHint': 'gear',
+          'effectText': 'Each remaining board discard gives +1 Gold.',
+          'effectTextKey': 'data.items.coin_funnel.effectText',
+          'effect': {
+            'timing': 'settlement',
+            'op': 'board_discard_reward_bonus',
+            'amount': 1,
+          },
+          'tags': ['equipment', 'settlement'],
+          'sourceNotes': 'Test fixture.',
+        },
+        {
+          'id': 'hand_funnel',
+          'displayName': 'Hand Funnel',
+          'displayNameKey': 'data.items.hand_funnel.displayName',
+          'type': 'equipment',
+          'rarity': 'common',
+          'basePrice': 6,
+          'sellPrice': 3,
+          'stackable': false,
+          'maxStack': 1,
+          'sellable': true,
+          'usableInBattle': false,
+          'placement': 'equipped',
+          'slotHint': 'gear',
+          'effectText': 'Each remaining hand discard gives +1 Gold.',
+          'effectTextKey': 'data.items.hand_funnel.effectText',
+          'effect': {
+            'timing': 'settlement',
+            'op': 'hand_discard_reward_bonus',
+            'amount': 1,
+          },
+          'tags': ['equipment', 'settlement'],
+          'sourceNotes': 'Test fixture.',
+        },
+      ],
+    });
+    final progress = RummiRunProgress()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'coin_funnel',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+          OwnedItemEntry(
+            itemId: 'hand_funnel',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+        ],
+        equippedItemIds: ['coin_funnel', 'hand_funnel'],
+      );
+
+    final breakdown = progress.buildCashOutBreakdown(
+      session,
+      itemCatalog: catalog,
+    );
+
+    expect(breakdown.itemBonuses.map((e) => e.itemId).toList(), [
+      'coin_funnel',
+      'hand_funnel',
+    ]);
+    expect(breakdown.itemGold, 5);
+    expect(
+      breakdown.totalGold,
+      breakdown.blindReward +
+          breakdown.boardDiscardGold +
+          breakdown.handDiscardGold +
+          breakdown.itemGold,
     );
   });
 

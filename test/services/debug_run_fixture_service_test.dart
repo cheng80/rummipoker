@@ -99,4 +99,56 @@ void main() {
       'market_compass',
     ]);
   });
+
+  test('settlement item bonus fixture starts with settlement reward items', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.settlementItemBonus,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.runProgress.itemInventory.equippedItemIds, [
+      'coin_funnel',
+      'hand_funnel',
+    ]);
+    expect(
+      fixture.runProgress.itemInventory.ownedItems.map((entry) => entry.itemId),
+      ['coin_funnel', 'hand_funnel'],
+    );
+  });
+
+  test('inventory sell hook fixture opens shop with jester hook', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.inventorySellHookShop,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
+    expect(fixture.runProgress.ownedJesters.single.id, 'egg');
+    expect(fixture.runProgress.itemInventory.passiveRelicIds, ['jester_hook']);
+    expect(
+      fixture.runProgress.itemInventory.ownedItems.map((entry) => entry.itemId),
+      ['jester_hook'],
+    );
+  });
+
+  test(
+    'inventory quick slot fixture starts with spare pouch and 3 quick slots',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.inventoryQuickSlotBattle,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.battle);
+      expect(fixture.runProgress.itemInventory.passiveRelicIds, [
+        'spare_pouch',
+      ]);
+      expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+        'board_scrap',
+        'hand_scrap',
+        'move_token',
+      ]);
+    },
+  );
 }

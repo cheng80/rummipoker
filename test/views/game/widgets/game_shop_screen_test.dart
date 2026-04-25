@@ -143,6 +143,7 @@ void main() {
         ),
       ],
       itemOfferSlotCount: 3,
+      quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
       itemOffers: [itemOffer],
     );
     var currentSave = const RummiActiveRunSaveFacade(
@@ -182,6 +183,7 @@ void main() {
           ownedEntries: currentMarket.ownedEntries,
           offers: currentMarket.offers,
           itemOfferSlotCount: currentMarket.itemOfferSlotCount,
+          quickSlotCapacity: currentMarket.quickSlotCapacity,
           itemOffers: [nextItemOffer],
         );
         currentSave = const RummiActiveRunSaveFacade(
@@ -220,6 +222,7 @@ void main() {
           ],
           offers: const [],
           itemOfferSlotCount: 3,
+          quickSlotCapacity: currentMarket.quickSlotCapacity,
           itemOffers: currentMarket.itemOffers,
         );
         currentSave = const RummiActiveRunSaveFacade(

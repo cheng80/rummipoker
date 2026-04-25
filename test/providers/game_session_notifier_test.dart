@@ -433,6 +433,66 @@ void main() {
       expect(updated.runProgress!.ownedJesters, isEmpty);
     });
 
+    test('sellOwnedJester는 보유 아이템의 판매 보너스를 적용한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3101);
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'jester_hook',
+            timing: 'sell_jester',
+            op: 'sell_price_bonus',
+            placement: 'passiveRack',
+          ),
+        ],
+      });
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!
+        ..gold = 0
+        ..ownedJesters.add(
+          const RummiJesterCard(
+            id: 'egg',
+            displayName: 'Egg',
+            rarity: RummiJesterRarity.common,
+            baseCost: 5,
+            effectText: '',
+            effectType: 'chips_bonus',
+            trigger: 'onScore',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 10,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+        )
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'jester_hook',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          passiveRelicIds: ['jester_hook'],
+        );
+      notifier.markDirty();
+
+      final sold = notifier.sellOwnedJester(0, itemCatalog: catalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(sold, isTrue);
+      expect(updated.runProgress!.gold, 3);
+      expect(updated.runProgress!.ownedJesters, isEmpty);
+    });
+
     test('sellSelectedJesterOverlayFromState는 선택된 오버레이 슬롯을 판매한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -564,6 +624,77 @@ void main() {
       expect(updated.runProgress!.itemInventory.quickSlotItemIds, [item.id]);
     });
 
+    test('buyItemOffer는 spare pouch quick slot 용량을 적용한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3701);
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'spare_pouch',
+            timing: 'inventory_capacity',
+            op: 'extra_quick_slot',
+            placement: 'passiveRack',
+          ),
+        ],
+      });
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!
+        ..gold = 20
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'board_scrap',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+            OwnedItemEntry(
+              itemId: 'peek_chip',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+            OwnedItemEntry(
+              itemId: 'spare_pouch',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          quickSlotItemIds: ['board_scrap', 'peek_chip'],
+          passiveRelicIds: ['spare_pouch'],
+        );
+      final thirdQuickItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'third_quick_item',
+          timing: 'use_battle',
+          op: 'add_board_discard',
+          placement: 'quickSlot',
+        ),
+      );
+      final offer = RummiMarketItemOfferView.fromItemDefinition(
+        thirdQuickItem,
+        slotIndex: 0,
+        currentGold: 20,
+      );
+
+      final failWithoutCatalog = notifier.buyItemOffer(offer);
+      final okWithCatalog = notifier.buyItemOffer(offer, itemCatalog: catalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failWithoutCatalog, '이미 보유 한도에 도달한 아이템입니다.');
+      expect(okWithCatalog, isNull);
+      expect(updated.runProgress!.itemInventory.quickSlotItemIds, [
+        'board_scrap',
+        'peek_chip',
+        'third_quick_item',
+      ]);
+    });
+
     test('buyItemOffer는 market item discount를 적용하고 소비한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -618,6 +749,60 @@ void main() {
       expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold - 2);
       expect(updated.runProgress!.marketModifiers.nextItemPurchaseDiscount, 0);
       expect(updated.marketView!.gold, RummiEconomyConfig.startingGold - 2);
+    });
+
+    test('useMarketItem은 market 사용 아이템으로 골드와 facade를 갱신한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3802);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final item = ItemDefinition.fromJson(const <String, dynamic>{
+        'id': 'coin_cache',
+        'displayName': 'Coin Cache',
+        'displayNameKey': 'data.items.coin_cache.displayName',
+        'type': 'consumable',
+        'rarity': 'common',
+        'basePrice': 3,
+        'sellPrice': 1,
+        'stackable': true,
+        'maxStack': 2,
+        'sellable': true,
+        'usableInBattle': false,
+        'placement': 'inventory',
+        'slotHint': 'q',
+        'effectText': 'Gain +3 Gold immediately.',
+        'effectTextKey': 'data.items.coin_cache.effectText',
+        'effect': <String, dynamic>{
+          'timing': 'use_market',
+          'op': 'gain_gold',
+          'amount': 3,
+          'consume': true,
+        },
+        'tags': <String>['gold'],
+        'sourceNotes': 'Test fixture.',
+      });
+      state.runProgress!.itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'coin_cache',
+            count: 1,
+            placement: ItemPlacement.inventory,
+          ),
+        ],
+      );
+      notifier.markDirty();
+
+      final failMessage = notifier.useMarketItem(item);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold + 3);
+      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold + 3);
+      expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
     });
 
     test('useBattleItem은 discard 자원을 올리고 consumable stack을 소모한다', () {
@@ -892,6 +1077,11 @@ void main() {
           transitioning.runLoopPhase,
           GameRunLoopPhase.nextStationTransition,
         );
+        expect(transitioning.activeRunScene, ActiveRunScene.blindSelect);
+        expect(
+          transitioning.activeRunSaveView!.sceneAlias,
+          RummiSaveSceneAlias.blindSelect,
+        );
 
         notifier.advanceToNextStation(args.runSeed);
         final advanced = container.read(gameSessionNotifierProvider(args));
@@ -917,6 +1107,155 @@ void main() {
         );
       },
     );
+
+    test('prepareNextStationBlindSelectRuntime는 전환 상태와 저장 scene을 함께 만든다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 4303);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      final runtime = notifier.prepareNextStationBlindSelectRuntime(
+        difficulty: NewRunDifficulty.standard,
+      );
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(runtime.activeScene, ActiveRunScene.blindSelect);
+      expect(updated.activeRunScene, ActiveRunScene.blindSelect);
+      expect(updated.runLoopPhase, GameRunLoopPhase.nextStationTransition);
+      expect(
+        updated.activeRunSaveView!.sceneAlias,
+        RummiSaveSceneAlias.blindSelect,
+      );
+      expect(runtime.stageStartSnapshot.runProgress.stageIndex, 1);
+    });
+
+    test('boss cash-out는 stage_map boss clear reward를 적용한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 4301);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final itemCatalog = ItemCatalog.fromJson(const {
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          {
+            'id': 'stage_map',
+            'displayName': 'Station Map',
+            'displayNameKey': 'data.items.stage_map.displayName',
+            'type': 'passive_relic',
+            'rarity': 'common',
+            'basePrice': 6,
+            'sellPrice': 3,
+            'stackable': false,
+            'maxStack': 1,
+            'sellable': true,
+            'usableInBattle': false,
+            'placement': 'passiveRack',
+            'slotHint': 'passive',
+            'effectText': 'Boss Blind clear reward gives +1 Gold.',
+            'effectTextKey': 'data.items.stage_map.effectText',
+            'effect': {
+              'timing': 'boss_blind_clear_reward',
+              'op': 'gain_gold',
+              'amount': 1,
+            },
+            'tags': ['relic', 'gold', 'boss'],
+            'sourceNotes': 'Test fixture.',
+          },
+        ],
+      });
+      state.runProgress!
+        ..currentStationBlindTierIndex = BlindTier.boss.index
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'stage_map',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          passiveRelicIds: ['stage_map'],
+        );
+      final initialGold = state.runProgress!.gold;
+
+      final breakdown = notifier.prepareSettlementAndCashOut(
+        itemCatalog: itemCatalog,
+      );
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(updated.runProgress!.gold, initialGold + breakdown.totalGold + 1);
+      expect(updated.marketView!.gold, initialGold + breakdown.totalGold + 1);
+    });
+
+    test('cash-out는 settlement item reward modifier를 적용한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 4302);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final itemCatalog = ItemCatalog.fromJson(const {
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          {
+            'id': 'coin_funnel',
+            'displayName': 'Coin Funnel',
+            'displayNameKey': 'data.items.coin_funnel.displayName',
+            'type': 'equipment',
+            'rarity': 'common',
+            'basePrice': 6,
+            'sellPrice': 3,
+            'stackable': false,
+            'maxStack': 1,
+            'sellable': true,
+            'usableInBattle': false,
+            'placement': 'equipped',
+            'slotHint': 'gear',
+            'effectText': 'Each remaining board discard gives +1 Gold.',
+            'effectTextKey': 'data.items.coin_funnel.effectText',
+            'effect': {
+              'timing': 'settlement',
+              'op': 'board_discard_reward_bonus',
+              'amount': 1,
+            },
+            'tags': ['equipment', 'settlement'],
+            'sourceNotes': 'Test fixture.',
+          },
+        ],
+      });
+      state.session!.blind.boardDiscardsRemaining = 2;
+      state.session!.blind.handDiscardsRemaining = 0;
+      state.runProgress!.itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'coin_funnel',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+        ],
+        equippedItemIds: ['coin_funnel'],
+      );
+      final initialGold = state.runProgress!.gold;
+
+      final breakdown = notifier.prepareSettlementAndCashOut(
+        itemCatalog: itemCatalog,
+      );
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(breakdown.itemGold, 2);
+      expect(updated.runProgress!.gold, initialGold + breakdown.totalGold);
+      expect(updated.marketView!.gold, initialGold + breakdown.totalGold);
+    });
 
     test('buildSaveRuntimeState는 현재 runtime과 active scene을 그대로 반영한다', () {
       final container = ProviderContainer();
@@ -1189,4 +1528,37 @@ void main() {
       );
     });
   });
+}
+
+Map<String, dynamic> _itemJson({
+  required String id,
+  required String timing,
+  required String op,
+  required String placement,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'displayName': id,
+    'displayNameKey': 'data.items.$id.displayName',
+    'type': 'utility',
+    'rarity': 'common',
+    'basePrice': 4,
+    'sellPrice': 2,
+    'stackable': false,
+    'maxStack': 1,
+    'sellable': true,
+    'usableInBattle': placement == 'quickSlot',
+    'placement': placement,
+    'slotHint': 'q',
+    'effectText': 'Test effect.',
+    'effectTextKey': 'data.items.$id.effectText',
+    'effect': <String, dynamic>{
+      'timing': timing,
+      'op': op,
+      'amount': 1,
+      'consume': false,
+    },
+    'tags': <String>['test'],
+    'sourceNotes': 'Test fixture.',
+  };
 }
