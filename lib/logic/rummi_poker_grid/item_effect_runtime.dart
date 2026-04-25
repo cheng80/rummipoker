@@ -23,6 +23,7 @@ enum ItemEffectEventKind {
   settlementModifierQueued,
   capacityModifierQueued,
   bossModifierQueued,
+  expiryGuardTriggered,
   interactionRequired,
 }
 
@@ -529,11 +530,52 @@ class ItemEffectRuntime {
     };
   }
 
-  static ItemUseResult applyFailedConfirmItem({
+  static ItemUseResult applyExpiryGuardItem({
     required ItemDefinition item,
+    required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
+    required List<RummiExpirySignal> signals,
   }) {
-    return _pendingHook(item, 'applyFailedConfirmItem');
+    return switch (item.effect.op) {
+      'rescue_first_expiry_each_station' => _applyExpiryGuardRescue(
+        item,
+        session,
+        signals,
+      ),
+      _ => _pendingHook(item, 'applyExpiryGuardItem'),
+    };
+  }
+
+  static List<ItemUseResult> applyOwnedExpiryGuardItems({
+    required ItemCatalog catalog,
+    required RummiPokerGridSession session,
+    required RummiRunProgress runProgress,
+    required List<RummiExpirySignal> signals,
+  }) {
+    if (signals.isEmpty) return const [];
+    final activeIds = <String>{
+      for (final entry in runProgress.itemInventory.ownedItems)
+        if (entry.count > 0) entry.itemId,
+    };
+    final results = <ItemUseResult>[];
+    for (final itemId in activeIds) {
+      final item = catalog.findById(itemId);
+      if (item == null || item.effect.timing != 'expiry_guard') continue;
+      if (item.placement == ItemPlacement.quickSlot) continue;
+      final result = applyExpiryGuardItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        signals: signals,
+      );
+      results.add(result);
+      if (result.isSuccess && item.effect.consume) {
+        runProgress.itemInventory = runProgress.itemInventory.withConsumedItem(
+          item.id,
+        );
+      }
+    }
+    return List<ItemUseResult>.unmodifiable(results);
   }
 
   static ItemEffectCatalogRow _catalogRowFor(ItemDefinition item) {
@@ -579,7 +621,9 @@ class ItemEffectRuntime {
       'station_start:increase_hand_size_with_discard_penalty' ||
       'inventory_capacity:increase_hand_size' ||
       'inventory_capacity:extra_quick_slot' ||
-      'sell_jester:sell_price_bonus' => ItemEffectApplicationStatus.applied,
+      'sell_jester:sell_price_bonus' ||
+      'expiry_guard:rescue_first_expiry_each_station' =>
+        ItemEffectApplicationStatus.applied,
       _ => ItemEffectApplicationStatus.pendingHook,
     };
     return ItemEffectCatalogRow(
@@ -682,7 +726,7 @@ class ItemEffectRuntime {
       'boss_blind_clear_market' => 'applyBossClearItem',
       'inventory_capacity' => 'applyInventoryCapacityItem',
       'sell_jester' => 'applySellJesterItem',
-      'failed_confirm' => 'applyFailedConfirmItem',
+      'expiry_guard' => 'applyExpiryGuardItem',
       'market_build_offers' => 'applyEnterMarketItem',
       _ => 'unassignedItemEffectHandler',
     };
@@ -773,6 +817,66 @@ class ItemEffectRuntime {
         ),
       ],
     );
+  }
+
+  static ItemUseResult _applyExpiryGuardRescue(
+    ItemDefinition item,
+    RummiPokerGridSession session,
+    List<RummiExpirySignal> signals,
+  ) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    final canAddBoardDiscard = signals.contains(
+      RummiExpirySignal.boardFullAfterDcExhausted,
+    );
+    final canRecycleDraw =
+        signals.contains(RummiExpirySignal.drawPileExhausted) &&
+        session.eliminated.isNotEmpty &&
+        session.hand.length < session.maxHandSize;
+    if (!canAddBoardDiscard && !canRecycleDraw) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '안전망으로 복구할 수 있는 만료 상태가 아닙니다.',
+      );
+    }
+    if (!session.tryUseExpiryGuard()) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '이미 이번 스테이션의 안전망을 사용했습니다.',
+      );
+    }
+    final events = <ItemEffectEvent>[
+      ItemEffectEvent(
+        kind: ItemEffectEventKind.expiryGuardTriggered,
+        itemId: item.id,
+        amount: amount,
+        detail: item.effect.op,
+      ),
+    ];
+    if (canAddBoardDiscard) {
+      session.blind.boardDiscardsRemaining += amount;
+      events.add(
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.boardDiscardAdded,
+          itemId: item.id,
+          amount: amount,
+        ),
+      );
+    }
+    if (canRecycleDraw) {
+      final drawn = session.recycleEliminatedIntoDeckAndDraw();
+      if (drawn != null) {
+        events.add(
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.tileDrawn,
+            itemId: item.id,
+            amount: 1,
+            detail: 'recycled_eliminated',
+          ),
+        );
+      }
+    }
+    return ItemUseResult.success(itemId: item.id, events: events);
   }
 
   static ItemUseResult _applyGainGold(

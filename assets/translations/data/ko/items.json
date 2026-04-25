@@ -95,7 +95,7 @@
       },
       "safety_net": {
         "displayName": "안전망",
-        "effectText": "스테이션마다 첫 확정 실패를 1회 무효화합니다."
+        "effectText": "스테이션마다 첫 전투 종료 위기를 1회 막습니다."
       },
       "coin_funnel": {
         "displayName": "코인 깔때기",

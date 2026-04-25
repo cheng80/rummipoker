@@ -121,6 +121,7 @@ class SavedSessionData {
     this.confirmModifiers = const [],
     this.confirmCountThisStation = 0,
     this.firstConfirmScoreThisStation = 0,
+    this.expiryGuardUsedThisStation = false,
   });
 
   final int runSeed;
@@ -137,6 +138,7 @@ class SavedSessionData {
   final List<Map<String, dynamic>> confirmModifiers;
   final int confirmCountThisStation;
   final int firstConfirmScoreThisStation;
+  final bool expiryGuardUsedThisStation;
 
   Map<String, dynamic> toJson() => {
     'runSeed': runSeed,
@@ -153,6 +155,7 @@ class SavedSessionData {
     'confirmModifiers': confirmModifiers,
     'confirmCountThisStation': confirmCountThisStation,
     'firstConfirmScoreThisStation': firstConfirmScoreThisStation,
+    'expiryGuardUsedThisStation': expiryGuardUsedThisStation,
   };
 
   static SavedSessionData fromJson(Map<String, dynamic> json) {
@@ -195,6 +198,10 @@ class SavedSessionData {
           (json['confirmCountThisStation'] as num?)?.toInt() ?? 0,
       firstConfirmScoreThisStation:
           (json['firstConfirmScoreThisStation'] as num?)?.toInt() ?? 0,
+      expiryGuardUsedThisStation:
+          json['expiryGuardUsedThisStation'] as bool? ??
+          json['failedConfirmRefundUsedThisStation'] as bool? ??
+          false,
     );
   }
 }
@@ -525,6 +532,7 @@ class ActiveRunSaveService {
           .toList(growable: false),
       confirmCountThisStation: session.confirmCountThisStation,
       firstConfirmScoreThisStation: session.firstConfirmScoreThisStation,
+      expiryGuardUsedThisStation: session.expiryGuardUsedThisStation,
     );
   }
 
@@ -591,6 +599,7 @@ class ActiveRunSaveService {
           .toList(growable: false),
       confirmCountThisStation: data.confirmCountThisStation,
       firstConfirmScoreThisStation: data.firstConfirmScoreThisStation,
+      expiryGuardUsedThisStation: data.expiryGuardUsedThisStation,
     );
   }
 

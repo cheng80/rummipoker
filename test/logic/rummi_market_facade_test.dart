@@ -273,6 +273,31 @@ void main() {
       );
     });
 
+    test('base run leaves the fifth jester slot locked for future unlocks', () {
+      final progress = RummiRunProgress()
+        ..gold = 20
+        ..ownedJesters.addAll([
+          _jester(id: 'slot_1'),
+          _jester(id: 'slot_2'),
+          _jester(id: 'slot_3'),
+          _jester(id: 'slot_4'),
+        ])
+        ..shopOffers.add(
+          RummiShopOffer(
+            slotIndex: 0,
+            card: _jester(id: 'slot_5_offer'),
+            price: 1,
+          ),
+        );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(facade.maxOwnedSlots, RummiRunProgress.maxJesterSlots);
+      expect(progress.jesterSlotCapacity(), 4);
+      expect(progress.buyOffer(0), isFalse);
+      expect(progress.ownedJesters.length, 4);
+    });
+
     test(
       'facade is snapshot-based and requires re-creation after mutations',
       () {

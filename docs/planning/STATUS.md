@@ -28,6 +28,7 @@
 - battle item zone은 quick slot/passive rack item을 read model로 표시한다.
 - `ItemEffectRuntime`은 현재 적용 완료와 pending hook을 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`에서 관리한다.
 - Group 5 inventory/sell hook 적용 완료: `spare_pouch` quick slot capacity와 `jester_hook` Jester 판매가 보너스가 구매/판매/read facade에 반영된다.
+- Group 6 expiry guard hook 적용 완료: `safety_net`은 스테이션당 첫 전투 종료 위기에서 보드 버림 또는 구조 드로우를 제공하고 해당 사용 상태를 save/restore한다.
 - Jester score effect는 `JesterEffectRuntime` 경유로 정리되어 animation/event 경계를 갖는다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
@@ -36,10 +37,10 @@
 최근 문서 정리 및 정합성 검증 기준:
 
 - `flutter analyze`: 통과
-- `flutter test`: 통과, 207 tests passed
+- `flutter test`: 통과, 211 tests passed
 - Markdown absolute link check: 통과
 - `git diff --check`: 통과
-- item catalog: 49 items / 49 ko translations, runtime applied 45 / pendingHook 4
+- item catalog: 49 items / 49 ko translations, runtime applied 46 / pendingHook 3
 - phase5 jester catalog: 38 jesters / 61 ko translations, phase5 기준 누락 없음
 
 의미 있는 앱 실구동 검증이 필요한 경우 아래 스크립트를 먼저 사용한다.
@@ -54,6 +55,8 @@
 - 2026-04-25: default launch, auto cash-out loop to Blind Select, market resume, cash-out sheet route 확인.
 - 2026-04-25 추가: `settlement_item_bonus` fixture로 `coin_funnel` / `hand_funnel` item bonus row까지 iOS 화면 확인.
 - 2026-04-25 추가: `inventory_sell_hook_shop` fixture에서 `jester_hook` 판매가 `+3` 표시, `inventory_quick_slot_battle` fixture에서 `spare_pouch` quick slot 3칸 표시 확인.
+- 2026-04-25 추가: `safety_net_expiry_guard` fixture에서 Safety Net 보유와 보드가 꽉 찬 종료 위기 상태 확인. 구조 feedback은 provider test로 확인하고, snackbar는 필요 시 수동 eye-check 대상이다.
+- 2026-04-26 추가: `inventory_quick_slot_battle` fixture에서 Q1-Q3/P1-P2 분리, Q/P 잠금 표시, item name 2줄 표시 확인. `inventory_sell_hook_shop` fixture에서 Jester 5th 잠금과 Item Slot Q3/P2 잠금 표시 확인.
 - 확인 필요: title launch에서 iOS in-app review prompt가 화면을 가림. item bonus row leading label `I`는 추후 product/design 판단 가능.
 
 ## 4. Recommended Reading
@@ -81,7 +84,7 @@
 우선순위:
 
 1. Item effect runtime 남은 hook 처리
-   - 다음은 Group 6 `safety_net` failed confirm hook
+   - 다음은 Group 7 `boss_trophy` boss/next market offer hook
 2. B7 Next Station Loop follow-up
    - next station transition command와 blindSelect save scene 연결은 1차 완료
    - 남은 작업은 iOS smoke와 station map/preview가 붙을 때 재개
@@ -93,6 +96,9 @@
    - 기존 적용 유지: cash-out sheet의 단계별 보상 라인 등장, Jester scoring burst
    - 현재 진행분 적용 후보: settlement item bonus row 등장 타이밍, total gold 강조, Market route 진입/복귀, Next Station/Blind Select 전환
    - 다음 UI 작업 기본 규칙: 새 modal/sheet/route/보상/아이템 효과는 120~260ms 범위의 짧은 fade/slide/step animation을 우선 검토
+   - 아이템 효과는 수동/패시브 모두 발동 사실과 실제 delta가 명확히 보여야 한다. snackbar만으로 끝내지 말고 overlay, badge, `+1` float, resource pulse 중 하나를 제공한다.
+   - 입력 차단 barrier는 직접 `ModalBarrier`와 색상 값을 하드코딩하지 말고 `GameInputBarrier.modal()` 또는 `GameInputBarrier.feedback()`를 사용한다.
+   - battle item/Jester slot UI는 의미별 표시와 잠금 상태를 분리한다. Quick/Passive/Jester 표시 개수와 초기 해금 개수는 공용 상수/용량 메서드를 사용하고, 새 UI에서 `Q3`, `P2`, `Jester 5th` 잠금을 다시 하드코딩하지 않는다.
    - 과하지 않게 적용: 입력 대기, 반복 플레이 속도, 정보 가독성을 방해하면 애니메이션을 줄이거나 생략
 5. Blind / station pacing polish
    - station target scale 기본값 재점검

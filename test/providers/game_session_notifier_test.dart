@@ -5,6 +5,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -491,6 +492,72 @@ void main() {
       expect(sold, isTrue);
       expect(updated.runProgress!.gold, 3);
       expect(updated.runProgress!.ownedJesters, isEmpty);
+    });
+
+    test('applyExpiryGuard는 safety_net으로 첫 전투 종료 위기를 구조한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3102);
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'safety_net',
+            timing: 'expiry_guard',
+            op: 'rescue_first_expiry_each_station',
+            placement: 'passiveRack',
+          ),
+        ],
+      });
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.session!.blind.boardDiscardsRemaining = 0;
+      const ranks = [
+        [1, 3, 6, 8, 11],
+        [2, 5, 9, 12, 4],
+        [7, 10, 13, 1, 5],
+        [8, 11, 2, 6, 9],
+        [2, 4, 7, 10, 13],
+      ];
+      for (var row = 0; row < kBoardSize; row++) {
+        for (var col = 0; col < kBoardSize; col++) {
+          state.session!.board.setCell(
+            row,
+            col,
+            Tile(
+              color:
+                  TileColor.values[(row + col * 2) % TileColor.values.length],
+              number: ranks[row][col],
+            ),
+          );
+        }
+      }
+      expect(state.session!.canConfirmAllFullLines, isFalse);
+      state.runProgress!.itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'safety_net',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        passiveRelicIds: ['safety_net'],
+      );
+      notifier.markDirty();
+
+      final first = notifier.applyExpiryGuard(itemCatalog: catalog);
+      final second = notifier.applyExpiryGuard(itemCatalog: catalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(first, isNotNull);
+      expect(first!.message, '안전망이 보드 버림 1회를 확보했습니다.');
+      expect(second, isNull);
+      expect(updated.session!.blind.boardDiscardsRemaining, 1);
+      expect(updated.session!.expiryGuardUsedThisStation, isTrue);
     });
 
     test('sellSelectedJesterOverlayFromState는 선택된 오버레이 슬롯을 판매한다', () {

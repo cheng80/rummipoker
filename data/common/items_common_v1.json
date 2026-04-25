@@ -609,14 +609,14 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Undo the first failed confirm attempt once per Station.",
+      "effectText": "Prevent the first run-ending combat lock once per Station.",
       "effect": {
-        "timing": "failed_confirm",
-        "op": "refund_first_failed_confirm_each_station",
+        "timing": "expiry_guard",
+        "op": "rescue_first_expiry_each_station",
         "amount": 1
       },
       "tags": ["relic", "safety", "battle"],
-      "sourceNotes": "Defensive relic pattern translated into failed-confirm forgiveness.",
+      "sourceNotes": "Defensive relic pattern translated into one run-ending combat lock rescue.",
       "displayNameKey": "data.items.safety_net.displayName",
       "effectTextKey": "data.items.safety_net.effectText"
     },

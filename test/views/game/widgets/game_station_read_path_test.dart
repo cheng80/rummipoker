@@ -201,14 +201,82 @@ void main() {
       ),
     );
 
-    expect(find.text('Board Scrap'), findsOneWidget);
+    expect(find.text('Board\nScrap'), findsOneWidget);
     expect(find.text('Q1'), findsOneWidget);
     expect(find.text('x2'), findsOneWidget);
     expect(find.text('Q2'), findsOneWidget);
-    expect(find.text('P'), findsOneWidget);
+    expect(find.text('Q3'), findsOneWidget);
+    expect(find.text('P1'), findsOneWidget);
+    expect(find.text('P2'), findsOneWidget);
 
-    await tester.tap(find.text('Board Scrap'));
+    await tester.tap(find.text('Board\nScrap'));
     expect(tappedSlot?.contentId, 'board_scrap');
+  });
+
+  testWidgets('GameItemZoneSkeleton keeps passive items in passive slots', (
+    tester,
+  ) async {
+    final safetyNet = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'safety_net',
+      'displayName': 'Safety Net',
+      'displayNameKey': 'data.items.safety_net.displayName',
+      'type': 'utility',
+      'rarity': 'common',
+      'basePrice': 4,
+      'sellPrice': 2,
+      'stackable': false,
+      'maxStack': 1,
+      'sellable': true,
+      'usableInBattle': false,
+      'placement': 'passiveRack',
+      'slotHint': 'passive',
+      'effectText':
+          'Prevent the first run-ending combat lock once per Station.',
+      'effectTextKey': 'data.items.safety_net.effectText',
+      'effect': <String, dynamic>{
+        'timing': 'expiry_guard',
+        'op': 'rescue_first_expiry_each_station',
+        'amount': 1,
+      },
+      'tags': <String>['battle', 'safety'],
+      'sourceNotes': 'Test fixture.',
+    });
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+      itemSlots: [
+        RummiBattleItemSlotView.fromOwnedItem(
+          slotIndex: 0,
+          slotLabel: 'P1',
+          entry: const OwnedItemEntry(
+            itemId: 'safety_net',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+          item: safetyNet,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: GameItemZoneSkeleton(battle: battle)),
+      ),
+    );
+
+    expect(find.text('Q1'), findsOneWidget);
+    expect(find.text('Q2'), findsOneWidget);
+    expect(find.text('Q3'), findsOneWidget);
+    expect(find.text('Safety\nNet'), findsOneWidget);
+    expect(find.text('P1'), findsOneWidget);
+    expect(
+      tester.getCenter(find.text('Safety\nNet')).dx,
+      greaterThan(tester.getCenter(find.text('Q3')).dx),
+    );
   });
 
   testWidgets('GameBattleItemInfoOverlay confirms use from explicit button', (
@@ -276,5 +344,65 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.close_rounded));
     expect(closeCount, 1);
+  });
+
+  testWidgets('GameBattleItemInfoOverlay marks passive items as auto effects', (
+    tester,
+  ) async {
+    final item = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'safety_net',
+      'displayName': 'Safety Net',
+      'displayNameKey': 'data.items.safety_net.displayName',
+      'type': 'utility',
+      'rarity': 'common',
+      'basePrice': 4,
+      'sellPrice': 2,
+      'stackable': false,
+      'maxStack': 1,
+      'sellable': true,
+      'usableInBattle': false,
+      'placement': 'passiveRack',
+      'slotHint': 'passive',
+      'effectText':
+          'Prevent the first run-ending combat lock once per Station.',
+      'effectTextKey': 'data.items.safety_net.effectText',
+      'effect': <String, dynamic>{
+        'timing': 'expiry_guard',
+        'op': 'rescue_first_expiry_each_station',
+        'amount': 1,
+      },
+      'tags': <String>['battle', 'safety'],
+      'sourceNotes': 'Test fixture.',
+    });
+    final itemSlot = RummiBattleItemSlotView.fromOwnedItem(
+      slotIndex: 0,
+      slotLabel: 'P1',
+      entry: const OwnedItemEntry(
+        itemId: 'safety_net',
+        count: 1,
+        placement: ItemPlacement.passiveRack,
+      ),
+      item: item,
+    );
+    var useCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameBattleItemInfoOverlay(
+            itemSlot: itemSlot,
+            onUse: () => useCount += 1,
+            onClose: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Safety Net'), findsOneWidget);
+    expect(find.text('패시브'), findsOneWidget);
+    expect(find.text('자동 발동'), findsOneWidget);
+    expect(find.text('패시브 효과 · 조건 충족 시 자동 발동'), findsOneWidget);
+    expect(find.text('사용'), findsNothing);
+    expect(useCount, 0);
   });
 }

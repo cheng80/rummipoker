@@ -67,7 +67,7 @@
 최근 UI 쪽 current baseline 변화:
 
 - market는 full-screen shop route를 유지하되 내부 표현은 `카드 선택 + 상세 패널 + page/reroll` 구조로 이동 중이다.
-- battle item zone은 `가로 3-slot` 구조를 유지하면서 slot 체급을 키우는 쪽으로 조정 중이다.
+- battle item zone은 Quick `Q1-Q3`와 Passive `P1-P2`를 의미별로 분리 표시한다. 초기에는 `Q1/Q2/P1`만 열고 `Q3/P2`는 잠금으로 노출한다.
 - battle debug 조작은 options dialog/in-line HUD에서 분리해 작은 진입 버튼과 modal bottom sheet로 모으는 방향을 채택했다.
 
 ## 3. Non-Negotiable Protection Rules
@@ -422,6 +422,7 @@ Current applied note:
 
 - Group 4 settlement item reward가 cash-out breakdown과 settlement read model에 연결됐다.
 - Group 5 inventory/sell hook이 적용됐다. `spare_pouch`는 quick slot 구매/표시 capacity를 늘리고, `jester_hook`은 Market 판매가와 실제 판매 골드를 함께 보정한다.
+- Group 6 expiry guard hook이 적용됐다. `safety_net`은 스테이션당 첫 전투 종료 위기에서 보드 버림 또는 구조 드로우를 제공하고 해당 사용 상태를 저장/복원한다.
 - next station blind-select runtime 생성은 `GameSessionNotifier.prepareNextStationBlindSelectRuntime`로 이동했다.
 - `beginNextStationTransition`은 `activeRunScene = blindSelect`와 `nextStationTransition` phase를 함께 기록한다.
 

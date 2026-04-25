@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../game/rummi_poker_grid/rummikub_tile_canvas.dart';
+import '../../../logic/rummi_poker_grid/item_definition.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
@@ -21,6 +22,12 @@ const double kBoardGridGap = 1.5;
 const double kBoardTileInnerPadding = 2.0;
 const double kBattleItemSlotWidth = 58.0;
 const double kBattleItemSlotHeight = 78.0;
+const int kBattleQuickSlotDisplayCount = 3;
+const int kBattlePassiveSlotDisplayCount = 2;
+const int kBattleBaseUnlockedQuickSlots = 2;
+const int kBattleBaseUnlockedPassiveSlots = 1;
+const Color kGameModalBarrierColor = Color(0x70000000);
+const Color kGameFeedbackBarrierColor = Color(0x22000000);
 
 const TextStyle gameHudLabelStyle = TextStyle(
   color: Colors.white70,
@@ -34,6 +41,20 @@ final TextStyle gameHudValueStyle = TextStyle(
   fontWeight: FontWeight.w900,
   height: 1,
 );
+
+class GameInputBarrier extends StatelessWidget {
+  const GameInputBarrier.modal({super.key}) : color = kGameModalBarrierColor;
+
+  const GameInputBarrier.feedback({super.key})
+    : color = kGameFeedbackBarrierColor;
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ModalBarrier(dismissible: false, color: color);
+  }
+}
 
 const TextStyle gameHudSubStyle = TextStyle(
   color: Colors.white70,
@@ -299,7 +320,20 @@ class GameItemZoneSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slots = battle.itemSlots;
+    final quickSlots = battle.itemSlots
+        .where((slot) => slot.placement == ItemPlacement.quickSlot)
+        .toList(growable: false);
+    final passiveSlots = battle.itemSlots
+        .where((slot) => slot.placement == ItemPlacement.passiveRack)
+        .toList(growable: false);
+    final unlockedQuickSlots = max(
+      kBattleBaseUnlockedQuickSlots,
+      quickSlots.length,
+    );
+    final unlockedPassiveSlots = max(
+      kBattleBaseUnlockedPassiveSlots,
+      passiveSlots.length,
+    );
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFF173126).withValues(alpha: 0.78),
@@ -311,13 +345,22 @@ class GameItemZoneSkeleton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            for (var index = 0; index < 3; index++)
+            for (var index = 0; index < kBattleQuickSlotDisplayCount; index++)
               _GameItemPocketChip(
-                label: index < 2 ? 'Q${index + 1}' : 'P',
-                accent: index < 2
-                    ? const Color(0xFF267B67)
-                    : const Color(0xFF4C5A55),
-                itemSlot: index < slots.length ? slots[index] : null,
+                label: 'Q${index + 1}',
+                accent: const Color(0xFF267B67),
+                itemSlot: index < quickSlots.length ? quickSlots[index] : null,
+                locked: index >= unlockedQuickSlots,
+                onTap: onItemSlotTap,
+              ),
+            for (var index = 0; index < kBattlePassiveSlotDisplayCount; index++)
+              _GameItemPocketChip(
+                label: 'P${index + 1}',
+                accent: const Color(0xFF4C5A55),
+                itemSlot: index < passiveSlots.length
+                    ? passiveSlots[index]
+                    : null,
+                locked: index >= unlockedPassiveSlots,
                 onTap: onItemSlotTap,
               ),
           ],
@@ -350,6 +393,10 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
       itemSlot.contentId,
       itemSlot.effectText,
     );
+    final canUseInBattle =
+        itemSlot.placement == ItemPlacement.quickSlot &&
+        itemSlot.usableInBattle;
+    final isPassive = itemSlot.placement == ItemPlacement.passiveRack;
     return Material(
       color: Colors.transparent,
       child: DecoratedBox(
@@ -408,19 +455,61 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                   _GameItemOverlayTag(text: itemSlot.slotLabel),
                   const SizedBox(width: 8),
                   _GameItemOverlayTag(text: 'x${itemSlot.count}'),
+                  if (isPassive) ...[
+                    const SizedBox(width: 8),
+                    const _GameItemOverlayTag(text: '패시브'),
+                    const SizedBox(width: 8),
+                    const _GameItemOverlayTag(text: '자동 발동'),
+                  ],
                 ],
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: GameActionButton(
-                  label: '사용',
-                  background: const Color(0xFFF4A81D),
-                  foreground: Colors.black,
-                  onPressed: onUse,
+              if (canUseInBattle) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: GameActionButton(
+                    label: '사용',
+                    background: const Color(0xFFF4A81D),
+                    foreground: Colors.black,
+                    onPressed: onUse,
+                  ),
                 ),
-              ),
+              ] else if (isPassive) ...[
+                const SizedBox(height: 12),
+                const _GamePassiveItemNotice(),
+              ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GamePassiveItemNotice extends StatelessWidget {
+  const _GamePassiveItemNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: const SizedBox(
+        width: double.infinity,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: Text(
+            '패시브 효과 · 조건 충족 시 자동 발동',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              height: 1.15,
+            ),
           ),
         ),
       ),
@@ -461,12 +550,14 @@ class _GameItemPocketChip extends StatelessWidget {
   const _GameItemPocketChip({
     required this.label,
     required this.accent,
+    this.locked = false,
     this.itemSlot,
     this.onTap,
   });
 
   final String label;
   final Color accent;
+  final bool locked;
   final RummiBattleItemSlotView? itemSlot;
   final ValueChanged<RummiBattleItemSlotView>? onTap;
 
@@ -478,21 +569,28 @@ class _GameItemPocketChip extends StatelessWidget {
         : ItemTranslationScope.of(
             context,
           ).resolveDisplayName(itemSlot.contentId, itemSlot.displayName);
+    final compactItemName = itemName?.replaceFirst(' ', '\n');
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: itemSlot == null || onTap == null ? null : () => onTap!(itemSlot),
+      onTap: locked || itemSlot == null || onTap == null
+          ? null
+          : () => onTap!(itemSlot),
       child: Stack(
         children: [
           Container(
             width: kBattleItemSlotWidth,
             height: kBattleItemSlotHeight,
             decoration: BoxDecoration(
-              color: itemSlot == null
+              color: locked
+                  ? Colors.black.withValues(alpha: 0.26)
+                  : itemSlot == null
                   ? Colors.black.withValues(alpha: 0.16)
                   : accent.withValues(alpha: 0.20),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: itemSlot == null
+                color: locked
+                    ? Colors.white.withValues(alpha: 0.14)
+                    : itemSlot == null
                     ? accent.withValues(alpha: 0.48)
                     : accent.withValues(alpha: 0.82),
                 width: itemSlot == null ? 1 : 1.3,
@@ -500,7 +598,30 @@ class _GameItemPocketChip extends StatelessWidget {
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(5, 6, 5, 5),
-              child: itemSlot == null
+              child: locked
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white.withValues(alpha: 0.40),
+                          size: 22,
+                        ),
+                        const SizedBox(height: 7),
+                        Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.48),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    )
+                  : itemSlot == null
                   ? Center(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
@@ -532,7 +653,7 @@ class _GameItemPocketChip extends StatelessWidget {
                         Expanded(
                           child: Center(
                             child: Text(
-                              itemName!,
+                              compactItemName!,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
@@ -1151,7 +1272,7 @@ Future<T?> showGameFramedDialog<T>({
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    barrierColor: Colors.black54,
+    barrierColor: kGameModalBarrierColor,
     builder: (dialogContext) {
       return Dialog(
         backgroundColor: Colors.transparent,

@@ -114,6 +114,7 @@ void main() {
             ],
             confirmCountThisStation: 1,
             firstConfirmScoreThisStation: 50,
+            expiryGuardUsedThisStation: true,
           ),
           runProgress: const SavedRunProgressData(
             stageIndex: 3,
@@ -202,6 +203,7 @@ void main() {
         );
         expect(restored.session.confirmCountThisStation, 1);
         expect(restored.session.firstConfirmScoreThisStation, 50);
+        expect(restored.session.expiryGuardUsedThisStation, isTrue);
         expect(
           restored.runProgress.itemInventory.ownedItems.single.itemId,
           'board_scrap',
@@ -385,6 +387,7 @@ void main() {
         );
         session.confirmCountThisStation = 1;
         session.firstConfirmScoreThisStation = 50;
+        session.tryUseExpiryGuard();
         session.drawToHand();
         session.blind.boardMovesRemaining = 1;
         runProgress.gold += 5;
@@ -442,6 +445,7 @@ void main() {
         expect(restored.session.confirmModifiers.single.itemId, 'chip_capsule');
         expect(restored.session.confirmCountThisStation, 1);
         expect(restored.session.firstConfirmScoreThisStation, 50);
+        expect(restored.session.expiryGuardUsedThisStation, isTrue);
         expect(restored.runProgress.itemInventory.passiveRelicIds, <String>[
           'market_compass',
         ]);

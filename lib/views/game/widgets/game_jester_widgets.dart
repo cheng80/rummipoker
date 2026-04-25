@@ -112,6 +112,7 @@ class GameJesterStrip extends StatelessWidget {
               ? market.ownedEntries[index]
               : null;
           final card = ownedEntry?.card;
+          final locked = index >= RummiRunProgress.baseUnlockedJesterSlots;
           return SizedBox(
             width: kJesterCardWidth,
             height: kJesterCardHeight,
@@ -128,7 +129,8 @@ class GameJesterStrip extends StatelessWidget {
               activeEffect: card != null ? effectById[card.id] : null,
               settlementSequenceTick: settlementSequenceTick,
               selected: selectedIndex == index,
-              onTap: card != null ? () => onTapCard(index) : null,
+              locked: locked,
+              onTap: card != null && !locked ? () => onTapCard(index) : null,
             ),
           );
         }),
@@ -146,6 +148,7 @@ class GameJesterSlot extends StatelessWidget {
     required this.activeEffect,
     required this.settlementSequenceTick,
     this.selected = false,
+    this.locked = false,
     this.onTap,
   });
 
@@ -155,6 +158,7 @@ class GameJesterSlot extends StatelessWidget {
   final RummiJesterEffectBreakdown? activeEffect;
   final int settlementSequenceTick;
   final bool selected;
+  final bool locked;
   final VoidCallback? onTap;
 
   @override
@@ -175,11 +179,15 @@ class GameJesterSlot extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                extended ? 'EXT' : 'JESTER',
+                locked
+                    ? 'LOCKED'
+                    : extended
+                    ? 'EXT'
+                    : 'JESTER',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.62),
+                  color: Colors.white.withValues(alpha: locked ? 0.46 : 0.62),
                   fontSize: 8,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.55,
@@ -189,19 +197,27 @@ class GameJesterSlot extends StatelessWidget {
               const Spacer(),
               Center(
                 child: Icon(
-                  extended ? Icons.add_box_outlined : Icons.style_outlined,
-                  color: Colors.white.withValues(alpha: 0.28),
+                  locked
+                      ? Icons.lock_rounded
+                      : extended
+                      ? Icons.add_box_outlined
+                      : Icons.style_outlined,
+                  color: Colors.white.withValues(alpha: locked ? 0.36 : 0.28),
                   size: 20,
                 ),
               ),
               const SizedBox(height: 4),
               Center(
                 child: Text(
-                  extended ? '5th' : '+',
+                  locked
+                      ? (extended ? '5th' : '잠김')
+                      : extended
+                      ? '5th'
+                      : '+',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.42),
+                    color: Colors.white.withValues(alpha: locked ? 0.48 : 0.42),
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     height: 1,

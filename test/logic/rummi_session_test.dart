@@ -350,6 +350,34 @@ void main() {
     );
   });
 
+  test('보드가 꽉 차도 확정 가능한 줄이 있으면 boardFullAfterDcExhausted가 아니다', () {
+    final board = RummiBoard();
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        board.setCell(
+          row,
+          col,
+          t(
+            TileColor.values[(row + col) % TileColor.values.length],
+            ((row * kBoardSize + col) % kTileRanks) + 1,
+          ),
+        );
+      }
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 9999, boardDiscardsRemaining: 0),
+      board: board,
+    );
+
+    expect(session.canConfirmAllFullLines, true);
+    expect(
+      session.evaluateExpirySignals().contains(
+        RummiExpirySignal.boardFullAfterDcExhausted,
+      ),
+      false,
+    );
+  });
+
   test('다음 스테이지 진입 시 덱이 시드 기반으로 리셋·셔플된다', () {
     final a = RummiPokerGridSession(runSeed: 4242);
     final b = RummiPokerGridSession(runSeed: 4242);

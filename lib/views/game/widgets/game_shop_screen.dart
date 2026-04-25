@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../logic/rummi_poker_grid/item_definition.dart';
+import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
@@ -692,6 +693,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                 : null;
                             final card = ownedEntry?.card;
                             final selected = _selectedOwnedIndex == index;
+                            final locked =
+                                index >=
+                                RummiRunProgress.baseUnlockedJesterSlots;
                             final child = _MarketSelectableCardFrame(
                               selected: false,
                               width: _marketOwnedCardWidth,
@@ -709,6 +713,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                 activeEffect: null,
                                 settlementSequenceTick: 0,
                                 selected: selected,
+                                locked: locked,
                               ),
                             );
 
@@ -719,7 +724,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                               height:
                                   _marketOwnedCardHeight +
                                   (_marketCardSelectionInset * 2),
-                              child: card == null
+                              child: card == null || locked
                                   ? child
                                   : GestureDetector(
                                       onTap: () => _selectOwned(index),
@@ -742,7 +747,11 @@ class _GameShopScreenState extends State<GameShopScreen> {
                           SizedBox(width: 8),
                           _MarketItemGhostChip(label: 'Q2'),
                           SizedBox(width: 8),
-                          _MarketItemGhostChip(label: 'Passive'),
+                          _MarketItemGhostChip(label: 'Q3', locked: true),
+                          SizedBox(width: 8),
+                          _MarketItemGhostChip(label: 'P1'),
+                          SizedBox(width: 8),
+                          _MarketItemGhostChip(label: 'P2', locked: true),
                         ],
                       ),
                     ),
@@ -1281,34 +1290,60 @@ class _MarketPagerBar extends StatelessWidget {
 }
 
 class _MarketItemGhostChip extends StatelessWidget {
-  const _MarketItemGhostChip({required this.label});
+  const _MarketItemGhostChip({required this.label, this.locked = false});
 
   final String label;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
+    final foreground = locked
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.lock_rounded,
+                color: Colors.white.withValues(alpha: 0.38),
+                size: 18,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.54),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ],
+          )
+        : Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.68),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          );
     return Expanded(
       child: Center(
         child: SizedBox(
           width: _marketOwnedCardWidth + 6,
           height: _marketOwnedCardHeight + 6,
-          child: Container(
+          child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.14),
+              color: locked
+                  ? Colors.black.withValues(alpha: 0.24)
+                  : Colors.black.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.68),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
+              border: Border.all(
+                color: locked ? Colors.white12 : Colors.white10,
               ),
             ),
+            child: Center(child: foreground),
           ),
         ),
       ),

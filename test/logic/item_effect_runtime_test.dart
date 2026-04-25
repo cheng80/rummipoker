@@ -765,6 +765,41 @@ void main() {
       expect(result.events.single.detail, 'sell_price_bonus');
     });
 
+    test('expiry guard item rescues the first combat lock once', () {
+      final item = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'safety_net',
+          timing: 'expiry_guard',
+          op: 'rescue_first_expiry_each_station',
+          placement: 'passiveRack',
+        ),
+      );
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999, boardDiscardsRemaining: 0),
+      );
+      final runProgress = RummiRunProgress();
+
+      final first = ItemEffectRuntime.applyExpiryGuardItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        signals: const [RummiExpirySignal.boardFullAfterDcExhausted],
+      );
+      final second = ItemEffectRuntime.applyExpiryGuardItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        signals: const [RummiExpirySignal.boardFullAfterDcExhausted],
+      );
+
+      expect(first.isSuccess, isTrue);
+      expect(first.events.first.kind, ItemEffectEventKind.expiryGuardTriggered);
+      expect(session.blind.boardDiscardsRemaining, 1);
+      expect(session.expiryGuardUsedThisStation, isTrue);
+      expect(second.isSuccess, isFalse);
+    });
+
     test('owned enter market items queue first reroll and offer modifiers', () {
       final catalog = ItemCatalog.fromJson({
         'schemaVersion': 1,
@@ -970,6 +1005,7 @@ void main() {
           'inventory_capacity:increase_hand_size',
           'inventory_capacity:extra_quick_slot',
           'sell_jester:sell_price_bonus',
+          'expiry_guard:rescue_first_expiry_each_station',
         },
       );
     });

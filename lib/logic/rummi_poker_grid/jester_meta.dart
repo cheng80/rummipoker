@@ -708,6 +708,7 @@ class RummiRunProgress {
   }
 
   static const int maxJesterSlots = 5;
+  static const int baseUnlockedJesterSlots = 4;
   static const int stageClearGoldBase = RummiEconomyConfig.stageClearGoldBase;
   static const int remainingBoardDiscardGoldBonus =
       RummiEconomyConfig.remainingBoardDiscardGoldBonus;
@@ -1035,7 +1036,7 @@ class RummiRunProgress {
     if (offerIndex < 0 || offerIndex >= shopOffers.length) {
       return false;
     }
-    if (ownedJesters.length >= maxJesterSlots) {
+    if (ownedJesters.length >= jesterSlotCapacity()) {
       return false;
     }
     final offer = shopOffers[offerIndex];
@@ -1057,13 +1058,18 @@ class RummiRunProgress {
       return false;
     }
     final capacity = quickSlotCapacity(itemCatalog: itemCatalog);
-    if (!itemInventory.canAcquire(item, quickSlotCapacity: capacity)) {
+    if (!itemInventory.canAcquire(
+      item,
+      quickSlotCapacity: capacity,
+      passiveRelicCapacity: passiveRelicCapacity(itemCatalog: itemCatalog),
+    )) {
       return false;
     }
     gold -= resolvedPrice;
     itemInventory = itemInventory.withAcquiredItem(
       item,
       quickSlotCapacity: capacity,
+      passiveRelicCapacity: passiveRelicCapacity(itemCatalog: itemCatalog),
     );
     _consumePurchaseDiscounts('item');
     return true;
@@ -1089,12 +1095,32 @@ class RummiRunProgress {
   }
 
   int quickSlotCapacity({ItemCatalog? itemCatalog}) {
-    return RunInventoryState.defaultQuickSlotCapacity +
+    final capacity =
+        RunInventoryState.defaultQuickSlotCapacity +
         _sumOwnedItemEffectAmount(
           itemCatalog: itemCatalog,
           timing: 'inventory_capacity',
           op: 'extra_quick_slot',
         );
+    return capacity
+        .clamp(
+          RunInventoryState.defaultQuickSlotCapacity,
+          RunInventoryState.maxQuickSlotCapacity,
+        )
+        .toInt();
+  }
+
+  int passiveRelicCapacity({ItemCatalog? itemCatalog}) {
+    return RunInventoryState.defaultPassiveRelicCapacity
+        .clamp(
+          RunInventoryState.defaultPassiveRelicCapacity,
+          RunInventoryState.maxPassiveRelicCapacity,
+        )
+        .toInt();
+  }
+
+  int jesterSlotCapacity({ItemCatalog? itemCatalog}) {
+    return baseUnlockedJesterSlots.clamp(0, maxJesterSlots).toInt();
   }
 
   int jesterSellPriceBonus({ItemCatalog? itemCatalog}) {

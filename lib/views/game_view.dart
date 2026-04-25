@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,6 +69,8 @@ class GameView extends ConsumerStatefulWidget {
 
 class _GameViewState extends ConsumerState<GameView>
     with WidgetsBindingObserver {
+  static const Duration _itemEffectFeedbackDuration = Duration(seconds: 2);
+
   static const List<String> _shopInspectOfferIds = [
     'green_jester',
     'popcorn',
@@ -85,6 +89,8 @@ class _GameViewState extends ConsumerState<GameView>
   late bool _shouldResumeMarketOnCatalogLoad;
   ItemCatalog? _itemCatalog;
   RummiBattleItemSlotView? _selectedBattleItemSlot;
+  _ItemEffectFeedback? _itemEffectFeedback;
+  int _itemEffectFeedbackTick = 0;
   bool _boardMoveMode = false;
   int? _pendingBoardMoveSourceRow;
   int? _pendingBoardMoveSourceCol;
@@ -130,19 +136,23 @@ class _GameViewState extends ConsumerState<GameView>
       slotIndex += 1;
     }
 
-    for (final itemId in inventory.passiveRelicIds.take(1)) {
+    var passiveSlotIndex = 0;
+    for (final itemId in inventory.passiveRelicIds.take(
+      kBattlePassiveSlotDisplayCount,
+    )) {
       final entry = entriesById[itemId];
       final item = catalog.findById(itemId);
       if (entry == null || item == null) continue;
       itemSlots.add(
         RummiBattleItemSlotView.fromOwnedItem(
           slotIndex: slotIndex,
-          slotLabel: 'P',
+          slotLabel: 'P${passiveSlotIndex + 1}',
           entry: entry,
           item: item,
         ),
       );
       slotIndex += 1;
+      passiveSlotIndex += 1;
     }
 
     return battle.withItemSlots(itemSlots);
@@ -347,6 +357,29 @@ class _GameViewState extends ConsumerState<GameView>
     showTopNotice(context, message);
   }
 
+  void _showItemEffectFeedback({
+    required String title,
+    required String detail,
+    bool passive = false,
+  }) {
+    if (!mounted) return;
+    final tick = _itemEffectFeedbackTick + 1;
+    setState(() {
+      _itemEffectFeedbackTick = tick;
+      _itemEffectFeedback = _ItemEffectFeedback(
+        title: title,
+        detail: detail,
+        passive: passive,
+      );
+    });
+    unawaited(
+      Future<void>.delayed(_itemEffectFeedbackDuration, () {
+        if (!mounted || _itemEffectFeedbackTick != tick) return;
+        setState(() => _itemEffectFeedback = null);
+      }),
+    );
+  }
+
   Future<void> _restartCurrentRun() async {
     final confirmed = await showConfirmDialog(
       context,
@@ -427,12 +460,30 @@ class _GameViewState extends ConsumerState<GameView>
         _stationView.objective.isMet) {
       return false;
     }
+    if (await _tryApplyExpiryGuard()) {
+      return false;
+    }
     final signals = _gameNotifier.evaluateExpiry();
     if (signals.isEmpty) return false;
     _persistRetrySnapshotOnSave = true;
     await _saveActiveRun(scene: ActiveRunScene.battle);
     if (!mounted) return true;
     _showGameOver(signals);
+    return true;
+  }
+
+  Future<bool> _tryApplyExpiryGuard() async {
+    final guardResult = _gameNotifier.applyExpiryGuard(
+      itemCatalog: _itemCatalog,
+    );
+    if (guardResult == null) return false;
+    _showSnack(guardResult.message);
+    _showItemEffectFeedback(
+      title: '안전망 발동',
+      detail: guardResult.feedbackDetail,
+      passive: true,
+    );
+    await _saveActiveRun(scene: ActiveRunScene.battle);
     return true;
   }
 
@@ -558,6 +609,10 @@ class _GameViewState extends ConsumerState<GameView>
       context,
     ).resolveDisplayName(slot.contentId, slot.displayName);
     _showSnack('$itemName 사용');
+    _showItemEffectFeedback(
+      title: itemName,
+      detail: _battleItemFeedbackDetail(slot.item),
+    );
     if (mounted) {
       setState(() => _selectedBattleItemSlot = null);
     }
@@ -593,6 +648,7 @@ class _GameViewState extends ConsumerState<GameView>
     if (selectedIndex == null) {
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
       _showSnack('$itemName 사용');
+      _showItemEffectFeedback(title: itemName, detail: '덱 확인');
       return;
     }
 
@@ -606,13 +662,32 @@ class _GameViewState extends ConsumerState<GameView>
     }
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     _showSnack('$itemName 사용');
+    _showItemEffectFeedback(title: itemName, detail: '덱 타일 1장 제거');
     await _saveActiveRun();
+  }
+
+  String _battleItemFeedbackDetail(ItemDefinition item) {
+    return switch (item.effect.op) {
+      'add_board_discard' => '보드 버림 +${item.effect.value('amount') ?? 1}',
+      'add_hand_discard' => '손패 버림 +${item.effect.value('amount') ?? 1}',
+      'add_board_move' => '타일 이동 +${item.effect.value('amount') ?? 1}',
+      'undo_last_board_move' => '마지막 이동 되돌림',
+      'draw_if_hand_empty' => '타일 1장 드로우',
+      'chips_bonus' => '다음 확정 Chips 보너스',
+      'mult_bonus' => '다음 확정 Mult 보너스',
+      'xmult_bonus' => '다음 확정 XMult 보너스',
+      'temporary_overlap_cap_bonus' => '다음 확정 overlap 보너스',
+      _ => '효과 적용',
+    };
   }
 
   void _confirmLines() async {
     if (_isBattleInputLocked) return;
     final result = _gameNotifier.confirmLines();
     if (result == null) {
+      if (await _tryApplyExpiryGuard()) return;
+      final didGameOver = await _afterAction();
+      if (didGameOver) return;
       _showSnack('확정할 족보 줄이 없습니다.');
       return;
     }
@@ -1082,6 +1157,8 @@ class _GameViewState extends ConsumerState<GameView>
         pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
         selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
         selectedBattleItemSlot: _selectedBattleItemSlot,
+        itemEffectFeedback: _itemEffectFeedback,
+        itemEffectFeedbackTick: _itemEffectFeedbackTick,
         onOptionsTap: () => _openGameOptions(context),
         onDebugTap: () => _openDebugBottomSheet(context),
         onJesterTap: _openJesterOverlay,
@@ -1098,6 +1175,132 @@ class _GameViewState extends ConsumerState<GameView>
         onJesterOverlayClose: _closeJesterOverlay,
         onBattleItemUse: _useBattleItem,
         onBattleItemOverlayClose: _closeBattleItemOverlay,
+      ),
+    );
+  }
+}
+
+class _ItemEffectFeedback {
+  const _ItemEffectFeedback({
+    required this.title,
+    required this.detail,
+    required this.passive,
+  });
+
+  final String title;
+  final String detail;
+  final bool passive;
+}
+
+class _ItemEffectFeedbackToast extends StatelessWidget {
+  const _ItemEffectFeedbackToast({super.key, required this.feedback});
+
+  final _ItemEffectFeedback feedback;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = feedback.passive
+        ? const Color(0xFF6EE7B7)
+        : const Color(0xFFF4A81D);
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final opacity = value < 0.15 ? value / 0.15 : 1.0;
+        return Opacity(
+          opacity: opacity.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 18),
+            child: child,
+          ),
+        );
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F2B23).withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withValues(alpha: 0.75), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.22),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                feedback.passive ? Icons.shield_rounded : Icons.bolt_rounded,
+                color: accent,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      feedback.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      feedback.detail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (feedback.passive)
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: accent.withValues(alpha: 0.35)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    child: Text(
+                      '패시브',
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1121,6 +1324,8 @@ class _GameSurface extends StatelessWidget {
     required this.pendingBoardMoveSourceCol,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
+    required this.itemEffectFeedback,
+    required this.itemEffectFeedbackTick,
     required this.onOptionsTap,
     required this.onDebugTap,
     required this.onJesterTap,
@@ -1155,6 +1360,8 @@ class _GameSurface extends StatelessWidget {
   final int? pendingBoardMoveSourceCol;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
+  final _ItemEffectFeedback? itemEffectFeedback;
+  final int itemEffectFeedbackTick;
   final VoidCallback onOptionsTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
@@ -1249,15 +1456,24 @@ class _GameSurface extends StatelessWidget {
                   scoreAdded: stageScoreAdded,
                 ),
               ),
+            if (itemEffectFeedback != null)
+              const Positioned.fill(child: GameInputBarrier.feedback()),
+            if (itemEffectFeedback != null)
+              Positioned(
+                left: 22,
+                right: 22,
+                bottom: 238,
+                child: _ItemEffectFeedbackToast(
+                  key: ValueKey('item-effect-$itemEffectFeedbackTick'),
+                  feedback: itemEffectFeedback!,
+                ),
+              ),
             if (selectedJesterOverlayIndex != null &&
                 selectedJesterOverlayIndex! < market.ownedEntries.length)
               Positioned.fill(
                 child: Stack(
                   children: [
-                    const ModalBarrier(
-                      dismissible: false,
-                      color: Color(0x70000000),
-                    ),
+                    const GameInputBarrier.modal(),
                     Positioned(
                       left: 12,
                       right: 12,
@@ -1285,10 +1501,7 @@ class _GameSurface extends StatelessWidget {
               Positioned.fill(
                 child: Stack(
                   children: [
-                    const ModalBarrier(
-                      dismissible: false,
-                      color: Color(0x70000000),
-                    ),
+                    const GameInputBarrier.modal(),
                     Positioned(
                       left: 12,
                       right: 12,

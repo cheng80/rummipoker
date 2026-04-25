@@ -36,6 +36,7 @@ class DebugRunFixtureService {
   static const String settlementItemBonus = 'settlement_item_bonus';
   static const String inventorySellHookShop = 'inventory_sell_hook_shop';
   static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
+  static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
 
   /// 새 디버그 픽스처는 여기에 등록하고, 아래에 대응하는 builder를 추가한다.
   static final List<DebugRunFixtureDefinition> _fixtures = [
@@ -81,6 +82,12 @@ class DebugRunFixtureService {
       label: 'Inventory Quick Slot 전투',
       description: 'Spare Pouch 보유 / quick slot 3칸 표시 검증용',
       builder: _buildInventoryQuickSlotBattle,
+    ),
+    DebugRunFixtureDefinition(
+      id: safetyNetExpiryGuard,
+      label: 'Safety Net 종료 방지',
+      description: 'Safety Net 보유 / 보드가 꽉 찬 종료 위기 구조 검증용',
+      builder: _buildSafetyNetExpiryGuard,
     ),
   ];
 
@@ -506,6 +513,77 @@ class DebugRunFixtureService {
       runProgress: runProgress,
       stageStartSnapshot: ActiveRunStageSnapshot(
         session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildSafetyNetExpiryGuard() {
+    final board = RummiBoard();
+    const ranks = [
+      [1, 3, 6, 8, 11],
+      [2, 5, 9, 12, 4],
+      [7, 10, 13, 1, 5],
+      [8, 11, 2, 6, 9],
+      [2, 4, 7, 10, 13],
+    ];
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        board.setCell(
+          row,
+          col,
+          _tile(
+            TileColor.values[(row + col * 2) % TileColor.values.length],
+            ranks[row][col],
+          ),
+        );
+      }
+    }
+    final session = RummiPokerGridSession.restored(
+      runSeed: 2026042501,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: 1,
+      runRandomState: SeededRandom(2026042501).state,
+      blind: RummiBlindState(
+        targetScore: 480,
+        boardDiscardsRemaining: 0,
+        handDiscardsRemaining: 2,
+        scoreTowardBlind: 0,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(
+        board: board,
+        random: Random(2026042501),
+      ),
+      board: board,
+      hand: const [],
+      eliminated: const [],
+    );
+    final runProgress = RummiRunProgress.restore(
+      stageIndex: 2,
+      gold: 36,
+      rerollCost: RummiRunProgress.shopBaseRerollCost,
+      ownedJesters: const [],
+      shopOffers: const [],
+      statefulValuesBySlot: const {},
+      playedHandCounts: const <RummiHandRank, int>{},
+      itemInventory: const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'safety_net',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        passiveRelicIds: ['safety_net'],
+      ),
+    );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
         runProgress: runProgress.copySnapshot(),
       ),
     );

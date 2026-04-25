@@ -20,7 +20,7 @@ class BlindCleared {
 
 /// GDD §8.4 만료 신호(후속 판정은 UI/런 레이어).
 enum RummiExpirySignal {
-  /// 버림(D)이 없는데 보드 25칸이 모두 찼을 때(칸을 비울 수 없음).
+  /// 버림(D)이 없고 보드 25칸이 모두 찼으며 확정 가능한 줄도 없을 때.
   boardFullAfterDcExhausted,
 
   /// 드로우 더미가 비었고, 손패/확정 가능한 줄도 더 이상 없어 진행할 카드가 없음.
@@ -200,6 +200,7 @@ class RummiPokerGridSession {
     required this.confirmModifiers,
     required this.confirmCountThisStation,
     required this.firstConfirmScoreThisStation,
+    required this.expiryGuardUsedThisStation,
     required this.engine,
   });
 
@@ -244,6 +245,7 @@ class RummiPokerGridSession {
       confirmModifiers: <RummiConfirmModifier>[],
       confirmCountThisStation: 0,
       firstConfirmScoreThisStation: 0,
+      expiryGuardUsedThisStation: false,
       engine: RummiPokerGridEngine(),
     );
   }
@@ -265,6 +267,7 @@ class RummiPokerGridSession {
     List<RummiConfirmModifier> confirmModifiers = const [],
     int confirmCountThisStation = 0,
     int firstConfirmScoreThisStation = 0,
+    bool expiryGuardUsedThisStation = false,
   }) {
     return RummiPokerGridSession._(
       runSeed: runSeed,
@@ -281,6 +284,7 @@ class RummiPokerGridSession {
       confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
       confirmCountThisStation: confirmCountThisStation,
       firstConfirmScoreThisStation: firstConfirmScoreThisStation,
+      expiryGuardUsedThisStation: expiryGuardUsedThisStation,
       engine: RummiPokerGridEngine(),
     );
   }
@@ -305,6 +309,7 @@ class RummiPokerGridSession {
   final List<RummiConfirmModifier> confirmModifiers;
   int confirmCountThisStation;
   int firstConfirmScoreThisStation;
+  bool expiryGuardUsedThisStation;
   final RummiPokerGridEngine engine;
 
   int get totalDeckSize => totalDeckSizeForCopies(deckCopiesPerTile);
@@ -498,7 +503,22 @@ class RummiPokerGridSession {
       confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
       confirmCountThisStation: confirmCountThisStation,
       firstConfirmScoreThisStation: firstConfirmScoreThisStation,
+      expiryGuardUsedThisStation: expiryGuardUsedThisStation,
     );
+  }
+
+  bool tryUseExpiryGuard() {
+    if (expiryGuardUsedThisStation) return false;
+    expiryGuardUsedThisStation = true;
+    return true;
+  }
+
+  Tile? recycleEliminatedIntoDeckAndDraw() {
+    if (eliminated.isEmpty || hand.length >= maxHandSize) return null;
+    final recycled = List<Tile>.from(eliminated);
+    eliminated.clear();
+    deck.resetShuffled(random: runRandom, source: recycled);
+    return drawToHand();
   }
 
   /// 현재 보드의 점수 성립 라인을 즉시 확정한다.
@@ -697,7 +717,8 @@ class RummiPokerGridSession {
       s.add(RummiExpirySignal.drawPileExhausted);
     }
     if (blind.boardDiscardsRemaining <= 0 &&
-        countTilesOnBoard(board) == kBoardSize * kBoardSize) {
+        countTilesOnBoard(board) == kBoardSize * kBoardSize &&
+        !canConfirmAllFullLines) {
       s.add(RummiExpirySignal.boardFullAfterDcExhausted);
     }
     return s;
@@ -756,6 +777,7 @@ class RummiPokerGridSession {
     confirmModifiers.clear();
     confirmCountThisStation = 0;
     firstConfirmScoreThisStation = 0;
+    expiryGuardUsedThisStation = false;
   }
 
   ({int score, List<RummiJesterEffectBreakdown> effects})

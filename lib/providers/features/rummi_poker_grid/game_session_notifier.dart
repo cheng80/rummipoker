@@ -418,6 +418,37 @@ class GameSessionNotifier
     );
   }
 
+  ExpiryGuardResult? applyExpiryGuard({ItemCatalog? itemCatalog}) {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null || itemCatalog == null) {
+      return null;
+    }
+    final signals = session.evaluateExpirySignals();
+    if (signals.isEmpty) return null;
+    final results = ItemEffectRuntime.applyOwnedExpiryGuardItems(
+      catalog: itemCatalog,
+      session: session,
+      runProgress: runProgress,
+      signals: signals,
+    );
+    final appliedResults = results.where(
+      (result) =>
+          result.isSuccess &&
+          result.events.any(
+            (event) => event.kind == ItemEffectEventKind.expiryGuardTriggered,
+          ),
+    );
+    final applied = appliedResults.isNotEmpty;
+    if (!applied) return null;
+    clearSelections();
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return ExpiryGuardResult(
+      signals: signals,
+      events: [for (final result in appliedResults) ...result.events],
+    );
+  }
+
   void applyConfirmedLineScore(int score) {
     final session = state.session;
     if (session == null) return;
@@ -539,7 +570,7 @@ class GameSessionNotifier
     if (offerIndex < 0 || offerIndex >= runProgress.shopOffers.length) {
       return '구매할 오퍼를 찾지 못했습니다.';
     }
-    if (runProgress.ownedJesters.length >= RummiRunProgress.maxJesterSlots) {
+    if (runProgress.ownedJesters.length >= runProgress.jesterSlotCapacity()) {
       return '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.';
     }
     final price = runProgress.effectiveJesterOfferPrice(offerIndex);
@@ -570,6 +601,9 @@ class GameSessionNotifier
     if (!runProgress.itemInventory.canAcquire(
       offer.item,
       quickSlotCapacity: quickSlotCapacity,
+      passiveRelicCapacity: runProgress.passiveRelicCapacity(
+        itemCatalog: itemCatalog,
+      ),
     )) {
       return '이미 보유 한도에 도달한 아이템입니다.';
     }
@@ -942,6 +976,45 @@ class ConfirmLinesResult {
   final int totalScore;
   final List<ConfirmedLineBreakdown> lineBreakdowns;
   final bool stageCleared;
+}
+
+class ExpiryGuardResult {
+  const ExpiryGuardResult({required this.signals, required this.events});
+
+  final List<RummiExpirySignal> signals;
+  final List<ItemEffectEvent> events;
+
+  String get message {
+    final hasBoardRescue = events.any(
+      (event) => event.kind == ItemEffectEventKind.boardDiscardAdded,
+    );
+    final hasDrawRescue = events.any(
+      (event) => event.kind == ItemEffectEventKind.tileDrawn,
+    );
+    if (hasBoardRescue && hasDrawRescue) {
+      return '안전망이 보드 버림과 구조 드로우를 확보했습니다.';
+    }
+    if (hasBoardRescue) {
+      return '안전망이 보드 버림 1회를 확보했습니다.';
+    }
+    return '안전망이 제거 더미를 섞어 타일 1장을 구조했습니다.';
+  }
+
+  String get feedbackDetail {
+    final hasBoardRescue = events.any(
+      (event) => event.kind == ItemEffectEventKind.boardDiscardAdded,
+    );
+    final hasDrawRescue = events.any(
+      (event) => event.kind == ItemEffectEventKind.tileDrawn,
+    );
+    if (hasBoardRescue && hasDrawRescue) {
+      return '보드 버림 +1 · 구조 드로우 +1';
+    }
+    if (hasBoardRescue) {
+      return '보드 버림 +1';
+    }
+    return '구조 드로우 +1';
+  }
 }
 
 class BattleBoardTapResult {

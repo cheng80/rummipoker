@@ -239,6 +239,9 @@ class OwnedItemEntry {
 
 class RunInventoryState {
   static const int defaultQuickSlotCapacity = 2;
+  static const int maxQuickSlotCapacity = 3;
+  static const int defaultPassiveRelicCapacity = 1;
+  static const int maxPassiveRelicCapacity = 2;
 
   const RunInventoryState({
     this.ownedItems = const [],
@@ -275,6 +278,7 @@ class RunInventoryState {
   bool canAcquire(
     ItemDefinition item, {
     int quickSlotCapacity = defaultQuickSlotCapacity,
+    int passiveRelicCapacity = defaultPassiveRelicCapacity,
   }) {
     final existingIndex = ownedItems.indexWhere(
       (entry) => entry.itemId == item.id,
@@ -282,6 +286,10 @@ class RunInventoryState {
     if (existingIndex < 0) {
       if (item.placement == ItemPlacement.quickSlot &&
           quickSlotItemIds.length >= quickSlotCapacity) {
+        return false;
+      }
+      if (item.placement == ItemPlacement.passiveRack &&
+          passiveRelicIds.length >= passiveRelicCapacity) {
         return false;
       }
       return true;
@@ -293,8 +301,15 @@ class RunInventoryState {
   RunInventoryState withAcquiredItem(
     ItemDefinition item, {
     int quickSlotCapacity = defaultQuickSlotCapacity,
+    int passiveRelicCapacity = defaultPassiveRelicCapacity,
   }) {
-    if (!canAcquire(item, quickSlotCapacity: quickSlotCapacity)) return this;
+    if (!canAcquire(
+      item,
+      quickSlotCapacity: quickSlotCapacity,
+      passiveRelicCapacity: passiveRelicCapacity,
+    )) {
+      return this;
+    }
 
     final nextOwnedItems = List<OwnedItemEntry>.of(ownedItems);
     final existingIndex = nextOwnedItems.indexWhere(

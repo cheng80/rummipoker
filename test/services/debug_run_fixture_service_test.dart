@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 
@@ -151,4 +152,20 @@ void main() {
       ]);
     },
   );
+
+  test('safety net fixture starts with board-full expiry guard state', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.safetyNetExpiryGuard,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.session.canConfirmAllFullLines, isFalse);
+    expect(fixture.session.blind.boardDiscardsRemaining, 0);
+    expect(
+      fixture.session.evaluateExpirySignals(),
+      contains(RummiExpirySignal.boardFullAfterDcExhausted),
+    );
+    expect(fixture.runProgress.itemInventory.passiveRelicIds, ['safety_net']);
+  });
 }

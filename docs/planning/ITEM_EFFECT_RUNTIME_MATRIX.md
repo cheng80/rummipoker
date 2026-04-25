@@ -26,7 +26,7 @@
 | `applyBossClearItem` | `boss_blind_clear_reward`, `boss_blind_clear_market` |
 | `applyInventoryCapacityItem` | `inventory_capacity` |
 | `applySellJesterItem` | `sell_jester` |
-| `applyFailedConfirmItem` | `failed_confirm` |
+| `applyExpiryGuardItem` | `expiry_guard` |
 
 ## Effect Matrix
 
@@ -55,7 +55,7 @@
 | `stage_map` | boss blind clear reward Gold +1 | `boss_blind_clear_reward` / `gain_gold` | `applyBossClearItem` | `applied` |
 | `spare_pouch` | quick slot +1 | `inventory_capacity` / `extra_quick_slot` | `applyInventoryCapacityItem` | `applied` |
 | `merchant_stamp` | market 진입 시 첫 reroll 할인 -1 | `enter_market` / `discount_first_reroll` | `applyEnterMarketItem` | `applied` |
-| `safety_net` | Station 첫 failed confirm refund | `failed_confirm` / `refund_first_failed_confirm_each_station` | `applyFailedConfirmItem` | `pendingHook` |
+| `safety_net` | Station 첫 전투 종료 위기 방어 | `expiry_guard` / `rescue_first_expiry_each_station` | `applyExpiryGuardItem` | `applied` |
 | `coin_funnel` | 남은 보드 버림 보상 Gold +1씩 추가 | `settlement` / `board_discard_reward_bonus` | `applySettlementItem` | `applied` |
 | `hand_funnel` | 남은 손패 버림 보상 Gold +1씩 추가 | `settlement` / `hand_discard_reward_bonus` | `applySettlementItem` | `applied` |
 | `lucky_counter` | rare item weight +5 | `market_build_offers` / `rarity_weight_bonus` | `applyEnterMarketItem` | `applied` |
@@ -109,11 +109,13 @@
   `coin_funnel`, `hand_funnel`
 - Inventory and sell hook:
   `spare_pouch`, `jester_hook`
+- Expiry guard hook:
+  `safety_net`
 
 현재 실제 런타임 기준:
 
-- 총 49개 중 `applied` 45개
-- 남은 `pendingHook` 4개
+- 총 49개 중 `applied` 46개
+- 남은 `pendingHook` 3개
 
 ## 공통 구현 묶음 플랜
 
@@ -201,9 +203,9 @@
 - jester sell price modifier hook 추가 완료
 - market/game facade에 변경된 capacity/가격 노출 완료
 
-### Group 6. Failed Confirm Hook
+### Group 6. Expiry Guard Hook
 
-공통 기반: confirm 실패 이벤트를 감지하고 스테이션당 1회 refund.
+공통 기반: 전투 종료 판정 직전 expiry signal을 감지하고 스테이션당 1회 구조 자원을 제공.
 
 대상 1개:
 
@@ -211,9 +213,9 @@
 
 공통 작업:
 
-- failed confirm event/result 경계 정의
-- station-scoped consumed flag save/restore
-- refund amount와 consume 정책 확정
+- expiry guard event/result 경계 정의 완료
+- station-scoped consumed flag save/restore 완료
+- 현재 정책: `safety_net`은 보드가 꽉 차고 보드 버림이 없으면 보드 버림 +1, 드로우 더미가 고갈되면 제거 더미를 섞어 타일 1장을 구조한다.
 
 ### Group 7. Boss/Next Market Offer Hook
 
@@ -252,7 +254,7 @@
 - Group 3 `Direct Gold and Economy Hooks`는 gold delta/event/save 경계까지 1차 적용 완료
 - Group 4 `Settlement Reward Modifiers`는 settlement breakdown UX와 gold total 반영까지 1차 적용 완료
 - B7 `Next Station Loop`의 next station transition command 정리는 1차 적용 완료
-- 다음 최우선은 Group 6 `Failed Confirm Hook`
+- 다음 최우선은 Group 7 `Boss/Next Market Offer Hook`
 
-1. Group 6 `Failed Confirm Hook`: `safety_net`의 confirm 실패 감지와 station-scoped refund를 처리한다.
-2. Group 7-8: boss delayed/board move follow-up처럼 각각 별도 hook이 필요한 단건 묶음으로 처리한다.
+1. Group 7 `Boss/Next Market Offer Hook`: `boss_trophy`의 boss clear 후 다음 market Jester offer +1 delayed modifier를 처리한다.
+2. Group 8 및 남은 market use 단건: `slide_wax`, `trade_ticket`처럼 별도 hook이 필요한 단건 묶음으로 처리한다.
