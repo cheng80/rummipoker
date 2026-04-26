@@ -74,6 +74,7 @@ class RummiBattleItemSlotView {
 class RummiBattleRuntimeFacade {
   const RummiBattleRuntimeFacade({
     required this.stageIndex,
+    this.currentBlindTierIndex = 0,
     required this.currentGold,
     required this.totalDeckSize,
     required this.board,
@@ -100,6 +101,7 @@ class RummiBattleRuntimeFacade {
 
     return RummiBattleRuntimeFacade(
       stageIndex: runProgress.stageIndex,
+      currentBlindTierIndex: runProgress.currentStationBlindTierIndex,
       currentGold: runProgress.gold,
       totalDeckSize: session.totalDeckSize,
       board: session.board,
@@ -114,6 +116,7 @@ class RummiBattleRuntimeFacade {
   ) {
     return RummiBattleRuntimeFacade(
       stageIndex: stageIndex,
+      currentBlindTierIndex: currentBlindTierIndex,
       currentGold: currentGold,
       totalDeckSize: totalDeckSize,
       board: board,
@@ -124,6 +127,7 @@ class RummiBattleRuntimeFacade {
   }
 
   final int stageIndex;
+  final int currentBlindTierIndex;
   final int currentGold;
   final int totalDeckSize;
   final RummiBoard board;

@@ -30,6 +30,7 @@ void main() {
     );
     final battle = RummiBattleRuntimeFacade(
       stageIndex: 4,
+      currentBlindTierIndex: 1,
       currentGold: 27,
       totalDeckSize: 52,
       board: RummiBoard(),
@@ -49,7 +50,8 @@ void main() {
       ),
     );
 
-    expect(find.text('4'), findsOneWidget);
+    expect(find.text('STATION 4'), findsOneWidget);
+    expect(find.text('BIG'), findsOneWidget);
     expect(find.text('360'), findsOneWidget);
     expect(find.text('/'), findsOneWidget);
     expect(find.text('900'), findsOneWidget);

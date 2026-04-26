@@ -9,8 +9,8 @@ import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/jester_translation_scope.dart';
 import 'game_shared_widgets.dart';
 
-const double kJesterCardWidth = 58.0;
-const double kJesterCardHeight = 78.0;
+const double kJesterCardWidth = kBattleItemSlotWidth;
+const double kJesterCardHeight = kBattleItemSlotHeight;
 const double kJesterSelectionOutset = 3.0;
 const double kJesterSelectionBorderWidth = 3.0;
 
@@ -104,9 +104,9 @@ class GameJesterStrip extends StatelessWidget {
       effectById[effect.jesterId] = effect;
     }
     return SizedBox(
-      height: kJesterCardHeight + 12,
+      height: kBattleItemSlotHeight,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(5, (index) {
           final ownedEntry = index < market.ownedEntries.length
               ? market.ownedEntries[index]
@@ -114,8 +114,8 @@ class GameJesterStrip extends StatelessWidget {
           final card = ownedEntry?.card;
           final locked = index >= RummiRunProgress.baseUnlockedJesterSlots;
           return SizedBox(
-            width: kJesterCardWidth,
-            height: kJesterCardHeight,
+            width: kBattleItemSlotWidth,
+            height: kBattleItemSlotHeight,
             child: GameJesterSlot(
               card: card,
               runtimeValueText: card != null
@@ -134,6 +134,61 @@ class GameJesterStrip extends StatelessWidget {
             ),
           );
         }),
+      ),
+    );
+  }
+}
+
+class GameJesterZone extends StatelessWidget {
+  const GameJesterZone({
+    super.key,
+    required this.market,
+    required this.activeEffects,
+    required this.settlementSequenceTick,
+    required this.selectedIndex,
+    required this.onTapCard,
+  });
+
+  final RummiMarketRuntimeFacade market;
+  final List<RummiJesterEffectBreakdown> activeEffects;
+  final int settlementSequenceTick;
+  final int? selectedIndex;
+  final ValueChanged<int> onTapCard;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF173126).withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '${market.ownedEntries.length}/${market.maxOwnedSlots}',
+              style: gameHudSubStyle.copyWith(
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 5),
+            GameJesterStrip(
+              market: market,
+              activeEffects: activeEffects,
+              settlementSequenceTick: settlementSequenceTick,
+              selectedIndex: selectedIndex,
+              onTapCard: onTapCard,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -163,80 +218,107 @@ class GameJesterSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final frameColor = selected
+        ? const Color(0xFFF2C14E)
+        : Colors.white.withValues(alpha: 0.22);
+    final frameWidth = selected ? 2.2 : 1.1;
     if (card == null) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF183E32).withValues(alpha: 0.82),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.18),
-            width: 1.4,
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: frameColor, width: frameWidth),
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                locked
-                    ? 'LOCKED'
-                    : extended
-                    ? 'EXT'
-                    : 'JESTER',
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: locked ? 0.46 : 0.62),
-                  fontSize: 8,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.55,
-                  height: 1,
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.all(kBattleSlotCardInset),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF183E32).withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    width: 1.2,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Center(
-                child: Icon(
-                  locked
-                      ? Icons.lock_rounded
-                      : extended
-                      ? Icons.add_box_outlined
-                      : Icons.style_outlined,
-                  color: Colors.white.withValues(alpha: locked ? 0.36 : 0.28),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: Text(
-                  locked
-                      ? (extended ? '5th' : '잠김')
-                      : extended
-                      ? '5th'
-                      : '+',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: locked ? 0.48 : 0.42),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    height: 1,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 6,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        locked
+                            ? 'LOCKED'
+                            : extended
+                            ? 'EXT'
+                            : 'JESTER',
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withValues(
+                            alpha: locked ? 0.46 : 0.62,
+                          ),
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.55,
+                          height: 1,
+                        ),
+                      ),
+                      const Spacer(),
+                      Center(
+                        child: Icon(
+                          locked
+                              ? Icons.lock_rounded
+                              : extended
+                              ? Icons.add_box_outlined
+                              : Icons.style_outlined,
+                          color: Colors.white.withValues(
+                            alpha: locked ? 0.36 : 0.28,
+                          ),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Center(
+                        child: Text(
+                          locked
+                              ? (extended ? '5th' : '잠김')
+                              : extended
+                              ? '5th'
+                              : '+',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(
+                              alpha: locked ? 0.48 : 0.42,
+                            ),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     }
 
-    final rarityColor = switch (card?.rarity) {
-      RummiJesterRarity.uncommon => const Color(0xFF6CD19B),
-      RummiJesterRarity.rare => const Color(0xFF67B7FF),
-      RummiJesterRarity.legendary => const Color(0xFFF2C14E),
-      _ => Colors.white70,
-    };
+    final rarityColor = gameJesterRarityColor(card!.rarity);
     final isActive = activeEffect != null;
     final displayName = localizedJesterName(context, card!);
 
@@ -245,130 +327,131 @@ class GameJesterSlot extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          if (selected)
-            Positioned(
-              left: -kJesterSelectionOutset,
-              right: -kJesterSelectionOutset,
-              top: -kJesterSelectionOutset,
-              bottom: -kJesterSelectionOutset,
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(17),
-                    border: Border.all(
-                      color: const Color(0xFFF2C14E),
-                      width: kJesterSelectionBorderWidth,
-                    ),
-                  ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: frameColor, width: frameWidth),
                 ),
               ),
             ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: const Color(0xFFEDE7DB),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isActive
-                    ? const Color(0xFFF2C14E)
-                    : rarityColor.withValues(alpha: 0.72),
-                width: isActive ? 2 : 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isActive
-                      ? const Color(0xFFF2C14E).withValues(alpha: 0.3)
-                      : Colors.black.withValues(alpha: 0.18),
-                  blurRadius: isActive ? 12 : 7,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
+          ),
+          Positioned.fill(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: card == null
-                          ? const Color(0xFF385248)
-                          : rarityColor,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+              padding: const EdgeInsets.all(kBattleSlotCardInset),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDE7DB),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isActive
+                        ? const Color(0xFFF2C14E)
+                        : rarityColor.withValues(alpha: 0.72),
+                    width: isActive ? 2 : 1.2,
                   ),
-                  const SizedBox(height: 6),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Text(
-                        displayName,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: const Color(
-                            0xFF20312B,
-                          ).withValues(alpha: 0.92),
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.15,
-                          height: 1.0,
-                        ),
-                      ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isActive
+                          ? const Color(0xFFF2C14E).withValues(alpha: 0.3)
+                          : Colors.black.withValues(alpha: 0.18),
+                      blurRadius: isActive ? 12 : 7,
+                      offset: const Offset(0, 3),
                     ),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF20312B).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        jesterCategoryLabel(card!),
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF1B3A31),
-                          fontSize: 7.5,
-                          fontWeight: FontWeight.w900,
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (activeEffect != null) ...[
-                    const SizedBox(height: 3),
-                    Align(
-                      alignment: Alignment.center,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 2.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E4A3B),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          jesterEffectBadge(activeEffect!),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 7.5,
-                            fontWeight: FontWeight.w900,
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.center,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.82,
+                          child: Container(
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: card == null
+                                  ? const Color(0xFF385248)
+                                  : rarityColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ],
+                      const SizedBox(height: 5),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: Text(
+                            displayName,
+                            maxLines: 2,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF26352F),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF385248,
+                          ).withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          jesterCategoryLabel(card!),
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF314239),
+                            fontSize: 7,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                      if (activeEffect != null) ...[
+                        const SizedBox(height: 3),
+                        Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E4A3B),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            jesterEffectBadge(activeEffect!),
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 6.5,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -635,7 +718,7 @@ class GameJesterHeaderRow extends StatelessWidget {
         child: Text(
           '${market.ownedEntries.length}/${market.maxOwnedSlots}',
           style: gameHudSubStyle.copyWith(
-            fontSize: 13,
+            fontSize: 9,
             fontWeight: FontWeight.w900,
             height: 1.0,
           ),

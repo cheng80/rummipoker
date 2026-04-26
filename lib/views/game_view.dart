@@ -1444,6 +1444,7 @@ class _GameSurface extends StatelessWidget {
                   pendingBoardMoveSourceRow: pendingBoardMoveSourceRow,
                   pendingBoardMoveSourceCol: pendingBoardMoveSourceCol,
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
+                  selectedBattleItemSlot: selectedBattleItemSlot,
                   onOptionsTap: onOptionsTap,
                   onDebugTap: onDebugTap,
                   onJesterTap: onJesterTap,
@@ -1557,6 +1558,7 @@ class _GameLayout extends StatelessWidget {
     required this.pendingBoardMoveSourceRow,
     required this.pendingBoardMoveSourceCol,
     required this.selectedJesterOverlayIndex,
+    required this.selectedBattleItemSlot,
     required this.onOptionsTap,
     required this.onDebugTap,
     required this.onJesterTap,
@@ -1585,6 +1587,7 @@ class _GameLayout extends StatelessWidget {
   final int? pendingBoardMoveSourceRow;
   final int? pendingBoardMoveSourceCol;
   final int? selectedJesterOverlayIndex;
+  final RummiBattleItemSlotView? selectedBattleItemSlot;
   final VoidCallback onOptionsTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
@@ -1620,19 +1623,18 @@ class _GameLayout extends StatelessWidget {
               battle: battle,
               onOptionsTap: onOptionsTap,
             ),
-            const SizedBox(height: 8),
-            GameJesterHeaderRow(station: station, market: market),
-            const SizedBox(height: 2),
-            GameJesterStrip(
+            const SizedBox(height: 6),
+            GameJesterZone(
               market: market,
               activeEffects: activeSettlementEffects,
               settlementSequenceTick: settlementSequenceTick,
               selectedIndex: selectedJesterOverlayIndex,
               onTapCard: onJesterTap,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             GameItemZoneSkeleton(
               battle: battle,
+              selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
               onItemSlotTap: onBattleItemTap,
             ),
             const SizedBox(height: 8),
