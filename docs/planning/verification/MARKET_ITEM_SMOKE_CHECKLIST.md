@@ -27,6 +27,7 @@
   - Tool offers.
   - Gear offers.
   - `T1-T3` and `G1-G2` owned slots in the upper slot section.
+  - Stack count badges such as `x2` are centered at the bottom of occupied cards.
 - Buy a Q-slot item and verify:
   - Gold decreases by item price.
   - Item appears in the next open Q slot.
@@ -75,6 +76,7 @@
 - Battle item zone defaults to `Slots`.
 - `Slots` tab shows `Q1-Q3` and `P1-P2`.
 - `Tool / Gear` tab shows `T1-T3` and `G1-G2`.
+- Occupied Jester and item cards share card sizing/inset rules; item cards use a distinct cool card face and centered count badges.
 - Tapping Q-slot usable item opens the info overlay and shows `사용`.
 - Tapping passive or gear item opens the info overlay and shows automatic-effect messaging.
 - Tapping tool item opens the info overlay and shows Market-use messaging, not battle-use action.

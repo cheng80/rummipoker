@@ -67,7 +67,9 @@
 
 현재:
 
-- stage 기반 단순 연속 루프
+- stage/blind 기반 단순 연속 루프
+- `Battle -> Settlement/Cash-out -> Market -> Next Station/Blind Select -> Battle` 기술 루프는 연결됨
+- 현재 UI는 Station 용어 일부와 Market 화면을 쓰지만, Station Map/Preview 구조는 아직 없음
 
 장기 목표:
 
@@ -136,8 +138,8 @@
 |---|---|---|
 | 전투 코어 | 이미 구현됨 | 유지/정리 |
 | 원페어 점수 | 0점 dead line | 유지 여부 명확히 결정 필요 |
-| 메타 루프 | stage 기반 | sector/station 구조 정의 |
-| shop | Jester 중심 | market 전체 구조 재설계 |
+| 메타 루프 | stage/blind 기반 루프는 작동, Station Map은 없음 | sector/station 구조 정의 |
+| shop/market | Jester + item tab 기반 Market으로 확장 중 | Station 사이 정식 Market 단계로 정리 |
 | economy | 프로토타입 수치 | 장기 밸런스 목표 기준 재설계 |
 | save | active run v2 | profile/run/checkpoint/history 분리 방향 제시 |
 | content | curated Jester 38종 중심 | 다층 콘텐츠 체계 추가 |
