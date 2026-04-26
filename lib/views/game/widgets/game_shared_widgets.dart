@@ -996,26 +996,29 @@ class _GameItemPocketChip extends StatelessWidget {
           ),
           if (itemSlot != null && itemSlot.count > 1)
             Positioned(
-              right: 4,
+              left: 0,
+              right: 0,
               bottom: 4,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.42),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white24),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
+              child: Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.42),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white24),
                   ),
-                  child: Text(
-                    'x${itemSlot.count}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    child: Text(
+                      'x${itemSlot.count}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
                     ),
                   ),
                 ),
