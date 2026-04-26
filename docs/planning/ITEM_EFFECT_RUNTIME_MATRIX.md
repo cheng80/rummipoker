@@ -32,7 +32,7 @@
 
 | Item | 실질 효과 | Timing / Op | Handler | 상태 |
 |---|---|---|---|---|
-| `reroll_token` | 다음 market reroll 비용 -1 | `market_reroll` / `discount_next_reroll` | `applyMarketRerollItem` | `applied` |
+| `reroll_token` | 다음 market reroll 무료 | `market_reroll` / `free_next_reroll` | `applyMarketRerollItem` | `applied` |
 | `coupon_stamp` | 다음 구매 가격 -2 | `market_buy` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
 | `coin_cache` | Gold +3 | `use_market` / `gain_gold` | `applyMarketUseItem` | `applied` |
 | `board_scrap` | 현재 Station 보드 버림 +1 | `use_battle` / `add_board_discard` | `useBattleItem` | `applied` |
@@ -60,9 +60,9 @@
 | `hand_funnel` | 남은 손패 버림 보상 Gold +1씩 추가 | `settlement` / `hand_discard_reward_bonus` | `applySettlementItem` | `applied` |
 | `lucky_counter` | rare item weight +5 | `market_build_offers` / `rarity_weight_bonus` | `applyEnterMarketItem` | `applied` |
 | `echo_bell` | 두 번째 confirm에 첫 confirm 점수 10% 추가 | `second_confirm_each_station` / `add_percent_of_first_confirm_score` | `applyConfirmModifierItem` | `applied` |
-| `boss_trophy` | 다음 market Jester offer +1 | `boss_blind_clear_market` / `extra_jester_offer_next_market` | `applyBossClearItem` | `pendingHook` |
+| `boss_trophy` | 다음 market Jester offer +1 | `boss_blind_clear_market` / `extra_jester_offer_next_market` | `applyBossClearItem` | `applied` |
 | `thin_wallet` | Gold 3 이하이면 Gold +5 | `use_market_if_gold_lte` / `gain_gold` | `applyMarketUseItem` | `applied` |
-| `trade_ticket` | item offer만 reroll | `use_market` / `reroll_item_offers_only` | `applyMarketUseItem` | `pendingHook` |
+| `trade_ticket` | item offer만 reroll | `use_market` / `reroll_item_offers_only` | `applyMarketUseItem` | `applied` |
 | `jester_invoice` | 다음 Jester 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
 | `item_invoice` | 다음 Item 구매 가격 -4 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
 | `red_swatch` | 다음 confirm red tile마다 mult +2 | `next_confirm_per_tile_color` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
@@ -102,9 +102,11 @@
   `black_swatch`, `yellow_swatch`, `rank_chalk`, `tile_polisher`
 - Market modifier state/save/facade hook:
   `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`,
-  `market_compass`, `shop_lens`, `lucky_counter`
+  `market_compass`, `shop_lens`, `lucky_counter`, `trade_ticket`
 - Direct economy hook:
   `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`
+- Boss/next market offer hook:
+  `boss_trophy`
 - Settlement reward modifier hook:
   `coin_funnel`, `hand_funnel`
 - Inventory and sell hook:
@@ -114,8 +116,8 @@
 
 현재 실제 런타임 기준:
 
-- 총 49개 중 `applied` 46개
-- 남은 `pendingHook` 3개
+- 총 49개 중 `applied` 48개
+- 남은 `pendingHook` 1개
 
 ## 공통 구현 묶음 플랜
 
@@ -149,7 +151,7 @@
 
 - reroll/구매 할인: `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`, `market_compass`
 - offer 구성 변경: `shop_lens`, `lucky_counter`
-- 부분 offer 갱신: `trade_ticket`
+- 부분 offer 갱신: `trade_ticket` 적용 완료
 
 공통 작업:
 
@@ -157,7 +159,7 @@
 - offer build config 추가: extra item slot, rarity weight bonus
 - market facade에 할인 적용 전/후 가격과 modifier source 노출
 - reroll/buy command에서 modifier 소비
-- `trade_ticket`용 item offer only reroll command 또는 market runtime hook 추가
+- `trade_ticket`용 item offer only reroll offset/save/read path 추가 완료
 
 ### Group 3. Direct Gold and Economy Hooks
 
@@ -227,8 +229,8 @@
 
 공통 작업:
 
-- boss clear reward와 next market build 사이에 delayed market modifier 저장
-- 다음 market jester offer slot +1 적용 후 소비
+- boss clear reward와 next market build 사이에 delayed market modifier 저장 완료
+- 다음 market jester offer slot +1 적용 후 해당 market의 reroll 동안 유지, 다음 market 진입 시 해제 완료
 
 ### Group 8. Board Move Follow-up Modifier
 
@@ -254,7 +256,6 @@
 - Group 3 `Direct Gold and Economy Hooks`는 gold delta/event/save 경계까지 1차 적용 완료
 - Group 4 `Settlement Reward Modifiers`는 settlement breakdown UX와 gold total 반영까지 1차 적용 완료
 - B7 `Next Station Loop`의 next station transition command 정리는 1차 적용 완료
-- 다음 최우선은 Group 7 `Boss/Next Market Offer Hook`
+- 다음 최우선은 Group 8 및 남은 market use 단건 hook
 
-1. Group 7 `Boss/Next Market Offer Hook`: `boss_trophy`의 boss clear 후 다음 market Jester offer +1 delayed modifier를 처리한다.
-2. Group 8 및 남은 market use 단건: `slide_wax`, `trade_ticket`처럼 별도 hook이 필요한 단건 묶음으로 처리한다.
+1. Group 8 `slide_wax`: 보드 이동 후 어떤 보너스가 발동되는지 수치/대상 확정 후 처리한다.

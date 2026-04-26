@@ -555,40 +555,43 @@ void main() {
       },
     );
 
-    test('market reroll item queues discount and consumes inventory stack', () {
-      final item = _item(
-        id: 'reroll_token',
-        timing: 'market_reroll',
-        op: 'discount_next_reroll',
-        placement: ItemPlacement.inventory,
-        amount: 1,
-        consume: true,
-      );
-      final runProgress = RummiRunProgress()
-        ..rerollCost = 5
-        ..itemInventory = const RunInventoryState(
-          ownedItems: [
-            OwnedItemEntry(
-              itemId: 'reroll_token',
-              count: 1,
-              placement: ItemPlacement.inventory,
-            ),
-          ],
+    test(
+      'market reroll item queues free reroll and consumes inventory stack',
+      () {
+        final item = _item(
+          id: 'reroll_token',
+          timing: 'market_reroll',
+          op: 'free_next_reroll',
+          placement: ItemPlacement.inventory,
+          amount: 1,
+          consume: true,
+        );
+        final runProgress = RummiRunProgress()
+          ..rerollCost = 5
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'reroll_token',
+                count: 1,
+                placement: ItemPlacement.inventory,
+              ),
+            ],
+          );
+
+        final result = ItemEffectRuntime.applyMarketRerollItem(
+          item: item,
+          runProgress: runProgress,
         );
 
-      final result = ItemEffectRuntime.applyMarketRerollItem(
-        item: item,
-        runProgress: runProgress,
-      );
-
-      expect(result.isSuccess, isTrue);
-      expect(runProgress.effectiveRerollCost(), 4);
-      expect(runProgress.itemInventory.ownedItems, isEmpty);
-      expect(result.events.map((event) => event.kind), [
-        ItemEffectEventKind.marketModifierQueued,
-        ItemEffectEventKind.itemConsumed,
-      ]);
-    });
+        expect(result.isSuccess, isTrue);
+        expect(runProgress.effectiveRerollCost(), 0);
+        expect(runProgress.itemInventory.ownedItems, isEmpty);
+        expect(result.events.map((event) => event.kind), [
+          ItemEffectEventKind.marketModifierQueued,
+          ItemEffectEventKind.itemConsumed,
+        ]);
+      },
+    );
 
     test('market use item gains gold and consumes inventory stack', () {
       final item = _item(
@@ -621,6 +624,42 @@ void main() {
       expect(runProgress.itemInventory.ownedItems, isEmpty);
       expect(result.events.map((event) => event.kind), [
         ItemEffectEventKind.goldGained,
+        ItemEffectEventKind.itemConsumed,
+      ]);
+    });
+
+    test('market use trade ticket advances item offer reroll offset', () {
+      final item = _item(
+        id: 'trade_ticket',
+        timing: 'use_market',
+        op: 'reroll_item_offers_only',
+        placement: ItemPlacement.inventory,
+        consume: true,
+      );
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'trade_ticket',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+
+      final result = ItemEffectRuntime.applyMarketUseItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(
+        runProgress.marketModifiers.itemOfferRerollOffset,
+        runProgress.marketModifiers.itemOfferSlotCount,
+      );
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+      expect(result.events.map((event) => event.kind), [
+        ItemEffectEventKind.marketModifierQueued,
         ItemEffectEventKind.itemConsumed,
       ]);
     });
@@ -924,6 +963,45 @@ void main() {
       expect(results.single.events.single.kind, ItemEffectEventKind.goldGained);
     });
 
+    test('owned boss trophy queues next market jester offer slot', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          _itemJson(
+            id: 'boss_trophy',
+            timing: 'boss_blind_clear_market',
+            op: 'extra_jester_offer_next_market',
+            placement: 'passiveRack',
+          ),
+        ],
+      });
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'boss_trophy',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          passiveRelicIds: ['boss_trophy'],
+        );
+
+      final results = ItemEffectRuntime.applyOwnedBossClearItems(
+        catalog: catalog,
+        runProgress: runProgress,
+      );
+
+      expect(results.single.isSuccess, isTrue);
+      expect(
+        results.single.events.single.kind,
+        ItemEffectEventKind.bossModifierQueued,
+      );
+      expect(results.single.events.single.amount, 1);
+      expect(runProgress.marketModifiers.nextMarketExtraJesterOfferSlots, 1);
+    });
+
     test('settlement item returns settlement modifier event', () {
       final item = _item(
         id: 'coin_funnel',
@@ -972,10 +1050,11 @@ void main() {
           'use_battle:undo_last_board_move',
           'use_battle:peek_deck_discard_one',
           'use_battle:draw_if_hand_empty',
-          'market_reroll:discount_next_reroll',
+          'market_reroll:free_next_reroll',
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',
           'use_market:gain_gold',
+          'use_market:reroll_item_offers_only',
           'use_market_if_gold_lte:gain_gold',
           'enter_market:gain_gold',
           'enter_market:discount_first_reroll',
@@ -983,6 +1062,7 @@ void main() {
           'market_build_offers:extra_item_offer_slot',
           'market_build_offers:rarity_weight_bonus',
           'boss_blind_clear_reward:gain_gold',
+          'boss_blind_clear_market:extra_jester_offer_next_market',
           'settlement:board_discard_reward_bonus',
           'settlement:hand_discard_reward_bonus',
           'next_confirm:chips_bonus',

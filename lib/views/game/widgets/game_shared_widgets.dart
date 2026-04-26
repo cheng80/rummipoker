@@ -24,6 +24,8 @@ const double kBattleItemSlotWidth = 58.0;
 const double kBattleItemSlotHeight = 78.0;
 const int kBattleQuickSlotDisplayCount = 3;
 const int kBattlePassiveSlotDisplayCount = 2;
+const int kBattleToolSlotDisplayCount = 3;
+const int kBattleGearSlotDisplayCount = 2;
 const int kBattleBaseUnlockedQuickSlots = 2;
 const int kBattleBaseUnlockedPassiveSlots = 1;
 const Color kGameModalBarrierColor = Color(0x70000000);
@@ -91,34 +93,37 @@ class GameTopHud extends StatelessWidget {
             0.0,
             1.0,
           );
+    final goldDisplayValue = '${battle.currentGold}';
 
     return SizedBox(
       height: 76,
       child: Row(
         children: [
-          Expanded(
-            flex: 9,
+          SizedBox(
+            width: 82,
             child: GameHudChip(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
                     'STATION',
                     style: gameHudLabelStyle,
                     maxLines: 1,
+                    textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Expanded(
                     child: Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: Alignment.center,
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.center,
                         child: Text(
                           '${battle.stageIndex}',
                           maxLines: 1,
-                          style: gameHudValueStyle.copyWith(fontSize: 22),
+                          textAlign: TextAlign.center,
+                          style: gameHudValueStyle.copyWith(fontSize: 20),
                         ),
                       ),
                     ),
@@ -128,6 +133,7 @@ class GameTopHud extends StatelessWidget {
                     '보상 +${RummiRunProgress.stageClearGoldBase}',
                     style: gameHudSubStyle,
                     maxLines: 1,
+                    textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -136,35 +142,48 @@ class GameTopHud extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            flex: 14,
             child: GameHudChip(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'STATION GOAL',
-                          style: gameHudLabelStyle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'STATION GOAL',
+                    style: gameHudLabelStyle,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Expanded(
                     child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${objective.scoreTowardObjective} / ${objective.targetScore}',
-                          maxLines: 1,
-                          style: gameHudValueStyle.copyWith(fontSize: 22),
-                        ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${objective.scoreTowardObjective}',
+                              maxLines: 1,
+                              textAlign: TextAlign.right,
+                              overflow: TextOverflow.clip,
+                              style: gameHudValueStyle.copyWith(fontSize: 20),
+                            ),
+                          ),
+                          Text(
+                            '/',
+                            maxLines: 1,
+                            style: gameHudValueStyle.copyWith(fontSize: 20),
+                          ),
+                          SizedBox(
+                            width: 48,
+                            child: Text(
+                              '${objective.targetScore}',
+                              maxLines: 1,
+                              textAlign: TextAlign.left,
+                              overflow: TextOverflow.clip,
+                              style: gameHudValueStyle.copyWith(fontSize: 20),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -185,45 +204,66 @@ class GameTopHud extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            flex: 9,
+          SizedBox(
+            width: 142,
             child: GameHudChip(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'GOLD',
-                          style: gameHudLabelStyle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: onOptionsTap,
-                        behavior: HitTestBehavior.opaque,
-                        child: Icon(
-                          Icons.more_vert_rounded,
-                          color: Colors.white.withValues(alpha: 0.88),
-                          size: 18,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'GOLD',
+                    style: gameHudLabelStyle,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${battle.currentGold}',
-                          maxLines: 1,
-                          style: gameHudValueStyle.copyWith(fontSize: 22),
-                        ),
+                    child: Transform.translate(
+                      offset: const Offset(0, -4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Semantics(
+                            label: 'Gold',
+                            value: goldDisplayValue,
+                            child: ExcludeSemantics(
+                              child: Image.asset(
+                                AssetPaths.uiGreed,
+                                width: 20,
+                                height: 20,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                goldDisplayValue,
+                                maxLines: 1,
+                                textAlign: TextAlign.right,
+                                overflow: TextOverflow.clip,
+                                style: gameHudValueStyle.copyWith(fontSize: 20),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          GestureDetector(
+                            onTap: onOptionsTap,
+                            behavior: HitTestBehavior.opaque,
+                            child: SizedBox(
+                              width: 18,
+                              height: 22,
+                              child: Icon(
+                                Icons.more_vert_rounded,
+                                color: Colors.white.withValues(alpha: 0.88),
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -308,7 +348,9 @@ class GameBottomInfoRow extends StatelessWidget {
   }
 }
 
-class GameItemZoneSkeleton extends StatelessWidget {
+enum _GameItemZoneTab { slots, tools }
+
+class GameItemZoneSkeleton extends StatefulWidget {
   const GameItemZoneSkeleton({
     super.key,
     required this.battle,
@@ -319,12 +361,28 @@ class GameItemZoneSkeleton extends StatelessWidget {
   final ValueChanged<RummiBattleItemSlotView>? onItemSlotTap;
 
   @override
+  State<GameItemZoneSkeleton> createState() => _GameItemZoneSkeletonState();
+}
+
+class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
+  _GameItemZoneTab _tab = _GameItemZoneTab.slots;
+
+  @override
   Widget build(BuildContext context) {
+    final battle = widget.battle;
     final quickSlots = battle.itemSlots
         .where((slot) => slot.placement == ItemPlacement.quickSlot)
         .toList(growable: false);
     final passiveSlots = battle.itemSlots
         .where((slot) => slot.placement == ItemPlacement.passiveRack)
+        .toList(growable: false);
+    final toolSlots = battle.itemSlots
+        .where((slot) => slot.placement == ItemPlacement.inventory)
+        .take(kBattleToolSlotDisplayCount)
+        .toList(growable: false);
+    final gearSlots = battle.itemSlots
+        .where((slot) => slot.placement == ItemPlacement.equipped)
+        .take(kBattleGearSlotDisplayCount)
         .toList(growable: false);
     final unlockedQuickSlots = max(
       kBattleBaseUnlockedQuickSlots,
@@ -342,29 +400,149 @@ class GameItemZoneSkeleton extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            for (var index = 0; index < kBattleQuickSlotDisplayCount; index++)
-              _GameItemPocketChip(
-                label: 'Q${index + 1}',
-                accent: const Color(0xFF267B67),
-                itemSlot: index < quickSlots.length ? quickSlots[index] : null,
-                locked: index >= unlockedQuickSlots,
-                onTap: onItemSlotTap,
-              ),
-            for (var index = 0; index < kBattlePassiveSlotDisplayCount; index++)
-              _GameItemPocketChip(
-                label: 'P${index + 1}',
-                accent: const Color(0xFF4C5A55),
-                itemSlot: index < passiveSlots.length
-                    ? passiveSlots[index]
-                    : null,
-                locked: index >= unlockedPassiveSlots,
-                onTap: onItemSlotTap,
-              ),
+            _GameItemZoneTabBar(
+              currentTab: _tab,
+              onChanged: (tab) => setState(() => _tab = tab),
+            ),
+            const SizedBox(height: 7),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: _tab == _GameItemZoneTab.slots
+                  ? [
+                      for (
+                        var index = 0;
+                        index < kBattleQuickSlotDisplayCount;
+                        index++
+                      )
+                        _GameItemPocketChip(
+                          label: 'Q${index + 1}',
+                          accent: const Color(0xFF267B67),
+                          itemSlot: index < quickSlots.length
+                              ? quickSlots[index]
+                              : null,
+                          locked: index >= unlockedQuickSlots,
+                          onTap: widget.onItemSlotTap,
+                        ),
+                      for (
+                        var index = 0;
+                        index < kBattlePassiveSlotDisplayCount;
+                        index++
+                      )
+                        _GameItemPocketChip(
+                          label: 'P${index + 1}',
+                          accent: const Color(0xFF4C5A55),
+                          itemSlot: index < passiveSlots.length
+                              ? passiveSlots[index]
+                              : null,
+                          locked: index >= unlockedPassiveSlots,
+                          onTap: widget.onItemSlotTap,
+                        ),
+                    ]
+                  : [
+                      for (
+                        var index = 0;
+                        index < kBattleToolSlotDisplayCount;
+                        index++
+                      )
+                        _GameItemPocketChip(
+                          label: 'T${index + 1}',
+                          accent: const Color(0xFF2D7FA2),
+                          itemSlot: index < toolSlots.length
+                              ? toolSlots[index]
+                              : null,
+                          onTap: widget.onItemSlotTap,
+                        ),
+                      for (
+                        var index = 0;
+                        index < kBattleGearSlotDisplayCount;
+                        index++
+                      )
+                        _GameItemPocketChip(
+                          label: 'G${index + 1}',
+                          accent: const Color(0xFFB88735),
+                          itemSlot: index < gearSlots.length
+                              ? gearSlots[index]
+                              : null,
+                          onTap: widget.onItemSlotTap,
+                        ),
+                    ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _GameItemZoneTabBar extends StatelessWidget {
+  const _GameItemZoneTabBar({
+    required this.currentTab,
+    required this.onChanged,
+  });
+
+  final _GameItemZoneTab currentTab;
+  final ValueChanged<_GameItemZoneTab> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 24,
+      child: Row(
+        children: [
+          Expanded(
+            child: _GameItemZoneTabButton(
+              label: 'Slots',
+              selected: currentTab == _GameItemZoneTab.slots,
+              onPressed: () => onChanged(_GameItemZoneTab.slots),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _GameItemZoneTabButton(
+              label: 'Tool / Gear',
+              selected: currentTab == _GameItemZoneTab.tools,
+              onPressed: () => onChanged(_GameItemZoneTab.tools),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GameItemZoneTabButton extends StatelessWidget {
+  const _GameItemZoneTabButton({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: Size.zero,
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: selected
+            ? const Color(0xFFF4A81D)
+            : Colors.black.withValues(alpha: 0.16),
+        foregroundColor: selected ? Colors.black : Colors.white70,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
       ),
     );
   }
@@ -396,7 +574,9 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
     final canUseInBattle =
         itemSlot.placement == ItemPlacement.quickSlot &&
         itemSlot.usableInBattle;
-    final isPassive = itemSlot.placement == ItemPlacement.passiveRack;
+    final isPassive =
+        itemSlot.placement == ItemPlacement.passiveRack ||
+        itemSlot.placement == ItemPlacement.equipped;
     return Material(
       color: Colors.transparent,
       child: DecoratedBox(
@@ -457,7 +637,11 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                   _GameItemOverlayTag(text: 'x${itemSlot.count}'),
                   if (isPassive) ...[
                     const SizedBox(width: 8),
-                    const _GameItemOverlayTag(text: '패시브'),
+                    _GameItemOverlayTag(
+                      text: itemSlot.placement == ItemPlacement.equipped
+                          ? '기어'
+                          : '패시브',
+                    ),
                     const SizedBox(width: 8),
                     const _GameItemOverlayTag(text: '자동 발동'),
                   ],
@@ -477,8 +661,42 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
               ] else if (isPassive) ...[
                 const SizedBox(height: 12),
                 const _GamePassiveItemNotice(),
+              ] else if (itemSlot.placement == ItemPlacement.inventory) ...[
+                const SizedBox(height: 12),
+                const _GameToolItemNotice(),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GameToolItemNotice extends StatelessWidget {
+  const _GameToolItemNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: const SizedBox(
+        width: double.infinity,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: Text(
+            '상점용 도구 · Market에서 조건에 따라 사용',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              height: 1.15,
+            ),
           ),
         ),
       ),
@@ -1318,7 +1536,7 @@ void showGameOverDialog({
           Text(
             context.tr('gameResult'),
             style: TextStyle(
-              fontFamily: AssetPaths.fontAngduIpsul140,
+              fontFamily: AssetPaths.fontNexonLv2Gothic,
               color: Colors.white.withValues(alpha: 0.95),
               fontSize: 18,
             ),

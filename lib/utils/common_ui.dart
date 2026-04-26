@@ -86,7 +86,7 @@ class GameChromeButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: AssetPaths.fontAngduIpsul140,
+                        fontFamily: AssetPaths.fontNexonLv2Gothic,
                         fontSize: 15,
                         color: baseForeground,
                         letterSpacing: 0.5,
@@ -165,6 +165,16 @@ class GameIconButtonChip extends StatelessWidget {
   }
 }
 
+Color _toneBorderColor(Color color, {required bool enabled}) {
+  final hsl = HSLColor.fromColor(color);
+  final adjusted = hsl
+      .withLightness((hsl.lightness - 0.14).clamp(0.0, 1.0))
+      .toColor();
+  return enabled
+      ? adjusted.withValues(alpha: 0.88)
+      : adjusted.withValues(alpha: 0.34);
+}
+
 class GameDialogSection extends StatelessWidget {
   const GameDialogSection({
     super.key,
@@ -195,7 +205,7 @@ class GameDialogSection extends StatelessWidget {
             Text(
               title!,
               style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
                 color: Colors.white.withValues(alpha: 0.72),
                 fontSize: 13,
               ),
@@ -267,7 +277,7 @@ class GameMenuActionTile extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontFamily: AssetPaths.fontAngduIpsul140,
+                        fontFamily: AssetPaths.fontNexonLv2Gothic,
                         color: Colors.white.withValues(
                           alpha: isEnabled ? 0.94 : 0.7,
                         ),
@@ -412,7 +422,7 @@ Future<T?> showGameChoiceDialog<T>(
           Text(
             title,
             style: TextStyle(
-              fontFamily: AssetPaths.fontAngduIpsul140,
+              fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 26,
               color: Colors.white.withValues(alpha: 0.96),
               letterSpacing: 1.2,
@@ -460,7 +470,7 @@ Future<bool> showConfirmDialog(
           Text(
             title,
             style: TextStyle(
-              fontFamily: AssetPaths.fontAngduIpsul140,
+              fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 26,
               color: Colors.white.withValues(alpha: 0.96),
               letterSpacing: 1.2,
@@ -644,14 +654,4 @@ class _NoticeCard extends StatelessWidget {
       ),
     );
   }
-}
-
-Color _toneBorderColor(Color color, {required bool enabled}) {
-  final hsl = HSLColor.fromColor(color);
-  final adjusted = hsl
-      .withLightness((hsl.lightness - 0.14).clamp(0.0, 1.0))
-      .toColor();
-  return enabled
-      ? adjusted.withValues(alpha: 0.88)
-      : adjusted.withValues(alpha: 0.34);
 }

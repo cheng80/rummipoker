@@ -155,7 +155,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
               '블라인드 선택',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 38,
                 color: Colors.white.withValues(alpha: 0.96),
                 letterSpacing: 1.8,
@@ -313,7 +313,7 @@ class _BlindOptionCard extends StatelessWidget {
                 color: Colors.white.withValues(
                   alpha: isInteractive ? 0.95 : 0.84,
                 ),
-                fontFamily: AssetPaths.fontAngduIpsul140,
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 22,
                 letterSpacing: 1.1,
               ),

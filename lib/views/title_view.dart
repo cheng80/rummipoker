@@ -253,7 +253,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                     context.tr('gameTitleBlock'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: AssetPaths.fontAngduIpsul140,
+                      fontFamily: AssetPaths.fontNexonLv2Gothic,
                       fontSize: 88,
                       fontWeight: FontWeight.bold,
                       height: 1.05,
@@ -277,7 +277,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                     context.tr('gameSubtitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: AssetPaths.fontAngduIpsul140,
+                      fontFamily: AssetPaths.fontNexonLv2Gothic,
                       fontSize: 20,
                       color: Colors.white.withValues(alpha: 0.6),
                     ),

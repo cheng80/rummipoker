@@ -50,7 +50,9 @@ void main() {
     );
 
     expect(find.text('4'), findsOneWidget);
-    expect(find.text('360 / 900'), findsOneWidget);
+    expect(find.text('360'), findsOneWidget);
+    expect(find.text('/'), findsOneWidget);
+    expect(find.text('900'), findsOneWidget);
     expect(find.text('27'), findsOneWidget);
   });
 
@@ -277,6 +279,107 @@ void main() {
       tester.getCenter(find.text('Safety\nNet')).dx,
       greaterThan(tester.getCenter(find.text('Q3')).dx),
     );
+  });
+
+  testWidgets('GameItemZoneSkeleton switches to tool and gear slots', (
+    tester,
+  ) async {
+    final rerollToken = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'reroll_token',
+      'displayName': 'Reroll Token',
+      'displayNameKey': 'data.items.reroll_token.displayName',
+      'type': 'utility',
+      'rarity': 'common',
+      'basePrice': 3,
+      'sellPrice': 1,
+      'stackable': true,
+      'maxStack': 3,
+      'sellable': true,
+      'usableInBattle': false,
+      'placement': 'inventory',
+      'slotHint': 'tool',
+      'effectText': 'The next Market reroll costs no Gold.',
+      'effectTextKey': 'data.items.reroll_token.effectText',
+      'effect': <String, dynamic>{
+        'timing': 'market_reroll',
+        'op': 'free_next_reroll',
+        'amount': 1,
+        'consume': true,
+      },
+      'tags': <String>['market'],
+      'sourceNotes': 'Test fixture.',
+    });
+    final scoreAbacus = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'score_abacus',
+      'displayName': 'Score Abacus',
+      'displayNameKey': 'data.items.score_abacus.displayName',
+      'type': 'gear',
+      'rarity': 'common',
+      'basePrice': 5,
+      'sellPrice': 2,
+      'stackable': false,
+      'maxStack': 1,
+      'sellable': true,
+      'usableInBattle': false,
+      'placement': 'equipped',
+      'slotHint': 'gear',
+      'effectText': 'Gain +1 board move at Station start.',
+      'effectTextKey': 'data.items.score_abacus.effectText',
+      'effect': <String, dynamic>{
+        'timing': 'station_start',
+        'op': 'add_board_move',
+        'amount': 1,
+      },
+      'tags': <String>['battle'],
+      'sourceNotes': 'Test fixture.',
+    });
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+      itemSlots: [
+        RummiBattleItemSlotView.fromOwnedItem(
+          slotIndex: 0,
+          slotLabel: 'T1',
+          entry: const OwnedItemEntry(
+            itemId: 'reroll_token',
+            count: 1,
+            placement: ItemPlacement.inventory,
+          ),
+          item: rerollToken,
+        ),
+        RummiBattleItemSlotView.fromOwnedItem(
+          slotIndex: 1,
+          slotLabel: 'G1',
+          entry: const OwnedItemEntry(
+            itemId: 'score_abacus',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+          item: scoreAbacus,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: GameItemZoneSkeleton(battle: battle)),
+      ),
+    );
+
+    await tester.tap(find.text('Tool / Gear'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reroll\nToken'), findsOneWidget);
+    expect(find.text('Score\nAbacus'), findsOneWidget);
+    expect(find.text('T1'), findsOneWidget);
+    expect(find.text('T2'), findsOneWidget);
+    expect(find.text('T3'), findsOneWidget);
+    expect(find.text('G1'), findsOneWidget);
+    expect(find.text('G2'), findsOneWidget);
   });
 
   testWidgets('GameBattleItemInfoOverlay confirms use from explicit button', (

@@ -689,6 +689,9 @@ void main() {
         item.id,
       );
       expect(updated.runProgress!.itemInventory.quickSlotItemIds, [item.id]);
+      expect(updated.runProgress!.marketModifiers.consumedItemOfferIds, [
+        item.id,
+      ]);
     });
 
     test('buyItemOffer는 spare pouch quick slot 용량을 적용한다', () {
@@ -870,6 +873,101 @@ void main() {
       expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold + 3);
       expect(updated.marketView!.gold, RummiEconomyConfig.startingGold + 3);
       expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
+    });
+
+    test('buyItemOffer는 보유 market_buy 아이템을 다음 구매에 자동 적용한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3803);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final catalog = ItemCatalog.fromJson(const {
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          {
+            'id': 'item_invoice',
+            'displayName': 'Item Invoice',
+            'type': 'utility',
+            'rarity': 'rare',
+            'basePrice': 8,
+            'sellPrice': 4,
+            'stackable': false,
+            'maxStack': 1,
+            'sellable': true,
+            'usableInBattle': false,
+            'placement': 'inventory',
+            'slotHint': 'utility',
+            'effectText': 'The next Item purchase costs 4 less.',
+            'effect': {
+              'timing': 'market_buy_if_category',
+              'op': 'discount_next_purchase',
+              'category': 'item',
+              'amount': 4,
+              'consume': true,
+            },
+          },
+          {
+            'id': 'board_scrap',
+            'displayName': 'Board Scrap',
+            'type': 'consumable',
+            'rarity': 'common',
+            'basePrice': 4,
+            'sellPrice': 2,
+            'stackable': true,
+            'maxStack': 2,
+            'sellable': true,
+            'usableInBattle': true,
+            'placement': 'quickSlot',
+            'slotHint': 'q',
+            'effectText': 'Gain +1 board discard for this Station.',
+            'effect': {
+              'timing': 'use_battle',
+              'op': 'add_board_discard',
+              'amount': 1,
+              'consume': true,
+            },
+          },
+        ],
+      });
+      final boughtItem = catalog.findById('board_scrap')!;
+      state.runProgress!
+        ..gold = 4
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'item_invoice',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+      notifier.markDirty();
+      final offer = RummiMarketItemOfferView.fromItemDefinition(
+        boughtItem,
+        slotIndex: 0,
+        currentGold: 4,
+        price: 4,
+      );
+
+      final failMessage = notifier.buyItemOffer(offer, itemCatalog: catalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.runProgress!.gold, 4);
+      expect(
+        updated.runProgress!.itemInventory.ownedItems.map(
+          (entry) => entry.itemId,
+        ),
+        ['board_scrap'],
+      );
+      expect(updated.runProgress!.itemInventory.quickSlotItemIds, [
+        'board_scrap',
+      ]);
+      expect(updated.runProgress!.marketModifiers.nextItemPurchaseDiscount, 0);
     });
 
     test('useBattleItem은 discard 자원을 올리고 consumable stack을 소모한다', () {
@@ -1070,8 +1168,90 @@ void main() {
       expect(message, isNull);
       expect(updated.runProgress!.gold, 5);
       expect(updated.marketView!.gold, 5);
+      expect(updated.runProgress!.rerollCost, 7);
       expect(updated.runProgress!.shopOffers, hasLength(1));
       expect(updated.runProgress!.shopOffers.first.card.id, 'green_jester');
+    });
+
+    test('rerollShopFromState는 리롤 토큰을 골드 대신 소모한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 42);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      notifier.setJesterCatalog(
+        RummiJesterCatalog.fromJsonString('''
+[
+  {
+    "id": "green_jester",
+    "displayName": "Green Jester",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "stateful_growth",
+    "trigger": "passive",
+    "conditionType": "none",
+    "conditionValue": null,
+    "value": 1,
+    "xValue": null,
+    "mappedTileColors": [],
+    "mappedTileNumbers": []
+  }
+]
+'''),
+      );
+      final itemCatalog = ItemCatalog.fromJson(const {
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          {
+            'id': 'reroll_token',
+            'displayName': 'Reroll Token',
+            'type': 'utility',
+            'rarity': 'common',
+            'basePrice': 3,
+            'sellPrice': 1,
+            'stackable': true,
+            'maxStack': 3,
+            'sellable': true,
+            'usableInBattle': false,
+            'placement': 'inventory',
+            'slotHint': 'utility',
+            'effectText': 'The next Market reroll costs no Gold.',
+            'effect': {
+              'timing': 'market_reroll',
+              'op': 'free_next_reroll',
+              'amount': 1,
+              'consume': true,
+            },
+          },
+        ],
+      });
+      state.runProgress!
+        ..gold = 5
+        ..rerollCost = 5
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'reroll_token',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+      notifier.markDirty();
+
+      final message = notifier.rerollShopFromState(itemCatalog: itemCatalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(message, isNull);
+      expect(updated.runProgress!.gold, 5);
+      expect(updated.runProgress!.rerollCost, 7);
+      expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
+      expect(updated.runProgress!.shopOffers.single.card.id, 'green_jester');
     });
 
     test(

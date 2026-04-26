@@ -3,6 +3,7 @@ import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
 import 'item_definition.dart';
 import 'jester_meta.dart';
+import 'owned_content_instance.dart';
 
 class RummiBattleItemSlotView {
   const RummiBattleItemSlotView({
@@ -25,18 +26,30 @@ class RummiBattleItemSlotView {
     required OwnedItemEntry entry,
     required ItemDefinition item,
   }) {
+    return RummiBattleItemSlotView.fromInstance(
+      slotIndex: slotIndex,
+      slotLabel: slotLabel,
+      instance: OwnedItemInstance(entry: entry, definition: item),
+    );
+  }
+
+  factory RummiBattleItemSlotView.fromInstance({
+    required int slotIndex,
+    required String slotLabel,
+    required OwnedItemInstance instance,
+  }) {
     return RummiBattleItemSlotView(
       slotIndex: slotIndex,
       slotLabel: slotLabel,
-      contentId: item.id,
-      displayName: item.displayName,
-      displayNameKey: item.displayNameKey,
-      effectText: item.effectText,
-      effectTextKey: item.effectTextKey,
-      count: entry.count,
-      placement: entry.placement,
-      usableInBattle: item.usableInBattle,
-      item: item,
+      contentId: instance.id,
+      displayName: instance.displayName,
+      displayNameKey: instance.displayNameKey,
+      effectText: instance.effectText,
+      effectTextKey: instance.effectTextKey,
+      count: instance.count,
+      placement: instance.placement,
+      usableInBattle: instance.usableInBattle,
+      item: instance.definition,
     );
   }
 

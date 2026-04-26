@@ -539,7 +539,7 @@ class GameSessionNotifier
     );
   }
 
-  String? rerollShopFromState() {
+  String? rerollShopFromState({ItemCatalog? itemCatalog}) {
     final session = state.session;
     final runProgress = state.runProgress;
     if (session == null || runProgress == null) {
@@ -547,15 +547,31 @@ class GameSessionNotifier
     }
     final catalog =
         state.jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[];
-    return rerollShop(catalog: catalog, rng: session.runRandom);
+    return rerollShop(
+      catalog: catalog,
+      rng: session.runRandom,
+      itemCatalog: itemCatalog,
+    );
   }
 
   String? rerollShop({
     required List<RummiJesterCard> catalog,
     required Random rng,
+    ItemCatalog? itemCatalog,
   }) {
     final runProgress = state.runProgress;
     if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    final rerollItem = _nextOwnedMarketRerollItem(
+      catalog: itemCatalog,
+      runProgress: runProgress,
+    );
+    if (rerollItem != null) {
+      final result = ItemEffectRuntime.applyMarketRerollItem(
+        item: rerollItem,
+        runProgress: runProgress,
+      );
+      if (!result.isSuccess) return result.failMessage;
+    }
     final ok = runProgress.rerollShop(catalog: catalog, rng: rng);
     if (!ok) {
       return '리롤 골드가 부족합니다.';
@@ -564,7 +580,27 @@ class GameSessionNotifier
     return null;
   }
 
-  String? buyShopOffer(int offerIndex) {
+  ItemDefinition? _nextOwnedMarketRerollItem({
+    required ItemCatalog? catalog,
+    required RummiRunProgress runProgress,
+  }) {
+    if (catalog == null || runProgress.effectiveRerollCost() <= 0) {
+      return null;
+    }
+    for (final entry in runProgress.itemInventory.ownedItems) {
+      if (entry.count <= 0 || !entry.isActive) continue;
+      final item = catalog.findById(entry.itemId);
+      if (item == null) continue;
+      if (item.effect.timing == 'market_reroll' &&
+          item.effect.op == 'free_next_reroll' &&
+          item.effect.consume) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  String? buyShopOffer(int offerIndex, {ItemCatalog? itemCatalog}) {
     final runProgress = state.runProgress;
     if (runProgress == null) return '상점 진행 정보가 없습니다.';
     if (offerIndex < 0 || offerIndex >= runProgress.shopOffers.length) {
@@ -572,6 +608,18 @@ class GameSessionNotifier
     }
     if (runProgress.ownedJesters.length >= runProgress.jesterSlotCapacity()) {
       return '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.';
+    }
+    final marketBuyItem = _nextOwnedMarketBuyItem(
+      catalog: itemCatalog,
+      runProgress: runProgress,
+      category: 'jester',
+    );
+    if (marketBuyItem != null) {
+      final result = ItemEffectRuntime.applyMarketBuyItem(
+        item: marketBuyItem,
+        runProgress: runProgress,
+      );
+      if (!result.isSuccess) return result.failMessage;
     }
     final price = runProgress.effectiveJesterOfferPrice(offerIndex);
     if (runProgress.gold < price) {
@@ -591,10 +639,6 @@ class GameSessionNotifier
   }) {
     final runProgress = state.runProgress;
     if (runProgress == null) return '상점 진행 정보가 없습니다.';
-    final price = runProgress.effectiveItemPrice(offer.item);
-    if (runProgress.gold < price) {
-      return '골드가 부족합니다.';
-    }
     final quickSlotCapacity = runProgress.quickSlotCapacity(
       itemCatalog: itemCatalog,
     );
@@ -607,6 +651,22 @@ class GameSessionNotifier
     )) {
       return '이미 보유 한도에 도달한 아이템입니다.';
     }
+    final marketBuyItem = _nextOwnedMarketBuyItem(
+      catalog: itemCatalog,
+      runProgress: runProgress,
+      category: 'item',
+    );
+    if (marketBuyItem != null) {
+      final result = ItemEffectRuntime.applyMarketBuyItem(
+        item: marketBuyItem,
+        runProgress: runProgress,
+      );
+      if (!result.isSuccess) return result.failMessage;
+    }
+    final price = runProgress.effectiveItemPrice(offer.item);
+    if (runProgress.gold < price) {
+      return '골드가 부족합니다.';
+    }
     final ok = runProgress.buyItem(
       offer.item,
       price: price,
@@ -615,7 +675,31 @@ class GameSessionNotifier
     if (!ok) {
       return '아이템 구매 처리에 실패했습니다.';
     }
+    runProgress.markItemOfferConsumed(offer.contentId);
     _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
+  ItemDefinition? _nextOwnedMarketBuyItem({
+    required ItemCatalog? catalog,
+    required RummiRunProgress runProgress,
+    required String category,
+  }) {
+    if (catalog == null) return null;
+    for (final entry in runProgress.itemInventory.ownedItems) {
+      if (entry.count <= 0 || !entry.isActive) continue;
+      final item = catalog.findById(entry.itemId);
+      if (item == null || item.effect.op != 'discount_next_purchase') {
+        continue;
+      }
+      if (item.effect.timing == 'market_buy') {
+        return item;
+      }
+      if (item.effect.timing == 'market_buy_if_category' &&
+          item.effect.value('category') == category) {
+        return item;
+      }
+    }
     return null;
   }
 

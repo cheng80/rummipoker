@@ -203,6 +203,10 @@ class ItemEffectRuntime {
     }
     final result = switch (item.effect.op) {
       'gain_gold' => _applyGainGold(item, runProgress),
+      'reroll_item_offers_only' => _applyRerollItemOffersOnly(
+        item,
+        runProgress,
+      ),
       _ => _pendingHook(item, 'applyMarketUseItem'),
     };
     if (!result.isSuccess) return result;
@@ -381,6 +385,10 @@ class ItemEffectRuntime {
   }) {
     return switch (item.effect.op) {
       'gain_gold' => _applyGainGold(item, runProgress),
+      'extra_jester_offer_next_market' => _applyBossMarketModifier(
+        item,
+        runProgress,
+      ),
       _ => _pendingHook(item, 'applyBossClearItem'),
     };
   }
@@ -589,10 +597,11 @@ class ItemEffectRuntime {
       'use_battle:undo_last_board_move' ||
       'use_battle:peek_deck_discard_one' ||
       'use_battle:draw_if_hand_empty' ||
-      'market_reroll:discount_next_reroll' ||
+      'market_reroll:free_next_reroll' ||
       'market_buy:discount_next_purchase' ||
       'market_buy_if_category:discount_next_purchase' ||
       'use_market:gain_gold' ||
+      'use_market:reroll_item_offers_only' ||
       'use_market_if_gold_lte:gain_gold' ||
       'enter_market:gain_gold' ||
       'enter_market:discount_first_reroll' ||
@@ -600,6 +609,7 @@ class ItemEffectRuntime {
       'market_build_offers:extra_item_offer_slot' ||
       'market_build_offers:rarity_weight_bonus' ||
       'boss_blind_clear_reward:gain_gold' ||
+      'boss_blind_clear_market:extra_jester_offer_next_market' ||
       'settlement:board_discard_reward_bonus' ||
       'settlement:hand_discard_reward_bonus' ||
       'next_confirm:chips_bonus' ||
@@ -783,6 +793,23 @@ class ItemEffectRuntime {
             ),
           ],
         );
+      case 'free_next_reroll':
+        final discount = runProgress.effectiveRerollCost();
+        runProgress.queueMarketModifier(
+          op: 'discount_next_reroll',
+          amount: discount,
+        );
+        return ItemUseResult.success(
+          itemId: item.id,
+          events: [
+            ItemEffectEvent(
+              kind: ItemEffectEventKind.marketModifierQueued,
+              itemId: item.id,
+              amount: discount,
+              detail: item.effect.op,
+            ),
+          ],
+        );
     }
     return _pendingHook(item, 'applyMarketModifier');
   }
@@ -797,6 +824,44 @@ class ItemEffectRuntime {
           kind: ItemEffectEventKind.capacityModifierQueued,
           itemId: item.id,
           amount: amount,
+          detail: item.effect.op,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applyBossMarketModifier(
+    ItemDefinition item,
+    RummiRunProgress runProgress,
+  ) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+    runProgress.queueMarketModifier(op: item.effect.op, amount: amount);
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.bossModifierQueued,
+          itemId: item.id,
+          amount: amount,
+          detail: item.effect.op,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applyRerollItemOffersOnly(
+    ItemDefinition item,
+    RummiRunProgress runProgress,
+  ) {
+    runProgress.queueMarketModifier(op: item.effect.op, amount: 1);
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.marketModifierQueued,
+          itemId: item.id,
+          amount: runProgress.marketModifiers.itemOfferRerollOffset,
           detail: item.effect.op,
         ),
       ],

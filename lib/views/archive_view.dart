@@ -7,10 +7,7 @@ import '../widgets/phone_frame_scaffold.dart';
 import 'home_entry_widgets.dart';
 
 class ArchiveView extends StatefulWidget {
-  const ArchiveView({
-    super.key,
-    this.debugScrollPreset,
-  });
+  const ArchiveView({super.key, this.debugScrollPreset});
 
   final String? debugScrollPreset;
 
@@ -66,7 +63,7 @@ class _ArchiveViewState extends State<ArchiveView> {
               '기록실',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 38,
                 color: Colors.white.withValues(alpha: 0.96),
                 letterSpacing: 1.8,

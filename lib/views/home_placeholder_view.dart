@@ -67,7 +67,7 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
             Text(
               widget.title,
               style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 34,
                 color: Colors.white.withValues(alpha: 0.96),
                 letterSpacing: 1.5,

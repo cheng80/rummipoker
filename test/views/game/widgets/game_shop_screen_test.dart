@@ -37,6 +37,7 @@ Future<void> _pumpShopScreen(
   required RummiActiveRunSaveFacade Function() readActiveRunSaveView,
   required String? Function(int offerIndex) onBuyOffer,
   String? Function(RummiMarketItemOfferView offer)? onBuyItemOffer,
+  String? Function(ItemDefinition item)? onUseMarketItem,
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
@@ -54,12 +55,14 @@ Future<void> _pumpShopScreen(
             home: JesterTranslationScope(
               child: ItemTranslationScope(
                 child: GameShopScreen(
+                  key: UniqueKey(),
                   runSeed: 77,
                   readMarketView: readMarketView,
                   readActiveRunSaveView: readActiveRunSaveView,
                   onReroll: () => null,
                   onBuyOffer: onBuyOffer,
                   onBuyItemOffer: onBuyItemOffer ?? ((_) => null),
+                  onUseMarketItem: onUseMarketItem ?? ((_) => null),
                   onSellOwnedJester: (_) => false,
                   onStateChanged: () async {},
                   onOpenSettings: () async {},
@@ -116,11 +119,11 @@ void main() {
         'usableInBattle': false,
         'placement': 'inventory',
         'slotHint': 'utility',
-        'effectText': 'Reduce the next Market reroll cost by 1.',
+        'effectText': 'The next Market reroll costs no Gold.',
         'effectTextKey': 'data.items.reroll_token.effectText',
         'effect': <String, dynamic>{
           'timing': 'market_reroll',
-          'op': 'discount_next_reroll',
+          'op': 'free_next_reroll',
           'amount': 1,
           'consume': true,
         },
@@ -244,9 +247,11 @@ void main() {
       },
     );
 
-    expect(find.text('Gold 12'), findsOneWidget);
-    expect(find.text('Jester Slots'), findsOneWidget);
-    expect(find.text('0/5'), findsOneWidget);
+    expect(find.text('GOLD'), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
+    expect(find.text('Tool Slots'), findsOneWidget);
+    expect(find.text('Gear Slots'), findsOneWidget);
+    expect(find.text('Jester Slots'), findsNothing);
     expect(find.text('구매'), findsOneWidget);
 
     expect(find.text('리롤 토큰'), findsWidgets);
@@ -256,15 +261,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(boughtItemId, 'reroll_token');
-    expect(find.text('Gold 9'), findsOneWidget);
+    expect(find.text('9'), findsOneWidget);
 
-    await tester.tap(find.text('Jester Shop'));
+    await tester.tap(find.text('Jester / Slots'));
     await tester.pumpAndSettle();
+
+    expect(find.text('Jester Slots'), findsOneWidget);
+    expect(find.text('1/5'), findsNothing);
 
     await tester.tap(find.text('구매'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Gold 5'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
     expect(find.text('1/5'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.more_horiz_rounded));

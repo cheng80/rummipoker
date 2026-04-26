@@ -176,7 +176,7 @@ class GameJesterSlot extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 locked
@@ -185,6 +185,7 @@ class GameJesterSlot extends StatelessWidget {
                     ? 'EXT'
                     : 'JESTER',
                 maxLines: 1,
+                textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: locked ? 0.46 : 0.62),
@@ -285,7 +286,7 @@ class GameJesterSlot extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
                     height: 7,
@@ -299,10 +300,11 @@ class GameJesterSlot extends StatelessWidget {
                   const SizedBox(height: 6),
                   Expanded(
                     child: Align(
-                      alignment: Alignment.topLeft,
+                      alignment: Alignment.topCenter,
                       child: Text(
                         displayName,
                         maxLines: 2,
+                        textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: const Color(
@@ -316,31 +318,35 @@ class GameJesterSlot extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 2.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF20312B).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      jesterCategoryLabel(card!),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF1B3A31),
-                        fontSize: 7.5,
-                        fontWeight: FontWeight.w900,
-                        height: 1.0,
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF20312B).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        jesterCategoryLabel(card!),
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF1B3A31),
+                          fontSize: 7.5,
+                          fontWeight: FontWeight.w900,
+                          height: 1.0,
+                        ),
                       ),
                     ),
                   ),
                   if (activeEffect != null) ...[
                     const SizedBox(height: 3),
                     Align(
-                      alignment: Alignment.centerRight,
+                      alignment: Alignment.center,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 5,
@@ -352,6 +358,7 @@ class GameJesterSlot extends StatelessWidget {
                         ),
                         child: Text(
                           jesterEffectBadge(activeEffect!),
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 7.5,

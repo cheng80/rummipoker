@@ -36,10 +36,10 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "Reduce the next Market reroll cost by 1.",
+      "effectText": "The next Market reroll costs no Gold.",
       "effect": {
         "timing": "market_reroll",
-        "op": "discount_next_reroll",
+        "op": "free_next_reroll",
         "amount": 1,
         "consume": true
       },

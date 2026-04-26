@@ -30,7 +30,7 @@ class HomeSection extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontFamily: AssetPaths.fontAngduIpsul140,
+              fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 20,
               color: Colors.white.withValues(alpha: 0.95),
               letterSpacing: 1.1,
@@ -78,78 +78,86 @@ class HomeEntryCard extends StatelessWidget {
           (HSLColor.fromColor(baseColor).lightness - 0.15).clamp(0.0, 1.0),
         )
         .toColor();
-    return InkWell(
-      onTap: enabled ? onTap : null,
+    return Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
-      child: Ink(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              baseColor.withValues(alpha: enabled ? 1 : 0.35),
-              darkerColor.withValues(alpha: enabled ? 1 : 0.35),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                baseColor.withValues(alpha: enabled ? 1 : 0.35),
+                darkerColor.withValues(alpha: enabled ? 1 : 0.35),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: darkerColor.withValues(alpha: 0.6),
+              width: 2.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: darkerColor.withValues(alpha: 0.5),
+                offset: const Offset(0, 3),
+                blurRadius: 0,
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: darkerColor.withValues(alpha: 0.6),
-            width: 2.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: darkerColor.withValues(alpha: 0.5),
-              offset: const Offset(0, 3),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontAngduIpsul140,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white.withValues(alpha: enabled ? 1 : 0.72),
-                      letterSpacing: 2.2,
-                      shadows: [
-                        Shadow(
-                          color: darkerColor.withValues(alpha: 0.8),
-                          offset: const Offset(1, 1),
-                          blurRadius: 0,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontFamily: AssetPaths.fontNexonLv2Gothic,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withValues(
+                          alpha: enabled ? 1 : 0.72,
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.white.withValues(
-                        alpha: enabled ? 0.82 : 0.6,
+                        letterSpacing: 2.2,
+                        shadows: [
+                          Shadow(
+                            color: darkerColor.withValues(alpha: 0.8),
+                            offset: const Offset(1, 1),
+                            blurRadius: 0,
+                          ),
+                        ],
                       ),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 5),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        color: Colors.white.withValues(
+                          alpha: enabled ? 0.82 : 0.6,
+                        ),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              enabled ? Icons.arrow_forward_rounded : Icons.lock_clock_rounded,
-              color: Colors.white.withValues(alpha: enabled ? 0.92 : 0.65),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Icon(
+                enabled
+                    ? Icons.arrow_forward_rounded
+                    : Icons.lock_clock_rounded,
+                color: Colors.white.withValues(alpha: enabled ? 0.92 : 0.65),
+              ),
+            ],
+          ),
         ),
       ),
     );

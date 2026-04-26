@@ -140,7 +140,10 @@ void main() {
             marketModifiers: RummiMarketModifierState(
               nextRerollDiscount: 1,
               nextItemPurchaseDiscount: 2,
+              nextMarketExtraJesterOfferSlots: 1,
               extraItemOfferSlots: 1,
+              itemOfferRerollOffset: 3,
+              consumedItemOfferIds: ['board_scrap'],
             ),
           ),
           stageStartSession: const SavedSessionData(
@@ -193,7 +196,15 @@ void main() {
           restored.runProgress.marketModifiers.nextItemPurchaseDiscount,
           2,
         );
+        expect(
+          restored.runProgress.marketModifiers.nextMarketExtraJesterOfferSlots,
+          1,
+        );
         expect(restored.runProgress.marketModifiers.extraItemOfferSlots, 1);
+        expect(restored.runProgress.marketModifiers.itemOfferRerollOffset, 3);
+        expect(restored.runProgress.marketModifiers.consumedItemOfferIds, [
+          'board_scrap',
+        ]);
         expect(restored.session.blind['boardMovesRemaining'], 1);
         expect(restored.session.blind['boardMovesMax'], 3);
         expect(restored.session.boardMoveHistory.single['toRow'], 1);

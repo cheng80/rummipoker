@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
@@ -90,11 +92,11 @@ void main() {
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "Reduce the next Market reroll cost by 1.",
+      "effectText": "The next Market reroll costs no Gold.",
       "effectTextKey": "data.items.reroll_token.effectText",
       "effect": {
         "timing": "market_reroll",
-        "op": "discount_next_reroll",
+        "op": "free_next_reroll",
         "amount": 1,
         "consume": true
       },
@@ -235,6 +237,130 @@ void main() {
       expect(progress.gold, 3);
     });
 
+    test('maps owned item inventory into market item slots', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'board_scrap',
+            timing: 'use_battle',
+            op: 'add_board_discard',
+            placement: 'quickSlot',
+          ),
+          _itemJson(
+            id: 'safety_net',
+            timing: 'expiry_guard',
+            op: 'rescue_first_expiry_each_station',
+            placement: 'passiveRack',
+          ),
+          _itemJson(
+            id: 'reroll_token',
+            timing: 'market_reroll',
+            op: 'free_next_reroll',
+            placement: 'inventory',
+          ),
+          _itemJson(
+            id: 'score_abacus',
+            timing: 'station_start',
+            op: 'add_board_move',
+            placement: 'equipped',
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'board_scrap',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+            OwnedItemEntry(
+              itemId: 'safety_net',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+            OwnedItemEntry(
+              itemId: 'reroll_token',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+            OwnedItemEntry(
+              itemId: 'score_abacus',
+              count: 1,
+              placement: ItemPlacement.equipped,
+            ),
+          ],
+          quickSlotItemIds: ['board_scrap'],
+          passiveRelicIds: ['safety_net'],
+          equippedItemIds: ['score_abacus'],
+        );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(facade.itemSlots.map((slot) => slot.slotLabel), [
+        'Q1',
+        'Q2',
+        'Q3',
+        'P1',
+        'P2',
+        'T1',
+        'T2',
+        'T3',
+        'G1',
+        'G2',
+      ]);
+      expect(facade.itemSlots[0].contentId, 'board_scrap');
+      expect(facade.itemSlots[0].locked, isFalse);
+      expect(facade.itemSlots[2].locked, isTrue);
+      expect(facade.itemSlots[3].contentId, 'safety_net');
+      expect(facade.itemSlots[4].locked, isTrue);
+      expect(facade.itemSlots[5].contentId, 'reroll_token');
+      expect(facade.itemSlots[8].contentId, 'score_abacus');
+    });
+
+    test('consumed item offers are removed from market item offers', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'board_scrap',
+            timing: 'use_battle',
+            op: 'add_board_discard',
+            placement: 'quickSlot',
+          ),
+          _itemJson(
+            id: 'hand_scrap',
+            timing: 'use_battle',
+            op: 'add_hand_discard',
+            placement: 'quickSlot',
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()..gold = 20;
+
+      final before = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+      progress.markItemOfferConsumed('board_scrap');
+      final after = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(before.itemOffers.map((offer) => offer.contentId), [
+        'board_scrap',
+        'hand_scrap',
+      ]);
+      expect(after.itemOffers.map((offer) => offer.contentId), ['hand_scrap']);
+    });
+
     test('marks unaffordable offers and carries runtime snapshot values', () {
       final progress = RummiRunProgress()
         ..gold = 6
@@ -296,6 +422,35 @@ void main() {
       expect(progress.jesterSlotCapacity(), 4);
       expect(progress.buyOffer(0), isFalse);
       expect(progress.ownedJesters.length, 4);
+    });
+
+    test('boss trophy next-market jester slot applies for one market', () {
+      final catalog = List<RummiJesterCard>.generate(
+        6,
+        (index) => _jester(id: 'offer_$index'),
+      );
+      final progress = RummiRunProgress()
+        ..marketModifiers = const RummiMarketModifierState(
+          nextMarketExtraJesterOfferSlots: 1,
+        );
+
+      progress.openShop(catalog: catalog, rng: Random(1));
+
+      expect(progress.shopOffers.length, 4);
+      expect(progress.marketModifiers.extraJesterOfferSlots, 1);
+      expect(progress.marketModifiers.nextMarketExtraJesterOfferSlots, 0);
+
+      progress.gold = 99;
+      final rerolled = progress.rerollShop(catalog: catalog, rng: Random(2));
+
+      expect(rerolled, isTrue);
+      expect(progress.shopOffers.length, 4);
+      expect(progress.rerollCost, 7);
+
+      progress.openShop(catalog: catalog, rng: Random(3));
+
+      expect(progress.shopOffers.length, 3);
+      expect(progress.marketModifiers.extraJesterOfferSlots, 0);
     });
 
     test(

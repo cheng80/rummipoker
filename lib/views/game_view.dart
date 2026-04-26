@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
+import '../logic/rummi_poker_grid/owned_content_instance.dart';
 import '../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../logic/rummi_poker_grid/rummi_settlement_facade.dart';
@@ -115,22 +116,24 @@ class _GameViewState extends ConsumerState<GameView>
       itemCatalog: catalog,
     );
 
-    final entriesById = {
-      for (final entry in inventory.ownedItems) entry.itemId: entry,
+    final itemInstances = OwnedContentInstances.itemInstances(
+      inventory: inventory,
+      catalog: catalog,
+    );
+    final instancesById = {
+      for (final instance in itemInstances) instance.id: instance,
     };
     final itemSlots = <RummiBattleItemSlotView>[];
     var slotIndex = 0;
 
     for (final itemId in inventory.quickSlotItemIds.take(quickSlotCapacity)) {
-      final entry = entriesById[itemId];
-      final item = catalog.findById(itemId);
-      if (entry == null || item == null) continue;
+      final instance = instancesById[itemId];
+      if (instance == null) continue;
       itemSlots.add(
-        RummiBattleItemSlotView.fromOwnedItem(
+        RummiBattleItemSlotView.fromInstance(
           slotIndex: slotIndex,
           slotLabel: 'Q${slotIndex + 1}',
-          entry: entry,
-          item: item,
+          instance: instance,
         ),
       );
       slotIndex += 1;
@@ -140,19 +143,50 @@ class _GameViewState extends ConsumerState<GameView>
     for (final itemId in inventory.passiveRelicIds.take(
       kBattlePassiveSlotDisplayCount,
     )) {
-      final entry = entriesById[itemId];
-      final item = catalog.findById(itemId);
-      if (entry == null || item == null) continue;
+      final instance = instancesById[itemId];
+      if (instance == null) continue;
       itemSlots.add(
-        RummiBattleItemSlotView.fromOwnedItem(
+        RummiBattleItemSlotView.fromInstance(
           slotIndex: slotIndex,
           slotLabel: 'P${passiveSlotIndex + 1}',
-          entry: entry,
-          item: item,
+          instance: instance,
         ),
       );
       slotIndex += 1;
       passiveSlotIndex += 1;
+    }
+
+    var toolSlotIndex = 0;
+    for (final instance in itemInstances.where(
+      (item) => item.placement == ItemPlacement.inventory,
+    )) {
+      if (toolSlotIndex >= kBattleToolSlotDisplayCount) break;
+      itemSlots.add(
+        RummiBattleItemSlotView.fromInstance(
+          slotIndex: slotIndex,
+          slotLabel: 'T${toolSlotIndex + 1}',
+          instance: instance,
+        ),
+      );
+      slotIndex += 1;
+      toolSlotIndex += 1;
+    }
+
+    var gearSlotIndex = 0;
+    for (final itemId in inventory.equippedItemIds.take(
+      kBattleGearSlotDisplayCount,
+    )) {
+      final instance = instancesById[itemId];
+      if (instance == null) continue;
+      itemSlots.add(
+        RummiBattleItemSlotView.fromInstance(
+          slotIndex: slotIndex,
+          slotLabel: 'G${gearSlotIndex + 1}',
+          instance: instance,
+        ),
+      );
+      slotIndex += 1;
+      gearSlotIndex += 1;
     }
 
     return battle.withItemSlots(itemSlots);
@@ -306,30 +340,12 @@ class _GameViewState extends ConsumerState<GameView>
     final catalog = _itemCatalog;
     final state = ref.read(gameSessionNotifierProvider(_gameArgs));
     final progress = state.runProgress;
-    final market = progress == null
+    return progress == null
         ? state.marketView!
         : RummiMarketRuntimeFacade.fromRunProgress(
             progress,
             itemCatalog: catalog,
           );
-    if (catalog == null) {
-      return market;
-    }
-    final itemOffers = catalog.all
-        .take(market.itemOfferSlotCount)
-        .toList(growable: false)
-        .asMap()
-        .entries
-        .map(
-          (entry) => RummiMarketItemOfferView.fromItemDefinition(
-            entry.value,
-            slotIndex: entry.key,
-            currentGold: market.gold,
-            price: progress?.effectiveItemPrice(entry.value),
-          ),
-        )
-        .toList(growable: false);
-    return market.withItemOffers(itemOffers);
   }
 
   Future<void> _saveActiveRun({ActiveRunScene? scene}) async {
@@ -942,10 +958,13 @@ class _GameViewState extends ConsumerState<GameView>
         builder: (context) => GameShopScreen(
           runSeed: widget.runSeed,
           readMarketView: _readMarketViewWithItemOffers,
-          onReroll: _gameNotifier.rerollShopFromState,
-          onBuyOffer: _gameNotifier.buyShopOffer,
+          onReroll: () =>
+              _gameNotifier.rerollShopFromState(itemCatalog: _itemCatalog),
+          onBuyOffer: (index) =>
+              _gameNotifier.buyShopOffer(index, itemCatalog: _itemCatalog),
           onBuyItemOffer: (offer) =>
               _gameNotifier.buyItemOffer(offer, itemCatalog: _itemCatalog),
+          onUseMarketItem: _gameNotifier.useMarketItem,
           onSellOwnedJester: (index) =>
               _gameNotifier.sellOwnedJester(index, itemCatalog: _itemCatalog),
           onStateChanged: _saveActiveRun,

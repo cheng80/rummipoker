@@ -53,7 +53,7 @@ class SettingView extends ConsumerWidget {
                       child: Text(
                         context.tr('settings'),
                         style: const TextStyle(
-                          fontFamily: AssetPaths.fontAngduIpsul140,
+                          fontFamily: AssetPaths.fontNexonLv2Gothic,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -138,7 +138,7 @@ class SettingView extends ConsumerWidget {
                             title: Text(
                               context.tr('rateApp'),
                               style: const TextStyle(
-                                fontFamily: AssetPaths.fontAngduIpsul140,
+                                fontFamily: AssetPaths.fontNexonLv2Gothic,
                                 fontSize: 16,
                               ),
                             ),
@@ -186,7 +186,7 @@ class _SectionTitle extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              fontFamily: AssetPaths.fontAngduIpsul140,
+              fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.grey,
@@ -217,7 +217,7 @@ class _VolumeSlider extends StatelessWidget {
       title: Text(
         label,
         style: const TextStyle(
-          fontFamily: AssetPaths.fontAngduIpsul140,
+          fontFamily: AssetPaths.fontNexonLv2Gothic,
           fontSize: 16,
         ),
       ),
@@ -255,7 +255,7 @@ class _MuteSwitch extends StatelessWidget {
       title: Text(
         label,
         style: const TextStyle(
-          fontFamily: AssetPaths.fontAngduIpsul140,
+          fontFamily: AssetPaths.fontNexonLv2Gothic,
           fontSize: 16,
         ),
       ),

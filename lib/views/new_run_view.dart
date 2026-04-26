@@ -175,7 +175,7 @@ class _NewRunViewState extends State<NewRunView> {
               '새 게임 시작',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: AssetPaths.fontAngduIpsul140,
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 38,
                 color: Colors.white.withValues(alpha: 0.96),
                 letterSpacing: 1.8,

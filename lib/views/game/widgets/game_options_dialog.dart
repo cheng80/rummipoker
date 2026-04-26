@@ -33,7 +33,7 @@ Future<void> showGameOptionsDialog({
                 child: Text(
                   context.tr('gameOptions'),
                   style: TextStyle(
-                    fontFamily: AssetPaths.fontAngduIpsul140,
+                    fontFamily: AssetPaths.fontNexonLv2Gothic,
                     color: Colors.white.withValues(alpha: 0.95),
                   ),
                 ),

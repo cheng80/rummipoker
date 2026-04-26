@@ -25,10 +25,13 @@
 - `small -> big -> boss -> market -> next station blind select` 루프가 연결됐다.
 - Item은 `data/common/items_common_v1.json` 기준 49개 v1 후보 데이터와 한국어 번역 49개가 맞춰져 있다.
 - `ItemDefinition` / `ItemCatalog` loader, market item offer read model, owned item inventory save/restore, item purchase command가 연결됐다.
+- owned item/Jester는 저장 엔트리와 catalog/runtime state를 묶는 `OwnedItemInstance` / `OwnedJesterInstance` read layer를 통해 battle/market facade에 전달된다.
 - battle item zone은 quick slot/passive rack item을 read model로 표시한다.
 - `ItemEffectRuntime`은 현재 적용 완료와 pending hook을 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`에서 관리한다.
 - Group 5 inventory/sell hook 적용 완료: `spare_pouch` quick slot capacity와 `jester_hook` Jester 판매가 보너스가 구매/판매/read facade에 반영된다.
 - Group 6 expiry guard hook 적용 완료: `safety_net`은 스테이션당 첫 전투 종료 위기에서 보드 버림 또는 구조 드로우를 제공하고 해당 사용 상태를 save/restore한다.
+- Group 7 boss/next market offer hook 적용 완료: `boss_trophy`는 boss clear 후 다음 market의 Jester offer +1 delayed modifier를 저장하고, 해당 market의 reroll 동안 유지한 뒤 다음 market에서는 해제된다.
+- Market use 단건 hook 적용 완료: `trade_ticket`은 market의 item offer 목록만 다음 구간으로 회전시키고 해당 offset을 save/restore한다.
 - Jester score effect는 `JesterEffectRuntime` 경유로 정리되어 animation/event 경계를 갖는다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
@@ -37,10 +40,10 @@
 최근 문서 정리 및 정합성 검증 기준:
 
 - `flutter analyze`: 통과
-- `flutter test`: 통과, 211 tests passed
+- `flutter test`: 통과, 224 tests passed
 - Markdown absolute link check: 통과
 - `git diff --check`: 통과
-- item catalog: 49 items / 49 ko translations, runtime applied 46 / pendingHook 3
+- item catalog: 49 items / 49 ko translations, runtime applied 48 / pendingHook 1
 - phase5 jester catalog: 38 jesters / 61 ko translations, phase5 기준 누락 없음
 
 의미 있는 앱 실구동 검증이 필요한 경우 아래 스크립트를 먼저 사용한다.
@@ -57,6 +60,7 @@
 - 2026-04-25 추가: `inventory_sell_hook_shop` fixture에서 `jester_hook` 판매가 `+3` 표시, `inventory_quick_slot_battle` fixture에서 `spare_pouch` quick slot 3칸 표시 확인.
 - 2026-04-25 추가: `safety_net_expiry_guard` fixture에서 Safety Net 보유와 보드가 꽉 찬 종료 위기 상태 확인. 구조 feedback은 provider test로 확인하고, snackbar는 필요 시 수동 eye-check 대상이다.
 - 2026-04-26 추가: `inventory_quick_slot_battle` fixture에서 Q1-Q3/P1-P2 분리, Q/P 잠금 표시, item name 2줄 표시 확인. `inventory_sell_hook_shop` fixture에서 Jester 5th 잠금과 Item Slot Q3/P2 잠금 표시 확인.
+- 2026-04-27 추가: market/battle slot tabs 정리 후 default launch, `inventory_sell_hook_shop`, `inventory_quick_slot_battle` iOS smoke 통과. 산출물은 `docs/planning/verification/daily_logs/2026-04-27.md` 참고.
 - 확인 필요: title launch에서 iOS in-app review prompt가 화면을 가림. item bonus row leading label `I`는 추후 product/design 판단 가능.
 
 ## 4. Recommended Reading
@@ -84,7 +88,7 @@
 우선순위:
 
 1. Item effect runtime 남은 hook 처리
-   - 다음은 Group 7 `boss_trophy` boss/next market offer hook
+   - 남은 pending hook은 `slide_wax`
 2. B7 Next Station Loop follow-up
    - next station transition command와 blindSelect save scene 연결은 1차 완료
    - 남은 작업은 iOS smoke와 station map/preview가 붙을 때 재개
@@ -110,6 +114,6 @@
 
 다음 PR 후보:
 
-- `item effect runtime inventory and sell hook`
+- `item effect runtime boss trophy next market hook`
 - `ui animation polish pass`
 - `blind/station pacing polish`

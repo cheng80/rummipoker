@@ -142,6 +142,6 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: HUAngduIpsul140
+    - family: NexonLv2Gothic
       fonts:
-        - asset: assets/fonts/HU앵두입술140.otf
+        - asset: assets/fonts/NEXON Lv2 Gothic.ttf
