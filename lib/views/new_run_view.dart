@@ -152,6 +152,12 @@ class _NewRunViewState extends State<NewRunView> {
         '&difficulty=${difficulty.name}';
   }
 
+  List<NewRunDifficulty> get _availableDifficulties {
+    return NewRunDifficulty.values
+        .where(_unlockState.isDifficultyUnlocked)
+        .toList(growable: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PhoneFrameScaffold(
@@ -181,21 +187,26 @@ class _NewRunViewState extends State<NewRunView> {
                 letterSpacing: 1.8,
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              '지금 가능한 시작 방식과 준비 중인 시작 옵션을 나눠 둔 화면입니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.72),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.45,
-              ),
-            ),
             const SizedBox(height: 22),
+            if (_availableDifficulties.length > 1) ...[
+              HomeSection(
+                title: '난이도',
+                subtitle: '이번 런의 시작 조건을 고릅니다.',
+                child: _DifficultyPicker(
+                  difficulties: _availableDifficulties,
+                  selectedDifficulty: _selectedDifficulty,
+                  onChanged: (difficulty) => setState(() {
+                    _selectedDifficulty = difficulty;
+                  }),
+                ),
+              ),
+              const SizedBox(height: 18),
+            ],
             HomeSection(
-              title: '바로 시작',
-              subtitle: '지금 바로 선택할 수 있는 시작 방식',
+              title: '시작 방식',
+              subtitle: _availableDifficulties.length > 1
+                  ? '선택한 난이도로 시작합니다.'
+                  : '표준 난이도로 시작합니다.',
               child: Column(
                 children: [
                   HomeEntryCard(
@@ -214,89 +225,6 @@ class _NewRunViewState extends State<NewRunView> {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
-            HomeSection(
-              title: '시작 설정',
-              subtitle: '난이도만 먼저 고르고, 덱 선택은 이후 구현 전까지 자리만 유지합니다.',
-              child: Column(
-                children: [
-                  _SelectableOptionCard(
-                    title: '덱 선택',
-                    options: [
-                      _OptionItem(
-                        label: '기본 덱',
-                        description: '현재는 플레이스홀더입니다. 덱별 규칙 차이는 아직 없습니다.',
-                        selected: true,
-                        isLocked: !_unlockState.isDeckAvailable('basic_deck'),
-                        lockReason: _unlockState.isDeckAvailable('basic_deck')
-                            ? '덱 선택은 이후 구현 예정'
-                            : '기본 덱 데이터 확인 필요',
-                        onTap: null,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _SelectableOptionCard(
-                    title: '난이도 선택',
-                    options: [
-                      _OptionItem(
-                        label: '표준',
-                        description: '기본 시작값',
-                        selected:
-                            _selectedDifficulty == NewRunDifficulty.standard,
-                        onTap: () => setState(() {
-                          _selectedDifficulty = NewRunDifficulty.standard;
-                        }),
-                      ),
-                      _OptionItem(
-                        label: '완화',
-                        description:
-                            '목표 240 / 시작 Gold +3 / 첫 리롤 -1 / 보드+1 / 손패+1',
-                        selected:
-                            _selectedDifficulty == NewRunDifficulty.relaxed,
-                        isLocked: !_unlockState.isDifficultyUnlocked(
-                          NewRunDifficulty.relaxed,
-                        ),
-                        lockReason: '기본 난이도 클리어 후 해금 예정',
-                        onTap:
-                            _unlockState.isDifficultyUnlocked(
-                              NewRunDifficulty.relaxed,
-                            )
-                            ? () => setState(() {
-                                _selectedDifficulty = NewRunDifficulty.relaxed;
-                              })
-                            : null,
-                      ),
-                      _OptionItem(
-                        label: '압박',
-                        description: '목표 360 / 보드-1 / 손패-1',
-                        selected:
-                            _selectedDifficulty == NewRunDifficulty.pressure,
-                        isLocked: !_unlockState.isDifficultyUnlocked(
-                          NewRunDifficulty.pressure,
-                        ),
-                        lockReason: '완화보다 늦게 해금 예정',
-                        onTap:
-                            _unlockState.isDifficultyUnlocked(
-                              NewRunDifficulty.pressure,
-                            )
-                            ? () => setState(() {
-                                _selectedDifficulty = NewRunDifficulty.pressure;
-                              })
-                            : null,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  HomeSnapshotCard(
-                    title: '현재 선택',
-                    summary:
-                        '덱 선택: 기본 덱 (플레이스홀더)\n'
-                        '난이도: ${NewRunSetup(difficulty: _selectedDifficulty).difficultyLabel}',
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -304,146 +232,89 @@ class _NewRunViewState extends State<NewRunView> {
   }
 }
 
-class _SelectableOptionCard extends StatelessWidget {
-  const _SelectableOptionCard({required this.title, required this.options});
+class _DifficultyPicker extends StatelessWidget {
+  const _DifficultyPicker({
+    required this.difficulties,
+    required this.selectedDifficulty,
+    required this.onChanged,
+  });
 
-  final String title;
-  final List<_OptionItem> options;
+  final List<NewRunDifficulty> difficulties;
+  final NewRunDifficulty selectedDifficulty;
+  final ValueChanged<NewRunDifficulty> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
+    return Row(
+      children: [
+        for (var i = 0; i < difficulties.length; i++) ...[
+          Expanded(
+            child: _DifficultyButton(
+              difficulty: difficulties[i],
+              selected: difficulties[i] == selectedDifficulty,
+              onTap: () => onChanged(difficulties[i]),
             ),
           ),
-          const SizedBox(height: 10),
-          for (var i = 0; i < options.length; i++) ...[
-            _SelectableOptionTile(item: options[i]),
-            if (i != options.length - 1) const SizedBox(height: 8),
-          ],
+          if (i != difficulties.length - 1) const SizedBox(width: 8),
         ],
-      ),
+      ],
     );
   }
 }
 
-class _SelectableOptionTile extends StatelessWidget {
-  const _SelectableOptionTile({required this.item});
+class _DifficultyButton extends StatelessWidget {
+  const _DifficultyButton({
+    required this.difficulty,
+    required this.selected,
+    required this.onTap,
+  });
 
-  final _OptionItem item;
+  final NewRunDifficulty difficulty;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isInteractive = !item.isLocked && item.onTap != null;
-    final borderColor = item.selected
+    final setup = NewRunSetup(difficulty: difficulty);
+    final borderColor = selected
         ? const Color(0xFF4FC3F7)
         : Colors.white.withValues(alpha: 0.08);
-    final fillColor = item.selected
+    final fillColor = selected
         ? const Color(0xFF4FC3F7).withValues(alpha: 0.16)
         : Colors.white.withValues(alpha: 0.04);
     return InkWell(
-      onTap: isInteractive ? item.onTap : null,
+      onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
         decoration: BoxDecoration(
           color: fillColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: borderColor,
-            width: item.selected ? 1.6 : 1,
-          ),
+          border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.label,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.94),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.description,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.72),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
-                    ),
-                  ),
-                  if (item.lockReason != null) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      item.lockReason!,
-                      style: TextStyle(
-                        color: const Color(0xFFFFD166).withValues(alpha: 0.92),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
             Icon(
-              item.isLocked
-                  ? Icons.lock_rounded
-                  : item.selected
-                  ? Icons.check_circle_rounded
-                  : Icons.circle_outlined,
-              color: item.isLocked
-                  ? const Color(0xFFFFD166)
-                  : item.selected
+              selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+              color: selected
                   ? const Color(0xFF4FC3F7)
                   : Colors.white.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              setup.difficultyLabel,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.94),
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
-
-class _OptionItem {
-  const _OptionItem({
-    required this.label,
-    required this.description,
-    required this.selected,
-    required this.onTap,
-    this.isLocked = false,
-    this.lockReason,
-  });
-
-  final String label;
-  final String description;
-  final bool selected;
-  final VoidCallback? onTap;
-  final bool isLocked;
-  final String? lockReason;
 }

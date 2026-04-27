@@ -474,10 +474,10 @@ continue/delete/corrupt save 동선을 망가뜨리지 않는 것이다.
 현재 코드 반영 메모:
 
 - `TitleView`는 이미 `Continue / New Run / Trial / Archive / Settings` 섹션을 가진 Home 1차 구조로 재구성됐다.
-- `Continue`는 active run summary를 화면에서 바로 보여 준다.
-- `New Run`은 전용 route로 분리됐고, 현재 가능한 `Random / Input Seed` entry와 future setup 축을 같이 노출한다.
+- `Continue`는 active run summary 중 현재 위치만 짧게 보여 주고, 체크포인트 상세는 일반 Home에서 제거했다.
+- `New Run`은 전용 route로 분리됐고, 현재 가능한 `Random / Input Seed` entry만 제품 화면에 노출한다. future setup/덱 placeholder는 일반 화면에서 제거했다.
 - `새 게임 시작`은 이제 `난이도 선택 -> 블라인드 선택 -> 전투 시작`의 2단계 진입 구조로 이동하기 시작했다.
-- `블라인드 선택`은 별도 route로 분리됐고, 현재는 `스몰/빅/보스` 조건 card를 먼저 보여 준다.
+- `블라인드 선택`은 별도 route로 분리됐고, 현재는 `스몰/빅/보스` 조건 card 3개를 한 화면에서 비교하게 보여 준다. 시작 액션은 card 전체 tap이 아니라 명시적인 play button에만 연결한다.
 - `Trial`/`Archive`는 현재 dedicated placeholder route 수준까지 분리됐다.
 - `Archive`는 이제 `기록 / 수집 / 통계` 3블록을 가진 첫 shell 화면으로 올라왔다.
 - 다음 구현 전에는 `06_UI_UX_FLOW.md`에 있는 ASCII stencil을 먼저 source of truth로 본다.
@@ -487,8 +487,9 @@ continue/delete/corrupt save 동선을 망가뜨리지 않는 것이다.
 - 유저에게 내부 구조명 `Trial`, `Archive`, `New Run`, `Home`를 직접 보여주지 않는다.
 - 개발/검증용 entry는 `디버그` 섹션으로만 모은다.
 - 화면 작업 전에는 stencil을 먼저 고정하고, 그다음에 코드 레이아웃을 맞춘다.
-- `덱 선택`은 플레이스홀더로 두고, 실제 시작 분기는 `난이도`와 다음 `블라인드 선택` 화면에 붙인다.
-- `빅/보스 블라인드`, `이어하기 -> 블라인드 선택`, `Market -> 블라인드 선택`은 다음 단계에서 잇는다.
+- `덱 선택`처럼 아직 실제 기능이 아닌 future setup 축은 일반 시작 화면에 placeholder로 노출하지 않는다.
+- 블라인드 card 설명은 말줄임표가 나오지 않게 짧은 문구 또는 2줄 표시를 사용한다.
+- `빅/보스 블라인드`, `이어하기 -> 블라인드 선택`, `Market -> 블라인드 선택`은 1차 연결됐고, 남은 판단은 pacing/transition polish로 본다.
 
 세부 작업 단위:
 

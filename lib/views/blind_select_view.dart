@@ -9,7 +9,6 @@ import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/new_run_setup.dart';
-import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'home_entry_widgets.dart';
 
@@ -31,7 +30,6 @@ class BlindSelectView extends StatefulWidget {
 
 class _BlindSelectViewState extends State<BlindSelectView> {
   late final List<BlindSelectionSpec> _options;
-  late BlindTier _selectedTier;
   ItemCatalog? _itemCatalog;
 
   @override
@@ -43,12 +41,6 @@ class _BlindSelectViewState extends State<BlindSelectView> {
       difficulty: _effectiveDifficulty,
       ruleset: _effectiveRuleset,
     );
-    _selectedTier = _options
-        .firstWhere(
-          (option) => option.isSelectable,
-          orElse: () => _options.first,
-        )
-        .tier;
     _loadItemCatalog();
   }
 
@@ -80,34 +72,13 @@ class _BlindSelectViewState extends State<BlindSelectView> {
 
   String get _stationSubtitle {
     if (widget.restoredRun == null) {
-      return '새 게임 시작 직후 첫 블라인드를 고르는 화면입니다.';
+      return '난이도 ${NewRunSetup(difficulty: _effectiveDifficulty).difficultyLabel}';
     }
-    return '이전 Station 클리어 이후 다음 블라인드를 고르는 화면입니다.';
+    return '다음 전투를 선택하세요.';
   }
 
-  BlindSelectionSpec get _selectedSpec => _options.firstWhere(
-    (option) => option.tier == _selectedTier,
-    orElse: () => _options.first,
-  );
-
-  Future<bool> _confirmStartSelectedBlind() async {
-    final selected = _selectedSpec;
-    return showConfirmDialog(
-      context,
-      title: '${selected.title} 시작',
-      message:
-          'Station $_stationIndex의 ${selected.title}에 진입합니다.\n'
-          '목표 ${selected.targetScore} · 손패 ${selected.maxHandSize} · 보드 버림 ${selected.boardDiscards} · 손패 버림 ${selected.handDiscards}',
-      cancelLabel: '취소',
-      confirmLabel: '시작',
-    );
-  }
-
-  Future<void> _startSelectedBlind() async {
-    final selected = _selectedSpec;
+  Future<void> _startBlind(BlindSelectionSpec selected) async {
     if (!selected.isSelectable) return;
-    final confirmed = await _confirmStartSelectedBlind();
-    if (!mounted || !confirmed) return;
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     if (!mounted) return;
@@ -133,6 +104,16 @@ class _BlindSelectViewState extends State<BlindSelectView> {
     );
   }
 
+  void _goBack() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go(
+      widget.restoredRun == null ? RoutePaths.newRun : RoutePaths.title,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PhoneFrameScaffold(
@@ -144,7 +125,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
             Row(
               children: [
                 IconButton(
-                  onPressed: () => context.pop(),
+                  onPressed: _goBack,
                   icon: const Icon(Icons.arrow_back_rounded),
                   color: Colors.white,
                 ),
@@ -161,18 +142,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
                 letterSpacing: 1.8,
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              '이번 Station의 목표와 압박 조건을 먼저 고릅니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.72),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 18),
             HomeSection(
               title: 'Station $_stationIndex',
               subtitle: _stationSubtitle,
@@ -181,42 +151,14 @@ class _BlindSelectViewState extends State<BlindSelectView> {
                   for (var i = 0; i < _options.length; i++) ...[
                     _BlindOptionCard(
                       spec: _options[i],
-                      selected: _selectedTier == _options[i].tier,
                       onTap: _options[i].isSelectable
-                          ? () => setState(() {
-                              _selectedTier = _options[i].tier;
-                            })
+                          ? () => _startBlind(_options[i])
                           : null,
                     ),
-                    if (i != _options.length - 1) const SizedBox(height: 12),
+                    if (i != _options.length - 1) const SizedBox(height: 8),
                   ],
                 ],
               ),
-            ),
-            const SizedBox(height: 18),
-            HomeSnapshotCard(
-              title: '현재 선택',
-              summary:
-                  '상태: ${_availabilityLabel(_selectedSpec)}\n'
-                  '난이도: ${NewRunSetup(difficulty: _effectiveDifficulty).difficultyLabel}\n'
-                  '블라인드: ${_selectedSpec.title}\n'
-                  '목표: ${_selectedSpec.targetScore} · 손패 ${_selectedSpec.maxHandSize} · 보드 버림 ${_selectedSpec.boardDiscards} · 손패 버림 ${_selectedSpec.handDiscards}',
-            ),
-            const SizedBox(height: 16),
-            HomeEntryCard(
-              title: '이 블라인드 시작',
-              description: _selectedSpec.isSelectable
-                  ? '${_selectedSpec.title}으로 전투에 들어갑니다.'
-                  : _selectedSpec.isCleared
-                  ? '${_selectedSpec.title}는 이미 클리어했습니다. 다음 블라인드를 선택하세요.'
-                  : _selectedSpec.lockReason ?? '아직 선택할 수 없습니다.',
-              accent: _selectedSpec.isSelectable
-                  ? const Color(0xFFF4A81D)
-                  : _selectedSpec.isCleared
-                  ? const Color(0xFF557062)
-                  : const Color(0xFF5B4D33),
-              enabled: _selectedSpec.isSelectable,
-              onTap: _startSelectedBlind,
             ),
           ],
         ),
@@ -226,199 +168,193 @@ class _BlindSelectViewState extends State<BlindSelectView> {
 }
 
 class _BlindOptionCard extends StatelessWidget {
-  const _BlindOptionCard({
-    required this.spec,
-    required this.selected,
-    required this.onTap,
-  });
+  const _BlindOptionCard({required this.spec, required this.onTap});
 
   final BlindSelectionSpec spec;
-  final bool selected;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final status = _statusStyleFor(spec, selected: selected);
+    final status = _statusStyleFor(spec);
     final isInteractive = spec.isSelectable && onTap != null;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Ink(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        decoration: BoxDecoration(
-          color: status.fillColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: status.borderColor,
-            width: selected ? 1.8 : 1.2,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: status.fillColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: status.borderColor,
+          width: isInteractive ? 1.6 : 1.1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: status.badgeColor,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        status.badgeLabel,
+                        style: TextStyle(
+                          color: status.badgeTextColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        spec.title,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withValues(
+                            alpha: isInteractive ? 0.95 : 0.78,
+                          ),
+                          fontFamily: AssetPaths.fontNexonLv2Gothic,
+                          fontSize: 19,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 9),
+                Row(
+                  children: [
+                    _BlindMetric(label: '목표', value: '${spec.targetScore}'),
+                    _BlindMetric(label: '보상', value: '+${spec.rewardPreview}'),
+                    _BlindMetric(label: '손패', value: '${spec.maxHandSize}'),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  _conditionSummary(spec),
+                  maxLines: 2,
+                  style: TextStyle(
+                    color: status.stateColor.withValues(
+                      alpha: isInteractive ? 0.92 : 0.74,
+                    ),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: status.badgeColor,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    status.badgeLabel,
-                    style: TextStyle(
-                      color: status.badgeTextColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: status.borderColor.withValues(alpha: 0.72),
-                    ),
-                  ),
-                  child: Text(
-                    status.stateLabel,
-                    style: TextStyle(
-                      color: status.stateColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Icon(status.trailingIcon, color: status.stateColor),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              spec.title,
-              style: TextStyle(
-                color: Colors.white.withValues(
-                  alpha: isInteractive ? 0.95 : 0.84,
-                ),
-                fontFamily: AssetPaths.fontNexonLv2Gothic,
-                fontSize: 22,
-                letterSpacing: 1.1,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              spec.description,
-              style: TextStyle(
-                color: Colors.white.withValues(
-                  alpha: isInteractive ? 0.72 : 0.62,
-                ),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _BlindStatChip(label: '목표 ${spec.targetScore}'),
-                _BlindStatChip(label: '손패 ${spec.maxHandSize}'),
-                _BlindStatChip(label: '보드 버림 ${spec.boardDiscards}'),
-                _BlindStatChip(label: '손패 버림 ${spec.handDiscards}'),
-                _BlindStatChip(label: '보상 +${spec.rewardPreview}'),
-              ],
-            ),
-            if (spec.isCleared) ...[
-              const SizedBox(height: 10),
-              Text(
-                '이 블라인드는 이미 클리어 완료 상태입니다. 다시 선택할 수는 없습니다.',
-                style: TextStyle(
-                  color: status.stateColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  height: 1.3,
-                ),
-              ),
-            ] else if (spec.lockReason != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                spec.lockReason!,
-                style: TextStyle(
-                  color: status.stateColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  height: 1.3,
-                ),
-              ),
-            ] else if (selected) ...[
-              const SizedBox(height: 10),
-              Text(
-                '현재 선택된 블라인드입니다. 아래 버튼으로 바로 진입할 수 있습니다.',
-                style: TextStyle(
-                  color: status.stateColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ],
-        ),
+          const SizedBox(width: 12),
+          _BlindPlayButton(
+            status: status,
+            enabled: isInteractive,
+            onTap: onTap,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _BlindStatChip extends StatelessWidget {
-  const _BlindStatChip({required this.label});
+class _BlindPlayButton extends StatelessWidget {
+  const _BlindPlayButton({
+    required this.status,
+    required this.enabled,
+    required this.onTap,
+  });
 
-  final String label;
+  final _BlindStatusStyle status;
+  final bool enabled;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.86),
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        customBorder: const CircleBorder(),
+        child: Ink(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: enabled
+                ? status.stateColor.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.14),
+            border: Border.all(
+              color: status.stateColor.withValues(alpha: enabled ? 0.9 : 0.45),
+              width: 1.4,
+            ),
+          ),
+          child: Icon(
+            status.trailingIcon,
+            color: status.stateColor.withValues(alpha: enabled ? 1 : 0.68),
+            size: 26,
+          ),
         ),
       ),
     );
   }
 }
 
-String _availabilityLabel(BlindSelectionSpec spec) {
-  if (spec.isSelectable) return '선택 가능';
-  if (spec.isCleared) return '클리어 완료';
-  return '잠금';
+class _BlindMetric extends StatelessWidget {
+  const _BlindMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.54),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.92),
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-_BlindStatusStyle _statusStyleFor(
-  BlindSelectionSpec spec, {
-  required bool selected,
-}) {
+String _conditionSummary(BlindSelectionSpec spec) {
+  if (spec.isCleared) return '클리어 완료';
+  if (spec.isLocked) return spec.lockReason ?? '아직 선택할 수 없습니다';
+  return '보드 버림 ${spec.boardDiscards} · 손패 버림 ${spec.handDiscards}';
+}
+
+_BlindStatusStyle _statusStyleFor(BlindSelectionSpec spec) {
   if (spec.isCleared) {
     return const _BlindStatusStyle(
       fillColor: Color(0x1629B36A),
@@ -426,7 +362,6 @@ _BlindStatusStyle _statusStyleFor(
       badgeColor: Color(0xFF2E7D4B),
       badgeTextColor: Colors.white,
       stateColor: Color(0xFF8EE0AB),
-      stateLabel: '클리어 완료',
       badgeLabel: 'CLEAR',
       trailingIcon: Icons.check_circle_rounded,
     );
@@ -438,32 +373,18 @@ _BlindStatusStyle _statusStyleFor(
       badgeColor: Color(0x7A6B5A32),
       badgeTextColor: Color(0xFFF5DA96),
       stateColor: Color(0xFFF0C96A),
-      stateLabel: '잠금',
       badgeLabel: 'LOCKED',
       trailingIcon: Icons.lock_rounded,
     );
   }
-  if (selected) {
-    return const _BlindStatusStyle(
-      fillColor: Color(0x1840BDE8),
-      borderColor: Color(0xFF4FC3F7),
-      badgeColor: Color(0xFF1D85C7),
-      badgeTextColor: Colors.white,
-      stateColor: Color(0xFF82D9FF),
-      stateLabel: '현재 선택',
-      badgeLabel: 'OPEN',
-      trailingIcon: Icons.radio_button_checked_rounded,
-    );
-  }
   return const _BlindStatusStyle(
-    fillColor: Color(0x08000000),
-    borderColor: Color(0x20FFFFFF),
+    fillColor: Color(0x1840BDE8),
+    borderColor: Color(0xFF4FC3F7),
     badgeColor: Color(0xFF275B49),
     badgeTextColor: Colors.white,
-    stateColor: Color(0xFFA9F3CE),
-    stateLabel: '선택 가능',
+    stateColor: Color(0xFF82D9FF),
     badgeLabel: 'OPEN',
-    trailingIcon: Icons.circle_outlined,
+    trailingIcon: Icons.play_arrow_rounded,
   );
 }
 
@@ -474,7 +395,6 @@ class _BlindStatusStyle {
     required this.badgeColor,
     required this.badgeTextColor,
     required this.stateColor,
-    required this.stateLabel,
     required this.badgeLabel,
     required this.trailingIcon,
   });
@@ -484,7 +404,6 @@ class _BlindStatusStyle {
   final Color badgeColor;
   final Color badgeTextColor;
   final Color stateColor;
-  final String stateLabel;
   final String badgeLabel;
   final IconData trailingIcon;
 }

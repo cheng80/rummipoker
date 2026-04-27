@@ -286,47 +286,33 @@ class _TitleViewState extends ConsumerState<TitleView>
                   HomeSection(
                     title: '이어하기',
                     subtitle: hasStoredActiveRun
-                        ? '저장된 진행과 체크포인트를 확인한 뒤 이어서 들어갑니다.'
+                        ? '저장된 런으로 돌아갑니다.'
                         : '현재 이어서 들어갈 저장 진행이 없습니다.',
                     child: Column(
                       children: [
                         HomeEntryCard(
                           title: '이어하기',
-                          description: hasStoredActiveRun
-                              ? '저장된 현재 런 복원'
-                              : '저장 런이 생기면 여기서 복귀',
+                          description:
+                              storedRunSummary?.currentLocationSummary ??
+                              (hasStoredActiveRun ? '저장된 현재 런 복원' : '저장 진행 없음'),
                           accent: const Color(0xFFF4A81D),
                           enabled: hasStoredActiveRun,
                           onTap: _openContinueMenu,
                         ),
-                        if (storedRunSummary != null) ...[
-                          const SizedBox(height: 10),
-                          HomeSnapshotCard(
-                            title: '저장된 진행',
-                            summary: storedRunSummary.snapshotSummaryLabel(),
-                          ),
-                        ],
                       ],
                     ),
                   ),
                   const SizedBox(height: 18),
                   HomeSection(
                     title: '새 시작',
-                    subtitle: '새 게임 시작 화면으로 이동합니다.',
+                    subtitle: '새 런을 준비합니다.',
                     child: Column(
                       children: [
                         HomeEntryCard(
                           title: '새 게임 시작',
-                          description: '시작 방식 선택 화면으로 이동',
+                          description: '난이도와 시작 방식을 선택',
                           accent: const Color(0xFF3CAEE0),
                           onTap: () => context.push(RoutePaths.newRun),
-                        ),
-                        const SizedBox(height: 10),
-                        const HomeSnapshotCard(
-                          title: '안내',
-                          summary:
-                              '다음 화면에서 무작위 시작 또는 시드 시작을 고를 수 있습니다.\n'
-                              '준비 중인 시작 옵션은 그 아래에서 따로 보입니다.',
                         ),
                       ],
                     ),

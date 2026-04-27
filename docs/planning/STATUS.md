@@ -33,6 +33,7 @@
 - Group 7 boss/next market offer hook 적용 완료: `boss_trophy`는 boss clear 후 다음 market의 Jester offer +1 delayed modifier를 저장하고, 해당 market의 reroll 동안 유지한 뒤 다음 market에서는 해제된다.
 - Market use 단건 hook 적용 완료: `trade_ticket`은 market의 item offer 목록만 다음 구간으로 회전시키고 해당 offset을 save/restore한다.
 - Jester score effect는 `JesterEffectRuntime` 경유로 정리되어 animation/event 경계를 갖는다.
+- Home/New Run/Blind Select 시작 flow는 제품용 정보량으로 정리됐다. Home은 짧은 continue/new-run entry만 보여 주고, New Run은 Random/Seed entry 중심, Blind Select는 `Small/Big/Boss` 3개 card 비교와 명시적 play button 시작 액션을 사용한다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
 ## 3. Current Verification Baseline
@@ -61,6 +62,7 @@
 - 2026-04-25 추가: `safety_net_expiry_guard` fixture에서 Safety Net 보유와 보드가 꽉 찬 종료 위기 상태 확인. 구조 feedback은 provider test로 확인하고, snackbar는 필요 시 수동 eye-check 대상이다.
 - 2026-04-26 추가: `inventory_quick_slot_battle` fixture에서 Q1-Q3/P1-P2 분리, Q/P 잠금 표시, item name 2줄 표시 확인. `inventory_sell_hook_shop` fixture에서 Jester 5th 잠금과 Item Slot Q3/P2 잠금 표시 확인.
 - 2026-04-27 추가: market/battle slot tabs 정리 후 default launch, `inventory_sell_hook_shop`, `inventory_quick_slot_battle` iOS smoke 통과. Battle HUD blind label, Jester/item shared card sizing, rarity bars, item card face color, selected slot frame, and centered item count badge follow-up까지 반영. 산출물은 `docs/planning/verification/daily_logs/2026-04-27.md` 참고.
+- 2026-04-28 추가: Home/New Run/Blind Select 시작 화면 정보량 축소 후 default launch, `/new-run`, `/blind-select?seed=12345&difficulty=standard` iOS smoke 통과. Blind Select는 3개 card가 한 화면에 들어오고, 시작 액션은 card 전체 tap이 아닌 play button으로 분리됐다. 산출물은 `docs/planning/verification/daily_logs/2026-04-28.md` 참고.
 - 확인 필요: title launch에서 iOS in-app review prompt가 화면을 가림. item bonus row leading label `I`는 추후 product/design 판단 가능.
 
 ## 4. Recommended Reading

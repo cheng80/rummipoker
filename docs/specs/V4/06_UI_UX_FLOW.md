@@ -42,6 +42,7 @@ UX 계약:
 
 - 사용자는 내부 구조명 `Home / Trial / Archive`를 직접 볼 필요가 없다.
 - `Continue`는 버튼 하나가 아니라 저장된 진행 요약을 포함한 block으로 본다.
+- `Continue`의 Home 노출 요약은 현재 위치를 짧게 보여 주고, 체크포인트/scene 같은 검증성 세부 정보는 dialog 또는 debug 맥락으로 보낸다.
 - `New Run`은 유저에게 `새 게임 시작`으로 보인다.
 - 개발 검증용 진입은 user-facing special mode와 섞지 않는다.
 - debug entry는 debug build 또는 developer option 뒤에 둔다.
@@ -50,7 +51,8 @@ UX 계약:
 
 [V4_DECISION]
 
-Run setup은 현재 가능한 시작 방식과 future setup 축을 분리한다.
+Run setup은 현재 가능한 시작 방식만 제품 화면에 노출한다.
+future setup 축은 실제 선택 가능한 기능이 되기 전까지 일반 화면에 플레이스홀더로 보이지 않는다.
 
 ```text
 New Run
@@ -69,6 +71,13 @@ Blind select card는 최소한 아래 정보를 함께 보여야 한다.
 - hand discard
 - reward preview
 - locked/unlocked state
+
+Blind Select UX 규칙:
+
+- `Small / Big / Boss` card는 한 모바일 viewport에서 비교 가능해야 한다.
+- card 전체 tap은 시작 액션이 아니다. 사용자가 정보를 읽는 중 실수로 전투에 들어가지 않도록 명시적인 play button만 시작 액션을 가진다.
+- 별도 현재 선택 summary와 하단 시작 button은 두지 않는다.
+- 게임 화면 문구에는 말줄임표를 쓰지 않는다. 필요한 경우 짧은 문구로 바꾸거나 2줄까지 허용한다.
 
 장기적으로 Market 이후 다음 Station 진입도 같은 blind select 구조를 재사용할 수 있어야 한다.
 

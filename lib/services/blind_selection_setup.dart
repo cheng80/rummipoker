@@ -84,7 +84,7 @@ class BlindSelectionSetup {
             : BlindSelectionAvailability.locked,
         lockReason: normalizedClearedBlindTierIndex >= BlindTier.small.index
             ? null
-            : '스몰 블라인드 클리어 후 빅 블라인드가 열립니다.',
+            : '스몰 클리어 후 빅 블라인드 열림',
       ),
       _buildSpec(
         tier: BlindTier.boss,
@@ -98,7 +98,7 @@ class BlindSelectionSetup {
             : BlindSelectionAvailability.locked,
         lockReason: normalizedClearedBlindTierIndex >= BlindTier.big.index
             ? null
-            : '빅 블라인드 클리어 후 보스 블라인드가 열립니다.',
+            : '빅 클리어 후 보스 블라인드 열림',
       ),
     ];
   }
