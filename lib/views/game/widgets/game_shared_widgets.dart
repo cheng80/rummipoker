@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' show lerpDouble;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -394,11 +395,15 @@ class GameItemZoneSkeleton extends StatefulWidget {
   const GameItemZoneSkeleton({
     super.key,
     required this.battle,
+    required this.activeEffects,
+    required this.settlementSequenceTick,
     this.selectedSlotIndex,
     this.onItemSlotTap,
   });
 
   final RummiBattleRuntimeFacade battle;
+  final List<RummiJesterEffectBreakdown> activeEffects;
+  final int settlementSequenceTick;
   final int? selectedSlotIndex;
   final ValueChanged<RummiBattleItemSlotView>? onItemSlotTap;
 
@@ -426,6 +431,23 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
         .where((slot) => slot.placement == ItemPlacement.equipped)
         .take(kBattleGearSlotDisplayCount)
         .toList(growable: false);
+    final activeEffectByItemId = <String, RummiJesterEffectBreakdown>{};
+    for (final effect in widget.activeEffects) {
+      activeEffectByItemId[effect.jesterId] = effect;
+    }
+    final activeToolOrGearEffect = [
+      ...toolSlots,
+      ...gearSlots,
+    ].any((slot) => activeEffectByItemId.containsKey(slot.contentId));
+    final activeSlotEffect = [
+      ...quickSlots,
+      ...passiveSlots,
+    ].any((slot) => activeEffectByItemId.containsKey(slot.contentId));
+    final visibleTab = activeToolOrGearEffect
+        ? _GameItemZoneTab.tools
+        : activeSlotEffect
+        ? _GameItemZoneTab.slots
+        : _tab;
     final unlockedQuickSlots = max(
       kBattleBaseUnlockedQuickSlots,
       quickSlots.length,
@@ -446,13 +468,13 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
           mainAxisSize: MainAxisSize.min,
           children: [
             _GameItemZoneTabBar(
-              currentTab: _tab,
+              currentTab: visibleTab,
               onChanged: (tab) => setState(() => _tab = tab),
             ),
             const SizedBox(height: 7),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: _tab == _GameItemZoneTab.slots
+              children: visibleTab == _GameItemZoneTab.slots
                   ? [
                       for (
                         var index = 0;
@@ -465,6 +487,11 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                           itemSlot: index < quickSlots.length
                               ? quickSlots[index]
                               : null,
+                          activeEffect: index < quickSlots.length
+                              ? activeEffectByItemId[quickSlots[index]
+                                    .contentId]
+                              : null,
+                          settlementSequenceTick: widget.settlementSequenceTick,
                           selected:
                               index < quickSlots.length &&
                               quickSlots[index].slotIndex ==
@@ -483,6 +510,11 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                           itemSlot: index < passiveSlots.length
                               ? passiveSlots[index]
                               : null,
+                          activeEffect: index < passiveSlots.length
+                              ? activeEffectByItemId[passiveSlots[index]
+                                    .contentId]
+                              : null,
+                          settlementSequenceTick: widget.settlementSequenceTick,
                           selected:
                               index < passiveSlots.length &&
                               passiveSlots[index].slotIndex ==
@@ -503,6 +535,10 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                           itemSlot: index < toolSlots.length
                               ? toolSlots[index]
                               : null,
+                          activeEffect: index < toolSlots.length
+                              ? activeEffectByItemId[toolSlots[index].contentId]
+                              : null,
+                          settlementSequenceTick: widget.settlementSequenceTick,
                           selected:
                               index < toolSlots.length &&
                               toolSlots[index].slotIndex ==
@@ -520,6 +556,10 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                           itemSlot: index < gearSlots.length
                               ? gearSlots[index]
                               : null,
+                          activeEffect: index < gearSlots.length
+                              ? activeEffectByItemId[gearSlots[index].contentId]
+                              : null,
+                          settlementSequenceTick: widget.settlementSequenceTick,
                           selected:
                               index < gearSlots.length &&
                               gearSlots[index].slotIndex ==
@@ -829,6 +869,8 @@ class _GameItemPocketChip extends StatelessWidget {
     this.locked = false,
     this.selected = false,
     this.itemSlot,
+    this.activeEffect,
+    required this.settlementSequenceTick,
     this.onTap,
   });
 
@@ -837,6 +879,8 @@ class _GameItemPocketChip extends StatelessWidget {
   final bool locked;
   final bool selected;
   final RummiBattleItemSlotView? itemSlot;
+  final RummiJesterEffectBreakdown? activeEffect;
+  final int settlementSequenceTick;
   final ValueChanged<RummiBattleItemSlotView>? onTap;
 
   @override
@@ -856,6 +900,7 @@ class _GameItemPocketChip extends StatelessWidget {
     final itemRarityColor = hasItem
         ? gameItemRarityColor(itemSlot.item.rarity)
         : accent;
+    final isActive = activeEffect != null;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: locked || itemSlot == null || onTap == null
@@ -885,14 +930,30 @@ class _GameItemPocketChip extends StatelessWidget {
                       : const Color(0xFFDDE9E4),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: locked
+                    color: isActive
+                        ? const Color(0xFFF2C14E)
+                        : locked
                         ? Colors.white.withValues(alpha: 0.14)
                         : itemSlot == null
                         ? accent.withValues(alpha: 0.48)
                         : itemRarityColor.withValues(alpha: 0.88),
-                    width: itemSlot == null ? 1 : 1.2,
+                    width: isActive
+                        ? 2
+                        : itemSlot == null
+                        ? 1
+                        : 1.2,
                   ),
-                  boxShadow: hasItem
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFF2C14E,
+                            ).withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : hasItem
                       ? [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.18),
@@ -958,6 +1019,32 @@ class _GameItemPocketChip extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 5),
+                            if (activeEffect != null) ...[
+                              Container(
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E4A3B),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  _itemEffectBadge(activeEffect!),
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 6.5,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                            ],
                             Text(
                               itemSlot.slotLabel,
                               maxLines: 1,
@@ -994,6 +1081,18 @@ class _GameItemPocketChip extends StatelessWidget {
               ),
             ),
           ),
+          if (activeEffect != null)
+            Positioned(
+              left: 2,
+              right: 2,
+              top: -15,
+              child: _GameItemEffectBurst(
+                key: ValueKey(
+                  'item-burst-${itemSlot!.contentId}-$settlementSequenceTick',
+                ),
+                effect: activeEffect!,
+              ),
+            ),
           if (itemSlot != null && itemSlot.count > 1)
             Positioned(
               left: 0,
@@ -1025,6 +1124,77 @@ class _GameItemPocketChip extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+String _itemEffectBadge(RummiJesterEffectBreakdown effect) {
+  if (effect.hasIntegerMultiplierToken) {
+    return 'xMult ${effect.xmultBonus.round()}x';
+  }
+  if (effect.chipsBonus > 0) {
+    return '+Chips ${effect.chipsBonus}';
+  }
+  if (effect.multBonus > 0) {
+    return '+Mult ${effect.multBonus}';
+  }
+  return '+Score ${effect.scoreDelta}';
+}
+
+class _GameItemEffectBurst extends StatelessWidget {
+  const _GameItemEffectBurst({super.key, required this.effect});
+
+  final RummiJesterEffectBreakdown effect;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 760),
+      builder: (context, value, child) {
+        final fade = value < 0.18
+            ? value / 0.18
+            : value > 0.76
+            ? (1 - value) / 0.24
+            : 1.0;
+        final dy = lerpDouble(10, -12, Curves.easeOut.transform(value))!;
+        return Opacity(
+          opacity: fade.clamp(0.0, 1.0),
+          child: Transform.translate(offset: Offset(0, dy), child: child),
+        );
+      },
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xB8143C31),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFF2C14E).withValues(alpha: 0.18),
+                blurRadius: 10,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            child: Text(
+              _itemEffectBadge(effect),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFFFFF4CF),
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

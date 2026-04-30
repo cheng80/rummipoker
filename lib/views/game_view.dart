@@ -1634,6 +1634,8 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 6),
             GameItemZoneSkeleton(
               battle: battle,
+              activeEffects: activeSettlementEffects,
+              settlementSequenceTick: settlementSequenceTick,
               selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
               onItemSlotTap: onBattleItemTap,
             ),
@@ -1673,7 +1675,10 @@ class _GameLayout extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
+            _ScoringPreviewChip(preview: battle.scoringPreview),
+            const SizedBox(height: 4),
             _BattleActionBar(
+              scoringPreview: battle.scoringPreview,
               canStartBoardMove:
                   !boardMoveMode &&
                   selectedBoardRow != null &&
@@ -1720,6 +1725,7 @@ class _GameLayout extends StatelessWidget {
 
 class _BattleActionBar extends StatelessWidget {
   const _BattleActionBar({
+    required this.scoringPreview,
     required this.canStartBoardMove,
     required this.onConfirm,
     required this.onClearSelection,
@@ -1730,6 +1736,7 @@ class _BattleActionBar extends StatelessWidget {
     required this.utilityEnabled,
   });
 
+  final RummiScoringPreview? scoringPreview;
   final bool canStartBoardMove;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
@@ -1746,6 +1753,7 @@ class _BattleActionBar extends StatelessWidget {
         const gap = 10.0;
         const confirmGap = 18.0;
         const buttonSide = 42.0;
+        final confirmReady = scoringPreview != null;
 
         return SizedBox(
           height: buttonSide,
@@ -1794,14 +1802,91 @@ class _BattleActionBar extends StatelessWidget {
                 label: '확정\n하기',
                 size: buttonSide,
                 borderRadius: 7,
-                backgroundColor: const Color(0xFFF4A81D),
-                foregroundColor: Colors.black,
+                backgroundColor: confirmReady
+                    ? const Color(0xFFF4A81D)
+                    : const Color(0xFF5A5D54),
+                foregroundColor: confirmReady ? Colors.black : Colors.white54,
                 onPressed: confirmEnabled ? onConfirm : null,
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _ScoringPreviewChip extends StatelessWidget {
+  const _ScoringPreviewChip({required this.preview});
+
+  final RummiScoringPreview? preview;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = this.preview;
+    final accent = preview == null
+        ? Colors.white.withValues(alpha: 0.34)
+        : const Color(0xFFF4A81D);
+    final label = preview == null
+        ? '확정 가능 줄 없음'
+        : '${preview.lineCount}줄 · ${gameHandRankLabel(preview.representativeRank)} · 예상 +${preview.expectedScore}';
+    final detail = preview == null
+        ? '족보 줄을 만들면 빌드 효과가 미리 표시됩니다'
+        : 'Base ${preview.baseScore}'
+              '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
+              ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';
+    return SizedBox(
+      height: 28,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: accent.withValues(alpha: 0.42)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Row(
+            children: [
+              Icon(
+                preview == null
+                    ? Icons.info_outline_rounded
+                    : Icons.auto_awesome_rounded,
+                color: accent,
+                size: 14,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: preview == null ? Colors.white54 : Colors.white,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

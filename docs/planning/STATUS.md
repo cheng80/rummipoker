@@ -16,7 +16,7 @@
 
 현재 한 줄 결론:
 
-> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, 다음 구현 초점은 Item effect runtime의 남은 hook과 station/market pacing polish다.
+> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, 다음 구현 초점은 Balatro-style scoring feedback, Item effect runtime의 남은 hook, station/market pacing polish다.
 
 ## 2. Latest Implementation State
 
@@ -33,6 +33,7 @@
 - Group 7 boss/next market offer hook 적용 완료: `boss_trophy`는 boss clear 후 다음 market의 Jester offer +1 delayed modifier를 저장하고, 해당 market의 reroll 동안 유지한 뒤 다음 market에서는 해제된다.
 - Market use 단건 hook 적용 완료: `trade_ticket`은 market의 item offer 목록만 다음 구간으로 회전시키고 해당 offset을 save/restore한다.
 - Jester score effect는 `JesterEffectRuntime` 경유로 정리되어 animation/event 경계를 갖는다.
+- 2026-04-30 huashu-design/Balatro 기준 UI 리뷰 결과, Jester/Item은 접는 인벤토리가 아니라 항상 보이는 scoring engine으로 유지한다. 다음 UI polish 핵심은 공간 축소가 아니라 확정 전 preview와 확정 후 Jester/Item 순차 발동 증명이다. 실행 계획은 `docs/planning/feature_plans/BALATRO_STYLE_SCORING_FEEDBACK_PLAN.md`를 따른다.
 - Home/New Run/Blind Select 시작 flow는 제품용 정보량으로 정리됐다. Home은 짧은 continue/new-run entry만 보여 주고, New Run은 Random/Seed entry 중심, Blind Select는 `Small/Big/Boss` 3개 card 비교와 명시적 play button 시작 액션을 사용한다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
@@ -63,6 +64,7 @@
 - 2026-04-26 추가: `inventory_quick_slot_battle` fixture에서 Q1-Q3/P1-P2 분리, Q/P 잠금 표시, item name 2줄 표시 확인. `inventory_sell_hook_shop` fixture에서 Jester 5th 잠금과 Item Slot Q3/P2 잠금 표시 확인.
 - 2026-04-27 추가: market/battle slot tabs 정리 후 default launch, `inventory_sell_hook_shop`, `inventory_quick_slot_battle` iOS smoke 통과. Battle HUD blind label, Jester/item shared card sizing, rarity bars, item card face color, selected slot frame, and centered item count badge follow-up까지 반영. 산출물은 `docs/planning/verification/daily_logs/2026-04-27.md` 참고.
 - 2026-04-28 추가: Home/New Run/Blind Select 시작 화면 정보량 축소 후 default launch, `/new-run`, `/blind-select?seed=12345&difficulty=standard` iOS smoke 통과. Blind Select는 3개 card가 한 화면에 들어오고, 시작 액션은 card 전체 tap이 아닌 play button으로 분리됐다. 산출물은 `docs/planning/verification/daily_logs/2026-04-28.md` 참고.
+- 2026-04-30 추가: Balatro-style scoring feedback 리뷰용 iOS smoke 통과. `inventory_quick_slot_battle`, `stage2_market_resume`, `stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1` route를 iPhone 17에서 확인했다. 산출물은 `docs/planning/verification/daily_logs/2026-04-30.md` 참고.
 - 확인 필요: title launch에서 iOS in-app review prompt가 화면을 가림. item bonus row leading label `I`는 추후 product/design 판단 가능.
 
 ## 4. Recommended Reading
@@ -82,6 +84,7 @@
 필요할 때만 추가로 본다.
 
 - `docs/planning/feature_plans/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md`
+- `docs/planning/feature_plans/BALATRO_STYLE_SCORING_FEEDBACK_PLAN.md`
 - `docs/planning/verification/TEST_QA_ACCEPTANCE.md`
 - `docs/planning/OPEN_DECISIONS.md`
 
@@ -104,7 +107,7 @@
 | 전환 UX | Settlement -> Market, Market -> Next Station, Blind Select 도착감/짧은 transition affordance | 미정/후속 |
 | Station 구조 | Station Map, Station Preview, Station Definition/Modifier | 아직 미구현, 별도 phase |
 | Pacing | target score curve, small/big/boss 보상/압박, unlock tempo | 후속 balance/polish |
-| 피드백 | item/Jester 효과 delta 표시, settlement bonus row, resource pulse/float | 후속 UI polish |
+| 피드백 | Balatro-style scoring preview, Jester/Item 순차 발동, item/Jester 효과 delta 표시, settlement bonus row, resource pulse/float | 후속 UI polish |
 
 다음 작업 판단:
 
@@ -114,36 +117,43 @@
 
 우선순위:
 
-1. Full loop smoke / save-restore 경계 점검
+1. Balatro-style scoring feedback pass
+   - Jester/Item은 항상 보이는 scoring engine으로 유지
+   - 확정 전 preview: line count, 대표 족보, base/overlap/effect count 표시
+   - 확정 후 순차 발동: board line -> hand rank/base -> overlap -> Jester slot order -> Item slot order -> final score
+   - Item confirm modifier도 battle item slot에서 직접 pulse/badge/float로 표시
+   - 기준 문서: `docs/planning/feature_plans/BALATRO_STYLE_SCORING_FEEDBACK_PLAN.md`
+2. Full loop smoke / save-restore 경계 점검
    - `Battle -> Settlement -> Market -> Next Station/Blind Select -> Battle` 루프를 다시 실행
    - market resume, next station checkpoint, death/continue/restart 경계 확인
-2. Item effect runtime 남은 hook 처리
+3. Item effect runtime 남은 hook 처리
    - 남은 pending hook은 `slide_wax`
-3. B7 Next Station Loop follow-up
+4. B7 Next Station Loop follow-up
    - next station transition command와 blindSelect save scene 연결은 1차 완료
    - 남은 작업은 transition affordance와 Station Preview/Map 범위 결정
-4. Market / battle interaction polish
+5. Market / battle interaction polish
    - market card/item slot 기준 유지
    - 설명 패널 높이와 텍스트 말줄임 기준 안정화
    - button/dialog visual consistency 유지
-5. UI animation polish pass
+6. UI animation polish pass
    - 기존 적용 유지: cash-out sheet의 단계별 보상 라인 등장, Jester scoring burst
-   - 현재 진행분 적용 후보: settlement item bonus row 등장 타이밍, total gold 강조, Market route 진입/복귀, Next Station/Blind Select 전환
+   - 현재 진행분 적용 후보: scoring preview 등장, Jester/Item 발동 pulse, settlement item bonus row 등장 타이밍, total gold 강조, Market route 진입/복귀, Next Station/Blind Select 전환
    - 다음 UI 작업 기본 규칙: 새 modal/sheet/route/보상/아이템 효과는 120~260ms 범위의 짧은 fade/slide/step animation을 우선 검토
    - 아이템 효과는 수동/패시브 모두 발동 사실과 실제 delta가 명확히 보여야 한다. snackbar만으로 끝내지 말고 overlay, badge, `+1` float, resource pulse 중 하나를 제공한다.
    - 입력 차단 barrier는 직접 `ModalBarrier`와 색상 값을 하드코딩하지 말고 `GameInputBarrier.modal()` 또는 `GameInputBarrier.feedback()`를 사용한다.
    - battle item/Jester slot UI는 의미별 표시와 잠금 상태를 분리한다. Quick/Passive/Jester 표시 개수와 초기 해금 개수는 공용 상수/용량 메서드를 사용하고, 새 UI에서 `Q3`, `P2`, `Jester 5th` 잠금을 다시 하드코딩하지 않는다.
    - 과하지 않게 적용: 입력 대기, 반복 플레이 속도, 정보 가독성을 방해하면 애니메이션을 줄이거나 생략
-6. Blind / station pacing polish
+7. Blind / station pacing polish
    - station target scale 기본값 재점검
    - small/big/boss 보상/압박 수치 재조정
    - blind unlock tempo와 continue 복귀 동선 확인
-7. Deferred run rule decision
+8. Deferred run rule decision
    - Balatro식 blind skip 도입 여부와 조건 결정
    - 도입 시 save/checkpoint/reward 규칙을 먼저 문서화
 
 다음 PR 후보:
 
+- `balatro style scoring feedback pass`
 - `full loop smoke and restore boundary pass`
 - `item effect runtime slide wax hook`
 - `ui animation polish pass`

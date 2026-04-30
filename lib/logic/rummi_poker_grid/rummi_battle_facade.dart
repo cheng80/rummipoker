@@ -1,9 +1,66 @@
+import 'hand_rank.dart';
 import 'models/board.dart';
 import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
 import 'item_definition.dart';
 import 'jester_meta.dart';
 import 'owned_content_instance.dart';
+
+class RummiScoringPreview {
+  const RummiScoringPreview({
+    required this.lineCount,
+    required this.representativeRank,
+    required this.baseScore,
+    required this.overlapBonus,
+    required this.expectedJesterEffectCount,
+    required this.expectedItemEffectCount,
+    required this.expectedScore,
+  });
+
+  factory RummiScoringPreview.fromBreakdowns({
+    required List<ConfirmedLineBreakdown> lines,
+    required int expectedScore,
+    required Set<String> jesterIds,
+  }) {
+    final representative = lines.reduce(
+      (best, line) => line.finalScore > best.finalScore ? line : best,
+    );
+    final effectIds = <String>{};
+    var jesterEffectCount = 0;
+    var itemEffectCount = 0;
+    for (final line in lines) {
+      for (final effect in line.effects) {
+        final key = '${effect.jesterId}:${effect.displayToken}';
+        if (!effectIds.add(key)) continue;
+        if (jesterIds.contains(effect.jesterId)) {
+          jesterEffectCount += 1;
+        } else {
+          itemEffectCount += 1;
+        }
+      }
+    }
+    return RummiScoringPreview(
+      lineCount: lines.length,
+      representativeRank: representative.rank,
+      baseScore: lines.fold<int>(0, (sum, line) => sum + line.baseScore),
+      overlapBonus: lines.fold<int>(0, (sum, line) => sum + line.overlapBonus),
+      expectedJesterEffectCount: jesterEffectCount,
+      expectedItemEffectCount: itemEffectCount,
+      expectedScore: expectedScore,
+    );
+  }
+
+  final int lineCount;
+  final RummiHandRank representativeRank;
+  final int baseScore;
+  final int overlapBonus;
+  final int expectedJesterEffectCount;
+  final int expectedItemEffectCount;
+  final int expectedScore;
+
+  int get expectedEffectCount =>
+      expectedJesterEffectCount + expectedItemEffectCount;
+}
 
 class RummiBattleItemSlotView {
   const RummiBattleItemSlotView({
@@ -80,6 +137,7 @@ class RummiBattleRuntimeFacade {
     required this.board,
     required this.hand,
     required this.scoringCellKeys,
+    this.scoringPreview,
     this.itemSlots = const [],
   });
 
@@ -99,6 +157,22 @@ class RummiBattleRuntimeFacade {
       }
     }
 
+    final previewSession = session.copySnapshot();
+    final previewOut = previewSession.confirmAllFullLines(
+      jesters: runProgress.ownedJesters,
+      runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+      applyScoreToBlind: false,
+    );
+    final scoringPreview = previewOut.result.ok
+        ? RummiScoringPreview.fromBreakdowns(
+            lines: previewOut.result.lineBreakdowns,
+            expectedScore: previewOut.result.scoreAdded,
+            jesterIds: {
+              for (final jester in runProgress.ownedJesters) jester.id,
+            },
+          )
+        : null;
+
     return RummiBattleRuntimeFacade(
       stageIndex: runProgress.stageIndex,
       currentBlindTierIndex: runProgress.currentStationBlindTierIndex,
@@ -107,6 +181,7 @@ class RummiBattleRuntimeFacade {
       board: session.board,
       hand: List<Tile>.unmodifiable(session.hand),
       scoringCellKeys: Set<String>.unmodifiable(scoringCellKeys),
+      scoringPreview: scoringPreview,
       itemSlots: const [],
     );
   }
@@ -122,6 +197,7 @@ class RummiBattleRuntimeFacade {
       board: board,
       hand: hand,
       scoringCellKeys: scoringCellKeys,
+      scoringPreview: scoringPreview,
       itemSlots: List<RummiBattleItemSlotView>.unmodifiable(nextItemSlots),
     );
   }
@@ -133,5 +209,6 @@ class RummiBattleRuntimeFacade {
   final RummiBoard board;
   final List<Tile> hand;
   final Set<String> scoringCellKeys;
+  final RummiScoringPreview? scoringPreview;
   final List<RummiBattleItemSlotView> itemSlots;
 }

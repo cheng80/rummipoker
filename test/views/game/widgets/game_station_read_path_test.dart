@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -199,6 +200,8 @@ void main() {
         home: Scaffold(
           body: GameItemZoneSkeleton(
             battle: battle,
+            activeEffects: const [],
+            settlementSequenceTick: 0,
             onItemSlotTap: (slot) => tappedSlot = slot,
           ),
         ),
@@ -268,7 +271,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: GameItemZoneSkeleton(battle: battle)),
+        home: Scaffold(
+          body: GameItemZoneSkeleton(
+            battle: battle,
+            activeEffects: const [],
+            settlementSequenceTick: 0,
+          ),
+        ),
       ),
     );
 
@@ -368,7 +377,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: GameItemZoneSkeleton(battle: battle)),
+        home: Scaffold(
+          body: GameItemZoneSkeleton(
+            battle: battle,
+            activeEffects: const [],
+            settlementSequenceTick: 0,
+          ),
+        ),
       ),
     );
 
@@ -382,6 +397,79 @@ void main() {
     expect(find.text('T3'), findsOneWidget);
     expect(find.text('G1'), findsOneWidget);
     expect(find.text('G2'), findsOneWidget);
+  });
+
+  testWidgets('GameItemZoneSkeleton displays active scoring item effect', (
+    tester,
+  ) async {
+    final item = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'chip_capsule',
+      'displayName': 'Chip Capsule',
+      'displayNameKey': 'data.items.chip_capsule.displayName',
+      'type': 'consumable',
+      'rarity': 'common',
+      'basePrice': 4,
+      'sellPrice': 2,
+      'stackable': true,
+      'maxStack': 2,
+      'sellable': true,
+      'usableInBattle': true,
+      'placement': 'quickSlot',
+      'slotHint': 'q',
+      'effectText': 'Next confirm gains chips.',
+      'effectTextKey': 'data.items.chip_capsule.effectText',
+      'effect': <String, dynamic>{
+        'timing': 'next_confirm',
+        'op': 'chips_bonus',
+        'amount': 50,
+        'consume': true,
+      },
+      'tags': <String>['battle', 'score'],
+      'sourceNotes': 'Test fixture.',
+    });
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 1,
+      currentGold: 0,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: const [],
+      scoringCellKeys: const {},
+      itemSlots: [
+        RummiBattleItemSlotView.fromOwnedItem(
+          slotIndex: 0,
+          slotLabel: 'Q1',
+          entry: const OwnedItemEntry(
+            itemId: 'chip_capsule',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          item: item,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameItemZoneSkeleton(
+            battle: battle,
+            activeEffects: const [
+              RummiJesterEffectBreakdown(
+                jesterId: 'chip_capsule',
+                displayName: 'chip_capsule',
+                chipsBonus: 50,
+                multBonus: 0,
+                xmultBonus: 1,
+                scoreDelta: 50,
+              ),
+            ],
+            settlementSequenceTick: 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('+Chips 50'), findsWidgets);
   });
 
   testWidgets('GameBattleItemInfoOverlay confirms use from explicit button', (

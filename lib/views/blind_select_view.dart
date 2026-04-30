@@ -282,6 +282,12 @@ class _BlindPlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final buttonColor = enabled
+        ? const Color(0xFFF4A81D)
+        : Colors.black.withValues(alpha: 0.14);
+    final iconColor = enabled
+        ? const Color(0xFF173126)
+        : status.stateColor.withValues(alpha: 0.68);
     return Material(
       color: Colors.transparent,
       shape: const CircleBorder(),
@@ -294,19 +300,30 @@ class _BlindPlayButton extends StatelessWidget {
           height: 46,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: enabled
-                ? status.stateColor.withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: 0.14),
+            color: buttonColor,
             border: Border.all(
-              color: status.stateColor.withValues(alpha: enabled ? 0.9 : 0.45),
-              width: 1.4,
+              color: enabled
+                  ? const Color(0xFFFFF0B0)
+                  : status.stateColor.withValues(alpha: 0.45),
+              width: enabled ? 2 : 1.4,
             ),
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFF4A81D).withValues(alpha: 0.34),
+                      blurRadius: 14,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.28),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ]
+                : null,
           ),
-          child: Icon(
-            status.trailingIcon,
-            color: status.stateColor.withValues(alpha: enabled ? 1 : 0.68),
-            size: 26,
-          ),
+          child: Icon(status.trailingIcon, color: iconColor, size: 26),
         ),
       ),
     );
