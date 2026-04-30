@@ -138,6 +138,8 @@ Implementation note:
 
 - [ ] Blind Select의 Small/Big/Boss 카드를 risk/reward 선택으로 더 강하게 표현한다.
 - [ ] 현재 빌드 기준 추천/위험 hint를 넣을 수 있는 read model 여지를 둔다.
+- [x] Settlement -> Market transition은 보상 확정 후 상점으로 넘어가는 짧은 affordance를 추가한다.
+  - Cash-out sheet에서 Market 진입을 확정하면 `market` runtime/save를 먼저 완료하고, `Market 준비` overlay를 재생한 뒤 Market route를 연다.
 - [x] Next Station transition은 완료감 후 선택 화면으로 넘어가게 짧은 affordance를 추가한다.
   - Market에서 다음 Station을 선택하면 `blindSelect` runtime을 먼저 저장하고, 짧은 transition overlay를 재생한 뒤 Blind Select로 이동한다.
 

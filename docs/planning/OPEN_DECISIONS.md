@@ -271,6 +271,15 @@ PyTorch 모델로 station / blind / market / item 조합의 난이도 경향을 
 - 모델 결과는 자동 패치가 아니라 사람이 밸런스 수치를 조정할 때 참고하는 리포트로 쓴다.
 - 상세 후보 설계는 `14_BALANCE_AUTOMATION_ML.md`를 기준으로 본다.
 
+진행 가능 조건:
+
+1. Station Preview/Map 최소 범위가 결정되어 `station_id`, blind tier, 선택지 구조가 로그 스키마에서 흔들리지 않는다.
+2. Market offer count와 rarity weighted roll 규칙이 결정되어 simulator가 실제 상점 분포를 재현할 수 있다.
+3. target score curve, small/big/boss 보상/압박, discard reward의 baseline balance version이 정해진다.
+4. Dart game logic simulator에서 UI 없이 battle/settlement/market/next station 한 바퀴를 deterministic seed로 실행할 수 있다.
+
+따라서 후속 작업 순서는 `station preview/map scope decision -> market offer count and rarity roll planning pass -> blind/station pacing baseline pass -> balance simulation readiness pass`로 본다.
+
 ## 3. Experiment Registry
 
 [EXPERIMENT]

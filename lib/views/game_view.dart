@@ -94,6 +94,7 @@ class _GameViewState extends ConsumerState<GameView>
   int _itemEffectFeedbackTick = 0;
   bool _boardMoveMode = false;
   bool _nextStationTransitionVisible = false;
+  RummiCashOutBreakdown? _settlementToMarketTransition;
   int? _pendingBoardMoveSourceRow;
   int? _pendingBoardMoveSourceCol;
 
@@ -1026,6 +1027,9 @@ class _GameViewState extends ConsumerState<GameView>
 
     _gameNotifier.enterMarketAfterCashOut(itemCatalog: _itemCatalog);
     await _saveActiveRun();
+    if (!mounted) return;
+    await _playSettlementToMarketTransition(breakdown);
+    if (!mounted) return;
 
     final nextStage = await _showShopScreen(
       autoAdvanceOnLoad: autoAdvanceMarketOnLoad,
@@ -1042,6 +1046,16 @@ class _GameViewState extends ConsumerState<GameView>
       '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
       extra: blindSelectRuntime,
     );
+  }
+
+  Future<void> _playSettlementToMarketTransition(
+    RummiCashOutBreakdown breakdown,
+  ) async {
+    if (!mounted) return;
+    setState(() => _settlementToMarketTransition = breakdown);
+    await Future<void>.delayed(const Duration(milliseconds: 520));
+    if (!mounted) return;
+    setState(() => _settlementToMarketTransition = null);
   }
 
   Future<void> _goToNextStationBlindSelect() async {
@@ -1313,9 +1327,114 @@ class _GameViewState extends ConsumerState<GameView>
             onBattleItemUse: _useBattleItem,
             onBattleItemOverlayClose: _closeBattleItemOverlay,
           ),
+          if (_settlementToMarketTransition != null)
+            Positioned.fill(
+              child: _SettlementToMarketTransitionOverlay(
+                breakdown: _settlementToMarketTransition!,
+              ),
+            ),
           if (_nextStationTransitionVisible)
             const Positioned.fill(child: _NextStationTransitionOverlay()),
         ],
+      ),
+    );
+  }
+}
+
+class _SettlementToMarketTransitionOverlay extends StatelessWidget {
+  const _SettlementToMarketTransitionOverlay({required this.breakdown});
+
+  final RummiCashOutBreakdown breakdown;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.50)),
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 380),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 14 * (1 - value)),
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
+              width: 282,
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF102D25),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFF4C64F).withValues(alpha: 0.66),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.34),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.storefront_rounded,
+                    color: Color(0xFFF4C64F),
+                    size: 32,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Market 준비',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '정산 보상 +${breakdown.totalGold} Gold',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.76),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 380),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) {
+                        return LinearProgressIndicator(
+                          value: value,
+                          minHeight: 5,
+                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFFF4C64F),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

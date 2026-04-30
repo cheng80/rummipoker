@@ -353,7 +353,19 @@ discard resource count
 
 [MIGRATION]
 
-도입한다면 순서는 아래가 안전하다.
+본격 구현 전에 아래 게임 규칙/데이터 경계를 먼저 고정한다.
+
+0. ML readiness 선행 작업
+   1. Station Preview/Map 최소 범위 결정
+      - `station_id`, blind tier, 선택지, modifier 후보가 로그 필드로 안정화되어야 한다.
+   2. Market offer count와 rarity weighted roll 규칙 결정
+      - Jester/Item offer 수, 증설 효과, 중복 제외, 구매 후 재노출 방지, rarity weight를 simulator가 재현할 수 있어야 한다.
+   3. Blind / station pacing baseline 결정
+      - target score curve, small/big/boss reward/pressure, discard reward, unlock tempo를 하나의 `balance_version`으로 묶는다.
+   4. Simulation readiness pass
+      - UI 의존성, save 의존성, randomness source, log field, bot policy boundary를 확인한다.
+
+그 다음 실제 도입 순서는 아래가 안전하다.
 
 1. 전투 시작/종료 snapshot을 JSONL로 남기는 구조 정의
 2. `greedy_bot_v1`만 구현

@@ -219,6 +219,7 @@
 목표:
 
 - Station 구조가 붙은 뒤 경제/난이도 재조정
+- ML 기반 밸런스 자동화가 참조할 baseline balance version 확정
 
 작업:
 
@@ -227,6 +228,14 @@
 - discard reward 재검토
 - Jester price/pool 조정
 - risk grade별 multiplier 조정
+
+ML readiness 선행 순서:
+
+1. Station Preview/Map 최소 범위 결정
+2. Market offer count와 rarity weighted roll 규칙 결정
+3. Blind/station pacing baseline 확정
+4. Balance simulation readiness pass
+5. `14_BALANCE_AUTOMATION_ML.md`의 simulator/JSONL/PyTorch 도입 순서 검토
 
 금지:
 

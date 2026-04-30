@@ -16,7 +16,7 @@
 
 현재 한 줄 결론:
 
-> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, Balatro-style scoring feedback P0, Item effect runtime v1 hook, full loop fixture smoke, Market -> Blind Select transition affordance, market readability polish는 1차 구현/검증됐다. 다음 구현 초점은 Settlement -> Market affordance, station/map 범위 결정, market offer count/rarity roll planning이다.
+> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, Balatro-style scoring feedback P0, Item effect runtime v1 hook, full loop fixture smoke, Settlement -> Market affordance, Market -> Blind Select transition affordance, market readability polish는 1차 구현/검증됐다. 다음 구현 초점은 ML 기반 밸런스 자동화를 가능하게 만드는 Station scope, Market roll 규칙, pacing baseline, simulation readiness 순서다.
 
 ## 2. Latest Implementation State
 
@@ -36,6 +36,7 @@
 - Jester score effect는 `JesterEffectRuntime` 경유로 정리되어 animation/event 경계를 갖는다.
 - 2026-04-30 huashu-design/Balatro 기준 UI 리뷰 결과, Jester/Item은 접는 인벤토리가 아니라 항상 보이는 scoring engine으로 유지한다. 확정 전 preview, Item slot active scoring effect, board/rank/overlap/Jester/Item/final score 순차 presentation은 1차 구현됐다. 실행 계획과 남은 smoke 기준은 `docs/planning/feature_plans/BALATRO_STYLE_SCORING_FEEDBACK_PLAN.md`를 따른다.
 - Market build readability polish 1차 적용 완료: 선택 offer 상세 패널의 조건/효과 synergy tag, Jester offer 외부 selection frame, 구매 불가 reason 표시가 연결됐다. Offer 카드 자체는 슬롯 타입/가격/선택 상태만 담당한다.
+- Settlement -> Market affordance 1차 적용 완료: cash-out sheet에서 Market 진입을 확정하면 market runtime/save를 먼저 완료한 뒤 짧은 `Market 준비` overlay를 재생하고 상점 route를 연다.
 - Home/New Run/Blind Select 시작 flow는 제품용 정보량으로 정리됐다. Home은 짧은 continue/new-run entry만 보여 주고, New Run은 Random/Seed entry 중심, Blind Select는 `Small/Big/Boss` 3개 card 비교와 명시적 play button 시작 액션을 사용한다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
@@ -112,7 +113,7 @@
 |---|---|---|
 | 기능 안정화 | Item effect runtime v1 hook | 49개 적용 완료 / pendingHook 0개 |
 | 루프 검증 | full loop smoke, market resume, save/restart 경계 확인 | fixture smoke 및 targeted regression 통과 / non-fixture background continue는 optional eye-check |
-| 전환 UX | Market -> Next Station -> Blind Select transition affordance | 1차 적용 / Settlement -> Market은 후속 |
+| 전환 UX | Settlement -> Market, Market -> Next Station -> Blind Select transition affordance | 1차 적용 |
 | Station 구조 | Station Map, Station Preview, Station Definition/Modifier | 아직 미구현, 별도 phase |
 | Market 생성 규칙 | offer 갯수 증설, Balatro식 rarity 기반 shop roll | 후순위 적용 계획에 추가 |
 | Pacing | target score curve, small/big/boss 보상/압박, unlock tempo | 후속 balance/polish |
@@ -121,30 +122,38 @@
 다음 작업 판단:
 
 - "작동하는 한 바퀴" 검증이 목적이면 full loop smoke와 저장/복귀 경계를 먼저 본다.
-- "제품형 Station 한 바퀴"가 목적이면 Station Preview/Map의 최소 범위를 먼저 결정한다.
+- "ML 기반 밸런스 자동화"가 목적이면 Station/Market/Pacing 규칙을 먼저 고정하고, 그 다음 simulator readiness로 들어간다.
+- "제품형 Station 한 바퀴"가 목적이면 Station Preview/Map의 최소 범위를 먼저 결정한다. 이 작업은 ML log schema의 station 단위도 함께 고정한다.
 - "잔여 runtime 완성"은 `slide_wax`까지 처리되어 현재 v1 기준 완료 상태다.
 
-우선순위:
+ML readiness 기준 우선순위:
 
-1. Save/restore 확장 점검
+1. Station Preview/Map scope decision
+   - ML 로그의 `station_id`, `blind_tier`, 선택지, modifier 범위를 흔들리지 않게 만든다.
+   - Station Map 전체 구현이 아니라, simulator/log schema가 참조할 최소 Station 단위를 먼저 결정한다.
+2. Market offer count and rarity roll planning pass
+   - Jester / Item offer 기본 갯수, 증설 규칙, 중복 제외, 구매 후 재노출 방지, rarity weighted roll 규칙을 문서화한다.
+   - `rarityWeights`와 `rarityWeightBonus`가 실제 roll과 simulator feature에 어떻게 반영되는지 정한다.
+3. Blind / station pacing baseline pass
+   - station target score curve, small/big/boss 보상/압박, discard reward, unlock tempo의 v1 baseline을 고정한다.
+   - ML은 이 baseline version을 기준으로 데이터를 쌓는다.
+4. Balance simulation readiness pass
+   - `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md` 기준으로 log field, deterministic seed, bot boundary, UI 의존성 제거 목록을 확정한다.
+   - 아직 PyTorch 구현이 아니라 `tools/sim/run_balance_sim.dart`를 만들 수 있는 준비 상태를 만든다.
+5. Save/restore 확장 점검
    - scoring feedback P0와 `slide_wax` runtime 기준 targeted regression은 통과
    - 2026-04-30 fixture full loop smoke는 Station 2 Blind Select까지 도달
    - 남은 수동 점검 후보: 실제 non-fixture app background/continue eye-check
-2. B7 Next Station Loop follow-up
+6. B7 Next Station Loop follow-up
    - next station transition command와 blindSelect save scene 연결은 1차 완료
    - Market -> Blind Select 전환 affordance는 1차 적용
-   - 남은 작업은 Settlement -> Market affordance와 Station Preview/Map 범위 결정
-3. Market / battle interaction polish
+   - Settlement -> Market 전환 affordance는 1차 적용
+   - 남은 작업은 Station Preview/Map 범위 결정
+7. Market / battle interaction polish
    - market card/item slot 기준 유지
    - 설명 패널 높이와 텍스트 말줄임 기준 안정화
    - button/dialog visual consistency 유지
-4. Market offer generation follow-up
-   - Jester / Item offer 기본 갯수와 증설 규칙을 재검토한다.
-   - `boss_trophy`, `shop_lens`처럼 offer 수를 늘리는 효과는 유지하되, 기본 offer 수와 unlock/보상 기반 증설 조건을 별도 balance pass에서 조정한다.
-   - 현재 Item offer는 catalog 순서 + reroll offset 기반이므로, 후속에서 Balatro식 rarity 기반 weighted roll로 바꾼다.
-   - Jester offer도 현재 지원 가능한 pool의 균등 랜덤이므로, 후속에서 rarity weight, 중복 제외, 현재 빌드/스테이션 조건 가중치를 분리 검토한다.
-   - `rarityWeights`와 `rarityWeightBonus`는 데이터/상태가 있으나 현재 roll에 직접 반영되지 않으므로, 적용 시 테스트와 smoke 기준을 함께 추가한다.
-5. UI animation polish pass
+8. UI animation polish pass
    - 기존 적용 유지: cash-out sheet의 단계별 보상 라인 등장, Jester scoring burst
    - 현재 진행분 적용: scoring preview, board/rank/overlap callout, Jester/Item slot-local scoring burst, Station Goal pulse
    - 남은 후보: settlement item bonus row 등장 타이밍, total gold 강조, Market route 진입/복귀, Next Station/Blind Select 전환
@@ -153,17 +162,15 @@
    - 입력 차단 barrier는 직접 `ModalBarrier`와 색상 값을 하드코딩하지 말고 `GameInputBarrier.modal()` 또는 `GameInputBarrier.feedback()`를 사용한다.
    - battle item/Jester slot UI는 의미별 표시와 잠금 상태를 분리한다. Quick/Passive/Jester 표시 개수와 초기 해금 개수는 공용 상수/용량 메서드를 사용하고, 새 UI에서 `Q3`, `P2`, `Jester 5th` 잠금을 다시 하드코딩하지 않는다.
    - 과하지 않게 적용: 입력 대기, 반복 플레이 속도, 정보 가독성을 방해하면 애니메이션을 줄이거나 생략
-6. Blind / station pacing polish
-   - station target scale 기본값 재점검
-   - small/big/boss 보상/압박 수치 재조정
-   - blind unlock tempo와 continue 복귀 동선 확인
-7. Deferred run rule decision
+9. Deferred run rule decision
    - Balatro식 blind skip 도입 여부와 조건 결정
    - 도입 시 save/checkpoint/reward 규칙을 먼저 문서화
 
 다음 PR 후보:
 
-- `settlement to market affordance pass`
+- `station preview/map scope decision`
 - `market offer count and rarity roll planning pass`
+- `blind/station pacing baseline pass`
+- `balance simulation readiness pass`
 - `ui animation polish pass`
 - `blind/station pacing polish`

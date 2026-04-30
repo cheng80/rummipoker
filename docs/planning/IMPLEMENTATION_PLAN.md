@@ -427,7 +427,8 @@ Current applied note:
 - next station blind-select runtime 생성은 `GameSessionNotifier.prepareNextStationBlindSelectRuntime`로 이동했다.
 - `beginNextStationTransition`은 `activeRunScene = blindSelect`와 `nextStationTransition` phase를 함께 기록한다.
 - Market -> Blind Select 전환 affordance는 1차 적용됐다. 다음 blind-select runtime을 먼저 저장한 뒤 짧은 overlay를 재생하고 route를 이동한다.
-- 후순위 Market 생성 규칙으로 Jester/Item offer 갯수 증설과 Balatro식 rarity weighted shop roll을 별도 balance pass에서 검토한다.
+- ML 기반 밸런스 자동화를 가능하게 하려면 후속 순서를 `Station Preview/Map scope -> Market offer count/rarity roll -> blind/station pacing baseline -> balance simulation readiness`로 둔다.
+- 후순위 Market 생성 규칙으로 Jester/Item offer 갯수 증설과 Balatro식 rarity weighted shop roll을 별도 balance pass에서 검토한다. 이 규칙은 simulator가 실제 상점 분포를 재현하기 위한 선행 조건이다.
 
 Animation polish backlog:
 
@@ -624,6 +625,7 @@ Abort conditions:
 8. Jester catalog id 변경
 9. economy full rebalance
 10. `jester_meta.dart` 대분해
+11. Balance automation ML 본 구현
 
 [DO-NOT-DO] [DOC VERIFIED]
 
