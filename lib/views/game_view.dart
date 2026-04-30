@@ -202,6 +202,10 @@ class _GameViewState extends ConsumerState<GameView>
   int get _stageScoreAdded => _gameState.stageScoreAdded;
   ConfirmedLineBreakdown? get _activeSettlementLine =>
       _gameState.activeSettlementLine;
+  ScoringPresentationStep get _activeSettlementStep =>
+      _gameState.activeSettlementStep;
+  int? get _activeSettlementEffectIndex =>
+      _gameState.activeSettlementEffectIndex;
   Map<String, Tile> get _settlementBoardSnapshot =>
       _gameState.settlementBoardSnapshot;
   int get _settlementSequenceTick => _gameState.settlementSequenceTick;
@@ -350,6 +354,9 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _saveActiveRun({ActiveRunScene? scene}) async {
     if (_isDebugFixtureRun) {
+      return;
+    }
+    if (scene == null && _stageFlowPhase != GameStageFlowPhase.none) {
       return;
     }
     if (scene != null) {
@@ -707,7 +714,11 @@ class _GameViewState extends ConsumerState<GameView>
       _showSnack('확정할 족보 줄이 없습니다.');
       return;
     }
-    _runSettlementSequence(
+    _gameNotifier.applyConfirmedScore(result.totalScore);
+    await _saveActiveRun(scene: ActiveRunScene.battle);
+    if (!mounted) return;
+
+    await _runSettlementSequence(
       lines: result.lineBreakdowns,
       totalScore: result.totalScore,
       shouldClearAfter: result.stageCleared,
@@ -800,29 +811,87 @@ class _GameViewState extends ConsumerState<GameView>
       _gameNotifier.setStageFlow(
         phase: GameStageFlowPhase.none,
         activeSettlementLine: null,
+        activeSettlementStep: ScoringPresentationStep.none,
+        activeSettlementEffectIndex: null,
         settlementBoardSnapshot: const {},
       );
       if (shouldClearAfter) {
         SoundManager.playSfx(AssetPaths.sfxClear);
         await _runStageClearFlow(totalScore);
+      } else {
+        await _saveActiveRun(scene: ActiveRunScene.battle);
       }
       return;
     }
 
-    _gameNotifier.setStageFlow(
-      phase: GameStageFlowPhase.confirmSettlement,
-      stageScoreAdded: totalScore,
-      activeSettlementLine: lines[index],
-      bumpSettlementSequence: true,
-    );
+    final line = lines[index];
+    final jesterIds = {
+      for (final entry in _marketView.ownedEntries) entry.card.id,
+    };
+    final jesterEffectIndexes = <int>[
+      for (var i = 0; i < line.effects.length; i++)
+        if (jesterIds.contains(line.effects[i].jesterId)) i,
+    ];
+    final itemEffectIndexes = <int>[
+      for (var i = 0; i < line.effects.length; i++)
+        if (!jesterIds.contains(line.effects[i].jesterId)) i,
+    ];
 
-    await Future<void>.delayed(const Duration(milliseconds: 780));
+    await _showSettlementStep(
+      totalScore: totalScore,
+      line: line,
+      step: ScoringPresentationStep.boardLine,
+      bump: true,
+      delay: const Duration(milliseconds: 560),
+    );
+    if (!mounted) return;
+    await _showSettlementStep(
+      totalScore: totalScore,
+      line: line,
+      step: ScoringPresentationStep.handRank,
+      delay: const Duration(milliseconds: 720),
+    );
+    if (!mounted) return;
+    if (line.overlapBonus > 0) {
+      await _showSettlementStep(
+        totalScore: totalScore,
+        line: line,
+        step: ScoringPresentationStep.overlap,
+        delay: const Duration(milliseconds: 680),
+      );
+      if (!mounted) return;
+    }
+    for (final effectIndex in jesterEffectIndexes) {
+      await _showSettlementStep(
+        totalScore: totalScore,
+        line: line,
+        step: ScoringPresentationStep.jester,
+        effectIndex: effectIndex,
+        bump: true,
+        delay: const Duration(milliseconds: 760),
+      );
+      if (!mounted) return;
+    }
+    for (final effectIndex in itemEffectIndexes) {
+      await _showSettlementStep(
+        totalScore: totalScore,
+        line: line,
+        step: ScoringPresentationStep.item,
+        effectIndex: effectIndex,
+        bump: true,
+        delay: const Duration(milliseconds: 760),
+      );
+      if (!mounted) return;
+    }
+    await _showSettlementStep(
+      totalScore: totalScore,
+      line: line,
+      step: ScoringPresentationStep.finalScore,
+      delay: const Duration(milliseconds: 920),
+    );
     if (!mounted) return;
 
-    final lineScore = lines[index].finalScore;
-    _gameNotifier.applyConfirmedLineScore(lineScore);
     SoundManager.playSfx(AssetPaths.sfxCollect);
-    await _saveActiveRun();
     if (!mounted) return;
 
     await Future<void>.delayed(const Duration(milliseconds: 300));
@@ -833,6 +902,25 @@ class _GameViewState extends ConsumerState<GameView>
       shouldClearAfter: shouldClearAfter,
       index: index + 1,
     );
+  }
+
+  Future<void> _showSettlementStep({
+    required int totalScore,
+    required ConfirmedLineBreakdown line,
+    required ScoringPresentationStep step,
+    required Duration delay,
+    int? effectIndex,
+    bool bump = false,
+  }) async {
+    _gameNotifier.setStageFlow(
+      phase: GameStageFlowPhase.confirmSettlement,
+      stageScoreAdded: totalScore,
+      activeSettlementLine: line,
+      activeSettlementStep: step,
+      activeSettlementEffectIndex: effectIndex,
+      bumpSettlementSequence: bump,
+    );
+    await Future<void>.delayed(delay);
   }
 
   Future<void> _runStageClearFlow(int scoreAdded) async {
@@ -923,9 +1011,8 @@ class _GameViewState extends ConsumerState<GameView>
     bool autoEnterMarketOnLoad = false,
     bool autoAdvanceMarketOnLoad = false,
   }) async {
-    await _saveActiveRun();
-
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.none);
+    await _saveActiveRun(scene: ActiveRunScene.battle);
 
     final enterShop = await _showCashOutSheet(
       breakdown,
@@ -1166,6 +1253,8 @@ class _GameViewState extends ConsumerState<GameView>
         stageFlowPhase: _stageFlowPhase,
         stageScoreAdded: _stageScoreAdded,
         activeSettlementLine: _activeSettlementLine,
+        activeSettlementStep: _activeSettlementStep,
+        activeSettlementEffectIndex: _activeSettlementEffectIndex,
         settlementSequenceTick: _settlementSequenceTick,
         settlementBoardSnapshot: _settlementBoardSnapshot,
         selectedHandTile: _selectedHandTile,
@@ -1333,6 +1422,8 @@ class _GameSurface extends StatelessWidget {
     required this.stageFlowPhase,
     required this.stageScoreAdded,
     required this.activeSettlementLine,
+    required this.activeSettlementStep,
+    required this.activeSettlementEffectIndex,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
     required this.selectedHandTile,
@@ -1369,6 +1460,8 @@ class _GameSurface extends StatelessWidget {
   final GameStageFlowPhase stageFlowPhase;
   final int stageScoreAdded;
   final ConfirmedLineBreakdown? activeSettlementLine;
+  final ScoringPresentationStep activeSettlementStep;
+  final int? activeSettlementEffectIndex;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
   final Tile? selectedHandTile;
@@ -1434,6 +1527,8 @@ class _GameSurface extends StatelessWidget {
                   market: market,
                   activeSettlementEffects:
                       activeSettlementLine?.effects ?? const [],
+                  activeSettlementStep: activeSettlementStep,
+                  activeSettlementEffectIndex: activeSettlementEffectIndex,
                   activeSettlementLine: activeSettlementLine,
                   settlementSequenceTick: settlementSequenceTick,
                   settlementBoardSnapshot: settlementBoardSnapshot,
@@ -1461,12 +1556,17 @@ class _GameSurface extends StatelessWidget {
               ),
             ),
             if (stageFlowPhase == GameStageFlowPhase.confirmSettlement)
-              Positioned.fill(
-                child: GameFloatingSettlementBurst(
-                  key: ValueKey('settlement-$settlementSequenceTick'),
-                  line: activeSettlementLine,
+              if (activeSettlementStep == ScoringPresentationStep.finalScore)
+                Positioned.fill(
+                  child: GameFloatingSettlementBurst(
+                    key: ValueKey(
+                      'settlement-$settlementSequenceTick-$activeSettlementStep-$activeSettlementEffectIndex',
+                    ),
+                    line: activeSettlementLine,
+                    step: activeSettlementStep,
+                    effectIndex: activeSettlementEffectIndex,
+                  ),
                 ),
-              ),
             if (stageFlowPhase == GameStageFlowPhase.cleared ||
                 stageFlowPhase == GameStageFlowPhase.settlement)
               Positioned.fill(
@@ -1548,6 +1648,8 @@ class _GameLayout extends StatelessWidget {
     required this.station,
     required this.market,
     required this.activeSettlementEffects,
+    required this.activeSettlementStep,
+    required this.activeSettlementEffectIndex,
     required this.activeSettlementLine,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
@@ -1577,6 +1679,8 @@ class _GameLayout extends StatelessWidget {
   final RummiStationRuntimeFacade station;
   final RummiMarketRuntimeFacade market;
   final List<RummiJesterEffectBreakdown> activeSettlementEffects;
+  final ScoringPresentationStep activeSettlementStep;
+  final int? activeSettlementEffectIndex;
   final ConfirmedLineBreakdown? activeSettlementLine;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
@@ -1610,6 +1714,11 @@ class _GameLayout extends StatelessWidget {
             for (final (row, col) in activeSettlementLine!.contributingCells)
               '$row:$col',
           };
+    final visibleSettlementEffects = _visibleSettlementEffects(
+      activeSettlementEffects,
+      activeSettlementStep,
+      activeSettlementEffectIndex,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1622,11 +1731,14 @@ class _GameLayout extends StatelessWidget {
               station: station,
               battle: battle,
               onOptionsTap: onOptionsTap,
+              stationGoalPulse:
+                  activeSettlementStep == ScoringPresentationStep.finalScore,
+              stationGoalPulseTick: settlementSequenceTick,
             ),
             const SizedBox(height: 6),
             GameJesterZone(
               market: market,
-              activeEffects: activeSettlementEffects,
+              activeEffects: visibleSettlementEffects,
               settlementSequenceTick: settlementSequenceTick,
               selectedIndex: selectedJesterOverlayIndex,
               onTapCard: onJesterTap,
@@ -1634,7 +1746,7 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 6),
             GameItemZoneSkeleton(
               battle: battle,
-              activeEffects: activeSettlementEffects,
+              activeEffects: visibleSettlementEffects,
               settlementSequenceTick: settlementSequenceTick,
               selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
               onItemSlotTap: onBattleItemTap,
@@ -1657,6 +1769,20 @@ class _GameLayout extends StatelessWidget {
                       onTapCell: onBoardCellTap,
                     ),
                   ),
+                  if (_showsBoardScoringCallout(activeSettlementStep) &&
+                      activeSettlementLine != null)
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      top: 10,
+                      child: _BoardScoringCallout(
+                        key: ValueKey(
+                          'board-score-$settlementSequenceTick-$activeSettlementStep',
+                        ),
+                        line: activeSettlementLine!,
+                        step: activeSettlementStep,
+                      ),
+                    ),
                   if (kDebugMode)
                     Positioned(
                       right: 0,
@@ -1719,6 +1845,144 @@ class _GameLayout extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+List<RummiJesterEffectBreakdown> _visibleSettlementEffects(
+  List<RummiJesterEffectBreakdown> effects,
+  ScoringPresentationStep step,
+  int? effectIndex,
+) {
+  if (step != ScoringPresentationStep.jester &&
+      step != ScoringPresentationStep.item) {
+    return const [];
+  }
+  if (effectIndex == null || effectIndex < 0 || effectIndex >= effects.length) {
+    return const [];
+  }
+  return [effects[effectIndex]];
+}
+
+bool _showsBoardScoringCallout(ScoringPresentationStep step) {
+  return step == ScoringPresentationStep.boardLine ||
+      step == ScoringPresentationStep.handRank ||
+      step == ScoringPresentationStep.overlap;
+}
+
+class _BoardScoringCallout extends StatelessWidget {
+  const _BoardScoringCallout({
+    super.key,
+    required this.line,
+    required this.step,
+  });
+
+  final ConfirmedLineBreakdown line;
+  final ScoringPresentationStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    final (title, value, detail) = switch (step) {
+      ScoringPresentationStep.boardLine => (
+        '${gameLineRefShortLabel(line.ref)} 라인',
+        '확정',
+        '하이라이트된 타일이 점수 라인입니다',
+      ),
+      ScoringPresentationStep.handRank => (
+        gameHandRankLabel(line.rank),
+        '+${line.rankBaseScore ?? line.baseScore}',
+        '족보 base score',
+      ),
+      ScoringPresentationStep.overlap => (
+        'overlap',
+        '+${line.overlapBonus}',
+        '겹친 타일 보너스',
+      ),
+      _ => ('점수', '+0', ''),
+    };
+    return IgnorePointer(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          final dy = (1 - value) * 10;
+          return Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: Transform.translate(offset: Offset(0, dy), child: child),
+          );
+        },
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xE6153C31),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFF2C14E).withValues(alpha: 0.78),
+                width: 1.4,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF2C14E).withValues(alpha: 0.16),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.28),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFF2C14E),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      detail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.68),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

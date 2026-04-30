@@ -33,6 +33,8 @@ class GameSessionState {
     this.stageFlowPhase = GameStageFlowPhase.none,
     this.stageScoreAdded = 0,
     this.activeSettlementLine,
+    this.activeSettlementStep = ScoringPresentationStep.none,
+    this.activeSettlementEffectIndex,
     this.settlementBoardSnapshot = const {},
     this.settlementSequenceTick = 0,
     this.revision = 0,
@@ -57,6 +59,8 @@ class GameSessionState {
   final GameStageFlowPhase stageFlowPhase;
   final int stageScoreAdded;
   final ConfirmedLineBreakdown? activeSettlementLine;
+  final ScoringPresentationStep activeSettlementStep;
+  final int? activeSettlementEffectIndex;
   final Map<String, Tile> settlementBoardSnapshot;
   final int settlementSequenceTick;
   final int revision;
@@ -86,6 +90,8 @@ class GameSessionState {
     GameStageFlowPhase? stageFlowPhase,
     int? stageScoreAdded,
     Object? activeSettlementLine = _unset,
+    ScoringPresentationStep? activeSettlementStep,
+    Object? activeSettlementEffectIndex = _unset,
     Map<String, Tile>? settlementBoardSnapshot,
     int? settlementSequenceTick,
     int? revision,
@@ -138,6 +144,10 @@ class GameSessionState {
       activeSettlementLine: activeSettlementLine == _unset
           ? this.activeSettlementLine
           : activeSettlementLine as ConfirmedLineBreakdown?,
+      activeSettlementStep: activeSettlementStep ?? this.activeSettlementStep,
+      activeSettlementEffectIndex: activeSettlementEffectIndex == _unset
+          ? this.activeSettlementEffectIndex
+          : activeSettlementEffectIndex as int?,
       settlementBoardSnapshot:
           settlementBoardSnapshot ?? this.settlementBoardSnapshot,
       settlementSequenceTick:
@@ -152,3 +162,13 @@ enum GameRunLoopPhase { battle, settlement, market, nextStationTransition }
 
 /// 전투 화면의 잠금/연출 단계.
 enum GameStageFlowPhase { none, confirmSettlement, cleared, settlement }
+
+enum ScoringPresentationStep {
+  none,
+  boardLine,
+  handRank,
+  overlap,
+  jester,
+  item,
+  finalScore,
+}

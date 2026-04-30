@@ -3,6 +3,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/hand_rank.dart';
+import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/line_ref.dart';
@@ -158,37 +159,50 @@ class GameStageClearOverlay extends StatelessWidget {
 }
 
 class GameFloatingSettlementBurst extends StatelessWidget {
-  const GameFloatingSettlementBurst({super.key, required this.line});
+  const GameFloatingSettlementBurst({
+    super.key,
+    required this.line,
+    required this.step,
+    required this.effectIndex,
+  });
 
   final ConfirmedLineBreakdown? line;
+  final ScoringPresentationStep step;
+  final int? effectIndex;
 
   @override
   Widget build(BuildContext context) {
     final currentLine = line;
-    final label = currentLine == null
-        ? '점수 정산'
-        : '${gameHandRankLabel(currentLine.rank)} · ${gameLineRefShortLabel(currentLine.ref)}';
-    final subLabel = currentLine == null
-        ? null
-        : gameScoreBreakdownLabel(currentLine);
-    final displayedScore = currentLine?.finalScore ?? 0;
-    final jesterLabel = currentLine == null
-        ? null
-        : settlementJesterNames(currentLine);
+    final activeEffect =
+        currentLine != null &&
+            effectIndex != null &&
+            effectIndex! >= 0 &&
+            effectIndex! < currentLine.effects.length
+        ? currentLine.effects[effectIndex!]
+        : null;
+    final label = _settlementStepLabel(currentLine, step, activeEffect);
+    final subLabel = _settlementStepSubLabel(currentLine, step, activeEffect);
+    final displayedScore = _settlementStepScore(
+      currentLine,
+      step,
+      activeEffect,
+    );
 
     return IgnorePointer(
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 980),
+        duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
         builder: (context, value, child) {
-          final fadeIn = (value / 0.18).clamp(0.0, 1.0);
-          final fadeOut = ((1 - value) / 0.28).clamp(0.0, 1.0);
-          final opacity = value < 0.72 ? fadeIn : fadeOut;
-          final dy = lerpDouble(22, -42, value)!;
+          final opacity = (value / 0.65).clamp(0.0, 1.0);
+          final dy = lerpDouble(10, 0, value)!;
+          final scale = lerpDouble(0.96, 1, value)!;
           return Opacity(
             opacity: opacity,
-            child: Transform.translate(offset: Offset(0, dy), child: child),
+            child: Transform.translate(
+              offset: Offset(0, dy),
+              child: Transform.scale(scale: scale, child: child),
+            ),
           );
         },
         child: Align(
@@ -231,18 +245,6 @@ class GameFloatingSettlementBurst extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
-                    if (jesterLabel != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        jesterLabel,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.58),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
                   ],
                 ],
               ),
@@ -252,6 +254,60 @@ class GameFloatingSettlementBurst extends StatelessWidget {
       ),
     );
   }
+}
+
+String _settlementStepLabel(
+  ConfirmedLineBreakdown? line,
+  ScoringPresentationStep step,
+  RummiJesterEffectBreakdown? effect,
+) {
+  if (line == null) return '점수 정산';
+  return switch (step) {
+    ScoringPresentationStep.boardLine =>
+      '${gameLineRefShortLabel(line.ref)} 라인',
+    ScoringPresentationStep.handRank => gameHandRankLabel(line.rank),
+    ScoringPresentationStep.overlap => 'overlap bonus',
+    ScoringPresentationStep.jester => effect?.displayName ?? 'Jester 발동',
+    ScoringPresentationStep.item => effect?.displayName ?? 'Item 발동',
+    ScoringPresentationStep.finalScore => 'Station Goal',
+    ScoringPresentationStep.none =>
+      '${gameHandRankLabel(line.rank)} · ${gameLineRefShortLabel(line.ref)}',
+  };
+}
+
+String? _settlementStepSubLabel(
+  ConfirmedLineBreakdown? line,
+  ScoringPresentationStep step,
+  RummiJesterEffectBreakdown? effect,
+) {
+  if (line == null) return null;
+  return switch (step) {
+    ScoringPresentationStep.boardLine => '보드 라인 확정',
+    ScoringPresentationStep.handRank =>
+      'base ${line.rankBaseScore ?? line.baseScore}',
+    ScoringPresentationStep.overlap => '겹침 +${line.overlapBonus}',
+    ScoringPresentationStep.jester || ScoringPresentationStep.item =>
+      effect == null ? null : jesterEffectBadge(effect),
+    ScoringPresentationStep.finalScore => gameScoreBreakdownLabel(line),
+    ScoringPresentationStep.none => gameScoreBreakdownLabel(line),
+  };
+}
+
+int _settlementStepScore(
+  ConfirmedLineBreakdown? line,
+  ScoringPresentationStep step,
+  RummiJesterEffectBreakdown? effect,
+) {
+  if (line == null) return 0;
+  return switch (step) {
+    ScoringPresentationStep.boardLine => 0,
+    ScoringPresentationStep.handRank => line.rankBaseScore ?? line.baseScore,
+    ScoringPresentationStep.overlap => line.overlapBonus,
+    ScoringPresentationStep.jester ||
+    ScoringPresentationStep.item => effect?.scoreDelta ?? 0,
+    ScoringPresentationStep.finalScore ||
+    ScoringPresentationStep.none => line.finalScore,
+  };
 }
 
 class GameCashOutSheet extends StatefulWidget {

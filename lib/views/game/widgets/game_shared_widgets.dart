@@ -98,11 +98,15 @@ class GameTopHud extends StatelessWidget {
     required this.station,
     required this.battle,
     required this.onOptionsTap,
+    this.stationGoalPulse = false,
+    this.stationGoalPulseTick = 0,
   });
 
   final RummiStationRuntimeFacade station;
   final RummiBattleRuntimeFacade battle;
   final VoidCallback onOptionsTap;
+  final bool stationGoalPulse;
+  final int stationGoalPulseTick;
 
   @override
   Widget build(BuildContext context) {
@@ -167,64 +171,78 @@ class GameTopHud extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Expanded(
-            child: GameHudChip(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'STATION GOAL',
-                    style: gameHudLabelStyle,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${objective.scoreTowardObjective}',
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey(
+                stationGoalPulse ? 'goal-$stationGoalPulseTick' : 'goal-idle',
+              ),
+              tween: Tween<double>(begin: 0, end: stationGoalPulse ? 1 : 0),
+              duration: const Duration(milliseconds: 420),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                final scale = stationGoalPulse
+                    ? 1 + (sin(value * pi) * 0.035)
+                    : 1.0;
+                return Transform.scale(scale: scale, child: child);
+              },
+              child: GameHudChip(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'STATION GOAL',
+                      style: gameHudLabelStyle,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${objective.scoreTowardObjective}',
+                                maxLines: 1,
+                                textAlign: TextAlign.right,
+                                overflow: TextOverflow.clip,
+                                style: gameHudValueStyle.copyWith(fontSize: 18),
+                              ),
+                            ),
+                            Text(
+                              '/',
                               maxLines: 1,
-                              textAlign: TextAlign.right,
-                              overflow: TextOverflow.clip,
                               style: gameHudValueStyle.copyWith(fontSize: 18),
                             ),
-                          ),
-                          Text(
-                            '/',
-                            maxLines: 1,
-                            style: gameHudValueStyle.copyWith(fontSize: 18),
-                          ),
-                          SizedBox(
-                            width: 44,
-                            child: Text(
-                              '${objective.targetScore}',
-                              maxLines: 1,
-                              textAlign: TextAlign.left,
-                              overflow: TextOverflow.clip,
-                              style: gameHudValueStyle.copyWith(fontSize: 18),
+                            SizedBox(
+                              width: 44,
+                              child: Text(
+                                '${objective.targetScore}',
+                                maxLines: 1,
+                                textAlign: TextAlign.left,
+                                overflow: TextOverflow.clip,
+                                style: gameHudValueStyle.copyWith(fontSize: 18),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                      backgroundColor: Colors.black.withValues(alpha: 0.3),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFFF4A81D),
+                    const SizedBox(height: 3),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: Colors.black.withValues(alpha: 0.3),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFFF4A81D),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -1083,14 +1101,15 @@ class _GameItemPocketChip extends StatelessWidget {
           ),
           if (activeEffect != null)
             Positioned(
-              left: 2,
-              right: 2,
+              left: -4,
+              right: -4,
               top: -15,
               child: _GameItemEffectBurst(
                 key: ValueKey(
                   'item-burst-${itemSlot!.contentId}-$settlementSequenceTick',
                 ),
                 effect: activeEffect!,
+                sourceName: itemName!,
               ),
             ),
           if (itemSlot != null && itemSlot.count > 1)
@@ -1143,9 +1162,14 @@ String _itemEffectBadge(RummiJesterEffectBreakdown effect) {
 }
 
 class _GameItemEffectBurst extends StatelessWidget {
-  const _GameItemEffectBurst({super.key, required this.effect});
+  const _GameItemEffectBurst({
+    super.key,
+    required this.effect,
+    required this.sourceName,
+  });
 
   final RummiJesterEffectBreakdown effect;
+  final String sourceName;
 
   @override
   Widget build(BuildContext context) {
@@ -1181,17 +1205,34 @@ class _GameItemEffectBurst extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-            child: Text(
-              _itemEffectBadge(effect),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFFFFF4CF),
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
-                height: 1,
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  sourceName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _itemEffectBadge(effect),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFFFF4CF),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

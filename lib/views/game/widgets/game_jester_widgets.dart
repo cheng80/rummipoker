@@ -465,6 +465,7 @@ class GameJesterSlot extends StatelessWidget {
                   'jester-burst-${activeEffect!.jesterId}-$settlementSequenceTick',
                 ),
                 effect: activeEffect!,
+                sourceName: displayName,
               ),
             ),
         ],
@@ -474,13 +475,17 @@ class GameJesterSlot extends StatelessWidget {
 }
 
 class GameJesterEffectBurst extends StatelessWidget {
-  const GameJesterEffectBurst({super.key, required this.effect});
+  const GameJesterEffectBurst({
+    super.key,
+    required this.effect,
+    required this.sourceName,
+  });
 
   final RummiJesterEffectBreakdown effect;
+  final String sourceName;
 
   @override
   Widget build(BuildContext context) {
-    final label = effect.displayToken;
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(milliseconds: 760),
@@ -513,13 +518,26 @@ class GameJesterEffectBurst extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: _GameOutlinedLabel(
-              label,
-              fillColor: const Color(0xFFFFF4CF),
-              strokeColor: const Color(0xFF173126),
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _GameOutlinedLabel(
+                  sourceName,
+                  fillColor: Colors.white.withValues(alpha: 0.92),
+                  strokeColor: const Color(0xFF173126),
+                  fontSize: 7.5,
+                  fontWeight: FontWeight.w900,
+                ),
+                const SizedBox(height: 2),
+                _GameOutlinedLabel(
+                  jesterEffectBadge(effect),
+                  fillColor: const Color(0xFFFFF4CF),
+                  strokeColor: const Color(0xFF173126),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ],
             ),
           ),
         ),

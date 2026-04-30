@@ -232,6 +232,8 @@ class GameSessionNotifier
         stageFlowPhase: GameStageFlowPhase.none,
         stageScoreAdded: 0,
         activeSettlementLine: null,
+        activeSettlementStep: ScoringPresentationStep.none,
+        activeSettlementEffectIndex: null,
         settlementBoardSnapshot: const {},
         settlementSequenceTick: 0,
         revision: state.revision + 1,
@@ -339,6 +341,8 @@ class GameSessionNotifier
     required GameStageFlowPhase phase,
     int? stageScoreAdded,
     ConfirmedLineBreakdown? activeSettlementLine,
+    ScoringPresentationStep activeSettlementStep = ScoringPresentationStep.none,
+    int? activeSettlementEffectIndex,
     Map<String, Tile>? settlementBoardSnapshot,
     bool bumpSettlementSequence = false,
   }) {
@@ -347,6 +351,8 @@ class GameSessionNotifier
         stageFlowPhase: phase,
         stageScoreAdded: stageScoreAdded,
         activeSettlementLine: activeSettlementLine,
+        activeSettlementStep: activeSettlementStep,
+        activeSettlementEffectIndex: activeSettlementEffectIndex,
         settlementBoardSnapshot: settlementBoardSnapshot,
         settlementSequenceTick: bumpSettlementSequence
             ? state.settlementSequenceTick + 1
@@ -449,7 +455,7 @@ class GameSessionNotifier
     );
   }
 
-  void applyConfirmedLineScore(int score) {
+  void applyConfirmedScore(int score) {
     final session = state.session;
     if (session == null) return;
     session.addScoreToBlind(score);
