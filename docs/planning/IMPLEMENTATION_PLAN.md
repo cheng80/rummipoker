@@ -432,6 +432,8 @@ Current applied note:
 - Market 생성 규칙 계획은 `MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`에 정리했다. 기본 offer 수 3/3, v1 cap 5, rarity weight, 중복 제외, 구매 후 재노출 방지, item offer save/restore 개선을 후속 구현 기준으로 둔다.
 - Blind/Station pacing baseline은 `BLIND_STATION_PACING_BASELINE_PLAN.md`에 `v4_pacing_baseline_1`로 기록했다. 이 pass는 수치 변경 없이 현재 target/reward/pressure 기준을 ML log 기준으로 고정한다.
 - Boss modifier taxonomy는 `BOSS_MODIFIER_TAXONOMY_PLAN.md`에 정리했다. Boss는 단순 목표 점수 증가가 아니라 preview/scoring/save/log에 노출되는 visible rule modifier로 다룬다.
+- Constraint visual language는 `CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`에 정리했다. 제약은 전투 진입 팝업으로 먼저 설명하고, 전투 중에는 작은 marker와 원인 위치 penalty float로만 반복 표시한다.
+- Boss modifier v1은 `빨간 타일 약화`로 적용했다. 보스 블라인드는 진입 팝업에서 제약을 설명하고, 전투 중 red tile marker와 scoring penalty callout을 사용한다.
 - Starting deck archetype reference는 `STARTING_DECK_ARCHETYPE_PLAN.md`에 정리했다. 현재 New Run은 Random/Seed만 유지하고, 후속 덱 선택은 `run_archetype_id`, 타일 강화는 `tile_modifier_id` 기준으로 ML/simulator에 먼저 연결한다.
 - Jester reference taxonomy는 `JESTER_REFERENCE_TAXONOMY_PLAN.md`에 정리했다. Balatro식 Joker 목록은 발동 순서, effect category, edition/penalty, ML feature 참고로만 사용하고 기존 Jester id는 유지한다.
 - Consumable/Voucher reference taxonomy는 `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에 정리했다. Balatro식 Tarot/Planet/Spectral/Voucher는 confirm modifier, tile enhancement, rank progression, high-risk mutation, run-long passive 후보로 분리한다.

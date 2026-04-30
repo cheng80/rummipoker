@@ -1,3 +1,5 @@
+import 'boss_modifier.dart';
+
 /// 블라인드당 자원·누적 점수 (GDD §8.2, `game_logic` §5.2).
 ///
 /// 죽은 줄(하이·원페어)은 **줄 확정으로 한 줄씩 지우지 않음**. 보드 칸 비우기는 **버림(D)** 만.
@@ -13,6 +15,7 @@ class RummiBlindState {
     int? discardsRemaining,
     int? discardsMax,
     this.scoreTowardBlind = 0,
+    this.bossModifier,
   }) : boardDiscardsRemaining =
            boardDiscardsRemaining ?? discardsRemaining ?? 4,
        boardDiscardsMax = boardDiscardsMax ?? discardsMax ?? 4,
@@ -36,6 +39,7 @@ class RummiBlindState {
   final int boardMovesMax;
 
   int scoreTowardBlind;
+  RummiBossModifier? bossModifier;
 
   /// 기존 코드/문서 호환용 별칭. 현재는 보드 버림 자원을 가리킨다.
   int get discardsRemaining => boardDiscardsRemaining;
@@ -56,6 +60,7 @@ class RummiBlindState {
       'boardMovesRemaining': boardMovesRemaining,
       'boardMovesMax': boardMovesMax,
       'scoreTowardBlind': scoreTowardBlind,
+      if (bossModifier != null) 'bossModifier': bossModifier!.toJson(),
     };
   }
 
@@ -69,6 +74,11 @@ class RummiBlindState {
       boardMovesRemaining: (json['boardMovesRemaining'] as num?)?.toInt(),
       boardMovesMax: (json['boardMovesMax'] as num?)?.toInt(),
       scoreTowardBlind: (json['scoreTowardBlind'] as num?)?.toInt() ?? 0,
+      bossModifier: json['bossModifier'] == null
+          ? null
+          : RummiBossModifier.fromJson(
+              Map<String, dynamic>.from(json['bossModifier'] as Map),
+            ),
     );
   }
 
@@ -83,6 +93,7 @@ class RummiBlindState {
     int? discardsRemaining,
     int? discardsMax,
     int? scoreTowardBlind,
+    Object? bossModifier = _unset,
   }) {
     return RummiBlindState(
       targetScore: targetScore ?? this.targetScore,
@@ -98,6 +109,11 @@ class RummiBlindState {
       boardMovesRemaining: boardMovesRemaining ?? this.boardMovesRemaining,
       boardMovesMax: boardMovesMax ?? this.boardMovesMax,
       scoreTowardBlind: scoreTowardBlind ?? this.scoreTowardBlind,
+      bossModifier: bossModifier == _unset
+          ? this.bossModifier
+          : bossModifier as RummiBossModifier?,
     );
   }
+
+  static const Object _unset = Object();
 }

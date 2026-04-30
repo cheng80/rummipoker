@@ -254,6 +254,14 @@ class _BlindOptionCard extends StatelessWidget {
                     height: 1.25,
                   ),
                 ),
+                if (spec.bossModifier != null) ...[
+                  const SizedBox(height: 7),
+                  _BlindConstraintChip(
+                    title: spec.bossModifier!.title,
+                    ruleText: spec.bossModifier!.ruleText,
+                    enabled: isInteractive,
+                  ),
+                ],
               ],
             ),
           ),
@@ -262,6 +270,52 @@ class _BlindOptionCard extends StatelessWidget {
             status: status,
             enabled: isInteractive,
             onTap: onTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlindConstraintChip extends StatelessWidget {
+  const _BlindConstraintChip({
+    required this.title,
+    required this.ruleText,
+    required this.enabled,
+  });
+
+  final String title;
+  final String ruleText;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled
+        ? const Color(0xFFFFB4A8)
+        : const Color(0xFFFFB4A8).withValues(alpha: 0.62);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF5A2B30).withValues(alpha: enabled ? 0.56 : 0.28),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: color.withValues(alpha: 0.54), width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: color, size: 14),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              '$title · $ruleText',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                height: 1.2,
+              ),
+            ),
           ),
         ],
       ),

@@ -1419,11 +1419,13 @@ class GameBoardGrid extends StatelessWidget {
     required this.moveSourceRow,
     required this.moveSourceCol,
     required this.onTapCell,
+    this.constrainedCells = const {},
     this.alignment = Alignment.center,
   });
 
   final RummiBoard board;
   final Set<String> scoringCells;
+  final Set<String> constrainedCells;
   final Set<String> activeSettlementCells;
   final Map<String, Tile> settlementBoardSnapshot;
   final int? selectedRow;
@@ -1472,6 +1474,7 @@ class GameBoardGrid extends StatelessWidget {
                         settlementBoardSnapshot['$row:$col'];
                     final selected = selectedRow == row && selectedCol == col;
                     final scoring = scoringCells.contains('$row:$col');
+                    final constrained = constrainedCells.contains('$row:$col');
                     final settlementActive = activeSettlementCells.contains(
                       '$row:$col',
                     );
@@ -1487,6 +1490,7 @@ class GameBoardGrid extends StatelessWidget {
                       tile: tile,
                       selected: selected,
                       scoring: scoring,
+                      constrained: constrained,
                       settlementActive: settlementActive,
                       moveSource: isMoveSource,
                       moveAvailable: isMoveAvailable,
@@ -1510,6 +1514,7 @@ class GameBoardCell extends StatelessWidget {
     required this.tile,
     required this.selected,
     required this.scoring,
+    required this.constrained,
     required this.settlementActive,
     required this.moveSource,
     required this.moveAvailable,
@@ -1520,6 +1525,7 @@ class GameBoardCell extends StatelessWidget {
   final Tile? tile;
   final bool selected;
   final bool scoring;
+  final bool constrained;
   final bool settlementActive;
   final bool moveSource;
   final bool moveAvailable;
@@ -1597,22 +1603,65 @@ class GameBoardCell extends StatelessWidget {
                             ),
                           )
                         : null
-                  : Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Opacity(
-                        opacity: moveLocked ? 0.42 : 1,
-                        child: GameRummiTileCard(
-                          tile: tile!,
-                          selected: selected || moveSource,
-                          accent: false,
-                          aspectRatio: kGameTileAspectRatio,
+                  : Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Opacity(
+                            opacity: moveLocked ? 0.42 : 1,
+                            child: GameRummiTileCard(
+                              tile: tile!,
+                              selected: selected || moveSource,
+                              accent: false,
+                              aspectRatio: kGameTileAspectRatio,
+                            ),
+                          ),
                         ),
-                      ),
+                        if (constrained)
+                          Positioned(
+                            right: 3,
+                            top: 3,
+                            child: _TileConstraintMarker(side: side),
+                          ),
+                      ],
                     ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _TileConstraintMarker extends StatelessWidget {
+  const _TileConstraintMarker({required this.side});
+
+  final double side;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = (side * 0.26).clamp(10.0, 16.0);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFFD34E4E),
+        borderRadius: BorderRadius.circular(size * 0.5),
+        border: Border.all(
+          color: const Color(0xFFFFD0C8).withValues(alpha: 0.9),
+          width: 1,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '!',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: size * 0.72,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
     );
   }
 }

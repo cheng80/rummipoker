@@ -1,4 +1,5 @@
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/boss_modifier.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/item_effect_runtime.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
@@ -22,6 +23,7 @@ class BlindSelectionSpec {
     required this.maxHandSize,
     required this.rewardPreview,
     required this.availability,
+    this.bossModifier,
     this.lockReason,
   });
 
@@ -35,6 +37,7 @@ class BlindSelectionSpec {
   final int maxHandSize;
   final int rewardPreview;
   final BlindSelectionAvailability availability;
+  final RummiBossModifier? bossModifier;
   final String? lockReason;
 
   bool get isSelectable =>
@@ -192,6 +195,9 @@ class BlindSelectionSetup {
       maxHandSize: maxHandSize,
       rewardPreview: rewardPreview,
       availability: availability,
+      bossModifier: tier == BlindTier.boss
+          ? RummiBossModifier.redDampener
+          : null,
       lockReason: lockReason,
     );
   }
@@ -226,6 +232,7 @@ class BlindSelectionSetup {
       handDiscards: selected.handDiscards,
       maxHandSize: selected.maxHandSize,
     );
+    session.blind.bossModifier = selected.bossModifier;
     if (itemCatalog != null) {
       ItemEffectRuntime.applyOwnedStationStartItems(
         catalog: itemCatalog,

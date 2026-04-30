@@ -242,11 +242,10 @@ class _GameHandZoneState extends State<GameHandZone>
         angle: angle,
         child: GestureDetector(
           onTap: () => widget.onHandTileTap(tile),
-          child: GameRummiTileCard(
+          child: _HandTileCard(
             tile: tile,
             selected: widget.selectedHandTile == tile,
-            accent: false,
-            aspectRatio: kGameTileAspectRatio,
+            constrained: widget.battle.isTileConstrained(tile),
           ),
         ),
       ),
@@ -279,14 +278,68 @@ class _GameHandZoneState extends State<GameHandZone>
         angle: angle,
         child: GestureDetector(
           onTap: () => widget.onHandTileTap(tile),
-          child: GameRummiTileCard(
+          child: _HandTileCard(
             tile: tile,
             selected: widget.selectedHandTile == tile,
+            constrained: widget.battle.isTileConstrained(tile),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HandTileCard extends StatelessWidget {
+  const _HandTileCard({
+    required this.tile,
+    required this.selected,
+    required this.constrained,
+  });
+
+  final Tile tile;
+  final bool selected;
+  final bool constrained;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GameRummiTileCard(
+            tile: tile,
+            selected: selected,
             accent: false,
             aspectRatio: kGameTileAspectRatio,
           ),
         ),
-      ),
+        if (constrained)
+          Positioned(
+            top: 2,
+            right: 2,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD34E4E),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: const Color(0xFFFFD0C8).withValues(alpha: 0.9),
+                  width: 1,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                '!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

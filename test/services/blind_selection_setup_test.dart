@@ -50,6 +50,7 @@ void main() {
       expect(options[0].availability, BlindSelectionAvailability.cleared);
       expect(options[1].availability, BlindSelectionAvailability.cleared);
       expect(options[2].availability, BlindSelectionAvailability.selectable);
+      expect(options[2].bossModifier?.title, '빨간 타일 약화');
     });
 
     test('boss 클리어 후 blind select runtime은 다음 station small 시작 상태로 리셋된다', () {

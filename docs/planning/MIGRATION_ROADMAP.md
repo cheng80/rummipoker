@@ -245,8 +245,13 @@ ML readiness 선행 순서:
    - 완료 기준: `JESTER_REFERENCE_TAXONOMY_PLAN.md`에서 Jester 발동 순서, effect category, edition/penalty, ML feature 후보를 고정한다.
 7. Consumable / voucher taxonomy 기준 확정
    - 완료 기준: `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 Item consumable, rank progression, high-risk mutation, run-long passive/voucher 후보를 고정한다.
-8. Balance simulation readiness pass
-9. `14_BALANCE_AUTOMATION_ML.md`의 simulator/JSONL/PyTorch 도입 순서 검토
+8. Constraint visual language 기준 확정
+   - 완료 기준: `CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`에서 entry popup, compact marker, position-local penalty float 기준을 고정한다.
+9. Boss modifier v1 implementation pass
+   - 완료 기준: 최소 1개 visible Boss rule modifier를 preview, entry popup, battle marker, scoring feedback, save/restore에 연결한다.
+   - 현재 완료: `빨간 타일 약화` v1
+10. Balance simulation readiness pass
+11. `14_BALANCE_AUTOMATION_ML.md`의 simulator/JSONL/PyTorch 도입 순서 검토
 
 금지:
 

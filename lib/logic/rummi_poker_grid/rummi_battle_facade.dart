@@ -1,4 +1,5 @@
 import 'hand_rank.dart';
+import 'boss_modifier.dart';
 import 'models/board.dart';
 import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
@@ -137,6 +138,7 @@ class RummiBattleRuntimeFacade {
     required this.board,
     required this.hand,
     required this.scoringCellKeys,
+    this.bossModifier,
     this.scoringPreview,
     this.itemSlots = const [],
   });
@@ -181,6 +183,7 @@ class RummiBattleRuntimeFacade {
       board: session.board,
       hand: List<Tile>.unmodifiable(session.hand),
       scoringCellKeys: Set<String>.unmodifiable(scoringCellKeys),
+      bossModifier: session.blind.bossModifier,
       scoringPreview: scoringPreview,
       itemSlots: const [],
     );
@@ -197,6 +200,7 @@ class RummiBattleRuntimeFacade {
       board: board,
       hand: hand,
       scoringCellKeys: scoringCellKeys,
+      bossModifier: bossModifier,
       scoringPreview: scoringPreview,
       itemSlots: List<RummiBattleItemSlotView>.unmodifiable(nextItemSlots),
     );
@@ -209,6 +213,9 @@ class RummiBattleRuntimeFacade {
   final RummiBoard board;
   final List<Tile> hand;
   final Set<String> scoringCellKeys;
+  final RummiBossModifier? bossModifier;
   final RummiScoringPreview? scoringPreview;
   final List<RummiBattleItemSlotView> itemSlots;
+
+  bool isTileConstrained(Tile tile) => bossModifier?.affectsTile(tile) ?? false;
 }

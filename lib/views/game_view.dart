@@ -12,6 +12,7 @@ import '../logic/rummi_poker_grid/owned_content_instance.dart';
 import '../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../logic/rummi_poker_grid/rummi_settlement_facade.dart';
+import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../logic/rummi_poker_grid/rummi_station_facade.dart';
@@ -97,6 +98,7 @@ class _GameViewState extends ConsumerState<GameView>
   RummiCashOutBreakdown? _settlementToMarketTransition;
   int? _pendingBoardMoveSourceRow;
   int? _pendingBoardMoveSourceCol;
+  bool _bossConstraintIntroShown = false;
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
@@ -237,6 +239,7 @@ class _GameViewState extends ConsumerState<GameView>
       if (_isDebugFixtureRun) {
         showTopNotice(context, '디버그 픽스처 모드: 이어하기 저장은 남기지 않습니다.');
       }
+      _showBossConstraintIntroIfNeeded();
     });
   }
 
@@ -314,6 +317,78 @@ class _GameViewState extends ConsumerState<GameView>
       if (!mounted) return;
       setState(() => _itemCatalog = null);
     }
+  }
+
+  Future<void> _showBossConstraintIntroIfNeeded() async {
+    if (_bossConstraintIntroShown || !mounted) return;
+    if (_gameState.activeRunScene != ActiveRunScene.battle) return;
+    final modifier = _gameState.session?.blind.bossModifier;
+    if (modifier == null) return;
+    _bossConstraintIntroShown = true;
+    await showGameFramedDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => GameModalCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD34E4E),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: const Color(0xFFFFD0C8).withValues(alpha: 0.88),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    modifier.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AssetPaths.fontNexonLv2Gothic,
+                      color: Colors.white.withValues(alpha: 0.96),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              modifier.ruleText,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.82),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            GameChromeButton(
+              label: '전투 시작',
+              backgroundColor: const Color(0xFFF4A81D),
+              foregroundColor: const Color(0xFF173126),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _scheduleDebugAutoUseItem() {
@@ -863,6 +938,16 @@ class _GameViewState extends ConsumerState<GameView>
         line: line,
         step: ScoringPresentationStep.overlap,
         delay: const Duration(milliseconds: 680),
+      );
+      if (!mounted) return;
+    }
+    if (line.constraintPenalties.isNotEmpty) {
+      await _showSettlementStep(
+        totalScore: totalScore,
+        line: line,
+        step: ScoringPresentationStep.constraint,
+        bump: true,
+        delay: const Duration(milliseconds: 760),
       );
       if (!mounted) return;
     }
@@ -1957,6 +2042,13 @@ class _GameLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scoringCells = battle.scoringCellKeys;
+    final constrainedCells = <String>{
+      for (var row = 0; row < kBoardSize; row++)
+        for (var col = 0; col < kBoardSize; col++)
+          if (battle.board.cellAt(row, col) != null &&
+              battle.isTileConstrained(battle.board.cellAt(row, col)!))
+            '$row:$col',
+    };
     final activeSettlementCells = activeSettlementLine == null
         ? <String>{}
         : {
@@ -2008,6 +2100,7 @@ class _GameLayout extends StatelessWidget {
                     child: GameBoardGrid(
                       board: battle.board,
                       scoringCells: scoringCells,
+                      constrainedCells: constrainedCells,
                       activeSettlementCells: activeSettlementCells,
                       settlementBoardSnapshot: settlementBoardSnapshot,
                       selectedRow: selectedBoardRow,
@@ -2116,7 +2209,8 @@ List<RummiJesterEffectBreakdown> _visibleSettlementEffects(
 bool _showsBoardScoringCallout(ScoringPresentationStep step) {
   return step == ScoringPresentationStep.boardLine ||
       step == ScoringPresentationStep.handRank ||
-      step == ScoringPresentationStep.overlap;
+      step == ScoringPresentationStep.overlap ||
+      step == ScoringPresentationStep.constraint;
 }
 
 class _BoardScoringCallout extends StatelessWidget {
@@ -2147,8 +2241,16 @@ class _BoardScoringCallout extends StatelessWidget {
         '+${line.overlapBonus}',
         '겹친 타일 보너스',
       ),
+      ScoringPresentationStep.constraint => (
+        line.constraintPenalties.first.title,
+        line.constraintPenalties.first.markerText,
+        line.constraintPenalties.first.ruleText,
+      ),
       _ => ('점수', '+0', ''),
     };
+    final valueColor = step == ScoringPresentationStep.constraint
+        ? const Color(0xFFFF8E7E)
+        : const Color(0xFFF2C14E);
     return IgnorePointer(
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0, end: 1),
@@ -2205,8 +2307,8 @@ class _BoardScoringCallout extends StatelessWidget {
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFFF2C14E),
+                    style: TextStyle(
+                      color: valueColor,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                       height: 1,

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -342,6 +343,19 @@ void main() {
 
       expect(restored.boardMovesRemaining, 3);
       expect(restored.boardMovesMax, 3);
+    });
+
+    test('blind json preserves boss modifier', () {
+      final blind = RummiBlindState(
+        targetScore: 300,
+        bossModifier: RummiBossModifier.redDampener,
+      );
+
+      final restored = RummiBlindState.fromJson(blind.toJson());
+
+      expect(restored.bossModifier?.id, RummiBossModifier.redDampener.id);
+      expect(restored.bossModifier?.title, '빨간 타일 약화');
+      expect(restored.bossModifier?.ruleText, contains('절반'));
     });
 
     test(

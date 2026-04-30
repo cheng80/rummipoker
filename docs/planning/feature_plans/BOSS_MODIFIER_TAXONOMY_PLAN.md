@@ -1,8 +1,10 @@
 # Boss Modifier Taxonomy Plan
 
 > 문서 성격: design reference / ML readiness prerequisite
-> 코드 반영 상태: planning only
+> 코드 반영 상태: tile color weaken v1 implemented
 > 핵심 정책: Boss는 단순 target/resource 압박이 아니라, 진입 전 공개되는 visible rule modifier를 가진 전투로 설계한다. Balatro의 Boss/Stake 제약은 참고하되, Rummi Poker의 draw 기반 손패와 5x5 board 구조에 맞게 재해석한다.
+
+제약 표시 방식은 `docs/planning/feature_plans/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`를 기준으로 본다.
 
 Reference:
 
@@ -167,6 +169,16 @@ Policy:
 
 Boss modifier는 entering 전에 반드시 보여야 한다.
 
+기본 전달 방식:
+
+```text
+Station Preview card summary
+-> Boss entry popup
+-> Battle compact marker
+-> Scoring position-local penalty float
+-> Detail panel explanation
+```
+
 Required preview fields:
 
 ```json
@@ -185,6 +197,10 @@ Battle UX requirements:
 - affected board tile / Jester slot / rank preview에 debuff marker 표시
 - scoring feedback에서 penalty가 적용된 위치를 보여 줌
 - Boss modifier text는 숨겨진 debug 정보가 아니라 player-facing 정보
+- 전투 진입 시 팝업으로 제약 이름, 대상, 한 줄 규칙을 설명한다.
+- 전투 중 상시 표시는 작은 badge/marker 위주로 제한하고 긴 설명문을 늘리지 않는다.
+- user-facing 화면에는 `boss_modifier_id`, `boss_modifier_category`, `score_multiplier` 같은 내부 변수명을 노출하지 않는다.
+- 화면 문구는 `빨간 타일 약화`, `빨간 타일 점수가 절반만 적용됩니다`처럼 짧은 한글 설명으로 쓴다.
 
 ## 6. Implementation Order
 
@@ -208,3 +224,25 @@ Recommended order:
 - Face-down card patterns are explicitly marked as redesign-needed.
 - Difficulty/stake constraints are reference-only.
 - First implemented Boss modifier must be visible in Station Preview, Battle UI, scoring feedback, save/restore, and simulator logs.
+
+## 8. Implementation Notes
+
+Implemented v1:
+
+- `빨간 타일 약화`
+- Boss blind only
+- Affected scoring line is reduced when it contains a red scoring tile.
+- User-facing UI uses Korean copy only.
+- Internal modifier id/category/parameters are kept in runtime/save/log-facing structures.
+- Connected surfaces:
+  - Blind Select Boss card
+  - battle entry popup
+  - board/hand compact marker
+  - scoring penalty callout
+  - blind save/restore
+
+Remaining follow-up:
+
+- simulator log field integration
+- additional modifier categories
+- persisted intro-seen state if repeated popups become noisy

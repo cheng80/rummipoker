@@ -267,6 +267,10 @@ String _settlementStepLabel(
       '${gameLineRefShortLabel(line.ref)} 라인',
     ScoringPresentationStep.handRank => gameHandRankLabel(line.rank),
     ScoringPresentationStep.overlap => 'overlap bonus',
+    ScoringPresentationStep.constraint =>
+      line.constraintPenalties.isEmpty
+          ? '제약 적용'
+          : line.constraintPenalties.first.title,
     ScoringPresentationStep.jester => effect?.displayName ?? 'Jester 발동',
     ScoringPresentationStep.item => effect?.displayName ?? 'Item 발동',
     ScoringPresentationStep.finalScore => 'Station Goal',
@@ -286,6 +290,10 @@ String? _settlementStepSubLabel(
     ScoringPresentationStep.handRank =>
       'base ${line.rankBaseScore ?? line.baseScore}',
     ScoringPresentationStep.overlap => '겹침 +${line.overlapBonus}',
+    ScoringPresentationStep.constraint =>
+      line.constraintPenalties.isEmpty
+          ? null
+          : line.constraintPenalties.first.ruleText,
     ScoringPresentationStep.jester || ScoringPresentationStep.item =>
       effect == null ? null : jesterEffectBadge(effect),
     ScoringPresentationStep.finalScore => gameScoreBreakdownLabel(line),
@@ -303,6 +311,10 @@ int _settlementStepScore(
     ScoringPresentationStep.boardLine => 0,
     ScoringPresentationStep.handRank => line.rankBaseScore ?? line.baseScore,
     ScoringPresentationStep.overlap => line.overlapBonus,
+    ScoringPresentationStep.constraint =>
+      line.constraintPenalties.isEmpty
+          ? 0
+          : line.constraintPenalties.first.scoreDelta,
     ScoringPresentationStep.jester ||
     ScoringPresentationStep.item => effect?.scoreDelta ?? 0,
     ScoringPresentationStep.finalScore ||

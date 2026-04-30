@@ -1,5 +1,6 @@
 import 'dart:math' show Random, max, min;
 
+import 'boss_modifier.dart';
 import 'hand_evaluator.dart';
 import 'hand_rank.dart';
 import 'jester_effect_runtime.dart';
@@ -166,6 +167,7 @@ class ConfirmedLineBreakdown {
     this.overlapMultiplier = 1.0,
     this.overlapBonus = 0,
     this.contributingCells = const [],
+    this.constraintPenalties = const [],
   });
 
   final LineRef ref;
@@ -179,6 +181,7 @@ class ConfirmedLineBreakdown {
   final double overlapMultiplier;
   final int overlapBonus;
   final List<(int, int)> contributingCells;
+  final List<RummiConstraintPenaltyBreakdown> constraintPenalties;
 }
 
 /// 덱·손패·보드·제거 더미를 묶은 퍼사드 (마이그레이션 플랜 단계 1).
@@ -669,6 +672,15 @@ class RummiPokerGridSession {
       );
       lineScore = itemResult.score;
       effects.addAll(itemResult.effects);
+      final constraintPenalties = <RummiConstraintPenaltyBreakdown>[];
+      final constraintScore = _applyBossModifierToLine(
+        score: lineScore,
+        scoringTiles: line.scoringTiles,
+      );
+      lineScore = constraintScore.score;
+      if (constraintScore.penalty != null) {
+        constraintPenalties.add(constraintScore.penalty!);
+      }
       baseScoreSum += baseLineScore;
       scoreSum += lineScore;
       jesterBonusSum += lineScore - baseLineScore;
@@ -687,6 +699,10 @@ class RummiPokerGridSession {
           contributingCells: List<(int, int)>.unmodifiable(
             line.contributingCells,
           ),
+          constraintPenalties:
+              List<RummiConstraintPenaltyBreakdown>.unmodifiable(
+                constraintPenalties,
+              ),
         ),
       );
     }
@@ -844,6 +860,38 @@ class RummiPokerGridSession {
       }
     }
     return (score: score, effects: effects);
+  }
+
+  ({int score, RummiConstraintPenaltyBreakdown? penalty})
+  _applyBossModifierToLine({
+    required int score,
+    required List<Tile> scoringTiles,
+  }) {
+    final modifier = blind.bossModifier;
+    if (modifier == null || score <= 0) {
+      return (score: score, penalty: null);
+    }
+    if (modifier.category != RummiBossModifierCategory.tileColorWeaken ||
+        !modifier.affectsAnyTile(scoringTiles)) {
+      return (score: score, penalty: null);
+    }
+    final nextScore = (score * modifier.scoreMultiplier).round();
+    final delta = nextScore - score;
+    if (delta == 0) {
+      return (score: score, penalty: null);
+    }
+    return (
+      score: nextScore,
+      penalty: RummiConstraintPenaltyBreakdown(
+        modifierId: modifier.id,
+        title: modifier.title,
+        ruleText: modifier.ruleText,
+        markerText: modifier.markerText,
+        scoreDelta: delta,
+        scoreMultiplier: modifier.scoreMultiplier,
+        affectedTileColors: modifier.affectedTileColors,
+      ),
+    );
   }
 
   ({int score, RummiJesterEffectBreakdown effect})? _scoreWithConfirmModifier({

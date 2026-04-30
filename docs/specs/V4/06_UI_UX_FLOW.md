@@ -91,6 +91,14 @@ Station Preview v1 결정:
 - 이 화면의 카드 정보는 ML simulator/log schema의 station objective source와 일치해야 한다.
 - Boss objective에 modifier가 붙는 경우, modifier 이름/영향 범위/짧은 규칙 문구를 전투 진입 전에 같은 카드 안에서 보여야 한다.
 
+Constraint visual rule:
+
+- 제약 표시는 `docs/planning/feature_plans/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`를 기준으로 한다.
+- Boss/Station 제약이 있으면 전투 진입 시 팝업 또는 bottom sheet로 제약 이름, 대상, 한 줄 규칙을 먼저 설명한다.
+- 전투 중에는 타일/Jester/Item 위에 작은 marker만 유지하고, 실제 감점은 점수 발생 위치의 짧은 float로 보여 준다.
+- 긴 제약 설명을 battle board 주변에 상시 노출하지 않는다.
+- user-facing 문구는 짧은 한글 설명만 사용한다. 내부 modifier id, enum, JSON field, score parameter를 화면에 노출하지 않는다.
+
 ## 4. Battle Screen Contract
 
 [V4_DECISION]

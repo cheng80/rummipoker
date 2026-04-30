@@ -43,6 +43,7 @@
 - Market offer count / rarity roll plan 완료: 기본 offer 수 3/3, v1 cap 5, rarity weight, 중복 제외, 구매 후 재노출 방지, item offer save/restore 개선 필요성을 `MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`에 정리했다.
 - Blind/Station pacing baseline 완료: 현재 target curve, difficulty multiplier, Small/Big/Boss pressure, reward preview/cash-out reward 기준을 `v4_pacing_baseline_1`로 문서화했다.
 - Boss modifier 방향 정리: Boss는 장기적으로 visible rule modifier를 갖는 전투로 보며, draw 기반 손패 구조 때문에 Balatro식 face-down hand-card 패턴은 그대로 복사하지 않는다.
+- Boss modifier v1 적용 완료: 보스 블라인드에 `빨간 타일 약화` 제약을 붙이고, 진입 팝업, Station Preview 표시, board/hand marker, scoring penalty callout, save/restore를 연결했다. 화면에는 내부 modifier 변수명 없이 한글 설명만 노출한다.
 - Starting deck archetype 방향 정리: Balatro식 시작 덱/카드 강화는 참고하되, 현재 New Run은 Random/Seed만 유지한다. 후속 작업은 `run_archetype_id`와 `tile_modifier_id` 기준으로 ML/simulator에 먼저 연결한다.
 - Home/New Run/Blind Select 시작 flow는 제품용 정보량으로 정리됐다. Home은 짧은 continue/new-run entry만 보여 주고, New Run은 Random/Seed entry 중심, Blind Select는 `Small/Big/Boss` 3개 card 비교와 명시적 play button 시작 액션을 사용한다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
@@ -124,7 +125,8 @@
 | Station 구조 | Station Preview v1, Station Map, Station Definition/Modifier | Preview v1 scope 결정 완료 / Map graph와 Modifier는 후속 |
 | Market 생성 규칙 | offer 갯수 증설, Balatro식 rarity 기반 shop roll | planning 완료 / 구현 후속 |
 | Pacing | target score curve, small/big/boss 보상/압박, unlock tempo | baseline 문서화 완료 / 수치 변경은 후속 |
-| Boss 제약 | Boss modifier taxonomy, 난이도/stake reference | planning 완료 / 구현 후속 |
+| Boss 제약 | Boss modifier taxonomy, tile color weaken v1 | v1 구현 완료 / 확장 후속 |
+| 제약 표시 | Entry popup, compact marker, position-local penalty float | v1 구현 완료 |
 | 시작 덱 | Starting deck archetype, tile enhancement reference | planning 완료 / ML 후속 |
 | Jester 확장 | Jester activation order, edition/penalty, effect taxonomy | planning 완료 / 구현 후속 |
 | Item 확장 | Consumable/Voucher taxonomy, rank progression, run passive | planning 완료 / 구현 후속 |
@@ -155,26 +157,32 @@ ML readiness 기준 우선순위:
    - Boss를 단순 target x2 전투가 아니라 visible rule modifier 전투로 다룬다.
    - Balatro Boss/Stake 제약은 참고하되, face-down hand-card 패턴은 draw 기반 구조에 맞게 재설계한다.
    - 완료: `docs/planning/feature_plans/BOSS_MODIFIER_TAXONOMY_PLAN.md`
-5. Balance simulation readiness pass
+5. Constraint visual language pass
+   - Boss/Station/Jester/Item 제약은 진입 팝업으로 먼저 설명하고, 전투 중에는 작은 marker와 position-local penalty float만 사용한다.
+   - 완료: `docs/planning/feature_plans/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`
+6. Boss modifier v1 implementation pass
+   - 완료: 보스 블라인드의 첫 visible rule modifier로 `빨간 타일 약화`를 적용했다.
+   - 연결: Blind Select card, battle entry popup, board/hand compact marker, scoring penalty callout, save/restore.
+7. Balance simulation readiness pass
    - `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md` 기준으로 log field, deterministic seed, bot boundary, UI 의존성 제거 목록을 확정한다.
    - `run_archetype_id = standard_tile_deck_v1` 같은 시작 덱 기준 필드를 read-only로 먼저 포함한다.
    - Jester effect category와 edition/penalty count는 `JESTER_REFERENCE_TAXONOMY_PLAN.md` 기준으로 feature 후보에 포함한다.
    - Consumable/Voucher effect category와 rank progression은 `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md` 기준으로 feature 후보에 포함한다.
    - 아직 PyTorch 구현이 아니라 `tools/sim/run_balance_sim.dart`를 만들 수 있는 준비 상태를 만든다.
-6. Save/restore 확장 점검
+8. Save/restore 확장 점검
    - scoring feedback P0와 `slide_wax` runtime 기준 targeted regression은 통과
    - 2026-04-30 fixture full loop smoke는 Station 2 Blind Select까지 도달
    - 남은 수동 점검 후보: 실제 non-fixture app background/continue eye-check
-7. B7 Next Station Loop follow-up
+9. B7 Next Station Loop follow-up
    - next station transition command와 blindSelect save scene 연결은 1차 완료
    - Market -> Blind Select 전환 affordance는 1차 적용
    - Settlement -> Market 전환 affordance는 1차 적용
    - 남은 작업은 Station Preview/Map 범위 결정
-8. Market / battle interaction polish
+10. Market / battle interaction polish
    - market card/item slot 기준 유지
    - 설명 패널 높이와 텍스트 말줄임 기준 안정화
    - button/dialog visual consistency 유지
-9. UI animation polish pass
+11. UI animation polish pass
    - 기존 적용 유지: cash-out sheet의 단계별 보상 라인 등장, Jester scoring burst
    - 현재 진행분 적용: scoring preview, board/rank/overlap callout, Jester/Item slot-local scoring burst, Station Goal pulse
    - 남은 후보: settlement item bonus row 등장 타이밍, total gold 강조, Market route 진입/복귀, Next Station/Blind Select 전환
@@ -183,12 +191,14 @@ ML readiness 기준 우선순위:
    - 입력 차단 barrier는 직접 `ModalBarrier`와 색상 값을 하드코딩하지 말고 `GameInputBarrier.modal()` 또는 `GameInputBarrier.feedback()`를 사용한다.
    - battle item/Jester slot UI는 의미별 표시와 잠금 상태를 분리한다. Quick/Passive/Jester 표시 개수와 초기 해금 개수는 공용 상수/용량 메서드를 사용하고, 새 UI에서 `Q3`, `P2`, `Jester 5th` 잠금을 다시 하드코딩하지 않는다.
    - 과하지 않게 적용: 입력 대기, 반복 플레이 속도, 정보 가독성을 방해하면 애니메이션을 줄이거나 생략
-10. Deferred run rule decision
+12. Deferred run rule decision
    - Balatro식 blind skip 도입 여부와 조건 결정
    - 도입 시 save/checkpoint/reward 규칙을 먼저 문서화
 
 다음 PR 후보:
 
+- `boss modifier v1 implementation pass`
+- `boss constraint entry popup / marker / penalty float pass`
 - `balance simulation readiness pass`
 - `market rarity roll implementation pass`
 - `ui animation polish pass`

@@ -114,6 +114,7 @@ class GameSessionNotifier
         targetScore: initialBlind.targetScore,
         boardDiscardsRemaining: initialBlind.boardDiscards,
         handDiscardsRemaining: initialBlind.handDiscards,
+        bossModifier: initialBlind.bossModifier,
       ),
     );
     session.maxHandSize = initialBlind.maxHandSize;

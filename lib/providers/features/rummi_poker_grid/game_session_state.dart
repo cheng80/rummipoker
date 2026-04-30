@@ -168,6 +168,7 @@ enum ScoringPresentationStep {
   boardLine,
   handRank,
   overlap,
+  constraint,
   jester,
   item,
   finalScore,

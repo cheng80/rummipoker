@@ -330,6 +330,17 @@ Boss blind는 단순히 목표 점수와 자원을 올리는 전투가 아니라
 - 숨김/비활성 제약을 넣는다면 반드시 entering 전 preview와 affected tile/Jester 표시가 필요하다.
 - Boss modifier는 `v4_pacing_baseline_1`의 target/resource baseline과 분리된 후속 pass로 다룬다.
 - Boss modifier는 preview, battle UI, scoring feedback, save/restore, simulator log에 같은 id/category로 나타나야 한다.
+- 제약 표시는 `CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`를 따른다.
+- 첫 Boss modifier 구현 전에 entry popup, compact marker, position-local penalty float 기준을 먼저 적용한다.
+- user-facing 화면에는 내부 modifier 변수명을 노출하지 않고, 짧은 한글 설명만 사용한다.
+
+현재 적용:
+
+- Boss modifier v1은 `빨간 타일 약화`다.
+- 보스 블라인드 진입 시 한글 팝업으로 규칙을 설명한다.
+- 전투 중 red tile에는 작은 marker를 표시한다.
+- 점수 정산 중 제약 적용 callout을 표시한다.
+- 남은 open decision은 simulator log field와 추가 Boss modifier category다.
 
 ### 3.2 Ante / Stake Score Curve Reference
 
