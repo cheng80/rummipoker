@@ -93,6 +93,7 @@ class _GameViewState extends ConsumerState<GameView>
   _ItemEffectFeedback? _itemEffectFeedback;
   int _itemEffectFeedbackTick = 0;
   bool _boardMoveMode = false;
+  bool _nextStationTransitionVisible = false;
   int? _pendingBoardMoveSourceRow;
   int? _pendingBoardMoveSourceCol;
 
@@ -289,11 +290,8 @@ class _GameViewState extends ConsumerState<GameView>
           final nextStage = await _showShopScreen();
           if (!mounted) return;
           if (nextStage == true) {
-            _gameNotifier.advanceToNextStation(
-              widget.runSeed,
-              itemCatalog: _itemCatalog,
-            );
-            _showSnack('Station ${_battleView.stageIndex} 시작');
+            await _goToNextStationBlindSelect();
+            return;
           }
           await _saveActiveRun();
           _gameNotifier.markDirty();
@@ -694,6 +692,7 @@ class _GameViewState extends ConsumerState<GameView>
       'add_board_discard' => '보드 버림 +${item.effect.value('amount') ?? 1}',
       'add_hand_discard' => '손패 버림 +${item.effect.value('amount') ?? 1}',
       'add_board_move' => '타일 이동 +${item.effect.value('amount') ?? 1}',
+      'mark_next_board_move_bonus' => '다음 보드 이동 보너스 준비',
       'undo_last_board_move' => '마지막 이동 되돌림',
       'draw_if_hand_empty' => '타일 1장 드로우',
       'chips_bonus' => '다음 확정 Chips 보너스',
@@ -784,6 +783,8 @@ class _GameViewState extends ConsumerState<GameView>
     );
     if (!confirmed || !mounted) return;
 
+    final hadSlideBonus =
+        _gameState.session?.nextBoardMoveSlideBonusQueued ?? false;
     final failReason = _gameNotifier.moveBoardTile(
       fromRow: fromRow,
       fromCol: fromCol,
@@ -796,7 +797,10 @@ class _GameViewState extends ConsumerState<GameView>
     }
     _cancelBoardMoveMode();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _showSnack('타일을 이동했습니다.');
+    _showSnack(hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.');
+    if (hadSlideBonus) {
+      _showItemEffectFeedback(title: 'Slide Wax', detail: '보드 이동 보너스 발동');
+    }
     await _saveActiveRun();
   }
 
@@ -1032,10 +1036,33 @@ class _GameViewState extends ConsumerState<GameView>
         .prepareNextStationBlindSelectRuntime(difficulty: widget.difficulty);
     await ActiveRunSaveService.saveRuntimeState(blindSelectRuntime);
     if (!mounted) return;
+    await _playNextStationTransition();
+    if (!mounted) return;
     context.go(
       '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
       extra: blindSelectRuntime,
     );
+  }
+
+  Future<void> _goToNextStationBlindSelect() async {
+    final blindSelectRuntime = _gameNotifier
+        .prepareNextStationBlindSelectRuntime(difficulty: widget.difficulty);
+    await ActiveRunSaveService.saveRuntimeState(blindSelectRuntime);
+    if (!mounted) return;
+    await _playNextStationTransition();
+    if (!mounted) return;
+    context.go(
+      '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
+      extra: blindSelectRuntime,
+    );
+  }
+
+  Future<void> _playNextStationTransition() async {
+    if (!mounted) return;
+    setState(() => _nextStationTransitionVisible = true);
+    await Future<void>.delayed(const Duration(milliseconds: 520));
+    if (!mounted) return;
+    setState(() => _nextStationTransitionVisible = false);
   }
 
   Future<bool?> _showShopScreen({bool autoAdvanceOnLoad = false}) {
@@ -1246,43 +1273,146 @@ class _GameViewState extends ConsumerState<GameView>
       );
     }
     return PhoneFrameScaffold(
-      child: _GameSurface(
-        battle: _battleViewWithItemSlots,
-        station: _stationView,
-        market: _marketView,
-        stageFlowPhase: _stageFlowPhase,
-        stageScoreAdded: _stageScoreAdded,
-        activeSettlementLine: _activeSettlementLine,
-        activeSettlementStep: _activeSettlementStep,
-        activeSettlementEffectIndex: _activeSettlementEffectIndex,
-        settlementSequenceTick: _settlementSequenceTick,
-        settlementBoardSnapshot: _settlementBoardSnapshot,
-        selectedHandTile: _selectedHandTile,
-        selectedBoardRow: _selectedBoardRow,
-        selectedBoardCol: _selectedBoardCol,
-        boardMoveMode: _boardMoveMode,
-        pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
-        pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
-        selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
-        selectedBattleItemSlot: _selectedBattleItemSlot,
-        itemEffectFeedback: _itemEffectFeedback,
-        itemEffectFeedbackTick: _itemEffectFeedbackTick,
-        onOptionsTap: () => _openGameOptions(context),
-        onDebugTap: () => _openDebugBottomSheet(context),
-        onJesterTap: _openJesterOverlay,
-        onHandTileTap: _toggleHandTile,
-        onBoardCellTap: _onBoardCellTap,
-        onDraw: _drawTile,
-        onBoardDiscard: _discardSelectedBoardTile,
-        onHandDiscard: _discardSelectedHandTile,
-        onStartBoardMove: _startBoardMoveMode,
-        onBattleItemTap: _openBattleItemOverlay,
-        onConfirm: _confirmLines,
-        onClearSelection: _clearSelections,
-        onJesterSell: _sellOwnedJesterFromOverlay,
-        onJesterOverlayClose: _closeJesterOverlay,
-        onBattleItemUse: _useBattleItem,
-        onBattleItemOverlayClose: _closeBattleItemOverlay,
+      child: Stack(
+        children: [
+          _GameSurface(
+            battle: _battleViewWithItemSlots,
+            station: _stationView,
+            market: _marketView,
+            stageFlowPhase: _stageFlowPhase,
+            stageScoreAdded: _stageScoreAdded,
+            activeSettlementLine: _activeSettlementLine,
+            activeSettlementStep: _activeSettlementStep,
+            activeSettlementEffectIndex: _activeSettlementEffectIndex,
+            settlementSequenceTick: _settlementSequenceTick,
+            settlementBoardSnapshot: _settlementBoardSnapshot,
+            selectedHandTile: _selectedHandTile,
+            selectedBoardRow: _selectedBoardRow,
+            selectedBoardCol: _selectedBoardCol,
+            boardMoveMode: _boardMoveMode,
+            pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
+            pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
+            selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
+            selectedBattleItemSlot: _selectedBattleItemSlot,
+            itemEffectFeedback: _itemEffectFeedback,
+            itemEffectFeedbackTick: _itemEffectFeedbackTick,
+            onOptionsTap: () => _openGameOptions(context),
+            onDebugTap: () => _openDebugBottomSheet(context),
+            onJesterTap: _openJesterOverlay,
+            onHandTileTap: _toggleHandTile,
+            onBoardCellTap: _onBoardCellTap,
+            onDraw: _drawTile,
+            onBoardDiscard: _discardSelectedBoardTile,
+            onHandDiscard: _discardSelectedHandTile,
+            onStartBoardMove: _startBoardMoveMode,
+            onBattleItemTap: _openBattleItemOverlay,
+            onConfirm: _confirmLines,
+            onClearSelection: _clearSelections,
+            onJesterSell: _sellOwnedJesterFromOverlay,
+            onJesterOverlayClose: _closeJesterOverlay,
+            onBattleItemUse: _useBattleItem,
+            onBattleItemOverlayClose: _closeBattleItemOverlay,
+          ),
+          if (_nextStationTransitionVisible)
+            const Positioned.fill(child: _NextStationTransitionOverlay()),
+        ],
+      ),
+    );
+  }
+}
+
+class _NextStationTransitionOverlay extends StatelessWidget {
+  const _NextStationTransitionOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.54)),
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 420),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 16 * (1 - value)),
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
+              width: 280,
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF102D25),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFF4C64F).withValues(alpha: 0.65),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.36),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.route_rounded,
+                    color: Color(0xFFF4C64F),
+                    size: 32,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '다음 Station 준비',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Blind 선택으로 이동',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 420),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) {
+                        return LinearProgressIndicator(
+                          value: value,
+                          minHeight: 5,
+                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFFF4C64F),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

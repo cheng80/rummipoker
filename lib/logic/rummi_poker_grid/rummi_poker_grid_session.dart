@@ -33,6 +33,7 @@ class BoardMoveRecord {
     required this.fromCol,
     required this.toRow,
     required this.toCol,
+    this.slideBonusTriggered = false,
   });
 
   factory BoardMoveRecord.fromJson(Map<String, dynamic> json) {
@@ -41,6 +42,7 @@ class BoardMoveRecord {
       fromCol: (json['fromCol'] as num).toInt(),
       toRow: (json['toRow'] as num).toInt(),
       toCol: (json['toCol'] as num).toInt(),
+      slideBonusTriggered: json['slideBonusTriggered'] as bool? ?? false,
     );
   }
 
@@ -48,12 +50,14 @@ class BoardMoveRecord {
   final int fromCol;
   final int toRow;
   final int toCol;
+  final bool slideBonusTriggered;
 
   Map<String, dynamic> toJson() => {
     'fromRow': fromRow,
     'fromCol': fromCol,
     'toRow': toRow,
     'toCol': toCol,
+    'slideBonusTriggered': slideBonusTriggered,
   };
 }
 
@@ -197,6 +201,8 @@ class RummiPokerGridSession {
     required this.hand,
     required this.eliminated,
     required this.boardMoveHistory,
+    required this.nextBoardMoveSlideBonusQueued,
+    required this.slideBonusTriggerCountThisStation,
     required this.confirmModifiers,
     required this.confirmCountThisStation,
     required this.firstConfirmScoreThisStation,
@@ -242,6 +248,8 @@ class RummiPokerGridSession {
       hand: <Tile>[],
       eliminated: <Tile>[],
       boardMoveHistory: <BoardMoveRecord>[],
+      nextBoardMoveSlideBonusQueued: false,
+      slideBonusTriggerCountThisStation: 0,
       confirmModifiers: <RummiConfirmModifier>[],
       confirmCountThisStation: 0,
       firstConfirmScoreThisStation: 0,
@@ -264,6 +272,8 @@ class RummiPokerGridSession {
     required List<Tile> hand,
     required List<Tile> eliminated,
     List<BoardMoveRecord> boardMoveHistory = const [],
+    bool nextBoardMoveSlideBonusQueued = false,
+    int slideBonusTriggerCountThisStation = 0,
     List<RummiConfirmModifier> confirmModifiers = const [],
     int confirmCountThisStation = 0,
     int firstConfirmScoreThisStation = 0,
@@ -281,6 +291,8 @@ class RummiPokerGridSession {
       hand: List<Tile>.from(hand),
       eliminated: List<Tile>.from(eliminated),
       boardMoveHistory: List<BoardMoveRecord>.from(boardMoveHistory),
+      nextBoardMoveSlideBonusQueued: nextBoardMoveSlideBonusQueued,
+      slideBonusTriggerCountThisStation: slideBonusTriggerCountThisStation,
       confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
       confirmCountThisStation: confirmCountThisStation,
       firstConfirmScoreThisStation: firstConfirmScoreThisStation,
@@ -306,6 +318,8 @@ class RummiPokerGridSession {
   /// 확정·버림으로 영구 제거된 타일(다시 드로우되지 않음).
   final List<Tile> eliminated;
   final List<BoardMoveRecord> boardMoveHistory;
+  bool nextBoardMoveSlideBonusQueued;
+  int slideBonusTriggerCountThisStation;
   final List<RummiConfirmModifier> confirmModifiers;
   int confirmCountThisStation;
   int firstConfirmScoreThisStation;
@@ -447,8 +461,13 @@ class RummiPokerGridSession {
         fromCol: fromCol,
         toRow: toRow,
         toCol: toCol,
+        slideBonusTriggered: nextBoardMoveSlideBonusQueued,
       ),
     );
+    if (nextBoardMoveSlideBonusQueued) {
+      nextBoardMoveSlideBonusQueued = false;
+      slideBonusTriggerCountThisStation += 1;
+    }
     blind.boardMovesRemaining--;
     return null;
   }
@@ -472,8 +491,21 @@ class RummiPokerGridSession {
     );
     if (!moved) return BoardMoveUndoFailReason.sourceOccupied;
     boardMoveHistory.removeLast();
+    if (last.slideBonusTriggered) {
+      slideBonusTriggerCountThisStation = max(
+        0,
+        slideBonusTriggerCountThisStation - 1,
+      );
+      nextBoardMoveSlideBonusQueued = true;
+    }
     blind.boardMovesRemaining++;
     return null;
+  }
+
+  bool queueNextBoardMoveSlideBonus() {
+    if (nextBoardMoveSlideBonusQueued) return false;
+    nextBoardMoveSlideBonusQueued = true;
+    return true;
   }
 
   void setDebugMaxHandSize(int value) {
@@ -500,6 +532,8 @@ class RummiPokerGridSession {
       hand: List<Tile>.from(hand),
       eliminated: List<Tile>.from(eliminated),
       boardMoveHistory: List<BoardMoveRecord>.from(boardMoveHistory),
+      nextBoardMoveSlideBonusQueued: nextBoardMoveSlideBonusQueued,
+      slideBonusTriggerCountThisStation: slideBonusTriggerCountThisStation,
       confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
       confirmCountThisStation: confirmCountThisStation,
       firstConfirmScoreThisStation: firstConfirmScoreThisStation,
@@ -740,6 +774,7 @@ class RummiPokerGridSession {
   /// 스테이지 종료 시 남은 보드/손패를 정리한다.
   void discardStageRemainder() {
     boardMoveHistory.clear();
+    nextBoardMoveSlideBonusQueued = false;
     for (final tile in hand) {
       eliminated.add(tile);
     }
@@ -777,6 +812,7 @@ class RummiPokerGridSession {
     confirmModifiers.clear();
     confirmCountThisStation = 0;
     firstConfirmScoreThisStation = 0;
+    slideBonusTriggerCountThisStation = 0;
     expiryGuardUsedThisStation = false;
   }
 

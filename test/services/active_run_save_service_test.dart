@@ -505,6 +505,7 @@ void main() {
       final drawn = session.drawToHand();
       expect(drawn, isNotNull);
       expect(session.tryPlaceFromHand(drawn!, 0, 0), isTrue);
+      expect(session.queueNextBoardMoveSlideBonus(), isTrue);
       expect(
         session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 1, toCol: 1),
         isNull,
@@ -532,11 +533,28 @@ void main() {
       expect(restored.session.board.cellAt(0, 0), isNull);
       expect(restored.session.board.cellAt(1, 1), isNotNull);
       expect(restored.session.boardMoveHistory.single.toRow, 1);
+      expect(
+        restored.session.boardMoveHistory.single.slideBonusTriggered,
+        isTrue,
+      );
+      expect(restored.session.nextBoardMoveSlideBonusQueued, isFalse);
+      expect(restored.session.slideBonusTriggerCountThisStation, 1);
       expect(restored.session.undoLastBoardMove(), isNull);
       expect(restored.session.board.cellAt(0, 0), isNotNull);
+      expect(restored.session.nextBoardMoveSlideBonusQueued, isTrue);
+      expect(restored.session.slideBonusTriggerCountThisStation, 0);
       expect(
         restored.stageStartSnapshot.session.boardMoveHistory.single.toRow,
         1,
+      );
+      expect(
+        restored
+            .stageStartSnapshot
+            .session
+            .boardMoveHistory
+            .single
+            .slideBonusTriggered,
+        isTrue,
       );
     });
 

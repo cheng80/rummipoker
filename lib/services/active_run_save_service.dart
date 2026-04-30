@@ -118,6 +118,8 @@ class SavedSessionData {
     required this.hand,
     required this.eliminated,
     this.boardMoveHistory = const [],
+    this.nextBoardMoveSlideBonusQueued = false,
+    this.slideBonusTriggerCountThisStation = 0,
     this.confirmModifiers = const [],
     this.confirmCountThisStation = 0,
     this.firstConfirmScoreThisStation = 0,
@@ -135,6 +137,8 @@ class SavedSessionData {
   final List<Map<String, dynamic>> hand;
   final List<Map<String, dynamic>> eliminated;
   final List<Map<String, dynamic>> boardMoveHistory;
+  final bool nextBoardMoveSlideBonusQueued;
+  final int slideBonusTriggerCountThisStation;
   final List<Map<String, dynamic>> confirmModifiers;
   final int confirmCountThisStation;
   final int firstConfirmScoreThisStation;
@@ -152,6 +156,8 @@ class SavedSessionData {
     'hand': hand,
     'eliminated': eliminated,
     'boardMoveHistory': boardMoveHistory,
+    'nextBoardMoveSlideBonusQueued': nextBoardMoveSlideBonusQueued,
+    'slideBonusTriggerCountThisStation': slideBonusTriggerCountThisStation,
     'confirmModifiers': confirmModifiers,
     'confirmCountThisStation': confirmCountThisStation,
     'firstConfirmScoreThisStation': firstConfirmScoreThisStation,
@@ -190,6 +196,10 @@ class SavedSessionData {
           .cast<Map<String, dynamic>>()
           .map(Map<String, dynamic>.from)
           .toList(growable: false),
+      nextBoardMoveSlideBonusQueued:
+          json['nextBoardMoveSlideBonusQueued'] as bool? ?? false,
+      slideBonusTriggerCountThisStation:
+          (json['slideBonusTriggerCountThisStation'] as num?)?.toInt() ?? 0,
       confirmModifiers: (json['confirmModifiers'] as List<dynamic>? ?? const [])
           .cast<Map<String, dynamic>>()
           .map(Map<String, dynamic>.from)
@@ -527,6 +537,9 @@ class ActiveRunSaveService {
       boardMoveHistory: session.boardMoveHistory
           .map((record) => record.toJson())
           .toList(growable: false),
+      nextBoardMoveSlideBonusQueued: session.nextBoardMoveSlideBonusQueued,
+      slideBonusTriggerCountThisStation:
+          session.slideBonusTriggerCountThisStation,
       confirmModifiers: session.confirmModifiers
           .map((modifier) => modifier.toJson())
           .toList(growable: false),
@@ -594,6 +607,8 @@ class ActiveRunSaveService {
       boardMoveHistory: data.boardMoveHistory
           .map(BoardMoveRecord.fromJson)
           .toList(growable: false),
+      nextBoardMoveSlideBonusQueued: data.nextBoardMoveSlideBonusQueued,
+      slideBonusTriggerCountThisStation: data.slideBonusTriggerCountThisStation,
       confirmModifiers: data.confirmModifiers
           .map(RummiConfirmModifier.fromJson)
           .toList(growable: false),

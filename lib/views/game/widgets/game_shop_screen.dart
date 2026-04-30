@@ -806,7 +806,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
             children: [
               const Positioned.fill(child: GameTableBackdrop()),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -954,7 +954,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                               onTap: _selectItemSlot,
                             ),
                           ],
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           _MarketSpeechPanel(
                             title: selectedOwned != null
                                 ? localizedJesterName(
@@ -1019,33 +1019,23 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                     ],
                                   )
                                 : selectedOffer != null
-                                ? Text(
-                                    localizedJesterEffect(
+                                ? _MarketOfferDetailBody(
+                                    effectText: localizedJesterEffect(
                                       context,
                                       selectedOffer.card,
                                     ),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.18,
+                                    tags: _jesterSynergyTags(
+                                      selectedOffer.card,
                                     ),
                                   )
                                 : selectedItemOffer != null
-                                ? Text(
-                                    localizedItemEffect(
+                                ? _MarketOfferDetailBody(
+                                    effectText: localizedItemEffect(
                                       context,
                                       selectedItemOffer,
                                     ),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.18,
+                                    tags: _itemSynergyTags(
+                                      selectedItemOffer.item,
                                     ),
                                   )
                                 : selectedOwnedItemSlot != null
@@ -1082,6 +1072,9 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                     onPressed: selectedOffer.isAffordable
                                         ? _buySelected
                                         : null,
+                                    disabledReason: selectedOffer.isAffordable
+                                        ? null
+                                        : 'Gold 부족',
                                   )
                                 : selectedItemOffer != null
                                 ? _MarketActionPane(
@@ -1092,6 +1085,10 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                     onPressed: selectedItemOffer.isAffordable
                                         ? _buySelectedItem
                                         : null,
+                                    disabledReason:
+                                        selectedItemOffer.isAffordable
+                                        ? null
+                                        : 'Gold 부족',
                                   )
                                 : selectedOwnedItemSlot != null
                                 ? _ownedMarketItemActionPane(
@@ -1100,7 +1097,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                   )
                                 : null,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           _MarketSectionBox(
                             title: null,
                             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -1414,6 +1411,7 @@ class _MarketActionPane extends StatelessWidget {
     required this.buttonColor,
     this.foreground = Colors.white,
     this.onPressed,
+    this.disabledReason,
   });
 
   final String priceLabel;
@@ -1421,6 +1419,7 @@ class _MarketActionPane extends StatelessWidget {
   final Color buttonColor;
   final Color foreground;
   final VoidCallback? onPressed;
+  final String? disabledReason;
 
   @override
   Widget build(BuildContext context) {
@@ -1450,6 +1449,78 @@ class _MarketActionPane extends StatelessWidget {
               compact: true,
               onPressed: onPressed,
             ),
+            if (disabledReason != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                disabledReason!,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFFFF8F74),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketOfferDetailBody extends StatelessWidget {
+  const _MarketOfferDetailBody({required this.effectText, required this.tags});
+
+  final String effectText;
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          effectText,
+          maxLines: tags.isEmpty ? 3 : 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            height: 1.18,
+          ),
+        ),
+        if (tags.isNotEmpty) ...[
+          const SizedBox(height: 5),
+          _MarketDetailTagWrap(tags: tags),
+        ],
+      ],
+    );
+  }
+}
+
+class _MarketDetailTagWrap extends StatelessWidget {
+  const _MarketDetailTagWrap({required this.tags});
+
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleTags = tags.take(4).toList(growable: false);
+    return SizedBox(
+      height: 16,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Row(
+          children: [
+            for (var index = 0; index < visibleTags.length; index++) ...[
+              _MarketSynergyChip(label: visibleTags[index], dense: false),
+              if (index < visibleTags.length - 1) const SizedBox(width: 4),
+            ],
           ],
         ),
       ),
@@ -1821,7 +1892,7 @@ class _GameShopOfferCard extends StatelessWidget {
               width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
               height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
               child: _MarketSelectableCardFrame(
-                selected: false,
+                selected: selected,
                 width: _marketOfferCardWidth,
                 height: _marketOfferCardHeight,
                 child: GameJesterSlot(
@@ -1830,7 +1901,7 @@ class _GameShopOfferCard extends StatelessWidget {
                   extended: false,
                   activeEffect: null,
                   settlementSequenceTick: 0,
-                  selected: selected,
+                  selected: false,
                 ),
               ),
             ),
@@ -1971,6 +2042,43 @@ class _MarketItemOfferCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketSynergyChip extends StatelessWidget {
+  const _MarketSynergyChip({required this.label, required this.dense});
+
+  final String label;
+  final bool dense;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: dense ? 3 : 5,
+        vertical: dense ? 1 : 2,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2C14E).withValues(alpha: dense ? 0.18 : 0.16),
+        borderRadius: BorderRadius.circular(dense ? 4 : 5),
+        border: Border.all(
+          color: const Color(0xFFF2C14E).withValues(alpha: 0.42),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.clip,
+        style: TextStyle(
+          color: const Color(0xFFFFE08A),
+          fontSize: dense ? 7 : 9,
+          fontWeight: FontWeight.w900,
+          height: 1.0,
         ),
       ),
     );
@@ -2147,6 +2255,181 @@ String _itemSlotLabel(RummiMarketItemOfferView offer) {
     ItemPlacement.passiveRack => 'RELIC',
     ItemPlacement.equipped => 'GEAR',
     ItemPlacement.inventory => 'TOOL',
+  };
+}
+
+List<String> _jesterSynergyTags(RummiJesterCard card) {
+  final tags = <String>[
+    _jesterConditionTag(card),
+    _jesterEffectTag(card),
+  ].where((tag) => tag.isNotEmpty).toList(growable: false);
+
+  if (tags.isNotEmpty) return tags;
+  return const ['Jester'];
+}
+
+String _jesterConditionTag(RummiJesterCard card) {
+  if (card.id == 'scholar') return 'Ace';
+  if (card.id == 'supernova') return '반복 족보';
+  if (card.id == 'popcorn' || card.id == 'ice_cream') return '감쇠형';
+  if (card.id == 'green_jester' || card.id == 'ride_the_bus') return '성장형';
+
+  return switch (card.conditionType) {
+    'none' => '상시',
+    'pair' => 'Pair',
+    'two_pair' => 'Two Pair',
+    'three_of_a_kind' => 'Triple',
+    'straight' => 'Straight',
+    'flush' => 'Flush',
+    'tile_color_scored' => card.mappedTileColors.isEmpty ? '색상' : '색상 타일',
+    'rank_scored' => '숫자 타일',
+    'face_card' => 'Face',
+    'other' => _otherJesterConditionTag(card.conditionValue),
+    _ => '',
+  };
+}
+
+String _otherJesterConditionTag(Object? value) {
+  return switch (value) {
+    'empty_jester_slots' => '빈 슬롯',
+    'unused_discards' => '미사용 버림',
+    'held_hand_size' => '손패',
+    _ => '조건부',
+  };
+}
+
+String _jesterEffectTag(RummiJesterCard card) {
+  if (card.id == 'scholar') return '+Chips/+Mult';
+  if (card.id == 'ice_cream') return '+Chips';
+  if (card.effectType == 'stateful_growth') return '+Mult';
+
+  return switch (card.effectType) {
+    'chips_bonus' => '+Chips',
+    'mult_bonus' => '+Mult',
+    'xmult_bonus' => 'xMult',
+    'economy' => '+Gold',
+    'rule_modifier' => 'Rule',
+    _ => '',
+  };
+}
+
+List<String> _itemSynergyTags(ItemDefinition item) {
+  final tags = <String>[
+    _itemTimingTag(item.effect.timing),
+    _itemEffectTag(item.effect.op),
+  ].where((tag) => tag.isNotEmpty).toList();
+
+  for (final tag in item.tags) {
+    if (tags.length >= 4) break;
+    final label = _catalogItemTagLabel(tag);
+    if (label.isNotEmpty && !tags.contains(label)) {
+      tags.add(label);
+    }
+  }
+
+  if (tags.isNotEmpty) return tags;
+  return [_itemPlacementTag(item.placement)];
+}
+
+String _itemTimingTag(String timing) {
+  return switch (timing) {
+    'next_confirm' ||
+    'next_confirm_if_rank' ||
+    'next_confirm_if_rank_at_least' ||
+    'next_confirm_per_tile_color' ||
+    'next_confirm_per_repeated_rank_tile' => '다음 확정',
+    'first_confirm_each_station' => '첫 확정',
+    'second_confirm_each_station' => '두번째 확정',
+    'first_scored_tile_each_station' => '첫 타일',
+    'use_battle' => '전투 사용',
+    'use_market' || 'use_market_if_gold_lte' => '상점 사용',
+    'market_buy' || 'market_buy_if_category' => '구매 연계',
+    'market_reroll' => '리롤',
+    'enter_market' || 'market_build_offers' => 'Market',
+    'station_start' => 'Station 시작',
+    'settlement' => '정산',
+    'boss_blind_clear_reward' || 'boss_blind_clear_market' => 'Boss 보상',
+    'inventory_capacity' => '슬롯',
+    'expiry_guard' => '보호',
+    'sell_jester' => '판매',
+    _ => '',
+  };
+}
+
+String _itemEffectTag(String op) {
+  return switch (op) {
+    'chips_bonus' => '+Chips',
+    'mult_bonus' => '+Mult',
+    'xmult_bonus' => 'xMult',
+    'temporary_overlap_cap_bonus' => 'Overlap',
+    'gain_gold' ||
+    'board_discard_reward_bonus' ||
+    'hand_discard_reward_bonus' => '+Gold',
+    'discount_next_purchase' ||
+    'free_next_reroll' ||
+    'discount_first_reroll' => 'Discount',
+    'add_board_discard' || 'add_hand_discard' => '+Discard',
+    'extra_item_offer_slot' ||
+    'extra_jester_offer_next_market' ||
+    'rarity_weight_bonus' => 'Offer',
+    'extra_quick_slot' => '+Slot',
+    'sell_price_bonus' => '판매 보너스',
+    'rescue_first_expiry_each_station' => 'Rescue',
+    'add_percent_of_first_confirm_score' => 'Echo',
+    'draw_if_hand_empty' => 'Draw',
+    'reroll_item_offers_only' => 'Item Reroll',
+    'peek_deck_discard_one' => 'Deck',
+    _ => '',
+  };
+}
+
+String _catalogItemTagLabel(String tag) {
+  return switch (tag) {
+    'market' => 'Market',
+    'economy' || 'gold' => '+Gold',
+    'discount' => 'Discount',
+    'battle' => '전투',
+    'score' => 'Score',
+    'chips' => '+Chips',
+    'mult' => '+Mult',
+    'xmult' => 'xMult',
+    'rank' => '족보',
+    'straight' => 'Straight',
+    'flush' => 'Flush',
+    'two_pair' => 'Two Pair',
+    'overlap' => 'Overlap',
+    'discard' => 'Discard',
+    'draw' => 'Draw',
+    'safety' => 'Safety',
+    'equipment' => 'Gear',
+    'station_start' => 'Station',
+    'offer' => 'Offer',
+    'jester' => 'Jester',
+    'relic' => 'Relic',
+    'boss' => 'Boss',
+    'capacity' => 'Slot',
+    'consumable' => 'Q-Slot',
+    'rarity' => 'Rarity',
+    'echo' => 'Echo',
+    'utility' => 'Tool',
+    'item' => 'Item',
+    'comeback' => 'Comeback',
+    'reroll' => 'Reroll',
+    'tile_color' => '색상',
+    'deck' => 'Deck',
+    'selection' => '선택',
+    'small_hand' => '작은 손패',
+    'legendary' => 'Legendary',
+    _ => '',
+  };
+}
+
+String _itemPlacementTag(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => 'Q-Slot',
+    ItemPlacement.passiveRack => 'Relic',
+    ItemPlacement.equipped => 'Gear',
+    ItemPlacement.inventory => 'Tool',
   };
 }
 

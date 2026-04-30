@@ -229,6 +229,71 @@ void main() {
     });
 
     test(
+      'useBattleItem queues next board move slide bonus and consumes stack',
+      () {
+        final item = _item(id: 'slide_wax', op: 'mark_next_board_move_bonus');
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'slide_wax',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['slide_wax'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(session.nextBoardMoveSlideBonusQueued, isTrue);
+        expect(session.slideBonusTriggerCountThisStation, 0);
+        expect(runProgress.itemInventory.ownedItems, isEmpty);
+        expect(result.events.map((event) => event.kind), [
+          ItemEffectEventKind.boardMoveSlideBonusQueued,
+          ItemEffectEventKind.itemConsumed,
+        ]);
+        expect(result.events.first.detail, 'next_board_move_slide_bonus');
+      },
+    );
+
+    test('successful board move consumes queued slide bonus marker', () {
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(
+          targetScore: 999,
+          boardMovesRemaining: 3,
+          boardMovesMax: 3,
+        ),
+      );
+      final tile = Tile(color: TileColor.red, number: 7);
+      session.board.setCell(0, 0, tile);
+      expect(session.queueNextBoardMoveSlideBonus(), isTrue);
+
+      expect(
+        session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 2, toCol: 2),
+        isNull,
+      );
+
+      expect(session.nextBoardMoveSlideBonusQueued, isFalse);
+      expect(session.slideBonusTriggerCountThisStation, 1);
+      expect(session.boardMoveHistory.single.slideBonusTriggered, isTrue);
+
+      expect(session.undoLastBoardMove(), isNull);
+      expect(session.nextBoardMoveSlideBonusQueued, isTrue);
+      expect(session.slideBonusTriggerCountThisStation, 0);
+    });
+
+    test(
       'useBattleItem queues next confirm chips modifier and consumes stack',
       () {
         final item = _item(
@@ -1047,6 +1112,7 @@ void main() {
           'use_battle:add_board_discard',
           'use_battle:add_hand_discard',
           'use_battle:add_board_move',
+          'use_battle:mark_next_board_move_bonus',
           'use_battle:undo_last_board_move',
           'use_battle:peek_deck_discard_one',
           'use_battle:draw_if_hand_empty',

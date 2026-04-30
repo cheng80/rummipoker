@@ -69,7 +69,8 @@
 
 - stage/blind 기반 단순 연속 루프
 - `Battle -> Settlement/Cash-out -> Market -> Next Station/Blind Select -> Battle` 기술 루프는 연결됨
-- 현재 UI는 Station 용어 일부와 Market 화면을 쓰지만, Station Map/Preview 구조는 아직 없음
+- 현재 UI는 Station 용어 일부와 Market 화면을 쓰고, Market -> Blind Select 전환 affordance는 1차 적용됨
+- Station Map/Preview 구조는 아직 없음
 
 장기 목표:
 

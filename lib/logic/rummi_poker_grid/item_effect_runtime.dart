@@ -12,6 +12,7 @@ enum ItemEffectEventKind {
   handDiscardAdded,
   handDiscardRemoved,
   boardMoveAdded,
+  boardMoveSlideBonusQueued,
   boardMoveUndone,
   maxHandSizeIncreased,
   tileDrawn,
@@ -143,6 +144,11 @@ class ItemEffectRuntime {
         break;
       case 'add_board_move':
         final applied = _applyAddBoardMove(item, session);
+        if (!applied.isSuccess) return applied;
+        events.addAll(applied.events);
+        break;
+      case 'mark_next_board_move_bonus':
+        final applied = _applyMarkNextBoardMoveBonus(item, session);
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;
@@ -594,6 +600,7 @@ class ItemEffectRuntime {
       'use_battle:add_board_discard' ||
       'use_battle:add_hand_discard' ||
       'use_battle:add_board_move' ||
+      'use_battle:mark_next_board_move_bonus' ||
       'use_battle:undo_last_board_move' ||
       'use_battle:peek_deck_discard_one' ||
       'use_battle:draw_if_hand_empty' ||
@@ -996,6 +1003,29 @@ class ItemEffectRuntime {
           kind: ItemEffectEventKind.boardMoveAdded,
           itemId: item.id,
           amount: amount,
+        ),
+      ],
+    );
+  }
+
+  static ItemUseResult _applyMarkNextBoardMoveBonus(
+    ItemDefinition item,
+    RummiPokerGridSession session,
+  ) {
+    if (!session.queueNextBoardMoveSlideBonus()) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '이미 다음 보드 이동 보너스가 준비되어 있습니다.',
+      );
+    }
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.boardMoveSlideBonusQueued,
+          itemId: item.id,
+          amount: 1,
+          detail: 'next_board_move_slide_bonus',
         ),
       ],
     );

@@ -423,8 +423,11 @@ Current applied note:
 - Group 4 settlement item reward가 cash-out breakdown과 settlement read model에 연결됐다.
 - Group 5 inventory/sell hook이 적용됐다. `spare_pouch`는 quick slot 구매/표시 capacity를 늘리고, `jester_hook`은 Market 판매가와 실제 판매 골드를 함께 보정한다.
 - Group 6 expiry guard hook이 적용됐다. `safety_net`은 스테이션당 첫 전투 종료 위기에서 보드 버림 또는 구조 드로우를 제공하고 해당 사용 상태를 저장/복원한다.
+- Group 8 board move follow-up hook이 적용됐다. `slide_wax`는 다음 성공한 board move marker를 저장/소비하고 undo/save/restore 경계를 갖는다.
 - next station blind-select runtime 생성은 `GameSessionNotifier.prepareNextStationBlindSelectRuntime`로 이동했다.
 - `beginNextStationTransition`은 `activeRunScene = blindSelect`와 `nextStationTransition` phase를 함께 기록한다.
+- Market -> Blind Select 전환 affordance는 1차 적용됐다. 다음 blind-select runtime을 먼저 저장한 뒤 짧은 overlay를 재생하고 route를 이동한다.
+- 후순위 Market 생성 규칙으로 Jester/Item offer 갯수 증설과 Balatro식 rarity weighted shop roll을 별도 balance pass에서 검토한다.
 
 Animation polish backlog:
 
@@ -435,7 +438,7 @@ Animation polish backlog:
   - settlement item bonus rows should keep the same stagger rhythm as base reward rows.
   - total gold row should get a subtle emphasis when all reward rows have appeared.
   - Market route entry/resume should use a short fade/slide that does not delay purchases or reroll.
-  - Next Station / Blind Select transition should get a brief transition affordance before route change or on arrival.
+  - Next Station / Blind Select transition has a first-pass affordance; future work should extend the same rhythm to Settlement -> Market if needed.
   - item/Jester effect activation should prefer small toast/badge/count feedback over large blocking animation.
 - Acceptance:
   - animation duration generally stays in the 120~260ms range.

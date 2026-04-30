@@ -291,16 +291,16 @@ Files:
 - Phase B `Board Move Command`: 완료
 - Phase C `UI Move Mode + Confirm`: 1차 완료
 - Phase D `Item Data Additions`: 완료
-- Phase E `Item Effect Runtime Expansion`: 이동/손패/덱 선택/confirm modifier/market modifier 축 완료, direct economy/settlement hook은 진행 대상
+- Phase E `Item Effect Runtime Expansion`: v1 item 49개 runtime hook 1차 완료, `pendingHook` 0개
 
-다음 작업 순서:
+적용 완료 순서:
 
 1. Direct gold/economy hooks 추가
    - 대상: `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`
-   - 공통 결과: use market, enter market, boss clear reward에서 gold delta/event/save 반영
+   - 상태: 1차 완료
 2. Settlement reward modifier hook 추가
    - 대상: `coin_funnel`, `hand_funnel`
-   - 공통 결과: 남은 discard 자원 기반 추가 gold와 settlement breakdown line 반영
+   - 상태: 1차 완료
 3. Market discount/offer modifier state 추가
    - 대상: `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`, `market_compass`, `shop_lens`, `lucky_counter`
    - 상태: 1차 완료
@@ -309,21 +309,21 @@ Files:
    - 상태: 1차 완료
 5. Inventory/sell hook 추가
    - 대상: `spare_pouch`, `jester_hook`
-   - 공통 결과: quick slot capacity 및 Jester sell price read/write path 반영
-6. Failed confirm hook 추가
+   - 상태: 1차 완료
+6. Expiry guard hook 추가
    - 대상: `safety_net`
-   - 공통 결과: 스테이션당 1회 실패 확정 refund
+   - 상태: 1차 완료
 7. Boss delayed market hook 추가
    - 대상: `boss_trophy`
-   - 공통 결과: boss clear 후 다음 market Jester offer +1 적용 후 소비
+   - 상태: 1차 완료
 8. Board move follow-up marker 추가
    - 대상: `slide_wax`
-   - 공통 결과: 다음 board move bonus marker 저장/소비
+   - 상태: 1차 완료
 
 Acceptance:
 
 - `catalogEffectRows`에 신규 item과 기존 item이 모두 handler에 매핑된다.
-- `pendingHook`은 UI/선택이 필요한 항목만 남긴다.
+- v1 item 기준 `pendingHook`은 0개다.
 - discard/move/hand size 자원 변경은 event list로 반환된다.
 
 ### Phase F: Jester Data Additions

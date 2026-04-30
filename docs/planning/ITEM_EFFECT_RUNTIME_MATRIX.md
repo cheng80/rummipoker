@@ -73,7 +73,7 @@
 | `deck_needle` | deck top 3 확인 후 1장 버림 | `use_battle` / `peek_deck_discard_one` | `useBattleItem` | `applied` |
 | `tile_polisher` | Station 첫 scored tile chips +20 | `first_scored_tile_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
 | `move_token` | 현재 Station 보드 이동 +1 | `use_battle` / `add_board_move` | `useBattleItem` | `applied` |
-| `slide_wax` | 다음 board move bonus trigger 등록 | `use_battle` / `mark_next_board_move_bonus` | `useBattleItem` | `pendingHook` |
+| `slide_wax` | 다음 board move bonus trigger 등록 | `use_battle` / `mark_next_board_move_bonus` | `useBattleItem` | `applied` |
 | `board_lift` | 다음 Station 보드 이동 +1 예약 | `station_start` / `add_board_move` | `applyStationStartItem` | `applied` |
 | `undo_seal` | 마지막 board move 1회 되돌리기 | `use_battle` / `undo_last_board_move` | `useBattleItem` | `applied` |
 | `organizer_glove` | Station 시작 시 보드 이동 +1 | `station_start` / `add_board_move` | `applyStationStartItem` | `applied` |
@@ -87,6 +87,7 @@
 - `board_scrap`: 보드 버림 +1, consume
 - `hand_scrap`: 손패 버림 +1, consume
 - `move_token`: 보드 이동 +1, consume
+- `slide_wax`: 다음 성공한 보드 이동에 slide bonus trigger marker 저장/소비, consume
 - `emergency_draw`: 손패가 비었을 때 1장 draw, consume
 - `deck_needle`: 덱 위 3장 중 선택한 1장을 버림, consume
 - `discard_glove`: Station 시작 시 보드 버림 +1
@@ -116,8 +117,8 @@
 
 현재 실제 런타임 기준:
 
-- 총 49개 중 `applied` 48개
-- 남은 `pendingHook` 1개
+- 총 49개 중 `applied` 49개
+- 남은 `pendingHook` 0개
 
 ## 공통 구현 묶음 플랜
 
@@ -242,9 +243,9 @@
 
 공통 작업:
 
-- next board move bonus marker 저장
-- board move 성공 시 marker를 station/battle scoring context로 이전
-- 어떤 보너스가 발동되는지 수치/대상 확정 필요
+- next board move bonus marker 저장 완료
+- board move 성공 시 marker를 `BoardMoveRecord.slideBonusTriggered`와 station trigger count로 이전 완료
+- undo 시 해당 marker/count를 되돌려 다음 이동에 다시 사용할 수 있게 복원 완료
 
 ## 다음 구현 우선순위
 
@@ -256,6 +257,8 @@
 - Group 3 `Direct Gold and Economy Hooks`는 gold delta/event/save 경계까지 1차 적용 완료
 - Group 4 `Settlement Reward Modifiers`는 settlement breakdown UX와 gold total 반영까지 1차 적용 완료
 - B7 `Next Station Loop`의 next station transition command 정리는 1차 적용 완료
-- 다음 최우선은 Group 8 및 남은 market use 단건 hook
+- 다음 최우선은 full loop smoke / save-restore 경계 재점검
 
-1. Group 8 `slide_wax`: 보드 이동 후 어떤 보너스가 발동되는지 수치/대상 확정 후 처리한다.
+1. Full loop smoke / save-restore 경계 재점검
+   - `Battle -> Settlement -> Market -> Next Station/Blind Select -> Battle`
+   - market resume, next station checkpoint, death/continue/restart

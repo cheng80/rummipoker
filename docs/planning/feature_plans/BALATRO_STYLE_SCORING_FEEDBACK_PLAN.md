@@ -114,16 +114,32 @@ Implementation notes:
 
 ### P1. Market Build Readability
 
-- [ ] Offer 카드에 현재 빌드와의 시너지 태그를 추가한다.
-- [ ] 예: `Straight 강화`, `discard 기반`, `face card 조건`, `첫 확정`, `overlap`.
-- [ ] 보유 슬롯/오퍼/상세 패널 사이 selection 연결을 더 강하게 표시한다.
-- [ ] 구매 불가 상태는 가격만 비활성화하지 말고 이유를 짧게 표시한다.
+- [x] Offer 카드에 현재 빌드와의 시너지 태그를 추가한다.
+- [x] 예: `Straight 강화`, `discard 기반`, `face card 조건`, `첫 확정`, `overlap`.
+- [x] 보유 슬롯/오퍼/상세 패널 사이 selection 연결을 더 강하게 표시한다.
+- [x] 구매 불가 상태는 가격만 비활성화하지 말고 이유를 짧게 표시한다.
+
+Implementation note:
+
+- Market offer card/Jester/item 카드는 슬롯 타입/가격/선택 상태만 담당하고, 조건/효과 태그는 선택된 offer 상세 패널에만 표시한다.
+- Jester offer selection은 카드 내부 선택과 외부 프레임이 충돌하지 않게 외부 프레임 기준으로 정리했다.
+- Gold 부족 구매 버튼은 비활성화 상태와 함께 `Gold 부족` reason을 표시한다.
+
+### P2. Market Offer Generation Follow-up
+
+- [ ] Jester / Item offer 기본 갯수와 증설 규칙을 재검토한다.
+- [ ] `boss_trophy`의 다음 market Jester offer +1, `shop_lens`의 item offer slot +1은 유지하되, 기본 offer 수와 unlock/보상 기반 증설 조건은 별도 balance pass에서 결정한다.
+- [ ] Item offer 생성은 현재 catalog 순서 + reroll offset 기반이므로, 후속에서 Balatro식 rarity 기반 weighted roll로 교체한다.
+- [ ] Jester offer 생성도 현재 지원 가능한 pool 균등 랜덤이므로, 후속에서 rarity weight 기반 roll과 현재 빌드/스테이션 조건 가중치를 검토한다.
+- [ ] `data/common/items_common_v1.json`의 `rarityWeights`와 `RummiMarketModifierState.rarityWeightBonus`를 실제 roll에 반영한다.
+- [ ] rarity roll 적용 시 중복 제외, 보유 한도, 구매 후 같은 market 재노출 방지, save/restore된 market resume 결과가 흔들리지 않는지 테스트한다.
 
 ### P2. Station Reward/Risk Framing
 
 - [ ] Blind Select의 Small/Big/Boss 카드를 risk/reward 선택으로 더 강하게 표현한다.
 - [ ] 현재 빌드 기준 추천/위험 hint를 넣을 수 있는 read model 여지를 둔다.
-- [ ] Next Station transition은 완료감 후 선택 화면으로 넘어가게 짧은 affordance를 추가한다.
+- [x] Next Station transition은 완료감 후 선택 화면으로 넘어가게 짧은 affordance를 추가한다.
+  - Market에서 다음 Station을 선택하면 `blindSelect` runtime을 먼저 저장하고, 짧은 transition overlay를 재생한 뒤 Blind Select로 이동한다.
 
 ## 6. Acceptance Criteria
 
