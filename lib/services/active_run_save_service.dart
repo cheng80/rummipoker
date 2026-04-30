@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/hand_rank.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
+import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/poker_deck.dart';
@@ -484,7 +485,9 @@ class ActiveRunSaveService {
 
   static Future<RummiJesterCatalog> _loadCatalog() async {
     try {
-      return await RummiJesterCatalog.loadFromAsset(AssetPaths.jestersCommon);
+      return await RummiJesterCatalogLoader.loadFromAsset(
+        AssetPaths.jestersCommon,
+      );
     } catch (_) {
       final jsonString = await rootBundle.loadString(AssetPaths.jestersCommon);
       return RummiJesterCatalog.fromJsonString(jsonString);

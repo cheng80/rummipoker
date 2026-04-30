@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/item_catalog_loader.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
+import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/owned_content_instance.dart';
 import '../logic/rummi_poker_grid/rummi_battle_facade.dart';
@@ -210,6 +212,9 @@ class _GameViewState extends ConsumerState<GameView>
       _gameState.activeSettlementStep;
   int? get _activeSettlementEffectIndex =>
       _gameState.activeSettlementEffectIndex;
+  List<int> get _activeSettlementEffectIndexes =>
+      _gameState.activeSettlementEffectIndexes;
+  int? get _settlementGoalDisplayScore => _gameState.settlementGoalDisplayScore;
   Map<String, Tile> get _settlementBoardSnapshot =>
       _gameState.settlementBoardSnapshot;
   int get _settlementSequenceTick => _gameState.settlementSequenceTick;
@@ -265,7 +270,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _loadJesterCatalog() async {
     try {
-      final catalog = await RummiJesterCatalog.loadFromAsset(
+      final catalog = await RummiJesterCatalogLoader.loadFromAsset(
         AssetPaths.jestersCommon,
       );
       if (!mounted) return;
@@ -309,7 +314,9 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _loadItemCatalog() async {
     try {
-      final catalog = await ItemCatalog.loadFromAsset(AssetPaths.itemsCommon);
+      final catalog = await ItemCatalogLoader.loadFromAsset(
+        AssetPaths.itemsCommon,
+      );
       if (!mounted) return;
       setState(() => _itemCatalog = catalog);
       _scheduleDebugAutoUseItem();
@@ -789,6 +796,11 @@ class _GameViewState extends ConsumerState<GameView>
       _showSnack('확정할 족보 줄이 없습니다.');
       return;
     }
+    final settlementGoalBaseScore = _stationView.objective.scoreTowardObjective;
+    _gameNotifier.setStageFlow(
+      phase: GameStageFlowPhase.none,
+      settlementGoalDisplayScore: settlementGoalBaseScore,
+    );
     _gameNotifier.applyConfirmedScore(result.totalScore);
     await _saveActiveRun(scene: ActiveRunScene.battle);
     if (!mounted) return;
@@ -797,6 +809,7 @@ class _GameViewState extends ConsumerState<GameView>
       lines: result.lineBreakdowns,
       totalScore: result.totalScore,
       shouldClearAfter: result.stageCleared,
+      settlementGoalBaseScore: settlementGoalBaseScore,
     );
     if (result.stageCleared) {
       return;
@@ -884,6 +897,8 @@ class _GameViewState extends ConsumerState<GameView>
     required List<ConfirmedLineBreakdown> lines,
     required int totalScore,
     required bool shouldClearAfter,
+    required int settlementGoalBaseScore,
+    int settlementGoalAppliedScore = 0,
     int index = 0,
   }) async {
     if (!mounted) return;
@@ -893,6 +908,7 @@ class _GameViewState extends ConsumerState<GameView>
         activeSettlementLine: null,
         activeSettlementStep: ScoringPresentationStep.none,
         activeSettlementEffectIndex: null,
+        settlementGoalDisplayScore: null,
         settlementBoardSnapshot: const {},
       );
       if (shouldClearAfter) {
@@ -905,6 +921,10 @@ class _GameViewState extends ConsumerState<GameView>
     }
 
     final line = lines[index];
+    final lineGoalStartScore =
+        settlementGoalBaseScore + settlementGoalAppliedScore;
+    final lineGoalDisplayScore =
+        settlementGoalBaseScore + settlementGoalAppliedScore + line.finalScore;
     final jesterIds = {
       for (final entry in _marketView.ownedEntries) entry.card.id,
     };
@@ -921,6 +941,7 @@ class _GameViewState extends ConsumerState<GameView>
       totalScore: totalScore,
       line: line,
       step: ScoringPresentationStep.boardLine,
+      settlementGoalDisplayScore: lineGoalStartScore,
       bump: true,
       delay: const Duration(milliseconds: 560),
     );
@@ -929,6 +950,7 @@ class _GameViewState extends ConsumerState<GameView>
       totalScore: totalScore,
       line: line,
       step: ScoringPresentationStep.handRank,
+      settlementGoalDisplayScore: lineGoalStartScore,
       delay: const Duration(milliseconds: 720),
     );
     if (!mounted) return;
@@ -937,6 +959,7 @@ class _GameViewState extends ConsumerState<GameView>
         totalScore: totalScore,
         line: line,
         step: ScoringPresentationStep.overlap,
+        settlementGoalDisplayScore: lineGoalStartScore,
         delay: const Duration(milliseconds: 680),
       );
       if (!mounted) return;
@@ -946,30 +969,33 @@ class _GameViewState extends ConsumerState<GameView>
         totalScore: totalScore,
         line: line,
         step: ScoringPresentationStep.constraint,
+        settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
         delay: const Duration(milliseconds: 760),
       );
       if (!mounted) return;
     }
-    for (final effectIndex in jesterEffectIndexes) {
+    if (jesterEffectIndexes.isNotEmpty) {
       await _showSettlementStep(
         totalScore: totalScore,
         line: line,
         step: ScoringPresentationStep.jester,
-        effectIndex: effectIndex,
+        effectIndexes: jesterEffectIndexes,
+        settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 760),
+        delay: const Duration(milliseconds: 820),
       );
       if (!mounted) return;
     }
-    for (final effectIndex in itemEffectIndexes) {
+    if (itemEffectIndexes.isNotEmpty) {
       await _showSettlementStep(
         totalScore: totalScore,
         line: line,
         step: ScoringPresentationStep.item,
-        effectIndex: effectIndex,
+        effectIndexes: itemEffectIndexes,
+        settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 760),
+        delay: const Duration(milliseconds: 820),
       );
       if (!mounted) return;
     }
@@ -977,6 +1003,7 @@ class _GameViewState extends ConsumerState<GameView>
       totalScore: totalScore,
       line: line,
       step: ScoringPresentationStep.finalScore,
+      settlementGoalDisplayScore: lineGoalDisplayScore,
       delay: const Duration(milliseconds: 920),
     );
     if (!mounted) return;
@@ -990,6 +1017,8 @@ class _GameViewState extends ConsumerState<GameView>
       lines: lines,
       totalScore: totalScore,
       shouldClearAfter: shouldClearAfter,
+      settlementGoalBaseScore: settlementGoalBaseScore,
+      settlementGoalAppliedScore: settlementGoalAppliedScore + line.finalScore,
       index: index + 1,
     );
   }
@@ -1000,6 +1029,8 @@ class _GameViewState extends ConsumerState<GameView>
     required ScoringPresentationStep step,
     required Duration delay,
     int? effectIndex,
+    List<int> effectIndexes = const [],
+    Object? settlementGoalDisplayScore = GameSessionState.unsetValue,
     bool bump = false,
   }) async {
     _gameNotifier.setStageFlow(
@@ -1008,6 +1039,8 @@ class _GameViewState extends ConsumerState<GameView>
       activeSettlementLine: line,
       activeSettlementStep: step,
       activeSettlementEffectIndex: effectIndex,
+      activeSettlementEffectIndexes: effectIndexes,
+      settlementGoalDisplayScore: settlementGoalDisplayScore,
       bumpSettlementSequence: bump,
     );
     await Future<void>.delayed(delay);
@@ -1383,6 +1416,8 @@ class _GameViewState extends ConsumerState<GameView>
             activeSettlementLine: _activeSettlementLine,
             activeSettlementStep: _activeSettlementStep,
             activeSettlementEffectIndex: _activeSettlementEffectIndex,
+            activeSettlementEffectIndexes: _activeSettlementEffectIndexes,
+            settlementGoalDisplayScore: _settlementGoalDisplayScore,
             settlementSequenceTick: _settlementSequenceTick,
             settlementBoardSnapshot: _settlementBoardSnapshot,
             selectedHandTile: _selectedHandTile,
@@ -1758,6 +1793,8 @@ class _GameSurface extends StatelessWidget {
     required this.activeSettlementLine,
     required this.activeSettlementStep,
     required this.activeSettlementEffectIndex,
+    required this.activeSettlementEffectIndexes,
+    required this.settlementGoalDisplayScore,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
     required this.selectedHandTile,
@@ -1796,6 +1833,8 @@ class _GameSurface extends StatelessWidget {
   final ConfirmedLineBreakdown? activeSettlementLine;
   final ScoringPresentationStep activeSettlementStep;
   final int? activeSettlementEffectIndex;
+  final List<int> activeSettlementEffectIndexes;
+  final int? settlementGoalDisplayScore;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
   final Tile? selectedHandTile;
@@ -1863,6 +1902,8 @@ class _GameSurface extends StatelessWidget {
                       activeSettlementLine?.effects ?? const [],
                   activeSettlementStep: activeSettlementStep,
                   activeSettlementEffectIndex: activeSettlementEffectIndex,
+                  activeSettlementEffectIndexes: activeSettlementEffectIndexes,
+                  settlementGoalDisplayScore: settlementGoalDisplayScore,
                   activeSettlementLine: activeSettlementLine,
                   settlementSequenceTick: settlementSequenceTick,
                   settlementBoardSnapshot: settlementBoardSnapshot,
@@ -1984,6 +2025,8 @@ class _GameLayout extends StatelessWidget {
     required this.activeSettlementEffects,
     required this.activeSettlementStep,
     required this.activeSettlementEffectIndex,
+    required this.activeSettlementEffectIndexes,
+    required this.settlementGoalDisplayScore,
     required this.activeSettlementLine,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
@@ -2015,6 +2058,8 @@ class _GameLayout extends StatelessWidget {
   final List<RummiJesterEffectBreakdown> activeSettlementEffects;
   final ScoringPresentationStep activeSettlementStep;
   final int? activeSettlementEffectIndex;
+  final List<int> activeSettlementEffectIndexes;
+  final int? settlementGoalDisplayScore;
   final ConfirmedLineBreakdown? activeSettlementLine;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
@@ -2059,6 +2104,7 @@ class _GameLayout extends StatelessWidget {
       activeSettlementEffects,
       activeSettlementStep,
       activeSettlementEffectIndex,
+      activeSettlementEffectIndexes,
     );
 
     return LayoutBuilder(
@@ -2072,6 +2118,7 @@ class _GameLayout extends StatelessWidget {
               station: station,
               battle: battle,
               onOptionsTap: onOptionsTap,
+              stationGoalDisplayScore: settlementGoalDisplayScore,
               stationGoalPulse:
                   activeSettlementStep == ScoringPresentationStep.finalScore,
               stationGoalPulseTick: settlementSequenceTick,
@@ -2195,10 +2242,17 @@ List<RummiJesterEffectBreakdown> _visibleSettlementEffects(
   List<RummiJesterEffectBreakdown> effects,
   ScoringPresentationStep step,
   int? effectIndex,
+  List<int> effectIndexes,
 ) {
   if (step != ScoringPresentationStep.jester &&
       step != ScoringPresentationStep.item) {
     return const [];
+  }
+  if (effectIndexes.isNotEmpty) {
+    return [
+      for (final index in effectIndexes)
+        if (index >= 0 && index < effects.length) effects[index],
+    ];
   }
   if (effectIndex == null || effectIndex < 0 || effectIndex >= effects.length) {
     return const [];

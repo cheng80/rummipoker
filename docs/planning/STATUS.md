@@ -44,6 +44,8 @@
 - Blind/Station pacing baseline 완료: 현재 target curve, difficulty multiplier, Small/Big/Boss pressure, reward preview/cash-out reward 기준을 `v4_pacing_baseline_1`로 문서화했다.
 - Boss modifier 방향 정리: Boss는 장기적으로 visible rule modifier를 갖는 전투로 보며, draw 기반 손패 구조 때문에 Balatro식 face-down hand-card 패턴은 그대로 복사하지 않는다.
 - Boss modifier v1 적용 완료: 보스 블라인드에 `빨간 타일 약화` 제약을 붙이고, 진입 팝업, Station Preview 표시, board/hand marker, scoring penalty callout, save/restore를 연결했다. 화면에는 내부 modifier 변수명 없이 한글 설명만 노출한다.
+- 저장 정답 상태와 transient presentation state 분리 원칙을 Battle/Market/Settlement 전체 기준으로 고정했다. `session/runProgress/stageStartSnapshot`이 save/continue의 정답이고, HUD 표시 지연값/정산 step/selection/overlay/reveal은 저장하지 않는 presentation state다.
+- 정산 점수 표시 보정 적용 완료: 확정 점수는 버튼 직후 runtime/save 기준으로 커밋하고, Station Goal 화면 숫자는 line별 final score 단계에서 뒤따라 표시한다. 후속 연출이 늘어나면 `GamePresentationEvent` / `presentationQueue` 형태의 transient event list로 묶는 것을 우선 검토한다.
 - Starting deck archetype 방향 정리: Balatro식 시작 덱/카드 강화는 참고하되, 현재 New Run은 Random/Seed만 유지한다. 후속 작업은 `run_archetype_id`와 `tile_modifier_id` 기준으로 ML/simulator에 먼저 연결한다.
 - Home/New Run/Blind Select 시작 flow는 제품용 정보량으로 정리됐다. Home은 짧은 continue/new-run entry만 보여 주고, New Run은 Random/Seed entry 중심, Blind Select는 `Small/Big/Boss` 3개 card 비교와 명시적 play button 시작 액션을 사용한다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
@@ -130,7 +132,8 @@
 | 시작 덱 | Starting deck archetype, tile enhancement reference | planning 완료 / ML 후속 |
 | Jester 확장 | Jester activation order, edition/penalty, effect taxonomy | planning 완료 / 구현 후속 |
 | Item 확장 | Consumable/Voucher taxonomy, rank progression, run passive | planning 완료 / 구현 후속 |
-| 피드백 | Balatro-style scoring preview, Jester/Item 순차 발동, item/Jester 효과 delta 표시, Station Goal pulse | P0 1차 구현 및 required iOS smoke 완료 |
+| Item 인벤토리 UX | 보유 아이템 판매 `sellItem` 구현 | 슬롯 수 제약 때문에 필요 / 후속 구현 |
+| 피드백 | Balatro-style scoring preview, Jester/Item 그룹 발동, item/Jester 효과 delta 표시, Station Goal 내부 glow, 저장/연출 상태 분리 | P0 1차 구현 및 required iOS smoke 완료 / presentation queue 도입은 후속 |
 
 다음 작업 판단:
 
@@ -138,6 +141,9 @@
 - "ML 기반 밸런스 자동화"가 목적이면 Station/Market/Pacing 규칙을 먼저 고정하고, 그 다음 simulator readiness로 들어간다.
 - "제품형 Station 한 바퀴"가 목적이면 Station Preview/Map의 최소 범위를 먼저 결정한다. 이 작업은 ML log schema의 station 단위도 함께 고정한다.
 - "잔여 runtime 완성"은 `slide_wax`까지 처리되어 현재 v1 기준 완료 상태다.
+- "아이템 인벤토리 사용성"이 목적이면 quick/passive/equipped 슬롯 수 제약을 고려해 보유 아이템 판매 `sellItem`을 먼저 구현한다.
+- "정산 체감 속도/게임감"이 목적이면 Jester/Item 발동 그룹 표시 위에 카드 shake, impact spark, score trail 같은 이펙트 polish를 추가한다.
+- "연출 구조 안정화"가 목적이면 새 이펙트를 먼저 늘리기보다 `GamePresentationEvent` / `presentationQueue` transient event list로 Battle/Market/Settlement 연출을 모을 수 있는지 설계한다.
 
 ML readiness 기준 우선순위:
 
@@ -165,6 +171,8 @@ ML readiness 기준 우선순위:
    - 연결: Blind Select card, battle entry popup, board/hand compact marker, scoring penalty callout, save/restore.
 7. Balance simulation readiness pass
    - `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md` 기준으로 log field, deterministic seed, bot boundary, UI 의존성 제거 목록을 확정한다.
+   - `/plan-eng-review` 입력 범위는 `docs/planning/feature_plans/BALANCE_SIMULATION_READINESS_PLAN.md`를 기준으로 본다.
+   - 현재 권장 구현 진입점은 기존 runtime을 재구성하는 것이 아니라 CLI import spike로 재사용 가능성을 먼저 확인하는 것이다.
    - `run_archetype_id = standard_tile_deck_v1` 같은 시작 덱 기준 필드를 read-only로 먼저 포함한다.
    - Jester effect category와 edition/penalty count는 `JESTER_REFERENCE_TAXONOMY_PLAN.md` 기준으로 feature 후보에 포함한다.
    - Consumable/Voucher effect category와 rank progression은 `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md` 기준으로 feature 후보에 포함한다.
@@ -190,6 +198,8 @@ ML readiness 기준 우선순위:
    - 아이템 효과는 수동/패시브 모두 발동 사실과 실제 delta가 명확히 보여야 한다. snackbar만으로 끝내지 말고 overlay, badge, `+1` float, resource pulse 중 하나를 제공한다.
    - 입력 차단 barrier는 직접 `ModalBarrier`와 색상 값을 하드코딩하지 말고 `GameInputBarrier.modal()` 또는 `GameInputBarrier.feedback()`를 사용한다.
    - battle item/Jester slot UI는 의미별 표시와 잠금 상태를 분리한다. Quick/Passive/Jester 표시 개수와 초기 해금 개수는 공용 상수/용량 메서드를 사용하고, 새 UI에서 `Q3`, `P2`, `Jester 5th` 잠금을 다시 하드코딩하지 않는다.
+   - 연출이 2~3개 이상 추가되면 `stageFlowPhase`와 `activeSettlement*` 같은 개별 field 확장보다 transient `GamePresentationEvent` / `presentationQueue` 구조를 먼저 검토한다.
+   - presentation queue는 save DTO에 포함하지 않는다. save/continue의 source of truth는 runtime state이며, queue는 비어 있어도 게임 결과가 변하지 않아야 한다.
    - 과하지 않게 적용: 입력 대기, 반복 플레이 속도, 정보 가독성을 방해하면 애니메이션을 줄이거나 생략
 12. Deferred run rule decision
    - Balatro식 blind skip 도입 여부와 조건 결정
@@ -197,9 +207,9 @@ ML readiness 기준 우선순위:
 
 다음 PR 후보:
 
-- `boss modifier v1 implementation pass`
-- `boss constraint entry popup / marker / penalty float pass`
 - `balance simulation readiness pass`
+- `balance simulation skeleton implementation pass`
 - `market rarity roll implementation pass`
+- `presentation queue architecture pass`
 - `ui animation polish pass`
 - `blind/station pacing polish`

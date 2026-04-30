@@ -8,10 +8,14 @@ import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
 
-/// `GameView`가 구독하는 현재 런의 UI 상태 스냅샷이다.
+/// `GameView`가 구독하는 현재 런의 상태 스냅샷이다.
 ///
 /// 세션/진행도는 mutable 객체를 품고 있으므로, 내부 값이 바뀐 뒤에는
 /// `revision`을 올려 Riverpod 구독 위젯이 다시 그려지게 한다.
+///
+/// 저장 가능한 정답 상태는 [session], [runProgress], [stageStartSnapshot]이다.
+/// Battle / Market / Settlement의 애니메이션, 선택, 표시 지연값은 transient
+/// presentation state이며 저장 데이터나 이어하기 복원 기준으로 사용하지 않는다.
 class GameSessionState {
   const GameSessionState({
     this.session,
@@ -35,6 +39,8 @@ class GameSessionState {
     this.activeSettlementLine,
     this.activeSettlementStep = ScoringPresentationStep.none,
     this.activeSettlementEffectIndex,
+    this.activeSettlementEffectIndexes = const [],
+    this.settlementGoalDisplayScore,
     this.settlementBoardSnapshot = const {},
     this.settlementSequenceTick = 0,
     this.revision = 0,
@@ -51,16 +57,22 @@ class GameSessionState {
   final GameRunLoopPhase runLoopPhase;
   final ActiveRunScene activeRunScene;
   final String? debugFixtureId;
+
+  // 화면 입력/선택 상태. 저장하지 않고 화면 재진입 시 기본값으로 돌아간다.
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
   final RummiJesterCatalog? jesterCatalog;
   final int? selectedJesterOverlayIndex;
+
+  // Battle/Settlement 연출과 HUD 표시를 위한 일시 상태. 실제 점수/저장 값이 아니다.
   final GameStageFlowPhase stageFlowPhase;
   final int stageScoreAdded;
   final ConfirmedLineBreakdown? activeSettlementLine;
   final ScoringPresentationStep activeSettlementStep;
   final int? activeSettlementEffectIndex;
+  final List<int> activeSettlementEffectIndexes;
+  final int? settlementGoalDisplayScore;
   final Map<String, Tile> settlementBoardSnapshot;
   final int settlementSequenceTick;
   final int revision;
@@ -68,7 +80,8 @@ class GameSessionState {
   bool get isReady => session != null && runProgress != null;
   bool get isUiLocked => stageFlowPhase != GameStageFlowPhase.none;
 
-  static const Object _unset = Object();
+  static const Object unsetValue = Object();
+  static const Object _unset = unsetValue;
 
   GameSessionState copyWith({
     Object? session = _unset,
@@ -92,6 +105,8 @@ class GameSessionState {
     Object? activeSettlementLine = _unset,
     ScoringPresentationStep? activeSettlementStep,
     Object? activeSettlementEffectIndex = _unset,
+    List<int>? activeSettlementEffectIndexes,
+    Object? settlementGoalDisplayScore = _unset,
     Map<String, Tile>? settlementBoardSnapshot,
     int? settlementSequenceTick,
     int? revision,
@@ -148,6 +163,11 @@ class GameSessionState {
       activeSettlementEffectIndex: activeSettlementEffectIndex == _unset
           ? this.activeSettlementEffectIndex
           : activeSettlementEffectIndex as int?,
+      activeSettlementEffectIndexes:
+          activeSettlementEffectIndexes ?? this.activeSettlementEffectIndexes,
+      settlementGoalDisplayScore: settlementGoalDisplayScore == _unset
+          ? this.settlementGoalDisplayScore
+          : settlementGoalDisplayScore as int?,
       settlementBoardSnapshot:
           settlementBoardSnapshot ?? this.settlementBoardSnapshot,
       settlementSequenceTick:

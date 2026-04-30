@@ -256,6 +256,15 @@ void main() {
 
     expect(find.text('리롤 토큰'), findsWidgets);
     expect(find.text('다음 상점 리롤 비용이 1 줄어듭니다.'), findsOneWidget);
+    final descriptionText = tester.widget<Text>(
+      find.byKey(const ValueKey('market-description-text')),
+    );
+    expect(descriptionText.maxLines, 4);
+    expect(descriptionText.overflow, TextOverflow.clip);
+    final descriptionBox = tester.widget<ConstrainedBox>(
+      find.byKey(const ValueKey('market-description-box')),
+    );
+    expect(descriptionBox.constraints.minHeight, greaterThanOrEqualTo(28));
 
     await tester.tap(find.text('구매'));
     await tester.pumpAndSettle();

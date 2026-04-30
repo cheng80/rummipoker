@@ -45,6 +45,7 @@ package-lock.json
 .pub-preload-cache/
 build/
 coverage/
+logs/
 flutter_*.png
 linked_*.ds
 unlinked.ds

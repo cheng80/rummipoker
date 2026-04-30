@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui' show lerpDouble;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -98,6 +97,7 @@ class GameTopHud extends StatelessWidget {
     required this.station,
     required this.battle,
     required this.onOptionsTap,
+    this.stationGoalDisplayScore,
     this.stationGoalPulse = false,
     this.stationGoalPulseTick = 0,
   });
@@ -105,18 +105,18 @@ class GameTopHud extends StatelessWidget {
   final RummiStationRuntimeFacade station;
   final RummiBattleRuntimeFacade battle;
   final VoidCallback onOptionsTap;
+  final int? stationGoalDisplayScore;
   final bool stationGoalPulse;
   final int stationGoalPulseTick;
 
   @override
   Widget build(BuildContext context) {
     final objective = station.objective;
+    final scoreTowardObjective =
+        stationGoalDisplayScore ?? objective.scoreTowardObjective;
     final progress = objective.targetScore <= 0
         ? 0.0
-        : (objective.scoreTowardObjective / objective.targetScore).clamp(
-            0.0,
-            1.0,
-          );
+        : (scoreTowardObjective / objective.targetScore).clamp(0.0, 1.0);
     final goldDisplayValue = '${battle.currentGold}';
     final blindLabel = _battleBlindLabel(battle.currentBlindTierIndex);
     final blindColor = _battleBlindColor(battle.currentBlindTierIndex);
@@ -179,12 +179,26 @@ class GameTopHud extends StatelessWidget {
               duration: const Duration(milliseconds: 420),
               curve: Curves.easeOutCubic,
               builder: (context, value, child) {
-                final scale = stationGoalPulse
-                    ? 1 + (sin(value * pi) * 0.035)
-                    : 1.0;
-                return Transform.scale(scale: scale, child: child);
+                final glow = stationGoalPulse ? sin(value * pi) : 0.0;
+                return DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      if (glow > 0)
+                        BoxShadow(
+                          color: const Color(
+                            0xFFF2C14E,
+                          ).withValues(alpha: 0.24 * glow),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                    ],
+                  ),
+                  child: child,
+                );
               },
               child: GameHudChip(
+                key: const ValueKey('station-goal-chip'),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -199,33 +213,16 @@ class GameTopHud extends StatelessWidget {
                     Expanded(
                       child: Align(
                         alignment: Alignment.center,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${objective.scoreTowardObjective}',
-                                maxLines: 1,
-                                textAlign: TextAlign.right,
-                                overflow: TextOverflow.clip,
-                                style: gameHudValueStyle.copyWith(fontSize: 18),
-                              ),
-                            ),
-                            Text(
-                              '/',
-                              maxLines: 1,
-                              style: gameHudValueStyle.copyWith(fontSize: 18),
-                            ),
-                            SizedBox(
-                              width: 44,
-                              child: Text(
-                                '${objective.targetScore}',
-                                maxLines: 1,
-                                textAlign: TextAlign.left,
-                                overflow: TextOverflow.clip,
-                                style: gameHudValueStyle.copyWith(fontSize: 18),
-                              ),
-                            ),
-                          ],
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$scoreTowardObjective/${objective.targetScore}',
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.visible,
+                            style: gameHudValueStyle.copyWith(fontSize: 18),
+                          ),
                         ),
                       ),
                     ),
@@ -708,80 +705,84 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onClose,
+                        icon: const Icon(Icons.close_rounded),
                         color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    effectText,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _GameItemOverlayTag(text: itemSlot.slotLabel),
+                      _GameItemOverlayTag(text: 'x${itemSlot.count}'),
+                      if (isPassive) ...[
+                        _GameItemOverlayTag(
+                          text: itemSlot.placement == ItemPlacement.equipped
+                              ? '기어'
+                              : '패시브',
+                        ),
+                        const _GameItemOverlayTag(text: '자동 발동'),
+                      ],
+                    ],
+                  ),
+                  if (canUseInBattle) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: GameActionButton(
+                        label: '사용',
+                        background: const Color(0xFFF4A81D),
+                        foreground: Colors.black,
+                        onPressed: onUse,
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close_rounded),
-                    color: Colors.white,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
-              Text(
-                effectText,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.82),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _GameItemOverlayTag(text: itemSlot.slotLabel),
-                  const SizedBox(width: 8),
-                  _GameItemOverlayTag(text: 'x${itemSlot.count}'),
-                  if (isPassive) ...[
-                    const SizedBox(width: 8),
-                    _GameItemOverlayTag(
-                      text: itemSlot.placement == ItemPlacement.equipped
-                          ? '기어'
-                          : '패시브',
-                    ),
-                    const SizedBox(width: 8),
-                    const _GameItemOverlayTag(text: '자동 발동'),
+                  ] else if (isPassive) ...[
+                    const SizedBox(height: 12),
+                    const _GamePassiveItemNotice(),
+                  ] else if (itemSlot.placement == ItemPlacement.inventory) ...[
+                    const SizedBox(height: 12),
+                    const _GameToolItemNotice(),
                   ],
                 ],
               ),
-              if (canUseInBattle) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: GameActionButton(
-                    label: '사용',
-                    background: const Color(0xFFF4A81D),
-                    foreground: Colors.black,
-                    onPressed: onUse,
-                  ),
-                ),
-              ] else if (isPassive) ...[
-                const SizedBox(height: 12),
-                const _GamePassiveItemNotice(),
-              ] else if (itemSlot.placement == ItemPlacement.inventory) ...[
-                const SizedBox(height: 12),
-                const _GameToolItemNotice(),
-              ],
-            ],
+            ),
           ),
         ),
       ),
@@ -1182,17 +1183,13 @@ class _GameItemEffectBurst extends StatelessWidget {
             : value > 0.76
             ? (1 - value) / 0.24
             : 1.0;
-        final dy = lerpDouble(10, -12, Curves.easeOut.transform(value))!;
-        return Opacity(
-          opacity: fade.clamp(0.0, 1.0),
-          child: Transform.translate(offset: Offset(0, dy), child: child),
-        );
+        return Opacity(opacity: fade.clamp(0.0, 1.0), child: child);
       },
       child: Center(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xB8143C31),
-            borderRadius: BorderRadius.circular(999),
+            color: const Color(0xE6143C31),
+            borderRadius: BorderRadius.circular(7),
             border: Border.all(
               color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
             ),
@@ -1205,31 +1202,41 @@ class _GameItemEffectBurst extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-            child: Column(
+            padding: const EdgeInsets.fromLTRB(0, 5, 8, 5),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  sourceName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontSize: 7.5,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _itemEffectBadge(effect),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFFFF4CF),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
+                Container(width: 3, height: 30, color: const Color(0xFFF2C14E)),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sourceName,
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontSize: 7.5,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _itemEffectBadge(effect),
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        style: const TextStyle(
+                          color: Color(0xFFFFF4CF),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1619,9 +1626,9 @@ class GameBoardCell extends StatelessWidget {
                         ),
                         if (constrained)
                           Positioned(
-                            right: 3,
-                            top: 3,
-                            child: _TileConstraintMarker(side: side),
+                            right: 2,
+                            top: 2,
+                            child: GameConstraintBadge(side: side),
                           ),
                       ],
                     ),
@@ -1633,33 +1640,45 @@ class GameBoardCell extends StatelessWidget {
   }
 }
 
-class _TileConstraintMarker extends StatelessWidget {
-  const _TileConstraintMarker({required this.side});
+class GameConstraintBadge extends StatelessWidget {
+  const GameConstraintBadge({super.key, required this.side});
 
   final double side;
 
   @override
   Widget build(BuildContext context) {
-    final size = (side * 0.26).clamp(10.0, 16.0);
-    return Container(
-      width: size,
-      height: size,
+    final width = (side * 0.58).clamp(26.0, 38.0);
+    final height = (side * 0.34).clamp(16.0, 22.0);
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFD34E4E),
-        borderRadius: BorderRadius.circular(size * 0.5),
+        color: const Color(0xFFD9343A),
+        borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: const Color(0xFFFFD0C8).withValues(alpha: 0.9),
-          width: 1,
+          color: const Color(0xFFFFD6CC).withValues(alpha: 0.96),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.45),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      alignment: Alignment.center,
-      child: Text(
-        '!',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: size * 0.72,
-          fontWeight: FontWeight.w900,
-          height: 1,
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: Center(
+          child: Text(
+            '1/2',
+            maxLines: 1,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: height * 0.58,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
         ),
       ),
     );

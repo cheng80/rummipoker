@@ -32,6 +32,23 @@
 문서는 목적형 폴더와 GCSE 역할 기준을 유지하고, 코드/테스트 중심으로 작업해라.
 ```
 
+gstack 흐름으로 이어갈 때는 목적에 따라 아래처럼 시작한다.
+
+```text
+/plan-eng-review
+START_HERE.md와 docs/planning/STATUS.md를 먼저 읽고, 현재 다음 구현 후보 중 balance simulation readiness pass를 진행하기 위한 최소 구현 계획을 검토해라.
+단, 새 구조 설계가 아니라 기존 runtime을 CLI에서 얇게 호출 가능한지 확인하는 import spike/skeleton 중심으로 봐라.
+저장 가능한 runtime state와 transient presentation state는 분리하고, presentation queue는 save/continue 기준에 포함하지 않는다.
+```
+
+UI 연출 구조를 먼저 정리하려면 아래처럼 시작한다.
+
+```text
+/plan-eng-review
+START_HERE.md와 docs/planning/STATUS.md를 먼저 읽고, Battle/Market/Settlement 연출을 GamePresentationEvent / presentationQueue 같은 transient event list로 묶을지 검토해라.
+save/continue source of truth는 runtime state로 유지하고, queue는 저장하지 않는 조건으로 최소 리팩터링 범위만 제안해라.
+```
+
 ## 먼저 읽을 문서
 
 읽는 순서는 아래로 고정한다.

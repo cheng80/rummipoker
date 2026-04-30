@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/services.dart' show rootBundle;
-
 import '../../app_config.dart';
 import 'hand_rank.dart';
 import 'item_definition.dart';
@@ -488,11 +486,6 @@ class RummiJesterCatalog {
         .map(RummiJesterCard.fromJson)
         .toList(growable: false);
     return RummiJesterCatalog._(cards);
-  }
-
-  static Future<RummiJesterCatalog> loadFromAsset(String assetPath) async {
-    final jsonString = await rootBundle.loadString(assetPath);
-    return RummiJesterCatalog.fromJsonString(jsonString);
   }
 
   final List<RummiJesterCard> _cards;

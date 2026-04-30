@@ -22,8 +22,18 @@ const double _marketCardSelectionInset = kJesterSelectionOutset;
 const double _marketShopCellWidth = 72.0;
 const double _marketShopCellHeight =
     kBattleItemSlotHeight + (kJesterSelectionOutset * 2) + 16.0;
-const double _marketShopPanelHeight = 184.0;
-const double _marketSpeechPanelHeight = 116.0;
+const double _marketShopPanelHeight = 156.0;
+const double _marketSpeechPanelHeight = 144.0;
+const double _marketDescriptionFontSize = 12.0;
+const double _marketDescriptionLineHeight = 1.18;
+const double _marketDescriptionMinHeight =
+    _marketDescriptionFontSize * _marketDescriptionLineHeight * 2;
+const TextStyle _marketDescriptionTextStyle = TextStyle(
+  color: Colors.white70,
+  fontSize: _marketDescriptionFontSize,
+  fontWeight: FontWeight.w700,
+  height: _marketDescriptionLineHeight,
+);
 
 enum _MarketShopTab { cardsAndQuickSlots, toolsAndGear }
 
@@ -988,19 +998,12 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                      _MarketDescriptionText(
                                         localizedJesterEffect(
                                           context,
                                           selectedOwned.card,
                                         ),
                                         maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.18,
-                                        ),
                                       ),
                                       if (selectedOwnedRuntimeValue !=
                                           null) ...[
@@ -1042,18 +1045,10 @@ class _GameShopScreenState extends State<GameShopScreen> {
                                 ? _OwnedMarketItemBody(
                                     slot: selectedOwnedItemSlot,
                                   )
-                                : Text(
+                                : _MarketDescriptionText(
                                     '선택한 카드의 정보와 액션이 여기에 표시됩니다.',
                                     maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.68,
-                                      ),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.18,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.68),
                                   ),
                             trailing: selectedOwned != null
                                 ? _MarketActionPane(
@@ -1471,6 +1466,33 @@ class _MarketActionPane extends StatelessWidget {
   }
 }
 
+class _MarketDescriptionText extends StatelessWidget {
+  const _MarketDescriptionText(
+    this.text, {
+    required this.maxLines,
+    this.color = Colors.white70,
+  });
+
+  final String text;
+  final int maxLines;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      key: const ValueKey('market-description-box'),
+      constraints: const BoxConstraints(minHeight: _marketDescriptionMinHeight),
+      child: Text(
+        text,
+        key: const ValueKey('market-description-text'),
+        maxLines: maxLines,
+        overflow: TextOverflow.clip,
+        style: _marketDescriptionTextStyle.copyWith(color: color),
+      ),
+    );
+  }
+}
+
 class _MarketOfferDetailBody extends StatelessWidget {
   const _MarketOfferDetailBody({required this.effectText, required this.tags});
 
@@ -1482,19 +1504,9 @@ class _MarketOfferDetailBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          effectText,
-          maxLines: tags.isEmpty ? 3 : 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            height: 1.18,
-          ),
-        ),
+        _MarketDescriptionText(effectText, maxLines: tags.isEmpty ? 5 : 4),
         if (tags.isNotEmpty) ...[
-          const SizedBox(height: 5),
+          const SizedBox(height: 3),
           _MarketDetailTagWrap(tags: tags),
         ],
       ],
@@ -1540,17 +1552,7 @@ class _OwnedMarketItemBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          effect,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            height: 1.18,
-          ),
-        ),
+        _MarketDescriptionText(effect, maxLines: 2),
         if (notice != null) ...[
           const SizedBox(height: 4),
           Text(

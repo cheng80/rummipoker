@@ -1527,6 +1527,38 @@ void main() {
       expect(runtime.stageStartSnapshot, same(state.stageStartSnapshot));
     });
 
+    test('buildSaveRuntimeState는 정산 표시 상태를 저장 정답으로 쓰지 않는다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 46);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      notifier.setStageFlow(
+        phase: GameStageFlowPhase.confirmSettlement,
+        stageScoreAdded: 99,
+        activeSettlementStep: ScoringPresentationStep.finalScore,
+        activeSettlementEffectIndexes: const [0, 1],
+        settlementGoalDisplayScore: 99,
+      );
+      notifier.setActiveRunScene(ActiveRunScene.shop);
+
+      final state = container.read(gameSessionNotifierProvider(args));
+      expect(state.settlementGoalDisplayScore, 99);
+      expect(state.stageFlowPhase, GameStageFlowPhase.confirmSettlement);
+
+      final runtime = notifier.buildSaveRuntimeState(
+        difficulty: NewRunDifficulty.standard,
+      );
+
+      expect(runtime.activeScene, ActiveRunScene.shop);
+      expect(runtime.session.blind.scoreTowardBlind, 0);
+      expect(runtime.session, same(state.session));
+      expect(runtime.runProgress, same(state.runProgress));
+    });
+
     test(
       'buildSaveRuntimeState retry mode는 stageStartSnapshot 복사본을 current로 만든다',
       () {
@@ -1566,6 +1598,45 @@ void main() {
         expect(runtime.runProgress, isNot(same(state.runProgress)));
       },
     );
+
+    test('replaceRuntimeState는 저장 runtime만 복원하고 정산 연출 상태는 초기화한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 48);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      notifier.setStageFlow(
+        phase: GameStageFlowPhase.confirmSettlement,
+        stageScoreAdded: 120,
+        activeSettlementStep: ScoringPresentationStep.jester,
+        activeSettlementEffectIndexes: const [0],
+        settlementGoalDisplayScore: 60,
+      );
+
+      final before = container.read(gameSessionNotifierProvider(args));
+      notifier.replaceRuntimeState(
+        session: before.session!.copySnapshot(),
+        runProgress: before.runProgress!.copySnapshot(),
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: before.stageStartSnapshot!.session.copySnapshot(),
+          runProgress: before.stageStartSnapshot!.runProgress.copySnapshot(),
+        ),
+        activeRunScene: ActiveRunScene.battle,
+      );
+
+      final restored = container.read(gameSessionNotifierProvider(args));
+      expect(restored.stageFlowPhase, GameStageFlowPhase.none);
+      expect(restored.stageScoreAdded, 0);
+      expect(restored.activeSettlementLine, isNull);
+      expect(restored.activeSettlementStep, ScoringPresentationStep.none);
+      expect(restored.activeSettlementEffectIndex, isNull);
+      expect(restored.activeSettlementEffectIndexes, isEmpty);
+      expect(restored.settlementGoalDisplayScore, isNull);
+      expect(restored.settlementSequenceTick, 0);
+    });
 
     test('debugForceBlindClear는 현재 블라인드를 즉시 목표 점수까지 올린다', () {
       final container = ProviderContainer();

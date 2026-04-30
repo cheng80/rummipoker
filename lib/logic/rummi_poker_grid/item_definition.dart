@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart' show rootBundle;
-
 enum ItemType { consumable, equipment, passiveRelic, utility }
 
 enum ItemRarity { common, uncommon, rare, legendary }
@@ -173,11 +171,6 @@ class ItemCatalog {
       rarityWeights: Map<ItemRarity, int>.unmodifiable(rarityWeights),
       items: items,
     );
-  }
-
-  static Future<ItemCatalog> loadFromAsset(String assetPath) async {
-    final jsonString = await rootBundle.loadString(assetPath);
-    return ItemCatalog.fromJsonString(jsonString);
   }
 
   final int schemaVersion;

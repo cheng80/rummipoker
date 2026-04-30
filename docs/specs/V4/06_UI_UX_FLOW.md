@@ -79,7 +79,8 @@ Blind Select UX 규칙:
 - `Small / Big / Boss` card는 한 모바일 viewport에서 비교 가능해야 한다.
 - card 전체 tap은 시작 액션이 아니다. 사용자가 정보를 읽는 중 실수로 전투에 들어가지 않도록 명시적인 play button만 시작 액션을 가진다.
 - 별도 현재 선택 summary와 하단 시작 button은 두지 않는다.
-- 게임 화면 문구에는 말줄임표를 쓰지 않는다. 필요한 경우 짧은 문구로 바꾸거나 2줄까지 허용한다.
+- 게임 화면 문구에는 말줄임표를 쓰지 않는다. 필요한 경우 최소 2줄 표시 영역을 확보한다.
+- 설명 문구가 길면 문구를 먼저 줄이지 말고, 하위 리스트/보조 영역을 줄여 설명 영역을 확보한다.
 
 장기적으로 Market 이후 다음 Station 진입도 같은 blind select 구조를 재사용할 수 있어야 한다.
 
@@ -95,7 +96,8 @@ Constraint visual rule:
 
 - 제약 표시는 `docs/planning/feature_plans/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`를 기준으로 한다.
 - Boss/Station 제약이 있으면 전투 진입 시 팝업 또는 bottom sheet로 제약 이름, 대상, 한 줄 규칙을 먼저 설명한다.
-- 전투 중에는 타일/Jester/Item 위에 작은 marker만 유지하고, 실제 감점은 점수 발생 위치의 짧은 float로 보여 준다.
+- 전투 중에는 타일/Jester/Item 위에 짧은 marker를 유지하되, 작은 점이나 단독 `!`처럼 약한 표시는 피한다. 점수 영향이 즉시 읽히는 각진 badge와 높은 대비를 사용한다.
+- 실제 감점은 점수 발생 위치의 짧은 float로 보여 준다.
 - 긴 제약 설명을 battle board 주변에 상시 노출하지 않는다.
 - user-facing 문구는 짧은 한글 설명만 사용한다. 내부 modifier id, enum, JSON field, score parameter를 화면에 노출하지 않는다.
 
@@ -174,6 +176,23 @@ Confirm UX는 contributor와 non-contributor를 명확히 구분해야 한다.
 
 Settlement는 현재 cash-out sheet에서 Station Reward Settlement로 확장 가능해야 한다.
 
+정산 feedback 규칙:
+
+- Jester / Item 발동 callout은 타원형 pill이 아니라 작은 직사각형 panel로 표시한다.
+- 발동 callout은 위로 떠오르는 이동 tween보다 source card/slot 고정 위치에서 나타났다 사라지는 방식을 우선한다.
+- 여러 Jester / Item이 같은 확정에서 발동하면 개별 대기열로 늘리지 말고 같은 그룹 단계에서 함께 표시한다.
+- Station Goal 피드백은 HUD container를 움직이지 않는다. score text, progress, glow 같은 내부 표현만 반응시킨다.
+
+저장/연출 상태 분리 규칙:
+
+- Battle / Market / Settlement 모두 저장 가능한 runtime state를 최종 정답으로 본다.
+- 점수, 골드, 인벤토리, 보드, Station 진행도는 액션 확정 시 먼저 runtime/save 기준으로 확정한다.
+- 화면 숫자 지연, 카드 이동, reveal, toast, glow, 선택/오버레이는 transient presentation state로만 둔다.
+- 이어하기와 save/restore는 presentation state를 복원하지 않고 저장된 runtime state에서 다시 파생한다.
+- 연출 상태가 늘어나면 개별 bool/int 필드를 계속 추가하지 않고 `GamePresentationEvent` / `presentationQueue` 같은 transient event list로 모은다.
+- presentation queue는 저장하지 않는다. 앱 재시작이나 이어하기 후 비어 있어도 게임 결과가 변하지 않아야 한다.
+- 현재 `activeSettlement*`, `settlementGoalDisplayScore`는 P0 정산 presentation field이며, 다음 UI/Market 연출 확장 시 `SettlementPresentationEvent` 계열로 묶는 후보로 본다.
+
 표시 기준:
 
 - station/stage index
@@ -219,6 +238,13 @@ Jester는 현재처럼 보유 슬롯과 연결된 카드 진열형을 유지할 
 Item은 inventory, quick slot, service card, consumable row 중 별도 표현을 사용한다.
 
 Item 4분류 표현 규칙과 market 정보 구조는 `13_ITEM_SYSTEM_CONTRACT.md`를 기준으로 본다.
+
+Market 상세 패널 규칙:
+
+- Jester / Item 설명은 말줄임표를 쓰지 않는다.
+- 설명 텍스트는 최소 2줄 표시 영역을 확보한다.
+- 화면에 다 들어가지 않는 설명은 하단 리스트/보조 영역을 줄여 상세 패널을 먼저 늘린다.
+- 전투 중 Jester / Item 상세 팝업은 말줄임표 없이 읽을 수 있어야 하며, 긴 설명은 팝업 내부 스크롤로 처리한다.
 
 ## 8. Archive / Trial UX Contract
 

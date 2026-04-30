@@ -1,5 +1,3 @@
-import 'dart:ui' show lerpDouble;
-
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
@@ -495,17 +493,13 @@ class GameJesterEffectBurst extends StatelessWidget {
             : value > 0.76
             ? (1 - value) / 0.24
             : 1.0;
-        final dy = lerpDouble(10, -12, Curves.easeOut.transform(value))!;
-        return Opacity(
-          opacity: fade.clamp(0.0, 1.0),
-          child: Transform.translate(offset: Offset(0, dy), child: child),
-        );
+        return Opacity(opacity: fade.clamp(0.0, 1.0), child: child);
       },
       child: Center(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xB8143C31),
-            borderRadius: BorderRadius.circular(999),
+            color: const Color(0xE6143C31),
+            borderRadius: BorderRadius.circular(7),
             border: Border.all(
               color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
             ),
@@ -518,24 +512,34 @@ class GameJesterEffectBurst extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            child: Column(
+            padding: const EdgeInsets.fromLTRB(0, 5, 8, 5),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _GameOutlinedLabel(
-                  sourceName,
-                  fillColor: Colors.white.withValues(alpha: 0.92),
-                  strokeColor: const Color(0xFF173126),
-                  fontSize: 7.5,
-                  fontWeight: FontWeight.w900,
-                ),
-                const SizedBox(height: 2),
-                _GameOutlinedLabel(
-                  jesterEffectBadge(effect),
-                  fillColor: const Color(0xFFFFF4CF),
-                  strokeColor: const Color(0xFF173126),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
+                Container(width: 3, height: 30, color: const Color(0xFFF2C14E)),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _GameOutlinedLabel(
+                        sourceName,
+                        fillColor: Colors.white.withValues(alpha: 0.92),
+                        strokeColor: const Color(0xFF173126),
+                        fontSize: 7.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      const SizedBox(height: 2),
+                      _GameOutlinedLabel(
+                        jesterEffectBadge(effect),
+                        fillColor: const Color(0xFFFFF4CF),
+                        strokeColor: const Color(0xFF173126),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -580,84 +584,89 @@ class GameJesterInfoOverlay extends StatelessWidget {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      localizedJesterName(context, card),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          localizedJesterName(context, card),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
                       ),
+                      IconButton(
+                        onPressed: onClose,
+                        icon: const Icon(Icons.close_rounded),
+                        color: Colors.white,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    localizedJesterEffect(context, card),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
                     ),
                   ),
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close_rounded),
-                    color: Colors.white,
-                    visualDensity: VisualDensity.compact,
+                  if (runtimeValueText != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        runtimeValueText!,
+                        style: const TextStyle(
+                          color: Color(0xFFF4E6B1),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (notes != null && notes.trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      notes,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.64),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: GameActionButton(
+                      label: '판매 +$sellGold 골드',
+                      background: const Color(0xFFB74B3B),
+                      onPressed: onSell,
+                    ),
                   ),
                 ],
               ),
-              Text(
-                localizedJesterEffect(context, card),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.82),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
-                ),
-              ),
-              if (runtimeValueText != null) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    runtimeValueText!,
-                    style: const TextStyle(
-                      color: Color(0xFFF4E6B1),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
-              if (notes != null && notes.trim().isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  notes,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.64),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: GameActionButton(
-                  label: '판매 +$sellGold 골드',
-                  background: const Color(0xFFB74B3B),
-                  onPressed: onSell,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

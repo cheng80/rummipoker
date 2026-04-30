@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/item_catalog_loader.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../resources/asset_paths.dart';
@@ -46,7 +47,9 @@ class _BlindSelectViewState extends State<BlindSelectView> {
 
   Future<void> _loadItemCatalog() async {
     try {
-      final catalog = await ItemCatalog.loadFromAsset(AssetPaths.itemsCommon);
+      final catalog = await ItemCatalogLoader.loadFromAsset(
+        AssetPaths.itemsCommon,
+      );
       if (!mounted) return;
       setState(() => _itemCatalog = catalog);
     } catch (_) {

@@ -235,6 +235,8 @@ class GameSessionNotifier
         activeSettlementLine: null,
         activeSettlementStep: ScoringPresentationStep.none,
         activeSettlementEffectIndex: null,
+        activeSettlementEffectIndexes: const [],
+        settlementGoalDisplayScore: null,
         settlementBoardSnapshot: const {},
         settlementSequenceTick: 0,
         revision: state.revision + 1,
@@ -344,6 +346,8 @@ class GameSessionNotifier
     ConfirmedLineBreakdown? activeSettlementLine,
     ScoringPresentationStep activeSettlementStep = ScoringPresentationStep.none,
     int? activeSettlementEffectIndex,
+    List<int> activeSettlementEffectIndexes = const [],
+    Object? settlementGoalDisplayScore = GameSessionState.unsetValue,
     Map<String, Tile>? settlementBoardSnapshot,
     bool bumpSettlementSequence = false,
   }) {
@@ -354,6 +358,8 @@ class GameSessionNotifier
         activeSettlementLine: activeSettlementLine,
         activeSettlementStep: activeSettlementStep,
         activeSettlementEffectIndex: activeSettlementEffectIndex,
+        activeSettlementEffectIndexes: activeSettlementEffectIndexes,
+        settlementGoalDisplayScore: settlementGoalDisplayScore,
         settlementBoardSnapshot: settlementBoardSnapshot,
         settlementSequenceTick: bumpSettlementSequence
             ? state.settlementSequenceTick + 1

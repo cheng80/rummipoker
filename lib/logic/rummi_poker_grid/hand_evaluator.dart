@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart' show listEquals;
-
 import 'hand_rank.dart';
 import 'models/tile.dart';
 import 'rummi_ruleset.dart';
@@ -71,7 +69,7 @@ class HandEvaluator {
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[4, 1])) {
+        if (_listEquals(counts, <int>[4, 1])) {
           return _result(
             RummiHandRank.fourOfAKind,
             contributingIndexes: _mapIndexes(
@@ -81,7 +79,7 @@ class HandEvaluator {
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[3, 2])) {
+        if (_listEquals(counts, <int>[3, 2])) {
           return _result(
             RummiHandRank.fullHouse,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
@@ -102,7 +100,7 @@ class HandEvaluator {
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[3, 1, 1])) {
+        if (_listEquals(counts, <int>[3, 1, 1])) {
           return _result(
             RummiHandRank.threeOfAKind,
             contributingIndexes: _mapIndexes(
@@ -112,7 +110,7 @@ class HandEvaluator {
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[2, 2, 1])) {
+        if (_listEquals(counts, <int>[2, 2, 1])) {
           return _result(
             RummiHandRank.twoPair,
             contributingIndexes: _mapIndexes(
@@ -122,7 +120,7 @@ class HandEvaluator {
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[2, 1, 1, 1])) {
+        if (_listEquals(counts, <int>[2, 1, 1, 1])) {
           return _result(
             RummiHandRank.onePair,
             contributingIndexes: _mapIndexes(
@@ -133,14 +131,14 @@ class HandEvaluator {
           );
         }
       case 4:
-        if (listEquals(counts, <int>[4])) {
+        if (_listEquals(counts, <int>[4])) {
           return _result(
             RummiHandRank.fourOfAKind,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[2, 2])) {
+        if (_listEquals(counts, <int>[2, 2])) {
           return _result(
             RummiHandRank.twoPair,
             contributingIndexes: _mapIndexes(
@@ -150,7 +148,7 @@ class HandEvaluator {
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[3, 1])) {
+        if (_listEquals(counts, <int>[3, 1])) {
           return _result(
             RummiHandRank.threeOfAKind,
             contributingIndexes: _mapIndexes(
@@ -160,7 +158,7 @@ class HandEvaluator {
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[2, 1, 1])) {
+        if (_listEquals(counts, <int>[2, 1, 1])) {
           return _result(
             RummiHandRank.onePair,
             contributingIndexes: _mapIndexes(
@@ -171,14 +169,14 @@ class HandEvaluator {
           );
         }
       case 3:
-        if (listEquals(counts, <int>[3])) {
+        if (_listEquals(counts, <int>[3])) {
           return _result(
             RummiHandRank.threeOfAKind,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
             ruleset: ruleset,
           );
         }
-        if (listEquals(counts, <int>[2, 1])) {
+        if (_listEquals(counts, <int>[2, 1])) {
           return _result(
             RummiHandRank.onePair,
             contributingIndexes: _mapIndexes(
@@ -189,7 +187,7 @@ class HandEvaluator {
           );
         }
       case 2:
-        if (listEquals(counts, <int>[2])) {
+        if (_listEquals(counts, <int>[2])) {
           return _result(
             RummiHandRank.onePair,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
@@ -285,5 +283,13 @@ class HandEvaluator {
       if (sortedRanks[i] != lo + i) return false;
     }
     return lo >= 1 && hi <= 13;
+  }
+
+  static bool _listEquals<T>(List<T> left, List<T> right) {
+    if (left.length != right.length) return false;
+    for (var i = 0; i < left.length; i++) {
+      if (left[i] != right[i]) return false;
+    }
+    return true;
   }
 }

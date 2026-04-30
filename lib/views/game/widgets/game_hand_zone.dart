@@ -313,32 +313,7 @@ class _HandTileCard extends StatelessWidget {
           ),
         ),
         if (constrained)
-          Positioned(
-            top: 2,
-            right: 2,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD34E4E),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: const Color(0xFFFFD0C8).withValues(alpha: 0.9),
-                  width: 1,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                '!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
-              ),
-            ),
-          ),
+          Positioned(top: 3, right: 3, child: GameConstraintBadge(side: 58)),
       ],
     );
   }

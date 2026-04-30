@@ -103,6 +103,8 @@ Implementation notes:
 - 2026-04-30 적용 완료.
 - scoring transaction은 정산 버튼 직후 계산/커밋/저장되고, animation은 저장된 결과를 재생하는 presentation으로 동작한다.
 - 중앙 floating text는 최종 점수 합산에만 사용하고, board/rank/overlap은 board 위 callout, Jester/Item 점수는 각 slot 위치 burst로 표시한다.
+- Station Goal 표시 숫자는 저장된 runtime 점수와 분리된 presentation override로 line별 final score 단계에서 따라온다.
+- 후속 연출이 Battle/Market/Settlement 전반으로 늘어나면 현재 `activeSettlement*` 필드는 `GamePresentationEvent` / `presentationQueue` 계열의 transient event list로 묶는 것을 우선 검토한다.
 - iOS smoke 재실행 완료. 현재 검증은 `flutter analyze`, 관련 widget/provider/save tests, required iOS smoke 3 routes 기준이다.
 
 ### P1. Battle Slot Visual Hierarchy

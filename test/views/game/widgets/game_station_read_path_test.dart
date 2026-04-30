@@ -53,10 +53,160 @@ void main() {
 
     expect(find.text('STATION 4'), findsOneWidget);
     expect(find.text('BIG'), findsOneWidget);
-    expect(find.text('360'), findsOneWidget);
-    expect(find.text('/'), findsOneWidget);
-    expect(find.text('900'), findsOneWidget);
+    expect(find.text('360/900'), findsOneWidget);
     expect(find.text('27'), findsOneWidget);
+  });
+
+  testWidgets('GameTopHud keeps four-digit station goal visible', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 1037,
+        scoreTowardObjective: 487,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 3,
+      currentBlindTierIndex: 1,
+      currentGold: 116,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 390,
+            child: GameTopHud(
+              station: station,
+              battle: battle,
+              onOptionsTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('487/1037'), findsOneWidget);
+    expect(find.text('487/103'), findsNothing);
+  });
+
+  testWidgets('GameTopHud goal pulse keeps chip layout fixed', (tester) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 520,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentBlindTierIndex: 1,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    Widget buildHud({required bool pulse}) {
+      return MaterialApp(
+        home: Scaffold(
+          body: GameTopHud(
+            station: station,
+            battle: battle,
+            onOptionsTap: () {},
+            stationGoalPulse: pulse,
+            stationGoalPulseTick: pulse ? 1 : 0,
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildHud(pulse: false));
+    final idleSize = tester.getSize(
+      find.byKey(const ValueKey('station-goal-chip')),
+    );
+
+    await tester.pumpWidget(buildHud(pulse: true));
+    final pulseSize = tester.getSize(
+      find.byKey(const ValueKey('station-goal-chip')),
+    );
+
+    expect(find.text('520/900'), findsOneWidget);
+    expect(pulseSize, idleSize);
+  });
+
+  testWidgets('GameTopHud can trail settled score with display override', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 700,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentBlindTierIndex: 1,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameTopHud(
+            station: station,
+            battle: battle,
+            stationGoalDisplayScore: 360,
+            onOptionsTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('360/900'), findsOneWidget);
+    expect(find.text('700/900'), findsNothing);
   });
 
   testWidgets('GameBottomInfoRow renders station facade resource values', (
@@ -128,6 +278,7 @@ void main() {
                 boardMoveMode: true,
                 moveSourceRow: 0,
                 moveSourceCol: 0,
+                constrainedCells: const {'0:0'},
                 onTapCell: (row, col) => taps.add((row, col)),
               ),
             ),
@@ -136,6 +287,7 @@ void main() {
       );
 
       expect(find.byIcon(Icons.open_with_rounded), findsWidgets);
+      expect(find.text('1/2'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('board-cell-0-0')));
       await tester.tap(find.byKey(const ValueKey('board-cell-2-2')));
@@ -530,6 +682,7 @@ void main() {
       find.text('Gain +1 board discard for this Station.'),
       findsOneWidget,
     );
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
     expect(useCount, 0);
 
     await tester.tap(find.text('사용'));
