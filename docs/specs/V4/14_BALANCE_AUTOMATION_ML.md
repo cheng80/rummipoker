@@ -144,6 +144,9 @@ lookahead_bot clear rate: 75-90%
     "jester": "jesters_common_phase5",
     "item": "items_common_v1"
   },
+  "run_archetype_id": "standard_tile_deck_v1",
+  "tile_deck_composition_id": "standard_52_v1",
+  "tile_modifier_pool_id": null,
   "is_debug_run": false,
   "is_fixture": false,
   "station": 3,
@@ -203,6 +206,8 @@ Deck / hand potential:
 
 ```text
 deck_size
+tile_deck_composition_id
+tile_modifier_pool_id
 rank_counts
 suit_counts
 unique_rank_count
@@ -219,6 +224,9 @@ owned_jester_count
 empty_jester_slots
 jester_rarity_counts
 jester_effect_type_counts
+jester_trigger_stage_counts
+jester_edition_counts
+jester_penalty_counts
 flat_chips_power
 flat_mult_power
 xmult_power
@@ -234,6 +242,9 @@ equipment_count
 passive_relic_count
 utility_count
 quick_slot_count
+consumable_effect_type_counts
+voucher_effect_type_counts
+hand_rank_levels
 score_item_power
 discard_item_power
 economy_item_power
@@ -358,11 +369,29 @@ discard resource count
 0. ML readiness 선행 작업
    1. Station Preview/Map 최소 범위 결정
       - `station_id`, blind tier, 선택지, modifier 후보가 로그 필드로 안정화되어야 한다.
+      - 현재 결정은 `docs/planning/feature_plans/STATION_PREVIEW_MAP_SCOPE_PLAN.md`를 따른다. `BlindSelectView`가 `Station Preview v1`이며 Station Map graph는 후속이다.
    2. Market offer count와 rarity weighted roll 규칙 결정
       - Jester/Item offer 수, 증설 효과, 중복 제외, 구매 후 재노출 방지, rarity weight를 simulator가 재현할 수 있어야 한다.
+      - 계획은 `docs/planning/feature_plans/MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`를 기준으로 본다.
    3. Blind / station pacing baseline 결정
       - target score curve, small/big/boss reward/pressure, discard reward, unlock tempo를 하나의 `balance_version`으로 묶는다.
-   4. Simulation readiness pass
+      - 현재 baseline은 `v4_pacing_baseline_1`이며 `docs/planning/feature_plans/BLIND_STATION_PACING_BASELINE_PLAN.md`를 기준으로 본다.
+      - Balatro ante/stake 요구 칩 표는 reference shape로만 쓰고, 실제 target score 조정은 simulator/ML 결과로 별도 `balance_version`에 반영한다.
+   4. Boss modifier taxonomy 결정
+      - Boss modifier는 target/resource baseline과 분리해 `boss_modifier_id`와 category를 로그 필드로 남긴다.
+      - 상세 범주는 `docs/planning/feature_plans/BOSS_MODIFIER_TAXONOMY_PLAN.md`를 기준으로 본다.
+      - Balatro Boss/Stake 제약은 reference-only이며, face-down hand-card 패턴은 Rummi Poker의 draw 기반 구조에 맞게 재설계한다.
+   5. Starting deck archetype 기준 결정
+      - 현재 runtime은 `standard_tile_deck_v1` 단일 archetype으로 본다.
+      - 후속 starting deck과 tile enhancement는 `run_archetype_id`, `tile_modifier_id`로 분리한다.
+      - 상세 기준은 `docs/planning/feature_plans/STARTING_DECK_ARCHETYPE_PLAN.md`를 따른다.
+   6. Jester taxonomy 기준 결정
+      - Jester activation order, effect category, trigger stage, edition/penalty 후보를 simulator feature로 남긴다.
+      - 상세 기준은 `docs/planning/feature_plans/JESTER_REFERENCE_TAXONOMY_PLAN.md`를 따른다.
+   7. Consumable / voucher taxonomy 기준 결정
+      - Item consumable, rank progression, high-risk mutation, run-long passive/voucher 후보를 simulator feature로 분리한다.
+      - 상세 기준은 `docs/planning/feature_plans/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`를 따른다.
+   8. Simulation readiness pass
       - UI 의존성, save 의존성, randomness source, log field, bot policy boundary를 확인한다.
 
 그 다음 실제 도입 순서는 아래가 안전하다.

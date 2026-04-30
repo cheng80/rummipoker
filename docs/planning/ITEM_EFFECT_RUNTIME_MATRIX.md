@@ -6,6 +6,7 @@
 기준 데이터: `data/common/items_common_v1.json`
 
 이 문서는 v1 Item 49개의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
+소모품/바우처 장기 확장 reference는 `docs/planning/feature_plans/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`를 기준으로 본다.
 상태 의미:
 
 - `applied`: 현재 runtime에서 실제 상태 변경까지 적용된다.

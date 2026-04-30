@@ -127,12 +127,17 @@ Implementation note:
 
 ### P2. Market Offer Generation Follow-up
 
-- [ ] Jester / Item offer 기본 갯수와 증설 규칙을 재검토한다.
-- [ ] `boss_trophy`의 다음 market Jester offer +1, `shop_lens`의 item offer slot +1은 유지하되, 기본 offer 수와 unlock/보상 기반 증설 조건은 별도 balance pass에서 결정한다.
-- [ ] Item offer 생성은 현재 catalog 순서 + reroll offset 기반이므로, 후속에서 Balatro식 rarity 기반 weighted roll로 교체한다.
-- [ ] Jester offer 생성도 현재 지원 가능한 pool 균등 랜덤이므로, 후속에서 rarity weight 기반 roll과 현재 빌드/스테이션 조건 가중치를 검토한다.
-- [ ] `data/common/items_common_v1.json`의 `rarityWeights`와 `RummiMarketModifierState.rarityWeightBonus`를 실제 roll에 반영한다.
-- [ ] rarity roll 적용 시 중복 제외, 보유 한도, 구매 후 같은 market 재노출 방지, save/restore된 market resume 결과가 흔들리지 않는지 테스트한다.
+- [x] Jester / Item offer 기본 갯수와 증설 규칙을 재검토한다.
+- [x] `boss_trophy`의 다음 market Jester offer +1, `shop_lens`의 item offer slot +1은 유지하되, 기본 offer 수와 unlock/보상 기반 증설 조건은 별도 balance pass에서 결정한다.
+- [x] Item offer 생성은 현재 catalog 순서 + reroll offset 기반이므로, 후속에서 Balatro식 rarity 기반 weighted roll로 교체한다.
+- [x] Jester offer 생성도 현재 지원 가능한 pool 균등 랜덤이므로, 후속에서 rarity weight 기반 roll과 현재 빌드/스테이션 조건 가중치를 검토한다.
+- [x] `data/common/items_common_v1.json`의 `rarityWeights`와 `RummiMarketModifierState.rarityWeightBonus`를 실제 roll에 반영한다.
+- [x] rarity roll 적용 시 중복 제외, 보유 한도, 구매 후 같은 market 재노출 방지, save/restore된 market resume 결과가 흔들리지 않는지 테스트한다.
+
+Planning note:
+
+- 구현 기준은 `docs/planning/feature_plans/MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`를 따른다.
+- 실제 rarity roll 코드 적용과 item offer id save/restore 개선은 후속 implementation pass로 분리한다.
 
 ### P2. Station Reward/Risk Framing
 

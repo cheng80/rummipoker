@@ -61,6 +61,8 @@ New Run
 -> Battle
 ```
 
+Starting deck/archetype selection은 v1 New Run 범위가 아니다. 후속으로 추가할 경우 `docs/planning/feature_plans/STARTING_DECK_ARCHETYPE_PLAN.md`의 `run_archetype_id` 기준을 따른다.
+
 Blind select card는 최소한 아래 정보를 함께 보여야 한다.
 
 - station/stage index
@@ -80,6 +82,14 @@ Blind Select UX 규칙:
 - 게임 화면 문구에는 말줄임표를 쓰지 않는다. 필요한 경우 짧은 문구로 바꾸거나 2줄까지 허용한다.
 
 장기적으로 Market 이후 다음 Station 진입도 같은 blind select 구조를 재사용할 수 있어야 한다.
+
+Station Preview v1 결정:
+
+- 현재 `BlindSelectView`를 Station Preview v1로 사용한다.
+- `Station N` 섹션 안에서 `Small / Big / Boss` objective를 비교하는 구조를 유지한다.
+- branch형 Station Map 화면, route 선택, Station modifier 선택 UI는 후속이다.
+- 이 화면의 카드 정보는 ML simulator/log schema의 station objective source와 일치해야 한다.
+- Boss objective에 modifier가 붙는 경우, modifier 이름/영향 범위/짧은 규칙 문구를 전투 진입 전에 같은 카드 안에서 보여야 한다.
 
 ## 4. Battle Screen Contract
 

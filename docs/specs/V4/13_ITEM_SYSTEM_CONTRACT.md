@@ -17,6 +17,8 @@
 현재 목표는 완성 규칙 확정이 아니라,
 `레이아웃 리팩터링과 도메인 분리 구현을 다시 뜯지 않게 만드는 것`이다.
 
+소모품/바우처류 장기 확장 reference는 `docs/planning/feature_plans/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`를 기준으로 본다.
+
 ## 2. Core Separation
 
 [V4_DECISION]
@@ -71,6 +73,7 @@ passive_relic: 12
 - Luck be a Landlord의 `reroll / removal / capsule / item synergy` 계열처럼 선택지 조정, 경제, 보드 상태 변화 도구를 `utility / consumable`에 반영한다.
 - 모든 아이템은 `effect.op` 기반으로 런타임 구현이 가능해야 하며, 텍스트만 있는 아이템은 허용하지 않는다.
 - 가격과 희귀도는 초기 실사용 밸런스 후보이며, 실제 플레이 로그 기반으로 조정한다.
+- Tarot/Planet/Spectral/Voucher식 구조는 그대로 가져오지 않고, confirm modifier, tile enhancement, tile conversion, rank progression, high-risk mutation, run-long passive로 분리한다.
 
 asset path:
 
@@ -140,6 +143,11 @@ UI 계약:
 - `acquire`
 - `persist`
 - `sell or lock` 정책은 별도 정의 가능
+
+Voucher-like effect:
+
+- 단순 run-long passive는 `passive_relic`으로 처리할 수 있다.
+- chain/unlock/한 구간 1개 offer 같은 voucher 전용 규칙이 필요해지면 별도 `Run Voucher` content type으로 분리한다.
 
 ### 3.4 Utility
 

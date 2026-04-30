@@ -6,6 +6,7 @@
 
 현재 코드 상세는 `docs/current_system/CURRENT_CODE_MAP.md`와 `docs/current_system/CURRENT_BUILD_BASELINE.md`를 기준으로 본다.
 Item effect 적용 상태는 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
+Jester taxonomy와 후속 catalog 확장 reference는 `docs/planning/feature_plans/JESTER_REFERENCE_TAXONOMY_PLAN.md`를 기준으로 본다.
 
 ## 1. Current Boundary Reference
 
@@ -38,6 +39,13 @@ Jester는 `run-long equipped synergy asset`으로 취급한다.
 - 조건 판정은 contributor 기반 `scoringTiles`를 사용한다.
 - stateful Jester는 기존 slot index 저장을 유지한다.
 - 장기적으로 instance id를 도입하더라도 기존 save는 adapter로 복원해야 한다.
+
+후속 확장 정책:
+
+- Balatro-style Joker 목록은 효과 taxonomy reference로만 사용하고, 이름/수치/목록을 그대로 복사하지 않는다.
+- hand-rank condition inheritance는 데이터와 테스트가 준비되기 전까지 암묵 적용하지 않는다.
+- Jester edition/penalty는 base catalog id가 아니라 owned instance modifier로 다룬다.
+- 새 effect category는 `JesterEffectRuntime`, scoring feedback, simulator log에 모두 연결된 뒤 Market에 노출한다.
 
 ## 3. Item Contract
 

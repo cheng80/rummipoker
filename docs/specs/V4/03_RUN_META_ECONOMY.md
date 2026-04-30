@@ -62,6 +62,20 @@ Run
 
 V4에서는 station 개수와 sector 개수를 확정하지 않는다. V3의 30 Station은 후보 테이블로 보존할 수 있지만, V4 기본 구현 지시로 박지 않는다.
 
+[V4_DECISION]
+
+Station Preview v1은 현재 `BlindSelectView`를 기준으로 한다.
+
+- `runProgress.stageIndex`를 Station index로 읽는다.
+- 한 Station 안에는 `Small / Big / Boss` 3개 blind objective가 있다.
+- `currentStationBlindTierIndex`는 해당 Station 안에서 마지막으로 클리어한 objective tier다.
+- 별도 branch형 Station Map graph는 v1 범위가 아니다.
+- Station modifier는 v1 로그 필드에서 빈 배열로 시작하고, 후속 Station modifier pass에서 채운다.
+
+상세 scope decision은 `docs/planning/feature_plans/STATION_PREVIEW_MAP_SCOPE_PLAN.md`를 기준으로 본다.
+
+Boss objective는 장기적으로 visible rule modifier를 포함한다. Boss modifier taxonomy와 Balatro Boss/Stake reference-only 정책은 `docs/planning/feature_plans/BOSS_MODIFIER_TAXONOMY_PLAN.md`를 기준으로 본다.
+
 ## 4. Station Modifier Contract
 
 [TARGET]
@@ -90,12 +104,35 @@ Lock
 - 특정 line 사용 불가
 - Permit 필요 조건
 
+Boss modifier 방향:
+
+- Boss는 단순 target/resource pressure보다 visible rule modifier를 갖는 전투로 확장한다.
+- 후보는 tile color 약화, hand rank 약화, tile number/rank 약화, Jester effect 제한, score 출력 압박, resource pressure다.
+- draw 기반 손패 구조 때문에 face-down hand-card류 규칙은 그대로 복사하지 않는다.
+- modifier는 Boss 진입 전 Station Preview에서 공개되어야 한다.
+
 [MIGRATION]
 
 Entry / Pressure / Lock은 전투 엔진 내부에 직접 끼워 넣지 않는다.
 `StationRuleModifier` 형태로 `RummiRulesetConfig` 또는 run meta layer에서 주입한다.
 
-## 5. Risk Grade / Trial Contract
+## 5. Starting Deck / Run Archetype Contract
+
+[FUTURE]
+
+Starting deck은 cosmetic deck skin이 아니라 run 시작 규칙 preset으로 본다.
+
+현재 결정:
+
+- v1 New Run은 Random / Seed start만 노출한다.
+- 현재 기본 런은 `standard_tile_deck_v1` archetype으로 해석한다.
+- 후속 starting deck은 `run_archetype_id`로 저장/로그에 들어가야 한다.
+- resource, slot, tile composition, starting build, scoring formula preset은 서로 다른 축으로 분리한다.
+- tile enhancement / seal / edition류는 starting deck이 아니라 후속 `tile_modifier_id` 또는 Jester/Item edition 후보로 본다.
+
+상세 reference와 ML 필드 후보는 `docs/planning/feature_plans/STARTING_DECK_ARCHETYPE_PLAN.md`를 기준으로 본다.
+
+## 6. Risk Grade / Trial Contract
 
 [TARGET]
 
@@ -123,7 +160,7 @@ Trial은 특별 규칙 run이다.
 
 Risk Grade와 Trial은 active run core가 안정화된 후 추가한다.
 
-## 6. Market Stop Contract
+## 7. Market Stop Contract
 
 [TARGET]
 
@@ -176,7 +213,7 @@ Market은 기존 `RummiRunProgress.shopOffers`를 깨지 않고 확장한다.
 4. UI는 기존 shop card를 유지한 채 category badge만 추가
 5. 이후 새 상품 타입 추가
 
-## 7. Economy Policy
+## 8. Economy Policy
 
 [V4_DECISION]
 

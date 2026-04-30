@@ -232,10 +232,21 @@
 ML readiness 선행 순서:
 
 1. Station Preview/Map 최소 범위 결정
+   - 완료 기준: `BlindSelectView`를 `Station Preview v1`로 공식화하고, Station Map graph는 후속으로 둔다.
 2. Market offer count와 rarity weighted roll 규칙 결정
+   - 완료 기준: `MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`에서 기본 offer 수, cap, rarity weight, 중복 제외, save/restore 경계를 고정한다.
 3. Blind/station pacing baseline 확정
-4. Balance simulation readiness pass
-5. `14_BALANCE_AUTOMATION_ML.md`의 simulator/JSONL/PyTorch 도입 순서 검토
+   - 완료 기준: `BLIND_STATION_PACING_BASELINE_PLAN.md`에서 `v4_pacing_baseline_1` balance version으로 현재 target/reward/pressure 수치를 기록한다.
+4. Boss modifier taxonomy 확정
+   - 완료 기준: `BOSS_MODIFIER_TAXONOMY_PLAN.md`에서 Boss 제약 범주, preview/feedback/save/log 요구사항, Balatro Boss/Stake reference-only 정책을 고정한다.
+5. Starting deck archetype 기준 확정
+   - 완료 기준: `STARTING_DECK_ARCHETYPE_PLAN.md`에서 현재 기본 archetype, 후속 starting deck, tile enhancement, simulator log field를 분리한다.
+6. Jester taxonomy 기준 확정
+   - 완료 기준: `JESTER_REFERENCE_TAXONOMY_PLAN.md`에서 Jester 발동 순서, effect category, edition/penalty, ML feature 후보를 고정한다.
+7. Consumable / voucher taxonomy 기준 확정
+   - 완료 기준: `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 Item consumable, rank progression, high-risk mutation, run-long passive/voucher 후보를 고정한다.
+8. Balance simulation readiness pass
+9. `14_BALANCE_AUTOMATION_ML.md`의 simulator/JSONL/PyTorch 도입 순서 검토
 
 금지:
 

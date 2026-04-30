@@ -274,11 +274,22 @@ PyTorch 모델로 station / blind / market / item 조합의 난이도 경향을 
 진행 가능 조건:
 
 1. Station Preview/Map 최소 범위가 결정되어 `station_id`, blind tier, 선택지 구조가 로그 스키마에서 흔들리지 않는다.
+   - 결정 완료: 현재 `BlindSelectView`를 `Station Preview v1`로 공식화하고, Station Map graph는 후속으로 둔다.
 2. Market offer count와 rarity weighted roll 규칙이 결정되어 simulator가 실제 상점 분포를 재현할 수 있다.
+   - 계획 완료: 기본 offer 수 3/3, v1 cap 5, 공통 rarity weight, `rarityWeightBonus` 적용 방향은 `MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`를 기준으로 본다.
 3. target score curve, small/big/boss 보상/압박, discard reward의 baseline balance version이 정해진다.
-4. Dart game logic simulator에서 UI 없이 battle/settlement/market/next station 한 바퀴를 deterministic seed로 실행할 수 있다.
+   - 완료: 현재 런타임 수치를 `v4_pacing_baseline_1`로 기록했다. 상세는 `BLIND_STATION_PACING_BASELINE_PLAN.md`를 기준으로 본다.
+4. Boss modifier taxonomy가 정해져 simulator가 보스 제약을 id/category/parameter로 남길 수 있다.
+   - 완료: `BOSS_MODIFIER_TAXONOMY_PLAN.md`에서 tile color, hand rank, number/rank, Jester, score/resource, board/line 제약 범주를 정리했다.
+5. Starting deck archetype 기준이 정해져 simulator가 시작 덱/타일 강화 축을 별도 feature로 남길 수 있다.
+   - 완료: `STARTING_DECK_ARCHETYPE_PLAN.md`에서 현재 runtime은 Random/Seed만 유지하고, 후속 starting deck은 `run_archetype_id`, tile enhancement는 `tile_modifier_id`로 분리했다.
+6. Jester taxonomy 기준이 정해져 simulator가 effect category, trigger stage, edition/penalty 후보를 별도 feature로 남길 수 있다.
+   - 완료: `JESTER_REFERENCE_TAXONOMY_PLAN.md`에서 activation order, rank inheritance caution, edition/penalty, effect category 후보를 정리했다.
+7. Consumable / voucher taxonomy 기준이 정해져 simulator가 Item 확장 축을 별도 feature로 남길 수 있다.
+   - 완료: `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 consumable, rank progression, high-risk mutation, voucher/passive 후보를 분리했다.
+8. Dart game logic simulator에서 UI 없이 battle/settlement/market/next station 한 바퀴를 deterministic seed로 실행할 수 있다.
 
-따라서 후속 작업 순서는 `station preview/map scope decision -> market offer count and rarity roll planning pass -> blind/station pacing baseline pass -> balance simulation readiness pass`로 본다.
+따라서 후속 작업 순서는 `balance simulation readiness pass -> market rarity roll implementation pass`로 본다.
 
 ## 3. Experiment Registry
 
@@ -293,6 +304,95 @@ PyTorch 모델로 station / blind / market / item 조합의 난이도 경향을 
 | Risk Grade | off | economy curve, reward multiplier |
 | Station modifiers | off | ruleset isolation |
 | Balance automation ML | off | simulator determinism, log schema, report accuracy |
+
+### 3.1 Boss Modifier Direction
+
+[FUTURE]
+
+Boss blind는 단순히 목표 점수와 자원을 올리는 전투가 아니라, 전투 시작 전 공개되는 제약/변형 규칙을 갖는 방향으로 본다.
+
+상세 taxonomy와 적용 순서는 `docs/planning/feature_plans/BOSS_MODIFIER_TAXONOMY_PLAN.md`를 기준으로 본다.
+
+후보 범주:
+
+- tile color 약화
+- hand rank 약화 또는 특정 rank 보너스 감소
+- tile number/rank 약화
+- Jester slot/effect 제한
+- score/chip 출력 압박
+- board/hand discard 또는 hand size 압박
+- board/line 제약
+
+주의:
+
+- Balatro의 face-down hand card류 규칙은 우리 게임에 그대로 옮기지 않는다.
+- 이 게임은 손패가 한 번에 주어지는 구조가 아니라 draw 기반이므로, 숨김 정보는 계획성을 해칠 수 있다.
+- 숨김/비활성 제약을 넣는다면 반드시 entering 전 preview와 affected tile/Jester 표시가 필요하다.
+- Boss modifier는 `v4_pacing_baseline_1`의 target/resource baseline과 분리된 후속 pass로 다룬다.
+- Boss modifier는 preview, battle UI, scoring feedback, save/restore, simulator log에 같은 id/category로 나타나야 한다.
+
+### 3.2 Ante / Stake Score Curve Reference
+
+[FUTURE]
+
+Balatro의 ante / stake별 요구 칩 표는 점수 곡선의 참고 자료로만 둔다.
+
+현재 결정:
+
+- Balatro 수치를 그대로 복사하지 않는다.
+- Small / Big / Boss의 `1.0 / 1.5 / 2.0` 압박 구조는 현재 baseline과 유사하므로 reference shape로 유지한다.
+- stake처럼 요구 점수 증가 속도를 올리는 구조는 우리 게임의 `difficulty_target_multiplier`, `station_growth_base`, `stationTargetScoreScale` 후보로 해석한다.
+- stake식 누적 제약은 `BOSS_MODIFIER_TAXONOMY_PLAN.md`의 difficulty/stake reference를 기준으로 후속 balance version에서 검토한다.
+- 실제 요구 점수 조정은 `balance simulation readiness pass` 이후 ML/simulator 로그를 기반으로 한다.
+- target score 변경 시 `balance_version`을 갱신한다.
+
+### 3.3 Starting Deck / Tile Enhancement Reference
+
+[FUTURE]
+
+Balatro의 시작 덱과 카드 강화 구조는 run archetype과 tile modifier 후보로만 참고한다.
+
+현재 결정:
+
+- 지금 New Run 화면에는 시작 덱 선택을 노출하지 않는다.
+- 현재 기본 런은 `standard_tile_deck_v1`에 해당하는 단일 archetype으로 본다.
+- 시작 덱은 후속 `run_archetype_id`로 표현한다.
+- 카드 강화/인장/에디션류는 후속 `tile_modifier_id` 또는 Jester/Item edition 후보로 분리한다.
+- 시작 덱 선택은 balance simulation readiness 이후, simulator가 archetype별 결과를 비교할 수 있을 때 검토한다.
+
+상세 기준은 `docs/planning/feature_plans/STARTING_DECK_ARCHETYPE_PLAN.md`를 따른다.
+
+### 3.4 Jester Reference Taxonomy
+
+[FUTURE]
+
+Balatro의 Joker 목록은 Jester catalog 확장과 ML feature 설계의 taxonomy reference로만 둔다.
+
+현재 결정:
+
+- 기존 Jester id는 변경하지 않는다.
+- Jester는 slot order로 발동한다.
+- hand-rank condition inheritance는 후속 데이터/테스트가 준비되기 전까지 암묵 적용하지 않는다.
+- edition/penalty는 base Jester id가 아니라 owned Jester instance modifier로 본다.
+- 새 effect category는 scoring feedback과 simulator log에 나타나기 전까지 Market에 노출하지 않는다.
+
+상세 기준은 `docs/planning/feature_plans/JESTER_REFERENCE_TAXONOMY_PLAN.md`를 따른다.
+
+### 3.5 Consumable / Voucher Reference Taxonomy
+
+[FUTURE]
+
+Balatro의 Tarot / Planet / Spectral / Voucher 구조는 Item 확장 taxonomy reference로만 둔다.
+
+현재 결정:
+
+- 현재 Item 49개 runtime은 유지한다.
+- Tarot-like 효과는 confirm modifier, tile enhancement, tile conversion, economy, Jester mutation 후보로 나눈다.
+- Planet-like 효과는 hand-rank progression 후보로 분리한다.
+- Spectral-like 효과는 high-risk mutation 후보로 분리하고 일반 market pool에는 바로 넣지 않는다.
+- Voucher-like 효과는 ordinary quick-use item이 아니라 run-long passive 또는 후속 `Run Voucher` content type으로 다룬다.
+
+상세 기준은 `docs/planning/feature_plans/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`를 따른다.
 
 ## 4. Known Code Notes
 

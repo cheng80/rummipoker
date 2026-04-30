@@ -428,7 +428,13 @@ Current applied note:
 - `beginNextStationTransition`은 `activeRunScene = blindSelect`와 `nextStationTransition` phase를 함께 기록한다.
 - Market -> Blind Select 전환 affordance는 1차 적용됐다. 다음 blind-select runtime을 먼저 저장한 뒤 짧은 overlay를 재생하고 route를 이동한다.
 - ML 기반 밸런스 자동화를 가능하게 하려면 후속 순서를 `Station Preview/Map scope -> Market offer count/rarity roll -> blind/station pacing baseline -> balance simulation readiness`로 둔다.
-- 후순위 Market 생성 규칙으로 Jester/Item offer 갯수 증설과 Balatro식 rarity weighted shop roll을 별도 balance pass에서 검토한다. 이 규칙은 simulator가 실제 상점 분포를 재현하기 위한 선행 조건이다.
+- Station Preview/Map scope는 `BlindSelectView`를 `Station Preview v1`로 공식화하는 방향으로 결정했다. Station Map graph와 Station modifier는 후속이다.
+- Market 생성 규칙 계획은 `MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`에 정리했다. 기본 offer 수 3/3, v1 cap 5, rarity weight, 중복 제외, 구매 후 재노출 방지, item offer save/restore 개선을 후속 구현 기준으로 둔다.
+- Blind/Station pacing baseline은 `BLIND_STATION_PACING_BASELINE_PLAN.md`에 `v4_pacing_baseline_1`로 기록했다. 이 pass는 수치 변경 없이 현재 target/reward/pressure 기준을 ML log 기준으로 고정한다.
+- Boss modifier taxonomy는 `BOSS_MODIFIER_TAXONOMY_PLAN.md`에 정리했다. Boss는 단순 목표 점수 증가가 아니라 preview/scoring/save/log에 노출되는 visible rule modifier로 다룬다.
+- Starting deck archetype reference는 `STARTING_DECK_ARCHETYPE_PLAN.md`에 정리했다. 현재 New Run은 Random/Seed만 유지하고, 후속 덱 선택은 `run_archetype_id`, 타일 강화는 `tile_modifier_id` 기준으로 ML/simulator에 먼저 연결한다.
+- Jester reference taxonomy는 `JESTER_REFERENCE_TAXONOMY_PLAN.md`에 정리했다. Balatro식 Joker 목록은 발동 순서, effect category, edition/penalty, ML feature 참고로만 사용하고 기존 Jester id는 유지한다.
+- Consumable/Voucher reference taxonomy는 `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에 정리했다. Balatro식 Tarot/Planet/Spectral/Voucher는 confirm modifier, tile enhancement, rank progression, high-risk mutation, run-long passive 후보로 분리한다.
 
 Animation polish backlog:
 
@@ -479,7 +485,7 @@ continue/delete/corrupt save 동선을 망가뜨리지 않는 것이다.
 
 - `TitleView`는 이미 `Continue / New Run / Trial / Archive / Settings` 섹션을 가진 Home 1차 구조로 재구성됐다.
 - `Continue`는 active run summary 중 현재 위치만 짧게 보여 주고, 체크포인트 상세는 일반 Home에서 제거했다.
-- `New Run`은 전용 route로 분리됐고, 현재 가능한 `Random / Input Seed` entry만 제품 화면에 노출한다. future setup/덱 placeholder는 일반 화면에서 제거했다.
+- `New Run`은 전용 route로 분리됐고, 현재 가능한 `Random / Input Seed` entry만 제품 화면에 노출한다. future setup/덱 placeholder는 일반 화면에서 제거했다. 후속 starting deck 선택은 `STARTING_DECK_ARCHETYPE_PLAN.md` 기준으로 simulator/log 경계가 잡힌 뒤 검토한다.
 - `새 게임 시작`은 이제 `난이도 선택 -> 블라인드 선택 -> 전투 시작`의 2단계 진입 구조로 이동하기 시작했다.
 - `블라인드 선택`은 별도 route로 분리됐고, 현재는 `스몰/빅/보스` 조건 card 3개를 한 화면에서 비교하게 보여 준다. 시작 액션은 card 전체 tap이 아니라 명시적인 play button에만 연결한다.
 - `Trial`/`Archive`는 현재 dedicated placeholder route 수준까지 분리됐다.
