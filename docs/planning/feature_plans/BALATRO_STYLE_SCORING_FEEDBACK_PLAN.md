@@ -73,26 +73,37 @@ Observed:
 
 ### P0. Scoring Preview
 
-- [ ] `RummiBattleRuntimeFacade` 또는 별도 read model에서 현재 확정 가능 line preview를 제공한다.
-- [ ] Preview에는 line count, 대표 족보명, base score, overlap bonus, expected Jester/Item effect count를 포함한다.
-- [ ] Battle action area 근처에 compact preview chip을 표시한다.
-- [ ] 확정할 줄이 없을 때는 `확정 하기` CTA를 낮은 대비로 두고 reason text를 짧게 표시한다.
+- [x] `RummiBattleRuntimeFacade` 또는 별도 read model에서 현재 확정 가능 line preview를 제공한다.
+- [x] Preview에는 line count, 대표 족보명, base score, overlap bonus, expected Jester/Item effect count를 포함한다.
+- [x] Battle action area 근처에 compact preview chip을 표시한다.
+- [x] 확정할 줄이 없을 때는 `확정 하기` CTA를 낮은 대비로 두고 reason text를 짧게 표시한다.
 
 ### P0. Item Active Effect Display
 
-- [ ] `GameItemZoneSkeleton`에 active item effects 입력을 추가한다.
-- [ ] `RummiJesterEffectBreakdown`을 그대로 쓸지, `ScoringEffectBreakdown` 같은 중립 타입으로 분리할지 결정한다.
-- [ ] Q/P/T/G slot이 발동하면 Jester와 같은 수준의 border pulse, badge, float token을 표시한다.
-- [ ] Item effect badge는 `+Chips`, `+Mult`, `xMult`, `+Score`, `overlap` 계열을 구분한다.
-- [ ] 수동 사용 Item feedback과 passive/confirm score Item feedback을 시각적으로 구분한다.
+- [x] `GameItemZoneSkeleton`에 active item effects 입력을 추가한다.
+- [x] `RummiJesterEffectBreakdown`을 그대로 쓸지, `ScoringEffectBreakdown` 같은 중립 타입으로 분리할지 결정한다.
+  - 현재는 save/schema 변경 없이 `ConfirmedLineBreakdown.effects`와 `RummiJesterEffectBreakdown`을 공통 scoring effect 입력으로 재사용한다.
+- [x] Q/P/T/G slot이 발동하면 Jester와 같은 수준의 border pulse, badge, float token을 표시한다.
+- [x] Item effect badge는 `+Chips`, `+Mult`, `xMult`, `+Score`, `overlap` 계열을 구분한다.
+  - 현재 표시 타입: `+Chips`, `+Mult`, `xMult`, `+Score`. `temporary_overlap_cap_bonus`는 scoring modifier 결과 기준 `xMult` 계열로 표시한다.
+- [x] 수동 사용 Item feedback과 passive/confirm score Item feedback을 시각적으로 구분한다.
+  - 수동 사용은 기존 item feedback toast, confirm/passive scoring은 item slot 위치의 pulse/badge/float로 분리한다.
 
 ### P0. Sequential Scoring Presentation
 
-- [ ] `_runSettlementSequence`를 line 단위뿐 아니라 effect step 단위로 표현할 수 있게 확장한다.
-- [ ] Step order를 고정한다: board line -> hand rank/base -> overlap -> Jester slot order -> Item slot order -> final score.
-- [ ] Jester는 현재 장착 슬롯 순서와 동일하게 pulse한다.
-- [ ] Item은 slot label 순서 또는 실제 modifier 적용 순서를 따른다.
-- [ ] 최종 점수 적용 시 Station Goal 숫자와 progress bar가 pulse한다.
+- [x] `_runSettlementSequence`를 line 단위뿐 아니라 effect step 단위로 표현할 수 있게 확장한다.
+- [x] Step order를 고정한다: board line -> hand rank/base -> overlap -> Jester slot order -> Item slot order -> final score.
+- [x] Jester는 현재 장착 슬롯 순서와 동일하게 pulse한다.
+- [x] Item은 slot label 순서 또는 실제 modifier 적용 순서를 따른다.
+  - 현재는 `ConfirmedLineBreakdown.effects`의 실제 적용 순서를 따르고, 해당 item id가 있는 Q/P/T/G slot 위치에서 표시한다.
+- [x] 최종 점수 적용 시 Station Goal 숫자와 progress bar가 pulse한다.
+
+Implementation notes:
+
+- 2026-04-30 적용 완료.
+- scoring transaction은 정산 버튼 직후 계산/커밋/저장되고, animation은 저장된 결과를 재생하는 presentation으로 동작한다.
+- 중앙 floating text는 최종 점수 합산에만 사용하고, board/rank/overlap은 board 위 callout, Jester/Item 점수는 각 slot 위치 burst로 표시한다.
+- iOS smoke 재실행 완료. 현재 검증은 `flutter analyze`, 관련 widget/provider/save tests, required iOS smoke 3 routes 기준이다.
 
 ### P1. Battle Slot Visual Hierarchy
 
@@ -146,4 +157,3 @@ Recommended tests:
 - Station/Blind 코드 symbol rename
 - economy 수치 변경
 - Jester/Item 영역 접기 또는 인벤토리식 숨김 처리
-

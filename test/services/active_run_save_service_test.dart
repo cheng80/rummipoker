@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
@@ -537,6 +538,76 @@ void main() {
         restored.stageStartSnapshot.session.boardMoveHistory.single.toRow,
         1,
       );
+    });
+
+    test('confirm transaction 저장은 완료된 점수와 보드 제거 상태를 복원한다', () async {
+      final session = RummiPokerGridSession(
+        runSeed: 6262,
+        blind: RummiBlindState(
+          targetScore: 300,
+          boardDiscardsRemaining: 4,
+          handDiscardsRemaining: 2,
+        ),
+      );
+      final runProgress = RummiRunProgress();
+      final stageStartSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      );
+
+      session.board.setCell(
+        0,
+        0,
+        const Tile(id: 1, color: TileColor.red, number: 1),
+      );
+      session.board.setCell(
+        0,
+        1,
+        const Tile(id: 2, color: TileColor.blue, number: 2),
+      );
+      session.board.setCell(
+        0,
+        2,
+        const Tile(id: 3, color: TileColor.yellow, number: 3),
+      );
+      session.board.setCell(
+        0,
+        3,
+        const Tile(id: 4, color: TileColor.black, number: 4),
+      );
+      session.board.setCell(
+        0,
+        4,
+        const Tile(id: 5, color: TileColor.red, number: 5),
+      );
+
+      final confirmed = session.confirmAllFullLines(applyScoreToBlind: false);
+      expect(confirmed.result.ok, isTrue);
+      session.addScoreToBlind(confirmed.result.scoreAdded);
+
+      await ActiveRunSaveService.saveRuntimeState(
+        ActiveRunRuntimeState(
+          activeScene: ActiveRunScene.battle,
+          difficulty: NewRunDifficulty.standard,
+          session: session,
+          runProgress: runProgress,
+          stageStartSnapshot: stageStartSnapshot,
+        ),
+      );
+
+      final restored = await ActiveRunSaveService.loadActiveRun();
+      expect(restored, isNotNull);
+      expect(restored!.activeScene, ActiveRunScene.battle);
+      expect(
+        restored.session.blind.scoreTowardBlind,
+        confirmed.result.scoreAdded,
+      );
+      for (var col = 0; col < 5; col++) {
+        expect(restored.session.board.cellAt(0, col), isNull);
+      }
+      expect(restored.session.eliminated.length, 5);
+      expect(restored.stageStartSnapshot.session.board.cellAt(0, 0), isNull);
+      expect(restored.stageStartSnapshot.session.blind.scoreTowardBlind, 0);
     });
   });
 }
