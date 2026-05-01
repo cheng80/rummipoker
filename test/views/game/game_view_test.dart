@@ -133,4 +133,5 @@ void main() {
     expect(find.text('게임결과'), findsNothing);
     expect(find.text('Market으로'), findsOneWidget);
   });
+
 }

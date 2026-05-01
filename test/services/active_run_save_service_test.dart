@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -615,6 +616,7 @@ void main() {
 
       final confirmed = session.confirmAllFullLines(applyScoreToBlind: false);
       expect(confirmed.result.ok, isTrue);
+      runProgress.onConfirmedLines(confirmed.result.lineBreakdowns);
       session.addScoreToBlind(confirmed.result.scoreAdded);
 
       await ActiveRunSaveService.saveRuntimeState(
@@ -638,8 +640,19 @@ void main() {
         expect(restored.session.board.cellAt(0, col), isNull);
       }
       expect(restored.session.eliminated.length, 5);
+      expect(
+        restored.runProgress.buildRuntimeSnapshot().playedCountForRank(
+          RummiHandRank.straight,
+        ),
+        1,
+      );
       expect(restored.stageStartSnapshot.session.board.cellAt(0, 0), isNull);
       expect(restored.stageStartSnapshot.session.blind.scoreTowardBlind, 0);
+      expect(
+        restored.stageStartSnapshot.runProgress.buildRuntimeSnapshot()
+            .playedCountForRank(RummiHandRank.straight),
+        0,
+      );
     });
   });
 }

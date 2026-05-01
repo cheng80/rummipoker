@@ -560,6 +560,51 @@ void main() {
       expect(updated.session!.expiryGuardUsedThisStation, isTrue);
     });
 
+    test('applyExpiryGuard는 목표 달성 후에는 안전망 연출 상태를 만들지 않는다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3103);
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'safety_net',
+            timing: 'expiry_guard',
+            op: 'rescue_first_expiry_each_station',
+            placement: 'passiveRack',
+          ),
+        ],
+      });
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.session!.blind
+        ..scoreTowardBlind = state.session!.blind.targetScore
+        ..boardDiscardsRemaining = 0
+        ..handDiscardsRemaining = 0;
+      state.runProgress!.itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'safety_net',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        passiveRelicIds: ['safety_net'],
+      );
+      notifier.markDirty();
+
+      final result = notifier.applyExpiryGuard(itemCatalog: catalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(result, isNull);
+      expect(updated.session!.expiryGuardUsedThisStation, isFalse);
+      expect(updated.runProgress!.itemInventory.ownedItems.single.count, 1);
+    });
+
     test('sellSelectedJesterOverlayFromState는 선택된 오버레이 슬롯을 판매한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -1084,6 +1129,53 @@ void main() {
       expect(updated.runProgress!.itemInventory.quickSlotItemIds, isEmpty);
     });
 
+    test('useBattleItem으로 보드 이동을 되돌리면 비어버린 보드 선택을 해제한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 143);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final item = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'undo_move',
+          timing: 'use_battle',
+          op: 'undo_last_board_move',
+          placement: 'quickSlot',
+        ),
+      );
+      state.runProgress!.itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'undo_move',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['undo_move'],
+      );
+
+      final drawn = state.session!.drawToHand();
+      expect(drawn, isNotNull);
+      expect(notifier.tryPlaceTile(drawn!, 0, 0), isTrue);
+      expect(
+        notifier.moveBoardTile(fromRow: 0, fromCol: 0, toRow: 0, toCol: 1),
+        isNull,
+      );
+      notifier.setSelectedBoardCell(0, 1);
+
+      final failMessage = notifier.useBattleItem(item);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.session!.board.cellAt(0, 0), drawn);
+      expect(updated.session!.board.cellAt(0, 1), isNull);
+      expect(updated.selectedBoardRow, isNull);
+      expect(updated.selectedBoardCol, isNull);
+    });
+
     test('rerollShop는 골드 부족 시 에러 문구를 반환한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -1557,6 +1649,83 @@ void main() {
       expect(runtime.session.blind.scoreTowardBlind, 0);
       expect(runtime.session, same(state.session));
       expect(runtime.runProgress, same(state.runProgress));
+    });
+
+    test('확정 직후 저장 runtime은 점수만 유지하고 정산 연출 상태는 복원하지 않는다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 4601);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final session = state.session!;
+      session.board.setCell(
+        0,
+        0,
+        const Tile(id: 1, color: TileColor.red, number: 1),
+      );
+      session.board.setCell(
+        0,
+        1,
+        const Tile(id: 2, color: TileColor.blue, number: 2),
+      );
+      session.board.setCell(
+        0,
+        2,
+        const Tile(id: 3, color: TileColor.yellow, number: 3),
+      );
+      session.board.setCell(
+        0,
+        3,
+        const Tile(id: 4, color: TileColor.black, number: 4),
+      );
+      session.board.setCell(
+        0,
+        4,
+        const Tile(id: 5, color: TileColor.red, number: 5),
+      );
+
+      final confirmed = notifier.confirmLines();
+      expect(confirmed, isNotNull);
+      notifier.setStageFlow(
+        phase: GameStageFlowPhase.confirmSettlement,
+        stageScoreAdded: confirmed!.totalScore,
+        activeSettlementLine: confirmed.lineBreakdowns.single,
+        activeSettlementStep: ScoringPresentationStep.finalScore,
+        settlementGoalDisplayScore: confirmed.totalScore,
+        bumpSettlementSequence: true,
+      );
+      notifier.applyConfirmedScore(confirmed.totalScore);
+
+      final savedLikeRuntime = notifier.buildSaveRuntimeState(
+        difficulty: NewRunDifficulty.standard,
+      );
+      final restoredContainer = ProviderContainer();
+      addTearDown(restoredContainer.dispose);
+      final restoredArgs = GameSessionArgs(
+        runSeed: 4601,
+        restoredRun: savedLikeRuntime,
+      );
+      final restored = restoredContainer.read(
+        gameSessionNotifierProvider(restoredArgs),
+      );
+
+      expect(
+        savedLikeRuntime.session.blind.scoreTowardBlind,
+        confirmed.totalScore,
+      );
+      expect(restored.session!.blind.scoreTowardBlind, confirmed.totalScore);
+      expect(restored.session!.board.cellAt(0, 0), isNull);
+      expect(restored.stageFlowPhase, GameStageFlowPhase.none);
+      expect(restored.stageScoreAdded, 0);
+      expect(restored.activeSettlementLine, isNull);
+      expect(restored.activeSettlementStep, ScoringPresentationStep.none);
+      expect(restored.settlementGoalDisplayScore, isNull);
+      expect(restored.settlementBoardSnapshot, isEmpty);
+      expect(restored.settlementSequenceTick, 0);
+      expect(restored.stageStartSnapshot!.session.blind.scoreTowardBlind, 0);
     });
 
     test(

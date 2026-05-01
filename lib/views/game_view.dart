@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,6 +33,7 @@ import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
 import 'game/widgets/game_options_dialog.dart';
+import 'game/widgets/game_effect_overlay.dart';
 import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
 import 'game/widgets/game_tile_choice_dialog.dart';
@@ -577,6 +579,10 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<bool> _tryApplyExpiryGuard() async {
+    if (_stageFlowPhase != GameStageFlowPhase.none ||
+        _stationView.objective.isMet) {
+      return false;
+    }
     final guardResult = _gameNotifier.applyExpiryGuard(
       itemCatalog: _itemCatalog,
     );
@@ -2158,6 +2164,15 @@ class _GameLayout extends StatelessWidget {
                       onTapCell: onBoardCellTap,
                     ),
                   ),
+                  Positioned.fill(
+                    child: GameBoardEffectOverlay(
+                      activeSettlementLine: activeSettlementLine,
+                      activeSettlementStep: activeSettlementStep,
+                      settlementSequenceTick: settlementSequenceTick,
+                      frameInset: kBoardFrameInset,
+                      gridGap: kBoardGridGap,
+                    ),
+                  ),
                   if (_showsBoardScoringCallout(activeSettlementStep) &&
                       activeSettlementLine != null)
                     Positioned(
@@ -2306,88 +2321,88 @@ class _BoardScoringCallout extends StatelessWidget {
         ? const Color(0xFFFF8E7E)
         : const Color(0xFFF2C14E);
     return IgnorePointer(
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-        builder: (context, value, child) {
-          final dy = (1 - value) * 10;
-          return Opacity(
-            opacity: value.clamp(0.0, 1.0),
-            child: Transform.translate(offset: Offset(0, dy), child: child),
-          );
-        },
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: const Color(0xE6153C31),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFF2C14E).withValues(alpha: 0.78),
-                width: 1.4,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFF2C14E).withValues(alpha: 0.16),
-                  blurRadius: 14,
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.28),
-                  blurRadius: 12,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
+      child:
+          Align(
+                alignment: Alignment.topCenter,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xE6153C31),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFF2C14E).withValues(alpha: 0.78),
+                      width: 1.4,
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: valueColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      detail,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.68),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        height: 1,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF2C14E).withValues(alpha: 0.16),
+                        blurRadius: 14,
+                        spreadRadius: 1,
                       ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: valueColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            detail,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.68),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
+              )
+              .animate()
+              .fadeIn(duration: 260.ms, curve: Curves.easeOutCubic)
+              .slideY(
+                begin: 0.18,
+                end: 0,
+                duration: 260.ms,
+                curve: Curves.easeOutCubic,
               ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -15,6 +15,7 @@ class GreedyBotPolicy extends BalanceSimBotPolicy {
   BalanceSimAction chooseAction(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
   }) {
     if (session.canConfirmAllFullLines) {
       return const BalanceSimAction.confirm();
@@ -25,7 +26,11 @@ class GreedyBotPolicy extends BalanceSimBotPolicy {
           : const BalanceSimAction.stop('no_hand_and_cannot_draw');
     }
 
-    final placement = _bestPlacement(session, jesters: jesters);
+    final placement = _bestPlacement(
+      session,
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+    );
     if (placement != null) return placement;
 
     if (session.blind.boardDiscardsRemaining > 0) {
@@ -44,6 +49,7 @@ class GreedyBotPolicy extends BalanceSimBotPolicy {
   BalanceSimAction? _bestPlacement(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
   }) {
     BalanceSimAction? bestAction;
     var bestScore = -1;
@@ -58,6 +64,7 @@ class GreedyBotPolicy extends BalanceSimBotPolicy {
           if (!placed) continue;
           final preview = copy.confirmAllFullLines(
             jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
             applyScoreToBlind: false,
           );
           final score = preview.result.scoreAdded;

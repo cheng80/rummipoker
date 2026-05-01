@@ -191,16 +191,10 @@ ML readiness 기준 우선순위:
    - 설명 패널 높이와 텍스트 말줄임 기준 안정화
    - button/dialog visual consistency 유지
 11. UI animation polish pass
-   - 기존 적용 유지: cash-out sheet의 단계별 보상 라인 등장, Jester scoring burst
-   - 현재 진행분 적용: scoring preview, board/rank/overlap callout, Jester/Item slot-local scoring burst, Station Goal pulse
-   - 남은 후보: settlement item bonus row 등장 타이밍, total gold 강조, Market route 진입/복귀, Next Station/Blind Select 전환
-   - 다음 UI 작업 기본 규칙: 새 modal/sheet/route/보상/아이템 효과는 120~260ms 범위의 짧은 fade/slide/step animation을 우선 검토
-   - 아이템 효과는 수동/패시브 모두 발동 사실과 실제 delta가 명확히 보여야 한다. snackbar만으로 끝내지 말고 overlay, badge, `+1` float, resource pulse 중 하나를 제공한다.
-   - 입력 차단 barrier는 직접 `ModalBarrier`와 색상 값을 하드코딩하지 말고 `GameInputBarrier.modal()` 또는 `GameInputBarrier.feedback()`를 사용한다.
-   - battle item/Jester slot UI는 의미별 표시와 잠금 상태를 분리한다. Quick/Passive/Jester 표시 개수와 초기 해금 개수는 공용 상수/용량 메서드를 사용하고, 새 UI에서 `Q3`, `P2`, `Jester 5th` 잠금을 다시 하드코딩하지 않는다.
-   - 연출이 2~3개 이상 추가되면 `stageFlowPhase`와 `activeSettlement*` 같은 개별 field 확장보다 transient `GamePresentationEvent` / `presentationQueue` 구조를 먼저 검토한다.
-   - presentation queue는 save DTO에 포함하지 않는다. save/continue의 source of truth는 runtime state이며, queue는 비어 있어도 게임 결과가 변하지 않아야 한다.
-   - 과하지 않게 적용: 입력 대기, 반복 플레이 속도, 정보 가독성을 방해하면 애니메이션을 줄이거나 생략
+   - 상세 목록/최적화 기준은 `docs/planning/ANIMATION_EFFECTS_PLAN.md`로 분리
+   - 현재 적용: cash-out reward stagger, Jester scoring burst, scoring preview, board/rank/overlap callout, Jester/Item slot-local scoring burst, Station Goal pulse, board line confirm Flame particle overlay skeleton
+   - 다음 후보: 기존 callout/toast Tween을 `flutter_animate`로 순차 치환, line confirm particle iOS 위치 확인, clear/boss/constraint particle 추가, Market card/reroll/buy feedback
+   - 핵심 기준: 연출은 transient presentation state이며 save DTO/simulator/runtime scoring에 포함하지 않는다. Flame visual overlay는 필요할 때만 마운트한다.
 12. Deferred run rule decision
    - Balatro식 blind skip 도입 여부와 조건 결정
    - 도입 시 save/checkpoint/reward 규칙을 먼저 문서화

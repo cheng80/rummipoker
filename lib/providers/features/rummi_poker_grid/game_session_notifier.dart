@@ -369,6 +369,31 @@ class GameSessionNotifier
     );
   }
 
+  GameSessionState _withValidSelections(GameSessionState current) {
+    final session = current.session;
+    if (session == null) return current;
+
+    final selectedHandTile = current.selectedHandTile;
+    final keepHandSelection =
+        selectedHandTile != null && session.hand.contains(selectedHandTile);
+    final selectedBoardRow = current.selectedBoardRow;
+    final selectedBoardCol = current.selectedBoardCol;
+    final keepBoardSelection =
+        selectedBoardRow != null &&
+        selectedBoardCol != null &&
+        selectedBoardRow >= 0 &&
+        selectedBoardRow < kBoardSize &&
+        selectedBoardCol >= 0 &&
+        selectedBoardCol < kBoardSize &&
+        session.board.cellAt(selectedBoardRow, selectedBoardCol) != null;
+
+    return current.copyWith(
+      selectedHandTile: keepHandSelection ? selectedHandTile : null,
+      selectedBoardRow: keepBoardSelection ? selectedBoardRow : null,
+      selectedBoardCol: keepBoardSelection ? selectedBoardCol : null,
+    );
+  }
+
   // -- Business logic --
 
   BattleBoardTapResult tapBoardCell(int row, int col) {
@@ -435,6 +460,9 @@ class GameSessionNotifier
     final session = state.session;
     final runProgress = state.runProgress;
     if (session == null || runProgress == null || itemCatalog == null) {
+      return null;
+    }
+    if (session.blind.scoreTowardBlind >= session.blind.targetScore) {
       return null;
     }
     final signals = session.evaluateExpirySignals();
@@ -914,7 +942,9 @@ class GameSessionNotifier
       runProgress: runProgress,
     );
     if (!result.isSuccess) return result.failMessage;
-    _replaceState(state.copyWith(revision: state.revision + 1));
+    _replaceState(
+      _withValidSelections(state).copyWith(revision: state.revision + 1),
+    );
     return null;
   }
 

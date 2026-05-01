@@ -10,6 +10,7 @@ abstract class BalanceSimBotPolicy {
   BalanceSimAction chooseAction(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
   });
 }
 
