@@ -147,7 +147,8 @@ class BlindSelectionSpecBuilder {
     final targetScore = switch (tier) {
       BlindTier.small => baseTarget,
       BlindTier.big => (baseTarget * 1.5).round(),
-      BlindTier.boss => (baseTarget * 2.0).round(),
+      BlindTier.boss =>
+        (baseTarget * _bossTargetMultiplier(stationIndex)).round(),
     };
     final boardDiscards = switch (tier) {
       BlindTier.small => baseBoardDiscards,
@@ -194,10 +195,24 @@ class BlindSelectionSpecBuilder {
       rewardPreview: rewardPreview,
       availability: availability,
       bossModifier: tier == BlindTier.boss
-          ? RummiBossModifier.redDampener
+          ? _bossModifierForStation(stationIndex)
           : null,
       lockReason: lockReason,
     );
+  }
+
+  static RummiBossModifier _bossModifierForStation(int stationIndex) {
+    const modifiers = [
+      RummiBossModifier.redDampener,
+      RummiBossModifier.rowDampener,
+    ];
+    final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
+    return modifiers[(normalizedStationIndex - 1) % modifiers.length];
+  }
+
+  static double _bossTargetMultiplier(int stationIndex) {
+    final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
+    return normalizedStationIndex == 1 ? 1.6 : 2.0;
   }
 
   static int _baseTargetForStation({

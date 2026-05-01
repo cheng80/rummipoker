@@ -484,6 +484,69 @@ void main() {
     expect(penalty.scoreDelta, -35);
   });
 
+  test('보스 가로줄 약화는 가로 점수 라인만 줄인다', () {
+    final board = RummiBoard();
+    const colors = [
+      TileColor.red,
+      TileColor.blue,
+      TileColor.yellow,
+      TileColor.black,
+      TileColor.red,
+    ];
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(2, i, t(colors[i], i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.rowDampener,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.ok, true);
+    expect(out.result.scoreAdded, 53);
+    expect(out.result.lineBreakdowns.single.ref.kind, LineKind.row);
+    final penalty = out.result.lineBreakdowns.single.constraintPenalties.single;
+    expect(penalty.title, '가로줄 약화');
+    expect(penalty.affectedLineKinds, [LineKind.row]);
+    expect(penalty.scoreDelta, -17);
+  });
+
+  test('보스 가로줄 약화는 세로 점수 라인에는 적용되지 않는다', () {
+    final board = RummiBoard();
+    const colors = [
+      TileColor.red,
+      TileColor.blue,
+      TileColor.yellow,
+      TileColor.black,
+      TileColor.red,
+    ];
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(i, 2, t(colors[i], i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.rowDampener,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.ok, true);
+    expect(out.result.scoreAdded, 70);
+    expect(out.result.lineBreakdowns.single.ref.kind, LineKind.col);
+    expect(out.result.lineBreakdowns.single.constraintPenalties, isEmpty);
+  });
+
   test('투페어 확정 시 매칭된 4장만 제거되고 키커는 남는다', () {
     final board = RummiBoard();
     board.setCell(1, 0, t(TileColor.red, 4));

@@ -675,6 +675,7 @@ class RummiPokerGridSession {
       final constraintPenalties = <RummiConstraintPenaltyBreakdown>[];
       final constraintScore = _applyBossModifierToLine(
         score: lineScore,
+        lineRef: line.ref,
         scoringTiles: line.scoringTiles,
       );
       lineScore = constraintScore.score;
@@ -865,14 +866,22 @@ class RummiPokerGridSession {
   ({int score, RummiConstraintPenaltyBreakdown? penalty})
   _applyBossModifierToLine({
     required int score,
+    required LineRef lineRef,
     required List<Tile> scoringTiles,
   }) {
     final modifier = blind.bossModifier;
     if (modifier == null || score <= 0) {
       return (score: score, penalty: null);
     }
-    if (modifier.category != RummiBossModifierCategory.tileColorWeaken ||
-        !modifier.affectsAnyTile(scoringTiles)) {
+    final affected = switch (modifier.category) {
+      RummiBossModifierCategory.tileColorWeaken => modifier.affectsAnyTile(
+        scoringTiles,
+      ),
+      RummiBossModifierCategory.lineKindWeaken => modifier.affectsLineKind(
+        lineRef.kind,
+      ),
+    };
+    if (!affected) {
       return (score: score, penalty: null);
     }
     final nextScore = (score * modifier.scoreMultiplier).round();
@@ -890,6 +899,7 @@ class RummiPokerGridSession {
         scoreDelta: delta,
         scoreMultiplier: modifier.scoreMultiplier,
         affectedTileColors: modifier.affectedTileColors,
+        affectedLineKinds: modifier.affectedLineKinds,
       ),
     );
   }

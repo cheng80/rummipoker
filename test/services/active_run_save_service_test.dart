@@ -359,6 +359,20 @@ void main() {
       expect(restored.bossModifier?.ruleText, contains('절반'));
     });
 
+    test('blind json preserves line-kind boss modifier', () {
+      final blind = RummiBlindState(
+        targetScore: 300,
+        bossModifier: RummiBossModifier.rowDampener,
+      );
+
+      final restored = RummiBlindState.fromJson(blind.toJson());
+
+      expect(restored.bossModifier?.id, RummiBossModifier.rowDampener.id);
+      expect(restored.bossModifier?.title, '가로줄 약화');
+      expect(restored.bossModifier?.affectedLineKinds, isNotEmpty);
+      expect(restored.bossModifier?.affectedTileColors, isEmpty);
+    });
+
     test(
       'saved run progress without itemInventory falls back to empty shape',
       () {
@@ -649,7 +663,8 @@ void main() {
       expect(restored.stageStartSnapshot.session.board.cellAt(0, 0), isNull);
       expect(restored.stageStartSnapshot.session.blind.scoreTowardBlind, 0);
       expect(
-        restored.stageStartSnapshot.runProgress.buildRuntimeSnapshot()
+        restored.stageStartSnapshot.runProgress
+            .buildRuntimeSnapshot()
             .playedCountForRank(RummiHandRank.straight),
         0,
       );

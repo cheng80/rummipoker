@@ -117,6 +117,13 @@
 - 사용자가 **문서화해 달라고 요청하기 전까지** `.md` 파일을 작성하지 않는다.
 - 설계, 플랜, 요약 등은 응답으로만 보여주고, 파일로 저장하지 않는다.
 
+## 분석 노트북/리포트
+
+- 노트북에서 Markdown 리포트를 인라인 표시할 때, 이미지 링크는 저장 파일 기준이 아니라 **노트북 파일 위치 기준**으로 다시 매핑해 깨지지 않게 한다.
+- 규칙 기반 라벨링·휴리스틱 리포트에는 “ML 학습/검증”처럼 오해될 이름을 쓰지 않는다. train/test/validation split, 모델, metric이 없으면 그 사실을 리포트와 노트북에 명시한다.
+- 레벨링 ML을 만들 때는 규칙 label 모방이 아니라 피처, supervised target, train/test split, metric, 모델 선택 근거, 데이터 부족 시 추가 실험안을 함께 설계한다.
+- 레벨링 sweep 데이터는 특정 병목(예: Boss)만 보지 말고, 기존 기준값을 만든 과정의 station curve, small/big/boss tier, difficulty, loadout, market profile 맥락을 함께 보존한다.
+
 ---
 
 ## 추가 참고

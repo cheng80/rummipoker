@@ -1,6 +1,7 @@
+import 'line_ref.dart';
 import 'models/tile.dart';
 
-enum RummiBossModifierCategory { tileColorWeaken }
+enum RummiBossModifierCategory { tileColorWeaken, lineKindWeaken }
 
 class RummiBossModifier {
   const RummiBossModifier({
@@ -9,13 +10,15 @@ class RummiBossModifier {
     required this.title,
     required this.ruleText,
     required this.markerText,
-    required this.affectedTileColors,
     required this.scoreMultiplier,
+    this.affectedTileColors = const [],
+    this.affectedLineKinds = const [],
   });
 
   factory RummiBossModifier.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String?;
     if (id == redDampener.id) return redDampener;
+    if (id == rowDampener.id) return rowDampener;
     return RummiBossModifier(
       id: id ?? redDampener.id,
       category: RummiBossModifierCategory.values.byName(
@@ -29,6 +32,11 @@ class RummiBossModifier {
               ?.map((value) => TileColor.values.byName(value as String))
               .toList(growable: false) ??
           redDampener.affectedTileColors,
+      affectedLineKinds:
+          (json['affectedLineKinds'] as List<dynamic>?)
+              ?.map((value) => LineKind.values.byName(value as String))
+              .toList(growable: false) ??
+          const [],
       scoreMultiplier:
           (json['scoreMultiplier'] as num?)?.toDouble() ??
           redDampener.scoreMultiplier,
@@ -45,17 +53,30 @@ class RummiBossModifier {
     scoreMultiplier: 0.5,
   );
 
+  static const rowDampener = RummiBossModifier(
+    id: 'row_line_dampener_v1',
+    category: RummiBossModifierCategory.lineKindWeaken,
+    title: '가로줄 약화',
+    ruleText: '가로줄 점수가 25% 감소합니다.',
+    markerText: '약화',
+    affectedLineKinds: [LineKind.row],
+    scoreMultiplier: 0.75,
+  );
+
   final String id;
   final RummiBossModifierCategory category;
   final String title;
   final String ruleText;
   final String markerText;
   final List<TileColor> affectedTileColors;
+  final List<LineKind> affectedLineKinds;
   final double scoreMultiplier;
 
   bool affectsTile(Tile tile) => affectedTileColors.contains(tile.color);
 
   bool affectsAnyTile(Iterable<Tile> tiles) => tiles.any(affectsTile);
+
+  bool affectsLineKind(LineKind kind) => affectedLineKinds.contains(kind);
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -64,6 +85,7 @@ class RummiBossModifier {
     'ruleText': ruleText,
     'markerText': markerText,
     'affectedTileColors': [for (final color in affectedTileColors) color.name],
+    'affectedLineKinds': [for (final kind in affectedLineKinds) kind.name],
     'scoreMultiplier': scoreMultiplier,
   };
 }
@@ -77,6 +99,7 @@ class RummiConstraintPenaltyBreakdown {
     required this.scoreDelta,
     required this.scoreMultiplier,
     this.affectedTileColors = const [],
+    this.affectedLineKinds = const [],
   });
 
   final String modifierId;
@@ -86,4 +109,5 @@ class RummiConstraintPenaltyBreakdown {
   final int scoreDelta;
   final double scoreMultiplier;
   final List<TileColor> affectedTileColors;
+  final List<LineKind> affectedLineKinds;
 }

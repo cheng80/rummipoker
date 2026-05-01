@@ -53,6 +53,25 @@ void main() {
       expect(options[2].bossModifier?.title, '빨간 타일 약화');
     });
 
+    test('station별 boss modifier는 deterministic하게 순환한다', () {
+      final station1 = BlindSelectionSetup.buildForStation(
+        stationIndex: 1,
+        clearedBlindTierIndex: 1,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final station2 = BlindSelectionSetup.buildForStation(
+        stationIndex: 2,
+        clearedBlindTierIndex: 1,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+
+      expect(station1[2].bossModifier?.id, 'red_dampener_v1');
+      expect(station2[2].bossModifier?.id, 'row_line_dampener_v1');
+      expect(station2[2].bossModifier?.title, '가로줄 약화');
+    });
+
     test('boss 클리어 후 blind select runtime은 다음 station small 시작 상태로 리셋된다', () {
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.blindSelect,
@@ -102,6 +121,54 @@ void main() {
       );
 
       expect(stationTwo.targetScore, greaterThan(stationOne.targetScore));
+    });
+
+    test('station 1 boss는 유입 구간용으로 목표 배율만 완화한다', () {
+      final small = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.small,
+        stationIndex: 1,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final big = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.big,
+        stationIndex: 1,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final boss = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 1,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+
+      expect(small.targetScore, 270);
+      expect(big.targetScore, 405);
+      expect(boss.targetScore, 432);
+      expect(boss.boardDiscards, big.boardDiscards);
+      expect(boss.handDiscards, 1);
+      expect(boss.maxHandSize, 1);
+      expect(boss.bossModifier?.id, 'red_dampener_v1');
+    });
+
+    test('station 2 이후 boss 목표 배율은 기존 강도를 유지한다', () {
+      final small = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.small,
+        stationIndex: 2,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final boss = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 2,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+
+      expect(small.targetScore, 432);
+      expect(boss.targetScore, 864);
+      expect(boss.bossModifier?.id, 'row_line_dampener_v1');
     });
 
     test('selected blind start applies active item station start effects', () {
