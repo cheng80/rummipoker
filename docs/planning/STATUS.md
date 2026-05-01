@@ -16,7 +16,7 @@
 
 현재 한 줄 결론:
 
-> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, Balatro-style scoring feedback P0, Item effect runtime v1 hook, full loop fixture smoke, Settlement -> Market affordance, Market -> Blind Select transition affordance, market readability polish는 1차 구현/검증됐다. Station Preview/Map scope, Market offer count/rarity roll 계획, Blind/Station pacing baseline, Boss modifier taxonomy, Starting deck archetype reference, Jester taxonomy reference, Consumable/Voucher taxonomy reference도 정리했다. 다음 구현 초점은 balance simulation readiness다.
+> 프로토타입을 V4 구조로 흡수하기 위한 기반 공사는 거의 끝났고, Balatro-style scoring feedback P0, Item effect runtime v1 hook, full loop fixture smoke, Settlement -> Market affordance, Market -> Blind Select transition affordance, market readability polish는 1차 구현/검증됐다. Station Preview/Map scope, Market offer count/rarity roll 계획, Blind/Station pacing baseline, Boss modifier taxonomy, Starting deck archetype reference, Jester taxonomy reference, Consumable/Voucher taxonomy reference도 정리했다. Balance simulation readiness는 CLI/runtime import spike와 row contract 기준으로 닫았고, 다음 구현 초점은 bot policy 품질 개선과 연출 polish다.
 
 ## 2. Latest Implementation State
 
@@ -48,6 +48,8 @@
 - 정산 점수 표시 보정 적용 완료: 확정 점수는 버튼 직후 runtime/save 기준으로 커밋하고, Station Goal 화면 숫자는 line별 final score 단계에서 뒤따라 표시한다. 후속 연출이 늘어나면 `GamePresentationEvent` / `presentationQueue` 형태의 transient event list로 묶는 것을 우선 검토한다.
 - Starting deck archetype 방향 정리: Balatro식 시작 덱/카드 강화는 참고하되, 현재 New Run은 Random/Seed만 유지한다. 후속 작업은 `run_archetype_id`와 `tile_modifier_id` 기준으로 ML/simulator에 먼저 연결한다.
 - Home/New Run/Blind Select 시작 flow는 제품용 정보량으로 정리됐다. Home은 짧은 continue/new-run entry만 보여 주고, New Run은 Random/Seed entry 중심, Blind Select는 `Small/Big/Boss` 3개 card 비교와 명시적 play button 시작 액션을 사용한다.
+- Balance simulation readiness 구현 완료: `tools/sim/run_balance_sim.dart`는 기존 runtime을 CLI에서 얇게 호출하고, deterministic matrix, runtime snapshot, item/Jester/boss/difficulty/station 조건, ML row contract, summary output, clear/expiry/save parity 테스트를 갖는다. `planner_v1` bot은 `greedy_v1`과 별도 id로 비교 가능하다.
+- Animation effects plan 분리 완료: `docs/planning/ANIMATION_EFFECTS_PLAN.md`에서 Flutter/Flame/particle 연출 목록, 최적화 기준, `bejeweled_classic` 참고 요소, 적용 순서를 관리한다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
 ## 3. Current Verification Baseline
@@ -170,13 +172,10 @@ ML readiness 기준 우선순위:
    - 완료: 보스 블라인드의 첫 visible rule modifier로 `빨간 타일 약화`를 적용했다.
    - 연결: Blind Select card, battle entry popup, board/hand compact marker, scoring penalty callout, save/restore.
 7. Balance simulation readiness pass
-   - `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md` 기준으로 log field, deterministic seed, bot boundary, UI 의존성 제거 목록을 확정한다.
-   - `/plan-eng-review` 입력 범위는 `docs/planning/feature_plans/BALANCE_SIMULATION_READINESS_PLAN.md`를 기준으로 본다.
-   - 현재 권장 구현 진입점은 기존 runtime을 재구성하는 것이 아니라 CLI import spike로 재사용 가능성을 먼저 확인하는 것이다.
-   - `run_archetype_id = standard_tile_deck_v1` 같은 시작 덱 기준 필드를 read-only로 먼저 포함한다.
-   - Jester effect category와 edition/penalty count는 `JESTER_REFERENCE_TAXONOMY_PLAN.md` 기준으로 feature 후보에 포함한다.
-   - Consumable/Voucher effect category와 rank progression은 `CONSUMABLE_VOUCHER_REFERENCE_PLAN.md` 기준으로 feature 후보에 포함한다.
-   - 아직 PyTorch 구현이 아니라 `tools/sim/run_balance_sim.dart`를 만들 수 있는 준비 상태를 만든다.
+   - 완료: 기존 runtime을 CLI에서 얇게 호출하는 `tools/sim/run_balance_sim.dart`가 동작한다.
+   - 완료: deterministic seed/matrix, loadout/difficulty/target/result/margin/outcome/resource end-state/summary output row contract를 테스트로 고정했다.
+   - 완료: clear 우선, expiry는 미클리어일 때만 outcome 원인이라는 실게임 parity를 테스트로 고정했다.
+   - 후속은 readiness가 아니라 simulation quality 영역이다. 현재 시작점은 `greedy_v1` 대비 `planner_v1` bot policy 비교다.
 8. Save/restore 확장 점검
    - scoring feedback P0와 `slide_wax` runtime 기준 targeted regression은 통과
    - 2026-04-30 fixture full loop smoke는 Station 2 Blind Select까지 도달
@@ -192,8 +191,8 @@ ML readiness 기준 우선순위:
    - button/dialog visual consistency 유지
 11. UI animation polish pass
    - 상세 목록/최적화 기준은 `docs/planning/ANIMATION_EFFECTS_PLAN.md`로 분리
-   - 현재 적용: cash-out reward stagger, Jester scoring burst, scoring preview, board/rank/overlap callout, Jester/Item slot-local scoring burst, Station Goal pulse, board line confirm Flame particle overlay skeleton
-   - 다음 후보: 기존 callout/toast Tween을 `flutter_animate`로 순차 치환, line confirm particle iOS 위치 확인, clear/boss/constraint particle 추가, Market card/reroll/buy feedback
+   - 현재 적용: cash-out reward stagger, Jester scoring burst, scoring preview, board/rank/overlap callout, Jester/Item slot-local scoring burst, Station Goal pulse, board line confirm Flame particle overlay skeleton, 일부 callout/toast/score preview `flutter_animate` 치환
+   - 다음 후보: 남은 callout/toast Tween을 `flutter_animate`로 순차 치환, line confirm particle iOS 위치 확인, clear/boss/constraint particle 추가, Market card/reroll/buy feedback
    - 핵심 기준: 연출은 transient presentation state이며 save DTO/simulator/runtime scoring에 포함하지 않는다. Flame visual overlay는 필요할 때만 마운트한다.
 12. Deferred run rule decision
    - Balatro식 blind skip 도입 여부와 조건 결정

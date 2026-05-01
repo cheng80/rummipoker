@@ -37,6 +37,7 @@ class DebugRunFixtureService {
   static const String inventorySellHookShop = 'inventory_sell_hook_shop';
   static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
+  static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
 
   /// 새 디버그 픽스처는 여기에 등록하고, 아래에 대응하는 builder를 추가한다.
   static final List<DebugRunFixtureDefinition> _fixtures = [
@@ -88,6 +89,13 @@ class DebugRunFixtureService {
       label: 'Safety Net 종료 방지',
       description: 'Safety Net 보유 / 보드가 꽉 찬 종료 위기 구조 검증용',
       builder: _buildSafetyNetExpiryGuard,
+    ),
+    DebugRunFixtureDefinition(
+      id: animationEffectsEyeCheck,
+      label: '연출 눈검증 전투',
+      description:
+          '점수 preview pulse / line confirm particle / quick item toast 검증용',
+      builder: _buildAnimationEffectsEyeCheck,
     ),
   ];
 
@@ -478,6 +486,47 @@ class DebugRunFixtureService {
   }
 
   static ActiveRunRuntimeState _buildInventoryQuickSlotBattle() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'board_scrap',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'hand_scrap',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'move_token',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'spare_pouch',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        quickSlotItemIds: ['board_scrap', 'hand_scrap', 'move_token'],
+        passiveRelicIds: ['spare_pouch'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildAnimationEffectsEyeCheck() {
     final base = _buildStage2ScoringSnapshot();
     final runProgress = base.runProgress.copySnapshot()
       ..itemInventory = const RunInventoryState(

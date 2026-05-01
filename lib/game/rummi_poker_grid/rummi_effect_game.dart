@@ -43,10 +43,10 @@ class RummiEffectGame extends FlameGame {
       pool.spawn(
         center: center,
         baseColor: const Color(0xFFF2C14E),
-        count: 10,
-        lifetime: 0.42,
-        speedScale: 0.86,
-        sizeScale: 0.88,
+        count: 12,
+        lifetime: 0.68,
+        speedScale: 0.76,
+        sizeScale: 0.95,
         withGlow: false,
       );
     }

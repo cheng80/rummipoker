@@ -116,6 +116,72 @@ void main() {
     expect(missingOutCode, 64);
   });
 
+  test('CLI accepts planner bot and repeats deterministically', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final greedyOut = '${dir.path}/greedy.jsonl';
+    final firstPlannerOut = '${dir.path}/planner_first.jsonl';
+    final secondPlannerOut = '${dir.path}/planner_second.jsonl';
+    final baseArgs = ['--runs', '1', '--seed', '42'];
+
+    final greedyCode = await runBalanceSim([
+      ...baseArgs,
+      '--bot',
+      'greedy_v1',
+      '--out',
+      greedyOut,
+    ]);
+    final firstPlannerCode = await runBalanceSim([
+      ...baseArgs,
+      '--bot',
+      'planner_v1',
+      '--out',
+      firstPlannerOut,
+    ]);
+    final secondPlannerCode = await runBalanceSim([
+      ...baseArgs,
+      '--bot',
+      'planner_v1',
+      '--out',
+      secondPlannerOut,
+    ]);
+
+    expect(greedyCode, 0);
+    expect(firstPlannerCode, 0);
+    expect(secondPlannerCode, 0);
+    expect(
+      File(firstPlannerOut).readAsStringSync(),
+      File(secondPlannerOut).readAsStringSync(),
+    );
+
+    final greedyRow =
+        jsonDecode(File(greedyOut).readAsStringSync()) as Map<String, dynamic>;
+    final plannerRow =
+        jsonDecode(File(firstPlannerOut).readAsStringSync())
+            as Map<String, dynamic>;
+    final plannerStartState = plannerRow['start_state'] as Map<String, dynamic>;
+    final greedyResult = greedyRow['result'] as Map<String, dynamic>;
+    final plannerResult = plannerRow['result'] as Map<String, dynamic>;
+
+    _expectBalanceSimRowContract(greedyRow);
+    _expectBalanceSimRowContract(plannerRow);
+    expect(greedyRow['bot_policy'], 'greedy_v1');
+    expect(plannerRow['bot_policy'], 'planner_v1');
+    expect(plannerResult['cleared'], isTrue);
+    expect(plannerResult['stop_reason'], 'cleared');
+    expect(plannerResult['confirm_action_count'], greaterThan(0));
+    expect(plannerResult['discarded_board_count'], 0);
+    expect(
+      plannerResult['remaining_board_discards'],
+      plannerStartState['board_discards'],
+    );
+    expect(
+      plannerResult['discarded_board_count'] as int,
+      lessThan(greedyResult['discarded_board_count'] as int),
+    );
+  });
+
   test('CLI records loadout feature summary for ML grouping', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
     addTearDown(() => dir.deleteSync(recursive: true));
@@ -548,8 +614,7 @@ void main() {
     final safetySummary = rows[2]['loadout_summary'] as Map<String, dynamic>;
     final scoreAbacusSummary =
         rows[3]['loadout_summary'] as Map<String, dynamic>;
-    final mobilitySummary =
-        rows[4]['loadout_summary'] as Map<String, dynamic>;
+    final mobilitySummary = rows[4]['loadout_summary'] as Map<String, dynamic>;
 
     expect(baselineStart['jester_ids'], isEmpty);
     expect(baselineStart['item_ids'], isEmpty);
@@ -558,9 +623,7 @@ void main() {
     expect(safetyStart['item_ids'], ['safety_net']);
     expect(safetySummary['item_tag_counts'], containsPair('safety', 1));
     expect(scoreAbacusStart['item_ids'], ['score_abacus']);
-    expect(scoreAbacusSummary['item_effect_op_counts'], {
-      'chips_bonus': 1,
-    });
+    expect(scoreAbacusSummary['item_effect_op_counts'], {'chips_bonus': 1});
     expect(mobilityStart['item_ids'], ['move_token', 'slide_wax']);
     expect(mobilitySummary['item_effect_op_counts'], {
       'add_board_move': 1,

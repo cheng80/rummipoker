@@ -1685,107 +1685,103 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
     final accent = feedback.passive
         ? const Color(0xFF6EE7B7)
         : const Color(0xFFF4A81D);
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        final opacity = value < 0.15 ? value / 0.15 : 1.0;
-        return Opacity(
-          opacity: opacity.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, (1 - value) * 18),
-            child: child,
-          ),
-        );
-      },
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F2B23).withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accent.withValues(alpha: 0.75), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: accent.withValues(alpha: 0.22),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+    return DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F2B23).withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.75),
+              width: 1.5,
             ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Icon(
-                feedback.passive ? Icons.shield_rounded : Icons.bolt_rounded,
-                color: accent,
-                size: 28,
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.22),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      feedback.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      feedback.detail,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: accent,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
-                    ),
-                  ],
-                ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.28),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              if (feedback.passive)
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withValues(alpha: 0.35)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
-                    ),
-                    child: Text(
-                      '패시브',
-                      style: TextStyle(
-                        color: accent,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
-        ),
-      ),
-    );
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  feedback.passive ? Icons.shield_rounded : Icons.bolt_rounded,
+                  color: accent,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        feedback.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        feedback.detail,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (feedback.passive)
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: accent.withValues(alpha: 0.35)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 5,
+                      ),
+                      child: Text(
+                        '패시브',
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 340.ms, curve: Curves.easeOutCubic)
+        .slideY(
+          begin: 0.12,
+          end: 0,
+          duration: 340.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
@@ -2396,11 +2392,11 @@ class _BoardScoringCallout extends StatelessWidget {
                 ),
               )
               .animate()
-              .fadeIn(duration: 260.ms, curve: Curves.easeOutCubic)
+              .fadeIn(duration: 420.ms, curve: Curves.easeOutCubic)
               .slideY(
-                begin: 0.18,
+                begin: 0.12,
                 end: 0,
-                duration: 260.ms,
+                duration: 420.ms,
                 curve: Curves.easeOutCubic,
               ),
     );
@@ -2519,58 +2515,77 @@ class _ScoringPreviewChip extends StatelessWidget {
         : 'Base ${preview.baseScore}'
               '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
               ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';
+    final pulseKey = ValueKey(
+      preview == null
+          ? 'score-preview-empty'
+          : 'score-preview-${preview.expectedScore}-${preview.lineCount}',
+    );
     return SizedBox(
       height: 28,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.16),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: accent.withValues(alpha: 0.42)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Row(
-            children: [
-              Icon(
-                preview == null
-                    ? Icons.info_outline_rounded
-                    : Icons.auto_awesome_rounded,
-                color: accent,
-                size: 14,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: preview == null ? Colors.white54 : Colors.white,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
+      child:
+          DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: accent.withValues(alpha: 0.42)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        preview == null
+                            ? Icons.info_outline_rounded
+                            : Icons.auto_awesome_rounded,
+                        color: accent,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: preview == null
+                                ? Colors.white54
+                                : Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          detail,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              )
+              .animate(key: pulseKey)
+              .fadeIn(duration: 260.ms, curve: Curves.easeOutCubic)
+              .scale(
+                begin: const Offset(0.985, 0.985),
+                end: const Offset(1, 1),
+                duration: 300.ms,
+                curve: Curves.easeOutCubic,
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  detail,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    color: accent,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

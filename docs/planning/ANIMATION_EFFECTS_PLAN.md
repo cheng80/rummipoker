@@ -13,10 +13,21 @@ source of truth는 runtime state다.
 - Jester/Item slot-local scoring burst
 - Station Goal pulse
 - board line confirm Flame particle overlay skeleton
+- `_BoardScoringCallout`, `_ItemEffectFeedbackToast`, `_ScoringPreviewChip` 일부 `flutter_animate` 적용
+
+## 눈검증 진입점
+
+- Route: `/game?fixture=animation_effects_eye_check`
+- 확인 순서:
+  - 진입 직후 scoring preview chip pulse와 board/rank/overlap callout 후보 상태를 본다.
+  - `확정`을 눌러 line confirm particle, score callout, settlement step 흐름을 본다.
+  - 다시 fixture에 진입한 뒤 보드 타일 하나를 선택하고 quick slot item을 눌러 item effect toast를 본다.
+  - 필요하면 `tools/ios_sim_smoke.sh --route "/game?fixture=animation_effects_eye_check" --settle 8`로 iOS 화면을 연다.
 
 ## 공통 규칙
 
 - 새 modal/sheet/route/보상/아이템 효과는 120~260ms 범위의 짧은 fade/slide/step animation을 우선 검토한다.
+- 점수/효과 내용을 읽어야 하는 callout, scoring preview, item toast는 320~420ms 진입 연출까지 허용한다.
 - 아이템 효과는 수동/패시브 모두 발동 사실과 실제 delta가 명확히 보여야 한다. snackbar만으로 끝내지 말고 overlay, badge, `+1` float, resource pulse 중 하나를 제공한다.
 - Flutter 내장 `AnimationController`/`Tween`만 고집하지 않는다. 동일한 fade/slide/scale/number tween boilerplate가 반복되거나 연출이 2~3 step 이상으로 늘면 `flutter_animate` 같은 Flutter-native tween helper를 presentation layer 한정으로 검토한다.
 - 입력 차단 barrier는 직접 `ModalBarrier`와 색상 값을 하드코딩하지 말고 `GameInputBarrier.modal()` 또는 `GameInputBarrier.feedback()`를 사용한다.
@@ -122,7 +133,7 @@ source of truth는 runtime state다.
 
 ## 적용 순서
 
-1. `flutter_animate`로 기존 callout/toast Tween 보일러플레이트를 순차 치환
+1. 남은 기존 callout/toast Tween 보일러플레이트를 순차 치환
 2. line confirm particle 위치를 iOS 시뮬레이터에서 확인
 3. clear burst와 boss/constraint impact를 Flame overlay에 추가
 4. Market 상품 카드 등장/리롤 stagger 적용

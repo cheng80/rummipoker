@@ -11,6 +11,7 @@ import 'package:rummipoker/services/new_run_setup.dart';
 
 import 'bot_policy.dart';
 import 'greedy_bot.dart';
+import 'planner_bot.dart';
 
 const _balanceVersion = 'v4_pacing_baseline_1';
 const _jesterCatalogPath = 'data/common/jesters_common_phase5.json';
@@ -643,6 +644,7 @@ RunInventoryState _buildInventory(ItemCatalog catalog, List<String> ids) {
 BalanceSimBotPolicy _createBot(String id) {
   return switch (id) {
     'greedy_v1' => const GreedyBotPolicy(),
+    'planner_v1' => const PlannerBotPolicy(),
     _ => throw FormatException('Unknown bot: $id'),
   };
 }
@@ -785,7 +787,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item] [--jester id] [--item id]';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item] [--jester id] [--item id]';
 
   static BlindTier _parseBlindTier(String raw) {
     return switch (raw) {

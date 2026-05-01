@@ -30,7 +30,7 @@ class GameBoardEffectOverlay extends StatefulWidget {
 }
 
 class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
-  static const Duration _effectVisibleDuration = Duration(milliseconds: 720);
+  static const Duration _effectVisibleDuration = Duration(milliseconds: 1050);
 
   late final RummiEffectGame _game;
   String? _lastBurstSignature;

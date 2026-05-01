@@ -153,6 +153,26 @@ void main() {
     },
   );
 
+  test('animation effects fixture exposes score and item feedback setup', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.animationEffectsEyeCheck,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.session.canConfirmAllFullLines, isTrue);
+    expect(fixture.runProgress.ownedJesters.map((card) => card.id), [
+      'crazy_jester',
+      'scary_face',
+    ]);
+    expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+      'board_scrap',
+      'hand_scrap',
+      'move_token',
+    ]);
+    expect(fixture.runProgress.itemInventory.passiveRelicIds, ['spare_pouch']);
+  });
+
   test('safety net fixture starts with board-full expiry guard state', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.safetyNetExpiryGuard,
