@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import itertools
 import json
 import subprocess
@@ -44,6 +45,7 @@ DEFAULT_OPTIONS: dict[str, Any] = {
     "out_prefix": "logs/sim/ml_sweep_dataset",
     "keep_candidate_files": False,
     "summary_only": False,
+    "jobs": 1,
 }
 HEARTBEAT_SECONDS = 30
 
@@ -81,6 +83,26 @@ class SweepCandidate:
             "base_experiment_id": self.experiment_id_base,
             **self.metadata_values,
         }
+
+
+@dataclass(frozen=True)
+class CandidateRunPlan:
+    """후보 하나를 실행하기 위한 파일/seed 계획."""
+
+    index: int
+    candidate: SweepCandidate
+    seed: int
+    raw_path: Path
+    summary_path: Path
+
+
+@dataclass(frozen=True)
+class CandidateRunResult:
+    """후보 실행 완료 후 병합에 필요한 결과."""
+
+    plan: CandidateRunPlan
+    summary: dict[str, Any]
+    elapsed_seconds: float
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -165,6 +187,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="최종 통합 JSONL을 만들지 않고 summary/report만 보존합니다.",
     )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=DEFAULT_OPTIONS["jobs"],
+        help="동시에 실행할 후보 수입니다. 기본값 1은 기존 순차 실행입니다.",
+    )
     args = parser.parse_args(argv)
 
     options = dict(DEFAULT_OPTIONS)
@@ -197,6 +225,7 @@ def main(argv: list[str] | None = None) -> int:
             "out_prefix": args.out_prefix,
             "keep_candidate_files": args.keep_candidate_files,
             "summary_only": args.summary_only,
+            "jobs": args.jobs,
         },
     )
 
@@ -230,52 +259,47 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
     candidates = _build_candidates(resolved)
     combined_lines: list[str] = []
     combined_groups: list[dict[str, Any]] = []
+    combined_sequence_groups: list[dict[str, Any]] = []
     total_run_count = 0
+    total_sequence_run_count = 0
     candidate_summaries: list[dict[str, Any]] = []
     sweep_started_at = time.monotonic()
 
     print(
         f"[sweep] mode={resolved['mode']} candidates={len(candidates)} "
-        f"runs={resolved['runs']} out_prefix={out_prefix}",
+        f"runs={resolved['runs']} jobs={resolved['jobs']} "
+        f"out_prefix={out_prefix}",
         flush=True,
     )
 
-    for index, candidate in enumerate(candidates):
-        candidate_started_at = time.monotonic()
-        candidate_seed = int(resolved["seed"]) + _candidate_seed_offset(candidate)
-        raw_path = out_prefix.with_name(
-            f"{out_prefix.name}_{candidate.candidate_id}.jsonl",
-        )
-        summary_path = out_prefix.with_name(
-            f"{out_prefix.name}_{candidate.candidate_id}_summary.json",
-        )
-        print(
-            f"[sweep] start {index + 1}/{len(candidates)} "
-            f"{candidate.candidate_id} seed={candidate_seed}",
-            flush=True,
-        )
-        _run_candidate(
-            resolved=resolved,
-            candidate=candidate,
-            seed=candidate_seed,
-            raw_path=raw_path,
-            summary_path=summary_path,
-        )
-        candidate_summary = _read_summary(summary_path)
+    plans = _candidate_run_plans(
+        candidates=candidates,
+        out_prefix=out_prefix,
+        seed_base=int(resolved["seed"]),
+    )
+    run_results = _run_candidate_plans(resolved=resolved, plans=plans)
+
+    for result in run_results:
+        candidate = result.plan.candidate
+        candidate_summary = result.summary
         candidate_summaries.append(candidate_summary)
         total_run_count += int(candidate_summary.get("run_count", 0))
+        total_sequence_run_count += int(candidate_summary.get("sequence_run_count", 0))
         if not resolved["summary_only"]:
-            combined_lines.extend(_candidate_jsonl_lines(raw_path, candidate, index))
+            combined_lines.extend(
+                _candidate_jsonl_lines(
+                    result.plan.raw_path,
+                    candidate,
+                    result.plan.index,
+                ),
+            )
         combined_groups.extend(_candidate_groups(candidate_summary, candidate))
-        print(
-            f"[sweep] done {index + 1}/{len(candidates)} "
-            f"{candidate.candidate_id} groups={len(candidate_summary.get('groups', []))} "
-            f"elapsed={_duration(time.monotonic() - candidate_started_at)}",
-            flush=True,
+        combined_sequence_groups.extend(
+            _candidate_sequence_groups(candidate_summary, candidate),
         )
         if not resolved["keep_candidate_files"]:
-            raw_path.unlink(missing_ok=True)
-            summary_path.unlink(missing_ok=True)
+            result.plan.raw_path.unlink(missing_ok=True)
+            result.plan.summary_path.unlink(missing_ok=True)
 
     source_path = None
     if not resolved["summary_only"]:
@@ -288,12 +312,24 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
         "schema_version": 1,
         "source_path": source_path,
         "run_count": total_run_count,
+        "sequence_run_count": total_sequence_run_count,
         "group_by": [
             "experiment_id",
+            "market_profile",
+            "resolved_market_profile",
             "loadout_id",
             "station",
             "blind_tier",
             "difficulty",
+        ],
+        "sequence_group_by": [
+            "experiment_id",
+            "market_profile",
+            "resolved_market_profile",
+            "loadout_id",
+            "difficulty",
+            "station_path",
+            "tier_path",
         ],
         "sweep": {
             "kind": resolved["mode"],
@@ -305,8 +341,10 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
             "loadout_ids": resolved["loadout_ids"],
             "market_profiles": resolved["market_profiles"],
             "summary_only": resolved["summary_only"],
+            "jobs": resolved["jobs"],
         },
         "groups": combined_groups,
+        "sequence_groups": combined_sequence_groups,
     }
     combined_summary_path.write_text(
         json.dumps(combined_summary, ensure_ascii=False),
@@ -378,6 +416,10 @@ def _resolve_options(options: dict[str, Any]) -> dict[str, Any]:
     resolved["mode"] = mode
     resolved["runs"] = runs
     resolved["seed"] = int(resolved["seed"])
+    jobs = int(resolved["jobs"])
+    if jobs <= 0:
+        raise MlSweepError("jobs는 1 이상이어야 합니다.")
+    resolved["jobs"] = jobs
     return resolved
 
 
@@ -478,6 +520,106 @@ def _require_candidates(candidates: list[SweepCandidate]) -> list[SweepCandidate
     if not candidates:
         raise MlSweepError("생성할 후보가 없습니다.")
     return candidates
+
+
+def _candidate_run_plans(
+    *,
+    candidates: list[SweepCandidate],
+    out_prefix: Path,
+    seed_base: int,
+) -> list[CandidateRunPlan]:
+    """후보 실행 파일명을 미리 고정해 병렬 실행에서도 병합 순서를 유지한다."""
+
+    plans: list[CandidateRunPlan] = []
+    for index, candidate in enumerate(candidates):
+        plans.append(
+            CandidateRunPlan(
+                index=index,
+                candidate=candidate,
+                seed=seed_base + _candidate_seed_offset(candidate),
+                raw_path=out_prefix.with_name(
+                    f"{out_prefix.name}_{candidate.candidate_id}.jsonl",
+                ),
+                summary_path=out_prefix.with_name(
+                    f"{out_prefix.name}_{candidate.candidate_id}_summary.json",
+                ),
+            ),
+        )
+    return plans
+
+
+def _run_candidate_plans(
+    *,
+    resolved: dict[str, Any],
+    plans: list[CandidateRunPlan],
+) -> list[CandidateRunResult]:
+    jobs = min(int(resolved["jobs"]), len(plans))
+    if jobs == 1:
+        return [
+            _run_candidate_plan(
+                resolved=resolved,
+                plan=plan,
+                total_count=len(plans),
+            )
+            for plan in plans
+        ]
+
+    results: list[CandidateRunResult | None] = [None] * len(plans)
+    print(f"[sweep] parallel jobs={jobs}", flush=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
+        futures = {
+            executor.submit(
+                _run_candidate_plan,
+                resolved=resolved,
+                plan=plan,
+                total_count=len(plans),
+            ): plan
+            for plan in plans
+        }
+        for future in concurrent.futures.as_completed(futures):
+            plan = futures[future]
+            try:
+                result = future.result()
+            except Exception as error:
+                raise MlSweepError(
+                    f"병렬 후보 실행 실패 candidate={plan.candidate.candidate_id}: {error}",
+                ) from error
+            results[plan.index] = result
+    return [result for result in results if result is not None]
+
+
+def _run_candidate_plan(
+    *,
+    resolved: dict[str, Any],
+    plan: CandidateRunPlan,
+    total_count: int,
+) -> CandidateRunResult:
+    candidate_started_at = time.monotonic()
+    print(
+        f"[sweep] start {plan.index + 1}/{total_count} "
+        f"{plan.candidate.candidate_id} seed={plan.seed}",
+        flush=True,
+    )
+    _run_candidate(
+        resolved=resolved,
+        candidate=plan.candidate,
+        seed=plan.seed,
+        raw_path=plan.raw_path,
+        summary_path=plan.summary_path,
+    )
+    elapsed_seconds = time.monotonic() - candidate_started_at
+    summary = _read_summary(plan.summary_path)
+    print(
+        f"[sweep] done {plan.index + 1}/{total_count} "
+        f"{plan.candidate.candidate_id} groups={len(summary.get('groups', []))} "
+        f"elapsed={_duration(elapsed_seconds)}",
+        flush=True,
+    )
+    return CandidateRunResult(
+        plan=plan,
+        summary=summary,
+        elapsed_seconds=elapsed_seconds,
+    )
 
 
 def _run_candidate(
@@ -590,6 +732,25 @@ def _candidate_groups(
     return groups
 
 
+def _candidate_sequence_groups(
+    summary: dict[str, Any],
+    candidate: SweepCandidate,
+) -> list[dict[str, Any]]:
+    raw_groups = summary.get("sequence_groups", [])
+    if not isinstance(raw_groups, list):
+        raise MlSweepError("후보 summary의 sequence_groups가 list가 아닙니다.")
+    groups: list[dict[str, Any]] = []
+    for raw_group in raw_groups:
+        if not isinstance(raw_group, dict):
+            continue
+        group = dict(raw_group)
+        group["experiment_id"] = candidate.experiment_id
+        group["sweep_candidate_id"] = candidate.candidate_id
+        group.update(candidate.metadata)
+        groups.append(group)
+    return groups
+
+
 def _render_report(
     *,
     resolved: dict[str, Any],
@@ -604,6 +765,7 @@ def _render_report(
         f"- mode: `{resolved['mode']}`",
         f"- 후보 수: {len(candidates)}",
         f"- runs per candidate: {resolved['runs']}",
+        f"- jobs: {resolved['jobs']}",
         f"- stations: `{resolved['stations']}`",
         f"- difficulty: `{resolved['difficulty']}`",
         f"- loadouts: `{', '.join(resolved['loadout_ids'])}`",

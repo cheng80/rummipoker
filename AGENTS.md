@@ -123,6 +123,7 @@
 - 규칙 기반 라벨링·휴리스틱 리포트에는 “ML 학습/검증”처럼 오해될 이름을 쓰지 않는다. train/test/validation split, 모델, metric이 없으면 그 사실을 리포트와 노트북에 명시한다.
 - 레벨링 ML을 만들 때는 규칙 label 모방이 아니라 피처, supervised target, train/test split, metric, 모델 선택 근거, 데이터 부족 시 추가 실험안을 함께 설계한다.
 - 레벨링 sweep 데이터는 특정 병목(예: Boss)만 보지 말고, 기존 기준값을 만든 과정의 station curve, small/big/boss tier, difficulty, loadout, market profile 맥락을 함께 보존한다.
+- 전체 레벨링 기준값 재검증은 사용자가 명시하지 않는 한 기존 장기 sweep 수준의 runs를 임의로 줄이지 않는다. 빠른 probe가 필요하면 “판단용이 아닌 탐색용”임을 문서와 응답에 분리해 적는다.
 
 ---
 
