@@ -16,6 +16,7 @@ GCSE 역할: `Execution`
 - implementation plan
 - migration roadmap
 - feature plan
+- ML leveling simulation direction
 - item effect runtime matrix
 - open decisions and experiments
 - smoke/build verification guide

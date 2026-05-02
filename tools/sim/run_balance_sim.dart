@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/services/blind_selection_spec.dart';
@@ -352,6 +354,10 @@ BalanceSimSequenceOutput _runStationPathSequence({
     matrixIndex: spec.matrixIndex,
     runIndex: runIndex,
   );
+  final resolvedMarketProfile = _resolveSequenceMarketProfile(
+    marketProfile: spec.marketProfile,
+    seed: config.seed + spec.matrixIndex * config.runs + runIndex,
+  );
   var stepIndex = 0;
   var clearedStepCount = 0;
   var totalTurnCount = 0;
@@ -367,7 +373,8 @@ BalanceSimSequenceOutput _runStationPathSequence({
       final effectiveLoadout = _sequenceEffectiveLoadout(
         baseLoadout: spec.loadout,
         station: station,
-        marketProfile: spec.marketProfile,
+        marketProfile: resolvedMarketProfile,
+        loadoutIdMarketProfile: spec.marketProfile,
       );
       final battleSpec = BalanceSimRunSpec(
         matrixIndex: spec.matrixIndex,
@@ -378,6 +385,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         blindTier: tier,
         difficulty: spec.difficulty,
         loadout: effectiveLoadout,
+        marketProfile: resolvedMarketProfile,
       );
       final row = _runSingleBattle(
         config: config,
@@ -404,9 +412,10 @@ BalanceSimSequenceOutput _runStationPathSequence({
       row['sequence_station_path'] = stationPath;
       row['sequence_tier_path'] = tierPath.map((tier) => tier.name).toList();
       row['market_profile'] = spec.marketProfile.id;
+      row['resolved_market_profile'] = resolvedMarketProfile.id;
       row['base_loadout_id'] = spec.loadout.id;
       row['market_purchase_events'] = _sequenceMarketPurchaseEvents(
-        marketProfile: spec.marketProfile,
+        marketProfile: resolvedMarketProfile,
         jesterCatalog: jesterCatalog,
         itemCatalog: itemCatalog,
       );
@@ -441,6 +450,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
             totalTurnCount: totalTurnCount,
             totalScore: totalScore,
             totalTargetScore: totalTargetScore,
+            resolvedMarketProfile: resolvedMarketProfile,
           ),
         );
       }
@@ -474,6 +484,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
       totalTurnCount: totalTurnCount,
       totalScore: totalScore,
       totalTargetScore: totalTargetScore,
+      resolvedMarketProfile: resolvedMarketProfile,
     ),
   );
 }
@@ -500,6 +511,7 @@ Map<String, Object?> _buildSequenceSummaryRow({
   required int totalTurnCount,
   required int totalScore,
   required int totalTargetScore,
+  required BalanceSimMarketProfile resolvedMarketProfile,
 }) {
   return <String, Object?>{
     'schema_version': 1,
@@ -512,6 +524,7 @@ Map<String, Object?> _buildSequenceSummaryRow({
     'matrix_size': config.sequenceMatrixSize,
     'experiment_id': spec.experimentId,
     'market_profile': spec.marketProfile.id,
+    'resolved_market_profile': resolvedMarketProfile.id,
     'loadout_id': spec.loadout.id,
     'loadout_effects': spec.loadout.effectsJson(),
     'seed': config.seed + spec.matrixIndex * config.runs + runIndex,
@@ -533,7 +546,7 @@ Map<String, Object?> _buildSequenceSummaryRow({
     'last_step_resource_state': lastStepResourceState,
     'failed_step_resource_state': failedStepResourceState,
     'market_purchase_events': _sequenceMarketPurchaseEvents(
-      marketProfile: spec.marketProfile,
+      marketProfile: resolvedMarketProfile,
       jesterCatalog: jesterCatalog,
       itemCatalog: itemCatalog,
     ),
@@ -597,8 +610,9 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
   required BalanceSimLoadoutSpec baseLoadout,
   required int station,
   required BalanceSimMarketProfile marketProfile,
+  required BalanceSimMarketProfile loadoutIdMarketProfile,
 }) {
-  if (station <= 1 || marketProfile == BalanceSimMarketProfile.none) {
+  if (station <= 1 || loadoutIdMarketProfile == BalanceSimMarketProfile.none) {
     return baseLoadout;
   }
   final jesterIds = [...baseLoadout.jesterIds];
@@ -612,9 +626,15 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
       _addUnique(jesterIds, 'sly_jester');
     case BalanceSimMarketProfile.s1BuyDiscardGlove:
       _addUnique(itemIds, 'discard_glove');
+    case BalanceSimMarketProfile.s1TilePackSmall:
+    case BalanceSimMarketProfile.s1PairSeedPack:
+    case BalanceSimMarketProfile.s1ColorSeedPack:
+    case BalanceSimMarketProfile.s1FaceSeedPack:
+    case BalanceSimMarketProfile.s1RandomCandidatePool:
+      break;
   }
   return BalanceSimLoadoutSpec(
-    id: '${baseLoadout.id}__${marketProfile.id}',
+    id: '${baseLoadout.id}__${loadoutIdMarketProfile.id}',
     jesterIds: List<String>.unmodifiable(jesterIds),
     itemIds: List<String>.unmodifiable(itemIds),
     maxHandSizeDelta: baseLoadout.maxHandSizeDelta,
@@ -635,13 +655,28 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.s1BuyJolly => 'jolly_jester',
     BalanceSimMarketProfile.s1BuySly => 'sly_jester',
     BalanceSimMarketProfile.s1BuyDiscardGlove => 'discard_glove',
+    BalanceSimMarketProfile.s1TilePackSmall => 'tile_pack_small',
+    BalanceSimMarketProfile.s1PairSeedPack => 'pair_seed_pack',
+    BalanceSimMarketProfile.s1ColorSeedPack => 'color_seed_pack',
+    BalanceSimMarketProfile.s1FaceSeedPack => 'face_seed_pack',
+    BalanceSimMarketProfile.s1RandomCandidatePool => 'random_candidate_pool',
   };
-  final category = marketProfile == BalanceSimMarketProfile.s1BuyDiscardGlove
-      ? 'item'
-      : 'jester';
-  final cost = category == 'jester'
-      ? jesterCatalog.findById(contentId)?.baseCost
-      : itemCatalog.findById(contentId)?.basePrice;
+  final category = switch (marketProfile) {
+    BalanceSimMarketProfile.s1BuyDiscardGlove => 'item',
+    BalanceSimMarketProfile.s1TilePackSmall ||
+    BalanceSimMarketProfile.s1PairSeedPack ||
+    BalanceSimMarketProfile.s1ColorSeedPack ||
+    BalanceSimMarketProfile.s1FaceSeedPack => 'pack',
+    BalanceSimMarketProfile.s1RandomCandidatePool => 'sim_pool',
+    _ => 'jester',
+  };
+  final cost = switch (category) {
+    'jester' => jesterCatalog.findById(contentId)?.baseCost,
+    'item' => itemCatalog.findById(contentId)?.basePrice,
+    'pack' => _simPackCost(marketProfile),
+    'sim_pool' => null,
+    _ => null,
+  };
   return [
     <String, Object?>{
       'after_station': 1,
@@ -649,8 +684,137 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
       'content_id': contentId,
       'cost': cost,
       'simulated': true,
+      if (category == 'pack')
+        'deck_tiles_added': _simPackAddedTileCount(marketProfile),
     },
   ];
+}
+
+BalanceSimMarketProfile _resolveSequenceMarketProfile({
+  required BalanceSimMarketProfile marketProfile,
+  required int seed,
+}) {
+  if (marketProfile != BalanceSimMarketProfile.s1RandomCandidatePool) {
+    return marketProfile;
+  }
+
+  final rng = Random(seed * 1009 + marketProfile.index * 9173);
+  const weightedCandidates = <BalanceSimMarketProfile>[
+    BalanceSimMarketProfile.s1BuyJolly,
+    BalanceSimMarketProfile.s1BuySly,
+    BalanceSimMarketProfile.s1BuyDiscardGlove,
+    BalanceSimMarketProfile.s1TilePackSmall,
+    BalanceSimMarketProfile.s1PairSeedPack,
+    BalanceSimMarketProfile.s1ColorSeedPack,
+    BalanceSimMarketProfile.s1FaceSeedPack,
+    BalanceSimMarketProfile.s1TilePackSmall,
+    BalanceSimMarketProfile.s1PairSeedPack,
+    BalanceSimMarketProfile.s1ColorSeedPack,
+    BalanceSimMarketProfile.s1FaceSeedPack,
+  ];
+  return weightedCandidates[rng.nextInt(weightedCandidates.length)];
+}
+
+int? _simPackCost(BalanceSimMarketProfile marketProfile) {
+  return switch (marketProfile) {
+    BalanceSimMarketProfile.s1TilePackSmall => 4,
+    BalanceSimMarketProfile.s1PairSeedPack => 5,
+    BalanceSimMarketProfile.s1ColorSeedPack => 5,
+    BalanceSimMarketProfile.s1FaceSeedPack => 5,
+    _ => null,
+  };
+}
+
+int _simPackAddedTileCount(BalanceSimMarketProfile marketProfile) {
+  return switch (marketProfile) {
+    BalanceSimMarketProfile.s1TilePackSmall ||
+    BalanceSimMarketProfile.s1PairSeedPack ||
+    BalanceSimMarketProfile.s1ColorSeedPack ||
+    BalanceSimMarketProfile.s1FaceSeedPack => 2,
+    _ => 0,
+  };
+}
+
+List<Tile> _applySimMarketPackDeckTiles({
+  required RummiPokerGridSession session,
+  required BalanceSimMarketProfile marketProfile,
+  required int station,
+  required int runSeed,
+}) {
+  if (station <= 1) return const [];
+  final count = _simPackAddedTileCount(marketProfile);
+  if (count <= 0) return const [];
+
+  final rng = Random(runSeed + station * 9973 + marketProfile.index * 7919);
+  final addedTiles = _buildSimPackAddedTiles(
+    marketProfile: marketProfile,
+    rng: rng,
+    count: count,
+  );
+  if (addedTiles.isEmpty) return const [];
+
+  final source = [...session.deck.snapshotPile(), ...addedTiles];
+  session.deck.resetShuffled(random: rng, source: source);
+  return List<Tile>.unmodifiable(addedTiles);
+}
+
+List<Tile> _buildSimPackAddedTiles({
+  required BalanceSimMarketProfile marketProfile,
+  required Random rng,
+  required int count,
+}) {
+  const colors = TileColor.values;
+  Tile tileAt({
+    required int index,
+    required TileColor color,
+    required int number,
+  }) {
+    return Tile(color: color, number: number, id: 1000 + index);
+  }
+
+  return switch (marketProfile) {
+    BalanceSimMarketProfile.s1TilePackSmall => List<Tile>.generate(
+      count,
+      (index) => tileAt(
+        index: index,
+        color: colors[rng.nextInt(colors.length)],
+        number: 1 + rng.nextInt(13),
+      ),
+      growable: false,
+    ),
+    BalanceSimMarketProfile.s1PairSeedPack => () {
+      final number = 1 + rng.nextInt(13);
+      return List<Tile>.generate(
+        count,
+        (index) => tileAt(
+          index: index,
+          color: colors[(rng.nextInt(colors.length) + index) % colors.length],
+          number: number,
+        ),
+        growable: false,
+      );
+    }(),
+    BalanceSimMarketProfile.s1ColorSeedPack => () {
+      final color = colors[rng.nextInt(colors.length)];
+      return List<Tile>.generate(
+        count,
+        (index) =>
+            tileAt(index: index, color: color, number: 1 + rng.nextInt(13)),
+        growable: false,
+      );
+    }(),
+    BalanceSimMarketProfile.s1FaceSeedPack => List<Tile>.generate(
+      count,
+      (index) => tileAt(
+        index: index,
+        color: colors[rng.nextInt(colors.length)],
+        number: 11 + rng.nextInt(3),
+      ),
+      growable: false,
+    ),
+    BalanceSimMarketProfile.s1RandomCandidatePool => const [],
+    _ => const [],
+  };
 }
 
 void _addUnique(List<String> values, String value) {
@@ -880,6 +1044,12 @@ Map<String, Object?> _runSingleBattle({
     maxHandSize: blindSpec.maxHandSize,
     applyRoundEndDecay: false,
   );
+  final simAddedDeckTiles = _applySimMarketPackDeckTiles(
+    session: session,
+    marketProfile: spec.marketProfile,
+    station: station,
+    runSeed: runSeed,
+  );
   session.blind.bossModifier = experiment.bossModifier;
   _applySimOnlyLoadoutGrowth(session, spec.loadout);
   ItemEffectRuntime.applyOwnedStationStartItems(
@@ -898,6 +1068,11 @@ Map<String, Object?> _runSingleBattle({
     'jester_ids': spec.loadout.jesterIds,
     'item_ids': spec.loadout.itemIds,
     'deck_size': session.totalDeckSize,
+    'sim_added_deck_tile_count': simAddedDeckTiles.length,
+    if (simAddedDeckTiles.isNotEmpty)
+      'sim_added_deck_tiles': simAddedDeckTiles
+          .map((tile) => tile.code)
+          .toList(growable: false),
   };
   final loadoutSummary = _buildLoadoutSummary(
     jesters: ownedJesters,
@@ -1664,7 +1839,12 @@ enum BalanceSimMarketProfile {
   none,
   s1BuyJolly,
   s1BuySly,
-  s1BuyDiscardGlove;
+  s1BuyDiscardGlove,
+  s1TilePackSmall,
+  s1PairSeedPack,
+  s1ColorSeedPack,
+  s1FaceSeedPack,
+  s1RandomCandidatePool;
 
   static BalanceSimMarketProfile parse(String raw) {
     return switch (raw) {
@@ -1672,6 +1852,12 @@ enum BalanceSimMarketProfile {
       's1_buy_jolly' => BalanceSimMarketProfile.s1BuyJolly,
       's1_buy_sly' => BalanceSimMarketProfile.s1BuySly,
       's1_buy_discard_glove' => BalanceSimMarketProfile.s1BuyDiscardGlove,
+      's1_tile_pack_small' => BalanceSimMarketProfile.s1TilePackSmall,
+      's1_pair_seed_pack' => BalanceSimMarketProfile.s1PairSeedPack,
+      's1_color_seed_pack' => BalanceSimMarketProfile.s1ColorSeedPack,
+      's1_face_seed_pack' => BalanceSimMarketProfile.s1FaceSeedPack,
+      's1_random_candidate_pool' =>
+        BalanceSimMarketProfile.s1RandomCandidatePool,
       _ => throw FormatException('Unknown market profile: $raw'),
     };
   }
@@ -1682,6 +1868,12 @@ enum BalanceSimMarketProfile {
       BalanceSimMarketProfile.s1BuyJolly => 's1_buy_jolly',
       BalanceSimMarketProfile.s1BuySly => 's1_buy_sly',
       BalanceSimMarketProfile.s1BuyDiscardGlove => 's1_buy_discard_glove',
+      BalanceSimMarketProfile.s1TilePackSmall => 's1_tile_pack_small',
+      BalanceSimMarketProfile.s1PairSeedPack => 's1_pair_seed_pack',
+      BalanceSimMarketProfile.s1ColorSeedPack => 's1_color_seed_pack',
+      BalanceSimMarketProfile.s1FaceSeedPack => 's1_face_seed_pack',
+      BalanceSimMarketProfile.s1RandomCandidatePool =>
+        's1_random_candidate_pool',
     };
   }
 }
@@ -1696,6 +1888,7 @@ class BalanceSimRunSpec {
     required this.blindTier,
     required this.difficulty,
     required this.loadout,
+    required this.marketProfile,
   });
 
   final int matrixIndex;
@@ -1706,6 +1899,7 @@ class BalanceSimRunSpec {
   final BlindTier blindTier;
   final NewRunDifficulty difficulty;
   final BalanceSimLoadoutSpec loadout;
+  final BalanceSimMarketProfile marketProfile;
 }
 
 class BalanceSimSequenceRunSpec {
@@ -2049,7 +2243,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--experiment-id baseline|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s6_boss_breaker_build|s8_finale_build] [--jester id] [--item id]';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--experiment-id baseline|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove|s1_tile_pack_small|s1_pair_seed_pack|s1_color_seed_pack|s1_face_seed_pack|s1_random_candidate_pool] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s5_sustain_build|s5_boss_bridge_build|planet_like_rank_level|tarot_like_tile_shape|enhanced_line_score|rare_jester_engine|rare_xmult_engine|s6_boss_breaker_build|s8_finale_build] [--jester id] [--item id]';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);
@@ -2232,6 +2426,130 @@ class BalanceSimCliConfig {
         boardDiscardsDelta: 1,
         handDiscardsDelta: 1,
       ),
+      's5_sustain_build' => const BalanceSimLoadoutSpec(
+        id: 's5_sustain_build',
+        jesterIds: [
+          'jolly_jester',
+          'zany_jester',
+          'sly_jester',
+          'abstract_jester',
+        ],
+        itemIds: [
+          'score_abacus',
+          'thin_caliper',
+          'organizer_glove',
+          'travel_pouch',
+          'mulligan_sleeve',
+        ],
+        maxHandSizeDelta: 2,
+        boardMovesDelta: 2,
+        boardDiscardsDelta: 1,
+        handDiscardsDelta: 2,
+      ),
+      's5_boss_bridge_build' => const BalanceSimLoadoutSpec(
+        id: 's5_boss_bridge_build',
+        jesterIds: [
+          'jolly_jester',
+          'zany_jester',
+          'sly_jester',
+          'abstract_jester',
+          'banner',
+        ],
+        itemIds: [
+          'score_abacus',
+          'thin_caliper',
+          'organizer_glove',
+          'travel_pouch',
+        ],
+        maxHandSizeDelta: 2,
+        boardMovesDelta: 2,
+        boardDiscardsDelta: 2,
+        handDiscardsDelta: 1,
+      ),
+      'planet_like_rank_level' => const BalanceSimLoadoutSpec(
+        id: 'planet_like_rank_level',
+        jesterIds: [
+          'jolly_jester',
+          'zany_jester',
+          'sly_jester',
+          'supernova',
+          'ride_the_bus',
+        ],
+        itemIds: ['score_abacus', 'thin_caliper', 'echo_bell'],
+        maxHandSizeDelta: 1,
+        boardMovesDelta: 2,
+        boardDiscardsDelta: 1,
+        handDiscardsDelta: 1,
+      ),
+      'tarot_like_tile_shape' => const BalanceSimLoadoutSpec(
+        id: 'tarot_like_tile_shape',
+        jesterIds: [
+          'fibonacci',
+          'even_steven',
+          'odd_todd',
+          'crazy_jester',
+          'devious_jester',
+        ],
+        itemIds: ['organizer_glove', 'mulligan_sleeve', 'travel_pouch'],
+        maxHandSizeDelta: 2,
+        boardMovesDelta: 2,
+        boardDiscardsDelta: 1,
+        handDiscardsDelta: 2,
+      ),
+      'enhanced_line_score' => const BalanceSimLoadoutSpec(
+        id: 'enhanced_line_score',
+        jesterIds: [
+          'jolly_jester',
+          'zany_jester',
+          'abstract_jester',
+          'gros_michel',
+        ],
+        itemIds: ['score_abacus', 'thin_caliper', 'echo_bell', 'tile_polisher'],
+        maxHandSizeDelta: 1,
+        boardMovesDelta: 2,
+        boardDiscardsDelta: 1,
+        handDiscardsDelta: 1,
+      ),
+      'rare_jester_engine' => const BalanceSimLoadoutSpec(
+        id: 'rare_jester_engine',
+        jesterIds: [
+          'supernova',
+          'green_jester',
+          'fibonacci',
+          'banner',
+          'gros_michel',
+        ],
+        itemIds: [
+          'score_abacus',
+          'thin_caliper',
+          'organizer_glove',
+          'travel_pouch',
+        ],
+        maxHandSizeDelta: 2,
+        boardMovesDelta: 2,
+        boardDiscardsDelta: 2,
+        handDiscardsDelta: 1,
+      ),
+      'rare_xmult_engine' => const BalanceSimLoadoutSpec(
+        id: 'rare_xmult_engine',
+        jesterIds: [
+          'the_duo',
+          'the_trio',
+          'the_family',
+          'the_order',
+          'the_tribe',
+        ],
+        itemIds: [
+          'score_abacus',
+          'thin_caliper',
+          'organizer_glove',
+          'travel_pouch',
+        ],
+        maxHandSizeDelta: 2,
+        boardMovesDelta: 2,
+        boardDiscardsDelta: 2,
+        handDiscardsDelta: 1,
+      ),
       's6_boss_breaker_build' => const BalanceSimLoadoutSpec(
         id: 's6_boss_breaker_build',
         jesterIds: [
@@ -2331,6 +2649,7 @@ class BalanceSimCliConfig {
                   blindTier: blindTier,
                   difficulty: difficulty,
                   loadout: loadout,
+                  marketProfile: BalanceSimMarketProfile.none,
                 ),
               );
             }

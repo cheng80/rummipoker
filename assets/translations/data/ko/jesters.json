@@ -296,6 +296,31 @@
         "effectText": "11, 12, 13 타일 없이 확정할 때마다 이 제스터가 배수 +1을 얻는다",
         "notes": "점수에 포함된 11, 12, 13 타일이 있으면 초기화된다."
       },
+      "the_duo": {
+        "displayName": "듀오",
+        "effectText": "페어 계열 족보를 확정하면 X2 배수",
+        "notes": "페어를 포함하는 상위 족보에도 발동한다."
+      },
+      "the_trio": {
+        "displayName": "트리오",
+        "effectText": "트리플 계열 족보를 확정하면 X3 배수",
+        "notes": "트리플을 포함하는 상위 족보에도 발동한다."
+      },
+      "the_family": {
+        "displayName": "패밀리",
+        "effectText": "같은 숫자 4개 족보를 확정하면 X4 배수",
+        "notes": "중복 타일 빌드의 레어 점수 엔진이다."
+      },
+      "the_order": {
+        "displayName": "오더",
+        "effectText": "스트레이트 계열 족보를 확정하면 X3 배수",
+        "notes": "연속 숫자 빌드의 레어 점수 엔진이다."
+      },
+      "the_tribe": {
+        "displayName": "트라이브",
+        "effectText": "플러시 계열 족보를 확정하면 X2 배수",
+        "notes": "색상 집중 빌드의 레어 점수 엔진이다."
+      },
       "constellation": {
         "displayName": "별자리",
         "effectText": "사용한 행성 1장마다 이 제스터가 0.1배 보너스를 얻는다",

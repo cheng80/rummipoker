@@ -23,6 +23,7 @@ DEFAULT_OPTIONS: dict[str, Any] = {
     "difficulty": "standard",
     "station_growth_experiments": ["station_curve_125", "station_curve_135"],
     "experiment_id": "station_curve_125",
+    "experiment_ids": ["station_curve_125", "station_curve_135"],
     "loadout_ids": [
         "baseline",
         "s1_entry_bridge_build",
@@ -42,7 +43,9 @@ DEFAULT_OPTIONS: dict[str, Any] = {
     "packages": [],
     "out_prefix": "logs/sim/ml_sweep_dataset",
     "keep_candidate_files": False,
+    "summary_only": False,
 }
+HEARTBEAT_SECONDS = 30
 
 
 class MlSweepError(Exception):
@@ -86,9 +89,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=["progression_curve", "boss_package"],
+        choices=["progression_curve", "boss_package", "experiment_matrix"],
         default=DEFAULT_OPTIONS["mode"],
-        help="progression_curve는 전체 station/tier/loadout 기준, boss_package는 기존 보스 병목 탐색입니다.",
+        help="progression_curve는 target multiplier, boss_package는 초기 boss, experiment_matrix는 실험 preset 후보를 돕니다.",
     )
     parser.add_argument("--runs", type=int, default=DEFAULT_OPTIONS["runs"])
     parser.add_argument("--seed", type=int, default=DEFAULT_OPTIONS["seed"])
@@ -96,6 +99,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stations", default=DEFAULT_OPTIONS["stations"])
     parser.add_argument("--difficulty", default=DEFAULT_OPTIONS["difficulty"])
     parser.add_argument("--experiment-id", default=DEFAULT_OPTIONS["experiment_id"])
+    parser.add_argument(
+        "--experiment-ids",
+        default=_join(DEFAULT_OPTIONS["experiment_ids"]),
+        help="experiment_matrix용 experiment preset 후보. 예: station_curve_125,s2_boss_resource_boost",
+    )
     parser.add_argument(
         "--station-growth-experiments",
         default=_join(DEFAULT_OPTIONS["station_growth_experiments"]),
@@ -152,6 +160,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="후보별 JSONL/summary 파일을 삭제하지 않습니다.",
     )
+    parser.add_argument(
+        "--summary-only",
+        action="store_true",
+        help="최종 통합 JSONL을 만들지 않고 summary/report만 보존합니다.",
+    )
     args = parser.parse_args(argv)
 
     options = dict(DEFAULT_OPTIONS)
@@ -164,6 +177,7 @@ def main(argv: list[str] | None = None) -> int:
             "stations": args.stations,
             "difficulty": args.difficulty,
             "experiment_id": args.experiment_id,
+            "experiment_ids": _parse_strings(args.experiment_ids, "experiment_ids"),
             "station_growth_experiments": _parse_strings(
                 args.station_growth_experiments,
                 "station_growth_experiments",
@@ -182,6 +196,7 @@ def main(argv: list[str] | None = None) -> int:
             "packages": _parse_packages(args.packages),
             "out_prefix": args.out_prefix,
             "keep_candidate_files": args.keep_candidate_files,
+            "summary_only": args.summary_only,
         },
     )
 
@@ -194,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"파일 오류: {error}", file=sys.stderr)
         return 1
 
-    print(f"Sweep JSONL: {result['jsonl_path']}")
+    print(f"Sweep JSONL: {result['jsonl_path'] or 'skipped'}")
     print(f"Sweep summary: {result['summary_path']}")
     print(f"Sweep report: {result['report_path']}")
     print(f"후보 수: {result['candidate_count']}")
@@ -249,7 +264,8 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
         candidate_summary = _read_summary(summary_path)
         candidate_summaries.append(candidate_summary)
         total_run_count += int(candidate_summary.get("run_count", 0))
-        combined_lines.extend(_candidate_jsonl_lines(raw_path, candidate, index))
+        if not resolved["summary_only"]:
+            combined_lines.extend(_candidate_jsonl_lines(raw_path, candidate, index))
         combined_groups.extend(_candidate_groups(candidate_summary, candidate))
         print(
             f"[sweep] done {index + 1}/{len(candidates)} "
@@ -261,10 +277,16 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
             raw_path.unlink(missing_ok=True)
             summary_path.unlink(missing_ok=True)
 
-    combined_jsonl_path.write_text("\n".join(combined_lines) + "\n", encoding="utf-8")
+    source_path = None
+    if not resolved["summary_only"]:
+        combined_jsonl_path.write_text(
+            "\n".join(combined_lines) + "\n",
+            encoding="utf-8",
+        )
+        source_path = str(combined_jsonl_path)
     combined_summary = {
         "schema_version": 1,
-        "source_path": str(combined_jsonl_path),
+        "source_path": source_path,
         "run_count": total_run_count,
         "group_by": [
             "experiment_id",
@@ -282,6 +304,7 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
             "difficulty": resolved["difficulty"],
             "loadout_ids": resolved["loadout_ids"],
             "market_profiles": resolved["market_profiles"],
+            "summary_only": resolved["summary_only"],
         },
         "groups": combined_groups,
     }
@@ -304,7 +327,7 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
         flush=True,
     )
     return {
-        "jsonl_path": str(combined_jsonl_path),
+        "jsonl_path": str(combined_jsonl_path) if source_path else None,
         "summary_path": str(combined_summary_path),
         "report_path": str(report_path),
         "candidate_count": len(candidates),
@@ -316,8 +339,10 @@ def _resolve_options(options: dict[str, Any]) -> dict[str, Any]:
     resolved = dict(DEFAULT_OPTIONS)
     resolved.update(options)
     mode = str(resolved["mode"])
-    if mode not in {"progression_curve", "boss_package"}:
-        raise MlSweepError("mode는 progression_curve 또는 boss_package여야 합니다.")
+    if mode not in {"progression_curve", "boss_package", "experiment_matrix"}:
+        raise MlSweepError(
+            "mode는 progression_curve, boss_package, experiment_matrix 중 하나여야 합니다.",
+        )
     runs = int(resolved["runs"])
     if runs <= 0:
         raise MlSweepError("runs는 1 이상이어야 합니다.")
@@ -333,7 +358,12 @@ def _resolve_options(options: dict[str, Any]) -> dict[str, Any]:
         if not values or any(value <= 0 for value in values):
             raise MlSweepError(f"{key}는 양수 목록이어야 합니다.")
         resolved[key] = values
-    for key in ["station_growth_experiments", "loadout_ids", "market_profiles"]:
+    for key in [
+        "station_growth_experiments",
+        "experiment_ids",
+        "loadout_ids",
+        "market_profiles",
+    ]:
         values = [str(value) for value in resolved[key] if str(value)]
         if not values:
             raise MlSweepError(f"{key}는 1개 이상이어야 합니다.")
@@ -354,6 +384,8 @@ def _resolve_options(options: dict[str, Any]) -> dict[str, Any]:
 def _build_candidates(resolved: dict[str, Any]) -> list[SweepCandidate]:
     if resolved["mode"] == "boss_package":
         return _build_boss_package_candidates(resolved)
+    if resolved["mode"] == "experiment_matrix":
+        return _build_experiment_matrix_candidates(resolved)
     return _build_progression_curve_candidates(resolved)
 
 
@@ -424,6 +456,24 @@ def _build_boss_package_candidates(resolved: dict[str, Any]) -> list[SweepCandid
     return _require_candidates(candidates)
 
 
+def _build_experiment_matrix_candidates(
+    resolved: dict[str, Any],
+) -> list[SweepCandidate]:
+    candidates = [
+        SweepCandidate(
+            candidate_id=f"experiment_{_experiment_slug(experiment_id)}",
+            mode="experiment_matrix",
+            experiment_id_base=experiment_id,
+            target_multipliers={},
+            metadata_values={
+                "experiment_matrix_id": experiment_id,
+            },
+        )
+        for experiment_id in resolved["experiment_ids"]
+    ]
+    return _require_candidates(candidates)
+
+
 def _require_candidates(candidates: list[SweepCandidate]) -> list[SweepCandidate]:
     if not candidates:
         raise MlSweepError("생성할 후보가 없습니다.")
@@ -469,11 +519,27 @@ def _run_candidate(
         cmd.extend(["--loadout-id", str(loadout_id)])
     for target_multiplier in candidate.target_multiplier_args:
         cmd.extend(["--target-multiplier", target_multiplier])
-    completed = subprocess.run(cmd, text=True, capture_output=True, check=False)
-    if completed.returncode != 0:
+    process = subprocess.Popen(
+        cmd,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    started_at = time.monotonic()
+    while True:
+        try:
+            _stdout, stderr = process.communicate(timeout=HEARTBEAT_SECONDS)
+            break
+        except subprocess.TimeoutExpired:
+            print(
+                f"[sweep] running {candidate.candidate_id} "
+                f"elapsed={_duration(time.monotonic() - started_at)}",
+                flush=True,
+            )
+    if process.returncode != 0:
         raise MlSweepError(
             f"후보 실행 실패 candidate={candidate.candidate_id}: "
-            f"{completed.stderr.strip()}",
+            f"{stderr.strip()}",
         )
 
 
@@ -547,6 +613,7 @@ def _render_report(
         "",
         "- `progression_curve`는 `v4_pacing_baseline_1`에서 잡아 온 station curve, blind tier pressure, progression build 기준을 함께 흔듭니다.",
         "- `boss_package`는 기존 S1/S2/S3 boss 병목 탐색을 보존하는 좁은 모드입니다.",
+        "- `experiment_matrix`는 target/resource/modifier 같은 실험 preset 자체를 후보로 비교합니다.",
         "- 생성된 metadata는 ML 워크벤치에서 숫자 피처로 사용됩니다.",
         "",
         "## 후보",
@@ -631,6 +698,10 @@ def _parse_strings(raw: str, name: str) -> list[str]:
 
 def _multiplier_slug(value: float) -> str:
     return str(value).replace(".", "p")
+
+
+def _experiment_slug(value: str) -> str:
+    return "".join(char if char.isalnum() else "_" for char in value)
 
 
 def _join(values: Any) -> str:

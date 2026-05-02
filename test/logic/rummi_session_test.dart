@@ -38,6 +38,7 @@ RummiJesterCard jester({
   required String id,
   required String effectType,
   required String conditionType,
+  RummiJesterRarity rarity = RummiJesterRarity.common,
   String trigger = 'passive',
   Object? conditionValue,
   int? value,
@@ -48,7 +49,7 @@ RummiJesterCard jester({
   return RummiJesterCard(
     id: id,
     displayName: id,
-    rarity: RummiJesterRarity.common,
+    rarity: rarity,
     baseCost: 3,
     effectText: id,
     effectType: effectType,
@@ -1205,6 +1206,65 @@ void main() {
       'inspect_3',
       'inspect_4',
     ]);
+  });
+
+  test('상점은 초반에도 rare Jester를 낮은 확률 후보로 포함한다', () {
+    final progress = RummiRunProgress()..stageIndex = 1;
+    final catalog = [
+      for (var index = 0; index < 4; index++)
+        jester(
+          id: 'rare_$index',
+          rarity: RummiJesterRarity.rare,
+          effectType: 'stateful_growth',
+          conditionType: 'stateful',
+        ),
+    ];
+
+    progress.openShop(catalog: catalog, rng: Random(11), offerCountOverride: 4);
+
+    expect(progress.shopOffers.map((offer) => offer.card.rarity).toSet(), {
+      RummiJesterRarity.rare,
+    });
+  });
+
+  test('상점은 후반으로 갈수록 rare Jester 자연 등장 비중을 높인다', () {
+    final catalog = [
+      jester(
+        id: 'common_anchor',
+        effectType: 'chips_bonus',
+        conditionType: 'none',
+        value: 5,
+      ),
+      for (var index = 0; index < 4; index++)
+        jester(
+          id: 'rare_$index',
+          rarity: RummiJesterRarity.rare,
+          effectType: 'stateful_growth',
+          conditionType: 'stateful',
+        ),
+    ];
+
+    int countRareOffersAtStage(int stage) {
+      var rareCount = 0;
+      for (var seed = 0; seed < 400; seed++) {
+        final progress = RummiRunProgress()..stageIndex = stage;
+        progress.openShop(
+          catalog: catalog,
+          rng: Random(seed),
+          offerCountOverride: 1,
+        );
+        if (progress.shopOffers.single.card.rarity == RummiJesterRarity.rare) {
+          rareCount++;
+        }
+      }
+      return rareCount;
+    }
+
+    final earlyRareCount = countRareOffersAtStage(1);
+    final lateRareCount = countRareOffersAtStage(6);
+
+    expect(earlyRareCount, greaterThan(0));
+    expect(lateRareCount, greaterThan(earlyRareCount * 4));
   });
 
   test('상점 카탈로그는 지원된 라운드 종료 economy Jester도 노출한다', () {

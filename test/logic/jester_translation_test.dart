@@ -72,5 +72,23 @@ void main() {
         }
       }
     });
+
+    test('phase5 catalog separates mid-run engine Jesters by rarity', () {
+      final catalogJson = File(
+        'data/common/jesters_common_phase5.json',
+      ).readAsStringSync();
+      final catalog = RummiJesterCatalog.fromJsonString(catalogJson);
+
+      expect(catalog.findById('green_jester')!.rarity, RummiJesterRarity.rare);
+      expect(catalog.findById('fibonacci')!.rarity, RummiJesterRarity.rare);
+      expect(catalog.findById('banner')!.rarity, RummiJesterRarity.rare);
+      expect(catalog.findById('supernova')!.rarity, RummiJesterRarity.rare);
+      expect(
+        catalog.findById('ride_the_bus')!.rarity,
+        RummiJesterRarity.uncommon,
+      );
+      expect(catalog.findById('popcorn')!.rarity, RummiJesterRarity.uncommon);
+      expect(catalog.findById('ice_cream')!.rarity, RummiJesterRarity.uncommon);
+    });
   });
 }

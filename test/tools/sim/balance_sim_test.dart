@@ -872,6 +872,150 @@ void main() {
     }
   });
 
+  test(
+    'CLI sequence tile pack market profiles add deck tiles after S1',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/sequence_tile_pack_profile.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '1,2',
+        '--experiment-id',
+        'early_boss_target_075',
+        '--market-profile',
+        's1_pair_seed_pack',
+        '--loadout-id',
+        's1_entry_bridge_build',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final battleRows = rows
+          .where((row) => row['row_type'] == 'battle')
+          .toList(growable: false);
+      final sequenceSummary = rows.singleWhere(
+        (row) => row['row_type'] == 'sequence_summary',
+      );
+      final s1Rows = battleRows
+          .where((row) => row['station'] == 1)
+          .toList(growable: false);
+      final s2Rows = battleRows
+          .where((row) => row['station'] == 2)
+          .toList(growable: false);
+      final purchaseEvents =
+          (sequenceSummary['market_purchase_events'] as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+
+      expect(sequenceSummary['market_profile'], 's1_pair_seed_pack');
+      expect(purchaseEvents.single['category'], 'pack');
+      expect(purchaseEvents.single['content_id'], 'pair_seed_pack');
+      expect(purchaseEvents.single['deck_tiles_added'], 2);
+      expect(
+        (s1Rows.first['start_state']
+            as Map<String, dynamic>)['sim_added_deck_tile_count'],
+        0,
+      );
+      if (s2Rows.isNotEmpty) {
+        final s2Start = s2Rows.first['start_state'] as Map<String, dynamic>;
+        expect(s2Start['sim_added_deck_tile_count'], 2);
+        expect(s2Start['sim_added_deck_tiles'], hasLength(2));
+        expect(s2Start['hands_remaining'], greaterThan(52));
+      }
+    },
+  );
+
+  test(
+    'CLI sequence random candidate market profile resolves per run',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/sequence_random_market_profile.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '1,2',
+        '--experiment-id',
+        'early_boss_target_075',
+        '--market-profile',
+        's1_random_candidate_pool',
+        '--loadout-id',
+        's1_entry_bridge_build',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final battleRows = rows
+          .where((row) => row['row_type'] == 'battle')
+          .toList(growable: false);
+      final sequenceSummary = rows.singleWhere(
+        (row) => row['row_type'] == 'sequence_summary',
+      );
+      final resolvedProfile =
+          sequenceSummary['resolved_market_profile'] as String;
+      final purchaseEvents =
+          (sequenceSummary['market_purchase_events'] as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+
+      expect(sequenceSummary['market_profile'], 's1_random_candidate_pool');
+      expect(
+        resolvedProfile,
+        isIn([
+          's1_buy_jolly',
+          's1_buy_sly',
+          's1_buy_discard_glove',
+          's1_tile_pack_small',
+          's1_pair_seed_pack',
+          's1_color_seed_pack',
+          's1_face_seed_pack',
+        ]),
+      );
+      expect(purchaseEvents.single['category'], isNot('sim_pool'));
+      expect(purchaseEvents.single['simulated'], isTrue);
+      expect(battleRows.map((row) => row['resolved_market_profile']).toSet(), {
+        resolvedProfile,
+      });
+      final s2Rows = battleRows
+          .where((row) => row['station'] == 2)
+          .toList(growable: false);
+      if (s2Rows.isNotEmpty) {
+        expect(
+          s2Rows.first['loadout_id'],
+          's1_entry_bridge_build__s1_random_candidate_pool',
+        );
+      }
+    },
+  );
+
   test('CLI rejects market profiles outside sequence mode', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
     addTearDown(() => dir.deleteSync(recursive: true));
@@ -1071,6 +1215,10 @@ void main() {
       '--loadout-id',
       's5_power_build',
       '--loadout-id',
+      's5_sustain_build',
+      '--loadout-id',
+      's5_boss_bridge_build',
+      '--loadout-id',
       's6_boss_breaker_build',
       '--loadout-id',
       's8_finale_build',
@@ -1086,7 +1234,7 @@ void main() {
         .toList();
 
     expect(code, 0);
-    expect(rows, hasLength(3));
+    expect(rows, hasLength(5));
     for (final row in rows) {
       _expectBalanceSimRowContract(row);
       expect(row['station'], 8);
@@ -1095,24 +1243,137 @@ void main() {
     }
 
     final s5Start = rows[0]['start_state'] as Map<String, dynamic>;
-    final s6Start = rows[1]['start_state'] as Map<String, dynamic>;
-    final s8Start = rows[2]['start_state'] as Map<String, dynamic>;
+    final sustainStart = rows[1]['start_state'] as Map<String, dynamic>;
+    final bridgeStart = rows[2]['start_state'] as Map<String, dynamic>;
+    final s6Start = rows[3]['start_state'] as Map<String, dynamic>;
+    final s8Start = rows[4]['start_state'] as Map<String, dynamic>;
     final s5Effects = rows[0]['loadout_effects'] as Map<String, dynamic>;
-    final s8Effects = rows[2]['loadout_effects'] as Map<String, dynamic>;
+    final sustainEffects = rows[1]['loadout_effects'] as Map<String, dynamic>;
+    final bridgeEffects = rows[2]['loadout_effects'] as Map<String, dynamic>;
+    final s8Effects = rows[4]['loadout_effects'] as Map<String, dynamic>;
 
     expect(rows.map((row) => row['loadout_id']).toList(), [
       's5_power_build',
+      's5_sustain_build',
+      's5_boss_bridge_build',
       's6_boss_breaker_build',
       's8_finale_build',
     ]);
     expect(s5Effects['sim_only'], isTrue);
+    expect(sustainEffects['sim_only'], isTrue);
+    expect(bridgeEffects['sim_only'], isTrue);
     expect(s8Effects['sim_only'], isTrue);
+    expect(
+      sustainStart['hand_discards'],
+      greaterThan(s5Start['hand_discards']),
+    );
+    expect(
+      sustainStart['max_hand_size'],
+      greaterThan(s5Start['max_hand_size']),
+    );
+    expect(bridgeStart['jester_ids'], contains('banner'));
+    expect(
+      bridgeStart['board_discards'],
+      greaterThan(s5Start['board_discards']),
+    );
     expect(s6Start['board_discards'], greaterThan(s5Start['board_discards']));
     expect(s8Start['max_hand_size'], greaterThan(s6Start['max_hand_size']));
     expect(s8Start['board_moves'], greaterThan(s6Start['board_moves']));
     expect(s8Start['hand_discards'], greaterThan(s6Start['hand_discards']));
     expect(s8Start['jester_ids'], hasLength(5));
     expect(s8Start['item_ids'], containsAll(['travel_pouch', 'echo_bell']));
+  });
+
+  test('CLI applies virtual enhancement loadout presets', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/virtual_enhancement_loadouts.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '42',
+      '--station',
+      '5',
+      '--blind-tier',
+      'boss',
+      '--experiment-id',
+      'station_curve_125',
+      '--loadout-id',
+      'planet_like_rank_level',
+      '--loadout-id',
+      'tarot_like_tile_shape',
+      '--loadout-id',
+      'enhanced_line_score',
+      '--loadout-id',
+      'rare_jester_engine',
+      '--loadout-id',
+      'rare_xmult_engine',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+
+    expect(rows, hasLength(5));
+    for (final row in rows) {
+      _expectBalanceSimRowContract(row);
+      expect(row['station'], 5);
+      expect(row['blind_tier'], 'boss');
+      expect(row['experiment_id'], 'station_curve_125');
+      final effects = row['loadout_effects'] as Map<String, dynamic>;
+      expect(effects['sim_only'], isTrue);
+    }
+
+    expect(rows.map((row) => row['loadout_id']).toList(), [
+      'planet_like_rank_level',
+      'tarot_like_tile_shape',
+      'enhanced_line_score',
+      'rare_jester_engine',
+      'rare_xmult_engine',
+    ]);
+
+    final planetStart = rows[0]['start_state'] as Map<String, dynamic>;
+    final tarotStart = rows[1]['start_state'] as Map<String, dynamic>;
+    final enhanceStart = rows[2]['start_state'] as Map<String, dynamic>;
+    final rareStart = rows[3]['start_state'] as Map<String, dynamic>;
+    final xmultStart = rows[4]['start_state'] as Map<String, dynamic>;
+
+    expect(
+      planetStart['jester_ids'],
+      containsAll(['supernova', 'ride_the_bus']),
+    );
+    expect(tarotStart['jester_ids'], containsAll(['fibonacci', 'even_steven']));
+    expect(
+      tarotStart['item_ids'],
+      containsAll(['travel_pouch', 'mulligan_sleeve']),
+    );
+    expect(enhanceStart['jester_ids'], contains('gros_michel'));
+    expect(
+      enhanceStart['item_ids'],
+      containsAll(['echo_bell', 'tile_polisher']),
+    );
+    expect(rareStart['jester_ids'], containsAll(['green_jester', 'banner']));
+    expect(
+      rareStart['item_ids'],
+      containsAll(['organizer_glove', 'travel_pouch']),
+    );
+    expect(
+      xmultStart['jester_ids'],
+      containsAll(['the_duo', 'the_trio', 'the_order', 'the_tribe']),
+    );
+    expect(
+      xmultStart['item_ids'],
+      containsAll(['organizer_glove', 'travel_pouch']),
+    );
   });
 
   test('CLI expands S2 boss experiment presets for bottleneck checks', () async {

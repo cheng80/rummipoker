@@ -154,4 +154,114 @@ void main() {
     expect(report, contains('mode: `progression_curve`'));
     expect(report, contains('v4_pacing_baseline_1'));
   });
+
+  test('ML sweep dataset can keep only summary artifacts', () async {
+    final pythonCheck = await Process.run('python3', ['--version']);
+    if (pythonCheck.exitCode != 0) {
+      markTestSkipped('python3 is not available in this environment');
+      return;
+    }
+
+    final dir = Directory.systemTemp.createTempSync('ml_sweep_dataset_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPrefix = '${dir.path}/summary_only';
+    final result = await Process.run('python3', [
+      'tools/sim/ml_sweep_dataset.py',
+      '--mode',
+      'progression_curve',
+      '--runs',
+      '1',
+      '--seed',
+      '79',
+      '--bot',
+      'greedy_v1',
+      '--stations',
+      '1',
+      '--difficulty',
+      'standard',
+      '--station-growth-experiments',
+      'station_curve_125',
+      '--loadout-ids',
+      'baseline',
+      '--market-profiles',
+      'none',
+      '--small-multipliers',
+      '1.0',
+      '--big-multipliers',
+      '1.0',
+      '--boss-multipliers',
+      '1.0',
+      '--summary-only',
+      '--out-prefix',
+      outPrefix,
+    ]);
+
+    expect(result.exitCode, 0, reason: result.stderr.toString());
+    expect(result.stdout.toString(), contains('Sweep JSONL: skipped'));
+    expect(File('$outPrefix.jsonl').existsSync(), false);
+
+    final summary =
+        jsonDecode(File('${outPrefix}_summary.json').readAsStringSync())
+            as Map<String, dynamic>;
+    expect(summary['source_path'], isNull);
+    expect((summary['sweep'] as Map<String, dynamic>)['summary_only'], true);
+    expect((summary['groups'] as List<dynamic>), isNotEmpty);
+  });
+
+  test('ML sweep dataset can compare experiment presets', () async {
+    final pythonCheck = await Process.run('python3', ['--version']);
+    if (pythonCheck.exitCode != 0) {
+      markTestSkipped('python3 is not available in this environment');
+      return;
+    }
+
+    final dir = Directory.systemTemp.createTempSync('ml_sweep_dataset_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPrefix = '${dir.path}/experiment_matrix';
+    final result = await Process.run('python3', [
+      'tools/sim/ml_sweep_dataset.py',
+      '--mode',
+      'experiment_matrix',
+      '--runs',
+      '1',
+      '--seed',
+      '80',
+      '--bot',
+      'greedy_v1',
+      '--stations',
+      '2',
+      '--difficulty',
+      'standard',
+      '--experiment-ids',
+      'station_curve_125,s2_boss_resource_boost',
+      '--loadout-ids',
+      'baseline',
+      '--market-profiles',
+      'none',
+      '--summary-only',
+      '--out-prefix',
+      outPrefix,
+    ]);
+
+    expect(result.exitCode, 0, reason: result.stderr.toString());
+    expect(result.stdout.toString(), contains('[sweep] mode=experiment_matrix'));
+    expect(result.stdout.toString(), contains('[sweep] merged candidates=2'));
+
+    final summary =
+        jsonDecode(File('${outPrefix}_summary.json').readAsStringSync())
+            as Map<String, dynamic>;
+    expect((summary['sweep'] as Map<String, dynamic>)['kind'], 'experiment_matrix');
+    final groups = (summary['groups'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
+    expect(
+      groups.map((group) => group['experiment_matrix_id']).toSet(),
+      containsAll(['station_curve_125', 's2_boss_resource_boost']),
+    );
+    expect(
+      groups.map((group) => group['sweep_mode']).toSet(),
+      {'experiment_matrix'},
+    );
+  });
 }

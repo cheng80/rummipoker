@@ -144,6 +144,7 @@ class RummiJesterCard {
           );
         case 'xmult_bonus':
           xmultBonus *= _evaluateXmultBonus(
+            rank: rank,
             scoringTiles: scoringTiles,
             context: context,
           );
@@ -328,6 +329,7 @@ class RummiJesterCard {
       'pair' ||
       'two_pair' ||
       'three_of_a_kind' ||
+      'four_of_a_kind' ||
       'straight' ||
       'flush' => _matchesRankCondition(rank) ? bonus : 0,
       'face_card' => _countFaceCards(scoringTiles) * bonus,
@@ -349,6 +351,7 @@ class RummiJesterCard {
       'pair' ||
       'two_pair' ||
       'three_of_a_kind' ||
+      'four_of_a_kind' ||
       'straight' ||
       'flush' => _matchesRankCondition(rank) ? bonus : 0,
       'face_card' => _countFaceCards(scoringTiles) * bonus,
@@ -359,6 +362,7 @@ class RummiJesterCard {
   }
 
   double _evaluateXmultBonus({
+    required RummiHandRank rank,
     required List<Tile> scoringTiles,
     required RummiJesterScoreContext context,
   }) {
@@ -369,6 +373,14 @@ class RummiJesterCard {
     }
     if (conditionType == 'face_card' && conditionValue == 'first_scored') {
       return scoringTiles.any(_isFaceCard) ? bonus : 1.0;
+    }
+    if (conditionType == 'pair' ||
+        conditionType == 'two_pair' ||
+        conditionType == 'three_of_a_kind' ||
+        conditionType == 'four_of_a_kind' ||
+        conditionType == 'straight' ||
+        conditionType == 'flush') {
+      return _matchesRankCondition(rank) ? bonus : 1.0;
     }
     return 1.0;
   }
@@ -387,6 +399,7 @@ class RummiJesterCard {
         rank == RummiHandRank.threeOfAKind ||
             rank == RummiHandRank.fullHouse ||
             rank == RummiHandRank.fourOfAKind,
+      'four_of_a_kind' => rank == RummiHandRank.fourOfAKind,
       'straight' =>
         rank == RummiHandRank.straight || rank == RummiHandRank.straightFlush,
       'flush' =>
@@ -1310,9 +1323,77 @@ class RummiRunProgress {
       if (slot < shopOffers.length) {
         continue;
       }
-      final selected = pool.removeAt(rng.nextInt(pool.length));
+      final selected = _pickWeightedShopJester(pool: pool, rng: rng);
+      pool.remove(selected);
       shopOffers.add(RummiShopOffer(slotIndex: slot, card: selected));
     }
+  }
+
+  RummiJesterCard _pickWeightedShopJester({
+    required List<RummiJesterCard> pool,
+    required Random rng,
+  }) {
+    final candidates = pool;
+    final weights = candidates
+        .map((card) => _shopOfferWeightForRarity(card.rarity))
+        .toList(growable: false);
+    final totalWeight = weights.fold<int>(0, (sum, weight) => sum + weight);
+    if (totalWeight <= 0) {
+      return candidates[rng.nextInt(candidates.length)];
+    }
+
+    var roll = rng.nextInt(totalWeight);
+    for (var i = 0; i < candidates.length; i++) {
+      roll -= weights[i];
+      if (roll < 0) {
+        return candidates[i];
+      }
+    }
+    return candidates.last;
+  }
+
+  int _shopOfferWeightForRarity(RummiJesterRarity rarity) {
+    final rarityBonus = marketModifiers.rarityWeightBonus;
+    final stage = stageIndex < 1 ? 1 : stageIndex;
+    final tier = stage >= 6 ? 6 : stage;
+    return switch (rarity) {
+      RummiJesterRarity.common => switch (tier) {
+        1 => 860,
+        2 => 780,
+        3 => 700,
+        4 => 620,
+        5 => 550,
+        _ => 480,
+      },
+      RummiJesterRarity.uncommon => switch (tier) {
+        1 => 120,
+        2 => 170,
+        3 => 220,
+        4 => 270,
+        5 => 310,
+        _ => 340,
+      },
+      RummiJesterRarity.rare =>
+        switch (tier) {
+              1 => 20,
+              2 => 40,
+              3 => 70,
+              4 => 100,
+              5 => 130,
+              _ => 160,
+            } +
+            rarityBonus,
+      RummiJesterRarity.legendary =>
+        switch (tier) {
+              1 => 1,
+              2 => 2,
+              3 => 4,
+              4 => 8,
+              5 => 12,
+              _ => 20,
+            } +
+            (rarityBonus ~/ 2),
+    };
   }
 
   static int _sellPriceFor(RummiJesterCard card) {

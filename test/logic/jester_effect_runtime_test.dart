@@ -84,5 +84,61 @@ void main() {
       expect(result.scoreDelta, 0);
       expect(result.events, isEmpty);
     });
+
+    test('xmult bonus can be gated by scoring hand rank', () {
+      const jester = RummiJesterCard(
+        id: 'the_duo',
+        displayName: 'The Duo',
+        rarity: RummiJesterRarity.rare,
+        baseCost: 8,
+        effectText: '',
+        effectType: 'xmult_bonus',
+        trigger: 'onScore',
+        conditionType: 'pair',
+        conditionValue: 'pair_or_contains_pair',
+        value: null,
+        xValue: 2.0,
+        mappedTileColors: [],
+        mappedTileNumbers: [],
+      );
+
+      final pairResult = JesterEffectRuntime.applyToLine(
+        slotIndex: 0,
+        jester: jester,
+        rank: RummiHandRank.onePair,
+        baseScore: 100,
+        scoringTiles: const [
+          Tile(id: 1, color: TileColor.red, number: 7),
+          Tile(id: 2, color: TileColor.blue, number: 7),
+        ],
+        context: const RummiJesterScoreContext(
+          discardsRemaining: 2,
+          cardsRemainingInDeck: 30,
+          ownedJesterCount: 2,
+          maxJesterSlots: 5,
+        ),
+      );
+      final straightResult = JesterEffectRuntime.applyToLine(
+        slotIndex: 0,
+        jester: jester,
+        rank: RummiHandRank.straight,
+        baseScore: 100,
+        scoringTiles: const [
+          Tile(id: 1, color: TileColor.red, number: 3),
+          Tile(id: 2, color: TileColor.blue, number: 4),
+        ],
+        context: const RummiJesterScoreContext(
+          discardsRemaining: 2,
+          cardsRemainingInDeck: 30,
+          ownedJesterCount: 2,
+          maxJesterSlots: 5,
+        ),
+      );
+
+      expect(pairResult.score.finalScore, 200);
+      expect(pairResult.events.single.scoreDelta, 100);
+      expect(straightResult.score.finalScore, 100);
+      expect(straightResult.events, isEmpty);
+    });
   });
 }
