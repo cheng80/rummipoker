@@ -627,6 +627,11 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
     case BalanceSimMarketProfile.s1BuyDiscardGlove:
       _addUnique(itemIds, 'discard_glove');
     case BalanceSimMarketProfile.s1TilePackSmall:
+    case BalanceSimMarketProfile.s1TilePackPlus3:
+    case BalanceSimMarketProfile.s1TilePackPlus4:
+    case BalanceSimMarketProfile.s1TilePackPlus5:
+    case BalanceSimMarketProfile.s1BuildAwarePackPlus3:
+    case BalanceSimMarketProfile.s1BuildAwarePackPlus5:
     case BalanceSimMarketProfile.s1PairSeedPack:
     case BalanceSimMarketProfile.s1ColorSeedPack:
     case BalanceSimMarketProfile.s1FaceSeedPack:
@@ -656,6 +661,11 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.s1BuySly => 'sly_jester',
     BalanceSimMarketProfile.s1BuyDiscardGlove => 'discard_glove',
     BalanceSimMarketProfile.s1TilePackSmall => 'tile_pack_small',
+    BalanceSimMarketProfile.s1TilePackPlus3 => 'tile_pack_plus3',
+    BalanceSimMarketProfile.s1TilePackPlus4 => 'tile_pack_plus4',
+    BalanceSimMarketProfile.s1TilePackPlus5 => 'tile_pack_plus5',
+    BalanceSimMarketProfile.s1BuildAwarePackPlus3 => 'build_aware_pack_plus3',
+    BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 'build_aware_pack_plus5',
     BalanceSimMarketProfile.s1PairSeedPack => 'pair_seed_pack',
     BalanceSimMarketProfile.s1ColorSeedPack => 'color_seed_pack',
     BalanceSimMarketProfile.s1FaceSeedPack => 'face_seed_pack',
@@ -663,10 +673,7 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
   };
   final category = switch (marketProfile) {
     BalanceSimMarketProfile.s1BuyDiscardGlove => 'item',
-    BalanceSimMarketProfile.s1TilePackSmall ||
-    BalanceSimMarketProfile.s1PairSeedPack ||
-    BalanceSimMarketProfile.s1ColorSeedPack ||
-    BalanceSimMarketProfile.s1FaceSeedPack => 'pack',
+    _ when _isSimPackProfile(marketProfile) => 'pack',
     BalanceSimMarketProfile.s1RandomCandidatePool => 'sim_pool',
     _ => 'jester',
   };
@@ -718,6 +725,11 @@ BalanceSimMarketProfile _resolveSequenceMarketProfile({
 int? _simPackCost(BalanceSimMarketProfile marketProfile) {
   return switch (marketProfile) {
     BalanceSimMarketProfile.s1TilePackSmall => 4,
+    BalanceSimMarketProfile.s1TilePackPlus3 => 6,
+    BalanceSimMarketProfile.s1TilePackPlus4 => 7,
+    BalanceSimMarketProfile.s1TilePackPlus5 => 8,
+    BalanceSimMarketProfile.s1BuildAwarePackPlus3 => 7,
+    BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 9,
     BalanceSimMarketProfile.s1PairSeedPack => 5,
     BalanceSimMarketProfile.s1ColorSeedPack => 5,
     BalanceSimMarketProfile.s1FaceSeedPack => 5,
@@ -727,7 +739,12 @@ int? _simPackCost(BalanceSimMarketProfile marketProfile) {
 
 int _simPackAddedTileCount(BalanceSimMarketProfile marketProfile) {
   return switch (marketProfile) {
-    BalanceSimMarketProfile.s1TilePackSmall ||
+    BalanceSimMarketProfile.s1TilePackSmall => 2,
+    BalanceSimMarketProfile.s1TilePackPlus3 => 3,
+    BalanceSimMarketProfile.s1TilePackPlus4 => 4,
+    BalanceSimMarketProfile.s1TilePackPlus5 => 5,
+    BalanceSimMarketProfile.s1BuildAwarePackPlus3 => 3,
+    BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 5,
     BalanceSimMarketProfile.s1PairSeedPack ||
     BalanceSimMarketProfile.s1ColorSeedPack ||
     BalanceSimMarketProfile.s1FaceSeedPack => 2,
@@ -738,6 +755,7 @@ int _simPackAddedTileCount(BalanceSimMarketProfile marketProfile) {
 List<Tile> _applySimMarketPackDeckTiles({
   required RummiPokerGridSession session,
   required BalanceSimMarketProfile marketProfile,
+  required BalanceSimLoadoutSpec loadout,
   required int station,
   required int runSeed,
 }) {
@@ -748,6 +766,7 @@ List<Tile> _applySimMarketPackDeckTiles({
   final rng = Random(runSeed + station * 9973 + marketProfile.index * 7919);
   final addedTiles = _buildSimPackAddedTiles(
     marketProfile: marketProfile,
+    loadout: loadout,
     rng: rng,
     count: count,
   );
@@ -760,6 +779,7 @@ List<Tile> _applySimMarketPackDeckTiles({
 
 List<Tile> _buildSimPackAddedTiles({
   required BalanceSimMarketProfile marketProfile,
+  required BalanceSimLoadoutSpec loadout,
   required Random rng,
   required int count,
 }) {
@@ -773,7 +793,10 @@ List<Tile> _buildSimPackAddedTiles({
   }
 
   return switch (marketProfile) {
-    BalanceSimMarketProfile.s1TilePackSmall => List<Tile>.generate(
+    BalanceSimMarketProfile.s1TilePackSmall ||
+    BalanceSimMarketProfile.s1TilePackPlus3 ||
+    BalanceSimMarketProfile.s1TilePackPlus4 ||
+    BalanceSimMarketProfile.s1TilePackPlus5 => List<Tile>.generate(
       count,
       (index) => tileAt(
         index: index,
@@ -781,6 +804,12 @@ List<Tile> _buildSimPackAddedTiles({
         number: 1 + rng.nextInt(13),
       ),
       growable: false,
+    ),
+    BalanceSimMarketProfile.s1BuildAwarePackPlus3 ||
+    BalanceSimMarketProfile.s1BuildAwarePackPlus5 => _buildSimBuildAwareTiles(
+      loadout: loadout,
+      rng: rng,
+      count: count,
     ),
     BalanceSimMarketProfile.s1PairSeedPack => () {
       final number = 1 + rng.nextInt(13);
@@ -815,6 +844,122 @@ List<Tile> _buildSimPackAddedTiles({
     BalanceSimMarketProfile.s1RandomCandidatePool => const [],
     _ => const [],
   };
+}
+
+List<Tile> _buildSimBuildAwareTiles({
+  required BalanceSimLoadoutSpec loadout,
+  required Random rng,
+  required int count,
+}) {
+  const colors = TileColor.values;
+  Tile tileAt({
+    required int index,
+    required TileColor color,
+    required int number,
+  }) {
+    return Tile(color: color, number: number, id: 2000 + index);
+  }
+
+  final jesterIds = loadout.jesterIds.toSet();
+  if (jesterIds.contains('the_tribe') ||
+      jesterIds.any((id) => id.contains('flush'))) {
+    final color = colors[rng.nextInt(colors.length)];
+    return List<Tile>.generate(
+      count,
+      (index) =>
+          tileAt(index: index, color: color, number: 1 + rng.nextInt(13)),
+      growable: false,
+    );
+  }
+
+  if (jesterIds.contains('the_order')) {
+    final start = 1 + rng.nextInt(14 - count);
+    return List<Tile>.generate(
+      count,
+      (index) => tileAt(
+        index: index,
+        color: colors[rng.nextInt(colors.length)],
+        number: start + index,
+      ),
+      growable: false,
+    );
+  }
+
+  if (jesterIds.contains('fibonacci')) {
+    const numbers = [2, 3, 5, 8, 13];
+    return List<Tile>.generate(
+      count,
+      (index) => tileAt(
+        index: index,
+        color: colors[rng.nextInt(colors.length)],
+        number: numbers[(rng.nextInt(numbers.length) + index) % numbers.length],
+      ),
+      growable: false,
+    );
+  }
+
+  if (jesterIds.contains('even_steven')) {
+    const numbers = [2, 4, 6, 8, 10, 12];
+    return List<Tile>.generate(
+      count,
+      (index) => tileAt(
+        index: index,
+        color: colors[rng.nextInt(colors.length)],
+        number: numbers[(rng.nextInt(numbers.length) + index) % numbers.length],
+      ),
+      growable: false,
+    );
+  }
+
+  if (jesterIds.contains('odd_todd')) {
+    const numbers = [1, 3, 5, 7, 9, 11, 13];
+    return List<Tile>.generate(
+      count,
+      (index) => tileAt(
+        index: index,
+        color: colors[rng.nextInt(colors.length)],
+        number: numbers[(rng.nextInt(numbers.length) + index) % numbers.length],
+      ),
+      growable: false,
+    );
+  }
+
+  if (jesterIds.any(
+    (id) =>
+        id == 'the_duo' ||
+        id == 'the_trio' ||
+        id == 'the_family' ||
+        id == 'jolly_jester' ||
+        id == 'zany_jester' ||
+        id == 'sly_jester',
+  )) {
+    final number = 1 + rng.nextInt(13);
+    return List<Tile>.generate(
+      count,
+      (index) => tileAt(
+        index: index,
+        color: colors[(rng.nextInt(colors.length) + index) % colors.length],
+        number: number,
+      ),
+      growable: false,
+    );
+  }
+
+  final anchorNumber = 1 + rng.nextInt(13);
+  final anchorColor = colors[rng.nextInt(colors.length)];
+  return List<Tile>.generate(
+    count,
+    (index) => tileAt(
+      index: index,
+      color: index.isEven ? anchorColor : colors[rng.nextInt(colors.length)],
+      number: index.isEven ? anchorNumber : 1 + rng.nextInt(13),
+    ),
+    growable: false,
+  );
+}
+
+bool _isSimPackProfile(BalanceSimMarketProfile marketProfile) {
+  return _simPackAddedTileCount(marketProfile) > 0;
 }
 
 void _addUnique(List<String> values, String value) {
@@ -1047,6 +1192,7 @@ Map<String, Object?> _runSingleBattle({
   final simAddedDeckTiles = _applySimMarketPackDeckTiles(
     session: session,
     marketProfile: spec.marketProfile,
+    loadout: spec.loadout,
     station: station,
     runSeed: runSeed,
   );
@@ -1841,6 +1987,11 @@ enum BalanceSimMarketProfile {
   s1BuySly,
   s1BuyDiscardGlove,
   s1TilePackSmall,
+  s1TilePackPlus3,
+  s1TilePackPlus4,
+  s1TilePackPlus5,
+  s1BuildAwarePackPlus3,
+  s1BuildAwarePackPlus5,
   s1PairSeedPack,
   s1ColorSeedPack,
   s1FaceSeedPack,
@@ -1853,6 +2004,13 @@ enum BalanceSimMarketProfile {
       's1_buy_sly' => BalanceSimMarketProfile.s1BuySly,
       's1_buy_discard_glove' => BalanceSimMarketProfile.s1BuyDiscardGlove,
       's1_tile_pack_small' => BalanceSimMarketProfile.s1TilePackSmall,
+      's1_tile_pack_plus3' => BalanceSimMarketProfile.s1TilePackPlus3,
+      's1_tile_pack_plus4' => BalanceSimMarketProfile.s1TilePackPlus4,
+      's1_tile_pack_plus5' => BalanceSimMarketProfile.s1TilePackPlus5,
+      's1_build_aware_pack_plus3' =>
+        BalanceSimMarketProfile.s1BuildAwarePackPlus3,
+      's1_build_aware_pack_plus5' =>
+        BalanceSimMarketProfile.s1BuildAwarePackPlus5,
       's1_pair_seed_pack' => BalanceSimMarketProfile.s1PairSeedPack,
       's1_color_seed_pack' => BalanceSimMarketProfile.s1ColorSeedPack,
       's1_face_seed_pack' => BalanceSimMarketProfile.s1FaceSeedPack,
@@ -1869,6 +2027,13 @@ enum BalanceSimMarketProfile {
       BalanceSimMarketProfile.s1BuySly => 's1_buy_sly',
       BalanceSimMarketProfile.s1BuyDiscardGlove => 's1_buy_discard_glove',
       BalanceSimMarketProfile.s1TilePackSmall => 's1_tile_pack_small',
+      BalanceSimMarketProfile.s1TilePackPlus3 => 's1_tile_pack_plus3',
+      BalanceSimMarketProfile.s1TilePackPlus4 => 's1_tile_pack_plus4',
+      BalanceSimMarketProfile.s1TilePackPlus5 => 's1_tile_pack_plus5',
+      BalanceSimMarketProfile.s1BuildAwarePackPlus3 =>
+        's1_build_aware_pack_plus3',
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 =>
+        's1_build_aware_pack_plus5',
       BalanceSimMarketProfile.s1PairSeedPack => 's1_pair_seed_pack',
       BalanceSimMarketProfile.s1ColorSeedPack => 's1_color_seed_pack',
       BalanceSimMarketProfile.s1FaceSeedPack => 's1_face_seed_pack',
@@ -2243,7 +2408,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--experiment-id baseline|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove|s1_tile_pack_small|s1_pair_seed_pack|s1_color_seed_pack|s1_face_seed_pack|s1_random_candidate_pool] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s5_sustain_build|s5_boss_bridge_build|planet_like_rank_level|tarot_like_tile_shape|enhanced_line_score|rare_jester_engine|rare_xmult_engine|s6_boss_breaker_build|s8_finale_build] [--jester id] [--item id]';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--experiment-id baseline|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove|s1_tile_pack_small|s1_tile_pack_plus3|s1_tile_pack_plus4|s1_tile_pack_plus5|s1_build_aware_pack_plus3|s1_build_aware_pack_plus5|s1_pair_seed_pack|s1_color_seed_pack|s1_face_seed_pack|s1_random_candidate_pool] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s5_sustain_build|s5_boss_bridge_build|planet_like_rank_level|tarot_like_tile_shape|enhanced_line_score|rare_jester_engine|rare_xmult_engine|s6_boss_breaker_build|s8_finale_build] [--jester id] [--item id]';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);

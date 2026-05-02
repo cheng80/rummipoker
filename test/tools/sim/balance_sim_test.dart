@@ -940,6 +940,123 @@ void main() {
     },
   );
 
+  test('CLI sequence tile pack size profiles add configured counts', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/sequence_tile_pack_size_profile.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '42',
+      '--sequence-mode',
+      'station_path',
+      '--stations',
+      '1,2',
+      '--experiment-id',
+      'early_boss_target_075',
+      '--market-profile',
+      's1_tile_pack_plus5',
+      '--loadout-id',
+      's1_entry_bridge_build',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    final battleRows = rows
+        .where((row) => row['row_type'] == 'battle')
+        .toList(growable: false);
+    final sequenceSummary = rows.singleWhere(
+      (row) => row['row_type'] == 'sequence_summary',
+    );
+    final s2Rows = battleRows
+        .where((row) => row['station'] == 2)
+        .toList(growable: false);
+    final purchaseEvent =
+        (sequenceSummary['market_purchase_events'] as List<dynamic>).single
+            as Map<String, dynamic>;
+
+    expect(sequenceSummary['market_profile'], 's1_tile_pack_plus5');
+    expect(purchaseEvent['category'], 'pack');
+    expect(purchaseEvent['content_id'], 'tile_pack_plus5');
+    expect(purchaseEvent['deck_tiles_added'], 5);
+    expect(purchaseEvent['cost'], 8);
+    if (s2Rows.isNotEmpty) {
+      final s2Start = s2Rows.first['start_state'] as Map<String, dynamic>;
+      expect(s2Start['sim_added_deck_tile_count'], 5);
+      expect(s2Start['sim_added_deck_tiles'], hasLength(5));
+      expect(s2Start['hands_remaining'], greaterThan(55));
+    }
+  });
+
+  test('CLI sequence build-aware pack follows loadout incentives', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/sequence_build_aware_pack_profile.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '42',
+      '--sequence-mode',
+      'station_path',
+      '--stations',
+      '1,2',
+      '--experiment-id',
+      'early_boss_target_075',
+      '--market-profile',
+      's1_build_aware_pack_plus3',
+      '--loadout-id',
+      'rare_jester_engine',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    final battleRows = rows
+        .where((row) => row['row_type'] == 'battle')
+        .toList(growable: false);
+    final sequenceSummary = rows.singleWhere(
+      (row) => row['row_type'] == 'sequence_summary',
+    );
+    final purchaseEvent =
+        (sequenceSummary['market_purchase_events'] as List<dynamic>).single
+            as Map<String, dynamic>;
+    final s2Rows = battleRows
+        .where((row) => row['station'] == 2)
+        .toList(growable: false);
+
+    expect(sequenceSummary['market_profile'], 's1_build_aware_pack_plus3');
+    expect(purchaseEvent['content_id'], 'build_aware_pack_plus3');
+    expect(purchaseEvent['deck_tiles_added'], 3);
+    if (s2Rows.isNotEmpty) {
+      final s2Start = s2Rows.first['start_state'] as Map<String, dynamic>;
+      final addedTiles = (s2Start['sim_added_deck_tiles'] as List<dynamic>)
+          .cast<String>();
+      final addedNumbers = addedTiles
+          .map((code) => int.parse(code.substring(1)))
+          .toList(growable: false);
+      expect(addedNumbers, everyElement(isIn([2, 3, 5, 8, 13])));
+    }
+  });
+
   test(
     'CLI sequence random candidate market profile resolves per run',
     () async {

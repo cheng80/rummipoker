@@ -113,6 +113,34 @@ Boss 전체 기준:
 - 이 방식은 실제 마켓/UI를 확정하지 않고도 “랜덤 등장 가정”으로 후보군을 넓게 검증하는 데 적합하다.
 - 단, 현재 pool은 `discard_glove`보다 약하므로 Pack 크기, Voucher, 덱 성장 Jester가 추가로 필요하다.
 
+### v10: Pack 크기와 build-aware Pack
+
+주요 파일:
+
+- `logs/sim/ml_sweep_pack_size_v10_summary.json`
+- `logs/sim/ml_sweep_pack_size_v10_summary_bottleneck_report.md`
+- `logs/sim/ml_sweep_pack_size_v10_summary_ml_insights_report.md`
+
+Boss 전체 기준:
+
+| market profile | clear | deck exhausted | turn |
+|---|---:|---:|---:|
+| `none` | 65.8% | 32.7% | 98.1 |
+| `s1_tile_pack_small` | 69.3% | 28.9% | 100.1 |
+| `s1_tile_pack_plus3` | 71.1% | 26.8% | 100.4 |
+| `s1_tile_pack_plus4` | 71.9% | 26.3% | 101.3 |
+| `s1_tile_pack_plus5` | 74.4% | 24.0% | 102.2 |
+| `s1_build_aware_pack_plus3` | 71.7% | 26.8% | 100.7 |
+| `s1_build_aware_pack_plus5` | 74.8% | 23.1% | 101.3 |
+| `s1_buy_discard_glove` | 74.6% | 24.4% | 94.0 |
+
+결론:
+
+- 단순 랜덤 +N은 하한선으로만 봐야 한다. 실제 유저는 자주 만드는 족보에 맞는 숫자/색을 고를 가능성이 높다.
+- `build-aware +5`는 boss clear 기준으로 `discard_glove`와 동급 이상이며, deck exhausted는 더 낮다.
+- 단점은 turn 수와 board locked가 늘어날 수 있다는 점이다. 덱을 늘리는 것만으로는 플레이 템포가 느려질 수 있으므로 선택형 Pack 또는 bot 선택 품질 개선이 필요하다.
+- 다음 실험은 “N장 중 1~2장 선택”과 “현재/이전 전투에서 자주 만든 족보 기반 선택”이다.
+
 ## 아직 실 구현으로 옮기지 않는 이유
 
 - 현재 Pack은 “덱을 늘리면 고갈이 줄어든다”는 방향성만 확인했다.
@@ -148,8 +176,8 @@ Boss 전체 기준:
 ## 다음 권장 실험 순서
 
 1. Pack 크기 sweep
-   - `+2`, `+3`, `+4`, `+5` 타일을 비교한다.
-   - 목표는 boss deck exhausted를 낮추되 clear rate가 과하게 치솟지 않는 지점이다.
+   - 완료: v10에서 `+2`, `+3`, `+4`, `+5`, build-aware `+3/+5`를 비교했다.
+   - 현재 유력 후보는 `s1_build_aware_pack_plus5`다.
 
 2. 선택형 Pack sweep
    - “N장 중 1~2장 선택”을 시뮬레이션한다.
