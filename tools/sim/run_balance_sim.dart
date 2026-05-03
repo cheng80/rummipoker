@@ -154,6 +154,9 @@ class BalanceSimSummaryAccumulator {
       station: row['station'] as int,
       blindTier: row['blind_tier'] as String,
       difficulty: row['difficulty'] as String,
+      simBossConstraintId: _simBossConstraintIdFromEffects(
+        row['experiment_effects'],
+      ),
     );
     _runCount++;
     _groups
@@ -176,6 +179,11 @@ class BalanceSimSummaryAccumulator {
           outcomeLabel: result['outcome_label'] as String,
           isSlowClear: result['is_slow_clear'] as bool,
           clearTempoLabel: result['clear_tempo_label'] as String,
+          marketShopSlots:
+              (row['market_shop_slots'] as List<dynamic>?)
+                  ?.whereType<String>()
+                  .toList(growable: false) ??
+              const [],
         );
   }
 
@@ -193,6 +201,7 @@ class BalanceSimSummaryAccumulator {
         'station',
         'blind_tier',
         'difficulty',
+        'sim_boss_constraint_id',
       ],
       'sequence_group_by': [
         'experiment_id',
@@ -234,6 +243,8 @@ class BalanceSimSequenceSummaryGroup {
   int attemptedStepCountSum = 0;
   int clearedStepCountSum = 0;
   int totalTurnCountSum = 0;
+  int clearPathTurnCountSum = 0;
+  int failedPathTurnCountSum = 0;
   double totalScoreRatioSum = 0;
   final Map<String, int> failureCounts = {};
   final Map<String, int> failureStopReasonCounts = {};
@@ -257,6 +268,11 @@ class BalanceSimSequenceSummaryGroup {
     attemptedStepCountSum += attemptedStepCount;
     clearedStepCountSum += clearedStepCount;
     totalTurnCountSum += totalTurnCount;
+    if (pathCleared) {
+      clearPathTurnCountSum += totalTurnCount;
+    } else {
+      failedPathTurnCountSum += totalTurnCount;
+    }
     totalScoreRatioSum += totalScoreRatio.toDouble();
     if (!pathCleared) {
       final failureKey = failedAtStation == null || failedAtTier == null
@@ -288,6 +304,18 @@ class BalanceSimSequenceSummaryGroup {
           ? 0
           : clearedStepCountSum / runCount,
       'avg_total_turn_count': runCount == 0 ? 0 : totalTurnCountSum / runCount,
+      'avg_clear_path_turn_count': pathClearCount == 0
+          ? 0
+          : clearPathTurnCountSum / pathClearCount,
+      'avg_failed_path_turn_count': runCount == pathClearCount
+          ? 0
+          : failedPathTurnCountSum / (runCount - pathClearCount),
+      'avg_turn_per_attempted_step': attemptedStepCountSum == 0
+          ? 0
+          : totalTurnCountSum / attemptedStepCountSum,
+      'avg_turn_per_cleared_step': clearedStepCountSum == 0
+          ? 0
+          : totalTurnCountSum / clearedStepCountSum,
       'avg_total_score_ratio': runCount == 0
           ? 0
           : totalScoreRatioSum / runCount,
@@ -295,6 +323,12 @@ class BalanceSimSequenceSummaryGroup {
       'failure_stop_reason_counts': failureStopReasonCounts,
     };
   }
+}
+
+String? _simBossConstraintIdFromEffects(Object? rawEffects) {
+  if (rawEffects is! Map) return null;
+  final id = rawEffects['sim_boss_constraint_id'];
+  return id is String ? id : null;
 }
 
 class BalanceSimSummaryGroup {
@@ -306,6 +340,7 @@ class BalanceSimSummaryGroup {
     required this.station,
     required this.blindTier,
     required this.difficulty,
+    required this.simBossConstraintId,
   });
 
   final String experimentId;
@@ -315,6 +350,7 @@ class BalanceSimSummaryGroup {
   final int station;
   final String blindTier;
   final String difficulty;
+  final String? simBossConstraintId;
   int runCount = 0;
   int clearCount = 0;
   double scoreRatioSum = 0;
@@ -334,9 +370,11 @@ class BalanceSimSummaryGroup {
   int slowClearCount = 0;
   final Map<String, int> outcomeCounts = {};
   final Map<String, int> clearTempoLabelCounts = {};
+  final Map<String, int> marketShopSlotCounts = {};
 
   String get key =>
-      '$experimentId|$marketProfile|$resolvedMarketProfile|$loadoutId|$station|$blindTier|$difficulty';
+      '$experimentId|$marketProfile|$resolvedMarketProfile|$loadoutId|'
+      '$station|$blindTier|$difficulty|${simBossConstraintId ?? 'none'}';
 
   void addResult({
     required bool cleared,
@@ -356,6 +394,7 @@ class BalanceSimSummaryGroup {
     required String outcomeLabel,
     required bool isSlowClear,
     required String clearTempoLabel,
+    required List<String> marketShopSlots,
   }) {
     runCount++;
     if (cleared) clearCount++;
@@ -379,6 +418,9 @@ class BalanceSimSummaryGroup {
     outcomeCounts[outcomeLabel] = (outcomeCounts[outcomeLabel] ?? 0) + 1;
     clearTempoLabelCounts[clearTempoLabel] =
         (clearTempoLabelCounts[clearTempoLabel] ?? 0) + 1;
+    for (final slot in marketShopSlots) {
+      marketShopSlotCounts[slot] = (marketShopSlotCounts[slot] ?? 0) + 1;
+    }
   }
 
   Map<String, Object?> toJson() {
@@ -447,6 +489,7 @@ class BalanceSimSummaryGroup {
       'station': station,
       'blind_tier': blindTier,
       'difficulty': difficulty,
+      'sim_boss_constraint_id': simBossConstraintId,
       'run_count': runCount,
       'clear_count': clearCount,
       'slow_clear_count': slowClearCount,
@@ -481,6 +524,7 @@ class BalanceSimSummaryGroup {
       'avg_board_occupancy': runCount == 0 ? 0 : boardOccupancySum / runCount,
       'outcome_counts': outcomeCounts,
       'clear_tempo_label_counts': clearTempoLabelCounts,
+      'market_shop_slot_counts': marketShopSlotCounts,
     };
   }
 }
@@ -501,13 +545,13 @@ BalanceSimSequenceOutput _runStationPathSequence({
     matrixIndex: spec.matrixIndex,
     runIndex: runIndex,
   );
-  final marketSelection = _resolveSequenceMarketSelection(
+  final baseMarketSelection = _resolveSequenceMarketSelection(
     marketProfile: spec.marketProfile,
     seed: config.seed + spec.matrixIndex * config.runs + runIndex,
     loadout: spec.loadout,
   );
-  final resolvedMarketProfile = marketSelection.profile;
   var stepIndex = 0;
+  Map<String, Object?>? previousStepResourceState;
   var clearedStepCount = 0;
   var totalTurnCount = 0;
   var totalScore = 0;
@@ -519,6 +563,20 @@ BalanceSimSequenceOutput _runStationPathSequence({
 
   for (final station in stationPath) {
     for (final tier in tierPath) {
+      final marketSelection = _resolveSequenceStepMarketSelection(
+        baseSelection: baseMarketSelection,
+        marketProfile: spec.marketProfile,
+        seed:
+            config.seed +
+            spec.matrixIndex * config.runs +
+            runIndex +
+            stepIndex * 37,
+        loadout: spec.loadout,
+        station: station,
+        tier: tier,
+        previousStepResourceState: previousStepResourceState,
+      );
+      final resolvedMarketProfile = marketSelection.profile;
       final effectiveLoadout = _sequenceEffectiveLoadout(
         baseLoadout: spec.loadout,
         station: station,
@@ -565,6 +623,11 @@ BalanceSimSequenceOutput _runStationPathSequence({
       if (marketSelection.sourceCandidate case final sourceCandidate?) {
         row['resolved_market_candidate'] = sourceCandidate.toJson();
       }
+      if (marketSelection.shopSlots.isNotEmpty) {
+        row['market_shop_slots'] = marketSelection.shopSlots
+            .map((profile) => profile.id)
+            .toList(growable: false);
+      }
       row['base_loadout_id'] = spec.loadout.id;
       row['market_purchase_events'] = _sequenceMarketPurchaseEvents(
         marketProfile: resolvedMarketProfile,
@@ -573,6 +636,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         itemCatalog: itemCatalog,
       );
       battleRows.add(row);
+      previousStepResourceState = _sequenceResourceStateFromRow(row);
 
       if (!cleared) {
         failedAtStation = station;
@@ -596,14 +660,14 @@ BalanceSimSequenceOutput _runStationPathSequence({
             failedAtTier: failedAtTier,
             failedStepIndex: failedStepIndex,
             failureStopReason: failureStopReason,
-            lastStepResourceState: _sequenceResourceStateFromRow(row),
-            failedStepResourceState: _sequenceResourceStateFromRow(row),
+            lastStepResourceState: previousStepResourceState,
+            failedStepResourceState: previousStepResourceState,
             jesterCatalog: jesterCatalog,
             itemCatalog: itemCatalog,
             totalTurnCount: totalTurnCount,
             totalScore: totalScore,
             totalTargetScore: totalTargetScore,
-            marketSelection: marketSelection,
+            marketSelection: baseMarketSelection,
           ),
         );
       }
@@ -637,7 +701,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
       totalTurnCount: totalTurnCount,
       totalScore: totalScore,
       totalTargetScore: totalTargetScore,
-      marketSelection: marketSelection,
+      marketSelection: baseMarketSelection,
     ),
   );
 }
@@ -681,6 +745,10 @@ Map<String, Object?> _buildSequenceSummaryRow({
     'resolved_market_profile': resolvedMarketProfile.id,
     if (marketSelection.sourceCandidate case final sourceCandidate?)
       'resolved_market_candidate': sourceCandidate.toJson(),
+    if (marketSelection.shopSlots.isNotEmpty)
+      'market_shop_slots': marketSelection.shopSlots
+          .map((profile) => profile.id)
+          .toList(growable: false),
     'loadout_id': spec.loadout.id,
     'loadout_effects': spec.loadout.effectsJson(),
     'seed': config.seed + spec.matrixIndex * config.runs + runIndex,
@@ -708,6 +776,12 @@ Map<String, Object?> _buildSequenceSummaryRow({
       itemCatalog: itemCatalog,
     ),
     'total_turn_count': totalTurnCount,
+    'turn_per_attempted_step': attemptedStepCount == 0
+        ? 0
+        : totalTurnCount / attemptedStepCount,
+    'turn_per_cleared_step': clearedStepCount == 0
+        ? 0
+        : totalTurnCount / clearedStepCount,
     'total_score': totalScore,
     'total_target_score': totalTargetScore,
     'total_score_ratio': totalTargetScore == 0
@@ -803,6 +877,21 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
     case BalanceSimMarketProfile.s1RoleScoreGrowthPool:
     case BalanceSimMarketProfile.s1RoleShapeFixPool:
     case BalanceSimMarketProfile.s1RoleWeakFlavorPool:
+    case BalanceSimMarketProfile.s1StationWeightedCandidatePool:
+    case BalanceSimMarketProfile.s1StateWeightedCandidatePool:
+    case BalanceSimMarketProfile.bandedCandidatePoolV1:
+    case BalanceSimMarketProfile.bandedCandidatePoolV2:
+    case BalanceSimMarketProfile.shopSlotMarketV1:
+    case BalanceSimMarketProfile.shopSlotMarketV2:
+    case BalanceSimMarketProfile.shopSlotMarketV3:
+    case BalanceSimMarketProfile.shopSlotMarketV4:
+    case BalanceSimMarketProfile.shopSlotMarketV5:
+    case BalanceSimMarketProfile.shopSlotMarketV6:
+    case BalanceSimMarketProfile.shopSlotMarketV7:
+    case BalanceSimMarketProfile.shopSlotMarketV8:
+    case BalanceSimMarketProfile.shopSlotMarketV9:
+    case BalanceSimMarketProfile.shopSlotMarketV10:
+    case BalanceSimMarketProfile.shopSlotMarketV11:
       break;
     case BalanceSimMarketProfile.s1CandidateCommonColorJester:
       _addUnique(jesterIds, _colorJesterForLoadout(stationBaseLoadout));
@@ -846,6 +935,8 @@ BalanceSimLoadoutSpec _stationRouteLoadout({
   return switch (baseLoadout.id) {
     'progression_route_slow' => _progressionRouteSlow(station),
     'progression_route_balanced' => _progressionRouteBalanced(station),
+    'progression_route_delayed' => _progressionRouteDelayed(station),
+    'progression_route_sustain' => _progressionRouteSustain(station),
     'progression_route_power' => _progressionRoutePower(station),
     _ => baseLoadout,
   };
@@ -871,6 +962,33 @@ BalanceSimLoadoutSpec _progressionRouteBalanced(int station) {
     3 => 's3_hand_growth_build',
     4 => 's4_resource_build',
     5 => 's5_power_build',
+    6 => 's5_boss_bridge_build',
+    7 => 's6_boss_breaker_build',
+    _ => 's8_finale_build',
+  };
+  return BalanceSimCliConfig.parseLoadoutPresetForInternalUse(id);
+}
+
+BalanceSimLoadoutSpec _progressionRouteDelayed(int station) {
+  final id = switch (station) {
+    <= 1 => 's1_entry_bridge_build',
+    2 || 3 => 's2_foundation_build',
+    4 => 's3_hand_growth_build',
+    5 => 's4_resource_build',
+    6 => 's5_power_build',
+    7 => 's5_boss_bridge_build',
+    _ => 's6_boss_breaker_build',
+  };
+  return BalanceSimCliConfig.parseLoadoutPresetForInternalUse(id);
+}
+
+BalanceSimLoadoutSpec _progressionRouteSustain(int station) {
+  final id = switch (station) {
+    <= 1 => 's1_entry_bridge_build',
+    2 => 's2_foundation_build',
+    3 => 's3_hand_growth_build',
+    4 => 's4_resource_build',
+    5 => 's5_sustain_build',
     6 => 's5_boss_bridge_build',
     7 => 's6_boss_breaker_build',
     _ => 's8_finale_build',
@@ -921,6 +1039,23 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.s1RoleScoreGrowthPool => 'role_score_growth_pool',
     BalanceSimMarketProfile.s1RoleShapeFixPool => 'role_shape_fix_pool',
     BalanceSimMarketProfile.s1RoleWeakFlavorPool => 'role_weak_flavor_pool',
+    BalanceSimMarketProfile.s1StationWeightedCandidatePool =>
+      'station_weighted_candidate_pool',
+    BalanceSimMarketProfile.s1StateWeightedCandidatePool =>
+      'state_weighted_candidate_pool',
+    BalanceSimMarketProfile.bandedCandidatePoolV1 => 'banded_candidate_pool_v1',
+    BalanceSimMarketProfile.bandedCandidatePoolV2 => 'banded_candidate_pool_v2',
+    BalanceSimMarketProfile.shopSlotMarketV1 => 'shop_slot_market_v1',
+    BalanceSimMarketProfile.shopSlotMarketV2 => 'shop_slot_market_v2',
+    BalanceSimMarketProfile.shopSlotMarketV3 => 'shop_slot_market_v3',
+    BalanceSimMarketProfile.shopSlotMarketV4 => 'shop_slot_market_v4',
+    BalanceSimMarketProfile.shopSlotMarketV5 => 'shop_slot_market_v5',
+    BalanceSimMarketProfile.shopSlotMarketV6 => 'shop_slot_market_v6',
+    BalanceSimMarketProfile.shopSlotMarketV7 => 'shop_slot_market_v7',
+    BalanceSimMarketProfile.shopSlotMarketV8 => 'shop_slot_market_v8',
+    BalanceSimMarketProfile.shopSlotMarketV9 => 'shop_slot_market_v9',
+    BalanceSimMarketProfile.shopSlotMarketV10 => 'shop_slot_market_v10',
+    BalanceSimMarketProfile.shopSlotMarketV11 => 'shop_slot_market_v11',
     BalanceSimMarketProfile.s1CandidateCommonColorJester =>
       'common_color_jester_proxy',
     BalanceSimMarketProfile.s1CandidateCommonRankJester =>
@@ -948,6 +1083,21 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.s1RoleScoreGrowthPool => 'sim_pool',
     BalanceSimMarketProfile.s1RoleShapeFixPool => 'sim_pool',
     BalanceSimMarketProfile.s1RoleWeakFlavorPool => 'sim_pool',
+    BalanceSimMarketProfile.s1StationWeightedCandidatePool => 'sim_policy',
+    BalanceSimMarketProfile.s1StateWeightedCandidatePool => 'sim_policy',
+    BalanceSimMarketProfile.bandedCandidatePoolV1 => 'sim_policy',
+    BalanceSimMarketProfile.bandedCandidatePoolV2 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV1 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV2 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV3 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV4 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV5 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV6 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV7 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV8 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV9 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV10 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV11 => 'sim_policy',
     BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 'planet',
     BalanceSimMarketProfile.s1CandidateTarotBuildPack => 'tarot',
     BalanceSimMarketProfile.s1CandidateVoucherResource => 'voucher',
@@ -958,6 +1108,7 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     'item' => itemCatalog.findById(contentId)?.basePrice,
     'pack' => _simPackCost(marketProfile),
     'sim_pool' => null,
+    'sim_policy' => null,
     'planet' => 4,
     'tarot' => 4,
     'voucher' => 8,
@@ -986,6 +1137,13 @@ BalanceSimMarketSelection _resolveSequenceMarketSelection({
 }) {
   if (marketProfile != BalanceSimMarketProfile.s1RandomCandidatePool &&
       marketProfile != BalanceSimMarketProfile.s1ProbabilisticCandidatePool &&
+      marketProfile != BalanceSimMarketProfile.s1StationWeightedCandidatePool &&
+      marketProfile != BalanceSimMarketProfile.s1StateWeightedCandidatePool &&
+      marketProfile != BalanceSimMarketProfile.bandedCandidatePoolV1 &&
+      marketProfile != BalanceSimMarketProfile.bandedCandidatePoolV2 &&
+      marketProfile != BalanceSimMarketProfile.shopSlotMarketV1 &&
+      marketProfile != BalanceSimMarketProfile.shopSlotMarketV2 &&
+      marketProfile != BalanceSimMarketProfile.shopSlotMarketV3 &&
       marketProfile != BalanceSimMarketProfile.s1FullSafeCandidatePool &&
       !_isBacklogRolePool(marketProfile)) {
     return BalanceSimMarketSelection(profile: marketProfile);
@@ -1014,6 +1172,16 @@ BalanceSimMarketSelection _resolveSequenceMarketSelection({
     );
   }
 
+  if (marketProfile == BalanceSimMarketProfile.s1StationWeightedCandidatePool ||
+      marketProfile == BalanceSimMarketProfile.s1StateWeightedCandidatePool ||
+      marketProfile == BalanceSimMarketProfile.bandedCandidatePoolV1 ||
+      marketProfile == BalanceSimMarketProfile.bandedCandidatePoolV2 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV1 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV2 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV3) {
+    return BalanceSimMarketSelection(profile: marketProfile);
+  }
+
   const weightedCandidates = <BalanceSimMarketProfile>[
     BalanceSimMarketProfile.s1BuyJolly,
     BalanceSimMarketProfile.s1BuySly,
@@ -1029,6 +1197,158 @@ BalanceSimMarketSelection _resolveSequenceMarketSelection({
   ];
   return BalanceSimMarketSelection(
     profile: weightedCandidates[rng.nextInt(weightedCandidates.length)],
+  );
+}
+
+BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
+  required BalanceSimMarketSelection baseSelection,
+  required BalanceSimMarketProfile marketProfile,
+  required int seed,
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+  required Map<String, Object?>? previousStepResourceState,
+}) {
+  final isStationWeighted =
+      marketProfile == BalanceSimMarketProfile.s1StationWeightedCandidatePool;
+  final isStateWeighted =
+      marketProfile == BalanceSimMarketProfile.s1StateWeightedCandidatePool;
+  final isBanded =
+      marketProfile == BalanceSimMarketProfile.bandedCandidatePoolV1 ||
+      marketProfile == BalanceSimMarketProfile.bandedCandidatePoolV2;
+  final isShopSlot =
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV1 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV2 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV3 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV4 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV5 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+  if (!isStationWeighted && !isStateWeighted && !isBanded && !isShopSlot) {
+    return baseSelection;
+  }
+  if (station <= 1) return baseSelection;
+  final rng = Random(seed * 1009 + station * 313 + tier.index * 9173);
+  if (isShopSlot) {
+    final tempoBias = marketProfile != BalanceSimMarketProfile.shopSlotMarketV1;
+    final lateTempoBias =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV4 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV5 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+    final lateTempoBiasStrong =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV4 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+    final lateStaticGuard =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+    final lateStaticGuardStrong =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+    final earlyFunBias =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+    final lateBreakerBias =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+    final missingGrowthBias =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+    final missingGrowthBiasStrong =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10;
+    final boardLockRelief =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV3 &&
+        _hasPreviousBoardLockPressure(previousStepResourceState);
+    final candidates = _shopSlotMarketCandidates(
+      loadout: loadout,
+      station: station,
+      tier: tier,
+      tempoBias: tempoBias,
+      lateTempoBias: lateTempoBias,
+      lateTempoBiasStrong: lateTempoBiasStrong,
+      lateStaticGuard: lateStaticGuard,
+      lateStaticGuardStrong: lateStaticGuardStrong,
+      boardLockRelief: boardLockRelief,
+      earlyFunBias: earlyFunBias,
+      lateBreakerBias: lateBreakerBias,
+      missingGrowthBias: missingGrowthBias,
+      missingGrowthBiasStrong: missingGrowthBiasStrong,
+    );
+    final slots = _rollMarketShopSlots(
+      rng: rng,
+      candidates: candidates,
+      slotCount: _shopSlotCountForStation(
+        station,
+        tempoBias: tempoBias,
+        missingGrowthBias: missingGrowthBias,
+        missingGrowthBiasStrong: missingGrowthBiasStrong,
+      ),
+    );
+    return BalanceSimMarketSelection(
+      profile: _chooseMarketShopSlot(
+        loadout: loadout,
+        station: station,
+        tier: tier,
+        slots: slots,
+        tempoBias: tempoBias,
+        lateTempoBias: lateTempoBias,
+        lateTempoBiasStrong: lateTempoBiasStrong,
+        lateStaticGuard: lateStaticGuard,
+        lateStaticGuardStrong: lateStaticGuardStrong,
+        boardLockRelief: boardLockRelief,
+        earlyFunBias: earlyFunBias,
+        lateBreakerBias: lateBreakerBias,
+        missingGrowthBias: missingGrowthBias,
+        missingGrowthBiasStrong: missingGrowthBiasStrong,
+      ),
+      shopSlots: slots.map((slot) => slot.profile).toList(growable: false),
+    );
+  }
+  final candidates = isBanded
+      ? _bandedMarketCandidates(
+          loadout: loadout,
+          station: station,
+          tier: tier,
+          fastBurstBias:
+              marketProfile == BalanceSimMarketProfile.bandedCandidatePoolV2,
+        )
+      : isStateWeighted
+      ? _stateWeightedMarketCandidates(
+          loadout: loadout,
+          station: station,
+          tier: tier,
+          previousStepResourceState: previousStepResourceState,
+        )
+      : _stationWeightedMarketCandidates(
+          loadout: loadout,
+          station: station,
+          tier: tier,
+        );
+  return BalanceSimMarketSelection(
+    profile: _pickWeightedMarketCandidate(rng: rng, candidates: candidates),
   );
 }
 
@@ -1110,6 +1430,804 @@ List<_WeightedMarketCandidate> _probabilisticMarketCandidates(
         ),
       )
       .toList(growable: false);
+}
+
+List<_WeightedMarketCandidate> _stationWeightedMarketCandidates({
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+}) {
+  final isBoss = tier == BlindTier.boss;
+  final early = station <= 3;
+  final mid = station >= 4 && station <= 5;
+  final candidates = <_WeightedMarketCandidate>[
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateCommonColorJester,
+      early ? 18 : (mid ? 10 : 7),
+      category: 'common_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateCommonRankJester,
+      early ? 18 : (mid ? 12 : 8),
+      category: 'common_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester,
+      early ? 8 : (mid ? 12 : 10),
+      category: 'uncommon_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1TilePackPlus5,
+      early ? 8 : (mid ? 11 : 7),
+      category: 'pack',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5,
+      early ? 5 : (mid ? 9 : 6),
+      category: 'pack',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack,
+      early ? 9 : (mid ? 12 : 8),
+      category: 'tarot',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel,
+      early ? 6 : (mid ? 10 : 13),
+      category: 'planet',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1BuyDiscardGlove,
+      early ? 5 : (mid ? 7 : 4),
+      category: 'item',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateVoucherResource,
+      early ? 3 : (mid ? 5 : 4),
+      category: 'voucher',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateRareXmultJester,
+      early ? 2 : (mid ? 4 : 6),
+      category: 'rare_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge,
+      station >= 6 || isBoss ? 2 : 1,
+      category: 'legendary_proxy',
+    ),
+  ];
+  return candidates
+      .map(
+        (candidate) => candidate.withWeight(
+          candidate.weight +
+              (isBoss ? _bossMarketWeight(candidate.profile) : 0) +
+              _buildAwareMarketWeight(loadout, candidate.profile),
+        ),
+      )
+      .toList(growable: false);
+}
+
+List<_WeightedMarketCandidate> _bandedMarketCandidates({
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+  required bool fastBurstBias,
+}) {
+  final isBoss = tier == BlindTier.boss;
+  final early = station <= 2;
+  final mid = station >= 3 && station <= 5;
+  final candidates = <_WeightedMarketCandidate>[
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateCommonColorJester,
+      early ? (fastBurstBias ? 24 : 22) : (mid ? 8 : (fastBurstBias ? 4 : 5)),
+      category: 'common_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateCommonRankJester,
+      early ? (fastBurstBias ? 24 : 22) : (mid ? 10 : (fastBurstBias ? 5 : 7)),
+      category: 'common_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester,
+      early ? (fastBurstBias ? 7 : 5) : (mid ? (fastBurstBias ? 20 : 18) : 12),
+      category: 'uncommon_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1TilePackPlus5,
+      early ? 10 : (mid ? (fastBurstBias ? 5 : 8) : (fastBurstBias ? 3 : 4)),
+      category: 'pack',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5,
+      early ? 6 : (mid ? (fastBurstBias ? 8 : 11) : (fastBurstBias ? 5 : 6)),
+      category: 'pack',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack,
+      early ? (fastBurstBias ? 13 : 12) : (mid ? (fastBurstBias ? 12 : 14) : 4),
+      category: 'tarot',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel,
+      early ? 4 : (mid ? (fastBurstBias ? 12 : 14) : (fastBurstBias ? 8 : 18)),
+      category: 'planet',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1BuyDiscardGlove,
+      early ? 5 : (mid ? 5 : (fastBurstBias ? 2 : 3)),
+      category: 'item',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateVoucherResource,
+      early ? 3 : (mid ? 3 : (fastBurstBias ? 1 : 2)),
+      category: 'voucher',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateRareXmultJester,
+      early ? 2 : (mid ? (fastBurstBias ? 7 : 5) : (fastBurstBias ? 16 : 9)),
+      category: 'rare_jester',
+    ),
+    _WeightedMarketCandidate(
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge,
+      early ? 1 : (mid ? 1 : (fastBurstBias ? 5 : 3)),
+      category: 'legendary_proxy',
+    ),
+  ];
+  return candidates
+      .map(
+        (candidate) => candidate.withWeight(
+          candidate.weight +
+              (isBoss ? _bossMarketWeight(candidate.profile) : 0) +
+              _buildAwareMarketWeight(loadout, candidate.profile),
+        ),
+      )
+      .toList(growable: false);
+}
+
+List<_WeightedMarketCandidate> _stateWeightedMarketCandidates({
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+  required Map<String, Object?>? previousStepResourceState,
+}) {
+  final baseCandidates = _stationWeightedMarketCandidates(
+    loadout: loadout,
+    station: station,
+    tier: tier,
+  );
+  if (previousStepResourceState == null) return baseCandidates;
+
+  final targetScore = _stateInt(previousStepResourceState, 'target_score');
+  final finalScore = _stateInt(previousStepResourceState, 'final_score');
+  final remainingDeck = _stateInt(previousStepResourceState, 'remaining_deck');
+  final remainingBoardDiscards = _stateInt(
+    previousStepResourceState,
+    'remaining_board_discards',
+  );
+  final remainingHandDiscards = _stateInt(
+    previousStepResourceState,
+    'remaining_hand_discards',
+  );
+  final remainingBoardMoves = _stateInt(
+    previousStepResourceState,
+    'remaining_board_moves',
+  );
+  final boardOccupancy = _stateDouble(
+    previousStepResourceState,
+    'board_occupancy',
+  );
+  final scoreRatio = targetScore <= 0 ? 1.0 : finalScore / targetScore;
+
+  return baseCandidates
+      .map((candidate) {
+        var bonus = 0;
+        // 직전 전투의 자원 신호만 사용한다. 실제 런 저장/상점 상태는 아직 만들지 않는다.
+        if (remainingDeck <= 10) {
+          bonus += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1TilePackPlus5 ||
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 ||
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack => 5,
+            BalanceSimMarketProfile.s1CandidateVoucherResource => 3,
+            _ => 0,
+          };
+        } else if (remainingDeck <= 16) {
+          bonus += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 ||
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack => 3,
+            BalanceSimMarketProfile.s1TilePackPlus5 ||
+            BalanceSimMarketProfile.s1CandidateVoucherResource => 2,
+            _ => 0,
+          };
+        }
+
+        if (scoreRatio < 0.90) {
+          bonus += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 5,
+            BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 3,
+            BalanceSimMarketProfile.s1CandidateRareXmultJester => 3,
+            BalanceSimMarketProfile.s1CandidateLegendaryBridge => 1,
+            _ => 0,
+          };
+        } else if (scoreRatio < 1.08) {
+          bonus += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel ||
+            BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 2,
+            BalanceSimMarketProfile.s1CandidateRareXmultJester => 1,
+            _ => 0,
+          };
+        }
+
+        final discardPressure =
+            remainingBoardDiscards <= 0 || remainingHandDiscards <= 0;
+        final boardLockPressure =
+            boardOccupancy >= 18 || remainingBoardMoves <= 0 || discardPressure;
+        if (boardLockPressure) {
+          bonus += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack => 4,
+            BalanceSimMarketProfile.s1BuyDiscardGlove => 3,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 2,
+            BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+            BalanceSimMarketProfile.s1CandidateCommonRankJester => 1,
+            _ => 0,
+          };
+        }
+
+        return candidate.withWeight(candidate.weight + bonus);
+      })
+      .toList(growable: false);
+}
+
+List<_WeightedMarketCandidate> _shopSlotMarketCandidates({
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+  required bool tempoBias,
+  required bool lateTempoBias,
+  required bool lateTempoBiasStrong,
+  required bool lateStaticGuard,
+  required bool lateStaticGuardStrong,
+  required bool boardLockRelief,
+  required bool earlyFunBias,
+  required bool lateBreakerBias,
+  required bool missingGrowthBias,
+  required bool missingGrowthBiasStrong,
+}) {
+  final base = _bandedMarketCandidates(
+    loadout: loadout,
+    station: station,
+    tier: tier,
+    fastBurstBias: false,
+  );
+  final late = station >= 6;
+  final isBoss = tier == BlindTier.boss;
+  final isProgressionRoute = _isProgressionRouteLoadout(loadout);
+  return base
+      .map((candidate) {
+        var weight = candidate.weight;
+        // 슬롯형 market은 오래 버티는 후보보다 즉시 방향을 바꾸는 후보를 조금 더 노출한다.
+        if (late) {
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+              lateTempoBias
+                  ? lateTempoBiasStrong
+                        ? 6
+                        : 4
+                  : tempoBias
+                  ? 3
+                  : 5,
+            BalanceSimMarketProfile.s1CandidateLegendaryBridge =>
+              lateTempoBias
+                  ? 1
+                  : tempoBias
+                  ? 1
+                  : 2,
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel =>
+              lateTempoBias
+                  ? lateTempoBiasStrong
+                        ? 1
+                        : -1
+                  : tempoBias
+                  ? -2
+                  : -5,
+            BalanceSimMarketProfile.s1CandidateUncommonBuildJester =>
+              lateTempoBias
+                  ? lateTempoBiasStrong
+                        ? 3
+                        : 2
+                  : 0,
+            BalanceSimMarketProfile.s1CandidateVoucherResource =>
+              lateTempoBias
+                  ? lateTempoBiasStrong
+                        ? -7
+                        : -5
+                  : tempoBias
+                  ? -4
+                  : -2,
+            BalanceSimMarketProfile.s1TilePackPlus5 =>
+              lateTempoBias
+                  ? lateTempoBiasStrong
+                        ? -7
+                        : -5
+                  : tempoBias
+                  ? -4
+                  : -2,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 =>
+              lateTempoBias
+                  ? lateTempoBiasStrong
+                        ? -5
+                        : -4
+                  : tempoBias
+                  ? -3
+                  : 0,
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack =>
+              lateTempoBias
+                  ? lateTempoBiasStrong
+                        ? -4
+                        : -3
+                  : tempoBias
+                  ? -2
+                  : 0,
+            _ => 0,
+          };
+        }
+        if (late && !isProgressionRoute) {
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+              lateStaticGuardStrong
+                  ? -22
+                  : lateStaticGuard
+                  ? -11
+                  : -4,
+            BalanceSimMarketProfile.s1CandidateLegendaryBridge =>
+              lateStaticGuardStrong
+                  ? -16
+                  : lateStaticGuard
+                  ? -8
+                  : -3,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 =>
+              lateStaticGuardStrong
+                  ? -10
+                  : lateStaticGuard
+                  ? -5
+                  : -2,
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel =>
+              lateStaticGuardStrong
+                  ? -9
+                  : lateStaticGuard
+                  ? -4
+                  : 0,
+            BalanceSimMarketProfile.s1CandidateUncommonBuildJester =>
+              lateStaticGuardStrong
+                  ? -5
+                  : lateStaticGuard
+                  ? -2
+                  : 0,
+            _ => 0,
+          };
+        }
+        if (isBoss) {
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+              tempoBias ? 3 : 2,
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel =>
+              tempoBias ? 2 : 1,
+            BalanceSimMarketProfile.s1CandidateUncommonBuildJester =>
+              tempoBias ? 1 : 0,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 => tempoBias ? 0 : 1,
+            _ => 0,
+          };
+        }
+        if (earlyFunBias && station <= 2) {
+          // v8은 초반 재미와 S1~S2 병목 완화를 위해 형상 보정/자원 후보를 더 자주 노출한다.
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+            BalanceSimMarketProfile.s1CandidateCommonRankJester => 6,
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack => 7,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 4,
+            BalanceSimMarketProfile.s1TilePackPlus5 => 3,
+            BalanceSimMarketProfile.s1BuyDiscardGlove => 3,
+            BalanceSimMarketProfile.s1CandidateVoucherResource => 2,
+            BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 2,
+            BalanceSimMarketProfile.s1CandidateRareXmultJester => 1,
+            BalanceSimMarketProfile.s1CandidateLegendaryBridge => 1,
+            _ => 0,
+          };
+        }
+        if (lateBreakerBias && station >= 7) {
+          // v9는 S7~S8에서 늦게 실패하는 경로를 줄이기 위해 후반 돌파 후보를 더 노출한다.
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateRareXmultJester => 8,
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 5,
+            BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 4,
+            BalanceSimMarketProfile.s1CandidateLegendaryBridge => 2,
+            BalanceSimMarketProfile.s1CandidateVoucherResource => 1,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 => -2,
+            BalanceSimMarketProfile.s1TilePackPlus5 => -3,
+            _ => 0,
+          };
+        }
+        if (missingGrowthBias && station >= 3 && station <= 5) {
+          // v10은 해당 구간까지 성장 축을 못 얻은 경우를 가정해
+          // 직접 지급이 아니라 마켓 노출 확률만 보정한다.
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateVoucherResource =>
+              missingGrowthBiasStrong ? 10 : 5,
+            BalanceSimMarketProfile.s1BuyDiscardGlove =>
+              missingGrowthBiasStrong ? 8 : 6,
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack =>
+              missingGrowthBiasStrong ? 7 : 4,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 =>
+              missingGrowthBiasStrong ? 6 : 4,
+            BalanceSimMarketProfile.s1TilePackPlus5 =>
+              missingGrowthBiasStrong ? 4 : 2,
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel =>
+              missingGrowthBiasStrong ? 3 : 2,
+            BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+              missingGrowthBiasStrong ? -1 : 0,
+            _ => 0,
+          };
+        }
+        if (missingGrowthBias && late) {
+          // 후반에는 고갈/락 해소 후보를 완전히 밀어내지 않고 다시 보정한다.
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1CandidateVoucherResource =>
+              missingGrowthBiasStrong ? 11 : 5,
+            BalanceSimMarketProfile.s1BuyDiscardGlove =>
+              missingGrowthBiasStrong ? 7 : 5,
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack =>
+              missingGrowthBiasStrong ? 6 : 4,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 =>
+              missingGrowthBiasStrong ? 5 : 3,
+            BalanceSimMarketProfile.s1TilePackPlus5 =>
+              missingGrowthBiasStrong ? 4 : 2,
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 2,
+            BalanceSimMarketProfile.s1CandidateRareXmultJester => 2,
+            BalanceSimMarketProfile.s1CandidateLegendaryBridge => 1,
+            _ => 0,
+          };
+        }
+        if (boardLockRelief) {
+          final reliefScale = isProgressionRoute ? 1 : 0;
+          weight += switch (candidate.profile) {
+            BalanceSimMarketProfile.s1BuyDiscardGlove => 5 + reliefScale,
+            BalanceSimMarketProfile.s1CandidateTarotBuildPack =>
+              4 + reliefScale,
+            BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 1 + reliefScale,
+            BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+            BalanceSimMarketProfile.s1CandidateCommonRankJester => reliefScale,
+            BalanceSimMarketProfile.s1CandidateRareXmultJester => -3,
+            BalanceSimMarketProfile.s1CandidateLegendaryBridge => -2,
+            BalanceSimMarketProfile.s1CandidatePlanetRankLevel => -2,
+            _ => 0,
+          };
+        }
+        return candidate.withWeight(weight.clamp(1, 99));
+      })
+      .toList(growable: false);
+}
+
+int _shopSlotCountForStation(
+  int station, {
+  required bool tempoBias,
+  required bool missingGrowthBias,
+  required bool missingGrowthBiasStrong,
+}) {
+  if (station <= 2) return 3;
+  if (station <= 5) return missingGrowthBias ? 5 : 4;
+  if (missingGrowthBiasStrong) return 5;
+  if (tempoBias) return 4;
+  return 5;
+}
+
+bool _isProgressionRouteLoadout(BalanceSimLoadoutSpec loadout) {
+  return loadout.id.startsWith('progression_route_');
+}
+
+bool _hasPreviousBoardLockPressure(Map<String, Object?>? state) {
+  if (state == null) return false;
+  final remainingBoardDiscards = _stateInt(state, 'remaining_board_discards');
+  final remainingHandDiscards = _stateInt(state, 'remaining_hand_discards');
+  final remainingBoardMoves = _stateInt(state, 'remaining_board_moves');
+  final boardOccupancy = _stateDouble(state, 'board_occupancy');
+  return boardOccupancy >= 18 ||
+      remainingBoardMoves <= 0 ||
+      remainingBoardDiscards <= 0 ||
+      remainingHandDiscards <= 0;
+}
+
+List<_WeightedMarketCandidate> _rollMarketShopSlots({
+  required Random rng,
+  required List<_WeightedMarketCandidate> candidates,
+  required int slotCount,
+}) {
+  final remaining = [...candidates];
+  final slots = <_WeightedMarketCandidate>[];
+  while (slots.length < slotCount && remaining.isNotEmpty) {
+    final picked = _pickWeightedMarketCandidate(
+      rng: rng,
+      candidates: remaining,
+    );
+    final index = remaining.indexWhere(
+      (candidate) => candidate.profile == picked,
+    );
+    slots.add(remaining.removeAt(index < 0 ? 0 : index));
+  }
+  return List<_WeightedMarketCandidate>.unmodifiable(slots);
+}
+
+BalanceSimMarketProfile _chooseMarketShopSlot({
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+  required List<_WeightedMarketCandidate> slots,
+  required bool tempoBias,
+  required bool lateTempoBias,
+  required bool lateTempoBiasStrong,
+  required bool lateStaticGuard,
+  required bool lateStaticGuardStrong,
+  required bool boardLockRelief,
+  required bool earlyFunBias,
+  required bool lateBreakerBias,
+  required bool missingGrowthBias,
+  required bool missingGrowthBiasStrong,
+}) {
+  if (slots.isEmpty) return BalanceSimMarketProfile.none;
+  var best = slots.first;
+  var bestScore = _shopSlotUtility(
+    loadout: loadout,
+    station: station,
+    tier: tier,
+    candidate: best,
+    tempoBias: tempoBias,
+    lateTempoBias: lateTempoBias,
+    lateTempoBiasStrong: lateTempoBiasStrong,
+    lateStaticGuard: lateStaticGuard,
+    lateStaticGuardStrong: lateStaticGuardStrong,
+    boardLockRelief: boardLockRelief,
+    earlyFunBias: earlyFunBias,
+    lateBreakerBias: lateBreakerBias,
+    missingGrowthBias: missingGrowthBias,
+    missingGrowthBiasStrong: missingGrowthBiasStrong,
+  );
+  for (final candidate in slots.skip(1)) {
+    final score = _shopSlotUtility(
+      loadout: loadout,
+      station: station,
+      tier: tier,
+      candidate: candidate,
+      tempoBias: tempoBias,
+      lateTempoBias: lateTempoBias,
+      lateTempoBiasStrong: lateTempoBiasStrong,
+      lateStaticGuard: lateStaticGuard,
+      lateStaticGuardStrong: lateStaticGuardStrong,
+      boardLockRelief: boardLockRelief,
+      earlyFunBias: earlyFunBias,
+      lateBreakerBias: lateBreakerBias,
+      missingGrowthBias: missingGrowthBias,
+      missingGrowthBiasStrong: missingGrowthBiasStrong,
+    );
+    if (score > bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  }
+  return best.profile;
+}
+
+int _shopSlotUtility({
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+  required _WeightedMarketCandidate candidate,
+  required bool tempoBias,
+  required bool lateTempoBias,
+  required bool lateTempoBiasStrong,
+  required bool lateStaticGuard,
+  required bool lateStaticGuardStrong,
+  required bool boardLockRelief,
+  required bool earlyFunBias,
+  required bool lateBreakerBias,
+  required bool missingGrowthBias,
+  required bool missingGrowthBiasStrong,
+}) {
+  final late = station >= 6;
+  final boss = tier == BlindTier.boss;
+  final isProgressionRoute = _isProgressionRouteLoadout(loadout);
+  var score = candidate.weight;
+  score += _buildAwareMarketWeight(loadout, candidate.profile) * 2;
+  if (boss) score += _bossMarketWeight(candidate.profile);
+  if (late) {
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+        lateTempoBias
+            ? lateTempoBiasStrong
+                  ? 14
+                  : 12
+            : tempoBias
+            ? 10
+            : 8,
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge =>
+        lateTempoBias
+            ? 1
+            : tempoBias
+            ? 2
+            : 4,
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel =>
+        lateTempoBias
+            ? lateTempoBiasStrong
+                  ? 5
+                  : 4
+            : tempoBias
+            ? 3
+            : -3,
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester =>
+        lateTempoBias
+            ? lateTempoBiasStrong
+                  ? 5
+                  : 4
+            : tempoBias
+            ? 3
+            : 0,
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack =>
+        lateTempoBias
+            ? lateTempoBiasStrong
+                  ? -5
+                  : -4
+            : tempoBias
+            ? -3
+            : 0,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 =>
+        lateTempoBias
+            ? lateTempoBiasStrong
+                  ? -7
+                  : -5
+            : tempoBias
+            ? -4
+            : 0,
+      BalanceSimMarketProfile.s1TilePackPlus5 =>
+        lateTempoBias
+            ? lateTempoBiasStrong
+                  ? -8
+                  : -6
+            : tempoBias
+            ? -5
+            : 0,
+      BalanceSimMarketProfile.s1CandidateVoucherResource =>
+        lateTempoBias
+            ? lateTempoBiasStrong
+                  ? -9
+                  : -7
+            : tempoBias
+            ? -6
+            : -4,
+      _ => 0,
+    };
+  }
+  if (missingGrowthBiasStrong && station >= 3 && station <= 5) {
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1CandidateVoucherResource => 9,
+      BalanceSimMarketProfile.s1BuyDiscardGlove => 7,
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack => 6,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 5,
+      BalanceSimMarketProfile.s1TilePackPlus5 => 3,
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 2,
+      _ => 0,
+    };
+  }
+  if (missingGrowthBiasStrong && late) {
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1CandidateVoucherResource => 10,
+      BalanceSimMarketProfile.s1BuyDiscardGlove => 7,
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack => 5,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 5,
+      BalanceSimMarketProfile.s1TilePackPlus5 => 3,
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 2,
+      _ => 0,
+    };
+  }
+  if (late && !isProgressionRoute) {
+    // 고정 단일 빌드가 후반 rare 한 번으로 전체 경로를 뚫는 현상을 막는다.
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+        lateStaticGuardStrong
+            ? -60
+            : lateStaticGuard
+            ? -34
+            : -16,
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge =>
+        lateStaticGuardStrong
+            ? -42
+            : lateStaticGuard
+            ? -22
+            : -10,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 =>
+        lateStaticGuardStrong
+            ? -28
+            : lateStaticGuard
+            ? -14
+            : -6,
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel =>
+        lateStaticGuardStrong
+            ? -24
+            : lateStaticGuard
+            ? -12
+            : -4,
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester =>
+        lateStaticGuardStrong
+            ? -14
+            : lateStaticGuard
+            ? -7
+            : 0,
+      _ => 0,
+    };
+  }
+  if (boardLockRelief) {
+    final reliefScale = isProgressionRoute ? 1 : 0;
+    // 직전 전투가 잠겼을 때만 형상 보정 후보를 우선한다.
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1BuyDiscardGlove => 10 + reliefScale * 2,
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack => 8 + reliefScale * 2,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 3 + reliefScale,
+      BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+      BalanceSimMarketProfile.s1CandidateCommonRankJester => reliefScale,
+      BalanceSimMarketProfile.s1CandidateRareXmultJester => -7,
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge => -5,
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel => -4,
+      _ => 0,
+    };
+  }
+  if (station <= 2) {
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+      BalanceSimMarketProfile.s1CandidateCommonRankJester ||
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack => 3,
+      _ => 0,
+    };
+  }
+  if (earlyFunBias && station <= 2) {
+    // bot proxy도 초반에는 막히지 않는 선택을 조금 더 선호한다.
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack => 10,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 7,
+      BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+      BalanceSimMarketProfile.s1CandidateCommonRankJester => 6,
+      BalanceSimMarketProfile.s1BuyDiscardGlove => 5,
+      BalanceSimMarketProfile.s1TilePackPlus5 => 4,
+      BalanceSimMarketProfile.s1CandidateVoucherResource => 3,
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 2,
+      BalanceSimMarketProfile.s1CandidateRareXmultJester => 1,
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge => 1,
+      _ => 0,
+    };
+  }
+  if (lateBreakerBias && station >= 7) {
+    // 후반은 오래 버티기보다 돌파 기대값이 높은 후보를 bot proxy가 고른다.
+    score += switch (candidate.profile) {
+      BalanceSimMarketProfile.s1CandidateRareXmultJester => 16,
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 8,
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 7,
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge => 4,
+      BalanceSimMarketProfile.s1CandidateVoucherResource => 2,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 => -4,
+      BalanceSimMarketProfile.s1TilePackPlus5 => -5,
+      _ => 0,
+    };
+  }
+  return score;
+}
+
+int _stateInt(Map<String, Object?> state, String key) {
+  final value = state[key];
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return 0;
+}
+
+double _stateDouble(Map<String, Object?> state, String key) {
+  final value = state[key];
+  if (value is num) return value.toDouble();
+  return 0;
 }
 
 BalanceSimBacklogCandidate _pickWeightedBacklogCandidate({
@@ -1382,10 +2500,12 @@ class BalanceSimMarketSelection {
   const BalanceSimMarketSelection({
     required this.profile,
     this.sourceCandidate,
+    this.shopSlots = const [],
   });
 
   final BalanceSimMarketProfile profile;
   final BalanceSimBacklogCandidate? sourceCandidate;
+  final List<BalanceSimMarketProfile> shopSlots;
 }
 
 class BalanceSimBacklogCandidate {
@@ -1499,6 +2619,19 @@ int _buildAwareMarketWeight(
       likesRankHands ? 3 : 1,
     BalanceSimMarketProfile.s1CandidateLegendaryBridge =>
       likesRankHands ? 1 : 0,
+    _ => 0,
+  };
+}
+
+int _bossMarketWeight(BalanceSimMarketProfile profile) {
+  return switch (profile) {
+    BalanceSimMarketProfile.s1BuildAwarePackPlus5 ||
+    BalanceSimMarketProfile.s1TilePackPlus5 ||
+    BalanceSimMarketProfile.s1CandidateTarotBuildPack => 2,
+    BalanceSimMarketProfile.s1CandidatePlanetRankLevel ||
+    BalanceSimMarketProfile.s1CandidateRareXmultJester => 3,
+    BalanceSimMarketProfile.s1CandidateVoucherResource ||
+    BalanceSimMarketProfile.s1CandidateLegendaryBridge => 1,
     _ => 0,
   };
 }
@@ -1715,6 +2848,13 @@ List<Tile> _buildSimPackAddedTiles({
     ),
     BalanceSimMarketProfile.s1RandomCandidatePool ||
     BalanceSimMarketProfile.s1ProbabilisticCandidatePool ||
+    BalanceSimMarketProfile.bandedCandidatePoolV1 ||
+    BalanceSimMarketProfile.bandedCandidatePoolV2 ||
+    BalanceSimMarketProfile.shopSlotMarketV1 ||
+    BalanceSimMarketProfile.shopSlotMarketV2 ||
+    BalanceSimMarketProfile.shopSlotMarketV3 ||
+    BalanceSimMarketProfile.shopSlotMarketV10 ||
+    BalanceSimMarketProfile.shopSlotMarketV11 ||
     BalanceSimMarketProfile.s1CandidateCommonColorJester ||
     BalanceSimMarketProfile.s1CandidateCommonRankJester ||
     BalanceSimMarketProfile.s1CandidateUncommonBuildJester ||
@@ -2037,6 +3177,7 @@ Map<String, Object?> _runSingleBattle({
   );
   final experimentBase = _resolveExperiment(
     id: spec.experimentId,
+    runSeed: runSeed,
     station: station,
     tier: tier,
     difficulty: spec.difficulty,
@@ -2161,6 +3302,9 @@ Map<String, Object?> _runSingleBattle({
     'blind_tier': tier.name,
     'boss_modifier_id': experiment.bossModifier?.id,
     'boss_modifier_category': experiment.bossModifier?.category.name,
+    'sim_boss_constraint_id': _simBossConstraintIdFromEffects(
+      experiment.effects,
+    ),
     'sim_boss_constraint': experiment.simBossConstraint?.toJson(),
     'target_score': experiment.targetScore,
     'base_target_score': blindSpec.targetScore,
@@ -2551,6 +3695,7 @@ String _outcomeLabel({
 
 BalanceSimExperimentSpec _resolveExperiment({
   required String id,
+  required int runSeed,
   required int station,
   required BlindTier tier,
   required NewRunDifficulty difficulty,
@@ -2646,6 +3791,28 @@ BalanceSimExperimentSpec _resolveExperiment({
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_resource':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_ordered_boss_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v2':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v3':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1':
+    case _
+        when id.startsWith(
+          'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_',
+        ):
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_three_band_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1':
       return _resolveBossConstraintPoolExperiment(
         id: id,
         station: station,
@@ -2655,6 +3822,7 @@ BalanceSimExperimentSpec _resolveExperiment({
         baseBoardDiscards: baseBoardDiscards,
         baseHandDiscards: baseHandDiscards,
         baseBossModifier: baseBossModifier,
+        runSeed: runSeed,
       );
     case 's1_boss_target_070':
       final stationGrowthBase = 1.25;
@@ -2850,6 +4018,40 @@ double _stationGrowthBaseForExperiment(String id) {
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft' => 1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_resource' => 1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource' => 1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090' => 1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085' => 1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052' => 1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2' => 1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_ordered_boss_v1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v2' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v3' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1' =>
+      1.25,
+    _
+        when id.startsWith(
+          'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_',
+        ) =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_three_band_v1' => 1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1' => 1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1' => 1.25,
     _ when id.startsWith('station_curve_135_boss_constraint_pool') => 1.35,
     _ when id.startsWith('station_curve_125_boss_constraint_pool') => 1.25,
     _ => throw FormatException('Unknown station curve experiment id: $id'),
@@ -2902,13 +4104,33 @@ Map<String, Object?> _targetCurveTuningEffects({
 double _targetCurveMultiplier(String id, int station, BlindTier tier) {
   if (id == 'base_score_curve_v2' ||
       id.startsWith('base_score_curve_v2_boss_constraint_pool')) {
-    if (station == 1 &&
-        (id.endsWith('_s1_soft') || id.endsWith('_s1_soft_resource'))) {
-      return switch (tier) {
-        BlindTier.small => 1.00,
-        BlindTier.big => 0.78,
-        BlindTier.boss => 0.58,
-      };
+    final lateBossMultiplier = _baseScoreCurveV2LateBossMultiplier(
+      id,
+      station,
+      tier,
+    );
+    if (lateBossMultiplier != null) {
+      return lateBossMultiplier;
+    }
+    final earlyMidBossMultiplier = _baseScoreCurveV2EarlyMidBossMultiplier(
+      id,
+      station,
+      tier,
+    );
+    if (earlyMidBossMultiplier != null) {
+      return earlyMidBossMultiplier;
+    }
+    final s1Multiplier = _baseScoreCurveV2S1Multiplier(id, tier);
+    if (station == 1 && s1Multiplier != null) {
+      return s1Multiplier;
+    }
+    final bandMultiplier = _baseScoreCurveV2BandMultiplier(id, station, tier);
+    if (bandMultiplier != null) {
+      return bandMultiplier;
+    }
+    final s2BossMultiplier = _baseScoreCurveV2S2BossMultiplier(id);
+    if (station == 2 && tier == BlindTier.boss && s2BossMultiplier != null) {
+      return s2BossMultiplier;
     }
     return switch (tier) {
       BlindTier.small => 1.10,
@@ -2936,11 +4158,153 @@ double _targetCurveMultiplier(String id, int station, BlindTier tier) {
   };
 }
 
+double? _baseScoreCurveV2EarlyMidBossMultiplier(
+  String id,
+  int station,
+  BlindTier tier,
+) {
+  if (!id.contains('_early_mid_') || tier != BlindTier.boss) return null;
+  if (station == 1 &&
+      (id.contains('_early_mid_s1_boss_050') ||
+          id.contains('_early_mid_s1_050_s4_060_resource_1'))) {
+    return 0.50;
+  }
+  if (station == 4 &&
+      (id.contains('_early_mid_s4_boss_060') ||
+          id.contains('_early_mid_s1_050_s4_060_resource_1'))) {
+    return 0.60;
+  }
+  return null;
+}
+
+double? _baseScoreCurveV2LateBossMultiplier(
+  String id,
+  int station,
+  BlindTier tier,
+) {
+  if (!id.contains('_late_boss_') ||
+      station < 6 ||
+      station > 8 ||
+      tier != BlindTier.boss) {
+    return null;
+  }
+  if (id.contains('_late_boss_068')) return 0.68;
+  if (id.contains('_late_boss_070')) return 0.70;
+  return 0.74;
+}
+
+double? _baseScoreCurveV2S1Multiplier(String id, BlindTier tier) {
+  return switch (id) {
+    'base_score_curve_v2_boss_constraint_pool_v4_three_band_v1' ||
+    'base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1' ||
+    'base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1' =>
+      switch (tier) {
+        BlindTier.small => 0.95,
+        BlindTier.big => 0.70,
+        BlindTier.boss => 0.52,
+      },
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052' => switch (tier) {
+      BlindTier.small => 1.10,
+      BlindTier.big => 0.85,
+      BlindTier.boss => 0.52,
+    },
+    _
+        when id.startsWith(
+          'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+        ) =>
+      switch (tier) {
+        BlindTier.small => 0.95,
+        BlindTier.big => 0.70,
+        BlindTier.boss => 0.52,
+      },
+    _ when id.contains('_s1_soft') => switch (tier) {
+      BlindTier.small => 1.00,
+      BlindTier.big => 0.78,
+      BlindTier.boss => 0.58,
+    },
+    _ => null,
+  };
+}
+
+double? _baseScoreCurveV2BandMultiplier(
+  String id,
+  int station,
+  BlindTier tier,
+) {
+  final threeBand =
+      id == 'base_score_curve_v2_boss_constraint_pool_v4_three_band_v1';
+  final midGate =
+      id == 'base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1';
+  final lateGate =
+      id == 'base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1';
+  final lateGuard =
+      id.contains('_s1_soft_v2_late_guard_v1') ||
+      id.contains('_s1_soft_v2_late_guard_v2');
+  final lateGuardV2 = id.contains('_s1_soft_v2_late_guard_v2');
+  if (!threeBand && !midGate && !lateGate && !lateGuard) return null;
+
+  // 구간형 curve는 초반 빌드가 다음 구간 보스에서 막히도록
+  // S3~S5와 S6~S8의 요구치를 별도 계단으로 둔다.
+  if (station >= 3 && station <= 5 && !lateGuard) {
+    return switch (tier) {
+      BlindTier.small => midGate ? 1.14 : 1.10,
+      BlindTier.big => midGate ? 0.92 : 0.88,
+      BlindTier.boss => midGate ? 0.74 : 0.70,
+    };
+  }
+  if (station >= 6 && station <= 8) {
+    return switch (tier) {
+      BlindTier.small =>
+        lateGate
+            ? 1.18
+            : lateGuard
+            ? lateGuardV2
+                  ? 1.08
+                  : 1.12
+            : 1.14,
+      BlindTier.big =>
+        lateGate
+            ? 0.96
+            : lateGuard
+            ? lateGuardV2
+                  ? 0.88
+                  : 0.90
+            : 0.92,
+      BlindTier.boss =>
+        lateGate
+            ? 0.80
+            : lateGuard
+            ? 0.74
+            : 0.76,
+    };
+  }
+  return null;
+}
+
+bool _baseScoreCurveV2UsesS1Resource(String id) {
+  return id.contains('_s1_resource') || id.contains('_s1_soft_resource');
+}
+
+double? _baseScoreCurveV2S2BossMultiplier(String id) {
+  return switch (id) {
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090' =>
+      0.65 * 0.90,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085' =>
+      0.65 * 0.85,
+    _ => null,
+  };
+}
+
 int _targetCurveBoardDiscardsDelta(String id, int station, BlindTier tier) {
   if (id == 'base_score_curve_v2' ||
       id.startsWith('base_score_curve_v2_boss_constraint_pool')) {
-    if (station == 1 &&
-        (id.endsWith('_s1_resource') || id.endsWith('_s1_soft_resource'))) {
+    if (station == 1 && _baseScoreCurveV2UsesS1Resource(id)) {
+      return 1;
+    }
+    if (_baseScoreCurveV2UsesLateBossResource(id, station, tier)) {
+      return 1;
+    }
+    if (_baseScoreCurveV2UsesEarlyMidBossResource(id, station, tier)) {
       return 1;
     }
     return 0;
@@ -2961,8 +4325,13 @@ int _targetCurveBoardDiscardsDelta(String id, int station, BlindTier tier) {
 int _targetCurveHandDiscardsDelta(String id, int station, BlindTier tier) {
   if (id == 'base_score_curve_v2' ||
       id.startsWith('base_score_curve_v2_boss_constraint_pool')) {
-    if (station == 1 &&
-        (id.endsWith('_s1_resource') || id.endsWith('_s1_soft_resource'))) {
+    if (station == 1 && _baseScoreCurveV2UsesS1Resource(id)) {
+      return 1;
+    }
+    if (_baseScoreCurveV2UsesLateBossResource(id, station, tier)) {
+      return 1;
+    }
+    if (_baseScoreCurveV2UsesEarlyMidBossResource(id, station, tier)) {
       return 1;
     }
     return 0;
@@ -2983,8 +4352,13 @@ int _targetCurveHandDiscardsDelta(String id, int station, BlindTier tier) {
 int _targetCurveMaxHandSizeDelta(String id, int station, BlindTier tier) {
   if (id == 'base_score_curve_v2' ||
       id.startsWith('base_score_curve_v2_boss_constraint_pool')) {
-    if (station == 1 &&
-        (id.endsWith('_s1_resource') || id.endsWith('_s1_soft_resource'))) {
+    if (station == 1 && _baseScoreCurveV2UsesS1Resource(id)) {
+      return 1;
+    }
+    if (_baseScoreCurveV2UsesLateBossResource(id, station, tier)) {
+      return 1;
+    }
+    if (_baseScoreCurveV2UsesEarlyMidBossResource(id, station, tier)) {
       return 1;
     }
     return 0;
@@ -3002,8 +4376,31 @@ int _targetCurveMaxHandSizeDelta(String id, int station, BlindTier tier) {
   };
 }
 
+bool _baseScoreCurveV2UsesLateBossResource(
+  String id,
+  int station,
+  BlindTier tier,
+) =>
+    (id.contains('_late_boss_resource_1') ||
+        id.contains('_late_boss_070_resource_1') ||
+        id.contains('_late_boss_068_resource_1')) &&
+    station >= 5 &&
+    station <= 8 &&
+    tier == BlindTier.boss;
+
+bool _baseScoreCurveV2UsesEarlyMidBossResource(
+  String id,
+  int station,
+  BlindTier tier,
+) =>
+    (id.contains('_early_mid_s4_boss_resource_1') ||
+        id.contains('_early_mid_s1_050_s4_060_resource_1')) &&
+    station == 4 &&
+    tier == BlindTier.boss;
+
 BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
   required String id,
+  required int runSeed,
   required int station,
   required BlindTier tier,
   required NewRunDifficulty difficulty,
@@ -3057,16 +4454,40 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
     );
   }
 
-  final constraint = _bossConstraintForStationPool(
-    station: station,
-    severity: _bossConstraintPoolSeverity(id),
-    baseBossModifier: baseBossModifier,
-  );
+  final severity = _bossConstraintPoolSeverity(id);
+  final constraint = _usesWeightedBossPool(id)
+      ? _weightedBossConstraintForStationPool(
+          station: station,
+          severity: severity,
+          baseBossModifier: baseBossModifier,
+          runSeed: runSeed,
+          poolVersion: _weightedBossPoolVersion(id),
+        )
+      : _bossConstraintForStationPool(
+          station: station,
+          severity: severity,
+          baseBossModifier: baseBossModifier,
+        );
+  final rawBossTargetScore =
+      (curveTargetScore * constraint.targetScoreMultiplier).round();
+  final bossTargetScore = _usesOrderedBossTargets(id)
+      ? _orderedBossTargetScore(
+          rawBossTargetScore: rawBossTargetScore,
+          id: id,
+          station: station,
+          difficulty: difficulty,
+          stationGrowthBase: stationGrowthBase,
+        )
+      : rawBossTargetScore;
+  if (_usesOrderedBossTargets(id)) {
+    effects['ordered_boss_targets'] = true;
+    effects['raw_boss_target_score'] = rawBossTargetScore;
+  }
   effects.addAll(constraint.effects);
   return BalanceSimExperimentSpec(
     id: id,
     applied: true,
-    targetScore: (curveTargetScore * constraint.targetScoreMultiplier).round(),
+    targetScore: bossTargetScore,
     boardDiscards: max(
       0,
       baseBoardDiscards +
@@ -3084,6 +4505,50 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
     simBossConstraint: constraint.simConstraint,
     effects: effects,
   );
+}
+
+bool _usesOrderedBossTargets(String id) =>
+    id.endsWith('_ordered_boss_v1') ||
+    id.endsWith('_weighted_boss_v1') ||
+    id.endsWith('_weighted_boss_v2') ||
+    id.endsWith('_weighted_boss_v3') ||
+    id.contains('_weighted_boss_v3_late_boss_');
+
+bool _usesWeightedBossPool(String id) =>
+    id.endsWith('_weighted_boss_v1') ||
+    id.endsWith('_weighted_boss_v2') ||
+    id.endsWith('_weighted_boss_v3') ||
+    id.contains('_weighted_boss_v3_late_boss_');
+
+int _weightedBossPoolVersion(String id) {
+  if (id.endsWith('_weighted_boss_v3') ||
+      id.contains('_weighted_boss_v3_late_boss_')) {
+    return 3;
+  }
+  if (id.endsWith('_weighted_boss_v2')) return 2;
+  return 1;
+}
+
+int _orderedBossTargetScore({
+  required int rawBossTargetScore,
+  required String id,
+  required int station,
+  required NewRunDifficulty difficulty,
+  required double stationGrowthBase,
+}) {
+  final bigTargetScore = _targetScoreForStationCurve(
+    station: station,
+    tier: BlindTier.big,
+    difficulty: difficulty,
+    stationGrowthBase: stationGrowthBase,
+  );
+  final tunedBigTargetScore = _usesTargetCurveTuning(id)
+      ? (bigTargetScore * _targetCurveMultiplier(id, station, BlindTier.big))
+            .round()
+      : bigTargetScore;
+  return rawBossTargetScore <= tunedBigTargetScore
+      ? tunedBigTargetScore + 1
+      : rawBossTargetScore;
 }
 
 String _bossConstraintPoolSeverity(String id) {
@@ -3106,6 +4571,148 @@ BalanceSimBossConstraintChoice _bossConstraintForStationPool({
 }) {
   final normalizedStation = station < 1 ? 1 : station;
   final slot = (normalizedStation - 1) % 10;
+  return _bossConstraintChoiceForSlot(
+    slot: slot,
+    severity: severity,
+    baseBossModifier: baseBossModifier,
+  );
+}
+
+BalanceSimBossConstraintChoice _weightedBossConstraintForStationPool({
+  required int station,
+  required String severity,
+  required RummiBossModifier? baseBossModifier,
+  required int runSeed,
+  required int poolVersion,
+}) {
+  final candidates = _weightedBossConstraintSlots(
+    station,
+    poolVersion: poolVersion,
+  );
+  final totalWeight = candidates.fold<int>(
+    0,
+    (sum, candidate) => sum + candidate.weight,
+  );
+  final rng = Random(runSeed * 1009 + station * 7919);
+  var roll = rng.nextInt(totalWeight);
+  var selected = candidates.last.slot;
+  for (final candidate in candidates) {
+    roll -= candidate.weight;
+    if (roll < 0) {
+      selected = candidate.slot;
+      break;
+    }
+  }
+  final choice = _bossConstraintChoiceForSlot(
+    slot: selected,
+    severity: severity,
+    baseBossModifier: baseBossModifier,
+  );
+  return choice.withExtraEffects(<String, Object?>{
+    'sim_boss_pool_profile': switch (poolVersion) {
+      3 => 'early_mid_late_final_weighted_v3',
+      2 => 'early_mid_late_final_weighted_v2',
+      _ => 'early_mid_late_final_weighted_v1',
+    },
+    'sim_boss_pool_slot': selected,
+  });
+}
+
+List<({int slot, int weight})> _weightedBossConstraintSlots(
+  int station, {
+  required int poolVersion,
+}) {
+  if (station <= 2) {
+    return poolVersion >= 3
+        ? const [
+            (slot: 2, weight: 18),
+            (slot: 1, weight: 16),
+            (slot: 0, weight: 14),
+            (slot: 7, weight: 12),
+            (slot: 9, weight: 10),
+            (slot: 3, weight: 6),
+            (slot: 5, weight: 4),
+            (slot: 4, weight: 3),
+            (slot: 6, weight: 2),
+            (slot: 8, weight: 1),
+          ]
+        : const [
+            (slot: 0, weight: 24),
+            (slot: 1, weight: 20),
+            (slot: 2, weight: 14),
+            (slot: 7, weight: 8),
+            (slot: 9, weight: 6),
+            (slot: 3, weight: 4),
+            (slot: 5, weight: 2),
+          ];
+  }
+  if (station <= 5) {
+    return const [
+      (slot: 3, weight: 20),
+      (slot: 4, weight: 18),
+      (slot: 5, weight: 14),
+      (slot: 6, weight: 12),
+      (slot: 2, weight: 10),
+      (slot: 7, weight: 8),
+      (slot: 8, weight: 4),
+      (slot: 9, weight: 4),
+      (slot: 0, weight: 3),
+      (slot: 1, weight: 3),
+    ];
+  }
+  if (station <= 7) {
+    return const [
+      (slot: 5, weight: 22),
+      (slot: 6, weight: 20),
+      (slot: 8, weight: 14),
+      (slot: 9, weight: 12),
+      (slot: 3, weight: 10),
+      (slot: 7, weight: 8),
+      (slot: 4, weight: 6),
+      (slot: 2, weight: 4),
+    ];
+  }
+  return poolVersion >= 3
+      ? const [
+          (slot: 6, weight: 20),
+          (slot: 9, weight: 18),
+          (slot: 5, weight: 16),
+          (slot: 7, weight: 10),
+          (slot: 3, weight: 8),
+          (slot: 8, weight: 8),
+          (slot: 4, weight: 5),
+          (slot: 2, weight: 4),
+          (slot: 0, weight: 2),
+          (slot: 1, weight: 2),
+        ]
+      : poolVersion >= 2
+      ? const [
+          (slot: 8, weight: 14),
+          (slot: 6, weight: 20),
+          (slot: 9, weight: 18),
+          (slot: 5, weight: 16),
+          (slot: 7, weight: 10),
+          (slot: 3, weight: 8),
+          (slot: 4, weight: 4),
+          (slot: 2, weight: 2),
+        ]
+      : const [
+          (slot: 8, weight: 24),
+          (slot: 6, weight: 18),
+          (slot: 9, weight: 16),
+          (slot: 5, weight: 14),
+          (slot: 7, weight: 10),
+          (slot: 3, weight: 8),
+          (slot: 4, weight: 4),
+          (slot: 2, weight: 2),
+        ];
+}
+
+BalanceSimBossConstraintChoice _bossConstraintChoiceForSlot({
+  required int slot,
+  required String severity,
+  required RummiBossModifier? baseBossModifier,
+}) {
   final scale = switch (severity) {
     'soft' => 0.75,
     'v4' => 0.5,
@@ -3501,6 +5108,21 @@ class BalanceSimBossConstraintChoice {
   final RummiBossModifier? bossModifier;
   final BalanceSimBossConstraint? simConstraint;
   final Map<String, Object?> effects;
+
+  BalanceSimBossConstraintChoice withExtraEffects(
+    Map<String, Object?> extraEffects,
+  ) {
+    return BalanceSimBossConstraintChoice(
+      id: id,
+      targetScoreMultiplier: targetScoreMultiplier,
+      boardDiscardsDelta: boardDiscardsDelta,
+      handDiscardsDelta: handDiscardsDelta,
+      maxHandSizeDelta: maxHandSizeDelta,
+      bossModifier: bossModifier,
+      simConstraint: simConstraint,
+      effects: <String, Object?>{...effects, ...extraEffects},
+    );
+  }
 }
 
 class BalanceSimBattleResult {
@@ -3569,6 +5191,21 @@ enum BalanceSimMarketProfile {
   s1RoleScoreGrowthPool,
   s1RoleShapeFixPool,
   s1RoleWeakFlavorPool,
+  s1StationWeightedCandidatePool,
+  s1StateWeightedCandidatePool,
+  bandedCandidatePoolV1,
+  bandedCandidatePoolV2,
+  shopSlotMarketV1,
+  shopSlotMarketV2,
+  shopSlotMarketV3,
+  shopSlotMarketV4,
+  shopSlotMarketV5,
+  shopSlotMarketV6,
+  shopSlotMarketV7,
+  shopSlotMarketV8,
+  shopSlotMarketV9,
+  shopSlotMarketV10,
+  shopSlotMarketV11,
   s1CandidateCommonColorJester,
   s1CandidateCommonRankJester,
   s1CandidateUncommonBuildJester,
@@ -3608,6 +5245,25 @@ enum BalanceSimMarketProfile {
       's1_role_shape_fix_pool' => BalanceSimMarketProfile.s1RoleShapeFixPool,
       's1_role_weak_flavor_pool' =>
         BalanceSimMarketProfile.s1RoleWeakFlavorPool,
+      's1_station_weighted_candidate_pool' =>
+        BalanceSimMarketProfile.s1StationWeightedCandidatePool,
+      's1_state_weighted_candidate_pool' =>
+        BalanceSimMarketProfile.s1StateWeightedCandidatePool,
+      'banded_candidate_pool_v1' =>
+        BalanceSimMarketProfile.bandedCandidatePoolV1,
+      'banded_candidate_pool_v2' =>
+        BalanceSimMarketProfile.bandedCandidatePoolV2,
+      'shop_slot_market_v1' => BalanceSimMarketProfile.shopSlotMarketV1,
+      'shop_slot_market_v2' => BalanceSimMarketProfile.shopSlotMarketV2,
+      'shop_slot_market_v3' => BalanceSimMarketProfile.shopSlotMarketV3,
+      'shop_slot_market_v4' => BalanceSimMarketProfile.shopSlotMarketV4,
+      'shop_slot_market_v5' => BalanceSimMarketProfile.shopSlotMarketV5,
+      'shop_slot_market_v6' => BalanceSimMarketProfile.shopSlotMarketV6,
+      'shop_slot_market_v7' => BalanceSimMarketProfile.shopSlotMarketV7,
+      'shop_slot_market_v8' => BalanceSimMarketProfile.shopSlotMarketV8,
+      'shop_slot_market_v9' => BalanceSimMarketProfile.shopSlotMarketV9,
+      'shop_slot_market_v10' => BalanceSimMarketProfile.shopSlotMarketV10,
+      'shop_slot_market_v11' => BalanceSimMarketProfile.shopSlotMarketV11,
       's1_candidate_common_color_jester' =>
         BalanceSimMarketProfile.s1CandidateCommonColorJester,
       's1_candidate_common_rank_jester' =>
@@ -3658,6 +5314,25 @@ enum BalanceSimMarketProfile {
       BalanceSimMarketProfile.s1RoleShapeFixPool => 's1_role_shape_fix_pool',
       BalanceSimMarketProfile.s1RoleWeakFlavorPool =>
         's1_role_weak_flavor_pool',
+      BalanceSimMarketProfile.s1StationWeightedCandidatePool =>
+        's1_station_weighted_candidate_pool',
+      BalanceSimMarketProfile.s1StateWeightedCandidatePool =>
+        's1_state_weighted_candidate_pool',
+      BalanceSimMarketProfile.bandedCandidatePoolV1 =>
+        'banded_candidate_pool_v1',
+      BalanceSimMarketProfile.bandedCandidatePoolV2 =>
+        'banded_candidate_pool_v2',
+      BalanceSimMarketProfile.shopSlotMarketV1 => 'shop_slot_market_v1',
+      BalanceSimMarketProfile.shopSlotMarketV2 => 'shop_slot_market_v2',
+      BalanceSimMarketProfile.shopSlotMarketV3 => 'shop_slot_market_v3',
+      BalanceSimMarketProfile.shopSlotMarketV4 => 'shop_slot_market_v4',
+      BalanceSimMarketProfile.shopSlotMarketV5 => 'shop_slot_market_v5',
+      BalanceSimMarketProfile.shopSlotMarketV6 => 'shop_slot_market_v6',
+      BalanceSimMarketProfile.shopSlotMarketV7 => 'shop_slot_market_v7',
+      BalanceSimMarketProfile.shopSlotMarketV8 => 'shop_slot_market_v8',
+      BalanceSimMarketProfile.shopSlotMarketV9 => 'shop_slot_market_v9',
+      BalanceSimMarketProfile.shopSlotMarketV10 => 'shop_slot_market_v10',
+      BalanceSimMarketProfile.shopSlotMarketV11 => 'shop_slot_market_v11',
       BalanceSimMarketProfile.s1CandidateCommonColorJester =>
         's1_candidate_common_color_jester',
       BalanceSimMarketProfile.s1CandidateCommonRankJester =>
@@ -4043,7 +5718,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--experiment-id baseline|candidate_baseline_v1|base_score_curve_v2|base_score_curve_v2_boss_constraint_pool_v2|base_score_curve_v2_boss_constraint_pool_v4|base_score_curve_v2_boss_constraint_pool_v4_s1_soft|base_score_curve_v2_boss_constraint_pool_v4_s1_resource|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|station_curve_125_target_v5|station_curve_125_target_v6_s5_070|station_curve_125_target_v6_s5_075|station_curve_125_target_v7_s4_080_s5_070|station_curve_125_boss_constraint_pool_v1|station_curve_135_boss_constraint_pool_v1|station_curve_125_boss_constraint_pool_v2|station_curve_125_target_v5_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v2|station_curve_125_target_v6_s5_075_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v3|station_curve_125_target_v7_s4_080_s5_070_boss_constraint_pool_v3|station_curve_125_target_v6_s5_070_boss_constraint_pool_v4|station_curve_125_boss_constraint_pool_soft|station_curve_135_boss_constraint_pool_soft|station_curve_125_boss_constraint_pool_hard|station_curve_135_boss_constraint_pool_hard|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove|s1_tile_pack_small|s1_tile_pack_plus3|s1_tile_pack_plus4|s1_tile_pack_plus5|s1_build_aware_pack_plus3|s1_build_aware_pack_plus5|s1_pair_seed_pack|s1_color_seed_pack|s1_face_seed_pack|s1_random_candidate_pool|s1_probabilistic_candidate_pool|s1_full_safe_candidate_pool|s1_role_deck_sustain_pool|s1_role_score_growth_pool|s1_role_shape_fix_pool|s1_role_weak_flavor_pool] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s5_sustain_build|s5_boss_bridge_build|planet_like_rank_level|tarot_like_tile_shape|enhanced_line_score|rare_jester_engine|rare_xmult_engine|s6_boss_breaker_build|s8_finale_build|progression_route_slow|progression_route_balanced|progression_route_power] [--jester id] [--item id]';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--experiment-id baseline|candidate_baseline_v1|base_score_curve_v2|base_score_curve_v2_boss_constraint_pool_v2|base_score_curve_v2_boss_constraint_pool_v4|base_score_curve_v2_boss_constraint_pool_v4_s1_soft|base_score_curve_v2_boss_constraint_pool_v4_s1_resource|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085|base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_ordered_boss_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v2|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v3|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2|base_score_curve_v2_boss_constraint_pool_v4_three_band_v1|base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1|base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|station_curve_125_target_v5|station_curve_125_target_v6_s5_070|station_curve_125_target_v6_s5_075|station_curve_125_target_v7_s4_080_s5_070|station_curve_125_boss_constraint_pool_v1|station_curve_135_boss_constraint_pool_v1|station_curve_125_boss_constraint_pool_v2|station_curve_125_target_v5_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v2|station_curve_125_target_v6_s5_075_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v3|station_curve_125_target_v7_s4_080_s5_070_boss_constraint_pool_v3|station_curve_125_target_v6_s5_070_boss_constraint_pool_v4|station_curve_125_boss_constraint_pool_soft|station_curve_135_boss_constraint_pool_soft|station_curve_125_boss_constraint_pool_hard|station_curve_135_boss_constraint_pool_hard|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove|s1_tile_pack_small|s1_tile_pack_plus3|s1_tile_pack_plus4|s1_tile_pack_plus5|s1_build_aware_pack_plus3|s1_build_aware_pack_plus5|s1_pair_seed_pack|s1_color_seed_pack|s1_face_seed_pack|s1_random_candidate_pool|s1_probabilistic_candidate_pool|s1_full_safe_candidate_pool|s1_role_deck_sustain_pool|s1_role_score_growth_pool|s1_role_shape_fix_pool|s1_role_weak_flavor_pool|s1_station_weighted_candidate_pool|s1_state_weighted_candidate_pool|banded_candidate_pool_v1|banded_candidate_pool_v2|shop_slot_market_v1|shop_slot_market_v2|shop_slot_market_v3|shop_slot_market_v4|shop_slot_market_v5|shop_slot_market_v6|shop_slot_market_v7|shop_slot_market_v8|shop_slot_market_v9|shop_slot_market_v10|shop_slot_market_v11] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s5_sustain_build|s5_boss_bridge_build|planet_like_rank_level|tarot_like_tile_shape|enhanced_line_score|rare_jester_engine|rare_xmult_engine|s6_boss_breaker_build|s8_finale_build|progression_route_slow|progression_route_balanced|progression_route_delayed|progression_route_sustain|progression_route_power] [--jester id] [--item id]';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);
@@ -4105,6 +5780,24 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_resource',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_ordered_boss_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v2',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v3',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2',
+      'base_score_curve_v2_boss_constraint_pool_v4_three_band_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1',
       'baseline_curve_160',
       'station_curve_145',
       'station_curve_135',
@@ -4139,6 +5832,11 @@ class BalanceSimCliConfig {
       's2_boss_resource_boost',
     };
     if (ids.contains(raw)) return raw;
+    if (raw.startsWith(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_',
+    )) {
+      return raw;
+    }
     throw FormatException('Unknown experiment id: $raw');
   }
 
@@ -4422,6 +6120,16 @@ class BalanceSimCliConfig {
       ),
       'progression_route_balanced' => const BalanceSimLoadoutSpec(
         id: 'progression_route_balanced',
+        jesterIds: [],
+        itemIds: [],
+      ),
+      'progression_route_delayed' => const BalanceSimLoadoutSpec(
+        id: 'progression_route_delayed',
+        jesterIds: [],
+        itemIds: [],
+      ),
+      'progression_route_sustain' => const BalanceSimLoadoutSpec(
+        id: 'progression_route_sustain',
         jesterIds: [],
         itemIds: [],
       ),

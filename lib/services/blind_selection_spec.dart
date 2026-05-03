@@ -1,4 +1,3 @@
-import '../app_config.dart';
 import '../logic/rummi_poker_grid/boss_modifier.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
@@ -127,10 +126,6 @@ class BlindSelectionSpecBuilder {
     required BlindSelectionAvailability availability,
     String? lockReason,
   }) {
-    final baseTarget = _baseTargetForStation(
-      stationIndex: stationIndex,
-      difficulty: difficulty,
-    );
     final baseBoardDiscards = switch (difficulty) {
       NewRunDifficulty.standard => ruleset.defaultBoardDiscards,
       NewRunDifficulty.relaxed => ruleset.defaultBoardDiscards + 1,
@@ -144,12 +139,11 @@ class BlindSelectionSpecBuilder {
     final baseHandSize = ruleset.defaultMaxHandSize;
     final rewardBase = RummiRunProgress.stageClearGoldBase;
 
-    final targetScore = switch (tier) {
-      BlindTier.small => baseTarget,
-      BlindTier.big => (baseTarget * 1.5).round(),
-      BlindTier.boss =>
-        (baseTarget * _bossTargetMultiplier(stationIndex)).round(),
-    };
+    final targetScore = _targetScoreForSpec(
+      stationIndex: stationIndex,
+      tier: tier,
+      difficulty: difficulty,
+    );
     final boardDiscards = switch (tier) {
       BlindTier.small => baseBoardDiscards,
       BlindTier.big => baseBoardDiscards > 1 ? baseBoardDiscards - 1 : 1,
@@ -205,31 +199,55 @@ class BlindSelectionSpecBuilder {
     const modifiers = [
       RummiBossModifier.redDampener,
       RummiBossModifier.rowDampener,
+      RummiBossModifier.blueDampener,
+      RummiBossModifier.columnDampener,
+      RummiBossModifier.blackDampener,
+      RummiBossModifier.diagonalDampener,
+      RummiBossModifier.yellowDampener,
     ];
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
     return modifiers[(normalizedStationIndex - 1) % modifiers.length];
   }
 
-  static double _bossTargetMultiplier(int stationIndex) {
-    final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
-    return normalizedStationIndex == 1 ? 1.6 : 2.0;
-  }
-
-  static int _baseTargetForStation({
+  static int _targetScoreForSpec({
     required int stationIndex,
+    required BlindTier tier,
     required NewRunDifficulty difficulty,
   }) {
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
-    final stageScaled = normalizedStationIndex <= 1
-        ? 300
-        : (300 * _pow(1.6, normalizedStationIndex - 1)).floor();
-    final scaledTarget = (stageScaled * AppConfig.stationTargetScoreScale)
-        .round();
+    final standardTarget = _standardTargetScore(
+      stationIndex: normalizedStationIndex,
+      tier: tier,
+    );
     return switch (difficulty) {
-      NewRunDifficulty.standard => scaledTarget,
-      NewRunDifficulty.relaxed => (scaledTarget * 0.8).round(),
-      NewRunDifficulty.pressure => (scaledTarget * 1.2).round(),
+      NewRunDifficulty.standard => standardTarget,
+      NewRunDifficulty.relaxed => (standardTarget * 0.8).round(),
+      NewRunDifficulty.pressure => (standardTarget * 1.2).round(),
     };
+  }
+
+  static int _standardTargetScore({
+    required int stationIndex,
+    required BlindTier tier,
+  }) {
+    const table = <List<int>>[
+      [257, 284, 285],
+      [372, 431, 439],
+      [463, 537, 547],
+      [580, 672, 685],
+      [725, 841, 857],
+      [923, 1112, 1121],
+      [1154, 1391, 1401],
+      [1441, 1738, 1739],
+    ];
+    if (stationIndex <= table.length) {
+      return table[stationIndex - 1][tier.index];
+    }
+    // S8 이후는 아직 실제 진행 구간 밖이다. 테스트/디버그용으로만
+    // 마지막 구간 성장률을 이어 붙여 target 단조 증가를 보장한다.
+    final extraStep = stationIndex - table.length;
+    final base = table.last[tier.index];
+    return (base * _pow(1.25, extraStep)).round();
   }
 
   static double _pow(double base, int exponent) {

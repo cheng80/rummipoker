@@ -542,6 +542,7 @@ class RummiCashOutBreakdown {
     required this.economyBonuses,
     required this.economyGold,
     required this.totalGold,
+    this.firstBlindClearBonusGold = 0,
     this.itemBonuses = const [],
     this.itemGold = 0,
   });
@@ -557,6 +558,7 @@ class RummiCashOutBreakdown {
   final int handDiscardGold;
   final List<RummiRoundEndEconomyBonus> economyBonuses;
   final int economyGold;
+  final int firstBlindClearBonusGold;
   final List<RummiRoundEndItemBonus> itemBonuses;
   final int itemGold;
   final int totalGold;
@@ -591,11 +593,160 @@ class RummiEconomyConfig {
 
   static const int startingGold = 10;
   static const int stageClearGoldBase = 10;
+  static const int firstBlindClearBonusGold = 5;
   static const int remainingBoardDiscardGoldBonus = 5;
   static const int remainingHandDiscardGoldBonus = 2;
   static const int shopBaseRerollCost = 5;
   static const int shopRerollCostStep = 2;
   static const int shopOfferCount = 3;
+}
+
+enum RummiStationMarketBand { early, mid, late }
+
+/// 스테이션 구간별 상점 가중치 정책.
+///
+/// 시뮬의 `shop_slot_market_v9`를 실제 런타임이 이해할 수 있는 Jester rarity와
+/// Item tag/rarity 가중치로 번역한다. 저장 데이터가 아니라 상점 생성 시점의
+/// transient policy라서, 실제 save schema를 늘리지 않는다.
+class RummiStationBandMarketPolicy {
+  const RummiStationBandMarketPolicy._(this.stageIndex, this.band);
+
+  factory RummiStationBandMarketPolicy.forStage(int stageIndex) {
+    final stage = stageIndex < 1 ? 1 : stageIndex;
+    return RummiStationBandMarketPolicy._(
+      stage,
+      stage <= 2
+          ? RummiStationMarketBand.early
+          : stage <= 5
+          ? RummiStationMarketBand.mid
+          : RummiStationMarketBand.late,
+    );
+  }
+
+  final int stageIndex;
+  final RummiStationMarketBand band;
+
+  int jesterRarityWeight(
+    RummiJesterRarity rarity, {
+    int rarityWeightBonus = 0,
+  }) {
+    final tier = stageIndex >= 6 ? 6 : stageIndex;
+    return switch (rarity) {
+      RummiJesterRarity.common => switch (tier) {
+        1 => 860,
+        2 => 780,
+        3 => 700,
+        4 => 620,
+        5 => 550,
+        _ => 480,
+      },
+      RummiJesterRarity.uncommon => switch (tier) {
+        1 => 120,
+        2 => 170,
+        3 => 220,
+        4 => 270,
+        5 => 310,
+        _ => 340,
+      },
+      RummiJesterRarity.rare =>
+        switch (tier) {
+              1 => 20,
+              2 => 40,
+              3 => 70,
+              4 => 100,
+              5 => 130,
+              _ => 160,
+            } +
+            rarityWeightBonus,
+      RummiJesterRarity.legendary =>
+        switch (tier) {
+              1 => 1,
+              2 => 2,
+              3 => 4,
+              4 => 8,
+              5 => 12,
+              _ => 20,
+            } +
+            (rarityWeightBonus ~/ 2),
+    };
+  }
+
+  int itemOfferWeight(
+    ItemDefinition item, {
+    Set<String> missingGrowthTags = const {},
+  }) {
+    var weight = _itemRarityBaseWeight(item.rarity);
+    weight += _itemTagBonus(item.tags);
+    weight += _missingGrowthTagBonus(item.tags, missingGrowthTags);
+    if (item.usableInBattle)
+      weight += band == RummiStationMarketBand.late ? 30 : 50;
+    if (item.isPassive)
+      weight += band == RummiStationMarketBand.early ? 20 : 70;
+    return weight < 1 ? 1 : weight;
+  }
+
+  int _itemRarityBaseWeight(ItemRarity rarity) {
+    return switch (band) {
+      RummiStationMarketBand.early => switch (rarity) {
+        ItemRarity.common => 580,
+        ItemRarity.uncommon => 220,
+        ItemRarity.rare => 60,
+        ItemRarity.legendary => 4,
+      },
+      RummiStationMarketBand.mid => switch (rarity) {
+        ItemRarity.common => 360,
+        ItemRarity.uncommon => 420,
+        ItemRarity.rare => 140,
+        ItemRarity.legendary => 10,
+      },
+      RummiStationMarketBand.late => switch (rarity) {
+        ItemRarity.common => 260,
+        ItemRarity.uncommon => 360,
+        ItemRarity.rare => 260,
+        ItemRarity.legendary => 30,
+      },
+    };
+  }
+
+  int _itemTagBonus(List<String> tags) {
+    var bonus = 0;
+    bool has(String tag) => tags.contains(tag);
+    switch (band) {
+      case RummiStationMarketBand.early:
+        if (has('economy') || has('market')) bonus += 120;
+        if (has('discard') || has('safety') || has('move')) bonus += 95;
+        if (has('tile_color') || has('rank') || has('draw')) bonus += 65;
+        if (has('legendary')) bonus -= 20;
+      case RummiStationMarketBand.mid:
+        if (has('score') || has('rank') || has('tile_color')) bonus += 150;
+        if (has('market') || has('rarity') || has('capacity')) bonus += 75;
+        if (has('discard') || has('safety') || has('move')) bonus += 65;
+        if (has('boss')) bonus += 40;
+      case RummiStationMarketBand.late:
+        if (has('boss') || has('legendary')) bonus += 130;
+        if (has('score') || has('xmult') || has('rarity')) bonus += 115;
+        if (has('market') || has('capacity')) bonus += 85;
+        if (has('safety') || has('move') || has('discard')) bonus += 55;
+    }
+    return bonus;
+  }
+
+  int _missingGrowthTagBonus(
+    List<String> itemTags,
+    Set<String> missingGrowthTags,
+  ) {
+    if (missingGrowthTags.isEmpty) return 0;
+    var matched = 0;
+    for (final tag in itemTags) {
+      if (missingGrowthTags.contains(tag)) {
+        matched += 1;
+      }
+    }
+    // 직접 지급이 아니라 등장 확률만 약하게 보정한다. v10처럼 특정 자원
+    // 후보가 과선택되지 않도록 태그 보너스는 낮고 상한을 둔다.
+    final cappedMatches = matched > 2 ? 2 : matched;
+    return cappedMatches * 45;
+  }
 }
 
 class RummiMarketModifierState {
@@ -845,6 +996,7 @@ class RummiRunProgress {
     ItemCatalog? itemCatalog,
   }) {
     final blindReward = stageClearGoldBase;
+    final firstBlindClearBonusGold = _firstBlindClearBonusGold();
     final remainingBoardDiscards = session.blind.boardDiscardsRemaining;
     final remainingHandDiscards = session.blind.handDiscardsRemaining;
     final boardDiscardGold =
@@ -885,15 +1037,24 @@ class RummiRunProgress {
       handDiscardGold: handDiscardGold,
       economyBonuses: economyBonuses,
       economyGold: economyGold,
+      firstBlindClearBonusGold: firstBlindClearBonusGold,
       itemBonuses: itemBonuses,
       itemGold: itemGold,
       totalGold:
           blindReward +
+          firstBlindClearBonusGold +
           boardDiscardGold +
           handDiscardGold +
           economyGold +
           itemGold,
     );
+  }
+
+  int _firstBlindClearBonusGold() {
+    if (stageIndex == 1 && currentStationBlindTierIndex == 0) {
+      return RummiEconomyConfig.firstBlindClearBonusGold;
+    }
+    return 0;
   }
 
   List<RummiRoundEndItemBonus> _buildRoundEndItemBonuses({
@@ -1319,9 +1480,26 @@ class RummiRunProgress {
         RummiShopOffer(slotIndex: shopOffers.length, card: selected),
       );
     }
+    final focusSlot = _missingJesterGrowthFocusSlot(
+      rng,
+      startSlot: shopOffers.length,
+      slotCount: slotCount,
+    );
     for (var slot = 0; slot < slotCount && pool.isNotEmpty; slot++) {
       if (slot < shopOffers.length) {
         continue;
+      }
+      if (slot == focusSlot) {
+        final missingTags = _missingJesterGrowthTags();
+        final focusPool = pool
+            .where((card) => _jesterMatchesAnyGrowthTag(card, missingTags))
+            .toList(growable: false);
+        if (focusPool.isNotEmpty) {
+          final selected = _pickWeightedShopJester(pool: focusPool, rng: rng);
+          pool.remove(selected);
+          shopOffers.add(RummiShopOffer(slotIndex: slot, card: selected));
+          continue;
+        }
       }
       final selected = _pickWeightedShopJester(pool: pool, rng: rng);
       pool.remove(selected);
@@ -1353,47 +1531,89 @@ class RummiRunProgress {
   }
 
   int _shopOfferWeightForRarity(RummiJesterRarity rarity) {
-    final rarityBonus = marketModifiers.rarityWeightBonus;
-    final stage = stageIndex < 1 ? 1 : stageIndex;
-    final tier = stage >= 6 ? 6 : stage;
-    return switch (rarity) {
-      RummiJesterRarity.common => switch (tier) {
-        1 => 860,
-        2 => 780,
-        3 => 700,
-        4 => 620,
-        5 => 550,
-        _ => 480,
-      },
-      RummiJesterRarity.uncommon => switch (tier) {
-        1 => 120,
-        2 => 170,
-        3 => 220,
-        4 => 270,
-        5 => 310,
-        _ => 340,
-      },
-      RummiJesterRarity.rare =>
-        switch (tier) {
-              1 => 20,
-              2 => 40,
-              3 => 70,
-              4 => 100,
-              5 => 130,
-              _ => 160,
-            } +
-            rarityBonus,
-      RummiJesterRarity.legendary =>
-        switch (tier) {
-              1 => 1,
-              2 => 2,
-              3 => 4,
-              4 => 8,
-              5 => 12,
-              _ => 20,
-            } +
-            (rarityBonus ~/ 2),
-    };
+    return RummiStationBandMarketPolicy.forStage(stageIndex).jesterRarityWeight(
+      rarity,
+      rarityWeightBonus: marketModifiers.rarityWeightBonus,
+    );
+  }
+
+  int? _missingJesterGrowthFocusSlot(
+    Random rng, {
+    required int startSlot,
+    required int slotCount,
+  }) {
+    final missingTags = _missingJesterGrowthTags();
+    if (missingTags.isEmpty || stageIndex <= 2 || startSlot >= slotCount) {
+      return null;
+    }
+    final chance = stageIndex >= 6
+        ? 45
+        : stageIndex >= 4
+        ? 35
+        : 25;
+    if (rng.nextInt(100) >= chance) return null;
+    return startSlot + rng.nextInt(slotCount - startSlot);
+  }
+
+  Set<String> _missingJesterGrowthTags() {
+    final station = stageIndex < 1 ? 1 : stageIndex;
+    if (station <= 2) return const {};
+
+    final ownedTags = <String>{};
+    for (final card in ownedJesters) {
+      ownedTags.addAll(_growthTagsForJester(card));
+    }
+
+    final missing = <String>{};
+    final hasScoreGrowth =
+        ownedTags.contains('score') ||
+        ownedTags.contains('rank') ||
+        ownedTags.contains('tile_color');
+    if (!hasScoreGrowth) {
+      missing.addAll(const ['score', 'rank', 'tile_color']);
+    }
+
+    if (station >= 6) {
+      final hasBossGrowth =
+          ownedTags.contains('boss') || ownedTags.contains('xmult');
+      if (!hasBossGrowth) {
+        missing.addAll(const ['boss', 'xmult']);
+      }
+    }
+
+    return Set<String>.unmodifiable(missing);
+  }
+
+  static bool _jesterMatchesAnyGrowthTag(
+    RummiJesterCard card,
+    Set<String> expectedTags,
+  ) {
+    if (expectedTags.isEmpty) return false;
+    for (final tag in _growthTagsForJester(card)) {
+      if (expectedTags.contains(tag)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static Set<String> _growthTagsForJester(RummiJesterCard card) {
+    final tags = <String>{};
+    if (card.effectType == 'chips_bonus' ||
+        card.effectType == 'mult_bonus' ||
+        card.effectType == 'stateful_growth') {
+      tags.add('score');
+    }
+    if (card.effectType == 'xmult_bonus') {
+      tags.addAll(const ['score', 'xmult', 'boss']);
+    }
+    if (card.conditionType == 'rank_scored') {
+      tags.add('rank');
+    }
+    if (card.conditionType == 'tile_color_scored') {
+      tags.add('tile_color');
+    }
+    return Set<String>.unmodifiable(tags);
   }
 
   static int _sellPriceFor(RummiJesterCard card) {

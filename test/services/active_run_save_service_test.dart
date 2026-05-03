@@ -373,6 +373,20 @@ void main() {
       expect(restored.bossModifier?.affectedTileColors, isEmpty);
     });
 
+    test('blind json preserves expanded boss modifier pool entries', () {
+      final blind = RummiBlindState(
+        targetScore: 300,
+        bossModifier: RummiBossModifier.diagonalDampener,
+      );
+
+      final restored = RummiBlindState.fromJson(blind.toJson());
+
+      expect(restored.bossModifier?.id, RummiBossModifier.diagonalDampener.id);
+      expect(restored.bossModifier?.title, '대각선 약화');
+      expect(restored.bossModifier?.affectedLineKinds, hasLength(2));
+      expect(restored.bossModifier?.scoreMultiplier, 0.75);
+    });
+
     test(
       'saved run progress without itemInventory falls back to empty shape',
       () {

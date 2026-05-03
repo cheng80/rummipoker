@@ -72,6 +72,28 @@ void main() {
       expect(station2[2].bossModifier?.title, '가로줄 약화');
     });
 
+    test('station별 boss modifier는 실제 표현 가능한 후보 풀을 순환한다', () {
+      final bossModifierIds = List.generate(7, (index) {
+        final boss = BlindSelectionSetup.resolveSpec(
+          tier: BlindTier.boss,
+          stationIndex: index + 1,
+          difficulty: NewRunDifficulty.standard,
+          ruleset: RummiRuleset.currentDefaults,
+        );
+        return boss.bossModifier?.id;
+      });
+
+      expect(bossModifierIds, [
+        'red_dampener_v1',
+        'row_line_dampener_v1',
+        'blue_dampener_v1',
+        'column_line_dampener_v1',
+        'black_dampener_v1',
+        'diagonal_line_dampener_v1',
+        'yellow_dampener_v1',
+      ]);
+    });
+
     test('boss 클리어 후 blind select runtime은 다음 station small 시작 상태로 리셋된다', () {
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.blindSelect,
@@ -123,7 +145,7 @@ void main() {
       expect(stationTwo.targetScore, greaterThan(stationOne.targetScore));
     });
 
-    test('station 1 boss는 유입 구간용으로 목표 배율만 완화한다', () {
+    test('station 1 boss는 유입 구간용 target table을 따른다', () {
       final small = BlindSelectionSetup.resolveSpec(
         tier: BlindTier.small,
         stationIndex: 1,
@@ -143,16 +165,16 @@ void main() {
         ruleset: RummiRuleset.currentDefaults,
       );
 
-      expect(small.targetScore, 270);
-      expect(big.targetScore, 405);
-      expect(boss.targetScore, 432);
+      expect(small.targetScore, 257);
+      expect(big.targetScore, 284);
+      expect(boss.targetScore, 285);
       expect(boss.boardDiscards, big.boardDiscards);
       expect(boss.handDiscards, 1);
       expect(boss.maxHandSize, 1);
       expect(boss.bossModifier?.id, 'red_dampener_v1');
     });
 
-    test('station 2 이후 boss 목표 배율은 기존 강도를 유지한다', () {
+    test('station 2 이후 boss 목표는 구간별 target table을 따른다', () {
       final small = BlindSelectionSetup.resolveSpec(
         tier: BlindTier.small,
         stationIndex: 2,
@@ -166,9 +188,50 @@ void main() {
         ruleset: RummiRuleset.currentDefaults,
       );
 
-      expect(small.targetScore, 432);
-      expect(boss.targetScore, 864);
+      expect(small.targetScore, 372);
+      expect(boss.targetScore, 439);
       expect(boss.bossModifier?.id, 'row_line_dampener_v1');
+    });
+
+    test('S1부터 S8까지 small big boss target table을 고정한다', () {
+      final targets = <List<int>>[];
+      for (var station = 1; station <= 8; station++) {
+        targets.add([
+          BlindSelectionSetup.resolveSpec(
+            tier: BlindTier.small,
+            stationIndex: station,
+            difficulty: NewRunDifficulty.standard,
+            ruleset: RummiRuleset.currentDefaults,
+          ).targetScore,
+          BlindSelectionSetup.resolveSpec(
+            tier: BlindTier.big,
+            stationIndex: station,
+            difficulty: NewRunDifficulty.standard,
+            ruleset: RummiRuleset.currentDefaults,
+          ).targetScore,
+          BlindSelectionSetup.resolveSpec(
+            tier: BlindTier.boss,
+            stationIndex: station,
+            difficulty: NewRunDifficulty.standard,
+            ruleset: RummiRuleset.currentDefaults,
+          ).targetScore,
+        ]);
+      }
+
+      expect(targets, [
+        [257, 284, 285],
+        [372, 431, 439],
+        [463, 537, 547],
+        [580, 672, 685],
+        [725, 841, 857],
+        [923, 1112, 1121],
+        [1154, 1391, 1401],
+        [1441, 1738, 1739],
+      ]);
+      for (final row in targets) {
+        expect(row[1], greaterThan(row[0]));
+        expect(row[2], greaterThan(row[1]));
+      }
     });
 
     test('selected blind start applies active item station start effects', () {

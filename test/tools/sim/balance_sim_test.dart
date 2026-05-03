@@ -498,7 +498,7 @@ void main() {
     expect(smallRow['boss_modifier_id'], isNull);
     expect(bossRow['boss_modifier_id'], 'red_dampener_v1');
     expect(bossRow['target_score'], greaterThan(smallRow['target_score']));
-    expect(bossRow['target_score'], 432);
+    expect(bossRow['target_score'], 285);
     expect(bossResult['final_score'], lessThan(smallResult['final_score']));
     expect(bossResult['score_ratio'], lessThan(smallResult['score_ratio']));
   });
@@ -1219,6 +1219,323 @@ void main() {
   );
 
   test(
+    'CLI sequence station weighted candidate pool resolves per battle step',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath =
+          '${dir.path}/sequence_station_weighted_market_profile.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '2,5',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft',
+        '--market-profile',
+        's1_station_weighted_candidate_pool',
+        '--loadout-id',
+        'progression_route_power',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final battleRows = rows
+          .where((row) => row['row_type'] == 'battle')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+      final sequenceSummary = rows.singleWhere(
+        (row) => row['row_type'] == 'sequence_summary',
+      );
+      final resolvedProfiles = battleRows
+          .map((row) => row['resolved_market_profile'] as String)
+          .toSet();
+
+      expect(
+        sequenceSummary['market_profile'],
+        's1_station_weighted_candidate_pool',
+      );
+      expect(
+        sequenceSummary['resolved_market_profile'],
+        's1_station_weighted_candidate_pool',
+      );
+      expect(resolvedProfiles, isNotEmpty);
+      expect(
+        resolvedProfiles,
+        isNot(contains('s1_station_weighted_candidate_pool')),
+      );
+      expect(battleRows.map((row) => row['market_profile']).toSet(), {
+        's1_station_weighted_candidate_pool',
+      });
+    },
+  );
+
+  test(
+    'CLI sequence state weighted candidate pool resolves per battle step',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath =
+          '${dir.path}/sequence_state_weighted_market_profile.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '2,5',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft',
+        '--market-profile',
+        's1_state_weighted_candidate_pool',
+        '--loadout-id',
+        'progression_route_power',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final battleRows = rows
+          .where((row) => row['row_type'] == 'battle')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+      final sequenceSummary = rows.singleWhere(
+        (row) => row['row_type'] == 'sequence_summary',
+      );
+      final resolvedProfiles = battleRows
+          .map((row) => row['resolved_market_profile'] as String)
+          .toSet();
+
+      expect(
+        sequenceSummary['market_profile'],
+        's1_state_weighted_candidate_pool',
+      );
+      expect(
+        sequenceSummary['resolved_market_profile'],
+        's1_state_weighted_candidate_pool',
+      );
+      expect(resolvedProfiles, isNotEmpty);
+      expect(
+        resolvedProfiles,
+        isNot(contains('s1_state_weighted_candidate_pool')),
+      );
+      expect(battleRows.map((row) => row['market_profile']).toSet(), {
+        's1_state_weighted_candidate_pool',
+      });
+      expect(
+        battleRows.any((row) => row['last_step_resource_state'] != null),
+        isFalse,
+      );
+    },
+  );
+
+  test('CLI sequence banded candidate pools resolve per battle band', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    for (final marketProfile in [
+      'banded_candidate_pool_v1',
+      'banded_candidate_pool_v2',
+    ]) {
+      final outPath = '${dir.path}/sequence_$marketProfile.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '3',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '2,4,7',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+        '--market-profile',
+        marketProfile,
+        '--loadout-id',
+        'progression_route_power',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final battleRows = rows
+          .where((row) => row['row_type'] == 'battle')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+      final sequenceRows = rows
+          .where((row) => row['row_type'] == 'sequence_summary')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+      final resolvedProfiles = battleRows
+          .map((row) => row['resolved_market_profile'] as String)
+          .toSet();
+
+      expect(sequenceRows, hasLength(3));
+      expect(sequenceRows.map((row) => row['market_profile']).toSet(), {
+        marketProfile,
+      });
+      expect(
+        sequenceRows.map((row) => row['resolved_market_profile']).toSet(),
+        {marketProfile},
+      );
+      expect(battleRows.map((row) => row['market_profile']).toSet(), {
+        marketProfile,
+      });
+      expect(resolvedProfiles, isNotEmpty);
+      expect(resolvedProfiles, isNot(contains(marketProfile)));
+      expect(battleRows.map((row) => row['station']).toSet(), {2, 4, 7});
+      expect(
+        resolvedProfiles.difference({
+          's1_candidate_common_color_jester',
+          's1_candidate_common_rank_jester',
+          's1_candidate_uncommon_build_jester',
+          's1_candidate_rare_xmult_jester',
+          's1_candidate_legendary_bridge',
+          's1_candidate_planet_rank_level',
+          's1_candidate_tarot_build_pack',
+          's1_candidate_voucher_resource',
+          's1_buy_discard_glove',
+          's1_tile_pack_plus5',
+          's1_build_aware_pack_plus5',
+        }),
+        isEmpty,
+      );
+    }
+  });
+
+  test('CLI sequence shop slot market records rolled slots', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final allowedResolvedProfiles = {
+      's1_candidate_common_color_jester',
+      's1_candidate_common_rank_jester',
+      's1_candidate_uncommon_build_jester',
+      's1_candidate_rare_xmult_jester',
+      's1_candidate_legendary_bridge',
+      's1_candidate_planet_rank_level',
+      's1_candidate_tarot_build_pack',
+      's1_candidate_voucher_resource',
+      's1_buy_discard_glove',
+      's1_tile_pack_plus5',
+      's1_build_aware_pack_plus5',
+    };
+
+    for (final marketProfile in [
+      'shop_slot_market_v1',
+      'shop_slot_market_v2',
+      'shop_slot_market_v3',
+      'shop_slot_market_v4',
+      'shop_slot_market_v5',
+      'shop_slot_market_v6',
+      'shop_slot_market_v7',
+      'shop_slot_market_v10',
+      'shop_slot_market_v11',
+    ]) {
+      final outPath = '${dir.path}/sequence_$marketProfile.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '3',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '2,4,7',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+        '--market-profile',
+        marketProfile,
+        '--loadout-id',
+        'progression_route_power',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final battleRows = rows
+          .where((row) => row['row_type'] == 'battle')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+      final sequenceRows = rows
+          .where((row) => row['row_type'] == 'sequence_summary')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+
+      expect(sequenceRows, hasLength(3));
+      expect(sequenceRows.map((row) => row['market_profile']).toSet(), {
+        marketProfile,
+      });
+      expect(
+        sequenceRows.map((row) => row['resolved_market_profile']).toSet(),
+        {marketProfile},
+      );
+      expect(battleRows.map((row) => row['market_profile']).toSet(), {
+        marketProfile,
+      });
+      for (final row in battleRows) {
+        final resolvedProfile = row['resolved_market_profile'] as String;
+        final shopSlots = row['market_shop_slots'] as List<dynamic>;
+        final station = row['station'] as int;
+
+        expect(resolvedProfile, isNot(marketProfile));
+        expect(resolvedProfile, isIn(allowedResolvedProfiles));
+        expect(shopSlots, contains(resolvedProfile));
+        expect(
+          shopSlots.length,
+          station <= 2
+              ? 3
+              : marketProfile == 'shop_slot_market_v10'
+              ? 5
+              : marketProfile == 'shop_slot_market_v11' && station <= 5
+              ? 5
+              : station <= 5
+              ? 4
+              : 4 + (marketProfile == 'shop_slot_market_v1' ? 1 : 0),
+        );
+        expect(shopSlots.toSet().difference(allowedResolvedProfiles), isEmpty);
+      }
+    }
+  });
+
+  test(
     'CLI sequence full safe candidate pool records source backlog candidate',
     () async {
       final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
@@ -1597,6 +1914,61 @@ void main() {
       anyOf(isEmpty, {'s2_foundation_build'}),
     );
   });
+
+  test(
+    'CLI sequence supports delayed and sustain progression routes',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      Future<Set<String>> loadoutsFor({
+        required String routeId,
+        required int station,
+      }) async {
+        final outPath = '${dir.path}/${routeId}_s$station.jsonl';
+        final code = await runBalanceSim([
+          '--runs',
+          '1',
+          '--bot',
+          'planner_v2',
+          '--seed',
+          '42',
+          '--sequence-mode',
+          'station_path',
+          '--stations',
+          '$station',
+          '--market-profile',
+          'none',
+          '--loadout-id',
+          routeId,
+          '--out',
+          outPath,
+        ]);
+
+        expect(code, 0);
+
+        return File(outPath)
+            .readAsLinesSync()
+            .map((line) => jsonDecode(line) as Map<String, dynamic>)
+            .where((row) => row['row_type'] == 'battle')
+            .map((row) => row['loadout_id'] as String)
+            .toSet();
+      }
+
+      expect(
+        await loadoutsFor(routeId: 'progression_route_delayed', station: 3),
+        {'s2_foundation_build'},
+      );
+      expect(
+        await loadoutsFor(routeId: 'progression_route_delayed', station: 5),
+        {'s4_resource_build'},
+      );
+      expect(
+        await loadoutsFor(routeId: 'progression_route_sustain', station: 5),
+        {'s5_sustain_build'},
+      );
+    },
+  );
 
   test('CLI applies late-run progression loadout presets', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
@@ -2275,7 +2647,7 @@ void main() {
   });
 
   test(
-    'CLI applies station curve experiments without changing runtime baseline',
+    'CLI applies station curve experiments against runtime baseline',
     () async {
       final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
       addTearDown(() => dir.deleteSync(recursive: true));
@@ -2330,7 +2702,9 @@ void main() {
       final curve145Effects =
           curve145['experiment_effects'] as Map<String, dynamic>;
 
-      expect(curve160['target_score'], baseline['base_target_score']);
+      expect(baseline['target_score'], baseline['base_target_score']);
+      expect(baseline['base_target_score'], 685);
+      expect(curve160['target_score'], 2210);
       expect(curve160['experiment_applied'], false);
       expect(curve145['experiment_applied'], true);
       expect(curve145Effects['station_growth_base'], 1.45);
@@ -2391,6 +2765,232 @@ void main() {
     expect(result['sim_constraint_trigger_count'], isA<int>());
     expect(result['sim_constraint_score_penalty'], isA<int>());
   });
+
+  test(
+    'CLI ordered boss experiment covers every boss proxy and keeps boss above big',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/ordered_boss_pool.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--stations',
+        '1,2,3,4,5,6,7,8,9,10',
+        '--blind-tiers',
+        'big,boss',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_ordered_boss_v1',
+        '--loadout-id',
+        'progression_route_power',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final bigRows = {
+        for (final row in rows.where((row) => row['blind_tier'] == 'big'))
+          row['station'] as int: row,
+      };
+      final bossRows = rows
+          .where((row) => row['blind_tier'] == 'boss')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+
+      expect(bossRows, hasLength(10));
+      expect(
+        bossRows
+            .map(
+              (row) =>
+                  (row['experiment_effects']
+                      as Map<String, dynamic>)['sim_boss_constraint_id'],
+            )
+            .toSet(),
+        {
+          'color_dampener_cycle',
+          'line_kind_dampener_cycle',
+          'face_tile_dampener',
+          'repeat_rank_pressure_v4',
+          'single_rank_pressure',
+          'confirm_count_tax_v2',
+          'all_score_dampener',
+          'first_confirm_tax',
+          'target_spike_wall',
+          'resource_squeeze',
+        },
+      );
+      for (final bossRow in bossRows) {
+        final station = bossRow['station'] as int;
+        final effects = bossRow['experiment_effects'] as Map<String, dynamic>;
+        final bigRow = bigRows[station]!;
+
+        expect(effects['ordered_boss_targets'], isTrue);
+        expect(
+          bossRow['target_score'] as int,
+          greaterThan(bigRow['target_score'] as int),
+          reason: 'S$station boss target must stay above big',
+        );
+      }
+    },
+  );
+
+  test(
+    'CLI weighted boss experiment rolls banded boss pool and records proxy ids',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/weighted_boss_pool.jsonl';
+      final summaryPath = '${dir.path}/weighted_boss_pool_summary.json';
+      final code = await runBalanceSim([
+        '--runs',
+        '24',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '1,2,3,4,5,6,7,8',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v1',
+        '--market-profile',
+        'shop_slot_market_v7',
+        '--loadout-id',
+        'progression_route_power',
+        '--summary-out',
+        summaryPath,
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .where((row) => row['row_type'] == 'battle')
+          .toList();
+      final bossRows = rows
+          .where((row) => row['blind_tier'] == 'boss')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+      final rolledIds = bossRows
+          .map(
+            (row) =>
+                (row['experiment_effects']
+                    as Map<String, dynamic>)['sim_boss_constraint_id'],
+          )
+          .toSet();
+
+      expect(rolledIds.length, greaterThan(4));
+      expect(rolledIds, contains('target_spike_wall'));
+      expect(rolledIds, contains('confirm_count_tax_v2'));
+      for (final bossRow in bossRows) {
+        final effects = bossRow['experiment_effects'] as Map<String, dynamic>;
+        expect(
+          effects['sim_boss_pool_profile'],
+          'early_mid_late_final_weighted_v1',
+        );
+        expect(effects['ordered_boss_targets'], isTrue);
+        expect(
+          bossRow['sim_boss_constraint_id'],
+          effects['sim_boss_constraint_id'],
+        );
+      }
+
+      final summary =
+          jsonDecode(File(summaryPath).readAsStringSync())
+              as Map<String, dynamic>;
+      final groups = summary['groups'] as List<dynamic>;
+      expect(
+        groups.any(
+          (group) =>
+              group is Map<String, dynamic> &&
+              group['sim_boss_constraint_id'] == 'target_spike_wall',
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'CLI weighted boss v3 pairs shop slot market v9 with softened banded boss pool',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/weighted_boss_v3_market_v9.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '24',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '77',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '1,2,3,4,5,6,7,8',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v3',
+        '--market-profile',
+        'shop_slot_market_v9',
+        '--loadout-id',
+        'progression_route_power',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .where((row) => row['row_type'] == 'battle')
+          .toList();
+      final stationTwoRows = rows
+          .where((row) => row['station'] == 2)
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+      final finalBossRows = rows
+          .where((row) => row['station'] == 8 && row['blind_tier'] == 'boss')
+          .cast<Map<String, dynamic>>()
+          .toList(growable: false);
+
+      expect(stationTwoRows, isNotEmpty);
+      expect(stationTwoRows.map((row) => row['market_profile']).toSet(), {
+        'shop_slot_market_v9',
+      });
+      expect(
+        stationTwoRows
+            .map((row) => row['resolved_market_profile'])
+            .toSet()
+            .contains('shop_slot_market_v9'),
+        isFalse,
+      );
+      expect(finalBossRows, isNotEmpty);
+      for (final row in finalBossRows) {
+        final effects = row['experiment_effects'] as Map<String, dynamic>;
+        expect(
+          effects['sim_boss_pool_profile'],
+          'early_mid_late_final_weighted_v3',
+        );
+        expect(effects['ordered_boss_targets'], isTrue);
+      }
+    },
+  );
 
   test('CLI applies sim-only target curve v5 boss resource bridge', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
@@ -2845,7 +3445,7 @@ void main() {
       '--difficulty',
       'standard',
       '--experiment-ids',
-      'base_score_curve_v2_boss_constraint_pool_v4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft,base_score_curve_v2_boss_constraint_pool_v4_s1_resource,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource',
+      'base_score_curve_v2_boss_constraint_pool_v4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft,base_score_curve_v2_boss_constraint_pool_v4_s1_resource,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource,base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
       '--out',
       outPath,
     ]);
@@ -2878,6 +3478,26 @@ void main() {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource',
       'boss',
     );
+    final boss052Small = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052',
+      'small',
+    );
+    final boss052Boss = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052',
+      'boss',
+    );
+    final softV2Small = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+      'small',
+    );
+    final softV2Big = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+      'big',
+    );
+    final softV2Boss = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+      'boss',
+    );
     final softSmallEffects =
         softSmall['experiment_effects'] as Map<String, dynamic>;
     final resourceSmallEffects =
@@ -2901,6 +3521,401 @@ void main() {
     expect(softResourceBossEffects['board_discards_delta'], 1);
     expect(softResourceBossEffects['boss_constraint_pool_severity'], 'v4');
     expect(softResourceBoss['sim_boss_constraint'], anyOf(isNull, isA<Map>()));
+    expect(boss052Small['target_score'], baseSmall['target_score']);
+    expect(
+      boss052Boss['target_score'],
+      lessThan(softResourceBoss['target_score']),
+    );
+    expect(softV2Small['target_score'], lessThan(softSmall['target_score']));
+    expect(
+      softV2Big['target_score'],
+      lessThan(
+        rowFor(
+          'base_score_curve_v2_boss_constraint_pool_v4_s1_soft',
+          'big',
+        )['target_score'],
+      ),
+    );
+    expect(
+      softV2Boss['target_score'],
+      lessThan(softResourceBoss['target_score']),
+    );
+  });
+
+  test('CLI applies S1 soft plus S2 boss tuning on base curve v2', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/base_score_curve_v2_s1_s2_bridge.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'greedy_v1',
+      '--seed',
+      '42',
+      '--stations',
+      '1,2',
+      '--blind-tier',
+      'boss',
+      '--difficulty',
+      'standard',
+      '--experiment-ids',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    Map<String, dynamic> rowFor(String experimentId, int station) =>
+        rows.singleWhere(
+          (row) =>
+              row['experiment_id'] == experimentId && row['station'] == station,
+        );
+
+    final s1Soft = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft',
+      1,
+    );
+    final s1S2Boss090 = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090',
+      1,
+    );
+    final s2Soft = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft',
+      2,
+    );
+    final s2Boss090 = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090',
+      2,
+    );
+    final s2Boss085 = rowFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085',
+      2,
+    );
+
+    expect(s1S2Boss090['target_score'], s1Soft['target_score']);
+    expect(s2Boss090['target_score'], lessThan(s2Soft['target_score']));
+    expect(s2Boss085['target_score'], lessThan(s2Boss090['target_score']));
+    expect(
+      (s2Boss090['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+      0.65 * 0.90,
+    );
+    expect(
+      (s2Boss085['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+      0.65 * 0.85,
+    );
+  });
+
+  test('CLI applies three-band curve variants on base curve v2', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/base_score_curve_v2_three_band.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'greedy_v1',
+      '--seed',
+      '42',
+      '--stations',
+      '1,3,6',
+      '--blind-tiers',
+      'small,big,boss',
+      '--difficulty',
+      'standard',
+      '--experiment-ids',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2,base_score_curve_v2_boss_constraint_pool_v4_three_band_v1,base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1,base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    Map<String, dynamic> rowFor(
+      String experimentId,
+      int station,
+      String tier,
+    ) => rows.singleWhere(
+      (row) =>
+          row['experiment_id'] == experimentId &&
+          row['station'] == station &&
+          row['blind_tier'] == tier,
+    );
+    double multiplierFor(String experimentId, int station, String tier) {
+      final effects =
+          rowFor(experimentId, station, tier)['experiment_effects']
+              as Map<String, dynamic>;
+      return (effects['target_score_multiplier'] as num).toDouble();
+    }
+
+    const s1SoftV2 = 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2';
+    const s1SoftV2LateGuard =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1';
+    const s1SoftV2LateGuardV2 =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2';
+    const threeBand =
+        'base_score_curve_v2_boss_constraint_pool_v4_three_band_v1';
+    const midGate = 'base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1';
+    const lateGate = 'base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1';
+
+    expect(multiplierFor(threeBand, 1, 'small'), 0.95);
+    expect(multiplierFor(threeBand, 1, 'big'), 0.70);
+    expect(multiplierFor(threeBand, 1, 'boss'), 0.52);
+    expect(multiplierFor(s1SoftV2LateGuard, 1, 'small'), 0.95);
+    expect(multiplierFor(s1SoftV2LateGuard, 1, 'big'), 0.70);
+    expect(multiplierFor(s1SoftV2LateGuard, 1, 'boss'), 0.52);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'small'), 0.95);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'big'), 0.70);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'boss'), 0.52);
+
+    expect(multiplierFor(s1SoftV2, 3, 'boss'), 0.65);
+    expect(multiplierFor(s1SoftV2LateGuard, 3, 'boss'), 0.65);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 3, 'boss'), 0.65);
+    expect(multiplierFor(threeBand, 3, 'boss'), 0.70);
+    expect(multiplierFor(midGate, 3, 'small'), 1.14);
+    expect(multiplierFor(midGate, 3, 'big'), 0.92);
+    expect(multiplierFor(midGate, 3, 'boss'), 0.74);
+
+    expect(multiplierFor(threeBand, 6, 'small'), 1.14);
+    expect(multiplierFor(threeBand, 6, 'big'), 0.92);
+    expect(multiplierFor(threeBand, 6, 'boss'), 0.76);
+    expect(multiplierFor(s1SoftV2LateGuard, 6, 'small'), 1.12);
+    expect(multiplierFor(s1SoftV2LateGuard, 6, 'big'), 0.90);
+    expect(multiplierFor(s1SoftV2LateGuard, 6, 'boss'), 0.74);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 6, 'small'), 1.08);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 6, 'big'), 0.88);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 6, 'boss'), 0.74);
+    expect(
+      rowFor(s1SoftV2LateGuard, 6, 'boss')['target_score'],
+      greaterThan(rowFor(s1SoftV2, 6, 'boss')['target_score']),
+    );
+    expect(multiplierFor(lateGate, 6, 'small'), 1.18);
+    expect(multiplierFor(lateGate, 6, 'big'), 0.96);
+    expect(multiplierFor(lateGate, 6, 'boss'), 0.80);
+    expect(
+      rowFor(lateGate, 6, 'boss')['target_score'],
+      greaterThan(rowFor(threeBand, 6, 'boss')['target_score']),
+    );
+  });
+
+  test('CLI applies v64 late boss target and resource variants', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/v64_late_boss_variants.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'greedy_v1',
+      '--seed',
+      '42',
+      '--stations',
+      '4,5,8',
+      '--blind-tiers',
+      'big,boss',
+      '--difficulty',
+      'standard',
+      '--experiment-ids',
+      [
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
+      ].join(','),
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    Map<String, dynamic> rowFor(
+      String experimentId,
+      int station,
+      String tier,
+    ) => rows.singleWhere(
+      (row) =>
+          row['experiment_id'] == experimentId &&
+          row['station'] == station &&
+          row['blind_tier'] == tier,
+    );
+
+    const base =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3';
+    const target070 =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070';
+    const target068 =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068';
+    const resource =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1';
+    const target070Resource =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1';
+
+    final baseS5Boss = rowFor(base, 5, 'boss');
+    final target070S5Boss = rowFor(target070, 5, 'boss');
+    final baseS8Boss = rowFor(base, 8, 'boss');
+    final target070S8Boss = rowFor(target070, 8, 'boss');
+    final target068S8Boss = rowFor(target068, 8, 'boss');
+    final resourceS5Boss = rowFor(resource, 5, 'boss');
+    final target070ResourceS5Boss = rowFor(target070Resource, 5, 'boss');
+    final target070S4Boss = rowFor(target070, 4, 'boss');
+    final target070S5Big = rowFor(target070, 5, 'big');
+
+    expect(
+      (target070S5Boss['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+      (baseS5Boss['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+    );
+    expect(
+      (target070S8Boss['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+      0.70,
+    );
+    expect(
+      (target068S8Boss['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+      0.68,
+    );
+    expect(
+      target068S8Boss['target_score'] as int,
+      lessThan(target070S8Boss['target_score'] as int),
+    );
+    expect(
+      target070S8Boss['target_score'] as int,
+      lessThan(baseS8Boss['target_score'] as int),
+    );
+    expect(
+      (target070S4Boss['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+      (rowFor(base, 4, 'boss')['experiment_effects']
+          as Map<String, dynamic>)['target_score_multiplier'],
+    );
+    expect(
+      target070S5Big['target_score'],
+      rowFor(base, 5, 'big')['target_score'],
+    );
+
+    final baseStart = baseS5Boss['start_state'] as Map<String, dynamic>;
+    final resourceStart = resourceS5Boss['start_state'] as Map<String, dynamic>;
+    final targetResourceStart =
+        target070ResourceS5Boss['start_state'] as Map<String, dynamic>;
+    final resourceEffects =
+        resourceS5Boss['experiment_effects'] as Map<String, dynamic>;
+
+    expect(resourceEffects['board_discards_delta'], 1);
+    expect(resourceEffects['hand_discards_delta'], 1);
+    expect(resourceEffects['max_hand_size_delta'], 1);
+    expect(
+      resourceStart['board_discards'] as int,
+      (baseStart['board_discards'] as int) + 1,
+    );
+    expect(
+      resourceStart['hand_discards'] as int,
+      (baseStart['hand_discards'] as int) + 1,
+    );
+    expect(
+      resourceStart['max_hand_size'] as int,
+      (baseStart['max_hand_size'] as int) + 1,
+    );
+    expect(
+      target070ResourceS5Boss['target_score'],
+      target070S5Boss['target_score'],
+    );
+    expect(
+      targetResourceStart['max_hand_size'] as int,
+      (baseStart['max_hand_size'] as int) + 1,
+    );
+  });
+
+  test('CLI applies v65 early and mid boss variants on v64 best', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/v65_early_mid_variants.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'greedy_v1',
+      '--seed',
+      '42',
+      '--stations',
+      '1,4,8',
+      '--blind-tiers',
+      'boss',
+      '--difficulty',
+      'standard',
+      '--experiment-ids',
+      [
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s1_boss_050',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s4_boss_060',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s4_boss_resource_1',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s1_050_s4_060_resource_1',
+      ].join(','),
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    Map<String, dynamic> rowFor(String experimentId, int station) =>
+        rows.singleWhere(
+          (row) =>
+              row['experiment_id'] == experimentId && row['station'] == station,
+        );
+
+    const base =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1';
+    const s1 =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s1_boss_050';
+    const s4 =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s4_boss_060';
+    const s4Resource =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s4_boss_resource_1';
+    const combo =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1_early_mid_s1_050_s4_060_resource_1';
+
+    Map<String, dynamic> effects(String experimentId, int station) =>
+        rowFor(experimentId, station)['experiment_effects']
+            as Map<String, dynamic>;
+    Map<String, dynamic> start(String experimentId, int station) =>
+        rowFor(experimentId, station)['start_state'] as Map<String, dynamic>;
+
+    expect(effects(s1, 1)['target_score_multiplier'], 0.50);
+    expect(effects(s4, 4)['target_score_multiplier'], 0.60);
+    expect(effects(combo, 1)['target_score_multiplier'], 0.50);
+    expect(effects(combo, 4)['target_score_multiplier'], 0.60);
+    expect(effects(combo, 8)['target_score_multiplier'], 0.70);
+    expect(effects(s4Resource, 4)['board_discards_delta'], 1);
+    expect(effects(combo, 4)['max_hand_size_delta'], 1);
+    expect(
+      start(combo, 4)['max_hand_size'] as int,
+      (start(base, 4)['max_hand_size'] as int) + 1,
+    );
   });
 
   test('CLI writes optional aggregate summary output', () async {
@@ -2947,6 +3962,7 @@ void main() {
       'station',
       'blind_tier',
       'difficulty',
+      'sim_boss_constraint_id',
     ]);
     expect(summary['sequence_group_by'], [
       'experiment_id',
@@ -3058,6 +4074,66 @@ void main() {
     );
   });
 
+  test('CLI summary records market shop slot appearance counts', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/market_slot_summary_source.jsonl';
+    final summaryPath = '${dir.path}/market_slot_summary.json';
+    final code = await runBalanceSim([
+      '--runs',
+      '2',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '42',
+      '--sequence-mode',
+      'station_path',
+      '--stations',
+      '3',
+      '--market-profile',
+      'shop_slot_market_v10',
+      '--loadout-id',
+      'progression_route_delayed',
+      '--summary-out',
+      summaryPath,
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final summary =
+        jsonDecode(File(summaryPath).readAsStringSync())
+            as Map<String, dynamic>;
+    final groups = (summary['groups'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
+    final battleGroups = groups.where(
+      (group) =>
+          group['market_profile'] == 'shop_slot_market_v10' &&
+          group['station'] == 3,
+    );
+
+    expect(battleGroups, isNotEmpty);
+    for (final group in battleGroups) {
+      final slotCounts =
+          group['market_shop_slot_counts'] as Map<String, dynamic>;
+      expect(slotCounts, isNotEmpty);
+      expect(
+        slotCounts.keys.any(
+          {
+            's1_candidate_voucher_resource',
+            's1_buy_discard_glove',
+            's1_candidate_tarot_build_pack',
+            's1_build_aware_pack_plus5',
+            's1_tile_pack_plus5',
+          }.contains,
+        ),
+        isTrue,
+      );
+    }
+  });
+
   test('CLI summary records sequence path survival groups', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
     addTearDown(() => dir.deleteSync(recursive: true));
@@ -3106,6 +4182,10 @@ void main() {
     expect(sequenceGroup['avg_attempted_step_count'], isA<num>());
     expect(sequenceGroup['avg_cleared_step_count'], isA<num>());
     expect(sequenceGroup['avg_total_turn_count'], isA<num>());
+    expect(sequenceGroup['avg_clear_path_turn_count'], isA<num>());
+    expect(sequenceGroup['avg_failed_path_turn_count'], isA<num>());
+    expect(sequenceGroup['avg_turn_per_attempted_step'], isA<num>());
+    expect(sequenceGroup['avg_turn_per_cleared_step'], isA<num>());
     expect(sequenceGroup['avg_total_score_ratio'], isA<num>());
     expect(sequenceGroup['failure_counts'], isA<Map<String, dynamic>>());
     expect(

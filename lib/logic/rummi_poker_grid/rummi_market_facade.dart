@@ -309,17 +309,12 @@ class RummiMarketRuntimeFacade {
   ) {
     final items = catalog.all;
     if (items.isEmpty) return const [];
-    final offset =
-        progress.marketModifiers.itemOfferRerollOffset % items.length;
-    final rotatedItems = offset == 0
-        ? items
-        : <ItemDefinition>[...items.skip(offset), ...items.take(offset)];
     final quickSlotCapacity = progress.quickSlotCapacity(itemCatalog: catalog);
     final passiveRelicCapacity = progress.passiveRelicCapacity(
       itemCatalog: catalog,
     );
     final consumedIds = progress.marketModifiers.consumedItemOfferIds.toSet();
-    final candidates = rotatedItems
+    final candidates = items
         .where((item) => !consumedIds.contains(item.id))
         .where(
           (item) => progress.itemInventory.canAcquire(
@@ -328,9 +323,9 @@ class RummiMarketRuntimeFacade {
             passiveRelicCapacity: passiveRelicCapacity,
           ),
         )
-        .take(progress.marketModifiers.itemOfferSlotCount)
         .toList(growable: false);
-    return candidates
+    final pickedItems = _pickWeightedItemOffers(progress, candidates, items);
+    return pickedItems
         .asMap()
         .entries
         .map(
@@ -342,6 +337,208 @@ class RummiMarketRuntimeFacade {
           ),
         )
         .toList(growable: false);
+  }
+
+  static List<ItemDefinition> _pickWeightedItemOffers(
+    RummiRunProgress progress,
+    List<ItemDefinition> candidates,
+    List<ItemDefinition> catalogItems,
+  ) {
+    if (candidates.isEmpty) return const [];
+    final policy = RummiStationBandMarketPolicy.forStage(progress.stageIndex);
+    final missingGrowthTags = _missingGrowthTagsForMarket(
+      progress,
+      catalogItems,
+    );
+    final remaining = List<ItemDefinition>.from(candidates);
+    final picked = <ItemDefinition>[];
+    final slotCount = progress.marketModifiers.itemOfferSlotCount;
+    final offset = progress.marketModifiers.itemOfferRerollOffset;
+    final focusSlot = _missingGrowthFocusSlot(
+      progress.stageIndex,
+      offset,
+      missingGrowthTags,
+      slotCount,
+    );
+    for (var slot = 0; slot < slotCount && remaining.isNotEmpty; slot++) {
+      final focusCandidates = slot == focusSlot
+          ? remaining
+                .where((item) => _hasAnyTag(item.tags, missingGrowthTags))
+                .toList(growable: false)
+          : const <ItemDefinition>[];
+      if (focusCandidates.isNotEmpty) {
+        final selected = _pickWeightedItemFromPool(
+          policy: policy,
+          candidates: focusCandidates,
+          missingGrowthTags: missingGrowthTags,
+          stageIndex: progress.stageIndex,
+          offset: offset,
+          slotIndex: slot,
+        );
+        picked.add(selected);
+        remaining.remove(selected);
+        continue;
+      }
+
+      final totalWeight = remaining.fold<int>(
+        0,
+        (sum, item) =>
+            sum +
+            policy.itemOfferWeight(item, missingGrowthTags: missingGrowthTags),
+      );
+      var roll = _stableMarketRoll(
+        totalWeight,
+        stageIndex: progress.stageIndex,
+        offset: offset,
+        slotIndex: slot,
+      );
+      var selectedIndex = remaining.length - 1;
+      for (var index = 0; index < remaining.length; index++) {
+        roll -= policy.itemOfferWeight(
+          remaining[index],
+          missingGrowthTags: missingGrowthTags,
+        );
+        if (roll < 0) {
+          selectedIndex = index;
+          break;
+        }
+      }
+      picked.add(remaining.removeAt(selectedIndex));
+    }
+    return picked;
+  }
+
+  static ItemDefinition _pickWeightedItemFromPool({
+    required RummiStationBandMarketPolicy policy,
+    required List<ItemDefinition> candidates,
+    required Set<String> missingGrowthTags,
+    required int stageIndex,
+    required int offset,
+    required int slotIndex,
+  }) {
+    final totalWeight = candidates.fold<int>(
+      0,
+      (sum, item) =>
+          sum +
+          policy.itemOfferWeight(item, missingGrowthTags: missingGrowthTags),
+    );
+    var roll = _stableMarketRoll(
+      totalWeight,
+      stageIndex: stageIndex,
+      offset: offset,
+      slotIndex: slotIndex,
+    );
+    for (final item in candidates) {
+      roll -= policy.itemOfferWeight(
+        item,
+        missingGrowthTags: missingGrowthTags,
+      );
+      if (roll < 0) {
+        return item;
+      }
+    }
+    return candidates.last;
+  }
+
+  static int? _missingGrowthFocusSlot(
+    int stageIndex,
+    int offset,
+    Set<String> missingGrowthTags,
+    int slotCount,
+  ) {
+    if (missingGrowthTags.isEmpty || stageIndex <= 2 || slotCount <= 0) {
+      return null;
+    }
+    final chance = stageIndex >= 6
+        ? 55
+        : stageIndex >= 4
+        ? 45
+        : 35;
+    final roll = _stableMarketRoll(
+      100,
+      stageIndex: stageIndex,
+      offset: offset,
+      slotIndex: 97,
+    );
+    if (roll >= chance) return null;
+    return _stableMarketRoll(
+      slotCount,
+      stageIndex: stageIndex,
+      offset: offset,
+      slotIndex: 98,
+    );
+  }
+
+  static bool _hasAnyTag(List<String> tags, Set<String> expectedTags) {
+    for (final tag in tags) {
+      if (expectedTags.contains(tag)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static Set<String> _missingGrowthTagsForMarket(
+    RummiRunProgress progress,
+    List<ItemDefinition> catalogItems,
+  ) {
+    final station = progress.stageIndex < 1 ? 1 : progress.stageIndex;
+    if (station <= 2) return const {};
+
+    final catalogById = {for (final item in catalogItems) item.id: item};
+    final ownedTags = <String>{};
+    for (final entry in progress.itemInventory.ownedItems) {
+      final item = catalogById[entry.itemId];
+      if (item != null) {
+        ownedTags.addAll(item.tags);
+      }
+    }
+
+    final missing = <String>{};
+    final hasScoreGrowth =
+        ownedTags.contains('score') ||
+        ownedTags.contains('rank') ||
+        ownedTags.contains('tile_color');
+    if (!hasScoreGrowth) {
+      missing.addAll(const ['score', 'rank', 'tile_color']);
+    }
+
+    if (station >= 4) {
+      final hasTacticalResource =
+          ownedTags.contains('discard') ||
+          ownedTags.contains('move') ||
+          ownedTags.contains('safety');
+      if (!hasTacticalResource) {
+        missing.addAll(const ['discard', 'move', 'safety']);
+      }
+    }
+
+    if (station >= 6) {
+      final hasBossGrowth =
+          ownedTags.contains('boss') ||
+          ownedTags.contains('xmult') ||
+          ownedTags.contains('legendary');
+      if (!hasBossGrowth) {
+        missing.addAll(const ['boss', 'xmult', 'legendary']);
+      }
+    }
+
+    return Set<String>.unmodifiable(missing);
+  }
+
+  static int _stableMarketRoll(
+    int totalWeight, {
+    required int stageIndex,
+    required int offset,
+    required int slotIndex,
+  }) {
+    if (totalWeight <= 0) return 0;
+    final seed = '$stageIndex:$offset:$slotIndex:station_band_market_policy_v1';
+    var hash = 0;
+    for (final unit in seed.codeUnits) {
+      hash = ((hash * 31) + unit) & 0x7fffffff;
+    }
+    return hash % totalWeight;
   }
 
   static List<RummiMarketItemSlotView> _buildItemSlots(

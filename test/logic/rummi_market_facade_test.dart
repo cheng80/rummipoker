@@ -13,6 +13,8 @@ RummiJesterCard _jester({
   required String id,
   String? displayName,
   int baseCost = 6,
+  String effectType = 'chips_bonus',
+  String conditionType = 'none',
 }) {
   return RummiJesterCard(
     id: id,
@@ -20,9 +22,9 @@ RummiJesterCard _jester({
     rarity: RummiJesterRarity.common,
     baseCost: baseCost,
     effectText: '',
-    effectType: 'chips_bonus',
+    effectType: effectType,
     trigger: 'onScore',
-    conditionType: 'none',
+    conditionType: conditionType,
     conditionValue: null,
     value: 5,
     xValue: null,
@@ -354,11 +356,190 @@ void main() {
         itemCatalog: catalog,
       );
 
-      expect(before.itemOffers.map((offer) => offer.contentId), [
-        'board_scrap',
-        'hand_scrap',
-      ]);
+      expect(
+        before.itemOffers.map((offer) => offer.contentId),
+        containsAll(['board_scrap', 'hand_scrap']),
+      );
       expect(after.itemOffers.map((offer) => offer.contentId), ['hand_scrap']);
+    });
+
+    test(
+      'station band market policy keeps early economy and late boss growth',
+      () {
+        final early = RummiStationBandMarketPolicy.forStage(1);
+        final late = RummiStationBandMarketPolicy.forStage(7);
+        final economyItem = ItemDefinition.fromJson(
+          _itemJson(
+            id: 'coin_cache',
+            timing: 'use_market',
+            op: 'gain_gold',
+            placement: 'inventory',
+            tags: const ['gold', 'economy'],
+          ),
+        );
+        final bossBreakerItem = ItemDefinition.fromJson(
+          _itemJson(
+            id: 'boss_trophy',
+            timing: 'boss_blind_clear_market',
+            op: 'extra_jester_offer_next_market',
+            placement: 'passiveRack',
+            rarity: 'rare',
+            tags: const ['relic', 'boss', 'market', 'jester'],
+          ),
+        );
+
+        expect(
+          early.jesterRarityWeight(RummiJesterRarity.rare),
+          greaterThan(0),
+        );
+        expect(
+          late.jesterRarityWeight(RummiJesterRarity.rare),
+          greaterThan(early.jesterRarityWeight(RummiJesterRarity.rare) * 4),
+        );
+        expect(
+          early.itemOfferWeight(economyItem),
+          greaterThan(early.itemOfferWeight(bossBreakerItem)),
+        );
+        expect(
+          late.itemOfferWeight(bossBreakerItem),
+          greaterThan(late.itemOfferWeight(economyItem)),
+        );
+      },
+    );
+
+    test('mid station market policy keeps score growth ahead of resources', () {
+      final mid = RummiStationBandMarketPolicy.forStage(4);
+      final scoreGrowthItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'rank_chart',
+          timing: 'station_start',
+          op: 'add_board_move',
+          placement: 'equipped',
+          tags: const ['score', 'rank'],
+        ),
+      );
+      final resourceItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'resource_pouch',
+          timing: 'inventory_capacity',
+          op: 'extra_quick_slot',
+          placement: 'passiveRack',
+          tags: const ['capacity', 'discard'],
+        ),
+      );
+
+      expect(
+        mid.itemOfferWeight(scoreGrowthItem),
+        greaterThan(mid.itemOfferWeight(resourceItem)),
+      );
+      expect(
+        mid.jesterRarityWeight(RummiJesterRarity.legendary),
+        greaterThan(0),
+      );
+    });
+
+    test('missing growth correction only changes market appearance weight', () {
+      final mid = RummiStationBandMarketPolicy.forStage(4);
+      final scoreGrowthItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'rank_chart',
+          timing: 'station_start',
+          op: 'add_board_move',
+          placement: 'equipped',
+          tags: const ['score', 'rank'],
+        ),
+      );
+      final resourceItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'board_scrap',
+          timing: 'use_battle',
+          op: 'add_board_discard',
+          placement: 'quickSlot',
+          tags: const ['discard'],
+        ),
+      );
+
+      final baseScoreWeight = mid.itemOfferWeight(scoreGrowthItem);
+      final correctedScoreWeight = mid.itemOfferWeight(
+        scoreGrowthItem,
+        missingGrowthTags: const {'score', 'rank'},
+      );
+      final correctedResourceWeight = mid.itemOfferWeight(
+        resourceItem,
+        missingGrowthTags: const {'score', 'rank'},
+      );
+
+      expect(correctedScoreWeight, greaterThan(baseScoreWeight));
+      expect(correctedResourceWeight, mid.itemOfferWeight(resourceItem));
+      expect(correctedScoreWeight - baseScoreWeight, lessThanOrEqualTo(90));
+    });
+
+    test('missing growth exposure can focus a random item offer slot', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'coin_cache',
+            timing: 'use_market',
+            op: 'gain_gold',
+            placement: 'inventory',
+            tags: const ['economy'],
+          ),
+          _itemJson(
+            id: 'reroll_token',
+            timing: 'market_reroll',
+            op: 'free_next_reroll',
+            placement: 'inventory',
+            tags: const ['market'],
+          ),
+          _itemJson(
+            id: 'rank_chart',
+            timing: 'station_start',
+            op: 'add_board_move',
+            placement: 'equipped',
+            tags: const ['score', 'rank'],
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..stageIndex = 3
+        ..gold = 20;
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(
+        facade.itemOffers.map((offer) => offer.contentId),
+        contains('rank_chart'),
+      );
+    });
+
+    test('missing growth exposure can focus a random jester offer slot', () {
+      final catalog = [
+        _jester(id: 'golden_jester', effectType: 'economy'),
+        _jester(id: 'egg', effectType: 'economy'),
+        _jester(id: 'rank_jester', conditionType: 'rank_scored'),
+      ];
+      final progress = RummiRunProgress()
+        ..stageIndex = 4
+        ..gold = 20;
+
+      var foundNonFirstFocusedOffer = false;
+      for (var seed = 0; seed < 80; seed++) {
+        progress.openShop(catalog: catalog, rng: Random(seed));
+        final focusedIndex = progress.shopOffers.indexWhere(
+          (offer) => offer.card.id == 'rank_jester',
+        );
+        if (focusedIndex > 0) {
+          foundNonFirstFocusedOffer = true;
+          break;
+        }
+      }
+
+      expect(foundNonFirstFocusedOffer, isTrue);
     });
 
     test('marks unaffordable offers and carries runtime snapshot values', () {
@@ -488,13 +669,15 @@ Map<String, dynamic> _itemJson({
   required String timing,
   required String op,
   required String placement,
+  String rarity = 'common',
+  List<String> tags = const ['market'],
 }) {
   return <String, dynamic>{
     'id': id,
     'displayName': id,
     'displayNameKey': 'data.items.$id.displayName',
     'type': 'utility',
-    'rarity': 'common',
+    'rarity': rarity,
     'basePrice': 4,
     'sellPrice': 2,
     'stackable': false,
@@ -511,7 +694,7 @@ Map<String, dynamic> _itemJson({
       'amount': 1,
       'consume': false,
     },
-    'tags': <String>['market'],
+    'tags': tags,
     'sourceNotes': 'Test fixture.',
   };
 }

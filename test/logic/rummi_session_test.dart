@@ -957,6 +957,7 @@ void main() {
     expect(
       breakdown.totalGold,
       breakdown.blindReward +
+          breakdown.firstBlindClearBonusGold +
           breakdown.boardDiscardGold +
           breakdown.handDiscardGold,
     );
@@ -1007,6 +1008,7 @@ void main() {
     expect(
       breakdown.totalGold,
       breakdown.blindReward +
+          breakdown.firstBlindClearBonusGold +
           breakdown.boardDiscardGold +
           breakdown.handDiscardGold +
           breakdown.economyGold,
@@ -1105,6 +1107,7 @@ void main() {
     expect(
       breakdown.totalGold,
       breakdown.blindReward +
+          breakdown.firstBlindClearBonusGold +
           breakdown.boardDiscardGold +
           breakdown.handDiscardGold +
           breakdown.itemGold,

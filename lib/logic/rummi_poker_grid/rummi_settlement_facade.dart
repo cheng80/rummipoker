@@ -8,6 +8,7 @@ import 'jester_meta.dart';
 /// - settlement 화면 구조를 미리 전면 교체하지 않는다.
 enum RummiSettlementEntryKind {
   stationReward,
+  firstBlindClearBonus,
   boardDiscardReward,
   handDiscardReward,
   economyBonus,
@@ -35,7 +36,9 @@ class RummiSettlementEntryView {
 
   bool get isEconomyBonus => kind == RummiSettlementEntryKind.economyBonus;
   bool get isItemBonus => kind == RummiSettlementEntryKind.itemBonus;
-  bool get isBonus => isEconomyBonus || isItemBonus;
+  bool get isFirstBlindClearBonus =>
+      kind == RummiSettlementEntryKind.firstBlindClearBonus;
+  bool get isBonus => isFirstBlindClearBonus || isEconomyBonus || isItemBonus;
 }
 
 class RummiSettlementRuntimeFacade {
@@ -72,6 +75,13 @@ class RummiSettlementRuntimeFacade {
             '남은 손패 버림 ${breakdown.remainingHandDiscards}회 x ${breakdown.perHandDiscardBonus}',
         gold: breakdown.handDiscardGold,
       ),
+      if (breakdown.firstBlindClearBonusGold > 0)
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.firstBlindClearBonus,
+          leadingLabel: 'First',
+          description: '첫 블라인드 클리어 보너스',
+          gold: breakdown.firstBlindClearBonusGold,
+        ),
       ...breakdown.economyBonuses.map(
         (bonus) => RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.economyBonus,

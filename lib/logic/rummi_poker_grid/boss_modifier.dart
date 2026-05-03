@@ -18,7 +18,12 @@ class RummiBossModifier {
   factory RummiBossModifier.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String?;
     if (id == redDampener.id) return redDampener;
+    if (id == blueDampener.id) return blueDampener;
+    if (id == blackDampener.id) return blackDampener;
+    if (id == yellowDampener.id) return yellowDampener;
     if (id == rowDampener.id) return rowDampener;
+    if (id == columnDampener.id) return columnDampener;
+    if (id == diagonalDampener.id) return diagonalDampener;
     return RummiBossModifier(
       id: id ?? redDampener.id,
       category: RummiBossModifierCategory.values.byName(
@@ -60,6 +65,56 @@ class RummiBossModifier {
     ruleText: '가로줄 점수가 25% 감소합니다.',
     markerText: '약화',
     affectedLineKinds: [LineKind.row],
+    scoreMultiplier: 0.75,
+  );
+
+  static const blueDampener = RummiBossModifier(
+    id: 'blue_dampener_v1',
+    category: RummiBossModifierCategory.tileColorWeaken,
+    title: '파란 타일 약화',
+    ruleText: '파란 타일이 포함된 점수 라인은 40% 감소합니다.',
+    markerText: '약화',
+    affectedTileColors: [TileColor.blue],
+    scoreMultiplier: 0.6,
+  );
+
+  static const blackDampener = RummiBossModifier(
+    id: 'black_dampener_v1',
+    category: RummiBossModifierCategory.tileColorWeaken,
+    title: '검은 타일 약화',
+    ruleText: '검은 타일이 포함된 점수 라인은 40% 감소합니다.',
+    markerText: '약화',
+    affectedTileColors: [TileColor.black],
+    scoreMultiplier: 0.6,
+  );
+
+  static const yellowDampener = RummiBossModifier(
+    id: 'yellow_dampener_v1',
+    category: RummiBossModifierCategory.tileColorWeaken,
+    title: '노란 타일 약화',
+    ruleText: '노란 타일이 포함된 점수 라인은 40% 감소합니다.',
+    markerText: '약화',
+    affectedTileColors: [TileColor.yellow],
+    scoreMultiplier: 0.6,
+  );
+
+  static const columnDampener = RummiBossModifier(
+    id: 'column_line_dampener_v1',
+    category: RummiBossModifierCategory.lineKindWeaken,
+    title: '세로줄 약화',
+    ruleText: '세로줄 점수가 25% 감소합니다.',
+    markerText: '약화',
+    affectedLineKinds: [LineKind.col],
+    scoreMultiplier: 0.75,
+  );
+
+  static const diagonalDampener = RummiBossModifier(
+    id: 'diagonal_line_dampener_v1',
+    category: RummiBossModifierCategory.lineKindWeaken,
+    title: '대각선 약화',
+    ruleText: '대각선 점수가 25% 감소합니다.',
+    markerText: '약화',
+    affectedLineKinds: [LineKind.diagMain, LineKind.diagAnti],
     scoreMultiplier: 0.75,
   );
 

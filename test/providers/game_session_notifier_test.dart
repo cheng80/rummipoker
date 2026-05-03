@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
@@ -51,7 +52,7 @@ void main() {
       expect(initial.marketView, isNotNull);
       expect(initial.battleView, isNotNull);
       expect(initial.activeRunSaveView, isNotNull);
-      expect(initial.stationView!.objective.targetScore, 270);
+      expect(initial.stationView!.objective.targetScore, 257);
       expect(initial.marketView!.gold, RummiEconomyConfig.startingGold);
       expect(initial.battleView!.stageIndex, 1);
       expect(initial.battleView!.currentGold, RummiEconomyConfig.startingGold);
@@ -337,7 +338,7 @@ void main() {
         state.runProgress?.rerollCost,
         RummiRunProgress.shopBaseRerollCost - 1,
       );
-      expect(state.session?.blind.targetScore, 216);
+      expect(state.session?.blind.targetScore, 206);
       expect(
         state.session?.blind.boardDiscardsRemaining,
         RummiRuleset.currentDefaults.defaultBoardDiscards + 1,
@@ -358,7 +359,7 @@ void main() {
       );
 
       final state = container.read(gameSessionNotifierProvider(args));
-      expect(state.session?.blind.targetScore, 405);
+      expect(state.session?.blind.targetScore, 284);
       expect(
         state.session?.blind.boardDiscardsRemaining,
         RummiRuleset.currentDefaults.defaultBoardDiscards - 1,
@@ -1594,6 +1595,36 @@ void main() {
       expect(breakdown.itemGold, 2);
       expect(updated.runProgress!.gold, initialGold + breakdown.totalGold);
       expect(updated.marketView!.gold, initialGold + breakdown.totalGold);
+    });
+
+    test('S1 small cash-out는 첫 블라인드 클리어 보너스 골드를 지급한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 4303);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final before = container.read(gameSessionNotifierProvider(args));
+      final initialGold = before.runProgress!.gold;
+
+      final breakdown = notifier.prepareSettlementAndCashOut();
+      final afterCashOut = container.read(gameSessionNotifierProvider(args));
+
+      expect(breakdown.firstBlindClearBonusGold, 5);
+      expect(afterCashOut.runProgress!.gold, initialGold + breakdown.totalGold);
+      expect(afterCashOut.runProgress!.itemInventory.ownedItems, isEmpty);
+      final settlement = RummiSettlementRuntimeFacade.fromCashOut(
+        breakdown: breakdown,
+        currentGold: afterCashOut.runProgress!.gold,
+      );
+      expect(
+        settlement.entries.any(
+          (entry) =>
+              entry.kind == RummiSettlementEntryKind.firstBlindClearBonus,
+        ),
+        isTrue,
+      );
     });
 
     test('buildSaveRuntimeState는 현재 runtime과 active scene을 그대로 반영한다', () {
