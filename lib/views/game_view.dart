@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/boss_modifier.dart';
 import '../logic/rummi_poker_grid/item_catalog_loader.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
@@ -334,6 +335,20 @@ class _GameViewState extends ConsumerState<GameView>
     final modifier = _gameState.session?.blind.bossModifier;
     if (modifier == null) return;
     _bossConstraintIntroShown = true;
+    await _showBossConstraintInfo(modifier: modifier, buttonLabel: '전투 시작');
+  }
+
+  Future<void> _openBossConstraintInfo() async {
+    if (!mounted || _gameState.activeRunScene != ActiveRunScene.battle) return;
+    final modifier = _gameState.session?.blind.bossModifier;
+    if (modifier == null) return;
+    await _showBossConstraintInfo(modifier: modifier, buttonLabel: '닫기');
+  }
+
+  Future<void> _showBossConstraintInfo({
+    required RummiBossModifier modifier,
+    required String buttonLabel,
+  }) async {
     await showGameFramedDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -388,7 +403,7 @@ class _GameViewState extends ConsumerState<GameView>
             ),
             const SizedBox(height: 16),
             GameChromeButton(
-              label: '전투 시작',
+              label: buttonLabel,
               backgroundColor: const Color(0xFFF4A81D),
               foregroundColor: const Color(0xFF173126),
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -1436,6 +1451,7 @@ class _GameViewState extends ConsumerState<GameView>
             itemEffectFeedback: _itemEffectFeedback,
             itemEffectFeedbackTick: _itemEffectFeedbackTick,
             onOptionsTap: () => _openGameOptions(context),
+            onBlindInfoTap: _openBossConstraintInfo,
             onDebugTap: () => _openDebugBottomSheet(context),
             onJesterTap: _openJesterOverlay,
             onHandTileTap: _toggleHandTile,
@@ -1809,6 +1825,7 @@ class _GameSurface extends StatelessWidget {
     required this.itemEffectFeedback,
     required this.itemEffectFeedbackTick,
     required this.onOptionsTap,
+    required this.onBlindInfoTap,
     required this.onDebugTap,
     required this.onJesterTap,
     required this.onHandTileTap,
@@ -1849,6 +1866,7 @@ class _GameSurface extends StatelessWidget {
   final _ItemEffectFeedback? itemEffectFeedback;
   final int itemEffectFeedbackTick;
   final VoidCallback onOptionsTap;
+  final VoidCallback onBlindInfoTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
@@ -1917,6 +1935,7 @@ class _GameSurface extends StatelessWidget {
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   selectedBattleItemSlot: selectedBattleItemSlot,
                   onOptionsTap: onOptionsTap,
+                  onBlindInfoTap: onBlindInfoTap,
                   onDebugTap: onDebugTap,
                   onJesterTap: onJesterTap,
                   onHandTileTap: onHandTileTap,
@@ -2040,6 +2059,7 @@ class _GameLayout extends StatelessWidget {
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
     required this.onOptionsTap,
+    required this.onBlindInfoTap,
     required this.onDebugTap,
     required this.onJesterTap,
     required this.onHandTileTap,
@@ -2073,6 +2093,7 @@ class _GameLayout extends StatelessWidget {
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final VoidCallback onOptionsTap;
+  final VoidCallback onBlindInfoTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
@@ -2119,12 +2140,13 @@ class _GameLayout extends StatelessWidget {
               station: station,
               battle: battle,
               onOptionsTap: onOptionsTap,
+              onBlindInfoTap: onBlindInfoTap,
               stationGoalDisplayScore: settlementGoalDisplayScore,
               stationGoalPulse:
                   activeSettlementStep == ScoringPresentationStep.finalScore,
               stationGoalPulseTick: settlementSequenceTick,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             GameJesterZone(
               market: market,
               activeEffects: visibleSettlementEffects,
@@ -2132,7 +2154,7 @@ class _GameLayout extends StatelessWidget {
               selectedIndex: selectedJesterOverlayIndex,
               onTapCard: onJesterTap,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             GameItemZoneSkeleton(
               battle: battle,
               activeEffects: visibleSettlementEffects,
@@ -2140,7 +2162,7 @@ class _GameLayout extends StatelessWidget {
               selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
               onItemSlotTap: onBattleItemTap,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
             Expanded(
               child: Stack(
                 children: [

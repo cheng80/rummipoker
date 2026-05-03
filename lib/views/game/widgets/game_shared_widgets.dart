@@ -20,8 +20,8 @@ const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
 const double kBoardGridGap = 1.5;
 const double kBoardTileInnerPadding = 2.0;
-const double kBattleItemSlotWidth = 58.0;
-const double kBattleItemSlotHeight = 78.0;
+const double kBattleItemSlotWidth = 54.0;
+const double kBattleItemSlotHeight = 70.0;
 const double kBattleSlotCardInset = 2.0;
 const int kBattleQuickSlotDisplayCount = 3;
 const int kBattlePassiveSlotDisplayCount = 2;
@@ -97,6 +97,7 @@ class GameTopHud extends StatelessWidget {
     required this.station,
     required this.battle,
     required this.onOptionsTap,
+    this.onBlindInfoTap,
     this.stationGoalDisplayScore,
     this.stationGoalPulse = false,
     this.stationGoalPulseTick = 0,
@@ -105,6 +106,7 @@ class GameTopHud extends StatelessWidget {
   final RummiStationRuntimeFacade station;
   final RummiBattleRuntimeFacade battle;
   final VoidCallback onOptionsTap;
+  final VoidCallback? onBlindInfoTap;
   final int? stationGoalDisplayScore;
   final bool stationGoalPulse;
   final int stationGoalPulseTick;
@@ -122,50 +124,56 @@ class GameTopHud extends StatelessWidget {
     final blindColor = _battleBlindColor(battle.currentBlindTierIndex);
 
     return SizedBox(
-      height: 68,
+      height: 62,
       child: Row(
         children: [
           SizedBox(
             width: 76,
-            child: GameHudChip(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'STATION ${battle.stageIndex}',
-                    style: gameHudLabelStyle,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
+            child: GestureDetector(
+              onTap: onBlindInfoTap,
+              behavior: onBlindInfoTap == null
+                  ? HitTestBehavior.deferToChild
+                  : HitTestBehavior.opaque,
+              child: GameHudChip(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'STATION ${battle.stageIndex}',
+                      style: gameHudLabelStyle,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Expanded(
+                      child: Align(
                         alignment: Alignment.center,
-                        child: Text(
-                          blindLabel,
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          style: gameHudValueStyle.copyWith(
-                            color: blindColor,
-                            fontSize: 17,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.center,
+                          child: Text(
+                            blindLabel,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: gameHudValueStyle.copyWith(
+                              color: blindColor,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 0),
-                  Text(
-                    '보상 +${RummiRunProgress.stageClearGoldBase}',
-                    style: gameHudSubStyle,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    const SizedBox(height: 0),
+                    Text(
+                      '보상 +${RummiRunProgress.stageClearGoldBase}',
+                      style: gameHudSubStyle,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -221,7 +229,7 @@ class GameTopHud extends StatelessWidget {
                             maxLines: 1,
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.visible,
-                            style: gameHudValueStyle.copyWith(fontSize: 18),
+                            style: gameHudValueStyle.copyWith(fontSize: 17),
                           ),
                         ),
                       ),
@@ -285,7 +293,7 @@ class GameTopHud extends StatelessWidget {
                                 maxLines: 1,
                                 textAlign: TextAlign.right,
                                 overflow: TextOverflow.clip,
-                                style: gameHudValueStyle.copyWith(fontSize: 18),
+                                style: gameHudValueStyle.copyWith(fontSize: 17),
                               ),
                             ),
                           ),
@@ -478,7 +486,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -486,7 +494,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
               currentTab: visibleTab,
               onChanged: (tab) => setState(() => _tab = tab),
             ),
-            const SizedBox(height: 7),
+            const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: visibleTab == _GameItemZoneTab.slots
@@ -1626,8 +1634,10 @@ class GameBoardCell extends StatelessWidget {
                         ),
                         if (constrained)
                           Positioned(
-                            right: 2,
-                            top: 2,
+                            left: 4,
+                            top: 4,
+                            right: 4,
+                            bottom: 4,
                             child: GameConstraintBadge(side: side),
                           ),
                       ],
@@ -1647,40 +1657,49 @@ class GameConstraintBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = (side * 0.58).clamp(26.0, 38.0);
-    final height = (side * 0.34).clamp(16.0, 22.0);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFD9343A),
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(
-          color: const Color(0xFFFFD6CC).withValues(alpha: 0.96),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.45),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: Center(
-          child: Text(
-            '1/2',
-            maxLines: 1,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: height * 0.58,
-              fontWeight: FontWeight.w900,
-              height: 1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+        final pad = width * 0.06;
+        final innerWidth = width - (pad * 2);
+        final innerHeight = height - (pad * 2);
+        final barHeight = innerHeight * 0.24;
+        final fontSize = barHeight * 0.98;
+
+        return IgnorePointer(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(pad, pad, pad, 0),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: innerWidth,
+                height: barHeight,
+                child: Center(
+                  child: Text(
+                    'X',
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.96),
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.36),
+                          blurRadius: 1.7,
+                          offset: const Offset(0, 0.9),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

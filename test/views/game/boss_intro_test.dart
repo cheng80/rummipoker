@@ -94,5 +94,15 @@ void main() {
 
     await tester.tap(find.text('전투 시작'));
     await tester.pumpAndSettle();
+
+    await tester.tap(find.text('BOSS'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('빨간 타일 약화'), findsOneWidget);
+    expect(find.text('빨간 타일이 포함된 점수 라인은 40% 감소합니다.'), findsOneWidget);
+    expect(find.text('닫기'), findsOneWidget);
+
+    await tester.tap(find.text('닫기'));
+    await tester.pumpAndSettle();
   });
 }

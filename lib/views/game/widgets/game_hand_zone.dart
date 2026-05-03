@@ -313,7 +313,12 @@ class _HandTileCard extends StatelessWidget {
           ),
         ),
         if (constrained)
-          Positioned(top: 3, right: 3, child: GameConstraintBadge(side: 58)),
+          const Positioned.fill(
+            child: Padding(
+              padding: EdgeInsets.all(1),
+              child: GameConstraintBadge(side: 58),
+            ),
+          ),
       ],
     );
   }

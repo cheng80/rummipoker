@@ -162,7 +162,7 @@ class GameJesterZone extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+        padding: const EdgeInsets.fromLTRB(10, 5, 10, 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -177,7 +177,7 @@ class GameJesterZone extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 3),
             GameJesterStrip(
               market: market,
               activeEffects: activeEffects,

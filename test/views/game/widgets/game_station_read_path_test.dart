@@ -287,7 +287,7 @@ void main() {
       );
 
       expect(find.byIcon(Icons.open_with_rounded), findsWidgets);
-      expect(find.text('1/2'), findsOneWidget);
+      expect(find.byType(GameConstraintBadge), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('board-cell-0-0')));
       await tester.tap(find.byKey(const ValueKey('board-cell-2-2')));
