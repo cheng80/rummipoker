@@ -13,13 +13,13 @@
 - `specs`: Spec, 기능 규칙, UX, 데이터 계약, 아키텍처 명세
 - `planning`: Execution, 진행 상태, 구현 계획, 체크리스트, 검증 절차
 
-전체 문서 분류 규칙은 [docs/00_docs_README.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/00_docs_README.md)를 먼저 따른다.
+전체 문서 분류 규칙은 [docs/00_docs_README.md](docs/00_docs_README.md)를 먼저 따른다.
 
 코드 작업은 `current_system` 기준 문서 3종을 먼저 읽고 이어간다.
 
-- [CURRENT_SYSTEM_OVERVIEW.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_SYSTEM_OVERVIEW.md)
-- [CURRENT_CODE_MAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_CODE_MAP.md)
-- [CURRENT_TO_V4_GAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_TO_V4_GAP.md)
+- [CURRENT_SYSTEM_OVERVIEW.md](docs/current_system/CURRENT_SYSTEM_OVERVIEW.md)
+- [CURRENT_CODE_MAP.md](docs/current_system/CURRENT_CODE_MAP.md)
+- [CURRENT_TO_V4_GAP.md](docs/current_system/CURRENT_TO_V4_GAP.md)
 
 ## 새 세션 시작 지시문
 
@@ -53,26 +53,26 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 
 읽는 순서는 아래로 고정한다.
 
-1. [START_HERE.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/START_HERE.md)
-2. [docs/00_docs_README.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/00_docs_README.md)
-3. [CURRENT_SYSTEM_OVERVIEW.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_SYSTEM_OVERVIEW.md)
-4. [CURRENT_CODE_MAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_CODE_MAP.md)
-5. [CURRENT_TO_V4_GAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_TO_V4_GAP.md)
-6. [CURRENT_LEVELING_POLICY.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_LEVELING_POLICY.md)
-7. [CURRENT_LEVELING_ML_BASELINE.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_LEVELING_ML_BASELINE.md)
-8. [CURRENT_LEVELING_RUNTIME_SPEC.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md)
-9. [STATUS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/STATUS.md)
-10. [IMPLEMENTATION_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/IMPLEMENTATION_PLAN.md)
-11. [MIGRATION_ROADMAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/MIGRATION_ROADMAP.md)
-12. [ITEM_EFFECT_RUNTIME_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md)
+1. [START_HERE.md](START_HERE.md)
+2. [docs/00_docs_README.md](docs/00_docs_README.md)
+3. [CURRENT_SYSTEM_OVERVIEW.md](docs/current_system/CURRENT_SYSTEM_OVERVIEW.md)
+4. [CURRENT_CODE_MAP.md](docs/current_system/CURRENT_CODE_MAP.md)
+5. [CURRENT_TO_V4_GAP.md](docs/current_system/CURRENT_TO_V4_GAP.md)
+6. [CURRENT_LEVELING_POLICY.md](docs/current_system/CURRENT_LEVELING_POLICY.md)
+7. [CURRENT_LEVELING_ML_BASELINE.md](docs/current_system/CURRENT_LEVELING_ML_BASELINE.md)
+8. [CURRENT_LEVELING_RUNTIME_SPEC.md](docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md)
+9. [STATUS.md](docs/planning/STATUS.md)
+10. [IMPLEMENTATION_PLAN.md](docs/planning/IMPLEMENTATION_PLAN.md)
+11. [MIGRATION_ROADMAP.md](docs/planning/MIGRATION_ROADMAP.md)
+12. [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md)
 
 필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 
-- [13_ITEM_SYSTEM_CONTRACT.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
-- [TEST_QA_ACCEPTANCE.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/verification/TEST_QA_ACCEPTANCE.md)
-- [OPEN_DECISIONS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/OPEN_DECISIONS.md)
-- [feature plan archive](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md)
-- [leveling archive](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/archive/leveling/00_leveling_archive_README.md)
+- [13_ITEM_SYSTEM_CONTRACT.md](docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
+- [TEST_QA_ACCEPTANCE.md](docs/planning/verification/TEST_QA_ACCEPTANCE.md)
+- [OPEN_DECISIONS.md](docs/planning/OPEN_DECISIONS.md)
+- [feature plan archive](docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md)
+- [leveling archive](docs/archive/leveling/00_leveling_archive_README.md)
 
 ## 현재 문서 매핑
 
@@ -148,4 +148,4 @@ web 저장/라우팅/입력 경계가 바뀌면 아래 스크립트를 먼저 �
 
 - `tools/web_build_smoke.sh`
 
-의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [STATUS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/STATUS.md)에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에 남긴다.
+의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [STATUS.md](docs/planning/STATUS.md)에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에 남긴다.

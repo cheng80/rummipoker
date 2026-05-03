@@ -104,7 +104,7 @@ source of truth는 runtime state다.
 
 ## bejeweled_classic 참고 요소
 
-참고 프로젝트: `/Users/cheng80/Desktop/FlutterFrame_work/bejeweled_classic`
+참고 프로젝트: repo 외부 `bejeweled_classic` 참고 구현. 로컬 위치는 PC마다 다를 수 있으므로 문서에는 절대경로를 고정하지 않는다.
 
 - 바로 적용:
   - `flutter_animate`로 기존 `TweenAnimationBuilder` 보일러플레이트 축소

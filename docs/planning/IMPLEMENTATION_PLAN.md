@@ -3,7 +3,7 @@
 > GCSE role: `Execution`
 > Source of truth: V4 구현 순서, PR 분해, migration plan.
 
-검토용 순서/진행 체크는 [STATUS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/STATUS.md)에서 함께 본다.
+검토용 순서/진행 체크는 [STATUS.md](docs/planning/STATUS.md)에서 함께 본다.
 
 ## 1. Plan Scope
 
@@ -155,7 +155,7 @@
 
 ## 7. Migration Phase Source
 
-상세 phase 정의는 [MIGRATION_ROADMAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/MIGRATION_ROADMAP.md)를 단일 기준으로 둔다.
+상세 phase 정의는 [MIGRATION_ROADMAP.md](docs/planning/MIGRATION_ROADMAP.md)를 단일 기준으로 둔다.
 
 이 문서는 phase별 상세 작업을 반복하지 않고, 아래 실행 판단만 유지한다.
 

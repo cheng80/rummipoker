@@ -545,7 +545,7 @@ mobile-first 기준으로 실제 앱이 current baseline과 migration 변경을 
 - [x] item effect 적용은 `ItemEffectRuntime`이 담당하며, 애니메이션/이펙트/후속 콜백 연결용 event list를 결과로 반환한다.
 - [x] `ITEM_EFFECT_RUNTIME_MATRIX.md`에 v1 49개 item의 timing/op, 실질 효과, handler, 적용 상태를 정리했다.
 - [x] Jester score effect 적용도 `JesterEffectRuntime` 경유로 정리되어, 향후 발동 애니메이션/후속 콜백용 event 경계를 갖는다.
-- [x] 보드 이동을 `보드 버림`/`손패 버림`과 같은 제한 자원으로 추가하고, 손패 한도 증가 및 관련 Item/Jester를 기존 item 미구현 effect와 함께 처리하는 세부 실행 계획을 [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/archive/feature_plans_2026_04/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md)에 고정했다.
+- [x] 보드 이동을 `보드 버림`/`손패 버림`과 같은 제한 자원으로 추가하고, 손패 한도 증가 및 관련 Item/Jester를 기존 item 미구현 effect와 함께 처리하는 세부 실행 계획을 [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](docs/archive/feature_plans_2026_04/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md)에 고정했다.
 - [x] Phase E 일부로 Station 시작 시 `add_board_move`, `increase_hand_size`, `increase_hand_size_with_discard_penalty` item effect를 runtime/blind select 진입 경로에 연결했다.
 - [x] `undo_seal`의 `undo_last_board_move`를 보드 이동 이력/save restore 경로와 함께 연결했다.
 - [x] `deck_needle`의 `peek_deck_discard_one`을 덱 상단 선택 dialog와 전용 command로 연결했다.
