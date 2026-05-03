@@ -69,7 +69,7 @@ void main() {
         RummiEconomyConfig.startingGold + 9,
       );
       expect(updated.runLoopPhase, GameRunLoopPhase.market);
-      expect(updated.activeRunSaveView!.currentGold, 19);
+      expect(updated.activeRunSaveView!.currentGold, 9);
       expect(updated.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.market);
     });
 
@@ -333,7 +333,7 @@ void main() {
 
       final state = container.read(gameSessionNotifierProvider(args));
 
-      expect(state.runProgress?.gold, RummiEconomyConfig.startingGold + 3);
+      expect(state.runProgress?.gold, RummiEconomyConfig.startingGold);
       expect(
         state.runProgress?.rerollCost,
         RummiRunProgress.shopBaseRerollCost - 1,
@@ -650,6 +650,7 @@ void main() {
         gameSessionNotifierProvider(args).notifier,
       );
       final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!.gold = 10;
       state.runProgress!.shopOffers.add(
         RummiShopOffer(
           slotIndex: 0,
@@ -677,8 +678,8 @@ void main() {
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold - 3);
-      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold - 3);
+      expect(updated.runProgress!.gold, 7);
+      expect(updated.marketView!.gold, 7);
       expect(updated.runProgress!.ownedJesters.length, 1);
       expect(updated.marketView!.ownedEntries.length, 1);
       expect(updated.runProgress!.shopOffers, isEmpty);
@@ -720,15 +721,18 @@ void main() {
       final offer = RummiMarketItemOfferView.fromItemDefinition(
         item,
         slotIndex: 0,
-        currentGold: RummiEconomyConfig.startingGold,
+        currentGold: 10,
       );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!.gold = 10;
+      notifier.markDirty();
 
       final failMessage = notifier.buyItemOffer(offer);
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold - 4);
-      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold - 4);
+      expect(updated.runProgress!.gold, 6);
+      expect(updated.marketView!.gold, 6);
       expect(updated.runProgress!.itemInventory.ownedItems.length, 1);
       expect(
         updated.runProgress!.itemInventory.ownedItems.first.itemId,
@@ -761,6 +765,7 @@ void main() {
         gameSessionNotifierProvider(args).notifier,
       );
       final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!.gold = 10;
       state.runProgress!
         ..gold = 20
         ..itemInventory = const RunInventoryState(
@@ -820,6 +825,7 @@ void main() {
         gameSessionNotifierProvider(args).notifier,
       );
       final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!.gold = 10;
       final item = ItemDefinition.fromJson(const <String, dynamic>{
         'id': 'board_scrap',
         'displayName': 'Board Scrap',
@@ -854,7 +860,7 @@ void main() {
       final offer = RummiMarketItemOfferView.fromItemDefinition(
         item,
         slotIndex: 0,
-        currentGold: RummiEconomyConfig.startingGold,
+        currentGold: 10,
         price: state.runProgress!.effectiveItemPrice(item),
       );
 
@@ -862,9 +868,9 @@ void main() {
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, RummiEconomyConfig.startingGold - 2);
+      expect(updated.runProgress!.gold, 8);
       expect(updated.runProgress!.marketModifiers.nextItemPurchaseDiscount, 0);
-      expect(updated.marketView!.gold, RummiEconomyConfig.startingGold - 2);
+      expect(updated.marketView!.gold, 8);
     });
 
     test('useMarketItem은 market 사용 아이템으로 골드와 facade를 갱신한다', () {

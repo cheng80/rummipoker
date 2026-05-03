@@ -139,11 +139,7 @@ class GameSessionNotifier
   }
 
   static int _initialGold(NewRunDifficulty difficulty) {
-    return switch (difficulty) {
-      NewRunDifficulty.standard => RummiEconomyConfig.startingGold,
-      NewRunDifficulty.relaxed => RummiEconomyConfig.startingGold + 3,
-      NewRunDifficulty.pressure => RummiEconomyConfig.startingGold,
-    };
+    return RummiEconomyConfig.startingGold;
   }
 
   static int _initialRerollCost(NewRunDifficulty difficulty) {

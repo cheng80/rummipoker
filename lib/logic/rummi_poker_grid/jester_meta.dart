@@ -591,7 +591,7 @@ class RummiRoundEndItemBonus {
 class RummiEconomyConfig {
   const RummiEconomyConfig._();
 
-  static const int startingGold = 10;
+  static const int startingGold = 0;
   static const int stageClearGoldBase = 10;
   static const int firstBlindClearBonusGold = 5;
   static const int remainingBoardDiscardGoldBonus = 5;
@@ -678,10 +678,12 @@ class RummiStationBandMarketPolicy {
     var weight = _itemRarityBaseWeight(item.rarity);
     weight += _itemTagBonus(item.tags);
     weight += _missingGrowthTagBonus(item.tags, missingGrowthTags);
-    if (item.usableInBattle)
+    if (item.usableInBattle) {
       weight += band == RummiStationMarketBand.late ? 30 : 50;
-    if (item.isPassive)
+    }
+    if (item.isPassive) {
       weight += band == RummiStationMarketBand.early ? 20 : 70;
+    }
     return weight < 1 ? 1 : weight;
   }
 

@@ -50,15 +50,7 @@ class _AppState extends ConsumerState<App> {
               secondary: const Color(0xFF64B5F6),
             ),
           ),
-          scrollBehavior: const MaterialScrollBehavior().copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.stylus,
-              PointerDeviceKind.invertedStylus,
-              PointerDeviceKind.unknown,
-            },
-          ),
+          scrollBehavior: const AppScrollBehavior(),
           routerConfig: appRouter,
           builder: (context, child) {
             return Stack(
@@ -80,5 +72,28 @@ class _AppState extends ConsumerState<App> {
       );
     }
     return app;
+  }
+}
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+    PointerDeviceKind.unknown,
+  };
+
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    if (kIsWeb) return child;
+    return super.buildScrollbar(context, child, details);
   }
 }

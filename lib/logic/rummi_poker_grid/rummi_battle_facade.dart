@@ -189,7 +189,11 @@ class RummiBattleRuntimeFacade {
     if (previewOut.result.ok) {
       for (final line in previewOut.result.lineBreakdowns) {
         if (line.constraintPenalties.isEmpty) continue;
-        for (final (row, col) in line.contributingCells) {
+        for (final (row, col) in _constrainedPreviewCells(
+          line: line,
+          board: session.board,
+          modifier: session.blind.bossModifier,
+        )) {
           constrainedScoringCellKeys.add('$row:$col');
         }
       }
@@ -243,4 +247,27 @@ class RummiBattleRuntimeFacade {
   final List<RummiBattleItemSlotView> itemSlots;
 
   bool isTileConstrained(Tile tile) => bossModifier?.affectsTile(tile) ?? false;
+}
+
+Iterable<(int, int)> _constrainedPreviewCells({
+  required ConfirmedLineBreakdown line,
+  required RummiBoard board,
+  required RummiBossModifier? modifier,
+}) sync* {
+  if (modifier == null) return;
+  switch (modifier.category) {
+    case RummiBossModifierCategory.tileColorWeaken:
+    case RummiBossModifierCategory.faceTileWeaken:
+      for (final (row, col) in line.contributingCells) {
+        final tile = board.cellAt(row, col);
+        if (tile != null && modifier.affectsTile(tile)) {
+          yield (row, col);
+        }
+      }
+    case RummiBossModifierCategory.lineKindWeaken:
+    case RummiBossModifierCategory.allScoreWeaken:
+    case RummiBossModifierCategory.firstConfirmWeaken:
+    case RummiBossModifierCategory.confirmCountWeaken:
+      yield* line.contributingCells;
+  }
 }

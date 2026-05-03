@@ -1028,9 +1028,6 @@ class _GameViewState extends ConsumerState<GameView>
     );
     if (!mounted) return;
 
-    SoundManager.playSfx(AssetPaths.sfxCollect);
-    if (!mounted) return;
-
     await Future<void>.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     await _runSettlementSequence(
@@ -1053,6 +1050,7 @@ class _GameViewState extends ConsumerState<GameView>
     Object? settlementGoalDisplayScore = GameSessionState.unsetValue,
     bool bump = false,
   }) async {
+    SoundManager.playSfx(AssetPaths.sfxCollect);
     _gameNotifier.setStageFlow(
       phase: GameStageFlowPhase.confirmSettlement,
       stageScoreAdded: totalScore,

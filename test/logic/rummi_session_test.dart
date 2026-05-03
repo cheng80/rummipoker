@@ -1563,6 +1563,7 @@ void main() {
 
   test('Popcorn은 초기 state mult를 주고 스테이지 종료 후 감소한다', () {
     final progress = RummiRunProgress()
+      ..gold = 20
       ..shopOffers.add(
         RummiShopOffer(
           slotIndex: 0,
@@ -1601,6 +1602,7 @@ void main() {
 
   test('Ice Cream은 확정 액션마다 chips state가 감소한다', () {
     final progress = RummiRunProgress()
+      ..gold = 20
       ..shopOffers.add(
         RummiShopOffer(
           slotIndex: 0,
@@ -1638,6 +1640,7 @@ void main() {
 
   test('Green Jester는 줄 확정 액션마다 +1, 버림마다 -1을 누적한다', () {
     final progress = RummiRunProgress()
+      ..gold = 20
       ..shopOffers.add(
         RummiShopOffer(
           slotIndex: 0,
@@ -1696,6 +1699,7 @@ void main() {
 
   test('Ride the Bus는 페이스 카드 없는 확정에서 증가하고 페이스 카드가 나오면 초기화된다', () {
     final progress = RummiRunProgress()
+      ..gold = 20
       ..shopOffers.add(
         RummiShopOffer(
           slotIndex: 0,
