@@ -4642,3 +4642,181 @@ v79 판정:
 - 따라서 `board_scrap`, `hand_scrap`, `move_token`, `discard_glove`, `mulligan_sleeve`, `organizer_glove`, `board_lift`, `safety_net`, `spare_pouch`, `emergency_draw`, `undo_seal`은 “노출되면 살 수 있는 후보”로 본다.
 - `travel_pouch`, `wide_grip`, `grand_satchel`은 hand size 계열 고가 후보라 현재 기준에서는 레벨링 핵심 availability 후보로 쓰기 어렵다. 필요하면 가격 조정보다 먼저 “hand size가 실제로 필요한 성장축인지”를 별도 확인한다.
 - 다음 적용 판단은 weight 상향이 아니라 현 상태 유지가 우선이다. 노출률 69~76%와 price <= 9 구매 가능성이 모두 충족되므로, 현재 병목은 레벨링이 직접 풀 영역이 아니라 유저 선택/운영 영역으로 남긴다.
+
+v80 S1 boss 병목 축 분리:
+
+- 목적:
+  - 남은 top failure인 S1 boss가 target, market, resource, boss constraint 중 어느 축인지 분리한다.
+  - UI/저장 구조는 변경하지 않는다.
+- 파일:
+  - `logs/sim/ml_sweep_s1_boss_axis_v80_r400_summary.json`
+  - `logs/sim/ml_sweep_s1_boss_axis_v80_r400_report.md`
+- 조건:
+  - runs: 400
+  - stations: S1 only
+  - difficulty: `standard`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `none`, `shop_slot_market_v9`
+  - experiment:
+    - `base_score_curve_v2_boss_constraint_pool_v4`
+    - `base_score_curve_v2_boss_constraint_pool_v4_s1_soft`
+    - `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1`
+    - `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068`
+
+S1 path 결과:
+
+| experiment | route | market | S1 path clear | avg turn | fail draw | fail board | top failures |
+|---|---|---|---:|---:|---:|---:|---|
+| `v4` | balanced | none | 77.5% | 241.1 | 52 | 38 | S1 boss, S1 big, S1 small |
+| `v4` | balanced | v9 | 80.8% | 245.9 | 47 | 29 | S1 boss, S1 big, S1 small |
+| `v4` | power | none | 75.5% | 240.4 | 57 | 40 | S1 boss, S1 big, S1 small |
+| `v4` | power | v9 | 79.2% | 244.1 | 52 | 29 | S1 boss, S1 big, S1 small |
+| `s1_soft` | balanced | none | 86.0% | 232.7 | 28 | 28 | S1 boss, S1 big, S1 small |
+| `s1_soft` | balanced | v9 | 87.0% | 232.4 | 18 | 31 | S1 boss, S1 big, S1 small |
+| `s1_soft` | power | none | 85.2% | 228.8 | 24 | 35 | S1 boss, S1 big, S1 small |
+| `s1_soft` | power | v9 | 86.0% | 232.3 | 26 | 30 | S1 boss, S1 big, S1 small |
+| `s1_soft_v2` | balanced | none | 87.2% | 216.4 | 10 | 40 | S1 boss, S1 small, S1 big |
+| `s1_soft_v2` | balanced | v9 | 89.2% | 220.6 | 6 | 35 | S1 boss, S1 big, S1 small |
+| `s1_soft_v2` | power | none | 89.0% | 219.2 | 8 | 36 | S1 boss, S1 big, S1 small |
+| `s1_soft_v2` | power | v9 | 92.0% | 217.5 | 2 | 30 | S1 boss, S1 small, S1 big |
+| `current_sim` | balanced | none | 89.2% | 221.1 | 17 | 25 | S1 boss, S1 big, S1 small |
+| `current_sim` | balanced | v9 | 90.2% | 221.1 | 17 | 22 | S1 boss, S1 big, S1 small |
+| `current_sim` | power | none | 93.0% | 224.0 | 11 | 17 | S1 boss, S1 big, S1 small |
+| `current_sim` | power | v9 | 91.2% | 221.0 | 6 | 28 | S1 boss, S1 big, S1 small |
+
+S1 tier aggregate:
+
+| experiment | market | S1 small clear | S1 big clear | S1 boss clear | S1 boss avg score ratio | S1 boss main stop |
+|---|---|---:|---:|---:|---:|---|
+| `v4` | none | 96.2% | 95.3% | 83.4% | 1.01 | deck 90, board 32 |
+| `v4` | v9 | 98.4% | 95.6% | 85.1% | 1.02 | deck 87, board 25 |
+| `s1_soft` | none | 98.1% | 95.9% | 91.0% | 1.04 | deck 43, board 25 |
+| `s1_soft` | v9 | 98.6% | 96.2% | 91.2% | 1.04 | deck 39, board 28 |
+| `s1_soft_v2` | none | 96.9% | 96.9% | 93.9% | 1.06 | board 28, deck 18 |
+| `s1_soft_v2` | v9 | 98.1% | 96.8% | 95.4% | 1.06 | board 28, deck 7 |
+| `current_sim` | none | 98.5% | 97.7% | 94.7% | 1.06 | deck 25, board 16 |
+| `current_sim` | v9 | 98.8% | 97.8% | 93.9% | 1.05 | board 26, deck 21 |
+
+v80 판정:
+
+- S1 boss는 target 자체가 높아서 막히는 축은 아니다. `s1_soft_v2/current_sim`에서 boss avg score ratio가 1.05~1.06이고 clear도 94% 안팎이다.
+- S1 market 보정은 핵심 해결책이 아니다. S1은 shop slot step 보정이 직접 작동하지 않고, v9 적용 여부에 따른 S1 boss clear 차이도 작거나 흔들린다.
+- resource 자동 보정은 원칙상 실제 적용 후보가 아니다. `current_sim`의 S1 resource 성과는 “필요 성장축/구매 수요” 참고로만 본다.
+- 잔여 S1 path failure에서 S1 boss가 top failure로 보이는 것은 초반 3전 path 구조상 자연스럽다. 다만 실제 runtime은 현재 S1 boss가 `red_dampener_v1` 고정이라, 시뮬 weighted boss pool보다 특정 색상 약화 체감이 강할 수 있다.
+
+v81 실제 S1 runtime red boss probe:
+
+- 목적:
+  - 실제 runtime에 더 가까운 `base_score_curve_v2 + red_dampener_v1` 축과 weighted boss pool current sim을 비교한다.
+- 파일:
+  - `logs/sim/ml_sweep_s1_red_runtime_probe_v81_r400_summary.json`
+  - `logs/sim/ml_sweep_s1_red_runtime_probe_v81_r400_report.md`
+- 조건:
+  - runs: 400
+  - stations: S1 only
+  - difficulty: `standard`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `none`, `shop_slot_market_v9`
+  - experiment: `base_score_curve_v2`, `current_sim`
+
+S1 runtime-like 결과:
+
+| experiment | market | S1 boss clear | avg turn | avg score ratio | stop |
+|---|---|---:|---:|---:|---|
+| `base_score_curve_v2` | none | 88.1% | 91.2 | 1.03 | deck 68, board 20 |
+| `base_score_curve_v2` | v9 | 83.5% | 92.0 | 1.02 | deck 93, board 27 |
+| `current_sim` | none | 94.7% | 81.4 | 1.06 | board 16, deck 25 |
+| `current_sim` | v9 | 93.9% | 80.4 | 1.05 | board 26, deck 21 |
+
+S1 boss constraint별 current sim:
+
+| constraint | none clear | v9 clear | note |
+|---|---:|---:|---|
+| `color_dampener_cycle` | 82.7% | 85.4% | 실제 S1 red dampener와 가장 가까운 축, 가장 약함 |
+| `single_rank_pressure` | 91.3% | 93.3% | 표본 적음, 잔여 board/deck |
+| `confirm_count_tax_v2` | 97.1% | 91.7% | 표본/market 흔들림 |
+| `face_tile_dampener` | 96.2% | 95.3% | 안정 |
+| `line_kind_dampener_cycle` | 97.9% | 95.6% | 안정 |
+| `repeat_rank_pressure_v4` | 95.2% | 98.2% | 안정 |
+| `resource_squeeze` | 98.8% | 96.7% | 안정 |
+
+v81 판정:
+
+- 실제 runtime의 S1 boss 병목 후보는 target/market/gold보다 `red_dampener_v1` 고정 배치다.
+- weighted boss pool에서는 S1 boss가 94%대지만, 실제 red dampener와 가까운 `color_dampener_cycle`은 83~85%대다.
+- 따라서 다음 실제 적용 후보는 target 하향이나 market weight 상향이 아니라, S1 boss modifier 배치/강도 조정이다.
+- 단, 코드 적용 전 선택지가 갈린다.
+  - S1 boss만 `red_dampener` 대신 더 완만한 line kind dampener로 시작한다.
+  - S1 red dampener score multiplier를 0.5에서 0.6 수준으로 soft화한다.
+  - S1 boss modifier는 유지하되 target만 더 낮춘다. 현재 수치상 우선순위는 낮다.
+- 현재 원칙상 자동 resource +1은 적용하지 않는다.
+
+v82 S1 red dampener soft 0.6 적용:
+
+- 선택:
+  - S1 boss modifier 배치와 저장 ID는 유지한다.
+  - `red_dampener_v1`의 score multiplier만 `0.5 -> 0.6`으로 완화한다.
+  - 설명도 "절반 적용"에서 "40% 감소"로 맞춘다.
+- 이유:
+  - S1 boss 정체성은 유지하면서 고정 red dampener가 초반에 과하게 작동하는 문제만 줄인다.
+  - save schema, boss modifier id, blind selection 순환 구조를 바꾸지 않는다.
+  - target score 하향보다 데이터상 직접적인 축이다.
+- 파일:
+  - `lib/logic/rummi_poker_grid/boss_modifier.dart`
+  - `test/logic/rummi_session_test.dart`
+  - `test/services/active_run_save_service_test.dart`
+- smoke:
+  - `logs/sim/ml_sweep_s1_red_soft060_v82_r400_summary.json`
+  - `logs/sim/ml_sweep_s1_red_soft060_v82_r400_report.md`
+- 조건:
+  - runs: 400
+  - stations: S1 only
+  - difficulty: `standard`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `none`, `shop_slot_market_v9`
+  - experiment: `base_score_curve_v2`
+
+S1 red soft 0.6 결과:
+
+| market | S1 small clear | S1 big clear | S1 boss clear | S1 boss avg score ratio | S1 boss stop |
+|---|---:|---:|---:|---:|---|
+| `none` | 97.5% | 94.6% | 93.2% | 1.05 | deck 32, board 18 |
+| `shop_slot_market_v9` | 97.0% | 93.7% | 91.3% | 1.04 | deck 35, board 28 |
+
+S1 path 결과:
+
+| route | market | S1 path clear | avg total turn | top failures | stop |
+|---|---|---:|---:|---|---|
+| balanced | none | 85.5% | 237.1 | S1 boss 26, S1 big 22, S1 small 10 | draw 30, board 26 |
+| power | none | 86.5% | 238.7 | S1 boss 24, S1 big 20, S1 small 10 | draw 26, board 26 |
+| balanced | v9 | 83.0% | 239.9 | S1 boss 35, S1 big 24, S1 small 9 | board 36, draw 29 |
+| power | v9 | 83.0% | 238.1 | S1 boss 28, S1 big 25, S1 small 15 | board 40, draw 25 |
+
+v82 판정:
+
+- `0.6` 완화는 실제 S1 red boss clear를 90%대 초반으로 올리지만, S1 path clear는 83~86%대에 머문다. 따라서 초반 보스를 무력화하는 수준은 아니다.
+- v9 market은 S1에서 아직 주된 해결축이 아니다. S1은 상점 성장보다 기본 보스 제약 강도의 영향이 더 크다.
+- 잔여 실패는 boss만이 아니라 S1 big/small과 board/draw가 함께 남는다. 추가 완화가 필요하면 red dampener를 더 낮추기보다 S1 전체 path의 board/draw pressure를 별도 축으로 봐야 한다.
+- 현재 적용은 save schema를 바꾸지 않는다.
+
+v83 S1 boss runtime display 확인:
+
+- 목적:
+  - v82의 `red_dampener_v1` 0.6 완화가 실제 전투 화면에서 말줄임 없이 읽히는지 확인한다.
+  - 점수 감쇠는 target/save 값 감소가 아니라, 해당 라인의 확정 점수에만 적용된다는 표현을 유지한다.
+- 적용:
+  - 보스 인트로 제목에서 `TextOverflow.ellipsis`를 제거하고 줄바꿈을 허용했다.
+  - 전투 중 정산 callout의 `constraint` 단계는 제목/값과 설명을 분리해 표시한다.
+  - 일반 점수/Jester/Item callout 구조는 유지한다.
+- 확인:
+  - iPhone 17 simulator debug run에서 S1 boss 전투 진입 확인.
+  - 인트로에 `빨간 타일 약화`와 `빨간 타일이 포함된 점수 라인은 40% 감소합니다.`가 말줄임 없이 표시됨.
+- 테스트:
+  - `test/views/game/boss_intro_test.dart`
+  - `test/views/blind_select_view_test.dart`
+
+v83 판정:
+
+- 저장 구조와 보스 ID는 그대로 유지한다.
+- UI 변경은 보스 제약 설명 가독성 보강에 한정한다.
+- 다음 체감 확인은 실제 라인 확정 시 constraint callout의 노출 시간/위치가 충분한지 보는 것이다.

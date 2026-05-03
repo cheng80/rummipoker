@@ -365,8 +365,7 @@ class _GameViewState extends ConsumerState<GameView>
                 Expanded(
                   child: Text(
                     modifier.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
                     style: TextStyle(
                       fontFamily: AssetPaths.fontNexonLv2Gothic,
                       color: Colors.white.withValues(alpha: 0.96),
@@ -2290,6 +2289,7 @@ class _BoardScoringCallout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isConstraint = step == ScoringPresentationStep.constraint;
     final (title, value, detail) = switch (step) {
       ScoringPresentationStep.boardLine => (
         '${gameLineRefShortLabel(line.ref)} 라인',
@@ -2346,48 +2346,97 @@ class _BoardScoringCallout extends StatelessWidget {
                       horizontal: 12,
                       vertical: 8,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          value,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: valueColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            detail,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.68),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              height: 1,
+                    child: isConstraint
+                        ? ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 290),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        title,
+                                        softWrap: true,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.15,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      value,
+                                      style: TextStyle(
+                                        color: valueColor,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  detail,
+                                  softWrap: true,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.72),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.25,
+                                  ),
+                                ),
+                              ],
                             ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                value,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: valueColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: Text(
+                                  detail,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.68),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               )

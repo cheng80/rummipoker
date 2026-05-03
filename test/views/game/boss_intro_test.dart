@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
-import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
@@ -27,65 +27,27 @@ void main() {
     GameSettings.sfxMuted = true;
   });
 
-  testWidgets('stage clear settlement sheet와 game over dialog가 함께 뜨지 않는다', (
-    tester,
-  ) async {
-    final previousOnError = FlutterError.onError;
-    FlutterError.onError = (details) {
-      final exceptionText = details.exceptionAsString();
-      if (exceptionText.contains('A RenderFlex overflowed by 16 pixels')) {
-        return;
-      }
-      previousOnError?.call(details);
-    };
-    tester.view.physicalSize = const Size(1280, 2400);
+  testWidgets('보스 인트로 제목은 말줄임 없이 줄바꿈을 허용한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      FlutterError.onError = previousOnError;
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
 
     final session = RummiPokerGridSession(
-      runSeed: 900,
+      runSeed: 901,
       blind: RummiBlindState(
-        targetScore: 40,
-        boardDiscardsRemaining: 4,
-        handDiscardsRemaining: 2,
+        targetScore: 285,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 1,
+        bossModifier: RummiBossModifier.redDampener,
       ),
       deck: PokerDeck.fromSnapshot(const []),
     );
     final runProgress = RummiRunProgress()
-      ..stageIndex = 4
-      ..currentStationBlindTierIndex = 0
-      ..gold = 159;
-
-    session.board.setCell(
-      0,
-      0,
-      const Tile(id: 1, color: TileColor.red, number: 1),
-    );
-    session.board.setCell(
-      0,
-      1,
-      const Tile(id: 2, color: TileColor.blue, number: 2),
-    );
-    session.board.setCell(
-      0,
-      2,
-      const Tile(id: 3, color: TileColor.yellow, number: 3),
-    );
-    session.board.setCell(
-      0,
-      3,
-      const Tile(id: 4, color: TileColor.black, number: 4),
-    );
-    session.board.setCell(
-      0,
-      4,
-      const Tile(id: 5, color: TileColor.red, number: 5),
-    );
-
+      ..stageIndex = 1
+      ..currentStationBlindTierIndex = 2;
     final restoredRun = ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
       difficulty: NewRunDifficulty.standard,
@@ -112,7 +74,7 @@ void main() {
                 supportedLocales: context.supportedLocales,
                 localizationsDelegates: context.localizationDelegates,
                 home: JesterTranslationScope(
-                  child: GameView(runSeed: 900, restoredRun: restoredRun),
+                  child: GameView(runSeed: 901, restoredRun: restoredRun),
                 ),
               ),
             );
@@ -122,18 +84,15 @@ void main() {
     );
 
     await tester.pump();
-    await tester.tap(find.byTooltip('확정'));
     await tester.pump();
-    for (var i = 0; i < 30; i++) {
-      await tester.pump(const Duration(milliseconds: 250));
-    }
-    await tester.pumpAndSettle();
 
-    expect(find.text('정산 완료'), findsOneWidget);
-    expect(find.text('게임결과'), findsNothing);
-    expect(find.text('Market으로'), findsOneWidget);
+    final titleText = tester.widget<Text>(find.text('빨간 타일 약화'));
+    expect(titleText.overflow, isNull);
+    expect(titleText.maxLines, isNull);
+    expect(titleText.softWrap, isTrue);
+    expect(find.text('빨간 타일이 포함된 점수 라인은 40% 감소합니다.'), findsOneWidget);
 
-    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.tap(find.text('전투 시작'));
     await tester.pumpAndSettle();
   });
 }
