@@ -5,6 +5,9 @@ enum RummiBossModifierCategory {
   tileColorWeaken,
   lineKindWeaken,
   faceTileWeaken,
+  allScoreWeaken,
+  firstConfirmWeaken,
+  confirmCountWeaken,
 }
 
 class RummiBossModifier {
@@ -29,6 +32,9 @@ class RummiBossModifier {
     if (id == columnDampener.id) return columnDampener;
     if (id == diagonalDampener.id) return diagonalDampener;
     if (id == faceDampener.id) return faceDampener;
+    if (id == allScoreDampener.id) return allScoreDampener;
+    if (id == firstConfirmTax.id) return firstConfirmTax;
+    if (id == confirmCountTax.id) return confirmCountTax;
     return RummiBossModifier(
       id: id ?? redDampener.id,
       category: RummiBossModifierCategory.values.byName(
@@ -132,6 +138,33 @@ class RummiBossModifier {
     scoreMultiplier: 0.65,
   );
 
+  static const allScoreDampener = RummiBossModifier(
+    id: 'all_score_dampener_v1',
+    category: RummiBossModifierCategory.allScoreWeaken,
+    title: '전체 점수 약화',
+    ruleText: '모든 점수 라인이 20% 감소합니다.',
+    markerText: '약화',
+    scoreMultiplier: 0.8,
+  );
+
+  static const firstConfirmTax = RummiBossModifier(
+    id: 'first_confirm_tax_v1',
+    category: RummiBossModifierCategory.firstConfirmWeaken,
+    title: '첫 확정 약화',
+    ruleText: '첫 확정 점수 라인은 30% 감소합니다.',
+    markerText: '첫확정',
+    scoreMultiplier: 0.7,
+  );
+
+  static const confirmCountTax = RummiBossModifier(
+    id: 'confirm_count_tax_v2',
+    category: RummiBossModifierCategory.confirmCountWeaken,
+    title: '누적 확정 약화',
+    ruleText: '세 번째 확정부터 점수 라인이 25% 감소합니다.',
+    markerText: '3+',
+    scoreMultiplier: 0.75,
+  );
+
   final String id;
   final RummiBossModifierCategory category;
   final String title;
@@ -150,6 +183,14 @@ class RummiBossModifier {
   bool affectsAnyTile(Iterable<Tile> tiles) => tiles.any(affectsTile);
 
   bool affectsLineKind(LineKind kind) => affectedLineKinds.contains(kind);
+
+  bool affectsConfirmOrdinal(int ordinal) {
+    return switch (category) {
+      RummiBossModifierCategory.firstConfirmWeaken => ordinal == 1,
+      RummiBossModifierCategory.confirmCountWeaken => ordinal >= 3,
+      _ => false,
+    };
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,

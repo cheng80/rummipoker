@@ -199,12 +199,12 @@ class BlindSelectionSpecBuilder {
     const modifiers = [
       RummiBossModifier.redDampener,
       RummiBossModifier.rowDampener,
-      RummiBossModifier.blueDampener,
-      RummiBossModifier.columnDampener,
-      RummiBossModifier.blackDampener,
-      RummiBossModifier.diagonalDampener,
-      RummiBossModifier.yellowDampener,
       RummiBossModifier.faceDampener,
+      RummiBossModifier.columnDampener,
+      RummiBossModifier.allScoreDampener,
+      RummiBossModifier.diagonalDampener,
+      RummiBossModifier.firstConfirmTax,
+      RummiBossModifier.confirmCountTax,
     ];
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
     return modifiers[(normalizedStationIndex - 1) % modifiers.length];

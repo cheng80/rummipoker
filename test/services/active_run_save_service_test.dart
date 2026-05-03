@@ -402,6 +402,28 @@ void main() {
       expect(restored.bossModifier?.scoreMultiplier, 0.65);
     });
 
+    test('blind json preserves score and confirm boss modifiers', () {
+      final modifiers = [
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.firstConfirmTax,
+        RummiBossModifier.confirmCountTax,
+      ];
+
+      for (final modifier in modifiers) {
+        final blind = RummiBlindState(targetScore: 300, bossModifier: modifier);
+
+        final restored = RummiBlindState.fromJson(blind.toJson());
+
+        expect(restored.bossModifier?.id, modifier.id);
+        expect(restored.bossModifier?.category, modifier.category);
+        expect(restored.bossModifier?.ruleText, modifier.ruleText);
+        expect(
+          restored.bossModifier?.scoreMultiplier,
+          modifier.scoreMultiplier,
+        );
+      }
+    });
+
     test(
       'saved run progress without itemInventory falls back to empty shape',
       () {

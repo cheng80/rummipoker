@@ -677,6 +677,7 @@ class RummiPokerGridSession {
         score: lineScore,
         lineRef: line.ref,
         scoringTiles: line.scoringTiles,
+        confirmOrdinal: confirmOrdinal,
       );
       lineScore = constraintScore.score;
       if (constraintScore.penalty != null) {
@@ -868,6 +869,7 @@ class RummiPokerGridSession {
     required int score,
     required LineRef lineRef,
     required List<Tile> scoringTiles,
+    required int confirmOrdinal,
   }) {
     final modifier = blind.bossModifier;
     if (modifier == null || score <= 0) {
@@ -883,6 +885,11 @@ class RummiPokerGridSession {
       RummiBossModifierCategory.faceTileWeaken => modifier.affectsAnyTile(
         scoringTiles,
       ),
+      RummiBossModifierCategory.allScoreWeaken => true,
+      RummiBossModifierCategory.firstConfirmWeaken =>
+        modifier.affectsConfirmOrdinal(confirmOrdinal),
+      RummiBossModifierCategory.confirmCountWeaken =>
+        modifier.affectsConfirmOrdinal(confirmOrdinal),
     };
     if (!affected) {
       return (score: score, penalty: null);

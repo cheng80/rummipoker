@@ -60,7 +60,8 @@ Partially applied:
 
 - simulation boss pool의 10개 proxy는 현재 시뮬 기준표로 유지된다.
 - 런타임은 아직 weighted pool 전체를 그대로 뽑지 않고, station modifier cycle을 사용한다.
-- repeat rank, single rank, confirm tax, all score dampener, first confirm tax, target spike, resource squeeze는 아직 runtime modifier 타입으로 승격하지 않았다.
+- repeat rank, single rank, target spike, resource squeeze는 아직 runtime modifier 타입으로 승격하지 않았다.
+- all score dampener, first confirm tax, confirm count tax는 runtime modifier 타입으로 승격했다.
 
 Not applied:
 
@@ -73,23 +74,31 @@ Boss constraint runtime scope:
 |---:|---|---|---|
 | 0 | `color_dampener_cycle` | Applied | `tileColorWeaken`으로 전투/저장/표시 적용 완료 |
 | 1 | `line_kind_dampener_cycle` | Applied | `lineKindWeaken`으로 전투/저장/표시 적용 완료 |
-| 2 | `face_tile_dampener` | Applied | S8 boss modifier. 11~13 타일 포함 라인을 35% 감소 |
+| 2 | `face_tile_dampener` | Applied | S3 boss modifier. 11~13 타일 포함 라인을 35% 감소 |
 | 3 | `repeat_rank_pressure_v4` | Sim only | 이전 confirm 기록 추적과 설명/정산 표시 규칙이 필요 |
 | 4 | `single_rank_pressure` | Sim only | 첫 confirm rank 기준 저장/복원/표시 규칙이 필요 |
-| 5 | `confirm_count_tax_v2` | Sim only | confirm action count 기준과 정산 표시 순서를 정해야 함 |
-| 6 | `all_score_dampener` | Candidate | 모든 점수 라인 약화라 전투 구현은 단순하지만 표시가 너무 일반적일 수 있음 |
-| 7 | `first_confirm_tax` | Candidate | 첫 confirm만 약화. 전투 구현은 가능하지만 UI 사전 설명/정산 표시가 필요 |
+| 5 | `confirm_count_tax_v2` | Applied | 기존 `confirmCountThisStation`으로 세 번째 confirm부터 25% 감소 |
+| 6 | `all_score_dampener` | Applied | 모든 점수 라인 20% 감소. 타일별 표시 없이 보스 팝업/정산 penalty로 표시 |
+| 7 | `first_confirm_tax` | Applied | 첫 confirm 점수 라인 30% 감소. 기존 confirm ordinal로 판정 |
 | 8 | `target_spike_wall` | Spec only | target score 조정 계열이므로 boss modifier와 별도 target 레버로 다뤄야 함 |
 | 9 | `resource_squeeze` | Rejected for auto grant | 자원 지급이 아니라 시작 압박/마켓 후보 노출로만 해석 |
 
-다음 코드 적용 후보:
+Boss constraint implementation checklist:
 
-1. `all_score_dampener`: 구현은 단순하지만 보스 개성이 약하므로 우선순위는 낮다.
-2. `first_confirm_tax`: 유저가 이해하기 쉽지만 confirm 순서 상태와 표시 규칙이 필요하다.
+- [x] color dampener family: 타일 색상 포함 라인 약화
+- [x] line kind dampener family: 가로/세로/대각선 라인 약화
+- [x] face tile dampener: 11~13 포함 라인 약화
+- [x] all score dampener: 모든 점수 라인 약화
+- [x] first confirm tax: 첫 confirm 약화
+- [x] confirm count tax: 세 번째 confirm부터 약화
+- [ ] repeat rank pressure: 이전 confirm rank 기록/저장/표시 정책 확정 후 적용
+- [ ] single rank pressure: 기준 rank 선택/저장/표시 정책 확정 후 적용
+- [ ] target spike wall: boss modifier가 아니라 target score table 레버로 별도 검증
+- [x] resource squeeze: 자동 지급/보정 후보에서 제외
 
 현재 제외:
 
-- `repeat_rank_pressure_v4`, `single_rank_pressure`, `confirm_count_tax_v2`는 상태 추적/저장/정산 표시 범위가 커서 바로 적용하지 않는다.
+- `repeat_rank_pressure_v4`, `single_rank_pressure`는 상태 추적/저장/정산 표시 범위가 커서 바로 적용하지 않는다.
 - `target_spike_wall`은 boss modifier가 아니라 target table 레버로 둔다.
 - `resource_squeeze`는 자동 자원 지급/보정으로 번역하지 않는다.
 
@@ -238,17 +247,51 @@ v89 face boss runtime smoke:
 
 판정:
 
-- S8 boss가 `faceDampener`로 바뀐 뒤에도 S1/S8 boss 병목은 남는다.
+- S8 boss가 `faceDampener`였던 v89 기준에서도 S1/S8 boss 병목은 남았다.
 - r120 기준에서 v9 clear가 balanced 61.7%, power 66.7%로 과하게 뛰지 않았다.
 - `face_tile_dampener`는 S8에 넣어도 현재 target/market 기준을 무너뜨리지 않는 1차 후보로 본다.
+
+v90 boss runtime phase 1 proxy smoke:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 89000 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_boss_runtime_v90_smoke_r120`
+- summary: `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_summary.json`
+- report: `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_report.md`
+- note: 이 sweep은 Python sim의 boss proxy 기준이며, Dart runtime cycle 자체는 `blind_selection_setup_test.dart`로 검증한다.
+
+Runtime S1~S8 boss cycle:
+
+| Station | Modifier |
+|---:|---|
+| S1 | `red_dampener_v1` |
+| S2 | `row_line_dampener_v1` |
+| S3 | `face_tile_dampener_v1` |
+| S4 | `column_line_dampener_v1` |
+| S5 | `all_score_dampener_v1` |
+| S6 | `diagonal_line_dampener_v1` |
+| S7 | `first_confirm_tax_v1` |
+| S8 | `confirm_count_tax_v2` |
+
+| loadout | market | path clear | avg total turn | S1/S4/S5/S8 boss bottleneck | top bottlenecks | stop reason |
+|---|---|---:|---:|---|---|---|
+| balanced | none | 45.0% | 1331.1 | S1 5, S4 15, S5 7, S8 7 | S4 boss 15, S5 boss 7, S8 boss 7, S1 boss 5 | board 33, draw 32, both 1 |
+| balanced | v9 | 57.5% | 1356.3 | S1 8, S4 3, S5 1, S8 9 | S8 boss 9, S1 boss 8, S8 big 6, S2 boss 5 | board 34, draw 17 |
+| power | none | 59.2% | 1270.5 | S1 7, S4 1, S5 0, S8 9 | S8 boss 9, S1 boss 7, S3 boss 5, S2 big 4 | board 31, draw 18 |
+| power | v9 | 68.3% | 1378.2 | S1 1, S4 2, S5 2, S8 9 | S8 boss 9, S8 big 4, S1 big 3, S7 boss 3 | board 25, draw 13 |
+
+판정:
+
+- 신규 cycle은 v89 대비 balanced clear를 낮춘다. 특히 `none` balanced가 52.5%에서 45.0%로 내려가므로, 이 배치를 그대로 확정하기 전에는 r120보다 큰 runs로 재검증해야 한다.
+- `shop_slot_market_v9`는 여전히 clear를 올리지만 balanced v9도 57.5%라 과보정은 아니다.
+- S8 boss 병목이 모든 조합에서 남는다. S8에 들어간 `confirm_count_tax_v2`는 보스 압박으로 읽히지만, 후반 병목을 키우는지 장기 sweep으로 확인해야 한다.
+- 자동 자원 지급/보정은 추가하지 않는다. 다음 조정이 필요하면 boss severity나 S8 후보군 availability를 먼저 본다.
 
 ## 5. Next Leveling Work
 
 다음 순서:
 
 1. S7~S8 shape floor는 현재 값으로 동결한다. 추가 강화하지 않는다.
-2. boss constraint runtime 다음 후보는 `all_score_dampener` 또는 `first_confirm_tax` 중 하나로 둔다.
-3. 상태 추적이 필요한 repeat/single/confirm-count 계열은 바로 적용하지 않는다.
+2. 신규 boss modifier cycle은 r120 smoke로 S1/S4/S5/S8 병목과 path clear 변화를 확인한다.
+3. repeat/single rank 계열은 이전 rank 기준 저장/표시 정책을 먼저 확정한다.
 4. Pack/Tarot-like/Planet-like를 별도 타입으로 승격할지, 현재 Item/market role proxy로 유지할지 결정한다.
 
 ## 6. Read Order

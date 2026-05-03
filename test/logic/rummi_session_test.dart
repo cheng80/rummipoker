@@ -598,6 +598,125 @@ void main() {
     expect(out.result.lineBreakdowns.single.constraintPenalties, isEmpty);
   });
 
+  test('보스 전체 점수 약화는 모든 점수 라인을 줄인다', () {
+    final board = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.allScoreDampener,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.ok, true);
+    expect(out.result.scoreAdded, 120);
+    final penalty = out.result.lineBreakdowns.single.constraintPenalties.single;
+    expect(penalty.title, '전체 점수 약화');
+    expect(penalty.scoreDelta, -30);
+    expect(penalty.scoreMultiplier, 0.8);
+  });
+
+  test('보스 첫 확정 약화는 첫 confirm에만 적용된다', () {
+    final firstBoard = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      firstBoard.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final firstSession = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.firstConfirmTax,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: firstBoard),
+      board: firstBoard,
+    );
+
+    final firstOut = firstSession.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(firstOut.result.ok, true);
+    expect(firstOut.result.scoreAdded, 105);
+    expect(
+      firstOut.result.lineBreakdowns.single.constraintPenalties.single.title,
+      '첫 확정 약화',
+    );
+
+    final laterBoard = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      laterBoard.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final laterSession = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.firstConfirmTax,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: laterBoard),
+      board: laterBoard,
+    );
+    laterSession.confirmCountThisStation = 1;
+
+    final laterOut = laterSession.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(laterOut.result.ok, true);
+    expect(laterOut.result.scoreAdded, 150);
+    expect(laterOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
+  });
+
+  test('보스 누적 확정 약화는 세 번째 confirm부터 적용된다', () {
+    final earlyBoard = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      earlyBoard.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final earlySession = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: earlyBoard),
+      board: earlyBoard,
+    );
+    earlySession.confirmCountThisStation = 1;
+
+    final earlyOut = earlySession.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(earlyOut.result.ok, true);
+    expect(earlyOut.result.scoreAdded, 150);
+    expect(earlyOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
+
+    final taxedBoard = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      taxedBoard.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final taxedSession = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: taxedBoard),
+      board: taxedBoard,
+    );
+    taxedSession.confirmCountThisStation = 2;
+
+    final taxedOut = taxedSession.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(taxedOut.result.ok, true);
+    expect(taxedOut.result.scoreAdded, 113);
+    final penalty =
+        taxedOut.result.lineBreakdowns.single.constraintPenalties.single;
+    expect(penalty.title, '누적 확정 약화');
+    expect(penalty.markerText, '3+');
+    expect(penalty.scoreDelta, -37);
+  });
+
   test('투페어 확정 시 매칭된 4장만 제거되고 키커는 남는다', () {
     final board = RummiBoard();
     board.setCell(1, 0, t(TileColor.red, 4));

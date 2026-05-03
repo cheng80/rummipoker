@@ -86,12 +86,12 @@ void main() {
       expect(bossModifierIds, [
         'red_dampener_v1',
         'row_line_dampener_v1',
-        'blue_dampener_v1',
-        'column_line_dampener_v1',
-        'black_dampener_v1',
-        'diagonal_line_dampener_v1',
-        'yellow_dampener_v1',
         'face_tile_dampener_v1',
+        'column_line_dampener_v1',
+        'all_score_dampener_v1',
+        'diagonal_line_dampener_v1',
+        'first_confirm_tax_v1',
+        'confirm_count_tax_v2',
       ]);
     });
 
