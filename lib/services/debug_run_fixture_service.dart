@@ -33,6 +33,7 @@ class DebugRunFixtureService {
   static const String stage2MarketResume = 'stage2_market_resume';
   static const String deckNeedleBattle = 'deck_needle_battle';
   static const String marketModifierShop = 'market_modifier_shop';
+  static const String marketBadgePreview = 'market_badge_preview';
   static const String settlementItemBonus = 'settlement_item_bonus';
   static const String inventorySellHookShop = 'inventory_sell_hook_shop';
   static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
@@ -65,6 +66,12 @@ class DebugRunFixtureService {
       label: 'Market Modifier 상점',
       description: '리롤/구매 할인 + Item offer 4칸 검증용',
       builder: _buildMarketModifierShop,
+    ),
+    DebugRunFixtureDefinition(
+      id: marketBadgePreview,
+      label: 'Market Badge 프리뷰',
+      description: 'Jester category badge + Item rarity/slot badge 눈검증용',
+      builder: _buildMarketBadgePreview,
     ),
     DebugRunFixtureDefinition(
       id: settlementItemBonus,
@@ -412,6 +419,120 @@ class DebugRunFixtureService {
       stageStartSnapshot: base.stageStartSnapshot,
     );
   }
+
+  static ActiveRunRuntimeState _buildMarketBadgePreview() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..stageIndex = 5
+      ..gold = 88
+      ..rerollCost = RummiRunProgress.shopBaseRerollCost;
+    runProgress.shopOffers
+      ..clear()
+      ..addAll([
+        RummiShopOffer(
+          slotIndex: 0,
+          card: RummiJesterCard(
+            id: 'badge_preview_chips',
+            displayName: 'Badge Chips',
+            rarity: RummiJesterRarity.common,
+            baseCost: 4,
+            effectText: 'Played number 7 tiles give +24 Chips when scored',
+            effectType: 'chips_bonus',
+            trigger: 'onScore',
+            conditionType: 'number',
+            conditionValue: '7',
+            value: 24,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [7],
+          ),
+          price: 4,
+        ),
+        RummiShopOffer(
+          slotIndex: 1,
+          card: RummiJesterCard(
+            id: 'badge_preview_mult',
+            displayName: 'Badge Mult',
+            rarity: RummiJesterRarity.uncommon,
+            baseCost: 6,
+            effectText: 'Played hand containing a Flush gives +16 Mult',
+            effectType: 'mult_bonus',
+            trigger: 'onScore',
+            conditionType: 'flush',
+            conditionValue: 'contains_flush',
+            value: 16,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 6,
+        ),
+      ]);
+    runProgress.queueMarketModifier(op: 'extra_item_offer_slot', amount: 2);
+    runProgress.queueMarketModifier(op: 'rarity_weight_bonus', amount: 70);
+    for (final itemId in _marketBadgePreviewHiddenItemIds) {
+      runProgress.markItemOfferConsumed(itemId);
+    }
+
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static const List<String> _marketBadgePreviewHiddenItemIds = [
+    'reroll_token',
+    'coupon_stamp',
+    'coin_cache',
+    'hand_scrap',
+    'chip_capsule',
+    'mult_capsule',
+    'line_polish',
+    'straight_oil',
+    'flush_powder',
+    'pair_splint',
+    'overlap_pin',
+    'emergency_draw',
+    'ledger_clip',
+    'discard_glove',
+    'mulligan_sleeve',
+    'jester_hook',
+    'score_abacus',
+    'thin_caliper',
+    'stage_map',
+    'spare_pouch',
+    'safety_net',
+    'coin_funnel',
+    'hand_funnel',
+    'lucky_counter',
+    'echo_bell',
+    'boss_trophy',
+    'trade_ticket',
+    'jester_invoice',
+    'item_invoice',
+    'red_swatch',
+    'blue_swatch',
+    'black_swatch',
+    'yellow_swatch',
+    'rank_chalk',
+    'deck_needle',
+    'tile_polisher',
+    'move_token',
+    'slide_wax',
+    'board_lift',
+    'undo_seal',
+    'organizer_glove',
+    'travel_pouch',
+    'wide_grip',
+    'grand_satchel',
+    'market_compass',
+  ];
 
   static ActiveRunRuntimeState _buildSettlementItemBonus() {
     final base = _buildStage2ScoringSnapshot();

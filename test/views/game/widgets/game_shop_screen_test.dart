@@ -256,6 +256,14 @@ void main() {
 
     expect(find.text('리롤 토큰'), findsWidgets);
     expect(find.text('다음 상점 리롤 비용이 1 줄어듭니다.'), findsOneWidget);
+    expect(find.text('Common'), findsOneWidget);
+    expect(find.text('TOOL'), findsOneWidget);
+    for (final text in tester.widgetList<Text>(find.text('리롤 토큰'))) {
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+    }
+    for (final text in tester.widgetList<Text>(find.text('TOOL'))) {
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+    }
     final descriptionText = tester.widget<Text>(
       find.byKey(const ValueKey('market-description-text')),
     );
@@ -276,6 +284,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Jester Slots'), findsOneWidget);
+    expect(find.text('Item Slots'), findsNothing);
+    expect(find.text('Q-SLT'), findsWidgets);
+    expect(find.text('PSV'), findsOneWidget);
+    expect(find.text('점수형'), findsWidgets);
+    expect(find.text('+Chips'), findsWidgets);
     expect(find.text('1/5'), findsNothing);
 
     await tester.tap(find.text('구매'));

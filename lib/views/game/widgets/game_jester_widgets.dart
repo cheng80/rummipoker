@@ -202,6 +202,7 @@ class GameJesterSlot extends StatelessWidget {
     required this.settlementSequenceTick,
     this.selected = false,
     this.locked = false,
+    this.surfaceColor,
     this.onTap,
   });
 
@@ -212,6 +213,7 @@ class GameJesterSlot extends StatelessWidget {
   final int settlementSequenceTick;
   final bool selected;
   final bool locked;
+  final Color? surfaceColor;
   final VoidCallback? onTap;
 
   @override
@@ -340,7 +342,7 @@ class GameJesterSlot extends StatelessWidget {
               padding: const EdgeInsets.all(kBattleSlotCardInset),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDE7DB),
+                  color: surfaceColor ?? const Color(0xFFEDE7DB),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isActive

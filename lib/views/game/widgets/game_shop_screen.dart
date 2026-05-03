@@ -943,8 +943,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            _MarketItemSlotsSection(
-                              title: 'Item Slots',
+                            _MarketQuickPassiveSlotsSection(
                               slots: visibleItemSlots,
                               selectedItemSlotIndex: _selectedItemSlotIndex,
                               onTap: _selectItemSlot,
@@ -1263,15 +1262,7 @@ class _MarketSectionBox extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
                   children: [
-                    if (title != null)
-                      Text(
-                        title!,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    if (title != null) _MarketSectionTitleBadge(label: title!),
                     const Spacer(),
                     if (trailing != null)
                       Text(
@@ -1291,6 +1282,134 @@ class _MarketSectionBox extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MarketSectionTitleBadge extends StatelessWidget {
+  const _MarketSectionTitleBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = _marketSectionTitleBackground(label);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFF18382D), width: 1.4),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.clip,
+        style: const TextStyle(
+          color: Color(0xFF07110D),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+Color _marketSectionTitleBackground(String label) {
+  return switch (label) {
+    'Jester Slots' => const Color(0xFFEDE7DB),
+    'Q-SLT' => _itemOfferSurface(ItemPlacement.quickSlot),
+    'PSV' => _itemOfferSurface(ItemPlacement.passiveRack),
+    'Tool Slots' => _itemOfferSurface(ItemPlacement.inventory),
+    'Gear Slots' => _itemOfferSurface(ItemPlacement.equipped),
+    _ => const Color(0xFFEDE7DB),
+  };
+}
+
+class _MarketQuickPassiveSlotsSection extends StatelessWidget {
+  const _MarketQuickPassiveSlotsSection({
+    required this.slots,
+    required this.selectedItemSlotIndex,
+    required this.onTap,
+  });
+
+  final List<RummiMarketItemSlotView> slots;
+  final int selectedItemSlotIndex;
+  final ValueChanged<RummiMarketItemSlotView> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final quickSlots = slots
+        .where((slot) => slot.placement == ItemPlacement.quickSlot)
+        .toList(growable: false);
+    final passiveSlots = slots
+        .where((slot) => slot.placement == ItemPlacement.passiveRack)
+        .toList(growable: false);
+    return _MarketSectionBox(
+      title: null,
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: _MarketSlotGroup(
+              label: 'Q-SLT',
+              slots: quickSlots,
+              selectedItemSlotIndex: selectedItemSlotIndex,
+              onTap: onTap,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child: _MarketSlotGroup(
+              label: 'PSV',
+              slots: passiveSlots,
+              selectedItemSlotIndex: selectedItemSlotIndex,
+              onTap: onTap,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketSlotGroup extends StatelessWidget {
+  const _MarketSlotGroup({
+    required this.label,
+    required this.slots,
+    required this.selectedItemSlotIndex,
+    required this.onTap,
+  });
+
+  final String label;
+  final List<RummiMarketItemSlotView> slots;
+  final int selectedItemSlotIndex;
+  final ValueChanged<RummiMarketItemSlotView> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _MarketSectionTitleBadge(label: label),
+        const SizedBox(height: 5),
+        Row(
+          children: [
+            for (var i = 0; i < slots.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              _MarketItemGhostChip(
+                slot: slots[i],
+                selected: selectedItemSlotIndex == slots[i].slotIndex,
+                onTap: onTap,
+              ),
+            ],
+          ],
+        ),
+      ],
     );
   }
 }
@@ -1367,7 +1486,7 @@ class _MarketSpeechPanel extends StatelessWidget {
                     Text(
                       title,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      overflow: TextOverflow.clip,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -1378,7 +1497,7 @@ class _MarketSpeechPanel extends StatelessWidget {
                     Text(
                       subtitle,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      overflow: TextOverflow.clip,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.62),
                         fontSize: 10,
@@ -1429,7 +1548,7 @@ class _MarketActionPane extends StatelessWidget {
               priceLabel,
               maxLines: 1,
               textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
+              overflow: TextOverflow.clip,
               style: const TextStyle(
                 color: Color(0xFFF2C14E),
                 fontSize: 16,
@@ -1450,7 +1569,7 @@ class _MarketActionPane extends StatelessWidget {
                 disabledReason!,
                 maxLines: 1,
                 textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
+                overflow: TextOverflow.clip,
                 style: const TextStyle(
                   color: Color(0xFFFF8F74),
                   fontSize: 10,
@@ -1522,20 +1641,13 @@ class _MarketDetailTagWrap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visibleTags = tags.take(4).toList(growable: false);
-    return SizedBox(
-      height: 16,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        child: Row(
-          children: [
-            for (var index = 0; index < visibleTags.length; index++) ...[
-              _MarketSynergyChip(label: visibleTags[index], dense: false),
-              if (index < visibleTags.length - 1) const SizedBox(width: 4),
-            ],
-          ],
-        ),
-      ),
+    return Wrap(
+      spacing: 4,
+      runSpacing: 2,
+      children: [
+        for (final tag in visibleTags)
+          _MarketSynergyChip(label: tag, dense: true),
+      ],
     );
   }
 }
@@ -1741,7 +1853,7 @@ class _MarketItemGhostChip extends StatelessWidget {
                   displayName,
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  overflow: TextOverflow.clip,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -1913,7 +2025,7 @@ class _GameShopOfferCard extends StatelessWidget {
               child: Text(
                 '${offer.price}G',
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                overflow: TextOverflow.clip,
                 style: TextStyle(
                   color: canAfford ? const Color(0xFFF2C14E) : Colors.white38,
                   fontSize: 10,
@@ -1944,6 +2056,7 @@ class _MarketItemOfferCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final itemName = localizedItemName(context, offer);
     final accent = _itemOfferAccent(offer.item.placement);
+    final rarityColor = gameItemRarityColor(offer.item.rarity);
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -1962,14 +2075,7 @@ class _MarketItemOfferCard extends StatelessWidget {
                 height: _marketOfferCardHeight,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        _itemOfferSurface(offer.item.placement),
-                        const Color(0xFF17212D),
-                      ],
-                    ),
+                    color: _itemOfferSurface(offer.item.placement),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: accent.withValues(alpha: 0.72)),
                     boxShadow: [
@@ -1981,43 +2087,43 @@ class _MarketItemOfferCard extends StatelessWidget {
                     ],
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                    padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.94),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Text(
-                            _itemSlotLabel(offer),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _itemOfferBadgeTextColor(
-                                offer.item.placement,
-                              ),
-                              fontSize: 7,
-                              fontWeight: FontWeight.w900,
-                              height: 1.0,
+                        FractionallySizedBox(
+                          widthFactor: 0.82,
+                          child: Container(
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: rarityColor,
+                              borderRadius: BorderRadius.circular(6),
                             ),
                           ),
                         ),
-                        const Spacer(),
-                        Text(
-                          itemName,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                            height: 1.05,
+                        const SizedBox(height: 5),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: Text(
+                              itemName,
+                              textAlign: TextAlign.center,
+                              maxLines: 3,
+                              overflow: TextOverflow.clip,
+                              style: const TextStyle(
+                                color: Color(0xFF26352F),
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                height: 1.08,
+                              ),
+                            ),
+                          ),
+                        ),
+                        _MarketOfferBadge(
+                          label: _itemSlotLabel(offer),
+                          accent: accent,
+                          textColor: _itemOfferBadgeTextColor(
+                            offer.item.placement,
                           ),
                         ),
                       ],
@@ -2032,7 +2138,7 @@ class _MarketItemOfferCard extends StatelessWidget {
               child: Text(
                 '${offer.price}G',
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                overflow: TextOverflow.clip,
                 style: TextStyle(
                   color: offer.isAffordable
                       ? const Color(0xFFF2C14E)
@@ -2044,6 +2150,41 @@ class _MarketItemOfferCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketOfferBadge extends StatelessWidget {
+  const _MarketOfferBadge({
+    required this.label,
+    required this.accent,
+    required this.textColor,
+  });
+
+  final String label;
+  final Color accent;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 26),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.clip,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 7,
+          fontWeight: FontWeight.w900,
+          height: 1.0,
         ),
       ),
     );
@@ -2253,8 +2394,8 @@ String? _ownedItemSlotNotice(RummiMarketItemSlotView slot) {
 
 String _itemSlotLabel(RummiMarketItemOfferView offer) {
   return switch (offer.item.placement) {
-    ItemPlacement.quickSlot => 'Q-SLOT',
-    ItemPlacement.passiveRack => 'RELIC',
+    ItemPlacement.quickSlot => 'Q-SLT',
+    ItemPlacement.passiveRack => 'PSV',
     ItemPlacement.equipped => 'GEAR',
     ItemPlacement.inventory => 'TOOL',
   };
@@ -2262,12 +2403,23 @@ String _itemSlotLabel(RummiMarketItemOfferView offer) {
 
 List<String> _jesterSynergyTags(RummiJesterCard card) {
   final tags = <String>[
+    _jesterRarityTag(card.rarity),
+    jesterCategoryLabel(card),
     _jesterConditionTag(card),
     _jesterEffectTag(card),
   ].where((tag) => tag.isNotEmpty).toList(growable: false);
 
   if (tags.isNotEmpty) return tags;
   return const ['Jester'];
+}
+
+String _jesterRarityTag(RummiJesterRarity rarity) {
+  return switch (rarity) {
+    RummiJesterRarity.common => 'Common',
+    RummiJesterRarity.uncommon => 'Uncommon',
+    RummiJesterRarity.rare => 'Rare',
+    RummiJesterRarity.legendary => 'Legendary',
+  };
 }
 
 String _jesterConditionTag(RummiJesterCard card) {
@@ -2317,6 +2469,7 @@ String _jesterEffectTag(RummiJesterCard card) {
 
 List<String> _itemSynergyTags(ItemDefinition item) {
   final tags = <String>[
+    _itemRarityTag(item.rarity),
     _itemTimingTag(item.effect.timing),
     _itemEffectTag(item.effect.op),
   ].where((tag) => tag.isNotEmpty).toList();
@@ -2324,13 +2477,26 @@ List<String> _itemSynergyTags(ItemDefinition item) {
   for (final tag in item.tags) {
     if (tags.length >= 4) break;
     final label = _catalogItemTagLabel(tag);
-    if (label.isNotEmpty && !tags.contains(label)) {
+    if (label.isNotEmpty &&
+        !_itemTypeTagLabels.contains(label) &&
+        !tags.contains(label)) {
       tags.add(label);
     }
   }
 
   if (tags.isNotEmpty) return tags;
   return [_itemPlacementTag(item.placement)];
+}
+
+const Set<String> _itemTypeTagLabels = {'Q-Slot', 'Tool', 'Gear', 'Relic'};
+
+String _itemRarityTag(ItemRarity rarity) {
+  return switch (rarity) {
+    ItemRarity.common => 'Common',
+    ItemRarity.uncommon => 'Uncommon',
+    ItemRarity.rare => 'Rare',
+    ItemRarity.legendary => 'Legendary',
+  };
 }
 
 String _itemTimingTag(String timing) {
@@ -2437,25 +2603,25 @@ String _itemPlacementTag(ItemPlacement placement) {
 
 Color _itemOfferSurface(ItemPlacement placement) {
   return switch (placement) {
-    ItemPlacement.quickSlot => const Color(0xFF263A77),
-    ItemPlacement.passiveRack => const Color(0xFF4A285F),
-    ItemPlacement.equipped => const Color(0xFF5A3B1E),
-    ItemPlacement.inventory => const Color(0xFF203D62),
+    ItemPlacement.quickSlot => const Color(0xFFC7D8FF),
+    ItemPlacement.passiveRack => const Color(0xFFC9EDB1),
+    ItemPlacement.equipped => const Color(0xFFF4C77F),
+    ItemPlacement.inventory => const Color(0xFFC3F0EF),
   };
 }
 
 Color _itemOfferAccent(ItemPlacement placement) {
   return switch (placement) {
-    ItemPlacement.quickSlot => const Color(0xFF78A6FF),
-    ItemPlacement.passiveRack => const Color(0xFFD48CFF),
-    ItemPlacement.equipped => const Color(0xFFFFC15A),
-    ItemPlacement.inventory => const Color(0xFF7DE1FF),
+    ItemPlacement.quickSlot => const Color(0xFF4F82FF),
+    ItemPlacement.passiveRack => const Color(0xFF54B85C),
+    ItemPlacement.equipped => const Color(0xFFD88918),
+    ItemPlacement.inventory => const Color(0xFF24B8C6),
   };
 }
 
 Color _itemOfferBadgeTextColor(ItemPlacement placement) {
   return switch (placement) {
-    ItemPlacement.equipped => const Color(0xFF241505),
+    ItemPlacement.equipped => const Color(0xFF1F1203),
     _ => const Color(0xFF07111F),
   };
 }

@@ -4297,7 +4297,142 @@ v72 후속 체크리스트:
 - [x] 단위 테스트로 score growth 후보만 missing tag 보정을 받는지 확인한다.
 - [x] 단위 테스트로 item/Jester offer의 랜덤 슬롯이 missing growth 후보군을 볼 수 있는지 확인한다.
 - [x] 핵심 Flutter test와 sim CLI test를 다시 돌려 v72 market exposure 보정이 기존 runtime과 충돌하지 않는지 확인한다.
-- [ ] 다음 작업: v72 exposure 보정이 실제 route/market 성능을 과하게 올리지 않는지 smoke sweep으로 확인한다.
+- [x] v72 exposure 보정이 실제 route/market 성능을 과하게 올리지 않는지 smoke sweep으로 확인한다.
+
+v73 market exposure smoke sweep:
+
+- 목적: v72 missing growth exposure 보정이 `shop_slot_market_v9` route 성능을 과하게 올리는지 확인한다.
+- 파일:
+  - `logs/sim/ml_sweep_market_exposure_v72_smoke_r200_summary.json`
+  - `logs/sim/ml_sweep_market_exposure_v72_smoke_r200_report.md`
+  - `logs/sim/ml_sweep_market_exposure_v72_smoke_r200_summary_bottleneck_report.md`
+- 조건:
+  - runs: 200
+  - difficulty: `standard`
+  - experiment: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `none`, `shop_slot_market_v9`
+  - summary-only
+
+| route | market | path clear | avg attempted | avg cleared | avg total turn | fail draw | fail board | top failures |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `progression_route_balanced` | `none` | 49.0% | 18.02 | 17.51 | 1323.3 | 46 | 56 | S8 boss, S4 boss, S5 boss, S1 boss |
+| `progression_route_power` | `none` | 60.0% | 20.70 | 20.30 | 1404.9 | 34 | 46 | S8 boss, S7 boss, S8 big, S2 big |
+| `progression_route_balanced` | `shop_slot_market_v9` | 65.5% | 19.33 | 18.98 | 1350.5 | 21 | 48 | S1 boss, S8 boss, S4 boss, S5 big |
+| `progression_route_power` | `shop_slot_market_v9` | 74.5% | 20.65 | 20.39 | 1347.1 | 18 | 34 | S1 boss, S8 boss, S1 small, S3 boss |
+
+S1/S4/S5/S8 battle aggregate:
+
+| market | station | battle clear | avg turn | deck exhausted | board locked |
+|---|---:|---:|---:|---:|---:|
+| `none` | S1 | 97.2% | 75.1 | 0.6% | 2.2% |
+| `none` | S4 | 98.0% | 75.2 | 1.0% | 1.0% |
+| `none` | S5 | 98.2% | 64.2 | 1.2% | 0.6% |
+| `none` | S8 | 93.2% | 82.6 | 5.2% | 1.6% |
+| `shop_slot_market_v9` | S1 | 96.3% | 75.3 | 1.5% | 2.1% |
+| `shop_slot_market_v9` | S4 | 98.6% | 71.2 | 0.2% | 1.2% |
+| `shop_slot_market_v9` | S5 | 99.0% | 61.5 | 0.3% | 0.7% |
+| `shop_slot_market_v9` | S8 | 97.4% | 77.1 | 1.7% | 1.0% |
+
+v73 판정:
+
+- `shop_slot_market_v9`는 path clear를 balanced +16.5%p, power +14.5%p 올렸지만, v71 smoke와 같은 수준이라 v72 exposure 보정이 추가 과보정을 만든 증거는 없다.
+- S4/S5/S8 battle aggregate에서 deck exhausted가 낮아지고 평균 turn도 줄어든다. 특히 S8은 clear 93.2% → 97.4%, deck exhausted 5.2% → 1.7%로 개선되어 market exposure의 방향은 유효하다.
+- S1은 `shop_slot_market_v9`에서 battle clear가 97.2% → 96.3%로 소폭 낮고, S1 boss 실패가 여전히 top failure다. 초반 병목은 보정 강화보다 S1 boss constraint/초기 target/첫 클리어 골드 보상의 체감 흐름을 따로 봐야 한다.
+- 실패 stop reason은 board 쪽이 여전히 더 많다. 다음 튜닝을 한다면 slot focus 확률을 더 올리기보다, 구간별 후보군 availability와 board pressure 완화 후보의 실제 노출/구매 가능성을 먼저 확인한다.
+- 현재 수치만으로는 slot focus 확률을 낮출 필요가 없다. 다만 runs 200 smoke이므로 최종 확정 전에는 standard 기준 800+ runs 재검증이 필요하다.
+
+v73 후속 체크리스트:
+
+- [x] UI 변경 전, 저장 구조를 바꾸지 않는 표시 개선 범위를 먼저 확정한다.
+- [x] S1 boss 병목은 market 보정 강화가 아니라 boss 제약/target/초반 골드 흐름 중 어느 축인지 분리한다.
+- [ ] Pack/Tarot/Planet처럼 구매 후 선택/소비 UI가 필요한 후보는 별도 설계 승인 전까지 실제 runtime에 연결하지 않는다.
+
+v74 market exposure confirm sweep:
+
+- 목적: v73의 200 runs smoke 판정을 standard 800 runs로 확인한다.
+- 파일:
+  - `logs/sim/ml_sweep_market_exposure_v73_confirm_r800_summary.json`
+  - `logs/sim/ml_sweep_market_exposure_v73_confirm_r800_report.md`
+- 조건:
+  - runs: 800
+  - difficulty: `standard`
+  - experiment: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `none`, `shop_slot_market_v9`
+  - summary-only
+
+| route | market | path clear | avg attempted | avg cleared | avg total turn | fail draw | fail board | top failures |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `progression_route_balanced` | `none` | 49.9% | 18.26 | 17.76 | 1343.8 | 201 | 201 | S4 boss, S8 boss, S5 boss, S1 boss |
+| `progression_route_power` | `none` | 59.4% | 19.63 | 19.23 | 1336.1 | 137 | 191 | S8 boss, S1 boss, S3 boss, S1 big |
+| `progression_route_balanced` | `shop_slot_market_v9` | 62.9% | 19.29 | 18.92 | 1348.5 | 91 | 212 | S1 boss, S8 boss, S4 boss, S5 boss |
+| `progression_route_power` | `shop_slot_market_v9` | 67.3% | 20.03 | 19.70 | 1307.6 | 82 | 185 | S1 boss, S8 boss, S1 big, S1 small |
+
+S1/S4/S5/S8 battle aggregate:
+
+| market | station | battle clear | avg turn | deck exhausted | board locked |
+|---|---:|---:|---:|---:|---:|
+| `none` | S1 | 96.9% | 75.2 | 1.0% | 2.1% |
+| `none` | S4 | 97.1% | 75.8 | 1.8% | 1.2% |
+| `none` | S5 | 98.1% | 65.6 | 1.0% | 0.9% |
+| `none` | S8 | 94.2% | 82.8 | 4.7% | 1.1% |
+| `shop_slot_market_v9` | S1 | 96.7% | 75.1 | 1.3% | 2.0% |
+| `shop_slot_market_v9` | S4 | 98.2% | 71.1 | 0.3% | 1.5% |
+| `shop_slot_market_v9` | S5 | 98.9% | 61.8 | 0.2% | 0.9% |
+| `shop_slot_market_v9` | S8 | 96.9% | 77.5 | 2.0% | 1.1% |
+
+v74 판정:
+
+- 800 runs에서도 `shop_slot_market_v9`는 유효하지만 과보정은 아니다. path clear 개선폭은 balanced +13.0%p, power +7.9%p로 200 runs smoke보다 보수적으로 수렴했다.
+- S4/S5/S8의 deck exhausted와 turn 개선은 유지된다. 특히 S8은 battle clear 94.2% → 96.9%, deck exhausted 4.7% → 2.0%로 안정화된다.
+- S1은 market 유무와 무관하게 96~97%대 battle clear이며, `shop_slot_market_v9`가 S1을 직접 풀어주는 구조는 아니다. 따라서 S1 boss top failure는 보정 부족보다 station path에서 초반 실패가 눈에 띄는 자연스러운 잔여 병목으로 본다.
+- board failure는 market 적용 후에도 draw failure보다 많다. 다음 레벨링 조정은 slot focus 확률 상향이 아니라 board pressure 완화 후보의 availability/구매 가능성 검증이 우선이다.
+- UI 1차 적용은 저장 구조 없이 진행 가능하다. 단, 보스/제약 설명은 말줄임표로 숨기지 않는다.
+
+v74 UI 적용 범위:
+
+- 허용:
+  - 기존 `BlindSelectionSpec`과 `RummiBossModifier` 표시 개선.
+  - 기존 Jester/Item offer의 rarity/category/tag 표시 개선.
+  - 기존 구매/판매/리롤 흐름 유지.
+- 보류:
+  - Pack/Tarot/Planet 구매 후 선택/소비 UI.
+  - 새 저장 필드가 필요한 market category.
+  - face/rank/confirm tax/all-score dampener 같은 새 boss constraint runtime.
+
+v75 Market metadata 표시 1차:
+
+- 범위:
+  - 실제 저장 구조는 변경하지 않는다.
+  - market 후보 생성/구매/판매/리롤 로직은 변경하지 않는다.
+  - Pack/Tarot/Planet 정식 타입은 아직 만들지 않는다.
+- 변경:
+  - Market 상세 패널의 Jester tag 우선순위를 `rarity → category → condition → effect`로 정리했다.
+  - Market 상세 패널의 Item tag 우선순위를 `rarity → placement → timing → effect`로 정리했다.
+  - offer 카드 자체에는 과하지 않은 수준의 소형 배지만 추가했다.
+    - Jester offer: rarity 색을 입힌 category 배지.
+    - Item offer: rarity dot + placement 배지.
+  - 상세 패널은 기존 tag wrap을 재사용해 새 UI 구조를 만들지 않았다.
+- 확인:
+  - Jester offer는 `Common`, `점수형`, `+Chips` 같은 메타가 먼저 보인다.
+  - Item offer는 `Common`, `TOOL`, `리롤`, `Discount` 같은 메타가 먼저 보인다.
+  - 설명 문구는 기존 `_MarketDescriptionText`의 clip 정책을 유지하며, 말줄임표로 숨기지 않는다.
+
+Pack/Tarot/Planet 이름 치환 메모:
+
+- 현재 실제 runtime 정식 타입은 `Jester`와 `Item`뿐이다.
+- `Pack`, `Tarot`, `Planet`, `Voucher`는 `tools/sim/run_balance_sim.dart`에서 시뮬 proxy/category로만 남아 있다.
+- 실제 게임용 이름 후보:
+  - Pack 대응: `Tile Kit`
+  - Tarot 대응: `Pattern Card`
+  - Planet 대응: `Hand Manual`
+  - Voucher 대응: `Permit` 또는 `Contract`
+- 위 후보는 아직 적용하지 않는다. 구매 후 선택/소비 UI와 저장 구조가 필요하므로 별도 설계 승인 후 진행한다.
+
+v75 검증:
+
+- `flutter test test/views/game/widgets/game_shop_screen_test.dart`
 
 이번 단계 결론:
 

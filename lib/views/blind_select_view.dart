@@ -310,8 +310,7 @@ class _BlindConstraintChip extends StatelessWidget {
           Expanded(
             child: Text(
               '$title · $ruleText',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: TextStyle(
                 color: color,
                 fontSize: 10,

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
@@ -99,6 +100,43 @@ void main() {
       'merchant_stamp',
       'market_compass',
     ]);
+  });
+
+  test('market badge preview fixture opens shop with badge sample offers', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.marketBadgePreview,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
+    expect(fixture.runProgress.stageIndex, 5);
+    expect(fixture.runProgress.gold, 88);
+    expect(fixture.runProgress.shopOffers.map((offer) => offer.card.id), [
+      'badge_preview_chips',
+      'badge_preview_mult',
+    ]);
+    expect(fixture.runProgress.shopOffers.map((offer) => offer.card.rarity), [
+      RummiJesterRarity.common,
+      RummiJesterRarity.uncommon,
+    ]);
+    expect(fixture.runProgress.marketModifiers.itemOfferSlotCount, 5);
+    expect(fixture.runProgress.itemInventory.passiveRelicIds, isEmpty);
+    expect(
+      fixture.runProgress.marketModifiers.consumedItemOfferIds,
+      isNot(contains('board_scrap')),
+    );
+    expect(
+      fixture.runProgress.marketModifiers.consumedItemOfferIds,
+      isNot(contains('thin_wallet')),
+    );
+    expect(
+      fixture.runProgress.marketModifiers.consumedItemOfferIds,
+      isNot(contains('shop_lens')),
+    );
+    expect(
+      fixture.runProgress.marketModifiers.consumedItemOfferIds,
+      isNot(contains('merchant_stamp')),
+    );
   });
 
   test('settlement item bonus fixture starts with settlement reward items', () {
