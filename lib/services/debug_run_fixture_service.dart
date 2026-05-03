@@ -470,9 +470,7 @@ class DebugRunFixtureService {
       ]);
     runProgress.queueMarketModifier(op: 'extra_item_offer_slot', amount: 2);
     runProgress.queueMarketModifier(op: 'rarity_weight_bonus', amount: 70);
-    for (final itemId in _marketBadgePreviewHiddenItemIds) {
-      runProgress.markItemOfferConsumed(itemId);
-    }
+    _limitMarketBadgePreviewItems(runProgress);
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.shop,
@@ -486,10 +484,32 @@ class DebugRunFixtureService {
     );
   }
 
-  static const List<String> _marketBadgePreviewHiddenItemIds = [
+  static void _limitMarketBadgePreviewItems(RummiRunProgress runProgress) {
+    final previewIds = _marketBadgePreviewItemIds.toSet();
+    for (final itemId in _marketBadgePreviewCatalogItemIds) {
+      if (!previewIds.contains(itemId)) {
+        runProgress.markItemOfferConsumed(itemId);
+      }
+    }
+  }
+
+  /// Market badge 프리뷰가 Q-SLT/TOOL/GEAR/PSV를 비교하기 쉽게 남기는 대표 후보.
+  static const List<String> _marketBadgePreviewItemIds = [
+    'board_scrap',
+    'thin_wallet',
+    'shop_lens',
+    'merchant_stamp',
+  ];
+
+  /// data/common/items_common_v1.json의 현재 item id 목록.
+  ///
+  /// 디버그 fixture에서만 쓰는 명시적 allow-list 보조 자료다. 실제 market 생성,
+  /// 구매, 저장 규칙은 이 목록을 읽지 않는다.
+  static const List<String> _marketBadgePreviewCatalogItemIds = [
     'reroll_token',
     'coupon_stamp',
     'coin_cache',
+    'board_scrap',
     'hand_scrap',
     'chip_capsule',
     'mult_capsule',
@@ -502,17 +522,20 @@ class DebugRunFixtureService {
     'ledger_clip',
     'discard_glove',
     'mulligan_sleeve',
+    'shop_lens',
     'jester_hook',
     'score_abacus',
     'thin_caliper',
     'stage_map',
     'spare_pouch',
+    'merchant_stamp',
     'safety_net',
     'coin_funnel',
     'hand_funnel',
     'lucky_counter',
     'echo_bell',
     'boss_trophy',
+    'thin_wallet',
     'trade_ticket',
     'jester_invoice',
     'item_invoice',

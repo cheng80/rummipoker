@@ -31,6 +31,22 @@ RummiJesterCard _jester({
   );
 }
 
+const RummiActiveRunSaveFacade _marketSaveFacade = RummiActiveRunSaveFacade(
+  schemaVersion: 2,
+  activeScene: 'shop',
+  sceneAlias: RummiSaveSceneAlias.market,
+  currentStageIndex: 2,
+  currentStationIndex: 2,
+  currentRunSeed: 77,
+  currentGold: 12,
+  checkpoint: RummiStationCheckpointSaveView(
+    stageIndex: 2,
+    stationIndex: 2,
+    runSeed: 77,
+    gold: 10,
+  ),
+);
+
 Future<void> _pumpShopScreen(
   WidgetTester tester, {
   required RummiMarketRuntimeFacade Function() readMarketView,
@@ -97,7 +113,9 @@ void main() {
     };
     tester.view.physicalSize = const Size(1280, 2400);
     tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
       FlutterError.onError = previousOnError;
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();

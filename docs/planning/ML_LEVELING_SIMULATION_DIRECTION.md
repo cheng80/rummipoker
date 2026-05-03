@@ -4439,3 +4439,206 @@ v75 검증:
 - v61은 실제 구현 검토 기준점으로 쓸 수 있다.
 - 다만 “전체 통합 후보를 그대로 구현”하는 단계가 아니라, 먼저 런타임이 이미 표현 가능한 부분만 1차로 옮겨야 한다.
 - 실제 구현의 첫 목표는 최종 밸런스 완성이 아니라, 시뮬에서 확인한 방향성이 실제 코드 구조에서도 깨지지 않는지 검증하는 것이다.
+
+v76 fixture 정리 + market exposure smoke 재확인:
+
+- 목적:
+  - UI badge 프리뷰 fixture를 실제 확인용 대표 후보만 남기도록 정리한다.
+  - v74 이후 현재 작업본에서도 `shop_slot_market_v9` 방향이 깨지지 않았는지 r200 smoke로 다시 확인한다.
+- 파일:
+  - `logs/sim/ml_sweep_market_exposure_v75_smoke_r200_summary.json`
+  - `logs/sim/ml_sweep_market_exposure_v75_smoke_r200_report.md`
+- 조건:
+  - runs: 200
+  - difficulty: `standard`
+  - experiment: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `none`, `shop_slot_market_v9`
+  - summary-only
+
+| route | market | path clear | avg attempted | avg cleared | avg total turn | fail draw | fail board | top failures |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `progression_route_balanced` | `none` | 49.0% | 18.02 | 17.51 | 1323.3 | 46 | 56 | S8 boss, S4 boss, S5 boss, S1 boss |
+| `progression_route_balanced` | `shop_slot_market_v9` | 65.5% | 19.33 | 18.98 | 1350.5 | 21 | 48 | S1 boss, S8 boss, S4 boss, S1 small |
+| `progression_route_power` | `none` | 60.0% | 20.70 | 20.30 | 1404.9 | 34 | 46 | S8 boss, S7 boss, S8 big, S2 big |
+| `progression_route_power` | `shop_slot_market_v9` | 74.5% | 20.65 | 20.39 | 1347.1 | 17 | 33 | S1 boss, S8 boss, S1 small, S1 big |
+
+S1/S4/S5/S8 battle aggregate:
+
+| market | station | battle clear | avg turn | deck exhausted | board locked |
+|---|---:|---:|---:|---:|---:|
+| `none` | S1 | 97.2% | 75.1 | 0.6% | 2.2% |
+| `none` | S4 | 98.0% | 75.2 | 1.0% | 1.0% |
+| `none` | S5 | 98.2% | 64.2 | 1.2% | 0.6% |
+| `none` | S8 | 93.2% | 82.6 | 5.2% | 1.6% |
+| `shop_slot_market_v9` | S1 | 96.3% | 75.3 | 1.5% | 2.1% |
+| `shop_slot_market_v9` | S4 | 98.6% | 71.2 | 0.2% | 1.2% |
+| `shop_slot_market_v9` | S5 | 99.0% | 61.5 | 0.3% | 0.7% |
+| `shop_slot_market_v9` | S8 | 97.4% | 77.1 | 1.7% | 1.0% |
+
+v76 판정:
+
+- r200 smoke는 v73 smoke와 같은 방향이다. `shop_slot_market_v9`는 path clear와 S4/S5/S8 deck pressure를 개선하지만, S1 boss와 S8 boss는 여전히 top failure에 남는다.
+- board failure는 `shop_slot_market_v9`에서도 draw failure보다 많다. 이 결과만 보면 slot focus 확률을 낮추거나 높일 근거가 아니라, board pressure 완화 후보의 availability와 구매 가능성을 봐야 한다.
+- 현재 `tools/sim/run_balance_sim.dart`에서 직접적인 `boardLockRelief` 가중은 `shop_slot_market_v3` 조건에 묶여 있고, `shop_slot_market_v9`의 주 개선 축은 late tempo/static/breaker 쪽이다. 따라서 다음 분석은 v9 slot 수/weight 조정보다 “board pressure 완화 후보가 v9 station band에서 충분히 등장 가능한가”를 먼저 본다.
+- 실제 게임 적용 원칙은 유지한다. board discard, hand discard, max hand size 같은 자원은 자동 지급하지 않고, 필요 수요가 보이면 market 후보 노출/availability로만 번역한다.
+
+v77 board pressure 후보 availability probe:
+
+- 목적:
+  - `shop_slot_market_v9`의 남은 board failure가 단순히 board relief 후보 노출 부족인지 확인한다.
+  - `boardLockRelief`가 붙어 있던 `shop_slot_market_v3`를 같은 조건에서 비교해, v3식 보정을 v9에 그대로 이식할 가치가 있는지 본다.
+- 파일:
+  - `logs/sim/ml_sweep_board_relief_probe_v77_r200_summary.json`
+  - `logs/sim/ml_sweep_board_relief_probe_v77_r200_report.md`
+- 조건:
+  - runs: 200
+  - difficulty: `standard`
+  - experiment: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `shop_slot_market_v3`, `shop_slot_market_v9`
+  - summary-only
+
+Sequence 결과:
+
+| market | route | path clear | avg total turn | fail draw | fail board | top failures |
+|---|---|---:|---:|---:|---:|---|
+| `shop_slot_market_v3` | `progression_route_balanced` | 64.0% | 1370.9 | 22 | 50 | S8 boss, S4 boss, S1 boss, S1 big |
+| `shop_slot_market_v3` | `progression_route_power` | 63.5% | 1368.7 | 29 | 44 | S8 boss, S8 big, S2 big, S7 boss |
+| `shop_slot_market_v9` | `progression_route_balanced` | 65.5% | 1350.5 | 21 | 48 | S1 boss, S8 boss, S4 boss, S1 small |
+| `shop_slot_market_v9` | `progression_route_power` | 74.5% | 1347.1 | 17 | 33 | S1 boss, S8 boss, S1 small, S1 big |
+
+Board relief 후보 노출/선택:
+
+| market | station | battle clear | board locked | deck exhausted | Discard Glove exposed | Tarot/shape exposed | BuildAware Pack exposed | selected top |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `shop_slot_market_v3` | S4 | 98.5% | 10 | 5 | 19.7% | 54.1% | 42.2% | Uncommon 61.9%, Planet 21.0%, Tarot 10.9% |
+| `shop_slot_market_v3` | S5 | 99.5% | 5 | 0 | 21.4% | 51.4% | 44.2% | Uncommon 59.8%, Planet 20.5%, Tarot 13.3% |
+| `shop_slot_market_v3` | S8 | 94.8% | 13 | 33 | 21.0% | 22.6% | 25.2% | Uncommon 50.5%, Rare 28.7%, Planet 18.5% |
+| `shop_slot_market_v9` | S4 | 98.6% | 12 | 2 | 19.5% | 50.5% | 44.9% | Uncommon 64.8%, Planet 21.4%, Tarot 10.1% |
+| `shop_slot_market_v9` | S5 | 99.0% | 7 | 3 | 21.4% | 52.9% | 44.2% | Uncommon 62.5%, Planet 21.8%, Tarot 10.3% |
+| `shop_slot_market_v9` | S8 | 97.4% | 9 | 15 | 18.2% | 8.7% | 8.9% | Rare 81.1%, Planet 10.7%, Uncommon 7.9% |
+
+v77 판정:
+
+- `shop_slot_market_v3`의 board relief 성향을 그대로 v9에 이식하는 것은 적절하지 않다. v3는 S8에서 Discard Glove/Tarot/BuildAware 노출이 v9보다 높지만, path clear와 deck/board stop이 모두 나빠진다.
+- S4/S5에서는 v9도 Tarot/BuildAware 노출이 44~53% 수준으로 충분하다. 여기서 남은 board stop은 단순 availability 부족이라기보다 선택 우선순위/전투 상태/보스 제약의 잔여 리스크다.
+- S8에서는 v9가 후반 돌파 후보를 강하게 고른다. Rare/Planet/Uncommon 선택이 99% 이상을 차지하고, board relief 후보는 떠도 거의 선택되지 않는다. 하지만 이 선택 덕분에 v9가 v3보다 S8 clear와 deck exhausted를 더 잘 잡는다.
+- 따라서 다음 조정은 “v9 후반 돌파 bias를 낮춰 board relief를 많이 고르게 한다”가 아니다. 우선은 S8에서 board relief 후보가 실제 게임 후보군으로 어떤 이름/타입/가격/구간에 들어갈지 정의하고, 필요하면 S8 boss 직전의 약한 availability만 별도 probe한다.
+- S1 boss는 별도 축이다. 시뮬 구조상 `station <= 1`은 shop slot step 보정이 적용되지 않아 v9가 S1 boss를 직접 풀 수 없다. S1은 첫 클리어 골드 보상/초기 target/S1 boss constraint 체감으로 분리해 봐야 한다.
+
+v77 다음 분석 후보:
+
+- S8 boss 직전 board pressure 완화 후보의 실제 runtime 매핑:
+  - Discard Glove 계열: 이미 Item으로 표현 가능하지만 직접 지급 금지.
+  - Tarot/shape 계열: 아직 실제 runtime 타입이 아니므로 `Pattern Card` 같은 별도 구매/선택 UI 설계 전까지 적용 보류.
+  - BuildAware Pack 계열: 아직 Pack 정식 타입이 아니므로 `Tile Kit` 설계 전까지 적용 보류.
+- 적용 가능성이 있는 1차 후보는 기존 Item/Jester 안에서 board pressure를 낮추는 후보의 rarity/tag/category weight 조정이다.
+- 신규 타입이 필요한 후보는 레벨링 기준에는 “필요 성장축”으로 남기되, 실제 UI/저장 구조 승인 전에는 market runtime에 연결하지 않는다.
+
+v78 실제 runtime board pressure 후보 매핑:
+
+- 목적:
+  - v77의 “기존 Item/Jester 안에서 가능한 후보”를 실제 catalog 기준으로 분류한다.
+  - 신규 UI/저장 구조가 필요한 후보와 즉시 weight 조정 가능한 후보를 분리한다.
+- 확인 파일:
+  - `data/common/items_common_v1.json`
+  - `lib/logic/rummi_poker_grid/rummi_market_facade.dart`
+  - `lib/logic/rummi_poker_grid/jester_meta.dart`
+
+현재 runtime에 이미 있는 board/resource relief 후보:
+
+| 후보 | 타입 | placement | rarity | price | tags | 성격 |
+|---|---|---|---:|---:|---|---|
+| `board_scrap` | consumable | Q-SLT | common | 4 | battle/discard/safety | 이번 Station board discard +1 |
+| `hand_scrap` | consumable | Q-SLT | common | 4 | battle/discard/safety | 이번 Station hand discard +1 |
+| `move_token` | consumable | Q-SLT | common | 5 | battle/move/safety | 이번 Station board move +1 |
+| `discard_glove` | equipment | GEAR | common | 6 | equipment/discard/station_start | 매 Station board discard +1 |
+| `mulligan_sleeve` | equipment | GEAR | uncommon | 7 | equipment/discard/station_start | 매 Station hand discard +1 |
+| `organizer_glove` | equipment | GEAR | uncommon | 9 | equipment/move/station_start | 매 Station board move +1 |
+| `board_lift` | utility | TOOL | uncommon | 8 | move/station_start/utility | Station 시작 board move +1 |
+| `safety_net` | passive relic | PSV | uncommon | 8 | relic/safety/battle | Station 첫 expiry guard |
+| `spare_pouch` | passive relic | PSV | common | 6 | relic/capacity/consumable | Battle item slot +1 |
+| `emergency_draw` | consumable | Q-SLT | rare | 7 | battle/draw/safety | hand empty 시 draw 1 |
+| `undo_seal` | consumable | Q-SLT | rare | 9 | battle/move/undo | 마지막 board move 되돌리기 |
+| `travel_pouch` | passive relic | PSV | rare | 11 | relic/hand_size/capacity | hand size +1 |
+| `wide_grip` | equipment | GEAR | rare | 11 | equipment/hand_size/penalty | hand size +1, discard penalty |
+| `grand_satchel` | passive relic | PSV | legendary | 16 | relic/hand_size/legendary/penalty | hand size +2, discard penalty |
+
+현재 market policy에서의 노출 해석:
+
+- `RummiStationBandMarketPolicy.itemOfferWeight(...)`는 stage band별 rarity base에 tag bonus를 더한다.
+- `discard`, `move`, `safety` tag는 이미 모든 band에서 보너스를 받는다.
+  - early: +95
+  - mid: +65
+  - late: +55
+- station >= 4에서 tactical resource를 아직 보유하지 못했으면 missing growth tag에 `discard/move/safety`가 들어가고, matching tag당 +45, 최대 +90을 추가한다.
+- focus slot도 stage/reroll/slot count 기반 stable roll로 정해져 특정 위치 고정이 아니다.
+
+빈 inventory 기준 offer 노출 probe:
+
+| stage | any relief offer | 주요 relief 후보 노출 |
+|---:|---:|---|
+| S1 | 71.0% | `board_scrap` 14.3%, `move_token` 13.7%, `spare_pouch` 11.0%, `hand_scrap` 10.0%, `discard_glove` 9.3% |
+| S4 | 69.3% | `safety_net` 11.0%, `hand_scrap` 9.3%, `mulligan_sleeve` 9.0%, `slide_wax` 9.0%, `board_scrap` 8.7%, `move_token` 8.7% |
+| S5 | 72.0% | `board_scrap` 11.3%, `hand_scrap` 8.7%, `slide_wax` 8.3%, `move_token` 8.3%, `mulligan_sleeve` 8.0% |
+| S8 | 76.3% | `safety_net` 11.7%, `mulligan_sleeve` 9.7%, `board_lift` 8.7%, `slide_wax` 8.7%, `move_token` 8.0%, `emergency_draw` 8.0% |
+
+v78 판정:
+
+- 실제 runtime Item catalog 기준으로는 board pressure 완화 후보의 “등장 가능성”이 이미 낮지 않다. 기본 3 item offer에서도 빈 inventory 기준 relief 후보가 하나 이상 보일 확률은 S4~S8에서 약 69~76%다.
+- 따라서 다음 조정은 단순 tag weight 상향이 아니다. 지금 weight를 더 올리면 score/rank/market/economy 후보와의 선택 균형을 잃을 수 있다.
+- 시뮬 v9의 `TarotBuildPack`, `BuildAwarePack`은 실제 runtime에서 아직 각각 `Pattern Card`, `Tile Kit` 같은 신규 타입/선택 UI가 필요하다. 이들은 레벨링 필요 성장축으로만 남기고 runtime 연결은 보류한다.
+- 즉시 적용 가능한 후보는 기존 Item만이다. 다만 현재 노출률이 충분하므로, 실제 조정 전에는 “보였는데 구매하지 못했는지/구매하지 않았는지/장착 슬롯이 막혔는지”를 확인해야 한다.
+
+v78 다음 작업:
+
+- 실제 runtime market에서 가격/골드 구매 가능성을 확인한다.
+  - 슬롯 부족은 레벨링 병목으로 보지 않는다. 후보가 마켓에 등장했다면 기존 아이템을 팔고 살지는 유저 몫이다.
+  - Q-SLT/GEAR/PSV 용량을 자동 보정하지 않는다.
+  - 다음 probe는 save/UI 변경 없이, market offer generation 단위 테스트 또는 시뮬 보조 리포트로 “노출/가격”만 분해한다.
+
+v79 가격/골드 가능성 probe:
+
+- 기준 변경:
+  - 필요한 후보가 마켓에 뜨면, 슬롯을 비우고 구매할지 여부는 유저 선택으로 본다.
+  - 따라서 slot 수용 가능성은 레벨링 실패 기준에서 제외한다.
+  - 레벨링이 확인할 것은 후보군 노출과 가격/골드 가능성까지다.
+- 파일:
+  - `logs/sim/ml_sweep_market_price_probe_v79_r120.jsonl`
+  - `logs/sim/ml_sweep_market_price_probe_v79_r120_summary.json`
+  - `logs/sim/ml_sweep_market_price_probe_v79_r120_report.md`
+- 조건:
+  - runs: 120
+  - difficulty: `standard`
+  - experiment: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068`
+  - loadout: `progression_route_balanced`, `progression_route_power`
+  - market: `shop_slot_market_v9`
+  - keep candidate JSONL
+
+시뮬 battle row 기준 gold:
+
+| station | tier | avg gold | p50 | price <= 9 affordable | price 11 affordable | price 16 affordable |
+|---:|---|---:|---:|---:|---:|---:|
+| S1 | small/big/boss | 10.0 | 10 | 100% | 0% | 0% |
+| S4 | small/big/boss | 10.0 | 10 | 100% | 0% | 0% |
+| S5 | small/big/boss | 10.0 | 10 | 100% | 0% | 0% |
+| S8 | small/big/boss | 10.0 | 10 | 100% | 0% | 0% |
+
+가격 판정:
+
+| 후보군 | price | 구매 가능성 |
+|---|---:|---|
+| `board_scrap`, `hand_scrap` | 4 | 구매권 안 |
+| `move_token` | 5 | 구매권 안 |
+| `discard_glove`, `mulligan_sleeve`, `organizer_glove` | 6~9 | 구매권 안 |
+| `board_lift`, `safety_net`, `spare_pouch`, `emergency_draw`, `undo_seal` | 6~9 | 구매권 안 |
+| `travel_pouch`, `wide_grip` | 11 | 기본 probe 기준 구매권 밖 |
+| `grand_satchel` | 16 | 기본 probe 기준 구매권 밖 |
+
+v79 판정:
+
+- 가격 4~9의 기존 board pressure 완화 후보는 현재 시뮬 gold 기준에서 구매권 안이다.
+- 따라서 `board_scrap`, `hand_scrap`, `move_token`, `discard_glove`, `mulligan_sleeve`, `organizer_glove`, `board_lift`, `safety_net`, `spare_pouch`, `emergency_draw`, `undo_seal`은 “노출되면 살 수 있는 후보”로 본다.
+- `travel_pouch`, `wide_grip`, `grand_satchel`은 hand size 계열 고가 후보라 현재 기준에서는 레벨링 핵심 availability 후보로 쓰기 어렵다. 필요하면 가격 조정보다 먼저 “hand size가 실제로 필요한 성장축인지”를 별도 확인한다.
+- 다음 적용 판단은 weight 상향이 아니라 현 상태 유지가 우선이다. 노출률 69~76%와 price <= 9 구매 가능성이 모두 충족되므로, 현재 병목은 레벨링이 직접 풀 영역이 아니라 유저 선택/운영 영역으로 남긴다.
