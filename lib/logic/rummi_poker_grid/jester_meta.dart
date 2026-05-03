@@ -727,6 +727,11 @@ class RummiStationBandMarketPolicy {
         if (has('score') || has('xmult') || has('rarity')) bonus += 115;
         if (has('market') || has('capacity')) bonus += 85;
         if (has('safety') || has('move') || has('discard')) bonus += 55;
+        // S7~S8은 점수 전환 후보보다 덱/타일 형상 보정 후보가 부족했다.
+        // 직접 지급이 아니라 후반 마켓 후보군에 더 안정적으로 남기는 보정이다.
+        final isShapeCorrection =
+            has('tile_color') || has('draw') || (has('rank') && !has('score'));
+        if (stageIndex >= 7 && isShapeCorrection) bonus += 80;
     }
     return bonus;
   }

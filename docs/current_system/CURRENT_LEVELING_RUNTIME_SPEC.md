@@ -151,6 +151,20 @@ Rules:
 - Matching tag bonus는 tag당 +45, 최대 2개까지만 적용한다.
 - 이 보정은 직접 지급이 아니라 등장 확률 보정이다.
 
+Final band shape correction:
+
+| Station | Condition | Bonus | Purpose |
+|---|---|---:|---|
+| S7~S8 | `tile_color`, `draw`, 또는 `score` 없는 순수 `rank` 후보 | +80 | S8 boss의 deck exhausted 축을 직접 지급 없이 마켓 후보군 안정성으로 완화 |
+
+이 보정은 `score/xmult/boss` 후보를 더 올리는 조정이 아니다. 이미 충분했던 점수 전환 후보보다 낮게 보이던 덱/타일 형상 보정 후보를 final band에서 완전히 밀려나지 않게 만드는 floor다.
+
+Sim parity:
+
+- `tools/sim/run_balance_sim.dart`의 `shop_slot_market_v9`도 S7~S8에서 shape proxy 후보를 완전히 밀어내지 않도록 맞춘다.
+- sim shape proxy는 `s1_tile_pack_plus5`, `s1_build_aware_pack_plus5`, `s1_candidate_tarot_build_pack`이다.
+- 이 parity는 시뮬 후보 노출/선택 proxy만 맞추며, 실제 런타임 지급이나 슬롯 수를 바꾸지 않는다.
+
 ## 7. Candidate Role Interpretation
 
 | Candidate family | 실제 의미 | 적용 방식 |

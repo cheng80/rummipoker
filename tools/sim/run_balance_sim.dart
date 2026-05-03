@@ -1847,6 +1847,13 @@ List<_WeightedMarketCandidate> _shopSlotMarketCandidates({
             _ => 0,
           };
         }
+        if (lateBreakerBias &&
+            station >= 7 &&
+            _isFinalBandShapeCorrectionProxy(candidate.profile)) {
+          // runtime final band의 shape floor와 같은 의도다.
+          // 후보가 마켓에 남도록만 하고, 구매/지급/슬롯 수는 바꾸지 않는다.
+          weight += 6;
+        }
         if (missingGrowthBias && station >= 3 && station <= 5) {
           // v10은 해당 구간까지 성장 축을 못 얻은 경우를 가정해
           // 직접 지급이 아니라 마켓 노출 확률만 보정한다.
@@ -2214,7 +2221,23 @@ int _shopSlotUtility({
       _ => 0,
     };
   }
+  if (lateBreakerBias &&
+      station >= 7 &&
+      _isFinalBandShapeCorrectionProxy(candidate.profile)) {
+    // slot 노출 floor와 bot 선택 proxy를 같은 방향으로 맞춘다.
+    // rare/xmult/boss 후보보다 우선시키는 값은 아니다.
+    score += 8;
+  }
   return score;
+}
+
+bool _isFinalBandShapeCorrectionProxy(BalanceSimMarketProfile profile) {
+  return switch (profile) {
+    BalanceSimMarketProfile.s1TilePackPlus5 ||
+    BalanceSimMarketProfile.s1BuildAwarePackPlus5 ||
+    BalanceSimMarketProfile.s1CandidateTarotBuildPack => true,
+    _ => false,
+  };
 }
 
 int _stateInt(Map<String, Object?> state, String key) {

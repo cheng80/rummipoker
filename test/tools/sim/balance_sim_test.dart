@@ -4134,6 +4134,78 @@ void main() {
     }
   });
 
+  test(
+    'CLI shop slot market v9 keeps final band shape proxies visible',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/market_v9_final_shape_source.jsonl';
+      final summaryPath = '${dir.path}/market_v9_final_shape_summary.json';
+      final code = await runBalanceSim([
+        '--runs',
+        '12',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '87200',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '7,8',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068',
+        '--market-profile',
+        'shop_slot_market_v9',
+        '--loadout-id',
+        'progression_route_balanced',
+        '--summary-out',
+        summaryPath,
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final summary =
+          jsonDecode(File(summaryPath).readAsStringSync())
+              as Map<String, dynamic>;
+      final groups = (summary['groups'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final shapeProxyIds = {
+        's1_candidate_tarot_build_pack',
+        's1_build_aware_pack_plus5',
+        's1_tile_pack_plus5',
+      };
+      final scoreBreakerIds = {
+        's1_candidate_rare_xmult_jester',
+        's1_candidate_planet_rank_level',
+      };
+      var shapeProxyAppearances = 0;
+      var scoreBreakerAppearances = 0;
+
+      for (final group in groups) {
+        if (group['market_profile'] != 'shop_slot_market_v9') continue;
+        final station = group['station'] as int;
+        if (station < 7 || station > 8) continue;
+        final slotCounts =
+            group['market_shop_slot_counts'] as Map<String, dynamic>;
+        for (final entry in slotCounts.entries) {
+          final count = (entry.value as num).toInt();
+          if (shapeProxyIds.contains(entry.key)) {
+            shapeProxyAppearances += count;
+          }
+          if (scoreBreakerIds.contains(entry.key)) {
+            scoreBreakerAppearances += count;
+          }
+        }
+      }
+
+      expect(shapeProxyAppearances, greaterThan(0));
+      expect(scoreBreakerAppearances, greaterThan(shapeProxyAppearances));
+    },
+  );
+
   test('CLI summary records sequence path survival groups', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
     addTearDown(() => dir.deleteSync(recursive: true));

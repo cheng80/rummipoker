@@ -195,10 +195,20 @@ S8 boss 슬롯 노출률:
 4. smoke 이후 장기 sweep에서 path clear, avg total turn, S1/S4/S5/S8 병목, board lock/draw exhausted를 같이 본다.
 5. 너무 강하면 weight를 낮추고, 너무 약하면 slot 수가 아니라 후보군 availability를 먼저 본다.
 
+현재 1차 적용:
+
+- S7~S8 final band에서 `tile_color`, `draw`, 또는 `score` 없는 순수 `rank` 후보에 item weight +80을 추가했다.
+- slot 수, 직접 지급, 특정 위치 고정은 변경하지 않았다.
+- runtime market offer 분포 probe에서는 shape floor share가 S6 10.3%에서 S7~S8 12.5%로 올랐다.
+- sim `shop_slot_market_v9`도 final band shape proxy floor를 반영하도록 맞췄다.
+- v87 runtime parity r120 smoke에서 `shop_slot_market_v9`는 path clear를 올리지만 S1/S7/S8 boss 병목을 지우지 않았다.
+- final band v9 slot exposure는 shape proxy 740, score breaker proxy 1619로, shape 후보가 살아났지만 score breaker를 밀어내지는 않았다.
+
 ## 9. 관련 문서
 
 - 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 - 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
+- 적용 상태: `docs/planning/LEVELING_APPLIED_STATUS.md`
 - active 진입 요약: `docs/planning/ML_LEVELING_SIMULATION_DIRECTION.md`
 - 긴 실험 이력: `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
 - 시뮬 CLI: `tools/sim/run_balance_sim.dart`

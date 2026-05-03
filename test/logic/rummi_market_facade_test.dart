@@ -438,6 +438,53 @@ void main() {
       );
     });
 
+    test('final station market policy keeps shape correction available', () {
+      final late = RummiStationBandMarketPolicy.forStage(6);
+      final finalBand = RummiStationBandMarketPolicy.forStage(8);
+      final tileShapeItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'red_swatch',
+          timing: 'use_battle',
+          op: 'score_multiplier',
+          placement: 'quickSlot',
+          tags: const ['consumable', 'tile_color', 'mult'],
+        ),
+      );
+      final drawShapeItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'emergency_draw',
+          timing: 'use_battle',
+          op: 'draw_tile',
+          placement: 'quickSlot',
+          rarity: 'rare',
+          tags: const ['battle', 'draw', 'safety'],
+        ),
+      );
+      final bossBreakerItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'boss_trophy',
+          timing: 'boss_blind_clear_market',
+          op: 'extra_jester_offer_next_market',
+          placement: 'passiveRack',
+          rarity: 'rare',
+          tags: const ['relic', 'boss', 'market', 'jester'],
+        ),
+      );
+
+      expect(
+        finalBand.itemOfferWeight(tileShapeItem),
+        greaterThan(late.itemOfferWeight(tileShapeItem)),
+      );
+      expect(
+        finalBand.itemOfferWeight(drawShapeItem),
+        greaterThan(late.itemOfferWeight(drawShapeItem)),
+      );
+      expect(
+        finalBand.itemOfferWeight(bossBreakerItem),
+        greaterThan(finalBand.itemOfferWeight(tileShapeItem)),
+      );
+    });
+
     test('missing growth correction only changes market appearance weight', () {
       final mid = RummiStationBandMarketPolicy.forStage(4);
       final scoreGrowthItem = ItemDefinition.fromJson(
