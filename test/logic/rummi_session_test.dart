@@ -549,6 +549,55 @@ void main() {
     expect(out.result.lineBreakdowns.single.constraintPenalties, isEmpty);
   });
 
+  test('보스 그림 타일 약화는 11~13 포함 점수 라인을 줄인다', () {
+    final board = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(2, i, t(TileColor.red, i == 4 ? 11 : i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.faceDampener,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.ok, true);
+    expect(out.result.scoreAdded, 33);
+    expect(out.result.lineBreakdowns.single.constraintPenalties, hasLength(1));
+    final penalty = out.result.lineBreakdowns.single.constraintPenalties.single;
+    expect(penalty.title, '그림 타일 약화');
+    expect(penalty.ruleText, contains('35% 감소'));
+    expect(penalty.scoreDelta, -17);
+    expect(penalty.scoreMultiplier, 0.65);
+  });
+
+  test('보스 그림 타일 약화는 10 이하 점수 라인에는 적용되지 않는다', () {
+    final board = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.faceDampener,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.ok, true);
+    expect(out.result.scoreAdded, 150);
+    expect(out.result.lineBreakdowns.single.constraintPenalties, isEmpty);
+  });
+
   test('투페어 확정 시 매칭된 4장만 제거되고 키커는 남는다', () {
     final board = RummiBoard();
     board.setCell(1, 0, t(TileColor.red, 4));

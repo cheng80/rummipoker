@@ -73,7 +73,7 @@ void main() {
     });
 
     test('station별 boss modifier는 실제 표현 가능한 후보 풀을 순환한다', () {
-      final bossModifierIds = List.generate(7, (index) {
+      final bossModifierIds = List.generate(8, (index) {
         final boss = BlindSelectionSetup.resolveSpec(
           tier: BlindTier.boss,
           stationIndex: index + 1,
@@ -91,6 +91,7 @@ void main() {
         'black_dampener_v1',
         'diagonal_line_dampener_v1',
         'yellow_dampener_v1',
+        'face_tile_dampener_v1',
       ]);
     });
 

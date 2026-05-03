@@ -203,6 +203,9 @@ S8 boss 슬롯 노출률:
 - sim `shop_slot_market_v9`도 final band shape proxy floor를 반영하도록 맞췄다.
 - v87 runtime parity r120 smoke에서 `shop_slot_market_v9`는 path clear를 올리지만 S1/S7/S8 boss 병목을 지우지 않았다.
 - final band v9 slot exposure는 shape proxy 740, score breaker proxy 1619로, shape 후보가 살아났지만 score breaker를 밀어내지는 않았다.
+- v88 runtime parity r400에서는 balanced+v9 64.8%, power+v9 72.8% path clear를 보였다.
+- S1/S8 boss 병목은 남아 있으므로 과보정으로 보지 않지만, power+v9가 충분히 높아졌기 때문에 S7~S8 shape floor 추가 강화는 보류한다.
+- S8 runtime boss를 `faceDampener`로 바꾼 v89 r120 smoke에서는 balanced+v9 61.7%, power+v9 66.7% path clear를 보였다. S1/S8 boss 병목은 유지되어 1차 적용 가능한 범위로 판단한다.
 
 ## 9. 관련 문서
 

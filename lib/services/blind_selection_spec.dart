@@ -204,6 +204,7 @@ class BlindSelectionSpecBuilder {
       RummiBossModifier.blackDampener,
       RummiBossModifier.diagonalDampener,
       RummiBossModifier.yellowDampener,
+      RummiBossModifier.faceDampener,
     ];
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
     return modifiers[(normalizedStationIndex - 1) % modifiers.length];

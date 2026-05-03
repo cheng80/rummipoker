@@ -880,6 +880,9 @@ class RummiPokerGridSession {
       RummiBossModifierCategory.lineKindWeaken => modifier.affectsLineKind(
         lineRef.kind,
       ),
+      RummiBossModifierCategory.faceTileWeaken => modifier.affectsAnyTile(
+        scoringTiles,
+      ),
     };
     if (!affected) {
       return (score: score, penalty: null);

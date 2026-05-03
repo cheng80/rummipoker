@@ -388,6 +388,20 @@ void main() {
       expect(restored.bossModifier?.scoreMultiplier, 0.75);
     });
 
+    test('blind json preserves face tile boss modifier', () {
+      final blind = RummiBlindState(
+        targetScore: 300,
+        bossModifier: RummiBossModifier.faceDampener,
+      );
+
+      final restored = RummiBlindState.fromJson(blind.toJson());
+
+      expect(restored.bossModifier?.id, RummiBossModifier.faceDampener.id);
+      expect(restored.bossModifier?.title, '그림 타일 약화');
+      expect(restored.bossModifier?.category.name, 'faceTileWeaken');
+      expect(restored.bossModifier?.scoreMultiplier, 0.65);
+    });
+
     test(
       'saved run progress without itemInventory falls back to empty shape',
       () {

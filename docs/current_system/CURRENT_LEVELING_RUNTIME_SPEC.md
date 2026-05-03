@@ -68,7 +68,7 @@ S8 이후는 실제 진행 구간 밖이다. 디버그/테스트용으로만 마
 | S5 | `blackDampener` |
 | S6 | `diagonalDampener` |
 | S7 | `yellowDampener` |
-| S8 | `redDampener` 반복 |
+| S8 | `faceDampener` |
 
 표시 정책:
 
@@ -107,6 +107,15 @@ Weighted boss pool v3:
 - `boss_constraint_pool_v4`와 `late_boss_068` 계열을 유지한다.
 - S8 boss를 더 낮출 근거는 없다.
 - `color_dampener_cycle`, `confirm_count_tax_v2`, `target_spike_wall`은 S8 단일 전투에서 약한 축으로 남긴다.
+
+Runtime migration status:
+
+- 현재 완전 적용된 런타임 보스 제약은 `tileColorWeaken`, `lineKindWeaken`이다.
+- `face_tile_dampener`는 S8 runtime boss modifier로 1차 적용한다. 기존 타일 대상 약화 구조를 확장하며, 11~13 face tile 압박이라는 의미도 분명하다.
+- `all_score_dampener`, `first_confirm_tax`는 후보로 보존하되 우선순위는 낮춘다.
+- `repeat_rank_pressure_v4`, `single_rank_pressure`, `confirm_count_tax_v2`는 이전 confirm/순서 상태 추적이 필요하므로 바로 런타임에 넣지 않는다.
+- `target_spike_wall`은 boss modifier가 아니라 target score 레버로 본다.
+- `resource_squeeze`는 자동 자원 지급/보정이 아니라 시작 압박 또는 마켓 후보 수요로만 해석한다.
 
 ## 6. Market Band Policy
 

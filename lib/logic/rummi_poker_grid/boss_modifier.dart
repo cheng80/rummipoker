@@ -1,7 +1,11 @@
 import 'line_ref.dart';
 import 'models/tile.dart';
 
-enum RummiBossModifierCategory { tileColorWeaken, lineKindWeaken }
+enum RummiBossModifierCategory {
+  tileColorWeaken,
+  lineKindWeaken,
+  faceTileWeaken,
+}
 
 class RummiBossModifier {
   const RummiBossModifier({
@@ -24,6 +28,7 @@ class RummiBossModifier {
     if (id == rowDampener.id) return rowDampener;
     if (id == columnDampener.id) return columnDampener;
     if (id == diagonalDampener.id) return diagonalDampener;
+    if (id == faceDampener.id) return faceDampener;
     return RummiBossModifier(
       id: id ?? redDampener.id,
       category: RummiBossModifierCategory.values.byName(
@@ -118,6 +123,15 @@ class RummiBossModifier {
     scoreMultiplier: 0.75,
   );
 
+  static const faceDampener = RummiBossModifier(
+    id: 'face_tile_dampener_v1',
+    category: RummiBossModifierCategory.faceTileWeaken,
+    title: '그림 타일 약화',
+    ruleText: '11~13 타일이 포함된 점수 라인은 35% 감소합니다.',
+    markerText: '약화',
+    scoreMultiplier: 0.65,
+  );
+
   final String id;
   final RummiBossModifierCategory category;
   final String title;
@@ -127,7 +141,11 @@ class RummiBossModifier {
   final List<LineKind> affectedLineKinds;
   final double scoreMultiplier;
 
-  bool affectsTile(Tile tile) => affectedTileColors.contains(tile.color);
+  bool affectsTile(Tile tile) {
+    return affectedTileColors.contains(tile.color) ||
+        (category == RummiBossModifierCategory.faceTileWeaken &&
+            tile.number >= 11);
+  }
 
   bool affectsAnyTile(Iterable<Tile> tiles) => tiles.any(affectsTile);
 
