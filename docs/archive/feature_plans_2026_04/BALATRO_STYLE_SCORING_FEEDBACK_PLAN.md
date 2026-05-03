@@ -138,7 +138,7 @@ Implementation note:
 
 Planning note:
 
-- 구현 기준은 `docs/planning/feature_plans/MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`를 따른다.
+- 구현 기준은 `docs/archive/feature_plans_2026_04/MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`를 따른다.
 - 실제 rarity roll 코드 적용과 item offer id save/restore 개선은 후속 implementation pass로 분리한다.
 
 ### P2. Station Reward/Risk Framing

@@ -79,9 +79,9 @@ Item은 `ItemCatalog.rarityWeights`를 source of truth로 쓴다.
 
 Jester는 아직 별도 catalog weight가 없으므로 v1에서는 동일 기본 weight를 사용한다. 향후 `jesters_common_*.json` 또는 별도 market config에 rarity weight를 넣을 수 있다.
 
-Jester catalog 확장과 effect taxonomy는 `docs/planning/feature_plans/JESTER_REFERENCE_TAXONOMY_PLAN.md`를 기준으로 본다. Rarity roll 구현은 기존 Jester id를 변경하지 않는다.
+Jester catalog 확장과 effect taxonomy는 `docs/archive/feature_plans_2026_04/JESTER_REFERENCE_TAXONOMY_PLAN.md`를 기준으로 본다. Rarity roll 구현은 기존 Jester id를 변경하지 않는다.
 
-Consumable/voucher-like content expansion은 `docs/planning/feature_plans/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`를 기준으로 본다. v1 Market roll은 현재 Item offer lane을 유지하고, voucher/pack lane은 후속으로 둔다.
+Consumable/voucher-like content expansion은 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`를 기준으로 본다. v1 Market roll은 현재 Item offer lane을 유지하고, voucher/pack lane은 후속으로 둔다.
 
 ### Rarity weight bonus
 

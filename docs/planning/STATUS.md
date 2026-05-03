@@ -36,7 +36,7 @@
 - Jester score effect는 `JesterEffectRuntime` 경유로 정리되어 animation/event 경계를 갖는다.
 - Jester taxonomy reference 정리 완료: Balatro식 Joker 목록은 발동 순서, condition inheritance, edition/penalty, 성장/경제/시장/점수식 변형 taxonomy 참고로만 사용한다. 기존 Jester id는 유지한다.
 - Consumable/Voucher taxonomy reference 정리 완료: Balatro식 Tarot/Planet/Spectral/Voucher 구조는 confirm modifier, tile enhancement, rank progression, high-risk mutation, run-long passive 후보로 분리한다. 현재 Item 49개 runtime은 유지한다.
-- 2026-04-30 huashu-design/Balatro 기준 UI 리뷰 결과, Jester/Item은 접는 인벤토리가 아니라 항상 보이는 scoring engine으로 유지한다. 확정 전 preview, Item slot active scoring effect, board/rank/overlap/Jester/Item/final score 순차 presentation은 1차 구현됐다. 실행 계획과 남은 smoke 기준은 `docs/planning/feature_plans/BALATRO_STYLE_SCORING_FEEDBACK_PLAN.md`를 따른다.
+- 2026-04-30 huashu-design/Balatro 기준 UI 리뷰 결과, Jester/Item은 접는 인벤토리가 아니라 항상 보이는 scoring engine으로 유지한다. 확정 전 preview, Item slot active scoring effect, board/rank/overlap/Jester/Item/final score 순차 presentation은 1차 구현됐다. 과거 실행 계획과 smoke 기준은 `docs/archive/feature_plans_2026_04/BALATRO_STYLE_SCORING_FEEDBACK_PLAN.md`에서 검색한다.
 - Market build readability polish 1차 적용 완료: 선택 offer 상세 패널의 조건/효과 synergy tag, Jester offer 외부 selection frame, 구매 불가 reason 표시가 연결됐다. Offer 카드 자체는 슬롯 타입/가격/선택 상태만 담당한다.
 - Settlement -> Market affordance 1차 적용 완료: cash-out sheet에서 Market 진입을 확정하면 market runtime/save를 먼저 완료한 뒤 짧은 `Market 준비` overlay를 재생하고 상점 route를 연다.
 - Station Preview/Map scope decision 완료: 현재 `BlindSelectView`를 `Station Preview v1`로 공식화하고, Station Map 전체 구현은 후속으로 둔다. ML 로그의 station 단위는 `stageIndex + blind tier`를 기준으로 한다.
@@ -97,17 +97,20 @@
 3. `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md`
 4. `docs/current_system/CURRENT_CODE_MAP.md`
 5. `docs/current_system/CURRENT_TO_V4_GAP.md`
-6. `docs/planning/STATUS.md`
-7. `docs/planning/IMPLEMENTATION_PLAN.md`
-8. `docs/planning/MIGRATION_ROADMAP.md`
-9. `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
+6. `docs/current_system/CURRENT_LEVELING_POLICY.md`
+7. `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+8. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
+9. `docs/planning/STATUS.md`
+10. `docs/planning/IMPLEMENTATION_PLAN.md`
+11. `docs/planning/MIGRATION_ROADMAP.md`
+12. `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
 
-필요할 때만 추가로 본다.
+필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 
-- `docs/planning/feature_plans/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md`
-- `docs/planning/feature_plans/BALATRO_STYLE_SCORING_FEEDBACK_PLAN.md`
 - `docs/planning/verification/TEST_QA_ACCEPTANCE.md`
 - `docs/planning/OPEN_DECISIONS.md`
+- `docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md`
+- `docs/archive/leveling/00_leveling_archive_README.md`
 
 ## 5. Next Work
 
@@ -151,23 +154,23 @@ ML readiness 기준 우선순위:
 
 1. Station Preview/Map scope decision
    - ML 로그의 `station_id`, `blind_tier`, 선택지, modifier 범위를 흔들리지 않게 만든다.
-   - 완료: `docs/planning/feature_plans/STATION_PREVIEW_MAP_SCOPE_PLAN.md`
+   - 완료: `docs/archive/feature_plans_2026_04/STATION_PREVIEW_MAP_SCOPE_PLAN.md`
    - Station Map 전체 구현이 아니라, simulator/log schema가 참조할 최소 Station 단위를 먼저 결정했다.
 2. Market offer count and rarity roll planning pass
    - Jester / Item offer 기본 갯수, 증설 규칙, 중복 제외, 구매 후 재노출 방지, rarity weighted roll 규칙을 문서화한다.
    - `rarityWeights`와 `rarityWeightBonus`가 실제 roll과 simulator feature에 어떻게 반영되는지 정한다.
-   - 완료: `docs/planning/feature_plans/MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`
+   - 완료: `docs/archive/feature_plans_2026_04/MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`
 3. Blind / station pacing baseline pass
    - station target score curve, small/big/boss 보상/압박, discard reward, unlock tempo의 v1 baseline을 고정한다.
    - ML은 이 baseline version을 기준으로 데이터를 쌓는다.
-   - 완료: `docs/planning/feature_plans/BLIND_STATION_PACING_BASELINE_PLAN.md`
+   - 완료: `docs/archive/feature_plans_2026_04/BLIND_STATION_PACING_BASELINE_PLAN.md`
 4. Boss modifier taxonomy pass
    - Boss를 단순 target x2 전투가 아니라 visible rule modifier 전투로 다룬다.
    - Balatro Boss/Stake 제약은 참고하되, face-down hand-card 패턴은 draw 기반 구조에 맞게 재설계한다.
-   - 완료: `docs/planning/feature_plans/BOSS_MODIFIER_TAXONOMY_PLAN.md`
+   - 완료: `docs/archive/feature_plans_2026_04/BOSS_MODIFIER_TAXONOMY_PLAN.md`
 5. Constraint visual language pass
    - Boss/Station/Jester/Item 제약은 진입 팝업으로 먼저 설명하고, 전투 중에는 작은 marker와 position-local penalty float만 사용한다.
-   - 완료: `docs/planning/feature_plans/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`
+   - 완료: `docs/archive/feature_plans_2026_04/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`
 6. Boss modifier v1 implementation pass
    - 완료: 보스 블라인드의 첫 visible rule modifier로 `빨간 타일 약화`를 적용했다.
    - 연결: Blind Select card, battle entry popup, board/hand compact marker, scoring penalty callout, save/restore.

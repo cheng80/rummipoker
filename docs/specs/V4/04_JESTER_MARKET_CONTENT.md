@@ -6,7 +6,7 @@
 
 현재 코드 상세는 `docs/current_system/CURRENT_CODE_MAP.md`와 `docs/current_system/CURRENT_BUILD_BASELINE.md`를 기준으로 본다.
 Item effect 적용 상태는 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
-Jester taxonomy와 후속 catalog 확장 reference는 `docs/planning/feature_plans/JESTER_REFERENCE_TAXONOMY_PLAN.md`를 기준으로 본다.
+과거 Jester taxonomy와 후속 catalog 확장 reference는 `docs/archive/feature_plans_2026_04/JESTER_REFERENCE_TAXONOMY_PLAN.md`에서 검색한다.
 
 ## 1. Current Boundary Reference
 

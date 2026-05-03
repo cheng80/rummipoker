@@ -276,9 +276,9 @@ PyTorch 모델로 station / blind / market / item 조합의 난이도 경향을 
 1. Station Preview/Map 최소 범위가 결정되어 `station_id`, blind tier, 선택지 구조가 로그 스키마에서 흔들리지 않는다.
    - 결정 완료: 현재 `BlindSelectView`를 `Station Preview v1`로 공식화하고, Station Map graph는 후속으로 둔다.
 2. Market offer count와 rarity weighted roll 규칙이 결정되어 simulator가 실제 상점 분포를 재현할 수 있다.
-   - 계획 완료: 기본 offer 수 3/3, v1 cap 5, 공통 rarity weight, `rarityWeightBonus` 적용 방향은 `MARKET_OFFER_COUNT_RARITY_ROLL_PLAN.md`를 기준으로 본다.
+   - 계획 완료: 기본 offer 수 3/3, v1 cap 5, 공통 rarity weight, `rarityWeightBonus` 적용 방향은 과거 feature plan archive에서 검색한다.
 3. target score curve, small/big/boss 보상/압박, discard reward의 baseline balance version이 정해진다.
-   - 완료: 현재 런타임 수치를 `v4_pacing_baseline_1`로 기록했다. 상세는 `BLIND_STATION_PACING_BASELINE_PLAN.md`를 기준으로 본다.
+   - 완료: 현재 런타임 수치를 `v4_pacing_baseline_1`로 기록했다. 과거 상세 plan은 feature plan archive에서 검색한다.
 4. Boss modifier taxonomy가 정해져 simulator가 보스 제약을 id/category/parameter로 남길 수 있다.
    - 완료: `BOSS_MODIFIER_TAXONOMY_PLAN.md`에서 tile color, hand rank, number/rank, Jester, score/resource, board/line 제약 범주를 정리했다.
 5. Starting deck archetype 기준이 정해져 simulator가 시작 덱/타일 강화 축을 별도 feature로 남길 수 있다.
@@ -311,7 +311,7 @@ PyTorch 모델로 station / blind / market / item 조합의 난이도 경향을 
 
 Boss blind는 단순히 목표 점수와 자원을 올리는 전투가 아니라, 전투 시작 전 공개되는 제약/변형 규칙을 갖는 방향으로 본다.
 
-상세 taxonomy와 적용 순서는 `docs/planning/feature_plans/BOSS_MODIFIER_TAXONOMY_PLAN.md`를 기준으로 본다.
+과거 상세 taxonomy와 적용 순서는 `docs/archive/feature_plans_2026_04/BOSS_MODIFIER_TAXONOMY_PLAN.md`에서 검색한다.
 
 후보 범주:
 
@@ -330,7 +330,7 @@ Boss blind는 단순히 목표 점수와 자원을 올리는 전투가 아니라
 - 숨김/비활성 제약을 넣는다면 반드시 entering 전 preview와 affected tile/Jester 표시가 필요하다.
 - Boss modifier는 `v4_pacing_baseline_1`의 target/resource baseline과 분리된 후속 pass로 다룬다.
 - Boss modifier는 preview, battle UI, scoring feedback, save/restore, simulator log에 같은 id/category로 나타나야 한다.
-- 제약 표시는 `CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`를 따른다.
+- 제약 표시는 현재 UI 구현과 `AGENTS.md`의 말줄임/제약 가시성 규칙을 우선한다. 과거 plan은 feature plan archive에서 검색한다.
 - 첫 Boss modifier 구현 전에 entry popup, compact marker, position-local penalty float 기준을 먼저 적용한다.
 - user-facing 화면에는 내부 modifier 변수명을 노출하지 않고, 짧은 한글 설명만 사용한다.
 
@@ -353,7 +353,7 @@ Balatro의 ante / stake별 요구 칩 표는 점수 곡선의 참고 자료로�
 - Balatro 수치를 그대로 복사하지 않는다.
 - Small / Big / Boss의 `1.0 / 1.5 / 2.0` 압박 구조는 현재 baseline과 유사하므로 reference shape로 유지한다.
 - stake처럼 요구 점수 증가 속도를 올리는 구조는 우리 게임의 `difficulty_target_multiplier`, `station_growth_base`, `stationTargetScoreScale` 후보로 해석한다.
-- stake식 누적 제약은 `BOSS_MODIFIER_TAXONOMY_PLAN.md`의 difficulty/stake reference를 기준으로 후속 balance version에서 검토한다.
+- stake식 누적 제약은 후속 balance version에서 별도 검토한다. 과거 difficulty/stake reference는 feature plan archive에서 검색한다.
 - 실제 요구 점수 조정은 `balance simulation readiness pass` 이후 ML/simulator 로그를 기반으로 한다.
 - target score 변경 시 `balance_version`을 갱신한다.
 
@@ -371,7 +371,7 @@ Balatro의 시작 덱과 카드 강화 구조는 run archetype과 tile modifier 
 - 카드 강화/인장/에디션류는 후속 `tile_modifier_id` 또는 Jester/Item edition 후보로 분리한다.
 - 시작 덱 선택은 balance simulation readiness 이후, simulator가 archetype별 결과를 비교할 수 있을 때 검토한다.
 
-상세 기준은 `docs/planning/feature_plans/STARTING_DECK_ARCHETYPE_PLAN.md`를 따른다.
+과거 상세 기준은 `docs/archive/feature_plans_2026_04/STARTING_DECK_ARCHETYPE_PLAN.md`에서 검색한다.
 
 ### 3.4 Jester Reference Taxonomy
 
@@ -387,7 +387,7 @@ Balatro의 Joker 목록은 Jester catalog 확장과 ML feature 설계의 taxonom
 - edition/penalty는 base Jester id가 아니라 owned Jester instance modifier로 본다.
 - 새 effect category는 scoring feedback과 simulator log에 나타나기 전까지 Market에 노출하지 않는다.
 
-상세 기준은 `docs/planning/feature_plans/JESTER_REFERENCE_TAXONOMY_PLAN.md`를 따른다.
+과거 상세 기준은 `docs/archive/feature_plans_2026_04/JESTER_REFERENCE_TAXONOMY_PLAN.md`에서 검색한다.
 
 ### 3.5 Consumable / Voucher Reference Taxonomy
 
@@ -403,7 +403,7 @@ Balatro의 Tarot / Planet / Spectral / Voucher 구조는 Item 확장 taxonomy re
 - Spectral-like 효과는 high-risk mutation 후보로 분리하고 일반 market pool에는 바로 넣지 않는다.
 - Voucher-like 효과는 ordinary quick-use item이 아니라 run-long passive 또는 후속 `Run Voucher` content type으로 다룬다.
 
-상세 기준은 `docs/planning/feature_plans/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`를 따른다.
+과거 상세 기준은 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
 
 ## 4. Known Code Notes
 

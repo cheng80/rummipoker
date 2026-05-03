@@ -19,6 +19,7 @@ GCSE 역할: `Context`
 - 현재 코드 맵
 - 현재 빌드 baseline
 - current-to-target gap
+- 현재 레벨링 정책
 - 레거시 결정이 현재 코드에 남긴 영향
 - 보호해야 할 코드 규칙과 주요 테스트/검증 진입점
 
@@ -40,6 +41,8 @@ GCSE 역할: `Context`
 3. `CURRENT_TO_V4_GAP.md`
 
 이 3개만 읽어도 코드 작업을 이어갈 수 있어야 한다.
+
+레벨링/마켓 정책을 다룰 때는 `CURRENT_LEVELING_POLICY.md`, `CURRENT_LEVELING_ML_BASELINE.md`, `CURRENT_LEVELING_RUNTIME_SPEC.md`를 추가로 읽는다. 이 문서들은 과거 시뮬레이션 로그나 archive 문서보다 우선한다.
 
 `CURRENT_BUILD_BASELINE.md`는 V4 문서 생성 시점의 상세 baseline에서 분리한 보조 문서다. 작업 재개 기준은 위 3개 문서가 우선이며, baseline 표가 필요할 때만 추가로 확인한다.
 

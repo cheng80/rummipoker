@@ -15,6 +15,8 @@
 - `legacy/`: 과거 설계와 구현 참고 문서
 - `generated/`: 병합본, 스냅샷, 자동 생성 산출물
 - `prompts/`: 과거 AI/Codex 지시서와 프롬프트
+- `feature_plans_2026_04/`: 완료되었거나 현재 기준 역할을 잃은 2026-04 feature plan 스냅샷
+- `leveling/`: 긴 레벨링 시뮬레이션 이력과 과거 후보 기록
 
 ## Rule
 

@@ -15,12 +15,13 @@
 최신 판단은 아래 순서로 한다.
 
 1. 실제 코드와 테스트
-2. `START_HERE.md`
-3. `docs/00_docs_README.md`
-4. `docs/current_system/*`
-5. `docs/planning/*`
+2. `AGENTS.md`
+3. `START_HERE.md`
+4. `docs/00_docs_README.md`
+5. `docs/current_system/*`
 6. `docs/specs/*`
-7. `docs/archive/*`
+7. `docs/planning/*`
+8. `docs/archive/*`
 
 문서는 현재 목적형 폴더 기준으로 배치한다. 새 문서도 같은 기준으로 추가한다.
 
@@ -33,6 +34,12 @@
 1. `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md`
 2. `docs/current_system/CURRENT_CODE_MAP.md`
 3. `docs/current_system/CURRENT_TO_V4_GAP.md`
+
+레벨링/마켓 정책 작업은 아래 문서를 추가로 읽는다.
+
+- `docs/current_system/CURRENT_LEVELING_POLICY.md`
+- `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+- `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 
 이 3종은 `current_system`의 핵심 문서이며, 아래를 판단할 수 있어야 한다.
 
@@ -58,6 +65,7 @@
 - 진행률, 완료/미완료, 다음 작업은 `planning` 문서에 둔다.
 - 기능 규칙과 계약은 `specs` 문서에 둔다.
 - 현재 코드의 사실 설명과 작업 재개에 필요한 코드 지도는 `current_system` 문서에 둔다.
+- 레벨링의 현재 금지/허용 정책은 `docs/current_system/CURRENT_LEVELING_POLICY.md`에 둔다.
 - 제품 방향과 금지 원칙은 `goals` 문서에 둔다.
 - 중복 문서는 바로 삭제하지 않고 `archive` 후보로 표시한 뒤 링크를 정리한다.
 
@@ -68,7 +76,7 @@
 | 목적 | 위치 |
 |---|---|
 | 제품 목표, 금지 원칙, 의사결정 기준 | `docs/goals/` |
-| 현재 코드 사실, 코드 맵, 작업 재개 기준 | `docs/current_system/` |
+| 현재 코드 사실, 코드 맵, 작업 재개 기준, 현재 레벨링 정책 | `docs/current_system/` |
 | 기능 규칙, UX/데이터/아키텍처 계약 | `docs/specs/` |
 | 진행 상태, 구현 순서, open decision, 테스트 게이트 | `docs/planning/` |
 | 과거 문서, 병합본, 중복 요약, 프롬프트 | `docs/archive/` |

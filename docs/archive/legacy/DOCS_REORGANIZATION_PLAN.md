@@ -40,7 +40,7 @@
 - [x] Review checklist를 `docs/planning/STATUS.md`로 이동
 - [x] Implementation plan을 `docs/planning/IMPLEMENTATION_PLAN.md`로 이동
 - [x] Item effect matrix를 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`로 이동
-- [x] Board move / hand size feature plan을 `docs/planning/feature_plans/`로 이동
+- [x] Board move / hand size feature plan을 `docs/archive/feature_plans_2026_04/`로 이동
 - [x] Web build guide를 `docs/planning/verification/`로 이동
 - [x] Combined generated snapshot을 `docs/archive/generated/`로 이동
 - [x] Codex planning prompt를 `docs/archive/prompts/`로 이동

@@ -4,7 +4,7 @@
 > 코드 반영 상태: tile color weaken v1 implemented
 > 핵심 정책: Boss는 단순 target/resource 압박이 아니라, 진입 전 공개되는 visible rule modifier를 가진 전투로 설계한다. Balatro의 Boss/Stake 제약은 참고하되, Rummi Poker의 draw 기반 손패와 5x5 board 구조에 맞게 재해석한다.
 
-제약 표시 방식은 `docs/planning/feature_plans/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`를 기준으로 본다.
+제약 표시 방식은 `docs/archive/feature_plans_2026_04/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`를 기준으로 본다.
 
 Reference:
 

@@ -58,17 +58,21 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 3. [CURRENT_SYSTEM_OVERVIEW.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_SYSTEM_OVERVIEW.md)
 4. [CURRENT_CODE_MAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_CODE_MAP.md)
 5. [CURRENT_TO_V4_GAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_TO_V4_GAP.md)
-6. [STATUS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/STATUS.md)
-7. [IMPLEMENTATION_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/IMPLEMENTATION_PLAN.md)
-8. [MIGRATION_ROADMAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/MIGRATION_ROADMAP.md)
-9. [ITEM_EFFECT_RUNTIME_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md)
+6. [CURRENT_LEVELING_POLICY.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_LEVELING_POLICY.md)
+7. [CURRENT_LEVELING_ML_BASELINE.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_LEVELING_ML_BASELINE.md)
+8. [CURRENT_LEVELING_RUNTIME_SPEC.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md)
+9. [STATUS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/STATUS.md)
+10. [IMPLEMENTATION_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/IMPLEMENTATION_PLAN.md)
+11. [MIGRATION_ROADMAP.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/MIGRATION_ROADMAP.md)
+12. [ITEM_EFFECT_RUNTIME_MATRIX.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md)
 
-필요할 때만 추가로 본다.
+필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 
-- [BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/feature_plans/BOARD_MOVE_HAND_SIZE_ITEM_JESTER_PLAN.md)
 - [13_ITEM_SYSTEM_CONTRACT.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
 - [TEST_QA_ACCEPTANCE.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/verification/TEST_QA_ACCEPTANCE.md)
 - [OPEN_DECISIONS.md](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/planning/OPEN_DECISIONS.md)
+- [feature plan archive](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md)
+- [leveling archive](/Users/cheng80/Desktop/FlutterFrame_work/flame_binggo_card/docs/archive/leveling/00_leveling_archive_README.md)
 
 ## 현재 문서 매핑
 
@@ -77,9 +81,9 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 | 폴더 | GCSE 역할 | 현재 경로 | 역할 |
 | --- | --- | --- | --- |
 | goals | Goal | `docs/goals/*` | 제품 목표, 방향성, 의사결정 원칙 |
-| current_system | Context | `docs/current_system/*` | 현재 구현 상태, 코드 맵, current-to-target gap |
+| current_system | Context | `docs/current_system/*` | 현재 구현 상태, 코드 맵, current-to-target gap, 레벨링 현재 정책 |
 | specs | Spec | `docs/specs/V4/*.md` | 기능별 V4 명세 |
-| planning | Execution | `docs/planning/STATUS.md`, `docs/planning/IMPLEMENTATION_PLAN.md`, `docs/planning/MIGRATION_ROADMAP.md`, `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`, feature plan 문서 | 진행 상태, 구현 계획, 검증, 다음 작업 |
+| planning | Execution | `docs/planning/STATUS.md`, `docs/planning/IMPLEMENTATION_PLAN.md`, `docs/planning/MIGRATION_ROADMAP.md`, `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md` | 진행 상태, 구현 계획, 검증, 다음 작업 |
 | archive | Archive | `docs/archive/*`, generated/prompt/history 문서 | 최신 판단 기준은 아니지만 이력 검색에 사용할 수 있는 참고 자료 |
 
 ## Source of Truth
@@ -88,6 +92,9 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - 구현 계획: `docs/planning/IMPLEMENTATION_PLAN.md`
 - 이행 순서: `docs/planning/MIGRATION_ROADMAP.md`
 - Item effect 실행 상태: `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
+- 레벨링 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
+- 레벨링 ML 기준값: `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+- 레벨링 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 - 현재 코드 설명과 작업 재개 기준: `docs/current_system/*`
 - 기능 명세: `docs/specs/V4/*`
 - 과거 참고: `docs/archive/*`

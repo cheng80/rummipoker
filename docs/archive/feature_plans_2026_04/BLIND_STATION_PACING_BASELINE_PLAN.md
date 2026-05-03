@@ -202,7 +202,7 @@ output candidates:
 
 ## 9. Boss Modifier Follow-Up
 
-Detailed taxonomy and adoption order: `docs/planning/feature_plans/BOSS_MODIFIER_TAXONOMY_PLAN.md`.
+Detailed taxonomy and adoption order: `docs/archive/feature_plans_2026_04/BOSS_MODIFIER_TAXONOMY_PLAN.md`.
 
 Balatro-style Boss fights are not just higher target fights. They usually add a visible constraint that attacks part of the player's build: suit, hand type, card/rank, Joker, chip output, or round resource.
 
