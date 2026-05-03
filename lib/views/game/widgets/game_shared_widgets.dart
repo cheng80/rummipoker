@@ -1426,6 +1426,7 @@ class GameBoardGrid extends StatelessWidget {
     super.key,
     required this.board,
     required this.scoringCells,
+    required this.constrainedScoringCells,
     required this.activeSettlementCells,
     required this.settlementBoardSnapshot,
     required this.selectedRow,
@@ -1440,6 +1441,7 @@ class GameBoardGrid extends StatelessWidget {
 
   final RummiBoard board;
   final Set<String> scoringCells;
+  final Set<String> constrainedScoringCells;
   final Set<String> constrainedCells;
   final Set<String> activeSettlementCells;
   final Map<String, Tile> settlementBoardSnapshot;
@@ -1488,10 +1490,14 @@ class GameBoardGrid extends StatelessWidget {
                         board.cellAt(row, col) ??
                         settlementBoardSnapshot['$row:$col'];
                     final selected = selectedRow == row && selectedCol == col;
-                    final scoring = scoringCells.contains('$row:$col');
-                    final constrained = constrainedCells.contains('$row:$col');
+                    final cellKey = '$row:$col';
+                    final scoring = scoringCells.contains(cellKey);
+                    final constrainedScoring = constrainedScoringCells.contains(
+                      cellKey,
+                    );
+                    final constrained = constrainedCells.contains(cellKey);
                     final settlementActive = activeSettlementCells.contains(
-                      '$row:$col',
+                      cellKey,
                     );
                     final isMoveSource =
                         boardMoveMode &&
@@ -1505,6 +1511,7 @@ class GameBoardGrid extends StatelessWidget {
                       tile: tile,
                       selected: selected,
                       scoring: scoring,
+                      constrainedScoring: constrainedScoring,
                       constrained: constrained,
                       settlementActive: settlementActive,
                       moveSource: isMoveSource,
@@ -1529,6 +1536,7 @@ class GameBoardCell extends StatelessWidget {
     required this.tile,
     required this.selected,
     required this.scoring,
+    required this.constrainedScoring,
     required this.constrained,
     required this.settlementActive,
     required this.moveSource,
@@ -1540,6 +1548,7 @@ class GameBoardCell extends StatelessWidget {
   final Tile? tile;
   final bool selected;
   final bool scoring;
+  final bool constrainedScoring;
   final bool constrained;
   final bool settlementActive;
   final bool moveSource;
@@ -1559,6 +1568,8 @@ class GameBoardCell extends StatelessWidget {
         ? const Color(0xFFF76D5E)
         : settlementActive
         ? const Color(0xFF86F4C3)
+        : constrainedScoring
+        ? const Color(0xFFE45A5F)
         : scoring
         ? const Color(0xFFF4C45A)
         : Colors.white.withValues(alpha: 0.1);
@@ -1591,6 +1602,7 @@ class GameBoardCell extends StatelessWidget {
                   width:
                       selected ||
                           settlementActive ||
+                          constrainedScoring ||
                           moveSource ||
                           moveAvailable
                       ? 2

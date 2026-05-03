@@ -271,6 +271,7 @@ void main() {
               child: GameBoardGrid(
                 board: board,
                 scoringCells: const {},
+                constrainedScoringCells: const {},
                 activeSettlementCells: const {},
                 settlementBoardSnapshot: const {},
                 selectedRow: 0,

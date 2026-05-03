@@ -2170,6 +2170,8 @@ class _GameLayout extends StatelessWidget {
                     child: GameBoardGrid(
                       board: battle.board,
                       scoringCells: scoringCells,
+                      constrainedScoringCells:
+                          battle.constrainedScoringCellKeys,
                       constrainedCells: constrainedCells,
                       activeSettlementCells: activeSettlementCells,
                       settlementBoardSnapshot: settlementBoardSnapshot,
@@ -2575,6 +2577,7 @@ class _ScoringPreviewChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final preview = this.preview;
+    final hasConstraint = preview?.hasConstraintPenalty ?? false;
     final accent = preview == null
         ? Colors.white.withValues(alpha: 0.34)
         : const Color(0xFFF4A81D);
@@ -2583,6 +2586,8 @@ class _ScoringPreviewChip extends StatelessWidget {
         : '${preview.lineCount}줄 · ${gameHandRankLabel(preview.representativeRank)} · 예상 +${preview.expectedScore}';
     final detail = preview == null
         ? '족보 줄을 만들면 빌드 효과가 미리 표시됩니다'
+        : hasConstraint
+        ? '약화 -${preview.constraintPenaltyPercent}%'
         : 'Base ${preview.baseScore}'
               '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
               ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';
@@ -2619,7 +2624,7 @@ class _ScoringPreviewChip extends StatelessWidget {
                         child: Text(
                           label,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.clip,
                           style: TextStyle(
                             color: preview == null
                                 ? Colors.white54
@@ -2630,12 +2635,15 @@ class _ScoringPreviewChip extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
+                      const SizedBox(width: 6),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: hasConstraint ? 58 : 92,
+                        ),
                         child: Text(
                           detail,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.clip,
                           textAlign: TextAlign.right,
                           style: TextStyle(
                             color: accent,

@@ -16,6 +16,7 @@ class RummiScoringPreview {
     required this.expectedJesterEffectCount,
     required this.expectedItemEffectCount,
     required this.expectedScore,
+    required this.constraintPenaltyPercent,
   });
 
   factory RummiScoringPreview.fromBreakdowns({
@@ -29,7 +30,11 @@ class RummiScoringPreview {
     final effectIds = <String>{};
     var jesterEffectCount = 0;
     var itemEffectCount = 0;
+    RummiConstraintPenaltyBreakdown? constraintPenalty;
     for (final line in lines) {
+      if (constraintPenalty == null && line.constraintPenalties.isNotEmpty) {
+        constraintPenalty = line.constraintPenalties.first;
+      }
       for (final effect in line.effects) {
         final key = '${effect.jesterId}:${effect.displayToken}';
         if (!effectIds.add(key)) continue;
@@ -48,6 +53,9 @@ class RummiScoringPreview {
       expectedJesterEffectCount: jesterEffectCount,
       expectedItemEffectCount: itemEffectCount,
       expectedScore: expectedScore,
+      constraintPenaltyPercent: constraintPenalty == null
+          ? null
+          : ((1 - constraintPenalty.scoreMultiplier) * 100).round(),
     );
   }
 
@@ -58,9 +66,11 @@ class RummiScoringPreview {
   final int expectedJesterEffectCount;
   final int expectedItemEffectCount;
   final int expectedScore;
+  final int? constraintPenaltyPercent;
 
   int get expectedEffectCount =>
       expectedJesterEffectCount + expectedItemEffectCount;
+  bool get hasConstraintPenalty => constraintPenaltyPercent != null;
 }
 
 class RummiBattleItemSlotView {
@@ -138,6 +148,7 @@ class RummiBattleRuntimeFacade {
     required this.board,
     required this.hand,
     required this.scoringCellKeys,
+    this.constrainedScoringCellKeys = const {},
     this.bossModifier,
     this.scoringPreview,
     this.itemSlots = const [],
@@ -174,6 +185,15 @@ class RummiBattleRuntimeFacade {
             },
           )
         : null;
+    final constrainedScoringCellKeys = <String>{};
+    if (previewOut.result.ok) {
+      for (final line in previewOut.result.lineBreakdowns) {
+        if (line.constraintPenalties.isEmpty) continue;
+        for (final (row, col) in line.contributingCells) {
+          constrainedScoringCellKeys.add('$row:$col');
+        }
+      }
+    }
 
     return RummiBattleRuntimeFacade(
       stageIndex: runProgress.stageIndex,
@@ -183,6 +203,9 @@ class RummiBattleRuntimeFacade {
       board: session.board,
       hand: List<Tile>.unmodifiable(session.hand),
       scoringCellKeys: Set<String>.unmodifiable(scoringCellKeys),
+      constrainedScoringCellKeys: Set<String>.unmodifiable(
+        constrainedScoringCellKeys,
+      ),
       bossModifier: session.blind.bossModifier,
       scoringPreview: scoringPreview,
       itemSlots: const [],
@@ -200,6 +223,7 @@ class RummiBattleRuntimeFacade {
       board: board,
       hand: hand,
       scoringCellKeys: scoringCellKeys,
+      constrainedScoringCellKeys: constrainedScoringCellKeys,
       bossModifier: bossModifier,
       scoringPreview: scoringPreview,
       itemSlots: List<RummiBattleItemSlotView>.unmodifiable(nextItemSlots),
@@ -213,6 +237,7 @@ class RummiBattleRuntimeFacade {
   final RummiBoard board;
   final List<Tile> hand;
   final Set<String> scoringCellKeys;
+  final Set<String> constrainedScoringCellKeys;
   final RummiBossModifier? bossModifier;
   final RummiScoringPreview? scoringPreview;
   final List<RummiBattleItemSlotView> itemSlots;

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../logic/rummi_poker_grid/hand_rank.dart';
+import '../logic/rummi_poker_grid/boss_modifier.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/models/board.dart';
@@ -39,6 +40,11 @@ class DebugRunFixtureService {
   static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
+  static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
+  static const String bossColumnConstraintPreview =
+      'boss_column_constraint_preview';
+  static const String bossDiagonalConstraintPreview =
+      'boss_diagonal_constraint_preview';
 
   /// 새 디버그 픽스처는 여기에 등록하고, 아래에 대응하는 builder를 추가한다.
   static final List<DebugRunFixtureDefinition> _fixtures = [
@@ -103,6 +109,24 @@ class DebugRunFixtureService {
       description:
           '점수 preview pulse / line confirm particle / quick item toast 검증용',
       builder: _buildAnimationEffectsEyeCheck,
+    ),
+    DebugRunFixtureDefinition(
+      id: bossRowConstraintPreview,
+      label: 'Boss 가로줄 제약',
+      description: '가로줄 약화 보스전 / 확정 가능한 가로줄 표시 검증용',
+      builder: _buildBossRowConstraintPreview,
+    ),
+    DebugRunFixtureDefinition(
+      id: bossColumnConstraintPreview,
+      label: 'Boss 세로줄 제약',
+      description: '세로줄 약화 보스전 / 확정 가능한 세로줄 표시 검증용',
+      builder: _buildBossColumnConstraintPreview,
+    ),
+    DebugRunFixtureDefinition(
+      id: bossDiagonalConstraintPreview,
+      label: 'Boss 대각선 제약',
+      description: '대각선 약화 보스전 / 확정 가능한 대각선 표시 검증용',
+      builder: _buildBossDiagonalConstraintPreview,
     ),
   ];
 
@@ -770,6 +794,101 @@ class DebugRunFixtureService {
         passiveRelicIds: ['safety_net'],
       ),
     );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildBossRowConstraintPreview() {
+    final board = RummiBoard()
+      ..setCell(1, 0, _tile(TileColor.red, 1))
+      ..setCell(1, 1, _tile(TileColor.blue, 2))
+      ..setCell(1, 2, _tile(TileColor.black, 3))
+      ..setCell(1, 3, _tile(TileColor.yellow, 4))
+      ..setCell(1, 4, _tile(TileColor.red, 5))
+      ..setCell(3, 1, _tile(TileColor.blue, 9))
+      ..setCell(4, 3, _tile(TileColor.yellow, 12));
+    return _buildBossLineConstraintPreview(
+      seed: 2026050401,
+      stageIndex: 2,
+      board: board,
+      modifier: RummiBossModifier.rowDampener,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildBossColumnConstraintPreview() {
+    final board = RummiBoard()
+      ..setCell(0, 2, _tile(TileColor.red, 1))
+      ..setCell(1, 2, _tile(TileColor.blue, 2))
+      ..setCell(2, 2, _tile(TileColor.black, 3))
+      ..setCell(3, 2, _tile(TileColor.yellow, 4))
+      ..setCell(4, 2, _tile(TileColor.red, 5))
+      ..setCell(0, 4, _tile(TileColor.blue, 9))
+      ..setCell(4, 0, _tile(TileColor.yellow, 12));
+    return _buildBossLineConstraintPreview(
+      seed: 2026050402,
+      stageIndex: 4,
+      board: board,
+      modifier: RummiBossModifier.columnDampener,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildBossDiagonalConstraintPreview() {
+    final board = RummiBoard()
+      ..setCell(0, 0, _tile(TileColor.red, 1))
+      ..setCell(1, 1, _tile(TileColor.blue, 2))
+      ..setCell(2, 2, _tile(TileColor.black, 3))
+      ..setCell(3, 3, _tile(TileColor.yellow, 4))
+      ..setCell(4, 4, _tile(TileColor.red, 5))
+      ..setCell(0, 4, _tile(TileColor.blue, 9))
+      ..setCell(4, 0, _tile(TileColor.yellow, 12));
+    return _buildBossLineConstraintPreview(
+      seed: 2026050403,
+      stageIndex: 6,
+      board: board,
+      modifier: RummiBossModifier.diagonalDampener,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildBossLineConstraintPreview({
+    required int seed,
+    required int stageIndex,
+    required RummiBoard board,
+    required RummiBossModifier modifier,
+  }) {
+    final session = RummiPokerGridSession.restored(
+      runSeed: seed,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: 1,
+      runRandomState: SeededRandom(seed).state,
+      blind: RummiBlindState(
+        targetScore: 285,
+        boardDiscardsRemaining: 4,
+        handDiscardsRemaining: 2,
+        scoreTowardBlind: 0,
+        bossModifier: modifier,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board, random: Random(seed)),
+      board: board,
+      hand: const [],
+      eliminated: const [],
+    );
+    final runProgress = RummiRunProgress.restore(
+      stageIndex: stageIndex,
+      gold: 30,
+      rerollCost: RummiRunProgress.shopBaseRerollCost,
+      ownedJesters: const [],
+      shopOffers: const [],
+      statefulValuesBySlot: const {},
+      playedHandCounts: const <RummiHandRank, int>{},
+    )..currentStationBlindTierIndex = 2;
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
       difficulty: NewRunDifficulty.standard,

@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/debug_run_fixture_service.dart';
@@ -209,6 +211,43 @@ void main() {
       'move_token',
     ]);
     expect(fixture.runProgress.itemInventory.passiveRelicIds, ['spare_pouch']);
+  });
+
+  test('boss line constraint fixtures expose confirmable line penalties', () {
+    final cases = [
+      (
+        id: DebugRunFixtureService.bossRowConstraintPreview,
+        modifier: RummiBossModifier.rowDampener,
+        kind: LineKind.row,
+      ),
+      (
+        id: DebugRunFixtureService.bossColumnConstraintPreview,
+        modifier: RummiBossModifier.columnDampener,
+        kind: LineKind.col,
+      ),
+      (
+        id: DebugRunFixtureService.bossDiagonalConstraintPreview,
+        modifier: RummiBossModifier.diagonalDampener,
+        kind: LineKind.diagMain,
+      ),
+    ];
+
+    for (final c in cases) {
+      final fixture = DebugRunFixtureService.build(c.id);
+
+      expect(fixture, isNotNull, reason: c.id);
+      expect(fixture!.activeScene, ActiveRunScene.battle, reason: c.id);
+      expect(fixture.runProgress.currentStationBlindTierIndex, 2);
+      expect(fixture.session.blind.bossModifier?.id, c.modifier.id);
+      expect(fixture.session.canConfirmAllFullLines, isTrue, reason: c.id);
+
+      final out = fixture.session.confirmAllFullLines(applyScoreToBlind: false);
+      expect(out.result.lineBreakdowns, hasLength(1), reason: c.id);
+      final line = out.result.lineBreakdowns.single;
+      expect(line.ref.kind, c.kind, reason: c.id);
+      expect(line.constraintPenalties, hasLength(1), reason: c.id);
+      expect(line.constraintPenalties.single.modifierId, c.modifier.id);
+    }
   });
 
   test('safety net fixture starts with board-full expiry guard state', () {
