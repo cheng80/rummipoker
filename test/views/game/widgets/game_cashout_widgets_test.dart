@@ -44,6 +44,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('cashout-collect-badge')), findsWidgets);
     expect(find.byKey(const ValueKey('cashout-line-pulse')), findsWidgets);
+    expect(find.byKey(const ValueKey('cashout-reveal-size')), findsWidgets);
     expect(find.text('+5'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 2));

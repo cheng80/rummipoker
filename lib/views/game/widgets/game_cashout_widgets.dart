@@ -392,107 +392,112 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white12),
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  '정산 완료',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    '정산 완료',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                _GameCashOutReveal(
-                  visible: _step >= 1,
-                  child: _GameCashOutLine.fromSettlementEntry(
-                    settlement.entries[0],
+                  const SizedBox(height: 14),
+                  _GameCashOutReveal(
+                    visible: _step >= 1,
+                    child: _GameCashOutLine.fromSettlementEntry(
+                      settlement.entries[0],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _GameCashOutReveal(
-                  visible: _step >= 2,
-                  child: _GameCashOutLine.fromSettlementEntry(
-                    settlement.entries[1],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _GameCashOutReveal(
-                  visible: _step >= 3,
-                  child: _GameCashOutLine.fromSettlementEntry(
-                    settlement.entries[2],
-                  ),
-                ),
-                if (hasBonuses) ...[
                   const SizedBox(height: 8),
                   _GameCashOutReveal(
-                    visible: _step >= 4,
-                    child: Column(
-                      children: [
-                        for (final entry in settlement.entries.where(
-                          (entry) => entry.isBonus,
-                        )) ...[
-                          _GameCashOutLine(
-                            leading: entry.leadingLabel,
-                            text: _bonusEntryDescription(context, entry),
-                            gold: entry.gold,
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      ],
+                    visible: _step >= 2,
+                    child: _GameCashOutLine.fromSettlementEntry(
+                      settlement.entries[1],
                     ),
                   ),
-                ],
-                const SizedBox(height: 12),
-                _GameCashOutReveal(
-                  visible: _step >= (hasBonuses ? 5 : 4),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
+                  const SizedBox(height: 8),
+                  _GameCashOutReveal(
+                    visible: _step >= 3,
+                    child: _GameCashOutLine.fromSettlementEntry(
+                      settlement.entries[2],
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(16),
+                  ),
+                  if (hasBonuses) ...[
+                    const SizedBox(height: 8),
+                    _GameCashOutReveal(
+                      visible: _step >= 4,
+                      child: Column(
+                        children: [
+                          for (final entry in settlement.entries.where(
+                            (entry) => entry.isBonus,
+                          )) ...[
+                            _GameCashOutLine(
+                              leading: entry.leadingLabel,
+                              text: _bonusEntryDescription(context, entry),
+                              gold: entry.gold,
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '보유 골드 ${settlement.currentGold}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                  ],
+                  const SizedBox(height: 12),
+                  _GameCashOutReveal(
+                    visible: _step >= (hasBonuses ? 5 : 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '보유 골드 ${settlement.currentGold}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          '+${settlement.totalGold}',
-                          style: const TextStyle(
-                            color: Color(0xFFF2C14E),
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
+                          Text(
+                            '+${settlement.totalGold}',
+                            style: const TextStyle(
+                              color: Color(0xFFF2C14E),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                GameActionButton(
-                  label: 'Market으로',
-                  background: const Color(0xFFF4A81D),
-                  foreground: Colors.black,
-                  onPressed: _step < 3
-                      ? null
-                      : () => Navigator.of(context).pop(true),
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  GameActionButton(
+                    label: 'Market으로',
+                    background: const Color(0xFFF4A81D),
+                    foreground: Colors.black,
+                    onPressed: _step < 3
+                        ? null
+                        : () => Navigator.of(context).pop(true),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -530,17 +535,17 @@ class _GameCashOutReveal extends StatelessWidget {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
-        final offset = Tween<Offset>(
-          begin: const Offset(0, 0.18),
-          end: Offset.zero,
-        ).animate(animation);
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: offset,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.98, end: 1).animate(animation),
-              child: child,
+        return ClipRect(
+          child: SizeTransition(
+            key: const ValueKey('cashout-reveal-size'),
+            sizeFactor: animation,
+            axisAlignment: -1,
+            child: FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.99, end: 1).animate(animation),
+                child: child,
+              ),
             ),
           ),
         );
