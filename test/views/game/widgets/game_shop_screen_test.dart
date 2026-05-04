@@ -190,6 +190,18 @@ void main() {
           itemOfferSlotCount: currentMarket.itemOfferSlotCount,
           quickSlotCapacity: currentMarket.quickSlotCapacity,
           itemOffers: [nextItemOffer],
+          itemSlots: [
+            RummiMarketItemSlotView.fromOwnedItem(
+              slotIndex: 0,
+              slotLabel: 'T1',
+              entry: const OwnedItemEntry(
+                itemId: 'reroll_token',
+                count: 1,
+                placement: ItemPlacement.inventory,
+              ),
+              item: offer.item,
+            ),
+          ],
         );
         currentSave = const RummiActiveRunSaveFacade(
           schemaVersion: 2,
@@ -277,6 +289,13 @@ void main() {
     expect(descriptionBox.constraints.minHeight, greaterThanOrEqualTo(28));
 
     await tester.tap(find.text('구매'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(
+      find.byKey(const ValueKey('market-purchase-flight')),
+      findsOneWidget,
+    );
+
     await tester.pumpAndSettle();
 
     expect(boughtItemId, 'reroll_token');
@@ -294,6 +313,14 @@ void main() {
     expect(find.text('1/5'), findsNothing);
 
     await tester.tap(find.text('구매'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(
+      find.byKey(const ValueKey('market-purchase-flight')),
+      findsOneWidget,
+    );
+    expect(find.text('J1'), findsOneWidget);
+
     await tester.pumpAndSettle();
 
     expect(find.text('5'), findsOneWidget);

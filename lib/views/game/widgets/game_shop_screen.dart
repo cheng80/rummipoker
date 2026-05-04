@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +60,20 @@ class _MarketOfferEntry {
   final int? itemIndex;
 }
 
+class _MarketPurchaseFlight {
+  const _MarketPurchaseFlight({
+    required this.tick,
+    required this.label,
+    required this.slotLabel,
+    required this.item,
+  });
+
+  final int tick;
+  final String label;
+  final String slotLabel;
+  final bool item;
+}
+
 class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
@@ -108,6 +123,8 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _selectedItemSlotIndex = -1;
   int _mainOfferPage = 0;
   int _utilityOfferPage = 0;
+  int _purchaseFlightTick = 0;
+  _MarketPurchaseFlight? _purchaseFlight;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
 
@@ -519,6 +536,9 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _buySelected() {
     final index = _selectedOfferIndex;
     if (index == null) return;
+    final offers = _market.offers;
+    if (index < 0 || index >= offers.length) return;
+    final boughtOffer = offers[index];
     final failMessage = widget.onBuyOffer(index);
     if (failMessage != null) {
       showBottomNotice(context, failMessage);
@@ -526,7 +546,19 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     setState(() {
       final market = _market;
-      if (market.ownedEntries.isNotEmpty) {
+      final purchasedSlot = _findPurchasedJesterSlot(market, boughtOffer);
+      if (purchasedSlot != null) {
+        _shopTab = _MarketShopTab.cardsAndQuickSlots;
+        _selectedOwnedIndex = purchasedSlot.slotIndex;
+        _selectedOfferIndex = null;
+        _selectedItemOfferIndex = -1;
+        _selectedItemSlotIndex = -1;
+        _startPurchaseFlight(
+          label: boughtOffer.displayName,
+          slotLabel: 'J${purchasedSlot.slotIndex + 1}',
+          item: false,
+        );
+      } else if (market.ownedEntries.isNotEmpty) {
         _selectedOwnedIndex = market.ownedEntries.length - 1;
         _selectedOfferIndex = null;
       } else {
@@ -540,23 +572,88 @@ class _GameShopScreenState extends State<GameShopScreen>
     final offers = _market.itemOffers;
     final index = _selectedItemOfferIndex;
     if (index < 0 || index >= offers.length) return;
-    final failMessage = widget.onBuyItemOffer(offers[index]);
+    final boughtOffer = offers[index];
+    final failMessage = widget.onBuyItemOffer(boughtOffer);
     if (failMessage != null) {
       showBottomNotice(context, failMessage);
       return;
     }
     setState(() {
-      final nextEntries = _offerEntriesForTab(_market, _shopTab);
-      final stillSelected = nextEntries.any(
-        (entry) =>
-            entry.kind == _MarketOfferEntryKind.item &&
-            entry.itemIndex == _selectedItemOfferIndex,
-      );
-      if (!stillSelected) {
-        _selectFirstEntry(nextEntries);
+      final market = _market;
+      final purchasedSlot = _findPurchasedItemSlot(market, boughtOffer);
+      if (purchasedSlot != null) {
+        _shopTab = switch (purchasedSlot.placement) {
+          ItemPlacement.quickSlot ||
+          ItemPlacement.passiveRack => _MarketShopTab.cardsAndQuickSlots,
+          ItemPlacement.inventory ||
+          ItemPlacement.equipped => _MarketShopTab.toolsAndGear,
+        };
+        _selectedItemSlotIndex = purchasedSlot.slotIndex;
+        _selectedItemOfferIndex = -1;
+        _selectedOfferIndex = null;
+        _selectedOwnedIndex = null;
+        _startPurchaseFlight(
+          label: boughtOffer.displayName,
+          slotLabel: purchasedSlot.slotLabel,
+          item: true,
+        );
+      } else {
+        final nextEntries = _offerEntriesForTab(market, _shopTab);
+        final stillSelected = nextEntries.any(
+          (entry) =>
+              entry.kind == _MarketOfferEntryKind.item &&
+              entry.itemIndex == _selectedItemOfferIndex,
+        );
+        if (!stillSelected) {
+          _selectFirstEntry(nextEntries);
+        }
       }
     });
     widget.onStateChanged();
+  }
+
+  RummiMarketItemSlotView? _findPurchasedItemSlot(
+    RummiMarketRuntimeFacade market,
+    RummiMarketItemOfferView offer,
+  ) {
+    for (final slot in market.itemSlots) {
+      if (slot.contentId == offer.contentId &&
+          slot.placement == offer.item.placement) {
+        return slot;
+      }
+    }
+    return null;
+  }
+
+  RummiMarketOwnedEntryView? _findPurchasedJesterSlot(
+    RummiMarketRuntimeFacade market,
+    RummiMarketOfferView offer,
+  ) {
+    for (final entry in market.ownedEntries.reversed) {
+      if (entry.contentId == offer.contentId) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  void _startPurchaseFlight({
+    required String label,
+    required String slotLabel,
+    required bool item,
+  }) {
+    final tick = _purchaseFlightTick + 1;
+    _purchaseFlightTick = tick;
+    _purchaseFlight = _MarketPurchaseFlight(
+      tick: tick,
+      label: label,
+      slotLabel: slotLabel,
+      item: item,
+    );
+    Future<void>.delayed(const Duration(milliseconds: 760), () {
+      if (!mounted || _purchaseFlight?.tick != tick) return;
+      setState(() => _purchaseFlight = null);
+    });
   }
 
   void _useSelectedMarketItem(RummiMarketItemSlotView slot) {
@@ -1296,6 +1393,10 @@ class _GameShopScreenState extends State<GameShopScreen>
                   ],
                 ),
               ),
+              if (_purchaseFlight != null)
+                Positioned.fill(
+                  child: _MarketPurchaseFlightOverlay(flight: _purchaseFlight!),
+                ),
             ],
           ),
         ),
@@ -2340,6 +2441,113 @@ class _MarketSelectableCardFrame extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _MarketPurchaseFlightOverlay extends StatelessWidget {
+  const _MarketPurchaseFlightOverlay({required this.flight});
+
+  final _MarketPurchaseFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    final start = flight.item
+        ? const Alignment(0.52, 0.64)
+        : const Alignment(-0.42, 0.64);
+    final end = flight.item
+        ? const Alignment(-0.52, -0.22)
+        : const Alignment(-0.42, -0.48);
+    return IgnorePointer(
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey<int>(flight.tick),
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 620),
+        curve: Curves.easeInOutCubic,
+        builder: (context, value, child) {
+          final alignment = Alignment.lerp(start, end, value)!;
+          final lift = -22 * math.sin(math.pi * value);
+          final scale = 0.88 + (0.16 * math.sin(math.pi * value));
+          final opacity = value < 0.82 ? 1.0 : (1 - value) / 0.18;
+          return Align(
+            alignment: alignment,
+            child: Opacity(
+              opacity: opacity.clamp(0.0, 1.0),
+              child: Transform.translate(
+                offset: Offset(0, lift),
+                child: Transform.scale(scale: scale, child: child),
+              ),
+            ),
+          );
+        },
+        child: _MarketPurchaseFlightCard(flight: flight),
+      ),
+    );
+  }
+}
+
+class _MarketPurchaseFlightCard extends StatelessWidget {
+  const _MarketPurchaseFlightCard({required this.flight});
+
+  final _MarketPurchaseFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      key: const ValueKey('market-purchase-flight'),
+      decoration: BoxDecoration(
+        color: flight.item ? const Color(0xFFE9F6EF) : const Color(0xFFF7E7B8),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF2C14E), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF2C14E).withValues(alpha: 0.32),
+            blurRadius: 18,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: 78,
+        height: 52,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 5,
+            children: [
+              Text(
+                flight.slotLabel,
+                maxLines: 1,
+                overflow: TextOverflow.clip,
+                style: const TextStyle(
+                  color: Color(0xFF26352F),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              Text(
+                flight.label,
+                maxLines: 2,
+                overflow: TextOverflow.clip,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF26352F),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  height: 1.05,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
