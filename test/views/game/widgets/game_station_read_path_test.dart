@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -160,6 +161,59 @@ void main() {
 
     expect(find.text('520/900'), findsOneWidget);
     expect(pulseSize, idleSize);
+  });
+
+  testWidgets('GameTopHud surfaces active boss constraint in blind chip', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 520,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 8,
+      currentBlindTierIndex: 2,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+      bossModifier: RummiBossModifier.confirmCountTax,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 390,
+            child: GameTopHud(
+              station: station,
+              battle: battle,
+              onOptionsTap: () {},
+              onBlindInfoTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('BOSS'), findsOneWidget);
+    expect(find.text('3+'), findsOneWidget);
+    expect(find.text('누적 확정 약화'), findsOneWidget);
+    expect(find.text('보상 +3'), findsNothing);
   });
 
   testWidgets('GameTopHud can trail settled score with display override', (

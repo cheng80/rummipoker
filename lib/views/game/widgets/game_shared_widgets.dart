@@ -122,6 +122,7 @@ class GameTopHud extends StatelessWidget {
     final goldDisplayValue = '${battle.currentGold}';
     final blindLabel = _battleBlindLabel(battle.currentBlindTierIndex);
     final blindColor = _battleBlindColor(battle.currentBlindTierIndex);
+    final bossModifier = battle.bossModifier;
 
     return SizedBox(
       height: 62,
@@ -165,13 +166,19 @@ class GameTopHud extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 0),
-                    Text(
-                      '보상 +${RummiRunProgress.stageClearGoldBase}',
-                      style: gameHudSubStyle,
-                      maxLines: 1,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    if (bossModifier == null)
+                      Text(
+                        '보상 +${RummiRunProgress.stageClearGoldBase}',
+                        style: gameHudSubStyle,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    else
+                      _BossModifierHudLabel(
+                        markerText: bossModifier.markerText,
+                        title: bossModifier.title,
+                      ),
                   ],
                 ),
               ),
@@ -316,6 +323,68 @@ class GameTopHud extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BossModifierHudLabel extends StatelessWidget {
+  const _BossModifierHudLabel({required this.markerText, required this.title});
+
+  final String markerText;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 13,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 12,
+            constraints: const BoxConstraints(minWidth: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF8A5B).withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.45),
+                width: 0.7,
+              ),
+            ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                markerText,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Color(0xFF24120D),
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 3),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: gameHudSubStyle.copyWith(
+                  color: const Color(0xFFFFD8CC),
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ),
