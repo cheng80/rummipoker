@@ -1498,14 +1498,23 @@ class _GameItemEffectBurst extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 760),
+      duration: const Duration(milliseconds: 940),
+      curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final fade = value < 0.18
             ? value / 0.18
-            : value > 0.76
-            ? (1 - value) / 0.24
+            : value > 0.82
+            ? (1 - value) / 0.18
             : 1.0;
-        return Opacity(opacity: fade.clamp(0.0, 1.0), child: child);
+        final dy = -6 * value;
+        final scale = 0.88 + value * 0.12;
+        return Opacity(
+          opacity: fade.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, dy),
+            child: Transform.scale(scale: scale, child: child),
+          ),
+        );
       },
       child: Center(
         child: DecoratedBox(

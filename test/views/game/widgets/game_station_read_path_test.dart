@@ -1165,6 +1165,10 @@ void main() {
     );
 
     expect(find.text('+Chips 50'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('item-burst-chip_capsule-1')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('GameBattleItemInfoOverlay confirms use from explicit button', (
