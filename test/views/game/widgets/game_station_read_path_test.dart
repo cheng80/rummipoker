@@ -7,6 +7,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_station_facade.dart';
+import 'package:rummipoker/views/game/widgets/game_hand_zone.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
 void main() {
@@ -307,6 +308,65 @@ void main() {
     expect(find.text('이동 3/3'), findsOneWidget);
     expect(find.text('보드 버림 3/4'), findsOneWidget);
     expect(find.text('손패 2/3 · 버림 1/2'), findsOneWidget);
+  });
+
+  testWidgets('GameHandZone animates one removed hand tile', (tester) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 3,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 14,
+      ),
+    );
+    final board = RummiBoard();
+    final first = Tile(id: 1, color: TileColor.red, number: 1);
+    final second = Tile(id: 2, color: TileColor.blue, number: 2);
+    var hand = [first, second];
+
+    Widget buildHandZone() {
+      final battle = RummiBattleRuntimeFacade(
+        stageIndex: 4,
+        currentGold: 27,
+        totalDeckSize: 52,
+        board: board,
+        hand: hand,
+        scoringCellKeys: const {},
+      );
+      return MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 120,
+            child: GameHandZone(
+              battle: battle,
+              station: station,
+              hand: hand,
+              selectedHandTile: null,
+              onHandTileTap: (_) {},
+              onDraw: () {},
+              tileWidth: 48,
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildHandZone());
+    hand = [second];
+    await tester.pumpWidget(buildHandZone());
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('discarding-R1#1')), findsOneWidget);
   });
 
   testWidgets(

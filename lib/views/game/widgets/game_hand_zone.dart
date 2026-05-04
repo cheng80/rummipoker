@@ -40,6 +40,7 @@ class _GameHandZoneState extends State<GameHandZone>
   List<Tile> _fromHand = <Tile>[];
   List<Tile> _toHand = <Tile>[];
   Tile? _incomingTile;
+  Tile? _discardingTile;
   bool _animating = false;
 
   @override
@@ -54,6 +55,7 @@ class _GameHandZoneState extends State<GameHandZone>
           _settledHand = List<Tile>.from(_toHand);
           _fromHand = List<Tile>.from(_toHand);
           _incomingTile = null;
+          _discardingTile = null;
           _animating = false;
         });
       });
@@ -83,22 +85,34 @@ class _GameHandZoneState extends State<GameHandZone>
         widget.hand.length == oldWidget.hand.length &&
         addedKeys.length == 1 &&
         removedKeys.length == 1;
+    final isSingleRemoval =
+        widget.hand.length == oldWidget.hand.length - 1 &&
+        addedKeys.isEmpty &&
+        removedKeys.length == 1;
 
-    if (!isSimpleAppend && !isOneForOneReplacement) {
+    if (!isSimpleAppend && !isOneForOneReplacement && !isSingleRemoval) {
       _controller.stop();
       setState(() {
         _settledHand = List<Tile>.from(widget.hand);
         _fromHand = List<Tile>.from(widget.hand);
         _toHand = List<Tile>.from(widget.hand);
         _incomingTile = null;
+        _discardingTile = null;
         _animating = false;
       });
       return;
     }
 
-    final incoming = widget.hand.firstWhere(
-      (tile) => addedKeys.contains(_handTileKey(tile)),
-    );
+    final incoming = addedKeys.isEmpty
+        ? null
+        : widget.hand.firstWhere(
+            (tile) => addedKeys.contains(_handTileKey(tile)),
+          );
+    final discarding = removedKeys.isEmpty
+        ? null
+        : oldWidget.hand.firstWhere(
+            (tile) => removedKeys.contains(_handTileKey(tile)),
+          );
 
     _controller
       ..stop()
@@ -112,6 +126,7 @@ class _GameHandZoneState extends State<GameHandZone>
           : List<Tile>.from(oldWidget.hand);
       _toHand = List<Tile>.from(widget.hand);
       _incomingTile = incoming;
+      _discardingTile = isSingleRemoval ? discarding : null;
       _animating = true;
     });
     _controller.forward();
@@ -165,8 +180,13 @@ class _GameHandZoneState extends State<GameHandZone>
                           final sel = widget.selectedHandTile;
                           final handPaintOrder = <Tile>[
                             for (final tile in displayedHand)
-                              if (sel == null || tile != sel) tile,
-                            if (sel != null && displayedHand.contains(sel)) sel,
+                              if ((sel == null || tile != sel) &&
+                                  tile != _discardingTile)
+                                tile,
+                            if (sel != null &&
+                                displayedHand.contains(sel) &&
+                                sel != _discardingTile)
+                              sel,
                           ];
                           return Stack(
                             clipBehavior: Clip.none,
@@ -176,6 +196,13 @@ class _GameHandZoneState extends State<GameHandZone>
                                   tile,
                                   fromLayouts: fromLayouts,
                                   toLayouts: toLayouts,
+                                  areaSize: constraints.biggest,
+                                  t: t,
+                                ),
+                              if (_discardingTile != null)
+                                _buildDiscardingTile(
+                                  _discardingTile!,
+                                  fromLayouts: fromLayouts,
                                   areaSize: constraints.biggest,
                                   t: t,
                                 ),
@@ -246,6 +273,47 @@ class _GameHandZoneState extends State<GameHandZone>
             tile: tile,
             selected: widget.selectedHandTile == tile,
             constrained: widget.battle.isTileConstrained(tile),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiscardingTile(
+    Tile tile, {
+    required Map<String, _HandSlotLayout> fromLayouts,
+    required Size areaSize,
+    required double t,
+  }) {
+    final key = _handTileKey(tile);
+    final from = fromLayouts[key];
+    if (from == null) {
+      return const SizedBox.shrink();
+    }
+    final eased = Curves.easeInCubic.transform(t.clamp(0.0, 1.0));
+    final top = lerpDouble(from.top, areaSize.height + 8, eased)!;
+    final scale = lerpDouble(1.0, 0.82, eased)!;
+    final opacity = (1 - eased).clamp(0.0, 1.0);
+
+    return Positioned(
+      key: ValueKey('discarding-$key'),
+      left: from.left,
+      top: top,
+      width: from.width,
+      height: from.height,
+      child: Opacity(
+        opacity: opacity,
+        child: Transform.scale(
+          scale: scale,
+          child: Transform.rotate(
+            angle: lerpDouble(from.angle, from.angle - 0.16, eased)!,
+            child: IgnorePointer(
+              child: _HandTileCard(
+                tile: tile,
+                selected: widget.selectedHandTile == tile,
+                constrained: widget.battle.isTileConstrained(tile),
+              ),
+            ),
           ),
         ),
       ),
