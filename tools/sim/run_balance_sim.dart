@@ -598,6 +598,12 @@ BalanceSimSequenceOutput _runStationPathSequence({
       var economyMissingCostThisStep = 0;
       var economyUnaffordableThisStep = 0;
       var marketEventsAffordable = true;
+      final marketBudget = _simMarketBudgetForStep(
+        mode: config.simMarketBudgetMode,
+        station: station,
+        currentGold: simEconomyGold,
+      );
+      var remainingMarketBudget = marketBudget;
       for (final event in marketPurchaseEvents) {
         final cost = event['cost'];
         if (cost is! num) {
@@ -607,8 +613,14 @@ BalanceSimSequenceOutput _runStationPathSequence({
         }
         final resolvedCost = (cost * config.simPriceScale).round();
         if (resolvedCost <= 0) continue;
-        if (simEconomyGold >= resolvedCost) {
+        final withinBudget =
+            remainingMarketBudget == null ||
+            remainingMarketBudget >= resolvedCost;
+        if (simEconomyGold >= resolvedCost && withinBudget) {
           simEconomyGold -= resolvedCost;
+          if (remainingMarketBudget != null) {
+            remainingMarketBudget -= resolvedCost;
+          }
           economyKnownSpendThisStep += resolvedCost;
         } else {
           economyUnaffordableThisStep += 1;
@@ -691,6 +703,8 @@ BalanceSimSequenceOutput _runStationPathSequence({
         'mode': config.simEconomyMode.id,
         'reward_scale': config.simRewardScale,
         'price_scale': config.simPriceScale,
+        'market_budget_mode': config.simMarketBudgetMode.id,
+        'market_budget': marketBudget,
         'gold_before_market': economyBeforeMarket,
         'known_market_spend': economyKnownSpendThisStep,
         'missing_cost_event_count': economyMissingCostThisStep,
@@ -744,6 +758,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
               economyMode: config.simEconomyMode,
               rewardScale: config.simRewardScale,
               priceScale: config.simPriceScale,
+              marketBudgetMode: config.simMarketBudgetMode,
             ),
           ),
         );
@@ -788,6 +803,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         economyMode: config.simEconomyMode,
         rewardScale: config.simRewardScale,
         priceScale: config.simPriceScale,
+        marketBudgetMode: config.simMarketBudgetMode,
       ),
     ),
   );
@@ -889,12 +905,14 @@ Map<String, Object?> _simEconomySummary({
   required BalanceSimEconomyMode economyMode,
   required double rewardScale,
   required double priceScale,
+  required BalanceSimMarketBudgetMode marketBudgetMode,
 }) {
   return <String, Object?>{
     'schema_version': 1,
     'mode': economyMode.id,
     'reward_scale': rewardScale,
     'price_scale': priceScale,
+    'market_budget_mode': marketBudgetMode.id,
     'final_gold': finalGold,
     'total_cashout_gold': totalCashoutGold,
     'known_market_spend': knownMarketSpend,
@@ -977,6 +995,20 @@ int _simCashoutGoldForBattleRow(
           RummiEconomyConfig.remainingBoardDiscardGoldBonus +
       remainingHandDiscards * RummiEconomyConfig.remainingHandDiscardGoldBonus;
   return (baseGold * rewardScale).round();
+}
+
+int? _simMarketBudgetForStep({
+  required BalanceSimMarketBudgetMode mode,
+  required int station,
+  required int currentGold,
+}) {
+  if (mode == BalanceSimMarketBudgetMode.none) return null;
+  final bandBudget = station <= 2
+      ? 10
+      : station <= 5
+      ? 14
+      : 18;
+  return currentGold < bandBudget ? currentGold : bandBudget;
 }
 
 BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
@@ -5541,6 +5573,26 @@ enum BalanceSimEconomyMode {
   }
 }
 
+enum BalanceSimMarketBudgetMode {
+  none,
+  stationBandV1;
+
+  static BalanceSimMarketBudgetMode parse(String raw) {
+    return switch (raw) {
+      'none' => BalanceSimMarketBudgetMode.none,
+      'station_band_v1' => BalanceSimMarketBudgetMode.stationBandV1,
+      _ => throw FormatException('Unknown sim market budget mode: $raw'),
+    };
+  }
+
+  String get id {
+    return switch (this) {
+      BalanceSimMarketBudgetMode.none => 'none',
+      BalanceSimMarketBudgetMode.stationBandV1 => 'station_band_v1',
+    };
+  }
+}
+
 enum BalanceSimMarketProfile {
   none,
   s1BuyJolly,
@@ -5934,6 +5986,7 @@ class BalanceSimCliConfig {
     required this.simEconomyMode,
     required this.simRewardScale,
     required this.simPriceScale,
+    required this.simMarketBudgetMode,
     required this.targetMultiplierOverrides,
     required this.loadouts,
     required this.jesterIds,
@@ -5954,6 +6007,7 @@ class BalanceSimCliConfig {
     var simEconomyMode = BalanceSimEconomyMode.traceOnly;
     var simRewardScale = 1.0;
     var simPriceScale = 1.0;
+    var simMarketBudgetMode = BalanceSimMarketBudgetMode.none;
     List<int>? stations;
     List<BlindTier>? blindTiers;
     List<NewRunDifficulty>? difficulties;
@@ -6036,6 +6090,8 @@ class BalanceSimCliConfig {
             );
           }
           simPriceScale = parsed;
+        case '--sim-market-budget-mode':
+          simMarketBudgetMode = BalanceSimMarketBudgetMode.parse(readValue());
         case '--target-multiplier':
           targetMultiplierOverrides.add(
             BalanceSimTargetMultiplierOverride.parse(readValue()),
@@ -6107,6 +6163,7 @@ class BalanceSimCliConfig {
       simEconomyMode: simEconomyMode,
       simRewardScale: simRewardScale,
       simPriceScale: simPriceScale,
+      simMarketBudgetMode: simMarketBudgetMode,
       targetMultiplierOverrides:
           List<BalanceSimTargetMultiplierOverride>.unmodifiable(
             targetMultiplierOverrides,
@@ -6572,6 +6629,7 @@ class BalanceSimCliConfig {
   final BalanceSimEconomyMode simEconomyMode;
   final double simRewardScale;
   final double simPriceScale;
+  final BalanceSimMarketBudgetMode simMarketBudgetMode;
   final List<BalanceSimTargetMultiplierOverride> targetMultiplierOverrides;
   final List<BalanceSimLoadoutSpec> loadouts;
   final List<String> jesterIds;

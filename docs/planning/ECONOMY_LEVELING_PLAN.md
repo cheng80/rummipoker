@@ -162,6 +162,14 @@ r120 economy probe:
 - 단순 보상/가격 scale만으로는 경제 압박을 충분히 만들지 못한다.
 - 다음은 `market budget behavior`를 모델링한다. 예: market당 구매 개수 제한, reroll spend, slot cap, 보유물 판매 후 구매 여부.
 
+market budget probe:
+
+- mode: `--sim-market-budget-mode station_band_v1`
+- budget: early/mid/late market당 `10G / 14G / 18G`
+- probe: `economy_budget_v1_r20`
+- result: unaffordable event는 생기지만, 알려진 spend가 줄어 중후반 잔고는 오히려 더 높게 남는다.
+- interpretation: 단순 지출 예산 제한은 구매 압박을 만들지만 골드 sink가 아니다. 다음은 reroll spend, slot cap, 판매 후 구매 여부를 함께 모델링해야 한다.
+
 ### Phase 3. Economy Probe
 
 목표:
