@@ -109,6 +109,7 @@ void main() {
                     },
                     onUseMarketItem: (_) => null,
                     onSellOwnedJester: (_) => false,
+                    onSellMarketItem: (_) => false,
                     onStateChanged: () async {},
                     onOpenSettings: () async {},
                     onExitToTitle: () async {},

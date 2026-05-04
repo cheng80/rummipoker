@@ -1312,6 +1312,16 @@ class RummiRunProgress {
     return true;
   }
 
+  bool sellOwnedItem(ItemDefinition item) {
+    final existing = itemInventory.ownedItems.any(
+      (entry) => entry.itemId == item.id && entry.count > 0,
+    );
+    if (!existing) return false;
+    itemInventory = itemInventory.withSoldItem(item.id);
+    gold += item.sellPrice < 0 ? 0 : item.sellPrice;
+    return true;
+  }
+
   void markItemOfferConsumed(String itemId) {
     if (marketModifiers.consumedItemOfferIds.contains(itemId)) return;
     marketModifiers = marketModifiers.copyWith(

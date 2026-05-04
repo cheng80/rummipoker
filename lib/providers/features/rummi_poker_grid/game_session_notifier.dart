@@ -957,6 +957,15 @@ class GameSessionNotifier
     return null;
   }
 
+  bool sellMarketItem(ItemDefinition item) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return false;
+    final ok = runProgress.sellOwnedItem(item);
+    if (!ok) return false;
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return true;
+  }
+
   DeckPeekBattleUseResult consumeBattleDeckPeekItem(ItemDefinition item) {
     final session = state.session;
     final runProgress = state.runProgress;

@@ -927,6 +927,63 @@ void main() {
       expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
     });
 
+    test('sellMarketItem은 보유 아이템을 판매하고 슬롯을 비운다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3803);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      final item = ItemDefinition.fromJson(const <String, dynamic>{
+        'id': 'black_swatch',
+        'displayName': 'Black Swatch',
+        'displayNameKey': 'data.items.black_swatch.displayName',
+        'type': 'equipment',
+        'rarity': 'common',
+        'basePrice': 4,
+        'sellPrice': 2,
+        'stackable': false,
+        'maxStack': 1,
+        'sellable': true,
+        'usableInBattle': false,
+        'placement': 'quickSlot',
+        'slotHint': 'q',
+        'effectText': 'Score bonus for black tiles.',
+        'effectTextKey': 'data.items.black_swatch.effectText',
+        'effect': <String, dynamic>{
+          'timing': 'score_modifier',
+          'op': 'black_tile_multiplier',
+          'amount': 2,
+          'consume': false,
+        },
+        'tags': <String>['score'],
+        'sourceNotes': 'Test fixture.',
+      });
+      state.runProgress!
+        ..gold = 1
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'black_swatch',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['black_swatch'],
+        );
+      notifier.markDirty();
+
+      final sold = notifier.sellMarketItem(item);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(sold, isTrue);
+      expect(updated.runProgress!.gold, 3);
+      expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
+      expect(updated.runProgress!.itemInventory.quickSlotItemIds, isEmpty);
+    });
+
     test('buyItemOffer는 보유 market_buy 아이템을 다음 구매에 자동 적용한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

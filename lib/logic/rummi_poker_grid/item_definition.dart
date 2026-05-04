@@ -376,6 +376,10 @@ class RunInventoryState {
     );
   }
 
+  RunInventoryState withSoldItem(String itemId) {
+    return withConsumedItem(itemId);
+  }
+
   Map<String, dynamic> toJson() => {
     'ownedItems': ownedItems.map((item) => item.toJson()).toList(),
     'equippedItemIds': equippedItemIds,

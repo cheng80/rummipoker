@@ -105,6 +105,7 @@ class GameShopScreen extends StatefulWidget {
     required this.onBuyItemOffer,
     required this.onUseMarketItem,
     required this.onSellOwnedJester,
+    required this.onSellMarketItem,
     required this.onStateChanged,
     required this.onOpenSettings,
     required this.onExitToTitle,
@@ -122,6 +123,7 @@ class GameShopScreen extends StatefulWidget {
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
   final String? Function(ItemDefinition item) onUseMarketItem;
   final bool Function(int ownedIndex) onSellOwnedJester;
+  final bool Function(ItemDefinition item) onSellMarketItem;
   final Future<void> Function() onStateChanged;
   final Future<void> Function() onOpenSettings;
   final Future<void> Function() onExitToTitle;
@@ -889,19 +891,25 @@ class _GameShopScreenState extends State<GameShopScreen>
     };
   }
 
-  _MarketActionPane? _ownedMarketItemActionPane(
+  Widget? _ownedMarketItemActionPane(
     BuildContext context,
     RummiMarketItemSlotView slot,
   ) {
     final item = slot.item;
     if (item == null) return null;
+    final sellAction = _MarketActionPane(
+      priceLabel: '+${item.sellPrice}',
+      buttonLabel: '판매',
+      buttonColor: const Color(0xFFB74B3B),
+      onPressed: () => _sellMarketItem(slot),
+    );
     if (item.effect.timing == 'use_market' ||
         item.effect.timing == 'use_market_if_gold_lte') {
-      return _MarketActionPane(
-        priceLabel: 'x${slot.count}',
-        buttonLabel: '사용',
-        buttonColor: const Color(0xFF2E8BC0),
-        onPressed: () => _useSelectedMarketItem(slot),
+      return _MarketUseSellActionPane(
+        count: slot.count,
+        sellPrice: item.sellPrice,
+        onUse: () => _useSelectedMarketItem(slot),
+        onSell: () => _sellMarketItem(slot),
         denyActive: _marketDenyTarget == 'item-use',
         denyTick: _marketDenyTick,
         denyReason: _marketDenyReason,
@@ -909,14 +917,9 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     if (item.effect.timing == 'market_buy' ||
         item.effect.timing == 'market_buy_if_category') {
-      return _MarketActionPane(
-        priceLabel: 'x${slot.count}',
-        buttonLabel: '자동 적용',
-        buttonColor: const Color(0xFF41584F),
-        onPressed: null,
-      );
+      return sellAction;
     }
-    return null;
+    return sellAction;
   }
 
   void _sellOwned(int index) {
@@ -931,6 +934,20 @@ class _GameShopScreenState extends State<GameShopScreen>
       } else {
         _selectedOwnedIndex = index.clamp(0, market.ownedEntries.length - 1);
       }
+    });
+    widget.onStateChanged();
+  }
+
+  void _sellMarketItem(RummiMarketItemSlotView slot) {
+    final item = slot.item;
+    if (item == null) return;
+    final ok = widget.onSellMarketItem(item);
+    if (!ok) return;
+    showTopNotice(context, '아이템을 판매했습니다.');
+    setState(() {
+      final market = _market;
+      _selectedItemSlotIndex = -1;
+      _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
     });
     widget.onStateChanged();
   }
@@ -2242,6 +2259,92 @@ class _MarketActionPane extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MarketUseSellActionPane extends StatelessWidget {
+  const _MarketUseSellActionPane({
+    required this.count,
+    required this.sellPrice,
+    required this.onUse,
+    required this.onSell,
+    required this.denyActive,
+    required this.denyTick,
+    required this.denyReason,
+  });
+
+  final int count;
+  final int sellPrice;
+  final VoidCallback onUse;
+  final VoidCallback onSell;
+  final bool denyActive;
+  final int denyTick;
+  final String? denyReason;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'x$count',
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.clip,
+                style: const TextStyle(
+                  color: Color(0xFFF2C14E),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 6),
+              GameActionButton(
+                label: '사용',
+                background: const Color(0xFF2E8BC0),
+                compact: true,
+                onPressed: onUse,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                '+$sellPrice',
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.clip,
+                style: const TextStyle(
+                  color: Color(0xFFF2C14E),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: 3),
+              GameActionButton(
+                label: '판매',
+                background: const Color(0xFFB74B3B),
+                compact: true,
+                onPressed: onSell,
+              ),
+            ],
+          ),
+          if (denyActive)
+            Positioned(
+              key: const ValueKey('market-deny-feedback'),
+              top: -10,
+              right: 0,
+              child: _MarketDenyBadge(
+                label: denyReason == null || denyReason!.isEmpty
+                    ? '불가'
+                    : denyReason!,
+              ),
+            ),
+        ],
       ),
     );
   }

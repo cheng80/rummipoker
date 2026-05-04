@@ -1333,6 +1333,7 @@ class _GameViewState extends ConsumerState<GameView>
           onUseMarketItem: _gameNotifier.useMarketItem,
           onSellOwnedJester: (index) =>
               _gameNotifier.sellOwnedJester(index, itemCatalog: _itemCatalog),
+          onSellMarketItem: _gameNotifier.sellMarketItem,
           onStateChanged: _saveActiveRun,
           readActiveRunSaveView: () => ref
               .read(gameSessionNotifierProvider(_gameArgs))
