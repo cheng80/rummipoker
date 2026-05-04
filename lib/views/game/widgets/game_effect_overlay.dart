@@ -40,6 +40,8 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   List<Offset> _lineSweepCenters = const [];
   Offset? _constraintImpactCenter;
   String? _constraintImpactLabel;
+  Offset? _largeScoreCenter;
+  String? _largeScoreLabel;
   int _scoreMoteTick = 0;
 
   @override
@@ -74,6 +76,12 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
                 _ConstraintImpactBadgeLayer(
                   center: _constraintImpactCenter!,
                   label: _constraintImpactLabel!,
+                  tick: _scoreMoteTick,
+                ),
+              if (_largeScoreCenter != null && _largeScoreLabel != null)
+                _LargeScoreBurstBadgeLayer(
+                  center: _largeScoreCenter!,
+                  label: _largeScoreLabel!,
                   tick: _scoreMoteTick,
                 ),
             ],
@@ -129,16 +137,26 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           effectKind == _BoardEffectKind.constraintImpact
           ? _constraintPenaltyLabel(line)
           : null;
+      final largeScoreCenter = effectKind == _BoardEffectKind.largeScore
+          ? _averageOffset(centers)
+          : null;
+      final largeScoreLabel = effectKind == _BoardEffectKind.largeScore
+          ? '+${line.finalScore}'
+          : null;
       if (scoreMoteCenters.isNotEmpty ||
           _scoreMoteCenters.isNotEmpty ||
           _lineSweepCenters.isNotEmpty ||
           constraintImpactCenter != null ||
-          _constraintImpactCenter != null) {
+          _constraintImpactCenter != null ||
+          largeScoreCenter != null ||
+          _largeScoreCenter != null) {
         setState(() {
           _scoreMoteCenters = scoreMoteCenters;
           _lineSweepCenters = scoreMoteCenters;
           _constraintImpactCenter = constraintImpactCenter;
           _constraintImpactLabel = constraintImpactLabel;
+          _largeScoreCenter = largeScoreCenter;
+          _largeScoreLabel = largeScoreLabel;
           _scoreMoteTick = widget.settlementSequenceTick;
         });
       }
@@ -159,6 +177,8 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _lineSweepCenters = const [];
           _constraintImpactCenter = null;
           _constraintImpactLabel = null;
+          _largeScoreCenter = null;
+          _largeScoreLabel = null;
         });
       });
     });
@@ -376,6 +396,97 @@ class _ConstraintImpactBadge extends StatelessWidget {
                     style: const TextStyle(
                       color: Color(0xFFFFE6D6),
                       fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LargeScoreBurstBadgeLayer extends StatelessWidget {
+  const _LargeScoreBurstBadgeLayer({
+    required this.center,
+    required this.label,
+    required this.tick,
+  });
+
+  final Offset center;
+  final String label;
+  final int tick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      key: const ValueKey('large-score-burst-badge-layer'),
+      fit: StackFit.expand,
+      children: [
+        _LargeScoreBurstBadge(
+          key: ValueKey<String>('large-score-burst-badge-$tick'),
+          center: center,
+          label: label,
+        ),
+      ],
+    );
+  }
+}
+
+class _LargeScoreBurstBadge extends StatelessWidget {
+  const _LargeScoreBurstBadge({
+    super.key,
+    required this.center,
+    required this.label,
+  });
+
+  final Offset center;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 680),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final opacity = value < 0.76 ? 1.0 : 1.0 - ((value - 0.76) / 0.24);
+        final dy = -16 * value;
+        final scale = 0.78 + (value * 0.32);
+        return Positioned(
+          left: center.dx - 42,
+          top: center.dy - 24 + dy,
+          width: 84,
+          height: 38,
+          child: Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: scale,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF113B31).withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF86F4C3).withValues(alpha: 0.95),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF86F4C3).withValues(alpha: 0.36),
+                      blurRadius: 18,
+                      spreadRadius: 1.4,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFFE8FFF4),
+                      fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
                   ),

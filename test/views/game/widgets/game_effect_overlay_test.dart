@@ -76,6 +76,11 @@ void main() {
     await tester.pump();
 
     expect(_gameWidgetFinder(), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('large-score-burst-badge-layer')),
+      findsOneWidget,
+    );
+    expect(find.text('+150'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 1100));
   });
 
@@ -89,6 +94,10 @@ void main() {
     await tester.pump();
 
     expect(_gameWidgetFinder(), findsNothing);
+    expect(
+      find.byKey(const ValueKey('large-score-burst-badge-layer')),
+      findsNothing,
+    );
   });
 }
 
