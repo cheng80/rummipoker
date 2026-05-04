@@ -2194,7 +2194,7 @@ class _OwnedMarketItemBody extends StatelessWidget {
           Text(
             notice,
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow: TextOverflow.clip,
             style: const TextStyle(
               color: Color(0xFFF2C14E),
               fontSize: 11,

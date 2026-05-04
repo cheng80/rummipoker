@@ -144,6 +144,9 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('market-item-slot-T1')));
     await tester.pumpAndSettle();
+    final noticeText = tester.widget<Text>(find.text('상점에서 수동 사용'));
+    expect(noticeText.overflow, isNot(TextOverflow.ellipsis));
+
     await tester.tap(find.text('사용'));
     await tester.pump(const Duration(milliseconds: 120));
 
