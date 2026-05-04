@@ -55,6 +55,20 @@ class RummiEffectGame extends FlameGame {
     );
   }
 
+  void spawnLargeScoreBurst(Iterable<Vector2> centers) {
+    _spawnBoardBurst(
+      _PendingBoardBurst(
+        centers: centers.toList(growable: false),
+        baseColor: const Color(0xFF86F4C3),
+        count: 18,
+        lifetime: 0.72,
+        speedScale: 1.18,
+        sizeScale: 1.18,
+        withGlow: true,
+      ),
+    );
+  }
+
   void _spawnBoardBurst(_PendingBoardBurst burst) {
     if (_particlePool == null) {
       _pendingBoardBursts.add(burst);

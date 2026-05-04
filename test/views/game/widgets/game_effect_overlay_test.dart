@@ -34,6 +34,32 @@ void main() {
 
     expect(_gameWidgetFinder(), findsNothing);
   });
+
+  testWidgets('큰 final score 정산 단계에서 보드 이펙트를 띄운다', (tester) async {
+    await tester.pumpWidget(
+      _effectOverlayHost(
+        activeSettlementStep: ScoringPresentationStep.finalScore,
+        line: _line(finalScore: 150),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(_gameWidgetFinder(), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1100));
+  });
+
+  testWidgets('작은 final score 정산 단계는 보드 이펙트를 띄우지 않는다', (tester) async {
+    await tester.pumpWidget(
+      _effectOverlayHost(
+        activeSettlementStep: ScoringPresentationStep.finalScore,
+        line: _line(finalScore: 70),
+      ),
+    );
+    await tester.pump();
+
+    expect(_gameWidgetFinder(), findsNothing);
+  });
 }
 
 Finder _gameWidgetFinder() {
@@ -81,13 +107,14 @@ ConfirmedLineBreakdown _lineWithConstraintPenalty() {
 }
 
 ConfirmedLineBreakdown _line({
+  int finalScore = 42,
   List<RummiConstraintPenaltyBreakdown> constraintPenalties = const [],
 }) {
   return ConfirmedLineBreakdown(
     ref: LineRef.row(2),
     rank: RummiHandRank.straight,
     baseScore: 70,
-    finalScore: 42,
+    finalScore: finalScore,
     jesterBonus: 0,
     hasScoringFaceCard: false,
     effects: const [],

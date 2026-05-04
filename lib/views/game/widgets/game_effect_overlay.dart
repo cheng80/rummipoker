@@ -31,6 +31,7 @@ class GameBoardEffectOverlay extends StatefulWidget {
 
 class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   static const Duration _effectVisibleDuration = Duration(milliseconds: 1050);
+  static const int _largeScoreBurstThreshold = 100;
 
   late final RummiEffectGame _game;
   String? _lastEffectSignature;
@@ -64,6 +65,9 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       ScoringPresentationStep.constraint
           when line.constraintPenalties.isNotEmpty =>
         _BoardEffectKind.constraintImpact,
+      ScoringPresentationStep.finalScore
+          when line.finalScore >= _largeScoreBurstThreshold =>
+        _BoardEffectKind.largeScore,
       _ => null,
     };
     if (effectKind == null) return;
@@ -73,6 +77,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       effectKind.name,
       line.ref,
       line.contributingCells.join('|'),
+      line.finalScore,
       if (effectKind == _BoardEffectKind.constraintImpact)
         line.constraintPenalties.map((penalty) => penalty.modifierId).join('|'),
     ].join('-');
@@ -91,6 +96,8 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _game.spawnLineConfirmBurst(centers);
         case _BoardEffectKind.constraintImpact:
           _game.spawnConstraintImpactBurst(centers);
+        case _BoardEffectKind.largeScore:
+          _game.spawnLargeScoreBurst(centers);
       }
       Future<void>.delayed(_effectVisibleDuration, () {
         if (!mounted) return;
@@ -136,4 +143,4 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   }
 }
 
-enum _BoardEffectKind { lineConfirm, constraintImpact }
+enum _BoardEffectKind { lineConfirm, constraintImpact, largeScore }
