@@ -5,7 +5,9 @@ import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/views/blind_select_view.dart';
 
 void main() {
-  testWidgets('boss constraint text wraps without ellipsis', (tester) async {
+  testWidgets('boss constraint chip keeps long rule text out of card', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -24,14 +26,14 @@ void main() {
     await tester.pump();
 
     const modifier = RummiBossModifier.redDampener;
-    final constraintText = '${modifier.title} · ${modifier.ruleText}';
-    final finder = find.text(constraintText);
+    final finder = find.text(modifier.title);
 
     expect(finder, findsOneWidget);
+    expect(find.text(modifier.ruleText), findsNothing);
+    expect(find.text(modifier.markerText), findsOneWidget);
 
     final text = tester.widget<Text>(finder);
     expect(text.overflow, isNull);
-    expect(text.maxLines, isNull);
     expect(text.softWrap, isTrue);
   });
 }

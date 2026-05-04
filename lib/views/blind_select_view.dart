@@ -261,7 +261,7 @@ class _BlindOptionCard extends StatelessWidget {
                   const SizedBox(height: 7),
                   _BlindConstraintChip(
                     title: spec.bossModifier!.title,
-                    ruleText: spec.bossModifier!.ruleText,
+                    markerText: spec.bossModifier!.markerText,
                     enabled: isInteractive,
                   ),
                 ],
@@ -283,12 +283,12 @@ class _BlindOptionCard extends StatelessWidget {
 class _BlindConstraintChip extends StatelessWidget {
   const _BlindConstraintChip({
     required this.title,
-    required this.ruleText,
+    required this.markerText,
     required this.enabled,
   });
 
   final String title;
-  final String ruleText;
+  final String markerText;
   final bool enabled;
 
   @override
@@ -307,13 +307,33 @@ class _BlindConstraintChip extends StatelessWidget {
         children: [
           Icon(Icons.warning_amber_rounded, color: color, size: 14),
           const SizedBox(width: 5),
+          Container(
+            constraints: const BoxConstraints(minWidth: 22),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: enabled ? 0.88 : 0.48),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              markerText,
+              maxLines: 1,
+              style: const TextStyle(
+                color: Color(0xFF24120D),
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ),
+          const SizedBox(width: 5),
           Expanded(
             child: Text(
-              '$title · $ruleText',
+              title,
               softWrap: true,
               style: TextStyle(
                 color: color,
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w900,
                 height: 1.2,
               ),
