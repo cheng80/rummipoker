@@ -66,12 +66,14 @@ class _MarketPurchaseFlight {
     required this.label,
     required this.slotLabel,
     required this.item,
+    required this.spentGold,
   });
 
   final int tick;
   final String label;
   final String slotLabel;
   final bool item;
+  final int spentGold;
 }
 
 class GameShopScreen extends StatefulWidget {
@@ -557,6 +559,7 @@ class _GameShopScreenState extends State<GameShopScreen>
           label: boughtOffer.displayName,
           slotLabel: 'J${purchasedSlot.slotIndex + 1}',
           item: false,
+          spentGold: boughtOffer.price,
         );
       } else if (market.ownedEntries.isNotEmpty) {
         _selectedOwnedIndex = market.ownedEntries.length - 1;
@@ -596,6 +599,7 @@ class _GameShopScreenState extends State<GameShopScreen>
           label: boughtOffer.displayName,
           slotLabel: purchasedSlot.slotLabel,
           item: true,
+          spentGold: boughtOffer.price,
         );
       } else {
         final nextEntries = _offerEntriesForTab(market, _shopTab);
@@ -641,6 +645,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     required String label,
     required String slotLabel,
     required bool item,
+    required int spentGold,
   }) {
     final tick = _purchaseFlightTick + 1;
     _purchaseFlightTick = tick;
@@ -649,6 +654,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       label: label,
       slotLabel: slotLabel,
       item: item,
+      spentGold: spentGold,
     );
     Future<void>.delayed(const Duration(milliseconds: 760), () {
       if (!mounted || _purchaseFlight?.tick != tick) return;
@@ -1061,31 +1067,37 @@ class _GameShopScreenState extends State<GameShopScreen>
                                         final card = ownedEntry?.card;
                                         final selected =
                                             _selectedOwnedIndex == index;
+                                        final pulse =
+                                            _purchaseFlight?.item == false &&
+                                            _purchaseFlight?.slotLabel ==
+                                                'J${index + 1}';
                                         final locked =
                                             index >=
                                             RummiRunProgress
                                                 .baseUnlockedJesterSlots;
-                                        final child =
-                                            _MarketSelectableCardFrame(
-                                              selected: false,
-                                              width: _marketOwnedCardWidth,
-                                              height: _marketOwnedCardHeight,
-                                              child: GameJesterSlot(
-                                                card: card,
-                                                runtimeValueText: card == null
-                                                    ? null
-                                                    : jesterRuntimeValueText(
-                                                        card,
-                                                        market.runtimeSnapshot,
-                                                        slotIndex: index,
-                                                      ),
-                                                extended: index == 4,
-                                                activeEffect: null,
-                                                settlementSequenceTick: 0,
-                                                selected: selected,
-                                                locked: locked,
-                                              ),
-                                            );
+                                        final child = _MarketSlotPulse(
+                                          active: pulse,
+                                          child: _MarketSelectableCardFrame(
+                                            selected: false,
+                                            width: _marketOwnedCardWidth,
+                                            height: _marketOwnedCardHeight,
+                                            child: GameJesterSlot(
+                                              card: card,
+                                              runtimeValueText: card == null
+                                                  ? null
+                                                  : jesterRuntimeValueText(
+                                                      card,
+                                                      market.runtimeSnapshot,
+                                                      slotIndex: index,
+                                                    ),
+                                              extended: index == 4,
+                                              activeEffect: null,
+                                              settlementSequenceTick: 0,
+                                              selected: selected,
+                                              locked: locked,
+                                            ),
+                                          ),
+                                        );
 
                                         return SizedBox(
                                           width:
@@ -1116,6 +1128,9 @@ class _GameShopScreenState extends State<GameShopScreen>
                             _MarketQuickPassiveSlotsSection(
                               slots: visibleItemSlots,
                               selectedItemSlotIndex: _selectedItemSlotIndex,
+                              pulsingSlotLabel: _purchaseFlight?.item == true
+                                  ? _purchaseFlight?.slotLabel
+                                  : null,
                               onTap: _selectItemSlot,
                             ),
                           ] else ...[
@@ -1123,6 +1138,9 @@ class _GameShopScreenState extends State<GameShopScreen>
                               title: 'Tool Slots',
                               slots: visibleToolSlots,
                               selectedItemSlotIndex: _selectedItemSlotIndex,
+                              pulsingSlotLabel: _purchaseFlight?.item == true
+                                  ? _purchaseFlight?.slotLabel
+                                  : null,
                               onTap: _selectItemSlot,
                             ),
                             const SizedBox(height: 6),
@@ -1130,6 +1148,9 @@ class _GameShopScreenState extends State<GameShopScreen>
                               title: 'Gear Slots',
                               slots: visibleGearSlots,
                               selectedItemSlotIndex: _selectedItemSlotIndex,
+                              pulsingSlotLabel: _purchaseFlight?.item == true
+                                  ? _purchaseFlight?.slotLabel
+                                  : null,
                               onTap: _selectItemSlot,
                             ),
                           ],
@@ -1505,11 +1526,13 @@ class _MarketQuickPassiveSlotsSection extends StatelessWidget {
   const _MarketQuickPassiveSlotsSection({
     required this.slots,
     required this.selectedItemSlotIndex,
+    required this.pulsingSlotLabel,
     required this.onTap,
   });
 
   final List<RummiMarketItemSlotView> slots;
   final int selectedItemSlotIndex;
+  final String? pulsingSlotLabel;
   final ValueChanged<RummiMarketItemSlotView> onTap;
 
   @override
@@ -1532,6 +1555,7 @@ class _MarketQuickPassiveSlotsSection extends StatelessWidget {
               label: 'Q-SLT',
               slots: quickSlots,
               selectedItemSlotIndex: selectedItemSlotIndex,
+              pulsingSlotLabel: pulsingSlotLabel,
               onTap: onTap,
             ),
           ),
@@ -1542,6 +1566,7 @@ class _MarketQuickPassiveSlotsSection extends StatelessWidget {
               label: 'PSV',
               slots: passiveSlots,
               selectedItemSlotIndex: selectedItemSlotIndex,
+              pulsingSlotLabel: pulsingSlotLabel,
               onTap: onTap,
             ),
           ),
@@ -1556,12 +1581,14 @@ class _MarketSlotGroup extends StatelessWidget {
     required this.label,
     required this.slots,
     required this.selectedItemSlotIndex,
+    required this.pulsingSlotLabel,
     required this.onTap,
   });
 
   final String label;
   final List<RummiMarketItemSlotView> slots;
   final int selectedItemSlotIndex;
+  final String? pulsingSlotLabel;
   final ValueChanged<RummiMarketItemSlotView> onTap;
 
   @override
@@ -1578,6 +1605,7 @@ class _MarketSlotGroup extends StatelessWidget {
               _MarketItemGhostChip(
                 slot: slots[i],
                 selected: selectedItemSlotIndex == slots[i].slotIndex,
+                pulse: pulsingSlotLabel == slots[i].slotLabel,
                 onTap: onTap,
               ),
             ],
@@ -1593,12 +1621,14 @@ class _MarketItemSlotsSection extends StatelessWidget {
     required this.title,
     required this.slots,
     required this.selectedItemSlotIndex,
+    required this.pulsingSlotLabel,
     required this.onTap,
   });
 
   final String title;
   final List<RummiMarketItemSlotView> slots;
   final int selectedItemSlotIndex;
+  final String? pulsingSlotLabel;
   final ValueChanged<RummiMarketItemSlotView> onTap;
 
   @override
@@ -1615,6 +1645,7 @@ class _MarketItemSlotsSection extends StatelessWidget {
               _MarketItemGhostChip(
                 slot: slots[i],
                 selected: selectedItemSlotIndex == slots[i].slotIndex,
+                pulse: pulsingSlotLabel == slots[i].slotLabel,
                 onTap: onTap,
               ),
             ],
@@ -1963,11 +1994,13 @@ class _MarketItemGhostChip extends StatelessWidget {
   const _MarketItemGhostChip({
     required this.slot,
     this.selected = false,
+    this.pulse = false,
     this.onTap,
   });
 
   final RummiMarketItemSlotView slot;
   final bool selected;
+  final bool pulse;
   final ValueChanged<RummiMarketItemSlotView>? onTap;
 
   @override
@@ -2050,6 +2083,40 @@ class _MarketItemGhostChip extends StatelessWidget {
               ],
             ),
           );
+    final slotBox = SizedBox(
+      width: _marketOwnedCardWidth + 6,
+      height: _marketOwnedCardHeight + 6,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: locked
+              ? Colors.black.withValues(alpha: 0.24)
+              : displayName != null
+              ? _itemSlotBackground(slot.placement)
+              : Colors.black.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFFF4A81D)
+                : locked
+                ? Colors.white12
+                : displayName != null
+                ? _itemSlotAccent(slot.placement).withValues(alpha: 0.6)
+                : Colors.white10,
+            width: selected ? 2 : 1,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFF4A81D).withValues(alpha: 0.22),
+                    blurRadius: 14,
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(child: foreground),
+      ),
+    );
+
     return Expanded(
       child: Center(
         child: GestureDetector(
@@ -2057,41 +2124,7 @@ class _MarketItemGhostChip extends StatelessWidget {
           onTap: locked || slot.item == null || onTap == null
               ? null
               : () => onTap!(slot),
-          child: SizedBox(
-            width: _marketOwnedCardWidth + 6,
-            height: _marketOwnedCardHeight + 6,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: locked
-                    ? Colors.black.withValues(alpha: 0.24)
-                    : displayName != null
-                    ? _itemSlotBackground(slot.placement)
-                    : Colors.black.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: selected
-                      ? const Color(0xFFF4A81D)
-                      : locked
-                      ? Colors.white12
-                      : displayName != null
-                      ? _itemSlotAccent(slot.placement).withValues(alpha: 0.6)
-                      : Colors.white10,
-                  width: selected ? 2 : 1,
-                ),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: const Color(
-                            0xFFF4A81D,
-                          ).withValues(alpha: 0.22),
-                          blurRadius: 14,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Center(child: foreground),
-            ),
-          ),
+          child: _MarketSlotPulse(active: pulse, child: slotBox),
         ),
       ),
     );
@@ -2459,29 +2492,130 @@ class _MarketPurchaseFlightOverlay extends StatelessWidget {
         ? const Alignment(-0.52, -0.22)
         : const Alignment(-0.42, -0.48);
     return IgnorePointer(
-      child: TweenAnimationBuilder<double>(
-        key: ValueKey<int>(flight.tick),
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 620),
-        curve: Curves.easeInOutCubic,
-        builder: (context, value, child) {
-          final alignment = Alignment.lerp(start, end, value)!;
-          final lift = -22 * math.sin(math.pi * value);
-          final scale = 0.88 + (0.16 * math.sin(math.pi * value));
-          final opacity = value < 0.82 ? 1.0 : (1 - value) / 0.18;
-          return Align(
-            alignment: alignment,
-            child: Opacity(
-              opacity: opacity.clamp(0.0, 1.0),
-              child: Transform.translate(
-                offset: Offset(0, lift),
-                child: Transform.scale(scale: scale, child: child),
-              ),
-            ),
-          );
-        },
-        child: _MarketPurchaseFlightCard(flight: flight),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 16,
+            right: 42,
+            child: _MarketGoldSpendBadge(spentGold: flight.spentGold),
+          ),
+          TweenAnimationBuilder<double>(
+            key: ValueKey<int>(flight.tick),
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 620),
+            curve: Curves.easeInOutCubic,
+            builder: (context, value, child) {
+              final alignment = Alignment.lerp(start, end, value)!;
+              final lift = -22 * math.sin(math.pi * value);
+              final scale = 0.88 + (0.16 * math.sin(math.pi * value));
+              final opacity = value < 0.82 ? 1.0 : (1 - value) / 0.18;
+              return Align(
+                alignment: alignment,
+                child: Opacity(
+                  opacity: opacity.clamp(0.0, 1.0),
+                  child: Transform.translate(
+                    offset: Offset(0, lift),
+                    child: Transform.scale(scale: scale, child: child),
+                  ),
+                ),
+              );
+            },
+            child: _MarketPurchaseFlightCard(flight: flight),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class _MarketGoldSpendBadge extends StatelessWidget {
+  const _MarketGoldSpendBadge({required this.spentGold});
+
+  final int spentGold;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('market-gold-spend-badge'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 460),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final opacity = value < 0.72 ? 1.0 : (1 - value) / 0.28;
+        return Opacity(
+          opacity: opacity.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, -16 * value),
+            child: child,
+          ),
+        );
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B2311).withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFF2C14E), width: 1.1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.26),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            '-${spentGold}G',
+            style: const TextStyle(
+              color: Color(0xFFFFD568),
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketSlotPulse extends StatelessWidget {
+  const _MarketSlotPulse({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!active) return child;
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('market-slot-pulse'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final pulse = math.sin(math.pi * value);
+        return Transform.scale(
+          scale: 1 + (0.08 * pulse),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFFF2C14E,
+                  ).withValues(alpha: 0.34 * pulse),
+                  blurRadius: 18 * pulse,
+                  spreadRadius: 2 * pulse,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

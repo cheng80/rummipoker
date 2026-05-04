@@ -295,6 +295,12 @@ void main() {
       find.byKey(const ValueKey('market-purchase-flight')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('market-gold-spend-badge')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('market-slot-pulse')), findsOneWidget);
+    expect(find.text('-3G'), findsOneWidget);
 
     await tester.pumpAndSettle();
 
@@ -319,7 +325,13 @@ void main() {
       find.byKey(const ValueKey('market-purchase-flight')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('market-gold-spend-badge')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('market-slot-pulse')), findsOneWidget);
     expect(find.text('J1'), findsOneWidget);
+    expect(find.text('-4G'), findsOneWidget);
 
     await tester.pumpAndSettle();
 
