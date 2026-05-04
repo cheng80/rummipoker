@@ -27,7 +27,7 @@ void main() {
       find.byKey(const ValueKey('line-confirm-sweep-layer')),
       findsOneWidget,
     );
-    await tester.pump(const Duration(milliseconds: 1100));
+    await tester.pump(const Duration(milliseconds: 1350));
   });
 
   testWidgets('제약 penalty가 있는 정산 단계에서 보드 이펙트를 띄운다', (tester) async {
@@ -45,8 +45,17 @@ void main() {
       find.byKey(const ValueKey('constraint-impact-badge-layer')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('constraint-impact-cell-1-0')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('constraint-impact-cell-1-4')),
+      findsOneWidget,
+    );
+    expect(find.text('BOSS'), findsOneWidget);
     expect(find.text('-40%'), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 1100));
+    await tester.pump(const Duration(milliseconds: 1350));
   });
 
   testWidgets('제약 penalty가 없으면 제약 단계 보드 이펙트를 띄우지 않는다', (tester) async {
@@ -81,7 +90,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('+150'), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 1100));
+    await tester.pump(const Duration(milliseconds: 1350));
   });
 
   testWidgets('작은 final score 정산 단계는 보드 이펙트를 띄우지 않는다', (tester) async {

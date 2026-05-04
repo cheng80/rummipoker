@@ -30,7 +30,7 @@ class GameBoardEffectOverlay extends StatefulWidget {
 }
 
 class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
-  static const Duration _effectVisibleDuration = Duration(milliseconds: 1050);
+  static const Duration _effectVisibleDuration = Duration(milliseconds: 1300);
   static const int _largeScoreBurstThreshold = 100;
 
   late final RummiEffectGame _game;
@@ -38,6 +38,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   bool _visible = false;
   List<Offset> _scoreMoteCenters = const [];
   List<Offset> _lineSweepCenters = const [];
+  List<Offset> _constraintImpactCenters = const [];
   Offset? _constraintImpactCenter;
   String? _constraintImpactLabel;
   Offset? _largeScoreCenter;
@@ -74,6 +75,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
               if (_constraintImpactCenter != null &&
                   _constraintImpactLabel != null)
                 _ConstraintImpactBadgeLayer(
+                  centers: _constraintImpactCenters,
                   center: _constraintImpactCenter!,
                   label: _constraintImpactLabel!,
                   tick: _scoreMoteTick,
@@ -133,6 +135,10 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           effectKind == _BoardEffectKind.constraintImpact
           ? _averageOffset(centers)
           : null;
+      final constraintImpactCenters =
+          effectKind == _BoardEffectKind.constraintImpact
+          ? [for (final center in centers) Offset(center.x, center.y)]
+          : const <Offset>[];
       final constraintImpactLabel =
           effectKind == _BoardEffectKind.constraintImpact
           ? _constraintPenaltyLabel(line)
@@ -146,6 +152,8 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       if (scoreMoteCenters.isNotEmpty ||
           _scoreMoteCenters.isNotEmpty ||
           _lineSweepCenters.isNotEmpty ||
+          constraintImpactCenters.isNotEmpty ||
+          _constraintImpactCenters.isNotEmpty ||
           constraintImpactCenter != null ||
           _constraintImpactCenter != null ||
           largeScoreCenter != null ||
@@ -153,6 +161,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
         setState(() {
           _scoreMoteCenters = scoreMoteCenters;
           _lineSweepCenters = scoreMoteCenters;
+          _constraintImpactCenters = constraintImpactCenters;
           _constraintImpactCenter = constraintImpactCenter;
           _constraintImpactLabel = constraintImpactLabel;
           _largeScoreCenter = largeScoreCenter;
@@ -175,6 +184,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _visible = false;
           _scoreMoteCenters = const [];
           _lineSweepCenters = const [];
+          _constraintImpactCenters = const [];
           _constraintImpactCenter = null;
           _constraintImpactLabel = null;
           _largeScoreCenter = null;
@@ -320,11 +330,13 @@ class _LineConfirmSweepCell extends StatelessWidget {
 
 class _ConstraintImpactBadgeLayer extends StatelessWidget {
   const _ConstraintImpactBadgeLayer({
+    required this.centers,
     required this.center,
     required this.label,
     required this.tick,
   });
 
+  final List<Offset> centers;
   final Offset center;
   final String label;
   final int tick;
@@ -335,12 +347,76 @@ class _ConstraintImpactBadgeLayer extends StatelessWidget {
       key: const ValueKey('constraint-impact-badge-layer'),
       fit: StackFit.expand,
       children: [
+        for (var i = 0; i < centers.length; i++)
+          _ConstraintImpactCellFlash(
+            key: ValueKey<String>('constraint-impact-cell-$tick-$i'),
+            center: centers[i],
+            delay: Duration(milliseconds: i * 28),
+          ),
         _ConstraintImpactBadge(
           key: ValueKey<String>('constraint-impact-badge-$tick'),
           center: center,
           label: label,
         ),
       ],
+    );
+  }
+}
+
+class _ConstraintImpactCellFlash extends StatelessWidget {
+  const _ConstraintImpactCellFlash({
+    super.key,
+    required this.center,
+    required this.delay,
+  });
+
+  final Offset center;
+  final Duration delay;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 760),
+      curve: Curves.easeOutCubic,
+      builder: (context, rawValue, child) {
+        final delayRatio = delay.inMilliseconds / 760;
+        final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
+          0.0,
+          1.0,
+        );
+        final opacity = value < 0.72 ? 1.0 : 1.0 - ((value - 0.72) / 0.28);
+        final scale = 0.72 + value * 0.42;
+        return Positioned(
+          left: center.dx - 20,
+          top: center.dy - 20,
+          width: 40,
+          height: 40,
+          child: Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: scale,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF3E35).withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: const Color(0xFFFF675F).withValues(alpha: 0.9),
+                    width: 2.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF3E35).withValues(alpha: 0.34),
+                      blurRadius: 18,
+                      spreadRadius: 1.4,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -359,17 +435,17 @@ class _ConstraintImpactBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 620),
+      duration: const Duration(milliseconds: 900),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
-        final opacity = value < 0.78 ? 1.0 : 1.0 - ((value - 0.78) / 0.22);
-        final dy = -10 * value;
-        final scale = 0.84 + (value * 0.18);
+        final opacity = value < 0.84 ? 1.0 : 1.0 - ((value - 0.84) / 0.16);
+        final dy = -12 * value;
+        final scale = 0.78 + (value * 0.26);
         return Positioned(
-          left: center.dx - 32,
-          top: center.dy - 20 + dy,
-          width: 64,
-          height: 30,
+          left: center.dx - 42,
+          top: center.dy - 25 + dy,
+          width: 84,
+          height: 38,
           child: Opacity(
             opacity: opacity.clamp(0.0, 1.0),
             child: Transform.scale(
@@ -380,25 +456,39 @@ class _ConstraintImpactBadge extends StatelessWidget {
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
                     color: const Color(0xFFFF675F).withValues(alpha: 0.95),
-                    width: 1.8,
+                    width: 2.2,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFFFF675F).withValues(alpha: 0.35),
-                      blurRadius: 14,
-                      spreadRadius: 1,
+                      blurRadius: 18,
+                      spreadRadius: 1.4,
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: Color(0xFFFFE6D6),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'BOSS',
+                      style: TextStyle(
+                        color: Color(0xFFFFB4A8),
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Color(0xFFFFE6D6),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
