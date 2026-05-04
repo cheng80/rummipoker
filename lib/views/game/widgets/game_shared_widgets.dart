@@ -123,7 +123,6 @@ class GameTopHud extends StatelessWidget {
     final goalReached =
         objective.targetScore > 0 &&
         scoreTowardObjective >= objective.targetScore;
-    final goldDisplayValue = '${battle.currentGold}';
     final blindLabel = _battleBlindLabel(battle.currentBlindTierIndex);
     final blindColor = _battleBlindColor(battle.currentBlindTierIndex);
     final bossModifier = battle.bossModifier;
@@ -279,72 +278,134 @@ class GameTopHud extends StatelessWidget {
           const SizedBox(width: 6),
           SizedBox(
             width: 132,
-            child: GameHudChip(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'GOLD',
-                    style: gameHudLabelStyle,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Expanded(
-                    child: Transform.translate(
-                      offset: const Offset(0, -4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Semantics(
-                            label: 'Gold',
-                            value: goldDisplayValue,
-                            child: ExcludeSemantics(
-                              child: Image.asset(
-                                AssetPaths.uiGreed,
-                                width: 18,
-                                height: 18,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                goldDisplayValue,
-                                maxLines: 1,
-                                textAlign: TextAlign.right,
-                                overflow: TextOverflow.clip,
-                                style: gameHudValueStyle.copyWith(fontSize: 17),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          GestureDetector(
-                            onTap: onOptionsTap,
-                            behavior: HitTestBehavior.opaque,
-                            child: SizedBox(
-                              width: 18,
-                              height: 22,
-                              child: Icon(
-                                Icons.more_vert_rounded,
-                                color: Colors.white.withValues(alpha: 0.88),
-                                size: 17,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: _GameGoldHudChip(
+              gold: battle.currentGold,
+              onOptionsTap: onOptionsTap,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GameGoldHudChip extends StatefulWidget {
+  const _GameGoldHudChip({required this.gold, required this.onOptionsTap});
+
+  final int gold;
+  final VoidCallback onOptionsTap;
+
+  @override
+  State<_GameGoldHudChip> createState() => _GameGoldHudChipState();
+}
+
+class _GameGoldHudChipState extends State<_GameGoldHudChip> {
+  late int _previousGold;
+  int _pulseTick = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousGold = widget.gold;
+  }
+
+  @override
+  void didUpdateWidget(covariant _GameGoldHudChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_previousGold == widget.gold) return;
+    _previousGold = widget.gold;
+    setState(() => _pulseTick++);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final goldDisplayValue = '${widget.gold}';
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('game-gold-pulse-$_pulseTick'),
+      tween: Tween<double>(begin: 0, end: _pulseTick > 0 ? 1 : 0),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final glow = _pulseTick > 0 ? sin(value * pi) : 0.0;
+        return DecoratedBox(
+          key: _pulseTick > 0 ? const ValueKey('game-gold-pulse') : null,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              if (glow > 0)
+                BoxShadow(
+                  color: const Color(0xFFF2C14E).withValues(alpha: 0.26 * glow),
+                  blurRadius: 14,
+                  spreadRadius: 1.4,
+                ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: GameHudChip(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'GOLD',
+              style: gameHudLabelStyle,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Expanded(
+              child: Transform.translate(
+                offset: const Offset(0, -4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Semantics(
+                      label: 'Gold',
+                      value: goldDisplayValue,
+                      child: ExcludeSemantics(
+                        child: Image.asset(
+                          AssetPaths.uiGreed,
+                          width: 18,
+                          height: 18,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          goldDisplayValue,
+                          maxLines: 1,
+                          textAlign: TextAlign.right,
+                          overflow: TextOverflow.clip,
+                          style: gameHudValueStyle.copyWith(fontSize: 17),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    GestureDetector(
+                      onTap: widget.onOptionsTap,
+                      behavior: HitTestBehavior.opaque,
+                      child: SizedBox(
+                        width: 18,
+                        height: 22,
+                        child: Icon(
+                          Icons.more_vert_rounded,
+                          color: Colors.white.withValues(alpha: 0.88),
+                          size: 17,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
