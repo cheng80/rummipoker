@@ -447,62 +447,72 @@ class _GameViewState extends ConsumerState<GameView>
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => GameModalCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD34E4E),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: const Color(0xFFFFD0C8).withValues(alpha: 0.88),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.72,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD34E4E),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: const Color(0xFFFFD0C8).withValues(alpha: 0.88),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.white,
+                      size: 18,
                     ),
                   ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    modifier.title,
-                    softWrap: true,
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontNexonLv2Gothic,
-                      color: Colors.white.withValues(alpha: 0.96),
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      modifier.title,
+                      softWrap: true,
+                      style: TextStyle(
+                        fontFamily: AssetPaths.fontNexonLv2Gothic,
+                        color: Colors.white.withValues(alpha: 0.96),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              modifier.ruleText,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.82),
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                height: 1.45,
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            GameChromeButton(
-              label: buttonLabel,
-              backgroundColor: const Color(0xFFF4A81D),
-              foregroundColor: const Color(0xFF173126),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Flexible(
+                child: SingleChildScrollView(
+                  key: const ValueKey('boss-constraint-rule-scroll'),
+                  child: Text(
+                    modifier.ruleText,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              GameChromeButton(
+                label: buttonLabel,
+                backgroundColor: const Color(0xFFF4A81D),
+                foregroundColor: const Color(0xFF173126),
+                onPressed: () => Navigator.of(dialogContext).pop(),
+              ),
+            ],
+          ),
         ),
       ),
     );

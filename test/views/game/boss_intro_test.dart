@@ -90,6 +90,10 @@ void main() {
     expect(titleText.overflow, isNull);
     expect(titleText.maxLines, isNull);
     expect(titleText.softWrap, isTrue);
+    expect(
+      find.byKey(const ValueKey('boss-constraint-rule-scroll')),
+      findsOneWidget,
+    );
     expect(find.text('빨간 타일이 포함된 점수 라인은 40% 감소합니다.'), findsOneWidget);
 
     await tester.tap(find.text('전투 시작'));
@@ -99,10 +103,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('빨간 타일 약화'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('boss-constraint-rule-scroll')),
+      findsOneWidget,
+    );
     expect(find.text('빨간 타일이 포함된 점수 라인은 40% 감소합니다.'), findsOneWidget);
     expect(find.text('닫기'), findsOneWidget);
 
     await tester.tap(find.text('닫기'));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
 }
