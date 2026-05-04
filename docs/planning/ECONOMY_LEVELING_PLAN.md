@@ -241,9 +241,11 @@ affordable choice probe:
 - r120 기준으로 v9가 none보다 명확히 좋은 상태를 유지하면서 S8 boss 진입 잔고를 150G대에서 140G대 초반으로 낮췄다.
 - `price 2.6`은 잔고를 낮추지만 power v9가 none보다 낮거나 거의 같아져 시장 성장 보상의 의미가 약해진다.
 - `reward 0.36 / price 2.4`는 final gold avg를 약 106.8G까지 낮추지만 power v9가 none보다 낮아져 너무 강하다.
-- 현재 가장 덜 깨지는 후보는 `reward 0.38 / price 2.4`다. S8 boss 진입 잔고는 약 138.6G, final gold avg는 약 116.1G이고, balanced/power 모두 v9가 none보다 높다.
-- 다만 final gold avg가 여전히 100G 이상이고 balanced v9가 70.0%에서 65.0%로 내려가므로 economy gate 완료는 아니다.
-- 다음은 런타임 적용 전, `reward 0.38 / price 2.4`를 기준으로 실제 가격 테이블 후보 또는 gold sink 누락분을 분리해 검토한다.
+- `tools/sim/economy_audit.py`가 market/loadout별 final gold와 S8 boss market별 시작 골드를 출력한다.
+- market별 분리 결과, 전체 final gold avg는 none control의 미사용 골드가 크게 섞인 값이라 경제 gate 판단 근거로 약하다.
+- `reward 0.40 / price 2.4`에서 final gold는 none 약 226.1G, v9 약 17.3G다. S8 boss before도 none 약 279.5G, v9 약 22.5G로 갈린다.
+- 따라서 현재 장기 후보는 `reward 0.40 / price 2.4 / reroll_slot_sell_v1 / affordable_alternative_v1`을 다시 우선한다. `reward 0.38 / price 2.4`는 v9 잔고를 거의 더 낮추지 못하면서 balanced v9 clear를 70.0%에서 65.0%로 낮춘다.
+- 다음은 런타임 적용 전, `reward 0.40 / price 2.4` 후보를 기존 장기 sweep 기준으로 재검증한다. runs를 낮추면 탐색용으로만 기록한다.
 
 catalog value flags:
 

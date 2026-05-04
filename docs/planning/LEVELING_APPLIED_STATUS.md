@@ -344,9 +344,10 @@ Economy leveling gate:
 - current conclusion: 가격 band 단독 조정은 장기 후보에서 제외한다. 다음은 구매 후보 utility/cost 선택, reroll 빈도, 판매 회수율 모델을 더 현실화한다.
 - applied: `affordable_alternative_v1` sim-only market choice mode를 추가했다. shop slot에서 비싼 1순위 대신 구매 가능한 대안을 고르는 proxy다.
 - current affordable choice probe: `reward 0.40 / price 2.4 / reroll_slot_sell_v1 / affordable_alternative_v1` r120은 balanced none 52.5%, balanced v9 70.0%, power none 63.3%, power v9 67.5%다.
-- current economy signal: S8 boss 시작 평균은 약 142.1G, final gold avg는 약 121.7G다. 이전보다 낫지만 아직 잔고가 높아 economy gate 완료는 아니다.
+- current economy signal: 전체 S8 boss 시작 평균 약 142.1G와 final gold avg 약 121.7G는 none/v9가 섞인 값이라 market별 분리 해석이 필요하다.
 - narrowed probe: `reward 0.38 / price 2.4 / reroll_slot_sell_v1 / affordable_alternative_v1` r120은 balanced none 54.2%, balanced v9 65.0%, power none 63.3%, power v9 67.5%, S8 boss 시작 평균 약 138.6G, final gold avg 약 116.1G다.
-- current candidate: `reward 0.38 / price 2.4`가 현재 가장 덜 깨지는 sim-only 후보지만, 런타임 적용 전 실제 가격 테이블 후보와 gold sink 누락분을 분리 검토한다.
+- audit correction: 전체 final gold avg는 none control의 미사용 골드가 크게 섞인다. `reward 0.40 / price 2.4`에서 final gold는 none 약 226.1G, v9 약 17.3G이고, S8 boss 시작 골드는 none 약 279.5G, v9 약 22.5G다.
+- current candidate: `reward 0.40 / price 2.4`를 다시 우선한다. `reward 0.38 / price 2.4`는 v9 잔고를 거의 낮추지 못하면서 balanced v9 clear를 70.0%에서 65.0%로 낮춘다.
 - tool update: `tools/sim/economy_audit.py`가 `catalog_value_flags`를 출력한다.
 - current price flags: `reroll_token`, `coin_cache`, `thin_wallet`은 자기 회수형 item 후보이며, `green_jester`, `popcorn`, `ice_cream`, `supernova`는 low-price growth Jester 후보로 먼저 검토한다.
 - applied: `catalog_value_flags_v1` sim-only price band를 추가했다. price flag 후보 일부만 올리는 검증용이다.

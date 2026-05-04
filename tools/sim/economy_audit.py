@@ -324,10 +324,21 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     economy_missing_cost_events = 0
     economy_slot_replace_events = 0
     economy_final_gold_values: list[int] = []
+    economy_final_gold_by_market: dict[str, list[int]] = defaultdict(list)
+    economy_sequence_by_market_loadout: dict[str, dict[str, Any]] = defaultdict(
+        lambda: {
+            "run_count": 0,
+            "path_clear_count": 0,
+            "final_gold_values": [],
+        }
+    )
     economy_mode = ""
     economy_price_band_mode = ""
     economy_market_choice_mode = ""
     economy_by_station_tier: dict[str, dict[str, list[int]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    economy_by_market_station_tier: dict[str, dict[str, list[int]]] = defaultdict(
         lambda: defaultdict(list)
     )
 
@@ -357,6 +368,10 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                         f"S{_int(row.get('station'))} "
                         f"{str(row.get('blind_tier') or 'unknown')}"
                     )
+                    market_station_tier = (
+                        f"{str(row.get('market_profile') or 'unknown')}|"
+                        f"{station_tier}"
+                    )
                     economy_by_station_tier[station_tier]["gold_before_market"].append(
                         _int(trace.get("gold_before_market"))
                     )
@@ -366,6 +381,15 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                     economy_by_station_tier[station_tier]["cashout_gold"].append(
                         _int(trace.get("cashout_gold"))
                     )
+                    economy_by_market_station_tier[market_station_tier][
+                        "gold_before_market"
+                    ].append(_int(trace.get("gold_before_market")))
+                    economy_by_market_station_tier[market_station_tier][
+                        "gold_after_cashout"
+                    ].append(_int(trace.get("gold_after_cashout")))
+                    economy_by_market_station_tier[market_station_tier][
+                        "cashout_gold"
+                    ].append(_int(trace.get("cashout_gold")))
                     economy_cashout_gold += _int(trace.get("cashout_gold"))
                     economy_known_market_spend += _int(
                         trace.get("known_market_spend")
@@ -385,7 +409,19 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                 sequence_count += 1
                 summary = row.get("sim_economy_summary")
                 if isinstance(summary, dict):
-                    economy_final_gold_values.append(_int(summary.get("final_gold")))
+                    final_gold = _int(summary.get("final_gold"))
+                    economy_final_gold_values.append(final_gold)
+                    market = str(row.get("market_profile") or "unknown")
+                    loadout = str(row.get("loadout_id") or "unknown")
+                    economy_final_gold_by_market[market].append(final_gold)
+                    sequence_key = f"{loadout}|{market}"
+                    sequence_bucket = economy_sequence_by_market_loadout[
+                        sequence_key
+                    ]
+                    sequence_bucket["run_count"] += 1
+                    if row.get("path_cleared") is True:
+                        sequence_bucket["path_clear_count"] += 1
+                    sequence_bucket["final_gold_values"].append(final_gold)
             market = str(row.get("market_profile") or "unknown")
             by_market[market] += 1
             station = row.get("station")
@@ -446,12 +482,38 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
             "final_gold": _numeric_summary(economy_final_gold_values)
             if economy_final_gold_values
             else {"count": 0},
+            "final_gold_by_market": {
+                key: _numeric_summary(values)
+                for key, values in sorted(economy_final_gold_by_market.items())
+            },
+            "sequence_by_market_loadout": {
+                key: {
+                    "run_count": bucket["run_count"],
+                    "path_clear_count": bucket["path_clear_count"],
+                    "path_clear_rate": round(
+                        bucket["path_clear_count"] / bucket["run_count"], 4
+                    )
+                    if bucket["run_count"]
+                    else 0,
+                    "final_gold": _numeric_summary(bucket["final_gold_values"]),
+                }
+                for key, bucket in sorted(
+                    economy_sequence_by_market_loadout.items()
+                )
+            },
             "by_station_tier": {
                 key: {
                     metric: _numeric_summary(values)
                     for metric, values in sorted(metrics.items())
                 }
                 for key, metrics in sorted(economy_by_station_tier.items())
+            },
+            "by_market_station_tier": {
+                key: {
+                    metric: _numeric_summary(values)
+                    for metric, values in sorted(metrics.items())
+                }
+                for key, metrics in sorted(economy_by_market_station_tier.items())
             },
         },
     }
@@ -622,9 +684,19 @@ def _signals(report: dict[str, Any]) -> list[str]:
             avg_final_gold = _float(final_gold.get("avg"))
             mode = str(sim_trace.get("mode") or "sim economy")
             if avg_final_gold >= 100:
-                signals.append(
-                    f"{mode} 평균 최종 잔고가 {avg_final_gold}G로 높아 구매/가격 gate 필요"
+                by_market = sim_trace.get("final_gold_by_market", {})
+                v9_final = _float(
+                    by_market.get("shop_slot_market_v9", {}).get("avg")
                 )
+                none_final = _float(by_market.get("none", {}).get("avg"))
+                if v9_final and none_final and v9_final < 40 <= none_final:
+                    signals.append(
+                        f"{mode} 전체 평균 최종 잔고 {avg_final_gold}G는 none {none_final}G 영향이 크고, v9는 {v9_final}G로 낮음"
+                    )
+                else:
+                    signals.append(
+                        f"{mode} 평균 최종 잔고가 {avg_final_gold}G로 높아 구매/가격 gate 필요"
+                    )
     return signals
 
 
@@ -697,6 +769,31 @@ def _print_report(report: dict[str, Any]) -> None:
                 "- sim economy unaffordable events: "
                 f"{sim_trace['unaffordable_event_count']}"
             )
+            final_by_market = sim_trace.get("final_gold_by_market", {})
+            if isinstance(final_by_market, dict) and final_by_market:
+                print("- sim economy final gold by market:")
+                for market, row in sorted(final_by_market.items()):
+                    print(
+                        "  - "
+                        f"{market}: avg {row['avg']}G, "
+                        f"min={row['min']}, max={row['max']}"
+                    )
+            sequence_by_market_loadout = sim_trace.get(
+                "sequence_by_market_loadout",
+                {},
+            )
+            if (
+                isinstance(sequence_by_market_loadout, dict)
+                and sequence_by_market_loadout
+            ):
+                print("- sequence clear/final gold by loadout and market:")
+                for key, row in sorted(sequence_by_market_loadout.items()):
+                    final = row["final_gold"]
+                    print(
+                        "  - "
+                        f"{key}: clear {row['path_clear_rate'] * 100:.1f}%, "
+                        f"final avg {final['avg']}G"
+                    )
             by_station_tier = sim_trace.get("by_station_tier", {})
             for key in ["S1 small", "S4 boss", "S8 boss"]:
                 row = by_station_tier.get(key)
@@ -708,6 +805,21 @@ def _print_report(report: dict[str, Any]) -> None:
                     f"- {key}: before avg {before['avg']}G, "
                     f"after avg {after['avg']}G"
                 )
+            by_market_station_tier = sim_trace.get("by_market_station_tier", {})
+            if isinstance(by_market_station_tier, dict):
+                for key in [
+                    "none|S8 boss",
+                    "shop_slot_market_v9|S8 boss",
+                ]:
+                    row = by_market_station_tier.get(key)
+                    if not row:
+                        continue
+                    before = row["gold_before_market"]
+                    after = row["gold_after_cashout"]
+                    print(
+                        f"- {key}: before avg {before['avg']}G, "
+                        f"after avg {after['avg']}G"
+                    )
     value_flags = report.get("catalog_value_flags", {})
     if isinstance(value_flags, dict):
         print()
