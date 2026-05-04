@@ -3585,7 +3585,7 @@ BalanceSimBattleResult _runBattleLoop(
           runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
         );
         if (out.result.ok) {
-          final simPenalty = _simBossConstraintPenalty(
+          final simPenalty = simBossConstraintPenalty(
             constraint: simBossConstraint,
             lineBreakdowns: out.result.lineBreakdowns,
             usedRanks: simConstraintUsedRanks,
@@ -3666,7 +3666,7 @@ String _outcomeLabel({
   return 'stopped';
 }
 
-({int scorePenalty, int triggerCount}) _simBossConstraintPenalty({
+({int scorePenalty, int triggerCount}) simBossConstraintPenalty({
   required BalanceSimBossConstraint? constraint,
   required List<ConfirmedLineBreakdown> lineBreakdowns,
   required Set<String> usedRanks,
@@ -3693,7 +3693,7 @@ String _outcomeLabel({
       penalties.add(1 - multiplier);
     }
     if (constraint.singleRankScoreMultiplier case final multiplier?
-        when firstRank != null && firstRank != line.rank.name) {
+        when firstRank != null && firstRank == line.rank.name) {
       penalties.add(1 - multiplier);
     }
     if (constraint.firstConfirmScoreMultiplier case final multiplier?
@@ -4831,11 +4831,11 @@ BalanceSimBossConstraintChoice _bossConstraintChoiceForSlot({
     4 => choice(
       id: 'single_rank_pressure',
       family: 'single_hand_rank_pressure',
-      sourceReference: 'The Mouth one hand type only',
+      sourceReference: 'A안 first confirmed hand type repeat pressure',
       simConstraint: BalanceSimBossConstraint(
         id: 'single_rank_pressure',
         family: 'single_hand_rank_pressure',
-        sourceReference: 'The Mouth one hand type only',
+        sourceReference: 'A안 first confirmed hand type repeat pressure',
         singleRankScoreMultiplier: soften(0.4),
       ),
     ),

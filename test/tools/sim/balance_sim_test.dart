@@ -3,11 +3,61 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
 import '../../../tools/sim/run_balance_sim.dart';
 
 void main() {
+  test('sim single rank pressure follows runtime A안 semantics', () {
+    const constraint = BalanceSimBossConstraint(
+      id: 'single_rank_pressure',
+      family: 'single_hand_rank_pressure',
+      sourceReference: 'test',
+      singleRankScoreMultiplier: 0.7,
+    );
+    final firstRankLine = ConfirmedLineBreakdown(
+      ref: LineRef.row(0),
+      rank: RummiHandRank.twoPair,
+      baseScore: 25,
+      finalScore: 25,
+      jesterBonus: 0,
+      hasScoringFaceCard: false,
+      effects: [],
+    );
+    final otherRankLine = ConfirmedLineBreakdown(
+      ref: LineRef.row(1),
+      rank: RummiHandRank.straight,
+      baseScore: 70,
+      finalScore: 70,
+      jesterBonus: 0,
+      hasScoringFaceCard: false,
+      effects: [],
+    );
+
+    final repeatFirstRankPenalty = simBossConstraintPenalty(
+      constraint: constraint,
+      lineBreakdowns: [firstRankLine],
+      usedRanks: const {},
+      firstRank: RummiHandRank.twoPair.name,
+      confirmActionIndex: 1,
+    );
+    final otherRankPenalty = simBossConstraintPenalty(
+      constraint: constraint,
+      lineBreakdowns: [otherRankLine],
+      usedRanks: const {},
+      firstRank: RummiHandRank.twoPair.name,
+      confirmActionIndex: 1,
+    );
+
+    expect(repeatFirstRankPenalty.scorePenalty, 8);
+    expect(repeatFirstRankPenalty.triggerCount, 1);
+    expect(otherRankPenalty.scorePenalty, 0);
+    expect(otherRankPenalty.triggerCount, 0);
+  });
+
   test(
     'CLI writes deterministic JSONL rows with repeated loadout args',
     () async {
