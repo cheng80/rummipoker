@@ -262,6 +262,7 @@ void main() {
       },
     );
 
+    expect(find.byKey(const ValueKey('market-entry-motion')), findsOneWidget);
     expect(find.text('GOLD'), findsOneWidget);
     expect(find.text('12'), findsOneWidget);
     expect(find.text('Tool Slots'), findsOneWidget);

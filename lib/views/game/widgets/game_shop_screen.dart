@@ -991,507 +991,559 @@ class _GameShopScreenState extends State<GameShopScreen>
           );
 
     return PhoneFrameScaffold(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF123B32), Color(0xFF102E27), Color(0xFF0A1F1A)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.36),
-              blurRadius: 28,
-              spreadRadius: 4,
+      child: _MarketEntryMotion(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF123B32), Color(0xFF102E27), Color(0xFF0A1F1A)],
             ),
-          ],
-          border: Border.all(
-            color: const Color(0xFF507564).withValues(alpha: 0.55),
-            width: 1.2,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.36),
+                blurRadius: 28,
+                spreadRadius: 4,
+              ),
+            ],
+            border: Border.all(
+              color: const Color(0xFF507564).withValues(alpha: 0.55),
+              width: 1.2,
+            ),
           ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: Stack(
-            children: [
-              const Positioned.fill(child: GameTableBackdrop()),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Market',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              children: [
+                const Positioned.fill(child: GameTableBackdrop()),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Market',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
-                        ),
-                        _MarketGoldChip(gold: market.gold),
-                        const SizedBox(width: 6),
-                        GameIconButtonChip(
-                          onPressed: _openOptions,
-                          icon: Icons.more_horiz_rounded,
-                          size: 36,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    _MarketTabBar(
-                      currentTab: _shopTab,
-                      onChanged: _selectShopTab,
-                    ),
-                    const SizedBox(height: 6),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 140),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.035, 0),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
-                        ),
+                          _MarketGoldChip(gold: market.gold),
+                          const SizedBox(width: 6),
+                          GameIconButtonChip(
+                            onPressed: _openOptions,
+                            icon: Icons.more_horiz_rounded,
+                            size: 36,
+                          ),
+                        ],
                       ),
-                      child: Column(
-                        key: ValueKey<_MarketShopTab>(_shopTab),
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (_shopTab ==
-                              _MarketShopTab.cardsAndQuickSlots) ...[
-                            _MarketSectionBox(
-                              title: 'Jester Slots',
-                              trailing:
-                                  '${market.ownedEntries.length}/${market.maxOwnedSlots}',
-                              padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
-                              child: SizedBox(
-                                height: _marketOwnedCardHeight + 6,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: List.generate(
-                                      market.maxOwnedSlots,
-                                      (index) {
-                                        final ownedEntry =
-                                            index < market.ownedEntries.length
-                                            ? market.ownedEntries[index]
-                                            : null;
-                                        final card = ownedEntry?.card;
-                                        final selected =
-                                            _selectedOwnedIndex == index;
-                                        final pulse =
-                                            _purchaseFlight?.item == false &&
-                                            _purchaseFlight?.slotLabel ==
-                                                'J${index + 1}';
-                                        final locked =
-                                            index >=
-                                            RummiRunProgress
-                                                .baseUnlockedJesterSlots;
-                                        final child = _MarketSlotPulse(
-                                          active: pulse,
-                                          child: _MarketSelectableCardFrame(
-                                            selected: false,
-                                            width: _marketOwnedCardWidth,
-                                            height: _marketOwnedCardHeight,
-                                            child: GameJesterSlot(
-                                              card: card,
-                                              runtimeValueText: card == null
-                                                  ? null
-                                                  : jesterRuntimeValueText(
-                                                      card,
-                                                      market.runtimeSnapshot,
-                                                      slotIndex: index,
-                                                    ),
-                                              extended: index == 4,
-                                              activeEffect: null,
-                                              settlementSequenceTick: 0,
-                                              selected: selected,
-                                              locked: locked,
-                                            ),
-                                          ),
-                                        );
-
-                                        return SizedBox(
-                                          width:
-                                              _marketOwnedCardWidth +
-                                              (_marketCardSelectionInset * 2),
-                                          height:
-                                              _marketOwnedCardHeight +
-                                              (_marketCardSelectionInset * 2),
-                                          child: card == null || locked
-                                              ? child
-                                              : GestureDetector(
-                                                  onTap: () =>
-                                                      _selectOwned(index),
-                                                  onLongPress: () =>
-                                                      _showOwnedJesterDetail(
-                                                        index,
+                      const SizedBox(height: 6),
+                      _MarketTabBar(
+                        currentTab: _shopTab,
+                        onChanged: _selectShopTab,
+                      ),
+                      const SizedBox(height: 6),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 140),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.035, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        ),
+                        child: Column(
+                          key: ValueKey<_MarketShopTab>(_shopTab),
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_shopTab ==
+                                _MarketShopTab.cardsAndQuickSlots) ...[
+                              _MarketSectionBox(
+                                title: 'Jester Slots',
+                                trailing:
+                                    '${market.ownedEntries.length}/${market.maxOwnedSlots}',
+                                padding: const EdgeInsets.fromLTRB(
+                                  14,
+                                  8,
+                                  14,
+                                  8,
+                                ),
+                                child: SizedBox(
+                                  height: _marketOwnedCardHeight + 6,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: List.generate(
+                                        market.maxOwnedSlots,
+                                        (index) {
+                                          final ownedEntry =
+                                              index < market.ownedEntries.length
+                                              ? market.ownedEntries[index]
+                                              : null;
+                                          final card = ownedEntry?.card;
+                                          final selected =
+                                              _selectedOwnedIndex == index;
+                                          final pulse =
+                                              _purchaseFlight?.item == false &&
+                                              _purchaseFlight?.slotLabel ==
+                                                  'J${index + 1}';
+                                          final locked =
+                                              index >=
+                                              RummiRunProgress
+                                                  .baseUnlockedJesterSlots;
+                                          final child = _MarketSlotPulse(
+                                            active: pulse,
+                                            child: _MarketSelectableCardFrame(
+                                              selected: false,
+                                              width: _marketOwnedCardWidth,
+                                              height: _marketOwnedCardHeight,
+                                              child: GameJesterSlot(
+                                                card: card,
+                                                runtimeValueText: card == null
+                                                    ? null
+                                                    : jesterRuntimeValueText(
+                                                        card,
+                                                        market.runtimeSnapshot,
+                                                        slotIndex: index,
                                                       ),
-                                                  child: child,
-                                                ),
-                                        );
-                                      },
+                                                extended: index == 4,
+                                                activeEffect: null,
+                                                settlementSequenceTick: 0,
+                                                selected: selected,
+                                                locked: locked,
+                                              ),
+                                            ),
+                                          );
+
+                                          return SizedBox(
+                                            width:
+                                                _marketOwnedCardWidth +
+                                                (_marketCardSelectionInset * 2),
+                                            height:
+                                                _marketOwnedCardHeight +
+                                                (_marketCardSelectionInset * 2),
+                                            child: card == null || locked
+                                                ? child
+                                                : GestureDetector(
+                                                    onTap: () =>
+                                                        _selectOwned(index),
+                                                    onLongPress: () =>
+                                                        _showOwnedJesterDetail(
+                                                          index,
+                                                        ),
+                                                    child: child,
+                                                  ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            _MarketQuickPassiveSlotsSection(
-                              slots: visibleItemSlots,
-                              selectedItemSlotIndex: _selectedItemSlotIndex,
-                              pulsingSlotLabel: _purchaseFlight?.item == true
-                                  ? _purchaseFlight?.slotLabel
-                                  : null,
-                              onTap: _selectItemSlot,
-                            ),
-                          ] else ...[
-                            _MarketItemSlotsSection(
-                              title: 'Tool Slots',
-                              slots: visibleToolSlots,
-                              selectedItemSlotIndex: _selectedItemSlotIndex,
-                              pulsingSlotLabel: _purchaseFlight?.item == true
-                                  ? _purchaseFlight?.slotLabel
-                                  : null,
-                              onTap: _selectItemSlot,
-                            ),
-                            const SizedBox(height: 6),
-                            _MarketItemSlotsSection(
-                              title: 'Gear Slots',
-                              slots: visibleGearSlots,
-                              selectedItemSlotIndex: _selectedItemSlotIndex,
-                              pulsingSlotLabel: _purchaseFlight?.item == true
-                                  ? _purchaseFlight?.slotLabel
-                                  : null,
-                              onTap: _selectItemSlot,
-                            ),
-                          ],
-                          const SizedBox(height: 10),
-                          _MarketSpeechPanel(
-                            title: selectedOwned != null
-                                ? localizedJesterName(
-                                    context,
-                                    selectedOwned.card,
-                                  )
-                                : selectedOffer != null
-                                ? localizedJesterName(
-                                    context,
-                                    selectedOffer.card,
-                                  )
-                                : selectedItemOffer != null
-                                ? localizedItemName(context, selectedItemOffer)
-                                : selectedOwnedItemSlot != null
-                                ? localizedItemSlotName(
-                                    context,
-                                    selectedOwnedItemSlot,
-                                  )
-                                : '선택된 카드 없음',
-                            subtitle: selectedOwned != null
-                                ? '보유 슬롯'
-                                : selectedOffer != null
-                                ? 'Jester Shop'
-                                : selectedItemOffer != null
-                                ? 'Item Shop'
-                                : selectedOwnedItemSlot != null
-                                ? _ownedItemSlotSubtitle(selectedOwnedItemSlot)
-                                : '카드를 선택하세요',
-                            body: selectedOwned != null
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _MarketDescriptionText(
-                                        localizedJesterEffect(
-                                          context,
-                                          selectedOwned.card,
-                                        ),
-                                        maxLines: 2,
-                                      ),
-                                      if (selectedOwnedRuntimeValue !=
-                                          null) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          selectedOwnedRuntimeValue,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Color(0xFFF2C14E),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  )
-                                : selectedOffer != null
-                                ? _MarketOfferDetailBody(
-                                    effectText: localizedJesterEffect(
+                              const SizedBox(height: 6),
+                              _MarketQuickPassiveSlotsSection(
+                                slots: visibleItemSlots,
+                                selectedItemSlotIndex: _selectedItemSlotIndex,
+                                pulsingSlotLabel: _purchaseFlight?.item == true
+                                    ? _purchaseFlight?.slotLabel
+                                    : null,
+                                onTap: _selectItemSlot,
+                              ),
+                            ] else ...[
+                              _MarketItemSlotsSection(
+                                title: 'Tool Slots',
+                                slots: visibleToolSlots,
+                                selectedItemSlotIndex: _selectedItemSlotIndex,
+                                pulsingSlotLabel: _purchaseFlight?.item == true
+                                    ? _purchaseFlight?.slotLabel
+                                    : null,
+                                onTap: _selectItemSlot,
+                              ),
+                              const SizedBox(height: 6),
+                              _MarketItemSlotsSection(
+                                title: 'Gear Slots',
+                                slots: visibleGearSlots,
+                                selectedItemSlotIndex: _selectedItemSlotIndex,
+                                pulsingSlotLabel: _purchaseFlight?.item == true
+                                    ? _purchaseFlight?.slotLabel
+                                    : null,
+                                onTap: _selectItemSlot,
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            _MarketSpeechPanel(
+                              title: selectedOwned != null
+                                  ? localizedJesterName(
+                                      context,
+                                      selectedOwned.card,
+                                    )
+                                  : selectedOffer != null
+                                  ? localizedJesterName(
                                       context,
                                       selectedOffer.card,
-                                    ),
-                                    tags: _jesterSynergyTags(
-                                      selectedOffer.card,
-                                    ),
-                                  )
-                                : selectedItemOffer != null
-                                ? _MarketOfferDetailBody(
-                                    effectText: localizedItemEffect(
+                                    )
+                                  : selectedItemOffer != null
+                                  ? localizedItemName(
                                       context,
                                       selectedItemOffer,
-                                    ),
-                                    tags: _itemSynergyTags(
-                                      selectedItemOffer.item,
-                                    ),
-                                  )
-                                : selectedOwnedItemSlot != null
-                                ? _OwnedMarketItemBody(
-                                    slot: selectedOwnedItemSlot,
-                                  )
-                                : _MarketDescriptionText(
-                                    '선택한 카드의 정보와 액션이 여기에 표시됩니다.',
-                                    maxLines: 3,
-                                    color: Colors.white.withValues(alpha: 0.68),
-                                  ),
-                            trailing: selectedOwned != null
-                                ? _MarketActionPane(
-                                    priceLabel: '+${selectedOwned.sellPrice}',
-                                    buttonLabel: '판매',
-                                    buttonColor: const Color(0xFFB74B3B),
-                                    onPressed: () =>
-                                        _sellOwned(selectedOwned.slotIndex),
-                                  )
-                                : selectedOffer != null
-                                ? _MarketActionPane(
-                                    priceLabel: '${selectedOffer.price}',
-                                    buttonLabel: '구매',
-                                    buttonColor: const Color(0xFFF4A81D),
-                                    foreground: Colors.black,
-                                    onPressed: selectedOffer.isAffordable
-                                        ? _buySelected
-                                        : null,
-                                    onDeniedPressed: selectedOffer.isAffordable
-                                        ? null
-                                        : () {
-                                            const reason = 'Gold 부족';
-                                            _startMarketDenyFeedback(
-                                              'jester-buy',
-                                              reason,
-                                            );
-                                            showBottomNotice(context, reason);
-                                          },
-                                    disabledReason: selectedOffer.isAffordable
-                                        ? null
-                                        : 'Gold 부족',
-                                    denyActive:
-                                        _marketDenyTarget == 'jester-buy',
-                                    denyTick: _marketDenyTick,
-                                    denyReason: _marketDenyReason,
-                                  )
-                                : selectedItemOffer != null
-                                ? _MarketActionPane(
-                                    priceLabel: '${selectedItemOffer.price}',
-                                    buttonLabel: '구매',
-                                    buttonColor: const Color(0xFFF4A81D),
-                                    foreground: Colors.black,
-                                    onPressed: selectedItemOffer.isAffordable
-                                        ? _buySelectedItem
-                                        : null,
-                                    onDeniedPressed:
-                                        selectedItemOffer.isAffordable
-                                        ? null
-                                        : () {
-                                            const reason = 'Gold 부족';
-                                            _startMarketDenyFeedback(
-                                              'item-buy',
-                                              reason,
-                                            );
-                                            showBottomNotice(context, reason);
-                                          },
-                                    disabledReason:
-                                        selectedItemOffer.isAffordable
-                                        ? null
-                                        : 'Gold 부족',
-                                    denyActive: _marketDenyTarget == 'item-buy',
-                                    denyTick: _marketDenyTick,
-                                    denyReason: _marketDenyReason,
-                                  )
-                                : selectedOwnedItemSlot != null
-                                ? _ownedMarketItemActionPane(
-                                    context,
-                                    selectedOwnedItemSlot,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 6),
-                          _MarketSectionBox(
-                            title: null,
-                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                            child: SizedBox(
-                              height: _marketShopPanelHeight,
-                              child: Column(
-                                children: [
-                                  _MarketPagerBar(
-                                    currentPage: currentOfferPage,
-                                    pageCount: _pageCount(
-                                      currentOfferEntries.length,
-                                    ),
-                                    onPrev:
-                                        _shopTab ==
-                                            _MarketShopTab.cardsAndQuickSlots
-                                        ? () => _shiftMainOfferPage(-1)
-                                        : () => _shiftUtilityOfferPage(-1),
-                                    onNext:
-                                        _shopTab ==
-                                            _MarketShopTab.cardsAndQuickSlots
-                                        ? () => _shiftMainOfferPage(1)
-                                        : () => _shiftUtilityOfferPage(1),
-                                    rerollCost: market.rerollCost,
-                                    onReroll:
-                                        _shopTab ==
-                                            _MarketShopTab.cardsAndQuickSlots
-                                        ? _reroll
-                                        : null,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 0,
-                                        vertical: 2,
-                                      ),
-                                      child: visibleOfferEntries.isEmpty
-                                          ? Center(
-                                              child: Text(
-                                                _shopTab ==
-                                                        _MarketShopTab
-                                                            .cardsAndQuickSlots
-                                                    ? '이번 Market에 노출된 카드/Q-Slot이 없습니다.'
-                                                    : '이번 Market에 노출된 Tool/Gear가 없습니다.',
-                                                style: TextStyle(
-                                                  color: Colors.white
-                                                      .withValues(alpha: 0.68),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            )
-                                          : _MarketOfferLane(
-                                              itemCount:
-                                                  visibleOfferEntries.length,
-                                              children: [
-                                                for (
-                                                  var i = 0;
-                                                  i <
-                                                      visibleOfferEntries
-                                                          .length;
-                                                  i++
-                                                )
-                                                  _MarketOfferReveal(
-                                                    index: i,
-                                                    signature:
-                                                        _offerEntrySignature(
-                                                          market,
-                                                          visibleOfferEntries[i],
-                                                        ),
-                                                    child: switch (visibleOfferEntries[i]
-                                                        .kind) {
-                                                      _MarketOfferEntryKind
-                                                          .jester =>
-                                                        _GameShopOfferCard(
-                                                          offer:
-                                                              market
-                                                                  .offers[visibleOfferEntries[i]
-                                                                  .jesterIndex!],
-                                                          selected:
-                                                              _selectedOfferIndex ==
-                                                              visibleOfferEntries[i]
-                                                                  .jesterIndex,
-                                                          canAfford: market
-                                                              .offers[visibleOfferEntries[i]
-                                                                  .jesterIndex!]
-                                                              .isAffordable,
-                                                          onTap: () => _selectOffer(
-                                                            visibleOfferEntries[i]
-                                                                .jesterIndex!,
-                                                          ),
-                                                        ),
-                                                      _MarketOfferEntryKind
-                                                          .item =>
-                                                        _MarketItemOfferCard(
-                                                          offer:
-                                                              market
-                                                                  .itemOffers[visibleOfferEntries[i]
-                                                                  .itemIndex!],
-                                                          selected:
-                                                              _selectedItemOfferIndex ==
-                                                              visibleOfferEntries[i]
-                                                                  .itemIndex,
-                                                          onTap: () =>
-                                                              _selectItemOffer(
-                                                                visibleOfferEntries[i]
-                                                                    .itemIndex!,
-                                                              ),
-                                                        ),
-                                                    },
-                                                  ),
-                                              ],
+                                    )
+                                  : selectedOwnedItemSlot != null
+                                  ? localizedItemSlotName(
+                                      context,
+                                      selectedOwnedItemSlot,
+                                    )
+                                  : '선택된 카드 없음',
+                              subtitle: selectedOwned != null
+                                  ? '보유 슬롯'
+                                  : selectedOffer != null
+                                  ? 'Jester Shop'
+                                  : selectedItemOffer != null
+                                  ? 'Item Shop'
+                                  : selectedOwnedItemSlot != null
+                                  ? _ownedItemSlotSubtitle(
+                                      selectedOwnedItemSlot,
+                                    )
+                                  : '카드를 선택하세요',
+                              body: selectedOwned != null
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _MarketDescriptionText(
+                                          localizedJesterEffect(
+                                            context,
+                                            selectedOwned.card,
+                                          ),
+                                          maxLines: 2,
+                                        ),
+                                        if (selectedOwnedRuntimeValue !=
+                                            null) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            selectedOwnedRuntimeValue,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: Color(0xFFF2C14E),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
                                             ),
+                                          ),
+                                        ],
+                                      ],
+                                    )
+                                  : selectedOffer != null
+                                  ? _MarketOfferDetailBody(
+                                      effectText: localizedJesterEffect(
+                                        context,
+                                        selectedOffer.card,
+                                      ),
+                                      tags: _jesterSynergyTags(
+                                        selectedOffer.card,
+                                      ),
+                                    )
+                                  : selectedItemOffer != null
+                                  ? _MarketOfferDetailBody(
+                                      effectText: localizedItemEffect(
+                                        context,
+                                        selectedItemOffer,
+                                      ),
+                                      tags: _itemSynergyTags(
+                                        selectedItemOffer.item,
+                                      ),
+                                    )
+                                  : selectedOwnedItemSlot != null
+                                  ? _OwnedMarketItemBody(
+                                      slot: selectedOwnedItemSlot,
+                                    )
+                                  : _MarketDescriptionText(
+                                      '선택한 카드의 정보와 액션이 여기에 표시됩니다.',
+                                      maxLines: 3,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.68,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                              trailing: selectedOwned != null
+                                  ? _MarketActionPane(
+                                      priceLabel: '+${selectedOwned.sellPrice}',
+                                      buttonLabel: '판매',
+                                      buttonColor: const Color(0xFFB74B3B),
+                                      onPressed: () =>
+                                          _sellOwned(selectedOwned.slotIndex),
+                                    )
+                                  : selectedOffer != null
+                                  ? _MarketActionPane(
+                                      priceLabel: '${selectedOffer.price}',
+                                      buttonLabel: '구매',
+                                      buttonColor: const Color(0xFFF4A81D),
+                                      foreground: Colors.black,
+                                      onPressed: selectedOffer.isAffordable
+                                          ? _buySelected
+                                          : null,
+                                      onDeniedPressed:
+                                          selectedOffer.isAffordable
+                                          ? null
+                                          : () {
+                                              const reason = 'Gold 부족';
+                                              _startMarketDenyFeedback(
+                                                'jester-buy',
+                                                reason,
+                                              );
+                                              showBottomNotice(context, reason);
+                                            },
+                                      disabledReason: selectedOffer.isAffordable
+                                          ? null
+                                          : 'Gold 부족',
+                                      denyActive:
+                                          _marketDenyTarget == 'jester-buy',
+                                      denyTick: _marketDenyTick,
+                                      denyReason: _marketDenyReason,
+                                    )
+                                  : selectedItemOffer != null
+                                  ? _MarketActionPane(
+                                      priceLabel: '${selectedItemOffer.price}',
+                                      buttonLabel: '구매',
+                                      buttonColor: const Color(0xFFF4A81D),
+                                      foreground: Colors.black,
+                                      onPressed: selectedItemOffer.isAffordable
+                                          ? _buySelectedItem
+                                          : null,
+                                      onDeniedPressed:
+                                          selectedItemOffer.isAffordable
+                                          ? null
+                                          : () {
+                                              const reason = 'Gold 부족';
+                                              _startMarketDenyFeedback(
+                                                'item-buy',
+                                                reason,
+                                              );
+                                              showBottomNotice(context, reason);
+                                            },
+                                      disabledReason:
+                                          selectedItemOffer.isAffordable
+                                          ? null
+                                          : 'Gold 부족',
+                                      denyActive:
+                                          _marketDenyTarget == 'item-buy',
+                                      denyTick: _marketDenyTick,
+                                      denyReason: _marketDenyReason,
+                                    )
+                                  : selectedOwnedItemSlot != null
+                                  ? _ownedMarketItemActionPane(
+                                      context,
+                                      selectedOwnedItemSlot,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _MarketSectionBox(
+                              title: null,
+                              padding: const EdgeInsets.fromLTRB(
+                                12,
+                                10,
+                                12,
+                                10,
                               ),
+                              child: SizedBox(
+                                height: _marketShopPanelHeight,
+                                child: Column(
+                                  children: [
+                                    _MarketPagerBar(
+                                      currentPage: currentOfferPage,
+                                      pageCount: _pageCount(
+                                        currentOfferEntries.length,
+                                      ),
+                                      onPrev:
+                                          _shopTab ==
+                                              _MarketShopTab.cardsAndQuickSlots
+                                          ? () => _shiftMainOfferPage(-1)
+                                          : () => _shiftUtilityOfferPage(-1),
+                                      onNext:
+                                          _shopTab ==
+                                              _MarketShopTab.cardsAndQuickSlots
+                                          ? () => _shiftMainOfferPage(1)
+                                          : () => _shiftUtilityOfferPage(1),
+                                      rerollCost: market.rerollCost,
+                                      onReroll:
+                                          _shopTab ==
+                                              _MarketShopTab.cardsAndQuickSlots
+                                          ? _reroll
+                                          : null,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 0,
+                                          vertical: 2,
+                                        ),
+                                        child: visibleOfferEntries.isEmpty
+                                            ? Center(
+                                                child: Text(
+                                                  _shopTab ==
+                                                          _MarketShopTab
+                                                              .cardsAndQuickSlots
+                                                      ? '이번 Market에 노출된 카드/Q-Slot이 없습니다.'
+                                                      : '이번 Market에 노출된 Tool/Gear가 없습니다.',
+                                                  style: TextStyle(
+                                                    color: Colors.white
+                                                        .withValues(
+                                                          alpha: 0.68,
+                                                        ),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              )
+                                            : _MarketOfferLane(
+                                                itemCount:
+                                                    visibleOfferEntries.length,
+                                                children: [
+                                                  for (
+                                                    var i = 0;
+                                                    i <
+                                                        visibleOfferEntries
+                                                            .length;
+                                                    i++
+                                                  )
+                                                    _MarketOfferReveal(
+                                                      index: i,
+                                                      signature:
+                                                          _offerEntrySignature(
+                                                            market,
+                                                            visibleOfferEntries[i],
+                                                          ),
+                                                      child: switch (visibleOfferEntries[i]
+                                                          .kind) {
+                                                        _MarketOfferEntryKind
+                                                            .jester =>
+                                                          _GameShopOfferCard(
+                                                            offer:
+                                                                market
+                                                                    .offers[visibleOfferEntries[i]
+                                                                    .jesterIndex!],
+                                                            selected:
+                                                                _selectedOfferIndex ==
+                                                                visibleOfferEntries[i]
+                                                                    .jesterIndex,
+                                                            canAfford: market
+                                                                .offers[visibleOfferEntries[i]
+                                                                    .jesterIndex!]
+                                                                .isAffordable,
+                                                            onTap: () => _selectOffer(
+                                                              visibleOfferEntries[i]
+                                                                  .jesterIndex!,
+                                                            ),
+                                                          ),
+                                                        _MarketOfferEntryKind
+                                                            .item =>
+                                                          _MarketItemOfferCard(
+                                                            offer:
+                                                                market
+                                                                    .itemOffers[visibleOfferEntries[i]
+                                                                    .itemIndex!],
+                                                            selected:
+                                                                _selectedItemOfferIndex ==
+                                                                visibleOfferEntries[i]
+                                                                    .itemIndex,
+                                                            onTap: () =>
+                                                                _selectItemOffer(
+                                                                  visibleOfferEntries[i]
+                                                                      .itemIndex!,
+                                                                ),
+                                                          ),
+                                                      },
+                                                    ),
+                                                ],
+                                              ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GameActionButton(
+                              label: '메인 메뉴',
+                              background: const Color(0xFF586463),
+                              onPressed: () async {
+                                Navigator.of(context).pop(false);
+                                await widget.onExitToTitle();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: GameActionButton(
+                              label: '다음 Station',
+                              background: const Color(0xFF267B67),
+                              onPressed: () => Navigator.of(context).pop(true),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GameActionButton(
-                            label: '메인 메뉴',
-                            background: const Color(0xFF586463),
-                            onPressed: () async {
-                              Navigator.of(context).pop(false);
-                              await widget.onExitToTitle();
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: GameActionButton(
-                            label: '다음 Station',
-                            background: const Color(0xFF267B67),
-                            onPressed: () => Navigator.of(context).pop(true),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (_purchaseFlight != null)
-                Positioned.fill(
-                  child: _MarketPurchaseFlightOverlay(flight: _purchaseFlight!),
-                ),
-            ],
+                if (_purchaseFlight != null)
+                  Positioned.fill(
+                    child: _MarketPurchaseFlightOverlay(
+                      flight: _purchaseFlight!,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MarketEntryMotion extends StatelessWidget {
+  const _MarketEntryMotion({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('market-entry-motion'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final opacity = (value / 0.72).clamp(0.0, 1.0);
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, 8 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }
