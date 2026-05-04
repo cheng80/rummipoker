@@ -67,6 +67,9 @@ class _MarketPurchaseFlight {
     required this.slotLabel,
     required this.item,
     required this.spentGold,
+    this.jesterCard,
+    this.itemPlacement,
+    this.itemRarity,
   });
 
   final int tick;
@@ -74,6 +77,9 @@ class _MarketPurchaseFlight {
   final String slotLabel;
   final bool item;
   final int spentGold;
+  final RummiJesterCard? jesterCard;
+  final ItemPlacement? itemPlacement;
+  final ItemRarity? itemRarity;
 }
 
 class GameShopScreen extends StatefulWidget {
@@ -568,6 +574,7 @@ class _GameShopScreenState extends State<GameShopScreen>
           slotLabel: 'J${purchasedSlot.slotIndex + 1}',
           item: false,
           spentGold: boughtOffer.price,
+          jesterCard: boughtOffer.card,
         );
       } else if (market.ownedEntries.isNotEmpty) {
         _selectedOwnedIndex = market.ownedEntries.length - 1;
@@ -610,6 +617,8 @@ class _GameShopScreenState extends State<GameShopScreen>
           slotLabel: purchasedSlot.slotLabel,
           item: true,
           spentGold: boughtOffer.price,
+          itemPlacement: boughtOffer.item.placement,
+          itemRarity: boughtOffer.item.rarity,
         );
       } else {
         final nextEntries = _offerEntriesForTab(market, _shopTab);
@@ -656,6 +665,9 @@ class _GameShopScreenState extends State<GameShopScreen>
     required String slotLabel,
     required bool item,
     required int spentGold,
+    RummiJesterCard? jesterCard,
+    ItemPlacement? itemPlacement,
+    ItemRarity? itemRarity,
   }) {
     final tick = _purchaseFlightTick + 1;
     _purchaseFlightTick = tick;
@@ -665,6 +677,9 @@ class _GameShopScreenState extends State<GameShopScreen>
       slotLabel: slotLabel,
       item: item,
       spentGold: spentGold,
+      jesterCard: jesterCard,
+      itemPlacement: itemPlacement,
+      itemRarity: itemRarity,
     );
     Future<void>.delayed(const Duration(milliseconds: 760), () {
       if (!mounted || _purchaseFlight?.tick != tick) return;
@@ -3053,58 +3068,67 @@ class _MarketPurchaseFlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    final face = _purchaseFlightFace();
+    return SizedBox(
       key: const ValueKey('market-purchase-flight'),
-      decoration: BoxDecoration(
-        color: flight.item ? const Color(0xFFE9F6EF) : const Color(0xFFF7E7B8),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFF2C14E), width: 1.4),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFF2C14E).withValues(alpha: 0.32),
-            blurRadius: 18,
-            spreadRadius: 1,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
-          ),
-        ],
+      width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+      height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+      child: KeyedSubtree(
+        key: const ValueKey('market-purchase-flight-frame'),
+        child: _MarketSelectableCardFrame(
+          selected: true,
+          width: _marketOfferCardWidth,
+          height: _marketOfferCardHeight,
+          child: face,
+        ),
       ),
-      child: SizedBox(
-        width: 78,
-        height: 52,
+    );
+  }
+
+  Widget _purchaseFlightFace() {
+    final jesterCard = flight.jesterCard;
+    if (!flight.item && jesterCard != null) {
+      return GameJesterSlot(
+        card: jesterCard,
+        runtimeValueText: null,
+        extended: false,
+        activeEffect: null,
+        settlementSequenceTick: 0,
+        selected: false,
+      );
+    }
+
+    final placement = flight.itemPlacement;
+    final rarity = flight.itemRarity;
+    if (flight.item && placement != null && rarity != null) {
+      return _MarketItemCardFace(
+        label: flight.label,
+        placement: placement,
+        rarity: rarity,
+        selected: true,
+      );
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7E7B8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF2C14E), width: 1.2),
+      ),
+      child: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 5,
-            children: [
-              Text(
-                flight.slotLabel,
-                maxLines: 1,
-                overflow: TextOverflow.clip,
-                style: const TextStyle(
-                  color: Color(0xFF26352F),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
-              ),
-              Text(
-                flight.label,
-                maxLines: 2,
-                overflow: TextOverflow.clip,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF26352F),
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  height: 1.05,
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Text(
+            flight.label,
+            maxLines: 3,
+            overflow: TextOverflow.clip,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF26352F),
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              height: 1.05,
+            ),
           ),
         ),
       ),

@@ -298,6 +298,13 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-purchase-flight')),
+        matching: find.byKey(const ValueKey('market-purchase-flight-frame')),
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(const ValueKey('market-gold-spend-badge')),
       findsOneWidget,
     );
@@ -349,11 +356,17 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-purchase-flight')),
+        matching: find.byKey(const ValueKey('market-purchase-flight-frame')),
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(const ValueKey('market-gold-spend-badge')),
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('market-slot-pulse')), findsOneWidget);
-    expect(find.text('J1'), findsOneWidget);
     expect(find.text('-4G'), findsOneWidget);
 
     await tester.pumpAndSettle();
