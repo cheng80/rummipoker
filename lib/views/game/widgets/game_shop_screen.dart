@@ -10,7 +10,6 @@ import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/item_translation_scope.dart';
-import '../../../resources/jester_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
@@ -397,146 +396,6 @@ class _GameShopScreenState extends State<GameShopScreen>
     final start = (page * 3).clamp(0, items.length);
     final end = (start + 3).clamp(0, items.length);
     return items.sublist(start, end);
-  }
-
-  Future<void> _showOwnedJesterDetail(int index) async {
-    if (index < 0 || index >= _market.ownedEntries.length) return;
-    final ownedEntry = _market.ownedEntries[index];
-    final card = ownedEntry.card;
-    final notes = JesterTranslationScope.of(context).notes(card.id);
-    final sellGold = ownedEntry.sellPrice;
-    final runtimeValueText = jesterRuntimeValueText(
-      card,
-      _market.runtimeSnapshot,
-      slotIndex: index,
-    );
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: const Color(0xFF102D25),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            localizedJesterName(context, card),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.of(sheetContext).pop(),
-                          icon: const Icon(Icons.close_rounded),
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 68,
-                          height: 92,
-                          child: GameJesterSlot(
-                            card: card,
-                            runtimeValueText: runtimeValueText,
-                            extended: false,
-                            activeEffect: null,
-                            settlementSequenceTick: 0,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                localizedJesterEffect(context, card),
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.3,
-                                ),
-                              ),
-                              if (runtimeValueText != null) ...[
-                                const SizedBox(height: 10),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    runtimeValueText,
-                                    style: const TextStyle(
-                                      color: Color(0xFFF4E6B1),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              if (notes != null && notes.trim().isNotEmpty) ...[
-                                const SizedBox(height: 10),
-                                Text(
-                                  notes,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.62),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: GameActionButton(
-                        label: '판매 +$sellGold Gold',
-                        background: const Color(0xFFB74B3B),
-                        onPressed: () {
-                          Navigator.of(sheetContext).pop();
-                          _sellOwned(index);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _reroll() async {
@@ -1402,10 +1261,6 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                 : GestureDetector(
                                                     onTap: () =>
                                                         _selectOwned(index),
-                                                    onLongPress: () =>
-                                                        _showOwnedJesterDetail(
-                                                          index,
-                                                        ),
                                                     child: child,
                                                   ),
                                           );
