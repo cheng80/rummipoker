@@ -2958,6 +2958,52 @@ void main() {
     },
   );
 
+  test('CLI rank cycle probe can layer on the v90 baseline package', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/rank_cycle_probe_v90.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '42',
+      '--stations',
+      '1,5,8',
+      '--blind-tier',
+      'boss',
+      '--difficulty',
+      'standard',
+      '--experiment-id',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1',
+      '--loadout-id',
+      'progression_route_power',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    final byStation = {for (final row in rows) row['station'] as int: row};
+    final s1Effects =
+        byStation[1]!['experiment_effects'] as Map<String, dynamic>;
+    final s8Effects =
+        byStation[8]!['experiment_effects'] as Map<String, dynamic>;
+
+    expect(s1Effects['board_discards_delta'], 1);
+    expect(s1Effects['hand_discards_delta'], 1);
+    expect(s1Effects['max_hand_size_delta'], 1);
+    expect(s8Effects['target_score_multiplier'], 0.68);
+    expect(s8Effects['rank_cycle_probe'], isTrue);
+    expect(s8Effects['sim_boss_constraint_id'], 'confirm_count_tax_v2');
+  });
+
   test(
     'CLI weighted boss experiment rolls banded boss pool and records proxy ids',
     () async {
