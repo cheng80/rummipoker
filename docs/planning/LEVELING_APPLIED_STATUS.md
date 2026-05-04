@@ -342,6 +342,9 @@ Economy leveling gate:
 - applied: `rarity_category_v1`, `rarity_category_soft_v1` sim-only price band mode를 추가했다.
 - price band probe: hard band r20은 balanced v9 45.0%, power v9 50.0%로 너무 강하고, soft band r20은 final gold avg 약 158.5G로 잔고 압박이 약하다.
 - current conclusion: 가격 band 단독 조정은 장기 후보에서 제외한다. 다음은 구매 후보 utility/cost 선택, reroll 빈도, 판매 회수율 모델을 더 현실화한다.
+- applied: `affordable_alternative_v1` sim-only market choice mode를 추가했다. shop slot에서 비싼 1순위 대신 구매 가능한 대안을 고르는 proxy다.
+- current affordable choice probe: `reward 0.40 / price 2.4 / reroll_slot_sell_v1 / affordable_alternative_v1` r120은 balanced none 52.5%, balanced v9 70.0%, power none 63.3%, power v9 67.5%다.
+- current economy signal: S8 boss 시작 평균은 약 142.1G, final gold avg는 약 121.7G다. 이전보다 낫지만 아직 잔고가 높아 economy gate 완료는 아니다.
 
 ## 6. Read Order
 

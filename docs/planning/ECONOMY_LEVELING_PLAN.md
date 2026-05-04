@@ -219,6 +219,24 @@ price band probe:
 - soft band는 clear 충격은 덜하지만 잔고 압박이 약하다.
 - 가격 band 단독 조정은 다음 장기 후보에서 제외한다. 이후에는 실제 구매 후보별 utility/cost 선택 모델과 reroll 빈도, 판매 회수율을 더 현실화한 뒤 재검토한다.
 
+affordable choice probe:
+
+- `--sim-market-choice-mode affordable_alternative_v1`을 추가했다.
+- 기본값은 `none`이며 runtime 마켓 선택에는 영향이 없다.
+- 이 모드는 shop slot 시장에서 utility 1순위 후보가 비싸더라도, 같은 가판에 있는 구매 가능한 대안 중 utility가 높은 후보를 고른다.
+- 이는 “필요 후보가 떴지만 못 사면 전체 market 효과가 사라진다”는 과도한 sim penalty를 줄이고, 실제 유저가 가판에서 대안을 고르는 행동을 모델링하기 위한 proxy다.
+
+| Probe | Reward scale | Price scale | Choice mode | balanced none | balanced v9 | power none | power v9 | S4 boss before | S8 boss before | final gold avg |
+|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|
+| `economy_choice_affordable_v1_r20` | 0.40 | 2.4 | affordable | 30.0% | 55.0% | 50.0% | 70.0% | 77.3G | 136.4G | 111.9G |
+| `economy_choice_affordable_v1_r120` | 0.40 | 2.4 | affordable | 52.5% | 70.0% | 63.3% | 67.5% | 78.5G | 142.1G | 121.7G |
+
+판정:
+
+- r120 기준으로 v9가 none보다 명확히 좋은 상태를 유지하면서 S8 boss 진입 잔고를 150G대에서 140G대 초반으로 낮췄다.
+- 다만 final gold avg가 여전히 약 121.7G라 경제 gate 완료는 아니다.
+- 다음 후보는 `reward 0.36~0.40`, `price 2.4~2.8`, `affordable_alternative_v1`, `reroll_slot_sell_v1` 조합에서 r120 1~2개를 더 좁힌다.
+
 ### Phase 3. Economy Probe
 
 목표:

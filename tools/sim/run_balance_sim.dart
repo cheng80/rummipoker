@@ -584,17 +584,10 @@ BalanceSimSequenceOutput _runStationPathSequence({
         tier: tier,
         previousStepResourceState: previousStepResourceState,
       );
-      final resolvedMarketProfile = marketSelection.profile;
+      var resolvedMarketProfile = marketSelection.profile;
       final stationBaseLoadout = _stationRouteLoadout(
         baseLoadout: spec.loadout,
         station: station,
-      );
-      final marketPurchaseEvents = _sequenceMarketPurchaseEvents(
-        marketProfile: resolvedMarketProfile,
-        sourceCandidate: marketSelection.sourceCandidate,
-        jesterCatalog: jesterCatalog,
-        itemCatalog: itemCatalog,
-        loadout: stationBaseLoadout,
       );
       final economyBeforeMarket = simEconomyGold;
       var economyKnownSpendThisStep = 0;
@@ -621,6 +614,28 @@ BalanceSimSequenceOutput _runStationPathSequence({
         economyRerollSpendThisStep += resolvedRerollSpend;
         economyKnownSpendThisStep += resolvedRerollSpend;
       }
+      resolvedMarketProfile = _resolveAffordableMarketProfile(
+        mode: config.simMarketChoiceMode,
+        currentProfile: resolvedMarketProfile,
+        shopSlots: marketSelection.shopSlots,
+        station: station,
+        tier: tier,
+        loadout: stationBaseLoadout,
+        currentGold: simEconomyGold,
+        remainingMarketBudget: remainingMarketBudget,
+        simPriceScale: config.simPriceScale,
+        simPriceBandMode: config.simPriceBandMode,
+        simMarketSpendMode: config.simMarketSpendMode,
+        jesterCatalog: jesterCatalog,
+        itemCatalog: itemCatalog,
+      );
+      final marketPurchaseEvents = _sequenceMarketPurchaseEvents(
+        marketProfile: resolvedMarketProfile,
+        sourceCandidate: marketSelection.sourceCandidate,
+        jesterCatalog: jesterCatalog,
+        itemCatalog: itemCatalog,
+        loadout: stationBaseLoadout,
+      );
       for (final event in marketPurchaseEvents) {
         final cost = event['cost'];
         if (cost is! num) {
@@ -746,6 +761,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         'market_budget_mode': config.simMarketBudgetMode.id,
         'market_spend_mode': config.simMarketSpendMode.id,
         'price_band_mode': config.simPriceBandMode.id,
+        'market_choice_mode': config.simMarketChoiceMode.id,
         'market_budget': marketBudget,
         'gold_before_market': economyBeforeMarket,
         'known_market_spend': economyKnownSpendThisStep,
@@ -809,6 +825,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
               marketBudgetMode: config.simMarketBudgetMode,
               marketSpendMode: config.simMarketSpendMode,
               priceBandMode: config.simPriceBandMode,
+              marketChoiceMode: config.simMarketChoiceMode,
             ),
           ),
         );
@@ -859,6 +876,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         marketBudgetMode: config.simMarketBudgetMode,
         marketSpendMode: config.simMarketSpendMode,
         priceBandMode: config.simPriceBandMode,
+        marketChoiceMode: config.simMarketChoiceMode,
       ),
     ),
   );
@@ -966,6 +984,7 @@ Map<String, Object?> _simEconomySummary({
   required BalanceSimMarketBudgetMode marketBudgetMode,
   required BalanceSimMarketSpendMode marketSpendMode,
   required BalanceSimPriceBandMode priceBandMode,
+  required BalanceSimMarketChoiceMode marketChoiceMode,
 }) {
   return <String, Object?>{
     'schema_version': 1,
@@ -975,6 +994,7 @@ Map<String, Object?> _simEconomySummary({
     'market_budget_mode': marketBudgetMode.id,
     'market_spend_mode': marketSpendMode.id,
     'price_band_mode': priceBandMode.id,
+    'market_choice_mode': marketChoiceMode.id,
     'final_gold': finalGold,
     'total_cashout_gold': totalCashoutGold,
     'known_market_spend': knownMarketSpend,
@@ -1090,6 +1110,135 @@ int _simMarketRerollSpendForStep({
       ? 4
       : 6;
   return rerollCount * rerollCost;
+}
+
+BalanceSimMarketProfile _resolveAffordableMarketProfile({
+  required BalanceSimMarketChoiceMode mode,
+  required BalanceSimMarketProfile currentProfile,
+  required List<BalanceSimMarketProfile> shopSlots,
+  required int station,
+  required BlindTier tier,
+  required BalanceSimLoadoutSpec loadout,
+  required int currentGold,
+  required int? remainingMarketBudget,
+  required double simPriceScale,
+  required BalanceSimPriceBandMode simPriceBandMode,
+  required BalanceSimMarketSpendMode simMarketSpendMode,
+  required RummiJesterCatalog jesterCatalog,
+  required ItemCatalog itemCatalog,
+}) {
+  if (mode == BalanceSimMarketChoiceMode.none || shopSlots.isEmpty) {
+    return currentProfile;
+  }
+  var bestProfile = currentProfile;
+  var bestScore = -1 << 30;
+  for (final profile in shopSlots) {
+    final events = _sequenceMarketPurchaseEvents(
+      marketProfile: profile,
+      sourceCandidate: null,
+      jesterCatalog: jesterCatalog,
+      itemCatalog: itemCatalog,
+      loadout: loadout,
+    );
+    if (events.isEmpty) continue;
+    var affordable = true;
+    var projectedGold = currentGold;
+    var projectedBudget = remainingMarketBudget;
+    for (final event in events) {
+      final cost = event['cost'];
+      if (cost is! num) {
+        affordable = false;
+        break;
+      }
+      final scaledCost = (cost * simPriceScale).round();
+      final resolvedCost = _simPriceBandCostForEvent(
+        mode: simPriceBandMode,
+        event: event,
+        fallbackCost: scaledCost,
+      );
+      final replacement = _simMarketSlotReplacementForEvent(
+        mode: simMarketSpendMode,
+        event: event,
+        loadout: loadout,
+        jesterCatalog: jesterCatalog,
+        itemCatalog: itemCatalog,
+      );
+      projectedGold += replacement.sellRecovery;
+      final withinBudget =
+          projectedBudget == null || projectedBudget >= resolvedCost;
+      if (projectedGold < resolvedCost || !withinBudget) {
+        affordable = false;
+        break;
+      }
+      projectedGold -= resolvedCost;
+      if (projectedBudget != null) {
+        projectedBudget -= resolvedCost;
+      }
+    }
+    if (!affordable) continue;
+    final score = _shopSlotUtilityForProfile(
+      loadout: loadout,
+      station: station,
+      tier: tier,
+      profile: profile,
+    );
+    if (score > bestScore) {
+      bestProfile = profile;
+      bestScore = score;
+    }
+  }
+  return bestScore == -1 << 30 ? currentProfile : bestProfile;
+}
+
+int _shopSlotUtilityForProfile({
+  required BalanceSimLoadoutSpec loadout,
+  required int station,
+  required BlindTier tier,
+  required BalanceSimMarketProfile profile,
+}) {
+  final late = station >= 6;
+  final boss = tier == BlindTier.boss;
+  var score = _buildAwareMarketWeight(loadout, profile) * 2;
+  if (boss) score += _bossMarketWeight(profile);
+  if (late) {
+    score += switch (profile) {
+      BalanceSimMarketProfile.s1CandidateRareXmultJester => 18,
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 12,
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 10,
+      BalanceSimMarketProfile.s1CandidateLegendaryBridge => 6,
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack ||
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 ||
+      BalanceSimMarketProfile.s1TilePackPlus5 => 4,
+      BalanceSimMarketProfile.s1BuyDiscardGlove ||
+      BalanceSimMarketProfile.s1CandidateVoucherResource => 3,
+      _ => 0,
+    };
+  } else if (station <= 2) {
+    score += switch (profile) {
+      BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+      BalanceSimMarketProfile.s1CandidateCommonRankJester => 8,
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack => 7,
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 ||
+      BalanceSimMarketProfile.s1TilePackPlus5 => 5,
+      BalanceSimMarketProfile.s1BuyDiscardGlove => 4,
+      _ => 0,
+    };
+  } else {
+    score += switch (profile) {
+      BalanceSimMarketProfile.s1CandidateUncommonBuildJester ||
+      BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 10,
+      BalanceSimMarketProfile.s1CandidateRareXmultJester => 8,
+      BalanceSimMarketProfile.s1CandidateTarotBuildPack ||
+      BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 6,
+      BalanceSimMarketProfile.s1BuyDiscardGlove ||
+      BalanceSimMarketProfile.s1CandidateVoucherResource => 5,
+      _ => 0,
+    };
+  }
+  if (_isFinalBandShapeCorrectionProxy(profile) && station >= 7) {
+    score += 6;
+  }
+  return score;
 }
 
 int _simPriceBandCostForEvent({
@@ -5866,6 +6015,28 @@ enum BalanceSimPriceBandMode {
   }
 }
 
+enum BalanceSimMarketChoiceMode {
+  none,
+  affordableAlternativeV1;
+
+  static BalanceSimMarketChoiceMode parse(String raw) {
+    return switch (raw) {
+      'none' => BalanceSimMarketChoiceMode.none,
+      'affordable_alternative_v1' =>
+        BalanceSimMarketChoiceMode.affordableAlternativeV1,
+      _ => throw FormatException('Unknown sim market choice mode: $raw'),
+    };
+  }
+
+  String get id {
+    return switch (this) {
+      BalanceSimMarketChoiceMode.none => 'none',
+      BalanceSimMarketChoiceMode.affordableAlternativeV1 =>
+        'affordable_alternative_v1',
+    };
+  }
+}
+
 enum _SimMarketSlotFamily { none, jester, item }
 
 class _SimMarketSlotReplacement {
@@ -6276,6 +6447,7 @@ class BalanceSimCliConfig {
     required this.simMarketBudgetMode,
     required this.simMarketSpendMode,
     required this.simPriceBandMode,
+    required this.simMarketChoiceMode,
     required this.targetMultiplierOverrides,
     required this.loadouts,
     required this.jesterIds,
@@ -6299,6 +6471,7 @@ class BalanceSimCliConfig {
     var simMarketBudgetMode = BalanceSimMarketBudgetMode.none;
     var simMarketSpendMode = BalanceSimMarketSpendMode.none;
     var simPriceBandMode = BalanceSimPriceBandMode.none;
+    var simMarketChoiceMode = BalanceSimMarketChoiceMode.none;
     List<int>? stations;
     List<BlindTier>? blindTiers;
     List<NewRunDifficulty>? difficulties;
@@ -6387,6 +6560,8 @@ class BalanceSimCliConfig {
           simMarketSpendMode = BalanceSimMarketSpendMode.parse(readValue());
         case '--sim-price-band-mode':
           simPriceBandMode = BalanceSimPriceBandMode.parse(readValue());
+        case '--sim-market-choice-mode':
+          simMarketChoiceMode = BalanceSimMarketChoiceMode.parse(readValue());
         case '--target-multiplier':
           targetMultiplierOverrides.add(
             BalanceSimTargetMultiplierOverride.parse(readValue()),
@@ -6461,6 +6636,7 @@ class BalanceSimCliConfig {
       simMarketBudgetMode: simMarketBudgetMode,
       simMarketSpendMode: simMarketSpendMode,
       simPriceBandMode: simPriceBandMode,
+      simMarketChoiceMode: simMarketChoiceMode,
       targetMultiplierOverrides:
           List<BalanceSimTargetMultiplierOverride>.unmodifiable(
             targetMultiplierOverrides,
@@ -6929,6 +7105,7 @@ class BalanceSimCliConfig {
   final BalanceSimMarketBudgetMode simMarketBudgetMode;
   final BalanceSimMarketSpendMode simMarketSpendMode;
   final BalanceSimPriceBandMode simPriceBandMode;
+  final BalanceSimMarketChoiceMode simMarketChoiceMode;
   final List<BalanceSimTargetMultiplierOverride> targetMultiplierOverrides;
   final List<BalanceSimLoadoutSpec> loadouts;
   final List<String> jesterIds;

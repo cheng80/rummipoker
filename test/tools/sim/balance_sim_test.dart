@@ -1590,6 +1590,61 @@ void main() {
   });
 
   test(
+    'CLI sim economy can choose affordable shop slot alternatives',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/affordable_choice.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '2',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '99920',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '2,7',
+        '--market-profile',
+        'shop_slot_market_v9',
+        '--loadout-id',
+        'progression_route_balanced',
+        '--sim-economy-mode',
+        'gated_known_cost',
+        '--sim-reward-scale',
+        '0.40',
+        '--sim-price-scale',
+        '2.4',
+        '--sim-market-spend-mode',
+        'reroll_slot_sell_v1',
+        '--sim-market-choice-mode',
+        'affordable_alternative_v1',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final battleRows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .where((row) => row['row_type'] == 'battle')
+          .toList(growable: false);
+      expect(battleRows, isNotEmpty);
+      for (final row in battleRows) {
+        final trace = row['sim_economy_trace'] as Map<String, dynamic>;
+        expect(trace['market_choice_mode'], 'affordable_alternative_v1');
+        expect(trace['market_spend_mode'], 'reroll_slot_sell_v1');
+        final resolvedProfile = row['resolved_market_profile'] as String;
+        final shopSlots = row['market_shop_slots'] as List<dynamic>;
+        expect(shopSlots, contains(resolvedProfile));
+      }
+    },
+  );
+
+  test(
     'CLI sequence full safe candidate pool records source backlog candidate',
     () async {
       final dir = Directory.systemTemp.createTempSync('balance_sim_test_');

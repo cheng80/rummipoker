@@ -250,6 +250,7 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     economy_final_gold_values: list[int] = []
     economy_mode = ""
     economy_price_band_mode = ""
+    economy_market_choice_mode = ""
     economy_by_station_tier: dict[str, dict[str, list[int]]] = defaultdict(
         lambda: defaultdict(list)
     )
@@ -271,6 +272,10 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                     if not economy_price_band_mode:
                         economy_price_band_mode = str(
                             trace.get("price_band_mode") or ""
+                        )
+                    if not economy_market_choice_mode:
+                        economy_market_choice_mode = str(
+                            trace.get("market_choice_mode") or ""
                         )
                     station_tier = (
                         f"S{_int(row.get('station'))} "
@@ -353,6 +358,7 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
             "available": economy_trace_count > 0,
             "mode": economy_mode,
             "price_band_mode": economy_price_band_mode,
+            "market_choice_mode": economy_market_choice_mode,
             "battle_trace_count": economy_trace_count,
             "total_cashout_gold": economy_cashout_gold,
             "known_market_spend": economy_known_market_spend,
