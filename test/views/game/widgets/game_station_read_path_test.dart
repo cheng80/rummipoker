@@ -309,6 +309,52 @@ void main() {
     expect(find.text('손패 2/3 · 버림 1/2'), findsOneWidget);
   });
 
+  testWidgets('GameBottomInfoRow warns depleted battle resources', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 0,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 0,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 2,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 0,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: const [],
+      scoringCellKeys: const {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 390,
+            child: GameBottomInfoRow(station: station, battle: battle),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('덱 0/52'), findsOneWidget);
+    expect(find.text('보드 버림 0/4'), findsOneWidget);
+    expect(find.text('손패 0/3 · 버림 0/2'), findsOneWidget);
+    expect(find.byIcon(Icons.warning_amber_rounded), findsNWidgets(3));
+  });
+
   testWidgets(
     'GameBoardGrid marks source, locked cells, and empty move targets',
     (tester) async {
