@@ -132,6 +132,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   String? _marketDenyReason;
   int _marketUseFeedbackTick = 0;
   String? _marketUseFeedbackLabel;
+  String? _marketUseFeedbackDelta;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
 
@@ -698,6 +699,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     setState(() {
       _marketUseFeedbackTick = feedbackTick;
       _marketUseFeedbackLabel = '사용 완료';
+      _marketUseFeedbackDelta = _marketUseFeedbackDeltaLabel(item);
       final market = _market;
       final stillExists = market.itemSlots.any(
         (nextSlot) =>
@@ -710,9 +712,21 @@ class _GameShopScreenState extends State<GameShopScreen>
     });
     Future<void>.delayed(const Duration(milliseconds: 620), () {
       if (!mounted || _marketUseFeedbackTick != feedbackTick) return;
-      setState(() => _marketUseFeedbackLabel = null);
+      setState(() {
+        _marketUseFeedbackLabel = null;
+        _marketUseFeedbackDelta = null;
+      });
     });
     widget.onStateChanged();
+  }
+
+  String? _marketUseFeedbackDeltaLabel(ItemDefinition item) {
+    final amount = item.effect.amount;
+    return switch (item.effect.op) {
+      'gain_gold' when amount != null => '+${amount.toInt()}G',
+      'reroll_item_offers_only' => 'Item Reroll',
+      _ => null,
+    };
   }
 
   _MarketActionPane? _ownedMarketItemActionPane(
@@ -1525,6 +1539,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                   Positioned.fill(
                     child: _MarketUseFeedbackToast(
                       label: _marketUseFeedbackLabel!,
+                      deltaLabel: _marketUseFeedbackDelta,
                     ),
                   ),
               ],
@@ -1564,9 +1579,10 @@ class _MarketEntryMotion extends StatelessWidget {
 }
 
 class _MarketUseFeedbackToast extends StatelessWidget {
-  const _MarketUseFeedbackToast({required this.label});
+  const _MarketUseFeedbackToast({required this.label, this.deltaLabel});
 
   final String label;
+  final String? deltaLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -1605,14 +1621,30 @@ class _MarketUseFeedbackToast extends StatelessWidget {
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Color(0xFFB9F6D3),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 8,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFFB9F6D3),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                  if (deltaLabel != null)
+                    Text(
+                      deltaLabel!,
+                      style: const TextStyle(
+                        color: Color(0xFFF2C14E),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

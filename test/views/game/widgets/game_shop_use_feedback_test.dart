@@ -150,6 +150,7 @@ void main() {
     expect(useCalled, isTrue);
     expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
     expect(find.text('사용 완료'), findsOneWidget);
+    expect(find.text('+3G'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.byKey(const ValueKey('market-use-feedback')), findsNothing);
