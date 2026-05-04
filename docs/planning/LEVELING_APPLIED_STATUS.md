@@ -326,7 +326,9 @@ Economy leveling gate:
 - implication: 보상/가격을 보정하기 전에는 v90 이후 장기 sweep을 확정 판단에 쓰지 않는다.
 - applied: runtime 저장 포맷을 바꾸지 않는 sim-only `trace_only` economy layer가 battle row와 sequence summary에 골드 수입, 알려진 구매비, cost-null 이벤트, 잔고 부족 이벤트를 기록한다.
 - current trace: `economy_trace_v1_r20` 탐색 run에서 trace-only 평균 최종 잔고가 약 770G로 높게 나왔다. 기존 sim은 가격/잔고로 market effect를 제한하지 않는 상태다.
-- next implementation: 별도 gated economy mode/profile로 구매 가능성에 따라 market effect 적용을 제한하고, 보상 scale/가격 scale 후보를 탐색한다.
+- applied: `gated_known_cost` sim economy mode를 추가했다. 이 모드는 cost를 알 수 없거나 잔고로 살 수 없는 market effect를 적용하지 않는다.
+- current gated trace: `economy_gated_v1_r20` 탐색 run에서 cost-null 이벤트는 줄었지만 평균 최종 잔고는 약 676G로 여전히 높다.
+- next implementation: 보상 scale/가격 scale 후보를 sweep 축으로 추가한다.
 
 ## 6. Read Order
 

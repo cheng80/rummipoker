@@ -106,6 +106,20 @@ trace-only probe:
 - result: trace-only 평균 최종 잔고가 약 `770G`로 높다.
 - interpretation: 기존 sim은 가격/잔고로 path를 제한하지 않으므로, 다음 단계는 별도 gated economy mode로 구매 가능성에 따라 market effect 적용을 제한해야 한다.
 
+2차 적용:
+
+- `--sim-economy-mode gated_known_cost`를 추가한다.
+- 기본값은 `trace_only`라 기존 sweep 의미는 유지한다.
+- `gated_known_cost`에서는 cost를 알 수 없거나 현재 sim 잔고로 살 수 없는 market effect를 적용하지 않는다.
+- Jester proxy 후보는 실제 카탈로그 Jester 기준 추정 비용을 붙인다.
+
+gated probe:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 20 --seed 99300 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --sim-economy-mode gated_known_cost --jobs 4 --out-prefix logs/sim/economy_gated_v1_r20`
+- audit: `python3 tools/sim/economy_audit.py --summary logs/sim/economy_gated_v1_r20_summary.json --jsonl logs/sim/economy_gated_v1_r20.jsonl --json-out logs/sim/economy_gated_v1_r20_economy_audit.json`
+- result: cost-null 이벤트는 크게 줄었지만, 평균 최종 잔고는 여전히 약 `676G`다.
+- interpretation: 구매 gating만으로는 부족하다. 보상 scale 또는 가격 scale 후보를 실제 sweep 축으로 추가해야 한다.
+
 ### Phase 3. Economy Probe
 
 목표:

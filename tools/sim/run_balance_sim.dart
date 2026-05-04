@@ -582,20 +582,27 @@ BalanceSimSequenceOutput _runStationPathSequence({
         previousStepResourceState: previousStepResourceState,
       );
       final resolvedMarketProfile = marketSelection.profile;
+      final stationBaseLoadout = _stationRouteLoadout(
+        baseLoadout: spec.loadout,
+        station: station,
+      );
       final marketPurchaseEvents = _sequenceMarketPurchaseEvents(
         marketProfile: resolvedMarketProfile,
         sourceCandidate: marketSelection.sourceCandidate,
         jesterCatalog: jesterCatalog,
         itemCatalog: itemCatalog,
+        loadout: stationBaseLoadout,
       );
       final economyBeforeMarket = simEconomyGold;
       var economyKnownSpendThisStep = 0;
       var economyMissingCostThisStep = 0;
       var economyUnaffordableThisStep = 0;
+      var marketEventsAffordable = true;
       for (final event in marketPurchaseEvents) {
         final cost = event['cost'];
         if (cost is! num) {
           economyMissingCostThisStep += 1;
+          marketEventsAffordable = false;
           continue;
         }
         final resolvedCost = cost.toInt();
@@ -605,15 +612,21 @@ BalanceSimSequenceOutput _runStationPathSequence({
           economyKnownSpendThisStep += resolvedCost;
         } else {
           economyUnaffordableThisStep += 1;
+          marketEventsAffordable = false;
         }
       }
       simEconomyKnownMarketSpend += economyKnownSpendThisStep;
       simEconomyMissingCostEvents += economyMissingCostThisStep;
       simEconomyUnaffordableEvents += economyUnaffordableThisStep;
+      final appliedMarketProfile =
+          config.simEconomyMode == BalanceSimEconomyMode.gatedKnownCost &&
+              !marketEventsAffordable
+          ? BalanceSimMarketProfile.none
+          : resolvedMarketProfile;
       final effectiveLoadout = _sequenceEffectiveLoadout(
         baseLoadout: spec.loadout,
         station: station,
-        marketProfile: resolvedMarketProfile,
+        marketProfile: appliedMarketProfile,
         loadoutIdMarketProfile: spec.marketProfile,
       );
       final battleSpec = BalanceSimRunSpec(
@@ -670,7 +683,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
       row['market_purchase_events'] = marketPurchaseEvents;
       row['sim_economy_trace'] = <String, Object?>{
         'schema_version': 1,
-        'mode': 'trace_only',
+        'mode': config.simEconomyMode.id,
         'gold_before_market': economyBeforeMarket,
         'known_market_spend': economyKnownSpendThisStep,
         'missing_cost_event_count': economyMissingCostThisStep,
@@ -678,7 +691,9 @@ BalanceSimSequenceOutput _runStationPathSequence({
         'gold_after_market': economyBeforeMarket - economyKnownSpendThisStep,
         'cashout_gold': cashoutGold,
         'gold_after_cashout': simEconomyGold,
-        'behavior_gated': false,
+        'applied_market_profile': appliedMarketProfile.id,
+        'behavior_gated':
+            config.simEconomyMode == BalanceSimEconomyMode.gatedKnownCost,
       };
       battleRows.add(row);
       previousStepResourceState = _sequenceResourceStateFromRow(row);
@@ -719,6 +734,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
               knownMarketSpend: simEconomyKnownMarketSpend,
               missingCostEvents: simEconomyMissingCostEvents,
               unaffordableEvents: simEconomyUnaffordableEvents,
+              economyMode: config.simEconomyMode,
             ),
           ),
         );
@@ -760,6 +776,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         knownMarketSpend: simEconomyKnownMarketSpend,
         missingCostEvents: simEconomyMissingCostEvents,
         unaffordableEvents: simEconomyUnaffordableEvents,
+        economyMode: config.simEconomyMode,
       ),
     ),
   );
@@ -834,6 +851,7 @@ Map<String, Object?> _buildSequenceSummaryRow({
       sourceCandidate: marketSelection.sourceCandidate,
       jesterCatalog: jesterCatalog,
       itemCatalog: itemCatalog,
+      loadout: spec.loadout,
     ),
     'sim_economy_summary': simEconomySummary,
     'total_turn_count': totalTurnCount,
@@ -857,16 +875,17 @@ Map<String, Object?> _simEconomySummary({
   required int knownMarketSpend,
   required int missingCostEvents,
   required int unaffordableEvents,
+  required BalanceSimEconomyMode economyMode,
 }) {
   return <String, Object?>{
     'schema_version': 1,
-    'mode': 'trace_only',
+    'mode': economyMode.id,
     'final_gold': finalGold,
     'total_cashout_gold': totalCashoutGold,
     'known_market_spend': knownMarketSpend,
     'missing_cost_event_count': missingCostEvents,
     'unaffordable_event_count': unaffordableEvents,
-    'behavior_gated': false,
+    'behavior_gated': economyMode == BalanceSimEconomyMode.gatedKnownCost,
   };
 }
 
@@ -1121,6 +1140,7 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
   required BalanceSimBacklogCandidate? sourceCandidate,
   required RummiJesterCatalog jesterCatalog,
   required ItemCatalog itemCatalog,
+  required BalanceSimLoadoutSpec loadout,
 }) {
   if (marketProfile == BalanceSimMarketProfile.none) return const [];
   final contentId = switch (marketProfile) {
@@ -1215,7 +1235,12 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     _ => 'jester',
   };
   final cost = switch (category) {
-    'jester' => jesterCatalog.findById(contentId)?.baseCost,
+    'jester' => _simJesterProxyCost(
+      marketProfile: marketProfile,
+      contentId: contentId,
+      loadout: loadout,
+      catalog: jesterCatalog,
+    ),
     'item' => itemCatalog.findById(contentId)?.basePrice,
     'pack' => _simPackCost(marketProfile),
     'sim_pool' => null,
@@ -1239,6 +1264,43 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
       if (sourceCandidate != null) 'source_candidate': sourceCandidate.toJson(),
     },
   ];
+}
+
+int? _simJesterProxyCost({
+  required BalanceSimMarketProfile marketProfile,
+  required String contentId,
+  required BalanceSimLoadoutSpec loadout,
+  required RummiJesterCatalog catalog,
+}) {
+  final ids = switch (marketProfile) {
+    BalanceSimMarketProfile.s1CandidateCommonColorJester => [
+      _colorJesterForLoadout(loadout),
+    ],
+    BalanceSimMarketProfile.s1CandidateCommonRankJester => [
+      _rankJesterForLoadout(loadout),
+    ],
+    BalanceSimMarketProfile.s1CandidateUncommonBuildJester => [
+      _buildJesterForLoadout(loadout),
+    ],
+    BalanceSimMarketProfile.s1CandidateRareXmultJester => [
+      _rareXmultJesterForLoadout(loadout),
+    ],
+    BalanceSimMarketProfile.s1CandidateLegendaryBridge => [
+      'the_tribe',
+      'the_order',
+    ],
+    _ => <String>[],
+  };
+  if (ids.isEmpty) {
+    return catalog.findById(contentId)?.baseCost;
+  }
+  var total = 0;
+  for (final id in ids) {
+    final card = catalog.findById(id);
+    if (card == null) return null;
+    total += card.baseCost;
+  }
+  return total;
 }
 
 BalanceSimMarketSelection _resolveSequenceMarketSelection({
@@ -5441,6 +5503,26 @@ enum BalanceSimSequenceMode {
   }
 }
 
+enum BalanceSimEconomyMode {
+  traceOnly,
+  gatedKnownCost;
+
+  static BalanceSimEconomyMode parse(String raw) {
+    return switch (raw) {
+      'trace_only' => BalanceSimEconomyMode.traceOnly,
+      'gated_known_cost' => BalanceSimEconomyMode.gatedKnownCost,
+      _ => throw FormatException('Unknown sim economy mode: $raw'),
+    };
+  }
+
+  String get id {
+    return switch (this) {
+      BalanceSimEconomyMode.traceOnly => 'trace_only',
+      BalanceSimEconomyMode.gatedKnownCost => 'gated_known_cost',
+    };
+  }
+}
+
 enum BalanceSimMarketProfile {
   none,
   s1BuyJolly,
@@ -5831,6 +5913,7 @@ class BalanceSimCliConfig {
     required this.difficulties,
     required this.experimentIds,
     required this.marketProfiles,
+    required this.simEconomyMode,
     required this.targetMultiplierOverrides,
     required this.loadouts,
     required this.jesterIds,
@@ -5848,6 +5931,7 @@ class BalanceSimCliConfig {
     var station = 1;
     var blindTier = BlindTier.small;
     var difficulty = NewRunDifficulty.standard;
+    var simEconomyMode = BalanceSimEconomyMode.traceOnly;
     List<int>? stations;
     List<BlindTier>? blindTiers;
     List<NewRunDifficulty>? difficulties;
@@ -5912,6 +5996,8 @@ class BalanceSimCliConfig {
           marketProfiles.add(BalanceSimMarketProfile.parse(readValue()));
         case '--market-profiles':
           marketProfiles.addAll(_parseMarketProfileList(readValue()));
+        case '--sim-economy-mode':
+          simEconomyMode = BalanceSimEconomyMode.parse(readValue());
         case '--target-multiplier':
           targetMultiplierOverrides.add(
             BalanceSimTargetMultiplierOverride.parse(readValue()),
@@ -5980,6 +6066,7 @@ class BalanceSimCliConfig {
             ? [BalanceSimMarketProfile.none]
             : marketProfiles,
       ),
+      simEconomyMode: simEconomyMode,
       targetMultiplierOverrides:
           List<BalanceSimTargetMultiplierOverride>.unmodifiable(
             targetMultiplierOverrides,
@@ -6442,6 +6529,7 @@ class BalanceSimCliConfig {
   final List<NewRunDifficulty> difficulties;
   final List<String> experimentIds;
   final List<BalanceSimMarketProfile> marketProfiles;
+  final BalanceSimEconomyMode simEconomyMode;
   final List<BalanceSimTargetMultiplierOverride> targetMultiplierOverrides;
   final List<BalanceSimLoadoutSpec> loadouts;
   final List<String> jesterIds;

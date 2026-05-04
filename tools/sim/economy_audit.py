@@ -245,6 +245,7 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     economy_unaffordable_events = 0
     economy_missing_cost_events = 0
     economy_final_gold_values: list[int] = []
+    economy_mode = ""
 
     with path.open(encoding="utf-8") as handle:
         for line in handle:
@@ -258,6 +259,8 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                 trace = row.get("sim_economy_trace")
                 if isinstance(trace, dict):
                     economy_trace_count += 1
+                    if not economy_mode:
+                        economy_mode = str(trace.get("mode") or "")
                     economy_cashout_gold += _int(trace.get("cashout_gold"))
                     economy_known_market_spend += _int(
                         trace.get("known_market_spend")
@@ -319,6 +322,7 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
         },
         "sim_economy_trace": {
             "available": economy_trace_count > 0,
+            "mode": economy_mode,
             "battle_trace_count": economy_trace_count,
             "total_cashout_gold": economy_cashout_gold,
             "known_market_spend": economy_known_market_spend,
@@ -494,9 +498,10 @@ def _signals(report: dict[str, Any]) -> list[str]:
         if isinstance(sim_trace, dict) and sim_trace.get("available"):
             final_gold = sim_trace.get("final_gold", {})
             avg_final_gold = _float(final_gold.get("avg"))
+            mode = str(sim_trace.get("mode") or "sim economy")
             if avg_final_gold >= 100:
                 signals.append(
-                    f"trace-only 평균 최종 잔고가 {avg_final_gold}G로 높아 구매/가격 gate 필요"
+                    f"{mode} 평균 최종 잔고가 {avg_final_gold}G로 높아 구매/가격 gate 필요"
                 )
     return signals
 

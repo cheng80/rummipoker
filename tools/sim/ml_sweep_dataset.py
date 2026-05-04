@@ -35,6 +35,7 @@ DEFAULT_OPTIONS: dict[str, Any] = {
         "s8_finale_build",
     ],
     "market_profiles": ["none", "s1_buy_sly"],
+    "sim_economy_mode": "trace_only",
     "small_multipliers": [0.95, 1.0],
     "big_multipliers": [0.90, 1.0],
     "boss_multipliers": [0.75, 0.85, 1.0],
@@ -142,6 +143,12 @@ def main(argv: list[str] | None = None) -> int:
         help="쉼표로 구분한 market profile 목록.",
     )
     parser.add_argument(
+        "--sim-economy-mode",
+        default=DEFAULT_OPTIONS["sim_economy_mode"],
+        choices=["trace_only", "gated_known_cost"],
+        help="run_balance_sim의 sim-only economy 적용 모드.",
+    )
+    parser.add_argument(
         "--small-multipliers",
         default=_join(DEFAULT_OPTIONS["small_multipliers"]),
         help="progression_curve용 small target multiplier 후보.",
@@ -215,6 +222,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.market_profiles,
                 "market_profiles",
             ),
+            "sim_economy_mode": args.sim_economy_mode,
             "small_multipliers": _parse_multipliers(args.small_multipliers),
             "big_multipliers": _parse_multipliers(args.big_multipliers),
             "boss_multipliers": _parse_multipliers(args.boss_multipliers),
@@ -340,6 +348,7 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
             "difficulty": resolved["difficulty"],
             "loadout_ids": resolved["loadout_ids"],
             "market_profiles": resolved["market_profiles"],
+            "sim_economy_mode": resolved["sim_economy_mode"],
             "summary_only": resolved["summary_only"],
             "jobs": resolved["jobs"],
         },
@@ -654,6 +663,8 @@ def _run_candidate(
         str(summary_path),
         "--out",
         str(raw_path),
+        "--sim-economy-mode",
+        str(resolved["sim_economy_mode"]),
     ]
     for market_profile in resolved["market_profiles"]:
         cmd.extend(["--market-profile", str(market_profile)])
