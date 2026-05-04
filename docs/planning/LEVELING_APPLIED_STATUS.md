@@ -54,14 +54,15 @@ Applied:
 - Boss blind에는 station별 runtime modifier가 붙는다.
 - 색상 타일 약화처럼 특정 타일에 걸리는 제약은 타일 위에 표시한다.
 - Boss 표시를 눌러 제약 팝업을 다시 확인할 수 있다.
-- 현재 완전 적용된 제약 계열은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`이다.
+- 현재 구현된 제약 계열은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다.
 
 Partially applied:
 
 - simulation boss pool의 10개 proxy는 현재 시뮬 기준표로 유지된다.
 - 런타임은 아직 weighted pool 전체를 그대로 뽑지 않고, station modifier cycle을 사용한다.
-- repeat rank, single rank, target spike, resource squeeze는 아직 runtime modifier 타입으로 승격하지 않았다.
-- all score dampener, first confirm tax, confirm count tax는 runtime modifier 타입으로 승격했다.
+- all score dampener, first confirm tax, confirm count tax, repeat rank, single rank는 runtime modifier 타입으로 승격했다.
+- repeat rank, single rank는 modifier와 저장/복원은 구현됐지만 S1~S8 runtime boss cycle에는 아직 편입하지 않았다.
+- target spike, resource squeeze는 아직 runtime modifier 타입으로 승격하지 않았다.
 
 Not applied:
 
@@ -75,8 +76,8 @@ Boss constraint runtime scope:
 | 0 | `color_dampener_cycle` | Applied | `tileColorWeaken`으로 전투/저장/표시 적용 완료 |
 | 1 | `line_kind_dampener_cycle` | Applied | `lineKindWeaken`으로 전투/저장/표시 적용 완료 |
 | 2 | `face_tile_dampener` | Applied | S3 boss modifier. 11~13 타일 포함 라인을 35% 감소 |
-| 3 | `repeat_rank_pressure_v4` | Sim only | 이전 confirm 기록 추적과 설명/정산 표시 규칙이 필요 |
-| 4 | `single_rank_pressure` | Sim only | 첫 confirm rank 기준 저장/복원/표시 규칙이 필요 |
+| 3 | `repeat_rank_pressure_v4` | Implemented, not in cycle | 이전 confirm에서 나온 같은 족보를 다시 확정하면 20% 감소. `confirmedRanksThisStation` 저장/복원 |
+| 4 | `single_rank_pressure` | Implemented, not in cycle | A안 기준 첫 confirm 족보를 다시 확정하면 30% 감소. 타일 배지 없이 보스 팝업/정산 penalty 표시 |
 | 5 | `confirm_count_tax_v2` | Applied | 기존 `confirmCountThisStation`으로 세 번째 confirm부터 25% 감소 |
 | 6 | `all_score_dampener` | Applied | 모든 점수 라인 20% 감소. 타일별 표시 없이 보스 팝업/정산 penalty로 표시 |
 | 7 | `first_confirm_tax` | Applied | 첫 confirm 점수 라인 30% 감소. 기존 confirm ordinal로 판정 |
@@ -91,14 +92,14 @@ Boss constraint implementation checklist:
 - [x] all score dampener: 모든 점수 라인 약화
 - [x] first confirm tax: 첫 confirm 약화
 - [x] confirm count tax: 세 번째 confirm부터 약화
-- [ ] repeat rank pressure: 이전 confirm rank 기록/저장/표시 정책 확정 후 적용
-- [ ] single rank pressure: 기준 rank 선택/저장/표시 정책 확정 후 적용
+- [x] repeat rank pressure: 이전 confirm rank 기록/저장/표시 정책 적용
+- [x] single rank pressure: A안 기준 첫 confirm rank 저장/표시 정책 적용
 - [ ] target spike wall: boss modifier가 아니라 target score table 레버로 별도 검증
 - [x] resource squeeze: 자동 지급/보정 후보에서 제외
 
 현재 제외:
 
-- `repeat_rank_pressure_v4`, `single_rank_pressure`는 상태 추적/저장/정산 표시 범위가 커서 바로 적용하지 않는다.
+- `repeat_rank_pressure_v4`, `single_rank_pressure`는 modifier 구현은 완료했지만, S1~S8 cycle 배치는 아직 하지 않는다.
 - `target_spike_wall`은 boss modifier가 아니라 target table 레버로 둔다.
 - `resource_squeeze`는 자동 자원 지급/보정으로 번역하지 않는다.
 
@@ -313,7 +314,7 @@ v90 boss runtime long sweep:
 
 1. S7~S8 shape floor는 현재 값으로 동결한다. 추가 강화하지 않는다.
 2. 신규 boss modifier cycle은 r800 기준으로 1차 유지 가능하다. 다음 조정은 자동 보정이 아니라 boss severity/cycle 위치 또는 S8 market availability만 검토한다.
-3. repeat/single rank 계열은 이전 rank 기준 저장/표시 정책을 먼저 확정한다.
+3. repeat/single rank 계열은 modifier와 저장/표시 정책이 구현됐으므로, S1~S8 cycle 편입 전 severity와 배치 위치를 별도 sweep으로 검증한다.
 4. Pack/Tarot-like/Planet-like를 별도 타입으로 승격할지, 현재 Item/market role proxy로 유지할지 결정한다.
 
 ## 6. Read Order
