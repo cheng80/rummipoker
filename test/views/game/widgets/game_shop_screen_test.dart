@@ -38,6 +38,7 @@ Future<void> _pumpShopScreen(
   required String? Function(int offerIndex) onBuyOffer,
   String? Function(RummiMarketItemOfferView offer)? onBuyItemOffer,
   String? Function(ItemDefinition item)? onUseMarketItem,
+  bool Function(ItemDefinition item)? onSellMarketItem,
   bool initialItemShopTab = true,
 }) async {
   await tester.pumpWidget(
@@ -65,7 +66,7 @@ Future<void> _pumpShopScreen(
                   onBuyItemOffer: onBuyItemOffer ?? ((_) => null),
                   onUseMarketItem: onUseMarketItem ?? ((_) => null),
                   onSellOwnedJester: (_) => false,
-                  onSellMarketItem: (_) => false,
+                  onSellMarketItem: onSellMarketItem ?? ((_) => false),
                   onStateChanged: () async {},
                   onOpenSettings: () async {},
                   onExitToTitle: () async {},
@@ -411,5 +412,8 @@ void main() {
 
     expect(find.text('Market 옵션'), findsOneWidget);
     expect(find.text('Run Snapshot'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
   });
 }
