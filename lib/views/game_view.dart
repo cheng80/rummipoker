@@ -2608,6 +2608,9 @@ class _BoardScoringCallout extends StatelessWidget {
     final valueColor = step == ScoringPresentationStep.constraint
         ? const Color(0xFFFF8E7E)
         : const Color(0xFFF2C14E);
+    final accentColor = isConstraint
+        ? const Color(0xFFFF675F)
+        : const Color(0xFFF2C14E);
     return IgnorePointer(
       child:
           Align(
@@ -2617,12 +2620,12 @@ class _BoardScoringCallout extends StatelessWidget {
                     color: const Color(0xE6153C31),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFFF2C14E).withValues(alpha: 0.78),
+                      color: accentColor.withValues(alpha: 0.78),
                       width: 1.4,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFF2C14E).withValues(alpha: 0.16),
+                        color: accentColor.withValues(alpha: 0.16),
                         blurRadius: 14,
                         spreadRadius: 1,
                       ),
