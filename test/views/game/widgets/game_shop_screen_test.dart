@@ -303,11 +303,25 @@ void main() {
     );
     expect(find.byKey(const ValueKey('market-slot-pulse')), findsOneWidget);
     expect(find.text('-3G'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-purchase-flight')),
+        matching: find.text('Reroll Token'),
+      ),
+      findsNothing,
+    );
 
     await tester.pumpAndSettle();
 
     expect(boughtItemId, 'reroll_token');
     expect(find.text('9'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-item-slot-T1')),
+        matching: find.text('Reroll Token'),
+      ),
+      findsNothing,
+    );
 
     await tester.tap(find.text('Jester / Slots'));
     await tester.pumpAndSettle();

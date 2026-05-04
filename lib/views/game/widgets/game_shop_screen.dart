@@ -547,6 +547,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final offers = _market.offers;
     if (index < 0 || index >= offers.length) return;
     final boughtOffer = offers[index];
+    final flightLabel = localizedJesterName(context, boughtOffer.card);
     final failMessage = widget.onBuyOffer(index);
     if (failMessage != null) {
       _startMarketDenyFeedback('jester-buy', failMessage);
@@ -563,7 +564,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectedItemOfferIndex = -1;
         _selectedItemSlotIndex = -1;
         _startPurchaseFlight(
-          label: boughtOffer.displayName,
+          label: flightLabel,
           slotLabel: 'J${purchasedSlot.slotIndex + 1}',
           item: false,
           spentGold: boughtOffer.price,
@@ -583,6 +584,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final index = _selectedItemOfferIndex;
     if (index < 0 || index >= offers.length) return;
     final boughtOffer = offers[index];
+    final flightLabel = localizedItemName(context, boughtOffer);
     final failMessage = widget.onBuyItemOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('item-buy', failMessage);
@@ -604,7 +606,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectedOfferIndex = null;
         _selectedOwnedIndex = null;
         _startPurchaseFlight(
-          label: boughtOffer.displayName,
+          label: flightLabel,
           slotLabel: purchasedSlot.slotLabel,
           item: true,
           spentGold: boughtOffer.price,
@@ -2327,7 +2329,9 @@ class _MarketItemGhostChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final locked = slot.locked;
     final label = slot.slotLabel;
-    final displayName = slot.displayName;
+    final displayName = slot.displayName == null
+        ? null
+        : localizedItemSlotName(context, slot);
     final foreground = locked
         ? Column(
             mainAxisSize: MainAxisSize.min,
