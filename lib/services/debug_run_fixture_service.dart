@@ -40,6 +40,7 @@ class DebugRunFixtureService {
   static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
+  static const String settlementCashOutReady = 'settlement_cash_out_ready';
   static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
   static const String bossColumnConstraintPreview =
       'boss_column_constraint_preview';
@@ -109,6 +110,12 @@ class DebugRunFixtureService {
       description:
           '점수 preview pulse / line confirm particle / quick item toast 검증용',
       builder: _buildAnimationEffectsEyeCheck,
+    ),
+    DebugRunFixtureDefinition(
+      id: settlementCashOutReady,
+      label: '정산 화면 체크',
+      description: '확정하기 1회로 Stage Clear + cash-out 정산 시트 진입 검증용',
+      builder: _buildSettlementCashOutReady,
     ),
     DebugRunFixtureDefinition(
       id: bossRowConstraintPreview,
@@ -730,6 +737,91 @@ class DebugRunFixtureService {
       runProgress: runProgress,
       stageStartSnapshot: ActiveRunStageSnapshot(
         session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildSettlementCashOutReady() {
+    final board = RummiBoard();
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        board.setCell(
+          row,
+          col,
+          _tile(
+            TileColor.values[(row + col) % TileColor.values.length],
+            row + col + 1,
+          ),
+        );
+      }
+    }
+    final session = RummiPokerGridSession.restored(
+      runSeed: 2026050404,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: 1,
+      runRandomState: SeededRandom(2026050404).state,
+      blind: RummiBlindState(
+        targetScore: 1,
+        boardDiscardsRemaining: 4,
+        handDiscardsRemaining: 2,
+        scoreTowardBlind: 0,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(
+        board: board,
+        random: Random(2026050404),
+      ),
+      board: board,
+      hand: const [],
+      eliminated: const [],
+    );
+    final runProgress = RummiRunProgress.restore(
+      stageIndex: 1,
+      gold: 0,
+      rerollCost: RummiRunProgress.shopBaseRerollCost,
+      ownedJesters: const [
+        RummiJesterCard(
+          id: 'crazy_jester',
+          displayName: 'Crazy Jester',
+          rarity: RummiJesterRarity.common,
+          baseCost: 4,
+          effectText: 'Played hand containing a Straight gives +12 Mult',
+          effectType: 'mult_bonus',
+          trigger: 'onScore',
+          conditionType: 'straight',
+          conditionValue: 'contains_straight',
+          value: 12,
+          xValue: null,
+          mappedTileColors: [],
+          mappedTileNumbers: [],
+        ),
+      ],
+      shopOffers: const [],
+      statefulValuesBySlot: const {},
+      playedHandCounts: const <RummiHandRank, int>{},
+      itemInventory: const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'coin_funnel',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+          OwnedItemEntry(
+            itemId: 'hand_funnel',
+            count: 1,
+            placement: ItemPlacement.equipped,
+          ),
+        ],
+        equippedItemIds: ['coin_funnel', 'hand_funnel'],
+      ),
+    );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
         runProgress: runProgress.copySnapshot(),
       ),
     );

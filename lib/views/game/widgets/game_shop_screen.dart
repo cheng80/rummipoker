@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,7 @@ import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
+import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
@@ -28,6 +31,9 @@ const double _marketDescriptionFontSize = 12.0;
 const double _marketDescriptionLineHeight = 1.18;
 const double _marketDescriptionMinHeight =
     _marketDescriptionFontSize * _marketDescriptionLineHeight * 2;
+
+enum _MarketOptionsCloseAction { resumeGame, keepPaused, openSettings }
+
 const TextStyle _marketDescriptionTextStyle = TextStyle(
   color: Colors.white70,
   fontSize: _marketDescriptionFontSize,
@@ -93,7 +99,8 @@ class GameShopScreen extends StatefulWidget {
   State<GameShopScreen> createState() => _GameShopScreenState();
 }
 
-class _GameShopScreenState extends State<GameShopScreen> {
+class _GameShopScreenState extends State<GameShopScreen>
+    with WidgetsBindingObserver {
   int? _selectedOwnedIndex;
   int? _selectedOfferIndex;
   _MarketShopTab _shopTab = _MarketShopTab.cardsAndQuickSlots;
@@ -101,12 +108,15 @@ class _GameShopScreenState extends State<GameShopScreen> {
   int _selectedItemSlotIndex = -1;
   int _mainOfferPage = 0;
   int _utilityOfferPage = 0;
+  bool _pendingLifecycleOptions = false;
+  bool _optionsDialogOpen = false;
 
   RummiMarketRuntimeFacade get _market => widget.readMarketView();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (_market.ownedEntries.isNotEmpty) {
       _selectedOwnedIndex = 0;
     } else if (_market.offers.isNotEmpty) {
@@ -135,6 +145,38 @@ class _GameShopScreenState extends State<GameShopScreen> {
         if (!mounted) return;
         Navigator.of(context).pop(true);
       });
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+        SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+        if (!_optionsDialogOpen) {
+          _pendingLifecycleOptions = true;
+        }
+        unawaited(widget.onStateChanged());
+        break;
+      case AppLifecycleState.resumed:
+        if (_pendingLifecycleOptions) {
+          _pendingLifecycleOptions = false;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _openOptions();
+          });
+        }
+        break;
+      case AppLifecycleState.detached:
+        break;
     }
   }
 
@@ -582,7 +624,7 @@ class _GameShopScreenState extends State<GameShopScreen> {
     widget.onStateChanged();
   }
 
-  Future<void> _restartCurrentRun() async {
+  Future<bool> _restartCurrentRun() async {
     final confirmed = await showConfirmDialog(
       context,
       title: widget.isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
@@ -592,15 +634,15 @@ class _GameShopScreenState extends State<GameShopScreen> {
       cancelLabel: '취소',
       confirmLabel: widget.isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
     );
-    if (!mounted || !confirmed) return;
+    if (!mounted || !confirmed) return false;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
+    if (!mounted) return false;
 
-    Navigator.of(context).pop(false);
     await widget.onRestartRun();
+    return true;
   }
 
-  Future<void> _exitToTitleWithConfirm() async {
+  Future<bool> _exitToTitleWithConfirm() async {
     final confirmed = await showConfirmDialog(
       context,
       title: '메인 메뉴로 나가기',
@@ -608,133 +650,164 @@ class _GameShopScreenState extends State<GameShopScreen> {
       cancelLabel: '취소',
       confirmLabel: '나가기',
     );
-    if (!mounted || !confirmed) return;
+    if (!mounted || !confirmed) return false;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
+    if (!mounted) return false;
 
-    Navigator.of(context).pop(false);
     await widget.onExitToTitle();
+    return true;
   }
 
   Future<void> _openOptions() async {
-    final activeRunSaveView = widget.readActiveRunSaveView?.call();
-    await showGameFramedDialog<void>(
-      context: context,
-      builder: (dialogContext) => GameModalCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Market 옵션',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+    if (_optionsDialogOpen) return;
+    while (mounted) {
+      final activeRunSaveView = widget.readActiveRunSaveView?.call();
+      _optionsDialogOpen = true;
+      SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      final action = await showGameFramedDialog<_MarketOptionsCloseAction>(
+        context: context,
+        builder: (dialogContext) => GameModalCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Market 옵션',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                ),
-                GameIconButtonChip(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: Icons.close_rounded,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            GameDialogSection(
-              title: 'Run Seed',
-              margin: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SelectableText(
-                          '${widget.runSeed}',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                      ),
-                      GameIconButtonChip(
-                        onPressed: () async {
-                          await Clipboard.setData(
-                            ClipboardData(text: '${widget.runSeed}'),
-                          );
-                          if (!mounted) return;
-                          showTopNotice(context, '시드 번호를 복사했습니다.');
-                        },
-                        icon: Icons.copy_rounded,
-                        backgroundColor: const Color(0xFF21423A),
-                      ),
-                    ],
+                  GameIconButtonChip(
+                    onPressed: () => Navigator.of(
+                      dialogContext,
+                    ).pop(_MarketOptionsCloseAction.resumeGame),
+                    icon: Icons.close_rounded,
                   ),
                 ],
               ),
-            ),
-            if (activeRunSaveView != null)
+              const SizedBox(height: 8),
               GameDialogSection(
-                title: 'Run Snapshot',
+                title: 'Run Seed',
                 margin: const EdgeInsets.only(bottom: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _activeRunSummaryLabel(activeRunSaveView),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.92),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        height: 1.35,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SelectableText(
+                            '${widget.runSeed}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                        GameIconButtonChip(
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: '${widget.runSeed}'),
+                            );
+                            if (!mounted) return;
+                            showTopNotice(context, '시드 번호를 복사했습니다.');
+                          },
+                          icon: Icons.copy_rounded,
+                          backgroundColor: const Color(0xFF21423A),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            GameMenuActionTile(
-              title: context.tr('settings'),
-              subtitle: '설정 화면을 열고, Market으로 다시 돌아옵니다.',
-              icon: Icons.settings_rounded,
-              accentColor: Colors.lightBlueAccent.shade100,
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                await widget.onOpenSettings();
-              },
-            ),
-            const SizedBox(height: 8),
-            GameMenuActionTile(
-              title: widget.isDebugFixtureRun
-                  ? '디버그 픽스처 재로드'
-                  : '현재 Station 재시작',
-              subtitle: '현재 Station 시작 시점으로 되돌립니다.',
-              icon: Icons.refresh_rounded,
-              accentColor: Colors.amber.shade200,
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                await _restartCurrentRun();
-              },
-            ),
-            const SizedBox(height: 8),
-            GameMenuActionTile(
-              title: context.tr('exit'),
-              subtitle: '현재 진행을 멈추고 메인 메뉴로 돌아갑니다.',
-              icon: Icons.logout_rounded,
-              accentColor: Colors.redAccent.shade100,
-              onTap: () async {
-                Navigator.of(dialogContext).pop();
-                await _exitToTitleWithConfirm();
-              },
-            ),
-          ],
+              if (activeRunSaveView != null)
+                GameDialogSection(
+                  title: 'Run Snapshot',
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _activeRunSummaryLabel(activeRunSaveView),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              GameMenuActionTile(
+                title: context.tr('settings'),
+                subtitle: '설정 화면을 열고, Market으로 다시 돌아옵니다.',
+                icon: Icons.settings_rounded,
+                accentColor: Colors.lightBlueAccent.shade100,
+                onTap: () async {
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(_MarketOptionsCloseAction.openSettings);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
+                title: widget.isDebugFixtureRun
+                    ? '디버그 픽스처 재로드'
+                    : '현재 Station 재시작',
+                subtitle: '현재 Station 시작 시점으로 되돌립니다.',
+                icon: Icons.refresh_rounded,
+                accentColor: Colors.amber.shade200,
+                onTap: () async {
+                  final changed = await _restartCurrentRun();
+                  if (!dialogContext.mounted || !changed) return;
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(_MarketOptionsCloseAction.resumeGame);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
+                title: context.tr('exit'),
+                subtitle: '현재 진행을 멈추고 메인 메뉴로 돌아갑니다.',
+                icon: Icons.logout_rounded,
+                accentColor: Colors.redAccent.shade100,
+                onTap: () async {
+                  final changed = await _exitToTitleWithConfirm();
+                  if (!dialogContext.mounted || !changed) return;
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(_MarketOptionsCloseAction.keepPaused);
+                },
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+      _optionsDialogOpen = false;
+      if (!mounted) return;
+      switch (action ?? _MarketOptionsCloseAction.resumeGame) {
+        case _MarketOptionsCloseAction.resumeGame:
+          SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          return;
+        case _MarketOptionsCloseAction.keepPaused:
+          return;
+        case _MarketOptionsCloseAction.openSettings:
+          SoundManager.beginBgmAutoResumeBlock();
+          try {
+            await widget.onOpenSettings();
+          } finally {
+            SoundManager.endBgmAutoResumeBlock();
+          }
+          if (!mounted) return;
+      }
+    }
   }
 
   @override

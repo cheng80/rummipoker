@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
@@ -212,6 +213,37 @@ void main() {
     ]);
     expect(fixture.runProgress.itemInventory.passiveRelicIds, ['spare_pouch']);
   });
+
+  test(
+    'settlement cash-out fixture is ready to clear into settlement sheet',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.settlementCashOutReady,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.battle);
+      expect(fixture.session.canConfirmAllFullLines, isTrue);
+      expect(fixture.session.blind.targetScore, 1);
+      expect(fixture.runProgress.itemInventory.equippedItemIds, [
+        'coin_funnel',
+        'hand_funnel',
+      ]);
+
+      final out = fixture.session.confirmAllFullLines(
+        jesters: fixture.runProgress.ownedJesters,
+        runtimeSnapshot: fixture.runProgress.buildRuntimeSnapshot(),
+        applyScoreToBlind: false,
+      );
+      expect(out.result.ok, isTrue);
+      expect(out.cleared, isNotNull);
+      expect(out.result.lineBreakdowns.length, greaterThanOrEqualTo(10));
+      expect(
+        out.result.lineBreakdowns.map((line) => line.rank),
+        contains(RummiHandRank.straight),
+      );
+    },
+  );
 
   test('boss line constraint fixtures expose confirmable line penalties', () {
     final cases = [

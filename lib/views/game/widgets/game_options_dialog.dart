@@ -1,27 +1,26 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app_config.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import 'game_shared_widgets.dart';
 
-Future<void> showGameOptionsDialog({
+enum GameOptionsCloseAction { resumeGame, keepPaused, openSettings }
+
+Future<GameOptionsCloseAction> showGameOptionsDialog({
   required BuildContext context,
   required int runSeed,
   RummiActiveRunSaveFacade? activeRunSaveView,
-  required Future<void> Function() onRestartRun,
-  required Future<void> Function() onExitToTitle,
-  required Future<void> Function(BuildContext context) onReopenOptions,
+  required Future<bool> Function() onRestartRun,
+  required Future<bool> Function() onExitToTitle,
   required bool isDebugFixtureRun,
 }) async {
   SoundManager.unlockForWeb();
   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-  await showGameFramedDialog<void>(
+  final action = await showGameFramedDialog<GameOptionsCloseAction>(
     context: context,
     builder: (dialogContext) => GameModalCard(
       child: Column(
@@ -42,7 +41,9 @@ Future<void> showGameOptionsDialog({
                 tooltip: context.tr('cancel'),
                 onPressed: () {
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  Navigator.of(dialogContext).pop();
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(GameOptionsCloseAction.resumeGame);
                 },
                 icon: Icons.close_rounded,
               ),
@@ -110,9 +111,11 @@ Future<void> showGameOptionsDialog({
             icon: Icons.refresh_rounded,
             accentColor: Colors.amber.shade200,
             onTap: () async {
-              Navigator.of(dialogContext).pop();
-              await WidgetsBinding.instance.endOfFrame;
-              await onRestartRun();
+              final changed = await onRestartRun();
+              if (!dialogContext.mounted || !changed) return;
+              Navigator.of(
+                dialogContext,
+              ).pop(GameOptionsCloseAction.resumeGame);
             },
           ),
           const SizedBox(height: 8),
@@ -122,13 +125,9 @@ Future<void> showGameOptionsDialog({
             icon: Icons.settings_rounded,
             accentColor: Colors.lightBlueAccent.shade100,
             onTap: () async {
-              Navigator.of(dialogContext).pop();
-              await WidgetsBinding.instance.endOfFrame;
-              if (!context.mounted) return;
-              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              await context.push(RoutePaths.setting);
-              if (!context.mounted) return;
-              await onReopenOptions(context);
+              Navigator.of(
+                dialogContext,
+              ).pop(GameOptionsCloseAction.openSettings);
             },
           ),
           const SizedBox(height: 8),
@@ -138,15 +137,18 @@ Future<void> showGameOptionsDialog({
             icon: Icons.logout_rounded,
             accentColor: Colors.redAccent.shade100,
             onTap: () async {
-              Navigator.of(dialogContext).pop();
-              await WidgetsBinding.instance.endOfFrame;
-              await onExitToTitle();
+              final changed = await onExitToTitle();
+              if (!dialogContext.mounted || !changed) return;
+              Navigator.of(
+                dialogContext,
+              ).pop(GameOptionsCloseAction.keepPaused);
             },
           ),
         ],
       ),
     ),
   );
+  return action ?? GameOptionsCloseAction.resumeGame;
 }
 
 String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {

@@ -93,6 +93,7 @@ class _GameViewState extends ConsumerState<GameView>
   bool _persistRetrySnapshotOnSave = false;
   bool _autoCashOutLoopStarted = false;
   bool _debugAutoUseItemStarted = false;
+  late final bool _shouldAutoCashOutRestoredBattleOnLoad;
   late bool _shouldResumeMarketOnCatalogLoad;
   ItemCatalog? _itemCatalog;
   RummiBattleItemSlotView? _selectedBattleItemSlot;
@@ -104,6 +105,11 @@ class _GameViewState extends ConsumerState<GameView>
   int? _pendingBoardMoveSourceRow;
   int? _pendingBoardMoveSourceCol;
   bool _bossConstraintIntroShown = false;
+  bool _pendingLifecycleOptions = false;
+  bool _pausedLifecycleDuringStageFlow = false;
+  bool _optionsDialogOpen = false;
+  bool _presentationPaused = false;
+  Completer<void>? _presentationResumeCompleter;
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
@@ -236,6 +242,9 @@ class _GameViewState extends ConsumerState<GameView>
       difficulty: widget.difficulty,
       blindTier: widget.blindTier,
     );
+    _shouldAutoCashOutRestoredBattleOnLoad = _restoredBattleNeedsCashOut(
+      widget.restoredRun,
+    );
     _shouldResumeMarketOnCatalogLoad =
         widget.restoredRun?.activeScene == ActiveRunScene.shop;
     // BGM·카탈로그 로드를 첫 프레임 이후로 지연 — 전환 시 프레임 드롭 방지
@@ -263,11 +272,78 @@ class _GameViewState extends ConsumerState<GameView>
       case AppLifecycleState.hidden:
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
+        final isShopScene = _gameState.activeRunScene == ActiveRunScene.shop;
+        if (!isShopScene) {
+          _pausePresentation();
+        }
+        SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+        if (!isShopScene && !_optionsDialogOpen) {
+          _pendingLifecycleOptions = true;
+        } else if (!isShopScene && _stageFlowPhase != GameStageFlowPhase.none) {
+          _pausedLifecycleDuringStageFlow = true;
+        }
         _saveActiveRun();
         break;
-      case AppLifecycleState.detached:
       case AppLifecycleState.resumed:
+        if (_gameState.activeRunScene == ActiveRunScene.shop) {
+          _pendingLifecycleOptions = false;
+          _pausedLifecycleDuringStageFlow = false;
+          break;
+        }
+        if (_pendingLifecycleOptions) {
+          _pendingLifecycleOptions = false;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _openGameOptions(allowDuringStageFlow: true);
+          });
+        } else if (_pausedLifecycleDuringStageFlow) {
+          _pausedLifecycleDuringStageFlow = false;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _openGameOptions(allowDuringStageFlow: true);
+          });
+        }
         break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
+
+  void _pausePresentation() {
+    if (_presentationPaused) return;
+    _presentationPaused = true;
+    _presentationResumeCompleter ??= Completer<void>();
+  }
+
+  void _resumePresentation() {
+    if (!_presentationPaused) return;
+    _presentationPaused = false;
+    final completer = _presentationResumeCompleter;
+    _presentationResumeCompleter = null;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+  }
+
+  Future<void> _waitWhilePresentationPaused() async {
+    while (mounted && _presentationPaused) {
+      final completer = _presentationResumeCompleter;
+      if (completer == null) return;
+      await completer.future;
+    }
+  }
+
+  Future<void> _presentationDelay(Duration duration) async {
+    var remaining = duration;
+    const tick = Duration(milliseconds: 50);
+    while (mounted && remaining > Duration.zero) {
+      await _waitWhilePresentationPaused();
+      if (!mounted) return;
+      final chunk = remaining < tick ? remaining : tick;
+      await Future<void>.delayed(chunk);
+      if (!_presentationPaused) {
+        remaining -= chunk;
+      }
     }
   }
 
@@ -289,11 +365,7 @@ class _GameViewState extends ConsumerState<GameView>
       if (widget.autoCashOutLoopOnLoad &&
           _isDebugFixtureRun &&
           !_autoCashOutLoopStarted) {
-        _autoCashOutLoopStarted = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (!mounted) return;
-          await _runAutoCashOutLoopOnLoad();
-        });
+        _scheduleAutoCashOutLoopOnLoad();
       }
       if (_shouldResumeMarketOnCatalogLoad) {
         _shouldResumeMarketOnCatalogLoad = false;
@@ -315,6 +387,24 @@ class _GameViewState extends ConsumerState<GameView>
     }
   }
 
+  bool _restoredBattleNeedsCashOut(ActiveRunRuntimeState? restoredRun) {
+    if (restoredRun == null ||
+        restoredRun.activeScene != ActiveRunScene.battle) {
+      return false;
+    }
+    final blind = restoredRun.session.blind;
+    return blind.scoreTowardBlind >= blind.targetScore;
+  }
+
+  void _scheduleAutoCashOutLoopOnLoad() {
+    if (_autoCashOutLoopStarted) return;
+    _autoCashOutLoopStarted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _runAutoCashOutLoopOnLoad();
+    });
+  }
+
   Future<void> _loadItemCatalog() async {
     try {
       final catalog = await ItemCatalogLoader.loadFromAsset(
@@ -322,6 +412,9 @@ class _GameViewState extends ConsumerState<GameView>
       );
       if (!mounted) return;
       setState(() => _itemCatalog = catalog);
+      if (_shouldAutoCashOutRestoredBattleOnLoad) {
+        _scheduleAutoCashOutLoopOnLoad();
+      }
       _scheduleDebugAutoUseItem();
     } catch (_) {
       if (!mounted) return;
@@ -500,7 +593,7 @@ class _GameViewState extends ConsumerState<GameView>
     );
   }
 
-  Future<void> _restartCurrentRun() async {
+  Future<bool> _restartCurrentRun() async {
     final confirmed = await showConfirmDialog(
       context,
       title: '현재 Station 재시작',
@@ -509,15 +602,16 @@ class _GameViewState extends ConsumerState<GameView>
       cancelLabel: '취소',
       confirmLabel: '현재 Station 재시작',
     );
-    if (!mounted || !confirmed) return;
+    if (!mounted || !confirmed) return false;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
+    if (!mounted) return false;
 
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await _restartFromStageSnapshot();
+    return true;
   }
 
-  Future<void> _exitToTitleWithConfirm() async {
+  Future<bool> _exitToTitleWithConfirm() async {
     final confirmed = await showConfirmDialog(
       context,
       title: '메인 메뉴로 나가기',
@@ -525,15 +619,17 @@ class _GameViewState extends ConsumerState<GameView>
       cancelLabel: '취소',
       confirmLabel: '나가기',
     );
-    if (!mounted || !confirmed) return;
+    if (!mounted || !confirmed) return false;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
+    if (!mounted) return false;
 
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await _goToTitleAfterStoppingBgm();
+    return true;
   }
 
   Future<void> _restartFromStageSnapshot() async {
+    _resumePresentation();
     _persistRetrySnapshotOnSave = false;
     _gameNotifier.restartCurrentStage();
     await _saveActiveRun(scene: ActiveRunScene.battle);
@@ -654,6 +750,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _goToTitleAfterStoppingBgm() async {
+    _resumePresentation();
     await SoundManager.stopBgm();
     if (!mounted) return;
     context.go(RoutePaths.title);
@@ -923,6 +1020,8 @@ class _GameViewState extends ConsumerState<GameView>
   }) async {
     if (!mounted) return;
     if (lines.isEmpty || index >= lines.length) {
+      await _waitWhilePresentationPaused();
+      if (!mounted) return;
       _gameNotifier.setStageFlow(
         phase: GameStageFlowPhase.none,
         activeSettlementLine: null,
@@ -1028,7 +1127,7 @@ class _GameViewState extends ConsumerState<GameView>
     );
     if (!mounted) return;
 
-    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await _presentationDelay(const Duration(milliseconds: 300));
     if (!mounted) return;
     await _runSettlementSequence(
       lines: lines,
@@ -1050,6 +1149,8 @@ class _GameViewState extends ConsumerState<GameView>
     Object? settlementGoalDisplayScore = GameSessionState.unsetValue,
     bool bump = false,
   }) async {
+    await _waitWhilePresentationPaused();
+    if (!mounted) return;
     SoundManager.playSfx(AssetPaths.sfxCollect);
     _gameNotifier.setStageFlow(
       phase: GameStageFlowPhase.confirmSettlement,
@@ -1061,7 +1162,7 @@ class _GameViewState extends ConsumerState<GameView>
       settlementGoalDisplayScore: settlementGoalDisplayScore,
       bumpSettlementSequence: bump,
     );
-    await Future<void>.delayed(delay);
+    await _presentationDelay(delay);
   }
 
   Future<void> _runStageClearFlow(int scoreAdded) async {
@@ -1108,11 +1209,11 @@ class _GameViewState extends ConsumerState<GameView>
       activeSettlementLine: null,
     );
 
-    await Future<void>.delayed(const Duration(milliseconds: 850));
+    await _presentationDelay(const Duration(milliseconds: 850));
     if (!mounted) return false;
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.settlement);
 
-    await Future<void>.delayed(const Duration(milliseconds: 950));
+    await _presentationDelay(const Duration(milliseconds: 950));
     return mounted;
   }
 
@@ -1189,7 +1290,7 @@ class _GameViewState extends ConsumerState<GameView>
   ) async {
     if (!mounted) return;
     setState(() => _settlementToMarketTransition = breakdown);
-    await Future<void>.delayed(const Duration(milliseconds: 520));
+    await _presentationDelay(const Duration(milliseconds: 520));
     if (!mounted) return;
     setState(() => _settlementToMarketTransition = null);
   }
@@ -1210,7 +1311,7 @@ class _GameViewState extends ConsumerState<GameView>
   Future<void> _playNextStationTransition() async {
     if (!mounted) return;
     setState(() => _nextStationTransitionVisible = true);
-    await Future<void>.delayed(const Duration(milliseconds: 520));
+    await _presentationDelay(const Duration(milliseconds: 520));
     if (!mounted) return;
     setState(() => _nextStationTransitionVisible = false);
   }
@@ -1260,19 +1361,46 @@ class _GameViewState extends ConsumerState<GameView>
     _gameNotifier.markDirty();
   }
 
-  Future<void> _openGameOptions(BuildContext context) async {
-    if (_stageFlowPhase != GameStageFlowPhase.none) {
+  Future<void> _openGameOptions({bool allowDuringStageFlow = false}) async {
+    if ((!allowDuringStageFlow && _stageFlowPhase != GameStageFlowPhase.none) ||
+        _optionsDialogOpen) {
       return;
     }
-    await showGameOptionsDialog(
-      context: context,
-      runSeed: widget.runSeed,
-      activeRunSaveView: _gameState.activeRunSaveView,
-      onRestartRun: _restartCurrentRun,
-      onExitToTitle: _exitToTitleWithConfirm,
-      onReopenOptions: _openGameOptions,
-      isDebugFixtureRun: _isDebugFixtureRun,
-    );
+    while (mounted) {
+      _optionsDialogOpen = true;
+      SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      final action = await showGameOptionsDialog(
+        context: context,
+        runSeed: widget.runSeed,
+        activeRunSaveView: _gameState.activeRunSaveView,
+        onRestartRun: _restartCurrentRun,
+        onExitToTitle: _exitToTitleWithConfirm,
+        isDebugFixtureRun: _isDebugFixtureRun,
+      );
+      _optionsDialogOpen = false;
+      if (!mounted) return;
+      switch (action) {
+        case GameOptionsCloseAction.resumeGame:
+          _resumePresentation();
+          SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          return;
+        case GameOptionsCloseAction.keepPaused:
+          return;
+        case GameOptionsCloseAction.openSettings:
+          SoundManager.beginBgmAutoResumeBlock();
+          try {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            await context.push(RoutePaths.setting);
+          } finally {
+            SoundManager.endBgmAutoResumeBlock();
+          }
+          if (!mounted ||
+              (!allowDuringStageFlow &&
+                  _stageFlowPhase != GameStageFlowPhase.none)) {
+            return;
+          }
+      }
+    }
   }
 
   Future<void> _openDebugBottomSheet(BuildContext context) async {
@@ -1448,7 +1576,7 @@ class _GameViewState extends ConsumerState<GameView>
             selectedBattleItemSlot: _selectedBattleItemSlot,
             itemEffectFeedback: _itemEffectFeedback,
             itemEffectFeedbackTick: _itemEffectFeedbackTick,
-            onOptionsTap: () => _openGameOptions(context),
+            onOptionsTap: _openGameOptions,
             onBlindInfoTap: _openBossConstraintInfo,
             onDebugTap: () => _openDebugBottomSheet(context),
             onJesterTap: _openJesterOverlay,

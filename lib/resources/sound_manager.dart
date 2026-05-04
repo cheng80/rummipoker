@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flame_audio/flame_audio.dart';
 
@@ -14,6 +16,17 @@ class SoundManager {
   static String? _pendingBgm;
   static Future<void> _bgmOp = Future<void>.value();
   static int _bgmRequestSerial = 0;
+  static int _bgmAutoResumeBlockDepth = 0;
+
+  /// Pause 메뉴에서 설정을 여는 동안 mute 해제가 BGM을 자동 재개하지 못하게 막는다.
+  static void beginBgmAutoResumeBlock() {
+    _bgmAutoResumeBlockDepth++;
+  }
+
+  static void endBgmAutoResumeBlock() {
+    if (_bgmAutoResumeBlockDepth == 0) return;
+    _bgmAutoResumeBlockDepth--;
+  }
 
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
   /// playBgm(path) 대신 playBgmIfUnmuted() 사용: 이미 _currentBgm이 설정된 상태에서
@@ -89,10 +102,14 @@ class SoundManager {
     try {
       FlameAudio.bgm.resume();
     } catch (_) {}
+    if (!FlameAudio.bgm.isPlaying) {
+      unawaited(playBgm(_currentBgm!));
+    }
   }
 
   /// 음소거 해제 시 BGM 재생. pause 상태면 resume, stop 상태면 play.
   static Future<void> playBgmIfUnmuted() async {
+    if (_bgmAutoResumeBlockDepth > 0) return;
     final current = _currentBgm;
     if (current == null) return;
     await playBgm(current);
