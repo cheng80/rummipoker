@@ -45,6 +45,9 @@ void main() {
     final initialSheetHeight = tester
         .getSize(find.byKey(const ValueKey('cashout-sheet-frame')))
         .height;
+    final initialSheetTop = tester
+        .getTopLeft(find.byKey(const ValueKey('cashout-sheet-frame')))
+        .dy;
 
     await tester.pump(const Duration(milliseconds: 240));
 
@@ -56,7 +59,11 @@ void main() {
     final finalSheetHeight = tester
         .getSize(find.byKey(const ValueKey('cashout-sheet-frame')))
         .height;
+    final finalSheetTop = tester
+        .getTopLeft(find.byKey(const ValueKey('cashout-sheet-frame')))
+        .dy;
     expect(finalSheetHeight, initialSheetHeight);
+    expect(finalSheetTop, initialSheetTop);
 
     final totalGoldText = tester.widget<Text>(
       find.byKey(const ValueKey('cashout-total-gold-value')),

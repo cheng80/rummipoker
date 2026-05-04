@@ -1231,6 +1231,7 @@ class _GameViewState extends ConsumerState<GameView>
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
+      sheetAnimationStyle: AnimationStyle.noAnimation,
       builder: (sheetContext) {
         return GameCashOutSheet(
           settlement: settlementView,

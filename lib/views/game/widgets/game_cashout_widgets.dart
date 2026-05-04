@@ -601,14 +601,7 @@ class _GameCashOutReveal extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.scale(
-            scale: 0.99 + (0.01 * value),
-            alignment: Alignment.topCenter,
-            child: child,
-          ),
-        );
+        return Opacity(opacity: value, child: child);
       },
       child: IgnorePointer(ignoring: !visible, child: child),
     );
@@ -712,10 +705,9 @@ class _GameCashOutCollectBadge extends StatelessWidget {
       duration: const Duration(milliseconds: 420),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
-        final dy = lerpDouble(6, 0, value)!;
         final scale = lerpDouble(0.94, 1, value)!;
-        return Transform.translate(
-          offset: Offset(0, dy),
+        return Opacity(
+          opacity: value,
           child: Transform.scale(scale: scale, child: child),
         );
       },
