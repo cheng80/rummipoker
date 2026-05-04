@@ -1339,44 +1339,61 @@ class _GameShopScreenState extends State<GameShopScreen>
                                               itemCount:
                                                   visibleOfferEntries.length,
                                               children: [
-                                                for (final entry
-                                                    in visibleOfferEntries)
-                                                  switch (entry.kind) {
-                                                    _MarketOfferEntryKind
-                                                        .jester =>
-                                                      _GameShopOfferCard(
-                                                        offer:
-                                                            market.offers[entry
-                                                                .jesterIndex!],
-                                                        selected:
-                                                            _selectedOfferIndex ==
-                                                            entry.jesterIndex,
-                                                        canAfford: market
-                                                            .offers[entry
-                                                                .jesterIndex!]
-                                                            .isAffordable,
-                                                        onTap: () =>
-                                                            _selectOffer(
-                                                              entry
-                                                                  .jesterIndex!,
-                                                            ),
-                                                      ),
-                                                    _MarketOfferEntryKind
-                                                        .item =>
-                                                      _MarketItemOfferCard(
-                                                        offer:
-                                                            market
-                                                                .itemOffers[entry
-                                                                .itemIndex!],
-                                                        selected:
-                                                            _selectedItemOfferIndex ==
-                                                            entry.itemIndex,
-                                                        onTap: () =>
-                                                            _selectItemOffer(
-                                                              entry.itemIndex!,
-                                                            ),
-                                                      ),
-                                                  },
+                                                for (
+                                                  var i = 0;
+                                                  i <
+                                                      visibleOfferEntries
+                                                          .length;
+                                                  i++
+                                                )
+                                                  _MarketOfferReveal(
+                                                    index: i,
+                                                    signature:
+                                                        _offerEntrySignature(
+                                                          market,
+                                                          visibleOfferEntries[i],
+                                                        ),
+                                                    child: switch (visibleOfferEntries[i]
+                                                        .kind) {
+                                                      _MarketOfferEntryKind
+                                                          .jester =>
+                                                        _GameShopOfferCard(
+                                                          offer:
+                                                              market
+                                                                  .offers[visibleOfferEntries[i]
+                                                                  .jesterIndex!],
+                                                          selected:
+                                                              _selectedOfferIndex ==
+                                                              visibleOfferEntries[i]
+                                                                  .jesterIndex,
+                                                          canAfford: market
+                                                              .offers[visibleOfferEntries[i]
+                                                                  .jesterIndex!]
+                                                              .isAffordable,
+                                                          onTap: () => _selectOffer(
+                                                            visibleOfferEntries[i]
+                                                                .jesterIndex!,
+                                                          ),
+                                                        ),
+                                                      _MarketOfferEntryKind
+                                                          .item =>
+                                                        _MarketItemOfferCard(
+                                                          offer:
+                                                              market
+                                                                  .itemOffers[visibleOfferEntries[i]
+                                                                  .itemIndex!],
+                                                          selected:
+                                                              _selectedItemOfferIndex ==
+                                                              visibleOfferEntries[i]
+                                                                  .itemIndex,
+                                                          onTap: () =>
+                                                              _selectItemOffer(
+                                                                visibleOfferEntries[i]
+                                                                    .itemIndex!,
+                                                              ),
+                                                        ),
+                                                    },
+                                                  ),
                                               ],
                                             ),
                                     ),
@@ -2177,6 +2194,86 @@ class _MarketOfferLane extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: children,
+    );
+  }
+}
+
+String _offerEntrySignature(
+  RummiMarketRuntimeFacade market,
+  _MarketOfferEntry entry,
+) {
+  return switch (entry.kind) {
+    _MarketOfferEntryKind.jester =>
+      'j:${entry.jesterIndex}:${market.offers[entry.jesterIndex!].contentId}:${market.offers[entry.jesterIndex!].price}',
+    _MarketOfferEntryKind.item =>
+      'i:${entry.itemIndex}:${market.itemOffers[entry.itemIndex!].contentId}:${market.itemOffers[entry.itemIndex!].price}',
+  };
+}
+
+class _MarketOfferReveal extends StatefulWidget {
+  const _MarketOfferReveal({
+    required this.index,
+    required this.signature,
+    required this.child,
+  });
+
+  final int index;
+  final String signature;
+  final Widget child;
+
+  @override
+  State<_MarketOfferReveal> createState() => _MarketOfferRevealState();
+}
+
+class _MarketOfferRevealState extends State<_MarketOfferReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _offset;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _offset = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _play();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MarketOfferReveal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.signature != widget.signature) {
+      _play();
+    }
+  }
+
+  Future<void> _play() async {
+    _controller.value = 0;
+    final delay = Duration(milliseconds: widget.index * 42);
+    await Future<void>.delayed(delay);
+    if (!mounted) return;
+    unawaited(_controller.forward());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      key: ValueKey<String>('market-offer-stagger-${widget.index}'),
+      opacity: _fade,
+      child: SlideTransition(position: _offset, child: widget.child),
     );
   }
 }
