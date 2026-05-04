@@ -352,6 +352,43 @@ void main() {
     },
   );
 
+  testWidgets('GameBoardGrid pulses newly placed board tile', (tester) async {
+    final board = RummiBoard();
+
+    Widget buildGrid() {
+      return MaterialApp(
+        home: Scaffold(
+          body: SizedBox.square(
+            dimension: 320,
+            child: GameBoardGrid(
+              board: board,
+              scoringCells: const {},
+              constrainedScoringCells: const {},
+              activeSettlementCells: const {},
+              settlementBoardSnapshot: const {},
+              selectedRow: null,
+              selectedCol: null,
+              boardMoveMode: false,
+              moveSourceRow: null,
+              moveSourceCol: null,
+              constrainedCells: const {},
+              onTapCell: (_, _) {},
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildGrid());
+    expect(find.byKey(const ValueKey('board-place-pop')), findsNothing);
+
+    board.setCell(0, 0, Tile(id: 1, color: TileColor.red, number: 7));
+    await tester.pumpWidget(buildGrid());
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('board-place-pop')), findsOneWidget);
+  });
+
   testWidgets('GameBoardGrid lifts active settlement tiles', (tester) async {
     final board = RummiBoard();
     board.setCell(0, 0, Tile(id: 1, color: TileColor.red, number: 7));

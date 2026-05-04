@@ -1490,7 +1490,7 @@ class GameHudChip extends StatelessWidget {
   }
 }
 
-class GameBoardGrid extends StatelessWidget {
+class GameBoardGrid extends StatefulWidget {
   const GameBoardGrid({
     super.key,
     required this.board,
@@ -1523,13 +1523,42 @@ class GameBoardGrid extends StatelessWidget {
   final AlignmentGeometry alignment;
 
   @override
+  State<GameBoardGrid> createState() => _GameBoardGridState();
+}
+
+class _GameBoardGridState extends State<GameBoardGrid> {
+  late Map<String, String?> _previousTileKeys;
+  Set<String> _appearingCells = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _previousTileKeys = _tileKeysForBoard(widget.board);
+  }
+
+  @override
+  void didUpdateWidget(covariant GameBoardGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final currentTileKeys = _tileKeysForBoard(widget.board);
+    final appearingCells = <String>{};
+    for (final entry in currentTileKeys.entries) {
+      final previous = _previousTileKeys[entry.key];
+      if (previous == null && entry.value != null) {
+        appearingCells.add(entry.key);
+      }
+    }
+    _previousTileKeys = currentTileKeys;
+    _appearingCells = appearingCells;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final side = min(constraints.maxWidth, constraints.maxHeight);
 
         return Align(
-          alignment: alignment,
+          alignment: widget.alignment,
           child: SizedBox(
             width: side,
             height: side,
@@ -1556,26 +1585,28 @@ class GameBoardGrid extends StatelessWidget {
                     final row = index ~/ kBoardSize;
                     final col = index % kBoardSize;
                     final tile =
-                        board.cellAt(row, col) ??
-                        settlementBoardSnapshot['$row:$col'];
-                    final selected = selectedRow == row && selectedCol == col;
+                        widget.board.cellAt(row, col) ??
+                        widget.settlementBoardSnapshot['$row:$col'];
+                    final selected =
+                        widget.selectedRow == row && widget.selectedCol == col;
                     final cellKey = '$row:$col';
-                    final scoring = scoringCells.contains(cellKey);
-                    final constrainedScoring = constrainedScoringCells.contains(
+                    final scoring = widget.scoringCells.contains(cellKey);
+                    final constrainedScoring = widget.constrainedScoringCells
+                        .contains(cellKey);
+                    final constrained = widget.constrainedCells.contains(
                       cellKey,
                     );
-                    final constrained = constrainedCells.contains(cellKey);
-                    final settlementActive = activeSettlementCells.contains(
-                      cellKey,
-                    );
+                    final settlementActive = widget.activeSettlementCells
+                        .contains(cellKey);
                     final isMoveSource =
-                        boardMoveMode &&
-                        moveSourceRow == row &&
-                        moveSourceCol == col;
-                    final isMoveAvailable = boardMoveMode && tile == null;
+                        widget.boardMoveMode &&
+                        widget.moveSourceRow == row &&
+                        widget.moveSourceCol == col;
+                    final isMoveAvailable =
+                        widget.boardMoveMode && tile == null;
                     final isMoveLocked =
-                        boardMoveMode && tile != null && !isMoveSource;
-                    return GameBoardCell(
+                        widget.boardMoveMode && tile != null && !isMoveSource;
+                    final child = GameBoardCell(
                       key: ValueKey('board-cell-$row-$col'),
                       tile: tile,
                       selected: selected,
@@ -1586,8 +1617,12 @@ class GameBoardGrid extends StatelessWidget {
                       moveSource: isMoveSource,
                       moveAvailable: isMoveAvailable,
                       moveLocked: isMoveLocked,
-                      onTap: () => onTapCell(row, col),
+                      onTap: () => widget.onTapCell(row, col),
                     );
+                    if (!_appearingCells.contains(cellKey)) {
+                      return child;
+                    }
+                    return _BoardPlacePop(child: child);
                   },
                 ),
               ),
@@ -1595,6 +1630,52 @@ class GameBoardGrid extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+Map<String, String?> _tileKeysForBoard(RummiBoard board) {
+  return {
+    for (var row = 0; row < kBoardSize; row++)
+      for (var col = 0; col < kBoardSize; col++)
+        '$row:$col': _boardTileKey(board.cellAt(row, col)),
+  };
+}
+
+String? _boardTileKey(Tile? tile) => tile?.toString();
+
+class _BoardPlacePop extends StatelessWidget {
+  const _BoardPlacePop({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('board-place-pop'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        final glow = (1 - value).clamp(0.0, 1.0);
+        return Transform.scale(
+          scale: 0.9 + (value * 0.1),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(9),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF2C14E).withValues(alpha: 0.24 * glow),
+                  blurRadius: 16 * glow,
+                  spreadRadius: 1.5 * glow,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }
