@@ -12,7 +12,7 @@ import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('GameShopScreen shows feedback after market item use', (
+  testWidgets('GameShopScreen shows feedback after market item sell', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 2400);
@@ -24,30 +24,30 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final useItem = ItemDefinition.fromJson(const <String, dynamic>{
-      'id': 'coin_cache',
-      'displayName': 'Coin Cache',
-      'type': 'utility',
+    final sellItem = ItemDefinition.fromJson(const <String, dynamic>{
+      'id': 'score_abacus',
+      'displayName': 'Score Abacus',
+      'type': 'equipment',
       'rarity': 'common',
-      'basePrice': 3,
-      'sellPrice': 1,
-      'stackable': true,
-      'maxStack': 3,
+      'basePrice': 4,
+      'sellPrice': 2,
+      'stackable': false,
+      'maxStack': 1,
       'sellable': true,
       'usableInBattle': false,
-      'placement': 'inventory',
-      'slotHint': 'utility',
-      'effectText': 'Gain 3 Gold.',
+      'placement': 'quickSlot',
+      'slotHint': 'q',
+      'effectText': 'Gain score support.',
       'effect': <String, dynamic>{
-        'timing': 'use_market',
-        'op': 'gain_gold',
-        'amount': 3,
-        'consume': true,
+        'timing': 'station_start',
+        'op': 'add_board_move',
+        'amount': 1,
+        'consume': false,
       },
-      'tags': <String>['market', 'gold'],
+      'tags': <String>['gear'],
       'sourceNotes': 'Test fixture.',
     });
-    var useCalled = false;
+    var sellCalled = false;
     var currentMarket = RummiMarketRuntimeFacade(
       gold: 4,
       rerollCost: 5,
@@ -61,13 +61,13 @@ void main() {
       itemSlots: [
         RummiMarketItemSlotView.fromOwnedItem(
           slotIndex: 0,
-          slotLabel: 'T1',
+          slotLabel: 'Q1',
           entry: const OwnedItemEntry(
-            itemId: 'coin_cache',
+            itemId: 'score_abacus',
             count: 1,
-            placement: ItemPlacement.inventory,
+            placement: ItemPlacement.quickSlot,
           ),
-          item: useItem,
+          item: sellItem,
         ),
       ],
     );
@@ -108,11 +108,13 @@ void main() {
                     onReroll: () => null,
                     onBuyOffer: (_) => null,
                     onBuyItemOffer: (_) => null,
-                    onUseMarketItem: (item) {
-                      useCalled = true;
-                      expect(item.id, 'coin_cache');
+                    onUseMarketItem: (_) => null,
+                    onSellOwnedJester: (_) => false,
+                    onSellMarketItem: (item) {
+                      sellCalled = true;
+                      expect(item.id, 'score_abacus');
                       currentMarket = RummiMarketRuntimeFacade(
-                        gold: 7,
+                        gold: 6,
                         rerollCost: 5,
                         maxOwnedSlots: currentMarket.maxOwnedSlots,
                         runtimeSnapshot: currentMarket.runtimeSnapshot,
@@ -121,18 +123,22 @@ void main() {
                         itemOfferSlotCount: currentMarket.itemOfferSlotCount,
                         quickSlotCapacity: currentMarket.quickSlotCapacity,
                         itemOffers: currentMarket.itemOffers,
-                        itemSlots: const [],
+                        itemSlots: const [
+                          RummiMarketItemSlotView(
+                            slotIndex: 0,
+                            slotLabel: 'Q1',
+                            placement: ItemPlacement.quickSlot,
+                          ),
+                        ],
                       );
-                      return null;
+                      return true;
                     },
-                    onSellOwnedJester: (_) => false,
-                    onSellMarketItem: (_) => false,
                     onStateChanged: () async {},
                     onOpenSettings: () async {},
                     onExitToTitle: () async {},
                     onRestartRun: () async {},
                     isDebugFixtureRun: false,
-                    initialItemShopTab: true,
+                    initialItemShopTab: false,
                   ),
                 ),
               ),
@@ -143,22 +149,28 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('market-item-slot-T1')));
+    await tester.tap(find.byKey(const ValueKey('market-item-slot-Q1')));
     await tester.pumpAndSettle();
-    final noticeText = tester.widget<Text>(find.text('상점에서 수동 사용'));
-    expect(noticeText.overflow, isNot(TextOverflow.ellipsis));
-    expect(find.text('판매'), findsOneWidget);
-
-    await tester.tap(find.text('사용'));
+    await tester.tap(find.text('판매'));
     await tester.pump(const Duration(milliseconds: 120));
 
-    expect(useCalled, isTrue);
-    expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
-    expect(find.text('사용 완료'), findsOneWidget);
-    expect(find.text('+3G'), findsOneWidget);
+    expect(sellCalled, isTrue);
+    expect(find.byKey(const ValueKey('market-sale-flight')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('market-gold-gain-badge')),
+      findsOneWidget,
+    );
+    expect(find.text('+2G'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-item-slot-Q1')),
+        matching: find.byKey(const ValueKey('market-item-card-face')),
+      ),
+      findsNothing,
+    );
 
     await tester.pump(const Duration(milliseconds: 700));
-    expect(find.byKey(const ValueKey('market-use-feedback')), findsNothing);
+    expect(find.byKey(const ValueKey('market-sale-flight')), findsNothing);
     await tester.pump(const Duration(seconds: 3));
   });
 }

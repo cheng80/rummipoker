@@ -95,6 +95,26 @@ class _MarketPurchaseFlight {
   final ItemRarity? itemRarity;
 }
 
+class _MarketSaleFlight {
+  const _MarketSaleFlight({
+    required this.tick,
+    required this.label,
+    required this.sellGold,
+    required this.startOffset,
+    required this.endOffset,
+    required this.itemPlacement,
+    required this.itemRarity,
+  });
+
+  final int tick;
+  final String label;
+  final int sellGold;
+  final Offset? startOffset;
+  final Offset? endOffset;
+  final ItemPlacement itemPlacement;
+  final ItemRarity itemRarity;
+}
+
 class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
@@ -148,7 +168,10 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _utilityOfferPage = 0;
   int _purchaseFlightTick = 0;
   _MarketPurchaseFlight? _purchaseFlight;
+  int _saleFlightTick = 0;
+  _MarketSaleFlight? _saleFlight;
   final GlobalKey _marketSurfaceKey = GlobalKey();
+  final GlobalKey _goldChipKey = GlobalKey();
   final Map<String, GlobalKey> _offerKeys = <String, GlobalKey>{};
   final Map<String, GlobalKey> _itemSlotKeys = <String, GlobalKey>{};
   final Map<int, GlobalKey> _jesterSlotKeys = <int, GlobalKey>{};
@@ -762,6 +785,29 @@ class _GameShopScreenState extends State<GameShopScreen>
     });
   }
 
+  void _startSaleFlight({
+    required RummiMarketItemSlotView slot,
+    required ItemDefinition item,
+    required Offset? startOffset,
+    required Offset? endOffset,
+  }) {
+    final tick = _saleFlightTick + 1;
+    _saleFlightTick = tick;
+    _saleFlight = _MarketSaleFlight(
+      tick: tick,
+      label: localizedItemSlotName(context, slot),
+      sellGold: item.sellPrice,
+      startOffset: startOffset,
+      endOffset: endOffset,
+      itemPlacement: item.placement,
+      itemRarity: item.rarity,
+    );
+    Future<void>.delayed(_marketPurchaseFlightDuration, () {
+      if (!mounted || _saleFlight?.tick != tick) return;
+      setState(() => _saleFlight = null);
+    });
+  }
+
   int _visibleOfferLaneCount() {
     final entries = _offerEntriesForTab(_market, _shopTab);
     final page = _shopTab == _MarketShopTab.cardsAndQuickSlots
@@ -941,10 +987,18 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _sellMarketItem(RummiMarketItemSlotView slot) {
     final item = slot.item;
     if (item == null) return;
+    final startOffset = _flightCenterForKey(_itemSlotKey(slot.slotLabel));
+    final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellMarketItem(item);
     if (!ok) return;
     showTopNotice(context, '아이템을 판매했습니다.');
     setState(() {
+      _startSaleFlight(
+        slot: slot,
+        item: item,
+        startOffset: startOffset,
+        endOffset: endOffset,
+      );
       final market = _market;
       _selectedItemSlotIndex = -1;
       _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
@@ -1236,7 +1290,10 @@ class _GameShopScreenState extends State<GameShopScreen>
                               ),
                             ),
                           ),
-                          _MarketGoldChip(gold: market.gold),
+                          KeyedSubtree(
+                            key: _goldChipKey,
+                            child: _MarketGoldChip(gold: market.gold),
+                          ),
                           const SizedBox(width: 6),
                           GameIconButtonChip(
                             onPressed: _openOptions,
@@ -1728,6 +1785,10 @@ class _GameShopScreenState extends State<GameShopScreen>
                     child: _MarketPurchaseFlightOverlay(
                       flight: _purchaseFlight!,
                     ),
+                  ),
+                if (_saleFlight != null)
+                  Positioned.fill(
+                    child: _MarketSaleFlightOverlay(flight: _saleFlight!),
                   ),
                 if (_marketUseFeedbackLabel != null)
                   Positioned.fill(
@@ -3334,6 +3395,58 @@ class _MarketGoldSpendBadge extends StatelessWidget {
   }
 }
 
+class _MarketGoldGainBadge extends StatelessWidget {
+  const _MarketGoldGainBadge({required this.gold});
+
+  final int gold;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('market-gold-gain-badge'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 460),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final opacity = value < 0.72 ? 1.0 : (1 - value) / 0.28;
+        return Opacity(
+          opacity: opacity.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, -16 * value),
+            child: child,
+          ),
+        );
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF123829).withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF86F4C3), width: 1.1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.26),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            '+${gold}G',
+            style: const TextStyle(
+              color: Color(0xFF9FF2C2),
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MarketSlotPulse extends StatelessWidget {
   const _MarketSlotPulse({required this.active, required this.child});
 
@@ -3443,6 +3556,87 @@ class _MarketPurchaseFlightCard extends StatelessWidget {
               height: 1.05,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketSaleFlightOverlay extends StatelessWidget {
+  const _MarketSaleFlightOverlay({required this.flight});
+
+  final _MarketSaleFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    final startOffset = flight.startOffset;
+    final endOffset = flight.endOffset;
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 16,
+            right: 42,
+            child: _MarketGoldGainBadge(gold: flight.sellGold),
+          ),
+          TweenAnimationBuilder<double>(
+            key: ValueKey<int>(flight.tick),
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: _marketPurchaseFlightDuration,
+            curve: Curves.easeInOutCubic,
+            builder: (context, value, child) {
+              if (startOffset != null && endOffset != null) {
+                final offset = Offset.lerp(startOffset, endOffset, value)!;
+                return Positioned(
+                  left:
+                      offset.dx -
+                      ((_marketOfferCardWidth + _marketCardSelectionInset * 2) /
+                          2),
+                  top:
+                      offset.dy -
+                      ((_marketOfferCardHeight +
+                              _marketCardSelectionInset * 2) /
+                          2),
+                  child: child!,
+                );
+              }
+              return Align(
+                alignment: Alignment.lerp(
+                  const Alignment(-0.48, -0.10),
+                  const Alignment(0.58, -0.84),
+                  value,
+                )!,
+                child: child,
+              );
+            },
+            child: _MarketSaleFlightCard(flight: flight),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketSaleFlightCard extends StatelessWidget {
+  const _MarketSaleFlightCard({required this.flight});
+
+  final _MarketSaleFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('market-sale-flight'),
+      width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+      height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+      child: _MarketSelectableCardFrame(
+        selected: true,
+        width: _marketOfferCardWidth,
+        height: _marketOfferCardHeight,
+        child: _MarketItemCardFace(
+          label: flight.label,
+          placement: flight.itemPlacement,
+          rarity: flight.itemRarity,
+          selected: true,
         ),
       ),
     );
