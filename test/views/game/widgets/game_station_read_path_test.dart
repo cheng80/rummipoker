@@ -376,7 +376,7 @@ void main() {
     expect(midTop, lessThan(startTop));
   });
 
-  testWidgets('GameHandZone draws an incoming tile from the deck side', (
+  testWidgets('GameHandZone draws an incoming tile from the right edge', (
     tester,
   ) async {
     const station = RummiStationRuntimeFacade(
@@ -441,7 +441,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 130));
 
     final midLeft = tester.widget<Positioned>(incomingFinder).left!;
-    expect(midLeft, greaterThan(startLeft));
+    expect(midLeft, lessThan(startLeft));
   });
 
   testWidgets(
