@@ -322,6 +322,13 @@ void main() {
       ),
       findsNothing,
     );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-item-slot-T1')),
+        matching: find.byKey(const ValueKey('market-item-card-face')),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Jester / Slots'));
     await tester.pumpAndSettle();
