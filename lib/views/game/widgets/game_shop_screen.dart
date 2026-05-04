@@ -98,20 +98,24 @@ class _MarketSaleFlight {
   const _MarketSaleFlight({
     required this.tick,
     required this.label,
+    required this.item,
     required this.sellGold,
     required this.startOffset,
     required this.endOffset,
-    required this.itemPlacement,
-    required this.itemRarity,
+    this.itemPlacement,
+    this.itemRarity,
+    this.jesterCard,
   });
 
   final int tick;
   final String label;
+  final bool item;
   final int sellGold;
   final Offset? startOffset;
   final Offset? endOffset;
-  final ItemPlacement itemPlacement;
-  final ItemRarity itemRarity;
+  final ItemPlacement? itemPlacement;
+  final ItemRarity? itemRarity;
+  final RummiJesterCard? jesterCard;
 }
 
 class GameShopScreen extends StatefulWidget {
@@ -657,11 +661,34 @@ class _GameShopScreenState extends State<GameShopScreen>
     _saleFlight = _MarketSaleFlight(
       tick: tick,
       label: localizedItemSlotName(context, slot),
+      item: true,
       sellGold: item.sellPrice,
       startOffset: startOffset,
       endOffset: endOffset,
       itemPlacement: item.placement,
       itemRarity: item.rarity,
+    );
+    Future<void>.delayed(_marketPurchaseFlightDuration, () {
+      if (!mounted || _saleFlight?.tick != tick) return;
+      setState(() => _saleFlight = null);
+    });
+  }
+
+  void _startJesterSaleFlight({
+    required RummiMarketOwnedEntryView entry,
+    required Offset? startOffset,
+    required Offset? endOffset,
+  }) {
+    final tick = _saleFlightTick + 1;
+    _saleFlightTick = tick;
+    _saleFlight = _MarketSaleFlight(
+      tick: tick,
+      label: localizedJesterName(context, entry.card),
+      item: false,
+      sellGold: entry.sellPrice,
+      startOffset: startOffset,
+      endOffset: endOffset,
+      jesterCard: entry.card,
     );
     Future<void>.delayed(_marketPurchaseFlightDuration, () {
       if (!mounted || _saleFlight?.tick != tick) return;
@@ -830,10 +857,20 @@ class _GameShopScreenState extends State<GameShopScreen>
   }
 
   void _sellOwned(int index) {
+    final marketBeforeSell = _market;
+    if (index < 0 || index >= marketBeforeSell.ownedEntries.length) return;
+    final soldEntry = marketBeforeSell.ownedEntries[index];
+    final startOffset = _flightCenterForKey(_jesterSlotKey(index));
+    final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellOwnedJester(index);
     if (!ok) return;
     showTopNotice(context, '제스터를 판매했습니다.');
     setState(() {
+      _startJesterSaleFlight(
+        entry: soldEntry,
+        startOffset: startOffset,
+        endOffset: endOffset,
+      );
       final market = _market;
       if (market.ownedEntries.isEmpty) {
         _selectedOwnedIndex = null;
@@ -3539,6 +3576,35 @@ class _MarketSaleFlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final jesterCard = flight.jesterCard;
+    if (!flight.item && jesterCard != null) {
+      return SizedBox(
+        key: const ValueKey('market-sale-flight'),
+        width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+        height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+        child: KeyedSubtree(
+          key: const ValueKey('market-sale-flight-jester-card'),
+          child: _MarketSelectableCardFrame(
+            selected: true,
+            width: _marketOfferCardWidth,
+            height: _marketOfferCardHeight,
+            child: GameJesterSlot(
+              card: jesterCard,
+              runtimeValueText: null,
+              extended: false,
+              activeEffect: null,
+              settlementSequenceTick: 0,
+              selected: false,
+            ),
+          ),
+        ),
+      );
+    }
+    final placement = flight.itemPlacement;
+    final rarity = flight.itemRarity;
+    if (placement == null || rarity == null) {
+      return const SizedBox.shrink();
+    }
     return SizedBox(
       key: const ValueKey('market-sale-flight'),
       width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
@@ -3549,8 +3615,8 @@ class _MarketSaleFlightCard extends StatelessWidget {
         height: _marketOfferCardHeight,
         child: _MarketItemCardFace(
           label: flight.label,
-          placement: flight.itemPlacement,
-          rarity: flight.itemRarity,
+          placement: placement,
+          rarity: rarity,
           selected: true,
         ),
       ),
