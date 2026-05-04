@@ -120,6 +120,27 @@ gated probe:
 - result: cost-null 이벤트는 크게 줄었지만, 평균 최종 잔고는 여전히 약 `676G`다.
 - interpretation: 구매 gating만으로는 부족하다. 보상 scale 또는 가격 scale 후보를 실제 sweep 축으로 추가해야 한다.
 
+3차 적용:
+
+- `--sim-reward-scale`과 `--sim-price-scale`을 추가한다.
+- 기본값은 둘 다 `1.0`이다.
+- scale은 sim economy 원장과 `gated_known_cost` 구매 가능성에만 반영한다.
+- runtime 보상 공식이나 카탈로그 가격은 아직 바꾸지 않는다.
+
+scale probe:
+
+| Probe | Reward scale | Price scale | 1차 해석 |
+|---|---:|---:|---|
+| `economy_reward034_v1_r20` | 0.34 | 1.0 | 잔고는 크게 줄지만 balanced none clear가 흔들릴 수 있다. |
+| `economy_price294_v1_r20` | 1.0 | 2.94 | 가격만 올려도 잔고가 높고, 구매력 조정이 충분하지 않다. |
+| `economy_combo045_220_v1_r20` | 0.45 | 2.2 | 단일 축보다 path clear 균형이 덜 흔들리는 1차 후보로 보인다. |
+
+주의:
+
+- r20은 탐색용이며 확정 판단에 쓰지 않는다.
+- 평균 최종 잔고는 full path 누적값이므로, 다음 probe에서는 station/tier별 시작 골드와 종료 골드 분포도 함께 본다.
+- 다음 탐색은 `reward 0.45 / price 2.2` 주변과 `reward 0.34 / price 1.0` 주변을 r120으로 비교한다.
+
 ### Phase 3. Economy Probe
 
 목표:

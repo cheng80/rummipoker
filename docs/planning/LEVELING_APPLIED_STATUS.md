@@ -328,7 +328,9 @@ Economy leveling gate:
 - current trace: `economy_trace_v1_r20` 탐색 run에서 trace-only 평균 최종 잔고가 약 770G로 높게 나왔다. 기존 sim은 가격/잔고로 market effect를 제한하지 않는 상태다.
 - applied: `gated_known_cost` sim economy mode를 추가했다. 이 모드는 cost를 알 수 없거나 잔고로 살 수 없는 market effect를 적용하지 않는다.
 - current gated trace: `economy_gated_v1_r20` 탐색 run에서 cost-null 이벤트는 줄었지만 평균 최종 잔고는 약 676G로 여전히 높다.
-- next implementation: 보상 scale/가격 scale 후보를 sweep 축으로 추가한다.
+- applied: `--sim-reward-scale`, `--sim-price-scale`을 추가했다. 기본값은 1.0이며 runtime 수치에는 영향이 없다.
+- current scale probe: r20 탐색에서 `reward 0.45 / price 2.2` 혼합 후보가 단일 축 조정보다 path clear 균형이 덜 흔드는 1차 후보로 보인다.
+- next implementation: r120 탐색으로 `reward 0.45 / price 2.2` 주변과 `reward 0.34 / price 1.0` 주변을 비교하고, station/tier별 시작/종료 골드 분포를 추가 집계한다.
 
 ## 6. Read Order
 

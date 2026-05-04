@@ -36,6 +36,8 @@ DEFAULT_OPTIONS: dict[str, Any] = {
     ],
     "market_profiles": ["none", "s1_buy_sly"],
     "sim_economy_mode": "trace_only",
+    "sim_reward_scale": 1.0,
+    "sim_price_scale": 1.0,
     "small_multipliers": [0.95, 1.0],
     "big_multipliers": [0.90, 1.0],
     "boss_multipliers": [0.75, 0.85, 1.0],
@@ -149,6 +151,18 @@ def main(argv: list[str] | None = None) -> int:
         help="run_balance_sim의 sim-only economy 적용 모드.",
     )
     parser.add_argument(
+        "--sim-reward-scale",
+        type=float,
+        default=DEFAULT_OPTIONS["sim_reward_scale"],
+        help="sim economy 원장에서 cashout gold에 곱할 탐색용 scale.",
+    )
+    parser.add_argument(
+        "--sim-price-scale",
+        type=float,
+        default=DEFAULT_OPTIONS["sim_price_scale"],
+        help="sim economy 원장에서 구매 비용에 곱할 탐색용 scale.",
+    )
+    parser.add_argument(
         "--small-multipliers",
         default=_join(DEFAULT_OPTIONS["small_multipliers"]),
         help="progression_curve용 small target multiplier 후보.",
@@ -223,6 +237,8 @@ def main(argv: list[str] | None = None) -> int:
                 "market_profiles",
             ),
             "sim_economy_mode": args.sim_economy_mode,
+            "sim_reward_scale": args.sim_reward_scale,
+            "sim_price_scale": args.sim_price_scale,
             "small_multipliers": _parse_multipliers(args.small_multipliers),
             "big_multipliers": _parse_multipliers(args.big_multipliers),
             "boss_multipliers": _parse_multipliers(args.boss_multipliers),
@@ -349,6 +365,8 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
             "loadout_ids": resolved["loadout_ids"],
             "market_profiles": resolved["market_profiles"],
             "sim_economy_mode": resolved["sim_economy_mode"],
+            "sim_reward_scale": resolved["sim_reward_scale"],
+            "sim_price_scale": resolved["sim_price_scale"],
             "summary_only": resolved["summary_only"],
             "jobs": resolved["jobs"],
         },
@@ -665,6 +683,10 @@ def _run_candidate(
         str(raw_path),
         "--sim-economy-mode",
         str(resolved["sim_economy_mode"]),
+        "--sim-reward-scale",
+        str(resolved["sim_reward_scale"]),
+        "--sim-price-scale",
+        str(resolved["sim_price_scale"]),
     ]
     for market_profile in resolved["market_profiles"]:
         cmd.extend(["--market-profile", str(market_profile)])
