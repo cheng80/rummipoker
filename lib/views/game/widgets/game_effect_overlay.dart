@@ -36,6 +36,8 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   late final RummiEffectGame _game;
   String? _lastEffectSignature;
   bool _visible = false;
+  List<Offset> _scoreMoteCenters = const [];
+  int _scoreMoteTick = 0;
 
   @override
   void initState() {
@@ -50,7 +52,17 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
         builder: (context, constraints) {
           _scheduleBoardEffect(constraints);
           if (!_visible) return const SizedBox.expand();
-          return GameWidget<RummiEffectGame>(game: _game);
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              GameWidget<RummiEffectGame>(game: _game),
+              if (_scoreMoteCenters.isNotEmpty)
+                _SettlementScoreMoteLayer(
+                  centers: _scoreMoteCenters,
+                  tick: _scoreMoteTick,
+                ),
+            ],
+          );
         },
       ),
     );
@@ -91,6 +103,15 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       if (!_visible) {
         setState(() => _visible = true);
       }
+      final scoreMoteCenters = effectKind == _BoardEffectKind.lineConfirm
+          ? [for (final center in centers) Offset(center.x, center.y)]
+          : const <Offset>[];
+      if (scoreMoteCenters.isNotEmpty || _scoreMoteCenters.isNotEmpty) {
+        setState(() {
+          _scoreMoteCenters = scoreMoteCenters;
+          _scoreMoteTick = widget.settlementSequenceTick;
+        });
+      }
       switch (effectKind) {
         case _BoardEffectKind.lineConfirm:
           _game.spawnLineConfirmBurst(centers);
@@ -101,7 +122,11 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       }
       Future<void>.delayed(_effectVisibleDuration, () {
         if (!mounted) return;
-        setState(() => _visible = false);
+        if (_lastEffectSignature != signature) return;
+        setState(() {
+          _visible = false;
+          _scoreMoteCenters = const [];
+        });
       });
     });
   }
@@ -144,3 +169,92 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
 }
 
 enum _BoardEffectKind { lineConfirm, constraintImpact, largeScore }
+
+class _SettlementScoreMoteLayer extends StatelessWidget {
+  const _SettlementScoreMoteLayer({required this.centers, required this.tick});
+
+  final List<Offset> centers;
+  final int tick;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      key: const ValueKey('settlement-score-mote-layer'),
+      builder: (context, constraints) {
+        final target = Offset(
+          constraints.maxWidth / 2,
+          constraints.maxHeight * 0.12,
+        );
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            for (var i = 0; i < centers.length; i++)
+              _SettlementScoreMote(
+                key: ValueKey<String>('settlement-score-mote-$tick-$i'),
+                start: centers[i],
+                target: target,
+                delay: Duration(milliseconds: i * 34),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SettlementScoreMote extends StatelessWidget {
+  const _SettlementScoreMote({
+    super.key,
+    required this.start,
+    required this.target,
+    required this.delay,
+  });
+
+  final Offset start;
+  final Offset target;
+  final Duration delay;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 620),
+      curve: Curves.easeOutCubic,
+      builder: (context, rawValue, child) {
+        final delayRatio = delay.inMilliseconds / 620;
+        final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
+          0.0,
+          1.0,
+        );
+        final position = Offset.lerp(start, target, value)!;
+        final opacity = value < 0.82 ? 1.0 : 1.0 - ((value - 0.82) / 0.18);
+        final scale = 1.0 - (value * 0.22);
+        return Positioned(
+          left: position.dx - 4,
+          top: position.dy - 4,
+          width: 8,
+          height: 8,
+          child: Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: scale,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFF2C14E).withValues(alpha: 0.9),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF2C14E).withValues(alpha: 0.42),
+                      blurRadius: 9,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

@@ -9,6 +9,23 @@ import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_stat
 import 'package:rummipoker/views/game/widgets/game_effect_overlay.dart';
 
 void main() {
+  testWidgets('보드 라인 정산 단계에서 점수 조각 연출을 띄운다', (tester) async {
+    await tester.pumpWidget(
+      _effectOverlayHost(
+        activeSettlementStep: ScoringPresentationStep.boardLine,
+        line: _line(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('settlement-score-mote-layer')),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(milliseconds: 1100));
+  });
+
   testWidgets('제약 penalty가 있는 정산 단계에서 보드 이펙트를 띄운다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(
