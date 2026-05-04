@@ -31,12 +31,28 @@ class GamePresentationTimings {
   static const Duration cashOutCollectBadge = Duration(milliseconds: 420);
   static const Duration cashOutCoinBurst = Duration(milliseconds: 520);
 
+  static const Duration hudGoalPulse = Duration(milliseconds: 420);
+  static const Duration hudGoldPulse = Duration(milliseconds: 420);
+  static const Duration bottomInfoPulseHold = Duration(milliseconds: 420);
+  static const Duration bottomResourcePulse = Duration(milliseconds: 360);
+  static const Duration handCountToggle = Duration(milliseconds: 120);
+  static const Duration handTileTransition = Duration(milliseconds: 260);
+
+  static const Duration boardTileState = Duration(milliseconds: 120);
+  static const Duration boardTileMoveFlight = Duration(milliseconds: 280);
+  static const Duration boardTileRemoveFlight = Duration(milliseconds: 280);
+  static const Duration boardTilePlacePop = Duration(milliseconds: 260);
+  static const Duration settlementTileLift = Duration(milliseconds: 420);
+
   static const Duration boardEffectVisible = Duration(milliseconds: 1300);
   static const Duration lineConfirmSweep = Duration(milliseconds: 520);
+  static const Duration lineConfirmSweepStagger = Duration(milliseconds: 32);
   static const Duration constraintCellFlash = Duration(milliseconds: 760);
+  static const Duration constraintCellFlashStagger = Duration(milliseconds: 28);
   static const Duration constraintImpactBadge = Duration(milliseconds: 900);
   static const Duration largeScoreBurstBadge = Duration(milliseconds: 680);
   static const Duration settlementScoreMote = Duration(milliseconds: 620);
+  static const Duration settlementScoreMoteStagger = Duration(milliseconds: 34);
 
   static const Duration settlementEffectBurst = Duration(milliseconds: 940);
   static const Duration itemEffectSparkBurst = Duration(milliseconds: 560);

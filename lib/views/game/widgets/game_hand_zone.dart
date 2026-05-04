@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
+import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
 
 class GameHandZone extends StatefulWidget {
@@ -33,7 +34,8 @@ class GameHandZone extends StatefulWidget {
 
 class _GameHandZoneState extends State<GameHandZone>
     with SingleTickerProviderStateMixin {
-  static const Duration _handAnimDuration = Duration(milliseconds: 260);
+  static const Duration _handAnimDuration =
+      GamePresentationTimings.handTileTransition;
 
   late final AnimationController _controller;
   List<Tile> _settledHand = <Tile>[];

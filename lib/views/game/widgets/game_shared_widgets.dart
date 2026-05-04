@@ -193,7 +193,7 @@ class GameTopHud extends StatelessWidget {
                 stationGoalPulse ? 'goal-$stationGoalPulseTick' : 'goal-idle',
               ),
               tween: Tween<double>(begin: 0, end: stationGoalPulse ? 1 : 0),
-              duration: const Duration(milliseconds: 420),
+              duration: GamePresentationTimings.hudGoalPulse,
               curve: Curves.easeOutCubic,
               builder: (context, value, child) {
                 final glow = stationGoalPulse ? sin(value * pi) : 0.0;
@@ -322,7 +322,7 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
     return TweenAnimationBuilder<double>(
       key: ValueKey('game-gold-pulse-$_pulseTick'),
       tween: Tween<double>(begin: 0, end: _pulseTick > 0 ? 1 : 0),
-      duration: const Duration(milliseconds: 420),
+      duration: GamePresentationTimings.hudGoldPulse,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final glow = _pulseTick > 0 ? sin(value * pi) : 0.0;
@@ -578,7 +578,7 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
     if (changedKeys.isEmpty) return;
     setState(() => _pulsingKeys = changedKeys);
     _pulseClearTimer?.cancel();
-    _pulseClearTimer = Timer(const Duration(milliseconds: 420), () {
+    _pulseClearTimer = Timer(GamePresentationTimings.bottomInfoPulseHold, () {
       if (!mounted) return;
       if (_pulsingKeys != changedKeys) return;
       setState(() => _pulsingKeys = const {});
@@ -705,7 +705,7 @@ class _BottomResourceText extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: ValueKey('bottom-resource-pulse-$pulseKey'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 360),
+      duration: GamePresentationTimings.bottomResourcePulse,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final glow = sin(value * pi).clamp(0.0, 1.0);
@@ -1694,7 +1694,7 @@ class GameDebugHandSizeSegment extends StatelessWidget {
                 onTap: () => onChanged(option),
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
+                  duration: GamePresentationTimings.handCountToggle,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
@@ -1957,7 +1957,7 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       fromCellKey: fromCellKey,
       toCellKey: toCellKey,
     );
-    Future<void>.delayed(const Duration(milliseconds: 280), () {
+    Future<void>.delayed(GamePresentationTimings.boardTileMoveFlight, () {
       if (!mounted || _moveFlight?.tick != tick) return;
       setState(() => _moveFlight = null);
     });
@@ -1985,7 +1985,7 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       tile: tile,
       cellKey: cellKey,
     );
-    Future<void>.delayed(const Duration(milliseconds: 280), () {
+    Future<void>.delayed(GamePresentationTimings.boardTileRemoveFlight, () {
       if (!mounted || _removeFlight?.tick != tick) return;
       setState(() => _removeFlight = null);
     });
@@ -2059,7 +2059,7 @@ class _BoardMoveFlightOverlay extends StatelessWidget {
           return TweenAnimationBuilder<double>(
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 280),
+            duration: GamePresentationTimings.boardTileMoveFlight,
             curve: Curves.easeInOutCubic,
             builder: (context, value, child) {
               final offset = Offset.lerp(fromOffset, toOffset, value)!;
@@ -2138,7 +2138,7 @@ class _BoardRemoveFlightOverlay extends StatelessWidget {
           return TweenAnimationBuilder<double>(
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 280),
+            duration: GamePresentationTimings.boardTileRemoveFlight,
             curve: Curves.easeOutCubic,
             builder: (context, value, child) {
               final rise = value * 20;
@@ -2201,7 +2201,7 @@ class _BoardPlacePop extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('board-place-pop'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 260),
+      duration: GamePresentationTimings.boardTilePlacePop,
       curve: Curves.easeOutBack,
       builder: (context, value, child) {
         final glow = (1 - value).clamp(0.0, 1.0);
@@ -2293,7 +2293,7 @@ class GameBoardCell extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(cornerRadius),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
+              duration: GamePresentationTimings.boardTileState,
               decoration: BoxDecoration(
                 color: selected
                     ? const Color(0xFF2A3B34)
@@ -2385,7 +2385,7 @@ class _SettlementTileLift extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('settlement-tile-lift'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 420),
+      duration: GamePresentationTimings.settlementTileLift,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final lift = sin(pi * value);

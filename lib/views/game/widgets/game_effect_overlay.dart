@@ -267,7 +267,7 @@ class _LineConfirmSweepLayer extends StatelessWidget {
           _LineConfirmSweepCell(
             key: ValueKey<String>('line-confirm-sweep-$tick-$i'),
             center: centers[i],
-            delay: Duration(milliseconds: i * 32),
+            delay: GamePresentationTimings.lineConfirmSweepStagger * i,
           ),
       ],
     );
@@ -355,7 +355,7 @@ class _ConstraintImpactBadgeLayer extends StatelessWidget {
           _ConstraintImpactCellFlash(
             key: ValueKey<String>('constraint-impact-cell-$tick-$i'),
             center: centers[i],
-            delay: Duration(milliseconds: i * 28),
+            delay: GamePresentationTimings.constraintCellFlashStagger * i,
           ),
         _ConstraintImpactBadge(
           key: ValueKey<String>('constraint-impact-badge-$tick'),
@@ -619,7 +619,7 @@ class _SettlementScoreMoteLayer extends StatelessWidget {
                 key: ValueKey<String>('settlement-score-mote-$tick-$i'),
                 start: centers[i],
                 target: target,
-                delay: Duration(milliseconds: i * 34),
+                delay: GamePresentationTimings.settlementScoreMoteStagger * i,
               ),
           ],
         );
