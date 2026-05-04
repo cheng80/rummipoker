@@ -1101,7 +1101,7 @@ class _GameViewState extends ConsumerState<GameView>
         step: ScoringPresentationStep.constraint,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 760),
+        delay: const Duration(milliseconds: 1240),
       );
       if (!mounted) return;
     }
