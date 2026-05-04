@@ -522,6 +522,56 @@ void main() {
     expect(flightFinder, findsNothing);
   });
 
+  testWidgets('GameBoardGrid lifts discarded board tile out of cell', (
+    tester,
+  ) async {
+    final board = RummiBoard();
+    final tile = Tile(id: 1, color: TileColor.red, number: 7);
+
+    Widget buildGrid() {
+      return MaterialApp(
+        home: Scaffold(
+          body: SizedBox.square(
+            dimension: 320,
+            child: GameBoardGrid(
+              board: board,
+              scoringCells: const {},
+              constrainedScoringCells: const {},
+              activeSettlementCells: const {},
+              settlementBoardSnapshot: const {},
+              selectedRow: null,
+              selectedCol: null,
+              boardMoveMode: false,
+              moveSourceRow: null,
+              moveSourceCol: null,
+              constrainedCells: const {},
+              onTapCell: (_, _) {},
+            ),
+          ),
+        ),
+      );
+    }
+
+    board.setCell(2, 2, tile);
+    await tester.pumpWidget(buildGrid());
+
+    board.setCell(2, 2, null);
+    await tester.pumpWidget(buildGrid());
+    await tester.pump();
+
+    final flightFinder = find.byKey(const ValueKey('board-remove-flight'));
+    expect(flightFinder, findsOneWidget);
+    final startPosition = tester.widget<Positioned>(flightFinder);
+
+    await tester.pump(const Duration(milliseconds: 140));
+
+    final midPosition = tester.widget<Positioned>(flightFinder);
+    expect(midPosition.top!, lessThan(startPosition.top!));
+
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(flightFinder, findsNothing);
+  });
+
   testWidgets('GameBoardGrid lifts active settlement tiles', (tester) async {
     final board = RummiBoard();
     board.setCell(0, 0, Tile(id: 1, color: TileColor.red, number: 7));

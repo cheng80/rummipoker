@@ -1528,14 +1528,18 @@ class GameBoardGrid extends StatefulWidget {
 
 class _GameBoardGridState extends State<GameBoardGrid> {
   late Map<String, String?> _previousTileKeys;
+  late Map<String, Tile?> _previousTiles;
   Set<String> _appearingCells = const {};
   _BoardMoveFlight? _moveFlight;
+  _BoardRemoveFlight? _removeFlight;
   int _moveFlightTick = 0;
+  int _removeFlightTick = 0;
 
   @override
   void initState() {
     super.initState();
     _previousTileKeys = _tileKeysForBoard(widget.board);
+    _previousTiles = _tilesForBoard(widget.board);
   }
 
   @override
@@ -1560,7 +1564,13 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       previousTileKeys: _previousTileKeys,
       currentTileKeys: currentTileKeys,
     );
+    _startBoardRemoveFlightIfNeeded(
+      removedCells: removedCells,
+      appearedCells: appearedCells,
+      previousTiles: _previousTiles,
+    );
     _previousTileKeys = currentTileKeys;
+    _previousTiles = _tilesForBoard(widget.board);
     _appearingCells = _moveFlight == null
         ? appearingCells
         : appearingCells.difference({_moveFlight!.toCellKey});
@@ -1603,12 +1613,10 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                         final row = index ~/ kBoardSize;
                         final col = index % kBoardSize;
                         final cellKey = '$row:$col';
-                        final tile =
-                            cellKey == _moveFlight?.toCellKey
-                                ? null
-                                : widget.board.cellAt(row, col) ??
-                                      widget
-                                          .settlementBoardSnapshot['$row:$col'];
+                        final tile = cellKey == _moveFlight?.toCellKey
+                            ? null
+                            : widget.board.cellAt(row, col) ??
+                                  widget.settlementBoardSnapshot['$row:$col'];
                         final selected =
                             widget.selectedRow == row &&
                             widget.selectedCol == col;
@@ -1652,6 +1660,8 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                     ),
                     if (_moveFlight != null)
                       _BoardMoveFlightOverlay(flight: _moveFlight!),
+                    if (_removeFlight != null)
+                      _BoardRemoveFlightOverlay(flight: _removeFlight!),
                   ],
                 ),
               ),
@@ -1697,6 +1707,34 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       setState(() => _moveFlight = null);
     });
   }
+
+  void _startBoardRemoveFlightIfNeeded({
+    required List<String> removedCells,
+    required List<String> appearedCells,
+    required Map<String, Tile?> previousTiles,
+  }) {
+    if (removedCells.length != 1 || appearedCells.isNotEmpty) {
+      _removeFlight = null;
+      return;
+    }
+    final cellKey = removedCells.single;
+    final tile = previousTiles[cellKey];
+    if (tile == null) {
+      _removeFlight = null;
+      return;
+    }
+    final tick = _removeFlightTick + 1;
+    _removeFlightTick = tick;
+    _removeFlight = _BoardRemoveFlight(
+      tick: tick,
+      tile: tile,
+      cellKey: cellKey,
+    );
+    Future<void>.delayed(const Duration(milliseconds: 280), () {
+      if (!mounted || _removeFlight?.tick != tick) return;
+      setState(() => _removeFlight = null);
+    });
+  }
 }
 
 class _BoardMoveFlight {
@@ -1711,6 +1749,26 @@ class _BoardMoveFlight {
   final Tile tile;
   final String fromCellKey;
   final String toCellKey;
+}
+
+class _BoardRemoveFlight {
+  const _BoardRemoveFlight({
+    required this.tick,
+    required this.tile,
+    required this.cellKey,
+  });
+
+  final int tick;
+  final Tile tile;
+  final String cellKey;
+}
+
+Map<String, Tile?> _tilesForBoard(RummiBoard board) {
+  return {
+    for (var row = 0; row < kBoardSize; row++)
+      for (var col = 0; col < kBoardSize; col++)
+        '$row:$col': board.cellAt(row, col),
+  };
 }
 
 Map<String, String?> _tileKeysForBoard(RummiBoard board) {
@@ -1776,6 +1834,76 @@ class _BoardMoveFlightOverlay extends StatelessWidget {
                           ],
                         ),
                         child: child,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: IgnorePointer(
+                child: GameRummiTileCard(
+                  tile: flight.tile,
+                  selected: true,
+                  accent: false,
+                  aspectRatio: kGameTileAspectRatio,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Offset _cellOffset(String cellKey, double tileSide) {
+    final (row, col) = _parseBoardCellKey(cellKey);
+    return Offset(
+      col * (tileSide + kBoardGridGap),
+      row * (tileSide + kBoardGridGap),
+    );
+  }
+}
+
+class _BoardRemoveFlightOverlay extends StatelessWidget {
+  const _BoardRemoveFlightOverlay({required this.flight});
+
+  final _BoardRemoveFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final contentSide = min(constraints.maxWidth, constraints.maxHeight);
+          final tileSide =
+              (contentSide - (kBoardGridGap * (kBoardSize - 1))) / kBoardSize;
+          final offset = _cellOffset(flight.cellKey, tileSide);
+          return TweenAnimationBuilder<double>(
+            key: ValueKey<int>(flight.tick),
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              final rise = value * 20;
+              final opacity = (1 - value).clamp(0.0, 1.0);
+              return Stack(
+                children: [
+                  Positioned(
+                    key: const ValueKey('board-remove-flight'),
+                    left: offset.dx,
+                    top: offset.dy - rise,
+                    width: tileSide,
+                    height: tileSide,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: Transform.scale(
+                        scale: 1 - (0.08 * value),
+                        child: Transform.rotate(
+                          angle: -0.08 * value,
+                          child: child,
+                        ),
                       ),
                     ),
                   ),
