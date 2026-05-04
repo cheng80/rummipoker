@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -464,7 +465,7 @@ Color _battleBlindColor(int tierIndex) {
   };
 }
 
-class GameBottomInfoRow extends StatelessWidget {
+class GameBottomInfoRow extends StatefulWidget {
   const GameBottomInfoRow({
     super.key,
     required this.station,
@@ -475,62 +476,180 @@ class GameBottomInfoRow extends StatelessWidget {
   final RummiBattleRuntimeFacade battle;
 
   @override
+  State<GameBottomInfoRow> createState() => _GameBottomInfoRowState();
+}
+
+class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
+  late _BottomInfoSignature _previousSignature;
+  Set<String> _pulsingKeys = const {};
+  Timer? _pulseClearTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousSignature = _BottomInfoSignature.from(
+      station: widget.station,
+      battle: widget.battle,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant GameBottomInfoRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextSignature = _BottomInfoSignature.from(
+      station: widget.station,
+      battle: widget.battle,
+    );
+    final changedKeys = _previousSignature.changedKeys(nextSignature);
+    _previousSignature = nextSignature;
+    if (changedKeys.isEmpty) return;
+    setState(() => _pulsingKeys = changedKeys);
+    _pulseClearTimer?.cancel();
+    _pulseClearTimer = Timer(const Duration(milliseconds: 420), () {
+      if (!mounted) return;
+      if (_pulsingKeys != changedKeys) return;
+      setState(() => _pulsingKeys = const {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulseClearTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final resources = station.resources;
+    final resources = widget.station.resources;
     return Row(
       children: [
         Expanded(
-          child: Text(
-            '덱 ${resources.drawPileRemaining}/${battle.totalDeckSize}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-            ),
+          child: _BottomResourceText(
+            pulseKey: 'deck',
+            pulsing: _pulsingKeys.contains('deck'),
+            label:
+                '덱 ${resources.drawPileRemaining}/${widget.battle.totalDeckSize}',
+            textAlign: TextAlign.left,
           ),
         ),
         Expanded(
-          child: Text(
-            '이동 ${resources.boardMovesRemaining}/${resources.boardMovesMax}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: _BottomResourceText(
+            pulseKey: 'board-move',
+            pulsing: _pulsingKeys.contains('board-move'),
+            label:
+                '이동 ${resources.boardMovesRemaining}/${resources.boardMovesMax}',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-            ),
           ),
         ),
         Expanded(
-          child: Text(
-            '보드 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: _BottomResourceText(
+            pulseKey: 'board-discard',
+            pulsing: _pulsingKeys.contains('board-discard'),
+            label:
+                '보드 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-            ),
           ),
         ),
         Expanded(
-          child: Text(
-            '손패 ${battle.hand.length}/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: _BottomResourceText(
+            pulseKey: 'hand',
+            pulsing: _pulsingKeys.contains('hand'),
+            label:
+                '손패 ${widget.battle.hand.length}/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
             textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BottomInfoSignature {
+  const _BottomInfoSignature({
+    required this.deck,
+    required this.boardMove,
+    required this.boardDiscard,
+    required this.hand,
+  });
+
+  final String deck;
+  final String boardMove;
+  final String boardDiscard;
+  final String hand;
+
+  static _BottomInfoSignature from({
+    required RummiStationRuntimeFacade station,
+    required RummiBattleRuntimeFacade battle,
+  }) {
+    final resources = station.resources;
+    return _BottomInfoSignature(
+      deck: '${resources.drawPileRemaining}/${battle.totalDeckSize}',
+      boardMove: '${resources.boardMovesRemaining}/${resources.boardMovesMax}',
+      boardDiscard:
+          '${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
+      hand:
+          '${battle.hand.length}/${resources.maxHandSize}/${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
+    );
+  }
+
+  Set<String> changedKeys(_BottomInfoSignature next) {
+    return {
+      if (deck != next.deck) 'deck',
+      if (boardMove != next.boardMove) 'board-move',
+      if (boardDiscard != next.boardDiscard) 'board-discard',
+      if (hand != next.hand) 'hand',
+    };
+  }
+}
+
+class _BottomResourceText extends StatelessWidget {
+  const _BottomResourceText({
+    required this.pulseKey,
+    required this.pulsing,
+    required this.label,
+    required this.textAlign,
+  });
+
+  final String pulseKey;
+  final bool pulsing;
+  final String label;
+  final TextAlign textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: textAlign,
+      style: const TextStyle(
+        color: Colors.white70,
+        fontSize: 9,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+    if (!pulsing) return text;
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('bottom-resource-pulse-$pulseKey'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final glow = sin(value * pi).clamp(0.0, 1.0);
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: const Color(0xFFF2C14E).withValues(alpha: 0.10 * glow),
+          ),
+          child: DefaultTextStyle.merge(
+            style: TextStyle(
+              color: Color.lerp(Colors.white70, const Color(0xFFFFE08A), glow),
+            ),
+            child: child!,
+          ),
+        );
+      },
+      child: text,
     );
   }
 }

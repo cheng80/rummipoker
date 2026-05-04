@@ -359,6 +359,73 @@ void main() {
     expect(find.text('손패 2/3 · 버림 1/2'), findsOneWidget);
   });
 
+  testWidgets('GameBottomInfoRow pulses changed resource values', (
+    tester,
+  ) async {
+    const baseStation = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 1,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 14,
+      ),
+    );
+    const updatedStation = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 2,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 14,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: const [],
+      scoringCellKeys: const {},
+    );
+
+    Widget buildRow(RummiStationRuntimeFacade station) {
+      return MaterialApp(
+        home: Scaffold(
+          body: GameBottomInfoRow(station: station, battle: battle),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildRow(baseStation));
+    expect(find.text('이동 1/3'), findsOneWidget);
+
+    await tester.pumpWidget(buildRow(updatedStation));
+    await tester.pump();
+
+    expect(find.text('이동 2/3'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('bottom-resource-pulse-board-move')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('GameHandZone animates one removed hand tile', (tester) async {
     const station = RummiStationRuntimeFacade(
       stationType: RummiStationType.currentStage,
