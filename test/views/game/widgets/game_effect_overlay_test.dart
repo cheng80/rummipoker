@@ -41,6 +41,11 @@ void main() {
     await tester.pump();
 
     expect(_gameWidgetFinder(), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('constraint-impact-badge-layer')),
+      findsOneWidget,
+    );
+    expect(find.text('-40%'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 1100));
   });
 
@@ -54,6 +59,10 @@ void main() {
     await tester.pump();
 
     expect(_gameWidgetFinder(), findsNothing);
+    expect(
+      find.byKey(const ValueKey('constraint-impact-badge-layer')),
+      findsNothing,
+    );
   });
 
   testWidgets('큰 final score 정산 단계에서 보드 이펙트를 띄운다', (tester) async {

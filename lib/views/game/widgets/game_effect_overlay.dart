@@ -38,6 +38,8 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   bool _visible = false;
   List<Offset> _scoreMoteCenters = const [];
   List<Offset> _lineSweepCenters = const [];
+  Offset? _constraintImpactCenter;
+  String? _constraintImpactLabel;
   int _scoreMoteTick = 0;
 
   @override
@@ -65,6 +67,13 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
               if (_lineSweepCenters.isNotEmpty)
                 _LineConfirmSweepLayer(
                   centers: _lineSweepCenters,
+                  tick: _scoreMoteTick,
+                ),
+              if (_constraintImpactCenter != null &&
+                  _constraintImpactLabel != null)
+                _ConstraintImpactBadgeLayer(
+                  center: _constraintImpactCenter!,
+                  label: _constraintImpactLabel!,
                   tick: _scoreMoteTick,
                 ),
             ],
@@ -112,12 +121,24 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       final scoreMoteCenters = effectKind == _BoardEffectKind.lineConfirm
           ? [for (final center in centers) Offset(center.x, center.y)]
           : const <Offset>[];
+      final constraintImpactCenter =
+          effectKind == _BoardEffectKind.constraintImpact
+          ? _averageOffset(centers)
+          : null;
+      final constraintImpactLabel =
+          effectKind == _BoardEffectKind.constraintImpact
+          ? _constraintPenaltyLabel(line)
+          : null;
       if (scoreMoteCenters.isNotEmpty ||
           _scoreMoteCenters.isNotEmpty ||
-          _lineSweepCenters.isNotEmpty) {
+          _lineSweepCenters.isNotEmpty ||
+          constraintImpactCenter != null ||
+          _constraintImpactCenter != null) {
         setState(() {
           _scoreMoteCenters = scoreMoteCenters;
           _lineSweepCenters = scoreMoteCenters;
+          _constraintImpactCenter = constraintImpactCenter;
+          _constraintImpactLabel = constraintImpactLabel;
           _scoreMoteTick = widget.settlementSequenceTick;
         });
       }
@@ -136,6 +157,8 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _visible = false;
           _scoreMoteCenters = const [];
           _lineSweepCenters = const [];
+          _constraintImpactCenter = null;
+          _constraintImpactLabel = null;
         });
       });
     });
@@ -175,6 +198,22 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
                 tileSide / 2,
           ),
     ];
+  }
+
+  Offset _averageOffset(List<Vector2> centers) {
+    var dx = 0.0;
+    var dy = 0.0;
+    for (final center in centers) {
+      dx += center.x;
+      dy += center.y;
+    }
+    return Offset(dx / centers.length, dy / centers.length);
+  }
+
+  String _constraintPenaltyLabel(ConfirmedLineBreakdown line) {
+    final penalty = line.constraintPenalties.first;
+    if (penalty.markerText.isNotEmpty) return penalty.markerText;
+    return '${penalty.scoreDelta}';
   }
 }
 
@@ -249,6 +288,97 @@ class _LineConfirmSweepCell extends StatelessWidget {
                       spreadRadius: 1.2,
                     ),
                   ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ConstraintImpactBadgeLayer extends StatelessWidget {
+  const _ConstraintImpactBadgeLayer({
+    required this.center,
+    required this.label,
+    required this.tick,
+  });
+
+  final Offset center;
+  final String label;
+  final int tick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      key: const ValueKey('constraint-impact-badge-layer'),
+      fit: StackFit.expand,
+      children: [
+        _ConstraintImpactBadge(
+          key: ValueKey<String>('constraint-impact-badge-$tick'),
+          center: center,
+          label: label,
+        ),
+      ],
+    );
+  }
+}
+
+class _ConstraintImpactBadge extends StatelessWidget {
+  const _ConstraintImpactBadge({
+    super.key,
+    required this.center,
+    required this.label,
+  });
+
+  final Offset center;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 620),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final opacity = value < 0.78 ? 1.0 : 1.0 - ((value - 0.78) / 0.22);
+        final dy = -10 * value;
+        final scale = 0.84 + (value * 0.18);
+        return Positioned(
+          left: center.dx - 32,
+          top: center.dy - 20 + dy,
+          width: 64,
+          height: 30,
+          child: Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: scale,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF351514).withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(
+                    color: const Color(0xFFFF675F).withValues(alpha: 0.95),
+                    width: 1.8,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF675F).withValues(alpha: 0.35),
+                      blurRadius: 14,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFFFFE6D6),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ),
             ),
