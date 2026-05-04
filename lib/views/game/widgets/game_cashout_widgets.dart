@@ -790,25 +790,96 @@ class _GameCashOutCollectBadge extends StatelessWidget {
           child: Transform.scale(scale: scale, child: child),
         );
       },
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF2B2311),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFF2C14E), width: 1),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          child: Text(
-            '+$gold',
-            style: const TextStyle(
-              color: Color(0xFFF2C14E),
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              height: 1,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          const Positioned.fill(child: _GameCashOutCoinBurst()),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFF2B2311),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFF2C14E), width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              child: Text(
+                '+$gold',
+                style: const TextStyle(
+                  color: Color(0xFFF2C14E),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+}
+
+class _GameCashOutCoinBurst extends StatelessWidget {
+  const _GameCashOutCoinBurst();
+
+  static const List<Offset> _targets = [
+    Offset(-18, -16),
+    Offset(0, -22),
+    Offset(18, -14),
+    Offset(24, 4),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('cashout-coin-burst'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        final opacity = value < 0.72 ? 1.0 : (1 - value) / 0.28;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (var i = 0; i < _targets.length; i++)
+              Positioned(
+                left: 18 + _targets[i].dx * value,
+                top:
+                    10 + _targets[i].dy * value + math.sin(value * math.pi) * 4,
+                child: Opacity(
+                  opacity: opacity.clamp(0.0, 1.0),
+                  child: Transform.scale(
+                    scale: 0.78 + 0.22 * (1 - value),
+                    child: const _GameCashOutCoinSpark(),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _GameCashOutCoinSpark extends StatelessWidget {
+  const _GameCashOutCoinSpark();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFFF2C14E),
+        border: Border.all(color: const Color(0xFFFFE8A2), width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF2C14E).withValues(alpha: 0.32),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: const SizedBox.square(dimension: 7),
     );
   }
 }

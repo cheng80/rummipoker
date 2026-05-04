@@ -92,6 +92,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 240));
 
     expect(find.byKey(const ValueKey('cashout-collect-badge')), findsWidgets);
+    expect(find.byKey(const ValueKey('cashout-coin-burst')), findsWidgets);
     expect(find.byKey(const ValueKey('cashout-line-pulse')), findsWidgets);
     expect(find.text('+5'), findsOneWidget);
 
