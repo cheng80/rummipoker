@@ -3830,6 +3830,7 @@ BalanceSimExperimentSpec _resolveExperiment({
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_repeat_only_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_single_only_probe_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_soft_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1':
     case _
@@ -4072,6 +4073,8 @@ double _stationGrowthBaseForExperiment(String id) {
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_repeat_only_probe_v1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_single_only_probe_v1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_soft_probe_v1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1' =>
       1.25,
@@ -4561,7 +4564,8 @@ bool _usesOrderedBossTargets(String id) =>
 bool _usesRankCycleProbe(String id) =>
     id.endsWith('_rank_cycle_probe_v1') ||
     id.endsWith('_rank_cycle_repeat_only_probe_v1') ||
-    id.endsWith('_rank_cycle_single_only_probe_v1');
+    id.endsWith('_rank_cycle_single_only_probe_v1') ||
+    id.endsWith('_rank_cycle_soft_probe_v1');
 
 bool _usesWeightedBossPool(String id) =>
     id.endsWith('_weighted_boss_v1') ||
@@ -4605,6 +4609,9 @@ String _rankCycleProbeProfileId(String id) {
   if (id.endsWith('_rank_cycle_single_only_probe_v1')) {
     return 'rank_cycle_single_only_probe_v1';
   }
+  if (id.endsWith('_rank_cycle_soft_probe_v1')) {
+    return 'rank_cycle_soft_probe_v1';
+  }
   return 'rank_cycle_probe_v1';
 }
 
@@ -4614,6 +4621,9 @@ List<int> _rankCycleProbeSlotsForExperiment(String id) {
   }
   if (id.endsWith('_rank_cycle_single_only_probe_v1')) {
     return const [0, 1, 2, 10, 6, 4, 7, 5];
+  }
+  if (id.endsWith('_rank_cycle_soft_probe_v1')) {
+    return const [0, 1, 2, 12, 6, 13, 7, 5];
   }
   return const [0, 1, 2, 3, 6, 4, 7, 5];
 }
@@ -4865,6 +4875,28 @@ BalanceSimBossConstraintChoice _bossConstraintChoiceForSlot({
       family: 'line_kind_weaken',
       sourceReference: 'Runtime diagonal line dampener',
       bossModifier: RummiBossModifier.diagonalDampener,
+    ),
+    12 => choice(
+      id: 'repeat_rank_pressure_soft',
+      family: 'repeat_hand_rank_weaken',
+      sourceReference: 'Soft repeat hand rank pressure probe',
+      simConstraint: const BalanceSimBossConstraint(
+        id: 'repeat_rank_pressure_soft',
+        family: 'repeat_hand_rank_weaken',
+        sourceReference: 'Soft repeat hand rank pressure probe',
+        repeatRankScoreMultiplier: 0.90,
+      ),
+    ),
+    13 => choice(
+      id: 'single_rank_pressure_soft',
+      family: 'single_hand_rank_pressure',
+      sourceReference: 'Soft single hand rank pressure probe',
+      simConstraint: const BalanceSimBossConstraint(
+        id: 'single_rank_pressure_soft',
+        family: 'single_hand_rank_pressure',
+        sourceReference: 'Soft single hand rank pressure probe',
+        singleRankScoreMultiplier: 0.85,
+      ),
     ),
     2 => choice(
       id: 'face_tile_dampener',
@@ -5897,6 +5929,7 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_repeat_only_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_single_only_probe_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_soft_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2',

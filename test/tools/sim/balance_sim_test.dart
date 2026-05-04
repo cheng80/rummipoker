@@ -3081,6 +3081,69 @@ void main() {
     },
   );
 
+  test('CLI rank cycle soft probes reduce only rank pressure severity', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/rank_cycle_soft_probe.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '42',
+      '--stations',
+      '4,6',
+      '--blind-tier',
+      'boss',
+      '--difficulty',
+      'standard',
+      '--experiment-ids',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_soft_probe_v1',
+      '--loadout-id',
+      'progression_route_power',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    Map<String, dynamic> constraintFor(String experimentId, int station) =>
+        rows.singleWhere(
+              (row) =>
+                  row['experiment_id'] == experimentId &&
+                  row['station'] == station,
+            )['sim_boss_constraint']
+            as Map<String, dynamic>;
+
+    final hardRepeat = constraintFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1',
+      4,
+    );
+    final hardSingle = constraintFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1',
+      6,
+    );
+    final softRepeat = constraintFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_soft_probe_v1',
+      4,
+    );
+    final softSingle = constraintFor(
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_soft_probe_v1',
+      6,
+    );
+
+    expect(hardRepeat['repeat_rank_score_multiplier'], 0.80);
+    expect(hardSingle['single_rank_score_multiplier'], 0.7);
+    expect(softRepeat['repeat_rank_score_multiplier'], 0.90);
+    expect(softSingle['single_rank_score_multiplier'], 0.85);
+  });
+
   test(
     'CLI weighted boss experiment rolls banded boss pool and records proxy ids',
     () async {
