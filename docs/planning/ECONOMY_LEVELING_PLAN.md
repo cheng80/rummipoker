@@ -190,6 +190,21 @@ spend model probe:
 - path clear: balanced none `65.0%`, balanced v9 `65.0%`, power none `60.0%`, power v9 `70.0%`.
 - interpretation: budget cap보다 실제 gold sink 방향은 낫다. 다만 r20 탐색용이고 최종 잔고가 여전히 높아, `reward 0.34/price 1.0`, `reward 0.45/price 2.2`, `reward 0.40/price 2.4` 주변을 spend mode 포함 r120으로 비교한다.
 
+r120 spend model probe:
+
+| Probe | Reward scale | Price scale | balanced none | balanced v9 | power none | power v9 | S4 boss before | S8 boss before | final gold avg | 해석 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| `economy_spend_reward034_v1_r120` | 0.34 | 1.0 | 52.5% | 60.8% | 62.5% | 60.8% | 92.1G | 173.4G | 136.5G | 가격이 낮아 구매 압박이 약하다. |
+| `economy_spend_combo045_220_v1_r120` | 0.45 | 2.2 | 50.0% | 60.0% | 62.5% | 62.5% | 103.5G | 189.5G | 150.0G | 보상도 높아져 잔고가 더 남는다. |
+| `economy_spend_combo040_240_v1_r120` | 0.40 | 2.4 | 50.0% | 57.5% | 64.2% | 61.7% | 82.3G | 152.7G | 121.6G | 잔고는 낮지만 balanced v9 clear가 흔들린다. |
+
+판정:
+
+- `reroll_slot_sell_v1`은 budget cap보다 나은 방향이지만, 여전히 S8 boss 진입 잔고가 높다.
+- scale만 더 세게 조이면 clear와 병목이 같이 흔들릴 가능성이 크다.
+- 다음은 “가격 전체 배율”이 아니라 rarity/category별 가격 band와 실제 gold sink 누락을 나눠 본다.
+- 특히 pack/tarot/planet proxy, voucher proxy, reroll 비용, 판매 회수율이 실제 카탈로그 가격/가치와 맞는지 분리해야 한다.
+
 ### Phase 3. Economy Probe
 
 목표:

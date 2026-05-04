@@ -337,7 +337,8 @@ Economy leveling gate:
 - applied: `station_band_v1` market budget probe를 추가했다. 이 방식은 unaffordable event를 만들지만 알려진 spend를 줄여 중후반 잔고가 더 높아질 수 있다.
 - applied: `reroll_slot_sell_v1` market spend mode를 추가했다. 이 방식은 reroll spend, 슬롯이 찬 상태의 판매 회수, Jester slot cap 유지 loadout을 sim-only로 반영한다.
 - current spend probe: `economy_spend_v1_r20`에서 `reward 0.45 / price 2.2 / reroll_slot_sell_v1`은 reroll spend 5550G, sell recovery 352G, slot replace 352회를 기록했다. S8 boss 시작 평균은 약 180G로 내려갔지만 최종 잔고 평균은 약 154G라 아직 높다.
-- next probe: `reward 0.34 / price 1.0`, `reward 0.45 / price 2.2`, `reward 0.40 / price 2.4` 주변을 `reroll_slot_sell_v1` 포함 r120 탐색으로 비교한다.
+- r120 spend probe: `reward 0.34 / price 1.0`은 final gold avg 약 136.5G, `reward 0.45 / price 2.2`는 약 150.0G, `reward 0.40 / price 2.4`는 약 121.6G다.
+- current conclusion: scale-only 조정은 부족하다. 잔고를 더 누르면 clear가 흔들리므로 rarity/category별 가격 band와 누락된 gold sink를 분리해 다음 probe를 잡는다.
 
 ## 6. Read Order
 
