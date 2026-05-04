@@ -174,6 +174,22 @@ void main() {
     );
   });
 
+  test('market item use fixture opens shop with coin cache', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.marketItemUseShop,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
+    expect(fixture.runProgress.gold, 4);
+    expect(fixture.runProgress.ownedJesters, isEmpty);
+    expect(fixture.runProgress.shopOffers, isEmpty);
+    expect(
+      fixture.runProgress.itemInventory.ownedItems.map((entry) => entry.itemId),
+      ['coin_cache'],
+    );
+  });
+
   test(
     'inventory quick slot fixture starts with spare pouch and 3 quick slots',
     () {

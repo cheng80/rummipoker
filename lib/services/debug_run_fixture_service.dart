@@ -37,6 +37,7 @@ class DebugRunFixtureService {
   static const String marketBadgePreview = 'market_badge_preview';
   static const String settlementItemBonus = 'settlement_item_bonus';
   static const String inventorySellHookShop = 'inventory_sell_hook_shop';
+  static const String marketItemUseShop = 'market_item_use_shop';
   static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
@@ -91,6 +92,12 @@ class DebugRunFixtureService {
       label: 'Inventory Sell Hook 상점',
       description: 'Jester Hook 보유 / Market 판매가 +1 표시 검증용',
       builder: _buildInventorySellHookShop,
+    ),
+    DebugRunFixtureDefinition(
+      id: marketItemUseShop,
+      label: 'Market Item 사용 상점',
+      description: 'Coin Cache 보유 / Market 사용 골드 비행 연출 검증용',
+      builder: _buildMarketItemUseShop,
     ),
     DebugRunFixtureDefinition(
       id: inventoryQuickSlotBattle,
@@ -651,6 +658,31 @@ class DebugRunFixtureService {
           mappedTileNumbers: [],
         ),
       );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: base.stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildMarketItemUseShop() {
+    final base = _buildStage2MarketResume();
+    final runProgress = base.runProgress.copySnapshot()
+      ..gold = 4
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'coin_cache',
+            count: 1,
+            placement: ItemPlacement.inventory,
+          ),
+        ],
+      );
+    runProgress
+      ..ownedJesters.clear()
+      ..shopOffers.clear();
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.shop,
       difficulty: NewRunDifficulty.standard,
