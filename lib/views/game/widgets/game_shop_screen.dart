@@ -130,6 +130,8 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _marketDenyTick = 0;
   String? _marketDenyTarget;
   String? _marketDenyReason;
+  int _marketUseFeedbackTick = 0;
+  String? _marketUseFeedbackLabel;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
 
@@ -692,7 +694,10 @@ class _GameShopScreenState extends State<GameShopScreen>
       showBottomNotice(context, failMessage);
       return;
     }
+    final feedbackTick = _marketUseFeedbackTick + 1;
     setState(() {
+      _marketUseFeedbackTick = feedbackTick;
+      _marketUseFeedbackLabel = '사용 완료';
       final market = _market;
       final stillExists = market.itemSlots.any(
         (nextSlot) =>
@@ -702,6 +707,10 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectedItemSlotIndex = -1;
         _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
       }
+    });
+    Future<void>.delayed(const Duration(milliseconds: 620), () {
+      if (!mounted || _marketUseFeedbackTick != feedbackTick) return;
+      setState(() => _marketUseFeedbackLabel = null);
     });
     widget.onStateChanged();
   }
@@ -1512,6 +1521,12 @@ class _GameShopScreenState extends State<GameShopScreen>
                       flight: _purchaseFlight!,
                     ),
                   ),
+                if (_marketUseFeedbackLabel != null)
+                  Positioned.fill(
+                    child: _MarketUseFeedbackToast(
+                      label: _marketUseFeedbackLabel!,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1544,6 +1559,65 @@ class _MarketEntryMotion extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+class _MarketUseFeedbackToast extends StatelessWidget {
+  const _MarketUseFeedbackToast({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(0, 0.16),
+        child: TweenAnimationBuilder<double>(
+          key: const ValueKey('market-use-feedback'),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 8 * (1 - value)),
+                child: child,
+              ),
+            );
+          },
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFF183E32),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFF86F4C3).withValues(alpha: 0.72),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.26),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFFB9F6D3),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -2333,6 +2407,7 @@ class _MarketItemGhostChip extends StatelessWidget {
     return Expanded(
       child: Center(
         child: GestureDetector(
+          key: ValueKey<String>('market-item-slot-${slot.slotLabel}'),
           behavior: HitTestBehavior.opaque,
           onTap: locked || slot.item == null || onTap == null
               ? null
