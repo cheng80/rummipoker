@@ -290,9 +290,9 @@ class _GameHandZoneState extends State<GameHandZone>
     if (from == null) {
       return const SizedBox.shrink();
     }
-    final eased = Curves.easeInCubic.transform(t.clamp(0.0, 1.0));
-    final top = lerpDouble(from.top, areaSize.height + 8, eased)!;
-    final scale = lerpDouble(1.0, 0.82, eased)!;
+    final eased = Curves.easeOutCubic.transform(t.clamp(0.0, 1.0));
+    final top = lerpDouble(from.top, from.top - 18, eased)!;
+    final scale = lerpDouble(1.0, 0.9, eased)!;
     final opacity = (1 - eased).clamp(0.0, 1.0);
 
     return Positioned(
@@ -306,7 +306,7 @@ class _GameHandZoneState extends State<GameHandZone>
         child: Transform.scale(
           scale: scale,
           child: Transform.rotate(
-            angle: lerpDouble(from.angle, from.angle - 0.16, eased)!,
+            angle: lerpDouble(from.angle, from.angle - 0.08, eased)!,
             child: IgnorePointer(
               child: _HandTileCard(
                 tile: tile,

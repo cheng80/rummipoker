@@ -366,7 +366,14 @@ void main() {
     await tester.pumpWidget(buildHandZone());
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('discarding-R1#1')), findsOneWidget);
+    final discardingFinder = find.byKey(const ValueKey('discarding-R1#1'));
+    expect(discardingFinder, findsOneWidget);
+    final startTop = tester.widget<Positioned>(discardingFinder).top!;
+
+    await tester.pump(const Duration(milliseconds: 130));
+
+    final midTop = tester.widget<Positioned>(discardingFinder).top!;
+    expect(midTop, lessThan(startTop));
   });
 
   testWidgets(
