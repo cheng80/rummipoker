@@ -1529,6 +1529,8 @@ class GameBoardGrid extends StatefulWidget {
 class _GameBoardGridState extends State<GameBoardGrid> {
   late Map<String, String?> _previousTileKeys;
   Set<String> _appearingCells = const {};
+  _BoardMoveFlight? _moveFlight;
+  int _moveFlightTick = 0;
 
   @override
   void initState() {
@@ -1541,14 +1543,27 @@ class _GameBoardGridState extends State<GameBoardGrid> {
     super.didUpdateWidget(oldWidget);
     final currentTileKeys = _tileKeysForBoard(widget.board);
     final appearingCells = <String>{};
+    final removedCells = <String>[];
+    final appearedCells = <String>[];
     for (final entry in currentTileKeys.entries) {
       final previous = _previousTileKeys[entry.key];
       if (previous == null && entry.value != null) {
         appearingCells.add(entry.key);
+        appearedCells.add(entry.key);
+      } else if (previous != null && entry.value == null) {
+        removedCells.add(entry.key);
       }
     }
+    _startBoardMoveFlightIfNeeded(
+      removedCells: removedCells,
+      appearedCells: appearedCells,
+      previousTileKeys: _previousTileKeys,
+      currentTileKeys: currentTileKeys,
+    );
     _previousTileKeys = currentTileKeys;
-    _appearingCells = appearingCells;
+    _appearingCells = _moveFlight == null
+        ? appearingCells
+        : appearingCells.difference({_moveFlight!.toCellKey});
   }
 
   @override
@@ -1573,57 +1588,71 @@ class _GameBoardGridState extends State<GameBoardGrid> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(kBoardFrameInset),
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: kBoardSize,
-                    mainAxisSpacing: kBoardGridGap,
-                    crossAxisSpacing: kBoardGridGap,
-                  ),
-                  itemCount: kBoardSize * kBoardSize,
-                  itemBuilder: (context, index) {
-                    final row = index ~/ kBoardSize;
-                    final col = index % kBoardSize;
-                    final tile =
-                        widget.board.cellAt(row, col) ??
-                        widget.settlementBoardSnapshot['$row:$col'];
-                    final selected =
-                        widget.selectedRow == row && widget.selectedCol == col;
-                    final cellKey = '$row:$col';
-                    final scoring = widget.scoringCells.contains(cellKey);
-                    final constrainedScoring = widget.constrainedScoringCells
-                        .contains(cellKey);
-                    final constrained = widget.constrainedCells.contains(
-                      cellKey,
-                    );
-                    final settlementActive = widget.activeSettlementCells
-                        .contains(cellKey);
-                    final isMoveSource =
-                        widget.boardMoveMode &&
-                        widget.moveSourceRow == row &&
-                        widget.moveSourceCol == col;
-                    final isMoveAvailable =
-                        widget.boardMoveMode && tile == null;
-                    final isMoveLocked =
-                        widget.boardMoveMode && tile != null && !isMoveSource;
-                    final child = GameBoardCell(
-                      key: ValueKey('board-cell-$row-$col'),
-                      tile: tile,
-                      selected: selected,
-                      scoring: scoring,
-                      constrainedScoring: constrainedScoring,
-                      constrained: constrained,
-                      settlementActive: settlementActive,
-                      moveSource: isMoveSource,
-                      moveAvailable: isMoveAvailable,
-                      moveLocked: isMoveLocked,
-                      onTap: () => widget.onTapCell(row, col),
-                    );
-                    if (!_appearingCells.contains(cellKey)) {
-                      return child;
-                    }
-                    return _BoardPlacePop(child: child);
-                  },
+                child: Stack(
+                  children: [
+                    GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: kBoardSize,
+                            mainAxisSpacing: kBoardGridGap,
+                            crossAxisSpacing: kBoardGridGap,
+                          ),
+                      itemCount: kBoardSize * kBoardSize,
+                      itemBuilder: (context, index) {
+                        final row = index ~/ kBoardSize;
+                        final col = index % kBoardSize;
+                        final cellKey = '$row:$col';
+                        final tile =
+                            cellKey == _moveFlight?.toCellKey
+                                ? null
+                                : widget.board.cellAt(row, col) ??
+                                      widget
+                                          .settlementBoardSnapshot['$row:$col'];
+                        final selected =
+                            widget.selectedRow == row &&
+                            widget.selectedCol == col;
+                        final scoring = widget.scoringCells.contains(cellKey);
+                        final constrainedScoring = widget
+                            .constrainedScoringCells
+                            .contains(cellKey);
+                        final constrained = widget.constrainedCells.contains(
+                          cellKey,
+                        );
+                        final settlementActive = widget.activeSettlementCells
+                            .contains(cellKey);
+                        final isMoveSource =
+                            widget.boardMoveMode &&
+                            widget.moveSourceRow == row &&
+                            widget.moveSourceCol == col;
+                        final isMoveAvailable =
+                            widget.boardMoveMode && tile == null;
+                        final isMoveLocked =
+                            widget.boardMoveMode &&
+                            tile != null &&
+                            !isMoveSource;
+                        final child = GameBoardCell(
+                          key: ValueKey('board-cell-$row-$col'),
+                          tile: tile,
+                          selected: selected,
+                          scoring: scoring,
+                          constrainedScoring: constrainedScoring,
+                          constrained: constrained,
+                          settlementActive: settlementActive,
+                          moveSource: isMoveSource,
+                          moveAvailable: isMoveAvailable,
+                          moveLocked: isMoveLocked,
+                          onTap: () => widget.onTapCell(row, col),
+                        );
+                        if (!_appearingCells.contains(cellKey)) {
+                          return child;
+                        }
+                        return _BoardPlacePop(child: child);
+                      },
+                    ),
+                    if (_moveFlight != null)
+                      _BoardMoveFlightOverlay(flight: _moveFlight!),
+                  ],
                 ),
               ),
             ),
@@ -1632,6 +1661,56 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       },
     );
   }
+
+  void _startBoardMoveFlightIfNeeded({
+    required List<String> removedCells,
+    required List<String> appearedCells,
+    required Map<String, String?> previousTileKeys,
+    required Map<String, String?> currentTileKeys,
+  }) {
+    if (removedCells.length != 1 || appearedCells.length != 1) {
+      _moveFlight = null;
+      return;
+    }
+    final fromCellKey = removedCells.single;
+    final toCellKey = appearedCells.single;
+    if (previousTileKeys[fromCellKey] != currentTileKeys[toCellKey]) {
+      _moveFlight = null;
+      return;
+    }
+    final (toRow, toCol) = _parseBoardCellKey(toCellKey);
+    final tile = widget.board.cellAt(toRow, toCol);
+    if (tile == null) {
+      _moveFlight = null;
+      return;
+    }
+    final tick = _moveFlightTick + 1;
+    _moveFlightTick = tick;
+    _moveFlight = _BoardMoveFlight(
+      tick: tick,
+      tile: tile,
+      fromCellKey: fromCellKey,
+      toCellKey: toCellKey,
+    );
+    Future<void>.delayed(const Duration(milliseconds: 280), () {
+      if (!mounted || _moveFlight?.tick != tick) return;
+      setState(() => _moveFlight = null);
+    });
+  }
+}
+
+class _BoardMoveFlight {
+  const _BoardMoveFlight({
+    required this.tick,
+    required this.tile,
+    required this.fromCellKey,
+    required this.toCellKey,
+  });
+
+  final int tick;
+  final Tile tile;
+  final String fromCellKey;
+  final String toCellKey;
 }
 
 Map<String, String?> _tileKeysForBoard(RummiBoard board) {
@@ -1643,6 +1722,91 @@ Map<String, String?> _tileKeysForBoard(RummiBoard board) {
 }
 
 String? _boardTileKey(Tile? tile) => tile?.toString();
+
+(int, int) _parseBoardCellKey(String key) {
+  final parts = key.split(':');
+  return (int.parse(parts[0]), int.parse(parts[1]));
+}
+
+class _BoardMoveFlightOverlay extends StatelessWidget {
+  const _BoardMoveFlightOverlay({required this.flight});
+
+  final _BoardMoveFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final contentSide = min(constraints.maxWidth, constraints.maxHeight);
+          final tileSide =
+              (contentSide - (kBoardGridGap * (kBoardSize - 1))) / kBoardSize;
+          final fromOffset = _cellOffset(flight.fromCellKey, tileSide);
+          final toOffset = _cellOffset(flight.toCellKey, tileSide);
+          return TweenAnimationBuilder<double>(
+            key: ValueKey<int>(flight.tick),
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeInOutCubic,
+            builder: (context, value, child) {
+              final offset = Offset.lerp(fromOffset, toOffset, value)!;
+              final arc = sin(pi * value) * -10;
+              final pulse = sin(pi * value);
+              return Stack(
+                children: [
+                  Positioned(
+                    key: const ValueKey('board-move-flight'),
+                    left: offset.dx,
+                    top: offset.dy + arc,
+                    width: tileSide,
+                    height: tileSide,
+                    child: Transform.scale(
+                      scale: 1 + (0.05 * pulse),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(9),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF86F4C3,
+                              ).withValues(alpha: 0.22 * pulse),
+                              blurRadius: 14 * pulse,
+                              spreadRadius: 1.2 * pulse,
+                            ),
+                          ],
+                        ),
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: IgnorePointer(
+                child: GameRummiTileCard(
+                  tile: flight.tile,
+                  selected: true,
+                  accent: false,
+                  aspectRatio: kGameTileAspectRatio,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Offset _cellOffset(String cellKey, double tileSide) {
+    final (row, col) = _parseBoardCellKey(cellKey);
+    return Offset(
+      col * (tileSide + kBoardGridGap),
+      row * (tileSide + kBoardGridGap),
+    );
+  }
+}
 
 class _BoardPlacePop extends StatelessWidget {
   const _BoardPlacePop({required this.child});

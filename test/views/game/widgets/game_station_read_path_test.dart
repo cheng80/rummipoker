@@ -456,6 +456,57 @@ void main() {
     expect(find.byKey(const ValueKey('board-place-pop')), findsOneWidget);
   });
 
+  testWidgets('GameBoardGrid flies moved board tile to target cell', (
+    tester,
+  ) async {
+    final board = RummiBoard();
+    final tile = Tile(id: 1, color: TileColor.red, number: 7);
+
+    Widget buildGrid() {
+      return MaterialApp(
+        home: Scaffold(
+          body: SizedBox.square(
+            dimension: 320,
+            child: GameBoardGrid(
+              board: board,
+              scoringCells: const {},
+              constrainedScoringCells: const {},
+              activeSettlementCells: const {},
+              settlementBoardSnapshot: const {},
+              selectedRow: null,
+              selectedCol: null,
+              boardMoveMode: false,
+              moveSourceRow: null,
+              moveSourceCol: null,
+              constrainedCells: const {},
+              onTapCell: (_, _) {},
+            ),
+          ),
+        ),
+      );
+    }
+
+    board.setCell(0, 0, tile);
+    await tester.pumpWidget(buildGrid());
+
+    board.moveCell(fromRow: 0, fromCol: 0, toRow: 2, toCol: 2);
+    await tester.pumpWidget(buildGrid());
+    await tester.pump();
+
+    final flightFinder = find.byKey(const ValueKey('board-move-flight'));
+    expect(flightFinder, findsOneWidget);
+    final startPosition = tester.widget<Positioned>(flightFinder);
+
+    await tester.pump(const Duration(milliseconds: 140));
+
+    final midPosition = tester.widget<Positioned>(flightFinder);
+    expect(midPosition.left!, greaterThan(startPosition.left!));
+    expect(midPosition.top!, greaterThan(startPosition.top!));
+
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(flightFinder, findsNothing);
+  });
+
   testWidgets('GameBoardGrid lifts active settlement tiles', (tester) async {
     final board = RummiBoard();
     board.setCell(0, 0, Tile(id: 1, color: TileColor.red, number: 7));
