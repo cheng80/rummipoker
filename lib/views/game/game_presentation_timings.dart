@@ -25,4 +25,19 @@ class GamePresentationTimings {
   static const Duration settlementEffectBurst = Duration(milliseconds: 940);
   static const Duration itemEffectSparkBurst = Duration(milliseconds: 560);
   static const Duration itemEffectToastIn = Duration(milliseconds: 340);
+
+  static const Duration marketAutoAdvanceDelay = Duration(milliseconds: 120);
+  static const Duration marketPurchaseFlight = Duration(milliseconds: 560);
+  static const Duration marketDenyFeedbackHold = Duration(milliseconds: 560);
+  static const Duration marketUseFeedbackHold = Duration(milliseconds: 620);
+  static const Duration marketTabSwitch = Duration(milliseconds: 140);
+  static const Duration marketEntryIntro = Duration(milliseconds: 220);
+  static const Duration marketUseFeedbackIn = Duration(milliseconds: 260);
+  static const Duration marketActionDenyShake = Duration(milliseconds: 360);
+  static const Duration marketDenyBadgeIn = Duration(milliseconds: 260);
+  static const Duration marketRerollSuccess = Duration(milliseconds: 420);
+  static const Duration marketOfferReveal = Duration(milliseconds: 180);
+  static const Duration marketOfferRevealStagger = Duration(milliseconds: 42);
+  static const Duration marketGoldBadge = Duration(milliseconds: 460);
+  static const Duration marketSlotPulse = Duration(milliseconds: 520);
 }

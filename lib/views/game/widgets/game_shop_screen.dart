@@ -14,6 +14,7 @@ import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
+import '../game_presentation_timings.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';
 
@@ -22,7 +23,8 @@ const double _marketOwnedCardHeight = kBattleItemSlotHeight;
 const double _marketOfferCardWidth = kBattleItemSlotWidth;
 const double _marketOfferCardHeight = kBattleItemSlotHeight;
 const double _marketCardSelectionInset = kJesterSelectionOutset;
-const Duration _marketPurchaseFlightDuration = Duration(milliseconds: 560);
+const Duration _marketPurchaseFlightDuration =
+    GamePresentationTimings.marketPurchaseFlight;
 const double _marketShopCellWidth = 72.0;
 const double _marketShopCellHeight =
     kBattleItemSlotHeight + (kJesterSelectionOutset * 2) + 16.0;
@@ -256,7 +258,9 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     if (widget.autoAdvanceOnLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await Future<void>.delayed(const Duration(milliseconds: 120));
+        await Future<void>.delayed(
+          GamePresentationTimings.marketAutoAdvanceDelay,
+        );
         if (!mounted) return;
         Navigator.of(context).pop(true);
       });
@@ -819,7 +823,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       _marketDenyTarget = target;
       _marketDenyReason = reason;
     });
-    Future<void>.delayed(const Duration(milliseconds: 560), () {
+    Future<void>.delayed(GamePresentationTimings.marketDenyFeedbackHold, () {
       if (!mounted || _marketDenyTick != tick) return;
       setState(() {
         _marketDenyTarget = null;
@@ -864,7 +868,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
       }
     });
-    Future<void>.delayed(const Duration(milliseconds: 620), () {
+    Future<void>.delayed(GamePresentationTimings.marketUseFeedbackHold, () {
       if (!mounted || _marketUseFeedbackTick != feedbackTick) return;
       setState(() {
         _marketUseFeedbackLabel = null;
@@ -1271,7 +1275,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                       ),
                       const SizedBox(height: 6),
                       AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 140),
+                        duration: GamePresentationTimings.marketTabSwitch,
                         switchInCurve: Curves.easeOutCubic,
                         switchOutCurve: Curves.easeInCubic,
                         transitionBuilder: (child, animation) => FadeTransition(
@@ -1779,7 +1783,7 @@ class _MarketEntryMotion extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('market-entry-motion'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 220),
+      duration: GamePresentationTimings.marketEntryIntro,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = (value / 0.72).clamp(0.0, 1.0);
@@ -1810,7 +1814,7 @@ class _MarketUseFeedbackToast extends StatelessWidget {
         child: TweenAnimationBuilder<double>(
           key: const ValueKey('market-use-feedback'),
           tween: Tween<double>(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 260),
+          duration: GamePresentationTimings.marketUseFeedbackIn,
           curve: Curves.easeOutCubic,
           builder: (context, value, child) {
             return Opacity(
@@ -2251,7 +2255,7 @@ class _MarketActionPane extends StatelessWidget {
     final animatedPane = TweenAnimationBuilder<double>(
       key: ValueKey<int>(denyTick),
       tween: Tween<double>(begin: 0, end: denyActive ? 1 : 0),
-      duration: const Duration(milliseconds: 360),
+      duration: GamePresentationTimings.marketActionDenyShake,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final shake = denyActive
@@ -2383,7 +2387,7 @@ class _MarketDenyBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 260),
+      duration: GamePresentationTimings.marketDenyBadgeIn,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         return Opacity(
@@ -2646,7 +2650,7 @@ class _MarketRerollSuccessFeedback extends StatelessWidget {
         child: TweenAnimationBuilder<double>(
           key: ValueKey<String>('market-reroll-success-feedback-$tick'),
           tween: Tween<double>(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 420),
+          duration: GamePresentationTimings.marketRerollSuccess,
           curve: Curves.easeOutCubic,
           builder: (context, value, child) {
             final opacity = (1 - value).clamp(0.0, 1.0);
@@ -2911,7 +2915,7 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 180),
+      duration: GamePresentationTimings.marketOfferReveal,
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
     _offset = Tween<Offset>(
@@ -2931,7 +2935,8 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
 
   Future<void> _play() async {
     _controller.value = 0;
-    final delay = Duration(milliseconds: widget.index * 42);
+    final delay =
+        GamePresentationTimings.marketOfferRevealStagger * widget.index;
     await Future<void>.delayed(delay);
     if (!mounted) return;
     unawaited(_controller.forward());
@@ -3373,7 +3378,7 @@ class _MarketGoldSpendBadge extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('market-gold-spend-badge'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 460),
+      duration: GamePresentationTimings.marketGoldBadge,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = value < 0.72 ? 1.0 : (1 - value) / 0.28;
@@ -3425,7 +3430,7 @@ class _MarketGoldGainBadge extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('market-gold-gain-badge'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 460),
+      duration: GamePresentationTimings.marketGoldBadge,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = value < 0.72 ? 1.0 : (1 - value) / 0.28;
@@ -3479,7 +3484,7 @@ class _MarketSlotPulse extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('market-slot-pulse'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 520),
+      duration: GamePresentationTimings.marketSlotPulse,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final pulse = math.sin(math.pi * value);
