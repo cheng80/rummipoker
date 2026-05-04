@@ -1233,11 +1233,11 @@ class _GameViewState extends ConsumerState<GameView>
       activeSettlementLine: null,
     );
 
-    await _presentationDelay(const Duration(milliseconds: 850));
+    await _presentationDelay(GamePresentationTimings.stageClearClearedHold);
     if (!mounted) return false;
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.settlement);
 
-    await _presentationDelay(const Duration(milliseconds: 950));
+    await _presentationDelay(GamePresentationTimings.stageClearSettlementHold);
     return mounted;
   }
 
@@ -1315,7 +1315,9 @@ class _GameViewState extends ConsumerState<GameView>
   ) async {
     if (!mounted) return;
     setState(() => _settlementToMarketTransition = breakdown);
-    await _presentationDelay(const Duration(milliseconds: 520));
+    await _presentationDelay(
+      GamePresentationTimings.stageTransitionOverlayHold,
+    );
     if (!mounted) return;
     setState(() => _settlementToMarketTransition = null);
   }
@@ -1336,7 +1338,9 @@ class _GameViewState extends ConsumerState<GameView>
   Future<void> _playNextStationTransition() async {
     if (!mounted) return;
     setState(() => _nextStationTransitionVisible = true);
-    await _presentationDelay(const Duration(milliseconds: 520));
+    await _presentationDelay(
+      GamePresentationTimings.stageTransitionOverlayHold,
+    );
     if (!mounted) return;
     setState(() => _nextStationTransitionVisible = false);
   }
@@ -1647,7 +1651,7 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
         child: Center(
           child: TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 380),
+            duration: GamePresentationTimings.settlementToMarketOverlayIn,
             curve: Curves.easeOutCubic,
             builder: (context, value, child) {
               return Opacity(
@@ -1709,7 +1713,8 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     child: TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: 1),
-                      duration: const Duration(milliseconds: 380),
+                      duration:
+                          GamePresentationTimings.settlementToMarketOverlayIn,
                       curve: Curves.easeOutCubic,
                       builder: (context, value, _) {
                         return LinearProgressIndicator(
@@ -1744,7 +1749,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
         child: Center(
           child: TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 420),
+            duration: GamePresentationTimings.nextStationOverlayIn,
             curve: Curves.easeOutCubic,
             builder: (context, value, child) {
               return Opacity(
@@ -1806,7 +1811,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     child: TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: 1),
-                      duration: const Duration(milliseconds: 420),
+                      duration: GamePresentationTimings.nextStationOverlayIn,
                       curve: Curves.easeOutCubic,
                       builder: (context, value, _) {
                         return LinearProgressIndicator(
@@ -2741,11 +2746,14 @@ class _BoardScoringCallout extends StatelessWidget {
                 ),
               )
               .animate()
-              .fadeIn(duration: 420.ms, curve: Curves.easeOutCubic)
+              .fadeIn(
+                duration: GamePresentationTimings.boardScoringCalloutIn,
+                curve: Curves.easeOutCubic,
+              )
               .slideY(
                 begin: 0.12,
                 end: 0,
-                duration: 420.ms,
+                duration: GamePresentationTimings.boardScoringCalloutIn,
                 curve: Curves.easeOutCubic,
               ),
     );
@@ -2934,11 +2942,14 @@ class _ScoringPreviewChip extends StatelessWidget {
                 ),
               )
               .animate(key: pulseKey)
-              .fadeIn(duration: 260.ms, curve: Curves.easeOutCubic)
+              .fadeIn(
+                duration: GamePresentationTimings.scoringPreviewFadeIn,
+                curve: Curves.easeOutCubic,
+              )
               .scale(
                 begin: const Offset(0.985, 0.985),
                 end: const Offset(1, 1),
-                duration: 300.ms,
+                duration: GamePresentationTimings.scoringPreviewScale,
                 curve: Curves.easeOutCubic,
               ),
     );

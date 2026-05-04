@@ -99,6 +99,7 @@
 - **웹 스크롤바 숨김**: 웹 빌드에서는 스크롤 가능한 화면이라도 기본 브라우저/Flutter 스크롤바가 보이지 않게 전역 ScrollBehavior에서 처리한다. 스크롤 자체와 마우스/터치 드래그 입력은 유지한다.
 - **임시 디버그 픽스처 정리**: 특정 버그 확인용 임시 fixture를 제거할 때는 fixture 상수, registry 등록, builder, 해당 테스트를 함께 삭제한다. 다른 공용 디버그 fixture는 건드리지 않는다.
 - **저장 상태와 연출 상태 분리**: Battle/Market/Settlement 모두 확정된 게임 결과와 저장 데이터가 정답이다. 애니메이션, HUD/골드 표시 지연값, reveal 상태, 선택/오버레이 상태는 transient presentation state로 두고 저장/이어하기 기준에 포함하지 않는다.
+- **연출 timing 중앙화**: Battle/Market/Settlement 연출의 `Duration`, stagger, hold delay는 `lib/views/game/game_presentation_timings.dart`의 `GamePresentationTimings` 또는 `GamePresentationCue`에 먼저 이름 붙여 추가한다. 화면 파일에 `Duration(milliseconds: ...)`, `Duration(seconds: ...)`, `.ms` 숫자 literal을 새로 흩뿌리지 않는다.
 - **전략 후보 노출 금지**: UI/UX 보강은 후보·추천·정답을 직접 알려주는 방식으로 하지 않는다. 마켓 후보, 성장 축, 필요한 선택지를 유저에게 알려주는 것은 시험 문제 유출처럼 전략성을 해치므로 금지한다. 보강은 타일 이동, 카드/아이템 구매 이동, 정산 액션, 보스 제약 발동처럼 게임적 애니메이션과 피드백으로 표현한다.
 - **정산 완료 시트 라인 등장 방향**: 정산 완료 bottom sheet의 보상 라인은 위에서부터 순차적으로 생기게 한다. 아래에서 생겨 위로 올라가는 연출은 시선을 분산시키므로 쓰지 않는다.
 - **정산 완료 시트 크기 안정성**: 정산 완료 bottom sheet는 표시 시작 시 최종 높이를 미리 잡아 둔다. 라인 reveal 때문에 시트 자체 높이가 커지거나 아래 내용이 위로 밀려 올라오는 연출처럼 보이면 안 된다.

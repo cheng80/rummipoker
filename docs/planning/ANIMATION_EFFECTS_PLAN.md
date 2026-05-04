@@ -14,6 +14,7 @@ source of truth는 runtime state다.
 - Station Goal pulse
 - board line confirm Flame particle overlay skeleton
 - `_BoardScoringCallout`, `_ItemEffectFeedbackToast`, `_ScoringPreviewChip` 일부 `flutter_animate` 적용
+- 전투/정산/마켓/보드/HUD/손패 연출 timing은 `lib/views/game/game_presentation_timings.dart`의 `GamePresentationTimings`와 `GamePresentationCue` 기준으로 중앙화
 
 ## 눈검증 진입점
 
@@ -26,6 +27,10 @@ source of truth는 runtime state다.
 
 ## 공통 규칙
 
+- 새 전투/정산/마켓 연출의 `Duration`, stagger 간격, hold delay는 먼저 `lib/views/game/game_presentation_timings.dart`에 이름 붙여 추가한다. 화면 파일에서 `Duration(milliseconds: ...)`, `Duration(seconds: ...)`, `420.ms` 같은 숫자 literal을 직접 늘리지 않는다.
+- 같은 duration과 stagger가 함께 쓰이는 연출은 `GamePresentationCue`로 묶는다. 예: line confirm sweep, constraint cell flash, settlement score mote, market offer reveal처럼 index별 delay가 있는 연출.
+- `GamePresentationTimings`와 `GamePresentationCue`는 화면 박자만 관리한다. AnimationController, 선택 상태, reveal 완료 여부, 저장 가능한 runtime 값은 들지 않는다.
+- 새 연출을 추가한 뒤에는 `rg "Duration\\(milliseconds|Duration\\(seconds|\\.ms" lib/views/game lib/views/game/widgets -n`로 숫자 literal이 기준표 밖에 남지 않았는지 확인한다. 예외가 필요하면 코드 주석으로 이유를 남긴다.
 - 새 modal/sheet/route/보상/아이템 효과는 120~260ms 범위의 짧은 fade/slide/step animation을 우선 검토한다.
 - 점수/효과 내용을 읽어야 하는 callout, scoring preview, item toast는 320~420ms 진입 연출까지 허용한다.
 - 아이템 효과는 수동/패시브 모두 발동 사실과 실제 delta가 명확히 보여야 한다. snackbar만으로 끝내지 말고 overlay, badge, `+1` float, resource pulse 중 하나를 제공한다.

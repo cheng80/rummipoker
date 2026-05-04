@@ -7,6 +7,16 @@ class GamePresentationTimings {
   static const Duration presentationPauseTick = Duration(milliseconds: 50);
   static const Duration itemEffectFeedback = Duration(seconds: 2);
 
+  static const Duration stageClearClearedHold = Duration(milliseconds: 850);
+  static const Duration stageClearSettlementHold = Duration(milliseconds: 950);
+  static const Duration stageTransitionOverlayHold = Duration(
+    milliseconds: 520,
+  );
+  static const Duration settlementToMarketOverlayIn = Duration(
+    milliseconds: 380,
+  );
+  static const Duration nextStationOverlayIn = Duration(milliseconds: 420);
+
   static const Duration settlementBoardLineStep = Duration(milliseconds: 720);
   static const Duration settlementHandRankStep = Duration(milliseconds: 720);
   static const Duration settlementOverlapStep = Duration(milliseconds: 680);
@@ -57,6 +67,9 @@ class GamePresentationTimings {
   static const Duration settlementEffectBurst = Duration(milliseconds: 940);
   static const Duration itemEffectSparkBurst = Duration(milliseconds: 560);
   static const Duration itemEffectToastIn = Duration(milliseconds: 340);
+  static const Duration boardScoringCalloutIn = Duration(milliseconds: 420);
+  static const Duration scoringPreviewFadeIn = Duration(milliseconds: 260);
+  static const Duration scoringPreviewScale = Duration(milliseconds: 300);
 
   static const Duration marketAutoAdvanceDelay = Duration(milliseconds: 120);
   static const Duration marketPurchaseFlight = Duration(milliseconds: 560);
@@ -72,4 +85,43 @@ class GamePresentationTimings {
   static const Duration marketOfferRevealStagger = Duration(milliseconds: 42);
   static const Duration marketGoldBadge = Duration(milliseconds: 460);
   static const Duration marketSlotPulse = Duration(milliseconds: 520);
+}
+
+/// 반복되는 duration/stagger 조합을 이름 붙여 쓰는 presentation 전용 보조 타입.
+///
+/// 저장 가능한 runtime state를 들지 않고, 화면 박자 계산만 담당한다.
+class GamePresentationCue {
+  const GamePresentationCue({
+    required this.duration,
+    this.stagger = Duration.zero,
+  });
+
+  final Duration duration;
+  final Duration stagger;
+
+  Duration delayFor(int index) => stagger * index;
+}
+
+class GamePresentationCues {
+  const GamePresentationCues._();
+
+  static const GamePresentationCue lineConfirmSweep = GamePresentationCue(
+    duration: GamePresentationTimings.lineConfirmSweep,
+    stagger: GamePresentationTimings.lineConfirmSweepStagger,
+  );
+
+  static const GamePresentationCue constraintCellFlash = GamePresentationCue(
+    duration: GamePresentationTimings.constraintCellFlash,
+    stagger: GamePresentationTimings.constraintCellFlashStagger,
+  );
+
+  static const GamePresentationCue settlementScoreMote = GamePresentationCue(
+    duration: GamePresentationTimings.settlementScoreMote,
+    stagger: GamePresentationTimings.settlementScoreMoteStagger,
+  );
+
+  static const GamePresentationCue marketOfferReveal = GamePresentationCue(
+    duration: GamePresentationTimings.marketOfferReveal,
+    stagger: GamePresentationTimings.marketOfferRevealStagger,
+  );
 }

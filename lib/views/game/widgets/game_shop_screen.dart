@@ -2915,7 +2915,7 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: GamePresentationTimings.marketOfferReveal,
+      duration: GamePresentationCues.marketOfferReveal.duration,
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
     _offset = Tween<Offset>(
@@ -2935,8 +2935,7 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
 
   Future<void> _play() async {
     _controller.value = 0;
-    final delay =
-        GamePresentationTimings.marketOfferRevealStagger * widget.index;
+    final delay = GamePresentationCues.marketOfferReveal.delayFor(widget.index);
     await Future<void>.delayed(delay);
     if (!mounted) return;
     unawaited(_controller.forward());

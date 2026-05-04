@@ -267,7 +267,7 @@ class _LineConfirmSweepLayer extends StatelessWidget {
           _LineConfirmSweepCell(
             key: ValueKey<String>('line-confirm-sweep-$tick-$i'),
             center: centers[i],
-            delay: GamePresentationTimings.lineConfirmSweepStagger * i,
+            delay: GamePresentationCues.lineConfirmSweep.delayFor(i),
           ),
       ],
     );
@@ -288,12 +288,12 @@ class _LineConfirmSweepCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: GamePresentationTimings.lineConfirmSweep,
+      duration: GamePresentationCues.lineConfirmSweep.duration,
       curve: Curves.easeOutCubic,
       builder: (context, rawValue, child) {
         final delayRatio =
             delay.inMilliseconds /
-            GamePresentationTimings.lineConfirmSweep.inMilliseconds;
+            GamePresentationCues.lineConfirmSweep.duration.inMilliseconds;
         final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
           0.0,
           1.0,
@@ -355,7 +355,7 @@ class _ConstraintImpactBadgeLayer extends StatelessWidget {
           _ConstraintImpactCellFlash(
             key: ValueKey<String>('constraint-impact-cell-$tick-$i'),
             center: centers[i],
-            delay: GamePresentationTimings.constraintCellFlashStagger * i,
+            delay: GamePresentationCues.constraintCellFlash.delayFor(i),
           ),
         _ConstraintImpactBadge(
           key: ValueKey<String>('constraint-impact-badge-$tick'),
@@ -381,12 +381,12 @@ class _ConstraintImpactCellFlash extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: GamePresentationTimings.constraintCellFlash,
+      duration: GamePresentationCues.constraintCellFlash.duration,
       curve: Curves.easeOutCubic,
       builder: (context, rawValue, child) {
         final delayRatio =
             delay.inMilliseconds /
-            GamePresentationTimings.constraintCellFlash.inMilliseconds;
+            GamePresentationCues.constraintCellFlash.duration.inMilliseconds;
         final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
           0.0,
           1.0,
@@ -619,7 +619,7 @@ class _SettlementScoreMoteLayer extends StatelessWidget {
                 key: ValueKey<String>('settlement-score-mote-$tick-$i'),
                 start: centers[i],
                 target: target,
-                delay: GamePresentationTimings.settlementScoreMoteStagger * i,
+                delay: GamePresentationCues.settlementScoreMote.delayFor(i),
               ),
           ],
         );
@@ -644,12 +644,12 @@ class _SettlementScoreMote extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: GamePresentationTimings.settlementScoreMote,
+      duration: GamePresentationCues.settlementScoreMote.duration,
       curve: Curves.easeOutCubic,
       builder: (context, rawValue, child) {
         final delayRatio =
             delay.inMilliseconds /
-            GamePresentationTimings.settlementScoreMote.inMilliseconds;
+            GamePresentationCues.settlementScoreMote.duration.inMilliseconds;
         final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
           0.0,
           1.0,
