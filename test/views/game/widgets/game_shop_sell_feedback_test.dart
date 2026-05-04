@@ -171,6 +171,7 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.byKey(const ValueKey('market-sale-flight')), findsNothing);
+    expect(find.text('6'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
 }
