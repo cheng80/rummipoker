@@ -454,6 +454,21 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const ValueKey('board-place-pop')), findsOneWidget);
+    final flightFinder = find.byKey(const ValueKey('board-place-flight'));
+    final startTravel = tester
+        .widget<Transform>(flightFinder)
+        .transform
+        .getTranslation()
+        .y;
+
+    await tester.pump(const Duration(milliseconds: 130));
+
+    final midTravel = tester
+        .widget<Transform>(flightFinder)
+        .transform
+        .getTranslation()
+        .y;
+    expect(midTravel, lessThan(startTravel));
   });
 
   testWidgets('GameBoardGrid flies moved board tile to target cell', (

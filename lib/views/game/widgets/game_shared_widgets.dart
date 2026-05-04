@@ -1822,20 +1822,31 @@ class _BoardPlacePop extends StatelessWidget {
       curve: Curves.easeOutBack,
       builder: (context, value, child) {
         final glow = (1 - value).clamp(0.0, 1.0);
-        return Transform.scale(
-          scale: 0.9 + (value * 0.1),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(9),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFF2C14E).withValues(alpha: 0.24 * glow),
-                  blurRadius: 16 * glow,
-                  spreadRadius: 1.5 * glow,
+        final progress = value.clamp(0.0, 1.0);
+        final travel = (1 - Curves.easeOutCubic.transform(progress)) * 18;
+        return Transform.translate(
+          key: const ValueKey('board-place-flight'),
+          offset: Offset(0, travel),
+          child: Opacity(
+            opacity: (0.72 + (progress * 0.28)).clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: 0.9 + (value * 0.1),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(
+                        0xFFF2C14E,
+                      ).withValues(alpha: 0.24 * glow),
+                      blurRadius: 16 * glow,
+                      spreadRadius: 1.5 * glow,
+                    ),
+                  ],
                 ),
-              ],
+                child: child,
+              ),
             ),
-            child: child,
           ),
         );
       },
