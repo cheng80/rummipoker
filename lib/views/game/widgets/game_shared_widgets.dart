@@ -426,88 +426,59 @@ class GameBottomInfoRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _ResourceStatusText(
-            text: '덱 ${resources.drawPileRemaining}/${battle.totalDeckSize}',
-            depleted: resources.drawPileRemaining <= 0,
-            alignment: MainAxisAlignment.start,
-          ),
-        ),
-        Expanded(
-          child: _ResourceStatusText(
-            text:
-                '이동 ${resources.boardMovesRemaining}/${resources.boardMovesMax}',
-            depleted: resources.boardMovesRemaining <= 0,
-            alignment: MainAxisAlignment.center,
-          ),
-        ),
-        Expanded(
-          child: _ResourceStatusText(
-            text:
-                '보드 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
-            depleted: resources.boardDiscardsRemaining <= 0,
-            alignment: MainAxisAlignment.center,
-          ),
-        ),
-        Expanded(
-          child: _ResourceStatusText(
-            text:
-                '손패 ${battle.hand.length}/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
-            depleted: resources.handDiscardsRemaining <= 0,
-            alignment: MainAxisAlignment.end,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ResourceStatusText extends StatelessWidget {
-  const _ResourceStatusText({
-    required this.text,
-    required this.depleted,
-    required this.alignment,
-  });
-
-  final String text;
-  final bool depleted;
-  final MainAxisAlignment alignment;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = depleted
-        ? const Color(0xFFFFA07A)
-        : Colors.white.withValues(alpha: 0.7);
-    return Row(
-      mainAxisAlignment: alignment,
-      children: [
-        if (depleted) ...[
-          Icon(Icons.warning_amber_rounded, color: color, size: 10),
-          const SizedBox(width: 2),
-        ],
-        Flexible(
           child: Text(
-            text,
+            '덱 ${resources.drawPileRemaining}/${battle.totalDeckSize}',
             maxLines: 1,
-            overflow: TextOverflow.clip,
-            textAlign: _textAlignForMainAxis(alignment),
-            style: TextStyle(
-              color: color,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white70,
               fontSize: 9,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            '이동 ${resources.boardMovesRemaining}/${resources.boardMovesMax}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            '보드 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            '손패 ${battle.hand.length}/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
       ],
     );
   }
-}
-
-TextAlign _textAlignForMainAxis(MainAxisAlignment alignment) {
-  return switch (alignment) {
-    MainAxisAlignment.center => TextAlign.center,
-    MainAxisAlignment.end => TextAlign.right,
-    _ => TextAlign.left,
-  };
 }
 
 enum _GameItemZoneTab { slots, tools }
