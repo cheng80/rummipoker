@@ -181,7 +181,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--sim-price-band-mode",
         default=DEFAULT_OPTIONS["sim_price_band_mode"],
-        choices=["none", "rarity_category_v1", "rarity_category_soft_v1"],
+        choices=[
+            "none",
+            "rarity_category_v1",
+            "rarity_category_soft_v1",
+            "catalog_value_flags_v1",
+        ],
         help="후보 가치군별 sim-only 가격 band 모델.",
     )
     parser.add_argument(

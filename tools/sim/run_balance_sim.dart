@@ -1247,6 +1247,12 @@ int _simPriceBandCostForEvent({
   required int fallbackCost,
 }) {
   if (mode == BalanceSimPriceBandMode.none) return fallbackCost;
+  if (mode == BalanceSimPriceBandMode.catalogValueFlagsV1) {
+    return _simCatalogValueFlagCostForEvent(
+      event: event,
+      fallbackCost: fallbackCost,
+    );
+  }
   final soft = mode == BalanceSimPriceBandMode.rarityCategorySoftV1;
   final category = event['category'];
   final contentId = event['content_id'];
@@ -1272,6 +1278,33 @@ int _simPriceBandCostForEvent({
     if (contentId.contains('common')) return max(fallbackCost, soft ? 6 : 8);
   }
   return fallbackCost;
+}
+
+int _simCatalogValueFlagCostForEvent({
+  required Map<String, Object?> event,
+  required int fallbackCost,
+}) {
+  final category = event['category'];
+  final contentId = event['content_id'];
+  if (category == 'item' && contentId is String) {
+    return switch (contentId) {
+      'reroll_token' => max(fallbackCost, 5),
+      'coin_cache' => max(fallbackCost, 4),
+      'thin_wallet' => max(fallbackCost, 7),
+      _ => fallbackCost,
+    };
+  }
+  if (category != 'jester') return fallbackCost;
+  final proxyIds = event['proxy_jester_ids'];
+  final ids = proxyIds is List
+      ? proxyIds.whereType<String>().toSet()
+      : <String>{if (contentId is String) contentId};
+  var cost = fallbackCost;
+  if (ids.contains('green_jester')) cost = max(cost, 6);
+  if (ids.contains('popcorn')) cost = max(cost, 6);
+  if (ids.contains('ice_cream')) cost = max(cost, 7);
+  if (ids.contains('supernova')) cost = max(cost, 7);
+  return cost;
 }
 
 _SimMarketSlotReplacement _simMarketSlotReplacementForEvent({
@@ -1679,6 +1712,13 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     'voucher' => 8,
     _ => null,
   };
+  final proxyJesterIds = category == 'jester'
+      ? _simJesterProxyIds(
+          marketProfile: marketProfile,
+          contentId: contentId,
+          loadout: loadout,
+        )
+      : const <String>[];
   return [
     <String, Object?>{
       'after_station': 1,
@@ -1686,6 +1726,7 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
       'content_id': contentId,
       'cost': cost,
       'simulated': true,
+      if (proxyJesterIds.isNotEmpty) 'proxy_jester_ids': proxyJesterIds,
       if (category == 'pack')
         'deck_tiles_added': _simPackAddedTileCount(marketProfile),
       if (marketProfile.id.startsWith('s1_candidate_'))
@@ -1695,13 +1736,12 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
   ];
 }
 
-int? _simJesterProxyCost({
+List<String> _simJesterProxyIds({
   required BalanceSimMarketProfile marketProfile,
   required String contentId,
   required BalanceSimLoadoutSpec loadout,
-  required RummiJesterCatalog catalog,
 }) {
-  final ids = switch (marketProfile) {
+  return switch (marketProfile) {
     BalanceSimMarketProfile.s1CandidateCommonColorJester => [
       _colorJesterForLoadout(loadout),
     ],
@@ -1718,8 +1758,21 @@ int? _simJesterProxyCost({
       'the_tribe',
       'the_order',
     ],
-    _ => <String>[],
+    _ => contentId.isEmpty ? const <String>[] : [contentId],
   };
+}
+
+int? _simJesterProxyCost({
+  required BalanceSimMarketProfile marketProfile,
+  required String contentId,
+  required BalanceSimLoadoutSpec loadout,
+  required RummiJesterCatalog catalog,
+}) {
+  final ids = _simJesterProxyIds(
+    marketProfile: marketProfile,
+    contentId: '',
+    loadout: loadout,
+  );
   if (ids.isEmpty) {
     return catalog.findById(contentId)?.baseCost;
   }
@@ -5995,13 +6048,15 @@ enum BalanceSimMarketSpendMode {
 enum BalanceSimPriceBandMode {
   none,
   rarityCategoryV1,
-  rarityCategorySoftV1;
+  rarityCategorySoftV1,
+  catalogValueFlagsV1;
 
   static BalanceSimPriceBandMode parse(String raw) {
     return switch (raw) {
       'none' => BalanceSimPriceBandMode.none,
       'rarity_category_v1' => BalanceSimPriceBandMode.rarityCategoryV1,
       'rarity_category_soft_v1' => BalanceSimPriceBandMode.rarityCategorySoftV1,
+      'catalog_value_flags_v1' => BalanceSimPriceBandMode.catalogValueFlagsV1,
       _ => throw FormatException('Unknown sim price band mode: $raw'),
     };
   }
@@ -6011,6 +6066,7 @@ enum BalanceSimPriceBandMode {
       BalanceSimPriceBandMode.none => 'none',
       BalanceSimPriceBandMode.rarityCategoryV1 => 'rarity_category_v1',
       BalanceSimPriceBandMode.rarityCategorySoftV1 => 'rarity_category_soft_v1',
+      BalanceSimPriceBandMode.catalogValueFlagsV1 => 'catalog_value_flags_v1',
     };
   }
 }

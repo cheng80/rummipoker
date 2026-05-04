@@ -349,6 +349,8 @@ Economy leveling gate:
 - current candidate: `reward 0.38 / price 2.4`가 현재 가장 덜 깨지는 sim-only 후보지만, 런타임 적용 전 실제 가격 테이블 후보와 gold sink 누락분을 분리 검토한다.
 - tool update: `tools/sim/economy_audit.py`가 `catalog_value_flags`를 출력한다.
 - current price flags: `reroll_token`, `coin_cache`, `thin_wallet`은 자기 회수형 item 후보이며, `green_jester`, `popcorn`, `ice_cream`, `supernova`는 low-price growth Jester 후보로 먼저 검토한다.
+- applied: `catalog_value_flags_v1` sim-only price band를 추가했다. price flag 후보 일부만 올리는 검증용이다.
+- catalog flag probe: `reward 0.38 / price 2.4 / catalog_value_flags_v1` r120은 balanced v9가 59.2%로 낮아지고 final gold avg는 114.9G에 그쳐, 현재 장기 후보에서는 제외한다.
 
 ## 6. Read Order
 

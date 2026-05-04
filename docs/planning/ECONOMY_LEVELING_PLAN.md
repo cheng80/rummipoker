@@ -249,6 +249,7 @@ catalog value flags:
 
 - `tools/sim/economy_audit.py`가 `catalog_value_flags`를 출력한다.
 - 이 flag는 자동 적용값이 아니라 가격 조정 전 검토 후보만 표시한다.
+- `--sim-price-band-mode catalog_value_flags_v1`을 추가했다. flag 후보 일부만 sim-only 가격 상향하는 검증용 band다.
 - `economy_choice_reward038_price240_v1_r120` 기준 즉시 회수형 item 후보:
   - `reroll_token`: 3G 구매로 기본 리롤 비용 5G를 대체한다.
   - `coin_cache`: 3G 구매 후 +3G 즉시 회수라 실질 구매 비용이 0G에 가깝다.
@@ -256,7 +257,10 @@ catalog value flags:
 - low-price growth Jester 후보:
   - `green_jester`: rare인데 common median 4G와 같은 4G다.
   - `popcorn`, `ice_cream`, `supernova`: stateful growth 계열이 5G라 장기 성장 가치 대비 저렴할 수 있다.
-- 다음 가격 후보는 전체 가격 일괄 배율보다 위 후보군의 실제 base price/sell price 조정안을 먼저 만든다.
+- `catalog_value_flags_v1` r120 결과:
+  - `economy_choice_reward038_price240_catalog_flags_v1_r120`: balanced none 53.3%, balanced v9 59.2%, power none 64.2%, power v9 68.3%, S8 boss before 약 137.7G, final gold avg 약 114.9G.
+- 판정: 잔고는 약 1.2G만 낮아지는데 balanced v9가 65.0%에서 59.2%까지 떨어진다. 현재 장기 후보에서는 제외하고, 실제 가격표 후보 검증 도구로만 유지한다.
+- 다음 가격 후보는 item/Jester 개별 가격표를 바로 바꾸기보다, reward scale 후보와 market availability/gold sink 누락분을 분리해 본다.
 
 ### Phase 3. Economy Probe
 
