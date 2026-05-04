@@ -12,6 +12,7 @@ import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../../../utils/common_ui.dart';
+import '../game_presentation_timings.dart';
 import 'game_jester_widgets.dart';
 
 String gameHandRankLabel(RummiHandRank rank) {
@@ -68,7 +69,7 @@ class GameStageClearOverlay extends StatelessWidget {
       child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0.94, end: 1),
-          duration: const Duration(milliseconds: 320),
+          duration: GamePresentationTimings.stageClearOverlayPop,
           curve: Curves.easeOutBack,
           builder: (context, scale, child) {
             return Transform.scale(scale: scale, child: child);
@@ -122,7 +123,7 @@ class GameStageClearOverlay extends StatelessWidget {
                     if (isSettlement)
                       TweenAnimationBuilder<int>(
                         tween: IntTween(begin: 0, end: scoreAdded),
-                        duration: const Duration(milliseconds: 720),
+                        duration: GamePresentationTimings.stageClearScoreCount,
                         curve: Curves.easeOutCubic,
                         builder: (context, value, _) {
                           return Text(
@@ -173,7 +174,7 @@ class _StageClearSparkField extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('stage-clear-spark-field'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 520),
+      duration: GamePresentationTimings.stageClearSpark,
       curve: Curves.easeOutCubic,
       builder: (context, value, _) {
         return Opacity(
@@ -270,7 +271,7 @@ class GameFloatingSettlementBurst extends StatelessWidget {
     return IgnorePointer(
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 280),
+        duration: GamePresentationTimings.settlementStepCalloutIn,
         curve: Curves.easeOutCubic,
         builder: (context, value, child) {
           final opacity = (value / 0.65).clamp(0.0, 1.0);
@@ -426,14 +427,14 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
 
   Future<void> _runSteps() async {
     final stepDelay = widget.autoEnterMarketOnLoad
-        ? const Duration(milliseconds: 80)
-        : const Duration(milliseconds: 260);
+        ? GamePresentationTimings.cashOutAutoStepDelay
+        : GamePresentationTimings.cashOutStepDelay;
     final initialDelay = widget.autoEnterMarketOnLoad
-        ? const Duration(milliseconds: 80)
-        : const Duration(milliseconds: 220);
+        ? GamePresentationTimings.cashOutAutoInitialDelay
+        : GamePresentationTimings.cashOutInitialDelay;
     final autoAdvanceDelay = widget.autoEnterMarketOnLoad
-        ? const Duration(milliseconds: 120)
-        : const Duration(milliseconds: 300);
+        ? GamePresentationTimings.cashOutAutoAdvanceDelay
+        : GamePresentationTimings.cashOutAdvanceDelay;
 
     await Future<void>.delayed(initialDelay);
     if (!mounted) return;
@@ -677,7 +678,7 @@ class _GameCashOutReveal extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(end: visible ? 1 : 0),
-      duration: const Duration(milliseconds: 180),
+      duration: GamePresentationTimings.cashOutLineReveal,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         return Opacity(opacity: value, child: child);
@@ -711,7 +712,7 @@ class _GameCashOutLine extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('cashout-line-pulse'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 360),
+      duration: GamePresentationTimings.cashOutLinePulse,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final pulse = (1 - value).clamp(0.0, 1.0);
@@ -781,7 +782,7 @@ class _GameCashOutCollectBadge extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('cashout-collect-badge'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 420),
+      duration: GamePresentationTimings.cashOutCollectBadge,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final scale = lerpDouble(0.94, 1, value)!;
@@ -835,7 +836,7 @@ class _GameCashOutCoinBurst extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('cashout-coin-burst'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 520),
+      duration: GamePresentationTimings.cashOutCoinBurst,
       curve: Curves.easeOutCubic,
       builder: (context, value, _) {
         final opacity = value < 0.72 ? 1.0 : (1 - value) / 0.28;

@@ -14,6 +14,22 @@ class GamePresentationTimings {
   static const Duration settlementEffectStep = Duration(milliseconds: 1040);
   static const Duration settlementFinalScoreStep = Duration(milliseconds: 920);
   static const Duration settlementLineTail = Duration(milliseconds: 300);
+  static const Duration settlementStepCalloutIn = Duration(milliseconds: 280);
+
+  static const Duration stageClearOverlayPop = Duration(milliseconds: 320);
+  static const Duration stageClearScoreCount = Duration(milliseconds: 720);
+  static const Duration stageClearSpark = Duration(milliseconds: 520);
+
+  static const Duration cashOutAutoInitialDelay = Duration(milliseconds: 80);
+  static const Duration cashOutInitialDelay = Duration(milliseconds: 220);
+  static const Duration cashOutAutoStepDelay = Duration(milliseconds: 80);
+  static const Duration cashOutStepDelay = Duration(milliseconds: 260);
+  static const Duration cashOutAutoAdvanceDelay = Duration(milliseconds: 120);
+  static const Duration cashOutAdvanceDelay = Duration(milliseconds: 300);
+  static const Duration cashOutLineReveal = Duration(milliseconds: 180);
+  static const Duration cashOutLinePulse = Duration(milliseconds: 360);
+  static const Duration cashOutCollectBadge = Duration(milliseconds: 420);
+  static const Duration cashOutCoinBurst = Duration(milliseconds: 520);
 
   static const Duration boardEffectVisible = Duration(milliseconds: 1300);
   static const Duration lineConfirmSweep = Duration(milliseconds: 520);
