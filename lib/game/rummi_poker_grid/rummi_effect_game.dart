@@ -9,7 +9,7 @@ import 'rummi_particle_burst.dart';
 /// 런타임 결과를 계산하지 않고, 외부에서 전달받은 좌표에 짧은 파티클만 그린다.
 class RummiEffectGame extends FlameGame {
   RummiParticlePool? _particlePool;
-  final List<List<Vector2>> _pendingLineBursts = [];
+  final List<_PendingBoardBurst> _pendingBoardBursts = [];
 
   @override
   Color backgroundColor() => Colors.transparent;
@@ -21,34 +21,81 @@ class RummiEffectGame extends FlameGame {
       ..anchor = Anchor.topLeft
       ..position = Vector2.zero();
     _particlePool = RummiParticlePool(world);
-    for (final centers in _pendingLineBursts) {
-      _spawnLineConfirmBurstNow(centers);
+    for (final burst in _pendingBoardBursts) {
+      _spawnBoardBurstNow(burst);
     }
-    _pendingLineBursts.clear();
+    _pendingBoardBursts.clear();
   }
 
   void spawnLineConfirmBurst(Iterable<Vector2> centers) {
-    final copiedCenters = centers.toList(growable: false);
-    if (_particlePool == null) {
-      _pendingLineBursts.add(copiedCenters);
-      return;
-    }
-    _spawnLineConfirmBurstNow(copiedCenters);
-  }
-
-  void _spawnLineConfirmBurstNow(Iterable<Vector2> centers) {
-    final pool = _particlePool;
-    if (pool == null) return;
-    for (final center in centers) {
-      pool.spawn(
-        center: center,
+    _spawnBoardBurst(
+      _PendingBoardBurst(
+        centers: centers.toList(growable: false),
         baseColor: const Color(0xFFF2C14E),
         count: 12,
         lifetime: 0.68,
         speedScale: 0.76,
         sizeScale: 0.95,
         withGlow: false,
+      ),
+    );
+  }
+
+  void spawnConstraintImpactBurst(Iterable<Vector2> centers) {
+    _spawnBoardBurst(
+      _PendingBoardBurst(
+        centers: centers.toList(growable: false),
+        baseColor: const Color(0xFFFF5A66),
+        count: 14,
+        lifetime: 0.54,
+        speedScale: 1.05,
+        sizeScale: 1.1,
+        withGlow: true,
+      ),
+    );
+  }
+
+  void _spawnBoardBurst(_PendingBoardBurst burst) {
+    if (_particlePool == null) {
+      _pendingBoardBursts.add(burst);
+      return;
+    }
+    _spawnBoardBurstNow(burst);
+  }
+
+  void _spawnBoardBurstNow(_PendingBoardBurst burst) {
+    final pool = _particlePool;
+    if (pool == null) return;
+    for (final center in burst.centers) {
+      pool.spawn(
+        center: center,
+        baseColor: burst.baseColor,
+        count: burst.count,
+        lifetime: burst.lifetime,
+        speedScale: burst.speedScale,
+        sizeScale: burst.sizeScale,
+        withGlow: burst.withGlow,
       );
     }
   }
+}
+
+class _PendingBoardBurst {
+  const _PendingBoardBurst({
+    required this.centers,
+    required this.baseColor,
+    required this.count,
+    required this.lifetime,
+    required this.speedScale,
+    required this.sizeScale,
+    required this.withGlow,
+  });
+
+  final List<Vector2> centers;
+  final Color baseColor;
+  final int count;
+  final double lifetime;
+  final double speedScale;
+  final double sizeScale;
+  final bool withGlow;
 }

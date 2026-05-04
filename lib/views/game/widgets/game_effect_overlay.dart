@@ -33,7 +33,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   static const Duration _effectVisibleDuration = Duration(milliseconds: 1050);
 
   late final RummiEffectGame _game;
-  String? _lastBurstSignature;
+  String? _lastEffectSignature;
   bool _visible = false;
 
   @override
@@ -47,7 +47,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          _scheduleLineConfirmBurst(constraints);
+          _scheduleBoardEffect(constraints);
           if (!_visible) return const SizedBox.expand();
           return GameWidget<RummiEffectGame>(game: _game);
         },
@@ -55,17 +55,29 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
     );
   }
 
-  void _scheduleLineConfirmBurst(BoxConstraints constraints) {
+  void _scheduleBoardEffect(BoxConstraints constraints) {
     final line = widget.activeSettlementLine;
-    if (line == null ||
-        widget.activeSettlementStep != ScoringPresentationStep.boardLine) {
-      return;
-    }
+    if (line == null) return;
 
-    final signature =
-        '${widget.settlementSequenceTick}-${line.ref}-${line.contributingCells.join('|')}';
-    if (_lastBurstSignature == signature) return;
-    _lastBurstSignature = signature;
+    final effectKind = switch (widget.activeSettlementStep) {
+      ScoringPresentationStep.boardLine => _BoardEffectKind.lineConfirm,
+      ScoringPresentationStep.constraint
+          when line.constraintPenalties.isNotEmpty =>
+        _BoardEffectKind.constraintImpact,
+      _ => null,
+    };
+    if (effectKind == null) return;
+
+    final signature = [
+      widget.settlementSequenceTick,
+      effectKind.name,
+      line.ref,
+      line.contributingCells.join('|'),
+      if (effectKind == _BoardEffectKind.constraintImpact)
+        line.constraintPenalties.map((penalty) => penalty.modifierId).join('|'),
+    ].join('-');
+    if (_lastEffectSignature == signature) return;
+    _lastEffectSignature = signature;
 
     final centers = _cellCentersForLine(line, constraints);
     if (centers.isEmpty) return;
@@ -74,7 +86,12 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       if (!_visible) {
         setState(() => _visible = true);
       }
-      _game.spawnLineConfirmBurst(centers);
+      switch (effectKind) {
+        case _BoardEffectKind.lineConfirm:
+          _game.spawnLineConfirmBurst(centers);
+        case _BoardEffectKind.constraintImpact:
+          _game.spawnConstraintImpactBurst(centers);
+      }
       Future<void>.delayed(_effectVisibleDuration, () {
         if (!mounted) return;
         setState(() => _visible = false);
@@ -118,3 +135,5 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
     ];
   }
 }
+
+enum _BoardEffectKind { lineConfirm, constraintImpact }
