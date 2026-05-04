@@ -22,6 +22,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
   final action = await showGameFramedDialog<GameOptionsCloseAction>(
     context: context,
+    barrierDismissible: false,
     builder: (dialogContext) => GameModalCard(
       child: Column(
         mainAxisSize: MainAxisSize.min,
