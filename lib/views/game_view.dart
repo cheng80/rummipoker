@@ -31,6 +31,7 @@ import '../services/blind_selection_setup.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_progression_service.dart';
 import '../utils/common_ui.dart';
+import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
@@ -77,7 +78,8 @@ class GameView extends ConsumerStatefulWidget {
 
 class _GameViewState extends ConsumerState<GameView>
     with WidgetsBindingObserver {
-  static const Duration _itemEffectFeedbackDuration = Duration(seconds: 2);
+  static const Duration _itemEffectFeedbackDuration =
+      GamePresentationTimings.itemEffectFeedback;
 
   static const List<String> _shopInspectOfferIds = [
     'green_jester',
@@ -336,7 +338,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _presentationDelay(Duration duration) async {
     var remaining = duration;
-    const tick = Duration(milliseconds: 50);
+    const tick = GamePresentationTimings.presentationPauseTick;
     while (mounted && remaining > Duration.zero) {
       await _waitWhilePresentationPaused();
       if (!mounted) return;
@@ -1084,7 +1086,7 @@ class _GameViewState extends ConsumerState<GameView>
       step: ScoringPresentationStep.boardLine,
       settlementGoalDisplayScore: lineGoalStartScore,
       bump: true,
-      delay: const Duration(milliseconds: 720),
+      delay: GamePresentationTimings.settlementBoardLineStep,
     );
     if (!mounted) return;
     await _showSettlementStep(
@@ -1092,7 +1094,7 @@ class _GameViewState extends ConsumerState<GameView>
       line: line,
       step: ScoringPresentationStep.handRank,
       settlementGoalDisplayScore: lineGoalStartScore,
-      delay: const Duration(milliseconds: 720),
+      delay: GamePresentationTimings.settlementHandRankStep,
     );
     if (!mounted) return;
     if (line.overlapBonus > 0) {
@@ -1101,7 +1103,7 @@ class _GameViewState extends ConsumerState<GameView>
         line: line,
         step: ScoringPresentationStep.overlap,
         settlementGoalDisplayScore: lineGoalStartScore,
-        delay: const Duration(milliseconds: 680),
+        delay: GamePresentationTimings.settlementOverlapStep,
       );
       if (!mounted) return;
     }
@@ -1112,7 +1114,7 @@ class _GameViewState extends ConsumerState<GameView>
         step: ScoringPresentationStep.constraint,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 1240),
+        delay: GamePresentationTimings.settlementConstraintStep,
       );
       if (!mounted) return;
     }
@@ -1124,7 +1126,7 @@ class _GameViewState extends ConsumerState<GameView>
         effectIndexes: jesterEffectIndexes,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 1040),
+        delay: GamePresentationTimings.settlementEffectStep,
       );
       if (!mounted) return;
     }
@@ -1136,7 +1138,7 @@ class _GameViewState extends ConsumerState<GameView>
         effectIndexes: itemEffectIndexes,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 1040),
+        delay: GamePresentationTimings.settlementEffectStep,
       );
       if (!mounted) return;
     }
@@ -1145,11 +1147,11 @@ class _GameViewState extends ConsumerState<GameView>
       line: line,
       step: ScoringPresentationStep.finalScore,
       settlementGoalDisplayScore: lineGoalDisplayScore,
-      delay: const Duration(milliseconds: 920),
+      delay: GamePresentationTimings.settlementFinalScoreStep,
     );
     if (!mounted) return;
 
-    await _presentationDelay(const Duration(milliseconds: 300));
+    await _presentationDelay(GamePresentationTimings.settlementLineTail);
     if (!mounted) return;
     await _runSettlementSequence(
       lines: lines,
@@ -1987,11 +1989,14 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
           ],
         )
         .animate()
-        .fadeIn(duration: 340.ms, curve: Curves.easeOutCubic)
+        .fadeIn(
+          duration: GamePresentationTimings.itemEffectToastIn,
+          curve: Curves.easeOutCubic,
+        )
         .slideY(
           begin: 0.12,
           end: 0,
-          duration: 340.ms,
+          duration: GamePresentationTimings.itemEffectToastIn,
           curve: Curves.easeOutCubic,
         );
   }
@@ -2015,7 +2020,7 @@ class _ItemEffectSparkBurst extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('item-effect-spark-burst'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 560),
+      duration: GamePresentationTimings.itemEffectSparkBurst,
       curve: Curves.easeOutCubic,
       builder: (context, value, _) {
         final opacity = value < 0.7 ? 1.0 : (1 - value) / 0.3;

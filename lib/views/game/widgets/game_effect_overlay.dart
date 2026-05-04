@@ -5,6 +5,7 @@ import '../../../game/rummi_poker_grid/rummi_effect_game.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
+import '../game_presentation_timings.dart';
 
 /// Flutter 보드 위에 얹는 투명 Flame 이펙트 레이어.
 ///
@@ -30,7 +31,8 @@ class GameBoardEffectOverlay extends StatefulWidget {
 }
 
 class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
-  static const Duration _effectVisibleDuration = Duration(milliseconds: 1300);
+  static const Duration _effectVisibleDuration =
+      GamePresentationTimings.boardEffectVisible;
   static const int _largeScoreBurstThreshold = 100;
 
   late final RummiEffectGame _game;
@@ -286,10 +288,12 @@ class _LineConfirmSweepCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 520),
+      duration: GamePresentationTimings.lineConfirmSweep,
       curve: Curves.easeOutCubic,
       builder: (context, rawValue, child) {
-        final delayRatio = delay.inMilliseconds / 520;
+        final delayRatio =
+            delay.inMilliseconds /
+            GamePresentationTimings.lineConfirmSweep.inMilliseconds;
         final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
           0.0,
           1.0,
@@ -377,10 +381,12 @@ class _ConstraintImpactCellFlash extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 760),
+      duration: GamePresentationTimings.constraintCellFlash,
       curve: Curves.easeOutCubic,
       builder: (context, rawValue, child) {
-        final delayRatio = delay.inMilliseconds / 760;
+        final delayRatio =
+            delay.inMilliseconds /
+            GamePresentationTimings.constraintCellFlash.inMilliseconds;
         final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
           0.0,
           1.0,
@@ -435,7 +441,7 @@ class _ConstraintImpactBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 900),
+      duration: GamePresentationTimings.constraintImpactBadge,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = value < 0.84 ? 1.0 : 1.0 - ((value - 0.84) / 0.16);
@@ -540,7 +546,7 @@ class _LargeScoreBurstBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 680),
+      duration: GamePresentationTimings.largeScoreBurstBadge,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = value < 0.76 ? 1.0 : 1.0 - ((value - 0.76) / 0.24);
@@ -638,10 +644,12 @@ class _SettlementScoreMote extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 620),
+      duration: GamePresentationTimings.settlementScoreMote,
       curve: Curves.easeOutCubic,
       builder: (context, rawValue, child) {
-        final delayRatio = delay.inMilliseconds / 620;
+        final delayRatio =
+            delay.inMilliseconds /
+            GamePresentationTimings.settlementScoreMote.inMilliseconds;
         final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
           0.0,
           1.0,

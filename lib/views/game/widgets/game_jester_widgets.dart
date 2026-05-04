@@ -5,6 +5,7 @@ import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/jester_translation_scope.dart';
+import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
 
 const double kJesterCardWidth = kBattleItemSlotWidth;
@@ -488,7 +489,7 @@ class GameJesterEffectBurst extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 940),
+      duration: GamePresentationTimings.settlementEffectBurst,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final fade = value < 0.18

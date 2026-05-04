@@ -17,6 +17,7 @@ import '../../../resources/asset_paths.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../utils/common_ui.dart';
+import '../game_presentation_timings.dart';
 
 const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
@@ -1498,7 +1499,7 @@ class _GameItemEffectBurst extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 940),
+      duration: GamePresentationTimings.settlementEffectBurst,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final fade = value < 0.18
