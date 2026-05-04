@@ -3826,6 +3826,7 @@ BalanceSimExperimentSpec _resolveExperiment({
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_rank_cycle_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1':
     case _
@@ -4060,6 +4061,8 @@ double _stationGrowthBaseForExperiment(String id) {
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_rank_cycle_probe_v1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1' =>
       1.25,
@@ -4463,6 +4466,7 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
       tier: tier,
       difficulty: difficulty,
     ),
+    if (_usesRankCycleProbe(id)) 'rank_cycle_probe': true,
   };
   if (tier != BlindTier.boss) {
     return BalanceSimExperimentSpec(
@@ -4478,7 +4482,13 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
   }
 
   final severity = _bossConstraintPoolSeverity(id);
-  final constraint = _usesWeightedBossPool(id)
+  final constraint = _usesRankCycleProbe(id)
+      ? _rankCycleProbeConstraintForStationPool(
+          station: station,
+          severity: severity,
+          baseBossModifier: baseBossModifier,
+        )
+      : _usesWeightedBossPool(id)
       ? _weightedBossConstraintForStationPool(
           station: station,
           severity: severity,
@@ -4535,7 +4545,10 @@ bool _usesOrderedBossTargets(String id) =>
     id.endsWith('_weighted_boss_v1') ||
     id.endsWith('_weighted_boss_v2') ||
     id.endsWith('_weighted_boss_v3') ||
+    _usesRankCycleProbe(id) ||
     id.contains('_weighted_boss_v3_late_boss_');
+
+bool _usesRankCycleProbe(String id) => id.endsWith('_rank_cycle_probe_v1');
 
 bool _usesWeightedBossPool(String id) =>
     id.endsWith('_weighted_boss_v1') ||
@@ -4550,6 +4563,25 @@ int _weightedBossPoolVersion(String id) {
   }
   if (id.endsWith('_weighted_boss_v2')) return 2;
   return 1;
+}
+
+BalanceSimBossConstraintChoice _rankCycleProbeConstraintForStationPool({
+  required int station,
+  required String severity,
+  required RummiBossModifier? baseBossModifier,
+}) {
+  const slots = [0, 1, 2, 3, 6, 4, 7, 5];
+  final normalizedStation = station < 1 ? 1 : station;
+  final slot = slots[(normalizedStation - 1) % slots.length];
+  final choice = _bossConstraintChoiceForSlot(
+    slot: slot,
+    severity: severity,
+    baseBossModifier: baseBossModifier,
+  );
+  return choice.withExtraEffects(<String, Object?>{
+    'sim_boss_pool_profile': 'rank_cycle_probe_v1',
+    'sim_boss_pool_slot': slot,
+  });
 }
 
 int _orderedBossTargetScore({
@@ -5815,6 +5847,7 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_rank_cycle_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2',

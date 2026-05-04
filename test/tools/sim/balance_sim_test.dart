@@ -2897,6 +2897,68 @@ void main() {
   );
 
   test(
+    'CLI rank cycle probe places rank bosses without runtime mutation',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/rank_cycle_probe.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--stations',
+        '1,2,3,4,5,6,7,8',
+        '--blind-tier',
+        'boss',
+        '--difficulty',
+        'standard',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_rank_cycle_probe_v1',
+        '--loadout-id',
+        'progression_route_power',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+
+      expect(
+        rows
+            .map(
+              (row) =>
+                  (row['experiment_effects']
+                      as Map<String, dynamic>)['sim_boss_constraint_id'],
+            )
+            .toList(),
+        [
+          'color_dampener_cycle',
+          'line_kind_dampener_cycle',
+          'face_tile_dampener',
+          'repeat_rank_pressure_v4',
+          'all_score_dampener',
+          'single_rank_pressure',
+          'first_confirm_tax',
+          'confirm_count_tax_v2',
+        ],
+      );
+      for (final row in rows) {
+        final effects = row['experiment_effects'] as Map<String, dynamic>;
+        expect(effects['rank_cycle_probe'], isTrue);
+        expect(effects['ordered_boss_targets'], isTrue);
+      }
+    },
+  );
+
+  test(
     'CLI weighted boss experiment rolls banded boss pool and records proxy ids',
     () async {
       final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
