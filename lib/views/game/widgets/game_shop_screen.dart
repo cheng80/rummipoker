@@ -127,6 +127,9 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _utilityOfferPage = 0;
   int _purchaseFlightTick = 0;
   _MarketPurchaseFlight? _purchaseFlight;
+  int _marketDenyTick = 0;
+  String? _marketDenyTarget;
+  String? _marketDenyReason;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
 
@@ -543,6 +546,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final boughtOffer = offers[index];
     final failMessage = widget.onBuyOffer(index);
     if (failMessage != null) {
+      _startMarketDenyFeedback('jester-buy', failMessage);
       showBottomNotice(context, failMessage);
       return;
     }
@@ -578,6 +582,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final boughtOffer = offers[index];
     final failMessage = widget.onBuyItemOffer(boughtOffer);
     if (failMessage != null) {
+      _startMarketDenyFeedback('item-buy', failMessage);
       showBottomNotice(context, failMessage);
       return;
     }
@@ -662,11 +667,28 @@ class _GameShopScreenState extends State<GameShopScreen>
     });
   }
 
+  void _startMarketDenyFeedback(String target, String reason) {
+    final tick = _marketDenyTick + 1;
+    setState(() {
+      _marketDenyTick = tick;
+      _marketDenyTarget = target;
+      _marketDenyReason = reason;
+    });
+    Future<void>.delayed(const Duration(milliseconds: 560), () {
+      if (!mounted || _marketDenyTick != tick) return;
+      setState(() {
+        _marketDenyTarget = null;
+        _marketDenyReason = null;
+      });
+    });
+  }
+
   void _useSelectedMarketItem(RummiMarketItemSlotView slot) {
     final item = slot.item;
     if (item == null) return;
     final failMessage = widget.onUseMarketItem(item);
     if (failMessage != null) {
+      _startMarketDenyFeedback('item-use', failMessage);
       showBottomNotice(context, failMessage);
       return;
     }
@@ -697,6 +719,9 @@ class _GameShopScreenState extends State<GameShopScreen>
         buttonLabel: '사용',
         buttonColor: const Color(0xFF2E8BC0),
         onPressed: () => _useSelectedMarketItem(slot),
+        denyActive: _marketDenyTarget == 'item-use',
+        denyTick: _marketDenyTick,
+        denyReason: _marketDenyReason,
       );
     }
     if (item.effect.timing == 'market_buy' ||
@@ -1257,9 +1282,23 @@ class _GameShopScreenState extends State<GameShopScreen>
                                     onPressed: selectedOffer.isAffordable
                                         ? _buySelected
                                         : null,
+                                    onDeniedPressed: selectedOffer.isAffordable
+                                        ? null
+                                        : () {
+                                            const reason = 'Gold 부족';
+                                            _startMarketDenyFeedback(
+                                              'jester-buy',
+                                              reason,
+                                            );
+                                            showBottomNotice(context, reason);
+                                          },
                                     disabledReason: selectedOffer.isAffordable
                                         ? null
                                         : 'Gold 부족',
+                                    denyActive:
+                                        _marketDenyTarget == 'jester-buy',
+                                    denyTick: _marketDenyTick,
+                                    denyReason: _marketDenyReason,
                                   )
                                 : selectedItemOffer != null
                                 ? _MarketActionPane(
@@ -1270,10 +1309,24 @@ class _GameShopScreenState extends State<GameShopScreen>
                                     onPressed: selectedItemOffer.isAffordable
                                         ? _buySelectedItem
                                         : null,
+                                    onDeniedPressed:
+                                        selectedItemOffer.isAffordable
+                                        ? null
+                                        : () {
+                                            const reason = 'Gold 부족';
+                                            _startMarketDenyFeedback(
+                                              'item-buy',
+                                              reason,
+                                            );
+                                            showBottomNotice(context, reason);
+                                          },
                                     disabledReason:
                                         selectedItemOffer.isAffordable
                                         ? null
                                         : 'Gold 부족',
+                                    denyActive: _marketDenyTarget == 'item-buy',
+                                    denyTick: _marketDenyTick,
+                                    denyReason: _marketDenyReason,
                                   )
                                 : selectedOwnedItemSlot != null
                                 ? _ownedMarketItemActionPane(
@@ -1747,7 +1800,11 @@ class _MarketActionPane extends StatelessWidget {
     required this.buttonColor,
     this.foreground = Colors.white,
     this.onPressed,
+    this.onDeniedPressed,
     this.disabledReason,
+    this.denyActive = false,
+    this.denyTick = 0,
+    this.denyReason,
   });
 
   final String priceLabel;
@@ -1755,52 +1812,139 @@ class _MarketActionPane extends StatelessWidget {
   final Color buttonColor;
   final Color foreground;
   final VoidCallback? onPressed;
+  final VoidCallback? onDeniedPressed;
   final String? disabledReason;
+  final bool denyActive;
+  final int denyTick;
+  final String? denyReason;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 96,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    final pane = Padding(
+      padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            priceLabel,
+            maxLines: 1,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.clip,
+            style: const TextStyle(
+              color: Color(0xFFF2C14E),
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          GameActionButton(
+            label: buttonLabel,
+            background: buttonColor,
+            foreground: foreground,
+            compact: true,
+            onPressed: onPressed,
+          ),
+          if (disabledReason != null) ...[
+            const SizedBox(height: 4),
             Text(
-              priceLabel,
+              disabledReason!,
               maxLines: 1,
               textAlign: TextAlign.center,
               overflow: TextOverflow.clip,
               style: const TextStyle(
-                color: Color(0xFFF2C14E),
-                fontSize: 16,
+                color: Color(0xFFFF8F74),
+                fontSize: 10,
                 fontWeight: FontWeight.w900,
+                height: 1.0,
               ),
             ),
-            const SizedBox(height: 6),
-            GameActionButton(
-              label: buttonLabel,
-              background: buttonColor,
-              foreground: foreground,
-              compact: true,
-              onPressed: onPressed,
-            ),
-            if (disabledReason != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                disabledReason!,
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.clip,
-                style: const TextStyle(
-                  color: Color(0xFFFF8F74),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  height: 1.0,
+          ],
+        ],
+      ),
+    );
+    final animatedPane = TweenAnimationBuilder<double>(
+      key: ValueKey<int>(denyTick),
+      tween: Tween<double>(begin: 0, end: denyActive ? 1 : 0),
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final shake = denyActive
+            ? math.sin(value * math.pi * 5) * 5 * (1 - value)
+            : 0.0;
+        return Transform.translate(offset: Offset(shake, 0), child: child);
+      },
+      child: pane,
+    );
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onPressed == null ? onDeniedPressed : null,
+      child: SizedBox(
+        width: 96,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            animatedPane,
+            if (denyActive)
+              Positioned(
+                key: const ValueKey('market-deny-feedback'),
+                top: -10,
+                right: 0,
+                child: _MarketDenyBadge(
+                  label: denyReason == null || denyReason!.isEmpty
+                      ? '불가'
+                      : denyReason!,
                 ),
               ),
-            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketDenyBadge extends StatelessWidget {
+  const _MarketDenyBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.scale(scale: 0.9 + (0.1 * value), child: child),
+        );
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF3A1714).withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFFF8F74), width: 1.1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.24),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.clip,
+            style: const TextStyle(
+              color: Color(0xFFFFB6A6),
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
         ),
       ),
     );

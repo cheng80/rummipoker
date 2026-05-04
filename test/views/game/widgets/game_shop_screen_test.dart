@@ -38,6 +38,7 @@ Future<void> _pumpShopScreen(
   required String? Function(int offerIndex) onBuyOffer,
   String? Function(RummiMarketItemOfferView offer)? onBuyItemOffer,
   String? Function(ItemDefinition item)? onUseMarketItem,
+  bool initialItemShopTab = true,
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
@@ -69,7 +70,7 @@ Future<void> _pumpShopScreen(
                   onExitToTitle: () async {},
                   onRestartRun: () async {},
                   isDebugFixtureRun: false,
-                  initialItemShopTab: true,
+                  initialItemShopTab: initialItemShopTab,
                 ),
               ),
             ),
