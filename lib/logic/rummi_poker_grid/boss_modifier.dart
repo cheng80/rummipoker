@@ -1,3 +1,4 @@
+import 'hand_rank.dart';
 import 'line_ref.dart';
 import 'models/tile.dart';
 
@@ -8,6 +9,8 @@ enum RummiBossModifierCategory {
   allScoreWeaken,
   firstConfirmWeaken,
   confirmCountWeaken,
+  repeatHandRankWeaken,
+  singleHandRankPressure,
 }
 
 class RummiBossModifier {
@@ -35,6 +38,8 @@ class RummiBossModifier {
     if (id == allScoreDampener.id) return allScoreDampener;
     if (id == firstConfirmTax.id) return firstConfirmTax;
     if (id == confirmCountTax.id) return confirmCountTax;
+    if (id == repeatRankPressure.id) return repeatRankPressure;
+    if (id == singleRankPressure.id) return singleRankPressure;
     return RummiBossModifier(
       id: id ?? redDampener.id,
       category: RummiBossModifierCategory.values.byName(
@@ -165,6 +170,24 @@ class RummiBossModifier {
     scoreMultiplier: 0.75,
   );
 
+  static const repeatRankPressure = RummiBossModifier(
+    id: 'repeat_rank_pressure_v4',
+    category: RummiBossModifierCategory.repeatHandRankWeaken,
+    title: '반복 족보 약화',
+    ruleText: '이전 확정에서 사용한 족보를 다시 확정하면 점수 라인이 20% 감소합니다.',
+    markerText: '반복',
+    scoreMultiplier: 0.8,
+  );
+
+  static const singleRankPressure = RummiBossModifier(
+    id: 'single_rank_pressure',
+    category: RummiBossModifierCategory.singleHandRankPressure,
+    title: '단일 족보 압박',
+    ruleText: '첫 확정 족보를 다시 확정하면 점수 라인이 30% 감소합니다.',
+    markerText: '첫족보',
+    scoreMultiplier: 0.7,
+  );
+
   final String id;
   final RummiBossModifierCategory category;
   final String title;
@@ -190,6 +213,24 @@ class RummiBossModifier {
       RummiBossModifierCategory.confirmCountWeaken => ordinal >= 3,
       _ => false,
     };
+  }
+
+  bool affectsRepeatedRank(
+    RummiHandRank rank, {
+    required Iterable<RummiHandRank> confirmedRanks,
+  }) {
+    return category == RummiBossModifierCategory.repeatHandRankWeaken &&
+        confirmedRanks.contains(rank);
+  }
+
+  bool affectsFirstRankAgain(
+    RummiHandRank rank, {
+    required Iterable<RummiHandRank> confirmedRanks,
+  }) {
+    final firstRank = confirmedRanks.isEmpty ? null : confirmedRanks.first;
+    return category == RummiBossModifierCategory.singleHandRankPressure &&
+        firstRank != null &&
+        rank == firstRank;
   }
 
   Map<String, dynamic> toJson() => {

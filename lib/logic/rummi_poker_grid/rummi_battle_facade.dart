@@ -269,5 +269,8 @@ Iterable<(int, int)> _constrainedPreviewCells({
     case RummiBossModifierCategory.firstConfirmWeaken:
     case RummiBossModifierCategory.confirmCountWeaken:
       yield* line.contributingCells;
+    case RummiBossModifierCategory.repeatHandRankWeaken:
+    case RummiBossModifierCategory.singleHandRankPressure:
+      return;
   }
 }

@@ -117,6 +117,7 @@ void main() {
             ],
             confirmCountThisStation: 1,
             firstConfirmScoreThisStation: 50,
+            confirmedRanksThisStation: <String>['twoPair'],
             expiryGuardUsedThisStation: true,
           ),
           runProgress: const SavedRunProgressData(
@@ -217,6 +218,9 @@ void main() {
         );
         expect(restored.session.confirmCountThisStation, 1);
         expect(restored.session.firstConfirmScoreThisStation, 50);
+        expect(restored.session.confirmedRanksThisStation, <String>[
+          'twoPair',
+        ]);
         expect(restored.session.expiryGuardUsedThisStation, isTrue);
         expect(
           restored.runProgress.itemInventory.ownedItems.single.itemId,
@@ -407,6 +411,8 @@ void main() {
         RummiBossModifier.allScoreDampener,
         RummiBossModifier.firstConfirmTax,
         RummiBossModifier.confirmCountTax,
+        RummiBossModifier.repeatRankPressure,
+        RummiBossModifier.singleRankPressure,
       ];
 
       for (final modifier in modifiers) {
@@ -479,6 +485,7 @@ void main() {
         );
         session.confirmCountThisStation = 1;
         session.firstConfirmScoreThisStation = 50;
+        session.confirmedRanksThisStation.add(RummiHandRank.twoPair);
         session.tryUseExpiryGuard();
         session.drawToHand();
         session.blind.boardMovesRemaining = 1;
@@ -537,6 +544,9 @@ void main() {
         expect(restored.session.confirmModifiers.single.itemId, 'chip_capsule');
         expect(restored.session.confirmCountThisStation, 1);
         expect(restored.session.firstConfirmScoreThisStation, 50);
+        expect(restored.session.confirmedRanksThisStation, [
+          RummiHandRank.twoPair,
+        ]);
         expect(restored.session.expiryGuardUsedThisStation, isTrue);
         expect(restored.runProgress.itemInventory.passiveRelicIds, <String>[
           'market_compass',
@@ -556,6 +566,10 @@ void main() {
         );
         expect(restored.stageStartSnapshot.session.blind.boardMovesMax, 3);
         expect(restored.stageStartSnapshot.session.confirmModifiers, isEmpty);
+        expect(
+          restored.stageStartSnapshot.session.confirmedRanksThisStation,
+          isEmpty,
+        );
         expect(
           restored
               .stageStartSnapshot

@@ -124,6 +124,7 @@ class SavedSessionData {
     this.confirmModifiers = const [],
     this.confirmCountThisStation = 0,
     this.firstConfirmScoreThisStation = 0,
+    this.confirmedRanksThisStation = const [],
     this.expiryGuardUsedThisStation = false,
   });
 
@@ -143,6 +144,7 @@ class SavedSessionData {
   final List<Map<String, dynamic>> confirmModifiers;
   final int confirmCountThisStation;
   final int firstConfirmScoreThisStation;
+  final List<String> confirmedRanksThisStation;
   final bool expiryGuardUsedThisStation;
 
   Map<String, dynamic> toJson() => {
@@ -162,6 +164,7 @@ class SavedSessionData {
     'confirmModifiers': confirmModifiers,
     'confirmCountThisStation': confirmCountThisStation,
     'firstConfirmScoreThisStation': firstConfirmScoreThisStation,
+    'confirmedRanksThisStation': confirmedRanksThisStation,
     'expiryGuardUsedThisStation': expiryGuardUsedThisStation,
   };
 
@@ -209,6 +212,10 @@ class SavedSessionData {
           (json['confirmCountThisStation'] as num?)?.toInt() ?? 0,
       firstConfirmScoreThisStation:
           (json['firstConfirmScoreThisStation'] as num?)?.toInt() ?? 0,
+      confirmedRanksThisStation:
+          (json['confirmedRanksThisStation'] as List<dynamic>? ?? const [])
+              .cast<String>()
+              .toList(growable: false),
       expiryGuardUsedThisStation:
           json['expiryGuardUsedThisStation'] as bool? ??
           json['failedConfirmRefundUsedThisStation'] as bool? ??
@@ -548,6 +555,9 @@ class ActiveRunSaveService {
           .toList(growable: false),
       confirmCountThisStation: session.confirmCountThisStation,
       firstConfirmScoreThisStation: session.firstConfirmScoreThisStation,
+      confirmedRanksThisStation: session.confirmedRanksThisStation
+          .map((rank) => rank.name)
+          .toList(growable: false),
       expiryGuardUsedThisStation: session.expiryGuardUsedThisStation,
     );
   }
@@ -617,6 +627,9 @@ class ActiveRunSaveService {
           .toList(growable: false),
       confirmCountThisStation: data.confirmCountThisStation,
       firstConfirmScoreThisStation: data.firstConfirmScoreThisStation,
+      confirmedRanksThisStation: data.confirmedRanksThisStation
+          .map(RummiHandRank.values.byName)
+          .toList(growable: false),
       expiryGuardUsedThisStation: data.expiryGuardUsedThisStation,
     );
   }

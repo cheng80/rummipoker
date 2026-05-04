@@ -209,6 +209,7 @@ class RummiPokerGridSession {
     required this.confirmModifiers,
     required this.confirmCountThisStation,
     required this.firstConfirmScoreThisStation,
+    required this.confirmedRanksThisStation,
     required this.expiryGuardUsedThisStation,
     required this.engine,
   });
@@ -256,6 +257,7 @@ class RummiPokerGridSession {
       confirmModifiers: <RummiConfirmModifier>[],
       confirmCountThisStation: 0,
       firstConfirmScoreThisStation: 0,
+      confirmedRanksThisStation: <RummiHandRank>[],
       expiryGuardUsedThisStation: false,
       engine: RummiPokerGridEngine(),
     );
@@ -280,6 +282,7 @@ class RummiPokerGridSession {
     List<RummiConfirmModifier> confirmModifiers = const [],
     int confirmCountThisStation = 0,
     int firstConfirmScoreThisStation = 0,
+    List<RummiHandRank> confirmedRanksThisStation = const [],
     bool expiryGuardUsedThisStation = false,
   }) {
     return RummiPokerGridSession._(
@@ -299,6 +302,9 @@ class RummiPokerGridSession {
       confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
       confirmCountThisStation: confirmCountThisStation,
       firstConfirmScoreThisStation: firstConfirmScoreThisStation,
+      confirmedRanksThisStation: List<RummiHandRank>.from(
+        confirmedRanksThisStation,
+      ),
       expiryGuardUsedThisStation: expiryGuardUsedThisStation,
       engine: RummiPokerGridEngine(),
     );
@@ -326,6 +332,7 @@ class RummiPokerGridSession {
   final List<RummiConfirmModifier> confirmModifiers;
   int confirmCountThisStation;
   int firstConfirmScoreThisStation;
+  final List<RummiHandRank> confirmedRanksThisStation;
   bool expiryGuardUsedThisStation;
   final RummiPokerGridEngine engine;
 
@@ -540,6 +547,9 @@ class RummiPokerGridSession {
       confirmModifiers: List<RummiConfirmModifier>.from(confirmModifiers),
       confirmCountThisStation: confirmCountThisStation,
       firstConfirmScoreThisStation: firstConfirmScoreThisStation,
+      confirmedRanksThisStation: List<RummiHandRank>.from(
+        confirmedRanksThisStation,
+      ),
       expiryGuardUsedThisStation: expiryGuardUsedThisStation,
     );
   }
@@ -675,6 +685,7 @@ class RummiPokerGridSession {
       final constraintPenalties = <RummiConstraintPenaltyBreakdown>[];
       final constraintScore = _applyBossModifierToLine(
         score: lineScore,
+        rank: evaluation.rank,
         lineRef: line.ref,
         scoringTiles: line.scoringTiles,
         confirmOrdinal: confirmOrdinal,
@@ -734,6 +745,8 @@ class RummiPokerGridSession {
     if (consumedConfirmModifiers.isNotEmpty) {
       confirmModifiers.removeWhere(consumedConfirmModifiers.contains);
     }
+    // 다음 확정부터 같은 족보 반복 여부를 판단하기 위해 성공한 확정의 족보만 저장한다.
+    confirmedRanksThisStation.addAll(currentConfirmRankCounts.keys);
     confirmCountThisStation += 1;
     if (confirmCountThisStation == 1) {
       firstConfirmScoreThisStation = scoreSum;
@@ -830,6 +843,7 @@ class RummiPokerGridSession {
     confirmModifiers.clear();
     confirmCountThisStation = 0;
     firstConfirmScoreThisStation = 0;
+    confirmedRanksThisStation.clear();
     slideBonusTriggerCountThisStation = 0;
     expiryGuardUsedThisStation = false;
   }
@@ -867,6 +881,7 @@ class RummiPokerGridSession {
   ({int score, RummiConstraintPenaltyBreakdown? penalty})
   _applyBossModifierToLine({
     required int score,
+    required RummiHandRank rank,
     required LineRef lineRef,
     required List<Tile> scoringTiles,
     required int confirmOrdinal,
@@ -890,6 +905,16 @@ class RummiPokerGridSession {
         modifier.affectsConfirmOrdinal(confirmOrdinal),
       RummiBossModifierCategory.confirmCountWeaken =>
         modifier.affectsConfirmOrdinal(confirmOrdinal),
+      RummiBossModifierCategory.repeatHandRankWeaken =>
+        modifier.affectsRepeatedRank(
+          rank,
+          confirmedRanks: confirmedRanksThisStation,
+        ),
+      RummiBossModifierCategory.singleHandRankPressure =>
+        modifier.affectsFirstRankAgain(
+          rank,
+          confirmedRanks: confirmedRanksThisStation,
+        ),
     };
     if (!affected) {
       return (score: score, penalty: null);

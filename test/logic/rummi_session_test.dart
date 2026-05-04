@@ -388,6 +388,7 @@ void main() {
     expect(a.hand, isNotEmpty);
     expect(a.tryPlaceFromHand(a.hand.first, 0, 0), true);
     expect(a.board.cellAt(0, 0), isNotNull);
+    a.confirmedRanksThisStation.add(RummiHandRank.twoPair);
 
     final stageSeed = RummiPokerGridSession.deriveStageShuffleSeed(4242, 2);
     a.prepareNextBlind(
@@ -408,6 +409,7 @@ void main() {
     expect(a.eliminated, isEmpty);
     expect(a.blind.boardMovesRemaining, 3);
     expect(a.blind.boardMovesMax, 3);
+    expect(a.confirmedRanksThisStation, isEmpty);
     expect(a.deck.remaining, 52);
     expect(a.conservationTotal, 52);
     expect(a.drawToHand(), isNotNull);
@@ -715,6 +717,91 @@ void main() {
     expect(penalty.title, '누적 확정 약화');
     expect(penalty.markerText, '3+');
     expect(penalty.scoreDelta, -37);
+  });
+
+  test('보스 반복 족보 약화는 이전 confirm에 나온 같은 족보를 줄인다', () {
+    final board = RummiBoard();
+    board.setCell(2, 0, t(TileColor.red, 4));
+    board.setCell(2, 1, t(TileColor.blue, 4));
+    board.setCell(2, 2, t(TileColor.yellow, 9));
+    board.setCell(2, 3, t(TileColor.black, 9));
+    board.setCell(2, 4, t(TileColor.red, 12));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.repeatRankPressure,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final firstOut = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(firstOut.result.ok, true);
+    expect(firstOut.result.scoreAdded, 25);
+    expect(firstOut.result.lineBreakdowns.single.rank, RummiHandRank.twoPair);
+    expect(firstOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
+    expect(session.confirmedRanksThisStation, [RummiHandRank.twoPair]);
+
+    board.setCell(2, 0, t(TileColor.red, 5));
+    board.setCell(2, 1, t(TileColor.blue, 5));
+    board.setCell(2, 2, t(TileColor.yellow, 10));
+    board.setCell(2, 3, t(TileColor.black, 10));
+    board.setCell(2, 4, t(TileColor.red, 13));
+
+    final secondOut = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(secondOut.result.ok, true);
+    expect(secondOut.result.scoreAdded, 20);
+    final penalty =
+        secondOut.result.lineBreakdowns.single.constraintPenalties.single;
+    expect(penalty.title, '반복 족보 약화');
+    expect(penalty.markerText, '반복');
+    expect(penalty.scoreDelta, -5);
+    expect(penalty.scoreMultiplier, 0.8);
+  });
+
+  test('보스 단일 족보 압박은 첫 confirm 족보를 다시 쓰면 줄인다', () {
+    final board = RummiBoard();
+    board.setCell(2, 0, t(TileColor.red, 4));
+    board.setCell(2, 1, t(TileColor.blue, 4));
+    board.setCell(2, 2, t(TileColor.yellow, 9));
+    board.setCell(2, 3, t(TileColor.black, 9));
+    board.setCell(2, 4, t(TileColor.red, 12));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.singleRankPressure,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final firstOut = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(firstOut.result.ok, true);
+    expect(firstOut.result.scoreAdded, 25);
+    expect(firstOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
+    expect(session.confirmedRanksThisStation, [RummiHandRank.twoPair]);
+
+    board.setCell(2, 0, t(TileColor.red, 5));
+    board.setCell(2, 1, t(TileColor.blue, 5));
+    board.setCell(2, 2, t(TileColor.yellow, 10));
+    board.setCell(2, 3, t(TileColor.black, 10));
+    board.setCell(2, 4, t(TileColor.red, 13));
+
+    final secondOut = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(secondOut.result.ok, true);
+    expect(secondOut.result.scoreAdded, 18);
+    final penalty =
+        secondOut.result.lineBreakdowns.single.constraintPenalties.single;
+    expect(penalty.title, '단일 족보 압박');
+    expect(penalty.markerText, '첫족보');
+    expect(penalty.scoreDelta, -7);
+    expect(penalty.scoreMultiplier, 0.7);
   });
 
   test('투페어 확정 시 매칭된 4장만 제거되고 키커는 남는다', () {

@@ -285,12 +285,34 @@ Runtime S1~S8 boss cycle:
 - S8 boss 병목이 모든 조합에서 남는다. S8에 들어간 `confirm_count_tax_v2`는 보스 압박으로 읽히지만, 후반 병목을 키우는지 장기 sweep으로 확인해야 한다.
 - 자동 자원 지급/보정은 추가하지 않는다. 다음 조정이 필요하면 boss severity나 S8 후보군 availability를 먼저 본다.
 
+v90 boss runtime long sweep:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 800 --seed 90800 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_boss_runtime_v90_long_r800`
+- summary: `logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.json`
+- report: `logs/sim/ml_sweep_boss_runtime_v90_long_r800_report.md`
+- note: r120 smoke에서 확인한 신규 boss runtime cycle을 기존 장기 sweep 기준인 r800으로 재검증했다.
+
+| loadout | market | path clear | avg total turn | S1/S4/S5/S8 boss bottleneck | top bottlenecks | stop reason |
+|---|---|---:|---:|---|---|---|
+| balanced | none | 51.6% | 1353.3 | S1 32, S4 45, S5 34, S8 57 | S8 boss 57, S4 boss 45, S5 boss 34, S1 boss 32 | board 230, draw 155, both 2 |
+| balanced | v9 | 65.4% | 1386.6 | S1 30, S4 26, S5 24, S8 38 | S8 boss 38, S1 boss 30, S4 boss 26, S5 boss 24 | board 196, draw 78, both 3 |
+| power | none | 57.8% | 1348.2 | S1 45, S4 12, S5 2, S8 81 | S8 boss 81, S1 boss 45, S8 big 26, S7 boss 22 | board 203, draw 127, both 8 |
+| power | v9 | 73.2% | 1349.1 | S1 33, S4 9, S5 1, S8 29 | S1 boss 33, S8 boss 29, S1 big 21, S8 big 19 | board 148, draw 63, both 3 |
+
+판정:
+
+- r120 smoke에서 낮아 보였던 `balanced + none` 45.0%는 r800에서 51.6%로 회복됐다.
+- `shop_slot_market_v9`는 clear를 올리고 draw stop을 줄이지만, S1/S8 boss 병목은 지우지 않는다.
+- `power + v9`가 73.2%까지 올라가므로 S7~S8 shape floor나 market weight 추가 강화는 보류한다.
+- S8 `confirm_count_tax_v2`는 병목을 유지하지만, v9에서는 S8 boss stop이 balanced 38/800, power 29/800까지 내려가므로 즉시 완화할 hard wall로 보지 않는다.
+- 자동 자원 지급/자동 보정은 여전히 근거가 없다. 필요 시 boss severity/cycle 위치 또는 S8 후보군 availability를 먼저 검토한다.
+
 ## 5. Next Leveling Work
 
 다음 순서:
 
 1. S7~S8 shape floor는 현재 값으로 동결한다. 추가 강화하지 않는다.
-2. 신규 boss modifier cycle은 r120 smoke로 S1/S4/S5/S8 병목과 path clear 변화를 확인한다.
+2. 신규 boss modifier cycle은 r800 기준으로 1차 유지 가능하다. 다음 조정은 자동 보정이 아니라 boss severity/cycle 위치 또는 S8 market availability만 검토한다.
 3. repeat/single rank 계열은 이전 rank 기준 저장/표시 정책을 먼저 확정한다.
 4. Pack/Tarot-like/Planet-like를 별도 타입으로 승격할지, 현재 Item/market role proxy로 유지할지 결정한다.
 
