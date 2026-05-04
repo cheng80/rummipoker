@@ -339,6 +339,9 @@ Economy leveling gate:
 - current spend probe: `economy_spend_v1_r20`에서 `reward 0.45 / price 2.2 / reroll_slot_sell_v1`은 reroll spend 5550G, sell recovery 352G, slot replace 352회를 기록했다. S8 boss 시작 평균은 약 180G로 내려갔지만 최종 잔고 평균은 약 154G라 아직 높다.
 - r120 spend probe: `reward 0.34 / price 1.0`은 final gold avg 약 136.5G, `reward 0.45 / price 2.2`는 약 150.0G, `reward 0.40 / price 2.4`는 약 121.6G다.
 - current conclusion: scale-only 조정은 부족하다. 잔고를 더 누르면 clear가 흔들리므로 rarity/category별 가격 band와 누락된 gold sink를 분리해 다음 probe를 잡는다.
+- applied: `rarity_category_v1`, `rarity_category_soft_v1` sim-only price band mode를 추가했다.
+- price band probe: hard band r20은 balanced v9 45.0%, power v9 50.0%로 너무 강하고, soft band r20은 final gold avg 약 158.5G로 잔고 압박이 약하다.
+- current conclusion: 가격 band 단독 조정은 장기 후보에서 제외한다. 다음은 구매 후보 utility/cost 선택, reroll 빈도, 판매 회수율 모델을 더 현실화한다.
 
 ## 6. Read Order
 

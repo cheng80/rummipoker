@@ -205,6 +205,20 @@ r120 spend model probe:
 - 다음은 “가격 전체 배율”이 아니라 rarity/category별 가격 band와 실제 gold sink 누락을 나눠 본다.
 - 특히 pack/tarot/planet proxy, voucher proxy, reroll 비용, 판매 회수율이 실제 카탈로그 가격/가치와 맞는지 분리해야 한다.
 
+price band probe:
+
+- `--sim-price-band-mode rarity_category_v1`을 추가했다.
+- `--sim-price-band-mode rarity_category_soft_v1`을 추가했다.
+- 두 모드 모두 기본값이 아니며 runtime 가격에는 영향이 없다.
+- hard band `economy_price_band_v1_r20`: S8 boss 시작 평균 약 `168.1G`, final gold avg 약 `127.6G`, balanced v9 clear `45.0%`, power v9 clear `50.0%`.
+- soft band `economy_price_band_soft_v1_r20`: S8 boss 시작 평균 약 `194.1G`, final gold avg 약 `158.5G`, balanced v9 clear `55.0%`, power v9 clear `65.0%`.
+
+판정:
+
+- hard band는 v9 clear를 none보다 낮추는 방향이라 후보 노출을 “떠도 못 사는 상태”로 만들 위험이 있다.
+- soft band는 clear 충격은 덜하지만 잔고 압박이 약하다.
+- 가격 band 단독 조정은 다음 장기 후보에서 제외한다. 이후에는 실제 구매 후보별 utility/cost 선택 모델과 reroll 빈도, 판매 회수율을 더 현실화한 뒤 재검토한다.
+
 ### Phase 3. Economy Probe
 
 목표:
