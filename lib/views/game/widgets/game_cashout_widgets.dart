@@ -407,34 +407,30 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                AnimatedOpacity(
-                  opacity: _step >= 1 ? 1 : 0,
-                  duration: const Duration(milliseconds: 180),
+                _GameCashOutReveal(
+                  visible: _step >= 1,
                   child: _GameCashOutLine.fromSettlementEntry(
                     settlement.entries[0],
                   ),
                 ),
                 const SizedBox(height: 8),
-                AnimatedOpacity(
-                  opacity: _step >= 2 ? 1 : 0,
-                  duration: const Duration(milliseconds: 180),
+                _GameCashOutReveal(
+                  visible: _step >= 2,
                   child: _GameCashOutLine.fromSettlementEntry(
                     settlement.entries[1],
                   ),
                 ),
                 const SizedBox(height: 8),
-                AnimatedOpacity(
-                  opacity: _step >= 3 ? 1 : 0,
-                  duration: const Duration(milliseconds: 180),
+                _GameCashOutReveal(
+                  visible: _step >= 3,
                   child: _GameCashOutLine.fromSettlementEntry(
                     settlement.entries[2],
                   ),
                 ),
                 if (hasBonuses) ...[
                   const SizedBox(height: 8),
-                  AnimatedOpacity(
-                    opacity: _step >= 4 ? 1 : 0,
-                    duration: const Duration(milliseconds: 180),
+                  _GameCashOutReveal(
+                    visible: _step >= 4,
                     child: Column(
                       children: [
                         for (final entry in settlement.entries.where(
@@ -452,9 +448,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   ),
                 ],
                 const SizedBox(height: 12),
-                AnimatedOpacity(
-                  opacity: _step >= (hasBonuses ? 5 : 4) ? 1 : 0,
-                  duration: const Duration(milliseconds: 180),
+                _GameCashOutReveal(
+                  visible: _step >= (hasBonuses ? 5 : 4),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -522,6 +517,39 @@ String _bonusEntryDescription(
   return entry.description;
 }
 
+class _GameCashOutReveal extends StatelessWidget {
+  const _GameCashOutReveal({required this.visible, required this.child});
+
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final offset = Tween<Offset>(
+          begin: const Offset(0, 0.18),
+          end: Offset.zero,
+        ).animate(animation);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: offset,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1).animate(animation),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: visible ? child : const SizedBox.shrink(),
+    );
+  }
+}
+
 class _GameCashOutLine extends StatelessWidget {
   const _GameCashOutLine({
     required this.leading,
@@ -543,49 +571,107 @@ class _GameCashOutLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('cashout-line-pulse'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final pulse = (1 - value).clamp(0.0, 1.0);
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFF2C14E).withValues(alpha: 0.18 * pulse),
+                blurRadius: 18 * pulse,
+                spreadRadius: 1.5 * pulse,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF183E32),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                leading,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            _GameCashOutCollectBadge(gold: gold),
+          ],
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF183E32),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              leading,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
+    );
+  }
+}
+
+class _GameCashOutCollectBadge extends StatelessWidget {
+  const _GameCashOutCollectBadge({required this.gold});
+
+  final int gold;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('cashout-collect-badge'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final dy = lerpDouble(6, 0, value)!;
+        final scale = lerpDouble(0.94, 1, value)!;
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Transform.scale(scale: scale, child: child),
+        );
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B2311),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFF2C14E), width: 1),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          child: Text(
             '+$gold',
             style: const TextStyle(
               color: Color(0xFFF2C14E),
               fontSize: 16,
               fontWeight: FontWeight.w900,
+              height: 1,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
