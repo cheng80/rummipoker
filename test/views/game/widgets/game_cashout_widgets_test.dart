@@ -41,14 +41,22 @@ void main() {
       ),
     );
 
+    expect(find.byType(AnimatedSize), findsNothing);
+    final initialSheetHeight = tester
+        .getSize(find.byKey(const ValueKey('cashout-sheet-frame')))
+        .height;
+
     await tester.pump(const Duration(milliseconds: 240));
 
     expect(find.byKey(const ValueKey('cashout-collect-badge')), findsWidgets);
     expect(find.byKey(const ValueKey('cashout-line-pulse')), findsWidgets);
-    expect(find.byKey(const ValueKey('cashout-reveal-size')), findsWidgets);
     expect(find.text('+5'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 2));
+    final finalSheetHeight = tester
+        .getSize(find.byKey(const ValueKey('cashout-sheet-frame')))
+        .height;
+    expect(finalSheetHeight, initialSheetHeight);
 
     final totalGoldText = tester.widget<Text>(
       find.byKey(const ValueKey('cashout-total-gold-value')),
