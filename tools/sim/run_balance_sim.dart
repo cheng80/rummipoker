@@ -556,6 +556,11 @@ BalanceSimSequenceOutput _runStationPathSequence({
   var totalTurnCount = 0;
   var totalScore = 0;
   var totalTargetScore = 0;
+  var simEconomyGold = 0;
+  var simEconomyCashoutGold = 0;
+  var simEconomyKnownMarketSpend = 0;
+  var simEconomyMissingCostEvents = 0;
+  var simEconomyUnaffordableEvents = 0;
   int? failedAtStation;
   String? failedAtTier;
   int? failedStepIndex;
@@ -577,6 +582,34 @@ BalanceSimSequenceOutput _runStationPathSequence({
         previousStepResourceState: previousStepResourceState,
       );
       final resolvedMarketProfile = marketSelection.profile;
+      final marketPurchaseEvents = _sequenceMarketPurchaseEvents(
+        marketProfile: resolvedMarketProfile,
+        sourceCandidate: marketSelection.sourceCandidate,
+        jesterCatalog: jesterCatalog,
+        itemCatalog: itemCatalog,
+      );
+      final economyBeforeMarket = simEconomyGold;
+      var economyKnownSpendThisStep = 0;
+      var economyMissingCostThisStep = 0;
+      var economyUnaffordableThisStep = 0;
+      for (final event in marketPurchaseEvents) {
+        final cost = event['cost'];
+        if (cost is! num) {
+          economyMissingCostThisStep += 1;
+          continue;
+        }
+        final resolvedCost = cost.toInt();
+        if (resolvedCost <= 0) continue;
+        if (simEconomyGold >= resolvedCost) {
+          simEconomyGold -= resolvedCost;
+          economyKnownSpendThisStep += resolvedCost;
+        } else {
+          economyUnaffordableThisStep += 1;
+        }
+      }
+      simEconomyKnownMarketSpend += economyKnownSpendThisStep;
+      simEconomyMissingCostEvents += economyMissingCostThisStep;
+      simEconomyUnaffordableEvents += economyUnaffordableThisStep;
       final effectiveLoadout = _sequenceEffectiveLoadout(
         baseLoadout: spec.loadout,
         station: station,
@@ -608,6 +641,11 @@ BalanceSimSequenceOutput _runStationPathSequence({
       totalScore += result['final_score'] as int;
       totalTargetScore += row['target_score'] as int;
       if (cleared) clearedStepCount++;
+      final cashoutGold = cleared
+          ? _simCashoutGoldForBattleRow(row, station: station, tier: tier)
+          : 0;
+      simEconomyGold += cashoutGold;
+      simEconomyCashoutGold += cashoutGold;
 
       row['row_type'] = 'battle';
       row['run_id'] =
@@ -629,12 +667,19 @@ BalanceSimSequenceOutput _runStationPathSequence({
             .toList(growable: false);
       }
       row['base_loadout_id'] = spec.loadout.id;
-      row['market_purchase_events'] = _sequenceMarketPurchaseEvents(
-        marketProfile: resolvedMarketProfile,
-        sourceCandidate: marketSelection.sourceCandidate,
-        jesterCatalog: jesterCatalog,
-        itemCatalog: itemCatalog,
-      );
+      row['market_purchase_events'] = marketPurchaseEvents;
+      row['sim_economy_trace'] = <String, Object?>{
+        'schema_version': 1,
+        'mode': 'trace_only',
+        'gold_before_market': economyBeforeMarket,
+        'known_market_spend': economyKnownSpendThisStep,
+        'missing_cost_event_count': economyMissingCostThisStep,
+        'unaffordable_event_count': economyUnaffordableThisStep,
+        'gold_after_market': economyBeforeMarket - economyKnownSpendThisStep,
+        'cashout_gold': cashoutGold,
+        'gold_after_cashout': simEconomyGold,
+        'behavior_gated': false,
+      };
       battleRows.add(row);
       previousStepResourceState = _sequenceResourceStateFromRow(row);
 
@@ -668,6 +713,13 @@ BalanceSimSequenceOutput _runStationPathSequence({
             totalScore: totalScore,
             totalTargetScore: totalTargetScore,
             marketSelection: baseMarketSelection,
+            simEconomySummary: _simEconomySummary(
+              finalGold: simEconomyGold,
+              totalCashoutGold: simEconomyCashoutGold,
+              knownMarketSpend: simEconomyKnownMarketSpend,
+              missingCostEvents: simEconomyMissingCostEvents,
+              unaffordableEvents: simEconomyUnaffordableEvents,
+            ),
           ),
         );
       }
@@ -702,6 +754,13 @@ BalanceSimSequenceOutput _runStationPathSequence({
       totalScore: totalScore,
       totalTargetScore: totalTargetScore,
       marketSelection: baseMarketSelection,
+      simEconomySummary: _simEconomySummary(
+        finalGold: simEconomyGold,
+        totalCashoutGold: simEconomyCashoutGold,
+        knownMarketSpend: simEconomyKnownMarketSpend,
+        missingCostEvents: simEconomyMissingCostEvents,
+        unaffordableEvents: simEconomyUnaffordableEvents,
+      ),
     ),
   );
 }
@@ -729,6 +788,7 @@ Map<String, Object?> _buildSequenceSummaryRow({
   required int totalScore,
   required int totalTargetScore,
   required BalanceSimMarketSelection marketSelection,
+  required Map<String, Object?> simEconomySummary,
 }) {
   final resolvedMarketProfile = marketSelection.profile;
   return <String, Object?>{
@@ -775,6 +835,7 @@ Map<String, Object?> _buildSequenceSummaryRow({
       jesterCatalog: jesterCatalog,
       itemCatalog: itemCatalog,
     ),
+    'sim_economy_summary': simEconomySummary,
     'total_turn_count': totalTurnCount,
     'turn_per_attempted_step': attemptedStepCount == 0
         ? 0
@@ -787,6 +848,25 @@ Map<String, Object?> _buildSequenceSummaryRow({
     'total_score_ratio': totalTargetScore == 0
         ? 0
         : totalScore / totalTargetScore,
+  };
+}
+
+Map<String, Object?> _simEconomySummary({
+  required int finalGold,
+  required int totalCashoutGold,
+  required int knownMarketSpend,
+  required int missingCostEvents,
+  required int unaffordableEvents,
+}) {
+  return <String, Object?>{
+    'schema_version': 1,
+    'mode': 'trace_only',
+    'final_gold': finalGold,
+    'total_cashout_gold': totalCashoutGold,
+    'known_market_spend': knownMarketSpend,
+    'missing_cost_event_count': missingCostEvents,
+    'unaffordable_event_count': unaffordableEvents,
+    'behavior_gated': false,
   };
 }
 
@@ -811,7 +891,7 @@ Map<String, Object?> _sequenceResourceStateFromRow(
 ) {
   final startState = battleRow['start_state'] as Map<String, Object?>;
   final result = battleRow['result'] as Map<String, Object?>;
-  return <String, Object?>{
+  final resourceState = <String, Object?>{
     'station': battleRow['station'],
     'blind_tier': battleRow['blind_tier'],
     'target_score': battleRow['target_score'],
@@ -835,6 +915,31 @@ Map<String, Object?> _sequenceResourceStateFromRow(
     'discarded_board_count': result['discarded_board_count'],
     'max_single_confirm_score': result['max_single_confirm_score'],
   };
+  final economyTrace = battleRow['sim_economy_trace'];
+  if (economyTrace != null) {
+    resourceState['sim_economy_trace'] = economyTrace;
+  }
+  return resourceState;
+}
+
+int _simCashoutGoldForBattleRow(
+  Map<String, Object?> battleRow, {
+  required int station,
+  required BlindTier tier,
+}) {
+  final result = battleRow['result'] as Map<String, Object?>;
+  final remainingBoardDiscards =
+      (result['remaining_board_discards'] as num?)?.toInt() ?? 0;
+  final remainingHandDiscards =
+      (result['remaining_hand_discards'] as num?)?.toInt() ?? 0;
+  final firstBlindClearBonus = station == 1 && tier == BlindTier.small
+      ? RummiEconomyConfig.firstBlindClearBonusGold
+      : 0;
+  return RummiEconomyConfig.stageClearGoldBase +
+      firstBlindClearBonus +
+      remainingBoardDiscards *
+          RummiEconomyConfig.remainingBoardDiscardGoldBonus +
+      remainingHandDiscards * RummiEconomyConfig.remainingHandDiscardGoldBonus;
 }
 
 BalanceSimLoadoutSpec _sequenceEffectiveLoadout({

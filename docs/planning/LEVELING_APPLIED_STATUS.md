@@ -324,7 +324,9 @@ Economy leveling gate:
 - tool: `tools/sim/economy_audit.py`
 - current signal: v90 r800 summary 기준 평균 추정 cashout은 약 38G이고, common item/Jester 평균가는 약 4.3G라 정산 1회가 common 후보 8~9장 구매력이다.
 - implication: 보상/가격을 보정하기 전에는 v90 이후 장기 sweep을 확정 판단에 쓰지 않는다.
-- next implementation: runtime 저장 포맷을 바꾸지 않는 sim-only economy layer로 골드 수입, 구매비, 리롤비, 판매 회수, 잔고 부족 offer를 기록한다.
+- applied: runtime 저장 포맷을 바꾸지 않는 sim-only `trace_only` economy layer가 battle row와 sequence summary에 골드 수입, 알려진 구매비, cost-null 이벤트, 잔고 부족 이벤트를 기록한다.
+- current trace: `economy_trace_v1_r20` 탐색 run에서 trace-only 평균 최종 잔고가 약 770G로 높게 나왔다. 기존 sim은 가격/잔고로 market effect를 제한하지 않는 상태다.
+- next implementation: 별도 gated economy mode/profile로 구매 가능성에 따라 market effect 적용을 제한하고, 보상 scale/가격 scale 후보를 탐색한다.
 
 ## 6. Read Order
 

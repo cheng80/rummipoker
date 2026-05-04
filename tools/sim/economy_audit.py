@@ -239,6 +239,12 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     by_content: dict[str, list[int]] = defaultdict(list)
     by_market: dict[str, int] = Counter()
     by_station: dict[str, int] = Counter()
+    economy_trace_count = 0
+    economy_cashout_gold = 0
+    economy_known_market_spend = 0
+    economy_unaffordable_events = 0
+    economy_missing_cost_events = 0
+    economy_final_gold_values: list[int] = []
 
     with path.open(encoding="utf-8") as handle:
         for line in handle:
@@ -249,8 +255,24 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
             row_type = row.get("row_type")
             if row_type == "battle":
                 battle_count += 1
+                trace = row.get("sim_economy_trace")
+                if isinstance(trace, dict):
+                    economy_trace_count += 1
+                    economy_cashout_gold += _int(trace.get("cashout_gold"))
+                    economy_known_market_spend += _int(
+                        trace.get("known_market_spend")
+                    )
+                    economy_unaffordable_events += _int(
+                        trace.get("unaffordable_event_count")
+                    )
+                    economy_missing_cost_events += _int(
+                        trace.get("missing_cost_event_count")
+                    )
             elif row_type == "sequence_summary":
                 sequence_count += 1
+                summary = row.get("sim_economy_summary")
+                if isinstance(summary, dict):
+                    economy_final_gold_values.append(_int(summary.get("final_gold")))
             market = str(row.get("market_profile") or "unknown")
             by_market[market] += 1
             station = row.get("station")
@@ -294,6 +316,17 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
         "purchase_cost_by_content": {
             key: _numeric_summary(values)
             for key, values in sorted(by_content.items())
+        },
+        "sim_economy_trace": {
+            "available": economy_trace_count > 0,
+            "battle_trace_count": economy_trace_count,
+            "total_cashout_gold": economy_cashout_gold,
+            "known_market_spend": economy_known_market_spend,
+            "missing_cost_event_count": economy_missing_cost_events,
+            "unaffordable_event_count": economy_unaffordable_events,
+            "final_gold": _numeric_summary(economy_final_gold_values)
+            if economy_final_gold_values
+            else {"count": 0},
         },
     }
 
@@ -457,6 +490,14 @@ def _signals(report: dict[str, Any]) -> list[str]:
             signals.append(
                 "raw JSONL 구매 이벤트 절반 이상이 cost=null이라 실제 가격 산정 근거로 약함"
             )
+        sim_trace = jsonl_trace.get("sim_economy_trace", {})
+        if isinstance(sim_trace, dict) and sim_trace.get("available"):
+            final_gold = sim_trace.get("final_gold", {})
+            avg_final_gold = _float(final_gold.get("avg"))
+            if avg_final_gold >= 100:
+                signals.append(
+                    f"trace-only 평균 최종 잔고가 {avg_final_gold}G로 높아 구매/가격 gate 필요"
+                )
     return signals
 
 
@@ -508,6 +549,21 @@ def _print_report(report: dict[str, Any]) -> None:
             print(
                 f"- {category}: n={row['count']}, avg cost={row['avg']}, "
                 f"min={row['min']}, max={row['max']}"
+            )
+        sim_trace = trace.get("sim_economy_trace", {})
+        if sim_trace.get("available"):
+            final_gold = sim_trace["final_gold"]
+            print(
+                f"- sim economy cashout: {sim_trace['total_cashout_gold']}G, "
+                f"known spend: {sim_trace['known_market_spend']}G"
+            )
+            print(
+                f"- sim economy final gold avg: {final_gold['avg']}G, "
+                f"min={final_gold['min']}, max={final_gold['max']}"
+            )
+            print(
+                "- sim economy unaffordable events: "
+                f"{sim_trace['unaffordable_event_count']}"
             )
     purchase_power = report["purchase_power"]
     print()
