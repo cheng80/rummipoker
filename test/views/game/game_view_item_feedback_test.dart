@@ -83,6 +83,13 @@ void main() {
       find.byKey(const ValueKey('item-effect-spark-burst')),
       findsOneWidget,
     );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('item-effect-source-label')),
+        matching: find.text('Q1'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpWidget(const SizedBox.shrink());

@@ -584,6 +584,7 @@ class _GameViewState extends ConsumerState<GameView>
   void _showItemEffectFeedback({
     required String title,
     required String detail,
+    String? sourceLabel,
     bool passive = false,
   }) {
     if (!mounted) return;
@@ -593,6 +594,7 @@ class _GameViewState extends ConsumerState<GameView>
       _itemEffectFeedback = _ItemEffectFeedback(
         title: title,
         detail: detail,
+        sourceLabel: sourceLabel,
         passive: passive,
       );
     });
@@ -844,6 +846,7 @@ class _GameViewState extends ConsumerState<GameView>
     _showItemEffectFeedback(
       title: itemName,
       detail: _battleItemFeedbackDetail(slot.item),
+      sourceLabel: slot.slotLabel,
     );
     if (mounted) {
       setState(() => _selectedBattleItemSlot = null);
@@ -880,7 +883,11 @@ class _GameViewState extends ConsumerState<GameView>
     if (selectedIndex == null) {
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
       _showSnack('$itemName 사용');
-      _showItemEffectFeedback(title: itemName, detail: '덱 확인');
+      _showItemEffectFeedback(
+        title: itemName,
+        detail: '덱 확인',
+        sourceLabel: slot.slotLabel,
+      );
       return;
     }
 
@@ -894,7 +901,11 @@ class _GameViewState extends ConsumerState<GameView>
     }
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     _showSnack('$itemName 사용');
-    _showItemEffectFeedback(title: itemName, detail: '덱 타일 1장 제거');
+    _showItemEffectFeedback(
+      title: itemName,
+      detail: '덱 타일 1장 제거',
+      sourceLabel: slot.slotLabel,
+    );
     await _saveActiveRun();
   }
 
@@ -1821,11 +1832,13 @@ class _ItemEffectFeedback {
   const _ItemEffectFeedback({
     required this.title,
     required this.detail,
+    this.sourceLabel,
     required this.passive,
   });
 
   final String title;
   final String detail;
+  final String? sourceLabel;
   final bool passive;
 }
 
@@ -1888,6 +1901,34 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (feedback.sourceLabel != null) ...[
+                            DecoratedBox(
+                              key: const ValueKey('item-effect-source-label'),
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: accent.withValues(alpha: 0.45),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                child: Text(
+                                  feedback.sourceLabel!,
+                                  style: TextStyle(
+                                    color: accent,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                          ],
                           Text(
                             feedback.title,
                             maxLines: 1,
