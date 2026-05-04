@@ -230,12 +230,20 @@ affordable choice probe:
 |---|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|
 | `economy_choice_affordable_v1_r20` | 0.40 | 2.4 | affordable | 30.0% | 55.0% | 50.0% | 70.0% | 77.3G | 136.4G | 111.9G |
 | `economy_choice_affordable_v1_r120` | 0.40 | 2.4 | affordable | 52.5% | 70.0% | 63.3% | 67.5% | 78.5G | 142.1G | 121.7G |
+| `economy_choice_reward036_price240_v1_r120` | 0.36 | 2.4 | affordable | 55.8% | 70.8% | 66.7% | 61.7% | 70.5G | 129.7G | 106.8G |
+| `economy_choice_reward038_price240_v1_r120` | 0.38 | 2.4 | affordable | 54.2% | 65.0% | 63.3% | 67.5% | 75.4G | 138.6G | 116.1G |
+| `economy_choice_reward039_price240_v1_r120` | 0.39 | 2.4 | affordable | 55.8% | 60.8% | 64.2% | 66.7% | 77.9G | 146.5G | 121.3G |
+| `economy_choice_reward036_price260_v1_r120` | 0.36 | 2.6 | affordable | 57.5% | 64.2% | 68.3% | 66.7% | 70.8G | 131.9G | 108.8G |
+| `economy_choice_reward038_price260_v1_r120` | 0.38 | 2.6 | affordable | 50.8% | 65.8% | 69.2% | 68.3% | 75.9G | 139.8G | 116.9G |
 
 판정:
 
 - r120 기준으로 v9가 none보다 명확히 좋은 상태를 유지하면서 S8 boss 진입 잔고를 150G대에서 140G대 초반으로 낮췄다.
-- 다만 final gold avg가 여전히 약 121.7G라 경제 gate 완료는 아니다.
-- 다음 후보는 `reward 0.36~0.40`, `price 2.4~2.8`, `affordable_alternative_v1`, `reroll_slot_sell_v1` 조합에서 r120 1~2개를 더 좁힌다.
+- `price 2.6`은 잔고를 낮추지만 power v9가 none보다 낮거나 거의 같아져 시장 성장 보상의 의미가 약해진다.
+- `reward 0.36 / price 2.4`는 final gold avg를 약 106.8G까지 낮추지만 power v9가 none보다 낮아져 너무 강하다.
+- 현재 가장 덜 깨지는 후보는 `reward 0.38 / price 2.4`다. S8 boss 진입 잔고는 약 138.6G, final gold avg는 약 116.1G이고, balanced/power 모두 v9가 none보다 높다.
+- 다만 final gold avg가 여전히 100G 이상이고 balanced v9가 70.0%에서 65.0%로 내려가므로 economy gate 완료는 아니다.
+- 다음은 런타임 적용 전, `reward 0.38 / price 2.4`를 기준으로 실제 가격 테이블 후보 또는 gold sink 누락분을 분리해 검토한다.
 
 ### Phase 3. Economy Probe
 
