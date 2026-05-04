@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -72,89 +73,167 @@ class GameStageClearOverlay extends StatelessWidget {
           builder: (context, scale, child) {
             return Transform.scale(scale: scale, child: child);
           },
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 28),
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF153C31),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
-                width: 1.4,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.28),
-                  blurRadius: 18,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isSettlement ? 'SCORE SETTLED' : 'STATION CLEAR',
-                  style: TextStyle(
-                    color: isSettlement
-                        ? Colors.white.withValues(alpha: 0.78)
-                        : const Color(0xFFF2C14E),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (!isSettlement) const _StageClearSparkField(),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 28),
+                padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF153C31),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
+                    width: 1.4,
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Station $stageIndex',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.96),
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                if (isSettlement)
-                  TweenAnimationBuilder<int>(
-                    tween: IntTween(begin: 0, end: scoreAdded),
-                    duration: const Duration(milliseconds: 720),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, _) {
-                      return Text(
-                        '+$value',
-                        style: const TextStyle(
-                          color: Color(0xFFF2C14E),
-                          fontSize: 38,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
-                      );
-                    },
-                  )
-                else
-                  Text(
-                    'Station Goal 달성',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.28),
+                      blurRadius: 18,
+                      spreadRadius: 2,
                     ),
-                  ),
-                const SizedBox(height: 8),
-                Text(
-                  isSettlement ? '이번 확정으로 +$scoreAdded' : '정산 중...',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.66),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  ],
                 ),
-              ],
-            ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isSettlement ? 'SCORE SETTLED' : 'STATION CLEAR',
+                      style: TextStyle(
+                        color: isSettlement
+                            ? Colors.white.withValues(alpha: 0.78)
+                            : const Color(0xFFF2C14E),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Station $stageIndex',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.96),
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (isSettlement)
+                      TweenAnimationBuilder<int>(
+                        tween: IntTween(begin: 0, end: scoreAdded),
+                        duration: const Duration(milliseconds: 720),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) {
+                          return Text(
+                            '+$value',
+                            style: const TextStyle(
+                              color: Color(0xFFF2C14E),
+                              fontSize: 38,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          );
+                        },
+                      )
+                    else
+                      Text(
+                        'Station Goal 달성',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isSettlement ? '이번 확정으로 +$scoreAdded' : '정산 중...',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.66),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+}
+
+class _StageClearSparkField extends StatelessWidget {
+  const _StageClearSparkField();
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('stage-clear-spark-field'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        return Opacity(
+          opacity: (1 - value).clamp(0.0, 1.0),
+          child: CustomPaint(
+            painter: _StageClearSparkPainter(progress: value),
+            size: const Size(260, 150),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StageClearSparkPainter extends CustomPainter {
+  const _StageClearSparkPainter({required this.progress});
+
+  final double progress;
+
+  static const List<Offset> _origins = [
+    Offset(-90, -44),
+    Offset(-54, 38),
+    Offset(58, -42),
+    Offset(94, 32),
+    Offset(0, -64),
+    Offset(10, 54),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final paint = Paint()..strokeCap = StrokeCap.round;
+    for (var i = 0; i < _origins.length; i++) {
+      final angle = -math.pi / 2 + i * math.pi / 3;
+      final origin = center + _origins[i];
+      final travel = 20.0 + 8.0 * (i % 2);
+      final sparkCenter =
+          origin + Offset(math.cos(angle), math.sin(angle)) * travel * progress;
+      final arm = 5.0 + 2.0 * (1 - progress);
+      paint
+        ..color = const Color(
+          0xFFF2C14E,
+        ).withValues(alpha: 0.82 * (1 - progress))
+        ..strokeWidth = 2.2 * (1 - progress * 0.45);
+      canvas.drawLine(
+        sparkCenter.translate(-arm, 0),
+        sparkCenter.translate(arm, 0),
+        paint,
+      );
+      canvas.drawLine(
+        sparkCenter.translate(0, -arm),
+        sparkCenter.translate(0, arm),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StageClearSparkPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
 

@@ -1,10 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
+import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/utils/common_ui.dart';
 import 'package:rummipoker/views/game/widgets/game_cashout_widgets.dart';
 
 void main() {
+  testWidgets(
+    'GameStageClearOverlay shows spark field only during station clear',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: GameStageClearOverlay(
+              phase: GameStageFlowPhase.cleared,
+              stageIndex: 2,
+              scoreAdded: 150,
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const ValueKey('stage-clear-spark-field')),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: GameStageClearOverlay(
+              phase: GameStageFlowPhase.settlement,
+              stageIndex: 2,
+              scoreAdded: 150,
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const ValueKey('stage-clear-spark-field')),
+        findsNothing,
+      );
+    },
+  );
+
   testWidgets('GameCashOutSheet shows collection feedback as lines reveal', (
     tester,
   ) async {
