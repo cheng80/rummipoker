@@ -1513,6 +1513,7 @@ void main() {
       'shop_slot_market_v7',
       'shop_slot_market_v10',
       'shop_slot_market_v11',
+      'shop_slot_market_v12',
     ]) {
       final outPath = '${dir.path}/sequence_$marketProfile.jsonl';
       final code = await runBalanceSim([
@@ -4503,6 +4504,84 @@ void main() {
 
       expect(shapeProxyAppearances, greaterThan(0));
       expect(scoreBreakerAppearances, greaterThan(shapeProxyAppearances));
+    },
+  );
+
+  test(
+    'CLI shop slot market v12 raises final band shape floor without extra slots',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/market_v12_final_shape_source.jsonl';
+      final summaryPath = '${dir.path}/market_v12_final_shape_summary.json';
+      final code = await runBalanceSim([
+        '--runs',
+        '24',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '87200',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '7,8',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068',
+        '--market-profiles',
+        'shop_slot_market_v9,shop_slot_market_v12',
+        '--loadout-id',
+        'progression_route_balanced',
+        '--summary-out',
+        summaryPath,
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final summary =
+          jsonDecode(File(summaryPath).readAsStringSync())
+              as Map<String, dynamic>;
+      final groups = (summary['groups'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final shapeProxyIds = {
+        's1_candidate_tarot_build_pack',
+        's1_build_aware_pack_plus5',
+        's1_tile_pack_plus5',
+      };
+      final shapeAppearances = <String, int>{};
+      final slotTotals = <String, int>{};
+
+      for (final group in groups) {
+        final marketProfile = group['market_profile'] as String;
+        if (marketProfile != 'shop_slot_market_v9' &&
+            marketProfile != 'shop_slot_market_v12') {
+          continue;
+        }
+        final station = group['station'] as int;
+        if (station < 7 || station > 8) continue;
+        final slotCounts =
+            group['market_shop_slot_counts'] as Map<String, dynamic>;
+        for (final entry in slotCounts.entries) {
+          final count = (entry.value as num).toInt();
+          slotTotals[marketProfile] = (slotTotals[marketProfile] ?? 0) + count;
+          if (shapeProxyIds.contains(entry.key)) {
+            shapeAppearances[marketProfile] =
+                (shapeAppearances[marketProfile] ?? 0) + count;
+          }
+        }
+      }
+
+      expect(shapeAppearances['shop_slot_market_v9'], greaterThan(0));
+      expect(
+        shapeAppearances['shop_slot_market_v12'],
+        greaterThan(shapeAppearances['shop_slot_market_v9']!),
+      );
+      expect(
+        slotTotals['shop_slot_market_v12'],
+        slotTotals['shop_slot_market_v9'],
+      );
     },
   );
 
