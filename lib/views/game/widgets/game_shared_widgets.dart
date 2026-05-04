@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../game/rummi_poker_grid/rummikub_tile_canvas.dart';
+import '../../../logic/rummi_poker_grid/boss_modifier.dart';
 import '../../../logic/rummi_poker_grid/item_definition.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
@@ -178,10 +179,7 @@ class GameTopHud extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       )
                     else
-                      _BossModifierHudLabel(
-                        markerText: bossModifier.markerText,
-                        title: bossModifier.title,
-                      ),
+                      _BossModifierHudLabel(modifier: bossModifier),
                   ],
                 ),
               ),
@@ -449,13 +447,13 @@ class _StationGoalClearBadge extends StatelessWidget {
 }
 
 class _BossModifierHudLabel extends StatelessWidget {
-  const _BossModifierHudLabel({required this.markerText, required this.title});
+  const _BossModifierHudLabel({required this.modifier});
 
-  final String markerText;
-  final String title;
+  final RummiBossModifier modifier;
 
   @override
   Widget build(BuildContext context) {
+    final compactLabel = _bossModifierCompactHudLabel(modifier);
     return SizedBox(
       height: 13,
       child: Row(
@@ -477,7 +475,7 @@ class _BossModifierHudLabel extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                markerText,
+                modifier.markerText,
                 maxLines: 1,
                 style: const TextStyle(
                   color: Color(0xFF24120D),
@@ -494,7 +492,7 @@ class _BossModifierHudLabel extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                title,
+                compactLabel,
                 maxLines: 1,
                 style: gameHudSubStyle.copyWith(
                   color: const Color(0xFFFFD8CC),
@@ -508,6 +506,19 @@ class _BossModifierHudLabel extends StatelessWidget {
       ),
     );
   }
+}
+
+String _bossModifierCompactHudLabel(RummiBossModifier modifier) {
+  return switch (modifier.category) {
+    RummiBossModifierCategory.tileColorWeaken => '타일',
+    RummiBossModifierCategory.lineKindWeaken => '라인',
+    RummiBossModifierCategory.faceTileWeaken => '그림',
+    RummiBossModifierCategory.allScoreWeaken => '전체',
+    RummiBossModifierCategory.firstConfirmWeaken => '첫 확정',
+    RummiBossModifierCategory.confirmCountWeaken => '확정',
+    RummiBossModifierCategory.repeatHandRankWeaken => '반복',
+    RummiBossModifierCategory.singleHandRankPressure => '첫 족보',
+  };
 }
 
 String _battleBlindLabel(int tierIndex) {

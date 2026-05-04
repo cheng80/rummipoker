@@ -313,7 +313,8 @@ void main() {
 
     expect(find.text('BOSS'), findsOneWidget);
     expect(find.text('3+'), findsOneWidget);
-    expect(find.text('누적 확정 약화'), findsOneWidget);
+    expect(find.text('확정'), findsOneWidget);
+    expect(find.text('누적 확정 약화'), findsNothing);
     expect(find.text('보상 +3'), findsNothing);
   });
 
