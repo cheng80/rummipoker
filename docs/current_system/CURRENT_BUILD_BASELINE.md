@@ -154,7 +154,7 @@ One Pair는 V4 기본 규칙에서도 0점 dead line이다. One Pair 10점화는
 | 항목 | 현재 값 |
 |---|---:|
 | stageIndex 시작 | 1 |
-| 시작 골드 | 10 |
+| 시작 골드 | 0 |
 | stage clear 기본 보상 | 10 |
 | 남은 board discard 보상 | 개당 +5 |
 | 남은 hand discard 보상 | 개당 +2 |

@@ -93,7 +93,7 @@ V3의 30 Station은 후보일 뿐이다.
 
 현재:
 
-- startingGold 10
+- startingGold 0
 - stageClearGoldBase 10
 - reroll 5
 - stage target `300 * 1.6^(n-1)`

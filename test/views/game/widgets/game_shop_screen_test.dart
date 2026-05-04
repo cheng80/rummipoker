@@ -31,22 +31,6 @@ RummiJesterCard _jester({
   );
 }
 
-const RummiActiveRunSaveFacade _marketSaveFacade = RummiActiveRunSaveFacade(
-  schemaVersion: 2,
-  activeScene: 'shop',
-  sceneAlias: RummiSaveSceneAlias.market,
-  currentStageIndex: 2,
-  currentStationIndex: 2,
-  currentRunSeed: 77,
-  currentGold: 12,
-  checkpoint: RummiStationCheckpointSaveView(
-    stageIndex: 2,
-    stationIndex: 2,
-    runSeed: 77,
-    gold: 10,
-  ),
-);
-
 Future<void> _pumpShopScreen(
   WidgetTester tester, {
   required RummiMarketRuntimeFacade Function() readMarketView,

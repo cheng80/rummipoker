@@ -52,7 +52,7 @@
 - Hand: 기본 1장, debug 1~3장
 - Resources: board discard 4, hand discard 2
 - Run: stage → cash-out → full-screen Jester shop → next stage
-- Economy: start gold 10, stage clear base 10, reroll 5
+- Economy: start gold 0, stage clear base 10, reroll 5
 - Jester: curated common catalog, equipped slots 5, buy/sell/reroll, stateful 일부
 - Item: v1 data catalog/loader/market read path/buy command/inventory save/runtime hooks mostly connected; remaining hooks are tracked in `ITEM_EFFECT_RUNTIME_MATRIX.md`
 - Save: active run save v2, `stageStartSnapshot`, HMAC

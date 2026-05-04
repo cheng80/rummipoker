@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+
 import '../../../tools/sim/run_balance_sim.dart';
 
 void main() {
@@ -62,7 +64,7 @@ void main() {
       final startState = rows.first['start_state'] as Map<String, dynamic>;
       expect(startState['jester_ids'], ['jolly_jester', 'zany_jester']);
       expect(startState['item_ids'], ['slide_wax', 'move_token']);
-      expect(startState['gold'], 10);
+      expect(startState['gold'], RummiEconomyConfig.startingGold);
       expect(startState['board_discards'], isA<int>());
       expect(startState['hand_discards'], isA<int>());
       expect(startState['board_moves'], isA<int>());

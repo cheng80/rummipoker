@@ -192,7 +192,7 @@
 
 기본값:
 
-- 시작 골드: `10`
+- 시작 골드: `0`
 - stage clear 기본 보상: `10`
 - 남은 board discard 보상: `+5`씩
 - 남은 hand discard 보상: `+2`씩
