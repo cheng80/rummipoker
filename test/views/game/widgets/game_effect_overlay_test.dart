@@ -23,6 +23,10 @@ void main() {
       find.byKey(const ValueKey('settlement-score-mote-layer')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('line-confirm-sweep-layer')),
+      findsOneWidget,
+    );
     await tester.pump(const Duration(milliseconds: 1100));
   });
 

@@ -37,6 +37,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   String? _lastEffectSignature;
   bool _visible = false;
   List<Offset> _scoreMoteCenters = const [];
+  List<Offset> _lineSweepCenters = const [];
   int _scoreMoteTick = 0;
 
   @override
@@ -59,6 +60,11 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
               if (_scoreMoteCenters.isNotEmpty)
                 _SettlementScoreMoteLayer(
                   centers: _scoreMoteCenters,
+                  tick: _scoreMoteTick,
+                ),
+              if (_lineSweepCenters.isNotEmpty)
+                _LineConfirmSweepLayer(
+                  centers: _lineSweepCenters,
                   tick: _scoreMoteTick,
                 ),
             ],
@@ -106,9 +112,12 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       final scoreMoteCenters = effectKind == _BoardEffectKind.lineConfirm
           ? [for (final center in centers) Offset(center.x, center.y)]
           : const <Offset>[];
-      if (scoreMoteCenters.isNotEmpty || _scoreMoteCenters.isNotEmpty) {
+      if (scoreMoteCenters.isNotEmpty ||
+          _scoreMoteCenters.isNotEmpty ||
+          _lineSweepCenters.isNotEmpty) {
         setState(() {
           _scoreMoteCenters = scoreMoteCenters;
+          _lineSweepCenters = scoreMoteCenters;
           _scoreMoteTick = widget.settlementSequenceTick;
         });
       }
@@ -126,6 +135,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
         setState(() {
           _visible = false;
           _scoreMoteCenters = const [];
+          _lineSweepCenters = const [];
         });
       });
     });
@@ -169,6 +179,85 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
 }
 
 enum _BoardEffectKind { lineConfirm, constraintImpact, largeScore }
+
+class _LineConfirmSweepLayer extends StatelessWidget {
+  const _LineConfirmSweepLayer({required this.centers, required this.tick});
+
+  final List<Offset> centers;
+  final int tick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      key: const ValueKey('line-confirm-sweep-layer'),
+      fit: StackFit.expand,
+      children: [
+        for (var i = 0; i < centers.length; i++)
+          _LineConfirmSweepCell(
+            key: ValueKey<String>('line-confirm-sweep-$tick-$i'),
+            center: centers[i],
+            delay: Duration(milliseconds: i * 32),
+          ),
+      ],
+    );
+  }
+}
+
+class _LineConfirmSweepCell extends StatelessWidget {
+  const _LineConfirmSweepCell({
+    super.key,
+    required this.center,
+    required this.delay,
+  });
+
+  final Offset center;
+  final Duration delay;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      builder: (context, rawValue, child) {
+        final delayRatio = delay.inMilliseconds / 520;
+        final value = ((rawValue - delayRatio) / (1 - delayRatio)).clamp(
+          0.0,
+          1.0,
+        );
+        final opacity = value < 0.72 ? 1.0 : 1.0 - ((value - 0.72) / 0.28);
+        return Positioned(
+          left: center.dx - 18,
+          top: center.dy - 18,
+          width: 36,
+          height: 36,
+          child: Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: 0.72 + (value * 0.34),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(
+                    color: const Color(0xFFF2C14E).withValues(alpha: 0.86),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF2C14E).withValues(alpha: 0.34),
+                      blurRadius: 14,
+                      spreadRadius: 1.2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
 
 class _SettlementScoreMoteLayer extends StatelessWidget {
   const _SettlementScoreMoteLayer({required this.centers, required this.tick});
