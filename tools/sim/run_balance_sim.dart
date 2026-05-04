@@ -893,6 +893,7 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
     case BalanceSimMarketProfile.shopSlotMarketV10:
     case BalanceSimMarketProfile.shopSlotMarketV11:
     case BalanceSimMarketProfile.shopSlotMarketV12:
+    case BalanceSimMarketProfile.shopSlotMarketV13:
       break;
     case BalanceSimMarketProfile.s1CandidateCommonColorJester:
       _addUnique(jesterIds, _colorJesterForLoadout(stationBaseLoadout));
@@ -1058,6 +1059,7 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.shopSlotMarketV10 => 'shop_slot_market_v10',
     BalanceSimMarketProfile.shopSlotMarketV11 => 'shop_slot_market_v11',
     BalanceSimMarketProfile.shopSlotMarketV12 => 'shop_slot_market_v12',
+    BalanceSimMarketProfile.shopSlotMarketV13 => 'shop_slot_market_v13',
     BalanceSimMarketProfile.s1CandidateCommonColorJester =>
       'common_color_jester_proxy',
     BalanceSimMarketProfile.s1CandidateCommonRankJester =>
@@ -1101,6 +1103,7 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.shopSlotMarketV10 => 'sim_policy',
     BalanceSimMarketProfile.shopSlotMarketV11 => 'sim_policy',
     BalanceSimMarketProfile.shopSlotMarketV12 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV13 => 'sim_policy',
     BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 'planet',
     BalanceSimMarketProfile.s1CandidateTarotBuildPack => 'tarot',
     BalanceSimMarketProfile.s1CandidateVoucherResource => 'voucher',
@@ -1231,7 +1234,8 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
       marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
       marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
       marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
-      marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
   if (!isStationWeighted && !isStateWeighted && !isBanded && !isShopSlot) {
     return baseSelection;
   }
@@ -1248,7 +1252,8 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
     final lateTempoBiasStrong =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV4 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
@@ -1257,7 +1262,8 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
     final lateStaticGuard =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
@@ -1265,27 +1271,33 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
     final lateStaticGuardStrong =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
     final earlyFunBias =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
     final lateBreakerBias =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
     final finalShapeFloorStrong =
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
+        (marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 &&
+            station >= 8);
     final missingGrowthBias =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
@@ -2898,6 +2910,7 @@ List<Tile> _buildSimPackAddedTiles({
     BalanceSimMarketProfile.shopSlotMarketV10 ||
     BalanceSimMarketProfile.shopSlotMarketV11 ||
     BalanceSimMarketProfile.shopSlotMarketV12 ||
+    BalanceSimMarketProfile.shopSlotMarketV13 ||
     BalanceSimMarketProfile.s1CandidateCommonColorJester ||
     BalanceSimMarketProfile.s1CandidateCommonRankJester ||
     BalanceSimMarketProfile.s1CandidateUncommonBuildJester ||
@@ -5360,6 +5373,7 @@ enum BalanceSimMarketProfile {
   shopSlotMarketV10,
   shopSlotMarketV11,
   shopSlotMarketV12,
+  shopSlotMarketV13,
   s1CandidateCommonColorJester,
   s1CandidateCommonRankJester,
   s1CandidateUncommonBuildJester,
@@ -5419,6 +5433,7 @@ enum BalanceSimMarketProfile {
       'shop_slot_market_v10' => BalanceSimMarketProfile.shopSlotMarketV10,
       'shop_slot_market_v11' => BalanceSimMarketProfile.shopSlotMarketV11,
       'shop_slot_market_v12' => BalanceSimMarketProfile.shopSlotMarketV12,
+      'shop_slot_market_v13' => BalanceSimMarketProfile.shopSlotMarketV13,
       's1_candidate_common_color_jester' =>
         BalanceSimMarketProfile.s1CandidateCommonColorJester,
       's1_candidate_common_rank_jester' =>
@@ -5489,6 +5504,7 @@ enum BalanceSimMarketProfile {
       BalanceSimMarketProfile.shopSlotMarketV10 => 'shop_slot_market_v10',
       BalanceSimMarketProfile.shopSlotMarketV11 => 'shop_slot_market_v11',
       BalanceSimMarketProfile.shopSlotMarketV12 => 'shop_slot_market_v12',
+      BalanceSimMarketProfile.shopSlotMarketV13 => 'shop_slot_market_v13',
       BalanceSimMarketProfile.s1CandidateCommonColorJester =>
         's1_candidate_common_color_jester',
       BalanceSimMarketProfile.s1CandidateCommonRankJester =>
