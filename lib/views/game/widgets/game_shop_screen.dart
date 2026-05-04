@@ -118,6 +118,26 @@ class _MarketSaleFlight {
   final RummiJesterCard? jesterCard;
 }
 
+class _MarketItemUseFlight {
+  const _MarketItemUseFlight({
+    required this.tick,
+    required this.label,
+    required this.goldGain,
+    required this.startOffset,
+    required this.endOffset,
+    required this.itemPlacement,
+    required this.itemRarity,
+  });
+
+  final int tick;
+  final String label;
+  final int goldGain;
+  final Offset? startOffset;
+  final Offset? endOffset;
+  final ItemPlacement itemPlacement;
+  final ItemRarity itemRarity;
+}
+
 class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,
@@ -173,6 +193,8 @@ class _GameShopScreenState extends State<GameShopScreen>
   _MarketPurchaseFlight? _purchaseFlight;
   int _saleFlightTick = 0;
   _MarketSaleFlight? _saleFlight;
+  int _itemUseFlightTick = 0;
+  _MarketItemUseFlight? _itemUseFlight;
   final GlobalKey _marketSurfaceKey = GlobalKey();
   final GlobalKey _goldChipKey = GlobalKey();
   final Map<String, GlobalKey> _offerKeys = <String, GlobalKey>{};
@@ -696,6 +718,30 @@ class _GameShopScreenState extends State<GameShopScreen>
     });
   }
 
+  void _startMarketItemUseFlight({
+    required RummiMarketItemSlotView slot,
+    required ItemDefinition item,
+    required int goldGain,
+    required Offset? startOffset,
+    required Offset? endOffset,
+  }) {
+    final tick = _itemUseFlightTick + 1;
+    _itemUseFlightTick = tick;
+    _itemUseFlight = _MarketItemUseFlight(
+      tick: tick,
+      label: localizedItemSlotName(context, slot),
+      goldGain: goldGain,
+      startOffset: startOffset,
+      endOffset: endOffset,
+      itemPlacement: slot.placement,
+      itemRarity: item.rarity,
+    );
+    Future<void>.delayed(_marketPurchaseFlightDuration, () {
+      if (!mounted || _itemUseFlight?.tick != tick) return;
+      setState(() => _itemUseFlight = null);
+    });
+  }
+
   int _visibleOfferLaneCount() {
     final entries = _offerEntriesForTab(_market, _shopTab);
     final page = _shopTab == _MarketShopTab.cardsAndQuickSlots
@@ -785,6 +831,8 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _useSelectedMarketItem(RummiMarketItemSlotView slot) {
     final item = slot.item;
     if (item == null) return;
+    final startOffset = _flightCenterForKey(_itemSlotKey(slot.slotLabel));
+    final endOffset = _flightCenterForKey(_goldChipKey);
     final failMessage = widget.onUseMarketItem(item);
     if (failMessage != null) {
       _startMarketDenyFeedback('item-use', failMessage);
@@ -792,10 +840,20 @@ class _GameShopScreenState extends State<GameShopScreen>
       return;
     }
     final feedbackTick = _marketUseFeedbackTick + 1;
+    final goldGain = _marketUseGoldGain(item);
     setState(() {
       _marketUseFeedbackTick = feedbackTick;
       _marketUseFeedbackLabel = '사용 완료';
       _marketUseFeedbackDelta = _marketUseFeedbackDeltaLabel(item);
+      if (goldGain != null) {
+        _startMarketItemUseFlight(
+          slot: slot,
+          item: item,
+          goldGain: goldGain,
+          startOffset: startOffset,
+          endOffset: endOffset,
+        );
+      }
       final market = _market;
       final stillExists = market.itemSlots.any(
         (nextSlot) =>
@@ -817,12 +875,18 @@ class _GameShopScreenState extends State<GameShopScreen>
   }
 
   String? _marketUseFeedbackDeltaLabel(ItemDefinition item) {
-    final amount = item.effect.amount;
+    final amount = _marketUseGoldGain(item);
     return switch (item.effect.op) {
-      'gain_gold' when amount != null => '+${amount.toInt()}G',
+      'gain_gold' when amount != null => '+${amount}G',
       'reroll_item_offers_only' => 'Item Reroll',
       _ => null,
     };
+  }
+
+  int? _marketUseGoldGain(ItemDefinition item) {
+    final amount = item.effect.amount;
+    if (item.effect.op != 'gain_gold' || amount == null) return null;
+    return amount.toInt();
   }
 
   Widget? _ownedMarketItemActionPane(
@@ -1684,6 +1748,10 @@ class _GameShopScreenState extends State<GameShopScreen>
                 if (_saleFlight != null)
                   Positioned.fill(
                     child: _MarketSaleFlightOverlay(flight: _saleFlight!),
+                  ),
+                if (_itemUseFlight != null)
+                  Positioned.fill(
+                    child: _MarketItemUseFlightOverlay(flight: _itemUseFlight!),
                   ),
                 if (_marketUseFeedbackLabel != null)
                   Positioned.fill(
@@ -3617,6 +3685,87 @@ class _MarketSaleFlightCard extends StatelessWidget {
           label: flight.label,
           placement: placement,
           rarity: rarity,
+          selected: true,
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketItemUseFlightOverlay extends StatelessWidget {
+  const _MarketItemUseFlightOverlay({required this.flight});
+
+  final _MarketItemUseFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    final startOffset = flight.startOffset;
+    final endOffset = flight.endOffset;
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 16,
+            right: 42,
+            child: _MarketGoldGainBadge(gold: flight.goldGain),
+          ),
+          TweenAnimationBuilder<double>(
+            key: ValueKey<int>(flight.tick),
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: _marketPurchaseFlightDuration,
+            curve: Curves.easeInOutCubic,
+            builder: (context, value, child) {
+              if (startOffset != null && endOffset != null) {
+                final offset = Offset.lerp(startOffset, endOffset, value)!;
+                return Positioned(
+                  left:
+                      offset.dx -
+                      ((_marketOfferCardWidth + _marketCardSelectionInset * 2) /
+                          2),
+                  top:
+                      offset.dy -
+                      ((_marketOfferCardHeight +
+                              _marketCardSelectionInset * 2) /
+                          2),
+                  child: child!,
+                );
+              }
+              return Align(
+                alignment: Alignment.lerp(
+                  const Alignment(-0.48, -0.10),
+                  const Alignment(0.58, -0.84),
+                  value,
+                )!,
+                child: child,
+              );
+            },
+            child: _MarketItemUseFlightCard(flight: flight),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketItemUseFlightCard extends StatelessWidget {
+  const _MarketItemUseFlightCard({required this.flight});
+
+  final _MarketItemUseFlight flight;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('market-item-use-flight'),
+      width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+      height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+      child: _MarketSelectableCardFrame(
+        selected: true,
+        width: _marketOfferCardWidth,
+        height: _marketOfferCardHeight,
+        child: _MarketItemCardFace(
+          label: flight.label,
+          placement: flight.itemPlacement,
+          rarity: flight.itemRarity,
           selected: true,
         ),
       ),
