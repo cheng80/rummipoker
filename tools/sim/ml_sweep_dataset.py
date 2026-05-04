@@ -39,6 +39,7 @@ DEFAULT_OPTIONS: dict[str, Any] = {
     "sim_reward_scale": 1.0,
     "sim_price_scale": 1.0,
     "sim_market_budget_mode": "none",
+    "sim_market_spend_mode": "none",
     "small_multipliers": [0.95, 1.0],
     "big_multipliers": [0.90, 1.0],
     "boss_multipliers": [0.75, 0.85, 1.0],
@@ -170,6 +171,12 @@ def main(argv: list[str] | None = None) -> int:
         help="market당 sim-only 지출 예산 모델.",
     )
     parser.add_argument(
+        "--sim-market-spend-mode",
+        default=DEFAULT_OPTIONS["sim_market_spend_mode"],
+        choices=["none", "reroll_slot_sell_v1"],
+        help="reroll/slot replacement/sell recovery를 포함한 sim-only 지출 모델.",
+    )
+    parser.add_argument(
         "--small-multipliers",
         default=_join(DEFAULT_OPTIONS["small_multipliers"]),
         help="progression_curve용 small target multiplier 후보.",
@@ -247,6 +254,7 @@ def main(argv: list[str] | None = None) -> int:
             "sim_reward_scale": args.sim_reward_scale,
             "sim_price_scale": args.sim_price_scale,
             "sim_market_budget_mode": args.sim_market_budget_mode,
+            "sim_market_spend_mode": args.sim_market_spend_mode,
             "small_multipliers": _parse_multipliers(args.small_multipliers),
             "big_multipliers": _parse_multipliers(args.big_multipliers),
             "boss_multipliers": _parse_multipliers(args.boss_multipliers),
@@ -376,6 +384,7 @@ def run_from_options(options: dict[str, Any]) -> dict[str, Any]:
             "sim_reward_scale": resolved["sim_reward_scale"],
             "sim_price_scale": resolved["sim_price_scale"],
             "sim_market_budget_mode": resolved["sim_market_budget_mode"],
+            "sim_market_spend_mode": resolved["sim_market_spend_mode"],
             "summary_only": resolved["summary_only"],
             "jobs": resolved["jobs"],
         },
@@ -698,6 +707,8 @@ def _run_candidate(
         str(resolved["sim_price_scale"]),
         "--sim-market-budget-mode",
         str(resolved["sim_market_budget_mode"]),
+        "--sim-market-spend-mode",
+        str(resolved["sim_market_spend_mode"]),
     ]
     for market_profile in resolved["market_profiles"]:
         cmd.extend(["--market-profile", str(market_profile)])

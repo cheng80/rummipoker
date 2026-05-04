@@ -170,6 +170,26 @@ market budget probe:
 - result: unaffordable event는 생기지만, 알려진 spend가 줄어 중후반 잔고는 오히려 더 높게 남는다.
 - interpretation: 단순 지출 예산 제한은 구매 압박을 만들지만 골드 sink가 아니다. 다음은 reroll spend, slot cap, 판매 후 구매 여부를 함께 모델링해야 한다.
 
+5차 적용:
+
+- `--sim-market-spend-mode reroll_slot_sell_v1`을 추가한다.
+- 기본값은 `none`이라 기존 sweep 의미는 유지한다.
+- `reroll_slot_sell_v1`은 market 진입 전 tier/station band 기반 예상 reroll 비용을 차감한다.
+- Jester 슬롯이 가득 찬 상태에서 Jester 계열 후보를 사면, 가장 싼 기존 Jester 판매 회수금을 더하고 Jester 슬롯 cap을 유지한 loadout으로 전투를 돌린다.
+- item 계열도 같은 slot family가 가득 찼으면 같은 family의 가장 싼 sellPrice를 회수한다.
+- 이 모델은 유저에게 자동 판매를 강제하는 runtime 정책이 아니라, “슬롯이 찼을 때 유저가 판매 후 교체를 선택할 수 있다”는 경제 proxy다.
+
+spend model probe:
+
+- probe: `economy_spend_v1_r20`
+- mode: `gated_known_cost`
+- scale: reward `0.45`, price `2.2`
+- spend mode: `reroll_slot_sell_v1`
+- result: 알려진 spend `16039G`, reroll spend `5550G`, sell recovery `352G`, slot replace event `352`.
+- result: S4 boss 시작 평균 약 `97.5G`, S8 boss 시작 평균 약 `180.0G`, 최종 잔고 평균 약 `154.1G`.
+- path clear: balanced none `65.0%`, balanced v9 `65.0%`, power none `60.0%`, power v9 `70.0%`.
+- interpretation: budget cap보다 실제 gold sink 방향은 낫다. 다만 r20 탐색용이고 최종 잔고가 여전히 높아, `reward 0.34/price 1.0`, `reward 0.45/price 2.2`, `reward 0.40/price 2.4` 주변을 spend mode 포함 r120으로 비교한다.
+
 ### Phase 3. Economy Probe
 
 목표:

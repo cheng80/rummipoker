@@ -559,8 +559,11 @@ BalanceSimSequenceOutput _runStationPathSequence({
   var simEconomyGold = 0;
   var simEconomyCashoutGold = 0;
   var simEconomyKnownMarketSpend = 0;
+  var simEconomyRerollSpend = 0;
+  var simEconomySellRecovery = 0;
   var simEconomyMissingCostEvents = 0;
   var simEconomyUnaffordableEvents = 0;
+  var simEconomySlotReplaceEvents = 0;
   int? failedAtStation;
   String? failedAtTier;
   int? failedStepIndex;
@@ -595,8 +598,11 @@ BalanceSimSequenceOutput _runStationPathSequence({
       );
       final economyBeforeMarket = simEconomyGold;
       var economyKnownSpendThisStep = 0;
+      var economyRerollSpendThisStep = 0;
+      var economySellRecoveryThisStep = 0;
       var economyMissingCostThisStep = 0;
       var economyUnaffordableThisStep = 0;
+      var economySlotReplaceThisStep = 0;
       var marketEventsAffordable = true;
       final marketBudget = _simMarketBudgetForStep(
         mode: config.simMarketBudgetMode,
@@ -604,6 +610,17 @@ BalanceSimSequenceOutput _runStationPathSequence({
         currentGold: simEconomyGold,
       );
       var remainingMarketBudget = marketBudget;
+      final rerollSpend = _simMarketRerollSpendForStep(
+        mode: config.simMarketSpendMode,
+        station: station,
+        tier: tier,
+      );
+      if (rerollSpend > 0) {
+        final resolvedRerollSpend = min(simEconomyGold, rerollSpend);
+        simEconomyGold -= resolvedRerollSpend;
+        economyRerollSpendThisStep += resolvedRerollSpend;
+        economyKnownSpendThisStep += resolvedRerollSpend;
+      }
       for (final event in marketPurchaseEvents) {
         final cost = event['cost'];
         if (cost is! num) {
@@ -613,6 +630,18 @@ BalanceSimSequenceOutput _runStationPathSequence({
         }
         final resolvedCost = (cost * config.simPriceScale).round();
         if (resolvedCost <= 0) continue;
+        final slotReplacement = _simMarketSlotReplacementForEvent(
+          mode: config.simMarketSpendMode,
+          event: event,
+          loadout: stationBaseLoadout,
+          jesterCatalog: jesterCatalog,
+          itemCatalog: itemCatalog,
+        );
+        if (slotReplacement.replaced) {
+          simEconomyGold += slotReplacement.sellRecovery;
+          economySellRecoveryThisStep += slotReplacement.sellRecovery;
+          economySlotReplaceThisStep += 1;
+        }
         final withinBudget =
             remainingMarketBudget == null ||
             remainingMarketBudget >= resolvedCost;
@@ -628,8 +657,11 @@ BalanceSimSequenceOutput _runStationPathSequence({
         }
       }
       simEconomyKnownMarketSpend += economyKnownSpendThisStep;
+      simEconomyRerollSpend += economyRerollSpendThisStep;
+      simEconomySellRecovery += economySellRecoveryThisStep;
       simEconomyMissingCostEvents += economyMissingCostThisStep;
       simEconomyUnaffordableEvents += economyUnaffordableThisStep;
+      simEconomySlotReplaceEvents += economySlotReplaceThisStep;
       final appliedMarketProfile =
           config.simEconomyMode == BalanceSimEconomyMode.gatedKnownCost &&
               !marketEventsAffordable
@@ -640,6 +672,9 @@ BalanceSimSequenceOutput _runStationPathSequence({
         station: station,
         marketProfile: appliedMarketProfile,
         loadoutIdMarketProfile: spec.marketProfile,
+        enforceSlotCaps:
+            config.simMarketSpendMode ==
+            BalanceSimMarketSpendMode.rerollSlotSellV1,
       );
       final battleSpec = BalanceSimRunSpec(
         matrixIndex: spec.matrixIndex,
@@ -704,12 +739,16 @@ BalanceSimSequenceOutput _runStationPathSequence({
         'reward_scale': config.simRewardScale,
         'price_scale': config.simPriceScale,
         'market_budget_mode': config.simMarketBudgetMode.id,
+        'market_spend_mode': config.simMarketSpendMode.id,
         'market_budget': marketBudget,
         'gold_before_market': economyBeforeMarket,
         'known_market_spend': economyKnownSpendThisStep,
+        'reroll_spend': economyRerollSpendThisStep,
+        'sell_recovery': economySellRecoveryThisStep,
         'missing_cost_event_count': economyMissingCostThisStep,
         'unaffordable_event_count': economyUnaffordableThisStep,
-        'gold_after_market': economyBeforeMarket - economyKnownSpendThisStep,
+        'slot_replace_event_count': economySlotReplaceThisStep,
+        'gold_after_market': simEconomyGold,
         'cashout_gold': cashoutGold,
         'gold_after_cashout': simEconomyGold,
         'applied_market_profile': appliedMarketProfile.id,
@@ -753,12 +792,16 @@ BalanceSimSequenceOutput _runStationPathSequence({
               finalGold: simEconomyGold,
               totalCashoutGold: simEconomyCashoutGold,
               knownMarketSpend: simEconomyKnownMarketSpend,
+              rerollSpend: simEconomyRerollSpend,
+              sellRecovery: simEconomySellRecovery,
               missingCostEvents: simEconomyMissingCostEvents,
               unaffordableEvents: simEconomyUnaffordableEvents,
+              slotReplaceEvents: simEconomySlotReplaceEvents,
               economyMode: config.simEconomyMode,
               rewardScale: config.simRewardScale,
               priceScale: config.simPriceScale,
               marketBudgetMode: config.simMarketBudgetMode,
+              marketSpendMode: config.simMarketSpendMode,
             ),
           ),
         );
@@ -798,12 +841,16 @@ BalanceSimSequenceOutput _runStationPathSequence({
         finalGold: simEconomyGold,
         totalCashoutGold: simEconomyCashoutGold,
         knownMarketSpend: simEconomyKnownMarketSpend,
+        rerollSpend: simEconomyRerollSpend,
+        sellRecovery: simEconomySellRecovery,
         missingCostEvents: simEconomyMissingCostEvents,
         unaffordableEvents: simEconomyUnaffordableEvents,
+        slotReplaceEvents: simEconomySlotReplaceEvents,
         economyMode: config.simEconomyMode,
         rewardScale: config.simRewardScale,
         priceScale: config.simPriceScale,
         marketBudgetMode: config.simMarketBudgetMode,
+        marketSpendMode: config.simMarketSpendMode,
       ),
     ),
   );
@@ -900,12 +947,16 @@ Map<String, Object?> _simEconomySummary({
   required int finalGold,
   required int totalCashoutGold,
   required int knownMarketSpend,
+  required int rerollSpend,
+  required int sellRecovery,
   required int missingCostEvents,
   required int unaffordableEvents,
+  required int slotReplaceEvents,
   required BalanceSimEconomyMode economyMode,
   required double rewardScale,
   required double priceScale,
   required BalanceSimMarketBudgetMode marketBudgetMode,
+  required BalanceSimMarketSpendMode marketSpendMode,
 }) {
   return <String, Object?>{
     'schema_version': 1,
@@ -913,11 +964,15 @@ Map<String, Object?> _simEconomySummary({
     'reward_scale': rewardScale,
     'price_scale': priceScale,
     'market_budget_mode': marketBudgetMode.id,
+    'market_spend_mode': marketSpendMode.id,
     'final_gold': finalGold,
     'total_cashout_gold': totalCashoutGold,
     'known_market_spend': knownMarketSpend,
+    'reroll_spend': rerollSpend,
+    'sell_recovery': sellRecovery,
     'missing_cost_event_count': missingCostEvents,
     'unaffordable_event_count': unaffordableEvents,
+    'slot_replace_event_count': slotReplaceEvents,
     'behavior_gated': economyMode == BalanceSimEconomyMode.gatedKnownCost,
   };
 }
@@ -1011,11 +1066,137 @@ int? _simMarketBudgetForStep({
   return currentGold < bandBudget ? currentGold : bandBudget;
 }
 
+int _simMarketRerollSpendForStep({
+  required BalanceSimMarketSpendMode mode,
+  required int station,
+  required BlindTier tier,
+}) {
+  if (mode == BalanceSimMarketSpendMode.none) return 0;
+  if (tier == BlindTier.small) return 0;
+  final rerollCount = station >= 6 && tier == BlindTier.boss ? 2 : 1;
+  final rerollCost = station <= 2
+      ? 2
+      : station <= 5
+      ? 4
+      : 6;
+  return rerollCount * rerollCost;
+}
+
+_SimMarketSlotReplacement _simMarketSlotReplacementForEvent({
+  required BalanceSimMarketSpendMode mode,
+  required Map<String, Object?> event,
+  required BalanceSimLoadoutSpec loadout,
+  required RummiJesterCatalog jesterCatalog,
+  required ItemCatalog itemCatalog,
+}) {
+  if (mode == BalanceSimMarketSpendMode.none) {
+    return const _SimMarketSlotReplacement.none();
+  }
+  final family = _simMarketSlotFamilyForEvent(event);
+  if (family == _SimMarketSlotFamily.none) {
+    return const _SimMarketSlotReplacement.none();
+  }
+  if (family == _SimMarketSlotFamily.jester &&
+      loadout.jesterIds.length >= RummiRunProgress.maxJesterSlots) {
+    return _SimMarketSlotReplacement(
+      replaced: true,
+      sellRecovery: _simCheapestJesterSellRecovery(
+        loadout.jesterIds,
+        jesterCatalog,
+      ),
+    );
+  }
+  if (family == _SimMarketSlotFamily.item) {
+    final contentId = event['content_id'];
+    if (contentId is! String) return const _SimMarketSlotReplacement.none();
+    final item = itemCatalog.findById(contentId);
+    if (item == null ||
+        !_simItemSlotIsFull(loadout.itemIds, item, itemCatalog)) {
+      return const _SimMarketSlotReplacement.none();
+    }
+    return _SimMarketSlotReplacement(
+      replaced: true,
+      sellRecovery: _simCheapestItemSellRecovery(
+        loadout.itemIds,
+        item,
+        itemCatalog,
+      ),
+    );
+  }
+  return const _SimMarketSlotReplacement.none();
+}
+
+_SimMarketSlotFamily _simMarketSlotFamilyForEvent(Map<String, Object?> event) {
+  final category = event['category'];
+  return switch (category) {
+    'jester' || 'planet' => _SimMarketSlotFamily.jester,
+    'item' || 'voucher' => _SimMarketSlotFamily.item,
+    _ => _SimMarketSlotFamily.none,
+  };
+}
+
+int _simCheapestJesterSellRecovery(
+  List<String> jesterIds,
+  RummiJesterCatalog catalog,
+) {
+  var cheapest = 1 << 30;
+  for (final id in jesterIds) {
+    final card = catalog.findById(id);
+    if (card == null) continue;
+    cheapest = min(cheapest, max(1, card.baseCost ~/ 2));
+  }
+  return cheapest == 1 << 30 ? 0 : cheapest;
+}
+
+bool _simItemSlotIsFull(
+  List<String> itemIds,
+  ItemDefinition item,
+  ItemCatalog catalog,
+) {
+  final capacity = switch (item.placement) {
+    ItemPlacement.quickSlot => RunInventoryState.defaultQuickSlotCapacity,
+    ItemPlacement.passiveRack => RunInventoryState.defaultPassiveRelicCapacity,
+    ItemPlacement.equipped when item.slotHint == 'gear' => 2,
+    ItemPlacement.equipped => 3,
+    ItemPlacement.inventory => 99,
+  };
+  if (capacity >= 99) return false;
+  final occupied = itemIds
+      .map(catalog.findById)
+      .whereType<ItemDefinition>()
+      .where((owned) => _simSameItemSlotFamily(owned, item))
+      .length;
+  return occupied >= capacity;
+}
+
+bool _simSameItemSlotFamily(ItemDefinition a, ItemDefinition b) {
+  if (a.placement != b.placement) return false;
+  if (a.placement == ItemPlacement.equipped) {
+    return (a.slotHint == 'gear') == (b.slotHint == 'gear');
+  }
+  return true;
+}
+
+int _simCheapestItemSellRecovery(
+  List<String> itemIds,
+  ItemDefinition incoming,
+  ItemCatalog catalog,
+) {
+  var cheapest = 1 << 30;
+  for (final id in itemIds) {
+    final owned = catalog.findById(id);
+    if (owned == null || !_simSameItemSlotFamily(owned, incoming)) continue;
+    cheapest = min(cheapest, max(0, owned.sellPrice));
+  }
+  return cheapest == 1 << 30 ? 0 : cheapest;
+}
+
 BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
   required BalanceSimLoadoutSpec baseLoadout,
   required int station,
   required BalanceSimMarketProfile marketProfile,
   required BalanceSimMarketProfile loadoutIdMarketProfile,
+  bool enforceSlotCaps = false,
 }) {
   final stationBaseLoadout = _stationRouteLoadout(
     baseLoadout: baseLoadout,
@@ -1089,6 +1270,12 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
       break;
   }
   final growth = _simMarketLoadoutGrowth(marketProfile);
+  if (enforceSlotCaps && jesterIds.length > RummiRunProgress.maxJesterSlots) {
+    jesterIds.removeRange(
+      0,
+      jesterIds.length - RummiRunProgress.maxJesterSlots,
+    );
+  }
   return BalanceSimLoadoutSpec(
     id: '${stationBaseLoadout.id}__${loadoutIdMarketProfile.id}',
     jesterIds: List<String>.unmodifiable(jesterIds),
@@ -5593,6 +5780,40 @@ enum BalanceSimMarketBudgetMode {
   }
 }
 
+enum BalanceSimMarketSpendMode {
+  none,
+  rerollSlotSellV1;
+
+  static BalanceSimMarketSpendMode parse(String raw) {
+    return switch (raw) {
+      'none' => BalanceSimMarketSpendMode.none,
+      'reroll_slot_sell_v1' => BalanceSimMarketSpendMode.rerollSlotSellV1,
+      _ => throw FormatException('Unknown sim market spend mode: $raw'),
+    };
+  }
+
+  String get id {
+    return switch (this) {
+      BalanceSimMarketSpendMode.none => 'none',
+      BalanceSimMarketSpendMode.rerollSlotSellV1 => 'reroll_slot_sell_v1',
+    };
+  }
+}
+
+enum _SimMarketSlotFamily { none, jester, item }
+
+class _SimMarketSlotReplacement {
+  const _SimMarketSlotReplacement({
+    required this.replaced,
+    required this.sellRecovery,
+  });
+
+  const _SimMarketSlotReplacement.none() : replaced = false, sellRecovery = 0;
+
+  final bool replaced;
+  final int sellRecovery;
+}
+
 enum BalanceSimMarketProfile {
   none,
   s1BuyJolly,
@@ -5987,6 +6208,7 @@ class BalanceSimCliConfig {
     required this.simRewardScale,
     required this.simPriceScale,
     required this.simMarketBudgetMode,
+    required this.simMarketSpendMode,
     required this.targetMultiplierOverrides,
     required this.loadouts,
     required this.jesterIds,
@@ -6008,6 +6230,7 @@ class BalanceSimCliConfig {
     var simRewardScale = 1.0;
     var simPriceScale = 1.0;
     var simMarketBudgetMode = BalanceSimMarketBudgetMode.none;
+    var simMarketSpendMode = BalanceSimMarketSpendMode.none;
     List<int>? stations;
     List<BlindTier>? blindTiers;
     List<NewRunDifficulty>? difficulties;
@@ -6092,6 +6315,8 @@ class BalanceSimCliConfig {
           simPriceScale = parsed;
         case '--sim-market-budget-mode':
           simMarketBudgetMode = BalanceSimMarketBudgetMode.parse(readValue());
+        case '--sim-market-spend-mode':
+          simMarketSpendMode = BalanceSimMarketSpendMode.parse(readValue());
         case '--target-multiplier':
           targetMultiplierOverrides.add(
             BalanceSimTargetMultiplierOverride.parse(readValue()),
@@ -6164,6 +6389,7 @@ class BalanceSimCliConfig {
       simRewardScale: simRewardScale,
       simPriceScale: simPriceScale,
       simMarketBudgetMode: simMarketBudgetMode,
+      simMarketSpendMode: simMarketSpendMode,
       targetMultiplierOverrides:
           List<BalanceSimTargetMultiplierOverride>.unmodifiable(
             targetMultiplierOverrides,
@@ -6630,6 +6856,7 @@ class BalanceSimCliConfig {
   final double simRewardScale;
   final double simPriceScale;
   final BalanceSimMarketBudgetMode simMarketBudgetMode;
+  final BalanceSimMarketSpendMode simMarketSpendMode;
   final List<BalanceSimTargetMultiplierOverride> targetMultiplierOverrides;
   final List<BalanceSimLoadoutSpec> loadouts;
   final List<String> jesterIds;

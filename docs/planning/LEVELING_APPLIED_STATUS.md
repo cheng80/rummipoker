@@ -335,7 +335,9 @@ Economy leveling gate:
 - r120 probe: `reward 0.45 / price 2.2`는 balanced v9 64.2%, power v9 64.2%이고, `reward 0.34 / price 1.0`은 balanced v9 63.3%, power v9 73.3%다.
 - current conclusion: 단순 보상/가격 scale만으로는 경제 압박이 충분하지 않다. `gated_known_cost`에서도 잔고 부족 이벤트가 거의 없다.
 - applied: `station_band_v1` market budget probe를 추가했다. 이 방식은 unaffordable event를 만들지만 알려진 spend를 줄여 중후반 잔고가 더 높아질 수 있다.
-- next implementation: 단순 budget cap이 아니라 reroll spend, slot cap, 판매 후 구매 여부를 함께 반영하는 market spend model을 sim-only로 추가한다.
+- applied: `reroll_slot_sell_v1` market spend mode를 추가했다. 이 방식은 reroll spend, 슬롯이 찬 상태의 판매 회수, Jester slot cap 유지 loadout을 sim-only로 반영한다.
+- current spend probe: `economy_spend_v1_r20`에서 `reward 0.45 / price 2.2 / reroll_slot_sell_v1`은 reroll spend 5550G, sell recovery 352G, slot replace 352회를 기록했다. S8 boss 시작 평균은 약 180G로 내려갔지만 최종 잔고 평균은 약 154G라 아직 높다.
+- next probe: `reward 0.34 / price 1.0`, `reward 0.45 / price 2.2`, `reward 0.40 / price 2.4` 주변을 `reroll_slot_sell_v1` 포함 r120 탐색으로 비교한다.
 
 ## 6. Read Order
 

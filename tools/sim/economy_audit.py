@@ -242,8 +242,11 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     economy_trace_count = 0
     economy_cashout_gold = 0
     economy_known_market_spend = 0
+    economy_reroll_spend = 0
+    economy_sell_recovery = 0
     economy_unaffordable_events = 0
     economy_missing_cost_events = 0
+    economy_slot_replace_events = 0
     economy_final_gold_values: list[int] = []
     economy_mode = ""
     economy_by_station_tier: dict[str, dict[str, list[int]]] = defaultdict(
@@ -281,11 +284,16 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                     economy_known_market_spend += _int(
                         trace.get("known_market_spend")
                     )
+                    economy_reroll_spend += _int(trace.get("reroll_spend"))
+                    economy_sell_recovery += _int(trace.get("sell_recovery"))
                     economy_unaffordable_events += _int(
                         trace.get("unaffordable_event_count")
                     )
                     economy_missing_cost_events += _int(
                         trace.get("missing_cost_event_count")
+                    )
+                    economy_slot_replace_events += _int(
+                        trace.get("slot_replace_event_count")
                     )
             elif row_type == "sequence_summary":
                 sequence_count += 1
@@ -342,8 +350,11 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
             "battle_trace_count": economy_trace_count,
             "total_cashout_gold": economy_cashout_gold,
             "known_market_spend": economy_known_market_spend,
+            "reroll_spend": economy_reroll_spend,
+            "sell_recovery": economy_sell_recovery,
             "missing_cost_event_count": economy_missing_cost_events,
             "unaffordable_event_count": economy_unaffordable_events,
+            "slot_replace_event_count": economy_slot_replace_events,
             "final_gold": _numeric_summary(economy_final_gold_values)
             if economy_final_gold_values
             else {"count": 0},
@@ -584,6 +595,11 @@ def _print_report(report: dict[str, Any]) -> None:
             print(
                 f"- sim economy cashout: {sim_trace['total_cashout_gold']}G, "
                 f"known spend: {sim_trace['known_market_spend']}G"
+            )
+            print(
+                f"- sim economy reroll spend: {sim_trace['reroll_spend']}G, "
+                f"sell recovery: {sim_trace['sell_recovery']}G, "
+                f"slot replace events: {sim_trace['slot_replace_event_count']}"
             )
             print(
                 f"- sim economy final gold avg: {final_gold['avg']}G, "
