@@ -119,6 +119,9 @@ class GameTopHud extends StatelessWidget {
     final progress = objective.targetScore <= 0
         ? 0.0
         : (scoreTowardObjective / objective.targetScore).clamp(0.0, 1.0);
+    final goalReached =
+        objective.targetScore > 0 &&
+        scoreTowardObjective >= objective.targetScore;
     final goldDisplayValue = '${battle.currentGold}';
     final blindLabel = _battleBlindLabel(battle.currentBlindTierIndex);
     final blindColor = _battleBlindColor(battle.currentBlindTierIndex);
@@ -214,45 +217,59 @@ class GameTopHud extends StatelessWidget {
               },
               child: GameHudChip(
                 key: const ValueKey('station-goal-chip'),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    const Text(
-                      'STATION GOAL',
-                      style: gameHudLabelStyle,
-                      maxLines: 1,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.center,
-                          child: Text(
-                            '$scoreTowardObjective/${objective.targetScore}',
-                            maxLines: 1,
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.visible,
-                            style: gameHudValueStyle.copyWith(fontSize: 17),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'STATION GOAL',
+                          style: gameHudLabelStyle,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.center,
+                              child: Text(
+                                '$scoreTowardObjective/${objective.targetScore}',
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.visible,
+                                style: gameHudValueStyle.copyWith(fontSize: 17),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(99),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        backgroundColor: Colors.black.withValues(alpha: 0.3),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFFF4A81D),
+                        const SizedBox(height: 3),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(99),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 6,
+                            backgroundColor: Colors.black.withValues(
+                              alpha: 0.3,
+                            ),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFFF4A81D),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
+                    if (goalReached)
+                      const Positioned(
+                        key: ValueKey('station-goal-clear-badge'),
+                        right: -2,
+                        top: -5,
+                        child: _StationGoalClearBadge(),
+                      ),
                   ],
                 ),
               ),
@@ -327,6 +344,43 @@ class GameTopHud extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StationGoalClearBadge extends StatelessWidget {
+  const _StationGoalClearBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF113B31).withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: const Color(0xFF86F4C3).withValues(alpha: 0.92),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF86F4C3).withValues(alpha: 0.24),
+            blurRadius: 8,
+            spreadRadius: 0.7,
+          ),
+        ],
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        child: Text(
+          'CLEAR',
+          style: TextStyle(
+            color: Color(0xFFE8FFF4),
+            fontSize: 8,
+            fontWeight: FontWeight.w900,
+            height: 1,
+          ),
+        ),
       ),
     );
   }

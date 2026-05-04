@@ -164,6 +164,55 @@ void main() {
     expect(pulseSize, idleSize);
   });
 
+  testWidgets('GameTopHud shows clear badge when station goal is reached', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 900,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentBlindTierIndex: 1,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameTopHud(
+            station: station,
+            battle: battle,
+            onOptionsTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('station-goal-clear-badge')),
+      findsOneWidget,
+    );
+    expect(find.text('CLEAR'), findsOneWidget);
+  });
+
   testWidgets('GameTopHud surfaces active boss constraint in blind chip', (
     tester,
   ) async {
