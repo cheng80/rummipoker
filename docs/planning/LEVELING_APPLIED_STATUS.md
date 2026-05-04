@@ -312,10 +312,19 @@ v90 boss runtime long sweep:
 
 다음 순서:
 
-1. S7~S8 shape floor는 현재 값으로 동결한다. 추가 강화하지 않는다.
-2. 신규 boss modifier cycle은 r800 기준으로 1차 유지 가능하다. 다음 조정은 자동 보정이 아니라 boss severity/cycle 위치 또는 S8 market availability만 검토한다.
-3. repeat/single rank 계열은 modifier와 저장/표시 정책이 구현됐으므로, S1~S8 cycle 편입 전 severity와 배치 위치를 별도 sweep으로 검증한다.
-4. Pack/Tarot-like/Planet-like를 별도 타입으로 승격할지, 현재 Item/market role proxy로 유지할지 결정한다.
+1. Economy leveling gate를 먼저 통과한다. 보상 골드와 item/Jester 가격대가 구매력 기준과 맞지 않으면 boss/market 장기 sweep이 왜곡된다.
+2. S7~S8 shape floor는 현재 값으로 동결한다. 추가 강화하지 않는다.
+3. 신규 boss modifier cycle은 r800 기준으로 1차 유지 가능하다. 다음 조정은 자동 보정이 아니라 boss severity/cycle 위치 또는 S8 market availability만 검토한다.
+4. repeat/single rank 계열은 modifier와 저장/표시 정책이 구현됐으므로, S1~S8 cycle 편입 전 severity와 배치 위치를 별도 sweep으로 검증한다.
+5. Pack/Tarot-like/Planet-like를 별도 타입으로 승격할지, 현재 Item/market role proxy로 유지할지 결정한다.
+
+Economy leveling gate:
+
+- plan: `docs/planning/ECONOMY_LEVELING_PLAN.md`
+- tool: `tools/sim/economy_audit.py`
+- current signal: v90 r800 summary 기준 평균 추정 cashout은 약 38G이고, common item/Jester 평균가는 약 4.3G라 정산 1회가 common 후보 8~9장 구매력이다.
+- implication: 보상/가격을 보정하기 전에는 v90 이후 장기 sweep을 확정 판단에 쓰지 않는다.
+- next implementation: runtime 저장 포맷을 바꾸지 않는 sim-only economy layer로 골드 수입, 구매비, 리롤비, 판매 회수, 잔고 부족 offer를 기록한다.
 
 ## 6. Read Order
 
@@ -325,4 +334,5 @@ v90 boss runtime long sweep:
 2. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 3. `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
 4. `docs/planning/LEVELING_APPLIED_STATUS.md`
-5. 필요한 경우에만 `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
+5. `docs/planning/ECONOMY_LEVELING_PLAN.md`
+6. 필요한 경우에만 `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
