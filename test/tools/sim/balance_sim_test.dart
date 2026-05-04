@@ -3389,7 +3389,7 @@ void main() {
       expect(constraint['id'], 'confirm_count_tax_v2');
       expect(constraint.containsKey('max_confirm_actions'), isFalse);
       expect(constraint['confirm_after_limit_action_count'], 2);
-      expect(constraint['confirm_after_limit_score_multiplier'], 0.65);
+      expect(constraint['confirm_after_limit_score_multiplier'], 0.75);
     },
   );
 
@@ -3546,7 +3546,7 @@ void main() {
     expect(constraint['id'], 'confirm_count_tax_v2');
     expect(constraint.containsKey('max_confirm_actions'), isFalse);
     expect(constraint['confirm_after_limit_action_count'], 2);
-    expect(constraint['confirm_after_limit_score_multiplier'], 0.65);
+    expect(constraint['confirm_after_limit_score_multiplier'], 0.75);
   });
 
   test('CLI aliases candidate baseline v1 to current sim baseline', () async {

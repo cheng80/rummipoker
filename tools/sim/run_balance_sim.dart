@@ -5014,7 +5014,7 @@ BalanceSimBossConstraintChoice _bossConstraintChoiceForSlot({
             severity == 'v2' || severity == 'v3' || severity == 'v4' ? 2 : null,
         confirmAfterLimitScoreMultiplier:
             severity == 'v2' || severity == 'v3' || severity == 'v4'
-            ? 0.65
+            ? 0.75
             : null,
       ),
     ),
