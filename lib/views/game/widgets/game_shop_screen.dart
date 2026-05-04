@@ -180,6 +180,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _marketUseFeedbackTick = 0;
   String? _marketUseFeedbackLabel;
   String? _marketUseFeedbackDelta;
+  int _marketRerollFeedbackTick = 0;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
 
@@ -458,6 +459,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     setState(() {
       final market = _market;
+      _marketRerollFeedbackTick++;
       _selectedOfferIndex = market.offers.isEmpty ? null : 0;
       _selectedOwnedIndex ??= market.ownedEntries.isEmpty ? null : 0;
     });
@@ -1497,6 +1499,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                           ? () => _shiftMainOfferPage(1)
                                           : () => _shiftUtilityOfferPage(1),
                                       rerollCost: market.rerollCost,
+                                      feedbackTick: _marketRerollFeedbackTick,
                                       onReroll:
                                           _shopTab ==
                                               _MarketShopTab.cardsAndQuickSlots
@@ -2462,6 +2465,7 @@ class _MarketPagerBar extends StatelessWidget {
     required this.onPrev,
     required this.onNext,
     required this.rerollCost,
+    required this.feedbackTick,
     required this.onReroll,
   });
 
@@ -2470,6 +2474,7 @@ class _MarketPagerBar extends StatelessWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final int rerollCost;
+  final int feedbackTick;
   final VoidCallback? onReroll;
 
   @override
@@ -2497,11 +2502,19 @@ class _MarketPagerBar extends StatelessWidget {
         const SizedBox(width: 8),
         SizedBox(
           width: 86,
-          child: GameActionButton(
-            label: '리롤 $rerollCost',
-            background: const Color(0xFF2D6F9E),
-            compact: true,
-            onPressed: onReroll,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              GameActionButton(
+                label: '리롤 $rerollCost',
+                background: const Color(0xFF2D6F9E),
+                compact: true,
+                onPressed: onReroll,
+              ),
+              if (feedbackTick > 0)
+                _MarketRerollSuccessFeedback(tick: feedbackTick),
+            ],
           ),
         ),
         const SizedBox(width: 8),
@@ -2511,6 +2524,53 @@ class _MarketPagerBar extends StatelessWidget {
           size: 32,
         ),
       ],
+    );
+  }
+}
+
+class _MarketRerollSuccessFeedback extends StatelessWidget {
+  const _MarketRerollSuccessFeedback({required this.tick});
+
+  final int tick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      key: const ValueKey<String>('market-reroll-success-feedback'),
+      child: IgnorePointer(
+        child: TweenAnimationBuilder<double>(
+          key: ValueKey<String>('market-reroll-success-feedback-$tick'),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            final opacity = (1 - value).clamp(0.0, 1.0);
+            final scale = 1.0 + (value * 0.18);
+            return Opacity(
+              opacity: opacity,
+              child: Transform.scale(
+                scale: scale,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: const Color(0xFFFFD45A).withValues(alpha: 0.9),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFD45A).withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

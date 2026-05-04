@@ -158,6 +158,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 80));
 
     expect(offerReveal, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('market-reroll-success-feedback')),
+      findsOneWidget,
+    );
     expect(tester.getSize(offerReveal), initialOfferSize);
 
     await tester.pumpAndSettle();
