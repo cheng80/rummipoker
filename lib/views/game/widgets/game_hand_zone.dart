@@ -330,7 +330,7 @@ class _GameHandZoneState extends State<GameHandZone>
     if (to == null) {
       return const SizedBox.shrink();
     }
-    final startLeft = areaSize.width + 12;
+    final startLeft = -to.width - 12;
     final startTop = (areaSize.height - to.height) / 2;
     final left = lerpDouble(startLeft, to.left, t)!;
     final top = lerpDouble(startTop, to.top, t)!;

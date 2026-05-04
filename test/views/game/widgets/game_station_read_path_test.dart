@@ -376,6 +376,74 @@ void main() {
     expect(midTop, lessThan(startTop));
   });
 
+  testWidgets('GameHandZone draws an incoming tile from the deck side', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 3,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 14,
+      ),
+    );
+    final board = RummiBoard();
+    final first = Tile(id: 1, color: TileColor.red, number: 1);
+    final second = Tile(id: 2, color: TileColor.blue, number: 2);
+    var hand = [first];
+
+    Widget buildHandZone() {
+      final battle = RummiBattleRuntimeFacade(
+        stageIndex: 4,
+        currentGold: 27,
+        totalDeckSize: 52,
+        board: board,
+        hand: hand,
+        scoringCellKeys: const {},
+      );
+      return MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 120,
+            child: GameHandZone(
+              battle: battle,
+              station: station,
+              hand: hand,
+              selectedHandTile: null,
+              onHandTileTap: (_) {},
+              onDraw: () {},
+              tileWidth: 48,
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildHandZone());
+    hand = [first, second];
+    await tester.pumpWidget(buildHandZone());
+    await tester.pump();
+
+    final incomingFinder = find.byKey(const ValueKey('incoming-B2#2'));
+    expect(incomingFinder, findsOneWidget);
+    final startLeft = tester.widget<Positioned>(incomingFinder).left!;
+
+    await tester.pump(const Duration(milliseconds: 130));
+
+    final midLeft = tester.widget<Positioned>(incomingFinder).left!;
+    expect(midLeft, greaterThan(startLeft));
+  });
+
   testWidgets(
     'GameBoardGrid marks source, locked cells, and empty move targets',
     (tester) async {
