@@ -151,6 +151,13 @@ void main() {
       itemOfferSlotCount: 3,
       quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
       itemOffers: [itemOffer],
+      itemSlots: const [
+        RummiMarketItemSlotView(
+          slotIndex: 0,
+          slotLabel: 'T1',
+          placement: ItemPlacement.inventory,
+        ),
+      ],
     );
     var currentSave = const RummiActiveRunSaveFacade(
       schemaVersion: 2,
@@ -308,8 +315,19 @@ void main() {
       find.byKey(const ValueKey('market-gold-spend-badge')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('market-purchase-source-empty')),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('market-slot-pulse')), findsOneWidget);
     expect(find.text('-3G'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-item-slot-T1')),
+        matching: find.byKey(const ValueKey('market-item-card-face')),
+      ),
+      findsNothing,
+    );
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('market-purchase-flight')),
@@ -321,6 +339,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(boughtItemId, 'reroll_token');
+    expect(
+      find.byKey(const ValueKey('market-purchase-source-empty')),
+      findsNothing,
+    );
     expect(find.text('9'), findsOneWidget);
     expect(
       find.descendant(

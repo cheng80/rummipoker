@@ -23,6 +23,7 @@ const double _marketOwnedCardHeight = kBattleItemSlotHeight;
 const double _marketOfferCardWidth = kBattleItemSlotWidth;
 const double _marketOfferCardHeight = kBattleItemSlotHeight;
 const double _marketCardSelectionInset = kJesterSelectionOutset;
+const Duration _marketPurchaseFlightDuration = Duration(milliseconds: 560);
 const double _marketShopCellWidth = 72.0;
 const double _marketShopCellHeight =
     kBattleItemSlotHeight + (kJesterSelectionOutset * 2) + 16.0;
@@ -67,6 +68,12 @@ class _MarketPurchaseFlight {
     required this.slotLabel,
     required this.item,
     required this.spentGold,
+    required this.startAlignment,
+    required this.endAlignment,
+    required this.marketBeforePurchase,
+    required this.sourceVisibleIndex,
+    this.startOffset,
+    this.endOffset,
     this.jesterCard,
     this.itemPlacement,
     this.itemRarity,
@@ -77,6 +84,12 @@ class _MarketPurchaseFlight {
   final String slotLabel;
   final bool item;
   final int spentGold;
+  final Alignment startAlignment;
+  final Alignment endAlignment;
+  final RummiMarketRuntimeFacade marketBeforePurchase;
+  final int sourceVisibleIndex;
+  final Offset? startOffset;
+  final Offset? endOffset;
   final RummiJesterCard? jesterCard;
   final ItemPlacement? itemPlacement;
   final ItemRarity? itemRarity;
@@ -133,6 +146,10 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _utilityOfferPage = 0;
   int _purchaseFlightTick = 0;
   _MarketPurchaseFlight? _purchaseFlight;
+  final GlobalKey _marketSurfaceKey = GlobalKey();
+  final Map<String, GlobalKey> _offerKeys = <String, GlobalKey>{};
+  final Map<String, GlobalKey> _itemSlotKeys = <String, GlobalKey>{};
+  final Map<int, GlobalKey> _jesterSlotKeys = <int, GlobalKey>{};
   int _marketDenyTick = 0;
   String? _marketDenyTarget;
   String? _marketDenyReason;
@@ -143,6 +160,22 @@ class _GameShopScreenState extends State<GameShopScreen>
   bool _optionsDialogOpen = false;
 
   RummiMarketRuntimeFacade get _market => widget.readMarketView();
+
+  GlobalKey _offerKey(_MarketOfferEntry entry) {
+    final key = switch (entry.kind) {
+      _MarketOfferEntryKind.jester => 'j:${entry.jesterIndex}',
+      _MarketOfferEntryKind.item => 'i:${entry.itemIndex}',
+    };
+    return _offerKeys.putIfAbsent(key, GlobalKey.new);
+  }
+
+  GlobalKey _itemSlotKey(String slotLabel) {
+    return _itemSlotKeys.putIfAbsent(slotLabel, GlobalKey.new);
+  }
+
+  GlobalKey _jesterSlotKey(int slotIndex) {
+    return _jesterSlotKeys.putIfAbsent(slotIndex, GlobalKey.new);
+  }
 
   @override
   void initState() {
@@ -552,8 +585,13 @@ class _GameShopScreenState extends State<GameShopScreen>
     if (index == null) return;
     final offers = _market.offers;
     if (index < 0 || index >= offers.length) return;
+    final marketBeforePurchase = _market;
     final boughtOffer = offers[index];
     final flightLabel = localizedJesterName(context, boughtOffer.card);
+    final sourceEntry = _MarketOfferEntry.jester(index);
+    final sourceIndex = _visibleOfferLaneIndex(sourceEntry);
+    final sourceCount = _visibleOfferLaneCount();
+    final startOffset = _flightCenterForKey(_offerKey(sourceEntry));
     final failMessage = widget.onBuyOffer(index);
     if (failMessage != null) {
       _startMarketDenyFeedback('jester-buy', failMessage);
@@ -564,6 +602,9 @@ class _GameShopScreenState extends State<GameShopScreen>
       final market = _market;
       final purchasedSlot = _findPurchasedJesterSlot(market, boughtOffer);
       if (purchasedSlot != null) {
+        final endOffset = _flightCenterForKey(
+          _jesterSlotKey(purchasedSlot.slotIndex),
+        );
         _shopTab = _MarketShopTab.cardsAndQuickSlots;
         _selectedOwnedIndex = purchasedSlot.slotIndex;
         _selectedOfferIndex = null;
@@ -574,6 +615,12 @@ class _GameShopScreenState extends State<GameShopScreen>
           slotLabel: 'J${purchasedSlot.slotIndex + 1}',
           item: false,
           spentGold: boughtOffer.price,
+          startAlignment: _offerFlightStartAlignment(sourceIndex, sourceCount),
+          endAlignment: _jesterSlotFlightEndAlignment(purchasedSlot.slotIndex),
+          marketBeforePurchase: marketBeforePurchase,
+          sourceVisibleIndex: sourceIndex,
+          startOffset: startOffset,
+          endOffset: endOffset,
           jesterCard: boughtOffer.card,
         );
       } else if (market.ownedEntries.isNotEmpty) {
@@ -590,8 +637,13 @@ class _GameShopScreenState extends State<GameShopScreen>
     final offers = _market.itemOffers;
     final index = _selectedItemOfferIndex;
     if (index < 0 || index >= offers.length) return;
+    final marketBeforePurchase = _market;
     final boughtOffer = offers[index];
     final flightLabel = localizedItemName(context, boughtOffer);
+    final sourceEntry = _MarketOfferEntry.item(index);
+    final sourceIndex = _visibleOfferLaneIndex(sourceEntry);
+    final sourceCount = _visibleOfferLaneCount();
+    final startOffset = _flightCenterForKey(_offerKey(sourceEntry));
     final failMessage = widget.onBuyItemOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('item-buy', failMessage);
@@ -602,6 +654,9 @@ class _GameShopScreenState extends State<GameShopScreen>
       final market = _market;
       final purchasedSlot = _findPurchasedItemSlot(market, boughtOffer);
       if (purchasedSlot != null) {
+        final endOffset = _flightCenterForKey(
+          _itemSlotKey(purchasedSlot.slotLabel),
+        );
         _shopTab = switch (purchasedSlot.placement) {
           ItemPlacement.quickSlot ||
           ItemPlacement.passiveRack => _MarketShopTab.cardsAndQuickSlots,
@@ -617,6 +672,12 @@ class _GameShopScreenState extends State<GameShopScreen>
           slotLabel: purchasedSlot.slotLabel,
           item: true,
           spentGold: boughtOffer.price,
+          startAlignment: _offerFlightStartAlignment(sourceIndex, sourceCount),
+          endAlignment: _itemSlotFlightEndAlignment(purchasedSlot),
+          marketBeforePurchase: marketBeforePurchase,
+          sourceVisibleIndex: sourceIndex,
+          startOffset: startOffset,
+          endOffset: endOffset,
           itemPlacement: boughtOffer.item.placement,
           itemRarity: boughtOffer.item.rarity,
         );
@@ -665,6 +726,12 @@ class _GameShopScreenState extends State<GameShopScreen>
     required String slotLabel,
     required bool item,
     required int spentGold,
+    required Alignment startAlignment,
+    required Alignment endAlignment,
+    required RummiMarketRuntimeFacade marketBeforePurchase,
+    required int sourceVisibleIndex,
+    Offset? startOffset,
+    Offset? endOffset,
     RummiJesterCard? jesterCard,
     ItemPlacement? itemPlacement,
     ItemRarity? itemRarity,
@@ -677,14 +744,90 @@ class _GameShopScreenState extends State<GameShopScreen>
       slotLabel: slotLabel,
       item: item,
       spentGold: spentGold,
+      startAlignment: startAlignment,
+      endAlignment: endAlignment,
+      marketBeforePurchase: marketBeforePurchase,
+      sourceVisibleIndex: sourceVisibleIndex,
+      startOffset: startOffset,
+      endOffset: endOffset,
       jesterCard: jesterCard,
       itemPlacement: itemPlacement,
       itemRarity: itemRarity,
     );
-    Future<void>.delayed(const Duration(milliseconds: 760), () {
+    Future<void>.delayed(_marketPurchaseFlightDuration, () {
       if (!mounted || _purchaseFlight?.tick != tick) return;
       setState(() => _purchaseFlight = null);
     });
+  }
+
+  int _visibleOfferLaneCount() {
+    final entries = _offerEntriesForTab(_market, _shopTab);
+    final page = _shopTab == _MarketShopTab.cardsAndQuickSlots
+        ? _mainOfferPage
+        : _utilityOfferPage;
+    return _pagedItems(entries, page).length;
+  }
+
+  int _visibleOfferLaneIndex(_MarketOfferEntry target) {
+    final entries = _offerEntriesForTab(_market, _shopTab);
+    final page = _shopTab == _MarketShopTab.cardsAndQuickSlots
+        ? _mainOfferPage
+        : _utilityOfferPage;
+    final visible = _pagedItems(entries, page);
+    final index = visible.indexWhere(
+      (entry) =>
+          entry.kind == target.kind &&
+          entry.jesterIndex == target.jesterIndex &&
+          entry.itemIndex == target.itemIndex,
+    );
+    return index < 0 ? 0 : index;
+  }
+
+  Alignment _offerFlightStartAlignment(int visibleIndex, int visibleCount) {
+    if (visibleCount <= 1) return const Alignment(0, 0.64);
+    if (visibleCount == 2) {
+      return Alignment(visibleIndex == 0 ? -0.36 : 0.36, 0.64);
+    }
+    return Alignment((-0.52 + (visibleIndex.clamp(0, 2) * 0.52)), 0.64);
+  }
+
+  Alignment _jesterSlotFlightEndAlignment(int slotIndex) {
+    return Alignment((-0.52 + (slotIndex.clamp(0, 4) * 0.30)), -0.48);
+  }
+
+  Alignment _itemSlotFlightEndAlignment(RummiMarketItemSlotView slot) {
+    final label = slot.slotLabel;
+    final number = label.length > 1 ? int.tryParse(label.substring(1)) ?? 1 : 1;
+    final index = (number - 1).clamp(0, 2);
+    if (label.startsWith('Q')) {
+      return Alignment(-0.52 + (index * 0.30), -0.27);
+    }
+    if (label.startsWith('P')) {
+      return Alignment(0.38 + (index.clamp(0, 1) * 0.30), -0.27);
+    }
+    if (label.startsWith('G')) {
+      return Alignment(-0.52 + (index * 0.30), -0.12);
+    }
+    return Alignment(-0.52 + (index * 0.30), -0.28);
+  }
+
+  Offset? _flightCenterForKey(GlobalKey key) {
+    final surfaceContext = _marketSurfaceKey.currentContext;
+    final targetContext = key.currentContext;
+    if (surfaceContext == null || targetContext == null) return null;
+    final surfaceBox = surfaceContext.findRenderObject();
+    final targetBox = targetContext.findRenderObject();
+    if (surfaceBox is! RenderBox || targetBox is! RenderBox) return null;
+    final targetCenter = targetBox.localToGlobal(
+      targetBox.size.center(Offset.zero),
+    );
+    return surfaceBox.globalToLocal(targetCenter);
+  }
+
+  bool _isPurchaseSourceIndex(int visibleIndex) {
+    final flight = _purchaseFlight;
+    if (flight == null) return false;
+    return flight.sourceVisibleIndex == visibleIndex;
   }
 
   void _startMarketDenyFeedback(String target, String reason) {
@@ -981,7 +1124,7 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   @override
   Widget build(BuildContext context) {
-    final market = _market;
+    final market = _purchaseFlight?.marketBeforePurchase ?? _market;
     final selectedOwned =
         _selectedOwnedIndex != null &&
             _selectedOwnedIndex! >= 0 &&
@@ -1056,6 +1199,7 @@ class _GameShopScreenState extends State<GameShopScreen>
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28),
             child: Stack(
+              key: _marketSurfaceKey,
               children: [
                 const Positioned.fill(child: GameTableBackdrop()),
                 Padding(
@@ -1172,6 +1316,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                           );
 
                                           return SizedBox(
+                                            key: _jesterSlotKey(index),
                                             width:
                                                 _marketOwnedCardWidth +
                                                 (_marketCardSelectionInset * 2),
@@ -1203,6 +1348,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                 pulsingSlotLabel: _purchaseFlight?.item == true
                                     ? _purchaseFlight?.slotLabel
                                     : null,
+                                slotKeyForLabel: _itemSlotKey,
                                 onTap: _selectItemSlot,
                               ),
                             ] else ...[
@@ -1213,6 +1359,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                 pulsingSlotLabel: _purchaseFlight?.item == true
                                     ? _purchaseFlight?.slotLabel
                                     : null,
+                                slotKeyForLabel: _itemSlotKey,
                                 onTap: _selectItemSlot,
                               ),
                               const SizedBox(height: 6),
@@ -1223,6 +1370,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                 pulsingSlotLabel: _purchaseFlight?.item == true
                                     ? _purchaseFlight?.slotLabel
                                     : null,
+                                slotKeyForLabel: _itemSlotKey,
                                 onTap: _selectItemSlot,
                               ),
                             ],
@@ -1462,53 +1610,64 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                             .length;
                                                     i++
                                                   )
-                                                    _MarketOfferReveal(
-                                                      index: i,
-                                                      signature:
-                                                          _offerEntrySignature(
-                                                            market,
-                                                            visibleOfferEntries[i],
-                                                          ),
-                                                      child: switch (visibleOfferEntries[i]
-                                                          .kind) {
-                                                        _MarketOfferEntryKind
-                                                            .jester =>
-                                                          _GameShopOfferCard(
-                                                            offer:
-                                                                market
-                                                                    .offers[visibleOfferEntries[i]
-                                                                    .jesterIndex!],
-                                                            selected:
-                                                                _selectedOfferIndex ==
-                                                                visibleOfferEntries[i]
-                                                                    .jesterIndex,
-                                                            canAfford: market
-                                                                .offers[visibleOfferEntries[i]
-                                                                    .jesterIndex!]
-                                                                .isAffordable,
-                                                            onTap: () => _selectOffer(
-                                                              visibleOfferEntries[i]
-                                                                  .jesterIndex!,
+                                                    KeyedSubtree(
+                                                      key: _offerKey(
+                                                        visibleOfferEntries[i],
+                                                      ),
+                                                      child: _MarketOfferReveal(
+                                                        index: i,
+                                                        signature:
+                                                            _offerEntrySignature(
+                                                              market,
+                                                              visibleOfferEntries[i],
                                                             ),
-                                                          ),
-                                                        _MarketOfferEntryKind
-                                                            .item =>
-                                                          _MarketItemOfferCard(
-                                                            offer:
-                                                                market
-                                                                    .itemOffers[visibleOfferEntries[i]
-                                                                    .itemIndex!],
-                                                            selected:
-                                                                _selectedItemOfferIndex ==
-                                                                visibleOfferEntries[i]
-                                                                    .itemIndex,
-                                                            onTap: () =>
-                                                                _selectItemOffer(
-                                                                  visibleOfferEntries[i]
-                                                                      .itemIndex!,
-                                                                ),
-                                                          ),
-                                                      },
+                                                        child:
+                                                            _isPurchaseSourceIndex(
+                                                              i,
+                                                            )
+                                                            ? const _MarketEmptyOfferCard()
+                                                            : switch (visibleOfferEntries[i]
+                                                                  .kind) {
+                                                                _MarketOfferEntryKind
+                                                                    .jester =>
+                                                                  _GameShopOfferCard(
+                                                                    offer:
+                                                                        market
+                                                                            .offers[visibleOfferEntries[i]
+                                                                            .jesterIndex!],
+                                                                    selected:
+                                                                        _selectedOfferIndex ==
+                                                                        visibleOfferEntries[i]
+                                                                            .jesterIndex,
+                                                                    canAfford: market
+                                                                        .offers[visibleOfferEntries[i]
+                                                                            .jesterIndex!]
+                                                                        .isAffordable,
+                                                                    onTap: () =>
+                                                                        _selectOffer(
+                                                                          visibleOfferEntries[i]
+                                                                              .jesterIndex!,
+                                                                        ),
+                                                                  ),
+                                                                _MarketOfferEntryKind
+                                                                    .item =>
+                                                                  _MarketItemOfferCard(
+                                                                    offer:
+                                                                        market
+                                                                            .itemOffers[visibleOfferEntries[i]
+                                                                            .itemIndex!],
+                                                                    selected:
+                                                                        _selectedItemOfferIndex ==
+                                                                        visibleOfferEntries[i]
+                                                                            .itemIndex,
+                                                                    onTap: () =>
+                                                                        _selectItemOffer(
+                                                                          visibleOfferEntries[i]
+                                                                              .itemIndex!,
+                                                                        ),
+                                                                  ),
+                                                              },
+                                                      ),
                                                     ),
                                                 ],
                                               ),
@@ -1773,12 +1932,14 @@ class _MarketQuickPassiveSlotsSection extends StatelessWidget {
     required this.slots,
     required this.selectedItemSlotIndex,
     required this.pulsingSlotLabel,
+    required this.slotKeyForLabel,
     required this.onTap,
   });
 
   final List<RummiMarketItemSlotView> slots;
   final int selectedItemSlotIndex;
   final String? pulsingSlotLabel;
+  final GlobalKey Function(String slotLabel) slotKeyForLabel;
   final ValueChanged<RummiMarketItemSlotView> onTap;
 
   @override
@@ -1802,6 +1963,7 @@ class _MarketQuickPassiveSlotsSection extends StatelessWidget {
               slots: quickSlots,
               selectedItemSlotIndex: selectedItemSlotIndex,
               pulsingSlotLabel: pulsingSlotLabel,
+              slotKeyForLabel: slotKeyForLabel,
               onTap: onTap,
             ),
           ),
@@ -1813,6 +1975,7 @@ class _MarketQuickPassiveSlotsSection extends StatelessWidget {
               slots: passiveSlots,
               selectedItemSlotIndex: selectedItemSlotIndex,
               pulsingSlotLabel: pulsingSlotLabel,
+              slotKeyForLabel: slotKeyForLabel,
               onTap: onTap,
             ),
           ),
@@ -1828,6 +1991,7 @@ class _MarketSlotGroup extends StatelessWidget {
     required this.slots,
     required this.selectedItemSlotIndex,
     required this.pulsingSlotLabel,
+    required this.slotKeyForLabel,
     required this.onTap,
   });
 
@@ -1835,6 +1999,7 @@ class _MarketSlotGroup extends StatelessWidget {
   final List<RummiMarketItemSlotView> slots;
   final int selectedItemSlotIndex;
   final String? pulsingSlotLabel;
+  final GlobalKey Function(String slotLabel) slotKeyForLabel;
   final ValueChanged<RummiMarketItemSlotView> onTap;
 
   @override
@@ -1849,6 +2014,7 @@ class _MarketSlotGroup extends StatelessWidget {
             for (var i = 0; i < slots.length; i++) ...[
               if (i > 0) const SizedBox(width: 8),
               _MarketItemGhostChip(
+                key: slotKeyForLabel(slots[i].slotLabel),
                 slot: slots[i],
                 selected: selectedItemSlotIndex == slots[i].slotIndex,
                 pulse: pulsingSlotLabel == slots[i].slotLabel,
@@ -1868,6 +2034,7 @@ class _MarketItemSlotsSection extends StatelessWidget {
     required this.slots,
     required this.selectedItemSlotIndex,
     required this.pulsingSlotLabel,
+    required this.slotKeyForLabel,
     required this.onTap,
   });
 
@@ -1875,6 +2042,7 @@ class _MarketItemSlotsSection extends StatelessWidget {
   final List<RummiMarketItemSlotView> slots;
   final int selectedItemSlotIndex;
   final String? pulsingSlotLabel;
+  final GlobalKey Function(String slotLabel) slotKeyForLabel;
   final ValueChanged<RummiMarketItemSlotView> onTap;
 
   @override
@@ -1889,6 +2057,7 @@ class _MarketItemSlotsSection extends StatelessWidget {
             for (var i = 0; i < slots.length; i++) ...[
               if (i > 0) const SizedBox(width: 8),
               _MarketItemGhostChip(
+                key: slotKeyForLabel(slots[i].slotLabel),
                 slot: slots[i],
                 selected: selectedItemSlotIndex == slots[i].slotIndex,
                 pulse: pulsingSlotLabel == slots[i].slotLabel,
@@ -2329,6 +2498,7 @@ class _MarketPagerBar extends StatelessWidget {
 
 class _MarketItemGhostChip extends StatelessWidget {
   const _MarketItemGhostChip({
+    super.key,
     required this.slot,
     this.selected = false,
     this.pulse = false,
@@ -2666,6 +2836,45 @@ class _GameShopOfferCard extends StatelessWidget {
   }
 }
 
+class _MarketEmptyOfferCard extends StatelessWidget {
+  const _MarketEmptyOfferCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('market-purchase-source-empty'),
+      width: _marketShopCellWidth,
+      height: _marketShopCellHeight,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+            height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+            child: Center(
+              child: Container(
+                width: _marketOfferCardWidth,
+                height: _marketOfferCardHeight,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    width: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+}
+
 class _MarketItemOfferCard extends StatelessWidget {
   const _MarketItemOfferCard({
     required this.offer,
@@ -2926,12 +3135,10 @@ class _MarketPurchaseFlightOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final start = flight.item
-        ? const Alignment(0.52, 0.64)
-        : const Alignment(-0.42, 0.64);
-    final end = flight.item
-        ? const Alignment(-0.52, -0.22)
-        : const Alignment(-0.42, -0.48);
+    final start = flight.startAlignment;
+    final end = flight.endAlignment;
+    final startOffset = flight.startOffset;
+    final endOffset = flight.endOffset;
     return IgnorePointer(
       child: Stack(
         children: [
@@ -2943,23 +3150,26 @@ class _MarketPurchaseFlightOverlay extends StatelessWidget {
           TweenAnimationBuilder<double>(
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 620),
+            duration: _marketPurchaseFlightDuration,
             curve: Curves.easeInOutCubic,
             builder: (context, value, child) {
+              if (startOffset != null && endOffset != null) {
+                final offset = Offset.lerp(startOffset, endOffset, value)!;
+                return Positioned(
+                  left:
+                      offset.dx -
+                      ((_marketOfferCardWidth + _marketCardSelectionInset * 2) /
+                          2),
+                  top:
+                      offset.dy -
+                      ((_marketOfferCardHeight +
+                              _marketCardSelectionInset * 2) /
+                          2),
+                  child: child!,
+                );
+              }
               final alignment = Alignment.lerp(start, end, value)!;
-              final lift = -22 * math.sin(math.pi * value);
-              final scale = 0.88 + (0.16 * math.sin(math.pi * value));
-              final opacity = value < 0.82 ? 1.0 : (1 - value) / 0.18;
-              return Align(
-                alignment: alignment,
-                child: Opacity(
-                  opacity: opacity.clamp(0.0, 1.0),
-                  child: Transform.translate(
-                    offset: Offset(0, lift),
-                    child: Transform.scale(scale: scale, child: child),
-                  ),
-                ),
-              );
+              return Align(alignment: alignment, child: child);
             },
             child: _MarketPurchaseFlightCard(flight: flight),
           ),
