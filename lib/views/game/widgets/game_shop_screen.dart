@@ -665,7 +665,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       sellGold: item.sellPrice,
       startOffset: startOffset,
       endOffset: endOffset,
-      itemPlacement: item.placement,
+      itemPlacement: slot.placement,
       itemRarity: item.rarity,
     );
     Future<void>.delayed(_marketPurchaseFlightDuration, () {
@@ -864,7 +864,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellOwnedJester(index);
     if (!ok) return;
-    showTopNotice(context, '제스터를 판매했습니다.');
+    showBottomNotice(context, '제스터를 판매했습니다.');
     setState(() {
       _startJesterSaleFlight(
         entry: soldEntry,
@@ -889,7 +889,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellMarketItem(item);
     if (!ok) return;
-    showTopNotice(context, '아이템을 판매했습니다.');
+    showBottomNotice(context, '아이템을 판매했습니다.');
     setState(() {
       _startSaleFlight(
         slot: slot,

@@ -35,8 +35,8 @@ void main() {
       'maxStack': 1,
       'sellable': true,
       'usableInBattle': false,
-      'placement': 'quickSlot',
-      'slotHint': 'q',
+      'placement': 'equipped',
+      'slotHint': 'gear',
       'effectText': 'Gain score support.',
       'effect': <String, dynamic>{
         'timing': 'station_start',
@@ -156,6 +156,13 @@ void main() {
 
     expect(sellCalled, isTrue);
     expect(find.byKey(const ValueKey('market-sale-flight')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('market-sale-flight')),
+        matching: find.text('Q-SLT'),
+      ),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('market-gold-gain-badge')),
       findsOneWidget,
