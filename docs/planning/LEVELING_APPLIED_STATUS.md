@@ -332,7 +332,9 @@ Economy leveling gate:
 - current scale probe: r20 탐색에서 `reward 0.45 / price 2.2` 혼합 후보가 단일 축 조정보다 path clear 균형이 덜 흔드는 1차 후보로 보인다.
 - applied: economy audit이 station/tier별 시작 골드와 정산 후 골드 분포를 집계한다.
 - current station signal: `reward 0.45 / price 2.2` r20에서도 S4 boss 시작 평균 약 117G, S8 boss 시작 평균 약 245G로 높다.
-- next implementation: r120 탐색으로 `reward 0.45 / price 2.2` 주변과 `reward 0.34 / price 1.0` 주변을 비교한다.
+- r120 probe: `reward 0.45 / price 2.2`는 balanced v9 64.2%, power v9 64.2%이고, `reward 0.34 / price 1.0`은 balanced v9 63.3%, power v9 73.3%다.
+- current conclusion: 단순 보상/가격 scale만으로는 경제 압박이 충분하지 않다. `gated_known_cost`에서도 잔고 부족 이벤트가 거의 없다.
+- next implementation: market당 구매 개수, reroll spend, slot cap, 판매 후 구매 여부를 반영하는 market budget behavior를 sim-only로 추가한다.
 
 ## 6. Read Order
 

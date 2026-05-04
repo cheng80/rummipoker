@@ -148,6 +148,20 @@ scale probe:
 - `economy_combo045_220_v1_r20` 기준 S1 small 정산 후 평균은 약 `20.9G`, S4 boss 시작 평균은 약 `117.5G`, S8 boss 시작 평균은 약 `245.5G`다.
 - 따라서 full path 최종 잔고뿐 아니라 중후반 시작 잔고도 여전히 높다.
 
+r120 economy probe:
+
+| Probe | Reward scale | Price scale | balanced none | balanced v9 | power none | power v9 | 경제 해석 |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `economy_combo045_220_v1_r120` | 0.45 | 2.2 | 52.5% | 64.2% | 62.5% | 64.2% | S4/S8 시작 잔고가 여전히 높다. |
+| `economy_reward034_v1_r120` | 0.34 | 1.0 | 52.5% | 63.3% | 68.3% | 73.3% | 보상만 낮춰도 v9 구매력은 여전히 강하다. |
+
+판정:
+
+- 두 후보 모두 path clear만 보면 즉시 폐기할 정도는 아니다.
+- 그러나 `gated_known_cost`에서도 unaffordable event가 거의 없고, S4/S8 시작 잔고가 높다.
+- 단순 보상/가격 scale만으로는 경제 압박을 충분히 만들지 못한다.
+- 다음은 `market budget behavior`를 모델링한다. 예: market당 구매 개수 제한, reroll spend, slot cap, 보유물 판매 후 구매 여부.
+
 ### Phase 3. Economy Probe
 
 목표:
