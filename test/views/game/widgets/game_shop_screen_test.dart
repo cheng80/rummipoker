@@ -348,5 +348,11 @@ void main() {
       find.text('현재 Station 2 · Market · Gold 5\n체크포인트 Station 2'),
       findsOneWidget,
     );
+
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Market 옵션'), findsOneWidget);
+    expect(find.text('Run Snapshot'), findsOneWidget);
   });
 }

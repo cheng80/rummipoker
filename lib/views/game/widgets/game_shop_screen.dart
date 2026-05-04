@@ -817,6 +817,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
       final action = await showGameFramedDialog<_MarketOptionsCloseAction>(
         context: context,
+        barrierDismissible: false,
         builder: (dialogContext) => GameModalCard(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1260,7 +1261,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                           Text(
                                             selectedOwnedRuntimeValue,
                                             maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            overflow: TextOverflow.clip,
                                             style: const TextStyle(
                                               color: Color(0xFFF2C14E),
                                               fontSize: 11,
