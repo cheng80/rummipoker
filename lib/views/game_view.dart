@@ -1124,7 +1124,7 @@ class _GameViewState extends ConsumerState<GameView>
         effectIndexes: jesterEffectIndexes,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 820),
+        delay: const Duration(milliseconds: 1040),
       );
       if (!mounted) return;
     }
@@ -1136,7 +1136,7 @@ class _GameViewState extends ConsumerState<GameView>
         effectIndexes: itemEffectIndexes,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: const Duration(milliseconds: 820),
+        delay: const Duration(milliseconds: 1040),
       );
       if (!mounted) return;
     }
