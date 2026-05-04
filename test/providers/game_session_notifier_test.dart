@@ -1862,7 +1862,7 @@ void main() {
       },
     );
 
-    test('replaceRuntimeState는 저장 runtime만 복원하고 정산 연출 상태는 초기화한다', () {
+    test('replaceRuntimeState는 저장 runtime만 복원하고 화면 연출 상태는 초기화한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
       const args = GameSessionArgs(runSeed: 48);
@@ -1870,6 +1870,14 @@ void main() {
       final notifier = container.read(
         gameSessionNotifierProvider(args).notifier,
       );
+      final selectedTile = container
+          .read(gameSessionNotifierProvider(args))
+          .session!
+          .drawToHand()!;
+
+      notifier.setSelectedHandTile(selectedTile);
+      notifier.setSelectedBoardCell(0, 0);
+      notifier.setSelectedJesterOverlayIndex(0);
 
       notifier.setStageFlow(
         phase: GameStageFlowPhase.confirmSettlement,
@@ -1891,6 +1899,10 @@ void main() {
       );
 
       final restored = container.read(gameSessionNotifierProvider(args));
+      expect(restored.selectedHandTile, isNull);
+      expect(restored.selectedBoardRow, isNull);
+      expect(restored.selectedBoardCol, isNull);
+      expect(restored.selectedJesterOverlayIndex, isNull);
       expect(restored.stageFlowPhase, GameStageFlowPhase.none);
       expect(restored.stageScoreAdded, 0);
       expect(restored.activeSettlementLine, isNull);
