@@ -10,8 +10,8 @@ import '../../../logic/rummi_poker_grid/line_ref.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
+import '../../../utils/common_ui.dart';
 import 'game_jester_widgets.dart';
-import 'game_shared_widgets.dart';
 
 String gameHandRankLabel(RummiHandRank rank) {
   return switch (rank) {
@@ -454,44 +454,20 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   const SizedBox(height: 12),
                   _GameCashOutReveal(
                     visible: _step >= (hasBonuses ? 5 : 4),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '보유 골드 ${settlement.currentGold}',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '+${settlement.totalGold}',
-                            style: const TextStyle(
-                              color: Color(0xFFF2C14E),
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: _GameCashOutGoldSummary(
+                      currentGold: settlement.currentGold,
+                      totalGold: settlement.totalGold,
                     ),
                   ),
                   const SizedBox(height: 14),
-                  GameActionButton(
+                  GameChromeButton(
                     label: 'Market으로',
-                    background: const Color(0xFFF4A81D),
-                    foreground: Colors.black,
+                    backgroundColor: const Color(0xFFF4A81D),
+                    foregroundColor: Colors.black,
+                    height: 52,
+                    borderRadius: 18,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
                     onPressed: _step < 3
                         ? null
                         : () => Navigator.of(context).pop(true),
@@ -502,6 +478,100 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _GameCashOutGoldSummary extends StatelessWidget {
+  const _GameCashOutGoldSummary({
+    required this.currentGold,
+    required this.totalGold,
+  });
+
+  final int currentGold;
+  final int totalGold;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFF2C14E).withValues(alpha: 0.34),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: _GameCashOutGoldMetric(
+              label: '보유 골드',
+              value: '${currentGold}G',
+              valueKey: const ValueKey('cashout-current-gold-value'),
+              valueStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _GameCashOutGoldMetric(
+            label: '총 획득',
+            value: '+${totalGold}G',
+            valueKey: const ValueKey('cashout-total-gold-value'),
+            alignEnd: true,
+            valueStyle: const TextStyle(
+              color: Color(0xFFF2C14E),
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              height: 0.95,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GameCashOutGoldMetric extends StatelessWidget {
+  const _GameCashOutGoldMetric({
+    required this.label,
+    required this.value,
+    required this.valueKey,
+    required this.valueStyle,
+    this.alignEnd = false,
+  });
+
+  final String label;
+  final String value;
+  final Key valueKey;
+  final TextStyle valueStyle;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(value, key: valueKey, style: valueStyle),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
+import 'package:rummipoker/utils/common_ui.dart';
 import 'package:rummipoker/views/game/widgets/game_cashout_widgets.dart';
 
 void main() {
@@ -48,6 +49,27 @@ void main() {
     expect(find.text('+5'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 2));
+
+    final totalGoldText = tester.widget<Text>(
+      find.byKey(const ValueKey('cashout-total-gold-value')),
+    );
+    expect(totalGoldText.data, '+9G');
+    expect(totalGoldText.style?.fontSize, greaterThanOrEqualTo(28));
+    expect(totalGoldText.style?.fontWeight, FontWeight.w900);
+
+    final currentGoldText = tester.widget<Text>(
+      find.byKey(const ValueKey('cashout-current-gold-value')),
+    );
+    expect(currentGoldText.data, '11G');
+    expect(currentGoldText.style?.fontSize, greaterThanOrEqualTo(20));
+    expect(currentGoldText.style?.fontWeight, FontWeight.w900);
+
+    final marketButton = find.widgetWithText(GameChromeButton, 'Market으로');
+    expect(marketButton, findsOneWidget);
+    expect(tester.getSize(marketButton).height, greaterThanOrEqualTo(48));
+    final marketButtonText = tester.widget<Text>(find.text('Market으로'));
+    expect(marketButtonText.style?.fontWeight, FontWeight.w900);
+
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });

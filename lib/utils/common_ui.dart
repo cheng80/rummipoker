@@ -31,6 +31,8 @@ class GameChromeButton extends StatelessWidget {
     this.height = 38,
     this.borderRadius = 16,
     this.padding,
+    this.fontSize = 15,
+    this.fontWeight,
   });
 
   final String label;
@@ -41,6 +43,8 @@ class GameChromeButton extends StatelessWidget {
   final double height;
   final double borderRadius;
   final EdgeInsetsGeometry? padding;
+  final double fontSize;
+  final FontWeight? fontWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +91,8 @@ class GameChromeButton extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        fontSize: 15,
+                        fontSize: fontSize,
+                        fontWeight: fontWeight,
                         color: baseForeground,
                         letterSpacing: 0.5,
                       ),
