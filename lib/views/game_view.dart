@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1828,94 +1829,111 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
     final accent = feedback.passive
         ? const Color(0xFF6EE7B7)
         : const Color(0xFFF4A81D);
-    return DecoratedBox(
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F2B23).withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: accent.withValues(alpha: 0.75),
-              width: 1.5,
+    return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: 16,
+              top: -12,
+              child: _ItemEffectSparkBurst(accent: accent),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: 0.22),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.28),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(
-                  feedback.passive ? Icons.shield_rounded : Icons.bolt_rounded,
-                  color: accent,
-                  size: 28,
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F2B23).withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.75),
+                  width: 1.5,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        feedback.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        feedback.detail,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
-                      ),
-                    ],
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.22),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
                   ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.28),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-                if (feedback.passive)
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: accent.withValues(alpha: 0.35)),
+                child: Row(
+                  children: [
+                    Icon(
+                      feedback.passive
+                          ? Icons.shield_rounded
+                          : Icons.bolt_rounded,
+                      color: accent,
+                      size: 28,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
-                      ),
-                      child: Text(
-                        '패시브',
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            feedback.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            feedback.detail,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: accent,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-              ],
+                    if (feedback.passive)
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: accent.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 5,
+                          ),
+                          child: Text(
+                            '패시브',
+                            style: TextStyle(
+                              color: accent,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         )
         .animate()
         .fadeIn(duration: 340.ms, curve: Curves.easeOutCubic)
@@ -1925,6 +1943,77 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
           duration: 340.ms,
           curve: Curves.easeOutCubic,
         );
+  }
+}
+
+class _ItemEffectSparkBurst extends StatelessWidget {
+  const _ItemEffectSparkBurst({required this.accent});
+
+  final Color accent;
+
+  static const List<Offset> _targets = [
+    Offset(-14, -10),
+    Offset(2, -18),
+    Offset(18, -8),
+    Offset(24, 8),
+    Offset(-8, 12),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('item-effect-spark-burst'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 560),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        final opacity = value < 0.7 ? 1.0 : (1 - value) / 0.3;
+        return SizedBox(
+          width: 52,
+          height: 42,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              for (var i = 0; i < _targets.length; i++)
+                Positioned(
+                  left: 22 + _targets[i].dx * value,
+                  top:
+                      18 +
+                      _targets[i].dy * value -
+                      math.sin(value * math.pi) * 4,
+                  child: Opacity(
+                    opacity: opacity.clamp(0.0, 1.0),
+                    child: Transform.rotate(
+                      angle: value * math.pi * (i.isEven ? 0.35 : -0.3),
+                      child: _ItemEffectSpark(accent: accent),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ItemEffectSpark extends StatelessWidget {
+  const _ItemEffectSpark({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: accent,
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: [
+          BoxShadow(color: accent.withValues(alpha: 0.32), blurRadius: 7),
+        ],
+      ),
+      child: const SizedBox(width: 4, height: 10),
+    );
   }
 }
 
