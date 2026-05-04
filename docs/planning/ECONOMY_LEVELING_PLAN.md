@@ -247,6 +247,19 @@ affordable choice probe:
 - 따라서 현재 장기 후보는 `reward 0.40 / price 2.4 / reroll_slot_sell_v1 / affordable_alternative_v1`을 다시 우선한다. `reward 0.38 / price 2.4`는 v9 잔고를 거의 더 낮추지 못하면서 balanced v9 clear를 70.0%에서 65.0%로 낮춘다.
 - 다음은 런타임 적용 전, `reward 0.40 / price 2.4` 후보를 기존 장기 sweep 기준으로 재검증한다. runs를 낮추면 탐색용으로만 기록한다.
 
+long check:
+
+| Probe | runs | balanced none | balanced v9 | power none | power v9 | v9 final gold avg | v9 S8 boss before |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `economy_choice_reward040_price240_v1_r800` | 800 | 57.5% | 65.8% | 62.3% | 68.1% | 18.0G | 22.8G |
+
+판정:
+
+- r800에서도 v9는 none보다 clear가 높고, 시장을 사용하는 경로의 최종 잔고는 약 18G로 낮다.
+- S8 boss before는 전체 평균 약 144.8G지만, market별로 보면 none 약 279.2G, v9 약 22.8G다.
+- `reward 0.40 / price 2.4 / reroll_slot_sell_v1 / affordable_alternative_v1`는 현재 economy sim 후보로 유지한다.
+- 이 값은 아직 runtime 적용값이 아니다. runtime 보상/가격 변경은 별도 승인 후 적용한다.
+
 catalog value flags:
 
 - `tools/sim/economy_audit.py`가 `catalog_value_flags`를 출력한다.
