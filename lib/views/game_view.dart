@@ -1084,7 +1084,7 @@ class _GameViewState extends ConsumerState<GameView>
       step: ScoringPresentationStep.boardLine,
       settlementGoalDisplayScore: lineGoalStartScore,
       bump: true,
-      delay: const Duration(milliseconds: 560),
+      delay: const Duration(milliseconds: 720),
     );
     if (!mounted) return;
     await _showSettlementStep(
