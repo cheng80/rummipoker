@@ -141,6 +141,13 @@ scale probe:
 - 평균 최종 잔고는 full path 누적값이므로, 다음 probe에서는 station/tier별 시작 골드와 종료 골드 분포도 함께 본다.
 - 다음 탐색은 `reward 0.45 / price 2.2` 주변과 `reward 0.34 / price 1.0` 주변을 r120으로 비교한다.
 
+4차 적용:
+
+- `tools/sim/economy_audit.py`가 raw JSONL의 `sim_economy_trace`를 station/tier별로 집계한다.
+- 우선 출력 지점은 `S1 small`, `S4 boss`, `S8 boss`의 시작 골드와 정산 후 골드다.
+- `economy_combo045_220_v1_r20` 기준 S1 small 정산 후 평균은 약 `20.9G`, S4 boss 시작 평균은 약 `117.5G`, S8 boss 시작 평균은 약 `245.5G`다.
+- 따라서 full path 최종 잔고뿐 아니라 중후반 시작 잔고도 여전히 높다.
+
 ### Phase 3. Economy Probe
 
 목표:

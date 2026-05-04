@@ -330,7 +330,9 @@ Economy leveling gate:
 - current gated trace: `economy_gated_v1_r20` 탐색 run에서 cost-null 이벤트는 줄었지만 평균 최종 잔고는 약 676G로 여전히 높다.
 - applied: `--sim-reward-scale`, `--sim-price-scale`을 추가했다. 기본값은 1.0이며 runtime 수치에는 영향이 없다.
 - current scale probe: r20 탐색에서 `reward 0.45 / price 2.2` 혼합 후보가 단일 축 조정보다 path clear 균형이 덜 흔드는 1차 후보로 보인다.
-- next implementation: r120 탐색으로 `reward 0.45 / price 2.2` 주변과 `reward 0.34 / price 1.0` 주변을 비교하고, station/tier별 시작/종료 골드 분포를 추가 집계한다.
+- applied: economy audit이 station/tier별 시작 골드와 정산 후 골드 분포를 집계한다.
+- current station signal: `reward 0.45 / price 2.2` r20에서도 S4 boss 시작 평균 약 117G, S8 boss 시작 평균 약 245G로 높다.
+- next implementation: r120 탐색으로 `reward 0.45 / price 2.2` 주변과 `reward 0.34 / price 1.0` 주변을 비교한다.
 
 ## 6. Read Order
 

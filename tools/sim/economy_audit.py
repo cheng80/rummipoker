@@ -246,6 +246,9 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     economy_missing_cost_events = 0
     economy_final_gold_values: list[int] = []
     economy_mode = ""
+    economy_by_station_tier: dict[str, dict[str, list[int]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
 
     with path.open(encoding="utf-8") as handle:
         for line in handle:
@@ -261,6 +264,19 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                     economy_trace_count += 1
                     if not economy_mode:
                         economy_mode = str(trace.get("mode") or "")
+                    station_tier = (
+                        f"S{_int(row.get('station'))} "
+                        f"{str(row.get('blind_tier') or 'unknown')}"
+                    )
+                    economy_by_station_tier[station_tier]["gold_before_market"].append(
+                        _int(trace.get("gold_before_market"))
+                    )
+                    economy_by_station_tier[station_tier]["gold_after_cashout"].append(
+                        _int(trace.get("gold_after_cashout"))
+                    )
+                    economy_by_station_tier[station_tier]["cashout_gold"].append(
+                        _int(trace.get("cashout_gold"))
+                    )
                     economy_cashout_gold += _int(trace.get("cashout_gold"))
                     economy_known_market_spend += _int(
                         trace.get("known_market_spend")
@@ -331,6 +347,13 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
             "final_gold": _numeric_summary(economy_final_gold_values)
             if economy_final_gold_values
             else {"count": 0},
+            "by_station_tier": {
+                key: {
+                    metric: _numeric_summary(values)
+                    for metric, values in sorted(metrics.items())
+                }
+                for key, metrics in sorted(economy_by_station_tier.items())
+            },
         },
     }
 
@@ -570,6 +593,17 @@ def _print_report(report: dict[str, Any]) -> None:
                 "- sim economy unaffordable events: "
                 f"{sim_trace['unaffordable_event_count']}"
             )
+            by_station_tier = sim_trace.get("by_station_tier", {})
+            for key in ["S1 small", "S4 boss", "S8 boss"]:
+                row = by_station_tier.get(key)
+                if not row:
+                    continue
+                before = row["gold_before_market"]
+                after = row["gold_after_cashout"]
+                print(
+                    f"- {key}: before avg {before['avg']}G, "
+                    f"after avg {after['avg']}G"
+                )
     purchase_power = report["purchase_power"]
     print()
     print("## Purchase power")
