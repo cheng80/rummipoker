@@ -1699,34 +1699,63 @@ class GameBoardCell extends StatelessWidget {
                             ),
                           )
                         : null
-                  : Stack(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Opacity(
-                            opacity: moveLocked ? 0.42 : 1,
-                            child: GameRummiTileCard(
-                              tile: tile!,
-                              selected: selected || moveSource,
-                              accent: false,
-                              aspectRatio: kGameTileAspectRatio,
+                  : _SettlementTileLift(
+                      active: settlementActive,
+                      child: Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Opacity(
+                              opacity: moveLocked ? 0.42 : 1,
+                              child: GameRummiTileCard(
+                                tile: tile!,
+                                selected: selected || moveSource,
+                                accent: false,
+                                aspectRatio: kGameTileAspectRatio,
+                              ),
                             ),
                           ),
-                        ),
-                        if (constrained)
-                          Positioned(
-                            left: 4,
-                            top: 4,
-                            right: 4,
-                            bottom: 4,
-                            child: GameConstraintBadge(side: side),
-                          ),
-                      ],
+                          if (constrained)
+                            Positioned(
+                              left: 4,
+                              top: 4,
+                              right: 4,
+                              bottom: 4,
+                              child: GameConstraintBadge(side: side),
+                            ),
+                        ],
+                      ),
                     ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _SettlementTileLift extends StatelessWidget {
+  const _SettlementTileLift({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!active) return child;
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('settlement-tile-lift'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final lift = sin(pi * value);
+        return Transform.translate(
+          offset: Offset(0, -6 * lift),
+          child: Transform.scale(scale: 1 + (0.035 * lift), child: child),
+        );
+      },
+      child: child,
     );
   }
 }

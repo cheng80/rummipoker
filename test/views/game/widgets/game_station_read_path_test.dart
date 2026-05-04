@@ -343,6 +343,7 @@ void main() {
 
       expect(find.byIcon(Icons.open_with_rounded), findsWidgets);
       expect(find.byType(GameConstraintBadge), findsOneWidget);
+      expect(find.byKey(const ValueKey('settlement-tile-lift')), findsNothing);
 
       await tester.tap(find.byKey(const ValueKey('board-cell-0-0')));
       await tester.tap(find.byKey(const ValueKey('board-cell-2-2')));
@@ -350,6 +351,37 @@ void main() {
       expect(taps, <(int, int)>[(0, 0), (2, 2)]);
     },
   );
+
+  testWidgets('GameBoardGrid lifts active settlement tiles', (tester) async {
+    final board = RummiBoard();
+    board.setCell(0, 0, Tile(id: 1, color: TileColor.red, number: 7));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox.square(
+            dimension: 320,
+            child: GameBoardGrid(
+              board: board,
+              scoringCells: const {},
+              constrainedScoringCells: const {},
+              activeSettlementCells: const {'0:0'},
+              settlementBoardSnapshot: const {},
+              selectedRow: null,
+              selectedCol: null,
+              boardMoveMode: false,
+              moveSourceRow: null,
+              moveSourceCol: null,
+              constrainedCells: const {},
+              onTapCell: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('settlement-tile-lift')), findsOneWidget);
+  });
 
   testWidgets('GameItemZoneSkeleton renders owned battle item slots', (
     tester,
