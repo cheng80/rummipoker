@@ -3828,6 +3828,8 @@ BalanceSimExperimentSpec _resolveExperiment({
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_rank_cycle_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_repeat_only_probe_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_single_only_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1':
     case _
@@ -4066,6 +4068,10 @@ double _stationGrowthBaseForExperiment(String id) {
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_rank_cycle_probe_v1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_repeat_only_probe_v1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_single_only_probe_v1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1' =>
       1.25,
@@ -4487,6 +4493,7 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
   final severity = _bossConstraintPoolSeverity(id);
   final constraint = _usesRankCycleProbe(id)
       ? _rankCycleProbeConstraintForStationPool(
+          id: id,
           station: station,
           severity: severity,
           baseBossModifier: baseBossModifier,
@@ -4551,7 +4558,10 @@ bool _usesOrderedBossTargets(String id) =>
     _usesRankCycleProbe(id) ||
     id.contains('_weighted_boss_v3_late_boss_');
 
-bool _usesRankCycleProbe(String id) => id.endsWith('_rank_cycle_probe_v1');
+bool _usesRankCycleProbe(String id) =>
+    id.endsWith('_rank_cycle_probe_v1') ||
+    id.endsWith('_rank_cycle_repeat_only_probe_v1') ||
+    id.endsWith('_rank_cycle_single_only_probe_v1');
 
 bool _usesWeightedBossPool(String id) =>
     id.endsWith('_weighted_boss_v1') ||
@@ -4569,11 +4579,12 @@ int _weightedBossPoolVersion(String id) {
 }
 
 BalanceSimBossConstraintChoice _rankCycleProbeConstraintForStationPool({
+  required String id,
   required int station,
   required String severity,
   required RummiBossModifier? baseBossModifier,
 }) {
-  const slots = [0, 1, 2, 3, 6, 4, 7, 5];
+  final slots = _rankCycleProbeSlotsForExperiment(id);
   final normalizedStation = station < 1 ? 1 : station;
   final slot = slots[(normalizedStation - 1) % slots.length];
   final choice = _bossConstraintChoiceForSlot(
@@ -4582,9 +4593,29 @@ BalanceSimBossConstraintChoice _rankCycleProbeConstraintForStationPool({
     baseBossModifier: baseBossModifier,
   );
   return choice.withExtraEffects(<String, Object?>{
-    'sim_boss_pool_profile': 'rank_cycle_probe_v1',
+    'sim_boss_pool_profile': _rankCycleProbeProfileId(id),
     'sim_boss_pool_slot': slot,
   });
+}
+
+String _rankCycleProbeProfileId(String id) {
+  if (id.endsWith('_rank_cycle_repeat_only_probe_v1')) {
+    return 'rank_cycle_repeat_only_probe_v1';
+  }
+  if (id.endsWith('_rank_cycle_single_only_probe_v1')) {
+    return 'rank_cycle_single_only_probe_v1';
+  }
+  return 'rank_cycle_probe_v1';
+}
+
+List<int> _rankCycleProbeSlotsForExperiment(String id) {
+  if (id.endsWith('_rank_cycle_repeat_only_probe_v1')) {
+    return const [0, 1, 2, 3, 6, 11, 7, 5];
+  }
+  if (id.endsWith('_rank_cycle_single_only_probe_v1')) {
+    return const [0, 1, 2, 10, 6, 4, 7, 5];
+  }
+  return const [0, 1, 2, 3, 6, 4, 7, 5];
 }
 
 int _orderedBossTargetScore({
@@ -4822,6 +4853,18 @@ BalanceSimBossConstraintChoice _bossConstraintChoiceForSlot({
       family: 'line_kind_weaken',
       sourceReference: 'Balatro hand-shape pressure analog',
       bossModifier: RummiBossModifier.rowDampener,
+    ),
+    10 => choice(
+      id: 'column_line_dampener_cycle',
+      family: 'line_kind_weaken',
+      sourceReference: 'Runtime column line dampener',
+      bossModifier: RummiBossModifier.columnDampener,
+    ),
+    11 => choice(
+      id: 'diagonal_line_dampener_cycle',
+      family: 'line_kind_weaken',
+      sourceReference: 'Runtime diagonal line dampener',
+      bossModifier: RummiBossModifier.diagonalDampener,
     ),
     2 => choice(
       id: 'face_tile_dampener',
@@ -5852,6 +5895,8 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_rank_cycle_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_probe_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_repeat_only_probe_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_single_only_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2',
