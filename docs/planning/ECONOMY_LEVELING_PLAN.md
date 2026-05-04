@@ -245,6 +245,19 @@ affordable choice probe:
 - 다만 final gold avg가 여전히 100G 이상이고 balanced v9가 70.0%에서 65.0%로 내려가므로 economy gate 완료는 아니다.
 - 다음은 런타임 적용 전, `reward 0.38 / price 2.4`를 기준으로 실제 가격 테이블 후보 또는 gold sink 누락분을 분리해 검토한다.
 
+catalog value flags:
+
+- `tools/sim/economy_audit.py`가 `catalog_value_flags`를 출력한다.
+- 이 flag는 자동 적용값이 아니라 가격 조정 전 검토 후보만 표시한다.
+- `economy_choice_reward038_price240_v1_r120` 기준 즉시 회수형 item 후보:
+  - `reroll_token`: 3G 구매로 기본 리롤 비용 5G를 대체한다.
+  - `coin_cache`: 3G 구매 후 +3G 즉시 회수라 실질 구매 비용이 0G에 가깝다.
+  - `thin_wallet`: 조건부지만 5G 구매 후 +5G 회수라 comeback 도구 이상의 순환 골드가 될 수 있다.
+- low-price growth Jester 후보:
+  - `green_jester`: rare인데 common median 4G와 같은 4G다.
+  - `popcorn`, `ice_cream`, `supernova`: stateful growth 계열이 5G라 장기 성장 가치 대비 저렴할 수 있다.
+- 다음 가격 후보는 전체 가격 일괄 배율보다 위 후보군의 실제 base price/sell price 조정안을 먼저 만든다.
+
 ### Phase 3. Economy Probe
 
 목표:

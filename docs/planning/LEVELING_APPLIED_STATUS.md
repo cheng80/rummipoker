@@ -347,6 +347,8 @@ Economy leveling gate:
 - current economy signal: S8 boss 시작 평균은 약 142.1G, final gold avg는 약 121.7G다. 이전보다 낫지만 아직 잔고가 높아 economy gate 완료는 아니다.
 - narrowed probe: `reward 0.38 / price 2.4 / reroll_slot_sell_v1 / affordable_alternative_v1` r120은 balanced none 54.2%, balanced v9 65.0%, power none 63.3%, power v9 67.5%, S8 boss 시작 평균 약 138.6G, final gold avg 약 116.1G다.
 - current candidate: `reward 0.38 / price 2.4`가 현재 가장 덜 깨지는 sim-only 후보지만, 런타임 적용 전 실제 가격 테이블 후보와 gold sink 누락분을 분리 검토한다.
+- tool update: `tools/sim/economy_audit.py`가 `catalog_value_flags`를 출력한다.
+- current price flags: `reroll_token`, `coin_cache`, `thin_wallet`은 자기 회수형 item 후보이며, `green_jester`, `popcorn`, `ice_cream`, `supernova`는 low-price growth Jester 후보로 먼저 검토한다.
 
 ## 6. Read Order
 

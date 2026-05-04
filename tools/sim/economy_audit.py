@@ -81,6 +81,11 @@ def main() -> int:
         "reward_envelope": _reward_envelope(config),
         "summary_reward_estimate": _summary_reward_estimate(summary, config),
         "jsonl_market_trace": _jsonl_market_trace(args.jsonl),
+        "catalog_value_flags": _catalog_value_flags(
+            item_catalog.get("items", []),
+            jester_catalog,
+            config,
+        ),
     }
     report["purchase_power"] = _purchase_power(report)
     report["calibration_candidates"] = _calibration_candidates(report)
@@ -131,6 +136,77 @@ def _numeric_summary(values: list[int]) -> dict[str, Any]:
         "avg": round(statistics.mean(values), 2),
         "median": statistics.median(values),
         "price_counts": dict(sorted(counts.items())),
+    }
+
+
+def _catalog_value_flags(
+    items: list[dict[str, Any]],
+    jesters: list[dict[str, Any]],
+    config: EconomyConfig,
+) -> dict[str, Any]:
+    """런타임 가격을 직접 바꾸기 전 확인할 가치/가격 불일치 후보."""
+
+    item_self_refund_risks = []
+    for item in items:
+        price = _int(item.get("basePrice"))
+        effect = item.get("effect") if isinstance(item.get("effect"), dict) else {}
+        op = str(effect.get("op") or "")
+        amount = _float(effect.get("amount"))
+        estimated_value = 0.0
+        reason = ""
+        if op == "gain_gold":
+            estimated_value = amount
+            reason = "즉시 골드 회수"
+        elif op == "free_next_reroll":
+            estimated_value = config.stage_clear_gold_base / 2
+            reason = "기본 리롤 비용 대체"
+        elif op == "discount_next_purchase":
+            estimated_value = amount
+            reason = "다음 구매 할인"
+        if price > 0 and estimated_value >= price:
+            item_self_refund_risks.append(
+                {
+                    "id": item.get("id"),
+                    "rarity": item.get("rarity"),
+                    "base_price": price,
+                    "estimated_immediate_value": round(estimated_value, 2),
+                    "reason": reason,
+                }
+            )
+
+    common_prices = [
+        _int(card.get("baseCost"))
+        for card in jesters
+        if card.get("rarity") == "common" and _int(card.get("baseCost")) > 0
+    ]
+    common_median = statistics.median(common_prices) if common_prices else 0
+    elevated_rarity_low_price = []
+    high_impact_low_price = []
+    high_impact_types = {"xmult_bonus", "stateful_growth", "retrigger", "rule_modifier"}
+    for card in jesters:
+        price = _int(card.get("baseCost"))
+        rarity = str(card.get("rarity") or "common")
+        effect_type = str(card.get("effectType") or "")
+        row = {
+            "id": card.get("id"),
+            "rarity": rarity,
+            "base_cost": price,
+            "effect_type": effect_type,
+            "condition_type": card.get("conditionType"),
+            "value": card.get("value"),
+            "x_value": card.get("xValue"),
+        }
+        if rarity in {"uncommon", "rare", "legendary"} and common_median and price <= common_median:
+            elevated_rarity_low_price.append(row)
+        if effect_type in high_impact_types and common_median and price <= common_median + 1:
+            high_impact_low_price.append(row)
+
+    return {
+        "note": "자동 적용값이 아니라 가격 조정 전 검토 후보",
+        "item_self_refund_risks": item_self_refund_risks,
+        "jester_common_median_cost": common_median,
+        "jester_elevated_rarity_low_price": elevated_rarity_low_price,
+        "jester_high_impact_low_price": high_impact_low_price,
     }
 
 
@@ -631,6 +707,43 @@ def _print_report(report: dict[str, Any]) -> None:
                 print(
                     f"- {key}: before avg {before['avg']}G, "
                     f"after avg {after['avg']}G"
+                )
+    value_flags = report.get("catalog_value_flags", {})
+    if isinstance(value_flags, dict):
+        print()
+        print("## Catalog value flags")
+        print(f"- note: {value_flags.get('note')}")
+        print(
+            "- Jester common median cost: "
+            f"{value_flags.get('jester_common_median_cost')}"
+        )
+        item_risks = value_flags.get("item_self_refund_risks", [])
+        if isinstance(item_risks, list) and item_risks:
+            print("- item self-refund risks:")
+            for row in item_risks[:8]:
+                print(
+                    "  - "
+                    f"{row.get('id')}: price {row.get('base_price')}G, "
+                    f"value {row.get('estimated_immediate_value')}G, "
+                    f"{row.get('reason')}"
+                )
+        rarity_flags = value_flags.get("jester_elevated_rarity_low_price", [])
+        if isinstance(rarity_flags, list) and rarity_flags:
+            print("- elevated rarity low-price Jesters:")
+            for row in rarity_flags[:8]:
+                print(
+                    "  - "
+                    f"{row.get('id')}: {row.get('rarity')} "
+                    f"{row.get('base_cost')}G, {row.get('effect_type')}"
+                )
+        impact_flags = value_flags.get("jester_high_impact_low_price", [])
+        if isinstance(impact_flags, list) and impact_flags:
+            print("- high-impact low-price Jesters:")
+            for row in impact_flags[:8]:
+                print(
+                    "  - "
+                    f"{row.get('id')}: {row.get('base_cost')}G, "
+                    f"{row.get('effect_type')} / {row.get('condition_type')}"
                 )
     purchase_power = report["purchase_power"]
     print()
