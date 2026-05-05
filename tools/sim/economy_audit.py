@@ -29,6 +29,8 @@ class EconomyConfig:
     first_blind_clear_bonus_gold: int = 2
     remaining_board_discard_gold_bonus: int = 2
     remaining_hand_discard_gold_bonus: int = 1
+    market_price_scale_numerator: int = 11
+    market_price_scale_denominator: int = 5
     shop_base_reroll_cost: int = 5
     standard_board_discards: int = 4
     standard_hand_discards: int = 2
@@ -170,12 +172,14 @@ def _catalog_value_flags(
         elif op == "discount_next_purchase":
             estimated_value = amount
             reason = "다음 구매 할인"
-        if price > 0 and estimated_value >= price:
+        effective_price = _effective_market_price(config, price)
+        if price > 0 and estimated_value >= effective_price:
             item_self_refund_risks.append(
                 {
                     "id": item.get("id"),
                     "rarity": item.get("rarity"),
                     "base_price": price,
+                    "effective_price": effective_price,
                     "estimated_immediate_value": round(estimated_value, 2),
                     "reason": reason,
                 }
@@ -676,6 +680,16 @@ def _cashout_gold(
     )
 
 
+def _effective_market_price(config: EconomyConfig, base_price: int) -> int:
+    if base_price <= 0:
+        return 0
+    return round(
+        base_price
+        * config.market_price_scale_numerator
+        / config.market_price_scale_denominator
+    )
+
+
 def _signals(report: dict[str, Any]) -> list[str]:
     signals: list[str] = []
     item_common = report["price_stats"]["items_by_rarity"].get("common", {})
@@ -908,6 +922,7 @@ def _print_report(report: dict[str, Any]) -> None:
                 print(
                     "  - "
                     f"{row.get('id')}: price {row.get('base_price')}G, "
+                    f"effective {row.get('effective_price')}G, "
                     f"value {row.get('estimated_immediate_value')}G, "
                     f"{row.get('reason')}"
                 )

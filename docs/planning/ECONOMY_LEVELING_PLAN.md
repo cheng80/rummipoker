@@ -388,6 +388,21 @@ watchlist price decision:
 - `ride_the_bus`: 보류. base 6G, effective 13G이며 성장 조건이 붙어 있어 즉시 상향 근거가 부족하다.
 - `jester_hook`: 적용. base 10G, effective 22G는 `Jester sell value +1` 효과 대비 회수 조건이 너무 멀다. base 7G, sell 3G로 낮춰 effective 15G가 되게 했다.
 - 적용 후 `tools/sim/catalog_value_audit.py` 기준 expensive low-impact 후보는 0개다.
+- `tools/sim/economy_audit.py`도 runtime effective price 기준으로 자기 회수 후보를 판단하도록 맞췄다.
+
+jester hook price probe:
+
+- command: `dart run tools/sim/run_balance_sim.dart --runs 120 --bot planner_v2 --seed 91520 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --out logs/sim/economy_jester_hook_price_r120.jsonl --summary-out logs/sim/economy_jester_hook_price_r120_summary.json`
+- result:
+  - balanced none 58.3%, balanced v9 57.5%
+  - power none 60.8%, power v9 60.0%
+  - v9 final gold avg 약 6.1G
+  - v9 S8 boss before 약 9.18G
+  - immediate economy signal 없음
+- 판정:
+  - r120 기준으로 즉시 경제 경고는 없다.
+  - 다만 v9가 none보다 소폭 낮아진 결과라 이 값만으로 기준을 확정하지 않는다.
+  - 다음은 가격 후보를 더 늘리지 않고 r400으로 clear 역전 여부를 확인한다.
 
 ### Phase 3. Economy Probe
 

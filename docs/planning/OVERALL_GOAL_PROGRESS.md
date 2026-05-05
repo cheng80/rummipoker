@@ -62,7 +62,7 @@
 - `reroll_token`은 runtime effective price 기준 자기 회수형이 아니다.
 - `trade_ticket`, `ride_the_bus`는 watchlist로 유지하되 즉시 가격 변경은 보류한다.
 - `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
-- 다음 경제 검증은 가격 후보를 계속 늘리지 않고, 적용된 작은 변경이 clear/잔고/구매 압박을 망치지 않는지 확인한다.
+- r120 경제 probe에서 즉시 경제 경고는 없었지만 v9가 none보다 소폭 낮아, 다음은 가격 후보를 늘리지 않고 r400으로 확인한다.
 
 ## 4. Completed Progress So Far
 
@@ -111,7 +111,7 @@ Status: In progress
 
 현재 남은 일:
 
-- 경제 probe로 잔고, unaffordable event, clear 역전 여부 확인.
+- r400 경제 probe로 잔고, unaffordable event, clear 역전 여부 확인.
 
 ### M2. S1~S8 Leveling Curve
 
