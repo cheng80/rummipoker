@@ -91,12 +91,12 @@ Catalog economy normalization:
 |---:|---|
 | S1 | `redDampener` |
 | S2 | `rowDampener` |
-| S3 | `blueDampener` |
+| S3 | `faceDampener` |
 | S4 | `columnDampener` |
-| S5 | `blackDampener` |
+| S5 | `allScoreDampener` |
 | S6 | `diagonalDampener` |
-| S7 | `yellowDampener` |
-| S8 | `faceDampener` |
+| S7 | `firstConfirmTax` |
+| S8 | `confirmCountTax` |
 
 표시 정책:
 
