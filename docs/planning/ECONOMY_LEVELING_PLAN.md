@@ -318,6 +318,24 @@ catalog-first runtime translation:
   - 이 결과는 시장 후보가 의미 없다는 뜻이 아니라, 가격/리롤/슬롯 교체 비용이 선택 압박을 만든다는 신호로 본다.
   - 다음 조정은 자동 지급이 아니라 S8 후보군 availability, board/move/discard 후보 접근성, 또는 boss severity/cycle 위치를 분리해서 본다.
 
+catalog value audit:
+
+- `tools/sim/catalog_value_audit.py`를 추가했다.
+- 이 도구는 runtime 가격을 바꾸지 않고, Item/Jester 카탈로그의 `basePrice`/`baseCost`, rarity, effect role, 즉시 회수 가치, 판매 회수율을 묶어 가격 불일치 후보를 표시한다.
+- 현재 audit 범위는 `data/common/items_common_v1.json`과 `data/common/jesters_common_phase5.json`이다.
+- Pack/Tarot-like/Planet-like가 독립 카탈로그 타입으로 승격되면 같은 report에 role mapping을 추가해야 한다.
+- 1차 출력:
+  - item 49개, Jester 43개, 총 92개 후보를 점검한다.
+  - role별 median price는 economy 5G, resource 6G, score boost 4G, growth engine 7G, xmult engine 8G, market 9.5G, relic 9G, utility 8.5G다.
+  - 즉시 회수 후보는 `reroll_token`이다. 5G 구매로 기본 리롤 5G를 대체하므로 실질 비용이 낮다.
+  - 저가 성장 엔진 후보는 `popcorn`, `ride_the_bus`다.
+  - 저가 high-impact 후보는 `trade_ticket`, `popcorn`, `ride_the_bus`다.
+  - 고가 low-impact 후보는 `jester_hook`, `deck_needle`, `undo_seal`, `wide_grip`이다.
+- 판정:
+  - 골드 보상과 전체 가격 배율의 1차 상관은 정리됐지만, 개별 카드/아이템의 가치 대비 가격 산정은 아직 완료가 아니다.
+  - 다음 가격 변경은 이 audit 후보를 기준으로 role별 기준가를 먼저 잡고, 그 뒤 runtime economy sweep으로 검증한다.
+  - 표시/구매 단위는 계속 정수 G로 유지하며 소수점 가격은 만들지 않는다.
+
 ### Phase 3. Economy Probe
 
 목표:
