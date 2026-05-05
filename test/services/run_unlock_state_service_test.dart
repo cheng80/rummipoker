@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/services/run_unlock_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
@@ -20,12 +21,11 @@ void main() {
       expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isFalse);
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isFalse);
       expect(state.isDeckAvailable('basic_deck'), isTrue);
+      expect(state.insight, 0);
     });
 
     test('난이도 해금 저장 후 다시 읽을 수 있다', () async {
-      await RunUnlockStateService.unlockDifficulty(
-        NewRunDifficulty.relaxed,
-      );
+      await RunUnlockStateService.unlockDifficulty(NewRunDifficulty.relaxed);
 
       final state = await RunUnlockStateService.load();
       expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isTrue);
@@ -40,6 +40,18 @@ void main() {
       final state = await RunUnlockStateService.load();
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isTrue);
       expect(state.isDifficultyUnlocked(NewRunDifficulty.standard), isTrue);
+    });
+
+    test('기존 해금 저장에 insight가 없어도 0으로 복원한다', () async {
+      await StorageHelper.write(
+        StorageKeys.runUnlockStateV1,
+        '{"unlockedDifficultyNames":["standard"],'
+        '"clearedDifficultyNames":[],'
+        '"availableDeckIds":["basic_deck"]}',
+      );
+
+      final state = await RunUnlockStateService.load();
+      expect(state.insight, 0);
     });
   });
 }

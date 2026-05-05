@@ -9,6 +9,7 @@ class RunUnlockState {
     required this.unlockedDifficultyNames,
     required this.clearedDifficultyNames,
     required this.availableDeckIds,
+    required this.insight,
   });
 
   factory RunUnlockState.defaults() {
@@ -16,6 +17,7 @@ class RunUnlockState {
       unlockedDifficultyNames: <String>{'standard'},
       clearedDifficultyNames: <String>{},
       availableDeckIds: <String>{'basic_deck'},
+      insight: 0,
     );
   }
 
@@ -34,23 +36,27 @@ class RunUnlockState {
           ? RunUnlockState.defaults().unlockedDifficultyNames
           : rawDifficultyNames,
       clearedDifficultyNames:
-          (json['clearedDifficultyNames'] as List<dynamic>? ?? const <dynamic>[])
+          (json['clearedDifficultyNames'] as List<dynamic>? ??
+                  const <dynamic>[])
               .whereType<String>()
               .toSet(),
       availableDeckIds: rawDeckIds.isEmpty
           ? RunUnlockState.defaults().availableDeckIds
           : rawDeckIds,
+      insight: (json['insight'] as num?)?.toInt() ?? 0,
     );
   }
 
   final Set<String> unlockedDifficultyNames;
   final Set<String> clearedDifficultyNames;
   final Set<String> availableDeckIds;
+  final int insight;
 
   Map<String, dynamic> toJson() => {
     'unlockedDifficultyNames': unlockedDifficultyNames.toList()..sort(),
     'clearedDifficultyNames': clearedDifficultyNames.toList()..sort(),
     'availableDeckIds': availableDeckIds.toList()..sort(),
+    'insight': insight,
   };
 
   bool isDifficultyUnlocked(NewRunDifficulty difficulty) {
@@ -69,6 +75,7 @@ class RunUnlockState {
     Set<String>? unlockedDifficultyNames,
     Set<String>? clearedDifficultyNames,
     Set<String>? availableDeckIds,
+    int? insight,
   }) {
     return RunUnlockState(
       unlockedDifficultyNames:
@@ -76,6 +83,7 @@ class RunUnlockState {
       clearedDifficultyNames:
           clearedDifficultyNames ?? this.clearedDifficultyNames,
       availableDeckIds: availableDeckIds ?? this.availableDeckIds,
+      insight: insight ?? this.insight,
     );
   }
 }
@@ -136,5 +144,11 @@ class RunUnlockStateService {
         },
       ),
     );
+  }
+
+  static Future<void> addInsight(int amount) async {
+    if (amount <= 0) return;
+    final current = await load();
+    await save(current.copyWith(insight: current.insight + amount));
   }
 }

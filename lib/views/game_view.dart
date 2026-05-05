@@ -657,6 +657,7 @@ class _GameViewState extends ConsumerState<GameView>
         result: RunEndResult.expired,
         difficulty: widget.difficulty,
         reachedStageIndex: _battleView.stageIndex,
+        defeatedBossCount: _defeatedBossCountForRunEnd(completed: false),
       ),
     );
     await ActiveRunSaveService.clearActiveRun();
@@ -670,10 +671,17 @@ class _GameViewState extends ConsumerState<GameView>
         result: RunEndResult.completed,
         difficulty: widget.difficulty,
         reachedStageIndex: _battleView.stageIndex,
+        defeatedBossCount: _defeatedBossCountForRunEnd(completed: true),
       ),
     );
     await ActiveRunSaveService.clearActiveRun();
     await _goToTitleAfterStoppingBgm();
+  }
+
+  int _defeatedBossCountForRunEnd({required bool completed}) {
+    final stageIndex = _battleView.stageIndex;
+    if (stageIndex <= 0) return 0;
+    return completed ? stageIndex : math.max(0, stageIndex - 1);
   }
 
   void _showGameOver(List<RummiExpirySignal> signals) {
