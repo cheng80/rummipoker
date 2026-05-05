@@ -486,6 +486,8 @@ Market availability under pressure probe:
 - 실제 적용 전에는 `basic` market 기준을 흔들지 않는 구조와 save/runtime 전달 경로를 먼저 검토한다.
 - runtime applied: 저장 포맷은 바꾸지 않고 `high_stakes` 선택 상태에서 transient `RummiMarketPressureProfile.highStakes`를 파생한다. `basic`은 기존 market policy를 그대로 쓰며, `high_stakes`는 S3 이후 item offer 후보 폭을 +1 하고 missing growth item/Jester 후보 노출 확률만 보강한다.
 - post-apply risk check: 현재 runtime target에 가까운 `target 1.08 / reward 1.12` proxy에서 v10 r120은 balanced none 42.5%, balanced v10 42.5%, power none 45.0%, power v10 61.7%다. market pressure profile은 power 쪽을 확실히 받치지만 balanced에는 아직 충분하지 않으므로, 다음 조정 후보는 `high_stakes` target multiplier 자체를 낮추는 장기 sweep이다.
+- sim parity applied: `tools/sim/run_balance_sim.dart`도 `--run-modifier high_stakes`와 `shop_slot_market_v9`가 함께 쓰이면 runtime high stakes market pressure에 해당하는 missing growth/slot pressure를 반영한다.
+- parity r120 check: sim parity 이후 direct `high_stakes + v9` r120은 balanced none 40.8%, balanced v9 42.5%, power none 56.7%, power v9 55.8%다. effective target 1.04/1.02 probe에서도 balanced v9가 none보다 낮은 seed가 남았다. 따라서 target multiplier 변경은 아직 적용하지 않고, 다음은 multi-seed 또는 r400 이상으로 balanced route의 v9 역전 원인을 확인한다.
 
 ## 6. Read Order
 

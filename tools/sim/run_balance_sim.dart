@@ -586,6 +586,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
       final marketSelection = _resolveSequenceStepMarketSelection(
         baseSelection: baseMarketSelection,
         marketProfile: spec.marketProfile,
+        runModifier: config.runModifier,
         seed:
             config.seed +
             spec.matrixIndex * config.runs +
@@ -755,6 +756,10 @@ BalanceSimSequenceOutput _runStationPathSequence({
       row['sequence_tier_path'] = tierPath.map((tier) => tier.name).toList();
       row['market_profile'] = spec.marketProfile.id;
       row['resolved_market_profile'] = resolvedMarketProfile.id;
+      row['run_modifier_market_pressure'] = _hasRunModifierMarketPressure(
+        config.runModifier,
+        spec.marketProfile,
+      );
       if (marketSelection.sourceCandidate case final sourceCandidate?) {
         row['resolved_market_candidate'] = sourceCandidate.toJson();
       }
@@ -946,6 +951,10 @@ Map<String, Object?> _buildSequenceSummaryRow({
     'run_modifier_id': config.runModifier.id,
     'run_modifier_target_multiplier': config.runModifier.targetScoreMultiplier,
     'run_modifier_reward_multiplier': config.runModifier.rewardMultiplier,
+    'run_modifier_market_pressure': _hasRunModifierMarketPressure(
+      config.runModifier,
+      spec.marketProfile,
+    ),
     'seed': config.seed + spec.matrixIndex * config.runs + runIndex,
     'bot_policy': bot.id,
     'app_version': 'dev',
@@ -1911,6 +1920,7 @@ BalanceSimMarketSelection _resolveSequenceMarketSelection({
 BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
   required BalanceSimMarketSelection baseSelection,
   required BalanceSimMarketProfile marketProfile,
+  required NewRunModifier runModifier,
   required int seed,
   required BalanceSimLoadoutSpec loadout,
   required int station,
@@ -1944,6 +1954,10 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
   if (station <= 1) return baseSelection;
   final rng = Random(seed * 1009 + station * 313 + tier.index * 9173);
   if (isShopSlot) {
+    final runModifierMarketPressure = _hasRunModifierMarketPressure(
+      runModifier,
+      marketProfile,
+    );
     final tempoBias = marketProfile != BalanceSimMarketProfile.shopSlotMarketV1;
     final lateTempoBias =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV4 ||
@@ -2001,9 +2015,11 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         (marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 &&
             station >= 8);
     final missingGrowthBias =
+        runModifierMarketPressure ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
     final missingGrowthBiasStrong =
+        runModifierMarketPressure ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10;
     final boardLockRelief =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV3 &&
@@ -2078,6 +2094,14 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
   return BalanceSimMarketSelection(
     profile: _pickWeightedMarketCandidate(rng: rng, candidates: candidates),
   );
+}
+
+bool _hasRunModifierMarketPressure(
+  NewRunModifier runModifier,
+  BalanceSimMarketProfile marketProfile,
+) {
+  return runModifier == NewRunModifier.highStakes &&
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV9;
 }
 
 List<_WeightedMarketCandidate> _probabilisticMarketCandidates(

@@ -1589,6 +1589,51 @@ void main() {
     }
   });
 
+  test('CLI high stakes applies market pressure to shop slot v9', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/high_stakes_market_pressure.jsonl';
+    final code = await runBalanceSim([
+      '--runs',
+      '2',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '90840',
+      '--sequence-mode',
+      'station_path',
+      '--stations',
+      '2,4,7',
+      '--experiment-id',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
+      '--market-profile',
+      'shop_slot_market_v9',
+      '--loadout-id',
+      'progression_route_power',
+      '--run-modifier',
+      'high_stakes',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final battleRows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .where((row) => row['row_type'] == 'battle')
+        .toList(growable: false);
+    expect(battleRows, isNotEmpty);
+    for (final row in battleRows) {
+      expect(row['run_modifier_id'], 'high_stakes');
+      expect(row['run_modifier_market_pressure'], isTrue);
+      final shopSlots = row['market_shop_slots'] as List<dynamic>;
+      final station = row['station'] as int;
+      expect(shopSlots.length, station <= 2 ? 3 : 5);
+    }
+  });
+
   test(
     'CLI sim economy can choose affordable shop slot alternatives',
     () async {
