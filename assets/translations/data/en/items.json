@@ -1,0 +1,202 @@
+{
+  "data": {
+    "items": {
+      "reroll_token": {
+        "displayName": "Reroll Chip",
+        "effectText": "The next shop reroll costs 1 less Gold."
+      },
+      "coupon_stamp": {
+        "displayName": "Discount Stamp",
+        "effectText": "The next item or Jester purchase costs 2 less Gold."
+      },
+      "coin_cache": {
+        "displayName": "Coin Cache",
+        "effectText": "Gain +3 Gold immediately."
+      },
+      "board_scrap": {
+        "displayName": "Board Pass",
+        "effectText": "Gain +1 board discard for this Station."
+      },
+      "hand_scrap": {
+        "displayName": "Hand Pass",
+        "effectText": "Gain +1 hand discard for this Station."
+      },
+      "chip_capsule": {
+        "displayName": "Chip Charge",
+        "effectText": "The next confirm gains +25 Chips."
+      },
+      "mult_capsule": {
+        "displayName": "Mult Charge",
+        "effectText": "The next confirm gains +6 Mult."
+      },
+      "line_polish": {
+        "displayName": "Score Polish",
+        "effectText": "The next confirm final score is multiplied by x1.25."
+      },
+      "straight_oil": {
+        "displayName": "Run Primer",
+        "effectText": "The next Straight-or-better confirm gains +40 Chips."
+      },
+      "flush_powder": {
+        "displayName": "Color Primer",
+        "effectText": "The next Flush-or-better confirm gains +8 Mult."
+      },
+      "pair_splint": {
+        "displayName": "Pair Brace",
+        "effectText": "The next Two Pair confirm gains +35 Chips."
+      },
+      "overlap_pin": {
+        "displayName": "Overlap Pin",
+        "effectText": "The next confirm gets a slightly higher overlap bonus cap."
+      },
+      "emergency_draw": {
+        "displayName": "Emergency Draw",
+        "effectText": "If your hand is empty and the deck has tiles, draw 1 tile now."
+      },
+      "ledger_clip": {
+        "displayName": "Ledger Clip",
+        "effectText": "Gain +1 Gold when entering the shop."
+      },
+      "discard_glove": {
+        "displayName": "Board Glove",
+        "effectText": "At each Station start, gain +1 board discard."
+      },
+      "mulligan_sleeve": {
+        "displayName": "Hand Sleeve",
+        "effectText": "At each Station start, gain +1 hand discard."
+      },
+      "shop_lens": {
+        "displayName": "Offer Lens",
+        "effectText": "Item offers in the shop increase by 1."
+      },
+      "jester_hook": {
+        "displayName": "Jester Hook",
+        "effectText": "Jester sell value +1 Gold."
+      },
+      "score_abacus": {
+        "displayName": "Score Abacus",
+        "effectText": "The first confirm in each Station gains +30 Chips."
+      },
+      "thin_caliper": {
+        "displayName": "Short Caliper",
+        "effectText": "Confirms made with 3 or fewer tiles gain +4 Mult."
+      },
+      "stage_map": {
+        "displayName": "Station Map",
+        "effectText": "Clearing a Showdown gives +1 reward Gold."
+      },
+      "spare_pouch": {
+        "displayName": "Spare Pouch",
+        "effectText": "Battle item slots +1."
+      },
+      "merchant_stamp": {
+        "displayName": "Shop Stamp",
+        "effectText": "When entering the shop, the first reroll costs 1 less Gold."
+      },
+      "safety_net": {
+        "displayName": "Failsafe Net",
+        "effectText": "Once per Station, prevent the first combat lock that would end the run."
+      },
+      "coin_funnel": {
+        "displayName": "Board Funnel",
+        "effectText": "At settlement, each unused board discard gives +1 reward Gold."
+      },
+      "hand_funnel": {
+        "displayName": "Hand Funnel",
+        "effectText": "At settlement, each unused hand discard gives +1 reward Gold."
+      },
+      "lucky_counter": {
+        "displayName": "Rare Counter",
+        "effectText": "Rare items appear more often in item offers."
+      },
+      "echo_bell": {
+        "displayName": "Echo Bell",
+        "effectText": "The second confirm in each Station adds 10% of the first confirm score."
+      },
+      "boss_trophy": {
+        "displayName": "Showdown Trophy",
+        "effectText": "After clearing a Showdown, the next shop has +1 Jester offer."
+      },
+      "thin_wallet": {
+        "displayName": "Empty Wallet",
+        "effectText": "Use only at 3 Gold or less. Gain +5 Gold."
+      },
+      "trade_ticket": {
+        "displayName": "Item Ticket",
+        "effectText": "Reroll only item offers."
+      },
+      "jester_invoice": {
+        "displayName": "Jester Invoice",
+        "effectText": "The next Jester purchase costs 4 less Gold."
+      },
+      "item_invoice": {
+        "displayName": "Item Invoice",
+        "effectText": "The next item purchase costs 4 less Gold."
+      },
+      "red_swatch": {
+        "displayName": "Red Swatch",
+        "effectText": "On the next confirm, each red tile gives +2 Mult."
+      },
+      "blue_swatch": {
+        "displayName": "Blue Swatch",
+        "effectText": "On the next confirm, each blue tile gives +2 Mult."
+      },
+      "black_swatch": {
+        "displayName": "Black Swatch",
+        "effectText": "On the next confirm, each black tile gives +2 Mult."
+      },
+      "yellow_swatch": {
+        "displayName": "Yellow Swatch",
+        "effectText": "On the next confirm, each yellow tile gives +2 Mult."
+      },
+      "rank_chalk": {
+        "displayName": "Rank Chalk",
+        "effectText": "On the next confirm, each tile sharing a number gives +12 Chips."
+      },
+      "deck_needle": {
+        "displayName": "Deck Needle",
+        "effectText": "Look at the top 3 deck tiles and discard 1."
+      },
+      "tile_polisher": {
+        "displayName": "Tile Polisher",
+        "effectText": "The first scored tile in each Station gains +20 Chips."
+      },
+      "move_token": {
+        "displayName": "Move Chip",
+        "effectText": "Gain +1 board move for this Station."
+      },
+      "slide_wax": {
+        "displayName": "Slide Wax",
+        "effectText": "The next board move also triggers slide bonus effects."
+      },
+      "board_lift": {
+        "displayName": "Move Reserve",
+        "effectText": "Reserve +1 board move for the next Station."
+      },
+      "undo_seal": {
+        "displayName": "Undo Seal",
+        "effectText": "Undo the last board move once."
+      },
+      "organizer_glove": {
+        "displayName": "Organizer Glove",
+        "effectText": "At each Station start, gain +1 board move."
+      },
+      "travel_pouch": {
+        "displayName": "Travel Pouch",
+        "effectText": "Max hand size +1."
+      },
+      "wide_grip": {
+        "displayName": "Wide Grip",
+        "effectText": "At each Station start, max hand size +1 and board discard -1."
+      },
+      "grand_satchel": {
+        "displayName": "Grand Satchel",
+        "effectText": "At each Station start, max hand size +2 and hand discard -1."
+      },
+      "market_compass": {
+        "displayName": "Shop Compass",
+        "effectText": "When entering the shop, discount the cheaper first offer between item and Jester offers by 1 Gold."
+      }
+    }
+  }
+}

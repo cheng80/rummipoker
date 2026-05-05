@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ML sweep summary에서 station/tier/loadout 병목을 빠르게 분해한다."""
+"""시뮬레이션 sweep summary에서 station/tier/loadout 병목을 빠르게 분해한다."""
 
 from __future__ import annotations
 
@@ -112,7 +112,7 @@ def _render_report(
     station_tier_rows = _aggregate_by(groups, _station_tier_key)
 
     lines = [
-        "# ML 병목 분해 리포트",
+        "# 시뮬레이션 병목 분해 리포트",
         "",
         f"- 입력 파일: `{summary_path}`",
         f"- group 수: {len(groups)}",

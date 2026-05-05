@@ -3,7 +3,7 @@
 > 문서 성격: current policy / leveling source of truth
 > 적용 범위: target score, boss constraint, market candidate availability, market weight, simulation interpretation
 > 우선순위: 실제 코드와 테스트 다음으로 이 문서를 우선한다. 과거 planning/archive 문서가 이 문서와 충돌하면 이 문서를 따른다.
-> ML 기준값: `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+> 시뮬레이션 기준값: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 > 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 
 ## 1. 핵심 원칙

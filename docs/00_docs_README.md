@@ -38,7 +38,7 @@
 레벨링/마켓 정책 작업은 아래 문서를 추가로 읽는다.
 
 - `docs/current_system/CURRENT_LEVELING_POLICY.md`
-- `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+- `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 - `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 
 이 3종은 `current_system`의 핵심 문서이며, 아래를 판단할 수 있어야 한다.

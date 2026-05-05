@@ -1,13 +1,13 @@
 # Current Leveling Runtime Spec
 
 > 문서 성격: current runtime leveling table / implementation-facing spec
-> 근거 기준: `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+> 근거 기준: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 > 정책 기준: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 > 코드 기준: `lib/services/blind_selection_spec.dart`, `lib/logic/rummi_poker_grid/jester_meta.dart`, `lib/logic/rummi_poker_grid/rummi_market_facade.dart`
 
 ## 1. 목적
 
-이 문서는 76차 이상 진행한 ML/Flutter CLI/자체 시뮬레이션 실험을 실제 런타임 기준표로 번역한 문서다.
+이 문서는 76차 이상 진행한 Flutter CLI/자체 시뮬레이션/휴리스틱 진단 실험을 실제 런타임 기준표로 번역한 문서다.
 
 정하는 대상:
 

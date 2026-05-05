@@ -1,11 +1,11 @@
 [
   {
     "id": "jester",
-    "name": "Jester",
-    "displayName": "Jester",
+    "name": "Base Relay",
+    "displayName": "Base Relay",
     "rarity": "common",
     "baseCost": 2,
-    "effectText": "+4 Mult",
+    "effectText": "+4 Mult.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -16,8 +16,8 @@
     "value": 4,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.jester.displayName",
     "effectTextKey": "data.jesters.jester.effectText",
@@ -25,11 +25,11 @@
   },
   {
     "id": "greedy_jester",
-    "name": "Greedy Jester",
-    "displayName": "Greedy Jester",
+    "name": "Amber Tap",
+    "displayName": "Amber Tap",
     "rarity": "common",
     "baseCost": 5,
-    "effectText": "Played Diamonds give +3 Mult",
+    "effectText": "Each yellow tile in the scoring line gives +3 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -41,23 +41,20 @@
     "value": 3,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.greedy_jester.displayName",
     "effectTextKey": "data.jesters.greedy_jester.effectText",
-    "notesKey": "data.jesters.greedy_jester.notes",
-    "originalSuitRefs": [
-      "diamonds"
-    ]
+    "notesKey": "data.jesters.greedy_jester.notes"
   },
   {
     "id": "lusty_jester",
-    "name": "Lusty Jester",
-    "displayName": "Lusty Jester",
+    "name": "Crimson Tap",
+    "displayName": "Crimson Tap",
     "rarity": "common",
     "baseCost": 5,
-    "effectText": "Played Hearts give +3 Mult",
+    "effectText": "Each red tile in the scoring line gives +3 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -69,23 +66,20 @@
     "value": 3,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.lusty_jester.displayName",
     "effectTextKey": "data.jesters.lusty_jester.effectText",
-    "notesKey": "data.jesters.lusty_jester.notes",
-    "originalSuitRefs": [
-      "hearts"
-    ]
+    "notesKey": "data.jesters.lusty_jester.notes"
   },
   {
     "id": "wrathful_jester",
-    "name": "Wrathful Jester",
-    "displayName": "Wrathful Jester",
+    "name": "Cobalt Tap",
+    "displayName": "Cobalt Tap",
     "rarity": "common",
     "baseCost": 5,
-    "effectText": "Played Spades give +3 Mult",
+    "effectText": "Each blue tile in the scoring line gives +3 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -97,23 +91,20 @@
     "value": 3,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.wrathful_jester.displayName",
     "effectTextKey": "data.jesters.wrathful_jester.effectText",
-    "notesKey": "data.jesters.wrathful_jester.notes",
-    "originalSuitRefs": [
-      "spades"
-    ]
+    "notesKey": "data.jesters.wrathful_jester.notes"
   },
   {
     "id": "gluttonous_jester",
-    "name": "Gluttonous Jester",
-    "displayName": "Gluttonous Jester",
+    "name": "Obsidian Tap",
+    "displayName": "Obsidian Tap",
     "rarity": "common",
     "baseCost": 5,
-    "effectText": "Played Clubs give +3 Mult",
+    "effectText": "Each black tile in the scoring line gives +3 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -125,23 +116,20 @@
     "value": 3,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.gluttonous_jester.displayName",
     "effectTextKey": "data.jesters.gluttonous_jester.effectText",
-    "notesKey": "data.jesters.gluttonous_jester.notes",
-    "originalSuitRefs": [
-      "clubs"
-    ]
+    "notesKey": "data.jesters.gluttonous_jester.notes"
   },
   {
     "id": "jolly_jester",
-    "name": "Jolly Jester",
-    "displayName": "Jolly Jester",
+    "name": "Pair Call",
+    "displayName": "Pair Call",
     "rarity": "common",
     "baseCost": 3,
-    "effectText": "Played hand containing a Pair gives +8 Mult",
+    "effectText": "If the scoring line contains a Pair or better, +8 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -153,8 +141,8 @@
     "value": 8,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.jolly_jester.displayName",
     "effectTextKey": "data.jesters.jolly_jester.effectText",
@@ -162,25 +150,24 @@
   },
   {
     "id": "zany_jester",
-    "name": "Zany Jester",
-    "displayName": "Zany Jester",
+    "name": "Triple Call",
+    "displayName": "Triple Call",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing a Three of a Kind gives +12 Mult",
+    "effectText": "If the scoring line contains Three of a Kind or better, +12 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
     "unlockCondition": null,
-    "notes": "The fandom page explicitly states this includes hands containing any three cards with the same rank, such as Full House.",
+    "notes": "같은 숫자 3개 이상이 포함된 점수 라인에서 발동한다.",
     "effectType": "mult_bonus",
     "conditionType": "three_of_a_kind",
     "conditionValue": "contains_three_of_a_kind",
     "value": 12,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Verified against Zany Jester fandom page."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.zany_jester.displayName",
     "effectTextKey": "data.jesters.zany_jester.effectText",
@@ -188,11 +175,11 @@
   },
   {
     "id": "mad_jester",
-    "name": "Mad Jester",
-    "displayName": "Mad Jester",
+    "name": "Twin Pair Call",
+    "displayName": "Twin Pair Call",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing Two Pair gives +10 Mult",
+    "effectText": "If the scoring line contains Two Pair or better, +10 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -204,8 +191,8 @@
     "value": 10,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.mad_jester.displayName",
     "effectTextKey": "data.jesters.mad_jester.effectText",
@@ -213,11 +200,11 @@
   },
   {
     "id": "crazy_jester",
-    "name": "Crazy Jester",
-    "displayName": "Crazy Jester",
+    "name": "Run Call",
+    "displayName": "Run Call",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing a Straight gives +12 Mult",
+    "effectText": "If the scoring line contains a Straight or better, +12 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -229,8 +216,8 @@
     "value": 12,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.crazy_jester.displayName",
     "effectTextKey": "data.jesters.crazy_jester.effectText",
@@ -238,11 +225,11 @@
   },
   {
     "id": "droll_jester",
-    "name": "Droll Jester",
-    "displayName": "Droll Jester",
+    "name": "Color Call",
+    "displayName": "Color Call",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing a Flush gives +10 Mult",
+    "effectText": "If the scoring line contains a Flush or better, +10 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -254,8 +241,8 @@
     "value": 10,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.droll_jester.displayName",
     "effectTextKey": "data.jesters.droll_jester.effectText",
@@ -263,11 +250,11 @@
   },
   {
     "id": "sly_jester",
-    "name": "Sly Jester",
-    "displayName": "Sly Jester",
+    "name": "Pair Battery",
+    "displayName": "Pair Battery",
     "rarity": "common",
     "baseCost": 3,
-    "effectText": "Played hand containing a Pair gives +50 Chips",
+    "effectText": "If the scoring line contains a Pair or better, +50 Chips.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -279,8 +266,8 @@
     "value": 50,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.sly_jester.displayName",
     "effectTextKey": "data.jesters.sly_jester.effectText",
@@ -288,11 +275,11 @@
   },
   {
     "id": "wily_jester",
-    "name": "Wily Jester",
-    "displayName": "Wily Jester",
+    "name": "Triple Battery",
+    "displayName": "Triple Battery",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing a Three of a Kind gives +100 Chips",
+    "effectText": "If the scoring line contains Three of a Kind or better, +100 Chips.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -304,8 +291,8 @@
     "value": 100,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.wily_jester.displayName",
     "effectTextKey": "data.jesters.wily_jester.effectText",
@@ -313,11 +300,11 @@
   },
   {
     "id": "clever_jester",
-    "name": "Clever Jester",
-    "displayName": "Clever Jester",
+    "name": "Twin Pair Battery",
+    "displayName": "Twin Pair Battery",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing Two Pair gives +80 Chips",
+    "effectText": "If the scoring line contains Two Pair or better, +80 Chips.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -329,8 +316,8 @@
     "value": 80,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.clever_jester.displayName",
     "effectTextKey": "data.jesters.clever_jester.effectText",
@@ -338,11 +325,11 @@
   },
   {
     "id": "devious_jester",
-    "name": "Devious Jester",
-    "displayName": "Devious Jester",
+    "name": "Run Battery",
+    "displayName": "Run Battery",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing a Straight gives +100 Chips",
+    "effectText": "If the scoring line contains a Straight or better, +100 Chips.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -354,8 +341,8 @@
     "value": 100,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.devious_jester.displayName",
     "effectTextKey": "data.jesters.devious_jester.effectText",
@@ -363,11 +350,11 @@
   },
   {
     "id": "crafty_jester",
-    "name": "Crafty Jester",
-    "displayName": "Crafty Jester",
+    "name": "Color Battery",
+    "displayName": "Color Battery",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played hand containing a Flush gives +80 Chips",
+    "effectText": "If the scoring line contains a Flush or better, +80 Chips.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -379,8 +366,8 @@
     "value": 80,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.crafty_jester.displayName",
     "effectTextKey": "data.jesters.crafty_jester.effectText",
@@ -388,11 +375,11 @@
   },
   {
     "id": "half_jester",
-    "name": "Half Jester",
-    "displayName": "Half Jester",
+    "name": "Compact Core",
+    "displayName": "Compact Core",
     "rarity": "common",
     "baseCost": 5,
-    "effectText": "+20 Mult if played hand contains 3 or fewer cards",
+    "effectText": "If the scoring line uses 3 or fewer tiles, +20 Mult.",
     "trigger": "onPlay",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -404,8 +391,8 @@
     "value": 20,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.half_jester.displayName",
     "effectTextKey": "data.jesters.half_jester.effectText",
@@ -413,11 +400,11 @@
   },
   {
     "id": "jester_stencil",
-    "name": "Jester Stencil",
-    "displayName": "Jester Stencil",
+    "name": "Open Socket",
+    "displayName": "Open Socket",
     "rarity": "common",
     "baseCost": 8,
-    "effectText": "X1 Mult for each empty Jester slot",
+    "effectText": "Each empty Jester slot gives x1 Mult.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -429,8 +416,8 @@
     "value": null,
     "xValue": 1.0,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.jester_stencil.displayName",
     "effectTextKey": "data.jesters.jester_stencil.effectText",
@@ -438,11 +425,11 @@
   },
   {
     "id": "abstract_jester",
-    "name": "Abstract Jester",
-    "displayName": "Abstract Jester",
+    "name": "Crew Chorus",
+    "displayName": "Crew Chorus",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "+3 Mult for each Jester card (Currently +0 Mult)",
+    "effectText": "Each owned Jester gives +3 Mult.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -454,9 +441,8 @@
     "value": 3,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Abstract Jester page lists Common, $4, +3 Mult for each Jester card."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.abstract_jester.displayName",
     "effectTextKey": "data.jesters.abstract_jester.effectText",
@@ -464,11 +450,11 @@
   },
   {
     "id": "green_jester",
-    "name": "Green Jester",
-    "displayName": "Green Jester",
+    "name": "Momentum Meter",
+    "displayName": "Momentum Meter",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "+1 Mult per hand played, -1 Mult per discard (Currently +0 Mult)",
+    "effectText": "Gains +1 Mult after each confirm. Loses 1 Mult after each discard.",
     "trigger": "other",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -480,9 +466,8 @@
     "value": 1,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Green Jester page lists Common, $4, +1 Mult per hand played and -1 per discard."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.green_jester.displayName",
     "effectTextKey": "data.jesters.green_jester.effectText",
@@ -490,11 +475,11 @@
   },
   {
     "id": "blue_jester",
-    "name": "Blue Jester",
-    "displayName": "Blue Jester",
+    "name": "Deck Counter",
+    "displayName": "Deck Counter",
     "rarity": "common",
     "baseCost": 5,
-    "effectText": "+2 Chips for each card remaining in deck",
+    "effectText": "Each tile remaining in the deck gives +2 Chips.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -506,9 +491,8 @@
     "value": 2,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Blue Jester page lists Common, $5, +2 Chips per card still in deck."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.blue_jester.displayName",
     "effectTextKey": "data.jesters.blue_jester.effectText",
@@ -516,11 +500,11 @@
   },
   {
     "id": "scary_face",
-    "name": "Scary Face",
-    "displayName": "Scary Face",
+    "name": "Face Battery",
+    "displayName": "Face Battery",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played face cards give +30 Chips when scored",
+    "effectText": "Each 11-13 tile in the scoring line gives +30 Chips.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -538,26 +522,20 @@
       "face_card"
     ],
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Scary Face page lists Common, $4, +30 Chips on scored face cards."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.scary_face.displayName",
     "effectTextKey": "data.jesters.scary_face.effectText",
-    "notesKey": "data.jesters.scary_face.notes",
-    "originalRankRefs": [
-      "jack",
-      "queen",
-      "king"
-    ]
+    "notesKey": "data.jesters.scary_face.notes"
   },
   {
     "id": "smiley_face",
-    "name": "Smiley Face",
-    "displayName": "Smiley Face",
+    "name": "Face Signal",
+    "displayName": "Face Signal",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played face cards give +5 Mult when scored",
+    "effectText": "Each 11-13 tile in the scoring line gives +5 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -575,26 +553,20 @@
       "face_card"
     ],
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Smiley Face page lists Common, $4, +5 Mult on scored face cards."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.smiley_face.displayName",
     "effectTextKey": "data.jesters.smiley_face.effectText",
-    "notesKey": "data.jesters.smiley_face.notes",
-    "originalRankRefs": [
-      "jack",
-      "queen",
-      "king"
-    ]
+    "notesKey": "data.jesters.smiley_face.notes"
   },
   {
     "id": "egg",
-    "name": "Egg",
-    "displayName": "Egg",
+    "name": "Reserve Coin",
+    "displayName": "Reserve Coin",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Earn $3 at end of round",
+    "effectText": "Gain +3 Gold at settlement.",
     "trigger": "onRoundEnd",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -606,8 +578,8 @@
     "value": 3,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.egg.displayName",
     "effectTextKey": "data.jesters.egg.effectText",
@@ -615,11 +587,11 @@
   },
   {
     "id": "bonus_jester",
-    "name": "Bonus Jester",
-    "displayName": "Bonus Jester",
+    "name": "Chip Anchor",
+    "displayName": "Chip Anchor",
     "rarity": "common",
     "baseCost": 3,
-    "effectText": "+10 Chips",
+    "effectText": "+10 Chips.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -631,8 +603,8 @@
     "value": 10,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.bonus_jester.displayName",
     "effectTextKey": "data.jesters.bonus_jester.effectText",
@@ -640,11 +612,11 @@
   },
   {
     "id": "popcorn",
-    "name": "Popcorn",
-    "displayName": "Popcorn",
+    "name": "Fading Boost",
+    "displayName": "Fading Boost",
     "rarity": "uncommon",
     "baseCost": 6,
-    "effectText": "+20 Mult, loses 4 Mult per round",
+    "effectText": "+20 Mult. After each Station, this loses 4 Mult.",
     "trigger": "onRoundEnd",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -656,8 +628,8 @@
     "value": 20,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.popcorn.displayName",
     "effectTextKey": "data.jesters.popcorn.effectText",
@@ -665,11 +637,11 @@
   },
   {
     "id": "ice_cream",
-    "name": "Ice Cream",
-    "displayName": "Ice Cream",
+    "name": "Melting Reserve",
+    "displayName": "Melting Reserve",
     "rarity": "uncommon",
     "baseCost": 7,
-    "effectText": "+100 Chips, loses 5 Chips for every hand played",
+    "effectText": "+100 Chips. After each confirm, this loses 5 Chips.",
     "trigger": "onPlay",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -681,8 +653,8 @@
     "value": 100,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.ice_cream.displayName",
     "effectTextKey": "data.jesters.ice_cream.effectText",
@@ -690,11 +662,11 @@
   },
   {
     "id": "delayed_gratification",
-    "name": "Delayed Gratification",
-    "displayName": "Delayed Gratification",
+    "name": "Unused Refund",
+    "displayName": "Unused Refund",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Earn $2 per discard unused at end of round",
+    "effectText": "At settlement, gain +2 Gold for each unused discard.",
     "trigger": "onRoundEnd",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -706,8 +678,8 @@
     "value": 2,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.delayed_gratification.displayName",
     "effectTextKey": "data.jesters.delayed_gratification.effectText",
@@ -715,11 +687,11 @@
   },
   {
     "id": "walkie_talkie",
-    "name": "Walkie Talkie",
-    "displayName": "Walkie Talkie",
+    "name": "Ten-Four Signal",
+    "displayName": "Ten-Four Signal",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Each played 10 or 4 gives +4 Mult",
+    "effectText": "Each 10 or 4 in the scoring line gives +4 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -738,24 +710,20 @@
       4
     ],
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.walkie_talkie.displayName",
     "effectTextKey": "data.jesters.walkie_talkie.effectText",
-    "notesKey": "data.jesters.walkie_talkie.notes",
-    "originalRankRefs": [
-      "10",
-      "4"
-    ]
+    "notesKey": "data.jesters.walkie_talkie.notes"
   },
   {
     "id": "golden_jester",
-    "name": "Golden Jester",
-    "displayName": "Golden Jester",
+    "name": "Gold Drip",
+    "displayName": "Gold Drip",
     "rarity": "common",
     "baseCost": 6,
-    "effectText": "Earn $4 at end of each blind",
+    "effectText": "Gain +4 Gold at settlement.",
     "trigger": "onRoundEnd",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -767,9 +735,8 @@
     "value": 4,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Golden Jester page confirms extra $4 at end of each blind; search snippet shows buy price $6 and sell price $3."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.golden_jester.displayName",
     "effectTextKey": "data.jesters.golden_jester.effectText",
@@ -777,11 +744,11 @@
   },
   {
     "id": "mystic_summit",
-    "name": "Mystic Summit",
-    "displayName": "Mystic Summit",
+    "name": "Last Push",
+    "displayName": "Last Push",
     "rarity": "common",
     "baseCost": 5,
-    "effectText": "+15 Mult when 0 discards remaining",
+    "effectText": "If you have 0 discards remaining, +15 Mult.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -793,9 +760,8 @@
     "value": 15,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Jesters list and Mult page confirm Common, $5, +15 Mult when 0 discards remaining."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.mystic_summit.displayName",
     "effectTextKey": "data.jesters.mystic_summit.effectText",
@@ -803,16 +769,16 @@
   },
   {
     "id": "even_steven",
-    "name": "Even Steven",
-    "displayName": "Even Steven",
+    "name": "Even Engine",
+    "displayName": "Even Engine",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played cards with even rank give +4 Mult when scored",
+    "effectText": "Each even-number tile in the scoring line gives +4 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
     "unlockCondition": null,
-    "notes": "Even ranks in Balatro are 2, 4, 6, 8, and 10.",
+    "notes": "짝수 타일은 2, 4, 6, 8, 10이다.",
     "effectType": "mult_bonus",
     "conditionType": "rank_scored",
     "conditionValue": [
@@ -832,33 +798,25 @@
       10
     ],
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Even Steven page and Jesters list confirm Common, $4, +4 Mult on scored even ranks (2,4,6,8,10)."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.even_steven.displayName",
     "effectTextKey": "data.jesters.even_steven.effectText",
-    "notesKey": "data.jesters.even_steven.notes",
-    "originalRankRefs": [
-      "2",
-      "4",
-      "6",
-      "8",
-      "10"
-    ]
+    "notesKey": "data.jesters.even_steven.notes"
   },
   {
     "id": "odd_todd",
-    "name": "Odd Todd",
-    "displayName": "Odd Todd",
+    "name": "Odd Engine",
+    "displayName": "Odd Engine",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played cards with odd rank give +31 Chips when scored",
+    "effectText": "Each odd-number tile in the scoring line gives +31 Chips.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
     "unlockCondition": null,
-    "notes": "Odd ranks in Balatro are A, 3, 5, 7, and 9.",
+    "notes": "홀수 타일은 A, 3, 5, 7, 9이다.",
     "effectType": "chips_bonus",
     "conditionType": "rank_scored",
     "conditionValue": [
@@ -878,28 +836,20 @@
       9
     ],
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Jesters list and Chips page confirm Common, $4, +31 Chips on scored odd ranks (A,3,5,7,9)."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.odd_todd.displayName",
     "effectTextKey": "data.jesters.odd_todd.effectText",
-    "notesKey": "data.jesters.odd_todd.notes",
-    "originalRankRefs": [
-      "ace",
-      "3",
-      "5",
-      "7",
-      "9"
-    ]
+    "notesKey": "data.jesters.odd_todd.notes"
   },
   {
     "id": "scholar",
-    "name": "Scholar",
-    "displayName": "Scholar",
+    "name": "Ace Ledger",
+    "displayName": "Ace Ledger",
     "rarity": "common",
     "baseCost": 4,
-    "effectText": "Played Aces give +20 Chips and +4 Mult when scored",
+    "effectText": "Each Ace in the scoring line gives +20 Chips and +4 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -914,24 +864,20 @@
       1
     ],
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Scholar page and Chips page confirm Common, $4, +20 Chips and +4 Mult for each scored Ace."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.scholar.displayName",
     "effectTextKey": "data.jesters.scholar.effectText",
-    "notesKey": "data.jesters.scholar.notes",
-    "originalRankRefs": [
-      "ace"
-    ]
+    "notesKey": "data.jesters.scholar.notes"
   },
   {
     "id": "fibonacci",
-    "name": "Fibonacci",
-    "displayName": "Fibonacci",
+    "name": "Sequence Relay",
+    "displayName": "Sequence Relay",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "Each played Ace, 2, 3, 5, or 8 gives +8 Mult when scored",
+    "effectText": "Each Ace, 2, 3, 5, or 8 in the scoring line gives +8 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -956,27 +902,20 @@
       8
     ],
     "source": {
-      "origin": "fandom",
+      "origin": "internal_design",
       "verified": true
     },
     "displayNameKey": "data.jesters.fibonacci.displayName",
     "effectTextKey": "data.jesters.fibonacci.effectText",
-    "notesKey": "data.jesters.fibonacci.notes",
-    "originalRankRefs": [
-      "ace",
-      "2",
-      "3",
-      "5",
-      "8"
-    ]
+    "notesKey": "data.jesters.fibonacci.notes"
   },
   {
     "id": "banner",
-    "name": "Banner",
-    "displayName": "Banner",
+    "name": "Discard Meter",
+    "displayName": "Discard Meter",
     "rarity": "rare",
     "baseCost": 7,
-    "effectText": "+30 Chips for each remaining discard",
+    "effectText": "Each remaining discard gives +30 Chips.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -988,8 +927,8 @@
     "value": 30,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.banner.displayName",
     "effectTextKey": "data.jesters.banner.effectText",
@@ -997,11 +936,11 @@
   },
   {
     "id": "gros_michel",
-    "name": "Gros Michel",
-    "displayName": "Gros Michel",
+    "name": "Ripe Boost",
+    "displayName": "Ripe Boost",
     "rarity": "rare",
     "baseCost": 7,
-    "effectText": "+15 Mult",
+    "effectText": "+15 Mult.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": false,
@@ -1013,9 +952,8 @@
     "value": 15,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": false,
-      "sourceNotes": "Fandom page confirms Common additive mult jester with unconditional +15 Mult; cost to verify in later pass."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.gros_michel.displayName",
     "effectTextKey": "data.jesters.gros_michel.effectText",
@@ -1023,11 +961,11 @@
   },
   {
     "id": "supernova",
-    "name": "Supernova",
-    "displayName": "Supernova",
+    "name": "Run Memory",
+    "displayName": "Run Memory",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "Adds the number of times poker hand has been played this run to Mult",
+    "effectText": "Add this run's count for the confirmed hand type to Mult.",
     "trigger": "passive",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -1039,9 +977,8 @@
     "value": null,
     "xValue": null,
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Jesters list and Supernova page indicate Common, $5, adds times current poker hand has been played this run to Mult."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.supernova.displayName",
     "effectTextKey": "data.jesters.supernova.effectText",
@@ -1049,11 +986,11 @@
   },
   {
     "id": "ride_the_bus",
-    "name": "Ride the Bus",
-    "displayName": "Ride the Bus",
+    "name": "Clean Streak",
+    "displayName": "Clean Streak",
     "rarity": "uncommon",
     "baseCost": 6,
-    "effectText": "This Jester gains +1 Mult per consecutive hand played without a scoring face card (Currently +0 Mult)",
+    "effectText": "Gains +1 Mult after each confirm without scoring an 11-13 tile.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -1071,26 +1008,20 @@
       "face_card"
     ],
     "source": {
-      "origin": "fandom",
-      "verified": true,
-      "sourceNotes": "Mult page and Ride the Bus page indicate Common, $6, +1 Mult per consecutive hand without a scoring face card."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.ride_the_bus.displayName",
     "effectTextKey": "data.jesters.ride_the_bus.effectText",
-    "notesKey": "data.jesters.ride_the_bus.notes",
-    "originalRankRefs": [
-      "jack",
-      "queen",
-      "king"
-    ]
+    "notesKey": "data.jesters.ride_the_bus.notes"
   },
   {
     "id": "the_duo",
-    "name": "The Duo",
-    "displayName": "The Duo",
+    "name": "Pair Pact",
+    "displayName": "Pair Pact",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "X2 Mult if played hand contains a Pair",
+    "effectText": "If the scoring line contains a Pair or better, x2 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -1102,9 +1033,8 @@
     "value": null,
     "xValue": 2.0,
     "source": {
-      "origin": "fandom",
-      "verified": false,
-      "sourceNotes": "Adapted from Balatro rare hand-family xmult joker pattern."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.the_duo.displayName",
     "effectTextKey": "data.jesters.the_duo.effectText",
@@ -1112,11 +1042,11 @@
   },
   {
     "id": "the_trio",
-    "name": "The Trio",
-    "displayName": "The Trio",
+    "name": "Triple Pact",
+    "displayName": "Triple Pact",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "X3 Mult if played hand contains a Three of a Kind",
+    "effectText": "If the scoring line contains Three of a Kind or better, x3 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -1128,9 +1058,8 @@
     "value": null,
     "xValue": 3.0,
     "source": {
-      "origin": "fandom",
-      "verified": false,
-      "sourceNotes": "Adapted from Balatro rare hand-family xmult joker pattern."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.the_trio.displayName",
     "effectTextKey": "data.jesters.the_trio.effectText",
@@ -1138,11 +1067,11 @@
   },
   {
     "id": "the_family",
-    "name": "The Family",
-    "displayName": "The Family",
+    "name": "Quad Pact",
+    "displayName": "Quad Pact",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "X4 Mult if played hand contains a Four of a Kind",
+    "effectText": "If the scoring line contains Four of a Kind or better, x4 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -1154,9 +1083,8 @@
     "value": null,
     "xValue": 4.0,
     "source": {
-      "origin": "fandom",
-      "verified": false,
-      "sourceNotes": "Adapted from Balatro rare hand-family xmult joker pattern."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.the_family.displayName",
     "effectTextKey": "data.jesters.the_family.effectText",
@@ -1164,11 +1092,11 @@
   },
   {
     "id": "the_order",
-    "name": "The Order",
-    "displayName": "The Order",
+    "name": "Run Pact",
+    "displayName": "Run Pact",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "X3 Mult if played hand contains a Straight",
+    "effectText": "If the scoring line contains a Straight or better, x3 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -1180,9 +1108,8 @@
     "value": null,
     "xValue": 3.0,
     "source": {
-      "origin": "fandom",
-      "verified": false,
-      "sourceNotes": "Adapted from Balatro rare hand-family xmult joker pattern."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.the_order.displayName",
     "effectTextKey": "data.jesters.the_order.effectText",
@@ -1190,11 +1117,11 @@
   },
   {
     "id": "the_tribe",
-    "name": "The Tribe",
-    "displayName": "The Tribe",
+    "name": "Color Pact",
+    "displayName": "Color Pact",
     "rarity": "rare",
     "baseCost": 8,
-    "effectText": "X2 Mult if played hand contains a Flush",
+    "effectText": "If the scoring line contains a Flush or better, x2 Mult.",
     "trigger": "onScore",
     "editionAllowed": true,
     "stickersAllowed": true,
@@ -1206,9 +1133,8 @@
     "value": null,
     "xValue": 2.0,
     "source": {
-      "origin": "fandom",
-      "verified": false,
-      "sourceNotes": "Adapted from Balatro rare hand-family xmult joker pattern."
+      "origin": "internal_design",
+      "verified": true
     },
     "displayNameKey": "data.jesters.the_tribe.displayName",
     "effectTextKey": "data.jesters.the_tribe.effectText",

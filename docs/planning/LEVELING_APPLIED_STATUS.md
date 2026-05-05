@@ -4,7 +4,7 @@
 > 작성일: 2026-05-04
 > 정책 기준: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 > 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-> ML 기준: `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+> 시뮬레이션/휴리스틱 기준: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 
 이 문서는 레벨링 실험 산출물이 실제 런타임에 어디까지 반영되었는지 추적한다.
 
@@ -573,7 +573,7 @@ Market availability under pressure probe:
 
 1. `docs/current_system/CURRENT_LEVELING_POLICY.md`
 2. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-3. `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+3. `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 4. `docs/planning/LEVELING_APPLIED_STATUS.md`
 5. `docs/planning/ECONOMY_LEVELING_PLAN.md`
 6. 필요한 경우에만 `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`

@@ -54,7 +54,7 @@ void main() {
     );
 
     expect(find.text('STATION 4'), findsOneWidget);
-    expect(find.text('BIG'), findsOneWidget);
+    expect(find.text('CLASH'), findsOneWidget);
     expect(find.text('360/900'), findsOneWidget);
     expect(find.text('27'), findsOneWidget);
   });
@@ -903,7 +903,10 @@ void main() {
       ),
     );
 
-    expect(find.text('Board\nScrap'), findsOneWidget);
+    expect(find.text('Board Scrap'), findsOneWidget);
+    final itemNameText = tester.widget<Text>(find.text('Board Scrap'));
+    expect(itemNameText.softWrap, isTrue);
+    expect(itemNameText.overflow, isNull);
     expect(find.text('Q1'), findsOneWidget);
     expect(find.text('x2'), findsOneWidget);
     expect(find.text('Q2'), findsOneWidget);
@@ -911,7 +914,7 @@ void main() {
     expect(find.text('P1'), findsOneWidget);
     expect(find.text('P2'), findsOneWidget);
 
-    await tester.tap(find.text('Board\nScrap'));
+    await tester.tap(find.text('Board Scrap'));
     expect(tappedSlot?.contentId, 'board_scrap');
   });
 
@@ -979,10 +982,10 @@ void main() {
     expect(find.text('Q1'), findsOneWidget);
     expect(find.text('Q2'), findsOneWidget);
     expect(find.text('Q3'), findsOneWidget);
-    expect(find.text('Safety\nNet'), findsOneWidget);
+    expect(find.text('Safety Net'), findsOneWidget);
     expect(find.text('P1'), findsOneWidget);
     expect(
-      tester.getCenter(find.text('Safety\nNet')).dx,
+      tester.getCenter(find.text('Safety Net')).dx,
       greaterThan(tester.getCenter(find.text('Q3')).dx),
     );
   });
@@ -1085,8 +1088,8 @@ void main() {
     await tester.tap(find.text('Tool / Gear'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Reroll\nToken'), findsOneWidget);
-    expect(find.text('Score\nAbacus'), findsOneWidget);
+    expect(find.text('Reroll Token'), findsOneWidget);
+    expect(find.text('Score Abacus'), findsOneWidget);
     expect(find.text('T1'), findsOneWidget);
     expect(find.text('T2'), findsOneWidget);
     expect(find.text('T3'), findsOneWidget);
@@ -1225,6 +1228,10 @@ void main() {
     );
 
     expect(find.text('Board Scrap'), findsOneWidget);
+    final itemNameText = tester.widget<Text>(find.text('Board Scrap'));
+    expect(itemNameText.maxLines, 2);
+    expect(itemNameText.softWrap, isTrue);
+    expect(itemNameText.overflow, isNull);
     expect(
       find.text('Gain +1 board discard for this Station.'),
       findsOneWidget,

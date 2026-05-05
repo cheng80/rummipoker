@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ML 레벨링 학습용 sweep dataset을 생성한다."""
+"""시뮬레이션 레벨링 분석용 sweep dataset을 생성한다."""
 
 from __future__ import annotations
 
@@ -115,7 +115,7 @@ class CandidateRunResult:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="추천 기본값으로 ML 레벨링용 sweep dataset을 생성합니다.",
+        description="추천 기본값으로 시뮬레이션 레벨링용 sweep dataset을 생성합니다.",
     )
     parser.add_argument(
         "--mode",
@@ -853,7 +853,7 @@ def _render_report(
     combined_summary_path: Path,
 ) -> str:
     lines = [
-        "# ML 레벨링 Sweep Dataset",
+        "# 시뮬레이션 레벨링 Sweep Dataset",
         "",
         f"- summary: `{combined_summary_path}`",
         f"- mode: `{resolved['mode']}`",
@@ -870,7 +870,7 @@ def _render_report(
         "- `progression_curve`는 `v4_pacing_baseline_1`에서 잡아 온 station curve, blind tier pressure, progression build 기준을 함께 흔듭니다.",
         "- `boss_package`는 기존 S1/S2/S3 boss 병목 탐색을 보존하는 좁은 모드입니다.",
         "- `experiment_matrix`는 target/resource/modifier 같은 실험 preset 자체를 후보로 비교합니다.",
-        "- 생성된 metadata는 ML 워크벤치에서 숫자 피처로 사용됩니다.",
+        "- 생성된 metadata는 휴리스틱 워크벤치에서 숫자 피처로 사용됩니다.",
         "",
         "## 후보",
         "",

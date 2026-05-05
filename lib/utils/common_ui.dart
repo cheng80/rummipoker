@@ -88,7 +88,6 @@ class GameChromeButton extends StatelessWidget {
                       label,
                       textAlign: TextAlign.center,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
                         fontSize: fontSize,

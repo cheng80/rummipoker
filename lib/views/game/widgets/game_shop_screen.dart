@@ -15,6 +15,7 @@ import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
 import '../game_presentation_timings.dart';
+import 'game_card_name_text.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';
 
@@ -1542,7 +1543,6 @@ class _GameShopScreenState extends State<GameShopScreen>
                                           Text(
                                             selectedOwnedRuntimeValue,
                                             maxLines: 1,
-                                            overflow: TextOverflow.clip,
                                             style: const TextStyle(
                                               color: Color(0xFFF2C14E),
                                               fontSize: 11,
@@ -2028,7 +2028,6 @@ class _MarketSectionTitleBadge extends StatelessWidget {
       child: Text(
         label,
         maxLines: 1,
-        overflow: TextOverflow.clip,
         style: const TextStyle(
           color: Color(0xFF07110D),
           fontSize: 10,
@@ -2230,7 +2229,6 @@ class _MarketSpeechPanel extends StatelessWidget {
                     Text(
                       title,
                       maxLines: 1,
-                      overflow: TextOverflow.clip,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -2241,7 +2239,6 @@ class _MarketSpeechPanel extends StatelessWidget {
                     Text(
                       subtitle,
                       maxLines: 1,
-                      overflow: TextOverflow.clip,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.62),
                         fontSize: 10,
@@ -2298,7 +2295,6 @@ class _MarketActionPane extends StatelessWidget {
             priceLabel,
             maxLines: 1,
             textAlign: TextAlign.center,
-            overflow: TextOverflow.clip,
             style: const TextStyle(
               color: Color(0xFFF2C14E),
               fontSize: 16,
@@ -2319,7 +2315,6 @@ class _MarketActionPane extends StatelessWidget {
               disabledReason!,
               maxLines: 1,
               textAlign: TextAlign.center,
-              overflow: TextOverflow.clip,
               style: const TextStyle(
                 color: Color(0xFFFF8F74),
                 fontSize: 10,
@@ -2404,7 +2399,6 @@ class _MarketUseSellActionPane extends StatelessWidget {
                 'x$count',
                 maxLines: 1,
                 textAlign: TextAlign.center,
-                overflow: TextOverflow.clip,
                 style: const TextStyle(
                   color: Color(0xFFF2C14E),
                   fontSize: 16,
@@ -2423,7 +2417,6 @@ class _MarketUseSellActionPane extends StatelessWidget {
                 '+$sellPrice',
                 maxLines: 1,
                 textAlign: TextAlign.center,
-                overflow: TextOverflow.clip,
                 style: const TextStyle(
                   color: Color(0xFFF2C14E),
                   fontSize: 12,
@@ -2492,7 +2485,6 @@ class _MarketDenyBadge extends StatelessWidget {
           child: Text(
             label,
             maxLines: 1,
-            overflow: TextOverflow.clip,
             style: const TextStyle(
               color: Color(0xFFFFB6A6),
               fontSize: 10,
@@ -2526,7 +2518,6 @@ class _MarketDescriptionText extends StatelessWidget {
         text,
         key: const ValueKey('market-description-text'),
         maxLines: maxLines,
-        overflow: TextOverflow.clip,
         style: _marketDescriptionTextStyle.copyWith(color: color),
       ),
     );
@@ -2591,7 +2582,6 @@ class _OwnedMarketItemBody extends StatelessWidget {
           Text(
             notice,
             maxLines: 1,
-            overflow: TextOverflow.clip,
             style: const TextStyle(
               color: Color(0xFFF2C14E),
               fontSize: 11,
@@ -3132,7 +3122,6 @@ class _GameShopOfferCard extends StatelessWidget {
               child: Text(
                 '${offer.price}G',
                 maxLines: 1,
-                overflow: TextOverflow.clip,
                 style: TextStyle(
                   color: canAfford ? const Color(0xFFF2C14E) : Colors.white38,
                   fontSize: 10,
@@ -3231,7 +3220,6 @@ class _MarketItemOfferCard extends StatelessWidget {
               child: Text(
                 '${offer.price}G',
                 maxLines: 1,
-                overflow: TextOverflow.clip,
                 style: TextStyle(
                   color: offer.isAffordable
                       ? const Color(0xFFF2C14E)
@@ -3299,11 +3287,9 @@ class _MarketItemCardFace extends StatelessWidget {
             Expanded(
               child: Align(
                 alignment: Alignment.topCenter,
-                child: Text(
+                child: GameCardNameText(
                   label,
-                  textAlign: TextAlign.center,
                   maxLines: 3,
-                  overflow: TextOverflow.clip,
                   style: const TextStyle(
                     color: Color(0xFF26352F),
                     fontSize: 8,
@@ -3348,7 +3334,6 @@ class _MarketOfferBadge extends StatelessWidget {
       child: Text(
         label,
         maxLines: 1,
-        overflow: TextOverflow.clip,
         style: TextStyle(
           color: textColor,
           fontSize: 7,
@@ -3385,7 +3370,6 @@ class _MarketSynergyChip extends StatelessWidget {
         label,
         maxLines: 1,
         softWrap: false,
-        overflow: TextOverflow.clip,
         style: TextStyle(
           color: const Color(0xFFFFE08A),
           fontSize: dense ? 7 : 9,
@@ -3695,7 +3679,6 @@ class _MarketPurchaseFlightCard extends StatelessWidget {
           child: Text(
             flight.label,
             maxLines: 3,
-            overflow: TextOverflow.clip,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF26352F),
@@ -3920,7 +3903,6 @@ class _MarketGoldChip extends StatelessWidget {
               style: gameHudLabelStyle,
               maxLines: 1,
               textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 1),
             Expanded(
@@ -3945,7 +3927,6 @@ class _MarketGoldChip extends StatelessWidget {
                       '$gold',
                       maxLines: 1,
                       textAlign: TextAlign.right,
-                      overflow: TextOverflow.clip,
                       style: gameHudValueStyle.copyWith(fontSize: 20),
                     ),
                   ),
@@ -4202,7 +4183,7 @@ String _catalogItemTagLabel(String tag) {
     'equipment' => 'Gear',
     'station_start' => 'Station',
     'offer' => 'Offer',
-    'jester' => 'Jester',
+    'jester' || 'tactic' => 'Jester',
     'relic' => 'Relic',
     'boss' => 'Boss',
     'capacity' => 'Slot',

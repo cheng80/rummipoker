@@ -119,6 +119,8 @@ flutter:
   assets:
     - assets/translations/
     - assets/translations/data/
+    - assets/translations/data/en/jesters.json
+    - assets/translations/data/en/items.json
     - assets/translations/data/ko/jesters.json
     - assets/translations/data/ko/items.json
     - assets/images/

@@ -6,6 +6,7 @@ import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../game_presentation_timings.dart';
+import 'game_card_name_text.dart';
 import 'game_shared_widgets.dart';
 
 const double kJesterCardWidth = kBattleItemSlotWidth;
@@ -176,7 +177,6 @@ class GameJesterZone extends StatelessWidget {
                 height: 1,
               ),
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 3),
             GameJesterStrip(
@@ -264,7 +264,6 @@ class GameJesterSlot extends StatelessWidget {
                             : 'JESTER',
                         maxLines: 1,
                         textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white.withValues(
                             alpha: locked ? 0.46 : 0.62,
@@ -298,7 +297,6 @@ class GameJesterSlot extends StatelessWidget {
                               ? '5th'
                               : '+',
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.white.withValues(
                               alpha: locked ? 0.48 : 0.42,
@@ -385,11 +383,9 @@ class GameJesterSlot extends StatelessWidget {
                       Expanded(
                         child: Align(
                           alignment: Alignment.topCenter,
-                          child: Text(
+                          child: GameCardNameText(
                             displayName,
                             maxLines: 2,
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Color(0xFF26352F),
                               fontSize: 9,
@@ -415,7 +411,6 @@ class GameJesterSlot extends StatelessWidget {
                           jesterCategoryLabel(card!),
                           maxLines: 1,
                           textAlign: TextAlign.center,
-                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Color(0xFF314239),
                             fontSize: 7,
@@ -440,7 +435,6 @@ class GameJesterSlot extends StatelessWidget {
                             jesterEffectBadge(activeEffect!),
                             maxLines: 1,
                             textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 6.5,
@@ -762,7 +756,6 @@ class GameJesterHeaderRow extends StatelessWidget {
             height: 1.0,
           ),
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

@@ -144,7 +144,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
             ),
             const SizedBox(height: 6),
             Text(
-              '블라인드 선택',
+              '구간 선택',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -231,7 +231,6 @@ class _BlindOptionCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         spec.title,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white.withValues(
                             alpha: isInteractive ? 0.95 : 0.78,

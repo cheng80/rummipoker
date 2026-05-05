@@ -281,11 +281,11 @@ void main() {
     expect(find.text('Jester Slots'), findsNothing);
     expect(find.text('구매'), findsOneWidget);
 
-    expect(find.text('리롤 토큰'), findsWidgets);
+    expect(find.text('리롤 칩'), findsWidgets);
     expect(find.text('다음 상점 리롤 비용이 1 줄어듭니다.'), findsOneWidget);
     expect(find.text('Common'), findsOneWidget);
     expect(find.text('TOOL'), findsOneWidget);
-    for (final text in tester.widgetList<Text>(find.text('리롤 토큰'))) {
+    for (final text in tester.widgetList<Text>(find.text('리롤 칩'))) {
       expect(text.overflow, isNot(TextOverflow.ellipsis));
     }
     for (final text in tester.widgetList<Text>(find.text('TOOL'))) {
@@ -295,7 +295,7 @@ void main() {
       find.byKey(const ValueKey('market-description-text')),
     );
     expect(descriptionText.maxLines, 4);
-    expect(descriptionText.overflow, TextOverflow.clip);
+    expect(descriptionText.overflow, isNull);
     final descriptionBox = tester.widget<ConstrainedBox>(
       find.byKey(const ValueKey('market-description-box')),
     );

@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('ML sweep dataset preserves boss package metadata', () async {
+  test('Simulation sweep dataset preserves boss package metadata', () async {
     final pythonCheck = await Process.run('python3', ['--version']);
     if (pythonCheck.exitCode != 0) {
       markTestSkipped('python3 is not available in this environment');
@@ -86,12 +86,12 @@ void main() {
     expect(groups.first['sweep_candidate_id'], 's1_0p75_s2_0p8_s3_0p8');
 
     final markdown = report.readAsStringSync();
-    expect(markdown, contains('# ML 레벨링 Sweep Dataset'));
+    expect(markdown, contains('# 시뮬레이션 레벨링 Sweep Dataset'));
     expect(markdown, contains('mode: `boss_package`'));
     expect(markdown, contains('sweep_s1_0p75_s2_0p8_s3_0p8'));
   });
 
-  test('ML sweep dataset creates progression curve candidates', () async {
+  test('Simulation sweep dataset creates progression curve candidates', () async {
     final pythonCheck = await Process.run('python3', ['--version']);
     if (pythonCheck.exitCode != 0) {
       markTestSkipped('python3 is not available in this environment');
@@ -161,7 +161,7 @@ void main() {
     expect(report, contains('v4_pacing_baseline_1'));
   });
 
-  test('ML sweep dataset can keep only summary artifacts', () async {
+  test('Simulation sweep dataset can keep only summary artifacts', () async {
     final pythonCheck = await Process.run('python3', ['--version']);
     if (pythonCheck.exitCode != 0) {
       markTestSkipped('python3 is not available in this environment');
@@ -215,7 +215,7 @@ void main() {
     expect((summary['groups'] as List<dynamic>), isNotEmpty);
   });
 
-  test('ML sweep dataset can compare experiment presets', () async {
+  test('Simulation sweep dataset can compare experiment presets', () async {
     final pythonCheck = await Process.run('python3', ['--version']);
     if (pythonCheck.exitCode != 0) {
       markTestSkipped('python3 is not available in this environment');

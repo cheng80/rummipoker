@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "catalogId": "items_common_v1",
   "designBasis": {
-    "summary": "Production candidate item catalog for Rummi Poker Grid V4. Effects are original implementations tuned for the current board/hand/discard/market loop, informed by common roguelike deckbuilder patterns.",
+    "summary": "Production candidate item catalog for the current tile-grid roguelite loop. Effects are tuned for board, hand, discard, movement, shop, and settlement decisions.",
     "referencePatterns": [
-      "Balatro consumables: held single-use resources with limited slots",
-      "Balatro vouchers: persistent economy/shop modifiers",
-      "Slay the Spire relics: run-long passive modifiers",
-      "Luck be a Landlord items: passive, destroyable, and rarity-weighted utility effects"
+      "Limited battle utilities with explicit slot pressure",
+      "Run-long equipment and passive rack modifiers",
+      "Shop economy tools that preserve player purchase choice",
+      "Rarity-weighted utility effects for tile-grid pressure points"
     ],
     "policy": [
-      "Do not merge items into Jester slots.",
-      "Use item subtype and placement to determine battle and market behavior.",
+      "Do not merge item slots into tactic card slots.",
+      "Use item subtype and placement to determine battle and shop behavior.",
       "Store ids and state counters, not localized text.",
-      "Prefer small numeric effects that can ship before full balance pass."
+      "Prefer small numeric effects that are easy to verify before the final balance pass."
     ]
   },
   "rarityWeights": {
@@ -25,7 +25,7 @@
   "items": [
     {
       "id": "reroll_token",
-      "displayName": "Reroll Token",
+      "displayName": "Reroll Chip",
       "type": "utility",
       "rarity": "common",
       "basePrice": 5,
@@ -36,21 +36,24 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "The next Market reroll costs no Gold.",
+      "effectText": "The next shop reroll costs 1 less Gold.",
       "effect": {
         "timing": "market_reroll",
         "op": "free_next_reroll",
         "amount": 1,
         "consume": true
       },
-      "tags": ["market", "economy", "discount"],
-      "sourceNotes": "Inspired by shop discount and reroll economy patterns, implemented as a one-use market utility.",
+      "tags": [
+        "market",
+        "economy",
+        "discount"
+      ],
       "displayNameKey": "data.items.reroll_token.displayName",
       "effectTextKey": "data.items.reroll_token.effectText"
     },
     {
       "id": "coupon_stamp",
-      "displayName": "Coupon Stamp",
+      "displayName": "Discount Stamp",
       "type": "utility",
       "rarity": "common",
       "basePrice": 4,
@@ -61,15 +64,18 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "Reduce the next Item or Jester purchase cost by 2.",
+      "effectText": "The next item or Jester purchase costs 2 less Gold.",
       "effect": {
         "timing": "market_buy",
         "op": "discount_next_purchase",
         "amount": 2,
         "consume": true
       },
-      "tags": ["market", "economy", "discount"],
-      "sourceNotes": "Voucher-style price pressure reducer adapted to one purchase.",
+      "tags": [
+        "market",
+        "economy",
+        "discount"
+      ],
       "displayNameKey": "data.items.coupon_stamp.displayName",
       "effectTextKey": "data.items.coupon_stamp.effectText"
     },
@@ -93,14 +99,16 @@
         "amount": 3,
         "consume": true
       },
-      "tags": ["gold", "economy"],
-      "sourceNotes": "Small direct economy consumable for early-shop decisions.",
+      "tags": [
+        "gold",
+        "economy"
+      ],
       "displayNameKey": "data.items.coin_cache.displayName",
       "effectTextKey": "data.items.coin_cache.effectText"
     },
     {
       "id": "board_scrap",
-      "displayName": "Board Scrap",
+      "displayName": "Board Pass",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -119,14 +127,17 @@
         "capIncrease": false,
         "consume": true
       },
-      "tags": ["battle", "discard", "safety"],
-      "sourceNotes": "Maps potion-like emergency value to the current board discard resource.",
+      "tags": [
+        "battle",
+        "discard",
+        "safety"
+      ],
       "displayNameKey": "data.items.board_scrap.displayName",
       "effectTextKey": "data.items.board_scrap.effectText"
     },
     {
       "id": "hand_scrap",
-      "displayName": "Hand Scrap",
+      "displayName": "Hand Pass",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -145,14 +156,17 @@
         "capIncrease": false,
         "consume": true
       },
-      "tags": ["battle", "discard", "safety"],
-      "sourceNotes": "Companion to board_scrap, tuned for current hand discard resource.",
+      "tags": [
+        "battle",
+        "discard",
+        "safety"
+      ],
       "displayNameKey": "data.items.hand_scrap.displayName",
       "effectTextKey": "data.items.hand_scrap.effectText"
     },
     {
       "id": "chip_capsule",
-      "displayName": "Chip Capsule",
+      "displayName": "Chip Charge",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -163,21 +177,24 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Gain +25 Chips on the next confirm.",
+      "effectText": "The next confirm gains +25 Chips.",
       "effect": {
         "timing": "next_confirm",
         "op": "chips_bonus",
         "amount": 25,
         "consume": true
       },
-      "tags": ["battle", "score", "chips"],
-      "sourceNotes": "Balatro-style one-use scoring modifier adapted to confirm scoring.",
+      "tags": [
+        "battle",
+        "score",
+        "chips"
+      ],
       "displayNameKey": "data.items.chip_capsule.displayName",
       "effectTextKey": "data.items.chip_capsule.effectText"
     },
     {
       "id": "mult_capsule",
-      "displayName": "Mult Capsule",
+      "displayName": "Mult Charge",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -188,21 +205,24 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Gain +6 Mult on the next confirm.",
+      "effectText": "The next confirm gains +6 Mult.",
       "effect": {
         "timing": "next_confirm",
         "op": "mult_bonus",
         "amount": 6,
         "consume": true
       },
-      "tags": ["battle", "score", "mult"],
-      "sourceNotes": "Direct one-use multiplier boost sized below permanent Jester value.",
+      "tags": [
+        "battle",
+        "score",
+        "mult"
+      ],
       "displayNameKey": "data.items.mult_capsule.displayName",
       "effectTextKey": "data.items.mult_capsule.effectText"
     },
     {
       "id": "line_polish",
-      "displayName": "Line Polish",
+      "displayName": "Score Polish",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 6,
@@ -213,21 +233,24 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Multiply the final score of the next confirm by x1.25.",
+      "effectText": "The next confirm final score is multiplied by x1.25.",
       "effect": {
         "timing": "next_confirm",
         "op": "xmult_bonus",
         "amount": 1.25,
         "consume": true
       },
-      "tags": ["battle", "score", "xmult"],
-      "sourceNotes": "Risk-timed burst comparable to stronger consumables, kept modest for early balance.",
+      "tags": [
+        "battle",
+        "score",
+        "xmult"
+      ],
       "displayNameKey": "data.items.line_polish.displayName",
       "effectTextKey": "data.items.line_polish.effectText"
     },
     {
       "id": "straight_oil",
-      "displayName": "Straight Oil",
+      "displayName": "Run Primer",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 5,
@@ -238,7 +261,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Gain +40 Chips on the next Straight-or-better confirm.",
+      "effectText": "The next Straight-or-better confirm gains +40 Chips.",
       "effect": {
         "timing": "next_confirm_if_rank_at_least",
         "op": "chips_bonus",
@@ -246,14 +269,18 @@
         "amount": 40,
         "consume": true
       },
-      "tags": ["battle", "score", "rank", "straight"],
-      "sourceNotes": "Hand-type targeted boost inspired by poker-hand upgrade consumables.",
+      "tags": [
+        "battle",
+        "score",
+        "rank",
+        "straight"
+      ],
       "displayNameKey": "data.items.straight_oil.displayName",
       "effectTextKey": "data.items.straight_oil.effectText"
     },
     {
       "id": "flush_powder",
-      "displayName": "Flush Powder",
+      "displayName": "Color Primer",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 5,
@@ -264,7 +291,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Gain +8 Mult on the next Flush-or-better confirm.",
+      "effectText": "The next Flush-or-better confirm gains +8 Mult.",
       "effect": {
         "timing": "next_confirm_if_rank_at_least",
         "op": "mult_bonus",
@@ -272,14 +299,18 @@
         "amount": 8,
         "consume": true
       },
-      "tags": ["battle", "score", "rank", "flush"],
-      "sourceNotes": "Hand-type targeted boost tuned to reward suit planning.",
+      "tags": [
+        "battle",
+        "score",
+        "rank",
+        "flush"
+      ],
       "displayNameKey": "data.items.flush_powder.displayName",
       "effectTextKey": "data.items.flush_powder.effectText"
     },
     {
       "id": "pair_splint",
-      "displayName": "Pair Splint",
+      "displayName": "Pair Brace",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 5,
@@ -290,7 +321,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Gain +35 Chips on the next Two Pair confirm.",
+      "effectText": "The next Two Pair confirm gains +35 Chips.",
       "effect": {
         "timing": "next_confirm_if_rank",
         "op": "chips_bonus",
@@ -298,8 +329,12 @@
         "amount": 35,
         "consume": true
       },
-      "tags": ["battle", "score", "rank", "two_pair"],
-      "sourceNotes": "Supports low-mid hand recovery without changing One Pair dead-line policy.",
+      "tags": [
+        "battle",
+        "score",
+        "rank",
+        "two_pair"
+      ],
       "displayNameKey": "data.items.pair_splint.displayName",
       "effectTextKey": "data.items.pair_splint.effectText"
     },
@@ -316,15 +351,18 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Increase the next confirm's overlap bonus slightly.",
+      "effectText": "The next confirm gets a slightly higher overlap bonus cap.",
       "effect": {
         "timing": "next_confirm",
         "op": "temporary_overlap_cap_bonus",
         "amount": 0.25,
         "consume": true
       },
-      "tags": ["battle", "overlap", "score"],
-      "sourceNotes": "Uses this game's unique overlap mechanic instead of copying external effects.",
+      "tags": [
+        "battle",
+        "overlap",
+        "score"
+      ],
       "displayNameKey": "data.items.overlap_pin.displayName",
       "effectTextKey": "data.items.overlap_pin.effectText"
     },
@@ -341,15 +379,18 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "If your hand is empty and the deck has cards, draw 1 tile immediately.",
+      "effectText": "If your hand is empty and the deck has tiles, draw 1 tile now.",
       "effect": {
         "timing": "use_battle",
         "op": "draw_if_hand_empty",
         "amount": 1,
         "consume": true
       },
-      "tags": ["battle", "draw", "safety"],
-      "sourceNotes": "Emergency potion analogue for the current one-card hand loop.",
+      "tags": [
+        "battle",
+        "draw",
+        "safety"
+      ],
       "displayNameKey": "data.items.emergency_draw.displayName",
       "effectTextKey": "data.items.emergency_draw.effectText"
     },
@@ -366,20 +407,23 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Gain +1 Gold when entering the Market.",
+      "effectText": "Gain +1 Gold when entering the shop.",
       "effect": {
         "timing": "enter_market",
         "op": "gain_gold",
         "amount": 1
       },
-      "tags": ["equipment", "economy", "market"],
-      "sourceNotes": "Small recurring economy equipment inspired by passive relic income.",
+      "tags": [
+        "equipment",
+        "economy",
+        "market"
+      ],
       "displayNameKey": "data.items.ledger_clip.displayName",
       "effectTextKey": "data.items.ledger_clip.effectText"
     },
     {
       "id": "discard_glove",
-      "displayName": "Discard Glove",
+      "displayName": "Board Glove",
       "type": "equipment",
       "rarity": "common",
       "basePrice": 6,
@@ -390,21 +434,24 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Gain +1 board discard at the start of each Station.",
+      "effectText": "At each Station start, gain +1 board discard.",
       "effect": {
         "timing": "station_start",
         "op": "add_board_discard",
         "amount": 1,
         "capIncrease": false
       },
-      "tags": ["equipment", "discard", "station_start"],
-      "sourceNotes": "Permanent safety equipment for board pressure.",
+      "tags": [
+        "equipment",
+        "discard",
+        "station_start"
+      ],
       "displayNameKey": "data.items.discard_glove.displayName",
       "effectTextKey": "data.items.discard_glove.effectText"
     },
     {
       "id": "mulligan_sleeve",
-      "displayName": "Mulligan Sleeve",
+      "displayName": "Hand Sleeve",
       "type": "equipment",
       "rarity": "uncommon",
       "basePrice": 7,
@@ -415,21 +462,24 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Gain +1 hand discard at the start of each Station.",
+      "effectText": "At each Station start, gain +1 hand discard.",
       "effect": {
         "timing": "station_start",
         "op": "add_hand_discard",
         "amount": 1,
         "capIncrease": false
       },
-      "tags": ["equipment", "discard", "station_start"],
-      "sourceNotes": "Equipment counterpart to discard_glove.",
+      "tags": [
+        "equipment",
+        "discard",
+        "station_start"
+      ],
       "displayNameKey": "data.items.mulligan_sleeve.displayName",
       "effectTextKey": "data.items.mulligan_sleeve.effectText"
     },
     {
       "id": "shop_lens",
-      "displayName": "Shop Lens",
+      "displayName": "Offer Lens",
       "type": "equipment",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -440,14 +490,17 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Item Shop offers +1 item.",
+      "effectText": "Item offers in the shop increase by 1.",
       "effect": {
         "timing": "market_build_offers",
         "op": "extra_item_offer_slot",
         "amount": 1
       },
-      "tags": ["equipment", "market", "offer"],
-      "sourceNotes": "Overstock-like shop width increase, restricted to items.",
+      "tags": [
+        "equipment",
+        "market",
+        "offer"
+      ],
       "displayNameKey": "data.items.shop_lens.displayName",
       "effectTextKey": "data.items.shop_lens.effectText"
     },
@@ -464,14 +517,17 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Jester sell value +1.",
+      "effectText": "Jester sell value +1 Gold.",
       "effect": {
         "timing": "sell_jester",
         "op": "sell_price_bonus",
         "amount": 1
       },
-      "tags": ["equipment", "jester", "economy"],
-      "sourceNotes": "Light build pivot tool for Jester economy.",
+      "tags": [
+        "equipment",
+        "tactic",
+        "economy"
+      ],
       "displayNameKey": "data.items.jester_hook.displayName",
       "effectTextKey": "data.items.jester_hook.effectText"
     },
@@ -488,20 +544,23 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Gain +30 Chips on the first confirm of each Station.",
+      "effectText": "The first confirm in each Station gains +30 Chips.",
       "effect": {
         "timing": "first_confirm_each_station",
         "op": "chips_bonus",
         "amount": 30
       },
-      "tags": ["equipment", "battle", "score"],
-      "sourceNotes": "First-turn relic pattern adapted to first confirm.",
+      "tags": [
+        "equipment",
+        "battle",
+        "score"
+      ],
       "displayNameKey": "data.items.score_abacus.displayName",
       "effectTextKey": "data.items.score_abacus.effectText"
     },
     {
       "id": "thin_caliper",
-      "displayName": "Thin Caliper",
+      "displayName": "Short Caliper",
       "type": "equipment",
       "rarity": "rare",
       "basePrice": 9,
@@ -512,15 +571,18 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Gain +4 Mult on confirms made with 3 or fewer tiles.",
+      "effectText": "Confirms made with 3 or fewer tiles gain +4 Mult.",
       "effect": {
         "timing": "on_confirm_if_played_hand_size_lte",
         "op": "mult_bonus",
         "maxTiles": 3,
         "amount": 4
       },
-      "tags": ["equipment", "battle", "small_hand"],
-      "sourceNotes": "Rewards compact scoring without changing hand-rank rules.",
+      "tags": [
+        "equipment",
+        "battle",
+        "small_hand"
+      ],
       "displayNameKey": "data.items.thin_caliper.displayName",
       "effectTextKey": "data.items.thin_caliper.effectText"
     },
@@ -537,14 +599,17 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Boss Blind clear reward gives +1 Gold.",
+      "effectText": "Clearing a Showdown gives +1 reward Gold.",
       "effect": {
         "timing": "boss_blind_clear_reward",
         "op": "gain_gold",
         "amount": 1
       },
-      "tags": ["relic", "gold", "boss"],
-      "sourceNotes": "Run-long reward relic for station progression.",
+      "tags": [
+        "relic",
+        "gold",
+        "boss"
+      ],
       "displayNameKey": "data.items.stage_map.displayName",
       "effectTextKey": "data.items.stage_map.effectText"
     },
@@ -567,14 +632,17 @@
         "op": "extra_quick_slot",
         "amount": 1
       },
-      "tags": ["relic", "capacity", "consumable"],
-      "sourceNotes": "Consumable-slot expansion inspired by limited consumable slot systems.",
+      "tags": [
+        "relic",
+        "capacity",
+        "consumable"
+      ],
       "displayNameKey": "data.items.spare_pouch.displayName",
       "effectTextKey": "data.items.spare_pouch.effectText"
     },
     {
       "id": "merchant_stamp",
-      "displayName": "Merchant Stamp",
+      "displayName": "Shop Stamp",
       "type": "passive_relic",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -585,20 +653,23 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "The first reroll costs 1 less when entering the Market.",
+      "effectText": "When entering the shop, the first reroll costs 1 less Gold.",
       "effect": {
         "timing": "enter_market",
         "op": "discount_first_reroll",
         "amount": 1
       },
-      "tags": ["relic", "market", "reroll"],
-      "sourceNotes": "Persistent version of reroll_token, weaker than broad shop discounts.",
+      "tags": [
+        "relic",
+        "market",
+        "reroll"
+      ],
       "displayNameKey": "data.items.merchant_stamp.displayName",
       "effectTextKey": "data.items.merchant_stamp.effectText"
     },
     {
       "id": "safety_net",
-      "displayName": "Safety Net",
+      "displayName": "Failsafe Net",
       "type": "passive_relic",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -609,20 +680,23 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Prevent the first run-ending combat lock once per Station.",
+      "effectText": "Once per Station, prevent the first combat lock that would end the run.",
       "effect": {
         "timing": "expiry_guard",
         "op": "rescue_first_expiry_each_station",
         "amount": 1
       },
-      "tags": ["relic", "safety", "battle"],
-      "sourceNotes": "Defensive relic pattern translated into one run-ending combat lock rescue.",
+      "tags": [
+        "relic",
+        "safety",
+        "battle"
+      ],
       "displayNameKey": "data.items.safety_net.displayName",
       "effectTextKey": "data.items.safety_net.effectText"
     },
     {
       "id": "coin_funnel",
-      "displayName": "Coin Funnel",
+      "displayName": "Board Funnel",
       "type": "passive_relic",
       "rarity": "uncommon",
       "basePrice": 9,
@@ -633,14 +707,17 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Remaining board discards reward +1 Gold.",
+      "effectText": "At settlement, each unused board discard gives +1 reward Gold.",
       "effect": {
         "timing": "settlement",
         "op": "board_discard_reward_bonus",
         "amount": 1
       },
-      "tags": ["relic", "settlement", "gold"],
-      "sourceNotes": "Rewards conservative resource play at settlement.",
+      "tags": [
+        "relic",
+        "settlement",
+        "gold"
+      ],
       "displayNameKey": "data.items.coin_funnel.displayName",
       "effectTextKey": "data.items.coin_funnel.effectText"
     },
@@ -657,20 +734,23 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Remaining hand discards reward +1 Gold.",
+      "effectText": "At settlement, each unused hand discard gives +1 reward Gold.",
       "effect": {
         "timing": "settlement",
         "op": "hand_discard_reward_bonus",
         "amount": 1
       },
-      "tags": ["relic", "settlement", "gold"],
-      "sourceNotes": "Parallel settlement reward for hand discard conservation.",
+      "tags": [
+        "relic",
+        "settlement",
+        "gold"
+      ],
       "displayNameKey": "data.items.hand_funnel.displayName",
       "effectTextKey": "data.items.hand_funnel.effectText"
     },
     {
       "id": "lucky_counter",
-      "displayName": "Lucky Counter",
+      "displayName": "Rare Counter",
       "type": "passive_relic",
       "rarity": "rare",
       "basePrice": 11,
@@ -681,15 +761,18 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Rare Items appear more often in Item Shop offers.",
+      "effectText": "Rare items appear more often in item offers.",
       "effect": {
         "timing": "market_build_offers",
         "op": "rarity_weight_bonus",
         "rarity": "rare",
         "amount": 5
       },
-      "tags": ["relic", "market", "rarity"],
-      "sourceNotes": "Luck/rarity manipulation pattern adapted to item offers.",
+      "tags": [
+        "relic",
+        "market",
+        "rarity"
+      ],
       "displayNameKey": "data.items.lucky_counter.displayName",
       "effectTextKey": "data.items.lucky_counter.effectText"
     },
@@ -706,20 +789,24 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "The second confirm of each Station adds 10% of the first confirm score.",
+      "effectText": "The second confirm in each Station adds 10% of the first confirm score.",
       "effect": {
         "timing": "second_confirm_each_station",
         "op": "add_percent_of_first_confirm_score",
         "percent": 0.1
       },
-      "tags": ["relic", "battle", "score", "echo"],
-      "sourceNotes": "Echo-style memory effect grounded in current station scoring.",
+      "tags": [
+        "relic",
+        "battle",
+        "score",
+        "echo"
+      ],
       "displayNameKey": "data.items.echo_bell.displayName",
       "effectTextKey": "data.items.echo_bell.effectText"
     },
     {
       "id": "boss_trophy",
-      "displayName": "Boss Trophy",
+      "displayName": "Showdown Trophy",
       "type": "passive_relic",
       "rarity": "legendary",
       "basePrice": 15,
@@ -730,20 +817,24 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "After clearing a Boss Blind, the next Market has +1 Jester offer.",
+      "effectText": "After clearing a Showdown, the next shop has +1 Jester offer.",
       "effect": {
         "timing": "boss_blind_clear_market",
         "op": "extra_jester_offer_next_market",
         "amount": 1
       },
-      "tags": ["relic", "boss", "market", "jester"],
-      "sourceNotes": "Boss reward relic that increases post-boss build options.",
+      "tags": [
+        "relic",
+        "boss",
+        "market",
+        "tactic"
+      ],
       "displayNameKey": "data.items.boss_trophy.displayName",
       "effectTextKey": "data.items.boss_trophy.effectText"
     },
     {
       "id": "thin_wallet",
-      "displayName": "Thin Wallet",
+      "displayName": "Empty Wallet",
       "type": "utility",
       "rarity": "uncommon",
       "basePrice": 7,
@@ -754,7 +845,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "Usable only at 3 Gold or less. Gain +5 Gold.",
+      "effectText": "Use only at 3 Gold or less. Gain +5 Gold.",
       "effect": {
         "timing": "use_market_if_gold_lte",
         "op": "gain_gold",
@@ -762,14 +853,17 @@
         "amount": 5,
         "consume": true
       },
-      "tags": ["utility", "economy", "comeback"],
-      "sourceNotes": "Comeback economy lever for low-gold states.",
+      "tags": [
+        "utility",
+        "economy",
+        "comeback"
+      ],
       "displayNameKey": "data.items.thin_wallet.displayName",
       "effectTextKey": "data.items.thin_wallet.effectText"
     },
     {
       "id": "trade_ticket",
-      "displayName": "Trade Ticket",
+      "displayName": "Item Ticket",
       "type": "utility",
       "rarity": "uncommon",
       "basePrice": 6,
@@ -780,14 +874,17 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "Reroll only Item Shop offers.",
+      "effectText": "Reroll only item offers.",
       "effect": {
         "timing": "use_market",
         "op": "reroll_item_offers_only",
         "consume": true
       },
-      "tags": ["utility", "market", "reroll"],
-      "sourceNotes": "Separates item economy from Jester reroll pressure.",
+      "tags": [
+        "utility",
+        "market",
+        "reroll"
+      ],
       "displayNameKey": "data.items.trade_ticket.displayName",
       "effectTextKey": "data.items.trade_ticket.effectText"
     },
@@ -804,7 +901,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "The next Jester purchase costs 4 less. Consumed after use.",
+      "effectText": "The next Jester purchase costs 4 less Gold.",
       "effect": {
         "timing": "market_buy_if_category",
         "op": "discount_next_purchase",
@@ -812,8 +909,12 @@
         "amount": 4,
         "consume": true
       },
-      "tags": ["utility", "market", "jester", "discount"],
-      "sourceNotes": "Targeted voucher-like discount for build-defining purchases.",
+      "tags": [
+        "utility",
+        "market",
+        "tactic",
+        "discount"
+      ],
       "displayNameKey": "data.items.jester_invoice.displayName",
       "effectTextKey": "data.items.jester_invoice.effectText"
     },
@@ -830,7 +931,7 @@
       "usableInBattle": false,
       "placement": "inventory",
       "slotHint": "utility",
-      "effectText": "The next Item purchase costs 4 less. Consumed after use.",
+      "effectText": "The next item purchase costs 4 less Gold.",
       "effect": {
         "timing": "market_buy_if_category",
         "op": "discount_next_purchase",
@@ -838,8 +939,12 @@
         "amount": 4,
         "consume": true
       },
-      "tags": ["utility", "market", "item", "discount"],
-      "sourceNotes": "Counterpart to jester_invoice so Item Shop has its own economy identity.",
+      "tags": [
+        "utility",
+        "market",
+        "item",
+        "discount"
+      ],
       "displayNameKey": "data.items.item_invoice.displayName",
       "effectTextKey": "data.items.item_invoice.effectText"
     },
@@ -864,8 +969,11 @@
         "amount": 2,
         "consume": true
       },
-      "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Suit/color targeted consumable adapted to Rummi tile colors.",
+      "tags": [
+        "consumable",
+        "tile_color",
+        "mult"
+      ],
       "displayNameKey": "data.items.red_swatch.displayName",
       "effectTextKey": "data.items.red_swatch.effectText"
     },
@@ -890,8 +998,11 @@
         "amount": 2,
         "consume": true
       },
-      "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Color cycle consumable for tile-color planning.",
+      "tags": [
+        "consumable",
+        "tile_color",
+        "mult"
+      ],
       "displayNameKey": "data.items.blue_swatch.displayName",
       "effectTextKey": "data.items.blue_swatch.effectText"
     },
@@ -916,8 +1027,11 @@
         "amount": 2,
         "consume": true
       },
-      "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Color cycle consumable for tile-color planning.",
+      "tags": [
+        "consumable",
+        "tile_color",
+        "mult"
+      ],
       "displayNameKey": "data.items.black_swatch.displayName",
       "effectTextKey": "data.items.black_swatch.effectText"
     },
@@ -942,8 +1056,11 @@
         "amount": 2,
         "consume": true
       },
-      "tags": ["consumable", "tile_color", "mult"],
-      "sourceNotes": "Color cycle consumable for tile-color planning.",
+      "tags": [
+        "consumable",
+        "tile_color",
+        "mult"
+      ],
       "displayNameKey": "data.items.yellow_swatch.displayName",
       "effectTextKey": "data.items.yellow_swatch.effectText"
     },
@@ -960,15 +1077,18 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "On the next confirm, each tile with the same number gives +12 Chips.",
+      "effectText": "On the next confirm, each tile sharing a number gives +12 Chips.",
       "effect": {
         "timing": "next_confirm_per_repeated_rank_tile",
         "op": "chips_bonus",
         "amount": 12,
         "consume": true
       },
-      "tags": ["consumable", "rank", "chips"],
-      "sourceNotes": "Supports pair/triple/four-kind lines without changing rank scoring constants.",
+      "tags": [
+        "consumable",
+        "rank",
+        "chips"
+      ],
       "displayNameKey": "data.items.rank_chalk.displayName",
       "effectTextKey": "data.items.rank_chalk.effectText"
     },
@@ -993,8 +1113,11 @@
         "discard": 1,
         "consume": true
       },
-      "tags": ["utility", "deck", "selection"],
-      "sourceNotes": "Deck manipulation utility inspired by draft/selection consumables.",
+      "tags": [
+        "utility",
+        "deck",
+        "selection"
+      ],
       "displayNameKey": "data.items.deck_needle.displayName",
       "effectTextKey": "data.items.deck_needle.effectText"
     },
@@ -1017,14 +1140,17 @@
         "op": "chips_bonus",
         "amount": 20
       },
-      "tags": ["equipment", "score", "legendary"],
-      "sourceNotes": "Legendary equipment with broad but limited scoring value.",
+      "tags": [
+        "equipment",
+        "score",
+        "legendary"
+      ],
       "displayNameKey": "data.items.tile_polisher.displayName",
       "effectTextKey": "data.items.tile_polisher.effectText"
     },
     {
       "id": "move_token",
-      "displayName": "Move Token",
+      "displayName": "Move Chip",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 5,
@@ -1043,8 +1169,11 @@
         "capIncrease": false,
         "consume": true
       },
-      "tags": ["battle", "move", "safety"],
-      "sourceNotes": "Movement counterpart to board_scrap and hand_scrap for emergency board correction.",
+      "tags": [
+        "battle",
+        "move",
+        "safety"
+      ],
       "displayNameKey": "data.items.move_token.displayName",
       "effectTextKey": "data.items.move_token.effectText"
     },
@@ -1061,21 +1190,24 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "The next board move counts as a slide bonus trigger.",
+      "effectText": "The next board move also triggers slide bonus effects.",
       "effect": {
         "timing": "use_battle",
         "op": "mark_next_board_move_bonus",
         "amount": 1,
         "consume": true
       },
-      "tags": ["battle", "move", "trigger"],
-      "sourceNotes": "Sets up later movement/Jester synergies without changing base move rules.",
+      "tags": [
+        "battle",
+        "move",
+        "trigger"
+      ],
       "displayNameKey": "data.items.slide_wax.displayName",
       "effectTextKey": "data.items.slide_wax.effectText"
     },
     {
       "id": "board_lift",
-      "displayName": "Board Lift",
+      "displayName": "Move Reserve",
       "type": "utility",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -1093,8 +1225,11 @@
         "amount": 1,
         "consume": true
       },
-      "tags": ["move", "station_start", "utility"],
-      "sourceNotes": "Delayed movement resource utility for market planning.",
+      "tags": [
+        "move",
+        "station_start",
+        "utility"
+      ],
       "displayNameKey": "data.items.board_lift.displayName",
       "effectTextKey": "data.items.board_lift.effectText"
     },
@@ -1118,8 +1253,11 @@
         "amount": 1,
         "consume": true
       },
-      "tags": ["battle", "move", "undo"],
-      "sourceNotes": "Rare safety valve for movement mistakes; uses the saved last board move history.",
+      "tags": [
+        "battle",
+        "move",
+        "undo"
+      ],
       "displayNameKey": "data.items.undo_seal.displayName",
       "effectTextKey": "data.items.undo_seal.effectText"
     },
@@ -1142,8 +1280,11 @@
         "op": "add_board_move",
         "amount": 1
       },
-      "tags": ["equipment", "move", "station_start"],
-      "sourceNotes": "Persistent movement resource equipment for board-control builds.",
+      "tags": [
+        "equipment",
+        "move",
+        "station_start"
+      ],
       "displayNameKey": "data.items.organizer_glove.displayName",
       "effectTextKey": "data.items.organizer_glove.effectText"
     },
@@ -1160,14 +1301,17 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "Increase max hand size by 1.",
+      "effectText": "Max hand size +1.",
       "effect": {
         "timing": "inventory_capacity",
         "op": "increase_hand_size",
         "amount": 1
       },
-      "tags": ["relic", "hand_size", "capacity"],
-      "sourceNotes": "Rare run-shaping hand-size relic capped by later balance hooks.",
+      "tags": [
+        "relic",
+        "hand_size",
+        "capacity"
+      ],
       "displayNameKey": "data.items.travel_pouch.displayName",
       "effectTextKey": "data.items.travel_pouch.effectText"
     },
@@ -1191,8 +1335,11 @@
         "amount": 1,
         "boardDiscardPenalty": 1
       },
-      "tags": ["equipment", "hand_size", "penalty"],
-      "sourceNotes": "Strong hand-size equipment balanced by board discard pressure.",
+      "tags": [
+        "equipment",
+        "hand_size",
+        "penalty"
+      ],
       "displayNameKey": "data.items.wide_grip.displayName",
       "effectTextKey": "data.items.wide_grip.effectText"
     },
@@ -1216,14 +1363,18 @@
         "amount": 2,
         "handDiscardPenalty": 1
       },
-      "tags": ["relic", "hand_size", "legendary", "penalty"],
-      "sourceNotes": "Legendary high-ceiling hand-size relic with a discard penalty.",
+      "tags": [
+        "relic",
+        "hand_size",
+        "legendary",
+        "penalty"
+      ],
       "displayNameKey": "data.items.grand_satchel.displayName",
       "effectTextKey": "data.items.grand_satchel.effectText"
     },
     {
       "id": "market_compass",
-      "displayName": "Market Compass",
+      "displayName": "Shop Compass",
       "type": "passive_relic",
       "rarity": "legendary",
       "basePrice": 16,
@@ -1234,14 +1385,18 @@
       "usableInBattle": false,
       "placement": "passiveRack",
       "slotHint": "passive",
-      "effectText": "When entering the Market, discount the cheaper first offer between Item Shop and Jester Shop by 1.",
+      "effectText": "When entering the shop, discount the cheaper first offer between item and Jester offers by 1 Gold.",
       "effect": {
         "timing": "enter_market",
         "op": "discount_cheapest_first_offer",
         "amount": 1
       },
-      "tags": ["relic", "market", "legendary", "discount"],
-      "sourceNotes": "High-tier market consistency relic with low direct score power.",
+      "tags": [
+        "relic",
+        "market",
+        "legendary",
+        "discount"
+      ],
       "displayNameKey": "data.items.market_compass.displayName",
       "effectTextKey": "data.items.market_compass.effectText"
     }

@@ -81,12 +81,12 @@ void main() {
     expect(report.existsSync(), true);
 
     final markdown = report.readAsStringSync();
-    expect(markdown, contains('# ML 레벨링 워크벤치 리포트'));
+    expect(markdown, contains('# 휴리스틱 레벨링 워크벤치 리포트'));
     expect(markdown, contains('레벨링 목표: `tempo`'));
     expect(markdown, contains('## 분석 방식'));
     expect(markdown, contains('train/test split'));
     expect(markdown, contains('leveling_loss'));
-    expect(markdown, contains('## ML 레벨링 워크벤치'));
+    expect(markdown, contains('## 휴리스틱 레벨링 워크벤치'));
     expect(markdown, contains('### 목표/타겟'));
     expect(markdown, contains('### 데이터 충분성'));
     expect(markdown, contains('### 분류 타겟 분포'));
@@ -104,7 +104,7 @@ void main() {
     expect(markdown, contains('## Label 분포'));
     expect(markdown, contains('## 실험별 비교'));
     expect(markdown, contains('## 기본 런 곡선 진단'));
-    expect(markdown, contains('## ML Target v2 진단'));
+    expect(markdown, contains('## Heuristic Target v2 진단'));
     expect(markdown, contains('difficulty `too_hard`'));
     expect(markdown, contains('resource `deck_pressure_high`'));
     expect(markdown, contains('## Good Playfeel 후보'));
@@ -118,7 +118,7 @@ void main() {
     },
   );
 
-  test('ML leveling report compares experiment presets by name', () async {
+  test('heuristic leveling report compares experiment presets by name', () async {
     final pythonCheck = await Process.run('python3', ['--version']);
     if (pythonCheck.exitCode != 0) {
       markTestSkipped('python3 is not available in this environment');
@@ -193,7 +193,7 @@ void main() {
     );
   });
 
-  test('ML leveling report summarizes station curve experiments', () async {
+  test('heuristic leveling report summarizes station curve experiments', () async {
     final pythonCheck = await Process.run('python3', ['--version']);
     if (pythonCheck.exitCode != 0) {
       markTestSkipped('python3 is not available in this environment');
@@ -265,7 +265,7 @@ void main() {
   });
 
   test(
-    'ML leveling report rejects malformed summary without throwing',
+    'heuristic leveling report rejects malformed summary without throwing',
     () async {
       final pythonCheck = await Process.run('python3', ['--version']);
       if (pythonCheck.exitCode != 0) {
@@ -292,7 +292,7 @@ void main() {
     },
   );
 
-  test('ML leveling notebook keeps a single editable options cell', () {
+  test('heuristic leveling notebook keeps a single editable options cell', () {
     final notebook = File('notebooks/sim_ml_leveling.ipynb');
     expect(notebook.existsSync(), true);
 

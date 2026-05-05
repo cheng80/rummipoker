@@ -18,6 +18,7 @@ import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../utils/common_ui.dart';
 import '../game_presentation_timings.dart';
+import 'game_card_name_text.dart';
 
 const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
@@ -149,7 +150,6 @@ class GameTopHud extends StatelessWidget {
                       style: gameHudLabelStyle,
                       maxLines: 1,
                       textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Expanded(
@@ -177,7 +177,6 @@ class GameTopHud extends StatelessWidget {
                         style: gameHudSubStyle,
                         maxLines: 1,
                         textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
                       )
                     else
                       _BossModifierHudLabel(modifier: bossModifier),
@@ -227,7 +226,6 @@ class GameTopHud extends StatelessWidget {
                           style: gameHudLabelStyle,
                           maxLines: 1,
                           textAlign: TextAlign.center,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Expanded(
@@ -351,7 +349,6 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
               style: gameHudLabelStyle,
               maxLines: 1,
               textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Expanded(
@@ -380,7 +377,6 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
                           goldDisplayValue,
                           maxLines: 1,
                           textAlign: TextAlign.right,
-                          overflow: TextOverflow.clip,
                           style: gameHudValueStyle.copyWith(fontSize: 17),
                         ),
                       ),
@@ -524,9 +520,9 @@ String _bossModifierCompactHudLabel(RummiBossModifier modifier) {
 
 String _battleBlindLabel(int tierIndex) {
   return switch (tierIndex) {
-    1 => 'BIG',
+    1 => 'CLASH',
     2 => 'BOSS',
-    _ => 'SMALL',
+    _ => 'SCOUT',
   };
 }
 
@@ -693,7 +689,6 @@ class _BottomResourceText extends StatelessWidget {
     final text = Text(
       label,
       maxLines: 1,
-      overflow: TextOverflow.ellipsis,
       textAlign: textAlign,
       style: const TextStyle(
         color: Colors.white70,
@@ -977,7 +972,6 @@ class _GameItemZoneTabButton extends StatelessWidget {
       child: Text(
         label,
         maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
       ),
     );
@@ -1040,10 +1034,10 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
+                        child: GameCardNameText(
                           name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          textAlign: TextAlign.start,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -1233,7 +1227,6 @@ class _GameItemPocketChip extends StatelessWidget {
         : ItemTranslationScope.of(
             context,
           ).resolveDisplayName(itemSlot.contentId, itemSlot.displayName);
-    final compactItemName = itemName?.replaceFirst(' ', '\n');
     final frameColor = selected
         ? const Color(0xFFF2C14E)
         : Colors.white.withValues(alpha: 0.22);
@@ -1320,7 +1313,6 @@ class _GameItemPocketChip extends StatelessWidget {
                             Text(
                               label,
                               maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.48),
                                 fontSize: 12,
@@ -1376,7 +1368,6 @@ class _GameItemPocketChip extends StatelessWidget {
                                   _itemEffectBadge(activeEffect!),
                                   maxLines: 1,
                                   textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 6.5,
@@ -1390,7 +1381,6 @@ class _GameItemPocketChip extends StatelessWidget {
                             Text(
                               itemSlot.slotLabel,
                               maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: const Color(
                                   0xFF26352F,
@@ -1403,11 +1393,9 @@ class _GameItemPocketChip extends StatelessWidget {
                             const SizedBox(height: 3),
                             Expanded(
                               child: Center(
-                                child: Text(
-                                  compactItemName!,
+                                child: GameCardNameText(
+                                  itemName!,
                                   maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Color(0xFF26352F),
                                     fontSize: 10,
@@ -1548,7 +1536,6 @@ class _GameItemEffectBurst extends StatelessWidget {
                       Text(
                         sourceName,
                         maxLines: 1,
-                        overflow: TextOverflow.clip,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.92),
                           fontSize: 7.5,
@@ -1560,7 +1547,6 @@ class _GameItemEffectBurst extends StatelessWidget {
                       Text(
                         _itemEffectBadge(effect),
                         maxLines: 1,
-                        overflow: TextOverflow.clip,
                         style: const TextStyle(
                           color: Color(0xFFFFF4CF),
                           fontSize: 9,

@@ -87,7 +87,7 @@ class BlindSelectionSpecBuilder {
             : BlindSelectionAvailability.locked,
         lockReason: normalizedClearedBlindTierIndex >= BlindTier.small.index
             ? null
-            : '스몰 클리어 후 빅 블라인드 열림',
+            : '정찰 클리어 후 교전 열림',
       ),
       _buildSpec(
         tier: BlindTier.boss,
@@ -102,7 +102,7 @@ class BlindSelectionSpecBuilder {
             : BlindSelectionAvailability.locked,
         lockReason: normalizedClearedBlindTierIndex >= BlindTier.big.index
             ? null
-            : '빅 클리어 후 보스 블라인드 열림',
+            : '교전 클리어 후 Boss 열림',
       ),
     ];
   }
@@ -178,19 +178,19 @@ class BlindSelectionSpecBuilder {
     return BlindSelectionSpec(
       tier: tier,
       title: switch (tier) {
-        BlindTier.small => '스몰 블라인드',
-        BlindTier.big => '빅 블라인드',
-        BlindTier.boss => '보스 블라인드',
+        BlindTier.small => '정찰 구간',
+        BlindTier.big => '교전 구간',
+        BlindTier.boss => 'Boss 구간',
       },
       badgeLabel: switch (tier) {
-        BlindTier.small => 'SMALL',
-        BlindTier.big => 'BIG',
+        BlindTier.small => 'SCOUT',
+        BlindTier.big => 'CLASH',
         BlindTier.boss => 'BOSS',
       },
       description: switch (tier) {
-        BlindTier.small => '기본 조건으로 런을 시작합니다.',
-        BlindTier.big => '목표 점수를 크게 올리고 보드 버림 여유를 줄입니다.',
-        BlindTier.boss => '손패 크기와 버림 여유를 줄인 강한 압박 블라인드입니다.',
+        BlindTier.small => '기본 조건으로 이번 구간을 시작합니다.',
+        BlindTier.big => '목표 점수를 올리고 보드 버림 여유를 줄입니다.',
+        BlindTier.boss => '손패 크기와 버림 여유를 줄인 강한 Boss 구간입니다.',
       },
       targetScore: targetScore,
       boardDiscards: boardDiscards,

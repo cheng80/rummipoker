@@ -1,0 +1,221 @@
+{
+  "data": {
+    "jesters": {
+      "jester": {
+        "displayName": "Base Relay",
+        "effectText": "+4 Mult.",
+        "notes": ""
+      },
+      "greedy_jester": {
+        "displayName": "Amber Tap",
+        "effectText": "Each yellow tile in the scoring line gives +3 Mult.",
+        "notes": ""
+      },
+      "lusty_jester": {
+        "displayName": "Crimson Tap",
+        "effectText": "Each red tile in the scoring line gives +3 Mult.",
+        "notes": ""
+      },
+      "wrathful_jester": {
+        "displayName": "Cobalt Tap",
+        "effectText": "Each blue tile in the scoring line gives +3 Mult.",
+        "notes": ""
+      },
+      "gluttonous_jester": {
+        "displayName": "Obsidian Tap",
+        "effectText": "Each black tile in the scoring line gives +3 Mult.",
+        "notes": ""
+      },
+      "jolly_jester": {
+        "displayName": "Pair Call",
+        "effectText": "If the scoring line contains a Pair or better, +8 Mult.",
+        "notes": ""
+      },
+      "zany_jester": {
+        "displayName": "Triple Call",
+        "effectText": "If the scoring line contains Three of a Kind or better, +12 Mult.",
+        "notes": ""
+      },
+      "mad_jester": {
+        "displayName": "Twin Pair Call",
+        "effectText": "If the scoring line contains Two Pair or better, +10 Mult.",
+        "notes": ""
+      },
+      "crazy_jester": {
+        "displayName": "Run Call",
+        "effectText": "If the scoring line contains a Straight or better, +12 Mult.",
+        "notes": ""
+      },
+      "droll_jester": {
+        "displayName": "Color Call",
+        "effectText": "If the scoring line contains a Flush or better, +10 Mult.",
+        "notes": ""
+      },
+      "sly_jester": {
+        "displayName": "Pair Battery",
+        "effectText": "If the scoring line contains a Pair or better, +50 Chips.",
+        "notes": ""
+      },
+      "wily_jester": {
+        "displayName": "Triple Battery",
+        "effectText": "If the scoring line contains Three of a Kind or better, +100 Chips.",
+        "notes": ""
+      },
+      "clever_jester": {
+        "displayName": "Twin Pair Battery",
+        "effectText": "If the scoring line contains Two Pair or better, +80 Chips.",
+        "notes": ""
+      },
+      "devious_jester": {
+        "displayName": "Run Battery",
+        "effectText": "If the scoring line contains a Straight or better, +100 Chips.",
+        "notes": ""
+      },
+      "crafty_jester": {
+        "displayName": "Color Battery",
+        "effectText": "If the scoring line contains a Flush or better, +80 Chips.",
+        "notes": ""
+      },
+      "half_jester": {
+        "displayName": "Compact Core",
+        "effectText": "If the scoring line uses 3 or fewer tiles, +20 Mult.",
+        "notes": ""
+      },
+      "jester_stencil": {
+        "displayName": "Open Socket",
+        "effectText": "Each empty Jester slot gives x1 Mult.",
+        "notes": ""
+      },
+      "abstract_jester": {
+        "displayName": "Crew Chorus",
+        "effectText": "Each owned Jester gives +3 Mult.",
+        "notes": ""
+      },
+      "green_jester": {
+        "displayName": "Momentum Meter",
+        "effectText": "Gains +1 Mult after each confirm. Loses 1 Mult after each discard.",
+        "notes": ""
+      },
+      "blue_jester": {
+        "displayName": "Deck Counter",
+        "effectText": "Each tile remaining in the deck gives +2 Chips.",
+        "notes": ""
+      },
+      "scary_face": {
+        "displayName": "Face Battery",
+        "effectText": "Each 11-13 tile in the scoring line gives +30 Chips.",
+        "notes": ""
+      },
+      "smiley_face": {
+        "displayName": "Face Signal",
+        "effectText": "Each 11-13 tile in the scoring line gives +5 Mult.",
+        "notes": ""
+      },
+      "egg": {
+        "displayName": "Reserve Coin",
+        "effectText": "Gain +3 Gold at settlement.",
+        "notes": ""
+      },
+      "bonus_jester": {
+        "displayName": "Chip Anchor",
+        "effectText": "+10 Chips.",
+        "notes": ""
+      },
+      "popcorn": {
+        "displayName": "Fading Boost",
+        "effectText": "+20 Mult. After each Station, this loses 4 Mult.",
+        "notes": ""
+      },
+      "ice_cream": {
+        "displayName": "Melting Reserve",
+        "effectText": "+100 Chips. After each confirm, this loses 5 Chips.",
+        "notes": ""
+      },
+      "delayed_gratification": {
+        "displayName": "Unused Refund",
+        "effectText": "At settlement, gain +2 Gold for each unused discard.",
+        "notes": ""
+      },
+      "walkie_talkie": {
+        "displayName": "Ten-Four Signal",
+        "effectText": "Each 10 or 4 in the scoring line gives +4 Mult.",
+        "notes": ""
+      },
+      "golden_jester": {
+        "displayName": "Gold Drip",
+        "effectText": "Gain +4 Gold at settlement.",
+        "notes": ""
+      },
+      "mystic_summit": {
+        "displayName": "Last Push",
+        "effectText": "If you have 0 discards remaining, +15 Mult.",
+        "notes": ""
+      },
+      "even_steven": {
+        "displayName": "Even Engine",
+        "effectText": "Each even-number tile in the scoring line gives +4 Mult.",
+        "notes": ""
+      },
+      "odd_todd": {
+        "displayName": "Odd Engine",
+        "effectText": "Each odd-number tile in the scoring line gives +31 Chips.",
+        "notes": ""
+      },
+      "scholar": {
+        "displayName": "Ace Ledger",
+        "effectText": "Each Ace in the scoring line gives +20 Chips and +4 Mult.",
+        "notes": ""
+      },
+      "fibonacci": {
+        "displayName": "Sequence Relay",
+        "effectText": "Each Ace, 2, 3, 5, or 8 in the scoring line gives +8 Mult.",
+        "notes": ""
+      },
+      "banner": {
+        "displayName": "Discard Meter",
+        "effectText": "Each remaining discard gives +30 Chips.",
+        "notes": ""
+      },
+      "gros_michel": {
+        "displayName": "Ripe Boost",
+        "effectText": "+15 Mult.",
+        "notes": ""
+      },
+      "supernova": {
+        "displayName": "Run Memory",
+        "effectText": "Add this run's count for the confirmed hand type to Mult.",
+        "notes": ""
+      },
+      "ride_the_bus": {
+        "displayName": "Clean Streak",
+        "effectText": "Gains +1 Mult after each confirm without scoring an 11-13 tile.",
+        "notes": ""
+      },
+      "the_duo": {
+        "displayName": "Pair Pact",
+        "effectText": "If the scoring line contains a Pair or better, x2 Mult.",
+        "notes": ""
+      },
+      "the_trio": {
+        "displayName": "Triple Pact",
+        "effectText": "If the scoring line contains Three of a Kind or better, x3 Mult.",
+        "notes": ""
+      },
+      "the_family": {
+        "displayName": "Quad Pact",
+        "effectText": "If the scoring line contains Four of a Kind or better, x4 Mult.",
+        "notes": ""
+      },
+      "the_order": {
+        "displayName": "Run Pact",
+        "effectText": "If the scoring line contains a Straight or better, x3 Mult.",
+        "notes": ""
+      },
+      "the_tribe": {
+        "displayName": "Color Pact",
+        "effectText": "If the scoring line contains a Flush or better, x2 Mult.",
+        "notes": ""
+      }
+    }
+  }
+}

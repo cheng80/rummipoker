@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('ML bottleneck report summarizes station and loadout pressure', () async {
+  test('simulation bottleneck report summarizes station and loadout pressure', () async {
     final pythonCheck = await Process.run('python3', ['--version']);
     if (pythonCheck.exitCode != 0) {
       markTestSkipped('python3 is not available in this environment');
@@ -76,7 +76,7 @@ void main() {
     expect(result.stdout.toString(), contains('병목 리포트:'));
 
     final markdown = File(reportPath).readAsStringSync();
-    expect(markdown, contains('# ML 병목 분해 리포트'));
+    expect(markdown, contains('# 시뮬레이션 병목 분해 리포트'));
     expect(markdown, contains('## 한줄 판정'));
     expect(markdown, contains('덱 고갈'));
     expect(markdown, contains('## Experiment 비교'));

@@ -177,7 +177,7 @@
 | Market policy | station band rarity/tag weight, missing growth exposure, high-stakes market pressure 적용 | `RummiStationBandMarketPolicy`, `RummiMarketRuntimeFacade` |
 | Economy runtime | reward 0.40 번역, 정수 `11/5` effective price scale 적용 | `RummiEconomyConfig`, catalog JSON |
 | Economy tooling | economy trace, gated known cost, reroll/slot/sell proxy, catalog value audit, runtime offer audit 추가 | `tools/sim/economy_audit.py`, `tools/sim/catalog_value_audit.py`, `tools/sim/runtime_market_offer_audit.dart` |
-| Leveling docs | current policy/runtime spec/ML baseline/applied status 문서화 | `docs/current_system/`, `docs/planning/LEVELING_APPLIED_STATUS.md` |
+| Leveling docs | current policy/runtime spec/simulation baseline/applied status 문서화 | `docs/current_system/`, `docs/planning/LEVELING_APPLIED_STATUS.md` |
 | Goal workflow | 자동 진행 예외, 실험 수렴 규칙, 전체 진도표 규칙 추가 | `AGENTS.md`, `docs/planning/OVERALL_GOAL_PROGRESS.md` |
 
 최근 완료된 경제/레벨링 흐름:

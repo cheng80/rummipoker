@@ -1588,8 +1588,8 @@ class _GameViewState extends ConsumerState<GameView>
                             child: Column(
                               children: [
                                 GameMenuActionTile(
-                                  title: '현재 Blind 즉시 클리어',
-                                  subtitle: '현재 선택된 블라인드를 즉시 정산 완료 상태로 넘깁니다.',
+                                  title: '현재 구간 즉시 클리어',
+                                  subtitle: '현재 선택된 구간을 즉시 정산 완료 상태로 넘깁니다.',
                                   icon: Icons.bug_report_rounded,
                                   accentColor: Colors.orange.shade200,
                                   onTap: () async {
@@ -1600,8 +1600,8 @@ class _GameViewState extends ConsumerState<GameView>
                                 ),
                                 const SizedBox(height: 8),
                                 GameMenuActionTile(
-                                  title: '보스 클리어 후 다음 Blind Select',
-                                  subtitle: '다음 스테이션의 블라인드 선택으로 바로 이행합니다.',
+                                  title: 'Boss 클리어 후 다음 구간 선택',
+                                  subtitle: '다음 Station의 구간 선택으로 바로 이행합니다.',
                                   icon: Icons.skip_next_rounded,
                                   accentColor: Colors.lightGreenAccent.shade100,
                                   onTap: () async {
@@ -1852,7 +1852,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Blind 선택으로 이동',
+                    '구간 선택으로 이동',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.72),
@@ -1993,7 +1993,6 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                           Text(
                             feedback.title,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 15,
@@ -2005,7 +2004,6 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                           Text(
                             feedback.detail,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: accent,
                               fontSize: 18,
@@ -2578,7 +2576,6 @@ class _GameLayout extends StatelessWidget {
               Text(
                 '빈 칸을 선택해 이동을 확정하세요. 원본 타일을 누르면 취소됩니다.',
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.74),
@@ -2760,7 +2757,6 @@ class _BoardScoringCallout extends StatelessWidget {
                               Text(
                                 title,
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -2772,7 +2768,6 @@ class _BoardScoringCallout extends StatelessWidget {
                               Text(
                                 value,
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: valueColor,
                                   fontSize: 18,
@@ -2785,7 +2780,6 @@ class _BoardScoringCallout extends StatelessWidget {
                                 child: Text(
                                   detail,
                                   maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.68),
                                     fontSize: 10,
@@ -2962,7 +2956,6 @@ class _ScoringPreviewChip extends StatelessWidget {
                         child: Text(
                           label,
                           maxLines: 1,
-                          overflow: TextOverflow.clip,
                           style: TextStyle(
                             color: preview == null
                                 ? Colors.white54
@@ -2981,7 +2974,6 @@ class _ScoringPreviewChip extends StatelessWidget {
                         child: Text(
                           detail,
                           maxLines: 1,
-                          overflow: TextOverflow.clip,
                           textAlign: TextAlign.right,
                           style: TextStyle(
                             color: accent,
@@ -3067,7 +3059,6 @@ class _BattleRailButton extends StatelessWidget {
                   child: Text(
                     label,
                     maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,

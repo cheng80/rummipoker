@@ -103,10 +103,10 @@ void main() {
         expect(item.effect.op, isNotEmpty);
       }
 
-      expect(translationJson, contains('"리롤 토큰"'));
+      expect(translationJson, contains('"리롤 칩"'));
       expect(translationJson, contains('"다음 상점 리롤 비용이 1 줄어듭니다."'));
-      expect(translationJson, contains('"이동 토큰"'));
-      expect(translationJson, contains('"손패 한도 +1."'));
+      expect(translationJson, contains('"이동 칩"'));
+      expect(translationJson, contains('"최대 손패 크기 +1."'));
 
       expect(catalog.findById('move_token')!.effect.op, 'add_board_move');
       expect(catalog.findById('travel_pouch')!.effect.op, 'increase_hand_size');
@@ -123,7 +123,6 @@ void main() {
           (translationData['data'] as Map<String, dynamic>)['items']
               as Map<String, dynamic>;
       const internalTerms = [
-        'Market',
         'Gold',
         'Chips',
         'Mult',

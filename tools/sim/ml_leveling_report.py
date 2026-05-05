@@ -189,7 +189,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"파일 오류: {error}", file=sys.stderr)
         return 1
 
-    print(f"ML 레벨링 워크벤치 리포트: {result['report_path']}")
+    print(f"휴리스틱 레벨링 워크벤치 리포트: {result['report_path']}")
     for chart_path in result["chart_paths"]:
         print(f"차트: {chart_path}")
     for warning in result["warnings"]:
@@ -288,7 +288,7 @@ def ensure_libraries(*, auto_install: bool) -> dict[str, bool]:
 
 
 def load_groups(summary_path: Path) -> list[MlSummaryGroup]:
-    """summary JSON의 groups를 읽어 ML 해석 객체 목록으로 변환한다."""
+    """summary JSON의 groups를 읽어 휴리스틱 해석 객체 목록으로 변환한다."""
 
     if not summary_path.exists():
         raise MlLevelingError(f"summary 파일을 찾을 수 없습니다: {summary_path}")
@@ -320,7 +320,7 @@ def render_markdown(
     attention_groups = [group for group in groups if group.needs_balance_attention]
     coach = leveling_coach_v1(groups)
     lines: list[str] = [
-        "# ML 레벨링 워크벤치 리포트",
+        "# 휴리스틱 레벨링 워크벤치 리포트",
         "",
         f"- 입력 파일: `{summary_path}`",
         f"- 그룹 수: {len(groups)}",
@@ -368,7 +368,7 @@ def render_markdown(
         "",
         *basic_run_curve_lines(groups),
         "",
-        "## ML Target v2 진단",
+        "## Heuristic Target v2 진단",
         "",
         *target_v2_diagnostic_lines(groups, top_n=top_n),
         "",
@@ -397,7 +397,7 @@ def render_markdown(
         "",
         *goal_recommendation_lines(groups, goal=goal, top_n=top_n),
         "",
-        "## ML 레벨링 워크벤치",
+        "## 휴리스틱 레벨링 워크벤치",
         "",
         *ml_workbench_lines,
         "",
@@ -1460,7 +1460,7 @@ def write_charts(
     )
     paths: list[Path] = []
     for suffix, title, counter in [
-        ("label_distribution", "ML Label 분포", label_counts),
+        ("label_distribution", "휴리스틱 Label 분포", label_counts),
         ("attention_by_loadout", "Loadout별 Balance Attention", loadout_attention),
     ]:
         path = out_dir / f"{stem}_{suffix}.png"
