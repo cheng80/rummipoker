@@ -327,4 +327,21 @@ void main() {
     );
     expect(fixture.runProgress.itemInventory.passiveRelicIds, ['safety_net']);
   });
+
+  test('game over fixture starts with board-full expiry state', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.gameOverInsightReady,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.runProgress.stageIndex, 2);
+    expect(fixture.session.canConfirmAllFullLines, isFalse);
+    expect(fixture.session.blind.boardDiscardsRemaining, 0);
+    expect(
+      fixture.session.evaluateExpirySignals(),
+      contains(RummiExpirySignal.boardFullAfterDcExhausted),
+    );
+    expect(fixture.runProgress.itemInventory.passiveRelicIds, isEmpty);
+  });
 }

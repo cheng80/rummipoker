@@ -40,6 +40,7 @@ class DebugRunFixtureService {
   static const String marketItemUseShop = 'market_item_use_shop';
   static const String inventoryQuickSlotBattle = 'inventory_quick_slot_battle';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
+  static const String gameOverInsightReady = 'game_over_insight_ready';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
   static const String settlementCashOutReady = 'settlement_cash_out_ready';
   static const String finalBossCashOutReady = 'final_boss_cash_out_ready';
@@ -111,6 +112,12 @@ class DebugRunFixtureService {
       label: 'Safety Net 종료 방지',
       description: 'Safety Net 보유 / 보드가 꽉 찬 종료 위기 구조 검증용',
       builder: _buildSafetyNetExpiryGuard,
+    ),
+    DebugRunFixtureDefinition(
+      id: gameOverInsightReady,
+      label: '게임오버 Insight 체크',
+      description: '보드 꽉 참 + 보드 버림 0 / 패배 보상 dialog 검증용',
+      builder: _buildGameOverInsightReady,
     ),
     DebugRunFixtureDefinition(
       id: animationEffectsEyeCheck,
@@ -867,6 +874,32 @@ class DebugRunFixtureService {
   }
 
   static ActiveRunRuntimeState _buildSafetyNetExpiryGuard() {
+    return _buildBoardFullExpiryState(
+      runSeed: 2026042501,
+      itemInventory: const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'safety_net',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        passiveRelicIds: ['safety_net'],
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildGameOverInsightReady() {
+    return _buildBoardFullExpiryState(
+      runSeed: 2026050501,
+      itemInventory: const RunInventoryState(),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildBoardFullExpiryState({
+    required int runSeed,
+    required RunInventoryState itemInventory,
+  }) {
     final board = RummiBoard();
     const ranks = [
       [1, 3, 6, 8, 11],
@@ -888,10 +921,10 @@ class DebugRunFixtureService {
       }
     }
     final session = RummiPokerGridSession.restored(
-      runSeed: 2026042501,
+      runSeed: runSeed,
       deckCopiesPerTile: kDefaultCopiesPerTile,
       maxHandSize: 1,
-      runRandomState: SeededRandom(2026042501).state,
+      runRandomState: SeededRandom(runSeed).state,
       blind: RummiBlindState(
         targetScore: 480,
         boardDiscardsRemaining: 0,
@@ -900,7 +933,7 @@ class DebugRunFixtureService {
       ),
       deck: PokerDeck.remainingAfterPlaced(
         board: board,
-        random: Random(2026042501),
+        random: Random(runSeed),
       ),
       board: board,
       hand: const [],
@@ -914,16 +947,7 @@ class DebugRunFixtureService {
       shopOffers: const [],
       statefulValuesBySlot: const {},
       playedHandCounts: const <RummiHandRank, int>{},
-      itemInventory: const RunInventoryState(
-        ownedItems: [
-          OwnedItemEntry(
-            itemId: 'safety_net',
-            count: 1,
-            placement: ItemPlacement.passiveRack,
-          ),
-        ],
-        passiveRelicIds: ['safety_net'],
-      ),
+      itemInventory: itemInventory,
     );
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
