@@ -23,7 +23,7 @@
 | S1~S8 standard target table | Applied | `BlindSelectionSpecBuilder._standardTargetScore` | small/big/boss 목표표 런타임 연결 완료 |
 | difficulty multiplier | Applied | `BlindSelectionSpecBuilder._difficultyMultiplier` | relaxed 0.8, standard 1.0, pressure 1.2 |
 | blind tier resource pressure | Applied | `BlindSelectionSpecBuilder` | 전투 시작 압박이며 자동 보상/성장 지급이 아님 |
-| run modifier target/reward hook | Applied | `NewRunModifier.basic` / `BlindSelectionSpecBuilder` / `RummiRunProgress.buildCashOutBreakdown` | 현재는 `basic`만 적용, target/reward 1.0으로 기존 값 유지 |
+| run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.08, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
 | runtime boss modifier cycle | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 순환 보스 제약 표시/전투 적용 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face 약화 3계열 적용 |

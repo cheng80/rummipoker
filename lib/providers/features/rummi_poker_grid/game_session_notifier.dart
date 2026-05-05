@@ -96,7 +96,7 @@ class GameSessionNotifier
           runProgress: restoredRun.runProgress,
           stageStartSnapshot: restoredRun.stageStartSnapshot,
           ruleset: args.ruleset,
-          runModifier: NewRunModifier.basic,
+          runModifier: restoredRun.runModifier,
           runLoopPhase: _sceneToLoopPhase(restoredRun.activeScene),
           activeRunScene: restoredRun.activeScene,
           debugFixtureId: args.debugFixtureId,
@@ -191,6 +191,7 @@ class GameSessionNotifier
       return ActiveRunRuntimeState(
         activeScene: ActiveRunScene.battle,
         difficulty: difficulty,
+        runModifier: state.runModifier,
         session: retrySnapshot.session,
         runProgress: retrySnapshot.runProgress,
         stageStartSnapshot: retrySnapshot,
@@ -200,6 +201,7 @@ class GameSessionNotifier
     return ActiveRunRuntimeState(
       activeScene: currentScene,
       difficulty: difficulty,
+      runModifier: state.runModifier,
       session: state.session!,
       runProgress: state.runProgress!,
       stageStartSnapshot: state.stageStartSnapshot!,

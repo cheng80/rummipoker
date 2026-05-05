@@ -49,6 +49,27 @@ void main() {
       expect(NewRunModifier.basic.rewardMultiplier, 1);
     });
 
+    test('high stakes run modifier는 목표 점수와 보상 preview를 함께 올린다', () {
+      final standard = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 4,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final highStakes = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 4,
+        difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.highStakes,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+
+      expect(highStakes.targetScore, (standard.targetScore * 1.08).round());
+      expect(highStakes.rewardPreview, (standard.rewardPreview * 1.12).round());
+      expect(NewRunModifier.parse('high_stakes'), NewRunModifier.highStakes);
+      expect(NewRunModifier.highStakes.unlockCostInsight, 20);
+    });
+
     test('station 2에서는 small은 clear 비활성이고 big만 선택 가능하다', () {
       final options = BlindSelectionSetup.buildForStation(
         stationIndex: 1,
@@ -122,6 +143,7 @@ void main() {
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.blindSelect,
         difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.highStakes,
         session: RummiPokerGridSession(runSeed: 77),
         runProgress: RummiRunProgress()
           ..stageIndex = 1
@@ -138,12 +160,14 @@ void main() {
 
       expect(prepared.runProgress.stageIndex, 2);
       expect(prepared.runProgress.currentStationBlindTierIndex, -1);
+      expect(prepared.runModifier, NewRunModifier.highStakes);
 
       final options = BlindSelectionSetup.buildForStation(
         stationIndex: prepared.runProgress.stageIndex,
         clearedBlindTierIndex:
             prepared.runProgress.currentStationBlindTierIndex,
         difficulty: prepared.difficulty,
+        runModifier: prepared.runModifier,
         ruleset: prepared.session.ruleset,
       );
 

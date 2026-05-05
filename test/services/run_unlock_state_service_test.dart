@@ -21,6 +21,8 @@ void main() {
       expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isFalse);
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isFalse);
       expect(state.isDeckAvailable('basic_deck'), isTrue);
+      expect(state.isRunModifierUnlocked(NewRunModifier.basic), isTrue);
+      expect(state.isRunModifierUnlocked(NewRunModifier.highStakes), isFalse);
       expect(state.insight, 0);
     });
 
@@ -52,6 +54,34 @@ void main() {
 
       final state = await RunUnlockStateService.load();
       expect(state.insight, 0);
+      expect(state.isRunModifierUnlocked(NewRunModifier.basic), isTrue);
+      expect(state.isRunModifierUnlocked(NewRunModifier.highStakes), isFalse);
+    });
+
+    test('insight를 사용해 high stakes modifier를 해금한다', () async {
+      await RunUnlockStateService.addInsight(25);
+
+      final unlocked = await RunUnlockStateService.unlockRunModifier(
+        NewRunModifier.highStakes,
+      );
+
+      final state = await RunUnlockStateService.load();
+      expect(unlocked, isTrue);
+      expect(state.insight, 5);
+      expect(state.isRunModifierUnlocked(NewRunModifier.highStakes), isTrue);
+    });
+
+    test('insight가 부족하면 high stakes modifier를 해금하지 않는다', () async {
+      await RunUnlockStateService.addInsight(19);
+
+      final unlocked = await RunUnlockStateService.unlockRunModifier(
+        NewRunModifier.highStakes,
+      );
+
+      final state = await RunUnlockStateService.load();
+      expect(unlocked, isFalse);
+      expect(state.insight, 19);
+      expect(state.isRunModifierUnlocked(NewRunModifier.highStakes), isFalse);
     });
   });
 }

@@ -54,7 +54,7 @@ class BlindSelectionSetup {
       tier: tier,
       stationIndex: stationIndex,
       difficulty: runtime.difficulty,
-      runModifier: NewRunModifier.basic,
+      runModifier: runtime.runModifier,
       ruleset: session.ruleset,
     );
 
@@ -88,6 +88,7 @@ class BlindSelectionSetup {
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
       difficulty: runtime.difficulty,
+      runModifier: runtime.runModifier,
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
@@ -107,6 +108,7 @@ class BlindSelectionSetup {
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.blindSelect,
       difficulty: runtime.difficulty,
+      runModifier: runtime.runModifier,
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: runtime.stageStartSnapshot,

@@ -73,6 +73,7 @@ void main() {
           savedAtIso8601: '2026-04-19T00:00:00.000Z',
           activeScene: ActiveRunScene.shop.name,
           difficulty: NewRunDifficulty.standard.name,
+          runModifier: NewRunModifier.highStakes.id,
           session: const SavedSessionData(
             runSeed: 11,
             rulesetId: 'current_defaults_v1',
@@ -191,6 +192,7 @@ void main() {
         expect(restored.schemaVersion, 2);
         expect(restored.activeScene, ActiveRunScene.shop.name);
         expect(restored.difficulty, NewRunDifficulty.standard.name);
+        expect(restored.runModifier, NewRunModifier.highStakes.id);
         expect(restored.session.runSeed, 11);
         expect(restored.runProgress.currentStationBlindTierIndex, 1);
         expect(restored.session.rulesetId, 'current_defaults_v1');
@@ -218,9 +220,7 @@ void main() {
         );
         expect(restored.session.confirmCountThisStation, 1);
         expect(restored.session.firstConfirmScoreThisStation, 50);
-        expect(restored.session.confirmedRanksThisStation, <String>[
-          'twoPair',
-        ]);
+        expect(restored.session.confirmedRanksThisStation, <String>['twoPair']);
         expect(restored.session.expiryGuardUsedThisStation, isTrue);
         expect(
           restored.runProgress.itemInventory.ownedItems.single.itemId,
@@ -234,6 +234,10 @@ void main() {
         expect(restored.stageStartRunProgress.gold, 10);
         expect(restored.stageStartRunProgress.currentStationBlindTierIndex, 0);
         expect(restored.stageStartRunProgress.rerollCost, 5);
+
+        final legacyJson = save.toJson()..remove('runModifier');
+        final legacyRestored = ActiveRunSaveData.fromJson(legacyJson);
+        expect(legacyRestored.runModifier, NewRunModifier.basic.id);
       },
     );
 
@@ -608,6 +612,7 @@ void main() {
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.shop,
         difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.highStakes,
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
@@ -622,6 +627,7 @@ void main() {
       expect(restored, isNotNull);
       expect(restored!.activeScene, ActiveRunScene.shop);
       expect(restored.difficulty, NewRunDifficulty.standard);
+      expect(restored.runModifier, NewRunModifier.highStakes);
       expect(restored.session.runSeed, 5151);
       expect(restored.runProgress.gold, RummiEconomyConfig.startingGold + 9);
       expect(restored.session.board.cellAt(0, 0), isNull);

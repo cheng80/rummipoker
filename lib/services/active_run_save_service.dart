@@ -29,6 +29,7 @@ class ActiveRunRuntimeState {
   const ActiveRunRuntimeState({
     required this.activeScene,
     required this.difficulty,
+    this.runModifier = NewRunModifier.basic,
     required this.session,
     required this.runProgress,
     required this.stageStartSnapshot,
@@ -36,6 +37,7 @@ class ActiveRunRuntimeState {
 
   final ActiveRunScene activeScene;
   final NewRunDifficulty difficulty;
+  final NewRunModifier runModifier;
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
   final ActiveRunStageSnapshot stageStartSnapshot;
@@ -57,6 +59,7 @@ class ActiveRunSaveData {
     required this.savedAtIso8601,
     required this.activeScene,
     required this.difficulty,
+    this.runModifier = 'basic',
     required this.session,
     required this.runProgress,
     required this.stageStartSession,
@@ -67,6 +70,7 @@ class ActiveRunSaveData {
   final String savedAtIso8601;
   final String activeScene;
   final String difficulty;
+  final String runModifier;
   final SavedSessionData session;
   final SavedRunProgressData runProgress;
   final SavedSessionData stageStartSession;
@@ -77,6 +81,7 @@ class ActiveRunSaveData {
     'savedAt': savedAtIso8601,
     'activeScene': activeScene,
     'difficulty': difficulty,
+    'runModifier': runModifier,
     'session': session.toJson(),
     'runProgress': runProgress.toJson(),
     'stageStartSession': stageStartSession.toJson(),
@@ -90,6 +95,7 @@ class ActiveRunSaveData {
       activeScene: json['activeScene'] as String,
       difficulty:
           json['difficulty'] as String? ?? NewRunDifficulty.standard.name,
+      runModifier: json['runModifier'] as String? ?? NewRunModifier.basic.id,
       session: SavedSessionData.fromJson(
         json['session'] as Map<String, dynamic>,
       ),
@@ -373,6 +379,7 @@ class ActiveRunSaveService {
   static Future<void> saveActiveRun({
     required ActiveRunScene activeScene,
     required NewRunDifficulty difficulty,
+    NewRunModifier runModifier = NewRunModifier.basic,
     required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
     required ActiveRunStageSnapshot stageStartSnapshot,
@@ -384,6 +391,7 @@ class ActiveRunSaveService {
       savedAtIso8601: DateTime.now().toUtc().toIso8601String(),
       activeScene: activeScene.name,
       difficulty: difficulty.name,
+      runModifier: runModifier.id,
       session: savedSession,
       runProgress: savedRunProgress,
       stageStartSession: _buildSavedSessionData(stageStartSnapshot.session),
@@ -402,6 +410,7 @@ class ActiveRunSaveService {
     return saveActiveRun(
       activeScene: runtime.activeScene,
       difficulty: runtime.difficulty,
+      runModifier: runtime.runModifier,
       session: runtime.session,
       runProgress: runtime.runProgress,
       stageStartSnapshot: runtime.stageStartSnapshot,
@@ -423,6 +432,7 @@ class ActiveRunSaveService {
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.values.byName(save.activeScene),
       difficulty: NewRunSetup.parseDifficulty(save.difficulty),
+      runModifier: NewRunModifier.parse(save.runModifier),
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,

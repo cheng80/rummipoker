@@ -48,8 +48,11 @@ Run modifier multiplier:
 | Modifier | Target | Reward |
 |---|---:|---:|
 | `basic` | 1.0 | 1.0 |
+| `high_stakes` | 1.08 | 1.12 |
 
-Run modifier는 숨은 자동 보정이 아니다. 새 런 시작 시 명시적으로 선택된 modifier만 target score와 blind reward에 배율을 적용한다. 현재 런타임에 실제 선택 가능한 modifier는 `basic`뿐이며, 기존 레벨링 값은 바꾸지 않는다.
+Run modifier는 숨은 자동 보정이 아니다. 새 런 시작 시 명시적으로 선택된 modifier만 target score와 blind reward에 배율을 적용한다. `basic`은 기존 레벨링 값을 그대로 유지한다.
+
+`high_stakes`는 Insight 20으로 해금하는 명시적 계약이다. 목표 점수와 blind reward preview/reward만 함께 올리며, 인런 골드/아이템/Jester/자원은 직접 지급하지 않는다. active run 저장에는 선택된 modifier id를 보존하고, 기존 저장처럼 modifier가 없는 payload는 `basic`으로 복원한다.
 
 S8 이후는 실제 진행 구간 밖이다. 디버그/테스트용으로만 마지막 구간 성장률을 이어 붙여 단조 증가를 보장한다.
 

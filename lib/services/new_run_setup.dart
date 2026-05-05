@@ -6,6 +6,14 @@ enum NewRunModifier {
     label: '기본 런',
     targetScoreMultiplier: 1,
     rewardMultiplier: 1,
+    unlockCostInsight: 0,
+  ),
+  highStakes(
+    id: 'high_stakes',
+    label: '하이 스테이크',
+    targetScoreMultiplier: 1.08,
+    rewardMultiplier: 1.12,
+    unlockCostInsight: 20,
   );
 
   const NewRunModifier({
@@ -13,16 +21,19 @@ enum NewRunModifier {
     required this.label,
     required this.targetScoreMultiplier,
     required this.rewardMultiplier,
+    required this.unlockCostInsight,
   });
 
   final String id;
   final String label;
   final double targetScoreMultiplier;
   final double rewardMultiplier;
+  final int unlockCostInsight;
 
   static NewRunModifier parse(String? raw) {
     return switch (raw) {
       'basic' => NewRunModifier.basic,
+      'high_stakes' => NewRunModifier.highStakes,
       _ => NewRunModifier.basic,
     };
   }

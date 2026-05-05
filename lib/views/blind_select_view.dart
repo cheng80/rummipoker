@@ -65,7 +65,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
       widget.restoredRun?.difficulty ?? widget.difficulty;
 
   NewRunModifier get _effectiveRunModifier =>
-      widget.restoredRun == null ? widget.runModifier : NewRunModifier.basic;
+      widget.restoredRun?.runModifier ?? widget.runModifier;
 
   RummiRuleset get _effectiveRuleset =>
       widget.restoredRun?.session.ruleset ?? RummiRuleset.currentDefaults;

@@ -28,6 +28,7 @@ class _NewRunViewState extends State<NewRunView> {
   final ScrollController _scrollController = ScrollController();
   RunUnlockState _unlockState = RunUnlockState.defaults();
   NewRunDifficulty _selectedDifficulty = NewRunDifficulty.standard;
+  NewRunModifier _selectedRunModifier = NewRunModifier.basic;
 
   @override
   void initState() {
@@ -43,6 +44,9 @@ class _NewRunViewState extends State<NewRunView> {
       _unlockState = state;
       if (!_unlockState.isDifficultyUnlocked(_selectedDifficulty)) {
         _selectedDifficulty = NewRunDifficulty.standard;
+      }
+      if (!_unlockState.isRunModifierUnlocked(_selectedRunModifier)) {
+        _selectedRunModifier = NewRunModifier.basic;
       }
     });
   }
@@ -148,15 +152,38 @@ class _NewRunViewState extends State<NewRunView> {
     final difficulty = _unlockState.isDifficultyUnlocked(_selectedDifficulty)
         ? _selectedDifficulty
         : NewRunDifficulty.standard;
+    final runModifier = _unlockState.isRunModifierUnlocked(_selectedRunModifier)
+        ? _selectedRunModifier
+        : NewRunModifier.basic;
     return '${RoutePaths.blindSelect}?seed=$seed'
         '&difficulty=${difficulty.name}'
-        '&modifier=${NewRunModifier.basic.id}';
+        '&modifier=${runModifier.id}';
   }
 
   List<NewRunDifficulty> get _availableDifficulties {
     return NewRunDifficulty.values
         .where(_unlockState.isDifficultyUnlocked)
         .toList(growable: false);
+  }
+
+  Future<void> _selectOrUnlockRunModifier(NewRunModifier modifier) async {
+    if (_unlockState.isRunModifierUnlocked(modifier)) {
+      setState(() => _selectedRunModifier = modifier);
+      return;
+    }
+    final unlocked = await RunUnlockStateService.unlockRunModifier(modifier);
+    final latest = await RunUnlockStateService.load();
+    if (!mounted) return;
+    setState(() {
+      _unlockState = latest;
+      if (unlocked) {
+        _selectedRunModifier = modifier;
+      }
+    });
+    showTopNotice(
+      context,
+      unlocked ? '${modifier.label} 해금' : 'Insight가 부족합니다.',
+    );
   }
 
   @override
@@ -204,6 +231,16 @@ class _NewRunViewState extends State<NewRunView> {
               const SizedBox(height: 18),
             ],
             HomeSection(
+              title: '런 계약',
+              subtitle: '보유 Insight ${_unlockState.insight}',
+              child: _RunModifierPicker(
+                selectedRunModifier: _selectedRunModifier,
+                unlockState: _unlockState,
+                onSelect: _selectOrUnlockRunModifier,
+              ),
+            ),
+            const SizedBox(height: 18),
+            HomeSection(
               title: '시작 방식',
               subtitle: _availableDifficulties.length > 1
                   ? '선택한 난이도로 시작합니다.'
@@ -230,6 +267,144 @@ class _NewRunViewState extends State<NewRunView> {
         ),
       ),
     );
+  }
+}
+
+class _RunModifierPicker extends StatelessWidget {
+  const _RunModifierPicker({
+    required this.selectedRunModifier,
+    required this.unlockState,
+    required this.onSelect,
+  });
+
+  final NewRunModifier selectedRunModifier;
+  final RunUnlockState unlockState;
+  final ValueChanged<NewRunModifier> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      spacing: 10,
+      children: [
+        for (final modifier in NewRunModifier.values)
+          _RunModifierCard(
+            modifier: modifier,
+            selected: modifier == selectedRunModifier,
+            unlocked: unlockState.isRunModifierUnlocked(modifier),
+            canUnlock: unlockState.insight >= modifier.unlockCostInsight,
+            onTap: () => onSelect(modifier),
+          ),
+      ],
+    );
+  }
+}
+
+class _RunModifierCard extends StatelessWidget {
+  const _RunModifierCard({
+    required this.modifier,
+    required this.selected,
+    required this.unlocked,
+    required this.canUnlock,
+    required this.onTap,
+  });
+
+  final NewRunModifier modifier;
+  final bool selected;
+  final bool unlocked;
+  final bool canUnlock;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = modifier == NewRunModifier.highStakes
+        ? const Color(0xFFFFB13B)
+        : const Color(0xFF4FC3F7);
+    final borderColor = selected
+        ? accent
+        : Colors.white.withValues(alpha: unlocked ? 0.12 : 0.07);
+    final fillColor = selected
+        ? accent.withValues(alpha: 0.15)
+        : Colors.white.withValues(alpha: unlocked ? 0.05 : 0.025);
+    final status = unlocked
+        ? (selected ? '선택됨' : '선택 가능')
+        : (canUnlock ? 'Insight ${modifier.unlockCostInsight} 해금' : '잠김');
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          decoration: BoxDecoration(
+            color: fillColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor, width: selected ? 1.8 : 1),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                unlocked
+                    ? (selected
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_unchecked_rounded)
+                    : Icons.lock_rounded,
+                color: unlocked || canUnlock
+                    ? accent
+                    : Colors.white.withValues(alpha: 0.42),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      modifier.label,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.94),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _modifierEffectText(modifier),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.68),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                status,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: (unlocked || canUnlock)
+                      ? accent
+                      : Colors.white.withValues(alpha: 0.46),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _modifierEffectText(NewRunModifier modifier) {
+    if (modifier == NewRunModifier.basic) {
+      return '목표 점수 x1.00 · 보상 x1.00';
+    }
+    return '목표 점수 x${modifier.targetScoreMultiplier.toStringAsFixed(2)}'
+        ' · 보상 x${modifier.rewardMultiplier.toStringAsFixed(2)}';
   }
 }
 

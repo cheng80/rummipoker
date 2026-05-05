@@ -9,6 +9,7 @@ class RunUnlockState {
     required this.unlockedDifficultyNames,
     required this.clearedDifficultyNames,
     required this.availableDeckIds,
+    required this.unlockedRunModifierIds,
     required this.insight,
   });
 
@@ -17,6 +18,7 @@ class RunUnlockState {
       unlockedDifficultyNames: <String>{'standard'},
       clearedDifficultyNames: <String>{},
       availableDeckIds: <String>{'basic_deck'},
+      unlockedRunModifierIds: <String>{'basic'},
       insight: 0,
     );
   }
@@ -28,6 +30,10 @@ class RunUnlockState {
             .toSet();
     final rawDeckIds =
         (json['availableDeckIds'] as List<dynamic>? ?? const <dynamic>[])
+            .whereType<String>()
+            .toSet();
+    final rawRunModifierIds =
+        (json['unlockedRunModifierIds'] as List<dynamic>? ?? const <dynamic>[])
             .whereType<String>()
             .toSet();
 
@@ -43,6 +49,9 @@ class RunUnlockState {
       availableDeckIds: rawDeckIds.isEmpty
           ? RunUnlockState.defaults().availableDeckIds
           : rawDeckIds,
+      unlockedRunModifierIds: rawRunModifierIds.isEmpty
+          ? RunUnlockState.defaults().unlockedRunModifierIds
+          : rawRunModifierIds,
       insight: (json['insight'] as num?)?.toInt() ?? 0,
     );
   }
@@ -50,12 +59,14 @@ class RunUnlockState {
   final Set<String> unlockedDifficultyNames;
   final Set<String> clearedDifficultyNames;
   final Set<String> availableDeckIds;
+  final Set<String> unlockedRunModifierIds;
   final int insight;
 
   Map<String, dynamic> toJson() => {
     'unlockedDifficultyNames': unlockedDifficultyNames.toList()..sort(),
     'clearedDifficultyNames': clearedDifficultyNames.toList()..sort(),
     'availableDeckIds': availableDeckIds.toList()..sort(),
+    'unlockedRunModifierIds': unlockedRunModifierIds.toList()..sort(),
     'insight': insight,
   };
 
@@ -71,10 +82,15 @@ class RunUnlockState {
     return availableDeckIds.contains(deckId);
   }
 
+  bool isRunModifierUnlocked(NewRunModifier modifier) {
+    return unlockedRunModifierIds.contains(modifier.id);
+  }
+
   RunUnlockState copyWith({
     Set<String>? unlockedDifficultyNames,
     Set<String>? clearedDifficultyNames,
     Set<String>? availableDeckIds,
+    Set<String>? unlockedRunModifierIds,
     int? insight,
   }) {
     return RunUnlockState(
@@ -83,6 +99,8 @@ class RunUnlockState {
       clearedDifficultyNames:
           clearedDifficultyNames ?? this.clearedDifficultyNames,
       availableDeckIds: availableDeckIds ?? this.availableDeckIds,
+      unlockedRunModifierIds:
+          unlockedRunModifierIds ?? this.unlockedRunModifierIds,
       insight: insight ?? this.insight,
     );
   }
@@ -150,5 +168,22 @@ class RunUnlockStateService {
     if (amount <= 0) return;
     final current = await load();
     await save(current.copyWith(insight: current.insight + amount));
+  }
+
+  static Future<bool> unlockRunModifier(NewRunModifier modifier) async {
+    if (modifier == NewRunModifier.basic) return true;
+    final current = await load();
+    if (current.isRunModifierUnlocked(modifier)) return true;
+    if (current.insight < modifier.unlockCostInsight) return false;
+    await save(
+      current.copyWith(
+        insight: current.insight - modifier.unlockCostInsight,
+        unlockedRunModifierIds: <String>{
+          ...current.unlockedRunModifierIds,
+          modifier.id,
+        },
+      ),
+    );
+    return true;
   }
 }
