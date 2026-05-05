@@ -354,8 +354,10 @@ Smoke scripts:
 
 - `tools/ios_sim_smoke.sh`
 - `tools/web_build_smoke.sh`
+- `tools/prototype_submission_smoke.sh`
 
 Use iOS smoke for user-facing mobile flow changes. Use web smoke when routing, storage, or web build boundaries change.
+Use prototype submission smoke before a submission candidate because it bundles the current run-completion, game-over reward, fixture, and web-build gates.
 
 ---
 
