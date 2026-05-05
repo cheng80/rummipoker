@@ -10,6 +10,8 @@ GCSE 역할: `Execution`
 - 다음 작업 우선순위를 관리한다.
 - 구현 계획, 체크리스트, 검증 절차와 결과를 둔다.
 
+현재 작업 순서와 전체 진도 source-of-truth는 `OVERALL_GOAL_PROGRESS.md`다. 오래된 `STATUS.md`, `IMPLEMENTATION_PLAN.md`, `MIGRATION_ROADMAP.md`는 문서 재정리 대상이며, 최신 판단은 current/planning 기준 문서로 승격된 내용만 사용한다.
+
 ## Allowed Documents
 
 - 현재 status
