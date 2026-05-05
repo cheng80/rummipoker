@@ -502,6 +502,11 @@ Market availability under pressure probe:
 - station curve audit: 같은 r800 JSONL을 도달 전투 대비 실패율로 보면 `high_stakes + v9`는 balanced 기준 S1 3.4%, S2 1.2%, S3 1.5%, S4 3.5%, S5 3.0%, S6 0.7%, S7 0.8%, S8 5.8%다. power 기준은 S1 3.3%, S2 1.0%, S3 1.4%, S4 1.4%, S5 0.3%, S6 0.9%, S7 2.2%, S8 5.3%다.
 - curve judgement: 실패 총량이 아니라 실패율로 보면 S8이 가장 어렵고, S2/S3/S6은 쉬운 구간으로 남아 있다. 다만 “초반은 쉽고 갈수록 어려워진다” 기준에서는 S1 3%대가 약간 높을 수 있으므로, 다음 검토는 S1 target 단독 하향이 아니라 S1 boss constraint severity/초반 curve 체감/early market 접근성을 같이 본다.
 - next guardrail: S1을 완화하더라도 `small < big < boss` 구조를 깨거나 자동 자원 지급으로 풀지 않는다. 고레벨 계약의 최종 압박은 S8에 남기는 방향을 유지한다.
+- growth gate probe r120:
+  - command: `dart run tools/sim/run_balance_sim.dart --runs 120 --bot planner_v2 --seed 91420 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --market-profiles none,shop_slot_market_v9 --loadout-id baseline --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --out logs/sim/station_curve_growth_gate_probe_r120.jsonl --summary-out logs/sim/station_curve_growth_gate_probe_r120_summary.json`
+  - baseline/no-growth result: path clear 0.0%. 도달 전투 실패율은 `baseline + none` 기준 S1 7.4%, S2 49.4%, S3 83.3%이며, `baseline + v9` 기준 S1 10.6%, S2 37.9%, S3 66.7%다. 무성장은 S2에서 간신히 버티고 S3부터 확실히 막히는 목표와 대체로 맞다.
+  - growth route result: `balanced + v9` path clear 55.0%, `power + v9` 64.2%다. 도달 전투 실패율은 `balanced + v9` 기준 S4 4.2%, S5 3.0%, S8 6.0%이고, `power + v9` 기준 S7 2.8%, S8 4.3%다.
+  - curve issue: 현재 숨은 문제는 S1만이 아니라, 성장 route에서 S4~S8 특히 S7/S8의 실패율이 고난도 후반으로 보기엔 낮은 점이다. 다음 조정은 S1 입구를 과하게 어렵게 두지 않으면서, S4~S8 target/boss severity/market pressure를 단계적으로 올리는 방향으로 잡는다.
 
 ## 6. Read Order
 
