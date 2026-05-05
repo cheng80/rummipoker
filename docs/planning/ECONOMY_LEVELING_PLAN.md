@@ -359,6 +359,7 @@ catalog audit v2 probe:
   - top proxy Jester는 `the_duo`, `fibonacci`, `green_jester`, `zany_jester` 중심이다.
   - `trade_ticket`, `ride_the_bus`, `reroll_token`은 이번 probe의 구매 이벤트에 잡히지 않았다.
   - 이번 `shop_slot_market_v9` path에는 source candidate id도 기록되지 않았다. 이 경로는 backlog 후보 샘플링보다 고정 proxy profile 검증에 가깝다.
+  - watchlist 출력 기준 `reroll_token`, `trade_ticket`, `ride_the_bus`, `jester_hook`은 content/proxy/source candidate 모두 0회다.
 - 추가 판정:
   - 개별 카탈로그 가격 조정 전, sim이 proxy 묶음만 사는지 실제 카탈로그 후보까지 충분히 샘플링하는지 분리해야 한다.
   - 현재는 `trade_ticket`/`ride_the_bus` 가격을 바로 바꿀 근거가 약하다.

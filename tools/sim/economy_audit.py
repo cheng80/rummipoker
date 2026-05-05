@@ -15,6 +15,12 @@ from typing import Any, Iterable
 DEFAULT_ITEM_CATALOG = Path("data/common/items_common_v1.json")
 DEFAULT_JESTER_CATALOG = Path("data/common/jesters_common_phase5.json")
 DEFAULT_SUMMARY = Path("logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.json")
+CATALOG_AUDIT_WATCH_IDS = (
+    "reroll_token",
+    "trade_ticket",
+    "ride_the_bus",
+    "jester_hook",
+)
 
 
 @dataclass(frozen=True)
@@ -496,6 +502,15 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
             key: _numeric_summary(values)
             for key, values in sorted(by_content.items())
         },
+        "catalog_audit_watchlist": {
+            item_id: {
+                "content_events": content_counts.get(item_id, 0),
+                "proxy_jester_events": proxy_jester_counts.get(item_id, 0),
+                "source_candidate_events": source_candidate_counts.get(item_id, 0),
+                "cost": _numeric_summary(by_content.get(item_id, [])),
+            }
+            for item_id in CATALOG_AUDIT_WATCH_IDS
+        },
         "sim_economy_trace": {
             "available": economy_trace_count > 0,
             "mode": economy_mode,
@@ -794,6 +809,18 @@ def _print_report(report: dict[str, Any]) -> None:
             print("- top source candidate ids:")
             for source_id, count in list(source_counts.items())[:12]:
                 print(f"  - {source_id}: {count}")
+        watchlist = trace.get("catalog_audit_watchlist", {})
+        if isinstance(watchlist, dict) and watchlist:
+            print("- catalog audit watchlist events:")
+            for item_id, row in watchlist.items():
+                if not isinstance(row, dict):
+                    continue
+                print(
+                    "  - "
+                    f"{item_id}: content={row.get('content_events', 0)}, "
+                    f"proxy={row.get('proxy_jester_events', 0)}, "
+                    f"source={row.get('source_candidate_events', 0)}"
+                )
         sim_trace = trace.get("sim_economy_trace", {})
         if sim_trace.get("available"):
             final_gold = sim_trace["final_gold"]

@@ -33,7 +33,7 @@
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
 | economy reward / price policy | Applied | `RummiEconomyConfig` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용 |
 | catalog value audit | Applied | `tools/sim/catalog_value_audit.py` | Item/Jester 가격과 effect role의 불일치 후보를 표시한다. 가격 재산정 적용은 아직 아님 |
-| catalog audit v2 price probe | Workspace pending | `tools/sim/run_balance_sim.dart` / `tools/sim/economy_audit.py` | `catalog_audit_v2` sim-only price band 추가. r120에서는 조정 후보 구매 이벤트가 없어 normalized와 결과 동일. economy audit가 content/proxy/source candidate별 구매 count를 출력 |
+| catalog audit v2 price probe | Workspace pending | `tools/sim/run_balance_sim.dart` / `tools/sim/economy_audit.py` | `catalog_audit_v2` sim-only price band 추가. r120에서는 조정 후보 구매 이벤트가 없어 normalized와 결과 동일. economy audit가 content/proxy/source candidate별 구매 count와 audit watchlist를 출력 |
 | Pack/Tarot-like/Planet-like role mapping | Spec only | docs only | 현재는 Item/market candidate role로 해석. 별도 타입 런타임은 미도입 |
 | smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
