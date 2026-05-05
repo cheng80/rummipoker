@@ -415,6 +415,27 @@ Run modifier probe:
 - r120 proxy note: 전용 CLI 추가 전 `target 1.08 / reward 0.448` 조합으로 current economy 조건의 탐색 probe를 돌렸지만, seed 흔들림이 커서 tuning 근거로 쓰지 않는다.
 - current signal: high stakes는 balanced none/v9를 크게 누르고, power 계열은 어느 정도 유지한다. 장기 판단 전에는 반드시 `--run-modifier high_stakes` direct sweep으로 다시 비교한다.
 - next check: basic/high_stakes를 같은 economy 조건에서 r400 이상으로 비교하고, 좋은 market 선택 proxy가 같은 modifier의 none/control보다 낮아지는지 먼저 본다.
+- direct r400 check:
+  - basic command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 400 --seed 90300 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --summary-only --jobs 4 --out-prefix logs/sim/run_modifier_basic_direct_r400`
+  - high stakes command: same options with `--run-modifier high_stakes --out-prefix logs/sim/run_modifier_high_stakes_direct_r400`
+
+| modifier | loadout | market | path clear | avg total turn | top bottlenecks | stop reason |
+|---|---|---|---:|---:|---|---|
+| basic | balanced | none | 54.5% | 1314.7 | S4 boss 19, S8 boss 18, S3 boss 16, S1 big 14, S1 boss 14 | board 120, draw 60, both 2 |
+| basic | balanced | v9 | 56.8% | 1386.2 | S8 boss 25, S5 boss 13, S4 boss 13, S3 big 12, S4 big 11 | board 110, draw 62, both 1 |
+| basic | power | none | 65.8% | 1366.4 | S8 boss 26, S1 boss 12, S8 big 11, S2 boss 11, S1 small 8 | board 92, draw 44, both 1 |
+| basic | power | v9 | 63.2% | 1364.5 | S8 boss 28, S8 big 15, S1 big 15, S1 boss 13, S7 boss 12 | board 100, draw 44, both 3 |
+| high_stakes | balanced | none | 41.8% | 1250.6 | S4 boss 28, S8 boss 25, S1 boss 23, S5 boss 19, S3 boss 19 | board 117, draw 113, both 3 |
+| high_stakes | balanced | v9 | 42.0% | 1335.7 | S8 boss 39, S4 boss 31, S5 boss 18, S1 boss 15, S4 big 14 | board 116, draw 115, both 1 |
+| high_stakes | power | none | 56.2% | 1376.2 | S8 boss 37, S1 boss 17, S8 big 16, S7 boss 12, S1 big 11 | board 99, draw 75, both 1 |
+| high_stakes | power | v9 | 52.5% | 1379.4 | S8 boss 50, S1 boss 19, S1 big 17, S8 big 16, S7 boss 15 | board 100, draw 86, both 4 |
+
+판정:
+
+- `high_stakes`는 확실히 압박을 만든다. 다만 v9가 같은 modifier의 none/control보다 안정적으로 좋아지는지 아직 확인되지 않았다.
+- basic power v9도 이 seed에서는 none보다 낮아졌다. v91 r800에서는 power v9가 none보다 높았으므로 r400 단일 seed만으로 market 정책을 되돌리지 않는다.
+- `high_stakes` target 1.08 / reward 1.12는 그대로 확정하지 않는다. 다음은 r800 direct sweep 또는 `target 1.04~1.08 / reward 1.12~1.20` 후보 비교로 확인한다.
+- 조정이 필요해도 자동 자원 지급/고정 슬롯/직접 아이템 지급은 쓰지 않는다. modifier target/reward 또는 market availability만 검토한다.
 
 ## 6. Read Order
 
