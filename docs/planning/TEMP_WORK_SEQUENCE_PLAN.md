@@ -2,7 +2,7 @@
 
 > 문서 성격: temporary execution lock
 > 생성 이유: boss pool 확장, 레벨링/경제 재검증, ML 재학습 순서를 섞지 않기 위해 현재 작업 큐를 고정한다.
-> 삭제 조건: boss pool 확장, 확장 후 레벨링/경제 gate, ML 재학습/리포트, 공모전 QA 재개 여부가 source-of-truth에 반영되고 사용자가 삭제를 확인한 뒤 삭제한다.
+> 삭제 조건: boss pool 확장, 확장 후 레벨링/경제 gate, ML 재학습/리포트, 공모전 QA 재개 여부가 source-of-truth에 반영된 뒤에도 바로 삭제하지 않는다. 사람 검토 승인을 받은 뒤에만 삭제한다.
 
 ## 0. 고정 순서
 
