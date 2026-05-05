@@ -364,6 +364,22 @@ catalog audit v2 probe:
   - 개별 카탈로그 가격 조정 전, sim이 proxy 묶음만 사는지 실제 카탈로그 후보까지 충분히 샘플링하는지 분리해야 한다.
   - 현재는 `trade_ticket`/`ride_the_bus` 가격을 바로 바꿀 근거가 약하다.
 
+runtime offer audit:
+
+- 목적: sim proxy가 아니라 실제 runtime market offer 생성에서 watchlist 후보가 노출되는지 확인한다.
+- 실험 한계: 가격 결정을 닫기 위한 r200 표준 샘플 1회로 제한한다. 여기서 후보 노출 방향만 보고, 추가 반복 실험으로 확장하지 않는다.
+- command: `dart run tools/sim/runtime_market_offer_audit.dart --runs 200 --seed 92000 --json-out logs/sim/runtime_market_offer_audit_r200.json`
+- 결과:
+  - `ride_the_bus`: 68회
+  - `reroll_token`: 0회
+  - `trade_ticket`: 0회
+  - `jester_hook`: 0회
+- 판정:
+  - `ride_the_bus`는 실제 Jester offer에서 노출되므로 가격 후보로 계속 관찰할 수 있다.
+  - `reroll_token`, `trade_ticket`, `jester_hook`은 이번 runtime item offer 샘플에서 노출되지 않았다.
+  - 따라서 이 셋은 가격 상향/하향보다 item offer 노출 정책 또는 deterministic item offer roll 구조를 먼저 확인해야 한다.
+  - 현재 단계에서 개별 가격표 변경은 하지 않는다.
+
 ### Phase 3. Economy Probe
 
 목표:
