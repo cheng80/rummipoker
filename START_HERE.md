@@ -27,7 +27,7 @@
 
 ```text
 작업 시작 전에 START_HERE.md, docs/00_docs_README.md, docs/current_system/CURRENT_SYSTEM_OVERVIEW.md, docs/current_system/CURRENT_CODE_MAP.md, docs/current_system/CURRENT_TO_V4_GAP.md 를 먼저 읽고,
-그 다음 docs/planning/STATUS.md, docs/planning/IMPLEMENTATION_PLAN.md 를 확인해
+그 다음 docs/planning/OVERALL_GOAL_PROGRESS.md, docs/planning/LEVELING_APPLIED_STATUS.md, docs/planning/ECONOMY_LEVELING_PLAN.md 를 확인해
 현재 완료된 단계와 다음 단계부터 이어서 진행해라.
 문서는 목적형 폴더와 GCSE 역할 기준을 유지하고, 코드/테스트 중심으로 작업해라.
 ```
@@ -36,7 +36,7 @@ gstack 흐름으로 이어갈 때는 목적에 따라 아래처럼 시작한다.
 
 ```text
 /plan-eng-review
-START_HERE.md와 docs/planning/STATUS.md를 먼저 읽고, 현재 다음 구현 후보 중 balance simulation readiness pass를 진행하기 위한 최소 구현 계획을 검토해라.
+START_HERE.md와 docs/planning/OVERALL_GOAL_PROGRESS.md를 먼저 읽고, 현재 다음 구현 후보 중 balance simulation readiness pass를 진행하기 위한 최소 구현 계획을 검토해라.
 단, 새 구조 설계가 아니라 기존 runtime을 CLI에서 얇게 호출 가능한지 확인하는 import spike/skeleton 중심으로 봐라.
 저장 가능한 runtime state와 transient presentation state는 분리하고, presentation queue는 save/continue 기준에 포함하지 않는다.
 ```
@@ -45,7 +45,7 @@ UI 연출 구조를 먼저 정리하려면 아래처럼 시작한다.
 
 ```text
 /plan-eng-review
-START_HERE.md와 docs/planning/STATUS.md를 먼저 읽고, Battle/Market/Settlement 연출을 GamePresentationEvent / presentationQueue 같은 transient event list로 묶을지 검토해라.
+START_HERE.md와 docs/planning/OVERALL_GOAL_PROGRESS.md를 먼저 읽고, Battle/Market/Settlement 연출을 GamePresentationEvent / presentationQueue 같은 transient event list로 묶을지 검토해라.
 save/continue source of truth는 runtime state로 유지하고, queue는 저장하지 않는 조건으로 최소 리팩터링 범위만 제안해라.
 ```
 
@@ -59,15 +59,20 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 4. [CURRENT_CODE_MAP.md](docs/current_system/CURRENT_CODE_MAP.md)
 5. [CURRENT_TO_V4_GAP.md](docs/current_system/CURRENT_TO_V4_GAP.md)
 6. [CURRENT_LEVELING_POLICY.md](docs/current_system/CURRENT_LEVELING_POLICY.md)
-7. [CURRENT_LEVELING_ML_BASELINE.md](docs/current_system/CURRENT_LEVELING_ML_BASELINE.md)
+7. [CURRENT_LEVELING_SIMULATION_BASELINE.md](docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md)
 8. [CURRENT_LEVELING_RUNTIME_SPEC.md](docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md)
-9. [STATUS.md](docs/planning/STATUS.md)
-10. [IMPLEMENTATION_PLAN.md](docs/planning/IMPLEMENTATION_PLAN.md)
-11. [MIGRATION_ROADMAP.md](docs/planning/MIGRATION_ROADMAP.md)
-12. [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md)
+9. [OVERALL_GOAL_PROGRESS.md](docs/planning/OVERALL_GOAL_PROGRESS.md)
+10. [LEVELING_APPLIED_STATUS.md](docs/planning/LEVELING_APPLIED_STATUS.md)
+11. [ECONOMY_LEVELING_PLAN.md](docs/planning/ECONOMY_LEVELING_PLAN.md)
+12. [DOCUMENTATION_CONSOLIDATION_PLAN.md](docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md)
 
 필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 
+- [STATUS.md](docs/planning/STATUS.md)
+- [IMPLEMENTATION_PLAN.md](docs/planning/IMPLEMENTATION_PLAN.md)
+- [MIGRATION_ROADMAP.md](docs/planning/MIGRATION_ROADMAP.md)
+- [CURRENT_LEVELING_ML_BASELINE.md](docs/current_system/CURRENT_LEVELING_ML_BASELINE.md)
+- [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md)
 - [13_ITEM_SYSTEM_CONTRACT.md](docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
 - [TEST_QA_ACCEPTANCE.md](docs/planning/verification/TEST_QA_ACCEPTANCE.md)
 - [OPEN_DECISIONS.md](docs/planning/OPEN_DECISIONS.md)
@@ -83,20 +88,23 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 | goals | Goal | `docs/goals/*` | 제품 목표, 방향성, 의사결정 원칙 |
 | current_system | Context | `docs/current_system/*` | 현재 구현 상태, 코드 맵, current-to-target gap, 레벨링 현재 정책 |
 | specs | Spec | `docs/specs/V4/*.md` | 기능별 V4 명세 |
-| planning | Execution | `docs/planning/STATUS.md`, `docs/planning/IMPLEMENTATION_PLAN.md`, `docs/planning/MIGRATION_ROADMAP.md`, `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md` | 진행 상태, 구현 계획, 검증, 다음 작업 |
+| planning | Execution | `docs/planning/OVERALL_GOAL_PROGRESS.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`, `docs/planning/ECONOMY_LEVELING_PLAN.md`, `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md` | 진행 상태, 적용 상태, 경제 계획, 문서 정리 순서 |
 | archive | Archive | `docs/archive/*`, generated/prompt/history 문서 | 최신 판단 기준은 아니지만 이력 검색에 사용할 수 있는 참고 자료 |
 
 ## Source of Truth
 
-- 최신 진행 상태: `docs/planning/STATUS.md`
-- 구현 계획: `docs/planning/IMPLEMENTATION_PLAN.md`
-- 이행 순서: `docs/planning/MIGRATION_ROADMAP.md`
+- 최신 진행 상태와 작업 순서: `docs/planning/OVERALL_GOAL_PROGRESS.md`
+- 레벨링 적용 상태: `docs/planning/LEVELING_APPLIED_STATUS.md`
+- 경제 계획: `docs/planning/ECONOMY_LEVELING_PLAN.md`
+- 문서 정리 순서: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
 - Item effect 실행 상태: `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
 - 레벨링 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
-- 레벨링 ML 기준값: `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+- 레벨링 시뮬레이션/휴리스틱 기준값: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 - 레벨링 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 - 현재 코드 설명과 작업 재개 기준: `docs/current_system/*`
 - 기능 명세: `docs/specs/V4/*`
+- 과거 V4 진행 snapshot: `docs/planning/STATUS.md`, `docs/planning/IMPLEMENTATION_PLAN.md`, `docs/planning/MIGRATION_ROADMAP.md`
+- 과거 ML 경로 호환 안내: `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
 - 과거 참고: `docs/archive/*`
 
 `docs/archive/generated/RUMMI_POKER_GRID_V4_COMBINED.md`는 병합 스냅샷으로 보고, 개별 원본 문서보다 우선하지 않는다.
@@ -148,4 +156,4 @@ web 저장/라우팅/입력 경계가 바뀌면 아래 스크립트를 먼저 �
 
 - `tools/web_build_smoke.sh`
 
-의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [STATUS.md](docs/planning/STATUS.md)에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에 남긴다.
+의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [OVERALL_GOAL_PROGRESS.md](docs/planning/OVERALL_GOAL_PROGRESS.md) 또는 해당 source-of-truth 문서에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에 남긴다.

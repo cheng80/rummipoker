@@ -52,16 +52,17 @@
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
-| Analysis/ML documentation | 28% | `ML` 명칭 오해를 줄이기 위한 휴리스틱 기준 문서와 `analysis/leveling/` 스캐폴딩 존재 | 실제 ML 전환은 미완료. 문서 규합, source-of-truth 정리, pre-outcome feature 기반 ML 설계 필요 |
+| Analysis/ML documentation | 28% | `ML` 명칭 오해를 줄이기 위한 휴리스틱 기준 문서와 `analysis/leveling/` 스캐폴딩 존재 | 실제 ML 전환은 미완료. 문서 규합 후 공모전 작업 전에 pre-outcome feature 기반 ML 이행 필요 |
 
 ## 3. Current Focus
 
 현재 집중 축:
 
-1. ML/휴리스틱 용어 정정과 진행 문서 동기화
-2. 문서 재정리 및 아카이브 정리: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
-3. 공모전 기준 텍스트/UX/QA 작업 재개
-4. 경제/가격 기준선 정리와 S1~S8 레벨링 검증 재개
+1. `START_HERE.md` 기준 새 세션 진입 경로와 문서 source-of-truth 정렬
+2. 실제 ML 이행: pre-outcome feature table 재설계, baseline model 학습, metric 리포트, 후보 재시뮬레이션, MD 분석 보고서 작성
+3. ML 분석 산출물 정리: `analysis/leveling/` 데이터, 노트북, 작업용 Python 파일, 사람이 읽는 리포트 정돈
+4. 공모전 기준 텍스트/UX/QA 작업 재개
+5. 경제/가격 기준선 정리와 S1~S8 레벨링 검증 재개
 
 현재 경제 판단:
 
@@ -78,6 +79,7 @@
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
 - `analysis/leveling/`의 feature table과 RandomForest 결과는 실제 ML 전환 완료 증거가 아니라 전환 준비용 스캐폴딩이다.
 - 실제 ML 전환은 pre-outcome feature, supervised target, train/test split, metric, 후보 추천, 후보 재시뮬레이션, 사람 승인 후 적용까지 갖춘 뒤 별도 milestone으로 진행한다.
+- 이 실제 ML 이행 gate는 공모전 기준 작업 재개보다 앞에 둔다. 공모전 작업으로 돌아가기 전에 최소 baseline model과 후보 재시뮬레이션 리포트까지 완료/보류 사유를 남긴다.
 
 ## 4. Competition Prototype Track
 
@@ -214,10 +216,31 @@ Status: In progress
 
 현재 남은 일:
 
+- `START_HERE.md`의 먼저 읽을 문서와 Source of Truth를 현재 문서 체계와 맞춘다.
 - 문서 inventory 작성: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md` 기준.
 - current 문서와 archive 문서의 경계 정리.
-- 중복 planning 문서 통합 또는 archive 이동.
-- 다음 공모전 작업 큐가 `OVERALL_GOAL_PROGRESS.md` 기준으로 읽히도록 갱신.
+- 중복 planning 문서 통합 또는 archive 이동은 `START_HERE.md` 참조와 필요한 내용 승격을 확인한 뒤 진행한다.
+- 다음 작업 큐가 `OVERALL_GOAL_PROGRESS.md` 기준으로 읽히도록 갱신하되, 실제 ML 이행을 공모전 작업 앞에 유지한다.
+
+### M0.5. Actual ML Leveling Transition
+
+Status: Next
+
+완료 조건:
+
+- feature table을 outcome-derived summary feature가 아니라 추천 가능한 pre-outcome feature 중심으로 재설계한다.
+- supervised target, train/test split, baseline model, metric을 명시한다.
+- baseline model 결과와 feature importance를 사람이 읽을 수 있는 MD 리포트로 남긴다.
+- 모델 후보는 런타임 자동 적용이 아니라 후보 추천으로만 사용한다.
+- 추천 후보는 재시뮬레이션으로 검증하고, 사람 승인 전에는 target/boss/market/economy runtime에 반영하지 않는다.
+
+현재 남은 일:
+
+- `analysis/leveling/data/`에 pre-outcome feature table을 생성한다.
+- `tools/leveling/`의 feature build/train 스크립트를 실제 ML baseline용으로 분리하거나 명시 옵션을 추가한다.
+- baseline model을 학습하고 metric 리포트를 생성한다.
+- 후보 재시뮬레이션 범위와 runs를 정하고 실행한다.
+- `analysis/leveling/reports/`에 분석 보고서를 작성한다.
 
 ### M1. Economy And Price Baseline
 
