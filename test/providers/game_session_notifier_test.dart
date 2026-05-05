@@ -1329,6 +1329,56 @@ void main() {
       expect(updated.runProgress!.shopOffers.first.card.id, 'green_jester');
     });
 
+    test('rerollItemOffersFromState는 Jester 오퍼를 유지하고 아이템 리롤만 갱신한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 43);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!
+        ..gold = 10
+        ..rerollCost = 5
+        ..itemRerollCost = 5;
+      state.runProgress!.shopOffers.add(
+        RummiShopOffer(
+          slotIndex: 0,
+          card: const RummiJesterCard(
+            id: 'popcorn',
+            displayName: 'Popcorn',
+            rarity: RummiJesterRarity.common,
+            baseCost: 3,
+            effectText: '',
+            effectType: 'stateful_growth',
+            trigger: 'passive',
+            conditionType: 'none',
+            conditionValue: null,
+            value: 1,
+            xValue: null,
+            mappedTileColors: [],
+            mappedTileNumbers: [],
+          ),
+          price: 3,
+        ),
+      );
+      notifier.markDirty();
+
+      final message = notifier.rerollItemOffersFromState();
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(message, isNull);
+      expect(updated.runProgress!.gold, 5);
+      expect(updated.runProgress!.rerollCost, 5);
+      expect(updated.runProgress!.itemRerollCost, 7);
+      expect(updated.runProgress!.shopOffers.single.card.id, 'popcorn');
+      expect(
+        updated.runProgress!.marketModifiers.itemOfferRerollOffset,
+        updated.runProgress!.marketModifiers.itemOfferSlotCount,
+      );
+    });
+
     test('rerollShopFromState는 리롤 토큰을 골드 대신 소모한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

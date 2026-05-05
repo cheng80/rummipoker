@@ -38,6 +38,7 @@ Future<void> _pumpShopScreen(
   required String? Function(int offerIndex) onBuyOffer,
   String? Function(RummiMarketItemOfferView offer)? onBuyItemOffer,
   String? Function(ItemDefinition item)? onUseMarketItem,
+  String? Function()? onRerollItemOffers,
   bool Function(ItemDefinition item)? onSellMarketItem,
   bool initialItemShopTab = true,
 }) async {
@@ -62,6 +63,7 @@ Future<void> _pumpShopScreen(
                   readMarketView: readMarketView,
                   readActiveRunSaveView: readActiveRunSaveView,
                   onReroll: () => null,
+                  onRerollItemOffers: onRerollItemOffers,
                   onBuyOffer: onBuyOffer,
                   onBuyItemOffer: onBuyItemOffer ?? ((_) => null),
                   onUseMarketItem: onUseMarketItem ?? ((_) => null),

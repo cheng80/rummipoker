@@ -127,7 +127,8 @@ class GameSessionNotifier
     final runProgress = RummiRunProgress()
       ..currentStationBlindTierIndex = args.blindTier.index
       ..gold = _initialGold(args.difficulty)
-      ..rerollCost = _initialRerollCost(args.difficulty);
+      ..rerollCost = _initialRerollCost(args.difficulty)
+      ..itemRerollCost = _initialRerollCost(args.difficulty);
     return _withDerivedViews(
       GameSessionState(
         session: session,
@@ -602,6 +603,29 @@ class GameSessionNotifier
     );
   }
 
+  String? rerollItemOffersFromState({ItemCatalog? itemCatalog}) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    final rerollItem = _nextOwnedMarketRerollItem(
+      catalog: itemCatalog,
+      runProgress: runProgress,
+      itemReroll: true,
+    );
+    if (rerollItem != null) {
+      final result = ItemEffectRuntime.applyMarketRerollItem(
+        item: rerollItem,
+        runProgress: runProgress,
+      );
+      if (!result.isSuccess) return result.failMessage;
+    }
+    final ok = runProgress.rerollItemOffers();
+    if (!ok) {
+      return '리롤 골드가 부족합니다.';
+    }
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
   String? rerollShop({
     required List<RummiJesterCard> catalog,
     required Random rng,
@@ -635,8 +659,12 @@ class GameSessionNotifier
   ItemDefinition? _nextOwnedMarketRerollItem({
     required ItemCatalog? catalog,
     required RummiRunProgress runProgress,
+    bool itemReroll = false,
   }) {
-    if (catalog == null || runProgress.effectiveRerollCost() <= 0) {
+    final cost = itemReroll
+        ? runProgress.effectiveItemRerollCost()
+        : runProgress.effectiveRerollCost();
+    if (catalog == null || cost <= 0) {
       return null;
     }
     for (final entry in runProgress.itemInventory.ownedItems) {

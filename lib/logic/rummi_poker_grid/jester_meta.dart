@@ -924,6 +924,7 @@ class RummiRunProgress {
     this.currentStationBlindTierIndex = 0,
     required this.gold,
     required this.rerollCost,
+    int? itemRerollCost,
     required List<RummiJesterCard> ownedJesters,
     required List<RummiShopOffer> shopOffers,
     required Map<int, int> statefulValuesBySlot,
@@ -931,6 +932,7 @@ class RummiRunProgress {
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
   }) {
+    this.itemRerollCost = itemRerollCost ?? rerollCost;
     this.ownedJesters.addAll(ownedJesters);
     this.shopOffers.addAll(shopOffers);
     _statefulValuesBySlot.addAll(statefulValuesBySlot);
@@ -951,6 +953,7 @@ class RummiRunProgress {
   int currentStationBlindTierIndex = 0;
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
+  int itemRerollCost = shopBaseRerollCost;
   RunInventoryState itemInventory = const RunInventoryState();
   RummiMarketModifierState marketModifiers = const RummiMarketModifierState();
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
@@ -970,6 +973,7 @@ class RummiRunProgress {
       currentStationBlindTierIndex: currentStationBlindTierIndex,
       gold: gold,
       rerollCost: rerollCost,
+      itemRerollCost: itemRerollCost,
       ownedJesters: List<RummiJesterCard>.from(ownedJesters),
       shopOffers: shopOffers
           .map(
@@ -1143,6 +1147,7 @@ class RummiRunProgress {
         RummiMarketPressureProfile.standard,
   }) {
     rerollCost = shopBaseRerollCost;
+    itemRerollCost = shopBaseRerollCost;
     final nextMarketExtraJesterOfferSlots =
         marketModifiers.nextMarketExtraJesterOfferSlots;
     marketModifiers = marketModifiers.copyWith(
@@ -1172,6 +1177,15 @@ class RummiRunProgress {
     return max(
       0,
       rerollCost -
+          marketModifiers.nextRerollDiscount -
+          marketModifiers.firstRerollDiscount,
+    );
+  }
+
+  int effectiveItemRerollCost() {
+    return max(
+      0,
+      itemRerollCost -
           marketModifiers.nextRerollDiscount -
           marketModifiers.firstRerollDiscount,
     );
@@ -1295,6 +1309,24 @@ class RummiRunProgress {
       preferredOfferIds: preferredOfferIds,
       offerCountOverride: offerCountOverride,
       pressureProfile: pressureProfile,
+    );
+    return true;
+  }
+
+  bool rerollItemOffers() {
+    final cost = effectiveItemRerollCost();
+    if (gold < cost) {
+      return false;
+    }
+    gold -= cost;
+    itemRerollCost += shopRerollCostStep;
+    marketModifiers = marketModifiers.copyWith(
+      nextRerollDiscount: 0,
+      firstRerollDiscount: 0,
+      itemOfferRerollOffset:
+          marketModifiers.itemOfferRerollOffset +
+          marketModifiers.itemOfferSlotCount,
+      consumedItemOfferIds: const [],
     );
     return true;
   }

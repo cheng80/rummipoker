@@ -262,18 +262,20 @@ class SavedRunProgressData {
     this.currentStationBlindTierIndex = 0,
     required this.gold,
     required this.rerollCost,
+    int? itemRerollCost,
     required this.ownedJesterIds,
     required this.shopOffers,
     required this.statefulValuesBySlot,
     required this.playedHandCounts,
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
-  });
+  }) : itemRerollCost = itemRerollCost ?? rerollCost;
 
   final int stageIndex;
   final int currentStationBlindTierIndex;
   final int gold;
   final int rerollCost;
+  final int itemRerollCost;
   final List<String> ownedJesterIds;
   final List<SavedShopOfferData> shopOffers;
   final Map<String, int> statefulValuesBySlot;
@@ -286,6 +288,7 @@ class SavedRunProgressData {
     'currentStationBlindTierIndex': currentStationBlindTierIndex,
     'gold': gold,
     'rerollCost': rerollCost,
+    'itemRerollCost': itemRerollCost,
     'ownedJesterIds': ownedJesterIds,
     'shopOffers': shopOffers.map((offer) => offer.toJson()).toList(),
     'statefulValuesBySlot': statefulValuesBySlot,
@@ -301,6 +304,7 @@ class SavedRunProgressData {
           (json['currentStationBlindTierIndex'] as num?)?.toInt() ?? 0,
       gold: (json['gold'] as num).toInt(),
       rerollCost: (json['rerollCost'] as num).toInt(),
+      itemRerollCost: (json['itemRerollCost'] as num?)?.toInt(),
       ownedJesterIds: (json['ownedJesterIds'] as List<dynamic>)
           .map((value) => value as String)
           .toList(growable: false),
@@ -580,6 +584,7 @@ class ActiveRunSaveService {
       currentStationBlindTierIndex: runProgress.currentStationBlindTierIndex,
       gold: runProgress.gold,
       rerollCost: runProgress.rerollCost,
+      itemRerollCost: runProgress.itemRerollCost,
       ownedJesterIds: runProgress.ownedJesters
           .map((card) => card.id)
           .toList(growable: false),
@@ -671,6 +676,7 @@ class ActiveRunSaveService {
       currentStationBlindTierIndex: data.currentStationBlindTierIndex,
       gold: data.gold,
       rerollCost: data.rerollCost,
+      itemRerollCost: data.itemRerollCost,
       ownedJesters: ownedJesters,
       shopOffers: shopOffers,
       statefulValuesBySlot: statefulValuesBySlot,

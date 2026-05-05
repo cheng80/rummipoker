@@ -31,6 +31,7 @@ Future<void> _pumpShopScreen(
   WidgetTester tester, {
   required RummiMarketRuntimeFacade Function() readMarketView,
   required String? Function() onReroll,
+  String? Function(int offerIndex)? onBuyOffer,
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
@@ -67,7 +68,7 @@ Future<void> _pumpShopScreen(
                     ),
                   ),
                   onReroll: onReroll,
-                  onBuyOffer: (_) => null,
+                  onBuyOffer: onBuyOffer ?? ((_) => null),
                   onBuyItemOffer: (_) => null,
                   onUseMarketItem: (_) => null,
                   onSellOwnedJester: (_) => false,

@@ -126,6 +126,7 @@ void main() {
             currentStationBlindTierIndex: 1,
             gold: 42,
             rerollCost: 6,
+            itemRerollCost: 8,
             ownedJesterIds: <String>['jester'],
             shopOffers: <SavedShopOfferData>[
               SavedShopOfferData(slotIndex: 0, cardId: 'jester', price: 3),
@@ -197,6 +198,8 @@ void main() {
         expect(restored.runProgress.currentStationBlindTierIndex, 1);
         expect(restored.session.rulesetId, 'current_defaults_v1');
         expect(restored.runProgress.gold, 42);
+        expect(restored.runProgress.rerollCost, 6);
+        expect(restored.runProgress.itemRerollCost, 8);
         expect(restored.runProgress.marketModifiers.nextRerollDiscount, 1);
         expect(
           restored.runProgress.marketModifiers.nextItemPurchaseDiscount,
@@ -448,6 +451,7 @@ void main() {
         });
 
         expect(restored.itemInventory.isEmpty, isTrue);
+        expect(restored.itemRerollCost, 6);
       },
     );
 

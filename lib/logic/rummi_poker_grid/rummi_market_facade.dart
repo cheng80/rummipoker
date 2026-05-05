@@ -233,6 +233,7 @@ class RummiMarketRuntimeFacade {
     required this.offers,
     required this.itemOfferSlotCount,
     required this.quickSlotCapacity,
+    this.itemRerollCost = RummiRunProgress.shopBaseRerollCost,
     this.itemOffers = const [],
     this.itemSlots = const [],
   });
@@ -246,6 +247,7 @@ class RummiMarketRuntimeFacade {
     return RummiMarketRuntimeFacade(
       gold: progress.gold,
       rerollCost: progress.effectiveRerollCost(),
+      itemRerollCost: progress.effectiveItemRerollCost(),
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
       runtimeSnapshot: progress.buildRuntimeSnapshot(),
       ownedEntries: OwnedContentInstances.jesterInstances(progress)
@@ -290,6 +292,7 @@ class RummiMarketRuntimeFacade {
     return RummiMarketRuntimeFacade(
       gold: gold,
       rerollCost: rerollCost,
+      itemRerollCost: itemRerollCost,
       maxOwnedSlots: maxOwnedSlots,
       runtimeSnapshot: runtimeSnapshot,
       ownedEntries: ownedEntries,
@@ -303,6 +306,7 @@ class RummiMarketRuntimeFacade {
 
   final int gold;
   final int rerollCost;
+  final int itemRerollCost;
   final int maxOwnedSlots;
   final RummiJesterRuntimeSnapshot runtimeSnapshot;
   final List<RummiMarketOwnedEntryView> ownedEntries;

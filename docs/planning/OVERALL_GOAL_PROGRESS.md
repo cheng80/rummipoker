@@ -19,7 +19,7 @@
 | Pillar | Goal | Status | Progress | Current gate |
 |---|---|---|---:|---|
 | Core battle strategy | 보드/손패/확정/버림 선택이 매 전투마다 의미 있게 갈린다 | In progress | 67% | 출품용 S1 entry 완화 후 S2~S8 curve 재검증 |
-| Market deckbuilding | 후보 노출, 구매, 판매, 장착, 사용이 성장 선택의 중심이 된다 | In progress | 60% | 가격/보상/노출 기준선 정리 |
+| Market deckbuilding | 후보 노출, 구매, 판매, 장착, 사용이 성장 선택의 중심이 된다 | In progress | 61% | 가격/보상/노출 기준선 정리 |
 | Economy leveling | 골드 보상과 가격이 선택 압박을 만들되 좋은 플레이를 부당하게 막지 않는다 | In progress | 55% | watchlist 가격 후보 1차 정리 후 r120~r400 probe |
 | Boss pressure | 후반 보스가 압박을 주며 S7~S8은 높은 실패 비중을 유지한다 | Next | 47% | S8 병목 유지 확인 후 S2~S8 장기 재검증 |
 | UI/UX/game feel | 카드/타일/정산/마켓 액션이 게임적인 연출로 읽힌다 | In progress | 50% | 예정된 연출 보강 잔여 큐 완료 후 승인 대기 |
@@ -44,7 +44,7 @@
 |---|---:|---|---|
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
 | Boss modifier runtime cycle | 70% | S1~S8 cycle 적용, repeat/single rank는 구현 후 cycle 보류 | S7/S8 고난도 비중 재확인 |
-| Market offer and inventory | 65% | Jester/Item offer, 구매/판매/사용, 슬롯 제한, 재판매 정책 구현 | 가격/노출/구매력 최종 기준 필요 |
+| Market offer and inventory | 67% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한 구현 | 가격/노출/구매력 최종 기준 필요 |
 | Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | 경제 probe 및 r400/r800 |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
 | Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
@@ -164,7 +164,7 @@
 | Core battle loop | 보드 배치, 손패 드로우/버림, 라인 확정, 점수 계산, 정산 흐름 구현 | `lib/logic/rummi_poker_grid/`, `lib/providers/features/rummi_poker_grid/` |
 | Jester runtime | 점수형, 성장형, xmult형, economy형 Jester 효과 다수 구현 | `lib/logic/rummi_poker_grid/jester_meta.dart`, `data/common/jesters_common_phase5.json` |
 | Item runtime | quick slot, passive, gear/tool, market-use item 효과 구현 | `data/common/items_common_v1.json`, `lib/logic/rummi_poker_grid/item_effect_runtime.dart` |
-| Market UX | Jester/Item offer, 구매, 판매, 사용, reroll, 상세 패널, 슬롯 제한 구현 | `lib/views/game/widgets/game_shop_screen.dart`, `lib/logic/rummi_poker_grid/rummi_market_facade.dart` |
+| Market UX | Jester/Item offer, 구매, 판매, 사용, 상세 패널, 슬롯 제한, Jester/Slots와 Tool/Gear 분리 리롤 구현 | `lib/views/game/widgets/game_shop_screen.dart`, `lib/logic/rummi_poker_grid/rummi_market_facade.dart` |
 | Item resale | Q-Slot/Passive/Tool/Gear/Inventory item 재판매 흐름 적용 | `GameSessionNotifier` item sell path, shop sell feedback tests |
 | Market animation | 구매 flight, 판매 feedback, offer reveal timing 개선 | `lib/views/game/widgets/game_shop_screen.dart`, `lib/views/game/game_presentation_timings.dart` |
 | Settlement flow | 정산 presentation pause gate, cash-out 복구, bottom sheet reveal 안정화 | `lib/views/game_view.dart`, `lib/views/game/widgets/game_cashout_widgets.dart` |

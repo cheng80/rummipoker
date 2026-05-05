@@ -146,6 +146,7 @@ class GameShopScreen extends StatefulWidget {
     required this.runSeed,
     required this.readMarketView,
     required this.onReroll,
+    this.onRerollItemOffers,
     required this.onBuyOffer,
     required this.onBuyItemOffer,
     required this.onUseMarketItem,
@@ -164,6 +165,7 @@ class GameShopScreen extends StatefulWidget {
   final int runSeed;
   final RummiMarketRuntimeFacade Function() readMarketView;
   final String? Function() onReroll;
+  final String? Function()? onRerollItemOffers;
   final String? Function(int offerIndex) onBuyOffer;
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
   final String? Function(ItemDefinition item) onUseMarketItem;
@@ -429,6 +431,22 @@ class _GameShopScreenState extends State<GameShopScreen>
     return items.sublist(start, end);
   }
 
+  int _clampedOfferPage(List<_MarketOfferEntry> entries, int page) {
+    return page.clamp(0, _pageCount(entries.length) - 1);
+  }
+
+  void _clampOfferPageForTab(
+    RummiMarketRuntimeFacade market,
+    _MarketShopTab tab,
+  ) {
+    final entries = _offerEntriesForTab(market, tab);
+    if (tab == _MarketShopTab.cardsAndQuickSlots) {
+      _mainOfferPage = _clampedOfferPage(entries, _mainOfferPage);
+    } else {
+      _utilityOfferPage = _clampedOfferPage(entries, _utilityOfferPage);
+    }
+  }
+
   Future<void> _reroll() async {
     final confirmed = await showGameFramedDialog<bool>(
       context: context,
@@ -482,7 +500,11 @@ class _GameShopScreenState extends State<GameShopScreen>
     );
     if (!mounted || confirmed != true) return;
 
-    final failMessage = widget.onReroll();
+    final reroll = _shopTab == _MarketShopTab.toolsAndGear
+        ? widget.onRerollItemOffers
+        : widget.onReroll;
+    if (reroll == null) return;
+    final failMessage = reroll();
     if (failMessage != null) {
       showBottomNotice(context, failMessage);
       return;
@@ -490,8 +512,12 @@ class _GameShopScreenState extends State<GameShopScreen>
     setState(() {
       final market = _market;
       _marketRerollFeedbackTick++;
-      _selectedOfferIndex = market.offers.isEmpty ? null : 0;
-      _selectedOwnedIndex ??= market.ownedEntries.isEmpty ? null : 0;
+      _clampOfferPageForTab(market, _shopTab);
+      _selectedOwnedIndex = null;
+      _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
+      if (_selectedOfferIndex == null && _selectedItemOfferIndex < 0) {
+        _selectedOwnedIndex = market.ownedEntries.isEmpty ? null : 0;
+      }
     });
     await widget.onStateChanged();
   }
@@ -516,6 +542,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     setState(() {
       final market = _market;
+      _clampOfferPageForTab(market, _MarketShopTab.cardsAndQuickSlots);
       final purchasedSlot = _findPurchasedJesterSlot(market, boughtOffer);
       if (purchasedSlot != null) {
         final endOffset = _flightCenterForKey(
@@ -568,6 +595,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     setState(() {
       final market = _market;
+      _clampOfferPageForTab(market, _shopTab);
       final purchasedSlot = _findPurchasedItemSlot(market, boughtOffer);
       if (purchasedSlot != null) {
         final endOffset = _flightCenterForKey(
@@ -1196,9 +1224,13 @@ class _GameShopScreenState extends State<GameShopScreen>
         .where((slot) => slot.placement == ItemPlacement.equipped)
         .toList(growable: false);
     final currentOfferEntries = _offerEntriesForTab(market, _shopTab);
-    final currentOfferPage = _shopTab == _MarketShopTab.cardsAndQuickSlots
+    final rawCurrentOfferPage = _shopTab == _MarketShopTab.cardsAndQuickSlots
         ? _mainOfferPage
         : _utilityOfferPage;
+    final currentOfferPage = _clampedOfferPage(
+      currentOfferEntries,
+      rawCurrentOfferPage,
+    );
     final visibleOfferEntries = _pagedItems(
       currentOfferEntries,
       currentOfferPage,
@@ -1604,12 +1636,16 @@ class _GameShopScreenState extends State<GameShopScreen>
                                           ? () => _shiftMainOfferPage(1)
                                           : () => _shiftUtilityOfferPage(1),
                                       rerollCost: market.rerollCost,
+                                      itemRerollCost: market.itemRerollCost,
                                       feedbackTick: _marketRerollFeedbackTick,
                                       onReroll:
                                           _shopTab ==
-                                              _MarketShopTab.cardsAndQuickSlots
+                                                  _MarketShopTab
+                                                      .cardsAndQuickSlots ||
+                                              widget.onRerollItemOffers != null
                                           ? _reroll
                                           : null,
+                                      shopTab: _shopTab,
                                     ),
                                     const SizedBox(height: 8),
                                     Expanded(
@@ -2574,8 +2610,10 @@ class _MarketPagerBar extends StatelessWidget {
     required this.onPrev,
     required this.onNext,
     required this.rerollCost,
+    required this.itemRerollCost,
     required this.feedbackTick,
     required this.onReroll,
+    required this.shopTab,
   });
 
   final int currentPage;
@@ -2583,8 +2621,10 @@ class _MarketPagerBar extends StatelessWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final int rerollCost;
+  final int itemRerollCost;
   final int feedbackTick;
   final VoidCallback? onReroll;
+  final _MarketShopTab shopTab;
 
   @override
   Widget build(BuildContext context) {
@@ -2616,7 +2656,8 @@ class _MarketPagerBar extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               GameActionButton(
-                label: '리롤 $rerollCost',
+                label:
+                    '리롤 ${shopTab == _MarketShopTab.toolsAndGear ? itemRerollCost : rerollCost}',
                 background: const Color(0xFF2D6F9E),
                 compact: true,
                 onPressed: onReroll,

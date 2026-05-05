@@ -747,6 +747,44 @@ void main() {
       expect(progress.marketModifiers.extraJesterOfferSlots, 0);
     });
 
+    test('jester and item reroll costs advance independently', () {
+      final catalog = List<RummiJesterCard>.generate(
+        5,
+        (index) => _jester(id: 'offer_$index'),
+      );
+      final progress = RummiRunProgress()
+        ..gold = 30
+        ..rerollCost = 5
+        ..itemRerollCost = 5;
+      progress.openShop(catalog: catalog, rng: Random(1));
+      final originalItemOffset = progress.marketModifiers.itemOfferRerollOffset;
+
+      expect(progress.rerollShop(catalog: catalog, rng: Random(2)), isTrue);
+
+      expect(progress.gold, 25);
+      expect(progress.rerollCost, 7);
+      expect(progress.itemRerollCost, 5);
+      expect(
+        progress.marketModifiers.itemOfferRerollOffset,
+        originalItemOffset,
+      );
+
+      final jesterOfferIds = progress.shopOffers
+          .map((offer) => offer.card.id)
+          .toList(growable: false);
+
+      expect(progress.rerollItemOffers(), isTrue);
+
+      expect(progress.gold, 20);
+      expect(progress.rerollCost, 7);
+      expect(progress.itemRerollCost, 7);
+      expect(
+        progress.marketModifiers.itemOfferRerollOffset,
+        originalItemOffset + progress.marketModifiers.itemOfferSlotCount,
+      );
+      expect(progress.shopOffers.map((offer) => offer.card.id), jesterOfferIds);
+    });
+
     test(
       'facade is snapshot-based and requires re-creation after mutations',
       () {
