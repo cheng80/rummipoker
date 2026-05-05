@@ -261,6 +261,20 @@ void main() {
     },
   );
 
+  test('final boss cash-out fixture is ready to close the run', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.finalBossCashOutReady,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.runProgress.stageIndex, 8);
+    expect(fixture.runProgress.currentStationBlindTierIndex, 2);
+    expect(fixture.session.blind.targetScore, 1);
+    expect(fixture.session.blind.bossModifier?.id, 'confirm_count_tax_v2');
+    expect(fixture.session.canConfirmAllFullLines, isTrue);
+  });
+
   test('boss line constraint fixtures expose confirmable line penalties', () {
     final cases = [
       (

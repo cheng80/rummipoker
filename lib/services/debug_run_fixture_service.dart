@@ -42,6 +42,7 @@ class DebugRunFixtureService {
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
   static const String settlementCashOutReady = 'settlement_cash_out_ready';
+  static const String finalBossCashOutReady = 'final_boss_cash_out_ready';
   static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
   static const String bossColumnConstraintPreview =
       'boss_column_constraint_preview';
@@ -123,6 +124,12 @@ class DebugRunFixtureService {
       label: '정산 화면 체크',
       description: '확정하기 1회로 Stage Clear + cash-out 정산 시트 진입 검증용',
       builder: _buildSettlementCashOutReady,
+    ),
+    DebugRunFixtureDefinition(
+      id: finalBossCashOutReady,
+      label: '최종 Boss 런 완료 체크',
+      description: 'S8 Boss 확정 1회로 런 완료 + Insight 보상 시트 검증용',
+      builder: _buildFinalBossCashOutReady,
     ),
     DebugRunFixtureDefinition(
       id: bossRowConstraintPreview,
@@ -918,6 +925,25 @@ class DebugRunFixtureService {
         passiveRelicIds: ['safety_net'],
       ),
     );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildFinalBossCashOutReady() {
+    final runtime = _buildSettlementCashOutReady();
+    final session = runtime.session.copySnapshot();
+    session.blind.bossModifier = RummiBossModifier.confirmCountTax;
+    final runProgress = runtime.runProgress.copySnapshot()
+      ..stageIndex = 8
+      ..currentStationBlindTierIndex = 2;
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
       difficulty: NewRunDifficulty.standard,

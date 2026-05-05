@@ -88,7 +88,7 @@
 | Economy baseline | 골드와 가격이 과다 지급처럼 보이지 않고, 좋은 플레이는 부당하게 막지 않는다 | In progress | 58% |
 | Roguelite loop stub | 게임오버 보상과 다음 run 복귀가 최소 형태로 존재한다 | In progress | 32% |
 | Game feel baseline | 마켓/전투/정산의 대표 액션 연출이 어색하지 않다 | In progress | 55% |
-| Submission QA | 웹 빌드, 저장/복구, 플레이 영상 촬영 가능한 안정성을 확보한다 | In progress | 40% |
+| Submission QA | 웹 빌드, 저장/복구, 플레이 영상 촬영 가능한 안정성을 확보한다 | In progress | 46% |
 
 출품 모드 작업 원칙:
 
@@ -106,6 +106,14 @@
 - 게임오버 보상 루프는 저장 구조를 크게 깨지 않는 최소 구현으로 제한.
 - 연출은 신규 대형 시스템보다 이미 있는 전투/마켓/정산 대표 액션의 어색함 제거에 집중.
 - `flutter analyze`, 핵심 `flutter test`, `flutter build web`, browser/compute QA를 통과.
+
+최근 QA:
+
+- `final_boss_cash_out_ready` fixture로 Chrome/Computer Use QA를 수행했다.
+- S8 Boss 확정 후 정산 완료 sheet에 `획득 예정 Insight +36`과 `런 완료`가 표시된다.
+- `런 완료` 클릭 후 Title로 복귀하고 이어하기 저장은 비어 있다.
+- 새 게임 화면에서 `보유 Insight 36`이 표시된다.
+- `하이 스테이크` 해금 후 `보유 Insight 16`, `선택됨` 상태가 표시된다.
 
 출품 후 polishing으로 분리:
 
