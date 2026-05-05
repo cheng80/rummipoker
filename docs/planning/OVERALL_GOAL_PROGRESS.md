@@ -114,6 +114,9 @@
 - `런 완료` 클릭 후 Title로 복귀하고 이어하기 저장은 비어 있다.
 - 새 게임 화면에서 `보유 Insight 36`이 표시된다.
 - `하이 스테이크` 해금 후 `보유 Insight 16`, `선택됨` 상태가 표시된다.
+- `flutter analyze lib/views/game_view.dart lib/views/game/widgets/game_cashout_widgets.dart lib/views/game/widgets/game_shared_widgets.dart lib/services/debug_run_fixture_service.dart test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart` 통과.
+- `flutter test test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart test/services/run_progression_service_test.dart test/services/run_unlock_state_service_test.dart test/services/run_completion_flow_test.dart --reporter expanded` 통과.
+- `flutter build web` 통과.
 
 출품 후 polishing으로 분리:
 
