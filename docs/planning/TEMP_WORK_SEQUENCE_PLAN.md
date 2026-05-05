@@ -61,49 +61,60 @@ Done:
 
 ## 4. 실제 ML 이행
 
-Status: In progress, not complete
+Status: Done for offline candidate recommendation gate, not production ML
 
-완료로 인정하지 않는 것:
+완료:
 
-- pre-outcome feature table 생성
-- baseline RandomForest metric 생성
-- r120 후보 재시뮬레이션 연결 보고서
+- [x] 기존 휴리스틱/시뮬레이션 summary를 pre-outcome feature table로 확장했다.
+- [x] station/tier group table은 13,113 row까지 증량했다.
+- [x] sequence/path table은 기존 heuristic summary와 fresh target/economy probe를 포함해 80 row로 만들었다.
+- [x] `path_clear_rate` 기준 sequence model을 별도로 학습했다.
+- [x] 모델 추천표를 생성했다.
+- [x] target 후보 grid와 economy 후보를 fresh r80 resimulation으로 검증했다.
+- [x] 사람 승인용 MD 분석 보고서를 작성했다.
+- [x] 사람 승인 전 runtime target/boss/market/economy 값은 바꾸지 않았다.
 
-위 항목은 planned transition scaffold이며, 실제 ML 이행 완료가 아니다.
+완료로 오해하면 안 되는 것:
 
-남은 일:
+- production ML 자동 밸런싱은 아직 없다.
+- 모델이 runtime 값을 직접 패치하지 않는다.
+- sequence/path 데이터는 아직 80 row라 장기 자동화 근거로 부족하다.
 
-- [ ] broader candidate grid를 만들어 target/boss/market/economy 후보를 직접 비교한다.
-- [ ] 모델 추천표를 생성한다.
-- [ ] 추천 후보를 fresh resimulation으로 검증한다.
-- [ ] 사람 승인용 MD 분석 보고서를 작성한다.
-- [ ] 사람 승인 전 runtime target/boss/market/economy 값은 바꾸지 않는다.
-
-현재 scaffold 산출물:
+현재 산출물:
 
 - `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv`
+- `analysis/leveling/data/features/leveling_preoutcome_sequence_feature_table.csv`
 - `analysis/leveling/models/clear_rate_preoutcome_metrics.json`
+- `analysis/leveling/models/path_clear_rate_preoutcome_sequence_metrics.json`
+- `analysis/leveling/models/preoutcome_candidate_recommendations.csv`
 - `analysis/leveling/reports/preoutcome_baseline_model_report.md`
-- `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`
+- `analysis/leveling/reports/preoutcome_sequence_baseline_model_report.md`
+- `analysis/leveling/reports/preoutcome_candidate_recommendation_report.md`
+- `analysis/leveling/reports/actual_ml_transition_human_review.md`
+- `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
+- `logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json`
+- `logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json`
 
 ## 5. 경제 Probe 마감 여부 정리
 
-Status: Pending, not closed
+Status: Done as not closed
 
 현재 판단:
 
 - 출품용 baseline은 `good enough`로 유지할 수 있다.
 - 그러나 Jester/Slots와 Tool/Gear lane reroll 분리 이후 경제 영향은 아직 닫지 않았다.
 - post lane reroll probe는 exploratory/not closed다.
+- ML transition fresh economy r80에서도 balanced+v9가 none보다 낮은 경우가 있어 경제 gate를 완료로 올리면 안 된다.
+
+확인 완료:
+
+- [x] lane split 이후 기준 fresh r80 economy probe를 실행했다.
+- [x] v9 market clear가 balanced none보다 낮아지는 신호를 확인했다.
+- [x] 결과를 `ECONOMY_LEVELING_PLAN.md`와 `OVERALL_GOAL_PROGRESS.md`에 반영했다.
 
 남은 일:
 
-- [ ] lane split 이후 기준으로 v9 market clear를 확인한다.
-- [ ] final gold avg와 S8 boss 시작 골드를 확인한다.
-- [ ] reroll spend가 기존보다 얼마나 늘었는지 확인한다.
-- [ ] S1/S2/S3/S7/S8 병목 변화를 본다.
-- [ ] board locked / draw exhausted 변화를 확인한다.
-- [ ] 결과를 `ECONOMY_LEVELING_PLAN.md`와 `OVERALL_GOAL_PROGRESS.md`에 반영한다.
+- [ ] r400 이상으로 reroll spend, final gold, S8 boss 시작 골드, S1/S2/S3/S7/S8 병목, board locked/draw exhausted를 닫는다.
 
 ## 6. 공모전 기준 남은 작업 재개
 
@@ -111,11 +122,16 @@ Status: Blocked
 
 차단 이유:
 
-- 실제 ML 이행 gate가 아직 완료되지 않았다.
 - post lane reroll 경제 probe가 아직 not closed다.
 
 재개 조건:
 
-- [ ] 실제 ML 이행의 추천/재시뮬레이션/사람 승인용 보고서가 완료 또는 명시 보류된다.
+- [x] 실제 ML 이행의 추천/재시뮬레이션/사람 승인용 보고서가 완료 또는 명시 보류된다.
 - [ ] 경제 probe가 완료 또는 출품 기준 명시 보류로 정리된다.
-- [ ] 그 다음 공모전 기준 텍스트/UX/QA 작업으로 돌아간다.
+- [ ] 그 다음 공모전 기준 Boss pool expansion, 텍스트/UX/QA 작업으로 돌아간다.
+
+공모전용으로 포함된 추가 작업:
+
+- [ ] 원본 28개 boss pattern을 우리 게임 룰 패턴으로 매핑한다.
+- [ ] 현재 10개 simulation proxy / 8개 runtime modifier와 겹치는 것, 새로 흡수 가능한 것, 금지할 것을 분류한다.
+- [ ] 출품 안정성을 해치지 않는 1차 boss pool 확장 범위를 확정한다.

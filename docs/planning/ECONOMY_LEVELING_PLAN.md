@@ -431,6 +431,9 @@ post lane reroll status:
 - `ec02c91` 이후 Jester/Slots와 Tool/Gear 리롤 비용/진행이 분리됐다.
 - 이 변경은 유저 혼란을 줄이는 UI/경제 구조 개선이지만, 리롤 spend와 후보 탐색 비용을 바꿀 수 있다.
 - 현재 문서에 기록된 r400 경제 follow-up은 lane split 전후 효과를 닫는 장기 검증이 아니다.
+- ML transition fresh economy r80에서 `reward 0.40 / price 2.2`는 balanced none 55.0%, balanced v9 52.5%, power none 65.0%, power v9 71.2%였다.
+- 같은 r80에서 `reward 0.40 / price 2.4`는 balanced none 58.8%, balanced v9 53.8%, power none 66.2%, power v9 75.0%였다.
+- r80은 탐색용이지만 balanced+v9가 none보다 낮아지는 신호가 있으므로, post lane reroll 경제 gate를 완료로 기록하지 않는다.
 - 다음 경제 probe에서는 v9 market clear, final gold avg, S8 boss 시작 골드, reroll spend, S1/S2/S3/S7/S8 병목, board locked/draw exhausted를 lane split 이후 기준으로 다시 본다.
 - 결론: 출품용 baseline은 유지하되, post lane reroll 경제 gate는 not closed다.
 

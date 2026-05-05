@@ -52,6 +52,12 @@ PREOUTCOME_NUMERIC_FIELDS = [
     "tier_index",
     "difficulty_multiplier",
     "target_multiplier",
+    "small_target_multiplier",
+    "big_target_multiplier",
+    "boss_target_multiplier",
+    "s1_boss_target_multiplier",
+    "s2_boss_target_multiplier",
+    "s3_boss_target_multiplier",
     "reward_multiplier",
     "sweep_reward_scale",
     "sweep_price_scale",
@@ -71,6 +77,11 @@ PREOUTCOME_CATEGORICAL_FIELDS = [
     "resolved_market_profile",
     "run_modifier",
     "sim_boss_constraint_id",
+    "sim_economy_mode",
+    "sim_market_budget_mode",
+    "sim_market_spend_mode",
+    "sim_price_band_mode",
+    "sim_market_choice_mode",
 ]
 
 PREOUTCOME_TARGET_FIELDS = [
@@ -87,7 +98,7 @@ def main() -> int:
     parser.add_argument("summary_json", nargs="+", help="summary JSON 경로")
     parser.add_argument(
         "--feature-mode",
-        choices=["outcome_summary", "preoutcome"],
+        choices=["outcome_summary", "preoutcome", "preoutcome_sequence"],
         default="outcome_summary",
         help="feature table 모드. preoutcome은 추천 가능한 사전 조건 feature만 사용합니다.",
     )
@@ -110,7 +121,7 @@ def main() -> int:
     default_out = DEFAULT_PREOUTCOME_OUT if args.feature_mode == "preoutcome" else DEFAULT_OUT
     out_path = Path(args.out or default_out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    if args.feature_mode == "preoutcome":
+    if args.feature_mode in {"preoutcome", "preoutcome_sequence"}:
         fieldnames = [
             "source_path",
             *PREOUTCOME_CATEGORICAL_FIELDS,
@@ -118,10 +129,33 @@ def main() -> int:
             *PREOUTCOME_TARGET_FIELDS,
             *LABEL_FIELDS,
         ]
+        if args.feature_mode == "preoutcome_sequence":
+            fieldnames = [
+                "source_path",
+                *PREOUTCOME_CATEGORICAL_FIELDS,
+                "station_path_length",
+                "tier_path_length",
+                "difficulty_multiplier",
+                "target_multiplier",
+                "small_target_multiplier",
+                "big_target_multiplier",
+                "boss_target_multiplier",
+                "s1_boss_target_multiplier",
+                "s2_boss_target_multiplier",
+                "s3_boss_target_multiplier",
+                "reward_multiplier",
+                "sweep_reward_scale",
+                "sweep_price_scale",
+                "has_market_profile",
+                "market_profile_version",
+                "path_clear_rate",
+                "heuristic_failure_counts",
+                "heuristic_stop_reason_counts",
+            ]
     else:
         fieldnames = ["source_path", *CATEGORICAL_FIELDS, *NUMERIC_FIELDS, *LABEL_FIELDS]
     with out_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow({key: row.get(key, "") for key in fieldnames})
@@ -152,12 +186,21 @@ def main() -> int:
 
 def rows_from_summary(path: Path, *, feature_mode: str) -> list[dict[str, Any]]:
     root = json.loads(path.read_text(encoding="utf-8"))
+    sweep = root.get("sweep")
+    sweep_context = sweep if isinstance(sweep, dict) else {}
+    if feature_mode == "preoutcome_sequence":
+        groups = root.get("sequence_groups")
+        if not isinstance(groups, list):
+            raise SystemExit(f"{path}: sequence_groups 배열이 없습니다.")
+        return [
+            preoutcome_sequence_row_from_group(path, raw, sweep_context)
+            for raw in groups
+            if isinstance(raw, dict)
+        ]
+
     groups = root.get("groups")
     if not isinstance(groups, list):
         raise SystemExit(f"{path}: groups 배열이 없습니다.")
-
-    sweep = root.get("sweep")
-    sweep_context = sweep if isinstance(sweep, dict) else {}
     rows = []
     for raw in groups:
         if not isinstance(raw, dict):
@@ -167,6 +210,53 @@ def rows_from_summary(path: Path, *, feature_mode: str) -> list[dict[str, Any]]:
         else:
             rows.append(row_from_group(path, raw))
     return rows
+
+
+def preoutcome_sequence_row_from_group(
+    path: Path,
+    raw: dict[str, Any],
+    sweep_context: dict[str, Any],
+) -> dict[str, Any]:
+    run_modifier = value_or_empty(raw.get("run_modifier_id") or raw.get("run_modifier"))
+    market_profile = value_or_empty(raw.get("market_profile"))
+    resolved_market_profile = value_or_empty(raw.get("resolved_market_profile"))
+    base_experiment = value_or_empty(raw.get("base_experiment_id") or raw.get("experiment_matrix_id"))
+    station_path = raw.get("station_path")
+    tier_path = raw.get("tier_path")
+    return {
+        "source_path": str(path),
+        "base_experiment_id": base_experiment,
+        "loadout_id": value_or_empty(raw.get("loadout_id")),
+        "blind_tier": "path",
+        "difficulty": value_or_empty(raw.get("difficulty")),
+        "market_profile": market_profile,
+        "resolved_market_profile": resolved_market_profile,
+        "run_modifier": run_modifier,
+        "sim_boss_constraint_id": value_or_empty(raw.get("sim_boss_constraint_id")),
+        "sim_economy_mode": value_or_empty(sweep_context.get("sim_economy_mode") or "trace_only"),
+        "sim_market_budget_mode": value_or_empty(sweep_context.get("sim_market_budget_mode") or "none"),
+        "sim_market_spend_mode": value_or_empty(sweep_context.get("sim_market_spend_mode") or "none"),
+        "sim_price_band_mode": value_or_empty(sweep_context.get("sim_price_band_mode") or "none"),
+        "sim_market_choice_mode": value_or_empty(sweep_context.get("sim_market_choice_mode") or "none"),
+        "station_path_length": len(station_path) if isinstance(station_path, list) else 0,
+        "tier_path_length": len(tier_path) if isinstance(tier_path, list) else 0,
+        "difficulty_multiplier": difficulty_multiplier(raw.get("difficulty")),
+        "target_multiplier": inferred_target_multiplier(run_modifier, base_experiment),
+        "small_target_multiplier": numeric_or_default(raw.get("small_target_multiplier"), 1.0),
+        "big_target_multiplier": numeric_or_default(raw.get("big_target_multiplier"), 1.0),
+        "boss_target_multiplier": numeric_or_default(raw.get("boss_target_multiplier"), 1.0),
+        "s1_boss_target_multiplier": numeric_or_default(raw.get("s1_boss_target_multiplier"), 1.0),
+        "s2_boss_target_multiplier": numeric_or_default(raw.get("s2_boss_target_multiplier"), 1.0),
+        "s3_boss_target_multiplier": numeric_or_default(raw.get("s3_boss_target_multiplier"), 1.0),
+        "reward_multiplier": inferred_reward_multiplier(run_modifier, base_experiment),
+        "sweep_reward_scale": numeric_or_default(sweep_context.get("sim_reward_scale"), 1.0),
+        "sweep_price_scale": numeric_or_default(sweep_context.get("sim_price_scale"), 1.0),
+        "has_market_profile": int(market_profile not in ("", "none")),
+        "market_profile_version": market_profile_version(market_profile, resolved_market_profile),
+        "path_clear_rate": numeric_or_zero(raw.get("path_clear_rate")),
+        "heuristic_failure_counts": compact_json(raw.get("failure_counts", {})),
+        "heuristic_stop_reason_counts": compact_json(raw.get("failure_stop_reason_counts", {})),
+    }
 
 
 def row_from_group(path: Path, raw: dict[str, Any]) -> dict[str, Any]:
@@ -209,6 +299,30 @@ def preoutcome_row_from_group(
         "tier_index": tier_index(raw.get("blind_tier")),
         "difficulty_multiplier": difficulty_multiplier(raw.get("difficulty")),
         "target_multiplier": inferred_target_multiplier(run_modifier, base_experiment),
+        "small_target_multiplier": numeric_or_default(
+            raw.get("small_target_multiplier"),
+            1.0,
+        ),
+        "big_target_multiplier": numeric_or_default(
+            raw.get("big_target_multiplier"),
+            1.0,
+        ),
+        "boss_target_multiplier": numeric_or_default(
+            raw.get("boss_target_multiplier"),
+            1.0,
+        ),
+        "s1_boss_target_multiplier": numeric_or_default(
+            raw.get("s1_boss_target_multiplier"),
+            1.0,
+        ),
+        "s2_boss_target_multiplier": numeric_or_default(
+            raw.get("s2_boss_target_multiplier"),
+            1.0,
+        ),
+        "s3_boss_target_multiplier": numeric_or_default(
+            raw.get("s3_boss_target_multiplier"),
+            1.0,
+        ),
         "reward_multiplier": inferred_reward_multiplier(run_modifier, base_experiment),
         "sweep_reward_scale": numeric_or_default(sweep_context.get("sim_reward_scale"), 1.0),
         "sweep_price_scale": numeric_or_default(sweep_context.get("sim_price_scale"), 1.0),
@@ -216,6 +330,11 @@ def preoutcome_row_from_group(
         "market_profile_version": market_profile_version(market_profile, resolved_market_profile),
         "has_boss_constraint": int(boss_constraint != ""),
         "boss_family_index": boss_family_index(boss_constraint),
+        "sim_economy_mode": value_or_empty(sweep_context.get("sim_economy_mode") or "trace_only"),
+        "sim_market_budget_mode": value_or_empty(sweep_context.get("sim_market_budget_mode") or "none"),
+        "sim_market_spend_mode": value_or_empty(sweep_context.get("sim_market_spend_mode") or "none"),
+        "sim_price_band_mode": value_or_empty(sweep_context.get("sim_price_band_mode") or "none"),
+        "sim_market_choice_mode": value_or_empty(sweep_context.get("sim_market_choice_mode") or "none"),
         "clear_rate": numeric_or_zero(raw.get("clear_rate")),
         "needs_balance_attention": numeric_or_zero(raw.get("needs_balance_attention")),
         "needs_balance_attention_v2": numeric_or_zero(raw.get("needs_balance_attention_v2")),
@@ -314,6 +433,12 @@ def metadata_note(feature_mode: str) -> str:
             "Pre-outcome feature table for planned ML transition scaffold. "
             "Outcome summary fields are excluded from model features; clear_rate remains the supervised target. "
             "This is not production ML and does not auto-apply runtime balance changes."
+        )
+    if feature_mode == "preoutcome_sequence":
+        return (
+            "Pre-outcome sequence-level feature table for planned ML transition. "
+            "The supervised target is path_clear_rate. Failure counts are kept as heuristic diagnostics, not model features. "
+            "This does not auto-apply runtime balance changes."
         )
     return "This is ML-transition scaffolding. heuristic_labels is derived from legacy ml_labels silver labels."
 

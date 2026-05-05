@@ -45,6 +45,12 @@ PREOUTCOME_NUMERIC_FEATURES = [
     "tier_index",
     "difficulty_multiplier",
     "target_multiplier",
+    "small_target_multiplier",
+    "big_target_multiplier",
+    "boss_target_multiplier",
+    "s1_boss_target_multiplier",
+    "s2_boss_target_multiplier",
+    "s3_boss_target_multiplier",
     "reward_multiplier",
     "sweep_reward_scale",
     "sweep_price_scale",
@@ -63,6 +69,11 @@ PREOUTCOME_CATEGORICAL_FEATURES = [
     "resolved_market_profile",
     "run_modifier",
     "sim_boss_constraint_id",
+    "sim_economy_mode",
+    "sim_market_budget_mode",
+    "sim_market_spend_mode",
+    "sim_price_band_mode",
+    "sim_market_choice_mode",
 ]
 
 
@@ -72,7 +83,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--feature-mode",
-        choices=["outcome_summary", "preoutcome"],
+        choices=["outcome_summary", "preoutcome", "preoutcome_sequence"],
         default="outcome_summary",
         help="학습에 사용할 feature set. preoutcome은 사전 조건 feature만 사용합니다.",
     )
@@ -98,7 +109,7 @@ def main() -> int:
             f"{error}",
         ) from error
 
-    default_features = DEFAULT_PREOUTCOME_FEATURES if args.feature_mode == "preoutcome" else DEFAULT_FEATURES
+    default_features = DEFAULT_PREOUTCOME_FEATURES if args.feature_mode in {"preoutcome", "preoutcome_sequence"} else DEFAULT_FEATURES
     feature_path = Path(args.features or default_features)
     if not feature_path.exists():
         raise SystemExit(f"feature table이 없습니다: {feature_path}")
@@ -109,7 +120,26 @@ def main() -> int:
     if len(df) < 8:
         raise SystemExit("학습에는 최소 8개 이상의 group row가 필요합니다.")
 
-    if args.feature_mode == "preoutcome":
+    if args.feature_mode == "preoutcome_sequence":
+        all_numeric_features = [
+            "station_path_length",
+            "tier_path_length",
+            "difficulty_multiplier",
+            "target_multiplier",
+            "small_target_multiplier",
+            "big_target_multiplier",
+            "boss_target_multiplier",
+            "s1_boss_target_multiplier",
+            "s2_boss_target_multiplier",
+            "s3_boss_target_multiplier",
+            "reward_multiplier",
+            "sweep_reward_scale",
+            "sweep_price_scale",
+            "has_market_profile",
+            "market_profile_version",
+        ]
+        all_categorical_features = PREOUTCOME_CATEGORICAL_FEATURES
+    elif args.feature_mode == "preoutcome":
         all_numeric_features = PREOUTCOME_NUMERIC_FEATURES
         all_categorical_features = PREOUTCOME_CATEGORICAL_FEATURES
     else:
@@ -163,7 +193,7 @@ def main() -> int:
 
     model_dir = Path(args.model_dir)
     model_dir.mkdir(parents=True, exist_ok=True)
-    artifact_prefix = args.target if args.feature_mode == "outcome_summary" else f"{args.target}_preoutcome"
+    artifact_prefix = args.target if args.feature_mode == "outcome_summary" else f"{args.target}_{args.feature_mode}"
     importance_path = model_dir / f"{artifact_prefix}_feature_importance.csv"
     write_feature_importance(pipeline, numeric_features, categorical_features, importance_path)
     metrics_path = model_dir / f"{artifact_prefix}_metrics.json"
@@ -209,7 +239,7 @@ def write_feature_importance(
     importances = model.feature_importances_
     rows = sorted(zip(names, importances), key=lambda entry: entry[1], reverse=True)
     with out_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(["feature", "importance"])
         writer.writerows(rows)
 

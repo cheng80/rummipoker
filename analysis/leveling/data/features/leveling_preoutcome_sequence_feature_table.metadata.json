@@ -1,5 +1,5 @@
 {
-  "row_count": 13113,
+  "row_count": 80,
   "source_paths": [
     "analysis/leveling/data/raw/prototype_stability_submission_r120_summary.json",
     "analysis/leveling/data/raw/run_modifier_high_stakes_market_pressure_effective_t104_r800_summary.json",
@@ -19,7 +19,7 @@
     "logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json",
     "logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json"
   ],
-  "output": "analysis/leveling/data/features/leveling_preoutcome_feature_table.csv",
-  "feature_mode": "preoutcome",
-  "note": "Pre-outcome feature table for planned ML transition scaffold. Outcome summary fields are excluded from model features; clear_rate remains the supervised target. This is not production ML and does not auto-apply runtime balance changes."
+  "output": "analysis/leveling/data/features/leveling_preoutcome_sequence_feature_table.csv",
+  "feature_mode": "preoutcome_sequence",
+  "note": "Pre-outcome sequence-level feature table for planned ML transition. The supervised target is path_clear_rate. Failure counts are kept as heuristic diagnostics, not model features. This does not auto-apply runtime balance changes."
 }

@@ -43,7 +43,7 @@
 | smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
 | ML terminology correction | Applied | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
-| actual ML leveling transition | Scaffold only | `analysis/leveling/` / `tools/leveling/` | pre-outcome feature table, baseline metric, 후보 재시뮬레이션 연결 보고서는 planned transition scaffold다. production ML이나 런타임 자동 적용은 아직 미완료 |
+| actual ML leveling transition | Offline candidate recommendation applied | `analysis/leveling/` / `tools/leveling/` | pre-outcome station/tier table, sequence/path table, baseline metrics, candidate recommendation table, fresh r80 target/economy resimulation, human-review MD report 완료. production ML이나 런타임 자동 적용은 아직 없음 |
 
 ## 2. Applied Runtime Details
 

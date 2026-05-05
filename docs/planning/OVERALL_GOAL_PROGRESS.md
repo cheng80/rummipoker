@@ -58,9 +58,9 @@
 
 현재 집중 축:
 
-1. 실제 ML 이행 계속: broader candidate grid, 모델 추천표, fresh resimulation, 사람 승인용 MD 보고서
-2. 경제 probe 마감 여부 정리: post lane reroll 영향은 exploratory/not closed이므로 별도 probe 필요
-3. 공모전 기준 텍스트/UX/QA 작업 재개는 위 두 gate 이후로 보류
+1. 경제 probe 마감 여부 정리: post lane reroll 영향은 exploratory/not closed이고, fresh r80에서도 balanced+v9 역전 신호가 있어 r400 이상 확인 필요
+2. 공모전 기준 텍스트/UX/QA 작업 재개는 경제 gate 완료 또는 명시 보류 이후로 보류
+3. 실제 ML 이행은 offline candidate recommendation gate까지 완료했지만 production ML/자동 적용은 아님
 
 현재 경제 판단:
 
@@ -69,7 +69,7 @@
 - `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
 - r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
-- Jester/Slots와 Tool/Gear lane reroll 분리 이후 경제 영향은 아직 닫지 않았다. 다음 경제 probe에서 reroll spend, final gold, S8 boss 시작 골드, S1/S2/S3/S7/S8 병목을 별도 확인한다.
+- Jester/Slots와 Tool/Gear lane reroll 분리 이후 경제 영향은 아직 닫지 않았다. ML transition fresh economy r80에서도 balanced+v9가 none보다 낮아지는 신호가 있어, 다음 경제 probe에서 reroll spend, final gold, S8 boss 시작 골드, S1/S2/S3/S7/S8 병목을 r400 이상으로 별도 확인한다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
@@ -84,9 +84,9 @@
 
 - `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
 - ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
-- 실제 ML 이행은 planned transition scaffold까지만 진행됐고, broader candidate grid/모델 추천표/fresh resimulation/사람 승인 보고서가 남았다.
+- 실제 ML 이행은 offline candidate recommendation gate까지 진행됐다. `analysis/leveling/reports/actual_ml_transition_human_review.md` 기준 production ML/자동 적용은 아니다.
 - 경제 probe는 post lane reroll 기준으로 not closed다.
-- 공모전 기준 작업 재개는 실제 ML 이행과 경제 probe 상태 정리 이후로 보류한다.
+- 공모전 기준 작업 재개는 경제 probe 완료 또는 출품 기준 명시 보류 이후로 보류한다.
 
 ## 4. Competition Prototype Track
 
@@ -137,9 +137,19 @@
 - 모든 플랫폼별 세부 레이아웃 polish.
 - 신규 후보군을 대량 추가하는 콘텐츠 확장.
 
+출품용에 포함하는 Boss pool 작업:
+
+- 현재 S1~S8 boss cycle은 8칸이라 반복 플레이에서 전략 학습/대응 폭이 빨리 고갈될 수 있다.
+- 참고 원본 보스 패턴은 28개로 확인됐고, 현재 우리 게임은 이를 10개 simulation proxy와 8개 runtime modifier 타입으로 압축해 둔 상태다.
+- 공모전용 품질 기준에서는 boss pool 확장을 미루지 않고, 먼저 원본 패턴을 우리 룰로 번역한 매핑표를 만든다.
+- 구현은 이름/IP를 가져오지 않고, 색/라인/타일/rank/확정/자원/골드/아이템·Jester 발동 제한 같은 룰 패턴으로 재작성한다.
+- 출품 전 1차 목표는 안정성을 해치지 않는 추가 boss modifier 후보를 cycle 또는 pool 후보로 늘리는 것이다.
+- 저장 포맷 변경, 자동 자원 보정, 유저 선택 강제는 금지한다.
+
 출품 전 필수 완료:
 
 - r400 경제 probe로 현재 가격 변경이 부작용을 만들지 않는지 확인.
+- Boss pool 확장 매핑표와 출품용 1차 추가 범위를 확정한다.
 - `jester_hook` 가격 조정 r400 follow-up은 통과했으므로 추가 가격 후보 확장은 출품 후 polishing으로 넘긴다.
 - S1~S8 전체 sweep은 장기 확정용이 아니라 출품 안정성용 최소 판단으로 제한.
 - 게임오버 보상 루프는 저장 구조를 크게 깨지 않는 최소 구현으로 제한.
@@ -212,7 +222,7 @@
 
 ### M0. Documentation And Analysis Source Of Truth
 
-Status: In progress
+Status: Done for offline recommendation gate
 
 완료 조건:
 
@@ -241,12 +251,19 @@ Status: In progress
 - 모델 후보는 런타임 자동 적용이 아니라 후보 추천으로만 사용한다.
 - 추천 후보는 재시뮬레이션으로 검증하고, 사람 승인 전에는 target/boss/market/economy runtime에 반영하지 않는다.
 
-현재 남은 일:
+완료:
 
-- broader candidate grid를 만들어 target/boss/market/economy 후보를 더 직접 비교한다.
-- 모델 추천표를 생성한다.
-- 추천 후보를 fresh resimulation으로 검증한다.
-- 사람 승인 전 runtime 값을 바꾸지 않는다.
+- broader target/economy candidate grid를 만들었다.
+- station/tier `clear_rate` 모델과 sequence/path `path_clear_rate` 모델을 학습했다.
+- 모델 추천표를 생성했다.
+- target/economy 후보를 fresh r80으로 재시뮬레이션했다.
+- 사람 승인용 MD 보고서를 작성했다.
+- runtime 값은 바꾸지 않았다.
+
+남은 주의:
+
+- sequence/path 데이터는 80 row라 production ML 자동 적용 근거로 부족하다.
+- 실제 적용은 경제 gate와 사람 승인 이후에만 한다.
 
 ### M1. Economy And Price Baseline
 

@@ -10,9 +10,9 @@
 ## Dataset
 
 - feature table: `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv`
-- rows: 4666
-- train rows: 3499
-- test rows: 1167
+- rows: 13113
+- train rows: 9834
+- test rows: 3279
 - target: `clear_rate`
 - feature mode: `preoutcome`
 
@@ -23,6 +23,18 @@ Source summaries:
 - `analysis/leveling/data/raw/run_modifier_candidate_fair_t104_r112_r400_summary.json`
 - `analysis/leveling/data/raw/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json`
 - `analysis/leveling/data/raw/station_curve_growth_gate_probe_r120_summary.json`
+- `logs/sim/economy_choice_affordable_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward038_price240_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward039_price240_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward036_price260_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward038_price260_v1_r120_summary.json`
+- `logs/sim/post_lane_reroll_probe_r120_summary.json`
+- `logs/sim/prototype_stability_submission_r120_summary.json`
+- `logs/sim/prototype_s1_easy_entry_v91_r240_summary.json`
+- `logs/sim/prototype_stability_v91_r120_summary.json`
+- `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
+- `logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json`
+- `logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json`
 
 ## Feature And Target Definition
 
@@ -36,6 +48,12 @@ Pre-outcome numeric features:
 - `tier_index`
 - `difficulty_multiplier`
 - `target_multiplier`
+- `small_target_multiplier`
+- `big_target_multiplier`
+- `boss_target_multiplier`
+- `s1_boss_target_multiplier`
+- `s2_boss_target_multiplier`
+- `s3_boss_target_multiplier`
 - `reward_multiplier`
 - `sweep_reward_scale`
 - `sweep_price_scale`
@@ -54,6 +72,11 @@ Pre-outcome categorical features:
 - `resolved_market_profile`
 - `run_modifier`
 - `sim_boss_constraint_id`
+- `sim_economy_mode`
+- `sim_market_budget_mode`
+- `sim_market_spend_mode`
+- `sim_price_band_mode`
+- `sim_market_choice_mode`
 
 Excluded from model features:
 
@@ -82,8 +105,8 @@ Reason:
 
 ## Metric
 
-- MAE: 0.0439
-- R2: 0.2208
+- MAE: 0.0367
+- R2: 0.1056
 
 Interpretation:
 
@@ -95,16 +118,16 @@ Interpretation:
 
 | Feature | Importance |
 |---|---:|
-| `loadout_id_baseline__shop_slot_market_v9` | 0.3372 |
-| `station` | 0.1237 |
-| `boss_family_index` | 0.0595 |
-| `loadout_id_baseline` | 0.0581 |
-| `sim_boss_constraint_id_single_rank_pressure` | 0.0214 |
-| `resolved_market_profile_s1_candidate_tarot_build_pack` | 0.0203 |
-| `resolved_market_profile_s1_candidate_common_rank_jester` | 0.0203 |
-| `loadout_id_s3_hand_growth_build__shop_slot_market_v9` | 0.0202 |
-| `loadout_id_s5_power_build__shop_slot_market_v9` | 0.0196 |
-| `resolved_market_profile_s1_build_aware_pack_plus5` | 0.0193 |
+| `loadout_id_baseline__shop_slot_market_v9` | 0.1939 |
+| `station` | 0.1119 |
+| `boss_family_index` | 0.0749 |
+| `sweep_reward_scale` | 0.0479 |
+| `loadout_id_baseline` | 0.0294 |
+| `sweep_price_scale` | 0.0273 |
+| `resolved_market_profile_s1_candidate_uncommon_build_jester` | 0.0239 |
+| `resolved_market_profile_s1_candidate_planet_rank_level` | 0.0230 |
+| `sim_boss_constraint_id_target_spike_wall` | 0.0226 |
+| `resolved_market_profile_s1_candidate_tarot_build_pack` | 0.0219 |
 
 ## Artifacts
 
