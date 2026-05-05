@@ -437,6 +437,34 @@ Run modifier probe:
 - `high_stakes` target 1.08 / reward 1.12는 그대로 확정하지 않는다. 다음은 r800 direct sweep 또는 `target 1.04~1.08 / reward 1.12~1.20` 후보 비교로 확인한다.
 - 조정이 필요해도 자동 자원 지급/고정 슬롯/직접 아이템 지급은 쓰지 않는다. modifier target/reward 또는 market availability만 검토한다.
 
+Run modifier candidate probe:
+
+- purpose: `high_stakes` 압박이 너무 강한지 보기 위해 런타임을 바꾸지 않고 sim-only target override와 reward scale proxy로 후보를 비교했다.
+- note: 아래 값은 확정용 r800이 아니라 탐색용이다. `run_modifier`는 `basic`으로 두고 target override를 걸었으므로 실제 runtime modifier 적용값과 1:1 동일한 장기 근거가 아니다.
+- r120 same-seed probe:
+
+| proxy | balanced none | balanced v9 | power none | power v9 | 1차 해석 |
+|---|---:|---:|---:|---:|---|
+| target 1.02 / reward 1.12 | 49.2% | 63.3% | 55.0% | 60.8% | r120에서는 v9가 none보다 높음 |
+| target 1.04 / reward 1.12 | 44.2% | 60.0% | 50.8% | 57.5% | r120에서는 가장 안정적으로 보였음 |
+| target 1.06 / reward 1.16 | 38.3% | 57.5% | 49.2% | 51.7% | 압박이 강하고 power 개선폭이 작음 |
+| target 1.08 / reward 1.12 | 35.0% | 55.0% | 45.8% | 50.0% | 현재값 proxy. absolute clear가 낮음 |
+| target 1.08 / reward 1.20 | 35.0% | 52.5% | 45.8% | 48.3% | reward만 올려도 target 압박을 충분히 보완하지 못함 |
+
+- r400 follow-up:
+
+| proxy | balanced none | balanced v9 | power none | power v9 | 1차 해석 |
+|---|---:|---:|---:|---:|---|
+| target 1.02 / reward 1.12 | 57.5% | 53.2% | 57.2% | 64.8% | balanced v9가 none보다 낮아 적용 보류 |
+| target 1.04 / reward 1.12 | 55.5% | 49.5% | 53.5% | 63.7% | balanced v9가 none보다 낮아 적용 보류 |
+
+판정:
+
+- target multiplier를 1.02~1.04까지 낮춰도 seed에 따라 balanced v9가 none/control보다 낮아진다.
+- 따라서 `high_stakes` runtime 값을 지금 `target 1.04`나 `target 1.02`로 바꾸지 않는다.
+- 다음 후보는 단순 target/reward 배율보다, high pressure 조건에서 좋은 선택 proxy가 실제로 구매 가능한 후보군을 만나는지 보는 market availability under pressure probe다.
+- 이 probe도 직접 지급, 고정 슬롯, 자동 구매가 아니라 candidate availability/weight와 가격 접근성만 다룬다.
+
 ## 6. Read Order
 
 레벨링 작업 재개 시 순서:
