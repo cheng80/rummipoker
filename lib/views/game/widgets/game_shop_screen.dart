@@ -3918,6 +3918,8 @@ class _MarketGoldChip extends StatelessWidget {
                         width: 20,
                         height: 20,
                         fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) =>
+                            const _MarketGoldFallbackIcon(size: 20),
                       ),
                     ),
                   ),
@@ -3934,6 +3936,35 @@ class _MarketGoldChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketGoldFallbackIcon extends StatelessWidget {
+  const _MarketGoldFallbackIcon({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFFF2C14E),
+      ),
+      child: Text(
+        'G',
+        style: TextStyle(
+          fontFamily: AssetPaths.fontNexonLv2Gothic,
+          fontSize: size * 0.58,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF174131),
+          height: 1,
         ),
       ),
     );

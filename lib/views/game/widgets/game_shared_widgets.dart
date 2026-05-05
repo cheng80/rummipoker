@@ -366,6 +366,8 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
                           width: 18,
                           height: 18,
                           fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) =>
+                              const _GoldAssetFallbackIcon(size: 18),
                         ),
                       ),
                     ),
@@ -400,6 +402,35 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GoldAssetFallbackIcon extends StatelessWidget {
+  const _GoldAssetFallbackIcon({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFFF2C14E),
+      ),
+      child: Text(
+        'G',
+        style: TextStyle(
+          fontFamily: AssetPaths.fontNexonLv2Gothic,
+          fontSize: size * 0.58,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF174131),
+          height: 1,
         ),
       ),
     );

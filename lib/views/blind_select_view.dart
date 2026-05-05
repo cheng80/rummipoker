@@ -144,7 +144,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
             ),
             const SizedBox(height: 6),
             Text(
-              '구간 선택',
+              'Station Select',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,

@@ -1600,8 +1600,8 @@ class _GameViewState extends ConsumerState<GameView>
                                 ),
                                 const SizedBox(height: 8),
                                 GameMenuActionTile(
-                                  title: 'Boss 클리어 후 다음 구간 선택',
-                                  subtitle: '다음 Station의 구간 선택으로 바로 이행합니다.',
+                                  title: 'Boss 클리어 후 다음 Station Select',
+                                  subtitle: '다음 Station Select로 바로 이행합니다.',
                                   icon: Icons.skip_next_rounded,
                                   accentColor: Colors.lightGreenAccent.shade100,
                                   onTap: () async {
@@ -1852,7 +1852,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '구간 선택으로 이동',
+                    'Station Select로 이동',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.72),

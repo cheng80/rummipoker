@@ -13,7 +13,7 @@ String rummiSaveSceneLabel(RummiSaveSceneAlias sceneAlias) {
   return switch (sceneAlias) {
     RummiSaveSceneAlias.market => 'Market',
     RummiSaveSceneAlias.battle => 'Battle',
-    RummiSaveSceneAlias.blindSelect => '구간 선택',
+    RummiSaveSceneAlias.blindSelect => 'Station Select',
   };
 }
 
