@@ -354,10 +354,11 @@ catalog audit v2 probe:
   - 따라서 이 결과만으로 해당 후보 가격을 올릴 근거는 없다.
   - 다음은 가격 인상이 아니라 후보 노출/구매 이벤트 샘플링을 먼저 확인한다. 후보가 거의 구매되지 않는다면 가격 문제가 아니라 availability/utility proxy 문제일 수 있다.
 - audit update:
-  - `tools/sim/economy_audit.py`가 content id와 proxy Jester id별 구매 이벤트 count를 출력한다.
+  - `tools/sim/economy_audit.py`가 content id, proxy Jester id, source candidate id별 구매 이벤트 count를 출력한다.
   - `economy_catalog_audit_v2_r120`의 top content는 `planet_rank_level_proxy`, `shop_slot_market_v9`, `uncommon_build_jester_proxy`, `rare_xmult_jester_proxy`, `tarot_build_pack_proxy` 중심이다.
   - top proxy Jester는 `the_duo`, `fibonacci`, `green_jester`, `zany_jester` 중심이다.
   - `trade_ticket`, `ride_the_bus`, `reroll_token`은 이번 probe의 구매 이벤트에 잡히지 않았다.
+  - 이번 `shop_slot_market_v9` path에는 source candidate id도 기록되지 않았다. 이 경로는 backlog 후보 샘플링보다 고정 proxy profile 검증에 가깝다.
 - 추가 판정:
   - 개별 카탈로그 가격 조정 전, sim이 proxy 묶음만 사는지 실제 카탈로그 후보까지 충분히 샘플링하는지 분리해야 한다.
   - 현재는 `trade_ticket`/`ride_the_bus` 가격을 바로 바꿀 근거가 약하다.

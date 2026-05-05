@@ -314,6 +314,7 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     category_counts: Counter[str] = Counter()
     content_counts: Counter[str] = Counter()
     proxy_jester_counts: Counter[str] = Counter()
+    source_candidate_counts: Counter[str] = Counter()
     by_category: dict[str, list[int]] = defaultdict(list)
     by_content: dict[str, list[int]] = defaultdict(list)
     by_market: dict[str, int] = Counter()
@@ -449,6 +450,11 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                     for proxy_id in proxy_jester_ids:
                         if isinstance(proxy_id, str):
                             proxy_jester_counts[proxy_id] += 1
+                source_candidate = event.get("source_candidate")
+                if isinstance(source_candidate, dict):
+                    adapted_id = source_candidate.get("adapted_id")
+                    if isinstance(adapted_id, str) and adapted_id:
+                        source_candidate_counts[adapted_id] += 1
                 cost = event.get("cost")
                 if isinstance(cost, (int, float)):
                     by_category[category].append(int(cost))
@@ -471,6 +477,12 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
         "purchase_event_count_by_proxy_jester": dict(
             sorted(
                 proxy_jester_counts.items(),
+                key=lambda entry: (-entry[1], entry[0]),
+            )
+        ),
+        "purchase_event_count_by_source_candidate": dict(
+            sorted(
+                source_candidate_counts.items(),
                 key=lambda entry: (-entry[1], entry[0]),
             )
         ),
@@ -777,6 +789,11 @@ def _print_report(report: dict[str, Any]) -> None:
             print("- top proxy Jester ids:")
             for proxy_id, count in list(proxy_counts.items())[:12]:
                 print(f"  - {proxy_id}: {count}")
+        source_counts = trace.get("purchase_event_count_by_source_candidate", {})
+        if isinstance(source_counts, dict) and source_counts:
+            print("- top source candidate ids:")
+            for source_id, count in list(source_counts.items())[:12]:
+                print(f"  - {source_id}: {count}")
         sim_trace = trace.get("sim_economy_trace", {})
         if sim_trace.get("available"):
             final_gold = sim_trace["final_gold"]
