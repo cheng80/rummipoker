@@ -499,6 +499,9 @@ Market availability under pressure probe:
   - bottleneck signal: S8 boss는 balanced v9 56회, power v9 55회로 남고, stop reason도 board/draw 양쪽이 모두 남는다.
   - judgement: `high_stakes` effective target 1.04는 r800에서 좋은 market 선택 proxy가 none/control보다 낮아지는 문제를 해소하면서 압박을 유지한다. 목표는 `basic`급 clear rate가 아니라, 고레벨 보스다운 어려움과 통과 가능성을 같이 유지하는 것이다. 다음 후보는 runtime `high_stakes` target multiplier를 1.08에서 1.04로 낮추는 적용이다. reward 1.12와 market pressure profile은 유지하고, 자동 지급/고정 슬롯/자동 구매는 추가하지 않는다.
 - runtime applied: r800 결과를 기준으로 `NewRunModifier.highStakes.targetScoreMultiplier`를 1.08에서 1.04로 낮췄다. reward 1.12와 market pressure profile은 유지한다.
+- station curve audit: 같은 r800 JSONL을 도달 전투 대비 실패율로 보면 `high_stakes + v9`는 balanced 기준 S1 3.4%, S2 1.2%, S3 1.5%, S4 3.5%, S5 3.0%, S6 0.7%, S7 0.8%, S8 5.8%다. power 기준은 S1 3.3%, S2 1.0%, S3 1.4%, S4 1.4%, S5 0.3%, S6 0.9%, S7 2.2%, S8 5.3%다.
+- curve judgement: 실패 총량이 아니라 실패율로 보면 S8이 가장 어렵고, S2/S3/S6은 쉬운 구간으로 남아 있다. 다만 “초반은 쉽고 갈수록 어려워진다” 기준에서는 S1 3%대가 약간 높을 수 있으므로, 다음 검토는 S1 target 단독 하향이 아니라 S1 boss constraint severity/초반 curve 체감/early market 접근성을 같이 본다.
+- next guardrail: S1을 완화하더라도 `small < big < boss` 구조를 깨거나 자동 자원 지급으로 풀지 않는다. 고레벨 계약의 최종 압박은 S8에 남기는 방향을 유지한다.
 
 ## 6. Read Order
 

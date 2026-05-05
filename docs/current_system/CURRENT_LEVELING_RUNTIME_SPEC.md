@@ -270,12 +270,14 @@ Sim parity:
 
 ## 10. 다음 적용 후보
 
-다음 후보는 `shop_slot_market_v9`의 S7~S8 boss band에서 덱/타일 형상 보정 후보 availability floor를 검토하는 것이다.
+다음 후보는 S1~S8 station curve가 “초반은 쉽고 뒤로 갈수록 어려워지는” 체감을 유지하는지 검토하는 것이다. 최신 r800 기준에서 S8은 가장 높은 실패율을 유지하지만, S1이 초반치고 약간 높게 느껴질 수 있으므로 S1 boss constraint severity, 초반 target curve 체감, early market 접근성을 같이 본다.
 
 조건:
 
+- S1 target만 단독으로 낮춰 `small < big < boss` 구조를 깨지 않는다.
 - slot 수를 늘리지 않는다.
 - 직접 지급하지 않는다.
 - 특정 위치를 고정하지 않는다.
-- 후보군 포함 안정성만 조정한다.
+- S1 첫 클리어 보너스 외 자동 자원 지급으로 풀지 않는다.
+- S7~S8 shape floor는 현재 값으로 동결하고 추가 강화하지 않는다.
 - smoke 후 장기 sweep에서 path clear, avg total turn, S1/S4/S5/S8 병목, board locked/draw exhausted를 같이 본다.
