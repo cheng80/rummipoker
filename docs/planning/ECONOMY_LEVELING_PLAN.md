@@ -434,8 +434,12 @@ post lane reroll status:
 - ML transition fresh economy r80에서 `reward 0.40 / price 2.2`는 balanced none 55.0%, balanced v9 52.5%, power none 65.0%, power v9 71.2%였다.
 - 같은 r80에서 `reward 0.40 / price 2.4`는 balanced none 58.8%, balanced v9 53.8%, power none 66.2%, power v9 75.0%였다.
 - r80은 탐색용이지만 balanced+v9가 none보다 낮아지는 신호가 있으므로, post lane reroll 경제 gate를 완료로 기록하지 않는다.
-- 다음 경제 probe에서는 v9 market clear, final gold avg, S8 boss 시작 골드, reroll spend, S1/S2/S3/S7/S8 병목, board locked/draw exhausted를 lane split 이후 기준으로 다시 본다.
-- 결론: 출품용 baseline은 유지하되, post lane reroll 경제 gate는 not closed다.
+- current boss pool 기준 r400 raw probe `post_lane_reroll_economy_current_boss_r400`에서는 balanced none 50.0%, balanced v9 57.0%, power none 64.2%, power v9 63.5%였다.
+- 같은 r400에서 v9 final gold avg는 약 6.24G, v9 S8 boss 시작 골드는 약 9.43G, reroll spend는 99,571G, unaffordable event는 7,686회였다.
+- 병목은 S8 boss가 balanced none 25, balanced v9 20, power none 22, power v9 27로 남아 있다. board/draw stop도 모두 남아 있다.
+- current boss pool 기준으로는 즉시 경제 경고가 없지만, power v9가 none보다 0.7%p 낮고 boss pool 확장 전 기준이므로 최종 경제 gate로 닫지 않는다.
+- 다음 경제 probe에서는 확장 boss pool 기준으로 v9 market clear, final gold avg, S8 boss 시작 골드, reroll spend, S1/S2/S3/S7/S8 병목, board locked/draw exhausted를 다시 본다.
+- 결론: 출품용 baseline은 유지하되, post lane reroll 경제 gate는 확장 boss pool 전까지 not closed다.
 
 ### Phase 3. Economy Probe
 

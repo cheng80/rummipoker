@@ -58,9 +58,9 @@
 
 현재 집중 축:
 
-1. 경제 probe 마감 여부 정리: post lane reroll 영향은 exploratory/not closed이고, fresh r80에서도 balanced+v9 역전 신호가 있어 r400 이상 확인 필요
-2. 공모전 기준 텍스트/UX/QA 작업 재개는 경제 gate 완료 또는 명시 보류 이후로 보류
-3. 실제 ML 이행은 offline candidate recommendation gate까지 완료했지만 production ML/자동 적용은 아님
+1. Boss pool mapping 및 1차 확장: 확장 후 레벨링/경제/ML을 다시 검증해야 함
+2. 확장 boss pool 기준 레벨링/경제 probe: current boss pool r400 경제 baseline은 확보했지만 최종 gate는 아님
+3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영해 데이터 증량 여부부터 다시 검토
 
 현재 경제 판단:
 
@@ -69,7 +69,7 @@
 - `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
 - r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
-- Jester/Slots와 Tool/Gear lane reroll 분리 이후 경제 영향은 아직 닫지 않았다. ML transition fresh economy r80에서도 balanced+v9가 none보다 낮아지는 신호가 있어, 다음 경제 probe에서 reroll spend, final gold, S8 boss 시작 골드, S1/S2/S3/S7/S8 병목을 r400 이상으로 별도 확인한다.
+- Jester/Slots와 Tool/Gear lane reroll 분리 이후 current boss pool 기준 r400 raw probe는 balanced none 50.0%, balanced v9 57.0%, power none 64.2%, power v9 63.5%였다. v9 final gold avg 약 6.24G, v9 S8 boss 시작 골드 약 9.43G, reroll spend 99,571G, unaffordable event 7,686회로 즉시 경고는 없지만, boss pool 확장 전 기준이라 최종 경제 gate는 아니다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
@@ -85,8 +85,8 @@
 - `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
 - ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
 - 실제 ML 이행은 offline candidate recommendation gate까지 진행됐다. `analysis/leveling/reports/actual_ml_transition_human_review.md` 기준 production ML/자동 적용은 아니다.
-- 경제 probe는 post lane reroll 기준으로 not closed다.
-- 공모전 기준 작업 재개는 경제 probe 완료 또는 출품 기준 명시 보류 이후로 보류한다.
+- 경제 probe는 current boss pool 기준 r400 baseline만 확보했고, 확장 boss pool 기준으로 다시 열려 있다.
+- 공모전 기준 작업 재개는 Boss pool mapping/1차 확장과 확장 후 레벨링/경제/ML 상태 정리 이후로 보류한다.
 
 ## 4. Competition Prototype Track
 
@@ -117,6 +117,14 @@
 - 신규 시스템은 심사용 플레이 흐름을 막는 경우에만 추가한다.
 - 5월 12일을 feature freeze로 보고, 5월 13일은 QA/빌드/영상/제출 자료에 둔다.
 - 5월 14일은 수정일이 아니라 제출 버퍼로 남긴다.
+
+작업 시간 산정 기준:
+
+- 기본 산정은 하루 8~10시간 실작업 기준이다.
+- 현실적인 공모전 대응 기준은 하루 10~12시간 집중 작업 + 야간 자동 실행이다.
+- 야간에는 r400/r800 sweep, 경제 probe, ML feature rebuild/train, `flutter test`, `flutter analyze`, `flutter build web`, submission smoke처럼 사람 판단이 적은 작업을 돌린다.
+- Boss pool 설계 판단, UI/텍스트/IP 네이밍 최종 결정, 런타임 값 적용 여부, 최종 browser/compute 시각 QA 판정은 사람이 깨어 있을 때 한다.
+- 2026-05-06 새벽 기준으로는 08:30 KST 전까지 현재 boss pool 기준 post lane-reroll 경제 raw probe처럼 이후 비교에 쓸 수 있는 자동 작업을 우선 돌린다.
 
 출품용 일정 잠금:
 
