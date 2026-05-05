@@ -25,11 +25,11 @@
 | UI/UX/game feel | 카드/타일/정산/마켓 액션이 게임적인 연출로 읽힌다 | In progress | 50% | 예정된 연출 보강 잔여 큐 완료 후 승인 대기 |
 | Roguelite meta | 게임오버 이후 보상으로 다음 run 선택지가 열린다 | In progress | 22% | Insight 보상 이후 해금 선택 폭 확장 |
 | Run restart loop | 패배/클리어 후 보상, 해금, 새 run 시작이 자연스럽게 이어진다 | In progress | 30% | 일반 run smoke와 저장/복구 재확인 |
-| QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 44% | browser/compute QA와 submission candidate 반복 |
+| QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 43% | browser/compute QA와 submission candidate 반복 |
 
 전체 추정 진도: 43%
 
-출품용 프로토타입 추정 진도: 70%
+출품용 프로토타입 추정 진도: 69%
 
 주의:
 
@@ -47,10 +47,10 @@
 | Market offer and inventory | 65% | Jester/Item offer, 구매/판매/사용, 슬롯 제한, 재판매 정책 구현 | 가격/노출/구매력 최종 기준 필요 |
 | Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | 경제 probe 및 r400/r800 |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
-| Save/restore stability | 67% | active run save/restore, 정산 cash-out 복구, Market checkpoint 이어하기 browser QA 이력 | 새 meta/gameover loop 추가 시 재검증 |
+| Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
-| Integrated QA | 44% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프/Market 이어하기 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
+| Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
 
 ## 3. Current Focus
 
@@ -84,12 +84,12 @@
 
 | Gate | Prototype target | Status | Progress |
 |---|---|---|---:|
-| Playable vertical slice | 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산/패배 -> 재시작 흐름이 끊기지 않는다 | In progress | 73% |
+| Playable vertical slice | 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산/패배 -> 재시작 흐름이 끊기지 않는다 | In progress | 72% |
 | Strategy readability | 타일/카드/아이템/보스 제약이 설명 없이도 선택 압박으로 읽힌다 | In progress | 60% |
 | Economy baseline | 골드와 가격이 과다 지급처럼 보이지 않고, 좋은 플레이는 부당하게 막지 않는다 | In progress | 60% |
 | Roguelite loop stub | 게임오버 보상과 다음 run 복귀가 최소 형태로 존재한다 | In progress | 40% |
 | Game feel baseline | 마켓/전투/정산의 대표 액션 연출이 어색하지 않다 | In progress | 55% |
-| Submission QA | 웹 빌드, 저장/복구, 플레이 영상 촬영 가능한 안정성을 확보한다 | In progress | 60% |
+| Submission QA | 웹 빌드, 저장/복구, 플레이 영상 촬영 가능한 안정성을 확보한다 | In progress | 58% |
 
 출품 모드 작업 원칙:
 
@@ -143,9 +143,6 @@
 - `tools/prototype_submission_smoke.sh --skip-build --skip-pub-get` 통과. 로그: `/tmp/rummipoker_submission_smoke/20260505_210713`
 - `tools/prototype_submission_smoke.sh --skip-pub-get` 통과. analyze, 저장/복구 포함 핵심 테스트, `flutter build web`을 모두 통과했다. 로그: `/tmp/rummipoker_submission_smoke/20260505_210901`
 - `prototype_stability_submission_r120` 레벨링 smoke 통과. balanced v9 `65.0%`, power v9 `65.8%`, S8 boss 병목 유지. 출품용 기준에서는 target/boss/market 추가 조정을 보류한다.
-- 강제 클리어 후 저장된 Market checkpoint를 Chrome/Computer Use로 이어하기 재검증했다.
-- Title의 이어하기 카드가 `현재 Station 1 · Market · Gold 11`을 표시했고, 확인 dialog의 `이어하기` 후 `127.0.0.1:8087/game?difficulty=standard`에서 Station 1 Market과 Gold 11 상태로 복구됐다.
-- 이 검증은 전투 클리어 밸런스 증거가 아니라, 출품용 저장/이어하기 루프 안정성 증거로만 사용한다.
 - `flutter analyze lib/views/game_view.dart lib/views/game/widgets/game_cashout_widgets.dart lib/views/game/widgets/game_shared_widgets.dart lib/services/debug_run_fixture_service.dart test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart` 통과.
 - `flutter test test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart test/services/run_progression_service_test.dart test/services/run_unlock_state_service_test.dart test/services/run_completion_flow_test.dart --reporter expanded` 통과.
 - `flutter build web` 통과.
