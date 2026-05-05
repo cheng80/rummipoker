@@ -312,6 +312,8 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
     missing_cost_event_count = 0
     offered_slot_count = 0
     category_counts: Counter[str] = Counter()
+    content_counts: Counter[str] = Counter()
+    proxy_jester_counts: Counter[str] = Counter()
     by_category: dict[str, list[int]] = defaultdict(list)
     by_content: dict[str, list[int]] = defaultdict(list)
     by_market: dict[str, int] = Counter()
@@ -441,6 +443,12 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
                 category = str(event.get("category") or "unknown")
                 content_id = str(event.get("content_id") or "unknown")
                 category_counts[category] += 1
+                content_counts[content_id] += 1
+                proxy_jester_ids = event.get("proxy_jester_ids")
+                if isinstance(proxy_jester_ids, list):
+                    for proxy_id in proxy_jester_ids:
+                        if isinstance(proxy_id, str):
+                            proxy_jester_counts[proxy_id] += 1
                 cost = event.get("cost")
                 if isinstance(cost, (int, float)):
                     by_category[category].append(int(cost))
@@ -457,6 +465,15 @@ def _jsonl_market_trace(path: Path | None) -> dict[str, Any]:
         "missing_cost_event_count": missing_cost_event_count,
         "offered_slot_count": offered_slot_count,
         "purchase_event_count_by_category": dict(sorted(category_counts.items())),
+        "purchase_event_count_by_content": dict(
+            sorted(content_counts.items(), key=lambda entry: (-entry[1], entry[0]))
+        ),
+        "purchase_event_count_by_proxy_jester": dict(
+            sorted(
+                proxy_jester_counts.items(),
+                key=lambda entry: (-entry[1], entry[0]),
+            )
+        ),
         "row_count_by_market": dict(sorted(by_market.items())),
         "row_count_by_station": dict(sorted(by_station.items())),
         "purchase_cost_by_category": {
@@ -750,6 +767,16 @@ def _print_report(report: dict[str, Any]) -> None:
                 f"- {category}: n={row['count']}, avg cost={row['avg']}, "
                 f"min={row['min']}, max={row['max']}"
             )
+        content_counts = trace.get("purchase_event_count_by_content", {})
+        if isinstance(content_counts, dict) and content_counts:
+            print("- top purchased content ids:")
+            for content_id, count in list(content_counts.items())[:12]:
+                print(f"  - {content_id}: {count}")
+        proxy_counts = trace.get("purchase_event_count_by_proxy_jester", {})
+        if isinstance(proxy_counts, dict) and proxy_counts:
+            print("- top proxy Jester ids:")
+            for proxy_id, count in list(proxy_counts.items())[:12]:
+                print(f"  - {proxy_id}: {count}")
         sim_trace = trace.get("sim_economy_trace", {})
         if sim_trace.get("available"):
             final_gold = sim_trace["final_gold"]
