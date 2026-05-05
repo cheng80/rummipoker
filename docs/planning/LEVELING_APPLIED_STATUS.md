@@ -488,6 +488,10 @@ Market availability under pressure probe:
 - post-apply risk check: 현재 runtime target에 가까운 `target 1.08 / reward 1.12` proxy에서 v10 r120은 balanced none 42.5%, balanced v10 42.5%, power none 45.0%, power v10 61.7%다. market pressure profile은 power 쪽을 확실히 받치지만 balanced에는 아직 충분하지 않으므로, 다음 조정 후보는 `high_stakes` target multiplier 자체를 낮추는 장기 sweep이다.
 - sim parity applied: `tools/sim/run_balance_sim.dart`도 `--run-modifier high_stakes`와 `shop_slot_market_v9`가 함께 쓰이면 runtime high stakes market pressure에 해당하는 missing growth/slot pressure를 반영한다.
 - parity r120 check: sim parity 이후 direct `high_stakes + v9` r120은 balanced none 40.8%, balanced v9 42.5%, power none 56.7%, power v9 55.8%다. effective target 1.04/1.02 probe에서도 balanced v9가 none보다 낮은 seed가 남았다. 따라서 target multiplier 변경은 아직 적용하지 않고, 다음은 multi-seed 또는 r400 이상으로 balanced route의 v9 역전 원인을 확인한다.
+- parity r400 check: sim parity 이후 direct `high_stakes + v9` r400은 balanced none 41.8%, balanced v9 46.2%, power none 54.0%, power v9 55.5%다. v9는 같은 modifier의 none/control보다 높아졌지만, balanced v9 absolute clear 46.2%는 낮다.
+- effective target 1.04 r400 check: 런타임 변경 없이 `--run-modifier high_stakes`에 target override `1.04 / 1.08`을 곱한 r400은 balanced none 48.2%, balanced v9 54.0%, power none 55.8%, power v9 59.0%다.
+- bottleneck signal: effective target 1.04 r400에서도 S8 boss는 balanced v9 32회, power v9 30회로 남고, stop reason은 board/draw가 모두 남는다. 압박은 제거되지 않았다.
+- current candidate: `high_stakes` target multiplier를 1.08에서 effective 1.04로 낮추는 방향은 다음 r800 후보로 올린다. 단, 아직 runtime 값은 바꾸지 않는다. 적용 판단은 multi-seed 또는 r800에서 `balanced v9 >= balanced none`, `power v9 >= power none`, absolute clear와 S8 bottleneck이 동시에 허용 범위인지 확인한 뒤 한다.
 
 ## 6. Read Order
 
