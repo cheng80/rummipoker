@@ -110,6 +110,8 @@ void main() {
 
       expect(catalog.findById('move_token')!.effect.op, 'add_board_move');
       expect(catalog.findById('travel_pouch')!.effect.op, 'increase_hand_size');
+      expect(catalog.findById('jester_hook')!.basePrice, 7);
+      expect(catalog.findById('jester_hook')!.sellPrice, 3);
       expect(
         catalog.findById('wide_grip')!.effect.op,
         'increase_hand_size_with_discard_penalty',
