@@ -219,7 +219,7 @@
 목표:
 
 - Station 구조가 붙은 뒤 경제/난이도 재조정
-- ML 기반 밸런스 자동화가 참조할 baseline balance version 확정
+- 향후 ML 기반 밸런스 자동화가 참조할 baseline balance version 확정. 현재 밸런스는 실제 ML로 자동 조정되지 않는다.
 
 작업:
 

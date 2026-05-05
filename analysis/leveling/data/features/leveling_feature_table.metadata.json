@@ -8,5 +8,5 @@
     "analysis/leveling/data/raw/station_curve_growth_gate_probe_r120_summary.json"
   ],
   "output": "analysis/leveling/data/features/leveling_feature_table.csv",
-  "note": "heuristic_labels is derived from legacy ml_labels silver labels."
+  "note": "This is ML-transition scaffolding. heuristic_labels is derived from legacy ml_labels silver labels."
 }

@@ -427,7 +427,7 @@ Current applied note:
 - next station blind-select runtime 생성은 `GameSessionNotifier.prepareNextStationBlindSelectRuntime`로 이동했다.
 - `beginNextStationTransition`은 `activeRunScene = blindSelect`와 `nextStationTransition` phase를 함께 기록한다.
 - Market -> Blind Select 전환 affordance는 1차 적용됐다. 다음 blind-select runtime을 먼저 저장한 뒤 짧은 overlay를 재생하고 route를 이동한다.
-- ML 기반 밸런스 자동화를 가능하게 하려면 후속 순서를 `Station Preview/Map scope -> Market offer count/rarity roll -> blind/station pacing baseline -> balance simulation readiness`로 둔다.
+- 향후 ML 기반 밸런스 자동화를 준비하려면 후속 순서를 `Station Preview/Map scope -> Market offer count/rarity roll -> blind/station pacing baseline -> balance simulation readiness`로 둔다. 현재 밸런스는 실제 ML로 자동 조정되지 않는다.
 - Station Preview/Map scope는 `BlindSelectView`를 `Station Preview v1`로 공식화하는 방향으로 결정했다. Station Map graph와 Station modifier는 후속이다.
 - Market 생성 규칙, pacing baseline, Boss taxonomy, visual language 세부 계획은 `docs/archive/feature_plans_2026_04/`로 이동했다. 현재 구현 기준은 실제 코드, `docs/current_system/`, `docs/specs/V4/`, `AGENTS.md`를 우선한다.
 - Boss modifier v1은 `빨간 타일 약화`로 적용했다. 보스 블라인드는 진입 팝업에서 제약을 설명하고, 전투 중 red tile marker와 scoring penalty callout을 사용한다.

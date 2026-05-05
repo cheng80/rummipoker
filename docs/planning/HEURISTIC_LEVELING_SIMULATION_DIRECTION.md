@@ -15,6 +15,7 @@
 - 이 문서와 일부 기존 파일명/도구명의 `ML`은 역사적 이름이다.
 - 현재까지 실제 적용된 것은 supervised model, train/test split, validation metric이 있는 학습 모델이 아니다.
 - 현재 파이프라인은 “시뮬레이션 기반 레벨링 분석”과 “규칙 기반 휴리스틱 라벨링”이다.
+- `analysis/leveling/`의 현재 feature table과 RandomForest 리포트는 실제 ML 전환 완료가 아니라, 전환을 준비하기 위한 스캐폴딩과 설명 baseline이다.
 - 향후 실제 ML 전환 시에는 기존 시뮬레이션 결과를 feature table로 정리하고, 휴리스틱 라벨은 초기 `silver label`로만 사용한다.
 - 모델 추천은 런타임 자동 적용이 아니라 후보 추천, 재시뮬레이션 검증, 사람 승인 후 적용 순서로 다룬다.
 

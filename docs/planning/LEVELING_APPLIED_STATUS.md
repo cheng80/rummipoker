@@ -14,6 +14,7 @@
 - `Partially applied`: 일부 축만 코드화됨.
 - `Workspace pending`: 현재 작업 트리에 반영됐지만 아직 커밋 전.
 - `Spec only`: 문서 기준만 있고 런타임 적용 전.
+- `Scaffold only`: 실제 적용 전 준비물이나 설명 baseline만 있음.
 - `Rejected`: 정책상 폐기.
 
 ## 1. Current Snapshot
@@ -41,6 +42,8 @@
 | Pack/Tarot-like/Planet-like role mapping | Spec only | docs only | 현재는 Item/market candidate role로 해석. 별도 타입 런타임은 미도입 |
 | smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
+| ML terminology correction | Applied | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
+| actual ML leveling transition | Scaffold only | `analysis/leveling/` / `tools/leveling/` | feature table과 RandomForest 설명 baseline은 준비물이다. pre-outcome feature 기반 후보 추천, 재시뮬레이션, 사람 승인까지 아직 미완료 |
 
 ## 2. Applied Runtime Details
 

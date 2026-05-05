@@ -1,9 +1,11 @@
-# V4 Current Status
+# V4 Status Snapshot
 
 > GCSE role: `Execution`
-> Source of truth: 최신 진행 상태, 다음 작업 판단.
+> 상태: consolidation pending / older V4 snapshot
+> 현재 진행 source of truth: `docs/planning/OVERALL_GOAL_PROGRESS.md`
+> 레벨링 source of truth: `docs/current_system/CURRENT_LEVELING_POLICY.md`, `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`
 
-이 문서는 최신 상태만 유지한다. 이전 상세 체크리스트는 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색하고, 검증/산출물 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에서 검색한다.
+이 문서는 과거 V4 진행 스냅샷으로 남아 있으며, 현재 최신 작업 순서는 `docs/planning/OVERALL_GOAL_PROGRESS.md`를 따른다. 문서 재정리 작업에서 current/archive 위치를 다시 분류한다. 이전 상세 체크리스트는 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색하고, 검증/산출물 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에서 검색한다.
 
 ## 1. Status Summary
 
@@ -143,7 +145,7 @@
 다음 작업 판단:
 
 - "작동하는 한 바퀴" 검증이 목적이면 full loop smoke와 저장/복귀 경계를 먼저 본다.
-- "ML 기반 밸런스 자동화"가 목적이면 Station/Market/Pacing 규칙을 먼저 고정하고, 그 다음 simulator readiness로 들어간다.
+- "향후 ML 기반 밸런스 자동화 준비"가 목적이면 Station/Market/Pacing 규칙을 먼저 고정하고, 그 다음 simulator readiness로 들어간다. 현재 밸런스는 실제 ML로 자동 조정되지 않는다.
 - "제품형 Station 한 바퀴"가 목적이면 Station Preview/Map의 최소 범위를 먼저 결정한다. 이 작업은 ML log schema의 station 단위도 함께 고정한다.
 - "잔여 runtime 완성"은 `slide_wax`까지 처리되어 현재 v1 기준 완료 상태다.
 - "아이템 인벤토리 사용성"이 목적이면 quick/passive/equipped 슬롯 수 제약을 고려해 보유 아이템 판매 `sellItem`을 먼저 구현한다.
@@ -151,6 +153,8 @@
 - "연출 구조 안정화"가 목적이면 새 이펙트를 먼저 늘리기보다 `GamePresentationEvent` / `presentationQueue` transient event list로 Battle/Market/Settlement 연출을 모을 수 있는지 설계한다.
 
 ML readiness 기준 우선순위:
+
+현재 아래 항목은 실제 ML 적용 완료가 아니라, 시뮬레이션/로그/스키마 준비 단계로 본다.
 
 1. Station Preview/Map scope decision
    - ML 로그의 `station_id`, `blind_tier`, 선택지, modifier 범위를 흔들리지 않게 만든다.

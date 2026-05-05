@@ -1,9 +1,10 @@
-# Leveling Model Recommendation Report
+# Leveling ML Transition Scaffold Report
 
 ## Scope
 
-이 리포트는 오프라인 분석 모델 결과다. 런타임 밸런스를 자동으로 바꾸지 않는다.
-모델 추천은 후보 생성 근거이며, 후보는 반드시 재시뮬레이션과 사람 승인을 거쳐야 한다.
+이 리포트는 실제 ML 전환 완료 보고서가 아니다.
+현재 모델은 outcome-derived summary feature로 `clear_rate`를 설명하는 baseline이며, target score, boss severity, market weight, economy scale 후보를 추천하지 않는다.
+런타임 밸런스를 자동으로 바꾸지 않으며, 현재 산출물을 ML 기반 밸런스 자동 조정 근거로 사용하지 않는다.
 
 ## Dataset
 
@@ -63,9 +64,9 @@ Reason:
 
 - It handles non-linear interactions between station, blind tier, market profile, and resource residuals without requiring a fixed linear assumption.
 - It can mix numeric and one-hot categorical features through a simple preprocessing pipeline.
-- Feature importance is easy to inspect for a first transition report.
+- Feature importance is easy to inspect for a first scaffold report.
 
-This model is intentionally offline-only. It does not patch runtime target scores, boss modifiers, market weights, or economy constants.
+This model is intentionally offline-only and descriptive. It does not patch runtime target scores, boss modifiers, market weights, or economy constants.
 
 ## Metric
 
@@ -76,7 +77,9 @@ Interpretation:
 
 - MAE around `0.0120` is the average held-out group prediction error for `clear_rate`.
 - R2 around `0.9407` means the model explains most held-out variance in this simulation dataset when the value is high.
-- This is not evidence that the game is fully balanced. It is evidence that the simulation summary features are predictive enough to support offline candidate ranking.
+- This is not evidence that the game is fully balanced.
+- This is also not evidence that ML transition is complete.
+- It only shows that the current summary rows can be loaded into a supervised modeling scaffold and that outcome-derived features can explain held-out clear-rate variance.
 
 ## Feature Importance Snapshot
 
@@ -113,7 +116,7 @@ Current valid use:
 
 - Rank which simulation factors are associated with clear-rate changes.
 - Identify candidate regions for follow-up probes.
-- Support report evidence that the project has moved beyond pure rules-only analysis into an offline supervised modeling step.
+- Verify that the project has enough structured summary data to start designing a real ML transition.
 
 Current invalid use:
 
@@ -121,10 +124,11 @@ Current invalid use:
 - Automatically changing boss cycle/severity.
 - Automatically changing market candidate weights.
 - Treating this as player-behavior modeling.
+- Claiming that balance is already ML-driven.
 
 ## Next ML Step
 
-The next model should add pre-outcome candidate features so it can recommend interventions rather than only explain outcomes:
+Actual ML transition has not happened yet. The next model must add pre-outcome candidate features so it can recommend interventions rather than only explain outcomes:
 
 - target multiplier candidate
 - boss modifier category and severity

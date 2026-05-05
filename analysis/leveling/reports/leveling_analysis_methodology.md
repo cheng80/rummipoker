@@ -2,7 +2,7 @@
 
 ## Current State
 
-현재 런타임 레벨링은 학습 모델이 자동 조정하지 않는다.
+현재 런타임 레벨링은 학습 모델이 자동 조정하지 않는다. 실제 ML 기반 밸런스 추천도 아직 적용되지 않았다.
 
 현재 적용된 파이프라인은 다음과 같다.
 
@@ -24,6 +24,8 @@
 
 추천 후보는 다시 시뮬레이션으로 검증하고, 사람이 승인한 뒤 코드/데이터에 반영한다.
 
+현재 `analysis/leveling/`에 있는 feature table과 RandomForest 리포트는 이 전환을 위한 준비물이다. outcome-derived feature로 `clear_rate`를 설명하는 baseline이라서, 아직 target score, boss severity, market weight, economy scale 후보를 추천하는 모델이 아니다.
+
 ## Report Requirements
 
 실제 ML 적용 보고서에는 최소한 다음 항목을 포함한다.
@@ -37,3 +39,15 @@
 - feature importance
 - 추천 후보와 재시뮬레이션 검증 결과
 - 적용하지 않은 후보와 폐기 이유
+
+## Current Gap
+
+아직 완료되지 않은 실제 ML 전환 항목:
+
+- pre-outcome feature 설계
+- 추천 가능한 supervised target 정의
+- 후보 공간 정의: target multiplier, boss severity, market weight, economy scale
+- 모델 추천 후보 생성
+- 추천 후보 재시뮬레이션
+- 정책 위반 후보 필터링
+- 사람 승인 후 runtime 반영

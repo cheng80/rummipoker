@@ -26,6 +26,7 @@
 | Roguelite meta | 게임오버 이후 보상으로 다음 run 선택지가 열린다 | In progress | 22% | Insight 보상 이후 해금 선택 폭 확장 |
 | Run restart loop | 패배/클리어 후 보상, 해금, 새 run 시작이 자연스럽게 이어진다 | In progress | 30% | 일반 run smoke와 저장/복구 재확인 |
 | QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 43% | browser/compute QA와 submission candidate 반복 |
+| Analysis/documentation governance | 레벨링/경제/ML/출품 문서가 한 기준으로 읽히고 작업 순서가 흔들리지 않는다 | In progress | 35% | ML 오해 소지 정정 후 문서 재정리/아카이브 정리 |
 
 전체 추정 진도: 43%
 
@@ -51,14 +52,16 @@
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
+| Analysis/ML documentation | 28% | `ML` 명칭 오해를 줄이기 위한 휴리스틱 기준 문서와 `analysis/leveling/` 스캐폴딩 존재 | 실제 ML 전환은 미완료. 문서 규합, source-of-truth 정리, pre-outcome feature 기반 ML 설계 필요 |
 
 ## 3. Current Focus
 
 현재 집중 축:
 
-1. 경제/가격 기준선 정리
-2. S1~S8 레벨링 장기 sweep 재개
-3. 예정된 UI/UX/연출 보강 마무리
+1. ML/휴리스틱 용어 정정과 진행 문서 동기화
+2. 문서 재정리 및 아카이브 정리: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
+3. 공모전 기준 텍스트/UX/QA 작업 재개
+4. 경제/가격 기준선 정리와 S1~S8 레벨링 검증 재개
 
 현재 경제 판단:
 
@@ -68,6 +71,13 @@
 - r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
+
+현재 ML/분석 판단:
+
+- 현재 런타임 레벨링은 실제 머신러닝이 자동 조정하지 않는다.
+- 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
+- `analysis/leveling/`의 feature table과 RandomForest 결과는 실제 ML 전환 완료 증거가 아니라 전환 준비용 스캐폴딩이다.
+- 실제 ML 전환은 pre-outcome feature, supervised target, train/test split, metric, 후보 추천, 후보 재시뮬레이션, 사람 승인 후 적용까지 갖춘 뒤 별도 milestone으로 진행한다.
 
 ## 4. Competition Prototype Track
 
@@ -190,6 +200,24 @@
 - runtime offer audit로 watchlist 후보가 실제 offer에 노출되는지 확인.
 
 ## 6. Milestone Plan
+
+### M0. Documentation And Analysis Source Of Truth
+
+Status: In progress
+
+완료 조건:
+
+- `docs/current_system/`과 `docs/planning/`의 current 문서가 서로 충돌하지 않는다.
+- 과거 실험과 폐기 후보는 `docs/archive/`에서만 historical context로 읽힌다.
+- ML/휴리스틱/시뮬레이션/경제/출품 문서의 source-of-truth가 명확하다.
+- `analysis/leveling/`은 실제 ML 완료가 아니라 스캐폴딩으로 표시된다.
+
+현재 남은 일:
+
+- 문서 inventory 작성: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md` 기준.
+- current 문서와 archive 문서의 경계 정리.
+- 중복 planning 문서 통합 또는 archive 이동.
+- 다음 공모전 작업 큐가 `OVERALL_GOAL_PROGRESS.md` 기준으로 읽히도록 갱신.
 
 ### M1. Economy And Price Baseline
 

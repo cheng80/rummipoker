@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""레벨링 summary JSON을 모델 학습용 feature table로 변환한다."""
+"""레벨링 summary JSON을 모델링 준비용 feature table로 변환한다."""
 
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def main() -> int:
                 "row_count": len(rows),
                 "source_paths": [str(path) for path in source_paths],
                 "output": str(out_path),
-                "note": "heuristic_labels is derived from legacy ml_labels silver labels.",
+                "note": "This is ML-transition scaffolding. heuristic_labels is derived from legacy ml_labels silver labels.",
             },
             ensure_ascii=False,
             indent=2,
