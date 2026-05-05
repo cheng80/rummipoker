@@ -76,6 +76,7 @@ run_and_capture "$OUTPUT_DIR/10_analyze.log" flutter analyze \
   lib/views/game/widgets/game_cashout_widgets.dart \
   lib/views/game/widgets/game_shared_widgets.dart \
   test/services/debug_run_fixture_service_test.dart \
+  test/services/active_run_save_service_test.dart \
   test/services/run_progression_service_test.dart \
   test/services/run_unlock_state_service_test.dart \
   test/services/run_completion_flow_test.dart \
@@ -84,6 +85,7 @@ run_and_capture "$OUTPUT_DIR/10_analyze.log" flutter analyze \
 
 run_and_capture "$OUTPUT_DIR/20_tests.log" flutter test \
   test/services/debug_run_fixture_service_test.dart \
+  test/services/active_run_save_service_test.dart \
   test/services/run_progression_service_test.dart \
   test/services/run_unlock_state_service_test.dart \
   test/services/run_completion_flow_test.dart \

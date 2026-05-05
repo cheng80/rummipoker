@@ -139,8 +139,8 @@
 - `나가기` 후 Title로 복귀하고 새 게임 화면에서 기존 로컬 `Insight 52`에 보상 `+4`가 반영된 `보유 Insight 56`이 표시된다.
 - `flutter analyze lib/services/debug_run_fixture_service.dart test/services/debug_run_fixture_service_test.dart` 통과.
 - `flutter test test/services/debug_run_fixture_service_test.dart --reporter expanded` 통과.
-- `tools/prototype_submission_smoke.sh`를 추가해 출품 후보용 analyze/test/web build gate를 한 명령으로 묶었다.
-- `tools/prototype_submission_smoke.sh --skip-build --skip-pub-get` 통과. 로그: `/tmp/rummipoker_submission_smoke/20260505_210426`
+- `tools/prototype_submission_smoke.sh`를 추가해 출품 후보용 analyze/test/web build gate를 한 명령으로 묶었다. 저장/복구 경계 확인을 위해 `test/services/active_run_save_service_test.dart`도 포함한다.
+- `tools/prototype_submission_smoke.sh --skip-build --skip-pub-get` 통과. 로그: `/tmp/rummipoker_submission_smoke/20260505_210713`
 - `flutter analyze lib/views/game_view.dart lib/views/game/widgets/game_cashout_widgets.dart lib/views/game/widgets/game_shared_widgets.dart lib/services/debug_run_fixture_service.dart test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart` 통과.
 - `flutter test test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart test/services/run_progression_service_test.dart test/services/run_unlock_state_service_test.dart test/services/run_completion_flow_test.dart --reporter expanded` 통과.
 - `flutter build web` 통과.
