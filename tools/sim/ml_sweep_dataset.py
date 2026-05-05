@@ -188,6 +188,7 @@ def main(argv: list[str] | None = None) -> int:
             "rarity_category_soft_v1",
             "catalog_value_flags_v1",
             "catalog_normalized_v1",
+            "catalog_audit_v2",
         ],
         help="후보 가치군별 sim-only 가격 band 모델.",
     )

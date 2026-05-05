@@ -1789,6 +1789,50 @@ void main() {
   );
 
   test(
+    'CLI sim catalog audit v2 price band is accepted in economy trace',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/catalog_audit_v2.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '12345',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '1',
+        '--market-profile',
+        's1_candidate_uncommon_build_jester',
+        '--loadout-id',
+        's5_boss_bridge_build',
+        '--sim-economy-mode',
+        'gated_known_cost',
+        '--sim-price-band-mode',
+        'catalog_audit_v2',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final battleRows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .where((row) => row['row_type'] == 'battle')
+          .toList(growable: false);
+      final bigRow = battleRows.firstWhere((row) => row['blind_tier'] == 'big');
+      final trace = bigRow['sim_economy_trace'] as Map<String, dynamic>;
+      expect(trace['price_band_mode'], 'catalog_audit_v2');
+      expect(trace['known_market_spend'], isA<int>());
+    },
+  );
+
+  test(
     'CLI sequence full safe candidate pool records source backlog candidate',
     () async {
       final dir = Directory.systemTemp.createTempSync('balance_sim_test_');

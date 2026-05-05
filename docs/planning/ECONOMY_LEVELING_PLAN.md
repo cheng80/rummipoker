@@ -340,6 +340,20 @@ catalog value audit:
   - 다음 가격 변경은 이 audit 후보를 기준으로 role별 기준가를 먼저 잡고, 그 뒤 runtime economy sweep으로 검증한다.
   - 표시/구매 단위는 계속 정수 G로 유지하며 소수점 가격은 만들지 않는다.
 
+catalog audit v2 probe:
+
+- `--sim-price-band-mode catalog_audit_v2`를 추가했다.
+- 이 모드는 runtime 가격을 바꾸지 않는 sim-only 후보이며, `catalog_normalized_v1`에 더해 `trade_ticket` 8G, `ride_the_bus` 7G floor를 검증한다.
+- r120 탐색:
+  - command: `dart run tools/sim/run_balance_sim.dart --runs 120 --bot planner_v2 --seed 91460 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_audit_v2 --run-modifier basic --out logs/sim/economy_catalog_audit_v2_r120.jsonl --summary-out logs/sim/economy_catalog_audit_v2_r120_summary.json`
+  - same-seed normalized comparison: `catalog_normalized_v1`
+  - balanced none 58.3%, balanced v9 53.3%, power none 58.3%, power v9 55.8%
+  - `catalog_audit_v2`와 same-seed `catalog_normalized_v1` 결과가 동일했다.
+- 판정:
+  - 이번 r120 path에는 `trade_ticket`, `ride_the_bus` 구매 이벤트가 없어 v2 floor가 실제로 발동하지 않았다.
+  - 따라서 이 결과만으로 해당 후보 가격을 올릴 근거는 없다.
+  - 다음은 가격 인상이 아니라 후보 노출/구매 이벤트 샘플링을 먼저 확인한다. 후보가 거의 구매되지 않는다면 가격 문제가 아니라 availability/utility proxy 문제일 수 있다.
+
 ### Phase 3. Economy Probe
 
 목표:
