@@ -58,6 +58,7 @@ class BlindSelectionSpecBuilder {
     required int stationIndex,
     required int clearedBlindTierIndex,
     required NewRunDifficulty difficulty,
+    NewRunModifier runModifier = NewRunModifier.basic,
     required RummiRuleset ruleset,
   }) {
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
@@ -67,6 +68,7 @@ class BlindSelectionSpecBuilder {
         tier: BlindTier.small,
         stationIndex: normalizedStationIndex,
         difficulty: difficulty,
+        runModifier: runModifier,
         ruleset: ruleset,
         availability: normalizedClearedBlindTierIndex >= BlindTier.small.index
             ? BlindSelectionAvailability.cleared
@@ -76,6 +78,7 @@ class BlindSelectionSpecBuilder {
         tier: BlindTier.big,
         stationIndex: normalizedStationIndex,
         difficulty: difficulty,
+        runModifier: runModifier,
         ruleset: ruleset,
         availability: normalizedClearedBlindTierIndex >= BlindTier.big.index
             ? BlindSelectionAvailability.cleared
@@ -90,6 +93,7 @@ class BlindSelectionSpecBuilder {
         tier: BlindTier.boss,
         stationIndex: normalizedStationIndex,
         difficulty: difficulty,
+        runModifier: runModifier,
         ruleset: ruleset,
         availability: normalizedClearedBlindTierIndex >= BlindTier.boss.index
             ? BlindSelectionAvailability.cleared
@@ -107,12 +111,14 @@ class BlindSelectionSpecBuilder {
     required BlindTier tier,
     required int stationIndex,
     required NewRunDifficulty difficulty,
+    NewRunModifier runModifier = NewRunModifier.basic,
     required RummiRuleset ruleset,
   }) {
     return _buildSpec(
       tier: tier,
       stationIndex: stationIndex,
       difficulty: difficulty,
+      runModifier: runModifier,
       ruleset: ruleset,
       availability: BlindSelectionAvailability.selectable,
     );
@@ -122,6 +128,7 @@ class BlindSelectionSpecBuilder {
     required BlindTier tier,
     required int stationIndex,
     required NewRunDifficulty difficulty,
+    required NewRunModifier runModifier,
     required RummiRuleset ruleset,
     required BlindSelectionAvailability availability,
     String? lockReason,
@@ -143,6 +150,7 @@ class BlindSelectionSpecBuilder {
       stationIndex: stationIndex,
       tier: tier,
       difficulty: difficulty,
+      runModifier: runModifier,
     );
     final boardDiscards = switch (tier) {
       BlindTier.small => baseBoardDiscards,
@@ -164,6 +172,8 @@ class BlindSelectionSpecBuilder {
       BlindTier.big => rewardBase + 4,
       BlindTier.boss => rewardBase + 8,
     };
+    final modifiedRewardPreview = (rewardPreview * runModifier.rewardMultiplier)
+        .round();
 
     return BlindSelectionSpec(
       tier: tier,
@@ -186,7 +196,7 @@ class BlindSelectionSpecBuilder {
       boardDiscards: boardDiscards,
       handDiscards: handDiscards,
       maxHandSize: maxHandSize,
-      rewardPreview: rewardPreview,
+      rewardPreview: modifiedRewardPreview,
       availability: availability,
       bossModifier: tier == BlindTier.boss
           ? _bossModifierForStation(stationIndex)
@@ -214,17 +224,19 @@ class BlindSelectionSpecBuilder {
     required int stationIndex,
     required BlindTier tier,
     required NewRunDifficulty difficulty,
+    required NewRunModifier runModifier,
   }) {
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
     final standardTarget = _standardTargetScore(
       stationIndex: normalizedStationIndex,
       tier: tier,
     );
-    return switch (difficulty) {
+    final difficultyTarget = switch (difficulty) {
       NewRunDifficulty.standard => standardTarget,
       NewRunDifficulty.relaxed => (standardTarget * 0.8).round(),
       NewRunDifficulty.pressure => (standardTarget * 1.2).round(),
     };
+    return (difficultyTarget * runModifier.targetScoreMultiplier).round();
   }
 
   static int _standardTargetScore({

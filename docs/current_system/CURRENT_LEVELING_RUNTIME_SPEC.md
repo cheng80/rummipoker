@@ -43,6 +43,14 @@
 | standard | 1.0 |
 | pressure | 1.2 |
 
+Run modifier multiplier:
+
+| Modifier | Target | Reward |
+|---|---:|---:|
+| `basic` | 1.0 | 1.0 |
+
+Run modifier는 숨은 자동 보정이 아니다. 새 런 시작 시 명시적으로 선택된 modifier만 target score와 blind reward에 배율을 적용한다. 현재 런타임에 실제 선택 가능한 modifier는 `basic`뿐이며, 기존 레벨링 값은 바꾸지 않는다.
+
 S8 이후는 실제 진행 구간 밖이다. 디버그/테스트용으로만 마지막 구간 성장률을 이어 붙여 단조 증가를 보장한다.
 
 ## 3. Blind Resource Pressure

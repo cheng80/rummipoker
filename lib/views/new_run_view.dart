@@ -149,7 +149,8 @@ class _NewRunViewState extends State<NewRunView> {
         ? _selectedDifficulty
         : NewRunDifficulty.standard;
     return '${RoutePaths.blindSelect}?seed=$seed'
-        '&difficulty=${difficulty.name}';
+        '&difficulty=${difficulty.name}'
+        '&modifier=${NewRunModifier.basic.id}';
   }
 
   List<NewRunDifficulty> get _availableDifficulties {

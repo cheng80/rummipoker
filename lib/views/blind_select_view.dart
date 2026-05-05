@@ -18,11 +18,13 @@ class BlindSelectView extends StatefulWidget {
     super.key,
     required this.runSeed,
     required this.difficulty,
+    this.runModifier = NewRunModifier.basic,
     this.restoredRun,
   });
 
   final int runSeed;
   final NewRunDifficulty difficulty;
+  final NewRunModifier runModifier;
   final ActiveRunRuntimeState? restoredRun;
 
   @override
@@ -40,6 +42,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
       stationIndex: _stationIndex,
       clearedBlindTierIndex: _clearedBlindTierIndex,
       difficulty: _effectiveDifficulty,
+      runModifier: _effectiveRunModifier,
       ruleset: _effectiveRuleset,
     );
     _loadItemCatalog();
@@ -60,6 +63,9 @@ class _BlindSelectViewState extends State<BlindSelectView> {
 
   NewRunDifficulty get _effectiveDifficulty =>
       widget.restoredRun?.difficulty ?? widget.difficulty;
+
+  NewRunModifier get _effectiveRunModifier =>
+      widget.restoredRun == null ? widget.runModifier : NewRunModifier.basic;
 
   RummiRuleset get _effectiveRuleset =>
       widget.restoredRun?.session.ruleset ?? RummiRuleset.currentDefaults;
@@ -95,6 +101,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
           );
       context.go(
         '${RoutePaths.game}?difficulty=${_effectiveDifficulty.name}'
+        '&modifier=${_effectiveRunModifier.id}'
         '&blind_tier=${selected.tier.name}',
         extra: nextRuntime,
       );
@@ -103,6 +110,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
     context.go(
       '${RoutePaths.game}?seed=${widget.runSeed}'
       '&difficulty=${_effectiveDifficulty.name}'
+      '&modifier=${_effectiveRunModifier.id}'
       '&blind_tier=${selected.tier.name}',
     );
   }

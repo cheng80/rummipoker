@@ -15,6 +15,7 @@ void main() {
         stationIndex: 1,
         clearedBlindTierIndex: -1,
         difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.basic,
         ruleset: RummiRuleset.currentDefaults,
       );
 
@@ -24,6 +25,28 @@ void main() {
       expect(options[1].availability, BlindSelectionAvailability.locked);
       expect(options[2].tier, BlindTier.boss);
       expect(options[2].availability, BlindSelectionAvailability.locked);
+    });
+
+    test('basic run modifier는 목표 점수와 보상 preview를 바꾸지 않는다', () {
+      final standard = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 4,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final basic = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 4,
+        difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.basic,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+
+      expect(basic.targetScore, standard.targetScore);
+      expect(basic.rewardPreview, standard.rewardPreview);
+      expect(NewRunModifier.parse('unknown'), NewRunModifier.basic);
+      expect(NewRunModifier.basic.targetScoreMultiplier, 1);
+      expect(NewRunModifier.basic.rewardMultiplier, 1);
     });
 
     test('station 2에서는 small은 clear 비활성이고 big만 선택 가능하다', () {

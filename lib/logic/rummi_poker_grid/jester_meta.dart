@@ -1009,8 +1009,9 @@ class RummiRunProgress {
   RummiCashOutBreakdown buildCashOutBreakdown(
     RummiPokerGridSession session, {
     ItemCatalog? itemCatalog,
+    double rewardMultiplier = 1,
   }) {
-    final blindReward = stageClearGoldBase;
+    final blindReward = (stageClearGoldBase * rewardMultiplier).round();
     final firstBlindClearBonusGold = _firstBlindClearBonusGold();
     final remainingBoardDiscards = session.blind.boardDiscardsRemaining;
     final remainingHandDiscards = session.blind.handDiscardsRemaining;

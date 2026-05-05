@@ -17,11 +17,13 @@ class BlindSelectionSetup {
     required int stationIndex,
     required int clearedBlindTierIndex,
     required NewRunDifficulty difficulty,
+    NewRunModifier runModifier = NewRunModifier.basic,
     required RummiRuleset ruleset,
   }) => BlindSelectionSpecBuilder.buildForStation(
     stationIndex: stationIndex,
     clearedBlindTierIndex: clearedBlindTierIndex,
     difficulty: difficulty,
+    runModifier: runModifier,
     ruleset: ruleset,
   );
 
@@ -29,11 +31,13 @@ class BlindSelectionSetup {
     required BlindTier tier,
     required int stationIndex,
     required NewRunDifficulty difficulty,
+    NewRunModifier runModifier = NewRunModifier.basic,
     required RummiRuleset ruleset,
   }) => BlindSelectionSpecBuilder.resolveSpec(
     tier: tier,
     stationIndex: stationIndex,
     difficulty: difficulty,
+    runModifier: runModifier,
     ruleset: ruleset,
   );
 
@@ -50,6 +54,7 @@ class BlindSelectionSetup {
       tier: tier,
       stationIndex: stationIndex,
       difficulty: runtime.difficulty,
+      runModifier: NewRunModifier.basic,
       ruleset: session.ruleset,
     );
 

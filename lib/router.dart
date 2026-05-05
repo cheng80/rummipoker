@@ -38,9 +38,13 @@ final GoRouter appRouter = GoRouter(
           restoredRun?.difficulty.name ??
               state.uri.queryParameters['difficulty'],
         );
+        final runModifier = NewRunModifier.parse(
+          state.uri.queryParameters['modifier'],
+        );
         return BlindSelectView(
           runSeed: seed,
           difficulty: difficulty,
+          runModifier: runModifier,
           restoredRun: restoredRun,
         );
       },
@@ -71,6 +75,9 @@ final GoRouter appRouter = GoRouter(
         final difficulty = NewRunSetup.parseDifficulty(
           state.uri.queryParameters['difficulty'],
         );
+        final runModifier = NewRunModifier.parse(
+          state.uri.queryParameters['modifier'],
+        );
         final blindTier = BlindSelectionSetup.parseTier(
           state.uri.queryParameters['blind_tier'],
         );
@@ -83,6 +90,7 @@ final GoRouter appRouter = GoRouter(
           restoredRun: restoredRun,
           debugFixtureId: fixtureId,
           difficulty: difficulty,
+          runModifier: runModifier,
           blindTier: blindTier,
           autoAdvanceMarketOnLoad: autoAdvanceMarketOnLoad,
           autoEnterMarketOnCashOut: autoEnterMarketOnCashOut,

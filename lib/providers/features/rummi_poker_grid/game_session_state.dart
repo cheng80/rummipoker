@@ -7,6 +7,7 @@ import '../../../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
+import '../../../services/new_run_setup.dart';
 
 /// `GameView`가 구독하는 현재 런의 상태 스냅샷이다.
 ///
@@ -22,6 +23,7 @@ class GameSessionState {
     this.runProgress,
     this.stageStartSnapshot,
     this.ruleset = RummiRuleset.currentDefaults,
+    this.runModifier = NewRunModifier.basic,
     this.stationView,
     this.marketView,
     this.battleView,
@@ -50,6 +52,7 @@ class GameSessionState {
   final RummiRunProgress? runProgress;
   final ActiveRunStageSnapshot? stageStartSnapshot;
   final RummiRuleset ruleset;
+  final NewRunModifier runModifier;
   final RummiStationRuntimeFacade? stationView;
   final RummiMarketRuntimeFacade? marketView;
   final RummiBattleRuntimeFacade? battleView;
@@ -88,6 +91,7 @@ class GameSessionState {
     Object? runProgress = _unset,
     Object? stageStartSnapshot = _unset,
     RummiRuleset? ruleset,
+    NewRunModifier? runModifier,
     Object? stationView = _unset,
     Object? marketView = _unset,
     Object? battleView = _unset,
@@ -122,6 +126,7 @@ class GameSessionState {
           ? this.stageStartSnapshot
           : stageStartSnapshot as ActiveRunStageSnapshot?,
       ruleset: ruleset ?? this.ruleset,
+      runModifier: runModifier ?? this.runModifier,
       stationView: stationView == _unset
           ? this.stationView
           : stationView as RummiStationRuntimeFacade?,

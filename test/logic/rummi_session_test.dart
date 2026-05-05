@@ -1219,6 +1219,23 @@ void main() {
     );
   });
 
+  test('캐시아웃 blind reward는 명시적 run modifier 배율을 반영할 수 있다', () {
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 300),
+    );
+    final progress = RummiRunProgress();
+
+    final breakdown = progress.buildCashOutBreakdown(
+      session,
+      rewardMultiplier: 1.25,
+    );
+
+    expect(
+      breakdown.blindReward,
+      (RummiRunProgress.stageClearGoldBase * 1.25).round(),
+    );
+  });
+
   test('라운드 종료 economy Jester 보너스가 캐시아웃에 합산된다', () {
     final session = RummiPokerGridSession(
       blind: RummiBlindState(

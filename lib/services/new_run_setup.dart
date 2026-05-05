@@ -1,13 +1,44 @@
 enum NewRunDifficulty { standard, relaxed, pressure }
 
+enum NewRunModifier {
+  basic(
+    id: 'basic',
+    label: '기본 런',
+    targetScoreMultiplier: 1,
+    rewardMultiplier: 1,
+  );
+
+  const NewRunModifier({
+    required this.id,
+    required this.label,
+    required this.targetScoreMultiplier,
+    required this.rewardMultiplier,
+  });
+
+  final String id;
+  final String label;
+  final double targetScoreMultiplier;
+  final double rewardMultiplier;
+
+  static NewRunModifier parse(String? raw) {
+    return switch (raw) {
+      'basic' => NewRunModifier.basic,
+      _ => NewRunModifier.basic,
+    };
+  }
+}
+
 class NewRunSetup {
   const NewRunSetup({
     required this.difficulty,
+    this.runModifier = NewRunModifier.basic,
   });
 
   final NewRunDifficulty difficulty;
+  final NewRunModifier runModifier;
 
   String get difficultyParam => difficulty.name;
+  String get runModifierParam => runModifier.id;
 
   String get difficultyLabel => switch (difficulty) {
     NewRunDifficulty.standard => '표준',

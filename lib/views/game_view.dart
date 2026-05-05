@@ -49,6 +49,7 @@ class GameView extends ConsumerStatefulWidget {
     this.restoredRun,
     this.debugFixtureId,
     this.difficulty = NewRunDifficulty.standard,
+    this.runModifier = NewRunModifier.basic,
     this.blindTier = BlindTier.small,
     this.autoAdvanceMarketOnLoad = false,
     this.autoEnterMarketOnCashOut = false,
@@ -63,6 +64,7 @@ class GameView extends ConsumerStatefulWidget {
   final ActiveRunRuntimeState? restoredRun;
   final String? debugFixtureId;
   final NewRunDifficulty difficulty;
+  final NewRunModifier runModifier;
   final BlindTier blindTier;
   final bool autoAdvanceMarketOnLoad;
   final bool autoEnterMarketOnCashOut;
@@ -243,6 +245,7 @@ class _GameViewState extends ConsumerState<GameView>
       restoredRun: widget.restoredRun,
       debugFixtureId: widget.debugFixtureId,
       difficulty: widget.difficulty,
+      runModifier: widget.runModifier,
       blindTier: widget.blindTier,
     );
     _shouldAutoCashOutRestoredBattleOnLoad = _restoredBattleNeedsCashOut(

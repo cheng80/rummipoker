@@ -26,6 +26,7 @@ class GameSessionArgs {
     this.debugFixtureId,
     this.ruleset = RummiRuleset.currentDefaults,
     this.difficulty = NewRunDifficulty.standard,
+    this.runModifier = NewRunModifier.basic,
     this.blindTier = BlindTier.small,
   });
 
@@ -34,6 +35,7 @@ class GameSessionArgs {
   final String? debugFixtureId;
   final RummiRuleset ruleset;
   final NewRunDifficulty difficulty;
+  final NewRunModifier runModifier;
   final BlindTier blindTier;
 
   @override
@@ -44,6 +46,7 @@ class GameSessionArgs {
       other.debugFixtureId == debugFixtureId &&
       other.ruleset == ruleset &&
       other.difficulty == difficulty &&
+      other.runModifier == runModifier &&
       other.blindTier == blindTier;
 
   @override
@@ -53,6 +56,7 @@ class GameSessionArgs {
     debugFixtureId,
     ruleset,
     difficulty,
+    runModifier,
     blindTier,
   );
 }
@@ -92,6 +96,7 @@ class GameSessionNotifier
           runProgress: restoredRun.runProgress,
           stageStartSnapshot: restoredRun.stageStartSnapshot,
           ruleset: args.ruleset,
+          runModifier: NewRunModifier.basic,
           runLoopPhase: _sceneToLoopPhase(restoredRun.activeScene),
           activeRunScene: restoredRun.activeScene,
           debugFixtureId: args.debugFixtureId,
@@ -104,6 +109,7 @@ class GameSessionNotifier
       tier: args.blindTier,
       stationIndex: 1,
       difficulty: args.difficulty,
+      runModifier: args.runModifier,
       ruleset: ruleset,
     );
     final session = RummiPokerGridSession(
@@ -127,6 +133,7 @@ class GameSessionNotifier
         session: session,
         runProgress: runProgress,
         ruleset: ruleset,
+        runModifier: args.runModifier,
         stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
           session: session,
           runProgress: runProgress,
@@ -501,6 +508,7 @@ class GameSessionNotifier
     final breakdown = runProgress.buildCashOutBreakdown(
       session,
       itemCatalog: itemCatalog,
+      rewardMultiplier: state.runModifier.rewardMultiplier,
     );
     runProgress.applyCashOut(breakdown);
     if (itemCatalog != null &&
