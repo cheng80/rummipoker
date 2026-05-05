@@ -162,13 +162,13 @@
         "notes": ""
       },
       "scholar": {
-        "displayName": "에이스 장부",
-        "effectText": "점수 라인의 A마다 칩 +20, 배수 +4.",
+        "displayName": "1번 장부",
+        "effectText": "점수 라인의 1 타일마다 칩 +20, 배수 +4.",
         "notes": ""
       },
       "fibonacci": {
         "displayName": "수열 중계기",
-        "effectText": "점수 라인의 A, 2, 3, 5, 8마다 배수 +8.",
+        "effectText": "점수 라인의 1, 2, 3, 5, 8 타일마다 배수 +8.",
         "notes": ""
       },
       "banner": {
@@ -202,8 +202,8 @@
         "notes": ""
       },
       "the_family": {
-        "displayName": "포카드 계약",
-        "effectText": "포카드 이상 점수 라인을 확정하면 배수 x4.",
+        "displayName": "4묶음 계약",
+        "effectText": "4묶음 이상 점수 라인을 확정하면 배수 x4.",
         "notes": ""
       },
       "the_order": {

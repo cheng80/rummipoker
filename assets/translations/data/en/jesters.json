@@ -162,13 +162,13 @@
         "notes": ""
       },
       "scholar": {
-        "displayName": "Ace Ledger",
-        "effectText": "Each Ace in the scoring line gives +20 Chips and +4 Mult.",
+        "displayName": "One Ledger",
+        "effectText": "Each 1 tile in the scoring line gives +20 Chips and +4 Mult.",
         "notes": ""
       },
       "fibonacci": {
         "displayName": "Sequence Relay",
-        "effectText": "Each Ace, 2, 3, 5, or 8 in the scoring line gives +8 Mult.",
+        "effectText": "Each 1, 2, 3, 5, or 8 tile in the scoring line gives +8 Mult.",
         "notes": ""
       },
       "banner": {

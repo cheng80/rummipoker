@@ -148,6 +148,23 @@ void main() {
       }
     });
 
+    test('player-facing item data does not use voucher wording', () {
+      final playerFacingText = [
+        File('data/common/items_common_v1.json').readAsStringSync(),
+        File('assets/translations/data/ko/items.json').readAsStringSync(),
+        File('assets/translations/data/en/items.json').readAsStringSync(),
+      ].join('\n');
+
+      const blockedTerms = ['Voucher', 'voucher'];
+      for (final term in blockedTerms) {
+        expect(
+          playerFacingText,
+          isNot(contains(term)),
+          reason: 'Item data must not expose "$term" wording',
+        );
+      }
+    });
+
     test('owned item inventory state roundtrips storage shape', () {
       const inventory = RunInventoryState(
         ownedItems: [
