@@ -32,7 +32,8 @@
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
 | economy reward / price policy | Applied | `RummiEconomyConfig` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용 |
-| catalog value audit | Applied | `tools/sim/catalog_value_audit.py` | Item/Jester 가격과 effect role의 불일치 후보를 표시한다. 가격 재산정 적용은 아직 아님 |
+| catalog value audit | Applied | `tools/sim/catalog_value_audit.py` | Item/Jester 가격과 effect role의 불일치 후보를 runtime effective price 기준으로 표시한다 |
+| jester hook price adjustment | Applied | `data/common/items_common_v1.json` | `jester_hook` base 10G/effective 22G는 sell value +1 대비 과해 base 7G/effective 15G로 낮춤 |
 | catalog audit v2 price probe | Workspace pending | `tools/sim/run_balance_sim.dart` / `tools/sim/economy_audit.py` | `catalog_audit_v2` sim-only price band 추가. r120에서는 조정 후보 구매 이벤트가 없어 normalized와 결과 동일. economy audit가 content/proxy/source candidate별 구매 count와 audit watchlist를 출력 |
 | runtime offer audit | Workspace pending | `tools/sim/runtime_market_offer_audit.dart` | 실제 runtime offer r200에서 `reroll_token` 85회, `trade_ticket` 110회, `ride_the_bus` 68회, `jester_hook` 48회. 다음 판단 축은 노출 여부가 아니라 구매력/가격 대비 가치 |
 | Pack/Tarot-like/Planet-like role mapping | Spec only | docs only | 현재는 Item/market candidate role로 해석. 별도 타입 런타임은 미도입 |

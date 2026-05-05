@@ -330,7 +330,7 @@ catalog value audit:
   - runtime effective price 기준 즉시 자기 회수 후보는 없다. `reroll_token`은 base 5G지만 실제 구매가는 11G이고 기본 리롤 5G를 대체하므로 자기 회수형이 아니다.
   - 저가 성장 엔진 후보는 `ride_the_bus`다.
   - 저가 high-impact 후보는 `trade_ticket`, `ride_the_bus`다.
-  - 고가 low-impact 후보는 `jester_hook`이다.
+  - 고가 low-impact 후보는 `jester_hook`이었다.
 - 분류 보정:
   - `popcorn`은 영구 성장 엔진이 아니라 `tempo_score_boost`로 본다.
   - `wide_grip`은 단순 utility가 아니라 hand size와 board discard를 교환하는 `resource` 계열로 본다.
@@ -380,6 +380,14 @@ runtime offer audit:
   - 따라서 다음 판단 축은 노출 여부가 아니라, 실제 구매력과 가격 대비 가치다.
   - `catalog_value_audit.py`도 base price가 아니라 runtime effective price 기준으로 즉시 회수 후보를 판단하도록 수정했다.
   - 현재 단계에서 즉시 가격표를 바꾸지 않고, watchlist 후보의 역할별 기준가 후보를 좁힌 뒤 짧은 probe로 확인한다.
+
+watchlist price decision:
+
+- `reroll_token`: 보류. base 5G, effective 11G이며 기본 리롤 5G를 대체하므로 자기 회수형이 아니다.
+- `trade_ticket`: 보류. base 6G, effective 13G이며 runtime r200에서 충분히 노출된다. 가격보다 구매/사용 가치 검증이 먼저다.
+- `ride_the_bus`: 보류. base 6G, effective 13G이며 성장 조건이 붙어 있어 즉시 상향 근거가 부족하다.
+- `jester_hook`: 적용. base 10G, effective 22G는 `Jester sell value +1` 효과 대비 회수 조건이 너무 멀다. base 7G, sell 3G로 낮춰 effective 15G가 되게 했다.
+- 적용 후 `tools/sim/catalog_value_audit.py` 기준 expensive low-impact 후보는 0개다.
 
 ### Phase 3. Economy Probe
 

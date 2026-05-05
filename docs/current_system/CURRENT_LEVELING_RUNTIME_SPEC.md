@@ -97,6 +97,7 @@ Catalog economy normalization:
 | `banner` | 7G |
 | `gros_michel` | 7G |
 | `supernova` | 8G |
+| `jester_hook` | 7G |
 
 ## 4. Runtime Boss Modifier Cycle
 

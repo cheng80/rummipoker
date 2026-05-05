@@ -1,0 +1,200 @@
+# Overall Goal Progress
+
+> 문서 성격: 전체 목표 진도표 / 작업 수렴 기준
+> 목표: Balatro + Into the Breach 같은 전략성을 가진 덱빌딩 기반 로그라이트 완성
+> 상세 기준 문서: `docs/current_system/CURRENT_LEVELING_POLICY.md`, `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`
+
+이 문서는 세부 실험과 구현이 전체 완성 목표의 어느 축에 붙는지 추적한다.
+
+상태 기준:
+
+- `Done`: 현재 목표 기준으로 잠금 가능.
+- `In progress`: 구현/검증 중.
+- `Next`: 바로 다음 작업 후보.
+- `Planned`: 설계 필요.
+- `Blocked`: 별도 결정이나 선행 작업 필요.
+
+## 1. Goal Pillars
+
+| Pillar | Goal | Status | Progress | Current gate |
+|---|---|---|---:|---|
+| Core battle strategy | 보드/손패/확정/버림 선택이 매 전투마다 의미 있게 갈린다 | In progress | 65% | S1~S8 station curve와 boss 제약 재검증 |
+| Market deckbuilding | 후보 노출, 구매, 판매, 장착, 사용이 성장 선택의 중심이 된다 | In progress | 60% | 가격/보상/노출 기준선 정리 |
+| Economy leveling | 골드 보상과 가격이 선택 압박을 만들되 좋은 플레이를 부당하게 막지 않는다 | In progress | 55% | watchlist 가격 후보 1차 정리 후 r120~r400 probe |
+| Boss pressure | 후반 보스가 압박을 주며 S7~S8은 높은 실패 비중을 유지한다 | Next | 45% | economy 기준선 후 boss severity/target 재검증 |
+| UI/UX/game feel | 카드/타일/정산/마켓 액션이 게임적인 연출로 읽힌다 | In progress | 50% | 예정된 연출 보강 잔여 큐 완료 후 승인 대기 |
+| Roguelite meta | 게임오버 이후 보상으로 다음 run 선택지가 열린다 | Planned | 10% | 메타 성장 구조/보상 루프 설계 필요 |
+| Run restart loop | 패배/클리어 후 보상, 해금, 새 run 시작이 자연스럽게 이어진다 | Planned | 10% | 게임오버 보상 루프와 함께 설계 |
+| QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 35% | 기능 단위 테스트 + browser/compute QA |
+
+전체 추정 진도: 41%
+
+주의:
+
+- 이 퍼센트는 확정 지표가 아니라 현재 증거 기준의 작업 진척 추정치다.
+- 큰 설계 변경, 장기 sweep, browser QA, 저장 구조 변경이 생기면 퍼센트는 다시 조정한다.
+- 퍼센트는 “작업량”이 아니라 “goal 완성에 필요한 증거가 얼마나 갖춰졌는가”를 기준으로 한다.
+
+## 2. Percent Checklist
+
+| Area | Progress | Evidence | Missing evidence |
+|---|---:|---|---|
+| Battle rules and scoring | 75% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재 | 장기 station curve 재검증 필요 |
+| Boss modifier runtime cycle | 70% | S1~S8 cycle 적용, repeat/single rank는 구현 후 cycle 보류 | S7/S8 고난도 비중 재확인 |
+| Market offer and inventory | 65% | Jester/Item offer, 구매/판매/사용, 슬롯 제한, 재판매 정책 구현 | 가격/노출/구매력 최종 기준 필요 |
+| Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | 경제 probe 및 r400/r800 |
+| Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
+| Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
+| Roguelite meta growth | 10% | run modifier/high stakes 일부 기반 존재 | gameover reward, meta currency, unlock tree 설계/구현 |
+| Game over reward loop | 5% | 아직 본격 구현 전 | 보상 산식, UI, 저장, 새 run 연결 필요 |
+| Integrated QA | 35% | 단위 테스트와 웹 빌드 검증 이력 존재 | 전체 smoke script와 browser QA pass 필요 |
+
+## 3. Current Focus
+
+현재 집중 축:
+
+1. 경제/가격 기준선 정리
+2. S1~S8 레벨링 장기 sweep 재개
+3. 예정된 UI/UX/연출 보강 마무리
+
+현재 경제 판단:
+
+- `reroll_token`은 runtime effective price 기준 자기 회수형이 아니다.
+- `trade_ticket`, `ride_the_bus`는 watchlist로 유지하되 즉시 가격 변경은 보류한다.
+- `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
+- 다음 경제 검증은 가격 후보를 계속 늘리지 않고, 적용된 작은 변경이 clear/잔고/구매 압박을 망치지 않는지 확인한다.
+
+## 4. Completed Progress So Far
+
+게임 전반에서 이미 진행된 주요 축:
+
+| Area | Done | Evidence |
+|---|---|---|
+| Core battle loop | 보드 배치, 손패 드로우/버림, 라인 확정, 점수 계산, 정산 흐름 구현 | `lib/logic/rummi_poker_grid/`, `lib/providers/features/rummi_poker_grid/` |
+| Jester runtime | 점수형, 성장형, xmult형, economy형 Jester 효과 다수 구현 | `lib/logic/rummi_poker_grid/jester_meta.dart`, `data/common/jesters_common_phase5.json` |
+| Item runtime | quick slot, passive, gear/tool, market-use item 효과 구현 | `data/common/items_common_v1.json`, `lib/logic/rummi_poker_grid/item_effect_runtime.dart` |
+| Market UX | Jester/Item offer, 구매, 판매, 사용, reroll, 상세 패널, 슬롯 제한 구현 | `lib/views/game/widgets/game_shop_screen.dart`, `lib/logic/rummi_poker_grid/rummi_market_facade.dart` |
+| Item resale | Q-Slot/Passive/Tool/Gear/Inventory item 재판매 흐름 적용 | `GameSessionNotifier` item sell path, shop sell feedback tests |
+| Market animation | 구매 flight, 판매 feedback, offer reveal timing 개선 | `lib/views/game/widgets/game_shop_screen.dart`, `lib/views/game/game_presentation_timings.dart` |
+| Settlement flow | 정산 presentation pause gate, cash-out 복구, bottom sheet reveal 안정화 | `lib/views/game_view.dart`, `lib/views/game/widgets/game_cashout_widgets.dart` |
+| Background lifecycle | 게임/마켓 background pause, 복귀 옵션 dialog, BGM resume 보강 | `lib/views/game_view.dart`, `lib/views/game/widgets/game_shop_screen.dart`, `lib/resources/sound_manager.dart` |
+| Save/restore | active run 저장/복원, 정산 중 종료 후 cash-out 복구 확인 | `lib/services/active_run_save_service.dart`, debug fixture tests |
+| Boss modifiers | 색상/라인/face/all-score/first-confirm/confirm-count/repeat/single rank 계열 구현 | `lib/services/blind_selection_setup.dart`, `lib/logic/rummi_poker_grid/jester_meta.dart` |
+| Runtime boss cycle | S1~S8 boss cycle 적용 | `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md` |
+| Market policy | station band rarity/tag weight, missing growth exposure, high-stakes market pressure 적용 | `RummiStationBandMarketPolicy`, `RummiMarketRuntimeFacade` |
+| Economy runtime | reward 0.40 번역, 정수 `11/5` effective price scale 적용 | `RummiEconomyConfig`, catalog JSON |
+| Economy tooling | economy trace, gated known cost, reroll/slot/sell proxy, catalog value audit, runtime offer audit 추가 | `tools/sim/economy_audit.py`, `tools/sim/catalog_value_audit.py`, `tools/sim/runtime_market_offer_audit.dart` |
+| Leveling docs | current policy/runtime spec/ML baseline/applied status 문서화 | `docs/current_system/`, `docs/planning/LEVELING_APPLIED_STATUS.md` |
+| Goal workflow | 자동 진행 예외, 실험 수렴 규칙, 전체 진도표 규칙 추가 | `AGENTS.md`, `docs/planning/OVERALL_GOAL_PROGRESS.md` |
+
+최근 완료된 경제/레벨링 흐름:
+
+- `reward 0.40 / price 2.2 / catalog_normalized_v1` runtime economy 기준 적용.
+- `high_stakes` target 1.04 / reward 1.12 / market pressure profile 적용.
+- no-growth gate r120 확인: baseline no-growth는 S3부터 명확히 막히는 방향.
+- 성장 route 문제 확인: S4~S8, 특히 S7/S8이 아직 너무 쉬울 수 있어 economy 기준선 후 재검증 필요.
+- catalog audit를 runtime effective price 기준으로 보정.
+- runtime offer audit로 watchlist 후보가 실제 offer에 노출되는지 확인.
+
+## 5. Milestone Plan
+
+### M1. Economy And Price Baseline
+
+Status: In progress
+
+완료 조건:
+
+- runtime effective price 기준 catalog audit가 통과한다.
+- watchlist 후보의 조정/보류 판단이 문서화된다.
+- 가격 변경은 1차에서 1~2개 이하로 제한한다.
+- r120~r400 probe에서 `shop_slot_market_v9`가 none보다 부당하게 낮아지지 않는다.
+
+현재 남은 일:
+
+- 경제 probe로 잔고, unaffordable event, clear 역전 여부 확인.
+
+### M2. S1~S8 Leveling Curve
+
+Status: Next
+
+완료 조건:
+
+- S1은 막 플레이하지 않는 이상 대부분 통과한다.
+- S2는 성장이 있으면 쉽고, 성장이 없으면 간신히 통과한다.
+- S3부터 no-growth는 명확히 막힌다.
+- S4~S6은 성장 선택을 점차 검증한다.
+- S7~S8은 압박이 크고 clear 비중이 낮은 고난도 구간이다.
+
+현재 남은 일:
+
+- economy 기준선 적용 후 r400/r800 sweep.
+- 너무 쉬운 구간은 target/boss severity/market availability 중 하나만 좁혀 조정.
+
+### M3. UI/UX And Game Feel
+
+Status: In progress
+
+완료 조건:
+
+- 마켓 구매/판매/사용 카드 flight가 실제 카드 이동처럼 보인다.
+- 정산 bottom sheet는 최종 크기를 잡고 위에서부터 순차 reveal한다.
+- 전투/정산/마켓 timing은 `GamePresentationTimings`/`GamePresentationCue` 중심으로 관리한다.
+- 연출 검증은 browser/compute QA와 fixture로 확인한다.
+
+현재 남은 일:
+
+- 예정된 연출 큐 마무리.
+- 사용자가 지시한 대로 예정 연출 작업 종료 후 다음 목표 승인 대기.
+
+### M4. Roguelite Meta Growth
+
+Status: Planned
+
+완료 조건:
+
+- 게임오버 또는 클리어 후 run 결과가 meta reward로 변환된다.
+- meta reward는 다음 run의 선택지를 열지만, 인런 자동 지급으로 유저 선택을 대체하지 않는다.
+- 해금/성장으로 blind target, reward, market profile, run modifier가 어떻게 변하는지 명시된다.
+- 성장에 따른 레벨링 보정은 명시적 run modifier나 해금 선택으로만 적용한다.
+
+현재 남은 일:
+
+- meta currency/insight/해금 후보 설계.
+- game over reward formula 설계.
+- 새 run 선택 화면과 modifier 선택 UX 설계.
+
+### M5. Game Over Reward Loop
+
+Status: Planned
+
+완료 조건:
+
+- 패배 원인, 도달 Station, boss clear, 획득 성장에 따라 보상이 산정된다.
+- 보상은 다음 run으로 돌아가는 흐름을 만든다.
+- 패배 보상이 과도해 난이도를 무효화하지 않는다.
+- 저장/복구와 충돌하지 않는다.
+
+현재 남은 일:
+
+- 보상 항목과 저장 포맷 설계.
+- UI 흐름 설계.
+- 레벨링과 연결되는 run modifier gate 설계.
+
+### M6. Integrated QA
+
+Status: Planned
+
+완료 조건:
+
+- `flutter analyze`
+- 핵심 단위 테스트
+- `flutter build web`
+- browser/compute QA로 전투, 마켓, 정산, 저장/복구, 게임오버 루프 확인
+- fixture는 남길 것과 제거할 것을 문서 규칙대로 분리
+
+## 6. Work Discipline
+
+- 실험은 완료를 향해 수렴해야 한다.
+- 새 실험은 기준선, 중단 조건, 다음 구현 결정을 함께 적는다.
+- 실험 결과가 가격/target/boss/market 중 어느 레버로 이어지는지 불명확하면 추가 runs를 늘리지 않는다.
+- UI/UX/연출, 로그라이트 meta, 게임오버 루프는 레벨링과 별도 축으로 보되 최종 goal에서는 함께 잠근다.
