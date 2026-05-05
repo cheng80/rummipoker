@@ -389,6 +389,23 @@ Economy leveling gate:
 - balanced v9 57.0%는 낮은 편이다. 자동 지급이나 슬롯 고정 보정으로 풀지 말고, 다음 조정은 S8 후보군 availability 또는 boss severity/cycle 위치 쪽에서 검토한다.
 - S8 `confirm_count_tax_v2` 병목은 모든 조합에서 여전히 최상위다. 다만 v9에서 S8 boss stop이 balanced 49/800, power 42/800으로 남는 수준이라 즉시 완화보다 후속 후보군 availability probe가 먼저다.
 - board locked가 draw exhausted보다 많다. 자원 +1 지급으로 풀지 않고, board/move/discard 후보의 마켓 등장성 및 가격 접근성을 다음 probe 후보로 본다.
+- v91 market availability probe: `shop_slot_market_v10`~`shop_slot_market_v13`을 같은 economy 조건에서 r120 탐색 비교했다.
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 99920 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9,shop_slot_market_v10,shop_slot_market_v11,shop_slot_market_v12,shop_slot_market_v13 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --summary-only --jobs 4 --out-prefix logs/sim/economy_runtime_v91_market_probe_r120`
+
+| market | balanced clear | power clear | 1차 해석 |
+|---|---:|---:|---|
+| none | 52.5% | 63.3% | control |
+| v9 | 63.3% | 65.8% | 기존 후보. clear 상승, 압박 유지 |
+| v10 | 49.2% | 61.7% | balanced가 none보다 낮아 폐기 후보 |
+| v11 | 64.2% | 63.3% | balanced는 좋지만 power 개선 없음 |
+| v12 | 55.0% | 55.8% | power가 크게 낮아 폐기 후보 |
+| v13 | 65.8% | 65.8% | 좋아 보이나 seed 안정성 확인 필요 |
+
+- v13 raw check: 같은 economy 조건에서 `none,v9,v13`만 JSONL 포함 r120으로 재검사했다.
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 99980 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9,shop_slot_market_v13 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --jobs 4 --out-prefix logs/sim/economy_runtime_v91_market_probe_raw_r120`
+- raw check result: balanced none 56.7%, balanced v9 59.2%, balanced v13 51.7%, power none 65.8%, power v9 65.8%, power v13 60.0%.
+- raw audit: v9 final gold avg 6.51G, v13 final gold avg 6.45G로 경제 압박은 비슷하다. v13이 더 낮은 clear를 보인 이유는 잔고 완화가 아니라 후보/선택 proxy 안정성 문제로 본다.
+- 판정: 어느 정도 압박은 필요하지만, 이상적인 플레이 proxy가 none보다 낮아지면 안 된다. v13은 seed에 따라 none보다 낮아지는 케이스가 있어 적용하지 않는다. 현재는 v9를 유지하고, 다음 조정은 “압박 제거”가 아니라 “좋은 선택을 했을 때 통과 가능성 확보” 기준으로 별도 후보를 설계한다.
 
 ## 6. Read Order
 
