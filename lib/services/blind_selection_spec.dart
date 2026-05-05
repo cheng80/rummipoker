@@ -244,7 +244,7 @@ class BlindSelectionSpecBuilder {
     required BlindTier tier,
   }) {
     const table = <List<int>>[
-      [257, 284, 285],
+      [240, 264, 265],
       [372, 431, 439],
       [463, 537, 547],
       [580, 672, 685],

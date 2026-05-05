@@ -460,7 +460,7 @@ void main() {
     expect(session.blind.scoreTowardBlind, 70);
   });
 
-  test('보스 색상 약화는 해당 색상 포함 점수 라인을 40% 줄인다', () {
+  test('보스 색상 약화는 해당 색상 포함 점수 라인을 35% 줄인다', () {
     final board = RummiBoard();
     for (var i = 0; i < kBoardSize; i++) {
       board.setCell(2, i, t(i.isEven ? TileColor.red : TileColor.blue, i + 1));
@@ -478,14 +478,14 @@ void main() {
     final out = session.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(out.result.ok, true);
-    expect(out.result.scoreAdded, 42);
+    expect(out.result.scoreAdded, 46);
     expect(session.blind.scoreTowardBlind, 0);
     expect(out.result.lineBreakdowns.single.constraintPenalties, hasLength(1));
     final penalty = out.result.lineBreakdowns.single.constraintPenalties.single;
     expect(penalty.title, '빨간 타일 약화');
-    expect(penalty.ruleText, contains('40% 감소'));
-    expect(penalty.scoreDelta, -28);
-    expect(penalty.scoreMultiplier, 0.6);
+    expect(penalty.ruleText, contains('35% 감소'));
+    expect(penalty.scoreDelta, -24);
+    expect(penalty.scoreMultiplier, 0.65);
   });
 
   test('보스 가로줄 약화는 가로 점수 라인만 줄인다', () {

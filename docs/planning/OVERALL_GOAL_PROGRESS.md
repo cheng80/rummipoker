@@ -18,18 +18,18 @@
 
 | Pillar | Goal | Status | Progress | Current gate |
 |---|---|---|---:|---|
-| Core battle strategy | 보드/손패/확정/버림 선택이 매 전투마다 의미 있게 갈린다 | In progress | 65% | S1~S8 station curve와 boss 제약 재검증 |
+| Core battle strategy | 보드/손패/확정/버림 선택이 매 전투마다 의미 있게 갈린다 | In progress | 67% | 출품용 S1 entry 완화 후 S2~S8 curve 재검증 |
 | Market deckbuilding | 후보 노출, 구매, 판매, 장착, 사용이 성장 선택의 중심이 된다 | In progress | 60% | 가격/보상/노출 기준선 정리 |
 | Economy leveling | 골드 보상과 가격이 선택 압박을 만들되 좋은 플레이를 부당하게 막지 않는다 | In progress | 55% | watchlist 가격 후보 1차 정리 후 r120~r400 probe |
-| Boss pressure | 후반 보스가 압박을 주며 S7~S8은 높은 실패 비중을 유지한다 | Next | 45% | economy 기준선 후 boss severity/target 재검증 |
+| Boss pressure | 후반 보스가 압박을 주며 S7~S8은 높은 실패 비중을 유지한다 | Next | 47% | S8 병목 유지 확인 후 S2~S8 장기 재검증 |
 | UI/UX/game feel | 카드/타일/정산/마켓 액션이 게임적인 연출로 읽힌다 | In progress | 50% | 예정된 연출 보강 잔여 큐 완료 후 승인 대기 |
 | Roguelite meta | 게임오버 이후 보상으로 다음 run 선택지가 열린다 | In progress | 18% | Insight 보상 표시 이후 title/new run 연결 QA |
 | Run restart loop | 패배/클리어 후 보상, 해금, 새 run 시작이 자연스럽게 이어진다 | In progress | 22% | S8 boss 런 완료 후 title/new run 연결 QA |
-| QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 35% | 기능 단위 테스트 + browser/compute QA |
+| QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 37% | 기능 단위 테스트 + browser/compute QA |
 
-전체 추정 진도: 41%
+전체 추정 진도: 42%
 
-출품용 프로토타입 추정 진도: 62%
+출품용 프로토타입 추정 진도: 64%
 
 주의:
 
@@ -42,7 +42,7 @@
 
 | Area | Progress | Evidence | Missing evidence |
 |---|---:|---|---|
-| Battle rules and scoring | 75% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재 | 장기 station curve 재검증 필요 |
+| Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
 | Boss modifier runtime cycle | 70% | S1~S8 cycle 적용, repeat/single rank는 구현 후 cycle 보류 | S7/S8 고난도 비중 재확인 |
 | Market offer and inventory | 65% | Jester/Item offer, 구매/판매/사용, 슬롯 제한, 재판매 정책 구현 | 가격/노출/구매력 최종 기준 필요 |
 | Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | 경제 probe 및 r400/r800 |
@@ -50,7 +50,7 @@
 | Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
 | Roguelite meta growth | 18% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시 기반 존재 | unlock tree 확장과 새 run 연결 QA |
 | Game over reward loop | 26% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out | title/new run 연결 browser QA |
-| Integrated QA | 35% | 단위 테스트와 웹 빌드 검증 이력 존재 | 전체 smoke script와 browser QA pass 필요 |
+| Integrated QA | 37% | 단위 테스트, 웹 빌드, S1/S8 smoke 검증 이력 존재 | 전체 smoke script와 browser QA pass 필요 |
 
 ## 3. Current Focus
 
@@ -67,6 +67,7 @@
 - `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
 - r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
+- S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 ## 4. Competition Prototype Track
 

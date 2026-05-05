@@ -364,8 +364,8 @@ void main() {
 
       expect(restored.bossModifier?.id, RummiBossModifier.redDampener.id);
       expect(restored.bossModifier?.title, '빨간 타일 약화');
-      expect(restored.bossModifier?.ruleText, contains('40% 감소'));
-      expect(restored.bossModifier?.scoreMultiplier, 0.6);
+      expect(restored.bossModifier?.ruleText, contains('35% 감소'));
+      expect(restored.bossModifier?.scoreMultiplier, 0.65);
     });
 
     test('blind json preserves line-kind boss modifier', () {

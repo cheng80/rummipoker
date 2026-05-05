@@ -69,7 +69,7 @@
 | v68~v72 | 3구간 목표표와 runtime 전환. S1 첫 클리어 보너스 골드, station band market policy, missing growth market exposure를 runtime 방향으로 정리. |
 | v73~v76 | smoke/confirm sweep에서 v72 exposure가 과보정이 아님을 확인. `shop_slot_market_v9`는 path clear를 올리지만 S1/S8 boss 병목은 남김. |
 | v77~v79 | board pressure 후보 availability/가격 가능성 probe. 슬롯 수나 자동 자원보다 후보 노출/구매 가능성을 봐야 한다고 정리. |
-| v80~v83 | S1 boss 축 분리와 runtime display 확인. `red_dampener_v1` 0.6은 초반 보스를 무력화하지 않고, UI 설명 말줄임 없이 표시. |
+| v80~v83 | S1 boss 축 분리와 runtime display 확인. `red_dampener_v1`은 초반 보스를 무력화하지 않고, UI 설명 말줄임 없이 표시. |
 | v84~v86 | v72 exposure 재확인, S8 boss 축 분리, late offer exposure 확인. 점수 전환 후보는 충분하나 S8 boss에서 덱/타일 형상 보정 후보 노출은 낮음. |
 
 ## 5. 현재 수치 기준

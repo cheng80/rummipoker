@@ -550,7 +550,7 @@ void main() {
     expect(smallRow['boss_modifier_id'], isNull);
     expect(bossRow['boss_modifier_id'], 'red_dampener_v1');
     expect(bossRow['target_score'], greaterThan(smallRow['target_score']));
-    expect(bossRow['target_score'], 285);
+    expect(bossRow['target_score'], 265);
     expect(bossResult['final_score'], lessThan(smallResult['final_score']));
     expect(bossResult['score_ratio'], lessThan(smallResult['score_ratio']));
   });
@@ -4288,11 +4288,11 @@ void main() {
     expect(multiplierFor(threeBand, 1, 'small'), 0.95);
     expect(multiplierFor(threeBand, 1, 'big'), 0.70);
     expect(multiplierFor(threeBand, 1, 'boss'), 0.52);
-    expect(multiplierFor(s1SoftV2LateGuard, 1, 'small'), 0.95);
-    expect(multiplierFor(s1SoftV2LateGuard, 1, 'big'), 0.70);
+    expect(multiplierFor(s1SoftV2LateGuard, 1, 'small'), 0.89);
+    expect(multiplierFor(s1SoftV2LateGuard, 1, 'big'), 0.651);
     expect(multiplierFor(s1SoftV2LateGuard, 1, 'boss'), 0.52);
-    expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'small'), 0.95);
-    expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'big'), 0.70);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'small'), 0.89);
+    expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'big'), 0.651);
     expect(multiplierFor(s1SoftV2LateGuardV2, 1, 'boss'), 0.52);
 
     expect(multiplierFor(s1SoftV2, 3, 'boss'), 0.65);

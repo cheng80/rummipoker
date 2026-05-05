@@ -5051,8 +5051,8 @@ double? _baseScoreCurveV2S1Multiplier(String id, BlindTier tier) {
           'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2',
         ) =>
       switch (tier) {
-        BlindTier.small => 0.95,
-        BlindTier.big => 0.70,
+        BlindTier.small => 0.89,
+        BlindTier.big => 0.651,
         BlindTier.boss => 0.52,
       },
     _ when id.contains('_s1_soft') => switch (tier) {

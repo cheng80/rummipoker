@@ -54,7 +54,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('BOSS'), findsOneWidget);
-    expect(find.text('-40%'), findsOneWidget);
+    expect(find.text('-35%'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 1350));
   });
 
@@ -144,10 +144,10 @@ ConfirmedLineBreakdown _lineWithConstraintPenalty() {
       RummiConstraintPenaltyBreakdown(
         modifierId: 'red_dampener_v1',
         title: '빨간 타일 약화',
-        ruleText: '빨간 타일이 포함된 줄 점수 40% 감소',
-        markerText: '-40%',
-        scoreDelta: -28,
-        scoreMultiplier: 0.6,
+        ruleText: '빨간 타일이 포함된 줄 점수 35% 감소',
+        markerText: '-35%',
+        scoreDelta: -24,
+        scoreMultiplier: 0.65,
         affectedTileColors: [TileColor.red],
       ),
     ],

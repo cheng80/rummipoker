@@ -27,6 +27,7 @@
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
 | runtime boss modifier cycle | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 순환 보스 제약 표시/전투 적용 |
+| S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face 약화 3계열 적용 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
@@ -49,6 +50,7 @@ Applied:
 
 - S1~S8 `standard` target table은 blind 선택 런타임에 연결되어 있다.
 - small < big < boss 압박 구조는 유지한다.
+- S1은 출품용 프로토타입 기준으로 “거의 누구나 통과하는 입구” 역할을 우선해 240/264/265로 낮췄다.
 - S8 이후는 디버그/테스트용 단조 증가 fallback으로만 본다.
 
 Not applied:
@@ -62,6 +64,7 @@ Applied:
 - Boss blind에는 station별 runtime modifier가 붙는다.
 - 색상 타일 약화처럼 특정 타일에 걸리는 제약은 타일 위에 표시한다.
 - Boss 표시를 눌러 제약 팝업을 다시 확인할 수 있다.
+- S1 `red_dampener_v1`은 40% 감소에서 35% 감소로 완화했다. S1 통과 안정성을 위한 severity 조정이며, 자동 자원 지급이나 무료 성장 보정은 아니다.
 - 현재 구현된 제약 계열은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다.
 
 Partially applied:
@@ -315,6 +318,36 @@ v90 boss runtime long sweep:
 - `power + v9`가 73.2%까지 올라가므로 S7~S8 shape floor나 market weight 추가 강화는 보류한다.
 - S8 `confirm_count_tax_v2`는 병목을 유지하지만, v9에서는 S8 boss stop이 balanced 38/800, power 29/800까지 내려가므로 즉시 완화할 hard wall로 보지 않는다.
 - 자동 자원 지급/자동 보정은 여전히 근거가 없다. 필요 시 boss severity/cycle 위치 또는 S8 후보군 availability를 먼저 검토한다.
+
+v91 출품용 S1 entry smoke:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 90515 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/prototype_stability_v91_s1_easy_r120`
+- summary: `logs/sim/prototype_stability_v91_s1_easy_r120_summary.json`
+- S1 focused summary: `logs/sim/prototype_s1_easy_entry_v91_r240_summary.json`
+- note: r120은 출품 안정성 확인용 smoke이며, 장기 확정 sweep이 아니다.
+
+| loadout | market | path clear | avg total turn | top bottlenecks | stop reason |
+|---|---|---:|---:|---|---|
+| balanced | none | 45.0% | 1237.6 | S4 boss 10, S5 boss 7, S1 big 6, S1 boss 5, S8 boss 5 | board 46, draw 20 |
+| balanced | v9 | 65.0% | 1380.5 | S1 boss 5, S2 boss 4, S8 boss 4, S1 small 3, S4 boss 3 | board 28, draw 12, both 2 |
+| power | none | 63.3% | 1370.6 | S8 boss 9, S4 boss 4, S1 big 3, S8 big 3, S3 big 3 | board 33, draw 10, both 1 |
+| power | v9 | 65.8% | 1270.2 | S1 boss 6, S8 boss 5, S3 boss 4, S8 big 4, S1 big 3 | board 33, draw 8 |
+
+S1 focused r240:
+
+| loadout | market | S1 path clear | stop reason |
+|---|---|---:|---|
+| balanced | none | 94.2% | board 13, draw 1 |
+| balanced | v9 | 94.6% | board 11, draw 2 |
+| power | none | 94.2% | board 13, draw 1 |
+| power | v9 | 95.0% | board 11, draw 1 |
+
+판정:
+
+- S1 entry는 기존 90.8~92.9%에서 94.2~95.0%로 올라갔다.
+- draw exhaustion은 거의 사라졌고, 남은 S1 실패는 board lock 중심이다.
+- balanced+v9 전체 path clear는 61.7%에서 65.0%로 올라갔지만, S8 boss 병목은 남아 후반 압박을 지우지 않았다.
+- 출품용 기준으로 S1 target/severity 조정은 유지한다. 장기 확정은 별도 r400/r800으로 재검증한다.
 
 ## 5. Next Leveling Work
 

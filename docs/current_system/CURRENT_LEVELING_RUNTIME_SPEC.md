@@ -26,7 +26,7 @@
 
 | Station | Small | Big | Boss |
 |---:|---:|---:|---:|
-| S1 | 257 | 284 | 285 |
+| S1 | 240 | 264 | 265 |
 | S2 | 372 | 431 | 439 |
 | S3 | 463 | 537 | 547 |
 | S4 | 580 | 672 | 685 |
@@ -170,7 +170,7 @@ Runtime S1~S8 boss cycle:
 
 | Station | Modifier | 역할 |
 |---:|---|---|
-| S1 | `red_dampener_v1` | 색상 약화 family 대표 |
+| S1 | `red_dampener_v1` | 색상 약화 family 대표. 출품용 entry 안정화를 위해 35% 감소로 완화 |
 | S2 | `row_line_dampener_v1` | line kind 약화 |
 | S3 | `face_tile_dampener_v1` | 11~13 타일 압박 |
 | S4 | `column_line_dampener_v1` | line kind 약화 |

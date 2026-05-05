@@ -68,10 +68,10 @@ class RummiBossModifier {
     id: 'red_dampener_v1',
     category: RummiBossModifierCategory.tileColorWeaken,
     title: '빨간 타일 약화',
-    ruleText: '빨간 타일이 포함된 점수 라인은 40% 감소합니다.',
+    ruleText: '빨간 타일이 포함된 점수 라인은 35% 감소합니다.',
     markerText: '약화',
     affectedTileColors: [TileColor.red],
-    scoreMultiplier: 0.6,
+    scoreMultiplier: 0.65,
   );
 
   static const rowDampener = RummiBossModifier(

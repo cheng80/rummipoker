@@ -213,9 +213,9 @@ void main() {
         ruleset: RummiRuleset.currentDefaults,
       );
 
-      expect(small.targetScore, 257);
-      expect(big.targetScore, 284);
-      expect(boss.targetScore, 285);
+      expect(small.targetScore, 240);
+      expect(big.targetScore, 264);
+      expect(boss.targetScore, 265);
       expect(boss.boardDiscards, big.boardDiscards);
       expect(boss.handDiscards, 1);
       expect(boss.maxHandSize, 1);
@@ -267,7 +267,7 @@ void main() {
       }
 
       expect(targets, [
-        [257, 284, 285],
+        [240, 264, 265],
         [372, 431, 439],
         [463, 537, 547],
         [580, 672, 685],
