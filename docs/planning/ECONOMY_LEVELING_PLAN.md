@@ -404,6 +404,21 @@ jester hook price probe:
   - 다만 v9가 none보다 소폭 낮아진 결과라 이 값만으로 기준을 확정하지 않는다.
   - 다음은 가격 후보를 더 늘리지 않고 r400으로 clear 역전 여부를 확인한다.
 
+r400 follow-up:
+
+- command: `dart run tools/sim/run_balance_sim.dart --runs 400 --bot planner_v2 --seed 91540 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --out logs/sim/economy_jester_hook_price_r400.jsonl --summary-out logs/sim/economy_jester_hook_price_r400_summary.json`
+- result:
+  - balanced none 52.2%, balanced v9 57.5%
+  - power none 60.8%, power v9 61.3%
+  - v9 final gold avg 약 6.4G
+  - v9 S8 boss before 약 9.29G, after 약 7.16G
+  - unaffordable events 7596회
+  - immediate economy signal 없음
+- 판정:
+  - `jester_hook` 가격 조정은 r400에서도 즉시 부작용을 만들지 않았다.
+  - v9가 balanced/power 모두 none보다 clear를 떨어뜨리지 않았으므로, 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠근다.
+  - S7/S8 난이도와 후반 clear 비중은 경제 추가 변경이 아니라 target/boss severity/market availability sweep으로 별도 조정한다.
+
 ### Phase 3. Economy Probe
 
 목표:

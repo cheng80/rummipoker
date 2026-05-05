@@ -29,11 +29,14 @@
 
 전체 추정 진도: 41%
 
+출품용 프로토타입 추정 진도: 62%
+
 주의:
 
 - 이 퍼센트는 확정 지표가 아니라 현재 증거 기준의 작업 진척 추정치다.
 - 큰 설계 변경, 장기 sweep, browser QA, 저장 구조 변경이 생기면 퍼센트는 다시 조정한다.
 - 퍼센트는 “작업량”이 아니라 “goal 완성에 필요한 증거가 얼마나 갖춰졌는가”를 기준으로 한다.
+- 출품용 프로토타입 퍼센트는 전체 완성이 아니라, 심사자가 플레이 가능한 핵심 vertical slice를 기준으로 한다.
 
 ## 2. Percent Checklist
 
@@ -62,9 +65,57 @@
 - `reroll_token`은 runtime effective price 기준 자기 회수형이 아니다.
 - `trade_ticket`, `ride_the_bus`는 watchlist로 유지하되 즉시 가격 변경은 보류한다.
 - `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
-- r120 경제 probe에서 즉시 경제 경고는 없었지만 v9가 none보다 소폭 낮아, 다음은 가격 후보를 늘리지 않고 r400으로 확인한다.
+- r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
+- 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
 
-## 4. Completed Progress So Far
+## 4. Competition Prototype Track
+
+목표: `2026-05-14 15:00 KST` BIC 일반부문 1차 접수용 플레이 가능 빌드.
+
+공식 접수 안내 기준:
+
+- 일반부문 접수 기간: `2026-04-08` ~ `2026-05-14`
+- 접수 시작/마감시간: 오후 3시 KST
+- 실행 가능한 게임 빌드 제출 필수
+- 접수 마감 이후 빌드 업데이트 불가
+
+출품용 프로토타입은 전체 goal 100%가 아니라 아래 조건을 잠그는 것을 목표로 한다.
+
+| Gate | Prototype target | Status | Progress |
+|---|---|---|---:|
+| Playable vertical slice | 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산/패배 -> 재시작 흐름이 끊기지 않는다 | In progress | 68% |
+| Strategy readability | 타일/카드/아이템/보스 제약이 설명 없이도 선택 압박으로 읽힌다 | In progress | 60% |
+| Economy baseline | 골드와 가격이 과다 지급처럼 보이지 않고, 좋은 플레이는 부당하게 막지 않는다 | In progress | 58% |
+| Roguelite loop stub | 게임오버 보상과 다음 run 복귀가 최소 형태로 존재한다 | Planned | 15% |
+| Game feel baseline | 마켓/전투/정산의 대표 액션 연출이 어색하지 않다 | In progress | 55% |
+| Submission QA | 웹 빌드, 저장/복구, 플레이 영상 촬영 가능한 안정성을 확보한다 | In progress | 40% |
+
+출품 모드 작업 원칙:
+
+- 세부 수치 완성보다 큰 구조를 먼저 잠근다.
+- 경제/레벨링은 `good enough` 기준으로 닫고, 상세 polishing은 출품 후 트랙으로 분리한다.
+- 신규 시스템은 심사용 플레이 흐름을 막는 경우에만 추가한다.
+- 5월 12일을 feature freeze로 보고, 5월 13일은 QA/빌드/영상/제출 자료에 둔다.
+- 5월 14일은 수정일이 아니라 제출 버퍼로 남긴다.
+
+출품 전 필수 완료:
+
+- r400 경제 probe로 현재 가격 변경이 부작용을 만들지 않는지 확인.
+- `jester_hook` 가격 조정 r400 follow-up은 통과했으므로 추가 가격 후보 확장은 출품 후 polishing으로 넘긴다.
+- S1~S8 전체 sweep은 장기 확정용이 아니라 출품 안정성용 최소 판단으로 제한.
+- 게임오버 보상 루프는 저장 구조를 크게 깨지 않는 최소 구현으로 제한.
+- 연출은 신규 대형 시스템보다 이미 있는 전투/마켓/정산 대표 액션의 어색함 제거에 집중.
+- `flutter analyze`, 핵심 `flutter test`, `flutter build web`, browser/compute QA를 통과.
+
+출품 후 polishing으로 분리:
+
+- S7/S8 장기 clear 비율 정밀 조정.
+- 전체 카탈로그 가격 2차 재산정.
+- meta growth tree 확장.
+- 반복 플레이용 해금/런 modifier 깊이 확장.
+- 모바일/iPad 레이아웃 세부 polish.
+
+## 5. Completed Progress So Far
 
 게임 전반에서 이미 진행된 주요 축:
 
@@ -96,7 +147,7 @@
 - catalog audit를 runtime effective price 기준으로 보정.
 - runtime offer audit로 watchlist 후보가 실제 offer에 노출되는지 확인.
 
-## 5. Milestone Plan
+## 6. Milestone Plan
 
 ### M1. Economy And Price Baseline
 
@@ -192,7 +243,7 @@ Status: Planned
 - browser/compute QA로 전투, 마켓, 정산, 저장/복구, 게임오버 루프 확인
 - fixture는 남길 것과 제거할 것을 문서 규칙대로 분리
 
-## 6. Work Discipline
+## 7. Work Discipline
 
 - 실험은 완료를 향해 수렴해야 한다.
 - 새 실험은 기준선, 중단 조건, 다음 구현 결정을 함께 적는다.
