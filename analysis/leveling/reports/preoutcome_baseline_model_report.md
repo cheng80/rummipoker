@@ -10,9 +10,9 @@
 ## Dataset
 
 - feature table: `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv`
-- rows: 13113
-- train rows: 9834
-- test rows: 3279
+- rows: 14544
+- train rows: 10908
+- test rows: 3636
 - target: `clear_rate`
 - feature mode: `preoutcome`
 
@@ -35,6 +35,9 @@ Source summaries:
 - `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
 - `logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json`
 - `logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json`
+- `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- `logs/sim/post_lane_reroll_economy_current_boss_r400_summary.json`
+- `logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json`
 
 ## Feature And Target Definition
 
@@ -105,8 +108,8 @@ Reason:
 
 ## Metric
 
-- MAE: 0.0367
-- R2: 0.1056
+- MAE: 0.0360
+- R2: 0.1548
 
 Interpretation:
 
@@ -118,16 +121,16 @@ Interpretation:
 
 | Feature | Importance |
 |---|---:|
-| `loadout_id_baseline__shop_slot_market_v9` | 0.1939 |
-| `station` | 0.1119 |
-| `boss_family_index` | 0.0749 |
-| `sweep_reward_scale` | 0.0479 |
-| `loadout_id_baseline` | 0.0294 |
-| `sweep_price_scale` | 0.0273 |
-| `resolved_market_profile_s1_candidate_uncommon_build_jester` | 0.0239 |
-| `resolved_market_profile_s1_candidate_planet_rank_level` | 0.0230 |
-| `sim_boss_constraint_id_target_spike_wall` | 0.0226 |
-| `resolved_market_profile_s1_candidate_tarot_build_pack` | 0.0219 |
+| `loadout_id_baseline__shop_slot_market_v9` | 0.2004 |
+| `station` | 0.1082 |
+| `boss_family_index` | 0.0706 |
+| `sweep_reward_scale` | 0.0507 |
+| `loadout_id_baseline` | 0.0326 |
+| `resolved_market_profile_s1_candidate_uncommon_build_jester` | 0.0272 |
+| `sweep_price_scale` | 0.0267 |
+| `resolved_market_profile_s1_candidate_tarot_build_pack` | 0.0244 |
+| `sim_boss_constraint_id_target_spike_wall` | 0.0238 |
+| `resolved_market_profile_s1_candidate_planet_rank_level` | 0.0236 |
 
 ## Artifacts
 

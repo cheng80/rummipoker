@@ -719,6 +719,55 @@ void main() {
     expect(penalty.scoreDelta, -37);
   });
 
+  test('보스 연속 확정 압박은 두 번째 confirm부터 적용된다', () {
+    final firstBoard = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      firstBoard.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final firstSession = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.confirmLimitTax,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: firstBoard),
+      board: firstBoard,
+    );
+
+    final firstOut = firstSession.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(firstOut.result.ok, true);
+    expect(firstOut.result.scoreAdded, 150);
+    expect(firstOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
+
+    final secondBoard = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      secondBoard.setCell(2, i, t(TileColor.red, i + 1));
+    }
+    final secondSession = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        bossModifier: RummiBossModifier.confirmLimitTax,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: secondBoard),
+      board: secondBoard,
+    );
+    secondSession.confirmCountThisStation = 1;
+
+    final secondOut = secondSession.confirmAllFullLines(
+      applyScoreToBlind: false,
+    );
+
+    expect(secondOut.result.ok, true);
+    expect(secondOut.result.scoreAdded, 105);
+    final penalty =
+        secondOut.result.lineBreakdowns.single.constraintPenalties.single;
+    expect(penalty.title, '연속 확정 압박');
+    expect(penalty.markerText, '2+');
+    expect(penalty.scoreDelta, -45);
+  });
+
   test('보스 반복 족보 약화는 이전 confirm에 나온 같은 족보를 줄인다', () {
     final board = RummiBoard();
     board.setCell(2, 0, t(TileColor.red, 4));

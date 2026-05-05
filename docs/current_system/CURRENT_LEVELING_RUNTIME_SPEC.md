@@ -155,11 +155,12 @@ Weighted boss pool v3:
 
 Runtime migration status:
 
-- 현재 구현된 런타임 보스 제약은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다.
+- 현재 구현된 런타임 보스 제약은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다. `confirm_limit_tax_v1`은 `confirmCountWeaken` category의 threshold variant로 구현됐지만 S1~S8 cycle에는 아직 편입하지 않았다.
 - `face_tile_dampener`는 runtime boss modifier로 적용한다. 기존 타일 대상 약화 구조를 확장하며, 11~13 face tile 압박이라는 의미도 분명하다.
 - `all_score_dampener`는 모든 점수 라인 20% 감소로 적용한다. 특정 타일 표시 대상이 아니므로 보스 팝업/정산 penalty 표시를 기준으로 읽힌다.
 - `first_confirm_tax`는 첫 confirm 점수 라인 30% 감소로 적용한다.
 - `confirm_count_tax_v2`는 세 번째 confirm부터 점수 라인 25% 감소로 적용한다. 새 저장 필드 없이 기존 `confirmCountThisStation`을 사용한다.
+- `confirm_limit_tax_v1`은 두 번째 confirm부터 점수 라인 30% 감소로 적용한다. 기존 `confirmCountThisStation`을 사용하며, boss modifier JSON의 선택 필드로 threshold를 round-trip한다. 현재는 1차 확장 후보 구현 상태이고 S1~S8 cycle에는 넣지 않았다.
 - `repeat_rank_pressure_v4`는 이전 confirm에서 나온 같은 족보를 다시 확정하면 점수 라인을 20% 감소시키는 modifier로 구현됐다. 확정된 족보 이력은 `confirmedRanksThisStation`으로 저장/복원한다.
 - `single_rank_pressure`는 A안 기준으로 첫 confirm 족보를 다시 확정하면 점수 라인을 30% 감소시키는 modifier로 구현됐다. 타일별 제약이 아니므로 타일 배지는 표시하지 않고 보스 팝업/정산 penalty로 읽힌다.
 - `repeat_rank_pressure_v4`, `single_rank_pressure`는 아직 S1~S8 runtime boss cycle에는 편입하지 않았다. cycle 편입 전 별도 sweep으로 severity와 배치 위치를 검증한다.

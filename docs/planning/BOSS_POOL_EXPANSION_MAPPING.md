@@ -10,8 +10,8 @@
 
 | Layer | Count | Notes |
 |---|---:|---|
-| Simulation proxy pool | 10 | `CURRENT_LEVELING_RUNTIME_SPEC.md`의 boss constraint proxy 기준 |
-| Runtime modifier type | 8 | battle/save/display/settlement penalty 경로가 있는 modifier 타입 |
+| Simulation proxy pool | 10+3 | `CURRENT_LEVELING_RUNTIME_SPEC.md`의 boss constraint proxy 기준 + 1차 확장 experiment axis |
+| Runtime modifier type | 9 | battle/save/display/settlement penalty 경로가 있는 modifier 타입. `confirm_limit_tax_v1`은 구현됐지만 cycle 미편입 |
 | S1~S8 runtime cycle slot | 8 | Station마다 1개씩 고정 배치 |
 
 현재 문제:
@@ -80,6 +80,139 @@
 3. `reward_tax_by_repeat_rank_v1`
 4. `rank_family_decay_v1`
 5. `jester_skip_one_v1`
+
+## 4.1 Simulation Proxy 1차 적용 상태
+
+2026-05-06 기준으로 아래 후보는 runtime cycle이 아니라 simulation-only experiment axis에 먼저 추가했다.
+
+Experiment id:
+
+- `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1`
+
+추가된 simulation proxy:
+
+| Proxy | Pattern | 현재 처리 |
+|---|---|---|
+| `min_contributor_count_v1` | 확정 라인의 최소 기여 타일 수 압박 | 기여 타일 4개 미만 라인 25% penalty |
+| `rank_family_decay_v1` | 같은 족보 family 반복 사용 압박 | 이미 쓴 set/sequence/color/hybrid family를 다시 쓰면 15% penalty |
+| `confirm_limit_tax_v1` | 후속 확정 tax 압박 | 두 번째 confirm부터 30% penalty, boss target multiplier 0.82 |
+
+r80 exploratory smoke:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 90680 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/boss_expansion_probe_v1_r80`
+- summary: `logs/sim/boss_expansion_probe_v1_r80_summary.json`
+- report: `logs/sim/boss_expansion_probe_v1_r80_report.md`
+
+Path clear:
+
+| Experiment | Loadout | Market | Clear |
+|---|---|---|---:|
+| current boss pool baseline | balanced | none | 51.25% |
+| current boss pool baseline | balanced | v9 | 80.00% |
+| current boss pool baseline | power | none | 70.00% |
+| current boss pool baseline | power | v9 | 66.25% |
+| boss expansion probe v1 | balanced | none | 50.00% |
+| boss expansion probe v1 | balanced | v9 | 66.25% |
+| boss expansion probe v1 | power | none | 55.00% |
+| boss expansion probe v1 | power | v9 | 71.25% |
+
+판정:
+
+- r80은 탐색용이며 gate 완료 근거가 아니다.
+- 새 proxy 자체는 실행 가능하고 boss 전투 단위 clear는 모두 91% 이상이었다.
+- path 기준으로 `balanced + v9`와 `power + none`이 같은 seed baseline보다 내려가므로, 이 profile을 바로 runtime 편입 후보로 잠그지 않는다.
+- 다음은 r120 재확인 또는 severity 완화 profile을 비교한 뒤 안전한 runtime 후보를 좁힌다.
+
+r120 exploratory follow-up:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 906120 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/boss_expansion_probe_v1_r120`
+- summary: `logs/sim/boss_expansion_probe_v1_r120_summary.json`
+- report: `logs/sim/boss_expansion_probe_v1_r120_report.md`
+
+Path clear:
+
+| Loadout | Market | Clear | 주요 병목 |
+|---|---|---:|---|
+| balanced | none | 48.3% | S4 boss, S5 boss, S8 boss |
+| balanced | v9 | 60.8% | S1 boss, S7 boss, S8 boss |
+| power | none | 62.5% | S1 boss, S8 boss |
+| power | v9 | 69.2% | S1 boss, S7 boss, S8 boss |
+
+Boss 전투 단위 clear:
+
+| Proxy | Clear |
+|---|---:|
+| `min_contributor_count_v1` | 99.3% |
+| `rank_family_decay_v1` | 97.1% |
+| `confirm_limit_tax_v1` | 99.1% |
+
+Follow-up 판정:
+
+- `boss_expansion_probe_v1`은 r120에서도 실행 안정성은 있다.
+- S1/S7/S8 boss 병목이 남아 있고, v9가 none보다 낮아지는 역전은 없다.
+- 단, balanced v9가 60.8%로 과도하게 여유로운 후보는 아니므로 runtime cycle 편입은 아직 보류한다.
+- 다음 작은 작업은 severity 완화가 아니라, 후보별 단독 profile 또는 runtime 구현 가능성이 높은 `min_contributor_count_v1` / `confirm_limit_tax_v1` 중심 분리 smoke다.
+
+후보별 r80 split probe:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 90780 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_min_contributor_probe_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_rank_family_probe_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_confirm_limit_probe_v1 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/boss_expansion_split_probe_v1_r80`
+- summary: `logs/sim/boss_expansion_split_probe_v1_r80_summary.json`
+- report: `logs/sim/boss_expansion_split_probe_v1_r80_report.md`
+
+Path clear:
+
+| Profile | Loadout | none | v9 | 1차 판정 |
+|---|---|---:|---:|---|
+| `min_contributor` | balanced | 66.2% | 60.0% | v9 역전 신호, runtime 보류 |
+| `min_contributor` | power | 68.8% | 71.2% | 단독으론 가능하나 balanced 역전 때문에 보류 |
+| `rank_family` | balanced | 55.0% | 53.8% | v9 역전 신호, runtime 보류 |
+| `rank_family` | power | 65.0% | 68.8% | 단독으론 가능하나 balanced 역전 때문에 보류 |
+| `confirm_limit` | balanced | 47.5% | 62.5% | 1차 runtime 후보로 좁힘 |
+| `confirm_limit` | power | 57.5% | 71.2% | 1차 runtime 후보로 좁힘 |
+
+Boss 전투 단위 clear:
+
+| Profile | Proxy | Clear |
+|---|---|---:|
+| `min_contributor` | `min_contributor_count_v1` | 97.9% |
+| `rank_family` | `rank_family_decay_v1` | 98.0% |
+| `confirm_limit` | `confirm_limit_tax_v1` | 98.7% |
+
+Split 판정:
+
+- `confirm_limit_tax_v1`은 r80 split에서 v9가 none보다 명확히 높고, S1/S8 boss 병목도 남아 있어 1차 runtime 구현 후보로 좁힌다.
+- `min_contributor_count_v1`과 `rank_family_decay_v1`은 boss 전투 단위로는 안전하지만 path 기준 balanced v9 역전 신호가 있어 simulation-only 보류한다.
+- 다음 작은 작업은 `confirm_limit_tax_v1` runtime 구현 가능 경로 확인이다. 저장 포맷 변경 없이 기존 confirm count 상태로 처리 가능한지, 보스 표시와 정산 penalty가 자연스럽게 이어지는지 먼저 본다.
+
+Runtime path check:
+
+- `confirm_limit_tax_v1`은 runtime modifier로 구현했다.
+- 저장/복원은 새 저장 schema 없이 `RummiBossModifier` JSON의 `firstAffectedConfirmOrdinal` 선택 필드로 round-trip한다. 기존 저장 payload는 기본값 3으로 복원되어 `confirm_count_tax_v2` 의미를 유지한다.
+- 전투 penalty는 기존 `confirmCountThisStation`과 confirm ordinal 경로를 재사용한다.
+- HUD/정산 penalty 표시는 기존 `confirmCountWeaken` category 경로를 재사용한다.
+- S1~S8 runtime cycle에는 아직 편입하지 않았다.
+
+r400 leveling revalidation:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 400 --seed 908400 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_confirm_limit_probe_v1 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/boss_expansion_confirm_limit_v1_r400`
+- summary: `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- report: `logs/sim/boss_expansion_confirm_limit_v1_r400_report.md`
+
+Path clear:
+
+| Loadout | Market | Clear | 주요 병목 |
+|---|---|---:|---|
+| balanced | none | 50.7% | S1 boss, S4 boss, S8 boss |
+| balanced | v9 | 68.8% | S1 boss, S4/S5 boss, S8 boss |
+| power | none | 63.5% | S1 boss, S8 boss |
+| power | v9 | 69.0% | S1 boss, S7/S8 boss |
+
+Leveling 판정:
+
+- v9가 none보다 낮아지는 역전은 없다.
+- S1/S8 boss 병목이 남아 있어 후반 압박을 지우지 않는다.
+- `confirm_limit_tax_v1` boss 전투 단위 clear는 98.5%라 단독 boss가 과도하게 막는 후보는 아니다.
+- 이 결과는 확장 boss pool 기준 r400 레벨링 probe로 기록한다. 다음 gate는 같은 확장 profile 기준 경제 raw probe다.
 
 ## 5. Excluded From 1차
 

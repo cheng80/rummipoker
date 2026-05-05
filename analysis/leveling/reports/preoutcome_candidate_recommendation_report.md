@@ -15,12 +15,12 @@
 
 | Rank | Candidate | Category | Score | v9 avg | none avg | delta | S1 boss | S8 boss |
 |---:|---|---|---:|---:|---:|---:|---:|---:|
-| 1 | `economy_r038_p240_spend_choice` | economy | 3.2594 | 0.9845 | 0.9778 | 0.0067 | 0.9709 | 0.9445 |
-| 2 | `economy_r040_p240_spend_choice` | economy | 3.2518 | 0.9861 | 0.9782 | 0.0079 | 0.9732 | 0.9476 |
-| 3 | `economy_r040_p220_spend_choice` | economy | 3.2326 | 0.9878 | 0.9799 | 0.0078 | 0.9734 | 0.9571 |
-| 4 | `target_boss_098` | target | 3.0907 | 0.9875 | 0.9795 | 0.0080 | 0.9708 | 0.9558 |
-| 5 | `current_runtime_trace` | baseline | 3.0761 | 0.9887 | 0.9814 | 0.0073 | 0.9694 | 0.9635 |
-| 6 | `early_boss_soft_s1_098_s2_100_s3_100` | target | 3.0761 | 0.9887 | 0.9814 | 0.0073 | 0.9694 | 0.9635 |
+| 1 | `economy_r038_p240_spend_choice` | economy | 3.2360 | 0.9857 | 0.9793 | 0.0064 | 0.9712 | 0.9555 |
+| 2 | `economy_r040_p240_spend_choice` | economy | 3.2140 | 0.9873 | 0.9793 | 0.0081 | 0.9723 | 0.9678 |
+| 3 | `economy_r040_p220_spend_choice` | economy | 3.1749 | 0.9889 | 0.9826 | 0.0063 | 0.9732 | 0.9839 |
+| 4 | `target_boss_098` | target | 3.0349 | 0.9870 | 0.9793 | 0.0077 | 0.9741 | 0.9800 |
+| 5 | `current_runtime_trace` | baseline | 3.0137 | 0.9912 | 0.9849 | 0.0063 | 0.9714 | 0.9912 |
+| 6 | `early_boss_soft_s1_098_s2_100_s3_100` | target | 3.0137 | 0.9912 | 0.9849 | 0.0063 | 0.9714 | 0.9912 |
 
 ## Interpretation
 

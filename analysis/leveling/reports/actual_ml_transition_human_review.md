@@ -10,8 +10,8 @@ It does not enable production ML, runtime auto-balancing, or automatic target/bo
 
 | Dataset | Rows | Target | Metric | Judgment |
 |---|---:|---|---|---|
-| station/tier pre-outcome table | 13,113 | `clear_rate` | MAE 0.0401, R2 0.1205 | Enough for feature sanity checks, weak for autonomous recommendation |
-| sequence/path pre-outcome table | 80 | `path_clear_rate` | MAE 0.0796, R2 0.3974 | Better aligned with run-level decisions, still small |
+| station/tier pre-outcome table | 14,544 | `clear_rate` | MAE 0.0360, R2 0.1548 | Enough for feature sanity checks, still weak for autonomous recommendation |
+| sequence/path pre-outcome table | 92 | `path_clear_rate` | MAE 0.0651, R2 0.4202 | Better aligned with run-level decisions, still small |
 
 The existing heuristic pipeline was used as a bootstrap source:
 
@@ -28,6 +28,14 @@ Fresh economy probes were also generated for the top economy candidates:
 
 - `logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json`
 - `logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json`
+
+After boss pool expansion, additional inputs were added:
+
+- `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- `logs/sim/post_lane_reroll_economy_current_boss_r400_summary.json`
+- `logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json`
+
+The expanded-boss data improves coverage but does not make the station/tier model strong enough for autonomous recommendations.
 
 ## Model Artifacts
 
@@ -87,16 +95,45 @@ Interpretation:
 - That is a red flag under the current policy: a good market proxy should not be worse than none/control.
 - r80 is not enough to close the economy gate, but it is enough to prevent calling the post lane-reroll economy state closed.
 
+### Expanded Boss Economy Fresh r120
+
+The updated recommendation table ranked `economy_r038_p240_spend_choice` and `economy_r040_p240_spend_choice` above the current baseline, but fresh resimulation did not support applying either candidate.
+
+| Candidate | Loadout | Market | Path clear | Final gold avg | S8 boss start gold |
+|---|---|---|---:|---:|---:|
+| reward 0.38 / price 2.4 | balanced | none | 54.2% | 47.14G | 66.30G |
+| reward 0.38 / price 2.4 | balanced | v9 | 52.5% | 5.72G | 8.77G |
+| reward 0.38 / price 2.4 | power | none | 58.3% | 51.34G | 66.30G |
+| reward 0.38 / price 2.4 | power | v9 | 60.8% | 6.17G | 8.77G |
+| reward 0.40 / price 2.4 | balanced | none | 53.3% | 54.14G | 75.19G |
+| reward 0.40 / price 2.4 | balanced | v9 | 51.7% | 6.39G | 8.91G |
+| reward 0.40 / price 2.4 | power | none | 57.5% | 58.52G | 75.19G |
+| reward 0.40 / price 2.4 | power | v9 | 60.8% | 6.83G | 8.91G |
+
+Sources:
+
+- `logs/sim/ml_expanded_boss_economy_r038_p240_v1_r120_summary.json`
+- `logs/sim/ml_expanded_boss_economy_r038_p240_v1_r120_economy_audit.json`
+- `logs/sim/ml_expanded_boss_economy_r040_p240_v1_r120_summary.json`
+- `logs/sim/ml_expanded_boss_economy_r040_p240_v1_r120_economy_audit.json`
+
+Interpretation:
+
+- Both top economy candidates still make balanced+v9 lower than balanced+none.
+- That violates the policy expectation that a good market proxy should not be worse than none/control.
+- Keep `reward 0.40 / price 2.2 / catalog_normalized_v1` as the safer baseline for now.
+- The updated model is useful for selecting probes, but fresh resimulation remains the gate.
+
 ## Human Review Decision
 
 Current decision:
 
 - Do not apply target changes.
 - Do not apply new economy changes.
-- Keep the current runtime baseline until a larger post lane-reroll economy probe closes the balanced v9 regression risk.
-- Treat the offline ML transition as implemented for candidate ranking and report generation, not as production ML.
+- Keep the current runtime economy baseline. Expanded boss r400 economy has no immediate warning, but the model's top economy candidates failed fresh r120 on balanced+v9.
+- Treat the offline ML transition as implemented for candidate ranking, feature rebuild, metric generation, and fresh-resimulation filtering. It is still not production ML and does not auto-apply runtime values.
 
 Next required gate:
 
-- post lane-reroll economy probe with reroll spend, final gold, S8 boss starting gold, S1/S2/S3/S7/S8 bottlenecks, board locked, and draw exhausted.
-
+- human approval before any runtime target/boss/market/economy value change.
+- if more ML work is needed, expand the candidate grid around boss pool placement and market availability rather than applying the top economy candidates directly.

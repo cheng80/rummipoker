@@ -59,6 +59,92 @@ void main() {
   });
 
   test(
+    'sim boss expansion penalties cover contributor and rank family probes',
+    () {
+      const contributorConstraint = BalanceSimBossConstraint(
+        id: 'min_contributor_count_v1',
+        family: 'line_contributor_requirement',
+        sourceReference: 'test',
+        minContributingTileCount: 4,
+        minContributorScoreMultiplier: 0.75,
+      );
+      const familyConstraint = BalanceSimBossConstraint(
+        id: 'rank_family_decay_v1',
+        family: 'rank_family_decay',
+        sourceReference: 'test',
+        rankFamilyDecayScoreMultiplier: 0.85,
+      );
+      final shortLine = ConfirmedLineBreakdown(
+        ref: LineRef.row(0),
+        rank: RummiHandRank.twoPair,
+        baseScore: 40,
+        finalScore: 40,
+        jesterBonus: 0,
+        hasScoringFaceCard: false,
+        effects: [],
+        contributingCells: const [(0, 0), (0, 1), (0, 2)],
+      );
+      final fullLine = ConfirmedLineBreakdown(
+        ref: LineRef.row(1),
+        rank: RummiHandRank.flush,
+        baseScore: 80,
+        finalScore: 80,
+        jesterBonus: 0,
+        hasScoringFaceCard: false,
+        effects: [],
+        contributingCells: const [(1, 0), (1, 1), (1, 2), (1, 3)],
+      );
+      final sameFamilyLine = ConfirmedLineBreakdown(
+        ref: LineRef.row(2),
+        rank: RummiHandRank.threeOfAKind,
+        baseScore: 100,
+        finalScore: 100,
+        jesterBonus: 0,
+        hasScoringFaceCard: false,
+        effects: [],
+      );
+
+      final contributorPenalty = simBossConstraintPenalty(
+        constraint: contributorConstraint,
+        lineBreakdowns: [shortLine, fullLine],
+        usedRanks: const {},
+        firstRank: null,
+        confirmActionIndex: 0,
+      );
+      final familyPenalty = simBossConstraintPenalty(
+        constraint: familyConstraint,
+        lineBreakdowns: [sameFamilyLine],
+        usedRanks: {RummiHandRank.twoPair.name},
+        firstRank: null,
+        confirmActionIndex: 1,
+      );
+      final emptyContributorLine = ConfirmedLineBreakdown(
+        ref: LineRef.row(3),
+        rank: RummiHandRank.flush,
+        baseScore: 80,
+        finalScore: 80,
+        jesterBonus: 0,
+        hasScoringFaceCard: false,
+        effects: [],
+      );
+      final emptyContributorPenalty = simBossConstraintPenalty(
+        constraint: contributorConstraint,
+        lineBreakdowns: [emptyContributorLine],
+        usedRanks: const {},
+        firstRank: null,
+        confirmActionIndex: 0,
+      );
+
+      expect(contributorPenalty.scorePenalty, 10);
+      expect(contributorPenalty.triggerCount, 1);
+      expect(familyPenalty.scorePenalty, 15);
+      expect(familyPenalty.triggerCount, 1);
+      expect(emptyContributorPenalty.scorePenalty, 0);
+      expect(emptyContributorPenalty.triggerCount, 0);
+    },
+  );
+
+  test(
     'CLI writes deterministic JSONL rows with repeated loadout args',
     () async {
       final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
@@ -3394,6 +3480,59 @@ void main() {
       );
     },
   );
+
+  test('CLI boss expansion probes isolate each new simulation candidate', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final outPath = '${dir.path}/boss_expansion_probe_variants.jsonl';
+    final minContributorId =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_min_contributor_probe_v1';
+    final rankFamilyId =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_rank_family_probe_v1';
+    final confirmLimitId =
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_confirm_limit_probe_v1';
+    final code = await runBalanceSim([
+      '--runs',
+      '1',
+      '--bot',
+      'planner_v2',
+      '--seed',
+      '42',
+      '--stations',
+      '1,2,3,4,5,6,7,8',
+      '--blind-tier',
+      'boss',
+      '--difficulty',
+      'standard',
+      '--experiment-ids',
+      '$minContributorId,$rankFamilyId,$confirmLimitId',
+      '--loadout-id',
+      'progression_route_power',
+      '--out',
+      outPath,
+    ]);
+
+    expect(code, 0);
+
+    final rows = File(outPath)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+    List<String?> idsFor(String experimentId) => rows
+        .where((row) => row['experiment_id'] == experimentId)
+        .map(
+          (row) =>
+              (row['experiment_effects']
+                      as Map<String, dynamic>)['sim_boss_constraint_id']
+                  as String?,
+        )
+        .toList();
+
+    expect(idsFor(minContributorId), contains('min_contributor_count_v1'));
+    expect(idsFor(rankFamilyId), contains('rank_family_decay_v1'));
+    expect(idsFor(confirmLimitId), contains('confirm_limit_tax_v1'));
+  });
 
   test('CLI rank cycle soft probes reduce only rank pressure severity', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');

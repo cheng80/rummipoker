@@ -1,9 +1,9 @@
 {
-  "row_count": 80,
-  "train_count": 60,
-  "test_count": 20,
+  "row_count": 92,
+  "train_count": 69,
+  "test_count": 23,
   "target": "path_clear_rate",
   "feature_mode": "preoutcome_sequence",
-  "mae": 0.06850415068091639,
-  "r2": 0.4523718723873976
+  "mae": 0.06511364245431495,
+  "r2": 0.42023214013615584
 }

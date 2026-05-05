@@ -440,6 +440,7 @@ void main() {
         RummiBossModifier.allScoreDampener,
         RummiBossModifier.firstConfirmTax,
         RummiBossModifier.confirmCountTax,
+        RummiBossModifier.confirmLimitTax,
         RummiBossModifier.repeatRankPressure,
         RummiBossModifier.singleRankPressure,
       ];
@@ -455,6 +456,10 @@ void main() {
         expect(
           restored.bossModifier?.scoreMultiplier,
           modifier.scoreMultiplier,
+        );
+        expect(
+          restored.bossModifier?.firstAffectedConfirmOrdinal,
+          modifier.firstAffectedConfirmOrdinal,
         );
       }
     });

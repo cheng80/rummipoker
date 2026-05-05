@@ -29,7 +29,7 @@
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
 | runtime boss modifier cycle | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 순환 보스 제약 표시/전투 적용 |
 | S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
-| boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face 약화 3계열 적용 |
+| boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face 약화 3계열 적용. 1차 boss expansion experiment axis와 `confirm_limit_tax_v1` runtime modifier가 추가됐지만 cycle에는 미편입 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
@@ -69,12 +69,14 @@ Applied:
 - Boss 표시를 눌러 제약 팝업을 다시 확인할 수 있다.
 - S1 `red_dampener_v1`은 40% 감소에서 35% 감소로 완화했다. S1 통과 안정성을 위한 severity 조정이며, 자동 자원 지급이나 무료 성장 보정은 아니다.
 - 현재 구현된 제약 계열은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다.
+- `confirm_limit_tax_v1`은 `confirmCountWeaken` 계열 threshold variant로 구현했다. 두 번째 confirm부터 점수 라인 30% 감소이며, 기존 `confirmCountThisStation`과 boss modifier JSON round-trip을 사용한다. S1~S8 cycle에는 아직 넣지 않았다.
 
 Partially applied:
 
 - simulation boss pool의 10개 proxy는 현재 시뮬 기준표로 유지된다.
 - 런타임은 아직 weighted pool 전체를 그대로 뽑지 않고, station modifier cycle을 사용한다.
 - all score dampener, first confirm tax, confirm count tax, repeat rank, single rank는 runtime modifier 타입으로 승격했다.
+- confirm limit tax는 runtime modifier로 구현됐지만 cycle 편입 전이다.
 - repeat rank, single rank는 modifier와 저장/복원은 구현됐지만 S1~S8 runtime boss cycle에는 아직 편입하지 않았다.
 - target spike, resource squeeze는 아직 runtime modifier 타입으로 승격하지 않았다.
 
@@ -93,6 +95,7 @@ Boss constraint runtime scope:
 | 3 | `repeat_rank_pressure_v4` | Implemented, not in cycle | 이전 confirm에서 나온 같은 족보를 다시 확정하면 20% 감소. `confirmedRanksThisStation` 저장/복원 |
 | 4 | `single_rank_pressure` | Implemented, not in cycle | A안 기준 첫 confirm 족보를 다시 확정하면 30% 감소. 타일 배지 없이 보스 팝업/정산 penalty 표시 |
 | 5 | `confirm_count_tax_v2` | Applied | 기존 `confirmCountThisStation`으로 세 번째 confirm부터 25% 감소 |
+| 5a | `confirm_limit_tax_v1` | Implemented, not in cycle | 기존 `confirmCountThisStation`으로 두 번째 confirm부터 30% 감소. Boss expansion split probe에서 1차 runtime 후보로 좁힘 |
 | 6 | `all_score_dampener` | Applied | 모든 점수 라인 20% 감소. 타일별 표시 없이 보스 팝업/정산 penalty로 표시 |
 | 7 | `first_confirm_tax` | Applied | 첫 confirm 점수 라인 30% 감소. 기존 confirm ordinal로 판정 |
 | 8 | `target_spike_wall` | Spec only | target score 조정 계열이므로 boss modifier와 별도 target 레버로 다뤄야 함 |

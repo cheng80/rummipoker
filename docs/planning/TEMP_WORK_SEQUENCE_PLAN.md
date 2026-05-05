@@ -48,7 +48,7 @@ Status: Done
 
 ## 2. Boss Pool Mapping
 
-Status: Next
+Status: Done
 
 목표:
 
@@ -58,12 +58,20 @@ Status: Next
 
 필수 분류:
 
-- [ ] 이미 흡수됨
-- [ ] simulation proxy는 있으나 runtime 미편입
-- [ ] runtime modifier 추가 가능
-- [ ] simulation-only 후보
-- [ ] 자동 자원 보정/유저 선택 강제라 금지
-- [ ] 출품 전 1차 범위에서 제외
+- [x] 이미 흡수됨
+- [x] simulation proxy는 있으나 runtime 미편입
+- [x] runtime modifier 추가 가능
+- [x] simulation-only 후보
+- [x] 자동 자원 보정/유저 선택 강제라 금지
+- [x] 출품 전 1차 범위에서 제외
+
+현재 진행:
+
+- [x] `docs/planning/BOSS_POOL_EXPANSION_MAPPING.md`에 reference pattern mapping 초안 작성
+- [x] `boss_expansion_probe_v1` simulation-only profile 추가
+- [x] r80/r120 exploratory smoke 실행
+- [x] 후보별 r80 split smoke 실행
+- [x] `confirm_limit_tax_v1` runtime 구현 가능 경로 확인 후 Boss Pool 1차 확장으로 넘김
 
 제약:
 
@@ -73,7 +81,7 @@ Status: Next
 
 ## 3. Boss Pool 1차 확장
 
-Status: Pending
+Status: Done for first pass / cycle pending
 
 목표:
 
@@ -82,10 +90,16 @@ Status: Pending
 
 완료 조건:
 
-- [ ] 새 boss 후보 id와 설명이 우리 게임 용어로 작성된다.
-- [ ] `tools/sim/run_balance_sim.dart` 또는 해당 boss simulation 경로에 후보가 들어간다.
-- [ ] runtime에 넣는 후보는 저장/복원/표시/정산 penalty 경로가 확인된다.
-- [ ] S1~S8 cycle에 즉시 전부 넣지 않고, pool 후보 또는 별도 experiment axis로 검증한다.
+- [x] 새 boss 후보 id와 설명이 우리 게임 용어로 작성된다.
+- [x] `tools/sim/run_balance_sim.dart` 또는 해당 boss simulation 경로에 후보가 들어간다.
+- [x] runtime에 넣는 후보는 저장/복원/표시/정산 penalty 경로가 확인된다.
+- [x] S1~S8 cycle에 즉시 전부 넣지 않고, pool 후보 또는 별도 experiment axis로 검증한다.
+
+현재 판정:
+
+- `confirm_limit_tax_v1`은 후보별 r80 split에서 v9가 none보다 높아 1차 runtime 후보로 좁힌다.
+- `min_contributor_count_v1`, `rank_family_decay_v1`은 boss 전투 단위 clear는 높지만 balanced v9 역전 신호가 있어 simulation-only 보류한다.
+- `confirm_limit_tax_v1`은 runtime modifier로 구현됐지만 S1~S8 cycle에는 아직 편입하지 않았다.
 
 주의:
 
@@ -95,7 +109,7 @@ Status: Pending
 
 ## 4. 확장 Boss Pool 기준 레벨링 재검증
 
-Status: Pending
+Status: Done for expanded profile probe
 
 목표:
 
@@ -103,12 +117,19 @@ Status: Pending
 
 검증 항목:
 
-- [ ] S1은 거의 누구나 깨는 입구인지
-- [ ] S2는 성장이 있으면 쉽고, 없으면 간신히 통과하는지
-- [ ] S3부터 성장이 없으면 막히는지
-- [ ] S4~S6은 성장 선택을 점차 검증하는지
-- [ ] S7~S8은 후반 압박과 실패 비중이 남는지
-- [ ] board locked / draw exhausted / boss bottleneck 변화
+- [x] S1은 거의 누구나 깨는 입구인지
+- [x] S2는 성장이 있으면 쉽고, 없으면 간신히 통과하는지
+- [x] S3부터 성장이 없으면 막히는지
+- [x] S4~S6은 성장 선택을 점차 검증하는지
+- [x] S7~S8은 후반 압박과 실패 비중이 남는지
+- [x] board locked / draw exhausted / boss bottleneck 변화
+
+현재 결과:
+
+- `confirm_limit_tax_v1` 확장 profile 기준 r400 leveling probe 완료.
+- balanced none 50.7%, balanced v9 68.8%, power none 63.5%, power v9 69.0%.
+- S1/S8 boss 병목과 board/draw stop이 남아 있어 확장 profile이 압박을 지우지는 않는다.
+- 다음 순서인 확장 boss pool + lane reroll split 기준 경제 재검증으로 진행한다.
 
 실행 기준:
 
@@ -118,7 +139,7 @@ Status: Pending
 
 ## 5. 확장 Boss Pool + Lane Reroll Split 기준 경제 재검증
 
-Status: Pending
+Status: Done for expanded profile probe / not fully closed
 
 목표:
 
@@ -127,42 +148,58 @@ Status: Pending
 
 검증 항목:
 
-- [ ] v9 market clear가 none/control보다 부당하게 낮아지지 않는지
-- [ ] final gold avg
-- [ ] S8 boss 시작 골드
-- [ ] reroll spend
-- [ ] unaffordable event
-- [ ] S1/S2/S3/S7/S8 병목
-- [ ] board locked / draw exhausted
+- [x] v9 market clear가 none/control보다 부당하게 낮아지지 않는지
+- [x] final gold avg
+- [x] S8 boss 시작 골드
+- [x] reroll spend
+- [x] unaffordable event
+- [x] S1/S2/S3/S7/S8 병목
+- [x] board locked / draw exhausted
 
 현재 기준:
 
 - `reward 0.40 / price 2.2 / catalog_normalized_v1`은 출품용 baseline으로 유지한다.
 - 그러나 fresh r80에서 balanced+v9가 none보다 낮은 신호가 있으므로 경제 gate는 not closed다.
 
+현재 결과:
+
+- 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe 완료.
+- balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%.
+- v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회.
+- 즉시 경고는 없지만 power v9 미세 역전과 runtime cycle 미편입 상태가 남아 있어 최종 경제 gate 완료가 아니라 “expanded profile 기준 즉시 경고 없음 / not fully closed”로 둔다.
+- 이 결과는 실제 ML 이행 재개 입력으로 사용한다.
+
 ## 6. 실제 ML 이행 재개
 
-Status: Blocked by boss/economy gates
+Status: Done for expanded offline recommendation gate
 
 재개 조건:
 
-- [ ] Boss pool mapping 완료
-- [ ] Boss pool 1차 확장 완료 또는 명시 보류
-- [ ] 확장 boss pool 기준 레벨링 probe 완료
-- [ ] 확장 boss pool + lane reroll split 기준 경제 probe 완료 또는 명시 보류
+- [x] Boss pool mapping 완료
+- [x] Boss pool 1차 확장 완료 또는 명시 보류
+- [x] 확장 boss pool 기준 레벨링 probe 완료
+- [x] 확장 boss pool + lane reroll split 기준 경제 probe 완료 또는 명시 보류
 
 ML 재개 시 필수 작업:
 
-- [ ] 데이터 증량 필요 여부를 먼저 검토한다.
-- [ ] 기존 휴리스틱/시뮬레이션 summary로 충당 가능한지 확인한다.
-- [ ] 부족하면 candidate grid/probe/sweep으로 데이터를 증량한다.
-- [ ] pre-outcome station/tier feature table을 다시 만든다.
-- [ ] sequence/path feature table을 다시 만든다.
-- [ ] baseline model과 metric을 다시 생성한다.
-- [ ] 모델 추천표를 다시 만든다.
-- [ ] 추천 후보를 fresh resimulation으로 검증한다.
-- [ ] 사람 승인용 MD 분석 보고서를 갱신한다.
-- [ ] 사람 승인 전 runtime target/boss/market/economy 값은 바꾸지 않는다.
+- [x] 데이터 증량 필요 여부를 먼저 검토한다.
+- [x] 기존 휴리스틱/시뮬레이션 summary로 충당 가능한지 확인한다.
+- [x] 부족하면 candidate grid/probe/sweep으로 데이터를 증량한다.
+- [x] pre-outcome station/tier feature table을 다시 만든다.
+- [x] sequence/path feature table을 다시 만든다.
+- [x] baseline model과 metric을 다시 생성한다.
+- [x] 모델 추천표를 다시 만든다.
+- [x] 추천 후보를 fresh resimulation으로 검증한다.
+- [x] 사람 승인용 MD 분석 보고서를 갱신한다.
+- [x] 사람 승인 전 runtime target/boss/market/economy 값은 바꾸지 않는다.
+
+현재 결과:
+
+- station/tier pre-outcome table 14,544 rows, R2 0.1548.
+- sequence/path pre-outcome table 92 rows, R2 0.4202.
+- 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 runtime 적용 보류.
+- 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
+- production ML/자동 적용은 여전히 아님.
 
 완료로 인정하지 않는 것:
 
@@ -173,13 +210,13 @@ ML 재개 시 필수 작업:
 
 ## 7. 공모전 기준 남은 작업 재개
 
-Status: Blocked
+Status: Next
 
 재개 조건:
 
-- [ ] 확장 boss pool 기준 레벨링/경제/ML 상태가 source-of-truth에 반영된다.
-- [ ] 경제 gate가 완료 또는 출품 기준 명시 보류로 정리된다.
-- [ ] Boss pool 1차 확장 범위가 구현 완료 또는 출품 기준 명시 보류된다.
+- [x] 확장 boss pool 기준 레벨링/경제/ML 상태가 source-of-truth에 반영된다.
+- [x] 경제 gate가 완료 또는 출품 기준 명시 보류로 정리된다.
+- [x] Boss pool 1차 확장 범위가 구현 완료 또는 출품 기준 명시 보류된다.
 
 재개 후 우선순위:
 

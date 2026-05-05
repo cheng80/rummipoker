@@ -9,9 +9,9 @@
 ## Dataset
 
 - feature table: `analysis/leveling/data/features/leveling_preoutcome_sequence_feature_table.csv`
-- rows: 80
-- train rows: 60
-- test rows: 20
+- rows: 92
+- train rows: 69
+- test rows: 23
 - target: `path_clear_rate`
 
 Source summaries:
@@ -33,6 +33,9 @@ Source summaries:
 - `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
 - `logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json`
 - `logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json`
+- `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- `logs/sim/post_lane_reroll_economy_current_boss_r400_summary.json`
+- `logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json`
 
 Each row is a simulation group aggregated by experiment, loadout, blind tier, difficulty, market profile, run modifier, station, and outcome summary values. The current dataset is simulation-derived. It is not live player telemetry.
 
@@ -82,13 +85,13 @@ This model is intentionally offline-only and descriptive. It does not patch runt
 
 ## Metric
 
-- MAE: 0.0685
-- R2: 0.4524
+- MAE: 0.0651
+- R2: 0.4202
 
 Interpretation:
 
-- MAE around `0.0685` is the average held-out group prediction error for `path_clear_rate`.
-- R2 around `0.4524` means the model explains most held-out variance in this simulation dataset when the value is high.
+- MAE around `0.0651` is the average held-out group prediction error for `path_clear_rate`.
+- R2 around `0.4202` means the model explains most held-out variance in this simulation dataset when the value is high.
 - This is not evidence that the game is fully balanced.
 - This is also not evidence that ML transition is complete.
 - It only shows that the current summary rows can be loaded into a supervised modeling scaffold and that outcome-derived features can explain held-out clear-rate variance.
@@ -97,16 +100,16 @@ Interpretation:
 
 | Feature | Importance |
 |---|---:|
-| `station_path_length` | 0.3974 |
-| `loadout_id_progression_route_power` | 0.1746 |
-| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068` | 0.0881 |
-| `base_experiment_id_nan` | 0.0842 |
-| `loadout_id_progression_route_balanced` | 0.0603 |
-| `market_profile_shop_slot_market_v9` | 0.0391 |
-| `resolved_market_profile_shop_slot_market_v9` | 0.0321 |
-| `has_market_profile` | 0.0169 |
-| `market_profile_version` | 0.0159 |
-| `market_profile_none` | 0.0155 |
+| `station_path_length` | 0.3463 |
+| `loadout_id_progression_route_power` | 0.1968 |
+| `base_experiment_id_nan` | 0.1417 |
+| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068` | 0.0620 |
+| `loadout_id_progression_route_balanced` | 0.0529 |
+| `market_profile_shop_slot_market_v9` | 0.0414 |
+| `resolved_market_profile_shop_slot_market_v9` | 0.0368 |
+| `market_profile_version` | 0.0162 |
+| `resolved_market_profile_none` | 0.0162 |
+| `market_profile_none` | 0.0151 |
 
 Reading:
 

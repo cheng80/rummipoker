@@ -1,10 +1,10 @@
 candidate_id,category,predicted_v9_clear_avg,predicted_none_clear_avg,predicted_market_delta,predicted_s1_boss_v9,predicted_s8_boss_v9,reward_scale,price_scale,boss_target_multiplier,s1_boss_target_multiplier,sim_market_spend_mode,sim_market_choice_mode,recommendation_score,description
-economy_r038_p240_spend_choice,economy,0.9845,0.9778,0.0067,0.9709,0.9445,0.38,2.4,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,3.2594,보상 소폭 축소 + price 2.4 후보
-economy_r040_p240_spend_choice,economy,0.9861,0.9782,0.0079,0.9732,0.9476,0.4,2.4,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,3.2518,경제 압박 강화 후보 reward 0.40 / price 2.4
-economy_r040_p220_spend_choice,economy,0.9878,0.9799,0.0078,0.9734,0.9571,0.4,2.2,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,3.2326,현재 출품 baseline에 가까운 reward 0.40 / price 2.2 + reroll/slot/sell + affordable choice
-target_boss_098,target,0.9875,0.9795,0.008,0.9708,0.9558,1.0,1.0,0.98,1.0,none,none,3.0907,전체 boss target 0.98 후보
-current_runtime_trace,baseline,0.9887,0.9814,0.0073,0.9694,0.9635,1.0,1.0,1.0,1.0,none,none,3.0761,현재 런타임 후보를 trace-only 기준으로 읽는 baseline
-early_boss_soft_s1_098_s2_100_s3_100,target,0.9887,0.9814,0.0073,0.9694,0.9635,1.0,1.0,1.0,0.98,none,none,3.0761,S1 boss만 0.98로 낮추는 초반 완화 후보
-market_v9_current_no_economy_change,market,0.9887,0.9814,0.0073,0.9694,0.9635,1.0,1.0,1.0,1.0,none,none,3.0761,"마켓 v9 유지, economy sim 변경 없음"
-target_big100_boss102,target,0.9878,0.9817,0.0061,0.9677,0.9647,1.0,1.0,1.02,1.0,none,none,3.0735,후반 압박 보존용 boss target 1.02 후보
-economy_r040_p260_spend_choice,economy,0.9851,0.9778,0.0074,0.9729,0.9472,0.4,2.6,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,3.002,가격 압박 강한 price 2.6 후보
+economy_r038_p240_spend_choice,economy,0.9857,0.9793,0.0064,0.9712,0.9555,0.38,2.4,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,3.236,보상 소폭 축소 + price 2.4 후보
+economy_r040_p240_spend_choice,economy,0.9873,0.9793,0.0081,0.9723,0.9678,0.4,2.4,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,3.214,경제 압박 강화 후보 reward 0.40 / price 2.4
+economy_r040_p220_spend_choice,economy,0.9889,0.9826,0.0063,0.9732,0.9839,0.4,2.2,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,3.1749,현재 출품 baseline에 가까운 reward 0.40 / price 2.2 + reroll/slot/sell + affordable choice
+target_boss_098,target,0.987,0.9793,0.0077,0.9741,0.98,1.0,1.0,0.98,1.0,none,none,3.0349,전체 boss target 0.98 후보
+current_runtime_trace,baseline,0.9912,0.9849,0.0063,0.9714,0.9912,1.0,1.0,1.0,1.0,none,none,3.0137,현재 런타임 후보를 trace-only 기준으로 읽는 baseline
+early_boss_soft_s1_098_s2_100_s3_100,target,0.9912,0.9849,0.0063,0.9714,0.9912,1.0,1.0,1.0,0.98,none,none,3.0137,S1 boss만 0.98로 낮추는 초반 완화 후보
+market_v9_current_no_economy_change,market,0.9912,0.9849,0.0063,0.9714,0.9912,1.0,1.0,1.0,1.0,none,none,3.0137,"마켓 v9 유지, economy sim 변경 없음"
+target_big100_boss102,target,0.9898,0.9849,0.0048,0.9706,0.992,1.0,1.0,1.02,1.0,none,none,3.0094,후반 압박 보존용 boss target 1.02 후보
+economy_r040_p260_spend_choice,economy,0.9869,0.979,0.0079,0.9727,0.9672,0.4,2.6,1.0,1.0,reroll_slot_sell_v1,affordable_alternative_v1,2.9638,가격 압박 강한 price 2.6 후보

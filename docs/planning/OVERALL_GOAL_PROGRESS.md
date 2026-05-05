@@ -58,9 +58,9 @@
 
 현재 집중 축:
 
-1. Boss pool mapping 및 1차 확장: 확장 후 레벨링/경제/ML을 다시 검증해야 함
-2. 확장 boss pool 기준 레벨링/경제 probe: current boss pool r400 경제 baseline은 확보했지만 최종 gate는 아님
-3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영해 데이터 증량 여부부터 다시 검토
+1. Boss pool mapping 및 1차 확장: `confirm_limit_tax_v1`은 simulation split 후 runtime modifier로 구현됐지만 S1~S8 cycle에는 아직 미편입
+2. 확장 boss pool 기준 레벨링/경제 probe: confirm-limit 확장 profile 기준 r400 레벨링/경제 raw probe까지 확보했지만 최종 gate는 아님
+3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영한 offline recommendation gate는 갱신했고, runtime 자동 적용은 여전히 없음
 
 현재 경제 판단:
 
@@ -70,6 +70,7 @@
 - r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
 - Jester/Slots와 Tool/Gear lane reroll 분리 이후 current boss pool 기준 r400 raw probe는 balanced none 50.0%, balanced v9 57.0%, power none 64.2%, power v9 63.5%였다. v9 final gold avg 약 6.24G, v9 S8 boss 시작 골드 약 9.43G, reroll spend 99,571G, unaffordable event 7,686회로 즉시 경고는 없지만, boss pool 확장 전 기준이라 최종 경제 gate는 아니다.
+- 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe는 balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%였다. v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회로 즉시 경고는 없지만, power v9 미세 역전과 runtime cycle 미편입 상태가 남아 있어 최종 경제 gate는 아니다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
@@ -79,6 +80,8 @@
 - `analysis/leveling/`의 pre-outcome feature table과 RandomForest 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
 - production ML 전환은 더 넓은 candidate grid, 모델 추천표, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
+- 확장 boss pool 이후 pre-outcome feature table을 14,544 rows로 재생성했고, sequence/path table은 92 rows로 재생성했다. station/tier 모델 R2는 0.1548, sequence 모델 R2는 0.4202다.
+- 새 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 적용 보류한다. 현재 runtime economy baseline은 유지한다.
 
 임시 작업 순서 플랜 처리:
 

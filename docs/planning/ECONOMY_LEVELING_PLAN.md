@@ -441,6 +441,34 @@ post lane reroll status:
 - 다음 경제 probe에서는 확장 boss pool 기준으로 v9 market clear, final gold avg, S8 boss 시작 골드, reroll spend, S1/S2/S3/S7/S8 병목, board locked/draw exhausted를 다시 본다.
 - 결론: 출품용 baseline은 유지하되, post lane reroll 경제 gate는 확장 boss pool 전까지 not closed다.
 
+expanded boss pool confirm-limit r400 raw probe:
+
+- command: `dart run tools/sim/run_balance_sim.dart --runs 400 --bot planner_v2 --seed 91640 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_confirm_limit_probe_v1 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --out logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400.jsonl --summary-out logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json`
+- audit: `python3 tools/sim/economy_audit.py --summary logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json --jsonl logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400.jsonl --json-out logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_economy_audit.json`
+- audit json: `logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_economy_audit.json`
+
+| Loadout | Market | Clear | Final gold avg |
+|---|---|---:|---:|
+| balanced | none | 49.8% | 53.46G |
+| balanced | v9 | 56.0% | 6.37G |
+| power | none | 59.0% | 60.77G |
+| power | v9 | 58.8% | 6.53G |
+
+경제 지표:
+
+- v9 final gold avg: 약 6.45G
+- v9 S8 boss 시작 골드: 약 9.4G
+- reroll spend: 98,470G
+- unaffordable events: 7,474
+- current boss pool r400과 같은 수준의 즉시 경고는 없다.
+
+판정:
+
+- balanced에서는 v9가 none보다 높다.
+- power에서는 v9가 none보다 0.2%p 낮지만 current boss pool r400에서도 power v9가 none보다 0.7%p 낮았으므로 단독 경고로 보지는 않는다.
+- 확장 boss pool 기준 경제 raw probe는 ML 재개 입력으로 사용할 수 있다.
+- 다만 runtime cycle 편입 전이며, power v9 미세 역전 신호가 남아 있으므로 최종 경제 gate 완료가 아니라 “expanded profile 기준 즉시 경고 없음 / not fully closed”로 둔다.
+
 ### Phase 3. Economy Probe
 
 목표:

@@ -23,6 +23,7 @@ class RummiBossModifier {
     required this.scoreMultiplier,
     this.affectedTileColors = const [],
     this.affectedLineKinds = const [],
+    this.firstAffectedConfirmOrdinal = 3,
   });
 
   factory RummiBossModifier.fromJson(Map<String, dynamic> json) {
@@ -38,6 +39,7 @@ class RummiBossModifier {
     if (id == allScoreDampener.id) return allScoreDampener;
     if (id == firstConfirmTax.id) return firstConfirmTax;
     if (id == confirmCountTax.id) return confirmCountTax;
+    if (id == confirmLimitTax.id) return confirmLimitTax;
     if (id == repeatRankPressure.id) return repeatRankPressure;
     if (id == singleRankPressure.id) return singleRankPressure;
     return RummiBossModifier(
@@ -61,6 +63,8 @@ class RummiBossModifier {
       scoreMultiplier:
           (json['scoreMultiplier'] as num?)?.toDouble() ??
           redDampener.scoreMultiplier,
+      firstAffectedConfirmOrdinal:
+          (json['firstAffectedConfirmOrdinal'] as num?)?.toInt() ?? 3,
     );
   }
 
@@ -170,6 +174,16 @@ class RummiBossModifier {
     scoreMultiplier: 0.75,
   );
 
+  static const confirmLimitTax = RummiBossModifier(
+    id: 'confirm_limit_tax_v1',
+    category: RummiBossModifierCategory.confirmCountWeaken,
+    title: '연속 확정 압박',
+    ruleText: '두 번째 확정부터 점수 라인이 30% 감소합니다.',
+    markerText: '2+',
+    scoreMultiplier: 0.7,
+    firstAffectedConfirmOrdinal: 2,
+  );
+
   static const repeatRankPressure = RummiBossModifier(
     id: 'repeat_rank_pressure_v4',
     category: RummiBossModifierCategory.repeatHandRankWeaken,
@@ -196,6 +210,7 @@ class RummiBossModifier {
   final List<TileColor> affectedTileColors;
   final List<LineKind> affectedLineKinds;
   final double scoreMultiplier;
+  final int firstAffectedConfirmOrdinal;
 
   bool affectsTile(Tile tile) {
     return affectedTileColors.contains(tile.color) ||
@@ -210,7 +225,8 @@ class RummiBossModifier {
   bool affectsConfirmOrdinal(int ordinal) {
     return switch (category) {
       RummiBossModifierCategory.firstConfirmWeaken => ordinal == 1,
-      RummiBossModifierCategory.confirmCountWeaken => ordinal >= 3,
+      RummiBossModifierCategory.confirmCountWeaken =>
+        ordinal >= firstAffectedConfirmOrdinal,
       _ => false,
     };
   }
@@ -242,6 +258,7 @@ class RummiBossModifier {
     'affectedTileColors': [for (final color in affectedTileColors) color.name],
     'affectedLineKinds': [for (final kind in affectedLineKinds) kind.name],
     'scoreMultiplier': scoreMultiplier,
+    'firstAffectedConfirmOrdinal': firstAffectedConfirmOrdinal,
   };
 }
 
