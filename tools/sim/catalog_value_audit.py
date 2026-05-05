@@ -13,6 +13,9 @@ from typing import Any, Iterable
 
 DEFAULT_ITEM_CATALOG = Path("data/common/items_common_v1.json")
 DEFAULT_JESTER_CATALOG = Path("data/common/jesters_common_phase5.json")
+MARKET_PRICE_SCALE_NUMERATOR = 11
+MARKET_PRICE_SCALE_DENOMINATOR = 5
+SHOP_BASE_REROLL_COST = 5
 
 
 def main() -> int:
@@ -99,6 +102,7 @@ def print_report(report: dict[str, Any]) -> None:
             print(
                 "  - "
                 f"{row['kind']}:{row['id']} {row['price']}G "
+                f"(effective {row['effective_price']}G) "
                 f"({row['rarity']}, {row['role']}) {detail}"
             )
 
@@ -133,6 +137,7 @@ def _item_value_row(item: dict[str, Any]) -> dict[str, Any]:
     effect = item.get("effect") if isinstance(item.get("effect"), dict) else {}
     role = _item_role(item, effect)
     price = _int(item.get("basePrice"))
+    effective_price = _effective_market_price(price)
     sell_price = _int(item.get("sellPrice"))
     immediate_value = _item_immediate_value(effect)
     return {
@@ -142,6 +147,7 @@ def _item_value_row(item: dict[str, Any]) -> dict[str, Any]:
         "role": role,
         "kind_role": f"item:{role}",
         "price": price,
+        "effective_price": effective_price,
         "sell_price": sell_price,
         "sell_ratio": round(sell_price / price, 3) if price > 0 else 0,
         "effect": str(effect.get("op") or ""),
@@ -155,6 +161,7 @@ def _item_value_row(item: dict[str, Any]) -> dict[str, Any]:
 def _jester_value_row(card: dict[str, Any]) -> dict[str, Any]:
     role = _jester_role(card)
     price = _int(card.get("baseCost"))
+    effective_price = _effective_market_price(price)
     return {
         "kind": "jester",
         "id": str(card.get("id") or ""),
@@ -162,6 +169,7 @@ def _jester_value_row(card: dict[str, Any]) -> dict[str, Any]:
         "role": role,
         "kind_role": f"jester:{role}",
         "price": price,
+        "effective_price": effective_price,
         "sell_price": max(1, price // 2) if price > 0 else 0,
         "sell_ratio": round((max(1, price // 2) / price), 3)
         if price > 0
@@ -233,7 +241,7 @@ def _item_immediate_value(effect: dict[str, Any]) -> float:
     if op == "gain_gold":
         return amount
     if op == "free_next_reroll":
-        return 5.0
+        return float(SHOP_BASE_REROLL_COST)
     if op == "discount_next_purchase":
         return amount
     return 0.0
@@ -275,7 +283,9 @@ def _outliers(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
             row
             for row in rows
             if row["kind"] == "item"
-            and _float(row["immediate_value"]) >= _int(row["price"]) > 0
+            and _float(row["immediate_value"])
+            >= _int(row["effective_price"])
+            > 0
         ],
         "cheap_growth_engines": [
             row
@@ -305,6 +315,14 @@ def _outliers(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
 
 def _int(value: Any) -> int:
     return int(value) if isinstance(value, (int, float)) else 0
+
+
+def _effective_market_price(base_price: int) -> int:
+    if base_price <= 0:
+        return 0
+    return round(
+        base_price * MARKET_PRICE_SCALE_NUMERATOR / MARKET_PRICE_SCALE_DENOMINATOR
+    )
 
 
 def _float(value: Any) -> float:

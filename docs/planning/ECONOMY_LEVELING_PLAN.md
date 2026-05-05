@@ -327,7 +327,7 @@ catalog value audit:
 - 1차 출력:
   - item 49개, Jester 43개, 총 92개 후보를 점검한다.
   - role별 median price는 economy 5.5G, resource 7.5G, score boost 4G, growth engine 7.5G, xmult engine 8G, market 9.5G, relic 9G, deck control 9G, tempo score boost 6G다.
-  - 즉시 회수 후보는 `reroll_token`이다. 5G 구매로 기본 리롤 5G를 대체하므로 실질 비용이 낮다.
+  - runtime effective price 기준 즉시 자기 회수 후보는 없다. `reroll_token`은 base 5G지만 실제 구매가는 11G이고 기본 리롤 5G를 대체하므로 자기 회수형이 아니다.
   - 저가 성장 엔진 후보는 `ride_the_bus`다.
   - 저가 high-impact 후보는 `trade_ticket`, `ride_the_bus`다.
   - 고가 low-impact 후보는 `jester_hook`이다.
@@ -378,7 +378,8 @@ runtime offer audit:
   - 1차 audit 도구는 `itemOfferRerollOffset`을 `openShop()` 전에 넣어 offset이 초기화되는 문제가 있었다. offset을 `openShop()` 이후 적용하도록 수정했다.
   - 수정 후 watchlist 후보는 모두 실제 runtime offer에서 노출된다.
   - 따라서 다음 판단 축은 노출 여부가 아니라, 실제 구매력과 가격 대비 가치다.
-  - 다만 현재 단계에서 즉시 가격표를 바꾸지 않고, watchlist 후보의 역할별 기준가 후보를 좁힌 뒤 짧은 probe로 확인한다.
+  - `catalog_value_audit.py`도 base price가 아니라 runtime effective price 기준으로 즉시 회수 후보를 판단하도록 수정했다.
+  - 현재 단계에서 즉시 가격표를 바꾸지 않고, watchlist 후보의 역할별 기준가 후보를 좁힌 뒤 짧은 probe로 확인한다.
 
 ### Phase 3. Economy Probe
 

@@ -34,7 +34,7 @@
 | economy reward / price policy | Applied | `RummiEconomyConfig` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용 |
 | catalog value audit | Applied | `tools/sim/catalog_value_audit.py` | Item/Jester 가격과 effect role의 불일치 후보를 표시한다. 가격 재산정 적용은 아직 아님 |
 | catalog audit v2 price probe | Workspace pending | `tools/sim/run_balance_sim.dart` / `tools/sim/economy_audit.py` | `catalog_audit_v2` sim-only price band 추가. r120에서는 조정 후보 구매 이벤트가 없어 normalized와 결과 동일. economy audit가 content/proxy/source candidate별 구매 count와 audit watchlist를 출력 |
-| runtime offer audit | Workspace pending | `tools/sim/runtime_market_offer_audit.dart` | 실제 runtime offer r200에서 `ride_the_bus` 68회, `reroll_token`/`trade_ticket`/`jester_hook` 0회. 개별 가격 변경 전 item offer 노출 정책 확인 필요 |
+| runtime offer audit | Workspace pending | `tools/sim/runtime_market_offer_audit.dart` | 실제 runtime offer r200에서 `reroll_token` 85회, `trade_ticket` 110회, `ride_the_bus` 68회, `jester_hook` 48회. 다음 판단 축은 노출 여부가 아니라 구매력/가격 대비 가치 |
 | Pack/Tarot-like/Planet-like role mapping | Spec only | docs only | 현재는 Item/market candidate role로 해석. 별도 타입 런타임은 미도입 |
 | smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
@@ -366,7 +366,7 @@ Economy leveling gate:
 - selected runtime translation: `reward 0.40 / price 2.2 / catalog_normalized_v1` r120은 balanced none 54.2%, balanced v9 63.3%, power none 63.3%, power v9 66.7%다. v9 final gold avg는 약 18.7G, v9 S8 boss 시작 골드는 약 23.7G다.
 - runtime applied: 보상 상수는 `stageClearGoldBase` 4G, S1 첫 클리어 보너스 2G, 남은 board discard 2G, 남은 hand discard 1G로 낮췄다. 구매 가격은 `RummiEconomyConfig.scaledMarketPrice`에서 정수 `11/5` 비율로 반올림한다. 표시/구매 가격은 모두 정수 G다.
 - runtime catalog applied: 자기 회수형/저가 성장 후보의 기준가를 정수로 보정했다. `reroll_token` 5G, `coin_cache` 4G, `thin_wallet` 7G, `green_jester` 8G, `popcorn` 6G, `ice_cream` 7G, `banner` 7G, `gros_michel` 7G, `supernova` 8G.
-- updated audit: 새 런타임 기준 reward envelope는 S1 small 자원 미사용 16G, 자원 전부 사용 6G다. 기존 자기 회수 flag는 `reroll_token`만 남는다.
+- updated audit: 새 런타임 기준 reward envelope는 S1 small 자원 미사용 16G, 자원 전부 사용 6G다. runtime effective price 기준 자기 회수 flag는 남지 않는다.
 - v91 runtime economy long sweep: `reward 0.40 / price 2.2 / catalog_normalized_v1 / reroll_slot_sell_v1 / affordable_alternative_v1` r800을 실행했다.
 - command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 800 --seed 99800 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --jobs 4 --out-prefix logs/sim/economy_runtime_v91_long_r800`
 - summary: `logs/sim/economy_runtime_v91_long_r800_summary.json`
