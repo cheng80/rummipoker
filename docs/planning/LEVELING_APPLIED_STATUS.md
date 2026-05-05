@@ -465,6 +465,25 @@ Run modifier candidate probe:
 - 다음 후보는 단순 target/reward 배율보다, high pressure 조건에서 좋은 선택 proxy가 실제로 구매 가능한 후보군을 만나는지 보는 market availability under pressure probe다.
 - 이 probe도 직접 지급, 고정 슬롯, 자동 구매가 아니라 candidate availability/weight와 가격 접근성만 다룬다.
 
+Market availability under pressure probe:
+
+- purpose: 같은 `target 1.04 / reward 1.12` proxy에서 기존 market 변형이 high pressure 조건을 더 잘 받치는지 확인했다.
+- r120 probe: `none,v9,v10,v11,v12,v13` 비교에서 v9가 balanced 62.5%, power 60.8%로 가장 좋아 보였고, v10은 balanced 55.0%, power 60.8%였다.
+- r400 follow-up:
+
+| market | balanced clear | power clear | avg total turn signal | 1차 해석 |
+|---|---:|---:|---|---|
+| none | 51.7% | 56.0% | balanced 1399.8, power 1332.2 | control |
+| v9 | 51.2% | 62.0% | balanced 1358.8, power 1384.2 | power는 개선되지만 balanced가 none보다 낮음 |
+| v10 | 54.2% | 65.8% | balanced 1401.6, power 1414.6 | high pressure 조건에서는 가장 안정적인 탐색 후보 |
+
+판정:
+
+- high pressure에서는 단순 target/reward 조정보다 market availability가 더 큰 변수다.
+- v10은 직접 지급이 아니라 missing growth 후보의 마켓 노출 확률과 slot 후보 수를 조정하는 sim-only profile이다.
+- 다음 구현 후보는 `high_stakes`에서 기존 런타임 market policy를 숨은 자동 보정으로 바꾸는 것이 아니라, 명시적 run modifier에 묶인 market availability profile을 설계하는 것이다.
+- 실제 적용 전에는 `basic` market 기준을 흔들지 않는 구조와 save/runtime 전달 경로를 먼저 검토한다.
+
 ## 6. Read Order
 
 레벨링 작업 재개 시 순서:
