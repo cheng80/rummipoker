@@ -2878,15 +2878,15 @@ void main() {
       final firstBattle = battleRows.first;
       _expectBalanceSimRowContract(firstBattle);
       expect(firstBattle['run_modifier_id'], 'high_stakes');
-      expect(firstBattle['run_modifier_target_multiplier'], 1.08);
+      expect(firstBattle['run_modifier_target_multiplier'], 1.04);
       expect(firstBattle['run_modifier_reward_multiplier'], 1.12);
       expect(
         firstBattle['target_score'],
-        ((firstBattle['base_target_score'] as int) * 1.08).round(),
+        ((firstBattle['base_target_score'] as int) * 1.04).round(),
       );
       final effects = firstBattle['experiment_effects'] as Map<String, dynamic>;
       expect(effects['run_modifier_id'], 'high_stakes');
-      expect(effects['run_modifier_target_multiplier'], 1.08);
+      expect(effects['run_modifier_target_multiplier'], 1.04);
       expect(effects['run_modifier_reward_multiplier'], 1.12);
 
       final trace = firstBattle['sim_economy_trace'] as Map<String, dynamic>;

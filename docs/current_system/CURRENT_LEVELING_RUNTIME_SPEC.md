@@ -48,13 +48,15 @@ Run modifier multiplier:
 | Modifier | Target | Reward |
 |---|---:|---:|
 | `basic` | 1.0 | 1.0 |
-| `high_stakes` | 1.08 | 1.12 |
+| `high_stakes` | 1.04 | 1.12 |
 
 Run modifier는 숨은 자동 보정이 아니다. 새 런 시작 시 명시적으로 선택된 modifier만 target score와 blind reward에 배율을 적용한다. `basic`은 기존 레벨링 값을 그대로 유지한다.
 
 `high_stakes`는 Insight 20으로 해금하는 명시적 계약이다. 목표 점수와 blind reward preview/reward만 함께 올리며, 인런 골드/아이템/Jester/자원은 직접 지급하지 않는다. active run 저장에는 선택된 modifier id를 보존하고, 기존 저장처럼 modifier가 없는 payload는 `basic`으로 복원한다.
 
 `high_stakes`는 압박이 높기 때문에 상점 생성/표시 시점의 transient market pressure profile도 함께 사용한다. 이 profile은 저장 포맷을 늘리지 않고 선택된 run modifier에서 파생한다. 효과는 S3 이후 item offer 후보 폭 +1, missing growth 후보의 item/Jester 마켓 노출 확률 보강이며, 자동 지급/고정 슬롯/자동 구매는 하지 않는다.
+
+`high_stakes`는 고레벨 계약이므로 `basic`과 같은 clear rate를 목표로 하지 않는다. 목표는 압박 제거가 아니라, 좋은 market 선택 proxy가 none/control보다 낮아지는 불합리한 역전을 막으면서 S8 boss와 board/draw 병목이 남는 상태를 유지하는 것이다.
 
 S8 이후는 실제 진행 구간 밖이다. 디버그/테스트용으로만 마지막 구간 성장률을 이어 붙여 단조 증가를 보장한다.
 

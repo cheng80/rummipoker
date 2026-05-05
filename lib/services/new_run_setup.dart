@@ -11,7 +11,7 @@ enum NewRunModifier {
   highStakes(
     id: 'high_stakes',
     label: '하이 스테이크',
-    targetScoreMultiplier: 1.08,
+    targetScoreMultiplier: 1.04,
     rewardMultiplier: 1.12,
     unlockCostInsight: 20,
   );

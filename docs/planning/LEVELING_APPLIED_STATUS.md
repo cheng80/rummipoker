@@ -23,7 +23,7 @@
 | S1~S8 standard target table | Applied | `BlindSelectionSpecBuilder._standardTargetScore` | small/big/boss 목표표 런타임 연결 완료 |
 | difficulty multiplier | Applied | `BlindSelectionSpecBuilder._difficultyMultiplier` | relaxed 0.8, standard 1.0, pressure 1.2 |
 | blind tier resource pressure | Applied | `BlindSelectionSpecBuilder` | 전투 시작 압박이며 자동 보상/성장 지급이 아님 |
-| run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.08, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
+| run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.04, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
 | runtime boss modifier cycle | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 순환 보스 제약 표시/전투 적용 |
@@ -411,7 +411,7 @@ Economy leveling gate:
 
 Run modifier probe:
 
-- runtime applied: `high_stakes`는 Insight 20 해금 후 선택 가능한 명시적 run modifier다. target score 1.08, blind reward 1.12를 적용하며 직접 골드/아이템/Jester/자원을 지급하지 않는다.
+- runtime applied: `high_stakes`는 Insight 20 해금 후 선택 가능한 명시적 run modifier다. 현재 target score 1.04, blind reward 1.12를 적용하며 직접 골드/아이템/Jester/자원을 지급하지 않는다.
 - tool update: `tools/sim/run_balance_sim.dart`와 `tools/sim/ml_sweep_dataset.py`가 `--run-modifier basic|high_stakes`를 받는다. sim economy reward scale은 입력 scale에 modifier reward multiplier를 곱한 effective scale로 기록한다.
 - r120 proxy note: 전용 CLI 추가 전 `target 1.08 / reward 0.448` 조합으로 current economy 조건의 탐색 probe를 돌렸지만, seed 흔들림이 커서 tuning 근거로 쓰지 않는다.
 - current signal: high stakes는 balanced none/v9를 크게 누르고, power 계열은 어느 정도 유지한다. 장기 판단 전에는 반드시 `--run-modifier high_stakes` direct sweep으로 다시 비교한다.
@@ -462,7 +462,7 @@ Run modifier candidate probe:
 판정:
 
 - target multiplier를 1.02~1.04까지 낮춰도 seed에 따라 balanced v9가 none/control보다 낮아진다.
-- 따라서 `high_stakes` runtime 값을 지금 `target 1.04`나 `target 1.02`로 바꾸지 않는다.
+- 이 시점에서는 seed 흔들림 때문에 `high_stakes` runtime 값을 `target 1.04`나 `target 1.02`로 바로 바꾸지 않았다.
 - 다음 후보는 단순 target/reward 배율보다, high pressure 조건에서 좋은 선택 proxy가 실제로 구매 가능한 후보군을 만나는지 보는 market availability under pressure probe다.
 - 이 probe도 직접 지급, 고정 슬롯, 자동 구매가 아니라 candidate availability/weight와 가격 접근성만 다룬다.
 
@@ -492,6 +492,13 @@ Market availability under pressure probe:
 - effective target 1.04 r400 check: 런타임 변경 없이 `--run-modifier high_stakes`에 target override `1.04 / 1.08`을 곱한 r400은 balanced none 48.2%, balanced v9 54.0%, power none 55.8%, power v9 59.0%다.
 - bottleneck signal: effective target 1.04 r400에서도 S8 boss는 balanced v9 32회, power v9 30회로 남고, stop reason은 board/draw가 모두 남는다. 압박은 제거되지 않았다.
 - current candidate: `high_stakes` target multiplier를 1.08에서 effective 1.04로 낮추는 방향은 다음 r800 후보로 올린다. 단, 아직 runtime 값은 바꾸지 않는다. 적용 판단은 multi-seed 또는 r800에서 `balanced v9 >= balanced none`, `power v9 >= power none`, absolute clear와 S8 bottleneck이 동시에 허용 범위인지 확인한 뒤 한다.
+- effective target 1.04 r800 check:
+  - command summary: `dart run tools/sim/run_balance_sim.dart --runs 800 --bot planner_v2 --seed 91380 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier high_stakes --out logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r800.jsonl --summary-out logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r800_summary.json`
+  - target override: S1~S8의 small/big/boss 전체에 `--target-multiplier ...:0.962962962962963`을 적용해 `high_stakes` effective target을 1.04로 맞췄다.
+  - result: balanced none 48.8%, balanced v9 54.1%, power none 57.8%, power v9 61.3%.
+  - bottleneck signal: S8 boss는 balanced v9 56회, power v9 55회로 남고, stop reason도 board/draw 양쪽이 모두 남는다.
+  - judgement: `high_stakes` effective target 1.04는 r800에서 좋은 market 선택 proxy가 none/control보다 낮아지는 문제를 해소하면서 압박을 유지한다. 목표는 `basic`급 clear rate가 아니라, 고레벨 보스다운 어려움과 통과 가능성을 같이 유지하는 것이다. 다음 후보는 runtime `high_stakes` target multiplier를 1.08에서 1.04로 낮추는 적용이다. reward 1.12와 market pressure profile은 유지하고, 자동 지급/고정 슬롯/자동 구매는 추가하지 않는다.
+- runtime applied: r800 결과를 기준으로 `NewRunModifier.highStakes.targetScoreMultiplier`를 1.08에서 1.04로 낮췄다. reward 1.12와 market pressure profile은 유지한다.
 
 ## 6. Read Order
 

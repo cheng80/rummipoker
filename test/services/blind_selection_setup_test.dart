@@ -64,7 +64,7 @@ void main() {
         ruleset: RummiRuleset.currentDefaults,
       );
 
-      expect(highStakes.targetScore, (standard.targetScore * 1.08).round());
+      expect(highStakes.targetScore, (standard.targetScore * 1.04).round());
       expect(highStakes.rewardPreview, (standard.rewardPreview * 1.12).round());
       expect(NewRunModifier.parse('high_stakes'), NewRunModifier.highStakes);
       expect(NewRunModifier.highStakes.unlockCostInsight, 20);
