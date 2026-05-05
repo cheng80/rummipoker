@@ -24,6 +24,7 @@
 | difficulty multiplier | Applied | `BlindSelectionSpecBuilder._difficultyMultiplier` | relaxed 0.8, standard 1.0, pressure 1.2 |
 | blind tier resource pressure | Applied | `BlindSelectionSpecBuilder` | 전투 시작 압박이며 자동 보상/성장 지급이 아님 |
 | run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.08, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
+| run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
 | runtime boss modifier cycle | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 순환 보스 제약 표시/전투 적용 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face 약화 3계열 적용 |
@@ -483,6 +484,7 @@ Market availability under pressure probe:
 - v10은 직접 지급이 아니라 missing growth 후보의 마켓 노출 확률과 slot 후보 수를 조정하는 sim-only profile이다.
 - 다음 구현 후보는 `high_stakes`에서 기존 런타임 market policy를 숨은 자동 보정으로 바꾸는 것이 아니라, 명시적 run modifier에 묶인 market availability profile을 설계하는 것이다.
 - 실제 적용 전에는 `basic` market 기준을 흔들지 않는 구조와 save/runtime 전달 경로를 먼저 검토한다.
+- runtime applied: 저장 포맷은 바꾸지 않고 `high_stakes` 선택 상태에서 transient `RummiMarketPressureProfile.highStakes`를 파생한다. `basic`은 기존 market policy를 그대로 쓰며, `high_stakes`는 S3 이후 item offer 후보 폭을 +1 하고 missing growth item/Jester 후보 노출 확률만 보강한다.
 
 ## 6. Read Order
 

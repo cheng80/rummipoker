@@ -616,10 +616,20 @@ enum RummiStationMarketBand { early, mid, late }
 /// 시뮬의 `shop_slot_market_v9`를 실제 런타임이 이해할 수 있는 Jester rarity와
 /// Item tag/rarity 가중치로 번역한다. 저장 데이터가 아니라 상점 생성 시점의
 /// transient policy라서, 실제 save schema를 늘리지 않는다.
-class RummiStationBandMarketPolicy {
-  const RummiStationBandMarketPolicy._(this.stageIndex, this.band);
+enum RummiMarketPressureProfile { standard, highStakes }
 
-  factory RummiStationBandMarketPolicy.forStage(int stageIndex) {
+class RummiStationBandMarketPolicy {
+  const RummiStationBandMarketPolicy._(
+    this.stageIndex,
+    this.band,
+    this.pressureProfile,
+  );
+
+  factory RummiStationBandMarketPolicy.forStage(
+    int stageIndex, {
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
+  }) {
     final stage = stageIndex < 1 ? 1 : stageIndex;
     return RummiStationBandMarketPolicy._(
       stage,
@@ -628,11 +638,13 @@ class RummiStationBandMarketPolicy {
           : stage <= 5
           ? RummiStationMarketBand.mid
           : RummiStationMarketBand.late,
+      pressureProfile,
     );
   }
 
   final int stageIndex;
   final RummiStationMarketBand band;
+  final RummiMarketPressureProfile pressureProfile;
 
   int jesterRarityWeight(
     RummiJesterRarity rarity, {
@@ -757,10 +769,12 @@ class RummiStationBandMarketPolicy {
         matched += 1;
       }
     }
-    // 직접 지급이 아니라 등장 확률만 약하게 보정한다. v10처럼 특정 자원
-    // 후보가 과선택되지 않도록 태그 보너스는 낮고 상한을 둔다.
+    // 직접 지급이 아니라 등장 확률만 보정한다. high stakes는 압박이
+    // 높으므로 필요한 성장축 후보가 마켓에 남는 힘만 조금 더 준다.
     final cappedMatches = matched > 2 ? 2 : matched;
-    return cappedMatches * 45;
+    final bonusPerMatch =
+        pressureProfile == RummiMarketPressureProfile.highStakes ? 70 : 45;
+    return cappedMatches * bonusPerMatch;
   }
 }
 
@@ -1125,6 +1139,8 @@ class RummiRunProgress {
     required Random rng,
     List<String> preferredOfferIds = const [],
     int? offerCountOverride,
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
   }) {
     rerollCost = shopBaseRerollCost;
     final nextMarketExtraJesterOfferSlots =
@@ -1146,6 +1162,7 @@ class RummiRunProgress {
       rng: rng,
       preferredOfferIds: preferredOfferIds,
       offerCountOverride: offerCountOverride,
+      pressureProfile: pressureProfile,
     );
   }
 
@@ -1259,6 +1276,8 @@ class RummiRunProgress {
     required Random rng,
     List<String> preferredOfferIds = const [],
     int? offerCountOverride,
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
   }) {
     final cost = effectiveRerollCost();
     if (gold < cost) {
@@ -1275,6 +1294,7 @@ class RummiRunProgress {
       rng: rng,
       preferredOfferIds: preferredOfferIds,
       offerCountOverride: offerCountOverride,
+      pressureProfile: pressureProfile,
     );
     return true;
   }
@@ -1483,6 +1503,8 @@ class RummiRunProgress {
     required Random rng,
     List<String> preferredOfferIds = const [],
     int? offerCountOverride,
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
   }) {
     shopOffers.clear();
     final ownedIds = ownedJesters.map((card) => card.id).toSet();
@@ -1511,6 +1533,7 @@ class RummiRunProgress {
       rng,
       startSlot: shopOffers.length,
       slotCount: slotCount,
+      pressureProfile: pressureProfile,
     );
     for (var slot = 0; slot < slotCount && pool.isNotEmpty; slot++) {
       if (slot < shopOffers.length) {
@@ -1568,6 +1591,8 @@ class RummiRunProgress {
     Random rng, {
     required int startSlot,
     required int slotCount,
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
   }) {
     final missingTags = _missingJesterGrowthTags();
     if (missingTags.isEmpty || stageIndex <= 2 || startSlot >= slotCount) {
@@ -1578,7 +1603,9 @@ class RummiRunProgress {
         : stageIndex >= 4
         ? 35
         : 25;
-    if (rng.nextInt(100) >= chance) return null;
+    final pressureBonus =
+        pressureProfile == RummiMarketPressureProfile.highStakes ? 15 : 0;
+    if (rng.nextInt(100) >= chance + pressureBonus) return null;
     return startSlot + rng.nextInt(slotCount - startSlot);
   }
 

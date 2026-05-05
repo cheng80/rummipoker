@@ -555,6 +555,9 @@ class _GameViewState extends ConsumerState<GameView>
         : RummiMarketRuntimeFacade.fromRunProgress(
             progress,
             itemCatalog: catalog,
+            pressureProfile: state.runModifier == NewRunModifier.highStakes
+                ? RummiMarketPressureProfile.highStakes
+                : RummiMarketPressureProfile.standard,
           );
   }
 

@@ -404,7 +404,8 @@ class _RunModifierCard extends StatelessWidget {
       return '목표 점수 x1.00 · 보상 x1.00';
     }
     return '목표 점수 x${modifier.targetScoreMultiplier.toStringAsFixed(2)}'
-        ' · 보상 x${modifier.rewardMultiplier.toStringAsFixed(2)}';
+        ' · 보상 x${modifier.rewardMultiplier.toStringAsFixed(2)}'
+        ' · 상점 선택 폭 보강';
   }
 }
 

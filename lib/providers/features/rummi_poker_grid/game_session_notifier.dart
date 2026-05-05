@@ -564,6 +564,7 @@ class GameSessionNotifier
     runProgress.openShop(
       catalog: catalog?.shopCatalog ?? const <RummiJesterCard>[],
       rng: session.runRandom,
+      pressureProfile: _marketPressureProfileFor(state.runModifier),
     );
     if (itemCatalog != null) {
       ItemEffectRuntime.applyOwnedEnterMarketItems(
@@ -619,7 +620,11 @@ class GameSessionNotifier
       );
       if (!result.isSuccess) return result.failMessage;
     }
-    final ok = runProgress.rerollShop(catalog: catalog, rng: rng);
+    final ok = runProgress.rerollShop(
+      catalog: catalog,
+      rng: rng,
+      pressureProfile: _marketPressureProfileFor(state.runModifier),
+    );
     if (!ok) {
       return '리롤 골드가 부족합니다.';
     }
@@ -1054,6 +1059,7 @@ class GameSessionNotifier
       rng: session.runRandom,
       preferredOfferIds: preferredOfferIds,
       offerCountOverride: preferredOfferIds.length,
+      pressureProfile: _marketPressureProfileFor(state.runModifier),
     );
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
@@ -1076,7 +1082,10 @@ class GameSessionNotifier
 
     return next.copyWith(
       stationView: RummiStationRuntimeFacade.fromSession(session),
-      marketView: RummiMarketRuntimeFacade.fromRunProgress(runProgress),
+      marketView: RummiMarketRuntimeFacade.fromRunProgress(
+        runProgress,
+        pressureProfile: _marketPressureProfileFor(next.runModifier),
+      ),
       battleView: RummiBattleRuntimeFacade.fromRuntime(
         session: session,
         runProgress: runProgress,
@@ -1104,6 +1113,14 @@ class GameSessionNotifier
       ActiveRunScene.blindSelect => GameRunLoopPhase.nextStationTransition,
       ActiveRunScene.battle => GameRunLoopPhase.battle,
     };
+  }
+
+  RummiMarketPressureProfile _marketPressureProfileFor(
+    NewRunModifier modifier,
+  ) {
+    return modifier == NewRunModifier.highStakes
+        ? RummiMarketPressureProfile.highStakes
+        : RummiMarketPressureProfile.standard;
   }
 }
 

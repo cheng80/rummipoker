@@ -488,6 +488,10 @@ void main() {
 
     test('missing growth correction only changes market appearance weight', () {
       final mid = RummiStationBandMarketPolicy.forStage(4);
+      final highStakesMid = RummiStationBandMarketPolicy.forStage(
+        4,
+        pressureProfile: RummiMarketPressureProfile.highStakes,
+      );
       final scoreGrowthItem = ItemDefinition.fromJson(
         _itemJson(
           id: 'rank_chart',
@@ -512,14 +516,75 @@ void main() {
         scoreGrowthItem,
         missingGrowthTags: const {'score', 'rank'},
       );
+      final highStakesScoreWeight = highStakesMid.itemOfferWeight(
+        scoreGrowthItem,
+        missingGrowthTags: const {'score', 'rank'},
+      );
       final correctedResourceWeight = mid.itemOfferWeight(
         resourceItem,
         missingGrowthTags: const {'score', 'rank'},
       );
 
       expect(correctedScoreWeight, greaterThan(baseScoreWeight));
+      expect(highStakesScoreWeight, greaterThan(correctedScoreWeight));
       expect(correctedResourceWeight, mid.itemOfferWeight(resourceItem));
       expect(correctedScoreWeight - baseScoreWeight, lessThanOrEqualTo(90));
+    });
+
+    test('high stakes market pressure adds transient item offer room', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'coin_cache',
+            timing: 'use_market',
+            op: 'gain_gold',
+            placement: 'inventory',
+            tags: const ['economy'],
+          ),
+          _itemJson(
+            id: 'reroll_token',
+            timing: 'market_reroll',
+            op: 'free_next_reroll',
+            placement: 'inventory',
+            tags: const ['market'],
+          ),
+          _itemJson(
+            id: 'rank_chart',
+            timing: 'station_start',
+            op: 'add_board_move',
+            placement: 'equipped',
+            tags: const ['score', 'rank'],
+          ),
+          _itemJson(
+            id: 'board_scrap',
+            timing: 'use_battle',
+            op: 'add_board_discard',
+            placement: 'quickSlot',
+            tags: const ['discard'],
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..stageIndex = 4
+        ..gold = 20;
+
+      final standard = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+      final highStakes = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+        pressureProfile: RummiMarketPressureProfile.highStakes,
+      );
+
+      expect(standard.itemOfferSlotCount, 3);
+      expect(highStakes.itemOfferSlotCount, 4);
+      expect(standard.itemOffers.length, 3);
+      expect(highStakes.itemOffers.length, 4);
+      expect(progress.marketModifiers.extraItemOfferSlots, 0);
     });
 
     test('missing growth exposure can focus a random item offer slot', () {

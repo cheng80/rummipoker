@@ -240,6 +240,8 @@ class RummiMarketRuntimeFacade {
   factory RummiMarketRuntimeFacade.fromRunProgress(
     RummiRunProgress progress, {
     ItemCatalog? itemCatalog,
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
   }) {
     return RummiMarketRuntimeFacade(
       gold: progress.gold,
@@ -264,11 +266,18 @@ class RummiMarketRuntimeFacade {
             ),
           )
           .toList(growable: false),
-      itemOfferSlotCount: progress.marketModifiers.itemOfferSlotCount,
+      itemOfferSlotCount: _itemOfferSlotCount(
+        progress,
+        pressureProfile: pressureProfile,
+      ),
       quickSlotCapacity: progress.quickSlotCapacity(itemCatalog: itemCatalog),
       itemOffers: itemCatalog == null
           ? const []
-          : _buildItemOffers(progress, itemCatalog),
+          : _buildItemOffers(
+              progress,
+              itemCatalog,
+              pressureProfile: pressureProfile,
+            ),
       itemSlots: itemCatalog == null
           ? const []
           : _buildItemSlots(progress, itemCatalog),
@@ -305,8 +314,10 @@ class RummiMarketRuntimeFacade {
 
   static List<RummiMarketItemOfferView> _buildItemOffers(
     RummiRunProgress progress,
-    ItemCatalog catalog,
-  ) {
+    ItemCatalog catalog, {
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
+  }) {
     final items = catalog.all;
     if (items.isEmpty) return const [];
     final quickSlotCapacity = progress.quickSlotCapacity(itemCatalog: catalog);
@@ -324,7 +335,12 @@ class RummiMarketRuntimeFacade {
           ),
         )
         .toList(growable: false);
-    final pickedItems = _pickWeightedItemOffers(progress, candidates, items);
+    final pickedItems = _pickWeightedItemOffers(
+      progress,
+      candidates,
+      items,
+      pressureProfile: pressureProfile,
+    );
     return pickedItems
         .asMap()
         .entries
@@ -342,23 +358,32 @@ class RummiMarketRuntimeFacade {
   static List<ItemDefinition> _pickWeightedItemOffers(
     RummiRunProgress progress,
     List<ItemDefinition> candidates,
-    List<ItemDefinition> catalogItems,
-  ) {
+    List<ItemDefinition> catalogItems, {
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
+  }) {
     if (candidates.isEmpty) return const [];
-    final policy = RummiStationBandMarketPolicy.forStage(progress.stageIndex);
+    final policy = RummiStationBandMarketPolicy.forStage(
+      progress.stageIndex,
+      pressureProfile: pressureProfile,
+    );
     final missingGrowthTags = _missingGrowthTagsForMarket(
       progress,
       catalogItems,
     );
     final remaining = List<ItemDefinition>.from(candidates);
     final picked = <ItemDefinition>[];
-    final slotCount = progress.marketModifiers.itemOfferSlotCount;
+    final slotCount = _itemOfferSlotCount(
+      progress,
+      pressureProfile: pressureProfile,
+    );
     final offset = progress.marketModifiers.itemOfferRerollOffset;
     final focusSlot = _missingGrowthFocusSlot(
       progress.stageIndex,
       offset,
       missingGrowthTags,
       slotCount,
+      pressureProfile: pressureProfile,
     );
     for (var slot = 0; slot < slotCount && remaining.isNotEmpty; slot++) {
       final focusCandidates = slot == focusSlot
@@ -444,8 +469,10 @@ class RummiMarketRuntimeFacade {
     int stageIndex,
     int offset,
     Set<String> missingGrowthTags,
-    int slotCount,
-  ) {
+    int slotCount, {
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
+  }) {
     if (missingGrowthTags.isEmpty || stageIndex <= 2 || slotCount <= 0) {
       return null;
     }
@@ -454,19 +481,33 @@ class RummiMarketRuntimeFacade {
         : stageIndex >= 4
         ? 45
         : 35;
+    final pressureBonus =
+        pressureProfile == RummiMarketPressureProfile.highStakes ? 15 : 0;
     final roll = _stableMarketRoll(
       100,
       stageIndex: stageIndex,
       offset: offset,
       slotIndex: 97,
     );
-    if (roll >= chance) return null;
+    if (roll >= chance + pressureBonus) return null;
     return _stableMarketRoll(
       slotCount,
       stageIndex: stageIndex,
       offset: offset,
       slotIndex: 98,
     );
+  }
+
+  static int _itemOfferSlotCount(
+    RummiRunProgress progress, {
+    RummiMarketPressureProfile pressureProfile =
+        RummiMarketPressureProfile.standard,
+  }) {
+    final base = progress.marketModifiers.itemOfferSlotCount;
+    if (pressureProfile != RummiMarketPressureProfile.highStakes) {
+      return base;
+    }
+    return progress.stageIndex >= 3 ? base + 1 : base;
   }
 
   static bool _hasAnyTag(List<String> tags, Set<String> expectedTags) {

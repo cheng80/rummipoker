@@ -54,6 +54,8 @@ Run modifier는 숨은 자동 보정이 아니다. 새 런 시작 시 명시적�
 
 `high_stakes`는 Insight 20으로 해금하는 명시적 계약이다. 목표 점수와 blind reward preview/reward만 함께 올리며, 인런 골드/아이템/Jester/자원은 직접 지급하지 않는다. active run 저장에는 선택된 modifier id를 보존하고, 기존 저장처럼 modifier가 없는 payload는 `basic`으로 복원한다.
 
+`high_stakes`는 압박이 높기 때문에 상점 생성/표시 시점의 transient market pressure profile도 함께 사용한다. 이 profile은 저장 포맷을 늘리지 않고 선택된 run modifier에서 파생한다. 효과는 S3 이후 item offer 후보 폭 +1, missing growth 후보의 item/Jester 마켓 노출 확률 보강이며, 자동 지급/고정 슬롯/자동 구매는 하지 않는다.
+
 S8 이후는 실제 진행 구간 밖이다. 디버그/테스트용으로만 마지막 구간 성장률을 이어 붙여 단조 증가를 보장한다.
 
 ## 3. Blind Resource Pressure
