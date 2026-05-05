@@ -1,0 +1,9 @@
+{
+  "row_count": 4666,
+  "train_count": 3499,
+  "test_count": 1167,
+  "target": "clear_rate",
+  "feature_mode": "preoutcome",
+  "mae": 0.043880698284823764,
+  "r2": 0.22083966975617808
+}

@@ -1425,7 +1425,6 @@ class _GameItemPocketChip extends StatelessWidget {
                               child: Center(
                                 child: GameCardNameText(
                                   itemName!,
-                                  maxLines: 2,
                                   style: const TextStyle(
                                     color: Color(0xFF26352F),
                                     fontSize: 10,

@@ -11,6 +11,13 @@
 
 기존 v90 장기 sweep은 path clear와 병목을 확인하는 데 유효하지만, 실제 런타임 경제를 충분히 모델링하지 않는다. 따라서 다음 boss/market 장기 sweep을 재개하기 전에 economy leveling gate를 먼저 통과한다.
 
+현재 상태:
+
+- 출품용 프로토타입 기준 `reward 0.40 / price 2.2 / catalog_normalized_v1`와 `jester_hook` 가격 조정은 `good enough` baseline으로 유지한다.
+- 다만 Jester/Slots와 Tool/Gear 리롤 lane 분리 이후 경제 probe는 아직 exploratory 상태다.
+- post lane reroll probe는 “실행 완료”가 아니라 “다음 경제 gate에서 별도로 확인할 항목”이다.
+- 따라서 이 문서는 경제 gate 전체 완료 문서가 아니라, 현재 baseline과 남은 probe 조건을 분리해 기록한다.
+
 ## 2. 핵심 원칙
 
 - 보상 조정도 레벨링이다. 임시 감각으로 수치를 바꾸지 않는다.
@@ -418,6 +425,14 @@ r400 follow-up:
   - `jester_hook` 가격 조정은 r400에서도 즉시 부작용을 만들지 않았다.
   - v9가 balanced/power 모두 none보다 clear를 떨어뜨리지 않았으므로, 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠근다.
   - S7/S8 난이도와 후반 clear 비중은 경제 추가 변경이 아니라 target/boss severity/market availability sweep으로 별도 조정한다.
+
+post lane reroll status:
+
+- `ec02c91` 이후 Jester/Slots와 Tool/Gear 리롤 비용/진행이 분리됐다.
+- 이 변경은 유저 혼란을 줄이는 UI/경제 구조 개선이지만, 리롤 spend와 후보 탐색 비용을 바꿀 수 있다.
+- 현재 문서에 기록된 r400 경제 follow-up은 lane split 전후 효과를 닫는 장기 검증이 아니다.
+- 다음 경제 probe에서는 v9 market clear, final gold avg, S8 boss 시작 골드, reroll spend, S1/S2/S3/S7/S8 병목, board locked/draw exhausted를 lane split 이후 기준으로 다시 본다.
+- 결론: 출품용 baseline은 유지하되, post lane reroll 경제 gate는 not closed다.
 
 ### Phase 3. Economy Probe
 

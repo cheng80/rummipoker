@@ -1535,7 +1535,6 @@ class _GameShopScreenState extends State<GameShopScreen>
                                             context,
                                             selectedOwned.card,
                                           ),
-                                          maxLines: 2,
                                         ),
                                         if (selectedOwnedRuntimeValue !=
                                             null) ...[
@@ -1578,7 +1577,6 @@ class _GameShopScreenState extends State<GameShopScreen>
                                     )
                                   : _MarketDescriptionText(
                                       '선택한 카드의 정보와 액션이 여기에 표시됩니다.',
-                                      maxLines: 3,
                                       color: Colors.white.withValues(
                                         alpha: 0.68,
                                       ),
@@ -2499,14 +2497,9 @@ class _MarketDenyBadge extends StatelessWidget {
 }
 
 class _MarketDescriptionText extends StatelessWidget {
-  const _MarketDescriptionText(
-    this.text, {
-    required this.maxLines,
-    this.color = Colors.white70,
-  });
+  const _MarketDescriptionText(this.text, {this.color = Colors.white70});
 
   final String text;
-  final int maxLines;
   final Color color;
 
   @override
@@ -2514,11 +2507,14 @@ class _MarketDescriptionText extends StatelessWidget {
     return ConstrainedBox(
       key: const ValueKey('market-description-box'),
       constraints: const BoxConstraints(minHeight: _marketDescriptionMinHeight),
-      child: Text(
-        text,
-        key: const ValueKey('market-description-text'),
-        maxLines: maxLines,
-        style: _marketDescriptionTextStyle.copyWith(color: color),
+      child: SingleChildScrollView(
+        child: Text(
+          text,
+          key: const ValueKey('market-description-text'),
+          maxLines: null,
+          softWrap: true,
+          style: _marketDescriptionTextStyle.copyWith(color: color),
+        ),
       ),
     );
   }
@@ -2535,7 +2531,7 @@ class _MarketOfferDetailBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MarketDescriptionText(effectText, maxLines: tags.isEmpty ? 5 : 4),
+        _MarketDescriptionText(effectText),
         if (tags.isNotEmpty) ...[
           const SizedBox(height: 3),
           _MarketDetailTagWrap(tags: tags),
@@ -2576,7 +2572,7 @@ class _OwnedMarketItemBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MarketDescriptionText(effect, maxLines: 2),
+        _MarketDescriptionText(effect),
         if (notice != null) ...[
           const SizedBox(height: 4),
           Text(
@@ -3289,7 +3285,6 @@ class _MarketItemCardFace extends StatelessWidget {
                 alignment: Alignment.topCenter,
                 child: GameCardNameText(
                   label,
-                  maxLines: 3,
                   style: const TextStyle(
                     color: Color(0xFF26352F),
                     fontSize: 8,
@@ -3368,8 +3363,8 @@ class _MarketSynergyChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        maxLines: 1,
-        softWrap: false,
+        maxLines: null,
+        softWrap: true,
         style: TextStyle(
           color: const Color(0xFFFFE08A),
           fontSize: dense ? 7 : 9,
@@ -3676,9 +3671,8 @@ class _MarketPurchaseFlightCard extends StatelessWidget {
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Text(
+          child: GameCardNameText(
             flight.label,
-            maxLines: 3,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF26352F),

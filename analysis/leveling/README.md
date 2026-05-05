@@ -7,6 +7,7 @@
 - 현재 레벨링 기준은 시뮬레이션과 휴리스틱 진단 라벨에 기반한다.
 - 이 폴더의 현재 산출물은 실제 ML 전환 완료 증거가 아니라, 기존 summary를 feature table 형태로 보존하고 모델링 리포트 형식을 시험한 스캐폴딩이다.
 - 현재 `models/`와 `reports/`의 RandomForest 결과는 outcome-derived feature로 `clear_rate`를 설명하는 baseline이다. target/boss/market/economy 값을 추천해 적용하는 intervention model이 아니다.
+- `preoutcome` 이름이 붙은 새 feature/model/report 산출물도 planned transition scaffold다. outcome-derived feature를 제거한 점은 진전이지만, production ML이나 런타임 자동 조정 완료 증거가 아니다.
 - 실제 ML 전환은 pre-outcome feature, supervised target, train/test split, metric, 추천 후보 재시뮬레이션, 사람 승인까지 갖춘 뒤에만 “ML 기반 레벨링”으로 기록한다.
 - 휴리스틱 라벨은 향후 초기 `silver label`로만 사용할 수 있다.
 
@@ -17,3 +18,9 @@
 - `models/`: 스캐폴딩 모델과 metric 산출물. 현재 런타임 적용 근거가 아니다.
 - `notebooks/`: 사람이 읽고 검토하기 위한 Jupyter notebook.
 - `reports/`: MD 기반 분석 리포트와 향후 ML 전환 요구사항.
+
+## Current Planned Transition Artifacts
+
+- `analysis/leveling/reports/preoutcome_baseline_model_report.md`: pre-outcome baseline scaffold metric.
+- `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`: baseline metric과 후보 재시뮬레이션을 연결한 사람 검토용 보고서.
+- 두 보고서는 production ML이나 runtime 자동 적용 근거가 아니다.

@@ -294,8 +294,16 @@ void main() {
     final descriptionText = tester.widget<Text>(
       find.byKey(const ValueKey('market-description-text')),
     );
-    expect(descriptionText.maxLines, 4);
+    expect(descriptionText.maxLines, isNull);
+    expect(descriptionText.softWrap, isTrue);
     expect(descriptionText.overflow, isNull);
+    expect(
+      find.ancestor(
+        of: find.byKey(const ValueKey('market-description-text')),
+        matching: find.byType(SingleChildScrollView),
+      ),
+      findsOneWidget,
+    );
     final descriptionBox = tester.widget<ConstrainedBox>(
       find.byKey(const ValueKey('market-description-box')),
     );

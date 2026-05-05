@@ -905,6 +905,7 @@ void main() {
 
     expect(find.text('Board Scrap'), findsOneWidget);
     final itemNameText = tester.widget<Text>(find.text('Board Scrap'));
+    expect(itemNameText.maxLines, isNull);
     expect(itemNameText.softWrap, isTrue);
     expect(itemNameText.overflow, TextOverflow.visible);
     expect(find.text('Q1'), findsOneWidget);

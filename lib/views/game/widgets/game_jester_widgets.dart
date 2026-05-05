@@ -385,7 +385,6 @@ class GameJesterSlot extends StatelessWidget {
                           alignment: Alignment.topCenter,
                           child: GameCardNameText(
                             displayName,
-                            maxLines: 2,
                             style: const TextStyle(
                               color: Color(0xFF26352F),
                               fontSize: 9,

@@ -1,0 +1,13 @@
+{
+  "row_count": 4666,
+  "source_paths": [
+    "analysis/leveling/data/raw/prototype_stability_submission_r120_summary.json",
+    "analysis/leveling/data/raw/run_modifier_high_stakes_market_pressure_effective_t104_r800_summary.json",
+    "analysis/leveling/data/raw/run_modifier_candidate_fair_t104_r112_r400_summary.json",
+    "analysis/leveling/data/raw/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json",
+    "analysis/leveling/data/raw/station_curve_growth_gate_probe_r120_summary.json"
+  ],
+  "output": "analysis/leveling/data/features/leveling_preoutcome_feature_table.csv",
+  "feature_mode": "preoutcome",
+  "note": "Pre-outcome feature table for planned ML transition scaffold. Outcome summary fields are excluded from model features; clear_rate remains the supervised target. This is not production ML and does not auto-apply runtime balance changes."
+}

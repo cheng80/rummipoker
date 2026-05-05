@@ -46,23 +46,22 @@
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
 | Boss modifier runtime cycle | 70% | S1~S8 cycle 적용, repeat/single rank는 구현 후 cycle 보류 | S7/S8 고난도 비중 재확인 |
 | Market offer and inventory | 67% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한 구현 | 가격/노출/구매력 최종 기준 필요 |
-| Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | 경제 probe 및 r400/r800 |
+| Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | post lane reroll 경제 probe는 exploratory/not closed |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
 | Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
-| Analysis/ML documentation | 28% | `ML` 명칭 오해를 줄이기 위한 휴리스틱 기준 문서와 `analysis/leveling/` 스캐폴딩 존재 | 실제 ML 전환은 미완료. 문서 규합 후 공모전 작업 전에 pre-outcome feature 기반 ML 이행 필요 |
+| Analysis/ML documentation | 34% | `ML` 명칭 오해 정정, pre-outcome scaffold table/model/report, 후보 재시뮬레이션 연결 보고서 존재 | production ML과 runtime 자동 적용은 미완료. 더 넓은 후보 grid와 사람 승인 추천표 필요 |
 
 ## 3. Current Focus
 
 현재 집중 축:
 
-1. `START_HERE.md` 기준 새 세션 진입 경로와 문서 source-of-truth 정렬
-2. 실제 ML 이행: pre-outcome feature table 재설계, baseline model 학습, metric 리포트, 후보 재시뮬레이션, MD 분석 보고서 작성
-3. ML 분석 산출물 정리: `analysis/leveling/` 데이터, 노트북, 작업용 Python 파일, 사람이 읽는 리포트 정돈
-4. 공모전 기준 텍스트/UX/QA 작업 재개
-5. 경제/가격 기준선 정리와 S1~S8 레벨링 검증 재개
+1. 공모전 기준 텍스트/UX/QA 작업 재개
+2. post lane reroll 경제 probe 범위 확정
+3. 출품 후보 smoke/browser QA 반복
+4. S1~S8 레벨링 검증 재개
 
 현재 경제 판단:
 
@@ -71,15 +70,22 @@
 - `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
 - r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
+- Jester/Slots와 Tool/Gear lane reroll 분리 이후 경제 영향은 아직 닫지 않았다. 다음 경제 probe에서 reroll spend, final gold, S8 boss 시작 골드, S1/S2/S3/S7/S8 병목을 별도 확인한다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
 
 - 현재 런타임 레벨링은 실제 머신러닝이 자동 조정하지 않는다.
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
-- `analysis/leveling/`의 feature table과 RandomForest 결과는 실제 ML 전환 완료 증거가 아니라 전환 준비용 스캐폴딩이다.
-- 실제 ML 전환은 pre-outcome feature, supervised target, train/test split, metric, 후보 추천, 후보 재시뮬레이션, 사람 승인 후 적용까지 갖춘 뒤 별도 milestone으로 진행한다.
-- 이 실제 ML 이행 gate는 공모전 기준 작업 재개보다 앞에 둔다. 공모전 작업으로 돌아가기 전에 최소 baseline model과 후보 재시뮬레이션 리포트까지 완료/보류 사유를 남긴다.
+- `analysis/leveling/`의 pre-outcome feature table과 RandomForest 결과는 planned transition scaffold다.
+- `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
+- production ML 전환은 더 넓은 candidate grid, 모델 추천표, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
+
+임시 작업 순서 플랜 처리:
+
+- `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`의 고정 순서는 완료됐다.
+- 결과는 `AGENTS.md`, `docs/planning/00_planning_README.md`, `docs/planning/ECONOMY_LEVELING_PLAN.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`, `analysis/leveling/README.md`, `analysis/leveling/reports/`로 승격했다.
+- 따라서 임시 플랜 문서는 삭제 대상이다.
 
 ## 4. Competition Prototype Track
 
@@ -224,7 +230,7 @@ Status: In progress
 
 ### M0.5. Actual ML Leveling Transition
 
-Status: Next
+Status: In progress
 
 완료 조건:
 
@@ -236,11 +242,10 @@ Status: Next
 
 현재 남은 일:
 
-- `analysis/leveling/data/`에 pre-outcome feature table을 생성한다.
-- `tools/leveling/`의 feature build/train 스크립트를 실제 ML baseline용으로 분리하거나 명시 옵션을 추가한다.
-- baseline model을 학습하고 metric 리포트를 생성한다.
-- 후보 재시뮬레이션 범위와 runs를 정하고 실행한다.
-- `analysis/leveling/reports/`에 분석 보고서를 작성한다.
+- broader candidate grid를 만들어 target/boss/market/economy 후보를 더 직접 비교한다.
+- 모델 추천표를 생성한다.
+- 추천 후보를 fresh resimulation으로 검증한다.
+- 사람 승인 전 runtime 값을 바꾸지 않는다.
 
 ### M1. Economy And Price Baseline
 
@@ -255,7 +260,7 @@ Status: In progress
 
 현재 남은 일:
 
-- r400 경제 probe로 잔고, unaffordable event, clear 역전 여부 확인.
+- post lane reroll 이후 경제 probe로 reroll spend, 잔고, unaffordable event, clear 역전 여부를 확인한다.
 
 ### M2. S1~S8 Leveling Curve
 

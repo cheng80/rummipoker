@@ -11,7 +11,9 @@ from typing import Any
 
 
 DEFAULT_FEATURES = "analysis/leveling/data/features/leveling_feature_table.csv"
+DEFAULT_PREOUTCOME_FEATURES = "analysis/leveling/data/features/leveling_preoutcome_feature_table.csv"
 DEFAULT_REPORT = "analysis/leveling/reports/model_recommendation_report.md"
+DEFAULT_PREOUTCOME_REPORT = "analysis/leveling/reports/preoutcome_baseline_model_report.md"
 DEFAULT_MODEL_DIR = "analysis/leveling/models"
 
 NUMERIC_FEATURES = [
@@ -38,14 +40,45 @@ CATEGORICAL_FEATURES = [
     "tempo_risk_label",
 ]
 
+PREOUTCOME_NUMERIC_FEATURES = [
+    "station",
+    "tier_index",
+    "difficulty_multiplier",
+    "target_multiplier",
+    "reward_multiplier",
+    "sweep_reward_scale",
+    "sweep_price_scale",
+    "has_market_profile",
+    "market_profile_version",
+    "has_boss_constraint",
+    "boss_family_index",
+]
+
+PREOUTCOME_CATEGORICAL_FEATURES = [
+    "base_experiment_id",
+    "loadout_id",
+    "blind_tier",
+    "difficulty",
+    "market_profile",
+    "resolved_market_profile",
+    "run_modifier",
+    "sim_boss_constraint_id",
+]
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="레벨링 feature table로 RandomForest 설명 baseline을 학습하고 MD 리포트를 만듭니다.",
     )
-    parser.add_argument("--features", default=DEFAULT_FEATURES, help="feature table CSV")
+    parser.add_argument(
+        "--feature-mode",
+        choices=["outcome_summary", "preoutcome"],
+        default="outcome_summary",
+        help="학습에 사용할 feature set. preoutcome은 사전 조건 feature만 사용합니다.",
+    )
+    parser.add_argument("--features", default=None, help="feature table CSV")
     parser.add_argument("--target", default="clear_rate", help="예측 target 컬럼")
-    parser.add_argument("--report-out", default=DEFAULT_REPORT, help="MD 리포트 출력 경로")
+    parser.add_argument("--report-out", default=None, help="MD 리포트 출력 경로")
     parser.add_argument("--model-dir", default=DEFAULT_MODEL_DIR, help="모델 산출물 폴더")
     parser.add_argument("--test-size", type=float, default=0.25)
     parser.add_argument("--seed", type=int, default=42)
@@ -65,7 +98,8 @@ def main() -> int:
             f"{error}",
         ) from error
 
-    feature_path = Path(args.features)
+    default_features = DEFAULT_PREOUTCOME_FEATURES if args.feature_mode == "preoutcome" else DEFAULT_FEATURES
+    feature_path = Path(args.features or default_features)
     if not feature_path.exists():
         raise SystemExit(f"feature table이 없습니다: {feature_path}")
 
@@ -75,9 +109,18 @@ def main() -> int:
     if len(df) < 8:
         raise SystemExit("학습에는 최소 8개 이상의 group row가 필요합니다.")
 
-    features = [key for key in [*NUMERIC_FEATURES, *CATEGORICAL_FEATURES] if key in df.columns]
-    numeric_features = [key for key in NUMERIC_FEATURES if key in features]
-    categorical_features = [key for key in CATEGORICAL_FEATURES if key in features]
+    if args.feature_mode == "preoutcome":
+        all_numeric_features = PREOUTCOME_NUMERIC_FEATURES
+        all_categorical_features = PREOUTCOME_CATEGORICAL_FEATURES
+    else:
+        all_numeric_features = NUMERIC_FEATURES
+        all_categorical_features = CATEGORICAL_FEATURES
+
+    features = [key for key in [*all_numeric_features, *all_categorical_features] if key in df.columns]
+    numeric_features = [key for key in all_numeric_features if key in features]
+    categorical_features = [key for key in all_categorical_features if key in features]
+    if not features:
+        raise SystemExit("사용 가능한 feature 컬럼이 없습니다.")
 
     x = df[features].copy()
     y = df[args.target].astype(float)
@@ -113,18 +156,21 @@ def main() -> int:
         "train_count": int(len(x_train)),
         "test_count": int(len(x_test)),
         "target": args.target,
+        "feature_mode": args.feature_mode,
         "mae": float(mean_absolute_error(y_test, predictions)),
         "r2": float(r2_score(y_test, predictions)) if len(y_test) > 1 else 0.0,
     }
 
     model_dir = Path(args.model_dir)
     model_dir.mkdir(parents=True, exist_ok=True)
-    importance_path = model_dir / f"{args.target}_feature_importance.csv"
+    artifact_prefix = args.target if args.feature_mode == "outcome_summary" else f"{args.target}_preoutcome"
+    importance_path = model_dir / f"{artifact_prefix}_feature_importance.csv"
     write_feature_importance(pipeline, numeric_features, categorical_features, importance_path)
-    metrics_path = model_dir / f"{args.target}_metrics.json"
+    metrics_path = model_dir / f"{artifact_prefix}_metrics.json"
     metrics_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    report_path = Path(args.report_out)
+    default_report = DEFAULT_PREOUTCOME_REPORT if args.feature_mode == "preoutcome" else DEFAULT_REPORT
+    report_path = Path(args.report_out or default_report)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
         build_report(
@@ -133,6 +179,9 @@ def main() -> int:
             importance_path=importance_path,
             metrics_path=metrics_path,
             source_paths=read_feature_source_paths(feature_path),
+            feature_mode=args.feature_mode,
+            numeric_features=numeric_features,
+            categorical_features=categorical_features,
         ),
         encoding="utf-8",
     )
@@ -172,6 +221,9 @@ def build_report(
     importance_path: Path,
     metrics_path: Path,
     source_paths: list[str],
+    feature_mode: str,
+    numeric_features: list[str],
+    categorical_features: list[str],
 ) -> str:
     top_importances = read_top_importances(importance_path, limit=10)
     source_lines = [f"- `{source_path}`" for source_path in source_paths]
@@ -185,6 +237,18 @@ def build_report(
             for feature, importance in top_importances
         ],
     ]
+    if feature_mode == "preoutcome":
+        return build_preoutcome_report(
+            feature_path=feature_path,
+            metrics=metrics,
+            importance_path=importance_path,
+            metrics_path=metrics_path,
+            source_lines=source_lines,
+            top_importance_lines=top_importance_lines,
+            numeric_features=numeric_features,
+            categorical_features=categorical_features,
+        )
+
     return "\n".join(
         [
             "# Leveling ML Transition Scaffold Report",
@@ -300,6 +364,118 @@ def build_report(
             "2. Simulator runs the top candidates.",
             "3. Human review checks policy constraints and playfeel.",
             "4. Only approved candidates are applied to runtime data/code.",
+            "",
+        ],
+    )
+
+
+def build_preoutcome_report(
+    *,
+    feature_path: Path,
+    metrics: dict[str, Any],
+    importance_path: Path,
+    metrics_path: Path,
+    source_lines: list[str],
+    top_importance_lines: list[str],
+    numeric_features: list[str],
+    categorical_features: list[str],
+) -> str:
+    return "\n".join(
+        [
+            "# Leveling Pre-Outcome Transition Scaffold Report",
+            "",
+            "## Scope",
+            "",
+            "이 리포트는 planned ML transition scaffold다.",
+            "기존 outcome-derived summary feature를 제거하고, 시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 `clear_rate`를 예측한다.",
+            "모델은 후보 추천 루프를 설계하기 위한 오프라인 분석 도구이며, production ML이 아니고 런타임 target, boss, market, economy 값을 자동 변경하지 않는다.",
+            "이 산출물만으로 실제 ML 이행 완료를 주장하지 않는다. 후보 재시뮬레이션과 사람 승인 보고서가 별도로 필요하다.",
+            "",
+            "## Dataset",
+            "",
+            f"- feature table: `{feature_path}`",
+            f"- rows: {metrics['row_count']}",
+            f"- train rows: {metrics['train_count']}",
+            f"- test rows: {metrics['test_count']}",
+            f"- target: `{metrics['target']}`",
+            f"- feature mode: `{metrics['feature_mode']}`",
+            "",
+            "Source summaries:",
+            "",
+            *source_lines,
+            "",
+            "## Feature And Target Definition",
+            "",
+            "Target:",
+            "",
+            f"- `{metrics['target']}`: aggregated simulation group clear share.",
+            "",
+            "Pre-outcome numeric features:",
+            "",
+            *[f"- `{feature}`" for feature in numeric_features],
+            "",
+            "Pre-outcome categorical features:",
+            "",
+            *[f"- `{feature}`" for feature in categorical_features],
+            "",
+            "Excluded from model features:",
+            "",
+            "- `avg_score_ratio`",
+            "- `avg_turn_count`",
+            "- `avg_confirm_action_count`",
+            "- `avg_max_single_confirm_score`",
+            "- `avg_remaining_deck`",
+            "- `avg_remaining_board_discards`",
+            "- `avg_remaining_hand_discards`",
+            "- `avg_remaining_board_moves`",
+            "- `slow_clear_share_of_clears`",
+            "- `run_count`",
+            "",
+            "These excluded fields are outcomes or sample-size metadata, so they cannot be used for candidate recommendation before a simulation is run.",
+            "",
+            "## Model",
+            "",
+            "Model type: `RandomForestRegressor`.",
+            "",
+            "Reason:",
+            "",
+            "- It is a simple baseline for mixed numeric/categorical simulation settings.",
+            "- It can capture non-linear station, tier, market, boss, and modifier interactions.",
+            "- Feature importance is inspectable enough for a first human review.",
+            "",
+            "## Metric",
+            "",
+            f"- MAE: {metrics['mae']:.4f}",
+            f"- R2: {metrics['r2']:.4f}",
+            "",
+            "Interpretation:",
+            "",
+            "- This score is expected to be weaker than the previous outcome-summary scaffold because it cannot peek at post-run results.",
+            "- Useful signal here means candidate settings have enough structure for a first recommendation loop.",
+            "- Poor signal means more candidate diversity or raw run-level data is needed before relying on model ranking.",
+            "",
+            "## Feature Importance Snapshot",
+            "",
+            *top_importance_lines,
+            "",
+            "## Artifacts",
+            "",
+            f"- metrics JSON: `{metrics_path}`",
+            f"- feature importance CSV: `{importance_path}`",
+            "",
+            "## Recommendation Boundary",
+            "",
+            "Allowed next use:",
+            "",
+            "- rank candidate settings for follow-up simulation",
+            "- identify which pre-run settings explain clear-rate variance",
+            "- choose small candidate probes for human review",
+            "",
+            "Not allowed:",
+            "",
+            "- runtime auto-balancing",
+            "- direct target/boss/market/economy patch without resimulation",
+            "- treating this as player telemetry modeling",
             "",
         ],
     )
