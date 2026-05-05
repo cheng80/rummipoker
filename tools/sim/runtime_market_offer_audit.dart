@@ -63,14 +63,14 @@ Map<String, Object?> _buildReport({
     for (var seed = 0; seed < options.runs; seed++) {
       final progress = RummiRunProgress()
         ..stageIndex = stage
-        ..gold = 999
-        ..marketModifiers = RummiMarketModifierState(
-          itemOfferRerollOffset: seed,
-        );
+        ..gold = 999;
       progress.openShop(
         catalog: jesterCatalog.shopCatalog,
         rng: Random(options.seed + stage * 1009 + seed),
         pressureProfile: options.pressureProfile,
+      );
+      progress.marketModifiers = progress.marketModifiers.copyWith(
+        itemOfferRerollOffset: seed,
       );
       final market = RummiMarketRuntimeFacade.fromRunProgress(
         progress,
