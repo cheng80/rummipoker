@@ -127,6 +127,10 @@ void main() {
             gold: 42,
             rerollCost: 6,
             itemRerollCost: 8,
+            quickSlotRerollCost: 9,
+            passiveRerollCost: 10,
+            toolRerollCost: 11,
+            gearRerollCost: 12,
             ownedJesterIds: <String>['jester'],
             shopOffers: <SavedShopOfferData>[
               SavedShopOfferData(slotIndex: 0, cardId: 'jester', price: 3),
@@ -149,6 +153,10 @@ void main() {
               nextMarketExtraJesterOfferSlots: 1,
               extraItemOfferSlots: 1,
               itemOfferRerollOffset: 3,
+              quickSlotOfferRerollOffset: 4,
+              passiveOfferRerollOffset: 5,
+              toolOfferRerollOffset: 6,
+              gearOfferRerollOffset: 7,
               consumedItemOfferIds: ['board_scrap'],
             ),
           ),
@@ -200,6 +208,10 @@ void main() {
         expect(restored.runProgress.gold, 42);
         expect(restored.runProgress.rerollCost, 6);
         expect(restored.runProgress.itemRerollCost, 8);
+        expect(restored.runProgress.quickSlotRerollCost, 9);
+        expect(restored.runProgress.passiveRerollCost, 10);
+        expect(restored.runProgress.toolRerollCost, 11);
+        expect(restored.runProgress.gearRerollCost, 12);
         expect(restored.runProgress.marketModifiers.nextRerollDiscount, 1);
         expect(
           restored.runProgress.marketModifiers.nextItemPurchaseDiscount,
@@ -211,6 +223,16 @@ void main() {
         );
         expect(restored.runProgress.marketModifiers.extraItemOfferSlots, 1);
         expect(restored.runProgress.marketModifiers.itemOfferRerollOffset, 3);
+        expect(
+          restored.runProgress.marketModifiers.quickSlotOfferRerollOffset,
+          4,
+        );
+        expect(
+          restored.runProgress.marketModifiers.passiveOfferRerollOffset,
+          5,
+        );
+        expect(restored.runProgress.marketModifiers.toolOfferRerollOffset, 6);
+        expect(restored.runProgress.marketModifiers.gearOfferRerollOffset, 7);
         expect(restored.runProgress.marketModifiers.consumedItemOfferIds, [
           'board_scrap',
         ]);
@@ -452,6 +474,10 @@ void main() {
 
         expect(restored.itemInventory.isEmpty, isTrue);
         expect(restored.itemRerollCost, 6);
+        expect(restored.quickSlotRerollCost, 6);
+        expect(restored.passiveRerollCost, 6);
+        expect(restored.toolRerollCost, 6);
+        expect(restored.gearRerollCost, 6);
       },
     );
 

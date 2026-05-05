@@ -1379,6 +1379,45 @@ void main() {
       );
     });
 
+    test('rerollItemOffersFromState는 아이템 종류별 리롤 비용과 offset을 분리한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 44);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!
+        ..gold = 20
+        ..quickSlotRerollCost = 5
+        ..passiveRerollCost = 5
+        ..toolRerollCost = 5
+        ..gearRerollCost = 5;
+      notifier.markDirty();
+
+      final message = notifier.rerollItemOffersFromState(
+        placement: ItemPlacement.equipped,
+      );
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(message, isNull);
+      expect(updated.runProgress!.gold, 15);
+      expect(updated.runProgress!.quickSlotRerollCost, 5);
+      expect(updated.runProgress!.passiveRerollCost, 5);
+      expect(updated.runProgress!.toolRerollCost, 5);
+      expect(updated.runProgress!.gearRerollCost, 7);
+      expect(
+        updated.runProgress!.marketModifiers.gearOfferRerollOffset,
+        updated.runProgress!.marketModifiers.itemOfferSlotCount,
+      );
+      expect(
+        updated.runProgress!.marketModifiers.quickSlotOfferRerollOffset,
+        0,
+      );
+      expect(updated.runProgress!.marketModifiers.toolOfferRerollOffset, 0);
+    });
+
     test('rerollShopFromState는 리롤 토큰을 골드 대신 소모한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

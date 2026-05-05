@@ -790,9 +790,18 @@ class RummiMarketModifierState {
     this.nextMarketExtraJesterOfferSlots = 0,
     this.extraItemOfferSlots = 0,
     this.itemOfferRerollOffset = 0,
+    int? quickSlotOfferRerollOffset,
+    int? passiveOfferRerollOffset,
+    int? toolOfferRerollOffset,
+    int? gearOfferRerollOffset,
     this.consumedItemOfferIds = const [],
     this.rarityWeightBonus = 0,
-  });
+  }) : quickSlotOfferRerollOffset =
+           quickSlotOfferRerollOffset ?? itemOfferRerollOffset,
+       passiveOfferRerollOffset =
+           passiveOfferRerollOffset ?? itemOfferRerollOffset,
+       toolOfferRerollOffset = toolOfferRerollOffset ?? itemOfferRerollOffset,
+       gearOfferRerollOffset = gearOfferRerollOffset ?? itemOfferRerollOffset;
 
   factory RummiMarketModifierState.fromJson(Map<String, dynamic> json) {
     return RummiMarketModifierState(
@@ -814,6 +823,18 @@ class RummiMarketModifierState {
       ),
       extraItemOfferSlots: _nonNegativeJsonInt(json['extraItemOfferSlots']),
       itemOfferRerollOffset: _nonNegativeJsonInt(json['itemOfferRerollOffset']),
+      quickSlotOfferRerollOffset: json.containsKey('quickSlotOfferRerollOffset')
+          ? _nonNegativeJsonInt(json['quickSlotOfferRerollOffset'])
+          : _nonNegativeJsonInt(json['itemOfferRerollOffset']),
+      passiveOfferRerollOffset: json.containsKey('passiveOfferRerollOffset')
+          ? _nonNegativeJsonInt(json['passiveOfferRerollOffset'])
+          : _nonNegativeJsonInt(json['itemOfferRerollOffset']),
+      toolOfferRerollOffset: json.containsKey('toolOfferRerollOffset')
+          ? _nonNegativeJsonInt(json['toolOfferRerollOffset'])
+          : _nonNegativeJsonInt(json['itemOfferRerollOffset']),
+      gearOfferRerollOffset: json.containsKey('gearOfferRerollOffset')
+          ? _nonNegativeJsonInt(json['gearOfferRerollOffset'])
+          : _nonNegativeJsonInt(json['itemOfferRerollOffset']),
       consumedItemOfferIds: _stringListFromJson(json['consumedItemOfferIds']),
       rarityWeightBonus: _nonNegativeJsonInt(json['rarityWeightBonus']),
     );
@@ -829,6 +850,10 @@ class RummiMarketModifierState {
   final int nextMarketExtraJesterOfferSlots;
   final int extraItemOfferSlots;
   final int itemOfferRerollOffset;
+  final int quickSlotOfferRerollOffset;
+  final int passiveOfferRerollOffset;
+  final int toolOfferRerollOffset;
+  final int gearOfferRerollOffset;
   final List<String> consumedItemOfferIds;
   final int rarityWeightBonus;
 
@@ -843,6 +868,10 @@ class RummiMarketModifierState {
       nextMarketExtraJesterOfferSlots == 0 &&
       extraItemOfferSlots == 0 &&
       itemOfferRerollOffset == 0 &&
+      quickSlotOfferRerollOffset == 0 &&
+      passiveOfferRerollOffset == 0 &&
+      toolOfferRerollOffset == 0 &&
+      gearOfferRerollOffset == 0 &&
       consumedItemOfferIds.isEmpty &&
       rarityWeightBonus == 0;
 
@@ -851,6 +880,15 @@ class RummiMarketModifierState {
 
   int get itemOfferSlotCount =>
       RummiEconomyConfig.shopOfferCount + extraItemOfferSlots;
+
+  int itemOfferRerollOffsetFor(ItemPlacement placement) {
+    return switch (placement) {
+      ItemPlacement.quickSlot => quickSlotOfferRerollOffset,
+      ItemPlacement.passiveRack => passiveOfferRerollOffset,
+      ItemPlacement.inventory => toolOfferRerollOffset,
+      ItemPlacement.equipped => gearOfferRerollOffset,
+    };
+  }
 
   Map<String, dynamic> toJson() => {
     'nextRerollDiscount': nextRerollDiscount,
@@ -863,6 +901,10 @@ class RummiMarketModifierState {
     'nextMarketExtraJesterOfferSlots': nextMarketExtraJesterOfferSlots,
     'extraItemOfferSlots': extraItemOfferSlots,
     'itemOfferRerollOffset': itemOfferRerollOffset,
+    'quickSlotOfferRerollOffset': quickSlotOfferRerollOffset,
+    'passiveOfferRerollOffset': passiveOfferRerollOffset,
+    'toolOfferRerollOffset': toolOfferRerollOffset,
+    'gearOfferRerollOffset': gearOfferRerollOffset,
     'consumedItemOfferIds': consumedItemOfferIds,
     'rarityWeightBonus': rarityWeightBonus,
   };
@@ -878,6 +920,10 @@ class RummiMarketModifierState {
     int? nextMarketExtraJesterOfferSlots,
     int? extraItemOfferSlots,
     int? itemOfferRerollOffset,
+    int? quickSlotOfferRerollOffset,
+    int? passiveOfferRerollOffset,
+    int? toolOfferRerollOffset,
+    int? gearOfferRerollOffset,
     List<String>? consumedItemOfferIds,
     int? rarityWeightBonus,
   }) {
@@ -899,6 +945,14 @@ class RummiMarketModifierState {
       extraItemOfferSlots: extraItemOfferSlots ?? this.extraItemOfferSlots,
       itemOfferRerollOffset:
           itemOfferRerollOffset ?? this.itemOfferRerollOffset,
+      quickSlotOfferRerollOffset:
+          quickSlotOfferRerollOffset ?? this.quickSlotOfferRerollOffset,
+      passiveOfferRerollOffset:
+          passiveOfferRerollOffset ?? this.passiveOfferRerollOffset,
+      toolOfferRerollOffset:
+          toolOfferRerollOffset ?? this.toolOfferRerollOffset,
+      gearOfferRerollOffset:
+          gearOfferRerollOffset ?? this.gearOfferRerollOffset,
       consumedItemOfferIds: consumedItemOfferIds ?? this.consumedItemOfferIds,
       rarityWeightBonus: rarityWeightBonus ?? this.rarityWeightBonus,
     );
@@ -925,6 +979,10 @@ class RummiRunProgress {
     required this.gold,
     required this.rerollCost,
     int? itemRerollCost,
+    int? quickSlotRerollCost,
+    int? passiveRerollCost,
+    int? toolRerollCost,
+    int? gearRerollCost,
     required List<RummiJesterCard> ownedJesters,
     required List<RummiShopOffer> shopOffers,
     required Map<int, int> statefulValuesBySlot,
@@ -933,6 +991,11 @@ class RummiRunProgress {
     this.marketModifiers = const RummiMarketModifierState(),
   }) {
     this.itemRerollCost = itemRerollCost ?? rerollCost;
+    this.quickSlotRerollCost =
+        quickSlotRerollCost ?? itemRerollCost ?? rerollCost;
+    this.passiveRerollCost = passiveRerollCost ?? itemRerollCost ?? rerollCost;
+    this.toolRerollCost = toolRerollCost ?? itemRerollCost ?? rerollCost;
+    this.gearRerollCost = gearRerollCost ?? itemRerollCost ?? rerollCost;
     this.ownedJesters.addAll(ownedJesters);
     this.shopOffers.addAll(shopOffers);
     _statefulValuesBySlot.addAll(statefulValuesBySlot);
@@ -954,6 +1017,10 @@ class RummiRunProgress {
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
   int itemRerollCost = shopBaseRerollCost;
+  int quickSlotRerollCost = shopBaseRerollCost;
+  int passiveRerollCost = shopBaseRerollCost;
+  int toolRerollCost = shopBaseRerollCost;
+  int gearRerollCost = shopBaseRerollCost;
   RunInventoryState itemInventory = const RunInventoryState();
   RummiMarketModifierState marketModifiers = const RummiMarketModifierState();
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
@@ -974,6 +1041,10 @@ class RummiRunProgress {
       gold: gold,
       rerollCost: rerollCost,
       itemRerollCost: itemRerollCost,
+      quickSlotRerollCost: quickSlotRerollCost,
+      passiveRerollCost: passiveRerollCost,
+      toolRerollCost: toolRerollCost,
+      gearRerollCost: gearRerollCost,
       ownedJesters: List<RummiJesterCard>.from(ownedJesters),
       shopOffers: shopOffers
           .map(
@@ -1148,6 +1219,10 @@ class RummiRunProgress {
   }) {
     rerollCost = shopBaseRerollCost;
     itemRerollCost = shopBaseRerollCost;
+    quickSlotRerollCost = shopBaseRerollCost;
+    passiveRerollCost = shopBaseRerollCost;
+    toolRerollCost = shopBaseRerollCost;
+    gearRerollCost = shopBaseRerollCost;
     final nextMarketExtraJesterOfferSlots =
         marketModifiers.nextMarketExtraJesterOfferSlots;
     marketModifiers = marketModifiers.copyWith(
@@ -1160,6 +1235,10 @@ class RummiRunProgress {
       extraJesterOfferSlots: nextMarketExtraJesterOfferSlots,
       nextMarketExtraJesterOfferSlots: 0,
       itemOfferRerollOffset: 0,
+      quickSlotOfferRerollOffset: 0,
+      passiveOfferRerollOffset: 0,
+      toolOfferRerollOffset: 0,
+      gearOfferRerollOffset: 0,
       consumedItemOfferIds: const [],
     );
     _generateOffers(
@@ -1183,9 +1262,22 @@ class RummiRunProgress {
   }
 
   int effectiveItemRerollCost() {
+    return effectiveItemRerollCostFor(ItemPlacement.inventory);
+  }
+
+  int itemRerollCostFor(ItemPlacement placement) {
+    return switch (placement) {
+      ItemPlacement.quickSlot => quickSlotRerollCost,
+      ItemPlacement.passiveRack => passiveRerollCost,
+      ItemPlacement.inventory => toolRerollCost,
+      ItemPlacement.equipped => gearRerollCost,
+    };
+  }
+
+  int effectiveItemRerollCostFor(ItemPlacement placement) {
     return max(
       0,
-      itemRerollCost -
+      itemRerollCostFor(placement) -
           marketModifiers.nextRerollDiscount -
           marketModifiers.firstRerollDiscount,
     );
@@ -1267,10 +1359,26 @@ class RummiRunProgress {
           extraItemOfferSlots: marketModifiers.extraItemOfferSlots + amount,
         );
       case 'reroll_item_offers_only':
+        final nextQuickSlotOffset =
+            marketModifiers.quickSlotOfferRerollOffset +
+            marketModifiers.itemOfferSlotCount;
+        final nextPassiveOffset =
+            marketModifiers.passiveOfferRerollOffset +
+            marketModifiers.itemOfferSlotCount;
+        final nextToolOffset =
+            marketModifiers.toolOfferRerollOffset +
+            marketModifiers.itemOfferSlotCount;
+        final nextGearOffset =
+            marketModifiers.gearOfferRerollOffset +
+            marketModifiers.itemOfferSlotCount;
         marketModifiers = marketModifiers.copyWith(
           itemOfferRerollOffset:
               marketModifiers.itemOfferRerollOffset +
               marketModifiers.itemOfferSlotCount,
+          quickSlotOfferRerollOffset: nextQuickSlotOffset,
+          passiveOfferRerollOffset: nextPassiveOffset,
+          toolOfferRerollOffset: nextToolOffset,
+          gearOfferRerollOffset: nextGearOffset,
           consumedItemOfferIds: const [],
         );
       case 'extra_jester_offer_next_market':
@@ -1313,22 +1421,51 @@ class RummiRunProgress {
     return true;
   }
 
-  bool rerollItemOffers() {
-    final cost = effectiveItemRerollCost();
+  bool rerollItemOffers({ItemPlacement placement = ItemPlacement.inventory}) {
+    final cost = effectiveItemRerollCostFor(placement);
     if (gold < cost) {
       return false;
     }
     gold -= cost;
-    itemRerollCost += shopRerollCostStep;
+    _increaseItemRerollCostFor(placement);
+    final nextOffset =
+        marketModifiers.itemOfferRerollOffsetFor(placement) +
+        marketModifiers.itemOfferSlotCount;
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
       firstRerollDiscount: 0,
-      itemOfferRerollOffset:
-          marketModifiers.itemOfferRerollOffset +
-          marketModifiers.itemOfferSlotCount,
+      itemOfferRerollOffset: placement == ItemPlacement.inventory
+          ? nextOffset
+          : marketModifiers.itemOfferRerollOffset,
+      quickSlotOfferRerollOffset: placement == ItemPlacement.quickSlot
+          ? nextOffset
+          : marketModifiers.quickSlotOfferRerollOffset,
+      passiveOfferRerollOffset: placement == ItemPlacement.passiveRack
+          ? nextOffset
+          : marketModifiers.passiveOfferRerollOffset,
+      toolOfferRerollOffset: placement == ItemPlacement.inventory
+          ? nextOffset
+          : marketModifiers.toolOfferRerollOffset,
+      gearOfferRerollOffset: placement == ItemPlacement.equipped
+          ? nextOffset
+          : marketModifiers.gearOfferRerollOffset,
       consumedItemOfferIds: const [],
     );
     return true;
+  }
+
+  void _increaseItemRerollCostFor(ItemPlacement placement) {
+    switch (placement) {
+      case ItemPlacement.quickSlot:
+        quickSlotRerollCost += shopRerollCostStep;
+      case ItemPlacement.passiveRack:
+        passiveRerollCost += shopRerollCostStep;
+      case ItemPlacement.inventory:
+        toolRerollCost += shopRerollCostStep;
+        itemRerollCost = toolRerollCost;
+      case ItemPlacement.equipped:
+        gearRerollCost += shopRerollCostStep;
+    }
   }
 
   bool buyOffer(int offerIndex) {

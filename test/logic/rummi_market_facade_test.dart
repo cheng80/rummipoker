@@ -582,7 +582,7 @@ void main() {
 
       expect(standard.itemOfferSlotCount, 3);
       expect(highStakes.itemOfferSlotCount, 4);
-      expect(standard.itemOffers.length, 3);
+      expect(standard.itemOffers.length, 4);
       expect(highStakes.itemOffers.length, 4);
       expect(progress.marketModifiers.extraItemOfferSlots, 0);
     });

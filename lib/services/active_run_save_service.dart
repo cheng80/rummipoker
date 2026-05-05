@@ -263,19 +263,32 @@ class SavedRunProgressData {
     required this.gold,
     required this.rerollCost,
     int? itemRerollCost,
+    int? quickSlotRerollCost,
+    int? passiveRerollCost,
+    int? toolRerollCost,
+    int? gearRerollCost,
     required this.ownedJesterIds,
     required this.shopOffers,
     required this.statefulValuesBySlot,
     required this.playedHandCounts,
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
-  }) : itemRerollCost = itemRerollCost ?? rerollCost;
+  }) : itemRerollCost = itemRerollCost ?? rerollCost,
+       quickSlotRerollCost =
+           quickSlotRerollCost ?? itemRerollCost ?? rerollCost,
+       passiveRerollCost = passiveRerollCost ?? itemRerollCost ?? rerollCost,
+       toolRerollCost = toolRerollCost ?? itemRerollCost ?? rerollCost,
+       gearRerollCost = gearRerollCost ?? itemRerollCost ?? rerollCost;
 
   final int stageIndex;
   final int currentStationBlindTierIndex;
   final int gold;
   final int rerollCost;
   final int itemRerollCost;
+  final int quickSlotRerollCost;
+  final int passiveRerollCost;
+  final int toolRerollCost;
+  final int gearRerollCost;
   final List<String> ownedJesterIds;
   final List<SavedShopOfferData> shopOffers;
   final Map<String, int> statefulValuesBySlot;
@@ -289,6 +302,10 @@ class SavedRunProgressData {
     'gold': gold,
     'rerollCost': rerollCost,
     'itemRerollCost': itemRerollCost,
+    'quickSlotRerollCost': quickSlotRerollCost,
+    'passiveRerollCost': passiveRerollCost,
+    'toolRerollCost': toolRerollCost,
+    'gearRerollCost': gearRerollCost,
     'ownedJesterIds': ownedJesterIds,
     'shopOffers': shopOffers.map((offer) => offer.toJson()).toList(),
     'statefulValuesBySlot': statefulValuesBySlot,
@@ -305,6 +322,10 @@ class SavedRunProgressData {
       gold: (json['gold'] as num).toInt(),
       rerollCost: (json['rerollCost'] as num).toInt(),
       itemRerollCost: (json['itemRerollCost'] as num?)?.toInt(),
+      quickSlotRerollCost: (json['quickSlotRerollCost'] as num?)?.toInt(),
+      passiveRerollCost: (json['passiveRerollCost'] as num?)?.toInt(),
+      toolRerollCost: (json['toolRerollCost'] as num?)?.toInt(),
+      gearRerollCost: (json['gearRerollCost'] as num?)?.toInt(),
       ownedJesterIds: (json['ownedJesterIds'] as List<dynamic>)
           .map((value) => value as String)
           .toList(growable: false),
@@ -585,6 +606,10 @@ class ActiveRunSaveService {
       gold: runProgress.gold,
       rerollCost: runProgress.rerollCost,
       itemRerollCost: runProgress.itemRerollCost,
+      quickSlotRerollCost: runProgress.quickSlotRerollCost,
+      passiveRerollCost: runProgress.passiveRerollCost,
+      toolRerollCost: runProgress.toolRerollCost,
+      gearRerollCost: runProgress.gearRerollCost,
       ownedJesterIds: runProgress.ownedJesters
           .map((card) => card.id)
           .toList(growable: false),
@@ -677,6 +702,10 @@ class ActiveRunSaveService {
       gold: data.gold,
       rerollCost: data.rerollCost,
       itemRerollCost: data.itemRerollCost,
+      quickSlotRerollCost: data.quickSlotRerollCost,
+      passiveRerollCost: data.passiveRerollCost,
+      toolRerollCost: data.toolRerollCost,
+      gearRerollCost: data.gearRerollCost,
       ownedJesters: ownedJesters,
       shopOffers: shopOffers,
       statefulValuesBySlot: statefulValuesBySlot,

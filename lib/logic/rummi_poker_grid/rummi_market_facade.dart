@@ -234,6 +234,10 @@ class RummiMarketRuntimeFacade {
     required this.itemOfferSlotCount,
     required this.quickSlotCapacity,
     this.itemRerollCost = RummiRunProgress.shopBaseRerollCost,
+    this.quickSlotRerollCost = RummiRunProgress.shopBaseRerollCost,
+    this.passiveRerollCost = RummiRunProgress.shopBaseRerollCost,
+    this.toolRerollCost = RummiRunProgress.shopBaseRerollCost,
+    this.gearRerollCost = RummiRunProgress.shopBaseRerollCost,
     this.itemOffers = const [],
     this.itemSlots = const [],
   });
@@ -248,6 +252,18 @@ class RummiMarketRuntimeFacade {
       gold: progress.gold,
       rerollCost: progress.effectiveRerollCost(),
       itemRerollCost: progress.effectiveItemRerollCost(),
+      quickSlotRerollCost: progress.effectiveItemRerollCostFor(
+        ItemPlacement.quickSlot,
+      ),
+      passiveRerollCost: progress.effectiveItemRerollCostFor(
+        ItemPlacement.passiveRack,
+      ),
+      toolRerollCost: progress.effectiveItemRerollCostFor(
+        ItemPlacement.inventory,
+      ),
+      gearRerollCost: progress.effectiveItemRerollCostFor(
+        ItemPlacement.equipped,
+      ),
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
       runtimeSnapshot: progress.buildRuntimeSnapshot(),
       ownedEntries: OwnedContentInstances.jesterInstances(progress)
@@ -293,6 +309,10 @@ class RummiMarketRuntimeFacade {
       gold: gold,
       rerollCost: rerollCost,
       itemRerollCost: itemRerollCost,
+      quickSlotRerollCost: quickSlotRerollCost,
+      passiveRerollCost: passiveRerollCost,
+      toolRerollCost: toolRerollCost,
+      gearRerollCost: gearRerollCost,
       maxOwnedSlots: maxOwnedSlots,
       runtimeSnapshot: runtimeSnapshot,
       ownedEntries: ownedEntries,
@@ -307,6 +327,10 @@ class RummiMarketRuntimeFacade {
   final int gold;
   final int rerollCost;
   final int itemRerollCost;
+  final int quickSlotRerollCost;
+  final int passiveRerollCost;
+  final int toolRerollCost;
+  final int gearRerollCost;
   final int maxOwnedSlots;
   final RummiJesterRuntimeSnapshot runtimeSnapshot;
   final List<RummiMarketOwnedEntryView> ownedEntries;
@@ -315,6 +339,15 @@ class RummiMarketRuntimeFacade {
   final int quickSlotCapacity;
   final List<RummiMarketItemOfferView> itemOffers;
   final List<RummiMarketItemSlotView> itemSlots;
+
+  int itemRerollCostFor(ItemPlacement placement) {
+    return switch (placement) {
+      ItemPlacement.quickSlot => quickSlotRerollCost,
+      ItemPlacement.passiveRack => passiveRerollCost,
+      ItemPlacement.inventory => toolRerollCost,
+      ItemPlacement.equipped => gearRerollCost,
+    };
+  }
 
   static List<RummiMarketItemOfferView> _buildItemOffers(
     RummiRunProgress progress,
@@ -339,30 +372,36 @@ class RummiMarketRuntimeFacade {
           ),
         )
         .toList(growable: false);
-    final pickedItems = _pickWeightedItemOffers(
-      progress,
-      candidates,
-      items,
-      pressureProfile: pressureProfile,
-    );
-    return pickedItems
-        .asMap()
-        .entries
-        .map(
-          (entry) => RummiMarketItemOfferView.fromItemDefinition(
-            entry.value,
-            slotIndex: entry.key,
+    final offers = <RummiMarketItemOfferView>[];
+    for (final placement in ItemPlacement.values) {
+      final pickedItems = _pickWeightedItemOffers(
+        progress,
+        candidates
+            .where((item) => item.placement == placement)
+            .toList(growable: false),
+        items,
+        placement: placement,
+        pressureProfile: pressureProfile,
+      );
+      for (final item in pickedItems) {
+        offers.add(
+          RummiMarketItemOfferView.fromItemDefinition(
+            item,
+            slotIndex: offers.length,
             currentGold: progress.gold,
-            price: progress.effectiveItemPrice(entry.value),
+            price: progress.effectiveItemPrice(item),
           ),
-        )
-        .toList(growable: false);
+        );
+      }
+    }
+    return offers;
   }
 
   static List<ItemDefinition> _pickWeightedItemOffers(
     RummiRunProgress progress,
     List<ItemDefinition> candidates,
     List<ItemDefinition> catalogItems, {
+    required ItemPlacement placement,
     RummiMarketPressureProfile pressureProfile =
         RummiMarketPressureProfile.standard,
   }) {
@@ -381,7 +420,7 @@ class RummiMarketRuntimeFacade {
       progress,
       pressureProfile: pressureProfile,
     );
-    final offset = progress.marketModifiers.itemOfferRerollOffset;
+    final offset = progress.marketModifiers.itemOfferRerollOffsetFor(placement);
     final focusSlot = _missingGrowthFocusSlot(
       progress.stageIndex,
       offset,

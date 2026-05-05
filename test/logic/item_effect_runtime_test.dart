@@ -722,6 +722,22 @@ void main() {
         runProgress.marketModifiers.itemOfferRerollOffset,
         runProgress.marketModifiers.itemOfferSlotCount,
       );
+      expect(
+        runProgress.marketModifiers.quickSlotOfferRerollOffset,
+        runProgress.marketModifiers.itemOfferSlotCount,
+      );
+      expect(
+        runProgress.marketModifiers.passiveOfferRerollOffset,
+        runProgress.marketModifiers.itemOfferSlotCount,
+      );
+      expect(
+        runProgress.marketModifiers.toolOfferRerollOffset,
+        runProgress.marketModifiers.itemOfferSlotCount,
+      );
+      expect(
+        runProgress.marketModifiers.gearOfferRerollOffset,
+        runProgress.marketModifiers.itemOfferSlotCount,
+      );
       expect(runProgress.itemInventory.ownedItems, isEmpty);
       expect(result.events.map((event) => event.kind), [
         ItemEffectEventKind.marketModifierQueued,
@@ -776,7 +792,7 @@ void main() {
           timing: 'market_buy_if_category',
           op: 'discount_next_purchase',
           placement: ItemPlacement.inventory,
-          amount: 4,
+          amount: 9,
           consume: true,
           rawEffect: const {'category': 'item'},
         );

@@ -128,7 +128,11 @@ class GameSessionNotifier
       ..currentStationBlindTierIndex = args.blindTier.index
       ..gold = _initialGold(args.difficulty)
       ..rerollCost = _initialRerollCost(args.difficulty)
-      ..itemRerollCost = _initialRerollCost(args.difficulty);
+      ..itemRerollCost = _initialRerollCost(args.difficulty)
+      ..quickSlotRerollCost = _initialRerollCost(args.difficulty)
+      ..passiveRerollCost = _initialRerollCost(args.difficulty)
+      ..toolRerollCost = _initialRerollCost(args.difficulty)
+      ..gearRerollCost = _initialRerollCost(args.difficulty);
     return _withDerivedViews(
       GameSessionState(
         session: session,
@@ -603,13 +607,16 @@ class GameSessionNotifier
     );
   }
 
-  String? rerollItemOffersFromState({ItemCatalog? itemCatalog}) {
+  String? rerollItemOffersFromState({
+    ItemCatalog? itemCatalog,
+    ItemPlacement placement = ItemPlacement.inventory,
+  }) {
     final runProgress = state.runProgress;
     if (runProgress == null) return '상점 진행 정보가 없습니다.';
     final rerollItem = _nextOwnedMarketRerollItem(
       catalog: itemCatalog,
       runProgress: runProgress,
-      itemReroll: true,
+      itemRerollPlacement: placement,
     );
     if (rerollItem != null) {
       final result = ItemEffectRuntime.applyMarketRerollItem(
@@ -618,7 +625,7 @@ class GameSessionNotifier
       );
       if (!result.isSuccess) return result.failMessage;
     }
-    final ok = runProgress.rerollItemOffers();
+    final ok = runProgress.rerollItemOffers(placement: placement);
     if (!ok) {
       return '리롤 골드가 부족합니다.';
     }
@@ -659,10 +666,10 @@ class GameSessionNotifier
   ItemDefinition? _nextOwnedMarketRerollItem({
     required ItemCatalog? catalog,
     required RummiRunProgress runProgress,
-    bool itemReroll = false,
+    ItemPlacement? itemRerollPlacement,
   }) {
-    final cost = itemReroll
-        ? runProgress.effectiveItemRerollCost()
+    final cost = itemRerollPlacement != null
+        ? runProgress.effectiveItemRerollCostFor(itemRerollPlacement)
         : runProgress.effectiveRerollCost();
     if (catalog == null || cost <= 0) {
       return null;

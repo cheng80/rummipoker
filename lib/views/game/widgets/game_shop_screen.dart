@@ -28,7 +28,7 @@ const Duration _marketPurchaseFlightDuration =
 const double _marketShopCellWidth = 72.0;
 const double _marketShopCellHeight =
     kBattleItemSlotHeight + (kJesterSelectionOutset * 2) + 16.0;
-const double _marketShopPanelHeight = 156.0;
+const double _marketShopPanelHeight = 146.0;
 const double _marketSpeechPanelHeight = 144.0;
 const double _marketDescriptionFontSize = 12.0;
 const double _marketDescriptionLineHeight = 1.18;
@@ -45,6 +45,8 @@ const TextStyle _marketDescriptionTextStyle = TextStyle(
 );
 
 enum _MarketShopTab { cardsAndQuickSlots, toolsAndGear }
+
+enum _MarketOfferLane { jester, quickSlot, passive, tool, gear }
 
 enum _MarketOfferEntryKind { jester, item }
 
@@ -165,7 +167,7 @@ class GameShopScreen extends StatefulWidget {
   final int runSeed;
   final RummiMarketRuntimeFacade Function() readMarketView;
   final String? Function() onReroll;
-  final String? Function()? onRerollItemOffers;
+  final String? Function(ItemPlacement placement)? onRerollItemOffers;
   final String? Function(int offerIndex) onBuyOffer;
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
   final String? Function(ItemDefinition item) onUseMarketItem;
@@ -189,10 +191,11 @@ class _GameShopScreenState extends State<GameShopScreen>
   int? _selectedOwnedIndex;
   int? _selectedOfferIndex;
   _MarketShopTab _shopTab = _MarketShopTab.cardsAndQuickSlots;
+  _MarketOfferLane _mainOfferLane = _MarketOfferLane.jester;
+  _MarketOfferLane _utilityOfferLane = _MarketOfferLane.tool;
   int _selectedItemOfferIndex = -1;
   int _selectedItemSlotIndex = -1;
-  int _mainOfferPage = 0;
-  int _utilityOfferPage = 0;
+  final Map<_MarketOfferLane, int> _offerPages = <_MarketOfferLane, int>{};
   int _purchaseFlightTick = 0;
   _MarketPurchaseFlight? _purchaseFlight;
   int _saleFlightTick = 0;
@@ -242,14 +245,11 @@ class _GameShopScreenState extends State<GameShopScreen>
       _selectedOfferIndex = 0;
     }
     if (widget.initialItemShopTab) {
-      final utilityEntries = _offerEntriesForTab(
-        _market,
-        _MarketShopTab.toolsAndGear,
-      );
       _shopTab = _MarketShopTab.toolsAndGear;
+      _utilityOfferLane = _MarketOfferLane.tool;
       _selectedItemOfferIndex = -1;
       _selectedItemSlotIndex = -1;
-      for (final entry in utilityEntries) {
+      for (final entry in _offerEntriesForLane(_market, _utilityOfferLane)) {
         if (entry.kind == _MarketOfferEntryKind.item) {
           _selectedItemOfferIndex = entry.itemIndex ?? -1;
           break;
@@ -313,6 +313,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _selectOffer(int index) {
     setState(() {
       _shopTab = _MarketShopTab.cardsAndQuickSlots;
+      _mainOfferLane = _MarketOfferLane.jester;
       _selectedOfferIndex = index;
       _selectedItemOfferIndex = -1;
       _selectedItemSlotIndex = -1;
@@ -338,6 +339,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         ItemPlacement.inventory ||
         ItemPlacement.equipped => _MarketShopTab.toolsAndGear,
       };
+      _setOfferLaneForPlacement(slot.placement);
       _selectedItemSlotIndex = slot.slotIndex;
       _selectedItemOfferIndex = -1;
       _selectedOwnedIndex = null;
@@ -349,52 +351,89 @@ class _GameShopScreenState extends State<GameShopScreen>
     setState(() {
       _shopTab = tab;
       _selectedOwnedIndex = null;
-      final entries = _offerEntriesForTab(_market, tab);
+      final entries = _offerEntriesForLane(_market, _currentOfferLane);
       _selectFirstEntry(entries);
     });
   }
 
-  void _shiftMainOfferPage(int delta) {
-    final pageCount = _pageCount(
-      _offerEntriesForTab(_market, _MarketShopTab.cardsAndQuickSlots).length,
-    );
-    if (pageCount <= 1) return;
+  void _selectOfferLane(_MarketOfferLane lane) {
     setState(() {
-      _mainOfferPage = (_mainOfferPage + delta).clamp(0, pageCount - 1);
+      if (_shopTab == _MarketShopTab.cardsAndQuickSlots) {
+        _mainOfferLane = lane;
+      } else {
+        _utilityOfferLane = lane;
+      }
+      _selectedOwnedIndex = null;
+      _selectFirstEntry(_offerEntriesForLane(_market, lane));
     });
   }
 
-  void _shiftUtilityOfferPage(int delta) {
-    final pageCount = _pageCount(
-      _offerEntriesForTab(_market, _MarketShopTab.toolsAndGear).length,
-    );
+  void _shiftOfferPage(int delta) {
+    final lane = _currentOfferLane;
+    final pageCount = _pageCount(_offerEntriesForLane(_market, lane).length);
     if (pageCount <= 1) return;
     setState(() {
-      _utilityOfferPage = (_utilityOfferPage + delta).clamp(0, pageCount - 1);
+      _offerPages[lane] = (_offerPageFor(lane) + delta).clamp(0, pageCount - 1);
     });
   }
 
-  List<_MarketOfferEntry> _offerEntriesForTab(
+  _MarketOfferLane get _currentOfferLane =>
+      _shopTab == _MarketShopTab.cardsAndQuickSlots
+      ? _mainOfferLane
+      : _utilityOfferLane;
+
+  void _setOfferLaneForPlacement(ItemPlacement placement) {
+    switch (placement) {
+      case ItemPlacement.quickSlot:
+        _mainOfferLane = _MarketOfferLane.quickSlot;
+      case ItemPlacement.passiveRack:
+        _mainOfferLane = _MarketOfferLane.passive;
+      case ItemPlacement.inventory:
+        _utilityOfferLane = _MarketOfferLane.tool;
+      case ItemPlacement.equipped:
+        _utilityOfferLane = _MarketOfferLane.gear;
+    }
+  }
+
+  List<_MarketOfferLane> _offerLanesForTab(_MarketShopTab tab) {
+    return tab == _MarketShopTab.cardsAndQuickSlots
+        ? const [
+            _MarketOfferLane.jester,
+            _MarketOfferLane.quickSlot,
+            _MarketOfferLane.passive,
+          ]
+        : const [_MarketOfferLane.tool, _MarketOfferLane.gear];
+  }
+
+  int _offerPageFor(_MarketOfferLane lane) => _offerPages[lane] ?? 0;
+
+  List<_MarketOfferEntry> _offerEntriesForLane(
     RummiMarketRuntimeFacade market,
-    _MarketShopTab tab,
+    _MarketOfferLane lane,
   ) {
     final entries = <_MarketOfferEntry>[];
-    if (tab == _MarketShopTab.cardsAndQuickSlots) {
+    if (lane == _MarketOfferLane.jester) {
       for (var i = 0; i < market.offers.length; i++) {
         entries.add(_MarketOfferEntry.jester(i));
       }
+      return entries;
     }
     for (var i = 0; i < market.itemOffers.length; i++) {
       final placement = market.itemOffers[i].item.placement;
-      final belongsToMain =
-          placement == ItemPlacement.quickSlot ||
-          placement == ItemPlacement.passiveRack;
-      if ((tab == _MarketShopTab.cardsAndQuickSlots && belongsToMain) ||
-          (tab == _MarketShopTab.toolsAndGear && !belongsToMain)) {
+      if (_offerLaneForPlacement(placement) == lane) {
         entries.add(_MarketOfferEntry.item(i));
       }
     }
     return entries;
+  }
+
+  _MarketOfferLane _offerLaneForPlacement(ItemPlacement placement) {
+    return switch (placement) {
+      ItemPlacement.quickSlot => _MarketOfferLane.quickSlot,
+      ItemPlacement.passiveRack => _MarketOfferLane.passive,
+      ItemPlacement.inventory => _MarketOfferLane.tool,
+      ItemPlacement.equipped => _MarketOfferLane.gear,
+    };
   }
 
   List<RummiMarketItemSlotView> _itemSlotsForTab(
@@ -435,19 +474,27 @@ class _GameShopScreenState extends State<GameShopScreen>
     return page.clamp(0, _pageCount(entries.length) - 1);
   }
 
-  void _clampOfferPageForTab(
+  void _clampOfferPageForLane(
     RummiMarketRuntimeFacade market,
-    _MarketShopTab tab,
+    _MarketOfferLane lane,
   ) {
-    final entries = _offerEntriesForTab(market, tab);
-    if (tab == _MarketShopTab.cardsAndQuickSlots) {
-      _mainOfferPage = _clampedOfferPage(entries, _mainOfferPage);
-    } else {
-      _utilityOfferPage = _clampedOfferPage(entries, _utilityOfferPage);
-    }
+    final entries = _offerEntriesForLane(market, lane);
+    _offerPages[lane] = _clampedOfferPage(entries, _offerPageFor(lane));
+  }
+
+  ItemPlacement? _placementForOfferLane(_MarketOfferLane lane) {
+    return switch (lane) {
+      _MarketOfferLane.jester => null,
+      _MarketOfferLane.quickSlot => ItemPlacement.quickSlot,
+      _MarketOfferLane.passive => ItemPlacement.passiveRack,
+      _MarketOfferLane.tool => ItemPlacement.inventory,
+      _MarketOfferLane.gear => ItemPlacement.equipped,
+    };
   }
 
   Future<void> _reroll() async {
+    final lane = _currentOfferLane;
+    final laneLabel = _offerLaneLabel(lane);
     final confirmed = await showGameFramedDialog<bool>(
       context: context,
       builder: (dialogContext) => GameModalCard(
@@ -464,9 +511,9 @@ class _GameShopScreenState extends State<GameShopScreen>
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              '정말 리롤할까요?',
-              style: TextStyle(
+            Text(
+              '$laneLabel 후보를 리롤할까요?',
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -500,11 +547,11 @@ class _GameShopScreenState extends State<GameShopScreen>
     );
     if (!mounted || confirmed != true) return;
 
-    final reroll = _shopTab == _MarketShopTab.toolsAndGear
-        ? widget.onRerollItemOffers
-        : widget.onReroll;
-    if (reroll == null) return;
-    final failMessage = reroll();
+    final placement = _placementForOfferLane(lane);
+    if (placement != null && widget.onRerollItemOffers == null) return;
+    final failMessage = placement == null
+        ? widget.onReroll()
+        : widget.onRerollItemOffers!(placement);
     if (failMessage != null) {
       showBottomNotice(context, failMessage);
       return;
@@ -512,9 +559,9 @@ class _GameShopScreenState extends State<GameShopScreen>
     setState(() {
       final market = _market;
       _marketRerollFeedbackTick++;
-      _clampOfferPageForTab(market, _shopTab);
+      _clampOfferPageForLane(market, lane);
       _selectedOwnedIndex = null;
-      _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
+      _selectFirstEntry(_offerEntriesForLane(market, lane));
       if (_selectedOfferIndex == null && _selectedItemOfferIndex < 0) {
         _selectedOwnedIndex = market.ownedEntries.isEmpty ? null : 0;
       }
@@ -542,7 +589,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     setState(() {
       final market = _market;
-      _clampOfferPageForTab(market, _MarketShopTab.cardsAndQuickSlots);
+      _clampOfferPageForLane(market, _MarketOfferLane.jester);
       final purchasedSlot = _findPurchasedJesterSlot(market, boughtOffer);
       if (purchasedSlot != null) {
         final endOffset = _flightCenterForKey(
@@ -595,7 +642,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     setState(() {
       final market = _market;
-      _clampOfferPageForTab(market, _shopTab);
+      _clampOfferPageForLane(market, _currentOfferLane);
       final purchasedSlot = _findPurchasedItemSlot(market, boughtOffer);
       if (purchasedSlot != null) {
         final endOffset = _flightCenterForKey(
@@ -607,6 +654,7 @@ class _GameShopScreenState extends State<GameShopScreen>
           ItemPlacement.inventory ||
           ItemPlacement.equipped => _MarketShopTab.toolsAndGear,
         };
+        _setOfferLaneForPlacement(purchasedSlot.placement);
         _selectedItemSlotIndex = purchasedSlot.slotIndex;
         _selectedItemOfferIndex = -1;
         _selectedOfferIndex = null;
@@ -626,7 +674,7 @@ class _GameShopScreenState extends State<GameShopScreen>
           itemRarity: boughtOffer.item.rarity,
         );
       } else {
-        final nextEntries = _offerEntriesForTab(market, _shopTab);
+        final nextEntries = _offerEntriesForLane(market, _currentOfferLane);
         final stillSelected = nextEntries.any(
           (entry) =>
               entry.kind == _MarketOfferEntryKind.item &&
@@ -775,18 +823,16 @@ class _GameShopScreenState extends State<GameShopScreen>
   }
 
   int _visibleOfferLaneCount() {
-    final entries = _offerEntriesForTab(_market, _shopTab);
-    final page = _shopTab == _MarketShopTab.cardsAndQuickSlots
-        ? _mainOfferPage
-        : _utilityOfferPage;
+    final lane = _currentOfferLane;
+    final entries = _offerEntriesForLane(_market, lane);
+    final page = _offerPageFor(lane);
     return _pagedItems(entries, page).length;
   }
 
   int _visibleOfferLaneIndex(_MarketOfferEntry target) {
-    final entries = _offerEntriesForTab(_market, _shopTab);
-    final page = _shopTab == _MarketShopTab.cardsAndQuickSlots
-        ? _mainOfferPage
-        : _utilityOfferPage;
+    final lane = _currentOfferLane;
+    final entries = _offerEntriesForLane(_market, lane);
+    final page = _offerPageFor(lane);
     final visible = _pagedItems(entries, page);
     final index = visible.indexWhere(
       (entry) =>
@@ -893,7 +939,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       );
       if (!stillExists) {
         _selectedItemSlotIndex = -1;
-        _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
+        _selectFirstEntry(_offerEntriesForLane(market, _currentOfferLane));
       }
     });
     Future<void>.delayed(GamePresentationTimings.marketUseFeedbackHold, () {
@@ -995,7 +1041,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       );
       final market = _market;
       _selectedItemSlotIndex = -1;
-      _selectFirstEntry(_offerEntriesForTab(market, _shopTab));
+      _selectFirstEntry(_offerEntriesForLane(market, _currentOfferLane));
     });
     widget.onStateChanged();
   }
@@ -1223,10 +1269,9 @@ class _GameShopScreenState extends State<GameShopScreen>
     final visibleGearSlots = visibleItemSlots
         .where((slot) => slot.placement == ItemPlacement.equipped)
         .toList(growable: false);
-    final currentOfferEntries = _offerEntriesForTab(market, _shopTab);
-    final rawCurrentOfferPage = _shopTab == _MarketShopTab.cardsAndQuickSlots
-        ? _mainOfferPage
-        : _utilityOfferPage;
+    final currentOfferLane = _currentOfferLane;
+    final currentOfferEntries = _offerEntriesForLane(market, currentOfferLane);
+    final rawCurrentOfferPage = _offerPageFor(currentOfferLane);
     final currentOfferPage = _clampedOfferPage(
       currentOfferEntries,
       rawCurrentOfferPage,
@@ -1235,6 +1280,9 @@ class _GameShopScreenState extends State<GameShopScreen>
       currentOfferEntries,
       currentOfferPage,
     );
+    final currentRerollCost = currentOfferLane == _MarketOfferLane.jester
+        ? market.rerollCost
+        : market.itemRerollCostFor(_placementForOfferLane(currentOfferLane)!);
     final selectedOwnedRuntimeValue = selectedOwned == null
         ? null
         : jesterRuntimeValueText(
@@ -1608,6 +1656,12 @@ class _GameShopScreenState extends State<GameShopScreen>
                                   : null,
                             ),
                             const SizedBox(height: 6),
+                            _MarketOfferLaneBar(
+                              lanes: _offerLanesForTab(_shopTab),
+                              selectedLane: currentOfferLane,
+                              onChanged: _selectOfferLane,
+                            ),
+                            const SizedBox(height: 6),
                             _MarketSectionBox(
                               title: null,
                               padding: const EdgeInsets.fromLTRB(
@@ -1625,27 +1679,16 @@ class _GameShopScreenState extends State<GameShopScreen>
                                       pageCount: _pageCount(
                                         currentOfferEntries.length,
                                       ),
-                                      onPrev:
-                                          _shopTab ==
-                                              _MarketShopTab.cardsAndQuickSlots
-                                          ? () => _shiftMainOfferPage(-1)
-                                          : () => _shiftUtilityOfferPage(-1),
-                                      onNext:
-                                          _shopTab ==
-                                              _MarketShopTab.cardsAndQuickSlots
-                                          ? () => _shiftMainOfferPage(1)
-                                          : () => _shiftUtilityOfferPage(1),
-                                      rerollCost: market.rerollCost,
-                                      itemRerollCost: market.itemRerollCost,
+                                      onPrev: () => _shiftOfferPage(-1),
+                                      onNext: () => _shiftOfferPage(1),
+                                      rerollCost: currentRerollCost,
                                       feedbackTick: _marketRerollFeedbackTick,
                                       onReroll:
-                                          _shopTab ==
-                                                  _MarketShopTab
-                                                      .cardsAndQuickSlots ||
+                                          currentOfferLane ==
+                                                  _MarketOfferLane.jester ||
                                               widget.onRerollItemOffers != null
                                           ? _reroll
                                           : null,
-                                      shopTab: _shopTab,
                                     ),
                                     const SizedBox(height: 8),
                                     Expanded(
@@ -1660,8 +1703,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                   _shopTab ==
                                                           _MarketShopTab
                                                               .cardsAndQuickSlots
-                                                      ? '이번 Market에 노출된 카드/Q-Slot이 없습니다.'
-                                                      : '이번 Market에 노출된 Tool/Gear가 없습니다.',
+                                                      ? '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.'
+                                                      : '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.',
                                                   style: TextStyle(
                                                     color: Colors.white
                                                         .withValues(
@@ -1672,7 +1715,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                   ),
                                                 ),
                                               )
-                                            : _MarketOfferLane(
+                                            : _MarketOfferRow(
                                                 itemCount:
                                                     visibleOfferEntries.length,
                                                 children: [
@@ -2603,6 +2646,41 @@ class _MarketTabBar extends StatelessWidget {
   }
 }
 
+class _MarketOfferLaneBar extends StatelessWidget {
+  const _MarketOfferLaneBar({
+    required this.lanes,
+    required this.selectedLane,
+    required this.onChanged,
+  });
+
+  final List<_MarketOfferLane> lanes;
+  final _MarketOfferLane selectedLane;
+  final ValueChanged<_MarketOfferLane> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      spacing: 6,
+      children: [
+        for (final lane in lanes)
+          Expanded(
+            child: GameActionButton(
+              label: _offerLaneLabel(lane),
+              background: lane == selectedLane
+                  ? const Color(0xFFEDE7DB)
+                  : const Color(0xFF173D35),
+              foreground: lane == selectedLane
+                  ? const Color(0xFF152722)
+                  : Colors.white.withValues(alpha: 0.78),
+              compact: true,
+              onPressed: () => onChanged(lane),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _MarketPagerBar extends StatelessWidget {
   const _MarketPagerBar({
     required this.currentPage,
@@ -2610,10 +2688,8 @@ class _MarketPagerBar extends StatelessWidget {
     required this.onPrev,
     required this.onNext,
     required this.rerollCost,
-    required this.itemRerollCost,
     required this.feedbackTick,
     required this.onReroll,
-    required this.shopTab,
   });
 
   final int currentPage;
@@ -2621,10 +2697,8 @@ class _MarketPagerBar extends StatelessWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final int rerollCost;
-  final int itemRerollCost;
   final int feedbackTick;
   final VoidCallback? onReroll;
-  final _MarketShopTab shopTab;
 
   @override
   Widget build(BuildContext context) {
@@ -2656,8 +2730,7 @@ class _MarketPagerBar extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               GameActionButton(
-                label:
-                    '리롤 ${shopTab == _MarketShopTab.toolsAndGear ? itemRerollCost : rerollCost}',
+                label: '리롤 $rerollCost',
                 background: const Color(0xFF2D6F9E),
                 compact: true,
                 onPressed: onReroll,
@@ -2723,6 +2796,16 @@ class _MarketRerollSuccessFeedback extends StatelessWidget {
       ),
     );
   }
+}
+
+String _offerLaneLabel(_MarketOfferLane lane) {
+  return switch (lane) {
+    _MarketOfferLane.jester => 'Jester',
+    _MarketOfferLane.quickSlot => 'Q-Slot',
+    _MarketOfferLane.passive => 'Passive',
+    _MarketOfferLane.tool => 'Tool',
+    _MarketOfferLane.gear => 'Gear',
+  };
 }
 
 class _MarketItemGhostChip extends StatelessWidget {
@@ -2886,8 +2969,8 @@ class _MarketItemCountBadge extends StatelessWidget {
   }
 }
 
-class _MarketOfferLane extends StatelessWidget {
-  const _MarketOfferLane({required this.itemCount, required this.children});
+class _MarketOfferRow extends StatelessWidget {
+  const _MarketOfferRow({required this.itemCount, required this.children});
 
   final int itemCount;
   final List<Widget> children;
