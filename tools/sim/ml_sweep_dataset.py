@@ -42,6 +42,7 @@ DEFAULT_OPTIONS: dict[str, Any] = {
     "sim_market_spend_mode": "none",
     "sim_price_band_mode": "none",
     "sim_market_choice_mode": "none",
+    "run_modifier": "basic",
     "small_multipliers": [0.95, 1.0],
     "big_multipliers": [0.90, 1.0],
     "boss_multipliers": [0.75, 0.85, 1.0],
@@ -197,6 +198,12 @@ def main(argv: list[str] | None = None) -> int:
         help="shop slot 후보 중 구매 가능한 대안을 고르는 sim-only 선택 모델.",
     )
     parser.add_argument(
+        "--run-modifier",
+        default=DEFAULT_OPTIONS["run_modifier"],
+        choices=["basic", "high_stakes"],
+        help="run_balance_sim에 전달할 명시적 run modifier.",
+    )
+    parser.add_argument(
         "--small-multipliers",
         default=_join(DEFAULT_OPTIONS["small_multipliers"]),
         help="progression_curve용 small target multiplier 후보.",
@@ -277,6 +284,7 @@ def main(argv: list[str] | None = None) -> int:
             "sim_market_spend_mode": args.sim_market_spend_mode,
             "sim_price_band_mode": args.sim_price_band_mode,
             "sim_market_choice_mode": args.sim_market_choice_mode,
+            "run_modifier": args.run_modifier,
             "small_multipliers": _parse_multipliers(args.small_multipliers),
             "big_multipliers": _parse_multipliers(args.big_multipliers),
             "boss_multipliers": _parse_multipliers(args.boss_multipliers),
@@ -737,6 +745,8 @@ def _run_candidate(
         str(resolved["sim_price_band_mode"]),
         "--sim-market-choice-mode",
         str(resolved["sim_market_choice_mode"]),
+        "--run-modifier",
+        str(resolved["run_modifier"]),
     ]
     for market_profile in resolved["market_profiles"]:
         cmd.extend(["--market-profile", str(market_profile)])

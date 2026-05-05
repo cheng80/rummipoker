@@ -120,6 +120,7 @@ class BalanceSimSummaryAccumulator {
         resolvedMarketProfile:
             (row['resolved_market_profile'] as String?) ?? 'none',
         loadoutId: row['loadout_id'] as String,
+        runModifierId: row['run_modifier_id'] as String? ?? 'basic',
         difficulty: row['difficulty'] as String,
         stationPath: (row['station_path'] as List<dynamic>)
             .map((station) => station as int)
@@ -151,6 +152,7 @@ class BalanceSimSummaryAccumulator {
       resolvedMarketProfile:
           (row['resolved_market_profile'] as String?) ?? 'none',
       loadoutId: row['loadout_id'] as String,
+      runModifierId: row['run_modifier_id'] as String? ?? 'basic',
       station: row['station'] as int,
       blindTier: row['blind_tier'] as String,
       difficulty: row['difficulty'] as String,
@@ -198,6 +200,7 @@ class BalanceSimSummaryAccumulator {
         'market_profile',
         'resolved_market_profile',
         'loadout_id',
+        'run_modifier_id',
         'station',
         'blind_tier',
         'difficulty',
@@ -208,6 +211,7 @@ class BalanceSimSummaryAccumulator {
         'market_profile',
         'resolved_market_profile',
         'loadout_id',
+        'run_modifier_id',
         'difficulty',
         'station_path',
         'tier_path',
@@ -226,6 +230,7 @@ class BalanceSimSequenceSummaryGroup {
     required this.marketProfile,
     required this.resolvedMarketProfile,
     required this.loadoutId,
+    required this.runModifierId,
     required this.difficulty,
     required this.stationPath,
     required this.tierPath,
@@ -235,6 +240,7 @@ class BalanceSimSequenceSummaryGroup {
   final String marketProfile;
   final String resolvedMarketProfile;
   final String loadoutId;
+  final String runModifierId;
   final String difficulty;
   final List<int> stationPath;
   final List<String> tierPath;
@@ -251,7 +257,8 @@ class BalanceSimSequenceSummaryGroup {
 
   String get key =>
       '$experimentId|$marketProfile|$resolvedMarketProfile|$loadoutId|'
-      '$difficulty|${stationPath.join(',')}|${tierPath.join(',')}';
+      '$runModifierId|$difficulty|${stationPath.join(',')}|'
+      '${tierPath.join(',')}';
 
   void addResult({
     required bool pathCleared,
@@ -291,6 +298,7 @@ class BalanceSimSequenceSummaryGroup {
       'market_profile': marketProfile,
       'resolved_market_profile': resolvedMarketProfile,
       'loadout_id': loadoutId,
+      'run_modifier_id': runModifierId,
       'difficulty': difficulty,
       'station_path': stationPath,
       'tier_path': tierPath,
@@ -337,6 +345,7 @@ class BalanceSimSummaryGroup {
     required this.marketProfile,
     required this.resolvedMarketProfile,
     required this.loadoutId,
+    required this.runModifierId,
     required this.station,
     required this.blindTier,
     required this.difficulty,
@@ -347,6 +356,7 @@ class BalanceSimSummaryGroup {
   final String marketProfile;
   final String resolvedMarketProfile;
   final String loadoutId;
+  final String runModifierId;
   final int station;
   final String blindTier;
   final String difficulty;
@@ -374,7 +384,8 @@ class BalanceSimSummaryGroup {
 
   String get key =>
       '$experimentId|$marketProfile|$resolvedMarketProfile|$loadoutId|'
-      '$station|$blindTier|$difficulty|${simBossConstraintId ?? 'none'}';
+      '$runModifierId|$station|$blindTier|$difficulty|'
+      '${simBossConstraintId ?? 'none'}';
 
   void addResult({
     required bool cleared,
@@ -486,6 +497,7 @@ class BalanceSimSummaryGroup {
       'market_profile': marketProfile,
       'resolved_market_profile': resolvedMarketProfile,
       'loadout_id': loadoutId,
+      'run_modifier_id': runModifierId,
       'station': station,
       'blind_tier': blindTier,
       'difficulty': difficulty,
@@ -726,7 +738,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
               row,
               station: station,
               tier: tier,
-              rewardScale: config.simRewardScale,
+              rewardScale: config.effectiveSimRewardScale,
             )
           : 0;
       simEconomyGold += cashoutGold;
@@ -756,7 +768,10 @@ BalanceSimSequenceOutput _runStationPathSequence({
       row['sim_economy_trace'] = <String, Object?>{
         'schema_version': 1,
         'mode': config.simEconomyMode.id,
-        'reward_scale': config.simRewardScale,
+        'reward_scale': config.effectiveSimRewardScale,
+        'base_reward_scale': config.simRewardScale,
+        'run_modifier_id': config.runModifier.id,
+        'run_modifier_reward_multiplier': config.runModifier.rewardMultiplier,
         'price_scale': config.simPriceScale,
         'market_budget_mode': config.simMarketBudgetMode.id,
         'market_spend_mode': config.simMarketSpendMode.id,
@@ -871,7 +886,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         unaffordableEvents: simEconomyUnaffordableEvents,
         slotReplaceEvents: simEconomySlotReplaceEvents,
         economyMode: config.simEconomyMode,
-        rewardScale: config.simRewardScale,
+        rewardScale: config.effectiveSimRewardScale,
         priceScale: config.simPriceScale,
         marketBudgetMode: config.simMarketBudgetMode,
         marketSpendMode: config.simMarketSpendMode,
@@ -928,6 +943,9 @@ Map<String, Object?> _buildSequenceSummaryRow({
           .toList(growable: false),
     'loadout_id': spec.loadout.id,
     'loadout_effects': spec.loadout.effectsJson(),
+    'run_modifier_id': config.runModifier.id,
+    'run_modifier_target_multiplier': config.runModifier.targetScoreMultiplier,
+    'run_modifier_reward_multiplier': config.runModifier.rewardMultiplier,
     'seed': config.seed + spec.matrixIndex * config.runs + runIndex,
     'bot_policy': bot.id,
     'app_version': 'dev',
@@ -3926,12 +3944,16 @@ Map<String, Object?> _runSingleBattle({
     baseHandDiscards: blindSpec.handDiscards,
     baseBossModifier: blindSpec.bossModifier,
   );
-  final experiment = _applyTargetMultiplierOverrides(
+  final experimentWithOverrides = _applyTargetMultiplierOverrides(
     experiment: experimentBase,
     overrides: config.targetMultiplierOverrides,
     station: station,
     tier: tier,
     difficulty: spec.difficulty,
+  );
+  final experiment = _applyRunModifier(
+    experiment: experimentWithOverrides,
+    runModifier: config.runModifier,
   );
   final session = RummiPokerGridSession(runSeed: runSeed);
   final runProgress = RummiRunProgress();
@@ -4021,6 +4043,9 @@ Map<String, Object?> _runSingleBattle({
     'experiment_id': spec.experimentId,
     'experiment_applied': experiment.applied,
     'experiment_effects': experiment.effects,
+    'run_modifier_id': config.runModifier.id,
+    'run_modifier_target_multiplier': config.runModifier.targetScoreMultiplier,
+    'run_modifier_reward_multiplier': config.runModifier.rewardMultiplier,
     'loadout_id': spec.loadout.id,
     'loadout_effects': spec.loadout.effectsJson(),
     'seed': runSeed,
@@ -5844,6 +5869,29 @@ BalanceSimExperimentSpec _applyTargetMultiplierOverrides({
   );
 }
 
+BalanceSimExperimentSpec _applyRunModifier({
+  required BalanceSimExperimentSpec experiment,
+  required NewRunModifier runModifier,
+}) {
+  if (runModifier == NewRunModifier.basic) return experiment;
+  final effects = Map<String, Object?>.of(experiment.effects);
+  effects['run_modifier_id'] = runModifier.id;
+  effects['run_modifier_target_multiplier'] = runModifier.targetScoreMultiplier;
+  effects['run_modifier_reward_multiplier'] = runModifier.rewardMultiplier;
+  return BalanceSimExperimentSpec(
+    id: experiment.id,
+    applied: true,
+    targetScore: (experiment.targetScore * runModifier.targetScoreMultiplier)
+        .round(),
+    boardDiscards: experiment.boardDiscards,
+    handDiscards: experiment.handDiscards,
+    bossModifier: experiment.bossModifier,
+    effects: effects,
+    maxHandSizeDelta: experiment.maxHandSizeDelta,
+    simBossConstraint: experiment.simBossConstraint,
+  );
+}
+
 class BalanceSimExperimentSpec {
   const BalanceSimExperimentSpec({
     required this.id,
@@ -6542,6 +6590,7 @@ class BalanceSimCliConfig {
     required this.simMarketSpendMode,
     required this.simPriceBandMode,
     required this.simMarketChoiceMode,
+    required this.runModifier,
     required this.targetMultiplierOverrides,
     required this.loadouts,
     required this.jesterIds,
@@ -6566,6 +6615,7 @@ class BalanceSimCliConfig {
     var simMarketSpendMode = BalanceSimMarketSpendMode.none;
     var simPriceBandMode = BalanceSimPriceBandMode.none;
     var simMarketChoiceMode = BalanceSimMarketChoiceMode.none;
+    var runModifier = NewRunModifier.basic;
     List<int>? stations;
     List<BlindTier>? blindTiers;
     List<NewRunDifficulty>? difficulties;
@@ -6656,6 +6706,8 @@ class BalanceSimCliConfig {
           simPriceBandMode = BalanceSimPriceBandMode.parse(readValue());
         case '--sim-market-choice-mode':
           simMarketChoiceMode = BalanceSimMarketChoiceMode.parse(readValue());
+        case '--run-modifier':
+          runModifier = _parseRunModifier(readValue());
         case '--target-multiplier':
           targetMultiplierOverrides.add(
             BalanceSimTargetMultiplierOverride.parse(readValue()),
@@ -6731,6 +6783,7 @@ class BalanceSimCliConfig {
       simMarketSpendMode: simMarketSpendMode,
       simPriceBandMode: simPriceBandMode,
       simMarketChoiceMode: simMarketChoiceMode,
+      runModifier: runModifier,
       targetMultiplierOverrides:
           List<BalanceSimTargetMultiplierOverride>.unmodifiable(
             targetMultiplierOverrides,
@@ -6746,7 +6799,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--experiment-id baseline|candidate_baseline_v1|base_score_curve_v2|base_score_curve_v2_boss_constraint_pool_v2|base_score_curve_v2_boss_constraint_pool_v4|base_score_curve_v2_boss_constraint_pool_v4_s1_soft|base_score_curve_v2_boss_constraint_pool_v4_s1_resource|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085|base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_ordered_boss_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v2|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v3|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2|base_score_curve_v2_boss_constraint_pool_v4_three_band_v1|base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1|base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|station_curve_125_target_v5|station_curve_125_target_v6_s5_070|station_curve_125_target_v6_s5_075|station_curve_125_target_v7_s4_080_s5_070|station_curve_125_boss_constraint_pool_v1|station_curve_135_boss_constraint_pool_v1|station_curve_125_boss_constraint_pool_v2|station_curve_125_target_v5_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v2|station_curve_125_target_v6_s5_075_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v3|station_curve_125_target_v7_s4_080_s5_070_boss_constraint_pool_v3|station_curve_125_target_v6_s5_070_boss_constraint_pool_v4|station_curve_125_boss_constraint_pool_soft|station_curve_135_boss_constraint_pool_soft|station_curve_125_boss_constraint_pool_hard|station_curve_135_boss_constraint_pool_hard|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove|s1_tile_pack_small|s1_tile_pack_plus3|s1_tile_pack_plus4|s1_tile_pack_plus5|s1_build_aware_pack_plus3|s1_build_aware_pack_plus5|s1_pair_seed_pack|s1_color_seed_pack|s1_face_seed_pack|s1_random_candidate_pool|s1_probabilistic_candidate_pool|s1_full_safe_candidate_pool|s1_role_deck_sustain_pool|s1_role_score_growth_pool|s1_role_shape_fix_pool|s1_role_weak_flavor_pool|s1_station_weighted_candidate_pool|s1_state_weighted_candidate_pool|banded_candidate_pool_v1|banded_candidate_pool_v2|shop_slot_market_v1|shop_slot_market_v2|shop_slot_market_v3|shop_slot_market_v4|shop_slot_market_v5|shop_slot_market_v6|shop_slot_market_v7|shop_slot_market_v8|shop_slot_market_v9|shop_slot_market_v10|shop_slot_market_v11] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s5_sustain_build|s5_boss_bridge_build|planet_like_rank_level|tarot_like_tile_shape|enhanced_line_score|rare_jester_engine|rare_xmult_engine|s6_boss_breaker_build|s8_finale_build|progression_route_slow|progression_route_balanced|progression_route_delayed|progression_route_sustain|progression_route_power] [--jester id] [--item id]';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|--blind-tiers small,big,boss] [--difficulty standard|--difficulties relaxed,standard,pressure] [--run-modifier basic|high_stakes] [--experiment-id baseline|candidate_baseline_v1|base_score_curve_v2|base_score_curve_v2_boss_constraint_pool_v2|base_score_curve_v2_boss_constraint_pool_v4|base_score_curve_v2_boss_constraint_pool_v4_s1_soft|base_score_curve_v2_boss_constraint_pool_v4_s1_resource|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_resource|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_090|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_s2_boss_085|base_score_curve_v2_boss_constraint_pool_v4_s1_boss_052|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_ordered_boss_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v1|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v2|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_weighted_boss_v3|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3|base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2|base_score_curve_v2_boss_constraint_pool_v4_three_band_v1|base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1|base_score_curve_v2_boss_constraint_pool_v4_late_gate_v1|baseline_curve_160|station_curve_145|station_curve_135|station_curve_125|station_curve_125_target_v5|station_curve_125_target_v6_s5_070|station_curve_125_target_v6_s5_075|station_curve_125_target_v7_s4_080_s5_070|station_curve_125_boss_constraint_pool_v1|station_curve_135_boss_constraint_pool_v1|station_curve_125_boss_constraint_pool_v2|station_curve_125_target_v5_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v2|station_curve_125_target_v6_s5_075_boss_constraint_pool_v2|station_curve_125_target_v6_s5_070_boss_constraint_pool_v3|station_curve_125_target_v7_s4_080_s5_070_boss_constraint_pool_v3|station_curve_125_target_v6_s5_070_boss_constraint_pool_v4|station_curve_125_boss_constraint_pool_soft|station_curve_135_boss_constraint_pool_soft|station_curve_125_boss_constraint_pool_hard|station_curve_135_boss_constraint_pool_hard|s1_boss_target_070|early_boss_target_085|early_boss_target_080|early_boss_target_075|early_boss_resource_1|s2_boss_target_soften|s2_boss_target_085|s2_boss_target_080|s2_boss_target_075|s2_boss_modifier_soften|s2_boss_resource_boost] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile none|s1_buy_jolly|s1_buy_sly|s1_buy_discard_glove|s1_tile_pack_small|s1_tile_pack_plus3|s1_tile_pack_plus4|s1_tile_pack_plus5|s1_build_aware_pack_plus3|s1_build_aware_pack_plus5|s1_pair_seed_pack|s1_color_seed_pack|s1_face_seed_pack|s1_random_candidate_pool|s1_probabilistic_candidate_pool|s1_full_safe_candidate_pool|s1_role_deck_sustain_pool|s1_role_score_growth_pool|s1_role_shape_fix_pool|s1_role_weak_flavor_pool|s1_station_weighted_candidate_pool|s1_state_weighted_candidate_pool|banded_candidate_pool_v1|banded_candidate_pool_v2|shop_slot_market_v1|shop_slot_market_v2|shop_slot_market_v3|shop_slot_market_v4|shop_slot_market_v5|shop_slot_market_v6|shop_slot_market_v7|shop_slot_market_v8|shop_slot_market_v9|shop_slot_market_v10|shop_slot_market_v11] [--loadout-id baseline|pair_mult|safety_item|score_abacus|mobility_item|s1_entry_bridge_build|s2_foundation_build|s3_hand_growth_build|s4_resource_build|s5_power_build|s5_sustain_build|s5_boss_bridge_build|planet_like_rank_level|tarot_like_tile_shape|enhanced_line_score|rare_jester_engine|rare_xmult_engine|s6_boss_breaker_build|s8_finale_build|progression_route_slow|progression_route_balanced|progression_route_delayed|progression_route_sustain|progression_route_power] [--jester id] [--item id]';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);
@@ -6796,6 +6849,13 @@ class BalanceSimCliConfig {
       raw,
       '--difficulties',
     ).map(_parseDifficulty).toList(growable: false);
+  }
+
+  static NewRunModifier _parseRunModifier(String raw) {
+    for (final modifier in NewRunModifier.values) {
+      if (modifier.id == raw) return modifier;
+    }
+    throw FormatException('Unknown run modifier: $raw');
   }
 
   static String _parseExperimentId(String raw) {
@@ -7200,6 +7260,7 @@ class BalanceSimCliConfig {
   final BalanceSimMarketSpendMode simMarketSpendMode;
   final BalanceSimPriceBandMode simPriceBandMode;
   final BalanceSimMarketChoiceMode simMarketChoiceMode;
+  final NewRunModifier runModifier;
   final List<BalanceSimTargetMultiplierOverride> targetMultiplierOverrides;
   final List<BalanceSimLoadoutSpec> loadouts;
   final List<String> jesterIds;
@@ -7217,6 +7278,9 @@ class BalanceSimCliConfig {
       experimentIds.length *
       marketProfiles.length *
       loadouts.length;
+
+  double get effectiveSimRewardScale =>
+      simRewardScale * runModifier.rewardMultiplier;
 
   bool get isMatrix => matrixSize > 1;
 

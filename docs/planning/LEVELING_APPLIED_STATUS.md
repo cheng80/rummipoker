@@ -408,6 +408,14 @@ Economy leveling gate:
 - raw audit: v9 final gold avg 6.51G, v13 final gold avg 6.45G로 경제 압박은 비슷하다. v13이 더 낮은 clear를 보인 이유는 잔고 완화가 아니라 후보/선택 proxy 안정성 문제로 본다.
 - 판정: 어느 정도 압박은 필요하지만, 이상적인 플레이 proxy가 none보다 낮아지면 안 된다. v13은 seed에 따라 none보다 낮아지는 케이스가 있어 적용하지 않는다. 현재는 v9를 유지하고, 다음 조정은 “압박 제거”가 아니라 “좋은 선택을 했을 때 통과 가능성 확보” 기준으로 별도 후보를 설계한다.
 
+Run modifier probe:
+
+- runtime applied: `high_stakes`는 Insight 20 해금 후 선택 가능한 명시적 run modifier다. target score 1.08, blind reward 1.12를 적용하며 직접 골드/아이템/Jester/자원을 지급하지 않는다.
+- tool update: `tools/sim/run_balance_sim.dart`와 `tools/sim/ml_sweep_dataset.py`가 `--run-modifier basic|high_stakes`를 받는다. sim economy reward scale은 입력 scale에 modifier reward multiplier를 곱한 effective scale로 기록한다.
+- r120 proxy note: 전용 CLI 추가 전 `target 1.08 / reward 0.448` 조합으로 current economy 조건의 탐색 probe를 돌렸지만, seed 흔들림이 커서 tuning 근거로 쓰지 않는다.
+- current signal: high stakes는 balanced none/v9를 크게 누르고, power 계열은 어느 정도 유지한다. 장기 판단 전에는 반드시 `--run-modifier high_stakes` direct sweep으로 다시 비교한다.
+- next check: basic/high_stakes를 같은 economy 조건에서 r400 이상으로 비교하고, 좋은 market 선택 proxy가 같은 modifier의 none/control보다 낮아지는지 먼저 본다.
+
 ## 6. Read Order
 
 레벨링 작업 재개 시 순서:

@@ -133,14 +133,20 @@ void main() {
     ]);
 
     expect(result.exitCode, 0, reason: result.stderr.toString());
-    expect(result.stdout.toString(), contains('[sweep] mode=progression_curve'));
+    expect(
+      result.stdout.toString(),
+      contains('[sweep] mode=progression_curve'),
+    );
     expect(result.stdout.toString(), contains('[sweep] merged candidates=1'));
 
     final summaryFile = File('${outPrefix}_summary.json');
     expect(summaryFile.existsSync(), true);
     final summary =
         jsonDecode(summaryFile.readAsStringSync()) as Map<String, dynamic>;
-    expect((summary['sweep'] as Map<String, dynamic>)['kind'], 'progression_curve');
+    expect(
+      (summary['sweep'] as Map<String, dynamic>)['kind'],
+      'progression_curve',
+    );
     final groups = (summary['groups'] as List<dynamic>)
         .cast<Map<String, dynamic>>();
     expect(groups, isNotEmpty);
@@ -240,28 +246,38 @@ void main() {
       'baseline',
       '--market-profiles',
       'none',
+      '--run-modifier',
+      'high_stakes',
       '--summary-only',
       '--out-prefix',
       outPrefix,
     ]);
 
     expect(result.exitCode, 0, reason: result.stderr.toString());
-    expect(result.stdout.toString(), contains('[sweep] mode=experiment_matrix'));
+    expect(
+      result.stdout.toString(),
+      contains('[sweep] mode=experiment_matrix'),
+    );
     expect(result.stdout.toString(), contains('[sweep] merged candidates=2'));
 
     final summary =
         jsonDecode(File('${outPrefix}_summary.json').readAsStringSync())
             as Map<String, dynamic>;
-    expect((summary['sweep'] as Map<String, dynamic>)['kind'], 'experiment_matrix');
+    expect(
+      (summary['sweep'] as Map<String, dynamic>)['kind'],
+      'experiment_matrix',
+    );
     final groups = (summary['groups'] as List<dynamic>)
         .cast<Map<String, dynamic>>();
     expect(
       groups.map((group) => group['experiment_matrix_id']).toSet(),
       containsAll(['station_curve_125', 's2_boss_resource_boost']),
     );
-    expect(
-      groups.map((group) => group['sweep_mode']).toSet(),
-      {'experiment_matrix'},
-    );
+    expect(groups.map((group) => group['sweep_mode']).toSet(), {
+      'experiment_matrix',
+    });
+    expect(groups.map((group) => group['run_modifier_id']).toSet(), {
+      'high_stakes',
+    });
   });
 }

@@ -2787,6 +2787,75 @@ void main() {
     },
   );
 
+  test(
+    'CLI applies explicit high stakes run modifier to target and reward',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/run_modifier.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '42',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '1',
+        '--difficulty',
+        'standard',
+        '--experiment-id',
+        'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068',
+        '--run-modifier',
+        'high_stakes',
+        '--sim-economy-mode',
+        'gated_known_cost',
+        '--sim-reward-scale',
+        '0.40',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final rows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
+      final battleRows = rows
+          .where((row) => row['row_type'] == 'battle')
+          .toList(growable: false);
+      expect(battleRows, isNotEmpty);
+
+      final firstBattle = battleRows.first;
+      _expectBalanceSimRowContract(firstBattle);
+      expect(firstBattle['run_modifier_id'], 'high_stakes');
+      expect(firstBattle['run_modifier_target_multiplier'], 1.08);
+      expect(firstBattle['run_modifier_reward_multiplier'], 1.12);
+      expect(
+        firstBattle['target_score'],
+        ((firstBattle['base_target_score'] as int) * 1.08).round(),
+      );
+      final effects = firstBattle['experiment_effects'] as Map<String, dynamic>;
+      expect(effects['run_modifier_id'], 'high_stakes');
+      expect(effects['run_modifier_target_multiplier'], 1.08);
+      expect(effects['run_modifier_reward_multiplier'], 1.12);
+
+      final trace = firstBattle['sim_economy_trace'] as Map<String, dynamic>;
+      expect(trace['base_reward_scale'], 0.40);
+      expect(trace['run_modifier_id'], 'high_stakes');
+      expect(trace['reward_scale'], closeTo(0.448, 0.000001));
+
+      final summaryRow = rows.singleWhere(
+        (row) => row['row_type'] == 'sequence_summary',
+      );
+      expect(summaryRow['run_modifier_id'], 'high_stakes');
+    },
+  );
+
   test('CLI expands S2 boss target sweep presets in target order', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
     addTearDown(() => dir.deleteSync(recursive: true));
@@ -4415,6 +4484,7 @@ void main() {
       'market_profile',
       'resolved_market_profile',
       'loadout_id',
+      'run_modifier_id',
       'station',
       'blind_tier',
       'difficulty',
@@ -4425,6 +4495,7 @@ void main() {
       'market_profile',
       'resolved_market_profile',
       'loadout_id',
+      'run_modifier_id',
       'difficulty',
       'station_path',
       'tier_path',
@@ -5641,6 +5712,9 @@ void _expectBalanceSimRowContract(Map<String, dynamic> row) {
     'experiment_id',
     'experiment_applied',
     'experiment_effects',
+    'run_modifier_id',
+    'run_modifier_target_multiplier',
+    'run_modifier_reward_multiplier',
     'loadout_id',
     'seed',
     'bot_policy',
@@ -5678,6 +5752,9 @@ void _expectBalanceSimRowContract(Map<String, dynamic> row) {
   expect(row['experiment_id'], isA<String>());
   expect(row['experiment_applied'], isA<bool>());
   expect(row['experiment_effects'], isA<Map<String, dynamic>>());
+  expect(row['run_modifier_id'], isA<String>());
+  expect(row['run_modifier_target_multiplier'], isA<num>());
+  expect(row['run_modifier_reward_multiplier'], isA<num>());
   expect(row['loadout_effects'], isA<Map<String, dynamic>>());
   expect(row['loadout_id'], isA<String>());
   expect(row['seed'], isA<int>());
