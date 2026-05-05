@@ -15,6 +15,7 @@ import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
+import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -132,6 +133,24 @@ void main() {
     expect(find.text('정산 완료'), findsOneWidget);
     expect(find.text('게임결과'), findsNothing);
     expect(find.text('Market으로'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('game over Insight reward card가 종료 보상을 보여준다', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: GameOverInsightRewardCard(insightReward: 6),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('획득 예정 Insight +6'), findsOneWidget);
+    expect(find.textContaining('다음 런'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

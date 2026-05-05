@@ -2669,12 +2669,56 @@ String expirySignalLabel(RummiExpirySignal signal) {
   };
 }
 
+class GameOverInsightRewardCard extends StatelessWidget {
+  const GameOverInsightRewardCard({super.key, required this.insightReward});
+
+  final int insightReward;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF233D38),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF64D8A4).withValues(alpha: 0.42),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '획득 예정 Insight +$insightReward',
+            style: const TextStyle(
+              color: Color(0xFF9DF0BE),
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '종료하면 다음 런 계약 해금에 사용할 수 있습니다.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.72),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 만료 신호 목록으로 게임오버 다이얼로그를 표시한다.
 /// [onRetry]는 현재 스테이지 시작 스냅샷으로 즉시 복원한다.
 /// [onExit]는 저장을 정리하고 타이틀로 이동한다.
 void showGameOverDialog({
   required BuildContext context,
   required List<RummiExpirySignal> signals,
+  required int insightReward,
   required Future<void> Function() onRetry,
   required Future<void> Function() onExit,
 }) {
@@ -2707,6 +2751,10 @@ void showGameOverDialog({
               height: 1.35,
             ),
           ),
+          if (insightReward > 0) ...[
+            const SizedBox(height: 12),
+            GameOverInsightRewardCard(insightReward: insightReward),
+          ],
           const SizedBox(height: 18),
           Row(
             children: [

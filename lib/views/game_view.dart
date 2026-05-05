@@ -692,9 +692,16 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _showGameOver(List<RummiExpirySignal> signals) {
     if (!mounted) return;
+    final summary = RunEndSummary(
+      result: RunEndResult.expired,
+      difficulty: widget.difficulty,
+      reachedStageIndex: _battleView.stageIndex,
+      defeatedBossCount: _defeatedBossCountForRunEnd(completed: false),
+    );
     showGameOverDialog(
       context: context,
       signals: signals,
+      insightReward: RunProgressionService.calculateInsightReward(summary),
       onRetry: _restartFromStageSnapshot,
       onExit: _exitAfterGameOver,
     );
