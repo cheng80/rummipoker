@@ -5,7 +5,7 @@
 > 핵심 정책: 현재 플레이 가능한 흐름을 깨지 않고, Home / Battle / Market / Archive 축으로 확장한다.
 
 현재 화면 파일과 widget 경계는 `docs/current_system/CURRENT_CODE_MAP.md`를 기준으로 본다.
-구현 완료/미완료 상태는 `docs/planning/STATUS.md`를 기준으로 본다.
+구현 완료/미완료 상태와 다음 작업 순서는 `docs/planning/OVERALL_GOAL_PROGRESS.md`를 기준으로 본다.
 
 ## 1. Current Boundary Reference
 

@@ -22,8 +22,16 @@
 3. `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md`
 4. `docs/current_system/CURRENT_CODE_MAP.md`
 5. `docs/current_system/CURRENT_TO_V4_GAP.md`
-6. `docs/planning/STATUS.md`
-7. `docs/planning/IMPLEMENTATION_PLAN.md`
+6. `docs/current_system/CURRENT_LEVELING_POLICY.md`
+7. `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
+8. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
+9. `docs/planning/OVERALL_GOAL_PROGRESS.md`
+10. `docs/planning/LEVELING_APPLIED_STATUS.md`
+11. `docs/planning/ECONOMY_LEVELING_PLAN.md`
+12. `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
+
+`docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`가 존재하면 현재 임시 작업 순서를 잠그는 문서이므로 planning 문서보다 먼저 확인한다.
+`docs/planning/STATUS.md`, `docs/planning/IMPLEMENTATION_PLAN.md`, `docs/planning/MIGRATION_ROADMAP.md`는 과거 진행 snapshot/compatibility 문서이며, current source of truth가 아니다.
 
 코드 읽기 순서:
 

@@ -92,7 +92,8 @@
 
 ## 4. Recommended Reading
 
-새 작업 세션은 아래 순서를 따른다.
+이 문서는 과거 진행 snapshot이다. 새 작업 세션의 current 읽기 순서는 `START_HERE.md`를 따른다.
+아래 목록은 이 snapshot이 작성되던 시점의 legacy read order이며, current source-of-truth로 쓰지 않는다.
 
 1. `START_HERE.md`
 2. `docs/00_docs_README.md`
@@ -102,10 +103,11 @@
 6. `docs/current_system/CURRENT_LEVELING_POLICY.md`
 7. `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 8. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-9. `docs/planning/STATUS.md`
-10. `docs/planning/IMPLEMENTATION_PLAN.md`
-11. `docs/planning/MIGRATION_ROADMAP.md`
-12. `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
+9. `docs/planning/OVERALL_GOAL_PROGRESS.md`
+10. `docs/planning/LEVELING_APPLIED_STATUS.md`
+11. `docs/planning/ECONOMY_LEVELING_PLAN.md`
+12. `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
+13. `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
 
 필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 

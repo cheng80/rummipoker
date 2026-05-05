@@ -38,7 +38,8 @@
 | 기존 성격 | 현재 위치 |
 |---|---|
 | 현재 코드 baseline | `docs/current_system/CURRENT_BUILD_BASELINE.md` |
-| migration roadmap | `docs/planning/MIGRATION_ROADMAP.md` |
+| 현재 진행률/작업 순서 | `docs/planning/OVERALL_GOAL_PROGRESS.md` |
+| legacy migration roadmap | `docs/planning/MIGRATION_ROADMAP.md` |
 | Test/QA acceptance | `docs/planning/verification/TEST_QA_ACCEPTANCE.md` |
 | open decisions / experiments | `docs/planning/OPEN_DECISIONS.md` |
 | V3 -> V4 changelog | `docs/archive/legacy/V4_CHANGELOG_FROM_V3.md` |

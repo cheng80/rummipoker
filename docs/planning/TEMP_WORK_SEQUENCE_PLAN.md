@@ -51,6 +51,13 @@ Done:
 - [x] `START_HERE.md`의 먼저 읽을 문서 목록과 Source of Truth가 current 문서와 충돌하지 않는지 확인했다.
 - [x] `docs/planning/00_planning_README.md`를 current / legacy / temporary 문서 분류로 정리했다.
 - [x] `STATUS.md`는 기존 진행 snapshot으로 두고, 필요한 최신 항목 승격 전 archive 이동 금지로 유지했다.
+- [x] current 문서와 V4 spec의 잔여 `STATUS.md`/legacy planning 참조를 다시 감사했다.
+- [x] 잔여 current 참조 수정 후 `rg`로 `STATUS.md`/`IMPLEMENTATION_PLAN.md`/`MIGRATION_ROADMAP.md`가 current source-of-truth처럼 남아 있지 않은지 재확인했다.
+
+확인 결과:
+
+- `START_HERE.md`와 `docs/planning/00_planning_README.md`는 current source-of-truth와 legacy/temporary 분류가 일치한다.
+- 남아 있는 `STATUS.md`/`IMPLEMENTATION_PLAN.md`/`MIGRATION_ROADMAP.md` 참조는 legacy/snapshot/compatibility 안내 또는 archive/daily log 이력이다.
 
 ## 4. 실제 ML 이행
 
