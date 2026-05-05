@@ -6,13 +6,13 @@ class GameCardNameText extends StatelessWidget {
     this.text, {
     super.key,
     required this.style,
-    this.maxLines = 2,
+    this.maxLines,
     this.textAlign = TextAlign.center,
   });
 
   final String text;
   final TextStyle style;
-  final int maxLines;
+  final int? maxLines;
   final TextAlign textAlign;
 
   @override
@@ -21,6 +21,7 @@ class GameCardNameText extends StatelessWidget {
       text,
       maxLines: maxLines,
       softWrap: true,
+      overflow: TextOverflow.visible,
       textAlign: textAlign,
       style: style,
     );

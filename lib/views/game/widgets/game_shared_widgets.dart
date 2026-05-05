@@ -1067,7 +1067,6 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                       Expanded(
                         child: GameCardNameText(
                           name,
-                          maxLines: 2,
                           textAlign: TextAlign.start,
                           style: const TextStyle(
                             color: Colors.white,
