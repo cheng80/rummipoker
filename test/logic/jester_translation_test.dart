@@ -91,7 +91,7 @@ void main() {
       expect(catalog.findById('ice_cream')!.rarity, RummiJesterRarity.uncommon);
     });
 
-    test('player-facing Jester data does not restore legacy source names', () {
+    test('player-facing Jester data does not restore Joker-origin names', () {
       final deprecatedCatalogJson = File(
         'data/common/jesters_common.json',
       ).readAsStringSync();
@@ -120,7 +120,7 @@ void main() {
         expect(
           playerFacingText,
           isNot(contains(term)),
-          reason: 'Jester data must not carry source marker "$term"',
+          reason: 'Jester data must not carry external source marker "$term"',
         );
       }
 
@@ -195,7 +195,7 @@ void main() {
         expect(
           playerFacingText,
           isNot(contains(term)),
-          reason: 'Jester data restored legacy name "$term"',
+          reason: 'Jester data restored Joker-origin adapted name "$term"',
         );
       }
     });
