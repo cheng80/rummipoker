@@ -362,6 +362,33 @@ Economy leveling gate:
 - runtime applied: 보상 상수는 `stageClearGoldBase` 4G, S1 첫 클리어 보너스 2G, 남은 board discard 2G, 남은 hand discard 1G로 낮췄다. 구매 가격은 `RummiEconomyConfig.scaledMarketPrice`에서 정수 `11/5` 비율로 반올림한다. 표시/구매 가격은 모두 정수 G다.
 - runtime catalog applied: 자기 회수형/저가 성장 후보의 기준가를 정수로 보정했다. `reroll_token` 5G, `coin_cache` 4G, `thin_wallet` 7G, `green_jester` 8G, `popcorn` 6G, `ice_cream` 7G, `banner` 7G, `gros_michel` 7G, `supernova` 8G.
 - updated audit: 새 런타임 기준 reward envelope는 S1 small 자원 미사용 16G, 자원 전부 사용 6G다. 기존 자기 회수 flag는 `reroll_token`만 남는다.
+- v91 runtime economy long sweep: `reward 0.40 / price 2.2 / catalog_normalized_v1 / reroll_slot_sell_v1 / affordable_alternative_v1` r800을 실행했다.
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 800 --seed 99800 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --jobs 4 --out-prefix logs/sim/economy_runtime_v91_long_r800`
+- summary: `logs/sim/economy_runtime_v91_long_r800_summary.json`
+- report: `logs/sim/economy_runtime_v91_long_r800_report.md`
+- audit: `logs/sim/economy_runtime_v91_long_r800_economy_audit.json`
+
+| loadout | market | path clear | avg total turn | S1/S4/S5/S8 boss bottleneck | top bottlenecks | stop reason |
+|---|---|---:|---:|---|---|---|
+| balanced | none | 55.9% | 1390.7 | S1 25, S4 41, S5 26, S8 51 | S8 boss 51, S4 boss 41, S5 boss 26, S1 boss 25 | board 214, draw 136, both 3 |
+| balanced | v9 | 57.0% | 1389.9 | S1 20, S4 45, S5 36, S8 49 | S8 boss 49, S4 boss 45, S5 boss 36, S1 boss 20 | board 196, draw 141, both 7 |
+| power | none | 63.6% | 1353.2 | S1 35, S4 7, S5 4, S8 50 | S8 boss 50, S1 boss 35, S7 boss 28, S8 big 13 | board 205, draw 82, both 4 |
+| power | v9 | 64.4% | 1358.5 | S1 35, S4 10, S5 6, S8 42 | S8 boss 42, S1 boss 35, S8 big 26, S7 boss 24 | board 190, draw 92, both 3 |
+
+경제 audit:
+
+- v9 final gold avg는 balanced 6.23G, power 6.42G다. none control은 각각 54.6G, 60.51G로 남는다.
+- v9 S8 boss 시작 골드는 평균 9.4G, S8 boss 이후는 7.28G다.
+- 전체 sim economy final gold avg는 31.94G이며, 이는 none control 미사용 골드가 섞인 값이다.
+- unaffordable event는 15395회로, 이전 scale-only 후보와 달리 “떠도 바로 다 사는 상점” 상태는 아니다.
+
+판정:
+
+- 새 런타임 경제는 골드 과잉을 크게 낮춘다. 특히 v9 평균 최종 잔고가 한 자리수 G로 내려와 상점 선택/리롤 비용 압박이 생겼다.
+- v9 clear 상승폭은 balanced +1.1%p, power +0.8%p로 작다. 기존 v90 장기 sweep의 v9 상승폭보다 훨씬 낮아졌으므로, 경제 압박이 market profile 효과를 강하게 누르고 있다.
+- balanced v9 57.0%는 낮은 편이다. 자동 지급이나 슬롯 고정 보정으로 풀지 말고, 다음 조정은 S8 후보군 availability 또는 boss severity/cycle 위치 쪽에서 검토한다.
+- S8 `confirm_count_tax_v2` 병목은 모든 조합에서 여전히 최상위다. 다만 v9에서 S8 boss stop이 balanced 49/800, power 42/800으로 남는 수준이라 즉시 완화보다 후속 후보군 availability probe가 먼저다.
+- board locked가 draw exhausted보다 많다. 자원 +1 지급으로 풀지 않고, board/move/discard 후보의 마켓 등장성 및 가격 접근성을 다음 probe 후보로 본다.
 
 ## 6. Read Order
 

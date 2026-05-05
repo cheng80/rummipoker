@@ -308,6 +308,15 @@ catalog-first runtime translation:
   - 가격: 카탈로그 기준가 보정 후 `11/5` 정수 비율로 effective 구매가를 반올림
   - 표시/구매 단위는 모두 정수 G이며 소수점 가격은 만들지 않는다.
   - sellPrice와 reroll 비용은 이번 변경에서 유지한다.
+- runtime economy long check:
+  - `economy_runtime_v91_long_r800`: balanced none 55.9%, balanced v9 57.0%, power none 63.6%, power v9 64.4%
+  - v9 final gold avg는 balanced 6.23G, power 6.42G
+  - v9 S8 boss before는 평균 9.4G
+  - unaffordable event는 15395회
+- 판정:
+  - 새 런타임 경제는 골드 과잉을 해결하지만, v9 clear 상승폭도 크게 줄였다.
+  - 이 결과는 시장 후보가 의미 없다는 뜻이 아니라, 가격/리롤/슬롯 교체 비용이 선택 압박을 만든다는 신호로 본다.
+  - 다음 조정은 자동 지급이 아니라 S8 후보군 availability, board/move/discard 후보 접근성, 또는 boss severity/cycle 위치를 분리해서 본다.
 
 ### Phase 3. Economy Probe
 
@@ -364,6 +373,6 @@ catalog-first runtime translation:
 
 ## 6. 현재 보류
 
-- v90 boss runtime cycle 장기 sweep은 새 런타임 경제 적용 후 다시 재개한다.
+- v90 boss runtime cycle 장기 sweep은 새 런타임 경제 적용 후 `economy_runtime_v91_long_r800`으로 재개했다. 추가 결론 확정 전에는 후보군 availability와 boss severity를 분리해서 본다.
 - repeat/single rank cycle 편입 sweep도 economy gate 이후로 미룬다.
 - Pack/Tarot-like/Planet-like 타입 승격 논의는 economy 모델이 가격을 다룰 수 있게 된 뒤 재개한다.
