@@ -43,6 +43,7 @@
 - 사용자가 **"특정 영역만 Git의 이전 상태와 비교/복원"** 하라고 지시하면, 그 범위만 `git show` 등으로 먼저 확인한 뒤 **지정된 파일/블록만** 되돌린다. 다른 최신 작업본은 추측으로 함께 건드리지 않는다.
 - 문서 source-of-truth나 archive 후보를 정리할 때는 `START_HERE.md`의 새 세션 진입 경로와 먼저 읽을 문서 목록을 먼저 맞춘다. 진입 문서에서 아직 current로 읽는 문서를 archive 후보로 먼저 밀어 넣지 않는다.
 - 사용자가 작업 순서를 명시했으면 전체 진행표와 응답에서 같은 순서를 유지한다. 특히 `ML 표현 감사/정정 -> 텍스트 자름/줄바꿈 정책 -> START_HERE 기준 문서 진입점/파편화 정리 -> 실제 ML 이행과 리포트 -> 경제 probe 마감 여부 정리 -> 공모전 기준 작업`처럼 gate가 정해진 경우, 뒤 작업을 먼저 진행하거나 실제 ML 이행을 목록에서 누락하지 않는다.
+- planned transition scaffold, baseline model, exploratory probe, 연결 보고서는 gate 완료와 다르다. 실제 ML 이행은 모델 추천표와 fresh resimulation, 사람 승인 경계까지 닫혀야 완료로 본다. 경제 probe도 exploratory/not closed이면 공모전 기준 작업 재개 gate로 넘기지 않는다.
 
 ---
 

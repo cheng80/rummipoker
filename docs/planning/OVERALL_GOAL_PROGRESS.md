@@ -58,10 +58,9 @@
 
 현재 집중 축:
 
-1. 공모전 기준 텍스트/UX/QA 작업 재개
-2. post lane reroll 경제 probe 범위 확정
-3. 출품 후보 smoke/browser QA 반복
-4. S1~S8 레벨링 검증 재개
+1. 실제 ML 이행 계속: broader candidate grid, 모델 추천표, fresh resimulation, 사람 승인용 MD 보고서
+2. 경제 probe 마감 여부 정리: post lane reroll 영향은 exploratory/not closed이므로 별도 probe 필요
+3. 공모전 기준 텍스트/UX/QA 작업 재개는 위 두 gate 이후로 보류
 
 현재 경제 판단:
 
@@ -83,9 +82,11 @@
 
 임시 작업 순서 플랜 처리:
 
-- `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`의 고정 순서는 완료됐다.
-- 결과는 `AGENTS.md`, `docs/planning/00_planning_README.md`, `docs/planning/ECONOMY_LEVELING_PLAN.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`, `analysis/leveling/README.md`, `analysis/leveling/reports/`로 승격했다.
-- 따라서 임시 플랜 문서는 삭제 대상이다.
+- `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
+- ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
+- 실제 ML 이행은 planned transition scaffold까지만 진행됐고, broader candidate grid/모델 추천표/fresh resimulation/사람 승인 보고서가 남았다.
+- 경제 probe는 post lane reroll 기준으로 not closed다.
+- 공모전 기준 작업 재개는 실제 ML 이행과 경제 probe 상태 정리 이후로 보류한다.
 
 ## 4. Competition Prototype Track
 
