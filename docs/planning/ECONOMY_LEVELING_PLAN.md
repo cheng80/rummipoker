@@ -277,6 +277,38 @@ catalog value flags:
 - 판정: 잔고는 약 1.2G만 낮아지는데 balanced v9가 65.0%에서 59.2%까지 떨어진다. 현재 장기 후보에서는 제외하고, 실제 가격표 후보 검증 도구로만 유지한다.
 - 다음 가격 후보는 item/Jester 개별 가격표를 바로 바꾸기보다, reward scale 후보와 market availability/gold sink 누락분을 분리해 본다.
 
+catalog-first runtime translation:
+
+- 사용자가 “카탈로그부터 잡고 그 후 배율 적용” 순서를 승인했다.
+- `--sim-price-band-mode catalog_normalized_v1`을 추가했다.
+- 기준가 후보:
+  - `reroll_token`: 3G -> 5G
+  - `coin_cache`: 3G -> 4G
+  - `thin_wallet`: 5G -> 7G
+  - `green_jester`: 4G -> 8G
+  - `popcorn`: 5G -> 6G
+  - `ice_cream`: 5G -> 7G
+  - `banner`: 5G -> 7G
+  - `gros_michel`: 5G -> 7G
+  - `supernova`: 5G -> 8G
+- `reward 0.40 / price 1.0 / catalog_normalized_v1` r120:
+  - balanced none 50.8%, balanced v9 67.5%, power none 60.8%, power v9 70.8%
+  - v9 final gold avg 약 129.6G, v9 S8 boss before 약 155.3G
+  - 판정: 카탈로그 기준가만으로는 골드 압박이 부족하다.
+- `reward 0.40 / price 2.4 / catalog_normalized_v1` r120:
+  - balanced none 58.3%, balanced v9 66.7%, power none 65.0%, power v9 59.2%
+  - v9 final gold avg 약 17.2G, v9 S8 boss before 약 22.9G
+  - 판정: 잔고는 맞지만 power v9가 none보다 낮아져 너무 강하다.
+- `reward 0.40 / price 2.2 / catalog_normalized_v1` r120:
+  - balanced none 54.2%, balanced v9 63.3%, power none 63.3%, power v9 66.7%
+  - v9 final gold avg 약 18.7G, v9 S8 boss before 약 23.7G
+  - 판정: 카탈로그 정리 후 전체 가격 배율은 `2.2`가 더 안전하다.
+- runtime 적용:
+  - 보상: `stageClearGoldBase` 4G, S1 첫 클리어 보너스 2G, 남은 board discard 2G, 남은 hand discard 1G
+  - 가격: 카탈로그 기준가 보정 후 `11/5` 정수 비율로 effective 구매가를 반올림
+  - 표시/구매 단위는 모두 정수 G이며 소수점 가격은 만들지 않는다.
+  - sellPrice와 reroll 비용은 이번 변경에서 유지한다.
+
 ### Phase 3. Economy Probe
 
 목표:
@@ -332,6 +364,6 @@ catalog value flags:
 
 ## 6. 현재 보류
 
-- v90 boss runtime cycle 장기 sweep 재개는 economy gate 이후로 미룬다.
+- v90 boss runtime cycle 장기 sweep은 새 런타임 경제 적용 후 다시 재개한다.
 - repeat/single rank cycle 편입 sweep도 economy gate 이후로 미룬다.
 - Pack/Tarot-like/Planet-like 타입 승격 논의는 economy 모델이 가격을 다룰 수 있게 된 뒤 재개한다.

@@ -55,6 +55,34 @@ S8 이후는 실제 진행 구간 밖이다. 디버그/테스트용으로만 마
 | Big | base - 1, min 1 | base | base | `stageClearGoldBase + 4` |
 | Boss | base - 1, min 1 | base - 1, min 1 | base - 1, min 1 | `stageClearGoldBase + 8` |
 
+Runtime economy constants:
+
+| Field | Value |
+|---|---:|
+| `stageClearGoldBase` | 4G |
+| `firstBlindClearBonusGold` | 2G |
+| `remainingBoardDiscardGoldBonus` | 2G |
+| `remainingHandDiscardGoldBonus` | 1G |
+| `marketPriceScale` | `11/5`, rounded to integer G |
+| `shopBaseRerollCost` | 5G |
+| `shopRerollCostStep` | 2G |
+
+가격 표시는 항상 정수 G다. 카탈로그 기준가를 먼저 보정하고, 실제 구매/표시 가격은 `RummiEconomyConfig.scaledMarketPrice`로 정수 반올림한다. `sellPrice`와 reroll 비용은 현재 별도 배율을 적용하지 않는다.
+
+Catalog economy normalization:
+
+| Candidate | Runtime base price |
+|---|---:|
+| `reroll_token` | 5G |
+| `coin_cache` | 4G |
+| `thin_wallet` | 7G |
+| `green_jester` | 8G |
+| `popcorn` | 6G |
+| `ice_cream` | 7G |
+| `banner` | 7G |
+| `gros_michel` | 7G |
+| `supernova` | 8G |
+
 ## 4. Runtime Boss Modifier Cycle
 
 현재 런타임 Boss 표시/전투 제약은 station index 순환이다.

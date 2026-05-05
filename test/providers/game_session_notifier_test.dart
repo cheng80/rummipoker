@@ -678,8 +678,8 @@ void main() {
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, 7);
-      expect(updated.marketView!.gold, 7);
+      expect(updated.runProgress!.gold, 3);
+      expect(updated.marketView!.gold, 3);
       expect(updated.runProgress!.ownedJesters.length, 1);
       expect(updated.marketView!.ownedEntries.length, 1);
       expect(updated.runProgress!.shopOffers, isEmpty);
@@ -731,8 +731,8 @@ void main() {
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, 6);
-      expect(updated.marketView!.gold, 6);
+      expect(updated.runProgress!.gold, 1);
+      expect(updated.marketView!.gold, 1);
       expect(updated.runProgress!.itemInventory.ownedItems.length, 1);
       expect(
         updated.runProgress!.itemInventory.ownedItems.first.itemId,
@@ -868,9 +868,9 @@ void main() {
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, 8);
+      expect(updated.runProgress!.gold, 3);
       expect(updated.runProgress!.marketModifiers.nextItemPurchaseDiscount, 0);
-      expect(updated.marketView!.gold, 8);
+      expect(updated.marketView!.gold, 3);
     });
 
     test('useMarketItem은 market 사용 아이템으로 골드와 facade를 갱신한다', () {
@@ -1044,7 +1044,7 @@ void main() {
       });
       final boughtItem = catalog.findById('board_scrap')!;
       state.runProgress!
-        ..gold = 4
+        ..gold = 5
         ..itemInventory = const RunInventoryState(
           ownedItems: [
             OwnedItemEntry(
@@ -1058,7 +1058,7 @@ void main() {
       final offer = RummiMarketItemOfferView.fromItemDefinition(
         boughtItem,
         slotIndex: 0,
-        currentGold: 4,
+        currentGold: 5,
         price: 4,
       );
 
@@ -1066,7 +1066,7 @@ void main() {
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, 4);
+      expect(updated.runProgress!.gold, 0);
       expect(
         updated.runProgress!.itemInventory.ownedItems.map(
           (entry) => entry.itemId,
@@ -1674,7 +1674,10 @@ void main() {
       final breakdown = notifier.prepareSettlementAndCashOut();
       final afterCashOut = container.read(gameSessionNotifierProvider(args));
 
-      expect(breakdown.firstBlindClearBonusGold, 5);
+      expect(
+        breakdown.firstBlindClearBonusGold,
+        RummiEconomyConfig.firstBlindClearBonusGold,
+      );
       expect(afterCashOut.runProgress!.gold, initialGold + breakdown.totalGold);
       expect(afterCashOut.runProgress!.itemInventory.ownedItems, isEmpty);
       final settlement = RummiSettlementRuntimeFacade.fromCashOut(

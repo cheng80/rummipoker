@@ -1253,6 +1253,12 @@ int _simPriceBandCostForEvent({
       fallbackCost: fallbackCost,
     );
   }
+  if (mode == BalanceSimPriceBandMode.catalogNormalizedV1) {
+    return _simCatalogNormalizedCostForEvent(
+      event: event,
+      fallbackCost: fallbackCost,
+    );
+  }
   final soft = mode == BalanceSimPriceBandMode.rarityCategorySoftV1;
   final category = event['category'];
   final contentId = event['content_id'];
@@ -1278,6 +1284,35 @@ int _simPriceBandCostForEvent({
     if (contentId.contains('common')) return max(fallbackCost, soft ? 6 : 8);
   }
   return fallbackCost;
+}
+
+int _simCatalogNormalizedCostForEvent({
+  required Map<String, Object?> event,
+  required int fallbackCost,
+}) {
+  final category = event['category'];
+  final contentId = event['content_id'];
+  if (category == 'item' && contentId is String) {
+    return switch (contentId) {
+      'reroll_token' => max(fallbackCost, 5),
+      'coin_cache' => max(fallbackCost, 4),
+      'thin_wallet' => max(fallbackCost, 7),
+      _ => fallbackCost,
+    };
+  }
+  if (category != 'jester') return fallbackCost;
+  final proxyIds = event['proxy_jester_ids'];
+  final ids = proxyIds is List
+      ? proxyIds.whereType<String>().toSet()
+      : <String>{if (contentId is String) contentId};
+  var cost = fallbackCost;
+  if (ids.contains('green_jester')) cost = max(cost, 8);
+  if (ids.contains('popcorn')) cost = max(cost, 6);
+  if (ids.contains('ice_cream')) cost = max(cost, 7);
+  if (ids.contains('banner')) cost = max(cost, 7);
+  if (ids.contains('gros_michel')) cost = max(cost, 7);
+  if (ids.contains('supernova')) cost = max(cost, 8);
+  return cost;
 }
 
 int _simCatalogValueFlagCostForEvent({
@@ -6049,7 +6084,8 @@ enum BalanceSimPriceBandMode {
   none,
   rarityCategoryV1,
   rarityCategorySoftV1,
-  catalogValueFlagsV1;
+  catalogValueFlagsV1,
+  catalogNormalizedV1;
 
   static BalanceSimPriceBandMode parse(String raw) {
     return switch (raw) {
@@ -6057,6 +6093,7 @@ enum BalanceSimPriceBandMode {
       'rarity_category_v1' => BalanceSimPriceBandMode.rarityCategoryV1,
       'rarity_category_soft_v1' => BalanceSimPriceBandMode.rarityCategorySoftV1,
       'catalog_value_flags_v1' => BalanceSimPriceBandMode.catalogValueFlagsV1,
+      'catalog_normalized_v1' => BalanceSimPriceBandMode.catalogNormalizedV1,
       _ => throw FormatException('Unknown sim price band mode: $raw'),
     };
   }
@@ -6067,6 +6104,7 @@ enum BalanceSimPriceBandMode {
       BalanceSimPriceBandMode.rarityCategoryV1 => 'rarity_category_v1',
       BalanceSimPriceBandMode.rarityCategorySoftV1 => 'rarity_category_soft_v1',
       BalanceSimPriceBandMode.catalogValueFlagsV1 => 'catalog_value_flags_v1',
+      BalanceSimPriceBandMode.catalogNormalizedV1 => 'catalog_normalized_v1',
     };
   }
 }

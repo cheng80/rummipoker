@@ -19,10 +19,11 @@ DEFAULT_SUMMARY = Path("logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.jso
 
 @dataclass(frozen=True)
 class EconomyConfig:
-    stage_clear_gold_base: int = 10
-    first_blind_clear_bonus_gold: int = 5
-    remaining_board_discard_gold_bonus: int = 5
-    remaining_hand_discard_gold_bonus: int = 2
+    stage_clear_gold_base: int = 4
+    first_blind_clear_bonus_gold: int = 2
+    remaining_board_discard_gold_bonus: int = 2
+    remaining_hand_discard_gold_bonus: int = 1
+    shop_base_reroll_cost: int = 5
     standard_board_discards: int = 4
     standard_hand_discards: int = 2
 
@@ -158,7 +159,7 @@ def _catalog_value_flags(
             estimated_value = amount
             reason = "즉시 골드 회수"
         elif op == "free_next_reroll":
-            estimated_value = config.stage_clear_gold_base / 2
+            estimated_value = config.shop_base_reroll_cost
             reason = "기본 리롤 비용 대체"
         elif op == "discount_next_purchase":
             estimated_value = amount

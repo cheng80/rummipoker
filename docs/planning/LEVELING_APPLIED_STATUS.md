@@ -29,6 +29,7 @@
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
+| economy reward / price policy | Applied | `RummiEconomyConfig` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용 |
 | Pack/Tarot-like/Planet-like role mapping | Spec only | docs only | 현재는 Item/market candidate role로 해석. 별도 타입 런타임은 미도입 |
 | smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
@@ -354,6 +355,13 @@ Economy leveling gate:
 - current price flags: `reroll_token`, `coin_cache`, `thin_wallet`은 자기 회수형 item 후보이며, `green_jester`, `popcorn`, `ice_cream`, `supernova`는 low-price growth Jester 후보로 먼저 검토한다.
 - applied: `catalog_value_flags_v1` sim-only price band를 추가했다. price flag 후보 일부만 올리는 검증용이다.
 - catalog flag probe: `reward 0.38 / price 2.4 / catalog_value_flags_v1` r120은 balanced v9가 59.2%로 낮아지고 final gold avg는 114.9G에 그쳐, 현재 장기 후보에서는 제외한다.
+- applied: `catalog_normalized_v1` sim-only price band를 추가했다. 카탈로그 기준가 후보는 `reroll_token` 5G, `coin_cache` 4G, `thin_wallet` 7G, `green_jester` 8G, `popcorn` 6G, `ice_cream` 7G, `banner` 7G, `gros_michel` 7G, `supernova` 8G다.
+- catalog-first probe: `reward 0.40 / price 1.0 / catalog_normalized_v1` r120은 balanced v9 67.5%, power v9 70.8%였지만 v9 final gold avg가 약 129.6G, v9 S8 boss 시작 골드가 약 155.3G라 카탈로그 정리만으로는 골드 압박이 부족했다.
+- catalog + scale probe: `reward 0.40 / price 2.4 / catalog_normalized_v1` r120은 v9 final gold avg 약 17.2G로 낮지만 power v9 59.2%가 none 65.0%보다 낮아 “떠도 못 사는 상점” 위험이 있다.
+- selected runtime translation: `reward 0.40 / price 2.2 / catalog_normalized_v1` r120은 balanced none 54.2%, balanced v9 63.3%, power none 63.3%, power v9 66.7%다. v9 final gold avg는 약 18.7G, v9 S8 boss 시작 골드는 약 23.7G다.
+- runtime applied: 보상 상수는 `stageClearGoldBase` 4G, S1 첫 클리어 보너스 2G, 남은 board discard 2G, 남은 hand discard 1G로 낮췄다. 구매 가격은 `RummiEconomyConfig.scaledMarketPrice`에서 정수 `11/5` 비율로 반올림한다. 표시/구매 가격은 모두 정수 G다.
+- runtime catalog applied: 자기 회수형/저가 성장 후보의 기준가를 정수로 보정했다. `reroll_token` 5G, `coin_cache` 4G, `thin_wallet` 7G, `green_jester` 8G, `popcorn` 6G, `ice_cream` 7G, `banner` 7G, `gros_michel` 7G, `supernova` 8G.
+- updated audit: 새 런타임 기준 reward envelope는 S1 small 자원 미사용 16G, 자원 전부 사용 6G다. 기존 자기 회수 flag는 `reroll_token`만 남는다.
 
 ## 6. Read Order
 

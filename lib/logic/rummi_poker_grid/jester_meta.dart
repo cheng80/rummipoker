@@ -592,13 +592,21 @@ class RummiEconomyConfig {
   const RummiEconomyConfig._();
 
   static const int startingGold = 0;
-  static const int stageClearGoldBase = 10;
-  static const int firstBlindClearBonusGold = 5;
-  static const int remainingBoardDiscardGoldBonus = 5;
-  static const int remainingHandDiscardGoldBonus = 2;
+  static const int stageClearGoldBase = 4;
+  static const int firstBlindClearBonusGold = 2;
+  static const int remainingBoardDiscardGoldBonus = 2;
+  static const int remainingHandDiscardGoldBonus = 1;
+  static const int marketPriceScaleNumerator = 11;
+  static const int marketPriceScaleDenominator = 5;
   static const int shopBaseRerollCost = 5;
   static const int shopRerollCostStep = 2;
   static const int shopOfferCount = 3;
+
+  static int scaledMarketPrice(int basePrice) {
+    if (basePrice <= 0) return 0;
+    return (basePrice * marketPriceScaleNumerator / marketPriceScaleDenominator)
+        .round();
+  }
 }
 
 enum RummiStationMarketBand { early, mid, late }
@@ -1167,18 +1175,19 @@ class RummiRunProgress {
     required int basePrice,
     required String category,
   }) {
+    final scaledBasePrice = RummiEconomyConfig.scaledMarketPrice(basePrice);
     final categoryDiscount = switch (category) {
       'jester' => marketModifiers.nextJesterPurchaseDiscount,
       'item' => marketModifiers.nextItemPurchaseDiscount,
       _ => 0,
     };
     final cheapestDiscount =
-        _cheapestFirstOfferDiscountApplies(basePrice, category)
+        _cheapestFirstOfferDiscountApplies(scaledBasePrice, category)
         ? marketModifiers.cheapestFirstOfferDiscount
         : 0;
     return max(
       0,
-      basePrice -
+      scaledBasePrice -
           marketModifiers.nextPurchaseDiscount -
           categoryDiscount -
           cheapestDiscount,

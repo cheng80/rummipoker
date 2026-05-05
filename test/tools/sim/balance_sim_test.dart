@@ -1685,11 +1685,61 @@ void main() {
       final bigRow = battleRows.firstWhere((row) => row['blind_tier'] == 'big');
       final events = bigRow['market_purchase_events'] as List<dynamic>;
       final event = events.single as Map<String, dynamic>;
-      expect(event['cost'], 4);
+      expect(event['cost'], 8);
       expect(event['proxy_jester_ids'], contains('green_jester'));
       final trace = bigRow['sim_economy_trace'] as Map<String, dynamic>;
       expect(trace['price_band_mode'], 'catalog_value_flags_v1');
-      expect(trace['known_market_spend'], 6);
+      expect(trace['known_market_spend'], 8);
+    },
+  );
+
+  test(
+    'CLI sim catalog normalized price band uses integer catalog target costs',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+
+      final outPath = '${dir.path}/catalog_normalized.jsonl';
+      final code = await runBalanceSim([
+        '--runs',
+        '1',
+        '--bot',
+        'planner_v2',
+        '--seed',
+        '12345',
+        '--sequence-mode',
+        'station_path',
+        '--stations',
+        '1',
+        '--market-profile',
+        's1_candidate_uncommon_build_jester',
+        '--loadout-id',
+        's5_boss_bridge_build',
+        '--sim-economy-mode',
+        'gated_known_cost',
+        '--sim-price-band-mode',
+        'catalog_normalized_v1',
+        '--out',
+        outPath,
+      ]);
+
+      expect(code, 0);
+
+      final battleRows = File(outPath)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .where((row) => row['row_type'] == 'battle')
+          .toList(growable: false);
+      expect(battleRows, hasLength(3));
+      final bigRow = battleRows.firstWhere((row) => row['blind_tier'] == 'big');
+      final events = bigRow['market_purchase_events'] as List<dynamic>;
+      final event = events.single as Map<String, dynamic>;
+      expect(event['cost'], 8);
+      expect(event['proxy_jester_ids'], contains('green_jester'));
+      final trace = bigRow['sim_economy_trace'] as Map<String, dynamic>;
+      expect(trace['price_band_mode'], 'catalog_normalized_v1');
+      expect(trace['known_market_spend'], 8);
+      expect(trace['known_market_spend'], isA<int>());
     },
   );
 
