@@ -23,8 +23,8 @@
 | Economy leveling | 골드 보상과 가격이 선택 압박을 만들되 좋은 플레이를 부당하게 막지 않는다 | In progress | 55% | watchlist 가격 후보 1차 정리 후 r120~r400 probe |
 | Boss pressure | 후반 보스가 압박을 주며 S7~S8은 높은 실패 비중을 유지한다 | Next | 45% | economy 기준선 후 boss severity/target 재검증 |
 | UI/UX/game feel | 카드/타일/정산/마켓 액션이 게임적인 연출로 읽힌다 | In progress | 50% | 예정된 연출 보강 잔여 큐 완료 후 승인 대기 |
-| Roguelite meta | 게임오버 이후 보상으로 다음 run 선택지가 열린다 | In progress | 14% | Insight 보상 표시 이후 최소 해금 루프 UX 정리 |
-| Run restart loop | 패배/클리어 후 보상, 해금, 새 run 시작이 자연스럽게 이어진다 | In progress | 14% | 게임오버 보상 표시 이후 title/new run 연결 QA |
+| Roguelite meta | 게임오버 이후 보상으로 다음 run 선택지가 열린다 | In progress | 18% | Insight 보상 표시 이후 title/new run 연결 QA |
+| Run restart loop | 패배/클리어 후 보상, 해금, 새 run 시작이 자연스럽게 이어진다 | In progress | 22% | S8 boss 런 완료 후 title/new run 연결 QA |
 | QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 35% | 기능 단위 테스트 + browser/compute QA |
 
 전체 추정 진도: 41%
@@ -48,8 +48,8 @@
 | Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | 경제 probe 및 r400/r800 |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
 | Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
-| Roguelite meta growth | 14% | Insight, high stakes 해금, 게임오버 보상 표시 기반 존재 | unlock tree 확장과 새 run 연결 QA |
-| Game over reward loop | 18% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI 표시 | 클리어/패배 결과 화면 통합 polish |
+| Roguelite meta growth | 18% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시 기반 존재 | unlock tree 확장과 새 run 연결 QA |
+| Game over reward loop | 26% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out | title/new run 연결 browser QA |
 | Integrated QA | 35% | 단위 테스트와 웹 빌드 검증 이력 존재 | 전체 smoke script와 browser QA pass 필요 |
 
 ## 3. Current Focus
@@ -83,10 +83,10 @@
 
 | Gate | Prototype target | Status | Progress |
 |---|---|---|---:|
-| Playable vertical slice | 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산/패배 -> 재시작 흐름이 끊기지 않는다 | In progress | 68% |
+| Playable vertical slice | 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산/패배 -> 재시작 흐름이 끊기지 않는다 | In progress | 72% |
 | Strategy readability | 타일/카드/아이템/보스 제약이 설명 없이도 선택 압박으로 읽힌다 | In progress | 60% |
 | Economy baseline | 골드와 가격이 과다 지급처럼 보이지 않고, 좋은 플레이는 부당하게 막지 않는다 | In progress | 58% |
-| Roguelite loop stub | 게임오버 보상과 다음 run 복귀가 최소 형태로 존재한다 | In progress | 22% |
+| Roguelite loop stub | 게임오버 보상과 다음 run 복귀가 최소 형태로 존재한다 | In progress | 32% |
 | Game feel baseline | 마켓/전투/정산의 대표 액션 연출이 어색하지 않다 | In progress | 55% |
 | Submission QA | 웹 빌드, 저장/복구, 플레이 영상 촬영 가능한 안정성을 확보한다 | In progress | 40% |
 
@@ -129,6 +129,7 @@
 | Market animation | 구매 flight, 판매 feedback, offer reveal timing 개선 | `lib/views/game/widgets/game_shop_screen.dart`, `lib/views/game/game_presentation_timings.dart` |
 | Settlement flow | 정산 presentation pause gate, cash-out 복구, bottom sheet reveal 안정화 | `lib/views/game_view.dart`, `lib/views/game/widgets/game_cashout_widgets.dart` |
 | Game over reward feedback | 패배 종료 시 획득 예정 Insight를 dialog에서 표시 | `lib/views/game/widgets/game_shared_widgets.dart`, `test/views/game/game_view_test.dart` |
+| Final run completion | S8 boss 정산 후 Market 대신 런 완료 보상으로 닫힘 | `lib/views/game_view.dart`, `lib/views/game/widgets/game_cashout_widgets.dart`, `test/views/game/widgets/game_cashout_widgets_test.dart` |
 | Background lifecycle | 게임/마켓 background pause, 복귀 옵션 dialog, BGM resume 보강 | `lib/views/game_view.dart`, `lib/views/game/widgets/game_shop_screen.dart`, `lib/resources/sound_manager.dart` |
 | Save/restore | active run 저장/복원, 정산 중 종료 후 cash-out 복구 확인 | `lib/services/active_run_save_service.dart`, debug fixture tests |
 | Boss modifiers | 색상/라인/face/all-score/first-confirm/confirm-count/repeat/single rank 계열 구현 | `lib/services/blind_selection_setup.dart`, `lib/logic/rummi_poker_grid/jester_meta.dart` |

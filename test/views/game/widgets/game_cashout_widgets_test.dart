@@ -129,4 +129,56 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
+
+  testWidgets('GameCashOutSheet can close a final run with Insight reward', (
+    tester,
+  ) async {
+    final settlement = RummiSettlementRuntimeFacade(
+      stageIndex: 8,
+      targetScore: 2600,
+      currentGold: 7,
+      totalGold: 11,
+      entries: const [
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.stationReward,
+          leadingLabel: 'Station 8',
+          description: 'Station Goal 2600 달성 보상',
+          gold: 7,
+        ),
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.boardDiscardReward,
+          leadingLabel: '2',
+          description: '남은 보드 버림 2회 x 1',
+          gold: 2,
+        ),
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.handDiscardReward,
+          leadingLabel: '2',
+          description: '남은 손패 버림 2회 x 1',
+          gold: 2,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameCashOutSheet(
+            settlement: settlement,
+            completesRun: true,
+            insightReward: 36,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(find.text('획득 예정 Insight +36'), findsOneWidget);
+    expect(find.widgetWithText(GameChromeButton, '런 완료'), findsOneWidget);
+    expect(find.text('Market으로'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
 }

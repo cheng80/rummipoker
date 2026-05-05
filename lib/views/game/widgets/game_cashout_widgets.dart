@@ -14,6 +14,7 @@ import '../../../resources/jester_translation_scope.dart';
 import '../../../utils/common_ui.dart';
 import '../game_presentation_timings.dart';
 import 'game_jester_widgets.dart';
+import 'game_shared_widgets.dart';
 
 String gameHandRankLabel(RummiHandRank rank) {
   return switch (rank) {
@@ -407,10 +408,14 @@ class GameCashOutSheet extends StatefulWidget {
     super.key,
     required this.settlement,
     this.autoEnterMarketOnLoad = false,
+    this.completesRun = false,
+    this.insightReward = 0,
   });
 
   final RummiSettlementRuntimeFacade settlement;
   final bool autoEnterMarketOnLoad;
+  final bool completesRun;
+  final int insightReward;
 
   @override
   State<GameCashOutSheet> createState() => _GameCashOutSheetState();
@@ -451,7 +456,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
     await Future<void>.delayed(stepDelay);
     if (!mounted) return;
     setState(() => _step = 5);
-    if (widget.autoEnterMarketOnLoad) {
+    if (widget.autoEnterMarketOnLoad && !widget.completesRun) {
       await Future<void>.delayed(autoAdvanceDelay);
       if (!mounted) return;
       Navigator.of(context).pop(true);
@@ -536,9 +541,18 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                     totalGold: settlement.totalGold,
                   ),
                 ),
+                if (widget.completesRun && widget.insightReward > 0) ...[
+                  const SizedBox(height: 12),
+                  _GameCashOutReveal(
+                    visible: _step >= (hasBonuses ? 5 : 4),
+                    child: GameOverInsightRewardCard(
+                      insightReward: widget.insightReward,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 GameChromeButton(
-                  label: 'Market으로',
+                  label: widget.completesRun ? '런 완료' : 'Market으로',
                   backgroundColor: const Color(0xFFF4A81D),
                   foregroundColor: Colors.black,
                   height: 52,
@@ -547,7 +561,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   fontWeight: FontWeight.w900,
                   onPressed: _step < 3
                       ? null
-                      : () => Navigator.of(context).pop(true),
+                      : () => Navigator.of(context).pop(!widget.completesRun),
                 ),
               ],
             ),

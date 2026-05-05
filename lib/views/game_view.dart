@@ -82,6 +82,7 @@ class _GameViewState extends ConsumerState<GameView>
     with WidgetsBindingObserver {
   static const Duration _itemEffectFeedbackDuration =
       GamePresentationTimings.itemEffectFeedback;
+  static const int _finalStationIndex = 8;
 
   static const List<String> _shopInspectOfferIds = [
     'green_jester',
@@ -1265,11 +1266,15 @@ class _GameViewState extends ConsumerState<GameView>
   Future<bool?> _showCashOutSheet(
     RummiCashOutBreakdown breakdown, {
     bool autoEnterMarketOnLoad = false,
+    bool completesRun = false,
   }) {
     final settlementView = RummiSettlementRuntimeFacade.fromCashOut(
       breakdown: breakdown,
       currentGold: _marketView.gold,
     );
+    final insightReward = completesRun
+        ? RunProgressionService.calculateInsightReward(_completedRunSummary())
+        : 0;
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -1281,7 +1286,10 @@ class _GameViewState extends ConsumerState<GameView>
         return GameCashOutSheet(
           settlement: settlementView,
           autoEnterMarketOnLoad:
-              autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut,
+              !completesRun &&
+              (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
+          completesRun: completesRun,
+          insightReward: insightReward,
         );
       },
     );
@@ -1302,10 +1310,16 @@ class _GameViewState extends ConsumerState<GameView>
     _gameNotifier.setStageFlow(phase: GameStageFlowPhase.none);
     await _saveActiveRun(scene: ActiveRunScene.battle);
 
+    final completesRun = _isFinalBossCleared;
     final enterShop = await _showCashOutSheet(
       breakdown,
       autoEnterMarketOnLoad: autoEnterMarketOnLoad,
+      completesRun: completesRun,
     );
+    if (completesRun && enterShop == false) {
+      await _completeRunAndReturnToTitle();
+      return;
+    }
     if (!mounted || enterShop != true) return;
 
     _gameNotifier.enterMarketAfterCashOut(itemCatalog: _itemCatalog);
@@ -1328,6 +1342,20 @@ class _GameViewState extends ConsumerState<GameView>
     context.go(
       '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
       extra: blindSelectRuntime,
+    );
+  }
+
+  bool get _isFinalBossCleared {
+    return _battleView.stageIndex >= _finalStationIndex &&
+        _battleView.currentBlindTierIndex >= BlindTier.boss.index;
+  }
+
+  RunEndSummary _completedRunSummary() {
+    return RunEndSummary(
+      result: RunEndResult.completed,
+      difficulty: widget.difficulty,
+      reachedStageIndex: _battleView.stageIndex,
+      defeatedBossCount: _defeatedBossCountForRunEnd(completed: true),
     );
   }
 
