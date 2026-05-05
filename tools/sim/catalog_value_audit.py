@@ -177,13 +177,31 @@ def _jester_value_row(card: dict[str, Any]) -> dict[str, Any]:
 def _item_role(item: dict[str, Any], effect: dict[str, Any]) -> str:
     op = str(effect.get("op") or "")
     tags = {str(tag) for tag in item.get("tags", []) if isinstance(tag, str)}
-    if op in {"gain_gold", "free_next_reroll", "discount_next_purchase"}:
+    if op in {
+        "gain_gold",
+        "free_next_reroll",
+        "discount_next_purchase",
+        "sell_price_bonus",
+    }:
         return "economy"
-    if op in {"add_board_discard", "add_hand_discard", "add_board_move"}:
+    if op in {
+        "add_board_discard",
+        "add_hand_discard",
+        "add_board_move",
+        "increase_hand_size_with_discard_penalty",
+    } or tags.intersection({"discard", "move", "hand_size"}):
         return "resource"
+    if op in {"peek_deck_discard_one", "undo_last_board_move"} or tags.intersection(
+        {"deck", "selection", "undo"}
+    ):
+        return "deck_control"
     if op in {"chips_bonus", "mult_bonus", "xmult_bonus"}:
         return "score_boost"
-    if "market" in tags or op in {"extra_item_offer_slot", "rarity_weight_bonus"}:
+    if "market" in tags or op in {
+        "extra_item_offer_slot",
+        "rarity_weight_bonus",
+        "reroll_item_offers_only",
+    }:
         return "market"
     if "boss" in tags:
         return "boss_tool"
@@ -195,7 +213,10 @@ def _item_role(item: dict[str, Any], effect: dict[str, Any]) -> str:
 def _jester_role(card: dict[str, Any]) -> str:
     effect_type = str(card.get("effectType") or "")
     trigger = str(card.get("trigger") or "")
+    condition_value = str(card.get("conditionValue") or "")
     if effect_type == "stateful_growth":
+        if condition_value == "mult_decay":
+            return "tempo_score_boost"
         return "growth_engine"
     if effect_type == "xmult_bonus":
         return "xmult_engine"
