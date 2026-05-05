@@ -349,6 +349,27 @@ S1 focused r240:
 - balanced+v9 전체 path clear는 61.7%에서 65.0%로 올라갔지만, S8 boss 병목은 남아 후반 압박을 지우지 않았다.
 - 출품용 기준으로 S1 target/severity 조정은 유지한다. 장기 확정은 별도 r400/r800으로 재검증한다.
 
+v91 submission candidate leveling smoke:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 90516 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/prototype_stability_submission_r120`
+- summary: `logs/sim/prototype_stability_submission_r120_summary.json`
+- report: `logs/sim/prototype_stability_submission_r120_report.md`
+- note: r120은 출품 안정성 확인용 smoke이며, 장기 확정 sweep이 아니다.
+
+| loadout | market | path clear | avg total turn | top bottlenecks | stop reason |
+|---|---|---:|---:|---|---|
+| balanced | none | 45.0% | 1237.2 | S4 boss 10, S5 boss 7, S1 big 6, S1 boss 5, S8 boss 5 | board 46, draw 20 |
+| balanced | v9 | 65.0% | 1380.0 | S1 boss 5, S1 small 4, S2 boss 4, S8 boss 4, S4 boss 3 | board 28, draw 12, both 2 |
+| power | none | 63.3% | 1370.7 | S8 boss 9, S4 boss 4, S1 big 3, S8 big 3, S3 big 3 | board 33, draw 10, both 1 |
+| power | v9 | 65.8% | 1270.8 | S1 boss 6, S8 boss 5, S3 boss 4, S8 big 4, S1 big 3 | board 33, draw 8 |
+
+판정:
+
+- 현재 HEAD 기준에서도 v91 출품용 S1 entry smoke와 같은 방향이다.
+- `shop_slot_market_v9`는 balanced path clear를 45.0%에서 65.0%로 올리지만, S1/S8 boss 병목을 지우지는 않는다.
+- `power + v9`도 65.8%라 출품용 기준에서 후반 압박이 사라졌다고 보지 않는다.
+- 지금은 target/boss/market 숫자를 더 흔들지 않고, 플레이 가능한 vertical slice와 QA 안정성을 우선한다.
+
 ## 5. Next Leveling Work
 
 다음 순서:
