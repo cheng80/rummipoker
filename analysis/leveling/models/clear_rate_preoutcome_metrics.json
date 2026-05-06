@@ -1,10 +1,29 @@
 {
-  "row_count": 14544,
-  "train_count": 10908,
-  "test_count": 3636,
+  "row_count": 60000,
+  "source_row_count": 237507,
+  "train_count": 45000,
+  "test_count": 15000,
   "target": "clear_rate",
   "feature_mode": "preoutcome",
-  "mae": 0.03602574623616468,
-  "rmse": 0.10141113155098667,
-  "r2": 0.1547751204063771
+  "model_strategy": "auto",
+  "model_selection": {
+    "strategy": "auto",
+    "cv_splits": 5,
+    "scoring": "neg_root_mean_squared_error",
+    "candidate_models": [
+      "RandomForestRegressor",
+      "ExtraTreesRegressor"
+    ],
+    "best_params": {
+      "model": "ExtraTreesRegressor",
+      "model__max_features": "sqrt",
+      "model__min_samples_leaf": 2,
+      "model__n_estimators": 240
+    },
+    "best_cv_score": -0.13359814507584528,
+    "selected_model": "ExtraTreesRegressor"
+  },
+  "mae": 0.0656695417904804,
+  "rmse": 0.13923568512877132,
+  "r2": 0.5414187706840714
 }

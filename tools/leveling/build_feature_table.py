@@ -50,6 +50,10 @@ LABEL_FIELDS = [
 PREOUTCOME_NUMERIC_FIELDS = [
     "station",
     "tier_index",
+    "station_band_index",
+    "is_boss_tier",
+    "is_late_station",
+    "is_final_station",
     "difficulty_multiplier",
     "target_multiplier",
     "small_target_multiplier",
@@ -65,6 +69,10 @@ PREOUTCOME_NUMERIC_FIELDS = [
     "market_profile_version",
     "has_boss_constraint",
     "boss_family_index",
+    "boss_level_index",
+    "boss_pressure_index",
+    "is_runtime_boss_modifier",
+    "economy_pressure_index",
 ]
 
 PREOUTCOME_CATEGORICAL_FIELDS = [
@@ -108,6 +116,12 @@ def main() -> int:
         default=None,
         help="입력 파일 목록과 row 수를 기록할 JSON 경로",
     )
+    parser.add_argument(
+        "--max-rows",
+        type=int,
+        default=0,
+        help="0보다 크면 deterministic even sampling으로 CSV row 수를 제한합니다.",
+    )
     args = parser.parse_args()
 
     rows: list[dict[str, Any]] = []
@@ -117,6 +131,9 @@ def main() -> int:
 
     if not rows:
         raise SystemExit("feature table로 만들 group이 없습니다.")
+    source_row_count = len(rows)
+    if args.max_rows > 0 and len(rows) > args.max_rows:
+        rows = even_sample_rows(rows, args.max_rows)
 
     default_out = DEFAULT_PREOUTCOME_OUT if args.feature_mode == "preoutcome" else DEFAULT_OUT
     out_path = Path(args.out or default_out)
@@ -166,6 +183,8 @@ def main() -> int:
         json.dumps(
             {
                 "row_count": len(rows),
+                "source_row_count": source_row_count,
+                "max_rows": args.max_rows,
                 "source_paths": [str(path) for path in source_paths],
                 "output": str(out_path),
                 "feature_mode": args.feature_mode,
@@ -181,7 +200,21 @@ def main() -> int:
     print(f"feature table: {out_path}")
     print(f"metadata: {metadata_path}")
     print(f"rows: {len(rows)}")
+    if source_row_count != len(rows):
+        print(f"source rows: {source_row_count}")
     return 0
+
+
+def even_sample_rows(rows: list[dict[str, Any]], max_rows: int) -> list[dict[str, Any]]:
+    if max_rows <= 0 or len(rows) <= max_rows:
+        return rows
+    if max_rows == 1:
+        return [rows[0]]
+    last_index = len(rows) - 1
+    return [
+        rows[round(index * last_index / (max_rows - 1))]
+        for index in range(max_rows)
+    ]
 
 
 def rows_from_summary(path: Path, *, feature_mode: str) -> list[dict[str, Any]]:
@@ -191,7 +224,7 @@ def rows_from_summary(path: Path, *, feature_mode: str) -> list[dict[str, Any]]:
     if feature_mode == "preoutcome_sequence":
         groups = root.get("sequence_groups")
         if not isinstance(groups, list):
-            raise SystemExit(f"{path}: sequence_groups 배열이 없습니다.")
+            return []
         return [
             preoutcome_sequence_row_from_group(path, raw, sweep_context)
             for raw in groups
@@ -297,6 +330,10 @@ def preoutcome_row_from_group(
         "sim_boss_constraint_id": boss_constraint,
         "station": numeric_or_zero(raw.get("station")),
         "tier_index": tier_index(raw.get("blind_tier")),
+        "station_band_index": station_band_index(raw.get("station")),
+        "is_boss_tier": int(value_or_empty(raw.get("blind_tier")) == "boss"),
+        "is_late_station": int(numeric_or_zero(raw.get("station")) >= 6),
+        "is_final_station": int(numeric_or_zero(raw.get("station")) >= 8),
         "difficulty_multiplier": difficulty_multiplier(raw.get("difficulty")),
         "target_multiplier": inferred_target_multiplier(run_modifier, base_experiment),
         "small_target_multiplier": numeric_or_default(
@@ -330,6 +367,13 @@ def preoutcome_row_from_group(
         "market_profile_version": market_profile_version(market_profile, resolved_market_profile),
         "has_boss_constraint": int(boss_constraint != ""),
         "boss_family_index": boss_family_index(boss_constraint),
+        "boss_level_index": boss_level_index(boss_constraint),
+        "boss_pressure_index": boss_pressure_index(boss_constraint),
+        "is_runtime_boss_modifier": int(is_runtime_boss_modifier(boss_constraint)),
+        "economy_pressure_index": economy_pressure_index(
+            sweep_context.get("sim_reward_scale"),
+            sweep_context.get("sim_price_scale"),
+        ),
         "sim_economy_mode": value_or_empty(sweep_context.get("sim_economy_mode") or "trace_only"),
         "sim_market_budget_mode": value_or_empty(sweep_context.get("sim_market_budget_mode") or "none"),
         "sim_market_spend_mode": value_or_empty(sweep_context.get("sim_market_spend_mode") or "none"),
@@ -371,6 +415,17 @@ def tier_index(value: Any) -> int:
     return {"small": 0, "big": 1, "boss": 2}.get(value_or_empty(value), -1)
 
 
+def station_band_index(value: Any) -> int:
+    station = int(numeric_or_zero(value))
+    if station <= 2:
+        return 0
+    if station <= 5:
+        return 1
+    if station <= 7:
+        return 2
+    return 3
+
+
 def difficulty_multiplier(value: Any) -> float:
     return {"relaxed": 0.8, "standard": 1.0, "pressure": 1.2}.get(value_or_empty(value), 1.0)
 
@@ -409,22 +464,105 @@ def market_profile_version(*values: str) -> int:
 def boss_family_index(value: str) -> int:
     if value == "":
         return -1
-    families = [
-        "color",
-        "line",
-        "face",
-        "repeat",
-        "single",
-        "confirm_count",
-        "all_score",
-        "first_confirm",
-        "target_spike",
-        "resource",
+    family_patterns = [
+        ("tile_color", ["color", "red_", "yellow_", "blue_", "black_"]),
+        ("line_kind", ["line", "row_", "column_", "diagonal_"]),
+        ("face_tile", ["face"]),
+        ("repeat_rank", ["repeat"]),
+        ("single_rank", ["single"]),
+        ("confirm_count", ["confirm_count"]),
+        ("confirm_limit", ["confirm_limit"]),
+        ("all_score", ["all_score"]),
+        ("first_confirm", ["first_confirm"]),
+        ("target_spike", ["target_spike"]),
+        ("resource", ["resource", "discard"]),
+        ("draw_refill", ["refill", "draw"]),
+        ("reward_tax", ["reward_tax"]),
+        ("memory", ["memory", "decay"]),
+        ("jester", ["jester"]),
     ]
-    for index, family in enumerate(families):
-        if family in value:
+    for index, (_, patterns) in enumerate(family_patterns):
+        if any(pattern in value for pattern in patterns):
             return index
-    return len(families)
+    return len(family_patterns)
+
+
+def boss_level_index(value: str) -> int:
+    if value == "":
+        return -1
+    level_map = {
+        "red_dampener_v1": 0,
+        "yellow_dampener_v1": 0,
+        "row_line_dampener_v1": 0,
+        "blue_dampener_v1": 1,
+        "face_tile_dampener_v1": 1,
+        "face_tile_dampener": 1,
+        "black_dampener_v1": 2,
+        "column_line_dampener_v1": 2,
+        "diagonal_line_dampener_v1": 3,
+        "repeat_rank_pressure_v4": 3,
+        "single_rank_pressure": 3,
+        "all_score_dampener_v1": 4,
+        "all_score_dampener": 4,
+        "first_confirm_tax_v1": 5,
+        "first_confirm_tax": 5,
+        "confirm_count_tax_v2": 5,
+        "confirm_limit_tax_v1": 6,
+    }
+    return level_map.get(value, 7)
+
+
+def boss_pressure_index(value: str) -> float:
+    if value == "":
+        return 0.0
+    pressure_map = {
+        "red_dampener_v1": 0.35,
+        "yellow_dampener_v1": 0.40,
+        "blue_dampener_v1": 0.40,
+        "black_dampener_v1": 0.40,
+        "row_line_dampener_v1": 0.25,
+        "column_line_dampener_v1": 0.25,
+        "diagonal_line_dampener_v1": 0.25,
+        "face_tile_dampener_v1": 0.35,
+        "face_tile_dampener": 0.35,
+        "all_score_dampener_v1": 0.20,
+        "all_score_dampener": 0.20,
+        "first_confirm_tax_v1": 0.30,
+        "first_confirm_tax": 0.30,
+        "confirm_count_tax_v2": 0.25,
+        "confirm_limit_tax_v1": 0.30,
+        "repeat_rank_pressure_v4": 0.20,
+        "single_rank_pressure": 0.30,
+    }
+    return pressure_map.get(value, 0.0)
+
+
+def is_runtime_boss_modifier(value: str) -> bool:
+    return value in {
+        "red_dampener_v1",
+        "yellow_dampener_v1",
+        "blue_dampener_v1",
+        "black_dampener_v1",
+        "row_line_dampener_v1",
+        "column_line_dampener_v1",
+        "diagonal_line_dampener_v1",
+        "face_tile_dampener_v1",
+        "all_score_dampener_v1",
+        "first_confirm_tax_v1",
+        "confirm_count_tax_v2",
+        "confirm_limit_tax_v1",
+        "repeat_rank_pressure_v4",
+        "single_rank_pressure",
+    }
+
+
+def economy_pressure_index(reward_scale: Any, price_scale: Any) -> float:
+    reward = float(numeric_or_default(reward_scale, 1.0))
+    price = float(numeric_or_default(price_scale, 1.0))
+    if reward <= 0:
+        return price
+    return price / reward
+
 
 
 def metadata_note(feature_mode: str) -> str:

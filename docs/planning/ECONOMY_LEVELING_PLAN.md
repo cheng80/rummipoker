@@ -522,6 +522,33 @@ expanded boss pool confirm-limit r400 raw probe:
 - 먼저 한 축을 움직이고 probe로 확인한다.
 - 실제 수치 변경 전에는 사용자 승인 후 적용한다.
 
+## 5.5 Runtime Station Pool Economy r400
+
+Runtime station boss pool mirror 이후 같은 경제 baseline을 재검증했다.
+
+- command: `dart run tools/sim/run_balance_sim.dart --runs 400 --bot planner_v2 --seed 92040 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --out logs/sim/runtime_station_pool_economy_r400.jsonl --summary-out logs/sim/runtime_station_pool_economy_r400_summary.json`
+- audit: `python3 tools/sim/economy_audit.py --summary logs/sim/runtime_station_pool_economy_r400_summary.json --jsonl logs/sim/runtime_station_pool_economy_r400.jsonl --json-out logs/sim/runtime_station_pool_economy_r400_audit.json`
+
+결과:
+
+| Loadout | none clear | v9 clear | 판단 |
+|---|---:|---:|---|
+| balanced | 48.5% | 48.2% | v9가 none보다 낮아 gate 미통과 |
+| power | 56.8% | 56.8% | v9 개선 없음 |
+
+경제 신호:
+
+- v9 final gold avg는 약 6.23G다.
+- v9 S8 boss 시작 골드 평균은 약 9.48G다.
+- reroll spend는 96,307G, unaffordable event는 7,185회다.
+- audit의 즉시 경고 기준은 넘지 않았지만, 좋은 market 선택 proxy가 none/control보다 clear를 올리지 못해 경제 gate는 닫지 않는다.
+
+다음 경제 작업:
+
+1. 자동 지급, 직접 지급, 특정 슬롯 고정 없이 market availability와 price/role band를 분리해 본다.
+2. S1/S8 병목을 target/boss severity 문제와 market 구매력 문제로 나눠 probe한다.
+3. ML 추천 후보는 이 경제 gate가 다시 열리기 전까지 runtime 적용 후보가 아니라 내부 탐색 신호로만 쓴다.
+
 ## 6. 현재 보류
 
 - v90 boss runtime cycle 장기 sweep은 새 런타임 경제 적용 후 `economy_runtime_v91_long_r800`으로 재개했다. 추가 결론 확정 전에는 후보군 availability와 boss severity를 분리해서 본다.

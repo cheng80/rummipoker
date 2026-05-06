@@ -3,8 +3,8 @@
 ## 최종 결론 요약
 
 - 결론: 현재 모델은 pre-outcome 후보 추천 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다.
-- 핵심 점수: MAE 0.0360, RMSE 0.1014, R2 0.1548.
-- 데이터: 14544 rows, train 10908, test 3636, target `clear_rate`.
+- 핵심 점수: MAE 0.0657, RMSE 0.1392, R2 0.5414.
+- 데이터: 60000 rows, train 45000, test 15000, target `clear_rate`.
 - 사용 가능: 후속 시뮬레이션 후보를 고르는 참고 신호와 feature sanity check.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
 - NotebookLM 상태: 지표가 사용 수준이 아니므로 보고서/인포그래픽 재생성 source로 쓰기 전 단계.
@@ -14,10 +14,10 @@
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0360 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.1014 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.1548 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |
-| Row | 14544 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
+| MAE | 0.0657 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.1392 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.5414 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |
+| Row | 60000 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
@@ -29,34 +29,240 @@
 ## 데이터셋
 
 - feature table: `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv`
-- rows: 14544
-- train rows: 10908
-- test rows: 3636
+- rows: 60000
+- train rows: 45000
+- test rows: 15000
 - target: `clear_rate`
 - feature mode: `preoutcome`
 
 소스 summary:
 
-- `analysis/leveling/data/raw/prototype_stability_submission_r120_summary.json`
-- `analysis/leveling/data/raw/run_modifier_high_stakes_market_pressure_effective_t104_r800_summary.json`
-- `analysis/leveling/data/raw/run_modifier_candidate_fair_t104_r112_r400_summary.json`
-- `analysis/leveling/data/raw/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json`
-- `analysis/leveling/data/raw/station_curve_growth_gate_probe_r120_summary.json`
+- `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- `logs/sim/boss_expansion_probe_v1_r120_summary.json`
+- `logs/sim/boss_expansion_probe_v1_r80_summary.json`
+- `logs/sim/boss_expansion_split_probe_v1_r80_summary.json`
+- `logs/sim/boss_expansion_stage_a_probe_v1_r80_summary.json`
+- `logs/sim/boss_expansion_stage_a_split_probe_v1_r80_summary.json`
+- `logs/sim/candidate_baseline_v1_station_path_r400_summary.json`
+- `logs/sim/confirm_color_position_probe_v1_r80_summary.json`
+- `logs/sim/confirm_color_position_smoke_summary.json`
+- `logs/sim/economy_budget_v1_r20_summary.json`
+- `logs/sim/economy_catalog_audit_v2_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_reward040_price220_v1_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_reward040_price240_v1_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_reward040_v1_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_seed91460_r120_summary.json`
 - `logs/sim/economy_choice_affordable_v1_r120_summary.json`
-- `logs/sim/economy_choice_reward038_price240_v1_r120_summary.json`
-- `logs/sim/economy_choice_reward039_price240_v1_r120_summary.json`
+- `logs/sim/economy_choice_affordable_v1_r20_summary.json`
+- `logs/sim/economy_choice_reward036_price240_v1_r120_summary.json`
 - `logs/sim/economy_choice_reward036_price260_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward038_price240_catalog_flags_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward038_price240_v1_r120_summary.json`
 - `logs/sim/economy_choice_reward038_price260_v1_r120_summary.json`
-- `logs/sim/post_lane_reroll_probe_r120_summary.json`
-- `logs/sim/prototype_stability_submission_r120_summary.json`
-- `logs/sim/prototype_s1_easy_entry_v91_r240_summary.json`
-- `logs/sim/prototype_stability_v91_r120_summary.json`
-- `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
+- `logs/sim/economy_choice_reward039_price240_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward040_price240_v1_r800_summary.json`
+- `logs/sim/economy_combo045_220_v1_r120_summary.json`
+- `logs/sim/economy_combo045_220_v1_r20_summary.json`
+- `logs/sim/economy_gated_v1_r20_summary.json`
+- `logs/sim/economy_jester_hook_price_r120_summary.json`
+- `logs/sim/economy_jester_hook_price_r400_summary.json`
+- `logs/sim/economy_price294_v1_r20_summary.json`
+- `logs/sim/economy_price_band_soft_v1_r20_summary.json`
+- `logs/sim/economy_price_band_v1_r20_summary.json`
+- `logs/sim/economy_probe_v1_r20_summary.json`
+- `logs/sim/economy_reward034_v1_r120_summary.json`
+- `logs/sim/economy_reward034_v1_r20_summary.json`
+- `logs/sim/economy_runtime_v91_long_r800_summary.json`
+- `logs/sim/economy_runtime_v91_market_probe_r120_summary.json`
+- `logs/sim/economy_runtime_v91_market_probe_raw_r120_summary.json`
+- `logs/sim/economy_runtime_v91_market_v11_raw_r120_summary.json`
+- `logs/sim/economy_runtime_v91_preflight_r1_summary.json`
+- `logs/sim/economy_spend_cli_smoke_summary.json`
+- `logs/sim/economy_spend_combo040_240_v1_r120_summary.json`
+- `logs/sim/economy_spend_combo045_220_v1_r120_summary.json`
+- `logs/sim/economy_spend_reward034_v1_r120_summary.json`
+- `logs/sim/economy_spend_v1_r20_summary.json`
+- `logs/sim/economy_trace_v1_r20_summary.json`
+- `logs/sim/hand_discard_position_probe_v1_r80_summary.json`
+- `logs/sim/hand_discard_position_smoke_summary.json`
+- `logs/sim/late_offer_exposure_v86_r200_summary.json`
 - `logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json`
 - `logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json`
-- `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
+- `logs/sim/ml_expanded_boss_economy_r038_p240_v1_r120_summary.json`
+- `logs/sim/ml_expanded_boss_economy_r040_p240_v1_r120_summary.json`
+- `logs/sim/ml_preoutcome_candidate_v1_r120_summary.json`
+- `logs/sim/ml_sweep_banded_market_v37_r400_summary.json`
+- `logs/sim/ml_sweep_banded_market_v38_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_banded_market_v38b_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_base_curve_v2_constraints_v21_r400_summary.json`
+- `logs/sim/ml_sweep_base_score_curve_v2_final_r400_summary.json`
+- `logs/sim/ml_sweep_base_score_curve_v2_probe_r150_summary.json`
+- `logs/sim/ml_sweep_base_v2_constraint_v4_candidate_pool_v22_r400_summary.json`
+- `logs/sim/ml_sweep_board_relief_probe_v77_r200_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_full_curve_v13_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_v13_raw_probe_s6_s7_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_v13_raw_probe_s7_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_v13_raw_probe_summary.json`
+- `logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.json`
+- `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_summary.json`
+- `logs/sim/ml_sweep_boss_runtime_v91_confirm_tax_parity_r800_summary.json`
+- `logs/sim/ml_sweep_candidate_baseline_v1_full_r400_summary.json`
+- `logs/sim/ml_sweep_early_curve_v33_r400_summary.json`
+- `logs/sim/ml_sweep_early_mid_gate_v65_r800_summary.json`
+- `logs/sim/ml_sweep_early_s2_bridge_v34_r400_summary.json`
+- `logs/sim/ml_sweep_experiment_v4_summary.json`
+- `logs/sim/ml_sweep_face_boss_v89_smoke_r120_summary.json`
+- `logs/sim/ml_sweep_final_regression_v70_pressure_r800_summary.json`
+- `logs/sim/ml_sweep_final_regression_v70_relaxed_r800_summary.json`
+- `logs/sim/ml_sweep_final_regression_v70_standard_r800_summary.json`
+- `logs/sim/ml_sweep_full_safe_candidate_pool_v12_summary.json`
+- `logs/sim/ml_sweep_integrated_runtime_transition_v63_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v56_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v57_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v58_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v59_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v60_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v61_s8_r1600_summary.json`
+- `logs/sim/ml_sweep_late_boss_v64_r800_summary.json`
+- `logs/sim/ml_sweep_market_availability_v66_r800_summary.json`
+- `logs/sim/ml_sweep_market_availability_v67_r800_summary.json`
+- `logs/sim/ml_sweep_market_exposure_v72_smoke_r200_summary.json`
+- `logs/sim/ml_sweep_market_exposure_v73_confirm_r800_summary.json`
+- `logs/sim/ml_sweep_market_exposure_v75_smoke_r200_summary.json`
+- `logs/sim/ml_sweep_market_guard_v50_r400_summary.json`
+- `logs/sim/ml_sweep_market_guard_v51_r400_summary.json`
+- `logs/sim/ml_sweep_market_guard_v52_r800_summary.json`
+- `logs/sim/ml_sweep_market_price_probe_v79_r120_experiment_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_summary.json`
+- `logs/sim/ml_sweep_market_price_probe_v79_r120_summary.json`
+- `logs/sim/ml_sweep_market_tempo_v45_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_market_tempo_v46_r400_summary.json`
+- `logs/sim/ml_sweep_market_tempo_v46_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_market_v12_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_market_v13_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_market_v9_v11_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_mid_growth_spacing_v29_r400_summary.json`
+- `logs/sim/ml_sweep_ordered_boss_v55_r800_summary.json`
+- `logs/sim/ml_sweep_ordered_boss_v55_s8_r800_summary.json`
+- `logs/sim/ml_sweep_pack_size_v10_summary.json`
+- `logs/sim/ml_sweep_path_survival_role_pools_v25_r400_summary.json`
+- `logs/sim/ml_sweep_probabilistic_candidates_v11_summary.json`
+- `logs/sim/ml_sweep_progression_routes_v26_r400_summary.json`
+- `logs/sim/ml_sweep_random_market_v9_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_isolated_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_probe_v1_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_probe_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_soft_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rare_xmult_v7_summary.json`
+- `logs/sim/ml_sweep_role_candidate_pools_v24_r400_summary.json`
+- `logs/sim/ml_sweep_runtime_table_v71_smoke_r200_summary.json`
+- `logs/sim/ml_sweep_s1_boss_axis_v80_r400_summary.json`
+- `logs/sim/ml_sweep_s1_curve_v35_r400_summary.json`
+- `logs/sim/ml_sweep_s1_onboarding_progression_v27_r400_summary.json`
+- `logs/sim/ml_sweep_s1_red_runtime_probe_v81_r400_summary.json`
+- `logs/sim/ml_sweep_s1_red_soft060_v82_r400_summary.json`
+- `logs/sim/ml_sweep_s1_soft_market_roles_v30_r400_summary.json`
+- `logs/sim/ml_sweep_s4_constraint_v17_r400_summary.json`
+- `logs/sim/ml_sweep_s4_constraint_v17b_r400_summary.json`
+- `logs/sim/ml_sweep_s4_constraint_v18_r400_summary.json`
+- `logs/sim/ml_sweep_s5_sustain_v5_summary.json`
+- `logs/sim/ml_sweep_sequence_metric_v47_r400_summary.json`
+- `logs/sim/ml_sweep_sequence_metric_v47_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shape_floor_v87_runtime_parity_r120_summary.json`
+- `logs/sim/ml_sweep_shape_floor_v87_smoke_r120_summary.json`
+- `logs/sim/ml_sweep_shape_floor_v88_runtime_parity_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v39_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v39_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v39b_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v40_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v40_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v41_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v41_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v42_r400_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v42_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v43_r400_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v43_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v44_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_state_weighted_market_v32_r400_summary.json`
+- `logs/sim/ml_sweep_state_weighted_market_v32b_r400_summary.json`
+- `logs/sim/ml_sweep_static_vs_progression_guard_v28_r400_summary.json`
+- `logs/sim/ml_sweep_station_weighted_market_v31_r400_summary.json`
+- `logs/sim/ml_sweep_target_curve_v48_r400_summary.json`
+- `logs/sim/ml_sweep_target_curve_v49_r800_summary.json`
+- `logs/sim/ml_sweep_target_v3_summary.json`
+- `logs/sim/ml_sweep_target_v4_constraints_full_safe_r400_summary.json`
+- `logs/sim/ml_sweep_target_v5_constraint_v2_r400_summary.json`
+- `logs/sim/ml_sweep_target_v6_s5_r400_summary.json`
+- `logs/sim/ml_sweep_three_band_curve_v36_r400_summary.json`
+- `logs/sim/ml_sweep_tile_pack_v8_summary.json`
+- `logs/sim/ml_sweep_train_v1_summary.json`
+- `logs/sim/ml_sweep_train_v2_summary.json`
+- `logs/sim/ml_sweep_v72_exposure_smoke_v84_r120_summary.json`
+- `logs/sim/ml_sweep_virtual_enhance_v6_summary.json`
+- `logs/sim/planner_v2_8station_curve_100_summary.json`
+- `logs/sim/planner_v2_baseline_summary.json`
+- `logs/sim/planner_v2_boss_diversity_summary.json`
+- `logs/sim/planner_v2_early_boss_bridge_200_summary.json`
+- `logs/sim/planner_v2_early_onboarding_joker_200_summary.json`
+- `logs/sim/planner_v2_early_run_bridge_200_summary.json`
+- `logs/sim/planner_v2_early_run_bridge_v2_200_summary.json`
+- `logs/sim/planner_v2_full_progression_loadouts_100_summary.json`
+- `logs/sim/planner_v2_ml_label_v1_preview_100_summary.json`
+- `logs/sim/planner_v2_progression_loadouts_100_summary.json`
+- `logs/sim/planner_v2_s1_boss_soften_summary.json`
+- `logs/sim/planner_v2_s1_safety_resource_probe_300_summary.json`
+- `logs/sim/planner_v2_s1_safety_sequence_200_summary.json`
+- `logs/sim/planner_v2_s2_boss_experiment_100_summary.json`
+- `logs/sim/planner_v2_s2_boss_target_sweep_100_summary.json`
+- `logs/sim/planner_v2_sequence_market_minimal_200_summary.json`
+- `logs/sim/planner_v2_sequence_onboarding_200_summary.json`
 - `logs/sim/post_lane_reroll_economy_current_boss_r400_summary.json`
 - `logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json`
+- `logs/sim/post_lane_reroll_probe_r120_summary.json`
+- `logs/sim/post_lane_reroll_probe_raw_r120_summary.json`
+- `logs/sim/prototype_s1_easy_entry_v91_r240_summary.json`
+- `logs/sim/prototype_s1_probe_v91_r240_summary.json`
+- `logs/sim/prototype_s1_red035_v91_r240_summary.json`
+- `logs/sim/prototype_s1_softened_v91_r240_summary.json`
+- `logs/sim/prototype_stability_submission_r120_summary.json`
+- `logs/sim/prototype_stability_v91_r120_summary.json`
+- `logs/sim/prototype_stability_v91_s1_easy_r120_summary.json`
+- `logs/sim/rank_runtime_position_probe_v1_r80_summary.json`
+- `logs/sim/rank_runtime_position_smoke_summary.json`
+- `logs/sim/run_modifier_basic_direct_r400_summary.json`
+- `logs/sim/run_modifier_basic_economy_probe_r120_summary.json`
+- `logs/sim/run_modifier_basic_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t102_r112_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t102_r112_r400_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t104_r112_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t104_r112_r400_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t106_r116_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t108_r112_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t108_r120_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t104_r112_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t106_r116_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t108_r112_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t108_r120_probe_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_direct_r400_summary.json`
+- `logs/sim/run_modifier_high_stakes_economy_probe_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_direct_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_direct_r400_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t102_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r1_preflight_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r400_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r800_summary.json`
+- `logs/sim/run_modifier_high_stakes_probe_r120_summary.json`
+- `logs/sim/run_modifier_pressure_market_probe_t104_r112_r120_summary.json`
+- `logs/sim/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json`
+- `logs/sim/run_modifier_pressure_market_probe_t108_r112_v9_v10_r120_summary.json`
+- `logs/sim/runtime_boss_seed_pool_smoke_summary.json`
+- `logs/sim/runtime_station_pool_economy_r400_summary.json`
+- `logs/sim/runtime_station_pool_leveling_r400_summary.json`
+- `logs/sim/runtime_station_pool_leveling_r80_summary.json`
+- `logs/sim/runtime_station_pool_profile_smoke_summary.json`
+- `logs/sim/s8_boss_axis_v85_r400_summary.json`
+- `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
 
 ## 피처와 타깃 정의
 
@@ -68,6 +274,10 @@ Pre-outcome numeric features:
 
 - `station`
 - `tier_index`
+- `station_band_index`
+- `is_boss_tier`
+- `is_late_station`
+- `is_final_station`
 - `difficulty_multiplier`
 - `target_multiplier`
 - `small_target_multiplier`
@@ -83,6 +293,10 @@ Pre-outcome numeric features:
 - `market_profile_version`
 - `has_boss_constraint`
 - `boss_family_index`
+- `boss_level_index`
+- `boss_pressure_index`
+- `is_runtime_boss_modifier`
+- `economy_pressure_index`
 
 Pre-outcome categorical features:
 
@@ -117,7 +331,8 @@ Pre-outcome categorical features:
 
 ## 모델
 
-모델 종류: `RandomForestRegressor`.
+모델 전략: `auto`.
+선택된 모델: `ExtraTreesRegressor`.
 
 선택 이유:
 
@@ -127,30 +342,30 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.0360
-- RMSE: 0.1014
-- R2: 0.1548
+- MAE: 0.0657
+- RMSE: 0.1392
+- R2: 0.5414
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.1014` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.1392` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `loadout_id_baseline__shop_slot_market_v9` | 0.2004 |
-| `station` | 0.1082 |
-| `boss_family_index` | 0.0706 |
-| `sweep_reward_scale` | 0.0507 |
-| `loadout_id_baseline` | 0.0326 |
-| `resolved_market_profile_s1_candidate_uncommon_build_jester` | 0.0272 |
-| `sweep_price_scale` | 0.0267 |
-| `resolved_market_profile_s1_candidate_tarot_build_pack` | 0.0244 |
-| `sim_boss_constraint_id_target_spike_wall` | 0.0238 |
-| `resolved_market_profile_s1_candidate_planet_rank_level` | 0.0236 |
+| `station` | 0.0753 |
+| `station_band_index` | 0.0503 |
+| `resolved_market_profile_nan` | 0.0471 |
+| `is_late_station` | 0.0463 |
+| `market_profile_nan` | 0.0448 |
+| `loadout_id_baseline` | 0.0390 |
+| `is_boss_tier` | 0.0288 |
+| `tier_index` | 0.0277 |
+| `blind_tier_boss` | 0.0248 |
+| `blind_tier_small` | 0.0239 |
 
 ## 산출물
 

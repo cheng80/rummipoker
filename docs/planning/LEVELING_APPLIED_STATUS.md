@@ -575,6 +575,28 @@ Market availability under pressure probe:
   - growth route result: `balanced + v9` path clear 55.0%, `power + v9` 64.2%다. 도달 전투 실패율은 `balanced + v9` 기준 S4 4.2%, S5 3.0%, S8 6.0%이고, `power + v9` 기준 S7 2.8%, S8 4.3%다.
   - curve issue: 현재 숨은 문제는 S1만이 아니라, 성장 route에서 S4~S8 특히 S7/S8의 실패율이 고난도 후반으로 보기엔 낮은 점이다. 다음 조정은 S1 입구를 과하게 어렵게 두지 않으면서, S4~S8 target/boss severity/market pressure를 단계적으로 올리는 방향으로 잡는다.
 
+## Runtime Station Pool Follow-up
+
+Status: 레벨링 r400 확인 완료, 경제 gate는 미통과.
+
+- runtime station pool leveling r80: balanced none 50.0%, balanced v9 51.2%, power none 61.2%, power v9 63.7%.
+- runtime station pool leveling r400: balanced none 48.0%, balanced v9 67.2%, power none 54.0%, power v9 66.0%.
+- r400 병목은 S8/S1/S3/S4에 남아 있어 후반 압박은 유지된다.
+- runtime station pool economy r400: balanced none 48.5%, balanced v9 48.2%, power none 56.8%, power v9 56.8%.
+- economy audit 기준 v9 final gold avg는 약 6.23G, v9 S8 boss 시작 골드 평균은 약 9.48G, reroll spend는 96,307G, unaffordable event는 7,185회다.
+- 즉시 경제 경고는 없지만, market v9가 none보다 clear를 올리지 못해 `reward 0.40 / price 2.2 / catalog_normalized_v1`의 runtime station pool 경제 gate는 닫지 않는다.
+- 다음 레벨링 작업은 자동 지급/특정 슬롯 고정 없이 market availability, boss severity placement, price role band를 분리해 본다.
+
+## Latest ML Scaffold Status
+
+Status: sequence/path 모델은 크게 개선, station/tier 모델은 실무 추천 gate 미달.
+
+- preoutcome feature table: 237,507 source rows, station/tier 학습은 비용 제한으로 60,000 rows sampling.
+- station/tier model: ExtraTreesRegressor, MAE 0.0657(최선 0.0000), RMSE 0.1392(최선 0.0000), R2 0.5414(이상값 1.0000).
+- sequence/path model: RandomForestRegressor, 2,938 rows, MAE 0.0483(최선 0.0000), RMSE 0.0866(최선 0.0000), R2 0.9178(이상값 1.0000).
+- 새 feature는 station band, boss level/pressure, runtime boss 여부, economy pressure를 포함한다.
+- path-level triage 신호는 유망하지만, station/tier 모델과 economy gate가 함께 부족하므로 추천 후보를 runtime에 자동 적용하지 않는다.
+
 ## 6. Read Order
 
 레벨링 작업 재개 시 순서:

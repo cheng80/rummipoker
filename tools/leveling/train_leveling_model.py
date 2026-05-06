@@ -43,6 +43,10 @@ CATEGORICAL_FEATURES = [
 PREOUTCOME_NUMERIC_FEATURES = [
     "station",
     "tier_index",
+    "station_band_index",
+    "is_boss_tier",
+    "is_late_station",
+    "is_final_station",
     "difficulty_multiplier",
     "target_multiplier",
     "small_target_multiplier",
@@ -58,6 +62,10 @@ PREOUTCOME_NUMERIC_FEATURES = [
     "market_profile_version",
     "has_boss_constraint",
     "boss_family_index",
+    "boss_level_index",
+    "boss_pressure_index",
+    "is_runtime_boss_modifier",
+    "economy_pressure_index",
 ]
 
 PREOUTCOME_CATEGORICAL_FEATURES = [
@@ -93,14 +101,26 @@ def main() -> int:
     parser.add_argument("--model-dir", default=DEFAULT_MODEL_DIR, help="모델 산출물 폴더")
     parser.add_argument("--test-size", type=float, default=0.25)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--model-strategy",
+        choices=["baseline", "auto"],
+        default="auto",
+        help="baseline은 기존 RandomForest 단일 모델, auto는 여러 tree 모델/하이퍼파라미터를 비교합니다.",
+    )
+    parser.add_argument(
+        "--max-rows",
+        type=int,
+        default=60000,
+        help="학습 비용 상한을 위해 사용할 최대 row 수. 0 이하면 전체 row를 사용합니다.",
+    )
     args = parser.parse_args()
 
     try:
         import pandas as pd
         from sklearn.compose import ColumnTransformer
-        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
         from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-        from sklearn.model_selection import train_test_split
+        from sklearn.model_selection import GridSearchCV, KFold, train_test_split
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import OneHotEncoder
     except ImportError as error:
@@ -119,6 +139,9 @@ def main() -> int:
         raise SystemExit(f"target 컬럼이 없습니다: {args.target}")
     if len(df) < 8:
         raise SystemExit("학습에는 최소 8개 이상의 group row가 필요합니다.")
+    original_row_count = read_feature_source_row_count(feature_path) or len(df)
+    if args.max_rows > 0 and len(df) > args.max_rows:
+        df = df.sample(n=args.max_rows, random_state=args.seed).reset_index(drop=True)
 
     if args.feature_mode == "preoutcome_sequence":
         all_numeric_features = [
@@ -161,33 +184,35 @@ def main() -> int:
         random_state=args.seed,
     )
 
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", "passthrough", numeric_features),
-            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
-        ],
-    )
-    model = RandomForestRegressor(
-        n_estimators=200,
-        min_samples_leaf=2,
-        random_state=args.seed,
-    )
-    pipeline = Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("model", model),
-        ],
+    pipeline, model_selection = build_pipeline(
+        numeric_features=numeric_features,
+        categorical_features=categorical_features,
+        strategy=args.model_strategy,
+        seed=args.seed,
+        row_count=len(df),
+        random_forest_cls=RandomForestRegressor,
+        extra_trees_cls=ExtraTreesRegressor,
+        grid_search_cls=GridSearchCV,
+        kfold_cls=KFold,
     )
     pipeline.fit(x_train, y_train)
+    if hasattr(pipeline, "best_params_"):
+        model_selection["best_params"] = serializable_best_params(pipeline.best_params_)
+        model_selection["best_cv_score"] = float(pipeline.best_score_)
+        best_model = pipeline.best_estimator_.named_steps["model"]
+        model_selection["selected_model"] = type(best_model).__name__
     predictions = pipeline.predict(x_test)
     mse = mean_squared_error(y_test, predictions)
 
     metrics = {
         "row_count": int(len(df)),
+        "source_row_count": int(original_row_count),
         "train_count": int(len(x_train)),
         "test_count": int(len(x_test)),
         "target": args.target,
         "feature_mode": args.feature_mode,
+        "model_strategy": args.model_strategy,
+        "model_selection": model_selection,
         "mae": float(mean_absolute_error(y_test, predictions)),
         "rmse": float(mse ** 0.5),
         "r2": float(r2_score(y_test, predictions)) if len(y_test) > 1 else 0.0,
@@ -224,12 +249,118 @@ def main() -> int:
     return 0
 
 
+def build_pipeline(
+    *,
+    numeric_features: list[str],
+    categorical_features: list[str],
+    strategy: str,
+    seed: int,
+    row_count: int,
+    random_forest_cls: Any,
+    extra_trees_cls: Any,
+    grid_search_cls: Any,
+    kfold_cls: Any,
+) -> tuple[Any, dict[str, Any]]:
+    from sklearn.compose import ColumnTransformer
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import OneHotEncoder
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", "passthrough", numeric_features),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+        ],
+    )
+    baseline_model = random_forest_cls(
+        n_estimators=300,
+        min_samples_leaf=2,
+        random_state=seed,
+    )
+    baseline_pipeline = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("model", baseline_model),
+        ],
+    )
+    if strategy == "baseline" or row_count < 40:
+        return baseline_pipeline, {
+            "strategy": "baseline",
+            "selected_model": "RandomForestRegressor",
+            "note": "row_count가 작거나 baseline 전략을 선택해 단일 모델을 사용했습니다.",
+        }
+
+    candidate_pipeline = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("model", baseline_model),
+        ],
+    )
+    n_estimators = [240] if row_count > 50000 else [300, 600]
+    min_samples_leaf = [2, 4] if row_count > 50000 else [1, 2, 4]
+    max_features = ["sqrt"] if row_count > 50000 else ["sqrt", 1.0]
+    param_grid = [
+        {
+            "model": [random_forest_cls(random_state=seed)],
+            "model__n_estimators": n_estimators,
+            "model__min_samples_leaf": min_samples_leaf,
+            "model__max_features": max_features,
+        },
+        {
+            "model": [extra_trees_cls(random_state=seed)],
+            "model__n_estimators": n_estimators,
+            "model__min_samples_leaf": min_samples_leaf,
+            "model__max_features": max_features,
+        },
+    ]
+    cv_splits = min(5, max(3, row_count // 200))
+    search = grid_search_cls(
+        estimator=candidate_pipeline,
+        param_grid=param_grid,
+        scoring="neg_root_mean_squared_error",
+        cv=kfold_cls(n_splits=cv_splits, shuffle=True, random_state=seed),
+        n_jobs=2,
+    )
+    return search, {
+        "strategy": "auto",
+        "cv_splits": cv_splits,
+        "scoring": "neg_root_mean_squared_error",
+        "candidate_models": ["RandomForestRegressor", "ExtraTreesRegressor"],
+    }
+
+
+def selected_model_name(metrics: dict[str, Any]) -> str:
+    selection = metrics.get("model_selection")
+    if not isinstance(selection, dict):
+        return "RandomForestRegressor"
+    selected = selection.get("selected_model")
+    if isinstance(selected, str):
+        return selected
+    best_params = selection.get("best_params")
+    if isinstance(best_params, dict):
+        model = best_params.get("model")
+        if model is not None:
+            return type(model).__name__
+    return "auto-selected tree regressor"
+
+
+def serializable_best_params(params: dict[str, Any]) -> dict[str, Any]:
+    sanitized: dict[str, Any] = {}
+    for key, value in params.items():
+        if key == "model":
+            sanitized[key] = type(value).__name__
+        else:
+            sanitized[key] = value
+    return sanitized
+
+
 def write_feature_importance(
     pipeline: Any,
     numeric_features: list[str],
     categorical_features: list[str],
     out_path: Path,
 ) -> None:
+    if hasattr(pipeline, "best_estimator_"):
+        pipeline = pipeline.best_estimator_
     preprocessor = pipeline.named_steps["preprocessor"]
     model = pipeline.named_steps["model"]
     names: list[str] = []
@@ -269,7 +400,7 @@ def build_report(
             for feature, importance in top_importances
         ],
     ]
-    if feature_mode == "preoutcome":
+    if feature_mode in {"preoutcome", "preoutcome_sequence"}:
         return build_preoutcome_report(
             feature_path=feature_path,
             metrics=metrics,
@@ -342,7 +473,8 @@ def build_report(
             "",
             "## 모델",
             "",
-            "모델 종류: `RandomForestRegressor`.",
+            f"모델 전략: `{metrics.get('model_strategy', 'baseline')}`.",
+            f"선택된 모델: `{selected_model_name(metrics)}`.",
             "",
             "선택 이유:",
             "",
@@ -434,9 +566,27 @@ def build_preoutcome_report(
     numeric_features: list[str],
     categorical_features: list[str],
 ) -> str:
+    is_sequence = metrics.get("feature_mode") == "preoutcome_sequence"
+    title = (
+        "# 레벨링 Pre-Outcome Sequence 전환 스캐폴드 리포트"
+        if is_sequence
+        else "# 레벨링 Pre-Outcome 전환 스캐폴드 리포트"
+    )
+    scope_subject = (
+        "S1~S8 path 실행 전에 알 수 있는 조건만 feature로 사용해 "
+        f"`{metrics['target']}`를 예측한다."
+        if is_sequence
+        else "시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 "
+        f"`{metrics['target']}`를 예측한다."
+    )
+    r2_judgment = (
+        "path triage 신호로 유망하나 단독 gate로는 부족"
+        if is_sequence and metrics["r2"] >= 0.9
+        else "실무 추천 기준에는 부족"
+    )
     return "\n".join(
         [
-            "# 레벨링 Pre-Outcome 전환 스캐폴드 리포트",
+            title,
             "",
             "## 최종 결론 요약",
             "",
@@ -454,13 +604,13 @@ def build_preoutcome_report(
             "|---|---:|---:|---|---|",
             f"| MAE | {metrics['mae']:.4f} | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |",
             f"| RMSE | {metrics['rmse']:.4f} | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |",
-            f"| R2 | {metrics['r2']:.4f} | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |",
+            f"| R2 | {metrics['r2']:.4f} | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | {r2_judgment} |",
             f"| Row | {metrics['row_count']} | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |",
             "",
             "## 범위",
             "",
             "이 리포트는 계획된 ML transition scaffold다.",
-            "기존 outcome-derived summary feature를 제거하고, 시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 `clear_rate`를 예측한다.",
+            f"기존 outcome-derived summary feature를 제거하고, {scope_subject}",
             "모델은 후보 추천 루프를 설계하기 위한 오프라인 분석 도구이며, production ML이 아니고 런타임 target, boss, market, economy 값을 자동 변경하지 않는다.",
             "이 산출물만으로 실제 ML 이행 완료를 주장하지 않는다. 후보 재시뮬레이션과 사람 승인 보고서가 별도로 필요하다.",
             "",
@@ -508,7 +658,8 @@ def build_preoutcome_report(
             "",
             "## 모델",
             "",
-            "모델 종류: `RandomForestRegressor`.",
+            f"모델 전략: `{metrics.get('model_strategy', 'baseline')}`.",
+            f"선택된 모델: `{selected_model_name(metrics)}`.",
             "",
             "선택 이유:",
             "",
@@ -571,17 +722,30 @@ def read_top_importances(path: Path, *, limit: int) -> list[tuple[str, float]]:
 
 
 def read_feature_source_paths(feature_path: Path) -> list[str]:
-    metadata_path = feature_path.with_suffix(".metadata.json")
-    if not metadata_path.exists():
-        return []
-    try:
-        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return []
+    metadata = read_feature_metadata(feature_path)
     source_paths = metadata.get("source_paths")
     if not isinstance(source_paths, list):
         return []
     return [str(path) for path in source_paths]
+
+
+def read_feature_source_row_count(feature_path: Path) -> int | None:
+    metadata = read_feature_metadata(feature_path)
+    value = metadata.get("source_row_count")
+    if isinstance(value, int):
+        return value
+    return None
+
+
+def read_feature_metadata(feature_path: Path) -> dict[str, Any]:
+    metadata_path = feature_path.with_suffix(".metadata.json")
+    if not metadata_path.exists():
+        return {}
+    try:
+        value = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return value if isinstance(value, dict) else {}
 
 
 if __name__ == "__main__":

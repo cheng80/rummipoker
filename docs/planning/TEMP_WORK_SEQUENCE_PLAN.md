@@ -118,7 +118,7 @@ Status: Done for first pass / station pool applied / revalidation pending
 
 ## 4. 확장 Boss Pool 기준 레벨링 재검증
 
-Status: Done for expanded profile probe
+Status: Done for runtime station pool r400
 
 목표:
 
@@ -133,12 +133,19 @@ Status: Done for expanded profile probe
 - [x] S7~S8은 후반 압박과 실패 비중이 남는지
 - [x] board locked / draw exhausted / boss bottleneck 변화
 
-현재 결과:
+이전 결과:
 
 - `confirm_limit_tax_v1` 확장 profile 기준 r400 leveling probe 완료.
 - balanced none 50.7%, balanced v9 68.8%, power none 63.5%, power v9 69.0%.
 - S1/S8 boss 병목과 board/draw stop이 남아 있어 확장 profile이 압박을 지우지는 않는다.
-- 다음 순서인 확장 boss pool + lane reroll split 기준 경제 재검증으로 진행한다.
+
+현재 runtime station pool 결과:
+
+- profile: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1`
+- r80 smoke: balanced none 50.0%, balanced v9 51.2%, power none 61.2%, power v9 63.7%.
+- r400 leveling: balanced none 48.0%, balanced v9 67.2%, power none 54.0%, power v9 66.0%.
+- S8 boss, S1 boss, S3/S4 boss 병목이 남아 있어 boss 압박은 사라지지 않았다.
+- v9가 none보다 낮아지는 레벨링 역전은 없다.
 
 실행 기준:
 
@@ -148,7 +155,7 @@ Status: Done for expanded profile probe
 
 ## 5. 확장 Boss Pool + Lane Reroll Split 기준 경제 재검증
 
-Status: Done for expanded profile probe / not fully closed
+Status: Runtime station pool economy r400 done / not closed
 
 목표:
 
@@ -178,9 +185,18 @@ Status: Done for expanded profile probe / not fully closed
 - 즉시 경고는 없지만 power v9 미세 역전이 남아 있고, seed 기반 runtime pool 적용 후 재검증 전이므로 최종 경제 gate 완료가 아니라 “expanded profile 기준 즉시 경고 없음 / not fully closed”로 둔다.
 - 이 결과는 실제 ML 이행 재개 입력으로 사용한다.
 
+runtime station pool 경제 결과:
+
+- command output: `logs/sim/runtime_station_pool_economy_r400_summary.json`
+- audit: `logs/sim/runtime_station_pool_economy_r400_audit.json`
+- balanced none 48.5%, balanced v9 48.2%, power none 56.8%, power v9 56.8%.
+- v9 final gold avg 6.23G, v9 S8 boss 시작 골드 9.48G, reroll spend 96,307G, unaffordable event 7,185회.
+- 경제 trace를 적용하면 `shop_slot_market_v9`가 clear를 올리지 못하므로, runtime station pool 기준 경제 gate는 not closed다.
+- 자동 지급/슬롯 고정으로 풀지 않는다. 다음 후보는 market availability, board/move/discard 후보 접근성, boss severity 위치를 분리해 본다.
+
 ## 6. 실제 ML 이행 재개
 
-Status: In progress / model quality not sufficient for gate closure
+Status: In progress / sequence model improved / station model not sufficient
 
 재개 조건:
 
@@ -201,17 +217,22 @@ ML 재개 시 필수 작업:
 - [x] 추천 후보를 fresh resimulation으로 검증한다.
 - [x] 사람 승인용 MD 분석 보고서를 갱신한다.
 - [x] 사람 승인 전 runtime target/boss/market/economy 값은 바꾸지 않는다.
-- [ ] 회귀 모델 지표를 MAE/RMSE/R2 기준으로 다시 산출한다.
+- [x] 회귀 모델 지표를 MAE/RMSE/R2 기준으로 다시 산출한다.
 - [ ] 실무 추천 기준에 충분한 모델 품질과 데이터 수를 확보한다.
 
 현재 결과:
 
-- station/tier pre-outcome table 14,544 rows, MAE 0.0360, RMSE 0.1014, R2 0.1548.
-- sequence/path pre-outcome table 92 rows, MAE 0.0651, RMSE 0.1246, R2 0.4202.
+- 이전 station/tier pre-outcome table 14,544 rows, MAE 0.0360, RMSE 0.1014, R2 0.1548.
+- 이전 sequence/path pre-outcome table 92 rows, MAE 0.0651, RMSE 0.1246, R2 0.4202.
+- 최신 station/tier pre-outcome table은 전체 source 237,507 rows 중 60,000 sampled train set을 사용한다. MAE 0.0657, RMSE 0.1392, R2 0.5414이며 이전보다 R2는 개선됐지만 실무 추천 gate에는 부족하다.
+- 최신 sequence/path pre-outcome table은 2,938 rows 전체를 사용한다. MAE 0.0483, RMSE 0.0866, R2 0.9178이며 후보 triage에는 접근했지만 경제 gate가 not closed이고 station/tier 모델이 부족해 ML 마감은 아니다.
+- feature 추가: station band, boss tier/final station flag, runtime boss family/level/pressure, economy pressure index.
+- 모델 개선: RandomForest/ExtraTrees 후보와 하이퍼파라미터 grid를 비교하는 `auto` 전략을 추가했다. 큰 데이터는 `--max-rows`와 `n_jobs=2`로 비용을 제한한다.
 - 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 runtime 적용 보류.
 - 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
 - production ML/자동 적용은 여전히 아님.
-- 현재 모델 지표는 실무 추천 기준에 한참 부족하므로 ML 마감이나 recommendation gate 완료로 보지 않는다.
+- 최신 sequence/path 지표는 크게 개선됐지만 station/tier 지표와 경제 gate가 부족하므로 ML 마감이나 recommendation gate 완료로 보지 않는다.
+- 실무 적용 가능 수준 목표: path-level R2 0.90+ 유지, station/tier R2 추가 개선, fresh resimulation에서 v9 >= none 및 S1/S8 병목 보존을 동시에 만족해야 한다.
 - NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 현재 리포트는 내부 판단 source로만 둔다.
 
 완료로 인정하지 않는 것:

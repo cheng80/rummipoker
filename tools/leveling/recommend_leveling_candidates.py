@@ -18,6 +18,10 @@ DEFAULT_REPORT = "analysis/leveling/reports/preoutcome_candidate_recommendation_
 NUMERIC_FEATURES = [
     "station",
     "tier_index",
+    "station_band_index",
+    "is_boss_tier",
+    "is_late_station",
+    "is_final_station",
     "difficulty_multiplier",
     "target_multiplier",
     "small_target_multiplier",
@@ -33,6 +37,10 @@ NUMERIC_FEATURES = [
     "market_profile_version",
     "has_boss_constraint",
     "boss_family_index",
+    "boss_level_index",
+    "boss_pressure_index",
+    "is_runtime_boss_modifier",
+    "economy_pressure_index",
 ]
 
 CATEGORICAL_FEATURES = [
@@ -266,6 +274,10 @@ def rows_for_candidate(candidate: Candidate) -> list[dict[str, Any]]:
                             "sim_boss_constraint_id": "",
                             "station": station,
                             "tier_index": tier_index,
+                            "station_band_index": station_band_index(station),
+                            "is_boss_tier": int(tier == "boss"),
+                            "is_late_station": int(station >= 6),
+                            "is_final_station": int(station >= 8),
                             "difficulty_multiplier": 1.0,
                             "target_multiplier": candidate.target_multiplier,
                             "small_target_multiplier": candidate.small_target_multiplier,
@@ -281,6 +293,13 @@ def rows_for_candidate(candidate: Candidate) -> list[dict[str, Any]]:
                             "market_profile_version": 9 if market == "shop_slot_market_v9" else 0,
                             "has_boss_constraint": 0,
                             "boss_family_index": -1,
+                            "boss_level_index": -1,
+                            "boss_pressure_index": 0.0,
+                            "is_runtime_boss_modifier": 0,
+                            "economy_pressure_index": economy_pressure_index(
+                                candidate.sweep_reward_scale,
+                                candidate.sweep_price_scale,
+                            ),
                             "sim_economy_mode": candidate.sim_economy_mode,
                             "sim_market_budget_mode": candidate.sim_market_budget_mode,
                             "sim_market_spend_mode": candidate.sim_market_spend_mode,
@@ -357,6 +376,22 @@ def average(values: list[float]) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
+
+
+def station_band_index(station: int) -> int:
+    if station <= 2:
+        return 0
+    if station <= 5:
+        return 1
+    if station <= 7:
+        return 2
+    return 3
+
+
+def economy_pressure_index(reward_scale: float, price_scale: float) -> float:
+    if reward_scale <= 0:
+        return price_scale
+    return price_scale / reward_scale
 
 
 def build_report(*, feature_path: Path, out_path: Path, rows: list[dict[str, Any]]) -> str:

@@ -1,62 +1,268 @@
-# 레벨링 ML 전환 스캐폴드 리포트
+# 레벨링 Pre-Outcome Sequence 전환 스캐폴드 리포트
 
 ## 최종 결론 요약
 
-- 결론: 현재 모델은 설명용 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다.
-- 핵심 점수: MAE 0.0651, RMSE 0.1246, R2 0.4202.
-- 데이터: 92 rows, train 69, test 23, target `path_clear_rate`.
-- 사용 가능: 후속 probe 후보 영역 탐색과 feature sanity check.
-- 사용 금지: runtime 자동 변경, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
+- 결론: 현재 모델은 pre-outcome 후보 추천 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다.
+- 핵심 점수: MAE 0.0483, RMSE 0.0866, R2 0.9178.
+- 데이터: 2938 rows, train 2203, test 735, target `path_clear_rate`.
+- 사용 가능: 후속 시뮬레이션 후보를 고르는 참고 신호와 feature sanity check.
+- 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
 - NotebookLM 상태: 지표가 사용 수준이 아니므로 보고서/인포그래픽 재생성 source로 쓰기 전 단계.
-- 다음 액션: pre-outcome candidate grid와 run-level 데이터를 늘리고 MAE/RMSE/R2를 재평가한다.
+- 다음 액션: boss/market/economy candidate grid와 raw run-level 데이터를 늘리고 MAE/RMSE/R2를 재평가한다.
 
 ## 핵심 점수
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0651 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.1246 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.4202 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |
-| Row | 92 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
+| MAE | 0.0483 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.0866 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.9178 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | path triage 신호로 유망하나 단독 gate로는 부족 |
+| Row | 2938 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
-이 리포트는 실제 ML 전환 완료 보고서가 아니다.
-현재 모델은 outcome-derived summary feature로 `clear_rate`를 설명하는 baseline이며, target score, boss severity, market weight, economy scale 후보를 추천하지 않는다.
-런타임 밸런스를 자동으로 바꾸지 않으며, 현재 산출물을 ML 기반 밸런스 자동 조정 근거로 사용하지 않는다.
+이 리포트는 계획된 ML transition scaffold다.
+기존 outcome-derived summary feature를 제거하고, S1~S8 path 실행 전에 알 수 있는 조건만 feature로 사용해 `path_clear_rate`를 예측한다.
+모델은 후보 추천 루프를 설계하기 위한 오프라인 분석 도구이며, production ML이 아니고 런타임 target, boss, market, economy 값을 자동 변경하지 않는다.
+이 산출물만으로 실제 ML 이행 완료를 주장하지 않는다. 후보 재시뮬레이션과 사람 승인 보고서가 별도로 필요하다.
 
 ## 데이터셋
 
 - feature table: `analysis/leveling/data/features/leveling_preoutcome_sequence_feature_table.csv`
-- rows: 92
-- train rows: 69
-- test rows: 23
+- rows: 2938
+- train rows: 2203
+- test rows: 735
 - target: `path_clear_rate`
+- feature mode: `preoutcome_sequence`
 
 소스 summary:
 
-- `analysis/leveling/data/raw/prototype_stability_submission_r120_summary.json`
-- `analysis/leveling/data/raw/run_modifier_high_stakes_market_pressure_effective_t104_r800_summary.json`
-- `analysis/leveling/data/raw/run_modifier_candidate_fair_t104_r112_r400_summary.json`
-- `analysis/leveling/data/raw/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json`
-- `analysis/leveling/data/raw/station_curve_growth_gate_probe_r120_summary.json`
+- `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- `logs/sim/boss_expansion_probe_v1_r120_summary.json`
+- `logs/sim/boss_expansion_probe_v1_r80_summary.json`
+- `logs/sim/boss_expansion_split_probe_v1_r80_summary.json`
+- `logs/sim/boss_expansion_stage_a_probe_v1_r80_summary.json`
+- `logs/sim/boss_expansion_stage_a_split_probe_v1_r80_summary.json`
+- `logs/sim/candidate_baseline_v1_station_path_r400_summary.json`
+- `logs/sim/confirm_color_position_probe_v1_r80_summary.json`
+- `logs/sim/confirm_color_position_smoke_summary.json`
+- `logs/sim/economy_budget_v1_r20_summary.json`
+- `logs/sim/economy_catalog_audit_v2_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_reward040_price220_v1_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_reward040_price240_v1_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_reward040_v1_r120_summary.json`
+- `logs/sim/economy_catalog_normalized_seed91460_r120_summary.json`
 - `logs/sim/economy_choice_affordable_v1_r120_summary.json`
-- `logs/sim/economy_choice_reward038_price240_v1_r120_summary.json`
-- `logs/sim/economy_choice_reward039_price240_v1_r120_summary.json`
+- `logs/sim/economy_choice_affordable_v1_r20_summary.json`
+- `logs/sim/economy_choice_reward036_price240_v1_r120_summary.json`
 - `logs/sim/economy_choice_reward036_price260_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward038_price240_catalog_flags_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward038_price240_v1_r120_summary.json`
 - `logs/sim/economy_choice_reward038_price260_v1_r120_summary.json`
-- `logs/sim/post_lane_reroll_probe_r120_summary.json`
-- `logs/sim/prototype_stability_submission_r120_summary.json`
-- `logs/sim/prototype_s1_easy_entry_v91_r240_summary.json`
-- `logs/sim/prototype_stability_v91_r120_summary.json`
-- `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
+- `logs/sim/economy_choice_reward039_price240_v1_r120_summary.json`
+- `logs/sim/economy_choice_reward040_price240_v1_r800_summary.json`
+- `logs/sim/economy_combo045_220_v1_r120_summary.json`
+- `logs/sim/economy_combo045_220_v1_r20_summary.json`
+- `logs/sim/economy_gated_v1_r20_summary.json`
+- `logs/sim/economy_jester_hook_price_r120_summary.json`
+- `logs/sim/economy_jester_hook_price_r400_summary.json`
+- `logs/sim/economy_price294_v1_r20_summary.json`
+- `logs/sim/economy_price_band_soft_v1_r20_summary.json`
+- `logs/sim/economy_price_band_v1_r20_summary.json`
+- `logs/sim/economy_probe_v1_r20_summary.json`
+- `logs/sim/economy_reward034_v1_r120_summary.json`
+- `logs/sim/economy_reward034_v1_r20_summary.json`
+- `logs/sim/economy_runtime_v91_long_r800_summary.json`
+- `logs/sim/economy_runtime_v91_market_probe_r120_summary.json`
+- `logs/sim/economy_runtime_v91_market_probe_raw_r120_summary.json`
+- `logs/sim/economy_runtime_v91_market_v11_raw_r120_summary.json`
+- `logs/sim/economy_runtime_v91_preflight_r1_summary.json`
+- `logs/sim/economy_spend_cli_smoke_summary.json`
+- `logs/sim/economy_spend_combo040_240_v1_r120_summary.json`
+- `logs/sim/economy_spend_combo045_220_v1_r120_summary.json`
+- `logs/sim/economy_spend_reward034_v1_r120_summary.json`
+- `logs/sim/economy_spend_v1_r20_summary.json`
+- `logs/sim/economy_trace_v1_r20_summary.json`
+- `logs/sim/hand_discard_position_probe_v1_r80_summary.json`
+- `logs/sim/hand_discard_position_smoke_summary.json`
+- `logs/sim/late_offer_exposure_v86_r200_summary.json`
 - `logs/sim/ml_actual_economy_r040_p220_v1_r80_summary.json`
 - `logs/sim/ml_actual_economy_r040_p240_v1_r80_summary.json`
-- `logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json`
+- `logs/sim/ml_actual_target_grid_v1_r80_summary.json`
+- `logs/sim/ml_expanded_boss_economy_r038_p240_v1_r120_summary.json`
+- `logs/sim/ml_expanded_boss_economy_r040_p240_v1_r120_summary.json`
+- `logs/sim/ml_preoutcome_candidate_v1_r120_summary.json`
+- `logs/sim/ml_sweep_banded_market_v37_r400_summary.json`
+- `logs/sim/ml_sweep_banded_market_v38_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_banded_market_v38b_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_base_curve_v2_constraints_v21_r400_summary.json`
+- `logs/sim/ml_sweep_base_score_curve_v2_final_r400_summary.json`
+- `logs/sim/ml_sweep_base_score_curve_v2_probe_r150_summary.json`
+- `logs/sim/ml_sweep_base_v2_constraint_v4_candidate_pool_v22_r400_summary.json`
+- `logs/sim/ml_sweep_board_relief_probe_v77_r200_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_full_curve_v13_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_v13_raw_probe_s6_s7_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_v13_raw_probe_s7_summary.json`
+- `logs/sim/ml_sweep_boss_constraints_v13_raw_probe_summary.json`
+- `logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.json`
+- `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_summary.json`
+- `logs/sim/ml_sweep_boss_runtime_v91_confirm_tax_parity_r800_summary.json`
+- `logs/sim/ml_sweep_candidate_baseline_v1_full_r400_summary.json`
+- `logs/sim/ml_sweep_early_curve_v33_r400_summary.json`
+- `logs/sim/ml_sweep_early_mid_gate_v65_r800_summary.json`
+- `logs/sim/ml_sweep_early_s2_bridge_v34_r400_summary.json`
+- `logs/sim/ml_sweep_experiment_v4_summary.json`
+- `logs/sim/ml_sweep_face_boss_v89_smoke_r120_summary.json`
+- `logs/sim/ml_sweep_final_regression_v70_pressure_r800_summary.json`
+- `logs/sim/ml_sweep_final_regression_v70_relaxed_r800_summary.json`
+- `logs/sim/ml_sweep_final_regression_v70_standard_r800_summary.json`
+- `logs/sim/ml_sweep_full_safe_candidate_pool_v12_summary.json`
+- `logs/sim/ml_sweep_integrated_runtime_transition_v63_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v56_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v57_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v58_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v59_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v60_s8_r800_summary.json`
+- `logs/sim/ml_sweep_integrated_weighted_boss_v61_s8_r1600_summary.json`
+- `logs/sim/ml_sweep_late_boss_v64_r800_summary.json`
+- `logs/sim/ml_sweep_market_availability_v66_r800_summary.json`
+- `logs/sim/ml_sweep_market_availability_v67_r800_summary.json`
+- `logs/sim/ml_sweep_market_exposure_v72_smoke_r200_summary.json`
+- `logs/sim/ml_sweep_market_exposure_v73_confirm_r800_summary.json`
+- `logs/sim/ml_sweep_market_exposure_v75_smoke_r200_summary.json`
+- `logs/sim/ml_sweep_market_guard_v50_r400_summary.json`
+- `logs/sim/ml_sweep_market_guard_v51_r400_summary.json`
+- `logs/sim/ml_sweep_market_guard_v52_r800_summary.json`
+- `logs/sim/ml_sweep_market_price_probe_v79_r120_experiment_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_summary.json`
+- `logs/sim/ml_sweep_market_price_probe_v79_r120_summary.json`
+- `logs/sim/ml_sweep_market_tempo_v45_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_market_tempo_v46_r400_summary.json`
+- `logs/sim/ml_sweep_market_tempo_v46_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_market_v12_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_market_v13_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_market_v9_v11_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_mid_growth_spacing_v29_r400_summary.json`
+- `logs/sim/ml_sweep_ordered_boss_v55_r800_summary.json`
+- `logs/sim/ml_sweep_ordered_boss_v55_s8_r800_summary.json`
+- `logs/sim/ml_sweep_pack_size_v10_summary.json`
+- `logs/sim/ml_sweep_path_survival_role_pools_v25_r400_summary.json`
+- `logs/sim/ml_sweep_probabilistic_candidates_v11_summary.json`
+- `logs/sim/ml_sweep_progression_routes_v26_r400_summary.json`
+- `logs/sim/ml_sweep_random_market_v9_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_isolated_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_probe_v1_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_probe_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rank_cycle_soft_v90_explore_r120_summary.json`
+- `logs/sim/ml_sweep_rare_xmult_v7_summary.json`
+- `logs/sim/ml_sweep_role_candidate_pools_v24_r400_summary.json`
+- `logs/sim/ml_sweep_runtime_table_v71_smoke_r200_summary.json`
+- `logs/sim/ml_sweep_s1_boss_axis_v80_r400_summary.json`
+- `logs/sim/ml_sweep_s1_curve_v35_r400_summary.json`
+- `logs/sim/ml_sweep_s1_onboarding_progression_v27_r400_summary.json`
+- `logs/sim/ml_sweep_s1_red_runtime_probe_v81_r400_summary.json`
+- `logs/sim/ml_sweep_s1_red_soft060_v82_r400_summary.json`
+- `logs/sim/ml_sweep_s1_soft_market_roles_v30_r400_summary.json`
+- `logs/sim/ml_sweep_s4_constraint_v17_r400_summary.json`
+- `logs/sim/ml_sweep_s4_constraint_v17b_r400_summary.json`
+- `logs/sim/ml_sweep_s4_constraint_v18_r400_summary.json`
+- `logs/sim/ml_sweep_s5_sustain_v5_summary.json`
+- `logs/sim/ml_sweep_sequence_metric_v47_r400_summary.json`
+- `logs/sim/ml_sweep_sequence_metric_v47_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shape_floor_v87_runtime_parity_r120_summary.json`
+- `logs/sim/ml_sweep_shape_floor_v87_smoke_r120_summary.json`
+- `logs/sim/ml_sweep_shape_floor_v88_runtime_parity_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v39_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v39_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v39b_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v40_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v40_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v41_r400_summary.json`
+- `logs/sim/ml_sweep_shop_slot_market_v41_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v42_r400_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v42_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v43_r400_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v43_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_stage_curve_v44_smoke_r100_summary.json`
+- `logs/sim/ml_sweep_state_weighted_market_v32_r400_summary.json`
+- `logs/sim/ml_sweep_state_weighted_market_v32b_r400_summary.json`
+- `logs/sim/ml_sweep_static_vs_progression_guard_v28_r400_summary.json`
+- `logs/sim/ml_sweep_station_weighted_market_v31_r400_summary.json`
+- `logs/sim/ml_sweep_target_curve_v48_r400_summary.json`
+- `logs/sim/ml_sweep_target_curve_v49_r800_summary.json`
+- `logs/sim/ml_sweep_target_v3_summary.json`
+- `logs/sim/ml_sweep_target_v4_constraints_full_safe_r400_summary.json`
+- `logs/sim/ml_sweep_target_v5_constraint_v2_r400_summary.json`
+- `logs/sim/ml_sweep_target_v6_s5_r400_summary.json`
+- `logs/sim/ml_sweep_three_band_curve_v36_r400_summary.json`
+- `logs/sim/ml_sweep_tile_pack_v8_summary.json`
+- `logs/sim/ml_sweep_train_v1_summary.json`
+- `logs/sim/ml_sweep_train_v2_summary.json`
+- `logs/sim/ml_sweep_v72_exposure_smoke_v84_r120_summary.json`
+- `logs/sim/ml_sweep_virtual_enhance_v6_summary.json`
+- `logs/sim/planner_v2_8station_curve_100_summary.json`
+- `logs/sim/planner_v2_baseline_summary.json`
+- `logs/sim/planner_v2_boss_diversity_summary.json`
+- `logs/sim/planner_v2_early_boss_bridge_200_summary.json`
+- `logs/sim/planner_v2_early_onboarding_joker_200_summary.json`
+- `logs/sim/planner_v2_early_run_bridge_200_summary.json`
+- `logs/sim/planner_v2_early_run_bridge_v2_200_summary.json`
+- `logs/sim/planner_v2_full_progression_loadouts_100_summary.json`
+- `logs/sim/planner_v2_ml_label_v1_preview_100_summary.json`
+- `logs/sim/planner_v2_progression_loadouts_100_summary.json`
+- `logs/sim/planner_v2_s1_boss_soften_summary.json`
+- `logs/sim/planner_v2_s1_safety_resource_probe_300_summary.json`
+- `logs/sim/planner_v2_s1_safety_sequence_200_summary.json`
+- `logs/sim/planner_v2_s2_boss_experiment_100_summary.json`
+- `logs/sim/planner_v2_s2_boss_target_sweep_100_summary.json`
+- `logs/sim/planner_v2_sequence_market_minimal_200_summary.json`
+- `logs/sim/planner_v2_sequence_onboarding_200_summary.json`
 - `logs/sim/post_lane_reroll_economy_current_boss_r400_summary.json`
 - `logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json`
-
-각 row는 experiment, loadout, blind tier, difficulty, market profile, run modifier, station, outcome summary 값으로 집계한 시뮬레이션 그룹이다. 현재 데이터셋은 시뮬레이션 기반이며 실제 플레이어 telemetry가 아니다.
+- `logs/sim/post_lane_reroll_probe_r120_summary.json`
+- `logs/sim/post_lane_reroll_probe_raw_r120_summary.json`
+- `logs/sim/prototype_s1_easy_entry_v91_r240_summary.json`
+- `logs/sim/prototype_s1_probe_v91_r240_summary.json`
+- `logs/sim/prototype_s1_red035_v91_r240_summary.json`
+- `logs/sim/prototype_s1_softened_v91_r240_summary.json`
+- `logs/sim/prototype_stability_submission_r120_summary.json`
+- `logs/sim/prototype_stability_v91_r120_summary.json`
+- `logs/sim/prototype_stability_v91_s1_easy_r120_summary.json`
+- `logs/sim/rank_runtime_position_probe_v1_r80_summary.json`
+- `logs/sim/rank_runtime_position_smoke_summary.json`
+- `logs/sim/run_modifier_basic_direct_r400_summary.json`
+- `logs/sim/run_modifier_basic_economy_probe_r120_summary.json`
+- `logs/sim/run_modifier_basic_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t102_r112_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t102_r112_r400_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t104_r112_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t104_r112_r400_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t106_r116_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t108_r112_r120_summary.json`
+- `logs/sim/run_modifier_candidate_fair_t108_r120_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t104_r112_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t106_r116_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t108_r112_probe_r120_summary.json`
+- `logs/sim/run_modifier_candidate_t108_r120_probe_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_direct_r400_summary.json`
+- `logs/sim/run_modifier_high_stakes_economy_probe_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_direct_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_direct_r400_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t102_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r120_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r1_preflight_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r400_summary.json`
+- `logs/sim/run_modifier_high_stakes_market_pressure_effective_t104_r800_summary.json`
+- `logs/sim/run_modifier_high_stakes_probe_r120_summary.json`
+- `logs/sim/run_modifier_pressure_market_probe_t104_r112_r120_summary.json`
+- `logs/sim/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json`
+- `logs/sim/run_modifier_pressure_market_probe_t108_r112_v9_v10_r120_summary.json`
+- `logs/sim/runtime_boss_seed_pool_smoke_summary.json`
+- `logs/sim/runtime_station_pool_economy_r400_summary.json`
+- `logs/sim/runtime_station_pool_leveling_r400_summary.json`
+- `logs/sim/runtime_station_pool_leveling_r80_summary.json`
+- `logs/sim/runtime_station_pool_profile_smoke_summary.json`
+- `logs/sim/s8_boss_axis_v85_r400_summary.json`
+- `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
 
 ## 피처와 타깃 정의
 
@@ -64,10 +270,42 @@ Target:
 
 - `path_clear_rate`: 집계된 시뮬레이션 그룹의 clear 비율.
 
-Numeric features:
+Pre-outcome numeric features:
 
-- `station`
-- `run_count`
+- `station_path_length`
+- `tier_path_length`
+- `difficulty_multiplier`
+- `target_multiplier`
+- `small_target_multiplier`
+- `big_target_multiplier`
+- `boss_target_multiplier`
+- `s1_boss_target_multiplier`
+- `s2_boss_target_multiplier`
+- `s3_boss_target_multiplier`
+- `reward_multiplier`
+- `sweep_reward_scale`
+- `sweep_price_scale`
+- `has_market_profile`
+- `market_profile_version`
+
+Pre-outcome categorical features:
+
+- `base_experiment_id`
+- `loadout_id`
+- `blind_tier`
+- `difficulty`
+- `market_profile`
+- `resolved_market_profile`
+- `run_modifier`
+- `sim_boss_constraint_id`
+- `sim_economy_mode`
+- `sim_market_budget_mode`
+- `sim_market_spend_mode`
+- `sim_price_band_mode`
+- `sim_market_choice_mode`
+
+모델 feature에서 제외한 항목:
+
 - `avg_score_ratio`
 - `avg_turn_count`
 - `avg_confirm_action_count`
@@ -77,105 +315,64 @@ Numeric features:
 - `avg_remaining_hand_discards`
 - `avg_remaining_board_moves`
 - `slow_clear_share_of_clears`
+- `run_count`
 
-Categorical features:
-
-- `experiment_id`
-- `loadout_id`
-- `blind_tier`
-- `difficulty`
-- `market_profile`
-- `run_modifier`
-- `tempo_risk_label`
-
-Silver-label 컬럼은 분석 맥락으로 feature table에 보존하지만, 이 첫 모델은 휴리스틱 라벨을 학습하지 않고 선택된 target을 직접 예측한다.
+제외된 필드는 outcome 또는 sample-size metadata이므로, 시뮬레이션 실행 전 후보 추천에는 사용할 수 없다.
 
 ## 모델
 
-모델 종류: `RandomForestRegressor`.
+모델 전략: `auto`.
+선택된 모델: `RandomForestRegressor`.
 
 선택 이유:
 
-- station, blind tier, market profile, resource residual 사이의 비선형 상호작용을 고정된 선형 가정 없이 다룰 수 있다.
-- 간단한 전처리 pipeline으로 numeric feature와 one-hot categorical feature를 함께 사용할 수 있다.
-- 첫 scaffold report에서 feature importance를 검토하기 쉽다.
-
-이 모델은 의도적으로 offline-only 설명 모델이다. runtime target score, boss modifier, market weight, economy constant를 직접 패치하지 않는다.
+- numeric/categorical simulation setting이 섞인 데이터를 다루는 단순 baseline으로 적합하다.
+- station, tier, market, boss, modifier 사이의 비선형 상호작용을 포착할 수 있다.
+- 첫 사람 검토에서 feature importance를 확인하기 쉽다.
 
 ## 지표
 
-- MAE: 0.0651
-- RMSE: 0.1246
-- R2: 0.4202
+- MAE: 0.0483
+- RMSE: 0.0866
+- R2: 0.9178
 
 해석:
 
-- MAE `0.0651` 수준은 held-out group에서 `path_clear_rate`를 예측할 때의 평균 오차다.
-- RMSE `0.1246` 수준은 큰 오차에 더 민감한 회귀 오차다.
-- R2 `0.4202` 수준은 값이 높을수록 이 시뮬레이션 데이터셋의 held-out variance를 더 많이 설명한다는 뜻이다.
-- 이것은 게임 밸런스가 완전히 닫혔다는 근거가 아니다.
-- 이것은 ML 전환이 완료됐다는 근거도 아니다.
-- 현재 summary row를 supervised modeling scaffold에 올릴 수 있고, outcome-derived feature가 clear-rate variance를 설명할 수 있음을 보여줄 뿐이다.
+- post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
+- RMSE `0.0866` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `station_path_length` | 0.3463 |
-| `loadout_id_progression_route_power` | 0.1968 |
-| `base_experiment_id_nan` | 0.1417 |
-| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068` | 0.0620 |
-| `loadout_id_progression_route_balanced` | 0.0529 |
-| `market_profile_shop_slot_market_v9` | 0.0414 |
-| `resolved_market_profile_shop_slot_market_v9` | 0.0368 |
-| `market_profile_version` | 0.0162 |
-| `resolved_market_profile_none` | 0.0162 |
-| `market_profile_none` | 0.0151 |
-
-읽는 법:
-
-- outcome-derived feature가 지배적이면 이 모델은 처방형보다 설명형에 가깝다.
-- 이후 추천 모델은 outcome 설명을 넘어서 개입안을 추천할 수 있도록 전투 전 configuration feature를 추가해야 한다.
+| `loadout_id_s5_power_build` | 0.2836 |
+| `loadout_id_s2_foundation_build` | 0.2715 |
+| `loadout_id_s3_hand_growth_build` | 0.2663 |
+| `loadout_id_s1_entry_bridge_build` | 0.0355 |
+| `station_path_length` | 0.0174 |
+| `loadout_id_progression_route_power` | 0.0119 |
+| `loadout_id_s5_boss_bridge_build` | 0.0117 |
+| `resolved_market_profile_s1_candidate_legendary_bridge` | 0.0087 |
+| `loadout_id_progression_route_delayed` | 0.0060 |
+| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1` | 0.0057 |
 
 ## 산출물
 
 - metrics JSON: `analysis/leveling/models/path_clear_rate_preoutcome_sequence_metrics.json`
 - feature importance CSV: `analysis/leveling/models/path_clear_rate_preoutcome_sequence_feature_importance.csv`
 
-## 해석 규칙
-
-휴리스틱 라벨은 초기 silver label로만 사용한다. 실제 유저 데이터가 충분해지면 target과 metric을 다시 정의한다.
-
 ## 추천 경계
 
-현재 허용되는 사용:
+허용되는 다음 사용:
 
-- clear-rate 변화와 관련 있는 시뮬레이션 factor의 우선순위를 본다.
-- 후속 probe를 돌릴 후보 영역을 찾는다.
-- 실제 ML 전환 설계를 시작할 만큼 구조화된 summary data가 있는지 확인한다.
+- 후속 시뮬레이션을 위한 candidate setting 순위화
+- clear-rate variance를 설명하는 pre-run setting 식별
+- 사람 검토용 작은 candidate probe 선택
 
-현재 금지되는 사용:
+허용되지 않는 사용:
 
-- runtime target score 자동 변경.
-- boss cycle/severity 자동 변경.
-- market candidate weight 자동 변경.
-- 플레이어 행동 모델링으로 해석.
-- 이미 ML 기반 밸런스라고 주장.
-- ML 마감 또는 추천 gate 완료 근거로 사용.
-
-## 다음 ML 단계
-
-실제 ML 전환은 아직 완료되지 않았다. 다음 모델은 outcome 설명을 넘어 개입안을 추천할 수 있도록 pre-outcome candidate feature를 추가해야 한다.
-
-- target multiplier candidate
-- boss modifier category and severity
-- market candidate availability/weight profile
-- reward scale and price scale
-- reroll lane spend and final gold features after the recent reroll split
-
-그 다음 후보 loop를 실행한다.
-
-1. 모델이 offline에서 candidate setting 순위를 매긴다.
-2. 시뮬레이터가 상위 후보를 실행한다.
-3. 사람 검토로 정책 제약과 playfeel을 확인한다.
-4. 승인된 후보만 runtime data/code에 적용한다.
+- runtime 자동 밸런싱
+- 재시뮬레이션 없는 target/boss/market/economy 직접 패치
+- 플레이어 telemetry modeling으로 해석
+- ML 마감 또는 추천 gate 완료 근거로 사용

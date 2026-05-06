@@ -44,7 +44,7 @@
 | Area | Progress | Evidence | Missing evidence |
 |---|---:|---|---|
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
-| Boss modifier runtime/sim pool | 80% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, simulation runtime-station mirror profile 추가 | seed 기반 pool 전체 r80/r400 재검증 |
+| Boss modifier runtime/sim pool | 84% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, simulation runtime-station mirror profile 추가, runtime station pool r80/r400 leveling probe 완료 | 경제 조건에서 seed 기반 pool의 market availability/보스 severity 분리 재검증 |
 | Market offer and inventory | 67% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한 구현 | 가격/노출/구매력 최종 기준 필요 |
 | Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | post lane reroll 경제 probe는 exploratory/not closed |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
@@ -52,15 +52,15 @@
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
-| Analysis/ML documentation | 30% | `ML` 명칭 오해 정정, pre-outcome scaffold table/model/report, 후보 재시뮬레이션 연결 보고서 존재 | 모델 품질이 실무 추천 기준에 부족함. 더 넓은 후보 grid, 데이터 증량, 사람 승인 추천표 필요 |
+| Analysis/ML documentation | 40% | `ML` 명칭 오해 정정, pre-outcome feature 증량, station/path 모델 auto selection, 최신 MAE/RMSE/R2 리포트 존재 | station/tier 모델과 경제 gate가 실무 추천 기준에 부족함. 후보 grid, raw run-level 데이터, 사람 승인 추천표 필요 |
 
 ## 3. Current Focus
 
 현재 집중 축:
 
 1. Boss pool mapping 및 1차 확장: S1~S8 station 난이도 level별 3~4개 seed 기반 runtime boss pool과 simulation mirror profile 적용. 새 저장 schema 없이 기존 blind boss modifier 저장 경로 재사용
-2. 확장 boss pool 기준 레벨링/경제 probe: confirm-limit 확장 profile 기준 r400 레벨링/경제 raw probe까지 확보했지만 최종 gate는 아님
-3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영해 offline recommendation scaffold는 갱신했지만, 모델 지표가 실무 사용 기준에 부족해 recommendation gate는 닫지 않음
+2. 확장 boss pool 기준 레벨링/경제 probe: runtime station pool 기준 r400 레벨링은 v9가 none보다 높지만, 같은 pool의 economy r400에서는 v9가 clear를 올리지 못해 경제 gate는 아직 닫지 않음
+3. 실제 ML 이행 재개: pre-outcome feature와 모델 선택을 개선해 sequence/path 모델은 크게 개선됐지만, station/tier 모델과 경제 gate가 부족해 recommendation gate는 닫지 않음
 
 현재 경제 판단:
 
@@ -71,16 +71,19 @@
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
 - Jester/Slots와 Tool/Gear lane reroll 분리 이후 current boss pool 기준 r400 raw probe는 balanced none 50.0%, balanced v9 57.0%, power none 64.2%, power v9 63.5%였다. v9 final gold avg 약 6.24G, v9 S8 boss 시작 골드 약 9.43G, reroll spend 99,571G, unaffordable event 7,686회로 즉시 경고는 없지만, boss pool 확장 전 기준이라 최종 경제 gate는 아니다.
 - 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe는 balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%였다. v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회로 즉시 경고는 없지만, power v9 미세 역전이 있어 최종 경제 gate는 아니다. seed 기반 runtime pool 적용 후 재검증이 필요하다.
+- runtime station pool 기준 r400 leveling probe는 balanced none 48.0%, balanced v9 67.2%, power none 54.0%, power v9 66.0%로 v9가 none보다 높다. S8/S1/S3/S4 병목은 남아 있다.
+- 같은 runtime station pool의 economy r400은 balanced none 48.5%, balanced v9 48.2%, power none 56.8%, power v9 56.8%였다. v9 final gold avg 약 6.23G, v9 S8 boss 시작 골드 약 9.48G, reroll spend 96,307G, unaffordable event 7,185회로 즉시 경제 경고는 없지만, v9가 clear를 올리지 못하므로 경제 gate는 닫지 않는다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
 
 - 현재 런타임 레벨링은 실제 머신러닝이 자동 조정하지 않는다.
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
-- `analysis/leveling/`의 pre-outcome feature table과 RandomForest 결과는 planned transition scaffold다.
+- `analysis/leveling/`의 pre-outcome feature table과 tree ensemble 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
 - production ML 전환은 더 넓은 candidate grid, MAE/RMSE/R2가 실무 추천 기준을 만족하는 모델, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
-- 확장 boss pool 이후 pre-outcome feature table을 14,544 rows로 재생성했고, sequence/path table은 92 rows로 재생성했다. station/tier 모델은 MAE 0.0360, RMSE 0.1014, R2 0.1548이고 sequence 모델은 MAE 0.0651, RMSE 0.1246, R2 0.4202다. 현재 지표는 실무 추천 기준에 한참 부족하다.
+- pre-outcome feature table은 237,507 source rows로 재생성했고, 학습 비용 제한을 위해 station/tier 모델은 60,000 rows sampling으로 학습했다. 최신 station/tier 모델은 ExtraTreesRegressor, MAE 0.0657(최선 0.0000), RMSE 0.1392(최선 0.0000), R2 0.5414(이상값 1.0000)이다. 이전 R2 0.1548보다는 개선됐지만 실무 추천 gate로는 아직 부족하다.
+- sequence/path table은 2,938 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0483(최선 0.0000), RMSE 0.0866(최선 0.0000), R2 0.9178(이상값 1.0000)이다. path-level triage 신호로는 유망하지만, station/tier 모델과 economy gate가 닫히기 전까지 ML 추천 적용 근거로 쓰지 않는다.
 - NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 지금 리포트는 내부 gate/source 정리용이며 외부 재가공 전 단계다.
 - 새 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 적용 보류한다. 현재 runtime economy baseline은 유지한다.
 
@@ -275,13 +278,15 @@ Status: In progress
 - target/economy 후보를 fresh r80으로 재시뮬레이션했다.
 - 사람 승인용 MD 보고서를 작성했다.
 - runtime 값은 바꾸지 않았다.
+- pre-outcome feature table을 237,507 source rows로 증량하고, station/tier 모델에 boss pressure, boss level, runtime boss 여부, station band, economy pressure feature를 추가했다.
+- 모델 전략을 baseline 단일 RandomForest에서 `RandomForestRegressor`/`ExtraTreesRegressor` 제한 grid auto selection으로 확장했다.
 
 남은 주의:
 
-- sequence/path 데이터는 92 row라 production ML 자동 적용 근거로 부족하다.
-- 현재 station/tier R2 0.1548, sequence R2 0.4202는 실무 추천 기준에 부족하다.
+- station/tier 모델은 MAE 0.0657, RMSE 0.1392, R2 0.5414로 이전보다 개선됐지만, 실무 추천 gate로는 아직 부족하다.
+- sequence/path 모델은 MAE 0.0483, RMSE 0.0866, R2 0.9178로 path-level triage 신호는 유망하지만, 단독으로 production ML 자동 적용 근거가 아니다.
+- 현재 economy r400에서 runtime station pool의 `shop_slot_market_v9`가 none보다 clear를 올리지 못했으므로, ML 추천 후보 적용은 경제 gate와 사람 승인 이후에만 한다.
 - 다음 모델 재생성 때도 MAE/RMSE/R2를 모두 기록하고, 실무 추천 기준 충족 여부를 별도로 판단한다.
-- 실제 적용은 경제 gate와 사람 승인 이후에만 한다.
 
 ### M1. Economy And Price Baseline
 
