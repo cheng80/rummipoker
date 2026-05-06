@@ -102,6 +102,7 @@ Status: Done for first pass / cycle pending
 - `confirm_limit_tax_v1`은 runtime modifier로 구현됐지만 S1~S8 cycle에는 아직 편입하지 않았다.
 - 28개 reference pattern 재검토 후 Stage A 추가 proxy를 넣었고, split probe 기준 `reward_tax_by_contributor_v1`과 `hand_discard_cost_v1`를 Stage B 우선 후보로 좁혔다.
 - 코드 경로 확인 결과, 다음 작은 구현 후보는 저장 schema를 늘리지 않는 `hand_discard_cost_v1` resource-pressure spike다. `reward_tax_by_contributor_v1`은 cashout/economy/UI 영향이 커서 별도 작업으로 분리한다.
+- 앱 runtime에는 simulator처럼 boss 후보만 주입하는 experiment axis가 없으므로, `hand_discard_cost_v1`도 적용하면 실제 런타임 규칙 변경이다. 구현 전 승인 대상으로 둔다.
 
 주의:
 

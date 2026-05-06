@@ -230,6 +230,8 @@ Code path 판정:
 
 - 다음 구현은 `hand_discard_cost_v1`의 resource-pressure spike가 가장 작다.
 - 이 spike는 저장 포맷을 늘리지 않는다. blind 시작 시 확정된 `handDiscards` 값이 기존 active run save payload에 저장된다.
+- 앱 runtime에는 simulator의 `experiment-id`처럼 boss 후보만 주입하는 축이 없다. 현재 `NewRunModifier`는 `basic` / `high_stakes`뿐이고, debug fixture는 QA fixture이지 밸런스 실험 축이 아니다.
+- 따라서 `hand_discard_cost_v1` resource spike를 코드에 넣으면 숨은 실험이 아니라 실제 런타임 규칙 변경이다. S1~S8 cycle 편입 전이라도 사람 승인 후 적용한다.
 - 단, 이 구현은 아직 player-facing boss modifier 타입 확장이 아니다. 표시명/보스 chip까지 붙이는 순간 보스 modifier taxonomy 확장 작업으로 분리한다.
 - `reward_tax_by_contributor_v1`은 재미 가치는 높지만 정산 source of truth와 reward 표시를 건드리므로, hand discard resource spike 이후 별도 작업으로 둔다.
 
@@ -401,5 +403,6 @@ Leveling 판정:
 
 1. `hand_discard_cost_v1`를 저장 schema 변경 없는 resource-pressure spike로 구현할지 결정한다.
 2. 구현한다면 1차 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한하고, S1~S8 cycle 편입과 player-facing boss modifier 일반화는 뒤로 둔다.
-3. `reward_tax_by_contributor_v1`는 cashout/economy/UI 영향이 커서 별도 구현 계획으로 분리한다.
-4. runtime smoke가 안정적이면 확장 boss pool 기준 레벨링/경제/ML 재검증 순서로 돌아간다.
+3. 앱 runtime에는 독립 boss experiment axis가 없으므로, `hand_discard_cost_v1`도 코드 적용 전 승인 대상으로 둔다.
+4. `reward_tax_by_contributor_v1`는 cashout/economy/UI 영향이 커서 별도 구현 계획으로 분리한다.
+5. runtime smoke가 안정적이면 확장 boss pool 기준 레벨링/경제/ML 재검증 순서로 돌아간다.
