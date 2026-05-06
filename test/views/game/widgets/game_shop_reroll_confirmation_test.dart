@@ -55,12 +55,15 @@ ItemDefinition _quickSlotItem() {
   });
 }
 
-Future<void> _pumpShopScreen(WidgetTester tester) async {
+Future<void> _pumpShopScreen(WidgetTester tester, {int rerollCost = 5}) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
+
   final jester = _jester();
   final quickSlotItem = _quickSlotItem();
   final market = RummiMarketRuntimeFacade(
     gold: 20,
-    rerollCost: 5,
+    rerollCost: rerollCost,
     maxOwnedSlots: RummiRunProgress.maxJesterSlots,
     runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     ownedEntries: const [],
@@ -144,12 +147,14 @@ Future<void> _pumpShopScreen(WidgetTester tester) async {
     ),
   );
   await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 50));
+  await tester.pumpAndSettle();
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('reroll confirmation names the current offer lane', (
+  testWidgets('reroll confirmation names the lane and explains a free reroll', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 2400);
@@ -180,5 +185,25 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Jester 후보를 리롤할까요?'), findsOneWidget);
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+
+    await _pumpShopScreen(tester, rerollCost: 0);
+
+    await tester.tap(find.text('Jester / Slots'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Jester'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('첫 리롤 무료'), findsOneWidget);
+
+    await tester.tap(find.text('첫 리롤 무료'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Jester 후보를 리롤할까요?\n상점 입장 첫 리롤은 정찰 무료입니다.'),
+      findsOneWidget,
+    );
+    expect(find.text('무료 리롤'), findsOneWidget);
   });
 }

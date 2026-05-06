@@ -493,9 +493,20 @@ class _GameShopScreenState extends State<GameShopScreen>
     };
   }
 
+  int _rerollCostForLane(
+    RummiMarketRuntimeFacade market,
+    _MarketOfferLane lane,
+  ) {
+    final placement = _placementForOfferLane(lane);
+    return placement == null
+        ? market.rerollCost
+        : market.itemRerollCostFor(placement);
+  }
+
   Future<void> _reroll() async {
     final lane = _currentOfferLane;
     final laneLabel = _offerLaneLabel(lane);
+    final rerollCost = _rerollCostForLane(_market, lane);
     final confirmed = await showGameFramedDialog<bool>(
       context: context,
       builder: (dialogContext) => GameModalCard(
@@ -513,7 +524,7 @@ class _GameShopScreenState extends State<GameShopScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              '$laneLabel 후보를 리롤할까요?',
+              _rerollConfirmMessage(laneLabel, rerollCost),
               style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
@@ -534,7 +545,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: GameActionButton(
-                    label: '리롤',
+                    label: _rerollConfirmActionLabel(rerollCost),
                     background: const Color(0xFFF4A81D),
                     foreground: Colors.black,
                     onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -1281,9 +1292,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       currentOfferEntries,
       currentOfferPage,
     );
-    final currentRerollCost = currentOfferLane == _MarketOfferLane.jester
-        ? market.rerollCost
-        : market.itemRerollCostFor(_placementForOfferLane(currentOfferLane)!);
+    final currentRerollCost = _rerollCostForLane(market, currentOfferLane);
     final selectedOwnedRuntimeValue = selectedOwned == null
         ? null
         : jesterRuntimeValueText(
@@ -2667,6 +2676,19 @@ class _MarketOfferLaneBar extends StatelessWidget {
   }
 }
 
+String _rerollButtonLabel(int rerollCost) {
+  return rerollCost <= 0 ? '첫 리롤 무료' : '리롤 $rerollCost';
+}
+
+String _rerollConfirmActionLabel(int rerollCost) {
+  return rerollCost <= 0 ? '무료 리롤' : '리롤';
+}
+
+String _rerollConfirmMessage(String laneLabel, int rerollCost) {
+  if (rerollCost > 0) return '$laneLabel 후보를 리롤할까요?';
+  return '$laneLabel 후보를 리롤할까요?\n상점 입장 첫 리롤은 정찰 무료입니다.';
+}
+
 class _MarketPagerBar extends StatelessWidget {
   const _MarketPagerBar({
     required this.currentPage,
@@ -2716,7 +2738,7 @@ class _MarketPagerBar extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               GameActionButton(
-                label: '리롤 $rerollCost',
+                label: _rerollButtonLabel(rerollCost),
                 background: const Color(0xFF2D6F9E),
                 compact: true,
                 onPressed: onReroll,
