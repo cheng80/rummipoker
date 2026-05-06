@@ -100,6 +100,8 @@ Status: Done for first pass / cycle pending
 - `confirm_limit_tax_v1`은 후보별 r80 split에서 v9가 none보다 높아 1차 runtime 후보로 좁힌다.
 - `min_contributor_count_v1`, `rank_family_decay_v1`은 boss 전투 단위 clear는 높지만 balanced v9 역전 신호가 있어 simulation-only 보류한다.
 - `confirm_limit_tax_v1`은 runtime modifier로 구현됐지만 S1~S8 cycle에는 아직 편입하지 않았다.
+- 28개 reference pattern 재검토 후 Stage A 추가 proxy를 넣었고, split probe 기준 `reward_tax_by_contributor_v1`과 `hand_discard_cost_v1`를 Stage B 우선 후보로 좁혔다.
+- 코드 경로 확인 결과, 다음 작은 구현 후보는 저장 schema를 늘리지 않는 `hand_discard_cost_v1` resource-pressure spike다. `reward_tax_by_contributor_v1`은 cashout/economy/UI 영향이 커서 별도 작업으로 분리한다.
 
 주의:
 

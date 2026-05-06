@@ -219,6 +219,20 @@ Stage B 구현 원칙:
 - 두 후보 모두 S1~S8 cycle에 바로 넣지 않고 별도 runtime experiment axis 또는 pool 후보로 검증한다.
 - 저장 포맷을 늘려야 하는 구현안이 나오면 코드 작성 전에 영향과 검증 경로를 다시 확인한다.
 
+Stage B code path check:
+
+| Candidate | 현재 코드 anchor | 3파일 이하 1차 단위 | 큰 변경으로 넘어가는 경계 |
+|---|---|---|---|
+| `hand_discard_cost_v1` | `lib/services/blind_selection_spec.dart`의 boss tier `handDiscards` 계산, `lib/views/blind_select_view.dart`의 조건 요약, `test/services/blind_selection_setup_test.dart`의 boss resource/cycle test | S1~S8 cycle 미편입 상태에서 특정 boss spec의 `handDiscards`를 0 또는 `base - 1`로 낮추는 resource-pressure spike. 저장은 기존 `RummiBlindState.handDiscardsRemaining/Max`를 사용한다 | `RummiBossModifier`에 resource category를 추가해 boss popup/chip/title까지 일반화하거나, runtime cycle에 넣어 player-facing boss로 고정하면 `boss_modifier.dart`, blind select UI, active run save round-trip test까지 포함한다 |
+| `reward_tax_by_contributor_v1` | `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`의 cash-out command, `lib/logic/rummi_poker_grid/item_effect_runtime.dart`의 settlement reward modifier, `lib/views/game/widgets/game_cashout_widgets.dart`의 reward line 표시 | 문서/시뮬 기준으로는 후보 유지. 코드 1차 단위로 자르려면 reward preview를 바꾸지 않는 internal tax calculation spike부터 분리해야 한다 | boss modifier JSON에 reward tax parameter를 넣거나 cashout sheet에 tax line을 표시하면 저장/복원, final boss reward, economy audit, widget test까지 같이 확인해야 한다 |
+
+Code path 판정:
+
+- 다음 구현은 `hand_discard_cost_v1`의 resource-pressure spike가 가장 작다.
+- 이 spike는 저장 포맷을 늘리지 않는다. blind 시작 시 확정된 `handDiscards` 값이 기존 active run save payload에 저장된다.
+- 단, 이 구현은 아직 player-facing boss modifier 타입 확장이 아니다. 표시명/보스 chip까지 붙이는 순간 보스 modifier taxonomy 확장 작업으로 분리한다.
+- `reward_tax_by_contributor_v1`은 재미 가치는 높지만 정산 source of truth와 reward 표시를 건드리므로, hand discard resource spike 이후 별도 작업으로 둔다.
+
 ### Stage C: 저장/UI 변경이 필요하지만 재미 가치가 큰 실험
 
 출품 전 즉시 구현 후보는 아니지만, boss전 다양성을 위해 폐기하지 않고 실험 후보로 보존한다.
@@ -385,8 +399,7 @@ Leveling 판정:
 
 ## 6. Next Step
 
-1. `reward_tax_by_contributor_v1`와 `hand_discard_cost_v1`의 runtime 구현 경로를 코드에서 확인한다.
-2. 저장 schema를 늘리지 않는 최소 구현안이면 작은 runtime experiment axis로 구현한다.
-3. S1~S8 cycle에는 바로 넣지 않고, runtime experiment axis로 smoke/test를 돌린다.
-4. `reward_tax_by_contributor_v1`은 reward preview/cashout/economy audit 경로를 먼저 확인한다.
-5. `hand_discard_cost_v1`은 gold cost가 아니라 blind resource pressure로만 구현 가능한지 먼저 확인한다.
+1. `hand_discard_cost_v1`를 저장 schema 변경 없는 resource-pressure spike로 구현할지 결정한다.
+2. 구현한다면 1차 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한하고, S1~S8 cycle 편입과 player-facing boss modifier 일반화는 뒤로 둔다.
+3. `reward_tax_by_contributor_v1`는 cashout/economy/UI 영향이 커서 별도 구현 계획으로 분리한다.
+4. runtime smoke가 안정적이면 확장 boss pool 기준 레벨링/경제/ML 재검증 순서로 돌아간다.
