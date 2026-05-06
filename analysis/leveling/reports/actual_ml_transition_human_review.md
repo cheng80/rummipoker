@@ -63,8 +63,8 @@ expanded-boss/runtime-station data는 coverage를 넓히고 sequence/path model�
 
 | 산출물 | 경로 |
 |---|---|
-| station/tier feature table | `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv` |
-| sequence feature table | `analysis/leveling/data/features/leveling_preoutcome_sequence_feature_table.csv` |
+| station/tier feature table | `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv` |
+| sequence feature table | `analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv` |
 | station/tier metric | `analysis/leveling/models/clear_rate_preoutcome_metrics.json` |
 | sequence metric | `analysis/leveling/models/path_clear_rate_preoutcome_sequence_metrics.json` |
 | station/tier recommendation CSV | `analysis/leveling/models/preoutcome_candidate_recommendations.csv` |

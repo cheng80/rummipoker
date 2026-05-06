@@ -38,8 +38,16 @@ Status: Done
 
 - `analysis/leveling/reports/actual_ml_transition_human_review.md`
 - `analysis/leveling/reports/preoutcome_candidate_recommendation_report.md`
-- `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv`
-- `analysis/leveling/data/features/leveling_preoutcome_sequence_feature_table.csv`
+- `analysis/leveling/data/features/*.metadata.json`
+- `analysis/leveling/models/*_metrics.json`
+- `analysis/leveling/models/*_feature_importance.csv`
+
+대용량 generated 산출물:
+
+- `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv`
+- `analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv`
+- 위 CSV들은 재생성 가능한 heavy artifact이므로 Git 추적 대상이 아니다.
+- `logs/sim/*.jsonl` raw run log도 Git 추적 대상이 아니다.
 
 주의:
 

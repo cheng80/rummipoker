@@ -28,7 +28,7 @@
 
 ## 데이터셋
 
-- feature table: `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv`
+- feature table: `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv`
 - rows: 60000
 - train rows: 45000
 - test rows: 15000

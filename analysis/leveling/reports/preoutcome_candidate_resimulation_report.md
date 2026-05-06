@@ -34,7 +34,7 @@
 
 | 산출물 | 경로 |
 |---|---|
-| pre-outcome feature table | `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv` |
+| pre-outcome feature table | `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv` |
 | metadata | `analysis/leveling/data/features/leveling_preoutcome_feature_table.metadata.json` |
 | metric JSON | `analysis/leveling/models/clear_rate_preoutcome_metrics.json` |
 | feature importance | `analysis/leveling/models/clear_rate_preoutcome_feature_importance.csv` |

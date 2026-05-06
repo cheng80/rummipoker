@@ -155,6 +155,12 @@ analysis_benchmark.json
 **/htmlcov/
 **/.ipynb_checkpoints/
 
+# Leveling simulation / ML generated heavy artifacts
+logs/sim/*.jsonl
+analysis/leveling/generated/
+analysis/leveling/data/features/*.csv
+analysis/leveling/data/raw/
+
 # Environment files
 **/.env
 **/.env.*

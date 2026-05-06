@@ -28,7 +28,7 @@
 
 ## 입력
 
-- feature table: `analysis/leveling/data/features/leveling_preoutcome_feature_table.csv`
+- feature table: `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv`
 - recommendation csv: `analysis/leveling/models/preoutcome_candidate_recommendations.csv`
 
 ## 상위 후보 상세

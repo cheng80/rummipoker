@@ -22,7 +22,7 @@
     "logs/sim/post_lane_reroll_economy_current_boss_r400_summary.json",
     "logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json"
   ],
-  "output": "analysis/leveling/data/features/leveling_feature_table.csv",
+  "output": "analysis/leveling/generated/features/leveling_feature_table.csv",
   "feature_mode": "outcome_summary",
   "note": "This is ML-transition scaffolding. heuristic_labels is derived from legacy ml_labels silver labels."
 }

@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_FEATURES = "analysis/leveling/data/features/leveling_feature_table.csv"
-DEFAULT_PREOUTCOME_FEATURES = "analysis/leveling/data/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_FEATURES = "analysis/leveling/generated/features/leveling_feature_table.csv"
+DEFAULT_PREOUTCOME_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
 DEFAULT_REPORT = "analysis/leveling/reports/model_recommendation_report.md"
 DEFAULT_PREOUTCOME_REPORT = "analysis/leveling/reports/preoutcome_baseline_model_report.md"
 DEFAULT_MODEL_DIR = "analysis/leveling/models"
@@ -738,14 +738,28 @@ def read_feature_source_row_count(feature_path: Path) -> int | None:
 
 
 def read_feature_metadata(feature_path: Path) -> dict[str, Any]:
-    metadata_path = feature_path.with_suffix(".metadata.json")
-    if not metadata_path.exists():
-        return {}
-    try:
-        value = json.loads(metadata_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-    return value if isinstance(value, dict) else {}
+    for metadata_path in feature_metadata_candidates(feature_path):
+        if not metadata_path.exists():
+            continue
+        try:
+            value = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def feature_metadata_candidates(feature_path: Path) -> list[Path]:
+    candidates = [feature_path.with_suffix(".metadata.json")]
+    parts = feature_path.parts
+    generated_marker = ("analysis", "leveling", "generated", "features")
+    if parts[: len(generated_marker)] == generated_marker:
+        candidates.append(
+            Path("analysis/leveling/data/features")
+            / feature_path.with_suffix(".metadata.json").name
+        )
+    return candidates
 
 
 if __name__ == "__main__":

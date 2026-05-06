@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_OUT = "analysis/leveling/data/features/leveling_feature_table.csv"
-DEFAULT_PREOUTCOME_OUT = "analysis/leveling/data/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_OUT = "analysis/leveling/generated/features/leveling_feature_table.csv"
+DEFAULT_PREOUTCOME_OUT = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
 
 
 NUMERIC_FIELDS = [
@@ -177,7 +177,7 @@ def main() -> int:
         for row in rows:
             writer.writerow({key: row.get(key, "") for key in fieldnames})
 
-    metadata_path = Path(args.metadata_out) if args.metadata_out else out_path.with_suffix(".metadata.json")
+    metadata_path = Path(args.metadata_out) if args.metadata_out else default_metadata_path(out_path)
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
     metadata_path.write_text(
         json.dumps(
@@ -215,6 +215,14 @@ def even_sample_rows(rows: list[dict[str, Any]], max_rows: int) -> list[dict[str
         rows[round(index * last_index / (max_rows - 1))]
         for index in range(max_rows)
     ]
+
+
+def default_metadata_path(out_path: Path) -> Path:
+    parts = out_path.parts
+    generated_marker = ("analysis", "leveling", "generated", "features")
+    if parts[: len(generated_marker)] == generated_marker:
+        return Path("analysis/leveling/data/features") / out_path.with_suffix(".metadata.json").name
+    return out_path.with_suffix(".metadata.json")
 
 
 def rows_from_summary(path: Path, *, feature_mode: str) -> list[dict[str, Any]]:

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_FEATURES = "analysis/leveling/data/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
 DEFAULT_OUT = "analysis/leveling/models/preoutcome_candidate_recommendations.csv"
 DEFAULT_REPORT = "analysis/leveling/reports/preoutcome_candidate_recommendation_report.md"
 

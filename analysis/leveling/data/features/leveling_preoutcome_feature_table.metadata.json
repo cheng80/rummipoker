@@ -230,7 +230,7 @@
     "logs/sim/s8_boss_axis_v85_r400_summary.json",
     "logs/sim/station_curve_growth_gate_probe_r120_summary.json"
   ],
-  "output": "analysis/leveling/data/features/leveling_preoutcome_feature_table.csv",
+  "output": "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv",
   "feature_mode": "preoutcome",
   "note": "Pre-outcome feature table for planned ML transition scaffold. Outcome summary fields are excluded from model features; clear_rate remains the supervised target. This is not production ML and does not auto-apply runtime balance changes."
 }
