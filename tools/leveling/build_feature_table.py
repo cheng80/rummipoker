@@ -49,11 +49,17 @@ LABEL_FIELDS = [
 
 PREOUTCOME_NUMERIC_FIELDS = [
     "station",
+    "station_tier_index",
     "tier_index",
     "station_band_index",
     "is_boss_tier",
     "is_late_station",
     "is_final_station",
+    "expected_target_score",
+    "expected_reward_gold",
+    "board_discard_pressure",
+    "hand_discard_pressure",
+    "max_hand_size_pressure",
     "difficulty_multiplier",
     "target_multiplier",
     "small_target_multiplier",
@@ -76,6 +82,14 @@ PREOUTCOME_NUMERIC_FIELDS = [
     "boss_pressure_index",
     "is_runtime_boss_modifier",
     "economy_pressure_index",
+    "station_boss_interaction",
+    "station_pressure_interaction",
+    "market_station_interaction",
+    "economy_market_interaction",
+    "price_band_growth_access",
+    "price_band_catalog_normalized",
+    "spend_mode_reroll_slot_sell",
+    "choice_mode_affordable_alternative",
 ]
 
 PREOUTCOME_CATEGORICAL_FIELDS = [
@@ -97,6 +111,7 @@ PREOUTCOME_CATEGORICAL_FIELDS = [
 
 PREOUTCOME_TARGET_FIELDS = [
     "clear_rate",
+    "clear_rate_smoothed",
     "needs_balance_attention",
     "needs_balance_attention_v2",
 ]
@@ -144,6 +159,7 @@ def main() -> int:
     if args.feature_mode in {"preoutcome", "preoutcome_sequence"}:
         fieldnames = [
             "source_path",
+            "run_count",
             *PREOUTCOME_CATEGORICAL_FIELDS,
             *PREOUTCOME_NUMERIC_FIELDS,
             *PREOUTCOME_TARGET_FIELDS,
@@ -287,6 +303,18 @@ def preoutcome_sequence_row_from_group(
         "sim_market_choice_mode": value_or_empty(sweep_context.get("sim_market_choice_mode") or "none"),
         "station_path_length": len(station_path) if isinstance(station_path, list) else 0,
         "tier_path_length": len(tier_path) if isinstance(tier_path, list) else 0,
+        "expected_target_score": expected_target_score(
+            raw.get("station"),
+            raw.get("blind_tier"),
+            raw.get("difficulty"),
+            run_modifier,
+            base_experiment,
+            raw,
+        ),
+        "expected_reward_gold": expected_reward_gold(raw.get("blind_tier"), run_modifier),
+        "board_discard_pressure": board_discard_pressure(raw.get("blind_tier")),
+        "hand_discard_pressure": hand_discard_pressure(raw.get("blind_tier")),
+        "max_hand_size_pressure": max_hand_size_pressure(raw.get("blind_tier")),
         "difficulty_multiplier": difficulty_multiplier(raw.get("difficulty")),
         "target_multiplier": inferred_target_multiplier(run_modifier, base_experiment),
         "small_target_multiplier": numeric_or_default(raw.get("small_target_multiplier"), 1.0),
@@ -336,6 +364,7 @@ def preoutcome_row_from_group(
 
     row: dict[str, Any] = {
         "source_path": str(path),
+        "run_count": numeric_or_zero(raw.get("run_count")),
         "experiment_id": value_or_empty(raw.get("experiment_id")),
         "base_experiment_id": base_experiment,
         "loadout_id": value_or_empty(raw.get("loadout_id")),
@@ -400,9 +429,31 @@ def preoutcome_row_from_group(
         "sim_price_band_mode": value_or_empty(sweep_context.get("sim_price_band_mode") or "none"),
         "sim_market_choice_mode": value_or_empty(sweep_context.get("sim_market_choice_mode") or "none"),
         "clear_rate": numeric_or_zero(raw.get("clear_rate")),
+        "clear_rate_smoothed": smoothed_clear_rate(raw),
         "needs_balance_attention": numeric_or_zero(raw.get("needs_balance_attention")),
         "needs_balance_attention_v2": numeric_or_zero(raw.get("needs_balance_attention_v2")),
     }
+    station = numeric_or_zero(raw.get("station"))
+    tier = tier_index(raw.get("blind_tier"))
+    boss_tier = int(value_or_empty(raw.get("blind_tier")) == "boss")
+    market_index = market_availability_index(market_profile, resolved_market_profile)
+    economy_index = economy_pressure_index(
+        sweep_context.get("sim_reward_scale"),
+        sweep_context.get("sim_price_scale"),
+    )
+    pressure_index = boss_pressure_index(boss_constraint)
+    price_band_mode = value_or_empty(sweep_context.get("sim_price_band_mode") or "none")
+    spend_mode = value_or_empty(sweep_context.get("sim_market_spend_mode") or "none")
+    choice_mode = value_or_empty(sweep_context.get("sim_market_choice_mode") or "none")
+    row["station_tier_index"] = station * 3 + max(tier, 0)
+    row["station_boss_interaction"] = station * boss_tier
+    row["station_pressure_interaction"] = station * pressure_index
+    row["market_station_interaction"] = station * market_index
+    row["economy_market_interaction"] = economy_index * int(market_profile not in ("", "none"))
+    row["price_band_growth_access"] = int(price_band_mode == "growth_access_v1")
+    row["price_band_catalog_normalized"] = int(price_band_mode == "catalog_normalized_v1")
+    row["spend_mode_reroll_slot_sell"] = int(spend_mode == "reroll_slot_sell_v1")
+    row["choice_mode_affordable_alternative"] = int(choice_mode == "affordable_alternative_v1")
     row["heuristic_labels"] = compact_json(raw.get("ml_labels", []))
     row["heuristic_target_labels_v2"] = compact_json(raw.get("ml_target_labels_v2", {}))
     row["outcome_counts"] = compact_json(raw.get("outcome_counts", {}))
@@ -431,6 +482,16 @@ def numeric_or_default(value: Any, default: float) -> int | float:
     return default
 
 
+def smoothed_clear_rate(raw: dict[str, Any]) -> float:
+    run_count = float(numeric_or_zero(raw.get("run_count")))
+    clear_count = float(numeric_or_zero(raw.get("clear_count")))
+    if run_count <= 0:
+        return float(numeric_or_zero(raw.get("clear_rate")))
+    prior_runs = 40.0
+    prior_rate = 0.5
+    return (clear_count + prior_runs * prior_rate) / (run_count + prior_runs)
+
+
 def tier_index(value: Any) -> int:
     return {"small": 0, "big": 1, "boss": 2}.get(value_or_empty(value), -1)
 
@@ -448,6 +509,73 @@ def station_band_index(value: Any) -> int:
 
 def difficulty_multiplier(value: Any) -> float:
     return {"relaxed": 0.8, "standard": 1.0, "pressure": 1.2}.get(value_or_empty(value), 1.0)
+
+
+def expected_target_score(
+    station_value: Any,
+    tier_value: Any,
+    difficulty_value: Any,
+    run_modifier: str,
+    experiment_id: str,
+    raw: dict[str, Any],
+) -> int:
+    station = int(numeric_or_zero(station_value))
+    tier = value_or_empty(tier_value)
+    base = standard_target_score(station, tier)
+    tier_multiplier = {
+        "small": numeric_or_default(raw.get("small_target_multiplier"), 1.0),
+        "big": numeric_or_default(raw.get("big_target_multiplier"), 1.0),
+        "boss": numeric_or_default(raw.get("boss_target_multiplier"), 1.0),
+    }.get(tier, 1.0)
+    if tier == "boss" and station == 1:
+        tier_multiplier *= numeric_or_default(raw.get("s1_boss_target_multiplier"), 1.0)
+    if tier == "boss" and station == 2:
+        tier_multiplier *= numeric_or_default(raw.get("s2_boss_target_multiplier"), 1.0)
+    if tier == "boss" and station == 3:
+        tier_multiplier *= numeric_or_default(raw.get("s3_boss_target_multiplier"), 1.0)
+    multiplier = (
+        difficulty_multiplier(difficulty_value)
+        * inferred_target_multiplier(run_modifier, experiment_id)
+        * tier_multiplier
+    )
+    return round(base * multiplier)
+
+
+def standard_target_score(station: int, tier: str) -> int:
+    table = {
+        1: {"small": 240, "big": 264, "boss": 265},
+        2: {"small": 372, "big": 431, "boss": 439},
+        3: {"small": 463, "big": 537, "boss": 547},
+        4: {"small": 580, "big": 672, "boss": 685},
+        5: {"small": 725, "big": 841, "boss": 857},
+        6: {"small": 923, "big": 1112, "boss": 1121},
+        7: {"small": 1154, "big": 1391, "boss": 1401},
+        8: {"small": 1441, "big": 1738, "boss": 1739},
+    }
+    if station in table:
+        return table[station].get(tier, 0)
+    if station <= 0:
+        return 0
+    previous = standard_target_score(8, tier)
+    return round(previous * (1.2 ** (station - 8)))
+
+
+def expected_reward_gold(tier_value: Any, run_modifier: str) -> float:
+    tier = value_or_empty(tier_value)
+    base = {"small": 4, "big": 8, "boss": 12}.get(tier, 0)
+    return base * inferred_reward_multiplier(run_modifier, "")
+
+
+def board_discard_pressure(tier_value: Any) -> int:
+    return 1 if value_or_empty(tier_value) in {"big", "boss"} else 0
+
+
+def hand_discard_pressure(tier_value: Any) -> int:
+    return 1 if value_or_empty(tier_value) == "boss" else 0
+
+
+def max_hand_size_pressure(tier_value: Any) -> int:
+    return 1 if value_or_empty(tier_value) == "boss" else 0
 
 
 def inferred_target_multiplier(run_modifier: str, experiment_id: str) -> float:

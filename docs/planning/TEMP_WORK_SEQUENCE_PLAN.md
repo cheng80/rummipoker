@@ -128,7 +128,7 @@ Status: Done for first pass / station pool applied / revalidation pending
 
 ## 4. 확장 Boss Pool 기준 레벨링 재검증
 
-Status: Closed for ML handoff / runtime S4 rank-weight patch pending commit
+Status: Closed for ML handoff / runtime S4 rank-weight patch applied
 
 목표:
 
@@ -171,7 +171,7 @@ Status: Closed for ML handoff / runtime S4 rank-weight patch pending commit
 
 ## 5. 확장 Boss Pool + Lane Reroll Split 기준 경제 재검증
 
-Status: Closed for ML handoff / runtime growth-access price cap pending commit
+Status: Closed for ML handoff / runtime growth-access price cap applied
 
 목표:
 
@@ -341,9 +341,18 @@ Runtime S4 rank weight + growth access final r400:
 - 경제: v9 final gold 평균 약 5.86G, v9 S8 boss 시작 약 9.98G, 즉시 경제 경고 없음.
 - 판단: ML 재개 전 막고 있던 economy gate는 이 후보 기준으로 닫는다. v15는 아직 runtime 적용 후보가 아니므로 ML 입력에서는 별도 sim-only 후보로만 취급한다.
 
+Runtime S4 rank weight + growth access multi-seed check:
+
+- outputs: `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91627_r400_summary.json`, `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91628_r400_summary.json`
+- 쉬운 결론: 같은 조건을 seed만 바꿔 다시 돌려도 결과가 거의 같다.
+- seed91627: none balanced 47.2%, power 54.0% / v9 balanced 52.0%, power 57.0%.
+- seed91628: none balanced 47.0%, power 53.8% / v9 balanced 52.0%, power 56.8%.
+- 경제: v9 final gold 평균은 약 5.85~5.86G, v9 S8 boss 시작 골드는 약 9.98~10.00G, 즉시 경제 경고 없음.
+- 가격 보정 정리: `growth_access` runtime 가격 상한은 점수/족보/색/버림/이동/안전/드로우 성장 후보에만 적용한다. `market`/`boss` 전용 아이템은 더 이상 이 상한으로 싸지지 않는다.
+
 ## 6. 실제 ML 이행 재개
 
-Status: In progress / sequence model improved / station model not sufficient
+Status: In progress / station model improved but not production-ready
 
 재개 조건:
 
@@ -371,15 +380,16 @@ ML 재개 시 필수 작업:
 
 - 이전 station/tier pre-outcome table 14,544 rows, MAE 0.0360, RMSE 0.1014, R2 0.1548.
 - 이전 sequence/path pre-outcome table 92 rows, MAE 0.0651, RMSE 0.1246, R2 0.4202.
-- 최신 station/tier pre-outcome table은 전체 source 239,212 rows 중 60,000 sampled train set을 사용한다. MAE 0.0631, RMSE 0.1314, R2 0.5610이며 이전보다 R2는 개선됐지만 실무 추천 gate에는 부족하다.
-- 최신 station/tier pre-outcome table은 246,271 source rows에서 120,000 rows를 사용했다. MAE 0.0561, RMSE 0.1207, R2 0.6066이며 이전 0.5610보다 좋아졌지만 실무 추천 gate로는 아직 부족하다.
-- 최신 sequence/path pre-outcome table은 3,004 rows 전체를 사용한다. MAE 0.0466, RMSE 0.0794, R2 0.9214이며 후보 triage에는 유망하지만 station/tier 모델이 부족해 단독 ML 마감은 아니다.
-- feature 추가: station band, boss tier/final station flag, runtime boss family/level/pressure, economy pressure index, market availability/sim policy index.
-- 모델 개선: RandomForest/ExtraTrees 후보와 하이퍼파라미터 grid를 비교하는 `auto` 전략을 추가했다. 큰 데이터는 `--max-rows`와 `n_jobs=2`로 비용을 제한한다.
-- 최신 모델 추천 상위 economy 후보 `reward 0.40 / price 2.4`, `reward 0.38 / price 2.4`는 여전히 fresh resimulation 검증 전 참고 신호다. 같은 계열 후보는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 runtime 적용 보류 상태를 유지한다.
+- 중간 station/tier pre-outcome table은 전체 source 239,212 rows 중 60,000 sampled train set을 사용했다. MAE 0.0631, RMSE 0.1314, R2 0.5610이며 이후 갱신 전 기준이다.
+- 최신 raw station/tier `clear_rate` 모델은 247,290 source rows 중 60,000 rows를 사용했다. MAE 0.0450, RMSE 0.1102, R2 0.6784이며 이전 0.6066보다 좋아졌지만 실무 추천 gate로는 아직 부족하다.
+- 최신 smoothed station/tier `clear_rate_smoothed` 모델은 247,290 source rows 중 120,000 rows를 사용했다. MAE 0.0440, RMSE 0.0666, R2 0.7877이다. r80/r120 같은 작은 표본의 흔들림을 줄여 더 안정적이지만, R2 이상값 1.0000 기준 production/자동 적용 단계는 아니다.
+- 최신 sequence/path pre-outcome table은 3,012 rows 전체를 사용한다. MAE 0.0466, RMSE 0.0879, R2 0.9093이며 후보 triage에는 유망하지만 station/tier 모델이 production 수준은 아니라 단독 ML 마감은 아니다.
+- feature 추가: station/tier 조합, station-boss 상호작용, station-pressure 상호작용, market-station 상호작용, economy-market 상호작용, 실제 target score, reward/resource pressure, price band/spend/choice mode flag.
+- 모델 개선: 큰 데이터 반복 실행이 가능하도록 baseline tree 수와 `n_jobs=2`를 조정하고, `run_count`는 모델 feature가 아니라 sample weight로만 쓴다. 작은 표본 결과가 큰 표본 결과와 같은 힘으로 학습되는 문제를 줄이기 위한 조치다.
+- 최신 모델 추천표는 `clear_rate_smoothed` 기준으로 다시 만들었다. 다만 추천표는 fresh resimulation 후보 선정용 참고자료이며 runtime 자동 적용 근거가 아니다.
 - 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
 - production ML/자동 적용은 여전히 아님.
-- 최신 sequence/path 지표는 크게 개선됐고 economy gate는 runtime handoff 후보 기준으로 닫혔다. 다만 station/tier R2 0.6066은 아직 약하므로 ML 마감이나 자동 추천 gate 완료로 보지 않는다.
+- 최신 sequence/path 지표는 유지됐고 economy gate는 runtime handoff 후보 기준으로 닫혔다. station/tier도 R2 0.7877까지 개선됐지만, 아직 실무 기준을 잠그지 못했으므로 ML 마감이나 자동 추천 gate 완료로 보지 않는다.
 - 실무 적용 가능 수준 목표: path-level R2 0.90+ 유지, station/tier R2 추가 개선, fresh resimulation에서 v9 >= none 및 S1/S8 병목 보존을 동시에 만족해야 한다.
 - NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 현재 리포트는 내부 판단 source로만 둔다.
 

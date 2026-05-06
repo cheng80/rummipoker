@@ -19,11 +19,17 @@ DEFAULT_REPORT = "analysis/leveling/reports/preoutcome_candidate_recommendation_
 
 NUMERIC_FEATURES = [
     "station",
+    "station_tier_index",
     "tier_index",
     "station_band_index",
     "is_boss_tier",
     "is_late_station",
     "is_final_station",
+    "expected_target_score",
+    "expected_reward_gold",
+    "board_discard_pressure",
+    "hand_discard_pressure",
+    "max_hand_size_pressure",
     "difficulty_multiplier",
     "target_multiplier",
     "small_target_multiplier",
@@ -46,6 +52,14 @@ NUMERIC_FEATURES = [
     "boss_pressure_index",
     "is_runtime_boss_modifier",
     "economy_pressure_index",
+    "station_boss_interaction",
+    "station_pressure_interaction",
+    "market_station_interaction",
+    "economy_market_interaction",
+    "price_band_growth_access",
+    "price_band_catalog_normalized",
+    "spend_mode_reroll_slot_sell",
+    "choice_mode_affordable_alternative",
 ]
 
 CATEGORICAL_FEATURES = [
@@ -121,7 +135,7 @@ def main() -> int:
 
     feature_path = Path(args.features)
     ensure_feature_table(feature_path, feature_mode="preoutcome")
-    df = pd.read_csv(feature_path)
+    df = pd.read_csv(feature_path, low_memory=False)
     original_row_count = len(df)
     if args.max_rows > 0 and len(df) > args.max_rows:
         df = df.sample(n=args.max_rows, random_state=args.seed).reset_index(drop=True)
@@ -130,13 +144,18 @@ def main() -> int:
         for key in [*NUMERIC_FEATURES, *CATEGORICAL_FEATURES]
         if key in df.columns
     ]
-    if "clear_rate" not in df.columns:
+    target_column = "clear_rate_smoothed" if "clear_rate_smoothed" in df.columns else "clear_rate"
+    if target_column not in df.columns:
         raise SystemExit("feature table에 clear_rate target이 없습니다.")
     if not feature_columns:
         raise SystemExit("사용 가능한 feature column이 없습니다.")
 
     numeric_features = [key for key in NUMERIC_FEATURES if key in feature_columns]
     categorical_features = [key for key in CATEGORICAL_FEATURES if key in feature_columns]
+    for key in numeric_features:
+        df[key] = df[key].fillna(0)
+    for key in categorical_features:
+        df[key] = df[key].fillna("")
     model = Pipeline(
         steps=[
             (
@@ -159,7 +178,7 @@ def main() -> int:
             ),
         ],
     )
-    model.fit(df[feature_columns], df["clear_rate"].astype(float))
+    model.fit(df[feature_columns], df[target_column].astype(float))
 
     candidates = candidate_grid()
     rows = []
@@ -190,6 +209,7 @@ def main() -> int:
             row_count=len(df),
             source_row_count=original_row_count,
             max_rows=args.max_rows,
+            target_column=target_column,
         ),
         encoding="utf-8",
     )
@@ -303,11 +323,17 @@ def rows_for_candidate(candidate: Candidate) -> list[dict[str, Any]]:
                             "run_modifier": "basic",
                             "sim_boss_constraint_id": "",
                             "station": station,
+                            "station_tier_index": station * 3 + tier_index,
                             "tier_index": tier_index,
                             "station_band_index": station_band_index(station),
                             "is_boss_tier": int(tier == "boss"),
                             "is_late_station": int(station >= 6),
                             "is_final_station": int(station >= 8),
+                            "expected_target_score": expected_target_score(station, tier, candidate),
+                            "expected_reward_gold": expected_reward_gold(tier, candidate),
+                            "board_discard_pressure": int(tier in {"big", "boss"}),
+                            "hand_discard_pressure": int(tier == "boss"),
+                            "max_hand_size_pressure": int(tier == "boss"),
                             "difficulty_multiplier": 1.0,
                             "target_multiplier": candidate.target_multiplier,
                             "small_target_multiplier": candidate.small_target_multiplier,
@@ -338,6 +364,17 @@ def rows_for_candidate(candidate: Candidate) -> list[dict[str, Any]]:
                                 candidate.sweep_reward_scale,
                                 candidate.sweep_price_scale,
                             ),
+                            "station_boss_interaction": station * int(tier == "boss"),
+                            "station_pressure_interaction": 0.0,
+                            "market_station_interaction": station * market_availability_index(market),
+                            "economy_market_interaction": economy_pressure_index(
+                                candidate.sweep_reward_scale,
+                                candidate.sweep_price_scale,
+                            ) * int(market != "none"),
+                            "price_band_growth_access": int(candidate.sim_price_band_mode == "growth_access_v1"),
+                            "price_band_catalog_normalized": int(candidate.sim_price_band_mode == "catalog_normalized_v1"),
+                            "spend_mode_reroll_slot_sell": int(candidate.sim_market_spend_mode == "reroll_slot_sell_v1"),
+                            "choice_mode_affordable_alternative": int(candidate.sim_market_choice_mode == "affordable_alternative_v1"),
                             "sim_economy_mode": candidate.sim_economy_mode,
                             "sim_market_budget_mode": candidate.sim_market_budget_mode,
                             "sim_market_spend_mode": candidate.sim_market_spend_mode,
@@ -448,6 +485,35 @@ def market_availability_index(market: str) -> int:
     return 1
 
 
+def expected_target_score(station: int, tier: str, candidate: Candidate) -> int:
+    base = {
+        1: {"small": 240, "big": 264, "boss": 265},
+        2: {"small": 372, "big": 431, "boss": 439},
+        3: {"small": 463, "big": 537, "boss": 547},
+        4: {"small": 580, "big": 672, "boss": 685},
+        5: {"small": 725, "big": 841, "boss": 857},
+        6: {"small": 923, "big": 1112, "boss": 1121},
+        7: {"small": 1154, "big": 1391, "boss": 1401},
+        8: {"small": 1441, "big": 1738, "boss": 1739},
+    }.get(station, {}).get(tier, 0)
+    tier_multiplier = {
+        "small": candidate.small_target_multiplier,
+        "big": candidate.big_target_multiplier,
+        "boss": candidate.boss_target_multiplier,
+    }.get(tier, 1.0)
+    if tier == "boss" and station == 1:
+        tier_multiplier *= candidate.s1_boss_target_multiplier
+    if tier == "boss" and station == 2:
+        tier_multiplier *= candidate.s2_boss_target_multiplier
+    if tier == "boss" and station == 3:
+        tier_multiplier *= candidate.s3_boss_target_multiplier
+    return round(base * candidate.target_multiplier * tier_multiplier)
+
+
+def expected_reward_gold(tier: str, candidate: Candidate) -> float:
+    return {"small": 4, "big": 8, "boss": 12}.get(tier, 0) * candidate.reward_multiplier
+
+
 def build_report(
     *,
     feature_path: Path,
@@ -456,6 +522,7 @@ def build_report(
     row_count: int,
     source_row_count: int,
     max_rows: int,
+    target_column: str,
 ) -> str:
     top_rows = rows[:6]
     table = [
@@ -506,6 +573,7 @@ def build_report(
             f"- source rows: {source_row_count}",
             f"- training rows: {row_count}",
             f"- max rows: {max_rows}",
+            f"- target: `{target_column}`",
             "",
             "## 상위 후보 상세",
             "",

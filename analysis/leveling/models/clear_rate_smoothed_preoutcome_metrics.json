@@ -1,9 +1,9 @@
 {
-  "row_count": 60000,
+  "row_count": 120000,
   "source_row_count": 247290,
-  "train_count": 45000,
-  "test_count": 15000,
-  "target": "clear_rate",
+  "train_count": 90000,
+  "test_count": 30000,
+  "target": "clear_rate_smoothed",
   "feature_mode": "preoutcome",
   "model_strategy": "baseline",
   "uses_run_count_sample_weight": true,
@@ -12,7 +12,7 @@
     "selected_model": "RandomForestRegressor",
     "note": "row_count가 작거나 baseline 전략을 선택해 단일 모델을 사용했습니다."
   },
-  "mae": 0.044952669705077095,
-  "rmse": 0.1101673767461186,
-  "r2": 0.6784020718809545
+  "mae": 0.04404670001062987,
+  "rmse": 0.06658614757658703,
+  "r2": 0.7876952255190924
 }

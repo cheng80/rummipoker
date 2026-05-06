@@ -45,11 +45,17 @@ CATEGORICAL_FEATURES = [
 
 PREOUTCOME_NUMERIC_FEATURES = [
     "station",
+    "station_tier_index",
     "tier_index",
     "station_band_index",
     "is_boss_tier",
     "is_late_station",
     "is_final_station",
+    "expected_target_score",
+    "expected_reward_gold",
+    "board_discard_pressure",
+    "hand_discard_pressure",
+    "max_hand_size_pressure",
     "difficulty_multiplier",
     "target_multiplier",
     "small_target_multiplier",
@@ -72,6 +78,14 @@ PREOUTCOME_NUMERIC_FEATURES = [
     "boss_pressure_index",
     "is_runtime_boss_modifier",
     "economy_pressure_index",
+    "station_boss_interaction",
+    "station_pressure_interaction",
+    "market_station_interaction",
+    "economy_market_interaction",
+    "price_band_growth_access",
+    "price_band_catalog_normalized",
+    "spend_mode_reroll_slot_sell",
+    "choice_mode_affordable_alternative",
 ]
 
 PREOUTCOME_CATEGORICAL_FEATURES = [
@@ -144,7 +158,7 @@ def main() -> int:
     feature_path = Path(args.features or default_features)
     ensure_feature_table(feature_path, feature_mode=args.feature_mode)
 
-    df = pd.read_csv(feature_path)
+    df = pd.read_csv(feature_path, low_memory=False)
     if args.target not in df.columns:
         raise SystemExit(f"target 컬럼이 없습니다: {args.target}")
     if len(df) < 8:
@@ -189,13 +203,31 @@ def main() -> int:
         raise SystemExit("사용 가능한 feature 컬럼이 없습니다.")
 
     x = df[features].copy()
+    for key in numeric_features:
+        x[key] = x[key].fillna(0)
+    for key in categorical_features:
+        x[key] = x[key].fillna("")
     y = df[args.target].astype(float)
-    x_train, x_test, y_train, y_test = train_test_split(
-        x,
-        y,
-        test_size=args.test_size,
-        random_state=args.seed,
-    )
+    sample_weight = None
+    if args.feature_mode == "preoutcome" and "run_count" in df.columns:
+        sample_weight = df["run_count"].fillna(1).clip(lower=1).astype(float)
+
+    if sample_weight is None:
+        x_train, x_test, y_train, y_test = train_test_split(
+            x,
+            y,
+            test_size=args.test_size,
+            random_state=args.seed,
+        )
+        train_weight = None
+    else:
+        x_train, x_test, y_train, y_test, train_weight, _ = train_test_split(
+            x,
+            y,
+            sample_weight,
+            test_size=args.test_size,
+            random_state=args.seed,
+        )
 
     pipeline, model_selection = build_pipeline(
         numeric_features=numeric_features,
@@ -208,7 +240,8 @@ def main() -> int:
         grid_search_cls=GridSearchCV,
         kfold_cls=KFold,
     )
-    pipeline.fit(x_train, y_train)
+    fit_params = {"model__sample_weight": train_weight} if train_weight is not None else {}
+    pipeline.fit(x_train, y_train, **fit_params)
     if hasattr(pipeline, "best_params_"):
         model_selection["best_params"] = serializable_best_params(pipeline.best_params_)
         model_selection["best_cv_score"] = float(pipeline.best_score_)
@@ -225,6 +258,7 @@ def main() -> int:
         "target": args.target,
         "feature_mode": args.feature_mode,
         "model_strategy": args.model_strategy,
+        "uses_run_count_sample_weight": bool(sample_weight is not None),
         "model_selection": model_selection,
         "mae": float(mean_absolute_error(y_test, predictions)),
         "rmse": float(mse ** 0.5),
@@ -285,8 +319,9 @@ def build_pipeline(
         ],
     )
     baseline_model = random_forest_cls(
-        n_estimators=300,
+        n_estimators=160 if row_count > 50000 else 300,
         min_samples_leaf=2,
+        n_jobs=2,
         random_state=seed,
     )
     baseline_pipeline = Pipeline(
@@ -313,13 +348,13 @@ def build_pipeline(
     max_features = ["sqrt"] if row_count > 50000 else ["sqrt", 1.0]
     param_grid = [
         {
-            "model": [random_forest_cls(random_state=seed)],
+            "model": [random_forest_cls(n_jobs=2, random_state=seed)],
             "model__n_estimators": n_estimators,
             "model__min_samples_leaf": min_samples_leaf,
             "model__max_features": max_features,
         },
         {
-            "model": [extra_trees_cls(random_state=seed)],
+            "model": [extra_trees_cls(n_jobs=2, random_state=seed)],
             "model__n_estimators": n_estimators,
             "model__min_samples_leaf": min_samples_leaf,
             "model__max_features": max_features,
@@ -665,9 +700,9 @@ def build_preoutcome_report(
             "- `avg_remaining_hand_discards`",
             "- `avg_remaining_board_moves`",
             "- `slow_clear_share_of_clears`",
-            "- `run_count`",
             "",
-            "제외된 필드는 outcome 또는 sample-size metadata이므로, 시뮬레이션 실행 전 후보 추천에는 사용할 수 없다.",
+            "제외된 필드는 outcome 값이므로, 시뮬레이션 실행 전 후보 추천에는 사용할 수 없다.",
+            "`run_count`는 후보 조건 feature가 아니라 같은 조건을 몇 번 돌렸는지 나타내는 sample-size metadata이므로, 모델 입력 대신 학습 가중치로만 사용한다.",
             "",
             "## 모델",
             "",

@@ -1,29 +1,18 @@
 {
-  "row_count": 3004,
-  "source_row_count": 3004,
-  "train_count": 2253,
-  "test_count": 751,
+  "row_count": 3012,
+  "source_row_count": 3012,
+  "train_count": 2259,
+  "test_count": 753,
   "target": "path_clear_rate",
   "feature_mode": "preoutcome_sequence",
-  "model_strategy": "auto",
+  "model_strategy": "baseline",
+  "uses_run_count_sample_weight": false,
   "model_selection": {
-    "strategy": "auto",
-    "cv_splits": 5,
-    "scoring": "neg_root_mean_squared_error",
-    "candidate_models": [
-      "RandomForestRegressor",
-      "ExtraTreesRegressor"
-    ],
-    "best_params": {
-      "model": "RandomForestRegressor",
-      "model__max_features": 1.0,
-      "model__min_samples_leaf": 1,
-      "model__n_estimators": 600
-    },
-    "best_cv_score": -0.0839317804852769,
-    "selected_model": "RandomForestRegressor"
+    "strategy": "baseline",
+    "selected_model": "RandomForestRegressor",
+    "note": "row_count가 작거나 baseline 전략을 선택해 단일 모델을 사용했습니다."
   },
-  "mae": 0.046578646960392676,
-  "rmse": 0.07937752284433128,
-  "r2": 0.9213826834110572
+  "mae": 0.04664962876331806,
+  "rmse": 0.08785731678808983,
+  "r2": 0.909316869857967
 }

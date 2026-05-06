@@ -1369,12 +1369,10 @@ class RummiRunProgress {
       'rank',
       'tile_color',
       'xmult',
-      'boss',
       'discard',
       'move',
       'safety',
       'draw',
-      'market',
     };
     for (final tag in item.tags) {
       if (growthTags.contains(tag)) return true;

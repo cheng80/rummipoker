@@ -27,15 +27,15 @@
 | run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.04, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
-| runtime boss modifier station pool | Workspace pending | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 각 station 난이도 level에 맞춰 3~4개 후보를 두고 run seed로 deterministic 선택. S4 mid pool은 `singleRankPressure` 가중을 1/4에서 2/4로 올린 작업 트리 상태 |
-| simulation runtime boss station profile | Workspace pending | `tools/sim/run_balance_sim.dart` | runtime station pool과 같은 3~4개 후보 profile과 S4 rank 가중 변형을 sim experiment id로 추가. 레벨링/경제/ML 재검증 입력으로 사용 |
+| runtime boss modifier station pool | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 각 station 난이도 level에 맞춰 3~4개 후보를 두고 run seed로 deterministic 선택. S4 mid pool은 `singleRankPressure` 가중을 1/4에서 2/4로 올림 |
+| simulation runtime boss station profile | Applied | `tools/sim/run_balance_sim.dart` | runtime station pool과 같은 3~4개 후보 profile과 S4 rank 가중 변형을 sim experiment id로 추가. 레벨링/경제/ML 재검증 입력으로 사용 |
 | S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face/all-score/confirm/rank 계열을 station level pool에 적용. 추가 simulation-only proxy는 아직 런타임 미편입 |
 | post-contest boss candidates | Deferred | docs only | 저장/UI/정산/Jester·Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
-| economy reward / price policy | Workspace pending | `RummiEconomyConfig` / `RummiRunProgress.effective*Price` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용. 성장 Jester/Item은 rarity별 구매 가격 상한을 적용해 “보이면 살 수 있는” 후보로 조정 |
+| economy reward / price policy | Applied | `RummiEconomyConfig` / `RummiRunProgress.effective*Price` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용. 성장 Jester/Item은 rarity별 구매 가격 상한을 적용해 “보이면 살 수 있는” 후보로 조정. 단, market/boss 전용 아이템은 성장 접근 상한에서 제외 |
 | catalog value audit | Applied | `tools/sim/catalog_value_audit.py` | Item/Jester 가격과 effect role의 불일치 후보를 runtime effective price 기준으로 표시한다 |
 | jester hook price adjustment | Applied | `data/common/items_common_v1.json` | `jester_hook` base 10G/effective 22G는 sell value +1 대비 과해 base 7G/effective 15G로 낮춤 |
 | catalog audit v2 price probe | Workspace pending | `tools/sim/run_balance_sim.dart` / `tools/sim/economy_audit.py` | `catalog_audit_v2` sim-only price band 추가. r120에서는 조정 후보 구매 이벤트가 없어 normalized와 결과 동일. economy audit가 content/proxy/source candidate별 구매 count와 audit watchlist를 출력 |
@@ -182,10 +182,11 @@ Runtime S4 rank weight + growth access r400:
 
 ML handoff refresh:
 
-- feature rows: station/tier 246,271 source rows 중 120,000 rows 학습, sequence/path 3,004 rows 전체 학습.
-- station/tier: ExtraTreesRegressor, MAE 0.0561(최선 0.0000), RMSE 0.1207(최선 0.0000), R2 0.6066(이상값 1.0000).
-- sequence/path: RandomForestRegressor, MAE 0.0466(최선 0.0000), RMSE 0.0794(최선 0.0000), R2 0.9214(이상값 1.0000).
-- 판단: path-level 후보 triage는 유망하지만 station/tier 품질은 아직 부족하다. production ML/자동 적용은 계속 금지한다.
+- feature rows: station/tier 247,290 source rows, sequence/path 3,012 rows.
+- raw station/tier `clear_rate`: RandomForestRegressor, 60,000 rows, MAE 0.0450(최선 0.0000), RMSE 0.1102(최선 0.0000), R2 0.6784(이상값 1.0000).
+- smoothed station/tier `clear_rate_smoothed`: RandomForestRegressor, 120,000 rows, MAE 0.0440(최선 0.0000), RMSE 0.0666(최선 0.0000), R2 0.7877(이상값 1.0000).
+- sequence/path: RandomForestRegressor, 3,012 rows, MAE 0.0466(최선 0.0000), RMSE 0.0879(최선 0.0000), R2 0.9093(이상값 1.0000).
+- 판단: station/tier는 이전보다 좋아졌지만 production ML/자동 적용 기준은 아니다. path-level 후보 triage는 계속 참고 신호로만 쓴다.
 
 S7~S8 shape correction workspace probe:
 
@@ -631,13 +632,14 @@ Status: 레벨링 r400 확인 완료, 경제 gate는 미통과.
 
 ## Latest ML Scaffold Status
 
-Status: sequence/path 모델은 크게 개선, station/tier 모델은 실무 추천 gate 미달.
+Status: sequence/path 모델은 유망, station/tier 모델은 개선됐지만 실무 추천 gate 미달.
 
-- preoutcome feature table: 239,212 source rows, station/tier 학습은 비용 제한으로 60,000 rows sampling.
-- station/tier model: ExtraTreesRegressor, MAE 0.0631(최선 0.0000), RMSE 0.1314(최선 0.0000), R2 0.5610(이상값 1.0000).
-- sequence/path model: RandomForestRegressor, 2,950 rows, MAE 0.0490(최선 0.0000), RMSE 0.0892(최선 0.0000), R2 0.9119(이상값 1.0000).
-- 새 feature는 station band, boss level/pressure, runtime boss 여부, economy pressure, market availability/sim policy index를 포함한다.
-- path-level triage 신호는 유망하지만, station/tier 모델과 economy gate가 함께 부족하므로 추천 후보를 runtime에 자동 적용하지 않는다.
+- preoutcome feature table: 247,290 source rows.
+- raw station/tier `clear_rate`: RandomForestRegressor, 60,000 rows, MAE 0.0450(최선 0.0000), RMSE 0.1102(최선 0.0000), R2 0.6784(이상값 1.0000).
+- smoothed station/tier `clear_rate_smoothed`: RandomForestRegressor, 120,000 rows, MAE 0.0440(최선 0.0000), RMSE 0.0666(최선 0.0000), R2 0.7877(이상값 1.0000).
+- sequence/path model: RandomForestRegressor, 3,012 rows, MAE 0.0466(최선 0.0000), RMSE 0.0879(최선 0.0000), R2 0.9093(이상값 1.0000).
+- 새 feature는 station/tier 조합, boss/market/economy 상호작용, 실제 target score, reward/resource pressure, price band/spend/choice flag를 포함한다.
+- path-level triage 신호는 유망하고 station/tier도 개선됐지만, production ML/자동 적용 기준은 아직 아니다.
 
 ## 6. Read Order
 
