@@ -1,5 +1,7 @@
 {
   "row_count": 2938,
+  "source_row_count": 2938,
+  "max_rows": 0,
   "source_paths": [
     "logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json",
     "logs/sim/boss_expansion_probe_v1_r120_summary.json",

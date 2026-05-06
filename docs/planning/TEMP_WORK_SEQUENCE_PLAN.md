@@ -48,6 +48,8 @@ Status: Done
 - `analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv`
 - 위 CSV들은 재생성 가능한 heavy artifact이므로 Git 추적 대상이 아니다.
 - `logs/sim/*.jsonl` raw run log도 Git 추적 대상이 아니다.
+- `tools/leveling/train_leveling_model.py`와 `tools/leveling/recommend_leveling_candidates.py`는 generated feature CSV가 없으면 metadata의 `source_paths` 기준으로 자동 재생성을 시도한다.
+- 단, 다른 PC에서 `logs/sim/*_summary.json` source가 없으면 자동 재생성은 불가능하므로 summary 로그를 외부 저장소에서 복원하거나 해당 probe를 다시 실행해야 한다.
 
 주의:
 

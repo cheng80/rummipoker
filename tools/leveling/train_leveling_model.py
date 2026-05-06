@@ -9,9 +9,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from feature_table_autogen import ensure_feature_table
+
 
 DEFAULT_FEATURES = "analysis/leveling/generated/features/leveling_feature_table.csv"
 DEFAULT_PREOUTCOME_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_PREOUTCOME_SEQUENCE_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv"
 DEFAULT_REPORT = "analysis/leveling/reports/model_recommendation_report.md"
 DEFAULT_PREOUTCOME_REPORT = "analysis/leveling/reports/preoutcome_baseline_model_report.md"
 DEFAULT_MODEL_DIR = "analysis/leveling/models"
@@ -129,10 +132,14 @@ def main() -> int:
             f"{error}",
         ) from error
 
-    default_features = DEFAULT_PREOUTCOME_FEATURES if args.feature_mode in {"preoutcome", "preoutcome_sequence"} else DEFAULT_FEATURES
+    if args.feature_mode == "preoutcome":
+        default_features = DEFAULT_PREOUTCOME_FEATURES
+    elif args.feature_mode == "preoutcome_sequence":
+        default_features = DEFAULT_PREOUTCOME_SEQUENCE_FEATURES
+    else:
+        default_features = DEFAULT_FEATURES
     feature_path = Path(args.features or default_features)
-    if not feature_path.exists():
-        raise SystemExit(f"feature table이 없습니다: {feature_path}")
+    ensure_feature_table(feature_path, feature_mode=args.feature_mode)
 
     df = pd.read_csv(feature_path)
     if args.target not in df.columns:

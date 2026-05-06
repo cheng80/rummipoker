@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from feature_table_autogen import ensure_feature_table
+
 
 DEFAULT_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
 DEFAULT_OUT = "analysis/leveling/models/preoutcome_candidate_recommendations.csv"
@@ -109,6 +111,7 @@ def main() -> int:
         ) from error
 
     feature_path = Path(args.features)
+    ensure_feature_table(feature_path, feature_mode="preoutcome")
     df = pd.read_csv(feature_path)
     feature_columns = [
         key
