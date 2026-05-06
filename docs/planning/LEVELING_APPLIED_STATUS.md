@@ -222,6 +222,7 @@ First-reroll-free follow-up:
 - latest r400: 같은 조건에서 none balanced 48.8%, none power 54.8% / v9 balanced 60.5%, power 69.8% / v15 balanced 59.2%, power 64.8%다.
 - 판정: v9가 목표 범위에 들어오고, none은 압박 범위에 남는다. S8 boss 실패와 board/draw 실패도 남아 있다.
 - runtime applied: 첫 리롤 무료 정책을 `RummiRunProgress.openShop()`에 적용했다. 기존 `firstRerollDiscount` 저장 필드를 쓰므로 save schema 변경 없음.
+- policy lock: 첫 리롤 무료는 run-wide 1회가 아니라 market-entry bonus다. 각 상점에 들어갈 때 첫 리롤 1회만 무료이고, 같은 상점에서 사용하면 이후 리롤은 정상 비용을 낸다.
 - economy audit: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_economy_audit.json`에서 즉시 경제 경고 없음.
 - ML refresh: station/tier source split MAE 0.0487, RMSE 0.0952, R2 0.7265 / sequence/path source split MAE 0.0560, RMSE 0.1055, R2 0.8482.
 - sequence/path recommendation: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`은 fresh gate 1, ML gate 1이다.

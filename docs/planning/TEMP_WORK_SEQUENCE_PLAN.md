@@ -394,6 +394,7 @@ Runtime handoff uplift results:
 - 최신 runtime profile r400 결과: none balanced 48.8%, none power 54.8% / v9 balanced 60.5%, power 69.8% / v15 balanced 59.2%, power 64.8%.
 - 쉬운 해석: 최신 기준에서는 `none`은 목표 범위에 남고, v9만 목표 범위로 올라간다. S8 boss 실패와 board/draw 실패도 남아 있어 압박을 완전히 지우지 않았다.
 - runtime 적용: 성장 후보 가격 상한은 이미 runtime에 있었고, 부족했던 첫 리롤 무료 정책을 `RummiEconomyConfig.shopFirstRerollDiscount`와 `RummiRunProgress.openShop()`에 적용했다. 저장 필드는 기존 `firstRerollDiscount`를 사용하므로 save schema 변경은 없다.
+- 정책 결정: 첫 리롤 무료는 “런 전체 1회”가 아니라 “상점에 들어갈 때마다 첫 리롤 1회 무료”로 유지한다. 쓰지 않고 다음 상점으로 가면 그 상점의 무료 기회는 사라지고, 새 상점에서 다시 첫 리롤 1회 무료가 열린다.
 - economy audit: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_economy_audit.json`에서 즉시 경제 경고 없음.
 - ML refresh: station/tier source split MAE 0.0487, RMSE 0.0952, R2 0.7265 / sequence/path source split MAE 0.0560, RMSE 0.1055, R2 0.8482.
 - sequence/path recommendation: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`은 fresh gate 1, ML gate 1이다.
