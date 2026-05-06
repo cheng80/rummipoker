@@ -11,12 +11,12 @@
 | Layer | Count | Notes |
 |---|---:|---|
 | Simulation proxy pool | 10+3+5 | `CURRENT_LEVELING_RUNTIME_SPEC.md`의 boss constraint proxy 기준 + 1차 확장 experiment axis + Stage A simulation-only proxy |
-| Runtime modifier type | 9 | battle/save/display/settlement penalty 경로가 있는 modifier 타입. `confirm_limit_tax_v1`은 구현됐지만 cycle 미편입 |
-| S1~S8 runtime cycle slot | 8 | Station마다 1개씩 고정 배치 |
+| Runtime modifier id in seed pool | 14 | battle/save/display/settlement penalty 경로가 있는 modifier id. 색상 variant, `confirm_limit_tax_v1`, rank pressure 계열 포함 |
+| S1~S8 runtime station pool | 8 pools / 31 placements | Station 난이도 level별 3~4개 후보를 두고 run seed로 deterministic 선택 |
 
 현재 문제:
 
-- S1~S8에 boss가 8번만 나오므로 반복 run에서 전략 학습 폭이 좁다.
+- S1~S8 고정 boss 8개 문제는 1차 해소했다. 이제 각 station 난이도 level별 pool의 severity와 경제/레벨링 영향 재검증이 남았다.
 - reference boss pattern은 28개인데, 현재는 이를 10개 family로 압축했다.
 - 공모전용 vertical slice 기준에서도 boss 다양성은 전략성 인상에 직접 영향을 준다.
 
@@ -45,8 +45,8 @@
 | 11 | The Water | no discard | partial via resource squeeze | hand discard 0 또는 discard cost 증가 | simulation first |
 | 12 | The Window | suit debuff | absorbed by color dampener | 특정 색상 타일 포함 라인 점수 감소 | already absorbed |
 | 13 | The Manacle | hand size -1 | proxy `resource_squeeze` | max hand size pressure | simulation first, runtime risky |
-| 14 | The Eye | no repeated hand type | implemented repeat pressure | 같은 족보 반복 확정 시 점수 감소 또는 무효화 | implemented, not in cycle |
-| 15 | The Mouth | only one hand type | implemented single rank pressure | 첫 확정 족보 family만 고효율, 다른 family penalty | implemented, not in cycle |
+| 14 | The Eye | no repeated hand type | implemented repeat pressure | 같은 족보 반복 확정 시 점수 감소 또는 무효화 | runtime pool applied |
+| 15 | The Mouth | only one hand type | implemented single rank pressure | 첫 확정 족보 family만 고효율, 다른 family penalty | runtime pool applied |
 | 16 | The Plant | face card debuff | absorbed by face tile dampener | 11~13 포함 라인 점수 감소 | already absorbed |
 | 17 | The Serpent | draw count fixed | not absorbed | 확정/버림 후 refill 수 제한 또는 고정 | simulation first |
 | 18 | The Pillar | previous ante cards debuff | not absorbed | 이전 Station에서 많이 쓴 rank/color가 다음 Boss에서 약화 | needs tracking, defer |
@@ -118,7 +118,7 @@ Stage A 우선 probe 후보:
 Stage A 적용 상태:
 
 - experiment id: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1`
-- runtime cycle에는 편입하지 않았다.
+- Stage A simulation-only 후보이며 runtime station pool에는 편입하지 않았다.
 - 저장 포맷과 UI는 변경하지 않았다.
 - `reward_tax_by_contributor_v1`은 simulation economy cashout에만 적용한다.
 - `refill_limit_v1`은 첫 구현에서 `maxDrawActions 18`이 S3 boss를 거의 전부 막아 `maxDrawActions 42`로 완화했다.
@@ -192,11 +192,11 @@ Split 판정:
 ### Stage B: 저장 포맷 변경 없이 runtime 가능
 
 기존 boss modifier JSON, confirm count, confirmed rank, target table, settlement/economy trace로 구현 가능한 후보군이다.
-이 단계도 cycle 편입 전에는 별도 experiment axis로 검증한다.
+이 단계도 station pool 편입 전에는 별도 experiment axis로 검증한다.
 
 | Candidate | Runtime anchor | 저장/복원 영향 | UI/피드백 영향 | 현재 판단 |
 |---|---|---|---|---|
-| `confirm_limit_tax_v1` | `confirmCountWeaken` threshold variant | 새 schema 없이 선택 필드 round-trip 완료 | 기존 confirm count penalty 표시 재사용 | 구현 완료, cycle 미편입 |
+| `confirm_limit_tax_v1` | `confirmCountWeaken` threshold variant | 새 schema 없이 선택 필드 round-trip 완료 | 기존 confirm count penalty 표시 재사용 | 구현 완료, station pool 편입 |
 | `target_spike_wall_soft_v1` | boss target table lever | 저장 영향 없음 | boss target preview/설명 필요 | runtime 가능, severity 검증 필요 |
 | `color_dampener_variant_v1` | `tileColorWeaken` | 저장 영향 없음 | 기존 타일 배지/보스 팝업 재사용 | runtime 가능 |
 | `face_tile_dampener_variant_v1` | `faceTileWeaken` | 저장 영향 없음 | 기존 타일 배지/보스 팝업 재사용 | runtime 가능 |
@@ -216,14 +216,14 @@ Stage B 구현 원칙:
 
 - `reward_tax_by_contributor_v1`은 전투 점수 penalty가 아니라 정산/economy penalty다.
 - `hand_discard_cost_v1`은 먼저 기존 blind resource pressure 계열로만 구현한다. gold cost 방식은 이번 단계에서 제외한다.
-- 두 후보 모두 S1~S8 cycle에 바로 넣지 않고 별도 runtime experiment axis 또는 pool 후보로 검증한다.
+- 두 후보 모두 S1~S8 station pool에 바로 넣지 않고 별도 runtime experiment axis 또는 pool 후보로 검증한다.
 - 저장 포맷을 늘려야 하는 구현안이 나오면 코드 작성 전에 영향과 검증 경로를 다시 확인한다.
 
 Stage B code path check:
 
 | Candidate | 현재 코드 anchor | 3파일 이하 1차 단위 | 큰 변경으로 넘어가는 경계 |
 |---|---|---|---|
-| `hand_discard_cost_v1` | `lib/services/blind_selection_spec.dart`의 boss tier `handDiscards` 계산, `lib/views/blind_select_view.dart`의 조건 요약, `test/services/blind_selection_setup_test.dart`의 boss resource/cycle test | S1~S8 cycle 미편입 상태에서 특정 boss spec의 `handDiscards`를 0 또는 `base - 1`로 낮추는 resource-pressure spike. 저장은 기존 `RummiBlindState.handDiscardsRemaining/Max`를 사용한다 | `RummiBossModifier`에 resource category를 추가해 boss popup/chip/title까지 일반화하거나, runtime cycle에 넣어 player-facing boss로 고정하면 `boss_modifier.dart`, blind select UI, active run save round-trip test까지 포함한다 |
+| `hand_discard_cost_v1` | `lib/services/blind_selection_spec.dart`의 boss tier `handDiscards` 계산, `lib/views/blind_select_view.dart`의 조건 요약, `test/services/blind_selection_setup_test.dart`의 boss resource/pool test | station pool 후보로 넣기 전 특정 boss spec의 `handDiscards`를 0 또는 `base - 1`로 낮추는 resource-pressure spike. 저장은 기존 `RummiBlindState.handDiscardsRemaining/Max`를 사용한다 | `RummiBossModifier`에 resource category를 추가해 boss popup/chip/title까지 일반화하거나, station pool에 넣어 player-facing boss로 고정하면 `boss_modifier.dart`, blind select UI, active run save round-trip test까지 포함한다 |
 | `reward_tax_by_contributor_v1` | `lib/providers/features/rummi_poker_grid/game_session_notifier.dart`의 cash-out command, `lib/logic/rummi_poker_grid/item_effect_runtime.dart`의 settlement reward modifier, `lib/views/game/widgets/game_cashout_widgets.dart`의 reward line 표시 | 문서/시뮬 기준으로는 후보 유지. 코드 1차 단위로 자르려면 reward preview를 바꾸지 않는 internal tax calculation spike부터 분리해야 한다 | boss modifier JSON에 reward tax parameter를 넣거나 cashout sheet에 tax line을 표시하면 저장/복원, final boss reward, economy audit, widget test까지 같이 확인해야 한다 |
 
 Code path 판정:
@@ -231,7 +231,7 @@ Code path 판정:
 - 다음 구현은 `hand_discard_cost_v1`의 resource-pressure spike가 가장 작다.
 - 이 spike는 저장 포맷을 늘리지 않는다. blind 시작 시 확정된 `handDiscards` 값이 기존 active run save payload에 저장된다.
 - 앱 runtime에는 simulator의 `experiment-id`처럼 boss 후보만 주입하는 축이 없다. 현재 `NewRunModifier`는 `basic` / `high_stakes`뿐이고, debug fixture는 QA fixture이지 밸런스 실험 축이 아니다.
-- 따라서 `hand_discard_cost_v1` resource spike를 코드에 넣으면 숨은 실험이 아니라 실제 런타임 규칙 변경이다. S1~S8 cycle 편입 전이라도 사람 승인 후 적용한다.
+- 따라서 `hand_discard_cost_v1` resource spike를 코드에 넣으면 숨은 실험이 아니라 실제 런타임 규칙 변경이다. S1~S8 station pool 편입 전이라도 사람 승인 후 적용한다.
 - 단, 이 구현은 아직 player-facing boss modifier 타입 확장이 아니다. 표시명/보스 chip까지 붙이는 순간 보스 modifier taxonomy 확장 작업으로 분리한다.
 - `reward_tax_by_contributor_v1`은 재미 가치는 높지만 정산 source of truth와 reward 표시를 건드리므로, hand discard resource spike 이후 별도 작업으로 둔다.
 
@@ -256,10 +256,10 @@ Position 판정:
 - S4는 압박이 가장 크지만 v9 역전 신호가 있어, 그대로 runtime 적용하기 전 severity 또는 market availability 재확인이 필요하다.
 - 다음 runtime 구현 승인 후보는 S3 boss resource-pressure spike다. 단, 앱 runtime에 독립 boss experiment axis가 없으므로 코드 적용 전 승인 경계를 유지한다.
 
-### Stage B 증량: 이미 구현된 rank 계열 cycle 후보
+### Stage B 증량: 이미 구현된 rank 계열 station pool 후보
 
 `repeat_rank_pressure_v4`와 `single_rank_pressure`는 runtime modifier, 저장/복원, 정산 penalty 표시 경로가 이미 구현됐다.
-따라서 새 저장 schema나 새 UI category 없이 S1~S8 cycle 후보로 증량할 수 있는지 position probe로 확인한다.
+따라서 새 저장 schema나 새 UI category 없이 S1~S8 station pool 후보로 증량할 수 있는지 position probe로 확인한다.
 
 - command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 91280 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_repeat_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_repeat_s5,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_repeat_s6,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s5,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s6 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/rank_runtime_position_probe_v1_r80`
 - summary: `logs/sim/rank_runtime_position_probe_v1_r80_summary.json`
@@ -278,7 +278,7 @@ Target boss clear:
 
 증량 판정:
 
-- `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4는 이미 구현된 modifier를 활용하는 Stage B 우선 cycle 후보로 추가한다.
+- `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4는 이미 구현된 modifier를 활용하는 Stage B 우선 station pool 후보로 추가한다.
 - S5 배치는 안전하지만 압박이 약하므로 fallback 후보로 둔다.
 - S6 배치는 너무 안전하고 v9가 none보다 낮아지는 신호가 있어 이번 증량 후보에서는 제외한다.
 - 이로써 구현 후보군은 `confirm_limit_tax_v1`, `hand_discard_cost_v1` S3 resource spike, `repeat_rank_pressure_v4` S4, `single_rank_pressure` S4로 넓힌다.
@@ -286,7 +286,7 @@ Target boss clear:
 ### Stage B 증량: confirm-limit / color variant position 후보
 
 `confirm_limit_tax_v1`은 이미 runtime modifier로 구현되어 있고, color variant는 기존 `tileColorWeaken` + `blue_dampener_v1` 경로를 재사용한다.
-둘 다 저장 schema와 새 UI category 없이 cycle 후보 증량이 가능하다.
+둘 다 저장 schema와 새 UI category 없이 station pool 후보 증량이 가능하다.
 
 - command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 91380 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s5,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s6,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s2,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s5 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/confirm_color_position_probe_v1_r80`
 - summary: `logs/sim/confirm_color_position_probe_v1_r80_summary.json`
@@ -305,7 +305,7 @@ Target boss clear:
 
 증량 판정:
 
-- `confirm_limit_tax_v1`은 S4가 가장 강한 cycle 후보이고, S5는 보수적 fallback이다.
+- `confirm_limit_tax_v1`은 S4가 가장 강한 station pool 후보이고, S5는 보수적 fallback이다.
 - `color_dampener_variant_v1`은 S4/S5 모두 v9가 none보다 높아 색상 family 다양성 후보로 살린다. S2는 너무 안전해 우선순위에서 제외한다.
 - 구현 후보군에 `confirm_limit_tax_v1` S4, `color_dampener_variant_v1` S4/S5를 추가한다.
 
@@ -334,7 +334,7 @@ Target boss clear:
 
 ## 4.1 Simulation Proxy 1차 적용 상태
 
-2026-05-06 기준으로 아래 후보는 runtime cycle이 아니라 simulation-only experiment axis에 먼저 추가했다.
+2026-05-06 기준으로 아래 후보는 runtime station pool이 아니라 simulation-only experiment axis에 먼저 추가했다.
 
 Experiment id:
 
@@ -401,7 +401,7 @@ Follow-up 판정:
 
 - `boss_expansion_probe_v1`은 r120에서도 실행 안정성은 있다.
 - S1/S7/S8 boss 병목이 남아 있고, v9가 none보다 낮아지는 역전은 없다.
-- 단, balanced v9가 60.8%로 과도하게 여유로운 후보는 아니므로 runtime cycle 편입은 아직 보류한다.
+- 단, balanced v9가 60.8%로 과도하게 여유로운 후보는 아니므로 runtime station pool 편입은 아직 보류한다.
 - 다음 작은 작업은 severity 완화가 아니라, 후보별 단독 profile 또는 runtime 구현 가능성이 높은 `min_contributor_count_v1` / `confirm_limit_tax_v1` 중심 분리 smoke다.
 
 후보별 r80 split probe:
@@ -441,7 +441,7 @@ Runtime path check:
 - 저장/복원은 새 저장 schema 없이 `RummiBossModifier` JSON의 `firstAffectedConfirmOrdinal` 선택 필드로 round-trip한다. 기존 저장 payload는 기본값 3으로 복원되어 `confirm_count_tax_v2` 의미를 유지한다.
 - 전투 penalty는 기존 `confirmCountThisStation`과 confirm ordinal 경로를 재사용한다.
 - HUD/정산 penalty 표시는 기존 `confirmCountWeaken` category 경로를 재사용한다.
-- S1~S8 runtime cycle에는 아직 편입하지 않았다.
+- 이후 seed 기반 station pool에 편입했다.
 
 r400 leveling revalidation:
 
@@ -475,7 +475,7 @@ Leveling 판정:
 
 ## 6. Next Step
 
-1. 이미 구현된 후보 중 `confirm_limit_tax_v1` S4, `repeat_rank_pressure_v4` S4, `single_rank_pressure` S4, `color_dampener_variant_v1` S4/S5를 cycle 편입 후보로 우선 검토한다.
+1. seed 기반 runtime station pool을 기준으로 smoke/r80/r400 재검증을 진행한다.
 2. `hand_discard_cost_v1`를 구현한다면 1차 위치는 S3 boss로 잡고, 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한한다.
 3. 앱 runtime에는 독립 boss experiment axis가 없으므로, `hand_discard_cost_v1`도 코드 적용 전 승인 대상으로 둔다.
 4. `reward_tax_by_contributor_v1`는 cashout/economy/UI 영향이 커서 별도 구현 계획으로 분리한다.

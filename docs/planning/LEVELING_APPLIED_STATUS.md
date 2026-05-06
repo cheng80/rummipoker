@@ -27,9 +27,9 @@
 | run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.04, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
-| runtime boss modifier cycle | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 순환 보스 제약 표시/전투 적용 |
+| runtime boss modifier station pool | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 각 station 난이도 level에 맞춰 3~4개 후보를 두고 run seed로 deterministic 선택 |
 | S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
-| boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face 약화 3계열 적용. 1차 boss expansion experiment axis와 `confirm_limit_tax_v1` runtime modifier가 추가됐지만 cycle에는 미편입 |
+| boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face/all-score/confirm/rank 계열을 station level pool에 적용. 추가 simulation-only proxy는 아직 런타임 미편입 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
@@ -69,15 +69,15 @@ Applied:
 - Boss 표시를 눌러 제약 팝업을 다시 확인할 수 있다.
 - S1 `red_dampener_v1`은 40% 감소에서 35% 감소로 완화했다. S1 통과 안정성을 위한 severity 조정이며, 자동 자원 지급이나 무료 성장 보정은 아니다.
 - 현재 구현된 제약 계열은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다.
-- `confirm_limit_tax_v1`은 `confirmCountWeaken` 계열 threshold variant로 구현했다. 두 번째 confirm부터 점수 라인 30% 감소이며, 기존 `confirmCountThisStation`과 boss modifier JSON round-trip을 사용한다. S1~S8 cycle에는 아직 넣지 않았다.
+- `confirm_limit_tax_v1`은 `confirmCountWeaken` 계열 threshold variant로 구현했다. 두 번째 confirm부터 점수 라인 30% 감소이며, 기존 `confirmCountThisStation`과 boss modifier JSON round-trip을 사용한다. 현재 mid-late 이후 station pool 후보로 들어간다.
 
 Partially applied:
 
 - simulation boss pool의 10개 proxy는 현재 시뮬 기준표로 유지된다.
-- 런타임은 아직 weighted pool 전체를 그대로 뽑지 않고, station modifier cycle을 사용한다.
+- 런타임은 아직 weighted pool 전체를 그대로 뽑지 않지만, station 난이도 level별 3~4개 modifier pool을 사용한다.
 - all score dampener, first confirm tax, confirm count tax, repeat rank, single rank는 runtime modifier 타입으로 승격했다.
-- confirm limit tax는 runtime modifier로 구현됐지만 cycle 편입 전이다.
-- repeat rank, single rank는 modifier와 저장/복원은 구현됐지만 S1~S8 runtime boss cycle에는 아직 편입하지 않았다.
+- confirm limit tax는 runtime modifier로 구현됐고 mid-late 이후 station pool 후보로 편입됐다.
+- repeat rank, single rank는 modifier와 저장/복원이 구현됐고 mid/mid-late station pool 후보로 편입됐다.
 - target spike, resource squeeze는 아직 runtime modifier 타입으로 승격하지 않았다.
 
 Not applied:
@@ -92,10 +92,10 @@ Boss constraint runtime scope:
 | 0 | `color_dampener_cycle` | Applied | `tileColorWeaken`으로 전투/저장/표시 적용 완료 |
 | 1 | `line_kind_dampener_cycle` | Applied | `lineKindWeaken`으로 전투/저장/표시 적용 완료 |
 | 2 | `face_tile_dampener` | Applied | S3 boss modifier. 11~13 타일 포함 라인을 35% 감소 |
-| 3 | `repeat_rank_pressure_v4` | Implemented, not in cycle | 이전 confirm에서 나온 같은 족보를 다시 확정하면 20% 감소. `confirmedRanksThisStation` 저장/복원 |
-| 4 | `single_rank_pressure` | Implemented, not in cycle | A안 기준 첫 confirm 족보를 다시 확정하면 30% 감소. 타일 배지 없이 보스 팝업/정산 penalty 표시 |
+| 3 | `repeat_rank_pressure_v4` | Applied in station pool | 이전 confirm에서 나온 같은 족보를 다시 확정하면 20% 감소. `confirmedRanksThisStation` 저장/복원 |
+| 4 | `single_rank_pressure` | Applied in station pool | A안 기준 첫 confirm 족보를 다시 확정하면 30% 감소. 타일 배지 없이 보스 팝업/정산 penalty 표시 |
 | 5 | `confirm_count_tax_v2` | Applied | 기존 `confirmCountThisStation`으로 세 번째 confirm부터 25% 감소 |
-| 5a | `confirm_limit_tax_v1` | Implemented, not in cycle | 기존 `confirmCountThisStation`으로 두 번째 confirm부터 30% 감소. Boss expansion split probe에서 1차 runtime 후보로 좁힘 |
+| 5a | `confirm_limit_tax_v1` | Applied in station pool | 기존 `confirmCountThisStation`으로 두 번째 confirm부터 30% 감소. mid-late 이후 station pool 후보 |
 | 6 | `all_score_dampener` | Applied | 모든 점수 라인 20% 감소. 타일별 표시 없이 보스 팝업/정산 penalty로 표시 |
 | 7 | `first_confirm_tax` | Applied | 첫 confirm 점수 라인 30% 감소. 기존 confirm ordinal로 판정 |
 | 8 | `target_spike_wall` | Spec only | target score 조정 계열이므로 boss modifier와 별도 target 레버로 다뤄야 함 |
@@ -116,7 +116,7 @@ Boss constraint implementation checklist:
 
 현재 제외:
 
-- `repeat_rank_pressure_v4`, `single_rank_pressure`는 modifier 구현은 완료했지만, S1~S8 cycle 배치는 아직 하지 않는다.
+- `repeat_rank_pressure_v4`, `single_rank_pressure`는 modifier 구현과 저장/복원을 완료했고 mid/mid-late station pool 후보로 들어간다.
 - `target_spike_wall`은 boss modifier가 아니라 target table 레버로 둔다.
 - `resource_squeeze`는 자동 자원 지급/보정으로 번역하지 않는다.
 
@@ -274,9 +274,9 @@ v90 boss runtime phase 1 proxy smoke:
 - command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 89000 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_boss_runtime_v90_smoke_r120`
 - summary: `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_summary.json`
 - report: `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_report.md`
-- note: 이 sweep은 Python sim의 boss proxy 기준이며, Dart runtime cycle 자체는 `blind_selection_setup_test.dart`로 검증한다.
+- note: 이 sweep은 Python sim의 boss proxy 기준이며, 당시 Dart runtime cycle 자체는 `blind_selection_setup_test.dart`로 검증했다.
 
-Runtime S1~S8 boss cycle:
+Historical runtime S1~S8 boss cycle:
 
 | Station | Modifier |
 |---:|---|
@@ -298,7 +298,7 @@ Runtime S1~S8 boss cycle:
 
 판정:
 
-- 신규 cycle은 v89 대비 balanced clear를 낮춘다. 특히 `none` balanced가 52.5%에서 45.0%로 내려가므로, 이 배치를 그대로 확정하기 전에는 r120보다 큰 runs로 재검증해야 한다.
+- 당시 신규 cycle은 v89 대비 balanced clear를 낮췄다. 특히 `none` balanced가 52.5%에서 45.0%로 내려가므로, 이 배치를 그대로 확정하기 전에는 r120보다 큰 runs로 재검증해야 했다.
 - `shop_slot_market_v9`는 여전히 clear를 올리지만 balanced v9도 57.5%라 과보정은 아니다.
 - S8 boss 병목이 모든 조합에서 남는다. S8에 들어간 `confirm_count_tax_v2`는 보스 압박으로 읽히지만, 후반 병목을 키우는지 장기 sweep으로 확인해야 한다.
 - 자동 자원 지급/보정은 추가하지 않는다. 다음 조정이 필요하면 boss severity나 S8 후보군 availability를 먼저 본다.
@@ -308,7 +308,7 @@ v90 boss runtime long sweep:
 - command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 800 --seed 90800 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_boss_runtime_v90_long_r800`
 - summary: `logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.json`
 - report: `logs/sim/ml_sweep_boss_runtime_v90_long_r800_report.md`
-- note: r120 smoke에서 확인한 신규 boss runtime cycle을 기존 장기 sweep 기준인 r800으로 재검증했다.
+- note: r120 smoke에서 확인한 당시 boss runtime cycle을 기존 장기 sweep 기준인 r800으로 재검증했다.
 
 | loadout | market | path clear | avg total turn | S1/S4/S5/S8 boss bottleneck | top bottlenecks | stop reason |
 |---|---|---:|---:|---|---|---|
@@ -323,7 +323,7 @@ v90 boss runtime long sweep:
 - `shop_slot_market_v9`는 clear를 올리고 draw stop을 줄이지만, S1/S8 boss 병목은 지우지 않는다.
 - `power + v9`가 73.2%까지 올라가므로 S7~S8 shape floor나 market weight 추가 강화는 보류한다.
 - S8 `confirm_count_tax_v2`는 병목을 유지하지만, v9에서는 S8 boss stop이 balanced 38/800, power 29/800까지 내려가므로 즉시 완화할 hard wall로 보지 않는다.
-- 자동 자원 지급/자동 보정은 여전히 근거가 없다. 필요 시 boss severity/cycle 위치 또는 S8 후보군 availability를 먼저 검토한다.
+- 자동 자원 지급/자동 보정은 여전히 근거가 없다. 필요 시 boss severity/station pool 위치 또는 S8 후보군 availability를 먼저 검토한다.
 
 v91 출품용 S1 entry smoke:
 
@@ -382,8 +382,8 @@ v91 submission candidate leveling smoke:
 
 1. Economy leveling gate를 먼저 통과한다. 보상 골드와 item/Jester 가격대가 구매력 기준과 맞지 않으면 boss/market 장기 sweep이 왜곡된다.
 2. S7~S8 shape floor는 현재 값으로 동결한다. 추가 강화하지 않는다.
-3. 신규 boss modifier cycle은 r800 기준으로 1차 유지 가능하다. 다음 조정은 자동 보정이 아니라 boss severity/cycle 위치 또는 S8 market availability만 검토한다.
-4. repeat/single rank 계열은 modifier와 저장/표시 정책이 구현됐으므로, S1~S8 cycle 편입 전 severity와 배치 위치를 별도 sweep으로 검증한다.
+3. 신규 boss modifier station pool은 smoke 후 r80/r400 재검증이 필요하다. 다음 조정은 자동 보정이 아니라 boss severity/station pool 위치 또는 S8 market availability만 검토한다.
+4. repeat/single rank 계열은 modifier와 저장/표시 정책이 구현됐고, mid/mid-late station pool 후보로 편입됐다. 다음 검증은 seed 기반 pool 전체 smoke/r80/r400이다.
 5. Pack/Tarot-like/Planet-like를 별도 타입으로 승격할지, 현재 Item/market role proxy로 유지할지 결정한다.
 
 Economy leveling gate:
@@ -453,7 +453,7 @@ Economy leveling gate:
 
 - 새 런타임 경제는 골드 과잉을 크게 낮춘다. 특히 v9 평균 최종 잔고가 한 자리수 G로 내려와 상점 선택/리롤 비용 압박이 생겼다.
 - v9 clear 상승폭은 balanced +1.1%p, power +0.8%p로 작다. 기존 v90 장기 sweep의 v9 상승폭보다 훨씬 낮아졌으므로, 경제 압박이 market profile 효과를 강하게 누르고 있다.
-- balanced v9 57.0%는 낮은 편이다. 자동 지급이나 슬롯 고정 보정으로 풀지 말고, 다음 조정은 S8 후보군 availability 또는 boss severity/cycle 위치 쪽에서 검토한다.
+- balanced v9 57.0%는 낮은 편이다. 자동 지급이나 슬롯 고정 보정으로 풀지 말고, 다음 조정은 S8 후보군 availability 또는 boss severity/station pool 위치 쪽에서 검토한다.
 - S8 `confirm_count_tax_v2` 병목은 모든 조합에서 여전히 최상위다. 다만 v9에서 S8 boss stop이 balanced 49/800, power 42/800으로 남는 수준이라 즉시 완화보다 후속 후보군 availability probe가 먼저다.
 - board locked가 draw exhausted보다 많다. 자원 +1 지급으로 풀지 않고, board/move/discard 후보의 마켓 등장성 및 가격 접근성을 다음 probe 후보로 본다.
 - v91 market availability probe: `shop_slot_market_v10`~`shop_slot_market_v13`을 같은 economy 조건에서 r120 탐색 비교했다.

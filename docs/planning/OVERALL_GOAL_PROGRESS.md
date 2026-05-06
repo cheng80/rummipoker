@@ -44,7 +44,7 @@
 | Area | Progress | Evidence | Missing evidence |
 |---|---:|---|---|
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
-| Boss modifier runtime cycle | 70% | S1~S8 cycle 적용, repeat/single rank는 구현 후 cycle 보류 | S7/S8 고난도 비중 재확인 |
+| Boss modifier runtime pool | 78% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, repeat/single/confirm-limit/color/line variant 후보 편입 | seed 기반 pool 전체 r80/r400 재검증 |
 | Market offer and inventory | 67% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한 구현 | 가격/노출/구매력 최종 기준 필요 |
 | Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | post lane reroll 경제 probe는 exploratory/not closed |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
@@ -58,7 +58,7 @@
 
 현재 집중 축:
 
-1. Boss pool mapping 및 1차 확장: `confirm_limit_tax_v1`은 simulation split 후 runtime modifier로 구현됐지만 S1~S8 cycle에는 아직 미편입
+1. Boss pool mapping 및 1차 확장: S1~S8 station 난이도 level별 3~4개 seed 기반 runtime boss pool 적용. 새 저장 schema 없이 기존 blind boss modifier 저장 경로 재사용
 2. 확장 boss pool 기준 레벨링/경제 probe: confirm-limit 확장 profile 기준 r400 레벨링/경제 raw probe까지 확보했지만 최종 gate는 아님
 3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영해 offline recommendation scaffold는 갱신했지만, 모델 지표가 실무 사용 기준에 부족해 recommendation gate는 닫지 않음
 
@@ -70,7 +70,7 @@
 - r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
 - 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
 - Jester/Slots와 Tool/Gear lane reroll 분리 이후 current boss pool 기준 r400 raw probe는 balanced none 50.0%, balanced v9 57.0%, power none 64.2%, power v9 63.5%였다. v9 final gold avg 약 6.24G, v9 S8 boss 시작 골드 약 9.43G, reroll spend 99,571G, unaffordable event 7,686회로 즉시 경고는 없지만, boss pool 확장 전 기준이라 최종 경제 gate는 아니다.
-- 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe는 balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%였다. v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회로 즉시 경고는 없지만, power v9 미세 역전과 runtime cycle 미편입 상태가 남아 있어 최종 경제 gate는 아니다.
+- 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe는 balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%였다. v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회로 즉시 경고는 없지만, power v9 미세 역전이 있어 최종 경제 gate는 아니다. seed 기반 runtime pool 적용 후 재검증이 필요하다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
@@ -151,11 +151,11 @@
 
 출품용에 포함하는 Boss pool 작업:
 
-- 현재 S1~S8 boss cycle은 8칸이라 반복 플레이에서 전략 학습/대응 폭이 빨리 고갈될 수 있다.
-- 참고 원본 보스 패턴은 28개로 확인됐고, 현재 우리 게임은 이를 10개 simulation proxy와 8개 runtime modifier 타입으로 압축해 둔 상태다.
+- 현재 S1~S8 boss는 station 난이도 level별 3~4개 seed 기반 pool로 확장했지만, 반복 플레이 다양성은 r80/r400 재검증 전이다.
+- 참고 원본 보스 패턴은 28개로 확인됐고, 현재 우리 게임은 이를 10개 simulation proxy와 14개 runtime modifier id로 압축해 둔 상태다.
 - 공모전용 품질 기준에서는 boss pool 확장을 미루지 않고, 먼저 원본 패턴을 우리 룰로 번역한 매핑표를 만든다.
 - 구현은 이름/IP를 가져오지 않고, 색/라인/타일/rank/확정/자원/골드/아이템·Jester 발동 제한 같은 룰 패턴으로 재작성한다.
-- 출품 전 1차 목표는 안정성을 해치지 않는 추가 boss modifier 후보를 cycle 또는 pool 후보로 늘리는 것이다.
+- 출품 전 1차 목표는 안정성을 해치지 않는 추가 boss modifier 후보를 station level pool 후보로 늘리는 것이다.
 - 저장 포맷 변경, 자동 자원 보정, 유저 선택 강제는 금지한다.
 
 출품 전 필수 완료:
@@ -214,7 +214,7 @@
 | Background lifecycle | 게임/마켓 background pause, 복귀 옵션 dialog, BGM resume 보강 | `lib/views/game_view.dart`, `lib/views/game/widgets/game_shop_screen.dart`, `lib/resources/sound_manager.dart` |
 | Save/restore | active run 저장/복원, 정산 중 종료 후 cash-out 복구 확인 | `lib/services/active_run_save_service.dart`, debug fixture tests |
 | Boss modifiers | 색상/라인/face/all-score/first-confirm/confirm-count/repeat/single rank 계열 구현 | `lib/services/blind_selection_setup.dart`, `lib/logic/rummi_poker_grid/jester_meta.dart` |
-| Runtime boss cycle | S1~S8 boss cycle 적용 | `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md` |
+| Runtime boss pool | S1~S8 station level boss pool 적용 | `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md` |
 | Market policy | station band rarity/tag weight, missing growth exposure, high-stakes market pressure 적용 | `RummiStationBandMarketPolicy`, `RummiMarketRuntimeFacade` |
 | Economy runtime | reward 0.40 번역, 정수 `11/5` effective price scale 적용 | `RummiEconomyConfig`, catalog JSON |
 | Economy tooling | economy trace, gated known cost, reroll/slot/sell proxy, catalog value audit, runtime offer audit 추가 | `tools/sim/economy_audit.py`, `tools/sim/catalog_value_audit.py`, `tools/sim/runtime_market_offer_audit.dart` |

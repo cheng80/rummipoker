@@ -3999,6 +3999,7 @@ Map<String, Object?> _runSingleBattle({
     tier: tier,
     stationIndex: station,
     difficulty: spec.difficulty,
+    runSeed: runSeed,
     ruleset: RummiRuleset.currentDefaults,
   );
   final experimentBase = _resolveExperiment(

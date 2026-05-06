@@ -151,34 +151,35 @@ Weighted boss pool v3:
 - `boss_constraint_pool_v4`와 `late_boss_068` 계열을 유지한다.
 - S8 boss를 더 낮출 근거는 없다.
 - `target_spike_wall`은 S8 단일 전투에서 약한 축으로 남긴다.
-- `color_dampener_cycle`, `confirm_count_tax_v2`는 runtime modifier로 적용했으나 S1~S8 cycle 변경 후 smoke 재검증이 필요하다.
+- runtime은 S1~S8 고정 1개 cycle이 아니라 station 난이도 level별 boss pool에서 run seed로 deterministic 선택한다.
+- 선택된 boss modifier는 기존 blind state 저장 경로에 들어가므로 새 저장 schema는 없다.
 
 Runtime migration status:
 
-- 현재 구현된 런타임 보스 제약은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다. `confirm_limit_tax_v1`은 `confirmCountWeaken` category의 threshold variant로 구현됐지만 S1~S8 cycle에는 아직 편입하지 않았다.
+- 현재 구현된 런타임 보스 제약은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다.
 - `face_tile_dampener`는 runtime boss modifier로 적용한다. 기존 타일 대상 약화 구조를 확장하며, 11~13 face tile 압박이라는 의미도 분명하다.
 - `all_score_dampener`는 모든 점수 라인 20% 감소로 적용한다. 특정 타일 표시 대상이 아니므로 보스 팝업/정산 penalty 표시를 기준으로 읽힌다.
 - `first_confirm_tax`는 첫 confirm 점수 라인 30% 감소로 적용한다.
 - `confirm_count_tax_v2`는 세 번째 confirm부터 점수 라인 25% 감소로 적용한다. 새 저장 필드 없이 기존 `confirmCountThisStation`을 사용한다.
-- `confirm_limit_tax_v1`은 두 번째 confirm부터 점수 라인 30% 감소로 적용한다. 기존 `confirmCountThisStation`을 사용하며, boss modifier JSON의 선택 필드로 threshold를 round-trip한다. 현재는 1차 확장 후보 구현 상태이고 S1~S8 cycle에는 넣지 않았다.
+- `confirm_limit_tax_v1`은 두 번째 confirm부터 점수 라인 30% 감소로 적용한다. 기존 `confirmCountThisStation`을 사용하며, boss modifier JSON의 선택 필드로 threshold를 round-trip한다. 현재 mid-late 이후 station pool 후보로 들어간다.
 - `repeat_rank_pressure_v4`는 이전 confirm에서 나온 같은 족보를 다시 확정하면 점수 라인을 20% 감소시키는 modifier로 구현됐다. 확정된 족보 이력은 `confirmedRanksThisStation`으로 저장/복원한다.
 - `single_rank_pressure`는 A안 기준으로 첫 confirm 족보를 다시 확정하면 점수 라인을 30% 감소시키는 modifier로 구현됐다. 타일별 제약이 아니므로 타일 배지는 표시하지 않고 보스 팝업/정산 penalty로 읽힌다.
-- `repeat_rank_pressure_v4`, `single_rank_pressure`는 아직 S1~S8 runtime boss cycle에는 편입하지 않았다. cycle 편입 전 별도 sweep으로 severity와 배치 위치를 검증한다.
+- `repeat_rank_pressure_v4`, `single_rank_pressure`는 mid/mid-late station pool 후보로 들어간다.
 - `target_spike_wall`은 boss modifier가 아니라 target score 레버로 본다.
 - `resource_squeeze`는 자동 자원 지급/보정이 아니라 시작 압박 또는 마켓 후보 수요로만 해석한다.
 
-Runtime S1~S8 boss cycle:
+Runtime S1~S8 boss station pool:
 
-| Station | Modifier | 역할 |
-|---:|---|---|
-| S1 | `red_dampener_v1` | 색상 약화 family 대표. 출품용 entry 안정화를 위해 35% 감소로 완화 |
-| S2 | `row_line_dampener_v1` | line kind 약화 |
-| S3 | `face_tile_dampener_v1` | 11~13 타일 압박 |
-| S4 | `column_line_dampener_v1` | line kind 약화 |
-| S5 | `all_score_dampener_v1` | 전체 점수 약화 |
-| S6 | `diagonal_line_dampener_v1` | line kind 약화 |
-| S7 | `first_confirm_tax_v1` | 첫 confirm 압박 |
-| S8 | `confirm_count_tax_v2` | 후반 confirm 압박 |
+| Station | Level | Modifier pool | 역할 |
+|---:|---|---|---|
+| S1 | entry | `red_dampener_v1`, `yellow_dampener_v1`, `row_line_dampener_v1` | 입구 안정성 유지, 약한 색상/라인 variation |
+| S2 | early | `row_line_dampener_v1`, `blue_dampener_v1`, `yellow_dampener_v1`, `face_tile_dampener_v1` | 초반 성장 선택을 흔드는 line/color/face variation |
+| S3 | growthCheck | `face_tile_dampener_v1`, `black_dampener_v1`, `blue_dampener_v1`, `column_line_dampener_v1` | 성장 축 검증 시작 |
+| S4 | mid | `column_line_dampener_v1`, `diagonal_line_dampener_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` | 중반 패턴 전환 압박 |
+| S5 | midLate | `all_score_dampener_v1`, `confirm_limit_tax_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` | 중후반 점수/확정/족보 압박 |
+| S6 | late | `diagonal_line_dampener_v1`, `all_score_dampener_v1`, `first_confirm_tax_v1`, `confirm_count_tax_v2` | 후반 라인/정산 순서 압박 |
+| S7 | late | `first_confirm_tax_v1`, `confirm_count_tax_v2`, `confirm_limit_tax_v1`, `all_score_dampener_v1` | 후반 확정 순서/누적 압박 |
+| S8 | finalGate | `confirm_count_tax_v2`, `all_score_dampener_v1`, `first_confirm_tax_v1`, `confirm_limit_tax_v1` | 최종 점수/confirm gate |
 
 ## 6. Market Band Policy
 

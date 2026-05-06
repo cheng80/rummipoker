@@ -110,6 +110,7 @@ class GameSessionNotifier
       stationIndex: 1,
       difficulty: args.difficulty,
       runModifier: args.runModifier,
+      runSeed: args.runSeed,
       ruleset: ruleset,
     );
     final session = RummiPokerGridSession(

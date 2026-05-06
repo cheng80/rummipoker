@@ -81,7 +81,7 @@ Status: Done
 
 ## 3. Boss Pool 1차 확장
 
-Status: Done for first pass / cycle pending
+Status: Done for first pass / station pool applied / revalidation pending
 
 목표:
 
@@ -93,19 +93,20 @@ Status: Done for first pass / cycle pending
 - [x] 새 boss 후보 id와 설명이 우리 게임 용어로 작성된다.
 - [x] `tools/sim/run_balance_sim.dart` 또는 해당 boss simulation 경로에 후보가 들어간다.
 - [x] runtime에 넣는 후보는 저장/복원/표시/정산 penalty 경로가 확인된다.
-- [x] S1~S8 cycle에 즉시 전부 넣지 않고, pool 후보 또는 별도 experiment axis로 검증한다.
+- [x] S1~S8에 즉시 전부 고정 배치하지 않고, station pool 후보 또는 별도 experiment axis로 검증한다.
 
 현재 판정:
 
 - `confirm_limit_tax_v1`은 후보별 r80 split에서 v9가 none보다 높아 1차 runtime 후보로 좁힌다.
 - `min_contributor_count_v1`, `rank_family_decay_v1`은 boss 전투 단위 clear는 높지만 balanced v9 역전 신호가 있어 simulation-only 보류한다.
-- `confirm_limit_tax_v1`은 runtime modifier로 구현됐지만 S1~S8 cycle에는 아직 편입하지 않았다.
+- `confirm_limit_tax_v1`은 runtime modifier로 구현됐고 seed 기반 station pool 후보로 편입했다.
 - 28개 reference pattern 재검토 후 Stage A 추가 proxy를 넣었고, split probe 기준 `reward_tax_by_contributor_v1`과 `hand_discard_cost_v1`를 Stage B 우선 후보로 좁혔다.
 - 코드 경로 확인 결과, 다음 작은 구현 후보는 저장 schema를 늘리지 않는 `hand_discard_cost_v1` resource-pressure spike다. `reward_tax_by_contributor_v1`은 cashout/economy/UI 영향이 커서 별도 작업으로 분리한다.
 - 앱 runtime에는 simulator처럼 boss 후보만 주입하는 experiment axis가 없으므로, `hand_discard_cost_v1`도 적용하면 실제 런타임 규칙 변경이다. 구현 전 승인 대상으로 둔다.
 - S2/S3/S4 position r80 probe 기준으로는 S3 boss가 가장 자연스럽다. S2는 너무 안전하고 S4는 v9가 none보다 낮아지는 신호가 있다.
-- 구현 후보 증량을 위해 이미 구현된 rank 계열도 재검토했다. r80 기준 `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4는 v9가 none보다 높아 Stage B cycle 편입 후보로 재승격한다.
-- 추가 r80 기준 `confirm_limit_tax_v1` S4와 `color_dampener_variant_v1` S4/S5도 Stage B cycle 편입 후보로 재승격한다. S6 confirm-limit와 S2 color는 너무 안전해 우선순위에서 제외한다.
+- 구현 후보 증량을 위해 이미 구현된 rank 계열도 재검토했다. r80 기준 `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4는 v9가 none보다 높아 Stage B station pool 후보로 재승격한다.
+- 추가 r80 기준 `confirm_limit_tax_v1` S4와 `color_dampener_variant_v1` S4/S5도 Stage B station pool 후보로 재승격한다. S6 confirm-limit와 S2 color는 너무 안전해 우선순위에서 제외한다.
+- runtime은 고정 8개 cycle에서 station 난이도 level별 3~4개 seed 기반 boss pool로 확장했다. 선택된 boss modifier는 기존 blind state에 저장되므로 새 저장 schema는 없다.
 
 주의:
 
@@ -172,7 +173,7 @@ Status: Done for expanded profile probe / not fully closed
 - 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe 완료.
 - balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%.
 - v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회.
-- 즉시 경고는 없지만 power v9 미세 역전과 runtime cycle 미편입 상태가 남아 있어 최종 경제 gate 완료가 아니라 “expanded profile 기준 즉시 경고 없음 / not fully closed”로 둔다.
+- 즉시 경고는 없지만 power v9 미세 역전이 남아 있고, seed 기반 runtime pool 적용 후 재검증 전이므로 최종 경제 gate 완료가 아니라 “expanded profile 기준 즉시 경고 없음 / not fully closed”로 둔다.
 - 이 결과는 실제 ML 이행 재개 입력으로 사용한다.
 
 ## 6. 실제 ML 이행 재개

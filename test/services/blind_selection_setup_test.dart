@@ -139,6 +139,25 @@ void main() {
       ]);
     });
 
+    test('run seed가 있으면 station별 boss pool이 3~4개로 고르게 분산된다', () {
+      for (var station = 1; station <= 8; station++) {
+        final ids = <String>{};
+        for (var seed = 1; seed <= 64; seed++) {
+          final boss = BlindSelectionSetup.resolveSpec(
+            tier: BlindTier.boss,
+            stationIndex: station,
+            difficulty: NewRunDifficulty.standard,
+            runSeed: seed,
+            ruleset: RummiRuleset.currentDefaults,
+          );
+          ids.add(boss.bossModifier!.id);
+        }
+
+        expect(ids.length, greaterThanOrEqualTo(3), reason: 'S$station');
+        expect(ids.length, lessThanOrEqualTo(4), reason: 'S$station');
+      }
+    });
+
     test('boss 클리어 후 blind select runtime은 다음 station small 시작 상태로 리셋된다', () {
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.blindSelect,

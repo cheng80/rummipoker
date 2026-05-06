@@ -7,6 +7,15 @@ enum BlindTier { small, big, boss }
 
 enum BlindSelectionAvailability { selectable, cleared, locked }
 
+enum _BossPoolLevel { entry, early, growthCheck, mid, midLate, late, finalGate }
+
+class _BossStationPool {
+  const _BossStationPool({required this.level, required this.modifiers});
+
+  final _BossPoolLevel level;
+  final List<RummiBossModifier> modifiers;
+}
+
 class BlindSelectionSpec {
   const BlindSelectionSpec({
     required this.tier,
@@ -59,6 +68,7 @@ class BlindSelectionSpecBuilder {
     required int clearedBlindTierIndex,
     required NewRunDifficulty difficulty,
     NewRunModifier runModifier = NewRunModifier.basic,
+    int? runSeed,
     required RummiRuleset ruleset,
   }) {
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
@@ -69,6 +79,7 @@ class BlindSelectionSpecBuilder {
         stationIndex: normalizedStationIndex,
         difficulty: difficulty,
         runModifier: runModifier,
+        runSeed: runSeed,
         ruleset: ruleset,
         availability: normalizedClearedBlindTierIndex >= BlindTier.small.index
             ? BlindSelectionAvailability.cleared
@@ -79,6 +90,7 @@ class BlindSelectionSpecBuilder {
         stationIndex: normalizedStationIndex,
         difficulty: difficulty,
         runModifier: runModifier,
+        runSeed: runSeed,
         ruleset: ruleset,
         availability: normalizedClearedBlindTierIndex >= BlindTier.big.index
             ? BlindSelectionAvailability.cleared
@@ -94,6 +106,7 @@ class BlindSelectionSpecBuilder {
         stationIndex: normalizedStationIndex,
         difficulty: difficulty,
         runModifier: runModifier,
+        runSeed: runSeed,
         ruleset: ruleset,
         availability: normalizedClearedBlindTierIndex >= BlindTier.boss.index
             ? BlindSelectionAvailability.cleared
@@ -112,6 +125,7 @@ class BlindSelectionSpecBuilder {
     required int stationIndex,
     required NewRunDifficulty difficulty,
     NewRunModifier runModifier = NewRunModifier.basic,
+    int? runSeed,
     required RummiRuleset ruleset,
   }) {
     return _buildSpec(
@@ -119,6 +133,7 @@ class BlindSelectionSpecBuilder {
       stationIndex: stationIndex,
       difficulty: difficulty,
       runModifier: runModifier,
+      runSeed: runSeed,
       ruleset: ruleset,
       availability: BlindSelectionAvailability.selectable,
     );
@@ -129,6 +144,7 @@ class BlindSelectionSpecBuilder {
     required int stationIndex,
     required NewRunDifficulty difficulty,
     required NewRunModifier runModifier,
+    int? runSeed,
     required RummiRuleset ruleset,
     required BlindSelectionAvailability availability,
     String? lockReason,
@@ -199,25 +215,111 @@ class BlindSelectionSpecBuilder {
       rewardPreview: modifiedRewardPreview,
       availability: availability,
       bossModifier: tier == BlindTier.boss
-          ? _bossModifierForStation(stationIndex)
+          ? _bossModifierForStation(stationIndex, runSeed: runSeed)
           : null,
       lockReason: lockReason,
     );
   }
 
-  static RummiBossModifier _bossModifierForStation(int stationIndex) {
-    const modifiers = [
-      RummiBossModifier.redDampener,
-      RummiBossModifier.rowDampener,
-      RummiBossModifier.faceDampener,
-      RummiBossModifier.columnDampener,
-      RummiBossModifier.allScoreDampener,
-      RummiBossModifier.diagonalDampener,
-      RummiBossModifier.firstConfirmTax,
-      RummiBossModifier.confirmCountTax,
-    ];
+  static RummiBossModifier _bossModifierForStation(
+    int stationIndex, {
+    int? runSeed,
+  }) {
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
-    return modifiers[(normalizedStationIndex - 1) % modifiers.length];
+    final pool =
+        _bossStationPools[(normalizedStationIndex - 1) %
+            _bossStationPools.length];
+    if (runSeed == null) return pool.modifiers.first;
+    return pool.modifiers[_bossVariantIndex(
+      runSeed: runSeed,
+      stationIndex: normalizedStationIndex,
+      variantCount: pool.modifiers.length,
+    )];
+  }
+
+  static const List<_BossStationPool> _bossStationPools = [
+    _BossStationPool(
+      level: _BossPoolLevel.entry,
+      modifiers: [
+        RummiBossModifier.redDampener,
+        RummiBossModifier.yellowDampener,
+        RummiBossModifier.rowDampener,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.early,
+      modifiers: [
+        RummiBossModifier.rowDampener,
+        RummiBossModifier.blueDampener,
+        RummiBossModifier.yellowDampener,
+        RummiBossModifier.faceDampener,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.growthCheck,
+      modifiers: [
+        RummiBossModifier.faceDampener,
+        RummiBossModifier.blackDampener,
+        RummiBossModifier.blueDampener,
+        RummiBossModifier.columnDampener,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.mid,
+      modifiers: [
+        RummiBossModifier.columnDampener,
+        RummiBossModifier.diagonalDampener,
+        RummiBossModifier.repeatRankPressure,
+        RummiBossModifier.singleRankPressure,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.midLate,
+      modifiers: [
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.confirmLimitTax,
+        RummiBossModifier.repeatRankPressure,
+        RummiBossModifier.singleRankPressure,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.late,
+      modifiers: [
+        RummiBossModifier.diagonalDampener,
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.firstConfirmTax,
+        RummiBossModifier.confirmCountTax,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.late,
+      modifiers: [
+        RummiBossModifier.firstConfirmTax,
+        RummiBossModifier.confirmCountTax,
+        RummiBossModifier.confirmLimitTax,
+        RummiBossModifier.allScoreDampener,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.finalGate,
+      modifiers: [
+        RummiBossModifier.confirmCountTax,
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.firstConfirmTax,
+        RummiBossModifier.confirmLimitTax,
+      ],
+    ),
+  ];
+
+  static int _bossVariantIndex({
+    required int runSeed,
+    required int stationIndex,
+    required int variantCount,
+  }) {
+    final mixed =
+        (runSeed * 1103515245 + stationIndex * 1013904223 + 0x9E3779B9) &
+        0x7fffffff;
+    return mixed % variantCount;
   }
 
   static int _targetScoreForSpec({

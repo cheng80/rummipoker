@@ -43,6 +43,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
       clearedBlindTierIndex: _clearedBlindTierIndex,
       difficulty: _effectiveDifficulty,
       runModifier: _effectiveRunModifier,
+      runSeed: _effectiveRunSeed,
       ruleset: _effectiveRuleset,
     );
     _loadItemCatalog();
@@ -66,6 +67,9 @@ class _BlindSelectViewState extends State<BlindSelectView> {
 
   NewRunModifier get _effectiveRunModifier =>
       widget.restoredRun?.runModifier ?? widget.runModifier;
+
+  int get _effectiveRunSeed =>
+      widget.restoredRun?.session.runSeed ?? widget.runSeed;
 
   RummiRuleset get _effectiveRuleset =>
       widget.restoredRun?.session.ruleset ?? RummiRuleset.currentDefaults;
