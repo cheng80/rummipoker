@@ -2,8 +2,8 @@
 
 ## 최종 결론 요약
 
-- 결론: 이 추천표는 fresh resimulation 후보를 고르는 참고자료이며 ML 마감 근거가 아니다.
-- 1위 후보: `economy_r040_p240_spend_choice` / score 1.2900.
+- 결론: 이 추천표는 high-confidence row 기준 fresh resimulation 후보를 고르는 참고자료이며 ML 마감 근거가 아니다.
+- 1위 후보: `runtime_s4_rank_growth_access_current` / score -1.1413.
 - 사용 가능: 후보 우선순위 정리와 후속 probe 설계.
 - 사용 금지: 추천 후보를 runtime target/boss/market/economy 값에 자동 적용.
 - NotebookLM 상태: 모델 지표가 사용 수준이 된 뒤 보고서/인포그래픽 source로 재생성한다.
@@ -11,14 +11,14 @@
 
 ## 핵심 점수
 
-| 순위 | 후보 | 분류 | 점수 | v9 평균 | none 평균 | 차이 | S1 boss | S8 boss |
-|---:|---|---|---:|---:|---:|---:|---:|---:|
-| 1 | `economy_r040_p240_spend_choice` | economy | 1.2900 | 0.5824 | 0.8317 | -0.2493 | 0.8602 | 0.5438 |
-| 2 | `economy_r038_p240_spend_choice` | economy | 1.2817 | 0.5823 | 0.8357 | -0.2534 | 0.8602 | 0.5457 |
-| 3 | `economy_r040_p220_growth_access_spend_choice` | economy | 1.2637 | 0.5835 | 0.8428 | -0.2593 | 0.8599 | 0.5459 |
-| 4 | `economy_r040_p220_spend_choice` | economy | 1.2621 | 0.5839 | 0.8423 | -0.2584 | 0.8594 | 0.5442 |
-| 5 | `target_boss_098` | target | 1.2023 | 0.5729 | 0.8013 | -0.2283 | 0.8652 | 0.5384 |
-| 6 | `current_runtime_trace` | baseline | 1.1591 | 0.5718 | 0.8013 | -0.2295 | 0.8454 | 0.5384 |
+| 순위 | 후보 | 분류 | 통과 | 점수 | v9 평균 | none 평균 | 차이 | S1 boss | S8 boss |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | `runtime_s4_rank_growth_access_current` | runtime_handoff | 0 | -1.1413 | 0.8519 | 0.8827 | -0.0308 | 0.8690 | 0.6684 |
+| 2 | `current_runtime_trace` | baseline | 0 | -1.3193 | 0.8586 | 0.8794 | -0.0209 | 0.8628 | 0.6911 |
+| 3 | `economy_r040_p220_spend_choice` | economy | 0 | -2.3200 | 0.8576 | 0.8789 | -0.0213 | 0.8746 | 0.7777 |
+| 4 | `economy_r040_p240_spend_choice` | economy | 0 | -2.3254 | 0.8575 | 0.8789 | -0.0214 | 0.8721 | 0.7777 |
+| 5 | `economy_r038_p240_spend_choice` | economy | 0 | -2.3278 | 0.8567 | 0.8789 | -0.0222 | 0.8721 | 0.7777 |
+| 6 | `economy_r040_p220_growth_access_spend_choice` | economy | 0 | -2.4037 | 0.8561 | 0.9038 | -0.0477 | 0.8719 | 0.7772 |
 
 ## 범위
 
@@ -30,21 +30,23 @@
 
 - feature table: `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv`
 - recommendation csv: `analysis/leveling/models/preoutcome_candidate_recommendations.csv`
-- source rows: 120000
-- training rows: 60000
-- max rows: 60000
+- source rows: 247290
+- rows before filter: 247290
+- training rows: 44631
+- max rows: 0
+- min run count: 80
 - target: `clear_rate_smoothed`
 
 ## 상위 후보 상세
 
-| 순위 | 후보 | 분류 | 점수 | v9 평균 | none 평균 | 차이 | S1 boss | S8 boss |
-|---:|---|---|---:|---:|---:|---:|---:|---:|
-| 1 | `economy_r040_p240_spend_choice` | economy | 1.2900 | 0.5824 | 0.8317 | -0.2493 | 0.8602 | 0.5438 |
-| 2 | `economy_r038_p240_spend_choice` | economy | 1.2817 | 0.5823 | 0.8357 | -0.2534 | 0.8602 | 0.5457 |
-| 3 | `economy_r040_p220_growth_access_spend_choice` | economy | 1.2637 | 0.5835 | 0.8428 | -0.2593 | 0.8599 | 0.5459 |
-| 4 | `economy_r040_p220_spend_choice` | economy | 1.2621 | 0.5839 | 0.8423 | -0.2584 | 0.8594 | 0.5442 |
-| 5 | `target_boss_098` | target | 1.2023 | 0.5729 | 0.8013 | -0.2283 | 0.8652 | 0.5384 |
-| 6 | `current_runtime_trace` | baseline | 1.1591 | 0.5718 | 0.8013 | -0.2295 | 0.8454 | 0.5384 |
+| 순위 | 후보 | 분류 | 통과 | 점수 | v9 평균 | none 평균 | 차이 | S1 boss | S8 boss |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | `runtime_s4_rank_growth_access_current` | runtime_handoff | 0 | -1.1413 | 0.8519 | 0.8827 | -0.0308 | 0.8690 | 0.6684 |
+| 2 | `current_runtime_trace` | baseline | 0 | -1.3193 | 0.8586 | 0.8794 | -0.0209 | 0.8628 | 0.6911 |
+| 3 | `economy_r040_p220_spend_choice` | economy | 0 | -2.3200 | 0.8576 | 0.8789 | -0.0213 | 0.8746 | 0.7777 |
+| 4 | `economy_r040_p240_spend_choice` | economy | 0 | -2.3254 | 0.8575 | 0.8789 | -0.0214 | 0.8721 | 0.7777 |
+| 5 | `economy_r038_p240_spend_choice` | economy | 0 | -2.3278 | 0.8567 | 0.8789 | -0.0222 | 0.8721 | 0.7777 |
+| 6 | `economy_r040_p220_growth_access_spend_choice` | economy | 0 | -2.4037 | 0.8561 | 0.9038 | -0.0477 | 0.8719 | 0.7772 |
 
 ## 해석
 

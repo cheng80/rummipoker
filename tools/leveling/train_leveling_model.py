@@ -133,6 +133,12 @@ def main() -> int:
         default=60000,
         help="학습 비용 상한을 위해 사용할 최대 row 수. 0 이하면 전체 row를 사용합니다.",
     )
+    parser.add_argument(
+        "--min-run-count",
+        type=int,
+        default=0,
+        help="preoutcome station/tier 학습에서 이 run_count 미만 row를 제외합니다.",
+    )
     args = parser.parse_args()
 
     try:
@@ -164,6 +170,13 @@ def main() -> int:
     if len(df) < 8:
         raise SystemExit("학습에는 최소 8개 이상의 group row가 필요합니다.")
     original_row_count = read_feature_source_row_count(feature_path) or len(df)
+    before_filter_row_count = len(df)
+    if args.feature_mode == "preoutcome" and args.min_run_count > 0:
+        if "run_count" not in df.columns:
+            raise SystemExit("--min-run-count를 쓰려면 run_count 컬럼이 필요합니다.")
+        df = df[df["run_count"].fillna(0).astype(float) >= args.min_run_count].reset_index(drop=True)
+        if len(df) < 8:
+            raise SystemExit("min-run-count 적용 후 학습 row가 너무 적습니다.")
     if args.max_rows > 0 and len(df) > args.max_rows:
         df = df.sample(n=args.max_rows, random_state=args.seed).reset_index(drop=True)
 
@@ -253,6 +266,8 @@ def main() -> int:
     metrics = {
         "row_count": int(len(df)),
         "source_row_count": int(original_row_count),
+        "before_filter_row_count": int(before_filter_row_count),
+        "min_run_count": int(args.min_run_count),
         "train_count": int(len(x_train)),
         "test_count": int(len(x_test)),
         "target": args.target,
@@ -493,6 +508,8 @@ def build_report(
             "",
             f"- feature table: `{feature_path}`",
             f"- rows: {metrics['row_count']}",
+            f"- rows before filter: {metrics.get('before_filter_row_count', metrics['row_count'])}",
+            f"- min run count: {metrics.get('min_run_count', 0)}",
             f"- train rows: {metrics['train_count']}",
             f"- test rows: {metrics['test_count']}",
             f"- target: `{metrics['target']}`",
@@ -627,24 +644,41 @@ def build_preoutcome_report(
         else "시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 "
         f"`{metrics['target']}`를 예측한다."
     )
-    r2_judgment = (
-        "path triage 신호로 유망하나 단독 gate로는 부족"
-        if is_sequence and metrics["r2"] >= 0.9
-        else "실무 추천 기준에는 부족"
-    )
+    if is_sequence and metrics["r2"] >= 0.9:
+        conclusion = "현재 모델은 전체 경로 후보를 고르는 내부 추천 신호로 사용 가능하다. 단, 런타임 자동 적용 근거는 아니다."
+        usable = "S1~S8 전체 경로 후보 선별, fresh resimulation 우선순위 정리."
+        notebook = "NotebookLM source로 재가공 가능하나, 외부 발표용 재생성은 문서 동기화 후 진행한다."
+        next_action = "fresh gate와 ML gate가 함께 맞는 후보를 runtime/economy handoff 문서에 연결한다."
+        r2_judgment = "경로 후보 선별용으로 사용 가능"
+    elif not is_sequence and metrics["r2"] >= 0.88:
+        conclusion = "현재 모델은 station/tier 위험 구간을 보는 내부 진단 신호로 사용 가능하다. 단, 후보 최종 적용은 전체 경로 모델과 fresh simulation을 따른다."
+        usable = "어느 station/tier가 위험한지 보는 병목 진단, feature sanity check."
+        notebook = "NotebookLM source로 재가공 가능하나, 외부 발표용 재생성은 문서 동기화 후 진행한다."
+        next_action = "전체 경로 추천표와 r400 이상 fresh 결과를 함께 보고 적용 후보를 정리한다."
+        r2_judgment = "구간 위험 진단용으로 사용 가능"
+    else:
+        conclusion = "현재 모델은 pre-outcome 후보 추천 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다."
+        usable = "후속 시뮬레이션 후보를 고르는 참고 신호와 feature sanity check."
+        notebook = "지표가 사용 수준이 아니므로 보고서/인포그래픽 재생성 source로 쓰기 전 단계."
+        next_action = "boss/market/economy candidate grid와 raw run-level 데이터를 늘리고 MAE/RMSE/R2를 재평가한다."
+        r2_judgment = (
+            "path triage 신호로 유망하나 단독 gate로는 부족"
+            if is_sequence and metrics["r2"] >= 0.9
+            else "실무 추천 기준에는 부족"
+        )
     return "\n".join(
         [
             title,
             "",
             "## 최종 결론 요약",
             "",
-            "- 결론: 현재 모델은 pre-outcome 후보 추천 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다.",
+            f"- 결론: {conclusion}",
             f"- 핵심 점수: MAE {metrics['mae']:.4f}, RMSE {metrics['rmse']:.4f}, R2 {metrics['r2']:.4f}.",
             f"- 데이터: {metrics['row_count']} rows, train {metrics['train_count']}, test {metrics['test_count']}, target `{metrics['target']}`.",
-            "- 사용 가능: 후속 시뮬레이션 후보를 고르는 참고 신호와 feature sanity check.",
+            f"- 사용 가능: {usable}",
             "- 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.",
-            "- NotebookLM 상태: 지표가 사용 수준이 아니므로 보고서/인포그래픽 재생성 source로 쓰기 전 단계.",
-            "- 다음 액션: boss/market/economy candidate grid와 raw run-level 데이터를 늘리고 MAE/RMSE/R2를 재평가한다.",
+            f"- NotebookLM 상태: {notebook}",
+            f"- 다음 액션: {next_action}",
             "",
             "## 핵심 점수",
             "",
@@ -660,7 +694,7 @@ def build_preoutcome_report(
             "이 리포트는 계획된 ML transition scaffold다.",
             f"기존 outcome-derived summary feature를 제거하고, {scope_subject}",
             "모델은 후보 추천 루프를 설계하기 위한 오프라인 분석 도구이며, production ML이 아니고 런타임 target, boss, market, economy 값을 자동 변경하지 않는다.",
-            "이 산출물만으로 실제 ML 이행 완료를 주장하지 않는다. 후보 재시뮬레이션과 사람 승인 보고서가 별도로 필요하다.",
+            "이 산출물만으로 production ML 자동 적용 완료를 주장하지 않는다. 후보 재시뮬레이션과 사람 검토 보고서를 함께 본다.",
             "",
             "## 데이터셋",
             "",
@@ -702,7 +736,7 @@ def build_preoutcome_report(
             "- `slow_clear_share_of_clears`",
             "",
             "제외된 필드는 outcome 값이므로, 시뮬레이션 실행 전 후보 추천에는 사용할 수 없다.",
-            "`run_count`는 후보 조건 feature가 아니라 같은 조건을 몇 번 돌렸는지 나타내는 sample-size metadata이므로, 모델 입력 대신 학습 가중치로만 사용한다.",
+            "`run_count`는 후보 조건 feature가 아니라 같은 조건을 몇 번 돌렸는지 나타내는 sample-size metadata이므로, 모델 입력 대신 학습 가중치와 저신뢰 row 필터로만 사용한다.",
             "",
             "## 모델",
             "",

@@ -52,7 +52,7 @@
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
-| Analysis/ML documentation | 48% | `ML` 명칭 오해 정정, pre-outcome feature 증량, station/tier smoothed target 추가, station/path 최신 MAE/RMSE/R2 리포트 존재, ML 재개 전 economy gate 후보 확보 | station/tier R2가 아직 production 기준에는 부족해 자동 적용 금지 |
+| Analysis/ML documentation | 62% | high-confidence station/tier 진단 모델, sequence/path 후보 선별 모델, 경로 기준 추천표 추가, 현재 handoff 후보 ML/fresh gate 통과 | production 자동 적용은 금지하고 공모전 QA로 이동 |
 
 ## 3. Current Focus
 
@@ -93,20 +93,20 @@
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
 - `analysis/leveling/`의 pre-outcome feature table과 tree ensemble 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
-- production ML 전환은 더 넓은 candidate grid, MAE/RMSE/R2가 실무 추천 기준을 만족하는 모델, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
-- pre-outcome feature table은 247,290 source rows로 재생성했다. raw station/tier `clear_rate` 모델은 60,000 rows 기준 MAE 0.0450(최선 0.0000), RMSE 0.1102(최선 0.0000), R2 0.6784(이상값 1.0000)이다.
-- 작은 표본 흔들림을 줄인 station/tier `clear_rate_smoothed` 모델은 120,000 rows 기준 MAE 0.0440(최선 0.0000), RMSE 0.0666(최선 0.0000), R2 0.7877(이상값 1.0000)이다. 이전 0.6066보다 좋아졌지만 실무 자동 적용 기준으로는 아직 부족하다.
-- sequence/path table은 3,012 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0466(최선 0.0000), RMSE 0.0879(최선 0.0000), R2 0.9093(이상값 1.0000)이다. path-level triage 신호로는 유망하지만, station/tier 모델이 production 수준은 아니라 ML 자동 적용 근거로 쓰지 않는다.
-- NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 지금 리포트는 내부 gate/source 정리용이며 외부 재가공 전 단계다.
-- 최신 모델 추천표는 `clear_rate_smoothed` 기준으로 갱신했다. 추천표는 fresh 검증 전 참고 신호이며, 현재 runtime handoff 후보는 reward/price scale을 더 흔드는 대신 S4 boss 후보 가중과 growth-access price cap으로 economy gate를 닫은 상태다.
+- production ML 자동 적용은 하지 않는다. 이번에 닫은 범위는 “오프라인 분석 도구로 실무 사용 가능”이다.
+- pre-outcome feature table은 247,290 source rows로 재생성했다.
+- high-confidence station/tier `clear_rate_smoothed` 모델은 run_count 80 이상 44,631 rows 기준 MAE 0.0244(최선 0.0000), RMSE 0.0514(최선 0.0000), R2 0.8950(이상값 1.0000)이다. 구간 위험 진단용으로 사용 가능하다.
+- sequence/path table은 3,012 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0470(최선 0.0000), RMSE 0.0881(최선 0.0000), R2 0.9089(이상값 1.0000)이다. 전체 경로 후보 선별용으로 사용 가능하다.
+- 새 sequence/path 추천표에서 현재 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` 후보는 실제 r400 결과와 ML 예측 양쪽에서 통과한다.
+- NotebookLM 보고서/인포그래픽 재생성은 가능 상태가 됐지만, 이번 단계에서는 외부 재가공보다 공모전 QA 재개를 우선한다.
 
 임시 작업 순서 플랜 처리:
 
 - `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
 - ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
-- 실제 ML 이행은 offline candidate recommendation scaffold까지 갱신됐다. `analysis/leveling/reports/actual_ml_transition_human_review.md` 기준 production ML/자동 적용이 아니며, station/tier 모델은 개선됐지만 gate 완료로 볼 수 없다.
-- 경제 probe는 S4 rank weight + growth-access runtime handoff 후보 기준 r400 multi-seed에서 닫았고, ML 쪽은 station/tier 품질과 fresh resimulation 연결 기준 보강이 남아 있다.
-- 공모전 기준 작업 재개는 Boss pool mapping/1차 확장과 확장 후 레벨링/경제/ML 상태 정리 이후로 보류한다.
+- 실제 ML 이행은 offline candidate recommendation 도구로 사용할 수 있는 수준까지 갱신됐다. production ML/자동 적용은 아니며, 적용 판단은 sequence/path 추천표와 fresh r400+ 결과를 같이 본다.
+- 경제 probe는 S4 rank weight + growth-access runtime handoff 후보 기준 r400 multi-seed에서 닫았고, ML 쪽도 현재 후보를 실제 결과와 예측 양쪽에서 통과로 정리했다.
+- 공모전 기준 작업은 재개 가능하다.
 
 ## 4. Competition Prototype Track
 
@@ -272,7 +272,7 @@ Status: In progress / source-of-truth cleanup still open
 
 ### M0.5. Actual ML Leveling Transition
 
-Status: In progress
+Status: Closed for offline ML handoff / production auto-balancing disabled
 
 완료 조건:
 
@@ -296,10 +296,10 @@ Status: In progress
 
 남은 주의:
 
-- station/tier smoothed 모델은 MAE 0.0440, RMSE 0.0666, R2 0.7877로 이전보다 개선됐지만, 실무 추천 gate로는 아직 부족하다.
-- sequence/path 모델은 MAE 0.0466, RMSE 0.0879, R2 0.9093로 path-level triage 신호는 유망하지만, 단독으로 production ML 자동 적용 근거가 아니다.
-- `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` r400 multi-seed가 v9 >= none을 만족했고 feature table/모델/추천표를 갱신했다. production ML 자동 적용은 여전히 아니다.
-- 다음 모델 재생성 때도 MAE/RMSE/R2를 모두 기록하고, 실무 추천 기준 충족 여부를 별도로 판단한다.
+- station/tier smoothed 모델은 MAE 0.0244, RMSE 0.0514, R2 0.8950으로 구간 위험 진단용 기준을 통과했다.
+- sequence/path 모델은 MAE 0.0470, RMSE 0.0881, R2 0.9089로 전체 경로 후보 선별용 기준을 통과했다.
+- `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` r400 multi-seed가 v9 >= none을 만족했고, sequence/path 추천표에서도 fresh gate와 ML gate를 모두 통과했다.
+- production ML 자동 적용은 여전히 아니다. 다음 모델 재생성 때도 MAE/RMSE/R2를 모두 기록하고, 실무 기준 충족 여부를 별도로 판단한다.
 
 ### M1. Economy And Price Baseline
 

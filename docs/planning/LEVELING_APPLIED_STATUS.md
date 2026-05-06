@@ -183,10 +183,9 @@ Runtime S4 rank weight + growth access r400:
 ML handoff refresh:
 
 - feature rows: station/tier 247,290 source rows, sequence/path 3,012 rows.
-- raw station/tier `clear_rate`: RandomForestRegressor, 60,000 rows, MAE 0.0450(최선 0.0000), RMSE 0.1102(최선 0.0000), R2 0.6784(이상값 1.0000).
-- smoothed station/tier `clear_rate_smoothed`: RandomForestRegressor, 120,000 rows, MAE 0.0440(최선 0.0000), RMSE 0.0666(최선 0.0000), R2 0.7877(이상값 1.0000).
-- sequence/path: RandomForestRegressor, 3,012 rows, MAE 0.0466(최선 0.0000), RMSE 0.0879(최선 0.0000), R2 0.9093(이상값 1.0000).
-- 판단: station/tier는 이전보다 좋아졌지만 production ML/자동 적용 기준은 아니다. path-level 후보 triage는 계속 참고 신호로만 쓴다.
+- high-confidence station/tier `clear_rate_smoothed`: RandomForestRegressor, run_count 80 이상 44,631 rows, MAE 0.0244(최선 0.0000), RMSE 0.0514(최선 0.0000), R2 0.8950(이상값 1.0000).
+- sequence/path: RandomForestRegressor, 3,012 rows, MAE 0.0470(최선 0.0000), RMSE 0.0881(최선 0.0000), R2 0.9089(이상값 1.0000).
+- 판단: station/tier는 구간 위험 진단용으로, sequence/path는 전체 경로 후보 선별용으로 사용 가능하다. production ML/자동 적용은 아니다.
 
 S7~S8 shape correction workspace probe:
 
@@ -632,14 +631,13 @@ Status: 레벨링 r400 확인 완료, 경제 gate는 미통과.
 
 ## Latest ML Scaffold Status
 
-Status: sequence/path 모델은 유망, station/tier 모델은 개선됐지만 실무 추천 gate 미달.
+Status: offline ML handoff usable, production auto-balancing disabled.
 
 - preoutcome feature table: 247,290 source rows.
-- raw station/tier `clear_rate`: RandomForestRegressor, 60,000 rows, MAE 0.0450(최선 0.0000), RMSE 0.1102(최선 0.0000), R2 0.6784(이상값 1.0000).
-- smoothed station/tier `clear_rate_smoothed`: RandomForestRegressor, 120,000 rows, MAE 0.0440(최선 0.0000), RMSE 0.0666(최선 0.0000), R2 0.7877(이상값 1.0000).
-- sequence/path model: RandomForestRegressor, 3,012 rows, MAE 0.0466(최선 0.0000), RMSE 0.0879(최선 0.0000), R2 0.9093(이상값 1.0000).
+- high-confidence station/tier `clear_rate_smoothed`: RandomForestRegressor, run_count 80 이상 44,631 rows, MAE 0.0244(최선 0.0000), RMSE 0.0514(최선 0.0000), R2 0.8950(이상값 1.0000).
+- sequence/path model: RandomForestRegressor, 3,012 rows, MAE 0.0470(최선 0.0000), RMSE 0.0881(최선 0.0000), R2 0.9089(이상값 1.0000).
 - 새 feature는 station/tier 조합, boss/market/economy 상호작용, 실제 target score, reward/resource pressure, price band/spend/choice flag를 포함한다.
-- path-level triage 신호는 유망하고 station/tier도 개선됐지만, production ML/자동 적용 기준은 아직 아니다.
+- station/tier는 어디가 위험한지 보는 도구이고, sequence/path는 어떤 후보를 다음에 적용 후보로 볼지 고르는 도구다. production ML/자동 적용 기준은 아직 아니다.
 
 ## 6. Read Order
 

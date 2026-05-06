@@ -251,6 +251,7 @@ def rows_from_summary(path: Path, *, feature_mode: str) -> list[dict[str, Any]]:
     root = json.loads(path.read_text(encoding="utf-8"))
     sweep = root.get("sweep")
     sweep_context = sweep if isinstance(sweep, dict) else {}
+    sweep_context = inferred_sweep_context(path, sweep_context)
     if feature_mode == "preoutcome_sequence":
         groups = root.get("sequence_groups")
         if not isinstance(groups, list):
@@ -275,6 +276,45 @@ def rows_from_summary(path: Path, *, feature_mode: str) -> list[dict[str, Any]]:
     return rows
 
 
+def inferred_sweep_context(path: Path, sweep_context: dict[str, Any]) -> dict[str, Any]:
+    context = dict(sweep_context)
+    audit_path = path.with_name(path.name.replace("_summary.json", "_economy_audit.json"))
+    if audit_path.exists():
+        try:
+            audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            audit = {}
+        trace = audit.get("jsonl_market_trace")
+        economy_trace = trace.get("sim_economy_trace") if isinstance(trace, dict) else {}
+        if isinstance(economy_trace, dict):
+            context.setdefault("sim_economy_mode", economy_trace.get("mode"))
+            context.setdefault("sim_price_band_mode", economy_trace.get("price_band_mode"))
+            context.setdefault("sim_market_choice_mode", economy_trace.get("market_choice_mode"))
+            if economy_trace.get("mode") == "gated_known_cost":
+                context.setdefault("sim_market_spend_mode", "reroll_slot_sell_v1")
+        config = audit.get("config")
+        if isinstance(config, dict):
+            numerator = config.get("market_price_scale_numerator")
+            denominator = config.get("market_price_scale_denominator")
+            if numerator is not None and denominator not in (None, 0):
+                context.setdefault("sim_price_scale", float(numerator) / float(denominator))
+            if config.get("stage_clear_gold_base") is not None:
+                # 시뮬레이션의 기준 stage clear gold 10 대비 스케일이다.
+                context.setdefault("sim_reward_scale", float(config["stage_clear_gold_base"]) / 10.0)
+
+    filename = path.name
+    if "growth_access" in filename:
+        context.setdefault("sim_economy_mode", "gated_known_cost")
+        context.setdefault("sim_market_spend_mode", "reroll_slot_sell_v1")
+        context.setdefault("sim_price_band_mode", "growth_access_v1")
+        context.setdefault("sim_market_choice_mode", "affordable_alternative_v1")
+        context.setdefault("sim_reward_scale", 0.40)
+        context.setdefault("sim_price_scale", 2.20)
+    if "catalog_normalized" in filename:
+        context.setdefault("sim_price_band_mode", "catalog_normalized_v1")
+    return {key: value for key, value in context.items() if value not in (None, "")}
+
+
 def preoutcome_sequence_row_from_group(
     path: Path,
     raw: dict[str, Any],
@@ -283,7 +323,11 @@ def preoutcome_sequence_row_from_group(
     run_modifier = value_or_empty(raw.get("run_modifier_id") or raw.get("run_modifier"))
     market_profile = value_or_empty(raw.get("market_profile"))
     resolved_market_profile = value_or_empty(raw.get("resolved_market_profile"))
-    base_experiment = value_or_empty(raw.get("base_experiment_id") or raw.get("experiment_matrix_id"))
+    base_experiment = value_or_empty(
+        raw.get("base_experiment_id")
+        or raw.get("experiment_matrix_id")
+        or raw.get("experiment_id"),
+    )
     station_path = raw.get("station_path")
     tier_path = raw.get("tier_path")
     return {
@@ -360,7 +404,11 @@ def preoutcome_row_from_group(
     market_profile = value_or_empty(raw.get("market_profile"))
     resolved_market_profile = value_or_empty(raw.get("resolved_market_profile"))
     boss_constraint = value_or_empty(raw.get("sim_boss_constraint_id"))
-    base_experiment = value_or_empty(raw.get("base_experiment_id") or raw.get("experiment_matrix_id"))
+    base_experiment = value_or_empty(
+        raw.get("base_experiment_id")
+        or raw.get("experiment_matrix_id")
+        or raw.get("experiment_id"),
+    )
 
     row: dict[str, Any] = {
         "source_path": str(path),

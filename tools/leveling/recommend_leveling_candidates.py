@@ -88,6 +88,7 @@ class Candidate:
     candidate_id: str
     category: str
     description: str
+    base_experiment_id: str | None = None
     target_multiplier: float = 1.0
     small_target_multiplier: float = 1.0
     big_target_multiplier: float = 1.0
@@ -119,6 +120,12 @@ def main() -> int:
         default=60000,
         help="추천표 학습 비용 상한. 0 이하면 전체 row를 사용합니다.",
     )
+    parser.add_argument(
+        "--min-run-count",
+        type=int,
+        default=80,
+        help="추천 모델 학습에서 이 run_count 미만 row를 제외합니다.",
+    )
     args = parser.parse_args()
 
     try:
@@ -137,6 +144,13 @@ def main() -> int:
     ensure_feature_table(feature_path, feature_mode="preoutcome")
     df = pd.read_csv(feature_path, low_memory=False)
     original_row_count = len(df)
+    before_filter_row_count = len(df)
+    if args.min_run_count > 0:
+        if "run_count" not in df.columns:
+            raise SystemExit("--min-run-count를 쓰려면 run_count 컬럼이 필요합니다.")
+        df = df[df["run_count"].fillna(0).astype(float) >= args.min_run_count].reset_index(drop=True)
+        if len(df) < 8:
+            raise SystemExit("min-run-count 적용 후 학습 row가 너무 적습니다.")
     if args.max_rows > 0 and len(df) > args.max_rows:
         df = df.sample(n=args.max_rows, random_state=args.seed).reset_index(drop=True)
     feature_columns = [
@@ -208,7 +222,9 @@ def main() -> int:
             rows=ranked,
             row_count=len(df),
             source_row_count=original_row_count,
+            before_filter_row_count=before_filter_row_count,
             max_rows=args.max_rows,
+            min_run_count=args.min_run_count,
             target_column=target_column,
         ),
         encoding="utf-8",
@@ -224,6 +240,19 @@ def candidate_grid() -> list[Candidate]:
             candidate_id="current_runtime_trace",
             category="baseline",
             description="현재 런타임 후보를 trace-only 기준으로 읽는 baseline",
+            base_experiment_id="base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_s4_rank_weight_v1",
+        ),
+        Candidate(
+            candidate_id="runtime_s4_rank_growth_access_current",
+            category="runtime_handoff",
+            description="현재 handoff 후보: S4 rank pressure 가중 + growth access price band",
+            base_experiment_id="base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_s4_rank_weight_v1",
+            sweep_reward_scale=0.40,
+            sweep_price_scale=2.20,
+            sim_economy_mode="gated_known_cost",
+            sim_market_spend_mode="reroll_slot_sell_v1",
+            sim_price_band_mode="growth_access_v1",
+            sim_market_choice_mode="affordable_alternative_v1",
         ),
         Candidate(
             candidate_id="economy_r040_p220_spend_choice",
@@ -314,14 +343,14 @@ def rows_for_candidate(candidate: Candidate) -> list[dict[str, Any]]:
                 for market in MARKETS:
                     rows.append(
                         {
-                            "base_experiment_id": candidate.candidate_id,
+                            "base_experiment_id": candidate.base_experiment_id or candidate.candidate_id,
                             "loadout_id": loadout,
                             "blind_tier": tier,
                             "difficulty": "standard",
                             "market_profile": market,
                             "resolved_market_profile": market,
                             "run_modifier": "basic",
-                            "sim_boss_constraint_id": "",
+                            "sim_boss_constraint_id": runtime_boss_constraint_id(station, tier, candidate),
                             "station": station,
                             "station_tier_index": station * 3 + tier_index,
                             "tier_index": tier_index,
@@ -355,17 +384,17 @@ def rows_for_candidate(candidate: Candidate) -> list[dict[str, Any]]:
                                 "shop_slot_market_v13",
                             }),
                             "market_availability_index": market_availability_index(market),
-                            "has_boss_constraint": 0,
-                            "boss_family_index": -1,
-                            "boss_level_index": -1,
-                            "boss_pressure_index": 0.0,
-                            "is_runtime_boss_modifier": 0,
+                            "has_boss_constraint": int(runtime_boss_constraint_id(station, tier, candidate) != ""),
+                            "boss_family_index": boss_family_index(runtime_boss_constraint_id(station, tier, candidate)),
+                            "boss_level_index": boss_level_index(runtime_boss_constraint_id(station, tier, candidate)),
+                            "boss_pressure_index": boss_pressure_index(runtime_boss_constraint_id(station, tier, candidate)),
+                            "is_runtime_boss_modifier": int(runtime_boss_constraint_id(station, tier, candidate) != ""),
                             "economy_pressure_index": economy_pressure_index(
                                 candidate.sweep_reward_scale,
                                 candidate.sweep_price_scale,
                             ),
                             "station_boss_interaction": station * int(tier == "boss"),
-                            "station_pressure_interaction": 0.0,
+                            "station_pressure_interaction": station * boss_pressure_index(runtime_boss_constraint_id(station, tier, candidate)),
                             "market_station_interaction": station * market_availability_index(market),
                             "economy_market_interaction": economy_pressure_index(
                                 candidate.sweep_reward_scale,
@@ -426,7 +455,9 @@ def score_candidate(
     if candidate.sweep_price_scale > 2.5:
         score -= 0.25
     if avg_v9 < avg_none:
-        score -= 2.0
+        score -= 5.0
+    if avg_s8_boss > 0.72:
+        score -= 1.0
 
     return {
         "candidate_id": candidate.candidate_id,
@@ -436,6 +467,7 @@ def score_candidate(
         "predicted_market_delta": round(market_delta, 4),
         "predicted_s1_boss_v9": round(avg_s1_boss, 4),
         "predicted_s8_boss_v9": round(avg_s8_boss, 4),
+        "market_gate_pass": int(avg_v9 >= avg_none),
         "reward_scale": candidate.sweep_reward_scale,
         "price_scale": candidate.sweep_price_scale,
         "boss_target_multiplier": candidate.boss_target_multiplier,
@@ -485,6 +517,69 @@ def market_availability_index(market: str) -> int:
     return 1
 
 
+def runtime_boss_constraint_id(station: int, tier: str, candidate: Candidate) -> str:
+    if tier != "boss":
+        return ""
+    if candidate.base_experiment_id and "runtime_station_pool_s4_rank_weight" in candidate.base_experiment_id:
+        return {
+            1: "yellow_dampener_v1",
+            2: "blue_dampener_v1",
+            3: "face_tile_dampener_v1",
+            4: "single_rank_pressure",
+            5: "repeat_rank_pressure_v4",
+            6: "all_score_dampener_v1",
+            7: "confirm_count_tax_v2",
+            8: "confirm_limit_tax_v1",
+        }.get(station, "")
+    return ""
+
+
+def boss_family_index(value: str) -> int:
+    if value == "":
+        return -1
+    family_patterns = [
+        ["color", "red_", "yellow_", "blue_", "black_"],
+        ["line", "row_", "column_", "diagonal_"],
+        ["face"],
+        ["repeat"],
+        ["single"],
+        ["confirm_count"],
+        ["confirm_limit"],
+        ["all_score"],
+        ["first_confirm"],
+    ]
+    for index, patterns in enumerate(family_patterns):
+        if any(pattern in value for pattern in patterns):
+            return index
+    return len(family_patterns)
+
+
+def boss_level_index(value: str) -> int:
+    return {
+        "yellow_dampener_v1": 0,
+        "blue_dampener_v1": 1,
+        "face_tile_dampener_v1": 1,
+        "single_rank_pressure": 3,
+        "repeat_rank_pressure_v4": 3,
+        "all_score_dampener_v1": 4,
+        "confirm_count_tax_v2": 5,
+        "confirm_limit_tax_v1": 6,
+    }.get(value, -1 if value == "" else 7)
+
+
+def boss_pressure_index(value: str) -> float:
+    return {
+        "yellow_dampener_v1": 0.40,
+        "blue_dampener_v1": 0.40,
+        "face_tile_dampener_v1": 0.35,
+        "single_rank_pressure": 0.30,
+        "repeat_rank_pressure_v4": 0.20,
+        "all_score_dampener_v1": 0.20,
+        "confirm_count_tax_v2": 0.25,
+        "confirm_limit_tax_v1": 0.30,
+    }.get(value, 0.0)
+
+
 def expected_target_score(station: int, tier: str, candidate: Candidate) -> int:
     base = {
         1: {"small": 240, "big": 264, "boss": 265},
@@ -521,20 +616,23 @@ def build_report(
     rows: list[dict[str, Any]],
     row_count: int,
     source_row_count: int,
+    before_filter_row_count: int,
     max_rows: int,
+    min_run_count: int,
     target_column: str,
 ) -> str:
     top_rows = rows[:6]
     table = [
-        "| 순위 | 후보 | 분류 | 점수 | v9 평균 | none 평균 | 차이 | S1 boss | S8 boss |",
-        "|---:|---|---|---:|---:|---:|---:|---:|---:|",
+        "| 순위 | 후보 | 분류 | 통과 | 점수 | v9 평균 | none 평균 | 차이 | S1 boss | S8 boss |",
+        "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for index, row in enumerate(top_rows, start=1):
         table.append(
-            "| {rank} | `{candidate}` | {category} | {score:.4f} | {v9:.4f} | {none:.4f} | {delta:.4f} | {s1:.4f} | {s8:.4f} |".format(
+            "| {rank} | `{candidate}` | {category} | {gate} | {score:.4f} | {v9:.4f} | {none:.4f} | {delta:.4f} | {s1:.4f} | {s8:.4f} |".format(
                 rank=index,
                 candidate=row["candidate_id"],
                 category=row["category"],
+                gate=row["market_gate_pass"],
                 score=float(row["recommendation_score"]),
                 v9=float(row["predicted_v9_clear_avg"]),
                 none=float(row["predicted_none_clear_avg"]),
@@ -549,7 +647,7 @@ def build_report(
             "",
             "## 최종 결론 요약",
             "",
-            "- 결론: 이 추천표는 fresh resimulation 후보를 고르는 참고자료이며 ML 마감 근거가 아니다.",
+            "- 결론: 이 추천표는 high-confidence row 기준 fresh resimulation 후보를 고르는 참고자료이며 ML 마감 근거가 아니다.",
             f"- 1위 후보: `{top_rows[0]['candidate_id']}` / score {float(top_rows[0]['recommendation_score']):.4f}." if top_rows else "- 1위 후보: 없음.",
             "- 사용 가능: 후보 우선순위 정리와 후속 probe 설계.",
             "- 사용 금지: 추천 후보를 runtime target/boss/market/economy 값에 자동 적용.",
@@ -571,8 +669,10 @@ def build_report(
             f"- feature table: `{feature_path}`",
             f"- recommendation csv: `{out_path}`",
             f"- source rows: {source_row_count}",
+            f"- rows before filter: {before_filter_row_count}",
             f"- training rows: {row_count}",
             f"- max rows: {max_rows}",
+            f"- min run count: {min_run_count}",
             f"- target: `{target_column}`",
             "",
             "## 상위 후보 상세",

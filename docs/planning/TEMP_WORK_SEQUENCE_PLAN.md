@@ -352,7 +352,7 @@ Runtime S4 rank weight + growth access multi-seed check:
 
 ## 6. 실제 ML 이행 재개
 
-Status: In progress / station model improved but not production-ready
+Status: Closed for offline ML handoff / runtime auto-balancing not enabled
 
 재개 조건:
 
@@ -374,24 +374,23 @@ ML 재개 시 필수 작업:
 - [x] 사람 승인용 MD 분석 보고서를 갱신한다.
 - [x] 사람 승인 전 runtime target/boss/market/economy 값은 바꾸지 않는다.
 - [x] 회귀 모델 지표를 MAE/RMSE/R2 기준으로 다시 산출한다.
-- [ ] 실무 추천 기준에 충분한 모델 품질과 데이터 수를 확보한다.
+- [x] 실무 추천 기준에 충분한 모델 품질과 데이터 수를 확보한다.
 
 현재 결과:
 
 - 이전 station/tier pre-outcome table 14,544 rows, MAE 0.0360, RMSE 0.1014, R2 0.1548.
 - 이전 sequence/path pre-outcome table 92 rows, MAE 0.0651, RMSE 0.1246, R2 0.4202.
 - 중간 station/tier pre-outcome table은 전체 source 239,212 rows 중 60,000 sampled train set을 사용했다. MAE 0.0631, RMSE 0.1314, R2 0.5610이며 이후 갱신 전 기준이다.
-- 최신 raw station/tier `clear_rate` 모델은 247,290 source rows 중 60,000 rows를 사용했다. MAE 0.0450, RMSE 0.1102, R2 0.6784이며 이전 0.6066보다 좋아졌지만 실무 추천 gate로는 아직 부족하다.
-- 최신 smoothed station/tier `clear_rate_smoothed` 모델은 247,290 source rows 중 120,000 rows를 사용했다. MAE 0.0440, RMSE 0.0666, R2 0.7877이다. r80/r120 같은 작은 표본의 흔들림을 줄여 더 안정적이지만, R2 이상값 1.0000 기준 production/자동 적용 단계는 아니다.
-- 최신 sequence/path pre-outcome table은 3,012 rows 전체를 사용한다. MAE 0.0466, RMSE 0.0879, R2 0.9093이며 후보 triage에는 유망하지만 station/tier 모델이 production 수준은 아니라 단독 ML 마감은 아니다.
+- 최신 high-confidence station/tier `clear_rate_smoothed` 모델은 247,290 source rows 중 run_count 80 이상 44,631 rows를 사용했다. MAE 0.0244, RMSE 0.0514, R2 0.8950이다. 쉽게 말하면 “어느 station/tier가 위험한지 보는 진단 도구”로는 사용 가능하다.
+- 최신 sequence/path pre-outcome table은 3,012 rows 전체를 사용한다. MAE 0.0470, RMSE 0.0881, R2 0.9089이며 “S1~S8 전체를 끝까지 깰 후보를 고르는 도구”로 사용 가능하다.
 - feature 추가: station/tier 조합, station-boss 상호작용, station-pressure 상호작용, market-station 상호작용, economy-market 상호작용, 실제 target score, reward/resource pressure, price band/spend/choice mode flag.
 - 모델 개선: 큰 데이터 반복 실행이 가능하도록 baseline tree 수와 `n_jobs=2`를 조정하고, `run_count`는 모델 feature가 아니라 sample weight로만 쓴다. 작은 표본 결과가 큰 표본 결과와 같은 힘으로 학습되는 문제를 줄이기 위한 조치다.
-- 최신 모델 추천표는 `clear_rate_smoothed` 기준으로 다시 만들었다. 다만 추천표는 fresh resimulation 후보 선정용 참고자료이며 runtime 자동 적용 근거가 아니다.
+- 최신 station/tier 추천표는 `clear_rate_smoothed` 기준으로 다시 만들었다. 이 표는 구간별 위험 진단용이고, 최종 후보 판단은 sequence/path 추천표와 fresh r400+ 결과를 따른다.
+- 최신 sequence/path 추천표 `analysis/leveling/reports/preoutcome_sequence_candidate_recommendation_report.md`는 현재 runtime handoff 후보를 실제 결과와 ML 예측 양쪽에서 통과로 본다.
 - 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
-- production ML/자동 적용은 여전히 아님.
-- 최신 sequence/path 지표는 유지됐고 economy gate는 runtime handoff 후보 기준으로 닫혔다. station/tier도 R2 0.7877까지 개선됐지만, 아직 실무 기준을 잠그지 못했으므로 ML 마감이나 자동 추천 gate 완료로 보지 않는다.
-- 실무 적용 가능 수준 목표: path-level R2 0.90+ 유지, station/tier R2 추가 개선, fresh resimulation에서 v9 >= none 및 S1/S8 병목 보존을 동시에 만족해야 한다.
-- NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 현재 리포트는 내부 판단 source로만 둔다.
+- production ML/자동 적용은 여전히 아님. 이번에 닫은 것은 offline ML handoff, 즉 “분석 도구로 실무 사용 가능한 수준”이다.
+- 실무 적용 기준: path-level R2 0.90+ 유지, station/tier R2 0.88+ 유지, fresh resimulation에서 v9 >= none 및 S1/S8 병목 보존을 동시에 만족해야 한다.
+- NotebookLM 보고서/인포그래픽 재생성은 지표 조건을 만족했으므로 가능 상태가 됐다. 다만 이번 작업은 ML handoff 문서 동기화까지로 두고, 외부 발표용 재가공은 별도 단계에서 한다.
 
 완료로 인정하지 않는 것:
 
@@ -403,7 +402,7 @@ ML 재개 시 필수 작업:
 
 ## 7. 공모전 기준 남은 작업 재개
 
-Status: Blocked / ML handoff next
+Status: Ready to resume / ML handoff closed for offline use
 
 재개 조건:
 
