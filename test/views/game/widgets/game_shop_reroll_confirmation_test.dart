@@ -201,7 +201,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Jester 후보를 리롤할까요?\n상점 입장 첫 리롤은 정찰 무료입니다.'),
+      find.text('Jester 후보를 리롤할까요?\n상점 입장 보너스로 첫 리롤은 무료입니다.'),
       findsOneWidget,
     );
     expect(find.text('무료 리롤'), findsOneWidget);
