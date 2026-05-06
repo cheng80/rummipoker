@@ -205,6 +205,20 @@ Split 판정:
 | `min_contributor_count_v1` | confirm candidate scoring/penalty | 저장 영향 없음 | 라인 preview/정산 penalty 설명 필요 | simulation 역전 신호로 보류 |
 | `rank_family_decay_v1` | confirmed rank/family pressure | 기존 confirmed rank 저장 재사용 가능성 있음 | 보스 팝업/정산 penalty 필요 | simulation 역전 신호로 보류 |
 
+Stage B 우선 후보 영향 경로:
+
+| Candidate | 저장/복원 | 전투/정산 source of truth | 표시/피드백 | 구현 전 검증 |
+|---|---|---|---|---|
+| `reward_tax_by_contributor_v1` | 새 저장 schema 없이 `RummiBossModifier` 또는 blind spec에 reward tax 수치가 들어가면 active run save의 boss modifier JSON round-trip 확인 필요 | 전투 점수는 그대로 두고, 정산 reward 계산에서 확정 기여 라인/타일 수 기반 gold tax를 적용한다. 확정된 gold 결과가 source of truth이고 연출 지연값은 저장하지 않는다 | boss popup에 "확정 기여 수에 따라 보상 골드 감소"를 표시하고, settlement/cashout reward line에 tax를 별도 행으로 표시해야 한다 | reward preview, cashout, active run save/restore, final boss run completion reward, economy audit 경로를 함께 확인 |
+| `hand_discard_cost_v1` | 손패 버림 횟수 자체를 줄이는 방식이면 기존 blind resource 저장만 사용 가능. "버림 비용"으로 구현하면 gold 변화가 필요해 정산/전투 gold source를 따로 검토해야 함 | 출품 전 1차는 hand discard 0 또는 -1 pressure로만 본다. gold cost 방식은 경제/저장 영향이 커서 별도 승인 전 구현하지 않는다 | boss popup과 전투 HUD의 남은 hand discard 값만으로 읽혀야 하며, 자동 자원 지급이나 hidden correction은 없다 | S2~S3 boss 배치, no-growth route, board/draw stop, active run save/restore를 확인 |
+
+Stage B 구현 원칙:
+
+- `reward_tax_by_contributor_v1`은 전투 점수 penalty가 아니라 정산/economy penalty다.
+- `hand_discard_cost_v1`은 먼저 기존 blind resource pressure 계열로만 구현한다. gold cost 방식은 이번 단계에서 제외한다.
+- 두 후보 모두 S1~S8 cycle에 바로 넣지 않고 별도 runtime experiment axis 또는 pool 후보로 검증한다.
+- 저장 포맷을 늘려야 하는 구현안이 나오면 코드 작성 전에 영향과 검증 경로를 다시 확인한다.
+
 ### Stage C: 저장/UI 변경이 필요하지만 재미 가치가 큰 실험
 
 출품 전 즉시 구현 후보는 아니지만, boss전 다양성을 위해 폐기하지 않고 실험 후보로 보존한다.
@@ -371,8 +385,8 @@ Leveling 판정:
 
 ## 6. Next Step
 
-1. Stage A 우선 probe 5개를 simulation proxy id로 추가한다.
-2. S1~S8 cycle에 바로 넣지 않고 experiment axis로 r80 exploratory smoke를 돌린다.
-3. S1/S2/S3/S7/S8 병목, board locked, draw exhausted, v9가 none보다 낮아지는 역전 여부를 확인한다.
-4. Stage A 결과에서 2~3개만 Stage B runtime 후보로 좁힌다.
-5. 저장/UI 변경이 필요한 Stage C 후보는 구현하지 않고, 재미 가치와 저장/복원 검증 경로만 별도 후보로 유지한다.
+1. `reward_tax_by_contributor_v1`와 `hand_discard_cost_v1`의 runtime 구현 경로를 코드에서 확인한다.
+2. 저장 schema를 늘리지 않는 최소 구현안이면 작은 runtime experiment axis로 구현한다.
+3. S1~S8 cycle에는 바로 넣지 않고, runtime experiment axis로 smoke/test를 돌린다.
+4. `reward_tax_by_contributor_v1`은 reward preview/cashout/economy audit 경로를 먼저 확인한다.
+5. `hand_discard_cost_v1`은 gold cost가 아니라 blind resource pressure로만 구현 가능한지 먼저 확인한다.
