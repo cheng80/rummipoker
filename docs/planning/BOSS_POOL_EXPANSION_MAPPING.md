@@ -10,13 +10,13 @@
 
 | Layer | Count | Notes |
 |---|---:|---|
-| Simulation proxy pool | 10+3+5 | `CURRENT_LEVELING_RUNTIME_SPEC.md`의 boss constraint proxy 기준 + 1차 확장 experiment axis + Stage A simulation-only proxy |
+| Simulation proxy pool | 10+3+5 + runtime station profile | `CURRENT_LEVELING_RUNTIME_SPEC.md`의 boss constraint proxy 기준 + 1차 확장 experiment axis + Stage A simulation-only proxy + runtime station pool mirror |
 | Runtime modifier id in seed pool | 14 | battle/save/display/settlement penalty 경로가 있는 modifier id. 색상 variant, `confirm_limit_tax_v1`, rank pressure 계열 포함 |
 | S1~S8 runtime station pool | 8 pools / 31 placements | Station 난이도 level별 3~4개 후보를 두고 run seed로 deterministic 선택 |
 
 현재 문제:
 
-- S1~S8 고정 boss 8개 문제는 1차 해소했다. 이제 각 station 난이도 level별 pool의 severity와 경제/레벨링 영향 재검증이 남았다.
+- S1~S8 고정 boss 8개 문제는 1차 해소했고 simulation pool에도 runtime station profile을 추가했다. 이제 각 station 난이도 level별 pool의 severity와 경제/레벨링 영향 재검증이 남았다.
 - reference boss pattern은 28개인데, 현재는 이를 10개 family로 압축했다.
 - 공모전용 vertical slice 기준에서도 boss 다양성은 전략성 인상에 직접 영향을 준다.
 

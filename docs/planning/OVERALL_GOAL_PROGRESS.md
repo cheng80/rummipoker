@@ -44,7 +44,7 @@
 | Area | Progress | Evidence | Missing evidence |
 |---|---:|---|---|
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
-| Boss modifier runtime pool | 78% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, repeat/single/confirm-limit/color/line variant 후보 편입 | seed 기반 pool 전체 r80/r400 재검증 |
+| Boss modifier runtime/sim pool | 80% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, simulation runtime-station mirror profile 추가 | seed 기반 pool 전체 r80/r400 재검증 |
 | Market offer and inventory | 67% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한 구현 | 가격/노출/구매력 최종 기준 필요 |
 | Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | post lane reroll 경제 probe는 exploratory/not closed |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
@@ -58,7 +58,7 @@
 
 현재 집중 축:
 
-1. Boss pool mapping 및 1차 확장: S1~S8 station 난이도 level별 3~4개 seed 기반 runtime boss pool 적용. 새 저장 schema 없이 기존 blind boss modifier 저장 경로 재사용
+1. Boss pool mapping 및 1차 확장: S1~S8 station 난이도 level별 3~4개 seed 기반 runtime boss pool과 simulation mirror profile 적용. 새 저장 schema 없이 기존 blind boss modifier 저장 경로 재사용
 2. 확장 boss pool 기준 레벨링/경제 probe: confirm-limit 확장 profile 기준 r400 레벨링/경제 raw probe까지 확보했지만 최종 gate는 아님
 3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영해 offline recommendation scaffold는 갱신했지만, 모델 지표가 실무 사용 기준에 부족해 recommendation gate는 닫지 않음
 

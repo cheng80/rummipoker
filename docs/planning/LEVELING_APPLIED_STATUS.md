@@ -28,6 +28,7 @@
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
 | runtime boss modifier station pool | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 각 station 난이도 level에 맞춰 3~4개 후보를 두고 run seed로 deterministic 선택 |
+| simulation runtime boss station profile | Applied | `tools/sim/run_balance_sim.dart` | runtime station pool과 같은 3~4개 후보 profile을 sim experiment id로 추가. 레벨링/경제/ML 재검증 입력으로 사용 |
 | S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face/all-score/confirm/rank 계열을 station level pool에 적용. 추가 simulation-only proxy는 아직 런타임 미편입 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |

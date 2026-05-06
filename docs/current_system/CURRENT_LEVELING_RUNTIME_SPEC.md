@@ -99,20 +99,20 @@ Catalog economy normalization:
 | `supernova` | 8G |
 | `jester_hook` | 7G |
 
-## 4. Runtime Boss Modifier Cycle
+## 4. Runtime Boss Modifier Pool
 
-현재 런타임 Boss 표시/전투 제약은 station index 순환이다.
+현재 런타임 Boss 표시/전투 제약은 station 난이도 level별 pool에서 run seed로 deterministic 선택한다.
 
-| Station | Runtime boss modifier |
-|---:|---|
-| S1 | `redDampener` |
-| S2 | `rowDampener` |
-| S3 | `faceDampener` |
-| S4 | `columnDampener` |
-| S5 | `allScoreDampener` |
-| S6 | `diagonalDampener` |
-| S7 | `firstConfirmTax` |
-| S8 | `confirmCountTax` |
+| Station | Level | Runtime boss modifier pool |
+|---:|---|---|
+| S1 | entry | `red_dampener_v1`, `yellow_dampener_v1`, `row_line_dampener_v1` |
+| S2 | early | `row_line_dampener_v1`, `blue_dampener_v1`, `yellow_dampener_v1`, `face_tile_dampener_v1` |
+| S3 | growthCheck | `face_tile_dampener_v1`, `black_dampener_v1`, `blue_dampener_v1`, `column_line_dampener_v1` |
+| S4 | mid | `column_line_dampener_v1`, `diagonal_line_dampener_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` |
+| S5 | midLate | `all_score_dampener_v1`, `confirm_limit_tax_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` |
+| S6 | late | `diagonal_line_dampener_v1`, `all_score_dampener_v1`, `first_confirm_tax_v1`, `confirm_count_tax_v2` |
+| S7 | late | `first_confirm_tax_v1`, `confirm_count_tax_v2`, `confirm_limit_tax_v1`, `all_score_dampener_v1` |
+| S8 | finalGate | `confirm_count_tax_v2`, `all_score_dampener_v1`, `first_confirm_tax_v1`, `confirm_limit_tax_v1` |
 
 표시 정책:
 
@@ -153,6 +153,7 @@ Weighted boss pool v3:
 - `target_spike_wall`은 S8 단일 전투에서 약한 축으로 남긴다.
 - runtime은 S1~S8 고정 1개 cycle이 아니라 station 난이도 level별 boss pool에서 run seed로 deterministic 선택한다.
 - 선택된 boss modifier는 기존 blind state 저장 경로에 들어가므로 새 저장 schema는 없다.
+- 시뮬레이션에는 runtime과 같은 station 난이도 level별 pool을 쓰는 `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1` profile을 둔다. 이 profile은 `sim_boss_constraint_id`와 `boss_modifier_id`를 runtime modifier id 중심으로 기록해 이후 레벨링/ML 입력을 runtime 적용 후보와 맞춘다.
 
 Runtime migration status:
 

@@ -4703,6 +4703,7 @@ BalanceSimExperimentSpec _resolveExperiment({
             id.contains('_boss_expansion_stage_a_refill_limit_probe_v1') ||
             id.contains('_boss_expansion_stage_a_reward_tax_probe_v1') ||
             id.contains('_boss_expansion_stage_a_color_variant_probe_v1'):
+    case _ when id.endsWith('_runtime_station_pool_v1'):
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1':
     case _
@@ -4965,6 +4966,7 @@ double _stationGrowthBaseForExperiment(String id) {
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1' =>
       1.25,
     _ when _usesStageABossExpansionSplitProbe(id) => 1.25,
+    _ when id.endsWith('_runtime_station_pool_v1') => 1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1' =>
@@ -5390,6 +5392,12 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
           severity: severity,
           baseBossModifier: baseBossModifier,
         )
+      : _usesRuntimeBossStationPool(id)
+      ? _runtimeBossConstraintForStationPool(
+          station: station,
+          severity: severity,
+          runSeed: runSeed,
+        )
       : _usesWeightedBossPool(id)
       ? _weightedBossConstraintForStationPool(
           station: station,
@@ -5448,7 +5456,11 @@ bool _usesOrderedBossTargets(String id) =>
     id.endsWith('_weighted_boss_v2') ||
     id.endsWith('_weighted_boss_v3') ||
     _usesRankCycleProbe(id) ||
+    _usesRuntimeBossStationPool(id) ||
     id.contains('_weighted_boss_v3_late_boss_');
+
+bool _usesRuntimeBossStationPool(String id) =>
+    id.endsWith('_runtime_station_pool_v1');
 
 bool _usesRankCycleProbe(String id) =>
     id.endsWith('_rank_cycle_probe_v1') ||
@@ -5773,6 +5785,54 @@ BalanceSimBossConstraintChoice _weightedBossConstraintForStationPool({
   });
 }
 
+BalanceSimBossConstraintChoice _runtimeBossConstraintForStationPool({
+  required int station,
+  required String severity,
+  required int runSeed,
+}) {
+  final normalizedStation = station < 1 ? 1 : station;
+  final poolIndex = (normalizedStation - 1) % _runtimeBossStationPools.length;
+  final pool = _runtimeBossStationPools[poolIndex];
+  final selectedIndex = _runtimeBossVariantIndex(
+    runSeed: runSeed,
+    stationIndex: normalizedStation,
+    variantCount: pool.slots.length,
+  );
+  final selected = pool.slots[selectedIndex];
+  final choice = _bossConstraintChoiceForSlot(
+    slot: selected,
+    severity: severity,
+    baseBossModifier: null,
+  );
+  return choice.withExtraEffects(<String, Object?>{
+    'sim_boss_pool_profile': 'runtime_station_pool_v1',
+    'sim_boss_pool_level': pool.level,
+    'sim_boss_pool_slot': selected,
+  });
+}
+
+const List<({String level, List<int> slots})> _runtimeBossStationPools = [
+  (level: 'entry', slots: [30, 31, 32]),
+  (level: 'early', slots: [32, 33, 31, 37]),
+  (level: 'growthCheck', slots: [37, 34, 33, 35]),
+  (level: 'mid', slots: [35, 36, 42, 43]),
+  (level: 'midLate', slots: [38, 41, 42, 43]),
+  (level: 'late', slots: [36, 38, 39, 40]),
+  (level: 'late', slots: [39, 40, 41, 38]),
+  (level: 'finalGate', slots: [40, 38, 39, 41]),
+];
+
+int _runtimeBossVariantIndex({
+  required int runSeed,
+  required int stationIndex,
+  required int variantCount,
+}) {
+  final mixed =
+      (runSeed * 1103515245 + stationIndex * 1013904223 + 0x9E3779B9) &
+      0x7fffffff;
+  return mixed % variantCount;
+}
+
 List<({int slot, int weight})> _weightedBossConstraintSlots(
   int station, {
   required int poolVersion,
@@ -5908,6 +5968,90 @@ BalanceSimBossConstraintChoice _bossConstraintChoiceForSlot({
   }
 
   return switch (slot) {
+    30 => choice(
+      id: RummiBossModifier.redDampener.id,
+      family: 'tile_color_weaken',
+      sourceReference: 'Runtime red tile dampener',
+      bossModifier: RummiBossModifier.redDampener,
+    ),
+    31 => choice(
+      id: RummiBossModifier.yellowDampener.id,
+      family: 'tile_color_weaken',
+      sourceReference: 'Runtime yellow tile dampener',
+      bossModifier: RummiBossModifier.yellowDampener,
+    ),
+    32 => choice(
+      id: RummiBossModifier.rowDampener.id,
+      family: 'line_kind_weaken',
+      sourceReference: 'Runtime row line dampener',
+      bossModifier: RummiBossModifier.rowDampener,
+    ),
+    33 => choice(
+      id: RummiBossModifier.blueDampener.id,
+      family: 'tile_color_weaken',
+      sourceReference: 'Runtime blue tile dampener',
+      bossModifier: RummiBossModifier.blueDampener,
+    ),
+    34 => choice(
+      id: RummiBossModifier.blackDampener.id,
+      family: 'tile_color_weaken',
+      sourceReference: 'Runtime black tile dampener',
+      bossModifier: RummiBossModifier.blackDampener,
+    ),
+    35 => choice(
+      id: RummiBossModifier.columnDampener.id,
+      family: 'line_kind_weaken',
+      sourceReference: 'Runtime column line dampener',
+      bossModifier: RummiBossModifier.columnDampener,
+    ),
+    36 => choice(
+      id: RummiBossModifier.diagonalDampener.id,
+      family: 'line_kind_weaken',
+      sourceReference: 'Runtime diagonal line dampener',
+      bossModifier: RummiBossModifier.diagonalDampener,
+    ),
+    37 => choice(
+      id: RummiBossModifier.faceDampener.id,
+      family: 'face_tile_weaken',
+      sourceReference: 'Runtime face tile dampener',
+      bossModifier: RummiBossModifier.faceDampener,
+    ),
+    38 => choice(
+      id: RummiBossModifier.allScoreDampener.id,
+      family: 'base_score_and_mult_weaken',
+      sourceReference: 'Runtime all score dampener',
+      bossModifier: RummiBossModifier.allScoreDampener,
+    ),
+    39 => choice(
+      id: RummiBossModifier.firstConfirmTax.id,
+      family: 'forced_selection_or_opening_tax',
+      sourceReference: 'Runtime first confirm tax',
+      bossModifier: RummiBossModifier.firstConfirmTax,
+    ),
+    40 => choice(
+      id: RummiBossModifier.confirmCountTax.id,
+      family: 'confirm_count_tax',
+      sourceReference: 'Runtime confirm count tax',
+      bossModifier: RummiBossModifier.confirmCountTax,
+    ),
+    41 => choice(
+      id: RummiBossModifier.confirmLimitTax.id,
+      family: 'confirm_limit_tax',
+      sourceReference: 'Runtime confirm limit tax',
+      bossModifier: RummiBossModifier.confirmLimitTax,
+    ),
+    42 => choice(
+      id: RummiBossModifier.repeatRankPressure.id,
+      family: 'repeat_hand_rank_weaken',
+      sourceReference: 'Runtime repeat rank pressure',
+      bossModifier: RummiBossModifier.repeatRankPressure,
+    ),
+    43 => choice(
+      id: RummiBossModifier.singleRankPressure.id,
+      family: 'single_hand_rank_pressure',
+      sourceReference: 'Runtime single rank pressure',
+      bossModifier: RummiBossModifier.singleRankPressure,
+    ),
     0 => choice(
       id: 'color_dampener_cycle',
       family: 'tile_color_weaken',
@@ -7211,7 +7355,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|pressure] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1, *_boss_expansion_stage_a_probe_v1, *_boss_expansion_stage_a_*_probe_v1.';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|pressure] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1, *_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1, *_boss_expansion_stage_a_probe_v1, *_boss_expansion_stage_a_*_probe_v1.';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);
@@ -7322,6 +7466,7 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_refill_limit_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_reward_tax_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_color_variant_probe_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2',
