@@ -180,12 +180,29 @@ Runtime S4 rank weight + growth access r400:
 - v9 final gold avg는 약 5.86G, v9 S8 boss 시작 골드는 약 9.98G다.
 - 즉시 경제 경고는 없고, S1/S8 boss와 board/draw 실패가 남아 난이도 압박도 사라지지 않았다.
 
+Runtime handoff 추가 상승 후보:
+
+- outputs: `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r400_summary.json`, `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_seed91761_r400_summary.json`
+- 쉬운 결론: v9가 낮았던 가장 큰 이유는 성장 후보 가격보다 “좋은 후보를 찾으려고 리롤하다가 돈이 새는 문제”였다.
+
+| run | none balanced | none power | v9 balanced | v9 power | 판단 |
+|---|---:|---:|---:|---:|---|
+| seed 91760 | 51.7% | 56.2% | 65.2% | 67.8% | 목표 범위 통과 |
+| seed 91761 | 51.7% | 56.5% | 65.0% | 67.5% | 목표 범위 재현 |
+
+판정:
+
+- `slot_sell_v1`은 리롤 비용만 빼고 슬롯 교체/판매는 유지하는 sim-only 후보다.
+- 목표였던 `none` 45~55%, `balanced v9` 60~68%, `power v9` 62~72%에 가장 가깝다.
+- S8 boss 실패와 board/draw 실패도 남아 있어 압박을 지운 후보는 아니다.
+- 다만 v9 final gold 평균이 balanced 약 16.2G, power 약 24.3G로 기존 handoff 약 5.9G보다 높다. 그래서 바로 runtime 적용하지 않고, 리롤 비용 정책을 실제 게임 경제/UI 기대값과 맞게 다시 좁힌다.
+
 ML handoff refresh:
 
-- feature rows: station/tier 247,290 source rows, sequence/path 3,012 rows.
-- high-confidence station/tier `clear_rate_smoothed`: RandomForestRegressor, run_count 80 이상 44,631 rows, MAE 0.0244(최선 0.0000), RMSE 0.0514(최선 0.0000), R2 0.8950(이상값 1.0000).
-- sequence/path: RandomForestRegressor, 3,012 rows, MAE 0.0470(최선 0.0000), RMSE 0.0881(최선 0.0000), R2 0.9089(이상값 1.0000).
-- 판단: station/tier는 구간 위험 진단용으로, sequence/path는 전체 경로 후보 선별용으로 사용 가능하다. production ML/자동 적용은 아니다.
+- feature rows: station/tier 248,248 source rows, sequence/path 3,020 rows.
+- station/tier source-path split: MAE 0.0436(최선 0.0000), RMSE 0.0899(최선 0.0000), R2 0.5264(이상값 1.0000).
+- sequence/path source-path split: MAE 0.0582(최선 0.0000), RMSE 0.1120(최선 0.0000), R2 0.8408(이상값 1.0000).
+- 판단: station/tier는 힌트 전용, sequence/path는 후보 선별 보조 신호다. production ML/자동 적용은 아니다.
 
 S7~S8 shape correction workspace probe:
 
@@ -631,13 +648,14 @@ Status: 레벨링 r400 확인 완료, 경제 gate는 미통과.
 
 ## Latest ML Scaffold Status
 
-Status: offline ML handoff usable, production auto-balancing disabled.
+Status: grouped validation added / production auto-balancing disabled.
 
-- preoutcome feature table: 247,290 source rows.
-- high-confidence station/tier `clear_rate_smoothed`: RandomForestRegressor, run_count 80 이상 44,631 rows, MAE 0.0244(최선 0.0000), RMSE 0.0514(최선 0.0000), R2 0.8950(이상값 1.0000).
-- sequence/path model: RandomForestRegressor, 3,012 rows, MAE 0.0470(최선 0.0000), RMSE 0.0881(최선 0.0000), R2 0.9089(이상값 1.0000).
+- preoutcome feature table: 248,248 source rows.
+- station/tier source-path split: MAE 0.0436(최선 0.0000), RMSE 0.0899(최선 0.0000), R2 0.5264(이상값 1.0000).
+- sequence/path random split: RandomForestRegressor, 3,020 rows, MAE 0.0509(최선 0.0000), RMSE 0.0905(최선 0.0000), R2 0.9014(이상값 1.0000).
+- sequence/path source-path split: MAE 0.0582(최선 0.0000), RMSE 0.1120(최선 0.0000), R2 0.8408(이상값 1.0000).
 - 새 feature는 station/tier 조합, boss/market/economy 상호작용, 실제 target score, reward/resource pressure, price band/spend/choice flag를 포함한다.
-- station/tier는 어디가 위험한지 보는 도구이고, sequence/path는 어떤 후보를 다음에 적용 후보로 볼지 고르는 도구다. production ML/자동 적용 기준은 아직 아니다.
+- station/tier는 어디가 위험한지 보는 힌트이고, sequence/path는 어떤 후보를 다음에 볼지 고르는 보조 신호다. production ML/자동 적용 기준은 아니다.
 
 ## 6. Read Order
 

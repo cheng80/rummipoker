@@ -88,6 +88,8 @@ PREOUTCOME_NUMERIC_FIELDS = [
     "economy_market_interaction",
     "price_band_growth_access",
     "price_band_catalog_normalized",
+    "spend_mode_slot_sell",
+    "spend_mode_reroll_slot_sell_soft",
     "spend_mode_reroll_slot_sell",
     "choice_mode_affordable_alternative",
 ]
@@ -500,6 +502,10 @@ def preoutcome_row_from_group(
     row["economy_market_interaction"] = economy_index * int(market_profile not in ("", "none"))
     row["price_band_growth_access"] = int(price_band_mode == "growth_access_v1")
     row["price_band_catalog_normalized"] = int(price_band_mode == "catalog_normalized_v1")
+    row["spend_mode_slot_sell"] = int(spend_mode == "slot_sell_v1")
+    row["spend_mode_reroll_slot_sell_soft"] = int(
+        spend_mode == "reroll_slot_sell_soft_v1",
+    )
     row["spend_mode_reroll_slot_sell"] = int(spend_mode == "reroll_slot_sell_v1")
     row["choice_mode_affordable_alternative"] = int(choice_mode == "affordable_alternative_v1")
     row["heuristic_labels"] = compact_json(raw.get("ml_labels", []))

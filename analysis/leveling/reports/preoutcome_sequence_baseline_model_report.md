@@ -2,22 +2,25 @@
 
 ## 최종 결론 요약
 
-- 결론: 현재 모델은 전체 경로 후보를 고르는 내부 추천 신호로 사용 가능하다. 단, 런타임 자동 적용 근거는 아니다.
-- 핵심 점수: MAE 0.0470, RMSE 0.0881, R2 0.9089.
-- 데이터: 3012 rows, train 2259, test 753, target `path_clear_rate`.
-- 사용 가능: S1~S8 전체 경로 후보 선별, fresh resimulation 우선순위 정리.
+- 결론: 전체 경로 모델은 후보 선별 보조 신호로 유지한다. 단, source split에서는 random split보다 낮아지므로 fresh r400+ 검증이 최종 판단이다.
+- 핵심 점수: random split MAE 0.0509, RMSE 0.0905, R2 0.9014 / source split MAE 0.0582, RMSE 0.1120, R2 0.8408.
+- 데이터: 3020 rows, train 2265, test 755, target `path_clear_rate`.
+- 사용 가능: S1~S8 전체 경로 후보 선별 보조, fresh resimulation 우선순위 정리.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
-- NotebookLM 상태: NotebookLM source로 재가공 가능하나, 외부 발표용 재생성은 문서 동기화 후 진행한다.
+- NotebookLM 상태: source split 기준과 runtime 후보가 완전히 닫히기 전까지 외부 발표용 재생성은 보류한다.
 - 다음 액션: fresh gate와 ML gate가 함께 맞는 후보를 runtime/economy handoff 문서에 연결한다.
 
 ## 핵심 점수
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0470 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.0881 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.9089 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 경로 후보 선별용으로 사용 가능 |
-| Row | 3012 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
+| MAE | 0.0509 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.0905 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.9014 | 1.0000 | random split은 같은 실험의 비슷한 row가 섞일 수 있음 | source split과 함께만 사용 |
+| source split MAE | 0.0582 | 0.0000 | 새 실험 파일을 가려도 낮아야 함 | 후보 선별 보조 |
+| source split RMSE | 0.1120 | 0.0000 | 새 실험 파일에서 큰 오차가 낮아야 함 | 후보 선별 보조 |
+| source split R2 | 0.8408 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | fresh r400+ 필요 |
+| Row | 3020 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
@@ -29,9 +32,9 @@
 ## 데이터셋
 
 - feature table: `analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv`
-- rows: 3012
-- train rows: 2259
-- test rows: 753
+- rows: 3020
+- train rows: 2265
+- test rows: 755
 - target: `path_clear_rate`
 - feature mode: `preoutcome_sequence`
 
@@ -271,6 +274,8 @@
 - `logs/sim/single_s4_growth_access_seed91623_r240_summary.json`
 - `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91627_r400_summary.json`
 - `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91628_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_seed91761_r400_summary.json`
 
 ## 피처와 타깃 정의
 
@@ -343,30 +348,30 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.0470
-- RMSE: 0.0881
-- R2: 0.9089
+- MAE: 0.0509
+- RMSE: 0.0905
+- R2: 0.9014
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.0881` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.0905` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `loadout_id_s5_power_build` | 0.2912 |
-| `loadout_id_s3_hand_growth_build` | 0.2804 |
-| `loadout_id_s2_foundation_build` | 0.2729 |
-| `loadout_id_s1_entry_bridge_build` | 0.0381 |
-| `station_path_length` | 0.0149 |
-| `loadout_id_s5_boss_bridge_build` | 0.0117 |
-| `loadout_id_progression_route_power` | 0.0109 |
-| `resolved_market_profile_s1_candidate_legendary_bridge` | 0.0062 |
-| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2` | 0.0061 |
-| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4` | 0.0036 |
+| `loadout_id_s5_power_build` | 0.2915 |
+| `loadout_id_s3_hand_growth_build` | 0.2797 |
+| `loadout_id_s2_foundation_build` | 0.2758 |
+| `loadout_id_s1_entry_bridge_build` | 0.0398 |
+| `station_path_length` | 0.0137 |
+| `loadout_id_progression_route_power` | 0.0102 |
+| `loadout_id_s5_boss_bridge_build` | 0.0100 |
+| `resolved_market_profile_s1_candidate_legendary_bridge` | 0.0080 |
+| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2` | 0.0055 |
+| `loadout_id_progression_route_delayed` | 0.0047 |
 
 ## 산출물
 

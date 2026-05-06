@@ -176,7 +176,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--sim-market-spend-mode",
         default=DEFAULT_OPTIONS["sim_market_spend_mode"],
-        choices=["none", "reroll_slot_sell_v1"],
+        choices=[
+            "none",
+            "slot_sell_v1",
+            "reroll_slot_sell_soft_v1",
+            "reroll_slot_sell_v1",
+        ],
         help="reroll/slot replacement/sell recovery를 포함한 sim-only 지출 모델.",
     )
     parser.add_argument(

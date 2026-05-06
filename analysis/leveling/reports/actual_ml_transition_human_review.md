@@ -2,9 +2,9 @@
 
 ## 최종 결론 요약
 
-- 결론: offline ML handoff는 실무 사용 가능한 수준까지 도달했다. station/tier 모델은 구간 위험 진단용, sequence/path 모델은 전체 경로 후보 선별용으로 쓴다.
-- 핵심 점수: high-confidence station/tier MAE 0.0244, RMSE 0.0514, R2 0.8950 / sequence MAE 0.0470, RMSE 0.0881, R2 0.9089.
-- 사용 가능: 후보 선별, 구간 위험 진단, fresh r400+ 결과와 묶은 handoff 판단.
+- 결론: random split 기준은 낙관적이었다. source-path split 기준으로 station/tier는 힌트 전용, sequence/path는 후보 선별 보조 신호로 쓴다.
+- 핵심 점수: station/tier source split MAE 0.0436, RMSE 0.0899, R2 0.5264 / sequence source split MAE 0.0582, RMSE 0.1120, R2 0.8408.
+- 사용 가능: sequence/path 후보 선별 보조, station/tier 힌트, fresh r400+ 결과와 묶은 handoff 판단.
 - 사용 금지: production ML 주장, runtime 자동 밸런싱, 모델 예측만 보고 target/boss/market/economy를 변경하는 일.
 - 다음 액션: 현재 runtime handoff 후보를 공모전 QA 기준으로 넘기고, 이후 새 밸런스 변경 때 같은 ML+fresh gate를 반복한다.
 
@@ -12,17 +12,17 @@
 
 | 데이터셋 | 지표 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---|---:|---:|---|---|
-| high-confidence station/tier pre-outcome | MAE | 0.0244 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 구간 위험 진단용으로 사용 가능 |
-| high-confidence station/tier pre-outcome | RMSE | 0.0514 | 0.0000 | 큰 오차가 낮을수록 좋음 | 구간 위험 진단용으로 사용 가능 |
-| high-confidence station/tier pre-outcome | R2 | 0.8950 | 1.0000 | 0.88+이면 내부 진단 기준 통과 | 통과 |
-| sequence/path pre-outcome | MAE | 0.0470 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 후보 선별용으로 사용 가능 |
-| sequence/path pre-outcome | RMSE | 0.0881 | 0.0000 | 큰 오차가 낮을수록 좋음 | 후보 선별용으로 사용 가능 |
-| sequence/path pre-outcome | R2 | 0.9089 | 1.0000 | 0.90+이면 경로 후보 선별 기준 통과 | 통과 |
-| sequence/path pre-outcome | Row | 3,012 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 더 증량 필요 |
+| station/tier source-path split | MAE | 0.0436 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 힌트 전용 |
+| station/tier source-path split | RMSE | 0.0899 | 0.0000 | 큰 오차가 낮을수록 좋음 | 힌트 전용 |
+| station/tier source-path split | R2 | 0.5264 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | 단독 gate 금지 |
+| sequence/path source-path split | MAE | 0.0582 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 후보 선별 보조 |
+| sequence/path source-path split | RMSE | 0.1120 | 0.0000 | 큰 오차가 낮을수록 좋음 | 후보 선별 보조 |
+| sequence/path source-path split | R2 | 0.8408 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | fresh r400+와 함께 사용 |
+| sequence/path pre-outcome | Row | 3,020 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 더 증량 필요 |
 
 ## 범위
 
-이 리포트는 현재 offline ML transition의 진행 상태와 남은 gate를 사람 검토 기준으로 정리한다. 현재 품질은 offline ML handoff로 인정한다.
+이 리포트는 현재 offline ML transition의 진행 상태와 남은 gate를 사람 검토 기준으로 정리한다. random split은 낙관적이므로 source-path split을 함께 본다.
 
 이 산출물은 production ML, runtime auto-balancing, target/boss/market/economy 자동 patch를 활성화하지 않는다. 모델은 candidate setting 순위를 정하고 fresh resimulation 결과와 함께 적용 후보를 판단하는 용도로만 사용한다.
 
@@ -30,8 +30,8 @@
 
 | 데이터셋 | Row | Target | Metric | 판단 |
 |---|---:|---|---|---|
-| station/tier pre-outcome table | 247,290 source / run_count 80+ 44,631 rows | `clear_rate_smoothed` | MAE 0.0244, RMSE 0.0514, R2 0.8950 | 구간 위험 진단용 기준 통과 |
-| sequence/path pre-outcome table | 3,012 | `path_clear_rate` | MAE 0.0470, RMSE 0.0881, R2 0.9089 | 전체 경로 후보 선별용 기준 통과 |
+| station/tier pre-outcome table | 248,248 source / run_count 80+ 44,831 rows | `clear_rate_smoothed` | source split MAE 0.0436, RMSE 0.0899, R2 0.5264 | 구간 힌트 전용 |
+| sequence/path pre-outcome table | 3,020 | `path_clear_rate` | source split MAE 0.0582, RMSE 0.1120, R2 0.8408 | 후보 선별 보조 신호 |
 
 기존 heuristic pipeline은 bootstrap source로 사용했다.
 
@@ -83,6 +83,13 @@ expanded-boss/runtime-station data는 coverage를 넓혔다. 최신 feature 재�
 - 실제 r400: power는 none 53.8%에서 v9 57.0%로 오른다.
 - sequence/path 추천표: 같은 후보를 fresh gate 1, ML gate 1로 본다.
 - 결론: “좋은 마켓 선택을 했는데 더 나빠지는 문제”는 현재 handoff 후보 기준으로 닫힌다.
+
+추가 상승 후보 `slot_sell_v1`은 같은 boss/price 조건에서 리롤 비용만 빼고 슬롯 교체/판매는 유지한 sim-only 후보이다.
+
+- 실제 r400 seed 91760: none balanced 51.7%, none power 56.2%, v9 balanced 65.2%, v9 power 67.8%.
+- 실제 r400 seed 91761: none balanced 51.7%, none power 56.5%, v9 balanced 65.0%, v9 power 67.5%.
+- sequence/path 추천표: 두 r400 모두 fresh gate 1, ML gate 1이다.
+- 결론: 목표 clear 범위는 통과한다. 다만 v9 final gold가 16~24G로 늘어, runtime 리롤 비용 정책 영향 검토 전에는 적용하지 않는다.
 
 최신 추천표에서도 `reward 0.40 / price 2.4`, `reward 0.38 / price 2.4` 계열 economy 후보가 상위에 남아 있다. 그러나 아래 fresh resimulation에서는 같은 계열 후보가 balanced+v9를 none보다 낮게 만들어 runtime 적용 보류 상태다. 따라서 추천표 점수는 다음 probe 후보를 고르는 참고 신호로만 사용한다.
 
@@ -166,7 +173,7 @@ expanded-boss/runtime-station data는 coverage를 넓혔다. 최신 feature 재�
 - target 변경을 적용하지 않는다.
 - 새 economy 변경을 적용하지 않는다.
 - 현재 runtime economy baseline을 유지한다. Expanded boss r400 economy에는 즉시 경고가 없지만, 모델의 상위 economy candidate는 fresh r120에서 balanced+v9 기준을 통과하지 못했다.
-- offline ML transition은 feature rebuild, baseline metric generation, candidate ranking, sequence/path gate, fresh r400+ filtering 경로까지 구현된 상태로 본다. production 자동 적용은 아니지만, 내부 분석 도구로는 실무 사용 가능하다.
+- offline ML transition은 feature rebuild, baseline metric generation, grouped validation, candidate ranking, fresh r400+ filtering 경로까지 구현된 상태로 본다. production 자동 적용은 아니며, source split 점수를 함께 본다.
 
 다음 필수 gate:
 

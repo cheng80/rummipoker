@@ -84,6 +84,8 @@ PREOUTCOME_NUMERIC_FEATURES = [
     "economy_market_interaction",
     "price_band_growth_access",
     "price_band_catalog_normalized",
+    "spend_mode_slot_sell",
+    "spend_mode_reroll_slot_sell_soft",
     "spend_mode_reroll_slot_sell",
     "choice_mode_affordable_alternative",
 ]

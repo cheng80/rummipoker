@@ -93,12 +93,12 @@
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
 - `analysis/leveling/`의 pre-outcome feature table과 tree ensemble 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
-- production ML 자동 적용은 하지 않는다. 이번에 닫은 범위는 “오프라인 분석 도구로 실무 사용 가능”이다.
-- pre-outcome feature table은 247,290 source rows로 재생성했다.
-- high-confidence station/tier `clear_rate_smoothed` 모델은 run_count 80 이상 44,631 rows 기준 MAE 0.0244(최선 0.0000), RMSE 0.0514(최선 0.0000), R2 0.8950(이상값 1.0000)이다. 구간 위험 진단용으로 사용 가능하다.
-- sequence/path table은 3,012 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0470(최선 0.0000), RMSE 0.0881(최선 0.0000), R2 0.9089(이상값 1.0000)이다. 전체 경로 후보 선별용으로 사용 가능하다.
-- 새 sequence/path 추천표에서 현재 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` 후보는 실제 r400 결과와 ML 예측 양쪽에서 통과한다.
-- NotebookLM 보고서/인포그래픽 재생성은 가능 상태가 됐지만, 이번 단계에서는 외부 재가공보다 공모전 QA 재개를 우선한다.
+- production ML 자동 적용은 하지 않는다. random split 기준은 낙관적이었으므로, 이번 ML은 sequence/path 후보 선별 보조 신호와 fresh r400+ 검증을 묶어 쓴다.
+- pre-outcome feature table은 248,248 source rows로 재생성했다.
+- high-confidence station/tier random split은 MAE 0.0239, RMSE 0.0499, R2 0.9037이지만, source-path split은 MAE 0.0436, RMSE 0.0899, R2 0.5264이다. 구간 위험 힌트로만 사용한다.
+- sequence/path random split은 MAE 0.0509, RMSE 0.0905, R2 0.9014이고, source-path split은 MAE 0.0582, RMSE 0.1120, R2 0.8408이다. 후보 선별 보조 신호로 사용한다.
+- 현재 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` 후보는 최소 gate를 통과했지만 v9 clear가 낮다. 추가 상승 후보 `slot_sell_v1`은 r400 multi-seed에서 none balanced 51.7%, none power 56.2~56.5%, v9 balanced 65.0~65.2%, v9 power 67.5~67.8%를 보였다. 단, 리롤 비용 정책 영향 검토 전이라 runtime 적용은 보류한다.
+- NotebookLM 보고서/인포그래픽 재생성은 아직 보류한다. source split 기준 station/tier가 힌트 전용이고, 리롤 비용 정책 후보도 아직 닫히지 않았다.
 
 임시 작업 순서 플랜 처리:
 
@@ -291,13 +291,13 @@ Status: Closed for offline ML handoff / production auto-balancing disabled
 - target/economy 후보를 fresh r80으로 재시뮬레이션했다.
 - 사람 승인용 MD 보고서를 작성했다.
 - runtime 값은 바꾸지 않았다.
-- pre-outcome feature table을 247,290 source rows로 증량하고, station/tier 모델에 boss/market/economy 상호작용, 실제 target score, reward/resource pressure feature를 추가했다.
+- pre-outcome feature table을 248,248 source rows로 증량하고, station/tier 모델에 boss/market/economy 상호작용, 실제 target score, reward/resource pressure feature를 추가했다.
 - 모델 반복 실행 비용을 줄이기 위해 큰 데이터 baseline tree 수와 `n_jobs=2`를 조정했다. `run_count`는 feature가 아니라 학습 가중치로만 쓴다.
 
 남은 주의:
 
-- station/tier smoothed 모델은 MAE 0.0244, RMSE 0.0514, R2 0.8950으로 구간 위험 진단용 기준을 통과했다.
-- sequence/path 모델은 MAE 0.0470, RMSE 0.0881, R2 0.9089로 전체 경로 후보 선별용 기준을 통과했다.
+- station/tier smoothed 모델은 random split R2 0.9037이지만 source-path split R2 0.5264라 구간 위험 힌트 전용이다.
+- sequence/path 모델은 random split R2 0.9014, source-path split R2 0.8408로 후보 선별 보조 신호다.
 - `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` r400 multi-seed가 v9 >= none을 만족했고, sequence/path 추천표에서도 fresh gate와 ML gate를 모두 통과했다.
 - production ML 자동 적용은 여전히 아니다. 다음 모델 재생성 때도 MAE/RMSE/R2를 모두 기록하고, 실무 기준 충족 여부를 별도로 판단한다.
 
@@ -314,7 +314,7 @@ Status: In progress
 
 현재 남은 일:
 
-- post lane reroll 이후 경제 probe로 reroll spend, 잔고, unaffordable event, clear 역전 여부를 확인한다.
+- `slot_sell_v1`은 목표 clear에 도달했지만 v9 final gold 평균이 16~24G로 올라간다. 리롤 비용을 완전히 제거할지, 첫 리롤/조건부 할인/아이템 보강으로 옮길지 정책 영향 검토가 남아 있다.
 
 ### M2. S1~S8 Leveling Curve
 

@@ -350,6 +350,54 @@ Runtime S4 rank weight + growth access multi-seed check:
 - 경제: v9 final gold 평균은 약 5.85~5.86G, v9 S8 boss 시작 골드는 약 9.98~10.00G, 즉시 경제 경고 없음.
 - 가격 보정 정리: `growth_access` runtime 가격 상한은 점수/족보/색/버림/이동/안전/드로우 성장 후보에만 적용한다. `market`/`boss` 전용 아이템은 더 이상 이 상한으로 싸지지 않는다.
 
+Runtime handoff clear target:
+
+- 쉬운 목표: `none`은 "좋은 상점 도움 없이 돈 판"이므로 너무 높으면 안 된다. `v9`는 "좋은 상점 선택을 한 판"이므로 `none`보다 확실히 높아야 한다.
+- `none` 목표: balanced/power 모두 대략 45~55%를 유지한다. 이 범위는 성장 없이도 가끔 깰 수 있지만, 안정 클리어는 어렵다는 뜻이다.
+- `balanced v9` 목표: 60~68%를 우선 목표로 둔다. 평균적인 성장 선택을 잘 했을 때 체감 보상이 있어야 한다.
+- `power v9` 목표: 62~72%를 우선 목표로 둔다. 점수 성장 선택은 balanced보다 약간 높거나 비슷해야 한다.
+- 70% 이상은 장기 목표 후보로 볼 수 있지만, S8/board/draw 실패가 사라지면 과완화로 본다.
+- 지금 handoff의 balanced v9 52.0%, power v9 57.0%는 최소 통과선일 뿐 충분한 목표값은 아니다. 다음 작업은 `none`을 크게 올리지 않고 `v9`만 10~15%p 올리는 후보를 찾는다.
+
+Runtime handoff uplift checklist:
+
+- [x] 목표 이유를 문서에 기록한다.
+- [x] 가격/보상만 낮추는 후보를 r120으로 확인한다.
+- [x] 리롤/슬롯 교체 지출을 분리한 후보를 r120으로 확인한다.
+- [x] 목표 범위 후보를 r400으로 확인한다.
+- [x] 목표 범위 후보를 다른 seed r400으로 재현한다.
+- [x] 목표 범위 후보를 feature table / ML 추천표 / 사람 검토 리포트 입력에 반영한다.
+- [x] random split 과대평가를 source split으로 다시 확인한다.
+- [ ] 목표 범위 후보가 runtime 경제 정책으로 옮겨도 되는지 영향 범위를 확인한다.
+- [ ] runtime 적용 가능한 리롤 비용 정책 후보를 새로 좁힌다.
+
+Runtime handoff uplift results:
+
+- 가격만 낮춘 `price 2.0 / 1.8` r120은 balanced v9 52.5%, power v9 60.8%로 부족했다.
+- 보상만 올린 `reward 0.45` r120은 balanced v9 53.3%, power v9 60.0%로 부족했다.
+- `no_spend` r120은 balanced v9 62.5~63.3%, power v9 65.8~67.5%로 목표에 가까웠다. 단, 슬롯 교체 비용까지 사라지는 실험이라 그대로 적용하지 않는다.
+- 새 sim-only spend mode `slot_sell_v1`은 리롤 비용만 빼고 슬롯 교체/판매는 유지한다.
+- `slot_sell_v1` r400 결과: none balanced 51.7%, none power 56.2%, v9 balanced 65.2%, v9 power 67.8%.
+- `slot_sell_v1` seed91761 r400 재현: none balanced 51.7%, none power 56.5%, v9 balanced 65.0%, v9 power 67.5%.
+- `slot_sell_v1` 경제 감사: v9 final gold 평균은 balanced 16.2G, power 24.3G이고 즉시 경제 경고는 없다. 이전 handoff의 5.9G보다는 느슨하므로 런타임 적용 전 리롤 비용 정책 검토가 필요하다.
+- 쉬운 해석: 현재 낮은 v9 clear의 주된 원인은 성장 후보 가격보다 “좋은 후보를 찾기 위한 리롤 비용 압박”이다. 다만 runtime 적용 전에는 리롤 비용 정책 변경이 게임 경제와 UI 기대값을 흔드는지 별도 확인한다.
+- ML 입력 반영 후 sequence/path 추천표에서도 `slot_sell_v1` 두 r400은 실제 통과 1, ML 통과 1로 잡힌다. 다만 station/tier 추천표는 여전히 구간별 평균에서는 none 예측이 더 높게 나와 단독 gate로 쓰지 않는다.
+
+ML leakage / overfit checklist:
+
+- [x] random row split 지표가 과하게 좋아 보일 수 있는지 의심한다.
+- [x] source_path 단위 grouped validation 스크립트를 추가한다.
+- [x] grouped validation을 실행한다.
+- [x] 기존 ML 리포트와 planning 문서의 “사용 가능” 표현을 source split 기준으로 낮춘다.
+- [x] 이후 ML gate는 random split과 source split을 함께 표기한다.
+- [ ] 새 후보 추가 때마다 source split 지표를 다시 갱신한다.
+
+ML leakage / overfit result:
+
+- random row split은 같은 실험 파일의 비슷한 row가 train/test에 섞일 수 있어 낙관적이다.
+- source_path grouped validation 결과 station/tier는 MAE 0.0436, RMSE 0.0899, R2 0.5264이다. 구간 위험 힌트로만 쓰고 단독 gate로 쓰지 않는다.
+- source_path grouped validation 결과 sequence/path는 MAE 0.0582, RMSE 0.1120, R2 0.8408이다. 후보 선별 보조 신호로는 유지하되, fresh r400+ 검증이 최종 판단이다.
+
 ## 6. 실제 ML 이행 재개
 
 Status: Closed for offline ML handoff / runtime auto-balancing not enabled
@@ -381,16 +429,16 @@ ML 재개 시 필수 작업:
 - 이전 station/tier pre-outcome table 14,544 rows, MAE 0.0360, RMSE 0.1014, R2 0.1548.
 - 이전 sequence/path pre-outcome table 92 rows, MAE 0.0651, RMSE 0.1246, R2 0.4202.
 - 중간 station/tier pre-outcome table은 전체 source 239,212 rows 중 60,000 sampled train set을 사용했다. MAE 0.0631, RMSE 0.1314, R2 0.5610이며 이후 갱신 전 기준이다.
-- 최신 high-confidence station/tier `clear_rate_smoothed` 모델은 247,290 source rows 중 run_count 80 이상 44,631 rows를 사용했다. MAE 0.0244, RMSE 0.0514, R2 0.8950이다. 쉽게 말하면 “어느 station/tier가 위험한지 보는 진단 도구”로는 사용 가능하다.
-- 최신 sequence/path pre-outcome table은 3,012 rows 전체를 사용한다. MAE 0.0470, RMSE 0.0881, R2 0.9089이며 “S1~S8 전체를 끝까지 깰 후보를 고르는 도구”로 사용 가능하다.
+- 최신 high-confidence station/tier random split은 MAE 0.0239, RMSE 0.0499, R2 0.9037이지만, source-path split은 MAE 0.0436, RMSE 0.0899, R2 0.5264이다. 쉽게 말하면 “위험해 보이는 구간 힌트”로만 쓴다.
+- 최신 sequence/path random split은 MAE 0.0509, RMSE 0.0905, R2 0.9014이고, source-path split은 MAE 0.0582, RMSE 0.1120, R2 0.8408이다. 쉽게 말하면 “다음 후보를 고르는 보조 신호”로 쓴다.
 - feature 추가: station/tier 조합, station-boss 상호작용, station-pressure 상호작용, market-station 상호작용, economy-market 상호작용, 실제 target score, reward/resource pressure, price band/spend/choice mode flag.
 - 모델 개선: 큰 데이터 반복 실행이 가능하도록 baseline tree 수와 `n_jobs=2`를 조정하고, `run_count`는 모델 feature가 아니라 sample weight로만 쓴다. 작은 표본 결과가 큰 표본 결과와 같은 힘으로 학습되는 문제를 줄이기 위한 조치다.
 - 최신 station/tier 추천표는 `clear_rate_smoothed` 기준으로 다시 만들었다. 이 표는 구간별 위험 진단용이고, 최종 후보 판단은 sequence/path 추천표와 fresh r400+ 결과를 따른다.
 - 최신 sequence/path 추천표 `analysis/leveling/reports/preoutcome_sequence_candidate_recommendation_report.md`는 현재 runtime handoff 후보를 실제 결과와 ML 예측 양쪽에서 통과로 본다.
 - 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
-- production ML/자동 적용은 여전히 아님. 이번에 닫은 것은 offline ML handoff, 즉 “분석 도구로 실무 사용 가능한 수준”이다.
-- 실무 적용 기준: path-level R2 0.90+ 유지, station/tier R2 0.88+ 유지, fresh resimulation에서 v9 >= none 및 S1/S8 병목 보존을 동시에 만족해야 한다.
-- NotebookLM 보고서/인포그래픽 재생성은 지표 조건을 만족했으므로 가능 상태가 됐다. 다만 이번 작업은 ML handoff 문서 동기화까지로 두고, 외부 발표용 재가공은 별도 단계에서 한다.
+- production ML/자동 적용은 여전히 아님. 이번에 남긴 것은 source split으로 보수화한 offline ML 보조 신호와 fresh simulation gate다.
+- 실무 적용 기준: source split을 우선한다. sequence/path는 후보 선별 보조 신호로 쓰되, fresh resimulation에서 v9 >= none 및 S1/S8 병목 보존을 동시에 만족해야 한다. station/tier는 source split R2가 낮으므로 단독 추천 gate로 쓰지 않는다.
+- NotebookLM 보고서/인포그래픽 재생성은 아직 보류한다. source split 기준 station/tier가 힌트 전용이고, runtime 리롤 비용 정책 후보도 아직 닫히지 않았다.
 
 완료로 인정하지 않는 것:
 

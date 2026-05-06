@@ -1140,7 +1140,10 @@ int _simMarketRerollSpendForStep({
   required int station,
   required BlindTier tier,
 }) {
-  if (mode == BalanceSimMarketSpendMode.none) return 0;
+  if (mode == BalanceSimMarketSpendMode.none ||
+      mode == BalanceSimMarketSpendMode.slotSellV1) {
+    return 0;
+  }
   if (tier == BlindTier.small) return 0;
   final rerollCount = station >= 6 && tier == BlindTier.boss ? 2 : 1;
   final rerollCost = station <= 2
@@ -1148,7 +1151,11 @@ int _simMarketRerollSpendForStep({
       : station <= 5
       ? 4
       : 6;
-  return rerollCount * rerollCost;
+  final spend = rerollCount * rerollCost;
+  if (mode == BalanceSimMarketSpendMode.rerollSlotSellSoftV1) {
+    return (spend / 2).ceil();
+  }
+  return spend;
 }
 
 BalanceSimMarketProfile _resolveAffordableMarketProfile({
@@ -1354,9 +1361,8 @@ int _shopSlotUtilityForProfile({
       score += switch (profile) {
         BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 8,
         BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 6,
-        BalanceSimMarketProfile.s1CandidateRareXmultJester => station >= 8
-            ? 4
-            : 5,
+        BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+          station >= 8 ? 4 : 5,
         BalanceSimMarketProfile.s1CandidateLegendaryBridge => 3,
         _ => 0,
       };
@@ -1364,9 +1370,8 @@ int _shopSlotUtilityForProfile({
       score += switch (profile) {
         BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 4,
         BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 3,
-        BalanceSimMarketProfile.s1CandidateRareXmultJester => station >= 7
-            ? 3
-            : 1,
+        BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+          station >= 7 ? 3 : 1,
         _ => 0,
       };
     }
@@ -1399,7 +1404,10 @@ int _simPriceBandCostForEvent({
     );
   }
   if (mode == BalanceSimPriceBandMode.growthAccessV1) {
-    return _simGrowthAccessCostForEvent(event: event, fallbackCost: fallbackCost);
+    return _simGrowthAccessCostForEvent(
+      event: event,
+      fallbackCost: fallbackCost,
+    );
   }
   final soft = mode == BalanceSimPriceBandMode.rarityCategorySoftV1;
   final category = event['category'];
@@ -3032,8 +3040,7 @@ class _ShopSlotV15StateFlags {
   bool get any => scoreSoft || deckLow || boardPressure;
 
   bool get stacked =>
-      (scoreSoft && (deckLow || boardPressure)) ||
-      (deckLow && boardPressure);
+      (scoreSoft && (deckLow || boardPressure)) || (deckLow && boardPressure);
 
   bool get severe => scoreCritical || deckCritical || stacked;
 }
@@ -7113,11 +7120,16 @@ enum BalanceSimMarketBudgetMode {
 
 enum BalanceSimMarketSpendMode {
   none,
+  slotSellV1,
+  rerollSlotSellSoftV1,
   rerollSlotSellV1;
 
   static BalanceSimMarketSpendMode parse(String raw) {
     return switch (raw) {
       'none' => BalanceSimMarketSpendMode.none,
+      'slot_sell_v1' => BalanceSimMarketSpendMode.slotSellV1,
+      'reroll_slot_sell_soft_v1' =>
+        BalanceSimMarketSpendMode.rerollSlotSellSoftV1,
       'reroll_slot_sell_v1' => BalanceSimMarketSpendMode.rerollSlotSellV1,
       _ => throw FormatException('Unknown sim market spend mode: $raw'),
     };
@@ -7126,6 +7138,9 @@ enum BalanceSimMarketSpendMode {
   String get id {
     return switch (this) {
       BalanceSimMarketSpendMode.none => 'none',
+      BalanceSimMarketSpendMode.slotSellV1 => 'slot_sell_v1',
+      BalanceSimMarketSpendMode.rerollSlotSellSoftV1 =>
+        'reroll_slot_sell_soft_v1',
       BalanceSimMarketSpendMode.rerollSlotSellV1 => 'reroll_slot_sell_v1',
     };
   }

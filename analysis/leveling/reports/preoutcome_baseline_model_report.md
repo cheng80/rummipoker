@@ -2,22 +2,25 @@
 
 ## 최종 결론 요약
 
-- 결론: 현재 모델은 station/tier 위험 구간을 보는 내부 진단 신호로 사용 가능하다. 단, 후보 최종 적용은 전체 경로 모델과 fresh simulation을 따른다.
-- 핵심 점수: MAE 0.0244, RMSE 0.0514, R2 0.8950.
-- 데이터: 44631 rows, train 33473, test 11158, target `clear_rate_smoothed`.
-- 사용 가능: 어느 station/tier가 위험한지 보는 병목 진단, feature sanity check.
+- 결론: random split은 좋아 보이지만 source-path split에서 점수가 크게 낮아진다. 이 모델은 구간 위험 힌트 전용이다.
+- 핵심 점수: random split MAE 0.0239, RMSE 0.0499, R2 0.9037 / source split MAE 0.0436, RMSE 0.0899, R2 0.5264.
+- 데이터: 44831 rows, train 33623, test 11208, target `clear_rate_smoothed`.
+- 사용 가능: 어느 station/tier가 위험해 보이는지 보는 힌트, feature sanity check.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
-- NotebookLM 상태: NotebookLM source로 재가공 가능하나, 외부 발표용 재생성은 문서 동기화 후 진행한다.
+- NotebookLM 상태: source split 기준 station/tier가 힌트 전용이므로 외부 발표용 재생성은 보류한다.
 - 다음 액션: 전체 경로 추천표와 r400 이상 fresh 결과를 함께 보고 적용 후보를 정리한다.
 
 ## 핵심 점수
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0244 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.0514 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.8950 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 구간 위험 진단용으로 사용 가능 |
-| Row | 44631 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
+| MAE | 0.0239 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.0499 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.9037 | 1.0000 | random split은 같은 실험의 비슷한 row가 섞일 수 있음 | source split 기준으로 힌트 전용 |
+| source split MAE | 0.0436 | 0.0000 | 새 실험 파일을 가려도 낮아야 함 | 힌트 전용 |
+| source split RMSE | 0.0899 | 0.0000 | 새 실험 파일에서 큰 오차가 낮아야 함 | 힌트 전용 |
+| source split R2 | 0.5264 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | 단독 gate 금지 |
+| Row | 44831 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
@@ -29,9 +32,9 @@
 ## 데이터셋
 
 - feature table: `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv`
-- rows: 44631
-- train rows: 33473
-- test rows: 11158
+- rows: 44831
+- train rows: 33623
+- test rows: 11208
 - target: `clear_rate_smoothed`
 - feature mode: `preoutcome`
 
@@ -271,6 +274,8 @@
 - `logs/sim/single_s4_growth_access_seed91623_r240_summary.json`
 - `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91627_r400_summary.json`
 - `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91628_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_seed91761_r400_summary.json`
 
 ## 피처와 타깃 정의
 
@@ -320,6 +325,8 @@ Pre-outcome numeric features:
 - `economy_market_interaction`
 - `price_band_growth_access`
 - `price_band_catalog_normalized`
+- `spend_mode_slot_sell`
+- `spend_mode_reroll_slot_sell_soft`
 - `spend_mode_reroll_slot_sell`
 - `choice_mode_affordable_alternative`
 
@@ -367,30 +374,30 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.0244
-- RMSE: 0.0514
-- R2: 0.8950
+- MAE: 0.0239
+- RMSE: 0.0499
+- R2: 0.9037
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.0514` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.0499` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `station_boss_interaction` | 0.1919 |
-| `station_tier_index` | 0.0949 |
-| `loadout_id_baseline` | 0.0809 |
-| `resolved_market_profile_` | 0.0648 |
-| `market_profile_` | 0.0597 |
-| `boss_target_multiplier` | 0.0328 |
-| `base_experiment_id_station_curve_125_boss_constraint_pool_v1` | 0.0311 |
-| `base_experiment_id_station_curve_135_boss_constraint_pool_v1` | 0.0243 |
-| `station` | 0.0182 |
-| `loadout_id_baseline__s1_full_safe_candidate_pool` | 0.0172 |
+| `station_boss_interaction` | 0.1955 |
+| `station_tier_index` | 0.0933 |
+| `loadout_id_baseline` | 0.0726 |
+| `resolved_market_profile_` | 0.0625 |
+| `market_profile_` | 0.0586 |
+| `boss_target_multiplier` | 0.0353 |
+| `base_experiment_id_station_curve_125_boss_constraint_pool_v1` | 0.0291 |
+| `base_experiment_id_station_curve_135_boss_constraint_pool_v1` | 0.0229 |
+| `station` | 0.0195 |
+| `loadout_id_s2_foundation_build` | 0.0175 |
 
 ## 산출물
 
