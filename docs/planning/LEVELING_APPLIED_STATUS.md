@@ -197,6 +197,23 @@ Runtime handoff 추가 상승 후보:
 - S8 boss 실패와 board/draw 실패도 남아 있어 압박을 지운 후보는 아니다.
 - 다만 v9 final gold 평균이 balanced 약 16.2G, power 약 24.3G로 기존 handoff 약 5.9G보다 높다. 그래서 바로 runtime 적용하지 않고, 리롤 비용 정책을 실제 게임 경제/UI 기대값과 맞게 다시 좁힌다.
 
+First-reroll-free follow-up:
+
+- outputs: `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_r400_summary.json`, `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_r400_economy_audit.json`
+- 쉬운 결론: 첫 리롤만 무료로 하면 돈 문제는 안전하지만, balanced clear가 충분히 오르지 않는다.
+
+| loadout | market | path clear | v9 final gold | 판단 |
+|---|---|---:|---:|---|
+| balanced | none | 48.0% | - | control |
+| balanced | v9 | 54.5% | 7.97G | 목표 60% 미달 |
+| power | none | 55.0% | - | control |
+| power | v9 | 66.0% | 11.19G | 목표 범위 |
+
+판정:
+
+- `first_reroll_free_v1`은 `slot_sell_v1`보다 경제적으로 안전하지만, balanced v9가 부족하다.
+- 다음 후보는 리롤 비용만 더 낮추는 것이 아니라, balanced route가 S4~S8에서 필요한 성장 후보를 실제로 고르는지 보는 구매 선택/후반 후보 접근성 쪽이다.
+
 ML handoff refresh:
 
 - feature rows: station/tier 248,248 source rows, sequence/path 3,020 rows.

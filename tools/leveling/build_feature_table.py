@@ -89,6 +89,7 @@ PREOUTCOME_NUMERIC_FIELDS = [
     "price_band_growth_access",
     "price_band_catalog_normalized",
     "spend_mode_slot_sell",
+    "spend_mode_first_reroll_free",
     "spend_mode_reroll_slot_sell_soft",
     "spend_mode_reroll_slot_sell",
     "choice_mode_affordable_alternative",
@@ -503,6 +504,7 @@ def preoutcome_row_from_group(
     row["price_band_growth_access"] = int(price_band_mode == "growth_access_v1")
     row["price_band_catalog_normalized"] = int(price_band_mode == "catalog_normalized_v1")
     row["spend_mode_slot_sell"] = int(spend_mode == "slot_sell_v1")
+    row["spend_mode_first_reroll_free"] = int(spend_mode == "first_reroll_free_v1")
     row["spend_mode_reroll_slot_sell_soft"] = int(
         spend_mode == "reroll_slot_sell_soft_v1",
     )

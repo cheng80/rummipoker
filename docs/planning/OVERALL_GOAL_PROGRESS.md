@@ -315,6 +315,7 @@ Status: In progress
 현재 남은 일:
 
 - `slot_sell_v1`은 목표 clear에 도달했지만 v9 final gold 평균이 16~24G로 올라간다. 리롤 비용을 완전히 제거할지, 첫 리롤/조건부 할인/아이템 보강으로 옮길지 정책 영향 검토가 남아 있다.
+- `first_reroll_free_v1` r400은 v9 final gold가 balanced 8.0G, power 11.2G라 경제적으로 더 안전하지만, balanced v9가 54.5%라 목표 60%에 못 닿는다. 다음 후보는 리롤 비용만이 아니라 후반 성장 후보 접근성과 구매 선택 조건을 같이 본다.
 
 ### M2. S1~S8 Leveling Curve
 

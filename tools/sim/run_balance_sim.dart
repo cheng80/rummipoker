@@ -1152,6 +1152,9 @@ int _simMarketRerollSpendForStep({
       ? 4
       : 6;
   final spend = rerollCount * rerollCost;
+  if (mode == BalanceSimMarketSpendMode.firstRerollFreeV1) {
+    return max(0, rerollCount - 1) * rerollCost;
+  }
   if (mode == BalanceSimMarketSpendMode.rerollSlotSellSoftV1) {
     return (spend / 2).ceil();
   }
@@ -7121,6 +7124,7 @@ enum BalanceSimMarketBudgetMode {
 enum BalanceSimMarketSpendMode {
   none,
   slotSellV1,
+  firstRerollFreeV1,
   rerollSlotSellSoftV1,
   rerollSlotSellV1;
 
@@ -7128,6 +7132,7 @@ enum BalanceSimMarketSpendMode {
     return switch (raw) {
       'none' => BalanceSimMarketSpendMode.none,
       'slot_sell_v1' => BalanceSimMarketSpendMode.slotSellV1,
+      'first_reroll_free_v1' => BalanceSimMarketSpendMode.firstRerollFreeV1,
       'reroll_slot_sell_soft_v1' =>
         BalanceSimMarketSpendMode.rerollSlotSellSoftV1,
       'reroll_slot_sell_v1' => BalanceSimMarketSpendMode.rerollSlotSellV1,
@@ -7139,6 +7144,7 @@ enum BalanceSimMarketSpendMode {
     return switch (this) {
       BalanceSimMarketSpendMode.none => 'none',
       BalanceSimMarketSpendMode.slotSellV1 => 'slot_sell_v1',
+      BalanceSimMarketSpendMode.firstRerollFreeV1 => 'first_reroll_free_v1',
       BalanceSimMarketSpendMode.rerollSlotSellSoftV1 =>
         'reroll_slot_sell_soft_v1',
       BalanceSimMarketSpendMode.rerollSlotSellV1 => 'reroll_slot_sell_v1',

@@ -382,6 +382,8 @@ Runtime handoff uplift results:
 - `slot_sell_v1` 경제 감사: v9 final gold 평균은 balanced 16.2G, power 24.3G이고 즉시 경제 경고는 없다. 이전 handoff의 5.9G보다는 느슨하므로 런타임 적용 전 리롤 비용 정책 검토가 필요하다.
 - 쉬운 해석: 현재 낮은 v9 clear의 주된 원인은 성장 후보 가격보다 “좋은 후보를 찾기 위한 리롤 비용 압박”이다. 다만 runtime 적용 전에는 리롤 비용 정책 변경이 게임 경제와 UI 기대값을 흔드는지 별도 확인한다.
 - ML 입력 반영 후 sequence/path 추천표에서도 `slot_sell_v1` 두 r400은 실제 통과 1, ML 통과 1로 잡힌다. 다만 station/tier 추천표는 여전히 구간별 평균에서는 none 예측이 더 높게 나와 단독 gate로 쓰지 않는다.
+- `first_reroll_free_v1` r400 결과: none balanced 48.0%, none power 55.0%, v9 balanced 54.5%, v9 power 66.0%.
+- 쉬운 해석: 첫 리롤만 무료로 하면 경제는 안전해진다. v9 final gold는 balanced 약 8.0G, power 약 11.2G다. 하지만 balanced v9가 목표 60%에 못 닿는다. 따라서 “리롤 비용을 조금 줄이는 것”만으로는 부족하고, 후반 성장 후보 접근이나 구매 선택 조건을 같이 봐야 한다.
 
 ML leakage / overfit checklist:
 

@@ -179,6 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=[
             "none",
             "slot_sell_v1",
+            "first_reroll_free_v1",
             "reroll_slot_sell_soft_v1",
             "reroll_slot_sell_v1",
         ],
