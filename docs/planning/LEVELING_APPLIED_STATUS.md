@@ -31,6 +31,7 @@
 | simulation runtime boss station profile | Applied | `tools/sim/run_balance_sim.dart` | runtime station pool과 같은 3~4개 후보 profile을 sim experiment id로 추가. 레벨링/경제/ML 재검증 입력으로 사용 |
 | S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face/all-score/confirm/rank 계열을 station level pool에 적용. 추가 simulation-only proxy는 아직 런타임 미편입 |
+| post-contest boss candidates | Deferred | docs only | 저장/UI/정산/Jester·Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |

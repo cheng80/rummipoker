@@ -108,6 +108,7 @@ Status: Done for first pass / station pool applied / revalidation pending
 - 추가 r80 기준 `confirm_limit_tax_v1` S4와 `color_dampener_variant_v1` S4/S5도 Stage B station pool 후보로 재승격한다. S6 confirm-limit와 S2 color는 너무 안전해 우선순위에서 제외한다.
 - runtime은 고정 8개 cycle에서 station 난이도 level별 3~4개 seed 기반 boss pool로 확장했다. 선택된 boss modifier는 기존 blind state에 저장되므로 새 저장 schema는 없다.
 - simulation pool에도 runtime과 같은 station 난이도 level별 profile `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1`을 추가했다. 이후 레벨링/경제/ML 재검증은 이 profile을 우선 입력으로 사용한다.
+- 저장 포맷, UI/피드백 구조, 정산 reward tax line, Jester/Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 후보로 넘긴다. 공모전 전에는 현재 runtime/sim mirror pool 기준으로 레벨링과 경제를 다시 맞춘다.
 
 주의:
 

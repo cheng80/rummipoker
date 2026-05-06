@@ -148,6 +148,7 @@
 - 깊은 meta growth tree와 다수의 run modifier.
 - 모든 플랫폼별 세부 레이아웃 polish.
 - 신규 후보군을 대량 추가하는 콘텐츠 확장.
+- 저장 포맷, UI/피드백 구조, 정산 reward tax line, Jester/Item 비활성 표시가 필요한 boss 후보 적용.
 
 출품용에 포함하는 Boss pool 작업:
 
@@ -157,6 +158,8 @@
 - 구현은 이름/IP를 가져오지 않고, 색/라인/타일/rank/확정/자원/골드/아이템·Jester 발동 제한 같은 룰 패턴으로 재작성한다.
 - 출품 전 1차 목표는 안정성을 해치지 않는 추가 boss modifier 후보를 station level pool 후보로 늘리는 것이다.
 - 저장 포맷 변경, 자동 자원 보정, 유저 선택 강제는 금지한다.
+- 저장/UI/정산/Jester·Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 후보로 넘긴다.
+- 출품 전 boss 작업은 현재 runtime/simulation mirror pool을 기준으로 레벨링/경제 재검증을 닫는 데 집중한다.
 
 출품 전 필수 완료:
 

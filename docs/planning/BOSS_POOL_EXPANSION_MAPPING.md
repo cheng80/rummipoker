@@ -26,7 +26,7 @@
 - 우리 게임의 타일/라인/확정/자원/골드/마켓/아이템/Jester 발동 제한으로 다시 쓴다.
 - 자동 자원 지급, 직접 지급, 고정 offer slot, 강제 판매/강제 구매는 금지한다.
 - 유저 선택을 빼앗는 효과는 simulation-only 또는 제외한다.
-- 저장 포맷이 필요한 후보는 출품 전 1차 구현에서 제외하거나 별도 승인 대상으로 둔다.
+- 저장 포맷, UI/피드백 구조, 정산 sheet 변경이 필요한 후보는 공모전 이후 적용 후보로 넘긴다.
 
 ## 3. Reference Pattern Mapping
 
@@ -309,28 +309,36 @@ Target boss clear:
 - `color_dampener_variant_v1`은 S4/S5 모두 v9가 none보다 높아 색상 family 다양성 후보로 살린다. S2는 너무 안전해 우선순위에서 제외한다.
 - 구현 후보군에 `confirm_limit_tax_v1` S4, `color_dampener_variant_v1` S4/S5를 추가한다.
 
-### Stage C: 저장/UI 변경이 필요하지만 재미 가치가 큰 실험
+### Stage C: 공모전 이후 적용 후보
 
-출품 전 즉시 구현 후보는 아니지만, boss전 다양성을 위해 폐기하지 않고 실험 후보로 보존한다.
-이 후보들은 구현 전 저장/복원, 표시, 정산 검증 경로를 먼저 따로 제시해야 한다.
+저장/UI/피드백 변경이 필요하지만 boss전 다양성 가치는 큰 후보들이다.
+공모전 전에는 runtime station pool에 넣지 않고, 공모전 이후 실험 후보로 보존한다.
+구현 전에는 저장/복원, 표시, 정산 검증 경로를 먼저 따로 제시해야 한다.
 
 | Candidate | Reference pattern | 필요한 변경 | 재미 가치 | 주의 |
 |---|---|---|---|---|
-| `hand_lock_after_confirm_v1` | #1 | 손패 tile lock 상태 추적, 표시, 복원 | 확정 후 다음 선택이 달라짐 | 선택 불능처럼 보이지 않게 duration 짧게 설계 |
-| `delayed_reveal_hand_v1` | #3/#5/#8/#23 | hidden/reveal presentation state, 접근성 표시 | 정보 불완전성으로 전투 리듬 변화 | 값/색 판독 UX가 나빠질 수 있음 |
-| `previous_station_memory_v1` | #18 | 이전 Station rank/color 사용 통계 저장 | run 전체의 선택 기억이 생김 | 저장 schema 영향, 승인 필요 |
-| `jester_order_shuffle_v1` | #24 | Jester 발동 순서/표시 queue 조정 | 정산 예측과 빌드 안정성 압박 | 정산 feedback이 복잡해짐 |
-| `jester_skip_one_v1` | #27 | Jester별 이번 confirm 비활성 상태와 표시 | Jester 의존 빌드에 강한 변주 | UI/정산 feedback 없으면 불공정하게 보임 |
+| `hand_lock_after_confirm_v1` | #1 | 손패 tile lock 상태 추적, 표시, 복원 | 확정 후 다음 선택이 달라짐 | 공모전 이후. 선택 불능처럼 보이지 않게 duration 짧게 설계 |
+| `delayed_reveal_hand_v1` | #3/#5/#8/#23 | hidden/reveal presentation state, 접근성 표시 | 정보 불완전성으로 전투 리듬 변화 | 공모전 이후. 값/색 판독 UX가 나빠질 수 있음 |
+| `previous_station_memory_v1` | #18 | 이전 Station rank/color 사용 통계 저장 | run 전체의 선택 기억이 생김 | 공모전 이후. 저장 schema 영향, 승인 필요 |
+| `jester_order_shuffle_v1` | #24 | Jester 발동 순서/표시 queue 조정 | 정산 예측과 빌드 안정성 압박 | 공모전 이후. 정산 feedback이 복잡해짐 |
+| `jester_skip_one_v1` | #27 | Jester별 이번 confirm 비활성 상태와 표시 | Jester 의존 빌드에 강한 변주 | 공모전 이후. UI/정산 feedback 없으면 불공정하게 보임 |
 
-### Redesign 가능 후보
+### 공모전 이후 redesign 후보
 
-원본 패턴 그대로는 금지 원칙을 건드리지만, 우리 게임의 선택 원칙을 지키는 형태로 바꾸면 후보로 남길 수 있다.
+원본 패턴 그대로는 금지 원칙을 건드리지만, 우리 게임의 선택 원칙을 지키는 형태로 바꾸면 공모전 이후 후보로 남길 수 있다.
+공모전 전에는 적용하지 않는다.
 
 | Reference pattern | 그대로 불가한 이유 | Redesign 방향 |
 |---|---|---|
 | #25 forced sell 계열 | Jester 판매 강제는 유저 선택 강제 | 보유 Jester 수 또는 최고 rarity Jester 수에 따른 boss tax. 판매는 유저 선택으로 유지 |
 | #28 forced selected card 계열 | 특정 타일 포함 강제는 선택 강제 | 지정 조건을 만족하면 bonus만 제공하고, 미충족 penalty는 두지 않음 |
 | hidden 계열 | 정보 숨김이 UI 품질을 해칠 수 있음 | 값 전체 숨김보다 색/계열/정산 예상 일부 지연 reveal로 축소 |
+
+공모전 전 boss pool 범위:
+
+- 현재 runtime station pool과 simulation mirror profile까지만 유지한다.
+- 새 저장 schema, 새 UI 상태, 정산 reward tax line, Jester/Item 비활성 표시가 필요한 후보는 적용하지 않는다.
+- 다음 작업은 새 boss 추가가 아니라 `runtime_station_pool_v1` 기준 레벨링/경제 재검증이다.
 
 ## 4.1 Simulation Proxy 1차 적용 상태
 
