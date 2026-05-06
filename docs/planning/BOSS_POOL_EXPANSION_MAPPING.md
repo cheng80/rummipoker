@@ -156,6 +156,39 @@ Stage A r80 판정:
 - `target_spike_wall_soft_v1`, `hand_discard_cost_v1`, `reward_tax_by_contributor_v1`은 boss 전투 단위 clear가 높아 다음 split 후보로 남긴다.
 - `color_dampener_variant_v1`은 기존 family variant지만 deck exhausted 신호가 있어, S5 이후 배치와 severity를 분리해서 본다.
 
+Stage A split r80:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 91080 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_target_spike_probe_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_refill_limit_probe_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_reward_tax_probe_v1,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_color_variant_probe_v1 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/boss_expansion_stage_a_split_probe_v1_r80`
+- summary: `logs/sim/boss_expansion_stage_a_split_probe_v1_r80_summary.json`
+- report: `logs/sim/boss_expansion_stage_a_split_probe_v1_r80_report.md`
+
+Path clear:
+
+| Profile | balanced none | balanced v9 | power none | power v9 | 1차 판정 |
+|---|---:|---:|---:|---:|---|
+| `target_spike_wall_soft_v1` | 53.8% | 60.0% | 68.8% | 81.2% | v9 역전은 없지만 power v9가 너무 높아 배치/severity watch |
+| `hand_discard_cost_v1` | 58.8% | 63.7% | 58.8% | 75.0% | 실행 안정, Stage B 후보 |
+| `refill_limit_v1` | 50.0% | 62.5% | 62.5% | 71.2% | draw-limit stop이 남아 simulation-only 유지 |
+| `reward_tax_by_contributor_v1` | 52.5% | 70.0% | 57.5% | 70.0% | 실행 안정, Stage B 후보 |
+| `color_dampener_variant_v1` | 43.8% | 70.0% | 67.5% | 70.0% | family variant 후보지만 balanced none 압박 큼 |
+
+Boss 전투 단위 aggregate:
+
+| Proxy | Clear | Runs | 주요 outcome |
+|---|---:|---:|---|
+| `target_spike_wall_soft_v1` | 98.4% | 310 | board locked 4, deck exhausted 1 |
+| `hand_discard_cost_v1` | 98.2% | 285 | board locked 5 |
+| `refill_limit_v1` | 96.0% | 273 | score shortfall 6, board locked 5 |
+| `reward_tax_by_contributor_v1` | 98.8% | 252 | board locked 2, deck exhausted 1 |
+| `color_dampener_variant_v1` | 93.4% | 256 | deck exhausted 15 |
+
+Split 판정:
+
+- Stage B 우선 후보는 `reward_tax_by_contributor_v1`과 `hand_discard_cost_v1`이다.
+- `target_spike_wall_soft_v1`은 target table lever라 구현은 쉽지만 power v9가 높아, S7/S8 후반 압박을 지우지 않는 배치/severity로 다시 확인해야 한다.
+- `color_dampener_variant_v1`은 기존 family variant로 boss pool 폭은 늘리지만, 새로운 플레이 양상은 약하다. S5 배치보다 색상/Station variant pool 후보로 둔다.
+- `refill_limit_v1`은 draw-limit stop이 직접 남으므로 runtime 후보가 아니라 Stage A simulation-only 후보로 유지한다.
+
 ### Stage B: 저장 포맷 변경 없이 runtime 가능
 
 기존 boss modifier JSON, confirm count, confirmed rank, target table, settlement/economy trace로 구현 가능한 후보군이다.
