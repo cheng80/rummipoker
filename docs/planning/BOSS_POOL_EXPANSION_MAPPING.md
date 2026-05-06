@@ -256,6 +256,33 @@ Position 판정:
 - S4는 압박이 가장 크지만 v9 역전 신호가 있어, 그대로 runtime 적용하기 전 severity 또는 market availability 재확인이 필요하다.
 - 다음 runtime 구현 승인 후보는 S3 boss resource-pressure spike다. 단, 앱 runtime에 독립 boss experiment axis가 없으므로 코드 적용 전 승인 경계를 유지한다.
 
+### Stage B 증량: 이미 구현된 rank 계열 cycle 후보
+
+`repeat_rank_pressure_v4`와 `single_rank_pressure`는 runtime modifier, 저장/복원, 정산 penalty 표시 경로가 이미 구현됐다.
+따라서 새 저장 schema나 새 UI category 없이 S1~S8 cycle 후보로 증량할 수 있는지 position probe로 확인한다.
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 91280 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_repeat_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_repeat_s5,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_repeat_s6,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s5,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s6 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/rank_runtime_position_probe_v1_r80`
+- summary: `logs/sim/rank_runtime_position_probe_v1_r80_summary.json`
+- report: `logs/sim/rank_runtime_position_probe_v1_r80_report.md`
+
+Target boss clear:
+
+| Candidate | Placement | Target boss clear | none | v9 | 1차 판정 |
+|---|---:|---:|---:|---:|---|
+| `repeat_rank_pressure_v4` | S4 | 94.87% | 93.57% | 96.24% | 구현 후보로 재승격 |
+| `repeat_rank_pressure_v4` | S5 | 98.46% | 96.95% | 100.00% | 후보 가능, 압박 약함 |
+| `repeat_rank_pressure_v4` | S6 | 99.21% | 100.00% | 98.44% | 너무 안전하고 v9 역전 |
+| `single_rank_pressure` | S4 | 96.46% | 94.44% | 98.44% | 구현 후보로 재승격 |
+| `single_rank_pressure` | S5 | 97.96% | 96.75% | 99.18% | 후보 가능, 압박 약함 |
+| `single_rank_pressure` | S6 | 99.58% | 100.00% | 99.17% | 너무 안전하고 v9 역전 |
+
+증량 판정:
+
+- `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4는 이미 구현된 modifier를 활용하는 Stage B 우선 cycle 후보로 추가한다.
+- S5 배치는 안전하지만 압박이 약하므로 fallback 후보로 둔다.
+- S6 배치는 너무 안전하고 v9가 none보다 낮아지는 신호가 있어 이번 증량 후보에서는 제외한다.
+- 이로써 구현 후보군은 `confirm_limit_tax_v1`, `hand_discard_cost_v1` S3 resource spike, `repeat_rank_pressure_v4` S4, `single_rank_pressure` S4로 넓힌다.
+
 ### Stage C: 저장/UI 변경이 필요하지만 재미 가치가 큰 실험
 
 출품 전 즉시 구현 후보는 아니지만, boss전 다양성을 위해 폐기하지 않고 실험 후보로 보존한다.
@@ -422,8 +449,8 @@ Leveling 판정:
 
 ## 6. Next Step
 
-1. `hand_discard_cost_v1`를 저장 schema 변경 없는 resource-pressure spike로 구현할지 결정한다.
-2. 구현한다면 1차 위치는 S3 boss로 잡고, 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한한다.
+1. 이미 구현된 `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4를 cycle 편입 후보로 우선 검토한다.
+2. `hand_discard_cost_v1`를 구현한다면 1차 위치는 S3 boss로 잡고, 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한한다.
 3. 앱 runtime에는 독립 boss experiment axis가 없으므로, `hand_discard_cost_v1`도 코드 적용 전 승인 대상으로 둔다.
 4. `reward_tax_by_contributor_v1`는 cashout/economy/UI 영향이 커서 별도 구현 계획으로 분리한다.
 5. runtime smoke가 안정적이면 확장 boss pool 기준 레벨링/경제/ML 재검증 순서로 돌아간다.
