@@ -235,6 +235,27 @@ Code path 판정:
 - 단, 이 구현은 아직 player-facing boss modifier 타입 확장이 아니다. 표시명/보스 chip까지 붙이는 순간 보스 modifier taxonomy 확장 작업으로 분리한다.
 - `reward_tax_by_contributor_v1`은 재미 가치는 높지만 정산 source of truth와 reward 표시를 건드리므로, hand discard resource spike 이후 별도 작업으로 둔다.
 
+`hand_discard_cost_v1` position probe:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 91180 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1_s2,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1_s3,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1_s4 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/hand_discard_position_probe_v1_r80`
+- summary: `logs/sim/hand_discard_position_probe_v1_r80_summary.json`
+- report: `logs/sim/hand_discard_position_probe_v1_r80_report.md`
+
+Target boss clear:
+
+| Placement | Target boss clear | none | v9 | 1차 판정 |
+|---|---:|---:|---:|---|
+| S2 boss | 98.96% | 99.32% | 98.59% | 너무 안전하고 v9가 none보다 약간 낮음 |
+| S3 boss | 98.19% | 97.86% | 98.53% | 세 후보 중 market 선택 이점이 가장 자연스러움 |
+| S4 boss | 97.39% | 97.78% | 96.99% | 압박은 가장 크지만 v9가 none보다 낮음 |
+
+Position 판정:
+
+- S2는 runtime 초반 변주로는 안전하지만, clear가 너무 높고 v9가 none보다 약간 낮아 우선 구현 위치로는 약하다.
+- S3는 hand growth 검증 구간과 맞고, v9가 none보다 높아 market 선택 proxy 원칙과 가장 잘 맞는다.
+- S4는 압박이 가장 크지만 v9 역전 신호가 있어, 그대로 runtime 적용하기 전 severity 또는 market availability 재확인이 필요하다.
+- 다음 runtime 구현 승인 후보는 S3 boss resource-pressure spike다. 단, 앱 runtime에 독립 boss experiment axis가 없으므로 코드 적용 전 승인 경계를 유지한다.
+
 ### Stage C: 저장/UI 변경이 필요하지만 재미 가치가 큰 실험
 
 출품 전 즉시 구현 후보는 아니지만, boss전 다양성을 위해 폐기하지 않고 실험 후보로 보존한다.
@@ -402,7 +423,7 @@ Leveling 판정:
 ## 6. Next Step
 
 1. `hand_discard_cost_v1`를 저장 schema 변경 없는 resource-pressure spike로 구현할지 결정한다.
-2. 구현한다면 1차 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한하고, S1~S8 cycle 편입과 player-facing boss modifier 일반화는 뒤로 둔다.
+2. 구현한다면 1차 위치는 S3 boss로 잡고, 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한한다.
 3. 앱 runtime에는 독립 boss experiment axis가 없으므로, `hand_discard_cost_v1`도 코드 적용 전 승인 대상으로 둔다.
 4. `reward_tax_by_contributor_v1`는 cashout/economy/UI 영향이 커서 별도 구현 계획으로 분리한다.
 5. runtime smoke가 안정적이면 확장 boss pool 기준 레벨링/경제/ML 재검증 순서로 돌아간다.

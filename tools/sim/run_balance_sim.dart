@@ -5452,7 +5452,7 @@ bool _usesRankCycleProbe(String id) =>
 
 bool _usesStageABossExpansionSplitProbe(String id) =>
     id.endsWith('_boss_expansion_stage_a_target_spike_probe_v1') ||
-    id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1') ||
+    id.contains('_boss_expansion_stage_a_hand_discard_probe_v1') ||
     id.endsWith('_boss_expansion_stage_a_refill_limit_probe_v1') ||
     id.endsWith('_boss_expansion_stage_a_reward_tax_probe_v1') ||
     id.endsWith('_boss_expansion_stage_a_color_variant_probe_v1');
@@ -5523,6 +5523,15 @@ String _rankCycleProbeProfileId(String id) {
   if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1')) {
     return 'boss_expansion_stage_a_hand_discard_probe_v1';
   }
+  if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1_s2')) {
+    return 'boss_expansion_stage_a_hand_discard_probe_v1_s2';
+  }
+  if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1_s3')) {
+    return 'boss_expansion_stage_a_hand_discard_probe_v1_s3';
+  }
+  if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1_s4')) {
+    return 'boss_expansion_stage_a_hand_discard_probe_v1_s4';
+  }
   if (id.endsWith('_boss_expansion_stage_a_refill_limit_probe_v1')) {
     return 'boss_expansion_stage_a_refill_limit_probe_v1';
   }
@@ -5565,6 +5574,15 @@ List<int> _rankCycleProbeSlotsForExperiment(String id) {
   }
   if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1')) {
     return const [0, 18, 2, 10, 6, 11, 7, 5];
+  }
+  if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1_s2')) {
+    return const [0, 18, 2, 10, 6, 11, 7, 5];
+  }
+  if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1_s3')) {
+    return const [0, 1, 18, 10, 6, 11, 7, 5];
+  }
+  if (id.endsWith('_boss_expansion_stage_a_hand_discard_probe_v1_s4')) {
+    return const [0, 1, 2, 18, 6, 11, 7, 5];
   }
   if (id.endsWith('_boss_expansion_stage_a_refill_limit_probe_v1')) {
     return const [0, 1, 19, 10, 6, 11, 7, 5];
@@ -7198,6 +7216,9 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_target_spike_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1_s2',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1_s3',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_hand_discard_probe_v1_s4',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_refill_limit_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_reward_tax_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_color_variant_probe_v1',

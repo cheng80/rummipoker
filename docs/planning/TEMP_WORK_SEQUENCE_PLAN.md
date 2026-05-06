@@ -103,6 +103,7 @@ Status: Done for first pass / cycle pending
 - 28개 reference pattern 재검토 후 Stage A 추가 proxy를 넣었고, split probe 기준 `reward_tax_by_contributor_v1`과 `hand_discard_cost_v1`를 Stage B 우선 후보로 좁혔다.
 - 코드 경로 확인 결과, 다음 작은 구현 후보는 저장 schema를 늘리지 않는 `hand_discard_cost_v1` resource-pressure spike다. `reward_tax_by_contributor_v1`은 cashout/economy/UI 영향이 커서 별도 작업으로 분리한다.
 - 앱 runtime에는 simulator처럼 boss 후보만 주입하는 experiment axis가 없으므로, `hand_discard_cost_v1`도 적용하면 실제 런타임 규칙 변경이다. 구현 전 승인 대상으로 둔다.
+- S2/S3/S4 position r80 probe 기준으로는 S3 boss가 가장 자연스럽다. S2는 너무 안전하고 S4는 v9가 none보다 낮아지는 신호가 있다.
 
 주의:
 
