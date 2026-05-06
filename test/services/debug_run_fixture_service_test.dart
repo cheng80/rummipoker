@@ -97,7 +97,7 @@ void main() {
     expect(fixture!.activeScene, ActiveRunScene.shop);
     expect(fixture.runProgress.gold, 18);
     expect(fixture.runProgress.effectiveRerollCost(), 4);
-    expect(fixture.runProgress.effectiveJesterOfferPrice(0), 12);
+    expect(fixture.runProgress.effectiveJesterOfferPrice(0), 2);
     expect(fixture.runProgress.marketModifiers.itemOfferSlotCount, 4);
     expect(fixture.runProgress.itemInventory.passiveRelicIds, [
       'merchant_stamp',

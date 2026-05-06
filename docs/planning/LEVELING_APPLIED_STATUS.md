@@ -27,15 +27,15 @@
 | run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.04, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
-| runtime boss modifier station pool | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 각 station 난이도 level에 맞춰 3~4개 후보를 두고 run seed로 deterministic 선택 |
-| simulation runtime boss station profile | Applied | `tools/sim/run_balance_sim.dart` | runtime station pool과 같은 3~4개 후보 profile을 sim experiment id로 추가. 레벨링/경제/ML 재검증 입력으로 사용 |
+| runtime boss modifier station pool | Workspace pending | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 각 station 난이도 level에 맞춰 3~4개 후보를 두고 run seed로 deterministic 선택. S4 mid pool은 `singleRankPressure` 가중을 1/4에서 2/4로 올린 작업 트리 상태 |
+| simulation runtime boss station profile | Workspace pending | `tools/sim/run_balance_sim.dart` | runtime station pool과 같은 3~4개 후보 profile과 S4 rank 가중 변형을 sim experiment id로 추가. 레벨링/경제/ML 재검증 입력으로 사용 |
 | S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face/all-score/confirm/rank 계열을 station level pool에 적용. 추가 simulation-only proxy는 아직 런타임 미편입 |
 | post-contest boss candidates | Deferred | docs only | 저장/UI/정산/Jester·Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
-| economy reward / price policy | Applied | `RummiEconomyConfig` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용 |
+| economy reward / price policy | Workspace pending | `RummiEconomyConfig` / `RummiRunProgress.effective*Price` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용. 성장 Jester/Item은 rarity별 구매 가격 상한을 적용해 “보이면 살 수 있는” 후보로 조정 |
 | catalog value audit | Applied | `tools/sim/catalog_value_audit.py` | Item/Jester 가격과 effect role의 불일치 후보를 runtime effective price 기준으로 표시한다 |
 | jester hook price adjustment | Applied | `data/common/items_common_v1.json` | `jester_hook` base 10G/effective 22G는 sell value +1 대비 과해 base 7G/effective 15G로 낮춤 |
 | catalog audit v2 price probe | Workspace pending | `tools/sim/run_balance_sim.dart` / `tools/sim/economy_audit.py` | `catalog_audit_v2` sim-only price band 추가. r120에서는 조정 후보 구매 이벤트가 없어 normalized와 결과 동일. economy audit가 content/proxy/source candidate별 구매 count와 audit watchlist를 출력 |
@@ -155,6 +155,37 @@ Applied:
 - `flutter test test/logic/rummi_market_facade_test.dart`
 - `flutter test test/logic/rummi_market_facade_test.dart test/services/blind_selection_setup_test.dart test/providers/game_session_notifier_test.dart`
 - `git diff --check`
+- `dart analyze lib/logic/rummi_poker_grid/jester_meta.dart lib/services/blind_selection_spec.dart tools/sim/run_balance_sim.dart`
+- `flutter test test/logic/rummi_market_facade_test.dart test/services/blind_selection_setup_test.dart test/services/debug_run_fixture_service_test.dart`
+
+Runtime S4 rank weight + growth access r400:
+
+- summary: `logs/sim/runtime_s4_rank_weight_v1_growth_access_final_r400_summary.json`
+- audit: `logs/sim/runtime_s4_rank_weight_v1_growth_access_final_r400_economy_audit.json`
+- 쉬운 결론: S4 보스 후보 구성을 조금 바꾸고 성장 후보 가격을 낮추면, 상점 후보를 본 쪽이 이제 none보다 손해 보지 않는다.
+
+| loadout | market | path clear | 주요 실패 | stop reason |
+|---|---|---:|---|---|
+| balanced | none | 47.5% | S8 boss 39, S4 boss 21, S5 boss 19, S1 boss 18 | board 117, draw 88 |
+| balanced | v9 | 52.0% | S8 boss 39, S1 boss 22, S5 boss 20, S4 boss 12 | board 106, draw 85 |
+| balanced | v15 sim-only | 59.5% | S8 boss 35, S5 boss 18, S4 boss 15, S1 boss 13 | board 95, draw 65 |
+| power | none | 53.8% | S8 boss 47, S1 boss 21, S3 boss 17 | board 108, draw 77 |
+| power | v9 | 57.0% | S8 boss 44, S1 boss 26, S8 big 13 | board 95, draw 74 |
+| power | v15 sim-only | 58.2% | S8 boss 44, S1 boss 24, S8 big 13 | board 96, draw 69 |
+
+판정:
+
+- `shop_slot_market_v9`가 balanced와 power 모두에서 none보다 높아져 economy gate를 ML 재개 가능한 수준까지 닫는다.
+- v15는 더 좋아 보이지만 현재 runtime market policy가 아니라 sim-only 후보이므로 이번 런타임 적용 근거로 쓰지 않는다.
+- v9 final gold avg는 약 5.86G, v9 S8 boss 시작 골드는 약 9.98G다.
+- 즉시 경제 경고는 없고, S1/S8 boss와 board/draw 실패가 남아 난이도 압박도 사라지지 않았다.
+
+ML handoff refresh:
+
+- feature rows: station/tier 246,271 source rows 중 120,000 rows 학습, sequence/path 3,004 rows 전체 학습.
+- station/tier: ExtraTreesRegressor, MAE 0.0561(최선 0.0000), RMSE 0.1207(최선 0.0000), R2 0.6066(이상값 1.0000).
+- sequence/path: RandomForestRegressor, MAE 0.0466(최선 0.0000), RMSE 0.0794(최선 0.0000), R2 0.9214(이상값 1.0000).
+- 판단: path-level 후보 triage는 유망하지만 station/tier 품질은 아직 부족하다. production ML/자동 적용은 계속 금지한다.
 
 S7~S8 shape correction workspace probe:
 
@@ -587,7 +618,16 @@ Status: 레벨링 r400 확인 완료, 경제 gate는 미통과.
 - 즉시 경제 경고는 없지만, market v9가 none보다 clear를 올리지 못해 `reward 0.40 / price 2.2 / catalog_normalized_v1`의 runtime station pool 경제 gate는 닫지 않는다.
 - market availability r80에서는 balanced none 57.5%, v9 48.8%, v10 48.8%, v11 53.8%, v12 50.0%, v13 52.5% / power none 62.5%, v9 63.7%, v10 67.5%, v11 56.2%, v12 66.2%, v13 43.8%였다.
 - v11/v13은 balanced를 v9보다 일부 회복하고 v10/v12는 power를 올리지만, 단일 profile이 두 loadout을 동시에 안정화하지 못한다.
-- 다음 레벨링 작업은 자동 지급/특정 슬롯 고정 없이 market availability, boss severity placement, price role band를 분리해 본다.
+- S4~S8 role band 분리 r80은 `runtime_station_pool_market_role_band_probe_r80`로 재확인했다. 결과는 balanced none 57.5%, v9 48.8%, v10 48.8%, v11 53.8%, v12 50.0%, v13 52.5% / power none 62.5%, v9 63.7%, v10 67.5%, v11 56.2%, v12 66.2%, v13 43.8%다. v9 S8 boss 시작 골드는 약 9.57G, final gold avg는 약 6.51G이며 즉시 경제 경고는 없지만 balanced gate가 닫히지 않는다.
+- Boss severity placement 분리 r80은 `runtime_station_pool_boss_severity_placement_probe_r80`로 실행했다. `single_rank S4`는 balanced v9가 none보다 약간 높고 power v9가 81.2%까지 올라 과보정 watch다. `confirm_limit S5`는 balanced v9가 none보다 높지만 power 개선이 없다. `hand_discard S3`, `color_variant S4/S5`, `repeat_rank S4`는 한쪽 loadout에서 v9 역전 또는 개선 부족 신호가 있다.
+- sim-only `shop_slot_market_v14`를 추가해 S4+ missing-growth와 직전 board/draw 압박 relief를 조건부로 묶었다. `runtime_station_pool_market_v14_confirm_r120` 결과는 balanced none 53.3%, v9 49.2%, v14 51.7% / power none 58.3%, v9 60.0%, v14 59.2%다. v14는 v9 대비 balanced를 회복하지만 none보다 낮아 strict gate 미통과다.
+- 기존 조건형 profile 검토에서 `banded_candidate_pool_v2`는 balanced 59.2%, power 62.5%로 none 대비 balanced를 올리고 power를 유지했다. `confirm_limit S5 + banded_v2`는 balanced 59.2%, power 70.8%로 양쪽을 올렸지만, banded/state profile은 shop-slot lane/offer slot 경제와 1:1 대응되지 않는다.
+- sim-only `shop_slot_market_v15`는 현재 상황을 보고 상점 후보를 고르는 실험이다. runtime station pool r80에서 기준 none은 balanced 51.2%, power 57.5%였고, v15는 balanced 50.0%, power 56.2%로 둘 다 낮았다. `single_rank S4`, `confirm_limit S5`와 섞어도 같은 boss 조건의 none보다 낮아 runtime 적용 후보가 아니다.
+- 다음 레벨링 작업은 자동 지급/특정 슬롯 고정 없이 진행한다. 단, market 후보 보정만 더 키우지 말고 S1 boss, S8 boss, board full, draw exhausted가 동시에 남는 원인을 boss 배치/target/market 후보 충돌 관점에서 다시 본다. r80/r120만으로 runtime target/boss/market/economy 값은 바꾸지 않는다.
+- S1/S8 target split r80 결과, S1 boss만 5% 낮춰도 v9 회복은 작다. S8 boss만 5% 낮추면 v9는 조금 좋아지지만 기준 none보다 낮다. 따라서 현재 적용 후보는 target 단일 완화가 아니라, v9 상점 선택이 중간/후반 boss에서 점수 성장과 보드 정리 중 무엇을 잘못 고르는지 확인하는 것이다.
+- market choice split r80 결과, 최종 재선택을 끄면 v9 balanced는 좋아지지만 power는 낮다. v15는 balanced만 기준을 넘고 power가 무너진다. 따라서 다음 코드 후보는 새 market profile 강화가 아니라, 최종 구매 선택 단계가 현재 상태와 성장 route를 반영하도록 하는 sim-only `affordable_alternative_v2`다.
+- bot/proxy 확인 결과, 현재 사람 proxy는 전투와 상점이 분리돼 있다. `planner_v2`는 전투 판단 봇이고, 상점 구매는 별도 휴리스틱이다. `average_market_choice_v1`로 비싼 구매/슬롯 교체를 피하게 해도 v9는 기준보다 낮아, 다음은 상점 proxy와 전투 bot 판단을 함께 본다.
+- `single_rank S4 + growth_access_v1` r400은 첫 실무 후보로 남긴다. 기준 none은 balanced 51.7%, power 57.8%, v9는 balanced 58.0%, power 62.5%, v15는 balanced 59.2%, power 60.5%다. 경제 감사에서 v9/v15 final gold 평균은 약 6G이고 즉시 경고는 없다. 아직 runtime 적용 완료가 아니라 seed 재현/ML 갱신 전 단계다.
 
 ## Latest ML Scaffold Status
 

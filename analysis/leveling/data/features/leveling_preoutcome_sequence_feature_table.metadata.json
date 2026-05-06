@@ -1,6 +1,6 @@
 {
-  "row_count": 2950,
-  "source_row_count": 2950,
+  "row_count": 3004,
+  "source_row_count": 3004,
   "max_rows": 0,
   "source_paths": [
     "logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json",
@@ -229,7 +229,12 @@
     "logs/sim/runtime_station_pool_market_availability_r80_summary.json",
     "logs/sim/runtime_station_pool_profile_smoke_summary.json",
     "logs/sim/s8_boss_axis_v85_r400_summary.json",
-    "logs/sim/station_curve_growth_gate_probe_r120_summary.json"
+    "logs/sim/station_curve_growth_gate_probe_r120_summary.json",
+    "logs/sim/runtime_s4_rank_growth_access_probe_r80_summary.json",
+    "logs/sim/runtime_s4_rank_weight_v1_growth_access_confirm_r240_summary.json",
+    "logs/sim/runtime_s4_rank_weight_v1_growth_access_final_r400_summary.json",
+    "logs/sim/single_s4_growth_access_r400_summary.json",
+    "logs/sim/single_s4_growth_access_seed91623_r240_summary.json"
   ],
   "output": "analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv",
   "feature_mode": "preoutcome_sequence",

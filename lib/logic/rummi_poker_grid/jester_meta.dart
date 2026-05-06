@@ -1285,21 +1285,33 @@ class RummiRunProgress {
 
   int effectiveJesterOfferPrice(int offerIndex) {
     if (offerIndex < 0 || offerIndex >= shopOffers.length) return 0;
+    final offer = shopOffers[offerIndex];
     return effectivePurchasePrice(
-      basePrice: shopOffers[offerIndex].price,
+      basePrice: offer.price,
       category: 'jester',
+      jester: offer.card,
     );
   }
 
   int effectiveItemPrice(ItemDefinition item) {
-    return effectivePurchasePrice(basePrice: item.basePrice, category: 'item');
+    return effectivePurchasePrice(
+      basePrice: item.basePrice,
+      category: 'item',
+      item: item,
+    );
   }
 
   int effectivePurchasePrice({
     required int basePrice,
     required String category,
+    RummiJesterCard? jester,
+    ItemDefinition? item,
   }) {
-    final scaledBasePrice = RummiEconomyConfig.scaledMarketPrice(basePrice);
+    final scaledBasePrice = _growthAccessMarketPrice(
+      scaledBasePrice: RummiEconomyConfig.scaledMarketPrice(basePrice),
+      jester: jester,
+      item: item,
+    );
     final categoryDiscount = switch (category) {
       'jester' => marketModifiers.nextJesterPurchaseDiscount,
       'item' => marketModifiers.nextItemPurchaseDiscount,
@@ -1316,6 +1328,58 @@ class RummiRunProgress {
           categoryDiscount -
           cheapestDiscount,
     );
+  }
+
+  int _growthAccessMarketPrice({
+    required int scaledBasePrice,
+    RummiJesterCard? jester,
+    ItemDefinition? item,
+  }) {
+    if (jester != null && _isGrowthAccessJester(jester)) {
+      final cap = switch (jester.rarity) {
+        RummiJesterRarity.common => 5,
+        RummiJesterRarity.uncommon => 7,
+        RummiJesterRarity.rare => 8,
+        RummiJesterRarity.legendary => 14,
+      };
+      return min(scaledBasePrice, cap);
+    }
+    if (item != null && _isGrowthAccessItem(item)) {
+      final cap = switch (item.rarity) {
+        ItemRarity.common => 5,
+        ItemRarity.uncommon => 7,
+        ItemRarity.rare => 8,
+        ItemRarity.legendary => 14,
+      };
+      return min(scaledBasePrice, cap);
+    }
+    return scaledBasePrice;
+  }
+
+  bool _isGrowthAccessJester(RummiJesterCard card) {
+    return card.effectType == 'chips_bonus' ||
+        card.effectType == 'mult_bonus' ||
+        card.effectType == 'xmult_bonus' ||
+        card.effectType == 'stateful_growth';
+  }
+
+  bool _isGrowthAccessItem(ItemDefinition item) {
+    const growthTags = {
+      'score',
+      'rank',
+      'tile_color',
+      'xmult',
+      'boss',
+      'discard',
+      'move',
+      'safety',
+      'draw',
+      'market',
+    };
+    for (final tag in item.tags) {
+      if (growthTags.contains(tag)) return true;
+    }
+    return false;
   }
 
   void queueMarketModifier({

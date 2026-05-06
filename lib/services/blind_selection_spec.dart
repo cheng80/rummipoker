@@ -268,7 +268,7 @@ class BlindSelectionSpecBuilder {
       level: _BossPoolLevel.mid,
       modifiers: [
         RummiBossModifier.columnDampener,
-        RummiBossModifier.diagonalDampener,
+        RummiBossModifier.singleRankPressure,
         RummiBossModifier.repeatRankPressure,
         RummiBossModifier.singleRankPressure,
       ],

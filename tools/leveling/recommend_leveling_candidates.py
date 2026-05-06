@@ -99,6 +99,12 @@ def main() -> int:
     parser.add_argument("--out", default=DEFAULT_OUT)
     parser.add_argument("--report-out", default=DEFAULT_REPORT)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--max-rows",
+        type=int,
+        default=60000,
+        help="추천표 학습 비용 상한. 0 이하면 전체 row를 사용합니다.",
+    )
     args = parser.parse_args()
 
     try:
@@ -116,6 +122,9 @@ def main() -> int:
     feature_path = Path(args.features)
     ensure_feature_table(feature_path, feature_mode="preoutcome")
     df = pd.read_csv(feature_path)
+    original_row_count = len(df)
+    if args.max_rows > 0 and len(df) > args.max_rows:
+        df = df.sample(n=args.max_rows, random_state=args.seed).reset_index(drop=True)
     feature_columns = [
         key
         for key in [*NUMERIC_FEATURES, *CATEGORICAL_FEATURES]
@@ -142,8 +151,9 @@ def main() -> int:
             (
                 "model",
                 RandomForestRegressor(
-                    n_estimators=300,
+                    n_estimators=160,
                     min_samples_leaf=2,
+                    n_jobs=2,
                     random_state=args.seed,
                 ),
             ),
@@ -177,6 +187,9 @@ def main() -> int:
             feature_path=feature_path,
             out_path=out_path,
             rows=ranked,
+            row_count=len(df),
+            source_row_count=original_row_count,
+            max_rows=args.max_rows,
         ),
         encoding="utf-8",
     )
@@ -201,6 +214,17 @@ def candidate_grid() -> list[Candidate]:
             sim_economy_mode="gated_known_cost",
             sim_market_spend_mode="reroll_slot_sell_v1",
             sim_price_band_mode="catalog_normalized_v1",
+            sim_market_choice_mode="affordable_alternative_v1",
+        ),
+        Candidate(
+            candidate_id="economy_r040_p220_growth_access_spend_choice",
+            category="economy",
+            description="성장 후보 구매 접근성을 열어 둔 reward 0.40 / price 2.2 + growth access price band",
+            sweep_reward_scale=0.40,
+            sweep_price_scale=2.20,
+            sim_economy_mode="gated_known_cost",
+            sim_market_spend_mode="reroll_slot_sell_v1",
+            sim_price_band_mode="growth_access_v1",
             sim_market_choice_mode="affordable_alternative_v1",
         ),
         Candidate(
@@ -424,7 +448,15 @@ def market_availability_index(market: str) -> int:
     return 1
 
 
-def build_report(*, feature_path: Path, out_path: Path, rows: list[dict[str, Any]]) -> str:
+def build_report(
+    *,
+    feature_path: Path,
+    out_path: Path,
+    rows: list[dict[str, Any]],
+    row_count: int,
+    source_row_count: int,
+    max_rows: int,
+) -> str:
     top_rows = rows[:6]
     table = [
         "| 순위 | 후보 | 분류 | 점수 | v9 평균 | none 평균 | 차이 | S1 boss | S8 boss |",
@@ -471,6 +503,9 @@ def build_report(*, feature_path: Path, out_path: Path, rows: list[dict[str, Any
             "",
             f"- feature table: `{feature_path}`",
             f"- recommendation csv: `{out_path}`",
+            f"- source rows: {source_row_count}",
+            f"- training rows: {row_count}",
+            f"- max rows: {max_rows}",
             "",
             "## 상위 후보 상세",
             "",

@@ -63,11 +63,11 @@ void main() {
       expect(facade.offers.first.category, RummiMarketCategory.jester);
       expect(facade.offers.first.contentId, 'green_jester');
       expect(facade.offers.first.displayName, 'Green Jester');
-      expect(facade.offers.first.price, 18);
+      expect(facade.offers.first.price, 5);
       expect(facade.offers.first.currency, 'gold');
       expect(facade.offers.first.isAffordable, isTrue);
-      expect(facade.offers.last.price, 24);
-      expect(facade.offers.last.isAffordable, isFalse);
+      expect(facade.offers.last.price, 5);
+      expect(facade.offers.last.isAffordable, isTrue);
       expect(facade.runtimeSnapshot.playedHandCounts, isEmpty);
       expect(facade.itemOffers, isEmpty);
     });
@@ -164,7 +164,7 @@ void main() {
       final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
 
       expect(facade.rerollCost, 3);
-      expect(facade.offers.single.price, 10);
+      expect(facade.offers.single.price, 2);
       expect(facade.offers.single.isAffordable, isTrue);
     });
 
@@ -657,7 +657,7 @@ void main() {
 
     test('marks unaffordable offers and carries runtime snapshot values', () {
       final progress = RummiRunProgress()
-        ..gold = 6
+        ..gold = 4
         ..shopOffers.add(
           RummiShopOffer(
             slotIndex: 0,
@@ -806,7 +806,7 @@ void main() {
         expect(before.ownedEntries, isEmpty);
 
         final after = RummiMarketRuntimeFacade.fromRunProgress(progress);
-        expect(after.gold, 3);
+        expect(after.gold, 20);
         expect(after.offers, isEmpty);
         expect(after.ownedEntries.length, 1);
         expect(after.ownedEntries.first.contentId, 'ice_cream');

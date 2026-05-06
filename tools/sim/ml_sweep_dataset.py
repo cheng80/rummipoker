@@ -189,13 +189,19 @@ def main(argv: list[str] | None = None) -> int:
             "catalog_value_flags_v1",
             "catalog_normalized_v1",
             "catalog_audit_v2",
+            "growth_access_v1",
         ],
         help="후보 가치군별 sim-only 가격 band 모델.",
     )
     parser.add_argument(
         "--sim-market-choice-mode",
         default=DEFAULT_OPTIONS["sim_market_choice_mode"],
-        choices=["none", "affordable_alternative_v1"],
+        choices=[
+            "none",
+            "affordable_alternative_v1",
+            "affordable_alternative_v2",
+            "average_market_choice_v1",
+        ],
         help="shop slot 후보 중 구매 가능한 대안을 고르는 sim-only 선택 모델.",
     )
     parser.add_argument(

@@ -635,6 +635,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         station: station,
         tier: tier,
         loadout: stationBaseLoadout,
+        previousStepResourceState: previousStepResourceState,
         currentGold: simEconomyGold,
         remainingMarketBudget: remainingMarketBudget,
         simPriceScale: config.simPriceScale,
@@ -706,6 +707,7 @@ BalanceSimSequenceOutput _runStationPathSequence({
         station: station,
         marketProfile: appliedMarketProfile,
         loadoutIdMarketProfile: spec.marketProfile,
+        jesterCatalog: jesterCatalog,
         enforceSlotCaps:
             config.simMarketSpendMode ==
             BalanceSimMarketSpendMode.rerollSlotSellV1,
@@ -1156,6 +1158,7 @@ BalanceSimMarketProfile _resolveAffordableMarketProfile({
   required int station,
   required BlindTier tier,
   required BalanceSimLoadoutSpec loadout,
+  required Map<String, Object?>? previousStepResourceState,
   required int currentGold,
   required int? remainingMarketBudget,
   required double simPriceScale,
@@ -1213,15 +1216,55 @@ BalanceSimMarketProfile _resolveAffordableMarketProfile({
       }
     }
     if (!affordable) continue;
-    final score = _shopSlotUtilityForProfile(
+    var replacementCount = 0;
+    var totalCost = 0;
+    for (final event in events) {
+      final cost = event['cost'];
+      if (cost is num) {
+        totalCost += _simPriceBandCostForEvent(
+          mode: simPriceBandMode,
+          event: event,
+          fallbackCost: (cost * simPriceScale).round(),
+        );
+      }
+      if (_simMarketSlotReplacementForEvent(
+        mode: simMarketSpendMode,
+        event: event,
+        loadout: loadout,
+        jesterCatalog: jesterCatalog,
+        itemCatalog: itemCatalog,
+      ).replaced) {
+        replacementCount += 1;
+      }
+    }
+    var score = _shopSlotUtilityForProfile(
       loadout: loadout,
       station: station,
       tier: tier,
       profile: profile,
+      stateAwareChoice:
+          mode == BalanceSimMarketChoiceMode.affordableAlternativeV2 ||
+          mode == BalanceSimMarketChoiceMode.averageMarketChoiceV1,
+      stateFlags: _shopSlotV15StateFlags(previousStepResourceState),
     );
+    if (mode == BalanceSimMarketChoiceMode.averageMarketChoiceV1) {
+      // 평균적인 구매 proxy: 살 수 있어도 비싸거나 핵심 슬롯을 밀어내면 보수적으로 본다.
+      score -= totalCost ~/ 3;
+      score -= replacementCount * 14;
+    }
     if (score > bestScore) {
       bestProfile = profile;
       bestScore = score;
+    }
+  }
+  if (mode == BalanceSimMarketChoiceMode.averageMarketChoiceV1) {
+    final minimumUsefulScore = station <= 2
+        ? 5
+        : station <= 5
+        ? 8
+        : 10;
+    if (bestScore < minimumUsefulScore) {
+      return BalanceSimMarketProfile.none;
     }
   }
   return bestScore == -1 << 30 ? currentProfile : bestProfile;
@@ -1232,6 +1275,8 @@ int _shopSlotUtilityForProfile({
   required int station,
   required BlindTier tier,
   required BalanceSimMarketProfile profile,
+  bool stateAwareChoice = false,
+  _ShopSlotV15StateFlags stateFlags = const _ShopSlotV15StateFlags(),
 }) {
   final late = station >= 6;
   final boss = tier == BlindTier.boss;
@@ -1275,6 +1320,57 @@ int _shopSlotUtilityForProfile({
   if (_isFinalBandShapeCorrectionProxy(profile) && station >= 7) {
     score += 6;
   }
+  if (stateAwareChoice) {
+    // 최종 구매 선택도 직전 전투 상태를 본다. 구매 자체를 강제하지는 않는다.
+    if (stateFlags.boardPressure) {
+      score += switch (profile) {
+        BalanceSimMarketProfile.s1CandidateTarotBuildPack => 8,
+        BalanceSimMarketProfile.s1BuyDiscardGlove => 7,
+        BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 5,
+        BalanceSimMarketProfile.s1TilePackPlus5 => 3,
+        BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+        BalanceSimMarketProfile.s1CandidateCommonRankJester => 2,
+        _ => 0,
+      };
+    }
+    if (stateFlags.deckCritical) {
+      score += switch (profile) {
+        BalanceSimMarketProfile.s1CandidateTarotBuildPack => 7,
+        BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 6,
+        BalanceSimMarketProfile.s1TilePackPlus5 => 5,
+        BalanceSimMarketProfile.s1CandidateVoucherResource => 4,
+        _ => 0,
+      };
+    } else if (stateFlags.deckLow) {
+      score += switch (profile) {
+        BalanceSimMarketProfile.s1CandidateTarotBuildPack => 4,
+        BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 4,
+        BalanceSimMarketProfile.s1TilePackPlus5 => 3,
+        BalanceSimMarketProfile.s1CandidateVoucherResource => 2,
+        _ => 0,
+      };
+    }
+    if (stateFlags.scoreCritical) {
+      score += switch (profile) {
+        BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 8,
+        BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 6,
+        BalanceSimMarketProfile.s1CandidateRareXmultJester => station >= 8
+            ? 4
+            : 5,
+        BalanceSimMarketProfile.s1CandidateLegendaryBridge => 3,
+        _ => 0,
+      };
+    } else if (stateFlags.scoreSoft) {
+      score += switch (profile) {
+        BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 4,
+        BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 3,
+        BalanceSimMarketProfile.s1CandidateRareXmultJester => station >= 7
+            ? 3
+            : 1,
+        _ => 0,
+      };
+    }
+  }
   return score;
 }
 
@@ -1302,6 +1398,9 @@ int _simPriceBandCostForEvent({
       fallbackCost: fallbackCost,
     );
   }
+  if (mode == BalanceSimPriceBandMode.growthAccessV1) {
+    return _simGrowthAccessCostForEvent(event: event, fallbackCost: fallbackCost);
+  }
   final soft = mode == BalanceSimPriceBandMode.rarityCategorySoftV1;
   final category = event['category'];
   final contentId = event['content_id'];
@@ -1325,6 +1424,39 @@ int _simPriceBandCostForEvent({
     }
     if (contentId.contains('uncommon')) return max(fallbackCost, soft ? 9 : 12);
     if (contentId.contains('common')) return max(fallbackCost, soft ? 6 : 8);
+  }
+  return fallbackCost;
+}
+
+int _simGrowthAccessCostForEvent({
+  required Map<String, Object?> event,
+  required int fallbackCost,
+}) {
+  final category = event['category'];
+  final contentId = event['content_id'];
+  if (category == 'planet') return min(fallbackCost, 5);
+  if (category == 'tarot') return min(fallbackCost, 5);
+  if (category == 'voucher') return min(fallbackCost, 7);
+  if (category == 'pack') {
+    final addedTiles = event['deck_tiles_added'];
+    final addedTileCount = addedTiles is num ? addedTiles.toInt() : 0;
+    return min(fallbackCost, 4 + (addedTileCount / 2).ceil());
+  }
+  if (category != 'jester') return fallbackCost;
+  final proxyIds = event['proxy_jester_ids'];
+  final ids = proxyIds is List
+      ? proxyIds.whereType<String>().toSet()
+      : <String>{if (contentId is String) contentId};
+  if (contentId == 'rare_xmult_jester_proxy' ||
+      ids.any((id) => id == 'the_duo' || id == 'the_trio')) {
+    return min(fallbackCost, 8);
+  }
+  if (contentId == 'uncommon_build_jester_proxy') {
+    return min(fallbackCost, 7);
+  }
+  if (contentId == 'common_rank_jester_proxy' ||
+      contentId == 'common_color_jester_proxy') {
+    return min(fallbackCost, 5);
   }
   return fallbackCost;
 }
@@ -1527,6 +1659,7 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
   required int station,
   required BalanceSimMarketProfile marketProfile,
   required BalanceSimMarketProfile loadoutIdMarketProfile,
+  required RummiJesterCatalog jesterCatalog,
   bool enforceSlotCaps = false,
 }) {
   final stationBaseLoadout = _stationRouteLoadout(
@@ -1580,6 +1713,8 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
     case BalanceSimMarketProfile.shopSlotMarketV11:
     case BalanceSimMarketProfile.shopSlotMarketV12:
     case BalanceSimMarketProfile.shopSlotMarketV13:
+    case BalanceSimMarketProfile.shopSlotMarketV14:
+    case BalanceSimMarketProfile.shopSlotMarketV15:
       break;
     case BalanceSimMarketProfile.s1CandidateCommonColorJester:
       _addUnique(jesterIds, _colorJesterForLoadout(stationBaseLoadout));
@@ -1602,10 +1737,7 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
   }
   final growth = _simMarketLoadoutGrowth(marketProfile);
   if (enforceSlotCaps && jesterIds.length > RummiRunProgress.maxJesterSlots) {
-    jesterIds.removeRange(
-      0,
-      jesterIds.length - RummiRunProgress.maxJesterSlots,
-    );
+    _trimCheapestJestersForSlotCap(jesterIds, jesterCatalog);
   }
   return BalanceSimLoadoutSpec(
     id: '${stationBaseLoadout.id}__${loadoutIdMarketProfile.id}',
@@ -1620,6 +1752,25 @@ BalanceSimLoadoutSpec _sequenceEffectiveLoadout({
     handDiscardsDelta:
         stationBaseLoadout.handDiscardsDelta + growth.handDiscardsDelta,
   );
+}
+
+void _trimCheapestJestersForSlotCap(
+  List<String> jesterIds,
+  RummiJesterCatalog catalog,
+) {
+  while (jesterIds.length > RummiRunProgress.maxJesterSlots) {
+    var removeIndex = 0;
+    var cheapestCost = 1 << 30;
+    for (var index = 0; index < jesterIds.length; index++) {
+      final card = catalog.findById(jesterIds[index]);
+      final cost = card?.baseCost ?? 0;
+      if (cost < cheapestCost) {
+        cheapestCost = cost;
+        removeIndex = index;
+      }
+    }
+    jesterIds.removeAt(removeIndex);
+  }
 }
 
 BalanceSimLoadoutSpec _stationRouteLoadout({
@@ -1753,6 +1904,8 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.shopSlotMarketV11 => 'shop_slot_market_v11',
     BalanceSimMarketProfile.shopSlotMarketV12 => 'shop_slot_market_v12',
     BalanceSimMarketProfile.shopSlotMarketV13 => 'shop_slot_market_v13',
+    BalanceSimMarketProfile.shopSlotMarketV14 => 'shop_slot_market_v14',
+    BalanceSimMarketProfile.shopSlotMarketV15 => 'shop_slot_market_v15',
     BalanceSimMarketProfile.s1CandidateCommonColorJester =>
       'common_color_jester_proxy',
     BalanceSimMarketProfile.s1CandidateCommonRankJester =>
@@ -1797,6 +1950,8 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     BalanceSimMarketProfile.shopSlotMarketV11 => 'sim_policy',
     BalanceSimMarketProfile.shopSlotMarketV12 => 'sim_policy',
     BalanceSimMarketProfile.shopSlotMarketV13 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV14 => 'sim_policy',
+    BalanceSimMarketProfile.shopSlotMarketV15 => 'sim_policy',
     BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 'planet',
     BalanceSimMarketProfile.s1CandidateTarotBuildPack => 'tarot',
     BalanceSimMarketProfile.s1CandidateVoucherResource => 'voucher',
@@ -1991,7 +2146,9 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
       marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
       marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
       marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
-      marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+      marketProfile == BalanceSimMarketProfile.shopSlotMarketV15;
   if (!isStationWeighted && !isStateWeighted && !isBanded && !isShopSlot) {
     return baseSelection;
   }
@@ -2013,7 +2170,9 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV15;
     final lateTempoBiasStrong =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV4 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
@@ -2023,7 +2182,9 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV15;
     final lateStaticGuard =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV6 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
@@ -2032,7 +2193,9 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV15;
     final lateStaticGuardStrong =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV7 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
@@ -2040,33 +2203,53 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV15;
     final earlyFunBias =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV8 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV15;
     final lateBreakerBias =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV9 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV15;
     final finalShapeFloorStrong =
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV12 ||
         (marketProfile == BalanceSimMarketProfile.shopSlotMarketV13 &&
             station >= 8);
+    final v15StateFlags = _shopSlotV15StateFlags(previousStepResourceState);
+    final v15StateAware =
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV15 &&
+        station >= 4;
     final missingGrowthBias =
         runModifierMarketPressure ||
         marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV11 ||
+        (marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 &&
+            station >= 4) ||
+        (v15StateAware && v15StateFlags.any);
     final missingGrowthBiasStrong =
         runModifierMarketPressure ||
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10;
+        marketProfile == BalanceSimMarketProfile.shopSlotMarketV10 ||
+        // v14는 직전 압박이 있을 때만 후보 폭을 넓혀 상시 보정을 피한다.
+        (marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 &&
+            station >= 4 &&
+            _hasPreviousBoardLockPressure(previousStepResourceState)) ||
+        (v15StateAware && v15StateFlags.stacked);
     final boardLockRelief =
-        marketProfile == BalanceSimMarketProfile.shopSlotMarketV3 &&
+        (marketProfile == BalanceSimMarketProfile.shopSlotMarketV3 ||
+            marketProfile == BalanceSimMarketProfile.shopSlotMarketV14 ||
+            marketProfile == BalanceSimMarketProfile.shopSlotMarketV15) &&
         _hasPreviousBoardLockPressure(previousStepResourceState);
     final candidates = _shopSlotMarketCandidates(
       loadout: loadout,
@@ -2083,6 +2266,8 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
       finalShapeFloorStrong: finalShapeFloorStrong,
       missingGrowthBias: missingGrowthBias,
       missingGrowthBiasStrong: missingGrowthBiasStrong,
+      stateAwareRecovery: v15StateAware,
+      stateFlags: v15StateFlags,
     );
     final slots = _rollMarketShopSlots(
       rng: rng,
@@ -2092,6 +2277,8 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         tempoBias: tempoBias,
         missingGrowthBias: missingGrowthBias,
         missingGrowthBiasStrong: missingGrowthBiasStrong,
+        stateAwareRecovery: v15StateAware,
+        stateFlags: v15StateFlags,
       ),
     );
     return BalanceSimMarketSelection(
@@ -2111,6 +2298,8 @@ BalanceSimMarketSelection _resolveSequenceStepMarketSelection({
         finalShapeFloorStrong: finalShapeFloorStrong,
         missingGrowthBias: missingGrowthBias,
         missingGrowthBiasStrong: missingGrowthBiasStrong,
+        stateAwareRecovery: v15StateAware,
+        stateFlags: v15StateFlags,
       ),
       shopSlots: slots.map((slot) => slot.profile).toList(growable: false),
     );
@@ -2489,6 +2678,8 @@ List<_WeightedMarketCandidate> _shopSlotMarketCandidates({
   required bool finalShapeFloorStrong,
   required bool missingGrowthBias,
   required bool missingGrowthBiasStrong,
+  required bool stateAwareRecovery,
+  required _ShopSlotV15StateFlags stateFlags,
 }) {
   final base = _bandedMarketCandidates(
     loadout: loadout,
@@ -2706,6 +2897,67 @@ List<_WeightedMarketCandidate> _shopSlotMarketCandidates({
             _ => 0,
           };
         }
+        if (stateAwareRecovery) {
+          // v15는 직전 전투 상태를 후보 노출에만 반영한다.
+          // 특정 후보 지급이나 슬롯 위치 고정은 하지 않는다.
+          if (stateFlags.deckCritical) {
+            weight += switch (candidate.profile) {
+              BalanceSimMarketProfile.s1CandidateTarotBuildPack => 5,
+              BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 4,
+              BalanceSimMarketProfile.s1TilePackPlus5 => 4,
+              BalanceSimMarketProfile.s1CandidateVoucherResource => 3,
+              BalanceSimMarketProfile.s1BuyDiscardGlove => 2,
+              _ => 0,
+            };
+          } else if (stateFlags.deckLow) {
+            weight += switch (candidate.profile) {
+              BalanceSimMarketProfile.s1CandidateTarotBuildPack => 3,
+              BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 3,
+              BalanceSimMarketProfile.s1TilePackPlus5 => 2,
+              BalanceSimMarketProfile.s1CandidateVoucherResource => 2,
+              _ => 0,
+            };
+          }
+          if (stateFlags.scoreCritical) {
+            weight += switch (candidate.profile) {
+              BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 5,
+              BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 4,
+              BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+                station >= 8 ? 1 : 2,
+              BalanceSimMarketProfile.s1CandidateLegendaryBridge => 1,
+              _ => 0,
+            };
+          } else if (stateFlags.scoreSoft) {
+            weight += switch (candidate.profile) {
+              BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 3,
+              BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 2,
+              BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+                station >= 8 ? 0 : 1,
+              _ => 0,
+            };
+          }
+          if (stateFlags.boardPressure) {
+            weight += switch (candidate.profile) {
+              BalanceSimMarketProfile.s1CandidateTarotBuildPack => 4,
+              BalanceSimMarketProfile.s1BuyDiscardGlove => 4,
+              BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 2,
+              BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+              BalanceSimMarketProfile.s1CandidateCommonRankJester => 1,
+              BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+                station >= 8 ? 0 : -1,
+              _ => 0,
+            };
+          }
+          if (stateFlags.scoreSoft && station >= 7) {
+            weight += switch (candidate.profile) {
+              BalanceSimMarketProfile.s1CandidateRareXmultJester => 3,
+              BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 2,
+              BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 2,
+              BalanceSimMarketProfile.s1CandidateLegendaryBridge => 1,
+              _ => 0,
+            };
+          }
+        }
         return candidate.withWeight(weight.clamp(1, 99));
       })
       .toList(growable: false);
@@ -2716,8 +2968,14 @@ int _shopSlotCountForStation(
   required bool tempoBias,
   required bool missingGrowthBias,
   required bool missingGrowthBiasStrong,
+  required bool stateAwareRecovery,
+  required _ShopSlotV15StateFlags stateFlags,
 }) {
   if (station <= 2) return 3;
+  if (stateAwareRecovery) {
+    if (station <= 5) return stateFlags.stacked ? 5 : 4;
+    if (stateFlags.severe) return 5;
+  }
   if (station <= 5) return missingGrowthBias ? 5 : 4;
   if (missingGrowthBiasStrong) return 5;
   if (tempoBias) return 4;
@@ -2738,6 +2996,46 @@ bool _hasPreviousBoardLockPressure(Map<String, Object?>? state) {
       remainingBoardMoves <= 0 ||
       remainingBoardDiscards <= 0 ||
       remainingHandDiscards <= 0;
+}
+
+_ShopSlotV15StateFlags _shopSlotV15StateFlags(Map<String, Object?>? state) {
+  if (state == null) return const _ShopSlotV15StateFlags();
+  final targetScore = _stateInt(state, 'target_score');
+  final finalScore = _stateInt(state, 'final_score');
+  final remainingDeck = _stateInt(state, 'remaining_deck');
+  final scoreRatio = targetScore <= 0 ? 1.0 : finalScore / targetScore;
+  final boardPressure = _hasPreviousBoardLockPressure(state);
+  return _ShopSlotV15StateFlags(
+    scoreCritical: scoreRatio < 0.90,
+    scoreSoft: scoreRatio < 1.08,
+    deckCritical: remainingDeck <= 10,
+    deckLow: remainingDeck <= 16,
+    boardPressure: boardPressure,
+  );
+}
+
+class _ShopSlotV15StateFlags {
+  const _ShopSlotV15StateFlags({
+    this.scoreCritical = false,
+    this.scoreSoft = false,
+    this.deckCritical = false,
+    this.deckLow = false,
+    this.boardPressure = false,
+  });
+
+  final bool scoreCritical;
+  final bool scoreSoft;
+  final bool deckCritical;
+  final bool deckLow;
+  final bool boardPressure;
+
+  bool get any => scoreSoft || deckLow || boardPressure;
+
+  bool get stacked =>
+      (scoreSoft && (deckLow || boardPressure)) ||
+      (deckLow && boardPressure);
+
+  bool get severe => scoreCritical || deckCritical || stacked;
 }
 
 List<_WeightedMarketCandidate> _rollMarketShopSlots({
@@ -2776,6 +3074,8 @@ BalanceSimMarketProfile _chooseMarketShopSlot({
   required bool finalShapeFloorStrong,
   required bool missingGrowthBias,
   required bool missingGrowthBiasStrong,
+  required bool stateAwareRecovery,
+  required _ShopSlotV15StateFlags stateFlags,
 }) {
   if (slots.isEmpty) return BalanceSimMarketProfile.none;
   var best = slots.first;
@@ -2795,6 +3095,8 @@ BalanceSimMarketProfile _chooseMarketShopSlot({
     finalShapeFloorStrong: finalShapeFloorStrong,
     missingGrowthBias: missingGrowthBias,
     missingGrowthBiasStrong: missingGrowthBiasStrong,
+    stateAwareRecovery: stateAwareRecovery,
+    stateFlags: stateFlags,
   );
   for (final candidate in slots.skip(1)) {
     final score = _shopSlotUtility(
@@ -2813,6 +3115,8 @@ BalanceSimMarketProfile _chooseMarketShopSlot({
       finalShapeFloorStrong: finalShapeFloorStrong,
       missingGrowthBias: missingGrowthBias,
       missingGrowthBiasStrong: missingGrowthBiasStrong,
+      stateAwareRecovery: stateAwareRecovery,
+      stateFlags: stateFlags,
     );
     if (score > bestScore) {
       best = candidate;
@@ -2838,6 +3142,8 @@ int _shopSlotUtility({
   required bool finalShapeFloorStrong,
   required bool missingGrowthBias,
   required bool missingGrowthBiasStrong,
+  required bool stateAwareRecovery,
+  required _ShopSlotV15StateFlags stateFlags,
 }) {
   final late = station >= 6;
   final boss = tier == BlindTier.boss;
@@ -2984,6 +3290,68 @@ int _shopSlotUtility({
       BalanceSimMarketProfile.s1CandidatePlanetRankLevel => -4,
       _ => 0,
     };
+  }
+  if (stateAwareRecovery) {
+    if (stateFlags.deckCritical) {
+      score += switch (candidate.profile) {
+        BalanceSimMarketProfile.s1CandidateTarotBuildPack => 7,
+        BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 6,
+        BalanceSimMarketProfile.s1TilePackPlus5 => 5,
+        BalanceSimMarketProfile.s1CandidateVoucherResource => 4,
+        BalanceSimMarketProfile.s1BuyDiscardGlove => 3,
+        _ => 0,
+      };
+    } else if (stateFlags.deckLow) {
+      score += switch (candidate.profile) {
+        BalanceSimMarketProfile.s1CandidateTarotBuildPack => 4,
+        BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 4,
+        BalanceSimMarketProfile.s1TilePackPlus5 => 3,
+        BalanceSimMarketProfile.s1CandidateVoucherResource => 2,
+        _ => 0,
+      };
+    }
+    if (stateFlags.scoreCritical) {
+      score += switch (candidate.profile) {
+        BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 7,
+        BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 5,
+        BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+          station >= 8 ? 1 : 3,
+        BalanceSimMarketProfile.s1CandidateLegendaryBridge => 2,
+        _ => 0,
+      };
+    } else if (stateFlags.scoreSoft) {
+      score += switch (candidate.profile) {
+        BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 4,
+        BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 3,
+        BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+          station >= 8 ? 0 : 1,
+        _ => 0,
+      };
+    }
+    if (stateFlags.boardPressure) {
+      score += switch (candidate.profile) {
+        BalanceSimMarketProfile.s1CandidateTarotBuildPack => 7,
+        BalanceSimMarketProfile.s1BuyDiscardGlove => 7,
+        BalanceSimMarketProfile.s1BuildAwarePackPlus5 => 4,
+        BalanceSimMarketProfile.s1CandidateCommonColorJester ||
+        BalanceSimMarketProfile.s1CandidateCommonRankJester => 2,
+        BalanceSimMarketProfile.s1CandidateRareXmultJester =>
+          station >= 8 ? 0 : -2,
+        BalanceSimMarketProfile.s1CandidateLegendaryBridge =>
+          station >= 8 ? 0 : -1,
+        _ => 0,
+      };
+    }
+    if (stateFlags.scoreSoft && station >= 7) {
+      // 후반 boss 압박에서는 회복 후보가 돌파 후보를 완전히 밀어내지 않게 한다.
+      score += switch (candidate.profile) {
+        BalanceSimMarketProfile.s1CandidateRareXmultJester => 8,
+        BalanceSimMarketProfile.s1CandidatePlanetRankLevel => 5,
+        BalanceSimMarketProfile.s1CandidateUncommonBuildJester => 4,
+        BalanceSimMarketProfile.s1CandidateLegendaryBridge => 2,
+        _ => 0,
+      };
+    }
   }
   if (station <= 2) {
     score += switch (candidate.profile) {
@@ -3681,6 +4049,8 @@ List<Tile> _buildSimPackAddedTiles({
     BalanceSimMarketProfile.shopSlotMarketV11 ||
     BalanceSimMarketProfile.shopSlotMarketV12 ||
     BalanceSimMarketProfile.shopSlotMarketV13 ||
+    BalanceSimMarketProfile.shopSlotMarketV14 ||
+    BalanceSimMarketProfile.shopSlotMarketV15 ||
     BalanceSimMarketProfile.s1CandidateCommonColorJester ||
     BalanceSimMarketProfile.s1CandidateCommonRankJester ||
     BalanceSimMarketProfile.s1CandidateUncommonBuildJester ||
@@ -4703,7 +5073,9 @@ BalanceSimExperimentSpec _resolveExperiment({
             id.contains('_boss_expansion_stage_a_refill_limit_probe_v1') ||
             id.contains('_boss_expansion_stage_a_reward_tax_probe_v1') ||
             id.contains('_boss_expansion_stage_a_color_variant_probe_v1'):
-    case _ when id.endsWith('_runtime_station_pool_v1'):
+    case _
+        when id.endsWith('_runtime_station_pool_v1') ||
+            _usesRuntimeBossStationPoolVariant(id):
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1':
     case _
@@ -4966,7 +5338,10 @@ double _stationGrowthBaseForExperiment(String id) {
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1' =>
       1.25,
     _ when _usesStageABossExpansionSplitProbe(id) => 1.25,
-    _ when id.endsWith('_runtime_station_pool_v1') => 1.25,
+    _
+        when id.endsWith('_runtime_station_pool_v1') ||
+            _usesRuntimeBossStationPoolVariant(id) =>
+      1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1' =>
@@ -5394,6 +5769,7 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
         )
       : _usesRuntimeBossStationPool(id)
       ? _runtimeBossConstraintForStationPool(
+          id: id,
           station: station,
           severity: severity,
           runSeed: runSeed,
@@ -5460,7 +5836,13 @@ bool _usesOrderedBossTargets(String id) =>
     id.contains('_weighted_boss_v3_late_boss_');
 
 bool _usesRuntimeBossStationPool(String id) =>
-    id.endsWith('_runtime_station_pool_v1');
+    id.endsWith('_runtime_station_pool_v1') ||
+    _usesRuntimeBossStationPoolVariant(id);
+
+bool _usesRuntimeBossStationPoolVariant(String id) =>
+    id.contains('_runtime_station_pool_s4_rank_weight_v1') ||
+    id.contains('_runtime_station_pool_s4_rank_weight_v2') ||
+    id.contains('_runtime_station_pool_s4_rank_safe_v1');
 
 bool _usesRankCycleProbe(String id) =>
     id.endsWith('_rank_cycle_probe_v1') ||
@@ -5786,13 +6168,15 @@ BalanceSimBossConstraintChoice _weightedBossConstraintForStationPool({
 }
 
 BalanceSimBossConstraintChoice _runtimeBossConstraintForStationPool({
+  required String id,
   required int station,
   required String severity,
   required int runSeed,
 }) {
   final normalizedStation = station < 1 ? 1 : station;
-  final poolIndex = (normalizedStation - 1) % _runtimeBossStationPools.length;
-  final pool = _runtimeBossStationPools[poolIndex];
+  final pools = _runtimeBossStationPoolsForExperiment(id);
+  final poolIndex = (normalizedStation - 1) % pools.length;
+  final pool = pools[poolIndex];
   final selectedIndex = _runtimeBossVariantIndex(
     runSeed: runSeed,
     stationIndex: normalizedStation,
@@ -5806,9 +6190,39 @@ BalanceSimBossConstraintChoice _runtimeBossConstraintForStationPool({
   );
   return choice.withExtraEffects(<String, Object?>{
     'sim_boss_pool_profile': 'runtime_station_pool_v1',
+    if (_runtimeBossStationPoolProfileId(id) != 'runtime_station_pool_v1')
+      'sim_boss_pool_variant': _runtimeBossStationPoolProfileId(id),
     'sim_boss_pool_level': pool.level,
     'sim_boss_pool_slot': selected,
   });
+}
+
+List<({String level, List<int> slots})> _runtimeBossStationPoolsForExperiment(
+  String id,
+) {
+  if (id.contains('_runtime_station_pool_s4_rank_weight_v2')) {
+    return _runtimeBossStationPoolsS4RankWeightV2;
+  }
+  if (id.contains('_runtime_station_pool_s4_rank_weight_v1')) {
+    return _runtimeBossStationPoolsS4RankWeightV1;
+  }
+  if (id.contains('_runtime_station_pool_s4_rank_safe_v1')) {
+    return _runtimeBossStationPoolsS4RankSafeV1;
+  }
+  return _runtimeBossStationPools;
+}
+
+String _runtimeBossStationPoolProfileId(String id) {
+  if (id.contains('_runtime_station_pool_s4_rank_weight_v2')) {
+    return 'runtime_station_pool_s4_rank_weight_v2';
+  }
+  if (id.contains('_runtime_station_pool_s4_rank_weight_v1')) {
+    return 'runtime_station_pool_s4_rank_weight_v1';
+  }
+  if (id.contains('_runtime_station_pool_s4_rank_safe_v1')) {
+    return 'runtime_station_pool_s4_rank_safe_v1';
+  }
+  return 'runtime_station_pool_v1';
 }
 
 const List<({String level, List<int> slots})> _runtimeBossStationPools = [
@@ -5820,6 +6234,42 @@ const List<({String level, List<int> slots})> _runtimeBossStationPools = [
   (level: 'late', slots: [36, 38, 39, 40]),
   (level: 'late', slots: [39, 40, 41, 38]),
   (level: 'finalGate', slots: [40, 38, 39, 41]),
+];
+
+const List<({String level, List<int> slots})>
+_runtimeBossStationPoolsPrefixS1ToS3 = [
+  (level: 'entry', slots: [30, 31, 32]),
+  (level: 'early', slots: [32, 33, 31, 37]),
+  (level: 'growthCheck', slots: [37, 34, 33, 35]),
+];
+
+const List<({String level, List<int> slots})>
+_runtimeBossStationPoolsSuffixS5ToS8 = [
+  (level: 'midLate', slots: [38, 41, 42, 43]),
+  (level: 'late', slots: [36, 38, 39, 40]),
+  (level: 'late', slots: [39, 40, 41, 38]),
+  (level: 'finalGate', slots: [40, 38, 39, 41]),
+];
+
+const List<({String level, List<int> slots})>
+_runtimeBossStationPoolsS4RankWeightV1 = [
+  ..._runtimeBossStationPoolsPrefixS1ToS3,
+  (level: 'mid', slots: [35, 43, 42, 43]),
+  ..._runtimeBossStationPoolsSuffixS5ToS8,
+];
+
+const List<({String level, List<int> slots})>
+_runtimeBossStationPoolsS4RankWeightV2 = [
+  ..._runtimeBossStationPoolsPrefixS1ToS3,
+  (level: 'mid', slots: [43, 35, 43, 36]),
+  ..._runtimeBossStationPoolsSuffixS5ToS8,
+];
+
+const List<({String level, List<int> slots})>
+_runtimeBossStationPoolsS4RankSafeV1 = [
+  ..._runtimeBossStationPoolsPrefixS1ToS3,
+  (level: 'mid', slots: [35, 43, 36, 43]),
+  ..._runtimeBossStationPoolsSuffixS5ToS8,
 ];
 
 int _runtimeBossVariantIndex({
@@ -6687,7 +7137,8 @@ enum BalanceSimPriceBandMode {
   rarityCategorySoftV1,
   catalogValueFlagsV1,
   catalogNormalizedV1,
-  catalogAuditV2;
+  catalogAuditV2,
+  growthAccessV1;
 
   static BalanceSimPriceBandMode parse(String raw) {
     return switch (raw) {
@@ -6697,6 +7148,7 @@ enum BalanceSimPriceBandMode {
       'catalog_value_flags_v1' => BalanceSimPriceBandMode.catalogValueFlagsV1,
       'catalog_normalized_v1' => BalanceSimPriceBandMode.catalogNormalizedV1,
       'catalog_audit_v2' => BalanceSimPriceBandMode.catalogAuditV2,
+      'growth_access_v1' => BalanceSimPriceBandMode.growthAccessV1,
       _ => throw FormatException('Unknown sim price band mode: $raw'),
     };
   }
@@ -6709,19 +7161,26 @@ enum BalanceSimPriceBandMode {
       BalanceSimPriceBandMode.catalogValueFlagsV1 => 'catalog_value_flags_v1',
       BalanceSimPriceBandMode.catalogNormalizedV1 => 'catalog_normalized_v1',
       BalanceSimPriceBandMode.catalogAuditV2 => 'catalog_audit_v2',
+      BalanceSimPriceBandMode.growthAccessV1 => 'growth_access_v1',
     };
   }
 }
 
 enum BalanceSimMarketChoiceMode {
   none,
-  affordableAlternativeV1;
+  affordableAlternativeV1,
+  affordableAlternativeV2,
+  averageMarketChoiceV1;
 
   static BalanceSimMarketChoiceMode parse(String raw) {
     return switch (raw) {
       'none' => BalanceSimMarketChoiceMode.none,
       'affordable_alternative_v1' =>
         BalanceSimMarketChoiceMode.affordableAlternativeV1,
+      'affordable_alternative_v2' =>
+        BalanceSimMarketChoiceMode.affordableAlternativeV2,
+      'average_market_choice_v1' =>
+        BalanceSimMarketChoiceMode.averageMarketChoiceV1,
       _ => throw FormatException('Unknown sim market choice mode: $raw'),
     };
   }
@@ -6731,6 +7190,10 @@ enum BalanceSimMarketChoiceMode {
       BalanceSimMarketChoiceMode.none => 'none',
       BalanceSimMarketChoiceMode.affordableAlternativeV1 =>
         'affordable_alternative_v1',
+      BalanceSimMarketChoiceMode.affordableAlternativeV2 =>
+        'affordable_alternative_v2',
+      BalanceSimMarketChoiceMode.averageMarketChoiceV1 =>
+        'average_market_choice_v1',
     };
   }
 }
@@ -6787,6 +7250,8 @@ enum BalanceSimMarketProfile {
   shopSlotMarketV11,
   shopSlotMarketV12,
   shopSlotMarketV13,
+  shopSlotMarketV14,
+  shopSlotMarketV15,
   s1CandidateCommonColorJester,
   s1CandidateCommonRankJester,
   s1CandidateUncommonBuildJester,
@@ -6847,6 +7312,8 @@ enum BalanceSimMarketProfile {
       'shop_slot_market_v11' => BalanceSimMarketProfile.shopSlotMarketV11,
       'shop_slot_market_v12' => BalanceSimMarketProfile.shopSlotMarketV12,
       'shop_slot_market_v13' => BalanceSimMarketProfile.shopSlotMarketV13,
+      'shop_slot_market_v14' => BalanceSimMarketProfile.shopSlotMarketV14,
+      'shop_slot_market_v15' => BalanceSimMarketProfile.shopSlotMarketV15,
       's1_candidate_common_color_jester' =>
         BalanceSimMarketProfile.s1CandidateCommonColorJester,
       's1_candidate_common_rank_jester' =>
@@ -6918,6 +7385,8 @@ enum BalanceSimMarketProfile {
       BalanceSimMarketProfile.shopSlotMarketV11 => 'shop_slot_market_v11',
       BalanceSimMarketProfile.shopSlotMarketV12 => 'shop_slot_market_v12',
       BalanceSimMarketProfile.shopSlotMarketV13 => 'shop_slot_market_v13',
+      BalanceSimMarketProfile.shopSlotMarketV14 => 'shop_slot_market_v14',
+      BalanceSimMarketProfile.shopSlotMarketV15 => 'shop_slot_market_v15',
       BalanceSimMarketProfile.s1CandidateCommonColorJester =>
         's1_candidate_common_color_jester',
       BalanceSimMarketProfile.s1CandidateCommonRankJester =>
@@ -7118,6 +7587,7 @@ BalanceSimBotPolicy _createBot(String id) {
     'greedy_v1' => const GreedyBotPolicy(),
     'planner_v1' => const PlannerBotPolicy(),
     'planner_v2' => const PlannerV2BotPolicy(),
+    'planner_v3' => const PlannerV3BotPolicy(),
     _ => throw FormatException('Unknown bot: $id'),
   };
 }
@@ -7467,6 +7937,9 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_reward_tax_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_color_variant_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_s4_rank_weight_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_s4_rank_weight_v2',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_s4_rank_safe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2',

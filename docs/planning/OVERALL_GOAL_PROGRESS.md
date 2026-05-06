@@ -44,23 +44,23 @@
 | Area | Progress | Evidence | Missing evidence |
 |---|---:|---|---|
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
-| Boss modifier runtime/sim pool | 84% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, simulation runtime-station mirror profile 추가, runtime station pool r80/r400 leveling probe 완료 | 경제 조건에서 seed 기반 pool의 market availability/보스 severity 분리 재검증 |
+| Boss modifier runtime/sim pool | 87% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, S4 rank pressure 후보 가중 보정, simulation runtime-station mirror/variant profile 추가, r400 재검증 완료 | ML 재학습 후 후보 표현 정리 |
 | Market offer and inventory | 67% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한 구현 | 가격/노출/구매력 최종 기준 필요 |
-| Economy reward and price | 58% | runtime reward/price scale, catalog audit, runtime offer audit, `jester_hook` 1차 조정 | post lane reroll 경제 probe는 exploratory/not closed |
+| Economy reward and price | 66% | runtime reward/price scale, growth-access price cap, catalog audit, runtime offer audit, `jester_hook` 1차 조정, S4 rank weight + growth access r400 통과 | ML feature/table 재생성 후 recommendation gate 재평가 |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
 | Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
-| Analysis/ML documentation | 40% | `ML` 명칭 오해 정정, pre-outcome feature 증량, station/path 모델 auto selection, 최신 MAE/RMSE/R2 리포트 존재 | station/tier 모델과 경제 gate가 실무 추천 기준에 부족함. 후보 grid, raw run-level 데이터, 사람 승인 추천표 필요 |
+| Analysis/ML documentation | 43% | `ML` 명칭 오해 정정, pre-outcome feature 증량, station/path 모델 auto selection, 최신 MAE/RMSE/R2 리포트 존재, ML 재개 전 economy gate 후보 확보 | 최신 runtime/economy 후보를 feature source로 반영하고 station/tier 모델을 재평가해야 함 |
 
 ## 3. Current Focus
 
 현재 집중 축:
 
 1. Boss pool mapping 및 1차 확장: S1~S8 station 난이도 level별 3~4개 seed 기반 runtime boss pool과 simulation mirror profile 적용. 새 저장 schema 없이 기존 blind boss modifier 저장 경로 재사용
-2. 확장 boss pool 기준 레벨링/경제 probe: runtime station pool 기준 r400 레벨링은 v9가 none보다 높지만, 같은 pool의 economy r400에서는 v9가 clear를 올리지 못해 경제 gate는 아직 닫지 않음
-3. 실제 ML 이행 재개: pre-outcome feature와 모델 선택을 개선해 sequence/path 모델은 크게 개선됐지만, station/tier 모델과 경제 gate가 부족해 recommendation gate는 닫지 않음
+2. 확장 boss pool 기준 레벨링/경제 probe: S4 rank pressure 후보 가중 + growth-access price cap r400에서 v9가 balanced/power 모두 none보다 높아 ML handoff 기준 economy gate를 닫음
+3. 실제 ML 이행 재개: 최신 runtime/economy 후보를 feature source에 반영해 station/tier와 sequence/path 모델을 다시 학습하고 recommendation gate를 재평가해야 함
 
 현재 경제 판단:
 
@@ -74,6 +74,17 @@
 - runtime station pool 기준 r400 leveling probe는 balanced none 48.0%, balanced v9 67.2%, power none 54.0%, power v9 66.0%로 v9가 none보다 높다. S8/S1/S3/S4 병목은 남아 있다.
 - 같은 runtime station pool의 economy r400은 balanced none 48.5%, balanced v9 48.2%, power none 56.8%, power v9 56.8%였다. v9 final gold avg 약 6.23G, v9 S8 boss 시작 골드 약 9.48G, reroll spend 96,307G, unaffordable event 7,185회로 즉시 경제 경고는 없지만, v9가 clear를 올리지 못하므로 경제 gate는 닫지 않는다.
 - runtime station pool market availability r80에서 balanced는 none 57.5%, v9 48.8%, v11 53.8%, v13 52.5%이고, power는 none 62.5%, v9 63.7%, v10 67.5%, v12 66.2%였다. 단일 availability profile로 balanced/power를 동시에 해결하지 못하므로 다음은 S4~S8 role band와 boss severity 위치를 분리한다.
+- S4~S8 role band 분리 r80도 같은 방향이었다. balanced는 none 57.5% 대비 v9 48.8%, v10 48.8%, v11 53.8%, v12 50.0%, v13 52.5%로 모두 낮고, power는 v10 67.5%, v12 66.2%가 올랐지만 v13 43.8%는 크게 낮다. 단일 market profile로 gate를 닫지 않는다.
+- boss severity placement 분리 r80에서는 `single_rank S4`가 balanced none 57.5%, balanced v9 58.8%, power none 68.8%, power v9 81.2%로 가장 강하지만 과보정 watch다. `confirm_limit S5`는 balanced none 46.2%, balanced v9 55.0%, power none/v9 56.2%로 balanced 회복 후보지만 power 개선은 없다. 둘 다 후속 r120 후보이며 runtime 값은 바꾸지 않는다.
+- sim-only `shop_slot_market_v14`를 추가해 S4+ missing-growth와 직전 board/draw 압박 relief를 조건부로 묶어 봤다. r120 확인에서 balanced none 53.3%, v9 49.2%, v14 51.7% / power none 58.3%, v9 60.0%, v14 59.2%로 v9 대비 balanced는 회복했지만 strict gate인 balanced v14 >= none은 통과하지 못했다. runtime 적용은 금지하고, market 단독 해결 대신 boss placement/market 조합의 seed 안정성을 더 봐야 한다.
+- 기존 조건형 profile 검토에서는 `banded_candidate_pool_v2`가 runtime station pool 기준 balanced 59.2%, power 62.5%로 none 대비 balanced를 올리고 power를 유지했다. `confirm_limit S5 + banded_v2`는 balanced 59.2%, power 70.8%로 양쪽을 올렸고 S8/board/draw 병목도 남겼지만, banded/state profile은 shop-slot lane 경제와 1:1 대응되지 않는다. 다음 후보는 이 조건을 shop-slot 구조로 옮긴 sim-only profile이며 runtime 값은 아직 바꾸지 않는다.
+- sim-only `shop_slot_market_v15`는 현재 상황을 보고 상점 후보를 고르는 실험이다. 하지만 runtime station pool r80에서 none은 balanced 51.2%, power 57.5%였고, v15는 balanced 50.0%, power 56.2%로 둘 다 낮았다. `single_rank S4`, `confirm_limit S5`와 섞어도 같은 boss 조건의 none보다 낮아 runtime 적용 후보가 아니다.
+- 쉬운 판단: 지금 문제는 상점 후보만 조금 더 똑똑하게 고르면 끝나는 문제가 아니다. S1 boss와 S8 boss가 같이 남고, 실패 원인도 board full과 draw exhausted가 같이 남으므로 boss 배치, target, market 후보가 서로 충돌하는 부분을 줄여야 한다.
+- S1/S8 target split r80에서는 초반 보스만 5% 낮춰도 v9가 거의 회복되지 않았다. 마지막 보스만 5% 낮추면 v9 balanced 43.8% -> 46.2%, power 51.2% -> 53.8%로 조금 오르지만, 기준 none balanced 52.5%, power 60.0%보다 낮다. 다음은 target 한 곳 완화가 아니라 v9 상점 선택이 중간/후반 boss에서 무엇을 잘못 고르는지 본다.
+- market choice split r80에서 최종 재선택을 끄면 v9 balanced는 43.8% -> 48.8%로 좋아지지만 power는 51.2% -> 50.0%로 낮다. v15는 balanced 57.5%로 기준을 넘지만 power 45.0%로 무너진다. 다음 후보는 market profile을 더 키우는 것이 아니라, 최종 구매 선택도 현재 상태와 성장 route를 보게 하는 sim-only `affordable_alternative_v2`다.
+- bot/proxy 확인: `planner_v2`는 전투 배치/확정/버림을 고르는 봇이고, 상점 구매는 별도 proxy가 처리한다. `average_market_choice_v1`로 비싼 구매와 슬롯 교체를 피하게 해도 v9 balanced 46.2%, power 51.2%라 기준 none 52.5%/60.0%보다 낮다. 다음은 상점 proxy뿐 아니라 전투 bot의 보드 정리/낮은 점수 확정 판단도 같이 본다.
+- 첫 실무 후보: `single_rank S4 + growth_access_v1` r400에서 기준 none은 balanced 51.7%, power 57.8%였고, v9는 balanced 58.0%, power 62.5%, v15는 balanced 59.2%, power 60.5%였다. 경제 감사에서도 v9/v15 final gold 평균 약 6G, 즉시 경고 없음. 아직 runtime 적용 완료가 아니라 seed 재현, feature 재생성, ML/리포트 갱신이 남아 있다.
+- 최종 runtime handoff 후보: `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` r400에서 none은 balanced 47.5%, power 53.8%이고, v9는 balanced 52.0%, power 57.0%다. v9 final gold 평균 약 5.86G, v9 S8 boss 시작 약 9.98G, 즉시 경제 경고 없음. S1/S8 boss와 board/draw 실패가 남아 후반 압박도 유지된다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
@@ -83,17 +94,17 @@
 - `analysis/leveling/`의 pre-outcome feature table과 tree ensemble 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
 - production ML 전환은 더 넓은 candidate grid, MAE/RMSE/R2가 실무 추천 기준을 만족하는 모델, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
-- pre-outcome feature table은 239,212 source rows로 재생성했고, 학습 비용 제한을 위해 station/tier 모델은 60,000 rows sampling으로 학습했다. 최신 station/tier 모델은 ExtraTreesRegressor, MAE 0.0631(최선 0.0000), RMSE 0.1314(최선 0.0000), R2 0.5610(이상값 1.0000)이다. 이전 R2 0.1548보다는 개선됐지만 실무 추천 gate로는 아직 부족하다.
-- sequence/path table은 2,950 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0490(최선 0.0000), RMSE 0.0892(최선 0.0000), R2 0.9119(이상값 1.0000)이다. path-level triage 신호로는 유망하지만, station/tier 모델과 economy gate가 닫히기 전까지 ML 추천 적용 근거로 쓰지 않는다.
+- pre-outcome feature table은 246,271 source rows로 재생성했고, station/tier 모델은 120,000 rows sampling으로 학습했다. 최신 station/tier 모델은 ExtraTreesRegressor, MAE 0.0561(최선 0.0000), RMSE 0.1207(최선 0.0000), R2 0.6066(이상값 1.0000)이다. 이전 0.5610보다 개선됐지만 실무 추천 gate로는 아직 부족하다.
+- sequence/path table은 3,004 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0466(최선 0.0000), RMSE 0.0794(최선 0.0000), R2 0.9214(이상값 1.0000)이다. path-level triage 신호로는 유망하지만, station/tier 모델이 부족해 ML 자동 적용 근거로 쓰지 않는다.
 - NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 지금 리포트는 내부 gate/source 정리용이며 외부 재가공 전 단계다.
-- 최신 모델 추천 상위 economy 후보 `reward 0.40 / price 2.4`, `reward 0.38 / price 2.4`는 fresh 검증 전 참고 신호다. 같은 계열 후보는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 적용 보류했고, 현재 runtime economy baseline은 유지한다.
+- 최신 모델 추천 상위 economy 후보 `reward 0.40 / price 2.4`, `reward 0.38 / price 2.4`는 fresh 검증 전 참고 신호다. 현재 작업 트리의 runtime handoff 후보는 reward/price scale을 더 흔드는 대신 S4 boss 후보 가중과 growth-access price cap으로 gate를 닫았으므로, 다음 ML 입력은 이 후보를 포함해 다시 만든다.
 
 임시 작업 순서 플랜 처리:
 
 - `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
 - ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
-- 실제 ML 이행은 offline candidate recommendation scaffold까지 진행됐다. `analysis/leveling/reports/actual_ml_transition_human_review.md` 기준 production ML/자동 적용이 아니며, 모델 품질도 gate 완료로 볼 수 없다.
-- 경제 probe는 current boss pool 기준 r400 baseline만 확보했고, 확장 boss pool 기준으로 다시 열려 있다.
+- 실제 ML 이행은 offline candidate recommendation scaffold까지 갱신됐다. `analysis/leveling/reports/actual_ml_transition_human_review.md` 기준 production ML/자동 적용이 아니며, station/tier 모델 품질도 gate 완료로 볼 수 없다.
+- 경제 probe는 S4 rank weight + growth-access runtime handoff 후보 기준 r400에서 닫았고, ML 쪽은 station/tier 품질 보강이 남아 있다.
 - 공모전 기준 작업 재개는 Boss pool mapping/1차 확장과 확장 후 레벨링/경제/ML 상태 정리 이후로 보류한다.
 
 ## 4. Competition Prototype Track
@@ -286,7 +297,7 @@ Status: In progress
 
 - station/tier 모델은 MAE 0.0631, RMSE 0.1314, R2 0.5610로 이전보다 개선됐지만, 실무 추천 gate로는 아직 부족하다.
 - sequence/path 모델은 MAE 0.0490, RMSE 0.0892, R2 0.9119로 path-level triage 신호는 유망하지만, 단독으로 production ML 자동 적용 근거가 아니다.
-- 현재 economy r400에서 runtime station pool의 `shop_slot_market_v9`가 none보다 clear를 올리지 못했으므로, ML 추천 후보 적용은 경제 gate와 사람 승인 이후에만 한다.
+- 현재 작업 트리에서는 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` r400이 v9 >= none을 만족했으므로, 다음 단계는 feature table 재생성, 모델 재학습, 추천표 갱신이다. production ML 자동 적용은 여전히 아니다.
 - 다음 모델 재생성 때도 MAE/RMSE/R2를 모두 기록하고, 실무 추천 기준 충족 여부를 별도로 판단한다.
 
 ### M1. Economy And Price Baseline

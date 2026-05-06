@@ -329,6 +329,48 @@ class PlannerV2BotPolicy extends BalanceSimBotPolicy {
   }
 }
 
+/// 평균 플레이어 proxy.
+///
+/// 좋은 족보를 기다리기보다, 보드가 거의 찼을 때는 먼저 비워서 락을 피한다.
+class PlannerV3BotPolicy extends PlannerV2BotPolicy {
+  const PlannerV3BotPolicy();
+
+  @override
+  String get id => 'planner_v3';
+
+  @override
+  BalanceSimAction chooseAction(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    final confirmChoice = _currentConfirmChoice(
+      session,
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+    );
+    if (confirmChoice.shouldConfirmNow) {
+      return const BalanceSimAction.confirm();
+    }
+
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final emptyCells = kBoardSize * kBoardSize - occupancy;
+    if (emptyCells <= 3 && confirmChoice.score > 0) {
+      return const BalanceSimAction.confirm();
+    }
+    if (emptyCells <= 4 && confirmChoice.score == 0) {
+      final discard = _lastResortDiscard(session);
+      if (discard != null) return discard;
+    }
+
+    return super.chooseAction(
+      session,
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+    );
+  }
+}
+
 class _ConfirmChoice {
   const _ConfirmChoice({required this.score, required this.shouldConfirmNow});
 
