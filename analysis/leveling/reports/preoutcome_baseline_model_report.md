@@ -3,7 +3,7 @@
 ## 최종 결론 요약
 
 - 결론: 현재 모델은 pre-outcome 후보 추천 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다.
-- 핵심 점수: MAE 0.0657, RMSE 0.1392, R2 0.5414.
+- 핵심 점수: MAE 0.0631, RMSE 0.1314, R2 0.5610.
 - 데이터: 60000 rows, train 45000, test 15000, target `clear_rate`.
 - 사용 가능: 후속 시뮬레이션 후보를 고르는 참고 신호와 feature sanity check.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
@@ -14,9 +14,9 @@
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0657 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.1392 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.5414 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |
+| MAE | 0.0631 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.1314 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.5610 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |
 | Row | 60000 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
@@ -260,6 +260,7 @@
 - `logs/sim/runtime_station_pool_economy_r400_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r400_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_availability_r80_summary.json`
 - `logs/sim/runtime_station_pool_profile_smoke_summary.json`
 - `logs/sim/s8_boss_axis_v85_r400_summary.json`
 - `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
@@ -291,6 +292,9 @@ Pre-outcome numeric features:
 - `sweep_price_scale`
 - `has_market_profile`
 - `market_profile_version`
+- `is_shop_slot_market`
+- `is_sim_policy_market`
+- `market_availability_index`
 - `has_boss_constraint`
 - `boss_family_index`
 - `boss_level_index`
@@ -342,30 +346,30 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.0657
-- RMSE: 0.1392
-- R2: 0.5414
+- MAE: 0.0631
+- RMSE: 0.1314
+- R2: 0.5610
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.1392` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.1314` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `station` | 0.0753 |
-| `station_band_index` | 0.0503 |
-| `resolved_market_profile_nan` | 0.0471 |
-| `is_late_station` | 0.0463 |
-| `market_profile_nan` | 0.0448 |
-| `loadout_id_baseline` | 0.0390 |
-| `is_boss_tier` | 0.0288 |
-| `tier_index` | 0.0277 |
-| `blind_tier_boss` | 0.0248 |
-| `blind_tier_small` | 0.0239 |
+| `station` | 0.0762 |
+| `station_band_index` | 0.0578 |
+| `is_late_station` | 0.0495 |
+| `market_profile_nan` | 0.0443 |
+| `resolved_market_profile_nan` | 0.0376 |
+| `loadout_id_baseline` | 0.0355 |
+| `tier_index` | 0.0268 |
+| `blind_tier_boss` | 0.0255 |
+| `is_boss_tier` | 0.0251 |
+| `has_market_profile` | 0.0223 |
 
 ## 산출물
 

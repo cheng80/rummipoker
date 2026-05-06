@@ -67,6 +67,9 @@ PREOUTCOME_NUMERIC_FIELDS = [
     "sweep_price_scale",
     "has_market_profile",
     "market_profile_version",
+    "is_shop_slot_market",
+    "is_sim_policy_market",
+    "market_availability_index",
     "has_boss_constraint",
     "boss_family_index",
     "boss_level_index",
@@ -165,6 +168,9 @@ def main() -> int:
                 "sweep_price_scale",
                 "has_market_profile",
                 "market_profile_version",
+                "is_shop_slot_market",
+                "is_sim_policy_market",
+                "market_availability_index",
                 "path_clear_rate",
                 "heuristic_failure_counts",
                 "heuristic_stop_reason_counts",
@@ -294,6 +300,9 @@ def preoutcome_sequence_row_from_group(
         "sweep_price_scale": numeric_or_default(sweep_context.get("sim_price_scale"), 1.0),
         "has_market_profile": int(market_profile not in ("", "none")),
         "market_profile_version": market_profile_version(market_profile, resolved_market_profile),
+        "is_shop_slot_market": int(is_shop_slot_market(market_profile, resolved_market_profile)),
+        "is_sim_policy_market": int(is_sim_policy_market(market_profile, resolved_market_profile)),
+        "market_availability_index": market_availability_index(market_profile, resolved_market_profile),
         "path_clear_rate": numeric_or_zero(raw.get("path_clear_rate")),
         "heuristic_failure_counts": compact_json(raw.get("failure_counts", {})),
         "heuristic_stop_reason_counts": compact_json(raw.get("failure_stop_reason_counts", {})),
@@ -373,6 +382,9 @@ def preoutcome_row_from_group(
         "sweep_price_scale": numeric_or_default(sweep_context.get("sim_price_scale"), 1.0),
         "has_market_profile": int(market_profile not in ("", "none")),
         "market_profile_version": market_profile_version(market_profile, resolved_market_profile),
+        "is_shop_slot_market": int(is_shop_slot_market(market_profile, resolved_market_profile)),
+        "is_sim_policy_market": int(is_sim_policy_market(market_profile, resolved_market_profile)),
+        "market_availability_index": market_availability_index(market_profile, resolved_market_profile),
         "has_boss_constraint": int(boss_constraint != ""),
         "boss_family_index": boss_family_index(boss_constraint),
         "boss_level_index": boss_level_index(boss_constraint),
@@ -467,6 +479,24 @@ def market_profile_version(*values: str) -> int:
         if match:
             return int(match.group(1))
     return 0
+
+
+def is_shop_slot_market(*values: str) -> bool:
+    return any("shop_slot_market" in value for value in values)
+
+
+def is_sim_policy_market(*values: str) -> bool:
+    version = market_profile_version(*values)
+    return 10 <= version <= 13 and is_shop_slot_market(*values)
+
+
+def market_availability_index(*values: str) -> int:
+    if not is_shop_slot_market(*values):
+        return 0
+    version = market_profile_version(*values)
+    if version <= 0:
+        return 1
+    return max(1, version - 8)
 
 
 def boss_family_index(value: str) -> int:

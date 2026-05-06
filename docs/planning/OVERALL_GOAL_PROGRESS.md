@@ -73,6 +73,7 @@
 - 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe는 balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%였다. v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회로 즉시 경고는 없지만, power v9 미세 역전이 있어 최종 경제 gate는 아니다. seed 기반 runtime pool 적용 후 재검증이 필요하다.
 - runtime station pool 기준 r400 leveling probe는 balanced none 48.0%, balanced v9 67.2%, power none 54.0%, power v9 66.0%로 v9가 none보다 높다. S8/S1/S3/S4 병목은 남아 있다.
 - 같은 runtime station pool의 economy r400은 balanced none 48.5%, balanced v9 48.2%, power none 56.8%, power v9 56.8%였다. v9 final gold avg 약 6.23G, v9 S8 boss 시작 골드 약 9.48G, reroll spend 96,307G, unaffordable event 7,185회로 즉시 경제 경고는 없지만, v9가 clear를 올리지 못하므로 경제 gate는 닫지 않는다.
+- runtime station pool market availability r80에서 balanced는 none 57.5%, v9 48.8%, v11 53.8%, v13 52.5%이고, power는 none 62.5%, v9 63.7%, v10 67.5%, v12 66.2%였다. 단일 availability profile로 balanced/power를 동시에 해결하지 못하므로 다음은 S4~S8 role band와 boss severity 위치를 분리한다.
 - S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 완화했다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
 
 현재 ML/분석 판단:
@@ -82,10 +83,10 @@
 - `analysis/leveling/`의 pre-outcome feature table과 tree ensemble 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
 - production ML 전환은 더 넓은 candidate grid, MAE/RMSE/R2가 실무 추천 기준을 만족하는 모델, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
-- pre-outcome feature table은 237,507 source rows로 재생성했고, 학습 비용 제한을 위해 station/tier 모델은 60,000 rows sampling으로 학습했다. 최신 station/tier 모델은 ExtraTreesRegressor, MAE 0.0657(최선 0.0000), RMSE 0.1392(최선 0.0000), R2 0.5414(이상값 1.0000)이다. 이전 R2 0.1548보다는 개선됐지만 실무 추천 gate로는 아직 부족하다.
-- sequence/path table은 2,938 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0483(최선 0.0000), RMSE 0.0866(최선 0.0000), R2 0.9178(이상값 1.0000)이다. path-level triage 신호로는 유망하지만, station/tier 모델과 economy gate가 닫히기 전까지 ML 추천 적용 근거로 쓰지 않는다.
+- pre-outcome feature table은 239,212 source rows로 재생성했고, 학습 비용 제한을 위해 station/tier 모델은 60,000 rows sampling으로 학습했다. 최신 station/tier 모델은 ExtraTreesRegressor, MAE 0.0631(최선 0.0000), RMSE 0.1314(최선 0.0000), R2 0.5610(이상값 1.0000)이다. 이전 R2 0.1548보다는 개선됐지만 실무 추천 gate로는 아직 부족하다.
+- sequence/path table은 2,950 rows로 재생성했고, 최신 sequence/path 모델은 RandomForestRegressor, MAE 0.0490(최선 0.0000), RMSE 0.0892(최선 0.0000), R2 0.9119(이상값 1.0000)이다. path-level triage 신호로는 유망하지만, station/tier 모델과 economy gate가 닫히기 전까지 ML 추천 적용 근거로 쓰지 않는다.
 - NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 지금 리포트는 내부 gate/source 정리용이며 외부 재가공 전 단계다.
-- 새 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 적용 보류한다. 현재 runtime economy baseline은 유지한다.
+- 최신 모델 추천 상위 economy 후보 `reward 0.40 / price 2.4`, `reward 0.38 / price 2.4`는 fresh 검증 전 참고 신호다. 같은 계열 후보는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 적용 보류했고, 현재 runtime economy baseline은 유지한다.
 
 임시 작업 순서 플랜 처리:
 
@@ -278,13 +279,13 @@ Status: In progress
 - target/economy 후보를 fresh r80으로 재시뮬레이션했다.
 - 사람 승인용 MD 보고서를 작성했다.
 - runtime 값은 바꾸지 않았다.
-- pre-outcome feature table을 237,507 source rows로 증량하고, station/tier 모델에 boss pressure, boss level, runtime boss 여부, station band, economy pressure feature를 추가했다.
+- pre-outcome feature table을 239,212 source rows로 증량하고, station/tier 모델에 boss pressure, boss level, runtime boss 여부, station band, economy pressure feature를 추가했다.
 - 모델 전략을 baseline 단일 RandomForest에서 `RandomForestRegressor`/`ExtraTreesRegressor` 제한 grid auto selection으로 확장했다.
 
 남은 주의:
 
-- station/tier 모델은 MAE 0.0657, RMSE 0.1392, R2 0.5414로 이전보다 개선됐지만, 실무 추천 gate로는 아직 부족하다.
-- sequence/path 모델은 MAE 0.0483, RMSE 0.0866, R2 0.9178로 path-level triage 신호는 유망하지만, 단독으로 production ML 자동 적용 근거가 아니다.
+- station/tier 모델은 MAE 0.0631, RMSE 0.1314, R2 0.5610로 이전보다 개선됐지만, 실무 추천 gate로는 아직 부족하다.
+- sequence/path 모델은 MAE 0.0490, RMSE 0.0892, R2 0.9119로 path-level triage 신호는 유망하지만, 단독으로 production ML 자동 적용 근거가 아니다.
 - 현재 economy r400에서 runtime station pool의 `shop_slot_market_v9`가 none보다 clear를 올리지 못했으므로, ML 추천 후보 적용은 경제 gate와 사람 승인 이후에만 한다.
 - 다음 모델 재생성 때도 MAE/RMSE/R2를 모두 기록하고, 실무 추천 기준 충족 여부를 별도로 판단한다.
 

@@ -585,16 +585,18 @@ Status: 레벨링 r400 확인 완료, 경제 gate는 미통과.
 - runtime station pool economy r400: balanced none 48.5%, balanced v9 48.2%, power none 56.8%, power v9 56.8%.
 - economy audit 기준 v9 final gold avg는 약 6.23G, v9 S8 boss 시작 골드 평균은 약 9.48G, reroll spend는 96,307G, unaffordable event는 7,185회다.
 - 즉시 경제 경고는 없지만, market v9가 none보다 clear를 올리지 못해 `reward 0.40 / price 2.2 / catalog_normalized_v1`의 runtime station pool 경제 gate는 닫지 않는다.
+- market availability r80에서는 balanced none 57.5%, v9 48.8%, v10 48.8%, v11 53.8%, v12 50.0%, v13 52.5% / power none 62.5%, v9 63.7%, v10 67.5%, v11 56.2%, v12 66.2%, v13 43.8%였다.
+- v11/v13은 balanced를 v9보다 일부 회복하고 v10/v12는 power를 올리지만, 단일 profile이 두 loadout을 동시에 안정화하지 못한다.
 - 다음 레벨링 작업은 자동 지급/특정 슬롯 고정 없이 market availability, boss severity placement, price role band를 분리해 본다.
 
 ## Latest ML Scaffold Status
 
 Status: sequence/path 모델은 크게 개선, station/tier 모델은 실무 추천 gate 미달.
 
-- preoutcome feature table: 237,507 source rows, station/tier 학습은 비용 제한으로 60,000 rows sampling.
-- station/tier model: ExtraTreesRegressor, MAE 0.0657(최선 0.0000), RMSE 0.1392(최선 0.0000), R2 0.5414(이상값 1.0000).
-- sequence/path model: RandomForestRegressor, 2,938 rows, MAE 0.0483(최선 0.0000), RMSE 0.0866(최선 0.0000), R2 0.9178(이상값 1.0000).
-- 새 feature는 station band, boss level/pressure, runtime boss 여부, economy pressure를 포함한다.
+- preoutcome feature table: 239,212 source rows, station/tier 학습은 비용 제한으로 60,000 rows sampling.
+- station/tier model: ExtraTreesRegressor, MAE 0.0631(최선 0.0000), RMSE 0.1314(최선 0.0000), R2 0.5610(이상값 1.0000).
+- sequence/path model: RandomForestRegressor, 2,950 rows, MAE 0.0490(최선 0.0000), RMSE 0.0892(최선 0.0000), R2 0.9119(이상값 1.0000).
+- 새 feature는 station band, boss level/pressure, runtime boss 여부, economy pressure, market availability/sim policy index를 포함한다.
 - path-level triage 신호는 유망하지만, station/tier 모델과 economy gate가 함께 부족하므로 추천 후보를 runtime에 자동 적용하지 않는다.
 
 ## 6. Read Order

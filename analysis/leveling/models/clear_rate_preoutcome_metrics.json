@@ -1,6 +1,6 @@
 {
   "row_count": 60000,
-  "source_row_count": 237507,
+  "source_row_count": 239212,
   "train_count": 45000,
   "test_count": 15000,
   "target": "clear_rate",
@@ -20,10 +20,10 @@
       "model__min_samples_leaf": 2,
       "model__n_estimators": 240
     },
-    "best_cv_score": -0.13359814507584528,
+    "best_cv_score": -0.13334293612757792,
     "selected_model": "ExtraTreesRegressor"
   },
-  "mae": 0.0656695417904804,
-  "rmse": 0.13923568512877132,
-  "r2": 0.5414187706840714
+  "mae": 0.06307178382518594,
+  "rmse": 0.1313788077089675,
+  "r2": 0.5610017017392204
 }

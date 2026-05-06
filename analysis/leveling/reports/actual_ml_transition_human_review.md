@@ -3,7 +3,7 @@
 ## 최종 결론 요약
 
 - 결론: 현재 ML 품질은 마감 기준이 아니며 NotebookLM 보고서/인포그래픽 재생성 source로 쓰기 전 단계다.
-- 핵심 점수: station/tier MAE 0.0657, RMSE 0.1392, R2 0.5414 / sequence MAE 0.0483, RMSE 0.0866, R2 0.9178.
+- 핵심 점수: station/tier MAE 0.0631, RMSE 0.1314, R2 0.5610 / sequence MAE 0.0490, RMSE 0.0892, R2 0.9119.
 - 사용 가능: 현재 모델과 추천표는 후보 탐색과 후속 probe 설계 참고자료로만 사용한다.
 - 사용 금지: production ML 주장, runtime 자동 적용, NotebookLM 최종 보고서 재생성.
 - 다음 액션: boss pool/market/economy candidate grid를 확장하고 데이터 증량 후 MAE/RMSE/R2를 재평가한다.
@@ -12,13 +12,13 @@
 
 | 데이터셋 | 지표 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---|---:|---:|---|---|
-| station/tier pre-outcome | MAE | 0.0657 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| station/tier pre-outcome | RMSE | 0.1392 | 0.0000 | 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| station/tier pre-outcome | R2 | 0.5414 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 개선됐지만 부족 |
-| sequence/path pre-outcome | MAE | 0.0483 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| sequence/path pre-outcome | RMSE | 0.0866 | 0.0000 | 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| sequence/path pre-outcome | R2 | 0.9178 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | path triage 신호로 유망 |
-| sequence/path pre-outcome | Row | 2,938 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 더 증량 필요 |
+| station/tier pre-outcome | MAE | 0.0631 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| station/tier pre-outcome | RMSE | 0.1314 | 0.0000 | 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| station/tier pre-outcome | R2 | 0.5610 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 개선됐지만 부족 |
+| sequence/path pre-outcome | MAE | 0.0490 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| sequence/path pre-outcome | RMSE | 0.0892 | 0.0000 | 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| sequence/path pre-outcome | R2 | 0.9119 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | path triage 신호로 유망 |
+| sequence/path pre-outcome | Row | 2,950 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 더 증량 필요 |
 
 ## 범위
 
@@ -30,8 +30,8 @@
 
 | 데이터셋 | Row | Target | Metric | 판단 |
 |---|---:|---|---|---|
-| station/tier pre-outcome table | 237,507 source / 60,000 train sample | `clear_rate` | MAE 0.0657, RMSE 0.1392, R2 0.5414 | 이전보다 개선됐지만 실무 추천 모델 기준에는 부족함 |
-| sequence/path pre-outcome table | 2,938 | `path_clear_rate` | MAE 0.0483, RMSE 0.0866, R2 0.9178 | path-level triage 신호는 유망하지만 단독 ML 마감 기준은 아님 |
+| station/tier pre-outcome table | 239,212 source / 60,000 train sample | `clear_rate` | MAE 0.0631, RMSE 0.1314, R2 0.5610 | 이전보다 개선됐지만 실무 추천 모델 기준에는 부족함 |
+| sequence/path pre-outcome table | 2,950 | `path_clear_rate` | MAE 0.0490, RMSE 0.0892, R2 0.9119 | path-level triage 신호는 유망하지만 단독 ML 마감 기준은 아님 |
 
 기존 heuristic pipeline은 bootstrap source로 사용했다.
 
@@ -56,8 +56,9 @@ boss pool 확장 이후 추가 input을 반영했다.
 - `logs/sim/post_lane_reroll_economy_expanded_boss_confirm_limit_r400_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r400_summary.json`
 - `logs/sim/runtime_station_pool_economy_r400_summary.json`
+- `logs/sim/runtime_station_pool_market_availability_r80_summary.json`
 
-expanded-boss/runtime-station data는 coverage를 넓히고 sequence/path model을 크게 개선했지만, station/tier model을 실무 추천에 충분할 만큼 강하게 만들지는 않는다. 다음 학습에서도 MAE/RMSE/R2를 모두 비교한다.
+expanded-boss/runtime-station data는 coverage를 넓히고 sequence/path model을 크게 개선했지만, station/tier model을 실무 추천에 충분할 만큼 강하게 만들지는 않는다. market availability r80은 단일 profile이 balanced/power를 동시에 해결하지 못한다는 입력 신호를 추가했다. 다음 학습에서도 MAE/RMSE/R2를 모두 비교한다.
 
 ## 모델 산출물
 
@@ -72,6 +73,8 @@ expanded-boss/runtime-station data는 coverage를 넓히고 sequence/path model�
 | sequence model report | `analysis/leveling/reports/preoutcome_sequence_baseline_model_report.md` |
 
 ## 후보 재시뮬레이션
+
+최신 추천표에서도 `reward 0.40 / price 2.4`, `reward 0.38 / price 2.4` 계열 economy 후보가 상위에 남아 있다. 그러나 아래 fresh resimulation에서는 같은 계열 후보가 balanced+v9를 none보다 낮게 만들어 runtime 적용 보류 상태다. 따라서 추천표 점수는 다음 probe 후보를 고르는 참고 신호로만 사용한다.
 
 ### Target Grid r80
 

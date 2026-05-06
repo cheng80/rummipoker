@@ -37,6 +37,9 @@ NUMERIC_FEATURES = [
     "sweep_price_scale",
     "has_market_profile",
     "market_profile_version",
+    "is_shop_slot_market",
+    "is_sim_policy_market",
+    "market_availability_index",
     "has_boss_constraint",
     "boss_family_index",
     "boss_level_index",
@@ -294,6 +297,14 @@ def rows_for_candidate(candidate: Candidate) -> list[dict[str, Any]]:
                             "sweep_price_scale": candidate.sweep_price_scale,
                             "has_market_profile": int(market != "none"),
                             "market_profile_version": 9 if market == "shop_slot_market_v9" else 0,
+                            "is_shop_slot_market": int(market.startswith("shop_slot_market")),
+                            "is_sim_policy_market": int(market in {
+                                "shop_slot_market_v10",
+                                "shop_slot_market_v11",
+                                "shop_slot_market_v12",
+                                "shop_slot_market_v13",
+                            }),
+                            "market_availability_index": market_availability_index(market),
                             "has_boss_constraint": 0,
                             "boss_family_index": -1,
                             "boss_level_index": -1,
@@ -395,6 +406,22 @@ def economy_pressure_index(reward_scale: float, price_scale: float) -> float:
     if reward_scale <= 0:
         return price_scale
     return price_scale / reward_scale
+
+
+def market_availability_index(market: str) -> int:
+    if not market.startswith("shop_slot_market"):
+        return 0
+    if market == "shop_slot_market_v9":
+        return 1
+    if market == "shop_slot_market_v10":
+        return 2
+    if market == "shop_slot_market_v11":
+        return 3
+    if market == "shop_slot_market_v12":
+        return 4
+    if market == "shop_slot_market_v13":
+        return 5
+    return 1
 
 
 def build_report(*, feature_path: Path, out_path: Path, rows: list[dict[str, Any]]) -> str:

@@ -204,6 +204,15 @@ runtime station pool 경제 결과:
 - 경제 trace를 적용하면 `shop_slot_market_v9`가 clear를 올리지 못하므로, runtime station pool 기준 경제 gate는 not closed다.
 - 자동 지급/슬롯 고정으로 풀지 않는다. 다음 후보는 market availability, board/move/discard 후보 접근성, boss severity 위치를 분리해 본다.
 
+market availability 분리 r80:
+
+- command output: `logs/sim/runtime_station_pool_market_availability_r80_summary.json`
+- audit: `logs/sim/runtime_station_pool_market_availability_r80_audit.json`
+- balanced: none 57.5%, v9 48.8%, v10 48.8%, v11 53.8%, v12 50.0%, v13 52.5%.
+- power: none 62.5%, v9 63.7%, v10 67.5%, v11 56.2%, v12 66.2%, v13 43.8%.
+- v11/v13은 balanced를 v9보다 일부 회복하지만 none보다 낮다. v10/v12는 power를 올리지만 balanced가 낮다.
+- 결론: 단일 market availability profile로 balanced/power를 동시에 해결하지 못한다. 다음 후보는 loadout별 전략을 강제하지 않고, S4~S8 market role band와 boss severity 위치를 분리하는 multi-seed probe다.
+
 ## 6. 실제 ML 이행 재개
 
 Status: In progress / sequence model improved / station model not sufficient
@@ -234,11 +243,11 @@ ML 재개 시 필수 작업:
 
 - 이전 station/tier pre-outcome table 14,544 rows, MAE 0.0360, RMSE 0.1014, R2 0.1548.
 - 이전 sequence/path pre-outcome table 92 rows, MAE 0.0651, RMSE 0.1246, R2 0.4202.
-- 최신 station/tier pre-outcome table은 전체 source 237,507 rows 중 60,000 sampled train set을 사용한다. MAE 0.0657, RMSE 0.1392, R2 0.5414이며 이전보다 R2는 개선됐지만 실무 추천 gate에는 부족하다.
-- 최신 sequence/path pre-outcome table은 2,938 rows 전체를 사용한다. MAE 0.0483, RMSE 0.0866, R2 0.9178이며 후보 triage에는 접근했지만 경제 gate가 not closed이고 station/tier 모델이 부족해 ML 마감은 아니다.
-- feature 추가: station band, boss tier/final station flag, runtime boss family/level/pressure, economy pressure index.
+- 최신 station/tier pre-outcome table은 전체 source 239,212 rows 중 60,000 sampled train set을 사용한다. MAE 0.0631, RMSE 0.1314, R2 0.5610이며 이전보다 R2는 개선됐지만 실무 추천 gate에는 부족하다.
+- 최신 sequence/path pre-outcome table은 2,950 rows 전체를 사용한다. MAE 0.0490, RMSE 0.0892, R2 0.9119이며 후보 triage에는 접근했지만 경제 gate가 not closed이고 station/tier 모델이 부족해 ML 마감은 아니다.
+- feature 추가: station band, boss tier/final station flag, runtime boss family/level/pressure, economy pressure index, market availability/sim policy index.
 - 모델 개선: RandomForest/ExtraTrees 후보와 하이퍼파라미터 grid를 비교하는 `auto` 전략을 추가했다. 큰 데이터는 `--max-rows`와 `n_jobs=2`로 비용을 제한한다.
-- 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 runtime 적용 보류.
+- 최신 모델 추천 상위 economy 후보 `reward 0.40 / price 2.4`, `reward 0.38 / price 2.4`는 여전히 fresh resimulation 검증 전 참고 신호다. 같은 계열 후보는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 runtime 적용 보류 상태를 유지한다.
 - 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
 - production ML/자동 적용은 여전히 아님.
 - 최신 sequence/path 지표는 크게 개선됐지만 station/tier 지표와 경제 gate가 부족하므로 ML 마감이나 recommendation gate 완료로 보지 않는다.

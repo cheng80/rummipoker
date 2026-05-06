@@ -3,8 +3,8 @@
 ## 최종 결론 요약
 
 - 결론: 현재 모델은 pre-outcome 후보 추천 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다.
-- 핵심 점수: MAE 0.0483, RMSE 0.0866, R2 0.9178.
-- 데이터: 2938 rows, train 2203, test 735, target `path_clear_rate`.
+- 핵심 점수: MAE 0.0490, RMSE 0.0892, R2 0.9119.
+- 데이터: 2950 rows, train 2212, test 738, target `path_clear_rate`.
 - 사용 가능: 후속 시뮬레이션 후보를 고르는 참고 신호와 feature sanity check.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
 - NotebookLM 상태: 지표가 사용 수준이 아니므로 보고서/인포그래픽 재생성 source로 쓰기 전 단계.
@@ -14,10 +14,10 @@
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0483 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.0866 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.9178 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | path triage 신호로 유망하나 단독 gate로는 부족 |
-| Row | 2938 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
+| MAE | 0.0490 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.0892 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.9119 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | path triage 신호로 유망하나 단독 gate로는 부족 |
+| Row | 2950 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
@@ -29,9 +29,9 @@
 ## 데이터셋
 
 - feature table: `analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv`
-- rows: 2938
-- train rows: 2203
-- test rows: 735
+- rows: 2950
+- train rows: 2212
+- test rows: 738
 - target: `path_clear_rate`
 - feature mode: `preoutcome_sequence`
 
@@ -260,6 +260,7 @@
 - `logs/sim/runtime_station_pool_economy_r400_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r400_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_availability_r80_summary.json`
 - `logs/sim/runtime_station_pool_profile_smoke_summary.json`
 - `logs/sim/s8_boss_axis_v85_r400_summary.json`
 - `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
@@ -287,6 +288,9 @@ Pre-outcome numeric features:
 - `sweep_price_scale`
 - `has_market_profile`
 - `market_profile_version`
+- `is_shop_slot_market`
+- `is_sim_policy_market`
+- `market_availability_index`
 
 Pre-outcome categorical features:
 
@@ -332,30 +336,30 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.0483
-- RMSE: 0.0866
-- R2: 0.9178
+- MAE: 0.0490
+- RMSE: 0.0892
+- R2: 0.9119
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.0866` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.0892` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `loadout_id_s5_power_build` | 0.2836 |
-| `loadout_id_s2_foundation_build` | 0.2715 |
-| `loadout_id_s3_hand_growth_build` | 0.2663 |
-| `loadout_id_s1_entry_bridge_build` | 0.0355 |
-| `station_path_length` | 0.0174 |
-| `loadout_id_progression_route_power` | 0.0119 |
-| `loadout_id_s5_boss_bridge_build` | 0.0117 |
-| `resolved_market_profile_s1_candidate_legendary_bridge` | 0.0087 |
-| `loadout_id_progression_route_delayed` | 0.0060 |
-| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1` | 0.0057 |
+| `loadout_id_s5_power_build` | 0.2823 |
+| `loadout_id_s3_hand_growth_build` | 0.2713 |
+| `loadout_id_s2_foundation_build` | 0.2710 |
+| `loadout_id_s1_entry_bridge_build` | 0.0356 |
+| `station_path_length` | 0.0162 |
+| `loadout_id_progression_route_power` | 0.0114 |
+| `loadout_id_s5_boss_bridge_build` | 0.0111 |
+| `resolved_market_profile_s1_candidate_legendary_bridge` | 0.0081 |
+| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_mid_gate_v1` | 0.0054 |
+| `loadout_id_progression_route_delayed` | 0.0054 |
 
 ## 산출물
 

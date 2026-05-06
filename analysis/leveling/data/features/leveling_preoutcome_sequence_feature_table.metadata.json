@@ -1,6 +1,6 @@
 {
-  "row_count": 2938,
-  "source_row_count": 2938,
+  "row_count": 2950,
+  "source_row_count": 2950,
   "max_rows": 0,
   "source_paths": [
     "logs/sim/boss_expansion_confirm_limit_v1_r400_summary.json",
@@ -226,6 +226,7 @@
     "logs/sim/runtime_station_pool_economy_r400_summary.json",
     "logs/sim/runtime_station_pool_leveling_r400_summary.json",
     "logs/sim/runtime_station_pool_leveling_r80_summary.json",
+    "logs/sim/runtime_station_pool_market_availability_r80_summary.json",
     "logs/sim/runtime_station_pool_profile_smoke_summary.json",
     "logs/sim/s8_boss_axis_v85_r400_summary.json",
     "logs/sim/station_curve_growth_gate_probe_r120_summary.json"

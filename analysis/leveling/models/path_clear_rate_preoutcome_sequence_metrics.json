@@ -1,8 +1,8 @@
 {
-  "row_count": 2938,
-  "source_row_count": 2938,
-  "train_count": 2203,
-  "test_count": 735,
+  "row_count": 2950,
+  "source_row_count": 2950,
+  "train_count": 2212,
+  "test_count": 738,
   "target": "path_clear_rate",
   "feature_mode": "preoutcome_sequence",
   "model_strategy": "auto",
@@ -20,10 +20,10 @@
       "model__min_samples_leaf": 1,
       "model__n_estimators": 600
     },
-    "best_cv_score": -0.08327449786187788,
+    "best_cv_score": -0.08179184504603079,
     "selected_model": "RandomForestRegressor"
   },
-  "mae": 0.048259747110918565,
-  "rmse": 0.08659880868259497,
-  "r2": 0.9178204716800836
+  "mae": 0.049036093541031306,
+  "rmse": 0.08919504347880379,
+  "r2": 0.9119070278109309
 }

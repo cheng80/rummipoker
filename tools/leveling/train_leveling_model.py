@@ -63,6 +63,9 @@ PREOUTCOME_NUMERIC_FEATURES = [
     "sweep_price_scale",
     "has_market_profile",
     "market_profile_version",
+    "is_shop_slot_market",
+    "is_sim_policy_market",
+    "market_availability_index",
     "has_boss_constraint",
     "boss_family_index",
     "boss_level_index",
@@ -167,6 +170,9 @@ def main() -> int:
             "sweep_price_scale",
             "has_market_profile",
             "market_profile_version",
+            "is_shop_slot_market",
+            "is_sim_policy_market",
+            "market_availability_index",
         ]
         all_categorical_features = PREOUTCOME_CATEGORICAL_FEATURES
     elif args.feature_mode == "preoutcome":
