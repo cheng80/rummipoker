@@ -2,25 +2,22 @@
 
 ## 최종 결론 요약
 
-- 결론: 전체 경로 모델은 후보 선별 보조 신호로 유지한다. 단, source split에서는 random split보다 낮아지므로 fresh r400+ 검증이 최종 판단이다.
-- 핵심 점수: random split MAE 0.0509, RMSE 0.0905, R2 0.9014 / source split MAE 0.0582, RMSE 0.1120, R2 0.8408.
-- 데이터: 3020 rows, train 2265, test 755, target `path_clear_rate`.
-- 사용 가능: S1~S8 전체 경로 후보 선별 보조, fresh resimulation 우선순위 정리.
+- 결론: 현재 모델은 전체 경로 후보를 고르는 내부 추천 신호로 사용 가능하다. 단, 런타임 자동 적용 근거는 아니다.
+- 핵심 점수: MAE 0.0480, RMSE 0.0816, R2 0.9154.
+- 데이터: 3394 rows, train 2545, test 849, target `path_clear_rate`.
+- 사용 가능: S1~S8 전체 경로 후보 선별, fresh resimulation 우선순위 정리.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
-- NotebookLM 상태: source split 기준과 runtime 후보가 완전히 닫히기 전까지 외부 발표용 재생성은 보류한다.
+- NotebookLM 상태: NotebookLM source로 재가공 가능하나, 외부 발표용 재생성은 문서 동기화 후 진행한다.
 - 다음 액션: fresh gate와 ML gate가 함께 맞는 후보를 runtime/economy handoff 문서에 연결한다.
 
 ## 핵심 점수
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0509 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.0905 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.9014 | 1.0000 | random split은 같은 실험의 비슷한 row가 섞일 수 있음 | source split과 함께만 사용 |
-| source split MAE | 0.0582 | 0.0000 | 새 실험 파일을 가려도 낮아야 함 | 후보 선별 보조 |
-| source split RMSE | 0.1120 | 0.0000 | 새 실험 파일에서 큰 오차가 낮아야 함 | 후보 선별 보조 |
-| source split R2 | 0.8408 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | fresh r400+ 필요 |
-| Row | 3020 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
+| MAE | 0.0480 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.0816 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.9154 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 경로 후보 선별용으로 사용 가능 |
+| Row | 3394 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
@@ -32,9 +29,9 @@
 ## 데이터셋
 
 - feature table: `analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv`
-- rows: 3020
-- train rows: 2265
-- test rows: 755
+- rows: 3394
+- train rows: 2545
+- test rows: 849
 - target: `path_clear_rate`
 - feature mode: `preoutcome_sequence`
 
@@ -260,22 +257,75 @@
 - `logs/sim/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json`
 - `logs/sim/run_modifier_pressure_market_probe_t108_r112_v9_v10_r120_summary.json`
 - `logs/sim/runtime_boss_seed_pool_smoke_summary.json`
+- `logs/sim/runtime_growth_access_choice_v2_r120_summary.json`
+- `logs/sim/runtime_growth_price_boss105_r120_summary.json`
+- `logs/sim/runtime_late_access_choice_v15_r400_summary.json`
+- `logs/sim/runtime_late_access_choice_v16_r120_summary.json`
+- `logs/sim/runtime_late_access_growth_price_r120_summary.json`
+- `logs/sim/runtime_late_access_growth_price_r400_summary.json`
+- `logs/sim/runtime_s4_rank_growth_access_probe_r80_summary.json`
+- `logs/sim/runtime_s4_rank_late_access_growth_price_r120_summary.json`
+- `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_confirm_r240_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_final_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91627_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91628_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_path_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_no_spend_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_no_spend_seed91720_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_price180_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_price200_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_reward045_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_seed91761_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_spend_soft_r120_summary.json`
+- `logs/sim/runtime_station_pool_average_market_choice_r80_summary.json`
+- `logs/sim/runtime_station_pool_boss_severity_placement_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_condition_boss_combo_probe_r120_summary.json`
+- `logs/sim/runtime_station_pool_control_r80_summary.json`
+- `logs/sim/runtime_station_pool_cost_only_no_replacement_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r040_p18_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r040_p20_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r045_p20_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r045_p22_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r050_p14_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r050_p16_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r050_p18_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r055_p16_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r060_p16_r80_summary.json`
 - `logs/sim/runtime_station_pool_economy_r400_summary.json`
+- `logs/sim/runtime_station_pool_growth_access_boss_combo_r80_summary.json`
+- `logs/sim/runtime_station_pool_growth_access_price_r80_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r400_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r80_summary.json`
 - `logs/sim/runtime_station_pool_market_availability_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_choice_none_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_choice_v2_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_condition_probe_r120_summary.json`
+- `logs/sim/runtime_station_pool_market_role_band_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_boss_combo_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_confirm_r120_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_pressure_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_pressure_s4_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v15_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_no_spend_caps_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_planner_v3_growth_access_r80_summary.json`
 - `logs/sim/runtime_station_pool_profile_smoke_summary.json`
+- `logs/sim/runtime_station_pool_s1_boss_t095_r80_summary.json`
+- `logs/sim/runtime_station_pool_s3s4s8_boss_t095_r80_summary.json`
+- `logs/sim/runtime_station_pool_s8_boss_t095_r80_summary.json`
+- `logs/sim/runtime_station_pool_slot_replace_cheapest_r80_summary.json`
+- `logs/sim/runtime_station_pool_v15_boss_combo_probe_r80_summary.json`
 - `logs/sim/s8_boss_axis_v85_r400_summary.json`
-- `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
-- `logs/sim/runtime_s4_rank_growth_access_probe_r80_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_confirm_r240_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_final_r400_summary.json`
+- `logs/sim/single_s4_growth_access_r120_summary.json`
 - `logs/sim/single_s4_growth_access_r400_summary.json`
 - `logs/sim/single_s4_growth_access_seed91623_r240_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91627_r400_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91628_r400_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r400_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_seed91761_r400_summary.json`
+- `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
+- `logs/sim/tmp_v13_test_summary.json`
 
 ## 피처와 타깃 정의
 
@@ -337,7 +387,7 @@ Pre-outcome categorical features:
 
 ## 모델
 
-모델 전략: `baseline`.
+모델 전략: `auto`.
 선택된 모델: `RandomForestRegressor`.
 
 선택 이유:
@@ -348,30 +398,30 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.0509
-- RMSE: 0.0905
-- R2: 0.9014
+- MAE: 0.0480
+- RMSE: 0.0816
+- R2: 0.9154
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.0905` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.0816` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `loadout_id_s5_power_build` | 0.2915 |
-| `loadout_id_s3_hand_growth_build` | 0.2797 |
-| `loadout_id_s2_foundation_build` | 0.2758 |
-| `loadout_id_s1_entry_bridge_build` | 0.0398 |
-| `station_path_length` | 0.0137 |
-| `loadout_id_progression_route_power` | 0.0102 |
-| `loadout_id_s5_boss_bridge_build` | 0.0100 |
-| `resolved_market_profile_s1_candidate_legendary_bridge` | 0.0080 |
-| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2` | 0.0055 |
-| `loadout_id_progression_route_delayed` | 0.0047 |
+| `loadout_id_s5_power_build` | 0.2887 |
+| `loadout_id_s3_hand_growth_build` | 0.2810 |
+| `loadout_id_s2_foundation_build` | 0.2742 |
+| `loadout_id_s1_entry_bridge_build` | 0.0347 |
+| `station_path_length` | 0.0146 |
+| `loadout_id_s5_boss_bridge_build` | 0.0115 |
+| `loadout_id_progression_route_power` | 0.0109 |
+| `resolved_market_profile_s1_candidate_legendary_bridge` | 0.0063 |
+| `run_modifier_` | 0.0051 |
+| `base_experiment_id_base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2` | 0.0049 |
 
 ## 산출물
 

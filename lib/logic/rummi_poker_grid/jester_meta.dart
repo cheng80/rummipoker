@@ -600,6 +600,7 @@ class RummiEconomyConfig {
   static const int marketPriceScaleDenominator = 5;
   static const int shopBaseRerollCost = 5;
   static const int shopRerollCostStep = 2;
+  static const int shopFirstRerollDiscount = shopBaseRerollCost;
   static const int shopOfferCount = 3;
 
   static int scaledMarketPrice(int basePrice) {
@@ -1227,7 +1228,7 @@ class RummiRunProgress {
         marketModifiers.nextMarketExtraJesterOfferSlots;
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
-      firstRerollDiscount: 0,
+      firstRerollDiscount: RummiEconomyConfig.shopFirstRerollDiscount,
       nextPurchaseDiscount: 0,
       nextJesterPurchaseDiscount: 0,
       nextItemPurchaseDiscount: 0,

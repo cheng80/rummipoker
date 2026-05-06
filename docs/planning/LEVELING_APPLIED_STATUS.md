@@ -213,6 +213,25 @@ First-reroll-free follow-up:
 
 - `first_reroll_free_v1`은 `slot_sell_v1`보다 경제적으로 안전하지만, balanced v9가 부족하다.
 - 다음 후보는 리롤 비용만 더 낮추는 것이 아니라, balanced route가 S4~S8에서 필요한 성장 후보를 실제로 고르는지 보는 구매 선택/후반 후보 접근성 쪽이다.
+- follow-up: `affordable_alternative_v2`는 직전 전투에서 점수/덱/보드 중 무엇이 부족했는지 보고 구매 후보를 다시 고르는 sim-only 선택 proxy다.
+- r120: `first_reroll_free_v1 + affordable_alternative_v2`에서 v9 balanced 57.5%, power 68.3%다. balanced는 개선됐지만 목표 60%에는 아직 부족하다.
+- r120: 새 후보 `shop_slot_market_v16`은 balanced 59.2%, power 62.5%다. 후보를 더 넓히면 balanced는 조금 오르지만 power가 내려가므로 그대로 채택하지 않는다.
+- r400: `shop_slot_market_v15 + first_reroll_free_v1 + affordable_alternative_v2`는 none balanced 55.8%, power 65.0% / v15 balanced 55.8%, power 68.5%다. balanced가 none보다 나아지지 않아 gate 미통과다.
+- 기준 정정: `growth_access_v1` 가격대와 상태 기반 구매 선택의 첫 r120/r400은 최신 runtime handoff profile이 아니라 이전 base profile로 돌린 값이라 판단 근거에서 제외한다.
+- latest r120: 최신 `runtime_station_pool_s4_rank_weight_v1` 기준 `growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2`는 none balanced 50.8%, none power 50.8% / v9 balanced 57.5%, power 67.5% / v15 balanced 72.5%, power 72.5%다.
+- latest r400: 같은 조건에서 none balanced 48.8%, none power 54.8% / v9 balanced 60.5%, power 69.8% / v15 balanced 59.2%, power 64.8%다.
+- 판정: v9가 목표 범위에 들어오고, none은 압박 범위에 남는다. S8 boss 실패와 board/draw 실패도 남아 있다.
+- runtime applied: 첫 리롤 무료 정책을 `RummiRunProgress.openShop()`에 적용했다. 기존 `firstRerollDiscount` 저장 필드를 쓰므로 save schema 변경 없음.
+- economy audit: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_economy_audit.json`에서 즉시 경제 경고 없음.
+- ML refresh: station/tier source split MAE 0.0487, RMSE 0.0952, R2 0.7265 / sequence/path source split MAE 0.0560, RMSE 0.1055, R2 0.8482.
+- sequence/path recommendation: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`은 fresh gate 1, ML gate 1이다.
+- status: 공모전 기준 runtime/economy handoff와 ML 임시 handoff 가능. production ML/자동 밸런싱은 계속 금지한다.
+
+Shuffle reference note:
+
+- `/Users/cheng80/Desktop/셔플.txt`를 링크 본문 대체 참고 자료로 확인했다.
+- Fisher-Yates + seed 기반 셔플은 현재 유지 후보로 본다.
+- Bag System, Pity Timer, Smart Shuffle, Deck Smoothing은 공정 셔플 변경이 아니라 플레이 경험 보정이다. 적용 시 런타임/시뮬 양쪽에 룰 변경으로 넣고 레벨링/경제를 다시 검증해야 한다.
 
 ML handoff refresh:
 

@@ -45,22 +45,22 @@
 |---|---:|---|---|
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
 | Boss modifier runtime/sim pool | 87% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, S4 rank pressure 후보 가중 보정, simulation runtime-station mirror/variant profile 추가, r400 재검증 완료 | ML 재학습 후 후보 표현 정리 |
-| Market offer and inventory | 67% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한 구현 | 가격/노출/구매력 최종 기준 필요 |
-| Economy reward and price | 68% | runtime reward/price scale, growth-access price cap, catalog audit, runtime offer audit, `jester_hook` 1차 조정, S4 rank weight + growth access r400 multi-seed 통과 | ML 추천표는 참고용으로만 쓰고 fresh 재시뮬레이션 기준 유지 |
+| Market offer and inventory | 70% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한, 첫 리롤 무료 runtime 적용 | 셔플/추가 밸런스 변경 시 재검증 |
+| Economy reward and price | 74% | runtime reward/price scale, growth-access price cap, 첫 리롤 무료, catalog audit, runtime offer audit, 최신 runtime r400 통과 | ML 추천표는 참고용으로만 쓰고 fresh 재시뮬레이션 기준 유지 |
 | Animation/game feel | 50% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 예정 연출 큐 완료 및 browser/compute QA |
 | Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
-| Analysis/ML documentation | 62% | high-confidence station/tier 진단 모델, sequence/path 후보 선별 모델, 경로 기준 추천표 추가, 현재 handoff 후보 ML/fresh gate 통과 | production 자동 적용은 금지하고 공모전 QA로 이동 |
+| Analysis/ML documentation | 72% | 최신 runtime handoff r400, source split 검증, station/tier 진단 모델, sequence/path 후보 선별 모델, 경로 기준 추천표 갱신 | production 자동 적용은 금지하고 공모전 QA로 이동 |
 
 ## 3. Current Focus
 
 현재 집중 축:
 
 1. Boss pool mapping 및 1차 확장: S1~S8 station 난이도 level별 3~4개 seed 기반 runtime boss pool과 simulation mirror profile 적용. 새 저장 schema 없이 기존 blind boss modifier 저장 경로 재사용
-2. 확장 boss pool 기준 레벨링/경제 probe: S4 rank pressure 후보 가중 + growth-access price cap r400 multi-seed에서 v9가 balanced/power 모두 none보다 높아 ML handoff 기준 economy gate를 닫음
-3. 실제 ML 이행 재개: 최신 runtime/economy 후보를 feature source에 반영해 station/tier와 sequence/path 모델을 다시 학습했다. station/tier는 개선됐지만 production/자동 적용 기준은 아직 아니다.
+2. 확장 boss pool 기준 레벨링/경제 probe: S4 rank pressure 후보 가중 + growth-access price cap + 첫 리롤 무료 r400에서 v9가 balanced/power 모두 목표 범위에 들어와 runtime handoff 기준 economy gate를 닫음
+3. 실제 ML 이행 재개: 최신 runtime/economy 후보를 feature source에 반영해 station/tier와 sequence/path 모델을 다시 학습했다. 공모전 기준 ML 임시 handoff는 가능하지만 production/자동 적용 기준은 아니다.
 
 현재 경제 판단:
 
@@ -94,18 +94,18 @@
 - `analysis/leveling/`의 pre-outcome feature table과 tree ensemble 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
 - production ML 자동 적용은 하지 않는다. random split 기준은 낙관적이었으므로, 이번 ML은 sequence/path 후보 선별 보조 신호와 fresh r400+ 검증을 묶어 쓴다.
-- pre-outcome feature table은 248,248 source rows로 재생성했다.
-- high-confidence station/tier random split은 MAE 0.0239, RMSE 0.0499, R2 0.9037이지만, source-path split은 MAE 0.0436, RMSE 0.0899, R2 0.5264이다. 구간 위험 힌트로만 사용한다.
-- sequence/path random split은 MAE 0.0509, RMSE 0.0905, R2 0.9014이고, source-path split은 MAE 0.0582, RMSE 0.1120, R2 0.8408이다. 후보 선별 보조 신호로 사용한다.
-- 현재 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` 후보는 최소 gate를 통과했지만 v9 clear가 낮다. 추가 상승 후보 `slot_sell_v1`은 r400 multi-seed에서 none balanced 51.7%, none power 56.2~56.5%, v9 balanced 65.0~65.2%, v9 power 67.5~67.8%를 보였다. 단, 리롤 비용 정책 영향 검토 전이라 runtime 적용은 보류한다.
-- NotebookLM 보고서/인포그래픽 재생성은 아직 보류한다. source split 기준 station/tier가 힌트 전용이고, 리롤 비용 정책 후보도 아직 닫히지 않았다.
+- pre-outcome feature table은 297,051 source rows로 재생성했다.
+- station/tier random split은 MAE 0.0206, RMSE 0.0608, R2 0.9004이고, source-path split은 MAE 0.0487, RMSE 0.0952, R2 0.7265이다. 구간 위험 힌트로만 사용한다.
+- sequence/path random split은 MAE 0.0480, RMSE 0.0816, R2 0.9154이고, source-path split은 MAE 0.0560, RMSE 0.1055, R2 0.8482이다. 후보 선별 보조 신호로 사용한다.
+- 최신 runtime 후보 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2` r400은 none balanced 48.8%, none power 54.8%, v9 balanced 60.5%, v9 power 69.8%다. sequence/path 추천표에서도 fresh gate 1, ML gate 1이다.
+- NotebookLM 보고서/인포그래픽 재생성은 공모전 QA 진입 후 최종 발표 자료 단계에서 진행한다. production ML/자동 적용 표현은 계속 금지한다.
 
 임시 작업 순서 플랜 처리:
 
 - `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
 - ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
 - 실제 ML 이행은 offline candidate recommendation 도구로 사용할 수 있는 수준까지 갱신됐다. production ML/자동 적용은 아니며, 적용 판단은 sequence/path 추천표와 fresh r400+ 결과를 같이 본다.
-- 경제 probe는 S4 rank weight + growth-access runtime handoff 후보 기준 r400 multi-seed에서 닫았고, ML 쪽도 현재 후보를 실제 결과와 예측 양쪽에서 통과로 정리했다.
+- 경제 probe는 S4 rank weight + growth-access + first-reroll-free runtime handoff 후보 기준 r400에서 닫았고, ML 쪽도 현재 후보를 실제 결과와 예측 양쪽에서 통과로 정리했다.
 - 공모전 기준 작업은 재개 가능하다.
 
 ## 4. Competition Prototype Track
@@ -316,6 +316,9 @@ Status: In progress
 
 - `slot_sell_v1`은 목표 clear에 도달했지만 v9 final gold 평균이 16~24G로 올라간다. 리롤 비용을 완전히 제거할지, 첫 리롤/조건부 할인/아이템 보강으로 옮길지 정책 영향 검토가 남아 있다.
 - `first_reroll_free_v1` r400은 v9 final gold가 balanced 8.0G, power 11.2G라 경제적으로 더 안전하지만, balanced v9가 54.5%라 목표 60%에 못 닿는다. 다음 후보는 리롤 비용만이 아니라 후반 성장 후보 접근성과 구매 선택 조건을 같이 본다.
+- 후반 후보 접근성 실험 결과, `v15/v16 + first_reroll_free_v1`은 power에는 도움이 되지만 balanced를 안정적으로 60% 이상으로 올리지 못했다. 지금 문제는 “후보가 아예 안 보임” 하나가 아니라 “필요 후보가 보여도 balanced가 살 수 있는 가격/타이밍”까지 같이 묶인 문제다.
+- 최신 runtime 기준 `growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2` r400에서 none balanced 48.8%, none power 54.8%, v9 balanced 60.5%, v9 power 69.8%가 나왔다. 성장 후보 가격 상한은 이미 runtime에 있고, 첫 리롤 무료 정책도 runtime에 적용했다. 이 항목은 ML 재학습/추천표 갱신 전까지 “runtime 적용 후 검증 완료, ML 반영 대기” 상태다.
+- 셔플 검토 참고 자료는 `/Users/cheng80/Desktop/셔플.txt`에서 확인했다. 현재 방향은 Fisher-Yates/seed 기반 셔플 유지가 기본이며, Bag/Pity/Smart shuffle은 레벨링과 경제를 바꾸는 별도 룰 후보로만 검토한다.
 
 ### M2. S1~S8 Leveling Curve
 

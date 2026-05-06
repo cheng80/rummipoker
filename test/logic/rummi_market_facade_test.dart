@@ -761,7 +761,7 @@ void main() {
 
       expect(progress.rerollShop(catalog: catalog, rng: Random(2)), isTrue);
 
-      expect(progress.gold, 25);
+      expect(progress.gold, 30);
       expect(progress.rerollCost, 7);
       expect(progress.itemRerollCost, 5);
       expect(
@@ -775,7 +775,7 @@ void main() {
 
       expect(progress.rerollItemOffers(), isTrue);
 
-      expect(progress.gold, 20);
+      expect(progress.gold, 25);
       expect(progress.rerollCost, 7);
       expect(progress.itemRerollCost, 7);
       expect(

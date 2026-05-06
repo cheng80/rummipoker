@@ -368,8 +368,10 @@ Runtime handoff uplift checklist:
 - [x] 목표 범위 후보를 다른 seed r400으로 재현한다.
 - [x] 목표 범위 후보를 feature table / ML 추천표 / 사람 검토 리포트 입력에 반영한다.
 - [x] random split 과대평가를 source split으로 다시 확인한다.
-- [ ] 목표 범위 후보가 runtime 경제 정책으로 옮겨도 되는지 영향 범위를 확인한다.
-- [ ] runtime 적용 가능한 리롤 비용 정책 후보를 새로 좁힌다.
+- [x] 목표 범위 후보가 runtime 경제 정책으로 옮겨도 되는지 영향 범위를 확인한다.
+- [x] runtime 적용 가능한 리롤 비용 정책 후보를 새로 좁힌다.
+- [x] runtime에 적용하고 관련 테스트를 통과시킨다.
+- [x] 최신 feature table, station/tier 모델, sequence/path 모델, 추천표, 사람 검토 리포트를 갱신한다.
 
 Runtime handoff uplift results:
 
@@ -384,6 +386,25 @@ Runtime handoff uplift results:
 - ML 입력 반영 후 sequence/path 추천표에서도 `slot_sell_v1` 두 r400은 실제 통과 1, ML 통과 1로 잡힌다. 다만 station/tier 추천표는 여전히 구간별 평균에서는 none 예측이 더 높게 나와 단독 gate로 쓰지 않는다.
 - `first_reroll_free_v1` r400 결과: none balanced 48.0%, none power 55.0%, v9 balanced 54.5%, v9 power 66.0%.
 - 쉬운 해석: 첫 리롤만 무료로 하면 경제는 안전해진다. v9 final gold는 balanced 약 8.0G, power 약 11.2G다. 하지만 balanced v9가 목표 60%에 못 닿는다. 따라서 “리롤 비용을 조금 줄이는 것”만으로는 부족하고, 후반 성장 후보 접근이나 구매 선택 조건을 같이 봐야 한다.
+- `affordable_alternative_v2 + first_reroll_free_v1` r120 결과: v9 balanced 57.5%, power 68.3%다. 쉬운 해석: 상점 구매 판단이 직전 전투의 부족한 점을 봐도 balanced는 아직 60%에 못 닿는다.
+- `shop_slot_market_v16` r120 결과: balanced 59.2%, power 62.5%다. 쉬운 해석: 후반 후보를 더 넓히면 balanced는 조금 낫지만 power가 내려간다. 필요한 후보를 더 많이 보이게 하는 것만으로는 답이 아니다.
+- `shop_slot_market_v15 + affordable_alternative_v2 + first_reroll_free_v1` r400 결과: none balanced 55.8%, power 65.0% / v15 balanced 55.8%, power 68.5%다. 쉬운 해석: 상태 기반 후보 접근은 power에는 도움이 되지만 balanced에는 도움이 되지 않았다.
+- 기준 정정: `growth_access_v1 + affordable_alternative_v2 + first_reroll_free_v1`의 첫 r120/r400은 최신 runtime handoff profile이 아니라 이전 base profile로 돌린 값이라 판단 근거에서 제외한다.
+- 최신 runtime profile `runtime_station_pool_s4_rank_weight_v1` r120 결과: none balanced 50.8%, none power 50.8% / v9 balanced 57.5%, power 67.5% / v15 balanced 72.5%, power 72.5%.
+- 최신 runtime profile r400 결과: none balanced 48.8%, none power 54.8% / v9 balanced 60.5%, power 69.8% / v15 balanced 59.2%, power 64.8%.
+- 쉬운 해석: 최신 기준에서는 `none`은 목표 범위에 남고, v9만 목표 범위로 올라간다. S8 boss 실패와 board/draw 실패도 남아 있어 압박을 완전히 지우지 않았다.
+- runtime 적용: 성장 후보 가격 상한은 이미 runtime에 있었고, 부족했던 첫 리롤 무료 정책을 `RummiEconomyConfig.shopFirstRerollDiscount`와 `RummiRunProgress.openShop()`에 적용했다. 저장 필드는 기존 `firstRerollDiscount`를 사용하므로 save schema 변경은 없다.
+- economy audit: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_economy_audit.json`에서 즉시 경제 경고 없음.
+- ML refresh: station/tier source split MAE 0.0487, RMSE 0.0952, R2 0.7265 / sequence/path source split MAE 0.0560, RMSE 0.1055, R2 0.8482.
+- sequence/path recommendation: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`은 fresh gate 1, ML gate 1이다.
+- 판정: 공모전 기준 ML 임시 handoff 가능. production ML/자동 밸런싱은 아니다.
+
+Shuffle review pre-check:
+
+- 참고 자료: `/Users/cheng80/Desktop/셔플.txt`에서 가져온 “카드 게임 셔플 알고리즘 및 개발 가이드” 내용을 링크 본문 대체 자료로 확인했다.
+- 핵심 정리: 현재 같은 seed에서 재현 가능한 Fisher-Yates 계열 셔플은 유지 후보다. Dart `List.shuffle(Random)`은 표준 라이브러리 셔플이고, 우리 게임의 seed 기반 재현성과 시뮬레이션 재현성에 맞다.
+- Bag System, Pity Timer, Smart Shuffle, Deck Smoothing은 “공정 셔플”이 아니라 플레이 경험 보정이다. 적용하면 연속 투페어/패 꼬임 체감은 줄일 수 있지만, 확률 룰 자체가 바뀌므로 레벨링과 경제 재검증이 필요하다.
+- 셔플 변경 후보는 공모전 작업 전 별도 체크로 둔다. 우선 검토 순서는 현재 셔플 통계 측정 -> 투페어 연속 발생률 확인 -> 보정 셔플이 필요한지 판단 -> 필요 시 runtime/sim 양쪽 적용 -> r400+ 레벨링/경제 재검증이다.
 
 ML leakage / overfit checklist:
 

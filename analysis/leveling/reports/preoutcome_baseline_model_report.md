@@ -2,40 +2,37 @@
 
 ## 최종 결론 요약
 
-- 결론: random split은 좋아 보이지만 source-path split에서 점수가 크게 낮아진다. 이 모델은 구간 위험 힌트 전용이다.
-- 핵심 점수: random split MAE 0.0239, RMSE 0.0499, R2 0.9037 / source split MAE 0.0436, RMSE 0.0899, R2 0.5264.
-- 데이터: 44831 rows, train 33623, test 11208, target `clear_rate_smoothed`.
-- 사용 가능: 어느 station/tier가 위험해 보이는지 보는 힌트, feature sanity check.
+- 결론: 현재 모델은 station/tier 위험 구간을 보는 내부 진단 신호로 사용 가능하다. 단, 후보 최종 적용은 전체 경로 모델과 fresh simulation을 따른다.
+- 핵심 점수: MAE 0.0206, RMSE 0.0608, R2 0.9004.
+- 데이터: 30000 rows, train 22500, test 7500, target `clear_rate`.
+- 사용 가능: 어느 station/tier가 위험한지 보는 병목 진단, feature sanity check.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
-- NotebookLM 상태: source split 기준 station/tier가 힌트 전용이므로 외부 발표용 재생성은 보류한다.
+- NotebookLM 상태: NotebookLM source로 재가공 가능하나, 외부 발표용 재생성은 문서 동기화 후 진행한다.
 - 다음 액션: 전체 경로 추천표와 r400 이상 fresh 결과를 함께 보고 적용 후보를 정리한다.
 
 ## 핵심 점수
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.0239 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.0499 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.9037 | 1.0000 | random split은 같은 실험의 비슷한 row가 섞일 수 있음 | source split 기준으로 힌트 전용 |
-| source split MAE | 0.0436 | 0.0000 | 새 실험 파일을 가려도 낮아야 함 | 힌트 전용 |
-| source split RMSE | 0.0899 | 0.0000 | 새 실험 파일에서 큰 오차가 낮아야 함 | 힌트 전용 |
-| source split R2 | 0.5264 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | 단독 gate 금지 |
-| Row | 44831 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
+| MAE | 0.0206 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.0608 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.9004 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 구간 위험 진단용으로 사용 가능 |
+| Row | 30000 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
 이 리포트는 계획된 ML transition scaffold다.
-기존 outcome-derived summary feature를 제거하고, 시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 `clear_rate_smoothed`를 예측한다.
+기존 outcome-derived summary feature를 제거하고, 시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 `clear_rate`를 예측한다.
 모델은 후보 추천 루프를 설계하기 위한 오프라인 분석 도구이며, production ML이 아니고 런타임 target, boss, market, economy 값을 자동 변경하지 않는다.
 이 산출물만으로 production ML 자동 적용 완료를 주장하지 않는다. 후보 재시뮬레이션과 사람 검토 보고서를 함께 본다.
 
 ## 데이터셋
 
 - feature table: `analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv`
-- rows: 44831
-- train rows: 33623
-- test rows: 11208
-- target: `clear_rate_smoothed`
+- rows: 30000
+- train rows: 22500
+- test rows: 7500
+- target: `clear_rate`
 - feature mode: `preoutcome`
 
 소스 summary:
@@ -260,28 +257,81 @@
 - `logs/sim/run_modifier_pressure_market_probe_t104_r112_v9_v10_r400_summary.json`
 - `logs/sim/run_modifier_pressure_market_probe_t108_r112_v9_v10_r120_summary.json`
 - `logs/sim/runtime_boss_seed_pool_smoke_summary.json`
+- `logs/sim/runtime_growth_access_choice_v2_r120_summary.json`
+- `logs/sim/runtime_growth_price_boss105_r120_summary.json`
+- `logs/sim/runtime_late_access_choice_v15_r400_summary.json`
+- `logs/sim/runtime_late_access_choice_v16_r120_summary.json`
+- `logs/sim/runtime_late_access_growth_price_r120_summary.json`
+- `logs/sim/runtime_late_access_growth_price_r400_summary.json`
+- `logs/sim/runtime_s4_rank_growth_access_probe_r80_summary.json`
+- `logs/sim/runtime_s4_rank_late_access_growth_price_r120_summary.json`
+- `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_confirm_r240_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_final_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91627_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91628_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_path_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_first_reroll_free_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_no_spend_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_no_spend_seed91720_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_price180_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_price200_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_reward045_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r120_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_seed91761_r400_summary.json`
+- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_spend_soft_r120_summary.json`
+- `logs/sim/runtime_station_pool_average_market_choice_r80_summary.json`
+- `logs/sim/runtime_station_pool_boss_severity_placement_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_condition_boss_combo_probe_r120_summary.json`
+- `logs/sim/runtime_station_pool_control_r80_summary.json`
+- `logs/sim/runtime_station_pool_cost_only_no_replacement_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r040_p18_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r040_p20_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r045_p20_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r045_p22_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r050_p14_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r050_p16_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r050_p18_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r055_p16_r80_summary.json`
+- `logs/sim/runtime_station_pool_economy_r060_p16_r80_summary.json`
 - `logs/sim/runtime_station_pool_economy_r400_summary.json`
+- `logs/sim/runtime_station_pool_growth_access_boss_combo_r80_summary.json`
+- `logs/sim/runtime_station_pool_growth_access_price_r80_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r400_summary.json`
 - `logs/sim/runtime_station_pool_leveling_r80_summary.json`
 - `logs/sim/runtime_station_pool_market_availability_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_choice_none_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_choice_v2_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_condition_probe_r120_summary.json`
+- `logs/sim/runtime_station_pool_market_role_band_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_boss_combo_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_confirm_r120_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_pressure_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_pressure_s4_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v14_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_market_v15_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_no_spend_caps_probe_r80_summary.json`
+- `logs/sim/runtime_station_pool_planner_v3_growth_access_r80_summary.json`
 - `logs/sim/runtime_station_pool_profile_smoke_summary.json`
+- `logs/sim/runtime_station_pool_s1_boss_t095_r80_summary.json`
+- `logs/sim/runtime_station_pool_s3s4s8_boss_t095_r80_summary.json`
+- `logs/sim/runtime_station_pool_s8_boss_t095_r80_summary.json`
+- `logs/sim/runtime_station_pool_slot_replace_cheapest_r80_summary.json`
+- `logs/sim/runtime_station_pool_v15_boss_combo_probe_r80_summary.json`
 - `logs/sim/s8_boss_axis_v85_r400_summary.json`
-- `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
-- `logs/sim/runtime_s4_rank_growth_access_probe_r80_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_confirm_r240_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_final_r400_summary.json`
+- `logs/sim/single_s4_growth_access_r120_summary.json`
 - `logs/sim/single_s4_growth_access_r400_summary.json`
 - `logs/sim/single_s4_growth_access_seed91623_r240_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91627_r400_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_growth_access_seed91628_r400_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_r400_summary.json`
-- `logs/sim/runtime_s4_rank_weight_v1_v9_lift_slot_sell_seed91761_r400_summary.json`
+- `logs/sim/station_curve_growth_gate_probe_r120_summary.json`
+- `logs/sim/tmp_v13_test_summary.json`
 
 ## 피처와 타깃 정의
 
 Target:
 
-- `clear_rate_smoothed`: 집계된 시뮬레이션 그룹의 clear 비율.
+- `clear_rate`: 집계된 시뮬레이션 그룹의 clear 비율.
 
 Pre-outcome numeric features:
 
@@ -326,6 +376,7 @@ Pre-outcome numeric features:
 - `price_band_growth_access`
 - `price_band_catalog_normalized`
 - `spend_mode_slot_sell`
+- `spend_mode_first_reroll_free`
 - `spend_mode_reroll_slot_sell_soft`
 - `spend_mode_reroll_slot_sell`
 - `choice_mode_affordable_alternative`
@@ -374,35 +425,35 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.0239
-- RMSE: 0.0499
-- R2: 0.9037
+- MAE: 0.0206
+- RMSE: 0.0608
+- R2: 0.9004
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.0499` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.0608` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `station_boss_interaction` | 0.1955 |
-| `station_tier_index` | 0.0933 |
-| `loadout_id_baseline` | 0.0726 |
-| `resolved_market_profile_` | 0.0625 |
-| `market_profile_` | 0.0586 |
-| `boss_target_multiplier` | 0.0353 |
-| `base_experiment_id_station_curve_125_boss_constraint_pool_v1` | 0.0291 |
-| `base_experiment_id_station_curve_135_boss_constraint_pool_v1` | 0.0229 |
-| `station` | 0.0195 |
-| `loadout_id_s2_foundation_build` | 0.0175 |
+| `station_boss_interaction` | 0.2022 |
+| `station_tier_index` | 0.0916 |
+| `loadout_id_baseline` | 0.0832 |
+| `resolved_market_profile_` | 0.0605 |
+| `market_profile_` | 0.0588 |
+| `base_experiment_id_station_curve_125_boss_constraint_pool_v1` | 0.0355 |
+| `boss_target_multiplier` | 0.0339 |
+| `station` | 0.0214 |
+| `loadout_id_mobility_item` | 0.0210 |
+| `loadout_id_baseline__s1_full_safe_candidate_pool` | 0.0209 |
 
 ## 산출물
 
-- metrics JSON: `analysis/leveling/models/clear_rate_smoothed_preoutcome_metrics.json`
-- feature importance CSV: `analysis/leveling/models/clear_rate_smoothed_preoutcome_feature_importance.csv`
+- metrics JSON: `analysis/leveling/models/clear_rate_preoutcome_metrics.json`
+- feature importance CSV: `analysis/leveling/models/clear_rate_preoutcome_feature_importance.csv`
 
 ## 추천 경계
 

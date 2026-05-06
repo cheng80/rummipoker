@@ -2,23 +2,23 @@
 
 ## 최종 결론 요약
 
-- 결론: random split 기준은 낙관적이었다. source-path split 기준으로 station/tier는 힌트 전용, sequence/path는 후보 선별 보조 신호로 쓴다.
-- 핵심 점수: station/tier source split MAE 0.0436, RMSE 0.0899, R2 0.5264 / sequence source split MAE 0.0582, RMSE 0.1120, R2 0.8408.
-- 사용 가능: sequence/path 후보 선별 보조, station/tier 힌트, fresh r400+ 결과와 묶은 handoff 판단.
+- 결론: runtime handoff 후보는 최신 r400과 sequence/path ML gate를 함께 통과했다. station/tier는 source-path split 기준으로 아직 힌트 전용이고, sequence/path는 후보 선별 보조 신호로 쓴다.
+- 핵심 점수: station/tier source split MAE 0.0487, RMSE 0.0952, R2 0.7265 / sequence source split MAE 0.0560, RMSE 0.1055, R2 0.8482.
+- 사용 가능: sequence/path 후보 선별 보조, station/tier 힌트, fresh r400+ 결과와 묶은 공모전 기준 ML 임시 handoff 판단.
 - 사용 금지: production ML 주장, runtime 자동 밸런싱, 모델 예측만 보고 target/boss/market/economy를 변경하는 일.
-- 다음 액션: 현재 runtime handoff 후보를 공모전 QA 기준으로 넘기고, 이후 새 밸런스 변경 때 같은 ML+fresh gate를 반복한다.
+- 다음 액션: 현재 runtime handoff 후보를 공모전 QA 기준으로 넘기고, 셔플/추가 밸런스 변경 때 같은 runtime+ML+fresh gate를 반복한다.
 
 ## 핵심 점수
 
 | 데이터셋 | 지표 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---|---:|---:|---|---|
-| station/tier source-path split | MAE | 0.0436 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 힌트 전용 |
-| station/tier source-path split | RMSE | 0.0899 | 0.0000 | 큰 오차가 낮을수록 좋음 | 힌트 전용 |
-| station/tier source-path split | R2 | 0.5264 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | 단독 gate 금지 |
-| sequence/path source-path split | MAE | 0.0582 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 후보 선별 보조 |
-| sequence/path source-path split | RMSE | 0.1120 | 0.0000 | 큰 오차가 낮을수록 좋음 | 후보 선별 보조 |
-| sequence/path source-path split | R2 | 0.8408 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | fresh r400+와 함께 사용 |
-| sequence/path pre-outcome | Row | 3,020 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 더 증량 필요 |
+| station/tier source-path split | MAE | 0.0487 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 힌트 전용 |
+| station/tier source-path split | RMSE | 0.0952 | 0.0000 | 큰 오차가 낮을수록 좋음 | 힌트 전용 |
+| station/tier source-path split | R2 | 0.7265 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | 단독 gate 금지 |
+| sequence/path source-path split | MAE | 0.0560 | 0.0000 | target 0~1 기준 낮을수록 좋음 | 후보 선별 보조 |
+| sequence/path source-path split | RMSE | 0.1055 | 0.0000 | 큰 오차가 낮을수록 좋음 | 후보 선별 보조 |
+| sequence/path source-path split | R2 | 0.8482 | 1.0000 | 새 실험 파일을 가려도 높아야 함 | fresh r400+와 함께 사용 |
+| sequence/path pre-outcome | Row | 3,394 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 후보 선별 보조 가능 |
 
 ## 범위
 
@@ -30,8 +30,8 @@
 
 | 데이터셋 | Row | Target | Metric | 판단 |
 |---|---:|---|---|---|
-| station/tier pre-outcome table | 248,248 source / run_count 80+ 44,831 rows | `clear_rate_smoothed` | source split MAE 0.0436, RMSE 0.0899, R2 0.5264 | 구간 힌트 전용 |
-| sequence/path pre-outcome table | 3,020 | `path_clear_rate` | source split MAE 0.0582, RMSE 0.1120, R2 0.8408 | 후보 선별 보조 신호 |
+| station/tier pre-outcome table | 297,051 source / run_count 80+ 46,396 rows | `clear_rate_smoothed` | source split MAE 0.0487, RMSE 0.0952, R2 0.7265 | 구간 힌트 전용 |
+| sequence/path pre-outcome table | 3,394 | `path_clear_rate` | source split MAE 0.0560, RMSE 0.1055, R2 0.8482 | 후보 선별 보조 신호 |
 
 기존 heuristic pipeline은 bootstrap source로 사용했다.
 
@@ -77,12 +77,21 @@ expanded-boss/runtime-station data는 coverage를 넓혔다. 최신 feature 재�
 
 ## 후보 재시뮬레이션
 
-현재 runtime handoff 후보는 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1`이다. 쉬운 판단은 아래와 같다.
+현재 runtime handoff 후보는 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2`다. 쉬운 판단은 아래와 같다.
+
+- 실제 r400: balanced는 none 48.8%에서 v9 60.5%로 오른다.
+- 실제 r400: power는 none 54.8%에서 v9 69.8%로 오른다.
+- S8 boss 실패와 board/draw 실패가 남아 있어 후반 압박은 사라지지 않았다.
+- economy audit: 즉시 경제 경고 없음.
+- sequence/path 추천표: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`을 fresh gate 1, ML gate 1로 본다.
+- runtime 적용: 성장 후보 가격 상한은 이미 runtime에 있었고, 첫 리롤 무료 정책은 기존 `firstRerollDiscount` 필드로 적용했다. save schema 변경 없음.
+- 결론: 공모전 기준 ML 임시 handoff는 가능하다. 단 production ML/자동 밸런싱은 아니다.
+
+이전 runtime handoff 후보 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1`은 최소 gate는 통과했지만 clear 상승폭이 부족했다.
 
 - 실제 r400: balanced는 none 47.5%에서 v9 52.0%로 오른다.
 - 실제 r400: power는 none 53.8%에서 v9 57.0%로 오른다.
-- sequence/path 추천표: 같은 후보를 fresh gate 1, ML gate 1로 본다.
-- 결론: “좋은 마켓 선택을 했는데 더 나빠지는 문제”는 현재 handoff 후보 기준으로 닫힌다.
+- 결론: 좋은 마켓 선택이 손해를 보지는 않지만 공모전 목표 체감 상승에는 부족해 보류한다.
 
 추가 상승 후보 `slot_sell_v1`은 같은 boss/price 조건에서 리롤 비용만 빼고 슬롯 교체/판매는 유지한 sim-only 후보이다.
 
