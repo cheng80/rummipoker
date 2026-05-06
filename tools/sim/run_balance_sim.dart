@@ -1107,7 +1107,16 @@ int _simCashoutGoldForBattleRow(
       remainingBoardDiscards *
           RummiEconomyConfig.remainingBoardDiscardGoldBonus +
       remainingHandDiscards * RummiEconomyConfig.remainingHandDiscardGoldBonus;
-  return (baseGold * rewardScale).round();
+  final simConstraint = battleRow['sim_boss_constraint'];
+  final rewardTaxPerConfirmedLine = simConstraint is Map
+      ? (simConstraint['reward_tax_gold_per_confirmed_line'] as num?)?.toInt()
+      : null;
+  final confirmedLineCount =
+      (result['confirmed_line_count'] as num?)?.toInt() ?? 0;
+  final rewardTax = rewardTaxPerConfirmedLine == null
+      ? 0
+      : rewardTaxPerConfirmedLine * confirmedLineCount;
+  return max(0, (baseGold * rewardScale).round() - rewardTax);
 }
 
 int? _simMarketBudgetForStep({
@@ -4352,6 +4361,15 @@ BalanceSimBattleResult _runBattleLoop(
     );
     switch (action.type) {
       case BalanceSimActionType.draw:
+        if (simBossConstraint?.maxDrawActions case final maxDrawActions?
+            when drawCount >= maxDrawActions) {
+          simConstraintTriggerCount++;
+          return finish(
+            cleared: session.blind.isTargetMet,
+            turnCount: turn,
+            stopReason: 'sim_boss_draw_limit',
+          );
+        }
         if (session.drawToHand() != null) {
           drawCount++;
         }
@@ -4672,6 +4690,7 @@ BalanceSimExperimentSpec _resolveExperiment({
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_min_contributor_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_rank_family_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_confirm_limit_probe_v1':
+    case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1':
     case _
@@ -4924,6 +4943,8 @@ double _stationGrowthBaseForExperiment(String id) {
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_rank_family_probe_v1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_confirm_limit_probe_v1' =>
+      1.25,
+    'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1' =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1' =>
       1.25,
@@ -5418,7 +5439,8 @@ bool _usesRankCycleProbe(String id) =>
     id.endsWith('_boss_expansion_probe_v1') ||
     id.endsWith('_boss_expansion_min_contributor_probe_v1') ||
     id.endsWith('_boss_expansion_rank_family_probe_v1') ||
-    id.endsWith('_boss_expansion_confirm_limit_probe_v1');
+    id.endsWith('_boss_expansion_confirm_limit_probe_v1') ||
+    id.endsWith('_boss_expansion_stage_a_probe_v1');
 
 bool _usesWeightedBossPool(String id) =>
     id.endsWith('_weighted_boss_v1') ||
@@ -5477,6 +5499,9 @@ String _rankCycleProbeProfileId(String id) {
   if (id.endsWith('_boss_expansion_confirm_limit_probe_v1')) {
     return 'boss_expansion_confirm_limit_probe_v1';
   }
+  if (id.endsWith('_boss_expansion_stage_a_probe_v1')) {
+    return 'boss_expansion_stage_a_probe_v1';
+  }
   return 'rank_cycle_probe_v1';
 }
 
@@ -5501,6 +5526,9 @@ List<int> _rankCycleProbeSlotsForExperiment(String id) {
   }
   if (id.endsWith('_boss_expansion_confirm_limit_probe_v1')) {
     return const [0, 1, 2, 10, 6, 16, 7, 5];
+  }
+  if (id.endsWith('_boss_expansion_stage_a_probe_v1')) {
+    return const [17, 18, 19, 20, 21, 0, 2, 5];
   }
   return const [0, 1, 2, 3, 6, 4, 7, 5];
 }
@@ -5811,6 +5839,46 @@ BalanceSimBossConstraintChoice _bossConstraintChoiceForSlot({
         confirmAfterLimitScoreMultiplier: 0.70,
       ),
     ),
+    17 => choice(
+      id: 'target_spike_wall_soft_v1',
+      family: 'large_target_spike',
+      sourceReference: 'Stage A soft target spike pressure',
+      targetScoreMultiplier: 1.12,
+    ),
+    18 => choice(
+      id: 'hand_discard_cost_v1',
+      family: 'hand_discard_pressure',
+      sourceReference: 'Stage A hand discard pressure proxy',
+      handDiscardsDelta: -1,
+    ),
+    19 => choice(
+      id: 'refill_limit_v1',
+      family: 'draw_refill_pressure',
+      sourceReference: 'Stage A draw refill pressure proxy',
+      simConstraint: const BalanceSimBossConstraint(
+        id: 'refill_limit_v1',
+        family: 'draw_refill_pressure',
+        sourceReference: 'Stage A draw refill pressure proxy',
+        maxDrawActions: 42,
+      ),
+    ),
+    20 => choice(
+      id: 'reward_tax_by_contributor_v1',
+      family: 'settlement_reward_tax',
+      sourceReference: 'Stage A contributor reward tax proxy',
+      simConstraint: const BalanceSimBossConstraint(
+        id: 'reward_tax_by_contributor_v1',
+        family: 'settlement_reward_tax',
+        sourceReference: 'Stage A contributor reward tax proxy',
+        rewardTaxGoldPerConfirmedLine: 1,
+      ),
+    ),
+    21 => choice(
+      id: 'color_dampener_variant_v1',
+      family: 'tile_color_weaken_variant',
+      sourceReference: 'Stage A tile color dampener variant',
+      bossModifier: RummiBossModifier.blueDampener,
+    ),
     2 => choice(
       id: 'face_tile_dampener',
       family: 'face_tile_weaken',
@@ -6117,10 +6185,12 @@ class BalanceSimBossConstraint {
     this.rankFamilyDecayScoreMultiplier,
     this.firstConfirmScoreMultiplier,
     this.maxConfirmActions,
+    this.maxDrawActions,
     this.confirmAfterLimitActionCount,
     this.confirmAfterLimitScoreMultiplier,
     this.minContributingTileCount,
     this.minContributorScoreMultiplier = 1.0,
+    this.rewardTaxGoldPerConfirmedLine,
   });
 
   final String id;
@@ -6133,10 +6203,12 @@ class BalanceSimBossConstraint {
   final double? rankFamilyDecayScoreMultiplier;
   final double? firstConfirmScoreMultiplier;
   final int? maxConfirmActions;
+  final int? maxDrawActions;
   final int? confirmAfterLimitActionCount;
   final double? confirmAfterLimitScoreMultiplier;
   final int? minContributingTileCount;
   final double minContributorScoreMultiplier;
+  final int? rewardTaxGoldPerConfirmedLine;
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
@@ -6156,6 +6228,7 @@ class BalanceSimBossConstraint {
       if (firstConfirmScoreMultiplier != null)
         'first_confirm_score_multiplier': firstConfirmScoreMultiplier,
       if (maxConfirmActions != null) 'max_confirm_actions': maxConfirmActions,
+      if (maxDrawActions != null) 'max_draw_actions': maxDrawActions,
       if (confirmAfterLimitActionCount != null)
         'confirm_after_limit_action_count': confirmAfterLimitActionCount,
       if (confirmAfterLimitScoreMultiplier != null)
@@ -6165,6 +6238,8 @@ class BalanceSimBossConstraint {
         'min_contributing_tile_count': minContributingTileCount,
       if (minContributingTileCount != null)
         'min_contributor_score_multiplier': minContributorScoreMultiplier,
+      if (rewardTaxGoldPerConfirmedLine != null)
+        'reward_tax_gold_per_confirmed_line': rewardTaxGoldPerConfirmedLine,
     };
   }
 }
@@ -6985,7 +7060,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|pressure] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1.';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|pressure] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1, *_boss_expansion_stage_a_probe_v1.';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);
@@ -7075,6 +7150,7 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_min_contributor_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_rank_family_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_confirm_limit_probe_v1',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_070_resource_1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v2',

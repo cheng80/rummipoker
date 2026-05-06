@@ -10,7 +10,7 @@
 
 | Layer | Count | Notes |
 |---|---:|---|
-| Simulation proxy pool | 10+3 | `CURRENT_LEVELING_RUNTIME_SPEC.md`의 boss constraint proxy 기준 + 1차 확장 experiment axis |
+| Simulation proxy pool | 10+3+5 | `CURRENT_LEVELING_RUNTIME_SPEC.md`의 boss constraint proxy 기준 + 1차 확장 experiment axis + Stage A simulation-only proxy |
 | Runtime modifier type | 9 | battle/save/display/settlement penalty 경로가 있는 modifier 타입. `confirm_limit_tax_v1`은 구현됐지만 cycle 미편입 |
 | S1~S8 runtime cycle slot | 8 | Station마다 1개씩 고정 배치 |
 
@@ -114,6 +114,47 @@ Stage A 우선 probe 후보:
 
 위 5개는 숫자 penalty만이 아니라 target, 자원, 드로우, 정산, 색상 family variant를 골고루 포함한다.
 `min_contributor_count_v1`, `rank_family_decay_v1`, `confirm_limit_tax_v1`은 이미 1차 simulation proxy에 들어갔으므로 새 Stage A probe에는 중복으로 넣지 않는다.
+
+Stage A 적용 상태:
+
+- experiment id: `base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1`
+- runtime cycle에는 편입하지 않았다.
+- 저장 포맷과 UI는 변경하지 않았다.
+- `reward_tax_by_contributor_v1`은 simulation economy cashout에만 적용한다.
+- `refill_limit_v1`은 첫 구현에서 `maxDrawActions 18`이 S3 boss를 거의 전부 막아 `maxDrawActions 42`로 완화했다.
+
+r80 exploratory smoke:
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 90980 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_stage_a_probe_v1 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/boss_expansion_stage_a_probe_v1_r80`
+- summary: `logs/sim/boss_expansion_stage_a_probe_v1_r80_summary.json`
+- report: `logs/sim/boss_expansion_stage_a_probe_v1_r80_report.md`
+
+Path clear:
+
+| Loadout | Market | Clear | 주요 병목 |
+|---|---|---:|---|
+| balanced | none | 40.0% | S5 boss, S8 boss, S3 boss |
+| balanced | v9 | 61.3% | S5 boss, S8 boss, S4 boss |
+| power | none | 62.5% | S8 boss, S4 big, S6/S7 boss |
+| power | v9 | 68.8% | S8 boss, S3 boss, S8 big |
+
+Boss 전투 단위 aggregate:
+
+| Proxy | Clear | Runs | 주요 outcome |
+|---|---:|---:|---|
+| `target_spike_wall_soft_v1` | 98.4% | 313 | mostly clear |
+| `hand_discard_cost_v1` | 99.3% | 301 | mostly clear |
+| `refill_limit_v1` | 93.8% | 292 | score shortfall 14, board locked 4 |
+| `reward_tax_by_contributor_v1` | 98.1% | 267 | mostly clear |
+| `color_dampener_variant_v1` | 92.5% | 253 | deck exhausted 17 |
+
+Stage A r80 판정:
+
+- v9가 none보다 낮아지는 역전은 없다.
+- `balanced none`은 40.0%까지 내려가지만, Stage A는 출품 runtime 적용이 아니라 확장 후보 탐색이므로 즉시 폐기하지 않는다.
+- `refill_limit_v1`은 완화 후에도 path 병목에 크게 관여하므로, 단독 split probe 없이는 runtime 후보로 올리지 않는다.
+- `target_spike_wall_soft_v1`, `hand_discard_cost_v1`, `reward_tax_by_contributor_v1`은 boss 전투 단위 clear가 높아 다음 split 후보로 남긴다.
+- `color_dampener_variant_v1`은 기존 family variant지만 deck exhausted 신호가 있어, S5 이후 배치와 severity를 분리해서 본다.
 
 ### Stage B: 저장 포맷 변경 없이 runtime 가능
 
