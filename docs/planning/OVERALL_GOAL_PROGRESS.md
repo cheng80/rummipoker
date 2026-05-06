@@ -52,7 +52,7 @@
 | Roguelite meta growth | 22% | Insight, high stakes 해금, 게임오버/런 완료 보상 표시와 새 run 연결 QA 존재 | unlock tree 확장 |
 | Game over reward loop | 34% | RunProgressionService 보상 산식, Insight 저장, 게임오버 보상 UI, S8 boss 완료 cash-out, 패배 보상 browser QA | 일반 run 패배/재시작 smoke |
 | Integrated QA | 43% | 단위 테스트, 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, submission smoke 통과 | browser/compute QA 반복과 최종 후보 빌드 필요 |
-| Analysis/ML documentation | 34% | `ML` 명칭 오해 정정, pre-outcome scaffold table/model/report, 후보 재시뮬레이션 연결 보고서 존재 | production ML과 runtime 자동 적용은 미완료. 더 넓은 후보 grid와 사람 승인 추천표 필요 |
+| Analysis/ML documentation | 30% | `ML` 명칭 오해 정정, pre-outcome scaffold table/model/report, 후보 재시뮬레이션 연결 보고서 존재 | 모델 품질이 실무 추천 기준에 부족함. 더 넓은 후보 grid, 데이터 증량, 사람 승인 추천표 필요 |
 
 ## 3. Current Focus
 
@@ -60,7 +60,7 @@
 
 1. Boss pool mapping 및 1차 확장: `confirm_limit_tax_v1`은 simulation split 후 runtime modifier로 구현됐지만 S1~S8 cycle에는 아직 미편입
 2. 확장 boss pool 기준 레벨링/경제 probe: confirm-limit 확장 profile 기준 r400 레벨링/경제 raw probe까지 확보했지만 최종 gate는 아님
-3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영한 offline recommendation gate는 갱신했고, runtime 자동 적용은 여전히 없음
+3. 실제 ML 이행 재개: 확장 boss pool과 경제 probe 결과를 반영해 offline recommendation scaffold는 갱신했지만, 모델 지표가 실무 사용 기준에 부족해 recommendation gate는 닫지 않음
 
 현재 경제 판단:
 
@@ -79,15 +79,16 @@
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
 - `analysis/leveling/`의 pre-outcome feature table과 RandomForest 결과는 planned transition scaffold다.
 - `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
-- production ML 전환은 더 넓은 candidate grid, 모델 추천표, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
-- 확장 boss pool 이후 pre-outcome feature table을 14,544 rows로 재생성했고, sequence/path table은 92 rows로 재생성했다. station/tier 모델 R2는 0.1548, sequence 모델 R2는 0.4202다.
+- production ML 전환은 더 넓은 candidate grid, MAE/RMSE/R2가 실무 추천 기준을 만족하는 모델, 재시뮬레이션 검증, 사람 승인 후 적용까지 갖춘 뒤에만 완료로 기록한다.
+- 확장 boss pool 이후 pre-outcome feature table을 14,544 rows로 재생성했고, sequence/path table은 92 rows로 재생성했다. station/tier 모델은 MAE 0.0360, RMSE 0.1014, R2 0.1548이고 sequence 모델은 MAE 0.0651, RMSE 0.1246, R2 0.4202다. 현재 지표는 실무 추천 기준에 한참 부족하다.
+- NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 지금 리포트는 내부 gate/source 정리용이며 외부 재가공 전 단계다.
 - 새 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 적용 보류한다. 현재 runtime economy baseline은 유지한다.
 
 임시 작업 순서 플랜 처리:
 
 - `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
 - ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
-- 실제 ML 이행은 offline candidate recommendation gate까지 진행됐다. `analysis/leveling/reports/actual_ml_transition_human_review.md` 기준 production ML/자동 적용은 아니다.
+- 실제 ML 이행은 offline candidate recommendation scaffold까지 진행됐다. `analysis/leveling/reports/actual_ml_transition_human_review.md` 기준 production ML/자동 적용이 아니며, 모델 품질도 gate 완료로 볼 수 없다.
 - 경제 probe는 current boss pool 기준 r400 baseline만 확보했고, 확장 boss pool 기준으로 다시 열려 있다.
 - 공모전 기준 작업 재개는 Boss pool mapping/1차 확장과 확장 후 레벨링/경제/ML 상태 정리 이후로 보류한다.
 
@@ -233,7 +234,7 @@
 
 ### M0. Documentation And Analysis Source Of Truth
 
-Status: Done for offline recommendation gate
+Status: In progress / source-of-truth cleanup still open
 
 완료 조건:
 
@@ -257,10 +258,11 @@ Status: In progress
 완료 조건:
 
 - feature table을 outcome-derived summary feature가 아니라 추천 가능한 pre-outcome feature 중심으로 재설계한다.
-- supervised target, train/test split, baseline model, metric을 명시한다.
+- supervised target, train/test split, baseline model, metric을 명시한다. 회귀 모델은 MAE/RMSE/R2를 함께 기록한다.
 - baseline model 결과와 feature importance를 사람이 읽을 수 있는 MD 리포트로 남긴다.
 - 모델 후보는 런타임 자동 적용이 아니라 후보 추천으로만 사용한다.
 - 추천 후보는 재시뮬레이션으로 검증하고, 사람 승인 전에는 target/boss/market/economy runtime에 반영하지 않는다.
+- 모델 지표가 실무 추천 기준에 충분히 좋아야 recommendation gate 완료로 인정한다.
 
 완료:
 
@@ -273,7 +275,9 @@ Status: In progress
 
 남은 주의:
 
-- sequence/path 데이터는 80 row라 production ML 자동 적용 근거로 부족하다.
+- sequence/path 데이터는 92 row라 production ML 자동 적용 근거로 부족하다.
+- 현재 station/tier R2 0.1548, sequence R2 0.4202는 실무 추천 기준에 부족하다.
+- 다음 모델 재생성 때도 MAE/RMSE/R2를 모두 기록하고, 실무 추천 기준 충족 여부를 별도로 판단한다.
 - 실제 적용은 경제 gate와 사람 승인 이후에만 한다.
 
 ### M1. Economy And Price Baseline

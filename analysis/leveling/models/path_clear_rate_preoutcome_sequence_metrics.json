@@ -5,5 +5,6 @@
   "target": "path_clear_rate",
   "feature_mode": "preoutcome_sequence",
   "mae": 0.06511364245431495,
+  "rmse": 0.12464088722203541,
   "r2": 0.42023214013615584
 }

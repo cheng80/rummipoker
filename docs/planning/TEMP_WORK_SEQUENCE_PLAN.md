@@ -171,7 +171,7 @@ Status: Done for expanded profile probe / not fully closed
 
 ## 6. 실제 ML 이행 재개
 
-Status: Done for expanded offline recommendation gate
+Status: In progress / model quality not sufficient for gate closure
 
 재개 조건:
 
@@ -192,20 +192,25 @@ ML 재개 시 필수 작업:
 - [x] 추천 후보를 fresh resimulation으로 검증한다.
 - [x] 사람 승인용 MD 분석 보고서를 갱신한다.
 - [x] 사람 승인 전 runtime target/boss/market/economy 값은 바꾸지 않는다.
+- [ ] 회귀 모델 지표를 MAE/RMSE/R2 기준으로 다시 산출한다.
+- [ ] 실무 추천 기준에 충분한 모델 품질과 데이터 수를 확보한다.
 
 현재 결과:
 
-- station/tier pre-outcome table 14,544 rows, R2 0.1548.
-- sequence/path pre-outcome table 92 rows, R2 0.4202.
+- station/tier pre-outcome table 14,544 rows, MAE 0.0360, RMSE 0.1014, R2 0.1548.
+- sequence/path pre-outcome table 92 rows, MAE 0.0651, RMSE 0.1246, R2 0.4202.
 - 모델 추천 상위 economy 후보 `reward 0.38 / price 2.4`, `reward 0.40 / price 2.4`는 expanded boss fresh r120에서 balanced+v9가 none보다 낮아져 runtime 적용 보류.
 - 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
 - production ML/자동 적용은 여전히 아님.
+- 현재 모델 지표는 실무 추천 기준에 한참 부족하므로 ML 마감이나 recommendation gate 완료로 보지 않는다.
+- NotebookLM 보고서/인포그래픽 재생성은 모델 지표가 사용 수준이 된 뒤에만 한다. 현재 리포트는 내부 판단 source로만 둔다.
 
 완료로 인정하지 않는 것:
 
 - feature table만 다시 만든 상태
 - r80 exploratory probe만 실행한 상태
 - 모델 metric만 생성한 상태
+- MAE/RMSE/R2 중 일부만 있거나 R2가 낮아 실무 사용 기준에 못 미치는 상태
 - production ML/자동 적용처럼 읽히는 문구
 
 ## 7. 공모전 기준 남은 작업 재개
