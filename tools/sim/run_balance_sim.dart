@@ -4688,7 +4688,9 @@ BalanceSimExperimentSpec _resolveExperiment({
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_cycle_soft_probe_v1':
     case _
         when id.contains('_rank_runtime_position_probe_v1_repeat_s') ||
-            id.contains('_rank_runtime_position_probe_v1_single_s'):
+            id.contains('_rank_runtime_position_probe_v1_single_s') ||
+            id.contains('_confirm_limit_position_probe_v1_s') ||
+            id.contains('_color_variant_position_probe_v1_s'):
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_min_contributor_probe_v1':
     case 'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_rank_family_probe_v1':
@@ -4947,7 +4949,9 @@ double _stationGrowthBaseForExperiment(String id) {
       1.25,
     _
         when id.contains('_rank_runtime_position_probe_v1_repeat_s') ||
-            id.contains('_rank_runtime_position_probe_v1_single_s') =>
+            id.contains('_rank_runtime_position_probe_v1_single_s') ||
+            id.contains('_confirm_limit_position_probe_v1_s') ||
+            id.contains('_color_variant_position_probe_v1_s') =>
       1.25,
     'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1' =>
       1.25,
@@ -5452,6 +5456,8 @@ bool _usesRankCycleProbe(String id) =>
     id.endsWith('_rank_cycle_soft_probe_v1') ||
     id.contains('_rank_runtime_position_probe_v1_repeat_s') ||
     id.contains('_rank_runtime_position_probe_v1_single_s') ||
+    id.contains('_confirm_limit_position_probe_v1_s') ||
+    id.contains('_color_variant_position_probe_v1_s') ||
     id.endsWith('_boss_expansion_probe_v1') ||
     id.endsWith('_boss_expansion_min_contributor_probe_v1') ||
     id.endsWith('_boss_expansion_rank_family_probe_v1') ||
@@ -5529,6 +5535,24 @@ String _rankCycleProbeProfileId(String id) {
   if (id.contains('_rank_runtime_position_probe_v1_single_s6')) {
     return 'rank_runtime_position_probe_v1_single_s6';
   }
+  if (id.contains('_confirm_limit_position_probe_v1_s4')) {
+    return 'confirm_limit_position_probe_v1_s4';
+  }
+  if (id.contains('_confirm_limit_position_probe_v1_s5')) {
+    return 'confirm_limit_position_probe_v1_s5';
+  }
+  if (id.contains('_confirm_limit_position_probe_v1_s6')) {
+    return 'confirm_limit_position_probe_v1_s6';
+  }
+  if (id.contains('_color_variant_position_probe_v1_s2')) {
+    return 'color_variant_position_probe_v1_s2';
+  }
+  if (id.contains('_color_variant_position_probe_v1_s4')) {
+    return 'color_variant_position_probe_v1_s4';
+  }
+  if (id.contains('_color_variant_position_probe_v1_s5')) {
+    return 'color_variant_position_probe_v1_s5';
+  }
   if (id.endsWith('_boss_expansion_probe_v1')) {
     return 'boss_expansion_probe_v1';
   }
@@ -5598,6 +5622,24 @@ List<int> _rankCycleProbeSlotsForExperiment(String id) {
   }
   if (id.contains('_rank_runtime_position_probe_v1_single_s6')) {
     return const [0, 1, 2, 10, 6, 4, 7, 5];
+  }
+  if (id.contains('_confirm_limit_position_probe_v1_s4')) {
+    return const [0, 1, 2, 16, 6, 11, 7, 5];
+  }
+  if (id.contains('_confirm_limit_position_probe_v1_s5')) {
+    return const [0, 1, 2, 10, 16, 11, 7, 5];
+  }
+  if (id.contains('_confirm_limit_position_probe_v1_s6')) {
+    return const [0, 1, 2, 10, 6, 16, 7, 5];
+  }
+  if (id.contains('_color_variant_position_probe_v1_s2')) {
+    return const [0, 21, 2, 10, 6, 11, 7, 5];
+  }
+  if (id.contains('_color_variant_position_probe_v1_s4')) {
+    return const [0, 1, 2, 21, 6, 11, 7, 5];
+  }
+  if (id.contains('_color_variant_position_probe_v1_s5')) {
+    return const [0, 1, 2, 10, 21, 11, 7, 5];
   }
   if (id.endsWith('_boss_expansion_probe_v1')) {
     return const [0, 14, 2, 15, 6, 16, 7, 5];
@@ -7260,6 +7302,12 @@ class BalanceSimCliConfig {
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s4',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s5',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_rank_runtime_position_probe_v1_single_s6',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s4',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s5',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s6',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s2',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s4',
+      'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s5',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_min_contributor_probe_v1',
       'base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_boss_expansion_rank_family_probe_v1',

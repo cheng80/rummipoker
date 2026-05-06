@@ -105,6 +105,7 @@ Status: Done for first pass / cycle pending
 - 앱 runtime에는 simulator처럼 boss 후보만 주입하는 experiment axis가 없으므로, `hand_discard_cost_v1`도 적용하면 실제 런타임 규칙 변경이다. 구현 전 승인 대상으로 둔다.
 - S2/S3/S4 position r80 probe 기준으로는 S3 boss가 가장 자연스럽다. S2는 너무 안전하고 S4는 v9가 none보다 낮아지는 신호가 있다.
 - 구현 후보 증량을 위해 이미 구현된 rank 계열도 재검토했다. r80 기준 `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4는 v9가 none보다 높아 Stage B cycle 편입 후보로 재승격한다.
+- 추가 r80 기준 `confirm_limit_tax_v1` S4와 `color_dampener_variant_v1` S4/S5도 Stage B cycle 편입 후보로 재승격한다. S6 confirm-limit와 S2 color는 너무 안전해 우선순위에서 제외한다.
 
 주의:
 

@@ -283,6 +283,32 @@ Target boss clear:
 - S6 배치는 너무 안전하고 v9가 none보다 낮아지는 신호가 있어 이번 증량 후보에서는 제외한다.
 - 이로써 구현 후보군은 `confirm_limit_tax_v1`, `hand_discard_cost_v1` S3 resource spike, `repeat_rank_pressure_v4` S4, `single_rank_pressure` S4로 넓힌다.
 
+### Stage B 증량: confirm-limit / color variant position 후보
+
+`confirm_limit_tax_v1`은 이미 runtime modifier로 구현되어 있고, color variant는 기존 `tileColorWeaken` + `blue_dampener_v1` 경로를 재사용한다.
+둘 다 저장 schema와 새 UI category 없이 cycle 후보 증량이 가능하다.
+
+- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 80 --seed 91380 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s5,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_confirm_limit_position_probe_v1_s6,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s2,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s4,base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_color_variant_position_probe_v1_s5 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/confirm_color_position_probe_v1_r80`
+- summary: `logs/sim/confirm_color_position_probe_v1_r80_summary.json`
+- report: `logs/sim/confirm_color_position_probe_v1_r80_report.md`
+
+Target boss clear:
+
+| Candidate | Placement | Target boss clear | none | v9 | 1차 판정 |
+|---|---:|---:|---:|---:|---|
+| `confirm_limit_tax_v1` | S4 | 92.22% | 88.28% | 96.12% | 구현 후보로 재승격 |
+| `confirm_limit_tax_v1` | S5 | 95.60% | 94.31% | 96.85% | 후보 가능 |
+| `confirm_limit_tax_v1` | S6 | 99.19% | 98.32% | 100.00% | 너무 안전 |
+| `color_dampener_variant_v1` | S2 | 98.28% | 97.18% | 99.33% | 너무 안전 |
+| `color_dampener_variant_v1` | S4 | 91.70% | 90.08% | 93.28% | 구현 후보로 재승격 |
+| `color_dampener_variant_v1` | S5 | 94.35% | 91.74% | 96.85% | 구현 후보로 재승격 |
+
+증량 판정:
+
+- `confirm_limit_tax_v1`은 S4가 가장 강한 cycle 후보이고, S5는 보수적 fallback이다.
+- `color_dampener_variant_v1`은 S4/S5 모두 v9가 none보다 높아 색상 family 다양성 후보로 살린다. S2는 너무 안전해 우선순위에서 제외한다.
+- 구현 후보군에 `confirm_limit_tax_v1` S4, `color_dampener_variant_v1` S4/S5를 추가한다.
+
 ### Stage C: 저장/UI 변경이 필요하지만 재미 가치가 큰 실험
 
 출품 전 즉시 구현 후보는 아니지만, boss전 다양성을 위해 폐기하지 않고 실험 후보로 보존한다.
@@ -449,7 +475,7 @@ Leveling 판정:
 
 ## 6. Next Step
 
-1. 이미 구현된 `repeat_rank_pressure_v4` S4와 `single_rank_pressure` S4를 cycle 편입 후보로 우선 검토한다.
+1. 이미 구현된 후보 중 `confirm_limit_tax_v1` S4, `repeat_rank_pressure_v4` S4, `single_rank_pressure` S4, `color_dampener_variant_v1` S4/S5를 cycle 편입 후보로 우선 검토한다.
 2. `hand_discard_cost_v1`를 구현한다면 1차 위치는 S3 boss로 잡고, 범위는 `BlindSelectionSpec` resource 계산과 해당 service test로 제한한다.
 3. 앱 runtime에는 독립 boss experiment axis가 없으므로, `hand_discard_cost_v1`도 코드 적용 전 승인 대상으로 둔다.
 4. `reward_tax_by_contributor_v1`는 cashout/economy/UI 영향이 커서 별도 구현 계획으로 분리한다.
