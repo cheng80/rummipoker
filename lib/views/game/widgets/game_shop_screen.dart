@@ -2997,8 +2997,8 @@ class _MarketOfferRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final cardWidth = _marketOfferCardWidth + (_marketCardSelectionInset * 2);
-    final pageWidth = cardWidth * _pageSlots + _gap * (_pageSlots - 1);
+    final pageWidth =
+        _marketShopCellWidth * _pageSlots + _gap * (_pageSlots - 1);
     return Align(
       alignment: Alignment.topCenter,
       child: SizedBox(
