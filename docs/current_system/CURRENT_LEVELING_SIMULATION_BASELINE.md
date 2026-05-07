@@ -19,7 +19,7 @@
 | 결정 대상 | 실험이 확인한 것 | 현재 해석 |
 |---|---|---|
 | S1~S8 station/tier target score | small/big/boss 목표 점수가 station path에서 진행 가능한지 | S1~S8 standard target table을 runtime에 연결 |
-| `standard` 난이도 기준 | relaxed/standard/pressure 중 기본 플레이 기준이 되는 curve | 현재 기본 판단은 `standard` 중심 |
+| `standard` 난이도 기준 | standard/challenge 중 기본 플레이 기준이 되는 curve | 현재 기본 판단은 `standard` 중심 |
 | station band별 마켓 후보군 | S1~S2, S3~S5, S6~S8에서 어떤 성장 후보가 필요해지는지 | early/mid/late market band policy로 번역 |
 | Jester 후보 weight | Common/Uncommon/Rare/Legendary가 어느 구간부터 의미 있는지 | Rare/Legendary도 0으로 막지 않고 낮은 확률 유지 |
 | Item/Pack/Tarot-like/Planet-like 후보 weight | 덱/타일 형상, 점수 성장, boss 대응, market/economy 후보의 역할 | 직접 지급이 아니라 market candidate availability/weight로만 반영 |

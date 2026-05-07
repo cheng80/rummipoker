@@ -673,13 +673,14 @@ void main() {
         ),
       );
       notifier.markDirty();
+      final expectedPrice = state.runProgress!.effectiveJesterOfferPrice(0);
 
       final failMessage = notifier.buyShopOffer(0);
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, 3);
-      expect(updated.marketView!.gold, 3);
+      expect(updated.runProgress!.gold, 10 - expectedPrice);
+      expect(updated.marketView!.gold, 10 - expectedPrice);
       expect(updated.runProgress!.ownedJesters.length, 1);
       expect(updated.marketView!.ownedEntries.length, 1);
       expect(updated.runProgress!.shopOffers, isEmpty);
@@ -726,13 +727,14 @@ void main() {
       final state = container.read(gameSessionNotifierProvider(args));
       state.runProgress!.gold = 10;
       notifier.markDirty();
+      final expectedPrice = state.runProgress!.effectiveItemPrice(item);
 
       final failMessage = notifier.buyItemOffer(offer);
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, 1);
-      expect(updated.marketView!.gold, 1);
+      expect(updated.runProgress!.gold, 10 - expectedPrice);
+      expect(updated.marketView!.gold, 10 - expectedPrice);
       expect(updated.runProgress!.itemInventory.ownedItems.length, 1);
       expect(
         updated.runProgress!.itemInventory.ownedItems.first.itemId,

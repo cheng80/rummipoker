@@ -259,6 +259,11 @@ class _GameShopScreenState extends State<GameShopScreen>
       _selectedOwnedIndex = null;
       _selectedOfferIndex = null;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _market;
+      unawaited(widget.onStateChanged());
+    });
     if (widget.autoAdvanceOnLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await Future<void>.delayed(
@@ -2980,6 +2985,9 @@ class _MarketItemCountBadge extends StatelessWidget {
 class _MarketOfferRow extends StatelessWidget {
   const _MarketOfferRow({required this.itemCount, required this.children});
 
+  static const double _gap = 8;
+  static const int _pageSlots = 3;
+
   final int itemCount;
   final List<Widget> children;
 
@@ -2989,22 +2997,23 @@ class _MarketOfferRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    if (itemCount <= 3) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            Expanded(child: Center(child: children[i])),
-            if (i < children.length - 1) const SizedBox(width: 8),
+    final cardWidth = _marketOfferCardWidth + (_marketCardSelectionInset * 2);
+    final pageWidth = cardWidth * _pageSlots + _gap * (_pageSlots - 1);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SizedBox(
+        width: pageWidth,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < children.length; i++) ...[
+              children[i],
+              if (i < children.length - 1) const SizedBox(width: _gap),
+            ],
           ],
-        ],
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
+        ),
+      ),
     );
   }
 }
@@ -4083,7 +4092,7 @@ String _jesterRarityTag(RummiJesterRarity rarity) {
 String _jesterConditionTag(RummiJesterCard card) {
   if (card.id == 'scholar') return 'Ace';
   if (card.id == 'supernova') return '반복 족보';
-  if (card.id == 'popcorn' || card.id == 'ice_cream') return '감쇠형';
+  if (card.id == 'popcorn' || card.id == 'ice_cream') return '줄어듦';
   if (card.id == 'green_jester' || card.id == 'ride_the_bus') return '성장형';
 
   return switch (card.conditionType) {
@@ -4091,8 +4100,8 @@ String _jesterConditionTag(RummiJesterCard card) {
     'pair' => 'Pair',
     'two_pair' => 'Two Pair',
     'three_of_a_kind' => 'Triple',
-    'straight' => 'Straight',
-    'flush' => 'Flush',
+    'straight' => 'Run',
+    'flush' => 'Color',
     'tile_color_scored' => card.mappedTileColors.isEmpty ? '색상' : '색상 타일',
     'rank_scored' => '숫자 타일',
     'face_card' => 'Face',
@@ -4220,8 +4229,8 @@ String _catalogItemTagLabel(String tag) {
     'mult' => '+Mult',
     'xmult' => 'xMult',
     'rank' => '족보',
-    'straight' => 'Straight',
-    'flush' => 'Flush',
+    'straight' => 'Run',
+    'flush' => 'Color',
     'two_pair' => 'Two Pair',
     'overlap' => 'Overlap',
     'discard' => 'Discard',

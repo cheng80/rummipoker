@@ -11,6 +11,13 @@ class RunUnlockState {
     required this.availableDeckIds,
     required this.unlockedRunModifierIds,
     required this.insight,
+    this.seenMarketJesterIds = const <String>{},
+    this.seenMarketItemIds = const <String>{},
+    this.boughtJesterIds = const <String>{},
+    this.boughtItemIds = const <String>{},
+    this.seenBossModifierIds = const <String>{},
+    this.clearedStationKeys = const <String>{},
+    this.earnedMemoryCardIds = const <String>{},
   });
 
   factory RunUnlockState.defaults() {
@@ -53,6 +60,13 @@ class RunUnlockState {
           ? RunUnlockState.defaults().unlockedRunModifierIds
           : rawRunModifierIds,
       insight: (json['insight'] as num?)?.toInt() ?? 0,
+      seenMarketJesterIds: _stringSet(json['seenMarketJesterIds']),
+      seenMarketItemIds: _stringSet(json['seenMarketItemIds']),
+      boughtJesterIds: _stringSet(json['boughtJesterIds']),
+      boughtItemIds: _stringSet(json['boughtItemIds']),
+      seenBossModifierIds: _stringSet(json['seenBossModifierIds']),
+      clearedStationKeys: _stringSet(json['clearedStationKeys']),
+      earnedMemoryCardIds: _stringSet(json['earnedMemoryCardIds']),
     );
   }
 
@@ -61,6 +75,13 @@ class RunUnlockState {
   final Set<String> availableDeckIds;
   final Set<String> unlockedRunModifierIds;
   final int insight;
+  final Set<String> seenMarketJesterIds;
+  final Set<String> seenMarketItemIds;
+  final Set<String> boughtJesterIds;
+  final Set<String> boughtItemIds;
+  final Set<String> seenBossModifierIds;
+  final Set<String> clearedStationKeys;
+  final Set<String> earnedMemoryCardIds;
 
   Map<String, dynamic> toJson() => {
     'unlockedDifficultyNames': unlockedDifficultyNames.toList()..sort(),
@@ -68,6 +89,13 @@ class RunUnlockState {
     'availableDeckIds': availableDeckIds.toList()..sort(),
     'unlockedRunModifierIds': unlockedRunModifierIds.toList()..sort(),
     'insight': insight,
+    'seenMarketJesterIds': seenMarketJesterIds.toList()..sort(),
+    'seenMarketItemIds': seenMarketItemIds.toList()..sort(),
+    'boughtJesterIds': boughtJesterIds.toList()..sort(),
+    'boughtItemIds': boughtItemIds.toList()..sort(),
+    'seenBossModifierIds': seenBossModifierIds.toList()..sort(),
+    'clearedStationKeys': clearedStationKeys.toList()..sort(),
+    'earnedMemoryCardIds': earnedMemoryCardIds.toList()..sort(),
   };
 
   bool isDifficultyUnlocked(NewRunDifficulty difficulty) {
@@ -92,6 +120,13 @@ class RunUnlockState {
     Set<String>? availableDeckIds,
     Set<String>? unlockedRunModifierIds,
     int? insight,
+    Set<String>? seenMarketJesterIds,
+    Set<String>? seenMarketItemIds,
+    Set<String>? boughtJesterIds,
+    Set<String>? boughtItemIds,
+    Set<String>? seenBossModifierIds,
+    Set<String>? clearedStationKeys,
+    Set<String>? earnedMemoryCardIds,
   }) {
     return RunUnlockState(
       unlockedDifficultyNames:
@@ -102,8 +137,41 @@ class RunUnlockState {
       unlockedRunModifierIds:
           unlockedRunModifierIds ?? this.unlockedRunModifierIds,
       insight: insight ?? this.insight,
+      seenMarketJesterIds: seenMarketJesterIds ?? this.seenMarketJesterIds,
+      seenMarketItemIds: seenMarketItemIds ?? this.seenMarketItemIds,
+      boughtJesterIds: boughtJesterIds ?? this.boughtJesterIds,
+      boughtItemIds: boughtItemIds ?? this.boughtItemIds,
+      seenBossModifierIds: seenBossModifierIds ?? this.seenBossModifierIds,
+      clearedStationKeys: clearedStationKeys ?? this.clearedStationKeys,
+      earnedMemoryCardIds: earnedMemoryCardIds ?? this.earnedMemoryCardIds,
     );
   }
+
+  static Set<String> _stringSet(Object? value) {
+    return (value as List<dynamic>? ?? const <dynamic>[])
+        .whereType<String>()
+        .toSet();
+  }
+}
+
+class RunCollectionUpdate {
+  const RunCollectionUpdate({
+    this.seenMarketJesterIds = const <String>{},
+    this.seenMarketItemIds = const <String>{},
+    this.boughtJesterIds = const <String>{},
+    this.boughtItemIds = const <String>{},
+    this.seenBossModifierIds = const <String>{},
+    this.clearedStationKeys = const <String>{},
+    this.earnedMemoryCardIds = const <String>{},
+  });
+
+  final Set<String> seenMarketJesterIds;
+  final Set<String> seenMarketItemIds;
+  final Set<String> boughtJesterIds;
+  final Set<String> boughtItemIds;
+  final Set<String> seenBossModifierIds;
+  final Set<String> clearedStationKeys;
+  final Set<String> earnedMemoryCardIds;
 }
 
 class RunUnlockStateService {
@@ -168,6 +236,42 @@ class RunUnlockStateService {
     if (amount <= 0) return;
     final current = await load();
     await save(current.copyWith(insight: current.insight + amount));
+  }
+
+  static Future<void> recordRunCollection(RunCollectionUpdate update) async {
+    final current = await load();
+    await save(
+      current.copyWith(
+        seenMarketJesterIds: <String>{
+          ...current.seenMarketJesterIds,
+          ...update.seenMarketJesterIds,
+        },
+        seenMarketItemIds: <String>{
+          ...current.seenMarketItemIds,
+          ...update.seenMarketItemIds,
+        },
+        boughtJesterIds: <String>{
+          ...current.boughtJesterIds,
+          ...update.boughtJesterIds,
+        },
+        boughtItemIds: <String>{
+          ...current.boughtItemIds,
+          ...update.boughtItemIds,
+        },
+        seenBossModifierIds: <String>{
+          ...current.seenBossModifierIds,
+          ...update.seenBossModifierIds,
+        },
+        clearedStationKeys: <String>{
+          ...current.clearedStationKeys,
+          ...update.clearedStationKeys,
+        },
+        earnedMemoryCardIds: <String>{
+          ...current.earnedMemoryCardIds,
+          ...update.earnedMemoryCardIds,
+        },
+      ),
+    );
   }
 
   static Future<bool> unlockRunModifier(NewRunModifier modifier) async {

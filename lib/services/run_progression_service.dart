@@ -9,19 +9,45 @@ class RunEndSummary {
     required this.difficulty,
     required this.reachedStageIndex,
     this.defeatedBossCount = 0,
+    this.seenMarketJesterIds = const <String>{},
+    this.seenMarketItemIds = const <String>{},
+    this.boughtJesterIds = const <String>{},
+    this.boughtItemIds = const <String>{},
+    this.seenBossModifierIds = const <String>{},
+    this.clearedStationKeys = const <String>{},
   });
 
   final RunEndResult result;
   final NewRunDifficulty difficulty;
   final int reachedStageIndex;
   final int defeatedBossCount;
+  final Set<String> seenMarketJesterIds;
+  final Set<String> seenMarketItemIds;
+  final Set<String> boughtJesterIds;
+  final Set<String> boughtItemIds;
+  final Set<String> seenBossModifierIds;
+  final Set<String> clearedStationKeys;
 }
 
 class RunProgressionService {
   RunProgressionService._();
 
   static Future<void> handleRunEnded(RunEndSummary summary) async {
-    await RunUnlockStateService.addInsight(calculateInsightReward(summary));
+    final memoryCardReward = calculateInsightReward(summary);
+    await RunUnlockStateService.addInsight(memoryCardReward);
+    await RunUnlockStateService.recordRunCollection(
+      RunCollectionUpdate(
+        seenMarketJesterIds: summary.seenMarketJesterIds,
+        seenMarketItemIds: summary.seenMarketItemIds,
+        boughtJesterIds: summary.boughtJesterIds,
+        boughtItemIds: summary.boughtItemIds,
+        seenBossModifierIds: summary.seenBossModifierIds,
+        clearedStationKeys: summary.clearedStationKeys,
+        earnedMemoryCardIds: memoryCardReward <= 0
+            ? const <String>{}
+            : <String>{_memoryCardId(summary)},
+      ),
+    );
 
     if (summary.result != RunEndResult.completed) {
       return;
@@ -49,9 +75,17 @@ class RunProgressionService {
 
   static NewRunDifficulty? _nextDifficulty(NewRunDifficulty difficulty) {
     return switch (difficulty) {
-      NewRunDifficulty.standard => NewRunDifficulty.relaxed,
-      NewRunDifficulty.relaxed => NewRunDifficulty.pressure,
-      NewRunDifficulty.pressure => null,
+      NewRunDifficulty.standard => NewRunDifficulty.challenge,
+      NewRunDifficulty.relaxed => null,
+      NewRunDifficulty.challenge => null,
     };
+  }
+
+  static String _memoryCardId(RunEndSummary summary) {
+    final result = summary.result.name;
+    final station = summary.reachedStageIndex < 0
+        ? 0
+        : summary.reachedStageIndex;
+    return 'memory_card_${result}_${summary.difficulty.name}_s$station';
   }
 }

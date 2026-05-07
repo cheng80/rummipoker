@@ -138,7 +138,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('game over Insight reward card가 종료 보상을 보여준다', (tester) async {
+  testWidgets('game over reward card가 기억 카드 보상을 보여준다', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -149,8 +149,9 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('획득 예정 Insight +6'), findsOneWidget);
-    expect(find.textContaining('다음 런'), findsOneWidget);
+    expect(find.text('기억 카드 획득'), findsOneWidget);
+    expect(find.textContaining('새 규칙'), findsOneWidget);
+    expect(find.textContaining('Insight'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

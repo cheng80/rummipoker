@@ -104,7 +104,7 @@ class BalanceSummaryReport {
     return switch (difficulty) {
       'relaxed' => 0,
       'standard' => 1,
-      'pressure' => 2,
+      'challenge' => 2,
       _ => 99,
     };
   }

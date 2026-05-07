@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -61,10 +64,9 @@ class SettingsNotifier extends Notifier<SettingsState> {
   }
 
   static void _applyWakelock(bool enabled) {
-    if (enabled) {
-      WakelockPlus.enable();
-    } else {
-      WakelockPlus.disable();
-    }
+    if (kIsWeb) return;
+    final request = enabled ? WakelockPlus.enable() : WakelockPlus.disable();
+    // 웹 브라우저가 화면 켜짐 유지를 거부해도 게임 진행은 막지 않는다.
+    unawaited(request.catchError((Object _) {}));
   }
 }

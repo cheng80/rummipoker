@@ -162,6 +162,7 @@ class _NewRunViewState extends State<NewRunView> {
 
   List<NewRunDifficulty> get _availableDifficulties {
     return NewRunDifficulty.values
+        .where(NewRunSetup.isDifficultySelectable)
         .where(_unlockState.isDifficultyUnlocked)
         .toList(growable: false);
   }
@@ -182,7 +183,7 @@ class _NewRunViewState extends State<NewRunView> {
     });
     showTopNotice(
       context,
-      unlocked ? '${modifier.label} 해금' : 'Insight가 부족합니다.',
+      unlocked ? '${modifier.label} 해금' : '기억 카드가 부족합니다.',
     );
   }
 
@@ -231,8 +232,8 @@ class _NewRunViewState extends State<NewRunView> {
               const SizedBox(height: 18),
             ],
             HomeSection(
-              title: '런 계약',
-              subtitle: '보유 Insight ${_unlockState.insight}',
+              title: '런 규칙',
+              subtitle: _unlockState.insight > 0 ? '기억 카드 보유' : '기억 카드 없음',
               child: _RunModifierPicker(
                 selectedRunModifier: _selectedRunModifier,
                 unlockState: _unlockState,
@@ -327,7 +328,7 @@ class _RunModifierCard extends StatelessWidget {
         : Colors.white.withValues(alpha: unlocked ? 0.05 : 0.025);
     final status = unlocked
         ? (selected ? '선택됨' : '선택 가능')
-        : (canUnlock ? 'Insight ${modifier.unlockCostInsight} 해금' : '잠김');
+        : (canUnlock ? '기억 카드로 해금' : '기억 카드 필요');
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
@@ -405,7 +406,7 @@ class _RunModifierCard extends StatelessWidget {
     }
     return '목표 점수 x${modifier.targetScoreMultiplier.toStringAsFixed(2)}'
         ' · 보상 x${modifier.rewardMultiplier.toStringAsFixed(2)}'
-        ' · 상점 선택 폭 보강';
+        '\n상점 후보 +1';
   }
 }
 

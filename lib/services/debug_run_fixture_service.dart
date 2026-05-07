@@ -56,7 +56,7 @@ class DebugRunFixtureService {
       id: stage2ScoringSnapshot,
       label: 'Stage 2 점수 스냅샷',
       description:
-          'Stage 2 / Gold 36 / Crazy Jester + Scary Face / Hand 비어 있음 / Deck 34',
+          'Stage 2 / Gold 36 / Run Call + Face Battery / 손패 비어 있음 / 덱 34',
       builder: _buildStage2ScoringSnapshot,
     ),
     DebugRunFixtureDefinition(
@@ -115,8 +115,8 @@ class DebugRunFixtureService {
     ),
     DebugRunFixtureDefinition(
       id: gameOverInsightReady,
-      label: '게임오버 Insight 체크',
-      description: '보드 꽉 참 + 보드 버림 0 / 패배 보상 dialog 검증용',
+      label: '게임오버 기억 카드 체크',
+      description: '보드 꽉 참 + 보드 버림 0 / 패배 보상 카드 검증용',
       builder: _buildGameOverInsightReady,
     ),
     DebugRunFixtureDefinition(
@@ -135,7 +135,7 @@ class DebugRunFixtureService {
     DebugRunFixtureDefinition(
       id: finalBossCashOutReady,
       label: '최종 Boss 런 완료 체크',
-      description: 'S8 Boss 확정 1회로 런 완료 + Insight 보상 시트 검증용',
+      description: 'S8 Boss 확정 1회로 런 완료 + 기억 카드 보상 시트 검증용',
       builder: _buildFinalBossCashOutReady,
     ),
     DebugRunFixtureDefinition(
@@ -222,10 +222,10 @@ class DebugRunFixtureService {
       ownedJesters: const [
         RummiJesterCard(
           id: 'crazy_jester',
-          displayName: 'Crazy Jester',
+          displayName: 'Run Call',
           rarity: RummiJesterRarity.common,
           baseCost: 4,
-          effectText: 'Played hand containing a Straight gives +12 Mult',
+          effectText: 'Scoring a run line gives +12 Mult',
           effectType: 'mult_bonus',
           trigger: 'onScore',
           conditionType: 'straight',
@@ -237,10 +237,10 @@ class DebugRunFixtureService {
         ),
         RummiJesterCard(
           id: 'scary_face',
-          displayName: 'Scary Face',
+          displayName: 'Face Battery',
           rarity: RummiJesterRarity.common,
           baseCost: 4,
-          effectText: 'Played face cards give +30 Chips when scored',
+          effectText: 'Each 11-13 tile in the scoring line gives +30 Chips',
           effectType: 'chips_bonus',
           trigger: 'onScore',
           conditionType: 'face_card',
@@ -279,7 +279,7 @@ class DebugRunFixtureService {
           slotIndex: 0,
           card: RummiJesterCard(
             id: 'green_jester',
-            displayName: 'Green Jester',
+            displayName: 'Momentum Meter',
             rarity: RummiJesterRarity.common,
             baseCost: 4,
             effectText: 'Every discard changes current Mult by +1',
@@ -298,7 +298,7 @@ class DebugRunFixtureService {
           slotIndex: 1,
           card: RummiJesterCard(
             id: 'popcorn',
-            displayName: 'Popcorn',
+            displayName: 'Fading Boost',
             rarity: RummiJesterRarity.common,
             baseCost: 5,
             effectText: 'Starts at +20 Mult, decreases by 4 each round',
@@ -380,7 +380,7 @@ class DebugRunFixtureService {
           slotIndex: 0,
           card: RummiJesterCard(
             id: 'green_jester',
-            displayName: 'Green Jester',
+            displayName: 'Momentum Meter',
             rarity: RummiJesterRarity.common,
             baseCost: 4,
             effectText: 'Every discard changes current Mult by +1',
@@ -399,7 +399,7 @@ class DebugRunFixtureService {
           slotIndex: 1,
           card: RummiJesterCard(
             id: 'popcorn',
-            displayName: 'Popcorn',
+            displayName: 'Fading Boost',
             rarity: RummiJesterRarity.common,
             baseCost: 5,
             effectText: 'Starts at +20 Mult, decreases by 4 each round',
@@ -507,7 +507,7 @@ class DebugRunFixtureService {
             displayName: 'Badge Mult',
             rarity: RummiJesterRarity.uncommon,
             baseCost: 6,
-            effectText: 'Played hand containing a Flush gives +16 Mult',
+            effectText: 'Scoring a same-color line gives +16 Mult',
             effectType: 'mult_bonus',
             trigger: 'onScore',
             conditionType: 'flush',
@@ -658,7 +658,7 @@ class DebugRunFixtureService {
       ..add(
         RummiJesterCard(
           id: 'egg',
-          displayName: 'Egg',
+          displayName: 'Reserve Coin',
           rarity: RummiJesterRarity.common,
           baseCost: 5,
           effectText: 'Test sell hook fixture.',
@@ -828,10 +828,10 @@ class DebugRunFixtureService {
       ownedJesters: const [
         RummiJesterCard(
           id: 'crazy_jester',
-          displayName: 'Crazy Jester',
+          displayName: 'Run Call',
           rarity: RummiJesterRarity.common,
           baseCost: 4,
-          effectText: 'Played hand containing a Straight gives +12 Mult',
+          effectText: 'Scoring a run line gives +12 Mult',
           effectType: 'mult_bonus',
           trigger: 'onScore',
           conditionType: 'straight',

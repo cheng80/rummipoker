@@ -72,6 +72,8 @@ final GoRouter appRouter = GoRouter(
         final debugAutoUseItemId =
             state.uri.queryParameters['debug_auto_use_item'];
         final debugShopTab = state.uri.queryParameters['debug_shop_tab'];
+        final debugShowGameOverOnLoad =
+            state.uri.queryParameters['debug_show_game_over_on_load'] == '1';
         final difficulty = NewRunSetup.parseDifficulty(
           state.uri.queryParameters['difficulty'],
         );
@@ -99,6 +101,7 @@ final GoRouter appRouter = GoRouter(
           debugCompleteRunOnLoad: debugCompleteRunOnLoad,
           debugAutoUseItemId: debugAutoUseItemId,
           debugStartItemShop: debugShopTab == 'items',
+          debugShowGameOverOnLoad: debugShowGameOverOnLoad,
         );
       },
     ),
@@ -130,6 +133,7 @@ final GoRouter appRouter = GoRouter(
       path: RoutePaths.archive,
       builder: (context, state) => ArchiveView(
         debugScrollPreset: state.uri.queryParameters['debug_scroll'],
+        debugCollectionPreset: state.uri.queryParameters['debug_collection'],
       ),
     ),
   ],

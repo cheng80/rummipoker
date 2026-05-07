@@ -12,7 +12,7 @@ from typing import Any
 
 
 TIER_ORDER = {"small": 0, "big": 1, "boss": 2}
-DIFFICULTY_ORDER = {"relaxed": 0, "standard": 1, "pressure": 2}
+DIFFICULTY_ORDER = {"relaxed": 0, "standard": 1, "challenge": 2}
 
 
 @dataclass(frozen=True)

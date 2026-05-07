@@ -39,9 +39,10 @@
 
 | Difficulty | Multiplier |
 |---|---:|
-| relaxed | 0.8 |
 | standard | 1.0 |
-| pressure | 1.2 |
+| challenge | 1.2 |
+
+`relaxed`는 이전 실험용 난이도 id로 남아 있지만 일반 새 run 선택지에는 노출하지 않는다. 출품용 플레이어 노출명은 `standard=표준`, `challenge=도전`이다.
 
 Run modifier multiplier:
 
@@ -54,15 +55,17 @@ Run modifier는 숨은 자동 보정이 아니다. 새 런 시작 시 명시적�
 
 `high_stakes`는 Insight 20으로 해금하는 명시적 계약이다. 목표 점수와 blind reward preview/reward만 함께 올리며, 인런 골드/아이템/Jester/자원은 직접 지급하지 않는다. active run 저장에는 선택된 modifier id를 보존하고, 기존 저장처럼 modifier가 없는 payload는 `basic`으로 복원한다.
 
-`high_stakes`는 압박이 높기 때문에 상점 생성/표시 시점의 transient market pressure profile도 함께 사용한다. 이 profile은 저장 포맷을 늘리지 않고 선택된 run modifier에서 파생한다. 효과는 S3 이후 item offer 후보 폭 +1, missing growth 후보의 item/Jester 마켓 노출 확률 보강이며, 자동 지급/고정 슬롯/자동 구매는 하지 않는다.
+`high_stakes`는 상위 난도 계약이므로 상점 생성/표시 시점의 transient market profile도 함께 사용한다. 이 profile은 저장 포맷을 늘리지 않고 선택된 run modifier에서 파생한다. 효과는 S3 이후 item offer 후보 폭 +1, missing growth 후보의 item/Jester 마켓 노출 확률 보강이며, 자동 지급/고정 슬롯/자동 구매는 하지 않는다.
 
-`high_stakes`는 고레벨 계약이므로 `basic`과 같은 clear rate를 목표로 하지 않는다. 목표는 압박 제거가 아니라, 좋은 market 선택 proxy가 none/control보다 낮아지는 불합리한 역전을 막으면서 S8 boss와 board/draw 병목이 남는 상태를 유지하는 것이다.
+`high_stakes`는 고레벨 계약이므로 `basic`과 같은 clear rate를 목표로 하지 않는다. 목표는 난도를 없애는 것이 아니라, 좋은 market 선택 proxy가 none/control보다 낮아지는 불합리한 역전을 막으면서 S8 boss와 board/draw 실패 구간이 남는 상태를 유지하는 것이다.
 
-S8 이후는 실제 진행 구간 밖이다. 디버그/테스트용으로만 마지막 구간 성장률을 이어 붙여 단조 증가를 보장한다.
+S8 Boss 클리어는 기본 런 승리로 처리한다. 정산 시트에서 `런 완료`를 고르면 Title로 돌아가고, `계속 진행`을 고르면 S8 승리 보상/난이도 해금을 1회 처리한 뒤 S9+ 기록 도전으로 이어진다.
+
+S9 이후 target은 디버그 전용이 아니라 승리 이후 계속 진행용 fallback이다. 마지막 구간 성장률을 이어 붙여 단조 증가를 보장한다. S8 승리 보상은 저장되는 `runCompletionRewardClaimed` 상태로 중복 지급을 막는다.
 
 ## 3. Blind Resource Pressure
 
-이 값은 전투 시작 자원 압박이며, 자동 보상/성장 지급이 아니다.
+이 값은 전투 시작 자원 제약이며, 자동 보상/성장 지급이 아니다.
 
 | Tier | board discard | hand discard | max hand size | reward preview |
 |---|---|---|---|---:|
@@ -128,14 +131,14 @@ Catalog economy normalization:
 |---:|---|---|---|
 | 0 | `color_dampener_cycle` | tile color weaken | 색상 약화 계열 |
 | 1 | `line_kind_dampener_cycle` | line kind weaken | row/column/diagonal 약화 계열 |
-| 2 | `face_tile_dampener` | face tile weaken | 11~13 face tile 압박 |
-| 3 | `repeat_rank_pressure_v4` | repeat hand rank weaken | 같은 rank/족보 반복 압박 |
-| 4 | `single_rank_pressure` | single hand rank pressure | 단일 rank/족보 압박 |
+| 2 | `face_tile_dampener` | face tile weaken | 11~13 face tile 제약 |
+| 3 | `repeat_rank_pressure_v4` | repeat hand rank weaken | 같은 rank/족보 반복 제약 |
+| 4 | `single_rank_pressure` | single hand rank pressure | 단일 rank/족보 제약 |
 | 5 | `confirm_count_tax_v2` | confirm count tax | confirm 횟수 이후 점수 세금 |
 | 6 | `all_score_dampener` | base score and mult weaken | 전체 score 약화 |
 | 7 | `first_confirm_tax` | opening tax | 첫 confirm 약화 |
 | 8 | `target_spike_wall` | large target spike | 목표 점수 spike |
-| 9 | `resource_squeeze` | hand size/discard pressure | 손패/버림 압박 proxy |
+| 9 | `resource_squeeze` | hand size/discard pressure | 손패/버림 자원 제약 proxy |
 
 Weighted boss pool v3:
 
@@ -158,7 +161,7 @@ Weighted boss pool v3:
 Runtime migration status:
 
 - 현재 구현된 런타임 보스 제약은 `tileColorWeaken`, `lineKindWeaken`, `faceTileWeaken`, `allScoreWeaken`, `firstConfirmWeaken`, `confirmCountWeaken`, `repeatHandRankWeaken`, `singleHandRankPressure`이다.
-- `face_tile_dampener`는 runtime boss modifier로 적용한다. 기존 타일 대상 약화 구조를 확장하며, 11~13 face tile 압박이라는 의미도 분명하다.
+- `face_tile_dampener`는 runtime boss modifier로 적용한다. 기존 타일 대상 약화 구조를 확장하며, 11~13 face tile 제약이라는 의미도 분명하다.
 - `all_score_dampener`는 모든 점수 라인 20% 감소로 적용한다. 특정 타일 표시 대상이 아니므로 보스 팝업/정산 penalty 표시를 기준으로 읽힌다.
 - `first_confirm_tax`는 첫 confirm 점수 라인 30% 감소로 적용한다.
 - `confirm_count_tax_v2`는 세 번째 confirm부터 점수 라인 25% 감소로 적용한다. 새 저장 필드 없이 기존 `confirmCountThisStation`을 사용한다.
@@ -167,7 +170,7 @@ Runtime migration status:
 - `single_rank_pressure`는 A안 기준으로 첫 confirm 족보를 다시 확정하면 점수 라인을 30% 감소시키는 modifier로 구현됐다. 타일별 제약이 아니므로 타일 배지는 표시하지 않고 보스 팝업/정산 penalty로 읽힌다.
 - `repeat_rank_pressure_v4`, `single_rank_pressure`는 mid/mid-late station pool 후보로 들어간다.
 - `target_spike_wall`은 boss modifier가 아니라 target score 레버로 본다.
-- `resource_squeeze`는 자동 자원 지급/보정이 아니라 시작 압박 또는 마켓 후보 수요로만 해석한다.
+- `resource_squeeze`는 자동 자원 지급/보정이 아니라 시작 자원 제약 또는 마켓 후보 수요로만 해석한다.
 
 Runtime S1~S8 boss station pool:
 
@@ -176,10 +179,10 @@ Runtime S1~S8 boss station pool:
 | S1 | entry | `red_dampener_v1`, `yellow_dampener_v1`, `row_line_dampener_v1` | 입구 안정성 유지, 약한 색상/라인 variation |
 | S2 | early | `row_line_dampener_v1`, `blue_dampener_v1`, `yellow_dampener_v1`, `face_tile_dampener_v1` | 초반 성장 선택을 흔드는 line/color/face variation |
 | S3 | growthCheck | `face_tile_dampener_v1`, `black_dampener_v1`, `blue_dampener_v1`, `column_line_dampener_v1` | 성장 축 검증 시작 |
-| S4 | mid | `column_line_dampener_v1`, `diagonal_line_dampener_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` | 중반 패턴 전환 압박 |
-| S5 | midLate | `all_score_dampener_v1`, `confirm_limit_tax_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` | 중후반 점수/확정/족보 압박 |
-| S6 | late | `diagonal_line_dampener_v1`, `all_score_dampener_v1`, `first_confirm_tax_v1`, `confirm_count_tax_v2` | 후반 라인/정산 순서 압박 |
-| S7 | late | `first_confirm_tax_v1`, `confirm_count_tax_v2`, `confirm_limit_tax_v1`, `all_score_dampener_v1` | 후반 확정 순서/누적 압박 |
+| S4 | mid | `column_line_dampener_v1`, `diagonal_line_dampener_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` | 중반 패턴 전환 제약 |
+| S5 | midLate | `all_score_dampener_v1`, `confirm_limit_tax_v1`, `repeat_rank_pressure_v4`, `single_rank_pressure` | 중후반 점수/확정/족보 제약 |
+| S6 | late | `diagonal_line_dampener_v1`, `all_score_dampener_v1`, `first_confirm_tax_v1`, `confirm_count_tax_v2` | 후반 라인/정산 순서 제약 |
+| S7 | late | `first_confirm_tax_v1`, `confirm_count_tax_v2`, `confirm_limit_tax_v1`, `all_score_dampener_v1` | 후반 확정 순서/누적 제약 |
 | S8 | finalGate | `confirm_count_tax_v2`, `all_score_dampener_v1`, `first_confirm_tax_v1`, `confirm_limit_tax_v1` | 최종 점수/confirm gate |
 
 ## 6. Market Band Policy
@@ -229,7 +232,7 @@ Final band shape correction:
 
 | Station | Condition | Bonus | Purpose |
 |---|---|---:|---|
-| S7~S8 | `tile_color`, `draw`, 또는 `score` 없는 순수 `rank` 후보 | +80 | S8 boss의 deck exhausted 축을 직접 지급 없이 마켓 후보군 안정성으로 완화 |
+| S7~S8 | `tile_color`, `draw`, 또는 `score` 없는 순수 `rank` 후보 | +80 | S8 boss의 deck exhausted 축을 직접 지급 없이 마켓 후보군 안정성으로 보강 |
 
 이 보정은 `score/xmult/boss` 후보를 더 올리는 조정이 아니다. 이미 충분했던 점수 전환 후보보다 낮게 보이던 덱/타일 형상 보정 후보를 final band에서 완전히 밀려나지 않게 만드는 floor다.
 
@@ -254,10 +257,10 @@ Sim parity:
 
 | Signal | 해석 | 먼저 볼 레버 |
 |---|---|---|
-| S1 boss top failure | 초반 보스 압박이 살아 있음 | target/constraint display/첫 클리어 골드 흐름 |
+| S1 boss top failure | 초반 보스 난도가 살아 있음 | target/constraint display/첫 클리어 골드 흐름 |
 | S4/S5 failure | 중반 성장축/board pressure 병목 | market candidate availability, score/shape 후보 |
 | S8 boss deck exhausted | 후반 점수 전환은 충분하나 덱/타일 형상 후보가 낮을 수 있음 | late boss band 후보군 availability |
-| board locked 증가 | 슬롯/자원 자동 보정 근거 아님 | board pressure 완화 후보 노출/가격 |
+| board locked 증가 | 슬롯/자원 자동 보정 근거 아님 | board pressure 보강 후보 노출/가격 |
 | avg total turn 감소 | 템포 개선 | clear rate와 같이 확인 |
 | path clear 급등 | 과보정 의심 | failure distribution과 top bottleneck 확인 |
 
@@ -270,7 +273,7 @@ Sim parity:
 - 아이템/Jester/Pack/덱 타일 직접 지급
 - 특정 slot 고정 노출
 - bot 구매 결과를 시스템 지급으로 번역
-- S1 boss target만 낮춰 `small < big < boss` 압박을 깨는 조정
+- S1 boss target만 낮춰 `small < big < boss` 난도 구조를 깨는 조정
 
 ## 10. 다음 적용 후보
 

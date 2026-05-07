@@ -770,7 +770,7 @@ class RummiStationBandMarketPolicy {
         matched += 1;
       }
     }
-    // 직접 지급이 아니라 등장 확률만 보정한다. high stakes는 압박이
+    // 직접 지급이 아니라 등장 확률만 보정한다. high stakes는 난도가
     // 높으므로 필요한 성장축 후보가 마켓에 남는 힘만 조금 더 준다.
     final cappedMatches = matched > 2 ? 2 : matched;
     final bonusPerMatch =
@@ -977,6 +977,7 @@ class RummiRunProgress {
   RummiRunProgress.restore({
     required this.stageIndex,
     this.currentStationBlindTierIndex = 0,
+    this.runCompletionRewardClaimed = false,
     required this.gold,
     required this.rerollCost,
     int? itemRerollCost,
@@ -990,6 +991,12 @@ class RummiRunProgress {
     required Map<RummiHandRank, int> playedHandCounts,
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
+    this.seenMarketJesterIds = const <String>{},
+    this.seenMarketItemIds = const <String>{},
+    this.boughtJesterIds = const <String>{},
+    this.boughtItemIds = const <String>{},
+    this.seenBossModifierIds = const <String>{},
+    this.clearedStationKeys = const <String>{},
   }) {
     this.itemRerollCost = itemRerollCost ?? rerollCost;
     this.quickSlotRerollCost =
@@ -1015,6 +1022,7 @@ class RummiRunProgress {
 
   int stageIndex = 1;
   int currentStationBlindTierIndex = 0;
+  bool runCompletionRewardClaimed = false;
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
   int itemRerollCost = shopBaseRerollCost;
@@ -1024,6 +1032,12 @@ class RummiRunProgress {
   int gearRerollCost = shopBaseRerollCost;
   RunInventoryState itemInventory = const RunInventoryState();
   RummiMarketModifierState marketModifiers = const RummiMarketModifierState();
+  Set<String> seenMarketJesterIds = <String>{};
+  Set<String> seenMarketItemIds = <String>{};
+  Set<String> boughtJesterIds = <String>{};
+  Set<String> boughtItemIds = <String>{};
+  Set<String> seenBossModifierIds = <String>{};
+  Set<String> clearedStationKeys = <String>{};
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
   final List<RummiShopOffer> shopOffers = <RummiShopOffer>[];
   final Map<int, int> _statefulValuesBySlot = <int, int>{};
@@ -1039,6 +1053,7 @@ class RummiRunProgress {
     return RummiRunProgress.restore(
       stageIndex: stageIndex,
       currentStationBlindTierIndex: currentStationBlindTierIndex,
+      runCompletionRewardClaimed: runCompletionRewardClaimed,
       gold: gold,
       rerollCost: rerollCost,
       itemRerollCost: itemRerollCost,
@@ -1060,7 +1075,28 @@ class RummiRunProgress {
       playedHandCounts: Map<RummiHandRank, int>.from(_playedHandCounts),
       itemInventory: itemInventory,
       marketModifiers: marketModifiers,
+      seenMarketJesterIds: Set<String>.from(seenMarketJesterIds),
+      seenMarketItemIds: Set<String>.from(seenMarketItemIds),
+      boughtJesterIds: Set<String>.from(boughtJesterIds),
+      boughtItemIds: Set<String>.from(boughtItemIds),
+      seenBossModifierIds: Set<String>.from(seenBossModifierIds),
+      clearedStationKeys: Set<String>.from(clearedStationKeys),
     );
+  }
+
+  /// 도감에 남길 마켓 노출 이력을 런 진행 상태에 쌓는다.
+  void recordSeenMarketItems(Iterable<String> itemIds) {
+    seenMarketItemIds.addAll(itemIds.where((id) => id.isNotEmpty));
+  }
+
+  void recordSeenBossModifier(String? modifierId) {
+    if (modifierId == null || modifierId.isEmpty) return;
+    seenBossModifierIds.add(modifierId);
+  }
+
+  void recordClearedStation(int stationIndex) {
+    if (stationIndex <= 0) return;
+    clearedStationKeys.add('station_$stationIndex');
   }
 
   int targetForStage(int stageNumber) {
@@ -1545,6 +1581,7 @@ class RummiRunProgress {
     }
     gold -= price;
     ownedJesters.add(offer.card);
+    boughtJesterIds.add(offer.card.id);
     _initializeStateForSlot(ownedJesters.length - 1, offer.card);
     shopOffers.removeAt(offerIndex);
     _consumePurchaseDiscounts('jester');
@@ -1570,6 +1607,7 @@ class RummiRunProgress {
       quickSlotCapacity: capacity,
       passiveRelicCapacity: passiveRelicCapacity(itemCatalog: itemCatalog),
     );
+    boughtItemIds.add(item.id);
     _consumePurchaseDiscounts('item');
     return true;
   }
@@ -1760,6 +1798,7 @@ class RummiRunProgress {
       shopOffers.add(
         RummiShopOffer(slotIndex: shopOffers.length, card: selected),
       );
+      seenMarketJesterIds.add(selected.id);
     }
     final focusSlot = _missingJesterGrowthFocusSlot(
       rng,
@@ -1780,12 +1819,14 @@ class RummiRunProgress {
           final selected = _pickWeightedShopJester(pool: focusPool, rng: rng);
           pool.remove(selected);
           shopOffers.add(RummiShopOffer(slotIndex: slot, card: selected));
+          seenMarketJesterIds.add(selected.id);
           continue;
         }
       }
       final selected = _pickWeightedShopJester(pool: pool, rng: rng);
       pool.remove(selected);
       shopOffers.add(RummiShopOffer(slotIndex: slot, card: selected));
+      seenMarketJesterIds.add(selected.id);
     }
   }
 

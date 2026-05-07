@@ -177,7 +177,7 @@ class RummiBossModifier {
   static const confirmLimitTax = RummiBossModifier(
     id: 'confirm_limit_tax_v1',
     category: RummiBossModifierCategory.confirmCountWeaken,
-    title: '연속 확정 압박',
+    title: '연속 확정 제한',
     ruleText: '두 번째 확정부터 점수 라인이 30% 감소합니다.',
     markerText: '2+',
     scoreMultiplier: 0.7,
@@ -196,7 +196,7 @@ class RummiBossModifier {
   static const singleRankPressure = RummiBossModifier(
     id: 'single_rank_pressure',
     category: RummiBossModifierCategory.singleHandRankPressure,
-    title: '단일 족보 압박',
+    title: '첫 족보 제한',
     ruleText: '첫 확정 족보를 다시 확정하면 점수 라인이 30% 감소합니다.',
     markerText: '첫족보',
     scoreMultiplier: 0.7,

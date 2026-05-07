@@ -719,7 +719,7 @@ void main() {
     expect(penalty.scoreDelta, -37);
   });
 
-  test('보스 연속 확정 압박은 두 번째 confirm부터 적용된다', () {
+  test('보스 연속 확정 제한은 두 번째 confirm부터 적용된다', () {
     final firstBoard = RummiBoard();
     for (var i = 0; i < kBoardSize; i++) {
       firstBoard.setCell(2, i, t(TileColor.red, i + 1));
@@ -763,7 +763,7 @@ void main() {
     expect(secondOut.result.scoreAdded, 105);
     final penalty =
         secondOut.result.lineBreakdowns.single.constraintPenalties.single;
-    expect(penalty.title, '연속 확정 압박');
+    expect(penalty.title, '연속 확정 제한');
     expect(penalty.markerText, '2+');
     expect(penalty.scoreDelta, -45);
   });
@@ -811,7 +811,7 @@ void main() {
     expect(penalty.scoreMultiplier, 0.8);
   });
 
-  test('보스 단일 족보 압박은 첫 confirm 족보를 다시 쓰면 줄인다', () {
+  test('보스 첫 족보 제한은 첫 confirm 족보를 다시 쓰면 줄인다', () {
     final board = RummiBoard();
     board.setCell(2, 0, t(TileColor.red, 4));
     board.setCell(2, 1, t(TileColor.blue, 4));
@@ -847,7 +847,7 @@ void main() {
     expect(secondOut.result.scoreAdded, 18);
     final penalty =
         secondOut.result.lineBreakdowns.single.constraintPenalties.single;
-    expect(penalty.title, '단일 족보 압박');
+    expect(penalty.title, '첫 족보 제한');
     expect(penalty.markerText, '첫족보');
     expect(penalty.scoreDelta, -7);
     expect(penalty.scoreMultiplier, 0.7);

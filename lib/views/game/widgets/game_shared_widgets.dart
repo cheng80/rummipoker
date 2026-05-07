@@ -2700,25 +2700,48 @@ class GameOverInsightRewardCard extends StatelessWidget {
           color: const Color(0xFF64D8A4).withValues(alpha: 0.42),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            '획득 예정 Insight +$insightReward',
-            style: const TextStyle(
+          Container(
+            width: 42,
+            height: 54,
+            decoration: BoxDecoration(
+              color: const Color(0xFF132520),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF9DF0BE), width: 1.4),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.style_rounded,
               color: Color(0xFF9DF0BE),
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
+              size: 24,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '종료하면 다음 런 계약 해금에 사용할 수 있습니다.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              height: 1.25,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '기억 카드 획득',
+                  style: TextStyle(
+                    color: Color(0xFF9DF0BE),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '다음 런 준비에서 새 규칙을 여는 데 사용됩니다.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -2729,17 +2752,19 @@ class GameOverInsightRewardCard extends StatelessWidget {
 
 /// 만료 신호 목록으로 게임오버 다이얼로그를 표시한다.
 /// [onRetry]는 현재 스테이지 시작 스냅샷으로 즉시 복원한다.
+/// [onNewRun]은 이번 런 기록을 남기고 새 run 준비로 이동한다.
 /// [onExit]는 저장을 정리하고 타이틀로 이동한다.
 void showGameOverDialog({
   required BuildContext context,
   required List<RummiExpirySignal> signals,
   required int insightReward,
   required Future<void> Function() onRetry,
+  required Future<void> Function() onNewRun,
   required Future<void> Function() onExit,
 }) {
   final text =
       '${signals.map(expirySignalLabel).join('\n')}\n\n'
-      '현재 스테이지 시작 상태로 다시 시도하거나 종료할 수 있습니다.';
+      '이번 런의 기록을 남기고 새로 시작할 수 있습니다.';
   showGameFramedDialog<void>(
     context: context,
     barrierDismissible: false,
@@ -2771,33 +2796,42 @@ void showGameOverDialog({
             GameOverInsightRewardCard(insightReward: insightReward),
           ],
           const SizedBox(height: 18),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: GameActionButton(
-                  label: '다시하기',
-                  background: const Color(0xFFF4A81D),
-                  foreground: Colors.black,
-                  onPressed: () async {
-                    Navigator.of(ctx).pop();
-                    await WidgetsBinding.instance.endOfFrame;
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                    await onRetry();
-                  },
-                ),
+              GameActionButton(
+                label: '다시 도전',
+                background: const Color(0xFFF4A81D),
+                foreground: Colors.black,
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  await WidgetsBinding.instance.endOfFrame;
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  await onRetry();
+                },
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: GameActionButton(
-                  label: context.tr('exit'),
-                  background: const Color(0xFF5D6B68),
-                  onPressed: () async {
-                    Navigator.of(ctx).pop();
-                    await WidgetsBinding.instance.endOfFrame;
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                    await onExit();
-                  },
-                ),
+              const SizedBox(height: 10),
+              GameActionButton(
+                label: '새 run 준비',
+                background: const Color(0xFF64D8A4),
+                foreground: Colors.black,
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  await WidgetsBinding.instance.endOfFrame;
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  await onNewRun();
+                },
+              ),
+              const SizedBox(height: 10),
+              GameActionButton(
+                label: context.tr('exit'),
+                background: const Color(0xFF5D6B68),
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  await WidgetsBinding.instance.endOfFrame;
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  await onExit();
+                },
               ),
             ],
           ),

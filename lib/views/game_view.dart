@@ -58,6 +58,7 @@ class GameView extends ConsumerStatefulWidget {
     this.debugCompleteRunOnLoad = false,
     this.debugAutoUseItemId,
     this.debugStartItemShop = false,
+    this.debugShowGameOverOnLoad = false,
   });
 
   final int runSeed;
@@ -73,6 +74,7 @@ class GameView extends ConsumerStatefulWidget {
   final bool debugCompleteRunOnLoad;
   final String? debugAutoUseItemId;
   final bool debugStartItemShop;
+  final bool debugShowGameOverOnLoad;
 
   @override
   ConsumerState<GameView> createState() => _GameViewState();
@@ -99,6 +101,7 @@ class _GameViewState extends ConsumerState<GameView>
   bool _persistRetrySnapshotOnSave = false;
   bool _autoCashOutLoopStarted = false;
   bool _debugAutoUseItemStarted = false;
+  bool _debugGameOverDialogShown = false;
   late final bool _shouldAutoCashOutRestoredBattleOnLoad;
   late bool _shouldResumeMarketOnCatalogLoad;
   ItemCatalog? _itemCatalog;
@@ -264,6 +267,7 @@ class _GameViewState extends ConsumerState<GameView>
         showTopNotice(context, '디버그 픽스처 모드: 이어하기 저장은 남기지 않습니다.');
       }
       _showBossConstraintIntroIfNeeded();
+      _showDebugGameOverOnLoadIfNeeded();
     });
   }
 
@@ -659,30 +663,46 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _exitAfterGameOver() async {
     _persistRetrySnapshotOnSave = false;
-    await RunProgressionService.handleRunEnded(
-      RunEndSummary(
-        result: RunEndResult.expired,
-        difficulty: widget.difficulty,
-        reachedStageIndex: _battleView.stageIndex,
-        defeatedBossCount: _defeatedBossCountForRunEnd(completed: false),
-      ),
-    );
+    await _recordRunEndIfNeeded(_expiredRunSummary());
     await ActiveRunSaveService.clearActiveRun();
     await _goToTitleAfterStoppingBgm();
   }
 
+  Future<void> _startNewRunAfterGameOver() async {
+    _persistRetrySnapshotOnSave = false;
+    await _recordRunEndIfNeeded(_expiredRunSummary());
+    await ActiveRunSaveService.clearActiveRun();
+    await SoundManager.stopBgm();
+    if (!mounted) return;
+    context.go(RoutePaths.newRun);
+  }
+
   Future<void> _completeRunAndReturnToTitle() async {
     _persistRetrySnapshotOnSave = false;
-    await RunProgressionService.handleRunEnded(
-      RunEndSummary(
-        result: RunEndResult.completed,
-        difficulty: widget.difficulty,
-        reachedStageIndex: _battleView.stageIndex,
-        defeatedBossCount: _defeatedBossCountForRunEnd(completed: true),
-      ),
-    );
+    await _recordRunEndIfNeeded(_completedRunSummary());
     await ActiveRunSaveService.clearActiveRun();
     await _goToTitleAfterStoppingBgm();
+  }
+
+  Future<void> _recordRunEndIfNeeded(RunEndSummary summary) async {
+    // 디버그 fixture는 눈검증용이므로 보상/도감 저장 상태를 바꾸지 않는다.
+    if (_isDebugFixtureRun) return;
+    await RunProgressionService.handleRunEnded(summary);
+  }
+
+  RunEndSummary _expiredRunSummary() {
+    return RunEndSummary(
+      result: RunEndResult.expired,
+      difficulty: widget.difficulty,
+      reachedStageIndex: _battleView.stageIndex,
+      defeatedBossCount: _defeatedBossCountForRunEnd(completed: false),
+      seenMarketJesterIds: _runProgressCollection.seenMarketJesterIds,
+      seenMarketItemIds: _runProgressCollection.seenMarketItemIds,
+      boughtJesterIds: _runProgressCollection.boughtJesterIds,
+      boughtItemIds: _runProgressCollection.boughtItemIds,
+      seenBossModifierIds: _runProgressCollection.seenBossModifierIds,
+      clearedStationKeys: _runProgressCollection.clearedStationKeys,
+    );
   }
 
   int _defeatedBossCountForRunEnd({required bool completed}) {
@@ -704,8 +724,28 @@ class _GameViewState extends ConsumerState<GameView>
       signals: signals,
       insightReward: RunProgressionService.calculateInsightReward(summary),
       onRetry: _restartFromStageSnapshot,
+      onNewRun: _startNewRunAfterGameOver,
       onExit: _exitAfterGameOver,
     );
+  }
+
+  void _showDebugGameOverOnLoadIfNeeded() {
+    if (!kDebugMode ||
+        !widget.debugShowGameOverOnLoad ||
+        _debugGameOverDialogShown) {
+      return;
+    }
+    _debugGameOverDialogShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future<void>.delayed(const Duration(milliseconds: 220));
+      if (!mounted) return;
+      final signals = _gameNotifier.evaluateExpiry();
+      _showGameOver(
+        signals.isEmpty
+            ? const [RummiExpirySignal.boardFullAfterDcExhausted]
+            : signals,
+      );
+    });
   }
 
   Future<bool> _afterAction() async {
@@ -1263,7 +1303,7 @@ class _GameViewState extends ConsumerState<GameView>
     return mounted;
   }
 
-  Future<bool?> _showCashOutSheet(
+  Future<GameCashOutAction?> _showCashOutSheet(
     RummiCashOutBreakdown breakdown, {
     bool autoEnterMarketOnLoad = false,
     bool completesRun = false,
@@ -1275,7 +1315,7 @@ class _GameViewState extends ConsumerState<GameView>
     final insightReward = completesRun
         ? RunProgressionService.calculateInsightReward(_completedRunSummary())
         : 0;
-    return showModalBottomSheet<bool>(
+    return showModalBottomSheet<GameCashOutAction>(
       context: context,
       isScrollControlled: true,
       isDismissible: false,
@@ -1311,16 +1351,23 @@ class _GameViewState extends ConsumerState<GameView>
     await _saveActiveRun(scene: ActiveRunScene.battle);
 
     final completesRun = _isFinalBossCleared;
-    final enterShop = await _showCashOutSheet(
+    final cashOutAction = await _showCashOutSheet(
       breakdown,
       autoEnterMarketOnLoad: autoEnterMarketOnLoad,
       completesRun: completesRun,
     );
-    if (completesRun && enterShop == false) {
+    if (cashOutAction == GameCashOutAction.completeRun) {
       await _completeRunAndReturnToTitle();
       return;
     }
-    if (!mounted || enterShop != true) return;
+    if (cashOutAction == GameCashOutAction.continueEndless) {
+      await _claimRunCompletionRewardIfNeeded();
+    }
+    if (!mounted ||
+        cashOutAction != GameCashOutAction.enterMarket &&
+            cashOutAction != GameCashOutAction.continueEndless) {
+      return;
+    }
 
     _gameNotifier.enterMarketAfterCashOut(itemCatalog: _itemCatalog);
     await _saveActiveRun();
@@ -1346,8 +1393,19 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   bool get _isFinalBossCleared {
-    return _battleView.stageIndex >= _finalStationIndex &&
+    return _battleView.stageIndex == _finalStationIndex &&
         _battleView.currentBlindTierIndex >= BlindTier.boss.index;
+  }
+
+  Future<void> _claimRunCompletionRewardIfNeeded() async {
+    final runProgress = _gameState.runProgress;
+    if (runProgress == null || runProgress.runCompletionRewardClaimed) {
+      return;
+    }
+    await _recordRunEndIfNeeded(_completedRunSummary());
+    runProgress.runCompletionRewardClaimed = true;
+    _gameNotifier.markDirty();
+    await _saveActiveRun(scene: ActiveRunScene.battle);
   }
 
   RunEndSummary _completedRunSummary() {
@@ -1356,7 +1414,17 @@ class _GameViewState extends ConsumerState<GameView>
       difficulty: widget.difficulty,
       reachedStageIndex: _battleView.stageIndex,
       defeatedBossCount: _defeatedBossCountForRunEnd(completed: true),
+      seenMarketJesterIds: _runProgressCollection.seenMarketJesterIds,
+      seenMarketItemIds: _runProgressCollection.seenMarketItemIds,
+      boughtJesterIds: _runProgressCollection.boughtJesterIds,
+      boughtItemIds: _runProgressCollection.boughtItemIds,
+      seenBossModifierIds: _runProgressCollection.seenBossModifierIds,
+      clearedStationKeys: _runProgressCollection.clearedStationKeys,
     );
+  }
+
+  RummiRunProgress get _runProgressCollection {
+    return _gameState.runProgress ?? RummiRunProgress();
   }
 
   Future<void> _playSettlementToMarketTransition(
@@ -2917,7 +2985,7 @@ class _ScoringPreviewChip extends StatelessWidget {
         ? '확정 가능 줄 없음'
         : '${preview.lineCount}줄 · ${gameHandRankLabel(preview.representativeRank)} · 예상 +${preview.expectedScore}';
     final detail = preview == null
-        ? '족보 줄을 만들면 빌드 효과가 미리 표시됩니다'
+        ? '빌드 효과 표시'
         : hasConstraint
         ? '약화 -${preview.constraintPenaltyPercent}%'
         : 'Base ${preview.baseScore}'

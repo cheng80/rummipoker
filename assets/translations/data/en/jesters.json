@@ -43,12 +43,12 @@
       },
       "crazy_jester": {
         "displayName": "Run Call",
-        "effectText": "If the scoring line contains a Straight or better, +12 Mult.",
+        "effectText": "If the scoring line contains a run, +12 Mult.",
         "notes": ""
       },
       "droll_jester": {
         "displayName": "Color Call",
-        "effectText": "If the scoring line contains a Flush or better, +10 Mult.",
+        "effectText": "If the scoring line uses one color, +10 Mult.",
         "notes": ""
       },
       "sly_jester": {
@@ -68,12 +68,12 @@
       },
       "devious_jester": {
         "displayName": "Run Battery",
-        "effectText": "If the scoring line contains a Straight or better, +100 Chips.",
+        "effectText": "If the scoring line contains a run, +100 Chips.",
         "notes": ""
       },
       "crafty_jester": {
         "displayName": "Color Battery",
-        "effectText": "If the scoring line contains a Flush or better, +80 Chips.",
+        "effectText": "If the scoring line uses one color, +80 Chips.",
         "notes": ""
       },
       "half_jester": {
@@ -208,12 +208,12 @@
       },
       "the_order": {
         "displayName": "Run Pact",
-        "effectText": "If the scoring line contains a Straight or better, x3 Mult.",
+        "effectText": "If the scoring line contains a run, x3 Mult.",
         "notes": ""
       },
       "the_tribe": {
         "displayName": "Color Pact",
-        "effectText": "If the scoring line contains a Flush or better, x2 Mult.",
+        "effectText": "If the scoring line uses one color, x2 Mult.",
         "notes": ""
       }
     }

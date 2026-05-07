@@ -53,7 +53,7 @@ void main() {
             loadoutId: 'baseline',
             station: 2,
             tier: 'boss',
-            difficulty: 'pressure',
+            difficulty: 'challenge',
             clearRate: 0.0,
             scoreRatio: 0.62,
             turns: 109.0,

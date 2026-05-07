@@ -29,6 +29,7 @@
 10. `docs/planning/LEVELING_APPLIED_STATUS.md`
 11. `docs/planning/ECONOMY_LEVELING_PLAN.md`
 12. `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
+13. `docs/planning/COMPETITION_SUBMISSION_CHECKLIST.md`
 
 `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`가 존재하면 현재 임시 작업 순서를 잠그는 문서이므로 planning 문서보다 먼저 확인한다.
 `docs/planning/STATUS.md`, `docs/planning/IMPLEMENTATION_PLAN.md`, `docs/planning/MIGRATION_ROADMAP.md`는 과거 진행 snapshot/compatibility 문서이며, current source of truth가 아니다.
@@ -42,7 +43,9 @@
 5. `lib/views/game_view.dart`
 6. `lib/views/game/widgets/`
 7. `lib/views/title_view.dart`
-8. `lib/router.dart`
+8. `lib/views/new_run_view.dart`
+9. `lib/views/archive_view.dart`
+10. `lib/router.dart`
 
 Item/Market/Station 작업이면 아래 파일을 추가로 먼저 본다.
 
@@ -229,10 +232,20 @@ Protection rule:
 ### `lib/services/run_progression_service.dart`
 
 - run/stage progression helper logic
+- 런 완료/보상/해금 기록 처리
+- S8 승리 보상 중복 지급 방지
+- 게임오버/런 완료 후 수집 기록 업데이트
 
 ### `lib/services/run_unlock_state_service.dart`
 
 - unlock state support for run selection flows
+- 난이도 clear/unlock 상태
+- 런 종료 기억 카드와 Insight 보상 상태
+- 도감 수집 상태
+  - 마켓에서 본 Jester/Item
+  - 구매한 Jester/Item
+  - Boss/Station 이력
+  - 획득한 기억 카드
 
 ### `lib/services/debug_run_fixture_service.dart`
 
@@ -242,6 +255,34 @@ Protection rule:
 ### `lib/utils/storage_helper.dart`
 
 - lower-level local storage wrapper
+
+---
+
+## 4.5 Archive / Collection
+
+### `lib/views/archive_view.dart`
+
+공모전 빌드 기준의 1차 도감 화면이다.
+
+Responsibilities:
+
+- 기억 카드/Jester/Item 수집판 표시
+- 미수집 칸과 수집 카드 face의 같은 크기 grid 유지
+- `미발견`, `발견`, `획득`, `클리어` 상태 라벨 표시
+- 상태 라벨을 카드 face 바깥 하단 영역에 배치
+- 카드 face만 선택/탭 대상 처리
+- 항목 상세를 수집판 아래 접이식 패널로 표시
+- debug query `debug_collection=full`로 도감 표시 상태 확인
+
+Related tests:
+
+- `test/views/archive_view_test.dart`
+
+Protection rules:
+
+- 상태 라벨을 카드 face 위에 overlay하지 않는다.
+- 상태 라벨은 카드 선택/탭 영역에 포함하지 않는다.
+- 수집 grid는 마지막 페이지 항목이 적어도 좌측 기준으로 채운다.
 
 ---
 

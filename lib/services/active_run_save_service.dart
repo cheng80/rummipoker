@@ -260,6 +260,7 @@ class SavedRunProgressData {
   const SavedRunProgressData({
     required this.stageIndex,
     this.currentStationBlindTierIndex = 0,
+    this.runCompletionRewardClaimed = false,
     required this.gold,
     required this.rerollCost,
     int? itemRerollCost,
@@ -273,6 +274,12 @@ class SavedRunProgressData {
     required this.playedHandCounts,
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
+    this.seenMarketJesterIds = const <String>[],
+    this.seenMarketItemIds = const <String>[],
+    this.boughtJesterIds = const <String>[],
+    this.boughtItemIds = const <String>[],
+    this.seenBossModifierIds = const <String>[],
+    this.clearedStationKeys = const <String>[],
   }) : itemRerollCost = itemRerollCost ?? rerollCost,
        quickSlotRerollCost =
            quickSlotRerollCost ?? itemRerollCost ?? rerollCost,
@@ -282,6 +289,7 @@ class SavedRunProgressData {
 
   final int stageIndex;
   final int currentStationBlindTierIndex;
+  final bool runCompletionRewardClaimed;
   final int gold;
   final int rerollCost;
   final int itemRerollCost;
@@ -295,10 +303,17 @@ class SavedRunProgressData {
   final Map<String, int> playedHandCounts;
   final RunInventoryState itemInventory;
   final RummiMarketModifierState marketModifiers;
+  final List<String> seenMarketJesterIds;
+  final List<String> seenMarketItemIds;
+  final List<String> boughtJesterIds;
+  final List<String> boughtItemIds;
+  final List<String> seenBossModifierIds;
+  final List<String> clearedStationKeys;
 
   Map<String, dynamic> toJson() => {
     'stageIndex': stageIndex,
     'currentStationBlindTierIndex': currentStationBlindTierIndex,
+    'runCompletionRewardClaimed': runCompletionRewardClaimed,
     'gold': gold,
     'rerollCost': rerollCost,
     'itemRerollCost': itemRerollCost,
@@ -312,6 +327,12 @@ class SavedRunProgressData {
     'playedHandCounts': playedHandCounts,
     'itemInventory': itemInventory.toJson(),
     'marketModifiers': marketModifiers.toJson(),
+    'seenMarketJesterIds': seenMarketJesterIds,
+    'seenMarketItemIds': seenMarketItemIds,
+    'boughtJesterIds': boughtJesterIds,
+    'boughtItemIds': boughtItemIds,
+    'seenBossModifierIds': seenBossModifierIds,
+    'clearedStationKeys': clearedStationKeys,
   };
 
   static SavedRunProgressData fromJson(Map<String, dynamic> json) {
@@ -319,6 +340,8 @@ class SavedRunProgressData {
       stageIndex: (json['stageIndex'] as num).toInt(),
       currentStationBlindTierIndex:
           (json['currentStationBlindTierIndex'] as num?)?.toInt() ?? 0,
+      runCompletionRewardClaimed:
+          json['runCompletionRewardClaimed'] as bool? ?? false,
       gold: (json['gold'] as num).toInt(),
       rerollCost: (json['rerollCost'] as num).toInt(),
       itemRerollCost: (json['itemRerollCost'] as num?)?.toInt(),
@@ -349,7 +372,19 @@ class SavedRunProgressData {
         (json['marketModifiers'] as Map?)?.cast<String, dynamic>() ??
             const <String, dynamic>{},
       ),
+      seenMarketJesterIds: _jsonStringList(json['seenMarketJesterIds']),
+      seenMarketItemIds: _jsonStringList(json['seenMarketItemIds']),
+      boughtJesterIds: _jsonStringList(json['boughtJesterIds']),
+      boughtItemIds: _jsonStringList(json['boughtItemIds']),
+      seenBossModifierIds: _jsonStringList(json['seenBossModifierIds']),
+      clearedStationKeys: _jsonStringList(json['clearedStationKeys']),
     );
+  }
+
+  static List<String> _jsonStringList(Object? value) {
+    return (value as List<dynamic>? ?? const <dynamic>[])
+        .whereType<String>()
+        .toList(growable: false);
   }
 }
 
@@ -603,6 +638,7 @@ class ActiveRunSaveService {
     return SavedRunProgressData(
       stageIndex: runProgress.stageIndex,
       currentStationBlindTierIndex: runProgress.currentStationBlindTierIndex,
+      runCompletionRewardClaimed: runProgress.runCompletionRewardClaimed,
       gold: runProgress.gold,
       rerollCost: runProgress.rerollCost,
       itemRerollCost: runProgress.itemRerollCost,
@@ -630,6 +666,12 @@ class ActiveRunSaveService {
       ),
       itemInventory: runProgress.itemInventory,
       marketModifiers: runProgress.marketModifiers,
+      seenMarketJesterIds: runProgress.seenMarketJesterIds.toList()..sort(),
+      seenMarketItemIds: runProgress.seenMarketItemIds.toList()..sort(),
+      boughtJesterIds: runProgress.boughtJesterIds.toList()..sort(),
+      boughtItemIds: runProgress.boughtItemIds.toList()..sort(),
+      seenBossModifierIds: runProgress.seenBossModifierIds.toList()..sort(),
+      clearedStationKeys: runProgress.clearedStationKeys.toList()..sort(),
     );
   }
 
@@ -699,6 +741,7 @@ class ActiveRunSaveService {
     return RummiRunProgress.restore(
       stageIndex: data.stageIndex,
       currentStationBlindTierIndex: data.currentStationBlindTierIndex,
+      runCompletionRewardClaimed: data.runCompletionRewardClaimed,
       gold: data.gold,
       rerollCost: data.rerollCost,
       itemRerollCost: data.itemRerollCost,
@@ -712,6 +755,12 @@ class ActiveRunSaveService {
       playedHandCounts: playedHandCounts,
       itemInventory: data.itemInventory,
       marketModifiers: data.marketModifiers,
+      seenMarketJesterIds: data.seenMarketJesterIds.toSet(),
+      seenMarketItemIds: data.seenMarketItemIds.toSet(),
+      boughtJesterIds: data.boughtJesterIds.toSet(),
+      boughtItemIds: data.boughtItemIds.toSet(),
+      seenBossModifierIds: data.seenBossModifierIds.toSet(),
+      clearedStationKeys: data.clearedStationKeys.toSet(),
     );
   }
 }

@@ -394,6 +394,7 @@ class RummiMarketRuntimeFacade {
         );
       }
     }
+    progress.recordSeenMarketItems(offers.map((offer) => offer.contentId));
     return offers;
   }
 

@@ -24,6 +24,7 @@
 5. **Jester 기반 점수 증폭**
 6. **cash-out + shop + next stage**
 7. **continue / active run save / stage restart**
+8. **새 run 난이도/계약 선택 + 런 완료 보상 + 도감 수집판 1차 구현**
 
 즉, `V4`는 빈 설계에서 시작하는 문서가 아니라  
 이미 작동하는 코어 게임 루프를 상위 구조로 재편하는 문서가 되어야 한다.
@@ -83,6 +84,9 @@
 현재:
 
 - Jester 중심
+- Item v1 런타임과 market tab 1차 연결
+- 기억 카드, Jester, Item 도감 수집판 1차 구현
+- 수집 상태는 `RunUnlockStateService`에 저장
 
 장기 목표:
 
@@ -94,7 +98,8 @@
 - Sigil
 - Risk Grade
 - Trial
-- Archive
+- Archive 완성형
+- Stats
 
 ### 3.3 데이터 구조 확장
 
@@ -102,6 +107,8 @@
 
 - active run save v2
 - stage start snapshot
+- run unlock/collection state
+- S8 런 완료 보상 중복 방지 상태
 
 장기 목표:
 
@@ -117,8 +124,11 @@
 현재:
 
 - title
+- new run
 - battle
 - shop
+- blind/station select
+- archive 1차 수집판
 - setting
 
 장기 목표:
@@ -143,8 +153,8 @@
 | shop/market | Jester + item tab 기반 Market으로 확장 중 | Station 사이 정식 Market 단계로 정리 |
 | economy | 프로토타입 수치 | 장기 밸런스 목표 기준 재설계 |
 | save | active run v2 | profile/run/checkpoint/history 분리 방향 제시 |
-| content | curated Jester 38종 중심 | 다층 콘텐츠 체계 추가 |
-| UI | 전투 중심 | 제품 전체 플로우 확장 |
+| content | curated Jester 43종 + Item v1 49종 + 기억 카드/도감 1차 | 다층 콘텐츠 체계와 완성형 archive/stats 추가 |
+| UI | 전투/마켓/새 run/도감 1차 | 제품 전체 플로우 확장 |
 | terminology | old/prototype 이름 혼재 | canonical 명칭 정책 정리 |
 
 ---

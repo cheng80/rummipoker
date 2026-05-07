@@ -18,15 +18,15 @@
 
 ## 1. 현재 프로젝트 성격
 
-현재 프로젝트는 **초기 프로토타입에서 플레이 가능한 보드형 로그라이트 전투 루프**를 먼저 붙여 놓은 상태다.
+현재 프로젝트는 **초기 프로토타입에서 공모전 제출 후보에 가까운 보드형 로그라이트 전투 루프**를 먼저 붙여 놓은 상태다.
 
 현재 구현의 핵심 특징:
 
 1. `Rummi Poker Grid`의 핵심 전투 규칙은 이미 동작한다.
 2. 상점, Jester, cash-out, stage advance, continue/save, restart까지 1차 루프가 연결되어 있다.
-3. 메타 구조는 아직 단순하다.
+3. 새 run 난이도/계약 선택, 런 완료 보상, 기억 카드, 도감 수집판까지 공모전용 1차 메타 루프가 붙어 있다.
 4. 경제, 장기 progression, 대규모 콘텐츠 계층은 아직 확장 전이다.
-5. 따라서 현재 코드는 **“작동하는 코어 프로토타입”** 이고, `V4`는 이를 장기 목표 구조로 재편하는 문서가 되어야 한다.
+5. 따라서 현재 코드는 **“작동하는 코어 프로토타입 + 공모전 제출용 메타/도감 1차 구현”** 이고, `V4`는 이를 장기 목표 구조로 재편하는 문서가 되어야 한다.
 
 ---
 
@@ -179,10 +179,10 @@
 - glyph
 - echo
 - sigil
-- archive / stats 완성형 구조
 - risk grade / trial
+- stats 완성형 구조
 
-즉, 현재는 **stage + shop + next stage** 구조다.
+즉, 현재는 **stage + shop + next stage** 구조를 기본으로 하되, 새 run/도감/보상 카드가 런 바깥 메타 화면으로 1차 연결된 상태다.
 
 ---
 
@@ -228,7 +228,8 @@
 
 현재 운영 카탈로그 기준:
 
-- common Jester 38종
+- common Jester 43종
+- Item v1 49종
 
 ### 6.3 현재 구현된 대표 범주
 
@@ -276,6 +277,8 @@
 - 현재 run progress
 - active scene
 - `stageStartSnapshot`
+- 선택 난이도와 run modifier
+- S8 런 완료 보상 중복 방지 상태
 
 ### 7.3 stage start snapshot
 
@@ -322,9 +325,12 @@
 현재 주요 화면:
 
 - `TitleView`
+- `NewRunView`
 - `GameView`
+- `BlindSelectView`
 - `SettingView`
 - `GameShopScreen`
+- `ArchiveView`
 
 ### 8.1 전투 화면 구조
 
@@ -350,6 +356,19 @@
 - `StarryBackground` 사용
 - 현재 Flame은 핵심 화면이 아니라 보조 연출 후보
 
+### 8.4 도감 화면
+
+`ArchiveView`는 공모전 빌드 기준의 1차 수집 화면이다.
+
+현재 도감은 요약 기록 목록이 아니라 수집판 형태를 우선한다.
+
+- 기억 카드, Jester, Item을 페이지 단위 grid로 보여준다.
+- 수집된 항목은 실제 카드/아이템 face로 보여주고, 미수집 항목은 같은 크기의 빈칸으로 남긴다.
+- 상태는 `미발견`, `발견`, `획득`, `클리어` 라벨로 구분한다.
+- 상태 라벨은 카드 face를 덮지 않고 카드 아래 별도 영역에 둔다.
+- 카드 선택/탭 영역과 선택 테두리는 카드 face에만 적용하고, 상태 라벨은 선택 대상에 포함하지 않는다.
+- 상세 정보는 팝업이 아니라 수집판 아래 접이식 패널로 열린다.
+
 ---
 
 ## 9. 현재 상태 관리 구조
@@ -371,6 +390,14 @@
 - `SettingsNotifier`
 - 볼륨, 음소거, 화면 꺼짐 방지 등
 
+### 9.4 런 해금/수집 상태
+
+- `RunUnlockStateService`
+- 난이도 클리어/해금 상태
+- 기억 카드와 Insight 보상
+- 마켓에서 본 Jester/Item, 구매한 Jester/Item, Boss/Station 이력 저장
+- 도감 화면의 수집 상태 source of truth
+
 ---
 
 ## 10. 현재 구현됨 / 부분 구현 / 미구현
@@ -388,6 +415,10 @@
 - continue
 - active run save/load
 - stage start restart
+- 새 run 난이도/계약 선택
+- S8 런 완료 보상 처리
+- 기억 카드/Insight 보상 저장
+- 도감 수집판 1차 구현
 
 ### 10.2 부분 구현
 
@@ -397,6 +428,7 @@
 - UI polish
 - 테스트용 shop 동선 제거 여부
 - 유저 문구 정리
+- 도감 수집 UX polish와 자연 플레이 검증
 
 ### 10.3 미구현
 
@@ -410,7 +442,6 @@
 - sigil
 - risk grade
 - trial
-- archive
 - stats
 - 장기 데이터 구조
 
@@ -423,5 +454,6 @@
 3. 현재는 `copiesPerTile` 기반 덱 구조다.
 4. 현재는 **stage 기반 루프 + full-screen Jester shop** 이다.
 5. 현재 저장은 **active run + stageStartSnapshot** 중심이다.
-6. 현재는 Jester 중심 프로토타입이며, 장기 콘텐츠 계층은 아직 추가되지 않았다.
-7. `V4`는 현재 코드를 복기하는 문서가 아니라, **현재 구조를 흡수해 장기 목표로 연결하는 문서**가 되어야 한다.
+6. 현재는 Jester/Item/기억 카드 도감이 1차 연결됐지만, 장기 archive/stats 구조는 아직 완성형이 아니다.
+7. 현재는 Jester 중심 프로토타입이며, 장기 콘텐츠 계층은 아직 추가되지 않았다.
+8. `V4`는 현재 코드를 복기하는 문서가 아니라, **현재 구조를 흡수해 장기 목표로 연결하는 문서**가 되어야 한다.

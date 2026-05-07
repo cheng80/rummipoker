@@ -331,8 +331,8 @@ class _TitleViewState extends ConsumerState<TitleView>
                         ),
                         const SizedBox(height: 12),
                         HomeEntryCard(
-                          title: '기록실',
-                          description: '기록, 수집, 통계 확인',
+                          title: '도감',
+                          description: '보상 카드와 열린 항목 확인',
                           accent: const Color(0xFF5C7CFA),
                           onTap: () => context.push(RoutePaths.archive),
                         ),

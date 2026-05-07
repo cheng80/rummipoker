@@ -6,6 +6,13 @@
 
 ## 0. 고정 순서
 
+2026-05-07 공모전 마감 재정렬:
+
+- 이 문서의 기존 1~6단계는 공모전 기준으로 “임시 handoff 가능” 상태다.
+- ML 갱신, production ML, 장기 밸런스 최종화는 제출 전 필수 gate가 아니다.
+- 지금 활성 작업은 7번 “공모전 기준 남은 작업 재개”이며, 세부 순서는 `docs/planning/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/OVERALL_GOAL_PROGRESS.md`의 Competition Prototype Track을 따른다.
+- 기능 구현 체크만으로 닫지 않는다. 자연 full-play, 최신 web build, 브라우저 콘솔, 도감 실물 카드 표시, 게임오버 재도전 유도력, 플레이 영상 촬영 가능성을 별도 제출 gate로 본다.
+
 이 문서가 남아 있는 동안 아래 순서를 바꾸지 않는다.
 
 1. 완료된 선행 정리 상태 유지
@@ -128,7 +135,7 @@ Status: Done for first pass / station pool applied / revalidation pending
 
 ## 4. 확장 Boss Pool 기준 레벨링 재검증
 
-Status: Closed for ML handoff / runtime S4 rank-weight patch applied
+Status: Closed for contest handoff / long-term revalidation pending
 
 목표:
 
@@ -171,7 +178,7 @@ Status: Closed for ML handoff / runtime S4 rank-weight patch applied
 
 ## 5. 확장 Boss Pool + Lane Reroll Split 기준 경제 재검증
 
-Status: Closed for ML handoff / runtime growth-access price cap applied
+Status: Closed for contest handoff / long-term revalidation pending
 
 목표:
 
@@ -359,6 +366,50 @@ Runtime handoff clear target:
 - 70% 이상은 장기 목표 후보로 볼 수 있지만, S8/board/draw 실패가 사라지면 과완화로 본다.
 - 지금 handoff의 balanced v9 52.0%, power v9 57.0%는 최소 통과선일 뿐 충분한 목표값은 아니다. 다음 작업은 `none`을 크게 올리지 않고 `v9`만 10~15%p 올리는 후보를 찾는다.
 
+## 6. Actual ML Handoff
+
+Status: Paused for contest submission
+
+현재 판정:
+
+- actual ML 전환은 offline candidate recommendation 도구로는 의미가 있다.
+- 공모전 제출 전에는 ML 재학습, NotebookLM 재생성, production 자동 적용을 하지 않는다.
+- ML 관련 문서는 “실제 런타임 자동 조정”처럼 보이지 않게 유지한다.
+- 제출 전 작업은 ML이 아니라 플레이 가능한 vertical slice, 심미성, 재미도, 브라우저 QA, 제출 후보 빌드로 이동한다.
+
+공모전 이후 재개 조건:
+
+- 최신 제출 빌드 기준 gameplay 로그와 QA 피드백을 모은다.
+- S1~S8 자연 플레이 결과, 보스/마켓 체감, 게임오버 재시작률 가설을 반영해 새 sweep 범위를 정한다.
+- 모델 추천은 fresh resimulation과 사람 승인 후에만 runtime 후보로 올린다.
+
+## 7. Contest Submission Active Queue
+
+Status: In progress
+
+목표:
+
+- BIC 일반부문 1차 접수용으로 “플레이 가능한 빌드”를 제출할 수 있게 잠근다.
+- 게임완성도, 심미성, 재미도는 기능 체크와 별개로 다시 본다.
+
+현재 남은 gate:
+
+- [ ] debug fixture 없이 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산 -> 게임오버/런 완료 -> 보상 -> 새 run 복귀를 확인한다.
+- [ ] 최신 변경 후 `flutter build web` 또는 `tools/prototype_submission_smoke.sh --skip-pub-get`을 다시 실행한다.
+- [ ] 최신 `build/web` 또는 새 web-server에서 console error/warn을 다시 확인한다.
+- [ ] 게임오버 화면의 `기억 카드 획득`, `다시 도전`, `새 run 준비` 버튼 위계가 패배 후 다시 시작하고 싶게 보이는지 확인한다.
+- [ ] 도감의 Jester/Item 실물 카드 face가 마켓/보유 슬롯과 같은 인상으로 보이는지 확인한다.
+- [ ] 마켓/전투/정산/도감/새 run 화면이 한 게임처럼 이어지는지 영상 촬영 기준으로 본다.
+- [ ] 도감 항목별 미발견/발견/획득/클리어 상태 UI를 이번 제출 전까지 할지, 제출 후로 미룰지 결정한다.
+
+완료로 되어 있지만 재점검할 항목:
+
+- `Submission Smoke`의 이전 web build 통과는 최신 도감/게임오버 변경 전 증거일 수 있다.
+- `browser/compute QA`의 full route는 디버그 즉시 클리어와 fixture를 섞은 smoke다.
+- `도감`은 저장/표시 1차 구현은 됐지만, 수집욕을 채우는 상세 화면으로는 부족할 수 있다.
+- `게임오버 보상 루프`는 기능적으로 이어지지만, 재도전 유도력과 시각적 보상감은 아직 별도 판정이 필요하다.
+- `Feature Freeze`는 대형 신규 기능 금지 기준으로 유지하되, 제출을 막는 도감/게임오버/QA 안정화 변경은 예외로 본다.
+
 Runtime handoff uplift checklist:
 
 - [x] 목표 이유를 문서에 기록한다.
@@ -392,13 +443,17 @@ Runtime handoff uplift results:
 - 기준 정정: `growth_access_v1 + affordable_alternative_v2 + first_reroll_free_v1`의 첫 r120/r400은 최신 runtime handoff profile이 아니라 이전 base profile로 돌린 값이라 판단 근거에서 제외한다.
 - 최신 runtime profile `runtime_station_pool_s4_rank_weight_v1` r120 결과: none balanced 50.8%, none power 50.8% / v9 balanced 57.5%, power 67.5% / v15 balanced 72.5%, power 72.5%.
 - 최신 runtime profile r400 결과: none balanced 48.8%, none power 54.8% / v9 balanced 60.5%, power 69.8% / v15 balanced 59.2%, power 64.8%.
-- 쉬운 해석: 최신 기준에서는 `none`은 목표 범위에 남고, v9만 목표 범위로 올라간다. S8 boss 실패와 board/draw 실패도 남아 있어 압박을 완전히 지우지 않았다.
+- 2026-05-07 fresh r400 재확인:
+  - direct seed 93040: none balanced 51.5%, none power 62.0% / v9 balanced 65.2%, power 68.0%.
+  - wrapper seed 93041: none balanced 49.5%, none power 58.8% / v9 balanced 59.0%, power 65.0%.
+  - economy audit: `logs/sim/runtime_handoff_recheck_20260507_r400_economy_audit.json`에서 즉시 경제 경고 없음.
+- 쉬운 해석: `v9` 상점 선택은 대체로 `none`보다 좋고, S1/S8 boss와 board/draw 실패도 남아 있어 압박을 지우지는 않았다. 다만 `power none`이 일부 seed에서 목표 45~55%보다 높고, 한 seed에서는 balanced v9가 60%를 살짝 밑돈다. 공모전 기준으로는 known risk로 문서화하고 넘어갈 수 있지만, 장기 밸런스 완료로 쓰지는 않는다.
 - runtime 적용: 성장 후보 가격 상한은 이미 runtime에 있었고, 부족했던 첫 리롤 무료 정책을 `RummiEconomyConfig.shopFirstRerollDiscount`와 `RummiRunProgress.openShop()`에 적용했다. 저장 필드는 기존 `firstRerollDiscount`를 사용하므로 save schema 변경은 없다.
 - 정책 결정: 첫 리롤 무료는 “런 전체 1회”가 아니라 “상점에 들어갈 때마다 첫 리롤 1회 무료”로 유지한다. 쓰지 않고 다음 상점으로 가면 그 상점의 무료 기회는 사라지고, 새 상점에서 다시 첫 리롤 1회 무료가 열린다.
 - economy audit: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_economy_audit.json`에서 즉시 경제 경고 없음.
 - ML refresh: station/tier source split MAE 0.0487, RMSE 0.0952, R2 0.7265 / sequence/path source split MAE 0.0560, RMSE 0.1055, R2 0.8482.
 - sequence/path recommendation: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`은 fresh gate 1, ML gate 1이다.
-- 판정: 공모전 기준 ML 임시 handoff 가능. production ML/자동 밸런싱은 아니다.
+- 판정: 공모전 기준 runtime/economy/boss pool 임시 handoff는 가능하다. ML 갱신과 NotebookLM/외부 발표용 재가공은 보류한다. production ML/자동 밸런싱은 아니다.
 
 Shuffle review pre-check:
 
@@ -424,7 +479,7 @@ ML leakage / overfit result:
 
 ## 6. 실제 ML 이행 재개
 
-Status: Closed for offline ML handoff / runtime auto-balancing not enabled
+Status: Paused for contest prototype / runtime auto-balancing not enabled
 
 재개 조건:
 
@@ -461,6 +516,7 @@ ML 재개 시 필수 작업:
 - 최신 sequence/path 추천표 `analysis/leveling/reports/preoutcome_sequence_candidate_recommendation_report.md`는 현재 runtime handoff 후보를 실제 결과와 ML 예측 양쪽에서 통과로 본다.
 - 현재 runtime economy baseline `reward 0.40 / price 2.2 / catalog_normalized_v1` 유지.
 - production ML/자동 적용은 여전히 아님. 이번에 남긴 것은 source split으로 보수화한 offline ML 보조 신호와 fresh simulation gate다.
+- 2026-05-07 기준으로 ML 작업은 공모전 기준 작업 재개를 위해 잠시 보류한다. 이유는 runtime/economy/boss pool만으로 vertical slice 판단은 가능하지만, fresh r400에서 `power none`이 일부 높게 나와 ML 리포트를 “마감”으로 다시 쓰기에는 아직 과장될 수 있기 때문이다.
 - 실무 적용 기준: source split을 우선한다. sequence/path는 후보 선별 보조 신호로 쓰되, fresh resimulation에서 v9 >= none 및 S1/S8 병목 보존을 동시에 만족해야 한다. station/tier는 source split R2가 낮으므로 단독 추천 gate로 쓰지 않는다.
 - NotebookLM 보고서/인포그래픽 재생성은 아직 보류한다. source split 기준 station/tier가 힌트 전용이고, runtime 리롤 비용 정책 후보도 아직 닫히지 않았다.
 
@@ -474,19 +530,27 @@ ML 재개 시 필수 작업:
 
 ## 7. 공모전 기준 남은 작업 재개
 
-Status: Ready to resume / ML handoff closed for offline use
+Status: Ready to resume for contest prototype / ML deferred
 
 재개 조건:
 
-- [x] 확장 boss pool 기준 레벨링/경제/ML 상태가 source-of-truth에 반영된다.
+- [x] 확장 boss pool 기준 레벨링/경제 상태가 source-of-truth에 반영된다.
+- [x] ML은 production/자동 적용이 아니라 후보 선별 보조로만 두고 공모전 기준에서는 보류한다.
 - [x] 경제 gate가 완료 또는 출품 기준 명시 보류로 정리된다.
 - [x] Boss pool 1차 확장 범위가 구현 완료 또는 출품 기준 명시 보류된다.
-- [x] 현재 market/economy/proxy 문제를 출품 기준으로 닫는다.
+- [x] 현재 market/economy/proxy 문제를 출품 기준으로 임시 handoff한다.
+
+Known risk:
+
+- `power none`은 fresh r400 일부 seed에서 58.8~62.0%로 목표 45~55%보다 높다. 좋은 점수 성장 경로가 상점 도움 없이도 통과하는 비중이 높은 신호다.
+- `balanced v9`는 fresh seed 93041에서 59.0%로 목표 60%를 살짝 밑돈다.
+- 다만 `v9`가 대체로 `none`보다 높고, S1/S8 boss 실패와 board/draw 실패가 남아 있어 공모전 vertical slice를 막는 red flag로 보지는 않는다.
+- 장기 밸런스에서는 multi-seed r400/r800과 ML 리포트 갱신을 다시 수행한다.
 
 재개 후 우선순위:
 
-1. Boss pool 1차 확장 적용 범위 QA
-2. 텍스트/네이밍/IP 리스크 잔여 정리
+1. 텍스트/네이밍/IP 리스크 잔여 정리
+2. Boss pool 1차 확장 적용 범위 QA
 3. browser/compute QA
 4. submission smoke
 5. 제출 후보 빌드 안정화

@@ -564,7 +564,11 @@ def station_band_index(value: Any) -> int:
 
 
 def difficulty_multiplier(value: Any) -> float:
-    return {"relaxed": 0.8, "standard": 1.0, "pressure": 1.2}.get(value_or_empty(value), 1.0)
+    return {
+        "relaxed": 0.8,
+        "standard": 1.0,
+        "challenge": 1.2,
+    }.get(value_or_empty(value), 1.0)
 
 
 def expected_target_score(

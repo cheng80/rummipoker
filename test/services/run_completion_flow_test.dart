@@ -25,7 +25,7 @@ void main() {
 
       final state = await RunUnlockStateService.load();
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isTrue);
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isTrue);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isTrue);
       expect(state.insight, 16);
     });
   });

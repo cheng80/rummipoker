@@ -1237,7 +1237,7 @@ def feature_matrix(groups: list[MlSummaryGroup]) -> tuple[list[list[float]], lis
     """summary에서 현재 사용 가능한 입력 피처를 수치 행렬로 바꾼다."""
 
     tier_order = {"small": 0, "big": 1, "boss": 2}
-    difficulty_order = {"relaxed": 0, "standard": 1, "pressure": 2}
+    difficulty_order = {"relaxed": 0, "standard": 1, "challenge": 2}
     loadouts = sorted({group.loadout_id for group in groups})
     experiments = sorted({group.experiment_id for group in groups})
     numeric_sweep_keys = sorted(
@@ -1373,7 +1373,11 @@ def target_clear_band(group: MlSummaryGroup) -> tuple[float, float]:
         "big": (0.50, 0.78),
         "boss": (0.35, 0.62),
     }.get(group.blind_tier, (0.45, 0.75))
-    difficulty_shift = {"relaxed": 0.08, "standard": 0.0, "pressure": -0.08}.get(
+    difficulty_shift = {
+        "relaxed": 0.08,
+        "standard": 0.0,
+        "challenge": -0.08,
+    }.get(
         group.difficulty,
         0.0,
     )
@@ -1389,7 +1393,11 @@ def target_turn_band(group: MlSummaryGroup) -> tuple[float, float]:
         "big": (75.0, 120.0),
         "boss": (90.0, 135.0),
     }.get(group.blind_tier, (75.0, 120.0))
-    difficulty_shift = {"relaxed": -8.0, "standard": 0.0, "pressure": 10.0}.get(
+    difficulty_shift = {
+        "relaxed": -8.0,
+        "standard": 0.0,
+        "challenge": 10.0,
+    }.get(
         group.difficulty,
         0.0,
     )
@@ -1492,7 +1500,7 @@ def sklearn_hint_lines(groups: list[MlSummaryGroup]) -> tuple[list[str], str | N
     # - avg_turn_count: 평균 턴 수.
     # - avg_max_single_confirm_score: 평균 최대 한방 점수.
     tier_order = {"small": 0, "big": 1, "boss": 2}
-    difficulty_order = {"relaxed": 0, "standard": 1, "pressure": 2}
+    difficulty_order = {"relaxed": 0, "standard": 1, "challenge": 2}
     feature_names = [
         "station",
         "tier_index",

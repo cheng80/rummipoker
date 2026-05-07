@@ -156,7 +156,7 @@ void main() {
               'loadout_id': 'baseline',
               'station': 2,
               'blind_tier': 'boss',
-              'difficulty': 'pressure',
+              'difficulty': 'challenge',
               'run_count': 2,
               'clear_count': 0,
               'clear_rate': 0.0,

@@ -22,7 +22,7 @@
 | Area | Status | Runtime anchor | Notes |
 |---|---|---|---|
 | S1~S8 standard target table | Applied | `BlindSelectionSpecBuilder._standardTargetScore` | small/big/boss 목표표 런타임 연결 완료 |
-| difficulty multiplier | Applied | `BlindSelectionSpecBuilder._difficultyMultiplier` | relaxed 0.8, standard 1.0, pressure 1.2 |
+| difficulty multiplier | Applied | `BlindSelectionSpecBuilder._difficultyMultiplier` | standard 1.0, challenge 1.2. `relaxed`는 이전 실험용 id로 남아 있지만 일반 새 run 선택지에는 노출하지 않음 |
 | blind tier resource pressure | Applied | `BlindSelectionSpecBuilder` | 전투 시작 압박이며 자동 보상/성장 지급이 아님 |
 | run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.04, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
@@ -45,7 +45,7 @@
 | smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
 | ML terminology correction | Applied | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
-| actual ML leveling transition | Offline candidate recommendation applied | `analysis/leveling/` / `tools/leveling/` | pre-outcome station/tier table, sequence/path table, baseline metrics, candidate recommendation table, fresh r80 target/economy resimulation, human-review MD report 완료. production ML이나 런타임 자동 적용은 아직 없음 |
+| actual ML leveling transition | Paused for contest prototype | `analysis/leveling/` / `tools/leveling/` | pre-outcome station/tier table, sequence/path table, baseline metrics, candidate recommendation table, human-review MD report는 보조 신호로 존재. 공모전 기준에서는 ML 갱신을 보류하고 production ML이나 런타임 자동 적용은 하지 않음 |
 
 ## 2. Applied Runtime Details
 
@@ -226,7 +226,19 @@ First-reroll-free follow-up:
 - economy audit: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_economy_audit.json`에서 즉시 경제 경고 없음.
 - ML refresh: station/tier source split MAE 0.0487, RMSE 0.0952, R2 0.7265 / sequence/path source split MAE 0.0560, RMSE 0.1055, R2 0.8482.
 - sequence/path recommendation: `logs/sim/runtime_s4_rank_late_access_growth_price_r400_summary.json`은 fresh gate 1, ML gate 1이다.
-- status: 공모전 기준 runtime/economy handoff와 ML 임시 handoff 가능. production ML/자동 밸런싱은 계속 금지한다.
+- status: 공모전 기준 runtime/economy/boss pool 임시 handoff 가능. ML 갱신은 보류하며 production ML/자동 밸런싱은 계속 금지한다.
+
+2026-05-07 fresh runtime handoff recheck:
+
+- summary: `logs/sim/runtime_handoff_recheck_20260507_r400_summary.json`
+- audit: `logs/sim/runtime_handoff_recheck_20260507_r400_economy_audit.json`
+- 추가 seed summary: `logs/sim/runtime_handoff_recheck_20260507_seed93041_r400_summary.json`
+- direct seed 93040: none balanced 51.5%, none power 62.0% / v9 balanced 65.2%, power 68.0%.
+- wrapper seed 93041: none balanced 49.5%, none power 58.8% / v9 balanced 59.0%, power 65.0%.
+- 쉬운 결론: 좋은 상점 선택인 v9는 대체로 none보다 높다. S1/S8 boss 실패와 board/draw 실패도 남아 난이도 압박을 지우지 않았다.
+- known risk: power none이 목표 45~55%보다 높고, balanced v9가 한 seed에서 60%를 살짝 밑돈다.
+- contest status: runtime/economy/boss pool은 공모전 기준 임시 handoff 가능. 장기 밸런스 완료나 ML 마감으로 쓰지는 않는다.
+- ML status: 공모전 기준에서는 ML 갱신을 보류한다. production ML/자동 밸런싱은 계속 금지한다.
 
 Shuffle reference note:
 

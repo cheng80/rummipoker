@@ -34,11 +34,11 @@
         "effectText": "다음 확정의 최종 점수가 x1.25가 됩니다."
       },
       "straight_oil": {
-        "displayName": "연속 프라이머",
+        "displayName": "연속 준비",
         "effectText": "다음 스트레이트 이상 확정에 칩 +40."
       },
       "flush_powder": {
-        "displayName": "색상 프라이머",
+        "displayName": "색상 준비",
         "effectText": "다음 플러시 이상 확정에 배수 +8."
       },
       "pair_splint": {
@@ -78,7 +78,7 @@
         "effectText": "각 Station의 첫 확정에 칩 +30."
       },
       "thin_caliper": {
-        "displayName": "짧은 캘리퍼",
+        "displayName": "짧은 줄",
         "effectText": "3장 이하 확정에 배수 +4."
       },
       "stage_map": {
@@ -98,15 +98,15 @@
         "effectText": "Station마다 런 종료 전투 막힘을 1회 막습니다."
       },
       "coin_funnel": {
-        "displayName": "보드 깔때기",
+        "displayName": "보드 환급",
         "effectText": "정산 시 남은 보드 버림마다 보상 골드 +1."
       },
       "hand_funnel": {
-        "displayName": "손패 깔때기",
+        "displayName": "손패 환급",
         "effectText": "정산 시 남은 손패 버림마다 보상 골드 +1."
       },
       "lucky_counter": {
-        "displayName": "희귀 계수기",
+        "displayName": "희귀 표식",
         "effectText": "희귀 아이템이 상점 후보에 더 자주 등장합니다."
       },
       "echo_bell": {
@@ -170,11 +170,11 @@
         "effectText": "다음 보드 이동이 슬라이드 보너스도 발동합니다."
       },
       "board_lift": {
-        "displayName": "이동 예비권",
+        "displayName": "이동 예약",
         "effectText": "다음 Station에 보드 이동 +1을 예약합니다."
       },
       "undo_seal": {
-        "displayName": "되돌림 봉인",
+        "displayName": "되돌림 표식",
         "effectText": "마지막 보드 이동을 1회 되돌립니다."
       },
       "organizer_glove": {

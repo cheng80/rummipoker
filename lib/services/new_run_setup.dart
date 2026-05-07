@@ -1,4 +1,4 @@
-enum NewRunDifficulty { standard, relaxed, pressure }
+enum NewRunDifficulty { standard, relaxed, challenge }
 
 enum NewRunModifier {
   basic(
@@ -53,8 +53,8 @@ class NewRunSetup {
 
   String get difficultyLabel => switch (difficulty) {
     NewRunDifficulty.standard => '표준',
-    NewRunDifficulty.relaxed => '완화',
-    NewRunDifficulty.pressure => '압박',
+    NewRunDifficulty.relaxed => '이전 규칙',
+    NewRunDifficulty.challenge => '도전',
   };
 
   bool get isDifficultyUnlocked => isDifficultySelectable(difficulty);
@@ -62,7 +62,7 @@ class NewRunSetup {
   static NewRunDifficulty parseDifficulty(String? raw) {
     return switch (raw) {
       'relaxed' => NewRunDifficulty.relaxed,
-      'pressure' => NewRunDifficulty.pressure,
+      'challenge' => NewRunDifficulty.challenge,
       _ => NewRunDifficulty.standard,
     };
   }
@@ -71,7 +71,7 @@ class NewRunSetup {
     return switch (difficulty) {
       NewRunDifficulty.standard => true,
       NewRunDifficulty.relaxed => false,
-      NewRunDifficulty.pressure => false,
+      NewRunDifficulty.challenge => true,
     };
   }
 

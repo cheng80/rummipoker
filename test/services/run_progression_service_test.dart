@@ -25,7 +25,7 @@ void main() {
       );
 
       final state = await RunUnlockStateService.load();
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isFalse);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isFalse);
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isFalse);
       expect(state.insight, 2);
     });
@@ -42,25 +42,25 @@ void main() {
 
       final state = await RunUnlockStateService.load();
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isTrue);
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isTrue);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isTrue);
       expect(state.insight, 27);
     });
 
-    test('완화 클리어는 압박 난이도를 해금한다', () async {
-      await RunUnlockStateService.unlockDifficulty(NewRunDifficulty.relaxed);
+    test('도전 클리어는 추가 난이도를 해금하지 않는다', () async {
+      await RunUnlockStateService.unlockDifficulty(NewRunDifficulty.challenge);
 
       await RunProgressionService.handleRunEnded(
         const RunEndSummary(
           result: RunEndResult.completed,
-          difficulty: NewRunDifficulty.relaxed,
+          difficulty: NewRunDifficulty.challenge,
           reachedStageIndex: 11,
           defeatedBossCount: 4,
         ),
       );
 
       final state = await RunUnlockStateService.load();
-      expect(state.isDifficultyCleared(NewRunDifficulty.relaxed), isTrue);
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.pressure), isTrue);
+      expect(state.isDifficultyCleared(NewRunDifficulty.challenge), isTrue);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isTrue);
       expect(state.insight, 31);
     });
 
@@ -84,7 +84,38 @@ void main() {
 
       final state = await RunUnlockStateService.load();
       expect(state.insight, 10);
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isFalse);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isFalse);
+    });
+
+    test('런 종료 시 수집 기록과 기억 카드 획득 이력을 남긴다', () async {
+      await RunProgressionService.handleRunEnded(
+        const RunEndSummary(
+          result: RunEndResult.expired,
+          difficulty: NewRunDifficulty.standard,
+          reachedStageIndex: 2,
+          defeatedBossCount: 1,
+          seenMarketJesterIds: {'run_call'},
+          seenMarketItemIds: {'coin_cache'},
+          boughtJesterIds: {'run_call'},
+          boughtItemIds: {'coin_cache'},
+          seenBossModifierIds: {'red_dampener_v1'},
+          clearedStationKeys: {'station_1'},
+        ),
+      );
+
+      final state = await RunUnlockStateService.load();
+
+      expect(state.insight, 4);
+      expect(state.seenMarketJesterIds, contains('run_call'));
+      expect(state.seenMarketItemIds, contains('coin_cache'));
+      expect(state.boughtJesterIds, contains('run_call'));
+      expect(state.boughtItemIds, contains('coin_cache'));
+      expect(state.seenBossModifierIds, contains('red_dampener_v1'));
+      expect(state.clearedStationKeys, contains('station_1'));
+      expect(
+        state.earnedMemoryCardIds,
+        contains('memory_card_expired_standard_s2'),
+      );
     });
   });
 }

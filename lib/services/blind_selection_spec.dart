@@ -152,12 +152,12 @@ class BlindSelectionSpecBuilder {
     final baseBoardDiscards = switch (difficulty) {
       NewRunDifficulty.standard => ruleset.defaultBoardDiscards,
       NewRunDifficulty.relaxed => ruleset.defaultBoardDiscards + 1,
-      NewRunDifficulty.pressure => ruleset.defaultBoardDiscards - 1,
+      NewRunDifficulty.challenge => ruleset.defaultBoardDiscards - 1,
     };
     final baseHandDiscards = switch (difficulty) {
       NewRunDifficulty.standard => ruleset.defaultHandDiscards,
       NewRunDifficulty.relaxed => ruleset.defaultHandDiscards + 1,
-      NewRunDifficulty.pressure => ruleset.defaultHandDiscards - 1,
+      NewRunDifficulty.challenge => ruleset.defaultHandDiscards - 1,
     };
     final baseHandSize = ruleset.defaultMaxHandSize;
     final rewardBase = RummiRunProgress.stageClearGoldBase;
@@ -336,7 +336,7 @@ class BlindSelectionSpecBuilder {
     final difficultyTarget = switch (difficulty) {
       NewRunDifficulty.standard => standardTarget,
       NewRunDifficulty.relaxed => (standardTarget * 0.8).round(),
-      NewRunDifficulty.pressure => (standardTarget * 1.2).round(),
+      NewRunDifficulty.challenge => (standardTarget * 1.2).round(),
     };
     return (difficultyTarget * runModifier.targetScoreMultiplier).round();
   }

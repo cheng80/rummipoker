@@ -35,11 +35,11 @@
       },
       "straight_oil": {
         "displayName": "Run Primer",
-        "effectText": "The next Straight-or-better confirm gains +40 Chips."
+        "effectText": "The next run-line confirm gains +40 Chips."
       },
       "flush_powder": {
         "displayName": "Color Primer",
-        "effectText": "The next Flush-or-better confirm gains +8 Mult."
+        "effectText": "The next same-color confirm gains +8 Mult."
       },
       "pair_splint": {
         "displayName": "Pair Brace",

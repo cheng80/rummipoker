@@ -130,7 +130,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('GameCashOutSheet can close a final run with Insight reward', (
+  testWidgets('GameCashOutSheet can close a final run with memory card reward', (
     tester,
   ) async {
     final settlement = RummiSettlementRuntimeFacade(
@@ -174,7 +174,9 @@ void main() {
 
     await tester.pump(const Duration(seconds: 2));
 
-    expect(find.text('획득 예정 Insight +36'), findsOneWidget);
+    expect(find.text('기억 카드 획득'), findsOneWidget);
+    expect(find.textContaining('Insight'), findsNothing);
+    expect(find.widgetWithText(GameChromeButton, '계속 진행'), findsOneWidget);
     expect(find.widgetWithText(GameChromeButton, '런 완료'), findsOneWidget);
     expect(find.text('Market으로'), findsNothing);
 

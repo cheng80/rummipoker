@@ -404,7 +404,7 @@ void main() {
       '--blind-tiers',
       'small,big,boss',
       '--difficulties',
-      'relaxed,standard,pressure',
+      'relaxed,standard,challenge',
       '--out',
       outPath,
     ]);
@@ -740,7 +740,7 @@ void main() {
     final pressureCode = await runBalanceSim([
       ...baseArgs,
       '--difficulty',
-      'pressure',
+      'challenge',
       '--out',
       pressureOut,
     ]);
@@ -768,7 +768,7 @@ void main() {
     _expectBalanceSimRowContract(pressureRow);
     expect(relaxedRow['difficulty'], 'relaxed');
     expect(standardRow['difficulty'], 'standard');
-    expect(pressureRow['difficulty'], 'pressure');
+    expect(pressureRow['difficulty'], 'challenge');
     expect(relaxedRow['target_score'], lessThan(standardRow['target_score']));
     expect(
       pressureRow['target_score'],
@@ -796,7 +796,7 @@ void main() {
       '--blind-tiers',
       'small,boss',
       '--difficulties',
-      'relaxed,pressure',
+      'relaxed,challenge',
       '--out',
       outPath,
     ]);
@@ -841,7 +841,7 @@ void main() {
     expect(rows.first['difficulty'], 'relaxed');
     expect(rows.last['station'], 2);
     expect(rows.last['blind_tier'], 'boss');
-    expect(rows.last['difficulty'], 'pressure');
+    expect(rows.last['difficulty'], 'challenge');
   });
 
   test(
@@ -5180,7 +5180,7 @@ void main() {
       '--blind-tiers',
       'small,big,boss',
       '--difficulties',
-      'relaxed,standard,pressure',
+      'relaxed,standard,challenge',
       '--summary-out',
       summaryPath,
       '--out',
@@ -5255,7 +5255,7 @@ void main() {
       '--blind-tiers',
       'small,big,boss',
       '--difficulties',
-      'standard,pressure',
+      'standard,challenge',
       '--loadout-id',
       'baseline',
       '--loadout-id',

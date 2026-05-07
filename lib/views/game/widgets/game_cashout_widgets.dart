@@ -421,6 +421,8 @@ class GameCashOutSheet extends StatefulWidget {
   State<GameCashOutSheet> createState() => _GameCashOutSheetState();
 }
 
+enum GameCashOutAction { enterMarket, completeRun, continueEndless }
+
 class _GameCashOutSheetState extends State<GameCashOutSheet> {
   int _step = 0;
 
@@ -459,7 +461,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
     if (widget.autoEnterMarketOnLoad && !widget.completesRun) {
       await Future<void>.delayed(autoAdvanceDelay);
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(GameCashOutAction.enterMarket);
     }
   }
 
@@ -551,18 +553,51 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   ),
                 ],
                 const SizedBox(height: 14),
-                GameChromeButton(
-                  label: widget.completesRun ? '런 완료' : 'Market으로',
-                  backgroundColor: const Color(0xFFF4A81D),
-                  foregroundColor: Colors.black,
-                  height: 52,
-                  borderRadius: 18,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  onPressed: _step < 3
-                      ? null
-                      : () => Navigator.of(context).pop(!widget.completesRun),
-                ),
+                if (widget.completesRun) ...[
+                  GameChromeButton(
+                    label: '계속 진행',
+                    backgroundColor: const Color(0xFF4FA3D8),
+                    foregroundColor: Colors.white,
+                    height: 50,
+                    borderRadius: 18,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    onPressed: _step < 3
+                        ? null
+                        : () => Navigator.of(
+                            context,
+                          ).pop(GameCashOutAction.continueEndless),
+                  ),
+                  const SizedBox(height: 8),
+                  GameChromeButton(
+                    label: '런 완료',
+                    backgroundColor: const Color(0xFFF4A81D),
+                    foregroundColor: Colors.black,
+                    height: 50,
+                    borderRadius: 18,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    onPressed: _step < 3
+                        ? null
+                        : () => Navigator.of(
+                            context,
+                          ).pop(GameCashOutAction.completeRun),
+                  ),
+                ] else
+                  GameChromeButton(
+                    label: 'Market으로',
+                    backgroundColor: const Color(0xFFF4A81D),
+                    foregroundColor: Colors.black,
+                    height: 52,
+                    borderRadius: 18,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    onPressed: _step < 3
+                        ? null
+                        : () => Navigator.of(
+                            context,
+                          ).pop(GameCashOutAction.enterMarket),
+                  ),
               ],
             ),
           ),

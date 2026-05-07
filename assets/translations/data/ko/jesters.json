@@ -2,27 +2,27 @@
   "data": {
     "jesters": {
       "jester": {
-        "displayName": "기본 중계기",
+        "displayName": "기본패",
         "effectText": "배수 +4.",
         "notes": ""
       },
       "greedy_jester": {
-        "displayName": "노랑 증폭기",
+        "displayName": "노랑 불씨",
         "effectText": "점수 라인의 노란 타일마다 배수 +3.",
         "notes": ""
       },
       "lusty_jester": {
-        "displayName": "빨강 증폭기",
+        "displayName": "빨강 불씨",
         "effectText": "점수 라인의 빨간 타일마다 배수 +3.",
         "notes": ""
       },
       "wrathful_jester": {
-        "displayName": "파랑 증폭기",
+        "displayName": "파랑 불씨",
         "effectText": "점수 라인의 파란 타일마다 배수 +3.",
         "notes": ""
       },
       "gluttonous_jester": {
-        "displayName": "검정 증폭기",
+        "displayName": "검정 불씨",
         "effectText": "점수 라인의 검은 타일마다 배수 +3.",
         "notes": ""
       },
@@ -52,62 +52,62 @@
         "notes": ""
       },
       "sly_jester": {
-        "displayName": "페어 전지",
+        "displayName": "페어 칩",
         "effectText": "원 페어 이상 점수 라인을 확정하면 칩 +50.",
         "notes": ""
       },
       "wily_jester": {
-        "displayName": "트리플 전지",
+        "displayName": "트리플 칩",
         "effectText": "트리플 이상 점수 라인을 확정하면 칩 +100.",
         "notes": ""
       },
       "clever_jester": {
-        "displayName": "투페어 전지",
+        "displayName": "투페어 칩",
         "effectText": "투 페어 이상 점수 라인을 확정하면 칩 +80.",
         "notes": ""
       },
       "devious_jester": {
-        "displayName": "연속 전지",
+        "displayName": "연속 칩",
         "effectText": "스트레이트 이상 점수 라인을 확정하면 칩 +100.",
         "notes": ""
       },
       "crafty_jester": {
-        "displayName": "색상 전지",
+        "displayName": "색상 칩",
         "effectText": "플러시 이상 점수 라인을 확정하면 칩 +80.",
         "notes": ""
       },
       "half_jester": {
-        "displayName": "압축 코어",
+        "displayName": "작은 손",
         "effectText": "3장 이하 점수 라인을 확정하면 배수 +20.",
         "notes": ""
       },
       "jester_stencil": {
-        "displayName": "빈 소켓",
+        "displayName": "빈 자리",
         "effectText": "빈 Jester 슬롯마다 1배 보너스.",
         "notes": ""
       },
       "abstract_jester": {
-        "displayName": "합창 회로",
+        "displayName": "합창단",
         "effectText": "보유한 Jester마다 배수 +3.",
         "notes": ""
       },
       "green_jester": {
-        "displayName": "기세 계량기",
+        "displayName": "기세",
         "effectText": "확정할 때마다 배수 +1. 버릴 때마다 배수 -1.",
         "notes": ""
       },
       "blue_jester": {
-        "displayName": "덱 계수기",
+        "displayName": "남은 덱",
         "effectText": "덱에 남은 타일마다 칩 +2.",
         "notes": ""
       },
       "scary_face": {
-        "displayName": "그림 전지",
+        "displayName": "그림 칩",
         "effectText": "점수 라인의 11~13 타일마다 칩 +30.",
         "notes": ""
       },
       "smiley_face": {
-        "displayName": "그림 신호기",
+        "displayName": "그림 배수",
         "effectText": "점수 라인의 11~13 타일마다 배수 +5.",
         "notes": ""
       },
@@ -122,12 +122,12 @@
         "notes": ""
       },
       "popcorn": {
-        "displayName": "감쇠 부스터",
+        "displayName": "시한 배수",
         "effectText": "배수 +20. Station을 마칠 때마다 배수 -4.",
         "notes": ""
       },
       "ice_cream": {
-        "displayName": "소모 저장고",
+        "displayName": "줄어드는 칩",
         "effectText": "칩 +100. 확정할 때마다 칩 -5.",
         "notes": ""
       },
@@ -137,17 +137,17 @@
         "notes": ""
       },
       "walkie_talkie": {
-        "displayName": "십사 신호기",
+        "displayName": "10과 4",
         "effectText": "점수 라인의 10 또는 4 타일마다 배수 +4.",
         "notes": ""
       },
       "golden_jester": {
-        "displayName": "금빛 누수관",
+        "displayName": "금빛 주머니",
         "effectText": "정산 시 골드 +4.",
         "notes": ""
       },
       "mystic_summit": {
-        "displayName": "마지막 밀어붙임",
+        "displayName": "마지막 힘",
         "effectText": "남은 버림이 0이면 배수 +15.",
         "notes": ""
       },
@@ -167,12 +167,12 @@
         "notes": ""
       },
       "fibonacci": {
-        "displayName": "수열 중계기",
+        "displayName": "수열 보너스",
         "effectText": "점수 라인의 1, 2, 3, 5, 8 타일마다 배수 +8.",
         "notes": ""
       },
       "banner": {
-        "displayName": "버림 계량기",
+        "displayName": "남은 버림",
         "effectText": "남은 버림마다 칩 +30.",
         "notes": ""
       },
@@ -192,27 +192,27 @@
         "notes": ""
       },
       "the_duo": {
-        "displayName": "페어 계약",
+        "displayName": "페어 배수",
         "effectText": "원 페어 이상 점수 라인을 확정하면 배수 x2.",
         "notes": ""
       },
       "the_trio": {
-        "displayName": "트리플 계약",
+        "displayName": "트리플 배수",
         "effectText": "트리플 이상 점수 라인을 확정하면 배수 x3.",
         "notes": ""
       },
       "the_family": {
-        "displayName": "4묶음 계약",
+        "displayName": "4묶음 배수",
         "effectText": "4묶음 이상 점수 라인을 확정하면 배수 x4.",
         "notes": ""
       },
       "the_order": {
-        "displayName": "연속 계약",
+        "displayName": "연속 배수",
         "effectText": "스트레이트 이상 점수 라인을 확정하면 배수 x3.",
         "notes": ""
       },
       "the_tribe": {
-        "displayName": "색상 계약",
+        "displayName": "색상 배수",
         "effectText": "플러시 이상 점수 라인을 확정하면 배수 x2.",
         "notes": ""
       }

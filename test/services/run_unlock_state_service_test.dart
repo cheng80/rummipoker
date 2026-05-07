@@ -18,7 +18,7 @@ void main() {
       final state = await RunUnlockStateService.load();
 
       expect(state.isDifficultyUnlocked(NewRunDifficulty.standard), isTrue);
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isFalse);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isFalse);
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isFalse);
       expect(state.isDeckAvailable('basic_deck'), isTrue);
       expect(state.isRunModifierUnlocked(NewRunModifier.basic), isTrue);
@@ -27,11 +27,10 @@ void main() {
     });
 
     test('난이도 해금 저장 후 다시 읽을 수 있다', () async {
-      await RunUnlockStateService.unlockDifficulty(NewRunDifficulty.relaxed);
+      await RunUnlockStateService.unlockDifficulty(NewRunDifficulty.challenge);
 
       final state = await RunUnlockStateService.load();
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.relaxed), isTrue);
-      expect(state.isDifficultyUnlocked(NewRunDifficulty.pressure), isFalse);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isTrue);
     });
 
     test('클리어한 난이도 이력을 따로 저장한다', () async {
@@ -82,6 +81,33 @@ void main() {
       expect(unlocked, isFalse);
       expect(state.insight, 19);
       expect(state.isRunModifierUnlocked(NewRunModifier.highStakes), isFalse);
+    });
+
+    test('런 수집 기록을 저장 후 다시 읽을 수 있다', () async {
+      await RunUnlockStateService.recordRunCollection(
+        const RunCollectionUpdate(
+          seenMarketJesterIds: {'run_call'},
+          seenMarketItemIds: {'coin_cache'},
+          boughtJesterIds: {'run_call'},
+          boughtItemIds: {'coin_cache'},
+          seenBossModifierIds: {'red_dampener_v1'},
+          clearedStationKeys: {'station_1'},
+          earnedMemoryCardIds: {'memory_card_expired_standard_s2'},
+        ),
+      );
+
+      final state = await RunUnlockStateService.load();
+
+      expect(state.seenMarketJesterIds, contains('run_call'));
+      expect(state.seenMarketItemIds, contains('coin_cache'));
+      expect(state.boughtJesterIds, contains('run_call'));
+      expect(state.boughtItemIds, contains('coin_cache'));
+      expect(state.seenBossModifierIds, contains('red_dampener_v1'));
+      expect(state.clearedStationKeys, contains('station_1'));
+      expect(
+        state.earnedMemoryCardIds,
+        contains('memory_card_expired_standard_s2'),
+      );
     });
   });
 }

@@ -261,7 +261,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "The next Straight-or-better confirm gains +40 Chips.",
+      "effectText": "The next run-line confirm gains +40 Chips.",
       "effect": {
         "timing": "next_confirm_if_rank_at_least",
         "op": "chips_bonus",
@@ -291,7 +291,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "The next Flush-or-better confirm gains +8 Mult.",
+      "effectText": "The next same-color confirm gains +8 Mult.",
       "effect": {
         "timing": "next_confirm_if_rank_at_least",
         "op": "mult_bonus",

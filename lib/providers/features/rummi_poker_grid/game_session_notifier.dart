@@ -134,6 +134,7 @@ class GameSessionNotifier
       ..passiveRerollCost = _initialRerollCost(args.difficulty)
       ..toolRerollCost = _initialRerollCost(args.difficulty)
       ..gearRerollCost = _initialRerollCost(args.difficulty);
+    runProgress.recordSeenBossModifier(initialBlind.bossModifier?.id);
     return _withDerivedViews(
       GameSessionState(
         session: session,
@@ -525,6 +526,8 @@ class GameSessionNotifier
         catalog: itemCatalog,
         runProgress: runProgress,
       );
+      runProgress.recordSeenBossModifier(session.blind.bossModifier?.id);
+      runProgress.recordClearedStation(runProgress.stageIndex);
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return breakdown;
