@@ -37,12 +37,13 @@ lib/
 ## 문서
 
 - [`START_HERE.md`](START_HERE.md) — 현재 상태 / 다음 작업 진입점
-- [`docs/V4/V4_REVIEW_CHECKLIST.md`](docs/V4/V4_REVIEW_CHECKLIST.md) — V4 진행 상태 source of truth
-- [`docs/V4/V4_IMPLEMENTATION_PLAN.md`](docs/V4/V4_IMPLEMENTATION_PLAN.md) — V4 구현 계획
+- [`docs/00_docs_README.md`](docs/00_docs_README.md) — 전체 문서 분류와 source of truth 기준
+- [`docs/planning/ACTIVE_EXECUTION_PLAN.md`](docs/planning/ACTIVE_EXECUTION_PLAN.md) — 현재 활성 작업과 다음 실행 순서
+- [`docs/specs/V4/00_README.md`](docs/specs/V4/00_README.md) — V4 기능 명세 진입점
 - [`docs/current_system/CURRENT_SYSTEM_OVERVIEW.md`](docs/current_system/CURRENT_SYSTEM_OVERVIEW.md) — 현재 시스템 요약
 - [`docs/web_build.md`](docs/web_build.md) — Web 빌드
 
-`docs/archive/` 문서는 레거시 참고 자료이며, 현재 기준과 충돌하면 `START_HERE.md`, `docs/V4/*`, `docs/current_system/*`, 실제 `lib/` 코드를 우선합니다.
+`docs/archive/` 문서는 레거시 참고 자료이며, 현재 기준과 충돌하면 실제 `lib/` 코드와 테스트, `AGENTS.md`, `START_HERE.md`, `docs/00_docs_README.md`, `docs/current_system/*`, `docs/specs/*`, `docs/planning/*` 순서로 우선합니다.
 
 ## 실행
 
