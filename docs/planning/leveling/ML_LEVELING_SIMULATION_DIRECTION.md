@@ -1,7 +1,7 @@
 # Deprecated ML Leveling Simulation Direction
 
 > 이 파일명은 과거 호환용으로만 남긴다.
-> 현재 기준 문서는 `docs/planning/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`다.
+> 현재 기준 문서는 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`다.
 > 이 경로를 “AI가 학습해 밸런스를 자동 조정한다”는 근거로 사용하지 않는다.
 
 현재 레벨링 분석은 학습 모델이 아니라 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 진단 라벨, 사람 승인 절차에 기반한다.

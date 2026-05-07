@@ -5,8 +5,9 @@
 > 핵심 정책: 현재 stage loop를 보호하고, Station은 장기 메타 구조로 단계 도입한다.
 
 현재 run loop와 economy 수치 상세는 `docs/current_system/CURRENT_BUILD_BASELINE.md`를 기준으로 본다.
-진행 상태와 다음 구현 순서는 `docs/planning/OVERALL_GOAL_PROGRESS.md`, `docs/planning/ECONOMY_LEVELING_PLAN.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`를 기준으로 본다.
-`docs/planning/MIGRATION_ROADMAP.md`는 과거 migration plan이므로 current 작업 순서의 기준으로 쓰지 않는다.
+현재 실행 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 기준으로 본다.
+진행 상태와 장기 Goal 판단은 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`, `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`, `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`를 기준으로 본다.
+`docs/planning/legacy/MIGRATION_ROADMAP.md`는 과거 migration plan이므로 current 작업 순서의 기준으로 쓰지 않는다.
 
 ## 1. Current Boundary Reference
 

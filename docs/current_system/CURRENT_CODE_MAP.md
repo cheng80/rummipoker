@@ -25,14 +25,16 @@
 6. `docs/current_system/CURRENT_LEVELING_POLICY.md`
 7. `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 8. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-9. `docs/planning/OVERALL_GOAL_PROGRESS.md`
-10. `docs/planning/LEVELING_APPLIED_STATUS.md`
-11. `docs/planning/ECONOMY_LEVELING_PLAN.md`
-12. `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
-13. `docs/planning/COMPETITION_SUBMISSION_CHECKLIST.md`
+9. `docs/planning/ACTIVE_EXECUTION_PLAN.md`
+10. `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
+11. `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
+12. `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
+13. `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
+14. `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`
 
-`docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`가 존재하면 현재 임시 작업 순서를 잠그는 문서이므로 planning 문서보다 먼저 확인한다.
-`docs/planning/STATUS.md`, `docs/planning/IMPLEMENTATION_PLAN.md`, `docs/planning/MIGRATION_ROADMAP.md`는 과거 진행 snapshot/compatibility 문서이며, current source of truth가 아니다.
+현재 활성 트랙과 다음 작업 선택은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 먼저 따른다.
+`docs/planning/legacy/TEMP_WORK_SEQUENCE_PLAN.md`는 과거 임시 작업 순서 lock snapshot이며, 현재 실행 판단 기준이 아니다.
+`docs/planning/legacy/STATUS.md`, `docs/planning/legacy/IMPLEMENTATION_PLAN.md`, `docs/planning/legacy/MIGRATION_ROADMAP.md`는 과거 진행 snapshot/compatibility 문서이며, current source of truth가 아니다.
 
 코드 읽기 순서:
 
@@ -175,7 +177,7 @@ Boundary caveat:
 - battle/market/settlement/station timing hooks
 - owned item runtime effect application
 
-When implementing new item behavior, check `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md` after reading this file.
+When implementing new item behavior, check `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md` after reading this file.
 
 ### Facades
 
@@ -419,7 +421,7 @@ Use prototype submission smoke before a submission candidate because it bundles 
 - Battle read changes should prefer `rummi_battle_facade.dart`.
 - Settlement reward/read changes should prefer `rummi_settlement_facade.dart`.
 - Station/blind setup changes should check `blind_selection_setup.dart`, `new_run_setup.dart`, and `rummi_station_facade.dart`.
-- Item effect changes should update `item_effect_runtime.dart` and `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md` together.
+- Item effect changes should update `item_effect_runtime.dart` and `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md` together.
 
 ---
 

@@ -122,7 +122,7 @@ office hours를 시작해줘
 
 ```text
 /plan-eng-review
-START_HERE.md와 docs/planning/OVERALL_GOAL_PROGRESS.md를 먼저 읽고, 현재 다음 구현 후보를 확인한 뒤 최소 변경 계획을 검토해줘.
+START_HERE.md와 docs/planning/goal/OVERALL_GOAL_PROGRESS.md를 먼저 읽고, 현재 다음 구현 후보를 확인한 뒤 최소 변경 계획을 검토해줘.
 ```
 
 ```text

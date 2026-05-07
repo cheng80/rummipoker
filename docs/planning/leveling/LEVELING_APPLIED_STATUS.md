@@ -44,7 +44,7 @@
 | Pack/Tarot-like/Planet-like role mapping | Spec only | docs only | 현재는 Item/market candidate role로 해석. 별도 타입 런타임은 미도입 |
 | smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
-| ML terminology correction | Applied | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
+| ML terminology correction | Applied | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
 | actual ML leveling transition | Paused for contest prototype | `analysis/leveling/` / `tools/leveling/` | pre-outcome station/tier table, sequence/path table, baseline metrics, candidate recommendation table, human-review MD report는 보조 신호로 존재. 공모전 기준에서는 ML 갱신을 보류하고 production ML이나 런타임 자동 적용은 하지 않음 |
 
 ## 2. Applied Runtime Details
@@ -487,7 +487,7 @@ v91 submission candidate leveling smoke:
 
 Economy leveling gate:
 
-- plan: `docs/planning/ECONOMY_LEVELING_PLAN.md`
+- plan: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 - tool: `tools/sim/economy_audit.py`
 - current signal: v90 r800 summary 기준 평균 추정 cashout은 약 38G이고, common item/Jester 평균가는 약 4.3G라 정산 1회가 common 후보 8~9장 구매력이다.
 - implication: 보상/가격을 보정하기 전에는 v90 이후 장기 sweep을 확정 판단에 쓰지 않는다.
@@ -713,6 +713,6 @@ Status: grouped validation added / production auto-balancing disabled.
 1. `docs/current_system/CURRENT_LEVELING_POLICY.md`
 2. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 3. `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
-4. `docs/planning/LEVELING_APPLIED_STATUS.md`
-5. `docs/planning/ECONOMY_LEVELING_PLAN.md`
+4. `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
+5. `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 6. 필요한 경우에만 `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`

@@ -479,7 +479,7 @@ Leveling 판정:
 - forced sell / forced selection 계열은 원형 그대로는 유저 선택 강제라 금지한다. 다만 boss tax 또는 bonus-only 조건으로 재설계하면 후보로 남길 수 있다.
 - previous Station memory 계열은 새 tracking과 저장/복원 리스크가 있어 Stage C로 둔다.
 - very large target 계열은 숫자만 키운 boss로 끝나기 쉬우므로, 먼저 soft/hard target spike simulation proxy로만 본다.
-- `TEMP_WORK_SEQUENCE_PLAN.md` 삭제나 공모전 기준 작업 재개는 사람 검토 승인 전까지 하지 않는다.
+- `docs/planning/legacy/TEMP_WORK_SEQUENCE_PLAN.md` 삭제는 사람 검토 승인 전까지 하지 않는다. 현재 공모전 기준 작업 재개 여부는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 따른다.
 
 ## 6. Next Step
 

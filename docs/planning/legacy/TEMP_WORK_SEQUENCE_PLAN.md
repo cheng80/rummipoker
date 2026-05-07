@@ -1,8 +1,13 @@
 # Temporary Work Sequence Plan
 
-> 문서 성격: temporary execution lock
+> 문서 성격: legacy temporary execution lock snapshot
 > 생성 이유: boss pool 확장, 레벨링/경제 재검증, ML 재학습 순서를 섞지 않기 위해 현재 작업 큐를 고정한다.
 > 삭제 조건: boss pool 확장, 확장 후 레벨링/경제 gate, ML 재학습/리포트, 공모전 QA 재개 여부가 source-of-truth에 반영된 뒤에도 바로 삭제하지 않는다. 사람 검토 승인을 받은 뒤에만 삭제한다.
+> 현재 실행 기준: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
+
+이 문서는 현재 활성 작업을 고르는 문서가 아니다.
+과거에 boss pool, 레벨링/경제, ML 순서를 섞지 않기 위해 잠갔던 순서를 보존한다.
+현재 공모전/Goal 실행 판단은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 따른다.
 
 ## 0. 고정 순서
 
@@ -10,7 +15,7 @@
 
 - 이 문서의 기존 1~6단계는 공모전 기준으로 “임시 handoff 가능” 상태다.
 - ML 갱신, production ML, 장기 밸런스 최종화는 제출 전 필수 gate가 아니다.
-- 지금 활성 작업은 7번 “공모전 기준 남은 작업 재개”이며, 세부 순서는 `docs/planning/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/OVERALL_GOAL_PROGRESS.md`의 Competition Prototype Track을 따른다.
+- 지금 활성 작업은 7번 “공모전 기준 남은 작업 재개”이며, 세부 순서는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`의 Competition Prototype Track을 따른다.
 - 기능 구현 체크만으로 닫지 않는다. 자연 full-play, 최신 web build, 브라우저 콘솔, 도감 실물 카드 표시, 게임오버 재도전 유도력, 플레이 영상 촬영 가능성을 별도 제출 gate로 본다.
 
 이 문서가 남아 있는 동안 아래 순서를 바꾸지 않는다.

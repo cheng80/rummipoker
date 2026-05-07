@@ -215,8 +215,8 @@ S8 boss 슬롯 노출률:
 
 - 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 - 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-- 적용 상태: `docs/planning/LEVELING_APPLIED_STATUS.md`
-- active 진입 요약: `docs/planning/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`
+- 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
+- active 진입 요약: `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`
 - 긴 실험 이력: `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
 - 시뮬 CLI: `tools/sim/run_balance_sim.dart`
 - sweep dataset: `tools/sim/ml_sweep_dataset.py`

@@ -2,9 +2,11 @@
 
 > 문서 성격: 전체 목표 진도표 / 작업 수렴 기준
 > 목표: Balatro + Into the Breach 같은 전략성을 가진 덱빌딩 기반 로그라이트 완성
-> 상세 기준 문서: `docs/current_system/CURRENT_LEVELING_POLICY.md`, `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`
+> 상세 기준 문서: `docs/current_system/CURRENT_LEVELING_POLICY.md`, `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`, `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
+> 현재 실행 라우터: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
 
 이 문서는 세부 실험과 구현이 전체 완성 목표의 어느 축에 붙는지 추적한다.
+현재 활성 트랙과 다음 작업 선택은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 먼저 따른다.
 
 상태 기준:
 
@@ -13,6 +15,38 @@
 - `Next`: 바로 다음 작업 후보.
 - `Planned`: 설계 필요.
 - `Blocked`: 별도 결정이나 선행 작업 필요.
+
+## 0. 실제 Goal 기준 첫 화면
+
+현재 결론:
+
+- 실제 제품 완성도는 아직 `In progress`이며, 전체 추정 진도는 42%다.
+- 공모전 제출 전에는 실제 Goal 트랙을 새로 밀지 않는다. 현재 활성 실행은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 공모전 트랙이다.
+- 공모전 이후에는 장기 밸런스, meta growth, game feel, 자연 full-play QA, ML/휴리스틱 리포트 갱신을 순서대로 재개한다.
+
+공모전 전에는 보류:
+
+- 장기 multi-seed r400/r800 밸런스 확정
+- ML 리포트 갱신과 NotebookLM용 재가공
+- production ML 또는 runtime 자동 밸런싱
+- 저장 포맷을 크게 바꾸는 meta growth 확장
+- 신규 대형 UI 구조 변경
+- 전체 카탈로그 가격 2차 재산정
+- 반복 플레이용 해금 tree와 run modifier 깊이 확장
+
+공모전 이후 재개 순서:
+
+1. 자연 full-play와 저장/복원 증거를 공모전 QA 결과에서 승격한다.
+2. 장기 S1~S8 밸런스를 multi-seed r400/r800 기준으로 재검증한다.
+3. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
+4. ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 갱신한다.
+5. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
+
+장기 Done 기준:
+
+- 앱/runtime에 반영되고 저장/복원/시뮬레이션/관련 테스트 경로가 확인되어야 한다.
+- 문서 정리, sim-only probe, ML 추천표, offline metric, 후보 설계는 완료가 아니라 중간 산출물이다.
+- 공모전 handoff는 장기 Goal 완료와 다르다.
 
 ## 1. Goal Pillars
 
@@ -54,67 +88,36 @@
 | Integrated QA | 35% | 단위 테스트, 이전 웹 빌드, S1/S8 smoke, 최종 보스/패배 루프 browser QA, 수집 저장 테스트 | 최신 변경 후 전체 smoke/web build/browser QA 재실행, debug fixture 없는 자연 QA |
 | Analysis/ML documentation | 64% | source split 검증과 sequence/path 후보 선별 보조 신호 존재 | ML 갱신은 보류, production 자동 적용 금지 |
 
-## 3. Current Focus
+## 3. 장기 레벨링/경제/ML 요약
 
-현재 집중 축:
+장기 Goal 관점의 현재 판단:
 
-1. Boss pool mapping 및 1차 확장: S1~S8 station 난이도 level별 3~4개 seed 기반 runtime boss pool과 simulation mirror profile 적용. 새 저장 schema 없이 기존 blind boss modifier 저장 경로 재사용
-2. 확장 boss pool 기준 레벨링/경제 probe: S4 rank pressure 후보 가중 + growth-access price cap + 첫 리롤 무료 기준에서 v9가 대체로 none보다 높고, economy audit 즉시 경고가 없어 공모전 기준 임시 handoff 가능
-3. 공모전 기준 재정비: ML은 production/자동 적용이 아니므로 잠시 보류하고, runtime/economy/boss pool 기준으로 vertical slice QA를 재개한다.
+- S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 낮췄다.
+- S1 path는 r240 smoke에서 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
+- `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1`은 공모전 handoff 후보로는 충분하지만 장기 밸런스 완료가 아니다.
+- `power none`이 일부 seed에서 목표보다 높고, `balanced v9`가 한 seed에서 목표 60%를 살짝 밑돈다.
+- 경제/가격/market availability는 즉시 경고는 없지만 장기 gate를 닫지 않는다.
 
-현재 경제 판단:
-
-- `reroll_token`은 runtime effective price 기준 자기 회수형이 아니다.
-- `trade_ticket`, `ride_the_bus`는 watchlist로 유지하되 즉시 가격 변경은 보류한다.
-- `jester_hook`은 효과 대비 effective price가 너무 높아 base 7G로 낮췄다.
-- r400 경제 probe에서 `jester_hook` 가격 조정은 즉시 부작용이 없고, `shop_slot_market_v9`는 balanced/power 모두 none보다 clear를 떨어뜨리지 않았다.
-- 출품용 프로토타입 기준 경제 baseline은 `good enough`로 잠그고, S7/S8 난이도는 boss/target/market availability sweep으로 별도 조정한다.
-- Jester/Slots와 Tool/Gear lane reroll 분리 이후 current boss pool 기준 r400 raw probe는 balanced none 50.0%, balanced v9 57.0%, power none 64.2%, power v9 63.5%였다. v9 final gold avg 약 6.24G, v9 S8 boss 시작 골드 약 9.43G, reroll spend 99,571G, unaffordable event 7,686회로 즉시 경고는 없지만, boss pool 확장 전 기준이라 최종 경제 gate는 아니다.
-- 확장 boss pool `confirm_limit_tax_v1` profile 기준 r400 raw economy probe는 balanced none 49.8%, balanced v9 56.0%, power none 59.0%, power v9 58.8%였다. v9 final gold avg 약 6.45G, v9 S8 boss 시작 골드 약 9.4G, reroll spend 98,470G, unaffordable event 7,474회로 즉시 경고는 없지만, power v9 미세 역전이 있어 최종 경제 gate는 아니다. seed 기반 runtime pool 적용 후 재검증이 필요하다.
-- runtime station pool 기준 r400 leveling probe는 balanced none 48.0%, balanced v9 67.2%, power none 54.0%, power v9 66.0%로 v9가 none보다 높다. S8/S1/S3/S4 병목은 남아 있다.
-- 같은 runtime station pool의 economy r400은 balanced none 48.5%, balanced v9 48.2%, power none 56.8%, power v9 56.8%였다. v9 final gold avg 약 6.23G, v9 S8 boss 시작 골드 약 9.48G, reroll spend 96,307G, unaffordable event 7,185회로 즉시 경제 경고는 없지만, v9가 clear를 올리지 못하므로 경제 gate는 닫지 않는다.
-- runtime station pool market availability r80에서 balanced는 none 57.5%, v9 48.8%, v11 53.8%, v13 52.5%이고, power는 none 62.5%, v9 63.7%, v10 67.5%, v12 66.2%였다. 단일 availability profile로 balanced/power를 동시에 해결하지 못하므로 다음은 S4~S8 role band와 boss severity 위치를 분리한다.
-- S4~S8 role band 분리 r80도 같은 방향이었다. balanced는 none 57.5% 대비 v9 48.8%, v10 48.8%, v11 53.8%, v12 50.0%, v13 52.5%로 모두 낮고, power는 v10 67.5%, v12 66.2%가 올랐지만 v13 43.8%는 크게 낮다. 단일 market profile로 gate를 닫지 않는다.
-- boss severity placement 분리 r80에서는 `single_rank S4`가 balanced none 57.5%, balanced v9 58.8%, power none 68.8%, power v9 81.2%로 가장 강하지만 과보정 watch다. `confirm_limit S5`는 balanced none 46.2%, balanced v9 55.0%, power none/v9 56.2%로 balanced 회복 후보지만 power 개선은 없다. 둘 다 후속 r120 후보이며 runtime 값은 바꾸지 않는다.
-- sim-only `shop_slot_market_v14`를 추가해 S4+ missing-growth와 직전 board/draw 실패 구간 보강을 조건부로 묶어 봤다. r120 확인에서 balanced none 53.3%, v9 49.2%, v14 51.7% / power none 58.3%, v9 60.0%, v14 59.2%로 v9 대비 balanced는 회복했지만 strict gate인 balanced v14 >= none은 통과하지 못했다. runtime 적용은 금지하고, market 단독 해결 대신 boss placement/market 조합의 seed 안정성을 더 봐야 한다.
-- 기존 조건형 profile 검토에서는 `banded_candidate_pool_v2`가 runtime station pool 기준 balanced 59.2%, power 62.5%로 none 대비 balanced를 올리고 power를 유지했다. `confirm_limit S5 + banded_v2`는 balanced 59.2%, power 70.8%로 양쪽을 올렸고 S8/board/draw 병목도 남겼지만, banded/state profile은 shop-slot lane 경제와 1:1 대응되지 않는다. 다음 후보는 이 조건을 shop-slot 구조로 옮긴 sim-only profile이며 runtime 값은 아직 바꾸지 않는다.
-- sim-only `shop_slot_market_v15`는 현재 상황을 보고 상점 후보를 고르는 실험이다. 하지만 runtime station pool r80에서 none은 balanced 51.2%, power 57.5%였고, v15는 balanced 50.0%, power 56.2%로 둘 다 낮았다. `single_rank S4`, `confirm_limit S5`와 섞어도 같은 boss 조건의 none보다 낮아 runtime 적용 후보가 아니다.
-- 쉬운 판단: 지금 문제는 상점 후보만 조금 더 똑똑하게 고르면 끝나는 문제가 아니다. S1 boss와 S8 boss가 같이 남고, 실패 원인도 board full과 draw exhausted가 같이 남으므로 boss 배치, target, market 후보가 서로 충돌하는 부분을 줄여야 한다.
-- S1/S8 target split r80에서는 초반 보스만 5% 낮춰도 v9가 거의 회복되지 않았다. 마지막 보스만 5% 낮추면 v9 balanced 43.8% -> 46.2%, power 51.2% -> 53.8%로 조금 오르지만, 기준 none balanced 52.5%, power 60.0%보다 낮다. 다음은 target 한 곳 낮춤이 아니라 v9 상점 선택이 중간/후반 boss에서 무엇을 잘못 고르는지 본다.
-- market choice split r80에서 최종 재선택을 끄면 v9 balanced는 43.8% -> 48.8%로 좋아지지만 power는 51.2% -> 50.0%로 낮다. v15는 balanced 57.5%로 기준을 넘지만 power 45.0%로 무너진다. 다음 후보는 market profile을 더 키우는 것이 아니라, 최종 구매 선택도 현재 상태와 성장 route를 보게 하는 sim-only `affordable_alternative_v2`다.
-- bot/proxy 확인: `planner_v2`는 전투 배치/확정/버림을 고르는 봇이고, 상점 구매는 별도 proxy가 처리한다. `average_market_choice_v1`로 비싼 구매와 슬롯 교체를 피하게 해도 v9 balanced 46.2%, power 51.2%라 기준 none 52.5%/60.0%보다 낮다. 다음은 상점 proxy뿐 아니라 전투 bot의 보드 정리/낮은 점수 확정 판단도 같이 본다.
-- 첫 실무 후보: `single_rank S4 + growth_access_v1` r400에서 기준 none은 balanced 51.7%, power 57.8%였고, v9는 balanced 58.0%, power 62.5%, v15는 balanced 59.2%, power 60.5%였다. 경제 감사에서도 v9/v15 final gold 평균 약 6G, 즉시 경고 없음. 아직 runtime 적용 완료가 아니라 seed 재현, feature 재생성, ML/리포트 갱신이 남아 있다.
-- 최종 runtime handoff 후보: `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1` r400에서 none은 balanced 47.5%, power 53.8%이고, v9는 balanced 52.0%, power 57.0%다. v9 final gold 평균 약 5.86G, v9 S8 boss 시작 약 9.98G, 즉시 경제 경고 없음. S1/S8 boss와 board/draw 실패가 남아 후반 난도도 유지된다.
-- S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 낮췄다. r240 smoke에서 S1 path는 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
-
-현재 ML/분석 판단:
+ML/분석 상태:
 
 - 현재 런타임 레벨링은 실제 머신러닝이 자동 조정하지 않는다.
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
-- `analysis/leveling/`의 pre-outcome feature table과 tree ensemble 결과는 planned transition scaffold다.
-- `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`가 baseline metric과 r120 후보 재시뮬레이션을 연결한다.
-- production ML 자동 적용은 하지 않는다. random split 기준은 낙관적이었으므로, 이번 ML은 sequence/path 후보 선별 보조 신호와 fresh r400+ 검증을 묶어 쓴다.
-- pre-outcome feature table은 297,051 source rows로 재생성했다.
-- station/tier random split은 MAE 0.0206, RMSE 0.0608, R2 0.9004이고, source-path split은 MAE 0.0487, RMSE 0.0952, R2 0.7265이다. 구간 위험 힌트로만 사용한다.
-- sequence/path random split은 MAE 0.0480, RMSE 0.0816, R2 0.9154이고, source-path split은 MAE 0.0560, RMSE 0.1055, R2 0.8482이다. 후보 선별 보조 신호로 사용한다.
-- 최신 runtime 후보 `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2`의 기존 r400은 none balanced 48.8%, none power 54.8%, v9 balanced 60.5%, v9 power 69.8%다.
-- 2026-05-07 fresh r400 재확인에서는 seed별로 none balanced 49.5~51.5%, none power 58.8~62.0%, v9 balanced 59.0~65.2%, v9 power 65.0~68.0%다.
-- 쉬운 판단: 좋은 상점 선택인 v9는 대체로 none보다 높고, S1/S8 boss와 board/draw 실패가 남는다. 다만 power none이 목표보다 높고 balanced v9가 한 seed에서 60%를 살짝 밑돌아 장기 밸런스 완료가 아니라 공모전 기준 임시 handoff로 둔다.
-- ML 갱신과 NotebookLM 보고서/인포그래픽 재생성은 보류한다. production ML/자동 적용 표현은 계속 금지한다.
+- `analysis/leveling/`의 feature table과 model 결과는 planned transition scaffold다.
+- ML 갱신과 NotebookLM 보고서/인포그래픽 재생성은 공모전 이후로 보류한다.
+- production ML 또는 runtime 자동 적용 표현은 계속 금지한다.
 
-임시 작업 순서 플랜 처리:
+상세 근거 위치:
 
-- `docs/planning/TEMP_WORK_SEQUENCE_PLAN.md`는 아직 삭제 대상이 아니다.
-- ML 표현 감사/정정, 텍스트 줄바꿈 정책, `START_HERE.md` 기준 문서 점검은 완료됐다.
-- 실제 ML 이행은 offline candidate recommendation 도구로 사용할 수 있는 수준이지만, 공모전 기준에서는 잠시 보류한다. production ML/자동 적용은 아니다.
-- 경제/레벨링/boss pool은 S4 rank weight + growth-access + first-reroll-free runtime handoff 후보 기준으로 공모전 임시 handoff 가능하다.
-- 공모전 기준 작업은 재개 가능하다. 단, `power none` 높음과 balanced v9 seed 편차는 known risk로 둔다.
+- 레벨링 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
+- 경제/가격/리롤 probe: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
+- 휴리스틱/시뮬레이션 진입 요약: `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`
+- 과거 순서 lock snapshot: `docs/planning/legacy/TEMP_WORK_SEQUENCE_PLAN.md`
 
 ## 4. Competition Prototype Track
 
 목표: `2026-05-14 15:00 KST` BIC 일반부문 1차 접수용 플레이 가능 빌드.
 
-상세 제출 준비 체크리스트는 `docs/planning/COMPETITION_SUBMISSION_CHECKLIST.md`를 기준으로 진행한다. 이 문서는 전체 진도와 gate 상태만 갱신한다.
+상세 제출 준비 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 기준으로 진행한다. 현재 실행 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`가 고르고, 이 문서는 전체 진도와 gate 상태만 갱신한다.
 
 공식 접수 안내 기준:
 
@@ -250,8 +253,8 @@
 | Market policy | station band rarity/tag weight, missing growth exposure, high-stakes market pressure 적용 | `RummiStationBandMarketPolicy`, `RummiMarketRuntimeFacade` |
 | Economy runtime | reward 0.40 번역, 정수 `11/5` effective price scale 적용 | `RummiEconomyConfig`, catalog JSON |
 | Economy tooling | economy trace, gated known cost, reroll/slot/sell proxy, catalog value audit, runtime offer audit 추가 | `tools/sim/economy_audit.py`, `tools/sim/catalog_value_audit.py`, `tools/sim/runtime_market_offer_audit.dart` |
-| Leveling docs | current policy/runtime spec/simulation baseline/applied status 문서화 | `docs/current_system/`, `docs/planning/LEVELING_APPLIED_STATUS.md` |
-| Goal workflow | 자동 진행 예외, 실험 수렴 규칙, 전체 진도표 규칙 추가 | `AGENTS.md`, `docs/planning/OVERALL_GOAL_PROGRESS.md` |
+| Leveling docs | current policy/runtime spec/simulation baseline/applied status 문서화 | `docs/current_system/`, `docs/planning/leveling/LEVELING_APPLIED_STATUS.md` |
+| Goal workflow | 자동 진행 예외, 실험 수렴 규칙, 전체 진도표 규칙 추가 | `AGENTS.md`, `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` |
 
 최근 완료된 경제/레벨링 흐름:
 

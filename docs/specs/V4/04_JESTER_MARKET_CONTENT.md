@@ -5,7 +5,7 @@
 > 핵심 정책: Jester는 초기 제품의 중심축으로 유지하되, Item과 Market은 저장/runtime/UI에서 분리 가능한 계약으로 확장한다.
 
 현재 코드 상세는 `docs/current_system/CURRENT_CODE_MAP.md`와 `docs/current_system/CURRENT_BUILD_BASELINE.md`를 기준으로 본다.
-Item effect 적용 상태는 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
+Item effect 적용 상태는 `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
 과거 Jester taxonomy와 후속 catalog 확장 reference는 `docs/archive/feature_plans_2026_04/JESTER_REFERENCE_TAXONOMY_PLAN.md`에서 검색한다.
 
 ## 1. Current Boundary Reference

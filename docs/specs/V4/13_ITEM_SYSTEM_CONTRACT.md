@@ -64,7 +64,7 @@ equipment: 10
 passive_relic: 12
 ```
 
-런타임 연결 상태는 이 명세에 중복 기록하지 않는다. 실제 적용/미적용 상태는 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
+런타임 연결 상태는 이 명세에 중복 기록하지 않는다. 실제 적용/미적용 상태는 `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
 
 데이터 작성 기준:
 

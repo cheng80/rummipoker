@@ -2,10 +2,11 @@
 
 > GCSE role: `Execution`
 > 상태: consolidation pending / older V4 snapshot
-> 현재 진행 source of truth: `docs/planning/OVERALL_GOAL_PROGRESS.md`
-> 레벨링 source of truth: `docs/current_system/CURRENT_LEVELING_POLICY.md`, `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`
+> 현재 실행 source of truth: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
+> 실제 Goal 진도 source of truth: `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
+> 레벨링 source of truth: `docs/current_system/CURRENT_LEVELING_POLICY.md`, `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`, `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 
-이 문서는 과거 V4 진행 스냅샷으로 남아 있으며, 현재 최신 작업 순서는 `docs/planning/OVERALL_GOAL_PROGRESS.md`를 따른다. 문서 재정리 작업에서 current/archive 위치를 다시 분류한다. 이전 상세 체크리스트는 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색하고, 검증/산출물 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에서 검색한다.
+이 문서는 과거 V4 진행 스냅샷으로 남아 있으며, 현재 최신 작업 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 따른다. 이전 상세 체크리스트는 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색하고, 검증/산출물 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에서 검색한다.
 
 ## 1. Status Summary
 
@@ -29,7 +30,7 @@
 - `ItemDefinition` / `ItemCatalog` loader, market item offer read model, owned item inventory save/restore, item purchase command가 연결됐다.
 - owned item/Jester는 저장 엔트리와 catalog/runtime state를 묶는 `OwnedItemInstance` / `OwnedJesterInstance` read layer를 통해 battle/market facade에 전달된다.
 - battle item zone은 quick slot/passive rack item을 read model로 표시한다.
-- `ItemEffectRuntime`은 현재 적용 완료와 pending hook을 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`에서 관리한다.
+- `ItemEffectRuntime`은 현재 적용 완료와 pending hook을 `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`에서 관리한다.
 - Group 5 inventory/sell hook 적용 완료: `spare_pouch` quick slot capacity와 `jester_hook` Jester 판매가 보너스가 구매/판매/read facade에 반영된다.
 - Group 6 expiry guard hook 적용 완료: `safety_net`은 스테이션당 첫 전투 종료 위기에서 보드 버림 또는 구조 드로우를 제공하고 해당 사용 상태를 save/restore한다.
 - Group 7 boss/next market offer hook 적용 완료: `boss_trophy`는 boss clear 후 다음 market의 Jester offer +1 delayed modifier를 저장하고, 해당 market의 reroll 동안 유지한 뒤 다음 market에서는 해제된다.
@@ -51,7 +52,7 @@
 - Starting deck archetype 방향 정리: Balatro식 시작 덱/카드 강화는 참고하되, 현재 New Run은 Random/Seed만 유지한다. 후속 작업은 `run_archetype_id`와 `tile_modifier_id` 기준으로 ML/simulator에 먼저 연결한다.
 - Home/New Run/Blind Select 시작 flow는 제품용 정보량으로 정리됐다. Home은 짧은 continue/new-run entry만 보여 주고, New Run은 Random/Seed entry 중심, Blind Select는 `Small/Big/Boss` 3개 card 비교와 명시적 play button 시작 액션을 사용한다.
 - Balance simulation readiness 구현 완료: `tools/sim/run_balance_sim.dart`는 기존 runtime을 CLI에서 얇게 호출하고, deterministic matrix, runtime snapshot, item/Jester/boss/difficulty/station 조건, ML row contract, summary output, clear/expiry/save parity 테스트를 갖는다. `planner_v1` bot은 `greedy_v1`과 별도 id로 비교 가능하다.
-- Animation effects plan 분리 완료: `docs/planning/ANIMATION_EFFECTS_PLAN.md`에서 Flutter/Flame/particle 연출 목록, 최적화 기준, `bejeweled_classic` 참고 요소, 적용 순서를 관리한다.
+- Animation effects plan 분리 완료: `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md`에서 Flutter/Flame/particle 연출 목록, 최적화 기준, `bejeweled_classic` 참고 요소, 적용 순서를 관리한다.
 - 문서 기준은 `START_HERE.md`와 `docs/00_docs_README.md`의 목적형 폴더 체계를 따른다.
 
 ## 3. Current Verification Baseline
@@ -103,16 +104,16 @@
 6. `docs/current_system/CURRENT_LEVELING_POLICY.md`
 7. `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 8. `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-9. `docs/planning/OVERALL_GOAL_PROGRESS.md`
-10. `docs/planning/LEVELING_APPLIED_STATUS.md`
-11. `docs/planning/ECONOMY_LEVELING_PLAN.md`
+9. `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
+10. `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
+11. `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 12. `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
-13. `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
+13. `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
 
 필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 
 - `docs/planning/verification/TEST_QA_ACCEPTANCE.md`
-- `docs/planning/OPEN_DECISIONS.md`
+- `docs/planning/feature_plans/OPEN_DECISIONS.md`
 - `docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md`
 - `docs/archive/leveling/00_leveling_archive_README.md`
 
@@ -199,7 +200,7 @@ ML readiness 기준 우선순위:
    - 설명 패널 높이와 텍스트 말줄임 기준 안정화
    - button/dialog visual consistency 유지
 11. UI animation polish pass
-   - 상세 목록/최적화 기준은 `docs/planning/ANIMATION_EFFECTS_PLAN.md`로 분리
+   - 상세 목록/최적화 기준은 `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md`로 분리
    - 현재 적용: cash-out reward stagger, Jester scoring burst, scoring preview, board/rank/overlap callout, Jester/Item slot-local scoring burst, Station Goal pulse, board line confirm Flame particle overlay skeleton, 일부 callout/toast/score preview `flutter_animate` 치환
    - 다음 후보: 남은 callout/toast Tween을 `flutter_animate`로 순차 치환, line confirm particle iOS 위치 확인, clear/boss/constraint particle 추가, Market card/reroll/buy feedback
    - 핵심 기준: 연출은 transient presentation state이며 save DTO/simulator/runtime scoring에 포함하지 않는다. Flame visual overlay는 필요할 때만 마운트한다.

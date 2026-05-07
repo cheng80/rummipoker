@@ -44,16 +44,16 @@ V4의 목적은 현재 작동하는 코어 루프를 부정하거나 재작성�
 Codex는 저장소를 읽고, V4 문서와 현재 코드 구조를 대조한 뒤, 다음 산출물을 작성해야 한다.
 
 ```text
-docs/planning/IMPLEMENTATION_PLAN.md
+docs/planning/legacy/IMPLEMENTATION_PLAN.md
 ```
 
 이미 해당 파일이 있다면 내용을 보존하면서 최신 기준으로 갱신한다.
 
 이번 작업에서 허용되는 변경:
 
-- `docs/planning/IMPLEMENTATION_PLAN.md` 생성 또는 수정
-- 필요 시 `docs/planning/IMPLEMENTATION_PLAN.md` 안에 Risk Register 섹션 생성
-- 필요 시 `docs/planning/IMPLEMENTATION_PLAN.md` 안에 Source Traceability 섹션 생성
+- `docs/planning/legacy/IMPLEMENTATION_PLAN.md` 생성 또는 수정
+- 필요 시 `docs/planning/legacy/IMPLEMENTATION_PLAN.md` 안에 Risk Register 섹션 생성
+- 필요 시 `docs/planning/legacy/IMPLEMENTATION_PLAN.md` 안에 Source Traceability 섹션 생성
 
 이번 작업에서 금지되는 변경:
 
@@ -82,9 +82,9 @@ docs/planning/IMPLEMENTATION_PLAN.md
 3. `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md`
 4. `docs/current_system/CURRENT_CODE_MAP.md`
 5. `docs/current_system/CURRENT_TO_V4_GAP.md`
-6. `docs/planning/STATUS.md`
-7. `docs/planning/IMPLEMENTATION_PLAN.md`
-8. `docs/planning/MIGRATION_ROADMAP.md`
+6. `docs/planning/legacy/STATUS.md`
+7. `docs/planning/legacy/IMPLEMENTATION_PLAN.md`
+8. `docs/planning/legacy/MIGRATION_ROADMAP.md`
 9. `docs/specs/V4/00_README.md`
 10. `docs/specs/V4/02_CORE_COMBAT_RULES.md`
 11. `docs/specs/V4/03_RUN_META_ECONOMY.md`
@@ -93,7 +93,7 @@ docs/planning/IMPLEMENTATION_PLAN.md
 14. `docs/specs/V4/06_UI_UX_FLOW.md`
 15. `docs/specs/V4/07_TECHNICAL_ARCHITECTURE.md`
 16. `docs/specs/V4/10_TERMINOLOGY_ALIAS.md`
-17. `docs/planning/OPEN_DECISIONS.md`
+17. `docs/planning/feature_plans/OPEN_DECISIONS.md`
 18. `docs/planning/verification/TEST_QA_ACCEPTANCE.md`
 
 ### 2.2 현재 코드 anchor
@@ -160,7 +160,7 @@ test/providers/game_session_notifier_test.dart
 
 ## 4. 계획 문서 작성 규칙
 
-`docs/planning/IMPLEMENTATION_PLAN.md`는 아래 라벨을 사용해야 한다.
+`docs/planning/legacy/IMPLEMENTATION_PLAN.md`는 아래 라벨을 사용해야 한다.
 
 ```text
 [CURRENT]
@@ -208,7 +208,7 @@ V4 목표 구조지만 아직 기본 구현으로 확정하지 않을 항목
 
 ---
 
-## 5. `docs/planning/IMPLEMENTATION_PLAN.md` 필수 목차
+## 5. `docs/planning/legacy/IMPLEMENTATION_PLAN.md` 필수 목차
 
 아래 목차를 그대로 사용한다.
 
@@ -531,7 +531,7 @@ Codex는 아래 순서로 작업한다.
 6. Phase를 PR 단위로 쪼갠다.
 7. 첫 3개 PR을 상세화한다.
 8. 금지 작업과 deferred work를 명시한다.
-9. `docs/planning/IMPLEMENTATION_PLAN.md`를 작성한다.
+9. `docs/planning/legacy/IMPLEMENTATION_PLAN.md`를 작성한다.
 10. 변경 파일 목록을 최종 요약한다.
 
 ---

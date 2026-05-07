@@ -242,7 +242,7 @@ Data files:
 
 - `data/common/items_common_v1.json`
 - `assets/translations/data/ko/items.json`
-- `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`
+- `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
 - `test/logic/item_definition_test.dart`
 
 새 op:
@@ -283,7 +283,7 @@ Files:
 5. 기존 `station_start` 자원 item 적용
 6. `deck_needle` 덱 확인/선택 버림 dialog 적용
 
-남은 축은 item 단건이 아니라 공통 runtime hook 단위로 진행한다. 세부 대상은 [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md)의 "공통 구현 묶음 플랜"을 따른다.
+남은 축은 item 단건이 아니라 공통 runtime hook 단위로 진행한다. 세부 대상은 [ITEM_EFFECT_RUNTIME_MATRIX.md](../../planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md)의 "공통 구현 묶음 플랜"을 따른다.
 
 현재 기준:
 

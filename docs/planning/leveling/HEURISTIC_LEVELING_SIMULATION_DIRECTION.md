@@ -7,7 +7,7 @@
 > 현재 기준: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 > 시뮬레이션/휴리스틱 기준: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 > 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-> 적용 상태: `docs/planning/LEVELING_APPLIED_STATUS.md`
+> 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 > 긴 실험 이력: `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
 
 ## 용어 정정

@@ -10,9 +10,9 @@
 이 계획은 아래 문서 기준을 따른다.
 
 - `START_HERE.md`: 현재 playable prototype과 iOS simulator smoke를 기준 검증 흐름으로 유지한다.
-- `docs/planning/STATUS.md`: 다음 구현 초점은 `balance simulation readiness`다.
-- `docs/planning/MIGRATION_ROADMAP.md`: V4는 current prototype을 교체하지 않고 흡수/확장한다.
-- `docs/planning/OPEN_DECISIONS.md`: Balance Automation은 Flutter UI 자동 클릭이 아니라 Dart game logic simulator + bot policy + JSONL 로그 구조다.
+- `docs/planning/legacy/STATUS.md`: 다음 구현 초점은 `balance simulation readiness`다.
+- `docs/planning/legacy/MIGRATION_ROADMAP.md`: V4는 current prototype을 교체하지 않고 흡수/확장한다.
+- `docs/planning/feature_plans/OPEN_DECISIONS.md`: Balance Automation은 Flutter UI 자동 클릭이 아니라 Dart game logic simulator + bot policy + JSONL 로그 구조다.
 - `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md`: `RummiPokerGridSession`, `HandEvaluator`, Jester effect, Item effect를 CLI/test harness에서 반복 실행하는 방향이다.
 - `/office-hours` design doc: 첫 deliverable은 local Dart CLI 개발 도구이며, raw log는 git에 넣지 않는다.
 

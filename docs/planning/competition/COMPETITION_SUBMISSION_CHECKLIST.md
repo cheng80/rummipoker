@@ -1,13 +1,52 @@
 # Competition Submission Checklist
 
 > 문서 성격: 공모전 제출 준비용 실행 체크리스트
-> 기준 문서: `docs/planning/OVERALL_GOAL_PROGRESS.md`, `docs/planning/LEVELING_APPLIED_STATUS.md`, `docs/current_system/CURRENT_LEVELING_POLICY.md`
+> 현재 실행 라우터: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
+> 기준 문서: `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`, `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`, `docs/current_system/CURRENT_LEVELING_POLICY.md`
 > 목표: BIC 일반부문 1차 접수용 플레이 가능 빌드를 안정적으로 제출한다.
+> full-play gate 별명: `공모전 풀런봇` (`contest_full_run_bot`)
 
 이 문서는 공모전 제출 전 남은 작업을 작은 단위로 추적한다.
-전체 진도와 장기 목표 판단은 `docs/planning/OVERALL_GOAL_PROGRESS.md`를 기준으로 하고, 이 문서는 제출 준비 실행표로만 사용한다.
+현재 활성 트랙과 다음 작업 선택은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 따른다.
+전체 진도와 장기 목표 판단은 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`를 기준으로 하고, 이 문서는 제출 준비 실행표로만 사용한다.
 
-## 현재 기준
+## 0. 제출 작업 첫 화면
+
+현재 결론:
+
+- 공모전 작업은 재개 가능하다.
+- 제출 전 핵심은 새 기능 추가가 아니라 최신 빌드, Browser/WebDriver + Compute Use hybrid full-play bot, console 0건, 보상/도감/새 run 화면의 체감 QA다.
+- runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
+- full-play 기준은 사람 수동 플레이가 아니라 제작된 bot이 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표 조작을 결합해 S1~S8을 클리어하는 것이다.
+- 이 hybrid full-play bot의 대화 호출 별명은 `공모전 풀런봇`이고, 영문 식별자는 `contest_full_run_bot`이다.
+- Codex 앱 내장 Browser Use는 제출 gate가 아니라 bot 실패 구간 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
+
+오늘 바로 할 작업:
+
+1. 최신 변경 후 제출 후보 web build를 다시 만든다.
+2. 새 web-server 또는 최신 build 기준으로 console error/warn 0건을 확인한다.
+3. Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1부터 S8까지 실제 UI full-play를 수행한다.
+4. 게임오버 보상, 도감 카드 face, 새 run 화면이 다시 시작 욕구와 수집 욕구로 읽히는지 눈검증한다.
+5. 제출 영상 촬영 기준으로 전투/마켓/정산/도감/새 run 화면이 한 게임처럼 이어지는지 확인한다.
+
+제출 후보 Done 기준:
+
+- `flutter analyze` 통과
+- 핵심 `flutter test` 통과
+- 최신 `flutter build web` 통과
+- 최신 빌드 기준 Browser/WebDriver full-play QA console error/warn 0건
+- Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 clear 확인
+- full-play 중 마켓 구매와 아이템 실제 사용 증거 확인
+- 게임오버/런 완료 보상, 도감, 새 run 복귀가 심사자에게 설명 없이 읽힌다는 눈검증
+
+아직 열려 있는 위험:
+
+- Browser/WebDriver + Compute Use hybrid full-play bot의 S1~S8 실제 UI clear 증거는 아직 없다.
+- 도감은 수집/발견/구매/보상/보스/스테이지 이력을 저장하지만, 항목별 미발견/발견/획득/클리어 상태 상세 UI는 남아 있다.
+- `power none`과 `balanced v9` seed 편차는 장기 밸런스 risk로 유지한다.
+- 기억 카드 보상은 현재 기억 카드류 이력에 한정하며, 실제 보상 아이템/Jester 지급은 아직 없다.
+
+## 1. 기준과 보류 항목
 
 - 공모전 작업은 재개 가능하다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태다.
@@ -15,15 +54,17 @@
 - `power none` clear가 일부 seed에서 높고, `balanced v9`가 한 seed에서 60%를 살짝 밑도는 점은 known risk로 둔다.
 - 세부 레벨링 재조정보다 플레이 가능성, 이해도, 제출 안정성을 우선한다.
 - 도감, 보상 카드, 해금 확인 흐름은 공모전 이해도에 필요한 항목으로 본다. 필요하면 UI와 저장 구조 변경도 구현 대상으로 올린다.
-- 완료 체크는 기능 존재만으로 닫지 않는다. 게임완성도, 심미성, 재미도, 자연 플레이 증거, 최신 제출 후보 빌드 기준으로 다시 본다.
+- 완료 체크는 기능 존재만으로 닫지 않는다. 게임완성도, 심미성, 재미도, full-play bot 증거, 최신 제출 후보 빌드 기준으로 다시 본다.
+- full-play bot 제작 기준은 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`를 따른다.
 
-## 0. 공모전 마감 재점검
+## 2. 공모전 마감 재점검
 
 Status: In progress
 
 - [ ] 최신 변경 후 제출 후보 web build를 다시 만든다.
 - [ ] 최신 빌드 또는 새 web-server에서 console error/warn 0건을 다시 확인한다.
-- [ ] debug fixture 없이 자연 플레이로 새 run -> 전투 -> 마켓 -> 보스 -> 정산 -> 게임오버/런 완료 -> 보상 -> 새 run 복귀를 확인한다.
+- [ ] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 실제 UI clear를 확인한다.
+- [ ] full-play bot이 마켓 구매와 아이템 실제 사용을 수행하고 로그에 남긴다.
 - [ ] 게임오버 화면이 패배 후 다시 시작하고 싶게 만드는지 확인한다.
 - [ ] 도감의 Jester/Item 카드가 마켓/보유 슬롯의 실물 카드 face와 같은 인상인지 확인한다.
 - [ ] 첫 10분 플레이에서 “목표 이해 -> 선택 -> 결과 -> 보상 -> 다시 시작” 흐름이 심사자에게 설명 없이 읽히는지 확인한다.
@@ -32,11 +73,11 @@ Status: In progress
 완료로 되어 있지만 재점검할 항목:
 
 - `Submission Smoke`의 `flutter build web` 통과는 최신 도감/게임오버 변경 전 증거일 수 있으므로 다시 실행한다.
-- Browser Use full route QA는 debug fixture/즉시 클리어 보조가 섞였으므로 자연 플레이 증거가 아니다.
+- Browser Use full route QA는 debug fixture/즉시 클리어 보조가 섞였으므로 full-play bot 증거가 아니다.
 - 게임오버 보상 루프는 저장/이동은 구현됐지만, 재도전 욕구와 보상감은 아직 눈검증이 필요하다.
 - 도감은 수집 저장과 실물 카드 face 1차 표시가 됐지만, 항목별 상태와 화면 밀도는 아직 재점검 대상이다.
 
-## 1. 텍스트/네이밍/IP 리스크
+## 3. 텍스트/네이밍/IP 리스크
 
 Status: In progress
 
@@ -55,7 +96,7 @@ Status: In progress
 - 영어 Jester/Item fallback과 상점 tag label의 `Straight`/`Flush` 표현을 `run`, `same-color`, `Run`, `Color` 기준으로 바꿨다.
 - 보스 modifier title/ruleText는 원본명 없이 색상/라인/확정/족보 제한으로 읽힌다.
 
-## 2. 보스/상점/정산 설명 QA
+## 4. 보스/상점/정산 설명 QA
 
 Status: In progress
 
@@ -75,7 +116,7 @@ Status: In progress
 - Browser Use QA에서 `boss_row_constraint_preview`는 라인 제약이 보스 팝업/preview 문구로만 표시되고 개별 타일 배지로 뜨지 않는 것을 확인했다.
 - Browser Use QA에서 S1 Boss 색상 제약은 보드 위 타일 숫자와 색상 바를 가리는 별도 배지 없이 표시되는 것을 확인했다.
 
-## 3. 핵심 Run Flow QA
+## 5. 핵심 Run Flow QA
 
 Status: In progress
 
@@ -104,11 +145,11 @@ Status: In progress
 - Browser Use QA에서 S1 전투의 드로우, 손패 버림, 타일 배치, 확정 버튼 피드백이 새 console error 없이 동작하는 것을 확인했다.
 - 최신 `127.0.0.1:7361` 기준 Browser Use 한 세션에서 Title -> 새 run -> Station Select -> Scout/Clash/Boss -> 정산 -> Market -> 다음 Station 흐름을 확인했다. 전투 클리어는 디버그 `현재 구간 즉시 클리어` 보조를 사용했다.
 - 같은 Browser Use QA 세션에서 `final_boss_cash_out_ready` fixture로 S8 정산 완료 -> `런 완료` -> Title -> `새 게임 시작` -> 새 run 화면 복귀까지 최신 문구 기준으로 다시 확인했다.
-- 위 QA는 화면 전환 smoke이며, 실제 수집 보상까지 포함한 자연 full-play 증거가 아니다.
-- 디버그 보조 없는 S1~S8 자연 full-play와 실제 보상 획득/저장/도감 반영은 다시 확인해야 한다.
-- 2026-05-07: 게임오버에서 `새 run 준비` CTA를 추가했고, 보상/수집 기록은 `run_unlock_state_v1`에 저장해 새 run 화면과 도감에서 읽을 수 있게 했다. 자연 full-play QA는 아직 열려 있다.
+- 위 QA는 화면 전환 smoke이며, 실제 수집 보상까지 포함한 full-play bot 증거가 아니다.
+- 디버그 보조 없는 S1~S8 bot full-play와 실제 보상 획득/저장/도감 반영은 다시 확인해야 한다.
+- 2026-05-07: 게임오버에서 `새 run 준비` CTA를 추가했고, 보상/수집 기록은 `run_unlock_state_v1`에 저장해 새 run 화면과 도감에서 읽을 수 있게 했다. full-play bot QA는 아직 열려 있다.
 
-## 4. 게임오버/런 완료 보상 루프
+## 6. 게임오버/런 완료 보상 루프
 
 Status: In progress
 
@@ -140,7 +181,7 @@ Status: In progress
 - 최신 소스 기준 게임오버/런 완료 보상은 수치 재화 문구가 아니라 `기억 카드 획득` 카드로 보인다. 이전 `build/web` 산출물에서는 stale build 때문에 구버전 보상 문구가 보였으므로 제출 후보 빌드는 반드시 최신 소스로 재빌드해야 한다.
 - 실제 보상 아이템/Jester 지급은 아직 없다. 현재 보상 이력은 기억 카드류 보상에 한정한다.
 
-## 5. 도감/수집 확인
+## 7. 도감/수집 확인
 
 Status: In progress
 
@@ -168,14 +209,15 @@ Status: In progress
 - Browser Use QA에서 Title의 `도감` 진입, `기억 카드`, `하이 스테이크`, `Jester`, `Item`, `Boss` 항목 표시를 확인했다.
 - 최신 소스 기준 새 run 화면은 `기억 카드 보유`, `기억 카드 필요`, `기억 카드로 해금`으로 표시된다.
 
-## 6. Submission Smoke
+## 8. Submission Smoke
 
 Status: Reopened for latest candidate
 
 - [x] `flutter analyze` 통과.
 - [x] 핵심 `flutter test` 통과.
 - [ ] 최신 변경 후 `flutter build web` 통과.
-- [ ] browser/compute QA에서 핵심 flow를 최신 빌드 기준으로 눈검증한다.
+- [ ] Browser/WebDriver + Compute Use hybrid bot으로 S1~S8 실제 UI clear를 최신 빌드 기준으로 검증한다.
+- [ ] full-play bot 로그에 마켓 구매와 아이템 실제 사용 증거를 남긴다.
 - [ ] 제출 후보 빌드에서 콘솔 에러나 화면 깨짐이 없는지 확인한다.
 - [ ] 최종 빌드 산출물과 실행 경로를 정리한다.
 
@@ -191,8 +233,9 @@ Status: Reopened for latest candidate
 - 이전 `127.0.0.1:7360` 서버는 stale 문자열을 보여줄 수 있으므로, 제출 전 확인은 최신 빌드 또는 새로 띄운 서버 기준으로 한다.
 - `127.0.0.1:7361` Browser Use full route QA 후 `tab.dev.logs` 기준 error/warn 0건을 확인했다.
 - 이후 도감/게임오버/수집 저장 변경이 들어갔으므로 제출 후보 build와 browser QA는 다시 열었다.
+- 2026-05-08 기준 공모전 full-play QA는 사람 수동 플레이가 아니라 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid bot 기준으로 닫는다.
 
-## 6.5 심미성/재미도 재점검
+## 9. 심미성/재미도 재점검
 
 Status: In progress
 
@@ -210,7 +253,7 @@ Status: In progress
 - 이 섹션은 기능 완성 체크가 아니라 제출 전 눈검증/영상 기준 체크다.
 - 문제가 보이면 새 시스템을 크게 추가하지 않고 문구, 버튼 위계, spacing, 카드 face 재사용, 화면 전환 안정화 범위에서 해결한다.
 
-## 7. Feature Freeze 기준
+## 10. Feature Freeze 기준
 
 Status: In progress
 
@@ -231,6 +274,6 @@ Status: In progress
 - `balanced v9`는 fresh seed 93041에서 59.0%로 목표 60%를 살짝 밑돈다.
 - 현재는 장기 밸런스 완료가 아니라 공모전 임시 handoff다.
 - 장기 밸런스에서는 multi-seed r400/r800과 ML 리포트 갱신을 다시 수행한다.
-- 디버그 보조 없는 S1~S8 자연 full-play는 아직 영상 촬영 단계에서 다시 확인해야 한다.
+- Browser/WebDriver + Compute Use hybrid bot으로 S1~S8 실제 UI clear를 아직 완료하지 않았다.
 - 도감은 수집/발견/구매/보상/보스/스테이지 이력을 저장하지만, 아직 항목별 미발견/발견/획득/클리어 상태를 나눈 상세 UI는 없다.
 - 기억 카드 보상은 내부 `insight` 계열 값을 유지하면서 `earnedMemoryCardIds` 획득 이력을 함께 남긴다. 실제 보상 아이템/Jester 지급은 아직 없다.

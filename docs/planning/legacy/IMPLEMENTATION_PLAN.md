@@ -1,10 +1,10 @@
 # Rummi Poker Grid V4 Implementation Plan
 
 > GCSE role: `Execution`
-> Legacy status: 과거 대형 구현 계획. current 작업 순서 source-of-truth는 `docs/planning/OVERALL_GOAL_PROGRESS.md`다.
+> Legacy status: 과거 대형 구현 계획. current 실행 source-of-truth는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`다.
 
-검토용 현재 순서/진행 체크는 `docs/planning/OVERALL_GOAL_PROGRESS.md`에서 본다.
-이 문서와 `docs/planning/MIGRATION_ROADMAP.md`는 남은 항목 승격 여부를 확인하기 위한 compatibility 참고로만 사용한다.
+검토용 현재 실행 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`, 실제 Goal 진도는 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`에서 본다.
+이 문서와 `docs/planning/legacy/MIGRATION_ROADMAP.md`는 남은 항목 승격 여부를 확인하기 위한 compatibility 참고로만 사용한다.
 
 ## 1. Plan Scope
 
@@ -110,8 +110,8 @@
 | Shop UI | `lib/views/game/widgets/game_shop_screen.dart` | `docs/specs/V4/06_UI_UX_FLOW.md` | [CODE VERIFIED] | full-screen shop 유지 |
 | Current baseline summary | `docs/current_system/CURRENT_SYSTEM_OVERVIEW.md` | `docs/current_system/CURRENT_BUILD_BASELINE.md` | [DOC VERIFIED] | current baseline 보조 문서 |
 | Code ownership map | `docs/current_system/CURRENT_CODE_MAP.md` | `docs/specs/V4/07_TECHNICAL_ARCHITECTURE.md` | [DOC VERIFIED] | 파일 책임 정리 |
-| Current-to-target gap | `docs/current_system/CURRENT_TO_V4_GAP.md` | `docs/planning/OVERALL_GOAL_PROGRESS.md` | [DOC VERIFIED] | current target 단계화 근거 |
-| One Pair future pressure | `docs/planning/OPEN_DECISIONS.md` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CONFLICT] | 일부 타겟 논의와 current code 충돌 가능, 초기 계획에서는 보호 대상 |
+| Current-to-target gap | `docs/current_system/CURRENT_TO_V4_GAP.md` | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | [DOC VERIFIED] | current target 단계화 근거 |
+| One Pair future pressure | `docs/planning/feature_plans/OPEN_DECISIONS.md` | `docs/specs/V4/02_CORE_COMBAT_RULES.md` | [CONFLICT] | 일부 타겟 논의와 current code 충돌 가능, 초기 계획에서는 보호 대상 |
 
 ## 5. Current Code Anchors
 
@@ -156,8 +156,8 @@
 
 ## 7. Migration Phase Source
 
-상세 current 작업 순서는 `docs/planning/OVERALL_GOAL_PROGRESS.md`를 단일 기준으로 둔다.
-`docs/planning/MIGRATION_ROADMAP.md`는 이 문서가 작성되던 시점의 legacy phase 참고다.
+상세 current 실행 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`, 실제 Goal 진도는 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`를 기준으로 둔다.
+`docs/planning/legacy/MIGRATION_ROADMAP.md`는 이 문서가 작성되던 시점의 legacy phase 참고다.
 
 이 문서는 phase별 상세 작업을 반복하지 않고, 아래 실행 판단만 유지한다.
 
@@ -545,7 +545,7 @@ Files to inspect:
 `docs/planning/*`
 
 Files to change:
-`docs/planning/IMPLEMENTATION_PLAN.md`
+`docs/planning/legacy/IMPLEMENTATION_PLAN.md`
 
 Tests to add or run:
 없음. 문서 리뷰

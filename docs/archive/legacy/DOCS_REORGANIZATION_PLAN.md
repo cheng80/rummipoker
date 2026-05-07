@@ -37,16 +37,16 @@
 
 - [x] Current context 문서를 `docs/current_system/`로 이동
 - [x] V4 spec 문서 세트를 `docs/specs/V4/`로 이동
-- [x] Review checklist를 `docs/planning/STATUS.md`로 이동
-- [x] Implementation plan을 `docs/planning/IMPLEMENTATION_PLAN.md`로 이동
-- [x] Item effect matrix를 `docs/planning/ITEM_EFFECT_RUNTIME_MATRIX.md`로 이동
+- [x] Review checklist를 `docs/planning/legacy/STATUS.md`로 이동
+- [x] Implementation plan을 `docs/planning/legacy/IMPLEMENTATION_PLAN.md`로 이동
+- [x] Item effect matrix를 `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`로 이동
 - [x] Board move / hand size feature plan을 `docs/archive/feature_plans_2026_04/`로 이동
 - [x] Web build guide를 `docs/planning/verification/`로 이동
 - [x] Combined generated snapshot을 `docs/archive/generated/`로 이동
 - [x] Codex planning prompt를 `docs/archive/prompts/`로 이동
 - [x] 기존 `docs/archive/*` 문서를 `docs/archive/legacy/`로 이동
-- [x] Risk register를 `docs/planning/IMPLEMENTATION_PLAN.md`에 흡수
-- [x] Traceability matrix를 `docs/planning/IMPLEMENTATION_PLAN.md`에 흡수
+- [x] Risk register를 `docs/planning/legacy/IMPLEMENTATION_PLAN.md`에 흡수
+- [x] Traceability matrix를 `docs/planning/legacy/IMPLEMENTATION_PLAN.md`에 흡수
 - [x] 절대 링크와 상대 링크를 새 경로로 갱신
 - [x] GCSE 약어 폴더명을 목적형 폴더명으로 변경
 - [x] 폴더 정의서 파일명을 목적형 폴더명 기준으로 변경

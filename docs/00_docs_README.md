@@ -82,3 +82,19 @@
 | 과거 문서, 병합본, 중복 요약, 프롬프트 | `docs/archive/` |
 
 `specs`에는 현재 baseline 원본, roadmap, QA 실행 계획, open decision, changelog, master summary를 두지 않는다. 해당 문서는 각각 `current_system`, `planning`, `archive`로 분리한다.
+
+## Planning Subfolder Rule
+
+`docs/planning/`은 실행 문서가 많아지면 아래 하위 역할로 나눈다.
+
+| 목적 | 위치 |
+|---|---|
+| 현재 활성 트랙과 다음 작업 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` |
+| 공모전 제출 실행표 | `docs/planning/competition/` |
+| 실제 Goal 진도 | `docs/planning/goal/` |
+| 레벨링/경제/휴리스틱/ML 전환 상태 | `docs/planning/leveling/` |
+| 기능별 계획, runtime matrix, open decision | `docs/planning/feature_plans/` |
+| 과거 V4 status, migration, 임시 순서 lock snapshot | `docs/planning/legacy/` |
+| QA, smoke, build 절차와 검증 로그 | `docs/planning/verification/` |
+
+`START_HERE.md`는 전체 문서 진입과 읽는 순서를 잡고, `ACTIVE_EXECUTION_PLAN.md`는 planning 단계에서 현재 실행 트랙만 고른다.
