@@ -141,9 +141,11 @@ class CompetitionBattleAction {
 class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   const CompetitionPlannerV2Policy({
     this.enableRetryRecoveryConfirmDelay = false,
+    this.retryRecoveryAttempt = 0,
   });
 
   final bool enableRetryRecoveryConfirmDelay;
+  final int retryRecoveryAttempt;
 
   static const int _cleanConfirmScoreFloor = 70;
   static const int _highTargetConfirmScoreFloor = 180;
@@ -540,8 +542,21 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   }
 
   bool _isHighTargetRecoveryBundle(_ImmediateConfirmChoice choice) {
+    if (enableRetryRecoveryConfirmDelay && retryRecoveryAttempt >= 2) {
+      return choice.score >= 420 ||
+          choice.lineCount >= 4 && choice.score >= _highTargetConfirmScoreFloor;
+    }
     return choice.score >= _highTargetTwoLineConfirmScoreFloor ||
         (choice.lineCount >= 3 && choice.score >= _highTargetConfirmScoreFloor);
+  }
+
+  bool isHighTargetRecoveryBundleForTest({
+    required int score,
+    required int lineCount,
+  }) {
+    return _isHighTargetRecoveryBundle(
+      _ImmediateConfirmChoice(score: score, lineCount: lineCount),
+    );
   }
 
   bool _shouldUseStrategicUtility(RummiPokerGridSession session) {

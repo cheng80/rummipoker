@@ -395,7 +395,10 @@ class _CompetitionFullPlayBot {
       final tier = BlindTier.values[runProgress.currentStationBlindTierIndex];
       final runtimeSnapshot = runProgress.buildRuntimeSnapshot();
       final policy = gameOverRetries >= 2
-          ? retryRecoveryBattlePolicy
+          ? CompetitionPlannerV2Policy(
+              enableRetryRecoveryConfirmDelay: true,
+              retryRecoveryAttempt: gameOverRetries,
+            )
           : battlePolicy;
       final action = policy.chooseAction(
         session,
@@ -794,10 +797,20 @@ class _CompetitionFullPlayBot {
         score += stateValue > 0 ? stateValue * 12 : -260;
       case 'clever_jester':
         score += 220;
+      case 'jester_stencil':
+        if (stage >= 6) {
+          score -= 760;
+        }
+      case 'jolly_jester':
+      case 'zany_jester':
+      case 'mad_jester':
+      case 'droll_jester':
+      case 'sly_jester':
+        score += stage >= 6 ? 180 : 40;
       case 'wrathful_jester':
       case 'gluttonous_jester':
       case 'lusty_jester':
-        score += 80;
+        score += stage >= 6 ? 240 : 80;
       case 'egg':
       case 'delayed_gratification':
         score -= 120;
@@ -811,6 +824,15 @@ class _CompetitionFullPlayBot {
         case 'mystic_summit':
         case 'half_jester':
           score += 140;
+        case 'wrathful_jester':
+        case 'gluttonous_jester':
+        case 'lusty_jester':
+        case 'jolly_jester':
+        case 'zany_jester':
+        case 'mad_jester':
+        case 'droll_jester':
+        case 'sly_jester':
+          score += 120;
         case 'ride_the_bus':
         case 'green_jester':
           score += stateValue > 0 ? 90 : -120;

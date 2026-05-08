@@ -317,6 +317,22 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.confirm));
   });
 
+  test('second retry raises the medium three-line confirm threshold', () {
+    expect(
+      const CompetitionPlannerV2Policy(
+        enableRetryRecoveryConfirmDelay: true,
+      ).isHighTargetRecoveryBundleForTest(score: 266, lineCount: 3),
+      isTrue,
+    );
+    expect(
+      const CompetitionPlannerV2Policy(
+        enableRetryRecoveryConfirmDelay: true,
+        retryRecoveryAttempt: 2,
+      ).isHighTargetRecoveryBundleForTest(score: 266, lineCount: 3),
+      isFalse,
+    );
+  });
+
   test('full board can discard to set up discard move place combo', () {
     final board = RummiBoard.fromSnapshot([
       _tile(TileColor.red, 5),
@@ -1299,19 +1315,25 @@ void main() {
 
 Tile _tile(TileColor color, int number) => Tile(color: color, number: number);
 
-RummiJesterCard _jester(String id) {
+RummiJesterCard _jester(
+  String id, {
+  String effectType = '',
+  Object? conditionValue,
+  int? value,
+  double? xValue,
+}) {
   return RummiJesterCard(
     id: id,
     displayName: id,
     rarity: RummiJesterRarity.common,
     baseCost: 1,
     effectText: '',
-    effectType: '',
+    effectType: effectType,
     trigger: '',
     conditionType: '',
-    conditionValue: null,
-    value: null,
-    xValue: null,
+    conditionValue: conditionValue,
+    value: value,
+    xValue: xValue,
     mappedTileColors: const [],
     mappedTileNumbers: const [],
   );
