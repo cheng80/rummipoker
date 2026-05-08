@@ -155,6 +155,21 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return const CompetitionBattleAction.confirm();
     }
 
+    final boardIsFull =
+        RummiPokerGridSession.countTilesOnBoard(session.board) >=
+        kBoardSize * kBoardSize;
+    if (boardIsFull) {
+      final scoringDiscard = _chooseScoringBoardDiscard(
+        session,
+        jesters: jesters,
+        runtimeSnapshot: runtimeSnapshot,
+      );
+      if (scoringDiscard != null) return scoringDiscard;
+
+      final handDiscard = chooseHandDiscard(session);
+      if (handDiscard != null) return handDiscard;
+    }
+
     final discard = chooseBoardDiscard(session);
     if (discard != null) return discard;
 
@@ -399,6 +414,46 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       col: worstCell.$2,
     );
   }
+
+  CompetitionBattleAction? _chooseScoringBoardDiscard(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (session.blind.boardDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return null;
+    }
+
+    _BoardDiscardChoice? best;
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        if (session.board.cellAt(row, col) == null) continue;
+        final copy = session.copySnapshot();
+        copy.board.setCell(row, col, null);
+        if (!copy.tryPlaceFromHand(session.hand.first, row, col)) continue;
+        final preview = copy.confirmAllFullLines(
+          jesters: jesters,
+          runtimeSnapshot: runtimeSnapshot,
+          applyScoreToBlind: false,
+        );
+        final immediateScore = preview.result.scoreAdded;
+        if (immediateScore <= 0) continue;
+
+        final choice = _BoardDiscardChoice(
+          action: CompetitionBattleAction.discardBoard(row: row, col: col),
+          immediateScore: immediateScore,
+          potentialScore: _plannerBoardPotentialScore(copy.board),
+        );
+        if (best == null ||
+            choice.immediateScore > best.immediateScore ||
+            choice.immediateScore == best.immediateScore &&
+                choice.potentialScore > best.potentialScore) {
+          best = choice;
+        }
+      }
+    }
+    return best?.action;
+  }
 }
 
 class _ConfirmChoice {
@@ -439,6 +494,18 @@ class _MoveChoice {
   final CompetitionBattleAction action;
   final int gain;
   final int potential;
+}
+
+class _BoardDiscardChoice {
+  const _BoardDiscardChoice({
+    required this.action,
+    required this.immediateScore,
+    required this.potentialScore,
+  });
+
+  final CompetitionBattleAction action;
+  final int immediateScore;
+  final int potentialScore;
 }
 
 int _plannerBoardPotentialScore(RummiBoard board) {

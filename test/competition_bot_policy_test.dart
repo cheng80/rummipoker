@@ -1,0 +1,69 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+
+import '../integration_test/competition_bot_policy.dart';
+
+void main() {
+  test('full board chooses a scoring board discard over the loop cell', () {
+    final board = RummiBoard.fromSnapshot([
+      _tile(TileColor.red, 3),
+      _tile(TileColor.blue, 12),
+      _tile(TileColor.black, 3),
+      _tile(TileColor.red, 10),
+      _tile(TileColor.blue, 3),
+      _tile(TileColor.blue, 10),
+      _tile(TileColor.black, 9),
+      _tile(TileColor.black, 2),
+      _tile(TileColor.blue, 6),
+      _tile(TileColor.blue, 7),
+      _tile(TileColor.red, 9),
+      _tile(TileColor.yellow, 5),
+      _tile(TileColor.blue, 4),
+      _tile(TileColor.black, 13),
+      _tile(TileColor.yellow, 6),
+      _tile(TileColor.yellow, 11),
+      _tile(TileColor.black, 8),
+      _tile(TileColor.yellow, 10),
+      _tile(TileColor.black, 4),
+      _tile(TileColor.yellow, 9),
+      _tile(TileColor.blue, 8),
+      _tile(TileColor.yellow, 12),
+      _tile(TileColor.black, 10),
+      _tile(TileColor.red, 1),
+      _tile(TileColor.red, 6),
+    ]);
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 537,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.red, 2)]),
+      board: board,
+      hand: [_tile(TileColor.yellow, 4)],
+      eliminated: const [],
+    );
+
+    final action = const CompetitionPlannerV2Policy().chooseAction(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+
+    expect(action.type, CompetitionBattleActionType.discardBoard);
+    expect(action.row, 1);
+    expect(action.col, 1);
+  });
+}
+
+Tile _tile(TileColor color, int number) => Tile(color: color, number: number);
