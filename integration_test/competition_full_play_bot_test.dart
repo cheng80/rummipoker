@@ -40,7 +40,8 @@ void main() {
       );
       await bot.run();
     },
-    timeout: const Timeout(Duration(minutes: 30)),
+    // fresh S1~S8 full-run은 브라우저 구동과 retry 로그까지 포함해 길게 잡는다.
+    timeout: const Timeout(Duration(minutes: 120)),
   );
 }
 
