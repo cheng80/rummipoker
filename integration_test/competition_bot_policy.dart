@@ -450,7 +450,8 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           enableRetryRecoveryConfirmDelay &&
           session.blind.targetScore >= _highTargetConfirmTargetFloor;
       if (isRetryRecoveryHighTarget) {
-        final hasRecoveryBundle = score >= _highTargetConfirmScoreFloor;
+        final hasRecoveryBundle =
+            lineCount >= 3 || score >= _bossConfirmScoreFloor;
         final isForcedBoardLock = emptyCells == 0 && score > 0;
         return _ConfirmChoice(
           lineCount: lineCount,

@@ -658,6 +658,63 @@ void main() {
     expect(action.gain, greaterThanOrEqualTo(70));
   });
 
+  test('retry recovery boss delays a medium two-line confirm', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1121,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 0,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 7)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.blue, 3),
+        _tile(TileColor.black, 3),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.yellow, 3),
+        null,
+        _tile(TileColor.red, 1),
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.black, 1),
+        _tile(TileColor.yellow, 1),
+        null,
+        null,
+        null,
+        _tile(TileColor.red, 9),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.red, 5)],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+  });
+
   test('early low target does not spend hand discard for evidence', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
