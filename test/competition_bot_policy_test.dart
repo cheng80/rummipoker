@@ -627,7 +627,7 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
   });
 
-  test('early low target boss does not spend board move for evidence', () {
+  test('early low target boss can move for duplicate confirm setup', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
       deckCopiesPerTile: 1,
@@ -638,7 +638,7 @@ void main() {
         boardDiscardsRemaining: 3,
         handDiscardsRemaining: 2,
         boardMovesRemaining: 3,
-        bossModifier: RummiBossModifier.redDampener,
+        bossModifier: RummiBossModifier.confirmLimitTax,
       ),
       deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
       board: RummiBoard.fromSnapshot([
@@ -647,28 +647,28 @@ void main() {
         _tile(TileColor.red, 3),
         _tile(TileColor.red, 4),
         null,
+        _tile(TileColor.red, 9),
         _tile(TileColor.blue, 7),
         _tile(TileColor.black, 8),
         _tile(TileColor.yellow, 9),
-        null,
-        null,
+        _tile(TileColor.red, 6),
         _tile(TileColor.blue, 1),
         _tile(TileColor.black, 5),
         _tile(TileColor.blue, 10),
         _tile(TileColor.black, 11),
+        _tile(TileColor.red, 7),
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.black, 12),
+        _tile(TileColor.yellow, 13),
         null,
-        _tile(TileColor.red, 5),
-        null,
-        null,
-        null,
-        null,
+        _tile(TileColor.red, 8),
         null,
         null,
         null,
         null,
         null,
       ]),
-      hand: [_tile(TileColor.black, 13)],
+      hand: [_tile(TileColor.red, 5)],
       eliminated: const [],
     );
 
@@ -678,7 +678,7 @@ void main() {
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+    expect(action.type, CompetitionBattleActionType.moveBoard);
   });
 
   test('early low target does not spend board discard for evidence', () {
