@@ -371,7 +371,15 @@ class _CompetitionFullPlayBot {
         continue;
       }
 
-      final state = _readGameState();
+      final state = _tryReadGameState();
+      if (state == null) {
+        if (find.text('Station Select').evaluate().isNotEmpty) {
+          await _chooseOpenBlind();
+        } else {
+          await _pumpFor(const Duration(milliseconds: 500));
+        }
+        continue;
+      }
       final session = state.session!;
       if (session.blind.scoreTowardBlind >= session.blind.targetScore) {
         await _pumpUntilCashOutReady();
@@ -737,7 +745,8 @@ class _CompetitionFullPlayBot {
   Future<bool> _tryUseBattleItem() async {
     if (!config.needsItemUse && !config.isFullRun) return false;
     if (usedItem) return false;
-    final state = _readGameState();
+    final state = _tryReadGameState();
+    if (state == null) return false;
     final inventory = state.runProgress!.itemInventory;
     if (inventory.quickSlotItemIds.isEmpty) return false;
     final choice = _chooseBattleItemToUse(state);
