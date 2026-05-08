@@ -588,6 +588,7 @@ class _CompetitionFullPlayBot {
     await _tapText('Market으로');
     _record('S$stage ${tier.name}: cashout -> market');
     await _pumpUntilVisible(find.text('다음 Station'));
+    await _saveBotCheckpoint();
   }
 
   bool _isCashOutReady() {
@@ -620,6 +621,7 @@ class _CompetitionFullPlayBot {
     await _tapPrimaryActionUntilAnyVisible('다음 Station', [
       find.text('Station Select'),
     ]);
+    await _saveBotCheckpoint();
   }
 
   Future<void> _handleMarketEvidenceOnly({required int stage}) async {
