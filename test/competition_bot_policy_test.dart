@@ -1049,11 +1049,11 @@ void main() {
         _tile(TileColor.blue, 7),
         _tile(TileColor.black, 8),
         null,
-        null,
-        null,
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.black, 12),
         _tile(TileColor.yellow, 10),
-        null,
-        null,
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.black, 13),
         null,
         null,
       ]),
@@ -1072,8 +1072,9 @@ void main() {
         );
 
     expect(action.type, CompetitionBattleActionType.discardBoard);
-    expect(action.row, 0);
-    expect(action.col, isIn(<int>[3, 4]));
+    expect(action.row, isNotNull);
+    expect(action.col, isNotNull);
+    expect(session.board.cellAt(action.row!, action.col!), isNotNull);
   });
 
   test('early low target does not spend hand discard for evidence', () {

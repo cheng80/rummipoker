@@ -158,6 +158,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
   static const int _midBoardMoveMaxOccupancy = kBoardSize * 4 - 1;
   static const int _midBoardMoveMinGain = 20;
+  static const int _mysticBoardDiscardMinOccupancy = kBoardSize * 4 - 2;
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
   static const int _strategicUtilityTargetScoreFloor = 1000;
@@ -604,7 +605,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return false;
     }
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
-    if (occupancy < _midBoardMoveMinOccupancy) return false;
+    if (occupancy < _mysticBoardDiscardMinOccupancy) return false;
     return true;
   }
 
