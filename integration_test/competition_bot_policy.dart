@@ -141,17 +141,14 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   const CompetitionPlannerV2Policy();
 
   static const int _cleanConfirmScoreFloor = 70;
-  static const int _lateRunTargetScoreFloor = 1600;
   static const int _bossConfirmScoreFloor = 360;
   static const int _bossConfirmMinOccupancy = kBoardSize * 4;
-  static const int _bossHandDiscardMinOccupancy = kBoardSize * 3 + 3;
   static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
   static const int _midBoardMoveMaxOccupancy = kBoardSize * 4 - 1;
   static const int _midBoardMoveMinGain = 20;
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
   static const int _strategicUtilityTargetScoreFloor = 1000;
-  static const int _highPressureOccupancy = kBoardSize * kBoardSize - 3;
   @override
   String get id => 'competition_planner_v2';
 
@@ -176,33 +173,20 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       if (confirmChoice.shouldConfirmNow || confirmChoice.score > 0) {
         return const CompetitionBattleAction.confirm();
       }
-      if (_shouldUseStrategicUtility(session)) {
-        final discard = chooseBoardDiscard(session);
-        if (discard != null) return discard;
-      }
       return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
     }
 
-    final zeroDiscardBonusActive = _hasZeroDiscardBonusJester(jesters);
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
-    final shouldProtectDeck = _shouldProtectDeck(session);
     final shouldUseStrategicUtility = _shouldUseStrategicUtility(session);
-    if (zeroDiscardBonusActive &&
-        shouldUseStrategicUtility &&
-        session.blind.handDiscardsRemaining > 0) {
-      final handDiscard = chooseHandDiscard(session);
-      final minHandDiscardOccupancy = shouldProtectDeck
-          ? _bossHandDiscardMinOccupancy
-          : kBoardSize * 2;
-      if (handDiscard != null && occupancy >= minHandDiscardOccupancy) {
-        return handDiscard;
-      }
-    }
 
     if (shouldUseStrategicUtility &&
         occupancy >= _midBoardMoveMinOccupancy &&
         occupancy <= _midBoardMoveMaxOccupancy) {
-      final move = chooseBoardMove(session);
+      final move = chooseBoardMove(
+        session,
+        jesters: jesters,
+        runtimeSnapshot: runtimeSnapshot,
+      );
       if (move != null && (move.gain ?? 0) >= _midBoardMoveMinGain) {
         return move;
       }
@@ -248,19 +232,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
 
-    if (zeroDiscardBonusActive &&
-        shouldUseStrategicUtility &&
-        session.blind.boardDiscardsRemaining > 0 &&
-        occupancy >= _highPressureOccupancy) {
-      final bonusDiscard = chooseBoardDiscard(session);
-      if (bonusDiscard != null) return bonusDiscard;
-    }
-
-    if (shouldUseStrategicUtility) {
-      final discard = chooseBoardDiscard(session);
-      if (discard != null) return discard;
-    }
-
     return const CompetitionBattleAction.stop('no_legal_action');
   }
 
@@ -280,10 +251,16 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return CompetitionBattleAction.discardHand(handIndex: worstIndex);
   }
 
-  CompetitionBattleAction? chooseBoardMove(RummiPokerGridSession session) {
+  CompetitionBattleAction? chooseBoardMove(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
     if (session.blind.boardMovesRemaining <= 0) return null;
+    if (session.blind.boardMovesRemaining < session.blind.boardMovesMax) {
+      return null;
+    }
     if (session.boardMoveHistory.isNotEmpty) return null;
-    final basePotential = _plannerBoardPotentialScore(session.board);
     _MoveChoice? best;
 
     for (var fromRow = 0; fromRow < kBoardSize; fromRow++) {
@@ -301,6 +278,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             )) {
               continue;
             }
+            final followUp = _bestImmediateConfirmAfterBoardChange(
+              session,
+              movedBoard: copy,
+              jesters: jesters,
+              runtimeSnapshot: runtimeSnapshot,
+            );
+            if (followUp.lineCount < 2 || followUp.score <= 0) continue;
             final potential = _plannerBoardPotentialScore(copy);
             final choice = _MoveChoice(
               action: CompetitionBattleAction.moveBoard(
@@ -308,9 +292,9 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
                 col: fromCol,
                 toRow: toRow,
                 toCol: toCol,
-                gain: potential - basePotential,
+                gain: followUp.score,
               ),
-              gain: potential - basePotential,
+              gain: followUp.score,
               potential: potential,
             );
             if (best == null ||
@@ -354,10 +338,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       jesters: jesters,
       runtimeSnapshot: runtimeSnapshot,
     )?.action;
-  }
-
-  bool _hasZeroDiscardBonusJester(List<RummiJesterCard> jesters) {
-    return jesters.any((jester) => jester.id == 'mystic_summit');
   }
 
   int _bestPlacementPotential(RummiPokerGridSession session, int handIndex) {
@@ -459,11 +439,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final hasRideTheBus = jesters.any((jester) => jester.id == 'ride_the_bus');
     final bossId = session.blind.bossModifier?.id;
     return hasRideTheBus || bossId == 'confirm_limit_tax_v1';
-  }
-
-  bool _shouldProtectDeck(RummiPokerGridSession session) {
-    return session.blind.bossModifier != null ||
-        session.blind.targetScore >= _lateRunTargetScoreFloor;
   }
 
   bool _shouldUseStrategicUtility(RummiPokerGridSession session) {
@@ -632,7 +607,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 
   CompetitionBattleAction? chooseBoardDiscard(
     RummiPokerGridSession session, {
-    int minOccupancy = _highPressureOccupancy,
+    int minOccupancy = kBoardSize * kBoardSize - 3,
   }) {
     if (session.blind.boardDiscardsRemaining <= 0) return null;
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
@@ -660,6 +635,47 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     );
   }
 
+  _ImmediateConfirmChoice _bestImmediateConfirmAfterBoardChange(
+    RummiPokerGridSession session, {
+    required RummiBoard movedBoard,
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (session.hand.isEmpty) {
+      return const _ImmediateConfirmChoice(score: 0, lineCount: 0);
+    }
+    var best = const _ImmediateConfirmChoice(score: 0, lineCount: 0);
+    for (var handIndex = 0; handIndex < session.hand.length; handIndex++) {
+      final tile = session.hand[handIndex];
+      for (var row = 0; row < kBoardSize; row++) {
+        for (var col = 0; col < kBoardSize; col++) {
+          if (movedBoard.cellAt(row, col) != null) continue;
+          final copy = session.copySnapshot();
+          for (var r = 0; r < kBoardSize; r++) {
+            for (var c = 0; c < kBoardSize; c++) {
+              copy.board.setCell(r, c, movedBoard.cellAt(r, c));
+            }
+          }
+          if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+          final preview = copy.confirmAllFullLines(
+            jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
+            applyScoreToBlind: false,
+          );
+          final choice = _ImmediateConfirmChoice(
+            score: preview.result.scoreAdded,
+            lineCount: preview.result.lineBreakdowns.length,
+          );
+          if (choice.lineCount > best.lineCount ||
+              choice.lineCount == best.lineCount && choice.score > best.score) {
+            best = choice;
+          }
+        }
+      }
+    }
+    return best;
+  }
+
   CompetitionBattleAction? chooseScoringBoardDiscard(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
@@ -673,21 +689,51 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     for (var row = 0; row < kBoardSize; row++) {
       for (var col = 0; col < kBoardSize; col++) {
         if (session.board.cellAt(row, col) == null) continue;
-        final copy = session.copySnapshot();
-        copy.board.setCell(row, col, null);
-        if (!copy.tryPlaceFromHand(session.hand.first, row, col)) continue;
-        final preview = copy.confirmAllFullLines(
+        final afterDiscard = session.copySnapshot();
+        afterDiscard.board.setCell(row, col, null);
+        final moveCombo = chooseBoardMove(
+          afterDiscard,
           jesters: jesters,
           runtimeSnapshot: runtimeSnapshot,
-          applyScoreToBlind: false,
         );
-        final immediateScore = preview.result.scoreAdded;
-        if (immediateScore <= 0) continue;
+        var combo = const _ImmediateConfirmChoice(score: 0, lineCount: 0);
+        var potentialScore = _plannerBoardPotentialScore(afterDiscard.board);
+        for (final tile in session.hand) {
+          final copy = afterDiscard.copySnapshot();
+          if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+          final preview = copy.confirmAllFullLines(
+            jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
+            applyScoreToBlind: false,
+          );
+          final immediateScore = preview.result.scoreAdded;
+          final lineCount = preview.result.lineBreakdowns.length;
+          final replacementCombo = lineCount >= 2 && immediateScore > 0
+              ? _ImmediateConfirmChoice(
+                  score: immediateScore,
+                  lineCount: lineCount,
+                )
+              : _bestMoveConfirmAfterBoardDiscardPlacement(
+                  copy,
+                  jesters: jesters,
+                  runtimeSnapshot: runtimeSnapshot,
+                );
+          if (replacementCombo.lineCount > combo.lineCount ||
+              replacementCombo.lineCount == combo.lineCount &&
+                  replacementCombo.score > combo.score) {
+            combo = replacementCombo;
+            potentialScore = _plannerBoardPotentialScore(copy.board);
+          }
+        }
+        if (combo.lineCount < 2 &&
+            (moveCombo == null || (moveCombo.gain ?? 0) <= 0)) {
+          continue;
+        }
 
         final choice = _BoardDiscardChoice(
           action: CompetitionBattleAction.discardBoard(row: row, col: col),
-          immediateScore: immediateScore,
-          potentialScore: _plannerBoardPotentialScore(copy.board),
+          immediateScore: combo.lineCount >= 2 ? combo.score : moveCombo!.gain!,
+          potentialScore: potentialScore,
         );
         if (best == null ||
             choice.immediateScore > best.immediateScore ||
@@ -698,6 +744,54 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
     return best?.action;
+  }
+
+  _ImmediateConfirmChoice _bestMoveConfirmAfterBoardDiscardPlacement(
+    RummiPokerGridSession afterDiscardPlacement, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (afterDiscardPlacement.blind.boardMovesRemaining <= 0) {
+      return const _ImmediateConfirmChoice(score: 0, lineCount: 0);
+    }
+    var best = const _ImmediateConfirmChoice(score: 0, lineCount: 0);
+    for (var fromRow = 0; fromRow < kBoardSize; fromRow++) {
+      for (var fromCol = 0; fromCol < kBoardSize; fromCol++) {
+        if (afterDiscardPlacement.board.cellAt(fromRow, fromCol) == null) {
+          continue;
+        }
+        for (var toRow = 0; toRow < kBoardSize; toRow++) {
+          for (var toCol = 0; toCol < kBoardSize; toCol++) {
+            if (afterDiscardPlacement.board.cellAt(toRow, toCol) != null) {
+              continue;
+            }
+            final copy = afterDiscardPlacement.copySnapshot();
+            final fail = copy.tryMoveBoardTile(
+              fromRow: fromRow,
+              fromCol: fromCol,
+              toRow: toRow,
+              toCol: toCol,
+            );
+            if (fail != null) continue;
+            final preview = copy.confirmAllFullLines(
+              jesters: jesters,
+              runtimeSnapshot: runtimeSnapshot,
+              applyScoreToBlind: false,
+            );
+            final choice = _ImmediateConfirmChoice(
+              score: preview.result.scoreAdded,
+              lineCount: preview.result.lineBreakdowns.length,
+            );
+            if (choice.lineCount > best.lineCount ||
+                choice.lineCount == best.lineCount &&
+                    choice.score > best.score) {
+              best = choice;
+            }
+          }
+        }
+      }
+    }
+    return best;
   }
 }
 
@@ -741,6 +835,13 @@ class _MoveChoice {
   final CompetitionBattleAction action;
   final int gain;
   final int potential;
+}
+
+class _ImmediateConfirmChoice {
+  const _ImmediateConfirmChoice({required this.score, required this.lineCount});
+
+  final int score;
+  final int lineCount;
 }
 
 class _BoardDiscardChoice {

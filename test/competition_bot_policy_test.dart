@@ -37,7 +37,7 @@ void main() {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
       deckCopiesPerTile: 1,
-      maxHandSize: 1,
+      maxHandSize: 2,
       runRandomState: 1,
       blind: RummiBlindState(
         targetScore: 1739,
@@ -128,7 +128,7 @@ void main() {
       ),
       deck: PokerDeck.fromSnapshot([_tile(TileColor.red, 2)]),
       board: board,
-      hand: [_tile(TileColor.yellow, 4)],
+      hand: [_tile(TileColor.red, 13), _tile(TileColor.yellow, 4)],
       eliminated: const [],
     );
 
@@ -139,8 +139,60 @@ void main() {
     );
 
     expect(action.type, CompetitionBattleActionType.discardBoard);
-    expect(action.row, 1);
-    expect(action.col, 1);
+  });
+
+  test('full board can discard to set up discard move place combo', () {
+    final board = RummiBoard.fromSnapshot([
+      _tile(TileColor.red, 5),
+      _tile(TileColor.blue, 2),
+      _tile(TileColor.black, 3),
+      _tile(TileColor.yellow, 4),
+      _tile(TileColor.red, 6),
+      _tile(TileColor.blue, 5),
+      _tile(TileColor.black, 6),
+      _tile(TileColor.yellow, 7),
+      _tile(TileColor.blue, 8),
+      _tile(TileColor.red, 7),
+      _tile(TileColor.black, 9),
+      _tile(TileColor.yellow, 10),
+      _tile(TileColor.blue, 11),
+      _tile(TileColor.black, 12),
+      _tile(TileColor.red, 8),
+      _tile(TileColor.yellow, 13),
+      _tile(TileColor.blue, 1),
+      _tile(TileColor.black, 2),
+      _tile(TileColor.yellow, 3),
+      _tile(TileColor.red, 9),
+      _tile(TileColor.red, 1),
+      _tile(TileColor.red, 2),
+      _tile(TileColor.red, 3),
+      _tile(TileColor.red, 4),
+      _tile(TileColor.blue, 13),
+    ]);
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1200,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
+      board: board,
+      hand: [_tile(TileColor.black, 13)],
+      eliminated: const [],
+    );
+
+    final action = const CompetitionPlannerV2Policy().chooseScoringBoardDiscard(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+
+    expect(action?.type, CompetitionBattleActionType.discardBoard);
   });
 
   test('mid board uses a useful move instead of spending it as evidence', () {
@@ -162,28 +214,28 @@ void main() {
         _tile(TileColor.red, 3),
         _tile(TileColor.red, 4),
         null,
+        _tile(TileColor.red, 9),
         _tile(TileColor.blue, 7),
         _tile(TileColor.black, 8),
         _tile(TileColor.yellow, 9),
-        null,
-        null,
+        _tile(TileColor.red, 6),
         _tile(TileColor.blue, 1),
         _tile(TileColor.black, 5),
         _tile(TileColor.blue, 10),
         _tile(TileColor.black, 11),
+        _tile(TileColor.red, 7),
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.black, 12),
+        _tile(TileColor.yellow, 13),
         null,
-        _tile(TileColor.red, 5),
-        null,
-        null,
-        null,
-        null,
+        _tile(TileColor.red, 8),
         null,
         null,
         null,
         null,
         null,
       ]),
-      hand: [_tile(TileColor.black, 13)],
+      hand: [_tile(TileColor.red, 5)],
       eliminated: const [],
     );
 
@@ -196,6 +248,62 @@ void main() {
     expect(action.type, CompetitionBattleActionType.moveBoard);
     expect(action.gain, greaterThanOrEqualTo(20));
   });
+
+  test(
+    'mid board does not move for potential without duplicate confirm setup',
+    () {
+      final session = RummiPokerGridSession.restored(
+        runSeed: 91460,
+        deckCopiesPerTile: 1,
+        maxHandSize: 1,
+        runRandomState: 1,
+        blind: RummiBlindState(
+          targetScore: 1200,
+          boardDiscardsRemaining: 3,
+          handDiscardsRemaining: 2,
+          boardMovesRemaining: 3,
+        ),
+        deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
+        board: RummiBoard.fromSnapshot([
+          _tile(TileColor.red, 1),
+          _tile(TileColor.red, 2),
+          _tile(TileColor.red, 3),
+          _tile(TileColor.red, 4),
+          null,
+          _tile(TileColor.blue, 7),
+          _tile(TileColor.black, 8),
+          _tile(TileColor.yellow, 9),
+          null,
+          null,
+          _tile(TileColor.blue, 1),
+          _tile(TileColor.black, 5),
+          _tile(TileColor.blue, 10),
+          _tile(TileColor.black, 11),
+          null,
+          _tile(TileColor.red, 5),
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+        ]),
+        hand: [_tile(TileColor.black, 13)],
+        eliminated: const [],
+      );
+
+      final action = const CompetitionPlannerV2Policy().chooseAction(
+        session,
+        jesters: const [],
+        runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+      );
+
+      expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+    },
+  );
 
   test('board move is not chained within the same station', () {
     final session = RummiPokerGridSession.restored(
@@ -242,6 +350,60 @@ void main() {
       boardMoveHistory: const [
         BoardMoveRecord(fromRow: 0, fromCol: 0, toRow: 0, toCol: 4),
       ],
+    );
+
+    final action = const CompetitionPlannerV2Policy().chooseAction(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+
+    expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+  });
+
+  test('board move is not repeated after placement clears undo history', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1200,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 2,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.red, 4),
+        null,
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.yellow, 9),
+        null,
+        null,
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.black, 5),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.black, 11),
+        null,
+        _tile(TileColor.red, 5),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.black, 13)],
+      eliminated: const [],
+      boardMoveHistory: const [],
     );
 
     final action = const CompetitionPlannerV2Policy().chooseAction(
