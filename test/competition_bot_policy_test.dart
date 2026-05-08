@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
@@ -9,6 +10,60 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart'
 import '../integration_test/competition_bot_policy.dart';
 
 void main() {
+  test('boss battle waits instead of taking a small early confirm', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1739,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 6)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.black, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.blue, 2),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.blue, 3),
+        _tile(TileColor.black, 3),
+        _tile(TileColor.red, 4),
+        _tile(TileColor.blue, 4),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.yellow, 6)],
+      eliminated: const [],
+    );
+
+    final action = const CompetitionPlannerV2Policy().chooseAction(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+
+    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+  });
+
   test('full board chooses a scoring board discard over the loop cell', () {
     final board = RummiBoard.fromSnapshot([
       _tile(TileColor.red, 3),

@@ -16,7 +16,7 @@ import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/router.dart';
 import 'package:rummipoker/resources/asset_paths.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
-import 'package:rummipoker/services/blind_selection_spec.dart';
+import 'package:rummipoker/services/blind_selection_setup.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/views/game_view.dart';
@@ -190,6 +190,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> run() async {
     itemCatalog = await ItemCatalogLoader.loadFromAsset(AssetPaths.itemsCommon);
+    _syncEvidenceFromResumeConfig();
     await _startSeededRun();
     _syncEvidenceFromState();
     if (find.text('Station Select').evaluate().isNotEmpty &&
@@ -293,26 +294,31 @@ class _CompetitionFullPlayBot {
     if (config.resumeActiveRun) {
       final restored = await _loadResumeRuntime();
       if (restored != null) {
-        final route = restored.activeScene == ActiveRunScene.blindSelect
+        final resumeRuntime = restored.activeScene == ActiveRunScene.blindSelect
+            ? BlindSelectionSetup.prepareRuntimeForBlindSelect(
+                runtime: restored,
+              )
+            : restored;
+        final route = resumeRuntime.activeScene == ActiveRunScene.blindSelect
             ? RoutePaths.blindSelect
             : RoutePaths.game;
         appRouter.go(
-          '$route?difficulty=${restored.difficulty.name}'
-          '&modifier=${restored.runModifier.id}',
-          extra: restored,
+          '$route?difficulty=${resumeRuntime.difficulty.name}'
+          '&modifier=${resumeRuntime.runModifier.id}',
+          extra: resumeRuntime,
         );
         await _pumpFor(const Duration(seconds: 2));
         _record(
           'resumed active run '
-          'scene=${restored.activeScene.name} '
-          'S${restored.runProgress.stageIndex} '
-          'tier=${restored.runProgress.currentStationBlindTierIndex}',
+          'scene=${resumeRuntime.activeScene.name} '
+          'S${resumeRuntime.runProgress.stageIndex} '
+          'tier=${resumeRuntime.runProgress.currentStationBlindTierIndex}',
         );
-        if (restored.activeScene == ActiveRunScene.shop) {
+        if (resumeRuntime.activeScene == ActiveRunScene.shop) {
           await _pumpUntilVisible(find.text('다음 Station'));
           return;
         }
-        if (restored.activeScene == ActiveRunScene.blindSelect) {
+        if (resumeRuntime.activeScene == ActiveRunScene.blindSelect) {
           await _pumpUntilVisible(find.text('Station Select'));
           return;
         }
@@ -346,6 +352,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _chooseOpenBlind() async {
     await _pumpUntilVisible(find.text('Station Select'));
+    await _pumpUntilVisible(find.byIcon(Icons.play_arrow_rounded));
     final openButton = find.byIcon(Icons.play_arrow_rounded).first;
     await tester.tap(openButton);
     await _pumpFor(const Duration(seconds: 2));
@@ -380,6 +387,10 @@ class _CompetitionFullPlayBot {
         }
         continue;
       }
+      if (find.text('Station Select').evaluate().isNotEmpty) {
+        await _chooseOpenBlind();
+        continue;
+      }
       final session = state.session!;
       if (session.blind.scoreTowardBlind >= session.blind.targetScore) {
         await _pumpUntilCashOutReady();
@@ -406,8 +417,8 @@ class _CompetitionFullPlayBot {
       switch (action.type) {
         case CompetitionBattleActionType.draw:
           final handCount = session.hand.length;
-          await _tapText('드로우');
-          await _pumpUntilState(
+          await _tapTextUntilState(
+            '드로우',
             (next) => next.session!.hand.length > handCount,
           );
           break;
@@ -526,7 +537,21 @@ class _CompetitionFullPlayBot {
     BlindTier tier,
   ) async {
     if (!config.isFullRun) return false;
-    if (!discardedHand) {
+    final hasZeroDiscardBonusJester = runProgress.ownedJesters.any(
+      (jester) => jester.id == 'mystic_summit',
+    );
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final shouldProtectLateDeck = runProgress.stageIndex >= 8;
+    final shouldSpendHandDiscard =
+        !shouldProtectLateDeck &&
+            !discardedHand &&
+            occupancy >= kBoardSize * 2 ||
+        !discardedHand &&
+            !shouldProtectLateDeck &&
+            hasZeroDiscardBonusJester &&
+            session.blind.handDiscardsRemaining > 0 &&
+            occupancy >= kBoardSize * 2;
+    if (shouldSpendHandDiscard) {
       final action = battlePolicy.chooseHandDiscard(session);
       if (action != null) {
         _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
@@ -542,9 +567,11 @@ class _CompetitionFullPlayBot {
       }
     }
 
-    if (!movedBoard) {
+    if (!movedBoard && occupancy >= 2) {
       final action = battlePolicy.chooseBoardMove(session);
-      if (action != null) {
+      final isUsefulLateMove =
+          !shouldProtectLateDeck || (action?.gain ?? 0) >= 100;
+      if (action != null && isUsefulLateMove) {
         _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
         await _tapBoardCell(action.row!, action.col!);
         await _tapText('타일\n이동');
@@ -556,12 +583,24 @@ class _CompetitionFullPlayBot {
               next.session!.board.cellAt(action.row!, action.col!) == null &&
               next.session!.board.cellAt(action.toRow!, action.toCol!) != null,
         );
+        await _pumpFor(config.actionDelay + const Duration(seconds: 1));
         movedBoard = true;
         return true;
       }
     }
 
-    if (!discardedBoard) {
+    final shouldSpendBoardDiscard =
+        tier != BlindTier.boss &&
+            !shouldProtectLateDeck &&
+            !discardedBoard &&
+            occupancy >= kBoardSize * 2 ||
+        !discardedBoard &&
+            tier != BlindTier.boss &&
+            !shouldProtectLateDeck &&
+            hasZeroDiscardBonusJester &&
+            session.blind.boardDiscardsRemaining > 0 &&
+            occupancy >= kBoardSize * 3;
+    if (shouldSpendBoardDiscard) {
       final action = battlePolicy.chooseBoardDiscard(
         session,
         minOccupancy: kBoardSize * 2,
@@ -603,6 +642,7 @@ class _CompetitionFullPlayBot {
   }
 
   bool _isCashOutReady() {
+    if (_tryReadGameState() == null) return false;
     return find.text('정산 완료').evaluate().isNotEmpty ||
         find.text('Market으로').evaluate().isNotEmpty ||
         find.text('런 완료').evaluate().isNotEmpty;
@@ -650,6 +690,53 @@ class _CompetitionFullPlayBot {
     boughtItem = boughtItem || progress.boughtItemIds.isNotEmpty;
   }
 
+  void _syncEvidenceFromResumeConfig() {
+    final resumeSave = config.resumeSaveBase64;
+    if (resumeSave.isEmpty) return;
+    try {
+      final decoded = utf8.decode(base64Decode(resumeSave));
+      final json = jsonDecode(decoded) as Map<String, dynamic>;
+      final progress = json['runProgress'] as Map<String, dynamic>?;
+      final session = json['session'] as Map<String, dynamic>?;
+      if (progress == null) return;
+      boughtJester =
+          boughtJester ||
+          (progress['boughtJesterIds'] as List<dynamic>? ?? const [])
+              .isNotEmpty;
+      boughtItem =
+          boughtItem ||
+          (progress['boughtItemIds'] as List<dynamic>? ?? const []).isNotEmpty;
+      final blind = session?['blind'] as Map<String, dynamic>?;
+      if (blind == null) return;
+      final boardDiscardsRemaining = (blind['boardDiscardsRemaining'] as num?)
+          ?.toInt();
+      final boardDiscardsMax = (blind['boardDiscardsMax'] as num?)?.toInt();
+      final handDiscardsRemaining = (blind['handDiscardsRemaining'] as num?)
+          ?.toInt();
+      final handDiscardsMax = (blind['handDiscardsMax'] as num?)?.toInt();
+      final boardMovesRemaining = (blind['boardMovesRemaining'] as num?)
+          ?.toInt();
+      final boardMovesMax = (blind['boardMovesMax'] as num?)?.toInt();
+      discardedBoard =
+          discardedBoard ||
+          boardDiscardsRemaining != null &&
+              boardDiscardsMax != null &&
+              boardDiscardsRemaining < boardDiscardsMax;
+      discardedHand =
+          discardedHand ||
+          handDiscardsRemaining != null &&
+              handDiscardsMax != null &&
+              handDiscardsRemaining < handDiscardsMax;
+      movedBoard =
+          movedBoard ||
+          boardMovesRemaining != null &&
+              boardMovesMax != null &&
+              boardMovesRemaining < boardMovesMax;
+    } catch (_) {
+      return;
+    }
+  }
+
   Future<void> _buyJestersIfPossible(int stage) async {
     if (!config.needsMarketPurchase && !config.isFullRun) return;
     await _tapTextIfVisible('Jester / Slots');
@@ -661,19 +748,39 @@ class _CompetitionFullPlayBot {
       final progress = state.runProgress;
       if (market == null || progress == null || market.offers.isEmpty) return;
 
-      final offerIndex = market.offers.indexWhere(
-        (offer) => offer.isAffordable,
+      final affordableOffers = market.offers
+          .where((offer) => offer.isAffordable)
+          .toList();
+      if (affordableOffers.isEmpty) return;
+      affordableOffers.sort(
+        (a, b) => _jesterBotScore(b.card).compareTo(_jesterBotScore(a.card)),
       );
-      if (offerIndex < 0) return;
-      final offer = market.offers[offerIndex];
+      final offer = affordableOffers.first;
+      final offerScore = _jesterBotScore(offer.card);
       final jesterSlotsFull =
           market.ownedEntries.length >= progress.jesterSlotCapacity();
       if (jesterSlotsFull) {
-        final canBuyAfterSelling = market.ownedEntries.any(
-          (entry) => market.gold + entry.sellPrice >= offer.price,
+        final ownedEntries = [...market.ownedEntries]
+          ..sort(
+            (a, b) => _jesterBotScore(
+              a.card,
+              stateValue: a.stateValue,
+            ).compareTo(_jesterBotScore(b.card, stateValue: b.stateValue)),
+          );
+        final weakest = ownedEntries.first;
+        final weakestScore = _jesterBotScore(
+          weakest.card,
+          stateValue: weakest.stateValue,
         );
-        if (!canBuyAfterSelling) return;
-        if (!await _sellSelectedJesterIfVisible(stage)) return;
+        final canBuyAfterSelling =
+            market.gold + weakest.sellPrice >= offer.price;
+        if (!canBuyAfterSelling || offerScore <= weakestScore + 40) return;
+        if (!await _sellSelectedJesterIfVisible(
+          stage,
+          contentId: weakest.contentId,
+        )) {
+          return;
+        }
       }
 
       if (!await _selectJesterOfferByPrice(offer.price)) return;
@@ -685,9 +792,57 @@ class _CompetitionFullPlayBot {
     }
   }
 
-  Future<bool> _sellSelectedJesterIfVisible(int stage) async {
+  int _jesterBotScore(RummiJesterCard card, {int stateValue = 0}) {
+    var score = switch (card.rarity) {
+      RummiJesterRarity.legendary => 900,
+      RummiJesterRarity.rare => 720,
+      RummiJesterRarity.uncommon => 540,
+      RummiJesterRarity.common => 360,
+    };
+    switch (card.effectType) {
+      case 'xmult_bonus':
+        score += 420 + ((card.xValue ?? 1) * 120).round();
+      case 'mult_bonus':
+        score += 180 + (card.value ?? 0) * 8;
+      case 'chips_bonus':
+        score += 120 + (card.value ?? 0);
+      case 'stateful_growth':
+        score += 180 + stateValue * 8;
+      case 'economy':
+        score += 40;
+    }
+    switch (card.id) {
+      case 'the_family':
+      case 'the_order':
+      case 'the_trio':
+        score += 260;
+      case 'mystic_summit':
+        score += 220;
+      case 'half_jester':
+        score += 180;
+      case 'ride_the_bus':
+        score += stateValue > 0 ? stateValue * 12 : -180;
+      case 'green_jester':
+        score += stateValue > 0 ? stateValue * 12 : -260;
+      case 'clever_jester':
+        score += 220;
+      case 'wrathful_jester':
+      case 'gluttonous_jester':
+      case 'lusty_jester':
+        score += 80;
+      case 'egg':
+      case 'delayed_gratification':
+        score -= 120;
+    }
+    return score;
+  }
+
+  Future<bool> _sellSelectedJesterIfVisible(
+    int stage, {
+    String? contentId,
+  }) async {
     if (find.text('판매').evaluate().isEmpty) {
-      await _selectOwnedJesterForSale();
+      await _selectOwnedJesterForSale(contentId: contentId);
     }
     if (find.text('판매').evaluate().isEmpty) return false;
     await _tapText('판매');
@@ -696,10 +851,11 @@ class _CompetitionFullPlayBot {
     return true;
   }
 
-  Future<void> _selectOwnedJesterForSale() async {
+  Future<void> _selectOwnedJesterForSale({String? contentId}) async {
     final ownedEntries = _readGameState().marketView?.ownedEntries;
     if (ownedEntries == null || ownedEntries.isEmpty) return;
     for (final entry in ownedEntries) {
+      if (contentId != null && entry.contentId != contentId) continue;
       final slotFinder = find.byWidgetPredicate(
         (widget) =>
             widget is GameJesterSlot &&
@@ -725,7 +881,10 @@ class _CompetitionFullPlayBot {
 
   Future<void> _buyQuickSlotItemIfNeeded(int stage) async {
     if (!config.needsItemPurchase && !config.isFullRun) return;
-    if (boughtItem) return;
+    final inventory = _readGameState().runProgress?.itemInventory;
+    final hasUsableQuickSlotItem =
+        inventory != null && inventory.quickSlotItemIds.isNotEmpty;
+    if (boughtItem && hasUsableQuickSlotItem) return;
     await _tapTextIfVisible('Jester / Slots');
     await _tapTextIfVisible('Q-Slot');
     if (find.text('구매').evaluate().isEmpty) return;
@@ -854,7 +1013,14 @@ class _CompetitionFullPlayBot {
   }
 
   Future<void> _saveBotCheckpoint() async {
-    final state = _readGameState();
+    GameSessionState? state;
+    final end = DateTime.now().add(const Duration(seconds: 5));
+    while (DateTime.now().isBefore(end)) {
+      state = _tryReadGameState();
+      if (state != null) break;
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    if (state == null) return;
     final session = state.session;
     final runProgress = state.runProgress;
     final stageStartSnapshot = state.stageStartSnapshot;

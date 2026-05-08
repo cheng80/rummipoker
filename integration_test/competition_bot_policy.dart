@@ -34,6 +34,7 @@ class CompetitionBattleAction {
     this.col,
     this.toRow,
     this.toCol,
+    this.gain,
     this.reason,
   });
 
@@ -74,12 +75,14 @@ class CompetitionBattleAction {
     required int col,
     required int toRow,
     required int toCol,
+    int? gain,
   }) : this._(
          type: CompetitionBattleActionType.moveBoard,
          row: row,
          col: col,
          toRow: toRow,
          toCol: toCol,
+         gain: gain,
        );
 
   const CompetitionBattleAction.stop(String reason)
@@ -91,6 +94,7 @@ class CompetitionBattleAction {
   final int? col;
   final int? toRow;
   final int? toCol;
+  final int? gain;
   final String? reason;
 
   @override
@@ -113,8 +117,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   const CompetitionPlannerV2Policy();
 
   static const int _cleanConfirmScoreFloor = 70;
+  static const int _lateRunTargetScoreFloor = 1600;
+  static const int _bossConfirmScoreFloor = 360;
+  static const int _bossConfirmMinOccupancy = kBoardSize * 4;
+  static const int _bossHandDiscardMinOccupancy = kBoardSize * 3 + 3;
   static const int _highPressureOccupancy = kBoardSize * kBoardSize - 3;
-
   @override
   String get id => 'competition_planner_v2';
 
@@ -144,6 +151,19 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
     }
 
+    final zeroDiscardBonusActive = _hasZeroDiscardBonusJester(jesters);
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final shouldProtectDeck = _shouldProtectDeck(session);
+    if (zeroDiscardBonusActive && session.blind.handDiscardsRemaining > 0) {
+      final handDiscard = chooseHandDiscard(session);
+      final minHandDiscardOccupancy = shouldProtectDeck
+          ? _bossHandDiscardMinOccupancy
+          : kBoardSize * 2;
+      if (handDiscard != null && occupancy >= minHandDiscardOccupancy) {
+        return handDiscard;
+      }
+    }
+
     final placement = _bestPlacement(
       session,
       jesters: jesters,
@@ -155,9 +175,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return const CompetitionBattleAction.confirm();
     }
 
-    final boardIsFull =
-        RummiPokerGridSession.countTilesOnBoard(session.board) >=
-        kBoardSize * kBoardSize;
+    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
     if (boardIsFull) {
       final scoringDiscard = _chooseScoringBoardDiscard(
         session,
@@ -168,6 +186,19 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 
       final handDiscard = chooseHandDiscard(session);
       if (handDiscard != null) return handDiscard;
+
+      // 보드가 꽉 찬 뒤 버림 수단도 없으면 2족보 원칙보다 진행 지속을 우선한다.
+      if (confirmChoice.score > 0) {
+        return const CompetitionBattleAction.confirm();
+      }
+    }
+
+    if (zeroDiscardBonusActive && session.blind.boardDiscardsRemaining > 0) {
+      final bonusDiscard = chooseBoardDiscard(
+        session,
+        minOccupancy: kBoardSize * 3,
+      );
+      if (bonusDiscard != null) return bonusDiscard;
     }
 
     final discard = chooseBoardDiscard(session);
@@ -219,6 +250,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
                 col: fromCol,
                 toRow: toRow,
                 toCol: toCol,
+                gain: potential - basePotential,
               ),
               gain: potential - basePotential,
               potential: potential,
@@ -234,6 +266,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
     if (best == null) return null;
     return best.action;
+  }
+
+  bool _hasZeroDiscardBonusJester(List<RummiJesterCard> jesters) {
+    return jesters.any((jester) => jester.id == 'mystic_summit');
   }
 
   int _bestPlacementPotential(RummiPokerGridSession session, int handIndex) {
@@ -271,6 +307,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         session.blind.targetScore - session.blind.scoreTowardBlind;
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
     final emptyCells = kBoardSize * kBoardSize - occupancy;
+    final isBossBattle = session.blind.bossModifier != null;
 
     if (lineCount < 2) {
       return _ConfirmChoice(
@@ -279,11 +316,31 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         shouldConfirmNow: false,
       );
     }
+    if (score > 0 && _shouldTempoConfirm(session, jesters)) {
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: true,
+      );
+    }
     if (remainingScore > 0 && score >= remainingScore) {
       return _ConfirmChoice(
         lineCount: lineCount,
         score: score,
         shouldConfirmNow: true,
+      );
+    }
+    if (isBossBattle) {
+      // 보스전은 덱 고갈 리스크가 커서 작은 2줄 확정을 참는다.
+      // 보드를 충분히 채워 3줄 이상 또는 고득점 묶음을 노리는 것이 목적이다.
+      final hasLargeBundle =
+          score >= _bossConfirmScoreFloor &&
+          (occupancy >= _bossConfirmMinOccupancy || lineCount >= 3);
+      final isNearBoardLock = emptyCells <= 2 && score > 0;
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: hasLargeBundle || isNearBoardLock,
       );
     }
     if (score >= _cleanConfirmScoreFloor) {
@@ -305,6 +362,20 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       score: score,
       shouldConfirmNow: false,
     );
+  }
+
+  bool _shouldTempoConfirm(
+    RummiPokerGridSession session,
+    List<RummiJesterCard> jesters,
+  ) {
+    final hasRideTheBus = jesters.any((jester) => jester.id == 'ride_the_bus');
+    final bossId = session.blind.bossModifier?.id;
+    return hasRideTheBus || bossId == 'confirm_limit_tax_v1';
+  }
+
+  bool _shouldProtectDeck(RummiPokerGridSession session) {
+    return session.blind.bossModifier != null ||
+        session.blind.targetScore >= _lateRunTargetScoreFloor;
   }
 
   _PlacementChoice? _bestPlacement(
@@ -339,7 +410,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
               ),
               clearsTarget: true,
               immediateScore: immediateScore,
-              potentialScore: _plannerBoardPotentialScore(copy.board),
+              potentialScore: _plannerBoardPotentialScoreForJesters(
+                copy.board,
+                jesters,
+              ),
               boardPressure: RummiPokerGridSession.countTilesOnBoard(
                 copy.board,
               ),
@@ -354,7 +428,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             ),
             clearsTarget: false,
             immediateScore: immediateScore,
-            potentialScore: _plannerBoardPotentialScore(copy.board),
+            potentialScore: _plannerBoardPotentialScoreForJesters(
+              copy.board,
+              jesters,
+            ),
             boardPressure: RummiPokerGridSession.countTilesOnBoard(copy.board),
           );
 
@@ -519,6 +596,100 @@ int _plannerBoardPotentialScore(RummiBoard board) {
   score += _plannerLinePotentialScore(board.diagMain());
   score += _plannerLinePotentialScore(board.diagAnti());
   return score;
+}
+
+int _plannerBoardPotentialScoreForJesters(
+  RummiBoard board,
+  List<RummiJesterCard> jesters,
+) {
+  var score = _plannerBoardPotentialScore(board);
+  final wantsFlush = jesters.any(
+    (jester) =>
+        jester.conditionType == 'flush' ||
+        jester.conditionType == 'tile_color_scored',
+  );
+  final wantsFourKind = jesters.any((jester) => jester.id == 'the_family');
+  final wantsPairs = jesters.any(
+    (jester) =>
+        jester.id == 'clever_jester' ||
+        jester.conditionType == 'two_pair' ||
+        jester.conditionType == 'three_of_a_kind' ||
+        jester.conditionType == 'four_of_a_kind' ||
+        jester.conditionType == 'full_house',
+  );
+  if (!wantsFlush && !wantsPairs) return score;
+
+  for (var row = 0; row < kBoardSize; row++) {
+    score += _plannerJesterLineBonus(
+      board.row(row),
+      wantsFlush: wantsFlush,
+      wantsFourKind: wantsFourKind,
+      wantsPairs: wantsPairs,
+    );
+  }
+  for (var col = 0; col < kBoardSize; col++) {
+    score += _plannerJesterLineBonus(
+      board.col(col),
+      wantsFlush: wantsFlush,
+      wantsFourKind: wantsFourKind,
+      wantsPairs: wantsPairs,
+    );
+  }
+  score += _plannerJesterLineBonus(
+    board.diagMain(),
+    wantsFlush: wantsFlush,
+    wantsFourKind: wantsFourKind,
+    wantsPairs: wantsPairs,
+  );
+  score += _plannerJesterLineBonus(
+    board.diagAnti(),
+    wantsFlush: wantsFlush,
+    wantsFourKind: wantsFourKind,
+    wantsPairs: wantsPairs,
+  );
+  return score;
+}
+
+int _plannerJesterLineBonus(
+  List<Tile?> line, {
+  required bool wantsFlush,
+  required bool wantsFourKind,
+  required bool wantsPairs,
+}) {
+  final tiles = line.whereType<Tile>().toList(growable: false);
+  if (tiles.isEmpty) return 0;
+  final missing = kBoardSize - tiles.length;
+  final colorCounts = <TileColor, int>{};
+  final rankCounts = <int, int>{};
+  for (final tile in tiles) {
+    colorCounts[tile.color] = (colorCounts[tile.color] ?? 0) + 1;
+    rankCounts[tile.number] = (rankCounts[tile.number] ?? 0) + 1;
+  }
+
+  var bonus = 0;
+  if (wantsFlush) {
+    final maxSameColor = colorCounts.values.fold<int>(
+      0,
+      (maxValue, count) => count > maxValue ? count : maxValue,
+    );
+    if (maxSameColor + missing >= kBoardSize) {
+      bonus += maxSameColor * 70 + (missing == 0 ? 280 : 0);
+    }
+  }
+  if (wantsPairs) {
+    final pairCount = rankCounts.values.where((count) => count >= 2).length;
+    final maxSameRank = rankCounts.values.fold<int>(
+      0,
+      (maxValue, count) => count > maxValue ? count : maxValue,
+    );
+    if (wantsFourKind && maxSameRank + missing >= 4) {
+      bonus += maxSameRank * 180 + (missing == 0 ? 520 : 0);
+    }
+    if (pairCount >= 2 || maxSameRank >= 3) {
+      bonus += pairCount * 90 + maxSameRank * 55 + (missing == 0 ? 160 : 0);
+    }
+  }
+  return bonus;
 }
 
 int _plannerLinePotentialScore(List<Tile?> line) {
