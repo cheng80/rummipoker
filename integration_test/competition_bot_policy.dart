@@ -148,6 +148,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _midBoardMoveMinGain = 20;
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
+  static const int _bossUtilityTargetScoreFloor = 500;
   static const int _strategicUtilityTargetScoreFloor = 1000;
   @override
   String get id => 'competition_planner_v2';
@@ -453,7 +454,9 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   }
 
   bool _shouldUseStrategicUtility(RummiPokerGridSession session) {
-    if (session.blind.bossModifier != null) return true;
+    if (session.blind.bossModifier != null) {
+      return session.blind.targetScore >= _bossUtilityTargetScoreFloor;
+    }
     if (session.blind.targetScore >= _strategicUtilityTargetScoreFloor) {
       return true;
     }
