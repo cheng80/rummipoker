@@ -497,7 +497,8 @@ class _CompetitionFullPlayBot {
   }
 
   Future<bool> _retryGameOverIfVisible() async {
-    if (find.text('다시 도전').evaluate().isEmpty) return false;
+    final retryFinder = _visibleButtonOrTextFinder('다시 도전');
+    if (retryFinder.evaluate().isEmpty) return false;
     gameOverRetries++;
     if (gameOverRetries > config.maxGameOverRetries) {
       fail(
@@ -506,7 +507,8 @@ class _CompetitionFullPlayBot {
       );
     }
     _record('game over -> retry $gameOverRetries/${config.maxGameOverRetries}');
-    await _tapText('다시 도전');
+    await tester.tap(retryFinder.last, warnIfMissed: false);
+    await _pumpFor(const Duration(milliseconds: 800));
     await _pumpUntilVisible(find.text('드로우'));
     return true;
   }
