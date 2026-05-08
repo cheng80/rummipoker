@@ -524,6 +524,68 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
   });
 
+  test('retry recovery boss can spend another move for duplicate setup', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1200,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 2,
+        boardMovesMax: 3,
+        bossModifier: RummiBossModifier.singleRankPressure,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.red, 4),
+        null,
+        _tile(TileColor.red, 9),
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.yellow, 9),
+        _tile(TileColor.red, 6),
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.black, 5),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.black, 11),
+        _tile(TileColor.red, 7),
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.black, 12),
+        _tile(TileColor.yellow, 13),
+        null,
+        _tile(TileColor.red, 8),
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.red, 5)],
+      eliminated: const [],
+      boardMoveHistory: const [
+        BoardMoveRecord(fromRow: 0, fromCol: 0, toRow: 0, toCol: 4),
+      ],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, CompetitionBattleActionType.moveBoard);
+    expect(action.gain, greaterThanOrEqualTo(70));
+  });
+
   test('early low target does not spend hand discard for evidence', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,

@@ -274,10 +274,16 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
   }) {
     if (session.blind.boardMovesRemaining <= 0) return null;
-    if (session.blind.boardMovesRemaining < session.blind.boardMovesMax) {
+    final allowsRepeatedStrategicMove = _allowsRepeatedStrategicBoardMove(
+      session,
+    );
+    if (!allowsRepeatedStrategicMove &&
+        session.blind.boardMovesRemaining < session.blind.boardMovesMax) {
       return null;
     }
-    if (session.boardMoveHistory.isNotEmpty) return null;
+    if (!allowsRepeatedStrategicMove && session.boardMoveHistory.isNotEmpty) {
+      return null;
+    }
     _MoveChoice? best;
 
     for (var fromRow = 0; fromRow < kBoardSize; fromRow++) {
@@ -302,6 +308,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
               runtimeSnapshot: runtimeSnapshot,
             );
             if (followUp.lineCount < 2 || followUp.score <= 0) continue;
+            if (allowsRepeatedStrategicMove &&
+                followUp.lineCount < 3 &&
+                followUp.score < _highTargetConfirmScoreFloor) {
+              continue;
+            }
             final potential = _plannerBoardPotentialScore(copy);
             final choice = _MoveChoice(
               action: CompetitionBattleAction.moveBoard(
@@ -325,6 +336,15 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
     if (best == null) return null;
     return best.action;
+  }
+
+  bool _allowsRepeatedStrategicBoardMove(RummiPokerGridSession session) {
+    if (!enableRetryRecoveryConfirmDelay) return false;
+    if (session.blind.boardMovesRemaining >= session.blind.boardMovesMax) {
+      return true;
+    }
+    if (session.blind.bossModifier != null) return true;
+    return session.blind.targetScore >= _strategicUtilityTargetScoreFloor;
   }
 
   bool _shouldDrawForMoreOptions(
@@ -418,6 +438,20 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (isBossBattle) {
       // 보스전은 덱 고갈 리스크가 커서 작은 2줄 확정을 참는다.
       // 보드를 충분히 채워 3줄 이상 또는 고득점 묶음을 노리는 것이 목적이다.
+      final isRetryRecoveryHighTarget =
+          enableRetryRecoveryConfirmDelay &&
+          session.blind.targetScore >= _highTargetConfirmTargetFloor;
+      if (isRetryRecoveryHighTarget) {
+        final hasRecoveryBundle =
+            score >= _highTargetConfirmScoreFloor ||
+            lineCount >= 3 && score >= _cleanConfirmScoreFloor;
+        final isForcedBoardLock = emptyCells == 0 && score > 0;
+        return _ConfirmChoice(
+          lineCount: lineCount,
+          score: score,
+          shouldConfirmNow: hasRecoveryBundle || isForcedBoardLock,
+        );
+      }
       final hasLargeBundle =
           score >= _bossConfirmScoreFloor &&
           (occupancy >= _bossConfirmMinOccupancy || lineCount >= 3);
