@@ -447,7 +447,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         shouldConfirmNow: false,
       );
     }
-    if (score > 0 && _shouldTempoConfirm(session, jesters)) {
+    final isRetryRecoveryHighTarget =
+        enableRetryRecoveryConfirmDelay &&
+        retryRecoveryAttempt >= 2 &&
+        session.blind.targetScore >= _highTargetConfirmTargetFloor;
+    if (score > 0 &&
+        !isRetryRecoveryHighTarget &&
+        _shouldTempoConfirm(session, jesters)) {
       return _ConfirmChoice(
         lineCount: lineCount,
         score: score,
@@ -464,9 +470,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (isBossBattle) {
       // 보스전은 덱 고갈 리스크가 커서 작은 2줄 확정을 참는다.
       // 보드를 충분히 채워 3줄 이상 또는 고득점 묶음을 노리는 것이 목적이다.
-      final isRetryRecoveryHighTarget =
-          enableRetryRecoveryConfirmDelay &&
-          session.blind.targetScore >= _highTargetConfirmTargetFloor;
       if (isRetryRecoveryHighTarget) {
         final hasRecoveryBundle =
             score >= _bossConfirmScoreFloor ||

@@ -333,6 +333,64 @@ void main() {
     );
   });
 
+  test('second retry boss does not tempo confirm a low tax bundle', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1401,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 3,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.red, 2)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.blue, 10),
+        null,
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.yellow, 12),
+        null,
+        _tile(TileColor.black, 1),
+        null,
+        _tile(TileColor.black, 4),
+        _tile(TileColor.black, 12),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.red, 6),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.blue, 8),
+        _tile(TileColor.black, 11),
+        _tile(TileColor.black, 7),
+        _tile(TileColor.red, 13),
+        _tile(TileColor.blue, 13),
+        _tile(TileColor.black, 9),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.black, 13),
+        null,
+        _tile(TileColor.red, 10),
+        _tile(TileColor.red, 5),
+        null,
+        null,
+      ]),
+      hand: const [],
+      eliminated: const [],
+    );
+
+    final secondRecoveryAction =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(secondRecoveryAction.type, CompetitionBattleActionType.draw);
+  });
+
   test('full board can discard to set up discard move place combo', () {
     final board = RummiBoard.fromSnapshot([
       _tile(TileColor.red, 5),
