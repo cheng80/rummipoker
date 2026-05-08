@@ -312,6 +312,70 @@ void main() {
     expect(action.type, CompetitionBattleActionType.moveBoard);
   });
 
+  test(
+    'full boss board discards to revive a scoring line instead of stopping',
+    () {
+      final session = RummiPokerGridSession.restored(
+        runSeed: 91460,
+        deckCopiesPerTile: 1,
+        maxHandSize: 1,
+        runRandomState: 1,
+        blind: RummiBlindState(
+          targetScore: 1121,
+          boardDiscardsRemaining: 3,
+          handDiscardsRemaining: 0,
+          boardMovesRemaining: 0,
+          bossModifier: RummiBossModifier.confirmCountTax,
+        ),
+        deck: PokerDeck.fromSnapshot([
+          _tile(TileColor.blue, 8),
+          _tile(TileColor.yellow, 4),
+          _tile(TileColor.red, 2),
+        ]),
+        board: RummiBoard.fromSnapshot([
+          _tile(TileColor.yellow, 2),
+          _tile(TileColor.black, 2),
+          _tile(TileColor.yellow, 3),
+          _tile(TileColor.red, 7),
+          _tile(TileColor.blue, 4),
+          _tile(TileColor.red, 9),
+          _tile(TileColor.black, 10),
+          _tile(TileColor.red, 1),
+          _tile(TileColor.black, 4),
+          _tile(TileColor.blue, 9),
+          _tile(TileColor.red, 11),
+          _tile(TileColor.black, 1),
+          _tile(TileColor.blue, 12),
+          _tile(TileColor.black, 5),
+          _tile(TileColor.blue, 7),
+          _tile(TileColor.red, 5),
+          _tile(TileColor.black, 13),
+          _tile(TileColor.red, 4),
+          _tile(TileColor.black, 12),
+          _tile(TileColor.black, 8),
+          _tile(TileColor.yellow, 11),
+          _tile(TileColor.blue, 13),
+          _tile(TileColor.yellow, 1),
+          _tile(TileColor.yellow, 6),
+          _tile(TileColor.black, 6),
+        ]),
+        hand: [_tile(TileColor.yellow, 5)],
+        eliminated: const [],
+      );
+
+      final action =
+          const CompetitionPlannerV2Policy(
+            enableRetryRecoveryConfirmDelay: true,
+          ).chooseAction(
+            session,
+            jesters: const [],
+            runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+          );
+
+      expect(action.type, CompetitionBattleActionType.discardBoard);
+    },
+  );
+
   test('mid board uses a useful move instead of spending it as evidence', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,

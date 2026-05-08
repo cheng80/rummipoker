@@ -241,6 +241,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
 
     if (boardIsFull) {
+      final recoveryDiscard = chooseRecoveryBoardDiscard(
+        session,
+        jesters: jesters,
+        runtimeSnapshot: runtimeSnapshot,
+      );
+      if (recoveryDiscard != null) return recoveryDiscard;
+
       final handDiscard = chooseHandDiscard(session);
       if (handDiscard != null) return handDiscard;
 
@@ -809,6 +816,82 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             choice.immediateScore == best.immediateScore &&
                 choice.potentialScore > best.potentialScore) {
           best = choice;
+        }
+      }
+    }
+    return best?.action;
+  }
+
+  CompetitionBattleAction? chooseRecoveryBoardDiscard(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (session.blind.boardDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return null;
+    }
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    if (occupancy < kBoardSize * kBoardSize) return null;
+    final shouldRecover =
+        session.blind.bossModifier != null ||
+        session.blind.targetScore >= _strategicUtilityTargetScoreFloor ||
+        !session.canDrawFromDeck;
+    if (!shouldRecover) return null;
+
+    final currentPreview = session.copySnapshot().confirmAllFullLines(
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+      applyScoreToBlind: false,
+    );
+    final currentScore = currentPreview.result.scoreAdded;
+    final currentLineCount = currentPreview.result.lineBreakdowns.length;
+    _BoardDiscardChoice? best;
+
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        if (session.board.cellAt(row, col) == null) continue;
+        final afterDiscard = session.copySnapshot();
+        afterDiscard.board.setCell(row, col, null);
+        final afterDiscardPotential = _plannerBoardPotentialScoreForJesters(
+          afterDiscard.board,
+          jesters,
+        );
+
+        for (var handIndex = 0; handIndex < session.hand.length; handIndex++) {
+          final tile = session.hand[handIndex];
+          final copy = afterDiscard.copySnapshot();
+          if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+          final preview = copy.confirmAllFullLines(
+            jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
+            applyScoreToBlind: false,
+          );
+          final lineCount = preview.result.lineBreakdowns.length;
+          final score = preview.result.scoreAdded;
+          final potentialScore = _plannerBoardPotentialScoreForJesters(
+            copy.board,
+            jesters,
+          );
+          final improvesConfirm =
+              lineCount > currentLineCount ||
+              lineCount == currentLineCount && score > currentScore;
+          final revivesDeadLine =
+              lineCount > 0 &&
+              score > 0 &&
+              potentialScore >= afterDiscardPotential;
+          if (!improvesConfirm && !revivesDeadLine) continue;
+
+          final choice = _BoardDiscardChoice(
+            action: CompetitionBattleAction.discardBoard(row: row, col: col),
+            immediateScore: score,
+            potentialScore: potentialScore,
+          );
+          if (best == null ||
+              choice.immediateScore > best.immediateScore ||
+              choice.immediateScore == best.immediateScore &&
+                  choice.potentialScore > best.potentialScore) {
+            best = choice;
+          }
         }
       }
     }
