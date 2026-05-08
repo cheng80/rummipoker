@@ -147,6 +147,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 
   static const int _cleanConfirmScoreFloor = 70;
   static const int _highTargetConfirmScoreFloor = 180;
+  static const int _highTargetTwoLineConfirmScoreFloor = 300;
   static const int _highTargetConfirmTargetFloor = 600;
   static const int _bossConfirmScoreFloor = 360;
   static const int _bossConfirmMinOccupancy = kBoardSize * 4;
@@ -317,7 +318,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             );
             if (followUp.lineCount < 2 || followUp.score <= 0) continue;
             if (allowsRepeatedStrategicMove &&
-                followUp.score < _highTargetConfirmScoreFloor) {
+                !_isHighTargetRecoveryBundle(followUp)) {
               continue;
             }
             final potential = _plannerBoardPotentialScore(copy);
@@ -475,10 +476,15 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (isHighTarget) {
       // 고점수 구간에서는 작은 확정을 바로 먹기보다, 보드 버림/이동으로
       // 더 큰 중복 족보 묶음을 만들 여지를 먼저 본다.
+      final isForcedBoardLock = emptyCells == 0 && score > 0;
       return _ConfirmChoice(
         lineCount: lineCount,
         score: score,
-        shouldConfirmNow: score >= _highTargetConfirmScoreFloor,
+        shouldConfirmNow:
+            _isHighTargetRecoveryBundle(
+              _ImmediateConfirmChoice(score: score, lineCount: lineCount),
+            ) ||
+            isForcedBoardLock,
       );
     }
     if (score >= _cleanConfirmScoreFloor) {
@@ -509,6 +515,12 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final hasRideTheBus = jesters.any((jester) => jester.id == 'ride_the_bus');
     final bossId = session.blind.bossModifier?.id;
     return hasRideTheBus || bossId == 'confirm_limit_tax_v1';
+  }
+
+  bool _isHighTargetRecoveryBundle(_ImmediateConfirmChoice choice) {
+    return choice.score >= _highTargetTwoLineConfirmScoreFloor ||
+        (choice.lineCount >= 3 &&
+            choice.score >= _highTargetConfirmScoreFloor);
   }
 
   bool _shouldUseStrategicUtility(RummiPokerGridSession session) {
