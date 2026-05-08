@@ -914,9 +914,8 @@ class _CompetitionFullPlayBot {
   }
 
   Future<void> _tapText(String text) async {
-    final finder = _buttonOrTextFinder(text);
-    await _pumpUntilVisible(finder);
-    await tester.tap(finder.first, warnIfMissed: false);
+    final finder = await _pumpUntilTappableText(text);
+    await tester.tap(finder.last, warnIfMissed: false);
   }
 
   Future<void> _tapPrimaryActionUntilAnyVisible(
@@ -941,7 +940,7 @@ class _CompetitionFullPlayBot {
   }
 
   Future<void> _tapTextIfVisible(String text) async {
-    final finder = _buttonOrTextFinder(text);
+    final finder = _visibleButtonOrTextFinder(text);
     if (finder.evaluate().isEmpty) return;
     await tester.tap(finder.first, warnIfMissed: false);
     await _pumpFor(const Duration(milliseconds: 500));
@@ -968,9 +967,26 @@ class _CompetitionFullPlayBot {
   }
 
   Finder _buttonOrTextFinder(String text) {
+    return _visibleButtonOrTextFinder(text);
+  }
+
+  Finder _visibleButtonOrTextFinder(String text) {
     final actionButton = find.widgetWithText(GameActionButton, text);
     if (actionButton.evaluate().isNotEmpty) return actionButton;
     return find.text(text);
+  }
+
+  Future<Finder> _pumpUntilTappableText(
+    String text, {
+    Duration timeout = const Duration(minutes: 2),
+  }) async {
+    final end = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 100));
+      final finder = _visibleButtonOrTextFinder(text);
+      if (finder.evaluate().isNotEmpty) return finder;
+    }
+    fail('Timed out waiting for tappable text "$text"');
   }
 
   Future<void> _pumpUntilVisible(
