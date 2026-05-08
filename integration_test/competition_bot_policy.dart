@@ -174,8 +174,28 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (confirmChoice.shouldConfirmNow) {
       return const CompetitionBattleAction.confirm();
     }
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final shouldUseStrategicUtility = _shouldUseStrategicUtility(session);
+    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
     if (session.hand.isEmpty) {
       if (session.canDrawFromDeck) return const CompetitionBattleAction.draw();
+      if ((shouldUseStrategicUtility || boardIsFull) &&
+          occupancy >= _boardDiscardReplacementMinOccupancy) {
+        final scoringDiscard = chooseScoringBoardDiscard(
+          session,
+          jesters: jesters,
+          runtimeSnapshot: runtimeSnapshot,
+        );
+        if (scoringDiscard != null) return scoringDiscard;
+      }
+      if (boardIsFull) {
+        final recoveryDiscard = chooseRecoveryBoardDiscard(
+          session,
+          jesters: jesters,
+          runtimeSnapshot: runtimeSnapshot,
+        );
+        if (recoveryDiscard != null) return recoveryDiscard;
+      }
       // 더 이상 드로우/배치가 불가능하면 카드 고갈 실패를 피하기 위해
       // 최소 2개 족보 조건을 마지막 수단으로만 완화한다.
       if (confirmChoice.shouldConfirmNow || confirmChoice.score > 0) {
@@ -183,9 +203,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
       return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
     }
-
-    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
-    final shouldUseStrategicUtility = _shouldUseStrategicUtility(session);
 
     if (shouldUseStrategicUtility &&
         occupancy >= _midBoardMoveMinOccupancy &&
@@ -230,7 +247,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return const CompetitionBattleAction.confirm();
     }
 
-    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
     if ((shouldUseStrategicUtility || boardIsFull) &&
         occupancy >= _boardDiscardReplacementMinOccupancy) {
       final scoringDiscard = chooseScoringBoardDiscard(
@@ -453,7 +469,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         final hasRecoveryBundle =
             score >= _bossConfirmScoreFloor ||
             (lineCount >= 3 && score >= _highTargetConfirmScoreFloor);
-        final isForcedBoardLock = emptyCells == 0 && score > 0;
+        final isForcedBoardLock =
+            emptyCells == 0 &&
+            score > 0 &&
+            session.blind.boardDiscardsRemaining <= 0;
         return _ConfirmChoice(
           lineCount: lineCount,
           score: score,
@@ -476,7 +495,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (isHighTarget) {
       // 고점수 구간에서는 작은 확정을 바로 먹기보다, 보드 버림/이동으로
       // 더 큰 중복 족보 묶음을 만들 여지를 먼저 본다.
-      final isForcedBoardLock = emptyCells == 0 && score > 0;
+      final isForcedBoardLock =
+          emptyCells == 0 &&
+          score > 0 &&
+          session.blind.boardDiscardsRemaining <= 0;
       return _ConfirmChoice(
         lineCount: lineCount,
         score: score,
@@ -519,8 +541,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 
   bool _isHighTargetRecoveryBundle(_ImmediateConfirmChoice choice) {
     return choice.score >= _highTargetTwoLineConfirmScoreFloor ||
-        (choice.lineCount >= 3 &&
-            choice.score >= _highTargetConfirmScoreFloor);
+        (choice.lineCount >= 3 && choice.score >= _highTargetConfirmScoreFloor);
   }
 
   bool _shouldUseStrategicUtility(RummiPokerGridSession session) {

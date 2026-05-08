@@ -149,6 +149,62 @@ void main() {
     expect(action.type, CompetitionBattleActionType.discardBoard);
   });
 
+  test('retry recovery full board does not force a low confirm', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1391,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 0,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.red, 2)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 3),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.black, 3),
+        _tile(TileColor.red, 10),
+        _tile(TileColor.blue, 3),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.black, 9),
+        _tile(TileColor.black, 2),
+        _tile(TileColor.blue, 6),
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.red, 9),
+        _tile(TileColor.yellow, 5),
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.black, 13),
+        _tile(TileColor.yellow, 6),
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.black, 4),
+        _tile(TileColor.yellow, 9),
+        _tile(TileColor.blue, 8),
+        _tile(TileColor.yellow, 12),
+        _tile(TileColor.black, 10),
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 6),
+      ]),
+      hand: const [],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+  });
+
   test('retry recovery delays a small high target confirm for utility', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
