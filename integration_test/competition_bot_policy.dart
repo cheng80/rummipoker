@@ -134,7 +134,9 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
     if (session.hand.isEmpty) {
       if (session.canDrawFromDeck) return const CompetitionBattleAction.draw();
-      if (confirmChoice.shouldConfirmNow) {
+      // 더 이상 드로우/배치가 불가능하면 카드 고갈 실패를 피하기 위해
+      // 최소 2개 족보 조건을 마지막 수단으로만 완화한다.
+      if (confirmChoice.shouldConfirmNow || confirmChoice.score > 0) {
         return const CompetitionBattleAction.confirm();
       }
       final discard = chooseBoardDiscard(session);

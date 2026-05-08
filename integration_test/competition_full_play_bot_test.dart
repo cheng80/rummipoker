@@ -470,6 +470,7 @@ class _CompetitionFullPlayBot {
           if (await _retryGameOverAfterStop(action.reason ?? 'stop')) {
             continue;
           }
+          await _saveBotCheckpoint();
           fail('battle bot stopped: ${action.reason}');
       }
 
@@ -478,6 +479,7 @@ class _CompetitionFullPlayBot {
 
     final state = _readGameState();
     final progress = state.runProgress!;
+    await _saveBotCheckpoint();
     fail(
       'battle action cap reached at '
       'S${progress.stageIndex} '
