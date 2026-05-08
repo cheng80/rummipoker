@@ -217,8 +217,15 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _marketRerollFeedbackTick = 0;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
+  Future<void> _pendingStateSave = Future<void>.value();
 
   RummiMarketRuntimeFacade get _market => widget.readMarketView();
+
+  void _queueStateSave() {
+    _pendingStateSave = _pendingStateSave.then((_) => widget.onStateChanged());
+  }
+
+  Future<void> _flushStateSave() => _pendingStateSave;
 
   GlobalKey _offerKey(_MarketOfferEntry entry) {
     final key = switch (entry.kind) {
@@ -262,13 +269,15 @@ class _GameShopScreenState extends State<GameShopScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _market;
-      unawaited(widget.onStateChanged());
+      _queueStateSave();
     });
     if (widget.autoAdvanceOnLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await Future<void>.delayed(
           GamePresentationTimings.marketAutoAdvanceDelay,
         );
+        if (!mounted) return;
+        await _flushStateSave();
         if (!mounted) return;
         Navigator.of(context).pop(true);
       });
@@ -291,7 +300,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         if (!_optionsDialogOpen) {
           _pendingLifecycleOptions = true;
         }
-        unawaited(widget.onStateChanged());
+        _queueStateSave();
         break;
       case AppLifecycleState.resumed:
         if (_pendingLifecycleOptions) {
@@ -637,7 +646,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectedOfferIndex = market.offers.isEmpty ? null : 0;
       }
     });
-    widget.onStateChanged();
+    _queueStateSave();
   }
 
   void _buySelectedItem() {
@@ -702,7 +711,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         }
       }
     });
-    widget.onStateChanged();
+    _queueStateSave();
   }
 
   RummiMarketItemSlotView? _findPurchasedItemSlot(
@@ -966,7 +975,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         _marketUseFeedbackDelta = null;
       });
     });
-    widget.onStateChanged();
+    _queueStateSave();
   }
 
   String? _marketUseFeedbackDeltaLabel(ItemDefinition item) {
@@ -1038,7 +1047,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectedOwnedIndex = index.clamp(0, market.ownedEntries.length - 1);
       }
     });
-    widget.onStateChanged();
+    _queueStateSave();
   }
 
   void _sellMarketItem(RummiMarketItemSlotView slot) {
@@ -1060,7 +1069,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       _selectedItemSlotIndex = -1;
       _selectFirstEntry(_offerEntriesForLane(market, _currentOfferLane));
     });
-    widget.onStateChanged();
+    _queueStateSave();
   }
 
   Future<bool> _restartCurrentRun() async {
@@ -1826,7 +1835,11 @@ class _GameShopScreenState extends State<GameShopScreen>
                             child: GameActionButton(
                               label: '다음 Station',
                               background: const Color(0xFF267B67),
-                              onPressed: () => Navigator.of(context).pop(true),
+                              onPressed: () async {
+                                await _flushStateSave();
+                                if (!context.mounted) return;
+                                Navigator.of(context).pop(true);
+                              },
                             ),
                           ),
                         ],
