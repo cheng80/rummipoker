@@ -363,11 +363,13 @@ class _CompetitionFullPlayBot {
   }
 
   Future<void> _playCurrentBattle() async {
-    for (var step = 0; step < config.maxBattleActions; step++) {
+    var step = 0;
+    while (step < config.maxBattleActions) {
       if (_isCashOutReady()) {
         return;
       }
       if (await _retryGameOverIfVisible()) {
+        step = 0;
         continue;
       }
 
@@ -486,12 +488,14 @@ class _CompetitionFullPlayBot {
           break;
         case CompetitionBattleActionType.stop:
           if (await _retryGameOverAfterStop(action.reason ?? 'stop')) {
+            step = 0;
             continue;
           }
           await _saveBotCheckpoint();
           fail('battle bot stopped: ${action.reason}');
       }
 
+      step++;
       await _pumpFor(config.actionDelay);
     }
 
