@@ -190,9 +190,21 @@ class _CompetitionFullPlayBot {
   Future<void> run() async {
     itemCatalog = await ItemCatalogLoader.loadFromAsset(AssetPaths.itemsCommon);
     await _startSeededRun();
-    if (_shouldStopAt(scene: _ContestBotScene.stationSelect)) {
+    _syncEvidenceFromState();
+    if (find.text('Station Select').evaluate().isNotEmpty &&
+        _shouldStopAt(scene: _ContestBotScene.stationSelect)) {
       await _finishSubRun('target station select reached');
       return;
+    }
+
+    if (find.text('다음 Station').evaluate().isNotEmpty) {
+      final progress = _readGameState().runProgress!;
+      await _handleMarket(stage: progress.stageIndex);
+      if (find.text('Station Select').evaluate().isNotEmpty &&
+          _shouldStopAt(scene: _ContestBotScene.stationSelect)) {
+        await _finishSubRun('target station select reached');
+        return;
+      }
     }
 
     if (find.text('드로우').evaluate().isEmpty) {
@@ -591,11 +603,11 @@ class _CompetitionFullPlayBot {
       if (_isCashOutReady()) return;
       if (await _retryGameOverIfVisible()) return;
     }
-    final state = _readGameState();
-    final session = state.session;
+    final state = _tryReadGameState();
+    final session = state?.session;
     fail(
       'Timed out waiting for cash-out UI '
-      '(phase=${state.stageFlowPhase}, '
+      '(phase=${state?.stageFlowPhase}, '
       'score=${session?.blind.scoreTowardBlind}/${session?.blind.targetScore})',
     );
   }
@@ -603,16 +615,24 @@ class _CompetitionFullPlayBot {
   Future<void> _handleMarket({required int stage}) async {
     await _handleMarketEvidenceOnly(stage: stage);
 
-    await _tapPrimaryActionUntilVisible(
-      '다음 Station',
+    await _tapPrimaryActionUntilAnyVisible('다음 Station', [
       find.text('Station Select'),
-    );
+    ]);
   }
 
   Future<void> _handleMarketEvidenceOnly({required int stage}) async {
     await _buyJestersIfPossible(stage);
     await _buyQuickSlotItemIfNeeded(stage);
     await _useMarketItemIfVisible(stage);
+  }
+
+  void _syncEvidenceFromState() {
+    final state = _tryReadGameState();
+    if (state == null) return;
+    final progress = state.runProgress;
+    if (progress == null) return;
+    boughtJester = boughtJester || progress.boughtJesterIds.isNotEmpty;
+    boughtItem = boughtItem || progress.boughtItemIds.isNotEmpty;
   }
 
   Future<void> _buyJestersIfPossible(int stage) async {
@@ -805,10 +825,10 @@ class _CompetitionFullPlayBot {
     if (session == null || runProgress == null || stageStartSnapshot == null) {
       return;
     }
-    final scene = find.text('다음 Station').evaluate().isNotEmpty
-        ? ActiveRunScene.shop
-        : find.text('Station Select').evaluate().isNotEmpty
+    final scene = find.text('Station Select').evaluate().isNotEmpty
         ? ActiveRunScene.blindSelect
+        : find.text('다음 Station').evaluate().isNotEmpty
+        ? ActiveRunScene.shop
         : ActiveRunScene.battle;
     final runtime = ActiveRunRuntimeState(
       activeScene: scene,
@@ -856,8 +876,14 @@ class _CompetitionFullPlayBot {
   }
 
   GameSessionState _readGameState() {
+    final state = _tryReadGameState();
+    expect(state, isNotNull);
+    return state!;
+  }
+
+  GameSessionState? _tryReadGameState() {
     final gameViewFinder = find.byType(GameView, skipOffstage: false);
-    expect(gameViewFinder, findsWidgets);
+    if (gameViewFinder.evaluate().isEmpty) return null;
     final gameView = tester.widget<GameView>(gameViewFinder.first);
     final element = tester.element(gameViewFinder.first);
     final container = ProviderScope.containerOf(element);
@@ -891,15 +917,15 @@ class _CompetitionFullPlayBot {
     await tester.tap(finder.first, warnIfMissed: false);
   }
 
-  Future<void> _tapPrimaryActionUntilVisible(
+  Future<void> _tapPrimaryActionUntilAnyVisible(
     String actionText,
-    Finder resultFinder, {
+    List<Finder> resultFinders, {
     Duration timeout = const Duration(minutes: 2),
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (resultFinder.evaluate().isNotEmpty) return;
+      if (resultFinders.any((finder) => finder.evaluate().isNotEmpty)) return;
 
       final actionFinder = _buttonOrTextFinder(actionText);
       if (actionFinder.evaluate().isNotEmpty) {
@@ -909,7 +935,7 @@ class _CompetitionFullPlayBot {
         await _pumpFor(const Duration(milliseconds: 800));
       }
     }
-    fail('Timed out waiting for $resultFinder after tapping "$actionText"');
+    fail('Timed out waiting for $resultFinders after tapping "$actionText"');
   }
 
   Future<void> _tapTextIfVisible(String text) async {
