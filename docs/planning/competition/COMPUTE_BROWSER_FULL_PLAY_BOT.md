@@ -47,14 +47,15 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 - 기존 시뮬레이션 bot만으로 통과 처리하지 않는다. 실제 UI 조작 증거가 필요하다.
 - debug fixture, 즉시 클리어, forced reward 같은 보조 경로는 full-play 증거로 쓰지 않는다.
 
-현재 구현상 주의:
+현재 구현/정책 요약:
 
 - full-run은 `tools/contest_full_run_bot.sh`로 실행한다.
 - 실패 시 game over에서 재시도하며, 저장된 active run checkpoint부터 이어서 실행할 수 있다.
-- 체크포인트 재개 시 Jester/Item 구매 이력, 손패/보드 버림, 보드 이동 같은 evidence도 저장 상태에서 복원한다.
-- S8 boss는 봇이 사람처럼 고득점 설계를 하기 어렵기 때문에, bot 정책에서만 작은 확정을 억제하고 보드를 더 채우도록 보정한다.
-- 마켓에서는 Jester 슬롯/골드가 허용하는 한 구매를 시도하고, 슬롯이 꽉 찬 경우 더 좋은 후보가 있으면 약한 Jester 판매 후 교체한다.
-- Q-Slot이 비어 있으면 과거 구매 이력이 있더라도 새 Item을 구매해 실제 사용 evidence를 확보한다.
+- 체크포인트 재개 시 Jester/Item 구매 이력과 실제 전투 진행 상태를 저장 상태에서 복원한다.
+- S8 boss는 bot 정책에서만 작은 확정을 억제하고, 완성 직전 라인 수, 교차 유망 라인 수, 손패 기반 1-step lookahead로 중복줄 확정 가능성을 평가한다.
+- 후반 game over 대응은 봇 전용 가중치 숫자 조정보다 족보/중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다.
+- 마켓에서는 Jester 슬롯/골드가 허용하는 한 구매를 시도하고, 슬롯이 꽉 찬 경우 더 좋은 후보가 있으면 약한 Jester 판매 후 교체한다. 후반에는 구간별 등장 확률을 올린 Jester/Item을 안정화 구매 후보로 더 높게 평가한다.
+- Q-Slot이 비어 있으면 과거 구매 이력이 있더라도 새 Item 구매를 검토한다. 단, 아이템 사용은 족보 형성 또는 확정 점수 개선이 분명할 때만 한다.
 - 단일 fresh process로 S1부터 S8까지 끊김 없이 다시 도는 최종 회귀는 제출 직전 한 번 더 돌리는 것을 권장한다.
 
 ## 0.1 실행 방식 판단
@@ -90,7 +91,7 @@ Playwright나 Flutter `integration_test`의 selector/tap이 안정적이지 않�
 - `공모전 서브런봇 S3까지`: S3의 지정 tier 또는 기본 boss clear 후 정지한다. tier가 없으면 S3 boss clear를 기본 목표로 본다.
 - `공모전 서브런봇 S5 Market까지`: S5 전투 클리어 후 Market 진입을 확인하고 정지한다.
 - `공모전 서브런봇 S8 Boss 진입까지`: S8 boss 전투 화면 진입을 확인하고 정지한다.
-- `공모전 서브런봇 아이템 사용까지`: 첫 실제 Item 사용 증거를 확보하면 정지한다.
+- `공모전 서브런봇 아이템 사용까지`: 실제 족보 형성 또는 확정 점수 개선에 도움이 되는 Item 사용이 발생하면 정지한다.
 
 서브런봇 target은 아래 필드로 기록한다.
 
@@ -121,7 +122,7 @@ contest_sub_run_bot target
 
 현재 판정:
 
-- Bot 구현/정책: 완료.
+- Bot 구현/정책: lookahead와 후반 구매/판매 정책 반영 후 full-run 재검증 대기.
 - S1~S8 클리어 가능성: 체크포인트/재시도 경로로 확인 완료.
 - S8 boss 최종 pass: 확인 완료.
 - 남은 제출 QA: 최신 제출 후보 build 기준 console error/warn 0건, 보상/도감/새 run 눈검증, 단일 fresh full-run 회귀.
@@ -187,13 +188,7 @@ Browser/WebDriver에서 직접 읽은 runtime 상태를 `planner_v2` 입력으�
 - 슬롯이 부족하면 판매가 가능한 항목을 팔지, 구매를 포기할지 Compute 판단으로 결정하고 로그에 남긴다.
 - 리롤은 무료/할인 조건이 화면에 보일 때 우선 사용하되, S1~S8 클리어 안정성을 해치지 않는 선에서만 사용한다.
 
-2026-05-08 bot 정책:
-
-- Jester offer는 rarity/effect/id 기반 bot score로 정렬해 구매한다.
-- `the_family`, `clever_jester`, `half_jester`, `mystic_summit`처럼 S8 통과에 기여한 Jester는 낮은 상태값 성장 카드보다 높게 평가한다.
-- 슬롯이 꽉 찬 경우 `offerScore > weakestScore + 40`이고 판매 후 구매 가능한 경우에만 교체한다.
-- `ride_the_bus`, `green_jester`처럼 stateful 성장값이 0인 후보는 후반에 낮게 평가해 기존 핵심 Jester를 쉽게 팔지 않는다.
-- Item은 Q-Slot이 비어 있으면 구매 이력과 무관하게 새로 구매한다.
+세부 id별 구매/판매 가중치는 이 문서의 “현재 구현/정책 요약”을 source로 삼고, 실제 값은 `integration_test/competition_full_play_bot_test.dart`의 bot score 함수와 함께 검증한다.
 
 ## 4. Scene 상태 기계
 
@@ -286,7 +281,7 @@ Full-play bot checkpoint-resume verification
 - Browser/WebDriver + Compute Use hybrid를 1차 제출 gate로 문서화한다.
 - Codex 내장 Browser Use는 보조 디버깅/눈검증 경로로 문서화한다.
 - 기존 `planner_v2`를 전투 판단 엔진으로 재사용한다.
-- 마켓 구매와 아이템 사용을 full-play 필수 증거에 포함한다.
+- 마켓 구매를 full-play 필수 증거에 포함한다. 아이템 사용, 보드 이동, 손패/보드 버림은 증거용으로 강제하지 않고 족보 형성 또는 확정 점수 개선이 있을 때만 기록한다.
 
 이번 범위에서 하지 않는 것:
 

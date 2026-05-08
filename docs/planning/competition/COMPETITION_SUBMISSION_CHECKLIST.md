@@ -28,7 +28,7 @@
 
 1. 최신 변경 후 제출 후보 web build를 다시 만든다.
 2. 새 web-server 또는 최신 build 기준으로 console error/warn 0건을 확인한다.
-3. Browser/WebDriver + Compute Use hybrid bot을 최신 제출 후보 build 기준으로 다시 실행해 단일 fresh full-run 회귀 또는 최신 checkpoint-resume pass를 확인한다.
+3. S8 boss 안정성 risk로 남은 배치 lookahead 후보를 문서에 반영한 뒤, Browser/WebDriver + Compute Use hybrid bot을 최신 제출 후보 build 기준으로 다시 실행해 단일 fresh full-run 회귀 또는 최신 checkpoint-resume pass를 확인한다.
 4. 게임오버 보상, 도감 카드 face, 새 run 화면이 다시 시작 욕구와 수집 욕구로 읽히는지 눈검증한다.
 5. 제출 영상 촬영 기준으로 전투/마켓/정산/도감/새 run 화면이 한 게임처럼 이어지는지 확인한다.
 
@@ -39,12 +39,14 @@
 - 최신 `flutter build web` 통과
 - 최신 빌드 기준 Browser/WebDriver full-play QA console error/warn 0건
 - Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 clear 확인
-- full-play 중 마켓 구매와 아이템 실제 사용 증거 확인
+- full-play 중 마켓 구매와 실제 플레이 흐름 확인. 아이템/보드 이동/버림은 증거용 강제 사용이 아니라 족보 형성 또는 확정 점수 개선이 있을 때만 확인한다.
 - 게임오버/런 완료 보상, 도감, 새 run 복귀가 심사자에게 설명 없이 읽힌다는 눈검증
 
 아직 열려 있는 위험:
 
 - full-play bot의 checkpoint-resume clear 증거는 확보했지만, 최신 제출 후보 build 기준 console 0건과 단일 fresh full-run 회귀는 아직 제출 직전 재확인이 필요하다.
+- S8 boss 안정화의 다음 bot 정책 후보는 완성 직전 라인 수, 교차 유망 라인 수, 손패 기반 1-step lookahead다. 이는 bot 전용 QA 정책 보정이며 runtime 난이도/production 밸런스 변경으로 닫지 않는다.
+- 후반 game over가 재발하면 봇 전용 가중치 숫자 조정만 보지 않고, 중복줄 확정 정책과 손패/이동/버림/아이템/구매/판매 전략을 함께 점검한다. 구간별 등장 확률을 올린 Jester/Item은 후반 안정화 구매 후보로 검토한다.
 - 도감은 수집/발견/구매/보상/보스/스테이지 이력을 저장하지만, 항목별 미발견/발견/획득/클리어 상태 상세 UI는 남아 있다.
 - `power none`과 `balanced v9` seed 편차는 장기 밸런스 risk로 유지한다.
 - 기억 카드 보상은 현재 기억 카드류 이력에 한정하며, 실제 보상 아이템/Jester 지급은 아직 없다.
@@ -67,7 +69,7 @@ Status: In progress
 - [ ] 최신 변경 후 제출 후보 web build를 다시 만든다.
 - [ ] 최신 빌드 또는 새 web-server에서 console error/warn 0건을 다시 확인한다.
 - [x] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 실제 UI clear 가능한 경로를 확인한다.
-- [x] full-play bot이 마켓 구매와 아이템 실제 사용을 수행하고 로그에 남긴다.
+- [x] full-play bot이 마켓 구매를 수행하고 로그에 남긴다.
 - [ ] 게임오버 화면이 패배 후 다시 시작하고 싶게 만드는지 확인한다.
 - [ ] 도감의 Jester/Item 카드가 마켓/보유 슬롯의 실물 카드 face와 같은 인상인지 확인한다.
 - [ ] 첫 10분 플레이에서 “목표 이해 -> 선택 -> 결과 -> 보상 -> 다시 시작” 흐름이 심사자에게 설명 없이 읽히는지 확인한다.
@@ -221,7 +223,7 @@ Status: Reopened for latest candidate
 - [x] 핵심 `flutter test` 통과.
 - [ ] 최신 변경 후 `flutter build web` 통과.
 - [x] Browser/WebDriver + Compute Use hybrid bot으로 S1~S8 실제 UI clear 가능한 checkpoint-resume 경로를 검증한다.
-- [x] full-play bot 로그에 마켓 구매와 아이템 실제 사용 증거를 남긴다.
+- [x] full-play bot 로그에 마켓 구매 증거를 남긴다.
 - [ ] 제출 후보 빌드에서 콘솔 에러나 화면 깨짐이 없는지 확인한다.
 - [ ] 최종 빌드 산출물과 실행 경로를 정리한다.
 

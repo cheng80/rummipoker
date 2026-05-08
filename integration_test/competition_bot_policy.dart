@@ -126,6 +126,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _midBoardMoveMinGain = 20;
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
+  static const int _strategicUtilityTargetScoreFloor = 1000;
   static const int _highPressureOccupancy = kBoardSize * kBoardSize - 3;
   @override
   String get id => 'competition_planner_v2';
@@ -151,15 +152,20 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       if (confirmChoice.shouldConfirmNow || confirmChoice.score > 0) {
         return const CompetitionBattleAction.confirm();
       }
-      final discard = chooseBoardDiscard(session);
-      if (discard != null) return discard;
+      if (_shouldUseStrategicUtility(session)) {
+        final discard = chooseBoardDiscard(session);
+        if (discard != null) return discard;
+      }
       return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
     }
 
     final zeroDiscardBonusActive = _hasZeroDiscardBonusJester(jesters);
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
     final shouldProtectDeck = _shouldProtectDeck(session);
-    if (zeroDiscardBonusActive && session.blind.handDiscardsRemaining > 0) {
+    final shouldUseStrategicUtility = _shouldUseStrategicUtility(session);
+    if (zeroDiscardBonusActive &&
+        shouldUseStrategicUtility &&
+        session.blind.handDiscardsRemaining > 0) {
       final handDiscard = chooseHandDiscard(session);
       final minHandDiscardOccupancy = shouldProtectDeck
           ? _bossHandDiscardMinOccupancy
@@ -169,7 +175,8 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
 
-    if (occupancy >= _midBoardMoveMinOccupancy &&
+    if (shouldUseStrategicUtility &&
+        occupancy >= _midBoardMoveMinOccupancy &&
         occupancy <= _midBoardMoveMaxOccupancy) {
       final move = chooseBoardMove(session);
       if (move != null && (move.gain ?? 0) >= _midBoardMoveMinGain) {
@@ -196,7 +203,9 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return const CompetitionBattleAction.confirm();
     }
 
-    if (occupancy >= _boardDiscardReplacementMinOccupancy) {
+    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
+    if ((shouldUseStrategicUtility || boardIsFull) &&
+        occupancy >= _boardDiscardReplacementMinOccupancy) {
       final scoringDiscard = chooseScoringBoardDiscard(
         session,
         jesters: jesters,
@@ -205,7 +214,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       if (scoringDiscard != null) return scoringDiscard;
     }
 
-    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
     if (boardIsFull) {
       final handDiscard = chooseHandDiscard(session);
       if (handDiscard != null) return handDiscard;
@@ -217,14 +225,17 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
 
     if (zeroDiscardBonusActive &&
+        shouldUseStrategicUtility &&
         session.blind.boardDiscardsRemaining > 0 &&
         occupancy >= _highPressureOccupancy) {
       final bonusDiscard = chooseBoardDiscard(session);
       if (bonusDiscard != null) return bonusDiscard;
     }
 
-    final discard = chooseBoardDiscard(session);
-    if (discard != null) return discard;
+    if (shouldUseStrategicUtility) {
+      final discard = chooseBoardDiscard(session);
+      if (discard != null) return discard;
+    }
 
     return const CompetitionBattleAction.stop('no_legal_action');
   }
@@ -247,6 +258,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 
   CompetitionBattleAction? chooseBoardMove(RummiPokerGridSession session) {
     if (session.blind.boardMovesRemaining <= 0) return null;
+    if (session.boardMoveHistory.isNotEmpty) return null;
     final basePotential = _plannerBoardPotentialScore(session.board);
     _MoveChoice? best;
 
@@ -306,6 +318,18 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final copy = session.copySnapshot();
     copy.hand.add(tile);
     return _bestPlacementPotential(copy, copy.hand.length - 1);
+  }
+
+  CompetitionBattleAction? bestPlacementForTest(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    return _bestPlacement(
+      session,
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+    )?.action;
   }
 
   bool _hasZeroDiscardBonusJester(List<RummiJesterCard> jesters) {
@@ -418,6 +442,14 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         session.blind.targetScore >= _lateRunTargetScoreFloor;
   }
 
+  bool _shouldUseStrategicUtility(RummiPokerGridSession session) {
+    if (session.blind.bossModifier != null) return true;
+    if (session.blind.targetScore >= _strategicUtilityTargetScoreFloor) {
+      return true;
+    }
+    return false;
+  }
+
   _PlacementChoice? _bestPlacement(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
@@ -454,6 +486,16 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
                 copy.board,
                 jesters,
               ),
+              lookaheadScore: _placementLookaheadScore(
+                copy,
+                placedRow: row,
+                placedCol: col,
+                basePotential: _plannerBoardPotentialScoreForJesters(
+                  session.board,
+                  jesters,
+                ),
+                jesters: jesters,
+              ),
               boardPressure: RummiPokerGridSession.countTilesOnBoard(
                 copy.board,
               ),
@@ -471,6 +513,16 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             potentialScore: _plannerBoardPotentialScoreForJesters(
               copy.board,
               jesters,
+            ),
+            lookaheadScore: _placementLookaheadScore(
+              copy,
+              placedRow: row,
+              placedCol: col,
+              basePotential: _plannerBoardPotentialScoreForJesters(
+                session.board,
+                jesters,
+              ),
+              jesters: jesters,
             ),
             boardPressure: RummiPokerGridSession.countTilesOnBoard(copy.board),
           );
@@ -496,10 +548,62 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (candidate.potentialScore != best.potentialScore) {
       return candidate.potentialScore > best.potentialScore;
     }
+    if (candidate.lookaheadScore != best.lookaheadScore) {
+      return candidate.lookaheadScore > best.lookaheadScore;
+    }
     if (candidate.immediateScore != best.immediateScore) {
       return candidate.immediateScore > best.immediateScore;
     }
     return candidate.boardPressure < best.boardPressure;
+  }
+
+  int _placementLookaheadScore(
+    RummiPokerGridSession afterPlacement, {
+    required int placedRow,
+    required int placedCol,
+    required int basePotential,
+    required List<RummiJesterCard> jesters,
+  }) {
+    final lines = <List<Tile?>>[
+      afterPlacement.board.row(placedRow),
+      afterPlacement.board.col(placedCol),
+    ];
+    if (placedRow == placedCol) {
+      lines.add(afterPlacement.board.diagMain());
+    }
+    if (placedRow + placedCol == kBoardSize - 1) {
+      lines.add(afterPlacement.board.diagAnti());
+    }
+
+    var nearlyCompleteLines = 0;
+    var promisingLines = 0;
+    for (final line in lines) {
+      final filled = line.whereType<Tile>().length;
+      final potential = _plannerLinePotentialScore(line);
+      if (filled >= kBoardSize - 1 && potential > 0) {
+        nearlyCompleteLines++;
+      }
+      if (filled >= 3 && potential > 0) {
+        promisingLines++;
+      }
+    }
+
+    var bestNextGain = 0;
+    final currentPotential = _plannerBoardPotentialScoreForJesters(
+      afterPlacement.board,
+      jesters,
+    );
+    for (var index = 0; index < afterPlacement.hand.length; index++) {
+      final nextPotential = _bestPlacementPotential(afterPlacement, index);
+      final gain = nextPotential - currentPotential;
+      if (gain > bestNextGain) bestNextGain = gain;
+    }
+
+    final potentialGain = currentPotential - basePotential;
+    return potentialGain +
+        nearlyCompleteLines * 120 +
+        promisingLines * 45 +
+        bestNextGain;
   }
 
   CompetitionBattleAction? chooseBoardDiscard(
@@ -591,6 +695,7 @@ class _PlacementChoice {
     required this.clearsTarget,
     required this.immediateScore,
     required this.potentialScore,
+    required this.lookaheadScore,
     required this.boardPressure,
   });
 
@@ -598,6 +703,7 @@ class _PlacementChoice {
   final bool clearsTarget;
   final int immediateScore;
   final int potentialScore;
+  final int lookaheadScore;
   final int boardPressure;
 }
 

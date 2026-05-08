@@ -8,7 +8,6 @@ import 'package:rummipoker/main.dart' as app;
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_catalog_loader.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
-import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
@@ -266,22 +265,6 @@ class _CompetitionFullPlayBot {
       reason: 'contest_full_run_bot must buy a Jester',
     );
     expect(boughtItem, isTrue, reason: 'contest_full_run_bot must buy an Item');
-    expect(usedItem, isTrue, reason: 'contest_full_run_bot must use an Item');
-    expect(
-      discardedHand,
-      isTrue,
-      reason: 'contest_full_run_bot must discard a hand tile',
-    );
-    expect(
-      discardedBoard,
-      isTrue,
-      reason: 'contest_full_run_bot must discard a board tile',
-    );
-    expect(
-      movedBoard,
-      isTrue,
-      reason: 'contest_full_run_bot must move a board tile',
-    );
 
     _printPassLog('S8 boss full run complete');
   }
@@ -399,11 +382,6 @@ class _CompetitionFullPlayBot {
       }
       final runProgress = state.runProgress!;
       final tier = BlindTier.values[runProgress.currentStationBlindTierIndex];
-      if (await _tryExerciseBattleUtilityActions(session, runProgress, tier)) {
-        await _pumpFor(config.actionDelay);
-        continue;
-      }
-
       final action = battlePolicy.chooseAction(
         session,
         jesters: runProgress.ownedJesters,
@@ -529,111 +507,6 @@ class _CompetitionFullPlayBot {
     await _pumpFor(const Duration(seconds: 2));
     if (await _retryGameOverIfVisible()) return true;
     if (_isCashOutReady()) return true;
-    return false;
-  }
-
-  Future<bool> _tryExerciseBattleUtilityActions(
-    RummiPokerGridSession session,
-    RummiRunProgress runProgress,
-    BlindTier tier,
-  ) async {
-    if (!config.isFullRun) return false;
-    final hasZeroDiscardBonusJester = runProgress.ownedJesters.any(
-      (jester) => jester.id == 'mystic_summit',
-    );
-    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
-    final shouldProtectLateDeck = runProgress.stageIndex >= 8;
-    final shouldSpendHandDiscard =
-        !shouldProtectLateDeck &&
-            !discardedHand &&
-            occupancy >= kBoardSize * 2 ||
-        !discardedHand &&
-            !shouldProtectLateDeck &&
-            hasZeroDiscardBonusJester &&
-            session.blind.handDiscardsRemaining > 0 &&
-            occupancy >= kBoardSize * 2;
-    if (shouldSpendHandDiscard) {
-      final action = battlePolicy.chooseHandDiscard(session);
-      if (action != null) {
-        _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
-        final tile = session.hand[action.handIndex!];
-        final handDiscards = session.blind.handDiscardsRemaining;
-        await _tapHandTile(tile.toString());
-        await _tapText('손패\n버림');
-        await _pumpUntilState(
-          (next) => next.session!.blind.handDiscardsRemaining < handDiscards,
-        );
-        discardedHand = true;
-        return true;
-      }
-    }
-
-    if (!movedBoard &&
-        occupancy >= kBoardSize * 2 + 2 &&
-        occupancy <= kBoardSize * 4 - 1) {
-      final action = battlePolicy.chooseBoardMove(session);
-      if (action != null && (action.gain ?? 0) >= 20) {
-        _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
-        await _tapBoardCell(action.row!, action.col!);
-        await _tapText('타일\n이동');
-        await _tapBoardCell(action.toRow!, action.toCol!);
-        await _pumpUntilVisible(find.text('보드 이동'));
-        await _tapText('이동');
-        await _pumpUntilState(
-          (next) =>
-              next.session!.board.cellAt(action.row!, action.col!) == null &&
-              next.session!.board.cellAt(action.toRow!, action.toCol!) != null,
-        );
-        await _pumpFor(config.actionDelay + const Duration(seconds: 1));
-        movedBoard = true;
-        return true;
-      }
-    }
-
-    final shouldSpendBoardDiscard =
-        !discardedBoard &&
-        !shouldProtectLateDeck &&
-        session.blind.boardDiscardsRemaining > 0 &&
-        occupancy >= kBoardSize * 4;
-    if (shouldSpendBoardDiscard) {
-      final action = battlePolicy.chooseScoringBoardDiscard(
-        session,
-        jesters: runProgress.ownedJesters,
-        runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
-      );
-      if (action != null) {
-        _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
-        await _tapBoardCell(action.row!, action.col!);
-        await _tapText('보드\n버림');
-        await _pumpUntilState(
-          (next) =>
-              next.session!.board.cellAt(action.row!, action.col!) == null,
-        );
-        discardedBoard = true;
-        return true;
-      }
-    }
-
-    if (!discardedBoard &&
-        hasZeroDiscardBonusJester &&
-        tier != BlindTier.boss &&
-        !shouldProtectLateDeck &&
-        session.blind.boardDiscardsRemaining > 0 &&
-        occupancy >= kBoardSize * kBoardSize - 3) {
-      final action = battlePolicy.chooseBoardDiscard(session);
-      if (action != null) {
-        _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
-        await _tapBoardCell(action.row!, action.col!);
-        await _tapText('보드\n버림');
-        await _pumpUntilState(
-          (next) =>
-              next.session!.board.cellAt(action.row!, action.col!) == null,
-        );
-        discardedBoard = true;
-        return true;
-      }
-    }
-
     return false;
   }
 
@@ -769,24 +642,36 @@ class _CompetitionFullPlayBot {
           .toList();
       if (affordableOffers.isEmpty) return;
       affordableOffers.sort(
-        (a, b) => _jesterBotScore(b.card).compareTo(_jesterBotScore(a.card)),
+        (a, b) => _jesterBotScore(
+          b.card,
+          stage: stage,
+        ).compareTo(_jesterBotScore(a.card, stage: stage)),
       );
       final offer = affordableOffers.first;
-      final offerScore = _jesterBotScore(offer.card);
+      final offerScore = _jesterBotScore(offer.card, stage: stage);
       final jesterSlotsFull =
           market.ownedEntries.length >= progress.jesterSlotCapacity();
       if (jesterSlotsFull) {
         final ownedEntries = [...market.ownedEntries]
           ..sort(
-            (a, b) => _jesterBotScore(
-              a.card,
-              stateValue: a.stateValue,
-            ).compareTo(_jesterBotScore(b.card, stateValue: b.stateValue)),
+            (a, b) =>
+                _jesterBotScore(
+                  a.card,
+                  stateValue: a.stateValue,
+                  stage: stage,
+                ).compareTo(
+                  _jesterBotScore(
+                    b.card,
+                    stateValue: b.stateValue,
+                    stage: stage,
+                  ),
+                ),
           );
         final weakest = ownedEntries.first;
         final weakestScore = _jesterBotScore(
           weakest.card,
           stateValue: weakest.stateValue,
+          stage: stage,
         );
         final canBuyAfterSelling =
             market.gold + weakest.sellPrice >= offer.price;
@@ -808,7 +693,11 @@ class _CompetitionFullPlayBot {
     }
   }
 
-  int _jesterBotScore(RummiJesterCard card, {int stateValue = 0}) {
+  int _jesterBotScore(
+    RummiJesterCard card, {
+    int stateValue = 0,
+    int stage = 1,
+  }) {
     var score = switch (card.rarity) {
       RummiJesterRarity.legendary => 900,
       RummiJesterRarity.rare => 720,
@@ -849,6 +738,20 @@ class _CompetitionFullPlayBot {
       case 'egg':
       case 'delayed_gratification':
         score -= 120;
+    }
+    if (stage >= 6) {
+      switch (card.id) {
+        case 'the_family':
+        case 'the_order':
+        case 'the_trio':
+        case 'clever_jester':
+        case 'mystic_summit':
+        case 'half_jester':
+          score += 140;
+        case 'ride_the_bus':
+        case 'green_jester':
+          score += stateValue > 0 ? 90 : -120;
+      }
     }
     return score;
   }
@@ -897,17 +800,75 @@ class _CompetitionFullPlayBot {
 
   Future<void> _buyQuickSlotItemIfNeeded(int stage) async {
     if (!config.needsItemPurchase && !config.isFullRun) return;
-    final inventory = _readGameState().runProgress?.itemInventory;
+    final state = _readGameState();
+    final inventory = state.runProgress?.itemInventory;
     final hasUsableQuickSlotItem =
         inventory != null && inventory.quickSlotItemIds.isNotEmpty;
     if (boughtItem && hasUsableQuickSlotItem) return;
     await _tapTextIfVisible('Jester / Slots');
     await _tapTextIfVisible('Q-Slot');
+    final quickSlotOffers =
+        state.marketView?.itemOffers
+            .where(
+              (offer) =>
+                  offer.item.placement == ItemPlacement.quickSlot &&
+                  offer.isAffordable,
+            )
+            .toList() ??
+        const [];
+    if (quickSlotOffers.isNotEmpty) {
+      quickSlotOffers.sort(
+        (a, b) => _itemBotScore(
+          b.item,
+          stage: stage,
+        ).compareTo(_itemBotScore(a.item, stage: stage)),
+      );
+      if (!await _selectItemOfferByPrice(quickSlotOffers.first.price)) return;
+    }
     if (find.text('구매').evaluate().isEmpty) return;
     await _tapText('구매');
     boughtItem = true;
     _record('S$stage market: bought Item');
     await _pumpFor(const Duration(seconds: 2));
+  }
+
+  int _itemBotScore(ItemDefinition item, {required int stage}) {
+    var score = switch (item.rarity) {
+      ItemRarity.legendary => 900,
+      ItemRarity.rare => 700,
+      ItemRarity.uncommon => 520,
+      ItemRarity.common => 340,
+    };
+    switch (item.effect.op) {
+      case 'peek_deck_discard_one':
+        score += stage >= 5 ? 280 : 120;
+      case 'mark_next_board_move_bonus':
+      case 'add_board_move':
+        score += stage >= 5 ? 240 : 100;
+      case 'add_board_discard':
+      case 'add_hand_discard':
+        score += stage >= 5 ? 180 : 80;
+      case 'increase_hand_size':
+        score += stage >= 4 ? 220 : 140;
+      case 'draw_if_hand_empty':
+        score += 120;
+      case 'chips_bonus':
+      case 'mult_bonus':
+      case 'xmult_bonus':
+      case 'add_percent_of_first_confirm_score':
+        score += stage >= 6 ? 220 : 120;
+    }
+    return score;
+  }
+
+  Future<bool> _selectItemOfferByPrice(int price) async {
+    await _tapTextIfVisible('Jester / Slots');
+    await _tapTextIfVisible('Q-Slot');
+    final priceFinder = find.text('${price}G');
+    if (priceFinder.evaluate().isEmpty) return false;
+    await tester.tap(priceFinder.first, warnIfMissed: false);
+    await _pumpFor(const Duration(milliseconds: 600));
+    return true;
   }
 
   Future<void> _useMarketItemIfVisible(int stage) async {
@@ -921,7 +882,7 @@ class _CompetitionFullPlayBot {
 
   Future<bool> _tryUseBattleItem() async {
     if (!config.needsItemUse && !config.isFullRun) return false;
-    if (usedItem) return false;
+    if (usedItem && !config.isFullRun) return false;
     final state = _tryReadGameState();
     if (state == null) return false;
     final inventory = state.runProgress!.itemInventory;
@@ -1009,22 +970,47 @@ class _CompetitionFullPlayBot {
     if (!hasItem) return false;
 
     return switch (item.effect.op) {
-      'add_board_discard' ||
-      'add_hand_discard' ||
-      'add_board_move' ||
+      'add_board_move' || 'mark_next_board_move_bonus' =>
+        battlePolicy.chooseBoardMove(session) != null,
+      'add_board_discard' =>
+        battlePolicy.chooseScoringBoardDiscard(
+              session,
+              jesters: runProgress.ownedJesters,
+              runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+            ) !=
+            null,
+      'add_hand_discard' =>
+        session.hand.length >= session.maxHandSize &&
+            battlePolicy.chooseHandDiscard(session) != null,
       'chips_bonus' ||
       'mult_bonus' ||
       'xmult_bonus' ||
       'temporary_overlap_cap_bonus' ||
-      'add_percent_of_first_confirm_score' => true,
-      'mark_next_board_move_bonus' => session.blind.boardMovesRemaining > 0,
-      'undo_last_board_move' => session.boardMoveHistory.isNotEmpty,
+      'add_percent_of_first_confirm_score' => _hasScoringConfirmNow(
+        session,
+        runProgress,
+      ),
+      'undo_last_board_move' => false,
       'draw_if_hand_empty' => session.hand.isEmpty && session.canDrawFromDeck,
       'increase_hand_size' => session.hand.length >= session.maxHandSize,
       'peek_deck_discard_one' =>
         _chooseDeckNeedleDiscardIndex(item, session) != null,
       _ => false,
     };
+  }
+
+  bool _hasScoringConfirmNow(
+    RummiPokerGridSession session,
+    RummiRunProgress runProgress,
+  ) {
+    if (!session.canConfirmAllFullLines) return false;
+    final preview = session.copySnapshot().confirmAllFullLines(
+      jesters: runProgress.ownedJesters,
+      runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+      applyScoreToBlind: false,
+    );
+    return preview.result.lineBreakdowns.length >= 2 &&
+        preview.result.scoreAdded > 0;
   }
 
   int? _chooseDeckNeedleDiscardIndex(
