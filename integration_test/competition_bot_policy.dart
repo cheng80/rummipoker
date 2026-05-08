@@ -16,7 +16,15 @@ abstract class CompetitionBattleBotPolicy {
   });
 }
 
-enum CompetitionBattleActionType { draw, place, confirm, discardBoard, stop }
+enum CompetitionBattleActionType {
+  draw,
+  place,
+  confirm,
+  discardHand,
+  discardBoard,
+  moveBoard,
+  stop,
+}
 
 class CompetitionBattleAction {
   const CompetitionBattleAction._({
@@ -24,6 +32,8 @@ class CompetitionBattleAction {
     this.handIndex,
     this.row,
     this.col,
+    this.toRow,
+    this.toCol,
     this.reason,
   });
 
@@ -53,6 +63,25 @@ class CompetitionBattleAction {
          col: col,
        );
 
+  const CompetitionBattleAction.discardHand({required int handIndex})
+    : this._(
+        type: CompetitionBattleActionType.discardHand,
+        handIndex: handIndex,
+      );
+
+  const CompetitionBattleAction.moveBoard({
+    required int row,
+    required int col,
+    required int toRow,
+    required int toCol,
+  }) : this._(
+         type: CompetitionBattleActionType.moveBoard,
+         row: row,
+         col: col,
+         toRow: toRow,
+         toCol: toCol,
+       );
+
   const CompetitionBattleAction.stop(String reason)
     : this._(type: CompetitionBattleActionType.stop, reason: reason);
 
@@ -60,6 +89,8 @@ class CompetitionBattleAction {
   final int? handIndex;
   final int? row;
   final int? col;
+  final int? toRow;
+  final int? toCol;
   final String? reason;
 
   @override
@@ -68,7 +99,10 @@ class CompetitionBattleAction {
       CompetitionBattleActionType.draw => 'draw',
       CompetitionBattleActionType.confirm => 'confirm',
       CompetitionBattleActionType.place => 'place($handIndex,$row,$col)',
+      CompetitionBattleActionType.discardHand => 'discardHand($handIndex)',
       CompetitionBattleActionType.discardBoard => 'discardBoard($row,$col)',
+      CompetitionBattleActionType.moveBoard =>
+        'moveBoard($row,$col->$toRow,$toCol)',
       CompetitionBattleActionType.stop => 'stop($reason)',
     };
   }
@@ -100,9 +134,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
     if (session.hand.isEmpty) {
       if (session.canDrawFromDeck) return const CompetitionBattleAction.draw();
-      if (confirmChoice.score > 0) {
+      if (confirmChoice.shouldConfirmNow) {
         return const CompetitionBattleAction.confirm();
       }
+      final discard = chooseBoardDiscard(session);
+      if (discard != null) return discard;
       return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
     }
 
@@ -113,14 +149,90 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     );
     if (placement != null) return placement.action;
 
-    if (confirmChoice.score > 0) {
+    if (confirmChoice.shouldConfirmNow) {
       return const CompetitionBattleAction.confirm();
     }
 
-    final discard = _lastResortDiscard(session);
+    final discard = chooseBoardDiscard(session);
     if (discard != null) return discard;
 
     return const CompetitionBattleAction.stop('no_legal_action');
+  }
+
+  CompetitionBattleAction? chooseHandDiscard(RummiPokerGridSession session) {
+    if (session.blind.handDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return null;
+    }
+    var worstIndex = 0;
+    var worstPotential = 1 << 30;
+    for (var index = 0; index < session.hand.length; index++) {
+      final bestAfterKeepingTile = _bestPlacementPotential(session, index);
+      if (bestAfterKeepingTile < worstPotential) {
+        worstPotential = bestAfterKeepingTile;
+        worstIndex = index;
+      }
+    }
+    return CompetitionBattleAction.discardHand(handIndex: worstIndex);
+  }
+
+  CompetitionBattleAction? chooseBoardMove(RummiPokerGridSession session) {
+    if (session.blind.boardMovesRemaining <= 0) return null;
+    final basePotential = _plannerBoardPotentialScore(session.board);
+    _MoveChoice? best;
+
+    for (var fromRow = 0; fromRow < kBoardSize; fromRow++) {
+      for (var fromCol = 0; fromCol < kBoardSize; fromCol++) {
+        if (session.board.cellAt(fromRow, fromCol) == null) continue;
+        for (var toRow = 0; toRow < kBoardSize; toRow++) {
+          for (var toCol = 0; toCol < kBoardSize; toCol++) {
+            if (session.board.cellAt(toRow, toCol) != null) continue;
+            final copy = session.board.copy();
+            if (!copy.moveCell(
+              fromRow: fromRow,
+              fromCol: fromCol,
+              toRow: toRow,
+              toCol: toCol,
+            )) {
+              continue;
+            }
+            final potential = _plannerBoardPotentialScore(copy);
+            final choice = _MoveChoice(
+              action: CompetitionBattleAction.moveBoard(
+                row: fromRow,
+                col: fromCol,
+                toRow: toRow,
+                toCol: toCol,
+              ),
+              gain: potential - basePotential,
+              potential: potential,
+            );
+            if (best == null ||
+                choice.gain > best.gain ||
+                choice.gain == best.gain && choice.potential > best.potential) {
+              best = choice;
+            }
+          }
+        }
+      }
+    }
+    if (best == null) return null;
+    return best.action;
+  }
+
+  int _bestPlacementPotential(RummiPokerGridSession session, int handIndex) {
+    if (handIndex < 0 || handIndex >= session.hand.length) return 0;
+    final tile = session.hand[handIndex];
+    var best = -1 << 30;
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        if (session.board.cellAt(row, col) != null) continue;
+        final copy = session.copySnapshot();
+        if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+        final potential = _plannerBoardPotentialScore(copy.board);
+        if (potential > best) best = potential;
+      }
+    }
+    return best == -1 << 30 ? 0 : best;
   }
 
   _ConfirmChoice _currentConfirmChoice(
@@ -137,21 +249,45 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       applyScoreToBlind: false,
     );
     final score = preview.result.scoreAdded;
+    final lineCount = preview.result.lineBreakdowns.length;
     final remainingScore =
         session.blind.targetScore - session.blind.scoreTowardBlind;
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
     final emptyCells = kBoardSize * kBoardSize - occupancy;
 
+    if (lineCount < 2) {
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: false,
+      );
+    }
     if (remainingScore > 0 && score >= remainingScore) {
-      return _ConfirmChoice(score: score, shouldConfirmNow: true);
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: true,
+      );
     }
     if (score >= _cleanConfirmScoreFloor) {
-      return _ConfirmChoice(score: score, shouldConfirmNow: true);
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: true,
+      );
     }
     if (emptyCells <= 2 && score > 0) {
-      return _ConfirmChoice(score: score, shouldConfirmNow: true);
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: true,
+      );
     }
-    return _ConfirmChoice(score: score, shouldConfirmNow: false);
+    return _ConfirmChoice(
+      lineCount: lineCount,
+      score: score,
+      shouldConfirmNow: false,
+    );
   }
 
   _PlacementChoice? _bestPlacement(
@@ -232,10 +368,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return candidate.boardPressure < best.boardPressure;
   }
 
-  CompetitionBattleAction? _lastResortDiscard(RummiPokerGridSession session) {
+  CompetitionBattleAction? chooseBoardDiscard(
+    RummiPokerGridSession session, {
+    int minOccupancy = _highPressureOccupancy,
+  }) {
     if (session.blind.boardDiscardsRemaining <= 0) return null;
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
-    if (occupancy < _highPressureOccupancy) return null;
+    if (occupancy < minOccupancy) return null;
 
     (int, int)? worstCell;
     var worstLoss = 1 << 30;
@@ -261,8 +400,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 }
 
 class _ConfirmChoice {
-  const _ConfirmChoice({required this.score, required this.shouldConfirmNow});
+  const _ConfirmChoice({
+    this.lineCount = 0,
+    required this.score,
+    required this.shouldConfirmNow,
+  });
 
+  final int lineCount;
   final int score;
   final bool shouldConfirmNow;
 }
@@ -281,6 +425,18 @@ class _PlacementChoice {
   final int immediateScore;
   final int potentialScore;
   final int boardPressure;
+}
+
+class _MoveChoice {
+  const _MoveChoice({
+    required this.action,
+    required this.gain,
+    required this.potential,
+  });
+
+  final CompetitionBattleAction action;
+  final int gain;
+  final int potential;
 }
 
 int _plannerBoardPotentialScore(RummiBoard board) {

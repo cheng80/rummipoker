@@ -444,22 +444,16 @@ class ActiveRunSaveService {
     required RummiRunProgress runProgress,
     required ActiveRunStageSnapshot stageStartSnapshot,
   }) async {
-    final savedSession = _buildSavedSessionData(session);
-    final savedRunProgress = _buildSavedRunProgressData(runProgress);
-    final save = ActiveRunSaveData(
-      schemaVersion: schemaVersion,
-      savedAtIso8601: DateTime.now().toUtc().toIso8601String(),
-      activeScene: activeScene.name,
-      difficulty: difficulty.name,
-      runModifier: runModifier.id,
-      session: savedSession,
-      runProgress: savedRunProgress,
-      stageStartSession: _buildSavedSessionData(stageStartSnapshot.session),
-      stageStartRunProgress: _buildSavedRunProgressData(
-        stageStartSnapshot.runProgress,
+    final payload = runtimeStateToJson(
+      ActiveRunRuntimeState(
+        activeScene: activeScene,
+        difficulty: difficulty,
+        runModifier: runModifier,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: stageStartSnapshot,
       ),
     );
-    final payload = jsonEncode(save.toJson());
     final deviceKey = await _ensureDeviceKey();
     final signature = _signPayload(payload, deviceKey);
     await StorageHelper.write(StorageKeys.activeRunPayloadV1, payload);
@@ -480,6 +474,17 @@ class ActiveRunSaveService {
   static Future<ActiveRunRuntimeState?> loadActiveRun() async {
     final save = await _loadVerifiedSaveData();
     if (save == null) return null;
+    return runtimeStateFromSaveData(save);
+  }
+
+  static Future<ActiveRunRuntimeState> runtimeStateFromJson(String jsonString) {
+    final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
+    return runtimeStateFromSaveData(ActiveRunSaveData.fromJson(decoded));
+  }
+
+  static Future<ActiveRunRuntimeState> runtimeStateFromSaveData(
+    ActiveRunSaveData save,
+  ) async {
     final catalog = await _loadCatalog();
 
     final session = _restoreSession(save.session);
@@ -497,6 +502,25 @@ class ActiveRunSaveService {
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
     );
+  }
+
+  static String runtimeStateToJson(ActiveRunRuntimeState runtime) {
+    final save = ActiveRunSaveData(
+      schemaVersion: schemaVersion,
+      savedAtIso8601: DateTime.now().toUtc().toIso8601String(),
+      activeScene: runtime.activeScene.name,
+      difficulty: runtime.difficulty.name,
+      runModifier: runtime.runModifier.id,
+      session: _buildSavedSessionData(runtime.session),
+      runProgress: _buildSavedRunProgressData(runtime.runProgress),
+      stageStartSession: _buildSavedSessionData(
+        runtime.stageStartSnapshot.session,
+      ),
+      stageStartRunProgress: _buildSavedRunProgressData(
+        runtime.stageStartSnapshot.runProgress,
+      ),
+    );
+    return jsonEncode(save.toJson());
   }
 
   static Future<RummiActiveRunSaveFacade?> loadActiveRunSummary() async {
