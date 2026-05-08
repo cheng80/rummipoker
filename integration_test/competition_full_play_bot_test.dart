@@ -950,6 +950,9 @@ class _CompetitionFullPlayBot {
     if (inventory.quickSlotItemIds.isEmpty) return false;
     final choice = _chooseBattleItemToUse(state, plannedAction: plannedAction);
     if (choice == null) return false;
+    if (choice.item.effect.op == 'add_board_move' && gameOverRetries < 2) {
+      return false;
+    }
 
     await _tapTextIfVisible('Slots');
     final slotLabel = find.text('Q${choice.slotIndex + 1}');
