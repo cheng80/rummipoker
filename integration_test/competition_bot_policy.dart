@@ -192,6 +192,17 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
 
+    if (_shouldContinueBoardDiscardMoveCombo(session)) {
+      final move = chooseBoardMove(
+        session,
+        jesters: jesters,
+        runtimeSnapshot: runtimeSnapshot,
+      );
+      if (move != null && (move.gain ?? 0) >= _midBoardMoveMinGain) {
+        return move;
+      }
+    }
+
     if (_shouldDrawForMoreOptions(
       session,
       occupancy: occupancy,
@@ -447,6 +458,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return true;
     }
     return false;
+  }
+
+  bool _shouldContinueBoardDiscardMoveCombo(RummiPokerGridSession session) {
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    return occupancy == kBoardSize * kBoardSize - 1 &&
+        session.blind.boardDiscardsRemaining < session.blind.boardDiscardsMax &&
+        session.blind.boardMovesRemaining == session.blind.boardMovesMax;
   }
 
   _PlacementChoice? _bestPlacement(

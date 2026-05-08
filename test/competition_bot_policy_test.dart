@@ -195,6 +195,59 @@ void main() {
     expect(action?.type, CompetitionBattleActionType.discardBoard);
   });
 
+  test('near full board continues discard move combo before placing', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1200,
+        boardDiscardsRemaining: 2,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.red, 4),
+        null,
+        _tile(TileColor.red, 9),
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.yellow, 9),
+        _tile(TileColor.red, 6),
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.black, 5),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.black, 11),
+        _tile(TileColor.red, 7),
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.black, 12),
+        _tile(TileColor.yellow, 13),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.red, 8),
+        _tile(TileColor.black, 1),
+        _tile(TileColor.black, 2),
+        _tile(TileColor.black, 3),
+        _tile(TileColor.black, 4),
+        _tile(TileColor.yellow, 1),
+      ]),
+      hand: [_tile(TileColor.red, 5)],
+      eliminated: const [],
+    );
+
+    final action = const CompetitionPlannerV2Policy().chooseAction(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+
+    expect(action.type, CompetitionBattleActionType.moveBoard);
+  });
+
   test('mid board uses a useful move instead of spending it as evidence', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
