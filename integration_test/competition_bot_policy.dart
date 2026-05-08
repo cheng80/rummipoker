@@ -138,9 +138,15 @@ class CompetitionBattleAction {
 
 /// `tools/sim/planner_bot.dart`의 planner_v2 판단을 integration test용으로 옮긴다.
 class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
-  const CompetitionPlannerV2Policy();
+  const CompetitionPlannerV2Policy({
+    this.enableRetryRecoveryConfirmDelay = false,
+  });
+
+  final bool enableRetryRecoveryConfirmDelay;
 
   static const int _cleanConfirmScoreFloor = 70;
+  static const int _highTargetConfirmScoreFloor = 180;
+  static const int _highTargetConfirmTargetFloor = 600;
   static const int _bossConfirmScoreFloor = 360;
   static const int _bossConfirmMinOccupancy = kBoardSize * 4;
   static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
@@ -420,6 +426,18 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         lineCount: lineCount,
         score: score,
         shouldConfirmNow: hasLargeBundle || isNearBoardLock,
+      );
+    }
+    final isHighTarget =
+        enableRetryRecoveryConfirmDelay &&
+        session.blind.targetScore >= _highTargetConfirmTargetFloor;
+    if (isHighTarget) {
+      // 고점수 구간에서는 작은 확정을 바로 먹기보다, 보드 버림/이동으로
+      // 더 큰 중복 족보 묶음을 만들 여지를 먼저 본다.
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: score >= _highTargetConfirmScoreFloor,
       );
     }
     if (score >= _cleanConfirmScoreFloor) {

@@ -8,6 +8,7 @@ import 'package:rummipoker/main.dart' as app;
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_catalog_loader.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
@@ -187,6 +188,8 @@ class _CompetitionFullPlayBot {
   final _ContestBotConfig config;
   final CompetitionPlannerV2Policy battlePolicy =
       const CompetitionPlannerV2Policy();
+  final CompetitionPlannerV2Policy retryRecoveryBattlePolicy =
+      const CompetitionPlannerV2Policy(enableRetryRecoveryConfirmDelay: true);
   final List<String> log = <String>[];
   ItemCatalog? itemCatalog;
 
@@ -387,10 +390,14 @@ class _CompetitionFullPlayBot {
       }
       final runProgress = state.runProgress!;
       final tier = BlindTier.values[runProgress.currentStationBlindTierIndex];
-      final action = battlePolicy.chooseAction(
+      final runtimeSnapshot = runProgress.buildRuntimeSnapshot();
+      final policy = gameOverRetries >= 2
+          ? retryRecoveryBattlePolicy
+          : battlePolicy;
+      final action = policy.chooseAction(
         session,
         jesters: runProgress.ownedJesters,
-        runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+        runtimeSnapshot: runtimeSnapshot,
       );
 
       if (await _tryUseBattleItem(plannedAction: action)) {
@@ -400,7 +407,8 @@ class _CompetitionFullPlayBot {
 
       _record(
         'S${runProgress.stageIndex} ${tier.name} action=$action '
-        'score=${session.blind.scoreTowardBlind}/${session.blind.targetScore}',
+        'score=${session.blind.scoreTowardBlind}/${session.blind.targetScore} '
+        '${_battleTraceSuffix(session, runProgress, runtimeSnapshot)}',
       );
 
       switch (action.type) {
@@ -506,11 +514,51 @@ class _CompetitionFullPlayBot {
         '$gameOverRetries/${config.maxGameOverRetries}',
       );
     }
+    await _saveBotCheckpoint();
     _record('game over -> retry $gameOverRetries/${config.maxGameOverRetries}');
     await tester.tap(retryFinder.last, warnIfMissed: false);
     await _pumpFor(const Duration(milliseconds: 800));
     await _pumpUntilVisible(find.text('드로우'));
     return true;
+  }
+
+  String _battleTraceSuffix(
+    RummiPokerGridSession session,
+    RummiRunProgress progress,
+    RummiJesterRuntimeSnapshot runtimeSnapshot,
+  ) {
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final confirmPreview = session.canConfirmAllFullLines
+        ? session
+              .copySnapshot()
+              .confirmAllFullLines(
+                jesters: progress.ownedJesters,
+                runtimeSnapshot: runtimeSnapshot,
+                applyScoreToBlind: false,
+              )
+              .result
+        : null;
+    final confirmText = confirmPreview == null
+        ? 'confirm=none'
+        : 'confirm=${confirmPreview.scoreAdded}/'
+              '${confirmPreview.lineBreakdowns.length}';
+    final handText = session.hand.map(_compactTileText).join(',');
+    final deckTopText = session.peekDeckTop(3).map(_compactTileText).join(',');
+    return 'occ=$occupancy '
+        'deck=${session.deck.remaining} '
+        'hand=[$handText] '
+        'top=[$deckTopText] '
+        '$confirmText';
+  }
+
+  String _compactTileText(Tile tile) {
+    final color = switch (tile.color) {
+      TileColor.red => 'R',
+      TileColor.blue => 'B',
+      TileColor.yellow => 'Y',
+      TileColor.black => 'K',
+    };
+    return '$color${tile.number}';
   }
 
   Future<bool> _retryGameOverAfterStop(String reason) async {
