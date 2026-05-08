@@ -317,7 +317,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             );
             if (followUp.lineCount < 2 || followUp.score <= 0) continue;
             if (allowsRepeatedStrategicMove &&
-                followUp.lineCount < 3 &&
                 followUp.score < _highTargetConfirmScoreFloor) {
               continue;
             }
@@ -451,7 +450,8 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           session.blind.targetScore >= _highTargetConfirmTargetFloor;
       if (isRetryRecoveryHighTarget) {
         final hasRecoveryBundle =
-            lineCount >= 3 || score >= _bossConfirmScoreFloor;
+            score >= _bossConfirmScoreFloor ||
+            (lineCount >= 3 && score >= _highTargetConfirmScoreFloor);
         final isForcedBoardLock = emptyCells == 0 && score > 0;
         return _ConfirmChoice(
           lineCount: lineCount,

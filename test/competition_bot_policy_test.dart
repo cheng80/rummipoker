@@ -715,6 +715,121 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.confirm));
   });
 
+  test('retry recovery boss delays a low score three-line confirm', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 685,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 0,
+        bossModifier: RummiBossModifier.singleRankPressure,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.black, 13)]),
+      board: RummiBoard.fromSnapshot([
+        null,
+        _tile(TileColor.red, 1),
+        _tile(TileColor.yellow, 5),
+        _tile(TileColor.red, 5),
+        _tile(TileColor.black, 5),
+        _tile(TileColor.red, 2),
+        null,
+        _tile(TileColor.yellow, 8),
+        _tile(TileColor.black, 3),
+        null,
+        _tile(TileColor.black, 11),
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.black, 6),
+        _tile(TileColor.blue, 6),
+        _tile(TileColor.red, 9),
+        _tile(TileColor.yellow, 12),
+        null,
+        _tile(TileColor.red, 4),
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.blue, 9),
+        _tile(TileColor.red, 9),
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.black, 12)],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+  });
+
+  test('retry recovery boss skips a low value repeated board move', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 685,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        bossModifier: RummiBossModifier.singleRankPressure,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.black, 13)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.black, 5),
+        _tile(TileColor.red, 1),
+        _tile(TileColor.yellow, 5),
+        _tile(TileColor.red, 5),
+        null,
+        _tile(TileColor.red, 2),
+        _tile(TileColor.red, 4),
+        _tile(TileColor.yellow, 8),
+        _tile(TileColor.black, 3),
+        _tile(TileColor.blue, 6),
+        _tile(TileColor.black, 11),
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.black, 6),
+        null,
+        _tile(TileColor.red, 9),
+        _tile(TileColor.yellow, 12),
+        null,
+        null,
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.blue, 9),
+        _tile(TileColor.red, 9),
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.black, 12)],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+  });
+
   test('early low target does not spend hand discard for evidence', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
