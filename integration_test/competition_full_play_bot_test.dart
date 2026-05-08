@@ -450,6 +450,7 @@ class _CompetitionFullPlayBot {
           if (!_isCashOutReady()) {
             await _pumpUntilState(
               (next) => next.stageFlowPhase == GameStageFlowPhase.none,
+              timeout: const Duration(minutes: 2),
             );
           }
           break;
