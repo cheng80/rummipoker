@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -236,6 +238,15 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       confirmChoice: confirmChoice,
     )) {
       return const CompetitionBattleAction.draw();
+    }
+
+    if (_shouldSpendBoardDiscardForMystic(session, jesters)) {
+      final mysticDiscard = chooseMysticBoardDiscard(
+        session,
+        jesters: jesters,
+        runtimeSnapshot: runtimeSnapshot,
+      );
+      if (mysticDiscard != null) return mysticDiscard;
     }
 
     final placement = _bestPlacement(
@@ -575,6 +586,26 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return occupancy == kBoardSize * kBoardSize - 1 &&
         session.blind.boardDiscardsRemaining < session.blind.boardDiscardsMax &&
         session.blind.boardMovesRemaining == session.blind.boardMovesMax;
+  }
+
+  bool _shouldSpendBoardDiscardForMystic(
+    RummiPokerGridSession session,
+    List<RummiJesterCard> jesters,
+  ) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.blind.boardDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return false;
+    }
+    if (!jesters.any((jester) => jester.id == 'mystic_summit')) return false;
+    if (session.blind.bossModifier == null &&
+        session.blind.targetScore < _strategicUtilityTargetScoreFloor) {
+      return false;
+    }
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    if (occupancy < _midBoardMoveMinOccupancy) return false;
+    return true;
   }
 
   _PlacementChoice? _bestPlacement(
@@ -948,6 +979,87 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
     return best?.action;
+  }
+
+  CompetitionBattleAction? chooseMysticBoardDiscard(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (session.blind.boardDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return null;
+    }
+
+    final basePotential = _plannerBoardPotentialScoreForJesters(
+      session.board,
+      jesters,
+    );
+    _BoardDiscardChoice? best;
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        if (session.board.cellAt(row, col) == null) continue;
+        final afterDiscard = session.copySnapshot();
+        afterDiscard.board.setCell(row, col, null);
+        final afterDiscardPotential = _plannerBoardPotentialScoreForJesters(
+          afterDiscard.board,
+          jesters,
+        );
+
+        for (var handIndex = 0; handIndex < session.hand.length; handIndex++) {
+          final tile = session.hand[handIndex];
+          final copy = afterDiscard.copySnapshot();
+          if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+          final preview = copy.confirmAllFullLines(
+            jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
+            applyScoreToBlind: false,
+          );
+          final score = preview.result.scoreAdded;
+          final lineCount = preview.result.lineBreakdowns.length;
+          final potentialScore = _plannerBoardPotentialScoreForJesters(
+            copy.board,
+            jesters,
+          );
+          final potentialGain = potentialScore - basePotential;
+          final recoversDiscardLoss = potentialScore >= afterDiscardPotential;
+          final createsUsefulLine =
+              _touchedLinePotential(copy.board, row, col) >=
+              _cleanConfirmScoreFloor;
+          final improvesImmediate = lineCount >= 2 && score > 0;
+          if (!recoversDiscardLoss) continue;
+          if (!improvesImmediate && !createsUsefulLine && potentialGain < 12) {
+            continue;
+          }
+
+          final choice = _BoardDiscardChoice(
+            action: CompetitionBattleAction.discardBoard(row: row, col: col),
+            immediateScore: score + potentialGain,
+            potentialScore: potentialScore,
+          );
+          if (best == null ||
+              choice.immediateScore > best.immediateScore ||
+              choice.immediateScore == best.immediateScore &&
+                  choice.potentialScore > best.potentialScore) {
+            best = choice;
+          }
+        }
+      }
+    }
+    return best?.action;
+  }
+
+  int _touchedLinePotential(RummiBoard board, int row, int col) {
+    var best = max(
+      _plannerLinePotentialScore(board.row(row)),
+      _plannerLinePotentialScore(board.col(col)),
+    );
+    if (row == col) {
+      best = max(best, _plannerLinePotentialScore(board.diagMain()));
+    }
+    if (row + col == kBoardSize - 1) {
+      best = max(best, _plannerLinePotentialScore(board.diagAnti()));
+    }
+    return best;
   }
 
   _ImmediateConfirmChoice _bestMoveConfirmAfterBoardDiscardPlacement(

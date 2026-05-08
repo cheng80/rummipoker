@@ -1016,6 +1016,66 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
   });
 
+  test('retry recovery boss spends useful board discard for mystic summit', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1401,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 0,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.red, 4),
+        _tile(TileColor.black, 9),
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.black, 2),
+        _tile(TileColor.yellow, 3),
+        null,
+        null,
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.black, 5),
+        _tile(TileColor.yellow, 6),
+        null,
+        null,
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.black, 8),
+        null,
+        null,
+        null,
+        _tile(TileColor.yellow, 10),
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.red, 5)],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).chooseAction(
+          session,
+          jesters: [_jester('mystic_summit')],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, CompetitionBattleActionType.discardBoard);
+    expect(action.row, 0);
+    expect(action.col, isIn(<int>[3, 4]));
+  });
+
   test('early low target does not spend hand discard for evidence', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
