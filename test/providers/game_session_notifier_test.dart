@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
@@ -2214,7 +2215,97 @@ void main() {
         contains(RummiExpirySignal.drawPileExhausted),
       );
     });
+
+    test('S4 복원 runtime은 골드, Jester, 아이템 facade를 유지한다', () {
+      final session = RummiPokerGridSession(runSeed: 91460);
+      final jester = _testJester('droll_jester');
+      final runProgress = RummiRunProgress.restore(
+        stageIndex: 4,
+        currentStationBlindTierIndex: 0,
+        gold: 84,
+        rerollCost: RummiRunProgress.shopBaseRerollCost,
+        ownedJesters: <RummiJesterCard>[jester],
+        shopOffers: const <RummiShopOffer>[],
+        statefulValuesBySlot: const <int, int>{},
+        playedHandCounts: const <RummiHandRank, int>{},
+        seenMarketJesterIds: <String>{},
+        seenMarketItemIds: <String>{},
+        boughtJesterIds: <String>{},
+        boughtItemIds: <String>{},
+        seenBossModifierIds: <String>{},
+        clearedStationKeys: <String>{},
+        itemInventory: const RunInventoryState(
+          ownedItems: <OwnedItemEntry>[
+            OwnedItemEntry(
+              itemId: 'move_token',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: <String>['move_token'],
+        ),
+      );
+      final restoredRun = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.shop,
+        difficulty: NewRunDifficulty.standard,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: session.copySnapshot(),
+          runProgress: runProgress.copySnapshot(),
+        ),
+      );
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final args = GameSessionArgs(runSeed: 91460, restoredRun: restoredRun);
+
+      final restored = container.read(gameSessionNotifierProvider(args));
+      final itemCatalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'move_token',
+            timing: 'use_battle',
+            op: 'gain_board_move',
+            placement: 'quickSlot',
+          ),
+        ],
+      });
+      final marketWithItems = RummiMarketRuntimeFacade.fromRunProgress(
+        restored.runProgress!,
+        itemCatalog: itemCatalog,
+      );
+
+      expect(restored.marketView!.gold, 84);
+      expect(restored.marketView!.ownedEntries.map((entry) => entry.card.id), [
+        'droll_jester',
+      ]);
+      expect(
+        marketWithItems.itemSlots.any((slot) => slot.item != null),
+        isTrue,
+      );
+      expect(marketWithItems.itemSlots.first.item?.id, 'move_token');
+    });
   });
+}
+
+RummiJesterCard _testJester(String id) {
+  return RummiJesterCard(
+    id: id,
+    displayName: id,
+    rarity: RummiJesterRarity.common,
+    baseCost: 4,
+    effectText: '',
+    effectType: 'chips_bonus',
+    trigger: 'onScore',
+    conditionType: 'none',
+    conditionValue: null,
+    value: 10,
+    xValue: null,
+    mappedTileColors: const [],
+    mappedTileNumbers: const [],
+  );
 }
 
 Map<String, dynamic> _itemJson({

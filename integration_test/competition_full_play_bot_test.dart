@@ -1193,7 +1193,11 @@ class _CompetitionFullPlayBot {
     _record(
       'checkpoint saved scene=${scene.name} '
       'S${runProgress.stageIndex} '
-      'tier=${runProgress.currentStationBlindTierIndex}',
+      'tier=${runProgress.currentStationBlindTierIndex} '
+      'gold=${runProgress.gold} '
+      'jesters=${runProgress.ownedJesters.length} '
+      'items=${runProgress.itemInventory.ownedItems.length} '
+      'quick=${runProgress.itemInventory.quickSlotItemIds.length}',
     );
   }
 

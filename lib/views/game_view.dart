@@ -382,20 +382,7 @@ class _GameViewState extends ConsumerState<GameView>
           !_autoCashOutLoopStarted) {
         _scheduleAutoCashOutLoopOnLoad();
       }
-      if (_shouldResumeMarketOnCatalogLoad) {
-        _shouldResumeMarketOnCatalogLoad = false;
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (!mounted) return;
-          final nextStage = await _showShopScreen();
-          if (!mounted) return;
-          if (nextStage == true) {
-            await _goToNextStationBlindSelect();
-            return;
-          }
-          await _saveActiveRun();
-          _gameNotifier.markDirty();
-        });
-      }
+      _resumeRestoredMarketWhenCatalogsReady();
     } catch (_) {
       if (!mounted) return;
       _gameNotifier.setJesterCatalog(null);
@@ -427,6 +414,7 @@ class _GameViewState extends ConsumerState<GameView>
       );
       if (!mounted) return;
       setState(() => _itemCatalog = catalog);
+      _resumeRestoredMarketWhenCatalogsReady();
       if (_shouldAutoCashOutRestoredBattleOnLoad) {
         _scheduleAutoCashOutLoopOnLoad();
       }
@@ -435,6 +423,24 @@ class _GameViewState extends ConsumerState<GameView>
       if (!mounted) return;
       setState(() => _itemCatalog = null);
     }
+  }
+
+  void _resumeRestoredMarketWhenCatalogsReady() {
+    if (!_shouldResumeMarketOnCatalogLoad || _itemCatalog == null) {
+      return;
+    }
+    _shouldResumeMarketOnCatalogLoad = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final nextStage = await _showShopScreen();
+      if (!mounted) return;
+      if (nextStage == true) {
+        await _goToNextStationBlindSelect();
+        return;
+      }
+      await _saveActiveRun();
+      _gameNotifier.markDirty();
+    });
   }
 
   Future<void> _showBossConstraintIntroIfNeeded() async {
