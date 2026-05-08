@@ -1047,7 +1047,11 @@ class _CompetitionFullPlayBot {
     }
 
     return switch (item.effect.op) {
-      'add_board_move' => false,
+      'add_board_move' =>
+        plannedAction.type == CompetitionBattleActionType.moveBoard &&
+            (plannedAction.gain ?? 0) >= 70 &&
+            (session.blind.bossModifier != null ||
+                session.blind.targetScore >= 1000),
       'mark_next_board_move_bonus' => true,
       'add_board_discard' =>
         battlePolicy.chooseScoringBoardDiscard(

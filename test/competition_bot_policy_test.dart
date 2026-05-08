@@ -11,12 +11,20 @@ import '../integration_test/competition_bot_policy.dart';
 
 void main() {
   test('battle item use must support the planned battle action', () {
-    for (final actionType in CompetitionBattleActionType.values) {
-      expect(
-        contestBattleItemOpSupportsPlannedAction('add_board_move', actionType),
-        isFalse,
-      );
-    }
+    expect(
+      contestBattleItemOpSupportsPlannedAction(
+        'add_board_move',
+        CompetitionBattleActionType.moveBoard,
+      ),
+      isTrue,
+    );
+    expect(
+      contestBattleItemOpSupportsPlannedAction(
+        'add_board_move',
+        CompetitionBattleActionType.draw,
+      ),
+      isFalse,
+    );
     expect(
       contestBattleItemOpSupportsPlannedAction(
         'mark_next_board_move_bonus',

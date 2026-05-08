@@ -31,7 +31,8 @@ bool contestBattleItemOpSupportsPlannedAction(
   CompetitionBattleActionType plannedActionType,
 ) {
   return switch (op) {
-    'add_board_move' => false,
+    'add_board_move' =>
+      plannedActionType == CompetitionBattleActionType.moveBoard,
     'mark_next_board_move_bonus' =>
       plannedActionType == CompetitionBattleActionType.moveBoard,
     'add_board_discard' =>
@@ -442,9 +443,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           enableRetryRecoveryConfirmDelay &&
           session.blind.targetScore >= _highTargetConfirmTargetFloor;
       if (isRetryRecoveryHighTarget) {
-        final hasRecoveryBundle =
-            score >= _highTargetConfirmScoreFloor ||
-            lineCount >= 3 && score >= _cleanConfirmScoreFloor;
+        final hasRecoveryBundle = score >= _highTargetConfirmScoreFloor;
         final isForcedBoardLock = emptyCells == 0 && score > 0;
         return _ConfirmChoice(
           lineCount: lineCount,
