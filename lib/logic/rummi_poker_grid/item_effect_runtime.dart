@@ -162,6 +162,11 @@ class ItemEffectRuntime {
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;
+      case 'increase_hand_size':
+        final applied = _applyIncreaseHandSize(item, session);
+        if (!applied.isSuccess) return applied;
+        events.addAll(applied.events);
+        break;
       case 'chips_bonus':
       case 'mult_bonus':
       case 'xmult_bonus':
@@ -604,6 +609,7 @@ class ItemEffectRuntime {
       'use_battle:undo_last_board_move' ||
       'use_battle:peek_deck_discard_one' ||
       'use_battle:draw_if_hand_empty' ||
+      'use_battle:increase_hand_size' ||
       'market_reroll:free_next_reroll' ||
       'market_buy:discount_next_purchase' ||
       'market_buy_if_category:discount_next_purchase' ||

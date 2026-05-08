@@ -84,13 +84,13 @@ void main() {
 
       expect(catalog.schemaVersion, 1);
       expect(catalog.catalogId, 'items_common_v1');
-      expect(catalog.all.length, 49);
-      expect(catalog.byType(ItemType.utility).length, 8);
+      expect(catalog.all.length, 50);
+      expect(catalog.byType(ItemType.utility).length, 9);
       expect(catalog.byType(ItemType.consumable).length, 19);
       expect(catalog.byType(ItemType.equipment).length, 10);
       expect(catalog.byType(ItemType.passiveRelic).length, 12);
       expect(catalog.byPlacement(ItemPlacement.inventory).length, 8);
-      expect(catalog.byPlacement(ItemPlacement.quickSlot).length, 19);
+      expect(catalog.byPlacement(ItemPlacement.quickSlot).length, 20);
       expect(catalog.byPlacement(ItemPlacement.equipped).length, 10);
       expect(catalog.byPlacement(ItemPlacement.passiveRack).length, 12);
 
@@ -109,6 +109,8 @@ void main() {
       expect(translationJson, contains('"최대 손패 크기 +1."'));
 
       expect(catalog.findById('move_token')!.effect.op, 'add_board_move');
+      expect(catalog.findById('battle_pouch')!.effect.op, 'increase_hand_size');
+      expect(catalog.findById('battle_pouch')!.effect.timing, 'use_battle');
       expect(catalog.findById('travel_pouch')!.effect.op, 'increase_hand_size');
       expect(catalog.findById('jester_hook')!.basePrice, 7);
       expect(catalog.findById('jester_hook')!.sellPrice, 3);

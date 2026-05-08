@@ -22,6 +22,7 @@ import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/views/game_view.dart';
 import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
+import 'package:rummipoker/views/game/widgets/game_tile_choice_dialog.dart';
 
 import 'competition_bot_policy.dart';
 
@@ -567,11 +568,11 @@ class _CompetitionFullPlayBot {
       }
     }
 
-    if (!movedBoard && occupancy >= 2) {
+    if (!movedBoard &&
+        occupancy >= kBoardSize * 2 + 2 &&
+        occupancy <= kBoardSize * 4 - 1) {
       final action = battlePolicy.chooseBoardMove(session);
-      final isUsefulLateMove =
-          !shouldProtectLateDeck || (action?.gain ?? 0) >= 100;
-      if (action != null && isUsefulLateMove) {
+      if (action != null && (action.gain ?? 0) >= 20) {
         _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
         await _tapBoardCell(action.row!, action.col!);
         await _tapText('타일\n이동');
@@ -590,21 +591,36 @@ class _CompetitionFullPlayBot {
     }
 
     final shouldSpendBoardDiscard =
-        tier != BlindTier.boss &&
-            !shouldProtectLateDeck &&
-            !discardedBoard &&
-            occupancy >= kBoardSize * 2 ||
         !discardedBoard &&
-            tier != BlindTier.boss &&
-            !shouldProtectLateDeck &&
-            hasZeroDiscardBonusJester &&
-            session.blind.boardDiscardsRemaining > 0 &&
-            occupancy >= kBoardSize * 3;
+        !shouldProtectLateDeck &&
+        session.blind.boardDiscardsRemaining > 0 &&
+        occupancy >= kBoardSize * 4;
     if (shouldSpendBoardDiscard) {
-      final action = battlePolicy.chooseBoardDiscard(
+      final action = battlePolicy.chooseScoringBoardDiscard(
         session,
-        minOccupancy: kBoardSize * 2,
+        jesters: runProgress.ownedJesters,
+        runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
       );
+      if (action != null) {
+        _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
+        await _tapBoardCell(action.row!, action.col!);
+        await _tapText('보드\n버림');
+        await _pumpUntilState(
+          (next) =>
+              next.session!.board.cellAt(action.row!, action.col!) == null,
+        );
+        discardedBoard = true;
+        return true;
+      }
+    }
+
+    if (!discardedBoard &&
+        hasZeroDiscardBonusJester &&
+        tier != BlindTier.boss &&
+        !shouldProtectLateDeck &&
+        session.blind.boardDiscardsRemaining > 0 &&
+        occupancy >= kBoardSize * kBoardSize - 3) {
+      final action = battlePolicy.chooseBoardDiscard(session);
       if (action != null) {
         _record('S${runProgress.stageIndex} ${tier.name} utility=$action');
         await _tapBoardCell(action.row!, action.col!);
@@ -920,6 +936,9 @@ class _CompetitionFullPlayBot {
     await _pumpFor(const Duration(milliseconds: 500));
     if (find.text('사용').evaluate().isEmpty) return false;
     await _tapText('사용');
+    if (choice.item.effect.op == 'peek_deck_discard_one') {
+      await _resolveDeckNeedleDialog(choice, state.session!);
+    }
     usedItem = true;
     _record(
       'S${state.runProgress!.stageIndex} '
@@ -928,6 +947,35 @@ class _CompetitionFullPlayBot {
     );
     await _pumpFor(const Duration(seconds: 1));
     return true;
+  }
+
+  Future<void> _resolveDeckNeedleDialog(
+    _BattleItemChoice choice,
+    RummiPokerGridSession session,
+  ) async {
+    await _pumpFor(const Duration(milliseconds: 500));
+    final dialogFinder = find.byType(GameTileChoiceDialog);
+    if (dialogFinder.evaluate().isEmpty) return;
+    final discardIndex = _chooseDeckNeedleDiscardIndex(choice.item, session);
+    if (discardIndex == null) {
+      if (find.text('닫기').evaluate().isNotEmpty) {
+        await _tapText('닫기');
+      }
+      return;
+    }
+    final tileFinder = find.descendant(
+      of: dialogFinder,
+      matching: find.byType(GameRummiTileCard),
+    );
+    if (tileFinder.evaluate().length <= discardIndex) {
+      if (find.text('닫기').evaluate().isNotEmpty) {
+        await _tapText('닫기');
+      }
+      return;
+    }
+    await tester.tap(tileFinder.at(discardIndex), warnIfMissed: false);
+    _record('deck_needle: discarded top-window tile index $discardIndex');
+    await _pumpFor(const Duration(milliseconds: 600));
   }
 
   _BattleItemChoice? _chooseBattleItemToUse(GameSessionState state) {
@@ -972,8 +1020,43 @@ class _CompetitionFullPlayBot {
       'mark_next_board_move_bonus' => session.blind.boardMovesRemaining > 0,
       'undo_last_board_move' => session.boardMoveHistory.isNotEmpty,
       'draw_if_hand_empty' => session.hand.isEmpty && session.canDrawFromDeck,
+      'increase_hand_size' => session.hand.length >= session.maxHandSize,
+      'peek_deck_discard_one' =>
+        _chooseDeckNeedleDiscardIndex(item, session) != null,
       _ => false,
     };
+  }
+
+  int? _chooseDeckNeedleDiscardIndex(
+    ItemDefinition item,
+    RummiPokerGridSession session,
+  ) {
+    final windowSize =
+        (item.effect.value('lookAt') as num?)?.toInt() ??
+        (item.effect.value('peek') as num?)?.toInt() ??
+        3;
+    final candidates = session.peekDeckTop(windowSize);
+    if (candidates.length < 2) return null;
+    if (!session.canDrawFromDeck) return null;
+    final policy = const CompetitionPlannerV2Policy();
+    var bestScore = -1 << 30;
+    var worstScore = 1 << 30;
+    var worstIndex = 0;
+    for (var index = 0; index < candidates.length; index++) {
+      final score = policy.bestPlacementPotentialForTile(
+        session,
+        candidates[index],
+      );
+      if (score > bestScore) bestScore = score;
+      if (score < worstScore) {
+        worstScore = score;
+        worstIndex = index;
+      }
+    }
+    // 덱 조작 아이템은 증거용으로 소모하지 않고, 선택지 품질 차이가
+    // 분명할 때만 낮은 잠재력 타일을 제거한다.
+    if (bestScore - worstScore < 18 && worstScore >= 10) return null;
+    return worstIndex;
   }
 
   bool _shouldStopAt({

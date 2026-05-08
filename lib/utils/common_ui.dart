@@ -444,7 +444,10 @@ Future<T?> showGameChoiceDialog<T>(
               ),
             ),
           ],
-          if (content != null) ...[const SizedBox(height: 14), content],
+          if (content != null) ...[
+            const SizedBox(height: 14),
+            Flexible(child: content),
+          ],
           const SizedBox(height: 18),
           _GameDialogActionBar<T>(actions: actions),
         ],

@@ -29,11 +29,13 @@ class EconomyConfig:
     first_blind_clear_bonus_gold: int = 2
     remaining_board_discard_gold_bonus: int = 2
     remaining_hand_discard_gold_bonus: int = 1
+    remaining_board_move_gold_bonus: int = 1
     market_price_scale_numerator: int = 11
     market_price_scale_denominator: int = 5
     shop_base_reroll_cost: int = 5
     standard_board_discards: int = 4
     standard_hand_discards: int = 2
+    standard_board_moves: int = 3
 
 
 def main() -> int:
@@ -226,24 +228,28 @@ def _reward_envelope(config: EconomyConfig) -> dict[str, Any]:
         "small": (
             config.standard_board_discards,
             config.standard_hand_discards,
+            config.standard_board_moves,
         ),
         "big": (
             max(1, config.standard_board_discards - 1),
             config.standard_hand_discards,
+            config.standard_board_moves,
         ),
         "boss": (
             max(1, config.standard_board_discards - 1),
             max(1, config.standard_hand_discards - 1),
+            config.standard_board_moves,
         ),
     }
     rows = {}
-    for tier, (board_discards, hand_discards) in tiers.items():
+    for tier, (board_discards, hand_discards, board_moves) in tiers.items():
         max_gold = _cashout_gold(
             config,
             station=1,
             tier=tier,
             remaining_board_discards=board_discards,
             remaining_hand_discards=hand_discards,
+            remaining_board_moves=board_moves,
         )
         min_gold = _cashout_gold(
             config,
@@ -251,6 +257,7 @@ def _reward_envelope(config: EconomyConfig) -> dict[str, Any]:
             tier=tier,
             remaining_board_discards=0,
             remaining_hand_discards=0,
+            remaining_board_moves=0,
         )
         rows[tier] = {
             "standard_unused_resources_gold_s1": max_gold,
@@ -283,12 +290,14 @@ def _summary_reward_estimate(
         tier = str(group.get("blind_tier") or "")
         board = _float(group.get("avg_remaining_board_discards"))
         hand = _float(group.get("avg_remaining_hand_discards"))
+        move = _float(group.get("avg_remaining_board_moves"))
         gold = _cashout_gold(
             config,
             station=station,
             tier=tier,
             remaining_board_discards=board,
             remaining_hand_discards=hand,
+            remaining_board_moves=move,
         )
         market = str(group.get("market_profile") or "unknown")
         by_market[market].append((gold, run_count))
@@ -666,6 +675,7 @@ def _cashout_gold(
     tier: str,
     remaining_board_discards: float,
     remaining_hand_discards: float,
+    remaining_board_moves: float,
 ) -> float:
     first_bonus = (
         config.first_blind_clear_bonus_gold
@@ -677,6 +687,7 @@ def _cashout_gold(
         + first_bonus
         + remaining_board_discards * config.remaining_board_discard_gold_bonus
         + remaining_hand_discards * config.remaining_hand_discard_gold_bonus
+        + remaining_board_moves * config.remaining_board_move_gold_bonus
     )
 
 

@@ -612,6 +612,77 @@ void main() {
     expect(midLeft, lessThan(startLeft));
   });
 
+  testWidgets('GameHandZone highlights added hand capacity near draw control', (
+    tester,
+  ) async {
+    RummiStationRuntimeFacade stationWithHandSize(int maxHandSize) {
+      return RummiStationRuntimeFacade(
+        stationType: RummiStationType.currentStage,
+        objective: const RummiStationObjectiveView(
+          targetScore: 900,
+          scoreTowardObjective: 360,
+        ),
+        resources: RummiStationResourceView(
+          boardDiscardsRemaining: 3,
+          boardDiscardsMax: 4,
+          handDiscardsRemaining: 1,
+          handDiscardsMax: 2,
+          boardMovesRemaining: 3,
+          boardMovesMax: 3,
+          maxHandSize: maxHandSize,
+          drawPileRemaining: 14,
+        ),
+      );
+    }
+
+    final board = RummiBoard();
+    final first = Tile(id: 1, color: TileColor.red, number: 1);
+    final hand = [first];
+    var station = stationWithHandSize(2);
+
+    Widget buildHandZone() {
+      final battle = RummiBattleRuntimeFacade(
+        stageIndex: 4,
+        currentGold: 27,
+        totalDeckSize: 52,
+        board: board,
+        hand: hand,
+        scoringCellKeys: const {},
+      );
+      return MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 120,
+            child: GameHandZone(
+              battle: battle,
+              station: station,
+              hand: hand,
+              selectedHandTile: null,
+              onHandTileTap: (_) {},
+              onDraw: () {},
+              tileWidth: 48,
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildHandZone());
+    expect(find.text('1칸 남음'), findsOneWidget);
+
+    station = stationWithHandSize(3);
+    await tester.pumpWidget(buildHandZone());
+    await tester.pump();
+
+    expect(find.text('2칸 남음'), findsOneWidget);
+    expect(find.text('손패 +1'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('hand-capacity-gain-badge')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'GameBoardGrid marks source, locked cells, and empty move targets',
     (tester) async {

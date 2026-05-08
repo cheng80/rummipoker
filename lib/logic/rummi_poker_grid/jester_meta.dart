@@ -542,6 +542,9 @@ class RummiCashOutBreakdown {
     required this.economyBonuses,
     required this.economyGold,
     required this.totalGold,
+    this.remainingBoardMoves = 0,
+    this.perBoardMoveBonus = 0,
+    this.boardMoveGold = 0,
     this.firstBlindClearBonusGold = 0,
     this.itemBonuses = const [],
     this.itemGold = 0,
@@ -552,10 +555,13 @@ class RummiCashOutBreakdown {
   final int blindReward;
   final int remainingBoardDiscards;
   final int remainingHandDiscards;
+  final int remainingBoardMoves;
   final int perBoardDiscardBonus;
   final int perHandDiscardBonus;
+  final int perBoardMoveBonus;
   final int boardDiscardGold;
   final int handDiscardGold;
+  final int boardMoveGold;
   final List<RummiRoundEndEconomyBonus> economyBonuses;
   final int economyGold;
   final int firstBlindClearBonusGold;
@@ -596,6 +602,7 @@ class RummiEconomyConfig {
   static const int firstBlindClearBonusGold = 2;
   static const int remainingBoardDiscardGoldBonus = 2;
   static const int remainingHandDiscardGoldBonus = 1;
+  static const int remainingBoardMoveGoldBonus = 1;
   static const int marketPriceScaleNumerator = 11;
   static const int marketPriceScaleDenominator = 5;
   static const int shopBaseRerollCost = 5;
@@ -1017,6 +1024,8 @@ class RummiRunProgress {
       RummiEconomyConfig.remainingBoardDiscardGoldBonus;
   static const int remainingHandDiscardGoldBonus =
       RummiEconomyConfig.remainingHandDiscardGoldBonus;
+  static const int remainingBoardMoveGoldBonus =
+      RummiEconomyConfig.remainingBoardMoveGoldBonus;
   static const int shopBaseRerollCost = RummiEconomyConfig.shopBaseRerollCost;
   static const int shopRerollCostStep = RummiEconomyConfig.shopRerollCostStep;
 
@@ -1141,10 +1150,12 @@ class RummiRunProgress {
     final firstBlindClearBonusGold = _firstBlindClearBonusGold();
     final remainingBoardDiscards = session.blind.boardDiscardsRemaining;
     final remainingHandDiscards = session.blind.handDiscardsRemaining;
+    final remainingBoardMoves = session.blind.boardMovesRemaining;
     final boardDiscardGold =
         remainingBoardDiscards * remainingBoardDiscardGoldBonus;
     final handDiscardGold =
         remainingHandDiscards * remainingHandDiscardGoldBonus;
+    final boardMoveGold = remainingBoardMoves * remainingBoardMoveGoldBonus;
     final economyBonuses = ownedJesters
         .map(
           (card) => _buildRoundEndEconomyBonus(
@@ -1173,10 +1184,13 @@ class RummiRunProgress {
       blindReward: blindReward,
       remainingBoardDiscards: remainingBoardDiscards,
       remainingHandDiscards: remainingHandDiscards,
+      remainingBoardMoves: remainingBoardMoves,
       perBoardDiscardBonus: remainingBoardDiscardGoldBonus,
       perHandDiscardBonus: remainingHandDiscardGoldBonus,
+      perBoardMoveBonus: remainingBoardMoveGoldBonus,
       boardDiscardGold: boardDiscardGold,
       handDiscardGold: handDiscardGold,
+      boardMoveGold: boardMoveGold,
       economyBonuses: economyBonuses,
       economyGold: economyGold,
       firstBlindClearBonusGold: firstBlindClearBonusGold,
@@ -1187,6 +1201,7 @@ class RummiRunProgress {
           firstBlindClearBonusGold +
           boardDiscardGold +
           handDiscardGold +
+          boardMoveGold +
           economyGold +
           itemGold,
     );

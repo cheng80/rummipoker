@@ -985,6 +985,7 @@ class _GameViewState extends ConsumerState<GameView>
       'mark_next_board_move_bonus' => '다음 보드 이동 보너스 준비',
       'undo_last_board_move' => '마지막 이동 되돌림',
       'draw_if_hand_empty' => '타일 1장 드로우',
+      'increase_hand_size' => '손패 최대치 +${item.effect.value('amount') ?? 1}',
       'chips_bonus' => '다음 확정 Chips 보너스',
       'mult_bonus' => '다음 확정 Mult 보너스',
       'xmult_bonus' => '다음 확정 XMult 보너스',

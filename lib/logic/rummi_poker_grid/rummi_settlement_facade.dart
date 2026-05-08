@@ -11,6 +11,7 @@ enum RummiSettlementEntryKind {
   firstBlindClearBonus,
   boardDiscardReward,
   handDiscardReward,
+  boardMoveReward,
   economyBonus,
   itemBonus,
 }
@@ -74,6 +75,13 @@ class RummiSettlementRuntimeFacade {
         description:
             '남은 손패 버림 ${breakdown.remainingHandDiscards}회 x ${breakdown.perHandDiscardBonus}',
         gold: breakdown.handDiscardGold,
+      ),
+      RummiSettlementEntryView(
+        kind: RummiSettlementEntryKind.boardMoveReward,
+        leadingLabel: '${breakdown.remainingBoardMoves}',
+        description:
+            '남은 보드 이동 ${breakdown.remainingBoardMoves}회 x ${breakdown.perBoardMoveBonus}',
+        gold: breakdown.boardMoveGold,
       ),
       if (breakdown.firstBlindClearBonusGold > 0)
         RummiSettlementEntryView(

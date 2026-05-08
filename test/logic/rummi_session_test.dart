@@ -1238,12 +1238,13 @@ void main() {
     );
   });
 
-  test('캐시아웃은 보드 버림과 손패 버림을 따로 계산해 합산한다', () {
+  test('캐시아웃은 남은 보드 버림, 손패 버림, 보드 이동을 따로 계산해 합산한다', () {
     final session = RummiPokerGridSession(
       blind: RummiBlindState(
         targetScore: 300,
         boardDiscardsRemaining: 3,
         handDiscardsRemaining: 2,
+        boardMovesRemaining: 2,
       ),
     );
     final progress = RummiRunProgress();
@@ -1260,11 +1261,16 @@ void main() {
       2 * RummiRunProgress.remainingHandDiscardGoldBonus,
     );
     expect(
+      breakdown.boardMoveGold,
+      2 * RummiRunProgress.remainingBoardMoveGoldBonus,
+    );
+    expect(
       breakdown.totalGold,
       breakdown.blindReward +
           breakdown.firstBlindClearBonusGold +
           breakdown.boardDiscardGold +
-          breakdown.handDiscardGold,
+          breakdown.handDiscardGold +
+          breakdown.boardMoveGold,
     );
   });
 
@@ -1333,6 +1339,7 @@ void main() {
           breakdown.firstBlindClearBonusGold +
           breakdown.boardDiscardGold +
           breakdown.handDiscardGold +
+          breakdown.boardMoveGold +
           breakdown.economyGold,
     );
   });
@@ -1432,6 +1439,7 @@ void main() {
           breakdown.firstBlindClearBonusGold +
           breakdown.boardDiscardGold +
           breakdown.handDiscardGold +
+          breakdown.boardMoveGold +
           breakdown.itemGold,
     );
   });

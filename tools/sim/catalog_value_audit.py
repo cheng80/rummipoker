@@ -196,6 +196,7 @@ def _item_role(item: dict[str, Any], effect: dict[str, Any]) -> str:
         "add_board_discard",
         "add_hand_discard",
         "add_board_move",
+        "increase_hand_size",
         "increase_hand_size_with_discard_penalty",
     } or tags.intersection({"discard", "move", "hand_size"}):
         return "resource"

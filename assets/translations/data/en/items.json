@@ -157,6 +157,10 @@
         "displayName": "Deck Needle",
         "effectText": "Look at the top 3 deck tiles and discard 1."
       },
+      "battle_pouch": {
+        "displayName": "Battle Pouch",
+        "effectText": "Max hand size +1 for this Battle."
+      },
       "tile_polisher": {
         "displayName": "Tile Polisher",
         "effectText": "The first scored tile in each Station gains +20 Chips."

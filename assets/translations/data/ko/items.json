@@ -157,6 +157,10 @@
         "displayName": "덱 바늘",
         "effectText": "덱 맨 위 타일 3장을 보고 1장을 버립니다."
       },
+      "battle_pouch": {
+        "displayName": "전투 주머니",
+        "effectText": "이번 Battle 동안 최대 손패 크기 +1."
+      },
       "tile_polisher": {
         "displayName": "타일 광택기",
         "effectText": "각 Station에서 처음 점수화된 타일에 칩 +20."

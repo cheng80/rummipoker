@@ -1100,6 +1100,8 @@ int _simCashoutGoldForBattleRow(
       (result['remaining_board_discards'] as num?)?.toInt() ?? 0;
   final remainingHandDiscards =
       (result['remaining_hand_discards'] as num?)?.toInt() ?? 0;
+  final remainingBoardMoves =
+      (result['remaining_board_moves'] as num?)?.toInt() ?? 0;
   final firstBlindClearBonus = station == 1 && tier == BlindTier.small
       ? RummiEconomyConfig.firstBlindClearBonusGold
       : 0;
@@ -1108,7 +1110,8 @@ int _simCashoutGoldForBattleRow(
       firstBlindClearBonus +
       remainingBoardDiscards *
           RummiEconomyConfig.remainingBoardDiscardGoldBonus +
-      remainingHandDiscards * RummiEconomyConfig.remainingHandDiscardGoldBonus;
+      remainingHandDiscards * RummiEconomyConfig.remainingHandDiscardGoldBonus +
+      remainingBoardMoves * RummiEconomyConfig.remainingBoardMoveGoldBonus;
   final simConstraint = battleRow['sim_boss_constraint'];
   final rewardTaxPerConfirmedLine = simConstraint is Map
       ? (simConstraint['reward_tax_gold_per_confirmed_line'] as num?)?.toInt()

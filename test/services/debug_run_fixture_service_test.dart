@@ -88,6 +88,50 @@ void main() {
     },
   );
 
+  test(
+    'hand capacity deck control fixture exposes larger hand and deck needle',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.handCapacityDeckControlBattle,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.battle);
+      expect(fixture.session.maxHandSize, 3);
+      expect(fixture.session.hand.length, 1);
+      expect(fixture.session.canDrawFromDeck, isTrue);
+      expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+        'deck_needle',
+      ]);
+      expect(fixture.runProgress.itemInventory.passiveRelicIds, [
+        'travel_pouch',
+      ]);
+      expect(fixture.session.peekDeckTop(3).map((tile) => tile.number), [
+        1,
+        7,
+        7,
+      ]);
+    },
+  );
+
+  test(
+    'hand capacity increase preview fixture starts before capacity pulse',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.handCapacityIncreasePreviewBattle,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.battle);
+      expect(fixture.session.maxHandSize, 1);
+      expect(fixture.session.hand.length, 1);
+      expect(fixture.session.canDrawFromDeck, isFalse);
+      expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+        'battle_pouch',
+      ]);
+    },
+  );
+
   test('market modifier fixture opens shop with discounted market state', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.marketModifierShop,

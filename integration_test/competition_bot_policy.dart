@@ -121,6 +121,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _bossConfirmScoreFloor = 360;
   static const int _bossConfirmMinOccupancy = kBoardSize * 4;
   static const int _bossHandDiscardMinOccupancy = kBoardSize * 3 + 3;
+  static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
+  static const int _midBoardMoveMaxOccupancy = kBoardSize * 4 - 1;
+  static const int _midBoardMoveMinGain = 20;
+  static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
+  static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
   static const int _highPressureOccupancy = kBoardSize * kBoardSize - 3;
   @override
   String get id => 'competition_planner_v2';
@@ -164,6 +169,22 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
 
+    if (occupancy >= _midBoardMoveMinOccupancy &&
+        occupancy <= _midBoardMoveMaxOccupancy) {
+      final move = chooseBoardMove(session);
+      if (move != null && (move.gain ?? 0) >= _midBoardMoveMinGain) {
+        return move;
+      }
+    }
+
+    if (_shouldDrawForMoreOptions(
+      session,
+      occupancy: occupancy,
+      confirmChoice: confirmChoice,
+    )) {
+      return const CompetitionBattleAction.draw();
+    }
+
     final placement = _bestPlacement(
       session,
       jesters: jesters,
@@ -175,15 +196,17 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return const CompetitionBattleAction.confirm();
     }
 
-    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
-    if (boardIsFull) {
-      final scoringDiscard = _chooseScoringBoardDiscard(
+    if (occupancy >= _boardDiscardReplacementMinOccupancy) {
+      final scoringDiscard = chooseScoringBoardDiscard(
         session,
         jesters: jesters,
         runtimeSnapshot: runtimeSnapshot,
       );
       if (scoringDiscard != null) return scoringDiscard;
+    }
 
+    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
+    if (boardIsFull) {
       final handDiscard = chooseHandDiscard(session);
       if (handDiscard != null) return handDiscard;
 
@@ -193,11 +216,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
 
-    if (zeroDiscardBonusActive && session.blind.boardDiscardsRemaining > 0) {
-      final bonusDiscard = chooseBoardDiscard(
-        session,
-        minOccupancy: kBoardSize * 3,
-      );
+    if (zeroDiscardBonusActive &&
+        session.blind.boardDiscardsRemaining > 0 &&
+        occupancy >= _highPressureOccupancy) {
+      final bonusDiscard = chooseBoardDiscard(session);
       if (bonusDiscard != null) return bonusDiscard;
     }
 
@@ -266,6 +288,24 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
     if (best == null) return null;
     return best.action;
+  }
+
+  bool _shouldDrawForMoreOptions(
+    RummiPokerGridSession session, {
+    required int occupancy,
+    required _ConfirmChoice confirmChoice,
+  }) {
+    if (session.maxHandSize <= 1 || !session.canDrawFromDeck) return false;
+    if (session.hand.length >= session.maxHandSize) return false;
+    if (confirmChoice.shouldConfirmNow) return false;
+    if (occupancy > _strategicDrawMaxOccupancy) return false;
+    return true;
+  }
+
+  int bestPlacementPotentialForTile(RummiPokerGridSession session, Tile tile) {
+    final copy = session.copySnapshot();
+    copy.hand.add(tile);
+    return _bestPlacementPotential(copy, copy.hand.length - 1);
   }
 
   bool _hasZeroDiscardBonusJester(List<RummiJesterCard> jesters) {
@@ -492,7 +532,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     );
   }
 
-  CompetitionBattleAction? _chooseScoringBoardDiscard(
+  CompetitionBattleAction? chooseScoringBoardDiscard(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,

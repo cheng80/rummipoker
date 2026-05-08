@@ -189,6 +189,39 @@ void main() {
       ]);
     });
 
+    test('useBattleItem supports temporary hand capacity increase', () {
+      final item = _item(id: 'battle_pouch', op: 'increase_hand_size');
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      )..maxHandSize = 1;
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'battle_pouch',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['battle_pouch'],
+        );
+
+      final result = ItemEffectRuntime.useBattleItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(session.maxHandSize, 2);
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+      expect(result.events.map((event) => event.kind), [
+        ItemEffectEventKind.maxHandSizeIncreased,
+        ItemEffectEventKind.itemConsumed,
+      ]);
+    });
+
     test('useBattleItem applies board move effect and consumes stack', () {
       final item = _item(id: 'move_token', op: 'add_board_move', amount: 1);
       final session = RummiPokerGridSession(
@@ -1132,6 +1165,7 @@ void main() {
           'use_battle:undo_last_board_move',
           'use_battle:peek_deck_discard_one',
           'use_battle:draw_if_hand_empty',
+          'use_battle:increase_hand_size',
           'market_reroll:free_next_reroll',
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',

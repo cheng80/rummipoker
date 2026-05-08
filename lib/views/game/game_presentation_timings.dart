@@ -46,6 +46,7 @@ class GamePresentationTimings {
   static const Duration bottomInfoPulseHold = Duration(milliseconds: 420);
   static const Duration bottomResourcePulse = Duration(milliseconds: 360);
   static const Duration handCountToggle = Duration(milliseconds: 120);
+  static const Duration handCapacityPulse = Duration(milliseconds: 620);
   static const Duration handTileTransition = Duration(milliseconds: 260);
 
   static const Duration boardTileState = Duration(milliseconds: 120);

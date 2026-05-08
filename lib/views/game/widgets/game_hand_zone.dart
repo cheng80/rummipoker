@@ -33,17 +33,19 @@ class GameHandZone extends StatefulWidget {
 }
 
 class _GameHandZoneState extends State<GameHandZone>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const Duration _handAnimDuration =
       GamePresentationTimings.handTileTransition;
 
   late final AnimationController _controller;
+  late final AnimationController _capacityController;
   List<Tile> _settledHand = <Tile>[];
   List<Tile> _fromHand = <Tile>[];
   List<Tile> _toHand = <Tile>[];
   Tile? _incomingTile;
   Tile? _discardingTile;
   bool _animating = false;
+  int _capacityGain = 0;
 
   @override
   void initState() {
@@ -61,17 +63,35 @@ class _GameHandZoneState extends State<GameHandZone>
           _animating = false;
         });
       });
+    _capacityController =
+        AnimationController(
+          vsync: this,
+          duration: GamePresentationTimings.handCapacityPulse,
+        )..addStatusListener((status) {
+          if (status != AnimationStatus.completed || !mounted) return;
+          setState(() => _capacityGain = 0);
+        });
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _capacityController.dispose();
     super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant GameHandZone oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final oldCapacity = oldWidget.station.resources.maxHandSize;
+    final newCapacity = widget.station.resources.maxHandSize;
+    if (newCapacity > oldCapacity) {
+      setState(() => _capacityGain = newCapacity - oldCapacity);
+      _capacityController
+        ..stop()
+        ..value = 0
+        ..forward();
+    }
     if (_sameTileKeys(oldWidget.hand, widget.hand)) {
       return;
     }
@@ -137,6 +157,11 @@ class _GameHandZoneState extends State<GameHandZone>
   @override
   Widget build(BuildContext context) {
     final displayedHand = _animating ? _fromHand : _settledHand;
+    final resources = widget.station.resources;
+    final drawSlotsRemaining = (resources.maxHandSize - widget.hand.length)
+        .clamp(0, resources.maxHandSize)
+        .toInt();
+    final canDraw = drawSlotsRemaining > 0 && resources.drawPileRemaining > 0;
     return Column(
       children: [
         GameBottomInfoRow(station: widget.station, battle: widget.battle),
@@ -147,93 +172,138 @@ class _GameHandZoneState extends State<GameHandZone>
             children: [
               SizedBox(
                 width: 72,
-                child: GameActionButton(
-                  label: '드로우',
-                  background: const Color(0xFF267B67),
-                  onPressed: widget.onDraw,
+                child: _DrawHandButton(
+                  slotsRemaining: drawSlotsRemaining,
+                  canDraw: canDraw,
+                  pulse: _capacityController,
+                  pulsing: _capacityGain > 0,
+                  onPressed: canDraw ? widget.onDraw : null,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final fromLayouts = _layoutByKey(
-                        _fromHand,
-                        size: constraints.biggest,
-                        tileWidth: widget.tileWidth,
-                      );
-                      final toLayouts = _layoutByKey(
-                        _toHand.isEmpty ? displayedHand : _toHand,
-                        size: constraints.biggest,
-                        tileWidth: widget.tileWidth,
-                      );
-                      return AnimatedBuilder(
-                        animation: _controller,
-                        builder: (context, _) {
-                          final t = _animating ? _controller.value : 1.0;
-                          final sel = widget.selectedHandTile;
-                          final handPaintOrder = <Tile>[
-                            for (final tile in displayedHand)
-                              if ((sel == null || tile != sel) &&
-                                  tile != _discardingTile)
-                                tile,
-                            if (sel != null &&
-                                displayedHand.contains(sel) &&
-                                sel != _discardingTile)
-                              sel,
-                          ];
-                          return Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              for (final tile in handPaintOrder)
-                                _buildSettledTile(
-                                  tile,
-                                  fromLayouts: fromLayouts,
-                                  toLayouts: toLayouts,
-                                  areaSize: constraints.biggest,
-                                  t: t,
+                child: AnimatedBuilder(
+                  animation: _capacityController,
+                  builder: (context, child) {
+                    final pulse = Curves.easeOutCubic.transform(
+                      _capacityController.value,
+                    );
+                    final glow = _capacityController.isAnimating
+                        ? (1 - pulse).clamp(0.0, 1.0)
+                        : 0.0;
+                    return DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Color.lerp(
+                            Colors.white.withValues(alpha: 0.08),
+                            const Color(0xFF7DE0B8),
+                            glow,
+                          )!,
+                          width: 1 + glow,
+                        ),
+                        boxShadow: glow <= 0
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF7DE0B8,
+                                  ).withValues(alpha: 0.22 * glow),
+                                  blurRadius: 18,
+                                  spreadRadius: 1,
                                 ),
-                              if (_discardingTile != null)
-                                _buildDiscardingTile(
-                                  _discardingTile!,
-                                  fromLayouts: fromLayouts,
-                                  areaSize: constraints.biggest,
-                                  t: t,
-                                ),
-                              if (_incomingTile != null)
-                                _buildIncomingTile(
-                                  _incomingTile!,
-                                  toLayouts: toLayouts,
-                                  areaSize: constraints.biggest,
-                                  t: t,
-                                ),
-                              if (displayedHand.isEmpty &&
-                                  _incomingTile == null)
-                                Center(
-                                  child: Text(
-                                    '손패 비어 있음',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.38,
-                                      ),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
+                              ],
+                      ),
+                      child: child,
+                    );
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final fromLayouts = _layoutByKey(
+                            _fromHand,
+                            size: constraints.biggest,
+                            tileWidth: widget.tileWidth,
+                          );
+                          final toLayouts = _layoutByKey(
+                            _toHand.isEmpty ? displayedHand : _toHand,
+                            size: constraints.biggest,
+                            tileWidth: widget.tileWidth,
+                          );
+                          return AnimatedBuilder(
+                            animation: _controller,
+                            builder: (context, _) {
+                              final t = _animating ? _controller.value : 1.0;
+                              final sel = widget.selectedHandTile;
+                              final handPaintOrder = <Tile>[
+                                for (final tile in displayedHand)
+                                  if ((sel == null || tile != sel) &&
+                                      tile != _discardingTile)
+                                    tile,
+                                if (sel != null &&
+                                    displayedHand.contains(sel) &&
+                                    sel != _discardingTile)
+                                  sel,
+                              ];
+                              return Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  for (final tile in handPaintOrder)
+                                    _buildSettledTile(
+                                      tile,
+                                      fromLayouts: fromLayouts,
+                                      toLayouts: toLayouts,
+                                      areaSize: constraints.biggest,
+                                      t: t,
                                     ),
-                                  ),
-                                ),
-                            ],
+                                  if (_discardingTile != null)
+                                    _buildDiscardingTile(
+                                      _discardingTile!,
+                                      fromLayouts: fromLayouts,
+                                      areaSize: constraints.biggest,
+                                      t: t,
+                                    ),
+                                  if (_incomingTile != null)
+                                    _buildIncomingTile(
+                                      _incomingTile!,
+                                      toLayouts: toLayouts,
+                                      areaSize: constraints.biggest,
+                                      t: t,
+                                    ),
+                                  if (displayedHand.isEmpty &&
+                                      _incomingTile == null)
+                                    Center(
+                                      child: Text(
+                                        '손패 비어 있음',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.38,
+                                          ),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           );
                         },
-                      );
-                    },
+                      ),
+                      if (_capacityGain > 0)
+                        Positioned(
+                          key: const ValueKey('hand-capacity-gain-badge'),
+                          left: 10,
+                          top: -8,
+                          child: _HandCapacityGainBadge(
+                            amount: _capacityGain,
+                            animation: _capacityController,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -355,6 +425,143 @@ class _GameHandZoneState extends State<GameHandZone>
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DrawHandButton extends StatelessWidget {
+  const _DrawHandButton({
+    required this.slotsRemaining,
+    required this.canDraw,
+    required this.pulse,
+    required this.pulsing,
+    required this.onPressed,
+  });
+
+  final int slotsRemaining;
+  final bool canDraw;
+  final Animation<double> pulse;
+  final bool pulsing;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: pulse,
+      builder: (context, _) {
+        final pulseValue = Curves.easeOutCubic.transform(pulse.value);
+        final glow = pulsing ? (1 - pulseValue).clamp(0.0, 1.0) : 0.0;
+        final baseColor = canDraw
+            ? Color.lerp(
+                const Color(0xFF267B67),
+                const Color(0xFF35A982),
+                glow,
+              )!
+            : const Color(0xFF3F5750);
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(16),
+            child: Ink(
+              height: 52,
+              decoration: BoxDecoration(
+                color: canDraw ? baseColor : baseColor.withValues(alpha: 0.42),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color.lerp(
+                    Colors.white.withValues(alpha: canDraw ? 0.18 : 0.08),
+                    const Color(0xFF9AF0C9),
+                    glow,
+                  )!,
+                  width: 1.4,
+                ),
+                boxShadow: glow <= 0
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF7DE0B8,
+                          ).withValues(alpha: 0.22 * glow),
+                          blurRadius: 14,
+                        ),
+                      ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 2,
+                children: [
+                  Text(
+                    '드로우',
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white.withValues(
+                        alpha: canDraw ? 1.0 : 0.56,
+                      ),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    slotsRemaining > 0 ? '$slotsRemaining칸 남음' : '가득 참',
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white.withValues(
+                        alpha: canDraw ? 0.86 : 0.46,
+                      ),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HandCapacityGainBadge extends StatelessWidget {
+  const _HandCapacityGainBadge({required this.amount, required this.animation});
+
+  final int amount;
+  final Animation<double> animation;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        final t = Curves.easeOutCubic.transform(animation.value);
+        final opacity = (1 - t).clamp(0.0, 1.0);
+        final dy = lerpDouble(0, -10, t)!;
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, dy),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF193D32),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF9AF0C9)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  '손패 +$amount',
+                  style: const TextStyle(
+                    color: Color(0xFFD8FFE9),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

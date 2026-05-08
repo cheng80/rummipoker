@@ -199,13 +199,14 @@ class _TitleViewState extends ConsumerState<TitleView>
       showTopNotice(context, '디버그 픽스처를 찾지 못했습니다.');
       return;
     }
+    final runtime = fixture.builder();
     final router = GoRouter.of(context);
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await ActiveRunSaveService.clearActiveRun();
     await SoundManager.stopBgm();
     if (!mounted) return;
-    router.go('${RoutePaths.game}?fixture=${fixture.id}');
+    router.go('${RoutePaths.game}?fixture=${fixture.id}', extra: runtime);
   }
 
   @override
@@ -420,40 +421,81 @@ class _DebugFixtureOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Ink(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF102A43),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0xFF7E57C2).withValues(alpha: 0.6),
-            width: 2,
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFF17352C),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: const Color(0xFFE6D4A1).withValues(alpha: 0.32),
+              width: 1.4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.22),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+            child: Row(
+              spacing: 10,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 6,
+                    children: [
+                      Text(
+                        label,
+                        softWrap: true,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        description,
+                        softWrap: true,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.35,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.74),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6D4A1).withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFE6D4A1).withValues(alpha: 0.26),
+                    ),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: Color(0xFFEFE6C8),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.35,
-                color: Colors.white.withValues(alpha: 0.78),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

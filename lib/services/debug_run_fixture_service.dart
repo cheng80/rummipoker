@@ -33,6 +33,10 @@ class DebugRunFixtureService {
   static const String stage2ScoringSnapshot = 'stage2_scoring_snapshot';
   static const String stage2MarketResume = 'stage2_market_resume';
   static const String deckNeedleBattle = 'deck_needle_battle';
+  static const String handCapacityIncreasePreviewBattle =
+      'hand_capacity_increase_preview_battle';
+  static const String handCapacityDeckControlBattle =
+      'hand_capacity_deck_control_battle';
   static const String marketModifierShop = 'market_modifier_shop';
   static const String marketBadgePreview = 'market_badge_preview';
   static const String settlementItemBonus = 'settlement_item_bonus';
@@ -70,6 +74,19 @@ class DebugRunFixtureService {
       label: 'Deck Needle 전투 아이템',
       description: 'Deck Needle 보유 / 덱 상단 3장 확인 dialog 검증용',
       builder: _buildDeckNeedleBattle,
+    ),
+    DebugRunFixtureDefinition(
+      id: handCapacityIncreasePreviewBattle,
+      label: '손패 증가 연출 전투',
+      description: '전투 진입 후 손패 1/1에서 1/3으로 자동 증가 / 드로우 버튼 pulse 검증용',
+      builder: _buildHandCapacityIncreasePreviewBattle,
+    ),
+    DebugRunFixtureDefinition(
+      id: handCapacityDeckControlBattle,
+      label: '손패 증가 + 덱 제어 전투',
+      description:
+          '손패 1/3 + Travel Pouch + Deck Needle / 드로우 잔여 칸과 덱 버림 UI 검증용',
+      builder: _buildHandCapacityDeckControlBattle,
     ),
     DebugRunFixtureDefinition(
       id: marketModifierShop,
@@ -357,6 +374,108 @@ class DebugRunFixtureService {
           ),
         ],
         quickSlotItemIds: ['deck_needle'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildHandCapacityIncreasePreviewBattle() {
+    final base = _buildStage2ScoringSnapshot();
+    final deckTop = [
+      _tile(TileColor.black, 10),
+      _tile(TileColor.blue, 7),
+      _tile(TileColor.red, 7),
+      _tile(TileColor.black, 7),
+      _tile(TileColor.red, 1),
+    ];
+    final session = RummiPokerGridSession.restored(
+      runSeed: base.session.runSeed,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: 1,
+      runRandomState: base.session.runRandom.state,
+      ruleset: base.session.ruleset,
+      blind: base.session.blind.copyWith(),
+      deck: PokerDeck.fromSnapshot(deckTop),
+      board: base.session.board.copy(),
+      hand: [_tile(TileColor.yellow, 7)],
+      eliminated: List<Tile>.from(base.session.eliminated),
+      boardMoveHistory: List<BoardMoveRecord>.from(
+        base.session.boardMoveHistory,
+      ),
+    );
+    final runProgress = base.runProgress.copySnapshot()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'battle_pouch',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['battle_pouch'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildHandCapacityDeckControlBattle() {
+    final base = _buildStage2ScoringSnapshot();
+    final deckTop = [
+      _tile(TileColor.black, 10),
+      _tile(TileColor.yellow, 3),
+      _tile(TileColor.blue, 7),
+      _tile(TileColor.red, 7),
+      _tile(TileColor.black, 7),
+      _tile(TileColor.red, 1),
+    ];
+    final hand = [_tile(TileColor.yellow, 7)];
+    final session = RummiPokerGridSession.restored(
+      runSeed: base.session.runSeed,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: 3,
+      runRandomState: base.session.runRandom.state,
+      ruleset: base.session.ruleset,
+      blind: base.session.blind.copyWith(),
+      deck: PokerDeck.fromSnapshot(deckTop),
+      board: base.session.board.copy(),
+      hand: hand,
+      eliminated: List<Tile>.from(base.session.eliminated),
+      boardMoveHistory: List<BoardMoveRecord>.from(
+        base.session.boardMoveHistory,
+      ),
+    );
+    final runProgress = base.runProgress.copySnapshot()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'deck_needle',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'travel_pouch',
+            count: 1,
+            placement: ItemPlacement.passiveRack,
+          ),
+        ],
+        quickSlotItemIds: ['deck_needle'],
+        passiveRelicIds: ['travel_pouch'],
       );
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,

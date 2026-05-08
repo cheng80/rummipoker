@@ -15,6 +15,9 @@ void main() {
         remainingHandDiscards: 1,
         perHandDiscardBonus: 2,
         handDiscardGold: 2,
+        remainingBoardMoves: 3,
+        perBoardMoveBonus: 1,
+        boardMoveGold: 3,
         economyGold: 4,
         economyBonuses: [
           RummiRoundEndEconomyBonus(
@@ -31,7 +34,7 @@ void main() {
             gold: 3,
           ),
         ],
-        totalGold: 25,
+        totalGold: 28,
       );
 
       final facade = RummiSettlementRuntimeFacade.fromCashOut(
@@ -42,15 +45,21 @@ void main() {
       expect(facade.stageIndex, 3);
       expect(facade.targetScore, 300);
       expect(facade.currentGold, 34);
-      expect(facade.totalGold, 25);
-      expect(facade.entries, hasLength(5));
+      expect(facade.totalGold, 28);
+      expect(facade.entries, hasLength(6));
 
       expect(facade.entries.first.kind, RummiSettlementEntryKind.stationReward);
       expect(facade.entries.first.leadingLabel, 'Station 3');
       expect(facade.entries.first.description, 'Station Goal 300 달성 보상');
       expect(facade.entries.first.gold, 10);
 
-      final economy = facade.entries[3];
+      final boardMove = facade.entries[3];
+      expect(boardMove.kind, RummiSettlementEntryKind.boardMoveReward);
+      expect(boardMove.leadingLabel, '3');
+      expect(boardMove.description, '남은 보드 이동 3회 x 1');
+      expect(boardMove.gold, 3);
+
+      final economy = facade.entries[4];
       expect(economy.kind, RummiSettlementEntryKind.economyBonus);
       expect(economy.leadingLabel, 'J');
       expect(economy.jesterId, 'green_jester');
