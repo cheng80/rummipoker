@@ -20,12 +20,15 @@
 - full-play 기준은 사람 수동 플레이가 아니라 제작된 bot이 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표 조작을 결합해 S1~S8을 클리어하는 것이다.
 - 이 hybrid full-play bot의 대화 호출 별명은 `공모전 풀런봇`이고, 영문 식별자는 `contest_full_run_bot`이다.
 - Codex 앱 내장 Browser Use는 제출 gate가 아니라 bot 실패 구간 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
+- 2026-05-08 기준 `contest_full_run_bot`은 체크포인트/재시도 기반으로 S1~S8 boss 클리어 가능한 상태까지 구현됐다.
+- 최신 pass 증거는 commit `9262e6d`와 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`에 남아 있다.
+- 이 pass는 bot 전용 정책 보정이며, runtime 난이도나 production 밸런스 변경 증거가 아니다.
 
 오늘 바로 할 작업:
 
 1. 최신 변경 후 제출 후보 web build를 다시 만든다.
 2. 새 web-server 또는 최신 build 기준으로 console error/warn 0건을 확인한다.
-3. Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1부터 S8까지 실제 UI full-play를 수행한다.
+3. Browser/WebDriver + Compute Use hybrid bot을 최신 제출 후보 build 기준으로 다시 실행해 단일 fresh full-run 회귀 또는 최신 checkpoint-resume pass를 확인한다.
 4. 게임오버 보상, 도감 카드 face, 새 run 화면이 다시 시작 욕구와 수집 욕구로 읽히는지 눈검증한다.
 5. 제출 영상 촬영 기준으로 전투/마켓/정산/도감/새 run 화면이 한 게임처럼 이어지는지 확인한다.
 
@@ -41,7 +44,7 @@
 
 아직 열려 있는 위험:
 
-- Browser/WebDriver + Compute Use hybrid full-play bot의 S1~S8 실제 UI clear 증거는 아직 없다.
+- full-play bot의 checkpoint-resume clear 증거는 확보했지만, 최신 제출 후보 build 기준 console 0건과 단일 fresh full-run 회귀는 아직 제출 직전 재확인이 필요하다.
 - 도감은 수집/발견/구매/보상/보스/스테이지 이력을 저장하지만, 항목별 미발견/발견/획득/클리어 상태 상세 UI는 남아 있다.
 - `power none`과 `balanced v9` seed 편차는 장기 밸런스 risk로 유지한다.
 - 기억 카드 보상은 현재 기억 카드류 이력에 한정하며, 실제 보상 아이템/Jester 지급은 아직 없다.
@@ -63,8 +66,8 @@ Status: In progress
 
 - [ ] 최신 변경 후 제출 후보 web build를 다시 만든다.
 - [ ] 최신 빌드 또는 새 web-server에서 console error/warn 0건을 다시 확인한다.
-- [ ] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 실제 UI clear를 확인한다.
-- [ ] full-play bot이 마켓 구매와 아이템 실제 사용을 수행하고 로그에 남긴다.
+- [x] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 실제 UI clear 가능한 경로를 확인한다.
+- [x] full-play bot이 마켓 구매와 아이템 실제 사용을 수행하고 로그에 남긴다.
 - [ ] 게임오버 화면이 패배 후 다시 시작하고 싶게 만드는지 확인한다.
 - [ ] 도감의 Jester/Item 카드가 마켓/보유 슬롯의 실물 카드 face와 같은 인상인지 확인한다.
 - [ ] 첫 10분 플레이에서 “목표 이해 -> 선택 -> 결과 -> 보상 -> 다시 시작” 흐름이 심사자에게 설명 없이 읽히는지 확인한다.
@@ -74,6 +77,7 @@ Status: In progress
 
 - `Submission Smoke`의 `flutter build web` 통과는 최신 도감/게임오버 변경 전 증거일 수 있으므로 다시 실행한다.
 - Browser Use full route QA는 debug fixture/즉시 클리어 보조가 섞였으므로 full-play bot 증거가 아니다.
+- `contest_full_run_bot` 최신 증거는 checkpoint-resume pass이며, 제출 직전에는 최신 build 기준으로 단일 fresh full-run 또는 동일 checkpoint-resume pass를 다시 남긴다.
 - 게임오버 보상 루프는 저장/이동은 구현됐지만, 재도전 욕구와 보상감은 아직 눈검증이 필요하다.
 - 도감은 수집 저장과 실물 카드 face 1차 표시가 됐지만, 항목별 상태와 화면 밀도는 아직 재점검 대상이다.
 
@@ -216,8 +220,8 @@ Status: Reopened for latest candidate
 - [x] `flutter analyze` 통과.
 - [x] 핵심 `flutter test` 통과.
 - [ ] 최신 변경 후 `flutter build web` 통과.
-- [ ] Browser/WebDriver + Compute Use hybrid bot으로 S1~S8 실제 UI clear를 최신 빌드 기준으로 검증한다.
-- [ ] full-play bot 로그에 마켓 구매와 아이템 실제 사용 증거를 남긴다.
+- [x] Browser/WebDriver + Compute Use hybrid bot으로 S1~S8 실제 UI clear 가능한 checkpoint-resume 경로를 검증한다.
+- [x] full-play bot 로그에 마켓 구매와 아이템 실제 사용 증거를 남긴다.
 - [ ] 제출 후보 빌드에서 콘솔 에러나 화면 깨짐이 없는지 확인한다.
 - [ ] 최종 빌드 산출물과 실행 경로를 정리한다.
 
@@ -234,6 +238,9 @@ Status: Reopened for latest candidate
 - `127.0.0.1:7361` Browser Use full route QA 후 `tab.dev.logs` 기준 error/warn 0건을 확인했다.
 - 이후 도감/게임오버/수집 저장 변경이 들어갔으므로 제출 후보 build와 browser QA는 다시 열었다.
 - 2026-05-08 기준 공모전 full-play QA는 사람 수동 플레이가 아니라 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid bot 기준으로 닫는다.
+- 2026-05-08 `contest_full_run_bot`은 checkpoint/resume 기반으로 S8 boss까지 클리어했고, 최종 pass 로그는 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`다.
+- 최종 pass 로그에는 `S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus`, `game over -> retry 1/24`, `All tests passed.`가 포함된다.
+- 관련 커밋은 `9262e6d Stabilize contest full run bot strategy`이며, bot 전용 정책 보정이다. runtime 밸런스 변경으로 해석하지 않는다.
 
 ## 9. 심미성/재미도 재점검
 

@@ -15,6 +15,22 @@
 공모전 full-play QA는 사람 수동 플레이가 아니라 제작된 bot 기준으로 닫는다.
 bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표·시각 조작을 함께 사용해 실제 Flutter Web 화면을 플레이한다.
 
+2026-05-08 현재 `contest_full_run_bot`은 체크포인트/재시도 기반으로 S1부터 S8 boss까지 이어서 클리어 가능한 상태다.
+최종 확인은 S8 boss 직전 체크포인트에서 이어서 실행해 `All tests passed`까지 확인했다.
+이 상태는 런타임 난이도나 production 밸런스를 바꾼 것이 아니라, 공모전 QA bot 전용 의사결정/증거 동기화 보정이다.
+
+확인된 최종 증거:
+
+- commit: `9262e6d Stabilize contest full run bot strategy`
+- 최종 pass 로그: `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`
+- 핵심 로그:
+  - `S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus`
+  - `game over -> retry 1/24`
+  - `All tests passed.`
+- 보조 검증:
+  - `flutter analyze integration_test/competition_bot_policy.dart integration_test/competition_full_play_bot_test.dart test/competition_bot_policy_test.dart`
+  - `flutter test test/competition_bot_policy_test.dart test/views/game/widgets/game_shop_screen_save_flush_test.dart`
+
 앞으로 대화에서 `공모전 풀런봇 실행`, `공모전 풀런봇 준비`, `공모전 풀런봇 이어서`라고 말하면 이 문서의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다.
 스크립트, 로그 prefix, 파일명에는 영문 식별자 `contest_full_run_bot`을 사용한다.
 
@@ -30,6 +46,16 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 - `tools/sim/planner_bot.dart`의 `planner_v2` 전투 판단은 재사용한다.
 - 기존 시뮬레이션 bot만으로 통과 처리하지 않는다. 실제 UI 조작 증거가 필요하다.
 - debug fixture, 즉시 클리어, forced reward 같은 보조 경로는 full-play 증거로 쓰지 않는다.
+
+현재 구현상 주의:
+
+- full-run은 `tools/contest_full_run_bot.sh`로 실행한다.
+- 실패 시 game over에서 재시도하며, 저장된 active run checkpoint부터 이어서 실행할 수 있다.
+- 체크포인트 재개 시 Jester/Item 구매 이력, 손패/보드 버림, 보드 이동 같은 evidence도 저장 상태에서 복원한다.
+- S8 boss는 봇이 사람처럼 고득점 설계를 하기 어렵기 때문에, bot 정책에서만 작은 확정을 억제하고 보드를 더 채우도록 보정한다.
+- 마켓에서는 Jester 슬롯/골드가 허용하는 한 구매를 시도하고, 슬롯이 꽉 찬 경우 더 좋은 후보가 있으면 약한 Jester 판매 후 교체한다.
+- Q-Slot이 비어 있으면 과거 구매 이력이 있더라도 새 Item을 구매해 실제 사용 evidence를 확보한다.
+- 단일 fresh process로 S1부터 S8까지 끊김 없이 다시 도는 최종 회귀는 제출 직전 한 번 더 돌리는 것을 권장한다.
 
 ## 0.1 실행 방식 판단
 
@@ -93,6 +119,13 @@ contest_sub_run_bot target
 - Browser/WebDriver console log 기준 새 error/warn 0건을 확인한다.
 - 실행 로그에는 stage, blind tier, 구매 내역, 아이템 사용, stop reason, console 결과를 남긴다.
 
+현재 판정:
+
+- Bot 구현/정책: 완료.
+- S1~S8 클리어 가능성: 체크포인트/재시도 경로로 확인 완료.
+- S8 boss 최종 pass: 확인 완료.
+- 남은 제출 QA: 최신 제출 후보 build 기준 console error/warn 0건, 보상/도감/새 run 눈검증, 단일 fresh full-run 회귀.
+
 ## 2. 구조
 
 ```text
@@ -154,6 +187,14 @@ Browser/WebDriver에서 직접 읽은 runtime 상태를 `planner_v2` 입력으�
 - 슬롯이 부족하면 판매가 가능한 항목을 팔지, 구매를 포기할지 Compute 판단으로 결정하고 로그에 남긴다.
 - 리롤은 무료/할인 조건이 화면에 보일 때 우선 사용하되, S1~S8 클리어 안정성을 해치지 않는 선에서만 사용한다.
 
+2026-05-08 bot 정책:
+
+- Jester offer는 rarity/effect/id 기반 bot score로 정렬해 구매한다.
+- `the_family`, `clever_jester`, `half_jester`, `mystic_summit`처럼 S8 통과에 기여한 Jester는 낮은 상태값 성장 카드보다 높게 평가한다.
+- 슬롯이 꽉 찬 경우 `offerScore > weakestScore + 40`이고 판매 후 구매 가능한 경우에만 교체한다.
+- `ride_the_bus`, `green_jester`처럼 stateful 성장값이 0인 후보는 후반에 낮게 평가해 기존 핵심 Jester를 쉽게 팔지 않는다.
+- Item은 Q-Slot이 비어 있으면 구매 이력과 무관하게 새로 구매한다.
+
 ## 4. Scene 상태 기계
 
 ```text
@@ -212,6 +253,29 @@ Full-play bot run
 - console: error 0, warn 0
 - screenshots/video: <paths-if-any>
 - notes: <known-risk-or-observation>
+```
+
+최신 확인 로그:
+
+```text
+Full-play bot checkpoint-resume verification
+- date: 2026-05-08
+- commit: 9262e6d Stabilize contest full run bot strategy
+- runner: flutter drive integration_test/competition_full_play_bot_test.dart on Chrome
+- result: pass
+- final log: /tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log
+- reached stage: S8 boss run complete
+- market/item evidence:
+  - S8 market: bought Item
+  - S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus
+- retry evidence:
+  - game over -> retry 1/24
+- final line:
+  - All tests passed.
+- notes:
+  - checkpoint/resume evidence sync is part of the bot contract.
+  - S8 boss uses bot-only confirmation delay to reduce deck exhaustion.
+  - runtime balance was not changed by this bot stabilization.
 ```
 
 ## 6. 제작 범위와 보류
