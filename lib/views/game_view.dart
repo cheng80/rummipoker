@@ -322,13 +322,17 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _pausePresentation() {
     if (_presentationPaused) return;
-    _presentationPaused = true;
+    setState(() {
+      _presentationPaused = true;
+    });
     _presentationResumeCompleter ??= Completer<void>();
   }
 
   void _resumePresentation() {
     if (!_presentationPaused) return;
-    _presentationPaused = false;
+    setState(() {
+      _presentationPaused = false;
+    });
     final completer = _presentationResumeCompleter;
     _presentationResumeCompleter = null;
     if (completer != null && !completer.isCompleted) {
@@ -1710,6 +1714,7 @@ class _GameViewState extends ConsumerState<GameView>
             station: _stationView,
             market: _marketView,
             stageFlowPhase: _stageFlowPhase,
+            presentationPaused: _presentationPaused,
             stageScoreAdded: _stageScoreAdded,
             activeSettlementLine: _activeSettlementLine,
             activeSettlementStep: _activeSettlementStep,
@@ -1754,6 +1759,8 @@ class _GameViewState extends ConsumerState<GameView>
             ),
           if (_nextStationTransitionVisible)
             const Positioned.fill(child: _NextStationTransitionOverlay()),
+          if (_presentationPaused)
+            const Positioned.fill(child: _GamePresentationPauseVeil()),
         ],
       ),
     );
@@ -1851,6 +1858,36 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GamePresentationPauseVeil extends StatelessWidget {
+  const _GamePresentationPauseVeil();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Color(0xCC06110F),
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Color(0xFF153C31),
+            borderRadius: BorderRadius.all(Radius.circular(18)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+            child: Text(
+              '일시정지',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
@@ -2204,6 +2241,7 @@ class _GameSurface extends StatelessWidget {
     required this.station,
     required this.market,
     required this.stageFlowPhase,
+    required this.presentationPaused,
     required this.stageScoreAdded,
     required this.activeSettlementLine,
     required this.activeSettlementStep,
@@ -2245,6 +2283,7 @@ class _GameSurface extends StatelessWidget {
   final RummiStationRuntimeFacade station;
   final RummiMarketRuntimeFacade market;
   final GameStageFlowPhase stageFlowPhase;
+  final bool presentationPaused;
   final int stageScoreAdded;
   final ConfirmedLineBreakdown? activeSettlementLine;
   final ScoringPresentationStep activeSettlementStep;
@@ -2348,7 +2387,8 @@ class _GameSurface extends StatelessWidget {
                 ),
               ),
             ),
-            if (stageFlowPhase == GameStageFlowPhase.confirmSettlement)
+            if (!presentationPaused &&
+                stageFlowPhase == GameStageFlowPhase.confirmSettlement)
               if (activeSettlementStep == ScoringPresentationStep.finalScore)
                 Positioned.fill(
                   child: GameFloatingSettlementBurst(
@@ -2360,8 +2400,9 @@ class _GameSurface extends StatelessWidget {
                     effectIndex: activeSettlementEffectIndex,
                   ),
                 ),
-            if (stageFlowPhase == GameStageFlowPhase.cleared ||
-                stageFlowPhase == GameStageFlowPhase.settlement)
+            if (!presentationPaused &&
+                (stageFlowPhase == GameStageFlowPhase.cleared ||
+                    stageFlowPhase == GameStageFlowPhase.settlement))
               Positioned.fill(
                 child: GameStageClearOverlay(
                   phase: stageFlowPhase,
