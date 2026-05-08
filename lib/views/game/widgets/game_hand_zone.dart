@@ -461,6 +461,7 @@ class _DrawHandButton extends StatelessWidget {
         return Material(
           color: Colors.transparent,
           child: InkWell(
+            key: const ValueKey('draw-hand-button'),
             onTap: onPressed,
             borderRadius: BorderRadius.circular(16),
             child: Ink(

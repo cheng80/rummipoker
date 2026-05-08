@@ -1306,13 +1306,21 @@ class _CompetitionFullPlayBot {
       if (predicate(_readGameState())) return;
       if (await _retryGameOverIfVisible()) return;
 
-      final actionFinder = _buttonOrTextFinder(actionText);
+      final actionFinder = _primaryActionFinder(actionText);
       if (actionFinder.evaluate().isNotEmpty) {
-        await tester.tap(actionFinder.first, warnIfMissed: false);
+        await tester.tap(actionFinder.last, warnIfMissed: false);
         await _pumpFor(const Duration(milliseconds: 700));
       }
     }
     fail('Timed out waiting for game state update after tapping "$actionText"');
+  }
+
+  Finder _primaryActionFinder(String text) {
+    if (text == '드로우') {
+      final drawButton = find.byKey(const ValueKey('draw-hand-button'));
+      if (drawButton.evaluate().isNotEmpty) return drawButton;
+    }
+    return _buttonOrTextFinder(text);
   }
 
   Finder _buttonOrTextFinder(String text) {
