@@ -51,6 +51,7 @@ class _ContestBotConfig {
   const _ContestBotConfig({
     required this.mode,
     required this.seed,
+    required this.difficultyName,
     required this.maxBattleActions,
     required this.maxGameOverRetries,
     required this.resumeActiveRun,
@@ -70,6 +71,10 @@ class _ContestBotConfig {
     return _ContestBotConfig(
       mode: modeValue == 'sub' ? _ContestBotMode.sub : _ContestBotMode.full,
       seed: const int.fromEnvironment('CONTEST_BOT_SEED', defaultValue: 91460),
+      difficultyName: const String.fromEnvironment(
+        'CONTEST_BOT_DIFFICULTY',
+        defaultValue: 'standard',
+      ),
       maxBattleActions: const int.fromEnvironment(
         'CONTEST_BOT_MAX_BATTLE_ACTIONS',
         defaultValue: 420,
@@ -112,6 +117,7 @@ class _ContestBotConfig {
 
   final _ContestBotMode mode;
   final int seed;
+  final String difficultyName;
   final int maxBattleActions;
   final int maxGameOverRetries;
   final bool resumeActiveRun;
@@ -135,6 +141,10 @@ class _ContestBotConfig {
       isFullRun || requiredEvidence == 'item_purchase';
 
   bool get needsItemUse => isFullRun || requiredEvidence == 'item_use';
+
+  NewRunDifficulty get difficulty => NewRunSetup.resolveSelectableDifficulty(
+    NewRunSetup.parseDifficulty(difficultyName),
+  );
 
   BlindTier get targetTier => switch (targetTierName) {
     'small' => BlindTier.small,
@@ -317,11 +327,11 @@ class _CompetitionFullPlayBot {
 
     appRouter.go(
       '${RoutePaths.blindSelect}?seed=${config.seed}'
-      '&difficulty=standard&modifier=basic',
+      '&difficulty=${config.difficulty.name}&modifier=basic',
     );
     await _pumpUntilVisible(find.text('Station Select'));
     log.add(
-      'seed=${config.seed} difficulty=standard modifier=basic '
+      'seed=${config.seed} difficulty=${config.difficulty.name} modifier=basic '
       'mode=${config.mode.name}',
     );
   }
@@ -357,11 +367,6 @@ class _CompetitionFullPlayBot {
         continue;
       }
 
-      if (await _tryUseBattleItem()) {
-        await _pumpFor(config.actionDelay + const Duration(seconds: 2));
-        continue;
-      }
-
       final state = _tryReadGameState();
       if (state == null) {
         if (find.text('Station Select').evaluate().isNotEmpty) {
@@ -387,6 +392,11 @@ class _CompetitionFullPlayBot {
         jesters: runProgress.ownedJesters,
         runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
       );
+
+      if (await _tryUseBattleItem(plannedAction: action)) {
+        await _pumpFor(config.actionDelay + const Duration(seconds: 2));
+        continue;
+      }
 
       _record(
         'S${runProgress.stageIndex} ${tier.name} action=$action '
@@ -880,14 +890,16 @@ class _CompetitionFullPlayBot {
     await _pumpFor(const Duration(seconds: 2));
   }
 
-  Future<bool> _tryUseBattleItem() async {
+  Future<bool> _tryUseBattleItem({
+    required CompetitionBattleAction plannedAction,
+  }) async {
     if (!config.needsItemUse && !config.isFullRun) return false;
     if (usedItem && !config.isFullRun) return false;
     final state = _tryReadGameState();
     if (state == null) return false;
     final inventory = state.runProgress!.itemInventory;
     if (inventory.quickSlotItemIds.isEmpty) return false;
-    final choice = _chooseBattleItemToUse(state);
+    final choice = _chooseBattleItemToUse(state, plannedAction: plannedAction);
     if (choice == null) return false;
 
     await _tapTextIfVisible('Slots');
@@ -939,7 +951,10 @@ class _CompetitionFullPlayBot {
     await _pumpFor(const Duration(milliseconds: 600));
   }
 
-  _BattleItemChoice? _chooseBattleItemToUse(GameSessionState state) {
+  _BattleItemChoice? _chooseBattleItemToUse(
+    GameSessionState state, {
+    required CompetitionBattleAction plannedAction,
+  }) {
     final catalog = itemCatalog;
     final session = state.session;
     final runProgress = state.runProgress;
@@ -948,7 +963,13 @@ class _CompetitionFullPlayBot {
     for (var index = 0; index < inventory.quickSlotItemIds.length; index++) {
       final itemId = inventory.quickSlotItemIds[index];
       final item = catalog.findById(itemId);
-      if (item == null || !_canUseBattleItemNow(item, session, runProgress)) {
+      if (item == null ||
+          !_canUseBattleItemNow(
+            item,
+            session,
+            runProgress,
+            plannedAction: plannedAction,
+          )) {
         continue;
       }
       return _BattleItemChoice(slotIndex: index, item: item);
@@ -959,8 +980,9 @@ class _CompetitionFullPlayBot {
   bool _canUseBattleItemNow(
     ItemDefinition item,
     RummiPokerGridSession session,
-    RummiRunProgress runProgress,
-  ) {
+    RummiRunProgress runProgress, {
+    required CompetitionBattleAction plannedAction,
+  }) {
     if (item.placement != ItemPlacement.quickSlot || !item.usableInBattle) {
       return false;
     }
@@ -968,10 +990,16 @@ class _CompetitionFullPlayBot {
       (entry) => entry.itemId == item.id && entry.count > 0,
     );
     if (!hasItem) return false;
+    if (!contestBattleItemOpSupportsPlannedAction(
+      item.effect.op,
+      plannedAction.type,
+    )) {
+      return false;
+    }
 
     return switch (item.effect.op) {
-      'add_board_move' || 'mark_next_board_move_bonus' =>
-        battlePolicy.chooseBoardMove(session) != null,
+      'add_board_move' => false,
+      'mark_next_board_move_bonus' => true,
       'add_board_discard' =>
         battlePolicy.chooseScoringBoardDiscard(
               session,

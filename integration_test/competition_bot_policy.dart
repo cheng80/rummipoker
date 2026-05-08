@@ -26,6 +26,30 @@ enum CompetitionBattleActionType {
   stop,
 }
 
+bool contestBattleItemOpSupportsPlannedAction(
+  String op,
+  CompetitionBattleActionType plannedActionType,
+) {
+  return switch (op) {
+    'add_board_move' => false,
+    'mark_next_board_move_bonus' =>
+      plannedActionType == CompetitionBattleActionType.moveBoard,
+    'add_board_discard' =>
+      plannedActionType == CompetitionBattleActionType.discardBoard,
+    'add_hand_discard' =>
+      plannedActionType == CompetitionBattleActionType.discardHand,
+    'chips_bonus' ||
+    'mult_bonus' ||
+    'xmult_bonus' ||
+    'temporary_overlap_cap_bonus' ||
+    'add_percent_of_first_confirm_score' =>
+      plannedActionType == CompetitionBattleActionType.confirm,
+    'draw_if_hand_empty' || 'increase_hand_size' || 'peek_deck_discard_one' =>
+      plannedActionType == CompetitionBattleActionType.draw,
+    _ => false,
+  };
+}
+
 class CompetitionBattleAction {
   const CompetitionBattleAction._({
     required this.type,

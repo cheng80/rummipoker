@@ -10,6 +10,29 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart'
 import '../integration_test/competition_bot_policy.dart';
 
 void main() {
+  test('battle item use must support the planned battle action', () {
+    for (final actionType in CompetitionBattleActionType.values) {
+      expect(
+        contestBattleItemOpSupportsPlannedAction('add_board_move', actionType),
+        isFalse,
+      );
+    }
+    expect(
+      contestBattleItemOpSupportsPlannedAction(
+        'mark_next_board_move_bonus',
+        CompetitionBattleActionType.moveBoard,
+      ),
+      isTrue,
+    );
+    expect(
+      contestBattleItemOpSupportsPlannedAction(
+        'mark_next_board_move_bonus',
+        CompetitionBattleActionType.draw,
+      ),
+      isFalse,
+    );
+  });
+
   test('boss battle waits instead of taking a small early confirm', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
