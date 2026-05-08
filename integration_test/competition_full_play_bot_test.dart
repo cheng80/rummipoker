@@ -20,6 +20,7 @@ import 'package:rummipoker/services/blind_selection_spec.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/views/game_view.dart';
+import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
 import 'competition_bot_policy.dart';
@@ -675,11 +676,31 @@ class _CompetitionFullPlayBot {
   }
 
   Future<bool> _sellSelectedJesterIfVisible(int stage) async {
+    if (find.text('판매').evaluate().isEmpty) {
+      await _selectOwnedJesterForSale();
+    }
     if (find.text('판매').evaluate().isEmpty) return false;
     await _tapText('판매');
     _record('S$stage market: sold Jester for slot');
     await _pumpFor(const Duration(seconds: 2));
     return true;
+  }
+
+  Future<void> _selectOwnedJesterForSale() async {
+    final ownedEntries = _readGameState().marketView?.ownedEntries;
+    if (ownedEntries == null || ownedEntries.isEmpty) return;
+    for (final entry in ownedEntries) {
+      final slotFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is GameJesterSlot &&
+            !widget.locked &&
+            widget.card?.id == entry.card.id,
+      );
+      if (slotFinder.evaluate().isEmpty) continue;
+      await tester.tap(slotFinder.first, warnIfMissed: false);
+      await _pumpFor(const Duration(milliseconds: 500));
+      if (find.text('판매').evaluate().isNotEmpty) return;
+    }
   }
 
   Future<bool> _selectJesterOfferByPrice(int price) async {
