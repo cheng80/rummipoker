@@ -1144,6 +1144,7 @@ class _CompetitionFullPlayBot {
     final session = state.session;
     final runProgress = state.runProgress;
     final stageStartSnapshot = state.stageStartSnapshot;
+    final gameView = _tryReadGameView();
     if (session == null || runProgress == null || stageStartSnapshot == null) {
       return;
     }
@@ -1154,7 +1155,7 @@ class _CompetitionFullPlayBot {
         : ActiveRunScene.battle;
     final runtime = ActiveRunRuntimeState(
       activeScene: scene,
-      difficulty: NewRunDifficulty.standard,
+      difficulty: gameView?.difficulty ?? config.difficulty,
       runModifier: state.runModifier,
       session: session,
       runProgress: runProgress,
@@ -1208,9 +1209,9 @@ class _CompetitionFullPlayBot {
   }
 
   GameSessionState? _tryReadGameState() {
+    final gameView = _tryReadGameView();
+    if (gameView == null) return null;
     final gameViewFinder = find.byType(GameView, skipOffstage: false);
-    if (gameViewFinder.evaluate().isEmpty) return null;
-    final gameView = tester.widget<GameView>(gameViewFinder.first);
     final element = tester.element(gameViewFinder.first);
     final container = ProviderScope.containerOf(element);
     final args = GameSessionArgs(
@@ -1222,6 +1223,12 @@ class _CompetitionFullPlayBot {
       blindTier: gameView.blindTier,
     );
     return container.read(gameSessionNotifierProvider(args));
+  }
+
+  GameView? _tryReadGameView() {
+    final gameViewFinder = find.byType(GameView, skipOffstage: false);
+    if (gameViewFinder.evaluate().isEmpty) return null;
+    return tester.widget<GameView>(gameViewFinder.first);
   }
 
   Future<void> _tapHandTile(String tileKey) async {

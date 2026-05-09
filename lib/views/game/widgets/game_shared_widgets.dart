@@ -101,6 +101,7 @@ class GameTopHud extends StatelessWidget {
     required this.station,
     required this.battle,
     required this.onOptionsTap,
+    this.difficultyLabel = '표준',
     this.onBlindInfoTap,
     this.stationGoalDisplayScore,
     this.stationGoalPulse = false,
@@ -109,6 +110,7 @@ class GameTopHud extends StatelessWidget {
 
   final RummiStationRuntimeFacade station;
   final RummiBattleRuntimeFacade battle;
+  final String difficultyLabel;
   final VoidCallback onOptionsTap;
   final VoidCallback? onBlindInfoTap;
   final int? stationGoalDisplayScore;
@@ -146,7 +148,7 @@ class GameTopHud extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'STATION ${battle.stageIndex}',
+                      'S${battle.stageIndex} · $difficultyLabel',
                       style: gameHudLabelStyle,
                       maxLines: 1,
                       textAlign: TextAlign.center,
@@ -2661,6 +2663,7 @@ Future<T?> showGameFramedDialog<T>({
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: kGameModalBarrierColor,
     builder: (dialogContext) {
       return Dialog(

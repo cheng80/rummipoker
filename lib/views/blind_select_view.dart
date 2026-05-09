@@ -84,10 +84,13 @@ class _BlindSelectViewState extends State<BlindSelectView> {
       widget.restoredRun?.runProgress.currentStationBlindTierIndex ?? -1;
 
   String get _stationSubtitle {
+    final difficultyLabel = NewRunSetup(
+      difficulty: _effectiveDifficulty,
+    ).difficultyLabel;
     if (widget.restoredRun == null) {
-      return '난이도 ${NewRunSetup(difficulty: _effectiveDifficulty).difficultyLabel}';
+      return '난이도 $difficultyLabel';
     }
-    return '다음 전투를 선택하세요.';
+    return '난이도 $difficultyLabel · 다음 전투를 선택하세요.';
   }
 
   Future<void> _startBlind(BlindSelectionSpec selected) async {

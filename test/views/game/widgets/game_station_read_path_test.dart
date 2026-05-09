@@ -47,13 +47,14 @@ void main() {
           body: GameTopHud(
             station: station,
             battle: battle,
+            difficultyLabel: '도전',
             onOptionsTap: () {},
           ),
         ),
       ),
     );
 
-    expect(find.text('STATION 4'), findsOneWidget);
+    expect(find.text('S4 · 도전'), findsOneWidget);
     expect(find.text('CLASH'), findsOneWidget);
     expect(find.text('360/900'), findsOneWidget);
     expect(find.text('27'), findsOneWidget);

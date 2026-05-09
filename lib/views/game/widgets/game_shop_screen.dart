@@ -1281,6 +1281,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                 const {},
           );
           if (!mounted) return;
+          SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          return;
       }
     }
   }

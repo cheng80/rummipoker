@@ -67,5 +67,10 @@ void main() {
     expect(find.text('완성 2회'), findsOneWidget);
     expect(find.text('70'), findsWidgets);
     expect(find.text('다음 80'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('취소'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('런 정보'), findsNothing);
   });
 }

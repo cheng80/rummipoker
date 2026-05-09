@@ -1564,19 +1564,22 @@ class _GameViewState extends ConsumerState<GameView>
             return;
           }
         case GameOptionsCloseAction.openRunInfo:
-          await showGameRunInfoDialog(
-            context: context,
-            playedHandCounts:
-                _gameState.activeRunSaveView?.currentPlayedHandCounts ??
-                const {},
-          );
-          if (!mounted ||
-              (!allowDuringStageFlow &&
-                  _stageFlowPhase != GameStageFlowPhase.none)) {
-            return;
-          }
+          await _openRunInfo();
+          if (!mounted) return;
+          _resumePresentation();
+          SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          return;
       }
     }
+  }
+
+  Future<void> _openRunInfo() async {
+    if (_optionsDialogOpen) return;
+    await showGameRunInfoDialog(
+      context: context,
+      playedHandCounts:
+          _gameState.activeRunSaveView?.currentPlayedHandCounts ?? const {},
+    );
   }
 
   Future<void> _openDebugBottomSheet(BuildContext context) async {
@@ -1753,7 +1756,11 @@ class _GameViewState extends ConsumerState<GameView>
             selectedBattleItemSlot: _selectedBattleItemSlot,
             itemEffectFeedback: _itemEffectFeedback,
             itemEffectFeedbackTick: _itemEffectFeedbackTick,
+            difficultyLabel: NewRunSetup(
+              difficulty: widget.difficulty,
+            ).difficultyLabel,
             onOptionsTap: _openGameOptions,
+            onRunInfoTap: _openRunInfo,
             onBlindInfoTap: _openBossConstraintInfo,
             onDebugTap: () => _openDebugBottomSheet(context),
             onJesterTap: _openJesterOverlay,
@@ -2280,7 +2287,9 @@ class _GameSurface extends StatelessWidget {
     required this.selectedBattleItemSlot,
     required this.itemEffectFeedback,
     required this.itemEffectFeedbackTick,
+    required this.difficultyLabel,
     required this.onOptionsTap,
+    required this.onRunInfoTap,
     required this.onBlindInfoTap,
     required this.onDebugTap,
     required this.onJesterTap,
@@ -2322,7 +2331,9 @@ class _GameSurface extends StatelessWidget {
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final _ItemEffectFeedback? itemEffectFeedback;
   final int itemEffectFeedbackTick;
+  final String difficultyLabel;
   final VoidCallback onOptionsTap;
+  final VoidCallback onRunInfoTap;
   final VoidCallback onBlindInfoTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
@@ -2391,7 +2402,9 @@ class _GameSurface extends StatelessWidget {
                   pendingBoardMoveSourceCol: pendingBoardMoveSourceCol,
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   selectedBattleItemSlot: selectedBattleItemSlot,
+                  difficultyLabel: difficultyLabel,
                   onOptionsTap: onOptionsTap,
+                  onRunInfoTap: onRunInfoTap,
                   onBlindInfoTap: onBlindInfoTap,
                   onDebugTap: onDebugTap,
                   onJesterTap: onJesterTap,
@@ -2517,7 +2530,9 @@ class _GameLayout extends StatelessWidget {
     required this.pendingBoardMoveSourceCol,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
+    required this.difficultyLabel,
     required this.onOptionsTap,
+    required this.onRunInfoTap,
     required this.onBlindInfoTap,
     required this.onDebugTap,
     required this.onJesterTap,
@@ -2551,7 +2566,9 @@ class _GameLayout extends StatelessWidget {
   final int? pendingBoardMoveSourceCol;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
+  final String difficultyLabel;
   final VoidCallback onOptionsTap;
+  final VoidCallback onRunInfoTap;
   final VoidCallback onBlindInfoTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
@@ -2598,6 +2615,7 @@ class _GameLayout extends StatelessWidget {
             GameTopHud(
               station: station,
               battle: battle,
+              difficultyLabel: difficultyLabel,
               onOptionsTap: onOptionsTap,
               onBlindInfoTap: onBlindInfoTap,
               stationGoalDisplayScore: settlementGoalDisplayScore,
@@ -2694,6 +2712,7 @@ class _GameLayout extends StatelessWidget {
                   station.resources.boardMovesRemaining > 0,
               onConfirm: onConfirm,
               onClearSelection: onClearSelection,
+              onRunInfo: onRunInfoTap,
               onStartBoardMove: onStartBoardMove,
               onBoardDiscard: onBoardDiscard,
               onHandDiscard: onHandDiscard,
@@ -2948,6 +2967,7 @@ class _BattleActionBar extends StatelessWidget {
     required this.onHandDiscard,
     required this.confirmEnabled,
     required this.utilityEnabled,
+    required this.onRunInfo,
   });
 
   final RummiScoringPreview? scoringPreview;
@@ -2959,6 +2979,7 @@ class _BattleActionBar extends StatelessWidget {
   final VoidCallback onHandDiscard;
   final bool confirmEnabled;
   final bool utilityEnabled;
+  final VoidCallback onRunInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -2975,6 +2996,15 @@ class _BattleActionBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              _BattleRailButton(
+                tooltip: '런 정보',
+                label: '런\n정보',
+                size: buttonSide,
+                borderRadius: 7,
+                backgroundColor: const Color(0xFF65562E),
+                onPressed: onRunInfo,
+              ),
+              const SizedBox(width: 16),
               _BattleRailButton(
                 tooltip: '선택 해제',
                 label: '선택\n해제',
