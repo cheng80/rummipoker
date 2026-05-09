@@ -171,17 +171,22 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
   }) {
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
     final confirmChoice = _currentConfirmChoice(
       session,
       jesters: jesters,
       runtimeSnapshot: runtimeSnapshot,
     );
-    if (confirmChoice.shouldConfirmNow) {
+    if (confirmChoice.shouldConfirmNow &&
+        !_shouldDelayRetryConfirmForPlacement(
+          session,
+          confirmChoice,
+          boardIsFull: boardIsFull,
+        )) {
       return const CompetitionBattleAction.confirm();
     }
-    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
     final shouldUseStrategicUtility = _shouldUseStrategicUtility(session);
-    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
     if (session.hand.isEmpty) {
       if (session.canDrawFromDeck) return const CompetitionBattleAction.draw();
       if ((shouldUseStrategicUtility || boardIsFull) &&
@@ -607,6 +612,24 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
     if (occupancy < _mysticBoardDiscardMinOccupancy) return false;
     return true;
+  }
+
+  bool _shouldDelayRetryConfirmForPlacement(
+    RummiPokerGridSession session,
+    _ConfirmChoice choice, {
+    required bool boardIsFull,
+  }) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.blind.targetScore < _highTargetConfirmTargetFloor) {
+      return false;
+    }
+    if (session.hand.isEmpty || boardIsFull) return false;
+    if (choice.score >= _bossConfirmScoreFloor) return false;
+    final remainingScore =
+        session.blind.targetScore - session.blind.scoreTowardBlind;
+    return remainingScore > choice.score;
   }
 
   _PlacementChoice? _bestPlacement(
