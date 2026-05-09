@@ -991,6 +991,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return null;
     }
 
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
     final basePotential = _plannerBoardPotentialScoreForJesters(
       session.board,
       jesters,
@@ -1026,9 +1027,12 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           final createsUsefulLine =
               _touchedLinePotential(copy.board, row, col) >=
               _cleanConfirmScoreFloor;
-          final improvesImmediate = lineCount >= 2 && score > 0;
+          final improvesImmediate =
+              lineCount >= 2 && score >= _highTargetConfirmScoreFloor;
+          final revivesNearFullLine =
+              occupancy >= kBoardSize * kBoardSize - 1 && createsUsefulLine;
           if (!recoversDiscardLoss) continue;
-          if (!improvesImmediate && !createsUsefulLine && potentialGain < 12) {
+          if (!improvesImmediate && !revivesNearFullLine) {
             continue;
           }
 
