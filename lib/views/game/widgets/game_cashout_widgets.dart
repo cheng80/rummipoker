@@ -477,6 +477,10 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
   Widget build(BuildContext context) {
     final settlement = widget.settlement;
     final hasBonuses = settlement.entries.any((e) => e.isBonus);
+    final deckRewardEntries = settlement.entries
+        .where((entry) => entry.isDeckTileReward)
+        .toList(growable: false);
+    final hasDeckRewards = deckRewardEntries.isNotEmpty;
     return SafeArea(
       top: false,
       child: Padding(
@@ -543,9 +547,23 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                     ),
                   ),
                 ],
+                if (hasDeckRewards) ...[
+                  const SizedBox(height: 8),
+                  _GameCashOutReveal(
+                    visible: _step >= (hasBonuses ? 5 : 4),
+                    child: Column(
+                      children: [
+                        for (final entry in deckRewardEntries) ...[
+                          _GameCashOutTileRewardLine(entry: entry),
+                          const SizedBox(height: 8),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 _GameCashOutReveal(
-                  visible: _step >= (hasBonuses ? 5 : 4),
+                  visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
                   child: _GameCashOutGoldSummary(
                     currentGold: settlement.currentGold,
                     totalGold: settlement.totalGold,
@@ -554,7 +572,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                 if (widget.completesRun && widget.insightReward > 0) ...[
                   const SizedBox(height: 12),
                   _GameCashOutReveal(
-                    visible: _step >= (hasBonuses ? 5 : 4),
+                    visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
                     child: GameOverInsightRewardCard(
                       insightReward: widget.insightReward,
                     ),
@@ -705,6 +723,90 @@ class _GameCashOutGoldMetric extends StatelessWidget {
         const SizedBox(height: 7),
         Text(value, key: valueKey, style: valueStyle),
       ],
+    );
+  }
+}
+
+class _GameCashOutTileRewardLine extends StatelessWidget {
+  const _GameCashOutTileRewardLine({required this.entry});
+
+  final RummiSettlementEntryView entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = entry.tile;
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('cashout-deck-tile-reward-line'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: GamePresentationTimings.cashOutLinePulse,
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final pulse = (1 - value).clamp(0.0, 1.0);
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4FA3D8).withValues(alpha: 0.18 * pulse),
+                blurRadius: 18 * pulse,
+                spreadRadius: 1.5 * pulse,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF4FA3D8).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF4FA3D8).withValues(alpha: 0.32),
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 40,
+              child: tile == null
+                  ? const SizedBox.shrink()
+                  : GameRummiTileCard(
+                      key: const ValueKey('cashout-deck-tile-reward-face'),
+                      tile: tile,
+                      selected: false,
+                      accent: true,
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '덱 타일 보상',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    entry.description,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

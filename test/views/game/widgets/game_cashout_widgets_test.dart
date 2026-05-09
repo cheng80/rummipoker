@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/utils/common_ui.dart';
@@ -130,57 +131,114 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('GameCashOutSheet can close a final run with memory card reward', (
+  testWidgets('GameCashOutSheet shows boss deck tile reward as a tile face', (
     tester,
   ) async {
     final settlement = RummiSettlementRuntimeFacade(
-      stageIndex: 8,
-      targetScore: 2600,
-      currentGold: 7,
-      totalGold: 11,
+      stageIndex: 2,
+      targetScore: 480,
+      currentGold: 11,
+      totalGold: 8,
       entries: const [
         RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.stationReward,
-          leadingLabel: 'Station 8',
-          description: 'Station Goal 2600 달성 보상',
-          gold: 7,
+          leadingLabel: 'Station 2',
+          description: 'Station Goal 480 달성 보상',
+          gold: 8,
         ),
         RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.boardDiscardReward,
-          leadingLabel: '2',
-          description: '남은 보드 버림 2회 x 1',
-          gold: 2,
+          leadingLabel: '0',
+          description: '남은 보드 버림 0회 x 3',
+          gold: 0,
         ),
         RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.handDiscardReward,
-          leadingLabel: '2',
-          description: '남은 손패 버림 2회 x 1',
-          gold: 2,
+          leadingLabel: '0',
+          description: '남은 손패 버림 0회 x 2',
+          gold: 0,
+        ),
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.deckTileReward,
+          leadingLabel: 'Tile',
+          description: '보스 클리어 보상 - 다음 전투 덱에 추가',
+          gold: 0,
+          tile: Tile(color: TileColor.red, number: 9, id: 1),
         ),
       ],
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: GameCashOutSheet(
-            settlement: settlement,
-            completesRun: true,
-            insightReward: 36,
-          ),
-        ),
+        home: Scaffold(body: GameCashOutSheet(settlement: settlement)),
       ),
     );
 
     await tester.pump(const Duration(seconds: 2));
 
-    expect(find.text('기억 카드 획득'), findsOneWidget);
-    expect(find.textContaining('Insight'), findsNothing);
-    expect(find.widgetWithText(GameChromeButton, '계속 진행'), findsOneWidget);
-    expect(find.widgetWithText(GameChromeButton, '런 완료'), findsOneWidget);
-    expect(find.text('Market으로'), findsNothing);
+    expect(find.text('덱 타일 보상'), findsOneWidget);
+    expect(find.textContaining('다음 전투 덱에 추가'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('cashout-deck-tile-reward-face')),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
+
+  testWidgets(
+    'GameCashOutSheet can close a final run with memory card reward',
+    (tester) async {
+      final settlement = RummiSettlementRuntimeFacade(
+        stageIndex: 8,
+        targetScore: 2600,
+        currentGold: 7,
+        totalGold: 11,
+        entries: const [
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.stationReward,
+            leadingLabel: 'Station 8',
+            description: 'Station Goal 2600 달성 보상',
+            gold: 7,
+          ),
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.boardDiscardReward,
+            leadingLabel: '2',
+            description: '남은 보드 버림 2회 x 1',
+            gold: 2,
+          ),
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.handDiscardReward,
+            leadingLabel: '2',
+            description: '남은 손패 버림 2회 x 1',
+            gold: 2,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GameCashOutSheet(
+              settlement: settlement,
+              completesRun: true,
+              insightReward: 36,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(find.text('기억 카드 획득'), findsOneWidget);
+      expect(find.textContaining('Insight'), findsNothing);
+      expect(find.widgetWithText(GameChromeButton, '계속 진행'), findsOneWidget);
+      expect(find.widgetWithText(GameChromeButton, '런 완료'), findsOneWidget);
+      expect(find.text('Market으로'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
 }

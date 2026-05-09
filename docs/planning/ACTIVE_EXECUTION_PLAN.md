@@ -10,10 +10,10 @@
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Paused on S8 boss system gap | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | `contest_full_run_bot`은 최신 보정으로 S8 big까지 통과했지만 S8 boss에서 후반 성장축 부족이 드러나 full-run QA를 일시 중단한다. |
-| 실제 Goal 기준 완성 | Active for QA before bot resume | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1은 런타임 반영과 핵심 검증 완료. 다음은 최신 build smoke와 bot policy 동기화 확인 뒤 공모전 풀런봇을 재개한다. |
+| 공모전 기준 완성 | Active for challenge full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 다음은 Flutter semantics 반복 경고를 먼저 정리하고, 도전 난이도 fresh S1~S8 full-run을 시작한다. |
+| 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강은 런타임 반영과 핵심 검증 완료. 장기 밸런스는 별도 트랙으로 남긴다. |
 
-현재는 공모전 풀런봇을 더 밀지 않고, 게임 전체 룰 시스템 보강 트랙을 먼저 실행한다.
+현재는 공모전 기준 QA를 재개한다. 단, full-run console 0건 기준을 위해 Flutter semantics 반복 경고를 먼저 닫고 도전 난이도 풀런으로 넘어간다.
 
 ## 2. 공모전 기준 다음 작업
 
@@ -21,19 +21,21 @@
 현재 실행 순서는 아래로 고정한다.
 
 1. 최신 build를 띄워 Browser/WebDriver smoke로 console error/warn 0건을 확인한다.
-2. `contest_full_run_bot` policy code/test가 tile lane 구매, 추가 덱, 특수 족보 점수를 실제 평가하는지 확인한다.
-3. 부족하면 bot 후보 평가에 특수 족보 근접도와 추가 타일 구매 판단을 보강한다.
-4. `contest_full_run_bot`을 최신 build 기준으로 재개한다.
-5. 재개 시 S8 big 통과 증거와 S8 boss 실패/timeout 로그를 기준선으로 삼고, S8 boss부터 checkpoint-resume 또는 fresh full-run을 다시 실행한다.
+2. 현재 fresh 표준 풀런에서 반복 출력된 Flutter semantics route label 경고를 수정하고, 관련 위젯 테스트 또는 smoke로 재확인한다.
+3. `contest_full_run_bot` policy code/test가 tile lane 구매, 추가 덱, 특수 족보 점수를 실제 평가하는지 확인한다.
+4. 부족하면 bot 후보 평가에 특수 족보 근접도와 추가 타일 구매 판단을 보강한다.
+5. `contest_full_run_bot`을 도전 난이도 fresh S1부터 최신 build 기준으로 실행한다.
+6. 도전 full-run 도중 세션이 종료되면 마지막 로그/출력 디렉터리/checkpoint를 먼저 확인하고, debug fixture 없이 이어서 진행한다.
 
 최근 `contest_full_run_bot` 기준선:
 
-- 최신 보정 커밋: `18f0b53 Tune boss retry deck scoring`
-- 실행 로그: `/tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log`
-- S8 big retry 6: `417 + 617 + 705 = 1739/1738`, clear 후 market 진입
-- S8 boss retry 0/1: `116 + 212 + 290 + 80 = 698/1739`, game over
-- S8 boss retry 2: 진행 중 `Timed out waiting for game state update`
-- 판단: 5장 deck lookahead와 late confirm 보정은 S8 big에는 효과가 있었지만, S8 boss는 족보 레벨 성장과 덱 확장 같은 런타임 성장축 없이 bot 정책만으로 안정화하기 어렵다.
+- 최신 fresh 표준 실행 로그: `/tmp/rummipoker_contest_full_run_bot/fresh_after_reward_tile_rules_20260509_201727/10_contest_full_run_bot.log`
+- 실행 조건: `--seed 91460 --difficulty standard --web-port 7362 --skip-pub-get`
+- 결과: `CONTEST_FULL_RUN_BOT_PASS`, `All tests passed!`, S8 boss run complete
+- S8 boss 정산: `870/3 -> 728/2 -> 312/1`, 목표 `1739` 통과
+- game over/retry: 없음
+- 보스 클리어 덱 타일 보상: S2 `deck=53`부터 S8 `deck=59`까지 증가 확인
+- 남은 문제: `Semantic node ... scopesRoute and namesRoute ... missing the label` Flutter semantics 경고가 반복 출력된다. 제출 console 0건 기준 전에는 open이다.
 
 ## 3. 공모전 Done Evidence
 

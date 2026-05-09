@@ -549,6 +549,7 @@ class RummiCashOutBreakdown {
     this.firstBlindClearBonusGold = 0,
     this.itemBonuses = const [],
     this.itemGold = 0,
+    this.deckTileRewards = const [],
   });
 
   final int stageIndex;
@@ -568,7 +569,32 @@ class RummiCashOutBreakdown {
   final int firstBlindClearBonusGold;
   final List<RummiRoundEndItemBonus> itemBonuses;
   final int itemGold;
+  final List<Tile> deckTileRewards;
   final int totalGold;
+
+  RummiCashOutBreakdown copyWith({List<Tile>? deckTileRewards}) {
+    return RummiCashOutBreakdown(
+      stageIndex: stageIndex,
+      targetScore: targetScore,
+      blindReward: blindReward,
+      remainingBoardDiscards: remainingBoardDiscards,
+      remainingHandDiscards: remainingHandDiscards,
+      remainingBoardMoves: remainingBoardMoves,
+      perBoardDiscardBonus: perBoardDiscardBonus,
+      perHandDiscardBonus: perHandDiscardBonus,
+      perBoardMoveBonus: perBoardMoveBonus,
+      boardDiscardGold: boardDiscardGold,
+      handDiscardGold: handDiscardGold,
+      boardMoveGold: boardMoveGold,
+      economyBonuses: economyBonuses,
+      economyGold: economyGold,
+      firstBlindClearBonusGold: firstBlindClearBonusGold,
+      itemBonuses: itemBonuses,
+      itemGold: itemGold,
+      deckTileRewards: deckTileRewards ?? this.deckTileRewards,
+      totalGold: totalGold,
+    );
+  }
 }
 
 class RummiRoundEndEconomyBonus {
@@ -1131,12 +1157,16 @@ class RummiRunProgress {
     pendingBossTileReward = true;
   }
 
-  bool addDeckTile(Tile tile) {
+  Tile addDeckTile(Tile tile) {
     final copyId = _nextCopyIdForTile(tile);
-    addedDeckTiles.add(
-      Tile(color: tile.color, number: tile.number, id: copyId),
-    );
-    return true;
+    final addedTile = Tile(color: tile.color, number: tile.number, id: copyId);
+    addedDeckTiles.add(addedTile);
+    return addedTile;
+  }
+
+  Tile addBossClearDeckTileReward(Random rng) {
+    final rewardPool = buildStandardPokerDeck(copiesPerTile: 1);
+    return addDeckTile(rewardPool[rng.nextInt(rewardPool.length)]);
   }
 
   bool buyTileOffer(int offerIndex) {
@@ -1160,7 +1190,6 @@ class RummiRunProgress {
   }
 
   int effectiveTileOfferPrice(int offerIndex) {
-    if (pendingBossTileReward) return 0;
     final stageStep = max(0, stageIndex - 1) ~/ 2;
     return 3 + stageStep;
   }

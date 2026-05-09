@@ -94,6 +94,7 @@ class _MarketPurchaseFlight {
     this.startOffset,
     this.endOffset,
     this.jesterCard,
+    this.tile,
     this.itemPlacement,
     this.itemRarity,
   });
@@ -110,6 +111,7 @@ class _MarketPurchaseFlight {
   final Offset? startOffset;
   final Offset? endOffset;
   final RummiJesterCard? jesterCard;
+  final Tile? tile;
   final ItemPlacement? itemPlacement;
   final ItemRarity? itemRarity;
 }
@@ -770,7 +772,12 @@ class _GameShopScreenState extends State<GameShopScreen>
     final offers = _market.tileOffers;
     final index = _selectedTileOfferIndex;
     if (index < 0 || index >= offers.length) return;
+    final marketBeforePurchase = _market;
     final boughtOffer = offers[index];
+    final sourceEntry = _MarketOfferEntry.tile(index);
+    final sourceIndex = _visibleOfferLaneIndex(sourceEntry);
+    final sourceCount = _visibleOfferLaneCount();
+    final startOffset = _flightCenterForKey(_offerKey(sourceEntry));
     final failMessage = widget.onBuyTileOffer(index);
     if (failMessage != null) {
       _startMarketDenyFeedback('tile-buy', failMessage);
@@ -781,6 +788,19 @@ class _GameShopScreenState extends State<GameShopScreen>
       final market = _market;
       _clampOfferPageForLane(market, _MarketOfferLane.tile);
       _selectFirstEntry(_offerEntriesForLane(market, _MarketOfferLane.tile));
+      _startPurchaseFlight(
+        label: _tileLabel(boughtOffer.tile),
+        slotLabel: 'Deck',
+        item: false,
+        spentGold: boughtOffer.isFreeReward ? 0 : boughtOffer.price,
+        startAlignment: _offerFlightStartAlignment(sourceIndex, sourceCount),
+        endAlignment: const Alignment(1.36, -0.04),
+        marketBeforePurchase: marketBeforePurchase,
+        sourceVisibleIndex: sourceIndex,
+        startOffset: startOffset,
+        endOffset: _deckTileFlightEndOffset(),
+        tile: boughtOffer.tile,
+      );
     });
     _queueStateSave();
     showBottomNotice(context, '${_tileLabel(boughtOffer.tile)} 덱 추가');
@@ -823,6 +843,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     Offset? startOffset,
     Offset? endOffset,
     RummiJesterCard? jesterCard,
+    Tile? tile,
     ItemPlacement? itemPlacement,
     ItemRarity? itemRarity,
   }) {
@@ -841,6 +862,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       startOffset: startOffset,
       endOffset: endOffset,
       jesterCard: jesterCard,
+      tile: tile,
       itemPlacement: itemPlacement,
       itemRarity: itemRarity,
     );
@@ -981,6 +1003,14 @@ class _GameShopScreenState extends State<GameShopScreen>
       targetBox.size.center(Offset.zero),
     );
     return surfaceBox.globalToLocal(targetCenter);
+  }
+
+  Offset? _deckTileFlightEndOffset() {
+    final surfaceContext = _marketSurfaceKey.currentContext;
+    if (surfaceContext == null) return null;
+    final surfaceBox = surfaceContext.findRenderObject();
+    if (surfaceBox is! RenderBox) return null;
+    return Offset(surfaceBox.size.width + 54, surfaceBox.size.height * 0.46);
   }
 
   bool _isPurchaseSourceIndex(int visibleIndex) {
@@ -3465,7 +3495,6 @@ class _MarketTileOfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = _tileAccent(offer.tile.color);
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -3478,29 +3507,7 @@ class _MarketTileOfferCard extends StatelessWidget {
             SizedBox(
               width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
               height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
-              child: _MarketSelectableCardFrame(
-                selected: selected,
-                width: _marketOfferCardWidth,
-                height: _marketOfferCardHeight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE7EEE5),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: accent, width: 2),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _tileLabel(offer.tile),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFF19352E),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              child: _MarketTileFace(tile: offer.tile, selected: selected),
             ),
             const SizedBox(height: 3),
             Text(
@@ -3524,13 +3531,53 @@ class _MarketTileOfferCard extends StatelessWidget {
 
 String _tileLabel(Tile tile) => '${tile.color.code}${tile.number}';
 
-Color _tileAccent(TileColor color) {
-  return switch (color) {
-    TileColor.red => const Color(0xFFE35249),
-    TileColor.blue => const Color(0xFF3D8CEB),
-    TileColor.yellow => const Color(0xFFE2B93B),
-    TileColor.black => const Color(0xFF29302D),
-  };
+class _MarketTileFace extends StatelessWidget {
+  const _MarketTileFace({required this.tile, required this.selected});
+
+  final Tile tile;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox.square(
+        key: const ValueKey('market-tile-face-frame'),
+        dimension: _marketOfferCardWidth,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            SizedBox.square(
+              key: const ValueKey('market-tile-face'),
+              dimension: _marketOfferCardWidth - 8,
+              child: GameRummiTileCard(
+                tile: tile,
+                selected: false,
+                accent: false,
+              ),
+            ),
+            if (selected)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    key: const ValueKey('market-tile-selector'),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        (_marketOfferCardWidth - 8) * 0.11,
+                      ),
+                      border: Border.all(
+                        color: const Color(0xFFF2C14E),
+                        width: kJesterSelectionBorderWidth,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MarketItemCardFace extends StatelessWidget {
@@ -3733,11 +3780,12 @@ class _MarketPurchaseFlightOverlay extends StatelessWidget {
     return IgnorePointer(
       child: Stack(
         children: [
-          Positioned(
-            top: 16,
-            right: 42,
-            child: _MarketGoldSpendBadge(spentGold: flight.spentGold),
-          ),
+          if (flight.spentGold > 0)
+            Positioned(
+              top: 16,
+              right: 42,
+              child: _MarketGoldSpendBadge(spentGold: flight.spentGold),
+            ),
           TweenAnimationBuilder<double>(
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
@@ -3921,6 +3969,16 @@ class _MarketPurchaseFlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tile = flight.tile;
+    if (tile != null) {
+      return SizedBox(
+        key: const ValueKey('market-purchase-flight'),
+        width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+        height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+        child: _MarketTileFace(tile: tile, selected: true),
+      );
+    }
+
     final face = _purchaseFlightFace();
     return SizedBox(
       key: const ValueKey('market-purchase-flight'),

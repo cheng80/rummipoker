@@ -455,7 +455,7 @@ class RummiMarketRuntimeFacade {
           slotIndex: i,
           currentGold: progress.gold,
           price: progress.effectiveTileOfferPrice(i),
-          isFreeReward: progress.pendingBossTileReward,
+          isFreeReward: false,
         ),
     ];
   }

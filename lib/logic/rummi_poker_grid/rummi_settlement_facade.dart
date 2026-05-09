@@ -1,4 +1,5 @@
 import 'jester_meta.dart';
+import 'models/tile.dart';
 
 /// Current cash-out result를 장기 Settlement 용어로 읽기 위한 read model.
 ///
@@ -14,6 +15,7 @@ enum RummiSettlementEntryKind {
   boardMoveReward,
   economyBonus,
   itemBonus,
+  deckTileReward,
 }
 
 class RummiSettlementEntryView {
@@ -25,6 +27,7 @@ class RummiSettlementEntryView {
     this.jesterId,
     this.itemId,
     this.displayName,
+    this.tile,
   });
 
   final RummiSettlementEntryKind kind;
@@ -34,12 +37,14 @@ class RummiSettlementEntryView {
   final String? jesterId;
   final String? itemId;
   final String? displayName;
+  final Tile? tile;
 
   bool get isEconomyBonus => kind == RummiSettlementEntryKind.economyBonus;
   bool get isItemBonus => kind == RummiSettlementEntryKind.itemBonus;
   bool get isFirstBlindClearBonus =>
       kind == RummiSettlementEntryKind.firstBlindClearBonus;
   bool get isBonus => isFirstBlindClearBonus || isEconomyBonus || isItemBonus;
+  bool get isDeckTileReward => kind == RummiSettlementEntryKind.deckTileReward;
 }
 
 class RummiSettlementRuntimeFacade {
@@ -108,6 +113,15 @@ class RummiSettlementRuntimeFacade {
           gold: bonus.gold,
           itemId: bonus.itemId,
           displayName: bonus.displayName,
+        ),
+      ),
+      ...breakdown.deckTileRewards.map(
+        (tile) => RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.deckTileReward,
+          leadingLabel: 'Tile',
+          description: '보스 클리어 보상 - 다음 전투 덱에 추가',
+          gold: 0,
+          tile: tile,
         ),
       ),
     ];

@@ -514,14 +514,17 @@ class GameSessionNotifier
     final session = state.session!;
     final runProgress = state.runProgress!;
     session.discardStageRemainder();
-    final breakdown = runProgress.buildCashOutBreakdown(
+    var breakdown = runProgress.buildCashOutBreakdown(
       session,
       itemCatalog: itemCatalog,
       rewardMultiplier: state.runModifier.rewardMultiplier,
     );
     runProgress.applyCashOut(breakdown);
     if (runProgress.currentStationBlindTierIndex == BlindTier.boss.index) {
-      runProgress.queueBossTileReward();
+      final rewardTile = runProgress.addBossClearDeckTileReward(
+        session.runRandom,
+      );
+      breakdown = breakdown.copyWith(deckTileRewards: [rewardTile]);
       if (itemCatalog != null) {
         ItemEffectRuntime.applyOwnedBossClearItems(
           catalog: itemCatalog,
@@ -779,13 +782,9 @@ class GameSessionNotifier
     if (offerIndex < 0 || offerIndex >= runProgress.tileOffers.length) {
       return '구매할 타일을 찾지 못했습니다.';
     }
-    final ok = runProgress.pendingBossTileReward
-        ? runProgress.claimFreeTileOffer(offerIndex)
-        : runProgress.buyTileOffer(offerIndex);
+    final ok = runProgress.buyTileOffer(offerIndex);
     if (!ok) {
-      return runProgress.pendingBossTileReward
-          ? '타일 선택에 실패했습니다.'
-          : '골드가 부족합니다.';
+      return '골드가 부족합니다.';
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;

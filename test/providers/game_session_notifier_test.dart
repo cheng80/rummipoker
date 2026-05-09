@@ -1785,6 +1785,38 @@ void main() {
       );
     });
 
+    test('boss cash-out는 보상 타일을 정산 결과에 싣고 즉시 덱에 추가한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 4304);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final before = container.read(gameSessionNotifierProvider(args));
+      before.runProgress!.currentStationBlindTierIndex = BlindTier.boss.index;
+      final initialAddedDeckCount = before.runProgress!.addedDeckTiles.length;
+
+      final breakdown = notifier.prepareSettlementAndCashOut();
+      final afterCashOut = container.read(gameSessionNotifierProvider(args));
+
+      expect(breakdown.deckTileRewards, hasLength(1));
+      expect(
+        afterCashOut.runProgress!.addedDeckTiles,
+        hasLength(initialAddedDeckCount + 1),
+      );
+      expect(
+        afterCashOut.runProgress!.addedDeckTiles.last,
+        breakdown.deckTileRewards.single,
+      );
+      expect(afterCashOut.runProgress!.pendingBossTileReward, isFalse);
+
+      final market = RummiMarketRuntimeFacade.fromRunProgress(
+        afterCashOut.runProgress!,
+      );
+      expect(market.tileOffers.every((offer) => !offer.isFreeReward), isTrue);
+    });
+
     test('buildSaveRuntimeState는 현재 runtime과 active scene을 그대로 반영한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
