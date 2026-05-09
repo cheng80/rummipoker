@@ -1878,6 +1878,26 @@ void main() {
     );
   });
 
+  test('boss retry rejects weak four-line confirms', () {
+    final policy = const CompetitionPlannerV2Policy(
+      enableRetryRecoveryConfirmDelay: true,
+      retryRecoveryAttempt: 2,
+    );
+
+    expect(
+      policy.isBossRetryRecoveryBundleForTest(score: 353, lineCount: 4),
+      isFalse,
+    );
+    expect(
+      policy.isBossRetryRecoveryBundleForTest(score: 470, lineCount: 4),
+      isTrue,
+    );
+    expect(
+      policy.isBossRetryRecoveryBundleForTest(score: 365, lineCount: 5),
+      isTrue,
+    );
+  });
+
   test('later retries avoid repeating failed placement routes', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,

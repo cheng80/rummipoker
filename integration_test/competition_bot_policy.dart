@@ -172,6 +172,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _highTargetTwoLineConfirmScoreFloor = 300;
   static const int _highTargetConfirmTargetFloor = 600;
   static const int _bossConfirmScoreFloor = 360;
+  static const int _bossRetryConfirmScoreFloor = 420;
   static const int _retryRecoveryConfirmHoldScoreFloor = 520;
   static const int _bossConfirmMinOccupancy = kBoardSize * 4;
   static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
@@ -550,9 +551,9 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       // 보스전은 덱 고갈 리스크가 커서 작은 2줄 확정을 참는다.
       // 보드를 충분히 채워 3줄 이상 또는 고득점 묶음을 노리는 것이 목적이다.
       if (isRetryRecoveryHighTarget) {
-        final hasRecoveryBundle =
-            score >= _bossConfirmScoreFloor ||
-            (lineCount >= 3 && score >= _highTargetConfirmScoreFloor);
+        final hasRecoveryBundle = _isBossRetryRecoveryBundle(
+          _ImmediateConfirmChoice(score: score, lineCount: lineCount),
+        );
         final isForcedBoardLock =
             emptyCells == 0 &&
             score > 0 &&
@@ -629,11 +630,25 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         (choice.lineCount >= 3 && choice.score >= _highTargetConfirmScoreFloor);
   }
 
+  bool _isBossRetryRecoveryBundle(_ImmediateConfirmChoice choice) {
+    return choice.score >= _bossRetryConfirmScoreFloor ||
+        choice.lineCount >= 5 && choice.score >= _bossConfirmScoreFloor;
+  }
+
   bool isHighTargetRecoveryBundleForTest({
     required int score,
     required int lineCount,
   }) {
     return _isHighTargetRecoveryBundle(
+      _ImmediateConfirmChoice(score: score, lineCount: lineCount),
+    );
+  }
+
+  bool isBossRetryRecoveryBundleForTest({
+    required int score,
+    required int lineCount,
+  }) {
+    return _isBossRetryRecoveryBundle(
       _ImmediateConfirmChoice(score: score, lineCount: lineCount),
     );
   }
@@ -1100,13 +1115,31 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         final score =
             potentialGain +
             touchedPotential ~/ 2 +
-            lineCount * 140 +
-            immediateScore * 2 +
+            _retryDeckLineWeight(session) * lineCount +
+            _retryDeckImmediateWeight(session) * immediateScore +
             finishScore;
         if (score > best) best = score;
       }
     }
     return best;
+  }
+
+  int _retryDeckLineWeight(RummiPokerGridSession session) {
+    if (enableRetryRecoveryConfirmDelay &&
+        retryRecoveryAttempt >= 2 &&
+        session.blind.bossModifier != null) {
+      return 90;
+    }
+    return 140;
+  }
+
+  int _retryDeckImmediateWeight(RummiPokerGridSession session) {
+    if (enableRetryRecoveryConfirmDelay &&
+        retryRecoveryAttempt >= 2 &&
+        session.blind.bossModifier != null) {
+      return 3;
+    }
+    return 2;
   }
 
   int _retryFinishScore({
