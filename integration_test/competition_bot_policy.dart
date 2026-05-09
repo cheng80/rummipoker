@@ -490,6 +490,8 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
     final emptyCells = kBoardSize * kBoardSize - occupancy;
     final isBossBattle = session.blind.bossModifier != null;
+    final isHighTarget =
+        session.blind.targetScore >= _highTargetConfirmTargetFloor;
 
     if (lineCount < 2) {
       return _ConfirmChoice(
@@ -501,10 +503,8 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final isRetryRecoveryHighTarget =
         enableRetryRecoveryConfirmDelay &&
         retryRecoveryAttempt >= 2 &&
-        session.blind.targetScore >= _highTargetConfirmTargetFloor;
-    if (score > 0 &&
-        !isRetryRecoveryHighTarget &&
-        _shouldTempoConfirm(session, jesters)) {
+        isHighTarget;
+    if (score > 0 && !isHighTarget && _shouldTempoConfirm(session, jesters)) {
       return _ConfirmChoice(
         lineCount: lineCount,
         score: score,
@@ -545,9 +545,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         shouldConfirmNow: hasLargeBundle || isNearBoardLock,
       );
     }
-    final isHighTarget =
-        enableRetryRecoveryConfirmDelay &&
-        session.blind.targetScore >= _highTargetConfirmTargetFloor;
     if (isHighTarget) {
       // 고점수 구간에서는 작은 확정을 바로 먹기보다, 보드 버림/이동으로
       // 더 큰 중복 족보 묶음을 만들 여지를 먼저 본다.
