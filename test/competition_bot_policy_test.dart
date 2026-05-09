@@ -1517,7 +1517,7 @@ void main() {
     },
   );
 
-  test('second retry avoids repeating a failed placement route', () {
+  test('later retries avoid repeating failed placement routes', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
       deckCopiesPerTile: 1,
@@ -1566,7 +1566,7 @@ void main() {
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
-    final retryAction =
+    final secondRetryAction =
         CompetitionPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
@@ -1576,11 +1576,33 @@ void main() {
           jesters: const [],
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
+    final thirdRetryAction =
+        CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 3,
+          avoidedActionRouteKeys: {
+            contestBattleActionRouteKey(firstAction),
+            contestBattleActionRouteKey(secondRetryAction!),
+          },
+        ).bestPlacementForTest(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
 
-    expect(retryAction?.type, CompetitionBattleActionType.place);
+    expect(secondRetryAction.type, CompetitionBattleActionType.place);
     expect(
-      contestBattleActionRouteKey(retryAction!),
+      contestBattleActionRouteKey(secondRetryAction),
       isNot(contestBattleActionRouteKey(firstAction)),
+    );
+    expect(thirdRetryAction?.type, CompetitionBattleActionType.place);
+    expect(
+      contestBattleActionRouteKey(thirdRetryAction!),
+      isNot(contestBattleActionRouteKey(firstAction)),
+    );
+    expect(
+      contestBattleActionRouteKey(thirdRetryAction),
+      isNot(contestBattleActionRouteKey(secondRetryAction)),
     );
   });
 

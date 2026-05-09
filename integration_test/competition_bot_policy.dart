@@ -181,6 +181,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
   static const int _strategicUtilityTargetScoreFloor = 1000;
+  static const int _failedRouteActionPenalty = 260;
   @override
   String get id => 'competition_planner_v2';
 
@@ -387,9 +388,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
               gain: followUp.score,
               potential: potential,
             );
-            if (best == null ||
-                choice.gain > best.gain ||
-                choice.gain == best.gain && choice.potential > best.potential) {
+            if (best == null || _isBetterMoveChoice(choice, best)) {
               best = choice;
             }
           }
@@ -398,6 +397,22 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
     if (best == null) return null;
     return best.action;
+  }
+
+  bool _isBetterMoveChoice(_MoveChoice candidate, _MoveChoice best) {
+    if (_shouldAvoidRepeatedFailedRoutes()) {
+      final candidateScore = _adjustedRouteScore(
+        candidate.action,
+        candidate.gain * 4 + candidate.potential,
+      );
+      final bestScore = _adjustedRouteScore(
+        best.action,
+        best.gain * 4 + best.potential,
+      );
+      if (candidateScore != bestScore) return candidateScore > bestScore;
+    }
+    return candidate.gain > best.gain ||
+        candidate.gain == best.gain && candidate.potential > best.potential;
   }
 
   bool _allowsRepeatedStrategicBoardMove(RummiPokerGridSession session) {
@@ -756,6 +771,19 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         candidate.repeatsFailedRoute != best.repeatsFailedRoute) {
       return !candidate.repeatsFailedRoute;
     }
+    if (_shouldAvoidRepeatedFailedRoutes()) {
+      final candidateScore = _adjustedRouteScore(
+        candidate.action,
+        candidate.potentialScore +
+            candidate.lookaheadScore ~/ 2 +
+            candidate.immediateScore,
+      );
+      final bestScore = _adjustedRouteScore(
+        best.action,
+        best.potentialScore + best.lookaheadScore ~/ 2 + best.immediateScore,
+      );
+      if (candidateScore != bestScore) return candidateScore > bestScore;
+    }
     if (candidate.immediateScore != best.immediateScore &&
         candidate.immediateScore >= _cleanConfirmScoreFloor) {
       return candidate.immediateScore > best.immediateScore;
@@ -781,6 +809,35 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return enableRetryRecoveryConfirmDelay &&
         retryRecoveryAttempt >= 2 &&
         avoidedActionRouteKeys.isNotEmpty;
+  }
+
+  int _adjustedRouteScore(CompetitionBattleAction action, int baseScore) {
+    if (!_shouldAvoidRepeatedFailedRoutes()) return baseScore;
+    final penalty =
+        avoidedActionRouteKeys.contains(contestBattleActionRouteKey(action))
+        ? _failedRouteActionPenalty + retryRecoveryAttempt * 20
+        : 0;
+    return baseScore - penalty + _retryDiversityScore(action);
+  }
+
+  int _retryDiversityScore(CompetitionBattleAction action) {
+    if (!_shouldAvoidRepeatedFailedRoutes() || retryRecoveryAttempt < 3) {
+      return 0;
+    }
+    final handIndex = action.handIndex ?? 0;
+    final row = action.row ?? 0;
+    final col = action.col ?? 0;
+    final toRow = action.toRow ?? 0;
+    final toCol = action.toCol ?? 0;
+    // 같은 seed에서 같은 실패 prefix가 반복될 때, 후보 점수가 근접하면
+    // 재시도 횟수에 따라 다른 합법 route를 먼저 보게 한다.
+    return (handIndex * 19 +
+            row * 31 +
+            col * 37 +
+            toRow * 41 +
+            toCol * 43 +
+            retryRecoveryAttempt * 53) %
+        97;
   }
 
   int _placementLookaheadScore(
@@ -962,15 +1019,32 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           immediateScore: combo.lineCount >= 2 ? combo.score : moveCombo!.gain!,
           potentialScore: potentialScore,
         );
-        if (best == null ||
-            choice.immediateScore > best.immediateScore ||
-            choice.immediateScore == best.immediateScore &&
-                choice.potentialScore > best.potentialScore) {
+        if (best == null || _isBetterBoardDiscardChoice(choice, best)) {
           best = choice;
         }
       }
     }
     return best?.action;
+  }
+
+  bool _isBetterBoardDiscardChoice(
+    _BoardDiscardChoice candidate,
+    _BoardDiscardChoice best,
+  ) {
+    if (_shouldAvoidRepeatedFailedRoutes()) {
+      final candidateScore = _adjustedRouteScore(
+        candidate.action,
+        candidate.immediateScore * 4 + candidate.potentialScore,
+      );
+      final bestScore = _adjustedRouteScore(
+        best.action,
+        best.immediateScore * 4 + best.potentialScore,
+      );
+      if (candidateScore != bestScore) return candidateScore > bestScore;
+    }
+    return candidate.immediateScore > best.immediateScore ||
+        candidate.immediateScore == best.immediateScore &&
+            candidate.potentialScore > best.potentialScore;
   }
 
   CompetitionBattleAction? chooseRecoveryBoardDiscard(
