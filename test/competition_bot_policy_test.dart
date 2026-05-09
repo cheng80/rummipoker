@@ -1003,6 +1003,7 @@ void main() {
     final action =
         const CompetitionPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
         ).chooseAction(
           session,
           jesters: const [],
@@ -1012,6 +1013,85 @@ void main() {
     expect(action.type, CompetitionBattleActionType.moveBoard);
     expect(action.gain, greaterThanOrEqualTo(70));
   });
+
+  test(
+    'retry recovery does not chain early board moves before late pressure',
+    () {
+      final session = RummiPokerGridSession.restored(
+        runSeed: 91460,
+        deckCopiesPerTile: 1,
+        maxHandSize: 1,
+        runRandomState: 1,
+        blind: RummiBlindState(
+          targetScore: 1738,
+          boardDiscardsRemaining: 3,
+          handDiscardsRemaining: 2,
+          boardMovesRemaining: 2,
+          boardMovesMax: 3,
+          bossModifier: RummiBossModifier.confirmCountTax,
+        ),
+        deck: PokerDeck.fromSnapshot([
+          _tile(TileColor.red, 13),
+          _tile(TileColor.yellow, 13),
+          _tile(TileColor.yellow, 3),
+          _tile(TileColor.blue, 9),
+          _tile(TileColor.red, 1),
+          _tile(TileColor.red, 10),
+          _tile(TileColor.black, 11),
+          _tile(TileColor.blue, 11),
+          _tile(TileColor.red, 11),
+          _tile(TileColor.red, 8),
+          _tile(TileColor.yellow, 8),
+          _tile(TileColor.black, 4),
+          _tile(TileColor.red, 4),
+        ]),
+        board: RummiBoard.fromSnapshot([
+          _tile(TileColor.red, 1),
+          null,
+          _tile(TileColor.blue, 4),
+          _tile(TileColor.red, 9),
+          _tile(TileColor.black, 9),
+          _tile(TileColor.blue, 9),
+          _tile(TileColor.red, 5),
+          _tile(TileColor.black, 5),
+          _tile(TileColor.black, 12),
+          _tile(TileColor.yellow, 12),
+          _tile(TileColor.red, 3),
+          _tile(TileColor.black, 3),
+          _tile(TileColor.yellow, 3),
+          _tile(TileColor.black, 13),
+          _tile(TileColor.red, 13),
+          _tile(TileColor.yellow, 13),
+          _tile(TileColor.blue, 2),
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+        ]),
+        hand: [_tile(TileColor.yellow, 3)],
+        eliminated: const [],
+        boardMoveHistory: const [
+          BoardMoveRecord(fromRow: 0, fromCol: 1, toRow: 2, toCol: 3),
+        ],
+      );
+
+      final action =
+          const CompetitionPlannerV2Policy(
+            enableRetryRecoveryConfirmDelay: true,
+            retryRecoveryAttempt: 2,
+          ).chooseAction(
+            session,
+            jesters: const [],
+            runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+          );
+
+      expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+    },
+  );
 
   test('retry recovery boss delays a medium two-line confirm', () {
     final session = RummiPokerGridSession.restored(
@@ -1184,6 +1264,130 @@ void main() {
 
     expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
   });
+
+  test('retry recovery confirms instead of burning late hand discards', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1738,
+        scoreTowardBlind: 648,
+        boardDiscardsRemaining: 0,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 0,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.black, 5),
+        _tile(TileColor.black, 8),
+      ]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.black, 1),
+        _tile(TileColor.yellow, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.blue, 3),
+        _tile(TileColor.red, 4),
+        _tile(TileColor.yellow, 8),
+        _tile(TileColor.black, 3),
+        _tile(TileColor.blue, 6),
+        _tile(TileColor.black, 11),
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.black, 6),
+        _tile(TileColor.red, 10),
+        _tile(TileColor.red, 9),
+        _tile(TileColor.yellow, 12),
+        _tile(TileColor.blue, 13),
+        _tile(TileColor.yellow, 13),
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.blue, 9),
+        _tile(TileColor.red, 9),
+        _tile(TileColor.black, 10),
+        _tile(TileColor.yellow, 7),
+      ]),
+      hand: [_tile(TileColor.blue, 7)],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 4,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, CompetitionBattleActionType.confirm);
+  });
+
+  test(
+    'retry recovery tries board discard before a low full-board confirm',
+    () {
+      final session = RummiPokerGridSession.restored(
+        runSeed: 91460,
+        deckCopiesPerTile: 1,
+        maxHandSize: 1,
+        runRandomState: 1,
+        blind: RummiBlindState(
+          targetScore: 1738,
+          scoreTowardBlind: 248,
+          boardDiscardsRemaining: 3,
+          handDiscardsRemaining: 2,
+          boardMovesRemaining: 0,
+          bossModifier: RummiBossModifier.confirmCountTax,
+        ),
+        deck: PokerDeck.fromSnapshot([_tile(TileColor.black, 5)]),
+        board: RummiBoard.fromSnapshot([
+          _tile(TileColor.red, 1),
+          _tile(TileColor.red, 2),
+          _tile(TileColor.red, 3),
+          _tile(TileColor.red, 4),
+          _tile(TileColor.black, 9),
+          _tile(TileColor.blue, 1),
+          _tile(TileColor.black, 2),
+          _tile(TileColor.yellow, 3),
+          _tile(TileColor.blue, 5),
+          _tile(TileColor.black, 6),
+          _tile(TileColor.blue, 4),
+          _tile(TileColor.black, 5),
+          _tile(TileColor.yellow, 6),
+          _tile(TileColor.red, 8),
+          _tile(TileColor.blue, 11),
+          _tile(TileColor.blue, 7),
+          _tile(TileColor.black, 8),
+          _tile(TileColor.red, 12),
+          _tile(TileColor.yellow, 11),
+          _tile(TileColor.black, 12),
+          _tile(TileColor.yellow, 10),
+          _tile(TileColor.blue, 12),
+          _tile(TileColor.black, 13),
+          _tile(TileColor.yellow, 13),
+          _tile(TileColor.black, 1),
+        ]),
+        hand: [_tile(TileColor.red, 5)],
+        eliminated: const [],
+      );
+
+      final action =
+          const CompetitionPlannerV2Policy(
+            enableRetryRecoveryConfirmDelay: true,
+            retryRecoveryAttempt: 3,
+          ).chooseAction(
+            session,
+            jesters: const [],
+            runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+          );
+
+      expect(action.type, CompetitionBattleActionType.discardBoard);
+    },
+  );
 
   test('retry recovery boss spends useful board discard for mystic summit', () {
     final session = RummiPokerGridSession.restored(

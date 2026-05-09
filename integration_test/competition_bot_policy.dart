@@ -183,7 +183,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
   static const int _strategicUtilityTargetScoreFloor = 1000;
-  static const int _failedRouteActionPenalty = 260;
+  static const int _failedRouteActionPenalty = 900;
   @override
   String get id => 'competition_planner_v2';
 
@@ -201,6 +201,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       runtimeSnapshot: runtimeSnapshot,
     );
     if (confirmChoice.shouldConfirmNow &&
+        !_shouldTryBoardFullRecoveryBeforeConfirm(session, confirmChoice) &&
         !_shouldDelayRetryConfirmForPlacement(
           session,
           confirmChoice,
@@ -307,6 +308,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         runtimeSnapshot: runtimeSnapshot,
       );
       if (recoveryDiscard != null) return recoveryDiscard;
+
+      if (_shouldConfirmInsteadOfLateHandDiscard(session, confirmChoice)) {
+        return const CompetitionBattleAction.confirm();
+      }
 
       final handDiscard = chooseHandDiscard(session);
       if (handDiscard != null) return handDiscard;
@@ -431,6 +436,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (session.blind.boardMovesRemaining >= session.blind.boardMovesMax) {
       return true;
     }
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final lateOrNearlyFull =
+        session.deck.remaining <= _lateDeckUtilityRemainingMax ||
+        occupancy >= _bossConfirmMinOccupancy;
+    if (!lateOrNearlyFull) return false;
     if (session.blind.bossModifier != null) return true;
     return session.blind.targetScore >= _strategicUtilityTargetScoreFloor;
   }
@@ -720,6 +730,44 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final remainingScore =
         session.blind.targetScore - session.blind.scoreTowardBlind;
     return remainingScore > choice.score;
+  }
+
+  bool _shouldTryBoardFullRecoveryBeforeConfirm(
+    RummiPokerGridSession session,
+    _ConfirmChoice choice,
+  ) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.blind.boardDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return false;
+    }
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    if (occupancy < kBoardSize * kBoardSize) return false;
+    final remainingScore =
+        session.blind.targetScore - session.blind.scoreTowardBlind;
+    if (remainingScore <= choice.score) return false;
+    if (choice.lineCount >= 3 &&
+        choice.score >= _retryRecoveryConfirmHoldScoreFloor) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _shouldConfirmInsteadOfLateHandDiscard(
+    RummiPokerGridSession session,
+    _ConfirmChoice choice,
+  ) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (choice.score <= 0) return false;
+    if (session.blind.boardDiscardsRemaining > 0) return false;
+    if (session.blind.targetScore < _strategicUtilityTargetScoreFloor &&
+        session.blind.bossModifier == null) {
+      return false;
+    }
+    return true;
   }
 
   _PlacementChoice? _bestPlacement(

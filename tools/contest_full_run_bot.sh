@@ -16,6 +16,7 @@ WEB_PORT="${CONTEST_BOT_WEB_PORT:-7357}"
 BROWSER_PROFILE_DIR="${CONTEST_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_contest_bot/chrome_profile}"
 RESUME_ACTIVE_RUN=false
 PUB_GET=1
+CHROMEDRIVER_PID=""
 
 usage() {
   cat <<'EOF'
@@ -106,6 +107,28 @@ port_is_open() {
   nc -z 127.0.0.1 "$CHROMEDRIVER_PORT" >/dev/null 2>&1
 }
 
+cleanup_bot_processes() {
+  [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill "$CHROMEDRIVER_PID" 2>/dev/null || true
+  pkill -f 'flutter drive.*integration_test/competition_full_play_bot_test.dart' \
+    2>/dev/null || true
+  pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
+  pkill -f 'chromedriver.*--port='"$CHROMEDRIVER_PORT" 2>/dev/null || true
+  local web_pids
+  web_pids="$(lsof -ti tcp:"$WEB_PORT" 2>/dev/null || true)"
+  [[ -n "$web_pids" ]] && kill $web_pids 2>/dev/null || true
+  local webdriver_pids
+  webdriver_pids="$(ps -axo pid,command | awk \
+    '/--test-type=webdriver/ && /Google Chrome/ && !/awk/ {print $1}')"
+  if [[ -n "$webdriver_pids" ]]; then
+    kill $webdriver_pids 2>/dev/null || true
+    sleep 1
+    webdriver_pids="$(ps -axo pid,command | awk \
+      '/--test-type=webdriver/ && /Google Chrome/ && !/awk/ {print $1}')"
+    [[ -n "$webdriver_pids" ]] && kill -9 $webdriver_pids 2>/dev/null || true
+  fi
+}
+trap cleanup_bot_processes EXIT
+
 start_chromedriver() {
   if port_is_open; then
     echo "Using existing chromedriver on port $CHROMEDRIVER_PORT"
@@ -125,7 +148,6 @@ start_chromedriver() {
   "${cmd[@]}" --port="$CHROMEDRIVER_PORT" \
     >"$OUTPUT_DIR/chromedriver.log" 2>&1 &
   CHROMEDRIVER_PID=$!
-  trap '[[ -n "${CHROMEDRIVER_PID:-}" ]] && kill "$CHROMEDRIVER_PID" 2>/dev/null || true' EXIT
 
   for _ in {1..30}; do
     if port_is_open; then
@@ -184,7 +206,7 @@ run_flutter_drive_and_capture() {
         pkill -f 'flutter drive.*integration_test/competition_full_play_bot_test.dart' \
           2>/dev/null || true
         pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
-        lsof -ti tcp:"$WEB_PORT" | xargs -r kill 2>/dev/null || true
+        cleanup_bot_processes
         pkill -f "tee $log_file" 2>/dev/null || true
         kill "$run_pid" 2>/dev/null || true
       fi
@@ -197,7 +219,7 @@ run_flutter_drive_and_capture() {
   wait "$run_pid"
   local status=$?
   persist_checkpoint "$log_file"
-  lsof -ti tcp:"$WEB_PORT" | xargs -r kill 2>/dev/null || true
+  cleanup_bot_processes
   set -e
   if [[ "$status" -ne 0 ]] && grep -q "All tests passed!" "$log_file" 2>/dev/null; then
     return 0
