@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/hand_rank.dart';
+import '../../../logic/rummi_poker_grid/models/tile.dart';
+import '../../../logic/rummi_poker_grid/models/poker_deck.dart';
 import '../../../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../utils/common_ui.dart';
@@ -11,6 +13,7 @@ import 'game_shared_widgets.dart';
 Future<void> showGameRunInfoDialog({
   required BuildContext context,
   required Map<RummiHandRank, int> playedHandCounts,
+  List<Tile> addedDeckTiles = const [],
 }) {
   return showGameFramedDialog<void>(
     context: context,
@@ -46,11 +49,19 @@ Future<void> showGameRunInfoDialog({
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    _RunInfoDeckSummary(addedDeckTiles: addedDeckTiles),
+                    const SizedBox(height: 8),
                     for (final row in _buildRunInfoRows(playedHandCounts))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: _RunInfoRankRow(row: row),
                       ),
+                    ..._buildHiddenRunInfoRows(playedHandCounts).map(
+                      (row) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: _RunInfoRankRow(row: row),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -60,6 +71,24 @@ Future<void> showGameRunInfoDialog({
       ),
     ),
   );
+}
+
+List<_RunInfoRankRowData> _buildHiddenRunInfoRows(
+  Map<RummiHandRank, int> playedHandCounts,
+) {
+  final rows = [
+    for (final rank in RummiHandGrowth.hiddenRanks)
+      if (RummiHandGrowth.completedCountFor(playedHandCounts, rank) > 0)
+        _RunInfoRankRowData.fromRank(
+          rank: rank,
+          completedCount: RummiHandGrowth.completedCountFor(
+            playedHandCounts,
+            rank,
+          ),
+        ),
+  ];
+  rows.sort((a, b) => b.currentScore.compareTo(a.currentScore));
+  return rows;
 }
 
 List<_RunInfoRankRowData> _buildRunInfoRows(
@@ -216,6 +245,58 @@ class _RunInfoRankRow extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RunInfoDeckSummary extends StatelessWidget {
+  const _RunInfoDeckSummary({required this.addedDeckTiles});
+
+  final List<Tile> addedDeckTiles;
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = addedDeckTiles.isEmpty
+        ? '기본 덱 $kBasePokerTileCount장'
+        : '덱 ${kBasePokerTileCount + addedDeckTiles.length}장 · 추가 ${addedDeckTiles.length}장';
+    final tileText = addedDeckTiles.isEmpty
+        ? '추가 타일 없음'
+        : addedDeckTiles
+              .map((tile) => '${tile.color.code}${tile.number}')
+              .join(' ');
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F2F29),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFF6BAF9B).withValues(alpha: 0.45),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              summary,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.94),
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              tileText,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.62),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],

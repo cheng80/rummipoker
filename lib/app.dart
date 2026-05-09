@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_config.dart';
 import 'providers/features/settings/settings_notifier.dart';
+import 'resources/asset_paths.dart';
 import 'resources/item_translation_scope.dart';
 import 'resources/jester_translation_scope.dart';
 import 'resources/sound_manager.dart';
@@ -36,6 +37,7 @@ class _AppState extends ConsumerState<App> {
 
   @override
   Widget build(BuildContext context) {
+    final baseTheme = ThemeData.dark();
     final app = JesterTranslationScope(
       child: ItemTranslationScope(
         child: MaterialApp.router(
@@ -44,7 +46,13 @@ class _AppState extends ConsumerState<App> {
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
-          theme: ThemeData.dark().copyWith(
+          theme: baseTheme.copyWith(
+            textTheme: baseTheme.textTheme.apply(
+              fontFamily: AssetPaths.fontNexonLv2Gothic,
+            ),
+            primaryTextTheme: baseTheme.primaryTextTheme.apply(
+              fontFamily: AssetPaths.fontNexonLv2Gothic,
+            ),
             colorScheme: ColorScheme.dark(
               primary: const Color(0xFF42A5F5),
               secondary: const Color(0xFF64B5F6),

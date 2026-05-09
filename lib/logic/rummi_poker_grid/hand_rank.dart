@@ -9,6 +9,11 @@ enum RummiHandRank {
   fullHouse,
   fourOfAKind,
   straightFlush,
+  prismStraight,
+  crownFourOfAKind,
+  lowStraightFlush,
+  royalStraightFlush,
+  fiveOfAKind,
 }
 
 /// 현재 룰 기준 기본 점수. 투페어 이상만 점수를 준다.
@@ -22,6 +27,11 @@ int gddBaseScore(RummiHandRank r) => switch (r) {
   RummiHandRank.fullHouse => 80,
   RummiHandRank.fourOfAKind => 100,
   RummiHandRank.straightFlush => 150,
+  RummiHandRank.prismStraight => 90,
+  RummiHandRank.crownFourOfAKind => 130,
+  RummiHandRank.lowStraightFlush => 180,
+  RummiHandRank.royalStraightFlush => 200,
+  RummiHandRank.fiveOfAKind => 220,
 };
 
 /// 현재는 하이카드와 원페어를 점수 없는 줄로 취급한다.

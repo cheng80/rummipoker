@@ -108,6 +108,7 @@ void main() {
                     onReroll: () => null,
                     onBuyOffer: (_) => null,
                     onBuyItemOffer: (_) => null,
+                    onBuyTileOffer: (_) => null,
                     onUseMarketItem: (_) => null,
                     onSellOwnedJester: (_) => false,
                     onSellMarketItem: (item) {

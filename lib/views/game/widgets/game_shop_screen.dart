@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../../../logic/rummi_poker_grid/item_definition.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/item_translation_scope.dart';
@@ -53,22 +54,30 @@ const TextStyle _marketDescriptionTextStyle = TextStyle(
 
 enum _MarketShopTab { cardsAndQuickSlots, toolsAndGear }
 
-enum _MarketOfferLane { jester, quickSlot, passive, tool, gear }
+enum _MarketOfferLane { jester, tile, quickSlot, passive, tool, gear }
 
-enum _MarketOfferEntryKind { jester, item }
+enum _MarketOfferEntryKind { jester, item, tile }
 
 class _MarketOfferEntry {
   const _MarketOfferEntry.jester(this.jesterIndex)
     : kind = _MarketOfferEntryKind.jester,
-      itemIndex = null;
+      itemIndex = null,
+      tileIndex = null;
 
   const _MarketOfferEntry.item(this.itemIndex)
     : kind = _MarketOfferEntryKind.item,
-      jesterIndex = null;
+      jesterIndex = null,
+      tileIndex = null;
+
+  const _MarketOfferEntry.tile(this.tileIndex)
+    : kind = _MarketOfferEntryKind.tile,
+      jesterIndex = null,
+      itemIndex = null;
 
   final _MarketOfferEntryKind kind;
   final int? jesterIndex;
   final int? itemIndex;
+  final int? tileIndex;
 }
 
 class _MarketPurchaseFlight {
@@ -158,6 +167,7 @@ class GameShopScreen extends StatefulWidget {
     this.onRerollItemOffers,
     required this.onBuyOffer,
     required this.onBuyItemOffer,
+    required this.onBuyTileOffer,
     required this.onUseMarketItem,
     required this.onSellOwnedJester,
     required this.onSellMarketItem,
@@ -177,6 +187,7 @@ class GameShopScreen extends StatefulWidget {
   final String? Function(ItemPlacement placement)? onRerollItemOffers;
   final String? Function(int offerIndex) onBuyOffer;
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
+  final String? Function(int offerIndex) onBuyTileOffer;
   final String? Function(ItemDefinition item) onUseMarketItem;
   final bool Function(int ownedIndex) onSellOwnedJester;
   final bool Function(ItemDefinition item) onSellMarketItem;
@@ -201,6 +212,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   _MarketOfferLane _mainOfferLane = _MarketOfferLane.jester;
   _MarketOfferLane _utilityOfferLane = _MarketOfferLane.tool;
   int _selectedItemOfferIndex = -1;
+  int _selectedTileOfferIndex = -1;
   int _selectedItemSlotIndex = -1;
   final Map<_MarketOfferLane, int> _offerPages = <_MarketOfferLane, int>{};
   int _purchaseFlightTick = 0;
@@ -237,6 +249,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final key = switch (entry.kind) {
       _MarketOfferEntryKind.jester => 'j:${entry.jesterIndex}',
       _MarketOfferEntryKind.item => 'i:${entry.itemIndex}',
+      _MarketOfferEntryKind.tile => 't:${entry.tileIndex}',
     };
     return _offerKeys.putIfAbsent(key, GlobalKey.new);
   }
@@ -257,11 +270,15 @@ class _GameShopScreenState extends State<GameShopScreen>
       _selectedOwnedIndex = 0;
     } else if (_market.offers.isNotEmpty) {
       _selectedOfferIndex = 0;
+    } else if (_market.tileOffers.isNotEmpty) {
+      _mainOfferLane = _MarketOfferLane.tile;
+      _selectedTileOfferIndex = 0;
     }
     if (widget.initialItemShopTab) {
       _shopTab = _MarketShopTab.toolsAndGear;
       _utilityOfferLane = _MarketOfferLane.tool;
       _selectedItemOfferIndex = -1;
+      _selectedTileOfferIndex = -1;
       _selectedItemSlotIndex = -1;
       for (final entry in _offerEntriesForLane(_market, _utilityOfferLane)) {
         if (entry.kind == _MarketOfferEntryKind.item) {
@@ -271,6 +288,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       }
       _selectedOwnedIndex = null;
       _selectedOfferIndex = null;
+      _selectedTileOfferIndex = -1;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -327,6 +345,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       _selectedOwnedIndex = index;
       _selectedOfferIndex = null;
       _selectedItemOfferIndex = -1;
+      _selectedTileOfferIndex = -1;
       _selectedItemSlotIndex = -1;
     });
   }
@@ -337,6 +356,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       _mainOfferLane = _MarketOfferLane.jester;
       _selectedOfferIndex = index;
       _selectedItemOfferIndex = -1;
+      _selectedTileOfferIndex = -1;
       _selectedItemSlotIndex = -1;
       _selectedOwnedIndex = null;
     });
@@ -345,6 +365,19 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _selectItemOffer(int index) {
     setState(() {
       _selectedItemOfferIndex = index;
+      _selectedTileOfferIndex = -1;
+      _selectedItemSlotIndex = -1;
+      _selectedOwnedIndex = null;
+      _selectedOfferIndex = null;
+    });
+  }
+
+  void _selectTileOffer(int index) {
+    setState(() {
+      _shopTab = _MarketShopTab.cardsAndQuickSlots;
+      _mainOfferLane = _MarketOfferLane.tile;
+      _selectedTileOfferIndex = index;
+      _selectedItemOfferIndex = -1;
       _selectedItemSlotIndex = -1;
       _selectedOwnedIndex = null;
       _selectedOfferIndex = null;
@@ -363,6 +396,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       _setOfferLaneForPlacement(slot.placement);
       _selectedItemSlotIndex = slot.slotIndex;
       _selectedItemOfferIndex = -1;
+      _selectedTileOfferIndex = -1;
       _selectedOwnedIndex = null;
       _selectedOfferIndex = null;
     });
@@ -420,6 +454,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     return tab == _MarketShopTab.cardsAndQuickSlots
         ? const [
             _MarketOfferLane.jester,
+            _MarketOfferLane.tile,
             _MarketOfferLane.quickSlot,
             _MarketOfferLane.passive,
           ]
@@ -436,6 +471,12 @@ class _GameShopScreenState extends State<GameShopScreen>
     if (lane == _MarketOfferLane.jester) {
       for (var i = 0; i < market.offers.length; i++) {
         entries.add(_MarketOfferEntry.jester(i));
+      }
+      return entries;
+    }
+    if (lane == _MarketOfferLane.tile) {
+      for (var i = 0; i < market.tileOffers.length; i++) {
+        entries.add(_MarketOfferEntry.tile(i));
       }
       return entries;
     }
@@ -472,6 +513,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _selectFirstEntry(List<_MarketOfferEntry> entries) {
     _selectedOfferIndex = null;
     _selectedItemOfferIndex = -1;
+    _selectedTileOfferIndex = -1;
     _selectedItemSlotIndex = -1;
     if (entries.isEmpty) return;
     final entry = entries.first;
@@ -480,6 +522,8 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectedOfferIndex = entry.jesterIndex;
       case _MarketOfferEntryKind.item:
         _selectedItemOfferIndex = entry.itemIndex ?? -1;
+      case _MarketOfferEntryKind.tile:
+        _selectedTileOfferIndex = entry.tileIndex ?? -1;
     }
   }
 
@@ -506,6 +550,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   ItemPlacement? _placementForOfferLane(_MarketOfferLane lane) {
     return switch (lane) {
       _MarketOfferLane.jester => null,
+      _MarketOfferLane.tile => null,
       _MarketOfferLane.quickSlot => ItemPlacement.quickSlot,
       _MarketOfferLane.passive => ItemPlacement.passiveRack,
       _MarketOfferLane.tool => ItemPlacement.inventory,
@@ -518,6 +563,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     _MarketOfferLane lane,
   ) {
     final placement = _placementForOfferLane(lane);
+    if (lane == _MarketOfferLane.tile) return 0;
     return placement == null
         ? market.rerollCost
         : market.itemRerollCostFor(placement);
@@ -720,6 +766,26 @@ class _GameShopScreenState extends State<GameShopScreen>
     _queueStateSave();
   }
 
+  void _buySelectedTile() {
+    final offers = _market.tileOffers;
+    final index = _selectedTileOfferIndex;
+    if (index < 0 || index >= offers.length) return;
+    final boughtOffer = offers[index];
+    final failMessage = widget.onBuyTileOffer(index);
+    if (failMessage != null) {
+      _startMarketDenyFeedback('tile-buy', failMessage);
+      showBottomNotice(context, failMessage);
+      return;
+    }
+    setState(() {
+      final market = _market;
+      _clampOfferPageForLane(market, _MarketOfferLane.tile);
+      _selectFirstEntry(_offerEntriesForLane(market, _MarketOfferLane.tile));
+    });
+    _queueStateSave();
+    showBottomNotice(context, '${_tileLabel(boughtOffer.tile)} 덱 추가');
+  }
+
   RummiMarketItemSlotView? _findPurchasedItemSlot(
     RummiMarketRuntimeFacade market,
     RummiMarketItemOfferView offer,
@@ -870,7 +936,8 @@ class _GameShopScreenState extends State<GameShopScreen>
       (entry) =>
           entry.kind == target.kind &&
           entry.jesterIndex == target.jesterIndex &&
-          entry.itemIndex == target.itemIndex,
+          entry.itemIndex == target.itemIndex &&
+          entry.tileIndex == target.tileIndex,
     );
     return index < 0 ? 0 : index;
   }
@@ -1279,6 +1346,7 @@ class _GameShopScreenState extends State<GameShopScreen>
             playedHandCounts:
                 widget.readActiveRunSaveView?.call()?.currentPlayedHandCounts ??
                 const {},
+            addedDeckTiles: _market.addedDeckTiles,
           );
           if (!mounted) return;
           SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
@@ -1306,6 +1374,11 @@ class _GameShopScreenState extends State<GameShopScreen>
         _selectedItemOfferIndex >= 0 &&
             _selectedItemOfferIndex < market.itemOffers.length
         ? market.itemOffers[_selectedItemOfferIndex]
+        : null;
+    final selectedTileOffer =
+        _selectedTileOfferIndex >= 0 &&
+            _selectedTileOfferIndex < market.tileOffers.length
+        ? market.tileOffers[_selectedTileOfferIndex]
         : null;
     final selectedItemSlot = _selectedItemSlotIndex < 0
         ? null
@@ -1559,6 +1632,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                       context,
                                       selectedItemOffer,
                                     )
+                                  : selectedTileOffer != null
+                                  ? _tileLabel(selectedTileOffer.tile)
                                   : selectedOwnedItemSlot != null
                                   ? localizedItemSlotName(
                                       context,
@@ -1571,6 +1646,10 @@ class _GameShopScreenState extends State<GameShopScreen>
                                   ? 'Jester Shop'
                                   : selectedItemOffer != null
                                   ? 'Item Shop'
+                                  : selectedTileOffer != null
+                                  ? selectedTileOffer.isFreeReward
+                                        ? 'Boss Reward'
+                                        : 'Tile Shop'
                                   : selectedOwnedItemSlot != null
                                   ? _ownedItemSlotSubtitle(
                                       selectedOwnedItemSlot,
@@ -1621,6 +1700,16 @@ class _GameShopScreenState extends State<GameShopScreen>
                                       tags: _itemSynergyTags(
                                         selectedItemOffer.item,
                                       ),
+                                    )
+                                  : selectedTileOffer != null
+                                  ? _MarketOfferDetailBody(
+                                      effectText: '다음 블라인드부터 드로우 덱에 추가됩니다.',
+                                      tags: [
+                                        '타일 ${_tileLabel(selectedTileOffer.tile)}',
+                                        selectedTileOffer.isFreeReward
+                                            ? '무료 선택'
+                                            : '덱 추가',
+                                      ],
                                     )
                                   : selectedOwnedItemSlot != null
                                   ? _OwnedMarketItemBody(
@@ -1697,6 +1786,40 @@ class _GameShopScreenState extends State<GameShopScreen>
                                       denyTick: _marketDenyTick,
                                       denyReason: _marketDenyReason,
                                     )
+                                  : selectedTileOffer != null
+                                  ? _MarketActionPane(
+                                      priceLabel: selectedTileOffer.isFreeReward
+                                          ? '무료'
+                                          : '${selectedTileOffer.price}',
+                                      buttonLabel:
+                                          selectedTileOffer.isFreeReward
+                                          ? '선택'
+                                          : '구매',
+                                      buttonColor: const Color(0xFFF4A81D),
+                                      foreground: Colors.black,
+                                      onPressed: selectedTileOffer.isAffordable
+                                          ? _buySelectedTile
+                                          : null,
+                                      onDeniedPressed:
+                                          selectedTileOffer.isAffordable
+                                          ? null
+                                          : () {
+                                              const reason = 'Gold 부족';
+                                              _startMarketDenyFeedback(
+                                                'tile-buy',
+                                                reason,
+                                              );
+                                              showBottomNotice(context, reason);
+                                            },
+                                      disabledReason:
+                                          selectedTileOffer.isAffordable
+                                          ? null
+                                          : 'Gold 부족',
+                                      denyActive:
+                                          _marketDenyTarget == 'tile-buy',
+                                      denyTick: _marketDenyTick,
+                                      denyReason: _marketDenyReason,
+                                    )
                                   : selectedOwnedItemSlot != null
                                   ? _ownedMarketItemActionPane(
                                       context,
@@ -1734,8 +1857,12 @@ class _GameShopScreenState extends State<GameShopScreen>
                                       feedbackTick: _marketRerollFeedbackTick,
                                       onReroll:
                                           currentOfferLane ==
-                                                  _MarketOfferLane.jester ||
-                                              widget.onRerollItemOffers != null
+                                              _MarketOfferLane.jester
+                                          ? _reroll
+                                          : currentOfferLane !=
+                                                    _MarketOfferLane.tile &&
+                                                widget.onRerollItemOffers !=
+                                                    null
                                           ? _reroll
                                           : null,
                                     ),
@@ -1829,6 +1956,23 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                                         _selectItemOffer(
                                                                           visibleOfferEntries[i]
                                                                               .itemIndex!,
+                                                                        ),
+                                                                  ),
+                                                                _MarketOfferEntryKind
+                                                                    .tile =>
+                                                                  _MarketTileOfferCard(
+                                                                    offer:
+                                                                        market
+                                                                            .tileOffers[visibleOfferEntries[i]
+                                                                            .tileIndex!],
+                                                                    selected:
+                                                                        _selectedTileOfferIndex ==
+                                                                        visibleOfferEntries[i]
+                                                                            .tileIndex,
+                                                                    onTap: () =>
+                                                                        _selectTileOffer(
+                                                                          visibleOfferEntries[i]
+                                                                              .tileIndex!,
                                                                         ),
                                                                   ),
                                                               },
@@ -2855,6 +2999,7 @@ class _MarketRerollSuccessFeedback extends StatelessWidget {
 String _offerLaneLabel(_MarketOfferLane lane) {
   return switch (lane) {
     _MarketOfferLane.jester => 'Jester',
+    _MarketOfferLane.tile => 'Tile',
     _MarketOfferLane.quickSlot => 'Q-Slot',
     _MarketOfferLane.passive => 'Passive',
     _MarketOfferLane.tool => 'Tool',
@@ -3068,6 +3213,8 @@ String _offerEntrySignature(
       'j:${entry.jesterIndex}:${market.offers[entry.jesterIndex!].contentId}:${market.offers[entry.jesterIndex!].price}',
     _MarketOfferEntryKind.item =>
       'i:${entry.itemIndex}:${market.itemOffers[entry.itemIndex!].contentId}:${market.itemOffers[entry.itemIndex!].price}',
+    _MarketOfferEntryKind.tile =>
+      't:${entry.tileIndex}:${market.tileOffers[entry.tileIndex!].tile.code}:${market.tileOffers[entry.tileIndex!].price}',
   };
 }
 
@@ -3303,6 +3450,87 @@ class _MarketItemOfferCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MarketTileOfferCard extends StatelessWidget {
+  const _MarketTileOfferCard({
+    required this.offer,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final RummiMarketTileOfferView offer;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _tileAccent(offer.tile.color);
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: _marketShopCellWidth,
+        height: _marketShopCellHeight,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+              height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+              child: _MarketSelectableCardFrame(
+                selected: selected,
+                width: _marketOfferCardWidth,
+                height: _marketOfferCardHeight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE7EEE5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: accent, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _tileLabel(offer.tile),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF19352E),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              offer.isFreeReward ? '무료' : '${offer.price}G',
+              maxLines: 1,
+              style: TextStyle(
+                color: offer.isAffordable
+                    ? const Color(0xFFF2C14E)
+                    : Colors.white38,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _tileLabel(Tile tile) => '${tile.color.code}${tile.number}';
+
+Color _tileAccent(TileColor color) {
+  return switch (color) {
+    TileColor.red => const Color(0xFFE35249),
+    TileColor.blue => const Color(0xFF3D8CEB),
+    TileColor.yellow => const Color(0xFFE2B93B),
+    TileColor.black => const Color(0xFF29302D),
+  };
 }
 
 class _MarketItemCardFace extends StatelessWidget {

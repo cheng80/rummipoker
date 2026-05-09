@@ -1492,6 +1492,7 @@ class _GameViewState extends ConsumerState<GameView>
               _gameNotifier.buyShopOffer(index, itemCatalog: _itemCatalog),
           onBuyItemOffer: (offer) =>
               _gameNotifier.buyItemOffer(offer, itemCatalog: _itemCatalog),
+          onBuyTileOffer: _gameNotifier.buyTileOffer,
           onUseMarketItem: _gameNotifier.useMarketItem,
           onSellOwnedJester: (index) =>
               _gameNotifier.sellOwnedJester(index, itemCatalog: _itemCatalog),
@@ -1579,6 +1580,7 @@ class _GameViewState extends ConsumerState<GameView>
       context: context,
       playedHandCounts:
           _gameState.activeRunSaveView?.currentPlayedHandCounts ?? const {},
+      addedDeckTiles: _gameState.runProgress?.addedDeckTiles ?? const [],
     );
   }
 

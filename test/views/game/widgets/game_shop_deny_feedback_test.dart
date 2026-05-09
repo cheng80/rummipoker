@@ -107,6 +107,7 @@ void main() {
                       buyCalled = true;
                       return null;
                     },
+                    onBuyTileOffer: (_) => null,
                     onUseMarketItem: (_) => null,
                     onSellOwnedJester: (_) => false,
                     onSellMarketItem: (_) => false,

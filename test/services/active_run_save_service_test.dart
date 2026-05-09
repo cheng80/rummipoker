@@ -778,7 +778,7 @@ void main() {
       expect(restored.session.eliminated.length, 5);
       expect(
         restored.runProgress.buildRuntimeSnapshot().playedCountForRank(
-          RummiHandRank.straight,
+          RummiHandRank.prismStraight,
         ),
         1,
       );
@@ -787,9 +787,37 @@ void main() {
       expect(
         restored.stageStartSnapshot.runProgress
             .buildRuntimeSnapshot()
-            .playedCountForRank(RummiHandRank.straight),
+            .playedCountForRank(RummiHandRank.prismStraight),
         0,
       );
+    });
+
+    test('run progress saves and restores added deck tiles', () async {
+      final runProgress = RummiRunProgress()
+        ..addDeckTile(const Tile(color: TileColor.red, number: 7))
+        ..tileOffers.add(const Tile(color: TileColor.blue, number: 9))
+        ..pendingBossTileReward = true;
+      final runtime = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.shop,
+        difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.basic,
+        session: RummiPokerGridSession(runSeed: 9),
+        runProgress: runProgress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: RummiPokerGridSession(runSeed: 9),
+          runProgress: runProgress.copySnapshot(),
+        ),
+      );
+
+      await ActiveRunSaveService.saveRuntimeState(runtime);
+      final restored = await ActiveRunSaveService.loadActiveRun();
+
+      expect(restored, isNotNull);
+      expect(restored!.runProgress.addedDeckTiles.single.color, TileColor.red);
+      expect(restored.runProgress.addedDeckTiles.single.number, 7);
+      expect(restored.runProgress.addedDeckTiles.single.id, 1);
+      expect(restored.runProgress.tileOffers.single.color, TileColor.blue);
+      expect(restored.runProgress.pendingBossTileReward, isTrue);
     });
   });
 }

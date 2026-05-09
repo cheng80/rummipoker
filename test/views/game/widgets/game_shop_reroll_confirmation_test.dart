@@ -129,6 +129,7 @@ Future<void> _pumpShopScreen(WidgetTester tester, {int rerollCost = 5}) async {
                   onRerollItemOffers: (_) => null,
                   onBuyOffer: (_) => null,
                   onBuyItemOffer: (_) => null,
+                  onBuyTileOffer: (_) => null,
                   onUseMarketItem: (_) => null,
                   onSellOwnedJester: (_) => false,
                   onSellMarketItem: (_) => false,

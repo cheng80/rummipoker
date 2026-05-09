@@ -14,6 +14,14 @@ class RummiHandGrowth {
     RummiHandRank.straightFlush,
   ];
 
+  static const List<RummiHandRank> hiddenRanks = [
+    RummiHandRank.prismStraight,
+    RummiHandRank.crownFourOfAKind,
+    RummiHandRank.lowStraightFlush,
+    RummiHandRank.royalStraightFlush,
+    RummiHandRank.fiveOfAKind,
+  ];
+
   static bool grows(RummiHandRank rank) => !isDeadLineRank(rank);
 
   static int levelForCompletedCount(RummiHandRank rank, int completedCount) {
@@ -29,6 +37,11 @@ class RummiHandGrowth {
     RummiHandRank.fullHouse => 16,
     RummiHandRank.fourOfAKind => 20,
     RummiHandRank.straightFlush => 30,
+    RummiHandRank.prismStraight => 18,
+    RummiHandRank.crownFourOfAKind => 26,
+    RummiHandRank.lowStraightFlush => 36,
+    RummiHandRank.royalStraightFlush => 40,
+    RummiHandRank.fiveOfAKind => 44,
     RummiHandRank.highCard || RummiHandRank.onePair => 0,
   };
 

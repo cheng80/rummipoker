@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/blind_selection_setup.dart';
@@ -193,6 +194,36 @@ void main() {
       expect(options[0].availability, BlindSelectionAvailability.selectable);
       expect(options[1].availability, BlindSelectionAvailability.locked);
       expect(options[2].availability, BlindSelectionAvailability.locked);
+    });
+
+    test('added deck tiles are shuffled into next selected blind deck', () {
+      final progress = RummiRunProgress()
+        ..stageIndex = 2
+        ..currentStationBlindTierIndex = -1
+        ..addDeckTile(const Tile(color: TileColor.red, number: 7));
+      final runtime = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.blindSelect,
+        difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.basic,
+        session: RummiPokerGridSession(runSeed: 77),
+        runProgress: progress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: RummiPokerGridSession(runSeed: 77),
+          runProgress: progress.copySnapshot(),
+        ),
+      );
+
+      final prepared = BlindSelectionSetup.prepareContinuedRunForSelectedBlind(
+        runtime: runtime,
+        tier: BlindTier.small,
+      );
+
+      expect(prepared.session.totalDeckSize, 53);
+      expect(prepared.session.conservationTotal, 53);
+      expect(
+        prepared.session.deck.snapshotPile(),
+        contains(const Tile(color: TileColor.red, number: 7, id: 1)),
+      );
     });
 
     test('station이 올라가면 같은 tier의 목표 점수도 함께 오른다', () {

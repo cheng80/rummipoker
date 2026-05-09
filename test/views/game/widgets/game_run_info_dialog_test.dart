@@ -42,7 +42,10 @@ void main() {
                         onPressed: () {
                           showGameRunInfoDialog(
                             context: context,
-                            playedHandCounts: const {RummiHandRank.flush: 2},
+                            playedHandCounts: const {
+                              RummiHandRank.flush: 2,
+                              RummiHandRank.fiveOfAKind: 1,
+                            },
                           );
                         },
                         child: const Text('open'),
@@ -62,7 +65,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('런 정보'), findsOneWidget);
+    expect(find.text('기본 덱 52장'), findsOneWidget);
     expect(find.text('플러시'), findsOneWidget);
+    expect(find.text('파이브 카드'), findsOneWidget);
     expect(find.text('Lv.3'), findsOneWidget);
     expect(find.text('완성 2회'), findsOneWidget);
     expect(find.text('70'), findsWidgets);

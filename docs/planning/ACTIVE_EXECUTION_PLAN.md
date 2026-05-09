@@ -11,7 +11,7 @@
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
 | 공모전 기준 완성 | Paused on S8 boss system gap | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | `contest_full_run_bot`은 최신 보정으로 S8 big까지 통과했지만 S8 boss에서 후반 성장축 부족이 드러나 full-run QA를 일시 중단한다. |
-| 실제 Goal 기준 완성 | Active for core rule reinforcement | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 완성 시 족보 자체가 성장하는 런타임 규칙과 덱 확장/성장 후보를 먼저 보강한 뒤 공모전 풀런봇을 재개한다. |
+| 실제 Goal 기준 완성 | Active for QA before bot resume | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1은 런타임 반영과 핵심 검증 완료. 다음은 최신 build smoke와 bot policy 동기화 확인 뒤 공모전 풀런봇을 재개한다. |
 
 현재는 공모전 풀런봇을 더 밀지 않고, 게임 전체 룰 시스템 보강 트랙을 먼저 실행한다.
 
@@ -20,12 +20,11 @@
 상세 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.
 현재 실행 순서는 아래로 고정한다.
 
-1. 족보를 완성할 때마다 해당 족보가 게임오버 없이 이어지는 하나의 run 전체에서 성장하고, 그 run의 이후 전투 점수에 반영되는 규칙을 설계하고 저장/복원/정산 테스트까지 반영한다.
-2. 게임 중/게임 밖에서 언제든 열 수 있는 `런 정보` 성격의 화면에서 족보별 레벨, 현재 점수, 완성 횟수를 볼 수 있게 UI 경로를 설계한다.
-3. 현재 아이템/Jester/마켓 구조에서 덱 확장 또는 족보 성장 보조 축이 없는지 확인하고, 필요한 최소 보강 후보를 정한다.
-4. 성장한 족보 점수가 전투 정산과 bot 후보 평가에 반영되는지 검증한다.
-5. `contest_full_run_bot`은 위 룰 시스템 보강이 런타임 검증까지 끝난 뒤 최신 build 기준으로 재개한다.
-6. 재개 시 S8 big 통과 증거와 S8 boss 실패/timeout 로그를 기준선으로 삼고, S8 boss부터 checkpoint-resume 또는 fresh full-run을 다시 실행한다.
+1. 최신 build를 띄워 Browser/WebDriver smoke로 console error/warn 0건을 확인한다.
+2. `contest_full_run_bot` policy code/test가 tile lane 구매, 추가 덱, 특수 족보 점수를 실제 평가하는지 확인한다.
+3. 부족하면 bot 후보 평가에 특수 족보 근접도와 추가 타일 구매 판단을 보강한다.
+4. `contest_full_run_bot`을 최신 build 기준으로 재개한다.
+5. 재개 시 S8 big 통과 증거와 S8 boss 실패/timeout 로그를 기준선으로 삼고, S8 boss부터 checkpoint-resume 또는 fresh full-run을 다시 실행한다.
 
 최근 `contest_full_run_bot` 기준선:
 

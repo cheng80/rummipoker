@@ -62,7 +62,28 @@ class HandEvaluator {
 
     switch (tiles.length) {
       case 5:
+        if (_listEquals(counts, <int>[5])) {
+          return _result(
+            RummiHandRank.fiveOfAKind,
+            contributingIndexes: List<int>.unmodifiable(originalIndexes),
+            ruleset: ruleset,
+          );
+        }
         if (flush && straight) {
+          if (_listEquals(ranks, <int>[9, 10, 11, 12, 13])) {
+            return _result(
+              RummiHandRank.royalStraightFlush,
+              contributingIndexes: List<int>.unmodifiable(originalIndexes),
+              ruleset: ruleset,
+            );
+          }
+          if (_listEquals(ranks, <int>[1, 2, 3, 4, 5])) {
+            return _result(
+              RummiHandRank.lowStraightFlush,
+              contributingIndexes: List<int>.unmodifiable(originalIndexes),
+              ruleset: ruleset,
+            );
+          }
           return _result(
             RummiHandRank.straightFlush,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
@@ -70,6 +91,17 @@ class HandEvaluator {
           );
         }
         if (_listEquals(counts, <int>[4, 1])) {
+          final fourRank = _rankForCount(indexesByRank, 4);
+          if (fourRank != null && fourRank >= 11 && fourRank <= 13) {
+            return _result(
+              RummiHandRank.crownFourOfAKind,
+              contributingIndexes: _mapIndexes(
+                originalIndexes,
+                _indexesForCount(indexesByRank, 4),
+              ),
+              ruleset: ruleset,
+            );
+          }
           return _result(
             RummiHandRank.fourOfAKind,
             contributingIndexes: _mapIndexes(
@@ -94,6 +126,13 @@ class HandEvaluator {
           );
         }
         if (straight) {
+          if (colors.length == 4) {
+            return _result(
+              RummiHandRank.prismStraight,
+              contributingIndexes: List<int>.unmodifiable(originalIndexes),
+              ruleset: ruleset,
+            );
+          }
           return _result(
             RummiHandRank.straight,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
@@ -245,6 +284,13 @@ class HandEvaluator {
     }
     out.sort();
     return out;
+  }
+
+  static int? _rankForCount(Map<int, List<int>> indexesByRank, int count) {
+    for (final entry in indexesByRank.entries) {
+      if (entry.value.length == count) return entry.key;
+    }
+    return null;
   }
 
   static List<int> _mapIndexes(

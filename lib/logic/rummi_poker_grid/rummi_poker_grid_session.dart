@@ -204,6 +204,7 @@ class RummiPokerGridSession {
     required this.runRandom,
     required this.ruleset,
     required this.deckCopiesPerTile,
+    required this.initialDeckSizeForBlind,
     required this.maxHandSize,
     required this.blind,
     required this.deck,
@@ -225,6 +226,7 @@ class RummiPokerGridSession {
   final int runSeed;
   final RummiRuleset ruleset;
   final int deckCopiesPerTile;
+  int initialDeckSizeForBlind;
   int maxHandSize;
 
   /// [runSeed]로 시드된 단일 RNG — 덱 셔플 이후에도 **같은 스트림**으로 이어짐(턴 재현).
@@ -246,6 +248,11 @@ class RummiPokerGridSession {
       runRandom: rng,
       ruleset: ruleset,
       deckCopiesPerTile: deckCopiesPerTile,
+      initialDeckSizeForBlind: _initialDeckSizeFor(
+        deck: deck,
+        board: board,
+        deckCopiesPerTile: deckCopiesPerTile,
+      ),
       maxHandSize: ruleset.defaultMaxHandSize,
       blind:
           blind ??
@@ -272,9 +279,20 @@ class RummiPokerGridSession {
 
   static int _rollSeed() => Random().nextInt(0x7fffffff);
 
+  static int _initialDeckSizeFor({
+    required PokerDeck? deck,
+    required RummiBoard? board,
+    required int deckCopiesPerTile,
+  }) {
+    if (deck == null) return totalDeckSizeForCopies(deckCopiesPerTile);
+    return deck.snapshotPile().length +
+        countTilesOnBoard(board ?? RummiBoard());
+  }
+
   factory RummiPokerGridSession.restored({
     required int runSeed,
     required int deckCopiesPerTile,
+    int? initialDeckSizeForBlind,
     required int maxHandSize,
     required int runRandomState,
     RummiRuleset ruleset = RummiRuleset.currentDefaults,
@@ -297,6 +315,8 @@ class RummiPokerGridSession {
       runRandom: SeededRandom.fromState(runRandomState),
       ruleset: ruleset,
       deckCopiesPerTile: deckCopiesPerTile,
+      initialDeckSizeForBlind:
+          initialDeckSizeForBlind ?? totalDeckSizeForCopies(deckCopiesPerTile),
       maxHandSize: maxHandSize,
       blind: blind,
       deck: deck,
@@ -343,7 +363,7 @@ class RummiPokerGridSession {
   bool expiryGuardUsedThisStation;
   final RummiPokerGridEngine engine;
 
-  int get totalDeckSize => totalDeckSizeForCopies(deckCopiesPerTile);
+  int get totalDeckSize => initialDeckSizeForBlind;
 
   /// 드로우 버튼 활성 조건: 덱 잔량 + 손패 여유.
   bool get canDrawFromDeck => hand.length < maxHandSize && !deck.isEmpty;
@@ -540,6 +560,7 @@ class RummiPokerGridSession {
     return RummiPokerGridSession.restored(
       runSeed: runSeed,
       deckCopiesPerTile: deckCopiesPerTile,
+      initialDeckSizeForBlind: initialDeckSizeForBlind,
       maxHandSize: maxHandSize,
       runRandomState: runRandom.state,
       ruleset: ruleset,
@@ -853,11 +874,16 @@ class RummiPokerGridSession {
     required int boardDiscardsRemaining,
     int? handDiscardsRemaining,
     int? shuffleSeed,
+    List<Tile>? deckSource,
   }) {
     discardStageRemainder();
     eliminated.clear();
+    final source = deckSource;
+    initialDeckSizeForBlind =
+        source?.length ?? totalDeckSizeForCopies(deckCopiesPerTile);
     deck.resetShuffled(
       random: SeededRandom(shuffleSeed ?? deriveStageShuffleSeed(runSeed, 1)),
+      source: source,
       copiesPerTile: deckCopiesPerTile,
     );
     blind.targetScore = targetScore;

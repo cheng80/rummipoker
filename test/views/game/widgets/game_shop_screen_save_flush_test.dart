@@ -133,6 +133,7 @@ void main() {
                                       return null;
                                     },
                                     onBuyItemOffer: (_) => null,
+                                    onBuyTileOffer: (_) => null,
                                     onUseMarketItem: (_) => null,
                                     onSellOwnedJester: (_) => false,
                                     onSellMarketItem: (_) => false,

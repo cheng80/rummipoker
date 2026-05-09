@@ -70,6 +70,7 @@ Future<void> _pumpShopScreen(
                   onReroll: onReroll,
                   onBuyOffer: onBuyOffer ?? ((_) => null),
                   onBuyItemOffer: (_) => null,
+                  onBuyTileOffer: (_) => null,
                   onUseMarketItem: (_) => null,
                   onSellOwnedJester: (_) => false,
                   onSellMarketItem: (_) => false,

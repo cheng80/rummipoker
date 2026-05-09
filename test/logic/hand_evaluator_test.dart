@@ -38,7 +38,7 @@ void main() {
       expect(isDeadLineRank(RummiHandRank.twoPair), isFalse);
     });
 
-    test('straight flush 9–13 same color', () {
+    test('royal straight flush 9–13 same color is hidden rank', () {
       final e = HandEvaluator.evaluateFive([
         t(TileColor.red, 9),
         t(TileColor.red, 10),
@@ -46,9 +46,58 @@ void main() {
         t(TileColor.red, 12),
         t(TileColor.red, 13),
       ]);
-      expect(e.rank, RummiHandRank.straightFlush);
-      expect(e.baseScore, 150);
+      expect(e.rank, RummiHandRank.royalStraightFlush);
+      expect(e.baseScore, 200);
       expect(e.canClearLine, true);
+    });
+
+    test('five of a kind beats four of a kind', () {
+      final e = HandEvaluator.evaluateFive([
+        const Tile(color: TileColor.red, number: 7, id: 0),
+        const Tile(color: TileColor.blue, number: 7, id: 0),
+        const Tile(color: TileColor.yellow, number: 7, id: 0),
+        const Tile(color: TileColor.black, number: 7, id: 0),
+        const Tile(color: TileColor.red, number: 7, id: 1),
+      ]);
+      expect(e.rank, RummiHandRank.fiveOfAKind);
+      expect(e.baseScore, 220);
+      expect(e.contributingIndexes, [0, 1, 2, 3, 4]);
+    });
+
+    test('low straight flush is hidden rank', () {
+      final e = HandEvaluator.evaluateFive([
+        t(TileColor.yellow, 1),
+        t(TileColor.yellow, 2),
+        t(TileColor.yellow, 3),
+        t(TileColor.yellow, 4),
+        t(TileColor.yellow, 5),
+      ]);
+      expect(e.rank, RummiHandRank.lowStraightFlush);
+      expect(e.baseScore, 180);
+    });
+
+    test('prism straight requires all four colors', () {
+      final e = HandEvaluator.evaluateFive([
+        t(TileColor.red, 1),
+        t(TileColor.blue, 2),
+        t(TileColor.yellow, 3),
+        t(TileColor.black, 4),
+        t(TileColor.red, 5),
+      ]);
+      expect(e.rank, RummiHandRank.prismStraight);
+      expect(e.baseScore, 90);
+    });
+
+    test('crown four of a kind beats normal four of a kind', () {
+      final e = HandEvaluator.evaluateFive([
+        t(TileColor.red, 12),
+        t(TileColor.blue, 12),
+        t(TileColor.yellow, 12),
+        t(TileColor.black, 12),
+        t(TileColor.red, 3),
+      ]);
+      expect(e.rank, RummiHandRank.crownFourOfAKind);
+      expect(e.baseScore, 130);
     });
 
     test('straight 1–5 mixed colors', () {
@@ -59,8 +108,8 @@ void main() {
         t(TileColor.black, 4),
         t(TileColor.red, 5),
       ]);
-      expect(e.rank, RummiHandRank.straight);
-      expect(e.baseScore, 70);
+      expect(e.rank, RummiHandRank.prismStraight);
+      expect(e.baseScore, 90);
     });
 
     test('straight wheel 10–11–12–13–1 mixed colors', () {
@@ -71,8 +120,8 @@ void main() {
         t(TileColor.black, 13),
         t(TileColor.red, 1),
       ]);
-      expect(e.rank, RummiHandRank.straight);
-      expect(e.baseScore, 70);
+      expect(e.rank, RummiHandRank.prismStraight);
+      expect(e.baseScore, 90);
     });
 
     test('ruleset can disable wheel straight recognition', () {

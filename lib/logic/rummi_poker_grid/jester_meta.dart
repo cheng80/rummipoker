@@ -5,6 +5,7 @@ import '../../app_config.dart';
 import 'hand_rank.dart';
 import 'item_definition.dart';
 import 'models/tile.dart';
+import 'models/poker_deck.dart';
 import 'rummi_poker_grid_session.dart';
 
 enum RummiJesterRarity { common, uncommon, rare, legendary }
@@ -996,6 +997,9 @@ class RummiRunProgress {
     required List<RummiShopOffer> shopOffers,
     required Map<int, int> statefulValuesBySlot,
     required Map<RummiHandRank, int> playedHandCounts,
+    List<Tile> addedDeckTiles = const [],
+    List<Tile> tileOffers = const [],
+    this.pendingBossTileReward = false,
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
     this.seenMarketJesterIds = const <String>{},
@@ -1015,6 +1019,8 @@ class RummiRunProgress {
     this.shopOffers.addAll(shopOffers);
     _statefulValuesBySlot.addAll(statefulValuesBySlot);
     _playedHandCounts.addAll(playedHandCounts);
+    this.addedDeckTiles.addAll(addedDeckTiles);
+    this.tileOffers.addAll(tileOffers);
   }
 
   static const int maxJesterSlots = 5;
@@ -1049,6 +1055,9 @@ class RummiRunProgress {
   Set<String> clearedStationKeys = <String>{};
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
   final List<RummiShopOffer> shopOffers = <RummiShopOffer>[];
+  final List<Tile> addedDeckTiles = <Tile>[];
+  final List<Tile> tileOffers = <Tile>[];
+  bool pendingBossTileReward = false;
   final Map<int, int> _statefulValuesBySlot = <int, int>{};
   final Map<RummiHandRank, int> _playedHandCounts = <RummiHandRank, int>{};
 
@@ -1082,6 +1091,9 @@ class RummiRunProgress {
           .toList(growable: false),
       statefulValuesBySlot: Map<int, int>.from(_statefulValuesBySlot),
       playedHandCounts: Map<RummiHandRank, int>.from(_playedHandCounts),
+      addedDeckTiles: List<Tile>.from(addedDeckTiles),
+      tileOffers: List<Tile>.from(tileOffers),
+      pendingBossTileReward: pendingBossTileReward,
       itemInventory: itemInventory,
       marketModifiers: marketModifiers,
       seenMarketJesterIds: Set<String>.from(seenMarketJesterIds),
@@ -1108,6 +1120,61 @@ class RummiRunProgress {
     clearedStationKeys.add('station_$stationIndex');
   }
 
+  List<Tile> buildDeckSourceForNextBlind(int deckCopiesPerTile) {
+    return List<Tile>.unmodifiable([
+      ...buildStandardPokerDeck(copiesPerTile: deckCopiesPerTile),
+      ...addedDeckTiles,
+    ]);
+  }
+
+  void queueBossTileReward() {
+    pendingBossTileReward = true;
+  }
+
+  bool addDeckTile(Tile tile) {
+    final copyId = _nextCopyIdForTile(tile);
+    addedDeckTiles.add(
+      Tile(color: tile.color, number: tile.number, id: copyId),
+    );
+    return true;
+  }
+
+  bool buyTileOffer(int offerIndex) {
+    if (offerIndex < 0 || offerIndex >= tileOffers.length) return false;
+    final price = effectiveTileOfferPrice(offerIndex);
+    if (gold < price) return false;
+    final tile = tileOffers.removeAt(offerIndex);
+    gold -= price;
+    addDeckTile(tile);
+    _consumePurchaseDiscounts('tile');
+    return true;
+  }
+
+  bool claimFreeTileOffer(int offerIndex) {
+    if (!pendingBossTileReward) return false;
+    if (offerIndex < 0 || offerIndex >= tileOffers.length) return false;
+    final tile = tileOffers.removeAt(offerIndex);
+    addDeckTile(tile);
+    pendingBossTileReward = false;
+    return true;
+  }
+
+  int effectiveTileOfferPrice(int offerIndex) {
+    if (pendingBossTileReward) return 0;
+    final stageStep = max(0, stageIndex - 1) ~/ 2;
+    return 3 + stageStep;
+  }
+
+  int _nextCopyIdForTile(Tile tile) {
+    var maxId = 0;
+    for (final existing in addedDeckTiles) {
+      if (existing.color == tile.color && existing.number == tile.number) {
+        maxId = max(maxId, existing.id);
+      }
+    }
+    return maxId + 1;
+  }
+
   int targetForStage(int stageNumber) {
     if (stageNumber <= 1) {
       return (300 * AppConfig.stationTargetScoreScale).round();
@@ -1125,6 +1192,7 @@ class RummiRunProgress {
     required int boardDiscards,
     required int handDiscards,
     required int maxHandSize,
+    List<Tile>? deckSource,
     bool applyRoundEndDecay = true,
   }) {
     stageIndex = stationIndex;
@@ -1137,6 +1205,7 @@ class RummiRunProgress {
       boardDiscardsRemaining: boardDiscards,
       handDiscardsRemaining: handDiscards,
       shuffleSeed: shuffleSeed,
+      deckSource: deckSource,
     );
     session.maxHandSize = maxHandSize;
   }
@@ -1300,6 +1369,7 @@ class RummiRunProgress {
       offerCountOverride: offerCountOverride,
       pressureProfile: pressureProfile,
     );
+    _generateTileOffers(rng);
   }
 
   bool canAfford(int cost) => gold >= cost;
@@ -1842,6 +1912,18 @@ class RummiRunProgress {
       pool.remove(selected);
       shopOffers.add(RummiShopOffer(slotIndex: slot, card: selected));
       seenMarketJesterIds.add(selected.id);
+    }
+  }
+
+  void _generateTileOffers(Random rng) {
+    tileOffers.clear();
+    final usedCodes = <String>{};
+    final allTiles = buildStandardPokerDeck(copiesPerTile: 1);
+    while (tileOffers.length < 3 && usedCodes.length < allTiles.length) {
+      final tile = allTiles[rng.nextInt(allTiles.length)];
+      final code = tile.code;
+      if (!usedCodes.add(code)) continue;
+      tileOffers.add(tile);
     }
   }
 

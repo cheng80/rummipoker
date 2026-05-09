@@ -76,6 +76,9 @@ class BlindSelectionSetup {
       boardDiscards: selected.boardDiscards,
       handDiscards: selected.handDiscards,
       maxHandSize: selected.maxHandSize,
+      deckSource: runProgress.buildDeckSourceForNextBlind(
+        session.deckCopiesPerTile,
+      ),
     );
     session.blind.bossModifier = selected.bossModifier;
     if (itemCatalog != null) {

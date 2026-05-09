@@ -108,6 +108,7 @@ void main() {
                     onReroll: () => null,
                     onBuyOffer: (_) => null,
                     onBuyItemOffer: (_) => null,
+                    onBuyTileOffer: (_) => null,
                     onUseMarketItem: (item) {
                       useCalled = true;
                       expect(item.id, 'coin_cache');

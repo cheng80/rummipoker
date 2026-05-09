@@ -27,6 +27,11 @@ String gameHandRankLabel(RummiHandRank rank) {
     RummiHandRank.fullHouse => '풀하우스',
     RummiHandRank.fourOfAKind => '포카드',
     RummiHandRank.straightFlush => '스티플',
+    RummiHandRank.prismStraight => '프리즘 스트레이트',
+    RummiHandRank.crownFourOfAKind => '크라운 포카드',
+    RummiHandRank.lowStraightFlush => '로우 스티플',
+    RummiHandRank.royalStraightFlush => '로열 스티플',
+    RummiHandRank.fiveOfAKind => '파이브 카드',
   };
 }
 

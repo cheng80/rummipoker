@@ -520,12 +520,14 @@ class GameSessionNotifier
       rewardMultiplier: state.runModifier.rewardMultiplier,
     );
     runProgress.applyCashOut(breakdown);
-    if (itemCatalog != null &&
-        runProgress.currentStationBlindTierIndex == BlindTier.boss.index) {
-      ItemEffectRuntime.applyOwnedBossClearItems(
-        catalog: itemCatalog,
-        runProgress: runProgress,
-      );
+    if (runProgress.currentStationBlindTierIndex == BlindTier.boss.index) {
+      runProgress.queueBossTileReward();
+      if (itemCatalog != null) {
+        ItemEffectRuntime.applyOwnedBossClearItems(
+          catalog: itemCatalog,
+          runProgress: runProgress,
+        );
+      }
       runProgress.recordSeenBossModifier(session.blind.bossModifier?.id);
       runProgress.recordClearedStation(runProgress.stageIndex);
     }
@@ -767,6 +769,24 @@ class GameSessionNotifier
       return '아이템 구매 처리에 실패했습니다.';
     }
     runProgress.markItemOfferConsumed(offer.contentId);
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
+  String? buyTileOffer(int offerIndex) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (offerIndex < 0 || offerIndex >= runProgress.tileOffers.length) {
+      return '구매할 타일을 찾지 못했습니다.';
+    }
+    final ok = runProgress.pendingBossTileReward
+        ? runProgress.claimFreeTileOffer(offerIndex)
+        : runProgress.buyTileOffer(offerIndex);
+    if (!ok) {
+      return runProgress.pendingBossTileReward
+          ? '타일 선택에 실패했습니다.'
+          : '골드가 부족합니다.';
+    }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }

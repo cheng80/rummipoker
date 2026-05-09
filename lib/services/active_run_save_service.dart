@@ -117,6 +117,7 @@ class SavedSessionData {
     required this.runSeed,
     this.rulesetId = RummiRuleset.currentDefaultsPersistenceId,
     required this.deckCopiesPerTile,
+    int? initialDeckSizeForBlind,
     required this.maxHandSize,
     required this.runRandomState,
     required this.blind,
@@ -132,11 +133,13 @@ class SavedSessionData {
     this.firstConfirmScoreThisStation = 0,
     this.confirmedRanksThisStation = const [],
     this.expiryGuardUsedThisStation = false,
-  });
+  }) : initialDeckSizeForBlind =
+           initialDeckSizeForBlind ?? kBasePokerTileCount * deckCopiesPerTile;
 
   final int runSeed;
   final String rulesetId;
   final int deckCopiesPerTile;
+  final int initialDeckSizeForBlind;
   final int maxHandSize;
   final int runRandomState;
   final Map<String, dynamic> blind;
@@ -157,6 +160,7 @@ class SavedSessionData {
     'runSeed': runSeed,
     'rulesetId': rulesetId,
     'deckCopiesPerTile': deckCopiesPerTile,
+    'initialDeckSizeForBlind': initialDeckSizeForBlind,
     'maxHandSize': maxHandSize,
     'runRandomState': runRandomState,
     'blind': blind,
@@ -181,6 +185,8 @@ class SavedSessionData {
           json['rulesetId'] as String? ??
           RummiRuleset.currentDefaultsPersistenceId,
       deckCopiesPerTile: (json['deckCopiesPerTile'] as num).toInt(),
+      initialDeckSizeForBlind: (json['initialDeckSizeForBlind'] as num?)
+          ?.toInt(),
       maxHandSize: (json['maxHandSize'] as num).toInt(),
       runRandomState: (json['runRandomState'] as num).toInt(),
       blind: Map<String, dynamic>.from(json['blind'] as Map),
@@ -272,6 +278,9 @@ class SavedRunProgressData {
     required this.shopOffers,
     required this.statefulValuesBySlot,
     required this.playedHandCounts,
+    this.addedDeckTiles = const [],
+    this.tileOffers = const [],
+    this.pendingBossTileReward = false,
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
     this.seenMarketJesterIds = const <String>[],
@@ -301,6 +310,9 @@ class SavedRunProgressData {
   final List<SavedShopOfferData> shopOffers;
   final Map<String, int> statefulValuesBySlot;
   final Map<String, int> playedHandCounts;
+  final List<Map<String, dynamic>> addedDeckTiles;
+  final List<Map<String, dynamic>> tileOffers;
+  final bool pendingBossTileReward;
   final RunInventoryState itemInventory;
   final RummiMarketModifierState marketModifiers;
   final List<String> seenMarketJesterIds;
@@ -325,6 +337,9 @@ class SavedRunProgressData {
     'shopOffers': shopOffers.map((offer) => offer.toJson()).toList(),
     'statefulValuesBySlot': statefulValuesBySlot,
     'playedHandCounts': playedHandCounts,
+    'addedDeckTiles': addedDeckTiles,
+    'tileOffers': tileOffers,
+    'pendingBossTileReward': pendingBossTileReward,
     'itemInventory': itemInventory.toJson(),
     'marketModifiers': marketModifiers.toJson(),
     'seenMarketJesterIds': seenMarketJesterIds,
@@ -362,6 +377,9 @@ class SavedRunProgressData {
         (key, value) => MapEntry(key as String, (value as num).toInt()),
       ),
       playedHandCounts: _jsonIntMap(json['playedHandCounts']),
+      addedDeckTiles: _jsonTileList(json['addedDeckTiles']),
+      tileOffers: _jsonTileList(json['tileOffers']),
+      pendingBossTileReward: json['pendingBossTileReward'] as bool? ?? false,
       itemInventory: RunInventoryState.fromJson(
         (json['itemInventory'] as Map?)?.cast<String, dynamic>() ??
             const <String, dynamic>{},
@@ -399,6 +417,13 @@ class SavedRunProgressData {
     }
     return out;
   }
+}
+
+List<Map<String, dynamic>> _jsonTileList(Object? value) {
+  return (value as List<dynamic>? ?? const [])
+      .whereType<Map>()
+      .map((entry) => Map<String, dynamic>.from(entry))
+      .toList(growable: false);
 }
 
 class ActiveRunSaveService {
@@ -645,6 +670,7 @@ class ActiveRunSaveService {
       runSeed: session.runSeed,
       rulesetId: session.ruleset.persistenceId,
       deckCopiesPerTile: session.deckCopiesPerTile,
+      initialDeckSizeForBlind: session.initialDeckSizeForBlind,
       maxHandSize: session.maxHandSize,
       runRandomState: session.runRandom.state,
       blind: session.blind.toJson(),
@@ -710,6 +736,13 @@ class ActiveRunSaveService {
       playedHandCounts: runProgress.snapshotPlayedHandCounts().map(
         (key, value) => MapEntry(key.name, value),
       ),
+      addedDeckTiles: runProgress.addedDeckTiles
+          .map((tile) => tile.toJson())
+          .toList(growable: false),
+      tileOffers: runProgress.tileOffers
+          .map((tile) => tile.toJson())
+          .toList(growable: false),
+      pendingBossTileReward: runProgress.pendingBossTileReward,
       itemInventory: runProgress.itemInventory,
       marketModifiers: runProgress.marketModifiers,
       seenMarketJesterIds: runProgress.seenMarketJesterIds.toList()..sort(),
@@ -737,6 +770,7 @@ class ActiveRunSaveService {
     return RummiPokerGridSession.restored(
       runSeed: data.runSeed,
       deckCopiesPerTile: data.deckCopiesPerTile,
+      initialDeckSizeForBlind: data.initialDeckSizeForBlind,
       maxHandSize: data.maxHandSize,
       runRandomState: data.runRandomState,
       ruleset: RummiRuleset.fromPersistenceId(data.rulesetId),
@@ -802,6 +836,11 @@ class ActiveRunSaveService {
       shopOffers: shopOffers,
       statefulValuesBySlot: statefulValuesBySlot,
       playedHandCounts: playedHandCounts,
+      addedDeckTiles: data.addedDeckTiles
+          .map(Tile.fromJson)
+          .toList(growable: false),
+      tileOffers: data.tileOffers.map(Tile.fromJson).toList(growable: false),
+      pendingBossTileReward: data.pendingBossTileReward,
       itemInventory: data.itemInventory,
       marketModifiers: data.marketModifiers,
       seenMarketJesterIds: data.seenMarketJesterIds.toSet(),

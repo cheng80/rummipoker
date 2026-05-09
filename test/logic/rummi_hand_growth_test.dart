@@ -45,5 +45,13 @@ void main() {
       ),
       180,
     );
+    expect(
+      RummiHandGrowth.grownBaseScoreFor(
+        rank: RummiHandRank.fiveOfAKind,
+        baseScore: 220,
+        completedCount: 2,
+      ),
+      308,
+    );
   });
 }

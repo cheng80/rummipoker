@@ -1,5 +1,6 @@
 import 'item_definition.dart';
 import 'jester_meta.dart';
+import 'models/tile.dart';
 import 'owned_content_instance.dart';
 
 /// V4 target-term facade over the current Jester-only shop runtime.
@@ -9,7 +10,7 @@ import 'owned_content_instance.dart';
 /// - It does not replace `RummiShopOffer`, `ownedJesters`, or shop logic.
 /// - It lets future Market-oriented docs/UI inspect current runtime state
 ///   without forcing an early refactor of `jester_meta.dart`.
-enum RummiMarketCategory { jester, item }
+enum RummiMarketCategory { jester, item, tile }
 
 class RummiMarketOwnedEntryView {
   const RummiMarketOwnedEntryView({
@@ -161,6 +162,44 @@ class RummiMarketItemOfferView {
   final ItemDefinition item;
 }
 
+class RummiMarketTileOfferView {
+  const RummiMarketTileOfferView({
+    required this.offerId,
+    required this.slotIndex,
+    required this.tile,
+    required this.price,
+    required this.currency,
+    required this.isAffordable,
+    required this.isFreeReward,
+  });
+
+  factory RummiMarketTileOfferView.fromTile(
+    Tile tile, {
+    required int slotIndex,
+    required int currentGold,
+    required int price,
+    required bool isFreeReward,
+  }) {
+    return RummiMarketTileOfferView(
+      offerId: 'tile:$slotIndex:${tile.code}',
+      slotIndex: slotIndex,
+      tile: tile,
+      price: price,
+      currency: 'gold',
+      isAffordable: currentGold >= price,
+      isFreeReward: isFreeReward,
+    );
+  }
+
+  final String offerId;
+  final int slotIndex;
+  final Tile tile;
+  final int price;
+  final String currency;
+  final bool isAffordable;
+  final bool isFreeReward;
+}
+
 class RummiMarketItemSlotView {
   const RummiMarketItemSlotView({
     required this.slotIndex,
@@ -239,6 +278,8 @@ class RummiMarketRuntimeFacade {
     this.toolRerollCost = RummiRunProgress.shopBaseRerollCost,
     this.gearRerollCost = RummiRunProgress.shopBaseRerollCost,
     this.itemOffers = const [],
+    this.tileOffers = const [],
+    this.addedDeckTiles = const [],
     this.itemSlots = const [],
   });
 
@@ -296,6 +337,8 @@ class RummiMarketRuntimeFacade {
               itemCatalog,
               pressureProfile: pressureProfile,
             ),
+      tileOffers: _buildTileOffers(progress),
+      addedDeckTiles: List<Tile>.unmodifiable(progress.addedDeckTiles),
       itemSlots: itemCatalog == null
           ? const []
           : _buildItemSlots(progress, itemCatalog),
@@ -320,6 +363,8 @@ class RummiMarketRuntimeFacade {
       itemOfferSlotCount: itemOfferSlotCount,
       quickSlotCapacity: quickSlotCapacity,
       itemOffers: nextItemOffers,
+      tileOffers: tileOffers,
+      addedDeckTiles: addedDeckTiles,
       itemSlots: itemSlots,
     );
   }
@@ -338,6 +383,8 @@ class RummiMarketRuntimeFacade {
   final int itemOfferSlotCount;
   final int quickSlotCapacity;
   final List<RummiMarketItemOfferView> itemOffers;
+  final List<RummiMarketTileOfferView> tileOffers;
+  final List<Tile> addedDeckTiles;
   final List<RummiMarketItemSlotView> itemSlots;
 
   int itemRerollCostFor(ItemPlacement placement) {
@@ -396,6 +443,21 @@ class RummiMarketRuntimeFacade {
     }
     progress.recordSeenMarketItems(offers.map((offer) => offer.contentId));
     return offers;
+  }
+
+  static List<RummiMarketTileOfferView> _buildTileOffers(
+    RummiRunProgress progress,
+  ) {
+    return [
+      for (var i = 0; i < progress.tileOffers.length; i++)
+        RummiMarketTileOfferView.fromTile(
+          progress.tileOffers[i],
+          slotIndex: i,
+          currentGold: progress.gold,
+          price: progress.effectiveTileOfferPrice(i),
+          isFreeReward: progress.pendingBossTileReward,
+        ),
+    ];
   }
 
   static List<ItemDefinition> _pickWeightedItemOffers(

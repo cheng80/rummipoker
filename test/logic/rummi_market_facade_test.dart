@@ -6,6 +6,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
@@ -70,6 +71,20 @@ void main() {
       expect(facade.offers.last.isAffordable, isTrue);
       expect(facade.runtimeSnapshot.playedHandCounts, isEmpty);
       expect(facade.itemOffers, isEmpty);
+    });
+
+    test('maps tile offers and added deck tiles into market facade', () {
+      final progress = RummiRunProgress()
+        ..gold = 3
+        ..tileOffers.add(const Tile(color: TileColor.red, number: 7))
+        ..addDeckTile(const Tile(color: TileColor.blue, number: 9));
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(facade.tileOffers.single.offerId, 'tile:0:R7');
+      expect(facade.tileOffers.single.price, 3);
+      expect(facade.tileOffers.single.isAffordable, isTrue);
+      expect(facade.addedDeckTiles.single.code, 'B9');
     });
 
     test(

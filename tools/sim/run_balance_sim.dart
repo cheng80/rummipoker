@@ -5013,11 +5013,16 @@ _BalanceSimRankFamily _simBossRankFamily(RummiHandRank rank) {
     RummiHandRank.onePair => _BalanceSimRankFamily.dead,
     RummiHandRank.twoPair ||
     RummiHandRank.threeOfAKind ||
-    RummiHandRank.fourOfAKind => _BalanceSimRankFamily.set,
-    RummiHandRank.straight => _BalanceSimRankFamily.sequence,
+    RummiHandRank.fourOfAKind ||
+    RummiHandRank.crownFourOfAKind ||
+    RummiHandRank.fiveOfAKind => _BalanceSimRankFamily.set,
+    RummiHandRank.straight ||
+    RummiHandRank.prismStraight => _BalanceSimRankFamily.sequence,
     RummiHandRank.flush => _BalanceSimRankFamily.color,
     RummiHandRank.fullHouse ||
-    RummiHandRank.straightFlush => _BalanceSimRankFamily.hybrid,
+    RummiHandRank.straightFlush ||
+    RummiHandRank.lowStraightFlush ||
+    RummiHandRank.royalStraightFlush => _BalanceSimRankFamily.hybrid,
   };
 }
 
