@@ -15,11 +15,11 @@
 공모전 full-play QA는 사람 수동 플레이가 아니라 제작된 bot 기준으로 닫는다.
 bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표·시각 조작을 함께 사용해 실제 Flutter Web 화면을 플레이한다.
 
-2026-05-08 현재 `contest_full_run_bot`은 체크포인트/재시도 기반으로 S1부터 S8 boss까지 이어서 클리어 가능한 상태다.
-최종 확인은 S8 boss 직전 체크포인트에서 이어서 실행해 `All tests passed`까지 확인했다.
-이 상태는 런타임 난이도나 production 밸런스를 바꾼 것이 아니라, 공모전 QA bot 전용 의사결정/증거 동기화 보정이다.
+2026-05-09 현재 `contest_full_run_bot`은 일시 중단 상태다.
+이전 체크포인트/재시도 기반 S8 boss pass 증거는 남아 있지만, 최신 보정 후보에서는 S8 big은 통과하고 S8 boss에서 후반 성장축 부족이 다시 드러났다.
+따라서 다음 full-run 재개는 bot 전용 추가 치팅이나 가중치 조정보다 먼저 게임 전체 룰 시스템 보강, 특히 족보 완성 시 족보 자체가 성장하는 런타임 규칙을 반영한 뒤 진행한다.
 
-확인된 최종 증거:
+과거 checkpoint pass 증거:
 
 - commit: `9262e6d Stabilize contest full run bot strategy`
 - 최종 pass 로그: `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`
@@ -30,6 +30,24 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 - 보조 검증:
   - `flutter analyze integration_test/competition_bot_policy.dart integration_test/competition_full_play_bot_test.dart test/competition_bot_policy_test.dart`
   - `flutter test test/competition_bot_policy_test.dart test/views/game/widgets/game_shop_screen_save_flush_test.dart`
+
+최신 보정 후보 기준선:
+
+- commit: `18f0b53 Tune boss retry deck scoring`
+- 로그: `/tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log`
+- S8 big retry 6:
+  - `417 + 617 + 705 = 1739/1738`
+  - `S8 big: cashout -> market`
+- S8 boss retry 0/1:
+  - `116 + 212 + 290 + 80 = 698/1739`
+  - `game over -> retry 2/24`
+- S8 boss retry 2:
+  - 진행 중 `Timed out waiting for game state update`
+- 판단:
+  - 5장 deck lookahead와 late confirm 보정은 S8 big 통과에 효과가 있었다.
+  - S8 boss는 같은 색상 플러시 축과 장기 족보 성장 축이 약해, bot 정책만으로 안정화하면 QA 보정이 과해진다.
+- 현재는 `contest_full_run_bot` 재실행보다 족보 성장/덱 확장 같은 런타임 규칙 보강을 먼저 한다.
+- 족보 성장은 이번 1차 범위에서 게임오버 없이 이어지는 하나의 run 전체의 성장 기록과 이후 전투 점수 반영으로 다룬다. 게임오버 후 새 run까지 이어지는 영구 계승은 별도 검토로 남긴다.
 
 앞으로 대화에서 `공모전 풀런봇 실행`, `공모전 풀런봇 준비`, `공모전 풀런봇 이어서`라고 말하면 이 문서의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다.
 스크립트, 로그 prefix, 파일명에는 영문 식별자 `contest_full_run_bot`을 사용한다.
@@ -52,7 +70,8 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 - full-run은 `tools/contest_full_run_bot.sh`로 실행한다.
 - 실패 시 game over에서 재시도하며, 저장된 active run checkpoint부터 이어서 실행할 수 있다.
 - 체크포인트 재개 시 Jester/Item 구매 이력과 실제 전투 진행 상태를 저장 상태에서 복원한다.
-- S8 boss는 bot 정책에서만 작은 확정을 억제하고, 완성 직전 라인 수, 교차 유망 라인 수, 손패 기반 1-step lookahead로 중복줄 확정 가능성을 평가한다.
+- S8 boss는 bot 정책에서만 작은 확정을 억제하고, 완성 직전 라인 수, 교차 유망 라인 수, 손패/덱 기반 1-step lookahead로 중복줄 확정 가능성을 평가한다.
+- 최신 run에서 이 보정은 S8 big 통과에는 충분했지만, S8 boss는 족보 레벨 성장과 덱 확장 축 없이 안정 pass로 보기 어렵다.
 - 후반 game over 대응은 봇 전용 가중치 숫자 조정보다 족보/중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다.
 - 마켓에서는 Jester 슬롯/골드가 허용하는 한 구매를 시도하고, 슬롯이 꽉 찬 경우 더 좋은 후보가 있으면 약한 Jester 판매 후 교체한다. 후반에는 구간별 등장 확률을 올린 Jester/Item을 안정화 구매 후보로 더 높게 평가한다.
 - Q-Slot이 비어 있으면 과거 구매 이력이 있더라도 새 Item 구매를 검토한다. 단, 아이템 사용은 족보 형성 또는 확정 점수 개선이 분명할 때만 한다.
@@ -122,10 +141,10 @@ contest_sub_run_bot target
 
 현재 판정:
 
-- Bot 구현/정책: lookahead와 후반 구매/판매 정책 반영 후 full-run 재검증 대기.
-- S1~S8 클리어 가능성: 체크포인트/재시도 경로로 확인 완료.
-- S8 boss 최종 pass: 확인 완료.
-- 남은 제출 QA: 최신 제출 후보 build 기준 console error/warn 0건, 보상/도감/새 run 눈검증, 단일 fresh full-run 회귀.
+- Bot 구현/정책: S8 big 통과 기준선 확보, S8 boss는 룰 시스템 보강 전 재실행 보류.
+- S1~S8 클리어 가능성: 과거 체크포인트/재시도 경로로 확인했지만 최신 후보의 제출 Done 증거로는 재확인이 필요하다.
+- S8 boss 최신 판정: 실패/timeout. 족보 성장과 덱 확장 축 검토 후 재개한다.
+- 남은 제출 QA: 룰 시스템 보강, 최신 제출 후보 build, console error/warn 0건, 보상/도감/새 run 눈검증, 단일 fresh full-run 또는 최신 checkpoint-resume 회귀.
 
 ## 2. 구조
 
@@ -250,7 +269,7 @@ Full-play bot run
 - notes: <known-risk-or-observation>
 ```
 
-최신 확인 로그:
+확인 로그:
 
 ```text
 Full-play bot checkpoint-resume verification
@@ -271,6 +290,26 @@ Full-play bot checkpoint-resume verification
   - checkpoint/resume evidence sync is part of the bot contract.
   - S8 boss uses bot-only confirmation delay to reduce deck exhaustion.
   - runtime balance was not changed by this bot stabilization.
+
+Full-play bot latest regression baseline
+- date: 2026-05-09
+- commit: 18f0b53 Tune boss retry deck scoring
+- runner: tools/contest_full_run_bot.sh --resume-active-run on Chrome
+- result: fail/timeout, bot paused
+- final log: /tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log
+- reached stage:
+  - S8 big clear, S8 boss retry 2
+- S8 big evidence:
+  - retry 6 confirms: 417, 617, 705
+  - total: 1739/1738
+- S8 boss evidence:
+  - retry 0/1 confirms: 116, 212, 290, 80
+  - total: 698/1739
+  - retry 2 ended with `Timed out waiting for game state update`
+- notes:
+  - boss 실패를 bot 전용 치팅으로 덮지 않는다.
+  - 족보 완성 시 족보 자체가 성장하는 런타임 규칙과 덱 확장/성장 보조 축을 먼저 검토한다.
+  - full-run 재개 전 문서 정책이 실제 policy code/test에 반영됐는지 확인한다.
 ```
 
 ## 6. 제작 범위와 보류
@@ -294,10 +333,12 @@ Full-play bot checkpoint-resume verification
 
 ## 7. 다음 실행 순서
 
-1. `tools/prototype_submission_smoke.sh`로 analyze/test/build 후보를 만든다.
-2. 최신 build 또는 Flutter web-server URL을 Browser/WebDriver로 열고 console/trace 수집을 시작한다.
-3. Compute 판단으로 현재 scene을 분류한다.
-4. 전투에서는 `planner_v2` action을 Compute Use 화면 좌표 조작으로 번역한다.
-5. 마켓에서는 구매/리롤/판매/아이템 사용 정책을 Compute Use 조작으로 적용한다.
-6. S8 boss clear 후 보상, 새 run 복귀, 도감 반영을 확인한다.
-7. console error/warn 0건과 실행 로그를 competition checklist에 반영한다.
+1. 족보 완성 시 해당 족보가 게임오버 없이 이어지는 하나의 run 전체에서 성장하고, 그 run의 이후 전투 점수에 반영되는 런타임 규칙을 구현하고 저장/복원/정산 테스트로 닫는다.
+2. 게임 중/게임 밖에서 언제든 열 수 있는 `런 정보` 화면 또는 동등한 UI로 족보별 레벨, 현재 점수, 완성 횟수를 확인하게 한다.
+3. 덱 확장 또는 족보 성장 보조 아이템/Jester 후보가 필요한지 현재 카탈로그와 runtime effect를 기준으로 검토한다.
+4. bot 정책이 성장한 족보 점수와 플러시/스트레이트 장기 성장 가치를 평가하도록 동기화한다.
+5. `tools/prototype_submission_smoke.sh` 또는 동등한 analyze/test/build로 최신 후보를 만든다.
+6. 최신 build 또는 Flutter web-server URL을 Browser/WebDriver로 열고 console/trace 수집을 시작한다.
+7. `contest_full_run_bot`을 S8 boss checkpoint-resume부터 먼저 재검증하고, 통과하면 단일 fresh full-run 회귀를 실행한다.
+8. S8 boss clear 후 보상, 새 run 복귀, 도감 반영을 확인한다.
+9. console error/warn 0건과 실행 로그를 competition checklist에 반영한다.

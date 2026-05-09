@@ -10,21 +10,31 @@
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Active | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 제출 전 QA, 빌드, 시각/재미도 확인을 우선한다. |
-| 실제 Goal 기준 완성 | Paused until contest pass | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 장기 밸런스, ML 갱신, 깊은 meta growth, 대형 구조 변경은 공모전 이후 재개한다. |
+| 공모전 기준 완성 | Paused on S8 boss system gap | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | `contest_full_run_bot`은 최신 보정으로 S8 big까지 통과했지만 S8 boss에서 후반 성장축 부족이 드러나 full-run QA를 일시 중단한다. |
+| 실제 Goal 기준 완성 | Active for core rule reinforcement | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 완성 시 족보 자체가 성장하는 런타임 규칙과 덱 확장/성장 후보를 먼저 보강한 뒤 공모전 풀런봇을 재개한다. |
 
-현재는 공모전 기준 완성 트랙만 실행한다.
+현재는 공모전 풀런봇을 더 밀지 않고, 게임 전체 룰 시스템 보강 트랙을 먼저 실행한다.
 
 ## 2. 공모전 기준 다음 작업
 
 상세 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.
 현재 실행 순서는 아래로 고정한다.
 
-1. 최신 변경 후 제출 후보 web build를 다시 만든다.
-2. 새 web-server 또는 최신 build 기준으로 console error/warn 0건을 확인한다.
-3. Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1부터 S8까지 실제 UI full-play를 수행한다.
-4. 게임오버 보상, 도감 카드 face, 새 run 화면이 다시 시작 욕구와 수집 욕구로 읽히는지 눈검증한다.
-5. 제출 영상 촬영 기준으로 전투/마켓/정산/도감/새 run 화면이 한 게임처럼 이어지는지 확인한다.
+1. 족보를 완성할 때마다 해당 족보가 게임오버 없이 이어지는 하나의 run 전체에서 성장하고, 그 run의 이후 전투 점수에 반영되는 규칙을 설계하고 저장/복원/정산 테스트까지 반영한다.
+2. 게임 중/게임 밖에서 언제든 열 수 있는 `런 정보` 성격의 화면에서 족보별 레벨, 현재 점수, 완성 횟수를 볼 수 있게 UI 경로를 설계한다.
+3. 현재 아이템/Jester/마켓 구조에서 덱 확장 또는 족보 성장 보조 축이 없는지 확인하고, 필요한 최소 보강 후보를 정한다.
+4. 성장한 족보 점수가 전투 정산과 bot 후보 평가에 반영되는지 검증한다.
+5. `contest_full_run_bot`은 위 룰 시스템 보강이 런타임 검증까지 끝난 뒤 최신 build 기준으로 재개한다.
+6. 재개 시 S8 big 통과 증거와 S8 boss 실패/timeout 로그를 기준선으로 삼고, S8 boss부터 checkpoint-resume 또는 fresh full-run을 다시 실행한다.
+
+최근 `contest_full_run_bot` 기준선:
+
+- 최신 보정 커밋: `18f0b53 Tune boss retry deck scoring`
+- 실행 로그: `/tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log`
+- S8 big retry 6: `417 + 617 + 705 = 1739/1738`, clear 후 market 진입
+- S8 boss retry 0/1: `116 + 212 + 290 + 80 = 698/1739`, game over
+- S8 boss retry 2: 진행 중 `Timed out waiting for game state update`
+- 판단: 5장 deck lookahead와 late confirm 보정은 S8 big에는 효과가 있었지만, S8 boss는 족보 레벨 성장과 덱 확장 같은 런타임 성장축 없이 bot 정책만으로 안정화하기 어렵다.
 
 ## 3. 공모전 Done Evidence
 
@@ -46,10 +56,17 @@
 - 장기 multi-seed r400/r800 밸런스 확정
 - ML 리포트 갱신과 NotebookLM용 재가공
 - production ML 또는 runtime 자동 밸런싱
-- 저장 포맷을 크게 바꾸는 meta growth 확장
 - 신규 대형 UI 구조 변경
 - 전체 카탈로그 가격 2차 재산정
 - 반복 플레이용 해금 tree와 run modifier 깊이 확장
+
+예외적으로 지금 시작하는 작업:
+
+- 족보 완성 시 족보 자체가 성장하는 최소 런타임 규칙
+- 그 규칙에 필요한 저장/복원/정산 테스트
+- 게임 중/게임 밖에서 언제든 족보 성장 상태를 확인하는 `런 정보` 화면 또는 동등한 UI
+- 새 run까지 이어지는 영구 계승은 이번 1차 범위에서 제외하고 별도 검토로 남긴다.
+- 공모전 풀런봇이 성장한 족보를 평가하도록 하는 bot 정책 동기화
 
 ## 5. 문서 교통정리
 

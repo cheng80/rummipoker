@@ -14,23 +14,27 @@
 
 현재 결론:
 
-- 공모전 작업은 재개 가능하다.
-- 제출 전 핵심은 새 기능 추가가 아니라 최신 빌드, Browser/WebDriver + Compute Use hybrid full-play bot, console 0건, 보상/도감/새 run 화면의 체감 QA다.
+- 공모전 풀런봇 QA는 일시 중단한다.
+- 최신 보정 후보에서 S8 big은 통과했지만 S8 boss는 후반 족보 성장축 부족과 timeout으로 닫히지 않았다.
+- 제출 전 핵심은 더 이상 bot 가중치만 조정하는 것이 아니라, 족보를 완성할 때마다 해당 족보가 성장하는 전체 룰 시스템 보강을 먼저 끝내는 것이다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
 - full-play 기준은 사람 수동 플레이가 아니라 제작된 bot이 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표 조작을 결합해 S1~S8을 클리어하는 것이다.
 - 이 hybrid full-play bot의 대화 호출 별명은 `공모전 풀런봇`이고, 영문 식별자는 `contest_full_run_bot`이다.
 - Codex 앱 내장 Browser Use는 제출 gate가 아니라 bot 실패 구간 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
-- 2026-05-08 기준 `contest_full_run_bot`은 체크포인트/재시도 기반으로 S1~S8 boss 클리어 가능한 상태까지 구현됐다.
-- 최신 pass 증거는 commit `9262e6d`와 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`에 남아 있다.
-- 이 pass는 bot 전용 정책 보정이며, runtime 난이도나 production 밸런스 변경 증거가 아니다.
+- 2026-05-08 checkpoint pass 증거는 commit `9262e6d`와 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`에 남아 있다.
+- 2026-05-09 최신 보정 후보는 commit `18f0b53` 기준 S8 big을 `1739/1738`로 통과했지만, S8 boss는 `698/1739` 실패 후 retry 2에서 timeout이 났다.
+- 이 결과는 bot 전용 정책만으로 S8 boss를 밀기보다, runtime의 족보 성장/덱 확장 축을 먼저 보강해야 한다는 판단 근거다.
 
 오늘 바로 할 작업:
 
-1. 최신 변경 후 제출 후보 web build를 다시 만든다.
-2. 새 web-server 또는 최신 build 기준으로 console error/warn 0건을 확인한다.
-3. S8 boss 안정성 risk로 남은 배치 lookahead 후보를 문서에 반영한 뒤, Browser/WebDriver + Compute Use hybrid bot을 최신 제출 후보 build 기준으로 다시 실행해 단일 fresh full-run 회귀 또는 최신 checkpoint-resume pass를 확인한다.
-4. 게임오버 보상, 도감 카드 face, 새 run 화면이 다시 시작 욕구와 수집 욕구로 읽히는지 눈검증한다.
-5. 제출 영상 촬영 기준으로 전투/마켓/정산/도감/새 run 화면이 한 게임처럼 이어지는지 확인한다.
+1. 족보 완성 시 해당 족보가 게임오버 없이 이어지는 하나의 run 전체에서 성장하고, 그 run의 이후 전투 점수에 반영되는 규칙을 설계/구현하고 저장/복원/정산 테스트로 닫는다.
+2. 게임 중/게임 밖에서 언제든 열 수 있는 `런 정보` 성격의 화면에서 족보별 레벨, 현재 점수, 완성 횟수를 볼 수 있게 한다.
+3. 덱 확장 또는 족보 성장 보조 아이템/Jester 후보가 필요한지 현재 카탈로그와 runtime effect를 기준으로 검토한다.
+4. bot 정책이 성장한 족보 점수와 플러시/스트레이트 장기 성장 가치를 평가하도록 동기화한다.
+5. 최신 변경 후 제출 후보 web build를 다시 만든다.
+6. 새 web-server 또는 최신 build 기준으로 console error/warn 0건을 확인한다.
+7. Browser/WebDriver + Compute Use hybrid bot을 최신 제출 후보 build 기준으로 다시 실행해 S8 boss checkpoint-resume pass를 먼저 확인하고, 이후 단일 fresh full-run 회귀를 시도한다.
+8. 게임오버 보상, 도감 카드 face, 새 run 화면이 다시 시작 욕구와 수집 욕구로 읽히는지 눈검증한다.
 
 제출 후보 Done 기준:
 
@@ -44,8 +48,11 @@
 
 아직 열려 있는 위험:
 
-- full-play bot의 checkpoint-resume clear 증거는 확보했지만, 최신 제출 후보 build 기준 console 0건과 단일 fresh full-run 회귀는 아직 제출 직전 재확인이 필요하다.
-- S8 boss 안정화의 다음 bot 정책 후보는 완성 직전 라인 수, 교차 유망 라인 수, 손패 기반 1-step lookahead다. 이는 bot 전용 QA 정책 보정이며 runtime 난이도/production 밸런스 변경으로 닫지 않는다.
+- full-play bot의 과거 checkpoint-resume clear 증거는 확보했지만, 최신 제출 후보 build 기준으로는 S8 boss가 다시 닫히지 않았다.
+- 5장 deck lookahead, late confirm, boss retry score weighting은 S8 big 통과에는 효과가 있었지만 S8 boss 안정화에는 부족했다.
+- 다음 작업은 bot 전용 치팅이나 과한 가중치 추가가 아니라, 족보 완성 시 족보 자체가 성장하는 runtime 규칙과 덱 확장/성장 보조 축 검토다.
+- 참고한 방향은 Balatro류 `런 정보`/족보 표처럼 각 족보의 레벨, 현재 점수, 완성 횟수를 한 화면에서 보여주는 구조다. 단, 명칭과 UI는 이 게임 용어와 시각 체계에 맞춘다.
+- `런 정보`는 전투 중 보조 팝업으로만 두지 않는다. 유저가 전투/마켓/새 run 준비/타이틀 또는 도감 계열 화면에서 현재 강한 족보와 다음 성장 목표를 확인할 수 있어야 한다.
 - 후반 game over가 재발하면 봇 전용 가중치 숫자 조정만 보지 않고, 중복줄 확정 정책과 손패/이동/버림/아이템/구매/판매 전략을 함께 점검한다. 구간별 등장 확률을 올린 Jester/Item은 후반 안정화 구매 후보로 검토한다.
 - 도감은 수집/발견/구매/보상/보스/스테이지 이력을 저장하지만, 항목별 미발견/발견/획득/클리어 상태 상세 UI는 남아 있다.
 - `power none`과 `balanced v9` seed 편차는 장기 밸런스 risk로 유지한다.
@@ -68,7 +75,7 @@ Status: In progress
 
 - [ ] 최신 변경 후 제출 후보 web build를 다시 만든다.
 - [ ] 최신 빌드 또는 새 web-server에서 console error/warn 0건을 다시 확인한다.
-- [x] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 실제 UI clear 가능한 경로를 확인한다.
+- [ ] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 실제 UI clear 가능한 최신 경로를 확인한다.
 - [x] full-play bot이 마켓 구매를 수행하고 로그에 남긴다.
 - [ ] 게임오버 화면이 패배 후 다시 시작하고 싶게 만드는지 확인한다.
 - [ ] 도감의 Jester/Item 카드가 마켓/보유 슬롯의 실물 카드 face와 같은 인상인지 확인한다.
@@ -79,7 +86,7 @@ Status: In progress
 
 - `Submission Smoke`의 `flutter build web` 통과는 최신 도감/게임오버 변경 전 증거일 수 있으므로 다시 실행한다.
 - Browser Use full route QA는 debug fixture/즉시 클리어 보조가 섞였으므로 full-play bot 증거가 아니다.
-- `contest_full_run_bot` 최신 증거는 checkpoint-resume pass이며, 제출 직전에는 최신 build 기준으로 단일 fresh full-run 또는 동일 checkpoint-resume pass를 다시 남긴다.
+- `contest_full_run_bot` 과거 증거는 checkpoint-resume pass이며, 최신 후보에서는 S8 boss 실패/timeout 상태다. 룰 시스템 보강 후 최신 build 기준으로 checkpoint-resume pass와 단일 fresh full-run을 다시 남긴다.
 - 게임오버 보상 루프는 저장/이동은 구현됐지만, 재도전 욕구와 보상감은 아직 눈검증이 필요하다.
 - 도감은 수집 저장과 실물 카드 face 1차 표시가 됐지만, 항목별 상태와 화면 밀도는 아직 재점검 대상이다.
 
@@ -240,9 +247,11 @@ Status: Reopened for latest candidate
 - `127.0.0.1:7361` Browser Use full route QA 후 `tab.dev.logs` 기준 error/warn 0건을 확인했다.
 - 이후 도감/게임오버/수집 저장 변경이 들어갔으므로 제출 후보 build와 browser QA는 다시 열었다.
 - 2026-05-08 기준 공모전 full-play QA는 사람 수동 플레이가 아니라 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid bot 기준으로 닫는다.
-- 2026-05-08 `contest_full_run_bot`은 checkpoint/resume 기반으로 S8 boss까지 클리어했고, 최종 pass 로그는 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`다.
-- 최종 pass 로그에는 `S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus`, `game over -> retry 1/24`, `All tests passed.`가 포함된다.
-- 관련 커밋은 `9262e6d Stabilize contest full run bot strategy`이며, bot 전용 정책 보정이다. runtime 밸런스 변경으로 해석하지 않는다.
+- 2026-05-08 `contest_full_run_bot`은 checkpoint/resume 기반으로 S8 boss까지 클리어했고, 과거 pass 로그는 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`다.
+- 과거 pass 로그에는 `S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus`, `game over -> retry 1/24`, `All tests passed.`가 포함된다.
+- 2026-05-09 최신 보정 후보 로그는 `/tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log`다.
+- 최신 후보에서 S8 big은 retry 6의 `417 + 617 + 705 = 1739/1738`로 통과했고, S8 boss는 `116 + 212 + 290 + 80 = 698/1739` 이후 retry 2에서 `Timed out waiting for game state update`로 끊겼다.
+- 관련 최신 커밋은 `18f0b53 Tune boss retry deck scoring`이다. 이 결과는 5장 lookahead와 boss retry 점수 가중치가 S8 big에는 효과가 있었지만, S8 boss에는 runtime 족보 성장축이 필요하다는 근거로 남긴다.
 
 ## 9. 심미성/재미도 재점검
 
@@ -267,15 +276,17 @@ Status: In progress
 Status: In progress
 
 - [x] 새 레벨링/경제/ML 조정은 공모전 이후로 미룬다.
-- [x] 대형 저장 포맷 변경은 공모전 이후로 미룬다.
+- [ ] 족보 완성 시 족보 자체가 게임오버 없이 이어지는 하나의 run 전체에서 성장하고, 그 run의 이후 전투 점수에 반영되는 최소 저장/정산 변경은 공모전 풀런봇 재개 전에 먼저 닫는다.
+- [ ] 게임 중/게임 밖에서 족보 성장 상태를 확인하는 `런 정보` 화면 또는 동등한 UI를 공모전 풀런봇 재개 전에 먼저 닫는다.
+- [x] 그 외 대형 저장 포맷 변경은 공모전 이후로 미룬다.
 - [x] `run_unlock_state_v1`에 도감 수집 이력을 추가한 소형 변경은 공모전 핵심 흐름 보강으로 적용하고 테스트했다.
 - [x] 신규 대형 UI 구조 변경은 공모전 이후로 미룬다.
 - [x] 제출 전에는 버그 수정, 문구 정리, QA 안정화만 허용한다.
 
 진행 메모:
 
-- 현재 남은 제출 전 작업은 자연 full end-to-end QA, 최신 빌드 산출물/실행 경로 정리, 문구/시각/재미도 회귀 확인으로 제한한다.
-- 밸런스 수치, ML 리포트 갱신, 새 저장 구조, 큰 화면 구조 변경은 제출 후 polishing으로 분리한다.
+- 현재 남은 제출 전 작업은 족보 성장 규칙 보강, 자연 full end-to-end QA, 최신 빌드 산출물/실행 경로 정리, 문구/시각/재미도 회귀 확인이다.
+- ML 리포트 갱신, 큰 화면 구조 변경, 반복 플레이용 깊은 해금 구조는 제출 후 polishing으로 분리한다.
 
 ## Known Risk
 
@@ -283,6 +294,9 @@ Status: In progress
 - `balanced v9`는 fresh seed 93041에서 59.0%로 목표 60%를 살짝 밑돈다.
 - 현재는 장기 밸런스 완료가 아니라 공모전 임시 handoff다.
 - 장기 밸런스에서는 multi-seed r400/r800과 ML 리포트 갱신을 다시 수행한다.
-- Browser/WebDriver + Compute Use hybrid bot으로 S1~S8 실제 UI clear를 아직 완료하지 않았다.
+- Browser/WebDriver + Compute Use hybrid bot은 과거 checkpoint pass가 있으나, 최신 후보에서는 S8 boss가 실패/timeout 상태다.
+- 족보별 레벨 성장과 덱 확장 축이 없어 후반 목표 점수 상승을 Jester/Item 운과 중복줄만으로 버티는 구조가 S8 boss risk로 드러났다.
+- 족보 성장 상태가 UI로 보이지 않으면 플레이어가 어떤 족보를 키웠고 다음에 어떤 족보를 노릴지 판단하기 어렵다. 성장 규칙은 정산 수치뿐 아니라 언제든 확인 가능한 런 정보 UI까지 포함해야 한다.
+- 게임오버 후 새 run까지 이어지는 영구 계승은 이번 1차 범위에서 제외한다. 현재 중요한 것은 유저가 게임오버 없이 이어지는 하나의 run 동안 사용한 족보가 성장 기록으로 남고, 그 run의 이후 전투 점수에 추가 반영되는 것이다.
 - 도감은 수집/발견/구매/보상/보스/스테이지 이력을 저장하지만, 아직 항목별 미발견/발견/획득/클리어 상태를 나눈 상세 UI는 없다.
 - 기억 카드 보상은 내부 `insight` 계열 값을 유지하면서 `earnedMemoryCardIds` 획득 이력을 함께 남긴다. 실제 보상 아이템/Jester 지급은 아직 없다.
