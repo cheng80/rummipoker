@@ -425,8 +425,8 @@ class _TitleViewState extends ConsumerState<TitleView>
                       builder: (context, snapshot) {
                         final v = snapshot.data;
                         final text = v != null
-                            ? 'Ver ${v.version}+${v.buildNumber}'
-                            : 'Ver';
+                            ? '${context.tr('appVersion')} ${v.version}+${v.buildNumber}'
+                            : context.tr('appVersion');
                         return Center(
                           child: Text(
                             text,

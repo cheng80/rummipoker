@@ -12,6 +12,9 @@ class InAppReviewService {
 
   static final InAppReview _instance = InAppReview.instance;
 
+  /// 스토어 이동 버튼을 보여줄 수 있는지 여부.
+  static bool get hasStoreListingId => AppConfig.appStoreId.isNotEmpty;
+
   /// 웹에서는 인앱 리뷰 미지원. defaultTargetPlatform으로 플랫폼 판별 (dart:io 불필요).
   static bool get _isSupported {
     if (kIsWeb) return false;
@@ -36,7 +39,9 @@ class InAppReviewService {
   /// Clear 오버레이가 처음 표시될 때 1회만 호출.
   static Future<void> maybeRequestReviewAfterFirstClear() async {
     if (!_isSupported) return;
-    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) return;
+    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) {
+      return;
+    }
 
     StorageHelper.write(StorageKeys.reviewRequestedAfterFirstClear, true);
 
@@ -50,9 +55,13 @@ class InAppReviewService {
   static Future<void> maybeRequestReviewOnTitleIfEligible() async {
     if (!_isSupported) return;
     if (StorageHelper.readBool(StorageKeys.reviewRequestedOnTitle)) return;
-    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) return;
+    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) {
+      return;
+    }
 
-    final firstLaunchStr = StorageHelper.read<String>(StorageKeys.firstLaunchDate);
+    final firstLaunchStr = StorageHelper.read<String>(
+      StorageKeys.firstLaunchDate,
+    );
     if (firstLaunchStr == null) return;
 
     final firstLaunch = DateTime.tryParse(firstLaunchStr);
@@ -74,7 +83,7 @@ class InAppReviewService {
   /// null: 미지원 플랫폼(웹 등), false: appStoreId 비어 있음, true: 성공.
   static Future<bool?> openStoreListing() async {
     if (!_isSupported) return null;
-    if (AppConfig.appStoreId.isEmpty) return false;
+    if (!hasStoreListingId) return false;
 
     await _instance.openStoreListing(appStoreId: AppConfig.appStoreId);
     return true;

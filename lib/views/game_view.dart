@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/boss_modifier.dart';
@@ -31,6 +33,7 @@ import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_progression_service.dart';
+import '../services/tutorial_state_service.dart';
 import '../utils/common_ui.dart';
 import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_cashout_widgets.dart';
@@ -42,6 +45,7 @@ import 'game/widgets/game_effect_overlay.dart';
 import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
 import 'game/widgets/game_tile_choice_dialog.dart';
+import 'game/widgets/game_tutorial_overlay.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 class GameView extends ConsumerStatefulWidget {
@@ -120,6 +124,13 @@ class _GameViewState extends ConsumerState<GameView>
   bool _pausedLifecycleDuringStageFlow = false;
   bool _optionsDialogOpen = false;
   bool _presentationPaused = false;
+  bool _battleTutorialScheduled = false;
+  bool _battleTutorialShouldMarkSeenOnFinish = false;
+  TutorialCoachMark? _battleTutorialCoachMark;
+  final GlobalKey _battleBoardTutorialKey = GlobalKey();
+  final GlobalKey _battlePreviewTutorialKey = GlobalKey();
+  final GlobalKey _battleActionsTutorialKey = GlobalKey();
+  final GlobalKey _battleHandTutorialKey = GlobalKey();
   Completer<void>? _presentationResumeCompleter;
 
   GameSessionNotifier get _gameNotifier =>
@@ -276,6 +287,7 @@ class _GameViewState extends ConsumerState<GameView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _dismissBattleTutorial();
     super.dispose();
   }
 
@@ -285,6 +297,7 @@ class _GameViewState extends ConsumerState<GameView>
       case AppLifecycleState.hidden:
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
+        _dismissBattleTutorial();
         final isShopScene = _gameState.activeRunScene == ActiveRunScene.shop;
         if (!isShopScene) {
           _pausePresentation();
@@ -348,6 +361,88 @@ class _GameViewState extends ConsumerState<GameView>
       if (completer == null) return;
       await completer.future;
     }
+  }
+
+  void _scheduleBattleTutorialIfNeeded() {
+    if (_battleTutorialScheduled ||
+        _optionsDialogOpen ||
+        _stageFlowPhase != GameStageFlowPhase.none ||
+        TutorialStateService.battleIntroSeen) {
+      return;
+    }
+    _battleTutorialScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startBattleTutorial(markSeen: true);
+    });
+  }
+
+  Future<void> _startBattleTutorial({required bool markSeen}) async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    if (markSeen) {
+      _battleTutorialShouldMarkSeenOnFinish = true;
+    } else {
+      _battleTutorialShouldMarkSeenOnFinish = false;
+    }
+    _battleTutorialCoachMark?.removeOverlayEntry();
+    _battleTutorialCoachMark = TutorialCoachMark(
+      targets: buildGameTutorialTargets(
+        steps: [
+          GameTutorialStep(
+            targetKey: _battleBoardTutorialKey,
+            title: context.tr('tutorialBattleBoardTitle'),
+            description: context.tr('tutorialBattleBoardDesc'),
+            align: ContentAlign.bottom,
+          ),
+          GameTutorialStep(
+            targetKey: _battlePreviewTutorialKey,
+            title: context.tr('tutorialBattlePreviewTitle'),
+            description: context.tr('tutorialBattlePreviewDesc'),
+            align: ContentAlign.top,
+          ),
+          GameTutorialStep(
+            targetKey: _battleActionsTutorialKey,
+            title: context.tr('tutorialBattleActionsTitle'),
+            description: context.tr('tutorialBattleActionsDesc'),
+            align: ContentAlign.top,
+          ),
+          GameTutorialStep(
+            targetKey: _battleHandTutorialKey,
+            title: context.tr('tutorialBattleHandTitle'),
+            description: context.tr('tutorialBattleHandDesc'),
+            align: ContentAlign.top,
+          ),
+        ],
+        nextLabel: context.tr('tutorialNext'),
+        doneLabel: context.tr('tutorialDone'),
+        skipLabel: context.tr('tutorialSkip'),
+      ),
+      colorShadow: const Color(0xFF05070D),
+      opacityShadow: 0.62,
+      pulseEnable: false,
+      paddingFocus: 6,
+      alignSkip: Alignment.topRight,
+      skipWidget: buildGameTutorialSkipButton(context.tr('tutorialSkip')),
+      onFinish: _markBattleTutorialSeenOnFinish,
+      onSkip: () {
+        _battleTutorialShouldMarkSeenOnFinish = false;
+        _battleTutorialScheduled = false;
+        return true;
+      },
+    )..show(context: context);
+  }
+
+  void _dismissBattleTutorial() {
+    if (!(_battleTutorialCoachMark?.isShowing ?? false)) return;
+    _battleTutorialCoachMark?.skip();
+    _battleTutorialScheduled = false;
+    _battleTutorialShouldMarkSeenOnFinish = false;
+  }
+
+  void _markBattleTutorialSeenOnFinish() {
+    if (!_battleTutorialShouldMarkSeenOnFinish) return;
+    _battleTutorialShouldMarkSeenOnFinish = false;
+    TutorialStateService.markBattleIntroSeen();
   }
 
   Future<void> _presentationDelay(Duration duration) async {
@@ -1593,9 +1688,11 @@ class _GameViewState extends ConsumerState<GameView>
         _optionsDialogOpen) {
       return;
     }
+    _dismissBattleTutorial();
     while (mounted) {
       _optionsDialogOpen = true;
       SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      if (!mounted) return;
       final action = await showGameOptionsDialog(
         context: context,
         runSeed: widget.runSeed,
@@ -1631,6 +1728,11 @@ class _GameViewState extends ConsumerState<GameView>
           if (!mounted) return;
           _resumePresentation();
           SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          return;
+        case GameOptionsCloseAction.openBattleTutorial:
+          _resumePresentation();
+          SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          await _startBattleTutorial(markSeen: false);
           return;
       }
     }
@@ -1806,6 +1908,7 @@ class _GameViewState extends ConsumerState<GameView>
         child: Center(child: CircularProgressIndicator()),
       );
     }
+    _scheduleBattleTutorialIfNeeded();
     return PhoneFrameScaffold(
       child: Stack(
         children: [
@@ -1836,6 +1939,10 @@ class _GameViewState extends ConsumerState<GameView>
             difficultyLabel: NewRunSetup(
               difficulty: widget.difficulty,
             ).difficultyLabel,
+            battleBoardTutorialKey: _battleBoardTutorialKey,
+            battlePreviewTutorialKey: _battlePreviewTutorialKey,
+            battleActionsTutorialKey: _battleActionsTutorialKey,
+            battleHandTutorialKey: _battleHandTutorialKey,
             onOptionsTap: _openGameOptions,
             onRunInfoTap: _openRunInfo,
             onBlindInfoTap: _openBossConstraintInfo,
@@ -2365,6 +2472,10 @@ class _GameSurface extends StatelessWidget {
     required this.itemEffectFeedback,
     required this.itemEffectFeedbackTick,
     required this.difficultyLabel,
+    required this.battleBoardTutorialKey,
+    required this.battlePreviewTutorialKey,
+    required this.battleActionsTutorialKey,
+    required this.battleHandTutorialKey,
     required this.onOptionsTap,
     required this.onRunInfoTap,
     required this.onBlindInfoTap,
@@ -2409,6 +2520,10 @@ class _GameSurface extends StatelessWidget {
   final _ItemEffectFeedback? itemEffectFeedback;
   final int itemEffectFeedbackTick;
   final String difficultyLabel;
+  final GlobalKey battleBoardTutorialKey;
+  final GlobalKey battlePreviewTutorialKey;
+  final GlobalKey battleActionsTutorialKey;
+  final GlobalKey battleHandTutorialKey;
   final VoidCallback onOptionsTap;
   final VoidCallback onRunInfoTap;
   final VoidCallback onBlindInfoTap;
@@ -2480,6 +2595,10 @@ class _GameSurface extends StatelessWidget {
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   selectedBattleItemSlot: selectedBattleItemSlot,
                   difficultyLabel: difficultyLabel,
+                  battleBoardTutorialKey: battleBoardTutorialKey,
+                  battlePreviewTutorialKey: battlePreviewTutorialKey,
+                  battleActionsTutorialKey: battleActionsTutorialKey,
+                  battleHandTutorialKey: battleHandTutorialKey,
                   onOptionsTap: onOptionsTap,
                   onRunInfoTap: onRunInfoTap,
                   onBlindInfoTap: onBlindInfoTap,
@@ -2608,6 +2727,10 @@ class _GameLayout extends StatelessWidget {
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
     required this.difficultyLabel,
+    required this.battleBoardTutorialKey,
+    required this.battlePreviewTutorialKey,
+    required this.battleActionsTutorialKey,
+    required this.battleHandTutorialKey,
     required this.onOptionsTap,
     required this.onRunInfoTap,
     required this.onBlindInfoTap,
@@ -2644,6 +2767,10 @@ class _GameLayout extends StatelessWidget {
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final String difficultyLabel;
+  final GlobalKey battleBoardTutorialKey;
+  final GlobalKey battlePreviewTutorialKey;
+  final GlobalKey battleActionsTutorialKey;
+  final GlobalKey battleHandTutorialKey;
   final VoidCallback onOptionsTap;
   final VoidCallback onRunInfoTap;
   final VoidCallback onBlindInfoTap;
@@ -2721,20 +2848,38 @@ class _GameLayout extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: GameBoardGrid(
-                      board: battle.board,
-                      scoringCells: scoringCells,
-                      constrainedScoringCells:
-                          battle.constrainedScoringCellKeys,
-                      constrainedCells: constrainedCells,
-                      activeSettlementCells: activeSettlementCells,
-                      settlementBoardSnapshot: settlementBoardSnapshot,
-                      selectedRow: selectedBoardRow,
-                      selectedCol: selectedBoardCol,
-                      boardMoveMode: boardMoveMode,
-                      moveSourceRow: pendingBoardMoveSourceRow,
-                      moveSourceCol: pendingBoardMoveSourceCol,
-                      onTapCell: onBoardCellTap,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final side = math.min(
+                          constraints.maxWidth,
+                          constraints.maxHeight,
+                        );
+                        return Align(
+                          alignment: Alignment.center,
+                          child: SizedBox.square(
+                            dimension: side,
+                            child: _GameTutorialTarget(
+                              showcaseKey: battleBoardTutorialKey,
+                              child: GameBoardGrid(
+                                board: battle.board,
+                                scoringCells: scoringCells,
+                                constrainedScoringCells:
+                                    battle.constrainedScoringCellKeys,
+                                constrainedCells: constrainedCells,
+                                activeSettlementCells: activeSettlementCells,
+                                settlementBoardSnapshot:
+                                    settlementBoardSnapshot,
+                                selectedRow: selectedBoardRow,
+                                selectedCol: selectedBoardCol,
+                                boardMoveMode: boardMoveMode,
+                                moveSourceRow: pendingBoardMoveSourceRow,
+                                moveSourceCol: pendingBoardMoveSourceCol,
+                                onTapCell: onBoardCellTap,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   Positioned.fill(
@@ -2778,23 +2923,29 @@ class _GameLayout extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            _ScoringPreviewChip(preview: battle.scoringPreview),
+            _GameTutorialTarget(
+              showcaseKey: battlePreviewTutorialKey,
+              child: _ScoringPreviewChip(preview: battle.scoringPreview),
+            ),
             const SizedBox(height: 4),
-            _BattleActionBar(
-              scoringPreview: battle.scoringPreview,
-              canStartBoardMove:
-                  !boardMoveMode &&
-                  selectedBoardRow != null &&
-                  selectedBoardCol != null &&
-                  station.resources.boardMovesRemaining > 0,
-              onConfirm: onConfirm,
-              onClearSelection: onClearSelection,
-              onRunInfo: onRunInfoTap,
-              onStartBoardMove: onStartBoardMove,
-              onBoardDiscard: onBoardDiscard,
-              onHandDiscard: onHandDiscard,
-              confirmEnabled: !boardMoveMode,
-              utilityEnabled: !boardMoveMode,
+            _GameTutorialTarget(
+              showcaseKey: battleActionsTutorialKey,
+              child: _BattleActionBar(
+                scoringPreview: battle.scoringPreview,
+                canStartBoardMove:
+                    !boardMoveMode &&
+                    selectedBoardRow != null &&
+                    selectedBoardCol != null &&
+                    station.resources.boardMovesRemaining > 0,
+                onConfirm: onConfirm,
+                onClearSelection: onClearSelection,
+                onRunInfo: onRunInfoTap,
+                onStartBoardMove: onStartBoardMove,
+                onBoardDiscard: onBoardDiscard,
+                onHandDiscard: onHandDiscard,
+                confirmEnabled: !boardMoveMode,
+                utilityEnabled: !boardMoveMode,
+              ),
             ),
             if (boardMoveMode) ...[
               const SizedBox(height: 4),
@@ -2810,14 +2961,17 @@ class _GameLayout extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 6),
-            GameHandZone(
-              battle: battle,
-              station: station,
-              hand: battle.hand,
-              selectedHandTile: selectedHandTile,
-              onHandTileTap: onHandTileTap,
-              onDraw: onDraw,
-              tileWidth: tileWidth,
+            _GameTutorialTarget(
+              showcaseKey: battleHandTutorialKey,
+              child: GameHandZone(
+                battle: battle,
+                station: station,
+                hand: battle.hand,
+                selectedHandTile: selectedHandTile,
+                onHandTileTap: onHandTileTap,
+                onDraw: onDraw,
+                tileWidth: tileWidth,
+              ),
             ),
           ],
         );
@@ -2853,6 +3007,18 @@ bool _showsBoardScoringCallout(ScoringPresentationStep step) {
       step == ScoringPresentationStep.handRank ||
       step == ScoringPresentationStep.overlap ||
       step == ScoringPresentationStep.constraint;
+}
+
+class _GameTutorialTarget extends StatelessWidget {
+  const _GameTutorialTarget({required this.showcaseKey, required this.child});
+
+  final GlobalKey showcaseKey;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyedSubtree(key: showcaseKey, child: child);
+  }
 }
 
 class _BoardScoringCallout extends StatelessWidget {

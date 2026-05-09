@@ -122,38 +122,40 @@ class SettingView extends ConsumerWidget {
                             value: settings.sfxMuted,
                             onChanged: notifier.setSfxMuted,
                           ),
-                          Divider(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            height: 1,
-                          ),
-                          _SectionTitle(
-                            icon: Icons.star,
-                            title: context.tr('rateApp'),
-                          ),
-                          ListTile(
-                            leading: const Icon(
-                              Icons.star_border,
-                              color: Colors.amber,
+                          if (InAppReviewService.hasStoreListingId) ...[
+                            Divider(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              height: 1,
                             ),
-                            title: Text(
-                              context.tr('rateApp'),
-                              style: const TextStyle(
-                                fontFamily: AssetPaths.fontNexonLv2Gothic,
-                                fontSize: 16,
+                            _SectionTitle(
+                              icon: Icons.star,
+                              title: context.tr('rateApp'),
+                            ),
+                            ListTile(
+                              leading: const Icon(
+                                Icons.star_border,
+                                color: Colors.amber,
                               ),
+                              title: Text(
+                                context.tr('rateApp'),
+                                style: const TextStyle(
+                                  fontFamily: AssetPaths.fontNexonLv2Gothic,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              onTap: () async {
+                                final result =
+                                    await InAppReviewService.openStoreListing();
+                                if (!context.mounted) return;
+                                if (result == false) {
+                                  showTopNotice(
+                                    context,
+                                    context.tr('rateAppAfterRelease'),
+                                  );
+                                }
+                              },
                             ),
-                            onTap: () async {
-                              final result =
-                                  await InAppReviewService.openStoreListing();
-                              if (!context.mounted) return;
-                              if (result == false) {
-                                showTopNotice(
-                                  context,
-                                  context.tr('rateAppAfterRelease'),
-                                );
-                              }
-                            },
-                          ),
+                          ],
                         ],
                       ),
                     ),

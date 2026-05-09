@@ -1,0 +1,4 @@
+storePassword=<keystore-password>
+keyPassword=<key-password>
+keyAlias=<rummi-poker-key-alias>
+storeFile=<absolute-path-to-rummi-poker-keystore.jks>

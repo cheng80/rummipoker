@@ -80,13 +80,13 @@ class HomeEntryCard extends StatelessWidget {
         .toColor();
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: enabled ? onTap : null,
         child: Ink(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -96,10 +96,10 @@ class HomeEntryCard extends StatelessWidget {
                 darkerColor.withValues(alpha: enabled ? 1 : 0.35),
               ],
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: darkerColor.withValues(alpha: 0.6),
-              width: 2.2,
+              width: 1.8,
             ),
             boxShadow: [
               BoxShadow(
@@ -119,12 +119,12 @@ class HomeEntryCard extends StatelessWidget {
                       title,
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        fontSize: 24,
+                        fontSize: 21,
                         fontWeight: FontWeight.bold,
                         color: Colors.white.withValues(
                           alpha: enabled ? 1 : 0.72,
                         ),
-                        letterSpacing: 2.2,
+                        letterSpacing: 1.4,
                         shadows: [
                           Shadow(
                             color: darkerColor.withValues(alpha: 0.8),
@@ -134,27 +134,28 @@ class HomeEntryCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Text(
                       description,
                       style: TextStyle(
                         color: Colors.white.withValues(
                           alpha: enabled ? 0.82 : 0.6,
                         ),
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        height: 1.3,
+                        height: 1.22,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Icon(
                 enabled
                     ? Icons.arrow_forward_rounded
                     : Icons.lock_clock_rounded,
                 color: Colors.white.withValues(alpha: enabled ? 0.92 : 0.65),
+                size: 22,
               ),
             ],
           ),

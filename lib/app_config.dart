@@ -38,6 +38,8 @@ class StorageKeys {
   static const String reviewRequestedAfterFirstClear =
       'review_requested_after_first_clear';
   static const String reviewRequestedOnTitle = 'review_requested_on_title';
+  static const String tutorialBattleIntroSeen = 'tutorial_battle_intro_seen';
+  static const String tutorialMarketIntroSeen = 'tutorial_market_intro_seen';
   static const String activeRunPayloadV1 = 'active_run_payload_v1';
   static const String activeRunSignatureV1 = 'active_run_signature_v1';
   static const String saveDeviceKeyV1 = 'save_device_key_v1';
