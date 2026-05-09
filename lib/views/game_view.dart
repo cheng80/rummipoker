@@ -126,6 +126,7 @@ class _GameViewState extends ConsumerState<GameView>
   bool _presentationPaused = false;
   bool _battleTutorialScheduled = false;
   bool _battleTutorialShouldMarkSeenOnFinish = false;
+  int _battleTutorialFocusIndex = 0;
   TutorialCoachMark? _battleTutorialCoachMark;
   final GlobalKey _battleBoardTutorialKey = GlobalKey();
   final GlobalKey _battlePreviewTutorialKey = GlobalKey();
@@ -335,8 +336,24 @@ class _GameViewState extends ConsumerState<GameView>
     }
   }
 
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    if (!(_battleTutorialCoachMark?.isShowing ?? false)) return;
+    final focusIndex = _battleTutorialFocusIndex;
+    _battleTutorialCoachMark?.removeOverlayEntry();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _optionsDialogOpen) return;
+      _startBattleTutorial(
+        markSeen: _battleTutorialShouldMarkSeenOnFinish,
+        initialFocus: focusIndex,
+      );
+    });
+  }
+
   void _pausePresentation() {
     if (_presentationPaused) return;
+    _removeBattleTutorialForPause();
     setState(() {
       _presentationPaused = true;
     });
@@ -366,19 +383,49 @@ class _GameViewState extends ConsumerState<GameView>
   void _scheduleBattleTutorialIfNeeded() {
     if (_battleTutorialScheduled ||
         _optionsDialogOpen ||
+        _presentationPaused ||
+        _gameState.activeRunScene != ActiveRunScene.battle ||
         _stageFlowPhase != GameStageFlowPhase.none ||
         TutorialStateService.battleIntroSeen) {
       return;
     }
     _battleTutorialScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startBattleTutorial(markSeen: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _waitForBattleTutorialLayout();
+      if (!mounted ||
+          _optionsDialogOpen ||
+          _presentationPaused ||
+          _gameState.activeRunScene != ActiveRunScene.battle ||
+          _stageFlowPhase != GameStageFlowPhase.none ||
+          TutorialStateService.battleIntroSeen) {
+        _battleTutorialScheduled = false;
+        return;
+      }
+      await _startBattleTutorial(markSeen: true);
     });
   }
 
-  Future<void> _startBattleTutorial({required bool markSeen}) async {
+  Future<void> _waitForBattleTutorialLayout() async {
+    await WidgetsBinding.instance.endOfFrame;
+    await Future<void>.delayed(GamePresentationTimings.scoringPreviewFadeIn);
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
+  Future<void> _startBattleTutorial({
+    required bool markSeen,
+    int initialFocus = 0,
+  }) async {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
+    if (_presentationPaused ||
+        _optionsDialogOpen ||
+        _gameState.activeRunScene != ActiveRunScene.battle) {
+      _battleTutorialScheduled = false;
+      _battleTutorialShouldMarkSeenOnFinish = false;
+      _battleTutorialFocusIndex = 0;
+      return;
+    }
+    _battleTutorialFocusIndex = initialFocus.clamp(0, 3);
     if (markSeen) {
       _battleTutorialShouldMarkSeenOnFinish = true;
     } else {
@@ -387,6 +434,7 @@ class _GameViewState extends ConsumerState<GameView>
     _battleTutorialCoachMark?.removeOverlayEntry();
     _battleTutorialCoachMark = TutorialCoachMark(
       targets: buildGameTutorialTargets(
+        context: context,
         steps: [
           GameTutorialStep(
             targetKey: _battleBoardTutorialKey,
@@ -416,6 +464,9 @@ class _GameViewState extends ConsumerState<GameView>
         nextLabel: context.tr('tutorialNext'),
         doneLabel: context.tr('tutorialDone'),
         skipLabel: context.tr('tutorialSkip'),
+        onStepAdvanced: (index) {
+          _battleTutorialFocusIndex = index.clamp(0, 3);
+        },
       ),
       colorShadow: const Color(0xFF05070D),
       opacityShadow: 0.62,
@@ -423,10 +474,13 @@ class _GameViewState extends ConsumerState<GameView>
       paddingFocus: 6,
       alignSkip: Alignment.topRight,
       skipWidget: buildGameTutorialSkipButton(context.tr('tutorialSkip')),
+      initialFocus: _battleTutorialFocusIndex,
       onFinish: _markBattleTutorialSeenOnFinish,
       onSkip: () {
+        TutorialStateService.markBattleIntroSeen();
         _battleTutorialShouldMarkSeenOnFinish = false;
         _battleTutorialScheduled = false;
+        _battleTutorialFocusIndex = 0;
         return true;
       },
     )..show(context: context);
@@ -434,12 +488,23 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _dismissBattleTutorial() {
     if (!(_battleTutorialCoachMark?.isShowing ?? false)) return;
-    _battleTutorialCoachMark?.skip();
+    _battleTutorialCoachMark?.removeOverlayEntry();
     _battleTutorialScheduled = false;
     _battleTutorialShouldMarkSeenOnFinish = false;
+    _battleTutorialFocusIndex = 0;
+  }
+
+  void _removeBattleTutorialForPause() {
+    if (_battleTutorialCoachMark?.isShowing ?? false) {
+      _battleTutorialCoachMark?.removeOverlayEntry();
+    }
+    _battleTutorialScheduled = false;
+    _battleTutorialShouldMarkSeenOnFinish = false;
+    _battleTutorialFocusIndex = 0;
   }
 
   void _markBattleTutorialSeenOnFinish() {
+    _battleTutorialFocusIndex = 0;
     if (!_battleTutorialShouldMarkSeenOnFinish) return;
     _battleTutorialShouldMarkSeenOnFinish = false;
     TutorialStateService.markBattleIntroSeen();
@@ -1632,6 +1697,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<bool?> _showShopScreen({bool autoAdvanceOnLoad = false}) {
+    _removeBattleTutorialForPause();
     return Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
@@ -1944,6 +2010,7 @@ class _GameViewState extends ConsumerState<GameView>
             battleActionsTutorialKey: _battleActionsTutorialKey,
             battleHandTutorialKey: _battleHandTutorialKey,
             onOptionsTap: _openGameOptions,
+            onTutorialTap: () => _startBattleTutorial(markSeen: false),
             onRunInfoTap: _openRunInfo,
             onBlindInfoTap: _openBossConstraintInfo,
             onDebugTap: () => _openDebugBottomSheet(context),
@@ -2477,6 +2544,7 @@ class _GameSurface extends StatelessWidget {
     required this.battleActionsTutorialKey,
     required this.battleHandTutorialKey,
     required this.onOptionsTap,
+    required this.onTutorialTap,
     required this.onRunInfoTap,
     required this.onBlindInfoTap,
     required this.onDebugTap,
@@ -2525,6 +2593,7 @@ class _GameSurface extends StatelessWidget {
   final GlobalKey battleActionsTutorialKey;
   final GlobalKey battleHandTutorialKey;
   final VoidCallback onOptionsTap;
+  final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
   final VoidCallback onBlindInfoTap;
   final VoidCallback onDebugTap;
@@ -2600,6 +2669,7 @@ class _GameSurface extends StatelessWidget {
                   battleActionsTutorialKey: battleActionsTutorialKey,
                   battleHandTutorialKey: battleHandTutorialKey,
                   onOptionsTap: onOptionsTap,
+                  onTutorialTap: onTutorialTap,
                   onRunInfoTap: onRunInfoTap,
                   onBlindInfoTap: onBlindInfoTap,
                   onDebugTap: onDebugTap,
@@ -2732,6 +2802,7 @@ class _GameLayout extends StatelessWidget {
     required this.battleActionsTutorialKey,
     required this.battleHandTutorialKey,
     required this.onOptionsTap,
+    required this.onTutorialTap,
     required this.onRunInfoTap,
     required this.onBlindInfoTap,
     required this.onDebugTap,
@@ -2772,6 +2843,7 @@ class _GameLayout extends StatelessWidget {
   final GlobalKey battleActionsTutorialKey;
   final GlobalKey battleHandTutorialKey;
   final VoidCallback onOptionsTap;
+  final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
   final VoidCallback onBlindInfoTap;
   final VoidCallback onDebugTap;
@@ -2826,6 +2898,7 @@ class _GameLayout extends StatelessWidget {
               stationGoalPulse:
                   activeSettlementStep == ScoringPresentationStep.finalScore,
               stationGoalPulseTick: settlementSequenceTick,
+              onTutorialTap: onTutorialTap,
             ),
             const SizedBox(height: 4),
             GameJesterZone(

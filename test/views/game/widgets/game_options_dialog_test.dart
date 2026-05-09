@@ -65,6 +65,8 @@ void main() {
 
     expect(find.text('옵션'), findsOneWidget);
     expect(find.text('123'), findsOneWidget);
+    expect(find.text('튜토리얼 다시 보기'), findsOneWidget);
+    expect(find.text('전투 기본 조작 안내를 다시 봅니다.'), findsOneWidget);
 
     await tester.tapAt(const Offset(8, 8));
     await tester.pumpAndSettle();

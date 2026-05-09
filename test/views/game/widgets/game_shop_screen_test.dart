@@ -424,6 +424,8 @@ void main() {
 
     expect(find.text('Market 옵션'), findsOneWidget);
     expect(find.text('Run Snapshot'), findsOneWidget);
+    expect(find.text('상점 튜토리얼 다시 보기'), findsOneWidget);
+    expect(find.text('상점 보유 영역, 후보, 리롤 안내를 다시 봅니다.'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();

@@ -10,8 +10,8 @@
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Active for challenge full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 도전 난이도 fresh S1~S8 full-run을 제외하고 최근 추가된 룰/UI 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했다. S8 boss 이후는 임시 계속 진행이 아니라 정식 `무한 도전` 진입 UX와 S9+ target 산식으로 정리했다. |
-| 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강은 런타임 반영과 핵심 검증 완료. 장기 밸런스는 별도 트랙으로 남긴다. |
+| 공모전 기준 완성 | Active for challenge full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 도전 난이도 fresh S1~S8 full-run을 제외하고 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했다. S8 boss 이후는 임시 계속 진행이 아니라 정식 `무한 도전` 진입 UX와 S9+ target 산식으로 정리했다. |
+| 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1, submission kit 문서화는 반영됐다. 장기 밸런스와 스토어 최종 산출물은 별도 트랙으로 남긴다. |
 
 현재는 공모전 기준 QA를 재개한다. 다음 남은 gate는 도전 난이도 fresh S1~S8 `contest_full_run_bot` full-run이다.
 
@@ -45,6 +45,9 @@
 - Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않음
 - `contest_full_run_bot` market policy는 `*_study` 같은 직접 족보 성장 아이템과 Tool/Gear lane 구매 후보를 평가하도록 code/test 동기화 완료
 - S8 boss 이후 `무한 도전 진입` CTA를 표시하고, S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율에 station 상승률을 적용한다. Station Select, 전투 HUD, 정산 라벨은 `무한 도전` 색상과 경고 톤으로 표시한다.
+- 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런` 적용 완료
+- `docs/submission_kit/` 제출 문서 세트 정리 완료. Android/iOS 실제 release artifact 생성은 아직 제출 전 별도 gate다.
+- 전투/마켓 튜토리얼 V1은 `tutorial_coach_mark`로 구현. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 리사이즈 후 focus 크기 눈검증은 아직 남아 있다.
 
 ## 3. 공모전 Done Evidence
 
@@ -58,6 +61,7 @@
 - Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 S1~S8 clear 확인
 - full-play 중 마켓 구매와 아이템 실제 사용 증거 확인
 - 게임오버/런 완료 보상, 도감, 새 run 복귀가 심사자에게 설명 없이 읽힌다는 눈검증
+- 전투/마켓 튜토리얼이 첫 진입/다시 보기/포커스 아웃/옵션 겹침/창 크기 변경에서 깨지지 않는다는 눈검증
 
 ## 4. 지금 시작하지 않는 작업
 
@@ -78,6 +82,7 @@
 - Planet-like 직접 족보 성장 아이템군과 초과 클리어 대표 족보 성장 보너스: 반영 완료
 - `handGrowthStates(level/progress/requiredProgress)` 분리: 반영 완료. `playedHandCounts`는 완성 횟수/Jester 통계용으로 유지하고 점수 성장 source를 분리했다.
 - 타이틀의 `런 정보` 직접 진입점과 게임오버 런 요약/랜덤 도발 문구: 반영 완료. 정산 progress bar는 이번 범위에서 제외한다.
+- 타이틀 로고/서브타이틀, submission kit 문서화, 전투/마켓 튜토리얼 V1: 반영 완료. 튜토리얼 리사이즈 눈검증은 남김.
 - 새 run까지 이어지는 영구 계승은 이번 1차 범위에서 제외하고 별도 검토로 남긴다.
 - 공모전 풀런봇이 성장한 족보를 평가하도록 하는 bot 정책 동기화
 

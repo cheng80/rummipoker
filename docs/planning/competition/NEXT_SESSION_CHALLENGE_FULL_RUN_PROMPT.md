@@ -11,6 +11,7 @@
 - 최신 룰/UI 후보에서 표준 난이도 fresh S1~S8 boss full-run은 이미 통과했다.
 - 이제 도전 난이도 fresh S1~S8 full-run을 시작한다.
 - Flutter semantics 반복 경고는 2026-05-10 route/dialog label 보정과 최신 build smoke로 1차 처리됐다.
+- 전투/마켓 튜토리얼은 `showcaseview`가 아니라 `tutorial_coach_mark` 기준이다. dialog/focus-out 시 overlay가 위에 남지 않게 닫고, FittedBox 변환 뒤 실제 화면 rect로 focus 위치와 크기를 계산하도록 보정했다.
 - S8 boss 이후는 `무한 도전 진입` UX로 정리됐다. S9+ 장기 생존은 이번 제출 gate가 아니지만, S8 정산에서 런 완료/무한 도전 진입 CTA와 보상 표시가 깨지지 않는지 확인한다.
 
 먼저 읽을 문서:
@@ -37,12 +38,17 @@
 
 이번 세션 첫 작업 순서:
 1. git status --short, git log -3 --oneline으로 시작한다.
-2. `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`의 “0.1 최근 5시간 이내 추가 항목과 검증 대기 목록”을 먼저 확인한다.
+2. `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`의 “0.1 최근 24시간 이내 추가 항목과 검증 대기 목록”을 먼저 확인한다.
    - 족보 성장 UI/점수 반영
    - 행성카드형 성장 아이템
    - 초과 점수 기반 대표 족보 성장
    - 메인 화면 `런 정보` 진입
    - 게임오버 정산 화면과 랜덤 도발 문구
+   - S8 이후 무한 도전 진입 UX
+   - 타이틀 로고/서브타이틀
+   - submission kit 빌드/스토어 문서
+   - 전투/마켓 튜토리얼과 다시 보기
+   - 인앱 리뷰 store id gate
    - 위 항목들은 도전 난이도 fresh S1~S8 full-run을 제외하고 최신 제출 후보 build/test/smoke 기준으로 1차 검증됐다.
 3. 도전 풀런 직전 최신 상태가 바뀌었으면 `flutter analyze`, 핵심 `flutter test`, `flutter build web`을 다시 실행한다.
 4. 공모전 풀런봇 policy code/test가 추가 덱, 보상 타일, 특수 족보, 족보 성장 점수를 실제 후보 평가에 반영하는지 확인한다.
@@ -68,6 +74,19 @@
 - 위 경로 모두 앱 warn/error/exception 0건
 - Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않는다.
 
+2026-05-10 최근 24시간 내 풀런 제외 진행 상태:
+- 런 내부 족보 레벨 성장, `handGrowthStates(level/progress/requiredProgress)` 분리, 런 정보 UI, 성장 점수 반영: 구현/테스트 완료.
+- 행성카드형 직접 성장 아이템(`*_study`)과 bot market policy 구매 평가: 구현/테스트 완료.
+- 초과 점수 기반 대표 족보 성장 보상: 구현/테스트 완료.
+- 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상: 구현/테스트 완료. 표준 fresh full-run에서도 덱 증가 확인됨.
+- S8 boss 이후 `무한 도전 진입`, S9+ Station Select/전투 HUD/정산 라벨 위험 색상, target 비율: 구현/테스트/눈검증 완료.
+- 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런`: 구현/커밋 완료.
+- `docs/submission_kit/` 제출 문서 세트, Android signing/key.properties 예시, 플랫폼별 빌드 가이드, store metadata: 문서화 완료.
+- 인앱 리뷰는 store id가 없으면 진입 메뉴 버튼을 숨기는 방향으로 반영됨.
+- 전투/마켓 튜토리얼은 `tutorial_coach_mark`로 구현. 자동 튜토리얼은 끝까지 완료된 경우만 seen 저장, skip/focus-out/options 진입은 다음에 다시 뜨게 한다.
+- 튜토리얼 최신 보정: focus 위치/크기를 FittedBox 변환 후 실제 화면 좌표로 계산하고, 창 크기 변경 시 현재 step 유지 후 overlay 재생성. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 남은 항목은 Browser/기기에서 리사이즈 후 크기 눈검증.
+- 정산 progress bar, 게임오버 후 새 run까지 족보 성장 영구 계승, 타로/유령카드류 전체 이식은 이번 제출 전 구현 범위에서 제외.
+
 중요 정책:
 - full-play bot 증거와 Browser Use smoke를 혼동하지 않는다.
 - debug fixture, 즉시 클리어, forced reward는 full-play evidence가 아니다.
@@ -79,6 +98,7 @@
 - S9+ 무한 도전 target은 Scout 1배, Clash 1.5배, Boss 2배 비율을 따른다.
 - 마켓 tile offer는 실제 타일 face로 보이고, 구매 시 오른쪽 중단 덱 방향으로 날아가야 한다.
 - 도전 풀런 통과를 제출 Done으로 쓰려면 console error/warn 0건도 함께 닫혀야 한다.
+- 튜토리얼 smoke는 full-play evidence가 아니다. 단, 제출 후보 UX QA 항목으로 전투 첫 진입, 마켓 첫 진입, 다시 보기, 포커스 아웃/옵션 겹침, 창 크기 변경 후 focus 위치/크기를 확인한다.
 
 완료 시 해야 할 일:
 - docs/planning/ACTIVE_EXECUTION_PLAN.md 업데이트

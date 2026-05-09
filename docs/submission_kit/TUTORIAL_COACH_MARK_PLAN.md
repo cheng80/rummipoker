@@ -13,6 +13,7 @@
 - 마켓 첫 진입 튜토리얼: 구현됨. 보유 슬롯, 상세/구매 패널, lane/리롤, offer 영역을 순서대로 안내한다.
 - 마켓 다시 보기: 구현됨. 상점 상단 우측 `?` 버튼에서 실행한다.
 - 반복 방지 저장 키: 구현됨. `tutorial_battle_intro_seen`, `tutorial_market_intro_seen`를 사용한다. 단, 자동 튜토리얼을 끝까지 완료한 경우에만 seen을 저장하고, 스킵/포커스 아웃/옵션 진입 등으로 중단되면 다음 진입 때 다시 표시한다.
+- focus target 보정: 구현됨. `FittedBox`/논리 해상도 프레임의 변환을 반영한 실제 화면 좌표와 크기를 계산해 `TargetPosition`으로 넘긴다. 창 크기 변경 시 현재 step을 유지한 채 overlay를 재생성한다.
 - 정산, 게임오버, 런 정보, 도감 튜토리얼: 이번 범위에서 제외한다.
 
 ## 목표
@@ -72,6 +73,7 @@
 - dialog, bottom sheet, navigation transition과 겹치지 않게 한다.
 - 옵션 dialog나 앱 포커스 변경으로 일시정지/옵션이 뜨기 전에는 실행 중인 tutorial overlay를 먼저 닫는다.
 - FittedBox, canvas, Flame overlay 위젯에서 target 위치가 흔들리지 않는지 Browser/기기 눈검증을 한다.
+- 위치뿐 아니라 focus 크기가 창 크기 변경을 따라오는지도 확인한다. package 기본 `GlobalKey` bounds가 논리 크기를 그대로 쓰면 custom target rect를 우선한다.
 - 전투 중 tutorial step은 플레이 입력을 막는 시간과 허용하는 시간을 분리한다.
 - `TextOverflow.ellipsis`로 설명을 숨기지 않는다.
 - 튜토리얼 문구는 한국어/영어 키 기준으로 관리한다.
@@ -95,3 +97,4 @@
 - [ ] 다시 보기 버튼에서 재실행되는지 Browser/기기 눈검증
 - [ ] 작은 iPhone 세로 화면에서 문구가 잘리지 않는지 기기 눈검증
 - [ ] iPad에서 target 위치가 맞는지 기기 눈검증
+- [ ] 웹 창 크기 변경 후 focus 위치와 크기가 모두 맞는지 Browser/기기 눈검증

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../../../resources/asset_paths.dart';
+import 'game_word_wrap_text.dart';
 
 class GameTutorialStep {
   const GameTutorialStep({
@@ -9,48 +10,128 @@ class GameTutorialStep {
     required this.title,
     required this.description,
     this.align = ContentAlign.bottom,
+    this.keepBubbleAboveTarget = false,
   });
 
   final GlobalKey targetKey;
   final String title;
   final String description;
   final ContentAlign align;
+  final bool keepBubbleAboveTarget;
 }
 
 List<TargetFocus> buildGameTutorialTargets({
+  required BuildContext context,
   required List<GameTutorialStep> steps,
   required String nextLabel,
   required String doneLabel,
   required String skipLabel,
+  ValueChanged<int>? onStepAdvanced,
 }) {
   return [
     for (var i = 0; i < steps.length; i += 1)
-      TargetFocus(
-        identify: 'tutorial_step_$i',
-        keyTarget: steps[i].targetKey,
-        shape: ShapeLightFocus.RRect,
-        radius: 12,
-        paddingFocus: 6,
-        enableOverlayTab: false,
-        enableTargetTab: false,
-        borderSide: const BorderSide(color: Color(0xFFF2C14E), width: 2),
-        contents: [
-          TargetContent(
-            align: steps[i].align,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            builder: (context, controller) => _TutorialBubble(
-              step: steps[i],
-              isLast: i == steps.length - 1,
-              nextLabel: nextLabel,
-              doneLabel: doneLabel,
-              skipLabel: skipLabel,
-              onNext: controller.next,
-              onSkip: controller.skip,
-            ),
-          ),
-        ],
+      _buildGameTutorialTarget(
+        context: context,
+        step: steps[i],
+        index: i,
+        isLast: i == steps.length - 1,
+        nextLabel: nextLabel,
+        doneLabel: doneLabel,
+        skipLabel: skipLabel,
+        onStepAdvanced: onStepAdvanced,
       ),
   ];
+}
+
+TargetFocus _buildGameTutorialTarget({
+  required BuildContext context,
+  required GameTutorialStep step,
+  required int index,
+  required bool isLast,
+  required String nextLabel,
+  required String doneLabel,
+  required String skipLabel,
+  ValueChanged<int>? onStepAdvanced,
+}) {
+  final targetPosition = _tutorialTargetPosition(context, step.targetKey);
+  final overlaySize = _tutorialOverlaySize(context);
+  final contentAlign = step.keepBubbleAboveTarget
+      ? ContentAlign.custom
+      : step.align;
+
+  return TargetFocus(
+    identify: 'tutorial_step_$index',
+    targetPosition: targetPosition,
+    shape: ShapeLightFocus.RRect,
+    radius: 12,
+    paddingFocus: 6,
+    enableOverlayTab: false,
+    enableTargetTab: false,
+    borderSide: const BorderSide(color: Color(0xFFF2C14E), width: 2),
+    contents: [
+      TargetContent(
+        align: contentAlign,
+        customPosition: step.keepBubbleAboveTarget
+            ? _contentAboveTargetPosition(overlaySize, targetPosition)
+            : null,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        builder: (context, controller) => _TutorialBubble(
+          step: step,
+          isLast: isLast,
+          nextLabel: nextLabel,
+          doneLabel: doneLabel,
+          skipLabel: skipLabel,
+          onNext: () {
+            onStepAdvanced?.call(index + 1);
+            controller.next();
+          },
+          onSkip: controller.skip,
+        ),
+      ),
+    ],
+  );
+}
+
+CustomTargetContentPosition _contentAboveTargetPosition(
+  Size overlaySize,
+  TargetPosition targetPosition,
+) {
+  final bottom = (overlaySize.height - targetPosition.offset.dy + 18).clamp(
+    128.0,
+    overlaySize.height - 96,
+  );
+  return CustomTargetContentPosition(bottom: bottom);
+}
+
+Size _tutorialOverlaySize(BuildContext context) {
+  final overlayBox = Overlay.of(context).context.findRenderObject();
+  if (overlayBox is RenderBox && overlayBox.hasSize) {
+    return overlayBox.size;
+  }
+  return MediaQuery.sizeOf(context);
+}
+
+TargetPosition _tutorialTargetPosition(BuildContext context, GlobalKey key) {
+  final targetContext = key.currentContext;
+  if (targetContext == null) {
+    return TargetPosition(Size.zero, Offset.zero);
+  }
+  final renderObject = targetContext.findRenderObject();
+  if (renderObject is! RenderBox || !renderObject.hasSize) {
+    return TargetPosition(Size.zero, Offset.zero);
+  }
+  final overlayBox = Overlay.of(context).context.findRenderObject();
+  final ancestor = overlayBox is RenderBox ? overlayBox : null;
+  final topLeft = renderObject.localToGlobal(Offset.zero, ancestor: ancestor);
+  final bottomRight = renderObject.localToGlobal(
+    Offset(renderObject.size.width, renderObject.size.height),
+    ancestor: ancestor,
+  );
+  final size = Size(
+    (bottomRight.dx - topLeft.dx).abs(),
+    (bottomRight.dy - topLeft.dy).abs(),
+  );
+  return TargetPosition(size, topLeft);
 }
 
 Widget buildGameTutorialSkipButton(String label) {
@@ -133,6 +214,9 @@ class _TutorialBubble extends StatelessWidget {
               children: [
                 Text(
                   step.title,
+                  maxLines: null,
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -143,9 +227,10 @@ class _TutorialBubble extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
+                GameWordWrapText(
                   step.description,
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.left,
+                  centerBlock: true,
                   style: const TextStyle(
                     fontFamily: AssetPaths.fontNexonLv2Gothic,
                     color: Colors.white,

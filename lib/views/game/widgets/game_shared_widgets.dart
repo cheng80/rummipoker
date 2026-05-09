@@ -103,6 +103,7 @@ class GameTopHud extends StatelessWidget {
     required this.station,
     required this.battle,
     required this.onOptionsTap,
+    this.onTutorialTap,
     this.difficultyLabel = '표준',
     this.onBlindInfoTap,
     this.stationGoalDisplayScore,
@@ -114,6 +115,7 @@ class GameTopHud extends StatelessWidget {
   final RummiBattleRuntimeFacade battle;
   final String difficultyLabel;
   final VoidCallback onOptionsTap;
+  final VoidCallback? onTutorialTap;
   final VoidCallback? onBlindInfoTap;
   final int? stationGoalDisplayScore;
   final bool stationGoalPulse;
@@ -307,6 +309,7 @@ class GameTopHud extends StatelessWidget {
             child: _GameGoldHudChip(
               gold: battle.currentGold,
               onOptionsTap: onOptionsTap,
+              onTutorialTap: onTutorialTap,
             ),
           ),
         ],
@@ -316,10 +319,15 @@ class GameTopHud extends StatelessWidget {
 }
 
 class _GameGoldHudChip extends StatefulWidget {
-  const _GameGoldHudChip({required this.gold, required this.onOptionsTap});
+  const _GameGoldHudChip({
+    required this.gold,
+    required this.onOptionsTap,
+    this.onTutorialTap,
+  });
 
   final int gold;
   final VoidCallback onOptionsTap;
+  final VoidCallback? onTutorialTap;
 
   @override
   State<_GameGoldHudChip> createState() => _GameGoldHudChipState();
@@ -373,11 +381,38 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'GOLD',
-              style: gameHudLabelStyle,
-              maxLines: 1,
-              textAlign: TextAlign.center,
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'GOLD',
+                    style: gameHudLabelStyle,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                if (widget.onTutorialTap != null)
+                  Tooltip(
+                    message: context.tr('tutorialBattleReplayTitle'),
+                    child: GestureDetector(
+                      onTap: widget.onTutorialTap,
+                      behavior: HitTestBehavior.opaque,
+                      child: SizedBox(
+                        width: 20,
+                        height: 18,
+                        child: Icon(
+                          Icons.help_outline_rounded,
+                          color: const Color(
+                            0xFFF2C14E,
+                          ).withValues(alpha: 0.95),
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(width: 20),
+              ],
             ),
             const SizedBox(height: 2),
             Expanded(

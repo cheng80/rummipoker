@@ -35,6 +35,8 @@
 - 2026-05-10 검증: `flutter analyze`, 핵심 `flutter test`, `flutter build web` 통과.
 - 2026-05-10 Browser/CDP smoke: `/`, `/new-run`, `/archive`, `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`, `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1` 모두 앱 warn/error/exception 0건. Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않는다.
 - 2026-05-10 추가 검증: 무한 도전 target 산식, S9+ Station Select 표시, 전투 HUD 무한 라벨, 정산 무한 라벨/CTA 테스트와 `flutter build web` 통과.
+- 2026-05-10 추가 작업: 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런`을 적용했고, `docs/submission_kit/`에 플랫폼별 빌드/스토어/튜토리얼/인앱 리뷰 문서를 정리했다.
+- 2026-05-10 튜토리얼: `showcaseview` 대신 `tutorial_coach_mark` 기반 전투/마켓 첫 설명과 다시 보기를 구현했다. 옵션/포커스 아웃 시 overlay가 위에 남지 않게 닫고, FittedBox 변환 뒤 실제 화면 rect로 focus 위치/크기를 계산하도록 보정했다. 남은 항목은 Browser/기기 리사이즈 눈검증이다.
 
 오늘 바로 할 작업:
 
@@ -42,10 +44,10 @@
 2. 도전 full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
 3. 도전 full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
 
-## 0.1 최근 5시간 이내 추가 항목과 검증 대기 목록
+## 0.1 최근 24시간 이내 추가 항목과 검증 대기 목록
 
 이 섹션을 제출 QA의 최상위 작업 큐로 본다.
-아래 항목은 도전 난이도 fresh S1~S8 full-run을 제외하고 최신 제출 후보 build와 Browser/CDP smoke, Flutter test 기준으로 검증을 마쳤다.
+아래 항목은 도전 난이도 fresh S1~S8 full-run을 제외한 최근 24시간 내 구현/문서/UX 작업 기준이다.
 
 ### A. 구현과 1차 검증을 닫은 항목
 
@@ -67,6 +69,15 @@
 - [x] S8 이후 무한 도전 진입 UX
   - 구현 상태: S8 Boss 정산에서 `무한 도전 진입` CTA를 표시하고, S9+ Station Select/전투 HUD/정산 라벨을 위험 구간 색상으로 표시한다.
   - 검증: `blind_selection_setup_test`, `blind_select_view_test`, `game_station_read_path_test`, `rummi_settlement_facade_test`, `game_cashout_widgets_test`에서 확인.
+- [x] 타이틀 로고와 서브타이틀
+  - 구현 상태: 이미지 로고를 적용하고 서브타이틀을 `타일로 만드는 포커 런`으로 고정했다.
+  - 검증: `title_view_test`, `flutter analyze`, `flutter build web` 기준으로 확인. 최종 스토어용 스크린샷은 별도 촬영 필요.
+- [x] submission kit 문서 세트
+  - 구현 상태: `docs/submission_kit/`에 플랫폼별 빌드 가이드, release checklist, store metadata, promo copy, tutorial plan, in-app review guide를 정리했다.
+  - 검증: 문서 구조와 old doc 흡수 범위 확인. 실제 Android/iOS release artifact 생성은 아직 별도 제출 전 gate다.
+- [x] 인앱 리뷰 store id gate
+  - 구현 상태: market id/store id가 없으면 진입 메뉴의 인앱 리뷰 버튼이 보이지 않게 처리했다.
+  - 검증: `setting_view_test`와 최신 analyze/test에서 확인.
 
 ### B. 최근 추가 항목 때문에 다시 열어 둔 QA
 
@@ -76,6 +87,14 @@
 - [x] `contest_full_run_bot`이 추가 덱, 보상 타일, 특수 족보, 족보 성장 점수를 실제 후보 평가에 반영하는지 policy code/test 확인.
 - [ ] 도전 난이도 fresh S1~S8 `contest_full_run_bot` full-run 증거 확보.
 - [x] 게임오버 보상, 도감 카드 face, 새 run 화면이 수집/재시작 욕구로 읽히는지 Browser Use 또는 Browser/WebDriver로 눈검증.
+- [x] 전투/마켓 튜토리얼 구현과 build/test 검증.
+  - `showcaseview` 제거, `tutorial_coach_mark` 적용.
+  - 자동 튜토리얼 완료 때만 seen 저장, skip/focus-out/options 진입 시 다음 진입에서 다시 표시.
+  - tooltip/card 색상은 녹색 배경과 분리된 흑청/보라 계열과 금색 테두리로 조정.
+- [ ] 튜토리얼 Browser/기기 눈검증.
+  - 전투 첫 진입, 마켓 첫 진입, 다시 보기 버튼, 옵션/포커스 아웃 겹침, 작은 화면/큰 화면에서 문구 잘림 확인.
+  - 창 크기 변경 뒤 focus 위치뿐 아니라 크기도 따라오는지 확인.
+- [ ] 일반 release build에서 debug fixture 진입점이 숨겨지고, QA build에서만 보이는지 재확인.
 
 ### C. 문서화됐지만 이번 제출 전 구현 범위에서 제외한 항목
 

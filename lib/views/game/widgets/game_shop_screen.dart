@@ -46,6 +46,7 @@ enum _MarketOptionsCloseAction {
   keepPaused,
   openSettings,
   openRunInfo,
+  openMarketTutorial,
 }
 
 const TextStyle _marketDescriptionTextStyle = TextStyle(
@@ -231,12 +232,17 @@ class _GameShopScreenState extends State<GameShopScreen>
   final Map<String, GlobalKey> _offerKeys = <String, GlobalKey>{};
   final Map<String, GlobalKey> _itemSlotKeys = <String, GlobalKey>{};
   final Map<int, GlobalKey> _jesterSlotKeys = <int, GlobalKey>{};
-  final GlobalKey _marketOffersTutorialKey = GlobalKey();
-  final GlobalKey _marketSlotsTutorialKey = GlobalKey();
-  final GlobalKey _marketDetailTutorialKey = GlobalKey();
-  final GlobalKey _marketRerollTutorialKey = GlobalKey();
+  final GlobalKey _marketCardsOffersTutorialKey = GlobalKey();
+  final GlobalKey _marketCardsSlotsTutorialKey = GlobalKey();
+  final GlobalKey _marketCardsDetailTutorialKey = GlobalKey();
+  final GlobalKey _marketCardsRerollTutorialKey = GlobalKey();
+  final GlobalKey _marketToolsOffersTutorialKey = GlobalKey();
+  final GlobalKey _marketToolsSlotsTutorialKey = GlobalKey();
+  final GlobalKey _marketToolsDetailTutorialKey = GlobalKey();
+  final GlobalKey _marketToolsRerollTutorialKey = GlobalKey();
   bool _marketTutorialScheduled = false;
   bool _marketTutorialShouldMarkSeenOnFinish = false;
+  int _marketTutorialFocusIndex = 0;
   TutorialCoachMark? _marketTutorialCoachMark;
   int _marketDenyTick = 0;
   String? _marketDenyTarget;
@@ -250,6 +256,26 @@ class _GameShopScreenState extends State<GameShopScreen>
   Future<void> _pendingStateSave = Future<void>.value();
 
   RummiMarketRuntimeFacade get _market => widget.readMarketView();
+
+  GlobalKey get _activeMarketOffersTutorialKey =>
+      _shopTab == _MarketShopTab.cardsAndQuickSlots
+      ? _marketCardsOffersTutorialKey
+      : _marketToolsOffersTutorialKey;
+
+  GlobalKey get _activeMarketSlotsTutorialKey =>
+      _shopTab == _MarketShopTab.cardsAndQuickSlots
+      ? _marketCardsSlotsTutorialKey
+      : _marketToolsSlotsTutorialKey;
+
+  GlobalKey get _activeMarketDetailTutorialKey =>
+      _shopTab == _MarketShopTab.cardsAndQuickSlots
+      ? _marketCardsDetailTutorialKey
+      : _marketToolsDetailTutorialKey;
+
+  GlobalKey get _activeMarketRerollTutorialKey =>
+      _shopTab == _MarketShopTab.cardsAndQuickSlots
+      ? _marketCardsRerollTutorialKey
+      : _marketToolsRerollTutorialKey;
 
   void _queueStateSave() {
     _pendingStateSave = _pendingStateSave.then((_) => widget.onStateChanged());
@@ -265,14 +291,34 @@ class _GameShopScreenState extends State<GameShopScreen>
       return;
     }
     _marketTutorialScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startMarketTutorial(markSeen: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _waitForMarketTutorialLayout();
+      if (!mounted ||
+          _optionsDialogOpen ||
+          widget.autoAdvanceOnLoad ||
+          TutorialStateService.marketIntroSeen) {
+        _marketTutorialScheduled = false;
+        return;
+      }
+      await _startMarketTutorial(markSeen: true);
     });
   }
 
-  Future<void> _startMarketTutorial({required bool markSeen}) async {
+  Future<void> _waitForMarketTutorialLayout() async {
+    await Future<void>.delayed(
+      GamePresentationTimings.marketEntryIntro +
+          GamePresentationTimings.marketTabSwitch,
+    );
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
+  Future<void> _startMarketTutorial({
+    required bool markSeen,
+    int initialFocus = 0,
+  }) async {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
+    _marketTutorialFocusIndex = initialFocus.clamp(0, 3);
     if (markSeen) {
       _marketTutorialShouldMarkSeenOnFinish = true;
     } else {
@@ -281,35 +327,40 @@ class _GameShopScreenState extends State<GameShopScreen>
     _marketTutorialCoachMark?.removeOverlayEntry();
     _marketTutorialCoachMark = TutorialCoachMark(
       targets: buildGameTutorialTargets(
+        context: context,
         steps: [
           GameTutorialStep(
-            targetKey: _marketSlotsTutorialKey,
+            targetKey: _activeMarketSlotsTutorialKey,
             title: context.tr('tutorialMarketSlotsTitle'),
             description: context.tr('tutorialMarketSlotsDesc'),
             align: ContentAlign.bottom,
           ),
           GameTutorialStep(
-            targetKey: _marketDetailTutorialKey,
+            targetKey: _activeMarketDetailTutorialKey,
             title: context.tr('tutorialMarketDetailTitle'),
             description: context.tr('tutorialMarketDetailDesc'),
             align: ContentAlign.bottom,
           ),
           GameTutorialStep(
-            targetKey: _marketRerollTutorialKey,
+            targetKey: _activeMarketRerollTutorialKey,
             title: context.tr('tutorialMarketRerollTitle'),
             description: context.tr('tutorialMarketRerollDesc'),
             align: ContentAlign.top,
           ),
           GameTutorialStep(
-            targetKey: _marketOffersTutorialKey,
+            targetKey: _activeMarketOffersTutorialKey,
             title: context.tr('tutorialMarketOffersTitle'),
             description: context.tr('tutorialMarketOffersDesc'),
             align: ContentAlign.top,
+            keepBubbleAboveTarget: true,
           ),
         ],
         nextLabel: context.tr('tutorialNext'),
         doneLabel: context.tr('tutorialDone'),
         skipLabel: context.tr('tutorialSkip'),
+        onStepAdvanced: (index) {
+          _marketTutorialFocusIndex = index.clamp(0, 3);
+        },
       ),
       colorShadow: const Color(0xFF05070D),
       opacityShadow: 0.62,
@@ -317,10 +368,13 @@ class _GameShopScreenState extends State<GameShopScreen>
       paddingFocus: 6,
       alignSkip: Alignment.topRight,
       skipWidget: buildGameTutorialSkipButton(context.tr('tutorialSkip')),
+      initialFocus: _marketTutorialFocusIndex,
       onFinish: _markMarketTutorialSeenOnFinish,
       onSkip: () {
+        TutorialStateService.markMarketIntroSeen();
         _marketTutorialShouldMarkSeenOnFinish = false;
         _marketTutorialScheduled = false;
+        _marketTutorialFocusIndex = 0;
         return true;
       },
     )..show(context: context);
@@ -328,12 +382,14 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   void _dismissMarketTutorial() {
     if (!(_marketTutorialCoachMark?.isShowing ?? false)) return;
-    _marketTutorialCoachMark?.skip();
+    _marketTutorialCoachMark?.removeOverlayEntry();
     _marketTutorialScheduled = false;
     _marketTutorialShouldMarkSeenOnFinish = false;
+    _marketTutorialFocusIndex = 0;
   }
 
   void _markMarketTutorialSeenOnFinish() {
+    _marketTutorialFocusIndex = 0;
     if (!_marketTutorialShouldMarkSeenOnFinish) return;
     _marketTutorialShouldMarkSeenOnFinish = false;
     TutorialStateService.markMarketIntroSeen();
@@ -434,6 +490,21 @@ class _GameShopScreenState extends State<GameShopScreen>
       case AppLifecycleState.detached:
         break;
     }
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    if (!(_marketTutorialCoachMark?.isShowing ?? false)) return;
+    final focusIndex = _marketTutorialFocusIndex;
+    _marketTutorialCoachMark?.removeOverlayEntry();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _optionsDialogOpen) return;
+      _startMarketTutorial(
+        markSeen: _marketTutorialShouldMarkSeenOnFinish,
+        initialFocus: focusIndex,
+      );
+    });
   }
 
   void _selectOwned(int index) {
@@ -1310,6 +1381,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       final activeRunSaveView = widget.readActiveRunSaveView?.call();
       _optionsDialogOpen = true;
       SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      if (!mounted) return;
       final action = await showGameFramedDialog<_MarketOptionsCloseAction>(
         context: context,
         barrierDismissible: false,
@@ -1405,6 +1477,18 @@ class _GameShopScreenState extends State<GameShopScreen>
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
+                title: context.tr('tutorialMarketReplayTitle'),
+                subtitle: context.tr('tutorialMarketReplaySubtitle'),
+                icon: Icons.help_outline_rounded,
+                accentColor: Colors.lightGreenAccent.shade100,
+                onTap: () async {
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(_MarketOptionsCloseAction.openMarketTutorial);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
                 title: context.tr('settings'),
                 subtitle: '설정 화면을 열고, Market으로 다시 돌아옵니다.',
                 icon: Icons.settings_rounded,
@@ -1478,6 +1562,10 @@ class _GameShopScreenState extends State<GameShopScreen>
           );
           if (!mounted) return;
           SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          return;
+        case _MarketOptionsCloseAction.openMarketTutorial:
+          SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          await _startMarketTutorial(markSeen: false);
           return;
       }
     }
@@ -1600,6 +1688,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                             onPressed: () =>
                                 _startMarketTutorial(markSeen: false),
                             icon: Icons.help_outline_rounded,
+                            foregroundColor: const Color(0xFFF2C14E),
                             size: 36,
                           ),
                           const SizedBox(width: 6),
@@ -1637,136 +1726,150 @@ class _GameShopScreenState extends State<GameShopScreen>
                             if (_shopTab ==
                                 _MarketShopTab.cardsAndQuickSlots) ...[
                               _MarketTutorialTarget(
-                                showcaseKey: _marketSlotsTutorialKey,
-                                child: _MarketSectionBox(
-                                  title: 'Jester Slots',
-                                  trailing:
-                                      '${market.ownedEntries.length}/${market.maxOwnedSlots}',
-                                  padding: const EdgeInsets.fromLTRB(
-                                    14,
-                                    8,
-                                    14,
-                                    8,
-                                  ),
-                                  child: SizedBox(
-                                    height: _marketOwnedCardHeight + 6,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
+                                showcaseKey: _marketCardsSlotsTutorialKey,
+                                child: Column(
+                                  children: [
+                                    _MarketSectionBox(
+                                      title: 'Jester Slots',
+                                      trailing:
+                                          '${market.ownedEntries.length}/${market.maxOwnedSlots}',
+                                      padding: const EdgeInsets.fromLTRB(
+                                        14,
+                                        8,
+                                        14,
+                                        8,
                                       ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: List.generate(
-                                          market.maxOwnedSlots,
-                                          (index) {
-                                            final ownedEntry =
-                                                index <
-                                                    market.ownedEntries.length
-                                                ? market.ownedEntries[index]
-                                                : null;
-                                            final card = ownedEntry?.card;
-                                            final selected =
-                                                _selectedOwnedIndex == index;
-                                            final pulse =
-                                                _purchaseFlight?.item ==
-                                                    false &&
-                                                _purchaseFlight?.slotLabel ==
-                                                    'J${index + 1}';
-                                            final locked =
-                                                index >=
-                                                RummiRunProgress
-                                                    .baseUnlockedJesterSlots;
-                                            final child = _MarketSlotPulse(
-                                              active: pulse,
-                                              child: _MarketSelectableCardFrame(
-                                                selected: false,
-                                                width: _marketOwnedCardWidth,
-                                                height: _marketOwnedCardHeight,
-                                                child: GameJesterSlot(
-                                                  card: card,
-                                                  runtimeValueText: card == null
-                                                      ? null
-                                                      : jesterRuntimeValueText(
-                                                          card,
-                                                          market
-                                                              .runtimeSnapshot,
-                                                          slotIndex: index,
-                                                        ),
-                                                  extended: index == 4,
-                                                  activeEffect: null,
-                                                  settlementSequenceTick: 0,
-                                                  selected: selected,
-                                                  locked: locked,
+                                      child: SizedBox(
+                                        height: _marketOwnedCardHeight + 6,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: List.generate(market.maxOwnedSlots, (
+                                              index,
+                                            ) {
+                                              final ownedEntry =
+                                                  index <
+                                                      market.ownedEntries.length
+                                                  ? market.ownedEntries[index]
+                                                  : null;
+                                              final card = ownedEntry?.card;
+                                              final selected =
+                                                  _selectedOwnedIndex == index;
+                                              final pulse =
+                                                  _purchaseFlight?.item ==
+                                                      false &&
+                                                  _purchaseFlight?.slotLabel ==
+                                                      'J${index + 1}';
+                                              final locked =
+                                                  index >=
+                                                  RummiRunProgress
+                                                      .baseUnlockedJesterSlots;
+                                              final child = _MarketSlotPulse(
+                                                active: pulse,
+                                                child: _MarketSelectableCardFrame(
+                                                  selected: false,
+                                                  width: _marketOwnedCardWidth,
+                                                  height:
+                                                      _marketOwnedCardHeight,
+                                                  child: GameJesterSlot(
+                                                    card: card,
+                                                    runtimeValueText:
+                                                        card == null
+                                                        ? null
+                                                        : jesterRuntimeValueText(
+                                                            card,
+                                                            market
+                                                                .runtimeSnapshot,
+                                                            slotIndex: index,
+                                                          ),
+                                                    extended: index == 4,
+                                                    activeEffect: null,
+                                                    settlementSequenceTick: 0,
+                                                    selected: selected,
+                                                    locked: locked,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
+                                              );
 
-                                            return SizedBox(
-                                              key: _jesterSlotKey(index),
-                                              width:
-                                                  _marketOwnedCardWidth +
-                                                  (_marketCardSelectionInset *
-                                                      2),
-                                              height:
-                                                  _marketOwnedCardHeight +
-                                                  (_marketCardSelectionInset *
-                                                      2),
-                                              child: card == null || locked
-                                                  ? child
-                                                  : GestureDetector(
-                                                      onTap: () =>
-                                                          _selectOwned(index),
-                                                      child: child,
-                                                    ),
-                                            );
-                                          },
+                                              return SizedBox(
+                                                key: _jesterSlotKey(index),
+                                                width:
+                                                    _marketOwnedCardWidth +
+                                                    (_marketCardSelectionInset *
+                                                        2),
+                                                height:
+                                                    _marketOwnedCardHeight +
+                                                    (_marketCardSelectionInset *
+                                                        2),
+                                                child: card == null || locked
+                                                    ? child
+                                                    : GestureDetector(
+                                                        onTap: () =>
+                                                            _selectOwned(index),
+                                                        child: child,
+                                                      ),
+                                              );
+                                            }),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 6),
+                                    _MarketQuickPassiveSlotsSection(
+                                      slots: visibleItemSlots,
+                                      selectedItemSlotIndex:
+                                          _selectedItemSlotIndex,
+                                      pulsingSlotLabel:
+                                          _purchaseFlight?.item == true
+                                          ? _purchaseFlight?.slotLabel
+                                          : null,
+                                      slotKeyForLabel: _itemSlotKey,
+                                      onTap: _selectItemSlot,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              _MarketQuickPassiveSlotsSection(
-                                slots: visibleItemSlots,
-                                selectedItemSlotIndex: _selectedItemSlotIndex,
-                                pulsingSlotLabel: _purchaseFlight?.item == true
-                                    ? _purchaseFlight?.slotLabel
-                                    : null,
-                                slotKeyForLabel: _itemSlotKey,
-                                onTap: _selectItemSlot,
                               ),
                             ] else ...[
                               _MarketTutorialTarget(
-                                showcaseKey: _marketSlotsTutorialKey,
-                                child: _MarketItemSlotsSection(
-                                  title: 'Tool Slots',
-                                  slots: visibleToolSlots,
-                                  selectedItemSlotIndex: _selectedItemSlotIndex,
-                                  pulsingSlotLabel:
-                                      _purchaseFlight?.item == true
-                                      ? _purchaseFlight?.slotLabel
-                                      : null,
-                                  slotKeyForLabel: _itemSlotKey,
-                                  onTap: _selectItemSlot,
+                                showcaseKey: _marketToolsSlotsTutorialKey,
+                                child: Column(
+                                  children: [
+                                    _MarketItemSlotsSection(
+                                      title: 'Tool Slots',
+                                      slots: visibleToolSlots,
+                                      selectedItemSlotIndex:
+                                          _selectedItemSlotIndex,
+                                      pulsingSlotLabel:
+                                          _purchaseFlight?.item == true
+                                          ? _purchaseFlight?.slotLabel
+                                          : null,
+                                      slotKeyForLabel: _itemSlotKey,
+                                      onTap: _selectItemSlot,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _MarketItemSlotsSection(
+                                      title: 'Gear Slots',
+                                      slots: visibleGearSlots,
+                                      selectedItemSlotIndex:
+                                          _selectedItemSlotIndex,
+                                      pulsingSlotLabel:
+                                          _purchaseFlight?.item == true
+                                          ? _purchaseFlight?.slotLabel
+                                          : null,
+                                      slotKeyForLabel: _itemSlotKey,
+                                      onTap: _selectItemSlot,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              _MarketItemSlotsSection(
-                                title: 'Gear Slots',
-                                slots: visibleGearSlots,
-                                selectedItemSlotIndex: _selectedItemSlotIndex,
-                                pulsingSlotLabel: _purchaseFlight?.item == true
-                                    ? _purchaseFlight?.slotLabel
-                                    : null,
-                                slotKeyForLabel: _itemSlotKey,
-                                onTap: _selectItemSlot,
                               ),
                             ],
                             const SizedBox(height: 10),
                             _MarketTutorialTarget(
-                              showcaseKey: _marketDetailTutorialKey,
+                              showcaseKey: _activeMarketDetailTutorialKey,
                               child: _MarketSpeechPanel(
                                 title: selectedOwned != null
                                     ? localizedJesterName(
@@ -2002,7 +2105,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                             ),
                             const SizedBox(height: 6),
                             _MarketTutorialTarget(
-                              showcaseKey: _marketOffersTutorialKey,
+                              showcaseKey: _activeMarketOffersTutorialKey,
                               child: _MarketSectionBox(
                                 title: null,
                                 padding: const EdgeInsets.fromLTRB(
@@ -2016,7 +2119,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                   child: Column(
                                     children: [
                                       _MarketTutorialTarget(
-                                        showcaseKey: _marketRerollTutorialKey,
+                                        showcaseKey:
+                                            _activeMarketRerollTutorialKey,
                                         child: _MarketPagerBar(
                                           currentPage: currentOfferPage,
                                           pageCount: _pageCount(
@@ -2211,12 +2315,6 @@ class _GameShopScreenState extends State<GameShopScreen>
                       deltaLabel: _marketUseFeedbackDelta,
                     ),
                   ),
-                _MarketTutorialAnchorLayer(
-                  slotsKey: _marketSlotsTutorialKey,
-                  detailKey: _marketDetailTutorialKey,
-                  rerollKey: _marketRerollTutorialKey,
-                  offersKey: _marketOffersTutorialKey,
-                ),
               ],
             ),
           ),
@@ -2253,62 +2351,6 @@ class _MarketEntryMotion extends StatelessWidget {
   }
 }
 
-class _MarketTutorialAnchorLayer extends StatelessWidget {
-  const _MarketTutorialAnchorLayer({
-    required this.slotsKey,
-    required this.detailKey,
-    required this.rerollKey,
-    required this.offersKey,
-  });
-
-  final GlobalKey slotsKey;
-  final GlobalKey detailKey;
-  final GlobalKey rerollKey;
-  final GlobalKey offersKey;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Stack(
-        children: [
-          Positioned(
-            key: slotsKey,
-            left: 24,
-            right: 24,
-            top: 174,
-            height: 112,
-            child: const SizedBox.expand(),
-          ),
-          Positioned(
-            key: detailKey,
-            left: 24,
-            right: 24,
-            top: 292,
-            height: 160,
-            child: const SizedBox.expand(),
-          ),
-          Positioned(
-            key: rerollKey,
-            left: 26,
-            right: 26,
-            bottom: 168,
-            height: 36,
-            child: const SizedBox.expand(),
-          ),
-          Positioned(
-            key: offersKey,
-            left: 22,
-            right: 22,
-            bottom: 82,
-            height: 126,
-            child: const SizedBox.expand(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MarketTutorialTarget extends StatelessWidget {
   const _MarketTutorialTarget({required this.showcaseKey, required this.child});
 
@@ -2317,7 +2359,7 @@ class _MarketTutorialTarget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return child;
+    return KeyedSubtree(key: showcaseKey, child: child);
   }
 }
 
