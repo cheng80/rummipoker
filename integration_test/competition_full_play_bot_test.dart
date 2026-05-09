@@ -203,7 +203,6 @@ class _CompetitionFullPlayBot {
   int gameOverRetries = 0;
   final Set<String> failedBattleActionRouteKeys = <String>{};
   final Set<String> currentBattleActionRouteKeys = <String>{};
-  bool shouldPlaceBeforeAnotherBoardDiscard = false;
 
   Future<void> run() async {
     itemCatalog = await ItemCatalogLoader.loadFromAsset(AssetPaths.itemsCommon);
@@ -404,22 +403,11 @@ class _CompetitionFullPlayBot {
               avoidedActionRouteKeys: failedBattleActionRouteKeys,
             )
           : battlePolicy;
-      var action = policy.chooseAction(
+      final action = policy.chooseAction(
         session,
         jesters: runProgress.ownedJesters,
         runtimeSnapshot: runtimeSnapshot,
       );
-      if (shouldPlaceBeforeAnotherBoardDiscard &&
-          action.type == CompetitionBattleActionType.discardBoard &&
-          session.hand.isNotEmpty) {
-        action =
-            policy.bestPlacementForTest(
-              session,
-              jesters: runProgress.ownedJesters,
-              runtimeSnapshot: runtimeSnapshot,
-            ) ??
-            action;
-      }
 
       if (await _tryUseBattleItem(plannedAction: action)) {
         await _pumpFor(config.actionDelay + const Duration(seconds: 2));
@@ -449,7 +437,6 @@ class _CompetitionFullPlayBot {
             (next) =>
                 next.session!.board.cellAt(action.row!, action.col!) != null,
           );
-          shouldPlaceBeforeAnotherBoardDiscard = false;
           break;
         case CompetitionBattleActionType.confirm:
           final score = session.blind.scoreTowardBlind;
@@ -470,7 +457,6 @@ class _CompetitionFullPlayBot {
               timeout: const Duration(minutes: 2),
             );
           }
-          shouldPlaceBeforeAnotherBoardDiscard = false;
           break;
         case CompetitionBattleActionType.discardHand:
           final tile = session.hand[action.handIndex!];
@@ -484,7 +470,6 @@ class _CompetitionFullPlayBot {
                 next.session!.hand.length != handCount,
           );
           discardedHand = true;
-          shouldPlaceBeforeAnotherBoardDiscard = false;
           break;
         case CompetitionBattleActionType.discardBoard:
           await _tapBoardCell(action.row!, action.col!);
@@ -494,7 +479,6 @@ class _CompetitionFullPlayBot {
                 next.session!.board.cellAt(action.row!, action.col!) == null,
           );
           discardedBoard = true;
-          shouldPlaceBeforeAnotherBoardDiscard = true;
           break;
         case CompetitionBattleActionType.moveBoard:
           await _tapBoardCell(action.row!, action.col!);
@@ -509,7 +493,6 @@ class _CompetitionFullPlayBot {
                     null,
           );
           movedBoard = true;
-          shouldPlaceBeforeAnotherBoardDiscard = false;
           break;
         case CompetitionBattleActionType.stop:
           if (await _retryGameOverAfterStop(action.reason ?? 'stop')) {
@@ -546,7 +529,6 @@ class _CompetitionFullPlayBot {
     }
     failedBattleActionRouteKeys.addAll(currentBattleActionRouteKeys);
     currentBattleActionRouteKeys.clear();
-    shouldPlaceBeforeAnotherBoardDiscard = false;
     await _saveBotCheckpoint();
     _record('game over -> retry $gameOverRetries/${config.maxGameOverRetries}');
     await tester.tap(retryFinder.last, warnIfMissed: false);
@@ -627,7 +609,6 @@ class _CompetitionFullPlayBot {
     gameOverRetries = 0;
     failedBattleActionRouteKeys.clear();
     currentBattleActionRouteKeys.clear();
-    shouldPlaceBeforeAnotherBoardDiscard = false;
   }
 
   bool _isCashOutReady() {
