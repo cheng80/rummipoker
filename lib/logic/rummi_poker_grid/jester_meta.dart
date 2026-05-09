@@ -6,6 +6,7 @@ import 'hand_rank.dart';
 import 'item_definition.dart';
 import 'models/tile.dart';
 import 'models/poker_deck.dart';
+import 'rummi_hand_growth.dart';
 import 'rummi_poker_grid_session.dart';
 
 enum RummiJesterRarity { common, uncommon, rare, legendary }
@@ -529,6 +530,20 @@ class RummiShopOffer {
   final int price;
 }
 
+class RummiOverkillGrowthBonus {
+  const RummiOverkillGrowthBonus({
+    required this.rank,
+    required this.amount,
+    required this.finalScore,
+    required this.thresholdScore,
+  });
+
+  final RummiHandRank rank;
+  final int amount;
+  final int finalScore;
+  final int thresholdScore;
+}
+
 class RummiCashOutBreakdown {
   const RummiCashOutBreakdown({
     required this.stageIndex,
@@ -550,6 +565,7 @@ class RummiCashOutBreakdown {
     this.itemBonuses = const [],
     this.itemGold = 0,
     this.deckTileRewards = const [],
+    this.overkillGrowthBonuses = const [],
   });
 
   final int stageIndex;
@@ -570,9 +586,13 @@ class RummiCashOutBreakdown {
   final List<RummiRoundEndItemBonus> itemBonuses;
   final int itemGold;
   final List<Tile> deckTileRewards;
+  final List<RummiOverkillGrowthBonus> overkillGrowthBonuses;
   final int totalGold;
 
-  RummiCashOutBreakdown copyWith({List<Tile>? deckTileRewards}) {
+  RummiCashOutBreakdown copyWith({
+    List<Tile>? deckTileRewards,
+    List<RummiOverkillGrowthBonus>? overkillGrowthBonuses,
+  }) {
     return RummiCashOutBreakdown(
       stageIndex: stageIndex,
       targetScore: targetScore,
@@ -592,6 +612,8 @@ class RummiCashOutBreakdown {
       itemBonuses: itemBonuses,
       itemGold: itemGold,
       deckTileRewards: deckTileRewards ?? this.deckTileRewards,
+      overkillGrowthBonuses:
+          overkillGrowthBonuses ?? this.overkillGrowthBonuses,
       totalGold: totalGold,
     );
   }
@@ -1023,6 +1045,9 @@ class RummiRunProgress {
     required List<RummiShopOffer> shopOffers,
     required Map<int, int> statefulValuesBySlot,
     required Map<RummiHandRank, int> playedHandCounts,
+    Map<RummiHandRank, RummiHandGrowthState> handGrowthStates = const {},
+    Map<RummiHandRank, int> stationRankFinalScores = const {},
+    Set<String> overkillGrowthClaimedStationKeys = const <String>{},
     List<Tile> addedDeckTiles = const [],
     List<Tile> tileOffers = const [],
     this.pendingBossTileReward = false,
@@ -1045,6 +1070,19 @@ class RummiRunProgress {
     this.shopOffers.addAll(shopOffers);
     _statefulValuesBySlot.addAll(statefulValuesBySlot);
     _playedHandCounts.addAll(playedHandCounts);
+    if (handGrowthStates.isEmpty) {
+      for (final entry in playedHandCounts.entries) {
+        if (isDeadLineRank(entry.key)) continue;
+        _handGrowthStates[entry.key] = RummiHandGrowthState.fromCompletedCount(
+          entry.key,
+          entry.value,
+        );
+      }
+    } else {
+      _handGrowthStates.addAll(handGrowthStates);
+    }
+    _stationRankFinalScores.addAll(stationRankFinalScores);
+    _overkillGrowthClaimedStationKeys.addAll(overkillGrowthClaimedStationKeys);
     this.addedDeckTiles.addAll(addedDeckTiles);
     this.tileOffers.addAll(tileOffers);
   }
@@ -1086,12 +1124,41 @@ class RummiRunProgress {
   bool pendingBossTileReward = false;
   final Map<int, int> _statefulValuesBySlot = <int, int>{};
   final Map<RummiHandRank, int> _playedHandCounts = <RummiHandRank, int>{};
+  final Map<RummiHandRank, RummiHandGrowthState> _handGrowthStates =
+      <RummiHandRank, RummiHandGrowthState>{};
+  final Map<RummiHandRank, int> _stationRankFinalScores =
+      <RummiHandRank, int>{};
+  final Set<String> _overkillGrowthClaimedStationKeys = <String>{};
 
   Map<int, int> snapshotStatefulValuesBySlot() =>
       Map<int, int>.unmodifiable(_statefulValuesBySlot);
 
   Map<RummiHandRank, int> snapshotPlayedHandCounts() =>
       Map<RummiHandRank, int>.unmodifiable(_playedHandCounts);
+
+  Map<RummiHandRank, RummiHandGrowthState> snapshotHandGrowthStates() =>
+      Map<RummiHandRank, RummiHandGrowthState>.unmodifiable(_handGrowthStates);
+
+  Map<RummiHandRank, int> snapshotStationRankFinalScores() =>
+      Map<RummiHandRank, int>.unmodifiable(_stationRankFinalScores);
+
+  Set<String> snapshotOverkillGrowthClaimedStationKeys() =>
+      Set<String>.unmodifiable(_overkillGrowthClaimedStationKeys);
+
+  bool addHandRankProgress(RummiHandRank rank, {int amount = 1}) {
+    if (amount <= 0 || isDeadLineRank(rank)) {
+      return false;
+    }
+    final current =
+        _handGrowthStates[rank] ?? RummiHandGrowthState.initial(rank);
+    _handGrowthStates[rank] = current.addProgress(rank, amount);
+    return true;
+  }
+
+  bool recordHandRankCompletion(RummiHandRank rank) {
+    _playedHandCounts.update(rank, (value) => value + 1, ifAbsent: () => 1);
+    return addHandRankProgress(rank);
+  }
 
   RummiRunProgress copySnapshot() {
     return RummiRunProgress.restore(
@@ -1117,6 +1184,15 @@ class RummiRunProgress {
           .toList(growable: false),
       statefulValuesBySlot: Map<int, int>.from(_statefulValuesBySlot),
       playedHandCounts: Map<RummiHandRank, int>.from(_playedHandCounts),
+      handGrowthStates: Map<RummiHandRank, RummiHandGrowthState>.from(
+        _handGrowthStates,
+      ),
+      stationRankFinalScores: Map<RummiHandRank, int>.from(
+        _stationRankFinalScores,
+      ),
+      overkillGrowthClaimedStationKeys: Set<String>.from(
+        _overkillGrowthClaimedStationKeys,
+      ),
       addedDeckTiles: List<Tile>.from(addedDeckTiles),
       tileOffers: List<Tile>.from(tileOffers),
       pendingBossTileReward: pendingBossTileReward,
@@ -1226,6 +1302,7 @@ class RummiRunProgress {
   }) {
     stageIndex = stationIndex;
     currentStationBlindTierIndex = blindTierIndex;
+    _stationRankFinalScores.clear();
     if (applyRoundEndDecay) {
       _applyRoundEndStateDecay();
     }
@@ -1276,6 +1353,10 @@ class RummiRunProgress {
             remainingHandDiscards: remainingHandDiscards,
           );
     final itemGold = itemBonuses.fold<int>(0, (sum, bonus) => sum + bonus.gold);
+    final overkillGrowthBonuses = claimOverkillGrowthBonus(
+      targetScore: session.blind.targetScore,
+      finalScore: session.blind.scoreTowardBlind,
+    );
     return RummiCashOutBreakdown(
       stageIndex: stageIndex,
       targetScore: session.blind.targetScore,
@@ -1294,6 +1375,7 @@ class RummiRunProgress {
       firstBlindClearBonusGold: firstBlindClearBonusGold,
       itemBonuses: itemBonuses,
       itemGold: itemGold,
+      overkillGrowthBonuses: overkillGrowthBonuses,
       totalGold:
           blindReward +
           firstBlindClearBonusGold +
@@ -1354,6 +1436,9 @@ class RummiRunProgress {
     return RummiJesterRuntimeSnapshot(
       slotStateValues: Map<int, int>.unmodifiable(_statefulValuesBySlot),
       playedHandCounts: Map<RummiHandRank, int>.unmodifiable(_playedHandCounts),
+      handGrowthStates: Map<RummiHandRank, RummiHandGrowthState>.unmodifiable(
+        _handGrowthStates,
+      ),
     );
   }
 
@@ -1856,11 +1941,14 @@ class RummiRunProgress {
       }
     }
     for (final line in lineBreakdowns) {
-      _playedHandCounts.update(
-        line.rank,
-        (value) => value + 1,
-        ifAbsent: () => 1,
-      );
+      recordHandRankCompletion(line.rank);
+      if (!isDeadLineRank(line.rank)) {
+        _stationRankFinalScores.update(
+          line.rank,
+          (value) => value + line.finalScore,
+          ifAbsent: () => line.finalScore,
+        );
+      }
     }
     for (var slot = 0; slot < ownedJesters.length; slot++) {
       if (ownedJesters[slot].id == 'ice_cream') {
@@ -1868,6 +1956,77 @@ class RummiRunProgress {
         _statefulValuesBySlot[slot] = next < 0 ? 0 : next;
       }
     }
+  }
+
+  List<RummiOverkillGrowthBonus> claimOverkillGrowthBonus({
+    required int targetScore,
+    required int finalScore,
+  }) {
+    if (targetScore <= 0 ||
+        finalScore <= 0 ||
+        _stationRankFinalScores.isEmpty) {
+      return const <RummiOverkillGrowthBonus>[];
+    }
+    final thresholdPercent = currentStationBlindTierIndex >= 2 ? 120 : 130;
+    final thresholdScore = ((targetScore * thresholdPercent) / 100).ceil();
+    if (finalScore < thresholdScore) {
+      return const <RummiOverkillGrowthBonus>[];
+    }
+    final stationKey = '$stageIndex:$currentStationBlindTierIndex';
+    if (_overkillGrowthClaimedStationKeys.contains(stationKey)) {
+      return const <RummiOverkillGrowthBonus>[];
+    }
+    final rank = _representativeOverkillRank();
+    if (rank == null) {
+      return const <RummiOverkillGrowthBonus>[];
+    }
+    final applied = addHandRankProgress(rank);
+    if (!applied) {
+      return const <RummiOverkillGrowthBonus>[];
+    }
+    _overkillGrowthClaimedStationKeys.add(stationKey);
+    return [
+      RummiOverkillGrowthBonus(
+        rank: rank,
+        amount: 1,
+        finalScore: finalScore,
+        thresholdScore: thresholdScore,
+      ),
+    ];
+  }
+
+  RummiHandRank? _representativeOverkillRank() {
+    RummiHandRank? bestRank;
+    var bestFinalScore = -1;
+    var bestCurrentScore = -1;
+    var bestBaseScore = -1;
+    for (final entry in _stationRankFinalScores.entries) {
+      if (isDeadLineRank(entry.key)) continue;
+      final currentScore =
+          gddBaseScore(entry.key) +
+          RummiHandGrowth.growthBonusForState(
+            rank: entry.key,
+            state:
+                _handGrowthStates[entry.key] ??
+                RummiHandGrowthState.fromCompletedCount(
+                  entry.key,
+                  _playedHandCounts[entry.key] ?? 0,
+                ),
+          );
+      final baseScore = gddBaseScore(entry.key);
+      final isBetter =
+          entry.value > bestFinalScore ||
+          (entry.value == bestFinalScore && currentScore > bestCurrentScore) ||
+          (entry.value == bestFinalScore &&
+              currentScore == bestCurrentScore &&
+              baseScore > bestBaseScore);
+      if (!isBetter) continue;
+      bestRank = entry.key;
+      bestFinalScore = entry.value;
+      bestCurrentScore = currentScore;
+      bestBaseScore = baseScore;
+    }
+    return bestRank;
   }
 
   void onDiscardUsed() {
@@ -2201,14 +2360,20 @@ class RummiJesterRuntimeSnapshot {
   const RummiJesterRuntimeSnapshot({
     this.slotStateValues = const {},
     this.playedHandCounts = const {},
+    this.handGrowthStates = const {},
   });
 
   final Map<int, int> slotStateValues;
   final Map<RummiHandRank, int> playedHandCounts;
+  final Map<RummiHandRank, RummiHandGrowthState> handGrowthStates;
 
   int stateValueForSlot(int slotIndex) => slotStateValues[slotIndex] ?? 0;
 
   int playedCountForRank(RummiHandRank rank) => playedHandCounts[rank] ?? 0;
+
+  RummiHandGrowthState growthStateForRank(RummiHandRank rank) {
+    return handGrowthStates[rank] ?? RummiHandGrowthState.initial(rank);
+  }
 }
 
 class RummiLineScore {

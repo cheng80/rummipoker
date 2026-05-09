@@ -663,21 +663,18 @@ class RummiPokerGridSession {
         peakContribution,
         ruleset: ruleset,
       );
-      final completedCountBeforeConfirm = runtimeSnapshot.playedCountForRank(
+      final growthStateBeforeConfirm = runtimeSnapshot.growthStateForRank(
         evaluation.rank,
       );
-      final growthLevel = RummiHandGrowth.levelForCompletedCount(
-        evaluation.rank,
-        completedCountBeforeConfirm,
-      );
-      final growthBonus = RummiHandGrowth.growthBonusFor(
+      final growthLevel = growthStateBeforeConfirm.level;
+      final growthBonus = RummiHandGrowth.growthBonusForState(
         rank: evaluation.rank,
-        completedCount: completedCountBeforeConfirm,
+        state: growthStateBeforeConfirm,
       );
-      final grownRankBaseScore = RummiHandGrowth.grownBaseScoreFor(
+      final grownRankBaseScore = RummiHandGrowth.grownBaseScoreForState(
         rank: evaluation.rank,
         baseScore: evaluation.baseScore,
-        completedCount: completedCountBeforeConfirm,
+        state: growthStateBeforeConfirm,
       );
       final int baseLineScore = (grownRankBaseScore * overlapMultiplier)
           .round();

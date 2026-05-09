@@ -10,22 +10,20 @@
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Active for challenge full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 다음은 Flutter semantics 반복 경고를 먼저 정리하고, 도전 난이도 fresh S1~S8 full-run을 시작한다. |
+| 공모전 기준 완성 | Active for challenge full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 도전 난이도 fresh S1~S8 full-run을 제외하고 최근 추가된 족보 성장 UI/점수, 행성카드형 성장 아이템, 초과 성장 보너스, 타이틀 `런 정보`, 게임오버 정산/도발 문구, Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했다. |
 | 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강은 런타임 반영과 핵심 검증 완료. 장기 밸런스는 별도 트랙으로 남긴다. |
 
-현재는 공모전 기준 QA를 재개한다. 단, full-run console 0건 기준을 위해 Flutter semantics 반복 경고를 먼저 닫고 도전 난이도 풀런으로 넘어간다.
+현재는 공모전 기준 QA를 재개한다. 다음 남은 gate는 도전 난이도 fresh S1~S8 `contest_full_run_bot` full-run이다.
 
 ## 2. 공모전 기준 다음 작업
 
 상세 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.
 현재 실행 순서는 아래로 고정한다.
 
-1. 최신 build를 띄워 Browser/WebDriver smoke로 console error/warn 0건을 확인한다.
-2. 현재 fresh 표준 풀런에서 반복 출력된 Flutter semantics route label 경고를 수정하고, 관련 위젯 테스트 또는 smoke로 재확인한다.
-3. `contest_full_run_bot` policy code/test가 tile lane 구매, 추가 덱, 특수 족보 점수를 실제 평가하는지 확인한다.
-4. 부족하면 bot 후보 평가에 특수 족보 근접도와 추가 타일 구매 판단을 보강한다.
-5. `contest_full_run_bot`을 도전 난이도 fresh S1부터 최신 build 기준으로 실행한다.
-6. 도전 full-run 도중 세션이 종료되면 마지막 로그/출력 디렉터리/checkpoint를 먼저 확인하고, debug fixture 없이 이어서 진행한다.
+1. `contest_full_run_bot`을 도전 난이도 fresh S1부터 최신 build 기준으로 실행한다.
+2. 도전 full-run 도중 실패하면 game over/retry/checkpoint 로그를 먼저 확인한다.
+3. 실패 원인이 policy 문제면 문서만 바꾸지 말고 policy code/test를 먼저 고친 뒤 재실행한다.
+4. 도전 full-run 도중 세션이 종료되면 마지막 로그/출력 디렉터리/checkpoint를 먼저 확인하고, debug fixture 없이 이어서 진행한다.
 
 최근 `contest_full_run_bot` 기준선:
 
@@ -35,7 +33,17 @@
 - S8 boss 정산: `870/3 -> 728/2 -> 312/1`, 목표 `1739` 통과
 - game over/retry: 없음
 - 보스 클리어 덱 타일 보상: S2 `deck=53`부터 S8 `deck=59`까지 증가 확인
-- 남은 문제: `Semantic node ... scopesRoute and namesRoute ... missing the label` Flutter semantics 경고가 반복 출력된다. 제출 console 0건 기준 전에는 open이다.
+- 당시 남은 문제: `Semantic node ... scopesRoute and namesRoute ... missing the label` Flutter semantics 경고가 반복 출력됐다. 2026-05-10 보정 후 최신 build smoke에서는 재현되지 않았다.
+
+최근 2026-05-10 검증:
+
+- `flutter analyze` 통과
+- 핵심 `flutter test` 묶음 통과
+- `flutter build web` 통과
+- Browser/CDP smoke 통과: `/`, `/new-run`, `/archive`, `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`, `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1` 모두 앱 warn/error/exception 0건
+- Flutter semantics route label 경고는 dialog/bottom sheet route label 보정 뒤 최신 build smoke에서 재현되지 않음
+- Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않음
+- `contest_full_run_bot` market policy는 `*_study` 같은 직접 족보 성장 아이템과 Tool/Gear lane 구매 후보를 평가하도록 code/test 동기화 완료
 
 ## 3. 공모전 Done Evidence
 
@@ -63,9 +71,12 @@
 
 예외적으로 지금 시작하는 작업:
 
-- 족보 완성 시 족보 자체가 성장하는 최소 런타임 규칙
-- 그 규칙에 필요한 저장/복원/정산 테스트
-- 게임 중/게임 밖에서 언제든 족보 성장 상태를 확인하는 `런 정보` 화면 또는 동등한 UI
+- 족보 완성 시 족보 자체가 성장하는 최소 런타임 규칙: 반영 완료
+- 그 규칙에 필요한 저장/복원/정산 테스트: 반영 완료
+- 게임 중/게임 밖에서 언제든 족보 성장 상태를 확인하는 `런 정보` 화면 또는 동등한 UI: 반영 완료
+- Planet-like 직접 족보 성장 아이템군과 초과 클리어 대표 족보 성장 보너스: 반영 완료
+- `handGrowthStates(level/progress/requiredProgress)` 분리: 반영 완료. `playedHandCounts`는 완성 횟수/Jester 통계용으로 유지하고 점수 성장 source를 분리했다.
+- 타이틀의 `런 정보` 직접 진입점과 게임오버 런 요약/랜덤 도발 문구: 반영 완료. 정산 progress bar는 이번 범위에서 제외한다.
 - 새 run까지 이어지는 영구 계승은 이번 1차 범위에서 제외하고 별도 검토로 남긴다.
 - 공모전 풀런봇이 성장한 족보를 평가하도록 하는 bot 정책 동기화
 

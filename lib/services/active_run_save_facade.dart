@@ -1,4 +1,6 @@
 import '../logic/rummi_poker_grid/hand_rank.dart';
+import '../logic/rummi_poker_grid/models/tile.dart';
+import '../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import 'active_run_save_service.dart';
 
 /// V4 target-term read model over the current active run save/runtime.
@@ -63,6 +65,8 @@ class RummiActiveRunSaveFacade {
     required this.currentGold,
     required this.checkpoint,
     this.currentPlayedHandCounts = const {},
+    this.currentHandGrowthStates = const {},
+    this.currentAddedDeckTiles = const [],
   });
 
   factory RummiActiveRunSaveFacade.fromSaveData(ActiveRunSaveData save) {
@@ -77,6 +81,11 @@ class RummiActiveRunSaveFacade {
       currentPlayedHandCounts: _parsePlayedHandCounts(
         save.runProgress.playedHandCounts,
       ),
+      currentHandGrowthStates: _parseHandGrowthStates(
+        save.runProgress.handGrowthStates,
+        save.runProgress.playedHandCounts,
+      ),
+      currentAddedDeckTiles: _parseTileList(save.runProgress.addedDeckTiles),
       checkpoint: RummiStationCheckpointSaveView.fromSaveData(save),
     );
   }
@@ -93,6 +102,8 @@ class RummiActiveRunSaveFacade {
       currentRunSeed: runtime.session.runSeed,
       currentGold: runtime.runProgress.gold,
       currentPlayedHandCounts: runtime.runProgress.snapshotPlayedHandCounts(),
+      currentHandGrowthStates: runtime.runProgress.snapshotHandGrowthStates(),
+      currentAddedDeckTiles: runtime.runProgress.addedDeckTiles,
       checkpoint: RummiStationCheckpointSaveView.fromRuntimeState(runtime),
     );
   }
@@ -105,6 +116,8 @@ class RummiActiveRunSaveFacade {
   final int currentRunSeed;
   final int currentGold;
   final Map<RummiHandRank, int> currentPlayedHandCounts;
+  final Map<RummiHandRank, RummiHandGrowthState> currentHandGrowthStates;
+  final List<Tile> currentAddedDeckTiles;
   final RummiStationCheckpointSaveView checkpoint;
 
   String get currentLocationSummary =>
@@ -154,5 +167,42 @@ class RummiActiveRunSaveFacade {
       }
     }
     return Map<RummiHandRank, int>.unmodifiable(out);
+  }
+
+  static List<Tile> _parseTileList(List<Map<String, dynamic>> tiles) {
+    final out = <Tile>[];
+    for (final tile in tiles) {
+      try {
+        out.add(Tile.fromJson(tile));
+      } on Object {
+        continue;
+      }
+    }
+    return List<Tile>.unmodifiable(out);
+  }
+
+  static Map<RummiHandRank, RummiHandGrowthState> _parseHandGrowthStates(
+    Map<String, Map<String, dynamic>> states,
+    Map<String, int> playedHandCounts,
+  ) {
+    final out = <RummiHandRank, RummiHandGrowthState>{};
+    for (final entry in states.entries) {
+      for (final rank in RummiHandRank.values) {
+        if (rank.name != entry.key) continue;
+        out[rank] = RummiHandGrowthState.fromJson(rank, entry.value);
+        break;
+      }
+    }
+    if (out.isNotEmpty) {
+      return Map<RummiHandRank, RummiHandGrowthState>.unmodifiable(out);
+    }
+    for (final entry in playedHandCounts.entries) {
+      for (final rank in RummiHandRank.values) {
+        if (rank.name != entry.key) continue;
+        out[rank] = RummiHandGrowthState.fromCompletedCount(rank, entry.value);
+        break;
+      }
+    }
+    return Map<RummiHandRank, RummiHandGrowthState>.unmodifiable(out);
   }
 }

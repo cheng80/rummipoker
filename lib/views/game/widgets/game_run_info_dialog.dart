@@ -13,6 +13,7 @@ import 'game_shared_widgets.dart';
 Future<void> showGameRunInfoDialog({
   required BuildContext context,
   required Map<RummiHandRank, int> playedHandCounts,
+  Map<RummiHandRank, RummiHandGrowthState> handGrowthStates = const {},
   List<Tile> addedDeckTiles = const [],
 }) {
   return showGameFramedDialog<void>(
@@ -51,12 +52,18 @@ Future<void> showGameRunInfoDialog({
                   children: [
                     _RunInfoDeckSummary(addedDeckTiles: addedDeckTiles),
                     const SizedBox(height: 8),
-                    for (final row in _buildRunInfoRows(playedHandCounts))
+                    for (final row in _buildRunInfoRows(
+                      playedHandCounts,
+                      handGrowthStates,
+                    ))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: _RunInfoRankRow(row: row),
                       ),
-                    ..._buildHiddenRunInfoRows(playedHandCounts).map(
+                    ..._buildHiddenRunInfoRows(
+                      playedHandCounts,
+                      handGrowthStates,
+                    ).map(
                       (row) => Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: _RunInfoRankRow(row: row),
@@ -75,6 +82,7 @@ Future<void> showGameRunInfoDialog({
 
 List<_RunInfoRankRowData> _buildHiddenRunInfoRows(
   Map<RummiHandRank, int> playedHandCounts,
+  Map<RummiHandRank, RummiHandGrowthState> handGrowthStates,
 ) {
   final rows = [
     for (final rank in RummiHandGrowth.hiddenRanks)
@@ -85,6 +93,11 @@ List<_RunInfoRankRowData> _buildHiddenRunInfoRows(
             playedHandCounts,
             rank,
           ),
+          growthState: _growthStateFor(
+            rank,
+            playedHandCounts,
+            handGrowthStates,
+          ),
         ),
   ];
   rows.sort((a, b) => b.currentScore.compareTo(a.currentScore));
@@ -93,6 +106,7 @@ List<_RunInfoRankRowData> _buildHiddenRunInfoRows(
 
 List<_RunInfoRankRowData> _buildRunInfoRows(
   Map<RummiHandRank, int> playedHandCounts,
+  Map<RummiHandRank, RummiHandGrowthState> handGrowthStates,
 ) {
   final rows = [
     for (final rank in RummiHandGrowth.scoringRanks)
@@ -102,6 +116,7 @@ List<_RunInfoRankRowData> _buildRunInfoRows(
           playedHandCounts,
           rank,
         ),
+        growthState: _growthStateFor(rank, playedHandCounts, handGrowthStates),
       ),
   ];
   rows.sort((a, b) {
@@ -116,11 +131,25 @@ List<_RunInfoRankRowData> _buildRunInfoRows(
   return rows;
 }
 
+RummiHandGrowthState _growthStateFor(
+  RummiHandRank rank,
+  Map<RummiHandRank, int> playedHandCounts,
+  Map<RummiHandRank, RummiHandGrowthState> handGrowthStates,
+) {
+  return handGrowthStates[rank] ??
+      RummiHandGrowthState.fromCompletedCount(
+        rank,
+        RummiHandGrowth.completedCountFor(playedHandCounts, rank),
+      );
+}
+
 class _RunInfoRankRowData {
   const _RunInfoRankRowData({
     required this.rank,
     required this.completedCount,
     required this.level,
+    required this.progress,
+    required this.requiredProgress,
     required this.currentScore,
     required this.nextScore,
   });
@@ -128,22 +157,25 @@ class _RunInfoRankRowData {
   factory _RunInfoRankRowData.fromRank({
     required RummiHandRank rank,
     required int completedCount,
+    required RummiHandGrowthState growthState,
   }) {
     final baseScore = gddBaseScore(rank);
-    final level = RummiHandGrowth.levelForCompletedCount(rank, completedCount);
+    final nextState = growthState.addProgress(rank, 1);
     return _RunInfoRankRowData(
       rank: rank,
       completedCount: completedCount,
-      level: level,
-      currentScore: RummiHandGrowth.grownBaseScoreFor(
+      level: growthState.level,
+      progress: growthState.progress,
+      requiredProgress: growthState.requiredProgress,
+      currentScore: RummiHandGrowth.grownBaseScoreForState(
         rank: rank,
         baseScore: baseScore,
-        completedCount: completedCount,
+        state: growthState,
       ),
-      nextScore: RummiHandGrowth.grownBaseScoreFor(
+      nextScore: RummiHandGrowth.grownBaseScoreForState(
         rank: rank,
         baseScore: baseScore,
-        completedCount: completedCount + 1,
+        state: nextState,
       ),
     );
   }
@@ -151,6 +183,8 @@ class _RunInfoRankRowData {
   final RummiHandRank rank;
   final int completedCount;
   final int level;
+  final int progress;
+  final int requiredProgress;
   final int currentScore;
   final int nextScore;
 }
@@ -205,10 +239,12 @@ class _RunInfoRankRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    context.tr(
-                      'runInfoCompletedCount',
-                      namedArgs: {'count': '${row.completedCount}'},
-                    ),
+                    row.requiredProgress <= 0
+                        ? context.tr(
+                            'runInfoCompletedCount',
+                            namedArgs: {'count': '${row.completedCount}'},
+                          )
+                        : '${context.tr('runInfoCompletedCount', namedArgs: {'count': '${row.completedCount}'})} · 성장 ${row.progress}/${row.requiredProgress}',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.62),
                       fontSize: 11,
@@ -225,10 +261,13 @@ class _RunInfoRankRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${row.currentScore}',
+                    context.tr(
+                      'runInfoCurrentChips',
+                      namedArgs: {'score': '${row.currentScore}'},
+                    ),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.95),
-                      fontSize: 16,
+                      fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),
                   ),

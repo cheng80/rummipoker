@@ -831,25 +831,21 @@ class _CompetitionFullPlayBot {
     final hasUsableQuickSlotItem =
         inventory != null && inventory.quickSlotItemIds.isNotEmpty;
     if (boughtItem && hasUsableQuickSlotItem) return;
-    await _tapTextIfVisible('Jester / Slots');
-    await _tapTextIfVisible('Q-Slot');
-    final quickSlotOffers =
+    final itemOffers =
         state.marketView?.itemOffers
-            .where(
-              (offer) =>
-                  offer.item.placement == ItemPlacement.quickSlot &&
-                  offer.isAffordable,
-            )
+            .where((offer) => offer.isAffordable)
             .toList() ??
         const [];
-    if (quickSlotOffers.isNotEmpty) {
-      quickSlotOffers.sort(
-        (a, b) => _itemBotScore(
+    if (itemOffers.isNotEmpty) {
+      itemOffers.sort(
+        (a, b) => contestFullRunBotItemScore(
           b.item,
           stage: stage,
-        ).compareTo(_itemBotScore(a.item, stage: stage)),
+        ).compareTo(contestFullRunBotItemScore(a.item, stage: stage)),
       );
-      if (!await _selectItemOfferByPrice(quickSlotOffers.first.price)) return;
+      final bestOffer = itemOffers.first;
+      await _selectItemOfferLaneForPlacement(bestOffer.item.placement);
+      if (!await _selectItemOfferByPrice(bestOffer.price)) return;
     }
     if (find.text('구매').evaluate().isEmpty) return;
     await _tapText('구매');
@@ -858,33 +854,21 @@ class _CompetitionFullPlayBot {
     await _pumpFor(const Duration(seconds: 2));
   }
 
-  int _itemBotScore(ItemDefinition item, {required int stage}) {
-    var score = switch (item.rarity) {
-      ItemRarity.legendary => 900,
-      ItemRarity.rare => 700,
-      ItemRarity.uncommon => 520,
-      ItemRarity.common => 340,
-    };
-    switch (item.effect.op) {
-      case 'peek_deck_discard_one':
-        score += stage >= 5 ? 280 : 120;
-      case 'mark_next_board_move_bonus':
-      case 'add_board_move':
-        score += stage >= 5 ? 240 : 100;
-      case 'add_board_discard':
-      case 'add_hand_discard':
-        score += stage >= 5 ? 180 : 80;
-      case 'increase_hand_size':
-        score += stage >= 4 ? 220 : 140;
-      case 'draw_if_hand_empty':
-        score += 120;
-      case 'chips_bonus':
-      case 'mult_bonus':
-      case 'xmult_bonus':
-      case 'add_percent_of_first_confirm_score':
-        score += stage >= 6 ? 220 : 120;
+  Future<void> _selectItemOfferLaneForPlacement(ItemPlacement placement) async {
+    switch (placement) {
+      case ItemPlacement.quickSlot:
+        await _tapTextIfVisible('Jester / Slots');
+        await _tapTextIfVisible('Q-Slot');
+      case ItemPlacement.passiveRack:
+        await _tapTextIfVisible('Jester / Slots');
+        await _tapTextIfVisible('Passive');
+      case ItemPlacement.inventory:
+        await _tapTextIfVisible('Tool / Gear');
+        await _tapTextIfVisible('Tool');
+      case ItemPlacement.equipped:
+        await _tapTextIfVisible('Tool / Gear');
+        await _tapTextIfVisible('Gear');
     }
-    return score;
   }
 
   Future<bool> _selectItemOfferByPrice(int price) async {

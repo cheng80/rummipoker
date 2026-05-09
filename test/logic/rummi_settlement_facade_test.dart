@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
@@ -107,6 +108,42 @@ void main() {
       expect(reward.tile, rewardTile);
       expect(reward.gold, 0);
       expect(reward.description, contains('다음 전투 덱에 추가'));
+    });
+
+    test('overkill growth bonuses are exposed as non-gold bonus entries', () {
+      const breakdown = RummiCashOutBreakdown(
+        stageIndex: 4,
+        targetScore: 600,
+        blindReward: 8,
+        remainingBoardDiscards: 0,
+        perBoardDiscardBonus: 3,
+        boardDiscardGold: 0,
+        remainingHandDiscards: 0,
+        perHandDiscardBonus: 2,
+        handDiscardGold: 0,
+        economyGold: 0,
+        economyBonuses: [],
+        totalGold: 8,
+        overkillGrowthBonuses: [
+          RummiOverkillGrowthBonus(
+            rank: RummiHandRank.flush,
+            amount: 1,
+            finalScore: 800,
+            thresholdScore: 780,
+          ),
+        ],
+      );
+
+      final facade = RummiSettlementRuntimeFacade.fromCashOut(
+        breakdown: breakdown,
+        currentGold: 12,
+      );
+
+      final growth = facade.entries.last;
+      expect(growth.kind, RummiSettlementEntryKind.overkillGrowthBonus);
+      expect(growth.isBonus, isTrue);
+      expect(growth.gold, 0);
+      expect(growth.description, '초과 달성: 플러시 성장 +1');
     });
   });
 }

@@ -9,12 +9,14 @@ import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/boss_modifier.dart';
+import '../logic/rummi_poker_grid/hand_rank.dart';
 import '../logic/rummi_poker_grid/item_catalog_loader.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/owned_content_instance.dart';
 import '../logic/rummi_poker_grid/rummi_battle_facade.dart';
+import '../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import '../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import '../logic/rummi_poker_grid/models/board.dart';
@@ -734,9 +736,60 @@ class _GameViewState extends ConsumerState<GameView>
       context: context,
       signals: signals,
       insightReward: RunProgressionService.calculateInsightReward(summary),
+      runSummary: _gameOverRunSummary(),
       onRetry: _restartFromStageSnapshot,
       onNewRun: _startNewRunAfterGameOver,
       onExit: _exitAfterGameOver,
+    );
+  }
+
+  GameOverRunSummary _gameOverRunSummary() {
+    final session = _gameState.session;
+    final counts = _runProgressCollection.snapshotPlayedHandCounts();
+    final growthStates = _runProgressCollection.snapshotHandGrowthStates();
+    RummiHandRank? bestRank;
+    var bestRankScore = 0;
+    RummiHandRank? mostPlayedRank;
+    var mostPlayedCount = 0;
+    var playedHandTotal = 0;
+
+    for (final entry in counts.entries) {
+      final count = entry.value < 0 ? 0 : entry.value;
+      playedHandTotal += count;
+      if (count > mostPlayedCount) {
+        mostPlayedRank = entry.key;
+        mostPlayedCount = count;
+      }
+      final growthState =
+          growthStates[entry.key] ??
+          RummiHandGrowthState.fromCompletedCount(entry.key, count);
+      final score = RummiHandGrowth.grownBaseScoreForState(
+        rank: entry.key,
+        baseScore: gddBaseScore(entry.key),
+        state: growthState,
+      );
+      if (score > bestRankScore) {
+        bestRank = entry.key;
+        bestRankScore = score;
+      }
+    }
+
+    return GameOverRunSummary(
+      difficultyLabel: NewRunSetup(
+        difficulty: widget.difficulty,
+      ).difficultyLabel,
+      stageIndex: _battleView.stageIndex,
+      scoreTowardTarget: session?.blind.scoreTowardBlind ?? 0,
+      targetScore: session?.blind.targetScore ?? 0,
+      seed: session?.runSeed ?? widget.runSeed,
+      bestRank: bestRank,
+      bestRankScore: bestRankScore,
+      mostPlayedRank: mostPlayedRank,
+      mostPlayedCount: mostPlayedCount,
+      playedHandTotal: playedHandTotal,
+      boughtJesterCount: _runProgressCollection.boughtJesterIds.length,
+      boughtItemCount: _runProgressCollection.boughtItemIds.length,
+      addedDeckTileCount: _runProgressCollection.addedDeckTiles.length,
     );
   }
 
@@ -947,6 +1000,8 @@ class _GameViewState extends ConsumerState<GameView>
     final selectedIndex = await showDialog<int>(
       context: context,
       barrierDismissible: false,
+      barrierLabel: '덱 확인',
+      routeSettings: const RouteSettings(name: '덱 확인'),
       builder: (context) => GameTileChoiceDialog(
         title: '덱 확인',
         message: '선택한 한 장을 버리거나, 버림 없이 닫을 수 있습니다.',
@@ -1333,15 +1388,23 @@ class _GameViewState extends ConsumerState<GameView>
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
+      barrierLabel: '정산 결과',
+      routeSettings: const RouteSettings(name: '정산 결과'),
       sheetAnimationStyle: AnimationStyle.noAnimation,
       builder: (sheetContext) {
-        return GameCashOutSheet(
-          settlement: settlementView,
-          autoEnterMarketOnLoad:
-              !completesRun &&
-              (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
-          completesRun: completesRun,
-          insightReward: insightReward,
+        return Semantics(
+          scopesRoute: true,
+          namesRoute: true,
+          explicitChildNodes: true,
+          label: '정산 결과',
+          child: GameCashOutSheet(
+            settlement: settlementView,
+            autoEnterMarketOnLoad:
+                !completesRun &&
+                (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
+            completesRun: completesRun,
+            insightReward: insightReward,
+          ),
         );
       },
     );
@@ -1580,6 +1643,8 @@ class _GameViewState extends ConsumerState<GameView>
       context: context,
       playedHandCounts:
           _gameState.activeRunSaveView?.currentPlayedHandCounts ?? const {},
+      handGrowthStates:
+          _gameState.runProgress?.snapshotHandGrowthStates() ?? const {},
       addedDeckTiles: _gameState.runProgress?.addedDeckTiles ?? const [],
     );
   }
@@ -1592,126 +1657,136 @@ class _GameViewState extends ConsumerState<GameView>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      barrierLabel: '디버그 설정',
+      routeSettings: const RouteSettings(name: '디버그 설정'),
       builder: (sheetContext) {
         var handSize = _stationView.resources.maxHandSize;
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return SafeArea(
-              top: false,
-              child: FractionallySizedBox(
-                heightFactor: 0.72,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: GameModalCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'DEBUG',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.4,
+            return Semantics(
+              scopesRoute: true,
+              namesRoute: true,
+              explicitChildNodes: true,
+              label: '디버그 설정',
+              child: SafeArea(
+                top: false,
+                child: FractionallySizedBox(
+                  heightFactor: 0.72,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: GameModalCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'DEBUG',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.4,
+                                  ),
                                 ),
                               ),
-                            ),
-                            GameIconButtonChip(
-                              tooltip: '닫기',
-                              onPressed: () => Navigator.of(sheetContext).pop(),
-                              icon: Icons.close_rounded,
-                              size: 34,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 108,
-                              child: GameActionButton(
-                                label: 'MARKET',
-                                background: const Color(0xFFF4A81D),
-                                foreground: Colors.black,
-                                onPressed: () async {
-                                  Navigator.of(sheetContext).pop();
-                                  await WidgetsBinding.instance.endOfFrame;
-                                  await _openShopForTest();
-                                },
+                              GameIconButtonChip(
+                                tooltip: '닫기',
+                                onPressed: () =>
+                                    Navigator.of(sheetContext).pop(),
+                                icon: Icons.close_rounded,
+                                size: 34,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: SizedBox(
-                                  width: 228,
-                                  height: 40,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.08,
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 108,
+                                child: GameActionButton(
+                                  label: 'MARKET',
+                                  background: const Color(0xFFF4A81D),
+                                  foreground: Colors.black,
+                                  onPressed: () async {
+                                    Navigator.of(sheetContext).pop();
+                                    await WidgetsBinding.instance.endOfFrame;
+                                    await _openShopForTest();
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: SizedBox(
+                                    width: 228,
+                                    height: 40,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
                                       ),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
+                                      decoration: BoxDecoration(
                                         color: Colors.white.withValues(
-                                          alpha: 0.12,
+                                          alpha: 0.08,
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.12,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    child: GameDebugHandSizeSegment(
-                                      value: handSize,
-                                      onChanged: (value) {
-                                        setModalState(() => handSize = value);
-                                        _setDebugMaxHandSize(value);
-                                      },
+                                      child: GameDebugHandSizeSegment(
+                                        value: handSize,
+                                        onChanged: (value) {
+                                          setModalState(() => handSize = value);
+                                          _setDebugMaxHandSize(value);
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                GameMenuActionTile(
-                                  title: '현재 구간 즉시 클리어',
-                                  subtitle: '현재 선택된 구간을 즉시 정산 완료 상태로 넘깁니다.',
-                                  icon: Icons.bug_report_rounded,
-                                  accentColor: Colors.orange.shade200,
-                                  onTap: () async {
-                                    Navigator.of(sheetContext).pop();
-                                    await WidgetsBinding.instance.endOfFrame;
-                                    await _debugForceBlindClear();
-                                  },
-                                ),
-                                const SizedBox(height: 8),
-                                GameMenuActionTile(
-                                  title: 'Boss 클리어 후 다음 Station Select',
-                                  subtitle: '다음 Station Select로 바로 이행합니다.',
-                                  icon: Icons.skip_next_rounded,
-                                  accentColor: Colors.lightGreenAccent.shade100,
-                                  onTap: () async {
-                                    Navigator.of(sheetContext).pop();
-                                    await WidgetsBinding.instance.endOfFrame;
-                                    await _debugForceBossClearToNextBlindSelect();
-                                  },
-                                ),
-                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  GameMenuActionTile(
+                                    title: '현재 구간 즉시 클리어',
+                                    subtitle: '현재 선택된 구간을 즉시 정산 완료 상태로 넘깁니다.',
+                                    icon: Icons.bug_report_rounded,
+                                    accentColor: Colors.orange.shade200,
+                                    onTap: () async {
+                                      Navigator.of(sheetContext).pop();
+                                      await WidgetsBinding.instance.endOfFrame;
+                                      await _debugForceBlindClear();
+                                    },
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GameMenuActionTile(
+                                    title: 'Boss 클리어 후 다음 Station Select',
+                                    subtitle: '다음 Station Select로 바로 이행합니다.',
+                                    icon: Icons.skip_next_rounded,
+                                    accentColor:
+                                        Colors.lightGreenAccent.shade100,
+                                    onTap: () async {
+                                      Navigator.of(sheetContext).pop();
+                                      await WidgetsBinding.instance.endOfFrame;
+                                      await _debugForceBossClearToNextBlindSelect();
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -5,7 +5,7 @@
 
 기준 데이터: `data/common/items_common_v1.json`
 
-이 문서는 v1 Item 49개의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
+이 문서는 v1 Item catalog의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
 과거 소모품/바우처 장기 확장 reference는 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
 상태 의미:
 
@@ -36,6 +36,13 @@
 | `reroll_token` | 다음 market reroll 무료 | `market_reroll` / `free_next_reroll` | `applyMarketRerollItem` | `applied` |
 | `coupon_stamp` | 다음 구매 가격 -2 | `market_buy` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
 | `coin_cache` | Gold +3 | `use_market` / `gain_gold` | `applyMarketUseItem` | `applied` |
+| `two_pair_study` | 투 페어 성장 +1 | `use_market` / `add_hand_rank_progress` | `applyMarketUseItem` | `applied` |
+| `triple_study` | 트리플 성장 +1 | `use_market` / `add_hand_rank_progress` | `applyMarketUseItem` | `applied` |
+| `straight_study` | 스트레이트 성장 +1 | `use_market` / `add_hand_rank_progress` | `applyMarketUseItem` | `applied` |
+| `flush_study` | 플러시 성장 +1 | `use_market` / `add_hand_rank_progress` | `applyMarketUseItem` | `applied` |
+| `full_house_study` | 풀하우스 성장 +1 | `use_market` / `add_hand_rank_progress` | `applyMarketUseItem` | `applied` |
+| `four_kind_study` | 포카드 성장 +1 | `use_market` / `add_hand_rank_progress` | `applyMarketUseItem` | `applied` |
+| `straight_flush_study` | 스티플 성장 +1 | `use_market` / `add_hand_rank_progress` | `applyMarketUseItem` | `applied` |
 | `board_scrap` | 현재 Station 보드 버림 +1 | `use_battle` / `add_board_discard` | `useBattleItem` | `applied` |
 | `hand_scrap` | 현재 Station 손패 버림 +1 | `use_battle` / `add_hand_discard` | `useBattleItem` | `applied` |
 | `chip_capsule` | 다음 confirm chips +25 | `next_confirm` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
@@ -107,6 +114,9 @@
   `market_compass`, `shop_lens`, `lucky_counter`, `trade_ticket`
 - Direct economy hook:
   `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`
+- Planet-like direct hand-rank growth hook:
+  `two_pair_study`, `triple_study`, `straight_study`, `flush_study`, `full_house_study`,
+  `four_kind_study`, `straight_flush_study`
 - Boss/next market offer hook:
   `boss_trophy`
 - Settlement reward modifier hook:
@@ -118,7 +128,7 @@
 
 현재 실제 런타임 기준:
 
-- 총 49개 중 `applied` 49개
+- 총 57개 중 `applied` 57개
 - 남은 `pendingHook` 0개
 
 ## 공통 구현 묶음 플랜

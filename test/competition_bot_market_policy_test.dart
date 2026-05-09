@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 
 import '../integration_test/competition_bot_market_policy.dart';
@@ -59,6 +60,40 @@ void main() {
         expect(
           contestFullRunBotJesterScore(rideTheBus, stage: 8, stateValue: 35),
           greaterThan(contestFullRunBotJesterScore(drollJester, stage: 8)),
+        );
+      },
+    );
+  });
+
+  group('contestFullRunBotItemScore', () {
+    late ItemCatalog catalog;
+
+    setUpAll(() {
+      catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+    });
+
+    test('prioritizes direct hand growth Tool over evidence-only Q-Slot', () {
+      final straightStudy = catalog.findById('straight_study')!;
+      final boardLift = catalog.findById('board_lift')!;
+
+      expect(straightStudy.placement, ItemPlacement.inventory);
+      expect(
+        contestFullRunBotItemScore(straightStudy, stage: 6),
+        greaterThan(contestFullRunBotItemScore(boardLift, stage: 6)),
+      );
+    });
+
+    test(
+      'keeps deck control useful but below direct growth in late market',
+      () {
+        final flushStudy = catalog.findById('flush_study')!;
+        final deckNeedle = catalog.findById('deck_needle')!;
+
+        expect(
+          contestFullRunBotItemScore(flushStudy, stage: 8),
+          greaterThan(contestFullRunBotItemScore(deckNeedle, stage: 8)),
         );
       },
     );

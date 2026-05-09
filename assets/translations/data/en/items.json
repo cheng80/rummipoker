@@ -13,6 +13,34 @@
         "displayName": "Coin Cache",
         "effectText": "Gain +3 Gold immediately."
       },
+      "two_pair_study": {
+        "displayName": "Two Pair Study",
+        "effectText": "Use in the shop to give Two Pair growth +1."
+      },
+      "triple_study": {
+        "displayName": "Triple Study",
+        "effectText": "Use in the shop to give Triple growth +1."
+      },
+      "straight_study": {
+        "displayName": "Straight Study",
+        "effectText": "Use in the shop to give Straight growth +1."
+      },
+      "flush_study": {
+        "displayName": "Flush Study",
+        "effectText": "Use in the shop to give Flush growth +1."
+      },
+      "full_house_study": {
+        "displayName": "Full House Study",
+        "effectText": "Use in the shop to give Full House growth +1."
+      },
+      "four_kind_study": {
+        "displayName": "Four Kind Study",
+        "effectText": "Use in the shop to give Four of a Kind growth +1."
+      },
+      "straight_flush_study": {
+        "displayName": "Straight Flush Study",
+        "effectText": "Use in the shop to give Straight Flush growth +1."
+      },
       "board_scrap": {
         "displayName": "Board Pass",
         "effectText": "Gain +1 board discard for this Station."

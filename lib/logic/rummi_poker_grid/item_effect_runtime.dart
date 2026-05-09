@@ -26,6 +26,7 @@ enum ItemEffectEventKind {
   bossModifierQueued,
   expiryGuardTriggered,
   interactionRequired,
+  handRankProgressAdded,
 }
 
 class ItemEffectEvent {
@@ -214,6 +215,7 @@ class ItemEffectRuntime {
     }
     final result = switch (item.effect.op) {
       'gain_gold' => _applyGainGold(item, runProgress),
+      'add_hand_rank_progress' => _applyAddHandRankProgress(item, runProgress),
       'reroll_item_offers_only' => _applyRerollItemOffersOnly(
         item,
         runProgress,
@@ -614,6 +616,7 @@ class ItemEffectRuntime {
       'market_buy:discount_next_purchase' ||
       'market_buy_if_category:discount_next_purchase' ||
       'use_market:gain_gold' ||
+      'use_market:add_hand_rank_progress' ||
       'use_market:reroll_item_offers_only' ||
       'use_market_if_gold_lte:gain_gold' ||
       'enter_market:gain_gold' ||
@@ -712,6 +715,11 @@ class ItemEffectRuntime {
       'fullHouse' => RummiHandRank.fullHouse,
       'fourOfAKind' => RummiHandRank.fourOfAKind,
       'straightFlush' => RummiHandRank.straightFlush,
+      'prismStraight' => RummiHandRank.prismStraight,
+      'crownFourOfAKind' => RummiHandRank.crownFourOfAKind,
+      'lowStraightFlush' => RummiHandRank.lowStraightFlush,
+      'royalStraightFlush' => RummiHandRank.royalStraightFlush,
+      'fiveOfAKind' => RummiHandRank.fiveOfAKind,
       _ => null,
     };
   }
@@ -1154,6 +1162,38 @@ class ItemEffectRuntime {
     }
 
     return ItemUseResult.success(itemId: item.id, events: events);
+  }
+
+  static ItemUseResult _applyAddHandRankProgress(
+    ItemDefinition item,
+    RummiRunProgress runProgress,
+  ) {
+    final rank = _parseRank(item.effect.value('rank'));
+    final amount = _nonNegativeIntValue(item, 'amount');
+    if (rank == null || amount <= 0) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '성장시킬 족보를 찾지 못했습니다.',
+      );
+    }
+    final didApply = runProgress.addHandRankProgress(rank, amount: amount);
+    if (!didApply) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '이 족보는 성장시킬 수 없습니다.',
+      );
+    }
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.handRankProgressAdded,
+          itemId: item.id,
+          amount: amount,
+          detail: rank.name,
+        ),
+      ],
+    );
   }
 
   static void _consumeIfNeeded(

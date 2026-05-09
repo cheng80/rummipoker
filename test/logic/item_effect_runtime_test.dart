@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
@@ -817,6 +818,48 @@ void main() {
       expect(runProgress.itemInventory.ownedItems, isEmpty);
     });
 
+    test('applyMarketUseItem directly adds hand rank growth progress', () {
+      final item = _item(
+        id: 'straight_study',
+        timing: 'use_market',
+        op: 'add_hand_rank_progress',
+        placement: ItemPlacement.inventory,
+        consume: true,
+        rawEffect: const {'rank': 'straight'},
+      );
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'straight_study',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+
+      final result = ItemEffectRuntime.applyMarketUseItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(
+        runProgress.snapshotPlayedHandCounts()[RummiHandRank.straight],
+        isNull,
+      );
+      expect(
+        runProgress.snapshotHandGrowthStates()[RummiHandRank.straight]!.level,
+        2,
+      );
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+      expect(result.events.map((event) => event.kind), [
+        ItemEffectEventKind.handRankProgressAdded,
+        ItemEffectEventKind.itemConsumed,
+      ]);
+      expect(result.events.first.detail, 'straight');
+    });
+
     test(
       'market buy item queues category discount and consumes on purchase',
       () {
@@ -1170,6 +1213,7 @@ void main() {
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',
           'use_market:gain_gold',
+          'use_market:add_hand_rank_progress',
           'use_market:reroll_item_offers_only',
           'use_market_if_gold_lte:gain_gold',
           'enter_market:gain_gold',

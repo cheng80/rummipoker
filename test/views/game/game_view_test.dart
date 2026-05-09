@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -141,9 +142,7 @@ void main() {
   testWidgets('game over reward card가 기억 카드 보상을 보여준다', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: GameOverInsightRewardCard(insightReward: 6),
-        ),
+        home: Scaffold(body: GameOverInsightRewardCard(insightReward: 6)),
       ),
     );
 
@@ -152,6 +151,65 @@ void main() {
     expect(find.text('기억 카드 획득'), findsOneWidget);
     expect(find.textContaining('새 규칙'), findsOneWidget);
     expect(find.textContaining('Insight'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('game over dialog가 런 요약과 도발 문구를 보여준다', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    showGameOverDialog(
+                      context: context,
+                      signals: const [RummiExpirySignal.drawPileExhausted],
+                      insightReward: 0,
+                      tauntLine: '성장은 남았습니다. 승리는 다음에 찾죠.',
+                      runSummary: const GameOverRunSummary(
+                        difficultyLabel: '도전',
+                        stageIndex: 8,
+                        scoreTowardTarget: 1065,
+                        targetScore: 1738,
+                        seed: 777,
+                        bestRank: RummiHandRank.flush,
+                        bestRankScore: 80,
+                        mostPlayedRank: RummiHandRank.twoPair,
+                        mostPlayedCount: 3,
+                        playedHandTotal: 9,
+                        boughtJesterCount: 2,
+                        boughtItemCount: 4,
+                        addedDeckTileCount: 1,
+                      ),
+                      onRetry: () async {},
+                      onNewRun: () async {},
+                      onExit: () async {},
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('이번 런 정산'), findsOneWidget);
+    expect(find.text('성장은 남았습니다. 승리는 다음에 찾죠.'), findsOneWidget);
+    expect(find.text('S8 · 도전'), findsOneWidget);
+    expect(find.text('1065 / 1738'), findsOneWidget);
+    expect(find.text('플러시 · 칩 80'), findsOneWidget);
+    expect(find.text('투페어 (3)'), findsOneWidget);
+    expect(find.text('추가 타일 1 · 777'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

@@ -13,6 +13,34 @@
         "displayName": "금화 보관함",
         "effectText": "즉시 골드 +3."
       },
+      "two_pair_study": {
+        "displayName": "투 페어 연구",
+        "effectText": "상점에서 사용하면 투 페어 성장 +1."
+      },
+      "triple_study": {
+        "displayName": "트리플 연구",
+        "effectText": "상점에서 사용하면 트리플 성장 +1."
+      },
+      "straight_study": {
+        "displayName": "스트레이트 연구",
+        "effectText": "상점에서 사용하면 스트레이트 성장 +1."
+      },
+      "flush_study": {
+        "displayName": "플러시 연구",
+        "effectText": "상점에서 사용하면 플러시 성장 +1."
+      },
+      "full_house_study": {
+        "displayName": "풀하우스 연구",
+        "effectText": "상점에서 사용하면 풀하우스 성장 +1."
+      },
+      "four_kind_study": {
+        "displayName": "포카드 연구",
+        "effectText": "상점에서 사용하면 포카드 성장 +1."
+      },
+      "straight_flush_study": {
+        "displayName": "스티플 연구",
+        "effectText": "상점에서 사용하면 스티플 성장 +1."
+      },
       "board_scrap": {
         "displayName": "보드 패스",
         "effectText": "이번 Station의 보드 버림 +1."

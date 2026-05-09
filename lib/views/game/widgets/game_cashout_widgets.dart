@@ -36,9 +36,9 @@ String gameHandRankLabel(RummiHandRank rank) {
 }
 
 String gameScoreBreakdownLabel(ConfirmedLineBreakdown line) {
-  final parts = <String>['기본 ${line.rankBaseScore ?? line.baseScore}'];
+  final parts = <String>['칩 ${line.rankBaseScore ?? line.baseScore}'];
   if (line.growthBonus > 0) {
-    parts.add('성장 +${line.growthBonus}');
+    parts.add('성장 칩 +${line.growthBonus}');
   }
   if (line.overlapBonus > 0) {
     parts.add('겹침 +${line.overlapBonus}');
@@ -377,7 +377,7 @@ String? _settlementStepSubLabel(
   return switch (step) {
     ScoringPresentationStep.boardLine => '보드 라인 확정',
     ScoringPresentationStep.handRank =>
-      'base ${line.rankBaseScore ?? line.baseScore}',
+      '칩 ${line.rankBaseScore ?? line.baseScore}',
     ScoringPresentationStep.overlap => '겹침 +${line.overlapBonus}',
     ScoringPresentationStep.constraint =>
       line.constraintPenalties.isEmpty
@@ -923,7 +923,7 @@ class _GameCashOutLine extends StatelessWidget {
                 ),
               ),
             ),
-            _GameCashOutCollectBadge(gold: gold),
+            if (gold > 0) _GameCashOutCollectBadge(gold: gold),
           ],
         ),
       ),

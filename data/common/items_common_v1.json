@@ -107,6 +107,216 @@
       "effectTextKey": "data.items.coin_cache.effectText"
     },
     {
+      "id": "two_pair_study",
+      "displayName": "Two Pair Study",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "basePrice": 6,
+      "sellPrice": 3,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Use in the shop to give Two Pair growth +1.",
+      "effect": {
+        "timing": "use_market",
+        "op": "add_hand_rank_progress",
+        "rank": "twoPair",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "consumable",
+        "rank_growth",
+        "planet_like",
+        "two_pair"
+      ],
+      "displayNameKey": "data.items.two_pair_study.displayName",
+      "effectTextKey": "data.items.two_pair_study.effectText"
+    },
+    {
+      "id": "triple_study",
+      "displayName": "Triple Study",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "basePrice": 7,
+      "sellPrice": 3,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Use in the shop to give Triple growth +1.",
+      "effect": {
+        "timing": "use_market",
+        "op": "add_hand_rank_progress",
+        "rank": "threeOfAKind",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "consumable",
+        "rank_growth",
+        "planet_like",
+        "three_kind"
+      ],
+      "displayNameKey": "data.items.triple_study.displayName",
+      "effectTextKey": "data.items.triple_study.effectText"
+    },
+    {
+      "id": "straight_study",
+      "displayName": "Straight Study",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "basePrice": 8,
+      "sellPrice": 4,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Use in the shop to give Straight growth +1.",
+      "effect": {
+        "timing": "use_market",
+        "op": "add_hand_rank_progress",
+        "rank": "straight",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "consumable",
+        "rank_growth",
+        "planet_like",
+        "straight"
+      ],
+      "displayNameKey": "data.items.straight_study.displayName",
+      "effectTextKey": "data.items.straight_study.effectText"
+    },
+    {
+      "id": "flush_study",
+      "displayName": "Flush Study",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "basePrice": 8,
+      "sellPrice": 4,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Use in the shop to give Flush growth +1.",
+      "effect": {
+        "timing": "use_market",
+        "op": "add_hand_rank_progress",
+        "rank": "flush",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "consumable",
+        "rank_growth",
+        "planet_like",
+        "flush"
+      ],
+      "displayNameKey": "data.items.flush_study.displayName",
+      "effectTextKey": "data.items.flush_study.effectText"
+    },
+    {
+      "id": "full_house_study",
+      "displayName": "Full House Study",
+      "type": "consumable",
+      "rarity": "rare",
+      "basePrice": 9,
+      "sellPrice": 4,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Use in the shop to give Full House growth +1.",
+      "effect": {
+        "timing": "use_market",
+        "op": "add_hand_rank_progress",
+        "rank": "fullHouse",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "consumable",
+        "rank_growth",
+        "planet_like",
+        "full_house"
+      ],
+      "displayNameKey": "data.items.full_house_study.displayName",
+      "effectTextKey": "data.items.full_house_study.effectText"
+    },
+    {
+      "id": "four_kind_study",
+      "displayName": "Four Kind Study",
+      "type": "consumable",
+      "rarity": "rare",
+      "basePrice": 10,
+      "sellPrice": 5,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Use in the shop to give Four of a Kind growth +1.",
+      "effect": {
+        "timing": "use_market",
+        "op": "add_hand_rank_progress",
+        "rank": "fourOfAKind",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "consumable",
+        "rank_growth",
+        "planet_like",
+        "four_kind"
+      ],
+      "displayNameKey": "data.items.four_kind_study.displayName",
+      "effectTextKey": "data.items.four_kind_study.effectText"
+    },
+    {
+      "id": "straight_flush_study",
+      "displayName": "Straight Flush Study",
+      "type": "consumable",
+      "rarity": "rare",
+      "basePrice": 12,
+      "sellPrice": 6,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": false,
+      "placement": "inventory",
+      "slotHint": "utility",
+      "effectText": "Use in the shop to give Straight Flush growth +1.",
+      "effect": {
+        "timing": "use_market",
+        "op": "add_hand_rank_progress",
+        "rank": "straightFlush",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "consumable",
+        "rank_growth",
+        "planet_like",
+        "straight_flush"
+      ],
+      "displayNameKey": "data.items.straight_flush_study.displayName",
+      "effectTextKey": "data.items.straight_flush_study.effectText"
+    },
+    {
       "id": "board_scrap",
       "displayName": "Board Pass",
       "type": "consumable",

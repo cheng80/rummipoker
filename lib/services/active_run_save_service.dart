@@ -13,6 +13,7 @@ import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/poker_deck.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_blind_state.dart';
+import '../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import '../resources/asset_paths.dart';
@@ -278,6 +279,9 @@ class SavedRunProgressData {
     required this.shopOffers,
     required this.statefulValuesBySlot,
     required this.playedHandCounts,
+    this.handGrowthStates = const <String, Map<String, dynamic>>{},
+    this.stationRankFinalScores = const <String, int>{},
+    this.overkillGrowthClaimedStationKeys = const <String>[],
     this.addedDeckTiles = const [],
     this.tileOffers = const [],
     this.pendingBossTileReward = false,
@@ -310,6 +314,9 @@ class SavedRunProgressData {
   final List<SavedShopOfferData> shopOffers;
   final Map<String, int> statefulValuesBySlot;
   final Map<String, int> playedHandCounts;
+  final Map<String, Map<String, dynamic>> handGrowthStates;
+  final Map<String, int> stationRankFinalScores;
+  final List<String> overkillGrowthClaimedStationKeys;
   final List<Map<String, dynamic>> addedDeckTiles;
   final List<Map<String, dynamic>> tileOffers;
   final bool pendingBossTileReward;
@@ -337,6 +344,9 @@ class SavedRunProgressData {
     'shopOffers': shopOffers.map((offer) => offer.toJson()).toList(),
     'statefulValuesBySlot': statefulValuesBySlot,
     'playedHandCounts': playedHandCounts,
+    'handGrowthStates': handGrowthStates,
+    'stationRankFinalScores': stationRankFinalScores,
+    'overkillGrowthClaimedStationKeys': overkillGrowthClaimedStationKeys,
     'addedDeckTiles': addedDeckTiles,
     'tileOffers': tileOffers,
     'pendingBossTileReward': pendingBossTileReward,
@@ -377,6 +387,11 @@ class SavedRunProgressData {
         (key, value) => MapEntry(key as String, (value as num).toInt()),
       ),
       playedHandCounts: _jsonIntMap(json['playedHandCounts']),
+      handGrowthStates: _jsonMapMap(json['handGrowthStates']),
+      stationRankFinalScores: _jsonIntMap(json['stationRankFinalScores']),
+      overkillGrowthClaimedStationKeys: _jsonStringList(
+        json['overkillGrowthClaimedStationKeys'],
+      ),
       addedDeckTiles: _jsonTileList(json['addedDeckTiles']),
       tileOffers: _jsonTileList(json['tileOffers']),
       pendingBossTileReward: json['pendingBossTileReward'] as bool? ?? false,
@@ -414,6 +429,21 @@ class SavedRunProgressData {
       final rawValue = entry.value;
       if (key is! String || rawValue is! num) continue;
       out[key] = rawValue.toInt();
+    }
+    return out;
+  }
+
+  static Map<String, Map<String, dynamic>> _jsonMapMap(Object? value) {
+    final source = value;
+    if (source is! Map) {
+      return const <String, Map<String, dynamic>>{};
+    }
+    final out = <String, Map<String, dynamic>>{};
+    for (final entry in source.entries) {
+      final key = entry.key;
+      final rawValue = entry.value;
+      if (key is! String || rawValue is! Map) continue;
+      out[key] = Map<String, dynamic>.from(rawValue);
     }
     return out;
   }
@@ -736,6 +766,15 @@ class ActiveRunSaveService {
       playedHandCounts: runProgress.snapshotPlayedHandCounts().map(
         (key, value) => MapEntry(key.name, value),
       ),
+      handGrowthStates: runProgress.snapshotHandGrowthStates().map(
+        (key, value) => MapEntry(key.name, value.toJson()),
+      ),
+      stationRankFinalScores: runProgress.snapshotStationRankFinalScores().map(
+        (key, value) => MapEntry(key.name, value),
+      ),
+      overkillGrowthClaimedStationKeys:
+          runProgress.snapshotOverkillGrowthClaimedStationKeys().toList()
+            ..sort(),
       addedDeckTiles: runProgress.addedDeckTiles
           .map((tile) => tile.toJson())
           .toList(growable: false),
@@ -821,6 +860,18 @@ class ActiveRunSaveService {
       if (rank == null) continue;
       playedHandCounts[rank] = entry.value;
     }
+    final stationRankFinalScores = <RummiHandRank, int>{};
+    for (final entry in data.stationRankFinalScores.entries) {
+      final rank = _tryParseHandRank(entry.key);
+      if (rank == null) continue;
+      stationRankFinalScores[rank] = entry.value;
+    }
+    final handGrowthStates = <RummiHandRank, RummiHandGrowthState>{};
+    for (final entry in data.handGrowthStates.entries) {
+      final rank = _tryParseHandRank(entry.key);
+      if (rank == null) continue;
+      handGrowthStates[rank] = RummiHandGrowthState.fromJson(rank, entry.value);
+    }
     return RummiRunProgress.restore(
       stageIndex: data.stageIndex,
       currentStationBlindTierIndex: data.currentStationBlindTierIndex,
@@ -836,6 +887,10 @@ class ActiveRunSaveService {
       shopOffers: shopOffers,
       statefulValuesBySlot: statefulValuesBySlot,
       playedHandCounts: playedHandCounts,
+      handGrowthStates: handGrowthStates,
+      stationRankFinalScores: stationRankFinalScores,
+      overkillGrowthClaimedStationKeys: data.overkillGrowthClaimedStationKeys
+          .toSet(),
       addedDeckTiles: data.addedDeckTiles
           .map(Tile.fromJson)
           .toList(growable: false),

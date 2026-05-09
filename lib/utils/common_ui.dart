@@ -395,12 +395,16 @@ Future<T?> showAppDialog<T>(
   BuildContext context, {
   bool barrierDismissible = true,
   bool useRootNavigator = true,
+  String routeName = '게임 대화상자',
   required WidgetBuilder builder,
 }) {
+  final safeRouteName = routeName.trim().isEmpty ? '게임 대화상자' : routeName;
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
     useRootNavigator: useRootNavigator,
+    barrierLabel: safeRouteName,
+    routeSettings: RouteSettings(name: safeRouteName),
     builder: builder,
   );
 }
@@ -418,7 +422,9 @@ Future<T?> showGameChoiceDialog<T>(
     context,
     barrierDismissible: barrierDismissible,
     useRootNavigator: useRootNavigator,
+    routeName: title,
     builder: (dialogContext) => _GameDialogFrame(
+      semanticLabel: title,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -469,7 +475,9 @@ Future<bool> showConfirmDialog(
     context,
     barrierDismissible: barrierDismissible,
     useRootNavigator: useRootNavigator,
+    routeName: title,
     builder: (dialogContext) => _GameDialogFrame(
+      semanticLabel: title,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -517,29 +525,37 @@ Future<bool> showConfirmDialog(
 }
 
 class _GameDialogFrame extends StatelessWidget {
-  const _GameDialogFrame({required this.child});
+  const _GameDialogFrame({required this.child, this.semanticLabel = '게임 확인'});
 
   final Widget child;
+  final String semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 348),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: const Color(0xFF13251E),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: const Color(0xFFE6D4A1).withValues(alpha: 0.24),
-              width: 1.2,
+    final label = semanticLabel.trim().isEmpty ? '게임 확인' : semanticLabel;
+    return Semantics(
+      scopesRoute: true,
+      namesRoute: true,
+      explicitChildNodes: true,
+      label: label,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 348),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFF13251E),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: const Color(0xFFE6D4A1).withValues(alpha: 0.24),
+                width: 1.2,
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-            child: child,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              child: child,
+            ),
           ),
         ),
       ),

@@ -1,7 +1,7 @@
 # Consumable / Voucher Reference Plan
 
 > 문서 성격: design reference / Item system follow-up
-> 코드 반영 상태: planning only
+> 코드 반영 상태: Planet-like hand-rank progression 일부 구현 진행 / Tarot tile mutation, Spectral-like mutation, Voucher-like chain은 post-contest 검토
 > 핵심 정책: Balatro의 Tarot / Planet / Spectral / Voucher 구조는 Item 확장 참고 자료로만 사용한다. Rummi Poker에서는 1회성 전술 도구, hand-rank progression, deck/tile mutation, run-long passive를 서로 다른 시스템 경계로 분리한다.
 
 Reference:
@@ -34,16 +34,17 @@ Do not import Balatro consumable/voucher catalog or values.
 
 Current Rummi Poker state:
 
-- `data/common/items_common_v1.json` has 49 original v1 items.
-- All 49 item effects are currently connected in `ItemEffectRuntime`.
+- `data/common/items_common_v1.json` has original v1 items plus Planet-like rank-growth support items.
+- Item effects are connected in `ItemEffectRuntime` through the runtime matrix.
 - Item subtype baseline is `consumable / equipment / passive_relic / utility`.
 
 Policy:
 
-- Keep current item catalog stable.
-- Use this reference to define future taxonomy, not immediate content import.
+- Keep current item catalog stable except for explicitly approved Planet-like hand-rank growth support.
+- Use this reference to define taxonomy, not direct content/name/value import.
 - Do not add large deck/tile mutation before save/restore and simulator can reproduce it.
 - Do not expose voucher-like permanent passives as ordinary quick-use items.
+- Tile enhancement/conversion/removal Tarot-like effects and Spectral-like high-risk mutation are post-contest candidates, not current submission-blocking work.
 
 ## 3. Rummi Poker Mapping
 

@@ -18,7 +18,8 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 2026-05-09 현재 `contest_full_run_bot`은 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss pass 증거를 확보했다.
 이전 체크포인트/재시도 기반 S8 boss pass 증거와, S8 boss 실패/timeout을 만들었던 최신 보정 후보 로그도 기준선으로 남긴다.
 다음 full-run 재개는 도전 난이도 fresh S1~S8이다.
-단, fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐으므로, 제출 console 0건 기준을 위해 이 경고를 먼저 수정한 뒤 도전 풀런을 시작한다.
+fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐으나, 2026-05-10 route/dialog label 보정 뒤 최신 build smoke에서는 재현되지 않았다.
+도전 full-run 로그에서도 같은 console 0건 기준으로 다시 확인한다.
 
 과거 checkpoint pass 증거:
 
@@ -77,8 +78,16 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
   - 초반 증거용 이동/버림은 보이지 않았다.
   - S3 big, S6 small/big, S7/S8 구간의 보드 이동/버림은 확정 점수 또는 중복줄 형성에 연결됐다.
 - 남은 문제:
-  - `Semantic node ... scopesRoute and namesRoute ... missing the label` 경고가 cashout/market 전환마다 반복된다.
-  - full-run 통과 증거와 별개로, console warn 0건 제출 기준은 아직 닫지 않는다.
+  - `Semantic node ... scopesRoute and namesRoute ... missing the label` 경고가 cashout/market 전환마다 반복됐다.
+  - 2026-05-10 최신 build smoke에서는 같은 경고가 재현되지 않았다. 도전 full-run에서 최종 재확인한다.
+
+2026-05-10 도전 full-run 제외 검증:
+
+- `flutter analyze` 통과
+- 핵심 `flutter test` 묶음 통과
+- `flutter build web` 통과
+- Browser/CDP smoke 통과: `/`, `/new-run`, `/archive`, `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`, `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1` 모두 앱 warn/error/exception 0건
+- Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않는다.
 
 앞으로 대화에서 `공모전 풀런봇 실행`, `공모전 풀런봇 준비`, `공모전 풀런봇 이어서`라고 말하면 이 문서의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다.
 스크립트, 로그 prefix, 파일명에는 영문 식별자 `contest_full_run_bot`을 사용한다.
@@ -107,6 +116,7 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 - 최신 fresh 표준 run에서는 족보 레벨 성장과 덱 확장/보상 타일 축이 들어간 상태로 S8 boss까지 통과했다. 도전 난이도는 아직 미검증이다.
 - 후반 game over 대응은 봇 전용 가중치 숫자 조정보다 족보/중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다.
 - 마켓에서는 Jester 슬롯/골드가 허용하는 한 구매를 시도하고, 슬롯이 꽉 찬 경우 더 좋은 후보가 있으면 약한 Jester 판매 후 교체한다. 후반에는 구간별 등장 확률을 올린 Jester/Item을 안정화 구매 후보로 더 높게 평가한다.
+- Item 구매 정책은 Q-Slot만 보지 않고 Q-Slot/Passive/Tool/Gear lane의 모든 affordable offer를 평가한다. `*_study`처럼 족보 성장을 직접 올리는 행성카드형 아이템은 후반 안정화 후보로 높게 평가한다.
 - Q-Slot이 비어 있으면 과거 구매 이력이 있더라도 새 Item 구매를 검토한다. 단, 아이템 사용은 족보 형성 또는 확정 점수 개선이 분명할 때만 한다.
 - 단일 fresh process로 S1부터 S8까지 끊김 없이 다시 도는 최종 회귀는 제출 직전 한 번 더 돌리는 것을 권장한다.
 

@@ -514,12 +514,12 @@ void main() {
     final out = session.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(out.result.ok, true);
-    expect(out.result.scoreAdded, 53);
+    expect(out.result.scoreAdded, 68);
     expect(out.result.lineBreakdowns.single.ref.kind, LineKind.row);
     final penalty = out.result.lineBreakdowns.single.constraintPenalties.single;
     expect(penalty.title, '가로줄 약화');
     expect(penalty.affectedLineKinds, [LineKind.row]);
-    expect(penalty.scoreDelta, -17);
+    expect(penalty.scoreDelta, -22);
   });
 
   test('보스 가로줄 약화는 세로 점수 라인에는 적용되지 않는다', () {
@@ -547,7 +547,7 @@ void main() {
     final out = session.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(out.result.ok, true);
-    expect(out.result.scoreAdded, 70);
+    expect(out.result.scoreAdded, 90);
     expect(out.result.lineBreakdowns.single.ref.kind, LineKind.col);
     expect(out.result.lineBreakdowns.single.constraintPenalties, isEmpty);
   });
@@ -597,7 +597,7 @@ void main() {
     final out = session.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(out.result.ok, true);
-    expect(out.result.scoreAdded, 150);
+    expect(out.result.scoreAdded, 180);
     expect(out.result.lineBreakdowns.single.constraintPenalties, isEmpty);
   });
 
@@ -619,10 +619,10 @@ void main() {
     final out = session.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(out.result.ok, true);
-    expect(out.result.scoreAdded, 120);
+    expect(out.result.scoreAdded, 144);
     final penalty = out.result.lineBreakdowns.single.constraintPenalties.single;
     expect(penalty.title, '전체 점수 약화');
-    expect(penalty.scoreDelta, -30);
+    expect(penalty.scoreDelta, -36);
     expect(penalty.scoreMultiplier, 0.8);
   });
 
@@ -644,7 +644,7 @@ void main() {
     final firstOut = firstSession.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(firstOut.result.ok, true);
-    expect(firstOut.result.scoreAdded, 105);
+    expect(firstOut.result.scoreAdded, 126);
     expect(
       firstOut.result.lineBreakdowns.single.constraintPenalties.single.title,
       '첫 확정 약화',
@@ -668,7 +668,7 @@ void main() {
     final laterOut = laterSession.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(laterOut.result.ok, true);
-    expect(laterOut.result.scoreAdded, 150);
+    expect(laterOut.result.scoreAdded, 180);
     expect(laterOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
   });
 
@@ -691,7 +691,7 @@ void main() {
     final earlyOut = earlySession.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(earlyOut.result.ok, true);
-    expect(earlyOut.result.scoreAdded, 150);
+    expect(earlyOut.result.scoreAdded, 180);
     expect(earlyOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
 
     final taxedBoard = RummiBoard();
@@ -712,12 +712,12 @@ void main() {
     final taxedOut = taxedSession.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(taxedOut.result.ok, true);
-    expect(taxedOut.result.scoreAdded, 113);
+    expect(taxedOut.result.scoreAdded, 135);
     final penalty =
         taxedOut.result.lineBreakdowns.single.constraintPenalties.single;
     expect(penalty.title, '누적 확정 약화');
     expect(penalty.markerText, '3+');
-    expect(penalty.scoreDelta, -37);
+    expect(penalty.scoreDelta, -45);
   });
 
   test('보스 연속 확정 제한은 두 번째 confirm부터 적용된다', () {
@@ -738,7 +738,7 @@ void main() {
     final firstOut = firstSession.confirmAllFullLines(applyScoreToBlind: false);
 
     expect(firstOut.result.ok, true);
-    expect(firstOut.result.scoreAdded, 150);
+    expect(firstOut.result.scoreAdded, 180);
     expect(firstOut.result.lineBreakdowns.single.constraintPenalties, isEmpty);
 
     final secondBoard = RummiBoard();
@@ -761,12 +761,12 @@ void main() {
     );
 
     expect(secondOut.result.ok, true);
-    expect(secondOut.result.scoreAdded, 105);
+    expect(secondOut.result.scoreAdded, 126);
     final penalty =
         secondOut.result.lineBreakdowns.single.constraintPenalties.single;
     expect(penalty.title, '연속 확정 제한');
     expect(penalty.markerText, '2+');
-    expect(penalty.scoreDelta, -45);
+    expect(penalty.scoreDelta, -54);
   });
 
   test('보스 반복 족보 약화는 이전 confirm에 나온 같은 족보를 줄인다', () {
@@ -1054,19 +1054,25 @@ void main() {
 
     final out = session.confirmAllFullLines(
       applyScoreToBlind: false,
-      runtimeSnapshot: const RummiJesterRuntimeSnapshot(
-        playedHandCounts: {RummiHandRank.straightFlush: 1},
+      runtimeSnapshot: RummiJesterRuntimeSnapshot(
+        handGrowthStates: {
+          RummiHandRank.lowStraightFlush:
+              RummiHandGrowthState.fromCompletedCount(
+                RummiHandRank.lowStraightFlush,
+                1,
+              ),
+        },
       ),
     );
 
     final line = out.result.lineBreakdowns.single;
     expect(out.result.ok, true);
-    expect(line.rank, RummiHandRank.straightFlush);
+    expect(line.rank, RummiHandRank.lowStraightFlush);
     expect(line.growthLevel, 2);
     expect(line.growthBonus, RummiHandGrowth.growthStepFor(line.rank));
-    expect(line.grownRankBaseScore, 180);
-    expect(out.result.baseScore, 180);
-    expect(out.result.scoreAdded, 180);
+    expect(line.grownRankBaseScore, 216);
+    expect(out.result.baseScore, 216);
+    expect(out.result.scoreAdded, 216);
   });
 
   test('같은 confirm 안의 같은 족보는 즉시 서로 레벨을 올리지 않는다', () {
@@ -1093,7 +1099,7 @@ void main() {
       out.result.lineBreakdowns.map((line) => line.growthBonus),
       everyElement(0),
     );
-    expect(out.result.scoreAdded, 300);
+    expect(out.result.scoreAdded, 360);
   });
 
   test('풀하우스 확정 시 contributor 5장 전체가 제거된다', () {

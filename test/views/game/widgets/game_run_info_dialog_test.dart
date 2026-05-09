@@ -69,9 +69,9 @@ void main() {
     expect(find.text('플러시'), findsOneWidget);
     expect(find.text('파이브 카드'), findsOneWidget);
     expect(find.text('Lv.3'), findsOneWidget);
-    expect(find.text('완성 2회'), findsOneWidget);
-    expect(find.text('70'), findsWidgets);
-    expect(find.text('다음 80'), findsOneWidget);
+    expect(find.textContaining('완성 2회'), findsOneWidget);
+    expect(find.text('칩 70'), findsWidgets);
+    expect(find.text('다음 칩 80'), findsOneWidget);
 
     await tester.tap(find.byTooltip('취소'));
     await tester.pumpAndSettle();

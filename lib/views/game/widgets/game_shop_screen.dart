@@ -1376,6 +1376,9 @@ class _GameShopScreenState extends State<GameShopScreen>
             playedHandCounts:
                 widget.readActiveRunSaveView?.call()?.currentPlayedHandCounts ??
                 const {},
+            handGrowthStates:
+                widget.readActiveRunSaveView?.call()?.currentHandGrowthStates ??
+                const {},
             addedDeckTiles: _market.addedDeckTiles,
           );
           if (!mounted) return;
@@ -4525,8 +4528,10 @@ String _itemEffectTag(String op) {
     'xmult_bonus' => 'xMult',
     'temporary_overlap_cap_bonus' => 'Overlap',
     'gain_gold' ||
+    'add_hand_rank_progress' ||
     'board_discard_reward_bonus' ||
-    'hand_discard_reward_bonus' => '+Gold',
+    'hand_discard_reward_bonus' =>
+      op == 'add_hand_rank_progress' ? '족보 성장' : '+Gold',
     'discount_next_purchase' ||
     'free_next_reroll' ||
     'discount_first_reroll' => 'Discount',
@@ -4556,6 +4561,7 @@ String _catalogItemTagLabel(String tag) {
     'mult' => '+Mult',
     'xmult' => 'xMult',
     'rank' => '족보',
+    'rank_growth' || 'planet_like' => '족보 성장',
     'straight' => 'Run',
     'flush' => 'Color',
     'two_pair' => 'Two Pair',

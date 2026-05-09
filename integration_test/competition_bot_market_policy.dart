@@ -1,3 +1,4 @@
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 
 /// 공모전 풀런봇의 상점 구매/교체 판단 점수.
@@ -98,6 +99,51 @@ int contestFullRunBotJesterScore(
       case 'lusty_jester':
         score += 120;
     }
+  }
+  return score;
+}
+
+/// 공모전 풀런봇의 Item 구매 판단 점수.
+///
+/// Q-Slot 증거 확보용 구매에 갇히지 않고, 후반 성장축이 되는 Tool/Gear도
+/// 같은 후보군에서 평가한다.
+int contestFullRunBotItemScore(ItemDefinition item, {required int stage}) {
+  var score = switch (item.rarity) {
+    ItemRarity.legendary => 900,
+    ItemRarity.rare => 700,
+    ItemRarity.uncommon => 520,
+    ItemRarity.common => 340,
+  };
+  switch (item.placement) {
+    case ItemPlacement.inventory:
+      score += 80;
+    case ItemPlacement.equipped:
+      score += 70;
+    case ItemPlacement.quickSlot:
+      score += 50;
+    case ItemPlacement.passiveRack:
+      score += 40;
+  }
+  switch (item.effect.op) {
+    case 'add_hand_rank_progress':
+      score += stage >= 4 ? 520 : 300;
+    case 'peek_deck_discard_one':
+      score += stage >= 5 ? 280 : 120;
+    case 'mark_next_board_move_bonus':
+    case 'add_board_move':
+      score += stage >= 5 ? 240 : 100;
+    case 'add_board_discard':
+    case 'add_hand_discard':
+      score += stage >= 5 ? 180 : 80;
+    case 'increase_hand_size':
+      score += stage >= 4 ? 220 : 140;
+    case 'draw_if_hand_empty':
+      score += 120;
+    case 'chips_bonus':
+    case 'mult_bonus':
+    case 'xmult_bonus':
+    case 'add_percent_of_first_confirm_score':
+      score += stage >= 6 ? 220 : 120;
   }
   return score;
 }

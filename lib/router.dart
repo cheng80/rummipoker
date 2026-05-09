@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_config.dart';
@@ -20,13 +21,16 @@ final GoRouter appRouter = GoRouter(
   routes: [
     GoRoute(
       path: RoutePaths.title,
-      builder: (context, state) => TitleView(
-        debugScrollPreset: state.uri.queryParameters['debug_scroll'],
+      pageBuilder: (context, state) => _instantPage(
+        state: state,
+        child: TitleView(
+          debugScrollPreset: state.uri.queryParameters['debug_scroll'],
+        ),
       ),
     ),
     GoRoute(
       path: RoutePaths.blindSelect,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final restoredRun = state.extra is ActiveRunRuntimeState
             ? state.extra as ActiveRunRuntimeState
             : null;
@@ -41,17 +45,20 @@ final GoRouter appRouter = GoRouter(
         final runModifier = NewRunModifier.parse(
           state.uri.queryParameters['modifier'],
         );
-        return BlindSelectView(
-          runSeed: seed,
-          difficulty: difficulty,
-          runModifier: runModifier,
-          restoredRun: restoredRun,
+        return _instantPage(
+          state: state,
+          child: BlindSelectView(
+            runSeed: seed,
+            difficulty: difficulty,
+            runModifier: runModifier,
+            restoredRun: restoredRun,
+          ),
         );
       },
     ),
     GoRoute(
       path: RoutePaths.game,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final fixtureId = state.uri.queryParameters['fixture'];
         final restoredRun = state.extra is ActiveRunRuntimeState
             ? state.extra as ActiveRunRuntimeState
@@ -87,54 +94,82 @@ final GoRouter appRouter = GoRouter(
             restoredRun?.session.runSeed ??
             int.tryParse(seedStr ?? '') ??
             RummiPokerGridSession.rollNewRunSeed();
-        return GameView(
-          runSeed: runSeed,
-          restoredRun: restoredRun,
-          debugFixtureId: fixtureId,
-          difficulty: difficulty,
-          runModifier: runModifier,
-          blindTier: blindTier,
-          autoAdvanceMarketOnLoad: autoAdvanceMarketOnLoad,
-          autoEnterMarketOnCashOut: autoEnterMarketOnCashOut,
-          autoCashOutLoopOnLoad: autoCashOutLoopOnLoad,
-          debugCompleteRunOnClear: debugCompleteRunOnClear,
-          debugCompleteRunOnLoad: debugCompleteRunOnLoad,
-          debugAutoUseItemId: debugAutoUseItemId,
-          debugStartItemShop: debugShopTab == 'items',
-          debugShowGameOverOnLoad: debugShowGameOverOnLoad,
+        return _instantPage(
+          state: state,
+          child: GameView(
+            runSeed: runSeed,
+            restoredRun: restoredRun,
+            debugFixtureId: fixtureId,
+            difficulty: difficulty,
+            runModifier: runModifier,
+            blindTier: blindTier,
+            autoAdvanceMarketOnLoad: autoAdvanceMarketOnLoad,
+            autoEnterMarketOnCashOut: autoEnterMarketOnCashOut,
+            autoCashOutLoopOnLoad: autoCashOutLoopOnLoad,
+            debugCompleteRunOnClear: debugCompleteRunOnClear,
+            debugCompleteRunOnLoad: debugCompleteRunOnLoad,
+            debugAutoUseItemId: debugAutoUseItemId,
+            debugStartItemShop: debugShopTab == 'items',
+            debugShowGameOverOnLoad: debugShowGameOverOnLoad,
+          ),
         );
       },
     ),
     GoRoute(
       path: RoutePaths.setting,
-      builder: (context, state) => const SettingView(),
+      pageBuilder: (context, state) =>
+          _instantPage(state: state, child: const SettingView()),
     ),
     GoRoute(
       path: RoutePaths.newRun,
-      builder: (context, state) => NewRunView(
-        debugScrollPreset: state.uri.queryParameters['debug_scroll'],
+      pageBuilder: (context, state) => _instantPage(
+        state: state,
+        child: NewRunView(
+          debugScrollPreset: state.uri.queryParameters['debug_scroll'],
+        ),
       ),
     ),
     GoRoute(
       path: RoutePaths.trial,
-      builder: (context, state) => HomePlaceholderView(
-        title: '특별 모드',
-        summary: '추가 규칙을 가진 별도 모드 자리입니다.',
-        cardTitle: '안내 카드',
-        debugScrollPreset: state.uri.queryParameters['debug_scroll'],
-        items: [
-          '지금은 진입 구조만 먼저 분리해 둔 상태입니다.',
-          '규칙, 보상, 기록 정책은 아직 정해지지 않았습니다.',
-          '개발 검증용 진입은 여기 두지 않고 디버그에만 둡니다.',
-        ],
+      pageBuilder: (context, state) => _instantPage(
+        state: state,
+        child: HomePlaceholderView(
+          title: '특별 모드',
+          summary: '추가 규칙을 가진 별도 모드 자리입니다.',
+          cardTitle: '안내 카드',
+          debugScrollPreset: state.uri.queryParameters['debug_scroll'],
+          items: [
+            '지금은 진입 구조만 먼저 분리해 둔 상태입니다.',
+            '규칙, 보상, 기록 정책은 아직 정해지지 않았습니다.',
+            '개발 검증용 진입은 여기 두지 않고 디버그에만 둡니다.',
+          ],
+        ),
       ),
     ),
     GoRoute(
       path: RoutePaths.archive,
-      builder: (context, state) => ArchiveView(
-        debugScrollPreset: state.uri.queryParameters['debug_scroll'],
-        debugCollectionPreset: state.uri.queryParameters['debug_collection'],
+      pageBuilder: (context, state) => _instantPage(
+        state: state,
+        child: ArchiveView(
+          debugScrollPreset: state.uri.queryParameters['debug_scroll'],
+          debugCollectionPreset: state.uri.queryParameters['debug_collection'],
+        ),
       ),
     ),
   ],
 );
+
+CustomTransitionPage<void> _instantPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: Duration.zero,
+    reverseTransitionDuration: Duration.zero,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return child;
+    },
+    child: child,
+  );
+}

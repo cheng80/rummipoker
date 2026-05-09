@@ -108,6 +108,8 @@ class _TitleViewState extends ConsumerState<TitleView>
         await showGameRunInfoDialog(
           context: context,
           playedHandCounts: summary?.currentPlayedHandCounts ?? const {},
+          handGrowthStates: summary?.currentHandGrowthStates ?? const {},
+          addedDeckTiles: summary?.currentAddedDeckTiles ?? const [],
         );
         if (!mounted) return;
         await _openContinueMenu();
@@ -134,6 +136,40 @@ class _TitleViewState extends ConsumerState<TitleView>
     }
 
     await _showCorruptedSaveDialog();
+  }
+
+  Future<void> _openTitleRunInfo() async {
+    final notifier = ref.read(titleNotifierProvider.notifier);
+    final titleState = await notifier.refreshAvailability();
+    if (!mounted) return;
+
+    if (!titleState.hasStoredActiveRun ||
+        titleState.lastAvailability != ActiveRunAvailability.available) {
+      await showGameChoiceDialog<void>(
+        context,
+        title: context.tr('runInfoTitle'),
+        message: '진행 중인 런이 없습니다.\n새 런을 시작하면 족보 성장과 추가 덱 정보가 여기에 표시됩니다.',
+        actions: const [
+          GameDialogAction<void>(
+            label: '확인',
+            value: null,
+            accent: Color(0xFFF2C14E),
+            textColor: Colors.black,
+          ),
+        ],
+      );
+      return;
+    }
+
+    final summary =
+        titleState.storedRunSummary ?? await notifier.loadStoredRunSummary();
+    if (!mounted) return;
+    await showGameRunInfoDialog(
+      context: context,
+      playedHandCounts: summary?.currentPlayedHandCounts ?? const {},
+      handGrowthStates: summary?.currentHandGrowthStates ?? const {},
+      addedDeckTiles: summary?.currentAddedDeckTiles ?? const [],
+    );
   }
 
   Future<void> _showCorruptedSaveDialog() async {
@@ -315,6 +351,15 @@ class _TitleViewState extends ConsumerState<TitleView>
                           accent: const Color(0xFFF4A81D),
                           enabled: hasStoredActiveRun,
                           onTap: _openContinueMenu,
+                        ),
+                        const SizedBox(height: 12),
+                        HomeEntryCard(
+                          title: context.tr('runInfoTitle'),
+                          description: hasStoredActiveRun
+                              ? '진행 중인 런의 족보 성장과 추가 덱 확인'
+                              : '새 런을 시작하면 성장 정보가 표시됩니다.',
+                          accent: const Color(0xFFF2C14E),
+                          onTap: _openTitleRunInfo,
                         ),
                       ],
                     ),

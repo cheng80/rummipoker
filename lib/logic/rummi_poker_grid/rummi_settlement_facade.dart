@@ -1,4 +1,5 @@
 import 'jester_meta.dart';
+import 'hand_rank.dart';
 import 'models/tile.dart';
 
 /// Current cash-out result를 장기 Settlement 용어로 읽기 위한 read model.
@@ -16,6 +17,7 @@ enum RummiSettlementEntryKind {
   economyBonus,
   itemBonus,
   deckTileReward,
+  overkillGrowthBonus,
 }
 
 class RummiSettlementEntryView {
@@ -43,7 +45,13 @@ class RummiSettlementEntryView {
   bool get isItemBonus => kind == RummiSettlementEntryKind.itemBonus;
   bool get isFirstBlindClearBonus =>
       kind == RummiSettlementEntryKind.firstBlindClearBonus;
-  bool get isBonus => isFirstBlindClearBonus || isEconomyBonus || isItemBonus;
+  bool get isOverkillGrowthBonus =>
+      kind == RummiSettlementEntryKind.overkillGrowthBonus;
+  bool get isBonus =>
+      isFirstBlindClearBonus ||
+      isEconomyBonus ||
+      isItemBonus ||
+      isOverkillGrowthBonus;
   bool get isDeckTileReward => kind == RummiSettlementEntryKind.deckTileReward;
 }
 
@@ -124,6 +132,16 @@ class RummiSettlementRuntimeFacade {
           tile: tile,
         ),
       ),
+      ...breakdown.overkillGrowthBonuses.map(
+        (bonus) => RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.overkillGrowthBonus,
+          leadingLabel: 'Growth',
+          description:
+              '초과 달성: ${_handRankLabel(bonus.rank)} 성장 +${bonus.amount}',
+          gold: 0,
+          displayName: _handRankLabel(bonus.rank),
+        ),
+      ),
     ];
 
     return RummiSettlementRuntimeFacade(
@@ -140,4 +158,23 @@ class RummiSettlementRuntimeFacade {
   final int currentGold;
   final int totalGold;
   final List<RummiSettlementEntryView> entries;
+}
+
+String _handRankLabel(RummiHandRank rank) {
+  return switch (rank) {
+    RummiHandRank.highCard => '하이',
+    RummiHandRank.onePair => '원페어',
+    RummiHandRank.twoPair => '투페어',
+    RummiHandRank.threeOfAKind => '트리플',
+    RummiHandRank.straight => '스트레이트',
+    RummiHandRank.flush => '플러시',
+    RummiHandRank.fullHouse => '풀하우스',
+    RummiHandRank.fourOfAKind => '포카드',
+    RummiHandRank.straightFlush => '스티플',
+    RummiHandRank.prismStraight => '프리즘 스트레이트',
+    RummiHandRank.crownFourOfAKind => '크라운 포카드',
+    RummiHandRank.lowStraightFlush => '로우 스티플',
+    RummiHandRank.royalStraightFlush => '로열 스티플',
+    RummiHandRank.fiveOfAKind => '파이브 카드',
+  };
 }

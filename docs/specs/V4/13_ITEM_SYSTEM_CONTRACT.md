@@ -55,11 +55,11 @@ data/common/items_common_v1.json
 ```
 
 이 파일은 placeholder 샘플이 아니라 `common run`에서 사용할 v1 후보 카탈로그다.
-현재 수록 범위는 49개 아이템이며, 분포는 다음과 같다.
+현재 수록 범위는 v1 baseline 49개에 Planet-like 족보 성장 직접 지원 아이템군을 더한 57개 아이템이며, 분포는 다음과 같다.
 
 ```text
-utility: 8
-consumable: 19
+utility: 9
+consumable: 26
 equipment: 10
 passive_relic: 12
 ```
@@ -74,6 +74,7 @@ passive_relic: 12
 - 모든 아이템은 `effect.op` 기반으로 런타임 구현이 가능해야 하며, 텍스트만 있는 아이템은 허용하지 않는다.
 - 가격과 희귀도는 초기 실사용 밸런스 후보이며, 실제 플레이 로그 기반으로 조정한다.
 - Tarot/Planet/Spectral/Voucher식 구조는 그대로 가져오지 않고, confirm modifier, tile enhancement, tile conversion, rank progression, high-risk mutation, run-long passive로 분리한다.
+- Planet-like rank progression은 특정 족보 성장 +1을 주는 직접 지원류로 다룬다. Tile enhancement/conversion과 Spectral-like high-risk mutation은 공모전 이후 검토한다.
 
 asset path:
 
