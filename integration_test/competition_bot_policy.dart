@@ -625,8 +625,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (session.blind.targetScore < _highTargetConfirmTargetFloor) {
       return false;
     }
-    if (session.hand.isEmpty || boardIsFull) return false;
+    if (boardIsFull) return false;
     if (choice.score >= _bossConfirmScoreFloor) return false;
+    if (session.hand.isEmpty) {
+      return session.canDrawFromDeck;
+    }
     final remainingScore =
         session.blind.targetScore - session.blind.scoreTowardBlind;
     return remainingScore > choice.score;

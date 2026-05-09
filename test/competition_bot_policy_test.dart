@@ -449,6 +449,64 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.confirm));
   });
 
+  test('second retry boss draws before a medium confirm if deck remains', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1401,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 0,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.fromSnapshot([_tile(TileColor.red, 2)]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 10),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.red, 11),
+        _tile(TileColor.blue, 11),
+        _tile(TileColor.yellow, 9),
+        _tile(TileColor.red, 12),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.red, 13),
+        _tile(TileColor.blue, 13),
+        _tile(TileColor.yellow, 8),
+        _tile(TileColor.red, 7),
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.red, 8),
+        _tile(TileColor.blue, 8),
+        _tile(TileColor.yellow, 6),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: const [],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, CompetitionBattleActionType.draw);
+  });
+
   test('full board can discard to set up discard move place combo', () {
     final board = RummiBoard.fromSnapshot([
       _tile(TileColor.red, 5),
