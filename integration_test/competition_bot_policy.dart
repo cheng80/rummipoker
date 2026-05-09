@@ -177,6 +177,8 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
   static const int _midBoardMoveMaxOccupancy = kBoardSize * 4 - 1;
   static const int _midBoardMoveMinGain = 20;
+  static const int _lateDeckBoardMoveMinOccupancy = kBoardSize * 2;
+  static const int _lateDeckUtilityRemainingMax = 6;
   static const int _mysticBoardDiscardMinOccupancy = kBoardSize * 4 - 2;
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
@@ -234,9 +236,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
     }
 
-    if (shouldUseStrategicUtility &&
-        occupancy >= _midBoardMoveMinOccupancy &&
-        occupancy <= _midBoardMoveMaxOccupancy) {
+    if (_shouldUseBoardMoveNow(
+      session,
+      occupancy: occupancy,
+      shouldUseStrategicUtility: shouldUseStrategicUtility,
+    )) {
       final move = chooseBoardMove(
         session,
         jesters: jesters,
@@ -373,7 +377,14 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             );
             if (followUp.lineCount < 2 || followUp.score <= 0) continue;
             if (allowsRepeatedStrategicMove &&
-                !_isHighTargetRecoveryBundle(followUp)) {
+                !_isHighTargetRecoveryBundle(followUp) &&
+                !_isLateDeckBoardMoveBundle(
+                  session,
+                  followUp,
+                  occupancy: RummiPokerGridSession.countTilesOnBoard(
+                    session.board,
+                  ),
+                )) {
               continue;
             }
             final potential = _plannerBoardPotentialScore(copy);
@@ -616,6 +627,48 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return true;
     }
     return false;
+  }
+
+  bool _shouldUseBoardMoveNow(
+    RummiPokerGridSession session, {
+    required int occupancy,
+    required bool shouldUseStrategicUtility,
+  }) {
+    if (!shouldUseStrategicUtility) return false;
+    if (occupancy >= _midBoardMoveMinOccupancy &&
+        occupancy <= _midBoardMoveMaxOccupancy) {
+      return true;
+    }
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.blind.targetScore < _strategicUtilityTargetScoreFloor) {
+      return false;
+    }
+    if (session.deck.remaining > _lateDeckUtilityRemainingMax) return false;
+    if (session.blind.boardMovesRemaining <= 0) return false;
+    final remainingScore =
+        session.blind.targetScore - session.blind.scoreTowardBlind;
+    if (remainingScore <= 0) return false;
+    return occupancy >= _lateDeckBoardMoveMinOccupancy &&
+        occupancy <= _midBoardMoveMaxOccupancy;
+  }
+
+  bool _isLateDeckBoardMoveBundle(
+    RummiPokerGridSession session,
+    _ImmediateConfirmChoice choice, {
+    required int occupancy,
+  }) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.deck.remaining > _lateDeckUtilityRemainingMax) return false;
+    if (session.blind.targetScore < _strategicUtilityTargetScoreFloor) {
+      return false;
+    }
+    if (occupancy < _lateDeckBoardMoveMinOccupancy) return false;
+    return choice.score >= _highTargetTwoLineConfirmScoreFloor ||
+        choice.lineCount >= 3 && choice.score >= _highTargetConfirmScoreFloor;
   }
 
   bool _shouldContinueBoardDiscardMoveCombo(RummiPokerGridSession session) {

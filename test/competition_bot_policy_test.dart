@@ -1688,6 +1688,71 @@ void main() {
 
     expect(action.type, CompetitionBattleActionType.draw);
   });
+
+  test('late low deck retry uses board move before spending the hand tile', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1738,
+        scoreTowardBlind: 1023,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.red, 2),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.blue, 5),
+        _tile(TileColor.black, 7),
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.blue, 10),
+      ]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 10),
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.black, 10),
+        _tile(TileColor.red, 1),
+        null,
+        _tile(TileColor.black, 2),
+        null,
+        null,
+        null,
+        _tile(TileColor.blue, 6),
+        _tile(TileColor.black, 3),
+        null,
+        null,
+        null,
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.black, 4),
+        null,
+        null,
+        null,
+        null,
+        _tile(TileColor.blue, 8),
+        null,
+        null,
+        null,
+        _tile(TileColor.blue, 9),
+      ]),
+      hand: [_tile(TileColor.blue, 10)],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, CompetitionBattleActionType.moveBoard);
+  });
 }
 
 Tile _tile(TileColor color, int number) => Tile(color: color, number: number);
