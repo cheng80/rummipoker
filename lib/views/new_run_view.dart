@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,7 +51,9 @@ class _NewRunViewState extends State<NewRunView> {
   }
 
   void _applyDebugScrollPreset() {
-    if (!kDebugMode || widget.debugScrollPreset != 'bottom') return;
+    if (!AppConfig.showDebugFixtures || widget.debugScrollPreset != 'bottom') {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future<void>.delayed(const Duration(milliseconds: 150), () {
         if (!mounted || !_scrollController.hasClients) return;
@@ -181,10 +182,7 @@ class _NewRunViewState extends State<NewRunView> {
         _selectedRunModifier = modifier;
       }
     });
-    showTopNotice(
-      context,
-      unlocked ? '${modifier.label} 해금' : '기억 카드가 부족합니다.',
-    );
+    showTopNotice(context, unlocked ? '${modifier.label} 해금' : '기억 카드가 부족합니다.');
   }
 
   @override

@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -48,7 +47,9 @@ class _TitleViewState extends ConsumerState<TitleView>
   }
 
   void _applyDebugScrollPreset() {
-    if (!kDebugMode || widget.debugScrollPreset != 'bottom') return;
+    if (!AppConfig.showDebugFixtures || widget.debugScrollPreset != 'bottom') {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future<void>.delayed(const Duration(milliseconds: 150), () {
         if (!mounted || !_scrollController.hasClients) return;
@@ -401,7 +402,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                       ],
                     ),
                   ),
-                  if (kDebugMode) ...[
+                  if (AppConfig.showDebugFixtures) ...[
                     const SizedBox(height: 18),
                     HomeSection(
                       title: '디버그',

@@ -332,6 +332,56 @@ void main() {
       }
     });
 
+    test('S9 이후는 무한 도전 target 비율을 따른다', () {
+      final small = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.small,
+        stationIndex: 9,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final big = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.big,
+        stationIndex: 9,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final boss = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 9,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+
+      expect(BlindSelectionSetup.isEndlessStation(8), isFalse);
+      expect(BlindSelectionSetup.isEndlessStation(9), isTrue);
+      expect(small.isEndless, isTrue);
+      expect(small.targetScore, (1441 * 1.25).round());
+      expect(big.targetScore, (small.targetScore * 1.5).round());
+      expect(boss.targetScore, small.targetScore * 2);
+      expect(big.description, contains('1.5배'));
+      expect(boss.description, contains('2배'));
+    });
+
+    test('도전 난이도 S9 이후도 무한 도전 비율 뒤에 난이도 보정을 적용한다', () {
+      final standardSmall = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.small,
+        stationIndex: 10,
+        difficulty: NewRunDifficulty.standard,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+      final challengeBoss = BlindSelectionSetup.resolveSpec(
+        tier: BlindTier.boss,
+        stationIndex: 10,
+        difficulty: NewRunDifficulty.challenge,
+        ruleset: RummiRuleset.currentDefaults,
+      );
+
+      expect(
+        challengeBoss.targetScore,
+        (standardSmall.targetScore * 2 * 1.2).round(),
+      );
+    });
+
     test('selected blind start applies active item station start effects', () {
       final session = RummiPokerGridSession(runSeed: 77);
       final runProgress = RummiRunProgress()

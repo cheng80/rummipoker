@@ -11,6 +11,7 @@
 - 최신 룰/UI 후보에서 표준 난이도 fresh S1~S8 boss full-run은 이미 통과했다.
 - 이제 도전 난이도 fresh S1~S8 full-run을 시작한다.
 - Flutter semantics 반복 경고는 2026-05-10 route/dialog label 보정과 최신 build smoke로 1차 처리됐다.
+- S8 boss 이후는 `무한 도전 진입` UX로 정리됐다. S9+ 장기 생존은 이번 제출 gate가 아니지만, S8 정산에서 런 완료/무한 도전 진입 CTA와 보상 표시가 깨지지 않는지 확인한다.
 
 먼저 읽을 문서:
 - START_HERE.md
@@ -74,6 +75,8 @@
 - 사용 로그를 남기기 위한 무의미한 사용을 만들지 않는다.
 - 보드 이동/버림은 낮은 target score를 이유로 절대 금지하지 않는다. 실제 족보 형성이나 중복 확정으로 이어지면 사용 가능하다.
 - 보스 클리어 덱 타일 보상은 마켓 offer 자리를 차지하지 않고 정산에서 즉시 덱에 추가되는 구조다.
+- S8 Boss 정산 후 `무한 도전 진입`을 누르면 S8 보상은 1회 claim되고 Market을 거쳐 S9+ 무한 도전 Station Select로 이어진다.
+- S9+ 무한 도전 target은 Scout 1배, Clash 1.5배, Boss 2배 비율을 따른다.
 - 마켓 tile offer는 실제 타일 face로 보이고, 구매 시 오른쪽 중단 덱 방향으로 날아가야 한다.
 - 도전 풀런 통과를 제출 Done으로 쓰려면 console error/warn 0건도 함께 닫혀야 한다.
 

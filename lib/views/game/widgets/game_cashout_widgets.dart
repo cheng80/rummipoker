@@ -73,8 +73,14 @@ class GameStageClearOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSettlement = phase == GameStageFlowPhase.settlement;
+    final isEndless = stageIndex > 8;
+    final accentColor = isEndless
+        ? const Color(0xFFFF6B3D)
+        : const Color(0xFFF2C14E);
     return ColoredBox(
-      color: Colors.black.withValues(alpha: 0.58),
+      color: (isEndless ? const Color(0xFF2C050C) : Colors.black).withValues(
+        alpha: 0.58,
+      ),
       child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0.94, end: 1),
@@ -91,10 +97,12 @@ class GameStageClearOverlay extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 28),
                 padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF153C31),
+                  color: isEndless
+                      ? const Color(0xFF4A121C)
+                      : const Color(0xFF153C31),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
+                    color: accentColor.withValues(alpha: 0.72),
                     width: 1.4,
                   ),
                   boxShadow: [
@@ -109,11 +117,13 @@ class GameStageClearOverlay extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isSettlement ? 'SCORE SETTLED' : 'STATION CLEAR',
+                      isEndless
+                          ? (isSettlement ? 'ENDLESS SCORE' : 'ENDLESS CLEAR')
+                          : (isSettlement ? 'SCORE SETTLED' : 'STATION CLEAR'),
                       style: TextStyle(
                         color: isSettlement
                             ? Colors.white.withValues(alpha: 0.78)
-                            : const Color(0xFFF2C14E),
+                            : accentColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.2,
@@ -121,9 +131,11 @@ class GameStageClearOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Station $stageIndex',
+                      isEndless ? '무한 도전 S$stageIndex' : 'Station $stageIndex',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.96),
+                        color: isEndless
+                            ? const Color(0xFFFFE5C2)
+                            : Colors.white.withValues(alpha: 0.96),
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
                       ),
@@ -137,8 +149,8 @@ class GameStageClearOverlay extends StatelessWidget {
                         builder: (context, value, _) {
                           return Text(
                             '+$value',
-                            style: const TextStyle(
-                              color: Color(0xFFF2C14E),
+                            style: TextStyle(
+                              color: accentColor,
                               fontSize: 38,
                               fontWeight: FontWeight.w900,
                               height: 1,
@@ -148,7 +160,7 @@ class GameStageClearOverlay extends StatelessWidget {
                       )
                     else
                       Text(
-                        'Station Goal 달성',
+                        isEndless ? '무한 도전 목표 달성' : 'Station Goal 달성',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 18,
@@ -511,6 +523,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   visible: _step >= 1,
                   child: _GameCashOutLine.fromSettlementEntry(
                     settlement.entries[0],
+                    isEndless: settlement.isEndless,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -518,6 +531,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   visible: _step >= 2,
                   child: _GameCashOutLine.fromSettlementEntry(
                     settlement.entries[1],
+                    isEndless: settlement.isEndless,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -525,6 +539,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                   visible: _step >= 3,
                   child: _GameCashOutLine.fromSettlementEntry(
                     settlement.entries[2],
+                    isEndless: settlement.isEndless,
                   ),
                 ),
                 if (hasBonuses) ...[
@@ -540,6 +555,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                             leading: entry.leadingLabel,
                             text: _bonusEntryDescription(context, entry),
                             gold: entry.gold,
+                            isEndless: settlement.isEndless,
                           ),
                           const SizedBox(height: 8),
                         ],
@@ -578,10 +594,17 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                     ),
                   ),
                 ],
+                if (widget.completesRun) ...[
+                  const SizedBox(height: 10),
+                  _GameCashOutReveal(
+                    visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
+                    child: const _GameCashOutEndlessNotice(),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 if (widget.completesRun) ...[
                   GameChromeButton(
-                    label: '계속 진행',
+                    label: '무한 도전 진입',
                     backgroundColor: const Color(0xFF4FA3D8),
                     foregroundColor: Colors.white,
                     height: 50,
@@ -628,6 +651,50 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _GameCashOutEndlessNotice extends StatelessWidget {
+  const _GameCashOutEndlessNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4A121C),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFF6B3D), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF3D2E).withValues(alpha: 0.22),
+            blurRadius: 14,
+          ),
+        ],
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.local_fire_department_rounded,
+            color: Color(0xFFFFC46B),
+            size: 22,
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'S8 이후는 무한 도전입니다. 보상은 받고, 다음 Station부터 목표 점수가 계속 상승합니다.',
+              softWrap: true,
+              style: TextStyle(
+                color: Color(0xFFFFE5C2),
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -852,19 +919,25 @@ class _GameCashOutLine extends StatelessWidget {
     required this.leading,
     required this.text,
     required this.gold,
+    this.isEndless = false,
   });
 
-  factory _GameCashOutLine.fromSettlementEntry(RummiSettlementEntryView entry) {
+  factory _GameCashOutLine.fromSettlementEntry(
+    RummiSettlementEntryView entry, {
+    bool isEndless = false,
+  }) {
     return _GameCashOutLine(
       leading: entry.leadingLabel,
       text: entry.description,
       gold: entry.gold,
+      isEndless: isEndless,
     );
   }
 
   final String leading;
   final String text;
   final int gold;
+  final bool isEndless;
 
   @override
   Widget build(BuildContext context) {
@@ -880,7 +953,11 @@ class _GameCashOutLine extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFF2C14E).withValues(alpha: 0.18 * pulse),
+                color:
+                    (isEndless
+                            ? const Color(0xFFFF6B3D)
+                            : const Color(0xFFF2C14E))
+                        .withValues(alpha: 0.18 * pulse),
                 blurRadius: 18 * pulse,
                 spreadRadius: 1.5 * pulse,
               ),
@@ -900,13 +977,18 @@ class _GameCashOutLine extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               decoration: BoxDecoration(
-                color: const Color(0xFF183E32),
+                color: isEndless
+                    ? const Color(0xFF7A1822)
+                    : const Color(0xFF183E32),
                 borderRadius: BorderRadius.circular(10),
+                border: isEndless
+                    ? Border.all(color: const Color(0xFFFF6B3D), width: 1)
+                    : null,
               ),
               child: Text(
                 leading,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: isEndless ? const Color(0xFFFFE5C2) : Colors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
@@ -916,8 +998,8 @@ class _GameCashOutLine extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: isEndless ? const Color(0xFFFFD08A) : Colors.white70,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),

@@ -13,6 +13,9 @@ class BlindSelectionSetup {
   static BlindTier parseTier(String? raw) =>
       BlindSelectionSpecBuilder.parseTier(raw);
 
+  static bool isEndlessStation(int stationIndex) =>
+      BlindSelectionSpecBuilder.isEndlessStation(stationIndex);
+
   static List<BlindSelectionSpec> buildForStation({
     required int stationIndex,
     required int clearedBlindTierIndex,

@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../app_config.dart';
 import '../logic/rummi_poker_grid/item_catalog_loader.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
@@ -51,7 +51,9 @@ class _ArchiveViewState extends State<ArchiveView> {
   }
 
   void _applyDebugScrollPreset() {
-    if (!kDebugMode || widget.debugScrollPreset != 'bottom') return;
+    if (!AppConfig.showDebugFixtures || widget.debugScrollPreset != 'bottom') {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future<void>.delayed(const Duration(milliseconds: 150), () {
         if (!mounted || !_scrollController.hasClients) return;
@@ -262,7 +264,8 @@ class _ArchiveViewState extends State<ArchiveView> {
   }
 
   RunUnlockState _debugArchiveState(RunUnlockState loadedState) {
-    if (!kDebugMode || widget.debugCollectionPreset != 'full') {
+    if (!AppConfig.showDebugFixtures ||
+        widget.debugCollectionPreset != 'full') {
       return loadedState;
     }
     return loadedState.copyWith(

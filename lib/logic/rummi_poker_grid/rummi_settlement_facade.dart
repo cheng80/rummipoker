@@ -71,8 +71,10 @@ class RummiSettlementRuntimeFacade {
     final entries = <RummiSettlementEntryView>[
       RummiSettlementEntryView(
         kind: RummiSettlementEntryKind.stationReward,
-        leadingLabel: 'Station ${breakdown.stageIndex}',
-        description: 'Station Goal ${breakdown.targetScore} 달성 보상',
+        leadingLabel: _stationSettlementLabel(breakdown.stageIndex),
+        description: breakdown.stageIndex > 8
+            ? '무한 도전 목표 ${breakdown.targetScore} 달성 보상'
+            : 'Station Goal ${breakdown.targetScore} 달성 보상',
         gold: breakdown.blindReward,
       ),
       RummiSettlementEntryView(
@@ -158,6 +160,12 @@ class RummiSettlementRuntimeFacade {
   final int currentGold;
   final int totalGold;
   final List<RummiSettlementEntryView> entries;
+
+  bool get isEndless => stageIndex > 8;
+}
+
+String _stationSettlementLabel(int stageIndex) {
+  return stageIndex > 8 ? '무한 S$stageIndex' : 'Station $stageIndex';
 }
 
 String _handRankLabel(RummiHandRank rank) {

@@ -19,6 +19,7 @@
 - 2026-05-10 최신 제출 후보 build에서 도전 난이도 fresh S1~S8 full-run을 제외한 최근 룰/UI 항목 검증을 마쳤다.
 - 다음 gate는 도전 난이도 fresh S1~S8 full-run이다.
 - 제출 전 핵심 룰 보강이었던 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 행성카드형 성장 아이템, 초과 점수 기반 대표 족보 성장, 타이틀 `런 정보`, 게임오버 정산/도발 문구는 런타임 반영과 핵심 검증을 마쳤다.
+- S8 boss 이후는 더 이상 애매한 `계속 진행`이 아니라 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고 Station Select, 전투 HUD, 정산 라벨에서 위험한 무한 구간 색상으로 드러낸다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
 - full-play 기준은 사람 수동 플레이가 아니라 제작된 bot이 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표 조작을 결합해 S1~S8을 클리어하는 것이다.
 - 이 hybrid full-play bot의 대화 호출 별명은 `공모전 풀런봇`이고, 영문 식별자는 `contest_full_run_bot`이다.
@@ -33,6 +34,7 @@
 - fresh 표준 로그에는 `Semantic node ... scopesRoute and namesRoute ... missing the label` 경고가 반복 출력됐다. 2026-05-10 route/dialog semantics label 보정 후 최신 build smoke에서는 같은 경고가 재현되지 않았다.
 - 2026-05-10 검증: `flutter analyze`, 핵심 `flutter test`, `flutter build web` 통과.
 - 2026-05-10 Browser/CDP smoke: `/`, `/new-run`, `/archive`, `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`, `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1` 모두 앱 warn/error/exception 0건. Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않는다.
+- 2026-05-10 추가 검증: 무한 도전 target 산식, S9+ Station Select 표시, 전투 HUD 무한 라벨, 정산 무한 라벨/CTA 테스트와 `flutter build web` 통과.
 
 오늘 바로 할 작업:
 
@@ -62,6 +64,9 @@
 - [x] 게임오버 정산 화면과 랜덤 도발 문구
   - 구현 상태: 게임오버 dialog에 이번 run 요약과 랜덤 도발 문구가 표시됨.
   - 검증: `game_view_test`와 `game_over_insight_ready` 최신 build smoke에서 확인.
+- [x] S8 이후 무한 도전 진입 UX
+  - 구현 상태: S8 Boss 정산에서 `무한 도전 진입` CTA를 표시하고, S9+ Station Select/전투 HUD/정산 라벨을 위험 구간 색상으로 표시한다.
+  - 검증: `blind_selection_setup_test`, `blind_select_view_test`, `game_station_read_path_test`, `rummi_settlement_facade_test`, `game_cashout_widgets_test`에서 확인.
 
 ### B. 최근 추가 항목 때문에 다시 열어 둔 QA
 
@@ -171,7 +176,7 @@ Status: In progress
 
 - 보스 제약 dialog의 `ruleText`는 내부 스크롤로 표시되고 말줄임표를 쓰지 않는다.
 - `test/views/game/widgets/game_shop_reroll_confirmation_test.dart`에서 무료 리롤 버튼과 확인창 문구를 검증했다.
-- `test/views/game/widgets/game_cashout_widgets_test.dart`에서 기억 카드 보상, 일반 정산의 `Market으로`, 최종 정산의 `계속 진행`/`런 완료` 분기를 검증한다.
+- `test/views/game/widgets/game_cashout_widgets_test.dart`에서 기억 카드 보상, 일반 정산의 `Market으로`, 최종 정산의 `무한 도전 진입`/`런 완료` 분기를 검증한다.
 - Browser Use QA에서 `boss_row_constraint_preview`는 라인 제약이 보스 팝업/preview 문구로만 표시되고 개별 타일 배지로 뜨지 않는 것을 확인했다.
 - Browser Use QA에서 S1 Boss 색상 제약은 보드 위 타일 숫자와 색상 바를 가리는 별도 배지 없이 표시되는 것을 확인했다.
 
@@ -200,7 +205,7 @@ Status: In progress
 - Title -> 새 게임 시작 -> 새 run 설정 -> 랜덤 시작 -> Station Select -> S1 전투 진입 -> 드로우 -> 타일 배치까지 실제 화면에서 확인했다. S1 확정/버림까지의 완전 수동 플레이는 아직 별도 확인이 필요하다.
 - Browser Use로 fresh origin `127.0.0.1:7360`에서 새 run 설정 화면을 다시 확인했다. 난이도는 `표준`/`도전`만 노출되고, `도전` 선택 후 URL이 `difficulty=challenge`로 유지되며 S1 Scout 목표가 288로 표시돼 표준 240 대비 1.2배 target이 적용되는 것을 확인했다.
 - `game_over_insight_ready` fixture에서 드로우 후 게임오버 dialog가 표시되고, 보상 카드가 `기억 카드 획득`으로 보이며 `나가기` 후 Title과 새 run 화면으로 복귀하는 것을 확인했다.
-- `final_boss_cash_out_ready` fixture에서 S8 Boss 확정 후 정산 완료 sheet가 `런 완료`, `계속 진행`, `기억 카드 획득`을 표시하고, `런 완료`는 Title로 복귀하며 `계속 진행`은 Market과 S9 Station Select로 이어지는 것을 확인했다.
+- `final_boss_cash_out_ready` fixture에서 S8 Boss 확정 후 정산 완료 sheet가 `런 완료`, `무한 도전 진입`, `기억 카드 획득`을 표시하고, `런 완료`는 Title로 복귀하며 `무한 도전 진입`은 Market과 S9 무한 도전 Station Select로 이어지는 구조를 확인했다.
 - Browser Use QA에서 S1 전투의 드로우, 손패 버림, 타일 배치, 확정 버튼 피드백이 새 console error 없이 동작하는 것을 확인했다.
 - 최신 `127.0.0.1:7361` 기준 Browser Use 한 세션에서 Title -> 새 run -> Station Select -> Scout/Clash/Boss -> 정산 -> Market -> 다음 Station 흐름을 확인했다. 전투 클리어는 디버그 `현재 구간 즉시 클리어` 보조를 사용했다.
 - 같은 Browser Use QA 세션에서 `final_boss_cash_out_ready` fixture로 S8 정산 완료 -> `런 완료` -> Title -> `새 게임 시작` -> 새 run 화면 복귀까지 최신 문구 기준으로 다시 확인했다.
@@ -214,7 +219,7 @@ Status: In progress
 
 - [x] 패배 시 기억 카드 보상이 보인다.
 - [x] 패배 후 Title 또는 새 run 화면으로 자연스럽게 돌아간다.
-- [x] S8 boss 완료 후 런 완료 또는 계속 진행을 선택할 수 있다.
+- [x] S8 boss 완료 후 런 완료 또는 무한 도전 진입을 선택할 수 있다.
 - [x] 런 완료 보상 후 내부 메타 값이 반영된다.
 - [x] 게임오버/런 완료 기억 카드 보상이 단순 내부 수치가 아니라 획득 이력으로 저장된다.
 - [x] 획득한 기억 카드 보상이 새 run 화면과 도감에서 확인된다.
@@ -232,7 +237,8 @@ Status: In progress
 - 현재 내부 보상 산식은 도달 스테이션, 보스 처치 수, 클리어 보너스를 더해 메타 보상값을 계산한다.
 - 플레이어에게는 수치 재화가 아니라 `기억 카드` 전용 보상처럼 보여준다. 내부 `insight` 계열 값은 유지하되, 별도 `earnedMemoryCardIds` 이력을 함께 남긴다.
 - 현재 `high_stakes`는 내부 메타 보상값으로 해금되며 target score 1.04, reward 1.12를 명시 적용한다. 직접 골드, 아이템, Jester, 자원을 지급하지 않는다.
-- S8 Boss 정산 후 `계속 진행`을 고르면 S8 승리 보상/난이도 해금을 1회 처리한 뒤 Market으로 들어가고, 다음 Station에서 S9+ 기록 도전으로 이어진다.
+- S8 Boss 정산 후 `무한 도전 진입`을 고르면 S8 승리 보상/난이도 해금을 1회 처리한 뒤 Market으로 들어가고, 다음 Station에서 S9+ 기록 도전으로 이어진다.
+- S9+ 무한 도전 target은 Station 기준 점수 상승에 Scout 1배, Clash 1.5배, Boss 2배를 적용한다.
 - S8 승리 보상은 `runCompletionRewardClaimed`로 저장/복원해 계속 진행 중 중복 지급되지 않게 했다.
 - 보상 산식상 S8 완료 보상은 기억 카드 36이며, 현재 이 값은 인런 자원이 아니라 `하이 스테이크` 같은 다음 런 규칙을 여는 데만 쓰인다. 공모전 기준으로는 다음 run 난이도를 무효화하는 즉시 위험보다 해금 선택 폭이 아직 얕은 점을 known risk로 둔다.
 - Browser Use QA에서 패배 후 `나가기` -> Title -> `새 게임 시작` -> 새 run 설정 화면 복귀를 확인했다.

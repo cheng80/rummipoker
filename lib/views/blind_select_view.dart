@@ -87,11 +87,22 @@ class _BlindSelectViewState extends State<BlindSelectView> {
     final difficultyLabel = NewRunSetup(
       difficulty: _effectiveDifficulty,
     ).difficultyLabel;
+    final modeLabel = BlindSelectionSetup.isEndlessStation(_stationIndex)
+        ? '무한 도전'
+        : '난이도 $difficultyLabel';
     if (widget.restoredRun == null) {
-      return '난이도 $difficultyLabel';
+      return modeLabel;
     }
-    return '난이도 $difficultyLabel · 다음 전투를 선택하세요.';
+    if (BlindSelectionSetup.isEndlessStation(_stationIndex)) {
+      return '$modeLabel · 난이도 $difficultyLabel · 점수가 계속 상승합니다.';
+    }
+    return '$modeLabel · 다음 전투를 선택하세요.';
   }
+
+  String get _stationTitle =>
+      BlindSelectionSetup.isEndlessStation(_stationIndex)
+      ? '무한 도전 S$_stationIndex'
+      : 'Station $_stationIndex';
 
   Future<void> _startBlind(BlindSelectionSpec selected) async {
     if (!selected.isSelectable) return;
@@ -161,8 +172,12 @@ class _BlindSelectViewState extends State<BlindSelectView> {
               ),
             ),
             const SizedBox(height: 18),
+            if (BlindSelectionSetup.isEndlessStation(_stationIndex)) ...[
+              const _EndlessWarningBanner(),
+              const SizedBox(height: 12),
+            ],
             HomeSection(
-              title: 'Station $_stationIndex',
+              title: _stationTitle,
               subtitle: _stationSubtitle,
               child: Column(
                 children: [
@@ -180,6 +195,82 @@ class _BlindSelectViewState extends State<BlindSelectView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EndlessWarningBanner extends StatelessWidget {
+  const _EndlessWarningBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 332,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4A121C),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFF6B3D), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF3D2E).withValues(alpha: 0.26),
+            blurRadius: 18,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.34),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B3D),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFFD08A), width: 1.5),
+            ),
+            child: const Icon(
+              Icons.local_fire_department_rounded,
+              color: Color(0xFF2B0710),
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '무한 도전',
+                  style: TextStyle(
+                    color: Color(0xFFFFD08A),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  '목표 점수가 계속 상승합니다. 여기부터는 기록 경쟁 구간입니다.',
+                  softWrap: true,
+                  style: TextStyle(
+                    color: Color(0xFFFFE5C2),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -482,6 +573,17 @@ _BlindStatusStyle _statusStyleFor(BlindSelectionSpec spec) {
       stateColor: Color(0xFFF0C96A),
       badgeLabel: 'LOCKED',
       trailingIcon: Icons.lock_rounded,
+    );
+  }
+  if (spec.isEndless) {
+    return const _BlindStatusStyle(
+      fillColor: Color(0x2EFF4B2E),
+      borderColor: Color(0xFFFF6B3D),
+      badgeColor: Color(0xFF7A1822),
+      badgeTextColor: Color(0xFFFFE5C2),
+      stateColor: Color(0xFFFFC46B),
+      badgeLabel: 'DANGER',
+      trailingIcon: Icons.local_fire_department_rounded,
     );
   }
   return const _BlindStatusStyle(

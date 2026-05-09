@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// 앱 전반에서 사용하는 상수 모음.
 /// private 생성자(_)로 인스턴스 생성을 막고, static 상수만 제공한다.
 class AppConfig {
@@ -14,6 +16,13 @@ class AppConfig {
 
   /// Station/Blind 목표 점수를 한 번에 미세 조정하는 전역 스케일.
   static const double stationTargetScoreScale = 0.9;
+
+  /// QA/눈검증용 디버그 픽스처 노출 플래그.
+  ///
+  /// 일반 release build에서는 숨기고, debug/profile 또는
+  /// `--dart-define=SHOW_DEBUG_FIXTURES=true` 빌드에서만 노출한다.
+  static const bool showDebugFixtures =
+      !kReleaseMode || bool.fromEnvironment('SHOW_DEBUG_FIXTURES');
 }
 
 /// 로컬 저장소(SharedPreferences) 키 상수.

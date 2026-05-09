@@ -17,6 +17,7 @@ import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
+import '../../../services/blind_selection_setup.dart';
 import '../../../utils/common_ui.dart';
 import '../game_presentation_timings.dart';
 import 'game_card_name_text.dart';
@@ -129,9 +130,23 @@ class GameTopHud extends StatelessWidget {
     final goalReached =
         objective.targetScore > 0 &&
         scoreTowardObjective >= objective.targetScore;
+    final isEndless = BlindSelectionSetup.isEndlessStation(battle.stageIndex);
     final blindLabel = _battleBlindLabel(battle.currentBlindTierIndex);
-    final blindColor = _battleBlindColor(battle.currentBlindTierIndex);
+    final blindColor = _battleBlindColor(
+      battle.currentBlindTierIndex,
+      isEndless: isEndless,
+    );
     final bossModifier = battle.bossModifier;
+    final stationLabel = isEndless
+        ? '무한 S${battle.stageIndex} · $difficultyLabel'
+        : 'S${battle.stageIndex} · $difficultyLabel';
+    final goalLabel = isEndless ? 'ENDLESS GOAL' : 'STATION GOAL';
+    final goalColor = isEndless
+        ? const Color(0xFFFFC46B)
+        : Colors.white.withValues(alpha: 0.92);
+    final progressColor = isEndless
+        ? const Color(0xFFFF6B3D)
+        : const Color(0xFFF4A81D);
 
     return SizedBox(
       height: 62,
@@ -149,8 +164,12 @@ class GameTopHud extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'S${battle.stageIndex} · $difficultyLabel',
-                      style: gameHudLabelStyle,
+                      stationLabel,
+                      style: gameHudLabelStyle.copyWith(
+                        color: isEndless
+                            ? const Color(0xFFFFC46B)
+                            : gameHudLabelStyle.color,
+                      ),
                       maxLines: 1,
                       textAlign: TextAlign.center,
                     ),
@@ -224,9 +243,13 @@ class GameTopHud extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'STATION GOAL',
-                          style: gameHudLabelStyle,
+                        Text(
+                          goalLabel,
+                          style: gameHudLabelStyle.copyWith(
+                            color: isEndless
+                                ? const Color(0xFFFFC46B)
+                                : gameHudLabelStyle.color,
+                          ),
                           maxLines: 1,
                           textAlign: TextAlign.center,
                         ),
@@ -242,7 +265,10 @@ class GameTopHud extends StatelessWidget {
                                 maxLines: 1,
                                 textAlign: TextAlign.center,
                                 overflow: TextOverflow.visible,
-                                style: gameHudValueStyle.copyWith(fontSize: 17),
+                                style: gameHudValueStyle.copyWith(
+                                  color: goalColor,
+                                  fontSize: 17,
+                                ),
                               ),
                             ),
                           ),
@@ -256,8 +282,8 @@ class GameTopHud extends StatelessWidget {
                             backgroundColor: Colors.black.withValues(
                               alpha: 0.3,
                             ),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFFF4A81D),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              progressColor,
                             ),
                           ),
                         ),
@@ -560,7 +586,14 @@ String _battleBlindLabel(int tierIndex) {
   };
 }
 
-Color _battleBlindColor(int tierIndex) {
+Color _battleBlindColor(int tierIndex, {bool isEndless = false}) {
+  if (isEndless) {
+    return switch (tierIndex) {
+      1 => const Color(0xFFFFC46B),
+      2 => const Color(0xFFFF6B3D),
+      _ => const Color(0xFFFF8F5A),
+    };
+  }
   return switch (tierIndex) {
     1 => const Color(0xFF72C7FF),
     2 => const Color(0xFFFF8A5B),

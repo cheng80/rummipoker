@@ -28,6 +28,7 @@ class BlindSelectionSpec {
     required this.maxHandSize,
     required this.rewardPreview,
     required this.availability,
+    required this.isEndless,
     this.bossModifier,
     this.lockReason,
   });
@@ -42,6 +43,7 @@ class BlindSelectionSpec {
   final int maxHandSize;
   final int rewardPreview;
   final BlindSelectionAvailability availability;
+  final bool isEndless;
   final RummiBossModifier? bossModifier;
   final String? lockReason;
 
@@ -54,6 +56,11 @@ class BlindSelectionSpec {
 /// 앱 UI와 CLI simulator가 공유하는 순수 Blind 선택 spec 계산기.
 class BlindSelectionSpecBuilder {
   const BlindSelectionSpecBuilder._();
+
+  static const int finalCoreStationIndex = 8;
+
+  static bool isEndlessStation(int stationIndex) =>
+      stationIndex > finalCoreStationIndex;
 
   static BlindTier parseTier(String? raw) {
     return switch (raw) {
@@ -161,6 +168,7 @@ class BlindSelectionSpecBuilder {
     };
     final baseHandSize = ruleset.defaultMaxHandSize;
     final rewardBase = RummiRunProgress.stageClearGoldBase;
+    final isEndless = isEndlessStation(stationIndex);
 
     final targetScore = _targetScoreForSpec(
       stationIndex: stationIndex,
@@ -203,17 +211,24 @@ class BlindSelectionSpecBuilder {
         BlindTier.big => 'CLASH',
         BlindTier.boss => 'BOSS',
       },
-      description: switch (tier) {
-        BlindTier.small => '기본 조건으로 이번 전투를 시작합니다.',
-        BlindTier.big => '목표 점수를 올리고 보드 버림 여유를 줄입니다.',
-        BlindTier.boss => '손패 크기와 버림 여유를 줄인 강한 Boss 전투입니다.',
-      },
+      description: isEndless
+          ? switch (tier) {
+              BlindTier.small => '무한 도전의 기본 전투입니다.',
+              BlindTier.big => '무한 도전 목표 점수가 1.5배로 오릅니다.',
+              BlindTier.boss => '무한 도전 목표 점수가 2배로 오르는 Boss 전투입니다.',
+            }
+          : switch (tier) {
+              BlindTier.small => '기본 조건으로 이번 전투를 시작합니다.',
+              BlindTier.big => '목표 점수를 올리고 보드 버림 여유를 줄입니다.',
+              BlindTier.boss => '손패 크기와 버림 여유를 줄인 강한 Boss 전투입니다.',
+            },
       targetScore: targetScore,
       boardDiscards: boardDiscards,
       handDiscards: handDiscards,
       maxHandSize: maxHandSize,
       rewardPreview: modifiedRewardPreview,
       availability: availability,
+      isEndless: isEndless,
       bossModifier: tier == BlindTier.boss
           ? _bossModifierForStation(stationIndex, runSeed: runSeed)
           : null,
@@ -358,11 +373,17 @@ class BlindSelectionSpecBuilder {
     if (stationIndex <= table.length) {
       return table[stationIndex - 1][tier.index];
     }
-    // S8 이후는 아직 실제 진행 구간 밖이다. 테스트/디버그용으로만
-    // 마지막 구간 성장률을 이어 붙여 target 단조 증가를 보장한다.
+    // S8 이후는 정식 무한 도전 구간이다. Station 기준 점수는 매 구간
+    // 상승하고, tier별 목표는 Scout 1배, Clash 1.5배, Boss 2배를 따른다.
     final extraStep = stationIndex - table.length;
-    final base = table.last[tier.index];
-    return (base * _pow(1.25, extraStep)).round();
+    final stationBase =
+        (table.last[BlindTier.small.index] * _pow(1.25, extraStep)).round();
+    final tierMultiplier = switch (tier) {
+      BlindTier.small => 1.0,
+      BlindTier.big => 1.5,
+      BlindTier.boss => 2.0,
+    };
+    return (stationBase * tierMultiplier).round();
   }
 
   static double _pow(double base, int exponent) {

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -794,7 +793,7 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   void _showDebugGameOverOnLoadIfNeeded() {
-    if (!kDebugMode ||
+    if (!AppConfig.showDebugFixtures ||
         !widget.debugShowGameOverOnLoad ||
         _debugGameOverDialogShown) {
       return;
@@ -1332,13 +1331,13 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _debugForceBlindClear() async {
-    if (!kDebugMode || _isUiLocked) return;
+    if (!AppConfig.showDebugFixtures || _isUiLocked) return;
     final scoreAdded = _gameNotifier.debugForceBlindClear();
     await _runStageClearFlow(scoreAdded);
   }
 
   Future<void> _debugForceBossClearToNextBlindSelect() async {
-    if (!kDebugMode || _isUiLocked) return;
+    if (!AppConfig.showDebugFixtures || _isUiLocked) return;
     final scoreAdded = _gameNotifier.debugForceBlindClear(
       overrideTier: BlindTier.boss,
     );
@@ -1650,7 +1649,8 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   Future<void> _openDebugBottomSheet(BuildContext context) async {
-    if (!kDebugMode || _stageFlowPhase != GameStageFlowPhase.none) {
+    if (!AppConfig.showDebugFixtures ||
+        _stageFlowPhase != GameStageFlowPhase.none) {
       return;
     }
     await showModalBottomSheet<void>(
@@ -2760,7 +2760,7 @@ class _GameLayout extends StatelessWidget {
                         step: activeSettlementStep,
                       ),
                     ),
-                  if (kDebugMode)
+                  if (AppConfig.showDebugFixtures)
                     Positioned(
                       right: 0,
                       bottom: 16,

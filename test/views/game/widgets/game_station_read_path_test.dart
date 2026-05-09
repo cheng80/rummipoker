@@ -60,6 +60,55 @@ void main() {
     expect(find.text('27'), findsOneWidget);
   });
 
+  testWidgets('GameTopHud marks S9 and later as endless danger mode', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 3602,
+        scoreTowardObjective: 1200,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 9,
+      currentBlindTierIndex: 2,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameTopHud(
+            station: station,
+            battle: battle,
+            difficultyLabel: '도전',
+            onOptionsTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('무한 S9 · 도전'), findsOneWidget);
+    expect(find.text('ENDLESS GOAL'), findsOneWidget);
+    expect(find.text('BOSS'), findsOneWidget);
+    expect(find.text('1200/3602'), findsOneWidget);
+  });
+
   testWidgets('GameTopHud keeps four-digit station goal visible', (
     tester,
   ) async {

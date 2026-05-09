@@ -110,6 +110,32 @@ void main() {
       expect(reward.description, contains('다음 전투 덱에 추가'));
     });
 
+    test('S9 이후 settlement는 무한 도전 라벨을 사용한다', () {
+      const breakdown = RummiCashOutBreakdown(
+        stageIndex: 9,
+        targetScore: 3602,
+        blindReward: 16,
+        remainingBoardDiscards: 0,
+        perBoardDiscardBonus: 3,
+        boardDiscardGold: 0,
+        remainingHandDiscards: 0,
+        perHandDiscardBonus: 2,
+        handDiscardGold: 0,
+        economyGold: 0,
+        economyBonuses: [],
+        totalGold: 16,
+      );
+
+      final facade = RummiSettlementRuntimeFacade.fromCashOut(
+        breakdown: breakdown,
+        currentGold: 22,
+      );
+
+      expect(facade.isEndless, isTrue);
+      expect(facade.entries.first.leadingLabel, '무한 S9');
+      expect(facade.entries.first.description, '무한 도전 목표 3602 달성 보상');
+    });
+
     test('overkill growth bonuses are exposed as non-gold bonus entries', () {
       const breakdown = RummiCashOutBreakdown(
         stageIndex: 4,

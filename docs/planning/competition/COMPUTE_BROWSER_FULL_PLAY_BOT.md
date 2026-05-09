@@ -20,6 +20,7 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 다음 full-run 재개는 도전 난이도 fresh S1~S8이다.
 fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐으나, 2026-05-10 route/dialog label 보정 뒤 최신 build smoke에서는 재현되지 않았다.
 도전 full-run 로그에서도 같은 console 0건 기준으로 다시 확인한다.
+S8 boss 이후는 정식 `무한 도전` 진입 UX로 정리했다. 제출 gate는 여전히 S8 boss clear와 보상/복귀/도감 확인까지이며, S9+ 무한 도전 자체의 장기 생존은 제출 gate로 요구하지 않는다.
 
 과거 checkpoint pass 증거:
 
@@ -114,6 +115,7 @@ fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐�
 - 마켓 tile offer는 실제 타일 face로 표시하고, 구매 시 오른쪽 중단 덱 방향으로 날아가는 연출을 쓴다. 선택 표시는 카드형 프레임이 아니라 타일 크기에 맞춘 selector만 사용한다.
 - S8 boss는 bot 정책에서만 작은 확정을 억제하고, 완성 직전 라인 수, 교차 유망 라인 수, 손패/덱 기반 1-step lookahead로 중복줄 확정 가능성을 평가한다.
 - 최신 fresh 표준 run에서는 족보 레벨 성장과 덱 확장/보상 타일 축이 들어간 상태로 S8 boss까지 통과했다. 도전 난이도는 아직 미검증이다.
+- S8 boss 정산의 계속 진행 버튼은 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고, Station Select/전투 HUD/정산 라벨은 위험 구간 색상으로 표시한다.
 - 후반 game over 대응은 봇 전용 가중치 숫자 조정보다 족보/중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다.
 - 마켓에서는 Jester 슬롯/골드가 허용하는 한 구매를 시도하고, 슬롯이 꽉 찬 경우 더 좋은 후보가 있으면 약한 Jester 판매 후 교체한다. 후반에는 구간별 등장 확률을 올린 Jester/Item을 안정화 구매 후보로 더 높게 평가한다.
 - Item 구매 정책은 Q-Slot만 보지 않고 Q-Slot/Passive/Tool/Gear lane의 모든 affordable offer를 평가한다. `*_study`처럼 족보 성장을 직접 올리는 행성카드형 아이템은 후반 안정화 후보로 높게 평가한다.
@@ -143,7 +145,7 @@ Playwright나 Flutter `integration_test`의 selector/tap이 안정적이지 않�
 
 | 별명 | 영문 식별자 | 목적 | 기본 종료 조건 |
 |---|---|---|---|
-| `공모전 풀런봇` | `contest_full_run_bot` | 최종 제출 full-play gate | S8 boss clear, 런 완료, 보상/복귀/도감 확인 |
+| `공모전 풀런봇` | `contest_full_run_bot` | 최종 제출 full-play gate | S8 boss clear, 런 완료 또는 무한 도전 진입 확인, 보상/복귀/도감 확인 |
 | `공모전 서브런봇` | `contest_sub_run_bot` | 특정 stage/scene까지 재현, 실패 구간 격리 | 사용자가 지정한 target 도달 |
 
 사용자가 이렇게 말하면 같은 의미로 해석한다.
@@ -178,7 +180,7 @@ contest_sub_run_bot target
 - 마켓에서 최소 1회 이상 Jester 또는 카드형 성장 구매를 수행한다.
 - 마켓에서 최소 1회 이상 Item 구매를 수행한다.
 - 전투 또는 마켓에서 최소 1회 이상 Item을 실제 사용한다.
-- S8 boss 이후 런 완료, 보상 확인, 새 run 복귀 또는 도감 반영까지 확인한다.
+- S8 boss 이후 런 완료 또는 무한 도전 진입 CTA, 보상 확인, 새 run 복귀 또는 도감 반영까지 확인한다.
 - Browser/WebDriver console log 기준 새 error/warn 0건을 확인한다.
 - 실행 로그에는 stage, blind tier, 구매 내역, 아이템 사용, stop reason, console 결과를 남긴다.
 

@@ -233,7 +233,8 @@ void main() {
 
       expect(find.text('기억 카드 획득'), findsOneWidget);
       expect(find.textContaining('Insight'), findsNothing);
-      expect(find.widgetWithText(GameChromeButton, '계속 진행'), findsOneWidget);
+      expect(find.textContaining('S8 이후는 무한 도전입니다'), findsOneWidget);
+      expect(find.widgetWithText(GameChromeButton, '무한 도전 진입'), findsOneWidget);
       expect(find.widgetWithText(GameChromeButton, '런 완료'), findsOneWidget);
       expect(find.text('Market으로'), findsNothing);
 
