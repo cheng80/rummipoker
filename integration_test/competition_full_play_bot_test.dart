@@ -201,6 +201,8 @@ class _CompetitionFullPlayBot {
   bool discardedBoard = false;
   bool movedBoard = false;
   int gameOverRetries = 0;
+  final Set<String> failedBattleActionRouteKeys = <String>{};
+  final Set<String> currentBattleActionRouteKeys = <String>{};
 
   Future<void> run() async {
     itemCatalog = await ItemCatalogLoader.loadFromAsset(AssetPaths.itemsCommon);
@@ -398,6 +400,7 @@ class _CompetitionFullPlayBot {
           ? CompetitionPlannerV2Policy(
               enableRetryRecoveryConfirmDelay: true,
               retryRecoveryAttempt: gameOverRetries,
+              avoidedActionRouteKeys: failedBattleActionRouteKeys,
             )
           : battlePolicy;
       final action = policy.chooseAction(
@@ -416,6 +419,7 @@ class _CompetitionFullPlayBot {
         'score=${session.blind.scoreTowardBlind}/${session.blind.targetScore} '
         '${_battleTraceSuffix(session, runProgress, runtimeSnapshot)}',
       );
+      currentBattleActionRouteKeys.add(contestBattleActionRouteKey(action));
 
       switch (action.type) {
         case CompetitionBattleActionType.draw:
@@ -523,6 +527,8 @@ class _CompetitionFullPlayBot {
         '$gameOverRetries/${config.maxGameOverRetries}',
       );
     }
+    failedBattleActionRouteKeys.addAll(currentBattleActionRouteKeys);
+    currentBattleActionRouteKeys.clear();
     await _saveBotCheckpoint();
     _record('game over -> retry $gameOverRetries/${config.maxGameOverRetries}');
     await tester.tap(retryFinder.last, warnIfMissed: false);
@@ -585,16 +591,24 @@ class _CompetitionFullPlayBot {
     await _pumpFor(const Duration(seconds: 3));
 
     if (stage == 8 && tier == BlindTier.boss) {
+      _resetBattleRetryLearning();
       await _tapText('런 완료');
       _record('S8 boss: run complete');
       await _pumpFor(const Duration(seconds: 3));
       return;
     }
 
+    _resetBattleRetryLearning();
     await _tapText('Market으로');
     _record('S$stage ${tier.name}: cashout -> market');
     await _pumpUntilVisible(find.text('다음 Station'));
     await _saveBotCheckpoint();
+  }
+
+  void _resetBattleRetryLearning() {
+    gameOverRetries = 0;
+    failedBattleActionRouteKeys.clear();
+    currentBattleActionRouteKeys.clear();
   }
 
   bool _isCashOutReady() {

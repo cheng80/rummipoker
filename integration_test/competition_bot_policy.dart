@@ -139,15 +139,33 @@ class CompetitionBattleAction {
   }
 }
 
+String contestBattleActionRouteKey(CompetitionBattleAction action) {
+  return switch (action.type) {
+    CompetitionBattleActionType.place =>
+      'place:${action.handIndex}:${action.row}:${action.col}',
+    CompetitionBattleActionType.discardHand =>
+      'discardHand:${action.handIndex}',
+    CompetitionBattleActionType.discardBoard =>
+      'discardBoard:${action.row}:${action.col}',
+    CompetitionBattleActionType.moveBoard =>
+      'moveBoard:${action.row}:${action.col}:${action.toRow}:${action.toCol}',
+    CompetitionBattleActionType.confirm => 'confirm',
+    CompetitionBattleActionType.draw => 'draw',
+    CompetitionBattleActionType.stop => 'stop:${action.reason ?? ''}',
+  };
+}
+
 /// `tools/sim/planner_bot.dart`의 planner_v2 판단을 integration test용으로 옮긴다.
 class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   const CompetitionPlannerV2Policy({
     this.enableRetryRecoveryConfirmDelay = false,
     this.retryRecoveryAttempt = 0,
+    this.avoidedActionRouteKeys = const <String>{},
   });
 
   final bool enableRetryRecoveryConfirmDelay;
   final int retryRecoveryAttempt;
+  final Set<String> avoidedActionRouteKeys;
 
   static const int _cleanConfirmScoreFloor = 70;
   static const int _highTargetConfirmScoreFloor = 180;
@@ -663,12 +681,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           );
           final immediateScore = preview.result.scoreAdded;
           if (remainingScore > 0 && immediateScore >= remainingScore) {
+            final action = CompetitionBattleAction.place(
+              handIndex: handIndex,
+              row: row,
+              col: col,
+            );
             return _PlacementChoice(
-              action: CompetitionBattleAction.place(
-                handIndex: handIndex,
-                row: row,
-                col: col,
-              ),
+              action: action,
               clearsTarget: true,
               immediateScore: immediateScore,
               potentialScore: _plannerBoardPotentialScoreForJesters(
@@ -688,15 +707,17 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
               boardPressure: RummiPokerGridSession.countTilesOnBoard(
                 copy.board,
               ),
+              repeatsFailedRoute: _repeatsFailedRoute(action),
             );
           }
 
+          final action = CompetitionBattleAction.place(
+            handIndex: handIndex,
+            row: row,
+            col: col,
+          );
           final choice = _PlacementChoice(
-            action: CompetitionBattleAction.place(
-              handIndex: handIndex,
-              row: row,
-              col: col,
-            ),
+            action: action,
             clearsTarget: false,
             immediateScore: immediateScore,
             potentialScore: _plannerBoardPotentialScoreForJesters(
@@ -714,6 +735,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
               jesters: jesters,
             ),
             boardPressure: RummiPokerGridSession.countTilesOnBoard(copy.board),
+            repeatsFailedRoute: _repeatsFailedRoute(action),
           );
 
           if (best == null || _isBetterPlacement(choice, best)) {
@@ -730,6 +752,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (candidate.clearsTarget != best.clearsTarget) {
       return candidate.clearsTarget;
     }
+    if (_shouldAvoidRepeatedFailedRoutes() &&
+        candidate.repeatsFailedRoute != best.repeatsFailedRoute) {
+      return !candidate.repeatsFailedRoute;
+    }
     if (candidate.immediateScore != best.immediateScore &&
         candidate.immediateScore >= _cleanConfirmScoreFloor) {
       return candidate.immediateScore > best.immediateScore;
@@ -744,6 +770,17 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return candidate.immediateScore > best.immediateScore;
     }
     return candidate.boardPressure < best.boardPressure;
+  }
+
+  bool _repeatsFailedRoute(CompetitionBattleAction action) {
+    return _shouldAvoidRepeatedFailedRoutes() &&
+        avoidedActionRouteKeys.contains(contestBattleActionRouteKey(action));
+  }
+
+  bool _shouldAvoidRepeatedFailedRoutes() {
+    return enableRetryRecoveryConfirmDelay &&
+        retryRecoveryAttempt >= 2 &&
+        avoidedActionRouteKeys.isNotEmpty;
   }
 
   int _placementLookaheadScore(
@@ -1166,6 +1203,7 @@ class _PlacementChoice {
     required this.potentialScore,
     required this.lookaheadScore,
     required this.boardPressure,
+    required this.repeatsFailedRoute,
   });
 
   final CompetitionBattleAction action;
@@ -1174,6 +1212,7 @@ class _PlacementChoice {
   final int potentialScore;
   final int lookaheadScore;
   final int boardPressure;
+  final bool repeatsFailedRoute;
 }
 
 class _MoveChoice {

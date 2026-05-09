@@ -1517,6 +1517,73 @@ void main() {
     },
   );
 
+  test('second retry avoids repeating a failed placement route', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 2,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1200,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+      ),
+      deck: PokerDeck.fromSnapshot(const []),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.red, 3),
+        null,
+        null,
+        _tile(TileColor.blue, 9),
+        _tile(TileColor.black, 9),
+        null,
+        null,
+        null,
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.black, 12),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.red, 4), _tile(TileColor.red, 5)],
+      eliminated: const [],
+    );
+
+    final firstAction = const CompetitionPlannerV2Policy().bestPlacementForTest(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+    final retryAction =
+        CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+          avoidedActionRouteKeys: {contestBattleActionRouteKey(firstAction!)},
+        ).bestPlacementForTest(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(retryAction?.type, CompetitionBattleActionType.place);
+    expect(
+      contestBattleActionRouteKey(retryAction!),
+      isNot(contestBattleActionRouteKey(firstAction)),
+    );
+  });
+
   test('larger hand draws for options before placing the first tile', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
