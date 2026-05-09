@@ -24,4 +24,6 @@ class AssetPaths {
 
   /// UI 이미지 경로.
   static const String uiGreed = 'assets/images/ui/greed.png';
+  static const String uiRummiPokerLogo =
+      'assets/images/ui/rummi_poker_logo.png';
 }

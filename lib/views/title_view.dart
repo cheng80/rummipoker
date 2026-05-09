@@ -302,41 +302,28 @@ class _TitleViewState extends ConsumerState<TitleView>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 44),
+                  const SizedBox(height: 28),
+                  Semantics(
+                    label: context.tr('gameTitleBlock').replaceAll('\n', ' '),
+                    image: true,
+                    child: Image.asset(
+                      AssetPaths.uiRummiPokerLogo,
+                      width: 318,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
-                    context.tr('gameTitleBlock'),
+                    AppConfig.gameSubtitle,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AssetPaths.fontNexonLv2Gothic,
-                      fontSize: 88,
-                      fontWeight: FontWeight.bold,
-                      height: 1.05,
-                      color: const Color(0xFFFFD54F),
-                      letterSpacing: 6,
-                      shadows: [
-                        Shadow(
-                          color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
-                          blurRadius: 24,
-                        ),
-                        const Shadow(
-                          color: Color(0xFFE65100),
-                          offset: Offset(2, 2),
-                          blurRadius: 0,
-                        ),
-                      ],
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white.withValues(alpha: 0.72),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.tr('gameSubtitle'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontNexonLv2Gothic,
-                      fontSize: 20,
-                      color: Colors.white.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 34),
+                  const SizedBox(height: 24),
                   HomeSection(
                     title: '이어하기',
                     subtitle: hasStoredActiveRun
