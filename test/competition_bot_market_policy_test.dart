@@ -15,15 +15,18 @@ void main() {
       );
     });
 
-    test('late S8 prefers immediate flush scoring over zero-stack ride', () {
-      final rideTheBus = catalog.findById('ride_the_bus')!;
-      final drollJester = catalog.findById('droll_jester')!;
+    test(
+      'does not replace zero-stack ride with single-condition droll in S8',
+      () {
+        final rideTheBus = catalog.findById('ride_the_bus')!;
+        final drollJester = catalog.findById('droll_jester')!;
 
-      expect(
-        contestFullRunBotJesterScore(drollJester, stage: 8),
-        greaterThan(contestFullRunBotJesterScore(rideTheBus, stage: 8) + 40),
-      );
-    });
+        expect(
+          contestFullRunBotJesterScore(rideTheBus, stage: 8),
+          greaterThan(contestFullRunBotJesterScore(drollJester, stage: 8) + 40),
+        );
+      },
+    );
 
     test('keeps zero-stack ride through S7 before the final market', () {
       final rideTheBus = catalog.findById('ride_the_bus')!;

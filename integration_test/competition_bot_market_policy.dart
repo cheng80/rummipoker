@@ -2,8 +2,8 @@ import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 
 /// 공모전 풀런봇의 상점 구매/교체 판단 점수.
 ///
-/// 후반 고점수 구간에서는 누적형 카드의 이론값보다 현재 전투에서 바로
-/// 중복 족보 점수에 붙는 Jester를 우선한다.
+/// 후반 고점수 구간에서도 좁은 단일 족보 보너스만 보고 누적형 카드를
+/// 버리지 않는다. 실제 손패/보드 흐름에서 여러 족보가 이어지는지가 더 중요하다.
 int contestFullRunBotJesterScore(
   RummiJesterCard card, {
   int stateValue = 0,
@@ -37,9 +37,7 @@ int contestFullRunBotJesterScore(
     case 'half_jester':
       score += 180;
     case 'ride_the_bus':
-      score += stateValue > 0
-          ? stateValue * 12
-          : (stage >= 8 ? -120 : (stage >= 7 ? 260 : -180));
+      score += stateValue > 0 ? stateValue * 12 : (stage >= 7 ? 260 : -180);
     case 'green_jester':
       score += stateValue > 0 ? stateValue * 12 : -260;
     case 'clever_jester':
@@ -83,9 +81,7 @@ int contestFullRunBotJesterScore(
       case 'green_jester':
         score += stateValue > 0 ? 90 : -120;
       case 'ride_the_bus':
-        score += stateValue > 0
-            ? 90
-            : (stage >= 8 ? -180 : (stage >= 7 ? 180 : -120));
+        score += stateValue > 0 ? 90 : (stage >= 7 ? 180 : -120);
     }
   }
   if (stage >= 8) {
