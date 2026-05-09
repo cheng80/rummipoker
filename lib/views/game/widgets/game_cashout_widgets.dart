@@ -32,6 +32,9 @@ String gameHandRankLabel(RummiHandRank rank) {
 
 String gameScoreBreakdownLabel(ConfirmedLineBreakdown line) {
   final parts = <String>['기본 ${line.rankBaseScore ?? line.baseScore}'];
+  if (line.growthBonus > 0) {
+    parts.add('성장 +${line.growthBonus}');
+  }
   if (line.overlapBonus > 0) {
     parts.add('겹침 +${line.overlapBonus}');
   }

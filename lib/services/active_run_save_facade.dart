@@ -1,3 +1,4 @@
+import '../logic/rummi_poker_grid/hand_rank.dart';
 import 'active_run_save_service.dart';
 
 /// V4 target-term read model over the current active run save/runtime.
@@ -61,6 +62,7 @@ class RummiActiveRunSaveFacade {
     required this.currentRunSeed,
     required this.currentGold,
     required this.checkpoint,
+    this.currentPlayedHandCounts = const {},
   });
 
   factory RummiActiveRunSaveFacade.fromSaveData(ActiveRunSaveData save) {
@@ -72,6 +74,9 @@ class RummiActiveRunSaveFacade {
       currentStationIndex: save.runProgress.stageIndex,
       currentRunSeed: save.session.runSeed,
       currentGold: save.runProgress.gold,
+      currentPlayedHandCounts: _parsePlayedHandCounts(
+        save.runProgress.playedHandCounts,
+      ),
       checkpoint: RummiStationCheckpointSaveView.fromSaveData(save),
     );
   }
@@ -87,6 +92,7 @@ class RummiActiveRunSaveFacade {
       currentStationIndex: runtime.runProgress.stageIndex,
       currentRunSeed: runtime.session.runSeed,
       currentGold: runtime.runProgress.gold,
+      currentPlayedHandCounts: runtime.runProgress.snapshotPlayedHandCounts(),
       checkpoint: RummiStationCheckpointSaveView.fromRuntimeState(runtime),
     );
   }
@@ -98,6 +104,7 @@ class RummiActiveRunSaveFacade {
   final int currentStationIndex;
   final int currentRunSeed;
   final int currentGold;
+  final Map<RummiHandRank, int> currentPlayedHandCounts;
   final RummiStationCheckpointSaveView checkpoint;
 
   String get currentLocationSummary =>
@@ -132,5 +139,20 @@ class RummiActiveRunSaveFacade {
       ActiveRunScene.battle => RummiSaveSceneAlias.battle,
       ActiveRunScene.blindSelect => RummiSaveSceneAlias.blindSelect,
     };
+  }
+
+  static Map<RummiHandRank, int> _parsePlayedHandCounts(
+    Map<String, int> counts,
+  ) {
+    final out = <RummiHandRank, int>{};
+    for (final entry in counts.entries) {
+      for (final rank in RummiHandRank.values) {
+        if (rank.name == entry.key) {
+          out[rank] = entry.value;
+          break;
+        }
+      }
+    }
+    return Map<RummiHandRank, int>.unmodifiable(out);
   }
 }

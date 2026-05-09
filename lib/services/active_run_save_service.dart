@@ -361,9 +361,7 @@ class SavedRunProgressData {
       statefulValuesBySlot: (json['statefulValuesBySlot'] as Map).map(
         (key, value) => MapEntry(key as String, (value as num).toInt()),
       ),
-      playedHandCounts: (json['playedHandCounts'] as Map).map(
-        (key, value) => MapEntry(key as String, (value as num).toInt()),
-      ),
+      playedHandCounts: _jsonIntMap(json['playedHandCounts']),
       itemInventory: RunInventoryState.fromJson(
         (json['itemInventory'] as Map?)?.cast<String, dynamic>() ??
             const <String, dynamic>{},
@@ -385,6 +383,21 @@ class SavedRunProgressData {
     return (value as List<dynamic>? ?? const <dynamic>[])
         .whereType<String>()
         .toList(growable: false);
+  }
+
+  static Map<String, int> _jsonIntMap(Object? value) {
+    final source = value;
+    if (source is! Map) {
+      return const <String, int>{};
+    }
+    final out = <String, int>{};
+    for (final entry in source.entries) {
+      final key = entry.key;
+      final rawValue = entry.value;
+      if (key is! String || rawValue is! num) continue;
+      out[key] = rawValue.toInt();
+    }
+    return out;
   }
 }
 
@@ -606,6 +619,15 @@ class ActiveRunSaveService {
     return card;
   }
 
+  static RummiHandRank? _tryParseHandRank(String name) {
+    for (final rank in RummiHandRank.values) {
+      if (rank.name == name) {
+        return rank;
+      }
+    }
+    return null;
+  }
+
   static ActiveRunStageSnapshot captureStageStartSnapshot({
     required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
@@ -759,9 +781,12 @@ class ActiveRunSaveService {
     final statefulValuesBySlot = data.statefulValuesBySlot.map(
       (key, value) => MapEntry(int.parse(key), value),
     );
-    final playedHandCounts = data.playedHandCounts.map(
-      (key, value) => MapEntry(RummiHandRank.values.byName(key), value),
-    );
+    final playedHandCounts = <RummiHandRank, int>{};
+    for (final entry in data.playedHandCounts.entries) {
+      final rank = _tryParseHandRank(entry.key);
+      if (rank == null) continue;
+      playedHandCounts[rank] = entry.value;
+    }
     return RummiRunProgress.restore(
       stageIndex: data.stageIndex,
       currentStationBlindTierIndex: data.currentStationBlindTierIndex,

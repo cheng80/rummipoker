@@ -487,6 +487,22 @@ void main() {
     );
 
     test(
+      'saved run progress without playedHandCounts restores empty growth',
+      () {
+        final restored = SavedRunProgressData.fromJson(const <String, dynamic>{
+          'stageIndex': 3,
+          'gold': 42,
+          'rerollCost': 6,
+          'ownedJesterIds': <String>['jester'],
+          'shopOffers': <SavedShopOfferData>[],
+          'statefulValuesBySlot': <String, int>{},
+        });
+
+        expect(restored.playedHandCounts, isEmpty);
+      },
+    );
+
+    test(
       'save -> inspect -> summary/load -> clear 전체 active run 저장 흐름이 동작한다',
       () async {
         final session = RummiPokerGridSession(runSeed: 4242);

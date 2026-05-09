@@ -8,7 +8,12 @@ import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import 'game_shared_widgets.dart';
 
-enum GameOptionsCloseAction { resumeGame, keepPaused, openSettings }
+enum GameOptionsCloseAction {
+  resumeGame,
+  keepPaused,
+  openSettings,
+  openRunInfo,
+}
 
 Future<GameOptionsCloseAction> showGameOptionsDialog({
   required BuildContext context,
@@ -106,6 +111,18 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 ],
               ),
             ),
+          GameMenuActionTile(
+            title: context.tr('runInfoTitle'),
+            subtitle: context.tr('runInfoActionSubtitle'),
+            icon: Icons.bar_chart_rounded,
+            accentColor: const Color(0xFFF2C14E),
+            onTap: () async {
+              Navigator.of(
+                dialogContext,
+              ).pop(GameOptionsCloseAction.openRunInfo);
+            },
+          ),
+          const SizedBox(height: 8),
           GameMenuActionTile(
             title: isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
             subtitle: '현재 진행을 유지한 채 이번 Station 시작 시점으로 되돌립니다.',

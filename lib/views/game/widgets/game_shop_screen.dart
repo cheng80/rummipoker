@@ -17,6 +17,7 @@ import '../../../widgets/phone_frame_scaffold.dart';
 import '../game_presentation_timings.dart';
 import 'game_card_name_text.dart';
 import 'game_jester_widgets.dart';
+import 'game_run_info_dialog.dart';
 import 'game_shared_widgets.dart';
 
 const double _marketOwnedCardWidth = kBattleItemSlotWidth;
@@ -36,7 +37,12 @@ const double _marketDescriptionLineHeight = 1.18;
 const double _marketDescriptionMinHeight =
     _marketDescriptionFontSize * _marketDescriptionLineHeight * 2;
 
-enum _MarketOptionsCloseAction { resumeGame, keepPaused, openSettings }
+enum _MarketOptionsCloseAction {
+  resumeGame,
+  keepPaused,
+  openSettings,
+  openRunInfo,
+}
 
 const TextStyle _marketDescriptionTextStyle = TextStyle(
   color: Colors.white70,
@@ -1195,6 +1201,18 @@ class _GameShopScreenState extends State<GameShopScreen>
                   ),
                 ),
               GameMenuActionTile(
+                title: context.tr('runInfoTitle'),
+                subtitle: context.tr('runInfoActionSubtitle'),
+                icon: Icons.bar_chart_rounded,
+                accentColor: const Color(0xFFF2C14E),
+                onTap: () async {
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(_MarketOptionsCloseAction.openRunInfo);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
                 title: context.tr('settings'),
                 subtitle: '설정 화면을 열고, Market으로 다시 돌아옵니다.',
                 icon: Icons.settings_rounded,
@@ -1254,6 +1272,14 @@ class _GameShopScreenState extends State<GameShopScreen>
           } finally {
             SoundManager.endBgmAutoResumeBlock();
           }
+          if (!mounted) return;
+        case _MarketOptionsCloseAction.openRunInfo:
+          await showGameRunInfoDialog(
+            context: context,
+            playedHandCounts:
+                widget.readActiveRunSaveView?.call()?.currentPlayedHandCounts ??
+                const {},
+          );
           if (!mounted) return;
       }
     }

@@ -522,6 +522,13 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     final isHighTarget =
         session.blind.targetScore >= _highTargetConfirmTargetFloor;
 
+    if (remainingScore > 0 && score >= remainingScore) {
+      return _ConfirmChoice(
+        lineCount: lineCount,
+        score: score,
+        shouldConfirmNow: true,
+      );
+    }
     if (lineCount < 2) {
       return _ConfirmChoice(
         lineCount: lineCount,
@@ -534,13 +541,6 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         retryRecoveryAttempt >= 2 &&
         isHighTarget;
     if (score > 0 && !isHighTarget && _shouldTempoConfirm(session, jesters)) {
-      return _ConfirmChoice(
-        lineCount: lineCount,
-        score: score,
-        shouldConfirmNow: true,
-      );
-    }
-    if (remainingScore > 0 && score >= remainingScore) {
       return _ConfirmChoice(
         lineCount: lineCount,
         score: score,

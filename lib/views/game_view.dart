@@ -36,6 +36,7 @@ import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
 import 'game/widgets/game_options_dialog.dart';
+import 'game/widgets/game_run_info_dialog.dart';
 import 'game/widgets/game_effect_overlay.dart';
 import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
@@ -1557,6 +1558,18 @@ class _GameViewState extends ConsumerState<GameView>
           } finally {
             SoundManager.endBgmAutoResumeBlock();
           }
+          if (!mounted ||
+              (!allowDuringStageFlow &&
+                  _stageFlowPhase != GameStageFlowPhase.none)) {
+            return;
+          }
+        case GameOptionsCloseAction.openRunInfo:
+          await showGameRunInfoDialog(
+            context: context,
+            playedHandCounts:
+                _gameState.activeRunSaveView?.currentPlayedHandCounts ??
+                const {},
+          );
           if (!mounted ||
               (!allowDuringStageFlow &&
                   _stageFlowPhase != GameStageFlowPhase.none)) {

@@ -9,6 +9,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_hand_growth.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1040,6 +1041,61 @@ void main() {
     }
   });
 
+  test('족보 성장은 현재 레벨 보너스를 점수에 더한다', () {
+    final board = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(0, i, t(TileColor.blue, i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(
+      applyScoreToBlind: false,
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(
+        playedHandCounts: {RummiHandRank.straightFlush: 1},
+      ),
+    );
+
+    final line = out.result.lineBreakdowns.single;
+    expect(out.result.ok, true);
+    expect(line.rank, RummiHandRank.straightFlush);
+    expect(line.growthLevel, 2);
+    expect(line.growthBonus, RummiHandGrowth.growthStepFor(line.rank));
+    expect(line.grownRankBaseScore, 180);
+    expect(out.result.baseScore, 180);
+    expect(out.result.scoreAdded, 180);
+  });
+
+  test('같은 confirm 안의 같은 족보는 즉시 서로 레벨을 올리지 않는다', () {
+    final board = RummiBoard();
+    for (var i = 0; i < kBoardSize; i++) {
+      board.setCell(1, i, t(TileColor.red, i + 1));
+      board.setCell(3, i, t(TileColor.blue, i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.ok, true);
+    expect(out.result.lineBreakdowns.length, 2);
+    expect(
+      out.result.lineBreakdowns.map((line) => line.growthLevel),
+      everyElement(1),
+    );
+    expect(
+      out.result.lineBreakdowns.map((line) => line.growthBonus),
+      everyElement(0),
+    );
+    expect(out.result.scoreAdded, 300);
+  });
+
   test('풀하우스 확정 시 contributor 5장 전체가 제거된다', () {
     final board = RummiBoard();
     board.setCell(4, 0, t(TileColor.red, 8));
@@ -1682,7 +1738,8 @@ void main() {
     );
 
     expect(first.result.scoreAdded, 26);
-    expect(second.result.scoreAdded, 28);
+    expect(second.result.scoreAdded, 33);
+    expect(second.result.lineBreakdowns.single.growthBonus, 5);
     expect(second.result.jesterBonus, greaterThan(first.result.jesterBonus));
   });
 
@@ -1855,7 +1912,8 @@ void main() {
     );
 
     expect(first.result.scoreAdded, 25);
-    expect(second.result.scoreAdded, 25);
+    expect(second.result.scoreAdded, 30);
+    expect(second.result.lineBreakdowns.single.growthBonus, 5);
   });
 
   test('Ride the Bus는 페이스 카드 없는 확정에서 증가하고 페이스 카드가 나오면 초기화된다', () {
@@ -1914,7 +1972,8 @@ void main() {
 
     expect(progress.buildRuntimeSnapshot().stateValueForSlot(0), 0);
     expect(first.result.scoreAdded, 25);
-    expect(second.result.scoreAdded, 26);
+    expect(second.result.scoreAdded, 32);
+    expect(second.result.lineBreakdowns.single.growthBonus, 5);
   });
 
   test('Scholar는 scored ace에 chips와 mult를 함께 준다', () {

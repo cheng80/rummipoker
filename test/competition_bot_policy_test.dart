@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
@@ -146,6 +147,61 @@ void main() {
     );
 
     expect(action.type, isNot(CompetitionBattleActionType.confirm));
+  });
+
+  test('growth score can make a single line confirm clear the target', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 2,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 170,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+      ),
+      deck: PokerDeck.fromSnapshot(const []),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.blue, 1),
+        _tile(TileColor.blue, 2),
+        _tile(TileColor.blue, 3),
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.blue, 5),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: const [],
+      eliminated: const [],
+    );
+
+    final action = const CompetitionPlannerV2Policy().chooseAction(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(
+        playedHandCounts: {RummiHandRank.straightFlush: 1},
+      ),
+    );
+
+    expect(action.type, CompetitionBattleActionType.confirm);
   });
 
   test('full board chooses a scoring board discard over the loop cell', () {

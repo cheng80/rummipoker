@@ -15,6 +15,7 @@ import '../services/active_run_save_service.dart';
 import '../services/debug_run_fixture_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/widgets/game_run_info_dialog.dart';
 import 'home_entry_widgets.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
@@ -73,18 +74,24 @@ class _TitleViewState extends ConsumerState<TitleView>
         context,
         title: '이어하기',
         message: _continueDialogMessage(summary),
-        actions: const [
-          GameDialogAction<String>(
+        actions: [
+          const GameDialogAction<String>(
             label: '삭제',
             value: 'delete',
             accent: Color(0xFF9C4735),
           ),
-          GameDialogAction<String>(
+          const GameDialogAction<String>(
             label: '취소',
             value: 'cancel',
             accent: Color(0xFF55615F),
           ),
           GameDialogAction<String>(
+            label: context.tr('runInfoTitle'),
+            value: 'runInfo',
+            accent: const Color(0xFFF2C14E),
+            textColor: Colors.black,
+          ),
+          const GameDialogAction<String>(
             label: '이어하기',
             value: 'continue',
             accent: Color(0xFFF4A81D),
@@ -95,6 +102,15 @@ class _TitleViewState extends ConsumerState<TitleView>
       if (!mounted || action == null || action == 'cancel') return;
       if (action == 'delete') {
         await _deleteStoredRun(showMessage: true);
+        return;
+      }
+      if (action == 'runInfo') {
+        await showGameRunInfoDialog(
+          context: context,
+          playedHandCounts: summary?.currentPlayedHandCounts ?? const {},
+        );
+        if (!mounted) return;
+        await _openContinueMenu();
         return;
       }
       final restoredRun = await notifier.loadStoredRun();

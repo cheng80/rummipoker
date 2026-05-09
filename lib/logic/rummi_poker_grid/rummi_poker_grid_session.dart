@@ -10,6 +10,7 @@ import 'models/board.dart';
 import 'models/poker_deck.dart';
 import 'models/tile.dart';
 import 'rummi_blind_state.dart';
+import 'rummi_hand_growth.dart';
 import 'rummi_poker_grid_engine.dart';
 import 'rummi_ruleset.dart';
 import '../../utils/seeded_random.dart';
@@ -164,6 +165,9 @@ class ConfirmedLineBreakdown {
     required this.hasScoringFaceCard,
     required this.effects,
     this.rankBaseScore,
+    this.grownRankBaseScore,
+    this.growthLevel = 0,
+    this.growthBonus = 0,
     this.overlapMultiplier = 1.0,
     this.overlapBonus = 0,
     this.contributingCells = const [],
@@ -173,6 +177,9 @@ class ConfirmedLineBreakdown {
   final LineRef ref;
   final RummiHandRank rank;
   final int? rankBaseScore;
+  final int? grownRankBaseScore;
+  final int growthLevel;
+  final int growthBonus;
   final int baseScore;
   final int finalScore;
   final int jesterBonus;
@@ -635,9 +642,25 @@ class RummiPokerGridSession {
         peakContribution,
         ruleset: ruleset,
       );
-      final int baseLineScore = (evaluation.baseScore * overlapMultiplier)
+      final completedCountBeforeConfirm = runtimeSnapshot.playedCountForRank(
+        evaluation.rank,
+      );
+      final growthLevel = RummiHandGrowth.levelForCompletedCount(
+        evaluation.rank,
+        completedCountBeforeConfirm,
+      );
+      final growthBonus = RummiHandGrowth.growthBonusFor(
+        rank: evaluation.rank,
+        completedCount: completedCountBeforeConfirm,
+      );
+      final grownRankBaseScore = RummiHandGrowth.grownBaseScoreFor(
+        rank: evaluation.rank,
+        baseScore: evaluation.baseScore,
+        completedCount: completedCountBeforeConfirm,
+      );
+      final int baseLineScore = (grownRankBaseScore * overlapMultiplier)
           .round();
-      final int overlapBonus = baseLineScore - evaluation.baseScore;
+      final int overlapBonus = baseLineScore - grownRankBaseScore;
       int lineScore = baseLineScore;
       final effects = <RummiJesterEffectBreakdown>[];
       currentConfirmRankCounts.update(
@@ -702,6 +725,9 @@ class RummiPokerGridSession {
           ref: line.ref,
           rank: evaluation.rank,
           rankBaseScore: evaluation.baseScore,
+          grownRankBaseScore: grownRankBaseScore,
+          growthLevel: growthLevel,
+          growthBonus: growthBonus,
           baseScore: baseLineScore,
           finalScore: lineScore,
           jesterBonus: lineScore - baseLineScore,
