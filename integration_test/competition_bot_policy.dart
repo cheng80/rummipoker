@@ -185,6 +185,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _strategicUtilityTargetScoreFloor = 1000;
   static const int _failedRouteActionPenalty = 900;
   static const int _retryDeckLookaheadTileCount = 5;
+  static const int _lateRetryConfirmShortageWindow = 320;
   @override
   String get id => 'competition_planner_v2';
 
@@ -203,6 +204,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     );
     if (confirmChoice.shouldConfirmNow &&
         !_shouldTryBoardFullRecoveryBeforeConfirm(session, confirmChoice) &&
+        !_shouldDelayLateRetryConfirmForRemaining(
+          session,
+          confirmChoice,
+          boardIsFull: boardIsFull,
+        ) &&
         !_shouldDelayRetryConfirmForPlacement(
           session,
           confirmChoice,
@@ -632,6 +638,23 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     );
   }
 
+  bool delaysLateRetryConfirmForTest(
+    RummiPokerGridSession session, {
+    required int score,
+    required int lineCount,
+    bool boardIsFull = false,
+  }) {
+    return _shouldDelayLateRetryConfirmForRemaining(
+      session,
+      _ConfirmChoice(
+        score: score,
+        lineCount: lineCount,
+        shouldConfirmNow: true,
+      ),
+      boardIsFull: boardIsFull,
+    );
+  }
+
   bool _shouldUseStrategicUtility(RummiPokerGridSession session) {
     if (session.blind.bossModifier != null) return true;
     if (session.blind.targetScore >= _strategicUtilityTargetScoreFloor) {
@@ -755,6 +778,28 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return true;
   }
 
+  bool _shouldDelayLateRetryConfirmForRemaining(
+    RummiPokerGridSession session,
+    _ConfirmChoice choice, {
+    required bool boardIsFull,
+  }) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (choice.score <= 0 || boardIsFull) return false;
+    if (session.blind.bossModifier == null &&
+        session.blind.targetScore < _strategicUtilityTargetScoreFloor) {
+      return false;
+    }
+    if (session.hand.isEmpty && !session.canDrawFromDeck) return false;
+    if (session.deck.remaining > _lateDeckUtilityRemainingMax) return false;
+    final remainingScore =
+        session.blind.targetScore - session.blind.scoreTowardBlind;
+    final shortageAfterConfirm = remainingScore - choice.score;
+    if (shortageAfterConfirm <= 0) return false;
+    return shortageAfterConfirm <= _lateRetryConfirmShortageWindow;
+  }
+
   bool _shouldConfirmInsteadOfLateHandDiscard(
     RummiPokerGridSession session,
     _ConfirmChoice choice,
@@ -816,6 +861,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
                   session.board,
                   jesters,
                 ),
+                remainingScore: remainingScore,
                 jesters: jesters,
                 runtimeSnapshot: runtimeSnapshot,
               ),
@@ -847,6 +893,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
                 session.board,
                 jesters,
               ),
+              remainingScore: remainingScore,
               jesters: jesters,
               runtimeSnapshot: runtimeSnapshot,
             ),
@@ -946,6 +993,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     required int placedRow,
     required int placedCol,
     required int basePotential,
+    required int remainingScore,
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
   }) {
@@ -993,6 +1041,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           afterPlacement,
           tile,
           currentPotential: currentPotential,
+          remainingScore: remainingScore,
           jesters: jesters,
           runtimeSnapshot: runtimeSnapshot,
         );
@@ -1021,6 +1070,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     RummiPokerGridSession session,
     Tile tile, {
     required int currentPotential,
+    required int remainingScore,
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
   }) {
@@ -1042,15 +1092,35 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             _plannerBoardPotentialScoreForJesters(copy.board, jesters) -
             currentPotential;
         final touchedPotential = _touchedLinePotential(copy.board, row, col);
+        final finishScore = _retryFinishScore(
+          immediateScore: immediateScore,
+          remainingScore: remainingScore,
+          deckRemaining: session.deck.remaining,
+        );
         final score =
             potentialGain +
             touchedPotential ~/ 2 +
             lineCount * 140 +
-            immediateScore * 2;
+            immediateScore * 2 +
+            finishScore;
         if (score > best) best = score;
       }
     }
     return best;
+  }
+
+  int _retryFinishScore({
+    required int immediateScore,
+    required int remainingScore,
+    required int deckRemaining,
+  }) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) return 0;
+    if (remainingScore <= 0 || immediateScore <= 0) return 0;
+    if (immediateScore >= remainingScore) return 5000 + immediateScore;
+    if (deckRemaining > _lateDeckUtilityRemainingMax) return 0;
+    final shortage = remainingScore - immediateScore;
+    if (shortage > _lateRetryConfirmShortageWindow) return 0;
+    return (_lateRetryConfirmShortageWindow - shortage) * 8;
   }
 
   CompetitionBattleAction? chooseBoardDiscard(

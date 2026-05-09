@@ -1838,6 +1838,46 @@ void main() {
     expect(action?.col, 4);
   });
 
+  test('late retry delays a confirm that would leave a small shortage', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1739,
+        scoreTowardBlind: 1079,
+        boardDiscardsRemaining: 0,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 0,
+        bossModifier: RummiBossModifier.allScoreDampener,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.red, 4),
+        _tile(TileColor.black, 8),
+        _tile(TileColor.blue, 13),
+      ]),
+      board: RummiBoard(),
+      hand: [_tile(TileColor.yellow, 8)],
+      eliminated: const [],
+    );
+
+    final policy = const CompetitionPlannerV2Policy(
+      enableRetryRecoveryConfirmDelay: true,
+      retryRecoveryAttempt: 2,
+    );
+
+    expect(
+      policy.delaysLateRetryConfirmForTest(session, score: 463, lineCount: 3),
+      isTrue,
+    );
+    expect(
+      policy.delaysLateRetryConfirmForTest(session, score: 660, lineCount: 3),
+      isFalse,
+    );
+  });
+
   test('later retries avoid repeating failed placement routes', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
