@@ -178,7 +178,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _midBoardMoveMaxOccupancy = kBoardSize * 4 - 1;
   static const int _midBoardMoveMinGain = 20;
   static const int _lateDeckBoardMoveMinOccupancy = kBoardSize * 2;
-  static const int _lateDeckUtilityRemainingMax = 6;
+  static const int _lateDeckUtilityRemainingMax = 12;
   static const int _mysticBoardDiscardMinOccupancy = kBoardSize * 4 - 2;
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
