@@ -86,6 +86,8 @@ int contestFullRunBotJesterScore(
   }
   if (stage >= 8) {
     switch (card.id) {
+      case 'clever_jester':
+        score += 180;
       case 'droll_jester':
       case 'sly_jester':
       case 'jolly_jester':

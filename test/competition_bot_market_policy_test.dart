@@ -40,6 +40,16 @@ void main() {
       );
     });
 
+    test('does not replace broad clever scoring with narrow droll in S8', () {
+      final cleverJester = catalog.findById('clever_jester')!;
+      final drollJester = catalog.findById('droll_jester')!;
+
+      expect(
+        contestFullRunBotJesterScore(cleverJester, stage: 8),
+        greaterThan(contestFullRunBotJesterScore(drollJester, stage: 8) + 40),
+      );
+    });
+
     test(
       'keeps stacked ride valuable when it already survived confirmations',
       () {
