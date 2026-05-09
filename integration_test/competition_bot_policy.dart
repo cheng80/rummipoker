@@ -154,6 +154,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _highTargetTwoLineConfirmScoreFloor = 300;
   static const int _highTargetConfirmTargetFloor = 600;
   static const int _bossConfirmScoreFloor = 360;
+  static const int _retryRecoveryConfirmHoldScoreFloor = 520;
   static const int _bossConfirmMinOccupancy = kBoardSize * 4;
   static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
   static const int _midBoardMoveMaxOccupancy = kBoardSize * 4 - 1;
@@ -626,7 +627,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       return false;
     }
     if (boardIsFull) return false;
-    if (choice.score >= _bossConfirmScoreFloor) return false;
+    final holdFloor = session.blind.bossModifier == null
+        ? _retryRecoveryConfirmHoldScoreFloor
+        : _bossConfirmScoreFloor;
+    if (choice.score >= holdFloor) return false;
     if (session.hand.isEmpty) {
       return session.canDrawFromDeck;
     }
