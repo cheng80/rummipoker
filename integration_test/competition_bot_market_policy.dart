@@ -37,7 +37,9 @@ int contestFullRunBotJesterScore(
     case 'half_jester':
       score += 180;
     case 'ride_the_bus':
-      score += stateValue > 0 ? stateValue * 12 : (stage >= 7 ? -120 : -180);
+      score += stateValue > 0
+          ? stateValue * 12
+          : (stage >= 8 ? -120 : (stage >= 7 ? 260 : -180));
     case 'green_jester':
       score += stateValue > 0 ? stateValue * 12 : -260;
     case 'clever_jester':
@@ -81,7 +83,9 @@ int contestFullRunBotJesterScore(
       case 'green_jester':
         score += stateValue > 0 ? 90 : -120;
       case 'ride_the_bus':
-        score += stateValue > 0 ? 90 : (stage >= 7 ? -180 : -120);
+        score += stateValue > 0
+            ? 90
+            : (stage >= 8 ? -180 : (stage >= 7 ? 180 : -120));
     }
   }
   if (stage >= 8) {

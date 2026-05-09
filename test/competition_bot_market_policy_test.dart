@@ -25,6 +25,18 @@ void main() {
       );
     });
 
+    test('keeps zero-stack ride through S7 before the final market', () {
+      final rideTheBus = catalog.findById('ride_the_bus')!;
+      final gluttonousJester = catalog.findById('gluttonous_jester')!;
+
+      expect(
+        contestFullRunBotJesterScore(rideTheBus, stage: 7),
+        greaterThan(
+          contestFullRunBotJesterScore(gluttonousJester, stage: 7) + 40,
+        ),
+      );
+    });
+
     test(
       'keeps stacked ride valuable when it already survived confirmations',
       () {
