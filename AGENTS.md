@@ -55,6 +55,7 @@
 - 공모전 풀런봇이 고점수 구간에서 game over가 나면 봇 전용 난이도 완화나 보상 보정보다 먼저 중복 족보 확보 정책을 점검한다. 확정 타이밍, 손패 여유 칸 활용, 덱 상단 제어, 보드 이동/버림은 여러 줄이 동시에 점수화되는 보드 상태를 만들기 위한 수단으로 우선 조정한다.
 - 공모전 풀런봇 실행/실패/중단 뒤에는 WebDriver Chrome, ChromeDriver, Flutter web 서버가 남아 메모리를 잡지 않는지 확인한다. 봇 runner는 종료 trap에서 관련 프로세스를 정리하고, 새 풀런을 시작하기 전에도 남은 headless WebDriver 프로세스를 먼저 정리한다.
 - 공모전 풀런봇의 seed 기반 보정은 1회 game over만으로 평상시 전투 정책을 바꾸지 않는다. 평소에는 손패, 덱 상단, 보드 점유, 확정 preview, action trace를 기록하고, 같은 run에서 2회 이상 game over가 누적된 뒤에만 retry recovery 전용 보정 정책을 켠다.
+- 공모전 풀런봇은 같은 seed에서 2회 이상 game over가 난 뒤에는 실패 route의 action key만 피하지 말고, 이미 관측된 덱 순서를 retry recovery 후보 평가에 반영한다. 다음 덱 패가 이어 만들 족보와 중복줄 가능성을 배치 lookahead에 넣되, 무의미한 버림/이동/아이템 사용으로 대체하지 않는다.
 - 공모전 풀런봇의 S8 boss 같은 고점수 구간 안정화는 즉시 점수 후보만 키우는 방향으로 닫지 않는다. `potentialScore`가 이미 반영하는 현재 배치 이득에 더해, 완성 직전 라인 수, 서로 교차하는 유망 라인 수, 현재 손패 남은 타일로 다음 1-step 배치까지 이어질 가능성을 lookahead 후보 평가에 넣는 방향을 먼저 검토한다. 이는 bot 전용 QA 정책 보정이며, runtime 난이도나 production 밸런스 완화로 처리하지 않는다.
 - 후반 고점수 구간에서 공모전 풀런봇이 game over가 나면 봇 전용 가중치 숫자를 임의로 올리는 것보다, 족보와 중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다. 레벨링상 특정 구간에서 마켓 등장 확률을 올린 Jester/Item은 그 구간의 의도된 성장 수단일 수 있으므로, 풀런봇도 후반 안정화 후보로 해당 카드/아이템을 우선 구매하거나 약한 보유물을 판매 후 교체하는 정책을 검토한다.
 - 공모전 풀런봇 중후반 Station에서 골드, Jester, Item이 비어 보이면 새 런 초기 상태로 추정하지 않는다. 먼저 저장 checkpoint의 `runProgress`와 `stageStartRunProgress`, 복원 route, Jester/Item catalog 로드 완료 시점, 화면 facade를 대조하고 실제 policy/bot 재실행 전에 회귀 테스트로 막는다.

@@ -1774,6 +1774,70 @@ void main() {
     },
   );
 
+  test('retry placement lookahead uses known deck order after failures', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 1738,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 3,
+        bossModifier: RummiBossModifier.confirmCountTax,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.black, 4),
+        _tile(TileColor.red, 9),
+        _tile(TileColor.blue, 7),
+      ]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 7),
+        _tile(TileColor.black, 7),
+        _tile(TileColor.yellow, 7),
+        null,
+        null,
+        _tile(TileColor.red, 1),
+        _tile(TileColor.blue, 2),
+        _tile(TileColor.black, 3),
+        null,
+        null,
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.black, 11),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.blue, 1)],
+      eliminated: const [],
+    );
+
+    final action =
+        const CompetitionPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).bestPlacementForTest(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action?.type, CompetitionBattleActionType.place);
+    expect(action?.row, 0);
+    expect(action?.col, 4);
+  });
+
   test('later retries avoid repeating failed placement routes', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,

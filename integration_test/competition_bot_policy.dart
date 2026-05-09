@@ -184,6 +184,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
   static const int _strategicUtilityTargetScoreFloor = 1000;
   static const int _failedRouteActionPenalty = 900;
+  static const int _retryDeckLookaheadTileCount = 5;
   @override
   String get id => 'competition_planner_v2';
 
@@ -816,6 +817,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
                   jesters,
                 ),
                 jesters: jesters,
+                runtimeSnapshot: runtimeSnapshot,
               ),
               boardPressure: RummiPokerGridSession.countTilesOnBoard(
                 copy.board,
@@ -846,6 +848,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
                 jesters,
               ),
               jesters: jesters,
+              runtimeSnapshot: runtimeSnapshot,
             ),
             boardPressure: RummiPokerGridSession.countTilesOnBoard(copy.board),
             repeatsFailedRoute: _repeatsFailedRoute(action),
@@ -944,6 +947,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     required int placedCol,
     required int basePotential,
     required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
   }) {
     final lines = <List<Tile?>>[
       afterPlacement.board.row(placedRow),
@@ -980,11 +984,73 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       if (gain > bestNextGain) bestNextGain = gain;
     }
 
+    var bestDeckContinuation = 0;
+    if (_shouldUseRetryDeckLookahead(afterPlacement)) {
+      for (final tile in afterPlacement.deck.peekTop(
+        _retryDeckLookaheadTileCount,
+      )) {
+        final score = _bestDeckTileContinuationScore(
+          afterPlacement,
+          tile,
+          currentPotential: currentPotential,
+          jesters: jesters,
+          runtimeSnapshot: runtimeSnapshot,
+        );
+        if (score > bestDeckContinuation) bestDeckContinuation = score;
+      }
+    }
+
     final potentialGain = currentPotential - basePotential;
     return potentialGain +
         nearlyCompleteLines * 120 +
         promisingLines * 45 +
-        bestNextGain;
+        bestNextGain +
+        bestDeckContinuation;
+  }
+
+  bool _shouldUseRetryDeckLookahead(RummiPokerGridSession session) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.deck.isEmpty) return false;
+    return session.blind.bossModifier != null ||
+        session.blind.targetScore >= _strategicUtilityTargetScoreFloor;
+  }
+
+  int _bestDeckTileContinuationScore(
+    RummiPokerGridSession session,
+    Tile tile, {
+    required int currentPotential,
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    var best = 0;
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        if (session.board.cellAt(row, col) != null) continue;
+        final copy = session.copySnapshot();
+        copy.hand.add(tile);
+        if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+        final preview = copy.confirmAllFullLines(
+          jesters: jesters,
+          runtimeSnapshot: runtimeSnapshot,
+          applyScoreToBlind: false,
+        );
+        final immediateScore = preview.result.scoreAdded;
+        final lineCount = preview.result.lineBreakdowns.length;
+        final potentialGain =
+            _plannerBoardPotentialScoreForJesters(copy.board, jesters) -
+            currentPotential;
+        final touchedPotential = _touchedLinePotential(copy.board, row, col);
+        final score =
+            potentialGain +
+            touchedPotential ~/ 2 +
+            lineCount * 140 +
+            immediateScore * 2;
+        if (score > best) best = score;
+      }
+    }
+    return best;
   }
 
   CompetitionBattleAction? chooseBoardDiscard(
