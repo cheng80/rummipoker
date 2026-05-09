@@ -793,7 +793,7 @@ class _CompetitionFullPlayBot {
       case 'half_jester':
         score += 180;
       case 'ride_the_bus':
-        score += stateValue > 0 ? stateValue * 12 : -180;
+        score += stateValue > 0 ? stateValue * 12 : (stage >= 7 ? 260 : -180);
       case 'green_jester':
         score += stateValue > 0 ? stateValue * 12 : -260;
       case 'clever_jester':
@@ -834,9 +834,10 @@ class _CompetitionFullPlayBot {
         case 'droll_jester':
         case 'sly_jester':
           score += 120;
-        case 'ride_the_bus':
         case 'green_jester':
           score += stateValue > 0 ? 90 : -120;
+        case 'ride_the_bus':
+          score += stateValue > 0 ? 90 : (stage >= 7 ? 180 : -120);
       }
     }
     return score;
