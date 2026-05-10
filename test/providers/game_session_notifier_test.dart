@@ -1421,6 +1421,35 @@ void main() {
       expect(updated.runProgress!.marketModifiers.toolOfferRerollOffset, 0);
     });
 
+    test('rerollTileOffersFromState는 타일 후보만 다시 채운다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 45);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!
+        ..gold = 5
+        ..rerollCost = 5;
+      state.runProgress!.openShop(
+        catalog: const [],
+        rng: state.session!.runRandom,
+      );
+      state.runProgress!.tileOffers.clear();
+      notifier.markDirty();
+
+      final message = notifier.rerollTileOffersFromState();
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(message, isNull);
+      expect(updated.runProgress!.gold, 5);
+      expect(updated.runProgress!.rerollCost, 7);
+      expect(updated.runProgress!.shopOffers, isEmpty);
+      expect(updated.marketView!.tileOffers, hasLength(3));
+    });
+
     test('rerollShopFromState는 리롤 토큰을 골드 대신 소모한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

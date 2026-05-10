@@ -1842,6 +1842,21 @@ class RummiRunProgress {
     return true;
   }
 
+  bool rerollTileOffers({required Random rng}) {
+    final cost = effectiveRerollCost();
+    if (gold < cost) {
+      return false;
+    }
+    gold -= cost;
+    rerollCost += shopRerollCostStep;
+    marketModifiers = marketModifiers.copyWith(
+      nextRerollDiscount: 0,
+      firstRerollDiscount: 0,
+    );
+    _generateTileOffers(rng);
+    return true;
+  }
+
   bool rerollItemOffers({ItemPlacement placement = ItemPlacement.inventory}) {
     final cost = effectiveItemRerollCostFor(placement);
     if (gold < cost) {

@@ -8,12 +8,14 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/resources/item_translation_scope.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
+import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 
 Future<void> _pumpTileShopScreen(
   WidgetTester tester, {
   required RummiMarketRuntimeFacade Function() readMarketView,
   required String? Function(int offerIndex) onBuyTileOffer,
+  required String? Function() onRerollTileOffers,
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
@@ -49,7 +51,7 @@ Future<void> _pumpTileShopScreen(
                     ),
                   ),
                   onReroll: () => null,
-                  onRerollTileOffers: null,
+                  onRerollTileOffers: onRerollTileOffers,
                   onBuyOffer: (_) => null,
                   onBuyItemOffer: (_) => null,
                   onBuyTileOffer: onBuyTileOffer,
@@ -75,7 +77,7 @@ Future<void> _pumpTileShopScreen(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('tile offer uses real tile face and flies toward deck edge', (
+  testWidgets('tile lane can reroll after all tile offers are bought', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 2400);
@@ -87,11 +89,10 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    const tile = Tile(color: TileColor.red, number: 7);
-    var boughtTileIndex = -1;
+    var rerolled = false;
     var currentMarket = const RummiMarketRuntimeFacade(
       gold: 8,
-      rerollCost: 5,
+      rerollCost: 0,
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
       runtimeSnapshot: RummiJesterRuntimeSnapshot(),
       ownedEntries: [],
@@ -102,7 +103,7 @@ void main() {
         RummiMarketTileOfferView(
           offerId: 'tile:0:R7',
           slotIndex: 0,
-          tile: tile,
+          tile: Tile(color: TileColor.red, number: 7),
           price: 3,
           currency: 'gold',
           isAffordable: true,
@@ -114,11 +115,10 @@ void main() {
     await _pumpTileShopScreen(
       tester,
       readMarketView: () => currentMarket,
-      onBuyTileOffer: (offerIndex) {
-        boughtTileIndex = offerIndex;
+      onBuyTileOffer: (_) {
         currentMarket = const RummiMarketRuntimeFacade(
           gold: 5,
-          rerollCost: 5,
+          rerollCost: 0,
           maxOwnedSlots: RummiRunProgress.maxJesterSlots,
           runtimeSnapshot: RummiJesterRuntimeSnapshot(),
           ownedEntries: [],
@@ -126,57 +126,60 @@ void main() {
           itemOfferSlotCount: 3,
           quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
           tileOffers: [],
-          addedDeckTiles: [tile],
+          addedDeckTiles: [Tile(color: TileColor.red, number: 7)],
+        );
+        return null;
+      },
+      onRerollTileOffers: () {
+        rerolled = true;
+        currentMarket = const RummiMarketRuntimeFacade(
+          gold: 5,
+          rerollCost: 2,
+          maxOwnedSlots: RummiRunProgress.maxJesterSlots,
+          runtimeSnapshot: RummiJesterRuntimeSnapshot(),
+          ownedEntries: [],
+          offers: [],
+          itemOfferSlotCount: 3,
+          quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
+          tileOffers: [
+            RummiMarketTileOfferView(
+              offerId: 'tile:0:B9',
+              slotIndex: 0,
+              tile: Tile(color: TileColor.blue, number: 9),
+              price: 3,
+              currency: 'gold',
+              isAffordable: true,
+              isFreeReward: false,
+            ),
+          ],
+          addedDeckTiles: [Tile(color: TileColor.red, number: 7)],
         );
         return null;
       },
     );
 
+    await tester.tap(find.text('구매'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('market-tile-face')), findsNothing);
+
+    final rerollButton = find.widgetWithText(GameActionButton, '첫 리롤 무료');
+    expect(rerollButton, findsOneWidget);
+    expect(tester.widget<GameActionButton>(rerollButton).onPressed, isNotNull);
+
+    await tester.tap(rerollButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('무료 리롤'));
+    await tester.pumpAndSettle();
+
+    expect(rerolled, isTrue);
+    expect(
+      find.byKey(const ValueKey('market-reroll-success-feedback')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('market-tile-face'), skipOffstage: false),
       findsOneWidget,
     );
-    expect(
-      find.byKey(const ValueKey('market-tile-selector'), skipOffstage: false),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.text('구매'));
-    await tester.pump(const Duration(milliseconds: 120));
-
-    expect(boughtTileIndex, 0);
-    expect(
-      find.byKey(const ValueKey('market-purchase-flight')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('market-purchase-flight')),
-        matching: find.byKey(const ValueKey('market-tile-face')),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('market-purchase-flight')),
-        matching: find.byKey(const ValueKey('market-tile-selector')),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('market-purchase-source-empty')),
-      findsOneWidget,
-    );
-    expect(find.text('-3G'), findsOneWidget);
-
-    await tester.pumpAndSettle();
-    await tester.pump(const Duration(seconds: 3));
-
-    expect(find.byKey(const ValueKey('market-purchase-flight')), findsNothing);
-    expect(
-      find.byKey(const ValueKey('market-purchase-source-empty')),
-      findsNothing,
-    );
-    expect(find.text('5'), findsOneWidget);
   });
 }

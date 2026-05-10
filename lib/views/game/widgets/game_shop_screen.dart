@@ -171,6 +171,7 @@ class GameShopScreen extends StatefulWidget {
     required this.readMarketView,
     required this.onReroll,
     this.onRerollItemOffers,
+    this.onRerollTileOffers,
     required this.onBuyOffer,
     required this.onBuyItemOffer,
     required this.onBuyTileOffer,
@@ -193,6 +194,7 @@ class GameShopScreen extends StatefulWidget {
   final RummiMarketRuntimeFacade Function() readMarketView;
   final String? Function() onReroll;
   final String? Function(ItemPlacement placement)? onRerollItemOffers;
+  final String? Function()? onRerollTileOffers;
   final String? Function(int offerIndex) onBuyOffer;
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
   final String? Function(int offerIndex) onBuyTileOffer;
@@ -824,7 +826,12 @@ class _GameShopScreenState extends State<GameShopScreen>
 
     final placement = _placementForOfferLane(lane);
     if (placement != null && widget.onRerollItemOffers == null) return;
-    final failMessage = placement == null
+    if (lane == _MarketOfferLane.tile && widget.onRerollTileOffers == null) {
+      return;
+    }
+    final failMessage = lane == _MarketOfferLane.tile
+        ? widget.onRerollTileOffers!()
+        : placement == null
         ? widget.onReroll()
         : widget.onRerollItemOffers!(placement);
     if (failMessage != null) {
@@ -2178,6 +2185,12 @@ class _GameShopScreenState extends State<GameShopScreen>
                                               currentOfferLane ==
                                                   _MarketOfferLane.jester
                                               ? _reroll
+                                              : currentOfferLane ==
+                                                    _MarketOfferLane.tile
+                                              ? widget.onRerollTileOffers !=
+                                                        null
+                                                    ? _reroll
+                                                    : null
                                               : currentOfferLane !=
                                                         _MarketOfferLane.tile &&
                                                     widget.onRerollItemOffers !=

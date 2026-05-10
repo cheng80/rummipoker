@@ -653,6 +653,31 @@ class GameSessionNotifier
     return null;
   }
 
+  String? rerollTileOffersFromState({ItemCatalog? itemCatalog}) {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null) {
+      return '상점 진행 정보가 없습니다.';
+    }
+    final rerollItem = _nextOwnedMarketRerollItem(
+      catalog: itemCatalog,
+      runProgress: runProgress,
+    );
+    if (rerollItem != null) {
+      final result = ItemEffectRuntime.applyMarketRerollItem(
+        item: rerollItem,
+        runProgress: runProgress,
+      );
+      if (!result.isSuccess) return result.failMessage;
+    }
+    final ok = runProgress.rerollTileOffers(rng: session.runRandom);
+    if (!ok) {
+      return '리롤 골드가 부족합니다.';
+    }
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
   String? rerollShop({
     required List<RummiJesterCard> catalog,
     required Random rng,

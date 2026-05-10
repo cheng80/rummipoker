@@ -837,6 +837,24 @@ void main() {
     });
 
     test(
+      'tile reroll refills only tile offers and consumes first free reroll',
+      () {
+        final progress = RummiRunProgress()..gold = 5;
+        progress.openShop(catalog: const [], rng: Random(1));
+        progress.tileOffers.clear();
+
+        final rerolled = progress.rerollTileOffers(rng: Random(2));
+
+        expect(rerolled, isTrue);
+        expect(progress.gold, 5);
+        expect(progress.rerollCost, 7);
+        expect(progress.shopOffers, isEmpty);
+        expect(progress.tileOffers, hasLength(3));
+        expect(progress.marketModifiers.firstRerollDiscount, 0);
+      },
+    );
+
+    test(
       'facade is snapshot-based and requires re-creation after mutations',
       () {
         final progress = RummiRunProgress()
