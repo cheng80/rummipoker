@@ -262,6 +262,17 @@ Market collection audit r800:
 - affordability cashout 25G path: seen/bought coverage Jester 100%, Item 100%. 전체 Item은 163번째 entry에서 보이고 같은 entry에서 구매 완료. gold blocked 0회, capacity blocked 0회.
 - 해석: 현재 보강 후 “전체 catalog가 마켓에 보일 수 있는가/살 수 있는가”는 r800 누적 기준으로 닫혔다. 표준 path의 11,033회 Item gold blocked는 대부분 전체 수집 완료 이후 반복 구매 시도에서 나온 값이므로, 수집 가능성 병목으로 보지 않는다. 다음 가격/보상 조정은 전체 수집 coverage가 아니라 실제 플레이 proxy의 clear rate, 잔고, 구매 우선순위에서 별도로 판단한다.
 
+Economy choice comparison r20:
+
+- output: `logs/sim/economy_choice_comparison_20260511_r20/summary_matrix.json`
+- 조건: 20 fresh station paths per row, `progression_route_power`, `shop_slot_market_v9`, reward 0.40, price 2.2, first-reroll-free, growth access price.
+- `planner_v2` standard: none 65%, affordable v1 60%, affordable v2 60%. final gold avg 약 48~50G. unaffordable 0회.
+- `planner_v2` challenge: none 30%, affordable v1 30%, affordable v2 35%. final gold avg 약 26~28G. unaffordable 0회.
+- `contest_policy_v1` standard: none/v1/v2 모두 100%. final gold avg 약 39~40G. unaffordable 0회.
+- `contest_policy_v1` challenge: none 85%, affordable v1 90%, affordable v2 90%. final gold avg 약 10.8~12.5G. unaffordable 각 1회.
+- 해석: 현재 가장 큰 차이는 market choice mode가 아니라 bot policy다. `planner_v2`는 구매력 문제가 없어도 S1/S2/S6/S7 boss 등에서 많이 흔들리고, `contest_policy_v1`은 같은 경제에서 standard를 안정적으로 닫고 challenge도 85~90%까지 유지한다. choice mode는 challenge에서만 소폭 개선 신호가 있으나 r20 기준으로 가격/보상 변경 근거는 아니다.
+- follow-up: r80/r120 확대는 12축 전체가 아니라 `contest_policy_v1 + challenge + none/v1/v2`로 좁혀 별도 장기 수동 probe로 실행한다. 현재 Flutter test harness 기준 r80은 장기 실행 비용이 커 기본 test suite에는 넣지 않는다.
+
 Shuffle reference note:
 
 - `/Users/cheng80/Desktop/셔플.txt`를 링크 본문 대체 참고 자료로 확인했다.

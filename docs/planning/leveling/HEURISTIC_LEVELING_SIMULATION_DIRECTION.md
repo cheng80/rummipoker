@@ -62,6 +62,8 @@
 - 의미 있는 결과로 보려면 `seen coverage`, `bought coverage`, `gold blocked`, `capacity blocked`, `unseen/unbought ids`를 함께 본다. coverage만 높고 `gold blocked`가 높으면 확률 문제가 아니라 구매력 병목이다.
 - `gold blocked`는 전체 수집 완료 전 `pre_collection_*`와 전체 합계를 나눠 본다. 전체 수집 완료 뒤 반복 구매 시도에서 나온 blocked는 수집 가능성 실패로 보지 않는다.
 - 골드 병목 분리를 위해 표준 cashout path와 넉넉한 affordability path를 나란히 돌린다.
+- 구매 우선순위 비교는 먼저 `planner_v2`와 `contest_policy_v1`를 나란히 둔다. 같은 경제에서 clear가 크게 갈리면 가격/보상보다 bot policy 또는 플레이 판단 proxy 차이를 먼저 본다.
+- choice mode 확대는 r20에서 차이가 난 축만 r80/r120으로 좁혀 돌린다. 전체 12축 장기 실행은 기본 test suite가 아니라 수동 probe로 둔다.
 
 ## 다음 작업 기준
 
