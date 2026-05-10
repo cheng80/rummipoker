@@ -321,7 +321,7 @@ class _CompetitionFullPlayBot {
       reason: 'contest_full_run_bot must buy a Jester',
     );
     expect(boughtItem, isTrue, reason: 'contest_full_run_bot must buy an Item');
-    if (!config.resumeActiveRun) {
+    if (!config.resumeActiveRun && !config.tutorialsAlreadySeen) {
       expect(
         battleTutorialCompleted,
         isTrue,
@@ -431,7 +431,10 @@ class _CompetitionFullPlayBot {
     await _pumpUntilVisible(find.text('드로우'));
     await _completeTutorialIfVisible(
       kind: _ContestTutorialKind.battle,
-      waitForAppearance: !config.resumeActiveRun && !battleTutorialCompleted,
+      waitForAppearance:
+          !config.resumeActiveRun &&
+          !config.tutorialsAlreadySeen &&
+          !battleTutorialCompleted,
     );
     await _pumpUntilVisible(find.text('드로우'));
   }
@@ -724,7 +727,10 @@ class _CompetitionFullPlayBot {
   Future<void> _handleMarketEvidenceOnly({required int stage}) async {
     await _completeTutorialIfVisible(
       kind: _ContestTutorialKind.market,
-      waitForAppearance: !config.resumeActiveRun && !marketTutorialCompleted,
+      waitForAppearance:
+          !config.resumeActiveRun &&
+          !config.tutorialsAlreadySeen &&
+          !marketTutorialCompleted,
     );
     await _buyJestersIfPossible(stage);
     await _buyQuickSlotItemIfNeeded(stage);
