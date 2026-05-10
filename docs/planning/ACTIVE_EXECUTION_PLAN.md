@@ -121,8 +121,8 @@
 - `contest_full_run_bot` market policy는 `*_study` 같은 직접 족보 성장 아이템과 Tool/Gear lane 구매 후보를 평가하도록 code/test 동기화 완료
 - S8 boss 이후 `무한 도전 진입` CTA를 표시하고, S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율에 station 상승률을 적용한다. Station Select, 전투 HUD, 정산 라벨은 `무한 도전` 색상과 경고 톤으로 표시한다.
 - 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런` 적용 완료
-- `docs/submission_kit/` 제출 문서 세트 정리 완료. Android/iOS 실제 release artifact 생성은 아직 제출 전 별도 gate다.
-- 전투/마켓 튜토리얼 V1은 `tutorial_coach_mark`로 구현. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 리사이즈 후 focus 크기 눈검증은 아직 남아 있다.
+- `docs/submission_kit/` 제출 문서 세트 정리 완료. 이번 웹 제출 기준에서는 문서화로 닫고, Android/iOS 실제 release artifact 생성은 해당 플랫폼 제출 시 별도 gate로 둔다.
+- 전투/마켓 튜토리얼 V1은 `tutorial_coach_mark`로 구현. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 리사이즈 후 focus 위치/크기 눈검증도 완료했다.
 - 2026-05-10 추가 UI/Web 회귀 수정: icon/splash/OG image를 최신 asset으로 반영, 릴리즈 홈 메뉴를 도감 중심으로 정리, 웹 BGM unlock과 스크롤 중 묵음 회귀 수정, 정산 sheet의 `TextDecoration` 상속 밑줄과 `showGeneralDialog` PhoneFrame 폭 회귀 수정. 검증: `flutter analyze`, `flutter test test/views/game/widgets/game_cashout_widgets_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter build web --release --base-href "/rummipoker/"`.
 
 ## 3. 공모전 Done Evidence
@@ -158,7 +158,7 @@
 - Planet-like 직접 족보 성장 아이템군과 초과 클리어 대표 족보 성장 보너스: 반영 완료
 - `handGrowthStates(level/progress/requiredProgress)` 분리: 반영 완료. `playedHandCounts`는 완성 횟수/Jester 통계용으로 유지하고 점수 성장 source를 분리했다.
 - 타이틀의 `런 정보` 직접 진입점과 게임오버 런 요약/랜덤 도발 문구: 반영 완료. 정산 progress bar는 이번 범위에서 제외한다.
-- 타이틀 로고/서브타이틀, submission kit 문서화, 전투/마켓 튜토리얼 V1: 반영 완료. 튜토리얼 리사이즈 눈검증은 남김.
+- 타이틀 로고/서브타이틀, submission kit 문서화, 전투/마켓 튜토리얼 V1: 반영 완료. 튜토리얼 리사이즈 눈검증도 완료했다.
 - 새 run까지 이어지는 영구 계승은 이번 1차 범위에서 제외하고 별도 검토로 남긴다.
 - 공모전 풀런봇이 성장한 족보를 평가하도록 하는 bot 정책 동기화
 

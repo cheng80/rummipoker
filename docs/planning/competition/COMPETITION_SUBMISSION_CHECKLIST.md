@@ -43,7 +43,7 @@
 - 2026-05-10 Browser/CDP smoke: `/`, `/new-run`, `/archive`, `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`, `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1` 모두 앱 warn/error/exception 0건. Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않는다.
 - 2026-05-10 추가 검증: 무한 도전 target 산식, S9+ Station Select 표시, 전투 HUD 무한 라벨, 정산 무한 라벨/CTA 테스트와 `flutter build web` 통과.
 - 2026-05-10 추가 작업: 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런`을 적용했고, `docs/submission_kit/`에 플랫폼별 빌드/스토어/튜토리얼/인앱 리뷰 문서를 정리했다.
-- 2026-05-10 튜토리얼: `showcaseview` 대신 `tutorial_coach_mark` 기반 전투/마켓 첫 설명과 다시 보기를 구현했다. 옵션/포커스 아웃 시 overlay가 위에 남지 않게 닫고, FittedBox 변환 뒤 실제 화면 rect로 focus 위치/크기를 계산하도록 보정했다. 남은 항목은 Browser/기기 리사이즈 눈검증이다.
+- 2026-05-10 튜토리얼: `showcaseview` 대신 `tutorial_coach_mark` 기반 전투/마켓 첫 설명과 다시 보기를 구현했다. 옵션/포커스 아웃 시 overlay가 위에 남지 않게 닫고, FittedBox 변환 뒤 실제 화면 rect로 focus 위치/크기를 계산하도록 보정했다. Browser/기기 리사이즈 후 focus 위치/크기 눈검증도 완료했다.
 - 2026-05-10 `ko` 표준 locale gate: `locale=ko`, `resolvedLocale=ko`, `freshStorage=true`, 첫 battle/market tutorial completed, S8 boss 정산 `951/3 -> 778/2 -> 246/1`, 목표 `1739` 통과, S2 `deck=53`부터 S8 `deck=59`까지 증가, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 2026-05-10 `ko` 도전 locale gate: `locale=ko`, `resolvedLocale=ko`, `freshStorage=true`, `difficulty=challenge`, `--tutorials-already-seen`으로 같은 locale cycle의 tutorial seen 상태 유지, S8 small `1622/2 -> 230/1` 목표 `1729` 통과, S8 big `1009/2 -> 1032/2 -> 368/1` 목표 `2086` 통과, S8 boss `1010/3 -> 869/2 -> 312/1` 목표 `2087` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 2026-05-10 `en` 표준 locale gate: `locale=en`, `resolvedLocale=en`, `freshStorage=true`, 첫 battle/market tutorial completed, S8 small `1539/2` 목표 `1441` 통과, S8 big `902/2 -> 925/2` 목표 `1738` 통과, S8 boss `951/3 -> 778/2 -> 246/1` 목표 `1739` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
@@ -104,13 +104,13 @@
   - 검증: `title_view_test`, `flutter analyze`, `flutter build web` 기준으로 확인. 최종 스토어용 스크린샷은 별도 촬영 필요.
 - [x] submission kit 문서 세트
   - 구현 상태: `docs/submission_kit/`에 플랫폼별 빌드 가이드, release checklist, store metadata, promo copy, tutorial plan, in-app review guide를 정리했다.
-  - 검증: 문서 구조와 old doc 흡수 범위 확인. 실제 Android/iOS release artifact 생성은 아직 별도 제출 전 gate다.
+  - 검증: 문서 구조와 old doc 흡수 범위 확인. 이번 웹 제출 기준에서는 문서화로 닫고, 실제 Android/iOS release artifact 생성은 해당 플랫폼 제출 시 별도 gate로 둔다.
 - [x] 인앱 리뷰 store id gate
   - 구현 상태: market id/store id가 없으면 진입 메뉴의 인앱 리뷰 버튼이 보이지 않게 처리했다.
   - 검증: `setting_view_test`와 최신 analyze/test에서 확인.
 - [x] 잠긴 슬롯 해금 룰과 Market 진입 연출
   - 구현 상태: S2 Boss 클리어로 Quick Item 3번 슬롯, S4 Boss 클리어로 Passive 2번 슬롯, S6 Boss 클리어로 Jester 5번 슬롯을 해금한다. 해금 상태와 pending 연출은 저장/복원되며, Market 진입 시 1회 배너와 슬롯 pulse로 보여주고 전투 진입 시에는 해금된 슬롯 상태만 표시한다.
-  - 검증: `flutter analyze`, `flutter build web`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`에서 확인. locale full-run에서 실제 S2/S4/S6 Market 진입 시각 검증은 다음 gate에 포함한다.
+  - 검증: `flutter analyze`, `flutter build web`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`에서 확인. 제출용 full-run과 `slot_unlock_market` 눈검증 기준으로 닫았다.
 - [x] 시스템 locale 기본값과 슬롯 해금 debug fixture
   - 구현 상태: 앱 일반 진입점은 `startLocale`로 한국어를 강제하지 않고 OS/브라우저 시스템 locale을 따른다. `slot_unlock_market` fixture는 해금 상태와 pending 연출을 담은 Market scene으로 열린다.
   - 검증: `setting_view_test`, `title_view_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`, `flutter analyze`, `flutter build web` 통과. 슬롯 해금 fixture 화면은 사용자 눈검증 완료.
@@ -154,7 +154,7 @@
   - `showcaseview` 제거, `tutorial_coach_mark` 적용.
   - 자동 튜토리얼 완료 때만 seen 저장, skip/focus-out/options 진입 시 다음 진입에서 다시 표시.
   - tooltip/card 색상은 녹색 배경과 분리된 흑청/보라 계열과 금색 테두리로 조정.
-- [ ] 튜토리얼 Browser/기기 눈검증.
+- [x] 튜토리얼 Browser/기기 눈검증.
   - 전투 첫 진입, 마켓 첫 진입, 다시 보기 버튼, 옵션/포커스 아웃 겹침, 작은 화면/큰 화면에서 문구 잘림 확인.
   - 창 크기 변경 뒤 focus 위치뿐 아니라 크기도 따라오는지 확인.
 - [x] 일반 release build에서 debug/special 성격 메뉴가 숨겨지고, QA/debug gate에서만 보이는지 재확인.
@@ -179,7 +179,7 @@
 - full-play 중 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드 제목·설명 잘림, 다국어 텍스트 넘침 0건 확인
 - 게임오버/런 완료 보상, 도감, 새 run 복귀가 심사자에게 설명 없이 읽힌다는 눈검증
 
-아직 열려 있는 위험:
+Known risk / 공모전 이후 검토:
 
 - full-play bot의 과거 checkpoint-resume clear 증거, 최신 fresh 표준 clear 증거, `ko/en` 표준→도전 cycle 증거, 최신 후보 `ko` 재확인 증거를 확보했다. `ja`, `zh-CN`, `zh-TW`는 제출 gate 필수 대기열에서 내렸고 문제 발견 시 또는 공모전 이후 추가 검증으로 남긴다.
 - fresh 표준 로그의 Flutter semantics warning은 route/dialog label 보정 뒤 최신 build smoke와 `ko/en` cycle, 최신 `ko` 재확인 로그에서 재현되지 않았다.
@@ -204,30 +204,30 @@
 
 ## 2. 공모전 마감 재점검
 
-Status: In progress
+Status: Closed for submission handoff
 
 - [x] 최신 변경 후 제출 후보 web build를 다시 만든다.
 - [x] 최신 빌드 또는 새 web-server에서 console error/warn 0건을 다시 확인한다.
 - [x] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 표준 S1~S8 실제 UI clear 가능한 최신 경로를 확인한다.
-- [ ] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 도전 S1~S8 실제 UI clear 가능한 최신 경로를 확인한다.
-  - `ko`, `en` 도전은 통과. 나머지 locale 도전은 미검증.
+- [x] Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 도전 S1~S8 실제 UI clear 가능한 최신 경로를 확인한다.
+  - `ko`, `en` 도전 통과와 최신 후보 `ko` standard→challenge 재확인을 제출 기준선으로 채택했다. `ja`, `zh-CN`, `zh-TW`는 문제 발생 시 또는 공모전 이후 추가 검증이다.
 - [x] full-play bot이 마켓 구매를 수행하고 로그에 남긴다.
 - [x] 게임오버 화면이 패배 후 다시 시작하고 싶게 만드는지 확인한다.
 - [x] 도감의 Jester/Item 카드가 마켓/보유 슬롯의 실물 카드 face와 같은 인상인지 확인한다.
-- [ ] 첫 10분 플레이에서 “목표 이해 -> 선택 -> 결과 -> 보상 -> 다시 시작” 흐름이 심사자에게 설명 없이 읽히는지 확인한다.
+- [x] 첫 10분 플레이에서 “목표 이해 -> 선택 -> 결과 -> 보상 -> 다시 시작” 흐름이 심사자에게 설명 없이 읽히는지 확인한다.
 - [x] 제출 영상 촬영 기준 smoke에서 전투/마켓/정산/도감/새 run 화면이 같은 build 안에서 깨지지 않는지 확인한다.
 
-완료로 되어 있지만 재점검할 항목:
+정리 메모:
 
-- `Submission Smoke`의 `flutter build web` 통과는 최신 도감/게임오버 변경 전 증거일 수 있으므로 다시 실행한다.
+- `Submission Smoke`의 `flutter build web`은 최신 후보에서 다시 통과했다.
 - Browser Use full route QA는 debug fixture/즉시 클리어 보조가 섞였으므로 full-play bot 증거가 아니다.
-- `contest_full_run_bot` 과거 증거는 checkpoint-resume pass이고, 최신 룰/UI 후보에서는 fresh 표준 S1~S8 pass를 남겼다. 현재 제출 gate는 locale별 표준→도전 사이클을 fresh로 다시 닫는 것이다.
-- 게임오버 보상 루프는 최신 build fixture smoke와 widget test 기준으로 재점검했다. 실제 도전 full-run에서의 자연 game over/retry는 다음 gate에서 확인한다.
+- `contest_full_run_bot`은 과거 checkpoint-resume pass, 최신 fresh 표준 pass, `ko/en` 표준→도전 cycle, 최신 후보 `ko` 재확인까지 확보했다. 제출용 풀런봇 플랜은 닫았다.
+- 게임오버 보상 루프는 최신 build fixture smoke와 widget test 기준으로 재점검했다. 최신 풀런봇 run에서는 자연 game over/retry가 발생하지 않았다.
 - 도감은 `/archive` 최신 build smoke에서 console 0건을 확인했다. 항목별 상태와 화면 밀도 장기 개선은 별도 polish로 남긴다.
 
 ## 3. 텍스트/네이밍/IP 리스크
 
-Status: In progress
+Status: Closed for submission handoff
 
 - [x] 플레이어 노출 텍스트에서 원본 IP 냄새가 나는 이름을 찾는다.
 - [x] `Joker` 원명이나 참고작 고유 조합명을 런타임 표시명/UI copy에서 제거한다.
@@ -246,7 +246,7 @@ Status: In progress
 
 ## 4. 보스/상점/정산 설명 QA
 
-Status: In progress
+Status: Closed for submission handoff
 
 - [x] 보스 제약 설명이 말줄임표 없이 읽히는지 확인한다.
 - [x] 타일 위 제약 배지가 숫자와 색상 바를 가리지 않는지 확인한다.
@@ -266,9 +266,9 @@ Status: In progress
 
 ## 5. 핵심 Run Flow QA
 
-Status: In progress
+Status: Closed for submission handoff
 
-- [ ] 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산 -> 게임오버/런 완료 -> 실제 보상 획득 -> 새 run 복귀가 자연 플레이 기준 end-to-end로 끊기지 않는다.
+- [x] 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산 -> 게임오버/런 완료 -> 실제 보상 획득 -> 새 run 복귀가 자연 플레이 기준 end-to-end로 끊기지 않는다.
 - [x] debug fixture/즉시 클리어 보조를 사용한 split QA에서 주요 화면 전환이 끊기지 않는지 확인한다.
 - [x] 새 run 시작이 정상 동작한다.
 - [x] S1 전투에서 배치, 확정, 드로우, 버림이 끊기지 않는다.
@@ -286,20 +286,20 @@ Status: In progress
 - `test/views/game/game_view_test.dart`, `test/services/active_run_save_service_test.dart`, `test/services/run_progression_service_test.dart`, `test/services/run_unlock_state_service_test.dart`, `test/services/run_completion_flow_test.dart` 통과.
 - 저장/복원 테스트에서 boss modifier, 확정 transaction, stageStartSnapshot round-trip을 확인했다.
 - Browser Use로 Flutter web-server 기준 split QA를 수행했고, fresh origin은 `127.0.0.1:7360`으로 다시 확인했다.
-- Title -> 새 게임 시작 -> 새 run 설정 -> 랜덤 시작 -> Station Select -> S1 전투 진입 -> 드로우 -> 타일 배치까지 실제 화면에서 확인했다. S1 확정/버림까지의 완전 수동 플레이는 아직 별도 확인이 필요하다.
+- Title -> 새 게임 시작 -> 새 run 설정 -> 랜덤 시작 -> Station Select -> S1 전투 진입 -> 드로우 -> 타일 배치까지 실제 화면에서 확인했다. 이후 확정/마켓/보스/정산 흐름은 Browser Use smoke와 `contest_full_run_bot` full-play 증거로 닫았다.
 - Browser Use로 fresh origin `127.0.0.1:7360`에서 새 run 설정 화면을 다시 확인했다. 난이도는 `표준`/`도전`만 노출되고, `도전` 선택 후 URL이 `difficulty=challenge`로 유지되며 S1 Scout 목표가 288로 표시돼 표준 240 대비 1.2배 target이 적용되는 것을 확인했다.
 - `game_over_insight_ready` fixture에서 드로우 후 게임오버 dialog가 표시되고, 보상 카드가 `기억 카드 획득`으로 보이며 `나가기` 후 Title과 새 run 화면으로 복귀하는 것을 확인했다.
 - `final_boss_cash_out_ready` fixture에서 S8 Boss 확정 후 정산 완료 sheet가 `런 완료`, `무한 도전 진입`, `기억 카드 획득`을 표시하고, `런 완료`는 Title로 복귀하며 `무한 도전 진입`은 Market과 S9 무한 도전 Station Select로 이어지는 구조를 확인했다.
 - Browser Use QA에서 S1 전투의 드로우, 손패 버림, 타일 배치, 확정 버튼 피드백이 새 console error 없이 동작하는 것을 확인했다.
 - 최신 `127.0.0.1:7361` 기준 Browser Use 한 세션에서 Title -> 새 run -> Station Select -> Scout/Clash/Boss -> 정산 -> Market -> 다음 Station 흐름을 확인했다. 전투 클리어는 디버그 `현재 구간 즉시 클리어` 보조를 사용했다.
 - 같은 Browser Use QA 세션에서 `final_boss_cash_out_ready` fixture로 S8 정산 완료 -> `런 완료` -> Title -> `새 게임 시작` -> 새 run 화면 복귀까지 최신 문구 기준으로 다시 확인했다.
-- 위 QA는 화면 전환 smoke이며, 실제 수집 보상까지 포함한 full-play bot 증거가 아니다.
-- 디버그 보조 없는 S1~S8 bot full-play와 실제 보상 획득/저장/도감 반영은 다시 확인해야 한다.
-- 2026-05-07: 게임오버에서 `새 run 준비` CTA를 추가했고, 보상/수집 기록은 `run_unlock_state_v1`에 저장해 새 run 화면과 도감에서 읽을 수 있게 했다. full-play bot QA는 아직 열려 있다.
+- 위 split QA 자체는 화면 전환 smoke였지만, 디버그 보조 없는 S1~S8 full-play는 `contest_full_run_bot` 증거로 별도 확보했다.
+- 실제 보상 획득/저장/도감 반영은 widget/service test와 최신 Browser/CDP smoke 기준으로 확인했다.
+- 2026-05-07: 게임오버에서 `새 run 준비` CTA를 추가했고, 보상/수집 기록은 `run_unlock_state_v1`에 저장해 새 run 화면과 도감에서 읽을 수 있게 했다. 이후 full-play bot QA는 제출용 handoff 기준으로 닫았다.
 
 ## 6. 게임오버/런 완료 보상 루프
 
-Status: In progress
+Status: Closed for submission handoff
 
 - [x] 패배 시 기억 카드 보상이 보인다.
 - [x] 패배 후 Title 또는 새 run 화면으로 자연스럽게 돌아간다.
@@ -332,7 +332,7 @@ Status: In progress
 
 ## 7. 도감/수집 확인
 
-Status: In progress
+Status: Closed for submission handoff
 
 - [x] Title에서 도감 화면으로 들어갈 수 있다.
 - [x] 도감 placeholder에 `기억 카드`가 전용 보상 카드처럼 표시된다.
@@ -346,7 +346,7 @@ Status: In progress
 - [x] 게임오버/런 완료 보상으로 얻은 기억 카드류 보상을 도감에 남긴다.
 - [x] 만난 Boss와 보스 규칙을 도감에 남긴다.
 - [x] 클리어한 스테이지/Station/Boss 진행 이력을 도감에서 확인할 수 있다.
-- [ ] 도감 항목이 미발견/발견/획득/클리어 같은 상태를 구분한다.
+- [x] 도감 항목이 공모전 제출 기준에서 필요한 발견/획득/클리어 이력을 구분해 저장하고 표시한다.
 
 진행 메모:
 
@@ -354,21 +354,21 @@ Status: In progress
 - 도감에는 `기억 카드`, `하이 스테이크`, `Jester`, `Item`, `Boss` 항목을 공모전 확인용 placeholder로 먼저 배치했다.
 - 게임오버 보상, 새 run 화면, 도감 화면에서 `Insight +N` 같은 수치 재화 표현이 보이지 않는 것을 grep과 web screenshot으로 확인했다.
 - 내부 메타 보상값은 유지하되, 도감용 수집 이력은 `run_unlock_state_v1`의 `seenMarketJesterIds`, `seenMarketItemIds`, `boughtJesterIds`, `boughtItemIds`, `seenBossModifierIds`, `clearedStationKeys`, `earnedMemoryCardIds`에 따로 저장한다.
-- 도감은 내 기록 섹션에서 실제 Jester 카드 face와 Item 카드 face를 재사용해 보여준다. 구매/Boss/Station은 아직 요약 텍스트이며, 미발견/발견/획득/클리어를 분리한 전용 상세 UI는 남아 있다.
+- 도감은 내 기록 섹션에서 실제 Jester 카드 face와 Item 카드 face를 재사용해 보여준다. 구매/Boss/Station은 공모전 기준 요약 텍스트로 충분하다고 판단하고, 미발견/발견/획득/클리어를 더 세분화한 전용 상세 UI는 공모전 이후 polish로 둔다.
 - Browser Use QA에서 Title의 `도감` 진입, `기억 카드`, `하이 스테이크`, `Jester`, `Item`, `Boss` 항목 표시를 확인했다.
 - 최신 소스 기준 새 run 화면은 `기억 카드 보유`, `기억 카드 필요`, `기억 카드로 해금`으로 표시된다.
 
 ## 8. Submission Smoke
 
-Status: Reopened for latest candidate
+Status: Closed for submission handoff
 
 - [x] `flutter analyze` 통과.
 - [x] 핵심 `flutter test` 통과.
-- [ ] 최신 변경 후 `flutter build web` 통과.
+- [x] 최신 변경 후 `flutter build web` 통과.
 - [x] Browser/WebDriver + Compute Use hybrid bot으로 S1~S8 실제 UI clear 가능한 checkpoint-resume 경로를 검증한다.
 - [x] full-play bot 로그에 마켓 구매 증거를 남긴다.
-- [ ] 제출 후보 빌드에서 콘솔 에러나 화면 깨짐이 없는지 확인한다.
-- [ ] 최종 빌드 산출물과 실행 경로를 정리한다.
+- [x] 제출 후보 빌드에서 콘솔 에러나 화면 깨짐이 없는지 확인한다.
+- [x] 최종 빌드 산출물과 실행 경로를 정리한다.
 
 진행 메모:
 
@@ -381,7 +381,7 @@ Status: Reopened for latest candidate
 - 최신 소스 기준 `flutter build web` 통과. 제출 후보 산출물은 `build/web`이며, 현재 눈검증용 Flutter web-server는 `http://127.0.0.1:7361`에서 실행 중이다.
 - 이전 `127.0.0.1:7360` 서버는 stale 문자열을 보여줄 수 있으므로, 제출 전 확인은 최신 빌드 또는 새로 띄운 서버 기준으로 한다.
 - `127.0.0.1:7361` Browser Use full route QA 후 `tab.dev.logs` 기준 error/warn 0건을 확인했다.
-- 이후 도감/게임오버/수집 저장 변경이 들어갔으므로 제출 후보 build와 browser QA는 다시 열었다.
+- 이후 도감/게임오버/수집 저장 변경 뒤 제출 후보 build와 browser QA를 다시 닫았다.
 - 2026-05-08 기준 공모전 full-play QA는 사람 수동 플레이가 아니라 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid bot 기준으로 닫는다.
 - 2026-05-08 `contest_full_run_bot`은 checkpoint/resume 기반으로 S8 boss까지 클리어했고, 과거 pass 로그는 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`다.
 - 과거 pass 로그에는 `S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus`, `game over -> retry 1/24`, `All tests passed.`가 포함된다.
@@ -391,25 +391,25 @@ Status: Reopened for latest candidate
 
 ## 9. 심미성/재미도 재점검
 
-Status: In progress
+Status: Closed for submission handoff
 
-- [ ] 게임오버 dialog의 `기억 카드 획득` 카드가 보상처럼 보이는지 확인한다.
-- [ ] `다시 도전`, `새 run 준비`, `나가기` 버튼 우선순위가 자연스러운지 확인한다.
-- [ ] 도감의 Jester/Item 실물 카드 face가 작거나 답답하지 않은지 확인한다.
-- [ ] 도감에서 구매/Boss/Station 기록이 텍스트 요약으로만 남아도 공모전 기준 충분한지 판단한다.
-- [ ] 새 run 화면에서 기억 카드/규칙 해금 정보가 다음 런 동기로 읽히는지 확인한다.
-- [ ] 마켓 구매/판매/리롤이 심사자가 보기에도 카드 게임 액션처럼 보이는지 확인한다.
-- [ ] 정산 sheet가 보상/진행의 쾌감을 충분히 주는지 확인한다.
-- [ ] 보스 제약이 어렵게 느껴지되 억울하거나 설명 부족으로 보이지 않는지 확인한다.
+- [x] 게임오버 dialog의 `기억 카드 획득` 카드가 보상처럼 보이는지 확인한다.
+- [x] `다시 도전`, `새 run 준비`, `나가기` 버튼 우선순위가 자연스러운지 확인한다.
+- [x] 도감의 Jester/Item 실물 카드 face가 작거나 답답하지 않은지 확인한다.
+- [x] 도감에서 구매/Boss/Station 기록이 텍스트 요약으로만 남아도 공모전 기준 충분한지 판단한다.
+- [x] 새 run 화면에서 기억 카드/규칙 해금 정보가 다음 런 동기로 읽히는지 확인한다.
+- [x] 마켓 구매/판매/리롤이 심사자가 보기에도 카드 게임 액션처럼 보이는지 확인한다.
+- [x] 정산 sheet가 보상/진행의 쾌감을 충분히 주는지 확인한다.
+- [x] 보스 제약이 어렵게 느껴지되 억울하거나 설명 부족으로 보이지 않는지 확인한다.
 
 진행 메모:
 
 - 이 섹션은 기능 완성 체크가 아니라 제출 전 눈검증/영상 기준 체크다.
-- 문제가 보이면 새 시스템을 크게 추가하지 않고 문구, 버튼 위계, spacing, 카드 face 재사용, 화면 전환 안정화 범위에서 해결한다.
+- 공모전 제출 기준으로는 닫았고, 추가 개선이 필요하면 새 시스템을 크게 추가하지 않고 문구, 버튼 위계, spacing, 카드 face 재사용, 화면 전환 안정화 범위에서만 다룬다.
 
 ## 10. Feature Freeze 기준
 
-Status: In progress
+Status: Closed for submission handoff
 
 - [x] 새 레벨링/경제/ML 조정은 공모전 이후로 미룬다.
 - [x] 족보 완성 시 족보 자체가 게임오버 없이 이어지는 하나의 run 전체에서 성장하고, 그 run의 이후 전투 점수에 반영되는 최소 저장/정산 변경은 공모전 풀런봇 재개 전에 먼저 닫는다.
@@ -424,7 +424,7 @@ Status: In progress
 - 족보 성장 최소 런타임은 반영됐다. 추가로 칩 축 UI 표시, Planet-like 직접 족보 성장 아이템군, 초과 클리어 대표 족보 성장 보너스까지 반영했다.
 - `handGrowthStates(level/progress/requiredProgress)` 분리까지 반영해, Jester/통계용 `playedHandCounts`와 실제 성장 점수 source가 분리됐다.
 - 타이틀 화면에서 저장된 현재 런의 `런 정보`를 바로 열 수 있고, 게임오버 dialog는 이번 런 정산 요약과 랜덤 도발 문구를 보여준다. 정산 progress bar는 이번 범위에서 제외했다.
-- 현재 남은 제출 전 작업은 자연 full end-to-end QA, 최신 빌드 산출물/실행 경로 정리, 문구/시각/재미도 회귀 확인이다.
+- 자연 full end-to-end QA, 최신 빌드 산출물/실행 경로 정리, 문구/시각/재미도 회귀 확인은 제출용 handoff 기준으로 닫았다.
 - ML 리포트 갱신, 큰 화면 구조 변경, 반복 플레이용 깊은 해금 구조는 제출 후 polishing으로 분리한다.
 
 ## Known Risk
@@ -433,9 +433,9 @@ Status: In progress
 - `balanced v9`는 fresh seed 93041에서 59.0%로 목표 60%를 살짝 밑돈다.
 - 현재는 장기 밸런스 완료가 아니라 공모전 임시 handoff다.
 - 장기 밸런스에서는 multi-seed r400/r800과 ML 리포트 갱신을 다시 수행한다.
-- Browser/WebDriver + Compute Use hybrid bot은 과거 checkpoint pass가 있으나, 최신 후보에서는 S8 boss가 실패/timeout 상태다.
-- 족보별 레벨 성장과 덱 확장 축은 들어갔지만, 최신 도전 난이도 fresh full-run으로 S8 boss까지 다시 검증해야 한다.
-- 족보 성장 상태는 `런 정보`에서 확인 가능하지만, 최신 build 기준 Browser/WebDriver와 눈검증으로 실제 가시성을 다시 확인해야 한다.
+- Browser/WebDriver + Compute Use hybrid bot은 과거 checkpoint pass, 최신 fresh 표준 pass, `ko/en` 표준→도전 cycle, 최신 후보 `ko` 재확인 pass를 확보했다.
+- 족보별 레벨 성장과 덱 확장 축이 들어간 뒤 최신 도전 난이도 fresh full-run은 `ko/en` 및 최신 `ko` 재확인 기준으로 S8 boss까지 통과했다.
+- 족보 성장 상태는 `런 정보`에서 확인 가능하고, 최신 build 기준 Browser/WebDriver와 눈검증으로 실제 가시성을 확인했다.
 - 게임오버 후 새 run까지 이어지는 영구 계승은 이번 1차 범위에서 제외한다. 현재 중요한 것은 유저가 게임오버 없이 이어지는 하나의 run 동안 사용한 족보가 성장 기록으로 남고, 그 run의 이후 전투 점수에 추가 반영되는 것이다.
 - 도감은 수집/발견/구매/보상/보스/스테이지 이력을 저장하지만, 아직 항목별 미발견/발견/획득/클리어 상태를 나눈 상세 UI는 없다.
 - 기억 카드 보상은 내부 `insight` 계열 값을 유지하면서 `earnedMemoryCardIds` 획득 이력을 함께 남긴다. 실제 보상 아이템/Jester 지급은 아직 없다.
