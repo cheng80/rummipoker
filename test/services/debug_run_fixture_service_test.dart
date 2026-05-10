@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
@@ -21,6 +22,17 @@ void main() {
     final fixtures = DebugRunFixtureService.fixtures;
     final fixture = fixtures.where(
       (entry) => entry.id == DebugRunFixtureService.stage2MarketResume,
+    );
+
+    expect(fixture, isNotEmpty);
+    expect(fixture.single.label, isNotEmpty);
+    expect(fixture.single.description, isNotEmpty);
+  });
+
+  test('fixture registry exposes slot unlock market entry', () {
+    final fixtures = DebugRunFixtureService.fixtures;
+    final fixture = fixtures.where(
+      (entry) => entry.id == DebugRunFixtureService.slotUnlockMarket,
     );
 
     expect(fixture, isNotEmpty);
@@ -65,6 +77,27 @@ void main() {
       ['green_jester', 'popcorn'],
     );
   });
+
+  test(
+    'slot unlock market fixture opens pending unlock presentation state',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.slotUnlockMarket,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.shop);
+      expect(fixture.runProgress.stageIndex, 6);
+      expect(fixture.runProgress.jesterSlotCapacity(), 5);
+      expect(fixture.runProgress.quickSlotCapacity(), 3);
+      expect(fixture.runProgress.passiveRelicCapacity(), 2);
+      expect(fixture.runProgress.snapshotPendingSlotUnlockPresentations(), {
+        RummiSlotUnlockKind.jester,
+        RummiSlotUnlockKind.quickSlot,
+        RummiSlotUnlockKind.passiveRelic,
+      });
+    },
+  );
 
   test(
     'deck needle battle fixture starts with quick slot item and known deck top',

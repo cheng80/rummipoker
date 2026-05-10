@@ -38,6 +38,7 @@ class DebugRunFixtureService {
   static const String handCapacityDeckControlBattle =
       'hand_capacity_deck_control_battle';
   static const String marketModifierShop = 'market_modifier_shop';
+  static const String slotUnlockMarket = 'slot_unlock_market';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
   static const String gameOverInsightReady = 'game_over_insight_ready';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
@@ -87,6 +88,12 @@ class DebugRunFixtureService {
       label: 'Market Modifier 상점',
       description: '리롤/구매 할인 + Item offer 4칸 검증용',
       builder: _buildMarketModifierShop,
+    ),
+    DebugRunFixtureDefinition(
+      id: slotUnlockMarket,
+      label: '슬롯 해금 Market',
+      description: 'S2/S4/S6 Boss 보상 슬롯 해금 배너와 Jester/Item/Passive 열린 상태 검증용',
+      builder: _buildSlotUnlockMarket,
     ),
     DebugRunFixtureDefinition(
       id: safetyNetExpiryGuard,
@@ -546,6 +553,27 @@ class DebugRunFixtureService {
       session: base.session.copySnapshot(),
       runProgress: runProgress,
       stageStartSnapshot: base.stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildSlotUnlockMarket() {
+    final base = _buildStage2MarketResume();
+    final runProgress = base.runProgress.copySnapshot()
+      ..stageIndex = 6
+      ..gold = 64;
+    runProgress.unlockSlotCapacity(RummiSlotUnlockKind.quickSlot);
+    runProgress.unlockSlotCapacity(RummiSlotUnlockKind.passiveRelic);
+    runProgress.unlockSlotCapacity(RummiSlotUnlockKind.jester);
+
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
     );
   }
 
