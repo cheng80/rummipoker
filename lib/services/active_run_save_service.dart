@@ -285,6 +285,10 @@ class SavedRunProgressData {
     this.addedDeckTiles = const [],
     this.tileOffers = const [],
     this.pendingBossTileReward = false,
+    this.unlockedJesterSlots,
+    this.unlockedQuickSlotCapacity,
+    this.unlockedPassiveRelicCapacity,
+    this.pendingSlotUnlockPresentations = const <String>[],
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
     this.seenMarketJesterIds = const <String>[],
@@ -320,6 +324,10 @@ class SavedRunProgressData {
   final List<Map<String, dynamic>> addedDeckTiles;
   final List<Map<String, dynamic>> tileOffers;
   final bool pendingBossTileReward;
+  final int? unlockedJesterSlots;
+  final int? unlockedQuickSlotCapacity;
+  final int? unlockedPassiveRelicCapacity;
+  final List<String> pendingSlotUnlockPresentations;
   final RunInventoryState itemInventory;
   final RummiMarketModifierState marketModifiers;
   final List<String> seenMarketJesterIds;
@@ -350,6 +358,12 @@ class SavedRunProgressData {
     'addedDeckTiles': addedDeckTiles,
     'tileOffers': tileOffers,
     'pendingBossTileReward': pendingBossTileReward,
+    if (unlockedJesterSlots != null) 'unlockedJesterSlots': unlockedJesterSlots,
+    if (unlockedQuickSlotCapacity != null)
+      'unlockedQuickSlotCapacity': unlockedQuickSlotCapacity,
+    if (unlockedPassiveRelicCapacity != null)
+      'unlockedPassiveRelicCapacity': unlockedPassiveRelicCapacity,
+    'pendingSlotUnlockPresentations': pendingSlotUnlockPresentations,
     'itemInventory': itemInventory.toJson(),
     'marketModifiers': marketModifiers.toJson(),
     'seenMarketJesterIds': seenMarketJesterIds,
@@ -395,6 +409,14 @@ class SavedRunProgressData {
       addedDeckTiles: _jsonTileList(json['addedDeckTiles']),
       tileOffers: _jsonTileList(json['tileOffers']),
       pendingBossTileReward: json['pendingBossTileReward'] as bool? ?? false,
+      unlockedJesterSlots: (json['unlockedJesterSlots'] as num?)?.toInt(),
+      unlockedQuickSlotCapacity: (json['unlockedQuickSlotCapacity'] as num?)
+          ?.toInt(),
+      unlockedPassiveRelicCapacity:
+          (json['unlockedPassiveRelicCapacity'] as num?)?.toInt(),
+      pendingSlotUnlockPresentations: _jsonStringList(
+        json['pendingSlotUnlockPresentations'],
+      ),
       itemInventory: RunInventoryState.fromJson(
         (json['itemInventory'] as Map?)?.cast<String, dynamic>() ??
             const <String, dynamic>{},
@@ -782,6 +804,15 @@ class ActiveRunSaveService {
           .map((tile) => tile.toJson())
           .toList(growable: false),
       pendingBossTileReward: runProgress.pendingBossTileReward,
+      unlockedJesterSlots: runProgress.unlockedJesterSlots,
+      unlockedQuickSlotCapacity: runProgress.unlockedQuickSlotCapacity,
+      unlockedPassiveRelicCapacity: runProgress.unlockedPassiveRelicCapacity,
+      pendingSlotUnlockPresentations:
+          runProgress
+              .snapshotPendingSlotUnlockPresentations()
+              .map((kind) => kind.persistenceValue)
+              .toList()
+            ..sort(),
       itemInventory: runProgress.itemInventory,
       marketModifiers: runProgress.marketModifiers,
       seenMarketJesterIds: runProgress.seenMarketJesterIds.toList()..sort(),
@@ -896,6 +927,13 @@ class ActiveRunSaveService {
           .toList(growable: false),
       tileOffers: data.tileOffers.map(Tile.fromJson).toList(growable: false),
       pendingBossTileReward: data.pendingBossTileReward,
+      unlockedJesterSlots: data.unlockedJesterSlots,
+      unlockedQuickSlotCapacity: data.unlockedQuickSlotCapacity,
+      unlockedPassiveRelicCapacity: data.unlockedPassiveRelicCapacity,
+      pendingSlotUnlockPresentations: data.pendingSlotUnlockPresentations
+          .map(RummiSlotUnlockKind.fromPersistenceValue)
+          .whereType<RummiSlotUnlockKind>()
+          .toSet(),
       itemInventory: data.itemInventory,
       marketModifiers: data.marketModifiers,
       seenMarketJesterIds: data.seenMarketJesterIds.toSet(),

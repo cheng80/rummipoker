@@ -531,6 +531,7 @@ class GameSessionNotifier
           runProgress: runProgress,
         );
       }
+      runProgress.claimBossSlotUnlockRewards();
       runProgress.recordSeenBossModifier(session.blind.bossModifier?.id);
       runProgress.recordClearedStation(runProgress.stageIndex);
     }
@@ -599,6 +600,16 @@ class GameSessionNotifier
         revision: state.revision + 1,
       ),
     );
+  }
+
+  void markSlotUnlockPresentationShown() {
+    final runProgress = state.runProgress;
+    if (runProgress == null ||
+        runProgress.snapshotPendingSlotUnlockPresentations().isEmpty) {
+      return;
+    }
+    runProgress.clearPendingSlotUnlockPresentations();
+    _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
   String? rerollShopFromState({ItemCatalog? itemCatalog}) {

@@ -885,11 +885,11 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
         : _tab;
     final unlockedQuickSlots = max(
       kBattleBaseUnlockedQuickSlots,
-      quickSlots.length,
+      battle.quickSlotCapacity,
     );
     final unlockedPassiveSlots = max(
       kBattleBaseUnlockedPassiveSlots,
-      passiveSlots.length,
+      battle.passiveRelicCapacity,
     );
     return DecoratedBox(
       decoration: BoxDecoration(

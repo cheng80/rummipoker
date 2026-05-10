@@ -152,6 +152,8 @@ class RummiBattleRuntimeFacade {
     this.bossModifier,
     this.scoringPreview,
     this.itemSlots = const [],
+    this.quickSlotCapacity = RunInventoryState.defaultQuickSlotCapacity,
+    this.passiveRelicCapacity = RunInventoryState.defaultPassiveRelicCapacity,
   });
 
   factory RummiBattleRuntimeFacade.fromRuntime({
@@ -213,12 +215,16 @@ class RummiBattleRuntimeFacade {
       bossModifier: session.blind.bossModifier,
       scoringPreview: scoringPreview,
       itemSlots: const [],
+      quickSlotCapacity: runProgress.quickSlotCapacity(),
+      passiveRelicCapacity: runProgress.passiveRelicCapacity(),
     );
   }
 
   RummiBattleRuntimeFacade withItemSlots(
-    List<RummiBattleItemSlotView> nextItemSlots,
-  ) {
+    List<RummiBattleItemSlotView> nextItemSlots, {
+    int? quickSlotCapacity,
+    int? passiveRelicCapacity,
+  }) {
     return RummiBattleRuntimeFacade(
       stageIndex: stageIndex,
       currentBlindTierIndex: currentBlindTierIndex,
@@ -231,6 +237,8 @@ class RummiBattleRuntimeFacade {
       bossModifier: bossModifier,
       scoringPreview: scoringPreview,
       itemSlots: List<RummiBattleItemSlotView>.unmodifiable(nextItemSlots),
+      quickSlotCapacity: quickSlotCapacity ?? this.quickSlotCapacity,
+      passiveRelicCapacity: passiveRelicCapacity ?? this.passiveRelicCapacity,
     );
   }
 
@@ -245,6 +253,8 @@ class RummiBattleRuntimeFacade {
   final RummiBossModifier? bossModifier;
   final RummiScoringPreview? scoringPreview;
   final List<RummiBattleItemSlotView> itemSlots;
+  final int quickSlotCapacity;
+  final int passiveRelicCapacity;
 
   bool isTileConstrained(Tile tile) => bossModifier?.affectsTile(tile) ?? false;
 }

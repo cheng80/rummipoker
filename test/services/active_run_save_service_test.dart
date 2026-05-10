@@ -137,6 +137,10 @@ void main() {
             ],
             statefulValuesBySlot: <String, int>{'0': 2},
             playedHandCounts: <String, int>{'straight': 1},
+            unlockedJesterSlots: 5,
+            unlockedQuickSlotCapacity: 3,
+            unlockedPassiveRelicCapacity: 2,
+            pendingSlotUnlockPresentations: <String>['jester', 'passiveRelic'],
             itemInventory: RunInventoryState(
               ownedItems: <OwnedItemEntry>[
                 OwnedItemEntry(
@@ -235,6 +239,13 @@ void main() {
         expect(restored.runProgress.marketModifiers.gearOfferRerollOffset, 7);
         expect(restored.runProgress.marketModifiers.consumedItemOfferIds, [
           'board_scrap',
+        ]);
+        expect(restored.runProgress.unlockedJesterSlots, 5);
+        expect(restored.runProgress.unlockedQuickSlotCapacity, 3);
+        expect(restored.runProgress.unlockedPassiveRelicCapacity, 2);
+        expect(restored.runProgress.pendingSlotUnlockPresentations, [
+          'jester',
+          'passiveRelic',
         ]);
         expect(restored.session.blind['boardMovesRemaining'], 1);
         expect(restored.session.blind['boardMovesMax'], 3);

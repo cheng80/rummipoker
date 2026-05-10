@@ -708,7 +708,7 @@ void main() {
       );
     });
 
-    test('base run leaves the fifth jester slot locked for future unlocks', () {
+    test('base run leaves the fifth jester slot locked until boss reward', () {
       final progress = RummiRunProgress()
         ..gold = 20
         ..ownedJesters.addAll([
@@ -731,6 +731,42 @@ void main() {
       expect(progress.jesterSlotCapacity(), 4);
       expect(progress.buyOffer(0), isFalse);
       expect(progress.ownedJesters.length, 4);
+
+      progress
+        ..stageIndex = 6
+        ..claimBossSlotUnlockRewards();
+
+      final unlockedFacade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+      expect(progress.jesterSlotCapacity(), 5);
+      expect(unlockedFacade.jesterSlotCapacity, 5);
+      expect(
+        unlockedFacade.pendingSlotUnlockPresentations,
+        contains(RummiSlotUnlockKind.jester),
+      );
+      expect(progress.buyOffer(0), isTrue);
+      expect(progress.ownedJesters.length, 5);
+    });
+
+    test('boss slot rewards unlock quick and passive capacities', () {
+      final progress = RummiRunProgress();
+
+      progress
+        ..stageIndex = 2
+        ..claimBossSlotUnlockRewards();
+      expect(progress.quickSlotCapacity(), 3);
+      expect(
+        progress.snapshotPendingSlotUnlockPresentations(),
+        contains(RummiSlotUnlockKind.quickSlot),
+      );
+
+      progress
+        ..stageIndex = 4
+        ..claimBossSlotUnlockRewards();
+      expect(progress.passiveRelicCapacity(), 2);
+      expect(
+        progress.snapshotPendingSlotUnlockPresentations(),
+        contains(RummiSlotUnlockKind.passiveRelic),
+      );
     });
 
     test('boss trophy next-market jester slot applies for one market', () {

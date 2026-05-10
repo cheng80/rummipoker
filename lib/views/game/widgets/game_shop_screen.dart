@@ -177,6 +177,7 @@ class GameShopScreen extends StatefulWidget {
     required this.onUseMarketItem,
     required this.onSellOwnedJester,
     required this.onSellMarketItem,
+    this.onSlotUnlockPresentationShown,
     required this.onStateChanged,
     required this.onOpenSettings,
     required this.onExitToTitle,
@@ -197,6 +198,7 @@ class GameShopScreen extends StatefulWidget {
   final String? Function(ItemDefinition item) onUseMarketItem;
   final bool Function(int ownedIndex) onSellOwnedJester;
   final bool Function(ItemDefinition item) onSellMarketItem;
+  final Future<void> Function()? onSlotUnlockPresentationShown;
   final Future<void> Function() onStateChanged;
   final Future<void> Function() onOpenSettings;
   final Future<void> Function() onExitToTitle;
@@ -253,6 +255,10 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _marketRerollFeedbackTick = 0;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
+  bool _slotUnlockPresentationScheduled = false;
+  bool _slotUnlockBannerVisible = false;
+  Set<RummiSlotUnlockKind> _activeSlotUnlockPresentation =
+      <RummiSlotUnlockKind>{};
   Future<void> _pendingStateSave = Future<void>.value();
 
   RummiMarketRuntimeFacade get _market => widget.readMarketView();
@@ -282,6 +288,26 @@ class _GameShopScreenState extends State<GameShopScreen>
   }
 
   Future<void> _flushStateSave() => _pendingStateSave;
+
+  void _scheduleSlotUnlockPresentationIfNeeded(
+    RummiMarketRuntimeFacade market,
+  ) {
+    if (_slotUnlockPresentationScheduled ||
+        market.pendingSlotUnlockPresentations.isEmpty) {
+      return;
+    }
+    _slotUnlockPresentationScheduled = true;
+    _activeSlotUnlockPresentation = market.pendingSlotUnlockPresentations;
+    _slotUnlockBannerVisible = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future<void>.delayed(const Duration(milliseconds: 850));
+      if (!mounted) return;
+      await widget.onSlotUnlockPresentationShown?.call();
+      await Future<void>.delayed(const Duration(milliseconds: 1250));
+      if (!mounted) return;
+      setState(() => _slotUnlockBannerVisible = false);
+    });
+  }
 
   void _scheduleMarketTutorialIfNeeded() {
     if (_marketTutorialScheduled ||
@@ -1632,6 +1658,7 @@ class _GameShopScreenState extends State<GameShopScreen>
             slotIndex: selectedOwned.slotIndex,
           );
 
+    _scheduleSlotUnlockPresentationIfNeeded(market);
     _scheduleMarketTutorialIfNeeded();
     return PhoneFrameScaffold(
       child: _MarketEntryMotion(
@@ -1766,10 +1793,20 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                       'J${index + 1}';
                                               final locked =
                                                   index >=
-                                                  RummiRunProgress
-                                                      .baseUnlockedJesterSlots;
+                                                  market.jesterSlotCapacity;
+                                              final recentlyUnlocked =
+                                                  market
+                                                      .pendingSlotUnlockPresentations
+                                                      .contains(
+                                                        RummiSlotUnlockKind
+                                                            .jester,
+                                                      ) &&
+                                                  index ==
+                                                      market.jesterSlotCapacity -
+                                                          1;
                                               final child = _MarketSlotPulse(
-                                                active: pulse,
+                                                active:
+                                                    pulse || recentlyUnlocked,
                                                 child: _MarketSelectableCardFrame(
                                                   selected: false,
                                                   width: _marketOwnedCardWidth,
@@ -2294,6 +2331,15 @@ class _GameShopScreenState extends State<GameShopScreen>
                     ],
                   ),
                 ),
+                if (_slotUnlockBannerVisible)
+                  Positioned(
+                    top: 54,
+                    left: 18,
+                    right: 18,
+                    child: _MarketSlotUnlockBanner(
+                      unlocks: _activeSlotUnlockPresentation,
+                    ),
+                  ),
                 if (_purchaseFlight != null)
                   Positioned.fill(
                     child: _MarketPurchaseFlightOverlay(
@@ -2624,7 +2670,9 @@ class _MarketSlotGroup extends StatelessWidget {
                 key: slotKeyForLabel(slots[i].slotLabel),
                 slot: slots[i],
                 selected: selectedItemSlotIndex == slots[i].slotIndex,
-                pulse: pulsingSlotLabel == slots[i].slotLabel,
+                pulse:
+                    pulsingSlotLabel == slots[i].slotLabel ||
+                    slots[i].recentlyUnlocked,
                 onTap: onTap,
               ),
             ],
@@ -2667,7 +2715,9 @@ class _MarketItemSlotsSection extends StatelessWidget {
                 key: slotKeyForLabel(slots[i].slotLabel),
                 slot: slots[i],
                 selected: selectedItemSlotIndex == slots[i].slotIndex,
-                pulse: pulsingSlotLabel == slots[i].slotLabel,
+                pulse:
+                    pulsingSlotLabel == slots[i].slotLabel ||
+                    slots[i].recentlyUnlocked,
                 onTap: onTap,
               ),
             ],
@@ -4577,6 +4627,80 @@ class _MarketGoldFallbackIcon extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _MarketSlotUnlockBanner extends StatelessWidget {
+  const _MarketSlotUnlockBanner({required this.unlocks});
+
+  final Set<RummiSlotUnlockKind> unlocks;
+
+  @override
+  Widget build(BuildContext context) {
+    final labels = unlocks
+        .map((kind) => _slotUnlockLabel(context, kind))
+        .join(' · ');
+    return TweenAnimationBuilder<double>(
+      key: const ValueKey('market-slot-unlock-banner'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, -12 * (1 - value)),
+          child: Opacity(opacity: value.clamp(0, 1), child: child),
+        );
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF111A26).withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFF2C14E), width: 1.4),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFF2C14E).withValues(alpha: 0.22),
+              blurRadius: 18,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.lock_open_rounded,
+                color: Color(0xFFF2C14E),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  labels,
+                  key: const ValueKey('market-slot-unlock-label'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _slotUnlockLabel(BuildContext context, RummiSlotUnlockKind kind) {
+    return switch (kind) {
+      RummiSlotUnlockKind.jester => context.tr('marketSlotUnlockJester'),
+      RummiSlotUnlockKind.quickSlot => context.tr('marketSlotUnlockQuickItem'),
+      RummiSlotUnlockKind.passiveRelic => context.tr('marketSlotUnlockPassive'),
+    };
   }
 }
 

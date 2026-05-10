@@ -1027,6 +1027,37 @@ class RummiMarketModifierState {
   }
 }
 
+enum RummiSlotUnlockKind {
+  jester,
+  quickSlot,
+  passiveRelic;
+
+  String get persistenceValue {
+    return switch (this) {
+      RummiSlotUnlockKind.jester => 'jester',
+      RummiSlotUnlockKind.quickSlot => 'quickSlot',
+      RummiSlotUnlockKind.passiveRelic => 'passiveRelic',
+    };
+  }
+
+  String get displayLabel {
+    return switch (this) {
+      RummiSlotUnlockKind.jester => 'Jester 슬롯 +1',
+      RummiSlotUnlockKind.quickSlot => 'Item 슬롯 +1',
+      RummiSlotUnlockKind.passiveRelic => 'Passive 슬롯 +1',
+    };
+  }
+
+  static RummiSlotUnlockKind? fromPersistenceValue(String value) {
+    return switch (value) {
+      'jester' => RummiSlotUnlockKind.jester,
+      'quickSlot' => RummiSlotUnlockKind.quickSlot,
+      'passiveRelic' => RummiSlotUnlockKind.passiveRelic,
+      _ => null,
+    };
+  }
+}
+
 class RummiRunProgress {
   RummiRunProgress();
 
@@ -1051,6 +1082,11 @@ class RummiRunProgress {
     List<Tile> addedDeckTiles = const [],
     List<Tile> tileOffers = const [],
     this.pendingBossTileReward = false,
+    int? unlockedJesterSlots,
+    int? unlockedQuickSlotCapacity,
+    int? unlockedPassiveRelicCapacity,
+    Set<RummiSlotUnlockKind> pendingSlotUnlockPresentations =
+        const <RummiSlotUnlockKind>{},
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
     this.seenMarketJesterIds = const <String>{},
@@ -1060,6 +1096,25 @@ class RummiRunProgress {
     this.seenBossModifierIds = const <String>{},
     this.clearedStationKeys = const <String>{},
   }) {
+    this.unlockedJesterSlots = (unlockedJesterSlots ?? baseUnlockedJesterSlots)
+        .clamp(baseUnlockedJesterSlots, maxJesterSlots)
+        .toInt();
+    this.unlockedQuickSlotCapacity =
+        (unlockedQuickSlotCapacity ??
+                RunInventoryState.defaultQuickSlotCapacity)
+            .clamp(
+              RunInventoryState.defaultQuickSlotCapacity,
+              RunInventoryState.maxQuickSlotCapacity,
+            )
+            .toInt();
+    this.unlockedPassiveRelicCapacity =
+        (unlockedPassiveRelicCapacity ??
+                RunInventoryState.defaultPassiveRelicCapacity)
+            .clamp(
+              RunInventoryState.defaultPassiveRelicCapacity,
+              RunInventoryState.maxPassiveRelicCapacity,
+            )
+            .toInt();
     this.itemRerollCost = itemRerollCost ?? rerollCost;
     this.quickSlotRerollCost =
         quickSlotRerollCost ?? itemRerollCost ?? rerollCost;
@@ -1085,6 +1140,7 @@ class RummiRunProgress {
     _overkillGrowthClaimedStationKeys.addAll(overkillGrowthClaimedStationKeys);
     this.addedDeckTiles.addAll(addedDeckTiles);
     this.tileOffers.addAll(tileOffers);
+    _pendingSlotUnlockPresentations.addAll(pendingSlotUnlockPresentations);
   }
 
   static const int maxJesterSlots = 5;
@@ -1117,6 +1173,10 @@ class RummiRunProgress {
   Set<String> boughtItemIds = <String>{};
   Set<String> seenBossModifierIds = <String>{};
   Set<String> clearedStationKeys = <String>{};
+  int unlockedJesterSlots = baseUnlockedJesterSlots;
+  int unlockedQuickSlotCapacity = RunInventoryState.defaultQuickSlotCapacity;
+  int unlockedPassiveRelicCapacity =
+      RunInventoryState.defaultPassiveRelicCapacity;
   final List<RummiJesterCard> ownedJesters = <RummiJesterCard>[];
   final List<RummiShopOffer> shopOffers = <RummiShopOffer>[];
   final List<Tile> addedDeckTiles = <Tile>[];
@@ -1129,6 +1189,8 @@ class RummiRunProgress {
   final Map<RummiHandRank, int> _stationRankFinalScores =
       <RummiHandRank, int>{};
   final Set<String> _overkillGrowthClaimedStationKeys = <String>{};
+  final Set<RummiSlotUnlockKind> _pendingSlotUnlockPresentations =
+      <RummiSlotUnlockKind>{};
 
   Map<int, int> snapshotStatefulValuesBySlot() =>
       Map<int, int>.unmodifiable(_statefulValuesBySlot);
@@ -1144,6 +1206,9 @@ class RummiRunProgress {
 
   Set<String> snapshotOverkillGrowthClaimedStationKeys() =>
       Set<String>.unmodifiable(_overkillGrowthClaimedStationKeys);
+
+  Set<RummiSlotUnlockKind> snapshotPendingSlotUnlockPresentations() =>
+      Set<RummiSlotUnlockKind>.unmodifiable(_pendingSlotUnlockPresentations);
 
   bool addHandRankProgress(RummiHandRank rank, {int amount = 1}) {
     if (amount <= 0 || isDeadLineRank(rank)) {
@@ -1196,6 +1261,12 @@ class RummiRunProgress {
       addedDeckTiles: List<Tile>.from(addedDeckTiles),
       tileOffers: List<Tile>.from(tileOffers),
       pendingBossTileReward: pendingBossTileReward,
+      unlockedJesterSlots: unlockedJesterSlots,
+      unlockedQuickSlotCapacity: unlockedQuickSlotCapacity,
+      unlockedPassiveRelicCapacity: unlockedPassiveRelicCapacity,
+      pendingSlotUnlockPresentations: Set<RummiSlotUnlockKind>.from(
+        _pendingSlotUnlockPresentations,
+      ),
       itemInventory: itemInventory,
       marketModifiers: marketModifiers,
       seenMarketJesterIds: Set<String>.from(seenMarketJesterIds),
@@ -1220,6 +1291,58 @@ class RummiRunProgress {
   void recordClearedStation(int stationIndex) {
     if (stationIndex <= 0) return;
     clearedStationKeys.add('station_$stationIndex');
+  }
+
+  bool unlockSlotCapacity(RummiSlotUnlockKind kind) {
+    final unlocked = switch (kind) {
+      RummiSlotUnlockKind.jester => _increaseJesterSlots(),
+      RummiSlotUnlockKind.quickSlot => _increaseQuickSlotCapacity(),
+      RummiSlotUnlockKind.passiveRelic => _increasePassiveRelicCapacity(),
+    };
+    if (unlocked) {
+      _pendingSlotUnlockPresentations.add(kind);
+    }
+    return unlocked;
+  }
+
+  List<RummiSlotUnlockKind> claimBossSlotUnlockRewards() {
+    final rewardKind = switch (stageIndex) {
+      2 => RummiSlotUnlockKind.quickSlot,
+      4 => RummiSlotUnlockKind.passiveRelic,
+      6 => RummiSlotUnlockKind.jester,
+      _ => null,
+    };
+    if (rewardKind == null) return const <RummiSlotUnlockKind>[];
+    return unlockSlotCapacity(rewardKind)
+        ? <RummiSlotUnlockKind>[rewardKind]
+        : const <RummiSlotUnlockKind>[];
+  }
+
+  void clearPendingSlotUnlockPresentations() {
+    _pendingSlotUnlockPresentations.clear();
+  }
+
+  bool _increaseJesterSlots() {
+    if (unlockedJesterSlots >= maxJesterSlots) return false;
+    unlockedJesterSlots += 1;
+    return true;
+  }
+
+  bool _increaseQuickSlotCapacity() {
+    if (unlockedQuickSlotCapacity >= RunInventoryState.maxQuickSlotCapacity) {
+      return false;
+    }
+    unlockedQuickSlotCapacity += 1;
+    return true;
+  }
+
+  bool _increasePassiveRelicCapacity() {
+    if (unlockedPassiveRelicCapacity >=
+        RunInventoryState.maxPassiveRelicCapacity) {
+      return false;
+    }
+    unlockedPassiveRelicCapacity += 1;
+    return true;
   }
 
   List<Tile> buildDeckSourceForNextBlind(int deckCopiesPerTile) {
@@ -1852,7 +1975,7 @@ class RummiRunProgress {
 
   int quickSlotCapacity({ItemCatalog? itemCatalog}) {
     final capacity =
-        RunInventoryState.defaultQuickSlotCapacity +
+        unlockedQuickSlotCapacity +
         _sumOwnedItemEffectAmount(
           itemCatalog: itemCatalog,
           timing: 'inventory_capacity',
@@ -1867,7 +1990,7 @@ class RummiRunProgress {
   }
 
   int passiveRelicCapacity({ItemCatalog? itemCatalog}) {
-    return RunInventoryState.defaultPassiveRelicCapacity
+    return unlockedPassiveRelicCapacity
         .clamp(
           RunInventoryState.defaultPassiveRelicCapacity,
           RunInventoryState.maxPassiveRelicCapacity,
@@ -1876,7 +1999,7 @@ class RummiRunProgress {
   }
 
   int jesterSlotCapacity({ItemCatalog? itemCatalog}) {
-    return baseUnlockedJesterSlots.clamp(0, maxJesterSlots).toInt();
+    return unlockedJesterSlots.clamp(0, maxJesterSlots).toInt();
   }
 
   int jesterSellPriceBonus({ItemCatalog? itemCatalog}) {

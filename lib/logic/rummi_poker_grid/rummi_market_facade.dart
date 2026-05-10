@@ -213,6 +213,7 @@ class RummiMarketItemSlotView {
     this.item,
     this.count = 0,
     this.locked = false,
+    this.recentlyUnlocked = false,
   });
 
   factory RummiMarketItemSlotView.fromOwnedItem({
@@ -244,6 +245,7 @@ class RummiMarketItemSlotView {
       effectTextKey: instance.effectTextKey,
       item: instance.definition,
       count: instance.count,
+      recentlyUnlocked: false,
     );
   }
 
@@ -258,6 +260,7 @@ class RummiMarketItemSlotView {
   final ItemDefinition? item;
   final int count;
   final bool locked;
+  final bool recentlyUnlocked;
 
   bool get isEmpty => contentId == null;
 }
@@ -272,6 +275,8 @@ class RummiMarketRuntimeFacade {
     required this.offers,
     required this.itemOfferSlotCount,
     required this.quickSlotCapacity,
+    this.jesterSlotCapacity = RummiRunProgress.baseUnlockedJesterSlots,
+    this.pendingSlotUnlockPresentations = const <RummiSlotUnlockKind>{},
     this.itemRerollCost = RummiRunProgress.shopBaseRerollCost,
     this.quickSlotRerollCost = RummiRunProgress.shopBaseRerollCost,
     this.passiveRerollCost = RummiRunProgress.shopBaseRerollCost,
@@ -330,6 +335,9 @@ class RummiMarketRuntimeFacade {
         pressureProfile: pressureProfile,
       ),
       quickSlotCapacity: progress.quickSlotCapacity(itemCatalog: itemCatalog),
+      jesterSlotCapacity: progress.jesterSlotCapacity(itemCatalog: itemCatalog),
+      pendingSlotUnlockPresentations: progress
+          .snapshotPendingSlotUnlockPresentations(),
       itemOffers: itemCatalog == null
           ? const []
           : _buildItemOffers(
@@ -362,6 +370,8 @@ class RummiMarketRuntimeFacade {
       offers: offers,
       itemOfferSlotCount: itemOfferSlotCount,
       quickSlotCapacity: quickSlotCapacity,
+      jesterSlotCapacity: jesterSlotCapacity,
+      pendingSlotUnlockPresentations: pendingSlotUnlockPresentations,
       itemOffers: nextItemOffers,
       tileOffers: tileOffers,
       addedDeckTiles: addedDeckTiles,
@@ -382,6 +392,8 @@ class RummiMarketRuntimeFacade {
   final List<RummiMarketOfferView> offers;
   final int itemOfferSlotCount;
   final int quickSlotCapacity;
+  final int jesterSlotCapacity;
+  final Set<RummiSlotUnlockKind> pendingSlotUnlockPresentations;
   final List<RummiMarketItemOfferView> itemOffers;
   final List<RummiMarketTileOfferView> tileOffers;
   final List<Tile> addedDeckTiles;
@@ -703,6 +715,8 @@ class RummiMarketRuntimeFacade {
     final slots = <RummiMarketItemSlotView>[];
     var slotIndex = 0;
     final quickSlotCapacity = progress.quickSlotCapacity(itemCatalog: catalog);
+    final pendingSlotUnlocks = progress
+        .snapshotPendingSlotUnlockPresentations();
 
     for (
       var index = 0;
@@ -729,6 +743,9 @@ class RummiMarketRuntimeFacade {
             slotLabel: 'Q${index + 1}',
             placement: ItemPlacement.quickSlot,
             locked: locked,
+            recentlyUnlocked:
+                pendingSlotUnlocks.contains(RummiSlotUnlockKind.quickSlot) &&
+                index == quickSlotCapacity - 1,
           ),
         );
       }
@@ -763,6 +780,9 @@ class RummiMarketRuntimeFacade {
             slotLabel: 'P${index + 1}',
             placement: ItemPlacement.passiveRack,
             locked: locked,
+            recentlyUnlocked:
+                pendingSlotUnlocks.contains(RummiSlotUnlockKind.passiveRelic) &&
+                index == passiveRelicCapacity - 1,
           ),
         );
       }

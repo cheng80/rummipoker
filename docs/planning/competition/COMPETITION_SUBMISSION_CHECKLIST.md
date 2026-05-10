@@ -14,14 +14,14 @@
 
 현재 결론:
 
-- 공모전 풀런봇 QA는 재개 가능 상태다.
+- 공모전 풀런봇 QA는 잠긴 슬롯 해금 룰 보강 때문에 일시 정지 상태다. 보강 검증과 사용자 승인 후 locale cycle을 재개한다.
 - 2026-05-09 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss full-run 통과 증거를 확보했다.
 - 2026-05-10 최신 제출 후보 build에서 locale별 standard→challenge full-run cycle을 제외한 최근 룰/UI 항목 검증을 마쳤다.
 - 2026-05-10 `ko` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `ko` fresh 도전 locale gate는 `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `en` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `en` fresh 도전 locale gate는 `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
-- `ko`, `en` 표준→도전 2사이클은 완료됐다. 다음 gate는 사용자 승인 후 `ja` 표준 S1부터 시작한다. 이후 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행한다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
+- `ko`, `en` 표준→도전 2사이클은 완료됐다. 이후 발견한 잠긴 슬롯 해금 공백을 S2/S4/S6 Boss 보상과 Market 진입 연출로 보강 중이므로 `ja`, `zh-CN`, `zh-TW`는 잠시 보류한다. 보강 검증 후 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행한다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
 - 제출 전 핵심 룰 보강이었던 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 행성카드형 성장 아이템, 초과 점수 기반 대표 족보 성장, 타이틀 `런 정보`, 게임오버 정산/도발 문구는 런타임 반영과 핵심 검증을 마쳤다.
 - S8 boss 이후는 더 이상 애매한 `계속 진행`이 아니라 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고 Station Select, 전투 HUD, 정산 라벨에서 위험한 무한 구간 색상으로 드러낸다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
@@ -49,6 +49,7 @@
 - 2026-05-10 `en` 표준 locale gate: `locale=en`, `resolvedLocale=en`, `freshStorage=true`, 첫 battle/market tutorial completed, S8 small `1539/2` 목표 `1441` 통과, S8 big `902/2 -> 925/2` 목표 `1738` 통과, S8 boss `951/3 -> 778/2 -> 246/1` 목표 `1739` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 2026-05-10 `en` 도전 locale gate: `locale=en`, `resolvedLocale=en`, `freshStorage=true`, `difficulty=challenge`, `--tutorials-already-seen`으로 같은 locale cycle의 tutorial seen 상태 유지, S8 small `1622/2 -> 230/1` 목표 `1729` 통과, S8 big `1009/2 -> 1032/2 -> 368/1` 목표 `2086` 통과, S8 boss `1010/3 -> 869/2 -> 312/1` 목표 `2087` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 해당 run 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
+- 2026-05-10 추가 룰 보강: 잠겨 있던 Quick Item 3번 슬롯, Passive 2번 슬롯, Jester 5번 슬롯을 각각 S2/S4/S6 Boss 클리어 보상으로 해금하도록 구현했다. 해금은 즉시 저장 상태에 반영하고, 다음 Market 진입 시 1회 배너/슬롯 pulse로 보여준 뒤 전투에는 이미 해금된 슬롯 상태로 진입한다. 검증: `flutter analyze`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`.
 
 오늘 바로 할 작업:
 
@@ -56,9 +57,10 @@
 2. 완료: 같은 `ko` cycle 내부에서 `ko` 도전 난이도 fresh S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 통과했다.
 3. 완료: Browser/WebDriver + Compute Use hybrid bot으로 `en` 표준 난이도 fresh S1~S8 Boss를 통과했다.
 4. 완료: 같은 `en` cycle 내부에서 `en` 도전 난이도 fresh S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 통과했다.
-5. 다음: `en` cycle 결과를 보고하고, 사용자 승인 후 `ja` 표준으로 넘어간다.
-6. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
-7. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
+5. 진행 중: 잠긴 슬롯 해금 룰과 Market 진입 연출 보강을 닫는다.
+6. 다음: 보강 검증/커밋 후 사용자 승인 기준으로 남은 locale full-run을 재개한다. 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
+7. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
+8. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
 
 ## 0.1 최근 24시간 이내 추가 항목과 검증 대기 목록
 
@@ -94,6 +96,9 @@
 - [x] 인앱 리뷰 store id gate
   - 구현 상태: market id/store id가 없으면 진입 메뉴의 인앱 리뷰 버튼이 보이지 않게 처리했다.
   - 검증: `setting_view_test`와 최신 analyze/test에서 확인.
+- [x] 잠긴 슬롯 해금 룰과 Market 진입 연출
+  - 구현 상태: S2 Boss 클리어로 Quick Item 3번 슬롯, S4 Boss 클리어로 Passive 2번 슬롯, S6 Boss 클리어로 Jester 5번 슬롯을 해금한다. 해금 상태와 pending 연출은 저장/복원되며, Market 진입 시 1회 배너와 슬롯 pulse로 보여주고 전투 진입 시에는 해금된 슬롯 상태만 표시한다.
+  - 검증: `flutter analyze`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`에서 확인. locale full-run에서 실제 S2/S4/S6 Market 진입 시각 검증은 다음 gate에 포함한다.
 
 ### B. 최근 추가 항목 때문에 다시 열어 둔 QA
 
@@ -107,8 +112,8 @@
   - `ko` cycle: 완료.
   - `en` 표준: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`.
   - `en` 도전: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`.
-  - `en` cycle: 완료. 사용자 승인 후 `ja` 표준부터 시작.
-  - `ja`, `zh-CN`, `zh-TW`: 미실행.
+  - `en` cycle: 완료.
+  - `ja`, `zh-CN`, `zh-TW`: 슬롯 해금 룰 보강 검증 전까지 보류.
 - [ ] 5개 locale cycle 모두에서 standard 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, challenge의 tutorial seen 유지, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
   - `ko`: standard 첫 battle/market tutorial completed, challenge tutorial seen 유지, UI overflow/Jester/Item/자원 설명 잘림 0건.
   - `en`: standard 첫 battle/market tutorial completed, challenge tutorial seen 유지, UI overflow/Jester/Item/자원 설명 잘림 0건.

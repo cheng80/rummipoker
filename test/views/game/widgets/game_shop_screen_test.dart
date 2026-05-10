@@ -41,7 +41,9 @@ Future<void> _pumpShopScreen(
   String? Function(ItemDefinition item)? onUseMarketItem,
   String? Function(ItemPlacement placement)? onRerollItemOffers,
   bool Function(ItemDefinition item)? onSellMarketItem,
+  Future<void> Function()? onSlotUnlockPresentationShown,
   bool initialItemShopTab = true,
+  bool settle = true,
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
@@ -71,6 +73,7 @@ Future<void> _pumpShopScreen(
                   onUseMarketItem: onUseMarketItem ?? ((_) => null),
                   onSellOwnedJester: (_) => false,
                   onSellMarketItem: onSellMarketItem ?? ((_) => false),
+                  onSlotUnlockPresentationShown: onSlotUnlockPresentationShown,
                   onStateChanged: () async {},
                   onOpenSettings: () async {},
                   onExitToTitle: () async {},
@@ -85,7 +88,11 @@ Future<void> _pumpShopScreen(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }
 
 void main() {

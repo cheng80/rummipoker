@@ -227,7 +227,13 @@ class _GameViewState extends ConsumerState<GameView>
       gearSlotIndex += 1;
     }
 
-    return battle.withItemSlots(itemSlots);
+    return battle.withItemSlots(
+      itemSlots,
+      quickSlotCapacity: quickSlotCapacity,
+      passiveRelicCapacity: runProgress.passiveRelicCapacity(
+        itemCatalog: catalog,
+      ),
+    );
   }
 
   RummiStationRuntimeFacade get _stationView => _gameState.stationView!;
@@ -1722,6 +1728,10 @@ class _GameViewState extends ConsumerState<GameView>
           onSellOwnedJester: (index) =>
               _gameNotifier.sellOwnedJester(index, itemCatalog: _itemCatalog),
           onSellMarketItem: _gameNotifier.sellMarketItem,
+          onSlotUnlockPresentationShown: () async {
+            _gameNotifier.markSlotUnlockPresentationShown();
+            await _saveActiveRun(scene: ActiveRunScene.shop);
+          },
           onStateChanged: _saveActiveRun,
           readActiveRunSaveView: () => ref
               .read(gameSessionNotifierProvider(_gameArgs))
