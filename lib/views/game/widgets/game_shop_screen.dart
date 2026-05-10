@@ -4257,14 +4257,19 @@ class _MarketSlotPulse extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!active) return child;
+    final duration = showUnlockLock
+        ? const Duration(milliseconds: 1200)
+        : GamePresentationTimings.marketSlotPulse;
     return TweenAnimationBuilder<double>(
       key: const ValueKey('market-slot-pulse'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: GamePresentationTimings.marketSlotPulse,
+      duration: duration,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final pulse = math.sin(math.pi * value);
-        final flash = (1 - value).clamp(0.0, 1.0);
+        final flash = showUnlockLock ? 1.0 : (1 - value).clamp(0.0, 1.0);
+        final lockFadeProgress = ((value - 0.55) / 0.45).clamp(0.0, 1.0);
+        final lockOpacity = 1 - lockFadeProgress;
         return Transform.scale(
           scale: 1 + (0.10 * pulse),
           child: DecoratedBox(
@@ -4312,7 +4317,7 @@ class _MarketSlotPulse extends StatelessWidget {
                           child: Transform.scale(
                             scale: 1 + 0.38 * value,
                             child: Opacity(
-                              opacity: flash,
+                              opacity: lockOpacity,
                               child: DecoratedBox(
                                 key: const ValueKey('market-slot-unlock-lock'),
                                 decoration: BoxDecoration(

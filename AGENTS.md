@@ -69,6 +69,7 @@
 - 출품 QA 중 앱 언어는 기본적으로 OS/브라우저 시스템 locale을 따른다. 특정 locale full-run을 검증할 때만 bot/테스트가 명시적으로 locale을 고정하고, 일반 앱 진입점에서 한국어 등 특정 언어를 `startLocale`로 강제하지 않는다.
 - 디버그 픽스처는 튜토리얼 검증 전용으로 명시된 경우가 아니면 자동 튜토리얼을 시작하지 않는다. 튜토리얼 확인이 목적이 아닌 fixture에서는 전투/마켓 튜토리얼이 버튼으로만 뜨게 해, 해금/구매/정산/연출 확인을 가리지 않게 한다.
 - Market debug URL에서 `debug_shop_tab=items`는 Tool/Gear 탭을 여는 옵션이다. Jester/Quick/Passive 슬롯 상태나 슬롯 해금 연출을 확인하는 fixture 문서/안내에는 이 옵션을 붙이지 않는다.
+- 슬롯 해금 자물쇠 연출은 사람이 눈으로 인지할 수 있을 만큼 유지한다. 구매 pulse처럼 짧은 0.5초대 연출로 처리하지 말고, 해금 전용 1회 연출은 약 1초 이상 유지한 뒤 후반에 fade-out한다.
 - 공모전 full-play QA hybrid bot의 호출 별명은 `공모전 풀런봇`으로 통일한다. 사용자가 “공모전 풀런봇 실행/준비/이어서”라고 말하면 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다. 영문 파일명·스크립트명·로그 prefix가 필요하면 `contest_full_run_bot`을 쓴다.
 - 공모전 풀런봇의 제출 gate는 locale별 1사이클 기준이다. 한 locale에서 fresh 표준 난이도 S1부터 S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1부터 S8 Boss를 다시 클리어하고 S8 정산/보상/무한 도전 진입 직전까지 확인해야 그 locale 사이클이 닫힌다. 이 사이클을 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`)에 대해 순서대로 5번 실행한다. S8 이후 S9+ 무한 도전 장기 생존은 제출 gate가 아니라 별도 확장 검증이다.
 - 공모전 풀런봇 실행 중 수정 범위는 game over만이 아니다. 실제 플레이 중 UI overflow, 튜토리얼 문구/target 문제, Jester/Item/자원 카드의 제목·설명 잘림, 다국어 텍스트 넘침이 보이면 제출 QA 결함으로 보고 code/test 또는 번역 자산을 수정한 뒤 같은 locale gate를 다시 실행한다.
