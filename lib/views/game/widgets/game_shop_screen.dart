@@ -4249,22 +4249,47 @@ class _MarketSlotPulse extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final pulse = math.sin(math.pi * value);
+        final flash = (1 - value).clamp(0.0, 1.0);
         return Transform.scale(
-          scale: 1 + (0.08 * pulse),
+          scale: 1 + (0.10 * pulse),
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(
+                  0xFFF2C14E,
+                ).withValues(alpha: (0.34 + 0.46 * pulse).clamp(0.0, 0.82)),
+                width: 1.4 + 1.8 * pulse,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: const Color(
                     0xFFF2C14E,
-                  ).withValues(alpha: 0.34 * pulse),
-                  blurRadius: 18 * pulse,
-                  spreadRadius: 2 * pulse,
+                  ).withValues(alpha: 0.42 * pulse),
+                  blurRadius: 22 * pulse,
+                  spreadRadius: 3 * pulse,
                 ),
               ],
             ),
-            child: child,
+            child: Stack(
+              fit: StackFit.passthrough,
+              children: [
+                child!,
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      key: const ValueKey('market-slot-pulse-flash'),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        color: const Color(
+                          0xFFF2C14E,
+                        ).withValues(alpha: 0.18 * flash),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

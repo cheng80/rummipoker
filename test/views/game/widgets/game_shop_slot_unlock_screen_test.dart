@@ -126,6 +126,11 @@ void main() {
 
     expect(bannerFinder, findsOneWidget);
     expect(find.text('Jester 슬롯 +1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('market-slot-pulse')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('market-slot-pulse-flash')),
+      findsOneWidget,
+    );
 
     for (var frame = 0; frame < 80; frame += 1) {
       await tester.pump(const Duration(milliseconds: 16));
