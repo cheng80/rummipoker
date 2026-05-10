@@ -4630,6 +4630,8 @@ Map<String, Object?> _runSingleBattle({
       'confirm_action_count': result.confirmActionCount,
       'confirmed_line_count': result.confirmedLineCount,
       'discarded_board_count': result.discardedBoardCount,
+      'discarded_hand_count': result.discardedHandCount,
+      'board_move_count': result.boardMoveCount,
       'draw_count': result.drawCount,
       'place_count': result.placeCount,
       'max_single_confirm_score': result.maxSingleConfirmScore,
@@ -4756,6 +4758,8 @@ BalanceSimBattleResult _runBattleLoop(
   var confirmedLineCount = 0;
   var confirmActionCount = 0;
   var discardedBoardCount = 0;
+  var discardedHandCount = 0;
+  var boardMoveCount = 0;
   var drawCount = 0;
   var placeCount = 0;
   var maxSingleConfirmScore = 0;
@@ -4778,6 +4782,8 @@ BalanceSimBattleResult _runBattleLoop(
       confirmActionCount: confirmActionCount,
       confirmedLineCount: confirmedLineCount,
       discardedBoardCount: discardedBoardCount,
+      discardedHandCount: discardedHandCount,
+      boardMoveCount: boardMoveCount,
       drawCount: drawCount,
       placeCount: placeCount,
       maxSingleConfirmScore: maxSingleConfirmScore,
@@ -4911,6 +4917,42 @@ BalanceSimBattleResult _runBattleLoop(
         final discard = session.tryDiscardFromBoard(row, col);
         if (discard.fail == null) {
           discardedBoardCount++;
+        }
+      case BalanceSimActionType.discardHand:
+        final handIndex = action.handIndex;
+        if (handIndex == null ||
+            handIndex < 0 ||
+            handIndex >= session.hand.length) {
+          return finish(
+            cleared: false,
+            turnCount: turn,
+            stopReason: 'invalid_discard_hand_action',
+          );
+        }
+        final discard = session.tryDiscardFromHand(session.hand[handIndex]);
+        if (discard.fail == null) {
+          discardedHandCount++;
+        }
+      case BalanceSimActionType.moveBoard:
+        final row = action.row;
+        final col = action.col;
+        final toRow = action.toRow;
+        final toCol = action.toCol;
+        if (row == null || col == null || toRow == null || toCol == null) {
+          return finish(
+            cleared: false,
+            turnCount: turn,
+            stopReason: 'invalid_move_board_action',
+          );
+        }
+        final fail = session.tryMoveBoardTile(
+          fromRow: row,
+          fromCol: col,
+          toRow: toRow,
+          toCol: toCol,
+        );
+        if (fail == null) {
+          boardMoveCount++;
         }
       case BalanceSimActionType.stop:
         return finish(
@@ -7129,6 +7171,8 @@ class BalanceSimBattleResult {
     required this.confirmActionCount,
     required this.confirmedLineCount,
     required this.discardedBoardCount,
+    required this.discardedHandCount,
+    required this.boardMoveCount,
     required this.drawCount,
     required this.placeCount,
     required this.maxSingleConfirmScore,
@@ -7144,6 +7188,8 @@ class BalanceSimBattleResult {
   final int confirmActionCount;
   final int confirmedLineCount;
   final int discardedBoardCount;
+  final int discardedHandCount;
+  final int boardMoveCount;
   final int drawCount;
   final int placeCount;
   final int maxSingleConfirmScore;
@@ -7697,6 +7743,7 @@ BalanceSimBotPolicy _createBot(String id) {
     'planner_v1' => const PlannerBotPolicy(),
     'planner_v2' => const PlannerV2BotPolicy(),
     'planner_v3' => const PlannerV3BotPolicy(),
+    'contest_policy_v1' => const ContestPolicyV1BotPolicy(),
     _ => throw FormatException('Unknown bot: $id'),
   };
 }
@@ -7934,7 +7981,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|challenge] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1, *_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1, *_boss_expansion_stage_a_probe_v1, *_boss_expansion_stage_a_*_probe_v1.';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2|planner_v3|contest_policy_v1 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|challenge] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1, *_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1, *_boss_expansion_stage_a_probe_v1, *_boss_expansion_stage_a_*_probe_v1.';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);

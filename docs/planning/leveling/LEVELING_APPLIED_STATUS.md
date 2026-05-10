@@ -34,6 +34,7 @@
 | post-contest boss candidates | Deferred | docs only | 저장/UI/정산/Jester·Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
 | missing growth market exposure | Applied | `RummiMarketFacade` / `RummiStationBandMarketPolicy` | 직접 지급 없이 랜덤 offer slot 후보 가중치만 조정 |
+| collection market exposure | Workspace pending | `RummiRunProgress.openShop` / `RummiMarketRuntimeFacade` / `RummiStationBandMarketPolicy` / `tools/sim/runtime_market_offer_audit.dart` | 개별 미수집 Jester/Item에 미구매 +45, 미노출 +90 가중치를 더한다. 직접 지급/자동 구매/고정 슬롯이 아니며, collection path audit로 `seen/bought/gold blocked/capacity blocked`를 계속 확인한다 |
 | S7~S8 shape correction floor | Applied | `RummiStationBandMarketPolicy._itemTagBonus` | final band `tile_color`/`draw`/순수 `rank` 후보 +80, `92c162b` 반영 |
 | economy reward / price policy | Applied | `RummiEconomyConfig` / `RummiRunProgress.effective*Price` / catalog JSON | 카탈로그 기준가 보정 후 정수 `11/5` effective price scale과 0.40 reward 번역 적용. 성장 Jester/Item은 rarity별 구매 가격 상한을 적용해 “보이면 살 수 있는” 후보로 조정. 단, market/boss 전용 아이템은 성장 접근 상한에서 제외 |
 | catalog value audit | Applied | `tools/sim/catalog_value_audit.py` | Item/Jester 가격과 effect role의 불일치 후보를 runtime effective price 기준으로 표시한다 |
@@ -46,6 +47,8 @@
 | r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
 | ML terminology correction | Applied | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
 | actual ML leveling transition | Paused for contest prototype | `analysis/leveling/` / `tools/leveling/` | pre-outcome station/tier table, sequence/path table, baseline metrics, candidate recommendation table, human-review MD report는 보조 신호로 존재. 공모전 기준에서는 ML 갱신을 보류하고 production ML이나 런타임 자동 적용은 하지 않음 |
+| historical leveling data reuse policy | Applied | `CURRENT_LEVELING_POLICY.md` / `HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `tools/leveling/README.md` | 과거 row는 `historical prior`로만 쓰고, 현재 clear rate/구매력/추천 결론은 최신 runtime/catalog/ruleset/bot policy fresh resimulation으로만 닫는다. |
+| contest-style CLI bot proxy | Workspace pending | `tools/sim/planner_bot.dart` / `tools/sim/run_balance_sim.dart` | `contest_policy_v1` 추가. full-run retry recovery와 seed route 회피는 제외하고, 일반 플레이 판단인 전략 draw, 고점수 확정 지연, lookahead 배치, board move/hand discard 실행 경로만 CLI 레벨링용 proxy로 분리했다. |
 
 ## 2. Applied Runtime Details
 
@@ -130,6 +133,7 @@ Applied:
 - Jester rarity weight는 stage tier에 따라 Common에서 Rare/Legendary 쪽으로 천천히 이동한다.
 - Item rarity/tag weight는 early/mid/late band에 따라 다르게 적용된다.
 - missing growth exposure는 필요한 후보군의 마켓 등장 확률만 올린다.
+- collection exposure는 개별 미수집 후보의 마켓 등장 확률만 올린다. 미구매 후보 +45, 미노출 후보 +90이며, 한 번 사고 판 후보는 다시 등장할 수 있지만 미수집 보정은 받지 않는다.
 - 보정 slot 위치는 고정하지 않고 stage/reroll/rng에 따라 흔들린다.
 
 Applied:
@@ -239,6 +243,23 @@ First-reroll-free follow-up:
 - known risk: power none이 목표 45~55%보다 높고, balanced v9가 한 seed에서 60%를 살짝 밑돈다.
 - contest status: runtime/economy/boss pool은 공모전 기준 임시 handoff 가능. 장기 밸런스 완료나 ML 마감으로 쓰지는 않는다.
 - ML status: 공모전 기준에서는 ML 갱신을 보류한다. production ML/자동 밸런싱은 계속 금지한다.
+
+Contest policy v1 fresh path smoke:
+
+- outputs: `logs/sim/contest_policy_v1_standard_20260511_053831.jsonl`, `logs/sim/contest_policy_v1_challenge_20260511_053831.jsonl`
+- summary: `logs/sim/contest_policy_v1_standard_20260511_053831_summary.json`, `logs/sim/contest_policy_v1_challenge_20260511_053831_summary.json`
+- 조건: `contest_policy_v1`, seed 91460, `progression_route_power`, `shop_slot_market_v9`, `gated_known_cost`, reward 0.40, price 2.2, first-reroll-free, growth access price, affordable alternative choice.
+- 표준: S1 small부터 S8 boss까지 24/24 steps cleared, total turn 1234, total score ratio 1.122. S8 boss 1997/1750.
+- 도전: S1 small부터 S8 boss까지 24/24 steps cleared, total turn 1446, total score ratio 1.124. S8 boss 2320/2100.
+- 해석: 이 결과는 제출 QA 증거가 아니라 숙련 플레이어 proxy의 fresh 레벨링 smoke다. baseline start + market-only route 단일 seed는 S3/S4에서 deck exhausted가 남았고, progression route power를 붙였을 때 표준/도전 full path가 닫혔다.
+
+Market collection audit r800:
+
+- outputs: `logs/sim/runtime_market_collection_audit_standard_r800_20260511_064500.json`, `logs/sim/runtime_market_collection_audit_affordability_r800_20260511_064500.json`
+- 조건: 800 fresh paths, seed 92100, S1~S8, stage당 3회 market entry, 누적 `seen/bought` 기록 기준, 판매 허용.
+- 표준 cashout 10G path: catalog Jester 43/Item 57. seen coverage Jester 100%, Item 100%. bought coverage Jester 100%, Item 100%. gold blocked는 Jester 103회, Item 11,033회, capacity blocked 0회.
+- affordability cashout 25G path: seen/bought coverage Jester 100%, Item 100%. gold blocked 0회, capacity blocked 0회.
+- 해석: 현재 보강 후 “전체 catalog가 마켓에 보일 수 있는가/살 수 있는가”는 r800 누적 기준으로 닫혔다. 다만 표준 cashout에서는 Item gold blocked가 크므로, 실제 플레이 중 모든 후보를 쉽게 살 수 있다는 뜻은 아니다. 다음 가격/보상 조정은 coverage가 아니라 구매력 병목과 선택 우선순위를 따로 보고 결정한다.
 
 Shuffle reference note:
 

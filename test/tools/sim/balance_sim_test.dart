@@ -467,6 +467,55 @@ void main() {
     expect(lateScoreCount, greaterThan(0));
   });
 
+  test('CLI accepts contest policy v1 and records utility actions', () async {
+    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+
+    final firstOut = '${dir.path}/contest_policy_first.jsonl';
+    final secondOut = '${dir.path}/contest_policy_second.jsonl';
+    final args = [
+      '--runs',
+      '2',
+      '--bot',
+      'contest_policy_v1',
+      '--seed',
+      '91460',
+      '--station',
+      '8',
+      '--blind-tier',
+      'boss',
+      '--difficulty',
+      'challenge',
+      '--loadout-id',
+      's5_power_build',
+    ];
+
+    final firstCode = await runBalanceSim([...args, '--out', firstOut]);
+    final secondCode = await runBalanceSim([...args, '--out', secondOut]);
+
+    expect(firstCode, 0);
+    expect(secondCode, 0);
+    expect(
+      File(firstOut).readAsStringSync(),
+      File(secondOut).readAsStringSync(),
+    );
+
+    final rows = File(firstOut)
+        .readAsLinesSync()
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .toList();
+
+    expect(rows, hasLength(2));
+    for (final row in rows) {
+      _expectBalanceSimRowContract(row);
+      expect(row['bot_policy'], 'contest_policy_v1');
+      final result = row['result'] as Map<String, dynamic>;
+      expect(result['stop_reason'], isNot(startsWith('invalid_')));
+      expect(result['discarded_hand_count'], isA<int>());
+      expect(result['board_move_count'], isA<int>());
+    }
+  });
+
   test('CLI records loadout feature summary for ML grouping', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
     addTearDown(() => dir.deleteSync(recursive: true));
@@ -6094,6 +6143,8 @@ void _expectBalanceSimRowContract(Map<String, dynamic> row) {
     'confirm_action_count',
     'confirmed_line_count',
     'discarded_board_count',
+    'discarded_hand_count',
+    'board_move_count',
     'draw_count',
     'place_count',
     'max_single_confirm_score',
@@ -6126,6 +6177,8 @@ void _expectBalanceSimRowContract(Map<String, dynamic> row) {
   expect(result['confirm_action_count'], isA<int>());
   expect(result['confirmed_line_count'], isA<int>());
   expect(result['discarded_board_count'], isA<int>());
+  expect(result['discarded_hand_count'], isA<int>());
+  expect(result['board_move_count'], isA<int>());
   expect(result['draw_count'], isA<int>());
   expect(result['place_count'], isA<int>());
   expect(result['max_single_confirm_score'], isA<int>());

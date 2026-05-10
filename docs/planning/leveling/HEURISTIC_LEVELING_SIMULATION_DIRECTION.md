@@ -38,12 +38,29 @@
 - bot 선택은 유저 선택 성향 proxy다. bot이 구매한 결과를 게임이 지급해야 한다는 뜻으로 해석하지 않는다.
 - archive 내용을 실제 적용 후보로 되살리려면 먼저 `CURRENT_LEVELING_POLICY.md`에 맞게 요약/승격한 뒤 검토한다.
 
+## 데이터 신뢰도 기준
+
+- 과거 시뮬레이션 데이터는 현재 게임의 결론값이 아니라 방향성 참고다.
+- 새 카드, 족보 성장, 슬롯 해금, 마켓/경제/보스 룰, 저장/정산 경로, bot policy가 바뀐 뒤에는 최신 runtime/catalog/ruleset으로 fresh resimulation을 다시 실행해야 한다.
+- 오래된 clear rate, 구매 event, path clear, ML 추천표는 현재 제출/레벨링 판단을 닫는 근거로 쓰지 않는다.
+- 과거 row를 feature table에 포함할 때는 `balance_version`, `ruleset_id`, `catalog_versions`, `experiment_id`, `market_profile`, `bot_policy`를 유지해 최신 row와 같은 그룹으로 섞이지 않게 한다.
+- 현재 판단은 `planner_v2` 같은 기존 proxy와, 실제 full-run 판단을 일반화한 `contest_policy_v1` 같은 최신 proxy를 나란히 비교한 fresh 결과를 우선한다.
+
 ## 현재 분석 판단
 
 - v84~v86 smoke 기준에서 `shop_slot_market_v9`는 점수 전환 후보를 충분히 노출한다.
 - 잔여 S8 boss 실패는 주로 deck exhausted 쪽이며, 즉시 target 하향이나 자동 자원 지급으로 풀지 않는다.
 - 다음 검토 후보는 S7~S8 boss 구간에서 덱/타일 형상 보정 후보가 마켓 후보군에 안정적으로 포함되는지 확인하는 것이다.
 - 이 후보도 직접 지급이 아니라 market-only availability/weight 조정으로만 본다.
+
+## 마켓 수집 audit 기준
+
+- 수집 audit의 질문은 “모든 후보가 보이는가”, “실제로 살 수 있는가”, “못 산다면 돈/슬롯/후보 필터 중 어디서 막히는가”다.
+- `runtime_market_offer_audit`는 독립 샘플뿐 아니라 한 run의 `seen/bought` 기록을 누적하는 collection path를 함께 출력한다.
+- 현재 수집 보정은 Jester/Item 모두 미구매 +45, 미노출 +90 가중치다. 직접 지급, 자동 구매, 특정 슬롯 고정은 아니다.
+- 기본 판정은 800개 fresh path, S1~S8, stage당 3회 market entry를 사용한다.
+- 의미 있는 결과로 보려면 `seen coverage`, `bought coverage`, `gold blocked`, `capacity blocked`, `unseen/unbought ids`를 함께 본다. coverage만 높고 `gold blocked`가 높으면 확률 문제가 아니라 구매력 병목이다.
+- 골드 병목 분리를 위해 표준 cashout path와 넉넉한 affordability path를 나란히 돌린다.
 
 ## 다음 작업 기준
 

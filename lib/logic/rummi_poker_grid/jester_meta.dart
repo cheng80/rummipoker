@@ -751,10 +751,12 @@ class RummiStationBandMarketPolicy {
   int itemOfferWeight(
     ItemDefinition item, {
     Set<String> missingGrowthTags = const {},
+    int collectionWeightBonus = 0,
   }) {
     var weight = _itemRarityBaseWeight(item.rarity);
     weight += _itemTagBonus(item.tags);
     weight += _missingGrowthTagBonus(item.tags, missingGrowthTags);
+    weight += collectionWeightBonus;
     if (item.usableInBattle) {
       weight += band == RummiStationMarketBand.late ? 30 : 50;
     }
@@ -2259,7 +2261,7 @@ class RummiRunProgress {
   }) {
     final candidates = pool;
     final weights = candidates
-        .map((card) => _shopOfferWeightForRarity(card.rarity))
+        .map(_shopOfferWeightForCard)
         .toList(growable: false);
     final totalWeight = weights.fold<int>(0, (sum, weight) => sum + weight);
     if (totalWeight <= 0) {
@@ -2281,6 +2283,15 @@ class RummiRunProgress {
       rarity,
       rarityWeightBonus: marketModifiers.rarityWeightBonus,
     );
+  }
+
+  int _shopOfferWeightForCard(RummiJesterCard card) {
+    var weight = _shopOfferWeightForRarity(card.rarity);
+    // 수집 audit가 실제 미수집 후보 노출을 볼 수 있도록 개별 미수집에도
+    // 작은 가중치를 준다. 성장축 보강보다 약하며, 직접 지급/고정 노출은 아니다.
+    if (!boughtJesterIds.contains(card.id)) weight += 45;
+    if (!seenMarketJesterIds.contains(card.id)) weight += 90;
+    return weight < 1 ? 1 : weight;
   }
 
   int? _missingJesterGrowthFocusSlot(

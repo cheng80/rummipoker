@@ -546,6 +546,62 @@ void main() {
       expect(correctedScoreWeight - baseScoreWeight, lessThanOrEqualTo(90));
     });
 
+    test('collection correction only changes market appearance weight', () {
+      final mid = RummiStationBandMarketPolicy.forStage(4);
+      final scoreGrowthItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'rank_chart',
+          timing: 'station_start',
+          op: 'add_board_move',
+          placement: 'equipped',
+          tags: const ['score', 'rank'],
+        ),
+      );
+
+      final baseWeight = mid.itemOfferWeight(scoreGrowthItem);
+      final boostedWeight = mid.itemOfferWeight(
+        scoreGrowthItem,
+        collectionWeightBonus: 135,
+      );
+      final growthAndCollectionWeight = mid.itemOfferWeight(
+        scoreGrowthItem,
+        missingGrowthTags: const {'score', 'rank'},
+        collectionWeightBonus: 135,
+      );
+
+      expect(boostedWeight - baseWeight, 135);
+      expect(growthAndCollectionWeight, greaterThan(boostedWeight));
+    });
+
+    test('collection correction makes unseen jester offers observable', () {
+      final catalog = [
+        _jester(id: 'seen_a'),
+        _jester(id: 'seen_b'),
+        _jester(id: 'unseen_target'),
+      ];
+      var targetOfferCount = 0;
+      var seenOfferCount = 0;
+
+      for (var seed = 0; seed < 240; seed++) {
+        final progress = RummiRunProgress()
+          ..stageIndex = 4
+          ..gold = 20
+          ..seenMarketJesterIds.addAll({'seen_a', 'seen_b'})
+          ..boughtJesterIds.addAll({'seen_a', 'seen_b'});
+        progress.openShop(catalog: catalog, rng: Random(seed));
+        for (final offer in progress.shopOffers) {
+          if (offer.card.id == 'unseen_target') {
+            targetOfferCount += 1;
+          } else {
+            seenOfferCount += 1;
+          }
+        }
+      }
+
+      expect(targetOfferCount, greaterThan(0));
+      expect(targetOfferCount, greaterThan(seenOfferCount ~/ 3));
+    });
+
     test('high stakes market pressure adds transient item offer room', () {
       final catalog = ItemCatalog.fromJson({
         'schemaVersion': 1,

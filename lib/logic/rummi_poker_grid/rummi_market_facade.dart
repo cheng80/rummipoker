@@ -513,6 +513,7 @@ class RummiMarketRuntimeFacade {
         final selected = _pickWeightedItemFromPool(
           policy: policy,
           candidates: focusCandidates,
+          progress: progress,
           missingGrowthTags: missingGrowthTags,
           stageIndex: progress.stageIndex,
           offset: offset,
@@ -527,7 +528,12 @@ class RummiMarketRuntimeFacade {
         0,
         (sum, item) =>
             sum +
-            policy.itemOfferWeight(item, missingGrowthTags: missingGrowthTags),
+            _itemOfferWeight(
+              progress: progress,
+              policy: policy,
+              item: item,
+              missingGrowthTags: missingGrowthTags,
+            ),
       );
       var roll = _stableMarketRoll(
         totalWeight,
@@ -537,8 +543,10 @@ class RummiMarketRuntimeFacade {
       );
       var selectedIndex = remaining.length - 1;
       for (var index = 0; index < remaining.length; index++) {
-        roll -= policy.itemOfferWeight(
-          remaining[index],
+        roll -= _itemOfferWeight(
+          progress: progress,
+          policy: policy,
+          item: remaining[index],
           missingGrowthTags: missingGrowthTags,
         );
         if (roll < 0) {
@@ -554,6 +562,7 @@ class RummiMarketRuntimeFacade {
   static ItemDefinition _pickWeightedItemFromPool({
     required RummiStationBandMarketPolicy policy,
     required List<ItemDefinition> candidates,
+    required RummiRunProgress progress,
     required Set<String> missingGrowthTags,
     required int stageIndex,
     required int offset,
@@ -563,7 +572,12 @@ class RummiMarketRuntimeFacade {
       0,
       (sum, item) =>
           sum +
-          policy.itemOfferWeight(item, missingGrowthTags: missingGrowthTags),
+          _itemOfferWeight(
+            progress: progress,
+            policy: policy,
+            item: item,
+            missingGrowthTags: missingGrowthTags,
+          ),
     );
     var roll = _stableMarketRoll(
       totalWeight,
@@ -572,8 +586,10 @@ class RummiMarketRuntimeFacade {
       slotIndex: slotIndex,
     );
     for (final item in candidates) {
-      roll -= policy.itemOfferWeight(
-        item,
+      roll -= _itemOfferWeight(
+        progress: progress,
+        policy: policy,
+        item: item,
         missingGrowthTags: missingGrowthTags,
       );
       if (roll < 0) {
@@ -581,6 +597,31 @@ class RummiMarketRuntimeFacade {
       }
     }
     return candidates.last;
+  }
+
+  static int _itemOfferWeight({
+    required RummiRunProgress progress,
+    required RummiStationBandMarketPolicy policy,
+    required ItemDefinition item,
+    required Set<String> missingGrowthTags,
+  }) {
+    return policy.itemOfferWeight(
+      item,
+      missingGrowthTags: missingGrowthTags,
+      collectionWeightBonus: _itemCollectionWeightBonus(progress, item),
+    );
+  }
+
+  static int _itemCollectionWeightBonus(
+    RummiRunProgress progress,
+    ItemDefinition item,
+  ) {
+    var bonus = 0;
+    // 개별 미수집 후보가 긴 run에서 계속 밀리지 않게 하는 약한 수집 보강.
+    // 성장축 보강과 마찬가지로 등장 확률만 조정하며 직접 지급하지 않는다.
+    if (!progress.boughtItemIds.contains(item.id)) bonus += 45;
+    if (!progress.seenMarketItemIds.contains(item.id)) bonus += 90;
+    return bonus;
   }
 
   static int? _missingGrowthFocusSlot(

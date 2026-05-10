@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -371,6 +373,501 @@ class PlannerV3BotPolicy extends PlannerV2BotPolicy {
   }
 }
 
+/// 제출 QA 봇에서 검증된 일반 플레이 판단만 CLI 레벨링에 옮긴 proxy.
+///
+/// retry recovery, 실패 route 회피, seed 기반 보정은 넣지 않는다.
+class ContestPolicyV1BotPolicy extends BalanceSimBotPolicy {
+  const ContestPolicyV1BotPolicy();
+
+  static const int _cleanConfirmScoreFloor = 70;
+  static const int _highTargetConfirmTargetFloor = 600;
+  static const int _highTargetTwoLineConfirmScoreFloor = 300;
+  static const int _highTargetConfirmScoreFloor = 180;
+  static const int _bossConfirmScoreFloor = 360;
+  static const int _bossConfirmMinOccupancy = kBoardSize * 4;
+  static const int _midBoardMoveMinOccupancy = kBoardSize * 2 + 2;
+  static const int _midBoardMoveMaxOccupancy = kBoardSize * 4 - 1;
+  static const int _midBoardMoveMinGain = 20;
+  static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
+  static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
+  static const int _midUtilityTargetScoreFloor = 500;
+  static const int _lateDeckRemainingMax = 8;
+
+  @override
+  String get id => 'contest_policy_v1';
+
+  @override
+  BalanceSimAction chooseAction(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final boardIsFull = occupancy >= kBoardSize * kBoardSize;
+    final confirmChoice = _contestConfirmChoice(
+      session,
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+    );
+    if (confirmChoice.shouldConfirmNow) {
+      return const BalanceSimAction.confirm();
+    }
+
+    final shouldUseStrategicUtility =
+        session.blind.bossModifier != null ||
+        session.blind.targetScore >= _midUtilityTargetScoreFloor;
+
+    if (session.hand.isEmpty) {
+      if (session.canDrawFromDeck) return const BalanceSimAction.draw();
+      if ((shouldUseStrategicUtility || boardIsFull) &&
+          occupancy >= _boardDiscardReplacementMinOccupancy) {
+        final discard = _scoringBoardDiscard(
+          session,
+          jesters: jesters,
+          runtimeSnapshot: runtimeSnapshot,
+        );
+        if (discard != null) return discard;
+      }
+      if (confirmChoice.score > 0) return const BalanceSimAction.confirm();
+      return const BalanceSimAction.stop('no_hand_and_cannot_draw');
+    }
+
+    if (shouldUseStrategicUtility &&
+        occupancy >= _midBoardMoveMinOccupancy &&
+        occupancy <= _midBoardMoveMaxOccupancy) {
+      final move = _boardMove(
+        session,
+        jesters: jesters,
+        runtimeSnapshot: runtimeSnapshot,
+      );
+      if (move != null && (move.gain ?? 0) >= _midBoardMoveMinGain) {
+        return move;
+      }
+    }
+
+    if (_shouldDrawForMoreOptions(
+      session,
+      occupancy: occupancy,
+      confirmChoice: confirmChoice,
+    )) {
+      return const BalanceSimAction.draw();
+    }
+
+    final placement = _contestBestPlacement(
+      session,
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+    );
+    if (placement != null) return placement.action;
+
+    if (confirmChoice.score > 0) return const BalanceSimAction.confirm();
+
+    if ((shouldUseStrategicUtility || boardIsFull) &&
+        occupancy >= _boardDiscardReplacementMinOccupancy) {
+      final discard = _scoringBoardDiscard(
+        session,
+        jesters: jesters,
+        runtimeSnapshot: runtimeSnapshot,
+      );
+      if (discard != null) return discard;
+    }
+
+    if (boardIsFull) {
+      final handDiscard = _handDiscard(session);
+      if (handDiscard != null) return handDiscard;
+      if (confirmChoice.score > 0) return const BalanceSimAction.confirm();
+    }
+
+    return const BalanceSimAction.stop('no_legal_action');
+  }
+
+  _ConfirmChoice _contestConfirmChoice(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (!session.canConfirmAllFullLines) {
+      return const _ConfirmChoice(score: 0, shouldConfirmNow: false);
+    }
+    final preview = session.copySnapshot().confirmAllFullLines(
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+      applyScoreToBlind: false,
+    );
+    final score = preview.result.scoreAdded;
+    final lineCount = preview.result.lineBreakdowns.length;
+    final remainingScore =
+        session.blind.targetScore - session.blind.scoreTowardBlind;
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    final emptyCells = kBoardSize * kBoardSize - occupancy;
+    final isBossBattle = session.blind.bossModifier != null;
+    final isHighTarget =
+        session.blind.targetScore >= _highTargetConfirmTargetFloor;
+
+    if (remainingScore > 0 && score >= remainingScore) {
+      return _ConfirmChoice(score: score, shouldConfirmNow: true);
+    }
+    if (lineCount < 2) {
+      if (session.deck.remaining <= _lateDeckRemainingMax && score > 0) {
+        return _ConfirmChoice(score: score, shouldConfirmNow: true);
+      }
+      return _ConfirmChoice(score: score, shouldConfirmNow: false);
+    }
+    if (isBossBattle) {
+      final hasLargeBundle =
+          score >= _bossConfirmScoreFloor &&
+          (occupancy >= _bossConfirmMinOccupancy || lineCount >= 3);
+      return _ConfirmChoice(
+        score: score,
+        shouldConfirmNow: hasLargeBundle || emptyCells <= 2 && score > 0,
+      );
+    }
+    if (isHighTarget) {
+      return _ConfirmChoice(
+        score: score,
+        shouldConfirmNow:
+            score >= _highTargetTwoLineConfirmScoreFloor ||
+            lineCount >= 3 && score >= _highTargetConfirmScoreFloor ||
+            emptyCells == 0 && score > 0,
+      );
+    }
+    if (score >= _cleanConfirmScoreFloor || emptyCells <= 2 && score > 0) {
+      return _ConfirmChoice(score: score, shouldConfirmNow: true);
+    }
+    return _ConfirmChoice(score: score, shouldConfirmNow: false);
+  }
+
+  bool _shouldDrawForMoreOptions(
+    RummiPokerGridSession session, {
+    required int occupancy,
+    required _ConfirmChoice confirmChoice,
+  }) {
+    if (session.maxHandSize <= 1 || !session.canDrawFromDeck) return false;
+    if (session.hand.length >= session.maxHandSize) return false;
+    if (confirmChoice.shouldConfirmNow) return false;
+    if (session.deck.remaining <= _lateDeckRemainingMax &&
+        confirmChoice.score > 0) {
+      return false;
+    }
+    return occupancy <= _strategicDrawMaxOccupancy;
+  }
+
+  _PlacementChoice? _contestBestPlacement(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    _PlacementChoice? best;
+    final remainingScore =
+        session.blind.targetScore - session.blind.scoreTowardBlind;
+    final basePotential = _plannerBoardPotentialScoreForJesters(
+      session.board,
+      jesters,
+    );
+
+    for (var handIndex = 0; handIndex < session.hand.length; handIndex++) {
+      final tile = session.hand[handIndex];
+      for (var row = 0; row < kBoardSize; row++) {
+        for (var col = 0; col < kBoardSize; col++) {
+          if (session.board.cellAt(row, col) != null) continue;
+          final copy = session.copySnapshot();
+          if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+          final preview = copy.confirmAllFullLines(
+            jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
+            applyScoreToBlind: false,
+          );
+          final immediateScore = preview.result.scoreAdded;
+          final potentialScore = _plannerBoardPotentialScoreForJesters(
+            copy.board,
+            jesters,
+          );
+          final action = BalanceSimAction.place(
+            handIndex: handIndex,
+            row: row,
+            col: col,
+          );
+          final choice = _PlacementChoice(
+            action: action,
+            clearsTarget:
+                remainingScore > 0 && immediateScore >= remainingScore,
+            immediateScore: immediateScore,
+            potentialScore: potentialScore,
+            lookaheadScore: _placementLookaheadScore(
+              copy,
+              row: row,
+              col: col,
+              basePotential: basePotential,
+              jesters: jesters,
+            ),
+            boardPressure: RummiPokerGridSession.countTilesOnBoard(copy.board),
+          );
+          if (best == null || _isBetterContestPlacement(choice, best)) {
+            best = choice;
+          }
+        }
+      }
+    }
+    return best;
+  }
+
+  bool _isBetterContestPlacement(
+    _PlacementChoice candidate,
+    _PlacementChoice best,
+  ) {
+    if (candidate.clearsTarget != best.clearsTarget) {
+      return candidate.clearsTarget;
+    }
+    if (candidate.immediateScore != best.immediateScore &&
+        candidate.immediateScore >= _cleanConfirmScoreFloor) {
+      return candidate.immediateScore > best.immediateScore;
+    }
+    if (candidate.potentialScore != best.potentialScore) {
+      return candidate.potentialScore > best.potentialScore;
+    }
+    if (candidate.lookaheadScore != best.lookaheadScore) {
+      return candidate.lookaheadScore > best.lookaheadScore;
+    }
+    if (candidate.immediateScore != best.immediateScore) {
+      return candidate.immediateScore > best.immediateScore;
+    }
+    return candidate.boardPressure < best.boardPressure;
+  }
+
+  int _placementLookaheadScore(
+    RummiPokerGridSession afterPlacement, {
+    required int row,
+    required int col,
+    required int basePotential,
+    required List<RummiJesterCard> jesters,
+  }) {
+    final lines = <List<Tile?>>[
+      afterPlacement.board.row(row),
+      afterPlacement.board.col(col),
+    ];
+    if (row == col) lines.add(afterPlacement.board.diagMain());
+    if (row + col == kBoardSize - 1) lines.add(afterPlacement.board.diagAnti());
+
+    var nearlyCompleteLines = 0;
+    var promisingLines = 0;
+    for (final line in lines) {
+      final filled = line.whereType<Tile>().length;
+      final potential = _plannerLinePotentialScore(line);
+      if (filled >= kBoardSize - 1 && potential > 0) nearlyCompleteLines++;
+      if (filled >= 3 && potential > 0) promisingLines++;
+    }
+
+    var bestNextGain = 0;
+    final currentPotential = _plannerBoardPotentialScoreForJesters(
+      afterPlacement.board,
+      jesters,
+    );
+    for (var index = 0; index < afterPlacement.hand.length; index++) {
+      final nextPotential = _bestPlacementPotential(afterPlacement, index);
+      final gain = nextPotential - currentPotential;
+      if (gain > bestNextGain) bestNextGain = gain;
+    }
+
+    return currentPotential -
+        basePotential +
+        nearlyCompleteLines * 120 +
+        promisingLines * 45 +
+        bestNextGain;
+  }
+
+  int _bestPlacementPotential(RummiPokerGridSession session, int handIndex) {
+    if (handIndex < 0 || handIndex >= session.hand.length) return 0;
+    final tile = session.hand[handIndex];
+    var best = -1 << 30;
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        if (session.board.cellAt(row, col) != null) continue;
+        final copy = session.copySnapshot();
+        if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+        best = max(best, _plannerBoardPotentialScore(copy.board));
+      }
+    }
+    return best == -1 << 30 ? 0 : best;
+  }
+
+  BalanceSimAction? _boardMove(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (session.blind.boardMovesRemaining <= 0) return null;
+    if (session.blind.boardMovesRemaining < session.blind.boardMovesMax) {
+      return null;
+    }
+    _MoveChoice? best;
+    for (var fromRow = 0; fromRow < kBoardSize; fromRow++) {
+      for (var fromCol = 0; fromCol < kBoardSize; fromCol++) {
+        if (session.board.cellAt(fromRow, fromCol) == null) continue;
+        for (var toRow = 0; toRow < kBoardSize; toRow++) {
+          for (var toCol = 0; toCol < kBoardSize; toCol++) {
+            if (session.board.cellAt(toRow, toCol) != null) continue;
+            final movedBoard = session.board.copy();
+            if (!movedBoard.moveCell(
+              fromRow: fromRow,
+              fromCol: fromCol,
+              toRow: toRow,
+              toCol: toCol,
+            )) {
+              continue;
+            }
+            final followUp = _bestImmediateConfirmAfterBoardChange(
+              session,
+              movedBoard: movedBoard,
+              jesters: jesters,
+              runtimeSnapshot: runtimeSnapshot,
+            );
+            if (followUp.lineCount < 2 || followUp.score <= 0) continue;
+            final potential = _plannerBoardPotentialScoreForJesters(
+              movedBoard,
+              jesters,
+            );
+            final choice = _MoveChoice(
+              action: BalanceSimAction.moveBoard(
+                row: fromRow,
+                col: fromCol,
+                toRow: toRow,
+                toCol: toCol,
+                gain: followUp.score,
+              ),
+              gain: followUp.score,
+              potential: potential,
+            );
+            if (best == null ||
+                choice.gain > best.gain ||
+                choice.gain == best.gain && choice.potential > best.potential) {
+              best = choice;
+            }
+          }
+        }
+      }
+    }
+    return best?.action;
+  }
+
+  _ImmediateConfirmChoice _bestImmediateConfirmAfterBoardChange(
+    RummiPokerGridSession session, {
+    required RummiBoard movedBoard,
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    var best = const _ImmediateConfirmChoice(score: 0, lineCount: 0);
+    for (var handIndex = 0; handIndex < session.hand.length; handIndex++) {
+      final tile = session.hand[handIndex];
+      for (var row = 0; row < kBoardSize; row++) {
+        for (var col = 0; col < kBoardSize; col++) {
+          if (movedBoard.cellAt(row, col) != null) continue;
+          final copy = session.copySnapshot();
+          for (var r = 0; r < kBoardSize; r++) {
+            for (var c = 0; c < kBoardSize; c++) {
+              copy.board.setCell(r, c, movedBoard.cellAt(r, c));
+            }
+          }
+          if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+          final preview = copy.confirmAllFullLines(
+            jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
+            applyScoreToBlind: false,
+          );
+          final choice = _ImmediateConfirmChoice(
+            score: preview.result.scoreAdded,
+            lineCount: preview.result.lineBreakdowns.length,
+          );
+          if (choice.lineCount > best.lineCount ||
+              choice.lineCount == best.lineCount && choice.score > best.score) {
+            best = choice;
+          }
+        }
+      }
+    }
+    return best;
+  }
+
+  BalanceSimAction? _scoringBoardDiscard(
+    RummiPokerGridSession session, {
+    required List<RummiJesterCard> jesters,
+    required RummiJesterRuntimeSnapshot runtimeSnapshot,
+  }) {
+    if (session.blind.boardDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return null;
+    }
+    final currentPreview = session.copySnapshot().confirmAllFullLines(
+      jesters: jesters,
+      runtimeSnapshot: runtimeSnapshot,
+      applyScoreToBlind: false,
+    );
+    final currentScore = currentPreview.result.scoreAdded;
+    final currentLineCount = currentPreview.result.lineBreakdowns.length;
+    _BoardDiscardChoice? best;
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        if (session.board.cellAt(row, col) == null) continue;
+        final afterDiscard = session.copySnapshot();
+        afterDiscard.board.setCell(row, col, null);
+        final afterDiscardPotential = _plannerBoardPotentialScoreForJesters(
+          afterDiscard.board,
+          jesters,
+        );
+        for (final tile in session.hand) {
+          final copy = afterDiscard.copySnapshot();
+          if (!copy.tryPlaceFromHand(tile, row, col)) continue;
+          final preview = copy.confirmAllFullLines(
+            jesters: jesters,
+            runtimeSnapshot: runtimeSnapshot,
+            applyScoreToBlind: false,
+          );
+          final lineCount = preview.result.lineBreakdowns.length;
+          final score = preview.result.scoreAdded;
+          final potentialScore = _plannerBoardPotentialScoreForJesters(
+            copy.board,
+            jesters,
+          );
+          final improvesConfirm =
+              lineCount > currentLineCount ||
+              lineCount == currentLineCount && score > currentScore;
+          final revivesDeadLine =
+              lineCount > 0 &&
+              score > 0 &&
+              potentialScore >= afterDiscardPotential;
+          if (!improvesConfirm && !revivesDeadLine) continue;
+          final choice = _BoardDiscardChoice(
+            action: BalanceSimAction.discardBoard(row: row, col: col),
+            immediateScore: score,
+            potentialScore: potentialScore,
+          );
+          if (best == null ||
+              choice.immediateScore > best.immediateScore ||
+              choice.immediateScore == best.immediateScore &&
+                  choice.potentialScore > best.potentialScore) {
+            best = choice;
+          }
+        }
+      }
+    }
+    return best?.action;
+  }
+
+  BalanceSimAction? _handDiscard(RummiPokerGridSession session) {
+    if (session.blind.handDiscardsRemaining <= 0 || session.hand.isEmpty) {
+      return null;
+    }
+    var worstIndex = 0;
+    var worstPotential = 1 << 30;
+    for (var index = 0; index < session.hand.length; index++) {
+      final potential = _bestPlacementPotential(session, index);
+      if (potential < worstPotential) {
+        worstPotential = potential;
+        worstIndex = index;
+      }
+    }
+    return BalanceSimAction.discardHand(handIndex: worstIndex);
+  }
+}
+
 class _ConfirmChoice {
   const _ConfirmChoice({required this.score, required this.shouldConfirmNow});
 
@@ -384,6 +881,7 @@ class _PlacementChoice {
     required this.clearsTarget,
     required this.immediateScore,
     required this.potentialScore,
+    this.lookaheadScore = 0,
     required this.boardPressure,
   });
 
@@ -391,7 +889,39 @@ class _PlacementChoice {
   final bool clearsTarget;
   final int immediateScore;
   final int potentialScore;
+  final int lookaheadScore;
   final int boardPressure;
+}
+
+class _MoveChoice {
+  const _MoveChoice({
+    required this.action,
+    required this.gain,
+    required this.potential,
+  });
+
+  final BalanceSimAction action;
+  final int gain;
+  final int potential;
+}
+
+class _ImmediateConfirmChoice {
+  const _ImmediateConfirmChoice({required this.score, required this.lineCount});
+
+  final int score;
+  final int lineCount;
+}
+
+class _BoardDiscardChoice {
+  const _BoardDiscardChoice({
+    required this.action,
+    required this.immediateScore,
+    required this.potentialScore,
+  });
+
+  final BalanceSimAction action;
+  final int immediateScore;
+  final int potentialScore;
 }
 
 int _plannerBoardPotentialScore(RummiBoard board) {
@@ -405,6 +935,100 @@ int _plannerBoardPotentialScore(RummiBoard board) {
   score += _plannerLinePotentialScore(board.diagMain());
   score += _plannerLinePotentialScore(board.diagAnti());
   return score;
+}
+
+int _plannerBoardPotentialScoreForJesters(
+  RummiBoard board,
+  List<RummiJesterCard> jesters,
+) {
+  var score = _plannerBoardPotentialScore(board);
+  final wantsFlush = jesters.any(
+    (jester) =>
+        jester.conditionType == 'flush' ||
+        jester.conditionType == 'tile_color_scored',
+  );
+  final wantsFourKind = jesters.any((jester) => jester.id == 'the_family');
+  final wantsPairs = jesters.any(
+    (jester) =>
+        jester.id == 'clever_jester' ||
+        jester.conditionType == 'two_pair' ||
+        jester.conditionType == 'three_of_a_kind' ||
+        jester.conditionType == 'four_of_a_kind' ||
+        jester.conditionType == 'full_house',
+  );
+  if (!wantsFlush && !wantsPairs) return score;
+
+  for (var row = 0; row < kBoardSize; row++) {
+    score += _plannerJesterLineBonus(
+      board.row(row),
+      wantsFlush: wantsFlush,
+      wantsFourKind: wantsFourKind,
+      wantsPairs: wantsPairs,
+    );
+  }
+  for (var col = 0; col < kBoardSize; col++) {
+    score += _plannerJesterLineBonus(
+      board.col(col),
+      wantsFlush: wantsFlush,
+      wantsFourKind: wantsFourKind,
+      wantsPairs: wantsPairs,
+    );
+  }
+  score += _plannerJesterLineBonus(
+    board.diagMain(),
+    wantsFlush: wantsFlush,
+    wantsFourKind: wantsFourKind,
+    wantsPairs: wantsPairs,
+  );
+  score += _plannerJesterLineBonus(
+    board.diagAnti(),
+    wantsFlush: wantsFlush,
+    wantsFourKind: wantsFourKind,
+    wantsPairs: wantsPairs,
+  );
+  return score;
+}
+
+int _plannerJesterLineBonus(
+  List<Tile?> line, {
+  required bool wantsFlush,
+  required bool wantsFourKind,
+  required bool wantsPairs,
+}) {
+  final tiles = line.whereType<Tile>().toList(growable: false);
+  if (tiles.isEmpty) return 0;
+  final missing = kBoardSize - tiles.length;
+  final colorCounts = <TileColor, int>{};
+  final rankCounts = <int, int>{};
+  for (final tile in tiles) {
+    colorCounts[tile.color] = (colorCounts[tile.color] ?? 0) + 1;
+    rankCounts[tile.number] = (rankCounts[tile.number] ?? 0) + 1;
+  }
+
+  var bonus = 0;
+  if (wantsFlush) {
+    final maxSameColor = colorCounts.values.fold<int>(
+      0,
+      (maxValue, count) => count > maxValue ? count : maxValue,
+    );
+    if (maxSameColor + missing >= kBoardSize) {
+      bonus += maxSameColor * 70 + (missing == 0 ? 280 : 0);
+    }
+  }
+  if (wantsPairs) {
+    final pairCount = rankCounts.values.where((count) => count >= 2).length;
+    final maxSameRank = rankCounts.values.fold<int>(
+      0,
+      (maxValue, count) => count > maxValue ? count : maxValue,
+    );
+    if (wantsFourKind && maxSameRank + missing >= 4) {
+      bonus += maxSameRank * 180 + (missing == 0 ? 520 : 0);
+    }
+    if (pairCount >= 2 || maxSameRank >= 3) {
+      bonus += pairCount * 90 + maxSameRank * 55 + (missing == 0 ? 160 : 0);
+    }
+  }
+  return bonus;
 }
 
 int _plannerLinePotentialScore(List<Tile?> line) {

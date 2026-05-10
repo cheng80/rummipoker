@@ -14,7 +14,15 @@ abstract class BalanceSimBotPolicy {
   });
 }
 
-enum BalanceSimActionType { draw, place, confirm, discardBoard, stop }
+enum BalanceSimActionType {
+  draw,
+  place,
+  confirm,
+  discardHand,
+  discardBoard,
+  moveBoard,
+  stop,
+}
 
 class BalanceSimAction {
   const BalanceSimAction._({
@@ -22,6 +30,9 @@ class BalanceSimAction {
     this.handIndex,
     this.row,
     this.col,
+    this.toRow,
+    this.toCol,
+    this.gain,
     this.reason,
   });
 
@@ -43,6 +54,24 @@ class BalanceSimAction {
   const BalanceSimAction.discardBoard({required int row, required int col})
     : this._(type: BalanceSimActionType.discardBoard, row: row, col: col);
 
+  const BalanceSimAction.discardHand({required int handIndex})
+    : this._(type: BalanceSimActionType.discardHand, handIndex: handIndex);
+
+  const BalanceSimAction.moveBoard({
+    required int row,
+    required int col,
+    required int toRow,
+    required int toCol,
+    int? gain,
+  }) : this._(
+         type: BalanceSimActionType.moveBoard,
+         row: row,
+         col: col,
+         toRow: toRow,
+         toCol: toCol,
+         gain: gain,
+       );
+
   const BalanceSimAction.stop(String reason)
     : this._(type: BalanceSimActionType.stop, reason: reason);
 
@@ -50,5 +79,8 @@ class BalanceSimAction {
   final int? handIndex;
   final int? row;
   final int? col;
+  final int? toRow;
+  final int? toCol;
+  final int? gain;
   final String? reason;
 }

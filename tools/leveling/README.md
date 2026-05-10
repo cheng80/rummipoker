@@ -25,3 +25,15 @@
 모델 결과는 런타임 자동 적용값이 아니다. 실제 ML 전환 단계에서도 모델은 후보 추천 근거를 만들 뿐이며, 후보는 재시뮬레이션과 사람 승인 후에만 코드나 데이터에 반영한다.
 
 현재 사람 검토용 연결 보고서는 `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`다.
+
+## Market Collection Audit
+
+전체 수집 가능성은 `tools/sim/runtime_market_offer_audit.dart`의 collection audit로 확인한다. 이 audit는 한 run의 `seen/bought` 기록을 누적하면서 S1~S8 market entry를 통과해, 모든 Jester/Item이 실제로 보이는지와 살 수 있는지, 그리고 실패가 돈/슬롯 중 어디서 나는지를 분리한다.
+
+예시 실행은 Flutter test wrapper인 `test/tools/sim/runtime_market_collection_audit_smoke_test.dart`를 사용한다. 현재 기준 산출물은 `logs/sim/runtime_market_collection_audit_standard_r800_20260511_064500.json`과 `logs/sim/runtime_market_collection_audit_affordability_r800_20260511_064500.json`이다.
+
+## Historical Data
+
+과거 시뮬레이션 CSV/JSON/리포트는 최신 게임 밸런스의 직접 증거가 아니다. 새 카드, 족보 성장, 슬롯 해금, 마켓/경제, 보스 룰, 저장/정산 경로, bot policy가 바뀌면 최신 runtime과 catalog로 fresh resimulation을 다시 만든다.
+
+과거 row를 분석에 포함할 때는 `balance_version`, `ruleset_id`, `catalog_versions`, `experiment_id`, `market_profile`, `bot_policy`를 보존한다. 이 값이 다른 row는 같은 신뢰도로 섞지 않고, historical prior 또는 비교 이력으로만 사용한다.

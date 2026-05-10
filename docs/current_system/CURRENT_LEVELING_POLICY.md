@@ -43,8 +43,25 @@
 - 다음 검토 후보는 S7~S8 boss 구간에서 덱/타일 형상 보정 후보가 마켓 후보군에 안정적으로 포함되는지 확인하는 것이다.
 - 후보는 마켓에만 뜬다. 구매, 판매, 슬롯 정리는 유저 선택이다.
 
-## 6. 과거 자료 사용법
+## 6. 전체 수집 가능성 보정
+
+- 전체 수집 보정은 특정 성장축 부족 보정과 별개다.
+- 현재 허용된 보정은 “아직 구매하지 않은 후보 +45”, “아직 마켓에서 보지 못한 후보 +90”처럼 Jester/Item 개별 후보의 등장 가중치만 올리는 방식이다.
+- 이미 한 번 구매한 뒤 판매한 Jester/Item은 `bought*Ids` 기록에 남는다. 다시 등장할 수는 있지만 “미수집 후보” 보정은 받지 않는다.
+- 이 보정은 직접 지급, 자동 구매, 특정 슬롯 고정, 카탈로그 제거가 아니다.
+- 수집 audit는 `tools/sim/runtime_market_offer_audit.dart`의 누적 collection path로 본다. 핵심 지표는 `seen coverage`, `bought coverage`, `gold blocked`, `capacity blocked`, `unseen/unbought ids`다.
+- 한 run에서 모든 후보를 동시에 보유해야 한다는 뜻은 아니다. 마켓을 반복 통과하는 여러 fresh path에서 전체 catalog가 실제로 보이고 살 수 있는지를 본다.
+
+## 7. 과거 자료 사용법
 
 - 긴 실험 로그와 이전 후보는 `docs/archive/leveling/`에서 검색한다.
 - archive 문서는 현재 기준이 아니다. 필요한 내용은 이 문서나 current/spec 문서로 승격한 뒤 사용한다.
 - 과거 문서의 `resource +1`, `soft_resource`, `sustain` 표현은 당시 실험 이름으로 보고 현재 정책으로 해석하지 않는다.
+
+## 8. 과거 데이터 재사용 기준
+
+- 과거 시뮬레이션 row와 리포트는 `historical prior`로만 사용한다.
+- 현재 clear rate, 카드 가치, 마켓 구매력, S1~S8 통과율, ML 추천 결론은 현재 runtime/catalog/ruleset/bot policy로 fresh resimulation을 다시 돌린 뒤에만 판단한다.
+- UI 변경만으로 CLI 레벨링 데이터가 무효가 되지는 않지만, 룰, 카드, 경제, 마켓, 정산, 저장 상태, bot policy가 바뀌면 데이터 분포가 바뀐 것으로 본다.
+- 과거 row를 분석 테이블에 섞을 때는 `balance_version`, `ruleset_id`, `catalog_versions`, `experiment_id`, `market_profile`, `bot_policy`를 feature 또는 grouping key로 보존한다.
+- 현재 추천 근거로 쓰는 데이터셋에는 최신 runtime 기준 fresh row를 우선하고, 과거 row는 낮은 신뢰도의 방향성 참고 또는 비교 이력으로만 둔다.
