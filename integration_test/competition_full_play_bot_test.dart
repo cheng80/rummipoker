@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +20,7 @@ import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/blind_selection_setup.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
+import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
 import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
@@ -50,11 +52,14 @@ enum _ContestBotMode { full, sub }
 
 enum _ContestBotScene { stationSelect, battle, cashOut, market, runComplete }
 
+enum _ContestTutorialKind { battle, market }
+
 class _ContestBotConfig {
   const _ContestBotConfig({
     required this.mode,
     required this.seed,
     required this.difficultyName,
+    required this.localeName,
     required this.maxBattleActions,
     required this.maxGameOverRetries,
     required this.resumeActiveRun,
@@ -77,6 +82,10 @@ class _ContestBotConfig {
       difficultyName: const String.fromEnvironment(
         'CONTEST_BOT_DIFFICULTY',
         defaultValue: 'standard',
+      ),
+      localeName: const String.fromEnvironment(
+        'CONTEST_BOT_LOCALE',
+        defaultValue: 'ko',
       ),
       maxBattleActions: const int.fromEnvironment(
         'CONTEST_BOT_MAX_BATTLE_ACTIONS',
@@ -121,6 +130,7 @@ class _ContestBotConfig {
   final _ContestBotMode mode;
   final int seed;
   final String difficultyName;
+  final String localeName;
   final int maxBattleActions;
   final int maxGameOverRetries;
   final bool resumeActiveRun;
@@ -149,12 +159,18 @@ class _ContestBotConfig {
     NewRunSetup.parseDifficulty(difficultyName),
   );
 
+  Locale get locale => _parseLocale(localeName);
+
   BlindTier get targetTier => switch (targetTierName) {
     'small' => BlindTier.small,
     'big' => BlindTier.big,
     'boss' => BlindTier.boss,
     _ => BlindTier.boss,
   };
+
+  List<String> get tutorialNextLabels => const ['다음', 'Next', '次へ', '下一步'];
+
+  List<String> get tutorialDoneLabels => const ['완료', 'Done', '完了', '完成'];
 
   bool matchesTarget({required int stage, required BlindTier tier}) {
     if (isFullRun) return stage == 8 && tier == BlindTier.boss;
@@ -168,6 +184,16 @@ class _ContestBotConfig {
       'market' || 'Market' => _ContestBotScene.market,
       'runComplete' || 'RunComplete' => _ContestBotScene.runComplete,
       _ => _ContestBotScene.cashOut,
+    };
+  }
+
+  static Locale _parseLocale(String value) {
+    return switch (value) {
+      'en' => const Locale('en'),
+      'ja' => const Locale('ja'),
+      'zh-CN' || 'zh_CN' => const Locale('zh', 'CN'),
+      'zh-TW' || 'zh_TW' => const Locale('zh', 'TW'),
+      _ => const Locale('ko'),
     };
   }
 }
@@ -198,6 +224,8 @@ class _CompetitionFullPlayBot {
   bool boughtJester = false;
   bool boughtItem = false;
   bool usedItem = false;
+  bool battleTutorialCompleted = false;
+  bool marketTutorialCompleted = false;
   bool discardedHand = false;
   bool discardedBoard = false;
   bool movedBoard = false;
@@ -282,6 +310,18 @@ class _CompetitionFullPlayBot {
       reason: 'contest_full_run_bot must buy a Jester',
     );
     expect(boughtItem, isTrue, reason: 'contest_full_run_bot must buy an Item');
+    if (!config.resumeActiveRun) {
+      expect(
+        battleTutorialCompleted,
+        isTrue,
+        reason: 'fresh contest_full_run_bot must complete battle tutorial',
+      );
+      expect(
+        marketTutorialCompleted,
+        isTrue,
+        reason: 'fresh contest_full_run_bot must complete market tutorial',
+      );
+    }
 
     _printPassLog('S8 boss full run complete');
   }
@@ -289,8 +329,19 @@ class _CompetitionFullPlayBot {
   Future<void> _startSeededRun() async {
     app.main();
     await _pumpFor(const Duration(seconds: 5));
+    if (!config.resumeActiveRun) {
+      await StorageHelper.erase();
+    }
+    await tester.element(find.byType(MaterialApp)).setLocale(config.locale);
+    await _pumpFor(const Duration(seconds: 2));
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
+    _record(
+      'locale=${config.localeName} '
+      'resolvedLocale=${config.locale.languageCode}'
+      '${config.locale.countryCode == null ? '' : '-${config.locale.countryCode}'} '
+      'freshStorage=${!config.resumeActiveRun}',
+    );
 
     if (config.resumeActiveRun) {
       final restored = await _loadResumeRuntime();
@@ -339,7 +390,7 @@ class _CompetitionFullPlayBot {
     await _pumpUntilVisible(find.text('Station Select'));
     log.add(
       'seed=${config.seed} difficulty=${config.difficulty.name} modifier=basic '
-      'mode=${config.mode.name}',
+      'mode=${config.mode.name} locale=${config.localeName}',
     );
   }
 
@@ -363,11 +414,20 @@ class _CompetitionFullPlayBot {
       await _pumpFor(const Duration(seconds: 1));
     }
     await _pumpUntilVisible(find.text('드로우'));
+    await _completeTutorialIfVisible(
+      kind: _ContestTutorialKind.battle,
+      waitForAppearance: !config.resumeActiveRun && !battleTutorialCompleted,
+    );
+    await _pumpUntilVisible(find.text('드로우'));
   }
 
   Future<void> _playCurrentBattle() async {
     var step = 0;
     while (step < config.maxBattleActions) {
+      if (await _completeTutorialIfVisible(kind: _ContestTutorialKind.battle)) {
+        await _pumpUntilVisible(find.text('드로우'));
+        continue;
+      }
       if (_isCashOutReady()) {
         return;
       }
@@ -647,6 +707,10 @@ class _CompetitionFullPlayBot {
   }
 
   Future<void> _handleMarketEvidenceOnly({required int stage}) async {
+    await _completeTutorialIfVisible(
+      kind: _ContestTutorialKind.market,
+      waitForAppearance: !config.resumeActiveRun && !marketTutorialCompleted,
+    );
     await _buyJestersIfPossible(stage);
     await _buyQuickSlotItemIfNeeded(stage);
     await _useMarketItemIfVisible(stage);
@@ -710,6 +774,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _buyJestersIfPossible(int stage) async {
     if (!config.needsMarketPurchase && !config.isFullRun) return;
+    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
     await _tapTextIfVisible('Jester / Slots');
     await _tapTextIfVisible('Jester');
 
@@ -826,6 +891,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _buyQuickSlotItemIfNeeded(int stage) async {
     if (!config.needsItemPurchase && !config.isFullRun) return;
+    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
     final state = _readGameState();
     final inventory = state.runProgress?.itemInventory;
     final hasUsableQuickSlotItem =
@@ -883,6 +949,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _useMarketItemIfVisible(int stage) async {
     if (!config.needsItemUse && !config.isFullRun) return;
+    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
     if (usedItem || find.text('사용').evaluate().isEmpty) return;
     await _tapText('사용');
     usedItem = true;
@@ -894,6 +961,7 @@ class _CompetitionFullPlayBot {
     required CompetitionBattleAction plannedAction,
   }) async {
     if (!config.needsItemUse && !config.isFullRun) return false;
+    await _completeTutorialIfVisible(kind: _ContestTutorialKind.battle);
     if (usedItem && !config.isFullRun) return false;
     final state = _tryReadGameState();
     if (state == null) return false;
@@ -952,6 +1020,62 @@ class _CompetitionFullPlayBot {
     await tester.tap(tileFinder.at(discardIndex), warnIfMissed: false);
     _record('deck_needle: discarded top-window tile index $discardIndex');
     await _pumpFor(const Duration(milliseconds: 600));
+  }
+
+  Future<bool> _completeTutorialIfVisible({
+    required _ContestTutorialKind kind,
+    bool waitForAppearance = false,
+  }) async {
+    var sawTutorial = false;
+    final maxSteps = waitForAppearance ? 24 : 8;
+    for (var step = 0; step < maxSteps; step++) {
+      await tester.pump(const Duration(milliseconds: 350));
+      final doneFinder = _firstVisibleTutorialButton(config.tutorialDoneLabels);
+      if (doneFinder != null) {
+        sawTutorial = true;
+        await tester.tap(doneFinder.last, warnIfMissed: false);
+        await _pumpFor(const Duration(milliseconds: 700));
+        _markTutorialCompleted(kind);
+        return true;
+      }
+      final nextFinder = _firstVisibleTutorialButton(config.tutorialNextLabels);
+      if (nextFinder != null) {
+        sawTutorial = true;
+        await tester.tap(nextFinder.last, warnIfMissed: false);
+        await _pumpFor(const Duration(milliseconds: 700));
+        continue;
+      }
+      if (!sawTutorial && !waitForAppearance) return false;
+      await _pumpFor(const Duration(milliseconds: 300));
+    }
+    if (sawTutorial) {
+      fail('tutorial did not reach Done for ${kind.name}');
+    }
+    if (waitForAppearance) {
+      fail('expected ${kind.name} tutorial did not appear');
+    }
+    return false;
+  }
+
+  Finder? _firstVisibleTutorialButton(List<String> labels) {
+    for (final label in labels) {
+      final finder = find.widgetWithText(FilledButton, label);
+      if (finder.evaluate().isNotEmpty) return finder;
+    }
+    return null;
+  }
+
+  void _markTutorialCompleted(_ContestTutorialKind kind) {
+    switch (kind) {
+      case _ContestTutorialKind.battle:
+        if (battleTutorialCompleted) return;
+        battleTutorialCompleted = true;
+        _record('battle tutorial completed');
+      case _ContestTutorialKind.market:
+        if (marketTutorialCompleted) return;
+        marketTutorialCompleted = true;
+        _record('market tutorial completed');
+    }
   }
 
   _BattleItemChoice? _chooseBattleItemToUse(

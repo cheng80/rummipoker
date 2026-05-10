@@ -74,6 +74,9 @@
 - 손패 최대치 증가와 덱 상단 확인/버림은 경제·전략 축으로 취급한다. 공모전 풀런봇은 손패가 비었을 때만 드로우하는 정책에 머무르지 말고, 손패 여유 칸을 후보 탐색에 활용하며, Deck Needle 같은 덱 조작 아이템은 증거용으로 초반 소모하지 않고 족보 형성에 유리한 타일 선별이 가능할 때만 사용한다. UI에서도 손패 최대치 증가는 작은 숫자 변화로만 두지 말고 드로우 가능 칸과 1회 강조 피드백으로 플레이어가 전략 변화를 알아차리게 한다.
 - 공모전 풀런봇이 고점수 구간에서 game over가 나면 봇 전용 난이도 완화나 보상 보정보다 먼저 중복 족보 확보 정책을 점검한다. 확정 타이밍, 손패 여유 칸 활용, 덱 상단 제어, 보드 이동/버림은 여러 줄이 동시에 점수화되는 보드 상태를 만들기 위한 수단으로 우선 조정한다.
 - 공모전 풀런봇 실행/실패/중단 뒤에는 WebDriver Chrome, ChromeDriver, Flutter web 서버가 남아 메모리를 잡지 않는지 확인한다. 봇 runner는 종료 trap에서 관련 프로세스를 정리하고, 새 풀런을 시작하기 전에도 남은 headless WebDriver 프로세스를 먼저 정리한다.
+- 공모전 풀런봇은 튜토리얼 overlay가 떠 있으면 전투/마켓 액션보다 튜토리얼 처리를 먼저 한다. fresh locale gate에서는 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done` 완료 로그가 남기 전에는 해당 locale pass로 인정하지 않는다.
+- 공모전 풀런봇 fresh locale gate에서 튜토리얼을 반드시 다시 띄우려면 앱 SharedPreferences만 지우지 말고 WebDriver Chrome profile의 cookie/localStorage/sessionStorage까지 초기화한다. `--resume-active-run`이 아닌 실행은 browser profile dir을 새로 시작해야 한다.
+- 공모전 풀런봇 locale gate는 5개 언어를 한 번에 연속 실행하지 않는다. `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 순서는 유지하되, 각 locale full-run 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다.
 - 공모전 풀런봇의 seed 기반 보정은 1회 game over만으로 평상시 전투 정책을 바꾸지 않는다. 평소에는 손패, 덱 상단, 보드 점유, 확정 preview, action trace를 기록하고, 같은 run에서 2회 이상 game over가 누적된 뒤에만 retry recovery 전용 보정 정책을 켠다.
 - 공모전 풀런봇은 같은 seed에서 2회 이상 game over가 난 뒤에는 실패 route의 action key만 피하지 말고, 이미 관측된 덱 순서를 retry recovery 후보 평가에 반영한다. 다음 덱 패가 이어 만들 족보와 중복줄 가능성을 배치 lookahead에 넣되, 무의미한 버림/이동/아이템 사용으로 대체하지 않는다.
 - 공모전 풀런봇의 S8 boss 같은 고점수 구간 안정화는 즉시 점수 후보만 키우는 방향으로 닫지 않는다. `potentialScore`가 이미 반영하는 현재 배치 이득에 더해, 완성 직전 라인 수, 서로 교차하는 유망 라인 수, 현재 손패 남은 타일로 다음 1-step 배치까지 이어질 가능성을 lookahead 후보 평가에 넣는 방향을 먼저 검토한다. 이는 bot 전용 QA 정책 보정이며, runtime 난이도나 production 밸런스 완화로 처리하지 않는다.

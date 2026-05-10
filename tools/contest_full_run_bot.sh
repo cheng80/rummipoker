@@ -8,6 +8,7 @@ cd "$ROOT_DIR"
 OUTPUT_DIR=""
 SEED="${CONTEST_BOT_SEED:-91460}"
 DIFFICULTY="${CONTEST_BOT_DIFFICULTY:-standard}"
+LOCALE="${CONTEST_BOT_LOCALE:-ko}"
 MAX_BATTLE_ACTIONS="${CONTEST_BOT_MAX_BATTLE_ACTIONS:-420}"
 MAX_GAME_OVER_RETRIES="${CONTEST_BOT_MAX_GAME_OVER_RETRIES:-24}"
 ACTION_DELAY_MS="${CONTEST_BOT_ACTION_DELAY_MS:-250}"
@@ -26,6 +27,7 @@ Usage:
 Options:
   --seed <number>           Run seed. Default: 91460.
   --difficulty <name>       standard | challenge. Default: standard.
+  --locale <code>           ko | en | ja | zh-CN | zh-TW. Default: ko.
   --max-actions <number>    Max battle actions per station. Default: 420.
   --max-retries <number>    Max game-over retries per bot run. Default: 24.
   --action-delay-ms <ms>    Delay after battle actions. Default: 250.
@@ -52,6 +54,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --difficulty)
       DIFFICULTY="${2:?missing difficulty}"
+      shift 2
+      ;;
+    --locale)
+      LOCALE="${2:?missing locale}"
       shift 2
       ;;
     --max-actions)
@@ -241,6 +247,13 @@ persist_checkpoint() {
 }
 
 echo "Output: $OUTPUT_DIR"
+if [[ "$RESUME_ACTIVE_RUN" != "true" ]]; then
+  if [[ -z "$BROWSER_PROFILE_DIR" || "$BROWSER_PROFILE_DIR" == "/" ]]; then
+    echo "Refusing to clear unsafe browser profile dir: $BROWSER_PROFILE_DIR" >&2
+    exit 1
+  fi
+  rm -rf "$BROWSER_PROFILE_DIR"
+fi
 start_chromedriver
 mkdir -p "$BROWSER_PROFILE_DIR"
 RESUME_DEFINE_ARG=""
@@ -264,6 +277,7 @@ run_flutter_drive_and_capture "$OUTPUT_DIR/10_contest_full_run_bot.log" \
     --dart-define=CONTEST_BOT_MODE=full \
     --dart-define=CONTEST_BOT_SEED="$SEED" \
     --dart-define=CONTEST_BOT_DIFFICULTY="$DIFFICULTY" \
+    --dart-define=CONTEST_BOT_LOCALE="$LOCALE" \
     --dart-define=CONTEST_BOT_MAX_BATTLE_ACTIONS="$MAX_BATTLE_ACTIONS" \
     --dart-define=CONTEST_BOT_MAX_GAME_OVER_RETRIES="$MAX_GAME_OVER_RETRIES" \
     --dart-define=CONTEST_BOT_ACTION_DELAY_MS="$ACTION_DELAY_MS" \
