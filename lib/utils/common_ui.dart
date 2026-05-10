@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../resources/asset_paths.dart';
+import '../widgets/phone_frame_scaffold.dart';
 
 enum _NoticeStyle { topBanner, bottomToast }
 
@@ -334,14 +335,18 @@ void showTopNotice(
     builder: (context) {
       return IgnorePointer(
         child: SafeArea(
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: _NoticeCard(
-                message: message,
-                beginOffsetY: -18,
-                style: _NoticeStyle.topBanner,
+          child: Center(
+            child: PhoneFrame(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _NoticeCard(
+                    message: message,
+                    beginOffsetY: -18,
+                    style: _NoticeStyle.topBanner,
+                  ),
+                ),
               ),
             ),
           ),
@@ -371,14 +376,18 @@ void showBottomNotice(
       return IgnorePointer(
         child: SafeArea(
           top: false,
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(18, 0, 18, bottomInset + 12),
-              child: _NoticeCard(
-                message: message,
-                beginOffsetY: 18,
-                style: _NoticeStyle.bottomToast,
+          child: Center(
+            child: PhoneFrame(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(18, 0, 18, bottomInset + 12),
+                  child: _NoticeCard(
+                    message: message,
+                    beginOffsetY: 18,
+                    style: _NoticeStyle.bottomToast,
+                  ),
+                ),
               ),
             ),
           ),
@@ -636,6 +645,9 @@ class _NoticeCard extends StatelessWidget {
         );
       },
       child: ConstrainedBox(
+        key: ValueKey(
+          isTopBanner ? 'common-top-notice' : 'common-bottom-notice',
+        ),
         constraints: BoxConstraints(maxWidth: isTopBanner ? 360 : 320),
         child: Material(
           color: Colors.transparent,

@@ -115,6 +115,7 @@
 - 웹 BGM unlock/retry는 스크롤 제스처마다 같은 BGM을 `stop()` 후 다시 `play()`하게 만들면 안 된다. 이미 같은 화면 BGM이 재생 중이면 즉시 return해 스크롤 중 묵음/재시작 레이스를 막는다.
 - 정산/팝업/게임 UI 텍스트 루트는 의도치 않은 `TextDecoration` 상속을 차단한다. 노란 밑줄 같은 시각 회귀는 warn/error/overflow로 잡히지 않으므로 screenshot/눈검증 대상에 넣고, 색/크기만 지정한 `TextStyle`도 decoration 상속 여부를 확인한다.
 - `PhoneFrameScaffold` 화면에서 `showGeneralDialog`, `showDialog`, bottom sheet 같은 route overlay를 띄울 때는 본문 프레임 밖 전체 화면 폭으로 UI가 새지 않게 한다. 게임 정산/보상/옵션처럼 플레이 화면의 일부인 overlay는 별도 `PhoneFrame` 또는 동등한 폭 제약을 적용하고, 데스크톱형 landscape widget test로 폭을 확인한다.
+- 게임 전역 상단/하단 배너와 toast는 실제 기기 safe area뿐 아니라 `PhoneFrame` 논리 프레임 안쪽에 떠야 한다. `rootOverlay`에 직접 붙이는 notice는 전체 브라우저/데스크톱 화면 기준으로 배치하지 말고 `SafeArea`와 `PhoneFrame` 제약을 함께 적용하며, wide landscape widget test로 상단/하단 bounds를 확인한다.
 
 ---
 
