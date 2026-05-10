@@ -10,10 +10,10 @@
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Active, locale full-run paused for slot-unlock rule check | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했고, `ko`, `en` locale 표준→도전 2사이클도 통과했다. 이후 잠긴 Jester/Quick Item/Passive 슬롯의 해금 룰과 Market 진입 연출을 추가했으므로, `ja`, `zh-CN`, `zh-TW` full-run 재개 전 이 변경의 build/test와 사용자 승인을 먼저 닫는다. |
+| 공모전 기준 완성 | Active, slot-unlock fixture eye-check before locale resume | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했고, `ko`, `en` locale 표준→도전 2사이클도 통과했다. 이후 잠긴 Jester/Quick Item/Passive 슬롯 해금 룰, Market 진입 연출, 시스템 locale 기본값, `slot_unlock_market` debug fixture를 구현/검증/커밋했다. 다음은 fixture 눈검증 후 사용자 승인 기준으로 남은 locale cycle을 재개하는 것이다. |
 | 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1, submission kit 문서화는 반영됐다. 장기 밸런스와 스토어 최종 산출물은 별도 트랙으로 남긴다. |
 
-현재는 공모전 기준 QA 중 잠긴 슬롯 해금 룰 보강을 먼저 닫는다. 다음 남은 full-run gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했지만, 그 뒤 S2/S4/S6 Boss 보상 슬롯 해금이 추가됐으므로 이후 full-run 재개는 슬롯 해금 변경 검증과 사용자 승인 후 진행한다. 5개 locale을 한 번에 연속 실행하지 않고, 각 locale 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
+현재는 공모전 기준 QA 중 잠긴 슬롯 해금 룰 보강의 Browser/기기 눈검증을 남겨 둔 상태다. 다음 남은 full-run gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했다. 그 뒤 S2/S4/S6 Boss 보상 슬롯 해금, Market 해금 연출, 시스템 locale 기본값, debug fixture가 추가됐으므로, `/game?fixture=slot_unlock_market&debug_shop_tab=items` 눈검증 후 사용자 승인 기준으로 남은 locale cycle을 재개한다. debug fixture 자동 튜토리얼은 튜토리얼 검증 전용 fixture가 아니면 꺼져 있어야 하며, 튜토리얼은 버튼으로만 다시 볼 수 있어야 한다. 5개 locale을 한 번에 연속 실행하지 않고, 각 locale 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
 
 ## 2. 공모전 기준 다음 작업
 
@@ -24,15 +24,16 @@
 2. 완료: 같은 `ko` cycle 내부의 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인 통과.
 3. 완료: `contest_full_run_bot` `en` locale 표준 난이도 fresh S1~S8 Boss full-run 통과.
 4. 완료: 같은 `en` cycle 내부의 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인 통과.
-5. 진행 중: 잠긴 슬롯 해금 룰을 S2/S4/S6 Boss 보상으로 연결하고, Market 진입 시 해금 연출을 보여준 뒤 전투에는 해금된 슬롯 상태로 들어가게 한다.
-6. 다음: 슬롯 해금 변경의 analyze/test/build 검증과 사용자 승인 후 남은 locale full-run을 재개한다. 재개 locale 순서는 사용자 승인 기준으로 정하되, 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
-7. 각 locale cycle 시작의 standard 실행 전 저장 세션/SharedPreferences를 지워 첫 전투/첫 Market 튜토리얼이 표시되는 조건으로 시작한다. 같은 locale의 challenge 실행은 새 도전 run으로 시작하되 같은 cycle 내부 진행이므로 battle/market tutorial seen 상태는 유지한다.
+5. 완료: 잠긴 슬롯 해금 룰을 S2/S4/S6 Boss 보상으로 연결하고, Market 진입 시 해금 연출을 보여준 뒤 전투에는 해금된 슬롯 상태로 들어가게 했다.
+6. 완료: 앱 기본 언어는 OS/브라우저 시스템 locale을 따르도록 `startLocale` 강제를 제거했고, `slot_unlock_market` debug fixture를 추가했다.
+7. 다음: `/game?fixture=slot_unlock_market&debug_shop_tab=items`에서 자동 튜토리얼 없이 해금 배너/슬롯 pulse와 시스템 locale 반영을 눈검증한 뒤 사용자 승인 기준으로 남은 locale full-run을 재개한다. 재개 locale 순서는 사용자 승인 기준으로 정하되, 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
+8. 각 locale cycle 시작의 standard 실행 전 저장 세션/SharedPreferences를 지워 첫 전투/첫 Market 튜토리얼이 표시되는 조건으로 시작한다. 같은 locale의 challenge 실행은 새 도전 run으로 시작하되 같은 cycle 내부 진행이므로 battle/market tutorial seen 상태는 유지한다.
    - bot은 튜토리얼 overlay가 보이면 전투/마켓 액션보다 `Next/Done` 완료를 먼저 처리하고, fresh locale gate에서는 전투/마켓 튜토리얼 완료 로그가 없으면 pass로 인정하지 않는다.
    - fresh locale standard 실행은 WebDriver Chrome profile의 cookie/localStorage/sessionStorage도 초기화한다. 같은 locale challenge 실행은 active run/save를 새로 시작하되 tutorial seen flag는 유지하거나 bot 옵션으로 다시 세팅한다.
-8. full-run 도중 실패하면 game over/retry/checkpoint 로그를 먼저 확인한다.
-9. 실패 원인이 policy 문제면 문서만 바꾸지 말고 policy code/test를 먼저 고친 뒤 재실행한다.
-10. game over가 아니어도 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드 제목·설명 잘림, 다국어 텍스트 넘침이 발견되면 제출 QA 결함으로 수정하고 해당 locale gate를 다시 실행한다.
-11. full-run 도중 세션이 종료되면 마지막 로그/출력 디렉터리/checkpoint를 먼저 확인하고, debug fixture 없이 이어서 진행한다.
+9. full-run 도중 실패하면 game over/retry/checkpoint 로그를 먼저 확인한다.
+10. 실패 원인이 policy 문제면 문서만 바꾸지 말고 policy code/test를 먼저 고친 뒤 재실행한다.
+11. game over가 아니어도 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드 제목·설명 잘림, 다국어 텍스트 넘침이 발견되면 제출 QA 결함으로 수정하고 해당 locale gate를 다시 실행한다.
+12. full-run 도중 세션이 종료되면 마지막 로그/출력 디렉터리/checkpoint를 먼저 확인하고, debug fixture 없이 이어서 진행한다.
 
 최근 `contest_full_run_bot` 기준선:
 

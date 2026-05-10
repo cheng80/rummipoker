@@ -17,13 +17,16 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 
 2026-05-09 현재 `contest_full_run_bot`은 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss pass 증거를 확보했다. 2026-05-10에는 `ko`, `en` locale 표준→도전 2사이클도 통과했다.
 이전 체크포인트/재시도 기반 S8 boss pass 증거와, S8 boss 실패/timeout을 만들었던 최신 보정 후보 로그도 기준선으로 남긴다.
-다음 full-run 재개는 잠긴 슬롯 해금 룰 보강 검증과 사용자 승인 후 진행한다. 제출 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 fresh 표준 난이도 S1~S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 확인해 닫는다. 5개 locale을 한 번에 연속 실행하지 않고 한 locale cycle 완료/점검/사용자 승인 후 다음 locale을 시작한다.
+다음 full-run 재개는 `slot_unlock_market` fixture 눈검증과 사용자 승인 후 진행한다. 제출 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 fresh 표준 난이도 S1~S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 확인해 닫는다. 5개 locale을 한 번에 연속 실행하지 않고 한 locale cycle 완료/점검/사용자 승인 후 다음 locale을 시작한다.
 fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐으나, 2026-05-10 route/dialog label 보정 뒤 최신 build smoke에서는 재현되지 않았다.
 locale별 표준/도전 full-run 로그에서도 같은 console 0건 기준으로 다시 확인한다.
 S8 boss 이후는 정식 `무한 도전` 진입 UX로 정리했다. 제출 gate는 각 locale에서 표준 S8 Boss clear를 먼저 확인한 뒤, 도전 S8 Boss clear와 S8 정산/보상/무한 도전 진입 직전 확인까지이며, S9+ 무한 도전 자체의 장기 생존은 제출 gate로 요구하지 않는다.
 full-run 중 수정 범위는 game over에 한정하지 않는다. 실제 플레이 도중 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드의 제목·설명 잘림, locale별 텍스트 넘침이 보이면 제출 QA 결함으로 보고 수정 뒤 해당 locale gate를 다시 실행한다.
 각 locale cycle의 standard 실행은 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작한다. 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done`으로 완료되는지, 스킵/완료/포커스 아웃 처리 기준이 깨지지 않는지도 full-run QA에 포함한다. 같은 locale의 challenge 실행은 새 run으로 시작하되 같은 cycle 내부 진행이므로 tutorial seen 상태를 유지한다. 튜토리얼 overlay가 떠 있으면 bot은 전투/마켓 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
 S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jester 슬롯 해금 배너와 슬롯 pulse가 1회 표시되는지 확인한다. 이후 전투 진입 시에는 같은 슬롯이 잠금 없이 열린 상태여야 하며, 해금 연출이 전투 화면 위에 다시 남으면 실패로 본다.
+해금 연출 보조 눈검증 URL은 `/game?fixture=slot_unlock_market&debug_shop_tab=items`다. 이 fixture는 full-play evidence가 아니며, locale full-run에서 실제 S2/S4/S6 Market 진입도 다시 확인한다.
+튜토리얼 검증 전용으로 명시되지 않은 debug fixture에서는 battle/market 자동 튜토리얼을 시작하지 않는다. fixture에서 튜토리얼이 필요하면 상단/옵션의 다시 보기 버튼으로만 연다.
+앱 일반 진입점의 locale은 OS/브라우저 시스템 설정을 따른다. locale full-run에서는 bot 인자로 명시 locale을 고정하고, 그 외 smoke에서는 시스템 locale 또는 브라우저 locale을 기준으로 본다.
 각 테스트 실행/실패/중단 후에는 WebDriver Chrome, Google Chrome Helper, ChromeDriver, Flutter web 서버를 정리한다. 다음 실행 전에도 같은 cleanup을 먼저 수행해 이전 테스트의 helper 프로세스가 메모리와 profile을 붙잡지 않게 한다.
 
 과거 checkpoint pass 증거:

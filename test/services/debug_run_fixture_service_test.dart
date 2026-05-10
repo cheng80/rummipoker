@@ -40,6 +40,16 @@ void main() {
     expect(fixture.single.description, isNotEmpty);
   });
 
+  test('debug fixtures do not auto start tutorials by default', () {
+    expect(DebugRunFixtureService.shouldAutoStartTutorials(null), isTrue);
+    expect(
+      DebugRunFixtureService.shouldAutoStartTutorials(
+        DebugRunFixtureService.slotUnlockMarket,
+      ),
+      isFalse,
+    );
+  });
+
   test('stage2 scoring snapshot fixture restores expected board and meta', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.stage2ScoringSnapshot,

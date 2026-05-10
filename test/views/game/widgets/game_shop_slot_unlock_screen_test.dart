@@ -13,6 +13,8 @@ Future<void> _pumpSlotUnlockShop(
   WidgetTester tester, {
   required RummiMarketRuntimeFacade market,
   required Future<void> Function() onSlotUnlockPresentationShown,
+  bool isDebugFixtureRun = false,
+  bool autoStartTutorials = true,
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
@@ -55,12 +57,13 @@ Future<void> _pumpSlotUnlockShop(
                   onUseMarketItem: (_) => null,
                   onSellOwnedJester: (_) => false,
                   onSellMarketItem: (_) => false,
+                  autoStartTutorials: autoStartTutorials,
                   onSlotUnlockPresentationShown: onSlotUnlockPresentationShown,
                   onStateChanged: () async {},
                   onOpenSettings: () async {},
                   onExitToTitle: () async {},
                   onRestartRun: () async {},
-                  isDebugFixtureRun: false,
+                  isDebugFixtureRun: isDebugFixtureRun,
                 ),
               ),
             ),
@@ -134,5 +137,40 @@ void main() {
     expect(presentationSeenCount, 1);
     await tester.pump(const Duration(milliseconds: 1300));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('debug fixture shop does not auto start market tutorial', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final market = RummiMarketRuntimeFacade(
+      gold: 12,
+      rerollCost: 5,
+      maxOwnedSlots: RummiRunProgress.maxJesterSlots,
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+      ownedEntries: const [],
+      offers: const [],
+      itemOfferSlotCount: 3,
+      quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
+    );
+
+    await _pumpSlotUnlockShop(
+      tester,
+      market: market,
+      onSlotUnlockPresentationShown: () async {},
+      isDebugFixtureRun: true,
+      autoStartTutorials: false,
+    );
+    await tester.pump(const Duration(seconds: 3));
+
+    expect(find.text('스킵'), findsNothing);
   });
 }

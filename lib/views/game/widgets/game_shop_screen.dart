@@ -177,6 +177,7 @@ class GameShopScreen extends StatefulWidget {
     required this.onUseMarketItem,
     required this.onSellOwnedJester,
     required this.onSellMarketItem,
+    this.autoStartTutorials = true,
     this.onSlotUnlockPresentationShown,
     required this.onStateChanged,
     required this.onOpenSettings,
@@ -198,6 +199,7 @@ class GameShopScreen extends StatefulWidget {
   final String? Function(ItemDefinition item) onUseMarketItem;
   final bool Function(int ownedIndex) onSellOwnedJester;
   final bool Function(ItemDefinition item) onSellMarketItem;
+  final bool autoStartTutorials;
   final Future<void> Function()? onSlotUnlockPresentationShown;
   final Future<void> Function() onStateChanged;
   final Future<void> Function() onOpenSettings;
@@ -311,6 +313,7 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   void _scheduleMarketTutorialIfNeeded() {
     if (_marketTutorialScheduled ||
+        !widget.autoStartTutorials ||
         _optionsDialogOpen ||
         widget.autoAdvanceOnLoad ||
         TutorialStateService.marketIntroSeen) {
@@ -321,6 +324,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       await _waitForMarketTutorialLayout();
       if (!mounted ||
           _optionsDialogOpen ||
+          !widget.autoStartTutorials ||
           widget.autoAdvanceOnLoad ||
           TutorialStateService.marketIntroSeen) {
         _marketTutorialScheduled = false;

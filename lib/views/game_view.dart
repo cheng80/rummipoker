@@ -31,6 +31,7 @@ import '../resources/item_translation_scope.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
+import '../services/debug_run_fixture_service.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_progression_service.dart';
 import '../services/tutorial_state_service.dart';
@@ -258,6 +259,10 @@ class _GameViewState extends ConsumerState<GameView>
   int get _settlementSequenceTick => _gameState.settlementSequenceTick;
   bool get _isUiLocked => _gameState.isUiLocked;
   bool get _isDebugFixtureRun => _gameState.debugFixtureId != null;
+  bool get _shouldAutoStartTutorials =>
+      DebugRunFixtureService.shouldAutoStartTutorials(
+        _gameState.debugFixtureId,
+      );
   bool get _isBattleInputLocked => _isUiLocked || _boardMoveMode;
 
   @override
@@ -388,6 +393,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _scheduleBattleTutorialIfNeeded() {
     if (_battleTutorialScheduled ||
+        !_shouldAutoStartTutorials ||
         _optionsDialogOpen ||
         _presentationPaused ||
         _gameState.activeRunScene != ActiveRunScene.battle ||
@@ -400,6 +406,7 @@ class _GameViewState extends ConsumerState<GameView>
       await _waitForBattleTutorialLayout();
       if (!mounted ||
           _optionsDialogOpen ||
+          !_shouldAutoStartTutorials ||
           _presentationPaused ||
           _gameState.activeRunScene != ActiveRunScene.battle ||
           _stageFlowPhase != GameStageFlowPhase.none ||
@@ -1728,6 +1735,7 @@ class _GameViewState extends ConsumerState<GameView>
           onSellOwnedJester: (index) =>
               _gameNotifier.sellOwnedJester(index, itemCatalog: _itemCatalog),
           onSellMarketItem: _gameNotifier.sellMarketItem,
+          autoStartTutorials: _shouldAutoStartTutorials,
           onSlotUnlockPresentationShown: () async {
             _gameNotifier.markSlotUnlockPresentationShown();
             await _saveActiveRun(scene: ActiveRunScene.shop);

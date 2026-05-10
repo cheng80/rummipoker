@@ -19,12 +19,14 @@ class DebugRunFixtureDefinition {
     required this.label,
     required this.description,
     required this.builder,
+    this.autoTutorialsEnabled = false,
   });
 
   final String id;
   final String label;
   final String description;
   final ActiveRunRuntimeState Function() builder;
+  final bool autoTutorialsEnabled;
 }
 
 class DebugRunFixtureService {
@@ -154,6 +156,11 @@ class DebugRunFixtureService {
 
   static ActiveRunRuntimeState? build(String fixtureId) {
     return find(fixtureId)?.builder();
+  }
+
+  static bool shouldAutoStartTutorials(String? fixtureId) {
+    if (fixtureId == null) return true;
+    return find(fixtureId)?.autoTutorialsEnabled ?? false;
   }
 
   static ActiveRunRuntimeState _buildStage2ScoringSnapshot() {
