@@ -36,6 +36,20 @@ flutter build web --release --base-href "/rummipoker/" --analyze-size
 
 빌드 결과물은 `build/web/` 폴더에 생성됩니다.
 
+### 공유 링크 미리보기 이미지
+
+카카오톡 같은 공유 미리보기는 로딩 스플래시가 아니라 `web/index.html`의 Open Graph 메타 태그를 봅니다.
+
+현재 공유 이미지는 다음 절대 URL로 고정합니다:
+
+```html
+<meta property="og:image" content="https://cheng80.myqnapcloud.com/rummipoker/assets/assets/images/ui/rummi_poker_logo.png">
+```
+
+해당 파일은 원본 `assets/images/ui/rummi_poker_logo.png`가 웹 빌드 후
+`rummipoker/assets/assets/images/ui/rummi_poker_logo.png`로 복사된 결과입니다.
+공유 이미지가 이전 이미지로 보이면 앱 빌드 문제가 아니라 카카오톡/플랫폼의 링크 미리보기 캐시일 수 있습니다.
+
 ### 배포
 
 **방법 A: 정적 호스팅 (GitHub Pages, Netlify 등)**
