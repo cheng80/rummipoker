@@ -1552,6 +1552,7 @@ class _GameViewState extends ConsumerState<GameView>
       sheetAnimationStyle: AnimationStyle.noAnimation,
       builder: (sheetContext) {
         return Semantics(
+          container: true,
           scopesRoute: true,
           namesRoute: true,
           explicitChildNodes: true,
@@ -1832,6 +1833,7 @@ class _GameViewState extends ConsumerState<GameView>
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Semantics(
+              container: true,
               scopesRoute: true,
               namesRoute: true,
               explicitChildNodes: true,
