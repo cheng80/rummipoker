@@ -15,9 +15,9 @@
 공모전 full-play QA는 사람 수동 플레이가 아니라 제작된 bot 기준으로 닫는다.
 bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표·시각 조작을 함께 사용해 실제 Flutter Web 화면을 플레이한다.
 
-2026-05-09 현재 `contest_full_run_bot`은 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss pass 증거를 확보했다. 2026-05-10에는 `ko` locale 표준→도전 1사이클도 통과했다.
+2026-05-09 현재 `contest_full_run_bot`은 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss pass 증거를 확보했다. 2026-05-10에는 `ko`, `en` locale 표준→도전 2사이클도 통과했다.
 이전 체크포인트/재시도 기반 S8 boss pass 증거와, S8 boss 실패/timeout을 만들었던 최신 보정 후보 로그도 기준선으로 남긴다.
-다음 full-run 재개는 사용자 승인 후 `en` fresh 표준 gate다. 제출 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 fresh 표준 난이도 S1~S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 확인해 닫는다. 5개 locale을 한 번에 연속 실행하지 않고 한 locale cycle 완료/점검/사용자 승인 후 다음 locale을 시작한다.
+다음 full-run 재개는 사용자 승인 후 `ja` fresh 표준 gate다. 제출 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 fresh 표준 난이도 S1~S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 확인해 닫는다. 5개 locale을 한 번에 연속 실행하지 않고 한 locale cycle 완료/점검/사용자 승인 후 다음 locale을 시작한다.
 fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐으나, 2026-05-10 route/dialog label 보정 뒤 최신 build smoke에서는 재현되지 않았다.
 locale별 표준/도전 full-run 로그에서도 같은 console 0건 기준으로 다시 확인한다.
 S8 boss 이후는 정식 `무한 도전` 진입 UX로 정리했다. 제출 gate는 각 locale에서 표준 S8 Boss clear를 먼저 확인한 뒤, 도전 S8 Boss clear와 S8 정산/보상/무한 도전 진입 직전 확인까지이며, S9+ 무한 도전 자체의 장기 생존은 제출 gate로 요구하지 않는다.
@@ -155,7 +155,80 @@ full-run 중 수정 범위는 game over에 한정하지 않는다. 실제 플레
   - 없음
 - 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음
 - 다음 상태:
-  - `ko` cycle은 닫혔다. 사용자 승인 후 `en` fresh 표준 난이도 S1부터 실행한다.
+  - `ko` cycle은 닫혔다.
+
+2026-05-10 `en` fresh 표준 locale gate 증거:
+
+- 로그: `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`
+- 출력 디렉터리: `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623`
+- 실행 조건: `--seed 91460 --difficulty standard --locale en --web-port 7365 --browser-profile-dir /tmp/rummipoker_contest_full_run_bot/standard_en_profile_20260510_140623 --output-dir /tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623 --skip-pub-get`
+- 결과:
+  - `CONTEST_FULL_RUN_BOT_PASS`
+  - `All tests passed!`
+  - `S8 boss: run complete`
+- locale/fresh 조건:
+  - `locale=en`
+  - `resolvedLocale=en`
+  - `freshStorage=true`
+- 튜토리얼:
+  - battle tutorial completed
+  - market tutorial completed
+- S8 small 정산:
+  - `confirm=1539/2`
+  - 목표 `1441` 통과
+- S8 big 정산:
+  - `confirm=902/2`
+  - `confirm=925/2`
+  - 목표 `1738` 통과
+- S8 boss 정산:
+  - `confirm=951/3`
+  - `confirm=778/2`
+  - `confirm=246/1`
+  - 목표 `1739` 통과
+- S8 시작 덱:
+  - `deck=59`
+- game over/retry/Flutter semantics warning/UI overflow/error/warn:
+  - 없음
+- 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음
+
+2026-05-10 `en` fresh 도전 locale gate 증거:
+
+- 로그: `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`
+- 출력 디렉터리: `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813`
+- 실행 조건: `--seed 91460 --difficulty challenge --locale en --web-port 7366 --browser-profile-dir /tmp/rummipoker_contest_full_run_bot/challenge_en_profile_20260510_145813 --output-dir /tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813 --tutorials-already-seen --skip-pub-get`
+- 결과:
+  - `CONTEST_FULL_RUN_BOT_PASS`
+  - `All tests passed!`
+  - `S8 boss: run complete`
+- locale/fresh 조건:
+  - `locale=en`
+  - `resolvedLocale=en`
+  - `freshStorage=true`
+  - `difficulty=challenge`
+- 튜토리얼:
+  - 같은 locale cycle 내부 challenge 실행이라 `--tutorials-already-seen`으로 battle/market tutorial seen 상태를 유지했다.
+  - 이 실행에서는 fresh tutorial completed 로그를 pass 요구사항으로 보지 않는다.
+- S8 small 정산:
+  - `confirm=1622/2`
+  - `confirm=230/1`
+  - 목표 `1729` 통과
+- S8 big 정산:
+  - `confirm=1009/2`
+  - `confirm=1032/2`
+  - `confirm=368/1`
+  - 목표 `2086` 통과
+- S8 boss 정산:
+  - `confirm=1010/3`
+  - `confirm=869/2`
+  - `confirm=312/1`
+  - 목표 `2087` 통과
+- S8 시작 덱:
+  - `deck=59`
+- game over/retry/Flutter semantics warning/UI overflow/error/warn:
+  - 없음
+- 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음
+- 다음 상태:
+  - `en` cycle은 닫혔다. 사용자 승인 후 `ja` fresh 표준 난이도 S1부터 실행한다.
 
 2026-05-10 locale cycle 제외 검증:
 
@@ -189,7 +262,7 @@ full-run 중 수정 범위는 game over에 한정하지 않는다. 실제 플레
 - 보스 클리어 덱 타일 보상은 마켓 tile offer 자리를 무료 보상으로 차지하지 않는다. 정산 화면에서 실제 타일 face로 보이고, 정산 시점에 즉시 덱에 추가되어 다음 전투부터 쓰인다.
 - 마켓 tile offer는 실제 타일 face로 표시하고, 구매 시 오른쪽 중단 덱 방향으로 날아가는 연출을 쓴다. 선택 표시는 카드형 프레임이 아니라 타일 크기에 맞춘 selector만 사용한다.
 - S8 boss는 bot 정책에서만 작은 확정을 억제하고, 완성 직전 라인 수, 교차 유망 라인 수, 손패/덱 기반 1-step lookahead로 중복줄 확정 가능성을 평가한다.
-- 최신 fresh 표준 run에서는 족보 레벨 성장과 덱 확장/보상 타일 축이 들어간 상태로 S8 boss까지 통과했다. `ko` 도전 난이도도 S8 boss까지 통과했으며, 남은 locale의 도전 난이도는 아직 미검증이다.
+- 최신 fresh 표준 run에서는 족보 레벨 성장과 덱 확장/보상 타일 축이 들어간 상태로 S8 boss까지 통과했다. `ko`, `en` 도전 난이도도 S8 boss까지 통과했으며, 남은 `ja`, `zh-CN`, `zh-TW` locale의 도전 난이도는 아직 미검증이다.
 - S8 boss 정산의 계속 진행 버튼은 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고, Station Select/전투 HUD/정산 라벨은 위험 구간 색상으로 표시한다.
 - 후반 game over 대응은 봇 전용 가중치 숫자 조정보다 족보/중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다.
 - 마켓에서는 Jester 슬롯/골드가 허용하는 한 구매를 시도하고, 슬롯이 꽉 찬 경우 더 좋은 후보가 있으면 약한 Jester 판매 후 교체한다. 후반에는 구간별 등장 확률을 올린 Jester/Item을 안정화 구매 후보로 더 높게 평가한다.
@@ -268,7 +341,7 @@ contest_sub_run_bot target
 
 - Bot 구현/정책: 최신 fresh 표준 S1~S8 pass 확보.
 - S1~S8 표준 클리어 가능성: debug fixture 없이 fresh full-run으로 확인.
-- locale별 표준→도전 cycle 가능성: `ko` 1/5 cycle 통과. `en`, `ja`, `zh-CN`, `zh-TW` fresh cycle은 미검증이며 다음 full-run gate다.
+- locale별 표준→도전 cycle 가능성: `ko`, `en` 2/5 cycle 통과. `ja`, `zh-CN`, `zh-TW` fresh cycle은 미검증이며 다음 full-run gate다.
 - S8 boss 최신 표준 단독 판정: pass, game over/retry 없음. 단독 표준 pass는 locale cycle 완료를 대체하지 않는다.
 - 남은 제출 QA: Flutter semantics warning 제거, 최신 제출 후보 build, console error/warn 0건, locale별 standard→challenge fresh cycle, 보상/도감/새 run 눈검증.
 
