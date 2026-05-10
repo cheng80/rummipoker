@@ -131,6 +131,10 @@ void main() {
       find.byKey(const ValueKey('market-slot-pulse-flash')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('market-slot-unlock-lock')),
+      findsOneWidget,
+    );
 
     for (var frame = 0; frame < 80; frame += 1) {
       await tester.pump(const Duration(milliseconds: 16));

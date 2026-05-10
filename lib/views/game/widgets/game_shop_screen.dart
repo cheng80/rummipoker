@@ -1811,6 +1811,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                               final child = _MarketSlotPulse(
                                                 active:
                                                     pulse || recentlyUnlocked,
+                                                showUnlockLock:
+                                                    recentlyUnlocked,
                                                 child: _MarketSelectableCardFrame(
                                                   selected: false,
                                                   width: _marketOwnedCardWidth,
@@ -2677,6 +2679,7 @@ class _MarketSlotGroup extends StatelessWidget {
                 pulse:
                     pulsingSlotLabel == slots[i].slotLabel ||
                     slots[i].recentlyUnlocked,
+                showUnlockLock: slots[i].recentlyUnlocked,
                 onTap: onTap,
               ),
             ],
@@ -2722,6 +2725,7 @@ class _MarketItemSlotsSection extends StatelessWidget {
                 pulse:
                     pulsingSlotLabel == slots[i].slotLabel ||
                     slots[i].recentlyUnlocked,
+                showUnlockLock: slots[i].recentlyUnlocked,
                 onTap: onTap,
               ),
             ],
@@ -3354,12 +3358,14 @@ class _MarketItemGhostChip extends StatelessWidget {
     required this.slot,
     this.selected = false,
     this.pulse = false,
+    this.showUnlockLock = false,
     this.onTap,
   });
 
   final RummiMarketItemSlotView slot;
   final bool selected;
   final bool pulse;
+  final bool showUnlockLock;
   final ValueChanged<RummiMarketItemSlotView>? onTap;
 
   @override
@@ -3473,7 +3479,11 @@ class _MarketItemGhostChip extends StatelessWidget {
           onTap: locked || slot.item == null || onTap == null
               ? null
               : () => onTap!(slot),
-          child: _MarketSlotPulse(active: pulse, child: child),
+          child: _MarketSlotPulse(
+            active: pulse,
+            showUnlockLock: showUnlockLock,
+            child: child,
+          ),
         ),
       ),
     );
@@ -4234,10 +4244,15 @@ class _MarketGoldGainBadge extends StatelessWidget {
 }
 
 class _MarketSlotPulse extends StatelessWidget {
-  const _MarketSlotPulse({required this.active, required this.child});
+  const _MarketSlotPulse({
+    required this.active,
+    required this.child,
+    this.showUnlockLock = false,
+  });
 
   final bool active;
   final Widget child;
+  final bool showUnlockLock;
 
   @override
   Widget build(BuildContext context) {
@@ -4288,6 +4303,52 @@ class _MarketSlotPulse extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (showUnlockLock)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Transform.translate(
+                          offset: Offset(0, -10 * value),
+                          child: Transform.scale(
+                            scale: 1 + 0.38 * value,
+                            child: Opacity(
+                              opacity: flash,
+                              child: DecoratedBox(
+                                key: const ValueKey('market-slot-unlock-lock'),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF111A26,
+                                  ).withValues(alpha: 0.88),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFFF2C14E),
+                                    width: 1.6,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFFF2C14E,
+                                      ).withValues(alpha: 0.38 * flash),
+                                      blurRadius: 16,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(7),
+                                  child: Icon(
+                                    Icons.lock_open_rounded,
+                                    color: Color(0xFFF2C14E),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
