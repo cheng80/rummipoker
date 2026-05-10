@@ -50,7 +50,7 @@
 - 2026-05-10 `en` 도전 locale gate: `locale=en`, `resolvedLocale=en`, `freshStorage=true`, `difficulty=challenge`, `--tutorials-already-seen`으로 같은 locale cycle의 tutorial seen 상태 유지, S8 small `1622/2 -> 230/1` 목표 `1729` 통과, S8 big `1009/2 -> 1032/2 -> 368/1` 목표 `2086` 통과, S8 boss `1010/3 -> 869/2 -> 312/1` 목표 `2087` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 해당 run 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
 - 2026-05-10 추가 룰 보강: 잠겨 있던 Quick Item 3번 슬롯, Passive 2번 슬롯, Jester 5번 슬롯을 각각 S2/S4/S6 Boss 클리어 보상으로 해금하도록 구현했다. 해금은 즉시 저장 상태에 반영하고, 다음 Market 진입 시 1회 배너/슬롯 pulse로 보여준 뒤 전투에는 이미 해금된 슬롯 상태로 진입한다. 검증: `flutter analyze`, `flutter build web`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`.
-- 2026-05-10 추가 UX/QA 보강: 앱 기본 언어는 특정 한국어 `startLocale` 강제가 아니라 OS/브라우저 시스템 locale을 따르게 했다. 해금 연출 확인용 debug fixture `slot_unlock_market`를 추가했고, 확인 URL은 `/game?fixture=slot_unlock_market&debug_shop_tab=items`다. 튜토리얼 검증 전용이 아닌 debug fixture는 자동 튜토리얼을 띄우지 않고, 튜토리얼은 다시 보기 버튼으로만 연다. 커밋: `4dea65c Add boss slot unlock rewards`, `8adc86d Add slot unlock debug fixture`.
+- 2026-05-10 추가 UX/QA 보강: 앱 기본 언어는 특정 한국어 `startLocale` 강제가 아니라 OS/브라우저 시스템 locale을 따르게 했다. 해금 연출 확인용 debug fixture `slot_unlock_market`를 추가했고, 확인 URL은 `/game?fixture=slot_unlock_market`다. 튜토리얼 검증 전용이 아닌 debug fixture는 자동 튜토리얼을 띄우지 않고, 튜토리얼은 다시 보기 버튼으로만 연다. 커밋: `4dea65c Add boss slot unlock rewards`, `8adc86d Add slot unlock debug fixture`.
 
 오늘 바로 할 작업:
 
@@ -60,7 +60,7 @@
 4. 완료: 같은 `en` cycle 내부에서 `en` 도전 난이도 fresh S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 통과했다.
 5. 완료: 잠긴 슬롯 해금 룰과 Market 진입 연출 보강을 닫았다.
 6. 완료: 시스템 locale 기본값과 `slot_unlock_market` debug fixture를 추가했다.
-7. 다음: `/game?fixture=slot_unlock_market&debug_shop_tab=items`에서 자동 튜토리얼 없이 해금 배너/슬롯 pulse가 보이는지 Browser/기기 눈검증 후 사용자 승인 기준으로 남은 locale full-run을 재개한다. 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
+7. 다음: `/game?fixture=slot_unlock_market`에서 자동 튜토리얼 없이 해금 배너/슬롯 pulse가 보이는지 Browser/기기 눈검증 후 사용자 승인 기준으로 남은 locale full-run을 재개한다. 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
 8. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
 9. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
 

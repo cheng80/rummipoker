@@ -56,7 +56,7 @@
    - 인앱 리뷰 store id gate
    - 위 항목들은 locale별 standard→challenge full-run cycle을 제외하고 최신 제출 후보 build/test/smoke 기준으로 1차 검증됐다.
 3. full-run cycle 직전 최신 상태가 바뀌었으면 `flutter analyze`, 핵심 `flutter test`, `flutter build web`을 다시 실행한다.
-4. `/game?fixture=slot_unlock_market&debug_shop_tab=items`로 자동 튜토리얼 없이 슬롯 해금 배너/슬롯 pulse와 시스템 locale 반영을 Browser/기기에서 눈검증한다. 이 fixture는 full-play evidence가 아니며, 실제 S2/S4/S6 Market 진입 검증은 full-run에서 다시 한다.
+4. `/game?fixture=slot_unlock_market`로 자동 튜토리얼 없이 슬롯 해금 배너/슬롯 pulse와 시스템 locale 반영을 Browser/기기에서 눈검증한다. 이 fixture는 full-play evidence가 아니며, 실제 S2/S4/S6 Market 진입 검증은 full-run에서 다시 한다.
 5. 공모전 풀런봇 policy code/test가 추가 덱, 보상 타일, 특수 족보, 족보 성장 점수, 슬롯 해금 상태를 실제 후보 평가/화면 판단에 반영하는지 확인한다.
 6. 공모전 풀런봇을 사용자 승인된 다음 locale의 표준 난이도 fresh S1부터 실행한다.
    - 스크립트: tools/contest_full_run_bot.sh
@@ -97,7 +97,7 @@
 - 전투/마켓 튜토리얼은 `tutorial_coach_mark`로 구현. 자동 튜토리얼은 끝까지 완료된 경우만 seen 저장, skip/focus-out/options 진입은 다음에 다시 뜨게 한다.
 - 튜토리얼 최신 보정: focus 위치/크기를 FittedBox 변환 후 실제 화면 좌표로 계산하고, 창 크기 변경 시 현재 step 유지 후 overlay 재생성. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 남은 항목은 Browser/기기에서 리사이즈 후 크기 눈검증.
 - 잠긴 슬롯 해금 룰과 Market 진입 연출: S2/S4/S6 Boss 보상으로 Quick Item/Passive/Jester 슬롯을 해금하고, Market 진입 1회 배너/슬롯 pulse와 전투 해금 상태 표시를 구현했다. `flutter analyze`, `flutter build web`, 관련 service/notifier/facade/widget test 통과.
-- 시스템 locale 기본값과 `slot_unlock_market` debug fixture: 일반 앱 진입점은 OS/브라우저 시스템 locale을 따르고, `/game?fixture=slot_unlock_market&debug_shop_tab=items`로 해금 연출 보조 눈검증을 할 수 있다. full-play evidence는 아니다.
+- 시스템 locale 기본값과 `slot_unlock_market` debug fixture: 일반 앱 진입점은 OS/브라우저 시스템 locale을 따르고, `/game?fixture=slot_unlock_market`로 해금 연출 보조 눈검증을 할 수 있다. full-play evidence는 아니다.
 - debug fixture 자동 튜토리얼 차단: 튜토리얼 검증 전용 fixture가 아니면 자동 튜토리얼은 뜨지 않고, 다시 보기 버튼으로만 실행한다.
 - 정산 progress bar, 게임오버 후 새 run까지 족보 성장 영구 계승, 타로/유령카드류 전체 이식은 이번 제출 전 구현 범위에서 제외.
 
