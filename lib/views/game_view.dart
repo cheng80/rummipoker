@@ -1541,29 +1541,30 @@ class _GameViewState extends ConsumerState<GameView>
     final insightReward = completesRun
         ? RunProgressionService.calculateInsightReward(_completedRunSummary())
         : 0;
-    return showModalBottomSheet<GameCashOutAction>(
+    return showGeneralDialog<GameCashOutAction>(
       context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
       barrierLabel: '정산 결과',
+      barrierDismissible: false,
+      barrierColor: kGameModalBarrierColor,
       routeSettings: const RouteSettings(name: '정산 결과'),
-      sheetAnimationStyle: AnimationStyle.noAnimation,
-      builder: (sheetContext) {
-        return Semantics(
-          container: true,
-          scopesRoute: true,
-          namesRoute: true,
-          explicitChildNodes: true,
-          label: '정산 결과',
-          child: GameCashOutSheet(
-            settlement: settlementView,
-            autoEnterMarketOnLoad:
-                !completesRun &&
-                (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
-            completesRun: completesRun,
-            insightReward: insightReward,
+      transitionDuration: Duration.zero,
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Semantics(
+            container: true,
+            scopesRoute: true,
+            namesRoute: true,
+            explicitChildNodes: true,
+            label: '정산 결과',
+            child: GameCashOutSheet(
+              settlement: settlementView,
+              autoEnterMarketOnLoad:
+                  !completesRun &&
+                  (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
+              completesRun: completesRun,
+              insightReward: insightReward,
+            ),
           ),
         );
       },
