@@ -92,6 +92,7 @@ class SettingView extends ConsumerWidget {
                             value: settings.keepScreenOn,
                             onChanged: notifier.setKeepScreenOn,
                           ),
+                          _LanguageSection(currentLocale: context.locale),
                           Divider(
                             color: Colors.white.withValues(alpha: 0.18),
                             height: 1,
@@ -168,6 +169,63 @@ class SettingView extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _LanguageSection extends StatelessWidget {
+  const _LanguageSection({required this.currentLocale});
+
+  final Locale currentLocale;
+
+  static const _options = <_LanguageOption>[
+    _LanguageOption(Locale('ko'), 'langKo'),
+    _LanguageOption(Locale('en'), 'langEn'),
+    _LanguageOption(Locale('ja'), 'langJa'),
+    _LanguageOption(Locale('zh', 'CN'), 'langZhCN'),
+    _LanguageOption(Locale('zh', 'TW'), 'langZhTW'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionTitle(icon: Icons.language, title: context.tr('language')),
+        for (final option in _options)
+          ListTile(
+            leading: Icon(
+              _sameLocale(currentLocale, option.locale)
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: _sameLocale(currentLocale, option.locale)
+                  ? Colors.amber
+                  : Colors.grey,
+            ),
+            title: Text(
+              context.tr(option.labelKey),
+              style: const TextStyle(
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
+                fontSize: 16,
+              ),
+            ),
+            onTap: () async {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              await context.setLocale(option.locale);
+            },
+          ),
+      ],
+    );
+  }
+
+  bool _sameLocale(Locale a, Locale b) {
+    return a.languageCode == b.languageCode && a.countryCode == b.countryCode;
+  }
+}
+
+class _LanguageOption {
+  const _LanguageOption(this.locale, this.labelKey);
+
+  final Locale locale;
+  final String labelKey;
 }
 
 class _SectionTitle extends StatelessWidget {

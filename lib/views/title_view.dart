@@ -314,7 +314,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    AppConfig.gameSubtitle,
+                    context.tr('gameSubtitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -325,17 +325,19 @@ class _TitleViewState extends ConsumerState<TitleView>
                   ),
                   const SizedBox(height: 24),
                   HomeSection(
-                    title: '이어하기',
+                    title: context.tr('homeContinueSectionTitle'),
                     subtitle: hasStoredActiveRun
-                        ? '저장된 런으로 돌아갑니다.'
-                        : '현재 이어서 들어갈 저장 진행이 없습니다.',
+                        ? context.tr('homeContinueSectionReady')
+                        : context.tr('homeContinueSectionEmpty'),
                     child: Column(
                       children: [
                         HomeEntryCard(
-                          title: '이어하기',
+                          title: context.tr('continueGame'),
                           description:
                               storedRunSummary?.currentLocationSummary ??
-                              (hasStoredActiveRun ? '저장된 현재 런 복원' : '저장 진행 없음'),
+                              (hasStoredActiveRun
+                                  ? context.tr('homeContinueReadyDescription')
+                                  : context.tr('homeContinueEmptyDescription')),
                           accent: const Color(0xFFF4A81D),
                           enabled: hasStoredActiveRun,
                           onTap: _openContinueMenu,
@@ -344,8 +346,8 @@ class _TitleViewState extends ConsumerState<TitleView>
                         HomeEntryCard(
                           title: context.tr('runInfoTitle'),
                           description: hasStoredActiveRun
-                              ? '진행 중인 런의 족보 성장과 추가 덱 확인'
-                              : '새 런을 시작하면 성장 정보가 표시됩니다.',
+                              ? context.tr('homeRunInfoReadyDescription')
+                              : context.tr('homeRunInfoEmptyDescription'),
                           accent: const Color(0xFFF2C14E),
                           onTap: _openTitleRunInfo,
                         ),
@@ -354,13 +356,13 @@ class _TitleViewState extends ConsumerState<TitleView>
                   ),
                   const SizedBox(height: 18),
                   HomeSection(
-                    title: '새 시작',
-                    subtitle: '새 런을 준비합니다.',
+                    title: context.tr('homeNewRunSectionTitle'),
+                    subtitle: context.tr('homeNewRunSectionSubtitle'),
                     child: Column(
                       children: [
                         HomeEntryCard(
-                          title: '새 게임 시작',
-                          description: '난이도와 시작 방식을 선택',
+                          title: context.tr('homeNewRunTitle'),
+                          description: context.tr('homeNewRunDescription'),
                           accent: const Color(0xFF3CAEE0),
                           onTap: () => context.push(RoutePaths.newRun),
                         ),
@@ -369,20 +371,20 @@ class _TitleViewState extends ConsumerState<TitleView>
                   ),
                   const SizedBox(height: 18),
                   HomeSection(
-                    title: '다른 메뉴',
-                    subtitle: '본편 진행과 분리된 별도 메뉴입니다.',
+                    title: context.tr('homeOtherMenuSectionTitle'),
+                    subtitle: context.tr('homeOtherMenuSectionSubtitle'),
                     child: Column(
                       children: [
                         HomeEntryCard(
-                          title: '특별 모드',
-                          description: '별도 규칙으로 즐기는 추가 모드',
+                          title: context.tr('homeSpecialModeTitle'),
+                          description: context.tr('homeSpecialModeDescription'),
                           accent: const Color(0xFF8E5CF6),
                           onTap: () => context.push(RoutePaths.trial),
                         ),
                         const SizedBox(height: 12),
                         HomeEntryCard(
-                          title: '도감',
-                          description: '보상 카드와 열린 항목 확인',
+                          title: context.tr('archiveTitle'),
+                          description: context.tr('homeArchiveDescription'),
                           accent: const Color(0xFF5C7CFA),
                           onTap: () => context.push(RoutePaths.archive),
                         ),
@@ -404,11 +406,11 @@ class _TitleViewState extends ConsumerState<TitleView>
                   ],
                   const SizedBox(height: 18),
                   HomeSection(
-                    title: '설정',
-                    subtitle: '앱 설정과 환경 옵션',
+                    title: context.tr('settings'),
+                    subtitle: context.tr('homeSettingsSectionSubtitle'),
                     child: HomeEntryCard(
                       title: context.tr('settings'),
-                      description: '사운드/환경 설정 열기',
+                      description: context.tr('homeSettingsDescription'),
                       accent: const Color(0xFF1976D2),
                       onTap: () {
                         SoundManager.unlockForWeb();

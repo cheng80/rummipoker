@@ -1,0 +1,221 @@
+{
+  "data": {
+    "jesters": {
+      "jester": {
+        "displayName": "Base Relay",
+        "effectText": "+4 Mult.",
+        "notes": ""
+      },
+      "greedy_jester": {
+        "displayName": "Amber Tap",
+        "effectText": "计分线中每张黄色牌给予+3 Mult。",
+        "notes": ""
+      },
+      "lusty_jester": {
+        "displayName": "Crimson Tap",
+        "effectText": "计分线中每张红色牌给予+3 Mult。",
+        "notes": ""
+      },
+      "wrathful_jester": {
+        "displayName": "Cobalt Tap",
+        "effectText": "计分线中每张蓝色牌给予+3 Mult。",
+        "notes": ""
+      },
+      "gluttonous_jester": {
+        "displayName": "Obsidian Tap",
+        "effectText": "计分线中每张黑色牌给予+3 Mult。",
+        "notes": ""
+      },
+      "jolly_jester": {
+        "displayName": "Pair Call",
+        "effectText": "如果计分线包含Pair或更高，获得+8 Mult。",
+        "notes": ""
+      },
+      "zany_jester": {
+        "displayName": "Triple Call",
+        "effectText": "如果计分线包含Three of a Kind或更高，获得+12 Mult。",
+        "notes": ""
+      },
+      "mad_jester": {
+        "displayName": "Twin Pair Call",
+        "effectText": "如果计分线包含Two Pair或更高，获得+10 Mult。",
+        "notes": ""
+      },
+      "crazy_jester": {
+        "displayName": "Run Call",
+        "effectText": "如果计分线包含Run，获得+12 Mult。",
+        "notes": ""
+      },
+      "droll_jester": {
+        "displayName": "Color Call",
+        "effectText": "如果计分线只使用一种颜色，获得+10 Mult。",
+        "notes": ""
+      },
+      "sly_jester": {
+        "displayName": "Pair Battery",
+        "effectText": "如果计分线包含Pair或更高，获得+50 Chips。",
+        "notes": ""
+      },
+      "wily_jester": {
+        "displayName": "Triple Battery",
+        "effectText": "如果计分线包含Three of a Kind或更高，获得+100 Chips。",
+        "notes": ""
+      },
+      "clever_jester": {
+        "displayName": "Twin Pair Battery",
+        "effectText": "如果计分线包含Two Pair或更高，获得+80 Chips。",
+        "notes": ""
+      },
+      "devious_jester": {
+        "displayName": "Run Battery",
+        "effectText": "如果计分线包含Run，获得+100 Chips。",
+        "notes": ""
+      },
+      "crafty_jester": {
+        "displayName": "Color Battery",
+        "effectText": "如果计分线只使用一种颜色，获得+80 Chips。",
+        "notes": ""
+      },
+      "half_jester": {
+        "displayName": "Compact Core",
+        "effectText": "如果计分线使用3张或更少牌，获得+20 Mult。",
+        "notes": ""
+      },
+      "jester_stencil": {
+        "displayName": "Open Socket",
+        "effectText": "每个空Jester Slot给予x1 Mult。",
+        "notes": ""
+      },
+      "abstract_jester": {
+        "displayName": "Crew Chorus",
+        "effectText": "每个已拥有Jester给予+3 Mult。",
+        "notes": ""
+      },
+      "green_jester": {
+        "displayName": "Momentum Meter",
+        "effectText": "每次确认后获得+1 Mult。每次弃牌后失去1 Mult。",
+        "notes": ""
+      },
+      "blue_jester": {
+        "displayName": "Deck Counter",
+        "effectText": "牌库中每张剩余牌给予+2 Chips。",
+        "notes": ""
+      },
+      "scary_face": {
+        "displayName": "Face Battery",
+        "effectText": "计分线中每张11-13牌给予+30 Chips。",
+        "notes": ""
+      },
+      "smiley_face": {
+        "displayName": "Face Signal",
+        "effectText": "计分线中每张11-13牌给予+5 Mult。",
+        "notes": ""
+      },
+      "egg": {
+        "displayName": "Reserve Coin",
+        "effectText": "结算时获得+3 Gold。",
+        "notes": ""
+      },
+      "bonus_jester": {
+        "displayName": "Chip Anchor",
+        "effectText": "+10 Chips.",
+        "notes": ""
+      },
+      "popcorn": {
+        "displayName": "Fading Boost",
+        "effectText": "+20 Mult。每次Station后失去4 Mult。",
+        "notes": ""
+      },
+      "ice_cream": {
+        "displayName": "Melting Reserve",
+        "effectText": "+100 Chips。每次confirm后失去5 Chips。",
+        "notes": ""
+      },
+      "delayed_gratification": {
+        "displayName": "Unused Refund",
+        "effectText": "结算时，每个未使用弃牌获得+2 Gold。",
+        "notes": ""
+      },
+      "walkie_talkie": {
+        "displayName": "Ten-Four Signal",
+        "effectText": "计分线中每个10或4给予+4 Mult。",
+        "notes": ""
+      },
+      "golden_jester": {
+        "displayName": "Gold Drip",
+        "effectText": "结算时获得+4 Gold。",
+        "notes": ""
+      },
+      "mystic_summit": {
+        "displayName": "Last Push",
+        "effectText": "如果剩余弃牌为0，获得+15 Mult。",
+        "notes": ""
+      },
+      "even_steven": {
+        "displayName": "Even Engine",
+        "effectText": "计分线中每张偶数牌给予+4 Mult。",
+        "notes": ""
+      },
+      "odd_todd": {
+        "displayName": "Odd Engine",
+        "effectText": "计分线中每张奇数牌给予+31 Chips。",
+        "notes": ""
+      },
+      "scholar": {
+        "displayName": "One Ledger",
+        "effectText": "计分线中每张1牌给予+20 Chips和+4 Mult。",
+        "notes": ""
+      },
+      "fibonacci": {
+        "displayName": "Sequence Relay",
+        "effectText": "计分线中每张1/2/3/5/8牌给予+8 Mult。",
+        "notes": ""
+      },
+      "banner": {
+        "displayName": "Discard Meter",
+        "effectText": "每个剩余弃牌给予+30 Chips。",
+        "notes": ""
+      },
+      "gros_michel": {
+        "displayName": "Ripe Boost",
+        "effectText": "+15 Mult.",
+        "notes": ""
+      },
+      "supernova": {
+        "displayName": "Run Memory",
+        "effectText": "将本run中该役型的确认次数加到Mult。",
+        "notes": ""
+      },
+      "ride_the_bus": {
+        "displayName": "Clean Streak",
+        "effectText": "每次未用11-13牌得分的确认后获得+1 Mult。",
+        "notes": ""
+      },
+      "the_duo": {
+        "displayName": "Pair Pact",
+        "effectText": "如果计分线包含Pair或更高，获得x2 Mult。",
+        "notes": ""
+      },
+      "the_trio": {
+        "displayName": "Triple Pact",
+        "effectText": "如果计分线包含Three of a Kind或更高，获得x3 Mult。",
+        "notes": ""
+      },
+      "the_family": {
+        "displayName": "Quad Pact",
+        "effectText": "如果计分线包含Four of a Kind或更高，获得x4 Mult。",
+        "notes": ""
+      },
+      "the_order": {
+        "displayName": "Run Pact",
+        "effectText": "如果计分线包含Run，获得x3 Mult。",
+        "notes": ""
+      },
+      "the_tribe": {
+        "displayName": "Color Pact",
+        "effectText": "如果计分线只使用一种颜色，获得x2 Mult。",
+        "notes": ""
+      }
+    }
+  }
+}

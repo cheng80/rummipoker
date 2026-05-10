@@ -9,10 +9,12 @@
 이번 세션 목표:
 - 공모전 제출 QA를 `공모전 풀런봇` 기준으로 이어간다.
 - 최신 룰/UI 후보에서 표준 난이도 fresh S1~S8 boss full-run은 이미 통과했다.
-- 이제 도전 난이도 fresh S1~S8 full-run을 시작한다.
+- 이제 도전 난이도 fresh S1~S8 Boss full-run을 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각 1회씩 시작한다.
 - Flutter semantics 반복 경고는 2026-05-10 route/dialog label 보정과 최신 build smoke로 1차 처리됐다.
 - 전투/마켓 튜토리얼은 `showcaseview`가 아니라 `tutorial_coach_mark` 기준이다. dialog/focus-out 시 overlay가 위에 남지 않게 닫고, FittedBox 변환 뒤 실제 화면 rect로 focus 위치와 크기를 계산하도록 보정했다.
-- S8 boss 이후는 `무한 도전 진입` UX로 정리됐다. S9+ 장기 생존은 이번 제출 gate가 아니지만, S8 정산에서 런 완료/무한 도전 진입 CTA와 보상 표시가 깨지지 않는지 확인한다.
+- S8 Boss 이후는 `무한 도전 진입` UX로 정리됐다. 제출 gate는 S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지이며, S9+ 장기 생존은 이번 제출 gate가 아니다.
+- full-run 중 수정 범위는 game over뿐 아니라 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드 제목·설명 잘림, 다국어 텍스트 넘침까지 포함한다.
+- 각 locale 실행 전 저장 세션/SharedPreferences를 지우고 첫 전투/첫 Market 튜토리얼이 실제로 표시되는지 확인한다.
 
 먼저 읽을 문서:
 - START_HERE.md
@@ -56,9 +58,13 @@
    - 스크립트: tools/contest_full_run_bot.sh
    - 영문 식별자: contest_full_run_bot
    - 난이도는 도전/challenge 계열을 사용한다. 실제 CLI 인자는 스크립트와 기존 테스트에서 확인한다.
-6. 도전 풀런이 실패하면 문서만 바꾸고 재실행하지 않는다.
+   - locale 실행 순서: `ko` -> `en` -> `ja` -> `zh-CN` -> `zh-TW`
+   - 각 locale 시작 전에 저장 세션/SharedPreferences를 초기화한다.
+   - 첫 전투/첫 Market 튜토리얼 표시, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item 설명 잘림을 함께 확인한다.
+6. 도전 풀런이 실패하거나 UI overflow/텍스트 잘림이 발견되면 문서만 바꾸고 재실행하지 않는다.
    - 먼저 policy code와 관련 test에 반영됐는지 확인한다.
    - game over/retry/checkpoint 로그를 근거로 족보, 중복줄 확정, 덱 추가, 히든 족보, 마켓 구매/판매, 보드 이동/버림 정책을 점검한다.
+   - UI/Jester/Item/자원 텍스트 문제는 code 또는 번역 자산을 수정하고 해당 locale gate를 다시 실행한다.
 7. 도전 풀런 도중 세션이 종료되면 다음 세션에서는 마지막 output-dir, 10_contest_full_run_bot.log, checkpoint 상태를 먼저 확인하고 이어간다.
 
 2026-05-10 도전 풀런 제외 검증:
@@ -97,7 +103,7 @@
 - S8 Boss 정산 후 `무한 도전 진입`을 누르면 S8 보상은 1회 claim되고 Market을 거쳐 S9+ 무한 도전 Station Select로 이어진다.
 - S9+ 무한 도전 target은 Scout 1배, Clash 1.5배, Boss 2배 비율을 따른다.
 - 마켓 tile offer는 실제 타일 face로 보이고, 구매 시 오른쪽 중단 덱 방향으로 날아가야 한다.
-- 도전 풀런 통과를 제출 Done으로 쓰려면 console error/warn 0건도 함께 닫혀야 한다.
+- 도전 풀런 통과를 제출 Done으로 쓰려면 5개 locale 모두 console error/warn 0건과 overflow/텍스트 잘림 0건도 함께 닫혀야 한다.
 - 튜토리얼 smoke는 full-play evidence가 아니다. 단, 제출 후보 UX QA 항목으로 전투 첫 진입, 마켓 첫 진입, 다시 보기, 포커스 아웃/옵션 겹침, 창 크기 변경 후 focus 위치/크기를 확인한다.
 
 완료 시 해야 할 일:

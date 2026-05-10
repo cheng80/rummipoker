@@ -24,11 +24,17 @@ void main() async {
   runApp(
     ProviderScope(
       child: EasyLocalization(
-        supportedLocales: const [Locale('ko')],
+        supportedLocales: const [
+          Locale('ko'),
+          Locale('en'),
+          Locale('ja'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),
         startLocale: const Locale('ko'),
-        saveLocale: false,
+        saveLocale: true,
         child: const App(),
       ),
     ),

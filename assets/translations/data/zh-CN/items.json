@@ -1,0 +1,234 @@
+{
+  "data": {
+    "items": {
+      "reroll_token": {
+        "displayName": "Reroll Chip",
+        "effectText": "下一次商店重抽少花1 Gold。"
+      },
+      "coupon_stamp": {
+        "displayName": "Discount Stamp",
+        "effectText": "下一次Item或Jester购买少花2 Gold。"
+      },
+      "coin_cache": {
+        "displayName": "Coin Cache",
+        "effectText": "立即获得+3 Gold。"
+      },
+      "two_pair_study": {
+        "displayName": "Two Pair Study",
+        "effectText": "在商店使用，使Two Pair成长+1。"
+      },
+      "triple_study": {
+        "displayName": "Triple Study",
+        "effectText": "在商店使用，使Triple成长+1。"
+      },
+      "straight_study": {
+        "displayName": "Straight Study",
+        "effectText": "在商店使用，使Straight成长+1。"
+      },
+      "flush_study": {
+        "displayName": "Flush Study",
+        "effectText": "在商店使用，使Flush成长+1。"
+      },
+      "full_house_study": {
+        "displayName": "Full House Study",
+        "effectText": "在商店使用，使Full House成长+1。"
+      },
+      "four_kind_study": {
+        "displayName": "Four Kind Study",
+        "effectText": "在商店使用，使Four of a Kind成长+1。"
+      },
+      "straight_flush_study": {
+        "displayName": "Straight Flush Study",
+        "effectText": "在商店使用，使Straight Flush成长+1。"
+      },
+      "board_scrap": {
+        "displayName": "Board Pass",
+        "effectText": "本Station获得+1次棋盘弃牌。"
+      },
+      "hand_scrap": {
+        "displayName": "Hand Pass",
+        "effectText": "本Station获得+1次手牌弃牌。"
+      },
+      "chip_capsule": {
+        "displayName": "Chip Charge",
+        "effectText": "下一次确认获得+25 Chips。"
+      },
+      "mult_capsule": {
+        "displayName": "Mult Charge",
+        "effectText": "下一次确认获得+6 Mult。"
+      },
+      "line_polish": {
+        "displayName": "Score Polish",
+        "effectText": "下一次确认最终分数x1.25。"
+      },
+      "straight_oil": {
+        "displayName": "Run Primer",
+        "effectText": "下一次Run线确认获得+40 Chips。"
+      },
+      "flush_powder": {
+        "displayName": "Color Primer",
+        "effectText": "下一次同色确认获得+8 Mult。"
+      },
+      "pair_splint": {
+        "displayName": "Pair Brace",
+        "effectText": "下一次Two Pair确认获得+35 Chips。"
+      },
+      "overlap_pin": {
+        "displayName": "Overlap Pin",
+        "effectText": "下一次确认的重叠奖励上限小幅提高。"
+      },
+      "emergency_draw": {
+        "displayName": "Emergency Draw",
+        "effectText": "如果手牌为空且牌库有牌，立即抽1张。"
+      },
+      "ledger_clip": {
+        "displayName": "Ledger Clip",
+        "effectText": "进入商店时获得+1 Gold。"
+      },
+      "discard_glove": {
+        "displayName": "Board Glove",
+        "effectText": "每个Station开始时，棋盘弃牌+1。"
+      },
+      "mulligan_sleeve": {
+        "displayName": "Hand Sleeve",
+        "effectText": "每个Station开始时，手牌弃牌+1。"
+      },
+      "shop_lens": {
+        "displayName": "Offer Lens",
+        "effectText": "商店中的Item候选+1。"
+      },
+      "jester_hook": {
+        "displayName": "Jester Hook",
+        "effectText": "Jester出售价格+1 Gold。"
+      },
+      "score_abacus": {
+        "displayName": "Score Abacus",
+        "effectText": "每个Station第一次确认获得+30 Chips。"
+      },
+      "thin_caliper": {
+        "displayName": "Short Caliper",
+        "effectText": "用3张或更少牌确认时获得+4 Mult。"
+      },
+      "stage_map": {
+        "displayName": "Station Map",
+        "effectText": "清除Showdown后奖励+1 Gold。"
+      },
+      "spare_pouch": {
+        "displayName": "Spare Pouch",
+        "effectText": "Battle Item Slot +1。"
+      },
+      "merchant_stamp": {
+        "displayName": "Shop Stamp",
+        "effectText": "进入商店后第一次重抽少花1 Gold。"
+      },
+      "safety_net": {
+        "displayName": "Failsafe Net",
+        "effectText": "每个Station一次，防止第一次会结束run的战斗锁定。"
+      },
+      "coin_funnel": {
+        "displayName": "Board Funnel",
+        "effectText": "结算时，每次未使用棋盘弃牌给予+1奖励Gold。"
+      },
+      "hand_funnel": {
+        "displayName": "Hand Funnel",
+        "effectText": "结算时，每次未使用手牌弃牌给予+1奖励Gold。"
+      },
+      "lucky_counter": {
+        "displayName": "Rare Counter",
+        "effectText": "Rare Item更常出现在Item候选中。"
+      },
+      "echo_bell": {
+        "displayName": "Echo Bell",
+        "effectText": "每个Station第二次确认追加第一次确认分数的10%。"
+      },
+      "boss_trophy": {
+        "displayName": "Showdown Trophy",
+        "effectText": "清除Showdown后，下个商店Jester候选+1。"
+      },
+      "thin_wallet": {
+        "displayName": "Empty Wallet",
+        "effectText": "仅在3 Gold以下可用。获得+5 Gold。"
+      },
+      "trade_ticket": {
+        "displayName": "Item Ticket",
+        "effectText": "只重抽Item候选。"
+      },
+      "jester_invoice": {
+        "displayName": "Jester Invoice",
+        "effectText": "下一次Jester购买少花4 Gold。"
+      },
+      "item_invoice": {
+        "displayName": "Item Invoice",
+        "effectText": "下一次Item购买少花4 Gold。"
+      },
+      "red_swatch": {
+        "displayName": "Red Swatch",
+        "effectText": "下一次确认时，每张红色牌给予+2 Mult。"
+      },
+      "blue_swatch": {
+        "displayName": "Blue Swatch",
+        "effectText": "下一次确认时，每张蓝色牌给予+2 Mult。"
+      },
+      "black_swatch": {
+        "displayName": "Black Swatch",
+        "effectText": "下一次确认时，每张黑色牌给予+2 Mult。"
+      },
+      "yellow_swatch": {
+        "displayName": "Yellow Swatch",
+        "effectText": "下一次确认时，每张黄色牌给予+2 Mult。"
+      },
+      "rank_chalk": {
+        "displayName": "Rank Chalk",
+        "effectText": "下一次确认时，每张同数字牌给予+12 Chips。"
+      },
+      "deck_needle": {
+        "displayName": "Deck Needle",
+        "effectText": "查看牌库顶部3张牌并弃掉1张。"
+      },
+      "battle_pouch": {
+        "displayName": "Battle Pouch",
+        "effectText": "本Battle最大手牌+1。"
+      },
+      "tile_polisher": {
+        "displayName": "Tile Polisher",
+        "effectText": "每个Station第一张得分牌获得+20 Chips。"
+      },
+      "move_token": {
+        "displayName": "Move Chip",
+        "effectText": "本Station棋盘移动+1。"
+      },
+      "slide_wax": {
+        "displayName": "Slide Wax",
+        "effectText": "下一次棋盘移动也会触发滑动奖励效果。"
+      },
+      "board_lift": {
+        "displayName": "Move Reserve",
+        "effectText": "为下个Station保留+1棋盘移动。"
+      },
+      "undo_seal": {
+        "displayName": "Undo Seal",
+        "effectText": "撤销上一次棋盘移动一次。"
+      },
+      "organizer_glove": {
+        "displayName": "Organizer Glove",
+        "effectText": "每个Station开始时，棋盘移动+1。"
+      },
+      "travel_pouch": {
+        "displayName": "Travel Pouch",
+        "effectText": "最大手牌+1。"
+      },
+      "wide_grip": {
+        "displayName": "Wide Grip",
+        "effectText": "每个Station开始时，最大手牌+1，棋盘弃牌-1。"
+      },
+      "grand_satchel": {
+        "displayName": "Grand Satchel",
+        "effectText": "每个Station开始时，最大手牌+2，手牌弃牌-1。"
+      },
+      "market_compass": {
+        "displayName": "Shop Compass",
+        "effectText": "进入商店时，Item/Jester候选中较便宜的第一个候选便宜1 Gold。"
+      }
+    }
+  }
+}

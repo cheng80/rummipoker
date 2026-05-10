@@ -1,0 +1,234 @@
+{
+  "data": {
+    "items": {
+      "reroll_token": {
+        "displayName": "Reroll Chip",
+        "effectText": "次のショップリロールはGoldコスト-1。"
+      },
+      "coupon_stamp": {
+        "displayName": "Discount Stamp",
+        "effectText": "次のItemまたはJester購入はGoldコスト-2。"
+      },
+      "coin_cache": {
+        "displayName": "Coin Cache",
+        "effectText": "ただちに+3 Goldを得る。"
+      },
+      "two_pair_study": {
+        "displayName": "Two Pair Study",
+        "effectText": "ショップで使うとTwo Pair成長+1。"
+      },
+      "triple_study": {
+        "displayName": "Triple Study",
+        "effectText": "ショップで使うとTriple成長+1。"
+      },
+      "straight_study": {
+        "displayName": "Straight Study",
+        "effectText": "ショップで使うとStraight成長+1。"
+      },
+      "flush_study": {
+        "displayName": "Flush Study",
+        "effectText": "ショップで使うとFlush成長+1。"
+      },
+      "full_house_study": {
+        "displayName": "Full House Study",
+        "effectText": "ショップで使うとFull House成長+1。"
+      },
+      "four_kind_study": {
+        "displayName": "Four Kind Study",
+        "effectText": "ショップで使うとFour of a Kind成長+1。"
+      },
+      "straight_flush_study": {
+        "displayName": "Straight Flush Study",
+        "effectText": "ショップで使うとStraight Flush成長+1。"
+      },
+      "board_scrap": {
+        "displayName": "Board Pass",
+        "effectText": "このStation中、ボード捨て+1。"
+      },
+      "hand_scrap": {
+        "displayName": "Hand Pass",
+        "effectText": "このStation中、手札捨て+1。"
+      },
+      "chip_capsule": {
+        "displayName": "Chip Charge",
+        "effectText": "次の確定は+25 Chips。"
+      },
+      "mult_capsule": {
+        "displayName": "Mult Charge",
+        "effectText": "次の確定は+6 Mult。"
+      },
+      "line_polish": {
+        "displayName": "Score Polish",
+        "effectText": "次の確定の最終スコアがx1.25。"
+      },
+      "straight_oil": {
+        "displayName": "Run Primer",
+        "effectText": "次のRunライン確定は+40 Chips。"
+      },
+      "flush_powder": {
+        "displayName": "Color Primer",
+        "effectText": "次の同色確定は+8 Mult。"
+      },
+      "pair_splint": {
+        "displayName": "Pair Brace",
+        "effectText": "次のTwo Pair確定は+35 Chips。"
+      },
+      "overlap_pin": {
+        "displayName": "Overlap Pin",
+        "effectText": "次の確定は重複ボーナス上限が少し上がる。"
+      },
+      "emergency_draw": {
+        "displayName": "Emergency Draw",
+        "effectText": "手札が空でデッキにタイルがあれば、今1枚引く。"
+      },
+      "ledger_clip": {
+        "displayName": "Ledger Clip",
+        "effectText": "ショップ入場時に+1 Gold。"
+      },
+      "discard_glove": {
+        "displayName": "Board Glove",
+        "effectText": "各Station開始時、ボード捨て+1。"
+      },
+      "mulligan_sleeve": {
+        "displayName": "Hand Sleeve",
+        "effectText": "各Station開始時、手札捨て+1。"
+      },
+      "shop_lens": {
+        "displayName": "Offer Lens",
+        "effectText": "ショップのItem候補+1。"
+      },
+      "jester_hook": {
+        "displayName": "Jester Hook",
+        "effectText": "Jester売却額+1 Gold。"
+      },
+      "score_abacus": {
+        "displayName": "Score Abacus",
+        "effectText": "各Stationの最初の確定は+30 Chips。"
+      },
+      "thin_caliper": {
+        "displayName": "Short Caliper",
+        "effectText": "3枚以下での確定は+4 Mult。"
+      },
+      "stage_map": {
+        "displayName": "Station Map",
+        "effectText": "Showdownクリア報酬Gold+1。"
+      },
+      "spare_pouch": {
+        "displayName": "Spare Pouch",
+        "effectText": "Battle Item Slot +1。"
+      },
+      "merchant_stamp": {
+        "displayName": "Shop Stamp",
+        "effectText": "ショップ入場後、最初のリロールはGoldコスト-1。"
+      },
+      "safety_net": {
+        "displayName": "Failsafe Net",
+        "effectText": "各Stationで1回、run終了になる最初の戦闘ロックを防ぐ。"
+      },
+      "coin_funnel": {
+        "displayName": "Board Funnel",
+        "effectText": "精算時、未使用ボード捨て1回ごとに報酬+1 Gold。"
+      },
+      "hand_funnel": {
+        "displayName": "Hand Funnel",
+        "effectText": "精算時、未使用手札捨て1回ごとに報酬+1 Gold。"
+      },
+      "lucky_counter": {
+        "displayName": "Rare Counter",
+        "effectText": "Item候補にRare Itemが出やすくなる。"
+      },
+      "echo_bell": {
+        "displayName": "Echo Bell",
+        "effectText": "各Stationの2回目の確定に、1回目の確定スコアの10%を加える。"
+      },
+      "boss_trophy": {
+        "displayName": "Showdown Trophy",
+        "effectText": "Showdownクリア後、次のショップのJester候補+1。"
+      },
+      "thin_wallet": {
+        "displayName": "Empty Wallet",
+        "effectText": "3 Gold以下の時だけ使用可能。+5 Gold。"
+      },
+      "trade_ticket": {
+        "displayName": "Item Ticket",
+        "effectText": "Item候補だけをリロールする。"
+      },
+      "jester_invoice": {
+        "displayName": "Jester Invoice",
+        "effectText": "次のJester購入はGoldコスト-4。"
+      },
+      "item_invoice": {
+        "displayName": "Item Invoice",
+        "effectText": "次のItem購入はGoldコスト-4。"
+      },
+      "red_swatch": {
+        "displayName": "Red Swatch",
+        "effectText": "次の確定で、赤タイル1枚ごとに+2 Mult。"
+      },
+      "blue_swatch": {
+        "displayName": "Blue Swatch",
+        "effectText": "次の確定で、青タイル1枚ごとに+2 Mult。"
+      },
+      "black_swatch": {
+        "displayName": "Black Swatch",
+        "effectText": "次の確定で、黒タイル1枚ごとに+2 Mult。"
+      },
+      "yellow_swatch": {
+        "displayName": "Yellow Swatch",
+        "effectText": "次の確定で、黄色タイル1枚ごとに+2 Mult。"
+      },
+      "rank_chalk": {
+        "displayName": "Rank Chalk",
+        "effectText": "次の確定で、同じ数字のタイル1枚ごとに+12 Chips。"
+      },
+      "deck_needle": {
+        "displayName": "Deck Needle",
+        "effectText": "デッキ上から3枚を見て1枚捨てる。"
+      },
+      "battle_pouch": {
+        "displayName": "Battle Pouch",
+        "effectText": "このBattle中、最大手札+1。"
+      },
+      "tile_polisher": {
+        "displayName": "Tile Polisher",
+        "effectText": "各Stationで最初に得点したタイルは+20 Chips。"
+      },
+      "move_token": {
+        "displayName": "Move Chip",
+        "effectText": "このStation中、ボード移動+1。"
+      },
+      "slide_wax": {
+        "displayName": "Slide Wax",
+        "effectText": "次のボード移動はスライドボーナス効果も発動する。"
+      },
+      "board_lift": {
+        "displayName": "Move Reserve",
+        "effectText": "次のStation用にボード移動+1を予約。"
+      },
+      "undo_seal": {
+        "displayName": "Undo Seal",
+        "effectText": "最後のボード移動を1回取り消す。"
+      },
+      "organizer_glove": {
+        "displayName": "Organizer Glove",
+        "effectText": "各Station開始時、ボード移動+1。"
+      },
+      "travel_pouch": {
+        "displayName": "Travel Pouch",
+        "effectText": "最大手札+1。"
+      },
+      "wide_grip": {
+        "displayName": "Wide Grip",
+        "effectText": "各Station開始時、最大手札+1、ボード捨て-1。"
+      },
+      "grand_satchel": {
+        "displayName": "Grand Satchel",
+        "effectText": "各Station開始時、最大手札+2、手札捨て-1。"
+      },
+      "market_compass": {
+        "displayName": "Shop Compass",
+        "effectText": "ショップ入場時、Item/Jester候補のうち安い最初の候補を1 Gold割引。"
+      }
+    }
+  }
+}

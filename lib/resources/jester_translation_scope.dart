@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../logic/rummi_poker_grid/jester_translations.dart';
+import 'translation_locale_code.dart';
 
 class JesterTranslationScope extends StatefulWidget {
   const JesterTranslationScope({super.key, required this.child});
@@ -34,18 +35,21 @@ class _JesterTranslationScopeState extends State<JesterTranslationScope> {
   }
 
   Future<void> _reload(Locale loc) async {
-    final code = loc.languageCode == 'ko' ? 'ko' : 'en';
+    final code = translationLocaleCode(loc);
+    final next = await _loadTranslations(code) ??
+        (code == 'en' ? null : await _loadTranslations('en'));
+    if (mounted) {
+      setState(() => _translations = next ?? JesterTranslations.empty());
+    }
+  }
+
+  Future<JesterTranslations?> _loadTranslations(String code) async {
     final path = 'assets/translations/data/$code/jesters.json';
     try {
       final raw = await rootBundle.loadString(path);
-      final next = JesterTranslations.fromJsonString(raw);
-      if (mounted) {
-        setState(() => _translations = next);
-      }
+      return JesterTranslations.fromJsonString(raw);
     } catch (_) {
-      if (mounted) {
-        setState(() => _translations = JesterTranslations.empty());
-      }
+      return null;
     }
   }
 

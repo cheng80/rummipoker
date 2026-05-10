@@ -122,8 +122,14 @@ flutter:
     - assets/translations/data/
     - assets/translations/data/en/jesters.json
     - assets/translations/data/en/items.json
+    - assets/translations/data/ja/jesters.json
+    - assets/translations/data/ja/items.json
     - assets/translations/data/ko/jesters.json
     - assets/translations/data/ko/items.json
+    - assets/translations/data/zh-CN/jesters.json
+    - assets/translations/data/zh-CN/items.json
+    - assets/translations/data/zh-TW/jesters.json
+    - assets/translations/data/zh-TW/items.json
     - assets/images/
     - assets/images/sprites/
     - assets/images/ui/
