@@ -171,6 +171,7 @@
 | 현재 코드 사실과 보호 규칙 | `docs/current_system/*` |
 | 현재 실행 트랙 선택 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` |
 | 공모전 제출 세부 체크 | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` |
+| 다음 세션 공모전 제출 handoff | `docs/planning/competition/NEXT_SESSION_SUBMISSION_HANDOFF_PROMPT.md` |
 | 공모전 full-play bot 제작 기준 | `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md` |
 | 실제 Goal 전체 진도 | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` |
 | 장기 레벨링/경제 적용 상태 | `docs/planning/leveling/*` |
