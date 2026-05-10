@@ -10,10 +10,10 @@
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Active for locale cycle full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했고, `ko` fresh 표준 locale gate도 통과했다. 남은 gate는 사용자 승인 후 `ko` 도전 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 확인한 뒤, 다음 locale을 같은 표준→도전 순서로 진행하는 사이클이다. |
+| 공모전 기준 완성 | Active for locale cycle full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했고, `ko` fresh 표준 locale gate도 통과했다. 남은 gate는 같은 `ko` cycle 내부의 도전 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 이어서 확인한 뒤, 사용자 승인 후 다음 locale을 같은 표준→도전 순서로 진행하는 것이다. |
 | 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1, submission kit 문서화는 반영됐다. 장기 밸런스와 스토어 최종 산출물은 별도 트랙으로 남긴다. |
 
-현재는 공모전 기준 QA를 재개한다. 다음 남은 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko` 표준은 2026-05-10에 완료했고, 다음 실행은 사용자 승인 후 `ko` 도전이다. 5개 locale을 한 번에 연속 실행하지 않고, 각 locale 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
+현재는 공모전 기준 QA를 재개한다. 다음 남은 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko` 표준은 2026-05-10에 완료했으므로 다음 실행은 같은 `ko` cycle 내부의 `ko` 도전이다. 5개 locale을 한 번에 연속 실행하지 않고, 각 locale 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
 
 ## 2. 공모전 기준 다음 작업
 
@@ -21,7 +21,7 @@
 현재 실행 순서는 아래로 고정한다.
 
 1. 완료: `contest_full_run_bot` `ko` locale 표준 난이도 fresh S1~S8 Boss full-run 통과.
-2. 대기: 사용자 승인 후 같은 locale 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 실행한다.
+2. 다음: 같은 `ko` cycle 내부에서 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 실행한다.
 3. `ko` 사이클이 닫히면 결과를 보고하고 사용자 승인받은 뒤 `en`으로 넘어간다. 이후 순서는 `ja` -> `zh-CN` -> `zh-TW`다.
 4. 각 standard/challenge 실행 전 저장 세션/SharedPreferences를 지워 첫 전투/첫 Market 튜토리얼이 표시되는 조건으로 시작한다.
    - bot은 튜토리얼 overlay가 보이면 전투/마켓 액션보다 `Next/Done` 완료를 먼저 처리하고, fresh locale gate에서는 전투/마켓 튜토리얼 완료 로그가 없으면 pass로 인정하지 않는다.
