@@ -85,12 +85,12 @@
   "homeNewRunSectionSubtitle": "새 런을 준비합니다.",
   "homeNewRunTitle": "새 게임 시작",
   "homeNewRunDescription": "난이도와 시작 방식을 선택",
-  "homeOtherMenuSectionTitle": "다른 메뉴",
-  "homeOtherMenuSectionSubtitle": "본편 진행과 분리된 별도 메뉴입니다.",
+  "homeOtherMenuSectionTitle": "도감",
+  "homeOtherMenuSectionSubtitle": "수집한 보상과 열린 항목을 확인합니다.",
   "homeSpecialModeTitle": "특별 모드",
   "homeSpecialModeDescription": "별도 규칙으로 즐기는 추가 모드",
   "archiveTitle": "도감",
-  "homeArchiveDescription": "보상 카드와 열린 항목 확인",
+  "homeArchiveDescription": "보상 카드, Jester, Item 수집 상태 확인",
   "homeSettingsSectionSubtitle": "앱 설정과 환경 옵션",
   "homeSettingsDescription": "사운드/환경 설정 열기"
 }

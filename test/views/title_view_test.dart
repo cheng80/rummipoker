@@ -51,7 +51,7 @@ void main() {
                 locale: context.locale,
                 supportedLocales: context.supportedLocales,
                 localizationsDelegates: context.localizationDelegates,
-                home: const TitleView(),
+                home: const TitleView(showDebugEntriesOverride: false),
               ),
             );
           },
@@ -61,6 +61,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('버전 1.0.0+1'), findsOneWidget);
+    expect(find.text('도감'), findsWidgets);
+    expect(find.text('보상 카드, Jester, Item 수집 상태 확인'), findsOneWidget);
+    expect(find.text('특별 모드'), findsNothing);
+    expect(find.text('디버그 픽스처'), findsNothing);
 
     await tester.tap(find.text('런 정보').first);
     await tester.pumpAndSettle();

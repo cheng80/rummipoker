@@ -19,9 +19,14 @@ import 'home_entry_widgets.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
 class TitleView extends ConsumerStatefulWidget {
-  const TitleView({super.key, this.debugScrollPreset});
+  const TitleView({
+    super.key,
+    this.debugScrollPreset,
+    this.showDebugEntriesOverride,
+  });
 
   final String? debugScrollPreset;
+  final bool? showDebugEntriesOverride;
 
   @override
   ConsumerState<TitleView> createState() => _TitleViewState();
@@ -47,7 +52,7 @@ class _TitleViewState extends ConsumerState<TitleView>
   }
 
   void _applyDebugScrollPreset() {
-    if (!AppConfig.showDebugFixtures || widget.debugScrollPreset != 'bottom') {
+    if (!_showDebugEntries || widget.debugScrollPreset != 'bottom') {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -57,6 +62,9 @@ class _TitleViewState extends ConsumerState<TitleView>
       });
     });
   }
+
+  bool get _showDebugEntries =>
+      widget.showDebugEntriesOverride ?? AppConfig.showDebugFixtures;
 
   Future<void> _openContinueMenu() async {
     final notifier = ref.read(titleNotifierProvider.notifier);
@@ -373,34 +381,36 @@ class _TitleViewState extends ConsumerState<TitleView>
                   HomeSection(
                     title: context.tr('homeOtherMenuSectionTitle'),
                     subtitle: context.tr('homeOtherMenuSectionSubtitle'),
-                    child: Column(
-                      children: [
-                        HomeEntryCard(
-                          title: context.tr('homeSpecialModeTitle'),
-                          description: context.tr('homeSpecialModeDescription'),
-                          accent: const Color(0xFF8E5CF6),
-                          onTap: () => context.push(RoutePaths.trial),
-                        ),
-                        const SizedBox(height: 12),
-                        HomeEntryCard(
-                          title: context.tr('archiveTitle'),
-                          description: context.tr('homeArchiveDescription'),
-                          accent: const Color(0xFF5C7CFA),
-                          onTap: () => context.push(RoutePaths.archive),
-                        ),
-                      ],
+                    child: HomeEntryCard(
+                      title: context.tr('archiveTitle'),
+                      description: context.tr('homeArchiveDescription'),
+                      accent: const Color(0xFF5C7CFA),
+                      onTap: () => context.push(RoutePaths.archive),
                     ),
                   ),
-                  if (AppConfig.showDebugFixtures) ...[
+                  if (_showDebugEntries) ...[
                     const SizedBox(height: 18),
                     HomeSection(
                       title: '디버그',
                       subtitle: '개발과 검증용 진입만 모아 둔 영역',
-                      child: HomeEntryCard(
-                        title: '디버그 픽스처',
-                        description: '검증용 런 상태로 바로 시작',
-                        accent: const Color(0xFF7E57C2),
-                        onTap: _openDebugFixtureMenu,
+                      child: Column(
+                        children: [
+                          HomeEntryCard(
+                            title: context.tr('homeSpecialModeTitle'),
+                            description: context.tr(
+                              'homeSpecialModeDescription',
+                            ),
+                            accent: const Color(0xFF8E5CF6),
+                            onTap: () => context.push(RoutePaths.trial),
+                          ),
+                          const SizedBox(height: 12),
+                          HomeEntryCard(
+                            title: '디버그 픽스처',
+                            description: '검증용 런 상태로 바로 시작',
+                            accent: const Color(0xFF7E57C2),
+                            onTap: _openDebugFixtureMenu,
+                          ),
+                        ],
                       ),
                     ),
                   ],
