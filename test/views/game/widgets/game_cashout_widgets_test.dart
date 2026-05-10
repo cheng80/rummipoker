@@ -131,6 +131,70 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('GameCashOutSheet blocks inherited text underline decoration', (
+    tester,
+  ) async {
+    final settlement = RummiSettlementRuntimeFacade(
+      stageIndex: 1,
+      targetScore: 240,
+      currentGold: 19,
+      totalGold: 19,
+      entries: const [
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.stationReward,
+          leadingLabel: 'Station 1',
+          description: 'Station Goal 240 달성 보상',
+          gold: 4,
+        ),
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.boardDiscardReward,
+          leadingLabel: '4',
+          description: '남은 보드 버림 4회 x 2',
+          gold: 8,
+        ),
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.handDiscardReward,
+          leadingLabel: '2',
+          description: '남은 손패 버림 2회 x 1',
+          gold: 2,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DefaultTextStyle(
+            style: const TextStyle(
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.yellow,
+            ),
+            child: GameCashOutSheet(settlement: settlement),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump(const Duration(milliseconds: 240));
+
+    final cashOutDefaultStyles = tester.widgetList<DefaultTextStyle>(
+      find.ancestor(
+        of: find.byKey(const ValueKey('cashout-sheet-frame')),
+        matching: find.byType(DefaultTextStyle),
+      ),
+    );
+    expect(
+      cashOutDefaultStyles.any(
+        (style) => style.style.decoration == TextDecoration.none,
+      ),
+      isTrue,
+    );
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('GameCashOutSheet shows boss deck tile reward as a tile face', (
     tester,
   ) async {

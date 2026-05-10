@@ -493,161 +493,168 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
         .where((entry) => entry.isDeckTileReward)
         .toList(growable: false);
     final hasDeckRewards = deckRewardEntries.isNotEmpty;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: DecoratedBox(
-          key: const ValueKey('cashout-sheet-frame'),
-          decoration: BoxDecoration(
-            color: const Color(0xFF102D25),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  '정산 완료',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _GameCashOutReveal(
-                  visible: _step >= 1,
-                  child: _GameCashOutLine.fromSettlementEntry(
-                    settlement.entries[0],
-                    isEndless: settlement.isEndless,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _GameCashOutReveal(
-                  visible: _step >= 2,
-                  child: _GameCashOutLine.fromSettlementEntry(
-                    settlement.entries[1],
-                    isEndless: settlement.isEndless,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _GameCashOutReveal(
-                  visible: _step >= 3,
-                  child: _GameCashOutLine.fromSettlementEntry(
-                    settlement.entries[2],
-                    isEndless: settlement.isEndless,
-                  ),
-                ),
-                if (hasBonuses) ...[
-                  const SizedBox(height: 8),
-                  _GameCashOutReveal(
-                    visible: _step >= 4,
-                    child: Column(
-                      children: [
-                        for (final entry in settlement.entries.where(
-                          (entry) => entry.isBonus,
-                        )) ...[
-                          _GameCashOutLine(
-                            leading: entry.leadingLabel,
-                            text: _bonusEntryDescription(context, entry),
-                            gold: entry.gold,
-                            isEndless: settlement.isEndless,
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      ],
+    // 상위 라우트/오버레이의 텍스트 장식이 정산 UI로 새어 들어오지 않게 막는다.
+    final baseTextStyle = DefaultTextStyle.of(
+      context,
+    ).style.copyWith(decoration: TextDecoration.none);
+    return DefaultTextStyle(
+      style: baseTextStyle,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: DecoratedBox(
+            key: const ValueKey('cashout-sheet-frame'),
+            decoration: BoxDecoration(
+              color: const Color(0xFF102D25),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    '정산 완료',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                ],
-                if (hasDeckRewards) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 14),
                   _GameCashOutReveal(
-                    visible: _step >= (hasBonuses ? 5 : 4),
-                    child: Column(
-                      children: [
-                        for (final entry in deckRewardEntries) ...[
-                          _GameCashOutTileRewardLine(entry: entry),
-                          const SizedBox(height: 8),
-                        ],
-                      ],
+                    visible: _step >= 1,
+                    child: _GameCashOutLine.fromSettlementEntry(
+                      settlement.entries[0],
+                      isEndless: settlement.isEndless,
                     ),
                   ),
-                ],
-                const SizedBox(height: 12),
-                _GameCashOutReveal(
-                  visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
-                  child: _GameCashOutGoldSummary(
-                    currentGold: settlement.currentGold,
-                    totalGold: settlement.totalGold,
+                  const SizedBox(height: 8),
+                  _GameCashOutReveal(
+                    visible: _step >= 2,
+                    child: _GameCashOutLine.fromSettlementEntry(
+                      settlement.entries[1],
+                      isEndless: settlement.isEndless,
+                    ),
                   ),
-                ),
-                if (widget.completesRun && widget.insightReward > 0) ...[
+                  const SizedBox(height: 8),
+                  _GameCashOutReveal(
+                    visible: _step >= 3,
+                    child: _GameCashOutLine.fromSettlementEntry(
+                      settlement.entries[2],
+                      isEndless: settlement.isEndless,
+                    ),
+                  ),
+                  if (hasBonuses) ...[
+                    const SizedBox(height: 8),
+                    _GameCashOutReveal(
+                      visible: _step >= 4,
+                      child: Column(
+                        children: [
+                          for (final entry in settlement.entries.where(
+                            (entry) => entry.isBonus,
+                          )) ...[
+                            _GameCashOutLine(
+                              leading: entry.leadingLabel,
+                              text: _bonusEntryDescription(context, entry),
+                              gold: entry.gold,
+                              isEndless: settlement.isEndless,
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (hasDeckRewards) ...[
+                    const SizedBox(height: 8),
+                    _GameCashOutReveal(
+                      visible: _step >= (hasBonuses ? 5 : 4),
+                      child: Column(
+                        children: [
+                          for (final entry in deckRewardEntries) ...[
+                            _GameCashOutTileRewardLine(entry: entry),
+                            const SizedBox(height: 8),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   _GameCashOutReveal(
                     visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
-                    child: GameOverInsightRewardCard(
-                      insightReward: widget.insightReward,
+                    child: _GameCashOutGoldSummary(
+                      currentGold: settlement.currentGold,
+                      totalGold: settlement.totalGold,
                     ),
                   ),
+                  if (widget.completesRun && widget.insightReward > 0) ...[
+                    const SizedBox(height: 12),
+                    _GameCashOutReveal(
+                      visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
+                      child: GameOverInsightRewardCard(
+                        insightReward: widget.insightReward,
+                      ),
+                    ),
+                  ],
+                  if (widget.completesRun) ...[
+                    const SizedBox(height: 10),
+                    _GameCashOutReveal(
+                      visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
+                      child: const _GameCashOutEndlessNotice(),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  if (widget.completesRun) ...[
+                    GameChromeButton(
+                      label: '무한 도전 진입',
+                      backgroundColor: const Color(0xFF4FA3D8),
+                      foregroundColor: Colors.white,
+                      height: 50,
+                      borderRadius: 18,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      onPressed: _step < 3
+                          ? null
+                          : () => Navigator.of(
+                              context,
+                            ).pop(GameCashOutAction.continueEndless),
+                    ),
+                    const SizedBox(height: 8),
+                    GameChromeButton(
+                      label: '런 완료',
+                      backgroundColor: const Color(0xFFF4A81D),
+                      foregroundColor: Colors.black,
+                      height: 50,
+                      borderRadius: 18,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      onPressed: _step < 3
+                          ? null
+                          : () => Navigator.of(
+                              context,
+                            ).pop(GameCashOutAction.completeRun),
+                    ),
+                  ] else
+                    GameChromeButton(
+                      label: 'Market으로',
+                      backgroundColor: const Color(0xFFF4A81D),
+                      foregroundColor: Colors.black,
+                      height: 52,
+                      borderRadius: 18,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      onPressed: _step < 3
+                          ? null
+                          : () => Navigator.of(
+                              context,
+                            ).pop(GameCashOutAction.enterMarket),
+                    ),
                 ],
-                if (widget.completesRun) ...[
-                  const SizedBox(height: 10),
-                  _GameCashOutReveal(
-                    visible: _step >= (hasBonuses || hasDeckRewards ? 5 : 4),
-                    child: const _GameCashOutEndlessNotice(),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                if (widget.completesRun) ...[
-                  GameChromeButton(
-                    label: '무한 도전 진입',
-                    backgroundColor: const Color(0xFF4FA3D8),
-                    foregroundColor: Colors.white,
-                    height: 50,
-                    borderRadius: 18,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    onPressed: _step < 3
-                        ? null
-                        : () => Navigator.of(
-                            context,
-                          ).pop(GameCashOutAction.continueEndless),
-                  ),
-                  const SizedBox(height: 8),
-                  GameChromeButton(
-                    label: '런 완료',
-                    backgroundColor: const Color(0xFFF4A81D),
-                    foregroundColor: Colors.black,
-                    height: 50,
-                    borderRadius: 18,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    onPressed: _step < 3
-                        ? null
-                        : () => Navigator.of(
-                            context,
-                          ).pop(GameCashOutAction.completeRun),
-                  ),
-                ] else
-                  GameChromeButton(
-                    label: 'Market으로',
-                    backgroundColor: const Color(0xFFF4A81D),
-                    foregroundColor: Colors.black,
-                    height: 52,
-                    borderRadius: 18,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    onPressed: _step < 3
-                        ? null
-                        : () => Navigator.of(
-                            context,
-                          ).pop(GameCashOutAction.enterMarket),
-                  ),
-              ],
+              ),
             ),
           ),
         ),

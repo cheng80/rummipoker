@@ -1562,21 +1562,23 @@ class _GameViewState extends ConsumerState<GameView>
       routeSettings: const RouteSettings(name: '정산 결과'),
       transitionDuration: Duration.zero,
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Semantics(
-            container: true,
-            scopesRoute: true,
-            namesRoute: true,
-            explicitChildNodes: true,
-            label: '정산 결과',
-            child: GameCashOutSheet(
-              settlement: settlementView,
-              autoEnterMarketOnLoad:
-                  !completesRun &&
-                  (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
-              completesRun: completesRun,
-              insightReward: insightReward,
+        return PhoneFrame(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Semantics(
+              container: true,
+              scopesRoute: true,
+              namesRoute: true,
+              explicitChildNodes: true,
+              label: '정산 결과',
+              child: GameCashOutSheet(
+                settlement: settlementView,
+                autoEnterMarketOnLoad:
+                    !completesRun &&
+                    (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
+                completesRun: completesRun,
+                insightReward: insightReward,
+              ),
             ),
           ),
         );

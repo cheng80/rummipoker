@@ -14,14 +14,14 @@
 
 현재 결론:
 
-- 공모전 풀런봇 QA는 잠긴 슬롯 해금 룰 보강의 Browser/기기 눈검증을 남겨 둔 상태다. `slot_unlock_market` fixture 확인과 사용자 승인 후 locale cycle을 재개한다.
+- 공모전 풀런봇 QA는 최신 UI/Web 회귀 수정 후 남은 locale cycle 재개 직전 상태다. `slot_unlock_market` 해금 연출 눈검증은 완료했고, 다음은 최신 build 눈검증과 사용자 승인 후 `ja` -> `zh-CN` -> `zh-TW` locale cycle을 재개하는 것이다.
 - 2026-05-09 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss full-run 통과 증거를 확보했다.
 - 2026-05-10 최신 제출 후보 build에서 locale별 standard→challenge full-run cycle을 제외한 최근 룰/UI 항목 검증을 마쳤다.
 - 2026-05-10 `ko` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `ko` fresh 도전 locale gate는 `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `en` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `en` fresh 도전 locale gate는 `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
-- `ko`, `en` 표준→도전 2사이클은 완료됐다. 이후 발견한 잠긴 슬롯 해금 공백은 S2/S4/S6 Boss 보상과 Market 진입 연출로 보강했고, 앱 기본 언어도 OS/브라우저 시스템 locale을 따르게 수정했다. `ja`, `zh-CN`, `zh-TW`는 `slot_unlock_market` fixture 눈검증 후 사용자 승인 기준으로 재개한다. 이후 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행한다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
+- `ko`, `en` 표준→도전 2사이클은 완료됐다. 이후 발견한 잠긴 슬롯 해금 공백은 S2/S4/S6 Boss 보상과 Market 진입 연출로 보강했고, 앱 기본 언어도 OS/브라우저 시스템 locale을 따르게 수정했다. `slot_unlock_market` fixture 눈검증도 완료했다. 이후 web 제출 산물/BGM/릴리즈 메뉴/정산 UI 회귀를 수정했으므로, 최신 build 눈검증 후 `ja`, `zh-CN`, `zh-TW`를 사용자 승인 기준으로 재개한다. 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행한다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
 - 제출 전 핵심 룰 보강이었던 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 행성카드형 성장 아이템, 초과 점수 기반 대표 족보 성장, 타이틀 `런 정보`, 게임오버 정산/도발 문구는 런타임 반영과 핵심 검증을 마쳤다.
 - S8 boss 이후는 더 이상 애매한 `계속 진행`이 아니라 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고 Station Select, 전투 HUD, 정산 라벨에서 위험한 무한 구간 색상으로 드러낸다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
@@ -50,7 +50,9 @@
 - 2026-05-10 `en` 도전 locale gate: `locale=en`, `resolvedLocale=en`, `freshStorage=true`, `difficulty=challenge`, `--tutorials-already-seen`으로 같은 locale cycle의 tutorial seen 상태 유지, S8 small `1622/2 -> 230/1` 목표 `1729` 통과, S8 big `1009/2 -> 1032/2 -> 368/1` 목표 `2086` 통과, S8 boss `1010/3 -> 869/2 -> 312/1` 목표 `2087` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 해당 run 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
 - 2026-05-10 추가 룰 보강: 잠겨 있던 Quick Item 3번 슬롯, Passive 2번 슬롯, Jester 5번 슬롯을 각각 S2/S4/S6 Boss 클리어 보상으로 해금하도록 구현했다. 해금은 즉시 저장 상태에 반영하고, 다음 Market 진입 시 1회 배너/슬롯 pulse로 보여준 뒤 전투에는 이미 해금된 슬롯 상태로 진입한다. 검증: `flutter analyze`, `flutter build web`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`.
-- 2026-05-10 추가 UX/QA 보강: 앱 기본 언어는 특정 한국어 `startLocale` 강제가 아니라 OS/브라우저 시스템 locale을 따르게 했다. 해금 연출 확인용 debug fixture `slot_unlock_market`를 추가했고, 확인 URL은 `/game?fixture=slot_unlock_market`다. 튜토리얼 검증 전용이 아닌 debug fixture는 자동 튜토리얼을 띄우지 않고, 튜토리얼은 다시 보기 버튼으로만 연다. 커밋: `4dea65c Add boss slot unlock rewards`, `8adc86d Add slot unlock debug fixture`.
+- 2026-05-10 추가 UX/QA 보강: 앱 기본 언어는 특정 한국어 `startLocale` 강제가 아니라 OS/브라우저 시스템 locale을 따르게 했다. 해금 연출 확인용 debug fixture `slot_unlock_market`를 추가했고, 확인 URL은 `/game?fixture=slot_unlock_market`다. 튜토리얼 검증 전용이 아닌 debug fixture는 자동 튜토리얼을 띄우지 않고, 튜토리얼은 다시 보기 버튼으로만 연다. 해금 연출은 자물쇠 확대/fade-out과 슬롯 pulse가 1회 보이는 기준으로 눈검증 완료했다. 커밋: `4dea65c Add boss slot unlock rewards`, `8adc86d Add slot unlock debug fixture`.
+- 2026-05-10 추가 Web/릴리즈 보강: icon/splash를 새 asset으로 반영하고 OG image를 `https://cheng80.myqnapcloud.com/rummipoker/assets/assets/splash.png` 기준으로 잡았다. 릴리즈 홈 메뉴는 도감 중심으로 정리하고 debug/special 메뉴는 debug gate 뒤로 숨겼다.
+- 2026-05-10 추가 오디오/정산 회귀 수정: 웹 BGM은 첫 사용자 터치/홈 카드 tap에서 unlock되고, 스크롤 중 같은 BGM을 stop/play 반복해 묵음이 되는 경로를 막았다. 정산 sheet의 노란 밑줄은 `TextDecoration` 상속 차단으로 수정했고, desktop/web에서 정산 dialog가 PhoneFrame 밖 전체 폭으로 그려지는 회귀는 `PhoneFrame` 제약과 landscape widget test로 막았다.
 
 오늘 바로 할 작업:
 
@@ -60,9 +62,11 @@
 4. 완료: 같은 `en` cycle 내부에서 `en` 도전 난이도 fresh S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 통과했다.
 5. 완료: 잠긴 슬롯 해금 룰과 Market 진입 연출 보강을 닫았다.
 6. 완료: 시스템 locale 기본값과 `slot_unlock_market` debug fixture를 추가했다.
-7. 다음: `/game?fixture=slot_unlock_market`에서 자동 튜토리얼 없이 해금 배너/슬롯 pulse가 보이는지 Browser/기기 눈검증 후 사용자 승인 기준으로 남은 locale full-run을 재개한다. 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
-8. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
-9. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
+7. 완료: `/game?fixture=slot_unlock_market`에서 자동 튜토리얼 없이 해금 배너/자물쇠 해제/슬롯 pulse가 보이는지 눈검증했다.
+8. 완료: web icon/splash/OG image, 릴리즈 홈 메뉴, 웹 BGM unlock/scroll 묵음, 정산 밑줄, 정산 PhoneFrame 폭 회귀를 수정하고 최신 build/test를 통과했다.
+9. 다음: 최신 build 눈검증 후 사용자 승인 기준으로 남은 locale full-run을 재개한다. 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
+10. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
+11. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
 
 ## 0.1 최근 24시간 이내 추가 항목과 검증 대기 목록
 
@@ -103,10 +107,22 @@
   - 검증: `flutter analyze`, `flutter build web`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`에서 확인. locale full-run에서 실제 S2/S4/S6 Market 진입 시각 검증은 다음 gate에 포함한다.
 - [x] 시스템 locale 기본값과 슬롯 해금 debug fixture
   - 구현 상태: 앱 일반 진입점은 `startLocale`로 한국어를 강제하지 않고 OS/브라우저 시스템 locale을 따른다. `slot_unlock_market` fixture는 해금 상태와 pending 연출을 담은 Market scene으로 열린다.
-  - 검증: `setting_view_test`, `title_view_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`, `flutter analyze`, `flutter build web` 통과. Browser/기기 눈검증은 다음 gate다.
+  - 검증: `setting_view_test`, `title_view_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`, `flutter analyze`, `flutter build web` 통과. 슬롯 해금 fixture 화면은 사용자 눈검증 완료.
 - [x] debug fixture 자동 튜토리얼 차단
   - 구현 상태: 튜토리얼 검증 전용으로 명시되지 않은 debug fixture는 battle/market 자동 튜토리얼을 시작하지 않는다. 튜토리얼은 상단/옵션 다시 보기 버튼을 통해서만 열린다.
-  - 검증: `debug_run_fixture_service_test`, `game_shop_slot_unlock_screen_test`에서 fixture 기본값과 Market 자동 튜토리얼 차단을 확인. 실제 fixture 화면 눈검증은 다음 gate다.
+  - 검증: `debug_run_fixture_service_test`, `game_shop_slot_unlock_screen_test`에서 fixture 기본값과 Market 자동 튜토리얼 차단을 확인. 실제 fixture 화면에서도 자동 튜토리얼이 해금 연출을 가리지 않는 것을 확인.
+- [x] Web 제출 산물과 공유 이미지
+  - 구현 상태: 새 `icon.png`/`splash.png`를 패키지 설정 기준으로 반영했고, web OG image는 배포 절대 주소의 splash asset을 바라보게 했다.
+  - 검증: `flutter_native_splash:create`, `flutter_launcher_icons`, `flutter build web --release --base-href "/rummipoker/"` 기준으로 확인. 카카오톡/브라우저 캐시는 별도 외부 캐시 정책 영향을 받을 수 있다.
+- [x] 릴리즈 홈 메뉴 정리
+  - 구현 상태: 일반 릴리즈 진입 화면의 “다른 화면” 메뉴는 도감 중심으로 정리했고, debug/special 성격 메뉴는 debug gate 뒤로 숨겼다.
+  - 검증: `flutter analyze`, 관련 home/title widget test, 최신 web build 기준으로 확인.
+- [x] 웹 BGM unlock/스크롤 묵음 회귀
+  - 구현 상태: 첫 사용자 pointer/tap에서 BGM 재생을 재시도하고, 홈 카드 tap에서는 직접 unlock/SFX를 호출한다. 같은 화면 BGM이 이미 재생 중이면 스크롤마다 stop/play를 반복하지 않는다.
+  - 검증: 데스크톱 웹과 iPhone Safari/카카오톡 브라우저에서 사용자 눈검증 완료. `flutter analyze`, `flutter build web` 통과.
+- [x] 정산 텍스트 밑줄과 PhoneFrame 폭 회귀
+  - 구현 상태: 정산 sheet 루트에서 의도치 않은 `TextDecoration` 상속을 차단하고, `showGeneralDialog`로 뜨는 정산 overlay를 `PhoneFrame` 안에 제한했다.
+  - 검증: `flutter analyze`, `flutter test test/views/game/widgets/game_cashout_widgets_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter build web --release --base-href "/rummipoker/"` 통과.
 
 ### B. 최근 추가 항목 때문에 다시 열어 둔 QA
 
@@ -121,7 +137,7 @@
   - `en` 표준: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`.
   - `en` 도전: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`.
   - `en` cycle: 완료.
-  - `ja`, `zh-CN`, `zh-TW`: `slot_unlock_market` fixture 눈검증과 사용자 승인 후 재개.
+  - `ja`, `zh-CN`, `zh-TW`: 최신 build 눈검증과 사용자 승인 후 재개.
 - [ ] 5개 locale cycle 모두에서 standard 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, challenge의 tutorial seen 유지, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
   - `ko`: standard 첫 battle/market tutorial completed, challenge tutorial seen 유지, UI overflow/Jester/Item/자원 설명 잘림 0건.
   - `en`: standard 첫 battle/market tutorial completed, challenge tutorial seen 유지, UI overflow/Jester/Item/자원 설명 잘림 0건.
@@ -133,7 +149,7 @@
 - [ ] 튜토리얼 Browser/기기 눈검증.
   - 전투 첫 진입, 마켓 첫 진입, 다시 보기 버튼, 옵션/포커스 아웃 겹침, 작은 화면/큰 화면에서 문구 잘림 확인.
   - 창 크기 변경 뒤 focus 위치뿐 아니라 크기도 따라오는지 확인.
-- [ ] 일반 release build에서 debug fixture 진입점이 숨겨지고, QA build에서만 보이는지 재확인.
+- [x] 일반 release build에서 debug/special 성격 메뉴가 숨겨지고, QA/debug gate에서만 보이는지 재확인.
 
 ### C. 문서화됐지만 이번 제출 전 구현 범위에서 제외한 항목
 
@@ -157,7 +173,7 @@
 
 아직 열려 있는 위험:
 
-- full-play bot의 과거 checkpoint-resume clear 증거와 최신 fresh 표준 clear 증거는 확보했다. locale별 표준→도전 사이클 증거는 `ko`, `en` 2/5가 완료됐고, `ja`, `zh-CN`, `zh-TW`가 남아 있다.
+- full-play bot의 과거 checkpoint-resume clear 증거와 최신 fresh 표준 clear 증거는 확보했다. locale별 표준→도전 사이클 증거는 `ko`, `en` 2/5가 완료됐고, 최신 UI/Web 회귀 수정 후 `ja`, `zh-CN`, `zh-TW`가 남아 있다.
 - fresh 표준 로그의 Flutter semantics warning은 route/dialog label 보정 뒤 최신 build smoke에서 재현되지 않았다. locale별 표준/도전 full-run 로그에서도 같은 기준으로 재확인해야 한다.
 - 다음 작업은 bot 전용 치팅이나 과한 가중치 추가가 아니라, 각 locale에서 표준을 먼저 실제로 닫고 그 다음 도전 난이도에서 족보/중복줄/성장/덱 확장 정책이 충분히 작동하는지 확인하는 것이다.
 - 참고한 방향은 Balatro류 `런 정보`/족보 표처럼 각 족보의 레벨, 현재 점수, 완성 횟수를 한 화면에서 보여주는 구조다. 단, 명칭과 UI는 이 게임 용어와 시각 체계에 맞춘다.

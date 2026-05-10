@@ -40,7 +40,7 @@ void main() {
       }
       previousOnError?.call(details);
     };
-    tester.view.physicalSize = const Size(1280, 2400);
+    tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       FlutterError.onError = previousOnError;
@@ -134,6 +134,10 @@ void main() {
     expect(find.text('정산 완료'), findsOneWidget);
     expect(find.text('게임결과'), findsNothing);
     expect(find.text('Market으로'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('cashout-sheet-frame'))).width,
+      lessThanOrEqualTo(390),
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
