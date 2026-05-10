@@ -14,7 +14,6 @@ class SoundManager {
   static String? _currentBgm;
   static bool _webUnlocked = false;
   static String? _pendingBgm;
-  static String? _preparedWebBgm;
   static Future<void> _bgmOp = Future<void>.value();
   static int _bgmRequestSerial = 0;
   static int _bgmAutoResumeBlockDepth = 0;
@@ -29,11 +28,12 @@ class SoundManager {
     _bgmAutoResumeBlockDepth--;
   }
 
-  /// 웹: 사용자 상호작용 시 호출. 대기 중이거나 멈춘 BGM을 제스처 안에서 재생한다.
+  /// 웹: 사용자 상호작용 시 호출. 대기 중인 BGM을 제스처 안에서 바로 재생한다.
   static void unlockForWeb() {
     if (!kIsWeb) return;
     _webUnlocked = true;
-    if (GameSettings.bgmMuted || FlameAudio.bgm.isPlaying) return;
+    if (GameSettings.bgmMuted) return;
+    if (FlameAudio.bgm.audioPlayer.state == PlayerState.playing) return;
     final target = _pendingBgm ?? _currentBgm;
     if (target == null) return;
     _playBgmImmediatelyForWeb(target);
@@ -44,33 +44,19 @@ class SoundManager {
     _currentBgm = path;
     _bgmRequestSerial++;
     try {
-      if (_preparedWebBgm == path) {
-        FlameAudio.bgm.audioPlayer.setVolume(GameSettings.bgmVolume);
-        unawaited(
-          FlameAudio.bgm.resume().catchError((Object _) {
-            _pendingBgm = path;
-          }),
-        );
-      } else {
-        FlameAudio.bgm.stop();
-        unawaited(
-          FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume).catchError((
-            Object _,
-          ) {
-            _pendingBgm = path;
-          }),
-        );
-      }
+      FlameAudio.bgm.stop();
+      unawaited(
+        FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume).catchError((
+          Object _,
+        ) {
+          _pendingBgm = path;
+          FlameAudio.bgm.isPlaying = false;
+        }),
+      );
     } catch (_) {
       _pendingBgm = path;
+      FlameAudio.bgm.isPlaying = false;
     }
-  }
-
-  static Future<void> _prepareWebBgmSource(String path) async {
-    await FlameAudio.bgm.audioPlayer.setReleaseMode(ReleaseMode.loop);
-    await FlameAudio.bgm.audioPlayer.setVolume(GameSettings.bgmVolume);
-    await FlameAudio.bgm.audioPlayer.setSource(AssetSource(path));
-    _preparedWebBgm = path;
   }
 
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
@@ -98,9 +84,6 @@ class SoundManager {
       if (GameSettings.bgmMuted) return;
       if (kIsWeb && !_webUnlocked) {
         _pendingBgm = path;
-        try {
-          await _prepareWebBgmSource(path);
-        } catch (_) {}
         return;
       }
       if (requestId != _bgmRequestSerial) return;
@@ -117,7 +100,6 @@ class SoundManager {
   static Future<void> stopBgm() async {
     _bgmRequestSerial++;
     _pendingBgm = null;
-    _preparedWebBgm = null;
     FlameAudio.bgm.stop();
     _currentBgm = null;
   }
