@@ -110,6 +110,7 @@
 - exploratory probe, r80/r120, scaffold, 문서 반영은 gate 완료가 아니다. 실제로 문제가 남아 있으면 `Done`, `[x]`, `closed`, `재개 조건 충족`처럼 읽히는 표시를 쓰지 않고 `open`, `not closed`, `보류`, `[ ]`로 남긴다.
 - 앱 진입 화면의 릴리즈 빌드용 메뉴에는 실제 플레이어에게 제공할 완성 메뉴만 둔다. `특별 모드`, debug fixture, placeholder route처럼 개발/검증/미정 성격의 진입점은 `AppConfig.showDebugFixtures` 같은 디버그 gate 뒤로 보내고, 일반 메뉴 섹션명과 설명은 남은 카드의 실제 기능과 일치시킨다.
 - 웹 BGM unlock은 단순 boolean latch로 끝내지 않는다. 첫 pointer가 BGM 준비보다 먼저 들어와도 이후 pointer에서 현재/대기 BGM을 사용자 제스처 안에서 다시 재생 시도해야 하며, 설정 음소거 토글을 거쳐야만 BGM이 살아나는 상태를 회귀로 본다.
+- 웹 홈 화면의 플레이어용 버튼/카드는 루트 pointer listener에만 의존하지 말고 해당 `onTap` 사용자 제스처 안에서 직접 `SoundManager.unlockForWeb()`와 버튼 SFX를 호출한다. 특히 새 게임/도감/설정 같은 홈 진입 카드에서 소리가 안 나면 릴리즈 UX 회귀로 본다.
 
 ---
 

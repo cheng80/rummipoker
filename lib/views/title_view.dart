@@ -423,8 +423,6 @@ class _TitleViewState extends ConsumerState<TitleView>
                       description: context.tr('homeSettingsDescription'),
                       accent: const Color(0xFF1976D2),
                       onTap: () {
-                        SoundManager.unlockForWeb();
-                        SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                         context.push(RoutePaths.setting);
                       },
                     ),

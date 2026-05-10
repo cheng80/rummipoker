@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../resources/asset_paths.dart';
+import '../resources/sound_manager.dart';
 
 class HomeSection extends StatelessWidget {
   const HomeSection({
@@ -83,7 +84,7 @@ class HomeEntryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: enabled ? onTap : null,
+        onTap: enabled ? _handleTap : null,
         child: Ink(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
@@ -162,6 +163,12 @@ class HomeEntryCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _handleTap() {
+    SoundManager.unlockForWeb();
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    onTap();
   }
 }
 
