@@ -36,6 +36,7 @@ void main() {
     'competition bot runs through real browser UI',
     (tester) async {
       binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
+      binding.shouldPropagateDevicePointerEvents = true;
 
       final bot = _CompetitionFullPlayBot(
         tester: tester,
