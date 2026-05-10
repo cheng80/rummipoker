@@ -75,6 +75,7 @@ class _AppState extends ConsumerState<App> {
     if (kIsWeb) {
       return Listener(
         onPointerDown: (_) => SoundManager.unlockForWeb(),
+        onPointerUp: (_) => SoundManager.unlockForWeb(),
         behavior: HitTestBehavior.translucent,
         child: app,
       );

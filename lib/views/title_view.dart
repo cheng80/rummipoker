@@ -66,6 +66,10 @@ class _TitleViewState extends ConsumerState<TitleView>
   bool get _showDebugEntries =>
       widget.showDebugEntriesOverride ?? AppConfig.showDebugFixtures;
 
+  void _unlockMenuBgmFromGesture() {
+    SoundManager.playBgmFromUserGesture(AssetPaths.bgmMenu);
+  }
+
   Future<void> _openContinueMenu() async {
     final notifier = ref.read(titleNotifierProvider.notifier);
     final titleState = await notifier.refreshAvailability();
@@ -299,158 +303,165 @@ class _TitleViewState extends ConsumerState<TitleView>
     final titleState = ref.watch(titleNotifierProvider).valueOrNull;
     final hasStoredActiveRun = titleState?.hasStoredActiveRun ?? false;
     final storedRunSummary = titleState?.storedRunSummary;
-    return PhoneFrameScaffold(
-      child: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          controller: _scrollController,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 28),
-                  Semantics(
-                    label: context.tr('gameTitleBlock').replaceAll('\n', ' '),
-                    image: true,
-                    child: Image.asset(
-                      AssetPaths.uiRummiPokerLogo,
-                      width: 318,
-                      fit: BoxFit.contain,
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => _unlockMenuBgmFromGesture(),
+      onPointerUp: (_) => _unlockMenuBgmFromGesture(),
+      child: PhoneFrameScaffold(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            controller: _scrollController,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 28),
+                    Semantics(
+                      label: context.tr('gameTitleBlock').replaceAll('\n', ' '),
+                      image: true,
+                      child: Image.asset(
+                        AssetPaths.uiRummiPokerLogo,
+                        width: 318,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    context.tr('gameSubtitle'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: AssetPaths.fontNexonLv2Gothic,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white.withValues(alpha: 0.72),
+                    const SizedBox(height: 6),
+                    Text(
+                      context.tr('gameSubtitle'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AssetPaths.fontNexonLv2Gothic,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white.withValues(alpha: 0.72),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  HomeSection(
-                    title: context.tr('homeContinueSectionTitle'),
-                    subtitle: hasStoredActiveRun
-                        ? context.tr('homeContinueSectionReady')
-                        : context.tr('homeContinueSectionEmpty'),
-                    child: Column(
-                      children: [
-                        HomeEntryCard(
-                          title: context.tr('continueGame'),
-                          description:
-                              storedRunSummary?.currentLocationSummary ??
-                              (hasStoredActiveRun
-                                  ? context.tr('homeContinueReadyDescription')
-                                  : context.tr('homeContinueEmptyDescription')),
-                          accent: const Color(0xFFF4A81D),
-                          enabled: hasStoredActiveRun,
-                          onTap: _openContinueMenu,
-                        ),
-                        const SizedBox(height: 12),
-                        HomeEntryCard(
-                          title: context.tr('runInfoTitle'),
-                          description: hasStoredActiveRun
-                              ? context.tr('homeRunInfoReadyDescription')
-                              : context.tr('homeRunInfoEmptyDescription'),
-                          accent: const Color(0xFFF2C14E),
-                          onTap: _openTitleRunInfo,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  HomeSection(
-                    title: context.tr('homeNewRunSectionTitle'),
-                    subtitle: context.tr('homeNewRunSectionSubtitle'),
-                    child: Column(
-                      children: [
-                        HomeEntryCard(
-                          title: context.tr('homeNewRunTitle'),
-                          description: context.tr('homeNewRunDescription'),
-                          accent: const Color(0xFF3CAEE0),
-                          onTap: () => context.push(RoutePaths.newRun),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  HomeSection(
-                    title: context.tr('homeOtherMenuSectionTitle'),
-                    subtitle: context.tr('homeOtherMenuSectionSubtitle'),
-                    child: HomeEntryCard(
-                      title: context.tr('archiveTitle'),
-                      description: context.tr('homeArchiveDescription'),
-                      accent: const Color(0xFF5C7CFA),
-                      onTap: () => context.push(RoutePaths.archive),
-                    ),
-                  ),
-                  if (_showDebugEntries) ...[
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 24),
                     HomeSection(
-                      title: '디버그',
-                      subtitle: '개발과 검증용 진입만 모아 둔 영역',
+                      title: context.tr('homeContinueSectionTitle'),
+                      subtitle: hasStoredActiveRun
+                          ? context.tr('homeContinueSectionReady')
+                          : context.tr('homeContinueSectionEmpty'),
                       child: Column(
                         children: [
                           HomeEntryCard(
-                            title: context.tr('homeSpecialModeTitle'),
-                            description: context.tr(
-                              'homeSpecialModeDescription',
-                            ),
-                            accent: const Color(0xFF8E5CF6),
-                            onTap: () => context.push(RoutePaths.trial),
+                            title: context.tr('continueGame'),
+                            description:
+                                storedRunSummary?.currentLocationSummary ??
+                                (hasStoredActiveRun
+                                    ? context.tr('homeContinueReadyDescription')
+                                    : context.tr(
+                                        'homeContinueEmptyDescription',
+                                      )),
+                            accent: const Color(0xFFF4A81D),
+                            enabled: hasStoredActiveRun,
+                            onTap: _openContinueMenu,
                           ),
                           const SizedBox(height: 12),
                           HomeEntryCard(
-                            title: '디버그 픽스처',
-                            description: '검증용 런 상태로 바로 시작',
-                            accent: const Color(0xFF7E57C2),
-                            onTap: _openDebugFixtureMenu,
+                            title: context.tr('runInfoTitle'),
+                            description: hasStoredActiveRun
+                                ? context.tr('homeRunInfoReadyDescription')
+                                : context.tr('homeRunInfoEmptyDescription'),
+                            accent: const Color(0xFFF2C14E),
+                            onTap: _openTitleRunInfo,
                           ),
                         ],
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 18),
-                  HomeSection(
-                    title: context.tr('settings'),
-                    subtitle: context.tr('homeSettingsSectionSubtitle'),
-                    child: HomeEntryCard(
-                      title: context.tr('settings'),
-                      description: context.tr('homeSettingsDescription'),
-                      accent: const Color(0xFF1976D2),
-                      onTap: () {
-                        context.push(RoutePaths.setting);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
-                    child: FutureBuilder<PackageInfo>(
-                      future: PackageInfo.fromPlatform(),
-                      builder: (context, snapshot) {
-                        final v = snapshot.data;
-                        final text = v != null
-                            ? '${context.tr('appVersion')} ${v.version}+${v.buildNumber}'
-                            : context.tr('appVersion');
-                        return Center(
-                          child: Text(
-                            text,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.58),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    const SizedBox(height: 18),
+                    HomeSection(
+                      title: context.tr('homeNewRunSectionTitle'),
+                      subtitle: context.tr('homeNewRunSectionSubtitle'),
+                      child: Column(
+                        children: [
+                          HomeEntryCard(
+                            title: context.tr('homeNewRunTitle'),
+                            description: context.tr('homeNewRunDescription'),
+                            accent: const Color(0xFF3CAEE0),
+                            onTap: () => context.push(RoutePaths.newRun),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 18),
+                    HomeSection(
+                      title: context.tr('homeOtherMenuSectionTitle'),
+                      subtitle: context.tr('homeOtherMenuSectionSubtitle'),
+                      child: HomeEntryCard(
+                        title: context.tr('archiveTitle'),
+                        description: context.tr('homeArchiveDescription'),
+                        accent: const Color(0xFF5C7CFA),
+                        onTap: () => context.push(RoutePaths.archive),
+                      ),
+                    ),
+                    if (_showDebugEntries) ...[
+                      const SizedBox(height: 18),
+                      HomeSection(
+                        title: '디버그',
+                        subtitle: '개발과 검증용 진입만 모아 둔 영역',
+                        child: Column(
+                          children: [
+                            HomeEntryCard(
+                              title: context.tr('homeSpecialModeTitle'),
+                              description: context.tr(
+                                'homeSpecialModeDescription',
+                              ),
+                              accent: const Color(0xFF8E5CF6),
+                              onTap: () => context.push(RoutePaths.trial),
+                            ),
+                            const SizedBox(height: 12),
+                            HomeEntryCard(
+                              title: '디버그 픽스처',
+                              description: '검증용 런 상태로 바로 시작',
+                              accent: const Color(0xFF7E57C2),
+                              onTap: _openDebugFixtureMenu,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    HomeSection(
+                      title: context.tr('settings'),
+                      subtitle: context.tr('homeSettingsSectionSubtitle'),
+                      child: HomeEntryCard(
+                        title: context.tr('settings'),
+                        description: context.tr('homeSettingsDescription'),
+                        accent: const Color(0xFF1976D2),
+                        onTap: () {
+                          context.push(RoutePaths.setting);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+                      child: FutureBuilder<PackageInfo>(
+                        future: PackageInfo.fromPlatform(),
+                        builder: (context, snapshot) {
+                          final v = snapshot.data;
+                          final text = v != null
+                              ? '${context.tr('appVersion')} ${v.version}+${v.buildNumber}'
+                              : context.tr('appVersion');
+                          return Center(
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.58),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

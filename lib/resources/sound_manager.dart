@@ -39,9 +39,20 @@ class SoundManager {
     _playBgmImmediatelyForWeb(target);
   }
 
+  static void playBgmFromUserGesture(String path) {
+    if (GameSettings.bgmMuted) return;
+    if (!kIsWeb) {
+      unawaited(playBgm(path));
+      return;
+    }
+    _webUnlocked = true;
+    _playBgmImmediatelyForWeb(path);
+  }
+
   static void _playBgmImmediatelyForWeb(String path) {
     _pendingBgm = null;
     _currentBgm = path;
+    if (FlameAudio.bgm.audioPlayer.state == PlayerState.playing) return;
     _bgmRequestSerial++;
     try {
       FlameAudio.bgm.stop();

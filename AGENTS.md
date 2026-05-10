@@ -111,6 +111,8 @@
 - 앱 진입 화면의 릴리즈 빌드용 메뉴에는 실제 플레이어에게 제공할 완성 메뉴만 둔다. `특별 모드`, debug fixture, placeholder route처럼 개발/검증/미정 성격의 진입점은 `AppConfig.showDebugFixtures` 같은 디버그 gate 뒤로 보내고, 일반 메뉴 섹션명과 설명은 남은 카드의 실제 기능과 일치시킨다.
 - 웹 BGM unlock은 단순 boolean latch로 끝내지 않는다. 첫 pointer가 BGM 준비보다 먼저 들어와도 이후 pointer에서 현재/대기 BGM을 사용자 제스처 안에서 다시 재생 시도해야 하며, 설정 음소거 토글을 거쳐야만 BGM이 살아나는 상태를 회귀로 본다.
 - 웹 홈 화면의 플레이어용 버튼/카드는 루트 pointer listener에만 의존하지 말고 해당 `onTap` 사용자 제스처 안에서 직접 `SoundManager.unlockForWeb()`와 버튼 SFX를 호출한다. 특히 새 게임/도감/설정 같은 홈 진입 카드에서 소리가 안 나면 릴리즈 UX 회귀로 본다.
+- Safari/iOS 웹 BGM은 `pointerdown`만으로 검증하지 않는다. 바탕 터치로 BGM이 시작되어야 하며, 버튼 `onTap`에서만 소리가 나는 상태는 실패다. 단, 전체 화면 투명 버튼처럼 첫 실제 버튼 클릭을 먹는 방식은 쓰지 않는다. root listener는 `pointerup`에서도 unlock을 재시도해 실제 tap 완료 제스처와 맞춘다.
+- 웹 BGM unlock/retry는 스크롤 제스처마다 같은 BGM을 `stop()` 후 다시 `play()`하게 만들면 안 된다. 이미 같은 화면 BGM이 재생 중이면 즉시 return해 스크롤 중 묵음/재시작 레이스를 막는다.
 
 ---
 
