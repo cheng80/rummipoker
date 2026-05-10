@@ -132,6 +132,32 @@ cleanup_bot_processes() {
       '/--test-type=webdriver/ && /Google Chrome/ && !/awk/ {print $1}')"
     [[ -n "$webdriver_pids" ]] && kill -9 $webdriver_pids 2>/dev/null || true
   fi
+  local chrome_helper_pids
+  chrome_helper_pids="$(ps -axo pid,command | awk -v profile="$BROWSER_PROFILE_DIR" \
+    '/Google Chrome Helper/ && !/awk/ && \
+     (/--test-type=webdriver/ || /rummipoker_contest/ || (profile != "" && index($0, profile) > 0)) {print $1}')"
+  if [[ -n "$chrome_helper_pids" ]]; then
+    kill $chrome_helper_pids 2>/dev/null || true
+    sleep 1
+    chrome_helper_pids="$(ps -axo pid,command | awk -v profile="$BROWSER_PROFILE_DIR" \
+      '/Google Chrome Helper/ && !/awk/ && \
+       (/--test-type=webdriver/ || /rummipoker_contest/ || (profile != "" && index($0, profile) > 0)) {print $1}')"
+    [[ -n "$chrome_helper_pids" ]] && kill -9 $chrome_helper_pids 2>/dev/null || true
+  fi
+  local regular_chrome_pids
+  regular_chrome_pids="$(ps -axo pid,command | awk \
+    '/Google Chrome/ && !/Google Chrome Helper/ && !/--test-type=webdriver/ && !/awk/ {print $1}')"
+  if [[ -z "$regular_chrome_pids" ]]; then
+    chrome_helper_pids="$(ps -axo pid,command | awk \
+      '/Google Chrome Helper/ && !/awk/ {print $1}')"
+    if [[ -n "$chrome_helper_pids" ]]; then
+      kill $chrome_helper_pids 2>/dev/null || true
+      sleep 1
+      chrome_helper_pids="$(ps -axo pid,command | awk \
+        '/Google Chrome Helper/ && !/awk/ {print $1}')"
+      [[ -n "$chrome_helper_pids" ]] && kill -9 $chrome_helper_pids 2>/dev/null || true
+    fi
+  fi
 }
 trap cleanup_bot_processes EXIT
 
@@ -247,6 +273,7 @@ persist_checkpoint() {
 }
 
 echo "Output: $OUTPUT_DIR"
+cleanup_bot_processes
 if [[ "$RESUME_ACTIVE_RUN" != "true" ]]; then
   if [[ -z "$BROWSER_PROFILE_DIR" || "$BROWSER_PROFILE_DIR" == "/" ]]; then
     echo "Refusing to clear unsafe browser profile dir: $BROWSER_PROFILE_DIR" >&2

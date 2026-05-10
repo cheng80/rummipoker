@@ -16,14 +16,14 @@
 
 - 공모전 풀런봇 QA는 재개 가능 상태다.
 - 2026-05-09 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss full-run 통과 증거를 확보했다.
-- 2026-05-10 최신 제출 후보 build에서 도전 난이도 fresh S1~S8 Boss full-run을 제외한 최근 룰/UI 항목 검증을 마쳤다.
-- 다음 gate는 도전 난이도 fresh S1~S8 Boss full-run을 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각 1회씩 실행하는 것이다. 단, locale 5개를 한 번에 돌리지 않고 한 locale 완료/점검/사용자 승인 후 다음 locale로 진행한다.
+- 2026-05-10 최신 제출 후보 build에서 locale별 standard→challenge full-run cycle을 제외한 최근 룰/UI 항목 검증을 마쳤다.
+- 다음 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
 - 제출 전 핵심 룰 보강이었던 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 행성카드형 성장 아이템, 초과 점수 기반 대표 족보 성장, 타이틀 `런 정보`, 게임오버 정산/도발 문구는 런타임 반영과 핵심 검증을 마쳤다.
 - S8 boss 이후는 더 이상 애매한 `계속 진행`이 아니라 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고 Station Select, 전투 HUD, 정산 라벨에서 위험한 무한 구간 색상으로 드러낸다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
-- full-play 기준은 사람 수동 플레이가 아니라 제작된 bot이 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표 조작을 결합해 도전 S1~S8 Boss를 클리어하는 것이다.
+- full-play 기준은 사람 수동 플레이가 아니라 제작된 bot이 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표 조작을 결합해 각 locale의 표준 S1~S8 Boss와 도전 S1~S8 Boss를 클리어하는 것이다.
 - 이 hybrid full-play bot의 대화 호출 별명은 `공모전 풀런봇`이고, 영문 식별자는 `contest_full_run_bot`이다.
-- 제출 gate의 플레이 범위는 S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
+- 제출 gate의 플레이 범위는 각 locale에서 표준 S8 Boss 클리어를 먼저 확인한 뒤, 도전 S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
 - full-run 도중 수정 범위는 game over에 한정하지 않는다. UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드의 제목·설명 잘림, locale별 텍스트 넘침이 발견되면 제출 QA 결함으로 수정하고 해당 locale gate를 다시 실행한다.
 - 각 locale run은 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작해 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그를 함께 확인한다. 튜토리얼 overlay가 떠 있으면 bot은 드로우/구매/다음 Station 같은 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
 - Codex 앱 내장 Browser Use는 제출 gate가 아니라 bot 실패 구간 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
@@ -43,14 +43,16 @@
 
 오늘 바로 할 작업:
 
-1. Browser/WebDriver + Compute Use hybrid bot을 도전 난이도 fresh S1부터 실행한다. 먼저 `ko` locale만 끝까지 실행하고 점검/보고/승인 후 다음 locale로 넘어간다.
-2. 도전 full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
-3. 도전 full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
+1. Browser/WebDriver + Compute Use hybrid bot을 `ko` 표준 난이도 fresh S1부터 실행한다.
+2. `ko` 표준 S1~S8 Boss 통과를 점검/보고하고 사용자 승인 후 `ko` 도전 난이도 fresh S1부터 실행한다.
+3. `ko` 도전 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 통과하면 `ko` cycle을 닫고, 사용자 승인 후 `en` 표준으로 넘어간다.
+4. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
+5. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
 
 ## 0.1 최근 24시간 이내 추가 항목과 검증 대기 목록
 
 이 섹션을 제출 QA의 최상위 작업 큐로 본다.
-아래 항목은 도전 난이도 fresh S1~S8 full-run을 제외한 최근 24시간 내 구현/문서/UX 작업 기준이다.
+아래 항목은 locale별 standard→challenge full-run cycle을 제외한 최근 24시간 내 구현/문서/UX 작업 기준이다.
 
 ### A. 구현과 1차 검증을 닫은 항목
 
@@ -88,8 +90,8 @@
 - [x] 최신 제출 후보 `flutter build web` 재실행.
 - [x] 최신 build 또는 새 web-server 기준 console error/warn 0건 확인.
 - [x] `contest_full_run_bot`이 추가 덱, 보상 타일, 특수 족보, 족보 성장 점수를 실제 후보 평가에 반영하는지 policy code/test 확인.
-- [ ] 도전 난이도 fresh S1~S8 Boss `contest_full_run_bot` full-run 증거 확보: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5회. 각 locale은 완료/점검/사용자 승인 후 다음 locale을 시작한다.
-- [ ] 5개 locale full-run 모두에서 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
+- [ ] locale별 standard→challenge `contest_full_run_bot` cycle 증거 확보: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5회. 각 locale은 표준 완료/점검/승인 후 같은 locale 도전으로 넘어가고, 도전 완료/점검/승인 후 다음 locale을 시작한다.
+- [ ] 5개 locale의 표준/도전 full-run 모두에서 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
 - [x] 게임오버 보상, 도감 카드 face, 새 run 화면이 수집/재시작 욕구로 읽히는지 Browser Use 또는 Browser/WebDriver로 눈검증.
 - [x] 전투/마켓 튜토리얼 구현과 build/test 검증.
   - `showcaseview` 제거, `tutorial_coach_mark` 적용.
@@ -115,16 +117,16 @@
 - 최신 `flutter build web` 통과
 - 최신 빌드 기준 Browser/WebDriver full-play QA console error/warn 0건
 - Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 표준 S1~S8 clear 확인
-- Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 도전 S1~S8 Boss clear 확인: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 각각 fresh 세션
+- Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 각 locale의 표준 S1~S8 Boss clear와 도전 S1~S8 Boss clear 확인: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 각각 fresh 세션
 - full-play 중 마켓 구매와 실제 플레이 흐름 확인. 아이템/보드 이동/버림은 증거용 강제 사용이 아니라 족보 형성 또는 확정 점수 개선이 있을 때만 확인한다.
 - full-play 중 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드 제목·설명 잘림, 다국어 텍스트 넘침 0건 확인
 - 게임오버/런 완료 보상, 도감, 새 run 복귀가 심사자에게 설명 없이 읽힌다는 눈검증
 
 아직 열려 있는 위험:
 
-- full-play bot의 과거 checkpoint-resume clear 증거와 최신 fresh 표준 clear 증거는 확보했다. 도전 난이도 full-run 증거는 아직 없다.
-- fresh 표준 로그의 Flutter semantics warning은 route/dialog label 보정 뒤 최신 build smoke에서 재현되지 않았다. 도전 full-run 로그에서도 같은 기준으로 재확인해야 한다.
-- 다음 작업은 bot 전용 치팅이나 과한 가중치 추가가 아니라, 도전 난이도에서 실제 족보/중복줄/성장/덱 확장 정책이 충분히 작동하는지 확인하는 것이다.
+- full-play bot의 과거 checkpoint-resume clear 증거와 최신 fresh 표준 clear 증거는 확보했지만, locale별 표준→도전 사이클 증거는 아직 없다.
+- fresh 표준 로그의 Flutter semantics warning은 route/dialog label 보정 뒤 최신 build smoke에서 재현되지 않았다. locale별 표준/도전 full-run 로그에서도 같은 기준으로 재확인해야 한다.
+- 다음 작업은 bot 전용 치팅이나 과한 가중치 추가가 아니라, 각 locale에서 표준을 먼저 실제로 닫고 그 다음 도전 난이도에서 족보/중복줄/성장/덱 확장 정책이 충분히 작동하는지 확인하는 것이다.
 - 참고한 방향은 Balatro류 `런 정보`/족보 표처럼 각 족보의 레벨, 현재 점수, 완성 횟수를 한 화면에서 보여주는 구조다. 단, 명칭과 UI는 이 게임 용어와 시각 체계에 맞춘다.
 - `런 정보`는 전투 중 보조 팝업으로만 두지 않는다. 유저가 전투/마켓/새 run 준비/타이틀 또는 도감 계열 화면에서 현재 강한 족보와 다음 성장 목표를 확인할 수 있어야 한다.
 - 후반 game over가 재발하면 봇 전용 가중치 숫자 조정만 보지 않고, 중복줄 확정 정책과 손패/이동/버림/아이템/구매/판매 전략을 함께 점검한다. 구간별 등장 확률을 올린 Jester/Item은 후반 안정화 구매 후보로 검토한다.
@@ -161,7 +163,7 @@ Status: In progress
 
 - `Submission Smoke`의 `flutter build web` 통과는 최신 도감/게임오버 변경 전 증거일 수 있으므로 다시 실행한다.
 - Browser Use full route QA는 debug fixture/즉시 클리어 보조가 섞였으므로 full-play bot 증거가 아니다.
-- `contest_full_run_bot` 과거 증거는 checkpoint-resume pass이고, 최신 룰/UI 후보에서는 fresh 표준 S1~S8 pass를 남겼다. 도전 난이도 fresh full-run은 다음 gate다.
+- `contest_full_run_bot` 과거 증거는 checkpoint-resume pass이고, 최신 룰/UI 후보에서는 fresh 표준 S1~S8 pass를 남겼다. 현재 제출 gate는 locale별 표준→도전 사이클을 fresh로 다시 닫는 것이다.
 - 게임오버 보상 루프는 최신 build fixture smoke와 widget test 기준으로 재점검했다. 실제 도전 full-run에서의 자연 game over/retry는 다음 gate에서 확인한다.
 - 도감은 `/archive` 최신 build smoke에서 console 0건을 확인했다. 항목별 상태와 화면 밀도 장기 개선은 별도 polish로 남긴다.
 

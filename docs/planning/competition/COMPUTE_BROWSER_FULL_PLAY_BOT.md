@@ -17,12 +17,13 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 
 2026-05-09 현재 `contest_full_run_bot`은 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss pass 증거를 확보했다.
 이전 체크포인트/재시도 기반 S8 boss pass 증거와, S8 boss 실패/timeout을 만들었던 최신 보정 후보 로그도 기준선으로 남긴다.
-다음 full-run 재개는 도전 난이도 fresh S1~S8 Boss이며, 제출 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각 1회씩 실행해 닫는다. 단, 5개 locale을 한 번에 연속 실행하지 않고 한 locale 완료/점검/사용자 승인 후 다음 locale을 시작한다.
+다음 full-run 재개는 locale별 standard→challenge cycle이다. 제출 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 fresh 표준 난이도 S1~S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 확인해 닫는다. 5개 locale을 한 번에 연속 실행하지 않고 한 locale cycle 완료/점검/사용자 승인 후 다음 locale을 시작한다.
 fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐으나, 2026-05-10 route/dialog label 보정 뒤 최신 build smoke에서는 재현되지 않았다.
-도전 full-run 로그에서도 같은 console 0건 기준으로 다시 확인한다.
-S8 boss 이후는 정식 `무한 도전` 진입 UX로 정리했다. 제출 gate는 도전 S8 Boss clear와 S8 정산/보상/무한 도전 진입 직전 확인까지이며, S9+ 무한 도전 자체의 장기 생존은 제출 gate로 요구하지 않는다.
+locale별 표준/도전 full-run 로그에서도 같은 console 0건 기준으로 다시 확인한다.
+S8 boss 이후는 정식 `무한 도전` 진입 UX로 정리했다. 제출 gate는 각 locale에서 표준 S8 Boss clear를 먼저 확인한 뒤, 도전 S8 Boss clear와 S8 정산/보상/무한 도전 진입 직전 확인까지이며, S9+ 무한 도전 자체의 장기 생존은 제출 gate로 요구하지 않는다.
 full-run 중 수정 범위는 game over에 한정하지 않는다. 실제 플레이 도중 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드의 제목·설명 잘림, locale별 텍스트 넘침이 보이면 제출 QA 결함으로 보고 수정 뒤 해당 locale gate를 다시 실행한다.
 각 locale 실행은 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작한다. 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done`으로 완료되는지, 스킵/완료/포커스 아웃 처리 기준이 깨지지 않는지도 full-run QA에 포함한다. 튜토리얼 overlay가 떠 있으면 bot은 전투/마켓 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
+각 테스트 실행/실패/중단 후에는 WebDriver Chrome, Google Chrome Helper, ChromeDriver, Flutter web 서버를 정리한다. 다음 실행 전에도 같은 cleanup을 먼저 수행해 이전 테스트의 helper 프로세스가 메모리와 profile을 붙잡지 않게 한다.
 
 과거 checkpoint pass 증거:
 
@@ -84,7 +85,7 @@ full-run 중 수정 범위는 game over에 한정하지 않는다. 실제 플레
   - `Semantic node ... scopesRoute and namesRoute ... missing the label` 경고가 cashout/market 전환마다 반복됐다.
   - 2026-05-10 최신 build smoke에서는 같은 경고가 재현되지 않았다. 도전 full-run에서 최종 재확인한다.
 
-2026-05-10 도전 full-run 제외 검증:
+2026-05-10 locale cycle 제외 검증:
 
 - `flutter analyze` 통과
 - 핵심 `flutter test` 묶음 통과
@@ -147,7 +148,7 @@ Playwright나 Flutter `integration_test`의 selector/tap이 안정적이지 않�
 
 | 별명 | 영문 식별자 | 목적 | 기본 종료 조건 |
 |---|---|---|---|
-| `공모전 풀런봇` | `contest_full_run_bot` | 최종 제출 full-play gate | 도전 S8 Boss clear, S8 정산/보상/무한 도전 진입 직전 확인, 5개 locale fresh 통과 |
+| `공모전 풀런봇` | `contest_full_run_bot` | 최종 제출 full-play gate | locale별 표준 S8 Boss clear 후 같은 locale 도전 S8 Boss clear, S8 정산/보상/무한 도전 진입 직전 확인, 5개 locale cycle fresh 통과 |
 | `공모전 서브런봇` | `contest_sub_run_bot` | 특정 stage/scene까지 재현, 실패 구간 격리 | 사용자가 지정한 target 도달 |
 
 사용자가 이렇게 말하면 같은 의미로 해석한다.
@@ -178,15 +179,16 @@ contest_sub_run_bot target
 
 - 최신 제출 후보 web build 또는 최신 Flutter web-server에서 시작한다.
 - 저장 세션/SharedPreferences를 지운 fresh 세션에서 시작한다.
-- `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5개 locale 각각에서 새 run을 시작한다.
-- 도전 난이도 S1 small부터 S8 Boss까지 실제 화면 조작으로 클리어한다.
+- `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5개 locale 각각에서 표준 run과 도전 run을 fresh로 시작한다.
+- 각 locale에서 표준 난이도 S1 small부터 S8 Boss까지 실제 화면 조작으로 먼저 클리어한다.
+- 같은 locale에서 도전 난이도 S1 small부터 S8 Boss까지 실제 화면 조작으로 다시 클리어한다.
 - 각 station에서 전투 진입, 드로우, 타일 배치, 확정, 정산, 마켓 이동을 실제 UI로 수행한다.
 - 첫 전투와 첫 Market 튜토리얼이 각 locale에서 표시되고, bot 로그에 튜토리얼 완료가 남으며, 스킵/완료/포커스 아웃 처리 기준이 깨지지 않는지 확인한다.
 - 전투/마켓/정산/런 정보/상점 카드에서 UI overflow, Jester/Item/자원 제목·설명 잘림, 다국어 텍스트 넘침이 없어야 한다.
 - 마켓에서 최소 1회 이상 Jester 또는 카드형 성장 구매를 수행한다.
 - 마켓에서 최소 1회 이상 Item 구매를 수행한다.
 - 전투 또는 마켓에서 최소 1회 이상 Item을 실제 사용한다.
-- S8 Boss 이후 S8 정산/보상과 `무한 도전 진입` 직전 CTA까지 확인한다. S9+ 무한 도전 장기 생존은 별도 검증이다.
+- 도전 S8 Boss 이후 S8 정산/보상과 `무한 도전 진입` 직전 CTA까지 확인한다. S9+ 무한 도전 장기 생존은 별도 검증이다.
 - Browser/WebDriver console log 기준 새 error/warn 0건을 확인한다.
 - 실행 로그에는 locale, stage, blind tier, 구매 내역, 아이템 사용, tutorial 확인, overflow 수정 여부, stop reason, console 결과를 남긴다.
 
@@ -194,9 +196,9 @@ contest_sub_run_bot target
 
 - Bot 구현/정책: 최신 fresh 표준 S1~S8 pass 확보.
 - S1~S8 표준 클리어 가능성: debug fixture 없이 fresh full-run으로 확인.
-- S1~S8 도전 클리어 가능성: 5개 locale fresh full-run 미검증. 다음 full-run gate다.
-- S8 boss 최신 표준 판정: pass, game over/retry 없음.
-- 남은 제출 QA: Flutter semantics warning 제거, 최신 제출 후보 build, console error/warn 0건, 도전 fresh full-run, 보상/도감/새 run 눈검증.
+- locale별 표준→도전 cycle 가능성: 5개 locale fresh cycle 미검증. 다음 full-run gate다.
+- S8 boss 최신 표준 단독 판정: pass, game over/retry 없음. 단독 표준 pass는 locale cycle 완료를 대체하지 않는다.
+- 남은 제출 QA: Flutter semantics warning 제거, 최신 제출 후보 build, console error/warn 0건, locale별 standard→challenge fresh cycle, 보상/도감/새 run 눈검증.
 
 ## 2. 구조
 
