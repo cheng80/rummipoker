@@ -22,7 +22,7 @@ fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐�
 locale별 표준/도전 full-run 로그에서도 같은 console 0건 기준으로 다시 확인한다.
 S8 boss 이후는 정식 `무한 도전` 진입 UX로 정리했다. 제출 gate는 각 locale에서 표준 S8 Boss clear를 먼저 확인한 뒤, 도전 S8 Boss clear와 S8 정산/보상/무한 도전 진입 직전 확인까지이며, S9+ 무한 도전 자체의 장기 생존은 제출 gate로 요구하지 않는다.
 full-run 중 수정 범위는 game over에 한정하지 않는다. 실제 플레이 도중 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드의 제목·설명 잘림, locale별 텍스트 넘침이 보이면 제출 QA 결함으로 보고 수정 뒤 해당 locale gate를 다시 실행한다.
-각 locale 실행은 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작한다. 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done`으로 완료되는지, 스킵/완료/포커스 아웃 처리 기준이 깨지지 않는지도 full-run QA에 포함한다. 튜토리얼 overlay가 떠 있으면 bot은 전투/마켓 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
+각 locale cycle의 standard 실행은 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작한다. 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done`으로 완료되는지, 스킵/완료/포커스 아웃 처리 기준이 깨지지 않는지도 full-run QA에 포함한다. 같은 locale의 challenge 실행은 새 run으로 시작하되 같은 cycle 내부 진행이므로 tutorial seen 상태를 유지한다. 튜토리얼 overlay가 떠 있으면 bot은 전투/마켓 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
 각 테스트 실행/실패/중단 후에는 WebDriver Chrome, Google Chrome Helper, ChromeDriver, Flutter web 서버를 정리한다. 다음 실행 전에도 같은 cleanup을 먼저 수행해 이전 테스트의 helper 프로세스가 메모리와 profile을 붙잡지 않게 한다.
 
 과거 checkpoint pass 증거:
@@ -216,7 +216,7 @@ contest_sub_run_bot target
 - 저장 세션/SharedPreferences를 지운 fresh 세션에서 시작한다.
 - `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5개 locale 각각에서 표준 run과 도전 run을 fresh로 시작한다.
 - 각 locale에서 표준 난이도 S1 small부터 S8 Boss까지 실제 화면 조작으로 먼저 클리어한다.
-- 같은 locale에서 도전 난이도 S1 small부터 S8 Boss까지 실제 화면 조작으로 다시 클리어한다.
+- 같은 locale에서 도전 난이도 S1 small부터 S8 Boss까지 실제 화면 조작으로 다시 클리어한다. 이때 active run/save는 새로 시작하되 standard에서 완료한 tutorial seen 상태는 유지한다.
 - 각 station에서 전투 진입, 드로우, 타일 배치, 확정, 정산, 마켓 이동을 실제 UI로 수행한다.
 - 첫 전투와 첫 Market 튜토리얼이 각 locale에서 표시되고, bot 로그에 튜토리얼 완료가 남으며, 스킵/완료/포커스 아웃 처리 기준이 깨지지 않는지 확인한다.
 - 전투/마켓/정산/런 정보/상점 카드에서 UI overflow, Jester/Item/자원 제목·설명 잘림, 다국어 텍스트 넘침이 없어야 한다.

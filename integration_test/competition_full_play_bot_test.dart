@@ -20,6 +20,7 @@ import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/blind_selection_setup.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
+import 'package:rummipoker/services/tutorial_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
 import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
@@ -69,6 +70,7 @@ class _ContestBotConfig {
     required this.maxGameOverRetries,
     required this.resumeActiveRun,
     required this.resumeSaveBase64,
+    required this.tutorialsAlreadySeen,
     required this.actionDelay,
     required this.targetStage,
     required this.targetTierName,
@@ -106,6 +108,9 @@ class _ContestBotConfig {
       resumeSaveBase64: const String.fromEnvironment(
         'CONTEST_BOT_RESUME_SAVE_B64',
       ),
+      tutorialsAlreadySeen: const bool.fromEnvironment(
+        'CONTEST_BOT_TUTORIALS_ALREADY_SEEN',
+      ),
       actionDelay: Duration(
         milliseconds: const int.fromEnvironment(
           'CONTEST_BOT_ACTION_DELAY_MS',
@@ -140,6 +145,7 @@ class _ContestBotConfig {
   final int maxGameOverRetries;
   final bool resumeActiveRun;
   final String resumeSaveBase64;
+  final bool tutorialsAlreadySeen;
   final Duration actionDelay;
   final int targetStage;
   final String targetTierName;
@@ -336,6 +342,10 @@ class _CompetitionFullPlayBot {
     await _pumpFor(const Duration(seconds: 5));
     if (!config.resumeActiveRun) {
       await StorageHelper.erase();
+    }
+    if (config.tutorialsAlreadySeen) {
+      await TutorialStateService.markBattleIntroSeen();
+      await TutorialStateService.markMarketIntroSeen();
     }
     await tester.element(find.byType(MaterialApp)).setLocale(config.locale);
     await _pumpFor(const Duration(seconds: 2));

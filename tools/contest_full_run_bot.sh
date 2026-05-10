@@ -16,6 +16,7 @@ CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${CONTEST_BOT_WEB_PORT:-7357}"
 BROWSER_PROFILE_DIR="${CONTEST_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_contest_bot/chrome_profile}"
 RESUME_ACTIVE_RUN=false
+TUTORIALS_ALREADY_SEEN=false
 PUB_GET=1
 CHROMEDRIVER_PID=""
 
@@ -32,6 +33,7 @@ Options:
   --max-retries <number>    Max game-over retries per bot run. Default: 24.
   --action-delay-ms <ms>    Delay after battle actions. Default: 250.
   --resume-active-run       Load the saved active run from the checkpoint env file.
+  --tutorials-already-seen  Start with battle/market tutorial seen flags enabled.
   --browser-profile-dir <p> Directory used for bot checkpoint env files.
                             Default: /tmp/rummipoker_contest_bot/chrome_profile.
   --web-port <number>       Fixed Flutter web port for persisted browser storage.
@@ -74,6 +76,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --resume-active-run)
       RESUME_ACTIVE_RUN=true
+      shift
+      ;;
+    --tutorials-already-seen)
+      TUTORIALS_ALREADY_SEEN=true
       shift
       ;;
     --browser-profile-dir)
@@ -308,7 +314,8 @@ run_flutter_drive_and_capture "$OUTPUT_DIR/10_contest_full_run_bot.log" \
     --dart-define=CONTEST_BOT_MAX_BATTLE_ACTIONS="$MAX_BATTLE_ACTIONS" \
     --dart-define=CONTEST_BOT_MAX_GAME_OVER_RETRIES="$MAX_GAME_OVER_RETRIES" \
     --dart-define=CONTEST_BOT_ACTION_DELAY_MS="$ACTION_DELAY_MS" \
-    --dart-define=CONTEST_BOT_RESUME_ACTIVE_RUN="$RESUME_ACTIVE_RUN"
+    --dart-define=CONTEST_BOT_RESUME_ACTIVE_RUN="$RESUME_ACTIVE_RUN" \
+    --dart-define=CONTEST_BOT_TUTORIALS_ALREADY_SEEN="$TUTORIALS_ALREADY_SEEN"
 
 echo "contest_full_run_bot complete."
 echo "Logs: $OUTPUT_DIR"

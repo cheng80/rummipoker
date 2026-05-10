@@ -26,7 +26,7 @@
 - 이 hybrid full-play bot의 대화 호출 별명은 `공모전 풀런봇`이고, 영문 식별자는 `contest_full_run_bot`이다.
 - 제출 gate의 플레이 범위는 각 locale에서 표준 S8 Boss 클리어를 먼저 확인한 뒤, 도전 S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
 - full-run 도중 수정 범위는 game over에 한정하지 않는다. UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드의 제목·설명 잘림, locale별 텍스트 넘침이 발견되면 제출 QA 결함으로 수정하고 해당 locale gate를 다시 실행한다.
-- 각 locale run은 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작해 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그를 함께 확인한다. 튜토리얼 overlay가 떠 있으면 bot은 드로우/구매/다음 Station 같은 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
+- 각 locale cycle은 standard 실행 전에 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작해 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그를 함께 확인한다. 같은 locale의 challenge 실행은 새 run으로 시작하되 같은 cycle 내부 진행이므로 tutorial seen 상태를 유지한다. 튜토리얼 overlay가 떠 있으면 bot은 드로우/구매/다음 Station 같은 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
 - Codex 앱 내장 Browser Use는 제출 gate가 아니라 bot 실패 구간 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
 - 2026-05-08 checkpoint pass 증거는 commit `9262e6d`와 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`에 남아 있다.
 - 2026-05-09 최신 보정 후보는 commit `18f0b53` 기준 S8 big을 `1739/1738`로 통과했지만, S8 boss는 `698/1739` 실패 후 retry 2에서 timeout이 났다.
@@ -96,7 +96,7 @@
 - [ ] locale별 standard→challenge `contest_full_run_bot` cycle 증거 확보: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5회. 각 locale은 표준 완료 후 같은 locale 도전까지 이어서 실행하고, 도전 완료/점검/승인 후 다음 locale을 시작한다.
   - `ko` 표준: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`.
   - `ko` 도전: 같은 locale cycle 내부 다음 실행.
-- [ ] 5개 locale의 표준/도전 full-run 모두에서 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
+- [ ] 5개 locale cycle 모두에서 standard 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, challenge의 tutorial seen 유지, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
 - [x] 게임오버 보상, 도감 카드 face, 새 run 화면이 수집/재시작 욕구로 읽히는지 Browser Use 또는 Browser/WebDriver로 눈검증.
 - [x] 전투/마켓 튜토리얼 구현과 build/test 검증.
   - `showcaseview` 제거, `tutorial_coach_mark` 적용.

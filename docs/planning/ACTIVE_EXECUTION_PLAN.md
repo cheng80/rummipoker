@@ -23,9 +23,9 @@
 1. 완료: `contest_full_run_bot` `ko` locale 표준 난이도 fresh S1~S8 Boss full-run 통과.
 2. 다음: 같은 `ko` cycle 내부에서 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 실행한다.
 3. `ko` 사이클이 닫히면 결과를 보고하고 사용자 승인받은 뒤 `en`으로 넘어간다. 이후 순서는 `ja` -> `zh-CN` -> `zh-TW`다.
-4. 각 standard/challenge 실행 전 저장 세션/SharedPreferences를 지워 첫 전투/첫 Market 튜토리얼이 표시되는 조건으로 시작한다.
+4. 각 locale cycle 시작의 standard 실행 전 저장 세션/SharedPreferences를 지워 첫 전투/첫 Market 튜토리얼이 표시되는 조건으로 시작한다. 같은 locale의 challenge 실행은 새 도전 run으로 시작하되 같은 cycle 내부 진행이므로 battle/market tutorial seen 상태는 유지한다.
    - bot은 튜토리얼 overlay가 보이면 전투/마켓 액션보다 `Next/Done` 완료를 먼저 처리하고, fresh locale gate에서는 전투/마켓 튜토리얼 완료 로그가 없으면 pass로 인정하지 않는다.
-   - fresh locale 실행은 WebDriver Chrome profile의 cookie/localStorage/sessionStorage도 초기화한다. `--resume-active-run`이 아닌 실행은 browser profile dir을 지운 뒤 시작한다.
+   - fresh locale standard 실행은 WebDriver Chrome profile의 cookie/localStorage/sessionStorage도 초기화한다. 같은 locale challenge 실행은 active run/save를 새로 시작하되 tutorial seen flag는 유지하거나 bot 옵션으로 다시 세팅한다.
 5. full-run 도중 실패하면 game over/retry/checkpoint 로그를 먼저 확인한다.
 6. 실패 원인이 policy 문제면 문서만 바꾸지 말고 policy code/test를 먼저 고친 뒤 재실행한다.
 7. game over가 아니어도 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드 제목·설명 잘림, 다국어 텍스트 넘침이 발견되면 제출 QA 결함으로 수정하고 해당 locale gate를 다시 실행한다.

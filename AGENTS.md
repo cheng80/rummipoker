@@ -79,6 +79,7 @@
 - 공모전 풀런봇 fresh locale gate에서 튜토리얼을 반드시 다시 띄우려면 앱 SharedPreferences만 지우지 말고 WebDriver Chrome profile의 cookie/localStorage/sessionStorage까지 초기화한다. `--resume-active-run`이 아닌 실행은 browser profile dir을 새로 시작해야 한다.
 - 공모전 풀런봇 locale gate는 5개 언어를 한 번에 연속 실행하지 않는다. `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 순서는 유지하되, 각 locale의 표준→도전 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다.
 - 공모전 풀런봇에서 표준 run 통과 후 같은 locale 도전 run으로 넘어가는 것은 하나의 locale cycle 내부 진행이다. 사용자가 별도 중단을 지시하지 않는 한 표준 통과만으로 승인 대기하지 않고, 같은 locale의 도전 S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 이어서 실행한 뒤 그 locale cycle 결과를 보고하고 다음 locale 진입 승인을 받는다.
+- 공모전 풀런봇의 첫 전투/첫 Market 튜토리얼 검증은 locale cycle 시작 시 표준 run에서 확인한다. 같은 locale의 도전 run은 새 run으로 시작하되 같은 cycle 내부 진행이므로 튜토리얼 seen 상태를 유지해야 하며, 도전 시작 전 저장 초기화가 필요하면 active run/save는 지우되 battle/market tutorial seen flag는 다시 세팅한다.
 - 공모전 풀런봇의 seed 기반 보정은 1회 game over만으로 평상시 전투 정책을 바꾸지 않는다. 평소에는 손패, 덱 상단, 보드 점유, 확정 preview, action trace를 기록하고, 같은 run에서 2회 이상 game over가 누적된 뒤에만 retry recovery 전용 보정 정책을 켠다.
 - 공모전 풀런봇은 같은 seed에서 2회 이상 game over가 난 뒤에는 실패 route의 action key만 피하지 말고, 이미 관측된 덱 순서를 retry recovery 후보 평가에 반영한다. 다음 덱 패가 이어 만들 족보와 중복줄 가능성을 배치 lookahead에 넣되, 무의미한 버림/이동/아이템 사용으로 대체하지 않는다.
 - 공모전 풀런봇의 S8 boss 같은 고점수 구간 안정화는 즉시 점수 후보만 키우는 방향으로 닫지 않는다. `potentialScore`가 이미 반영하는 현재 배치 이득에 더해, 완성 직전 라인 수, 서로 교차하는 유망 라인 수, 현재 손패 남은 타일로 다음 1-step 배치까지 이어질 가능성을 lookahead 후보 평가에 넣는 방향을 먼저 검토한다. 이는 bot 전용 QA 정책 보정이며, runtime 난이도나 production 밸런스 완화로 처리하지 않는다.
