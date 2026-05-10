@@ -10,10 +10,10 @@
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Active for locale cycle full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했고, `ko` fresh 표준 locale gate도 통과했다. 남은 gate는 같은 `ko` cycle 내부의 도전 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 이어서 확인한 뒤, 사용자 승인 후 다음 locale을 같은 표준→도전 순서로 진행하는 것이다. |
+| 공모전 기준 완성 | Active for locale cycle full-run | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했고, `ko` locale 표준→도전 1사이클도 통과했다. 남은 gate는 사용자 승인 후 `en`, `ja`, `zh-CN`, `zh-TW`를 같은 표준→도전 순서로 진행하는 것이다. |
 | 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1, submission kit 문서화는 반영됐다. 장기 밸런스와 스토어 최종 산출물은 별도 트랙으로 남긴다. |
 
-현재는 공모전 기준 QA를 재개한다. 다음 남은 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko` 표준은 2026-05-10에 완료했으므로 다음 실행은 같은 `ko` cycle 내부의 `ko` 도전이다. 5개 locale을 한 번에 연속 실행하지 않고, 각 locale 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
+현재는 공모전 기준 QA를 재개한다. 다음 남은 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko` cycle은 2026-05-10에 완료했으므로 다음 실행은 사용자 승인 후 `en` 표준부터다. 5개 locale을 한 번에 연속 실행하지 않고, 각 locale 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
 
 ## 2. 공모전 기준 다음 작업
 
@@ -21,8 +21,8 @@
 현재 실행 순서는 아래로 고정한다.
 
 1. 완료: `contest_full_run_bot` `ko` locale 표준 난이도 fresh S1~S8 Boss full-run 통과.
-2. 다음: 같은 `ko` cycle 내부에서 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 실행한다.
-3. `ko` 사이클이 닫히면 결과를 보고하고 사용자 승인받은 뒤 `en`으로 넘어간다. 이후 순서는 `ja` -> `zh-CN` -> `zh-TW`다.
+2. 완료: 같은 `ko` cycle 내부의 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인 통과.
+3. 다음: `ko` 사이클 결과를 보고하고 사용자 승인받은 뒤 `en` 표준으로 넘어간다. 이후 순서는 `ja` -> `zh-CN` -> `zh-TW`다.
 4. 각 locale cycle 시작의 standard 실행 전 저장 세션/SharedPreferences를 지워 첫 전투/첫 Market 튜토리얼이 표시되는 조건으로 시작한다. 같은 locale의 challenge 실행은 새 도전 run으로 시작하되 같은 cycle 내부 진행이므로 battle/market tutorial seen 상태는 유지한다.
    - bot은 튜토리얼 overlay가 보이면 전투/마켓 액션보다 `Next/Done` 완료를 먼저 처리하고, fresh locale gate에서는 전투/마켓 튜토리얼 완료 로그가 없으면 pass로 인정하지 않는다.
    - fresh locale standard 실행은 WebDriver Chrome profile의 cookie/localStorage/sessionStorage도 초기화한다. 같은 locale challenge 실행은 active run/save를 새로 시작하되 tutorial seen flag는 유지하거나 bot 옵션으로 다시 세팅한다.
@@ -42,6 +42,19 @@
 - S8 boss 정산: `951/3 -> 778/2 -> 246/1`, 목표 `1739` 통과
 - game over/retry/Flutter semantics warning/UI overflow/error/warn: 없음
 - 보스 클리어 덱 타일 보상: S2 `deck=53`부터 S8 `deck=59`까지 증가 확인
+- 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음
+
+- 2026-05-10 `ko` fresh 도전 locale gate 로그: `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046/10_contest_full_run_bot.log`
+- 출력 디렉터리: `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046`
+- 실행 조건: `--seed 91460 --difficulty challenge --locale ko --web-port 7364 --browser-profile-dir /tmp/rummipoker_contest_full_run_bot/challenge_ko_profile_20260510_115046 --output-dir /tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046 --tutorials-already-seen --skip-pub-get`
+- 결과: `CONTEST_FULL_RUN_BOT_PASS`, `All tests passed!`, S8 boss run complete
+- locale/fresh 조건: `locale=ko`, `resolvedLocale=ko`, `freshStorage=true`, `difficulty=challenge`
+- 튜토리얼: 같은 locale cycle 내부 challenge 실행이므로 `--tutorials-already-seen`으로 battle/market tutorial seen 상태를 유지했다. fresh 튜토리얼 완료 로그는 이 실행에서 요구하지 않는다.
+- S8 small 정산: `1622/2 -> 230/1`, 목표 `1729` 통과
+- S8 big 정산: `1009/2 -> 1032/2 -> 368/1`, 목표 `2086` 통과
+- S8 boss 정산: `1010/3 -> 869/2 -> 312/1`, 목표 `2087` 통과
+- S8 시작 덱: `deck=59`
+- game over/retry/Flutter semantics warning/UI overflow/error/warn: 없음
 - 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음
 
 - 최신 fresh 표준 실행 로그: `/tmp/rummipoker_contest_full_run_bot/fresh_after_reward_tile_rules_20260509_201727/10_contest_full_run_bot.log`
