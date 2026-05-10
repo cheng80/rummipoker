@@ -43,11 +43,11 @@ flutter build web --release --base-href "/rummipoker/" --analyze-size
 현재 공유 이미지는 다음 절대 URL로 고정합니다:
 
 ```html
-<meta property="og:image" content="https://cheng80.myqnapcloud.com/rummipoker/splash/img/light-4x.png">
+<meta property="og:image" content="https://cheng80.myqnapcloud.com/rummipoker/assets/assets/splash.png">
 ```
 
-해당 파일은 `assets/splash.png`가 웹 빌드 후
-`rummipoker/splash/img/light-4x.png`로 복사된 결과입니다.
+해당 파일은 원본 `assets/splash.png`가 웹 빌드 후
+`rummipoker/assets/assets/splash.png`로 복사된 결과입니다.
 공유 이미지가 이전 이미지로 보이면 앱 빌드 문제가 아니라 카카오톡/플랫폼의 링크 미리보기 캐시일 수 있습니다.
 
 ### 배포
