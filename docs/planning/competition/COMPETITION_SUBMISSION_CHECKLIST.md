@@ -17,7 +17,8 @@
 - 공모전 풀런봇 QA는 재개 가능 상태다.
 - 2026-05-09 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss full-run 통과 증거를 확보했다.
 - 2026-05-10 최신 제출 후보 build에서 locale별 standard→challenge full-run cycle을 제외한 최근 룰/UI 항목 검증을 마쳤다.
-- 다음 gate는 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행하는 것이다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
+- 2026-05-10 `ko` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
+- 다음 gate는 사용자 승인 후 `ko` fresh 도전 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인이다. 이후 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행한다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
 - 제출 전 핵심 룰 보강이었던 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 행성카드형 성장 아이템, 초과 점수 기반 대표 족보 성장, 타이틀 `런 정보`, 게임오버 정산/도발 문구는 런타임 반영과 핵심 검증을 마쳤다.
 - S8 boss 이후는 더 이상 애매한 `계속 진행`이 아니라 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고 Station Select, 전투 HUD, 정산 라벨에서 위험한 무한 구간 색상으로 드러낸다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
@@ -40,11 +41,13 @@
 - 2026-05-10 추가 검증: 무한 도전 target 산식, S9+ Station Select 표시, 전투 HUD 무한 라벨, 정산 무한 라벨/CTA 테스트와 `flutter build web` 통과.
 - 2026-05-10 추가 작업: 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런`을 적용했고, `docs/submission_kit/`에 플랫폼별 빌드/스토어/튜토리얼/인앱 리뷰 문서를 정리했다.
 - 2026-05-10 튜토리얼: `showcaseview` 대신 `tutorial_coach_mark` 기반 전투/마켓 첫 설명과 다시 보기를 구현했다. 옵션/포커스 아웃 시 overlay가 위에 남지 않게 닫고, FittedBox 변환 뒤 실제 화면 rect로 focus 위치/크기를 계산하도록 보정했다. 남은 항목은 Browser/기기 리사이즈 눈검증이다.
+- 2026-05-10 `ko` 표준 locale gate: `locale=ko`, `resolvedLocale=ko`, `freshStorage=true`, 첫 battle/market tutorial completed, S8 boss 정산 `951/3 -> 778/2 -> 246/1`, 목표 `1739` 통과, S2 `deck=53`부터 S8 `deck=59`까지 증가, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
+- 해당 run 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
 
 오늘 바로 할 작업:
 
-1. Browser/WebDriver + Compute Use hybrid bot을 `ko` 표준 난이도 fresh S1부터 실행한다.
-2. `ko` 표준 S1~S8 Boss 통과를 점검/보고하고 사용자 승인 후 `ko` 도전 난이도 fresh S1부터 실행한다.
+1. 완료: Browser/WebDriver + Compute Use hybrid bot으로 `ko` 표준 난이도 fresh S1~S8 Boss를 통과했다.
+2. 대기: 사용자 승인 후 `ko` 도전 난이도 fresh S1부터 실행한다.
 3. `ko` 도전 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 통과하면 `ko` cycle을 닫고, 사용자 승인 후 `en` 표준으로 넘어간다.
 4. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
 5. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
@@ -91,6 +94,8 @@
 - [x] 최신 build 또는 새 web-server 기준 console error/warn 0건 확인.
 - [x] `contest_full_run_bot`이 추가 덱, 보상 타일, 특수 족보, 족보 성장 점수를 실제 후보 평가에 반영하는지 policy code/test 확인.
 - [ ] locale별 standard→challenge `contest_full_run_bot` cycle 증거 확보: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5회. 각 locale은 표준 완료/점검/승인 후 같은 locale 도전으로 넘어가고, 도전 완료/점검/승인 후 다음 locale을 시작한다.
+  - `ko` 표준: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`.
+  - `ko` 도전: 사용자 승인 대기.
 - [ ] 5개 locale의 표준/도전 full-run 모두에서 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
 - [x] 게임오버 보상, 도감 카드 face, 새 run 화면이 수집/재시작 욕구로 읽히는지 Browser Use 또는 Browser/WebDriver로 눈검증.
 - [x] 전투/마켓 튜토리얼 구현과 build/test 검증.
