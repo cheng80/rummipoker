@@ -14,22 +14,22 @@
 
 현재 결론:
 
-- 공모전 풀런봇 QA는 최신 UI/Web 회귀 수정 후 남은 locale cycle 재개 직전 상태다. `slot_unlock_market` 해금 연출 눈검증은 완료했고, 다음은 최신 build 눈검증과 사용자 승인 후 `ja` -> `zh-CN` -> `zh-TW` locale cycle을 재개하는 것이다.
+- 공모전 풀런봇 QA는 제출용 handoff 상태로 닫는다. `ko`, `en` 표준→도전 cycle을 통과했고, 최신 UI/Web 회귀 수정 뒤 `ko` standard→challenge 재확인도 통과했다. `ja`, `zh-CN`, `zh-TW` full-run은 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다.
 - 2026-05-09 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss full-run 통과 증거를 확보했다.
 - 2026-05-10 최신 제출 후보 build에서 locale별 standard→challenge full-run cycle을 제외한 최근 룰/UI 항목 검증을 마쳤다.
 - 2026-05-10 `ko` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `ko` fresh 도전 locale gate는 `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `en` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `en` fresh 도전 locale gate는 `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
-- `ko`, `en` 표준→도전 2사이클은 완료됐다. 이후 발견한 잠긴 슬롯 해금 공백은 S2/S4/S6 Boss 보상과 Market 진입 연출로 보강했고, 앱 기본 언어도 OS/브라우저 시스템 locale을 따르게 수정했다. `slot_unlock_market` fixture 눈검증도 완료했다. 이후 web 제출 산물/BGM/릴리즈 메뉴/정산 UI 회귀를 수정했으므로, 최신 build 눈검증 후 `ja`, `zh-CN`, `zh-TW`를 사용자 승인 기준으로 재개한다. 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`) 각각에서 표준→도전 1사이클을 실행한다. 한 locale 사이클은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. locale 5개를 한 번에 돌리지 않고 한 locale 사이클 완료/점검/사용자 승인 후 다음 locale로 진행한다.
+- `ko`, `en` 표준→도전 2사이클은 완료됐다. 이후 발견한 잠긴 슬롯 해금 공백은 S2/S4/S6 Boss 보상과 Market 진입 연출로 보강했고, 앱 기본 언어도 OS/브라우저 시스템 locale을 따르게 수정했다. `slot_unlock_market` fixture 눈검증도 완료했다. 이후 web 제출 산물/BGM/릴리즈 메뉴/정산 UI 회귀를 수정했고, 최신 후보에서 `ko` standard→challenge 재확인을 다시 통과했다. 한 locale 사이클의 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ja`, `zh-CN`, `zh-TW`는 제출 gate 필수 대기열에서 내리고, 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다.
 - 제출 전 핵심 룰 보강이었던 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 행성카드형 성장 아이템, 초과 점수 기반 대표 족보 성장, 타이틀 `런 정보`, 게임오버 정산/도발 문구는 런타임 반영과 핵심 검증을 마쳤다.
 - S8 boss 이후는 더 이상 애매한 `계속 진행`이 아니라 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고 Station Select, 전투 HUD, 정산 라벨에서 위험한 무한 구간 색상으로 드러낸다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
 - full-play 기준은 사람 수동 플레이가 아니라 제작된 bot이 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표 조작을 결합해 각 locale의 표준 S1~S8 Boss와 도전 S1~S8 Boss를 클리어하는 것이다.
 - 이 hybrid full-play bot의 대화 호출 별명은 `공모전 풀런봇`이고, 영문 식별자는 `contest_full_run_bot`이다.
-- 제출 gate의 플레이 범위는 각 locale에서 표준 S8 Boss 클리어를 먼저 확인한 뒤, 도전 S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
+- 제출 gate의 플레이 범위는 확인 대상 locale에서 표준 S8 Boss 클리어를 먼저 확인한 뒤, 도전 S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. 이번 제출용 풀런봇 플랜은 `ko`, `en` cycle과 최신 `ko` 재확인으로 닫고, S9+ 무한 도전 장기 생존은 별도 확장 검증이다.
 - full-run 도중 수정 범위는 game over에 한정하지 않는다. UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드의 제목·설명 잘림, locale별 텍스트 넘침이 발견되면 제출 QA 결함으로 수정하고 해당 locale gate를 다시 실행한다.
-- 각 locale cycle은 standard 실행 전에 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작해 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그를 함께 확인한다. 같은 locale의 challenge 실행은 새 run으로 시작하되 같은 cycle 내부 진행이므로 tutorial seen 상태를 유지한다. 튜토리얼 overlay가 떠 있으면 bot은 드로우/구매/다음 Station 같은 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
+- 향후 문제 발생 또는 공모전 이후 locale cycle을 추가 검증할 때는 standard 실행 전에 저장 세션/SharedPreferences와 WebDriver Chrome profile의 cookie/localStorage/sessionStorage를 지운 fresh 세션에서 시작해 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그를 함께 확인한다. 같은 locale의 challenge 실행은 새 run으로 시작하되 같은 cycle 내부 진행이므로 tutorial seen 상태를 유지한다. 튜토리얼 overlay가 떠 있으면 bot은 드로우/구매/다음 Station 같은 실제 액션보다 튜토리얼 완료를 먼저 처리한다.
 - Codex 앱 내장 Browser Use는 제출 gate가 아니라 bot 실패 구간 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
 - 2026-05-08 checkpoint pass 증거는 commit `9262e6d`와 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`에 남아 있다.
 - 2026-05-09 최신 보정 후보는 commit `18f0b53` 기준 S8 big을 `1739/1738`로 통과했지만, S8 boss는 `698/1739` 실패 후 retry 2에서 timeout이 났다.
@@ -48,6 +48,12 @@
 - 2026-05-10 `ko` 도전 locale gate: `locale=ko`, `resolvedLocale=ko`, `freshStorage=true`, `difficulty=challenge`, `--tutorials-already-seen`으로 같은 locale cycle의 tutorial seen 상태 유지, S8 small `1622/2 -> 230/1` 목표 `1729` 통과, S8 big `1009/2 -> 1032/2 -> 368/1` 목표 `2086` 통과, S8 boss `1010/3 -> 869/2 -> 312/1` 목표 `2087` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 2026-05-10 `en` 표준 locale gate: `locale=en`, `resolvedLocale=en`, `freshStorage=true`, 첫 battle/market tutorial completed, S8 small `1539/2` 목표 `1441` 통과, S8 big `902/2 -> 925/2` 목표 `1738` 통과, S8 boss `951/3 -> 778/2 -> 246/1` 목표 `1739` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 2026-05-10 `en` 도전 locale gate: `locale=en`, `resolvedLocale=en`, `freshStorage=true`, `difficulty=challenge`, `--tutorials-already-seen`으로 같은 locale cycle의 tutorial seen 상태 유지, S8 small `1622/2 -> 230/1` 목표 `1729` 통과, S8 big `1009/2 -> 1032/2 -> 368/1` 목표 `2086` 통과, S8 boss `1010/3 -> 869/2 -> 312/1` 목표 `2087` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
+- 2026-05-10~11 최신 후보 `ko` 재확인:
+  - 표준 로그: `/tmp/rummipoker_contest_full_run_bot/standard_ko_recheck_20260510_233626/10_contest_full_run_bot.log`
+  - 도전 로그: `/tmp/rummipoker_contest_full_run_bot/challenge_ko_recheck_20260511_005027/10_contest_full_run_bot.log`
+  - 둘 다 `CONTEST_FULL_RUN_BOT_PASS`, `All tests passed!`, `S8 boss: run complete`.
+  - grep 기준 game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
+  - 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
 - 해당 run 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
 - 2026-05-10 추가 룰 보강: 잠겨 있던 Quick Item 3번 슬롯, Passive 2번 슬롯, Jester 5번 슬롯을 각각 S2/S4/S6 Boss 클리어 보상으로 해금하도록 구현했다. 해금은 즉시 저장 상태에 반영하고, 다음 Market 진입 시 1회 배너/슬롯 pulse로 보여준 뒤 전투에는 이미 해금된 슬롯 상태로 진입한다. 검증: `flutter analyze`, `flutter build web`, `rummi_market_facade_test`, `game_session_notifier_test`, `active_run_save_service_test`, `game_shop_slot_unlock_screen_test`, `debug_run_fixture_service_test`.
 - 2026-05-10 추가 UX/QA 보강: 앱 기본 언어는 특정 한국어 `startLocale` 강제가 아니라 OS/브라우저 시스템 locale을 따르게 했다. 해금 연출 확인용 debug fixture `slot_unlock_market`를 추가했고, 확인 URL은 `/game?fixture=slot_unlock_market`다. 튜토리얼 검증 전용이 아닌 debug fixture는 자동 튜토리얼을 띄우지 않고, 튜토리얼은 다시 보기 버튼으로만 연다. 해금 연출은 자물쇠 확대/fade-out과 슬롯 pulse가 1회 보이는 기준으로 눈검증 완료했다. 커밋: `4dea65c Add boss slot unlock rewards`, `8adc86d Add slot unlock debug fixture`.
@@ -64,7 +70,7 @@
 6. 완료: 시스템 locale 기본값과 `slot_unlock_market` debug fixture를 추가했다.
 7. 완료: `/game?fixture=slot_unlock_market`에서 자동 튜토리얼 없이 해금 배너/자물쇠 해제/슬롯 pulse가 보이는지 눈검증했다.
 8. 완료: web icon/splash/OG image, 릴리즈 홈 메뉴, 웹 BGM unlock/scroll 묵음, 정산 밑줄, 정산 PhoneFrame 폭 회귀를 수정하고 최신 build/test를 통과했다.
-9. 다음: 최신 build 눈검증 후 사용자 승인 기준으로 남은 locale full-run을 재개한다. 기존 대기열은 `ja` -> `zh-CN` -> `zh-TW`다.
+9. 완료: 최신 후보 `ko` standard→challenge 재확인 통과를 근거로 공모전 제출용 풀런봇 플랜을 닫는다. `ja`, `zh-CN`, `zh-TW`는 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다.
 10. full-run 도중 실패하면 game over/retry/checkpoint 로그를 기준으로 policy code/test를 먼저 고치고, 문서만 바꾼 상태로 재실행하지 않는다.
 11. full-run 통과 뒤 최신 build 기준 console 0건을 다시 확인한다.
 
@@ -130,15 +136,17 @@
 - [x] 최신 제출 후보 `flutter build web` 재실행.
 - [x] 최신 build 또는 새 web-server 기준 console error/warn 0건 확인.
 - [x] `contest_full_run_bot`이 추가 덱, 보상 타일, 특수 족보, 족보 성장 점수를 실제 후보 평가에 반영하는지 policy code/test 확인.
-- [ ] locale별 standard→challenge `contest_full_run_bot` cycle 증거 확보: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 5회. 각 locale은 표준 완료 후 같은 locale 도전까지 이어서 실행하고, 도전 완료/점검/승인 후 다음 locale을 시작한다.
+- [x] 제출용 `contest_full_run_bot` cycle 증거 확보: `ko`, `en` 표준→도전 cycle과 최신 후보 `ko` 재확인을 제출용 기준선으로 채택한다. `ja`, `zh-CN`, `zh-TW`는 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다.
   - `ko` 표준: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`.
   - `ko` 도전: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046/10_contest_full_run_bot.log`.
   - `ko` cycle: 완료.
   - `en` 표준: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`.
   - `en` 도전: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`.
   - `en` cycle: 완료.
-  - `ja`, `zh-CN`, `zh-TW`: 최신 build 눈검증과 사용자 승인 후 재개.
-- [ ] 5개 locale cycle 모두에서 standard 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, challenge의 tutorial seen 유지, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
+  - 최신 후보 `ko` 재확인 표준: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/standard_ko_recheck_20260510_233626/10_contest_full_run_bot.log`.
+  - 최신 후보 `ko` 재확인 도전: 완료. 로그 `/tmp/rummipoker_contest_full_run_bot/challenge_ko_recheck_20260511_005027/10_contest_full_run_bot.log`.
+  - `ja`, `zh-CN`, `zh-TW`: 문제가 발견될 때 또는 공모전 이후 추가 검증.
+- [x] 제출용 확인 대상 cycle에서 standard 첫 전투/첫 Market 튜토리얼 표시와 `Next/Done` 완료 로그, challenge의 tutorial seen 유지, 스킵/완료/포커스 아웃 처리, UI overflow/Jester/Item/자원 설명 잘림 0건 확인.
   - `ko`: standard 첫 battle/market tutorial completed, challenge tutorial seen 유지, UI overflow/Jester/Item/자원 설명 잘림 0건.
   - `en`: standard 첫 battle/market tutorial completed, challenge tutorial seen 유지, UI overflow/Jester/Item/자원 설명 잘림 0건.
 - [x] 게임오버 보상, 도감 카드 face, 새 run 화면이 수집/재시작 욕구로 읽히는지 Browser Use 또는 Browser/WebDriver로 눈검증.
@@ -166,16 +174,16 @@
 - 최신 `flutter build web` 통과
 - 최신 빌드 기준 Browser/WebDriver full-play QA console error/warn 0건
 - Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 표준 S1~S8 clear 확인
-- Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 각 locale의 표준 S1~S8 Boss clear와 도전 S1~S8 Boss clear 확인: `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 각각 fresh 세션
+- Browser/WebDriver + Compute Use hybrid bot으로 debug fixture 없이 `ko`, `en` 표준 S1~S8 Boss clear와 도전 S1~S8 Boss clear 확인. 최신 후보에서는 `ko` standard→challenge 재확인까지 통과했으므로 제출용 full-run bot 플랜은 닫는다. `ja`, `zh-CN`, `zh-TW`는 문제 발견 시 또는 공모전 이후 추가 검증으로 둔다.
 - full-play 중 마켓 구매와 실제 플레이 흐름 확인. 아이템/보드 이동/버림은 증거용 강제 사용이 아니라 족보 형성 또는 확정 점수 개선이 있을 때만 확인한다.
 - full-play 중 UI overflow, 튜토리얼 target/문구 문제, Jester/Item/자원 카드 제목·설명 잘림, 다국어 텍스트 넘침 0건 확인
 - 게임오버/런 완료 보상, 도감, 새 run 복귀가 심사자에게 설명 없이 읽힌다는 눈검증
 
 아직 열려 있는 위험:
 
-- full-play bot의 과거 checkpoint-resume clear 증거와 최신 fresh 표준 clear 증거는 확보했다. locale별 표준→도전 사이클 증거는 `ko`, `en` 2/5가 완료됐고, 최신 UI/Web 회귀 수정 후 `ja`, `zh-CN`, `zh-TW`가 남아 있다.
-- fresh 표준 로그의 Flutter semantics warning은 route/dialog label 보정 뒤 최신 build smoke에서 재현되지 않았다. locale별 표준/도전 full-run 로그에서도 같은 기준으로 재확인해야 한다.
-- 다음 작업은 bot 전용 치팅이나 과한 가중치 추가가 아니라, 각 locale에서 표준을 먼저 실제로 닫고 그 다음 도전 난이도에서 족보/중복줄/성장/덱 확장 정책이 충분히 작동하는지 확인하는 것이다.
+- full-play bot의 과거 checkpoint-resume clear 증거, 최신 fresh 표준 clear 증거, `ko/en` 표준→도전 cycle 증거, 최신 후보 `ko` 재확인 증거를 확보했다. `ja`, `zh-CN`, `zh-TW`는 제출 gate 필수 대기열에서 내렸고 문제 발견 시 또는 공모전 이후 추가 검증으로 남긴다.
+- fresh 표준 로그의 Flutter semantics warning은 route/dialog label 보정 뒤 최신 build smoke와 `ko/en` cycle, 최신 `ko` 재확인 로그에서 재현되지 않았다.
+- 향후 full-run 문제가 재발하면 bot 전용 치팅이나 과한 가중치 추가가 아니라, 해당 locale에서 표준을 먼저 실제로 닫고 그 다음 도전 난이도에서 족보/중복줄/성장/덱 확장 정책이 충분히 작동하는지 확인한다.
 - 참고한 방향은 Balatro류 `런 정보`/족보 표처럼 각 족보의 레벨, 현재 점수, 완성 횟수를 한 화면에서 보여주는 구조다. 단, 명칭과 UI는 이 게임 용어와 시각 체계에 맞춘다.
 - `런 정보`는 전투 중 보조 팝업으로만 두지 않는다. 유저가 전투/마켓/새 run 준비/타이틀 또는 도감 계열 화면에서 현재 강한 족보와 다음 성장 목표를 확인할 수 있어야 한다.
 - 후반 game over가 재발하면 봇 전용 가중치 숫자 조정만 보지 않고, 중복줄 확정 정책과 손패/이동/버림/아이템/구매/판매 전략을 함께 점검한다. 구간별 등장 확률을 올린 Jester/Item은 후반 안정화 구매 후보로 검토한다.
