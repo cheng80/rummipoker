@@ -60,6 +60,7 @@
 - 현재 수집 보정은 Jester/Item 모두 미구매 +45, 미노출 +90 가중치다. 직접 지급, 자동 구매, 특정 슬롯 고정은 아니다.
 - 기본 판정은 800개 fresh path, S1~S8, stage당 3회 market entry를 사용한다.
 - 의미 있는 결과로 보려면 `seen coverage`, `bought coverage`, `gold blocked`, `capacity blocked`, `unseen/unbought ids`를 함께 본다. coverage만 높고 `gold blocked`가 높으면 확률 문제가 아니라 구매력 병목이다.
+- `gold blocked`는 전체 수집 완료 전 `pre_collection_*`와 전체 합계를 나눠 본다. 전체 수집 완료 뒤 반복 구매 시도에서 나온 blocked는 수집 가능성 실패로 보지 않는다.
 - 골드 병목 분리를 위해 표준 cashout path와 넉넉한 affordability path를 나란히 돌린다.
 
 ## 다음 작업 기준

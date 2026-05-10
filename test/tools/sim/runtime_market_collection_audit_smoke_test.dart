@@ -25,6 +25,14 @@ void main() {
     expect(standardBought['jester_coverage'], greaterThanOrEqualTo(0.80));
     expect(standardBought['item_coverage'], greaterThanOrEqualTo(0.35));
     expect(standardBlocked['gold_items'], greaterThan(0));
+    expect(
+      standardBlocked['pre_collection_gold_items'],
+      lessThanOrEqualTo(standardBlocked['gold_items'] as num),
+    );
+    expect(
+      standardBought['all_items_bought_at_market_entry'],
+      lessThanOrEqualTo(standardCollection['market_entries'] as num),
+    );
 
     final affordabilityReport = _runAudit(
       outPath: affordabilityOutPath,

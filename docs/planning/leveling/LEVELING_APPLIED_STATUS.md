@@ -257,9 +257,10 @@ Market collection audit r800:
 
 - outputs: `logs/sim/runtime_market_collection_audit_standard_r800_20260511_064500.json`, `logs/sim/runtime_market_collection_audit_affordability_r800_20260511_064500.json`
 - 조건: 800 fresh paths, seed 92100, S1~S8, stage당 3회 market entry, 누적 `seen/bought` 기록 기준, 판매 허용.
-- 표준 cashout 10G path: catalog Jester 43/Item 57. seen coverage Jester 100%, Item 100%. bought coverage Jester 100%, Item 100%. gold blocked는 Jester 103회, Item 11,033회, capacity blocked 0회.
-- affordability cashout 25G path: seen/bought coverage Jester 100%, Item 100%. gold blocked 0회, capacity blocked 0회.
-- 해석: 현재 보강 후 “전체 catalog가 마켓에 보일 수 있는가/살 수 있는가”는 r800 누적 기준으로 닫혔다. 다만 표준 cashout에서는 Item gold blocked가 크므로, 실제 플레이 중 모든 후보를 쉽게 살 수 있다는 뜻은 아니다. 다음 가격/보상 조정은 coverage가 아니라 구매력 병목과 선택 우선순위를 따로 보고 결정한다.
+- 표준 cashout 10G path: catalog Jester 43/Item 57. seen coverage Jester 100%, Item 100%. bought coverage Jester 100%, Item 100%. 전체 Jester는 55번째 market entry에서 보였고 56번째에 구매 완료, 전체 Item은 37번째 entry에서 보였고 264번째에 구매 완료.
+- 표준 path의 total gold blocked는 Jester 103회, Item 11,033회지만, 전체 수집 완료 전 pre-collection gold blocked는 Jester 0회, Item 147회다. capacity blocked는 0회다.
+- affordability cashout 25G path: seen/bought coverage Jester 100%, Item 100%. 전체 Item은 163번째 entry에서 보이고 같은 entry에서 구매 완료. gold blocked 0회, capacity blocked 0회.
+- 해석: 현재 보강 후 “전체 catalog가 마켓에 보일 수 있는가/살 수 있는가”는 r800 누적 기준으로 닫혔다. 표준 path의 11,033회 Item gold blocked는 대부분 전체 수집 완료 이후 반복 구매 시도에서 나온 값이므로, 수집 가능성 병목으로 보지 않는다. 다음 가격/보상 조정은 전체 수집 coverage가 아니라 실제 플레이 proxy의 clear rate, 잔고, 구매 우선순위에서 별도로 판단한다.
 
 Shuffle reference note:
 

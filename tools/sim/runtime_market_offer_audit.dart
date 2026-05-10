@@ -149,9 +149,17 @@ Map<String, Object?> _buildCollectionAudit({
   final aggregateBoughtItems = <String>{};
   final goldBlockedJesters = <String, int>{};
   final goldBlockedItems = <String, int>{};
+  final preCoverageGoldBlockedJesters = <String, int>{};
+  final preCoverageGoldBlockedItems = <String, int>{};
   final capacityBlockedJesters = <String, int>{};
   final capacityBlockedItems = <String, int>{};
+  final preCoverageCapacityBlockedJesters = <String, int>{};
+  final preCoverageCapacityBlockedItems = <String, int>{};
   final finalGoldValues = <int>[];
+  int? allJestersSeenAtEntry;
+  int? allItemsSeenAtEntry;
+  int? allJestersBoughtAtEntry;
+  int? allItemsBoughtAtEntry;
   var marketEntries = 0;
   var jesterSellCount = 0;
   var itemSellCount = 0;
@@ -197,6 +205,13 @@ Map<String, Object?> _buildCollectionAudit({
         aggregateSeenItems.addAll(
           market.itemOffers.map((offer) => offer.contentId),
         );
+        allJestersSeenAtEntry ??=
+            aggregateSeenJesters.length >= jesterIds.length
+            ? marketEntries
+            : null;
+        allItemsSeenAtEntry ??= aggregateSeenItems.length >= itemIds.length
+            ? marketEntries
+            : null;
 
         final jesterCandidate = _firstUnboughtJesterOffer(
           progress,
@@ -211,6 +226,12 @@ Map<String, Object?> _buildCollectionAudit({
             final price = progress.effectiveJesterOfferPrice(index);
             if (progress.gold < price) {
               _increment(goldBlockedJesters, jesterCandidate.contentId);
+              if (allJestersBoughtAtEntry == null) {
+                _increment(
+                  preCoverageGoldBlockedJesters,
+                  jesterCandidate.contentId,
+                );
+              }
             } else if (progress.ownedJesters.length >=
                 progress.jesterSlotCapacity(itemCatalog: itemCatalog)) {
               if (options.allowSell && progress.ownedJesters.isNotEmpty) {
@@ -218,12 +239,28 @@ Map<String, Object?> _buildCollectionAudit({
                 jesterSellCount += 1;
               } else {
                 _increment(capacityBlockedJesters, jesterCandidate.contentId);
+                if (allJestersBoughtAtEntry == null) {
+                  _increment(
+                    preCoverageCapacityBlockedJesters,
+                    jesterCandidate.contentId,
+                  );
+                }
               }
             }
             if (progress.buyOffer(index)) {
               aggregateBoughtJesters.add(jesterCandidate.contentId);
+              allJestersBoughtAtEntry ??=
+                  aggregateBoughtJesters.length >= jesterIds.length
+                  ? marketEntries
+                  : null;
             } else if (progress.gold >= price) {
               _increment(capacityBlockedJesters, jesterCandidate.contentId);
+              if (allJestersBoughtAtEntry == null) {
+                _increment(
+                  preCoverageCapacityBlockedJesters,
+                  jesterCandidate.contentId,
+                );
+              }
             }
           }
         }
@@ -238,6 +275,9 @@ Map<String, Object?> _buildCollectionAudit({
           final price = itemCandidate.price;
           if (progress.gold < price) {
             _increment(goldBlockedItems, item.id);
+            if (allItemsBoughtAtEntry == null) {
+              _increment(preCoverageGoldBlockedItems, item.id);
+            }
           } else {
             final bought = progress.buyItem(
               item,
@@ -246,6 +286,10 @@ Map<String, Object?> _buildCollectionAudit({
             );
             if (bought) {
               aggregateBoughtItems.add(item.id);
+              allItemsBoughtAtEntry ??=
+                  aggregateBoughtItems.length >= itemIds.length
+                  ? marketEntries
+                  : null;
             } else if (options.allowSell &&
                 _sellOneOwnedItemForPlacement(progress, item, itemById)) {
               itemSellCount += 1;
@@ -255,11 +299,21 @@ Map<String, Object?> _buildCollectionAudit({
                 itemCatalog: itemCatalog,
               )) {
                 aggregateBoughtItems.add(item.id);
+                allItemsBoughtAtEntry ??=
+                    aggregateBoughtItems.length >= itemIds.length
+                    ? marketEntries
+                    : null;
               } else {
                 _increment(capacityBlockedItems, item.id);
+                if (allItemsBoughtAtEntry == null) {
+                  _increment(preCoverageCapacityBlockedItems, item.id);
+                }
               }
             } else {
               _increment(capacityBlockedItems, item.id);
+              if (allItemsBoughtAtEntry == null) {
+                _increment(preCoverageCapacityBlockedItems, item.id);
+              }
             }
           }
         }
@@ -284,6 +338,8 @@ Map<String, Object?> _buildCollectionAudit({
       'items': aggregateSeenItems.length,
       'jester_coverage': _ratio(aggregateSeenJesters.length, jesterIds.length),
       'item_coverage': _ratio(aggregateSeenItems.length, itemIds.length),
+      'all_jesters_seen_at_market_entry': allJestersSeenAtEntry,
+      'all_items_seen_at_market_entry': allItemsSeenAtEntry,
       'unseen_jesters': _missingIds(jesterIds, aggregateSeenJesters),
       'unseen_items': _missingIds(itemIds, aggregateSeenItems),
     },
@@ -295,6 +351,8 @@ Map<String, Object?> _buildCollectionAudit({
         jesterIds.length,
       ),
       'item_coverage': _ratio(aggregateBoughtItems.length, itemIds.length),
+      'all_jesters_bought_at_market_entry': allJestersBoughtAtEntry,
+      'all_items_bought_at_market_entry': allItemsBoughtAtEntry,
       'unbought_jesters': _missingIds(jesterIds, aggregateBoughtJesters),
       'unbought_items': _missingIds(itemIds, aggregateBoughtItems),
     },
@@ -303,8 +361,20 @@ Map<String, Object?> _buildCollectionAudit({
       'gold_items': _sumCounts(goldBlockedItems),
       'capacity_jesters': _sumCounts(capacityBlockedJesters),
       'capacity_items': _sumCounts(capacityBlockedItems),
+      'pre_collection_gold_jesters': _sumCounts(preCoverageGoldBlockedJesters),
+      'pre_collection_gold_items': _sumCounts(preCoverageGoldBlockedItems),
+      'pre_collection_capacity_jesters': _sumCounts(
+        preCoverageCapacityBlockedJesters,
+      ),
+      'pre_collection_capacity_items': _sumCounts(
+        preCoverageCapacityBlockedItems,
+      ),
       'top_gold_jesters': _topCounts(goldBlockedJesters),
       'top_gold_items': _topCounts(goldBlockedItems),
+      'top_pre_collection_gold_jesters': _topCounts(
+        preCoverageGoldBlockedJesters,
+      ),
+      'top_pre_collection_gold_items': _topCounts(preCoverageGoldBlockedItems),
       'top_capacity_jesters': _topCounts(capacityBlockedJesters),
       'top_capacity_items': _topCounts(capacityBlockedItems),
     },
@@ -355,6 +425,13 @@ void _printReport(Map<String, Object?> report) {
     'gold item ${blocked['gold_items']}, '
     'capacity jester ${blocked['capacity_jesters']}, '
     'capacity item ${blocked['capacity_items']}',
+  );
+  print(
+    '- pre-collection blocked: gold jester '
+    "${blocked['pre_collection_gold_jesters']}, "
+    "gold item ${blocked['pre_collection_gold_items']}, "
+    "capacity jester ${blocked['pre_collection_capacity_jesters']}, "
+    "capacity item ${blocked['pre_collection_capacity_items']}",
   );
 }
 

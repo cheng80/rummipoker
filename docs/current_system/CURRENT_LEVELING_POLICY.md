@@ -50,6 +50,7 @@
 - 이미 한 번 구매한 뒤 판매한 Jester/Item은 `bought*Ids` 기록에 남는다. 다시 등장할 수는 있지만 “미수집 후보” 보정은 받지 않는다.
 - 이 보정은 직접 지급, 자동 구매, 특정 슬롯 고정, 카탈로그 제거가 아니다.
 - 수집 audit는 `tools/sim/runtime_market_offer_audit.dart`의 누적 collection path로 본다. 핵심 지표는 `seen coverage`, `bought coverage`, `gold blocked`, `capacity blocked`, `unseen/unbought ids`다.
+- `gold blocked`는 전체 수집 완료 전과 완료 후를 나눠 해석한다. 완료 후 반복 구매 차단은 수집 가능성 실패가 아니라 경제 압박/구매 우선순위 신호다.
 - 한 run에서 모든 후보를 동시에 보유해야 한다는 뜻은 아니다. 마켓을 반복 통과하는 여러 fresh path에서 전체 catalog가 실제로 보이고 살 수 있는지를 본다.
 
 ## 7. 과거 자료 사용법
