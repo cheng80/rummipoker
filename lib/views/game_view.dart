@@ -3414,9 +3414,14 @@ class _ScoringPreviewChip extends StatelessWidget {
     final accent = preview == null
         ? Colors.white.withValues(alpha: 0.34)
         : const Color(0xFFF4A81D);
+    final rankLabel = preview == null
+        ? ''
+        : gameHandRankLabel(preview.representativeRank);
     final label = preview == null
         ? '확정 가능 줄 없음'
-        : '${preview.lineCount}줄 · ${gameHandRankLabel(preview.representativeRank)} · 예상 +${preview.expectedScore}';
+        : preview.lineCount == 1
+        ? '1줄 확정 · $rankLabel · 예상 +${preview.expectedScore}'
+        : '${preview.lineCount}줄 확정 · 최고 $rankLabel · 예상 +${preview.expectedScore}';
     final detail = preview == null
         ? '빌드 효과 표시'
         : hasConstraint
