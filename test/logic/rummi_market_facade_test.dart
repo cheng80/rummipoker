@@ -658,6 +658,134 @@ void main() {
       expect(progress.marketModifiers.extraItemOfferSlots, 0);
     });
 
+    test('full passive rack still shows sell-and-replace passive offers', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'owned_passive',
+            timing: 'enter_market',
+            op: 'discount_first_reroll',
+            placement: 'passiveRack',
+            tags: const ['relic', 'market'],
+          ),
+          _itemJson(
+            id: 'upgrade_passive',
+            timing: 'second_confirm_each_station',
+            op: 'add_percent_of_first_confirm_score',
+            placement: 'passiveRack',
+            rarity: 'rare',
+            tags: const ['relic', 'battle', 'score'],
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..stageIndex = 4
+        ..gold = 20
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'owned_passive',
+              count: 1,
+              placement: ItemPlacement.passiveRack,
+            ),
+          ],
+          passiveRelicIds: ['owned_passive'],
+        );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(
+        facade.itemOffers.map((offer) => offer.contentId),
+        contains('upgrade_passive'),
+      );
+      expect(
+        facade.itemOffers.map((offer) => offer.contentId),
+        isNot(contains('owned_passive')),
+      );
+      expect(progress.buyItem(catalog.findById('upgrade_passive')!), isFalse);
+
+      expect(
+        progress.sellOwnedItem(catalog.findById('owned_passive')!),
+        isTrue,
+      );
+      expect(progress.buyItem(catalog.findById('upgrade_passive')!), isTrue);
+    });
+
+    test('full quick slots still show sell-and-replace quick item offers', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'owned_quick_a',
+            timing: 'use_battle',
+            op: 'add_board_discard',
+            placement: 'quickSlot',
+            tags: const ['battle'],
+          ),
+          _itemJson(
+            id: 'owned_quick_b',
+            timing: 'use_battle',
+            op: 'add_hand_discard',
+            placement: 'quickSlot',
+            tags: const ['battle'],
+          ),
+          _itemJson(
+            id: 'upgrade_quick',
+            timing: 'use_battle',
+            op: 'peek_deck_top',
+            placement: 'quickSlot',
+            rarity: 'rare',
+            tags: const ['battle', 'control'],
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..stageIndex = 4
+        ..gold = 20
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'owned_quick_a',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+            OwnedItemEntry(
+              itemId: 'owned_quick_b',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['owned_quick_a', 'owned_quick_b'],
+        );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(
+        facade.itemOffers.map((offer) => offer.contentId),
+        contains('upgrade_quick'),
+      );
+      expect(
+        facade.itemOffers.map((offer) => offer.contentId),
+        isNot(contains('owned_quick_a')),
+      );
+      expect(progress.buyItem(catalog.findById('upgrade_quick')!), isFalse);
+
+      expect(
+        progress.sellOwnedItem(catalog.findById('owned_quick_a')!),
+        isTrue,
+      );
+      expect(progress.buyItem(catalog.findById('upgrade_quick')!), isTrue);
+    });
+
     test('missing growth exposure can focus a random item offer slot', () {
       final catalog = ItemCatalog.fromJson({
         'schemaVersion': 1,
@@ -909,6 +1037,21 @@ void main() {
         expect(progress.marketModifiers.firstRerollDiscount, 0);
       },
     );
+
+    test('tile reroll keeps tile card offers available after bought tiles', () {
+      final progress = RummiRunProgress()..gold = 30;
+      progress.openShop(catalog: const [], rng: Random(1));
+
+      while (progress.tileOffers.isNotEmpty) {
+        expect(progress.buyTileOffer(0), isTrue);
+      }
+      expect(progress.addedDeckTiles, isNotEmpty);
+
+      final rerolled = progress.rerollTileOffers(rng: Random(2));
+
+      expect(rerolled, isTrue);
+      expect(progress.tileOffers, hasLength(3));
+    });
 
     test(
       'facade is snapshot-based and requires re-creation after mutations',

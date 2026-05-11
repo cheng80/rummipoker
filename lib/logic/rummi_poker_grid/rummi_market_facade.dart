@@ -424,8 +424,10 @@ class RummiMarketRuntimeFacade {
     final candidates = items
         .where((item) => !consumedIds.contains(item.id))
         .where(
-          (item) => progress.itemInventory.canAcquire(
-            item,
+          (item) => _canAppearAsItemOffer(
+            progress: progress,
+            catalog: catalog,
+            item: item,
             quickSlotCapacity: quickSlotCapacity,
             passiveRelicCapacity: passiveRelicCapacity,
           ),
@@ -455,6 +457,42 @@ class RummiMarketRuntimeFacade {
     }
     progress.recordSeenMarketItems(offers.map((offer) => offer.contentId));
     return offers;
+  }
+
+  static bool _canAppearAsItemOffer({
+    required RummiRunProgress progress,
+    required ItemCatalog catalog,
+    required ItemDefinition item,
+    required int quickSlotCapacity,
+    required int passiveRelicCapacity,
+  }) {
+    if (progress.itemInventory.canAcquire(
+      item,
+      quickSlotCapacity: quickSlotCapacity,
+      passiveRelicCapacity: passiveRelicCapacity,
+    )) {
+      return true;
+    }
+
+    final ownsSameItem = progress.itemInventory.ownedItems.any(
+      (entry) => entry.itemId == item.id,
+    );
+    if (ownsSameItem) return false;
+
+    return _hasSellableOwnedItemInPlacement(progress, catalog, item.placement);
+  }
+
+  static bool _hasSellableOwnedItemInPlacement(
+    RummiRunProgress progress,
+    ItemCatalog catalog,
+    ItemPlacement placement,
+  ) {
+    for (final entry in progress.itemInventory.ownedItems) {
+      if (entry.placement != placement) continue;
+      final item = catalog.findById(entry.itemId);
+      if (item != null && item.sellable) return true;
+    }
+    return false;
   }
 
   static List<RummiMarketTileOfferView> _buildTileOffers(
