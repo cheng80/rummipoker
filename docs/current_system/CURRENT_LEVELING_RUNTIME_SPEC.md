@@ -227,6 +227,9 @@ Rules:
 - Focus slot은 확률적으로만 생기며, 위치는 stage/reroll/rng에 따라 흔들린다.
 - Matching tag bonus는 tag당 +45, 최대 2개까지만 적용한다.
 - 이 보정은 직접 지급이 아니라 등장 확률 보정이다.
+- Item offer 후보 필터는 “즉시 살 수 있는가”만으로 닫지 않는다. Quick/Passive/Tool/Gear 같은 placement에 팔 수 있는 보유물이 있으면, 같은 placement의 다른 후보는 판매 후 교체 후보로 마켓에 남긴다.
+- 현재 보유 중인 동일 item은 중복 노출하지 않는다. 이미 팔았거나 아직 사지 않은 다른 item은 collection/replace 후보로 다시 등장할 수 있다.
+- Tile card offer는 기존 added deck tile 때문에 후보 풀에서 제거하지 않는다. 리롤 후 tile card 후보가 비는 상황은 노출 정책 회귀로 본다.
 
 Final band shape correction:
 

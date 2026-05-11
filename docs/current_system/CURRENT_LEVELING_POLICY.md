@@ -26,6 +26,9 @@
 - 특정 구간에서 필요한 성장 후보가 상점에 등장할 가능성을 올릴 수 있다.
 - 보정은 candidate availability, category/tag/rarity/slot weight, 가격 검토, reroll/seed 기반 노출 확률로만 한다.
 - 후보가 등장해도 구매 여부, 기존 보유물 판매 여부, 슬롯 정리는 유저 선택이다.
+- 슬롯이나 보유 lane이 찬 상태라도, 같은 lane의 기존 보유물을 팔고 갈아탈 수 있는 다른 후보는 마켓 후보에서 제거하지 않는다.
+- 현재 보유 중인 동일 Jester/Item은 중복 노출을 막을 수 있지만, 팔았거나 아직 사지 않은 다른 후보는 수집/교체 후보로 남겨야 한다.
+- 덱 타일 후보는 이미 구매한 추가 타일 때문에 리롤 후보가 0개가 되면 안 된다. 중복 가격이나 구매 우선순위는 별도 경제 문제로 보고, 후보 노출 자체는 유지한다.
 - Rare/Legendary 후보는 초반에도 확률 0으로 막지 않는다.
 
 ## 4. 시뮬레이션 해석
@@ -49,6 +52,7 @@
 - 현재 허용된 보정은 “아직 구매하지 않은 후보 +45”, “아직 마켓에서 보지 못한 후보 +90”처럼 Jester/Item 개별 후보의 등장 가중치만 올리는 방식이다.
 - 이미 한 번 구매한 뒤 판매한 Jester/Item은 `bought*Ids` 기록에 남는다. 다시 등장할 수는 있지만 “미수집 후보” 보정은 받지 않는다.
 - 이 보정은 직접 지급, 자동 구매, 특정 슬롯 고정, 카탈로그 제거가 아니다.
+- Quick/Passive/Tool/Gear lane이 가득 찬 상태에서 좋은 후보가 보이면, 유저가 기존 보유물을 팔고 교체할 수 있어야 한다. 따라서 “capacity blocked”는 후보 노출 실패가 아니라 현재 상태에서 즉시 구매가 막힌 신호로 해석한다.
 - 수집 audit는 `tools/sim/runtime_market_offer_audit.dart`의 누적 collection path로 본다. 핵심 지표는 `seen coverage`, `bought coverage`, `gold blocked`, `capacity blocked`, `unseen/unbought ids`다.
 - `gold blocked`는 전체 수집 완료 전과 완료 후를 나눠 해석한다. 완료 후 반복 구매 차단은 수집 가능성 실패가 아니라 경제 압박/구매 우선순위 신호다.
 - 한 run에서 모든 후보를 동시에 보유해야 한다는 뜻은 아니다. 마켓을 반복 통과하는 여러 fresh path에서 전체 catalog가 실제로 보이고 살 수 있는지를 본다.

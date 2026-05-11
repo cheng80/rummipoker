@@ -430,6 +430,9 @@ post lane reroll status:
 
 - `ec02c91` 이후 Jester/Slots와 Tool/Gear 리롤 비용/진행이 분리됐다.
 - 이 변경은 유저 혼란을 줄이는 UI/경제 구조 개선이지만, 리롤 spend와 후보 탐색 비용을 바꿀 수 있다.
+- 2026-05-11 후보 노출 보강: 슬롯/lane이 가득 찬 상태라도 같은 placement에 팔 수 있는 보유물이 있으면 다른 item 후보는 판매 후 교체 후보로 노출한다. Passive만이 아니라 Quick/Tool/Gear item lane 전체에 적용한다.
+- Tile card는 이미 산 추가 타일 때문에 후보 풀에서 제거하지 않는다. 따라서 “리롤했는데 후보 0개”는 가격/골드 문제가 아니라 후보 생성/표시 회귀로 본다.
+- 이 보강은 자동 판매나 자동 구매가 아니다. 실제 구매는 여전히 보유물 판매, 슬롯 정리, 골드 보유 여부를 유저가 선택해야 하며, 경제 audit의 `capacity blocked`와 `gold blocked`는 즉시 구매 실패 신호로 따로 해석한다.
 - 현재 문서에 기록된 r400 경제 follow-up은 lane split 전후 효과를 닫는 장기 검증이 아니다.
 - ML transition fresh economy r80에서 `reward 0.40 / price 2.2`는 balanced none 55.0%, balanced v9 52.5%, power none 65.0%, power v9 71.2%였다.
 - 같은 r80에서 `reward 0.40 / price 2.4`는 balanced none 58.8%, balanced v9 53.8%, power none 66.2%, power v9 75.0%였다.
