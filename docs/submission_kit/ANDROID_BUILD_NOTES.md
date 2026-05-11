@@ -48,6 +48,22 @@ keytool -genkey -v \
   -alias rummipoker_key
 ```
 
+```bash
+mkdir -p /Users/cheng80/android_keystore
+
+keytool -genkeypair \
+  -v \
+  -keystore /Users/cheng80/android_keystore/rummipoker_keystore.jks \
+  -storepass 'm32821616' \
+  -keypass 'm32821616' \
+  -alias rummipoker_key \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000 \
+  -dname "CN=rummipoker, OU=dev, O=rummipoker, L=Seoul, ST=Seoul, C=KR"
+
+```
+
 주의:
 
 - 이 `.jks` 파일은 앱 업데이트 서명에 계속 필요하므로 백업해야 한다.

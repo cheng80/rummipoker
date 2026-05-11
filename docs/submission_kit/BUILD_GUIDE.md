@@ -21,9 +21,9 @@ version: 1.0.0+1
 마켓 빌드에서 버전명/빌드번호를 명시해야 할 때는 플랫폼별 빌드 명령의 `--build-name`, `--build-number` 옵션으로 override할 수 있다.
 
 ```bash
-flutter build appbundle --build-name=1.0.1 --build-number=2
-flutter build ios --build-name=1.0.1 --build-number=2
-flutter build web --build-name=1.0.1 --build-number=2
+flutter build appbundle --build-name=1.0.0 --build-number=1
+flutter build ios --build-name=1.0.0 --build-number=1
+flutter build web --build-name=1.0.0 --build-number=1
 ```
 
 주의:
