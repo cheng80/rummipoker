@@ -28,6 +28,7 @@
 - docs/planning/competition/NEXT_SESSION_CHALLENGE_FULL_RUN_PROMPT.md 는 보존 중인 과거 full-run 재개 프롬프트다.
 - 그 문서는 5개 locale full-run을 제출 필수 gate로 보던 시점의 문서라, 다음 작업 판단 기준으로 쓰지 않는다.
 - 최신 기준은 ACTIVE_EXECUTION_PLAN, COMPETITION_SUBMISSION_CHECKLIST, 이 handoff 문서다.
+- 2026-05-11 이후 `contest_policy_v1`, market collection audit, economy choice probe가 추가됐지만 이는 레벨링 분석 보조 자료다. 공모전 제출 handoff 기준을 바꾸거나 full-run gate를 재개하는 근거로 쓰지 않는다.
 
 현재 제출 QA 결론:
 - `contest_full_run_bot` `ko` standard→challenge cycle 통과.
@@ -48,8 +49,9 @@
 - 최신 `ko` 재확인 도전: /tmp/rummipoker_contest_full_run_bot/challenge_ko_recheck_20260511_005027/10_contest_full_run_bot.log
 
 최근 상태 커밋:
-- ff22e9f Sync contest checklist closure state
-- e764b14 Close contest full-run bot plan
+- a5edabb Document economy choice comparison probe
+- 1a8f0e0 Clarify market collection gold block audit
+- 68eeeba Add market collection audit and contest sim policy
 
 이번 세션 첫 작업 순서:
 1. `git status --short`, `git log -3 --oneline`으로 시작한다.
