@@ -724,7 +724,8 @@ class GameSessionNotifier
       final item = catalog.findById(entry.itemId);
       if (item == null) continue;
       if (item.effect.timing == 'market_reroll' &&
-          item.effect.op == 'free_next_reroll' &&
+          (item.effect.op == 'free_next_reroll' ||
+              item.effect.op == 'discount_next_reroll') &&
           item.effect.consume) {
         return item;
       }

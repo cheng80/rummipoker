@@ -39,7 +39,7 @@
       "effectText": "The next shop reroll costs 1 less Gold.",
       "effect": {
         "timing": "market_reroll",
-        "op": "free_next_reroll",
+        "op": "discount_next_reroll",
         "amount": 1,
         "consume": true
       },

@@ -1531,6 +1531,86 @@ void main() {
       expect(updated.runProgress!.shopOffers.single.card.id, 'green_jester');
     });
 
+    test('rerollShopFromState는 1G 할인 리롤 칩을 소모하고 차액만 지불한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 33);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      notifier.setJesterCatalog(
+        RummiJesterCatalog.fromJsonString('''
+[
+  {
+    "id": "green_jester",
+    "displayName": "Green Jester",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "stateful_growth",
+    "trigger": "passive",
+    "conditionType": "none",
+    "conditionValue": null,
+    "value": 1,
+    "xValue": null,
+    "mappedTileColors": [],
+    "mappedTileNumbers": []
+  }
+]
+'''),
+      );
+      final itemCatalog = ItemCatalog.fromJson(const {
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          {
+            'id': 'reroll_token',
+            'displayName': 'Reroll Token',
+            'type': 'utility',
+            'rarity': 'common',
+            'basePrice': 3,
+            'sellPrice': 1,
+            'stackable': true,
+            'maxStack': 3,
+            'sellable': true,
+            'usableInBattle': false,
+            'placement': 'inventory',
+            'slotHint': 'utility',
+            'effectText': 'The next Market reroll costs 1 less Gold.',
+            'effect': {
+              'timing': 'market_reroll',
+              'op': 'discount_next_reroll',
+              'amount': 1,
+              'consume': true,
+            },
+          },
+        ],
+      });
+      state.runProgress!
+        ..gold = 5
+        ..rerollCost = 5
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'reroll_token',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+      notifier.markDirty();
+
+      final message = notifier.rerollShopFromState(itemCatalog: itemCatalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(message, isNull);
+      expect(updated.runProgress!.gold, 1);
+      expect(updated.runProgress!.rerollCost, 7);
+      expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
+      expect(updated.runProgress!.shopOffers.single.card.id, 'green_jester');
+    });
+
     test(
       'settlement/market/next station command가 gold, scene, checkpoint를 함께 갱신한다',
       () {

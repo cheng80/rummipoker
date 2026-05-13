@@ -74,17 +74,20 @@ class RummiMarketOfferView {
     required this.contentId,
     required this.displayName,
     required this.price,
+    int? originalPrice,
     required this.currency,
     required this.isAffordable,
     required this.card,
-  });
+  }) : originalPrice = originalPrice ?? price;
 
   factory RummiMarketOfferView.fromShopOffer(
     RummiShopOffer offer, {
     required int currentGold,
     int? price,
+    int? originalPrice,
   }) {
     final resolvedPrice = price ?? offer.price;
+    final resolvedOriginalPrice = originalPrice ?? resolvedPrice;
     return RummiMarketOfferView(
       offerId: 'jester:${offer.slotIndex}:${offer.card.id}',
       slotIndex: offer.slotIndex,
@@ -92,6 +95,7 @@ class RummiMarketOfferView {
       contentId: offer.card.id,
       displayName: offer.card.displayName,
       price: resolvedPrice,
+      originalPrice: resolvedOriginalPrice,
       currency: 'gold',
       isAffordable: currentGold >= resolvedPrice,
       card: offer.card,
@@ -104,9 +108,13 @@ class RummiMarketOfferView {
   final String contentId;
   final String displayName;
   final int price;
+  final int originalPrice;
   final String currency;
   final bool isAffordable;
   final RummiJesterCard card;
+
+  int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
+  bool get hasDiscount => discountAmount > 0;
 }
 
 class RummiMarketItemOfferView {
@@ -120,18 +128,21 @@ class RummiMarketItemOfferView {
     required this.effectText,
     required this.effectTextKey,
     required this.price,
+    int? originalPrice,
     required this.currency,
     required this.isAffordable,
     required this.item,
-  });
+  }) : originalPrice = originalPrice ?? price;
 
   factory RummiMarketItemOfferView.fromItemDefinition(
     ItemDefinition item, {
     required int slotIndex,
     required int currentGold,
     int? price,
+    int? originalPrice,
   }) {
     final resolvedPrice = price ?? item.basePrice;
+    final resolvedOriginalPrice = originalPrice ?? resolvedPrice;
     return RummiMarketItemOfferView(
       offerId: 'item:$slotIndex:${item.id}',
       slotIndex: slotIndex,
@@ -142,6 +153,7 @@ class RummiMarketItemOfferView {
       effectText: item.effectText,
       effectTextKey: item.effectTextKey,
       price: resolvedPrice,
+      originalPrice: resolvedOriginalPrice,
       currency: 'gold',
       isAffordable: currentGold >= resolvedPrice,
       item: item,
@@ -157,9 +169,13 @@ class RummiMarketItemOfferView {
   final String effectText;
   final String effectTextKey;
   final int price;
+  final int originalPrice;
   final String currency;
   final bool isAffordable;
   final ItemDefinition item;
+
+  int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
+  bool get hasDiscount => discountAmount > 0;
 }
 
 class RummiMarketTileOfferView {
@@ -321,15 +337,15 @@ class RummiMarketRuntimeFacade {
             ),
           )
           .toList(growable: false),
-      offers: progress.shopOffers
-          .map(
-            (offer) => RummiMarketOfferView.fromShopOffer(
-              offer,
-              currentGold: progress.gold,
-              price: progress.effectiveJesterOfferPrice(offer.slotIndex),
-            ),
-          )
-          .toList(growable: false),
+      offers: [
+        for (var index = 0; index < progress.shopOffers.length; index++)
+          RummiMarketOfferView.fromShopOffer(
+            progress.shopOffers[index],
+            currentGold: progress.gold,
+            price: progress.effectiveJesterOfferPrice(index),
+            originalPrice: progress.effectiveJesterOfferBasePrice(index),
+          ),
+      ],
       itemOfferSlotCount: _itemOfferSlotCount(
         progress,
         pressureProfile: pressureProfile,
@@ -451,6 +467,7 @@ class RummiMarketRuntimeFacade {
             slotIndex: offers.length,
             currentGold: progress.gold,
             price: progress.effectiveItemPrice(item),
+            originalPrice: progress.effectiveItemBasePrice(item),
           ),
         );
       }

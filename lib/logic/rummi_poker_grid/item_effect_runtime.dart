@@ -613,6 +613,7 @@ class ItemEffectRuntime {
       'use_battle:draw_if_hand_empty' ||
       'use_battle:increase_hand_size' ||
       'market_reroll:free_next_reroll' ||
+      'market_reroll:discount_next_reroll' ||
       'market_buy:discount_next_purchase' ||
       'market_buy_if_category:discount_next_purchase' ||
       'use_market:gain_gold' ||

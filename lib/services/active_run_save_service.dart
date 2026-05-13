@@ -285,6 +285,7 @@ class SavedRunProgressData {
     this.addedDeckTiles = const [],
     this.tileOffers = const [],
     this.pendingBossTileReward = false,
+    this.firstShopRerollDiscountConsumed = false,
     this.unlockedJesterSlots,
     this.unlockedQuickSlotCapacity,
     this.unlockedPassiveRelicCapacity,
@@ -324,6 +325,7 @@ class SavedRunProgressData {
   final List<Map<String, dynamic>> addedDeckTiles;
   final List<Map<String, dynamic>> tileOffers;
   final bool pendingBossTileReward;
+  final bool firstShopRerollDiscountConsumed;
   final int? unlockedJesterSlots;
   final int? unlockedQuickSlotCapacity;
   final int? unlockedPassiveRelicCapacity;
@@ -358,6 +360,7 @@ class SavedRunProgressData {
     'addedDeckTiles': addedDeckTiles,
     'tileOffers': tileOffers,
     'pendingBossTileReward': pendingBossTileReward,
+    'firstShopRerollDiscountConsumed': firstShopRerollDiscountConsumed,
     if (unlockedJesterSlots != null) 'unlockedJesterSlots': unlockedJesterSlots,
     if (unlockedQuickSlotCapacity != null)
       'unlockedQuickSlotCapacity': unlockedQuickSlotCapacity,
@@ -409,6 +412,8 @@ class SavedRunProgressData {
       addedDeckTiles: _jsonTileList(json['addedDeckTiles']),
       tileOffers: _jsonTileList(json['tileOffers']),
       pendingBossTileReward: json['pendingBossTileReward'] as bool? ?? false,
+      firstShopRerollDiscountConsumed:
+          json['firstShopRerollDiscountConsumed'] as bool? ?? false,
       unlockedJesterSlots: (json['unlockedJesterSlots'] as num?)?.toInt(),
       unlockedQuickSlotCapacity: (json['unlockedQuickSlotCapacity'] as num?)
           ?.toInt(),
@@ -804,6 +809,8 @@ class ActiveRunSaveService {
           .map((tile) => tile.toJson())
           .toList(growable: false),
       pendingBossTileReward: runProgress.pendingBossTileReward,
+      firstShopRerollDiscountConsumed:
+          runProgress.firstShopRerollDiscountConsumed,
       unlockedJesterSlots: runProgress.unlockedJesterSlots,
       unlockedQuickSlotCapacity: runProgress.unlockedQuickSlotCapacity,
       unlockedPassiveRelicCapacity: runProgress.unlockedPassiveRelicCapacity,
@@ -927,6 +934,7 @@ class ActiveRunSaveService {
           .toList(growable: false),
       tileOffers: data.tileOffers.map(Tile.fromJson).toList(growable: false),
       pendingBossTileReward: data.pendingBossTileReward,
+      firstShopRerollDiscountConsumed: data.firstShopRerollDiscountConsumed,
       unlockedJesterSlots: data.unlockedJesterSlots,
       unlockedQuickSlotCapacity: data.unlockedQuickSlotCapacity,
       unlockedPassiveRelicCapacity: data.unlockedPassiveRelicCapacity,

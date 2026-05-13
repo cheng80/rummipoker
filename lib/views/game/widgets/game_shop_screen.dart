@@ -257,6 +257,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   String? _marketUseFeedbackLabel;
   String? _marketUseFeedbackDelta;
   int _marketRerollFeedbackTick = 0;
+  List<RummiMarketItemOfferView>? _pinnedItemOffers;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
   bool _slotUnlockPresentationScheduled = false;
@@ -265,7 +266,30 @@ class _GameShopScreenState extends State<GameShopScreen>
       <RummiSlotUnlockKind>{};
   Future<void> _pendingStateSave = Future<void>.value();
 
-  RummiMarketRuntimeFacade get _market => widget.readMarketView();
+  RummiMarketRuntimeFacade get _market {
+    final market = widget.readMarketView();
+    final pinnedOffers = _pinnedItemOffers;
+    if (pinnedOffers == null) return market;
+    return market.withItemOffers(
+      _repricePinnedItemOffers(pinnedOffers, market),
+    );
+  }
+
+  List<RummiMarketItemOfferView> _repricePinnedItemOffers(
+    List<RummiMarketItemOfferView> offers,
+    RummiMarketRuntimeFacade market,
+  ) {
+    return [
+      for (final offer in offers)
+        RummiMarketItemOfferView.fromItemDefinition(
+          offer.item,
+          slotIndex: offer.slotIndex,
+          currentGold: market.gold,
+          price: offer.price,
+          originalPrice: offer.originalPrice,
+        ),
+    ];
+  }
 
   GlobalKey get _activeMarketOffersTutorialKey =>
       _shopTab == _MarketShopTab.cardsAndQuickSlots
@@ -839,6 +863,9 @@ class _GameShopScreenState extends State<GameShopScreen>
       return;
     }
     setState(() {
+      if (placement != null) {
+        _pinnedItemOffers = null;
+      }
       final market = _market;
       _marketRerollFeedbackTick++;
       _clampOfferPageForLane(market, lane);
@@ -923,6 +950,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       return;
     }
     setState(() {
+      _pinnedItemOffers = null;
       final market = _market;
       _clampOfferPageForLane(market, _currentOfferLane);
       final purchasedSlot = _findPurchasedItemSlot(market, boughtOffer);
@@ -1251,6 +1279,9 @@ class _GameShopScreenState extends State<GameShopScreen>
     final feedbackTick = _marketUseFeedbackTick + 1;
     final goldGain = _marketUseGoldGain(item);
     setState(() {
+      if (item.effect.op == 'reroll_item_offers_only') {
+        _pinnedItemOffers = null;
+      }
       _marketUseFeedbackTick = feedbackTick;
       _marketUseFeedbackLabel = '사용 완료';
       _marketUseFeedbackDelta = _marketUseFeedbackDeltaLabel(item);
@@ -1339,6 +1370,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     if (!ok) return;
     showBottomNotice(context, '제스터를 판매했습니다.');
     setState(() {
+      _pinnedItemOffers = marketBeforeSell.itemOffers;
       _startJesterSaleFlight(
         entry: soldEntry,
         startOffset: startOffset,
@@ -1356,6 +1388,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   }
 
   void _sellMarketItem(RummiMarketItemSlotView slot) {
+    final marketBeforeSell = _market;
     final item = slot.item;
     if (item == null) return;
     final startOffset = _flightCenterForKey(_itemSlotKey(slot.slotLabel));
@@ -1364,6 +1397,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     if (!ok) return;
     showBottomNotice(context, '아이템을 판매했습니다.');
     setState(() {
+      _pinnedItemOffers = marketBeforeSell.itemOffers;
       _startSaleFlight(
         slot: slot,
         item: item,
@@ -3698,15 +3732,10 @@ class _GameShopOfferCard extends StatelessWidget {
             const SizedBox(height: 3),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                '${offer.price}G',
-                maxLines: 1,
-                style: TextStyle(
-                  color: canAfford ? const Color(0xFFF2C14E) : Colors.white38,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  height: 1.0,
-                ),
+              child: _MarketOfferPriceLabel(
+                price: offer.price,
+                originalPrice: offer.originalPrice,
+                isAffordable: canAfford,
               ),
             ),
           ],
@@ -3796,21 +3825,92 @@ class _MarketItemOfferCard extends StatelessWidget {
             const SizedBox(height: 3),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                '${offer.price}G',
-                maxLines: 1,
-                style: TextStyle(
-                  color: offer.isAffordable
-                      ? const Color(0xFFF2C14E)
-                      : Colors.white38,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  height: 1.0,
-                ),
+              child: _MarketOfferPriceLabel(
+                price: offer.price,
+                originalPrice: offer.originalPrice,
+                isAffordable: offer.isAffordable,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MarketOfferPriceLabel extends StatelessWidget {
+  const _MarketOfferPriceLabel({
+    required this.price,
+    required this.originalPrice,
+    required this.isAffordable,
+  });
+
+  final int price;
+  final int originalPrice;
+  final bool isAffordable;
+
+  @override
+  Widget build(BuildContext context) {
+    final priceColor = isAffordable ? const Color(0xFFF2C14E) : Colors.white38;
+    if (originalPrice <= price) {
+      return Text(
+        '${price}G',
+        maxLines: 1,
+        style: TextStyle(
+          color: priceColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          height: 1.0,
+        ),
+      );
+    }
+
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 3,
+        children: [
+          Text(
+            '${originalPrice}G',
+            maxLines: 1,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.45),
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+              height: 1.0,
+              decoration: TextDecoration.lineThrough,
+              decorationColor: Colors.white.withValues(alpha: 0.55),
+            ),
+          ),
+          Text(
+            '${price}G',
+            maxLines: 1,
+            style: TextStyle(
+              color: priceColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              height: 1.0,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2D6F9E),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text(
+              '할인',
+              maxLines: 1,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 7,
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

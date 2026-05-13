@@ -692,6 +692,44 @@ void main() {
       },
     );
 
+    test(
+      'market reroll discount item uses its amount instead of making reroll free',
+      () {
+        final item = _item(
+          id: 'reroll_token',
+          timing: 'market_reroll',
+          op: 'discount_next_reroll',
+          placement: ItemPlacement.inventory,
+          amount: 1,
+          consume: true,
+        );
+        final runProgress = RummiRunProgress()
+          ..rerollCost = 5
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'reroll_token',
+                count: 1,
+                placement: ItemPlacement.inventory,
+              ),
+            ],
+          );
+
+        final result = ItemEffectRuntime.applyMarketRerollItem(
+          item: item,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(runProgress.effectiveRerollCost(), 4);
+        expect(runProgress.itemInventory.ownedItems, isEmpty);
+        expect(result.events.map((event) => event.kind), [
+          ItemEffectEventKind.marketModifierQueued,
+          ItemEffectEventKind.itemConsumed,
+        ]);
+      },
+    );
+
     test('market use item gains gold and consumes inventory stack', () {
       final item = _item(
         id: 'coin_cache',
@@ -1209,7 +1247,7 @@ void main() {
           'use_battle:peek_deck_discard_one',
           'use_battle:draw_if_hand_empty',
           'use_battle:increase_hand_size',
-          'market_reroll:free_next_reroll',
+          'market_reroll:discount_next_reroll',
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',
           'use_market:gain_gold',

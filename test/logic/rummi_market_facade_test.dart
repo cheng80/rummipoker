@@ -73,6 +73,179 @@ void main() {
       expect(facade.itemOffers, isEmpty);
     });
 
+    test('keeps remaining jester offer prices after buying another offer', () {
+      final progress = RummiRunProgress()
+        ..gold = 30
+        ..shopOffers.addAll([
+          RummiShopOffer(slotIndex: 0, card: _jester(id: 'jester_a'), price: 3),
+          RummiShopOffer(slotIndex: 1, card: _jester(id: 'jester_b'), price: 4),
+          RummiShopOffer(
+            slotIndex: 2,
+            card: _jester(id: 'half_jester'),
+            price: 5,
+          ),
+        ]);
+
+      expect(progress.buyOffer(1), isTrue);
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(facade.offers.map((offer) => offer.contentId), [
+        'jester_a',
+        'half_jester',
+      ]);
+      expect(facade.offers.map((offer) => offer.price), [5, 5]);
+    });
+
+    test(
+      'keeps remaining jester offers normally priced after any offer purchase',
+      () {
+        for (final boughtIndex in [0, 1, 2]) {
+          final progress = RummiRunProgress()
+            ..gold = 30
+            ..shopOffers.addAll([
+              RummiShopOffer(
+                slotIndex: 0,
+                card: _jester(id: 'jester_a'),
+                price: 3,
+              ),
+              RummiShopOffer(
+                slotIndex: 1,
+                card: _jester(id: 'jester_b'),
+                price: 4,
+              ),
+              RummiShopOffer(
+                slotIndex: 2,
+                card: _jester(id: 'jester_c'),
+                price: 5,
+              ),
+            ]);
+
+          expect(progress.buyOffer(boughtIndex), isTrue);
+
+          final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+          expect(
+            facade.offers,
+            everyElement(
+              isA<RummiMarketOfferView>()
+                  .having((offer) => offer.price, 'price', greaterThan(0))
+                  .having((offer) => offer.hasDiscount, 'hasDiscount', isFalse),
+            ),
+            reason: 'boughtIndex=$boughtIndex',
+          );
+          expect(facade.offers.map((offer) => offer.price), [5, 5]);
+        }
+      },
+    );
+
+    test('consumes jester purchase discount after one offer purchase', () {
+      final progress = RummiRunProgress()
+        ..gold = 30
+        ..shopOffers.addAll([
+          RummiShopOffer(slotIndex: 0, card: _jester(id: 'jester_a'), price: 6),
+          RummiShopOffer(slotIndex: 1, card: _jester(id: 'jester_b'), price: 6),
+        ]);
+      progress.queueMarketModifier(
+        op: 'discount_next_purchase',
+        amount: 2,
+        category: 'jester',
+      );
+
+      final before = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(before.offers.map((offer) => offer.hasDiscount), [true, true]);
+      expect(before.offers.first.originalPrice, 5);
+      expect(before.offers.first.price, 3);
+
+      expect(progress.buyOffer(0), isTrue);
+
+      final after = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(after.offers.single.contentId, 'jester_b');
+      expect(after.offers.single.originalPrice, 5);
+      expect(after.offers.single.price, 5);
+      expect(after.offers.single.hasDiscount, isFalse);
+    });
+
+    test('item purchase discount does not leak into jester offer prices', () {
+      final progress = RummiRunProgress()
+        ..gold = 30
+        ..shopOffers.add(
+          RummiShopOffer(slotIndex: 0, card: _jester(id: 'jester_a'), price: 6),
+        );
+      progress.queueMarketModifier(
+        op: 'discount_next_purchase',
+        amount: 2,
+        category: 'item',
+      );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(facade.offers.single.originalPrice, 5);
+      expect(facade.offers.single.price, 5);
+      expect(facade.offers.single.hasDiscount, isFalse);
+    });
+
+    test('consumes item purchase discount after one item purchase', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'tool_coupon_target',
+            timing: 'use_market',
+            op: 'gain_gold',
+            placement: 'inventory',
+          ),
+          _itemJson(
+            id: 'quick_coupon_target',
+            timing: 'use_battle',
+            op: 'add_board_discard',
+            placement: 'quickSlot',
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()..gold = 30;
+      progress.queueMarketModifier(
+        op: 'discount_next_purchase',
+        amount: 2,
+        category: 'item',
+      );
+
+      final before = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(before.itemOffers, isNotEmpty);
+      for (final offer in before.itemOffers) {
+        expect(offer.price, max(0, offer.originalPrice - 2));
+        expect(offer.hasDiscount, isTrue);
+      }
+
+      final bought = before.itemOffers.first;
+      expect(
+        progress.buyItem(
+          bought.item,
+          price: bought.price,
+          itemCatalog: catalog,
+        ),
+        isTrue,
+      );
+
+      final after = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(after.itemOffers, isNotEmpty);
+      for (final offer in after.itemOffers) {
+        expect(offer.price, offer.originalPrice);
+        expect(offer.hasDiscount, isFalse);
+      }
+    });
+
     test('maps tile offers and added deck tiles into market facade', () {
       final progress = RummiRunProgress()
         ..gold = 3
@@ -179,7 +352,10 @@ void main() {
       final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
 
       expect(facade.rerollCost, 3);
+      expect(facade.offers.single.originalPrice, 5);
       expect(facade.offers.single.price, 2);
+      expect(facade.offers.single.discountAmount, 3);
+      expect(facade.offers.single.hasDiscount, isTrue);
       expect(facade.offers.single.isAffordable, isTrue);
     });
 
@@ -1018,6 +1194,27 @@ void main() {
         originalItemOffset + progress.marketModifiers.itemOfferSlotCount,
       );
       expect(progress.shopOffers.map((offer) => offer.card.id), jesterOfferIds);
+    });
+
+    test('first free jester reroll is not restored on the next market', () {
+      final catalog = List<RummiJesterCard>.generate(
+        5,
+        (index) => _jester(id: 'offer_$index'),
+      );
+      final progress = RummiRunProgress()..gold = 20;
+
+      progress.openShop(catalog: catalog, rng: Random(1));
+      expect(progress.effectiveRerollCost(), 0);
+
+      expect(progress.rerollShop(catalog: catalog, rng: Random(2)), isTrue);
+      expect(progress.gold, 20);
+
+      progress.openShop(catalog: catalog, rng: Random(3));
+
+      expect(
+        progress.effectiveRerollCost(),
+        RummiRunProgress.shopBaseRerollCost,
+      );
     });
 
     test(

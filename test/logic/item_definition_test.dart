@@ -109,6 +109,11 @@ void main() {
       expect(translationJson, contains('"최대 손패 크기 +1."'));
 
       expect(catalog.findById('move_token')!.effect.op, 'add_board_move');
+      expect(
+        catalog.findById('reroll_token')!.effect.op,
+        'discount_next_reroll',
+      );
+      expect(catalog.findById('reroll_token')!.effect.amount, 1);
       expect(catalog.findById('battle_pouch')!.effect.op, 'increase_hand_size');
       expect(catalog.findById('battle_pouch')!.effect.timing, 'use_battle');
       expect(catalog.findById('travel_pouch')!.effect.op, 'increase_hand_size');

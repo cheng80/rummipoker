@@ -1084,6 +1084,7 @@ class RummiRunProgress {
     List<Tile> addedDeckTiles = const [],
     List<Tile> tileOffers = const [],
     this.pendingBossTileReward = false,
+    this.firstShopRerollDiscountConsumed = false,
     int? unlockedJesterSlots,
     int? unlockedQuickSlotCapacity,
     int? unlockedPassiveRelicCapacity,
@@ -1184,6 +1185,7 @@ class RummiRunProgress {
   final List<Tile> addedDeckTiles = <Tile>[];
   final List<Tile> tileOffers = <Tile>[];
   bool pendingBossTileReward = false;
+  bool firstShopRerollDiscountConsumed = false;
   final Map<int, int> _statefulValuesBySlot = <int, int>{};
   final Map<RummiHandRank, int> _playedHandCounts = <RummiHandRank, int>{};
   final Map<RummiHandRank, RummiHandGrowthState> _handGrowthStates =
@@ -1263,6 +1265,7 @@ class RummiRunProgress {
       addedDeckTiles: List<Tile>.from(addedDeckTiles),
       tileOffers: List<Tile>.from(tileOffers),
       pendingBossTileReward: pendingBossTileReward,
+      firstShopRerollDiscountConsumed: firstShopRerollDiscountConsumed,
       unlockedJesterSlots: unlockedJesterSlots,
       unlockedQuickSlotCapacity: unlockedQuickSlotCapacity,
       unlockedPassiveRelicCapacity: unlockedPassiveRelicCapacity,
@@ -1587,7 +1590,9 @@ class RummiRunProgress {
         marketModifiers.nextMarketExtraJesterOfferSlots;
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
-      firstRerollDiscount: RummiEconomyConfig.shopFirstRerollDiscount,
+      firstRerollDiscount: firstShopRerollDiscountConsumed
+          ? 0
+          : RummiEconomyConfig.shopFirstRerollDiscount,
       nextPurchaseDiscount: 0,
       nextJesterPurchaseDiscount: 0,
       nextItemPurchaseDiscount: 0,
@@ -1654,10 +1659,35 @@ class RummiRunProgress {
     );
   }
 
+  int effectiveJesterOfferBasePrice(int offerIndex) {
+    if (offerIndex < 0 || offerIndex >= shopOffers.length) return 0;
+    final offer = shopOffers[offerIndex];
+    return effectivePurchaseBasePrice(
+      basePrice: offer.price,
+      jester: offer.card,
+    );
+  }
+
   int effectiveItemPrice(ItemDefinition item) {
     return effectivePurchasePrice(
       basePrice: item.basePrice,
       category: 'item',
+      item: item,
+    );
+  }
+
+  int effectiveItemBasePrice(ItemDefinition item) {
+    return effectivePurchaseBasePrice(basePrice: item.basePrice, item: item);
+  }
+
+  int effectivePurchaseBasePrice({
+    required int basePrice,
+    RummiJesterCard? jester,
+    ItemDefinition? item,
+  }) {
+    return _growthAccessMarketPrice(
+      scaledBasePrice: RummiEconomyConfig.scaledMarketPrice(basePrice),
+      jester: jester,
       item: item,
     );
   }
@@ -1668,8 +1698,8 @@ class RummiRunProgress {
     RummiJesterCard? jester,
     ItemDefinition? item,
   }) {
-    final scaledBasePrice = _growthAccessMarketPrice(
-      scaledBasePrice: RummiEconomyConfig.scaledMarketPrice(basePrice),
+    final scaledBasePrice = effectivePurchaseBasePrice(
+      basePrice: basePrice,
       jester: jester,
       item: item,
     );
@@ -1830,6 +1860,7 @@ class RummiRunProgress {
     }
     gold -= cost;
     rerollCost += shopRerollCostStep;
+    _markFirstShopRerollDiscountConsumed();
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
       firstRerollDiscount: 0,
@@ -1851,6 +1882,7 @@ class RummiRunProgress {
     }
     gold -= cost;
     rerollCost += shopRerollCostStep;
+    _markFirstShopRerollDiscountConsumed();
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
       firstRerollDiscount: 0,
@@ -1866,6 +1898,7 @@ class RummiRunProgress {
     }
     gold -= cost;
     _increaseItemRerollCostFor(placement);
+    _markFirstShopRerollDiscountConsumed();
     final nextOffset =
         marketModifiers.itemOfferRerollOffsetFor(placement) +
         marketModifiers.itemOfferSlotCount;
@@ -1890,6 +1923,12 @@ class RummiRunProgress {
       consumedItemOfferIds: const [],
     );
     return true;
+  }
+
+  void _markFirstShopRerollDiscountConsumed() {
+    if (marketModifiers.firstRerollDiscount > 0) {
+      firstShopRerollDiscountConsumed = true;
+    }
   }
 
   void _increaseItemRerollCostFor(ItemPlacement placement) {
