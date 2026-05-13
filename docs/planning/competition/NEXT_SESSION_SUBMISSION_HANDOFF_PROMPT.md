@@ -35,6 +35,7 @@
 - `contest_full_run_bot` `en` standard→challenge cycle 통과.
 - 최신 UI/Web 회귀 수정 뒤 `ko` standard→challenge 재확인 통과.
 - 2026-05-14 상점 가격/오퍼 회귀는 로직·위젯 테스트로 닫았다. 보유 Jester/Item/Passive 판매 시 보이는 오퍼 리스트가 명시적 리롤 없이 바뀌지 않고, Jester 오퍼 구매 후 남은 오퍼 가격이 0G로 튀지 않으며, 구매 할인은 UI에 원가/할인가/`할인` 배지로 표시된다.
+- 2026-05-14 상점 할인 시각 봇 `market_discount_visual_bot`을 추가했다. 같은 fixture 10회 반복이 아니라 7개 fresh 시나리오 매트릭스가 기본이며, 할인 Jester 구매/판매, 할인 Item offer 표시, Passive 판매 후 offer 유지, 리롤 할인/피드백, 비할인 Jester/Item 가격 표시, 슬롯 해금 Market 상태를 각각 별도 Chrome/Flutter drive 실행으로 확인한다. 이는 상점 회귀 눈검증용 보조 QA이며 full-play evidence나 full-run gate 재개 근거가 아니다.
 - `CONTEST_FULL_RUN_BOT_PASS`, `All tests passed!`, `S8 boss: run complete` 확인.
 - grep 기준 game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
@@ -48,15 +49,21 @@
 - `en` 도전: /tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log
 - 최신 `ko` 재확인 표준: /tmp/rummipoker_contest_full_run_bot/standard_ko_recheck_20260510_233626/10_contest_full_run_bot.log
 - 최신 `ko` 재확인 도전: /tmp/rummipoker_contest_full_run_bot/challenge_ko_recheck_20260511_005027/10_contest_full_run_bot.log
+- 상점 할인 시각 봇 전체 매트릭스: /tmp/rummipoker_market_discount_visual_bot/matrix_full_20260514_060908/10_market_discount_visual_bot.log
 
 최근 상태 커밋:
+- 2d1a4d4 Add market discount visual bot
 - d77f289 Fix shop offer pricing regressions
 - 200da7c Enhance iOS profile build documentation with debug execution instructions and clarify debug fixture visibility in release builds
-- 8e5716a Update Android build notes and guide for keystore creation and versioning
 
 최근 상점 회귀 수정 검증:
 - `flutter test test/logic/rummi_market_facade_test.dart test/logic/item_definition_test.dart test/logic/item_effect_runtime_test.dart test/providers/game_session_notifier_test.dart`
 - `flutter test test/views/game/widgets/game_shop_discount_badge_test.dart test/views/game/widgets/game_shop_sell_offer_stability_test.dart`
+- `flutter analyze integration_test/market_discount_visual_bot_test.dart`
+- `bash -n tools/market_discount_visual_bot.sh`
+- `tools/market_discount_visual_bot.sh --skip-pub-get --web-port 7371 --output-dir /tmp/rummipoker_market_discount_visual_bot/matrix_full_20260514_060908`
+  - 결과: `MARKET_DISCOUNT_VISUAL_BOT_PASS` 7건, `All tests passed!` 7건.
+  - 종료 후 WebDriver Chrome, ChromeDriver, Flutter web server 잔류 프로세스 없음.
 - `git diff --check`
 - `reroll_token`은 문구와 맞게 “다음 리롤 1G 할인”(`discount_next_reroll`)으로 정정했다. 기존 fixture용 `free_next_reroll` 지원은 남겨 두었다.
 
