@@ -211,6 +211,7 @@ void main() {
         expect(restored.session.rulesetId, 'current_defaults_v1');
         expect(restored.runProgress.gold, 42);
         expect(restored.runProgress.rerollCost, 6);
+        expect(restored.runProgress.tileRerollCost, 6);
         expect(restored.runProgress.itemRerollCost, 8);
         expect(restored.runProgress.quickSlotRerollCost, 9);
         expect(restored.runProgress.passiveRerollCost, 10);

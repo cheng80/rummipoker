@@ -287,6 +287,7 @@ class SavedRunProgressData {
     this.tileOffers = const [],
     this.pendingBossTileReward = false,
     this.firstShopRerollDiscountConsumed = false,
+    this.firstShopRerollDiscountConsumedLanes = const <String>[],
     this.unlockedJesterSlots,
     this.unlockedQuickSlotCapacity,
     this.unlockedPassiveRelicCapacity,
@@ -329,6 +330,7 @@ class SavedRunProgressData {
   final List<Map<String, dynamic>> tileOffers;
   final bool pendingBossTileReward;
   final bool firstShopRerollDiscountConsumed;
+  final List<String> firstShopRerollDiscountConsumedLanes;
   final int? unlockedJesterSlots;
   final int? unlockedQuickSlotCapacity;
   final int? unlockedPassiveRelicCapacity;
@@ -365,6 +367,8 @@ class SavedRunProgressData {
     'tileOffers': tileOffers,
     'pendingBossTileReward': pendingBossTileReward,
     'firstShopRerollDiscountConsumed': firstShopRerollDiscountConsumed,
+    'firstShopRerollDiscountConsumedLanes':
+        firstShopRerollDiscountConsumedLanes,
     if (unlockedJesterSlots != null) 'unlockedJesterSlots': unlockedJesterSlots,
     if (unlockedQuickSlotCapacity != null)
       'unlockedQuickSlotCapacity': unlockedQuickSlotCapacity,
@@ -419,6 +423,9 @@ class SavedRunProgressData {
       pendingBossTileReward: json['pendingBossTileReward'] as bool? ?? false,
       firstShopRerollDiscountConsumed:
           json['firstShopRerollDiscountConsumed'] as bool? ?? false,
+      firstShopRerollDiscountConsumedLanes: _jsonStringList(
+        json['firstShopRerollDiscountConsumedLanes'],
+      ),
       unlockedJesterSlots: (json['unlockedJesterSlots'] as num?)?.toInt(),
       unlockedQuickSlotCapacity: (json['unlockedQuickSlotCapacity'] as num?)
           ?.toInt(),
@@ -817,6 +824,9 @@ class ActiveRunSaveService {
       pendingBossTileReward: runProgress.pendingBossTileReward,
       firstShopRerollDiscountConsumed:
           runProgress.firstShopRerollDiscountConsumed,
+      firstShopRerollDiscountConsumedLanes:
+          runProgress.snapshotFirstShopRerollDiscountConsumedLanes().toList()
+            ..sort(),
       unlockedJesterSlots: runProgress.unlockedJesterSlots,
       unlockedQuickSlotCapacity: runProgress.unlockedQuickSlotCapacity,
       unlockedPassiveRelicCapacity: runProgress.unlockedPassiveRelicCapacity,
@@ -942,6 +952,9 @@ class ActiveRunSaveService {
       tileOffers: data.tileOffers.map(Tile.fromJson).toList(growable: false),
       pendingBossTileReward: data.pendingBossTileReward,
       firstShopRerollDiscountConsumed: data.firstShopRerollDiscountConsumed,
+      firstShopRerollDiscountConsumedLanes: data
+          .firstShopRerollDiscountConsumedLanes
+          .toSet(),
       unlockedJesterSlots: data.unlockedJesterSlots,
       unlockedQuickSlotCapacity: data.unlockedQuickSlotCapacity,
       unlockedPassiveRelicCapacity: data.unlockedPassiveRelicCapacity,
