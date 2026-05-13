@@ -1445,7 +1445,8 @@ void main() {
 
       expect(message, isNull);
       expect(updated.runProgress!.gold, 5);
-      expect(updated.runProgress!.rerollCost, 7);
+      expect(updated.runProgress!.rerollCost, 5);
+      expect(updated.runProgress!.tileRerollCost, 7);
       expect(updated.runProgress!.shopOffers, isEmpty);
       expect(updated.marketView!.tileOffers, hasLength(3));
     });

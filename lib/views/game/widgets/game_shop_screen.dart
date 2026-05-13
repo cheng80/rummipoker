@@ -786,7 +786,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     _MarketOfferLane lane,
   ) {
     final placement = _placementForOfferLane(lane);
-    if (lane == _MarketOfferLane.tile) return market.rerollCost;
+    if (lane == _MarketOfferLane.tile) return market.tileRerollCost;
     return placement == null
         ? market.rerollCost
         : market.itemRerollCostFor(placement);

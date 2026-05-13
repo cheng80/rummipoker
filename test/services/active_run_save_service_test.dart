@@ -489,6 +489,7 @@ void main() {
         });
 
         expect(restored.itemInventory.isEmpty, isTrue);
+        expect(restored.tileRerollCost, 6);
         expect(restored.itemRerollCost, 6);
         expect(restored.quickSlotRerollCost, 6);
         expect(restored.passiveRerollCost, 6);

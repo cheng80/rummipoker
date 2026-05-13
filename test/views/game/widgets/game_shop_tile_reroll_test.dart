@@ -92,7 +92,8 @@ void main() {
     var rerolled = false;
     var currentMarket = const RummiMarketRuntimeFacade(
       gold: 8,
-      rerollCost: 0,
+      rerollCost: 7,
+      tileRerollCost: 0,
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
       runtimeSnapshot: RummiJesterRuntimeSnapshot(),
       ownedEntries: [],
@@ -118,7 +119,8 @@ void main() {
       onBuyTileOffer: (_) {
         currentMarket = const RummiMarketRuntimeFacade(
           gold: 5,
-          rerollCost: 0,
+          rerollCost: 7,
+          tileRerollCost: 0,
           maxOwnedSlots: RummiRunProgress.maxJesterSlots,
           runtimeSnapshot: RummiJesterRuntimeSnapshot(),
           ownedEntries: [],
@@ -134,7 +136,8 @@ void main() {
         rerolled = true;
         currentMarket = const RummiMarketRuntimeFacade(
           gold: 5,
-          rerollCost: 2,
+          rerollCost: 7,
+          tileRerollCost: 2,
           maxOwnedSlots: RummiRunProgress.maxJesterSlots,
           runtimeSnapshot: RummiJesterRuntimeSnapshot(),
           ownedEntries: [],

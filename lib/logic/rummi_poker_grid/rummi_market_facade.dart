@@ -285,6 +285,7 @@ class RummiMarketRuntimeFacade {
   const RummiMarketRuntimeFacade({
     required this.gold,
     required this.rerollCost,
+    int? tileRerollCost,
     required this.maxOwnedSlots,
     required this.runtimeSnapshot,
     required this.ownedEntries,
@@ -302,7 +303,7 @@ class RummiMarketRuntimeFacade {
     this.tileOffers = const [],
     this.addedDeckTiles = const [],
     this.itemSlots = const [],
-  });
+  }) : tileRerollCost = tileRerollCost ?? rerollCost;
 
   factory RummiMarketRuntimeFacade.fromRunProgress(
     RummiRunProgress progress, {
@@ -313,6 +314,7 @@ class RummiMarketRuntimeFacade {
     return RummiMarketRuntimeFacade(
       gold: progress.gold,
       rerollCost: progress.effectiveRerollCost(),
+      tileRerollCost: progress.effectiveTileRerollCost(),
       itemRerollCost: progress.effectiveItemRerollCost(),
       quickSlotRerollCost: progress.effectiveItemRerollCostFor(
         ItemPlacement.quickSlot,
@@ -375,6 +377,7 @@ class RummiMarketRuntimeFacade {
     return RummiMarketRuntimeFacade(
       gold: gold,
       rerollCost: rerollCost,
+      tileRerollCost: tileRerollCost,
       itemRerollCost: itemRerollCost,
       quickSlotRerollCost: quickSlotRerollCost,
       passiveRerollCost: passiveRerollCost,
@@ -397,6 +400,7 @@ class RummiMarketRuntimeFacade {
 
   final int gold;
   final int rerollCost;
+  final int tileRerollCost;
   final int itemRerollCost;
   final int quickSlotRerollCost;
   final int passiveRerollCost;

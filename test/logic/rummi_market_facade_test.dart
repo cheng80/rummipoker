@@ -1158,7 +1158,7 @@ void main() {
       expect(progress.marketModifiers.extraJesterOfferSlots, 0);
     });
 
-    test('jester and item reroll costs advance independently', () {
+    test('jester, tile, and item reroll costs advance independently', () {
       final catalog = List<RummiJesterCard>.generate(
         5,
         (index) => _jester(id: 'offer_$index'),
@@ -1174,7 +1174,9 @@ void main() {
 
       expect(progress.gold, 30);
       expect(progress.rerollCost, 7);
+      expect(progress.tileRerollCost, 5);
       expect(progress.itemRerollCost, 5);
+      expect(progress.effectiveTileRerollCost(), 0);
       expect(
         progress.marketModifiers.itemOfferRerollOffset,
         originalItemOffset,
@@ -1186,8 +1188,9 @@ void main() {
 
       expect(progress.rerollItemOffers(), isTrue);
 
-      expect(progress.gold, 25);
+      expect(progress.gold, 30);
       expect(progress.rerollCost, 7);
+      expect(progress.tileRerollCost, 5);
       expect(progress.itemRerollCost, 7);
       expect(
         progress.marketModifiers.itemOfferRerollOffset,
@@ -1196,7 +1199,7 @@ void main() {
       expect(progress.shopOffers.map((offer) => offer.card.id), jesterOfferIds);
     });
 
-    test('first free jester reroll is not restored on the next market', () {
+    test('first free jester reroll is restored on the next market', () {
       final catalog = List<RummiJesterCard>.generate(
         5,
         (index) => _jester(id: 'offer_$index'),
@@ -1211,14 +1214,11 @@ void main() {
 
       progress.openShop(catalog: catalog, rng: Random(3));
 
-      expect(
-        progress.effectiveRerollCost(),
-        RummiRunProgress.shopBaseRerollCost,
-      );
+      expect(progress.effectiveRerollCost(), 0);
     });
 
     test(
-      'tile reroll refills only tile offers and consumes first free reroll',
+      'tile reroll refills only tile offers and consumes tile first free reroll',
       () {
         final progress = RummiRunProgress()..gold = 5;
         progress.openShop(catalog: const [], rng: Random(1));
@@ -1228,10 +1228,11 @@ void main() {
 
         expect(rerolled, isTrue);
         expect(progress.gold, 5);
-        expect(progress.rerollCost, 7);
+        expect(progress.rerollCost, 5);
+        expect(progress.tileRerollCost, 7);
+        expect(progress.effectiveRerollCost(), 0);
         expect(progress.shopOffers, isEmpty);
         expect(progress.tileOffers, hasLength(3));
-        expect(progress.marketModifiers.firstRerollDiscount, 0);
       },
     );
 

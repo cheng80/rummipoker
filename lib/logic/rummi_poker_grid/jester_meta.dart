@@ -1069,6 +1069,7 @@ class RummiRunProgress {
     this.runCompletionRewardClaimed = false,
     required this.gold,
     required this.rerollCost,
+    int? tileRerollCost,
     int? itemRerollCost,
     int? quickSlotRerollCost,
     int? passiveRerollCost,
@@ -1119,6 +1120,7 @@ class RummiRunProgress {
             )
             .toInt();
     this.itemRerollCost = itemRerollCost ?? rerollCost;
+    this.tileRerollCost = tileRerollCost ?? rerollCost;
     this.quickSlotRerollCost =
         quickSlotRerollCost ?? itemRerollCost ?? rerollCost;
     this.passiveRerollCost = passiveRerollCost ?? itemRerollCost ?? rerollCost;
@@ -1163,6 +1165,7 @@ class RummiRunProgress {
   bool runCompletionRewardClaimed = false;
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
+  int tileRerollCost = shopBaseRerollCost;
   int itemRerollCost = shopBaseRerollCost;
   int quickSlotRerollCost = shopBaseRerollCost;
   int passiveRerollCost = shopBaseRerollCost;
@@ -1581,18 +1584,18 @@ class RummiRunProgress {
         RummiMarketPressureProfile.standard,
   }) {
     rerollCost = shopBaseRerollCost;
+    tileRerollCost = shopBaseRerollCost;
     itemRerollCost = shopBaseRerollCost;
     quickSlotRerollCost = shopBaseRerollCost;
     passiveRerollCost = shopBaseRerollCost;
     toolRerollCost = shopBaseRerollCost;
     gearRerollCost = shopBaseRerollCost;
+    firstShopRerollDiscountConsumed = false;
     final nextMarketExtraJesterOfferSlots =
         marketModifiers.nextMarketExtraJesterOfferSlots;
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
-      firstRerollDiscount: firstShopRerollDiscountConsumed
-          ? 0
-          : RummiEconomyConfig.shopFirstRerollDiscount,
+      firstRerollDiscount: RummiEconomyConfig.shopFirstRerollDiscount,
       nextPurchaseDiscount: 0,
       nextJesterPurchaseDiscount: 0,
       nextItemPurchaseDiscount: 0,
@@ -1619,12 +1622,11 @@ class RummiRunProgress {
   bool canAfford(int cost) => gold >= cost;
 
   int effectiveRerollCost() {
-    return max(
-      0,
-      rerollCost -
-          marketModifiers.nextRerollDiscount -
-          marketModifiers.firstRerollDiscount,
-    );
+    return _effectiveRerollCostForRawCost(rerollCost);
+  }
+
+  int effectiveTileRerollCost() {
+    return _effectiveRerollCostForRawCost(tileRerollCost);
   }
 
   int effectiveItemRerollCost() {
@@ -1641,11 +1643,16 @@ class RummiRunProgress {
   }
 
   int effectiveItemRerollCostFor(ItemPlacement placement) {
+    return _effectiveRerollCostForRawCost(itemRerollCostFor(placement));
+  }
+
+  int _effectiveRerollCostForRawCost(int rawCost) {
+    final firstRerollDiscount = rawCost == shopBaseRerollCost
+        ? marketModifiers.firstRerollDiscount
+        : 0;
     return max(
       0,
-      itemRerollCostFor(placement) -
-          marketModifiers.nextRerollDiscount -
-          marketModifiers.firstRerollDiscount,
+      rawCost - marketModifiers.nextRerollDiscount - firstRerollDiscount,
     );
   }
 
@@ -1861,10 +1868,7 @@ class RummiRunProgress {
     gold -= cost;
     rerollCost += shopRerollCostStep;
     _markFirstShopRerollDiscountConsumed();
-    marketModifiers = marketModifiers.copyWith(
-      nextRerollDiscount: 0,
-      firstRerollDiscount: 0,
-    );
+    marketModifiers = marketModifiers.copyWith(nextRerollDiscount: 0);
     _generateOffers(
       catalog: catalog,
       rng: rng,
@@ -1876,17 +1880,14 @@ class RummiRunProgress {
   }
 
   bool rerollTileOffers({required Random rng}) {
-    final cost = effectiveRerollCost();
+    final cost = effectiveTileRerollCost();
     if (gold < cost) {
       return false;
     }
     gold -= cost;
-    rerollCost += shopRerollCostStep;
+    tileRerollCost += shopRerollCostStep;
     _markFirstShopRerollDiscountConsumed();
-    marketModifiers = marketModifiers.copyWith(
-      nextRerollDiscount: 0,
-      firstRerollDiscount: 0,
-    );
+    marketModifiers = marketModifiers.copyWith(nextRerollDiscount: 0);
     _generateTileOffers(rng);
     return true;
   }
@@ -1904,7 +1905,6 @@ class RummiRunProgress {
         marketModifiers.itemOfferSlotCount;
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
-      firstRerollDiscount: 0,
       itemOfferRerollOffset: placement == ItemPlacement.inventory
           ? nextOffset
           : marketModifiers.itemOfferRerollOffset,

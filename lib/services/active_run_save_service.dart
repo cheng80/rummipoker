@@ -270,6 +270,7 @@ class SavedRunProgressData {
     this.runCompletionRewardClaimed = false,
     required this.gold,
     required this.rerollCost,
+    int? tileRerollCost,
     int? itemRerollCost,
     int? quickSlotRerollCost,
     int? passiveRerollCost,
@@ -299,6 +300,7 @@ class SavedRunProgressData {
     this.seenBossModifierIds = const <String>[],
     this.clearedStationKeys = const <String>[],
   }) : itemRerollCost = itemRerollCost ?? rerollCost,
+       tileRerollCost = tileRerollCost ?? rerollCost,
        quickSlotRerollCost =
            quickSlotRerollCost ?? itemRerollCost ?? rerollCost,
        passiveRerollCost = passiveRerollCost ?? itemRerollCost ?? rerollCost,
@@ -310,6 +312,7 @@ class SavedRunProgressData {
   final bool runCompletionRewardClaimed;
   final int gold;
   final int rerollCost;
+  final int tileRerollCost;
   final int itemRerollCost;
   final int quickSlotRerollCost;
   final int passiveRerollCost;
@@ -345,6 +348,7 @@ class SavedRunProgressData {
     'runCompletionRewardClaimed': runCompletionRewardClaimed,
     'gold': gold,
     'rerollCost': rerollCost,
+    'tileRerollCost': tileRerollCost,
     'itemRerollCost': itemRerollCost,
     'quickSlotRerollCost': quickSlotRerollCost,
     'passiveRerollCost': passiveRerollCost,
@@ -386,6 +390,7 @@ class SavedRunProgressData {
           json['runCompletionRewardClaimed'] as bool? ?? false,
       gold: (json['gold'] as num).toInt(),
       rerollCost: (json['rerollCost'] as num).toInt(),
+      tileRerollCost: (json['tileRerollCost'] as num?)?.toInt(),
       itemRerollCost: (json['itemRerollCost'] as num?)?.toInt(),
       quickSlotRerollCost: (json['quickSlotRerollCost'] as num?)?.toInt(),
       passiveRerollCost: (json['passiveRerollCost'] as num?)?.toInt(),
@@ -770,6 +775,7 @@ class ActiveRunSaveService {
       runCompletionRewardClaimed: runProgress.runCompletionRewardClaimed,
       gold: runProgress.gold,
       rerollCost: runProgress.rerollCost,
+      tileRerollCost: runProgress.tileRerollCost,
       itemRerollCost: runProgress.itemRerollCost,
       quickSlotRerollCost: runProgress.quickSlotRerollCost,
       passiveRerollCost: runProgress.passiveRerollCost,
@@ -916,6 +922,7 @@ class ActiveRunSaveService {
       runCompletionRewardClaimed: data.runCompletionRewardClaimed,
       gold: data.gold,
       rerollCost: data.rerollCost,
+      tileRerollCost: data.tileRerollCost,
       itemRerollCost: data.itemRerollCost,
       quickSlotRerollCost: data.quickSlotRerollCost,
       passiveRerollCost: data.passiveRerollCost,
