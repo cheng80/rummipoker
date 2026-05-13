@@ -15,6 +15,8 @@
 
 현재는 공모전 기준 풀런봇 QA 플랜을 제출용 handoff 상태로 닫았다. 한 locale 사이클 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했고, S2/S4/S6 Boss 보상 슬롯 해금, Market 해금 연출, 시스템 locale 기본값, debug fixture, web 제출 산물/BGM/메뉴/정산 UI 회귀 수정 뒤 2026-05-10~11 최신 후보에서 `ko` standard→challenge 재확인도 통과했다. `ja`, `zh-CN`, `zh-TW` full-run은 제출 gate 필수 대기열에서 내리고, 문제가 발견될 때 또는 공모전 이후 추가 검증으로 잡는다. S9+ 무한 도전 장기 생존은 계속 별도 확장 검증이다.
 
+2026-05-14 제출 전 상점 회귀 수정도 닫았다. 보유 Jester/Item/Passive 판매 시 명시적 리롤 없이 오퍼 리스트가 바뀌지 않게 했고, Jester 오퍼 구매 후 남은 오퍼 가격이 0G로 튀던 stale slot index 경로를 막았다. 첫 무료 Jester 리롤은 다음 Market에서 다시 복원되지 않도록 저장/복원 상태까지 보강했으며, 구매 할인은 원가/할인가/`할인` 배지로 UI에 드러난다. 검증은 `rummi_market_facade_test`, `item_definition_test`, `item_effect_runtime_test`, `game_session_notifier_test`, `game_shop_discount_badge_test`, `game_shop_sell_offer_stability_test`로 완료했다. 이 수정은 full-run gate 재개 근거가 아니라 제출 전 발견된 상점 회귀의 로직/위젯 회귀 방지다.
+
 ## 2. 공모전 기준 다음 작업
 
 상세 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.

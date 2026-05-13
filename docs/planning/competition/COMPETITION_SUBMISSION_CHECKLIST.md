@@ -22,6 +22,7 @@
 - 2026-05-10 `en` fresh 표준 locale gate는 `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - 2026-05-10 `en` fresh 도전 locale gate는 `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`에서 `CONTEST_FULL_RUN_BOT_PASS`와 `All tests passed!`를 기록했다.
 - `ko`, `en` 표준→도전 2사이클은 완료됐다. 이후 발견한 잠긴 슬롯 해금 공백은 S2/S4/S6 Boss 보상과 Market 진입 연출로 보강했고, 앱 기본 언어도 OS/브라우저 시스템 locale을 따르게 수정했다. `slot_unlock_market` fixture 눈검증도 완료했다. 이후 web 제출 산물/BGM/릴리즈 메뉴/정산 UI 회귀를 수정했고, 최신 후보에서 `ko` standard→challenge 재확인을 다시 통과했다. 한 locale 사이클의 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ja`, `zh-CN`, `zh-TW`는 제출 gate 필수 대기열에서 내리고, 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다.
+- 2026-05-14 제출 전 상점 가격/오퍼 회귀 수정 완료: 보유 Jester/Item/Passive 판매는 명시적 리롤 없이 현재 보이는 오퍼 리스트를 유지하고, 오퍼 구매 후 남은 Jester/Item 가격이 자동으로 0G가 되지 않으며, 구매 할인은 UI에 원가/할인가/`할인` 배지로 표시된다. `reroll_token`은 문구와 맞게 다음 리롤 1G 할인으로 동작한다. 커밋: `d77f289`.
 - 제출 전 핵심 룰 보강이었던 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 행성카드형 성장 아이템, 초과 점수 기반 대표 족보 성장, 타이틀 `런 정보`, 게임오버 정산/도발 문구는 런타임 반영과 핵심 검증을 마쳤다.
 - S8 boss 이후는 더 이상 애매한 `계속 진행`이 아니라 `무한 도전 진입`으로 표시한다. S9+는 Scout 1배, Clash 1.5배, Boss 2배 target 비율을 따르고 Station Select, 전투 HUD, 정산 라벨에서 위험한 무한 구간 색상으로 드러낸다.
 - runtime/economy/boss pool은 공모전 기준 임시 handoff 가능 상태이며, 장기 밸런스 완료는 아니다.
@@ -59,6 +60,7 @@
 - 2026-05-10 추가 UX/QA 보강: 앱 기본 언어는 특정 한국어 `startLocale` 강제가 아니라 OS/브라우저 시스템 locale을 따르게 했다. 해금 연출 확인용 debug fixture `slot_unlock_market`를 추가했고, 확인 URL은 `/game?fixture=slot_unlock_market`다. 튜토리얼 검증 전용이 아닌 debug fixture는 자동 튜토리얼을 띄우지 않고, 튜토리얼은 다시 보기 버튼으로만 연다. 해금 연출은 자물쇠 확대/fade-out과 슬롯 pulse가 1회 보이는 기준으로 눈검증 완료했다. 커밋: `4dea65c Add boss slot unlock rewards`, `8adc86d Add slot unlock debug fixture`.
 - 2026-05-10 추가 Web/릴리즈 보강: icon/splash를 새 asset으로 반영하고 OG image를 `https://cheng80.myqnapcloud.com/rummipoker/assets/assets/splash.png` 기준으로 잡았다. 릴리즈 홈 메뉴는 도감 중심으로 정리하고 debug/special 메뉴는 debug gate 뒤로 숨겼다.
 - 2026-05-10 추가 오디오/정산 회귀 수정: 웹 BGM은 첫 사용자 터치/홈 카드 tap에서 unlock되고, 스크롤 중 같은 BGM을 stop/play 반복해 묵음이 되는 경로를 막았다. 정산 sheet의 노란 밑줄은 `TextDecoration` 상속 차단으로 수정했고, desktop/web에서 정산 dialog가 PhoneFrame 밖 전체 폭으로 그려지는 회귀는 `PhoneFrame` 제약과 landscape widget test로 막았다.
+- 2026-05-14 상점 회귀 수정: 보유물 판매 후 오퍼 리스트가 암묵적으로 리롤되는 문제, 오퍼 구매 후 남은 오퍼 가격이 0G로 바뀌는 stale slot index 문제, 첫 무료 Jester 리롤이 다음 Market에서 복원되는 문제, 할인 상태가 UI에 드러나지 않는 문제를 수정했다. 검증: `flutter test test/logic/rummi_market_facade_test.dart test/logic/item_definition_test.dart test/logic/item_effect_runtime_test.dart test/providers/game_session_notifier_test.dart`, `flutter test test/views/game/widgets/game_shop_discount_badge_test.dart test/views/game/widgets/game_shop_sell_offer_stability_test.dart`, `git diff --check`.
 
 오늘 바로 할 작업:
 

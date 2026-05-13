@@ -34,6 +34,7 @@
 - `contest_full_run_bot` `ko` standard→challenge cycle 통과.
 - `contest_full_run_bot` `en` standard→challenge cycle 통과.
 - 최신 UI/Web 회귀 수정 뒤 `ko` standard→challenge 재확인 통과.
+- 2026-05-14 상점 가격/오퍼 회귀는 로직·위젯 테스트로 닫았다. 보유 Jester/Item/Passive 판매 시 보이는 오퍼 리스트가 명시적 리롤 없이 바뀌지 않고, Jester 오퍼 구매 후 남은 오퍼 가격이 0G로 튀지 않으며, 구매 할인은 UI에 원가/할인가/`할인` 배지로 표시된다.
 - `CONTEST_FULL_RUN_BOT_PASS`, `All tests passed!`, `S8 boss: run complete` 확인.
 - grep 기준 game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
@@ -49,9 +50,15 @@
 - 최신 `ko` 재확인 도전: /tmp/rummipoker_contest_full_run_bot/challenge_ko_recheck_20260511_005027/10_contest_full_run_bot.log
 
 최근 상태 커밋:
-- a5edabb Document economy choice comparison probe
-- 1a8f0e0 Clarify market collection gold block audit
-- 68eeeba Add market collection audit and contest sim policy
+- d77f289 Fix shop offer pricing regressions
+- 200da7c Enhance iOS profile build documentation with debug execution instructions and clarify debug fixture visibility in release builds
+- 8e5716a Update Android build notes and guide for keystore creation and versioning
+
+최근 상점 회귀 수정 검증:
+- `flutter test test/logic/rummi_market_facade_test.dart test/logic/item_definition_test.dart test/logic/item_effect_runtime_test.dart test/providers/game_session_notifier_test.dart`
+- `flutter test test/views/game/widgets/game_shop_discount_badge_test.dart test/views/game/widgets/game_shop_sell_offer_stability_test.dart`
+- `git diff --check`
+- `reroll_token`은 문구와 맞게 “다음 리롤 1G 할인”(`discount_next_reroll`)으로 정정했다. 기존 fixture용 `free_next_reroll` 지원은 남겨 두었다.
 
 이번 세션 첫 작업 순서:
 1. `git status --short`, `git log -3 --oneline`으로 시작한다.
