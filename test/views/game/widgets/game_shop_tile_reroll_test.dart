@@ -181,5 +181,12 @@ void main() {
       find.byKey(const ValueKey('market-tile-face'), skipOffstage: false),
       findsOneWidget,
     );
+
+    final actionLabelsAfterReroll = tester
+        .widgetList<GameActionButton>(find.byType(GameActionButton))
+        .map((button) => button.label)
+        .toList();
+    expect(actionLabelsAfterReroll, isNot(contains('첫 리롤 무료')));
+    expect(actionLabelsAfterReroll, contains('리롤 2'));
   });
 }
