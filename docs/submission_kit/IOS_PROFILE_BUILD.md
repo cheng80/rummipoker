@@ -26,6 +26,18 @@ flutter build ios --profile
 flutter run --profile -d <device-id>
 ```
 
+시뮬레이터 시연 영상용 debug 실행:
+
+```bash
+flutter run -d <simulator-device-id>
+```
+
+Debug fixture와 특별 모드 같은 개발용 진입점은 기본적으로 모든 빌드에서 숨긴다. QA용으로 필요할 때만 다음처럼 명시적으로 켠다.
+
+```bash
+flutter run --dart-define=SHOW_DEBUG_FIXTURES=true -d <device-id>
+```
+
 Release IPA:
 
 ```bash
@@ -57,7 +69,8 @@ build/ios/ipa/Runner.ipa
 - iPad에서 콘텐츠 프레임과 배경 확장 규칙이 유지되는지
 - 로고 이미지가 뭉개지지 않는지
 - 사운드, 진동, 터치 반응이 과하지 않은지
-- Debug fixture 진입점이 release에서 숨겨지는지
+- Debug fixture/특별 모드/전투 디버그 버튼이 기본 debug/profile/release에서 숨겨지는지
+- QA용 `--dart-define=SHOW_DEBUG_FIXTURES=true` 실행에서만 Debug fixture 진입점이 보이는지
 - App Store Connect signing/profile 설정과 맞는지
 - 동일 버전 재업로드 시 build number가 증가했는지
 
