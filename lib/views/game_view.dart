@@ -91,6 +91,9 @@ class _GameViewState extends ConsumerState<GameView>
     with WidgetsBindingObserver {
   static const Duration _itemEffectFeedbackDuration =
       GamePresentationTimings.itemEffectFeedback;
+  static const Duration _inactiveLifecycleDebounce = Duration(
+    milliseconds: 250,
+  );
   static const int _finalStationIndex = 8;
 
   static const List<String> _shopInspectOfferIds = [
@@ -125,6 +128,7 @@ class _GameViewState extends ConsumerState<GameView>
   bool _pausedLifecycleDuringStageFlow = false;
   bool _optionsDialogOpen = false;
   bool _presentationPaused = false;
+  Timer? _inactiveLifecycleTimer;
   bool _battleTutorialScheduled = false;
   bool _battleTutorialShouldMarkSeenOnFinish = false;
   int _battleTutorialFocusIndex = 0;
@@ -298,6 +302,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   @override
   void dispose() {
+    _inactiveLifecycleTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _dismissBattleTutorial();
     super.dispose();
@@ -307,22 +312,21 @@ class _GameViewState extends ConsumerState<GameView>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.hidden:
-      case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
-        _dismissBattleTutorial();
-        final isShopScene = _gameState.activeRunScene == ActiveRunScene.shop;
-        if (!isShopScene) {
-          _pausePresentation();
-        }
-        SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
-        if (!isShopScene && !_optionsDialogOpen) {
-          _pendingLifecycleOptions = true;
-        } else if (!isShopScene && _stageFlowPhase != GameStageFlowPhase.none) {
-          _pausedLifecycleDuringStageFlow = true;
-        }
-        _saveActiveRun();
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = null;
+        _handleLifecyclePause();
+        break;
+      case AppLifecycleState.inactive:
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = Timer(_inactiveLifecycleDebounce, () {
+          if (!mounted) return;
+          _handleLifecyclePause();
+        });
         break;
       case AppLifecycleState.resumed:
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = null;
         if (_gameState.activeRunScene == ActiveRunScene.shop) {
           _pendingLifecycleOptions = false;
           _pausedLifecycleDuringStageFlow = false;
@@ -343,8 +347,25 @@ class _GameViewState extends ConsumerState<GameView>
         }
         break;
       case AppLifecycleState.detached:
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = null;
         break;
     }
+  }
+
+  void _handleLifecyclePause() {
+    _dismissBattleTutorial();
+    final isShopScene = _gameState.activeRunScene == ActiveRunScene.shop;
+    if (!isShopScene) {
+      _pausePresentation();
+    }
+    SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    if (!isShopScene && !_optionsDialogOpen) {
+      _pendingLifecycleOptions = true;
+    } else if (!isShopScene && _stageFlowPhase != GameStageFlowPhase.none) {
+      _pausedLifecycleDuringStageFlow = true;
+    }
+    _saveActiveRun();
   }
 
   @override

@@ -3,11 +3,49 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
+import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
+import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/blind_select_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() async {
+    StorageHelper.resetForTest();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await StorageHelper.init();
+    GameSettings.bgmMuted = true;
+    GameSettings.sfxMuted = true;
+    SoundManager.debugResetForTest();
+  });
+
+  tearDown(() {
+    SoundManager.debugResetForTest();
+  });
+
+  testWidgets('blind select requests menu BGM on entry', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BlindSelectView(
+          runSeed: 77,
+          difficulty: NewRunDifficulty.standard,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(Duration.zero);
+    });
+    await tester.pump();
+
+    expect(SoundManager.debugCurrentBgm, AssetPaths.bgmMenu);
+  });
+
   testWidgets('boss constraint chip keeps long rule text out of card', (
     tester,
   ) async {

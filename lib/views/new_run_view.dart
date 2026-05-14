@@ -32,6 +32,7 @@ class _NewRunViewState extends State<NewRunView> {
   @override
   void initState() {
     super.initState();
+    SoundManager.playBgm(AssetPaths.bgmMenu);
     _applyDebugScrollPreset();
     _loadUnlockState();
   }
@@ -74,9 +75,8 @@ class _NewRunViewState extends State<NewRunView> {
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final seed = RummiPokerGridSession.rollNewRunSeed();
     await ActiveRunSaveService.clearActiveRun();
-    await SoundManager.stopBgm();
     if (!mounted) return;
-    context.go(_buildStartRoute(seed: seed));
+    context.push(_buildStartRoute(seed: seed));
   }
 
   Future<void> _openSeedInputDialog() async {
@@ -144,9 +144,17 @@ class _NewRunViewState extends State<NewRunView> {
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await ActiveRunSaveService.clearActiveRun();
-    await SoundManager.stopBgm();
     if (!mounted) return;
-    context.go(_buildStartRoute(seed: value));
+    context.push(_buildStartRoute(seed: value));
+  }
+
+  void _goBack() {
+    SoundManager.playBgm(AssetPaths.bgmMenu);
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go(RoutePaths.title);
   }
 
   String _buildStartRoute({required int seed}) {
@@ -197,7 +205,7 @@ class _NewRunViewState extends State<NewRunView> {
             Row(
               children: [
                 IconButton(
-                  onPressed: () => context.pop(),
+                  onPressed: _goBack,
                   icon: const Icon(Icons.arrow_back_rounded),
                   color: Colors.white,
                 ),

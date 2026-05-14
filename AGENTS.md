@@ -79,6 +79,8 @@
 - 공모전 풀런봇이 고점수 구간에서 game over가 나면 봇 전용 난이도 완화나 보상 보정보다 먼저 중복 족보 확보 정책을 점검한다. 확정 타이밍, 손패 여유 칸 활용, 덱 상단 제어, 보드 이동/버림은 여러 줄이 동시에 점수화되는 보드 상태를 만들기 위한 수단으로 우선 조정한다.
 - 공모전 풀런봇 실행/실패/중단 뒤에는 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버가 남아 메모리를 잡지 않는지 확인한다. 봇 runner는 종료 trap에서 관련 프로세스를 정리하고, 새 풀런을 시작하기 전에도 남은 headless WebDriver/Chrome Helper 프로세스를 먼저 정리한다.
 - 공모전 풀런봇뿐 아니라 Browser/WebDriver/Chrome 기반 테스트는 성공, 실패, 사용자 중단, timeout 등 어떤 종료 경로든 한 번 실행이 끝날 때마다 Chrome Helper, WebDriver Chrome, ChromeDriver, Flutter web server 잔류 프로세스를 확인하고 정리한다. 정리 확인 전에는 다음 테스트를 시작하거나 최종 보고를 보내지 않는다.
+- Chrome/Simulator 실기 검증에서 대상 앱이나 브라우저가 이미 떠 있으면 새 Chrome 창이나 새 Simulator 창을 띄우지 않는다. 먼저 기존 창/탭/부팅된 시뮬레이터를 Computer Use로 선택해 재사용하고, 웹 검증이 필요하면 새 Chrome 실행 대신 web-server를 켠 뒤 기존 Chrome 탭에 URL을 입력한다.
+- 웹 사운드 문제를 고칠 때 화면·라우팅·게임 상태에 웹 전용 분기를 늘리지 않는다. 브라우저 자동재생 정책 대응은 `SoundManager` 내부로 제한하고, route 전환 중 짧은 `inactive`처럼 플랫폼별로 흔들리는 lifecycle 신호는 즉시 pause 확정이 아니라 짧은 debounce 후 공통 pause 경로로 처리한다.
 - 공모전 풀런봇은 튜토리얼 overlay가 떠 있으면 전투/마켓 액션보다 튜토리얼 처리를 먼저 한다. fresh locale gate에서는 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done` 완료 로그가 남기 전에는 해당 locale pass로 인정하지 않는다.
 - 공모전 풀런봇 fresh locale gate에서 튜토리얼을 반드시 다시 띄우려면 앱 SharedPreferences만 지우지 말고 WebDriver Chrome profile의 cookie/localStorage/sessionStorage까지 초기화한다. `--resume-active-run`이 아닌 실행은 browser profile dir을 새로 시작해야 한다.
 - 공모전 풀런봇 locale gate는 5개 언어를 한 번에 연속 실행하지 않는다. `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 순서는 유지하되, 각 locale의 표준→도전 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다.

@@ -11,12 +11,27 @@ import 'asset_paths.dart';
 class SoundManager {
   SoundManager._();
 
+  static const Duration _resumeStateSettleDelay = Duration(milliseconds: 120);
+
   static String? _currentBgm;
   static bool _webUnlocked = false;
   static String? _pendingBgm;
   static Future<void> _bgmOp = Future<void>.value();
   static int _bgmRequestSerial = 0;
   static int _bgmAutoResumeBlockDepth = 0;
+
+  @visibleForTesting
+  static String? get debugCurrentBgm => _currentBgm;
+
+  @visibleForTesting
+  static void debugResetForTest() {
+    _currentBgm = null;
+    _webUnlocked = false;
+    _pendingBgm = null;
+    _bgmOp = Future<void>.value();
+    _bgmRequestSerial = 0;
+    _bgmAutoResumeBlockDepth = 0;
+  }
 
   /// Pause 메뉴에서 설정을 여는 동안 mute 해제가 BGM을 자동 재개하지 못하게 막는다.
   static void beginBgmAutoResumeBlock() {
@@ -51,18 +66,27 @@ class SoundManager {
 
   static void _playBgmImmediatelyForWeb(String path) {
     _pendingBgm = null;
+    final previousBgm = _currentBgm;
     _currentBgm = path;
-    if (FlameAudio.bgm.audioPlayer.state == PlayerState.playing) return;
+    if (previousBgm == path &&
+        FlameAudio.bgm.audioPlayer.state == PlayerState.playing) {
+      return;
+    }
     _bgmRequestSerial++;
     try {
-      FlameAudio.bgm.stop();
       unawaited(
-        FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume).catchError((
-          Object _,
-        ) {
-          _pendingBgm = path;
-          FlameAudio.bgm.isPlaying = false;
-        }),
+        FlameAudio.bgm
+            .stop()
+            .then(
+              (_) => FlameAudio.bgm.play(
+                path,
+                volume: GameSettings.bgmVolume,
+              ),
+            )
+            .catchError((Object _) {
+              _pendingBgm = path;
+              FlameAudio.bgm.isPlaying = false;
+            }),
       );
     } catch (_) {
       _pendingBgm = path;
@@ -89,16 +113,24 @@ class SoundManager {
   static Future<void> playBgm(String path) async {
     final requestId = ++_bgmRequestSerial;
     _bgmOp = _bgmOp.then((_) async {
-      if (_currentBgm == path && FlameAudio.bgm.isPlaying) return;
-      FlameAudio.bgm.stop();
+      if (GameSettings.bgmMuted) {
+        _pendingBgm = null;
+        _currentBgm = path;
+        return;
+      }
+      if (_currentBgm == path &&
+          FlameAudio.bgm.audioPlayer.state == PlayerState.playing) {
+        return;
+      }
       _currentBgm = path;
-      if (GameSettings.bgmMuted) return;
       if (kIsWeb && !_webUnlocked) {
         _pendingBgm = path;
         return;
       }
       if (requestId != _bgmRequestSerial) return;
       try {
+        await FlameAudio.bgm.stop();
+        if (requestId != _bgmRequestSerial) return;
         await FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume);
       } catch (_) {
         _pendingBgm = path;
@@ -111,29 +143,48 @@ class SoundManager {
   static Future<void> stopBgm() async {
     _bgmRequestSerial++;
     _pendingBgm = null;
-    FlameAudio.bgm.stop();
     _currentBgm = null;
+    try {
+      await FlameAudio.bgm.stop();
+    } catch (_) {}
   }
 
   /// BGM 일시정지. [onlyIfCurrent]가 지정되면 현재 BGM과 일치할 때만 적용.
   static void pauseBgm({String? onlyIfCurrent}) {
     if (onlyIfCurrent != null && _currentBgm != onlyIfCurrent) return;
-    FlameAudio.bgm.pause();
+    unawaited(FlameAudio.bgm.pause().catchError((Object _) {}));
   }
 
   /// BGM 재개. [onlyIfCurrent]가 지정되면 현재 BGM과 일치할 때만 적용.
   static void resumeBgm({String? onlyIfCurrent}) {
     if (onlyIfCurrent != null && _currentBgm != onlyIfCurrent) return;
     if (GameSettings.bgmMuted) return;
-    if (_currentBgm == null) return;
-    if (FlameAudio.bgm.isPlaying) return;
+    final target = _currentBgm;
+    if (target == null) return;
+    if (FlameAudio.bgm.audioPlayer.state == PlayerState.playing) return;
     if (kIsWeb && !_webUnlocked) return;
+    unawaited(_resumeBgm(target));
+  }
+
+  static Future<void> _resumeBgm(String target) async {
+    final resumeRequestSerial = _bgmRequestSerial;
     try {
-      FlameAudio.bgm.resume();
+      await FlameAudio.bgm.resume();
     } catch (_) {}
-    if (!FlameAudio.bgm.isPlaying) {
-      unawaited(playBgm(_currentBgm!));
+    await Future<void>.delayed(_resumeStateSettleDelay);
+    if (_currentBgm != target ||
+        resumeRequestSerial != _bgmRequestSerial ||
+        GameSettings.bgmMuted) {
+      return;
     }
+    if (FlameAudio.bgm.audioPlayer.state == PlayerState.playing ||
+        FlameAudio.bgm.isPlaying) {
+      return;
+    }
+    if (kIsWeb) {
+      _pendingBgm = target;
+    }
+    await playBgm(target);
   }
 
   /// 음소거 해제 시 BGM 재생. pause 상태면 resume, stop 상태면 play.

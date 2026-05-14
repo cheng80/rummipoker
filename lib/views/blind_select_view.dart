@@ -38,6 +38,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
   @override
   void initState() {
     super.initState();
+    SoundManager.playBgm(AssetPaths.bgmMenu);
     _options = BlindSelectionSetup.buildForStation(
       stationIndex: _stationIndex,
       clearedBlindTierIndex: _clearedBlindTierIndex,
@@ -134,6 +135,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
   }
 
   void _goBack() {
+    SoundManager.playBgm(AssetPaths.bgmMenu);
     if (context.canPop()) {
       context.pop();
       return;
