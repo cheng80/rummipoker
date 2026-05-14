@@ -64,6 +64,31 @@ Chrome을 Flutter가 직접 열어도 되는 경우에는 아래처럼 실행한
 flutter run -d chrome --web-port=7357 --dart-define=SHOW_DEBUG_FIXTURES=true
 ```
 
+터미널에서 `flutter run`으로 띄우면 앱은 debug mode지만 IDE의 Pause/Run/Stop 디버그 패널은 뜨지 않는다.
+터미널에서는 `r` hot reload, `R` hot restart, `q` quit로 제어한다.
+
+VS Code의 디버그 패널까지 필요하면 `.vscode/launch.json`에 고정 포트 실행 구성을 추가한다.
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "RummiPoker Chrome Debug Fixtures",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port=7357",
+        "--dart-define=SHOW_DEBUG_FIXTURES=true"
+      ]
+    }
+  ]
+}
+```
+
+이 구성으로 VS Code Run and Debug에서 실행하면 포트 `7357`, debug fixture, IDE 디버그 패널을 함께 쓴다.
+
 주의:
 
 - `--web-port` 값은 진행 중인 다른 테스트와 겹치지 않게 정한다.
