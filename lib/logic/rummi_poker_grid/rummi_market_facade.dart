@@ -78,6 +78,7 @@ class RummiMarketOfferView {
     required this.currency,
     required this.isAffordable,
     required this.card,
+    this.discountSourceLabel,
   }) : originalPrice = originalPrice ?? price;
 
   factory RummiMarketOfferView.fromShopOffer(
@@ -85,6 +86,7 @@ class RummiMarketOfferView {
     required int currentGold,
     int? price,
     int? originalPrice,
+    String? discountSourceLabel,
   }) {
     final resolvedPrice = price ?? offer.price;
     final resolvedOriginalPrice = originalPrice ?? resolvedPrice;
@@ -99,6 +101,7 @@ class RummiMarketOfferView {
       currency: 'gold',
       isAffordable: currentGold >= resolvedPrice,
       card: offer.card,
+      discountSourceLabel: discountSourceLabel,
     );
   }
 
@@ -112,6 +115,7 @@ class RummiMarketOfferView {
   final String currency;
   final bool isAffordable;
   final RummiJesterCard card;
+  final String? discountSourceLabel;
 
   int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
   bool get hasDiscount => discountAmount > 0;
@@ -132,6 +136,7 @@ class RummiMarketItemOfferView {
     required this.currency,
     required this.isAffordable,
     required this.item,
+    this.discountSourceLabel,
   }) : originalPrice = originalPrice ?? price;
 
   factory RummiMarketItemOfferView.fromItemDefinition(
@@ -140,6 +145,7 @@ class RummiMarketItemOfferView {
     required int currentGold,
     int? price,
     int? originalPrice,
+    String? discountSourceLabel,
   }) {
     final resolvedPrice = price ?? item.basePrice;
     final resolvedOriginalPrice = originalPrice ?? resolvedPrice;
@@ -157,6 +163,7 @@ class RummiMarketItemOfferView {
       currency: 'gold',
       isAffordable: currentGold >= resolvedPrice,
       item: item,
+      discountSourceLabel: discountSourceLabel,
     );
   }
 
@@ -173,6 +180,7 @@ class RummiMarketItemOfferView {
   final String currency;
   final bool isAffordable;
   final ItemDefinition item;
+  final String? discountSourceLabel;
 
   int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
   bool get hasDiscount => discountAmount > 0;
@@ -291,6 +299,7 @@ class RummiMarketRuntimeFacade {
     required this.ownedEntries,
     required this.offers,
     required this.itemOfferSlotCount,
+    this.itemOfferSlotBonusLabel,
     required this.quickSlotCapacity,
     this.jesterSlotCapacity = RummiRunProgress.baseUnlockedJesterSlots,
     this.pendingSlotUnlockPresentations = const <RummiSlotUnlockKind>{},
@@ -311,6 +320,30 @@ class RummiMarketRuntimeFacade {
     RummiMarketPressureProfile pressureProfile =
         RummiMarketPressureProfile.standard,
   }) {
+    final jesterOffers = [
+      for (var index = 0; index < progress.shopOffers.length; index++)
+        RummiMarketOfferView.fromShopOffer(
+          progress.shopOffers[index],
+          currentGold: progress.gold,
+          price: progress.effectiveJesterOfferPrice(
+            index,
+            includeCheapestFirstOfferDiscount: false,
+          ),
+          originalPrice: progress.effectiveJesterOfferBasePrice(index),
+        ),
+    ];
+    final itemOffers = itemCatalog == null
+        ? const <RummiMarketItemOfferView>[]
+        : _buildItemOffers(
+            progress,
+            itemCatalog,
+            pressureProfile: pressureProfile,
+          );
+    final compassDiscountedOffers = _applyCheapestFirstOfferDiscount(
+      progress,
+      jesterOffers: jesterOffers,
+      itemOffers: itemOffers,
+    );
     return RummiMarketRuntimeFacade(
       gold: progress.gold,
       rerollCost: progress.effectiveRerollCost(),
@@ -339,30 +372,17 @@ class RummiMarketRuntimeFacade {
             ),
           )
           .toList(growable: false),
-      offers: [
-        for (var index = 0; index < progress.shopOffers.length; index++)
-          RummiMarketOfferView.fromShopOffer(
-            progress.shopOffers[index],
-            currentGold: progress.gold,
-            price: progress.effectiveJesterOfferPrice(index),
-            originalPrice: progress.effectiveJesterOfferBasePrice(index),
-          ),
-      ],
+      offers: compassDiscountedOffers.jesterOffers,
       itemOfferSlotCount: _itemOfferSlotCount(
         progress,
         pressureProfile: pressureProfile,
       ),
+      itemOfferSlotBonusLabel: _itemOfferSlotBonusLabel(progress),
       quickSlotCapacity: progress.quickSlotCapacity(itemCatalog: itemCatalog),
       jesterSlotCapacity: progress.jesterSlotCapacity(itemCatalog: itemCatalog),
       pendingSlotUnlockPresentations: progress
           .snapshotPendingSlotUnlockPresentations(),
-      itemOffers: itemCatalog == null
-          ? const []
-          : _buildItemOffers(
-              progress,
-              itemCatalog,
-              pressureProfile: pressureProfile,
-            ),
+      itemOffers: compassDiscountedOffers.itemOffers,
       tileOffers: _buildTileOffers(progress),
       addedDeckTiles: List<Tile>.unmodifiable(progress.addedDeckTiles),
       itemSlots: itemCatalog == null
@@ -388,6 +408,7 @@ class RummiMarketRuntimeFacade {
       ownedEntries: ownedEntries,
       offers: offers,
       itemOfferSlotCount: itemOfferSlotCount,
+      itemOfferSlotBonusLabel: itemOfferSlotBonusLabel,
       quickSlotCapacity: quickSlotCapacity,
       jesterSlotCapacity: jesterSlotCapacity,
       pendingSlotUnlockPresentations: pendingSlotUnlockPresentations,
@@ -411,6 +432,7 @@ class RummiMarketRuntimeFacade {
   final List<RummiMarketOwnedEntryView> ownedEntries;
   final List<RummiMarketOfferView> offers;
   final int itemOfferSlotCount;
+  final String? itemOfferSlotBonusLabel;
   final int quickSlotCapacity;
   final int jesterSlotCapacity;
   final Set<RummiSlotUnlockKind> pendingSlotUnlockPresentations;
@@ -470,7 +492,10 @@ class RummiMarketRuntimeFacade {
             item,
             slotIndex: offers.length,
             currentGold: progress.gold,
-            price: progress.effectiveItemPrice(item),
+            price: progress.effectiveItemPrice(
+              item,
+              includeCheapestFirstOfferDiscount: false,
+            ),
             originalPrice: progress.effectiveItemBasePrice(item),
           ),
         );
@@ -478,6 +503,78 @@ class RummiMarketRuntimeFacade {
     }
     progress.recordSeenMarketItems(offers.map((offer) => offer.contentId));
     return offers;
+  }
+
+  static _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(
+    RummiRunProgress progress, {
+    required List<RummiMarketOfferView> jesterOffers,
+    required List<RummiMarketItemOfferView> itemOffers,
+  }) {
+    final discount = progress.marketModifiers.cheapestFirstOfferDiscount;
+    if (discount <= 0) {
+      return _CompassDiscountedOffers(
+        jesterOffers: jesterOffers,
+        itemOffers: itemOffers,
+      );
+    }
+
+    var bestCategory = '';
+    var bestIndex = -1;
+    var bestPrice = 1 << 30;
+    for (var i = 0; i < jesterOffers.length; i++) {
+      final price = jesterOffers[i].price;
+      if (price > 0 && price < bestPrice) {
+        bestCategory = 'jester';
+        bestIndex = i;
+        bestPrice = price;
+      }
+    }
+    for (var i = 0; i < itemOffers.length; i++) {
+      final price = itemOffers[i].price;
+      if (price > 0 && price < bestPrice) {
+        bestCategory = 'item';
+        bestIndex = i;
+        bestPrice = price;
+      }
+    }
+    if (bestIndex < 0) {
+      return _CompassDiscountedOffers(
+        jesterOffers: jesterOffers,
+        itemOffers: itemOffers,
+      );
+    }
+
+    final appliedDiscount = bestPrice < discount ? bestPrice : discount;
+    if (bestCategory == 'jester') {
+      final nextJesters = List<RummiMarketOfferView>.of(jesterOffers);
+      final offer = nextJesters[bestIndex];
+      nextJesters[bestIndex] = RummiMarketOfferView.fromShopOffer(
+        progress.shopOffers[bestIndex],
+        currentGold: progress.gold,
+        price: offer.price - appliedDiscount,
+        originalPrice: offer.originalPrice,
+        discountSourceLabel: '나침반',
+      );
+      return _CompassDiscountedOffers(
+        jesterOffers: List<RummiMarketOfferView>.unmodifiable(nextJesters),
+        itemOffers: itemOffers,
+      );
+    }
+
+    final nextItems = List<RummiMarketItemOfferView>.of(itemOffers);
+    final offer = nextItems[bestIndex];
+    nextItems[bestIndex] = RummiMarketItemOfferView.fromItemDefinition(
+      offer.item,
+      slotIndex: offer.slotIndex,
+      currentGold: progress.gold,
+      price: offer.price - appliedDiscount,
+      originalPrice: offer.originalPrice,
+      discountSourceLabel: '나침반',
+    );
+    return _CompassDiscountedOffers(
+      jesterOffers: jesterOffers,
+      itemOffers: List<RummiMarketItemOfferView>.unmodifiable(nextItems),
+    );
   }
 
   static bool _canAppearAsItemOffer({
@@ -728,6 +825,12 @@ class RummiMarketRuntimeFacade {
     return progress.stageIndex >= 3 ? base + 1 : base;
   }
 
+  static String? _itemOfferSlotBonusLabel(RummiRunProgress progress) {
+    final bonusSlots = progress.marketModifiers.extraItemOfferSlots;
+    if (bonusSlots <= 0) return null;
+    return '렌즈 +$bonusSlots';
+  }
+
   static bool _hasAnyTag(List<String> tags, Set<String> expectedTags) {
     for (final tag in tags) {
       if (expectedTags.contains(tag)) {
@@ -941,4 +1044,14 @@ class RummiMarketRuntimeFacade {
     }
     return List<RummiMarketItemSlotView>.unmodifiable(slots);
   }
+}
+
+class _CompassDiscountedOffers {
+  const _CompassDiscountedOffers({
+    required this.jesterOffers,
+    required this.itemOffers,
+  });
+
+  final List<RummiMarketOfferView> jesterOffers;
+  final List<RummiMarketItemOfferView> itemOffers;
 }

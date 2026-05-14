@@ -1333,19 +1333,34 @@ class RummiRunProgress {
     clearedStationKeys.add('station_$stationIndex');
   }
 
-  bool unlockSlotCapacity(RummiSlotUnlockKind kind) {
+  bool unlockSlotCapacity(
+    RummiSlotUnlockKind kind, {
+    ItemCatalog? itemCatalog,
+  }) {
+    final visibleCapacityBefore = _slotCapacityFor(
+      kind,
+      itemCatalog: itemCatalog,
+    );
     final unlocked = switch (kind) {
       RummiSlotUnlockKind.jester => _increaseJesterSlots(),
       RummiSlotUnlockKind.quickSlot => _increaseQuickSlotCapacity(),
       RummiSlotUnlockKind.passiveRelic => _increasePassiveRelicCapacity(),
     };
     if (unlocked) {
-      _pendingSlotUnlockPresentations.add(kind);
+      final visibleCapacityAfter = _slotCapacityFor(
+        kind,
+        itemCatalog: itemCatalog,
+      );
+      if (visibleCapacityAfter > visibleCapacityBefore) {
+        _pendingSlotUnlockPresentations.add(kind);
+      }
     }
     return unlocked;
   }
 
-  List<RummiSlotUnlockKind> claimBossSlotUnlockRewards() {
+  List<RummiSlotUnlockKind> claimBossSlotUnlockRewards({
+    ItemCatalog? itemCatalog,
+  }) {
     final rewardKind = switch (stageIndex) {
       2 => RummiSlotUnlockKind.quickSlot,
       4 => RummiSlotUnlockKind.passiveRelic,
@@ -1353,9 +1368,24 @@ class RummiRunProgress {
       _ => null,
     };
     if (rewardKind == null) return const <RummiSlotUnlockKind>[];
-    return unlockSlotCapacity(rewardKind)
+    return unlockSlotCapacity(rewardKind, itemCatalog: itemCatalog) &&
+            _pendingSlotUnlockPresentations.contains(rewardKind)
         ? <RummiSlotUnlockKind>[rewardKind]
         : const <RummiSlotUnlockKind>[];
+  }
+
+  int _slotCapacityFor(RummiSlotUnlockKind kind, {ItemCatalog? itemCatalog}) {
+    return switch (kind) {
+      RummiSlotUnlockKind.jester => jesterSlotCapacity(
+        itemCatalog: itemCatalog,
+      ),
+      RummiSlotUnlockKind.quickSlot => quickSlotCapacity(
+        itemCatalog: itemCatalog,
+      ),
+      RummiSlotUnlockKind.passiveRelic => passiveRelicCapacity(
+        itemCatalog: itemCatalog,
+      ),
+    };
   }
 
   void clearPendingSlotUnlockPresentations() {
@@ -1701,13 +1731,17 @@ class RummiRunProgress {
     };
   }
 
-  int effectiveJesterOfferPrice(int offerIndex) {
+  int effectiveJesterOfferPrice(
+    int offerIndex, {
+    bool includeCheapestFirstOfferDiscount = true,
+  }) {
     if (offerIndex < 0 || offerIndex >= shopOffers.length) return 0;
     final offer = shopOffers[offerIndex];
     return effectivePurchasePrice(
       basePrice: offer.price,
       category: 'jester',
       jester: offer.card,
+      includeCheapestFirstOfferDiscount: includeCheapestFirstOfferDiscount,
     );
   }
 
@@ -1720,11 +1754,15 @@ class RummiRunProgress {
     );
   }
 
-  int effectiveItemPrice(ItemDefinition item) {
+  int effectiveItemPrice(
+    ItemDefinition item, {
+    bool includeCheapestFirstOfferDiscount = true,
+  }) {
     return effectivePurchasePrice(
       basePrice: item.basePrice,
       category: 'item',
       item: item,
+      includeCheapestFirstOfferDiscount: includeCheapestFirstOfferDiscount,
     );
   }
 
@@ -1749,6 +1787,7 @@ class RummiRunProgress {
     required String category,
     RummiJesterCard? jester,
     ItemDefinition? item,
+    bool includeCheapestFirstOfferDiscount = true,
   }) {
     final scaledBasePrice = effectivePurchaseBasePrice(
       basePrice: basePrice,
@@ -1761,7 +1800,8 @@ class RummiRunProgress {
       _ => 0,
     };
     final cheapestDiscount =
-        _cheapestFirstOfferDiscountApplies(scaledBasePrice, category)
+        includeCheapestFirstOfferDiscount &&
+            _cheapestFirstOfferDiscountApplies(scaledBasePrice, category)
         ? marketModifiers.cheapestFirstOfferDiscount
         : 0;
     return max(
@@ -1891,10 +1931,6 @@ class RummiRunProgress {
           nextMarketExtraJesterOfferSlots:
               marketModifiers.nextMarketExtraJesterOfferSlots + amount,
         );
-      case 'rarity_weight_bonus':
-        marketModifiers = marketModifiers.copyWith(
-          rarityWeightBonus: marketModifiers.rarityWeightBonus + amount,
-        );
     }
   }
 
@@ -1992,7 +2028,11 @@ class RummiRunProgress {
     }
   }
 
-  bool buyOffer(int offerIndex) {
+  bool buyOffer(
+    int offerIndex, {
+    int? price,
+    bool consumeCheapestFirstOfferDiscount = true,
+  }) {
     if (offerIndex < 0 || offerIndex >= shopOffers.length) {
       return false;
     }
@@ -2000,20 +2040,28 @@ class RummiRunProgress {
       return false;
     }
     final offer = shopOffers[offerIndex];
-    final price = effectiveJesterOfferPrice(offerIndex);
-    if (gold < price) {
+    final resolvedPrice = price ?? effectiveJesterOfferPrice(offerIndex);
+    if (gold < resolvedPrice) {
       return false;
     }
-    gold -= price;
+    gold -= resolvedPrice;
     ownedJesters.add(offer.card);
     boughtJesterIds.add(offer.card.id);
     _initializeStateForSlot(ownedJesters.length - 1, offer.card);
     shopOffers.removeAt(offerIndex);
-    _consumePurchaseDiscounts('jester');
+    _consumePurchaseDiscounts(
+      'jester',
+      consumeCheapestFirstOfferDiscount: consumeCheapestFirstOfferDiscount,
+    );
     return true;
   }
 
-  bool buyItem(ItemDefinition item, {int? price, ItemCatalog? itemCatalog}) {
+  bool buyItem(
+    ItemDefinition item, {
+    int? price,
+    ItemCatalog? itemCatalog,
+    bool consumeCheapestFirstOfferDiscount = true,
+  }) {
     final resolvedPrice = price ?? effectiveItemPrice(item);
     if (gold < resolvedPrice) {
       return false;
@@ -2033,7 +2081,10 @@ class RummiRunProgress {
       passiveRelicCapacity: passiveRelicCapacity(itemCatalog: itemCatalog),
     );
     boughtItemIds.add(item.id);
-    _consumePurchaseDiscounts('item');
+    _consumePurchaseDiscounts(
+      'item',
+      consumeCheapestFirstOfferDiscount: consumeCheapestFirstOfferDiscount,
+    );
     return true;
   }
 
@@ -2077,14 +2128,7 @@ class RummiRunProgress {
   }
 
   int quickSlotCapacity({ItemCatalog? itemCatalog}) {
-    final capacity =
-        unlockedQuickSlotCapacity +
-        _sumOwnedItemEffectAmount(
-          itemCatalog: itemCatalog,
-          timing: 'inventory_capacity',
-          op: 'extra_quick_slot',
-        );
-    return capacity
+    return unlockedQuickSlotCapacity
         .clamp(
           RunInventoryState.defaultQuickSlotCapacity,
           RunInventoryState.maxQuickSlotCapacity,
@@ -2501,7 +2545,10 @@ class RummiRunProgress {
     };
   }
 
-  void _consumePurchaseDiscounts(String category) {
+  void _consumePurchaseDiscounts(
+    String category, {
+    bool consumeCheapestFirstOfferDiscount = true,
+  }) {
     marketModifiers = marketModifiers.copyWith(
       nextPurchaseDiscount: 0,
       nextJesterPurchaseDiscount: category == 'jester'
@@ -2510,7 +2557,9 @@ class RummiRunProgress {
       nextItemPurchaseDiscount: category == 'item'
           ? 0
           : marketModifiers.nextItemPurchaseDiscount,
-      cheapestFirstOfferDiscount: 0,
+      cheapestFirstOfferDiscount: consumeCheapestFirstOfferDiscount
+          ? 0
+          : marketModifiers.cheapestFirstOfferDiscount,
     );
   }
 

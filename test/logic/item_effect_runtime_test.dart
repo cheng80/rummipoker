@@ -1165,36 +1165,6 @@ void main() {
       },
     );
 
-    test('inventory capacity item reports extra quick slot modifier', () {
-      final item = ItemDefinition.fromJson(
-        _itemJson(
-          id: 'spare_pouch',
-          timing: 'inventory_capacity',
-          op: 'extra_quick_slot',
-          placement: 'passiveRack',
-        ),
-      );
-      final session = RummiPokerGridSession(
-        runSeed: 1,
-        blind: RummiBlindState(targetScore: 999),
-      );
-      final runProgress = RummiRunProgress();
-
-      final result = ItemEffectRuntime.applyInventoryCapacityItem(
-        item: item,
-        session: session,
-        runProgress: runProgress,
-      );
-
-      expect(result.isSuccess, isTrue);
-      expect(
-        result.events.single.kind,
-        ItemEffectEventKind.capacityModifierQueued,
-      );
-      expect(result.events.single.amount, 1);
-      expect(result.events.single.detail, 'extra_quick_slot');
-    });
-
     test('sell jester item reports sell price bonus modifier', () {
       final item = ItemDefinition.fromJson(
         _itemJson(
@@ -1302,6 +1272,29 @@ void main() {
       expect(results.every((result) => result.isSuccess), isTrue);
       expect(runProgress.effectiveRerollCost(), 4);
       expect(runProgress.marketModifiers.itemOfferSlotCount, 4);
+    });
+
+    test('market build item offer slot fails at supported cap', () {
+      final item = _item(
+        id: 'shop_lens',
+        timing: 'market_build_offers',
+        op: 'extra_item_offer_slot',
+        placement: ItemPlacement.equipped,
+      );
+      final runProgress = RummiRunProgress()
+        ..queueMarketModifier(op: 'extra_item_offer_slot', amount: 1);
+
+      final result = ItemEffectRuntime.applyEnterMarketItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.failMessage, 'Item 후보 슬롯 최대치입니다.');
+      expect(
+        runProgress.marketModifiers.itemOfferSlotCount,
+        ItemEffectRuntime.maxSupportedMarketOfferSlots,
+      );
     });
 
     test('owned enter market gain-gold item applies immediately', () {
@@ -1417,6 +1410,52 @@ void main() {
       expect(runProgress.marketModifiers.nextMarketExtraJesterOfferSlots, 1);
     });
 
+    test('boss trophy queues only available jester offer slots before cap', () {
+      final item = _item(
+        id: 'boss_trophy',
+        timing: 'boss_blind_clear_market',
+        op: 'extra_jester_offer_next_market',
+        placement: ItemPlacement.passiveRack,
+        amount: 2,
+      );
+      final runProgress = RummiRunProgress();
+
+      final result = ItemEffectRuntime.applyBossClearItem(
+        item: item,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(result.events.single.amount, 1);
+      expect(runProgress.marketModifiers.nextMarketExtraJesterOfferSlots, 1);
+    });
+
+    test(
+      'boss trophy fails when next jester offer slots are already capped',
+      () {
+        final item = _item(
+          id: 'boss_trophy',
+          timing: 'boss_blind_clear_market',
+          op: 'extra_jester_offer_next_market',
+          placement: ItemPlacement.passiveRack,
+        );
+        final runProgress = RummiRunProgress()
+          ..queueMarketModifier(
+            op: 'extra_jester_offer_next_market',
+            amount: 1,
+          );
+
+        final result = ItemEffectRuntime.applyBossClearItem(
+          item: item,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.failMessage, 'Jester 후보 슬롯 최대치입니다.');
+        expect(runProgress.marketModifiers.nextMarketExtraJesterOfferSlots, 1);
+      },
+    );
+
     test('settlement item returns settlement modifier event', () {
       final item = _item(
         id: 'coin_funnel',
@@ -1478,7 +1517,6 @@ void main() {
           'enter_market:discount_first_reroll',
           'enter_market:discount_cheapest_first_offer',
           'market_build_offers:extra_item_offer_slot',
-          'market_build_offers:rarity_weight_bonus',
           'boss_blind_clear_reward:gain_gold',
           'boss_blind_clear_market:extra_jester_offer_next_market',
           'settlement:board_discard_reward_bonus',
@@ -1501,7 +1539,6 @@ void main() {
           'station_start:add_board_move',
           'station_start:increase_hand_size_with_discard_penalty',
           'inventory_capacity:increase_hand_size',
-          'inventory_capacity:extra_quick_slot',
           'sell_jester:sell_price_bonus',
           'expiry_guard:rescue_first_expiry_each_station',
         },

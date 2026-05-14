@@ -208,7 +208,6 @@ def _item_role(item: dict[str, Any], effect: dict[str, Any]) -> str:
         return "score_boost"
     if "market" in tags or op in {
         "extra_item_offer_slot",
-        "rarity_weight_bonus",
         "reroll_item_offers_only",
     }:
         return "market"

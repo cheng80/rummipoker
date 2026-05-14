@@ -734,8 +734,9 @@ void main() {
       final updated = container.read(gameSessionNotifierProvider(args));
 
       expect(failMessage, isNull);
-      expect(updated.runProgress!.gold, 10 - expectedPrice);
-      expect(updated.marketView!.gold, 10 - expectedPrice);
+      expect(updated.runProgress!.gold, 10 - offer.price);
+      expect(updated.marketView!.gold, 10 - offer.price);
+      expect(expectedPrice, greaterThan(offer.price));
       expect(updated.runProgress!.itemInventory.ownedItems.length, 1);
       expect(
         updated.runProgress!.itemInventory.ownedItems.first.itemId,
@@ -744,78 +745,6 @@ void main() {
       expect(updated.runProgress!.itemInventory.quickSlotItemIds, [item.id]);
       expect(updated.runProgress!.marketModifiers.consumedItemOfferIds, [
         item.id,
-      ]);
-    });
-
-    test('buyItemOffer는 spare pouch quick slot 용량을 적용한다', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      const args = GameSessionArgs(runSeed: 3701);
-      final catalog = ItemCatalog.fromJson({
-        'schemaVersion': 1,
-        'catalogId': 'items_test',
-        'items': [
-          _itemJson(
-            id: 'spare_pouch',
-            timing: 'inventory_capacity',
-            op: 'extra_quick_slot',
-            placement: 'passiveRack',
-          ),
-        ],
-      });
-
-      final notifier = container.read(
-        gameSessionNotifierProvider(args).notifier,
-      );
-      final state = container.read(gameSessionNotifierProvider(args));
-      state.runProgress!.gold = 10;
-      state.runProgress!
-        ..gold = 20
-        ..itemInventory = const RunInventoryState(
-          ownedItems: [
-            OwnedItemEntry(
-              itemId: 'board_scrap',
-              count: 1,
-              placement: ItemPlacement.quickSlot,
-            ),
-            OwnedItemEntry(
-              itemId: 'peek_chip',
-              count: 1,
-              placement: ItemPlacement.quickSlot,
-            ),
-            OwnedItemEntry(
-              itemId: 'spare_pouch',
-              count: 1,
-              placement: ItemPlacement.passiveRack,
-            ),
-          ],
-          quickSlotItemIds: ['board_scrap', 'peek_chip'],
-          passiveRelicIds: ['spare_pouch'],
-        );
-      final thirdQuickItem = ItemDefinition.fromJson(
-        _itemJson(
-          id: 'third_quick_item',
-          timing: 'use_battle',
-          op: 'add_board_discard',
-          placement: 'quickSlot',
-        ),
-      );
-      final offer = RummiMarketItemOfferView.fromItemDefinition(
-        thirdQuickItem,
-        slotIndex: 0,
-        currentGold: 20,
-      );
-
-      final failWithoutCatalog = notifier.buyItemOffer(offer);
-      final okWithCatalog = notifier.buyItemOffer(offer, itemCatalog: catalog);
-      final updated = container.read(gameSessionNotifierProvider(args));
-
-      expect(failWithoutCatalog, '이미 보유 한도에 도달한 아이템입니다.');
-      expect(okWithCatalog, isNull);
-      expect(updated.runProgress!.itemInventory.quickSlotItemIds, [
-        'board_scrap',
-        'peek_chip',
-        'third_quick_item',
       ]);
     });
 
@@ -874,6 +803,55 @@ void main() {
       expect(updated.runProgress!.gold, 3);
       expect(updated.runProgress!.marketModifiers.nextItemPurchaseDiscount, 0);
       expect(updated.marketView!.gold, 3);
+    });
+
+    test('buyItemOffer는 market compass 표시 가격만 결제하고 소비한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 3803);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      state.runProgress!.gold = 10;
+      state.runProgress!.queueMarketModifier(
+        op: 'discount_cheapest_first_offer',
+        amount: 1,
+      );
+      final item = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'coin_cache',
+          timing: 'use_market',
+          op: 'gain_gold',
+          placement: 'inventory',
+        ),
+      );
+      final basePrice = state.runProgress!.effectiveItemPrice(
+        item,
+        includeCheapestFirstOfferDiscount: false,
+      );
+      final offer = RummiMarketItemOfferView.fromItemDefinition(
+        item,
+        slotIndex: 0,
+        currentGold: 10,
+        price: basePrice - 1,
+        originalPrice: basePrice,
+        discountSourceLabel: '나침반',
+      );
+
+      final failMessage = notifier.buyItemOffer(offer);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(failMessage, isNull);
+      expect(updated.runProgress!.gold, 10 - (basePrice - 1));
+      expect(
+        updated.runProgress!.marketModifiers.cheapestFirstOfferDiscount,
+        0,
+      );
+      expect(updated.runProgress!.marketModifiers.consumedItemOfferIds, [
+        item.id,
+      ]);
     });
 
     test('useMarketItem은 market 사용 아이템으로 골드와 facade를 갱신한다', () {

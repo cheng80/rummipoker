@@ -30,12 +30,24 @@
    - 상한 도달 시 `보드 버림 최대치입니다.`, `손패 버림 최대치입니다.`, `보드 이동 최대치입니다.`로 실패 처리하고 소모하지 않는다.
    - 일부만 적용 가능한 경우에는 상한까지만 올리고 실제 증가량만 이벤트에 기록한다.
    - 검증: `item_effect_runtime_test`, `dart analyze`.
-3. 다음: Jester/Item/Tool/Gear 정책 리스크 검토 리스트를 작은 구현 후보로 분해한다.
-   - 상한/no-op: `spare_pouch`, `shop_lens`, `boss_trophy`.
+3. 완료: 보유 슬롯 확장 아이템 정책 정리.
+   - 정책: Quick/Passive/Jester 보유 슬롯 확장은 Boss 진행 보상의 전용 축으로 둔다.
+   - `spare_pouch`는 S2 Boss Quick Slot 해금과 충돌하므로 카탈로그/번역/테스트 fixture에서 삭제했다.
+   - 아이템은 보유 슬롯 수 자체를 늘리지 않고 후보 수/할인/사용 보조/자원 보정 축으로 설계한다.
+   - 검증: `item_definition_test`, `item_effect_runtime_test`, `game_session_notifier_test`, `dart analyze`.
+4. 완료: Market 후보 슬롯 증가 상한/no-op 정책 적용.
+   - 정책: Jester/Item 후보 슬롯은 현재 4개를 runtime 상한으로 둔다.
+   - `shop_lens`는 Item 후보 슬롯이 이미 4개이면 `Item 후보 슬롯 최대치입니다.`로 실패 처리하고, 후보 영역에 `렌즈 +1` 배지를 표시한다.
+   - `boss_trophy`는 다음 Market Jester 후보 슬롯이 4개를 넘지 않도록 실제 적용량만 예약하고, 이미 4개이면 `Jester 후보 슬롯 최대치입니다.`로 실패 처리한다.
+   - 검증: `item_effect_runtime_test`, `dart analyze`.
+5. 진행 중: Jester/Item/Tool/Gear 정책 리스크 검토 리스트를 작은 구현 후보로 분해한다.
+   - 완료: `spare_pouch`는 Boss 보유 슬롯 해금과 겹쳐 삭제했다.
+   - 완료: `lucky_counter`는 눈에 보이는 피드백이 없는 rarity weight 효과라 카탈로그에서 삭제했다.
+   - 완료: `market_compass`는 현재 Market의 보이는 Jester/Item 후보 중 1G 이상 최저가 1개에만 `나침반` 할인 배지를 붙인다. 0G 후보에는 적용하지 않는다.
    - 가격/가치: `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study`.
    - 조건부 사용 UX: `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품.
-4. 그 다음: 리팩터링 전에 runtime state와 presentation/overlay/dialog/animation state 분리 계획을 확정한다.
-5. 이후: 장기 경제 gate를 다시 연다. 특히 `runtime_station_pool_economy_r400`에서 `shop_slot_market_v9`가 none/control보다 개선되지 않은 문제를 target/boss severity/market 구매력으로 분리해 본다.
+6. 그 다음: 리팩터링 전에 runtime state와 presentation/overlay/dialog/animation state 분리 계획을 확정한다.
+7. 이후: 장기 경제 gate를 다시 연다. 특히 `runtime_station_pool_economy_r400`에서 `shop_slot_market_v9`가 none/control보다 개선되지 않은 문제를 target/boss severity/market 구매력으로 분리해 본다.
 
 ## 3. 공모전 기준 상태 기록
 

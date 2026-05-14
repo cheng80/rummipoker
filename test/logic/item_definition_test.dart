@@ -84,15 +84,15 @@ void main() {
 
       expect(catalog.schemaVersion, 1);
       expect(catalog.catalogId, 'items_common_v1');
-      expect(catalog.all.length, 57);
+      expect(catalog.all.length, 55);
       expect(catalog.byType(ItemType.utility).length, 9);
       expect(catalog.byType(ItemType.consumable).length, 26);
       expect(catalog.byType(ItemType.equipment).length, 10);
-      expect(catalog.byType(ItemType.passiveRelic).length, 12);
+      expect(catalog.byType(ItemType.passiveRelic).length, 10);
       expect(catalog.byPlacement(ItemPlacement.inventory).length, 15);
       expect(catalog.byPlacement(ItemPlacement.quickSlot).length, 20);
       expect(catalog.byPlacement(ItemPlacement.equipped).length, 10);
-      expect(catalog.byPlacement(ItemPlacement.passiveRack).length, 12);
+      expect(catalog.byPlacement(ItemPlacement.passiveRack).length, 10);
 
       for (final item in catalog.all) {
         expect(item.displayName, isNot(contains(RegExp('[가-힣]'))));

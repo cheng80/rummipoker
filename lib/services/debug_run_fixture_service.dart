@@ -587,6 +587,7 @@ class DebugRunFixtureService {
   static ActiveRunRuntimeState _buildAnimationEffectsEyeCheck() {
     final base = _buildStage2ScoringSnapshot();
     final runProgress = base.runProgress.copySnapshot()
+      ..unlockedQuickSlotCapacity = RunInventoryState.maxQuickSlotCapacity
       ..itemInventory = const RunInventoryState(
         ownedItems: [
           OwnedItemEntry(
@@ -604,14 +605,8 @@ class DebugRunFixtureService {
             count: 1,
             placement: ItemPlacement.quickSlot,
           ),
-          OwnedItemEntry(
-            itemId: 'spare_pouch',
-            count: 1,
-            placement: ItemPlacement.passiveRack,
-          ),
         ],
         quickSlotItemIds: ['board_scrap', 'hand_scrap', 'move_token'],
-        passiveRelicIds: ['spare_pouch'],
       );
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,

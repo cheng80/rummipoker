@@ -359,6 +359,95 @@ void main() {
       expect(facade.offers.single.isAffordable, isTrue);
     });
 
+    test('market compass discounts one visible cheapest item offer', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'cheap_tool',
+            timing: 'use_market',
+            op: 'gain_gold',
+            placement: 'inventory',
+            basePrice: 1,
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..gold = 10
+        ..shopOffers.add(
+          RummiShopOffer(
+            slotIndex: 0,
+            card: _jester(id: 'expensive_jester'),
+            price: 4,
+          ),
+        );
+      progress.queueMarketModifier(
+        op: 'discount_cheapest_first_offer',
+        amount: 1,
+      );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      final expectedJesterPrice = progress.effectiveJesterOfferPrice(
+        0,
+        includeCheapestFirstOfferDiscount: false,
+      );
+      expect(facade.offers.single.discountSourceLabel, isNull);
+      expect(facade.offers.single.price, expectedJesterPrice);
+      expect(facade.itemOffers.single.originalPrice, 2);
+      expect(facade.itemOffers.single.price, 1);
+      expect(facade.itemOffers.single.discountSourceLabel, '나침반');
+    });
+
+    test('market compass skips zero price item offers', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'free_tool',
+            timing: 'use_market',
+            op: 'gain_gold',
+            placement: 'inventory',
+            basePrice: 1,
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()
+        ..gold = 10
+        ..shopOffers.add(
+          RummiShopOffer(
+            slotIndex: 0,
+            card: _jester(id: 'visible_jester'),
+            price: 2,
+          ),
+        );
+      progress.queueMarketModifier(
+        op: 'discount_next_purchase',
+        amount: 2,
+        category: 'item',
+      );
+      progress.queueMarketModifier(
+        op: 'discount_cheapest_first_offer',
+        amount: 1,
+      );
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(facade.itemOffers.single.price, 0);
+      expect(facade.itemOffers.single.discountSourceLabel, isNull);
+      expect(facade.offers.single.originalPrice, 4);
+      expect(facade.offers.single.price, 3);
+      expect(facade.offers.single.discountSourceLabel, '나침반');
+    });
+
     test('maps owned jesters into sellable market entries', () {
       final progress = RummiRunProgress()
         ..ownedJesters.addAll([
@@ -381,7 +470,7 @@ void main() {
       expect(facade.ownedEntries[1].sellPrice, 4);
     });
 
-    test('applies owned sell and quick slot item modifiers', () {
+    test('applies owned sell item modifiers', () {
       final catalog = ItemCatalog.fromJson({
         'schemaVersion': 1,
         'catalogId': 'items_test',
@@ -390,12 +479,6 @@ void main() {
             id: 'jester_hook',
             timing: 'sell_jester',
             op: 'sell_price_bonus',
-            placement: 'passiveRack',
-          ),
-          _itemJson(
-            id: 'spare_pouch',
-            timing: 'inventory_capacity',
-            op: 'extra_quick_slot',
             placement: 'passiveRack',
           ),
         ],
@@ -410,13 +493,8 @@ void main() {
               count: 1,
               placement: ItemPlacement.passiveRack,
             ),
-            OwnedItemEntry(
-              itemId: 'spare_pouch',
-              count: 1,
-              placement: ItemPlacement.passiveRack,
-            ),
           ],
-          passiveRelicIds: ['jester_hook', 'spare_pouch'],
+          passiveRelicIds: ['jester_hook'],
         );
 
       final facade = RummiMarketRuntimeFacade.fromRunProgress(
@@ -425,7 +503,6 @@ void main() {
       );
 
       expect(facade.ownedEntries.single.sellPrice, 3);
-      expect(facade.quickSlotCapacity, 3);
 
       expect(progress.sellOwnedJester(0, itemCatalog: catalog), isTrue);
       expect(progress.gold, 3);
@@ -612,11 +689,11 @@ void main() {
       );
       final resourceItem = ItemDefinition.fromJson(
         _itemJson(
-          id: 'resource_pouch',
-          timing: 'inventory_capacity',
-          op: 'extra_quick_slot',
-          placement: 'passiveRack',
-          tags: const ['capacity', 'discard'],
+          id: 'resource_glove',
+          timing: 'station_start',
+          op: 'add_board_discard',
+          placement: 'equipped',
+          tags: const ['discard'],
         ),
       );
 
@@ -1325,6 +1402,7 @@ Map<String, dynamic> _itemJson({
   required String op,
   required String placement,
   String rarity = 'common',
+  int basePrice = 4,
   List<String> tags = const ['market'],
 }) {
   return <String, dynamic>{
@@ -1333,7 +1411,7 @@ Map<String, dynamic> _itemJson({
     'displayNameKey': 'data.items.$id.displayName',
     'type': 'utility',
     'rarity': rarity,
-    'basePrice': 4,
+    'basePrice': basePrice,
     'sellPrice': 2,
     'stackable': false,
     'maxStack': 1,

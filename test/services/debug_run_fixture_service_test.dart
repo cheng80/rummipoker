@@ -207,7 +207,8 @@ void main() {
       'hand_scrap',
       'move_token',
     ]);
-    expect(fixture.runProgress.itemInventory.passiveRelicIds, ['spare_pouch']);
+    expect(fixture.runProgress.unlockedQuickSlotCapacity, 3);
+    expect(fixture.runProgress.itemInventory.passiveRelicIds, isEmpty);
   });
 
   test('final boss cash-out fixture is ready to close the run', () {

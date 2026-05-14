@@ -113,10 +113,6 @@
         "displayName": "Station Map",
         "effectText": "Clearing a Showdown gives +1 reward Gold."
       },
-      "spare_pouch": {
-        "displayName": "Spare Pouch",
-        "effectText": "Battle item slots +1."
-      },
       "merchant_stamp": {
         "displayName": "Shop Stamp",
         "effectText": "When entering the shop, the first reroll costs 1 less Gold."
@@ -132,10 +128,6 @@
       "hand_funnel": {
         "displayName": "Hand Funnel",
         "effectText": "At settlement, each unused hand discard gives +1 reward Gold."
-      },
-      "lucky_counter": {
-        "displayName": "Rare Counter",
-        "effectText": "Rare items appear more often in item offers."
       },
       "echo_bell": {
         "displayName": "Echo Bell",

@@ -35,7 +35,7 @@ Future<void> _pumpShopScreen(
   WidgetTester tester, {
   required RummiMarketRuntimeFacade Function() readMarketView,
   required RummiActiveRunSaveFacade Function() readActiveRunSaveView,
-  required String? Function(int offerIndex) onBuyOffer,
+  required String? Function(RummiMarketOfferView offer) onBuyOffer,
   String? Function(RummiMarketItemOfferView offer)? onBuyItemOffer,
   String? Function(int offerIndex)? onBuyTileOffer,
   String? Function(ItemDefinition item)? onUseMarketItem,
@@ -161,7 +161,8 @@ void main() {
           currentGold: 12,
         ),
       ],
-      itemOfferSlotCount: 3,
+      itemOfferSlotCount: 4,
+      itemOfferSlotBonusLabel: '렌즈 +1',
       quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
       itemOffers: [itemOffer],
       itemSlots: const [
@@ -241,8 +242,8 @@ void main() {
         );
         return null;
       },
-      onBuyOffer: (offerIndex) {
-        expect(offerIndex, 0);
+      onBuyOffer: (offer) {
+        expect(offer.slotIndex, 0);
         currentMarket = RummiMarketRuntimeFacade(
           gold: 5,
           rerollCost: 5,
@@ -288,6 +289,14 @@ void main() {
     expect(find.text('Tool Slots'), findsOneWidget);
     expect(find.text('Gear Slots'), findsOneWidget);
     expect(find.text('Jester Slots'), findsNothing);
+    expect(
+      find.byKey(
+        const ValueKey('market-item-offer-bonus-badge'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('렌즈 +1'), findsOneWidget);
     expect(find.text('구매'), findsOneWidget);
 
     expect(find.text('리롤 칩'), findsWidgets);

@@ -61,12 +61,10 @@
 | `score_abacus` | Station 첫 confirm chips +30 | `first_confirm_each_station` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
 | `thin_caliper` | 작은 hand confirm mult +4 | `on_confirm_if_played_hand_size_lte` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
 | `stage_map` | boss blind clear reward Gold +1 | `boss_blind_clear_reward` / `gain_gold` | `applyBossClearItem` | `applied` |
-| `spare_pouch` | quick slot +1 | `inventory_capacity` / `extra_quick_slot` | `applyInventoryCapacityItem` | `applied` |
 | `merchant_stamp` | market 진입 시 첫 reroll 할인 -1 | `enter_market` / `discount_first_reroll` | `applyEnterMarketItem` | `applied` |
 | `safety_net` | Station 첫 전투 종료 위기 방어 | `expiry_guard` / `rescue_first_expiry_each_station` | `applyExpiryGuardItem` | `applied` |
 | `coin_funnel` | 남은 보드 버림 보상 Gold +1씩 추가 | `settlement` / `board_discard_reward_bonus` | `applySettlementItem` | `applied` |
 | `hand_funnel` | 남은 손패 버림 보상 Gold +1씩 추가 | `settlement` / `hand_discard_reward_bonus` | `applySettlementItem` | `applied` |
-| `lucky_counter` | rare item weight +5 | `market_build_offers` / `rarity_weight_bonus` | `applyEnterMarketItem` | `applied` |
 | `echo_bell` | 두 번째 confirm에 첫 confirm 점수 10% 추가 | `second_confirm_each_station` / `add_percent_of_first_confirm_score` | `applyConfirmModifierItem` | `applied` |
 | `boss_trophy` | 다음 market Jester offer +1 | `boss_blind_clear_market` / `extra_jester_offer_next_market` | `applyBossClearItem` | `applied` |
 | `thin_wallet` | Gold 3 이하이면 Gold +5 | `use_market_if_gold_lte` / `gain_gold` | `applyMarketUseItem` | `applied` |
@@ -111,7 +109,9 @@
   `black_swatch`, `yellow_swatch`, `rank_chalk`, `tile_polisher`
 - Market modifier state/save/facade hook:
   `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`,
-  `market_compass`, `shop_lens`, `lucky_counter`, `trade_ticket`
+  `market_compass`, `shop_lens`, `trade_ticket`
+- 삭제: `lucky_counter`는 rarity weight만 바꾸고 화면 피드백이 약해 현재 카탈로그에서 제거했다.
+- 삭제: `spare_pouch`는 S2 Boss Quick Slot 해금과 겹치는 보유 슬롯 확장 아이템이라 카탈로그에서 제거했다. Quick/Passive/Jester 보유 슬롯 확장은 Boss 진행 보상 전용 축으로 둔다.
 - Direct economy hook:
   `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`
 - Planet-like direct hand-rank growth hook:
@@ -122,13 +122,13 @@
 - Settlement reward modifier hook:
   `coin_funnel`, `hand_funnel`
 - Inventory and sell hook:
-  `spare_pouch`, `jester_hook`
+  `travel_pouch`, `jester_hook`
 - Expiry guard hook:
   `safety_net`
 
 현재 실제 런타임 기준:
 
-- 총 57개 중 `applied` 57개
+- 총 55개 중 `applied` 55개
 - 남은 `pendingHook` 0개
 
 ## Post-contest 정책 재검토 리스트
@@ -144,14 +144,18 @@
 - 전투 자원 증가 상한은 보드 버림 6회, 손패 버림 4회, 보드 이동 5회다.
 - `board_scrap`, `hand_scrap`, `move_token`, `discard_glove`, `mulligan_sleeve`, `board_lift`, `organizer_glove`는 상한 도달 시 실패 처리하고 아이템/효과를 소모하지 않는다.
 - 자원 증가가 일부만 적용 가능하면 상한까지만 올리고 실제 증가량만 이벤트에 남긴다.
+- Quick/Passive/Jester 보유 슬롯 확장은 Boss 진행 보상 전용 축으로 둔다.
+- `spare_pouch`는 S2 Boss Quick Slot 해금과 겹쳐 삭제했다.
+- Market 후보 슬롯은 현재 Jester/Item 각각 4개가 상한이다.
+- `shop_lens`는 Item 후보 슬롯이 이미 4개이면 `Item 후보 슬롯 최대치입니다.`로 실패 처리하고, 적용 중이면 후보 영역에 `렌즈 +1` 배지를 표시한다. `boss_trophy`는 다음 Market Jester 후보 슬롯을 4개까지만 예약한다.
 
 다음 재검토 후보:
 
 | 묶음 | 후보 | 리스크 | 다음 판단 |
 |---|---|---|---|
 | 자원 상한/no-op | `board_scrap`, `hand_scrap`, `discard_glove`, `mulligan_sleeve`, `move_token`, `board_lift`, `organizer_glove` | 완료: board discard / hand discard / board move는 런타임 상한과 실패/미소모 정책을 갖는다. 남은 표시는 `N/base` 형태의 현재 UI 의미를 별도 리팩터링 때 재검토한다. | 상한 정책은 닫고, 표시 최대치 동기화는 resource model 리팩터링 후보로 넘긴다. |
-| 슬롯 상한/no-op | `spare_pouch`, 슬롯 해금 보상 | Quick slot은 현재 최대 3칸이다. 이미 3칸인 상태에서 추가 슬롯 효과가 유저에게 어떻게 읽히는지 확인이 필요하다. | 상한 도달 시 구매 전 표시, 구매 차단, 실패/미소모 정책을 정한다. |
-| offer/market 상한 | `shop_lens`, `boss_trophy`, `lucky_counter`, `market_compass` | offer slot/rarity/discount 효과가 이미 충분한 후보 수나 할인 상태에서 체감이 없을 수 있다. | market facade가 실제 적용량과 적용 실패를 구분해 표시하는지 확인한다. |
+| 슬롯 상한/no-op | Boss 보유 슬롯 해금 | 완료: Quick/Passive/Jester 보유 슬롯 확장은 Boss 진행 보상 전용 축으로 두고, 중복되는 `spare_pouch`는 삭제했다. | 보유 슬롯 확장 아이템은 재도입하지 않는다. |
+| offer/market 상한 | `shop_lens`, `boss_trophy`, `market_compass` | 완료: `shop_lens`와 `boss_trophy`의 후보 슬롯 수는 4개 상한과 실제 적용량 이벤트를 갖는다. `shop_lens`는 후보 영역에 `렌즈 +1` 배지를 표시한다. `market_compass`는 현재 Market의 보이는 후보 1개에만 `나침반` 할인 배지를 붙이고 0G 후보는 건너뛴다. `lucky_counter`는 삭제했다. | 남은 delayed Market 계열은 실제 표시/예약 UI가 필요한 `boss_trophy`를 별도 후보로 본다. |
 | 조건부 사용 no-op | `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품 | 이미 queue가 있거나 조건이 충족되지 않거나 0점 confirm에 묻히면 소모품이 의미 없이 사라질 수 있다. | 실패 시 미소모는 유지하고, 사용 전/후 피드백과 조건 표시를 보강한다. |
 | 가격/가치 이상 후보 | `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study` | catalog audit 기준 cheap high-impact 또는 expensive low-impact 후보가 있다. | 가격표를 바로 바꾸지 말고 실제 노출/구매/사용률, S7~S8 병목, v9 market 개선 여부를 함께 본다. |
 | 자동/직접 지급으로 보일 수 있는 효과 | `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`, `coin_funnel`, `hand_funnel` | 경제 보정이 선택 부담을 지우거나 자동 지급처럼 읽힐 수 있다. | 직접 지급 금지 원칙과 충돌하지 않는지, 조건/타이밍/표시가 플레이어 선택으로 읽히는지 확인한다. |
@@ -193,7 +197,7 @@
 대상 9개:
 
 - reroll/구매 할인: `reroll_token`, `coupon_stamp`, `merchant_stamp`, `jester_invoice`, `item_invoice`, `market_compass`
-- offer 구성 변경: `shop_lens`, `lucky_counter`
+- offer 구성 변경: `shop_lens`
 - 부분 offer 갱신: `trade_ticket` 적용 완료
 
 공통 작업:
@@ -240,7 +244,7 @@
 
 대상 2개:
 
-- `spare_pouch`, `jester_hook`
+- `travel_pouch`, `jester_hook`
 
 공통 작업:
 

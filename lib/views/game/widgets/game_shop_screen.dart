@@ -195,7 +195,7 @@ class GameShopScreen extends StatefulWidget {
   final String? Function() onReroll;
   final String? Function(ItemPlacement placement)? onRerollItemOffers;
   final String? Function()? onRerollTileOffers;
-  final String? Function(int offerIndex) onBuyOffer;
+  final String? Function(RummiMarketOfferView offer) onBuyOffer;
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
   final String? Function(int offerIndex) onBuyTileOffer;
   final String? Function(ItemDefinition item) onUseMarketItem;
@@ -890,7 +890,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     final sourceIndex = _visibleOfferLaneIndex(sourceEntry);
     final sourceCount = _visibleOfferLaneCount();
     final startOffset = _flightCenterForKey(_offerKey(sourceEntry));
-    final failMessage = widget.onBuyOffer(index);
+    final failMessage = widget.onBuyOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('jester-buy', failMessage);
       showBottomNotice(context, failMessage);
@@ -1776,6 +1776,15 @@ class _GameShopScreenState extends State<GameShopScreen>
                         currentTab: _shopTab,
                         onChanged: _selectShopTab,
                       ),
+                      if (market.itemOfferSlotBonusLabel != null) ...[
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: _MarketOfferBonusBadge(
+                            label: market.itemOfferSlotBonusLabel!,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 6),
                       AnimatedSwitcher(
                         duration: GamePresentationTimings.marketTabSwitch,
@@ -3341,6 +3350,37 @@ class _MarketPagerBar extends StatelessWidget {
   }
 }
 
+class _MarketOfferBonusBadge extends StatelessWidget {
+  const _MarketOfferBonusBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('market-item-offer-bonus-badge'),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFD76B).withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0xFFFFD76B).withValues(alpha: 0.72),
+        ),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        style: const TextStyle(
+          color: Color(0xFFFFE39C),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
 class _MarketRerollSuccessFeedback extends StatelessWidget {
   const _MarketRerollSuccessFeedback({required this.tick});
 
@@ -3736,6 +3776,7 @@ class _GameShopOfferCard extends StatelessWidget {
                 price: offer.price,
                 originalPrice: offer.originalPrice,
                 isAffordable: canAfford,
+                discountSourceLabel: offer.discountSourceLabel,
               ),
             ),
           ],
@@ -3829,6 +3870,7 @@ class _MarketItemOfferCard extends StatelessWidget {
                 price: offer.price,
                 originalPrice: offer.originalPrice,
                 isAffordable: offer.isAffordable,
+                discountSourceLabel: offer.discountSourceLabel,
               ),
             ),
           ],
@@ -3843,11 +3885,13 @@ class _MarketOfferPriceLabel extends StatelessWidget {
     required this.price,
     required this.originalPrice,
     required this.isAffordable,
+    this.discountSourceLabel,
   });
 
   final int price;
   final int originalPrice;
   final bool isAffordable;
+  final String? discountSourceLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -3899,10 +3943,10 @@ class _MarketOfferPriceLabel extends StatelessWidget {
               color: const Color(0xFF2D6F9E),
               borderRadius: BorderRadius.circular(3),
             ),
-            child: const Text(
-              '할인',
+            child: Text(
+              discountSourceLabel ?? '할인',
               maxLines: 1,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 7,
                 fontWeight: FontWeight.w900,
@@ -5122,10 +5166,7 @@ String _itemEffectTag(String op) {
     'free_next_reroll' ||
     'discount_first_reroll' => 'Discount',
     'add_board_discard' || 'add_hand_discard' => '+Discard',
-    'extra_item_offer_slot' ||
-    'extra_jester_offer_next_market' ||
-    'rarity_weight_bonus' => 'Offer',
-    'extra_quick_slot' => '+Slot',
+    'extra_item_offer_slot' || 'extra_jester_offer_next_market' => 'Offer',
     'sell_price_bonus' => '판매 보너스',
     'rescue_first_expiry_each_station' => 'Rescue',
     'add_percent_of_first_confirm_score' => 'Echo',

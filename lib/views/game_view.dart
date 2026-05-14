@@ -1752,8 +1752,8 @@ class _GameViewState extends ConsumerState<GameView>
           onRerollTileOffers: () => _gameNotifier.rerollTileOffersFromState(
             itemCatalog: _itemCatalog,
           ),
-          onBuyOffer: (index) =>
-              _gameNotifier.buyShopOffer(index, itemCatalog: _itemCatalog),
+          onBuyOffer: (offer) =>
+              _gameNotifier.buyShopOfferView(offer, itemCatalog: _itemCatalog),
           onBuyItemOffer: (offer) =>
               _gameNotifier.buyItemOffer(offer, itemCatalog: _itemCatalog),
           onBuyTileOffer: _gameNotifier.buyTileOffer,

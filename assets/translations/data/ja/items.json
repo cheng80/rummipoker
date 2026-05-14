@@ -113,10 +113,6 @@
         "displayName": "Station Map",
         "effectText": "Showdownクリア報酬Gold+1。"
       },
-      "spare_pouch": {
-        "displayName": "Spare Pouch",
-        "effectText": "Battle Item Slot +1。"
-      },
       "merchant_stamp": {
         "displayName": "Shop Stamp",
         "effectText": "ショップ入場後、最初のリロールはGoldコスト-1。"
@@ -132,10 +128,6 @@
       "hand_funnel": {
         "displayName": "Hand Funnel",
         "effectText": "精算時、未使用手札捨て1回ごとに報酬+1 Gold。"
-      },
-      "lucky_counter": {
-        "displayName": "Rare Counter",
-        "effectText": "Item候補にRare Itemが出やすくなる。"
       },
       "echo_bell": {
         "displayName": "Echo Bell",

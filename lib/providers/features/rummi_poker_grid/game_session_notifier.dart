@@ -531,7 +531,7 @@ class GameSessionNotifier
           runProgress: runProgress,
         );
       }
-      runProgress.claimBossSlotUnlockRewards();
+      runProgress.claimBossSlotUnlockRewards(itemCatalog: itemCatalog);
       runProgress.recordSeenBossModifier(session.blind.bossModifier?.id);
       runProgress.recordClearedStation(runProgress.stageIndex);
     }
@@ -766,6 +766,59 @@ class GameSessionNotifier
     return null;
   }
 
+  String? buyShopOfferView(
+    RummiMarketOfferView offer, {
+    ItemCatalog? itemCatalog,
+  }) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    final offerIndex = runProgress.shopOffers.indexWhere(
+      (entry) => entry.card.id == offer.contentId,
+    );
+    if (offerIndex < 0) {
+      return '구매할 오퍼를 찾지 못했습니다.';
+    }
+    if (runProgress.ownedJesters.length >= runProgress.jesterSlotCapacity()) {
+      return '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.';
+    }
+    final marketBuyItem = _nextOwnedMarketBuyItem(
+      catalog: itemCatalog,
+      runProgress: runProgress,
+      category: 'jester',
+    );
+    var price = offer.price;
+    if (marketBuyItem != null) {
+      final result = ItemEffectRuntime.applyMarketBuyItem(
+        item: marketBuyItem,
+        runProgress: runProgress,
+      );
+      if (!result.isSuccess) return result.failMessage;
+      price = runProgress.effectiveJesterOfferPrice(
+        offerIndex,
+        includeCheapestFirstOfferDiscount: false,
+      );
+      if (offer.discountSourceLabel == '나침반') {
+        price = max(
+          0,
+          price - runProgress.marketModifiers.cheapestFirstOfferDiscount,
+        );
+      }
+    }
+    if (runProgress.gold < price) {
+      return '골드가 부족합니다.';
+    }
+    final ok = runProgress.buyOffer(
+      offerIndex,
+      price: price,
+      consumeCheapestFirstOfferDiscount: offer.discountSourceLabel == '나침반',
+    );
+    if (!ok) {
+      return '구매 처리에 실패했습니다.';
+    }
+    _replaceState(state.copyWith(revision: state.revision + 1));
+    return null;
+  }
+
   String? buyItemOffer(
     RummiMarketItemOfferView offer, {
     ItemCatalog? itemCatalog,
@@ -789,14 +842,24 @@ class GameSessionNotifier
       runProgress: runProgress,
       category: 'item',
     );
+    var price = offer.price;
     if (marketBuyItem != null) {
       final result = ItemEffectRuntime.applyMarketBuyItem(
         item: marketBuyItem,
         runProgress: runProgress,
       );
       if (!result.isSuccess) return result.failMessage;
+      price = runProgress.effectiveItemPrice(
+        offer.item,
+        includeCheapestFirstOfferDiscount: false,
+      );
+      if (offer.discountSourceLabel == '나침반') {
+        price = max(
+          0,
+          price - runProgress.marketModifiers.cheapestFirstOfferDiscount,
+        );
+      }
     }
-    final price = runProgress.effectiveItemPrice(offer.item);
     if (runProgress.gold < price) {
       return '골드가 부족합니다.';
     }
@@ -804,6 +867,7 @@ class GameSessionNotifier
       offer.item,
       price: price,
       itemCatalog: itemCatalog,
+      consumeCheapestFirstOfferDiscount: offer.discountSourceLabel == '나침반',
     );
     if (!ok) {
       return '아이템 구매 처리에 실패했습니다.';

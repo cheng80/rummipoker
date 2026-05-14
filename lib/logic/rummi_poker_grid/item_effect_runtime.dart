@@ -121,6 +121,7 @@ class ItemEffectRuntime {
   static const int maxSupportedBoardDiscards = 6;
   static const int maxSupportedHandDiscards = 4;
   static const int maxSupportedBoardMoves = 5;
+  static const int maxSupportedMarketOfferSlots = 4;
 
   static List<ItemEffectCatalogRow> catalogEffectRows(ItemCatalog catalog) {
     return catalog.all.map(_catalogRowFor).toList(growable: false);
@@ -418,7 +419,6 @@ class ItemEffectRuntime {
   }) {
     return switch (item.effect.op) {
       'increase_hand_size' => _applyIncreaseHandSize(item, session),
-      'extra_quick_slot' => _applyCapacityModifier(item),
       _ => _pendingHook(item, 'applyInventoryCapacityItem'),
     };
   }
@@ -629,7 +629,6 @@ class ItemEffectRuntime {
       'enter_market:discount_first_reroll' ||
       'enter_market:discount_cheapest_first_offer' ||
       'market_build_offers:extra_item_offer_slot' ||
-      'market_build_offers:rarity_weight_bonus' ||
       'boss_blind_clear_reward:gain_gold' ||
       'boss_blind_clear_market:extra_jester_offer_next_market' ||
       'settlement:board_discard_reward_bonus' ||
@@ -652,7 +651,6 @@ class ItemEffectRuntime {
       'station_start:add_board_move' ||
       'station_start:increase_hand_size_with_discard_penalty' ||
       'inventory_capacity:increase_hand_size' ||
-      'inventory_capacity:extra_quick_slot' ||
       'sell_jester:sell_price_bonus' ||
       'expiry_guard:rescue_first_expiry_each_station' =>
         ItemEffectApplicationStatus.applied,
@@ -797,8 +795,6 @@ class ItemEffectRuntime {
       case 'discount_first_reroll':
       case 'discount_next_purchase':
       case 'discount_cheapest_first_offer':
-      case 'extra_item_offer_slot':
-      case 'rarity_weight_bonus':
         runProgress.queueMarketModifier(
           op: item.effect.op,
           amount: amount,
@@ -811,6 +807,35 @@ class ItemEffectRuntime {
               kind: ItemEffectEventKind.marketModifierQueued,
               itemId: item.id,
               amount: amount,
+              detail: category == null
+                  ? item.effect.op
+                  : '${item.effect.op}:$category',
+            ),
+          ],
+        );
+      case 'extra_item_offer_slot':
+        final appliedAmount = _availableMarketOfferSlotIncrease(
+          currentSlotCount: runProgress.marketModifiers.itemOfferSlotCount,
+          requestedAmount: amount,
+        );
+        if (appliedAmount <= 0) {
+          return ItemUseResult.failure(
+            itemId: item.id,
+            message: 'Item 후보 슬롯 최대치입니다.',
+          );
+        }
+        runProgress.queueMarketModifier(
+          op: item.effect.op,
+          amount: appliedAmount,
+          category: category,
+        );
+        return ItemUseResult.success(
+          itemId: item.id,
+          events: [
+            ItemEffectEvent(
+              kind: ItemEffectEventKind.marketModifierQueued,
+              itemId: item.id,
+              amount: appliedAmount,
               detail: category == null
                   ? item.effect.op
                   : '${item.effect.op}:$category',
@@ -838,40 +863,51 @@ class ItemEffectRuntime {
     return _pendingHook(item, 'applyMarketModifier');
   }
 
-  static ItemUseResult _applyCapacityModifier(ItemDefinition item) {
-    final amount = _positiveIntAmount(item);
-    if (amount == null) return _invalidAmount(item);
-    return ItemUseResult.success(
-      itemId: item.id,
-      events: [
-        ItemEffectEvent(
-          kind: ItemEffectEventKind.capacityModifierQueued,
-          itemId: item.id,
-          amount: amount,
-          detail: item.effect.op,
-        ),
-      ],
-    );
-  }
-
   static ItemUseResult _applyBossMarketModifier(
     ItemDefinition item,
     RummiRunProgress runProgress,
   ) {
     final amount = _positiveIntAmount(item);
     if (amount == null) return _invalidAmount(item);
-    runProgress.queueMarketModifier(op: item.effect.op, amount: amount);
+    var appliedAmount = amount;
+    if (item.effect.op == 'extra_jester_offer_next_market') {
+      final nextMarketJesterSlots =
+          RummiEconomyConfig.shopOfferCount +
+          runProgress.marketModifiers.nextMarketExtraJesterOfferSlots;
+      appliedAmount = _availableMarketOfferSlotIncrease(
+        currentSlotCount: nextMarketJesterSlots,
+        requestedAmount: amount,
+      );
+      if (appliedAmount <= 0) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: 'Jester 후보 슬롯 최대치입니다.',
+        );
+      }
+    }
+    runProgress.queueMarketModifier(op: item.effect.op, amount: appliedAmount);
     return ItemUseResult.success(
       itemId: item.id,
       events: [
         ItemEffectEvent(
           kind: ItemEffectEventKind.bossModifierQueued,
           itemId: item.id,
-          amount: amount,
+          amount: appliedAmount,
           detail: item.effect.op,
         ),
       ],
     );
+  }
+
+  static int _availableMarketOfferSlotIncrease({
+    required int currentSlotCount,
+    required int requestedAmount,
+  }) {
+    final availableAmount = maxSupportedMarketOfferSlots - currentSlotCount;
+    if (availableAmount <= 0) return 0;
+    return requestedAmount > availableAmount
+        ? availableAmount
+        : requestedAmount;
   }
 
   static ItemUseResult _applyRerollItemOffersOnly(

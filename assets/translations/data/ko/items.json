@@ -113,10 +113,6 @@
         "displayName": "Station 지도",
         "effectText": "Boss 클리어 보상 골드 +1."
       },
-      "spare_pouch": {
-        "displayName": "예비 주머니",
-        "effectText": "전투 아이템 칸 +1."
-      },
       "merchant_stamp": {
         "displayName": "상점 도장",
         "effectText": "상점에 들어갈 때 첫 리롤 비용이 1 줄어듭니다."
@@ -132,10 +128,6 @@
       "hand_funnel": {
         "displayName": "손패 환급",
         "effectText": "정산 시 남은 손패 버림마다 보상 골드 +1."
-      },
-      "lucky_counter": {
-        "displayName": "희귀 표식",
-        "effectText": "희귀 아이템이 상점 후보에 더 자주 등장합니다."
       },
       "echo_bell": {
         "displayName": "메아리 종",

@@ -824,33 +824,6 @@
       "effectTextKey": "data.items.stage_map.effectText"
     },
     {
-      "id": "spare_pouch",
-      "displayName": "Spare Pouch",
-      "type": "passive_relic",
-      "rarity": "common",
-      "basePrice": 6,
-      "sellPrice": 3,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": false,
-      "placement": "passiveRack",
-      "slotHint": "passive",
-      "effectText": "Battle item slots +1.",
-      "effect": {
-        "timing": "inventory_capacity",
-        "op": "extra_quick_slot",
-        "amount": 1
-      },
-      "tags": [
-        "relic",
-        "capacity",
-        "consumable"
-      ],
-      "displayNameKey": "data.items.spare_pouch.displayName",
-      "effectTextKey": "data.items.spare_pouch.effectText"
-    },
-    {
       "id": "merchant_stamp",
       "displayName": "Shop Stamp",
       "type": "passive_relic",
@@ -957,34 +930,6 @@
       ],
       "displayNameKey": "data.items.hand_funnel.displayName",
       "effectTextKey": "data.items.hand_funnel.effectText"
-    },
-    {
-      "id": "lucky_counter",
-      "displayName": "Rare Counter",
-      "type": "passive_relic",
-      "rarity": "rare",
-      "basePrice": 11,
-      "sellPrice": 5,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": false,
-      "placement": "passiveRack",
-      "slotHint": "passive",
-      "effectText": "Rare items appear more often in item offers.",
-      "effect": {
-        "timing": "market_build_offers",
-        "op": "rarity_weight_bonus",
-        "rarity": "rare",
-        "amount": 5
-      },
-      "tags": [
-        "relic",
-        "market",
-        "rarity"
-      ],
-      "displayNameKey": "data.items.lucky_counter.displayName",
-      "effectTextKey": "data.items.lucky_counter.effectText"
     },
     {
       "id": "echo_bell",

@@ -113,10 +113,6 @@
         "displayName": "Station Map",
         "effectText": "清除Showdown后奖励+1 Gold。"
       },
-      "spare_pouch": {
-        "displayName": "Spare Pouch",
-        "effectText": "Battle Item Slot +1。"
-      },
       "merchant_stamp": {
         "displayName": "Shop Stamp",
         "effectText": "进入商店后第一次重抽少花1 Gold。"
@@ -132,10 +128,6 @@
       "hand_funnel": {
         "displayName": "Hand Funnel",
         "effectText": "结算时，每次未使用手牌弃牌给予+1奖励Gold。"
-      },
-      "lucky_counter": {
-        "displayName": "Rare Counter",
-        "effectText": "Rare Item更常出现在Item候选中。"
       },
       "echo_bell": {
         "displayName": "Echo Bell",
