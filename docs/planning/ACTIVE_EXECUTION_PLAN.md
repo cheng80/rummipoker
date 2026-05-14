@@ -44,6 +44,7 @@
    - 완료: `spare_pouch`는 Boss 보유 슬롯 해금과 겹쳐 삭제했다.
    - 완료: `lucky_counter`는 눈에 보이는 피드백이 없는 rarity weight 효과라 카탈로그에서 삭제했다.
    - 완료: `market_compass`는 현재 Market의 보이는 Jester/Item 후보 중 1G 이상 최저가 1개에만 `나침반` 할인 배지를 붙인다. 0G 후보에는 적용하지 않는다.
+   - 다음 세션 첫 작업: Chrome에서 debug fixture를 열어 실제 눈검증을 한다. 우선 `shop_lens` 적용 상태의 Tool/Gear 후보 영역에 `렌즈 +1` 배지가 보이는지, `market_compass` 할인 후보에 `나침반` 배지가 보이는지, Boss 보유 슬롯 해금이 아이템 없이도 기존 흐름대로 보이는지 확인한다. 실행 뒤 스크린샷/로그 요약은 이 문서나 날짜별 verification log에 남긴다.
    - 가격/가치: `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study`.
    - 조건부 사용 UX: `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품.
 6. 그 다음: 리팩터링 전에 runtime state와 presentation/overlay/dialog/animation state 분리 계획을 확정한다.
