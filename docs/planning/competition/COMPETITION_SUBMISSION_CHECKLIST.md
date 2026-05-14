@@ -6,7 +6,8 @@
 > 목표: BIC 일반부문 1차 접수용 플레이 가능 빌드를 안정적으로 제출한다.
 > full-play gate 별명: `공모전 풀런봇` (`contest_full_run_bot`)
 
-이 문서는 공모전 제출 전 남은 작업을 작은 단위로 추적한다.
+이 문서는 공모전 제출 이력과 제출 당시 검증 증거를 보존한다.
+2026-05-15 12시경 최종 산출물을 우선 등록했으므로 이 문서는 더 이상 활성 작업 큐가 아니다.
 현재 활성 트랙과 다음 작업 선택은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 따른다.
 전체 진도와 장기 목표 판단은 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`를 기준으로 하고, 이 문서는 제출 준비 실행표로만 사용한다.
 
@@ -14,6 +15,7 @@
 
 현재 결론:
 
+- 2026-05-15 12시경 최종 산출물을 우선 등록했다. 공모전 트랙은 off이며, 아래 항목은 제출 전 검증 이력이다.
 - 공모전 풀런봇 QA는 제출용 handoff 상태로 닫는다. `ko`, `en` 표준→도전 cycle을 통과했고, 최신 UI/Web 회귀 수정 뒤 `ko` standard→challenge 재확인도 통과했다. `ja`, `zh-CN`, `zh-TW` full-run은 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다.
 - 2026-05-09 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss full-run 통과 증거를 확보했다.
 - 2026-05-10 최신 제출 후보 build에서 locale별 standard→challenge full-run cycle을 제외한 최근 룰/UI 항목 검증을 마쳤다.
@@ -64,7 +66,7 @@
 - 2026-05-14 웹 focus-out BGM 완화: 웹뷰에서 focus-out 후 복귀할 때 BGM이 씹히거나 처음부터 재생되는 문제를 `SoundManager` 내부 정책으로 제한했다. lifecycle pause만 recovery pending으로 표시하고, 복귀 후 첫 사용자 제스처는 `resume()`을 먼저 시도한다. 그 resume이 실패한 경우에만 다음 제스처에서 `stop()`/`play()` fallback을 허용하며, `pointerdown`/`pointerup` 중복 replay는 막는다. 검증: `flutter test test/resources/sound_manager_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`, `flutter build web`, `git diff --check`. 웹뷰/브라우저 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 known limitation으로 둔다.
 - 2026-05-14 용어 UX 보강: `+N Mult`처럼 보이던 Jester/Item 설명을 실제 효과인 `점수 +N*5%`로 환산했고, 진짜 곱셈은 `점수 xN`으로 표시한다. 한국어 Chips는 `칩`으로 통일하며, 런 정보 다이얼로그에 `게임 용어` 설명을 추가해 `칩`, `점수 +%`, `점수 xN`, `골드` 차이를 설명한다. 검증: `flutter test test/views/game/widgets/game_run_info_dialog_test.dart test/logic/jester_translation_test.dart test/logic/item_definition_test.dart test/views/game/widgets/game_shop_jester_runtime_value_test.dart test/views/game/widgets/game_shop_screen_test.dart test/views/game/widgets/game_station_read_path_test.dart`, JSON validation, `git diff --check`.
 
-오늘 바로 할 작업:
+닫힌 제출 작업:
 
 1. 완료: Browser/WebDriver + Compute Use hybrid bot으로 `ko` 표준 난이도 fresh S1~S8 Boss를 통과했다.
 2. 완료: 같은 `ko` cycle 내부에서 `ko` 도전 난이도 fresh S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 통과했다.

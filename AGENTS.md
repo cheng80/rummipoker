@@ -120,6 +120,8 @@
 - 정산/팝업/게임 UI 텍스트 루트는 의도치 않은 `TextDecoration` 상속을 차단한다. 노란 밑줄 같은 시각 회귀는 warn/error/overflow로 잡히지 않으므로 screenshot/눈검증 대상에 넣고, 색/크기만 지정한 `TextStyle`도 decoration 상속 여부를 확인한다.
 - `PhoneFrameScaffold` 화면에서 `showGeneralDialog`, `showDialog`, bottom sheet 같은 route overlay를 띄울 때는 본문 프레임 밖 전체 화면 폭으로 UI가 새지 않게 한다. 게임 정산/보상/옵션처럼 플레이 화면의 일부인 overlay는 별도 `PhoneFrame` 또는 동등한 폭 제약을 적용하고, 데스크톱형 landscape widget test로 폭을 확인한다.
 - 게임 전역 상단/하단 배너와 toast는 실제 기기 safe area뿐 아니라 `PhoneFrame` 논리 프레임 안쪽에 떠야 한다. `rootOverlay`에 직접 붙이는 notice는 전체 브라우저/데스크톱 화면 기준으로 배치하지 말고 `SafeArea`와 `PhoneFrame` 제약을 함께 적용하며, wide landscape widget test로 상단/하단 bounds를 확인한다.
+- 손패 최대치 증가 효과는 유저가 실제로 볼 수 있는 손패 UI 한계와 함께 관리한다. 현재 전투 UI는 손패 5장을 상한으로 보고, 5장 초과 증가 효과는 실패 처리하며 아이템/효과를 소모하지 않고 `손패 최대치입니다.` 같은 명시 피드백을 보여준다. 손패 증가와 패널티가 묶인 복합 효과는 손패 증가가 실패하면 패널티만 적용하지 않는다.
+- 보드 버림/손패 버림/보드 이동 같은 전투 자원 증가 효과도 런타임 상한과 소모 여부를 함께 관리한다. 현재 상한은 보드 버림 6회, 손패 버림 4회, 보드 이동 5회이며, 상한 도달 시 실패 처리하고 아이템/효과를 소모하지 않는다. 일부만 적용 가능한 경우에는 실제 증가한 수량만 이벤트와 피드백에 반영한다.
 
 ---
 

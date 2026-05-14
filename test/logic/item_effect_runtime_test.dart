@@ -223,6 +223,39 @@ void main() {
       ]);
     });
 
+    test('useBattleItem caps hand capacity at five and reports no effect', () {
+      final item = _item(id: 'battle_pouch', op: 'increase_hand_size');
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      )..maxHandSize = ItemEffectRuntime.maxSupportedHandSize;
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'battle_pouch',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['battle_pouch'],
+        );
+
+      final result = ItemEffectRuntime.useBattleItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.failMessage, '손패 최대치입니다.');
+      expect(session.maxHandSize, ItemEffectRuntime.maxSupportedHandSize);
+      expect(
+        runProgress.itemInventory.ownedItems.single.itemId,
+        'battle_pouch',
+      );
+    });
+
     test('useBattleItem applies board move effect and consumes stack', () {
       final item = _item(id: 'move_token', op: 'add_board_move', amount: 1);
       final session = RummiPokerGridSession(
@@ -261,6 +294,164 @@ void main() {
       ]);
       expect(result.events.first.amount, 1);
     });
+
+    test(
+      'useBattleItem caps board discard at supported maximum without consume',
+      () {
+        final item = _item(id: 'board_scrap', op: 'add_board_discard');
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(
+            targetScore: 999,
+            boardDiscardsRemaining: ItemEffectRuntime.maxSupportedBoardDiscards,
+          ),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'board_scrap',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['board_scrap'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.failMessage, '보드 버림 최대치입니다.');
+        expect(
+          session.blind.boardDiscardsRemaining,
+          ItemEffectRuntime.maxSupportedBoardDiscards,
+        );
+        expect(
+          runProgress.itemInventory.ownedItems.single.itemId,
+          'board_scrap',
+        );
+      },
+    );
+
+    test(
+      'useBattleItem caps hand discard at supported maximum without consume',
+      () {
+        final item = _item(id: 'hand_scrap', op: 'add_hand_discard');
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(
+            targetScore: 999,
+            handDiscardsRemaining: ItemEffectRuntime.maxSupportedHandDiscards,
+          ),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'hand_scrap',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['hand_scrap'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.failMessage, '손패 버림 최대치입니다.');
+        expect(
+          session.blind.handDiscardsRemaining,
+          ItemEffectRuntime.maxSupportedHandDiscards,
+        );
+        expect(
+          runProgress.itemInventory.ownedItems.single.itemId,
+          'hand_scrap',
+        );
+      },
+    );
+
+    test(
+      'useBattleItem caps board move at supported maximum without consume',
+      () {
+        final item = _item(id: 'move_token', op: 'add_board_move');
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(
+            targetScore: 999,
+            boardMovesRemaining: ItemEffectRuntime.maxSupportedBoardMoves,
+          ),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'move_token',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['move_token'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.failMessage, '보드 이동 최대치입니다.');
+        expect(
+          session.blind.boardMovesRemaining,
+          ItemEffectRuntime.maxSupportedBoardMoves,
+        );
+        expect(
+          runProgress.itemInventory.ownedItems.single.itemId,
+          'move_token',
+        );
+      },
+    );
+
+    test(
+      'station start board move applies only available amount before cap',
+      () {
+        final item = _item(
+          id: 'board_lift',
+          timing: 'station_start',
+          op: 'add_board_move',
+          amount: 3,
+          placement: ItemPlacement.inventory,
+        );
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(
+            targetScore: 999,
+            boardMovesRemaining: ItemEffectRuntime.maxSupportedBoardMoves - 1,
+          ),
+        );
+
+        final result = ItemEffectRuntime.applyStationStartItem(
+          item: item,
+          session: session,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(
+          session.blind.boardMovesRemaining,
+          ItemEffectRuntime.maxSupportedBoardMoves,
+        );
+        expect(result.events.single.amount, 1);
+      },
+    );
 
     test(
       'useBattleItem queues next board move slide bonus and consumes stack',
@@ -484,6 +675,35 @@ void main() {
         ItemEffectEventKind.maxHandSizeIncreased,
         ItemEffectEventKind.boardDiscardRemoved,
       ]);
+    });
+
+    test('station start hand capacity item does not apply penalty at cap', () {
+      final item = _item(
+        id: 'wide_grip',
+        timing: 'station_start',
+        op: 'increase_hand_size_with_discard_penalty',
+        placement: ItemPlacement.equipped,
+        rawEffect: const {'boardDiscardPenalty': 1},
+      );
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(
+          targetScore: 999,
+          boardDiscardsRemaining: 4,
+          handDiscardsRemaining: 2,
+        ),
+      )..maxHandSize = ItemEffectRuntime.maxSupportedHandSize;
+
+      final result = ItemEffectRuntime.applyStationStartItem(
+        item: item,
+        session: session,
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.failMessage, '손패 최대치입니다.');
+      expect(session.maxHandSize, ItemEffectRuntime.maxSupportedHandSize);
+      expect(session.blind.boardDiscardsRemaining, 4);
+      expect(session.blind.handDiscardsRemaining, 2);
     });
 
     test(

@@ -117,6 +117,11 @@ class ItemEffectCatalogRow {
 class ItemEffectRuntime {
   const ItemEffectRuntime._();
 
+  static const int maxSupportedHandSize = 5;
+  static const int maxSupportedBoardDiscards = 6;
+  static const int maxSupportedHandDiscards = 4;
+  static const int maxSupportedBoardMoves = 5;
+
   static List<ItemEffectCatalogRow> catalogEffectRows(ItemCatalog catalog) {
     return catalog.all.map(_catalogRowFor).toList(growable: false);
   }
@@ -770,16 +775,13 @@ class ItemEffectRuntime {
   ) {
     final amount = _positiveIntAmount(item);
     if (amount == null) return _invalidAmount(item);
-    session.blind.boardDiscardsRemaining += amount;
-    return ItemUseResult.success(
-      itemId: item.id,
-      events: [
-        ItemEffectEvent(
-          kind: ItemEffectEventKind.boardDiscardAdded,
-          itemId: item.id,
-          amount: amount,
-        ),
-      ],
+    return _applyCappedResourceIncrease(
+      item: item,
+      currentValue: session.blind.boardDiscardsRemaining,
+      maxValue: maxSupportedBoardDiscards,
+      failureMessage: '보드 버림 최대치입니다.',
+      eventKind: ItemEffectEventKind.boardDiscardAdded,
+      applyValue: (value) => session.blind.boardDiscardsRemaining = value,
     );
   }
 
@@ -991,16 +993,13 @@ class ItemEffectRuntime {
   ) {
     final amount = _positiveIntAmount(item);
     if (amount == null) return _invalidAmount(item);
-    session.blind.handDiscardsRemaining += amount;
-    return ItemUseResult.success(
-      itemId: item.id,
-      events: [
-        ItemEffectEvent(
-          kind: ItemEffectEventKind.handDiscardAdded,
-          itemId: item.id,
-          amount: amount,
-        ),
-      ],
+    return _applyCappedResourceIncrease(
+      item: item,
+      currentValue: session.blind.handDiscardsRemaining,
+      maxValue: maxSupportedHandDiscards,
+      failureMessage: '손패 버림 최대치입니다.',
+      eventKind: ItemEffectEventKind.handDiscardAdded,
+      applyValue: (value) => session.blind.handDiscardsRemaining = value,
     );
   }
 
@@ -1010,14 +1009,42 @@ class ItemEffectRuntime {
   ) {
     final amount = _positiveIntAmount(item);
     if (amount == null) return _invalidAmount(item);
-    session.blind.boardMovesRemaining += amount;
+    return _applyCappedResourceIncrease(
+      item: item,
+      currentValue: session.blind.boardMovesRemaining,
+      maxValue: maxSupportedBoardMoves,
+      failureMessage: '보드 이동 최대치입니다.',
+      eventKind: ItemEffectEventKind.boardMoveAdded,
+      applyValue: (value) => session.blind.boardMovesRemaining = value,
+    );
+  }
+
+  static ItemUseResult _applyCappedResourceIncrease({
+    required ItemDefinition item,
+    required int currentValue,
+    required int maxValue,
+    required String failureMessage,
+    required ItemEffectEventKind eventKind,
+    required void Function(int value) applyValue,
+  }) {
+    final amount = _positiveIntAmount(item);
+    if (amount == null) return _invalidAmount(item);
+
+    final requestedValue = currentValue + amount;
+    final nextValue = requestedValue > maxValue ? maxValue : requestedValue;
+    final appliedAmount = nextValue - currentValue;
+    if (appliedAmount <= 0) {
+      return ItemUseResult.failure(itemId: item.id, message: failureMessage);
+    }
+
+    applyValue(nextValue);
     return ItemUseResult.success(
       itemId: item.id,
       events: [
         ItemEffectEvent(
-          kind: ItemEffectEventKind.boardMoveAdded,
+          kind: eventKind,
           itemId: item.id,
-          amount: amount,
+          amount: appliedAmount,
         ),
       ],
     );
@@ -1112,14 +1139,22 @@ class ItemEffectRuntime {
   ) {
     final amount = _positiveIntAmount(item);
     if (amount == null) return _invalidAmount(item);
-    session.maxHandSize += amount;
+    final nextMaxHandSize = (session.maxHandSize + amount).clamp(
+      session.maxHandSize,
+      maxSupportedHandSize,
+    );
+    final appliedAmount = nextMaxHandSize - session.maxHandSize;
+    if (appliedAmount <= 0) {
+      return ItemUseResult.failure(itemId: item.id, message: '손패 최대치입니다.');
+    }
+    session.maxHandSize = nextMaxHandSize;
     return ItemUseResult.success(
       itemId: item.id,
       events: [
         ItemEffectEvent(
           kind: ItemEffectEventKind.maxHandSizeIncreased,
           itemId: item.id,
-          amount: amount,
+          amount: appliedAmount,
         ),
       ],
     );

@@ -21,10 +21,11 @@
 현재 결론:
 
 - 실제 제품 완성도는 아직 `In progress`이며, 전체 추정 진도는 42%다.
-- 공모전 제출 전에는 실제 Goal 트랙을 새로 밀지 않는다. 현재 활성 실행은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 공모전 트랙이다.
-- 공모전 이후에는 장기 밸런스, meta growth, game feel, 자연 full-play QA, ML/휴리스틱 리포트 갱신을 순서대로 재개한다.
+- 2026-05-15 12시경 공모전 최종 산출물을 우선 등록했으므로 공모전 트랙은 off다. 현재 활성 실행은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 post-contest 안정화/리팩터링 트랙이다.
+- 공모전 이후 첫 작업으로 손패 최대치 4장 이상 UI/효과 버그를 수정했다. 현재 정책은 손패 최대치 5장, 5장 초과 증가 효과 실패/미소모, 복합 효과 패널티 미적용이다.
+- 다음은 Jester/Item/Tool/Gear 정책 리스크를 상한/no-op/가격/표시 문제로 분해한 뒤, 리팩터링과 최적화에 들어간다.
 
-공모전 전에는 보류:
+공모전 이후 재개 대상:
 
 - 장기 multi-seed r400/r800 밸런스 확정
 - ML 리포트 갱신과 NotebookLM용 재가공
@@ -34,13 +35,15 @@
 - 전체 카탈로그 가격 2차 재산정
 - 반복 플레이용 해금 tree와 run modifier 깊이 확장
 
-공모전 이후 재개 순서:
+현재 재개 순서:
 
-1. 자연 full-play와 저장/복원 증거를 공모전 QA 결과에서 승격한다.
-2. 장기 S1~S8 밸런스를 multi-seed r400/r800 기준으로 재검증한다.
-3. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
-4. ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 갱신한다.
-5. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
+1. 손패 최대치 버그처럼 실제 플레이에서 깨지는 post-contest 안정화 결함을 먼저 닫는다.
+2. Jester/Item/Tool/Gear 정책 리스크 리스트를 작은 구현 후보로 나눈다.
+3. runtime state와 transient presentation state 분리를 중심으로 리팩터링 계획을 확정한다.
+4. 장기 S1~S8 밸런스를 multi-seed r400/r800 기준으로 재검증한다.
+5. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
+6. ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 갱신한다.
+7. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
 
 장기 Done 기준:
 
@@ -52,15 +55,15 @@
 
 | Pillar | Goal | Status | Progress | Current gate |
 |---|---|---|---:|---|
-| Core battle strategy | 보드/손패/확정/버림 선택이 매 전투마다 의미 있게 갈린다 | In progress | 67% | 출품용 S1 entry 낮춤 후 S2~S8 curve 재검증 |
-| Market deckbuilding | 후보 노출, 구매, 판매, 장착, 사용이 성장 선택의 중심이 된다 | In progress | 61% | 가격/보상/노출 기준선 정리 |
-| Economy leveling | 골드 보상과 가격이 선택 부담을 만들되 좋은 플레이를 부당하게 막지 않는다 | In progress | 59% | 공모전 임시 handoff 가능, power none 높음은 known risk |
-| Boss pressure | 후반 보스가 높은 난도를 만들며 S7~S8은 높은 실패 비중을 유지한다 | In progress | 52% | 공모전 기준 boss pool 고정 후 QA |
-| UI/UX/game feel | 카드/타일/정산/마켓 액션이 게임적인 연출로 읽힌다 | In progress | 45% | 공모전 시각/조작감 재점검 |
+| Core battle strategy | 보드/손패/확정/버림 선택이 매 전투마다 의미 있게 갈린다 | In progress | 67% | 손패 상한/no-op 정책 후 S2~S8 curve 재검증 |
+| Market deckbuilding | 후보 노출, 구매, 판매, 장착, 사용이 성장 선택의 중심이 된다 | In progress | 61% | Jester/Item/Tool/Gear 정책 리스크 분해 |
+| Economy leveling | 골드 보상과 가격이 선택 부담을 만들되 좋은 플레이를 부당하게 막지 않는다 | In progress | 59% | post-contest 경제 gate 재개 |
+| Boss pressure | 후반 보스가 높은 난도를 만들며 S7~S8은 높은 실패 비중을 유지한다 | In progress | 52% | 장기 boss pool 재검증 |
+| UI/UX/game feel | 카드/타일/정산/마켓 액션이 게임적인 연출로 읽힌다 | In progress | 45% | post-contest 조작감/표시 결함 안정화 |
 | Roguelite meta | 게임오버 이후 기억 카드 보상으로 다음 run 선택지가 열린다 | In progress | 38% | 보상/도감/새 run CTA 체감 QA |
 | Run restart loop | 패배/클리어 후 실제 보상 획득, 도감 반영, 새 run 시작이 자연스럽게 이어진다 | In progress | 42% | 자연 진행 full end-to-end QA |
-| QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 35% | 최신 변경 후 submission candidate 재생성 |
-| Analysis/documentation governance | 레벨링/경제/ML/출품 문서가 한 기준으로 읽히고 작업 순서가 흔들리지 않는다 | In progress | 42% | ML 보류와 공모전 재개 기준 분리 |
+| QA/release gate | 웹/모바일에서 저장, 복구, 애니메이션, 경제가 깨지지 않는다 | In progress | 35% | post-contest smoke baseline 재수립 |
+| Analysis/documentation governance | 레벨링/경제/ML/출품 문서가 한 기준으로 읽히고 작업 순서가 흔들리지 않는다 | In progress | 42% | 공모전 off와 post-contest 실행 라우터 분리 |
 
 전체 추정 진도: 42%
 

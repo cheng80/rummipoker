@@ -662,6 +662,69 @@ void main() {
     expect(midLeft, lessThan(startLeft));
   });
 
+  testWidgets('GameHandZone lays out up to five hand tiles', (tester) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 3,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 5,
+        drawPileRemaining: 14,
+      ),
+    );
+    final board = RummiBoard();
+    final hand = [
+      Tile(id: 1, color: TileColor.red, number: 1),
+      Tile(id: 2, color: TileColor.blue, number: 2),
+      Tile(id: 3, color: TileColor.yellow, number: 3),
+      Tile(id: 4, color: TileColor.black, number: 4),
+      Tile(id: 5, color: TileColor.red, number: 5),
+    ];
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: board,
+      hand: hand,
+      scoringCellKeys: const {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 120,
+            child: GameHandZone(
+              battle: battle,
+              station: station,
+              hand: hand,
+              selectedHandTile: null,
+              onHandTileTap: (_) {},
+              onDraw: () {},
+              tileWidth: 48,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('settled-R1#1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settled-B2#2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settled-Y3#3')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settled-K4#4')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settled-R5#5')), findsOneWidget);
+    expect(find.text('가득 참'), findsOneWidget);
+  });
+
   testWidgets('GameHandZone highlights added hand capacity near draw control', (
     tester,
   ) async {

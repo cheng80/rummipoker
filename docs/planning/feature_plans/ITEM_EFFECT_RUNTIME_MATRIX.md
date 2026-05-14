@@ -131,6 +131,37 @@
 - 총 57개 중 `applied` 57개
 - 남은 `pendingHook` 0개
 
+## Post-contest 정책 재검토 리스트
+
+2026-05-15 post-contest 안정화 첫 작업으로 손패 최대치 4장 이상 UI/효과 버그를 닫았다.
+
+적용 정책:
+
+- 손패 최대치는 현재 전투 UI 기준 5장이다.
+- `battle_pouch`, `travel_pouch`, `wide_grip`, `grand_satchel` 같은 손패 증가 효과는 5장까지만 적용한다.
+- 이미 5장이면 `손패 최대치입니다.`로 실패 처리하고 아이템/효과를 소모하지 않는다.
+- 손패 증가와 패널티가 묶인 `wide_grip`, `grand_satchel`은 손패 증가가 실패하면 보드/손패 버림 패널티만 적용하지 않는다.
+- 전투 자원 증가 상한은 보드 버림 6회, 손패 버림 4회, 보드 이동 5회다.
+- `board_scrap`, `hand_scrap`, `move_token`, `discard_glove`, `mulligan_sleeve`, `board_lift`, `organizer_glove`는 상한 도달 시 실패 처리하고 아이템/효과를 소모하지 않는다.
+- 자원 증가가 일부만 적용 가능하면 상한까지만 올리고 실제 증가량만 이벤트에 남긴다.
+
+다음 재검토 후보:
+
+| 묶음 | 후보 | 리스크 | 다음 판단 |
+|---|---|---|---|
+| 자원 상한/no-op | `board_scrap`, `hand_scrap`, `discard_glove`, `mulligan_sleeve`, `move_token`, `board_lift`, `organizer_glove` | 완료: board discard / hand discard / board move는 런타임 상한과 실패/미소모 정책을 갖는다. 남은 표시는 `N/base` 형태의 현재 UI 의미를 별도 리팩터링 때 재검토한다. | 상한 정책은 닫고, 표시 최대치 동기화는 resource model 리팩터링 후보로 넘긴다. |
+| 슬롯 상한/no-op | `spare_pouch`, 슬롯 해금 보상 | Quick slot은 현재 최대 3칸이다. 이미 3칸인 상태에서 추가 슬롯 효과가 유저에게 어떻게 읽히는지 확인이 필요하다. | 상한 도달 시 구매 전 표시, 구매 차단, 실패/미소모 정책을 정한다. |
+| offer/market 상한 | `shop_lens`, `boss_trophy`, `lucky_counter`, `market_compass` | offer slot/rarity/discount 효과가 이미 충분한 후보 수나 할인 상태에서 체감이 없을 수 있다. | market facade가 실제 적용량과 적용 실패를 구분해 표시하는지 확인한다. |
+| 조건부 사용 no-op | `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품 | 이미 queue가 있거나 조건이 충족되지 않거나 0점 confirm에 묻히면 소모품이 의미 없이 사라질 수 있다. | 실패 시 미소모는 유지하고, 사용 전/후 피드백과 조건 표시를 보강한다. |
+| 가격/가치 이상 후보 | `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study` | catalog audit 기준 cheap high-impact 또는 expensive low-impact 후보가 있다. | 가격표를 바로 바꾸지 말고 실제 노출/구매/사용률, S7~S8 병목, v9 market 개선 여부를 함께 본다. |
+| 자동/직접 지급으로 보일 수 있는 효과 | `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`, `coin_funnel`, `hand_funnel` | 경제 보정이 선택 부담을 지우거나 자동 지급처럼 읽힐 수 있다. | 직접 지급 금지 원칙과 충돌하지 않는지, 조건/타이밍/표시가 플레이어 선택으로 읽히는지 확인한다. |
+
+정책상 주의:
+
+- 상한이 있는 효과는 런타임 상한, UI 표시, 실패 메시지, 소모 여부를 한 세트로 검토한다.
+- 복합 효과는 이득이 막힌 상태에서 비용만 적용하지 않는다.
+- 가격 후보는 단독 감각으로 바꾸지 않고 `catalog_value_audit.py`, runtime offer audit, 장기 economy probe를 함께 본다.
+
 ## 공통 구현 묶음 플랜
 
 남은 item은 개별 구현보다 같은 read/write 경계를 공유하는 묶음 단위로 처리한다.

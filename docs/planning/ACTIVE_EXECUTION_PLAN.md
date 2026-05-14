@@ -3,26 +3,50 @@
 > 문서 성격: 현재 실행 라우터
 > 기준: 문서 진입과 읽는 순서는 `START_HERE.md`를 따른다. 이 문서는 `planning` 단계에서 현재 어떤 트랙을 실행할지 정한다.
 
-이 문서는 공모전 기준 완성과 실제 Goal 기준 완성을 분리한다.
+이 문서는 닫힌 공모전 제출 이력과 post-contest 실제 Goal 실행을 분리한다.
 새 세션은 `START_HERE.md`와 `current_system` 기준 문서를 읽은 뒤, 이 문서에서 현재 활성 트랙과 다음 작업만 확인한다.
 
 ## 1. 현재 활성 트랙
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Closed for submission QA handoff | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-09 최신 룰/UI 후보에서 `contest_full_run_bot` fresh 표준 S1~S8 boss 통과 증거를 확보했다. 2026-05-10에는 최근 24시간 내 룰/UI/문서/튜토리얼 항목과 Flutter semantics 경고 보정을 최신 build/test/smoke로 검증했고, `ko`, `en` locale 표준→도전 2사이클도 통과했다. 이후 잠긴 Jester/Quick Item/Passive 슬롯 해금 룰, Market 진입 연출, 시스템 locale 기본값, `slot_unlock_market` debug fixture, web icon/splash/OG image, 릴리즈 메뉴, 웹 BGM unlock/scroll 묵음, 정산 밑줄, 정산 dialog PhoneFrame 폭 회귀를 보강했다. 2026-05-10~11 최신 후보에서 `ko` standard→challenge 재확인을 다시 통과했으므로, 공모전 제출용 풀런봇 플랜은 여기서 닫는다. `ja`, `zh-CN`, `zh-TW`는 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다. |
-| 실제 Goal 기준 완성 | Runtime rule V1 landed | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1, submission kit 문서화는 반영됐다. 장기 밸런스와 스토어 최종 산출물은 별도 트랙으로 남긴다. |
+| 공모전 기준 완성 | Closed / off | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-15 12시경 최종 산출물을 우선 등록했다. 공모전 풀런봇/제출 체크리스트는 더 이상 활성 작업 큐가 아니며, 이후 공모전 문서는 제출 증거와 이력 참고로만 본다. |
+| Post-contest 안정화 | Active | 이 문서 | 제출 직후 발견한 손패 최대치 4장 이상 UI/효과 버그를 먼저 수정했다. 현재 손패 UI/룰 상한은 5장이고, 5장 초과 손패 증가 효과는 실패 처리하며 소모하지 않는다. 이어서 보드 버림/손패 버림/보드 이동 자원 증가도 상한 도달 시 실패/미소모 정책으로 닫았다. 다음은 Jester/Item/Tool/Gear 정책 리스크 리스트 중 슬롯/market 상한과 조건부 사용 no-op을 작은 단위로 닫는다. |
+| 실제 Goal 기준 완성 | Active after stabilization | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1은 반영됐다. 공모전 이후에는 리팩터링, 최적화, 장기 밸런스, meta growth, 자연 full-play QA를 재개한다. |
 
-현재는 공모전 기준 풀런봇 QA 플랜을 제출용 handoff 상태로 닫았다. 한 locale 사이클 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했고, S2/S4/S6 Boss 보상 슬롯 해금, Market 해금 연출, 시스템 locale 기본값, debug fixture, web 제출 산물/BGM/메뉴/정산 UI 회귀 수정 뒤 2026-05-10~11 최신 후보에서 `ko` standard→challenge 재확인도 통과했다. `ja`, `zh-CN`, `zh-TW` full-run은 제출 gate 필수 대기열에서 내리고, 문제가 발견될 때 또는 공모전 이후 추가 검증으로 잡는다. S9+ 무한 도전 장기 생존은 계속 별도 확장 검증이다.
+현재는 공모전 기준 풀런봇 QA 플랜을 제출용 handoff 상태에서 완전히 닫았다. 한 locale 사이클 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했고, S2/S4/S6 Boss 보상 슬롯 해금, Market 해금 연출, 시스템 locale 기본값, debug fixture, web 제출 산물/BGM/메뉴/정산 UI 회귀 수정 뒤 2026-05-10~11 최신 후보에서 `ko` standard→challenge 재확인도 통과했다. 2026-05-15 12시경 최종 산출물을 우선 등록했으므로 `ja`, `zh-CN`, `zh-TW` full-run은 제출 gate가 아니라 post-contest 추가 검증 후보로만 남긴다. S9+ 무한 도전 장기 생존도 별도 확장 검증이다.
+
+## 2. Post-contest 다음 작업
+
+현재 실행 순서는 아래로 고정한다.
+
+1. 완료: 손패 최대치 4장 이상 UI/효과 버그 수정.
+   - 정책: 손패 최대치는 5장이다.
+   - 5장 초과 손패 증가 효과는 실패 처리하고 아이템/효과를 소모하지 않는다.
+   - 손패 증가와 패널티가 묶인 효과는 손패 증가가 실패하면 패널티만 적용하지 않는다.
+   - 검증: `item_effect_runtime_test`, `game_station_read_path_test`, `dart analyze`, `git diff --check`.
+2. 완료: 전투 자원 증가 상한/no-op 정책 적용.
+   - 정책: 보드 버림 6회, 손패 버림 4회, 보드 이동 5회를 현재 runtime 상한으로 둔다.
+   - 상한 도달 시 `보드 버림 최대치입니다.`, `손패 버림 최대치입니다.`, `보드 이동 최대치입니다.`로 실패 처리하고 소모하지 않는다.
+   - 일부만 적용 가능한 경우에는 상한까지만 올리고 실제 증가량만 이벤트에 기록한다.
+   - 검증: `item_effect_runtime_test`, `dart analyze`.
+3. 다음: Jester/Item/Tool/Gear 정책 리스크 검토 리스트를 작은 구현 후보로 분해한다.
+   - 상한/no-op: `spare_pouch`, `shop_lens`, `boss_trophy`.
+   - 가격/가치: `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study`.
+   - 조건부 사용 UX: `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품.
+4. 그 다음: 리팩터링 전에 runtime state와 presentation/overlay/dialog/animation state 분리 계획을 확정한다.
+5. 이후: 장기 경제 gate를 다시 연다. 특히 `runtime_station_pool_economy_r400`에서 `shop_slot_market_v9`가 none/control보다 개선되지 않은 문제를 target/boss severity/market 구매력으로 분리해 본다.
+
+## 3. 공모전 기준 상태 기록
 
 2026-05-14 제출 전 상점 회귀 수정도 닫았다. 보유 Jester/Item/Passive 판매 시 명시적 리롤 없이 오퍼 리스트가 바뀌지 않게 했고, Jester 오퍼 구매 후 남은 오퍼 가격이 0G로 튀던 stale slot index 경로를 막았다. 첫 무료 Jester 리롤은 다음 Market에서 다시 복원되지 않도록 저장/복원 상태까지 보강했으며, 구매 할인은 원가/할인가/`할인` 배지로 UI에 드러난다. 검증은 `rummi_market_facade_test`, `item_definition_test`, `item_effect_runtime_test`, `game_session_notifier_test`, `game_shop_discount_badge_test`, `game_shop_sell_offer_stability_test`와 `market_discount_visual_bot` 상점 시각 매트릭스로 완료했다. 시각 매트릭스는 7개 fresh Chrome/Flutter drive 시나리오로 할인 Jester 구매/판매, 할인 Item offer 표시, Passive 판매 후 offer 유지, 리롤 할인/피드백, 비할인 Jester/Item 가격 표시, 슬롯 해금 Market 상태를 확인한다. 최신 로그는 `/tmp/rummipoker_market_discount_visual_bot/matrix_full_20260514_060908/10_market_discount_visual_bot.log`이며 `MARKET_DISCOUNT_VISUAL_BOT_PASS` 7건과 `All tests passed!` 7건을 기록했다. 이 수정은 full-run gate 재개 근거가 아니라 제출 전 발견된 상점 회귀의 로직/위젯/시각 회귀 방지다.
 
 2026-05-14 제출 전 용어 UX 보강도 닫았다. 유저 노출 `mult_bonus` 문구는 내부 `+N Mult`가 아니라 실제 공식 `1 + N / 20`에 맞춰 `점수 +N*5%`로 표시한다. `xmult_bonus`는 실제 곱셈이므로 `점수 xN`으로 유지한다. 한국어 `Chips`는 게임 용어 `칩`으로 통일하고, 런 정보 다이얼로그의 책 아이콘에서 `게임 용어` 설명을 열어 `칩`, `점수 +%`, `점수 xN`, `골드` 차이를 확인하게 했다. 검증은 `game_run_info_dialog_test`, `jester_translation_test`, `item_definition_test`, `game_shop_jester_runtime_value_test`, `game_shop_screen_test`, `game_station_read_path_test`, JSON validation, `git diff --check`로 완료했다. 남은 리스크는 다국어 카드/툴팁 문구가 길어진 화면의 실제 기기 눈검증이다.
 
-## 2. 공모전 기준 다음 작업
+## 4. 공모전 기준 닫힌 작업
 
 상세 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.
-현재 실행 순서는 아래로 고정한다.
+아래 목록은 현재 실행 순서가 아니라 닫힌 제출 이력이다.
 
 1. 완료: `contest_full_run_bot` `ko` locale 표준 난이도 fresh S1~S8 Boss full-run 통과.
 2. 완료: 같은 `ko` cycle 내부의 도전 난이도 fresh S1부터 S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인 통과.
@@ -131,7 +155,7 @@
 - 2026-05-14 웹 focus-out BGM 후속 완화: `lib/resources/sound_manager.dart`에서 focus-out recovery pending, resume-first, duplicate pointer replay guard, fallback-on-next-gesture 정책을 적용했다. 검증: `flutter test test/resources/sound_manager_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`, `flutter build web`, `git diff --check`. 실제 웹뷰에서는 BGM 위치 유지가 완전하지 않을 수 있어 known limitation으로 남긴다.
 - 2026-05-14 용어 UX 보강: Jester/Item의 `mult_bonus` 노출 문구를 `점수 +%`로 환산하고 `xmult_bonus`는 `점수 xN`으로 유지했다. 한국어 Chips는 `칩`으로 통일하며, 런 정보에서 `게임 용어` 다이얼로그를 열어 칩/점수 보정/골드 차이를 설명한다. 검증: `flutter test test/views/game/widgets/game_run_info_dialog_test.dart test/logic/jester_translation_test.dart test/logic/item_definition_test.dart test/views/game/widgets/game_shop_jester_runtime_value_test.dart test/views/game/widgets/game_shop_screen_test.dart test/views/game/widgets/game_station_read_path_test.dart`.
 
-## 3. 공모전 Done Evidence
+## 5. 공모전 Done Evidence
 
 공모전 트랙은 기능 존재만으로 닫지 않는다.
 아래 증거가 있어야 제출 후보로 본다.
@@ -145,7 +169,7 @@
 - 게임오버/런 완료 보상, 도감, 새 run 복귀가 심사자에게 설명 없이 읽힌다는 눈검증
 - 전투/마켓 튜토리얼이 첫 진입/다시 보기/포커스 아웃/옵션 겹침/창 크기 변경에서 깨지지 않는다는 눈검증. full-run locale gate에서는 각 실행 전 세션을 지워 첫 전투/첫 Market 튜토리얼도 함께 확인한다.
 
-## 4. 지금 시작하지 않는 작업
+## 6. 지금 시작하지 않는 작업
 
 아래 항목은 실제 Goal 기준 완성 트랙으로 넘긴다.
 
@@ -168,7 +192,7 @@
 - 새 run까지 이어지는 영구 계승은 이번 1차 범위에서 제외하고 별도 검토로 남긴다.
 - 공모전 풀런봇이 성장한 족보를 평가하도록 하는 bot 정책 동기화
 
-## 5. 문서 교통정리
+## 7. 문서 교통정리
 
 | 필요 | 읽을 문서 |
 |---|---|
@@ -176,9 +200,9 @@
 | docs 폴더 분류 규칙 | `docs/00_docs_README.md` |
 | 현재 코드 사실과 보호 규칙 | `docs/current_system/*` |
 | 현재 실행 트랙 선택 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` |
-| 공모전 제출 세부 체크 | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` |
-| 다음 세션 공모전 제출 handoff | `docs/planning/competition/NEXT_SESSION_SUBMISSION_HANDOFF_PROMPT.md` |
-| 공모전 full-play bot 제작 기준 | `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md` |
+| 공모전 제출 이력 참고 | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` |
+| 과거 공모전 제출 handoff | `docs/planning/competition/NEXT_SESSION_SUBMISSION_HANDOFF_PROMPT.md` |
+| 과거 공모전 full-play bot 제작 기준 | `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md` |
 | 실제 Goal 전체 진도 | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` |
 | 장기 레벨링/경제 적용 상태 | `docs/planning/leveling/*` |
 | 과거 V4/migration 순서 lock | `docs/planning/legacy/*` |

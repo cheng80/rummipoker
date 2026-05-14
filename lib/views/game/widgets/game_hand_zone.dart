@@ -622,10 +622,17 @@ List<_HandSlotLayout> _buildHandSlotLayouts(
   required double tileWidth,
   required int cardCount,
 }) {
-  final slotCount = cardCount.clamp(1, 3);
-  final cardWidth = tileWidth;
+  final slotCount = cardCount.clamp(1, 5);
+  final stepFactor = switch (slotCount) {
+    <= 3 => 0.88,
+    4 => 0.72,
+    _ => 0.62,
+  };
+  final availableWidth = (size.width - 8).clamp(0.0, double.infinity);
+  final maxCardWidth = availableWidth / (1 + stepFactor * (slotCount - 1));
+  final cardWidth = tileWidth.clamp(0.0, maxCardWidth).toDouble();
   final cardHeight = cardWidth / kGameTileAspectRatio;
-  final step = cardWidth * 0.88;
+  final step = cardWidth * stepFactor;
   final usedWidth = cardWidth + step * (slotCount - 1);
   final startLeft = (size.width - usedWidth) / 2;
   final centerY = (size.height - cardHeight) / 2;
