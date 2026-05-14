@@ -9,21 +9,18 @@ enum TileColor {
   final String code;
 
   int get sortOrder => switch (this) {
-        TileColor.red => 0,
-        TileColor.blue => 1,
-        TileColor.yellow => 2,
-        TileColor.black => 3,
-      };
+    TileColor.red => 0,
+    TileColor.blue => 1,
+    TileColor.yellow => 2,
+    TileColor.black => 3,
+  };
 }
 
 /// 숫자 1~13 + 색. 덱 장수는 `(4색 × 13랭크 × copiesPerTile)`로 결정된다.
 /// [id]는 `copiesPerTile > 1` 인 경우까지 포함해 물리 복제 타일 구분용이다.
 class Tile {
-  const Tile({
-    required this.color,
-    required this.number,
-    this.id = 0,
-  }) : assert(number >= 1 && number <= 13);
+  const Tile({required this.color, required this.number, this.id = 0})
+    : assert(number >= 1 && number <= 13);
 
   final TileColor color;
   final int number;
@@ -32,6 +29,12 @@ class Tile {
   final int id;
 
   String get code => '${color.code}$number';
+
+  /// UI에서 덱 타일의 기준 가치를 보여줄 때 쓰는 값이다.
+  ///
+  /// 현재 점수 공식은 족보 기본 칩을 쓰며, 이 값은 아직 확정 점수 계산에
+  /// 직접 더하지 않는다.
+  int get baseChipValue => number;
 
   Map<String, dynamic> toJson() => {
     'color': color.name,

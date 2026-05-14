@@ -481,8 +481,14 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
     if (widget.autoEnterMarketOnLoad && !widget.completesRun) {
       await Future<void>.delayed(autoAdvanceDelay);
       if (!mounted) return;
-      Navigator.of(context).pop(GameCashOutAction.enterMarket);
+      _closeWith(GameCashOutAction.enterMarket);
     }
+  }
+
+  void _closeWith(GameCashOutAction action) {
+    final route = ModalRoute.of(context);
+    if (route?.isCurrent != true) return;
+    Navigator.of(context).pop(action);
   }
 
   @override
@@ -619,9 +625,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                       fontWeight: FontWeight.w900,
                       onPressed: _step < 3
                           ? null
-                          : () => Navigator.of(
-                              context,
-                            ).pop(GameCashOutAction.continueEndless),
+                          : () => _closeWith(GameCashOutAction.continueEndless),
                     ),
                     const SizedBox(height: 8),
                     GameChromeButton(
@@ -634,9 +638,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                       fontWeight: FontWeight.w900,
                       onPressed: _step < 3
                           ? null
-                          : () => Navigator.of(
-                              context,
-                            ).pop(GameCashOutAction.completeRun),
+                          : () => _closeWith(GameCashOutAction.completeRun),
                     ),
                   ] else
                     GameChromeButton(
@@ -649,9 +651,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                       fontWeight: FontWeight.w900,
                       onPressed: _step < 3
                           ? null
-                          : () => Navigator.of(
-                              context,
-                            ).pop(GameCashOutAction.enterMarket),
+                          : () => _closeWith(GameCashOutAction.enterMarket),
                     ),
                 ],
               ),

@@ -95,6 +95,9 @@ Alias /rummipoker /path/to/build/web
 
 ### 로컬 확인
 
+개발 서버에서 debug fixture를 켜고 고정 포트로 눈검증하는 절차는
+`docs/submission_kit/WEB_BUILD_GUIDE.md`의 "고정 포트 Chrome 눈검증"을 따른다.
+
 빌드 후 로컬에서 서브패스 동작을 확인하려면:
 
 ```bash

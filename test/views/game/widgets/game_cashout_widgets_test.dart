@@ -5,6 +5,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/utils/common_ui.dart';
 import 'package:rummipoker/views/game/widgets/game_cashout_widgets.dart';
+import 'package:rummipoker/views/game/widgets/game_options_dialog.dart';
 
 void main() {
   testWidgets(
@@ -193,6 +194,98 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('GameCashOutSheet auto close does not pop a covering dialog', (
+    tester,
+  ) async {
+    final settlement = RummiSettlementRuntimeFacade(
+      stageIndex: 2,
+      targetScore: 400,
+      currentGold: 11,
+      totalGold: 9,
+      entries: const [
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.stationReward,
+          leadingLabel: 'Station 2',
+          description: 'Station Goal 400 달성 보상',
+          gold: 5,
+        ),
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.boardDiscardReward,
+          leadingLabel: '2',
+          description: '남은 보드 버림 2회 x 1',
+          gold: 2,
+        ),
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.handDiscardReward,
+          leadingLabel: '2',
+          description: '남은 손패 버림 2회 x 1',
+          gold: 2,
+        ),
+      ],
+    );
+    Future<GameCashOutAction?>? cashOutFuture;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: Column(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      cashOutFuture = showGeneralDialog<GameCashOutAction>(
+                        context: context,
+                        barrierDismissible: false,
+                        pageBuilder: (_, _, _) => GameCashOutSheet(
+                          settlement: settlement,
+                          autoEnterMarketOnLoad: true,
+                        ),
+                      );
+                    },
+                    child: const Text('cashout'),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('cashout'));
+    await tester.pump();
+    final cashOutContext = tester.element(find.byType(GameCashOutSheet));
+    showDialog<GameOptionsCloseAction>(
+      context: cashOutContext,
+      builder: (dialogContext) => AlertDialog(
+        key: const ValueKey('covering-options-dialog'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(
+              dialogContext,
+            ).pop(GameOptionsCloseAction.resumeGame),
+            child: const Text('close options'),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(
+      find.byKey(const ValueKey('covering-options-dialog')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('close options'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Market으로'));
+    await tester.pumpAndSettle();
+
+    expect(await cashOutFuture, GameCashOutAction.enterMarket);
   });
 
   testWidgets('GameCashOutSheet shows boss deck tile reward as a tile face', (

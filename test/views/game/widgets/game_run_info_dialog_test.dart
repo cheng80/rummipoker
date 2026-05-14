@@ -66,6 +66,9 @@ void main() {
 
     expect(find.text('런 정보'), findsOneWidget);
     expect(find.text('기본 덱 52장'), findsOneWidget);
+    expect(find.text('타일 기준 칩'), findsOneWidget);
+    expect(find.text('1=칩 1'), findsOneWidget);
+    expect(find.text('13=칩 13'), findsOneWidget);
     expect(find.text('플러시'), findsOneWidget);
     expect(find.text('파이브 카드'), findsOneWidget);
     expect(find.text('Lv.3'), findsOneWidget);

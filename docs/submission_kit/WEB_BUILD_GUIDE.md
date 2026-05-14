@@ -43,6 +43,48 @@ flutter build web --dart-define=SHOW_DEBUG_FIXTURES=true --build-name=<버전명
 - QA fixture는 눈검증과 버그 재현용이다.
 - 공모전 full-play 증거는 fixture 없이 `contest_full_run_bot`으로 남긴다.
 
+## 고정 포트 Chrome 눈검증
+
+매번 Chrome 실행 포트가 바뀌면 같은 URL로 fixture를 다시 열기 어렵다.
+개발 서버 눈검증은 포트를 고정한다.
+
+```bash
+flutter run -d web-server --web-port=7357 --dart-define=SHOW_DEBUG_FIXTURES=true
+```
+
+기존 Chrome 탭에서 아래 주소를 연다.
+
+```text
+http://localhost:7357
+```
+
+Chrome을 Flutter가 직접 열어도 되는 경우에는 아래처럼 실행한다.
+
+```bash
+flutter run -d chrome --web-port=7357 --dart-define=SHOW_DEBUG_FIXTURES=true
+```
+
+주의:
+
+- `--web-port` 값은 진행 중인 다른 테스트와 겹치지 않게 정한다.
+- debug fixture 눈검증은 QA/재현용이며, 제출 full-play evidence로 쓰지 않는다.
+- 테스트 종료 뒤 Flutter web-server와 Chrome/Chrome Helper 잔류 프로세스를 확인한다.
+
+## 릴리즈 산출물 로컬 확인
+
+`flutter build web` 산출물은 자체 포트가 없다. 어느 서버로 서빙하는지가 포트를 정한다.
+`/rummipoker/` base-href 산출물을 로컬에서 확인할 때는 repo root에서 아래처럼 고정 포트로 연다.
+
+```bash
+python3 -m http.server 7358 -d .
+```
+
+그 다음 브라우저에서 아래 주소를 연다.
+
+```text
+http://localhost:7358/rummipoker/
+```
+
 ## Browser QA
 
 Web 빌드 후 로컬 서버로 열어 다음을 확인한다.

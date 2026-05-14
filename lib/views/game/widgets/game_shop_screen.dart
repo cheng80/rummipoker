@@ -2053,6 +2053,7 @@ class _GameShopScreenState extends State<GameShopScreen>
                                         effectText: '다음 블라인드부터 드로우 덱에 추가됩니다.',
                                         tags: [
                                           '타일 ${_tileLabel(selectedTileOffer.tile)}',
+                                          '칩 ${selectedTileOffer.tile.baseChipValue}',
                                           selectedTileOffer.isFreeReward
                                               ? '무료 선택'
                                               : '덱 추가',
@@ -3989,7 +3990,9 @@ class _MarketTileOfferCard extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              offer.isFreeReward ? '무료' : '${offer.price}G',
+              offer.isFreeReward
+                  ? '칩 ${offer.tile.baseChipValue} · 무료'
+                  : '칩 ${offer.tile.baseChipValue} · ${offer.price}G',
               maxLines: 1,
               style: TextStyle(
                 color: offer.isAffordable

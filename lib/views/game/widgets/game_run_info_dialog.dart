@@ -60,6 +60,8 @@ Future<void> showGameRunInfoDialog({
                   children: [
                     _RunInfoDeckSummary(addedDeckTiles: addedDeckTiles),
                     const SizedBox(height: 8),
+                    const _RunInfoBaseTileChipGuide(),
+                    const SizedBox(height: 8),
                     for (final row in _buildRunInfoRows(
                       playedHandCounts,
                       handGrowthStates,
@@ -314,7 +316,10 @@ class _RunInfoDeckSummary extends StatelessWidget {
     final tileText = addedDeckTiles.isEmpty
         ? '추가 타일 없음'
         : addedDeckTiles
-              .map((tile) => '${tile.color.code}${tile.number}')
+              .map(
+                (tile) =>
+                    '${tile.color.code}${tile.number}(칩 ${tile.baseChipValue})',
+              )
               .join(' ');
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -347,6 +352,89 @@ class _RunInfoDeckSummary extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RunInfoBaseTileChipGuide extends StatelessWidget {
+  const _RunInfoBaseTileChipGuide();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF102821),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFF2C14E).withValues(alpha: 0.38),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '타일 기준 칩',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.94),
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              '색상과 관계없이 타일 숫자값으로 표시합니다. 현재 확정 점수는 족보 기본 칩을 기준으로 계산됩니다.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.62),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (var number = 1; number <= kTileRanks; number++)
+                  _RunInfoBaseTileChipPill(number: number),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RunInfoBaseTileChipPill extends StatelessWidget {
+  const _RunInfoBaseTileChipPill({required this.number});
+
+  final int number;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2C14E).withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: const Color(0xFFF2C14E).withValues(alpha: 0.36),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        child: Text(
+          '$number=칩 $number',
+          style: const TextStyle(
+            color: Color(0xFFFFE08A),
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            height: 1.0,
+          ),
         ),
       ),
     );

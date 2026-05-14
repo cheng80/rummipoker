@@ -140,6 +140,8 @@ void main() {
       find.byKey(const ValueKey('market-tile-selector'), skipOffstage: false),
       findsOneWidget,
     );
+    expect(find.text('칩 7 · 3G'), findsOneWidget);
+    expect(find.text('칩 7'), findsOneWidget);
 
     await tester.tap(find.text('구매'));
     await tester.pump(const Duration(milliseconds: 120));
