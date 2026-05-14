@@ -3,52 +3,52 @@
     "jesters": {
       "jester": {
         "displayName": "기본패",
-        "effectText": "배수 +4.",
+        "effectText": "점수 +20%.",
         "notes": ""
       },
       "greedy_jester": {
         "displayName": "노랑 불씨",
-        "effectText": "점수 라인의 노란 타일마다 배수 +3.",
+        "effectText": "점수 라인의 노란 타일마다 점수 +15%.",
         "notes": ""
       },
       "lusty_jester": {
         "displayName": "빨강 불씨",
-        "effectText": "점수 라인의 빨간 타일마다 배수 +3.",
+        "effectText": "점수 라인의 빨간 타일마다 점수 +15%.",
         "notes": ""
       },
       "wrathful_jester": {
         "displayName": "파랑 불씨",
-        "effectText": "점수 라인의 파란 타일마다 배수 +3.",
+        "effectText": "점수 라인의 파란 타일마다 점수 +15%.",
         "notes": ""
       },
       "gluttonous_jester": {
         "displayName": "검정 불씨",
-        "effectText": "점수 라인의 검은 타일마다 배수 +3.",
+        "effectText": "점수 라인의 검은 타일마다 점수 +15%.",
         "notes": ""
       },
       "jolly_jester": {
         "displayName": "페어 호출",
-        "effectText": "원 페어 이상 점수 라인을 확정하면 배수 +8.",
+        "effectText": "원 페어 이상 점수 라인을 확정하면 점수 +40%.",
         "notes": ""
       },
       "zany_jester": {
         "displayName": "트리플 호출",
-        "effectText": "트리플 이상 점수 라인을 확정하면 배수 +12.",
+        "effectText": "트리플 이상 점수 라인을 확정하면 점수 +60%.",
         "notes": ""
       },
       "mad_jester": {
         "displayName": "투페어 호출",
-        "effectText": "투 페어 이상 점수 라인을 확정하면 배수 +10.",
+        "effectText": "투 페어 이상 점수 라인을 확정하면 점수 +50%.",
         "notes": ""
       },
       "crazy_jester": {
         "displayName": "연속 호출",
-        "effectText": "스트레이트 이상 점수 라인을 확정하면 배수 +12.",
+        "effectText": "스트레이트 이상 점수 라인을 확정하면 점수 +60%.",
         "notes": ""
       },
       "droll_jester": {
         "displayName": "색상 호출",
-        "effectText": "플러시 이상 점수 라인을 확정하면 배수 +10.",
+        "effectText": "플러시 이상 점수 라인을 확정하면 점수 +50%.",
         "notes": ""
       },
       "sly_jester": {
@@ -78,7 +78,7 @@
       },
       "half_jester": {
         "displayName": "작은 손",
-        "effectText": "3장 이하 점수 라인을 확정하면 배수 +20.",
+        "effectText": "3장 이하 점수 라인을 확정하면 점수 +100%.",
         "notes": ""
       },
       "jester_stencil": {
@@ -88,12 +88,12 @@
       },
       "abstract_jester": {
         "displayName": "합창단",
-        "effectText": "보유한 Jester마다 배수 +3.",
+        "effectText": "보유한 Jester마다 점수 +15%.",
         "notes": ""
       },
       "green_jester": {
         "displayName": "기세",
-        "effectText": "확정할 때마다 배수 +1. 버릴 때마다 배수 -1.",
+        "effectText": "확정할 때마다 점수 +5%. 버릴 때마다 점수 -5%.",
         "notes": ""
       },
       "blue_jester": {
@@ -107,8 +107,8 @@
         "notes": ""
       },
       "smiley_face": {
-        "displayName": "그림 배수",
-        "effectText": "점수 라인의 11~13 타일마다 배수 +5.",
+        "displayName": "그림 증폭",
+        "effectText": "점수 라인의 11~13 타일마다 점수 +25%.",
         "notes": ""
       },
       "egg": {
@@ -122,8 +122,8 @@
         "notes": ""
       },
       "popcorn": {
-        "displayName": "시한 배수",
-        "effectText": "배수 +20. Station을 마칠 때마다 배수 -4.",
+        "displayName": "시한 증폭",
+        "effectText": "점수 +100%. Station을 마칠 때마다 점수 -20%.",
         "notes": ""
       },
       "ice_cream": {
@@ -138,7 +138,7 @@
       },
       "walkie_talkie": {
         "displayName": "10과 4",
-        "effectText": "점수 라인의 10 또는 4 타일마다 배수 +4.",
+        "effectText": "점수 라인의 10 또는 4 타일마다 점수 +20%.",
         "notes": ""
       },
       "golden_jester": {
@@ -148,12 +148,12 @@
       },
       "mystic_summit": {
         "displayName": "마지막 힘",
-        "effectText": "남은 버림이 0이면 배수 +15.",
+        "effectText": "남은 버림이 0이면 점수 +75%.",
         "notes": ""
       },
       "even_steven": {
         "displayName": "짝수 엔진",
-        "effectText": "점수 라인의 짝수 타일마다 배수 +4.",
+        "effectText": "점수 라인의 짝수 타일마다 점수 +20%.",
         "notes": ""
       },
       "odd_todd": {
@@ -163,12 +163,12 @@
       },
       "scholar": {
         "displayName": "1번 장부",
-        "effectText": "점수 라인의 1 타일마다 칩 +20, 배수 +4.",
+        "effectText": "점수 라인의 1 타일마다 칩 +20, 점수 +20%.",
         "notes": ""
       },
       "fibonacci": {
         "displayName": "수열 보너스",
-        "effectText": "점수 라인의 1, 2, 3, 5, 8 타일마다 배수 +8.",
+        "effectText": "점수 라인의 1, 2, 3, 5, 8 타일마다 점수 +40%.",
         "notes": ""
       },
       "banner": {
@@ -178,42 +178,42 @@
       },
       "gros_michel": {
         "displayName": "숙성 부스터",
-        "effectText": "배수 +15.",
+        "effectText": "점수 +75%.",
         "notes": ""
       },
       "supernova": {
         "displayName": "런 기억 장치",
-        "effectText": "이번 런에서 같은 족보를 확정한 횟수만큼 배수 추가.",
+        "effectText": "이번 런에서 같은 족보를 확정한 횟수마다 점수 +5%.",
         "notes": ""
       },
       "ride_the_bus": {
         "displayName": "무사고 연속",
-        "effectText": "11~13 타일 없이 확정할 때마다 배수 +1.",
+        "effectText": "11~13 타일 없이 확정할 때마다 점수 +5%.",
         "notes": ""
       },
       "the_duo": {
-        "displayName": "페어 배수",
-        "effectText": "원 페어 이상 점수 라인을 확정하면 배수 x2.",
+        "displayName": "페어 증폭",
+        "effectText": "원 페어 이상 점수 라인을 확정하면 점수 x2.",
         "notes": ""
       },
       "the_trio": {
-        "displayName": "트리플 배수",
-        "effectText": "트리플 이상 점수 라인을 확정하면 배수 x3.",
+        "displayName": "트리플 증폭",
+        "effectText": "트리플 이상 점수 라인을 확정하면 점수 x3.",
         "notes": ""
       },
       "the_family": {
-        "displayName": "4묶음 배수",
-        "effectText": "4묶음 이상 점수 라인을 확정하면 배수 x4.",
+        "displayName": "4묶음 증폭",
+        "effectText": "4묶음 이상 점수 라인을 확정하면 점수 x4.",
         "notes": ""
       },
       "the_order": {
-        "displayName": "연속 배수",
-        "effectText": "스트레이트 이상 점수 라인을 확정하면 배수 x3.",
+        "displayName": "연속 증폭",
+        "effectText": "스트레이트 이상 점수 라인을 확정하면 점수 x3.",
         "notes": ""
       },
       "the_tribe": {
-        "displayName": "색상 배수",
-        "effectText": "플러시 이상 점수 라인을 확정하면 배수 x2.",
+        "displayName": "색상 증폭",
+        "effectText": "플러시 이상 점수 라인을 확정하면 점수 x2.",
         "notes": ""
       }
     }

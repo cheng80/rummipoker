@@ -54,8 +54,8 @@
         "effectText": "다음 확정에 칩 +25."
       },
       "mult_capsule": {
-        "displayName": "배수 충전구",
-        "effectText": "다음 확정에 배수 +6."
+        "displayName": "점수 충전구",
+        "effectText": "다음 확정에 점수 +30%."
       },
       "line_polish": {
         "displayName": "점수 광택제",
@@ -67,7 +67,7 @@
       },
       "flush_powder": {
         "displayName": "색상 준비",
-        "effectText": "다음 플러시 이상 확정에 배수 +8."
+        "effectText": "다음 플러시 이상 확정에 점수 +40%."
       },
       "pair_splint": {
         "displayName": "페어 고정대",
@@ -107,7 +107,7 @@
       },
       "thin_caliper": {
         "displayName": "짧은 줄",
-        "effectText": "3장 이하 확정에 배수 +4."
+        "effectText": "3장 이하 확정에 점수 +20%."
       },
       "stage_map": {
         "displayName": "Station 지도",
@@ -163,19 +163,19 @@
       },
       "red_swatch": {
         "displayName": "빨강 견본",
-        "effectText": "다음 확정에서 빨간 타일마다 배수 +2."
+        "effectText": "다음 확정에서 빨간 타일마다 점수 +10%."
       },
       "blue_swatch": {
         "displayName": "파랑 견본",
-        "effectText": "다음 확정에서 파란 타일마다 배수 +2."
+        "effectText": "다음 확정에서 파란 타일마다 점수 +10%."
       },
       "black_swatch": {
         "displayName": "검정 견본",
-        "effectText": "다음 확정에서 검은 타일마다 배수 +2."
+        "effectText": "다음 확정에서 검은 타일마다 점수 +10%."
       },
       "yellow_swatch": {
         "displayName": "노랑 견본",
-        "effectText": "다음 확정에서 노란 타일마다 배수 +2."
+        "effectText": "다음 확정에서 노란 타일마다 점수 +10%."
       },
       "rank_chalk": {
         "displayName": "숫자 분필",

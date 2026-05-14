@@ -2649,15 +2649,17 @@ class RummiJesterEffectBreakdown {
   bool get hasIntegerMultiplierToken =>
       xmultBonus > 1.0 && (xmultBonus - xmultBonus.round()).abs() < 0.05;
 
+  int get multPercentBonus => multBonus * 5;
+
   String get displayToken {
     if (hasIntegerMultiplierToken) {
-      return '${xmultBonus.round()}배';
+      return '점수 x${xmultBonus.round()}';
     }
     if (chipsBonus > 0) {
       return '+$chipsBonus';
     }
     if (multBonus > 0) {
-      return '+$multBonus';
+      return '+$multPercentBonus%';
     }
     return '+$scoreDelta';
   }
@@ -2670,7 +2672,7 @@ class RummiJesterEffectBreakdown {
       return '칩';
     }
     if (multBonus > 0) {
-      return '배수';
+      return '점수';
     }
     return '점수';
   }

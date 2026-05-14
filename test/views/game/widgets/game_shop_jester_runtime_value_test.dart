@@ -120,7 +120,7 @@ void main() {
 
     final runtimeText = tester.widget<Text>(
       find.byWidgetPredicate(
-        (widget) => widget is Text && widget.data == '현재 +7 배수',
+        (widget) => widget is Text && widget.data == '현재 점수 +35%',
       ),
     );
     expect(runtimeText.overflow, isNot(TextOverflow.ellipsis));

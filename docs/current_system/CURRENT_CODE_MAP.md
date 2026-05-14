@@ -372,6 +372,8 @@ Important widgets:
 - `game_jester_widgets.dart`
 - `game_hand_zone.dart`
 - `game_cashout_widgets.dart`
+- `game_run_info_dialog.dart`
+- `game_terms_dialog.dart`
 - `game_shop_screen.dart`
 - `game_options_dialog.dart`
 - `game_tile_choice_dialog.dart`

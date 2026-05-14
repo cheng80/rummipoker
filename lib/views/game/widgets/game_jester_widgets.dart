@@ -44,11 +44,11 @@ String? jesterRuntimeValueText(
     (sum, value) => sum + value,
   );
   return switch (card.id) {
-    'green_jester' => '현재 ${_signedValueToken(stateValue, "배수")}',
-    'popcorn' => '현재 +$stateValue 배수',
+    'green_jester' => '현재 점수 ${_signedMultPercentToken(stateValue)}',
+    'popcorn' => '현재 점수 +${stateValue * 5}%',
     'ice_cream' => '현재 +$stateValue 칩',
     'supernova' => '누적 확정 $playedHandTotal회',
-    'ride_the_bus' => '현재 ${_signedValueToken(stateValue, "배수")}',
+    'ride_the_bus' => '현재 점수 ${_signedMultPercentToken(stateValue)}',
     _ => null,
   };
 }
@@ -74,11 +74,12 @@ String? settlementJesterNames(ConfirmedLineBreakdown line) {
   return names.join(' · ');
 }
 
-String _signedValueToken(int value, String suffix) {
-  if (value >= 0) {
-    return '+$value $suffix';
+String _signedMultPercentToken(int value) {
+  final percent = value * 5;
+  if (percent >= 0) {
+    return '+$percent%';
   }
-  return '$value $suffix';
+  return '$percent%';
 }
 
 class GameJesterStrip extends StatelessWidget {

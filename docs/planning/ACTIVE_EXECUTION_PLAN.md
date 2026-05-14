@@ -17,6 +17,8 @@
 
 2026-05-14 제출 전 상점 회귀 수정도 닫았다. 보유 Jester/Item/Passive 판매 시 명시적 리롤 없이 오퍼 리스트가 바뀌지 않게 했고, Jester 오퍼 구매 후 남은 오퍼 가격이 0G로 튀던 stale slot index 경로를 막았다. 첫 무료 Jester 리롤은 다음 Market에서 다시 복원되지 않도록 저장/복원 상태까지 보강했으며, 구매 할인은 원가/할인가/`할인` 배지로 UI에 드러난다. 검증은 `rummi_market_facade_test`, `item_definition_test`, `item_effect_runtime_test`, `game_session_notifier_test`, `game_shop_discount_badge_test`, `game_shop_sell_offer_stability_test`와 `market_discount_visual_bot` 상점 시각 매트릭스로 완료했다. 시각 매트릭스는 7개 fresh Chrome/Flutter drive 시나리오로 할인 Jester 구매/판매, 할인 Item offer 표시, Passive 판매 후 offer 유지, 리롤 할인/피드백, 비할인 Jester/Item 가격 표시, 슬롯 해금 Market 상태를 확인한다. 최신 로그는 `/tmp/rummipoker_market_discount_visual_bot/matrix_full_20260514_060908/10_market_discount_visual_bot.log`이며 `MARKET_DISCOUNT_VISUAL_BOT_PASS` 7건과 `All tests passed!` 7건을 기록했다. 이 수정은 full-run gate 재개 근거가 아니라 제출 전 발견된 상점 회귀의 로직/위젯/시각 회귀 방지다.
 
+2026-05-14 제출 전 용어 UX 보강도 닫았다. 유저 노출 `mult_bonus` 문구는 내부 `+N Mult`가 아니라 실제 공식 `1 + N / 20`에 맞춰 `점수 +N*5%`로 표시한다. `xmult_bonus`는 실제 곱셈이므로 `점수 xN`으로 유지한다. 한국어 `Chips`는 게임 용어 `칩`으로 통일하고, 런 정보 다이얼로그의 책 아이콘에서 `게임 용어` 설명을 열어 `칩`, `점수 +%`, `점수 xN`, `골드` 차이를 확인하게 했다. 검증은 `game_run_info_dialog_test`, `jester_translation_test`, `item_definition_test`, `game_shop_jester_runtime_value_test`, `game_shop_screen_test`, `game_station_read_path_test`, JSON validation, `git diff --check`로 완료했다. 남은 리스크는 다국어 카드/툴팁 문구가 길어진 화면의 실제 기기 눈검증이다.
+
 ## 2. 공모전 기준 다음 작업
 
 상세 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.
@@ -127,6 +129,7 @@
 - 전투/마켓 튜토리얼 V1은 `tutorial_coach_mark`로 구현. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 리사이즈 후 focus 위치/크기 눈검증도 완료했다.
 - 2026-05-10 추가 UI/Web 회귀 수정: icon/splash/OG image를 최신 asset으로 반영, 릴리즈 홈 메뉴를 도감 중심으로 정리, 웹 BGM unlock과 스크롤 중 묵음 회귀 수정, 정산 sheet의 `TextDecoration` 상속 밑줄과 `showGeneralDialog` PhoneFrame 폭 회귀 수정. 검증: `flutter analyze`, `flutter test test/views/game/widgets/game_cashout_widgets_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter build web --release --base-href "/rummipoker/"`.
 - 2026-05-14 웹 focus-out BGM 후속 완화: `lib/resources/sound_manager.dart`에서 focus-out recovery pending, resume-first, duplicate pointer replay guard, fallback-on-next-gesture 정책을 적용했다. 검증: `flutter test test/resources/sound_manager_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`, `flutter build web`, `git diff --check`. 실제 웹뷰에서는 BGM 위치 유지가 완전하지 않을 수 있어 known limitation으로 남긴다.
+- 2026-05-14 용어 UX 보강: Jester/Item의 `mult_bonus` 노출 문구를 `점수 +%`로 환산하고 `xmult_bonus`는 `점수 xN`으로 유지했다. 한국어 Chips는 `칩`으로 통일하며, 런 정보에서 `게임 용어` 다이얼로그를 열어 칩/점수 보정/골드 차이를 설명한다. 검증: `flutter test test/views/game/widgets/game_run_info_dialog_test.dart test/logic/jester_translation_test.dart test/logic/item_definition_test.dart test/views/game/widgets/game_shop_jester_runtime_value_test.dart test/views/game/widgets/game_shop_screen_test.dart test/views/game/widgets/game_station_read_path_test.dart`.
 
 ## 3. 공모전 Done Evidence
 

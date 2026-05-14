@@ -92,5 +92,14 @@
   "homeSettingsSectionSubtitle": "アプリ設定と環境オプション",
   "homeSettingsDescription": "サウンド/環境設定を開く",
   "runInfoCurrentChips": "Chips {score}",
-  "gamePlaceholder": "Rummi Poker Gridのプレイエリアは\n準備中です。"
+  "gamePlaceholder": "Rummi Poker Gridのプレイエリアは\n準備中です。",
+  "gameTermsTitle": "ゲーム用語",
+  "gameTermChipsTitle": "Chips",
+  "gameTermChipsBody": "役とChipsボーナスで決まる得点計算の基本値です。Goldのように所持・消費する資源ではありません。",
+  "gameTermScorePercentTitle": "得点 +%",
+  "gameTermScorePercentBody": "Chipsを数えた後、この確定得点を割合で上げます。得点 +20%は最終得点を1.2倍にします。",
+  "gameTermScoreMultiplierTitle": "得点 xN",
+  "gameTermScoreMultiplierBody": "最後に適用される強い乗算補正です。得点 x2は実際に2倍します。",
+  "gameTermGoldTitle": "Gold",
+  "gameTermGoldBody": "MarketでJesterやItemを買ったり、候補をリロールするときに使う通貨です。"
 }

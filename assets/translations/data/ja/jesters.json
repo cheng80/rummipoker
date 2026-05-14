@@ -3,52 +3,52 @@
     "jesters": {
       "jester": {
         "displayName": "Base Relay",
-        "effectText": "+4 Mult.",
+        "effectText": "得点 +20%.",
         "notes": ""
       },
       "greedy_jester": {
         "displayName": "Amber Tap",
-        "effectText": "得点ラインの黄色タイル1枚ごとに+3 Mult。",
+        "effectText": "得点ラインの黄色タイル1枚ごとに得点 +15%。",
         "notes": ""
       },
       "lusty_jester": {
         "displayName": "Crimson Tap",
-        "effectText": "得点ラインの赤タイル1枚ごとに+3 Mult。",
+        "effectText": "得点ラインの赤タイル1枚ごとに得点 +15%。",
         "notes": ""
       },
       "wrathful_jester": {
         "displayName": "Cobalt Tap",
-        "effectText": "得点ラインの青タイル1枚ごとに+3 Mult。",
+        "effectText": "得点ラインの青タイル1枚ごとに得点 +15%。",
         "notes": ""
       },
       "gluttonous_jester": {
         "displayName": "Obsidian Tap",
-        "effectText": "得点ラインの黒タイル1枚ごとに+3 Mult。",
+        "effectText": "得点ラインの黒タイル1枚ごとに得点 +15%。",
         "notes": ""
       },
       "jolly_jester": {
         "displayName": "Pair Call",
-        "effectText": "得点ラインにPair以上があれば、+8 Mult。",
+        "effectText": "得点ラインにPair以上があれば、得点 +40%。",
         "notes": ""
       },
       "zany_jester": {
         "displayName": "Triple Call",
-        "effectText": "得点ラインにThree of a Kind以上があれば、+12 Mult。",
+        "effectText": "得点ラインにThree of a Kind以上があれば、得点 +60%。",
         "notes": ""
       },
       "mad_jester": {
         "displayName": "Twin Pair Call",
-        "effectText": "得点ラインにTwo Pair以上があれば、+10 Mult。",
+        "effectText": "得点ラインにTwo Pair以上があれば、得点 +50%。",
         "notes": ""
       },
       "crazy_jester": {
         "displayName": "Run Call",
-        "effectText": "得点ラインにRunがあれば、+12 Mult。",
+        "effectText": "得点ラインにRunがあれば、得点 +60%。",
         "notes": ""
       },
       "droll_jester": {
         "displayName": "Color Call",
-        "effectText": "得点ラインが1色なら、+10 Mult。",
+        "effectText": "得点ラインが1色なら、得点 +50%。",
         "notes": ""
       },
       "sly_jester": {
@@ -78,22 +78,22 @@
       },
       "half_jester": {
         "displayName": "Compact Core",
-        "effectText": "得点ラインが3枚以下なら、+20 Mult。",
+        "effectText": "得点ラインが3枚以下なら、得点 +100%。",
         "notes": ""
       },
       "jester_stencil": {
         "displayName": "Open Socket",
-        "effectText": "空のJester Slot1つごとにx1 Mult。",
+        "effectText": "空のJester Slot1つごとに得点 x1。",
         "notes": ""
       },
       "abstract_jester": {
         "displayName": "Crew Chorus",
-        "effectText": "所持Jester1枚ごとに+3 Mult。",
+        "effectText": "所持Jester1枚ごとに得点 +15%。",
         "notes": ""
       },
       "green_jester": {
         "displayName": "Momentum Meter",
-        "effectText": "確定するたび+1 Mult。捨てるたび1 Mult失う。",
+        "effectText": "確定するたび得点 +5%。捨てるたび得点 5%を失う。",
         "notes": ""
       },
       "blue_jester": {
@@ -108,7 +108,7 @@
       },
       "smiley_face": {
         "displayName": "Face Signal",
-        "effectText": "得点ラインの11-13タイル1枚ごとに+5 Mult。",
+        "effectText": "得点ラインの11-13タイル1枚ごとに得点 +25%。",
         "notes": ""
       },
       "egg": {
@@ -123,7 +123,7 @@
       },
       "popcorn": {
         "displayName": "Fading Boost",
-        "effectText": "+20 Mult。各Station後に4 Mult失う。",
+        "effectText": "得点 +100%。各Station後に得点 20%を失う。",
         "notes": ""
       },
       "ice_cream": {
@@ -138,7 +138,7 @@
       },
       "walkie_talkie": {
         "displayName": "Ten-Four Signal",
-        "effectText": "得点ラインの10または4ごとに+4 Mult。",
+        "effectText": "得点ラインの10または4ごとに得点 +20%。",
         "notes": ""
       },
       "golden_jester": {
@@ -148,12 +148,12 @@
       },
       "mystic_summit": {
         "displayName": "Last Push",
-        "effectText": "残り捨て札が0なら、+15 Mult。",
+        "effectText": "残り捨て札が0なら、得点 +75%。",
         "notes": ""
       },
       "even_steven": {
         "displayName": "Even Engine",
-        "effectText": "得点ラインの偶数タイル1枚ごとに+4 Mult。",
+        "effectText": "得点ラインの偶数タイル1枚ごとに得点 +20%。",
         "notes": ""
       },
       "odd_todd": {
@@ -163,12 +163,12 @@
       },
       "scholar": {
         "displayName": "One Ledger",
-        "effectText": "得点ラインの1タイル1枚ごとに+20 Chipsと+4 Mult。",
+        "effectText": "得点ラインの1タイル1枚ごとに+20 Chipsと得点 +20%。",
         "notes": ""
       },
       "fibonacci": {
         "displayName": "Sequence Relay",
-        "effectText": "得点ラインの1/2/3/5/8タイル1枚ごとに+8 Mult。",
+        "effectText": "得点ラインの1/2/3/5/8タイル1枚ごとに得点 +40%。",
         "notes": ""
       },
       "banner": {
@@ -178,42 +178,42 @@
       },
       "gros_michel": {
         "displayName": "Ripe Boost",
-        "effectText": "+15 Mult.",
+        "effectText": "得点 +75%.",
         "notes": ""
       },
       "supernova": {
         "displayName": "Run Memory",
-        "effectText": "このrunで確定した役の回数をMultに加える。",
+        "effectText": "このrunで同じ役を確定した回数ごとに得点 +5%。",
         "notes": ""
       },
       "ride_the_bus": {
         "displayName": "Clean Streak",
-        "effectText": "11-13タイルで得点しない確定ごとに+1 Mult。",
+        "effectText": "11-13タイルで得点しない確定ごとに得点 +5%。",
         "notes": ""
       },
       "the_duo": {
         "displayName": "Pair Pact",
-        "effectText": "得点ラインにPair以上があれば、x2 Mult。",
+        "effectText": "得点ラインにPair以上があれば、得点 x2。",
         "notes": ""
       },
       "the_trio": {
         "displayName": "Triple Pact",
-        "effectText": "得点ラインにThree of a Kind以上があれば、x3 Mult。",
+        "effectText": "得点ラインにThree of a Kind以上があれば、得点 x3。",
         "notes": ""
       },
       "the_family": {
         "displayName": "Quad Pact",
-        "effectText": "得点ラインにFour of a Kind以上があれば、x4 Mult。",
+        "effectText": "得点ラインにFour of a Kind以上があれば、得点 x4。",
         "notes": ""
       },
       "the_order": {
         "displayName": "Run Pact",
-        "effectText": "得点ラインにRunがあれば、x3 Mult。",
+        "effectText": "得点ラインにRunがあれば、得点 x3。",
         "notes": ""
       },
       "the_tribe": {
         "displayName": "Color Pact",
-        "effectText": "得点ラインが1色なら、x2 Mult。",
+        "effectText": "得点ラインが1色なら、得点 x2。",
         "notes": ""
       }
     }

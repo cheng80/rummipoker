@@ -388,7 +388,7 @@ void main() {
     expect(find.text('Q-SLT'), findsWidgets);
     expect(find.text('PSV'), findsOneWidget);
     expect(find.text('점수형'), findsWidgets);
-    expect(find.text('+Chips'), findsWidgets);
+    expect(find.text('+칩'), findsWidgets);
     expect(find.text('1/5'), findsNothing);
 
     await tester.tap(find.text('구매'));

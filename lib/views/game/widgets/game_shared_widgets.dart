@@ -1562,13 +1562,13 @@ class _GameItemPocketChip extends StatelessWidget {
 
 String _itemEffectBadge(RummiJesterEffectBreakdown effect) {
   if (effect.hasIntegerMultiplierToken) {
-    return 'xMult ${effect.xmultBonus.round()}x';
+    return '점수 x${effect.xmultBonus.round()}';
   }
   if (effect.chipsBonus > 0) {
-    return '+Chips ${effect.chipsBonus}';
+    return '+칩 ${effect.chipsBonus}';
   }
   if (effect.multBonus > 0) {
-    return '+Mult ${effect.multBonus}';
+    return '점수 +${effect.multPercentBonus}%';
   }
   return '+Score ${effect.scoreDelta}';
 }

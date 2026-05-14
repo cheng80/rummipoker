@@ -92,5 +92,14 @@
   "homeSettingsSectionSubtitle": "应用设置和环境选项",
   "homeSettingsDescription": "打开声音/环境设置",
   "runInfoCurrentChips": "Chips {score}",
-  "gamePlaceholder": "Rummi Poker Grid游玩区域\n正在准备中。"
+  "gamePlaceholder": "Rummi Poker Grid游玩区域\n正在准备中。",
+  "gameTermsTitle": "游戏术语",
+  "gameTermChipsTitle": "Chips",
+  "gameTermChipsBody": "由牌型和Chips奖励决定的分数计算基础值。它不像Gold一样持有或消耗。",
+  "gameTermScorePercentTitle": "分数 +%",
+  "gameTermScorePercentBody": "在计算Chips后，按百分比提高本次确认分数。分数 +20%会让最终分数变为1.2倍。",
+  "gameTermScoreMultiplierTitle": "分数 xN",
+  "gameTermScoreMultiplierBody": "最后应用的强力乘法修正。分数 x2会真正翻倍。",
+  "gameTermGoldTitle": "Gold",
+  "gameTermGoldBody": "在Market购买Jester和Item，或刷新候选时使用的货币。"
 }

@@ -62,6 +62,7 @@
 - 2026-05-10 추가 오디오/정산 회귀 수정: 웹 BGM은 첫 사용자 터치/홈 카드 tap에서 unlock되고, 스크롤 중 같은 BGM을 stop/play 반복해 묵음이 되는 경로를 막았다. 정산 sheet의 노란 밑줄은 `TextDecoration` 상속 차단으로 수정했고, desktop/web에서 정산 dialog가 PhoneFrame 밖 전체 폭으로 그려지는 회귀는 `PhoneFrame` 제약과 landscape widget test로 막았다.
 - 2026-05-14 상점 회귀 수정: 보유물 판매 후 오퍼 리스트가 암묵적으로 리롤되는 문제, 오퍼 구매 후 남은 오퍼 가격이 0G로 바뀌는 stale slot index 문제, 첫 무료 Jester 리롤이 다음 Market에서 복원되는 문제, 할인 상태가 UI에 드러나지 않는 문제를 수정했다. 검증: `flutter test test/logic/rummi_market_facade_test.dart test/logic/item_definition_test.dart test/logic/item_effect_runtime_test.dart test/providers/game_session_notifier_test.dart`, `flutter test test/views/game/widgets/game_shop_discount_badge_test.dart test/views/game/widgets/game_shop_sell_offer_stability_test.dart`, `flutter analyze integration_test/market_discount_visual_bot_test.dart`, `bash -n tools/market_discount_visual_bot.sh`, `tools/market_discount_visual_bot.sh --skip-pub-get --web-port 7371 --output-dir /tmp/rummipoker_market_discount_visual_bot/matrix_full_20260514_060908`, `git diff --check`. 상점 시각 봇 결과는 `MARKET_DISCOUNT_VISUAL_BOT_PASS` 7건과 `All tests passed!` 7건이며, 종료 후 WebDriver Chrome/ChromeDriver/Flutter web server 잔류 프로세스 없음.
 - 2026-05-14 웹 focus-out BGM 완화: 웹뷰에서 focus-out 후 복귀할 때 BGM이 씹히거나 처음부터 재생되는 문제를 `SoundManager` 내부 정책으로 제한했다. lifecycle pause만 recovery pending으로 표시하고, 복귀 후 첫 사용자 제스처는 `resume()`을 먼저 시도한다. 그 resume이 실패한 경우에만 다음 제스처에서 `stop()`/`play()` fallback을 허용하며, `pointerdown`/`pointerup` 중복 replay는 막는다. 검증: `flutter test test/resources/sound_manager_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`, `flutter build web`, `git diff --check`. 웹뷰/브라우저 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 known limitation으로 둔다.
+- 2026-05-14 용어 UX 보강: `+N Mult`처럼 보이던 Jester/Item 설명을 실제 효과인 `점수 +N*5%`로 환산했고, 진짜 곱셈은 `점수 xN`으로 표시한다. 한국어 Chips는 `칩`으로 통일하며, 런 정보 다이얼로그에 `게임 용어` 설명을 추가해 `칩`, `점수 +%`, `점수 xN`, `골드` 차이를 설명한다. 검증: `flutter test test/views/game/widgets/game_run_info_dialog_test.dart test/logic/jester_translation_test.dart test/logic/item_definition_test.dart test/views/game/widgets/game_shop_jester_runtime_value_test.dart test/views/game/widgets/game_shop_screen_test.dart test/views/game/widgets/game_station_read_path_test.dart`, JSON validation, `git diff --check`.
 
 오늘 바로 할 작업:
 
@@ -132,6 +133,9 @@
 - [x] 정산 텍스트 밑줄과 PhoneFrame 폭 회귀
   - 구현 상태: 정산 sheet 루트에서 의도치 않은 `TextDecoration` 상속을 차단하고, `showGeneralDialog`로 뜨는 정산 overlay를 `PhoneFrame` 안에 제한했다.
   - 검증: `flutter analyze`, `flutter test test/views/game/widgets/game_cashout_widgets_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter build web --release --base-href "/rummipoker/"` 통과.
+- [x] Jester/Item 점수 용어 명확화와 게임 용어 설명
+  - 구현 상태: `mult_bonus` 플레이어 문구는 `점수 +%`, `xmult_bonus`는 `점수 xN`, Chips는 한국어 `칩`으로 통일했다. 런 정보에서 `게임 용어` 다이얼로그를 열 수 있다.
+  - 검증: `game_run_info_dialog_test`, `jester_translation_test`, `item_definition_test`, `game_shop_jester_runtime_value_test`, `game_shop_screen_test`, `game_station_read_path_test`, JSON validation, `git diff --check` 통과. 실제 기기/브라우저 마켓 카드와 tooltip의 다국어 줄바꿈은 제출 전 눈검증 권장.
 
 ### B. 최근 추가 항목 때문에 다시 열어 둔 QA
 

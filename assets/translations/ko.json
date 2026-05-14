@@ -92,5 +92,14 @@
   "archiveTitle": "도감",
   "homeArchiveDescription": "보상 카드, Jester, Item 수집 상태 확인",
   "homeSettingsSectionSubtitle": "앱 설정과 환경 옵션",
-  "homeSettingsDescription": "사운드/환경 설정 열기"
+  "homeSettingsDescription": "사운드/환경 설정 열기",
+  "gameTermsTitle": "게임 용어",
+  "gameTermChipsTitle": "칩",
+  "gameTermChipsBody": "족보와 칩 보너스로 정해지는 점수 계산의 기본 재료입니다. 골드처럼 보유하거나 소비하지 않습니다.",
+  "gameTermScorePercentTitle": "점수 +%",
+  "gameTermScorePercentBody": "칩을 바탕으로 이번 확정 점수를 비율로 올립니다. 점수 +20%는 최종 점수를 1.2배로 만듭니다.",
+  "gameTermScoreMultiplierTitle": "점수 xN",
+  "gameTermScoreMultiplierBody": "마지막에 적용되는 강한 곱셈 보정입니다. 점수 x2는 실제로 2배를 곱합니다.",
+  "gameTermGoldTitle": "골드",
+  "gameTermGoldBody": "상점에서 Jester와 Item을 구매하거나 리롤할 때 쓰는 재화입니다."
 }

@@ -3,52 +3,52 @@
     "jesters": {
       "jester": {
         "displayName": "Base Relay",
-        "effectText": "+4 Mult.",
+        "effectText": "Score +20%.",
         "notes": ""
       },
       "greedy_jester": {
         "displayName": "Amber Tap",
-        "effectText": "Each yellow tile in the scoring line gives +3 Mult.",
+        "effectText": "Each yellow tile in the scoring line gives score +15%.",
         "notes": ""
       },
       "lusty_jester": {
         "displayName": "Crimson Tap",
-        "effectText": "Each red tile in the scoring line gives +3 Mult.",
+        "effectText": "Each red tile in the scoring line gives score +15%.",
         "notes": ""
       },
       "wrathful_jester": {
         "displayName": "Cobalt Tap",
-        "effectText": "Each blue tile in the scoring line gives +3 Mult.",
+        "effectText": "Each blue tile in the scoring line gives score +15%.",
         "notes": ""
       },
       "gluttonous_jester": {
         "displayName": "Obsidian Tap",
-        "effectText": "Each black tile in the scoring line gives +3 Mult.",
+        "effectText": "Each black tile in the scoring line gives score +15%.",
         "notes": ""
       },
       "jolly_jester": {
         "displayName": "Pair Call",
-        "effectText": "If the scoring line contains a Pair or better, +8 Mult.",
+        "effectText": "If the scoring line contains a Pair or better, score +40%.",
         "notes": ""
       },
       "zany_jester": {
         "displayName": "Triple Call",
-        "effectText": "If the scoring line contains Three of a Kind or better, +12 Mult.",
+        "effectText": "If the scoring line contains Three of a Kind or better, score +60%.",
         "notes": ""
       },
       "mad_jester": {
         "displayName": "Twin Pair Call",
-        "effectText": "If the scoring line contains Two Pair or better, +10 Mult.",
+        "effectText": "If the scoring line contains Two Pair or better, score +50%.",
         "notes": ""
       },
       "crazy_jester": {
         "displayName": "Run Call",
-        "effectText": "If the scoring line contains a run, +12 Mult.",
+        "effectText": "If the scoring line contains a run, score +60%.",
         "notes": ""
       },
       "droll_jester": {
         "displayName": "Color Call",
-        "effectText": "If the scoring line uses one color, +10 Mult.",
+        "effectText": "If the scoring line uses one color, score +50%.",
         "notes": ""
       },
       "sly_jester": {
@@ -78,22 +78,22 @@
       },
       "half_jester": {
         "displayName": "Compact Core",
-        "effectText": "If the scoring line uses 3 or fewer tiles, +20 Mult.",
+        "effectText": "If the scoring line uses 3 or fewer tiles, score +100%.",
         "notes": ""
       },
       "jester_stencil": {
         "displayName": "Open Socket",
-        "effectText": "Each empty Jester slot gives x1 Mult.",
+        "effectText": "Each empty Jester slot gives score x1.",
         "notes": ""
       },
       "abstract_jester": {
         "displayName": "Crew Chorus",
-        "effectText": "Each owned Jester gives +3 Mult.",
+        "effectText": "Each owned Jester gives score +15%.",
         "notes": ""
       },
       "green_jester": {
         "displayName": "Momentum Meter",
-        "effectText": "Gains +1 Mult after each confirm. Loses 1 Mult after each discard.",
+        "effectText": "Gains score +5% after each confirm. Loses score 5% after each discard.",
         "notes": ""
       },
       "blue_jester": {
@@ -108,7 +108,7 @@
       },
       "smiley_face": {
         "displayName": "Face Signal",
-        "effectText": "Each 11-13 tile in the scoring line gives +5 Mult.",
+        "effectText": "Each 11-13 tile in the scoring line gives score +25%.",
         "notes": ""
       },
       "egg": {
@@ -123,7 +123,7 @@
       },
       "popcorn": {
         "displayName": "Fading Boost",
-        "effectText": "+20 Mult. After each Station, this loses 4 Mult.",
+        "effectText": "Score +100%. After each Station, this loses score 20%.",
         "notes": ""
       },
       "ice_cream": {
@@ -138,7 +138,7 @@
       },
       "walkie_talkie": {
         "displayName": "Ten-Four Signal",
-        "effectText": "Each 10 or 4 in the scoring line gives +4 Mult.",
+        "effectText": "Each 10 or 4 in the scoring line gives score +20%.",
         "notes": ""
       },
       "golden_jester": {
@@ -148,12 +148,12 @@
       },
       "mystic_summit": {
         "displayName": "Last Push",
-        "effectText": "If you have 0 discards remaining, +15 Mult.",
+        "effectText": "If you have 0 discards remaining, score +75%.",
         "notes": ""
       },
       "even_steven": {
         "displayName": "Even Engine",
-        "effectText": "Each even-number tile in the scoring line gives +4 Mult.",
+        "effectText": "Each even-number tile in the scoring line gives score +20%.",
         "notes": ""
       },
       "odd_todd": {
@@ -163,12 +163,12 @@
       },
       "scholar": {
         "displayName": "One Ledger",
-        "effectText": "Each 1 tile in the scoring line gives +20 Chips and +4 Mult.",
+        "effectText": "Each 1 tile in the scoring line gives +20 Chips and score +20%.",
         "notes": ""
       },
       "fibonacci": {
         "displayName": "Sequence Relay",
-        "effectText": "Each 1, 2, 3, 5, or 8 tile in the scoring line gives +8 Mult.",
+        "effectText": "Each 1, 2, 3, 5, or 8 tile in the scoring line gives score +40%.",
         "notes": ""
       },
       "banner": {
@@ -178,42 +178,42 @@
       },
       "gros_michel": {
         "displayName": "Ripe Boost",
-        "effectText": "+15 Mult.",
+        "effectText": "Score +75%.",
         "notes": ""
       },
       "supernova": {
         "displayName": "Run Memory",
-        "effectText": "Add this run's count for the confirmed hand type to Mult.",
+        "effectText": "Score +5% for each time this hand type was confirmed this run.",
         "notes": ""
       },
       "ride_the_bus": {
         "displayName": "Clean Streak",
-        "effectText": "Gains +1 Mult after each confirm without scoring an 11-13 tile.",
+        "effectText": "Gains score +5% after each confirm without scoring an 11-13 tile.",
         "notes": ""
       },
       "the_duo": {
         "displayName": "Pair Pact",
-        "effectText": "If the scoring line contains a Pair or better, x2 Mult.",
+        "effectText": "If the scoring line contains a Pair or better, score x2.",
         "notes": ""
       },
       "the_trio": {
         "displayName": "Triple Pact",
-        "effectText": "If the scoring line contains Three of a Kind or better, x3 Mult.",
+        "effectText": "If the scoring line contains Three of a Kind or better, score x3.",
         "notes": ""
       },
       "the_family": {
         "displayName": "Quad Pact",
-        "effectText": "If the scoring line contains Four of a Kind or better, x4 Mult.",
+        "effectText": "If the scoring line contains Four of a Kind or better, score x4.",
         "notes": ""
       },
       "the_order": {
         "displayName": "Run Pact",
-        "effectText": "If the scoring line contains a run, x3 Mult.",
+        "effectText": "If the scoring line contains a run, score x3.",
         "notes": ""
       },
       "the_tribe": {
         "displayName": "Color Pact",
-        "effectText": "If the scoring line uses one color, x2 Mult.",
+        "effectText": "If the scoring line uses one color, score x2.",
         "notes": ""
       }
     }

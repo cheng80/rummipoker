@@ -92,5 +92,14 @@
   "homeArchiveDescription": "Review reward cards, Jesters, and Items",
   "homeSettingsSectionSubtitle": "App settings and environment options",
   "homeSettingsDescription": "Open sound and environment settings",
-  "gamePlaceholder": "The Rummi Poker Grid play area is\ncoming soon."
+  "gamePlaceholder": "The Rummi Poker Grid play area is\ncoming soon.",
+  "gameTermsTitle": "Game Terms",
+  "gameTermChipsTitle": "Chips",
+  "gameTermChipsBody": "The base material for score calculation, set by hand type and chip bonuses. Chips are not held or spent like gold.",
+  "gameTermScorePercentTitle": "Score +%",
+  "gameTermScorePercentBody": "Raises this confirm score by a percentage after chips are counted. Score +20% makes the final score 1.2x.",
+  "gameTermScoreMultiplierTitle": "Score xN",
+  "gameTermScoreMultiplierBody": "A stronger multiplier applied at the end. Score x2 really doubles the score.",
+  "gameTermGoldTitle": "Gold",
+  "gameTermGoldBody": "Currency used in the market to buy Jesters and Items or reroll offers."
 }

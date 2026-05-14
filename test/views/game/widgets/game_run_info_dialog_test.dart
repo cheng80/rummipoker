@@ -73,6 +73,18 @@ void main() {
     expect(find.text('칩 70'), findsWidgets);
     expect(find.text('다음 칩 80'), findsOneWidget);
 
+    await tester.tap(find.byTooltip('게임 용어'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('게임 용어'), findsOneWidget);
+    expect(find.text('칩'), findsWidgets);
+    expect(find.text('점수 +%'), findsOneWidget);
+    expect(find.text('점수 xN'), findsOneWidget);
+    expect(find.text('골드'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('취소').last);
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byTooltip('취소'));
     await tester.pumpAndSettle();
 

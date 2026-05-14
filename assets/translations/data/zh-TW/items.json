@@ -54,8 +54,8 @@
         "effectText": "下一次確認獲得+25 Chips。"
       },
       "mult_capsule": {
-        "displayName": "Mult Charge",
-        "effectText": "下一次確認獲得+6 Mult。"
+        "displayName": "Score Charge",
+        "effectText": "下一次確認獲得分數 +30%。"
       },
       "line_polish": {
         "displayName": "Score Polish",
@@ -67,7 +67,7 @@
       },
       "flush_powder": {
         "displayName": "Color Primer",
-        "effectText": "下一次同色確認獲得+8 Mult。"
+        "effectText": "下一次同色確認獲得分數 +40%。"
       },
       "pair_splint": {
         "displayName": "Pair Brace",
@@ -107,7 +107,7 @@
       },
       "thin_caliper": {
         "displayName": "Short Caliper",
-        "effectText": "用3張或更少牌確認時獲得+4 Mult。"
+        "effectText": "用3張或更少牌確認時獲得分數 +20%。"
       },
       "stage_map": {
         "displayName": "Station Map",
@@ -163,19 +163,19 @@
       },
       "red_swatch": {
         "displayName": "Red Swatch",
-        "effectText": "下一次確認時，每張紅色牌給予+2 Mult。"
+        "effectText": "下一次確認時，每張紅色牌給予分數 +10%。"
       },
       "blue_swatch": {
         "displayName": "Blue Swatch",
-        "effectText": "下一次確認時，每張藍色牌給予+2 Mult。"
+        "effectText": "下一次確認時，每張藍色牌給予分數 +10%。"
       },
       "black_swatch": {
         "displayName": "Black Swatch",
-        "effectText": "下一次確認時，每張黑色牌給予+2 Mult。"
+        "effectText": "下一次確認時，每張黑色牌給予分數 +10%。"
       },
       "yellow_swatch": {
         "displayName": "Yellow Swatch",
-        "effectText": "下一次確認時，每張黃色牌給予+2 Mult。"
+        "effectText": "下一次確認時，每張黃色牌給予分數 +10%。"
       },
       "rank_chalk": {
         "displayName": "Rank Chalk",

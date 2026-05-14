@@ -1241,9 +1241,9 @@ class _GameViewState extends ConsumerState<GameView>
       'undo_last_board_move' => '마지막 이동 되돌림',
       'draw_if_hand_empty' => '타일 1장 드로우',
       'increase_hand_size' => '손패 최대치 +${item.effect.value('amount') ?? 1}',
-      'chips_bonus' => '다음 확정 Chips 보너스',
-      'mult_bonus' => '다음 확정 Mult 보너스',
-      'xmult_bonus' => '다음 확정 XMult 보너스',
+      'chips_bonus' => '다음 확정 칩 보너스',
+      'mult_bonus' => '다음 확정 점수 +% 보너스',
+      'xmult_bonus' => '다음 확정 점수 x 보너스',
       'temporary_overlap_cap_bonus' => '다음 확정 overlap 보너스',
       _ => '효과 적용',
     };
@@ -3162,8 +3162,8 @@ class _BoardScoringCallout extends StatelessWidget {
       ),
       ScoringPresentationStep.handRank => (
         gameHandRankLabel(line.rank),
-        '+${line.rankBaseScore ?? line.baseScore}',
-        '족보 base score',
+        '칩 +${line.rankBaseScore ?? line.baseScore}',
+        '족보 기본 칩',
       ),
       ScoringPresentationStep.overlap => (
         'overlap',
@@ -3447,7 +3447,7 @@ class _ScoringPreviewChip extends StatelessWidget {
         ? '빌드 효과 표시'
         : hasConstraint
         ? '약화 -${preview.constraintPenaltyPercent}%'
-        : 'Base ${preview.baseScore}'
+        : '칩 ${preview.baseScore}'
               '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
               ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';
     final pulseKey = ValueKey(

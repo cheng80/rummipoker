@@ -404,7 +404,7 @@
     },
     {
       "id": "mult_capsule",
-      "displayName": "Mult Charge",
+      "displayName": "Score Charge",
       "type": "consumable",
       "rarity": "common",
       "basePrice": 4,
@@ -415,7 +415,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "The next confirm gains +6 Mult.",
+      "effectText": "The next confirm gains score +30%.",
       "effect": {
         "timing": "next_confirm",
         "op": "mult_bonus",
@@ -501,7 +501,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "The next same-color confirm gains +8 Mult.",
+      "effectText": "The next same-color confirm gains score +40%.",
       "effect": {
         "timing": "next_confirm_if_rank_at_least",
         "op": "mult_bonus",
@@ -781,7 +781,7 @@
       "usableInBattle": false,
       "placement": "equipped",
       "slotHint": "gear",
-      "effectText": "Confirms made with 3 or fewer tiles gain +4 Mult.",
+      "effectText": "Confirms made with 3 or fewer tiles gain score +20%.",
       "effect": {
         "timing": "on_confirm_if_played_hand_size_lte",
         "op": "mult_bonus",
@@ -1171,7 +1171,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "On the next confirm, each red tile gives +2 Mult.",
+      "effectText": "On the next confirm, each red tile gives score +10%.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",
@@ -1200,7 +1200,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "On the next confirm, each blue tile gives +2 Mult.",
+      "effectText": "On the next confirm, each blue tile gives score +10%.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",
@@ -1229,7 +1229,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "On the next confirm, each black tile gives +2 Mult.",
+      "effectText": "On the next confirm, each black tile gives score +10%.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",
@@ -1258,7 +1258,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "On the next confirm, each yellow tile gives +2 Mult.",
+      "effectText": "On the next confirm, each yellow tile gives score +10%.",
       "effect": {
         "timing": "next_confirm_per_tile_color",
         "op": "mult_bonus",

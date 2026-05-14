@@ -54,8 +54,8 @@
         "effectText": "次の確定は+25 Chips。"
       },
       "mult_capsule": {
-        "displayName": "Mult Charge",
-        "effectText": "次の確定は+6 Mult。"
+        "displayName": "Score Charge",
+        "effectText": "次の確定は得点 +30%。"
       },
       "line_polish": {
         "displayName": "Score Polish",
@@ -67,7 +67,7 @@
       },
       "flush_powder": {
         "displayName": "Color Primer",
-        "effectText": "次の同色確定は+8 Mult。"
+        "effectText": "次の同色確定は得点 +40%。"
       },
       "pair_splint": {
         "displayName": "Pair Brace",
@@ -107,7 +107,7 @@
       },
       "thin_caliper": {
         "displayName": "Short Caliper",
-        "effectText": "3枚以下での確定は+4 Mult。"
+        "effectText": "3枚以下での確定は得点 +20%。"
       },
       "stage_map": {
         "displayName": "Station Map",
@@ -163,19 +163,19 @@
       },
       "red_swatch": {
         "displayName": "Red Swatch",
-        "effectText": "次の確定で、赤タイル1枚ごとに+2 Mult。"
+        "effectText": "次の確定で、赤タイル1枚ごとに得点 +10%。"
       },
       "blue_swatch": {
         "displayName": "Blue Swatch",
-        "effectText": "次の確定で、青タイル1枚ごとに+2 Mult。"
+        "effectText": "次の確定で、青タイル1枚ごとに得点 +10%。"
       },
       "black_swatch": {
         "displayName": "Black Swatch",
-        "effectText": "次の確定で、黒タイル1枚ごとに+2 Mult。"
+        "effectText": "次の確定で、黒タイル1枚ごとに得点 +10%。"
       },
       "yellow_swatch": {
         "displayName": "Yellow Swatch",
-        "effectText": "次の確定で、黄色タイル1枚ごとに+2 Mult。"
+        "effectText": "次の確定で、黄色タイル1枚ごとに得点 +10%。"
       },
       "rank_chalk": {
         "displayName": "Rank Chalk",

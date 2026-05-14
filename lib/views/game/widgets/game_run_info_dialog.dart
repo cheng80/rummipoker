@@ -9,6 +9,7 @@ import '../../../resources/asset_paths.dart';
 import '../../../utils/common_ui.dart';
 import 'game_cashout_widgets.dart';
 import 'game_shared_widgets.dart';
+import 'game_terms_dialog.dart';
 
 Future<void> showGameRunInfoDialog({
   required BuildContext context,
@@ -38,6 +39,13 @@ Future<void> showGameRunInfoDialog({
                     ),
                   ),
                 ),
+                GameIconButtonChip(
+                  tooltip: context.tr('gameTermsTitle'),
+                  onPressed: () => showGameTermsDialog(context: dialogContext),
+                  icon: Icons.menu_book_rounded,
+                  backgroundColor: const Color(0xFF36513D),
+                ),
+                const SizedBox(width: 6),
                 GameIconButtonChip(
                   tooltip: context.tr('cancel'),
                   onPressed: () => Navigator.of(dialogContext).pop(),

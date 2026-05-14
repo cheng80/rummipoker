@@ -3,52 +3,52 @@
     "jesters": {
       "jester": {
         "displayName": "Base Relay",
-        "effectText": "+4 Mult.",
+        "effectText": "分數 +20%.",
         "notes": ""
       },
       "greedy_jester": {
         "displayName": "Amber Tap",
-        "effectText": "計分線中每张黃色牌给予+3 Mult。",
+        "effectText": "計分線中每张黃色牌给予分數 +15%。",
         "notes": ""
       },
       "lusty_jester": {
         "displayName": "Crimson Tap",
-        "effectText": "計分線中每张紅色牌给予+3 Mult。",
+        "effectText": "計分線中每张紅色牌给予分數 +15%。",
         "notes": ""
       },
       "wrathful_jester": {
         "displayName": "Cobalt Tap",
-        "effectText": "計分線中每张藍色牌给予+3 Mult。",
+        "effectText": "計分線中每张藍色牌给予分數 +15%。",
         "notes": ""
       },
       "gluttonous_jester": {
         "displayName": "Obsidian Tap",
-        "effectText": "計分線中每张黑色牌给予+3 Mult。",
+        "effectText": "計分線中每张黑色牌给予分數 +15%。",
         "notes": ""
       },
       "jolly_jester": {
         "displayName": "Pair Call",
-        "effectText": "如果計分線包含Pair或更高，获得+8 Mult。",
+        "effectText": "如果計分線包含Pair或更高，获得分數 +40%。",
         "notes": ""
       },
       "zany_jester": {
         "displayName": "Triple Call",
-        "effectText": "如果計分線包含Three of a Kind或更高，获得+12 Mult。",
+        "effectText": "如果計分線包含Three of a Kind或更高，获得分數 +60%。",
         "notes": ""
       },
       "mad_jester": {
         "displayName": "Twin Pair Call",
-        "effectText": "如果計分線包含Two Pair或更高，獲得+10 Mult。",
+        "effectText": "如果計分線包含Two Pair或更高，獲得分數 +50%。",
         "notes": ""
       },
       "crazy_jester": {
         "displayName": "Run Call",
-        "effectText": "如果計分線包含Run，获得+12 Mult。",
+        "effectText": "如果計分線包含Run，获得分數 +60%。",
         "notes": ""
       },
       "droll_jester": {
         "displayName": "Color Call",
-        "effectText": "如果計分線只使用一种颜色，获得+10 Mult。",
+        "effectText": "如果計分線只使用一种颜色，获得分數 +50%。",
         "notes": ""
       },
       "sly_jester": {
@@ -78,22 +78,22 @@
       },
       "half_jester": {
         "displayName": "Compact Core",
-        "effectText": "如果計分線使用3张或更少牌，获得+20 Mult。",
+        "effectText": "如果計分線使用3张或更少牌，获得分數 +100%。",
         "notes": ""
       },
       "jester_stencil": {
         "displayName": "Open Socket",
-        "effectText": "每个空Jester Slot给予x1 Mult。",
+        "effectText": "每个空Jester Slot给予分數 x1。",
         "notes": ""
       },
       "abstract_jester": {
         "displayName": "Crew Chorus",
-        "effectText": "每个已拥有Jester给予+3 Mult。",
+        "effectText": "每个已拥有Jester给予分數 +15%。",
         "notes": ""
       },
       "green_jester": {
         "displayName": "Momentum Meter",
-        "effectText": "每次確定后获得+1 Mult。每次棄牌后失去1 Mult。",
+        "effectText": "每次確定後獲得分數 +5%。每次棄牌後失去分數 5%。",
         "notes": ""
       },
       "blue_jester": {
@@ -108,7 +108,7 @@
       },
       "smiley_face": {
         "displayName": "Face Signal",
-        "effectText": "計分線中每张11-13牌给予+5 Mult。",
+        "effectText": "計分線中每张11-13牌给予分數 +25%。",
         "notes": ""
       },
       "egg": {
@@ -123,7 +123,7 @@
       },
       "popcorn": {
         "displayName": "Fading Boost",
-        "effectText": "+20 Mult。每次Station后失去4 Mult。",
+        "effectText": "分數 +100%。每次Station後失去分數 20%。",
         "notes": ""
       },
       "ice_cream": {
@@ -138,7 +138,7 @@
       },
       "walkie_talkie": {
         "displayName": "Ten-Four Signal",
-        "effectText": "計分線中每个10或4给予+4 Mult。",
+        "effectText": "計分線中每个10或4给予分數 +20%。",
         "notes": ""
       },
       "golden_jester": {
@@ -148,12 +148,12 @@
       },
       "mystic_summit": {
         "displayName": "Last Push",
-        "effectText": "如果剩余棄牌为0，获得+15 Mult。",
+        "effectText": "如果剩余棄牌为0，获得分數 +75%。",
         "notes": ""
       },
       "even_steven": {
         "displayName": "Even Engine",
-        "effectText": "計分線中每张偶数牌给予+4 Mult。",
+        "effectText": "計分線中每张偶数牌给予分數 +20%。",
         "notes": ""
       },
       "odd_todd": {
@@ -163,12 +163,12 @@
       },
       "scholar": {
         "displayName": "One Ledger",
-        "effectText": "計分線中每张1牌给予+20 Chips和+4 Mult。",
+        "effectText": "計分線中每张1牌给予+20 Chips和分數 +20%。",
         "notes": ""
       },
       "fibonacci": {
         "displayName": "Sequence Relay",
-        "effectText": "計分線中每张1/2/3/5/8牌给予+8 Mult。",
+        "effectText": "計分線中每张1/2/3/5/8牌给予分數 +40%。",
         "notes": ""
       },
       "banner": {
@@ -178,42 +178,42 @@
       },
       "gros_michel": {
         "displayName": "Ripe Boost",
-        "effectText": "+15 Mult.",
+        "effectText": "分數 +75%.",
         "notes": ""
       },
       "supernova": {
         "displayName": "Run Memory",
-        "effectText": "将本run中该役型的确认次数加到Mult。",
+        "effectText": "本run中每次確認相同役型，分數 +5%。",
         "notes": ""
       },
       "ride_the_bus": {
         "displayName": "Clean Streak",
-        "effectText": "每次未用11-13牌得分的确认后获得+1 Mult。",
+        "effectText": "每次未用11-13牌得分的确认后获得分數 +5%。",
         "notes": ""
       },
       "the_duo": {
         "displayName": "Pair Pact",
-        "effectText": "如果計分線包含Pair或更高，获得x2 Mult。",
+        "effectText": "如果計分線包含Pair或更高，获得分數 x2。",
         "notes": ""
       },
       "the_trio": {
         "displayName": "Triple Pact",
-        "effectText": "如果計分線包含Three of a Kind或更高，获得x3 Mult。",
+        "effectText": "如果計分線包含Three of a Kind或更高，获得分數 x3。",
         "notes": ""
       },
       "the_family": {
         "displayName": "Quad Pact",
-        "effectText": "如果計分線包含Four of a Kind或更高，獲得x4 Mult。",
+        "effectText": "如果計分線包含Four of a Kind或更高，獲得分數 x4。",
         "notes": ""
       },
       "the_order": {
         "displayName": "Run Pact",
-        "effectText": "如果計分線包含Run，获得x3 Mult。",
+        "effectText": "如果計分線包含Run，获得分數 x3。",
         "notes": ""
       },
       "the_tribe": {
         "displayName": "Color Pact",
-        "effectText": "如果計分線只使用一种颜色，获得x2 Mult。",
+        "effectText": "如果計分線只使用一种颜色，获得分數 x2。",
         "notes": ""
       }
     }

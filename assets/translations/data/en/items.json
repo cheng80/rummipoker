@@ -54,8 +54,8 @@
         "effectText": "The next confirm gains +25 Chips."
       },
       "mult_capsule": {
-        "displayName": "Mult Charge",
-        "effectText": "The next confirm gains +6 Mult."
+        "displayName": "Score Charge",
+        "effectText": "The next confirm gains score +30%."
       },
       "line_polish": {
         "displayName": "Score Polish",
@@ -67,7 +67,7 @@
       },
       "flush_powder": {
         "displayName": "Color Primer",
-        "effectText": "The next same-color confirm gains +8 Mult."
+        "effectText": "The next same-color confirm gains score +40%."
       },
       "pair_splint": {
         "displayName": "Pair Brace",
@@ -107,7 +107,7 @@
       },
       "thin_caliper": {
         "displayName": "Short Caliper",
-        "effectText": "Confirms made with 3 or fewer tiles gain +4 Mult."
+        "effectText": "Confirms made with 3 or fewer tiles gain score +20%."
       },
       "stage_map": {
         "displayName": "Station Map",
@@ -163,19 +163,19 @@
       },
       "red_swatch": {
         "displayName": "Red Swatch",
-        "effectText": "On the next confirm, each red tile gives +2 Mult."
+        "effectText": "On the next confirm, each red tile gives score +10%."
       },
       "blue_swatch": {
         "displayName": "Blue Swatch",
-        "effectText": "On the next confirm, each blue tile gives +2 Mult."
+        "effectText": "On the next confirm, each blue tile gives score +10%."
       },
       "black_swatch": {
         "displayName": "Black Swatch",
-        "effectText": "On the next confirm, each black tile gives +2 Mult."
+        "effectText": "On the next confirm, each black tile gives score +10%."
       },
       "yellow_swatch": {
         "displayName": "Yellow Swatch",
-        "effectText": "On the next confirm, each yellow tile gives +2 Mult."
+        "effectText": "On the next confirm, each yellow tile gives score +10%."
       },
       "rank_chalk": {
         "displayName": "Rank Chalk",

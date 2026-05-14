@@ -5036,14 +5036,14 @@ String _otherJesterConditionTag(Object? value) {
 }
 
 String _jesterEffectTag(RummiJesterCard card) {
-  if (card.id == 'scholar') return '+Chips/+Mult';
-  if (card.id == 'ice_cream') return '+Chips';
-  if (card.effectType == 'stateful_growth') return '+Mult';
+  if (card.id == 'scholar') return '+칩/+점수%';
+  if (card.id == 'ice_cream') return '+칩';
+  if (card.effectType == 'stateful_growth') return '+점수%';
 
   return switch (card.effectType) {
-    'chips_bonus' => '+Chips',
-    'mult_bonus' => '+Mult',
-    'xmult_bonus' => 'xMult',
+    'chips_bonus' => '+칩',
+    'mult_bonus' => '+점수%',
+    'xmult_bonus' => '점수 x',
     'economy' => '+Gold',
     'rule_modifier' => 'Rule',
     _ => '',
@@ -5109,9 +5109,9 @@ String _itemTimingTag(String timing) {
 
 String _itemEffectTag(String op) {
   return switch (op) {
-    'chips_bonus' => '+Chips',
-    'mult_bonus' => '+Mult',
-    'xmult_bonus' => 'xMult',
+    'chips_bonus' => '+칩',
+    'mult_bonus' => '+점수%',
+    'xmult_bonus' => '점수 x',
     'temporary_overlap_cap_bonus' => 'Overlap',
     'gain_gold' ||
     'add_hand_rank_progress' ||
@@ -5143,9 +5143,9 @@ String _catalogItemTagLabel(String tag) {
     'discount' => 'Discount',
     'battle' => '전투',
     'score' => 'Score',
-    'chips' => '+Chips',
-    'mult' => '+Mult',
-    'xmult' => 'xMult',
+    'chips' => '+칩',
+    'mult' => '+점수%',
+    'xmult' => '점수 x',
     'rank' => '족보',
     'rank_growth' || 'planet_like' => '족보 성장',
     'straight' => 'Run',
