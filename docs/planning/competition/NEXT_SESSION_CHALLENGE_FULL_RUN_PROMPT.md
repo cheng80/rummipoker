@@ -19,7 +19,7 @@
 - 앱 일반 진입점의 언어는 OS/브라우저 시스템 locale을 따른다. locale full-run 때만 bot 인자로 명시 locale을 고정한다.
 - 튜토리얼 검증 전용이 아닌 debug fixture에서는 자동 튜토리얼을 띄우지 않는다. 튜토리얼은 다시 보기 버튼으로만 연다.
 - `slot_unlock_market` fixture 눈검증은 완료됐다. 자물쇠 확대/fade-out과 슬롯 pulse가 1회 보이는 기준이며 반복 재생은 실제 플레이와 달라 넣지 않는다.
-- 이후 web icon/splash/OG image, 릴리즈 홈 메뉴, 웹 BGM unlock/scroll 묵음, 정산 밑줄, 정산 PhoneFrame 폭 회귀를 수정했다. 남은 full-run 재개 전에는 최신 build 눈검증과 사용자 승인을 받는다.
+- 이후 web icon/splash/OG image, 릴리즈 홈 메뉴, 웹 BGM unlock/scroll 묵음, 정산 밑줄, 정산 PhoneFrame 폭 회귀를 수정했다. 2026-05-14에는 웹 focus-out 복귀 BGM을 `SoundManager` 내부에서 best-effort 완화했다. lifecycle pause만 recovery pending으로 표시하고, 복귀 후 첫 제스처는 `resume()`을 먼저 시도하며 실패 시 다음 제스처에서만 `stop()`/`play()` fallback을 허용한다. 웹뷰별 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 known limitation으로 둔다. 남은 full-run 재개 전에는 최신 build 눈검증과 사용자 승인을 받는다.
 
 먼저 읽을 문서:
 - START_HERE.md
@@ -104,7 +104,7 @@
 - debug fixture 자동 튜토리얼 차단: 튜토리얼 검증 전용 fixture가 아니면 자동 튜토리얼은 뜨지 않고, 다시 보기 버튼으로만 실행한다.
 - Web 제출 산물과 공유 이미지: 새 icon/splash asset을 반영했고 OG image는 `https://cheng80.myqnapcloud.com/rummipoker/assets/assets/splash.png` 기준이다.
 - 릴리즈 홈 메뉴: 일반 메뉴는 도감 중심으로 정리했고 debug/special 메뉴는 debug gate 뒤로 숨겼다.
-- 웹 BGM: 첫 pointer/tap과 홈 카드 tap에서 unlock/SFX를 재시도하고, 스크롤 중 같은 BGM을 stop/play 반복하지 않게 수정했다. 데스크톱 웹, iPhone Safari, iPhone 카카오톡 브라우저에서 사용자 눈검증 완료.
+- 웹 BGM: 첫 pointer/tap과 홈 카드 tap에서 unlock/SFX를 재시도하고, 스크롤 중 같은 BGM을 stop/play 반복하지 않게 수정했다. focus-out 복귀는 resume-first, fallback-on-next-gesture 정책으로 완화했다. 데스크톱 웹, iPhone Safari, iPhone 카카오톡 브라우저에서 사용자 눈검증 완료. 단, 웹뷰별 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 known limitation이다.
 - 정산 UI: 노란 밑줄은 `TextDecoration` 상속 차단으로 수정했고, `showGeneralDialog` 정산 overlay가 PhoneFrame 밖 전체 폭으로 새는 회귀는 `PhoneFrame` 제약으로 수정했다. `flutter analyze`, `game_cashout_widgets_test`, `game_view_test`, `flutter build web --release --base-href "/rummipoker/"` 통과.
 - 정산 progress bar, 게임오버 후 새 run까지 족보 성장 영구 계승, 타로/유령카드류 전체 이식은 이번 제출 전 구현 범위에서 제외.
 

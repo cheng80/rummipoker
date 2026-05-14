@@ -29,7 +29,7 @@
 5. 완료: 잠긴 슬롯 해금 룰을 S2/S4/S6 Boss 보상으로 연결하고, Market 진입 시 해금 연출을 보여준 뒤 전투에는 해금된 슬롯 상태로 들어가게 했다.
 6. 완료: 앱 기본 언어는 OS/브라우저 시스템 locale을 따르도록 `startLocale` 강제를 제거했고, `slot_unlock_market` debug fixture를 추가했다.
 7. 완료: `/game?fixture=slot_unlock_market`에서 자동 튜토리얼 없이 해금 배너/슬롯 pulse를 눈검증했다. 자물쇠 확대/fade-out과 pulse가 1회 보이는 기준으로 조정했고, 반복 재생은 실제 플레이와 다르므로 넣지 않는다.
-8. 완료: web 제출 산물에 icon/splash/OG image를 반영하고, 릴리즈 진입 메뉴에서 debug/special 메뉴가 보이지 않게 정리했다. 웹 BGM은 첫 터치/버튼 tap에서 unlock되고, 스크롤 중 같은 BGM을 stop/play 반복하지 않게 보정했다.
+8. 완료: web 제출 산물에 icon/splash/OG image를 반영하고, 릴리즈 진입 메뉴에서 debug/special 메뉴가 보이지 않게 정리했다. 웹 BGM은 첫 터치/버튼 tap에서 unlock되고, 스크롤 중 같은 BGM을 stop/play 반복하지 않게 보정했다. 2026-05-14 추가로 focus-out 복귀 시 lifecycle pause만 recovery pending으로 표시하고, 첫 제스처에서는 `resume()`을 먼저 시도하며 실패한 경우에만 다음 제스처에서 `stop()`/`play()` fallback을 허용하도록 `SoundManager`에 제한했다. 웹뷰별 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 제출 blocker가 아니라 known limitation으로 둔다.
 9. 완료: 정산 sheet 텍스트의 노란 밑줄 회귀를 `TextDecoration` 상속 차단으로 수정했고, `showGeneralDialog` 정산 overlay가 desktop/web에서 PhoneFrame 밖 전체 폭으로 새는 회귀를 `PhoneFrame` 제약과 landscape widget test로 막았다.
 10. 완료: 최신 후보에서 `ko` standard→challenge 재확인을 통과했으므로 공모전 제출용 풀런봇 플랜은 닫는다. `ja`, `zh-CN`, `zh-TW`는 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다.
 11. 향후 문제 발생 또는 공모전 이후 locale cycle을 추가 검증할 때는 standard 실행 전 저장 세션/SharedPreferences를 지워 첫 전투/첫 Market 튜토리얼이 표시되는 조건으로 시작한다. 같은 locale의 challenge 실행은 새 도전 run으로 시작하되 같은 cycle 내부 진행이므로 battle/market tutorial seen 상태는 유지한다.
@@ -126,6 +126,7 @@
 - `docs/submission_kit/` 제출 문서 세트 정리 완료. 이번 웹 제출 기준에서는 문서화로 닫고, Android/iOS 실제 release artifact 생성은 해당 플랫폼 제출 시 별도 gate로 둔다.
 - 전투/마켓 튜토리얼 V1은 `tutorial_coach_mark`로 구현. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 리사이즈 후 focus 위치/크기 눈검증도 완료했다.
 - 2026-05-10 추가 UI/Web 회귀 수정: icon/splash/OG image를 최신 asset으로 반영, 릴리즈 홈 메뉴를 도감 중심으로 정리, 웹 BGM unlock과 스크롤 중 묵음 회귀 수정, 정산 sheet의 `TextDecoration` 상속 밑줄과 `showGeneralDialog` PhoneFrame 폭 회귀 수정. 검증: `flutter analyze`, `flutter test test/views/game/widgets/game_cashout_widgets_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter build web --release --base-href "/rummipoker/"`.
+- 2026-05-14 웹 focus-out BGM 후속 완화: `lib/resources/sound_manager.dart`에서 focus-out recovery pending, resume-first, duplicate pointer replay guard, fallback-on-next-gesture 정책을 적용했다. 검증: `flutter test test/resources/sound_manager_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`, `flutter build web`, `git diff --check`. 실제 웹뷰에서는 BGM 위치 유지가 완전하지 않을 수 있어 known limitation으로 남긴다.
 
 ## 3. 공모전 Done Evidence
 

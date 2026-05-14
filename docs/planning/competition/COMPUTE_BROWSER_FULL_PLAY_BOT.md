@@ -254,6 +254,8 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
   - 첫 pointer/tap에서 BGM unlock 재시도
   - 홈 카드 tap에서 직접 unlock/SFX 호출
   - 이미 같은 BGM이 재생 중이면 스크롤마다 stop/play를 반복하지 않음
+  - 2026-05-14 focus-out 복귀 완화: lifecycle pause만 recovery pending으로 표시하고, 다음 사용자 제스처에서 `resume()`을 먼저 시도한다. 실패한 경우에만 다음 제스처에서 `stop()`/`play()` fallback을 허용하며, pointerdown/pointerup 중복 replay는 막는다.
+  - 웹뷰/브라우저 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 known limitation이다. 추가 route/UI 분기를 늘리지 않고 `SoundManager` 내부 정책으로만 다룬다.
   - 데스크톱 웹, iPhone Safari, iPhone 카카오톡 브라우저에서 사용자 눈검증 완료
 - 정산 UI:
   - 정산 sheet의 노란 밑줄은 `TextDecoration` 상속 차단으로 수정

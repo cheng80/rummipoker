@@ -61,6 +61,7 @@
 - 2026-05-10 추가 Web/릴리즈 보강: icon/splash를 새 asset으로 반영하고 OG image를 `https://cheng80.myqnapcloud.com/rummipoker/assets/assets/splash.png` 기준으로 잡았다. 릴리즈 홈 메뉴는 도감 중심으로 정리하고 debug/special 메뉴는 debug gate 뒤로 숨겼다.
 - 2026-05-10 추가 오디오/정산 회귀 수정: 웹 BGM은 첫 사용자 터치/홈 카드 tap에서 unlock되고, 스크롤 중 같은 BGM을 stop/play 반복해 묵음이 되는 경로를 막았다. 정산 sheet의 노란 밑줄은 `TextDecoration` 상속 차단으로 수정했고, desktop/web에서 정산 dialog가 PhoneFrame 밖 전체 폭으로 그려지는 회귀는 `PhoneFrame` 제약과 landscape widget test로 막았다.
 - 2026-05-14 상점 회귀 수정: 보유물 판매 후 오퍼 리스트가 암묵적으로 리롤되는 문제, 오퍼 구매 후 남은 오퍼 가격이 0G로 바뀌는 stale slot index 문제, 첫 무료 Jester 리롤이 다음 Market에서 복원되는 문제, 할인 상태가 UI에 드러나지 않는 문제를 수정했다. 검증: `flutter test test/logic/rummi_market_facade_test.dart test/logic/item_definition_test.dart test/logic/item_effect_runtime_test.dart test/providers/game_session_notifier_test.dart`, `flutter test test/views/game/widgets/game_shop_discount_badge_test.dart test/views/game/widgets/game_shop_sell_offer_stability_test.dart`, `flutter analyze integration_test/market_discount_visual_bot_test.dart`, `bash -n tools/market_discount_visual_bot.sh`, `tools/market_discount_visual_bot.sh --skip-pub-get --web-port 7371 --output-dir /tmp/rummipoker_market_discount_visual_bot/matrix_full_20260514_060908`, `git diff --check`. 상점 시각 봇 결과는 `MARKET_DISCOUNT_VISUAL_BOT_PASS` 7건과 `All tests passed!` 7건이며, 종료 후 WebDriver Chrome/ChromeDriver/Flutter web server 잔류 프로세스 없음.
+- 2026-05-14 웹 focus-out BGM 완화: 웹뷰에서 focus-out 후 복귀할 때 BGM이 씹히거나 처음부터 재생되는 문제를 `SoundManager` 내부 정책으로 제한했다. lifecycle pause만 recovery pending으로 표시하고, 복귀 후 첫 사용자 제스처는 `resume()`을 먼저 시도한다. 그 resume이 실패한 경우에만 다음 제스처에서 `stop()`/`play()` fallback을 허용하며, `pointerdown`/`pointerup` 중복 replay는 막는다. 검증: `flutter test test/resources/sound_manager_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`, `flutter build web`, `git diff --check`. 웹뷰/브라우저 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 known limitation으로 둔다.
 
 오늘 바로 할 작업:
 
@@ -125,9 +126,9 @@
 - [x] 릴리즈 홈 메뉴 정리
   - 구현 상태: 일반 릴리즈 진입 화면의 “다른 화면” 메뉴는 도감 중심으로 정리했고, debug/special 성격 메뉴는 debug gate 뒤로 숨겼다.
   - 검증: `flutter analyze`, 관련 home/title widget test, 최신 web build 기준으로 확인.
-- [x] 웹 BGM unlock/스크롤 묵음 회귀
-  - 구현 상태: 첫 사용자 pointer/tap에서 BGM 재생을 재시도하고, 홈 카드 tap에서는 직접 unlock/SFX를 호출한다. 같은 화면 BGM이 이미 재생 중이면 스크롤마다 stop/play를 반복하지 않는다.
-  - 검증: 데스크톱 웹과 iPhone Safari/카카오톡 브라우저에서 사용자 눈검증 완료. `flutter analyze`, `flutter build web` 통과.
+- [x] 웹 BGM unlock/스크롤 묵음/focus-out 복구 회귀
+  - 구현 상태: 첫 사용자 pointer/tap에서 BGM 재생을 재시도하고, 홈 카드 tap에서는 직접 unlock/SFX를 호출한다. 같은 화면 BGM이 이미 재생 중이면 스크롤마다 stop/play를 반복하지 않는다. focus-out 복귀는 lifecycle pause만 recovery pending으로 만들고, 다음 사용자 제스처에서 `resume()`을 먼저 시도한 뒤 실패 시 다음 제스처에서만 `stop()`/`play()` fallback을 허용한다.
+  - 검증: 데스크톱 웹과 iPhone Safari/카카오톡 브라우저에서 사용자 눈검증 완료. 2026-05-14 후속 완화는 `flutter test test/resources/sound_manager_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`, `flutter build web`, `git diff --check` 통과. 일부 웹뷰에서 BGM 위치 유지가 완전하지 않은 것은 known limitation이다.
 - [x] 정산 텍스트 밑줄과 PhoneFrame 폭 회귀
   - 구현 상태: 정산 sheet 루트에서 의도치 않은 `TextDecoration` 상속을 차단하고, `showGeneralDialog`로 뜨는 정산 overlay를 `PhoneFrame` 안에 제한했다.
   - 검증: `flutter analyze`, `flutter test test/views/game/widgets/game_cashout_widgets_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter build web --release --base-href "/rummipoker/"` 통과.

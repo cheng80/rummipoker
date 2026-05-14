@@ -36,6 +36,7 @@
 - 최신 UI/Web 회귀 수정 뒤 `ko` standard→challenge 재확인 통과.
 - 2026-05-14 상점 가격/오퍼 회귀는 로직·위젯 테스트로 닫았다. 보유 Jester/Item/Passive 판매 시 보이는 오퍼 리스트가 명시적 리롤 없이 바뀌지 않고, Jester 오퍼 구매 후 남은 오퍼 가격이 0G로 튀지 않으며, 구매 할인은 UI에 원가/할인가/`할인` 배지로 표시된다.
 - 2026-05-14 상점 할인 시각 봇 `market_discount_visual_bot`을 추가했다. 같은 fixture 10회 반복이 아니라 7개 fresh 시나리오 매트릭스가 기본이며, 할인 Jester 구매/판매, 할인 Item offer 표시, Passive 판매 후 offer 유지, 리롤 할인/피드백, 비할인 Jester/Item 가격 표시, 슬롯 해금 Market 상태를 각각 별도 Chrome/Flutter drive 실행으로 확인한다. 이는 상점 회귀 눈검증용 보조 QA이며 full-play evidence나 full-run gate 재개 근거가 아니다.
+- 2026-05-14 웹 focus-out BGM은 `SoundManager` 내부에서 best-effort 완화했다. lifecycle pause만 recovery pending으로 표시하고, 복귀 후 첫 제스처는 `resume()`을 먼저 시도하며 실패 시 다음 제스처에서만 `stop()`/`play()` fallback을 허용한다. 이 변경은 웹뷰에서 사운드가 완전히 씹히는 빈도를 줄이기 위한 것이며, 웹뷰별 오디오 정책 때문에 BGM 위치 유지가 완전하지 않은 경우는 known limitation으로 둔다.
 - `CONTEST_FULL_RUN_BOT_PASS`, `All tests passed!`, `S8 boss: run complete` 확인.
 - grep 기준 game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 종료 후 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버 잔류 프로세스 없음.
@@ -67,6 +68,14 @@
 - `git diff --check`
 - `reroll_token`은 문구와 맞게 “다음 리롤 1G 할인”(`discount_next_reroll`)으로 정정했다. 기존 fixture용 `free_next_reroll` 지원은 남겨 두었다.
 
+최근 웹 BGM focus-out 완화 검증:
+- `flutter test test/resources/sound_manager_test.dart`
+- `flutter test test/views/game/game_view_test.dart`
+- `flutter analyze lib/app.dart lib/resources/sound_manager.dart test/resources/sound_manager_test.dart`
+- `flutter build web`
+- `git diff --check`
+- 남은 제한: 일부 웹뷰/브라우저에서 focus-out 복귀 후 BGM 위치가 항상 유지되지는 않는다. 제출 blocker가 아니라 known limitation이며, 추가 화면/라우팅별 웹 전용 분기를 늘리지 않는다.
+
 이번 세션 첫 작업 순서:
 1. `git status --short`, `git log -3 --oneline`으로 시작한다.
 2. `docs/planning/ACTIVE_EXECUTION_PLAN.md`에서 공모전 기준 완성이 `Closed for submission QA handoff`인지 확인한다.
@@ -80,6 +89,7 @@
    - `/archive`
    - 필요 시 `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`
    - 필요 시 `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1`
+   - 웹 BGM은 첫 터치/버튼 tap, 스크롤 중 묵음 없음, focus-out 후 복귀 시 사운드가 완전히 먹통으로 남지 않는지만 확인한다. BGM 위치가 항상 유지되는지까지 제출 blocker로 보지 않는다.
 6. 제출 폼/스토어 문구는 `docs/submission_kit/STORE_METADATA_KO_EN.md`와 `docs/submission_kit/SCREENSHOT_PROMO_COPY_KO_EN.md`를 참고한다.
 7. 제출 전 최종 응답에는 빌드 명령, 산출물 경로, 배포 URL, smoke 결과, git 상태를 남긴다.
 
@@ -88,6 +98,7 @@
 - `ja`, `zh-CN`, `zh-TW`를 제출 필수 gate로 되살리지 않는다.
 - debug fixture나 즉시 클리어를 full-play evidence로 쓰지 않는다.
 - 장기 밸런스, ML 리포트, 타로/유령카드류, 영구 족보 계승, 정산 progress bar를 제출 전 새 작업으로 열지 않는다.
+- 웹 focus-out BGM을 더 파지 않는다. 현재 `SoundManager`의 resume-first/fallback-on-next-gesture 정책을 제출 전 기준으로 유지한다.
 - Android/iOS release artifact는 이번 웹 제출 범위가 아니라면 만들지 않는다. 필요해진 경우에만 `docs/submission_kit/ANDROID_BUILD_NOTES.md`와 `docs/submission_kit/IOS_PROFILE_BUILD.md`를 따른다.
 
 공모전 이후로 둔 항목:

@@ -49,7 +49,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
-        SoundManager.pauseBgm();
+        SoundManager.pauseBgm(recoverOnNextWebGesture: true);
         break;
       case AppLifecycleState.resumed:
         SoundManager.resumeBgm();
