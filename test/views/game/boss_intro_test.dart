@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
@@ -21,7 +22,9 @@ void main() {
 
   setUp(() async {
     StorageHelper.resetForTest();
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      StorageKeys.tutorialBattleIntroSeen: true,
+    });
     await StorageHelper.init();
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
@@ -99,7 +102,7 @@ void main() {
     await tester.tap(find.text('전투 시작'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('BOSS'));
+    await tester.tap(find.byKey(const ValueKey('battle-blind-info-chip')));
     await tester.pumpAndSettle();
 
     expect(find.text('빨간 타일 약화'), findsOneWidget);

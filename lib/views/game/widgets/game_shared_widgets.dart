@@ -157,6 +157,7 @@ class GameTopHud extends StatelessWidget {
           SizedBox(
             width: 76,
             child: GestureDetector(
+              key: const ValueKey('battle-blind-info-chip'),
               onTap: onBlindInfoTap,
               behavior: onBlindInfoTap == null
                   ? HitTestBehavior.deferToChild
