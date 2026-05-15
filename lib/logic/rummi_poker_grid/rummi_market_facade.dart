@@ -299,7 +299,6 @@ class RummiMarketRuntimeFacade {
     required this.ownedEntries,
     required this.offers,
     required this.itemOfferSlotCount,
-    this.itemOfferSlotBonusLabel,
     required this.quickSlotCapacity,
     this.jesterSlotCapacity = RummiRunProgress.baseUnlockedJesterSlots,
     this.pendingSlotUnlockPresentations = const <RummiSlotUnlockKind>{},
@@ -377,7 +376,6 @@ class RummiMarketRuntimeFacade {
         progress,
         pressureProfile: pressureProfile,
       ),
-      itemOfferSlotBonusLabel: _itemOfferSlotBonusLabel(progress),
       quickSlotCapacity: progress.quickSlotCapacity(itemCatalog: itemCatalog),
       jesterSlotCapacity: progress.jesterSlotCapacity(itemCatalog: itemCatalog),
       pendingSlotUnlockPresentations: progress
@@ -408,7 +406,6 @@ class RummiMarketRuntimeFacade {
       ownedEntries: ownedEntries,
       offers: offers,
       itemOfferSlotCount: itemOfferSlotCount,
-      itemOfferSlotBonusLabel: itemOfferSlotBonusLabel,
       quickSlotCapacity: quickSlotCapacity,
       jesterSlotCapacity: jesterSlotCapacity,
       pendingSlotUnlockPresentations: pendingSlotUnlockPresentations,
@@ -432,7 +429,6 @@ class RummiMarketRuntimeFacade {
   final List<RummiMarketOwnedEntryView> ownedEntries;
   final List<RummiMarketOfferView> offers;
   final int itemOfferSlotCount;
-  final String? itemOfferSlotBonusLabel;
   final int quickSlotCapacity;
   final int jesterSlotCapacity;
   final Set<RummiSlotUnlockKind> pendingSlotUnlockPresentations;
@@ -823,12 +819,6 @@ class RummiMarketRuntimeFacade {
       return base;
     }
     return progress.stageIndex >= 3 ? base + 1 : base;
-  }
-
-  static String? _itemOfferSlotBonusLabel(RummiRunProgress progress) {
-    final bonusSlots = progress.marketModifiers.extraItemOfferSlots;
-    if (bonusSlots <= 0) return null;
-    return '렌즈 +$bonusSlots';
   }
 
   static bool _hasAnyTag(List<String> tags, Set<String> expectedTags) {

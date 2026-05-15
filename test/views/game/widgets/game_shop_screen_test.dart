@@ -101,20 +101,11 @@ void main() {
   testWidgets('GameShopScreen reads refreshed market/save facades after buy', (
     tester,
   ) async {
-    final previousOnError = FlutterError.onError;
-    FlutterError.onError = (details) {
-      final exceptionText = details.exceptionAsString();
-      if (exceptionText.contains('A RenderFlex overflowed by 4.0 pixels')) {
-        return;
-      }
-      previousOnError?.call(details);
-    };
     tester.view.physicalSize = const Size(1280, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
-      FlutterError.onError = previousOnError;
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
@@ -161,8 +152,7 @@ void main() {
           currentGold: 12,
         ),
       ],
-      itemOfferSlotCount: 4,
-      itemOfferSlotBonusLabel: '렌즈 +1',
+      itemOfferSlotCount: 3,
       quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
       itemOffers: [itemOffer],
       itemSlots: const [
@@ -170,6 +160,26 @@ void main() {
           slotIndex: 0,
           slotLabel: 'T1',
           placement: ItemPlacement.inventory,
+        ),
+        RummiMarketItemSlotView(
+          slotIndex: 1,
+          slotLabel: 'T2',
+          placement: ItemPlacement.inventory,
+        ),
+        RummiMarketItemSlotView(
+          slotIndex: 2,
+          slotLabel: 'T3',
+          placement: ItemPlacement.inventory,
+        ),
+        RummiMarketItemSlotView(
+          slotIndex: 3,
+          slotLabel: 'G1',
+          placement: ItemPlacement.equipped,
+        ),
+        RummiMarketItemSlotView(
+          slotIndex: 4,
+          slotLabel: 'G2',
+          placement: ItemPlacement.equipped,
         ),
       ],
     );
@@ -288,15 +298,17 @@ void main() {
     expect(find.text('12'), findsOneWidget);
     expect(find.text('Tool Slots'), findsOneWidget);
     expect(find.text('Gear Slots'), findsOneWidget);
+    expect(find.text('T3'), findsOneWidget);
+    expect(find.text('G2'), findsOneWidget);
     expect(find.text('Jester Slots'), findsNothing);
+    expect(tester.takeException(), isNull);
     expect(
       find.byKey(
         const ValueKey('market-item-offer-bonus-badge'),
         skipOffstage: false,
       ),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('렌즈 +1'), findsOneWidget);
     expect(find.text('구매'), findsOneWidget);
 
     expect(find.text('리롤 칩'), findsWidgets);
@@ -320,14 +332,18 @@ void main() {
         of: find.byKey(const ValueKey('market-description-text')),
         matching: find.byType(SingleChildScrollView),
       ),
-      findsOneWidget,
+      findsWidgets,
     );
     final descriptionBox = tester.widget<ConstrainedBox>(
       find.byKey(const ValueKey('market-description-box')),
     );
     expect(descriptionBox.constraints.minHeight, greaterThanOrEqualTo(28));
 
-    await tester.tap(find.text('구매'));
+    await tester.tap(find.text('리롤 칩').last);
+    await tester.pumpAndSettle();
+    final jesterBuyButton = find.text('구매', skipOffstage: false).first;
+    await tester.ensureVisible(jesterBuyButton);
+    await tester.tap(jesterBuyButton);
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(
@@ -400,7 +416,9 @@ void main() {
     expect(find.text('+칩'), findsWidgets);
     expect(find.text('1/5'), findsNothing);
 
-    await tester.tap(find.text('구매'));
+    final buyButton = find.text('구매', skipOffstage: false).first;
+    await tester.ensureVisible(buyButton);
+    await tester.tap(buyButton);
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(

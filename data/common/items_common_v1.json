@@ -688,33 +688,6 @@
       "effectTextKey": "data.items.mulligan_sleeve.effectText"
     },
     {
-      "id": "shop_lens",
-      "displayName": "Offer Lens",
-      "type": "equipment",
-      "rarity": "uncommon",
-      "basePrice": 8,
-      "sellPrice": 4,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": false,
-      "placement": "equipped",
-      "slotHint": "gear",
-      "effectText": "Item offers in the shop increase by 1.",
-      "effect": {
-        "timing": "market_build_offers",
-        "op": "extra_item_offer_slot",
-        "amount": 1
-      },
-      "tags": [
-        "equipment",
-        "market",
-        "offer"
-      ],
-      "displayNameKey": "data.items.shop_lens.displayName",
-      "effectTextKey": "data.items.shop_lens.effectText"
-    },
-    {
       "id": "jester_hook",
       "displayName": "Jester Hook",
       "type": "equipment",

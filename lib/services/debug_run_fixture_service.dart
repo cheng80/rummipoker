@@ -524,18 +524,13 @@ class DebugRunFixtureService {
             placement: ItemPlacement.passiveRack,
           ),
           OwnedItemEntry(
-            itemId: 'shop_lens',
-            count: 1,
-            placement: ItemPlacement.equipped,
-          ),
-          OwnedItemEntry(
             itemId: 'market_compass',
             count: 1,
             placement: ItemPlacement.passiveRack,
           ),
         ],
         passiveRelicIds: ['merchant_stamp', 'market_compass'],
-        equippedItemIds: ['shop_lens'],
+        equippedItemIds: [],
       );
     runProgress.queueMarketModifier(op: 'discount_next_reroll', amount: 1);
     runProgress.queueMarketModifier(
@@ -552,7 +547,6 @@ class DebugRunFixtureService {
       op: 'discount_cheapest_first_offer',
       amount: 1,
     );
-    runProgress.queueMarketModifier(op: 'extra_item_offer_slot', amount: 1);
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.shop,

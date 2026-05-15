@@ -183,7 +183,7 @@ void main() {
     expect(fixture.runProgress.gold, 18);
     expect(fixture.runProgress.effectiveRerollCost(), 4);
     expect(fixture.runProgress.effectiveJesterOfferPrice(0), 2);
-    expect(fixture.runProgress.marketModifiers.itemOfferSlotCount, 4);
+    expect(fixture.runProgress.marketModifiers.itemOfferSlotCount, 3);
     expect(fixture.runProgress.itemInventory.passiveRelicIds, [
       'merchant_stamp',
       'market_compass',

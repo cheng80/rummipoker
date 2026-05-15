@@ -171,5 +171,34 @@ void main() {
       expect(growth.gold, 0);
       expect(growth.description, '초과 달성: 플러시 성장 +1');
     });
+
+    test('overkill gold bonuses are exposed as gold bonus entries', () {
+      const breakdown = RummiCashOutBreakdown(
+        stageIndex: 4,
+        targetScore: 600,
+        blindReward: 8,
+        remainingBoardDiscards: 0,
+        perBoardDiscardBonus: 3,
+        boardDiscardGold: 0,
+        remainingHandDiscards: 0,
+        perHandDiscardBonus: 2,
+        handDiscardGold: 0,
+        economyGold: 0,
+        economyBonuses: [],
+        totalGold: 10,
+        overkillGoldBonus: 2,
+      );
+
+      final facade = RummiSettlementRuntimeFacade.fromCashOut(
+        breakdown: breakdown,
+        currentGold: 12,
+      );
+
+      final bonus = facade.entries.last;
+      expect(bonus.kind, RummiSettlementEntryKind.overkillGoldBonus);
+      expect(bonus.isBonus, isTrue);
+      expect(bonus.gold, 2);
+      expect(bonus.description, '초과 점수 보너스');
+    });
   });
 }

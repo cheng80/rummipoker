@@ -18,6 +18,7 @@ enum RummiSettlementEntryKind {
   itemBonus,
   deckTileReward,
   overkillGrowthBonus,
+  overkillGoldBonus,
 }
 
 class RummiSettlementEntryView {
@@ -47,11 +48,14 @@ class RummiSettlementEntryView {
       kind == RummiSettlementEntryKind.firstBlindClearBonus;
   bool get isOverkillGrowthBonus =>
       kind == RummiSettlementEntryKind.overkillGrowthBonus;
+  bool get isOverkillGoldBonus =>
+      kind == RummiSettlementEntryKind.overkillGoldBonus;
   bool get isBonus =>
       isFirstBlindClearBonus ||
       isEconomyBonus ||
       isItemBonus ||
-      isOverkillGrowthBonus;
+      isOverkillGrowthBonus ||
+      isOverkillGoldBonus;
   bool get isDeckTileReward => kind == RummiSettlementEntryKind.deckTileReward;
 }
 
@@ -144,6 +148,13 @@ class RummiSettlementRuntimeFacade {
           displayName: _handRankLabel(bonus.rank),
         ),
       ),
+      if (breakdown.overkillGoldBonus > 0)
+        RummiSettlementEntryView(
+          kind: RummiSettlementEntryKind.overkillGoldBonus,
+          leadingLabel: 'Score',
+          description: '초과 점수 보너스',
+          gold: breakdown.overkillGoldBonus,
+        ),
     ];
 
     return RummiSettlementRuntimeFacade(

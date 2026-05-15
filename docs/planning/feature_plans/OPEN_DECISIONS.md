@@ -176,6 +176,50 @@ V3의 30 Station은 후보일 뿐이다.
 - 일반 플레이 의미와 debug 의미를 화면 수준에서 분리한다.
 - options dialog는 런/설정/종료 중심으로 남기고, debug는 별도 surface로 격리한다.
 
+### 2.4.4 Overkill Growth Reward Scaling
+
+[CLOSED / IMPLEMENTED]
+
+현재:
+
+```text
+일반 Station 130% 이상: 대표 족보 성장 +1
+Boss 120% 이상: 대표 족보 성장 +1
+```
+
+문제:
+
+- 기준을 넘긴 뒤에는 180%, 250%, 400%처럼 더 높은 점수를 얻어도 보상이 같다.
+- 고점 플레이가 “대표 족보 한 단계 성장”에서 멈춰 보상 감각이 약하다.
+- 간신히 기준을 넘긴 플레이와 크게 초과한 플레이가 같은 보상을 받는다.
+
+결정:
+
+```text
+대표 족보 성장 보상은 기존처럼 +1 유지
+기준을 넘긴 나머지 초과율 50%p마다 +1G 추가 지급
+추가 골드 상한 없음
+```
+
+예시:
+
+```text
+일반 Station 130%: 성장 +1, +0G
+일반 Station 180%: 성장 +1, +1G
+일반 Station 230%: 성장 +1, +2G
+
+Boss 120%: 성장 +1, +0G
+Boss 170%: 성장 +1, +1G
+Boss 220%: 성장 +1, +2G
+```
+
+현재 결정:
+
+- `docs/planning/feature_plans/OVERKILL_HAND_GROWTH_PROGRESS_PLAN.md`에 위 규칙을 반영했다.
+- 추가 골드가 너무 자주 크게 나오면 cap을 두기보다 target score가 낮다는 신호로 보고 target/boss/economy 레벨링을 다시 본다.
+- `RummiCashOutBreakdown.overkillGoldBonus`와 settlement read model의 `overkillGoldBonus` 라인을 추가해 구현까지 닫았다.
+- 검증: `rummi_overkill_growth_test`, `rummi_settlement_facade_test`, targeted `flutter analyze`.
+
 ### 2.5 Jester Instance Identity
 
 [WATCH]

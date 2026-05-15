@@ -35,16 +35,21 @@
    - `spare_pouch`는 S2 Boss Quick Slot 해금과 충돌하므로 카탈로그/번역/테스트 fixture에서 삭제했다.
    - 아이템은 보유 슬롯 수 자체를 늘리지 않고 후보 수/할인/사용 보조/자원 보정 축으로 설계한다.
    - 검증: `item_definition_test`, `item_effect_runtime_test`, `game_session_notifier_test`, `dart analyze`.
-4. 완료: Market 후보 슬롯 증가 상한/no-op 정책 적용.
+4. 완료: Market 후보 슬롯 증가 상한/no-op 정책 적용 및 `shop_lens` 삭제.
    - 정책: Jester/Item 후보 슬롯은 현재 4개를 runtime 상한으로 둔다.
-   - `shop_lens`는 Item 후보 슬롯이 이미 4개이면 `Item 후보 슬롯 최대치입니다.`로 실패 처리하고, 후보 영역에 `렌즈 +1` 배지를 표시한다.
+   - `shop_lens`는 유저가 효과를 체감하기 어렵고 source-target-result 연출 없이 후보 수만 바꾸는 효과라 카탈로그/번역/fixture에서 삭제한다.
    - `boss_trophy`는 다음 Market Jester 후보 슬롯이 4개를 넘지 않도록 실제 적용량만 예약하고, 이미 4개이면 `Jester 후보 슬롯 최대치입니다.`로 실패 처리한다.
    - 검증: `item_effect_runtime_test`, `dart analyze`.
 5. 진행 중: Jester/Item/Tool/Gear 정책 리스크 검토 리스트를 작은 구현 후보로 분해한다.
    - 완료: `spare_pouch`는 Boss 보유 슬롯 해금과 겹쳐 삭제했다.
    - 완료: `lucky_counter`는 눈에 보이는 피드백이 없는 rarity weight 효과라 카탈로그에서 삭제했다.
    - 완료: `market_compass`는 현재 Market의 보이는 Jester/Item 후보 중 1G 이상 최저가 1개에만 `나침반` 할인 배지를 붙인다. 0G 후보에는 적용하지 않는다.
-   - 다음 세션 첫 작업: Chrome에서 debug fixture를 열어 실제 눈검증을 한다. 우선 `shop_lens` 적용 상태의 Tool/Gear 후보 영역에 `렌즈 +1` 배지가 보이는지, `market_compass` 할인 후보에 `나침반` 배지가 보이는지, Boss 보유 슬롯 해금이 아이템 없이도 기존 흐름대로 보이는지, 런 정보와 Tile Shop 후보에서 `타일 기준 칩`/`칩 N` 표시가 잘 읽히는지 확인한다. 실행 뒤 스크린샷/로그 요약은 이 문서나 날짜별 verification log에 남긴다.
+   - 완료: 전체 Item 55개를 `발동 객체 -> 적용 대상 -> 결과` 기준으로 재검토하는 1차 계약표를 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`에 만들었다. `shop_lens`는 삭제 상태로 두고, 남은 활성 54개는 P0~P3 보강 우선순위로 분류했다.
+   - 완료: `ItemPresentationEvent` / `ItemPresentationTarget` transient model 1차와 Market P0 일부 연출을 추가했다. 현재 Market reroll 할인, 구매 할인, `market_compass` 할인은 source -> target -> result toast를 표시하고, 구매 flight의 spent Gold는 실제 Gold 차이 기준으로 보정했다.
+   - 다음 세션 프롬프트: `docs/planning/feature_plans/NEXT_SESSION_ITEM_PRESENTATION_PROMPT.md`
+   - 완료: Chrome에서 Market P0 1차 연출을 눈검증했다. `market_compass`의 `나침반` 배지, 구매 시 `나침반 -> 기세 -> 구매가 -1G` source-target-result toast, 실제 Gold 18 -> 16 차감, `slot_unlock_market`의 `shop_lens` 없는 슬롯 해금 상태, Tile Shop `칩 N · 3G`, `런 정보`의 `타일 기준 칩` 표기를 확인했다. 기능뿐 아니라 overflow/잘림/겹침/프레임 누수 기준으로 봤고 미통과 항목은 없었다. 기록: `docs/planning/verification/daily_logs/2026-05-16.md`.
+   - 완료: `trade_ticket`은 보유 Tool source -> Item 후보 영역 target -> 후보 교체 완료 result toast를 표시한다. 기존 lower feedback도 `Item 후보 교체`로 바꿨고, 테스트 중 발견한 Tool/Gear 사용/판매 action pane overflow를 고쳤다. 검증: `game_shop_screen_trade_ticket_test`, `game_shop_screen_test`, targeted analyze, `git diff --check`.
+   - 다음 작업: `boss_trophy`, `jester_hook` 순서로 P0 Market 남은 연출을 작은 단위로 구현한다.
    - 가격/가치: `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study`.
    - 조건부 사용 UX: `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품.
 6. 그 다음: 리팩터링 전에 runtime state와 presentation/overlay/dialog/animation state 분리 계획을 확정한다.

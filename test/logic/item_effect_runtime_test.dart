@@ -1224,7 +1224,7 @@ void main() {
       expect(second.isSuccess, isFalse);
     });
 
-    test('owned enter market items queue first reroll and offer modifiers', () {
+    test('owned enter market items queue first reroll modifier', () {
       final catalog = ItemCatalog.fromJson({
         'schemaVersion': 1,
         'catalogId': 'test',
@@ -1234,13 +1234,6 @@ void main() {
             timing: 'enter_market',
             op: 'discount_first_reroll',
             placement: 'passiveRack',
-            consume: false,
-          ),
-          _itemJson(
-            id: 'shop_lens',
-            timing: 'market_build_offers',
-            op: 'extra_item_offer_slot',
-            placement: 'equipped',
             consume: false,
           ),
         ],
@@ -1254,14 +1247,9 @@ void main() {
               count: 1,
               placement: ItemPlacement.passiveRack,
             ),
-            OwnedItemEntry(
-              itemId: 'shop_lens',
-              count: 1,
-              placement: ItemPlacement.equipped,
-            ),
           ],
           passiveRelicIds: ['merchant_stamp'],
-          equippedItemIds: ['shop_lens'],
+          equippedItemIds: [],
         );
 
       final results = ItemEffectRuntime.applyOwnedEnterMarketItems(
@@ -1271,12 +1259,12 @@ void main() {
 
       expect(results.every((result) => result.isSuccess), isTrue);
       expect(runProgress.effectiveRerollCost(), 4);
-      expect(runProgress.marketModifiers.itemOfferSlotCount, 4);
+      expect(runProgress.marketModifiers.itemOfferSlotCount, 3);
     });
 
-    test('market build item offer slot fails at supported cap', () {
+    test('legacy market build item offer slot fails at supported cap', () {
       final item = _item(
-        id: 'shop_lens',
+        id: 'legacy_item_offer_slot_test',
         timing: 'market_build_offers',
         op: 'extra_item_offer_slot',
         placement: ItemPlacement.equipped,
@@ -1516,7 +1504,6 @@ void main() {
           'enter_market:gain_gold',
           'enter_market:discount_first_reroll',
           'enter_market:discount_cheapest_first_offer',
-          'market_build_offers:extra_item_offer_slot',
           'boss_blind_clear_reward:gain_gold',
           'boss_blind_clear_market:extra_jester_offer_next_market',
           'settlement:board_discard_reward_bonus',

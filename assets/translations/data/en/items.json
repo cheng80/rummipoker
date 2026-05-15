@@ -93,10 +93,6 @@
         "displayName": "Hand Sleeve",
         "effectText": "At each Station start, gain +1 hand discard."
       },
-      "shop_lens": {
-        "displayName": "Offer Lens",
-        "effectText": "Item offers in the shop increase by 1."
-      },
       "jester_hook": {
         "displayName": "Jester Hook",
         "effectText": "Jester sell value +1 Gold."

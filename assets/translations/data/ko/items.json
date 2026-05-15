@@ -93,10 +93,6 @@
         "displayName": "손패 슬리브",
         "effectText": "각 Station 시작 시 손패 버림 +1."
       },
-      "shop_lens": {
-        "displayName": "상품 렌즈",
-        "effectText": "상점의 아이템 후보가 1개 늘어납니다."
-      },
       "jester_hook": {
         "displayName": "Jester 후크",
         "effectText": "Jester 판매 가격 +1골드."

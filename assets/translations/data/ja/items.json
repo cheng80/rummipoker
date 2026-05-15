@@ -93,10 +93,6 @@
         "displayName": "Hand Sleeve",
         "effectText": "各Station開始時、手札捨て+1。"
       },
-      "shop_lens": {
-        "displayName": "Offer Lens",
-        "effectText": "ショップのItem候補+1。"
-      },
       "jester_hook": {
         "displayName": "Jester Hook",
         "effectText": "Jester売却額+1 Gold。"

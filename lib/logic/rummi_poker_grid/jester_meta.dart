@@ -566,6 +566,7 @@ class RummiCashOutBreakdown {
     this.itemGold = 0,
     this.deckTileRewards = const [],
     this.overkillGrowthBonuses = const [],
+    this.overkillGoldBonus = 0,
   });
 
   final int stageIndex;
@@ -587,6 +588,7 @@ class RummiCashOutBreakdown {
   final int itemGold;
   final List<Tile> deckTileRewards;
   final List<RummiOverkillGrowthBonus> overkillGrowthBonuses;
+  final int overkillGoldBonus;
   final int totalGold;
 
   RummiCashOutBreakdown copyWith({
@@ -614,6 +616,7 @@ class RummiCashOutBreakdown {
       deckTileRewards: deckTileRewards ?? this.deckTileRewards,
       overkillGrowthBonuses:
           overkillGrowthBonuses ?? this.overkillGrowthBonuses,
+      overkillGoldBonus: overkillGoldBonus,
       totalGold: totalGold,
     );
   }
@@ -1550,6 +1553,12 @@ class RummiRunProgress {
       targetScore: session.blind.targetScore,
       finalScore: session.blind.scoreTowardBlind,
     );
+    final overkillGoldBonus = overkillGrowthBonuses.isEmpty
+        ? 0
+        : calculateOverkillGoldBonus(
+            targetScore: session.blind.targetScore,
+            finalScore: session.blind.scoreTowardBlind,
+          );
     return RummiCashOutBreakdown(
       stageIndex: stageIndex,
       targetScore: session.blind.targetScore,
@@ -1569,6 +1578,7 @@ class RummiRunProgress {
       itemBonuses: itemBonuses,
       itemGold: itemGold,
       overkillGrowthBonuses: overkillGrowthBonuses,
+      overkillGoldBonus: overkillGoldBonus,
       totalGold:
           blindReward +
           firstBlindClearBonusGold +
@@ -1576,7 +1586,8 @@ class RummiRunProgress {
           handDiscardGold +
           boardMoveGold +
           economyGold +
-          itemGold,
+          itemGold +
+          overkillGoldBonus,
     );
   }
 
@@ -2237,7 +2248,7 @@ class RummiRunProgress {
         _stationRankFinalScores.isEmpty) {
       return const <RummiOverkillGrowthBonus>[];
     }
-    final thresholdPercent = currentStationBlindTierIndex >= 2 ? 120 : 130;
+    final thresholdPercent = _overkillThresholdPercent();
     final thresholdScore = ((targetScore * thresholdPercent) / 100).ceil();
     if (finalScore < thresholdScore) {
       return const <RummiOverkillGrowthBonus>[];
@@ -2264,6 +2275,20 @@ class RummiRunProgress {
       ),
     ];
   }
+
+  int calculateOverkillGoldBonus({
+    required int targetScore,
+    required int finalScore,
+  }) {
+    if (targetScore <= 0 || finalScore <= 0) return 0;
+    final surplusNumerator =
+        finalScore * 100 - targetScore * _overkillThresholdPercent();
+    if (surplusNumerator <= 0) return 0;
+    return surplusNumerator ~/ (targetScore * 50);
+  }
+
+  int _overkillThresholdPercent() =>
+      currentStationBlindTierIndex >= 2 ? 120 : 130;
 
   RummiHandRank? _representativeOverkillRank() {
     RummiHandRank? bestRank;

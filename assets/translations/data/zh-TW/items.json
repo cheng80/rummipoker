@@ -93,10 +93,6 @@
         "displayName": "Hand Sleeve",
         "effectText": "每個Station開始時，手牌棄牌+1。"
       },
-      "shop_lens": {
-        "displayName": "Offer Lens",
-        "effectText": "商店中的Item候選+1。"
-      },
       "jester_hook": {
         "displayName": "Jester Hook",
         "effectText": "Jester出售價格+1 Gold。"

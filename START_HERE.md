@@ -103,6 +103,8 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - 경제 계획: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 - 문서 정리 순서: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
 - Item effect 실행 상태: `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
+- Item effect 연출 계약: `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`
+- Item effect 다음 세션 프롬프트: `docs/planning/feature_plans/NEXT_SESSION_ITEM_PRESENTATION_PROMPT.md`
 - 레벨링 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 - 레벨링 시뮬레이션/휴리스틱 기준값: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 - 레벨링 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
