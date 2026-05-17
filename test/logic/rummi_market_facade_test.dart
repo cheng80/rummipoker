@@ -1235,6 +1235,24 @@ void main() {
       expect(progress.marketModifiers.extraJesterOfferSlots, 0);
     });
 
+    test('boss trophy jester slot bonus is exposed as market label', () {
+      final catalog = List<RummiJesterCard>.generate(
+        6,
+        (index) => _jester(id: 'offer_$index'),
+      );
+      final progress = RummiRunProgress()
+        ..marketModifiers = const RummiMarketModifierState(
+          nextMarketExtraJesterOfferSlots: 1,
+        );
+
+      progress.openShop(catalog: catalog, rng: Random(1));
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
+
+      expect(facade.offers.length, 4);
+      expect(facade.jesterOfferSlotBonusLabel, '트로피 +1');
+      expect(facade.itemOfferSlotBonusLabel, isNull);
+    });
+
     test('jester, tile, and item reroll costs advance independently', () {
       final catalog = List<RummiJesterCard>.generate(
         5,

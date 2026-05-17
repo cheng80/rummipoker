@@ -211,6 +211,55 @@ void main() {
     expect(fixture.runProgress.itemInventory.passiveRelicIds, isEmpty);
   });
 
+  test('item motion fixture exposes battle item motion setup', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.itemMotionEyeCheck,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.session.hand, isEmpty);
+    expect(fixture.session.canDrawFromDeck, isTrue);
+    expect(fixture.session.blind.boardMovesRemaining, greaterThan(0));
+    expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+      'deck_needle',
+      'emergency_draw',
+      'slide_wax',
+    ]);
+    expect(fixture.session.peekDeckTop(3).map((tile) => tile.number), [
+      1,
+      2,
+      3,
+    ]);
+  });
+
+  test('next confirm motion fixture exposes queued item setup', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.nextConfirmMotionEyeCheck,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.session.canConfirmAllFullLines, isTrue);
+    expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+      'straight_oil',
+    ]);
+  });
+
+  test('market item motion fixture exposes gold and non-gold use items', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.marketItemMotionEyeCheck,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
+    expect(fixture.runProgress.gold, 18);
+    expect(
+      fixture.runProgress.itemInventory.ownedItems.map((entry) => entry.itemId),
+      ['coin_cache', 'trade_ticket'],
+    );
+  });
+
   test('final boss cash-out fixture is ready to close the run', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.finalBossCashOutReady,

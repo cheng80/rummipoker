@@ -44,6 +44,10 @@ class DebugRunFixtureService {
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
   static const String gameOverInsightReady = 'game_over_insight_ready';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
+  static const String itemMotionEyeCheck = 'item_motion_eye_check';
+  static const String nextConfirmMotionEyeCheck =
+      'next_confirm_motion_eye_check';
+  static const String marketItemMotionEyeCheck = 'market_item_motion_eye_check';
   static const String finalBossCashOutReady = 'final_boss_cash_out_ready';
   static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
   static const String bossColumnConstraintPreview =
@@ -115,6 +119,24 @@ class DebugRunFixtureService {
       description:
           '점수 preview pulse / line confirm particle / quick item toast 검증용',
       builder: _buildAnimationEffectsEyeCheck,
+    ),
+    DebugRunFixtureDefinition(
+      id: itemMotionEyeCheck,
+      label: '아이템 모션 눈검증 전투',
+      description: 'Deck Needle / Emergency Draw / Slide Wax 발동-대상-결과 검증용',
+      builder: _buildItemMotionEyeCheck,
+    ),
+    DebugRunFixtureDefinition(
+      id: nextConfirmMotionEyeCheck,
+      label: '다음 확정 아이템 눈검증 전투',
+      description: 'Straight Oil queued badge / preview / settlement burst 검증용',
+      builder: _buildNextConfirmMotionEyeCheck,
+    ),
+    DebugRunFixtureDefinition(
+      id: marketItemMotionEyeCheck,
+      label: '마켓 아이템 모션 눈검증',
+      description: '골드/비골드 상점 아이템 use flight 검증용',
+      builder: _buildMarketItemMotionEyeCheck,
     ),
     DebugRunFixtureDefinition(
       id: finalBossCashOutReady,
@@ -611,6 +633,119 @@ class DebugRunFixtureService {
         session: base.stageStartSnapshot.session.copySnapshot(),
         runProgress: runProgress.copySnapshot(),
       ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildItemMotionEyeCheck() {
+    final base = _buildStage2ScoringSnapshot();
+    final deckTop = [
+      _tile(TileColor.black, 4),
+      _tile(TileColor.yellow, 3),
+      _tile(TileColor.blue, 2),
+      _tile(TileColor.red, 1),
+    ];
+    final session = RummiPokerGridSession.restored(
+      runSeed: base.session.runSeed,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: 1,
+      runRandomState: base.session.runRandom.state,
+      ruleset: base.session.ruleset,
+      blind: base.session.blind.copyWith(
+        boardMovesRemaining: 2,
+        handDiscardsRemaining: 2,
+        boardDiscardsRemaining: 4,
+      ),
+      deck: PokerDeck.fromSnapshot(deckTop),
+      board: base.session.board.copy(),
+      hand: const [],
+      eliminated: List<Tile>.from(base.session.eliminated),
+      boardMoveHistory: List<BoardMoveRecord>.from(
+        base.session.boardMoveHistory,
+      ),
+    );
+    final runProgress = base.runProgress.copySnapshot()
+      ..unlockedQuickSlotCapacity = RunInventoryState.maxQuickSlotCapacity
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'deck_needle',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'emergency_draw',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+          OwnedItemEntry(
+            itemId: 'slide_wax',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['deck_needle', 'emergency_draw', 'slide_wax'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildNextConfirmMotionEyeCheck() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'straight_oil',
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+        ],
+        quickSlotItemIds: ['straight_oil'],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildMarketItemMotionEyeCheck() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..gold = 18
+      ..itemInventory = const RunInventoryState(
+        ownedItems: [
+          OwnedItemEntry(
+            itemId: 'coin_cache',
+            count: 1,
+            placement: ItemPlacement.inventory,
+          ),
+          OwnedItemEntry(
+            itemId: 'trade_ticket',
+            count: 1,
+            placement: ItemPlacement.inventory,
+          ),
+        ],
+      );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: base.stageStartSnapshot,
     );
   }
 

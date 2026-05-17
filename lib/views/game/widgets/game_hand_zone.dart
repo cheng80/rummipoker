@@ -303,6 +303,13 @@ class _GameHandZoneState extends State<GameHandZone>
                             animation: _capacityController,
                           ),
                         ),
+                      if (_incomingTile != null)
+                        Positioned(
+                          key: const ValueKey('hand-draw-incoming-badge'),
+                          right: 12,
+                          top: -8,
+                          child: _HandDrawIncomingBadge(animation: _controller),
+                        ),
                     ],
                   ),
                 ),
@@ -425,6 +432,56 @@ class _GameHandZoneState extends State<GameHandZone>
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HandDrawIncomingBadge extends StatelessWidget {
+  const _HandDrawIncomingBadge({required this.animation});
+
+  final Animation<double> animation;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        final t = Curves.easeOutCubic.transform(animation.value);
+        final opacity = (1 - (t - 0.72).clamp(0.0, 1.0) / 0.28).clamp(0.0, 1.0);
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, -6 * t),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF123126).withValues(alpha: 0.96),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFF7DE0B8)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF7DE0B8).withValues(alpha: 0.24),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                child: Text(
+                  '드로우 +1',
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Color(0xFF7DE0B8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -123,6 +123,8 @@ class _GameViewState extends ConsumerState<GameView>
   RummiCashOutBreakdown? _settlementToMarketTransition;
   int? _pendingBoardMoveSourceRow;
   int? _pendingBoardMoveSourceCol;
+  String? _boardMoveBonusTargetCellKey;
+  int _boardMoveBonusFlashTick = 0;
   bool _bossConstraintIntroShown = false;
   bool _pendingLifecycleOptions = false;
   bool _pausedLifecycleDuringStageFlow = false;
@@ -1154,6 +1156,9 @@ class _GameViewState extends ConsumerState<GameView>
       await _useDeckNeedleItem(slot);
       return;
     }
+    final undoReturnCell = slot.item.effect.op == 'undo_last_board_move'
+        ? _gameState.session?.boardMoveHistory.lastOrNull
+        : null;
     final failReason = _gameNotifier.useBattleItem(slot.item);
     if (failReason != null) {
       _showSnack(failReason);
@@ -1169,6 +1174,12 @@ class _GameViewState extends ConsumerState<GameView>
       detail: _battleItemFeedbackDetail(slot.item),
       sourceLabel: slot.slotLabel,
     );
+    if (undoReturnCell != null) {
+      _showBoardMoveBonusFlash(
+        row: undoReturnCell.fromRow,
+        col: undoReturnCell.fromCol,
+      );
+    }
     if (mounted) {
       setState(() => _selectedBattleItemSlot = null);
     }
@@ -1197,11 +1208,12 @@ class _GameViewState extends ConsumerState<GameView>
       routeSettings: const RouteSettings(name: '덱 확인'),
       builder: (context) => GameTileChoiceDialog(
         title: '덱 확인',
-        message: '선택한 한 장을 버리거나, 버림 없이 닫을 수 있습니다.',
+        message: '덱 위 3장 중 버릴 타일을 선택합니다.',
         tiles: useResult.candidates,
         closeLabel: '닫기',
       ),
     );
+    await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     if (selectedIndex == null) {
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
@@ -1214,6 +1226,7 @@ class _GameViewState extends ConsumerState<GameView>
       return;
     }
 
+    final selectedTile = useResult.candidates[selectedIndex];
     final failReason = _gameNotifier.useBattleDeckPeekDiscardItem(
       slot.item,
       selectedIndex,
@@ -1223,10 +1236,10 @@ class _GameViewState extends ConsumerState<GameView>
       return;
     }
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _showSnack('$itemName 사용');
+    _showSnack('${selectedTile.code} 제거');
     _showItemEffectFeedback(
       title: itemName,
-      detail: '덱 타일 1장 제거',
+      detail: '${selectedTile.code} 제거',
       sourceLabel: slot.slotLabel,
     );
     await _saveActiveRun();
@@ -1351,9 +1364,25 @@ class _GameViewState extends ConsumerState<GameView>
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     _showSnack(hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.');
     if (hadSlideBonus) {
-      _showItemEffectFeedback(title: 'Slide Wax', detail: '보드 이동 보너스 발동');
+      _showBoardMoveBonusFlash(row: row, col: col);
+      _showItemEffectFeedback(title: '슬라이드 왁스', detail: '이동 보너스 발동');
     }
     await _saveActiveRun();
+  }
+
+  void _showBoardMoveBonusFlash({required int row, required int col}) {
+    if (!mounted) return;
+    final tick = _boardMoveBonusFlashTick + 1;
+    setState(() {
+      _boardMoveBonusFlashTick = tick;
+      _boardMoveBonusTargetCellKey = '$row:$col';
+    });
+    unawaited(
+      Future<void>.delayed(GamePresentationTimings.boardMoveBonusFlash, () {
+        if (!mounted || _boardMoveBonusFlashTick != tick) return;
+        setState(() => _boardMoveBonusTargetCellKey = null);
+      }),
+    );
   }
 
   Future<void> _runSettlementSequence({
@@ -2045,6 +2074,8 @@ class _GameViewState extends ConsumerState<GameView>
             boardMoveMode: _boardMoveMode,
             pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
             pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
+            boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
+            boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
             selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
             selectedBattleItemSlot: _selectedBattleItemSlot,
             itemEffectFeedback: _itemEffectFeedback,
@@ -2399,7 +2430,7 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                                 color: accent.withValues(alpha: 0.16),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: accent.withValues(alpha: 0.45),
+                                  color: accent.withValues(alpha: 0.52),
                                 ),
                               ),
                               child: Padding(
@@ -2418,7 +2449,9 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 5),
+                            const SizedBox(height: 4),
+                            _ItemEffectSourceToResultTrail(accent: accent),
+                            const SizedBox(height: 4),
                           ],
                           Text(
                             feedback.title,
@@ -2433,6 +2466,7 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                           const SizedBox(height: 5),
                           Text(
                             feedback.detail,
+                            key: const ValueKey('item-effect-result-label'),
                             maxLines: 1,
                             style: TextStyle(
                               color: accent,
@@ -2560,6 +2594,67 @@ class _ItemEffectSpark extends StatelessWidget {
   }
 }
 
+class _ItemEffectSourceToResultTrail extends StatelessWidget {
+  const _ItemEffectSourceToResultTrail({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('item-effect-source-result-trail'),
+      height: 12,
+      width: 118,
+      child: ClipRect(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: GamePresentationTimings.itemEffectSparkBurst,
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Stack(
+              children: [
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 5,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: accent.withValues(alpha: 0.34),
+                          width: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 8 + (74 * value),
+                  top: 0,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(3, (index) {
+                      final opacity = (0.34 + (index * 0.22)).clamp(0.0, 1.0);
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 2),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 12,
+                          color: accent.withValues(alpha: opacity),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class _GameSurface extends StatelessWidget {
   const _GameSurface({
     required this.battle,
@@ -2581,6 +2676,8 @@ class _GameSurface extends StatelessWidget {
     required this.boardMoveMode,
     required this.pendingBoardMoveSourceRow,
     required this.pendingBoardMoveSourceCol,
+    required this.boardMoveBonusTargetCellKey,
+    required this.boardMoveBonusFlashTick,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
     required this.itemEffectFeedback,
@@ -2630,6 +2727,8 @@ class _GameSurface extends StatelessWidget {
   final bool boardMoveMode;
   final int? pendingBoardMoveSourceRow;
   final int? pendingBoardMoveSourceCol;
+  final String? boardMoveBonusTargetCellKey;
+  final int boardMoveBonusFlashTick;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final _ItemEffectFeedback? itemEffectFeedback;
@@ -2708,6 +2807,8 @@ class _GameSurface extends StatelessWidget {
                   boardMoveMode: boardMoveMode,
                   pendingBoardMoveSourceRow: pendingBoardMoveSourceRow,
                   pendingBoardMoveSourceCol: pendingBoardMoveSourceCol,
+                  boardMoveBonusTargetCellKey: boardMoveBonusTargetCellKey,
+                  boardMoveBonusFlashTick: boardMoveBonusFlashTick,
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   selectedBattleItemSlot: selectedBattleItemSlot,
                   difficultyLabel: difficultyLabel,
@@ -2735,7 +2836,7 @@ class _GameSurface extends StatelessWidget {
             ),
             if (!presentationPaused &&
                 stageFlowPhase == GameStageFlowPhase.confirmSettlement)
-              if (activeSettlementStep == ScoringPresentationStep.finalScore)
+              if (_showsFloatingSettlementBurst(activeSettlementStep))
                 Positioned.fill(
                   child: GameFloatingSettlementBurst(
                     key: ValueKey(
@@ -2743,7 +2844,10 @@ class _GameSurface extends StatelessWidget {
                     ),
                     line: activeSettlementLine,
                     step: activeSettlementStep,
-                    effectIndex: activeSettlementEffectIndex,
+                    effectIndex: _floatingSettlementEffectIndex(
+                      activeSettlementEffectIndex,
+                      activeSettlementEffectIndexes,
+                    ),
                   ),
                 ),
             if (!presentationPaused &&
@@ -2841,6 +2945,8 @@ class _GameLayout extends StatelessWidget {
     required this.boardMoveMode,
     required this.pendingBoardMoveSourceRow,
     required this.pendingBoardMoveSourceCol,
+    required this.boardMoveBonusTargetCellKey,
+    required this.boardMoveBonusFlashTick,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
     required this.difficultyLabel,
@@ -2882,6 +2988,8 @@ class _GameLayout extends StatelessWidget {
   final bool boardMoveMode;
   final int? pendingBoardMoveSourceRow;
   final int? pendingBoardMoveSourceCol;
+  final String? boardMoveBonusTargetCellKey;
+  final int boardMoveBonusFlashTick;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final String difficultyLabel;
@@ -2994,6 +3102,8 @@ class _GameLayout extends StatelessWidget {
                                 boardMoveMode: boardMoveMode,
                                 moveSourceRow: pendingBoardMoveSourceRow,
                                 moveSourceCol: pendingBoardMoveSourceCol,
+                                bonusFlashCellKey: boardMoveBonusTargetCellKey,
+                                bonusFlashTick: boardMoveBonusFlashTick,
                                 onTapCell: onBoardCellTap,
                               ),
                             ),
@@ -3045,7 +3155,10 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 6),
             _GameTutorialTarget(
               showcaseKey: battlePreviewTutorialKey,
-              child: _ScoringPreviewChip(preview: battle.scoringPreview),
+              child: _ScoringPreviewChip(
+                preview: battle.scoringPreview,
+                pendingConfirmItemCount: battle.pendingConfirmItemCount,
+              ),
             ),
             const SizedBox(height: 4),
             _GameTutorialTarget(
@@ -3127,6 +3240,17 @@ bool _showsBoardScoringCallout(ScoringPresentationStep step) {
       step == ScoringPresentationStep.handRank ||
       step == ScoringPresentationStep.overlap ||
       step == ScoringPresentationStep.constraint;
+}
+
+bool _showsFloatingSettlementBurst(ScoringPresentationStep step) {
+  return step == ScoringPresentationStep.jester ||
+      step == ScoringPresentationStep.item ||
+      step == ScoringPresentationStep.finalScore;
+}
+
+int? _floatingSettlementEffectIndex(int? effectIndex, List<int> effectIndexes) {
+  if (effectIndex != null) return effectIndex;
+  return effectIndexes.length == 1 ? effectIndexes.single : null;
 }
 
 class _GameTutorialTarget extends StatelessWidget {
@@ -3424,9 +3548,13 @@ class _BattleActionBar extends StatelessWidget {
 }
 
 class _ScoringPreviewChip extends StatelessWidget {
-  const _ScoringPreviewChip({required this.preview});
+  const _ScoringPreviewChip({
+    required this.preview,
+    required this.pendingConfirmItemCount,
+  });
 
   final RummiScoringPreview? preview;
+  final int pendingConfirmItemCount;
 
   @override
   Widget build(BuildContext context) {
@@ -3443,26 +3571,43 @@ class _ScoringPreviewChip extends StatelessWidget {
         : preview.lineCount == 1
         ? '1줄 확정 · $rankLabel · 예상 +${preview.expectedScore}'
         : '${preview.lineCount}줄 확정 · 최고 $rankLabel · 예상 +${preview.expectedScore}';
-    final detail = preview == null
-        ? '빌드 효과 표시'
-        : hasConstraint
-        ? '약화 -${preview.constraintPenaltyPercent}%'
-        : '칩 ${preview.baseScore}'
-              '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
-              ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';
+    final detail = _previewDetail(
+      preview,
+      hasConstraint: hasConstraint,
+      pendingConfirmItemCount: pendingConfirmItemCount,
+    );
+    final hasPendingItem = pendingConfirmItemCount > 0;
     final pulseKey = ValueKey(
       preview == null
-          ? 'score-preview-empty'
-          : 'score-preview-${preview.expectedScore}-${preview.lineCount}',
+          ? 'score-preview-empty-$pendingConfirmItemCount'
+          : 'score-preview-${preview.expectedScore}-${preview.lineCount}-$pendingConfirmItemCount',
     );
     return SizedBox(
       height: 28,
       child:
           DecoratedBox(
+                key: hasPendingItem
+                    ? const ValueKey('scoring-preview-item-link-flash')
+                    : null,
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: accent.withValues(alpha: 0.42)),
+                  border: Border.all(
+                    color: hasPendingItem
+                        ? const Color(0xFFFFD36B).withValues(alpha: 0.78)
+                        : accent.withValues(alpha: 0.42),
+                    width: hasPendingItem ? 1.4 : 1,
+                  ),
+                  boxShadow: hasPendingItem
+                      ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFFFD36B,
+                            ).withValues(alpha: 0.18),
+                            blurRadius: 12,
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -3527,6 +3672,30 @@ class _ScoringPreviewChip extends StatelessWidget {
               ),
     );
   }
+}
+
+String _previewDetail(
+  RummiScoringPreview? preview, {
+  required bool hasConstraint,
+  required int pendingConfirmItemCount,
+}) {
+  if (preview == null) {
+    return pendingConfirmItemCount > 0
+        ? '아이템 대기 $pendingConfirmItemCount'
+        : '빌드 효과 표시';
+  }
+  if (hasConstraint) {
+    return '약화 -${preview.constraintPenaltyPercent}%';
+  }
+  if (pendingConfirmItemCount > 0) {
+    final applied = preview.expectedItemEffectCount;
+    return applied > 0
+        ? '아이템 적용 $applied/$pendingConfirmItemCount'
+        : '아이템 조건 미충족 0/$pendingConfirmItemCount';
+  }
+  return '칩 ${preview.baseScore}'
+      '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
+      ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';
 }
 
 class _BattleRailButton extends StatelessWidget {

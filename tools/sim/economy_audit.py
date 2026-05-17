@@ -18,6 +18,9 @@ DEFAULT_SUMMARY = Path("logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.jso
 CATALOG_AUDIT_WATCH_IDS = (
     "reroll_token",
     "trade_ticket",
+    "full_house_study",
+    "four_kind_study",
+    "straight_flush_study",
     "ride_the_bus",
     "jester_hook",
 )

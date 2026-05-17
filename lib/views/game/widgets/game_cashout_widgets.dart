@@ -281,7 +281,12 @@ class GameFloatingSettlementBurst extends StatelessWidget {
             effectIndex! < currentLine.effects.length
         ? currentLine.effects[effectIndex!]
         : null;
-    final label = _settlementStepLabel(currentLine, step, activeEffect);
+    final label = _settlementStepLabel(
+      context,
+      currentLine,
+      step,
+      activeEffect,
+    );
     final subLabel = _settlementStepSubLabel(currentLine, step, activeEffect);
     final displayedScore = _settlementStepScore(
       currentLine,
@@ -358,6 +363,7 @@ class GameFloatingSettlementBurst extends StatelessWidget {
 }
 
 String _settlementStepLabel(
+  BuildContext context,
   ConfirmedLineBreakdown? line,
   ScoringPresentationStep step,
   RummiJesterEffectBreakdown? effect,
@@ -372,8 +378,18 @@ String _settlementStepLabel(
       line.constraintPenalties.isEmpty
           ? '제약 적용'
           : line.constraintPenalties.first.title,
-    ScoringPresentationStep.jester => effect?.displayName ?? 'Jester 발동',
-    ScoringPresentationStep.item => effect?.displayName ?? 'Item 발동',
+    ScoringPresentationStep.jester =>
+      effect == null
+          ? 'Jester 발동'
+          : JesterTranslationScope.of(
+              context,
+            ).resolveDisplayName(effect.jesterId, effect.displayName),
+    ScoringPresentationStep.item =>
+      effect == null
+          ? 'Item 발동'
+          : ItemTranslationScope.of(
+              context,
+            ).resolveDisplayName(effect.jesterId, effect.displayName),
     ScoringPresentationStep.finalScore => 'Station Goal',
     ScoringPresentationStep.none =>
       '${gameHandRankLabel(line.rank)} · ${gameLineRefShortLabel(line.ref)}',

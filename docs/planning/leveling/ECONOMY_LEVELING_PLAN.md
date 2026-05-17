@@ -397,6 +397,16 @@ watchlist price decision:
 - 적용 후 `tools/sim/catalog_value_audit.py` 기준 expensive low-impact 후보는 0개다.
 - `tools/sim/economy_audit.py`도 runtime effective price 기준으로 자기 회수 후보를 판단하도록 맞췄다.
 
+2026-05-17 watchlist 재검토:
+
+- `runtime_market_offer_audit.dart` watchlist를 현재 가격/가치 후보 전체로 확장했다.
+- runtime offer r200 결과: `reroll_token` 1000회, `trade_ticket` 600회, `full_house_study` 200회, `four_kind_study` 0회, `straight_flush_study` 200회, `ride_the_bus` 77회, `jester_hook` 0회.
+- `catalog_value_audit.py` 현재 결과: `reroll_token`, `trade_ticket`, `ride_the_bus`는 cheap high-impact 후보이고, `full_house_study`, `four_kind_study`, `straight_flush_study`는 expensive low-impact 후보로 잡힌다.
+- `catalog_audit_v3` sim-only price band를 추가했다. v2의 `trade_ticket`/`ride_the_bus` floor에 더해 `full_house_study` 7G, `four_kind_study` 8G, `straight_flush_study` 9G 완화 가설을 테스트한다.
+- same-seed r120 비교 결과, `catalog_audit_v3`와 `catalog_normalized_v1`의 path clear가 완전히 동일했다: balanced none 63.3%, balanced v9 69.2%, power none 72.5%, power v9 70.8%.
+- economy audit에서도 watchlist content/proxy/source 구매 이벤트는 모두 0회다. 현재 station path sim은 실제 watchlist 카탈로그 구매가 아니라 proxy 구매 중심이므로, 이 결과만으로 runtime 가격을 바꾸지 않는다.
+- 다음 작업은 가격표 변경이 아니라 `shop_slot_market_v9` 구매 이벤트에 source candidate id를 보존하거나, 실제 runtime 후보 구매/사용 가치 probe를 별도로 만든 뒤 다시 판단한다.
+
 jester hook price probe:
 
 - command: `dart run tools/sim/run_balance_sim.dart --runs 120 --bot planner_v2 --seed 91520 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --out logs/sim/economy_jester_hook_price_r120.jsonl --summary-out logs/sim/economy_jester_hook_price_r120_summary.json`

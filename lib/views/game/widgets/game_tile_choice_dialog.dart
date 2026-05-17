@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/models/tile.dart';
+import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
 
-class GameTileChoiceDialog extends StatelessWidget {
+class GameTileChoiceDialog extends StatefulWidget {
   const GameTileChoiceDialog({
     super.key,
     required this.title,
@@ -26,8 +27,26 @@ class GameTileChoiceDialog extends StatelessWidget {
   final double tileSpacing;
 
   @override
+  State<GameTileChoiceDialog> createState() => _GameTileChoiceDialogState();
+}
+
+class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
+  int? _selectedIndex;
+
+  Future<void> _selectTile(int index) async {
+    if (_selectedIndex != null) return;
+    setState(() => _selectedIndex = index);
+    widget.onTileSelected?.call(index);
+    await Future<void>.delayed(
+      GamePresentationTimings.tileChoiceSelectFeedback,
+    );
+    if (!mounted) return;
+    Navigator.of(context).pop(index);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final routeLabel = title.trim().isEmpty ? '타일 선택' : title;
+    final routeLabel = widget.title.trim().isEmpty ? '타일 선택' : widget.title;
     return Semantics(
       scopesRoute: true,
       namesRoute: true,
@@ -47,14 +66,14 @@ class GameTileChoiceDialog extends StatelessWidget {
               14,
               14,
               14,
-              closeLabel == null ? 14 : 12,
+              widget.closeLabel == null ? 14 : 12,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  title,
+                  widget.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
@@ -62,10 +81,10 @@ class GameTileChoiceDialog extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (message != null) ...[
+                if (widget.message != null) ...[
                   const SizedBox(height: 6),
                   Text(
-                    message!,
+                    widget.message!,
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
@@ -74,29 +93,35 @@ class GameTileChoiceDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    for (var index = 0; index < tiles.length; index++) ...[
+                    for (
+                      var index = 0;
+                      index < widget.tiles.length;
+                      index++
+                    ) ...[
                       _TileChoiceButton(
-                        tile: tiles[index],
-                        size: tileSize,
-                        onTap: () {
-                          onTileSelected?.call(index);
-                          Navigator.of(context).pop(index);
-                        },
+                        index: index,
+                        tile: widget.tiles[index],
+                        size: widget.tileSize,
+                        selected: _selectedIndex == index,
+                        disabled: _selectedIndex != null,
+                        onTap: () => _selectTile(index),
                       ),
-                      if (index != tiles.length - 1)
-                        SizedBox(width: tileSpacing),
+                      if (index != widget.tiles.length - 1)
+                        SizedBox(width: widget.tileSpacing),
                     ],
                   ],
                 ),
-                if (closeLabel != null) ...[
+                if (widget.closeLabel != null) ...[
                   const SizedBox(height: 12),
                   GameActionButton(
-                    label: closeLabel!,
+                    label: widget.closeLabel!,
                     background: const Color(0xFF4C5A55),
-                    onPressed: () {
-                      onClose?.call();
-                      Navigator.of(context).pop();
-                    },
+                    onPressed: _selectedIndex == null
+                        ? () {
+                            widget.onClose?.call();
+                            Navigator.of(context).pop();
+                          }
+                        : null,
                   ),
                 ],
               ],
@@ -110,27 +135,144 @@ class GameTileChoiceDialog extends StatelessWidget {
 
 class _TileChoiceButton extends StatelessWidget {
   const _TileChoiceButton({
+    required this.index,
     required this.tile,
     required this.size,
+    required this.selected,
+    required this.disabled,
     required this.onTap,
   });
 
+  final int index;
   final Tile tile;
   final double size;
+  final bool selected;
+  final bool disabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: size,
-      height: size,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: GameRummiTileCard(tile: tile, selected: false, accent: true),
+      child: Semantics(
+        button: true,
+        label: '후보 ${index + 1} ${tile.code}',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              key: ValueKey('tile-choice-$index'),
+              width: size,
+              height: size,
+              child: AnimatedScale(
+                scale: selected ? 0.94 : 1,
+                duration: GamePresentationTimings.tileChoiceSelectFeedback,
+                curve: Curves.easeOutCubic,
+                child: AnimatedOpacity(
+                  opacity: disabled && !selected ? 0.42 : 1,
+                  duration: GamePresentationTimings.tileChoiceSelectFeedback,
+                  curve: Curves.easeOutCubic,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        child: InkWell(
+                          onTap: disabled ? null : onTap,
+                          borderRadius: BorderRadius.circular(8),
+                          child: GameRummiTileCard(
+                            tile: tile,
+                            selected: selected,
+                            accent: true,
+                          ),
+                        ),
+                      ),
+                      if (selected)
+                        DecoratedBox(
+                          key: ValueKey('tile-choice-selected-feedback-$index'),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFFFFD86B),
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFFFFD86B,
+                                ).withValues(alpha: 0.55),
+                                blurRadius: 12,
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (selected)
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Transform.translate(
+                            offset: const Offset(0, 9),
+                            child: DecoratedBox(
+                              key: ValueKey(
+                                'tile-choice-discard-result-$index',
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF181D20,
+                                ).withValues(alpha: 0.94),
+                                borderRadius: BorderRadius.circular(7),
+                                border: Border.all(
+                                  color: const Color(0xFFFFD86B),
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 2,
+                                ),
+                                child: Text(
+                                  '버림 확정',
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    color: Color(0xFFFFE39C),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              '후보 ${index + 1}',
+              maxLines: 1,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              tile.code,
+              maxLines: 1,
+              style: const TextStyle(
+                color: Color(0xFFF2C14E),
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ],
         ),
       ),
     );

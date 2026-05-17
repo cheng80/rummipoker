@@ -85,6 +85,47 @@ void main() {
       );
     });
 
+    test(
+      'useBattleItem does not open deck discard choice when deck is empty',
+      () {
+        final item = _item(
+          id: 'deck_needle',
+          op: 'peek_deck_discard_one',
+          rawEffect: const {'peek': 3},
+        );
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+          deck: PokerDeck.fromSnapshot(const []),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'deck_needle',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['deck_needle'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.isPending, isFalse);
+        expect(result.failMessage, '덱에 확인할 타일이 없습니다.');
+        expect(
+          runProgress.itemInventory.ownedItems.single.itemId,
+          'deck_needle',
+        );
+      },
+    );
+
     test('consumeBattleDeckPeekItem consumes when deck window is revealed', () {
       final item = _item(
         id: 'deck_needle',
@@ -491,6 +532,43 @@ void main() {
       },
     );
 
+    test(
+      'useBattleItem does not consume slide wax when no board move remains',
+      () {
+        final item = _item(id: 'slide_wax', op: 'mark_next_board_move_bonus');
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(
+            targetScore: 999,
+            boardMovesRemaining: 0,
+            boardMovesMax: 3,
+          ),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'slide_wax',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['slide_wax'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.failMessage, '사용 가능한 보드 이동이 없습니다.');
+        expect(session.nextBoardMoveSlideBonusQueued, isFalse);
+        expect(runProgress.itemInventory.ownedItems.single.itemId, 'slide_wax');
+      },
+    );
+
     test('successful board move consumes queued slide bonus marker', () {
       final session = RummiPokerGridSession(
         runSeed: 1,
@@ -563,6 +641,56 @@ void main() {
         expect(session.confirmModifiers, isEmpty);
         expect(
           confirmed.result.lineBreakdowns.single.effects.single.jesterId,
+          'chip_capsule',
+        );
+      },
+    );
+
+    test(
+      'useBattleItem does not consume next-confirm item when one is queued',
+      () {
+        final item = _item(
+          id: 'chip_capsule',
+          timing: 'next_confirm',
+          op: 'chips_bonus',
+          amount: 25,
+        );
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+        );
+        session.addConfirmModifier(
+          const RummiConfirmModifier(
+            itemId: 'mult_capsule',
+            timing: 'next_confirm',
+            op: 'mult_bonus',
+            percent: 0.3,
+            consumeOnApply: true,
+          ),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'chip_capsule',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['chip_capsule'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.failMessage, '이미 다음 확정 보너스가 준비되어 있습니다.');
+        expect(session.confirmModifiers.single.itemId, 'mult_capsule');
+        expect(
+          runProgress.itemInventory.ownedItems.single.itemId,
           'chip_capsule',
         );
       },

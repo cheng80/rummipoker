@@ -1359,6 +1359,70 @@ void main() {
     );
   });
 
+  testWidgets('GameItemZoneSkeleton displays queued confirm item badge', (
+    tester,
+  ) async {
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 1,
+      currentGold: 0,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: const [],
+      scoringCellKeys: const {},
+      pendingConfirmItemCount: 1,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameItemZoneSkeleton(
+            battle: battle,
+            activeEffects: const [],
+            settlementSequenceTick: 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('battle-item-confirm-queued-badge')),
+      findsOneWidget,
+    );
+    expect(find.text('확정 대기 1'), findsOneWidget);
+  });
+
+  testWidgets('GameItemZoneSkeleton displays queued board move bonus badge', (
+    tester,
+  ) async {
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 1,
+      currentGold: 0,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: const [],
+      scoringCellKeys: const {},
+      pendingBoardMoveSlideBonus: true,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameItemZoneSkeleton(
+            battle: battle,
+            activeEffects: const [],
+            settlementSequenceTick: 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('battle-item-board-move-queued-badge')),
+      findsOneWidget,
+    );
+    expect(find.text('이동 보너스 대기'), findsOneWidget);
+  });
+
   testWidgets('GameBattleItemInfoOverlay confirms use from explicit button', (
     tester,
   ) async {

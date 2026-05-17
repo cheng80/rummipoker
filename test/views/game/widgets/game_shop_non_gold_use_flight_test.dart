@@ -12,7 +12,7 @@ import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('GameShopScreen shows feedback after market item use', (
+  testWidgets('GameShopScreen flies non-gold market item use to result', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 2400);
@@ -25,26 +25,25 @@ void main() {
     });
 
     final useItem = ItemDefinition.fromJson(const <String, dynamic>{
-      'id': 'coin_cache',
-      'displayName': 'Coin Cache',
+      'id': 'trade_ticket',
+      'displayName': 'Trade Ticket',
       'type': 'utility',
-      'rarity': 'common',
-      'basePrice': 3,
-      'sellPrice': 1,
+      'rarity': 'uncommon',
+      'basePrice': 6,
+      'sellPrice': 3,
       'stackable': true,
       'maxStack': 3,
       'sellable': true,
       'usableInBattle': false,
       'placement': 'inventory',
       'slotHint': 'utility',
-      'effectText': 'Gain 3 Gold.',
+      'effectText': 'Reroll only item offers.',
       'effect': <String, dynamic>{
         'timing': 'use_market',
-        'op': 'gain_gold',
-        'amount': 3,
+        'op': 'reroll_item_offers_only',
         'consume': true,
       },
-      'tags': <String>['market', 'gold'],
+      'tags': <String>['market', 'reroll'],
       'sourceNotes': 'Test fixture.',
     });
     var useCalled = false;
@@ -63,7 +62,7 @@ void main() {
           slotIndex: 0,
           slotLabel: 'T1',
           entry: const OwnedItemEntry(
-            itemId: 'coin_cache',
+            itemId: 'trade_ticket',
             count: 1,
             placement: ItemPlacement.inventory,
           ),
@@ -111,9 +110,9 @@ void main() {
                     onBuyTileOffer: (_) => null,
                     onUseMarketItem: (item) {
                       useCalled = true;
-                      expect(item.id, 'coin_cache');
+                      expect(item.id, 'trade_ticket');
                       currentMarket = RummiMarketRuntimeFacade(
-                        gold: 7,
+                        gold: 4,
                         rerollCost: 5,
                         maxOwnedSlots: currentMarket.maxOwnedSlots,
                         runtimeSnapshot: currentMarket.runtimeSnapshot,
@@ -144,14 +143,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Tool / Gear'));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('market-item-slot-T1')));
     await tester.pumpAndSettle();
-    final noticeText = tester.widget<Text>(find.text('상점에서 수동 사용').first);
-    expect(noticeText.overflow, isNot(TextOverflow.ellipsis));
-    expect(find.text('판매'), findsOneWidget);
-
     await tester.tap(find.text('사용'));
     await tester.pump(const Duration(milliseconds: 120));
 
@@ -160,18 +153,12 @@ void main() {
       find.byKey(const ValueKey('market-item-use-flight')),
       findsOneWidget,
     );
-    expect(
-      find.byKey(const ValueKey('market-gold-gain-badge')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('market-gold-gain-badge')), findsNothing);
     expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
-    expect(find.text('사용 완료'), findsOneWidget);
-    expect(find.text('+3G'), findsWidgets);
+    expect(find.text('Item 후보 교체'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.byKey(const ValueKey('market-item-use-flight')), findsNothing);
     expect(find.byKey(const ValueKey('market-use-feedback')), findsNothing);
-    expect(find.text('7'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 3));
   });
 }

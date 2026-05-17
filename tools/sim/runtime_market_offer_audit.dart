@@ -14,6 +14,9 @@ const _defaultRuns = 200;
 const _watchIds = <String>{
   'reroll_token',
   'trade_ticket',
+  'full_house_study',
+  'four_kind_study',
+  'straight_flush_study',
   'ride_the_bus',
   'jester_hook',
 };

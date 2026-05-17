@@ -48,9 +48,11 @@ class GamePresentationTimings {
   static const Duration handCountToggle = Duration(milliseconds: 120);
   static const Duration handCapacityPulse = Duration(milliseconds: 620);
   static const Duration handTileTransition = Duration(milliseconds: 260);
+  static const Duration tileChoiceSelectFeedback = Duration(milliseconds: 220);
 
   static const Duration boardTileState = Duration(milliseconds: 120);
   static const Duration boardTileMoveFlight = Duration(milliseconds: 280);
+  static const Duration boardMoveBonusFlash = Duration(milliseconds: 620);
   static const Duration boardTileRemoveFlight = Duration(milliseconds: 280);
   static const Duration boardTilePlacePop = Duration(milliseconds: 260);
   static const Duration settlementTileLift = Duration(milliseconds: 420);
@@ -84,6 +86,7 @@ class GamePresentationTimings {
   static const Duration marketRerollSuccess = Duration(milliseconds: 420);
   static const Duration marketOfferReveal = Duration(milliseconds: 180);
   static const Duration marketOfferRevealStagger = Duration(milliseconds: 42);
+  static const Duration marketPassiveEffectPulse = Duration(milliseconds: 620);
   static const Duration marketGoldBadge = Duration(milliseconds: 460);
   static const Duration marketSlotPulse = Duration(milliseconds: 520);
 }

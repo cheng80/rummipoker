@@ -8,6 +8,9 @@
 이 문서는 v1 Item catalog의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
 Item 효과의 화면 연출 계약은 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`를 따른다.
 과거 소모품/바우처 장기 확장 reference는 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
+아이템의 발동/대상/결과 연출 coverage는 `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md`와 함께 본다.
+이 문서의 `applied`는 런타임 상태 변경과 소모 정책이 연결됐다는 뜻이며, 플레이어가 효과를 충분히 이해할 수 있는 UX까지 완료됐다는 뜻은 아니다.
+badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만 기록한다. 실제 연출은 `ANIMATION_EFFECTS_PLAN.md`의 아이템 source -> target/목적지 -> result 기준으로 별도 판단/구현한다.
 상태 의미:
 
 - `applied`: 현재 runtime에서 실제 상태 변경까지 적용된다.
@@ -156,10 +159,43 @@ Item 효과의 화면 연출 계약은 `docs/planning/feature_plans/ITEM_PRESENT
 |---|---|---|---|
 | 자원 상한/no-op | `board_scrap`, `hand_scrap`, `discard_glove`, `mulligan_sleeve`, `move_token`, `board_lift`, `organizer_glove` | 완료: board discard / hand discard / board move는 런타임 상한과 실패/미소모 정책을 갖는다. 남은 표시는 `N/base` 형태의 현재 UI 의미를 별도 리팩터링 때 재검토한다. | 상한 정책은 닫고, 표시 최대치 동기화는 resource model 리팩터링 후보로 넘긴다. |
 | 슬롯 상한/no-op | Boss 보유 슬롯 해금 | 완료: Quick/Passive/Jester 보유 슬롯 확장은 Boss 진행 보상 전용 축으로 두고, 중복되는 `spare_pouch`는 삭제했다. | 보유 슬롯 확장 아이템은 재도입하지 않는다. |
-| offer/market 상한 | `boss_trophy`, `market_compass` | 완료: `shop_lens`는 삭제했다. `boss_trophy`는 후보 슬롯 수 4개 상한과 실제 적용량 이벤트를 갖는다. `market_compass`는 현재 Market의 보이는 후보 1개에만 `나침반` 할인 배지를 붙이고 0G 후보는 건너뛴다. `lucky_counter`는 삭제했다. | 남은 delayed Market 계열은 실제 표시/예약 UI가 필요한 `boss_trophy`를 별도 후보로 본다. |
+| offer/market 상한 | `boss_trophy`, `market_compass` | 완료: `shop_lens`는 삭제했다. `boss_trophy`는 후보 슬롯 수 4개 상한, 실제 적용량 이벤트, 적용 Market의 Jester 후보 영역 `트로피 +N` 표시를 갖는다. `market_compass`는 현재 Market의 보이는 후보 1개에만 `나침반` 할인 배지를 붙이고 0G 후보는 건너뛴다. `lucky_counter`는 삭제했다. | 상한/표시 1차는 닫고, 가격/가치 이상 후보로 이동한다. |
 | 조건부 사용 no-op | `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품 | 이미 queue가 있거나 조건이 충족되지 않거나 0점 confirm에 묻히면 소모품이 의미 없이 사라질 수 있다. | 실패 시 미소모는 유지하고, 사용 전/후 피드백과 조건 표시를 보강한다. |
 | 가격/가치 이상 후보 | `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study` | catalog audit 기준 cheap high-impact 또는 expensive low-impact 후보가 있다. | 가격표를 바로 바꾸지 말고 실제 노출/구매/사용률, S7~S8 병목, v9 market 개선 여부를 함께 본다. |
 | 자동/직접 지급으로 보일 수 있는 효과 | `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`, `coin_funnel`, `hand_funnel` | 경제 보정이 선택 부담을 지우거나 자동 지급처럼 읽힐 수 있다. | 직접 지급 금지 원칙과 충돌하지 않는지, 조건/타이밍/표시가 플레이어 선택으로 읽히는지 확인한다. |
+
+2026-05-17 1차 적용:
+
+주의: 아래 묶음은 대부분 표시/피드백 1차다. 새 발동 모션, target 이동, stagger, particle까지 완료됐다는 뜻이 아니다. 기존 animation-first UX 규칙상 아이템 source, 목적지/대상, 결과가 게임적으로 이어지는지 `ANIMATION_EFFECTS_PLAN.md`에서 별도 재점검한다.
+
+- `slide_wax`: 보드 이동 자원이 0이면 `사용 가능한 보드 이동이 없습니다.`로 실패 처리하고 소모하지 않는다.
+- `deck_needle`: 확인할 덱 타일이 없으면 선택 overlay를 열지 않고 `덱에 확인할 타일이 없습니다.`로 실패 처리하고 소모하지 않는다.
+- next-confirm 수동 one-shot 소모품: 이미 다음 확정 보너스가 queued이면 `이미 다음 확정 보너스가 준비되어 있습니다.`로 실패 처리하고 소모하지 않는다.
+- `undo_seal`, `emergency_draw`: 전투 UI 실패 경로에서 명시 notice를 보여주고 성공 burst를 띄우지 않는 것을 `game_view_item_feedback_test`로 고정했다.
+- next-confirm 조건부 rank/color 계열: 수동 one-shot confirm modifier가 대기 중이면 battle facade와 확정 preview에 `아이템 대기 N`, `아이템 적용 A/N`, `아이템 조건 미충족 0/N`을 노출한다. 런타임 scoring 규칙은 그대로 두고 read path/presentation 표시만 보강했다.
+- next-confirm 대기 상태: 수동 소모품은 사용 즉시 Quick slot에서 사라지므로 원래 slot-local badge 대신 Item zone 내부에 `확정 대기 N` badge를 표시한다.
+- next-confirm 확정 순간: 정산 presentation의 item/jester step에서도 floating settlement burst를 띄워 실제 적용된 item delta를 보여준다. item 이름은 `ItemTranslationScope`로 resolve해 현지화된 이름과 `+N 칩`, `+N 점수 보정`, `xN` 결과를 callout으로 읽게 한다.
+- `deck_needle`: 덱 확인 dialog의 후보마다 `후보 N`과 타일 코드를 표시하고, 선택 후보를 짧게 강조한 뒤 실제 제거된 타일 코드를 notice/toast에 보여준다. 런타임 소비/버림 규칙은 그대로 두고 대상/결과 read path와 필요한 최소 presentation만 보강했다.
+- `emergency_draw`: 성공 시 기존 hand tile incoming 전환과 함께 hand zone에 `드로우 +1` badge를 표시한다. deck/hand resource pulse도 함께 검증해 Quick slot -> 덱/손패 -> 결과 체인을 고정했다. 실패 시 `손패가 비어 있을 때만 사용할 수 있습니다.` notice만 보이고 성공 burst가 뜨지 않는 정책을 유지한다.
+- `slide_wax`: session의 `nextBoardMoveSlideBonusQueued`를 battle facade로 노출하고 Item zone에 `이동 보너스 대기` badge를 표시한다. 다음 보드 이동 성공 시 queued marker가 소비되고 `슬라이드 왁스 / 이동 보너스 발동` feedback과 이동 도착 칸 bonus flash를 보여준다.
+- `boss_trophy`: 다음 Market Jester 후보 슬롯 보너스가 적용 중이면 market facade에 `트로피 +N` label을 노출하고, Jester offer lane pager badge로 표시한다.
+- `deck_needle`: 선택한 후보에 `버림 확정` result badge를 붙여 선택 후보가 discard 결과로 이어졌음을 dialog 안에서 즉시 보여준다.
+- next-confirm 16종: `확정 대기 N` badge pulse, scoring preview item link flash, settlement item burst를 묶어 source -> preview -> result 체인을 고정했다.
+- `market_compass`, `boss_trophy`: 할인 후보는 affected offer pulse, 후보 슬롯 증가는 lane bonus pulse로 보강했다.
+- `board_scrap`, `hand_scrap`, `move_token`, `battle_pouch`: 실제로 바뀐 하단 자원 HUD 또는 hand capacity badge가 반응하는지 전투 widget test로 고정했다.
+- `undo_seal`: 성공 시 되돌아간 board target 칸 flash를 보여주고, 실패는 기존처럼 notice만 보여준다.
+- Market 직접 사용/성장류: `coin_cache`의 slot source -> item use flight -> Gold HUD badge -> use feedback 경로를 widget test로 고정했고, reroll/discount/growth류는 기존 가격/후보/read path를 유지한다.
+- 검증: `item_effect_runtime_test`, `rummi_battle_facade_test`, `game_view_item_feedback_test`, `game_station_read_path_test`, `game_cashout_widgets_test`, 관련 `dart analyze`.
+
+다음 진행:
+
+- 조건부 사용 no-op/표시와 P1+ source -> target/목적지 -> result 연출 1차 묶음은 닫았다.
+- P2 후보(`board_scrap`, `hand_scrap`, `move_token`, `battle_pouch`, `undo_seal`, Market 직접 사용/성장 아이템)의 source -> target/결과 연결도 1차 Done으로 닫았다. 다음은 정책 결함이 새로 발견될 때만 열고, 그 외에는 가격/가치 이상 후보 검토로 돌아간다.
+- 연출 정정: pulse/glow는 필요한 곳의 보조 강조로만 쓰고, 남발을 피한다. 2026-05-17 추가 polish는 전투 item toast의 source -> result trail, `slide_wax` queued badge의 chevron 이동, 비골드 Market item use flight처럼 실제 이동/방향성이 보이는 쪽으로 반영한다.
+- Playwright 눈검증: 정적 web build의 `item_motion_eye_check`, `next_confirm_motion_eye_check`, `animation_effects_eye_check`, `market_modifier_shop`, `market_item_motion_eye_check` fixture에서 `deck_needle`, `emergency_draw`, `slide_wax`, next-confirm, direct resource item, Market modifier, gold/non-gold Market item use flight를 확인했다. 산출물은 `/tmp/rummipoker_item_motion_eye_check_20260517_152554/`, `/tmp/rummipoker_next_confirm_eye_check_20260517_153152/`, `/tmp/rummipoker_next_confirm_eye_check_more_20260517_153249/`, important console/error/overflow/warn 0건이다.
+- 그 다음 가격/가치 이상 후보를 실제 노출/구매/사용률, S7~S8 병목, v9 market 개선 여부와 함께 검토한다.
+- 2026-05-17 1차 audit 결과, 가격표는 아직 바꾸지 않는다. runtime offer에는 watchlist 일부가 노출되지만 station path sim 구매 이벤트는 proxy 중심이라 `catalog_audit_v3`와 normalized 결과가 동일했다. 다음은 실제 후보 구매/사용 가치 추적을 보강한다.
+- runtime 변경이 필요한 항목은 이 문서에 남기고, transient 연출/표시/눈검증 항목은 `ANIMATION_EFFECTS_PLAN.md`에 남긴다.
 
 정책상 주의:
 

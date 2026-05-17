@@ -1409,6 +1409,12 @@ int _simPriceBandCostForEvent({
       fallbackCost: fallbackCost,
     );
   }
+  if (mode == BalanceSimPriceBandMode.catalogAuditV3) {
+    return _simCatalogAuditV3CostForEvent(
+      event: event,
+      fallbackCost: fallbackCost,
+    );
+  }
   if (mode == BalanceSimPriceBandMode.growthAccessV1) {
     return _simGrowthAccessCostForEvent(
       event: event,
@@ -1530,6 +1536,29 @@ int _simCatalogAuditV2CostForEvent({
   );
   if (ids.contains('ride_the_bus')) cost = max(cost, 7);
   return cost;
+}
+
+int _simCatalogAuditV3CostForEvent({
+  required Map<String, Object?> event,
+  required int fallbackCost,
+}) {
+  final category = event['category'];
+  final contentId = event['content_id'];
+  if (category == 'item' && contentId is String) {
+    return switch (contentId) {
+      'full_house_study' => min(fallbackCost, 7),
+      'four_kind_study' => min(fallbackCost, 8),
+      'straight_flush_study' => min(fallbackCost, 9),
+      _ => _simCatalogAuditV2CostForEvent(
+        event: event,
+        fallbackCost: fallbackCost,
+      ),
+    };
+  }
+  return _simCatalogAuditV2CostForEvent(
+    event: event,
+    fallbackCost: fallbackCost,
+  );
 }
 
 int _simCatalogValueFlagCostForEvent({
@@ -7290,6 +7319,7 @@ enum BalanceSimPriceBandMode {
   catalogValueFlagsV1,
   catalogNormalizedV1,
   catalogAuditV2,
+  catalogAuditV3,
   growthAccessV1;
 
   static BalanceSimPriceBandMode parse(String raw) {
@@ -7300,6 +7330,7 @@ enum BalanceSimPriceBandMode {
       'catalog_value_flags_v1' => BalanceSimPriceBandMode.catalogValueFlagsV1,
       'catalog_normalized_v1' => BalanceSimPriceBandMode.catalogNormalizedV1,
       'catalog_audit_v2' => BalanceSimPriceBandMode.catalogAuditV2,
+      'catalog_audit_v3' => BalanceSimPriceBandMode.catalogAuditV3,
       'growth_access_v1' => BalanceSimPriceBandMode.growthAccessV1,
       _ => throw FormatException('Unknown sim price band mode: $raw'),
     };
@@ -7313,6 +7344,7 @@ enum BalanceSimPriceBandMode {
       BalanceSimPriceBandMode.catalogValueFlagsV1 => 'catalog_value_flags_v1',
       BalanceSimPriceBandMode.catalogNormalizedV1 => 'catalog_normalized_v1',
       BalanceSimPriceBandMode.catalogAuditV2 => 'catalog_audit_v2',
+      BalanceSimPriceBandMode.catalogAuditV3 => 'catalog_audit_v3',
       BalanceSimPriceBandMode.growthAccessV1 => 'growth_access_v1',
     };
   }

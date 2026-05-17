@@ -907,6 +907,14 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
               currentTab: visibleTab,
               onChanged: (tab) => setState(() => _tab = tab),
             ),
+            if (battle.pendingConfirmItemCount > 0) ...[
+              const SizedBox(height: 4),
+              _GameItemQueuedBadge(count: battle.pendingConfirmItemCount),
+            ],
+            if (battle.pendingBoardMoveSlideBonus) ...[
+              const SizedBox(height: 4),
+              const _GameItemBoardMoveQueuedBadge(),
+            ],
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1005,6 +1013,142 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                     ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GameItemQueuedBadge extends StatelessWidget {
+  const _GameItemQueuedBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey('battle-item-confirm-queued-pulse-$count'),
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: GamePresentationTimings.itemEffectSparkBurst,
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          final glow = sin(pi * value).clamp(0.0, 1.0);
+          return DecoratedBox(
+            key: const ValueKey('battle-item-confirm-queued-badge'),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4A81D).withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFF4A81D).withValues(alpha: 0.58),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFD36B).withValues(alpha: 0.32 * glow),
+                  blurRadius: 14 * glow,
+                  spreadRadius: 1.2 * glow,
+                ),
+              ],
+            ),
+            child: child,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          child: Text(
+            '확정 대기 $count',
+            maxLines: 1,
+            style: const TextStyle(
+              color: Color(0xFFFFD36B),
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GameItemBoardMoveQueuedBadge extends StatelessWidget {
+  const _GameItemBoardMoveQueuedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: DecoratedBox(
+        key: const ValueKey('battle-item-board-move-queued-badge'),
+        decoration: BoxDecoration(
+          color: const Color(0xFF7DE0B8).withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFF7DE0B8).withValues(alpha: 0.54),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                '이동 보너스 대기',
+                maxLines: 1,
+                style: TextStyle(
+                  color: Color(0xFF9AF0CB),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              SizedBox(width: 3),
+              _GameItemBoardMoveQueuedMotion(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GameItemBoardMoveQueuedMotion extends StatelessWidget {
+  const _GameItemBoardMoveQueuedMotion();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('battle-item-board-move-queued-motion'),
+      width: 18,
+      height: 10,
+      child: ClipRect(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: GamePresentationTimings.itemEffectSparkBurst,
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Stack(
+              children: [
+                Positioned(
+                  left: -8 + (12 * value),
+                  top: -3,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(2, (index) {
+                      return Icon(
+                        Icons.chevron_right_rounded,
+                        size: 15,
+                        color: const Color(
+                          0xFF9AF0CB,
+                        ).withValues(alpha: 0.54 + index * 0.24),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1847,6 +1991,8 @@ class GameBoardGrid extends StatefulWidget {
     required this.moveSourceCol,
     required this.onTapCell,
     this.constrainedCells = const {},
+    this.bonusFlashCellKey,
+    this.bonusFlashTick = 0,
     this.alignment = Alignment.center,
   });
 
@@ -1861,6 +2007,8 @@ class GameBoardGrid extends StatefulWidget {
   final bool boardMoveMode;
   final int? moveSourceRow;
   final int? moveSourceCol;
+  final String? bonusFlashCellKey;
+  final int bonusFlashTick;
   final void Function(int row, int col) onTapCell;
   final AlignmentGeometry alignment;
 
@@ -1981,7 +2129,7 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                             widget.boardMoveMode &&
                             tile != null &&
                             !isMoveSource;
-                        final child = GameBoardCell(
+                        Widget child = GameBoardCell(
                           key: ValueKey('board-cell-$row-$col'),
                           tile: tile,
                           selected: selected,
@@ -1994,6 +2142,13 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                           moveLocked: isMoveLocked,
                           onTap: () => widget.onTapCell(row, col),
                         );
+                        if (widget.bonusFlashCellKey == cellKey &&
+                            widget.bonusFlashTick > 0) {
+                          child = _BoardMoveBonusFlash(
+                            tick: widget.bonusFlashTick,
+                            child: child,
+                          );
+                        }
                         if (!_appearingCells.contains(cellKey)) {
                           return child;
                         }
@@ -2076,6 +2231,65 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       if (!mounted || _removeFlight?.tick != tick) return;
       setState(() => _removeFlight = null);
     });
+  }
+}
+
+class _BoardMoveBonusFlash extends StatelessWidget {
+  const _BoardMoveBonusFlash({required this.tick, required this.child});
+
+  final int tick;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('board-move-bonus-flash-$tick'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: GamePresentationTimings.boardMoveBonusFlash,
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        final wave = sin(pi * value).clamp(0.0, 1.0);
+        final fade = (1 - value).clamp(0.0, 1.0);
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            child,
+            Positioned.fill(
+              key: const ValueKey('board-move-bonus-flash'),
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(
+                        0xFFFFD86B,
+                      ).withValues(alpha: 0.95 * fade),
+                      width: 2 + (1.5 * wave),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(
+                          0xFFFFD86B,
+                        ).withValues(alpha: 0.48 * wave),
+                        blurRadius: 18 * wave,
+                        spreadRadius: 2.5 * wave,
+                      ),
+                      BoxShadow(
+                        color: const Color(
+                          0xFF80F7CA,
+                        ).withValues(alpha: 0.35 * wave),
+                        blurRadius: 22 * wave,
+                        spreadRadius: 1.5 * wave,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

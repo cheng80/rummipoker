@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/utils/common_ui.dart';
@@ -8,6 +12,26 @@ import 'package:rummipoker/views/game/widgets/game_cashout_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_options_dialog.dart';
 
 void main() {
+  testWidgets('GameFloatingSettlementBurst shows item effect callout', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameFloatingSettlementBurst(
+            line: _lineWithItemEffect(),
+            step: ScoringPresentationStep.item,
+            effectIndex: 0,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('연속 준비'), findsWidgets);
+    expect(find.text('+40'), findsWidgets);
+    expect(find.text('+40 칩'), findsWidgets);
+  });
+
   testWidgets(
     'GameStageClearOverlay shows spark field only during station clear',
     (tester) async {
@@ -398,5 +422,26 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
     },
+  );
+}
+
+ConfirmedLineBreakdown _lineWithItemEffect() {
+  return ConfirmedLineBreakdown(
+    ref: LineRef.row(0),
+    rank: RummiHandRank.straight,
+    baseScore: 70,
+    finalScore: 110,
+    jesterBonus: 0,
+    hasScoringFaceCard: false,
+    effects: const [
+      RummiJesterEffectBreakdown(
+        jesterId: 'straight_oil',
+        displayName: '연속 준비',
+        chipsBonus: 40,
+        multBonus: 0,
+        xmultBonus: 1,
+        scoreDelta: 40,
+      ),
+    ],
   );
 }

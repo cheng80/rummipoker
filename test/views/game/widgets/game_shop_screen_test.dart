@@ -110,6 +110,78 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
+    final trophyOfferCard = _jester(id: 'blueprint', displayName: 'Blueprint');
+    final trophyMarket = RummiMarketRuntimeFacade(
+      gold: 12,
+      rerollCost: 5,
+      maxOwnedSlots: RummiRunProgress.maxJesterSlots,
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+      ownedEntries: const [],
+      offers: [
+        RummiMarketOfferView.fromShopOffer(
+          RummiShopOffer(slotIndex: 0, card: trophyOfferCard, price: 4),
+          currentGold: 12,
+          price: 3,
+          originalPrice: 4,
+          discountSourceLabel: '나침반',
+        ),
+      ],
+      itemOfferSlotCount: 3,
+      jesterOfferSlotBonusLabel: '트로피 +1',
+      quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
+    );
+
+    await _pumpShopScreen(
+      tester,
+      initialItemShopTab: false,
+      readMarketView: () => trophyMarket,
+      readActiveRunSaveView: () => const RummiActiveRunSaveFacade(
+        schemaVersion: 2,
+        activeScene: 'shop',
+        sceneAlias: RummiSaveSceneAlias.market,
+        currentStageIndex: 4,
+        currentStationIndex: 4,
+        currentRunSeed: 77,
+        currentGold: 12,
+        checkpoint: RummiStationCheckpointSaveView(
+          stageIndex: 4,
+          stationIndex: 4,
+          runSeed: 77,
+          gold: 12,
+        ),
+      ),
+      onBuyOffer: (_) => null,
+    );
+
+    expect(find.text('트로피 +1'), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey('market-item-offer-bonus-badge'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('market-offer-bonus-lane-flash'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Blueprint'), findsWidgets);
+    expect(find.text('나침반'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('market-discount-offer-pulse')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('market-discount-offer-flash')),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
     final offerCard = _jester(id: 'test_card', displayName: 'T');
     final itemOffer = RummiMarketItemOfferView.fromItemDefinition(
       ItemDefinition.fromJson(const <String, dynamic>{

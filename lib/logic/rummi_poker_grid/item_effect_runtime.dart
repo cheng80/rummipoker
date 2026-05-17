@@ -188,6 +188,16 @@ class ItemEffectRuntime {
         events.addAll(applied.events);
         break;
       case 'peek_deck_discard_one':
+        final windowSize =
+            _positiveIntValue(item, 'lookAt') ??
+            _positiveIntValue(item, 'peek') ??
+            3;
+        if (session.peekDeckTop(windowSize).isEmpty) {
+          return ItemUseResult.failure(
+            itemId: item.id,
+            message: '덱에 확인할 타일이 없습니다.',
+          );
+        }
         return ItemUseResult.pendingHook(
           itemId: item.id,
           message: '버릴 덱 타일 선택이 필요합니다.',
@@ -383,6 +393,13 @@ class ItemEffectRuntime {
     final modifier = _buildConfirmModifier(item);
     if (modifier == null) {
       return _pendingHook(item, 'applyConfirmModifierItem');
+    }
+    if (_isManualOneShotConfirmModifier(modifier) &&
+        session.confirmModifiers.any(_isManualOneShotConfirmModifier)) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '이미 다음 확정 보너스가 준비되어 있습니다.',
+      );
     }
     session.addConfirmModifier(modifier);
     return ItemUseResult.success(
@@ -1090,6 +1107,12 @@ class ItemEffectRuntime {
     ItemDefinition item,
     RummiPokerGridSession session,
   ) {
+    if (session.blind.boardMovesRemaining <= 0) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '사용 가능한 보드 이동이 없습니다.',
+      );
+    }
     if (!session.queueNextBoardMoveSlideBonus()) {
       return ItemUseResult.failure(
         itemId: item.id,
@@ -1300,6 +1323,11 @@ class ItemEffectRuntime {
       return '보유 중인 아이템을 찾지 못했습니다.';
     }
     return null;
+  }
+
+  static bool _isManualOneShotConfirmModifier(RummiConfirmModifier modifier) {
+    return modifier.consumeOnApply &&
+        modifier.timing.startsWith('next_confirm');
   }
 
   static String? _validateMarketUse(

@@ -151,6 +151,8 @@ class RummiBattleRuntimeFacade {
     this.constrainedScoringCellKeys = const {},
     this.bossModifier,
     this.scoringPreview,
+    this.pendingConfirmItemCount = 0,
+    this.pendingBoardMoveSlideBonus = false,
     this.itemSlots = const [],
     this.quickSlotCapacity = RunInventoryState.defaultQuickSlotCapacity,
     this.passiveRelicCapacity = RunInventoryState.defaultPassiveRelicCapacity,
@@ -214,6 +216,10 @@ class RummiBattleRuntimeFacade {
       ),
       bossModifier: session.blind.bossModifier,
       scoringPreview: scoringPreview,
+      pendingConfirmItemCount: _pendingManualConfirmModifierCount(
+        session.confirmModifiers,
+      ),
+      pendingBoardMoveSlideBonus: session.nextBoardMoveSlideBonusQueued,
       itemSlots: const [],
       quickSlotCapacity: runProgress.quickSlotCapacity(),
       passiveRelicCapacity: runProgress.passiveRelicCapacity(),
@@ -236,6 +242,8 @@ class RummiBattleRuntimeFacade {
       constrainedScoringCellKeys: constrainedScoringCellKeys,
       bossModifier: bossModifier,
       scoringPreview: scoringPreview,
+      pendingConfirmItemCount: pendingConfirmItemCount,
+      pendingBoardMoveSlideBonus: pendingBoardMoveSlideBonus,
       itemSlots: List<RummiBattleItemSlotView>.unmodifiable(nextItemSlots),
       quickSlotCapacity: quickSlotCapacity ?? this.quickSlotCapacity,
       passiveRelicCapacity: passiveRelicCapacity ?? this.passiveRelicCapacity,
@@ -252,11 +260,25 @@ class RummiBattleRuntimeFacade {
   final Set<String> constrainedScoringCellKeys;
   final RummiBossModifier? bossModifier;
   final RummiScoringPreview? scoringPreview;
+  final int pendingConfirmItemCount;
+  final bool pendingBoardMoveSlideBonus;
   final List<RummiBattleItemSlotView> itemSlots;
   final int quickSlotCapacity;
   final int passiveRelicCapacity;
 
   bool isTileConstrained(Tile tile) => bossModifier?.affectsTile(tile) ?? false;
+}
+
+int _pendingManualConfirmModifierCount(
+  Iterable<RummiConfirmModifier> modifiers,
+) {
+  return modifiers
+      .where(
+        (modifier) =>
+            modifier.consumeOnApply &&
+            modifier.timing.startsWith('next_confirm'),
+      )
+      .length;
 }
 
 Iterable<(int, int)> _constrainedPreviewCells({
