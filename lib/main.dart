@@ -7,6 +7,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'app.dart';
 import 'resources/sound_manager.dart';
 import 'services/in_app_review_service.dart';
+import 'utils/app_locale.dart';
 import 'utils/storage_helper.dart';
 
 /// 앱 진입점.
@@ -33,6 +34,7 @@ void main() async {
         ],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),
+        startLocale: appStartLocaleFromEnvironment(),
         saveLocale: false,
         child: const App(),
       ),

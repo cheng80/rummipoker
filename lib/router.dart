@@ -81,6 +81,10 @@ final GoRouter appRouter = GoRouter(
         final debugShopTab = state.uri.queryParameters['debug_shop_tab'];
         final debugShowGameOverOnLoad =
             state.uri.queryParameters['debug_show_game_over_on_load'] == '1';
+        final debugOpenRunInfoOnLoad =
+            state.uri.queryParameters['debug_open_run_info'] == '1';
+        final debugSuppressFixtureNotice =
+            state.uri.queryParameters['debug_suppress_fixture_notice'] == '1';
         final difficulty = NewRunSetup.parseDifficulty(
           state.uri.queryParameters['difficulty'],
         );
@@ -111,6 +115,8 @@ final GoRouter appRouter = GoRouter(
             debugAutoUseItemId: debugAutoUseItemId,
             debugStartItemShop: debugShopTab == 'items',
             debugShowGameOverOnLoad: debugShowGameOverOnLoad,
+            debugOpenRunInfoOnLoad: debugOpenRunInfoOnLoad,
+            debugSuppressFixtureNotice: debugSuppressFixtureNotice,
           ),
         );
       },

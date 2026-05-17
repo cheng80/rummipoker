@@ -33,6 +33,15 @@
 node_modules/
 package-lock.json
 
+# App Store screenshot generator local dependencies/builds/exports.
+# Keep generator source and scripts in git; regenerate these artifacts locally.
+tools/app_store_screenshots/node_modules/
+tools/app_store_screenshots/.next/
+tools/app_store_screenshots/out/
+tools/app_store_screenshots/exports/
+tools/app_store_screenshots/public/screenshots/
+tools/app_store_screenshots/package-lock.json
+
 ############################################################
 # Flutter / Dart / Pub
 ############################################################

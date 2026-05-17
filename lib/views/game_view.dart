@@ -66,6 +66,8 @@ class GameView extends ConsumerStatefulWidget {
     this.debugAutoUseItemId,
     this.debugStartItemShop = false,
     this.debugShowGameOverOnLoad = false,
+    this.debugOpenRunInfoOnLoad = false,
+    this.debugSuppressFixtureNotice = false,
   });
 
   final int runSeed;
@@ -82,6 +84,8 @@ class GameView extends ConsumerStatefulWidget {
   final String? debugAutoUseItemId;
   final bool debugStartItemShop;
   final bool debugShowGameOverOnLoad;
+  final bool debugOpenRunInfoOnLoad;
+  final bool debugSuppressFixtureNotice;
 
   @override
   ConsumerState<GameView> createState() => _GameViewState();
@@ -294,11 +298,12 @@ class _GameViewState extends ConsumerState<GameView>
       SoundManager.playBgm(AssetPaths.bgmMain);
       _loadJesterCatalog();
       _loadItemCatalog();
-      if (_isDebugFixtureRun) {
+      if (_isDebugFixtureRun && !widget.debugSuppressFixtureNotice) {
         showTopNotice(context, '디버그 픽스처 모드: 이어하기 저장은 남기지 않습니다.');
       }
       _showBossConstraintIntroIfNeeded();
       _showDebugGameOverOnLoadIfNeeded();
+      _showDebugRunInfoOnLoadIfNeeded();
     });
   }
 
@@ -1891,6 +1896,18 @@ class _GameViewState extends ConsumerState<GameView>
     );
   }
 
+  void _showDebugRunInfoOnLoadIfNeeded() {
+    if (!AppConfig.showDebugFixtures ||
+        !widget.debugOpenRunInfoOnLoad ||
+        !_isDebugFixtureRun) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _openRunInfo();
+    });
+  }
+
   Future<void> _openDebugBottomSheet(BuildContext context) async {
     if (!AppConfig.showDebugFixtures ||
         _stageFlowPhase != GameStageFlowPhase.none) {
@@ -2080,6 +2097,7 @@ class _GameViewState extends ConsumerState<GameView>
             selectedBattleItemSlot: _selectedBattleItemSlot,
             itemEffectFeedback: _itemEffectFeedback,
             itemEffectFeedbackTick: _itemEffectFeedbackTick,
+            suppressDebugChrome: widget.debugSuppressFixtureNotice,
             difficultyLabel: NewRunSetup(
               difficulty: widget.difficulty,
             ).difficultyLabel,
@@ -2682,6 +2700,7 @@ class _GameSurface extends StatelessWidget {
     required this.selectedBattleItemSlot,
     required this.itemEffectFeedback,
     required this.itemEffectFeedbackTick,
+    required this.suppressDebugChrome,
     required this.difficultyLabel,
     required this.battleBoardTutorialKey,
     required this.battlePreviewTutorialKey,
@@ -2733,6 +2752,7 @@ class _GameSurface extends StatelessWidget {
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final _ItemEffectFeedback? itemEffectFeedback;
   final int itemEffectFeedbackTick;
+  final bool suppressDebugChrome;
   final String difficultyLabel;
   final GlobalKey battleBoardTutorialKey;
   final GlobalKey battlePreviewTutorialKey;
@@ -2811,6 +2831,7 @@ class _GameSurface extends StatelessWidget {
                   boardMoveBonusFlashTick: boardMoveBonusFlashTick,
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   selectedBattleItemSlot: selectedBattleItemSlot,
+                  suppressDebugChrome: suppressDebugChrome,
                   difficultyLabel: difficultyLabel,
                   battleBoardTutorialKey: battleBoardTutorialKey,
                   battlePreviewTutorialKey: battlePreviewTutorialKey,
@@ -2949,6 +2970,7 @@ class _GameLayout extends StatelessWidget {
     required this.boardMoveBonusFlashTick,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
+    required this.suppressDebugChrome,
     required this.difficultyLabel,
     required this.battleBoardTutorialKey,
     required this.battlePreviewTutorialKey,
@@ -2992,6 +3014,7 @@ class _GameLayout extends StatelessWidget {
   final int boardMoveBonusFlashTick;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
+  final bool suppressDebugChrome;
   final String difficultyLabel;
   final GlobalKey battleBoardTutorialKey;
   final GlobalKey battlePreviewTutorialKey;
@@ -3135,7 +3158,7 @@ class _GameLayout extends StatelessWidget {
                         step: activeSettlementStep,
                       ),
                     ),
-                  if (AppConfig.showDebugFixtures)
+                  if (AppConfig.showDebugFixtures && !suppressDebugChrome)
                     Positioned(
                       right: 0,
                       bottom: 16,

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
@@ -172,6 +173,28 @@ void main() {
       ]);
     },
   );
+
+  test('screenshot run growth fixture exposes played hand growth state', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.screenshotRunGrowthBattle,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.runProgress.stageIndex, 4);
+    expect(
+      fixture.runProgress.snapshotPlayedHandCounts()[RummiHandRank.straight],
+      4,
+    );
+    expect(
+      fixture.runProgress.snapshotPlayedHandCounts()[RummiHandRank.flush],
+      3,
+    );
+    expect(
+      fixture.runProgress.snapshotPlayedHandCounts()[RummiHandRank.fullHouse],
+      2,
+    );
+  });
 
   test('market modifier fixture opens shop with discounted market state', () {
     final fixture = DebugRunFixtureService.build(

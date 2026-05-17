@@ -423,6 +423,84 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
+
+  testWidgets(
+    'GameCashOutSheet fits final boss rewards inside mobile screenshot frame',
+    (tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      tester.view.devicePixelRatio = 3;
+      tester.view.physicalSize = const Size(1170, 2250);
+
+      final settlement = RummiSettlementRuntimeFacade(
+        stageIndex: 8,
+        targetScore: 2600,
+        currentGold: 23,
+        totalGold: 23,
+        entries: const [
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.stationReward,
+            leadingLabel: 'Station 8',
+            description: 'Station Goal 1 달성 보상',
+            gold: 4,
+          ),
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.boardDiscardReward,
+            leadingLabel: '4',
+            description: '남은 보드 버림 4회 x 2',
+            gold: 8,
+          ),
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.handDiscardReward,
+            leadingLabel: '2',
+            description: '남은 손패 버림 2회 x 1',
+            gold: 2,
+          ),
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.itemBonus,
+            leadingLabel: 'I',
+            description: 'Board Funnel 보너스',
+            gold: 4,
+          ),
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.itemBonus,
+            leadingLabel: 'I',
+            description: 'Hand Funnel 보너스',
+            gold: 2,
+          ),
+          RummiSettlementEntryView(
+            kind: RummiSettlementEntryKind.deckTileReward,
+            leadingLabel: 'Tile',
+            description: '보스 클리어 보상 - 다음 전투 덱에 추가',
+            gold: 0,
+            tile: Tile(color: TileColor.red, number: 2, id: 1),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GameCashOutSheet(
+              settlement: settlement,
+              completesRun: true,
+              insightReward: 36,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('BOTTOM OVERFLOWED'), findsNothing);
+      expect(find.widgetWithText(GameChromeButton, '무한 도전 진입'), findsOneWidget);
+      expect(find.widgetWithText(GameChromeButton, '런 완료'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
 }
 
 ConfirmedLineBreakdown _lineWithItemEffect() {

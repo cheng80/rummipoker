@@ -69,6 +69,9 @@
 - 공모전 full-play QA 기준은 사람 수동 플레이가 아니라 제작된 bot 기준이다. 1차 제출 gate는 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표·시각 조작을 결합한 hybrid bot이어야 한다. Browser-only selector/tap이 Flutter transform, canvas, semantics, FittedBox 때문에 흔들리면 Compute Use를 즉시 실행 계층으로 승격한다. debug fixture나 즉시 클리어 보조 없이 S1부터 S8까지 클리어하고, 중간 마켓 구매와 실제 플레이 흐름 증거를 남긴다. Codex 앱 내장 Browser Use는 실패 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
 - 출품 QA 중 앱 언어는 기본적으로 OS/브라우저 시스템 locale을 따른다. 특정 locale full-run을 검증할 때만 bot/테스트가 명시적으로 locale을 고정하고, 일반 앱 진입점에서 한국어 등 특정 언어를 `startLocale`로 강제하지 않는다.
 - 디버그 픽스처는 튜토리얼 검증 전용으로 명시된 경우가 아니면 자동 튜토리얼을 시작하지 않는다. 튜토리얼 확인이 목적이 아닌 fixture에서는 전투/마켓 튜토리얼이 버튼으로만 뜨게 해, 해금/구매/정산/연출 확인을 가리지 않게 한다.
+- App Store/Play Store 스크린샷 제작용 fixture는 내부 QA용 debug UI가 보이는 화면과 구분한다. 디버그 버튼, 개발용 라벨, QA 메뉴가 캡처에 남으면 제출 스크린샷으로 쓰지 않지만, 유저에게 보이는 최종 플레이 화면과 동일하게 보이도록 원하는 장면을 안정적으로 구성하는 fixture는 스크린샷 제작에 사용할 수 있다.
+- App Store/Play Store 스크린샷 생성기는 모바일 안전 영역 캡처가 주 피사체다. 웹 페이지 전체, 데스크톱 여백, 과한 mockup 장식, 화면 하단 잘림, 비활성/빈 상태가 첫 화면의 핵심 장면처럼 보이는 구성을 제출용 시안으로 두지 않는다. 생성 후 실제 export 이미지를 눈검증하고, 핵심 UI가 작거나 늦게 보이면 레이아웃을 다시 잡는다.
+- 스크린샷 제작용 fixture를 `SHOW_DEBUG_FIXTURES=true`로 실행하더라도 캡처 결과에는 디버그 벌레 버튼, QA notice, debug bottom sheet 진입점, 개발용 라벨이 남으면 안 된다. 캡처용 query는 fixture 상태만 만들고 debug chrome은 숨긴다.
 - Market debug URL에서 `debug_shop_tab=items`는 Tool/Gear 탭을 여는 옵션이다. Jester/Quick/Passive 슬롯 상태나 슬롯 해금 연출을 확인하는 fixture 문서/안내에는 이 옵션을 붙이지 않는다.
 - 슬롯 해금 자물쇠 연출은 사람이 눈으로 인지할 수 있을 만큼 유지한다. 구매 pulse처럼 짧은 0.5초대 연출로 처리하지 말고, 해금 전용 1회 연출은 약 1초 이상 유지한 뒤 후반에 fade-out한다.
 - 공모전 full-play QA hybrid bot의 호출 별명은 `공모전 풀런봇`으로 통일한다. 사용자가 “공모전 풀런봇 실행/준비/이어서”라고 말하면 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다. 영문 파일명·스크립트명·로그 prefix가 필요하면 `contest_full_run_bot`을 쓴다.
@@ -307,6 +310,7 @@
 - 보스 클리어로 덱 타일을 받을 때는 다음 마켓 offer 자리를 무료 보상처럼 차지하게 하지 않는다. 클리어 보상은 정산 화면에서 실제 타일 face로 보여주고, 정산 시점에 즉시 덱에 추가해 다음 전투부터 쓰이게 한다.
 - 다국어 작업은 release-visible UI와 release-visible 콘텐츠만 번역 대상으로 삼는다. 디버그 fixture, QA 전용 query, 로그/테스트/개발자 문구처럼 릴리즈 모드에서 노출되지 않는 텍스트는 번역 자산에 넣지 않고, 디버그 fixture 문구는 한국어를 유지한다. 한국어 UI에서도 게임성 때문에 영어로 유지한 `Jester`, `Item`, `Slot`, `Q-Slot`, `Passive`, `Tool`, `Gear`, `Gold`, `Chips`, `Mult`, `Boss`, `Market` 같은 용어는 다른 locale에서도 같은 영어 표기를 유지한다.
 - 아이템/전투/마켓 연출을 보강할 때 pulse, glow, border flash만 반복해 완료로 보지 않는다. 필요한 곳에서는 보조 강조로 쓰되, 핵심 연출은 아이템 source에서 target/result로 이동하는 flight/trail, 선택 대상의 실제 변화, 도착/결과 reveal, card/tile 이동처럼 방향과 원인이 보이는 애니메이션을 우선한다.
+- App Store 제출용 스크린샷 fixture에서 Flutter의 노란/검은 overflow stripe, debug banner, debug 버튼, QA notice가 보이면 생성기 문제가 아니라 런타임 UI 결함으로 본다. 해당 위젯의 모바일 프레임 테스트를 먼저 추가하고 레이아웃을 고친 뒤 iPhone Simulator 원본을 다시 캡처한다.
 
 ---
 

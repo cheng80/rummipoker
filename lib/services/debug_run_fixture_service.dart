@@ -39,6 +39,8 @@ class DebugRunFixtureService {
       'hand_capacity_increase_preview_battle';
   static const String handCapacityDeckControlBattle =
       'hand_capacity_deck_control_battle';
+  static const String screenshotRunGrowthBattle =
+      'screenshot_run_growth_battle';
   static const String marketModifierShop = 'market_modifier_shop';
   static const String slotUnlockMarket = 'slot_unlock_market';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
@@ -88,6 +90,12 @@ class DebugRunFixtureService {
       description:
           '손패 1/3 + Travel Pouch + Deck Needle / 드로우 잔여 칸과 덱 버림 UI 검증용',
       builder: _buildHandCapacityDeckControlBattle,
+    ),
+    DebugRunFixtureDefinition(
+      id: screenshotRunGrowthBattle,
+      label: '스크린샷용 런 성장 전투',
+      description: '스크린샷 제작용 / 런 정보에서 성장한 족보와 다음 성장 후보 표시',
+      builder: _buildScreenshotRunGrowthBattle,
     ),
     DebugRunFixtureDefinition(
       id: marketModifierShop,
@@ -576,6 +584,33 @@ class DebugRunFixtureService {
       session: base.session.copySnapshot(),
       runProgress: runProgress,
       stageStartSnapshot: base.stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildScreenshotRunGrowthBattle() {
+    final base = _buildHandCapacityDeckControlBattle();
+    final runProgress = base.runProgress.copySnapshot()
+      ..stageIndex = 4
+      ..gold = 42;
+    for (var i = 0; i < 4; i++) {
+      runProgress.recordHandRankCompletion(RummiHandRank.straight);
+    }
+    for (var i = 0; i < 3; i++) {
+      runProgress.recordHandRankCompletion(RummiHandRank.flush);
+    }
+    for (var i = 0; i < 2; i++) {
+      runProgress.recordHandRankCompletion(RummiHandRank.fullHouse);
+    }
+    runProgress.recordHandRankCompletion(RummiHandRank.twoPair);
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
     );
   }
 

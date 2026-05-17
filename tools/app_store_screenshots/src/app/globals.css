@@ -1,0 +1,276 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: #101413;
+  color: #f7f1df;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+main {
+  min-height: 100vh;
+  padding: 0 18px 18px;
+}
+
+.toolbar,
+.previewRail,
+.stageWrap {
+  max-width: 1290px;
+  margin: 0 auto 12px;
+}
+
+.toolbar,
+.previewRail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbar {
+  padding: 10px;
+  border: 1px solid rgba(247, 241, 223, 0.16);
+  background: #171d1b;
+}
+
+.toolbarGroup,
+.previewRail {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+label {
+  display: grid;
+  gap: 4px;
+  color: rgba(247, 241, 223, 0.68);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+select,
+button {
+  border: 1px solid rgba(247, 241, 223, 0.2);
+  background: #22302b;
+  color: #f7f1df;
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-weight: 800;
+}
+
+button {
+  cursor: pointer;
+}
+
+.thumb {
+  min-width: 118px;
+  text-align: left;
+  background: #18201e;
+}
+
+.thumb span {
+  margin-right: 8px;
+  color: #f2c14e;
+}
+
+.thumb.active {
+  border-color: #f2c14e;
+  background: #2a3b34;
+}
+
+.stageWrap {
+  width: 1290px;
+  max-width: calc(100vw - 36px);
+  overflow: auto;
+}
+
+.canvas {
+  position: relative;
+  width: 1290px;
+  height: 2796px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(242, 193, 78, 0.22), transparent 24%),
+    radial-gradient(circle at 82% 16%, rgba(71, 137, 124, 0.26), transparent 27%),
+    linear-gradient(160deg, #0b1110 0%, #173227 48%, #09100f 100%);
+}
+
+.texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 54px 54px;
+}
+
+.brandRow {
+  position: absolute;
+  top: 96px;
+  left: 82px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  z-index: 2;
+}
+
+.brandRow img {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+.brandRow strong,
+.brandRow span {
+  display: block;
+}
+
+.brandRow strong {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.brandRow span {
+  margin-top: 7px;
+  color: rgba(247, 241, 223, 0.72);
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.copyBlock {
+  position: absolute;
+  top: 230px;
+  width: 840px;
+  z-index: 2;
+}
+
+.align-left .copyBlock {
+  left: 82px;
+}
+
+.align-right .copyBlock {
+  right: 72px;
+}
+
+.eyebrow {
+  margin: 0 0 26px;
+  color: #f2c14e;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 0;
+  color: #fff8e3;
+  font-size: 86px;
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+h1 span {
+  display: block;
+}
+
+.body {
+  width: 760px;
+  margin: 28px 0 0;
+  color: rgba(247, 241, 223, 0.82);
+  font-size: 31px;
+  line-height: 1.36;
+  font-weight: 800;
+}
+
+.phoneCluster {
+  position: absolute;
+  bottom: 76px;
+  width: 980px;
+  height: 1885px;
+  z-index: 2;
+}
+
+.align-left .phoneCluster {
+  right: 70px;
+}
+
+.align-right .phoneCluster {
+  left: 70px;
+}
+
+.phoneShadow {
+  position: absolute;
+  inset: 42px 28px 0;
+  border-radius: 64px;
+  background: rgba(0, 0, 0, 0.58);
+  filter: blur(34px);
+  transform: translateY(30px);
+}
+
+.phoneFrame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 56px;
+  background: #050706;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.14),
+    0 46px 110px rgba(0, 0, 0, 0.45);
+}
+
+.phoneScreen {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: #050706;
+}
+
+.phoneGlare {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.08), transparent 30%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.tone-battle {
+  background:
+    radial-gradient(circle at 14% 70%, rgba(66, 165, 245, 0.2), transparent 27%),
+    linear-gradient(150deg, #0a1118 0%, #173126 52%, #0a100f 100%);
+}
+
+.tone-growth {
+  background:
+    radial-gradient(circle at 82% 28%, rgba(242, 193, 78, 0.24), transparent 26%),
+    linear-gradient(160deg, #12100d 0%, #273626 48%, #0c1110 100%);
+}
+
+.tone-market {
+  background:
+    radial-gradient(circle at 20% 24%, rgba(244, 168, 29, 0.25), transparent 26%),
+    linear-gradient(155deg, #11110e 0%, #214135 52%, #0a0e0d 100%);
+}
+
+.tone-boss {
+  background:
+    radial-gradient(circle at 74% 20%, rgba(211, 78, 78, 0.28), transparent 24%),
+    linear-gradient(155deg, #140d0d 0%, #26332c 50%, #080d0d 100%);
+}
+
+.tone-settlement {
+  background:
+    radial-gradient(circle at 22% 24%, rgba(120, 185, 145, 0.24), transparent 24%),
+    linear-gradient(155deg, #0b1014 0%, #22372f 52%, #10100b 100%);
+}
