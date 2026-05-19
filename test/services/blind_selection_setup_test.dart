@@ -263,9 +263,9 @@ void main() {
         ruleset: RummiRuleset.currentDefaults,
       );
 
-      expect(small.targetScore, 240);
-      expect(big.targetScore, 264);
-      expect(boss.targetScore, 265);
+      expect(small.targetScore, 480);
+      expect(big.targetScore, 720);
+      expect(boss.targetScore, 960);
       expect(boss.boardDiscards, big.boardDiscards);
       expect(boss.handDiscards, 1);
       expect(boss.maxHandSize, 1);
@@ -286,8 +286,8 @@ void main() {
         ruleset: RummiRuleset.currentDefaults,
       );
 
-      expect(small.targetScore, 372);
-      expect(boss.targetScore, 439);
+      expect(small.targetScore, 650);
+      expect(boss.targetScore, 1350);
       expect(boss.bossModifier?.id, 'row_line_dampener_v1');
     });
 
@@ -317,14 +317,14 @@ void main() {
       }
 
       expect(targets, [
-        [240, 264, 265],
-        [372, 431, 439],
-        [463, 537, 547],
-        [580, 672, 685],
-        [725, 841, 857],
-        [923, 1112, 1121],
-        [1154, 1391, 1401],
-        [1441, 1738, 1739],
+        [480, 720, 960],
+        [650, 1000, 1350],
+        [900, 1400, 1900],
+        [1250, 2000, 2750],
+        [1750, 2850, 3950],
+        [2450, 4050, 5650],
+        [3450, 5750, 8050],
+        [4850, 8150, 11400],
       ]);
       for (final row in targets) {
         expect(row[1], greaterThan(row[0]));
@@ -355,7 +355,7 @@ void main() {
       expect(BlindSelectionSetup.isEndlessStation(8), isFalse);
       expect(BlindSelectionSetup.isEndlessStation(9), isTrue);
       expect(small.isEndless, isTrue);
-      expect(small.targetScore, (1441 * 1.25).round());
+      expect(small.targetScore, (4850 * 1.25).round());
       expect(big.targetScore, (small.targetScore * 1.5).round());
       expect(boss.targetScore, small.targetScore * 2);
       expect(big.description, contains('1.5배'));
@@ -378,7 +378,7 @@ void main() {
 
       expect(
         challengeBoss.targetScore,
-        (standardSmall.targetScore * 2 * 1.2).round(),
+        (standardSmall.targetScore * 2 * 1.5).round(),
       );
     });
 

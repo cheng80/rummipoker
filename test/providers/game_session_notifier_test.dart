@@ -53,7 +53,7 @@ void main() {
       expect(initial.marketView, isNotNull);
       expect(initial.battleView, isNotNull);
       expect(initial.activeRunSaveView, isNotNull);
-      expect(initial.stationView!.objective.targetScore, 240);
+      expect(initial.stationView!.objective.targetScore, 480);
       expect(initial.marketView!.gold, RummiEconomyConfig.startingGold);
       expect(initial.battleView!.stageIndex, 1);
       expect(initial.battleView!.currentGold, RummiEconomyConfig.startingGold);
@@ -339,7 +339,7 @@ void main() {
         state.runProgress?.rerollCost,
         RummiRunProgress.shopBaseRerollCost - 1,
       );
-      expect(state.session?.blind.targetScore, 192);
+      expect(state.session?.blind.targetScore, 384);
       expect(
         state.session?.blind.boardDiscardsRemaining,
         RummiRuleset.currentDefaults.defaultBoardDiscards + 1,
@@ -360,7 +360,7 @@ void main() {
       );
 
       final state = container.read(gameSessionNotifierProvider(args));
-      expect(state.session?.blind.targetScore, 264);
+      expect(state.session?.blind.targetScore, 720);
       expect(
         state.session?.blind.boardDiscardsRemaining,
         RummiRuleset.currentDefaults.defaultBoardDiscards - 1,

@@ -21,15 +21,15 @@
 
 | Area | Status | Runtime anchor | Notes |
 |---|---|---|---|
-| S1~S8 standard target table | Applied | `BlindSelectionSpecBuilder._standardTargetScore` | small/big/boss 목표표 런타임 연결 완료 |
-| difficulty multiplier | Applied | `BlindSelectionSpecBuilder._difficultyMultiplier` | standard 1.0, challenge 1.2. `relaxed`는 이전 실험용 id로 남아 있지만 일반 새 run 선택지에는 노출하지 않음 |
+| S1~S8 standard target table | Applied / needs fresh sweep | `BlindSelectionSpecBuilder._standardTargetScore` | 2026-05-19 S1~S8 목표표를 로그형 상향 표로 교체. 런타임 연결은 완료됐지만 clear rate/economy 재검증은 open |
+| difficulty multiplier | Applied / needs fresh challenge sweep | `BlindSelectionSpecBuilder._difficultyMultiplier` | standard 1.0, challenge 1.5. `relaxed`는 이전 실험용 id로 남아 있지만 일반 새 run 선택지에는 노출하지 않음 |
 | blind tier resource pressure | Applied | `BlindSelectionSpecBuilder` | 전투 시작 압박이며 자동 보상/성장 지급이 아님 |
 | run modifier target/reward hook | Applied | `NewRunModifier` / `RunUnlockStateService` / `BlindSelectionSpecBuilder` / active run save | `basic`은 기존 값 유지. `high_stakes`는 Insight 20 해금 후 target 1.04, reward 1.12를 명시 적용하며 active run 저장/복원에 modifier id를 보존 |
 | run modifier market pressure profile | Applied | `RummiMarketPressureProfile` / `RummiStationBandMarketPolicy` / `RummiMarketRuntimeFacade` / `RummiRunProgress.openShop` | 저장 포맷 없이 `high_stakes`에서만 S3+ item offer 후보 폭 +1, missing growth 후보 노출 확률 보강. 자동 지급/고정 슬롯/자동 구매 아님 |
 | S1 first clear bonus gold | Applied | settlement/run clear reward flow | 현재 유일하게 허용된 시스템 보너스 |
 | runtime boss modifier station pool | Applied | `BlindSelectionSpecBuilder._bossModifierForStation` | S1~S8 각 station 난이도 level에 맞춰 3~4개 후보를 두고 run seed로 deterministic 선택. S4 mid pool은 `singleRankPressure` 가중을 1/4에서 2/4로 올림 |
 | simulation runtime boss station profile | Applied | `tools/sim/run_balance_sim.dart` | runtime station pool과 같은 3~4개 후보 profile과 S4 rank 가중 변형을 sim experiment id로 추가. 레벨링/경제/ML 재검증 입력으로 사용 |
-| S1 onboarding target/severity | Applied | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 S1 입구 안정화를 위해 S1 target을 240/264/265로 낮추고 `red_dampener_v1`을 35% 감소로 완화. sim S1 soft v2 target도 runtime과 맞춤 |
+| S1 onboarding target/severity | Replaced by post-contest curve | `BlindSelectionSpecBuilder._standardTargetScore` / `RummiBossModifier.redDampener` / `tools/sim/run_balance_sim.dart` | 출품용 240/264/265 입구 target은 2026-05-19 post-contest 로그형 상향 표로 대체. `red_dampener_v1` 완화는 유지 |
 | boss constraint pool v4 / late boss 068 | Partially applied | `tools/sim/run_balance_sim.dart` / `RummiBossModifier` | sim 10종 pool 중 runtime은 색상/라인/face/all-score/confirm/rank 계열을 station level pool에 적용. 추가 simulation-only proxy는 아직 런타임 미편입 |
 | post-contest boss candidates | Deferred | docs only | 저장/UI/정산/Jester·Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 |
 | station band rarity/tag weight | Applied | `RummiStationBandMarketPolicy` | `shop_slot_market_v9` 해석을 런타임 마켓 weight로 반영 |
@@ -58,7 +58,7 @@ Applied:
 
 - S1~S8 `standard` target table은 blind 선택 런타임에 연결되어 있다.
 - small < big < boss 압박 구조는 유지한다.
-- S1은 출품용 프로토타입 기준으로 “거의 누구나 통과하는 입구” 역할을 우선해 240/264/265로 낮췄다.
+- S1은 post-contest 기준에서 Scout 480, Clash 720, Boss 960으로 올렸다. 출품용 프로토타입의 “거의 누구나 통과하는 입구” target인 240/264/265는 더 이상 runtime 기준이 아니다.
 - S8 이후는 디버그/테스트용 단조 증가 fallback으로만 본다.
 
 Not applied:

@@ -351,7 +351,7 @@ class BlindSelectionSpecBuilder {
     final difficultyTarget = switch (difficulty) {
       NewRunDifficulty.standard => standardTarget,
       NewRunDifficulty.relaxed => (standardTarget * 0.8).round(),
-      NewRunDifficulty.challenge => (standardTarget * 1.2).round(),
+      NewRunDifficulty.challenge => (standardTarget * 1.5).round(),
     };
     return (difficultyTarget * runModifier.targetScoreMultiplier).round();
   }
@@ -361,14 +361,14 @@ class BlindSelectionSpecBuilder {
     required BlindTier tier,
   }) {
     const table = <List<int>>[
-      [240, 264, 265],
-      [372, 431, 439],
-      [463, 537, 547],
-      [580, 672, 685],
-      [725, 841, 857],
-      [923, 1112, 1121],
-      [1154, 1391, 1401],
-      [1441, 1738, 1739],
+      [480, 720, 960],
+      [650, 1000, 1350],
+      [900, 1400, 1900],
+      [1250, 2000, 2750],
+      [1750, 2850, 3950],
+      [2450, 4050, 5650],
+      [3450, 5750, 8050],
+      [4850, 8150, 11400],
     ];
     if (stationIndex <= table.length) {
       return table[stationIndex - 1][tier.index];

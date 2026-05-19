@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import '../../app_config.dart';
 import 'hand_rank.dart';
 import 'item_definition.dart';
 import 'models/tile.dart';
@@ -1477,11 +1476,13 @@ class RummiRunProgress {
   }
 
   int targetForStage(int stageNumber) {
-    if (stageNumber <= 1) {
-      return (300 * AppConfig.stationTargetScoreScale).round();
+    const scoutTargets = <int>[480, 650, 900, 1250, 1750, 2450, 3450, 4850];
+    if (stageNumber <= 1) return scoutTargets.first;
+    if (stageNumber <= scoutTargets.length) {
+      return scoutTargets[stageNumber - 1];
     }
-    final scaled = 300 * pow(1.6, stageNumber - 1);
-    return (scaled * AppConfig.stationTargetScoreScale).round();
+    final extraStep = stageNumber - scoutTargets.length;
+    return (scoutTargets.last * pow(1.25, extraStep)).round();
   }
 
   void startBlind(

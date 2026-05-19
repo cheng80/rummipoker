@@ -567,7 +567,7 @@ def difficulty_multiplier(value: Any) -> float:
     return {
         "relaxed": 0.8,
         "standard": 1.0,
-        "challenge": 1.2,
+        "challenge": 1.5,
     }.get(value_or_empty(value), 1.0)
 
 
@@ -603,14 +603,14 @@ def expected_target_score(
 
 def standard_target_score(station: int, tier: str) -> int:
     table = {
-        1: {"small": 240, "big": 264, "boss": 265},
-        2: {"small": 372, "big": 431, "boss": 439},
-        3: {"small": 463, "big": 537, "boss": 547},
-        4: {"small": 580, "big": 672, "boss": 685},
-        5: {"small": 725, "big": 841, "boss": 857},
-        6: {"small": 923, "big": 1112, "boss": 1121},
-        7: {"small": 1154, "big": 1391, "boss": 1401},
-        8: {"small": 1441, "big": 1738, "boss": 1739},
+        1: {"small": 480, "big": 720, "boss": 960},
+        2: {"small": 650, "big": 1000, "boss": 1350},
+        3: {"small": 900, "big": 1400, "boss": 1900},
+        4: {"small": 1250, "big": 2000, "boss": 2750},
+        5: {"small": 1750, "big": 2850, "boss": 3950},
+        6: {"small": 2450, "big": 4050, "boss": 5650},
+        7: {"small": 3450, "big": 5750, "boss": 8050},
+        8: {"small": 4850, "big": 8150, "boss": 11400},
     }
     if station in table:
         return table[station].get(tier, 0)

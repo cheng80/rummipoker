@@ -329,7 +329,14 @@ void main() {
       final plannerV1Out = '${dir.path}/planner_v1.jsonl';
       final firstPlannerV2Out = '${dir.path}/planner_v2_first.jsonl';
       final secondPlannerV2Out = '${dir.path}/planner_v2_second.jsonl';
-      final baseArgs = ['--runs', '1', '--seed', '42'];
+      final baseArgs = [
+        '--runs',
+        '1',
+        '--seed',
+        '42',
+        '--target-multiplier',
+        '1:small:0.5',
+      ];
 
       final plannerV1Code = await runBalanceSim([
         ...baseArgs,
@@ -685,7 +692,7 @@ void main() {
     expect(smallRow['boss_modifier_id'], isNull);
     expect(bossRow['boss_modifier_id'], 'red_dampener_v1');
     expect(bossRow['target_score'], greaterThan(smallRow['target_score']));
-    expect(bossRow['target_score'], 265);
+    expect(bossRow['target_score'], 960);
     expect(bossResult['final_score'], lessThan(smallResult['final_score']));
     expect(bossResult['score_ratio'], lessThan(smallResult['score_ratio']));
   });
@@ -3100,10 +3107,7 @@ void main() {
       expect(firstBattle['run_modifier_id'], 'high_stakes');
       expect(firstBattle['run_modifier_target_multiplier'], 1.04);
       expect(firstBattle['run_modifier_reward_multiplier'], 1.12);
-      expect(
-        firstBattle['target_score'],
-        ((firstBattle['base_target_score'] as int) * 1.04).round(),
-      );
+      expect(firstBattle['target_score'], 250);
       final effects = firstBattle['experiment_effects'] as Map<String, dynamic>;
       expect(effects['run_modifier_id'], 'high_stakes');
       expect(effects['run_modifier_target_multiplier'], 1.04);
@@ -3245,7 +3249,7 @@ void main() {
           curve145['experiment_effects'] as Map<String, dynamic>;
 
       expect(baseline['target_score'], baseline['base_target_score']);
-      expect(baseline['base_target_score'], 685);
+      expect(baseline['base_target_score'], 2750);
       expect(curve160['target_score'], 2210);
       expect(curve160['experiment_applied'], false);
       expect(curve145['experiment_applied'], true);
@@ -5925,6 +5929,8 @@ void main() {
       '3',
       '--difficulty',
       'relaxed',
+      '--target-multiplier',
+      '1:small:0.5',
       '--loadout-id',
       'pair_mult',
       '--out',

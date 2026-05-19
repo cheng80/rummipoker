@@ -5880,12 +5880,15 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
   required RummiBossModifier? baseBossModifier,
 }) {
   final stationGrowthBase = _stationGrowthBaseForExperiment(id);
-  final targetScore = _targetScoreForStationCurve(
-    station: station,
-    tier: tier,
-    difficulty: difficulty,
-    stationGrowthBase: stationGrowthBase,
-  );
+  final usesRuntimeTargetTable = _usesRuntimeBossStationPool(id);
+  final targetScore = usesRuntimeTargetTable
+      ? baseTargetScore
+      : _targetScoreForStationCurve(
+          station: station,
+          tier: tier,
+          difficulty: difficulty,
+          stationGrowthBase: stationGrowthBase,
+        );
   final targetCurveMultiplier = _targetCurveMultiplier(id, station, tier);
   final curveTargetScore = _usesTargetCurveTuning(id)
       ? (targetScore * targetCurveMultiplier).round()
@@ -5902,6 +5905,7 @@ BalanceSimExperimentSpec _resolveBossConstraintPoolExperiment({
   final effects = <String, Object?>{
     'station_growth_base': stationGrowthBase,
     'runtime_base_target_score': baseTargetScore,
+    if (usesRuntimeTargetTable) 'runtime_target_table': true,
     'boss_constraint_pool': tier == BlindTier.boss,
     'boss_constraint_pool_severity': _bossConstraintPoolSeverity(id),
     ..._targetCurveTuningEffects(
@@ -6943,7 +6947,7 @@ double _difficultyTargetMultiplier(NewRunDifficulty difficulty) {
   return switch (difficulty) {
     NewRunDifficulty.relaxed => 0.8,
     NewRunDifficulty.standard => 1.0,
-    NewRunDifficulty.challenge => 1.2,
+    NewRunDifficulty.challenge => 1.5,
   };
 }
 
