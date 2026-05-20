@@ -273,7 +273,10 @@ class _GameViewState extends ConsumerState<GameView>
       DebugRunFixtureService.shouldAutoStartTutorials(
         _gameState.debugFixtureId,
       );
-  bool get _isBattleInputLocked => _isUiLocked || _boardMoveMode;
+  bool get _isBattleInputLocked =>
+      _isUiLocked ||
+      _boardMoveMode ||
+      _stageFlowPhase != GameStageFlowPhase.none;
 
   @override
   void initState() {
@@ -1279,7 +1282,10 @@ class _GameViewState extends ConsumerState<GameView>
     }
     final settlementGoalBaseScore = _stationView.objective.scoreTowardObjective;
     _gameNotifier.setStageFlow(
-      phase: GameStageFlowPhase.none,
+      phase: GameStageFlowPhase.confirmSettlement,
+      activeSettlementLine: null,
+      activeSettlementStep: ScoringPresentationStep.none,
+      activeSettlementEffectIndex: null,
       settlementGoalDisplayScore: settlementGoalBaseScore,
     );
     _gameNotifier.applyConfirmedScore(result.totalScore);

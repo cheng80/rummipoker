@@ -528,16 +528,11 @@ class _CompetitionFullPlayBot {
                 _isCashOutReady() ||
                 next.session!.blind.scoreTowardBlind > score,
           );
-          if (_readGameState().session!.blind.scoreTowardBlind >= targetScore) {
-            await _pumpUntilCashOutReady();
-            return;
-          }
-          if (!_isCashOutReady()) {
-            await _pumpUntilState(
-              (next) => next.stageFlowPhase == GameStageFlowPhase.none,
-              timeout: const Duration(minutes: 2),
-            );
-          }
+          await _pumpUntilConfirmSettlementComplete(
+            previousScore: score,
+            targetScore: targetScore,
+          );
+          if (_isCashOutReady()) return;
           break;
         case CompetitionBattleActionType.discardHand:
           final tile = session.hand[action.handIndex!];
@@ -734,6 +729,7 @@ class _CompetitionFullPlayBot {
           !config.tutorialsAlreadySeen &&
           !marketTutorialCompleted,
     );
+    await _buyQuickSlotItemsIfPossible(stage);
     await _buyJestersIfPossible(stage);
     await _buyQuickSlotItemsIfPossible(stage);
     await _buyDeckTileIfPossible(stage);
@@ -807,7 +803,7 @@ class _CompetitionFullPlayBot {
 
     for (var attempt = 0; attempt < 6; attempt++) {
       final state = _readGameState();
-      final market = state.marketView;
+      final market = _marketViewFromState(state);
       final progress = state.runProgress;
       if (market == null || progress == null || market.offers.isEmpty) return;
 
@@ -889,7 +885,7 @@ class _CompetitionFullPlayBot {
   }
 
   Future<void> _selectOwnedJesterForSale({String? contentId}) async {
-    final ownedEntries = _readGameState().marketView?.ownedEntries;
+    final ownedEntries = _marketViewFromState(_readGameState())?.ownedEntries;
     if (ownedEntries == null || ownedEntries.isEmpty) return;
     for (final entry in ownedEntries) {
       if (contentId != null && entry.contentId != contentId) continue;
@@ -921,9 +917,9 @@ class _CompetitionFullPlayBot {
     await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
     final state = _readGameState();
     final tileOffers =
-        state.marketView?.tileOffers
-            .where((offer) => offer.isAffordable)
-            .toList() ??
+        _marketViewFromState(
+          state,
+        )?.tileOffers.where((offer) => offer.isAffordable).toList() ??
         const [];
     if (tileOffers.isEmpty) return;
     tileOffers.sort((a, b) {
@@ -963,15 +959,29 @@ class _CompetitionFullPlayBot {
     await _tapTextIfVisible('Jester / Slots');
     await _tapTextIfVisible('Q-Slot');
 
-    for (var attempt = 0; attempt < 6; attempt++) {
+    for (var attempt = 0; attempt < 10; attempt++) {
       final state = _readGameState();
-      final market = state.marketView;
+      final market = _marketViewFromState(state);
       final progress = state.runProgress;
       if (market == null || progress == null) return;
       final quickSlotCapacity = progress.quickSlotCapacity(
         itemCatalog: itemCatalog,
       );
       final quickSlotCount = progress.itemInventory.quickSlotItemIds.length;
+      final quickSlotOffers = market.itemOffers
+          .where((offer) => offer.item.placement == ItemPlacement.quickSlot)
+          .toList(growable: false);
+      _record(
+        'S$stage market Q-slot attempt=$attempt gold=${market.gold} '
+        'quick=$quickSlotCount/$quickSlotCapacity '
+        'itemOffers=${market.itemOffers.length} '
+        'quickOffers=${quickSlotOffers.length} '
+        'affordableQuick=${quickSlotOffers.where((offer) => offer.isAffordable).length}',
+      );
+      if (quickSlotCount >= quickSlotCapacity) {
+        _record('S$stage market Q-slot skipped: slots full');
+        return;
+      }
       final affordableOffers = market.itemOffers
           .where(
             (offer) =>
@@ -979,7 +989,16 @@ class _CompetitionFullPlayBot {
                 offer.isAffordable,
           )
           .toList();
-      if (affordableOffers.isEmpty) return;
+      if (affordableOffers.isEmpty) {
+        if (!await _rerollItemOffersForPlacementIfPossible(
+          ItemPlacement.quickSlot,
+          market,
+        )) {
+          _record('S$stage market Q-slot skipped: no affordable offer/reroll');
+          return;
+        }
+        continue;
+      }
       affordableOffers.sort(
         (a, b) => contestFullRunBotItemScore(
           b.item,
@@ -1004,19 +1023,44 @@ class _CompetitionFullPlayBot {
         if (!await _sellMarketItemSlotIfVisible(stage, weakest)) return;
       }
 
-      await _selectItemOfferLaneForPlacement(bestOffer.item.placement);
-      if (!await _selectItemOfferByPrice(
-        bestOffer.price,
-        placement: bestOffer.item.placement,
+      if (!await _selectVisibleItemOfferForPlacement(
+        bestOffer.item.placement,
       )) {
+        _record(
+          'S$stage market Q-slot skipped: visible offer tap failed '
+          'item=${bestOffer.item.id} price=${bestOffer.price}',
+        );
         return;
       }
-      if (find.text('구매').evaluate().isEmpty) return;
+      if (find.text('구매').evaluate().isEmpty) {
+        _record(
+          'S$stage market Q-slot skipped: purchase button missing '
+          'item=${bestOffer.item.id} price=${bestOffer.price}',
+        );
+        return;
+      }
       await _tapText('구매');
       boughtItem = true;
       _record('S$stage market: bought Q-Slot Item');
       await _pumpFor(const Duration(seconds: 2));
     }
+  }
+
+  Future<bool> _rerollItemOffersForPlacementIfPossible(
+    ItemPlacement placement,
+    RummiMarketRuntimeFacade market,
+  ) async {
+    final rerollCost = market.itemRerollCostFor(placement);
+    if (rerollCost <= 0 || market.gold < rerollCost) return false;
+    await _selectItemOfferLaneForPlacement(placement);
+    final rerollFinder = find.text('리롤 $rerollCost');
+    if (rerollFinder.evaluate().isEmpty) return false;
+    await _tapText('리롤 $rerollCost');
+    await _pumpUntilVisible(find.text('리롤 확인'));
+    await _tapText('리롤');
+    await _pumpFor(const Duration(seconds: 1));
+    _record('market: rerolled ${placement.name} Item offers');
+    return true;
   }
 
   Future<void> _selectItemOfferLaneForPlacement(ItemPlacement placement) async {
@@ -1036,14 +1080,18 @@ class _CompetitionFullPlayBot {
     }
   }
 
-  Future<bool> _selectItemOfferByPrice(
-    int price, {
-    required ItemPlacement placement,
-  }) async {
+  Future<bool> _selectVisibleItemOfferForPlacement(
+    ItemPlacement placement,
+  ) async {
     await _selectItemOfferLaneForPlacement(placement);
-    final priceFinder = find.text('${price}G');
-    if (priceFinder.evaluate().isEmpty) return false;
-    await tester.tap(priceFinder.first, warnIfMissed: false);
+    final offerFinder = find.byWidgetPredicate((widget) {
+      if (widget.runtimeType.toString() != '_MarketItemOfferCard') {
+        return false;
+      }
+      return true;
+    }).hitTestable();
+    if (offerFinder.evaluate().isEmpty) return false;
+    await tester.tap(offerFinder.first, warnIfMissed: false);
     await _pumpFor(const Duration(milliseconds: 600));
     return true;
   }
@@ -1126,14 +1174,22 @@ class _CompetitionFullPlayBot {
     final choice = _chooseBattleItemToUse(state, plannedAction: plannedAction);
     if (choice == null) return false;
     await _tapTextIfVisible('Slots');
-    final slotLabel = find.text('Q${choice.slotIndex + 1}');
-    if (slotLabel.evaluate().isEmpty) return false;
-    await tester.tap(slotLabel.first);
+    if (!await _selectBattleQuickSlot(choice)) return false;
     await _pumpFor(const Duration(milliseconds: 500));
+    if (!_selectedBattleItemOverlayMatches(choice)) return false;
     if (find.text('사용').evaluate().isEmpty) return false;
+    final beforeItemCount = _ownedItemCount(state.runProgress!, choice.item.id);
+    final beforeQuickSlotIds = List<String>.of(inventory.quickSlotItemIds);
     await _tapText('사용');
     if (choice.item.effect.op == 'peek_deck_discard_one') {
       await _resolveDeckNeedleDialog(choice, state.session!);
+    }
+    if (!await _waitForBattleItemUseApplied(
+      choice,
+      beforeItemCount: beforeItemCount,
+      beforeQuickSlotIds: beforeQuickSlotIds,
+    )) {
+      return false;
     }
     usedItem = true;
     _record(
@@ -1142,6 +1198,75 @@ class _CompetitionFullPlayBot {
       'used battle Item ${choice.item.id} op=${choice.item.effect.op}',
     );
     await _pumpFor(const Duration(seconds: 1));
+    return true;
+  }
+
+  Future<bool> _selectBattleQuickSlot(_BattleItemChoice choice) async {
+    final slotFinder = find.byWidgetPredicate((widget) {
+      if (widget.runtimeType.toString() != '_GameItemPocketChip') {
+        return false;
+      }
+      try {
+        final dynamic dynamicWidget = widget;
+        final dynamic itemSlot = dynamicWidget.itemSlot;
+        return dynamicWidget.label == 'Q${choice.slotIndex + 1}' &&
+            itemSlot != null &&
+            itemSlot.slotIndex == choice.slotIndex &&
+            itemSlot.contentId == choice.item.id;
+      } catch (_) {
+        return false;
+      }
+    });
+    if (slotFinder.evaluate().isEmpty) return false;
+    await tester.tap(slotFinder.first, warnIfMissed: false);
+    await _pumpFor(const Duration(milliseconds: 500));
+    return true;
+  }
+
+  bool _selectedBattleItemOverlayMatches(_BattleItemChoice choice) {
+    final overlayFinder = find.byWidgetPredicate((widget) {
+      if (widget is! GameBattleItemInfoOverlay) return false;
+      return widget.itemSlot.slotIndex == choice.slotIndex &&
+          widget.itemSlot.contentId == choice.item.id;
+    });
+    return overlayFinder.evaluate().isNotEmpty;
+  }
+
+  int _ownedItemCount(RummiRunProgress runProgress, String itemId) {
+    return runProgress.itemInventory.ownedItems
+        .where((entry) => entry.itemId == itemId)
+        .fold<int>(0, (sum, entry) => sum + entry.count);
+  }
+
+  Future<bool> _waitForBattleItemUseApplied(
+    _BattleItemChoice choice, {
+    required int beforeItemCount,
+    required List<String> beforeQuickSlotIds,
+  }) async {
+    final end = DateTime.now().add(const Duration(seconds: 8));
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 100));
+      final next = _tryReadGameState();
+      final progress = next?.runProgress;
+      if (progress == null) continue;
+      final nextItemCount = _ownedItemCount(progress, choice.item.id);
+      final nextQuickSlotIds = progress.itemInventory.quickSlotItemIds;
+      if (nextItemCount < beforeItemCount ||
+          !_sameStringList(nextQuickSlotIds, beforeQuickSlotIds)) {
+        return true;
+      }
+    }
+    _record(
+      'battle Item ${choice.item.id} use skipped: no inventory state change',
+    );
+    return false;
+  }
+
+  bool _sameStringList(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var index = 0; index < a.length; index++) {
+      if (a[index] != b[index]) return false;
+    }
     return true;
   }
 
@@ -1247,6 +1372,8 @@ class _CompetitionFullPlayBot {
             item,
             session,
             runProgress,
+            pendingConfirmItemCount:
+                state.battleView?.pendingConfirmItemCount ?? 0,
             plannedAction: plannedAction,
           )) {
         continue;
@@ -1260,6 +1387,7 @@ class _CompetitionFullPlayBot {
     ItemDefinition item,
     RummiPokerGridSession session,
     RummiRunProgress runProgress, {
+    required int pendingConfirmItemCount,
     required CompetitionBattleAction plannedAction,
   }) {
     if (item.placement != ItemPlacement.quickSlot || !item.usableInBattle) {
@@ -1296,10 +1424,9 @@ class _CompetitionFullPlayBot {
       'mult_bonus' ||
       'xmult_bonus' ||
       'temporary_overlap_cap_bonus' ||
-      'add_percent_of_first_confirm_score' => _hasScoringConfirmNow(
-        session,
-        runProgress,
-      ),
+      'add_percent_of_first_confirm_score' =>
+        _hasScoringConfirmNow(session, runProgress) &&
+            pendingConfirmItemCount == 0,
       'undo_last_board_move' => false,
       'draw_if_hand_empty' => session.hand.isEmpty && session.canDrawFromDeck,
       'increase_hand_size' => session.hand.length >= session.maxHandSize,
@@ -1478,6 +1605,18 @@ class _CompetitionFullPlayBot {
     return state!;
   }
 
+  RummiMarketRuntimeFacade? _marketViewFromState(GameSessionState state) {
+    final progress = state.runProgress;
+    if (progress == null) return state.marketView;
+    return RummiMarketRuntimeFacade.fromRunProgress(
+      progress,
+      itemCatalog: itemCatalog,
+      pressureProfile: state.runModifier == NewRunModifier.highStakes
+          ? RummiMarketPressureProfile.highStakes
+          : RummiMarketPressureProfile.standard,
+    );
+  }
+
   GameSessionState? _tryReadGameState() {
     final gameView = _tryReadGameView();
     if (gameView == null) return null;
@@ -1565,6 +1704,37 @@ class _CompetitionFullPlayBot {
       }
     }
     fail('Timed out waiting for game state update after tapping "$actionText"');
+  }
+
+  Future<void> _pumpUntilConfirmSettlementComplete({
+    required int previousScore,
+    required int targetScore,
+  }) async {
+    var sawSettlementPhase = false;
+    final end = DateTime.now().add(const Duration(minutes: 2));
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (await _retryGameOverIfVisible()) return;
+      if (_isCashOutReady()) {
+        await _pumpUntilCashOutReady();
+        return;
+      }
+      final state = _readGameState();
+      final currentScore = state.session!.blind.scoreTowardBlind;
+      if (state.stageFlowPhase != GameStageFlowPhase.none) {
+        sawSettlementPhase = true;
+      }
+      if (currentScore >= targetScore) {
+        await _pumpUntilCashOutReady();
+        return;
+      }
+      if (currentScore > previousScore &&
+          sawSettlementPhase &&
+          state.stageFlowPhase == GameStageFlowPhase.none) {
+        return;
+      }
+    }
+    fail('Timed out waiting for confirm settlement presentation to complete');
   }
 
   Finder _buttonOrTextFinder(String text) {

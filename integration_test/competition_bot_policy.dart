@@ -222,6 +222,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (session.hand.isEmpty) {
       if (session.canDrawFromDeck) return const CompetitionBattleAction.draw();
       if ((shouldUseStrategicUtility || boardIsFull) &&
+          _canUseBoardDiscardUtility(session) &&
           occupancy >= _boardDiscardReplacementMinOccupancy) {
         final scoringDiscard = chooseScoringBoardDiscard(
           session,
@@ -244,6 +245,12 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         return const CompetitionBattleAction.confirm();
       }
       return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
+    }
+
+    if (boardIsFull &&
+        !_canUseBoardDiscardUtility(session) &&
+        confirmChoice.score > 0) {
+      return const CompetitionBattleAction.confirm();
     }
 
     if (_shouldUseBoardMoveNow(
@@ -301,6 +308,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     }
 
     if ((shouldUseStrategicUtility || boardIsFull) &&
+        _canUseBoardDiscardUtility(session) &&
         occupancy >= _boardDiscardReplacementMinOccupancy) {
       final scoringDiscard = chooseScoringBoardDiscard(
         session,
@@ -740,9 +748,19 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 
   bool _shouldContinueBoardDiscardMoveCombo(RummiPokerGridSession session) {
     final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    if (!_canUseBoardDiscardUtility(session)) return false;
     return occupancy == kBoardSize * kBoardSize - 1 &&
         session.blind.boardDiscardsRemaining < session.blind.boardDiscardsMax &&
         session.blind.boardMovesRemaining == session.blind.boardMovesMax;
+  }
+
+  bool _canUseBoardDiscardUtility(RummiPokerGridSession session) {
+    if (_isBattleTargetLate(session)) return true;
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.deck.remaining > _lateDeckUtilityRemainingMax) return false;
+    return _isBattleTargetLate(session);
   }
 
   bool _shouldSpendBoardDiscardForMystic(
@@ -882,6 +900,12 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
               action: action,
               clearsTarget: true,
               immediateScore: immediateScore,
+              flushAlignmentScore: _placementFlushAlignmentScore(
+                session.board,
+                tile,
+                row,
+                col,
+              ),
               potentialScore: _plannerBoardPotentialScoreForJesters(
                 copy.board,
                 jesters,
@@ -914,6 +938,12 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             action: action,
             clearsTarget: false,
             immediateScore: immediateScore,
+            flushAlignmentScore: _placementFlushAlignmentScore(
+              session.board,
+              tile,
+              row,
+              col,
+            ),
             potentialScore: _plannerBoardPotentialScoreForJesters(
               copy.board,
               jesters,
@@ -969,6 +999,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         candidate.immediateScore >= _cleanConfirmScoreFloor) {
       return candidate.immediateScore > best.immediateScore;
     }
+    if (!_isRetryRecoveryPlacementMode() &&
+        candidate.flushAlignmentScore != best.flushAlignmentScore) {
+      return candidate.flushAlignmentScore > best.flushAlignmentScore;
+    }
     if (candidate.potentialScore != best.potentialScore) {
       return candidate.potentialScore > best.potentialScore;
     }
@@ -987,9 +1021,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   }
 
   bool _shouldAvoidRepeatedFailedRoutes() {
-    return enableRetryRecoveryConfirmDelay &&
-        retryRecoveryAttempt >= 2 &&
-        avoidedActionRouteKeys.isNotEmpty;
+    return _isRetryRecoveryPlacementMode() && avoidedActionRouteKeys.isNotEmpty;
+  }
+
+  bool _isRetryRecoveryPlacementMode() {
+    return enableRetryRecoveryConfirmDelay && retryRecoveryAttempt >= 2;
   }
 
   int _adjustedRouteScore(CompetitionBattleAction action, int baseScore) {
@@ -1559,6 +1595,7 @@ class _PlacementChoice {
     required this.action,
     required this.clearsTarget,
     required this.immediateScore,
+    required this.flushAlignmentScore,
     required this.potentialScore,
     required this.lookaheadScore,
     required this.boardPressure,
@@ -1568,6 +1605,7 @@ class _PlacementChoice {
   final CompetitionBattleAction action;
   final bool clearsTarget;
   final int immediateScore;
+  final int flushAlignmentScore;
   final int potentialScore;
   final int lookaheadScore;
   final int boardPressure;
@@ -1668,6 +1706,51 @@ int _plannerBoardPotentialScoreForJesters(
     wantsPairs: wantsPairs,
   );
   return score;
+}
+
+int _placementFlushAlignmentScore(
+  RummiBoard board,
+  Tile tile,
+  int row,
+  int col,
+) {
+  final lines = <List<Tile?>>[board.row(row), board.col(col)];
+  if (row == col) {
+    lines.add(board.diagMain());
+  }
+  if (row + col == kBoardSize - 1) {
+    lines.add(board.diagAnti());
+  }
+
+  var score = 0;
+  var cleanSameColorLines = 0;
+  for (final line in lines) {
+    final lineScore = _placementLineFlushAlignmentScore(line, tile.color);
+    score += lineScore;
+    final tiles = line.whereType<Tile>().toList(growable: false);
+    if (tiles.isNotEmpty && tiles.every((other) => other.color == tile.color)) {
+      cleanSameColorLines++;
+    }
+  }
+  if (cleanSameColorLines >= 2) {
+    score += cleanSameColorLines * 180;
+  }
+  return score;
+}
+
+int _placementLineFlushAlignmentScore(List<Tile?> line, TileColor color) {
+  final tiles = line.whereType<Tile>().toList(growable: false);
+  if (tiles.isEmpty) return 0;
+  final sameColor = tiles.where((tile) => tile.color == color).length;
+  final offColor = tiles.length - sameColor;
+
+  if (offColor == 0) {
+    return sameColor * 180 + (sameColor >= 2 ? 260 : 60);
+  }
+  if (sameColor == 0) {
+    return -offColor * 90;
+  }
+  return sameColor * 90 - offColor * 140;
 }
 
 int _plannerJesterLineBonus(

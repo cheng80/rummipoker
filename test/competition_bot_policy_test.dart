@@ -254,6 +254,56 @@ void main() {
     expect(action?.row, 0);
   });
 
+  test('placement policy prefers same-color line intersections', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 2,
+      runRandomState: 1,
+      blind: RummiBlindState(targetScore: 720),
+      deck: PokerDeck.fromSnapshot(const []),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 2),
+        null,
+        null,
+        null,
+        null,
+        null,
+        _tile(TileColor.red, 7),
+        null,
+        null,
+        null,
+        null,
+        _tile(TileColor.red, 8),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.red, 3), _tile(TileColor.yellow, 13)],
+      eliminated: const [],
+    );
+
+    final action = const CompetitionPlannerV2Policy().bestPlacementForTest(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+
+    expect(action?.type, CompetitionBattleActionType.place);
+    expect(action?.handIndex, 0);
+    expect((action?.row, action?.col), anyOf(const (0, 2), const (1, 1)));
+  });
+
   test('battle late is based on target progress, not station number', () {
     final early = RummiPokerGridSession.restored(
       runSeed: 91460,
@@ -284,7 +334,7 @@ void main() {
     expect(policy.isBattleTargetLateForTest(late), isTrue);
   });
 
-  test('full board chooses a scoring board discard over the loop cell', () {
+  test('full board confirms early score instead of discard move loop', () {
     final board = RummiBoard.fromSnapshot([
       _tile(TileColor.red, 3),
       _tile(TileColor.blue, 12),
@@ -335,7 +385,7 @@ void main() {
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, CompetitionBattleActionType.discardBoard);
+    expect(action.type, CompetitionBattleActionType.confirm);
   });
 
   test('retry recovery full board does not force a low confirm', () {
@@ -394,7 +444,7 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.confirm));
   });
 
-  test('retry recovery delays a small high target confirm for utility', () {
+  test('early full board high target confirms instead of utility discard', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
       deckCopiesPerTile: 1,
@@ -447,7 +497,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, CompetitionBattleActionType.discardBoard);
+    expect(action.type, CompetitionBattleActionType.confirm);
   });
 
   test('retry recovery delays a low value high target two-line confirm', () {
@@ -1857,6 +1907,63 @@ void main() {
 
     expect(action.type, isNot(CompetitionBattleActionType.discardBoard));
   });
+
+  test(
+    'early full board confirms existing line instead of discard move combo',
+    () {
+      final session = RummiPokerGridSession.restored(
+        runSeed: 91460,
+        deckCopiesPerTile: 1,
+        maxHandSize: 1,
+        runRandomState: 1,
+        blind: RummiBlindState(
+          targetScore: 2450,
+          boardDiscardsRemaining: 4,
+          handDiscardsRemaining: 2,
+          boardMovesRemaining: 3,
+          boardMovesMax: 3,
+        ),
+        deck: PokerDeck.fromSnapshot([_tile(TileColor.yellow, 9)]),
+        board: RummiBoard.fromSnapshot([
+          _tile(TileColor.red, 1),
+          _tile(TileColor.red, 2),
+          _tile(TileColor.red, 3),
+          _tile(TileColor.red, 4),
+          _tile(TileColor.red, 5),
+          _tile(TileColor.blue, 1),
+          _tile(TileColor.yellow, 3),
+          _tile(TileColor.black, 5),
+          _tile(TileColor.red, 7),
+          _tile(TileColor.blue, 9),
+          _tile(TileColor.black, 2),
+          _tile(TileColor.yellow, 4),
+          _tile(TileColor.blue, 6),
+          _tile(TileColor.red, 8),
+          _tile(TileColor.black, 10),
+          _tile(TileColor.yellow, 1),
+          _tile(TileColor.blue, 3),
+          _tile(TileColor.red, 6),
+          _tile(TileColor.black, 8),
+          _tile(TileColor.yellow, 10),
+          _tile(TileColor.black, 1),
+          _tile(TileColor.red, 9),
+          _tile(TileColor.yellow, 11),
+          _tile(TileColor.blue, 13),
+          _tile(TileColor.black, 7),
+        ]),
+        hand: [_tile(TileColor.blue, 11)],
+        eliminated: const [],
+      );
+
+      final action = const CompetitionPlannerV2Policy().chooseAction(
+        session,
+        jesters: const [],
+        runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+      );
+
+      expect(action.type, CompetitionBattleActionType.confirm);
+    },
+  );
 
   test(
     'placement lookahead picks the cell that sets up the next hand tile',
