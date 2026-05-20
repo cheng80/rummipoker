@@ -53,6 +53,16 @@
 
 2026-05-19 post-contest 기준에서 `challenge`는 `1.2`에서 `1.5`로 올렸다. 새 S1~S8 로그형 target table 기준에서 `1.2`는 표준보다 조금 높은 모드에 가까웠고, 도전 난이도는 성장/마켓 선택이 제대로 맞아야 하는 상위 모드로 읽혀야 하기 때문이다. 이 변경도 runtime applied 상태이며, fresh challenge path sweep은 open risk로 남긴다.
 
+2026-05-21 승인 방향: `challenge`는 순수 fresh run이 아니라, `standard` S8 Boss 클리어 시점의 성장 일부를 이어받는 상위 도전으로 설계한다. 표준 S8 Boss가 현재 target을 매우 좁은 점수 차로 통과하는 사례가 확인되었기 때문에, `challenge` 1.5배 target을 유지하려면 이전 런의 성장 축이 실제 진입 보상으로 연결되어야 한다.
+
+Challenge carryover policy:
+
+- 계승 대상: `standard` S8 Boss 클리어 시점의 족보 레벨과 런 중 추가로 적립한 덱 카드.
+- 초기화 대상: 골드, Jester, Item, Quick Slot 보유품, Tool/Gear/Passive 보유품, 마켓 상태, reroll cost, 전투 자원.
+- 유저 고지: challenge 시작 전과 standard S8 클리어 결과 화면에서 “족보 레벨과 추가 덱 카드만 계승되며, 골드/Jester/아이템/마켓 상태는 초기화된다”는 내용을 명시한다.
+- 밸런스 의도: 점수 성장 축은 표준 런의 성과로 이어받고, Jester/Item/골드 경제 축은 challenge에서 새로 검증한다.
+- 적용 상태: 정책 승인 완료, 런타임 구현 및 저장/복원/UI 고지는 아직 open이다. 구현 전까지 현재 코드의 challenge는 새 `RummiRunProgress`로 시작하는 fresh run이다.
+
 Run modifier multiplier:
 
 | Modifier | Target | Reward |
