@@ -10,6 +10,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_catalog_loader.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
@@ -234,6 +235,7 @@ class _CompetitionFullPlayBot {
 
   bool boughtJester = false;
   bool boughtItem = false;
+  bool boughtDeckTile = false;
   bool usedItem = false;
   bool battleTutorialCompleted = false;
   bool marketTutorialCompleted = false;
@@ -733,7 +735,8 @@ class _CompetitionFullPlayBot {
           !marketTutorialCompleted,
     );
     await _buyJestersIfPossible(stage);
-    await _buyQuickSlotItemIfNeeded(stage);
+    await _buyQuickSlotItemsIfPossible(stage);
+    await _buyDeckTileIfPossible(stage);
     await _useMarketItemIfVisible(stage);
   }
 
@@ -762,6 +765,9 @@ class _CompetitionFullPlayBot {
       boughtItem =
           boughtItem ||
           (progress['boughtItemIds'] as List<dynamic>? ?? const []).isNotEmpty;
+      boughtDeckTile =
+          boughtDeckTile ||
+          (progress['addedDeckTiles'] as List<dynamic>? ?? const []).isNotEmpty;
       final blind = session?['blind'] as Map<String, dynamic>?;
       if (blind == null) return;
       final boardDiscardsRemaining = (blind['boardDiscardsRemaining'] as num?)
@@ -910,35 +916,107 @@ class _CompetitionFullPlayBot {
     return true;
   }
 
-  Future<void> _buyQuickSlotItemIfNeeded(int stage) async {
-    if (!config.needsItemPurchase && !config.isFullRun) return;
+  Future<void> _buyDeckTileIfPossible(int stage) async {
+    if (!config.needsMarketPurchase && !config.isFullRun) return;
     await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
     final state = _readGameState();
-    final inventory = state.runProgress?.itemInventory;
-    final hasUsableQuickSlotItem =
-        inventory != null && inventory.quickSlotItemIds.isNotEmpty;
-    if (boughtItem && hasUsableQuickSlotItem) return;
-    final itemOffers =
-        state.marketView?.itemOffers
+    final tileOffers =
+        state.marketView?.tileOffers
             .where((offer) => offer.isAffordable)
             .toList() ??
         const [];
-    if (itemOffers.isNotEmpty) {
-      itemOffers.sort(
+    if (tileOffers.isEmpty) return;
+    tileOffers.sort((a, b) {
+      final scoreDiff = _deckTileBotScore(
+        b.tile,
+      ).compareTo(_deckTileBotScore(a.tile));
+      if (scoreDiff != 0) return scoreDiff;
+      return a.price.compareTo(b.price);
+    });
+    final bestOffer = tileOffers.first;
+    if (!await _selectTileOfferByPrice(bestOffer.price)) return;
+    if (find.text('구매').evaluate().isEmpty) return;
+    await _tapText('구매');
+    boughtDeckTile = true;
+    _record('S$stage market: bought deck tile ${bestOffer.tile.code}');
+    await _pumpFor(const Duration(seconds: 2));
+  }
+
+  int _deckTileBotScore(Tile tile) {
+    final rankScore = tile.number >= 10 ? 18 : tile.number;
+    return 40 + rankScore + tile.baseChipValue;
+  }
+
+  Future<bool> _selectTileOfferByPrice(int price) async {
+    await _tapTextIfVisible('Jester / Slots');
+    await _tapTextIfVisible('Tile');
+    final priceFinder = find.text('${price}G');
+    if (priceFinder.evaluate().isEmpty) return false;
+    await tester.tap(priceFinder.first, warnIfMissed: false);
+    await _pumpFor(const Duration(milliseconds: 600));
+    return true;
+  }
+
+  Future<void> _buyQuickSlotItemsIfPossible(int stage) async {
+    if (!config.needsItemPurchase && !config.isFullRun) return;
+    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
+    await _tapTextIfVisible('Jester / Slots');
+    await _tapTextIfVisible('Q-Slot');
+
+    for (var attempt = 0; attempt < 6; attempt++) {
+      final state = _readGameState();
+      final market = state.marketView;
+      final progress = state.runProgress;
+      if (market == null || progress == null) return;
+      final quickSlotCapacity = progress.quickSlotCapacity(
+        itemCatalog: itemCatalog,
+      );
+      final quickSlotCount = progress.itemInventory.quickSlotItemIds.length;
+      final affordableOffers = market.itemOffers
+          .where(
+            (offer) =>
+                offer.item.placement == ItemPlacement.quickSlot &&
+                offer.isAffordable,
+          )
+          .toList();
+      if (affordableOffers.isEmpty) return;
+      affordableOffers.sort(
         (a, b) => contestFullRunBotItemScore(
           b.item,
           stage: stage,
         ).compareTo(contestFullRunBotItemScore(a.item, stage: stage)),
       );
-      final bestOffer = itemOffers.first;
+      final bestOffer = affordableOffers.first;
+      final offerScore = contestFullRunBotItemScore(
+        bestOffer.item,
+        stage: stage,
+      );
+      if (quickSlotCount >= quickSlotCapacity) {
+        final weakest = _weakestOwnedQuickSlotItem(market, stage: stage);
+        if (weakest == null) return;
+        final weakestScore = contestFullRunBotItemScore(
+          weakest.item!,
+          stage: stage,
+        );
+        final canBuyAfterSelling =
+            market.gold + weakest.item!.sellPrice >= bestOffer.price;
+        if (!canBuyAfterSelling || offerScore <= weakestScore + 25) return;
+        if (!await _sellMarketItemSlotIfVisible(stage, weakest)) return;
+      }
+
       await _selectItemOfferLaneForPlacement(bestOffer.item.placement);
-      if (!await _selectItemOfferByPrice(bestOffer.price)) return;
+      if (!await _selectItemOfferByPrice(
+        bestOffer.price,
+        placement: bestOffer.item.placement,
+      )) {
+        return;
+      }
+      if (find.text('구매').evaluate().isEmpty) return;
+      await _tapText('구매');
+      boughtItem = true;
+      _record('S$stage market: bought Q-Slot Item');
+      await _pumpFor(const Duration(seconds: 2));
     }
-    if (find.text('구매').evaluate().isEmpty) return;
-    await _tapText('구매');
-    boughtItem = true;
-    _record('S$stage market: bought Item');
-    await _pumpFor(const Duration(seconds: 2));
   }
 
   Future<void> _selectItemOfferLaneForPlacement(ItemPlacement placement) async {
@@ -958,14 +1036,71 @@ class _CompetitionFullPlayBot {
     }
   }
 
-  Future<bool> _selectItemOfferByPrice(int price) async {
-    await _tapTextIfVisible('Jester / Slots');
-    await _tapTextIfVisible('Q-Slot');
+  Future<bool> _selectItemOfferByPrice(
+    int price, {
+    required ItemPlacement placement,
+  }) async {
+    await _selectItemOfferLaneForPlacement(placement);
     final priceFinder = find.text('${price}G');
     if (priceFinder.evaluate().isEmpty) return false;
     await tester.tap(priceFinder.first, warnIfMissed: false);
     await _pumpFor(const Duration(milliseconds: 600));
     return true;
+  }
+
+  RummiMarketItemSlotView? _weakestOwnedQuickSlotItem(
+    RummiMarketRuntimeFacade market, {
+    required int stage,
+  }) {
+    final candidates = market.itemSlots
+        .where(
+          (slot) =>
+              slot.placement == ItemPlacement.quickSlot &&
+              !slot.locked &&
+              slot.item != null,
+        )
+        .toList();
+    if (candidates.isEmpty) return null;
+    candidates.sort(
+      (a, b) => contestFullRunBotItemScore(
+        a.item!,
+        stage: stage,
+      ).compareTo(contestFullRunBotItemScore(b.item!, stage: stage)),
+    );
+    return candidates.first;
+  }
+
+  Future<bool> _sellMarketItemSlotIfVisible(
+    int stage,
+    RummiMarketItemSlotView slot,
+  ) async {
+    if (find.text('판매').evaluate().isEmpty) {
+      await _selectOwnedMarketItemSlot(slot);
+    }
+    if (find.text('판매').evaluate().isEmpty) return false;
+    await _tapText('판매');
+    _record('S$stage market: sold Q-Slot Item for replacement');
+    await _pumpFor(const Duration(seconds: 2));
+    return true;
+  }
+
+  Future<void> _selectOwnedMarketItemSlot(RummiMarketItemSlotView slot) async {
+    final slotFinder = find.byWidgetPredicate((widget) {
+      if (widget.runtimeType.toString() != '_MarketItemGhostChip') {
+        return false;
+      }
+      try {
+        final dynamic dynamicWidget = widget;
+        final dynamic widgetSlot = dynamicWidget.slot;
+        return widgetSlot.contentId == slot.contentId &&
+            widgetSlot.slotLabel == slot.slotLabel;
+      } catch (_) {
+        return false;
+      }
+    });
+    if (slotFinder.evaluate().isEmpty) return;
+    await tester.tap(slotFinder.first, warnIfMissed: false);
+    await _pumpFor(const Duration(milliseconds: 500));
   }
 
   Future<void> _useMarketItemIfVisible(int stage) async {
@@ -990,10 +1125,6 @@ class _CompetitionFullPlayBot {
     if (inventory.quickSlotItemIds.isEmpty) return false;
     final choice = _chooseBattleItemToUse(state, plannedAction: plannedAction);
     if (choice == null) return false;
-    if (choice.item.effect.op == 'add_board_move' && gameOverRetries < 2) {
-      return false;
-    }
-
     await _tapTextIfVisible('Slots');
     final slotLabel = find.text('Q${choice.slotIndex + 1}');
     if (slotLabel.evaluate().isEmpty) return false;
@@ -1149,8 +1280,7 @@ class _CompetitionFullPlayBot {
       'add_board_move' =>
         plannedAction.type == CompetitionBattleActionType.moveBoard &&
             (plannedAction.gain ?? 0) >= 70 &&
-            (session.blind.bossModifier != null ||
-                session.blind.targetScore >= 1000),
+            _isBattleTargetLate(session),
       'mark_next_board_move_bonus' => true,
       'add_board_discard' =>
         battlePolicy.chooseScoringBoardDiscard(
@@ -1177,6 +1307,17 @@ class _CompetitionFullPlayBot {
         _chooseDeckNeedleDiscardIndex(item, session) != null,
       _ => false,
     };
+  }
+
+  bool _isBattleTargetLate(RummiPokerGridSession session) {
+    final target = session.blind.targetScore;
+    if (target <= 0) return false;
+    final progress = session.blind.scoreTowardBlind / target;
+    final remainingScore = target - session.blind.scoreTowardBlind;
+    return progress >= 0.65 ||
+        remainingScore <= 300 ||
+        (RummiPokerGridSession.countTilesOnBoard(session.board) >= 20 &&
+            remainingScore <= 520);
   }
 
   bool _hasScoringConfirmNow(

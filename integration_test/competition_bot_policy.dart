@@ -184,6 +184,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _boardDiscardReplacementMinOccupancy = kBoardSize * 4;
   static const int _strategicDrawMaxOccupancy = kBoardSize * 4;
   static const int _strategicUtilityTargetScoreFloor = 1000;
+  static const double _battleLateProgressFloor = 0.65;
   static const int _failedRouteActionPenalty = 900;
   static const int _retryDeckLookaheadTileCount = 5;
   static const int _lateRetryConfirmShortageWindow = 320;
@@ -471,6 +472,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return _bestPlacementPotential(copy, copy.hand.length - 1);
   }
 
+  bool isBattleTargetLateForTest(RummiPokerGridSession session) {
+    return _isBattleTargetLate(session);
+  }
+
   CompetitionBattleAction? bestPlacementForTest(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
@@ -684,6 +689,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     required bool shouldUseStrategicUtility,
   }) {
     if (!shouldUseStrategicUtility) return false;
+    if (!_isBattleTargetLate(session)) return false;
     if (occupancy >= _midBoardMoveMinOccupancy &&
         occupancy <= _midBoardMoveMaxOccupancy) {
       return true;
@@ -701,6 +707,18 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (remainingScore <= 0) return false;
     return occupancy >= _lateDeckBoardMoveMinOccupancy &&
         occupancy <= _midBoardMoveMaxOccupancy;
+  }
+
+  bool _isBattleTargetLate(RummiPokerGridSession session) {
+    final target = session.blind.targetScore;
+    if (target <= 0) return false;
+    final progress = session.blind.scoreTowardBlind / target;
+    if (progress >= _battleLateProgressFloor) return true;
+    final remainingScore = target - session.blind.scoreTowardBlind;
+    if (remainingScore <= _highTargetTwoLineConfirmScoreFloor) return true;
+    final occupancy = RummiPokerGridSession.countTilesOnBoard(session.board);
+    return occupancy >= _bossConfirmMinOccupancy &&
+        remainingScore <= _retryRecoveryConfirmHoldScoreFloor;
   }
 
   bool _isLateDeckBoardMoveBundle(
@@ -1717,11 +1735,13 @@ int _plannerLinePotentialScore(List<Tile?> line) {
   final straightRun = _plannerLongestStraightRun(rankCounts.keys.toList());
 
   var score = 0;
-  if (maxSameRank + missing >= 4) score += 90;
-  if (pairCount >= 2 || pairCount == 1 && missing >= 2) score += 45;
-  if (maxSameRank >= 3 && missing >= 1) score += 35;
-  if (maxSameColor + missing >= 5) score += 65;
-  if (straightRun + missing >= 5) score += 70;
+  if (maxSameColor + missing >= 5) {
+    score += maxSameColor * 85 + (missing == 0 ? 360 : 0);
+  }
+  if (maxSameRank + missing >= 4) score += 70;
+  if (pairCount >= 2 || pairCount == 1 && missing >= 2) score += 40;
+  if (maxSameRank >= 3 && missing >= 1) score += 30;
+  if (straightRun + missing >= 5) score += 45;
   score += tiles.length * 2;
 
   if (missing <= 1 && maxSameRank < 2 && maxSameColor < 4 && straightRun < 4) {

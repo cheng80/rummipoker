@@ -16,38 +16,36 @@ void main() {
       );
     });
 
+    test('prefers late flush scoring over zero-stack ride in S8', () {
+      final rideTheBus = catalog.findById('ride_the_bus')!;
+      final drollJester = catalog.findById('droll_jester')!;
+
+      expect(
+        contestFullRunBotJesterScore(drollJester, stage: 8),
+        greaterThan(contestFullRunBotJesterScore(rideTheBus, stage: 8)),
+      );
+    });
+
     test(
-      'does not replace zero-stack ride with single-condition droll in S8',
+      'prefers color-scored Jester over zero-stack ride before final market',
       () {
         final rideTheBus = catalog.findById('ride_the_bus')!;
-        final drollJester = catalog.findById('droll_jester')!;
+        final gluttonousJester = catalog.findById('gluttonous_jester')!;
 
         expect(
-          contestFullRunBotJesterScore(rideTheBus, stage: 8),
-          greaterThan(contestFullRunBotJesterScore(drollJester, stage: 8) + 40),
+          contestFullRunBotJesterScore(gluttonousJester, stage: 7),
+          greaterThan(contestFullRunBotJesterScore(rideTheBus, stage: 7)),
         );
       },
     );
 
-    test('keeps zero-stack ride through S7 before the final market', () {
-      final rideTheBus = catalog.findById('ride_the_bus')!;
-      final gluttonousJester = catalog.findById('gluttonous_jester')!;
-
-      expect(
-        contestFullRunBotJesterScore(rideTheBus, stage: 7),
-        greaterThan(
-          contestFullRunBotJesterScore(gluttonousJester, stage: 7) + 40,
-        ),
-      );
-    });
-
-    test('does not replace broad clever scoring with narrow droll in S8', () {
+    test('prefers flush scoring over broad clever scoring in S8', () {
       final cleverJester = catalog.findById('clever_jester')!;
       final drollJester = catalog.findById('droll_jester')!;
 
       expect(
-        contestFullRunBotJesterScore(cleverJester, stage: 8),
-        greaterThan(contestFullRunBotJesterScore(drollJester, stage: 8) + 40),
+        contestFullRunBotJesterScore(drollJester, stage: 8),
+        greaterThan(contestFullRunBotJesterScore(cleverJester, stage: 8)),
       );
     });
 
@@ -63,6 +61,17 @@ void main() {
         );
       },
     );
+
+    test('prioritizes flush scoring for the post-contest bot policy', () {
+      final drollJester = catalog.findById('droll_jester')!;
+      final jollyJester = catalog.findById('jolly_jester')!;
+
+      expect(drollJester.conditionType, 'flush');
+      expect(
+        contestFullRunBotJesterScore(drollJester, stage: 7),
+        greaterThan(contestFullRunBotJesterScore(jollyJester, stage: 7)),
+      );
+    });
   });
 
   group('contestFullRunBotItemScore', () {
@@ -97,5 +106,15 @@ void main() {
         );
       },
     );
+
+    test('values flush growth above straight growth in late market', () {
+      final flushStudy = catalog.findById('flush_study')!;
+      final straightStudy = catalog.findById('straight_study')!;
+
+      expect(
+        contestFullRunBotItemScore(flushStudy, stage: 7),
+        greaterThan(contestFullRunBotItemScore(straightStudy, stage: 7)),
+      );
+    });
   });
 }

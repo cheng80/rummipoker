@@ -204,6 +204,86 @@ void main() {
     expect(action.type, CompetitionBattleActionType.confirm);
   });
 
+  test('placement policy prefers building same-color flush lines', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 2,
+      runRandomState: 1,
+      blind: RummiBlindState(targetScore: 439),
+      deck: PokerDeck.fromSnapshot(const []),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.red, 3),
+        null,
+        null,
+        _tile(TileColor.blue, 9),
+        null,
+        null,
+        null,
+        null,
+        _tile(TileColor.black, 9),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.red, 4), _tile(TileColor.yellow, 9)],
+      eliminated: const [],
+    );
+
+    final action = const CompetitionPlannerV2Policy().bestPlacementForTest(
+      session,
+      jesters: const [],
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+    );
+
+    expect(action?.type, CompetitionBattleActionType.place);
+    expect(action?.handIndex, 0);
+    expect(action?.row, 0);
+  });
+
+  test('battle late is based on target progress, not station number', () {
+    final early = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(targetScore: 1200, scoreTowardBlind: 240),
+      deck: PokerDeck.fromSnapshot(const []),
+      board: RummiBoard.fromSnapshot(List<Tile?>.filled(25, null)),
+      hand: const [],
+      eliminated: const [],
+    );
+    final late = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(targetScore: 1200, scoreTowardBlind: 840),
+      deck: PokerDeck.fromSnapshot(const []),
+      board: RummiBoard.fromSnapshot(List<Tile?>.filled(25, null)),
+      hand: const [],
+      eliminated: const [],
+    );
+
+    const policy = CompetitionPlannerV2Policy();
+
+    expect(policy.isBattleTargetLateForTest(early), isFalse);
+    expect(policy.isBattleTargetLateForTest(late), isTrue);
+  });
+
   test('full board chooses a scoring board discard over the loop cell', () {
     final board = RummiBoard.fromSnapshot([
       _tile(TileColor.red, 3),
@@ -651,6 +731,7 @@ void main() {
       runRandomState: 1,
       blind: RummiBlindState(
         targetScore: 1200,
+        scoreTowardBlind: 840,
         boardDiscardsRemaining: 3,
         handDiscardsRemaining: 2,
         boardMovesRemaining: 3,
@@ -678,6 +759,7 @@ void main() {
       runRandomState: 1,
       blind: RummiBlindState(
         targetScore: 1200,
+        scoreTowardBlind: 840,
         boardDiscardsRemaining: 2,
         handDiscardsRemaining: 2,
         boardMovesRemaining: 3,
@@ -787,7 +869,7 @@ void main() {
     },
   );
 
-  test('mid board uses a useful move instead of spending it as evidence', () {
+  test('mid board places a direct flush before spending a useful move', () {
     final session = RummiPokerGridSession.restored(
       runSeed: 91460,
       deckCopiesPerTile: 1,
@@ -837,8 +919,8 @@ void main() {
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, CompetitionBattleActionType.moveBoard);
-    expect(action.gain, greaterThanOrEqualTo(20));
+    expect(action.type, CompetitionBattleActionType.place);
+    expect(action.handIndex, 0);
   });
 
   test(
@@ -905,6 +987,7 @@ void main() {
       runRandomState: 1,
       blind: RummiBlindState(
         targetScore: 1200,
+        scoreTowardBlind: 840,
         boardDiscardsRemaining: 3,
         handDiscardsRemaining: 2,
         boardMovesRemaining: 2,
@@ -1007,68 +1090,71 @@ void main() {
     expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
   });
 
-  test('retry recovery boss can spend another move for duplicate setup', () {
-    final session = RummiPokerGridSession.restored(
-      runSeed: 91460,
-      deckCopiesPerTile: 1,
-      maxHandSize: 1,
-      runRandomState: 1,
-      blind: RummiBlindState(
-        targetScore: 1200,
-        boardDiscardsRemaining: 3,
-        handDiscardsRemaining: 2,
-        boardMovesRemaining: 2,
-        boardMovesMax: 3,
-        bossModifier: RummiBossModifier.singleRankPressure,
-      ),
-      deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
-      board: RummiBoard.fromSnapshot([
-        _tile(TileColor.red, 1),
-        _tile(TileColor.red, 2),
-        _tile(TileColor.red, 3),
-        _tile(TileColor.red, 4),
-        null,
-        _tile(TileColor.red, 9),
-        _tile(TileColor.blue, 7),
-        _tile(TileColor.black, 8),
-        _tile(TileColor.yellow, 9),
-        _tile(TileColor.red, 6),
-        _tile(TileColor.blue, 1),
-        _tile(TileColor.black, 5),
-        _tile(TileColor.blue, 10),
-        _tile(TileColor.black, 11),
-        _tile(TileColor.red, 7),
-        _tile(TileColor.yellow, 10),
-        _tile(TileColor.black, 12),
-        _tile(TileColor.yellow, 13),
-        null,
-        _tile(TileColor.red, 8),
-        null,
-        null,
-        null,
-        null,
-        null,
-      ]),
-      hand: [_tile(TileColor.red, 5)],
-      eliminated: const [],
-      boardMoveHistory: const [
-        BoardMoveRecord(fromRow: 0, fromCol: 0, toRow: 0, toCol: 4),
-      ],
-    );
+  test(
+    'retry recovery boss still places a direct flush before another move',
+    () {
+      final session = RummiPokerGridSession.restored(
+        runSeed: 91460,
+        deckCopiesPerTile: 1,
+        maxHandSize: 1,
+        runRandomState: 1,
+        blind: RummiBlindState(
+          targetScore: 1200,
+          boardDiscardsRemaining: 3,
+          handDiscardsRemaining: 2,
+          boardMovesRemaining: 2,
+          boardMovesMax: 3,
+          bossModifier: RummiBossModifier.singleRankPressure,
+        ),
+        deck: PokerDeck.fromSnapshot([_tile(TileColor.blue, 9)]),
+        board: RummiBoard.fromSnapshot([
+          _tile(TileColor.red, 1),
+          _tile(TileColor.red, 2),
+          _tile(TileColor.red, 3),
+          _tile(TileColor.red, 4),
+          null,
+          _tile(TileColor.red, 9),
+          _tile(TileColor.blue, 7),
+          _tile(TileColor.black, 8),
+          _tile(TileColor.yellow, 9),
+          _tile(TileColor.red, 6),
+          _tile(TileColor.blue, 1),
+          _tile(TileColor.black, 5),
+          _tile(TileColor.blue, 10),
+          _tile(TileColor.black, 11),
+          _tile(TileColor.red, 7),
+          _tile(TileColor.yellow, 10),
+          _tile(TileColor.black, 12),
+          _tile(TileColor.yellow, 13),
+          null,
+          _tile(TileColor.red, 8),
+          null,
+          null,
+          null,
+          null,
+          null,
+        ]),
+        hand: [_tile(TileColor.red, 5)],
+        eliminated: const [],
+        boardMoveHistory: const [
+          BoardMoveRecord(fromRow: 0, fromCol: 0, toRow: 0, toCol: 4),
+        ],
+      );
 
-    final action =
-        const CompetitionPlannerV2Policy(
-          enableRetryRecoveryConfirmDelay: true,
-          retryRecoveryAttempt: 2,
-        ).chooseAction(
-          session,
-          jesters: const [],
-          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
-        );
+      final action =
+          const CompetitionPlannerV2Policy(
+            enableRetryRecoveryConfirmDelay: true,
+            retryRecoveryAttempt: 2,
+          ).chooseAction(
+            session,
+            jesters: const [],
+            runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+          );
 
-    expect(action.type, CompetitionBattleActionType.moveBoard);
-    expect(action.gain, greaterThanOrEqualTo(70));
-  });
+      expect(action.type, CompetitionBattleActionType.place);
+      expect(action.handIndex, 0);
+    },
+  );
 
   test(
     'retry recovery does not chain early board moves before late pressure',
@@ -2081,7 +2167,7 @@ void main() {
       runRandomState: 1,
       blind: RummiBlindState(
         targetScore: 1738,
-        scoreTowardBlind: 1023,
+        scoreTowardBlind: 1200,
         boardDiscardsRemaining: 3,
         handDiscardsRemaining: 2,
         boardMovesRemaining: 3,
@@ -2146,7 +2232,7 @@ void main() {
       runRandomState: 1,
       blind: RummiBlindState(
         targetScore: 1738,
-        scoreTowardBlind: 1023,
+        scoreTowardBlind: 1200,
         boardDiscardsRemaining: 3,
         handDiscardsRemaining: 2,
         boardMovesRemaining: 3,

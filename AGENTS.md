@@ -311,6 +311,7 @@
 - 다국어 작업은 release-visible UI와 release-visible 콘텐츠만 번역 대상으로 삼는다. 디버그 fixture, QA 전용 query, 로그/테스트/개발자 문구처럼 릴리즈 모드에서 노출되지 않는 텍스트는 번역 자산에 넣지 않고, 디버그 fixture 문구는 한국어를 유지한다. 한국어 UI에서도 게임성 때문에 영어로 유지한 `Jester`, `Item`, `Slot`, `Q-Slot`, `Passive`, `Tool`, `Gear`, `Gold`, `Chips`, `Mult`, `Boss`, `Market` 같은 용어는 다른 locale에서도 같은 영어 표기를 유지한다.
 - 아이템/전투/마켓 연출을 보강할 때 pulse, glow, border flash만 반복해 완료로 보지 않는다. 필요한 곳에서는 보조 강조로 쓰되, 핵심 연출은 아이템 source에서 target/result로 이동하는 flight/trail, 선택 대상의 실제 변화, 도착/결과 reveal, card/tile 이동처럼 방향과 원인이 보이는 애니메이션을 우선한다.
 - App Store 제출용 스크린샷 fixture에서 Flutter의 노란/검은 overflow stripe, debug banner, debug 버튼, QA notice가 보이면 생성기 문제가 아니라 런타임 UI 결함으로 본다. 해당 위젯의 모바일 프레임 테스트를 먼저 추가하고 레이아웃을 고친 뒤 iPhone Simulator 원본을 다시 캡처한다.
+- 공모전 이후 신규 레벨링용 풀런봇 정책에서 “후반”은 S5/S6 같은 고정 스테이지가 아니라 해당 전투의 목표 점수 획득 진행도 기준이다. 보드 이동/보드 버림/손패 버림을 후반 조건으로 제한할 때는 현재 점수/목표 점수, 남은 목표 점수, 보드 잠김 위험을 함께 보고, 단순 이력용 소비는 금지한다.
 
 ---
 

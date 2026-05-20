@@ -100,6 +100,12 @@ int contestFullRunBotJesterScore(
         score += 120;
     }
   }
+  switch (card.conditionType) {
+    case 'flush':
+      score += stage >= 6 ? 360 : 220;
+    case 'tile_color_scored':
+      score += stage >= 6 ? 320 : 180;
+  }
   return score;
 }
 
@@ -126,7 +132,12 @@ int contestFullRunBotItemScore(ItemDefinition item, {required int stage}) {
   }
   switch (item.effect.op) {
     case 'add_hand_rank_progress':
-      score += stage >= 4 ? 520 : 300;
+      final handRank = item.effect.value('rank');
+      if (handRank == 'flush' || handRank == 'straightFlush') {
+        score += stage >= 4 ? 680 : 420;
+      } else {
+        score += stage >= 4 ? 520 : 300;
+      }
     case 'peek_deck_discard_one':
       score += stage >= 5 ? 280 : 120;
     case 'mark_next_board_move_bonus':
