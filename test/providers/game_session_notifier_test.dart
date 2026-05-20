@@ -11,6 +11,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_hand_growth.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
@@ -18,6 +19,7 @@ import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/blind_selection_setup.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
+import 'package:rummipoker/services/run_unlock_state_service.dart';
 
 void main() {
   group('GameSessionNotifier', () {
@@ -37,6 +39,44 @@ void main() {
       expect(state.battleView, isNotNull);
       expect(state.activeRunSaveView, isNotNull);
       expect(state.runLoopPhase, GameRunLoopPhase.battle);
+    });
+
+    test('challenge 새 런은 족보 레벨과 추가 덱 카드만 계승한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(
+        runSeed: 12345,
+        difficulty: NewRunDifficulty.challenge,
+        challengeCarryover: ChallengeCarryoverSnapshot(
+          playedHandCounts: {RummiHandRank.flush: 3},
+          handGrowthStates: {
+            RummiHandRank.flush: RummiHandGrowthState(
+              level: 4,
+              progress: 0,
+              requiredProgress: 1,
+            ),
+          },
+          addedDeckTiles: [Tile(color: TileColor.red, number: 7, id: 1)],
+        ),
+      );
+
+      final state = container.read(gameSessionNotifierProvider(args));
+
+      expect(state.runProgress?.gold, RummiEconomyConfig.startingGold);
+      expect(state.runProgress?.ownedJesters, isEmpty);
+      expect(state.runProgress?.itemInventory.ownedItems, isEmpty);
+      expect(state.runProgress?.addedDeckTiles.single.number, 7);
+      expect(
+        state.runProgress
+            ?.snapshotHandGrowthStates()[RummiHandRank.flush]
+            ?.level,
+        4,
+      );
+      expect(
+        state.runProgress?.snapshotPlayedHandCounts()[RummiHandRank.flush],
+        3,
+      );
+      expect(state.session?.deck.remaining, kBasePokerTileCount + 1);
     });
 
     test('파생 facade state가 orchestration 변경과 함께 갱신된다', () {

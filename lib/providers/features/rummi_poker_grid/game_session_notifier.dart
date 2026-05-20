@@ -8,6 +8,7 @@ import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
+import '../../../logic/rummi_poker_grid/models/poker_deck.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_blind_state.dart';
@@ -17,6 +18,7 @@ import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
 import '../../../services/blind_selection_setup.dart';
 import '../../../services/new_run_setup.dart';
+import '../../../services/run_unlock_state_service.dart';
 import 'game_session_state.dart';
 
 class GameSessionArgs {
@@ -28,6 +30,7 @@ class GameSessionArgs {
     this.difficulty = NewRunDifficulty.standard,
     this.runModifier = NewRunModifier.basic,
     this.blindTier = BlindTier.small,
+    this.challengeCarryover,
   });
 
   final int runSeed;
@@ -37,6 +40,7 @@ class GameSessionArgs {
   final NewRunDifficulty difficulty;
   final NewRunModifier runModifier;
   final BlindTier blindTier;
+  final ChallengeCarryoverSnapshot? challengeCarryover;
 
   @override
   bool operator ==(Object other) =>
@@ -47,7 +51,8 @@ class GameSessionArgs {
       other.ruleset == ruleset &&
       other.difficulty == difficulty &&
       other.runModifier == runModifier &&
-      other.blindTier == blindTier;
+      other.blindTier == blindTier &&
+      other.challengeCarryover == challengeCarryover;
 
   @override
   int get hashCode => Object.hash(
@@ -58,6 +63,7 @@ class GameSessionArgs {
     difficulty,
     runModifier,
     blindTier,
+    challengeCarryover,
   );
 }
 
@@ -105,6 +111,15 @@ class GameSessionNotifier
     }
 
     final ruleset = args.ruleset;
+    final challengeCarryover = args.difficulty == NewRunDifficulty.challenge
+        ? args.challengeCarryover
+        : null;
+    final initialDeckSource = challengeCarryover?.addedDeckTiles.isEmpty ?? true
+        ? null
+        : [
+            ...buildStandardPokerDeck(copiesPerTile: ruleset.copiesPerTile),
+            ...challengeCarryover!.addedDeckTiles,
+          ];
     final initialBlind = BlindSelectionSetup.resolveSpec(
       tier: args.blindTier,
       stationIndex: 1,
@@ -117,6 +132,7 @@ class GameSessionNotifier
       runSeed: args.runSeed,
       deckCopiesPerTile: ruleset.copiesPerTile,
       ruleset: ruleset,
+      deckSource: initialDeckSource,
       blind: RummiBlindState(
         targetScore: initialBlind.targetScore,
         boardDiscardsRemaining: initialBlind.boardDiscards,
@@ -134,6 +150,13 @@ class GameSessionNotifier
       ..passiveRerollCost = _initialRerollCost(args.difficulty)
       ..toolRerollCost = _initialRerollCost(args.difficulty)
       ..gearRerollCost = _initialRerollCost(args.difficulty);
+    if (challengeCarryover != null) {
+      runProgress.applyChallengeCarryover(
+        playedHandCounts: challengeCarryover.playedHandCounts,
+        handGrowthStates: challengeCarryover.handGrowthStates,
+        addedDeckTiles: challengeCarryover.addedDeckTiles,
+      );
+    }
     runProgress.recordSeenBossModifier(initialBlind.bossModifier?.id);
     return _withDerivedViews(
       GameSessionState(

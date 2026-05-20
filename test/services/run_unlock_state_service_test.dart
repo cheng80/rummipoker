@@ -2,6 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:rummipoker/app_config.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_hand_growth.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/services/run_unlock_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
@@ -107,6 +110,37 @@ void main() {
       expect(
         state.earnedMemoryCardIds,
         contains('memory_card_expired_standard_s2'),
+      );
+    });
+
+    test('challenge 계승 snapshot을 저장 후 다시 읽을 수 있다', () async {
+      await RunUnlockStateService.saveChallengeCarryover(
+        const ChallengeCarryoverSnapshot(
+          playedHandCounts: {RummiHandRank.flush: 3},
+          handGrowthStates: {
+            RummiHandRank.flush: RummiHandGrowthState(
+              level: 4,
+              progress: 0,
+              requiredProgress: 1,
+            ),
+          },
+          addedDeckTiles: [Tile(color: TileColor.blue, number: 9, id: 1)],
+        ),
+      );
+
+      final state = await RunUnlockStateService.load();
+
+      expect(
+        state.challengeCarryover?.handGrowthStates[RummiHandRank.flush]?.level,
+        4,
+      );
+      expect(
+        state.challengeCarryover?.playedHandCounts[RummiHandRank.flush],
+        3,
+      );
+      expect(
+        state.challengeCarryover?.addedDeckTiles.single.color,
+        TileColor.blue,
       );
     });
   });

@@ -267,19 +267,32 @@ run_flutter_drive_and_capture() {
 
 persist_checkpoint() {
   local log_file="$1"
+  mkdir -p "$BROWSER_PROFILE_DIR"
+
   local checkpoint
   checkpoint="$(grep -a 'CONTEST_BOT_CHECKPOINT_B64:' "$log_file" 2>/dev/null \
     | tail -1 | sed 's/^.*CONTEST_BOT_CHECKPOINT_B64://')"
-  if [[ -z "$checkpoint" ]]; then
-    return
+  if [[ -n "$checkpoint" ]]; then
+    printf 'CONTEST_BOT_RESUME_SAVE_B64=%s\n' "$checkpoint" \
+      >"$BROWSER_PROFILE_DIR/latest_checkpoint.env"
   fi
-  mkdir -p "$BROWSER_PROFILE_DIR"
-  printf 'CONTEST_BOT_RESUME_SAVE_B64=%s\n' "$checkpoint" \
-    >"$BROWSER_PROFILE_DIR/latest_checkpoint.env"
+
+  local carryover
+  carryover="$(grep -a 'CONTEST_BOT_CHALLENGE_CARRYOVER_B64:' "$log_file" 2>/dev/null \
+    | tail -1 | sed 's/^.*CONTEST_BOT_CHALLENGE_CARRYOVER_B64://')"
+  if [[ -n "$carryover" ]]; then
+    printf 'CONTEST_BOT_CHALLENGE_CARRYOVER_B64=%s\n' "$carryover" \
+      >"$BROWSER_PROFILE_DIR/latest_challenge_carryover.env"
+  fi
 }
 
 echo "Output: $OUTPUT_DIR"
 cleanup_bot_processes
+CARRYOVER_ENV_BACKUP=""
+if [[ "$DIFFICULTY" == "challenge" && -f "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env" ]]; then
+  CARRYOVER_ENV_BACKUP="$(mktemp /tmp/rummipoker_challenge_carryover.XXXXXX.env)"
+  cp "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env" "$CARRYOVER_ENV_BACKUP"
+fi
 if [[ "$RESUME_ACTIVE_RUN" != "true" ]]; then
   if [[ -z "$BROWSER_PROFILE_DIR" || "$BROWSER_PROFILE_DIR" == "/" ]]; then
     echo "Refusing to clear unsafe browser profile dir: $BROWSER_PROFILE_DIR" >&2
@@ -289,9 +302,17 @@ if [[ "$RESUME_ACTIVE_RUN" != "true" ]]; then
 fi
 start_chromedriver
 mkdir -p "$BROWSER_PROFILE_DIR"
+if [[ -n "$CARRYOVER_ENV_BACKUP" && -f "$CARRYOVER_ENV_BACKUP" ]]; then
+  cp "$CARRYOVER_ENV_BACKUP" "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env"
+  rm -f "$CARRYOVER_ENV_BACKUP"
+fi
 RESUME_DEFINE_ARG=""
 if [[ "$RESUME_ACTIVE_RUN" == "true" && -f "$BROWSER_PROFILE_DIR/latest_checkpoint.env" ]]; then
   RESUME_DEFINE_ARG="--dart-define-from-file=$BROWSER_PROFILE_DIR/latest_checkpoint.env"
+fi
+CARRYOVER_DEFINE_ARG=""
+if [[ -f "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env" ]]; then
+  CARRYOVER_DEFINE_ARG="--dart-define-from-file=$BROWSER_PROFILE_DIR/latest_challenge_carryover.env"
 fi
 
 if [[ "$PUB_GET" -eq 1 ]]; then
@@ -307,6 +328,7 @@ run_flutter_drive_and_capture "$OUTPUT_DIR/10_contest_full_run_bot.log" \
     --driver-port="$CHROMEDRIVER_PORT" \
     --no-keep-app-running \
     ${RESUME_DEFINE_ARG:+"$RESUME_DEFINE_ARG"} \
+    ${CARRYOVER_DEFINE_ARG:+"$CARRYOVER_DEFINE_ARG"} \
     --dart-define=CONTEST_BOT_MODE=full \
     --dart-define=CONTEST_BOT_SEED="$SEED" \
     --dart-define=CONTEST_BOT_DIFFICULTY="$DIFFICULTY" \

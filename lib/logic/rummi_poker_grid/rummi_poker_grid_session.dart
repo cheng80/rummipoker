@@ -239,17 +239,20 @@ class RummiPokerGridSession {
     RummiRuleset ruleset = RummiRuleset.currentDefaults,
     RummiBlindState? blind,
     PokerDeck? deck,
+    List<Tile>? deckSource,
     RummiBoard? board,
   }) {
     final s = runSeed ?? _rollSeed();
     final rng = SeededRandom(s);
+    final initialDeck =
+        deck ?? PokerDeck.shuffled(rng, deckSource, deckCopiesPerTile);
     return RummiPokerGridSession._(
       runSeed: s,
       runRandom: rng,
       ruleset: ruleset,
       deckCopiesPerTile: deckCopiesPerTile,
       initialDeckSizeForBlind: _initialDeckSizeFor(
-        deck: deck,
+        deck: initialDeck,
         board: board,
         deckCopiesPerTile: deckCopiesPerTile,
       ),
@@ -261,7 +264,7 @@ class RummiPokerGridSession {
             boardDiscardsRemaining: 4,
             handDiscardsRemaining: 2,
           ),
-      deck: deck ?? PokerDeck.shuffled(rng, null, deckCopiesPerTile),
+      deck: initialDeck,
       board: board ?? RummiBoard(),
       hand: <Tile>[],
       eliminated: <Tile>[],

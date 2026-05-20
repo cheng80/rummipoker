@@ -1248,6 +1248,23 @@ class RummiRunProgress {
   Set<RummiSlotUnlockKind> snapshotPendingSlotUnlockPresentations() =>
       Set<RummiSlotUnlockKind>.unmodifiable(_pendingSlotUnlockPresentations);
 
+  void applyChallengeCarryover({
+    Map<RummiHandRank, int> playedHandCounts = const <RummiHandRank, int>{},
+    Map<RummiHandRank, RummiHandGrowthState> handGrowthStates =
+        const <RummiHandRank, RummiHandGrowthState>{},
+    List<Tile> addedDeckTiles = const <Tile>[],
+  }) {
+    _playedHandCounts
+      ..clear()
+      ..addAll(playedHandCounts);
+    _handGrowthStates
+      ..clear()
+      ..addAll(handGrowthStates);
+    this.addedDeckTiles
+      ..clear()
+      ..addAll(addedDeckTiles);
+  }
+
   bool addHandRankProgress(RummiHandRank rank, {int amount = 1}) {
     if (amount <= 0 || isDeadLineRank(rank)) {
       return false;

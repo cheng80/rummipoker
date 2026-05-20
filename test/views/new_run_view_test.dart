@@ -57,7 +57,7 @@ void main() {
     await tester.runAsync(() async {
       await Future<void>.delayed(Duration.zero);
     });
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(SoundManager.debugCurrentBgm, AssetPaths.bgmMenu);
 

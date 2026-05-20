@@ -446,12 +446,14 @@ class GameCashOutSheet extends StatefulWidget {
     this.autoEnterMarketOnLoad = false,
     this.completesRun = false,
     this.insightReward = 0,
+    this.showsChallengeCarryoverNotice = false,
   });
 
   final RummiSettlementRuntimeFacade settlement;
   final bool autoEnterMarketOnLoad;
   final bool completesRun;
   final int insightReward;
+  final bool showsChallengeCarryoverNotice;
 
   @override
   State<GameCashOutSheet> createState() => _GameCashOutSheetState();
@@ -655,6 +657,14 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                                     child: const _GameCashOutEndlessNotice(),
                                   ),
                                 ],
+                                if (widget.showsChallengeCarryoverNotice) ...[
+                                  const SizedBox(height: 10),
+                                  _GameCashOutReveal(
+                                    visible: finalStepVisible,
+                                    child:
+                                        const _GameCashOutChallengeCarryoverNotice(),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -748,6 +758,40 @@ class _GameCashOutEndlessNotice extends StatelessWidget {
               softWrap: true,
               style: TextStyle(
                 color: Color(0xFFFFE5C2),
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GameCashOutChallengeCarryoverNotice extends StatelessWidget {
+  const _GameCashOutChallengeCarryoverNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF12283E),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF66C7FF), width: 1.2),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.upgrade_rounded, color: Color(0xFF9FE0FF), size: 21),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '도전 모드는 족보 레벨과 추가 덱 카드만 계승합니다. 골드, Jester, 아이템, 마켓 상태는 새 런에서 초기화됩니다.',
+              softWrap: true,
+              style: TextStyle(
+                color: Color(0xFFE8F7FF),
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
                 height: 1.25,

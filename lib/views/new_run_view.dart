@@ -237,6 +237,12 @@ class _NewRunViewState extends State<NewRunView> {
               ),
               const SizedBox(height: 18),
             ],
+            if (_selectedDifficulty == NewRunDifficulty.challenge) ...[
+              _ChallengeCarryoverNotice(
+                carryover: _unlockState.challengeCarryover,
+              ),
+              const SizedBox(height: 18),
+            ],
             HomeSection(
               title: '런 규칙',
               subtitle: _unlockState.insight > 0 ? '기억 카드 보유' : '기억 카드 없음',
@@ -272,6 +278,73 @@ class _NewRunViewState extends State<NewRunView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ChallengeCarryoverNotice extends StatelessWidget {
+  const _ChallengeCarryoverNotice({required this.carryover});
+
+  final ChallengeCarryoverSnapshot? carryover;
+
+  @override
+  Widget build(BuildContext context) {
+    final grownRankCount = carryover?.grownRankCount ?? 0;
+    final addedDeckCount = carryover?.addedDeckTiles.length ?? 0;
+    final hasCarryover = carryover?.hasContent ?? false;
+    final summary = hasCarryover
+        ? '계승: 성장 족보 $grownRankCount개 · 추가 덱 $addedDeckCount장'
+        : '계승 정보 없음 · 표준 S8 Boss 클리어 후 갱신됩니다.';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF102D3A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF67D0FF), width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.upgrade_rounded, color: Color(0xFF9FE0FF), size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '도전 계승',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  summary,
+                  style: const TextStyle(
+                    color: Color(0xFFE8F7FF),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '족보 레벨과 추가 덱 카드만 유지됩니다. 골드, Jester, 아이템, 마켓 상태는 새 런에서 초기화됩니다.',
+                  style: TextStyle(
+                    color: Color(0xFFB7D7E8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

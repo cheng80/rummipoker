@@ -1,8 +1,87 @@
 import 'dart:convert';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/hand_rank.dart';
+import '../logic/rummi_poker_grid/models/tile.dart';
+import '../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import '../utils/storage_helper.dart';
 import 'new_run_setup.dart';
+
+class ChallengeCarryoverSnapshot {
+  const ChallengeCarryoverSnapshot({
+    this.playedHandCounts = const <RummiHandRank, int>{},
+    this.handGrowthStates = const <RummiHandRank, RummiHandGrowthState>{},
+    this.addedDeckTiles = const <Tile>[],
+  });
+
+  factory ChallengeCarryoverSnapshot.fromJson(Map<String, dynamic> json) {
+    return ChallengeCarryoverSnapshot(
+      playedHandCounts: _rankIntMap(json['playedHandCounts']),
+      handGrowthStates: _growthStateMap(json['handGrowthStates']),
+      addedDeckTiles: (json['addedDeckTiles'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((value) => Tile.fromJson(value.cast<String, dynamic>()))
+          .toList(growable: false),
+    );
+  }
+
+  final Map<RummiHandRank, int> playedHandCounts;
+  final Map<RummiHandRank, RummiHandGrowthState> handGrowthStates;
+  final List<Tile> addedDeckTiles;
+
+  bool get hasContent =>
+      playedHandCounts.isNotEmpty ||
+      handGrowthStates.isNotEmpty ||
+      addedDeckTiles.isNotEmpty;
+
+  int get grownRankCount =>
+      handGrowthStates.values.where((state) => state.level > 1).length;
+
+  Map<String, dynamic> toJson() => {
+    'playedHandCounts': playedHandCounts.map(
+      (key, value) => MapEntry(key.name, value),
+    ),
+    'handGrowthStates': handGrowthStates.map(
+      (key, value) => MapEntry(key.name, value.toJson()),
+    ),
+    'addedDeckTiles': addedDeckTiles.map((tile) => tile.toJson()).toList(),
+  };
+
+  static Map<RummiHandRank, int> _rankIntMap(Object? value) {
+    final raw = value as Map? ?? const {};
+    final out = <RummiHandRank, int>{};
+    for (final entry in raw.entries) {
+      final rank = _tryParseRank('${entry.key}');
+      if (rank == null) continue;
+      out[rank] = (entry.value as num?)?.toInt() ?? 0;
+    }
+    return Map<RummiHandRank, int>.unmodifiable(out);
+  }
+
+  static Map<RummiHandRank, RummiHandGrowthState> _growthStateMap(
+    Object? value,
+  ) {
+    final raw = value as Map? ?? const {};
+    final out = <RummiHandRank, RummiHandGrowthState>{};
+    for (final entry in raw.entries) {
+      final rank = _tryParseRank('${entry.key}');
+      final stateJson = entry.value;
+      if (rank == null || stateJson is! Map) continue;
+      out[rank] = RummiHandGrowthState.fromJson(
+        rank,
+        stateJson.cast<String, dynamic>(),
+      );
+    }
+    return Map<RummiHandRank, RummiHandGrowthState>.unmodifiable(out);
+  }
+
+  static RummiHandRank? _tryParseRank(String value) {
+    for (final rank in RummiHandRank.values) {
+      if (rank.name == value) return rank;
+    }
+    return null;
+  }
+}
 
 class RunUnlockState {
   const RunUnlockState({
@@ -18,6 +97,7 @@ class RunUnlockState {
     this.seenBossModifierIds = const <String>{},
     this.clearedStationKeys = const <String>{},
     this.earnedMemoryCardIds = const <String>{},
+    this.challengeCarryover,
   });
 
   factory RunUnlockState.defaults() {
@@ -67,6 +147,7 @@ class RunUnlockState {
       seenBossModifierIds: _stringSet(json['seenBossModifierIds']),
       clearedStationKeys: _stringSet(json['clearedStationKeys']),
       earnedMemoryCardIds: _stringSet(json['earnedMemoryCardIds']),
+      challengeCarryover: _challengeCarryover(json['challengeCarryover']),
     );
   }
 
@@ -82,6 +163,7 @@ class RunUnlockState {
   final Set<String> seenBossModifierIds;
   final Set<String> clearedStationKeys;
   final Set<String> earnedMemoryCardIds;
+  final ChallengeCarryoverSnapshot? challengeCarryover;
 
   Map<String, dynamic> toJson() => {
     'unlockedDifficultyNames': unlockedDifficultyNames.toList()..sort(),
@@ -96,6 +178,8 @@ class RunUnlockState {
     'seenBossModifierIds': seenBossModifierIds.toList()..sort(),
     'clearedStationKeys': clearedStationKeys.toList()..sort(),
     'earnedMemoryCardIds': earnedMemoryCardIds.toList()..sort(),
+    if (challengeCarryover != null)
+      'challengeCarryover': challengeCarryover!.toJson(),
   };
 
   bool isDifficultyUnlocked(NewRunDifficulty difficulty) {
@@ -127,6 +211,7 @@ class RunUnlockState {
     Set<String>? seenBossModifierIds,
     Set<String>? clearedStationKeys,
     Set<String>? earnedMemoryCardIds,
+    Object? challengeCarryover = _unset,
   }) {
     return RunUnlockState(
       unlockedDifficultyNames:
@@ -144,13 +229,26 @@ class RunUnlockState {
       seenBossModifierIds: seenBossModifierIds ?? this.seenBossModifierIds,
       clearedStationKeys: clearedStationKeys ?? this.clearedStationKeys,
       earnedMemoryCardIds: earnedMemoryCardIds ?? this.earnedMemoryCardIds,
+      challengeCarryover: challengeCarryover == _unset
+          ? this.challengeCarryover
+          : challengeCarryover as ChallengeCarryoverSnapshot?,
     );
   }
+
+  static const Object _unset = Object();
 
   static Set<String> _stringSet(Object? value) {
     return (value as List<dynamic>? ?? const <dynamic>[])
         .whereType<String>()
         .toSet();
+  }
+
+  static ChallengeCarryoverSnapshot? _challengeCarryover(Object? value) {
+    if (value is! Map) return null;
+    final snapshot = ChallengeCarryoverSnapshot.fromJson(
+      value.cast<String, dynamic>(),
+    );
+    return snapshot.hasContent ? snapshot : null;
   }
 }
 
@@ -201,6 +299,24 @@ class RunUnlockStateService {
     }
   }
 
+  static RunUnlockState loadSync() {
+    final raw = StorageHelper.readString(
+      StorageKeys.runUnlockStateV1,
+      defaultValue: '',
+    );
+    if (raw.isEmpty) return RunUnlockState.defaults();
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid unlock state payload');
+      }
+      return RunUnlockState.fromJson(decoded);
+    } catch (_) {
+      return RunUnlockState.defaults();
+    }
+  }
+
   static Future<void> save(RunUnlockState state) {
     return StorageHelper.write(
       StorageKeys.runUnlockStateV1,
@@ -236,6 +352,14 @@ class RunUnlockStateService {
     if (amount <= 0) return;
     final current = await load();
     await save(current.copyWith(insight: current.insight + amount));
+  }
+
+  static Future<void> saveChallengeCarryover(
+    ChallengeCarryoverSnapshot snapshot,
+  ) async {
+    if (!snapshot.hasContent) return;
+    final current = await load();
+    await save(current.copyWith(challengeCarryover: snapshot));
   }
 
   static Future<void> recordRunCollection(RunCollectionUpdate update) async {

@@ -61,7 +61,7 @@ Challenge carryover policy:
 - 초기화 대상: 골드, Jester, Item, Quick Slot 보유품, Tool/Gear/Passive 보유품, 마켓 상태, reroll cost, 전투 자원.
 - 유저 고지: challenge 시작 전과 standard S8 클리어 결과 화면에서 “족보 레벨과 추가 덱 카드만 계승되며, 골드/Jester/아이템/마켓 상태는 초기화된다”는 내용을 명시한다.
 - 밸런스 의도: 점수 성장 축은 표준 런의 성과로 이어받고, Jester/Item/골드 경제 축은 challenge에서 새로 검증한다.
-- 적용 상태: 정책 승인 완료, 런타임 구현 및 저장/복원/UI 고지는 아직 open이다. 구현 전까지 현재 코드의 challenge는 새 `RummiRunProgress`로 시작하는 fresh run이다.
+- 적용 상태: 런타임 적용 완료. `standard` S8 Boss 클리어 시 challenge 계승 snapshot을 저장하고, `challenge` 새 런 시작 시 족보 레벨/완성 기록과 추가 덱 카드만 초기 `RummiRunProgress`와 첫 전투 덱에 주입한다. 새 런 화면과 S8 클리어 정산창에는 계승/초기화 대상을 명시한다.
 
 Run modifier multiplier:
 

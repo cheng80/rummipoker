@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_hand_growth.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/services/run_progression_service.dart';
 import 'package:rummipoker/services/run_unlock_state_service.dart';
@@ -37,6 +40,15 @@ void main() {
           difficulty: NewRunDifficulty.standard,
           reachedStageIndex: 9,
           defeatedBossCount: 3,
+          playedHandCounts: {RummiHandRank.flush: 4},
+          handGrowthStates: {
+            RummiHandRank.flush: RummiHandGrowthState(
+              level: 5,
+              progress: 0,
+              requiredProgress: 1,
+            ),
+          },
+          addedDeckTiles: [Tile(color: TileColor.red, number: 7, id: 1)],
         ),
       );
 
@@ -44,6 +56,15 @@ void main() {
       expect(state.isDifficultyCleared(NewRunDifficulty.standard), isTrue);
       expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isTrue);
       expect(state.insight, 27);
+      expect(
+        state.challengeCarryover?.handGrowthStates[RummiHandRank.flush]?.level,
+        5,
+      );
+      expect(
+        state.challengeCarryover?.playedHandCounts[RummiHandRank.flush],
+        4,
+      );
+      expect(state.challengeCarryover?.addedDeckTiles.single.number, 7);
     });
 
     test('도전 클리어는 추가 난이도를 해금하지 않는다', () async {

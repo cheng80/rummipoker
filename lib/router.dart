@@ -7,6 +7,7 @@ import 'services/active_run_save_service.dart';
 import 'services/blind_selection_setup.dart';
 import 'services/debug_run_fixture_service.dart';
 import 'services/new_run_setup.dart';
+import 'services/run_unlock_state_service.dart';
 import 'views/archive_view.dart';
 import 'views/blind_select_view.dart';
 import 'views/game_view.dart';
@@ -88,6 +89,12 @@ final GoRouter appRouter = GoRouter(
         final difficulty = NewRunSetup.parseDifficulty(
           state.uri.queryParameters['difficulty'],
         );
+        final challengeCarryover =
+            restoredRun == null &&
+                fixtureId == null &&
+                difficulty == NewRunDifficulty.challenge
+            ? RunUnlockStateService.loadSync().challengeCarryover
+            : null;
         final runModifier = NewRunModifier.parse(
           state.uri.queryParameters['modifier'],
         );
@@ -105,6 +112,7 @@ final GoRouter appRouter = GoRouter(
             restoredRun: restoredRun,
             debugFixtureId: fixtureId,
             difficulty: difficulty,
+            challengeCarryover: challengeCarryover,
             runModifier: runModifier,
             blindTier: blindTier,
             autoAdvanceMarketOnLoad: autoAdvanceMarketOnLoad,

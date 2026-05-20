@@ -34,6 +34,7 @@ import '../services/blind_selection_setup.dart';
 import '../services/debug_run_fixture_service.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_progression_service.dart';
+import '../services/run_unlock_state_service.dart';
 import '../services/tutorial_state_service.dart';
 import '../utils/common_ui.dart';
 import 'game/game_presentation_timings.dart';
@@ -56,6 +57,7 @@ class GameView extends ConsumerStatefulWidget {
     this.restoredRun,
     this.debugFixtureId,
     this.difficulty = NewRunDifficulty.standard,
+    this.challengeCarryover,
     this.runModifier = NewRunModifier.basic,
     this.blindTier = BlindTier.small,
     this.autoAdvanceMarketOnLoad = false,
@@ -74,6 +76,7 @@ class GameView extends ConsumerStatefulWidget {
   final ActiveRunRuntimeState? restoredRun;
   final String? debugFixtureId;
   final NewRunDifficulty difficulty;
+  final ChallengeCarryoverSnapshot? challengeCarryover;
   final NewRunModifier runModifier;
   final BlindTier blindTier;
   final bool autoAdvanceMarketOnLoad;
@@ -287,6 +290,7 @@ class _GameViewState extends ConsumerState<GameView>
       restoredRun: widget.restoredRun,
       debugFixtureId: widget.debugFixtureId,
       difficulty: widget.difficulty,
+      challengeCarryover: widget.challengeCarryover,
       runModifier: widget.runModifier,
       blindTier: widget.blindTier,
     );
@@ -918,6 +922,9 @@ class _GameViewState extends ConsumerState<GameView>
       boughtItemIds: _runProgressCollection.boughtItemIds,
       seenBossModifierIds: _runProgressCollection.seenBossModifierIds,
       clearedStationKeys: _runProgressCollection.clearedStationKeys,
+      playedHandCounts: _runProgressCollection.snapshotPlayedHandCounts(),
+      handGrowthStates: _runProgressCollection.snapshotHandGrowthStates(),
+      addedDeckTiles: List<Tile>.from(_runProgressCollection.addedDeckTiles),
     );
   }
 
@@ -1615,6 +1622,8 @@ class _GameViewState extends ConsumerState<GameView>
     final insightReward = completesRun
         ? RunProgressionService.calculateInsightReward(_completedRunSummary())
         : 0;
+    final showsChallengeCarryoverNotice =
+        completesRun && widget.difficulty == NewRunDifficulty.standard;
     return showGeneralDialog<GameCashOutAction>(
       context: context,
       barrierLabel: '정산 결과',
@@ -1639,6 +1648,7 @@ class _GameViewState extends ConsumerState<GameView>
                     (autoEnterMarketOnLoad || widget.autoEnterMarketOnCashOut),
                 completesRun: completesRun,
                 insightReward: insightReward,
+                showsChallengeCarryoverNotice: showsChallengeCarryoverNotice,
               ),
             ),
           ),

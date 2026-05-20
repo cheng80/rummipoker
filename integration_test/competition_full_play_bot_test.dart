@@ -21,7 +21,9 @@ import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/blind_selection_setup.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
+import 'package:rummipoker/services/run_unlock_state_service.dart';
 import 'package:rummipoker/services/tutorial_state_service.dart';
+import 'package:rummipoker/utils/common_ui.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
 import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
@@ -71,6 +73,7 @@ class _ContestBotConfig {
     required this.maxGameOverRetries,
     required this.resumeActiveRun,
     required this.resumeSaveBase64,
+    required this.challengeCarryoverBase64,
     required this.tutorialsAlreadySeen,
     required this.actionDelay,
     required this.targetStage,
@@ -109,6 +112,9 @@ class _ContestBotConfig {
       resumeSaveBase64: const String.fromEnvironment(
         'CONTEST_BOT_RESUME_SAVE_B64',
       ),
+      challengeCarryoverBase64: const String.fromEnvironment(
+        'CONTEST_BOT_CHALLENGE_CARRYOVER_B64',
+      ),
       tutorialsAlreadySeen: const bool.fromEnvironment(
         'CONTEST_BOT_TUTORIALS_ALREADY_SEEN',
       ),
@@ -146,6 +152,7 @@ class _ContestBotConfig {
   final int maxGameOverRetries;
   final bool resumeActiveRun;
   final String resumeSaveBase64;
+  final String challengeCarryoverBase64;
   final bool tutorialsAlreadySeen;
   final Duration actionDelay;
   final int targetStage;
@@ -345,6 +352,7 @@ class _CompetitionFullPlayBot {
     if (!config.resumeActiveRun) {
       await StorageHelper.erase();
     }
+    await _restoreChallengeCarryoverIfConfigured();
     if (config.tutorialsAlreadySeen) {
       await TutorialStateService.markBattleIntroSeen();
       await TutorialStateService.markMarketIntroSeen();
@@ -426,11 +434,9 @@ class _CompetitionFullPlayBot {
     await tester.tap(openButton);
     await _pumpFor(const Duration(seconds: 2));
 
-    if (find.text('전투 시작').evaluate().isNotEmpty) {
-      await tester.tap(find.text('전투 시작'));
-      await _pumpFor(const Duration(seconds: 1));
-    }
+    await _dismissBlockingDialogsIfVisible();
     await _pumpUntilVisible(find.text('드로우'));
+    await _dismissBlockingDialogsIfVisible();
     await _completeTutorialIfVisible(
       kind: _ContestTutorialKind.battle,
       waitForAppearance:
@@ -444,6 +450,10 @@ class _CompetitionFullPlayBot {
   Future<void> _playCurrentBattle() async {
     var step = 0;
     while (step < config.maxBattleActions) {
+      if (await _dismissBlockingDialogsIfVisible()) {
+        await _pumpUntilVisible(find.text('드로우'));
+        continue;
+      }
       if (await _completeTutorialIfVisible(kind: _ContestTutorialKind.battle)) {
         await _pumpUntilVisible(find.text('드로우'));
         continue;
@@ -668,6 +678,7 @@ class _CompetitionFullPlayBot {
 
     if (stage == 8 && tier == BlindTier.boss) {
       _resetBattleRetryLearning();
+      _emitChallengeCarryover();
       await _tapText('런 완료');
       _record('S8 boss: run complete');
       await _pumpFor(const Duration(seconds: 3));
@@ -679,6 +690,46 @@ class _CompetitionFullPlayBot {
     _record('S$stage ${tier.name}: cashout -> market');
     await _pumpUntilVisible(find.text('다음 Station'));
     await _saveBotCheckpoint();
+  }
+
+  Future<void> _restoreChallengeCarryoverIfConfigured() async {
+    if (config.difficulty != NewRunDifficulty.challenge ||
+        config.challengeCarryoverBase64.isEmpty) {
+      return;
+    }
+    final decoded = utf8.decode(base64Decode(config.challengeCarryoverBase64));
+    final json = jsonDecode(decoded) as Map<String, dynamic>;
+    await RunUnlockStateService.save(RunUnlockState.fromJson(json));
+    final carryover = RunUnlockState.fromJson(json).challengeCarryover;
+    _record(
+      'challenge carryover restored '
+      'grown=${carryover?.grownRankCount ?? 0} '
+      'deck=${carryover?.addedDeckTiles.length ?? 0}',
+    );
+  }
+
+  void _emitChallengeCarryover() {
+    if (config.difficulty != NewRunDifficulty.standard) return;
+    final progress = _readGameState().runProgress!;
+    final state = RunUnlockState(
+      unlockedDifficultyNames: const <String>{'challenge', 'standard'},
+      clearedDifficultyNames: const <String>{'standard'},
+      availableDeckIds: const <String>{'basic_deck'},
+      unlockedRunModifierIds: const <String>{'basic'},
+      insight: 0,
+      challengeCarryover: ChallengeCarryoverSnapshot(
+        playedHandCounts: progress.snapshotPlayedHandCounts(),
+        handGrowthStates: progress.snapshotHandGrowthStates(),
+        addedDeckTiles: List<Tile>.from(progress.addedDeckTiles),
+      ),
+    );
+    final encoded = base64Encode(utf8.encode(jsonEncode(state.toJson())));
+    debugPrint('CONTEST_BOT_CHALLENGE_CARRYOVER_B64:$encoded');
+    _record(
+      'challenge carryover exported '
+      'grown=${state.challengeCarryover?.grownRankCount ?? 0} '
+      'deck=${state.challengeCarryover?.addedDeckTiles.length ?? 0}',
+    );
   }
 
   void _resetBattleRetryLearning() {
@@ -1628,6 +1679,7 @@ class _CompetitionFullPlayBot {
       restoredRun: gameView.restoredRun,
       debugFixtureId: gameView.debugFixtureId,
       difficulty: gameView.difficulty,
+      challengeCarryover: gameView.challengeCarryover,
       runModifier: gameView.runModifier,
       blindTier: gameView.blindTier,
     );
@@ -1655,7 +1707,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _tapText(String text) async {
     final finder = await _pumpUntilTappableText(text);
-    await tester.tap(finder.last, warnIfMissed: false);
+    await tester.tap(finder.last);
   }
 
   Future<void> _tapPrimaryActionUntilAnyVisible(
@@ -1672,7 +1724,7 @@ class _CompetitionFullPlayBot {
       if (actionFinder.evaluate().isNotEmpty) {
         // 동일 라벨이 transition 뒤쪽 위젯 트리에 남는 경우가 있어 하단 주요 액션은
         // 현재 route에서 마지막으로 그려진 버튼을 우선 누른다.
-        await tester.tap(actionFinder.last, warnIfMissed: false);
+        await tester.tap(actionFinder.last);
         await _pumpFor(const Duration(milliseconds: 800));
       }
     }
@@ -1682,8 +1734,32 @@ class _CompetitionFullPlayBot {
   Future<void> _tapTextIfVisible(String text) async {
     final finder = _visibleButtonOrTextFinder(text);
     if (finder.evaluate().isEmpty) return;
-    await tester.tap(finder.first, warnIfMissed: false);
+    await tester.tap(finder.last);
     await _pumpFor(const Duration(milliseconds: 500));
+  }
+
+  Future<bool> _dismissBlockingDialogsIfVisible() async {
+    if (find.byType(Dialog).evaluate().isEmpty &&
+        find.byType(GameModalCard).evaluate().isEmpty) {
+      return false;
+    }
+    for (final label in const ['전투 시작', '확인', '닫기']) {
+      final buttonFinder = find
+          .widgetWithText(GameChromeButton, label)
+          .hitTestable();
+      if (buttonFinder.evaluate().isNotEmpty) {
+        await tester.tap(buttonFinder.last);
+        await _pumpFor(const Duration(seconds: 1));
+        return true;
+      }
+      final textFinder = find.text(label).hitTestable();
+      if (textFinder.evaluate().isNotEmpty) {
+        await tester.tap(textFinder.last);
+        await _pumpFor(const Duration(seconds: 1));
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<void> _tapTextUntilState(
@@ -1696,10 +1772,11 @@ class _CompetitionFullPlayBot {
       await tester.pump(const Duration(milliseconds: 100));
       if (predicate(_readGameState())) return;
       if (await _retryGameOverIfVisible()) return;
+      await _dismissBlockingDialogsIfVisible();
 
       final actionFinder = _buttonOrTextFinder(actionText);
       if (actionFinder.evaluate().isNotEmpty) {
-        await tester.tap(actionFinder.first, warnIfMissed: false);
+        await tester.tap(actionFinder.last);
         await _pumpFor(const Duration(milliseconds: 700));
       }
     }
@@ -1738,6 +1815,8 @@ class _CompetitionFullPlayBot {
   }
 
   Finder _buttonOrTextFinder(String text) {
+    final finder = _visibleButtonOrTextFinder(text).hitTestable();
+    if (finder.evaluate().isNotEmpty) return finder;
     return _visibleButtonOrTextFinder(text);
   }
 
@@ -1755,6 +1834,8 @@ class _CompetitionFullPlayBot {
     while (DateTime.now().isBefore(end)) {
       await tester.pump(const Duration(milliseconds: 100));
       final finder = _visibleButtonOrTextFinder(text);
+      final tappable = finder.hitTestable();
+      if (tappable.evaluate().isNotEmpty) return tappable;
       if (finder.evaluate().isNotEmpty) return finder;
     }
     fail('Timed out waiting for tappable text "$text"');
