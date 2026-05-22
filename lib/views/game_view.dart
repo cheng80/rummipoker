@@ -3198,6 +3198,7 @@ class _GameLayout extends StatelessWidget {
                                 bonusFlashCellKey: boardMoveBonusTargetCellKey,
                                 bonusFlashTick: boardMoveBonusFlashTick,
                                 onTapCell: onBoardCellTap,
+                                onLongPressTile: onHandTileLongPress,
                               ),
                             ),
                           ),

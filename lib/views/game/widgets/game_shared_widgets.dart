@@ -2172,6 +2172,7 @@ class GameBoardGrid extends StatefulWidget {
     required this.moveSourceRow,
     required this.moveSourceCol,
     required this.onTapCell,
+    required this.onLongPressTile,
     this.constrainedCells = const {},
     this.bonusFlashCellKey,
     this.bonusFlashTick = 0,
@@ -2192,6 +2193,7 @@ class GameBoardGrid extends StatefulWidget {
   final String? bonusFlashCellKey;
   final int bonusFlashTick;
   final void Function(int row, int col) onTapCell;
+  final ValueChanged<Tile> onLongPressTile;
   final AlignmentGeometry alignment;
 
   @override
@@ -2323,6 +2325,9 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                           moveAvailable: isMoveAvailable,
                           moveLocked: isMoveLocked,
                           onTap: () => widget.onTapCell(row, col),
+                          onLongPress: tile == null
+                              ? null
+                              : () => widget.onLongPressTile(tile),
                         );
                         if (widget.bonusFlashCellKey == cellKey &&
                             widget.bonusFlashTick > 0) {
@@ -2734,6 +2739,7 @@ class GameBoardCell extends StatelessWidget {
     required this.moveAvailable,
     required this.moveLocked,
     required this.onTap,
+    this.onLongPress,
   });
 
   final Tile? tile;
@@ -2746,6 +2752,7 @@ class GameBoardCell extends StatelessWidget {
   final bool moveAvailable;
   final bool moveLocked;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -2774,6 +2781,7 @@ class GameBoardCell extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
+            onLongPress: onLongPress,
             borderRadius: BorderRadius.circular(cornerRadius),
             child: AnimatedContainer(
               duration: GamePresentationTimings.boardTileState,

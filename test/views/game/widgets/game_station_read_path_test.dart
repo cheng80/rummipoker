@@ -950,6 +950,7 @@ void main() {
                 moveSourceCol: 0,
                 constrainedCells: const {'0:0'},
                 onTapCell: (row, col) => taps.add((row, col)),
+                onLongPressTile: (_) {},
               ),
             ),
           ),
@@ -966,6 +967,47 @@ void main() {
       expect(taps, <(int, int)>[(0, 0), (2, 2)]);
     },
   );
+
+  testWidgets('GameBoardGrid reports board tile long press', (tester) async {
+    final board = RummiBoard();
+    final tile = Tile(
+      id: 1,
+      color: TileColor.red,
+      number: 7,
+      enhancement: TileEnhancement.chipInlaid,
+    );
+    board.setCell(0, 0, tile);
+    Tile? longPressedTile;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox.square(
+            dimension: 320,
+            child: GameBoardGrid(
+              board: board,
+              scoringCells: const {},
+              constrainedScoringCells: const {},
+              activeSettlementCells: const {},
+              settlementBoardSnapshot: const {},
+              selectedRow: null,
+              selectedCol: null,
+              boardMoveMode: false,
+              moveSourceRow: null,
+              moveSourceCol: null,
+              constrainedCells: const {},
+              onTapCell: (_, _) {},
+              onLongPressTile: (tile) => longPressedTile = tile,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.longPress(find.byKey(const ValueKey('board-cell-0-0')));
+
+    expect(longPressedTile, tile);
+  });
 
   testWidgets('GameBoardGrid pulses newly placed board tile', (tester) async {
     final board = RummiBoard();
@@ -988,6 +1030,7 @@ void main() {
               moveSourceCol: null,
               constrainedCells: const {},
               onTapCell: (_, _) {},
+              onLongPressTile: (_) {},
             ),
           ),
         ),
@@ -1043,6 +1086,7 @@ void main() {
               moveSourceCol: null,
               constrainedCells: const {},
               onTapCell: (_, _) {},
+              onLongPressTile: (_) {},
             ),
           ),
         ),
@@ -1094,6 +1138,7 @@ void main() {
               moveSourceCol: null,
               constrainedCells: const {},
               onTapCell: (_, _) {},
+              onLongPressTile: (_) {},
             ),
           ),
         ),
@@ -1142,6 +1187,7 @@ void main() {
               moveSourceCol: null,
               constrainedCells: const {},
               onTapCell: (_, _) {},
+              onLongPressTile: (_) {},
             ),
           ),
         ),
