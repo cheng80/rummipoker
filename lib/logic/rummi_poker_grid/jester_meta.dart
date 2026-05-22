@@ -1471,7 +1471,13 @@ class RummiRunProgress {
 
   Tile addDeckTile(Tile tile) {
     final copyId = _nextCopyIdForTile(tile);
-    final addedTile = Tile(color: tile.color, number: tile.number, id: copyId);
+    final addedTile = Tile(
+      color: tile.color,
+      number: tile.number,
+      id: copyId,
+      enhancement: tile.enhancement,
+      seal: tile.seal,
+    );
     addedDeckTiles.add(addedTile);
     return addedTile;
   }
@@ -1502,8 +1508,27 @@ class RummiRunProgress {
   }
 
   int effectiveTileOfferPrice(int offerIndex) {
+    if (offerIndex < 0 || offerIndex >= tileOffers.length) return 0;
     final stageStep = max(0, stageIndex - 1) ~/ 2;
-    return 3 + stageStep;
+    return 3 + stageStep + _tileModifierSurcharge(tileOffers[offerIndex]);
+  }
+
+  int _tileModifierSurcharge(Tile tile) {
+    final enhancementSurcharge = switch (tile.enhancement) {
+      TileEnhancement.chipInlaid => 2,
+      TileEnhancement.scoreGilded => 3,
+      TileEnhancement.goldTile => 2,
+      TileEnhancement.glassTile => 4,
+      TileEnhancement.wildPainted => 4,
+      TileEnhancement.luckyTile => 3,
+      null => 0,
+    };
+    final sealSurcharge = switch (tile.seal) {
+      TileSeal.blueSeal => 3,
+      TileSeal.redSeal => 4,
+      null => 0,
+    };
+    return enhancementSurcharge + sealSurcharge;
   }
 
   int _nextCopyIdForTile(Tile tile) {
@@ -2292,7 +2317,13 @@ class RummiRunProgress {
       }
     }
     for (final line in lineBreakdowns) {
+      if (line.tileGoldBonus > 0) {
+        gold += line.tileGoldBonus;
+      }
       recordHandRankCompletion(line.rank);
+      for (var i = 0; i < line.bonusRankProgress; i += 1) {
+        recordHandRankCompletion(line.rank);
+      }
       if (!isDeadLineRank(line.rank)) {
         _stationRankFinalScores.update(
           line.rank,
@@ -2476,8 +2507,65 @@ class RummiRunProgress {
       final tile = allTiles[rng.nextInt(allTiles.length)];
       final code = tile.code;
       if (!usedCodes.add(code)) continue;
-      tileOffers.add(tile);
+      tileOffers.add(_decorateTileOffer(tile, tileOffers.length));
     }
+  }
+
+  Tile _decorateTileOffer(Tile tile, int offerIndex) {
+    final enhancementChance = stageIndex >= 6
+        ? 45
+        : stageIndex >= 3
+        ? 30
+        : 15;
+    final seed = _tileOfferModifierSeed(tile, offerIndex);
+    if (_tileOfferRoll(seed, 11) >= enhancementChance) {
+      return tile;
+    }
+
+    final enhancementPool = stageIndex >= 3
+        ? const [
+            TileEnhancement.chipInlaid,
+            TileEnhancement.scoreGilded,
+            TileEnhancement.goldTile,
+            TileEnhancement.glassTile,
+          ]
+        : const [
+            TileEnhancement.chipInlaid,
+            TileEnhancement.scoreGilded,
+            TileEnhancement.goldTile,
+          ];
+    final enhancement =
+        enhancementPool[_tileOfferRoll(seed, 23) % enhancementPool.length];
+    final seal = stageIndex >= 4 && _tileOfferRoll(seed, 37) < 20
+        ? (_tileOfferRoll(seed, 41).isEven
+              ? TileSeal.blueSeal
+              : TileSeal.redSeal)
+        : null;
+    return Tile(
+      color: tile.color,
+      number: tile.number,
+      id: tile.id,
+      enhancement: enhancement,
+      seal: seal,
+    );
+  }
+
+  int _tileOfferModifierSeed(Tile tile, int offerIndex) {
+    return Object.hash(
+      stageIndex,
+      offerIndex,
+      tile.color.index,
+      tile.number,
+      tile.id,
+    );
+  }
+
+  int _tileOfferRoll(int seed, int salt) {
+    var value = seed ^ (salt * 0x45d9f3b);
+    value = ((value >> 16) ^ value) * 0x45d9f3b;
+    value = ((value >> 16) ^ value) * 0x45d9f3b;
+    value = (value >> 16) ^ value;
+    return value.abs() % 100;
   }
 
   RummiJesterCard _pickWeightedShopJester({
@@ -2799,6 +2887,9 @@ class RummiJesterEffectBreakdown {
     if (hasIntegerMultiplierToken) {
       return '점수 x${xmultBonus.round()}';
     }
+    if (xmultBonus > 1.0) {
+      return '점수 x${xmultBonus.toStringAsFixed(1)}';
+    }
     if (chipsBonus > 0) {
       return '+$chipsBonus';
     }
@@ -2809,7 +2900,7 @@ class RummiJesterEffectBreakdown {
   }
 
   String get displaySuffix {
-    if (hasIntegerMultiplierToken) {
+    if (xmultBonus > 1.0) {
       return '';
     }
     if (chipsBonus > 0) {

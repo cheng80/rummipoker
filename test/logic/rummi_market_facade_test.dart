@@ -248,16 +248,41 @@ void main() {
 
     test('maps tile offers and added deck tiles into market facade', () {
       final progress = RummiRunProgress()
-        ..gold = 3
-        ..tileOffers.add(const Tile(color: TileColor.red, number: 7))
-        ..addDeckTile(const Tile(color: TileColor.blue, number: 9));
+        ..gold = 10
+        ..tileOffers.add(
+          const Tile(
+            color: TileColor.red,
+            number: 7,
+            enhancement: TileEnhancement.glassTile,
+            seal: TileSeal.blueSeal,
+          ),
+        )
+        ..addDeckTile(
+          const Tile(
+            color: TileColor.blue,
+            number: 9,
+            enhancement: TileEnhancement.chipInlaid,
+            seal: TileSeal.redSeal,
+          ),
+        );
 
       final facade = RummiMarketRuntimeFacade.fromRunProgress(progress);
 
       expect(facade.tileOffers.single.offerId, 'tile:0:R7');
-      expect(facade.tileOffers.single.price, 3);
+      expect(
+        facade.tileOffers.single.tile.enhancement,
+        TileEnhancement.glassTile,
+      );
+      expect(facade.tileOffers.single.tile.seal, TileSeal.blueSeal);
+      expect(facade.tileOffers.single.price, 10);
       expect(facade.tileOffers.single.isAffordable, isTrue);
       expect(facade.addedDeckTiles.single.code, 'B9');
+      expect(
+        facade.addedDeckTiles.single.enhancement,
+        TileEnhancement.chipInlaid,
+      );
+      expect(facade.addedDeckTiles.single.seal, TileSeal.redSeal);
+      expect(progress.effectiveTileOfferPrice(99), 0);
     });
 
     test(
@@ -1222,6 +1247,28 @@ void main() {
       );
     });
 
+    test('tile gold bonus and blue seal progress apply after confirm', () {
+      final progress = RummiRunProgress()..gold = 0;
+
+      progress.onConfirmedLines([
+        ConfirmedLineBreakdown(
+          ref: LineRef.row(0),
+          rank: RummiHandRank.flush,
+          rankBaseScore: 50,
+          baseScore: 50,
+          finalScore: 50,
+          jesterBonus: 0,
+          hasScoringFaceCard: false,
+          effects: [],
+          tileGoldBonus: 2,
+          bonusRankProgress: 1,
+        ),
+      ]);
+
+      expect(progress.gold, 2);
+      expect(progress.snapshotPlayedHandCounts()[RummiHandRank.flush], 2);
+    });
+
     test('base run leaves the fifth jester slot locked until boss reward', () {
       final progress = RummiRunProgress()
         ..gold = 20
@@ -1459,6 +1506,24 @@ void main() {
 
       expect(rerolled, isTrue);
       expect(progress.tileOffers, hasLength(3));
+    });
+
+    test('late shop tile offers can generate special modifiers', () {
+      var generatedModifiedOffer = false;
+
+      for (var seed = 1; seed <= 20; seed += 1) {
+        final progress = RummiRunProgress()
+          ..stageIndex = 8
+          ..gold = 30;
+        progress.openShop(catalog: const [], rng: Random(seed));
+
+        generatedModifiedOffer = progress.tileOffers.any(
+          (tile) => tile.hasModifier,
+        );
+        if (generatedModifiedOffer) break;
+      }
+
+      expect(generatedModifiedOffer, isTrue);
     });
 
     test(

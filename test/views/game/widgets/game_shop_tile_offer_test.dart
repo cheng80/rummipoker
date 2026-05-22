@@ -87,10 +87,15 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    const tile = Tile(color: TileColor.red, number: 7);
+    const tile = Tile(
+      color: TileColor.red,
+      number: 7,
+      enhancement: TileEnhancement.glassTile,
+      seal: TileSeal.redSeal,
+    );
     var boughtTileIndex = -1;
     var currentMarket = const RummiMarketRuntimeFacade(
-      gold: 8,
+      gold: 12,
       rerollCost: 5,
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
       runtimeSnapshot: RummiJesterRuntimeSnapshot(),
@@ -103,7 +108,7 @@ void main() {
           offerId: 'tile:0:R7',
           slotIndex: 0,
           tile: tile,
-          price: 3,
+          price: 10,
           currency: 'gold',
           isAffordable: true,
           isFreeReward: false,
@@ -117,7 +122,7 @@ void main() {
       onBuyTileOffer: (offerIndex) {
         boughtTileIndex = offerIndex;
         currentMarket = const RummiMarketRuntimeFacade(
-          gold: 5,
+          gold: 2,
           rerollCost: 5,
           maxOwnedSlots: RummiRunProgress.maxJesterSlots,
           runtimeSnapshot: RummiJesterRuntimeSnapshot(),
@@ -140,8 +145,18 @@ void main() {
       find.byKey(const ValueKey('market-tile-selector'), skipOffstage: false),
       findsOneWidget,
     );
-    expect(find.text('칩 7 · 3G'), findsOneWidget);
+    expect(find.text('유리 · 10G'), findsOneWidget);
     expect(find.text('칩 7'), findsOneWidget);
+    expect(find.textContaining('확정 시 점수 x1.5'), findsOneWidget);
+    expect(find.textContaining('타일 효과 1회 재발동'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('tile-enhancement-badge'), skipOffstage: false),
+      findsWidgets,
+    );
+    expect(
+      find.byKey(const ValueKey('tile-seal-badge'), skipOffstage: false),
+      findsWidgets,
+    );
 
     await tester.tap(find.text('구매'));
     await tester.pump(const Duration(milliseconds: 120));
@@ -169,7 +184,7 @@ void main() {
       find.byKey(const ValueKey('market-purchase-source-empty')),
       findsOneWidget,
     );
-    expect(find.text('-3G'), findsOneWidget);
+    expect(find.text('-10G'), findsOneWidget);
 
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 3));
@@ -179,6 +194,6 @@ void main() {
       find.byKey(const ValueKey('market-purchase-source-empty')),
       findsNothing,
     );
-    expect(find.text('5'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
   });
 }

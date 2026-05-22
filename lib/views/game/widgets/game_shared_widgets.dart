@@ -2642,6 +2642,7 @@ class GameBoardCell extends StatelessWidget {
                   : _SettlementTileLift(
                       active: settlementActive,
                       child: Stack(
+                        clipBehavior: Clip.none,
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(4),
@@ -2652,6 +2653,7 @@ class GameBoardCell extends StatelessWidget {
                                 selected: selected || moveSource,
                                 accent: false,
                                 aspectRatio: kGameTileAspectRatio,
+                                reserveConstraintBadgeSpace: constrained,
                               ),
                             ),
                           ),
@@ -2795,26 +2797,270 @@ class GameRummiTileCard extends StatelessWidget {
     required this.selected,
     required this.accent,
     this.aspectRatio = kGameTileAspectRatio,
+    this.reserveConstraintBadgeSpace = false,
   });
 
   final Tile tile;
   final bool selected;
   final bool accent;
   final double aspectRatio;
+  final bool reserveConstraintBadgeSpace;
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: aspectRatio,
-      child: CustomPaint(
-        painter: _GameRummiTilePainter(
-          tile: tile,
-          selected: selected,
-          accent: accent,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _GameRummiTilePainter(
+                tile: tile,
+                selected: selected,
+                accent: accent,
+              ),
+            ),
+          ),
+          if (tile.hasModifier)
+            Positioned.fill(
+              child: GameTileModifierBadges(
+                tile: tile,
+                reserveConstraintBadgeSpace: reserveConstraintBadgeSpace,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class GameTileModifierBadges extends StatelessWidget {
+  const GameTileModifierBadges({
+    super.key,
+    required this.tile,
+    this.reserveConstraintBadgeSpace = false,
+  });
+
+  final Tile tile;
+  final bool reserveConstraintBadgeSpace;
+
+  @override
+  Widget build(BuildContext context) {
+    final enhancement = tile.enhancement;
+    final seal = tile.seal;
+    return IgnorePointer(
+      key: const ValueKey('tile-modifier-badge-layer'),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final side = constraints.biggest.shortestSide;
+          final metrics = _TileModifierBadgeMetrics.forTileSide(side);
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              if (enhancement != null)
+                Positioned(
+                  key: const ValueKey('tile-enhancement-badge'),
+                  left: metrics.enhancementInset,
+                  top: metrics.enhancementInset,
+                  child: _TileModifierBadge(
+                    label: tileEnhancementShortLabel(enhancement),
+                    height: metrics.badgeHeight,
+                    fontSize: metrics.fontSize,
+                    background: tileEnhancementColor(enhancement),
+                    foreground: enhancement == TileEnhancement.goldTile
+                        ? Colors.black
+                        : Colors.white,
+                  ),
+                ),
+              if (seal != null)
+                Positioned(
+                  key: const ValueKey('tile-seal-badge'),
+                  right: metrics.sealInset,
+                  bottom: metrics.sealInset,
+                  child: _TileModifierBadge(
+                    label: tileSealShortLabel(seal),
+                    height: metrics.badgeHeight,
+                    fontSize: metrics.fontSize,
+                    background: tileSealColor(seal),
+                    foreground: Colors.white,
+                    circular: true,
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TileModifierBadgeMetrics {
+  const _TileModifierBadgeMetrics({
+    required this.badgeHeight,
+    required this.fontSize,
+    required this.enhancementInset,
+    required this.sealInset,
+  });
+
+  factory _TileModifierBadgeMetrics.forTileSide(double side) {
+    final badgeHeight = (side * 0.22).clamp(12.0, 14.0).toDouble();
+    return _TileModifierBadgeMetrics(
+      badgeHeight: badgeHeight,
+      fontSize: (badgeHeight * 0.62).clamp(7.0, 9.0).toDouble(),
+      enhancementInset: -2.0,
+      sealInset: (side * 0.055).clamp(2.0, 4.0).toDouble(),
+    );
+  }
+
+  final double badgeHeight;
+  final double fontSize;
+  final double enhancementInset;
+  final double sealInset;
+}
+
+class _TileModifierBadge extends StatelessWidget {
+  const _TileModifierBadge({
+    required this.label,
+    required this.height,
+    required this.fontSize,
+    required this.background,
+    required this.foreground,
+    this.circular = false,
+  });
+
+  final String label;
+  final double height;
+  final double fontSize;
+  final Color background;
+  final Color foreground;
+  final bool circular;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(circular ? 999 : height * 0.28),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.82),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.32),
+            blurRadius: 5,
+            offset: const Offset(0, 1.5),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        height: height,
+        width: circular ? height : height * 1.45,
+        child: Center(
+          child: Text(
+            label,
+            maxLines: 1,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: foreground,
+              fontSize: fontSize,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
         ),
       ),
     );
   }
+}
+
+String tileModifierSummary(Tile tile) {
+  final parts = <String>[
+    if (tile.enhancement != null) tileEnhancementDisplayName(tile.enhancement!),
+    if (tile.seal != null) tileSealDisplayName(tile.seal!),
+  ];
+  return parts.join(' · ');
+}
+
+String tileModifierEffectText(Tile tile) {
+  final parts = <String>[
+    if (tile.enhancement != null) tileEnhancementEffectText(tile.enhancement!),
+    if (tile.seal != null) tileSealEffectText(tile.seal!),
+  ];
+  return parts.join(' / ');
+}
+
+String tileEnhancementShortLabel(TileEnhancement enhancement) {
+  return switch (enhancement) {
+    TileEnhancement.chipInlaid => '+C',
+    TileEnhancement.scoreGilded => '+%',
+    TileEnhancement.goldTile => 'G',
+    TileEnhancement.glassTile => 'x',
+    TileEnhancement.wildPainted => 'W',
+    TileEnhancement.luckyTile => '?',
+  };
+}
+
+String tileSealShortLabel(TileSeal seal) {
+  return switch (seal) {
+    TileSeal.blueSeal => 'B',
+    TileSeal.redSeal => 'R',
+  };
+}
+
+String tileEnhancementDisplayName(TileEnhancement enhancement) {
+  return switch (enhancement) {
+    TileEnhancement.chipInlaid => '칩 박힘',
+    TileEnhancement.scoreGilded => '점수 도금',
+    TileEnhancement.goldTile => '골드',
+    TileEnhancement.glassTile => '유리',
+    TileEnhancement.wildPainted => '와일드',
+    TileEnhancement.luckyTile => '럭키',
+  };
+}
+
+String tileSealDisplayName(TileSeal seal) {
+  return switch (seal) {
+    TileSeal.blueSeal => '푸른 인장',
+    TileSeal.redSeal => '붉은 인장',
+  };
+}
+
+String tileEnhancementEffectText(TileEnhancement enhancement) {
+  return switch (enhancement) {
+    TileEnhancement.chipInlaid => '확정 시 +20칩',
+    TileEnhancement.scoreGilded => '확정 시 점수 +20%',
+    TileEnhancement.goldTile => '확정 후 골드 +1',
+    TileEnhancement.glassTile => '확정 시 점수 x1.5',
+    TileEnhancement.wildPainted => '색상 판정 확장 예정',
+    TileEnhancement.luckyTile => '확률 발동 예정',
+  };
+}
+
+String tileSealEffectText(TileSeal seal) {
+  return switch (seal) {
+    TileSeal.blueSeal => '확정 족보 성장 +1',
+    TileSeal.redSeal => '타일 효과 1회 재발동',
+  };
+}
+
+Color tileEnhancementColor(TileEnhancement enhancement) {
+  return switch (enhancement) {
+    TileEnhancement.chipInlaid => const Color(0xFF2D6F9E),
+    TileEnhancement.scoreGilded => const Color(0xFF7C4DFF),
+    TileEnhancement.goldTile => const Color(0xFFF2C14E),
+    TileEnhancement.glassTile => const Color(0xFF3BC7D6),
+    TileEnhancement.wildPainted => const Color(0xFF2EA66F),
+    TileEnhancement.luckyTile => const Color(0xFFC05AB8),
+  };
+}
+
+Color tileSealColor(TileSeal seal) {
+  return switch (seal) {
+    TileSeal.blueSeal => const Color(0xFF246BCE),
+    TileSeal.redSeal => const Color(0xFFC0392B),
+  };
 }
 
 class _GameRummiTilePainter extends CustomPainter {

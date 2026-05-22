@@ -2259,11 +2259,18 @@ class _GameShopScreenState extends State<GameShopScreen>
                                           )
                                         : selectedTileOffer != null
                                         ? _MarketOfferDetailBody(
-                                            effectText:
-                                                '다음 블라인드부터 드로우 덱에 추가됩니다.',
+                                            effectText: _tileOfferDetailText(
+                                              selectedTileOffer.tile,
+                                            ),
                                             tags: [
                                               '타일 ${_tileLabel(selectedTileOffer.tile)}',
                                               '칩 ${selectedTileOffer.tile.baseChipValue}',
+                                              if (selectedTileOffer
+                                                  .tile
+                                                  .hasModifier)
+                                                tileModifierSummary(
+                                                  selectedTileOffer.tile,
+                                                ),
                                               selectedTileOffer.isFreeReward
                                                   ? '무료 선택'
                                                   : '덱 추가',
@@ -4439,9 +4446,7 @@ class _MarketTileOfferCard extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              offer.isFreeReward
-                  ? '칩 ${offer.tile.baseChipValue} · 무료'
-                  : '칩 ${offer.tile.baseChipValue} · ${offer.price}G',
+              _tileOfferCompactLabel(offer),
               maxLines: 1,
               style: TextStyle(
                 color: offer.isAffordable
@@ -4460,6 +4465,23 @@ class _MarketTileOfferCard extends StatelessWidget {
 }
 
 String _tileLabel(Tile tile) => '${tile.color.code}${tile.number}';
+
+String _tileOfferCompactLabel(RummiMarketTileOfferView offer) {
+  final price = offer.isFreeReward ? '무료' : '${offer.price}G';
+  if (!offer.tile.hasModifier) {
+    return '칩 ${offer.tile.baseChipValue} · $price';
+  }
+  final modifier = offer.tile.enhancement != null
+      ? tileEnhancementDisplayName(offer.tile.enhancement!)
+      : tileSealDisplayName(offer.tile.seal!);
+  return '$modifier · $price';
+}
+
+String _tileOfferDetailText(Tile tile) {
+  const base = '다음 블라인드부터 드로우 덱에 추가됩니다.';
+  if (!tile.hasModifier) return base;
+  return '$base ${tileModifierEffectText(tile)}';
+}
 
 class _MarketTileFace extends StatelessWidget {
   const _MarketTileFace({required this.tile, required this.selected});

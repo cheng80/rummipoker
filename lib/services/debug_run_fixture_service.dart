@@ -50,6 +50,8 @@ class DebugRunFixtureService {
   static const String nextConfirmMotionEyeCheck =
       'next_confirm_motion_eye_check';
   static const String marketItemMotionEyeCheck = 'market_item_motion_eye_check';
+  static const String specialTileMarketPreview = 'special_tile_market_preview';
+  static const String specialTileBattlePreview = 'special_tile_battle_preview';
   static const String finalBossCashOutReady = 'final_boss_cash_out_ready';
   static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
   static const String bossColumnConstraintPreview =
@@ -145,6 +147,18 @@ class DebugRunFixtureService {
       label: '마켓 아이템 모션 눈검증',
       description: '골드/비골드 상점 아이템 use flight 검증용',
       builder: _buildMarketItemMotionEyeCheck,
+    ),
+    DebugRunFixtureDefinition(
+      id: specialTileMarketPreview,
+      label: '특수 타일 Market 미리보기',
+      description: '특수 타일 badge, 가격, 구매 상세 문구 스크린샷 검증용',
+      builder: _buildSpecialTileMarketPreview,
+    ),
+    DebugRunFixtureDefinition(
+      id: specialTileBattlePreview,
+      label: '특수 타일 전투 미리보기',
+      description: '손패/보드 특수 타일 badge와 확정 가능 라인 스크린샷 검증용',
+      builder: _buildSpecialTileBattlePreview,
     ),
     DebugRunFixtureDefinition(
       id: finalBossCashOutReady,
@@ -781,6 +795,166 @@ class DebugRunFixtureService {
       session: base.session.copySnapshot(),
       runProgress: runProgress,
       stageStartSnapshot: base.stageStartSnapshot,
+    );
+  }
+
+  static ActiveRunRuntimeState _buildSpecialTileMarketPreview() {
+    final base = _buildStage2ScoringSnapshot();
+    final runProgress = base.runProgress.copySnapshot()
+      ..stageIndex = 6
+      ..gold = 24
+      ..tileOffers.addAll(const [
+        Tile(
+          color: TileColor.red,
+          number: 7,
+          enhancement: TileEnhancement.glassTile,
+          seal: TileSeal.redSeal,
+        ),
+        Tile(
+          color: TileColor.blue,
+          number: 9,
+          enhancement: TileEnhancement.chipInlaid,
+          seal: TileSeal.blueSeal,
+        ),
+        Tile(
+          color: TileColor.yellow,
+          number: 4,
+          enhancement: TileEnhancement.goldTile,
+        ),
+      ])
+      ..addedDeckTiles.addAll(const [
+        Tile(
+          color: TileColor.black,
+          number: 12,
+          enhancement: TileEnhancement.scoreGilded,
+          seal: TileSeal.blueSeal,
+        ),
+      ]);
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.shop,
+      difficulty: NewRunDifficulty.standard,
+      session: base.session.copySnapshot(),
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: base.stageStartSnapshot.session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
+    );
+  }
+
+  static ActiveRunRuntimeState _buildSpecialTileBattlePreview() {
+    final board = RummiBoard()
+      ..setCell(
+        2,
+        0,
+        const Tile(
+          color: TileColor.red,
+          number: 1,
+          enhancement: TileEnhancement.chipInlaid,
+          seal: TileSeal.blueSeal,
+        ),
+      )
+      ..setCell(
+        2,
+        1,
+        const Tile(
+          color: TileColor.blue,
+          number: 2,
+          enhancement: TileEnhancement.glassTile,
+          seal: TileSeal.redSeal,
+        ),
+      )
+      ..setCell(2, 2, _tile(TileColor.yellow, 3))
+      ..setCell(
+        2,
+        3,
+        const Tile(
+          color: TileColor.black,
+          number: 4,
+          enhancement: TileEnhancement.goldTile,
+        ),
+      )
+      ..setCell(2, 4, _tile(TileColor.red, 5))
+      ..setCell(
+        4,
+        0,
+        const Tile(
+          color: TileColor.black,
+          number: 12,
+          enhancement: TileEnhancement.scoreGilded,
+        ),
+      );
+    final hand = const [
+      Tile(
+        color: TileColor.blue,
+        number: 9,
+        enhancement: TileEnhancement.chipInlaid,
+        seal: TileSeal.blueSeal,
+      ),
+      Tile(
+        color: TileColor.yellow,
+        number: 11,
+        enhancement: TileEnhancement.goldTile,
+      ),
+    ];
+    final session = RummiPokerGridSession.restored(
+      runSeed: 2026052301,
+      deckCopiesPerTile: kDefaultCopiesPerTile,
+      maxHandSize: 3,
+      runRandomState: SeededRandom(2026052301).state,
+      blind: RummiBlindState(
+        targetScore: 720,
+        boardDiscardsRemaining: 4,
+        handDiscardsRemaining: 2,
+        scoreTowardBlind: 210,
+        bossModifier: RummiBossModifier.redDampener,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(
+        board: board,
+        hand: hand,
+        random: Random(2026052301),
+      ),
+      board: board,
+      hand: hand,
+      eliminated: const [],
+    );
+    final runProgress = RummiRunProgress.restore(
+      stageIndex: 6,
+      gold: 28,
+      rerollCost: RummiRunProgress.shopBaseRerollCost,
+      ownedJesters: const [],
+      shopOffers: const [],
+      statefulValuesBySlot: const {},
+      playedHandCounts: const <RummiHandRank, int>{},
+      addedDeckTiles: const [
+        Tile(
+          color: TileColor.red,
+          number: 1,
+          enhancement: TileEnhancement.chipInlaid,
+          seal: TileSeal.blueSeal,
+        ),
+        Tile(
+          color: TileColor.blue,
+          number: 2,
+          enhancement: TileEnhancement.glassTile,
+          seal: TileSeal.redSeal,
+        ),
+        Tile(
+          color: TileColor.black,
+          number: 12,
+          enhancement: TileEnhancement.scoreGilded,
+        ),
+      ],
+    )..currentStationBlindTierIndex = 2;
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunStageSnapshot(
+        session: session.copySnapshot(),
+        runProgress: runProgress.copySnapshot(),
+      ),
     );
   }
 

@@ -11,6 +11,43 @@ import 'package:rummipoker/views/game/widgets/game_hand_zone.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
 void main() {
+  testWidgets('GameRummiTileCard shows enhancement and seal badges', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 80,
+            height: 96,
+            child: GameRummiTileCard(
+              tile: Tile(
+                color: TileColor.blue,
+                number: 9,
+                enhancement: TileEnhancement.chipInlaid,
+                seal: TileSeal.blueSeal,
+              ),
+              selected: false,
+              accent: false,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('tile-modifier-badge-layer')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('tile-enhancement-badge')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('tile-seal-badge')), findsOneWidget);
+    expect(find.text('+C'), findsOneWidget);
+    expect(find.text('B'), findsOneWidget);
+  });
+
   testWidgets('GameTopHud renders station facade objective values', (
     tester,
   ) async {

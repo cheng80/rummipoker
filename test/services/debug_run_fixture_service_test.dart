@@ -3,6 +3,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
@@ -281,6 +282,40 @@ void main() {
       fixture.runProgress.itemInventory.ownedItems.map((entry) => entry.itemId),
       ['coin_cache', 'trade_ticket'],
     );
+  });
+
+  test('special tile market fixture exposes modified tile offers', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.specialTileMarketPreview,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
+    expect(
+      fixture.runProgress.tileOffers.any((tile) => tile.hasModifier),
+      isTrue,
+    );
+  });
+
+  test('special tile battle fixture exposes modified board and hand tiles', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.specialTileBattlePreview,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.session.canConfirmAllFullLines, isTrue);
+    expect(
+      fixture.session.blind.bossModifier?.id,
+      RummiBossModifier.redDampener.id,
+    );
+    expect(
+      fixture.session.board.snapshotCells().whereType<Tile>().any(
+        (tile) => tile.hasModifier,
+      ),
+      isTrue,
+    );
+    expect(fixture.session.hand.any((tile) => tile.hasModifier), isTrue);
   });
 
   test('final boss cash-out fixture is ready to close the run', () {

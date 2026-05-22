@@ -170,6 +170,8 @@ class ConfirmedLineBreakdown {
     this.growthBonus = 0,
     this.overlapMultiplier = 1.0,
     this.overlapBonus = 0,
+    this.tileGoldBonus = 0,
+    this.bonusRankProgress = 0,
     this.contributingCells = const [],
     this.constraintPenalties = const [],
   });
@@ -187,6 +189,8 @@ class ConfirmedLineBreakdown {
   final List<RummiJesterEffectBreakdown> effects;
   final double overlapMultiplier;
   final int overlapBonus;
+  final int tileGoldBonus;
+  final int bonusRankProgress;
   final List<(int, int)> contributingCells;
   final List<RummiConstraintPenaltyBreakdown> constraintPenalties;
 }
@@ -716,6 +720,12 @@ class RummiPokerGridSession {
         }
         lineScore += scored.finalScore - scored.baseScore;
       }
+      final tileModifierResult = _applyTileModifiersToLine(
+        lineScore: lineScore,
+        scoringTiles: line.scoringTiles,
+      );
+      lineScore = tileModifierResult.score;
+      effects.addAll(tileModifierResult.effects);
       final itemResult = _applyConfirmModifiersToLine(
         lineScore: lineScore,
         rank: evaluation.rank,
@@ -756,6 +766,8 @@ class RummiPokerGridSession {
           effects: List<RummiJesterEffectBreakdown>.unmodifiable(effects),
           overlapMultiplier: overlapMultiplier,
           overlapBonus: overlapBonus,
+          tileGoldBonus: tileModifierResult.goldBonus,
+          bonusRankProgress: tileModifierResult.bonusRankProgress,
           contributingCells: List<(int, int)>.unmodifiable(
             line.contributingCells,
           ),
@@ -815,6 +827,77 @@ class RummiPokerGridSession {
       ),
       cleared: cleared,
     );
+  }
+
+  ({
+    int score,
+    List<RummiJesterEffectBreakdown> effects,
+    int goldBonus,
+    int bonusRankProgress,
+  })
+  _applyTileModifiersToLine({
+    required int lineScore,
+    required List<Tile> scoringTiles,
+  }) {
+    var score = lineScore;
+    var goldBonus = 0;
+    var bonusRankProgress = 0;
+    final effects = <RummiJesterEffectBreakdown>[];
+
+    for (final tile in scoringTiles) {
+      if (tile.seal == TileSeal.blueSeal) {
+        bonusRankProgress += 1;
+      }
+      final enhancement = tile.enhancement;
+      if (enhancement == null) continue;
+      final repeatCount = tile.seal == TileSeal.redSeal ? 2 : 1;
+      for (var repeat = 0; repeat < repeatCount; repeat += 1) {
+        final before = score;
+        switch (enhancement) {
+          case TileEnhancement.chipInlaid:
+            score += 20;
+          case TileEnhancement.scoreGilded:
+            score = (score * 1.2).round();
+          case TileEnhancement.goldTile:
+            goldBonus += 1;
+          case TileEnhancement.glassTile:
+            score = (score * 1.5).round();
+          case TileEnhancement.wildPainted:
+          case TileEnhancement.luckyTile:
+            break;
+        }
+        final delta = score - before;
+        if (delta <= 0) continue;
+        effects.add(
+          RummiJesterEffectBreakdown(
+            jesterId: 'tile:${enhancement.persistenceValue}',
+            displayName: _tileModifierDisplayName(enhancement),
+            chipsBonus: enhancement == TileEnhancement.chipInlaid ? 20 : 0,
+            multBonus: enhancement == TileEnhancement.scoreGilded ? 4 : 0,
+            xmultBonus: enhancement == TileEnhancement.glassTile ? 1.5 : 1.0,
+            scoreDelta: delta,
+          ),
+        );
+      }
+    }
+
+    return (
+      score: score,
+      effects: List<RummiJesterEffectBreakdown>.unmodifiable(effects),
+      goldBonus: goldBonus,
+      bonusRankProgress: bonusRankProgress,
+    );
+  }
+
+  static String _tileModifierDisplayName(TileEnhancement enhancement) {
+    return switch (enhancement) {
+      TileEnhancement.chipInlaid => '칩 박힘 타일',
+      TileEnhancement.scoreGilded => '점수 도금 타일',
+      TileEnhancement.goldTile => '골드 타일',
+      TileEnhancement.glassTile => '유리 타일',
+      TileEnhancement.wildPainted => '와일드 타일',
+      TileEnhancement.luckyTile => '럭키 타일',
+    };
   }
 
   void addScoreToBlind(int score) {

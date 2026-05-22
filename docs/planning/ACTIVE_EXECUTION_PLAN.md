@@ -11,21 +11,29 @@
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
 | 공모전 기준 완성 | Closed / off | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-15 12시경 최종 산출물을 우선 등록했다. 공모전 풀런봇/제출 체크리스트는 더 이상 활성 작업 큐가 아니며, 이후 공모전 문서는 제출 증거와 이력 참고로만 본다. |
-| Post-contest 안정화 | Active | 이 문서 | 손패/전투 자원/Market 후보 슬롯 상한, 조건부 아이템 no-op/미소모, 아이템 source -> target/result 1차 연출, Playwright fixture 눈검증까지 닫았다. 다음은 가격표를 바로 바꾸지 않고 `shop_slot_market_v9` 구매 이벤트 source candidate 추적 또는 실제 runtime 후보 구매/사용 가치 probe를 보강한다. |
+| Post-contest 덱 빌딩 확장 | Active | `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` | 기존 `shop_slot_market_v9` 구매 이벤트 추적, runtime 구매/사용 가치 probe, 가격/가치 판단 재개는 사용자에게 직접 보이는 작업이 아니므로 대기열로 내린다. 현재 활성 작업은 특수 타일 modifier V1/V2 플랜 기반으로, V1 데이터 모델/저장/마켓 표시/정산 반영을 순차 적용하는 것이다. |
 | 실제 Goal 기준 완성 | Active after stabilization | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1은 반영됐다. 공모전 이후에는 리팩터링, 최적화, 장기 밸런스, meta growth, 자연 full-play QA를 재개한다. |
 
 현재는 공모전 기준 풀런봇 QA 플랜을 제출용 handoff 상태에서 완전히 닫았다. 한 locale 사이클 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했고, S2/S4/S6 Boss 보상 슬롯 해금, Market 해금 연출, 시스템 locale 기본값, debug fixture, web 제출 산물/BGM/메뉴/정산 UI 회귀 수정 뒤 2026-05-10~11 최신 후보에서 `ko` standard→challenge 재확인도 통과했다. 2026-05-15 12시경 최종 산출물을 우선 등록했으므로 `ja`, `zh-CN`, `zh-TW` full-run은 제출 gate가 아니라 post-contest 추가 검증 후보로만 남긴다. S9+ 무한 도전 장기 생존도 별도 확장 검증이다.
 
 ## 다음 세션 시작점
 
-1. `shop_slot_market_v9` sim 로그가 실제 watchlist 아이템 구매/사용을 못 잡는 이유를 먼저 좁힌다.
-   - 확인 대상: `tools/sim/run_balance_sim.dart`의 market purchase event, source candidate id, content/proxy purchase 분류, `economy_audit.py` watchlist 집계 경로.
-   - Done 기준: `trade_ticket`, `ride_the_bus`, `full_house_study`, `four_kind_study`, `straight_flush_study`, `reroll_token` 중 실제 후보 노출/구매/사용 여부가 audit summary에 분리되어 나온다.
-2. 위 추적이 닫힌 뒤에만 가격/가치 판단을 다시 연다.
-   - 현재 `catalog_audit_v3`는 sim-only 완화 가설이며 runtime 가격표 변경 근거가 아니다.
-   - same-seed r120에서 normalized와 결과가 동일했으므로 가격표 변경은 보류한다.
-3. 병렬로 하지 말 것: 새 아이템 연출 대형 polish, full-run bot 재개, 장기 r400/r800 sweep.
-   - 새 가격/구매 probe가 실제 runtime 변경으로 이어지면 관련 widget/unit/sim test와 문서 동기화까지 한 단위로 닫는다.
+1. `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md`를 기준으로 특수 타일 V1을 시작한다.
+   - 첫 구현 단위: `Tile` 모델에 `enhancement`, `seal` 필드를 추가하고, 기존 저장 데이터가 modifier 없는 타일로 정상 복원되는지 테스트한다.
+   - 포함 경로: `addedDeckTiles`, `tileOffers`, deck pile, board cells, hand, eliminated JSON roundtrip.
+   - Done 기준: modifier 없는 기존 저장 호환, modifier 포함 타일 저장/복원, `flutter analyze`, 관련 save/model 테스트 통과.
+2. 이후 V1 순서:
+   - Tile lane 특수 후보 생성과 가격 surcharge.
+   - 마켓/보드/손패/런 정보 modifier badge와 설명.
+   - `chip_inlaid`, `score_gilded`, `gold_tile`, `glass_tile`, `wild_painted`, `lucky_tile`, `blue_seal` 정산 반영.
+   - glass 파괴와 런 덱 source 제거/복원.
+3. 대기열로 미룬 작업:
+   - `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
+   - 실제 runtime 후보 구매/사용 가치 probe.
+   - `trade_ticket`, `ride_the_bus`, 고급 study, `reroll_token` 가격/가치 판단 재개.
+   - 장기 경제 gate와 `runtime_station_pool_economy_r400` 재검토.
+4. 병렬로 하지 말 것: full-run bot 재개, 장기 r400/r800 sweep, 특수 타일 V2 구현.
+   - V2-A/B/C/D는 V1 runtime 반영과 기본 검증이 닫힌 뒤 연다.
 
 ## 2. Post-contest 다음 작업
 

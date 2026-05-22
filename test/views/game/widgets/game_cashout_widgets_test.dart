@@ -32,6 +32,25 @@ void main() {
     expect(find.text('+40 칩'), findsWidgets);
   });
 
+  testWidgets('GameFloatingSettlementBurst names tile modifier effects', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameFloatingSettlementBurst(
+            line: _lineWithTileEffect(),
+            step: ScoringPresentationStep.item,
+            effectIndex: 0,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('유리 타일'), findsWidgets);
+    expect(find.text('점수 x1.5'), findsWidgets);
+  });
+
   testWidgets(
     'GameStageClearOverlay shows spark field only during station clear',
     (tester) async {
@@ -519,6 +538,27 @@ ConfirmedLineBreakdown _lineWithItemEffect() {
         multBonus: 0,
         xmultBonus: 1,
         scoreDelta: 40,
+      ),
+    ],
+  );
+}
+
+ConfirmedLineBreakdown _lineWithTileEffect() {
+  return ConfirmedLineBreakdown(
+    ref: LineRef.row(0),
+    rank: RummiHandRank.straight,
+    baseScore: 70,
+    finalScore: 105,
+    jesterBonus: 35,
+    hasScoringFaceCard: false,
+    effects: const [
+      RummiJesterEffectBreakdown(
+        jesterId: 'tile:glass_tile',
+        displayName: '유리 타일',
+        chipsBonus: 0,
+        multBonus: 0,
+        xmultBonus: 1.5,
+        scoreDelta: 35,
       ),
     ],
   );

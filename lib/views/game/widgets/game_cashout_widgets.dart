@@ -387,6 +387,8 @@ String _settlementStepLabel(
     ScoringPresentationStep.item =>
       effect == null
           ? 'Item 발동'
+          : effect.jesterId.startsWith('tile:')
+          ? effect.displayName
           : ItemTranslationScope.of(
               context,
             ).resolveDisplayName(effect.jesterId, effect.displayName),

@@ -461,6 +461,80 @@ void main() {
     expect(session.blind.scoreTowardBlind, 70);
   });
 
+  test('특수 타일 점수 보정은 확정 점수와 breakdown에 반영된다', () {
+    final board = RummiBoard();
+    board.setCell(
+      2,
+      0,
+      const Tile(
+        color: TileColor.red,
+        number: 1,
+        enhancement: TileEnhancement.chipInlaid,
+      ),
+    );
+    board.setCell(
+      2,
+      1,
+      const Tile(
+        color: TileColor.blue,
+        number: 2,
+        enhancement: TileEnhancement.scoreGilded,
+      ),
+    );
+    board.setCell(2, 2, t(TileColor.red, 3));
+    board.setCell(2, 3, t(TileColor.blue, 4));
+    board.setCell(2, 4, t(TileColor.red, 5));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.scoreAdded, 108);
+    final line = out.result.lineBreakdowns.single;
+    expect(line.baseScore, 70);
+    expect(line.finalScore, 108);
+    expect(line.effects.map((effect) => effect.jesterId), [
+      'tile:chip_inlaid',
+      'tile:score_gilded',
+    ]);
+  });
+
+  test('빨간 봉인은 특수 타일 점수 효과를 한 번 더 적용한다', () {
+    final board = RummiBoard();
+    board.setCell(
+      2,
+      0,
+      const Tile(
+        color: TileColor.red,
+        number: 1,
+        enhancement: TileEnhancement.glassTile,
+        seal: TileSeal.redSeal,
+      ),
+    );
+    for (var i = 1; i < kBoardSize; i++) {
+      board.setCell(2, i, t(i.isEven ? TileColor.red : TileColor.blue, i + 1));
+    }
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.scoreAdded, 158);
+    expect(out.result.lineBreakdowns.single.effects, hasLength(2));
+    expect(
+      out.result.lineBreakdowns.single.effects.every(
+        (effect) => effect.jesterId == 'tile:glass_tile',
+      ),
+      isTrue,
+    );
+  });
+
   test('보스 색상 약화는 해당 색상 포함 점수 라인을 35% 줄인다', () {
     final board = RummiBoard();
     for (var i = 0; i < kBoardSize; i++) {

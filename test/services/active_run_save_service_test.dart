@@ -811,8 +811,22 @@ void main() {
 
     test('run progress saves and restores added deck tiles', () async {
       final runProgress = RummiRunProgress()
-        ..addDeckTile(const Tile(color: TileColor.red, number: 7))
-        ..tileOffers.add(const Tile(color: TileColor.blue, number: 9))
+        ..addDeckTile(
+          const Tile(
+            color: TileColor.red,
+            number: 7,
+            enhancement: TileEnhancement.chipInlaid,
+            seal: TileSeal.blueSeal,
+          ),
+        )
+        ..tileOffers.add(
+          const Tile(
+            color: TileColor.blue,
+            number: 9,
+            enhancement: TileEnhancement.glassTile,
+            seal: TileSeal.redSeal,
+          ),
+        )
         ..pendingBossTileReward = true;
       final runtime = ActiveRunRuntimeState(
         activeScene: ActiveRunScene.shop,
@@ -833,7 +847,20 @@ void main() {
       expect(restored!.runProgress.addedDeckTiles.single.color, TileColor.red);
       expect(restored.runProgress.addedDeckTiles.single.number, 7);
       expect(restored.runProgress.addedDeckTiles.single.id, 1);
+      expect(
+        restored.runProgress.addedDeckTiles.single.enhancement,
+        TileEnhancement.chipInlaid,
+      );
+      expect(
+        restored.runProgress.addedDeckTiles.single.seal,
+        TileSeal.blueSeal,
+      );
       expect(restored.runProgress.tileOffers.single.color, TileColor.blue);
+      expect(
+        restored.runProgress.tileOffers.single.enhancement,
+        TileEnhancement.glassTile,
+      );
+      expect(restored.runProgress.tileOffers.single.seal, TileSeal.redSeal);
       expect(restored.runProgress.pendingBossTileReward, isTrue);
     });
   });
