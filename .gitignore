@@ -171,8 +171,11 @@ analysis/leveling/data/features/*.csv
 analysis/leveling/data/raw/
 
 # Environment files
+.env
+*.env
 **/.env
 **/.env.*
+**/*.env
 **/.rummipoker_deploy.env
 !.env.example
 
