@@ -632,6 +632,83 @@ void main() {
       expect(after.itemOffers.map((offer) => offer.contentId), ['hand_scrap']);
     });
 
+    test('buying an item offer does not refill the empty market slot', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'board_scrap',
+            timing: 'use_battle',
+            op: 'add_board_discard',
+            placement: 'quickSlot',
+          ),
+          _itemJson(
+            id: 'hand_scrap',
+            timing: 'use_battle',
+            op: 'add_hand_discard',
+            placement: 'quickSlot',
+          ),
+          _itemJson(
+            id: 'move_token',
+            timing: 'use_battle',
+            op: 'add_board_move',
+            placement: 'quickSlot',
+          ),
+          _itemJson(
+            id: 'spare_draw',
+            timing: 'use_battle',
+            op: 'draw_tile',
+            placement: 'quickSlot',
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()..gold = 40;
+
+      final before = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+      final beforeQuickOffers = before.itemOffers
+          .where((offer) => offer.item.placement == ItemPlacement.quickSlot)
+          .map((offer) => offer.contentId)
+          .toList(growable: false);
+
+      expect(beforeQuickOffers.length, 3);
+
+      final boughtItem = before.itemOffers.first.item;
+      expect(progress.buyItem(boughtItem, itemCatalog: catalog), isTrue);
+      progress.markItemOfferConsumed(boughtItem.id);
+
+      final after = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+      final afterQuickOffers = after.itemOffers
+          .where((offer) => offer.item.placement == ItemPlacement.quickSlot)
+          .map((offer) => offer.contentId)
+          .toList(growable: false);
+
+      expect(afterQuickOffers, beforeQuickOffers.skip(1).toList());
+      expect(afterQuickOffers, isNot(contains('spare_draw')));
+
+      expect(
+        progress.rerollItemOffers(placement: ItemPlacement.quickSlot),
+        isTrue,
+      );
+      final afterReroll = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+      final rerolledQuickOffers = afterReroll.itemOffers
+          .where((offer) => offer.item.placement == ItemPlacement.quickSlot)
+          .map((offer) => offer.contentId)
+          .toList(growable: false);
+
+      expect(rerolledQuickOffers.length, 3);
+      expect(rerolledQuickOffers, isNot(afterQuickOffers));
+    });
+
     test(
       'station band market policy keeps early economy and late boss growth',
       () {

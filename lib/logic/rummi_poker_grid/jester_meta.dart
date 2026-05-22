@@ -856,6 +856,7 @@ class RummiMarketModifierState {
     int? toolOfferRerollOffset,
     int? gearOfferRerollOffset,
     this.consumedItemOfferIds = const [],
+    this.pinnedItemOfferKeys = const [],
     this.rarityWeightBonus = 0,
   }) : quickSlotOfferRerollOffset =
            quickSlotOfferRerollOffset ?? itemOfferRerollOffset,
@@ -897,6 +898,7 @@ class RummiMarketModifierState {
           ? _nonNegativeJsonInt(json['gearOfferRerollOffset'])
           : _nonNegativeJsonInt(json['itemOfferRerollOffset']),
       consumedItemOfferIds: _stringListFromJson(json['consumedItemOfferIds']),
+      pinnedItemOfferKeys: _stringListFromJson(json['pinnedItemOfferKeys']),
       rarityWeightBonus: _nonNegativeJsonInt(json['rarityWeightBonus']),
     );
   }
@@ -916,6 +918,7 @@ class RummiMarketModifierState {
   final int toolOfferRerollOffset;
   final int gearOfferRerollOffset;
   final List<String> consumedItemOfferIds;
+  final List<String> pinnedItemOfferKeys;
   final int rarityWeightBonus;
 
   bool get isEmpty =>
@@ -934,6 +937,7 @@ class RummiMarketModifierState {
       toolOfferRerollOffset == 0 &&
       gearOfferRerollOffset == 0 &&
       consumedItemOfferIds.isEmpty &&
+      pinnedItemOfferKeys.isEmpty &&
       rarityWeightBonus == 0;
 
   int get jesterOfferSlotCount =>
@@ -967,6 +971,7 @@ class RummiMarketModifierState {
     'toolOfferRerollOffset': toolOfferRerollOffset,
     'gearOfferRerollOffset': gearOfferRerollOffset,
     'consumedItemOfferIds': consumedItemOfferIds,
+    'pinnedItemOfferKeys': pinnedItemOfferKeys,
     'rarityWeightBonus': rarityWeightBonus,
   };
 
@@ -986,6 +991,7 @@ class RummiMarketModifierState {
     int? toolOfferRerollOffset,
     int? gearOfferRerollOffset,
     List<String>? consumedItemOfferIds,
+    List<String>? pinnedItemOfferKeys,
     int? rarityWeightBonus,
   }) {
     return RummiMarketModifierState(
@@ -1015,8 +1021,26 @@ class RummiMarketModifierState {
       gearOfferRerollOffset:
           gearOfferRerollOffset ?? this.gearOfferRerollOffset,
       consumedItemOfferIds: consumedItemOfferIds ?? this.consumedItemOfferIds,
+      pinnedItemOfferKeys: pinnedItemOfferKeys ?? this.pinnedItemOfferKeys,
       rarityWeightBonus: rarityWeightBonus ?? this.rarityWeightBonus,
     );
+  }
+
+  static String itemOfferKey(ItemPlacement placement, String itemId) {
+    return '${placement.name}:$itemId';
+  }
+
+  static bool itemOfferKeyMatchesPlacement(
+    String key,
+    ItemPlacement placement,
+  ) {
+    return key.startsWith('${placement.name}:');
+  }
+
+  static String itemIdFromOfferKey(String key) {
+    final separator = key.indexOf(':');
+    if (separator < 0 || separator == key.length - 1) return key;
+    return key.substring(separator + 1);
   }
 
   static int _nonNegativeJsonInt(Object? value) {
@@ -1698,6 +1722,7 @@ class RummiRunProgress {
       toolOfferRerollOffset: 0,
       gearOfferRerollOffset: 0,
       consumedItemOfferIds: const [],
+      pinnedItemOfferKeys: const [],
     );
     _generateOffers(
       catalog: catalog,
@@ -1954,6 +1979,7 @@ class RummiRunProgress {
           toolOfferRerollOffset: nextToolOffset,
           gearOfferRerollOffset: nextGearOffset,
           consumedItemOfferIds: const [],
+          pinnedItemOfferKeys: const [],
         );
       case 'extra_jester_offer_next_market':
         marketModifiers = marketModifiers.copyWith(
@@ -2030,7 +2056,10 @@ class RummiRunProgress {
       gearOfferRerollOffset: placement == ItemPlacement.equipped
           ? nextOffset
           : marketModifiers.gearOfferRerollOffset,
-      consumedItemOfferIds: const [],
+      pinnedItemOfferKeys: _itemOfferKeysWithoutPlacement(
+        marketModifiers.pinnedItemOfferKeys,
+        placement,
+      ),
     );
     return true;
   }
@@ -2134,6 +2163,29 @@ class RummiRunProgress {
         ...marketModifiers.consumedItemOfferIds,
         itemId,
       ]),
+    );
+  }
+
+  void pinCurrentItemOfferKeys(Iterable<String> itemOfferKeys) {
+    final keys = itemOfferKeys
+        .where((key) => key.isNotEmpty)
+        .toList(growable: false);
+    marketModifiers = marketModifiers.copyWith(
+      pinnedItemOfferKeys: List<String>.unmodifiable(keys),
+    );
+  }
+
+  static List<String> _itemOfferKeysWithoutPlacement(
+    List<String> keys,
+    ItemPlacement placement,
+  ) {
+    return List<String>.unmodifiable(
+      keys.where(
+        (key) => !RummiMarketModifierState.itemOfferKeyMatchesPlacement(
+          key,
+          placement,
+        ),
+      ),
     );
   }
 

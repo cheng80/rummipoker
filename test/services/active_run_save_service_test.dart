@@ -162,6 +162,7 @@ void main() {
               toolOfferRerollOffset: 6,
               gearOfferRerollOffset: 7,
               consumedItemOfferIds: ['board_scrap'],
+              pinnedItemOfferKeys: ['quickSlot:board_scrap'],
             ),
           ),
           stageStartSession: const SavedSessionData(
@@ -240,6 +241,9 @@ void main() {
         expect(restored.runProgress.marketModifiers.gearOfferRerollOffset, 7);
         expect(restored.runProgress.marketModifiers.consumedItemOfferIds, [
           'board_scrap',
+        ]);
+        expect(restored.runProgress.marketModifiers.pinnedItemOfferKeys, [
+          'quickSlot:board_scrap',
         ]);
         expect(restored.runProgress.unlockedJesterSlots, 5);
         expect(restored.runProgress.unlockedQuickSlotCapacity, 3);

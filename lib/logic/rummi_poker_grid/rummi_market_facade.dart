@@ -467,6 +467,8 @@ class RummiMarketRuntimeFacade {
       itemCatalog: catalog,
     );
     final consumedIds = progress.marketModifiers.consumedItemOfferIds.toSet();
+    final pinnedKeys = progress.marketModifiers.pinnedItemOfferKeys;
+    final shouldUsePinnedOffers = pinnedKeys.isNotEmpty;
     final candidates = items
         .where((item) => !consumedIds.contains(item.id))
         .where(
@@ -479,8 +481,51 @@ class RummiMarketRuntimeFacade {
           ),
         )
         .toList(growable: false);
+    final candidatesById = {for (final item in candidates) item.id: item};
     final offers = <RummiMarketItemOfferView>[];
+    final nextPinnedKeys = shouldUsePinnedOffers
+        ? List<String>.from(pinnedKeys)
+        : <String>[];
+    var generatedMissingPinnedPlacement = false;
     for (final placement in ItemPlacement.values) {
+      final pinnedKeysForPlacement = pinnedKeys
+          .where(
+            (key) => RummiMarketModifierState.itemOfferKeyMatchesPlacement(
+              key,
+              placement,
+            ),
+          )
+          .toList(growable: false);
+      if (pinnedKeysForPlacement.isNotEmpty) {
+        final pinnedItems = <ItemDefinition>[];
+        for (final key in pinnedKeysForPlacement) {
+          final itemId = RummiMarketModifierState.itemIdFromOfferKey(key);
+          final item = candidatesById[itemId];
+          if (item == null || pinnedItems.any((entry) => entry.id == item.id)) {
+            continue;
+          }
+          pinnedItems.add(item);
+        }
+        for (final item in pinnedItems) {
+          offers.add(
+            RummiMarketItemOfferView.fromItemDefinition(
+              item,
+              slotIndex: offers.length,
+              currentGold: progress.gold,
+              price: progress.effectiveItemPrice(
+                item,
+                includeCheapestFirstOfferDiscount: false,
+              ),
+              originalPrice: progress.effectiveItemBasePrice(item),
+            ),
+          );
+        }
+        continue;
+      }
+
+      if (shouldUsePinnedOffers) {
+        generatedMissingPinnedPlacement = true;
+      }
       final pickedItems = _pickWeightedItemOffers(
         progress,
         candidates
@@ -491,6 +536,9 @@ class RummiMarketRuntimeFacade {
         pressureProfile: pressureProfile,
       );
       for (final item in pickedItems) {
+        nextPinnedKeys.add(
+          RummiMarketModifierState.itemOfferKey(item.placement, item.id),
+        );
         offers.add(
           RummiMarketItemOfferView.fromItemDefinition(
             item,
@@ -504,6 +552,9 @@ class RummiMarketRuntimeFacade {
           ),
         );
       }
+    }
+    if (!shouldUsePinnedOffers || generatedMissingPinnedPlacement) {
+      progress.pinCurrentItemOfferKeys(nextPinnedKeys);
     }
     progress.recordSeenMarketItems(offers.map((offer) => offer.contentId));
     return offers;
