@@ -123,6 +123,7 @@ class _GameViewState extends ConsumerState<GameView>
   late bool _shouldResumeMarketOnCatalogLoad;
   ItemCatalog? _itemCatalog;
   RummiBattleItemSlotView? _selectedBattleItemSlot;
+  Tile? _selectedHandInfoTile;
   _ItemEffectFeedback? _itemEffectFeedback;
   int _itemEffectFeedbackTick = 0;
   bool _boardMoveMode = false;
@@ -1069,7 +1070,10 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _openJesterOverlay(int index) {
     if (_isBattleInputLocked) return;
-    setState(() => _selectedBattleItemSlot = null);
+    setState(() {
+      _selectedBattleItemSlot = null;
+      _selectedHandInfoTile = null;
+    });
     _gameNotifier.setSelectedJesterOverlayIndex(index);
   }
 
@@ -1087,7 +1091,10 @@ class _GameViewState extends ConsumerState<GameView>
   void _openBattleItemOverlay(RummiBattleItemSlotView slot) {
     if (_isBattleInputLocked) return;
     _gameNotifier.setSelectedJesterOverlayIndex(null);
-    setState(() => _selectedBattleItemSlot = slot);
+    setState(() {
+      _selectedBattleItemSlot = slot;
+      _selectedHandInfoTile = null;
+    });
   }
 
   void _closeBattleItemOverlay() {
@@ -1098,6 +1105,20 @@ class _GameViewState extends ConsumerState<GameView>
   void _toggleHandTile(Tile tile) {
     if (_isBattleInputLocked) return;
     _gameNotifier.toggleSelectedHandTile(tile);
+  }
+
+  void _openHandTileInfoOverlay(Tile tile) {
+    if (_isBattleInputLocked) return;
+    _gameNotifier.setSelectedJesterOverlayIndex(null);
+    setState(() {
+      _selectedBattleItemSlot = null;
+      _selectedHandInfoTile = tile;
+    });
+  }
+
+  void _closeHandTileInfoOverlay() {
+    if (!mounted) return;
+    setState(() => _selectedHandInfoTile = null);
   }
 
   Future<void> _goToTitleAfterStoppingBgm() async {
@@ -2111,6 +2132,7 @@ class _GameViewState extends ConsumerState<GameView>
             boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
             selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
             selectedBattleItemSlot: _selectedBattleItemSlot,
+            selectedHandInfoTile: _selectedHandInfoTile,
             itemEffectFeedback: _itemEffectFeedback,
             itemEffectFeedbackTick: _itemEffectFeedbackTick,
             suppressDebugChrome: widget.debugSuppressFixtureNotice,
@@ -2128,6 +2150,7 @@ class _GameViewState extends ConsumerState<GameView>
             onDebugTap: () => _openDebugBottomSheet(context),
             onJesterTap: _openJesterOverlay,
             onHandTileTap: _toggleHandTile,
+            onHandTileLongPress: _openHandTileInfoOverlay,
             onBoardCellTap: _onBoardCellTap,
             onDraw: _drawTile,
             onBoardDiscard: _discardSelectedBoardTile,
@@ -2140,6 +2163,7 @@ class _GameViewState extends ConsumerState<GameView>
             onJesterOverlayClose: _closeJesterOverlay,
             onBattleItemUse: _useBattleItem,
             onBattleItemOverlayClose: _closeBattleItemOverlay,
+            onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
           ),
           if (_settlementToMarketTransition != null)
             Positioned.fill(
@@ -2714,6 +2738,7 @@ class _GameSurface extends StatelessWidget {
     required this.boardMoveBonusFlashTick,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
+    required this.selectedHandInfoTile,
     required this.itemEffectFeedback,
     required this.itemEffectFeedbackTick,
     required this.suppressDebugChrome,
@@ -2729,6 +2754,7 @@ class _GameSurface extends StatelessWidget {
     required this.onDebugTap,
     required this.onJesterTap,
     required this.onHandTileTap,
+    required this.onHandTileLongPress,
     required this.onBoardCellTap,
     required this.onDraw,
     required this.onBoardDiscard,
@@ -2741,6 +2767,7 @@ class _GameSurface extends StatelessWidget {
     required this.onJesterOverlayClose,
     required this.onBattleItemUse,
     required this.onBattleItemOverlayClose,
+    required this.onHandTileInfoOverlayClose,
   });
 
   final RummiBattleRuntimeFacade battle;
@@ -2766,6 +2793,7 @@ class _GameSurface extends StatelessWidget {
   final int boardMoveBonusFlashTick;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
+  final Tile? selectedHandInfoTile;
   final _ItemEffectFeedback? itemEffectFeedback;
   final int itemEffectFeedbackTick;
   final bool suppressDebugChrome;
@@ -2781,6 +2809,7 @@ class _GameSurface extends StatelessWidget {
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
+  final ValueChanged<Tile> onHandTileLongPress;
   final void Function(int row, int col) onBoardCellTap;
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
@@ -2793,6 +2822,7 @@ class _GameSurface extends StatelessWidget {
   final VoidCallback onJesterOverlayClose;
   final ValueChanged<RummiBattleItemSlotView> onBattleItemUse;
   final VoidCallback onBattleItemOverlayClose;
+  final VoidCallback onHandTileInfoOverlayClose;
 
   @override
   Widget build(BuildContext context) {
@@ -2860,6 +2890,7 @@ class _GameSurface extends StatelessWidget {
                   onDebugTap: onDebugTap,
                   onJesterTap: onJesterTap,
                   onHandTileTap: onHandTileTap,
+                  onHandTileLongPress: onHandTileLongPress,
                   onBoardCellTap: onBoardCellTap,
                   onDraw: onDraw,
                   onBoardDiscard: onBoardDiscard,
@@ -2956,6 +2987,27 @@ class _GameSurface extends StatelessWidget {
                   ],
                 ),
               ),
+            if (selectedHandInfoTile != null)
+              Positioned.fill(
+                child: Stack(
+                  children: [
+                    const GameInputBarrier.modal(),
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      bottom: 118,
+                      child: GameHandTileInfoOverlay(
+                        tile: selectedHandInfoTile!,
+                        constrained: battle.isTileConstrained(
+                          selectedHandInfoTile!,
+                        ),
+                        bossModifier: battle.bossModifier,
+                        onClose: onHandTileInfoOverlayClose,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -2986,6 +3038,7 @@ class _GameLayout extends StatelessWidget {
     required this.boardMoveBonusFlashTick,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
+    required this.onHandTileLongPress,
     required this.suppressDebugChrome,
     required this.difficultyLabel,
     required this.battleBoardTutorialKey,
@@ -3043,6 +3096,7 @@ class _GameLayout extends StatelessWidget {
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
+  final ValueChanged<Tile> onHandTileLongPress;
   final void Function(int row, int col) onBoardCellTap;
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
@@ -3241,6 +3295,7 @@ class _GameLayout extends StatelessWidget {
                 hand: battle.hand,
                 selectedHandTile: selectedHandTile,
                 onHandTileTap: onHandTileTap,
+                onHandTileLongPress: onHandTileLongPress,
                 onDraw: onDraw,
                 tileWidth: tileWidth,
               ),

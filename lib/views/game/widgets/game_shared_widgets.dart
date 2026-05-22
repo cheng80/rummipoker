@@ -1415,6 +1415,188 @@ class _GamePassiveItemNotice extends StatelessWidget {
   }
 }
 
+class GameHandTileInfoOverlay extends StatelessWidget {
+  const GameHandTileInfoOverlay({
+    super.key,
+    required this.tile,
+    required this.constrained,
+    required this.bossModifier,
+    required this.onClose,
+  });
+
+  final Tile tile;
+  final bool constrained;
+  final RummiBossModifier? bossModifier;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final modifierSummary = tileModifierSummary(tile);
+    final modifierEffectText = tileModifierEffectText(tile);
+    final hasModifier = modifierSummary.isNotEmpty;
+    final baseInfoText =
+        '${tileColorDisplayName(tile.color)} ${tile.number} · 기준 칩 ${tile.baseChipValue}';
+    return Material(
+      color: Colors.transparent,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF123126).withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 54,
+                    height: 54,
+                    child: GameRummiTileCard(
+                      tile: tile,
+                      selected: false,
+                      accent: false,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tile.code,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          hasModifier ? modifierSummary : baseInfoText,
+                          maxLines: 2,
+                          style: TextStyle(
+                            color: hasModifier
+                                ? const Color(0xFFFFD36B)
+                                : Colors.white.withValues(alpha: 0.62),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            height: 1.12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close_rounded),
+                    color: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (hasModifier)
+                Text(
+                  modifierEffectText,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.84),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                )
+              else
+                Text(
+                  '$baseInfoText\n확정 점수는 완성한 족보의 기본 칩을 기준으로 계산됩니다.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              if (constrained && bossModifier != null) ...[
+                const SizedBox(height: 10),
+                _GameTileInfoConstraintCallout(modifier: bossModifier!),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GameTileInfoConstraintCallout extends StatelessWidget {
+  const _GameTileInfoConstraintCallout({required this.modifier});
+
+  final RummiBossModifier modifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF441E1E).withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFFF8A5B).withValues(alpha: 0.42),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 22,
+              height: 18,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF8A5B).withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                modifier.markerText,
+                style: const TextStyle(
+                  color: Color(0xFF24120D),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${modifier.title}: ${modifier.ruleText}',
+                style: const TextStyle(
+                  color: Color(0xFFFFD8CC),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  height: 1.25,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _GameItemOverlayTag extends StatelessWidget {
   const _GameItemOverlayTag({required this.text});
 
@@ -2989,6 +3171,15 @@ String tileModifierEffectText(Tile tile) {
     if (tile.seal != null) tileSealEffectText(tile.seal!),
   ];
   return parts.join(' / ');
+}
+
+String tileColorDisplayName(TileColor color) {
+  return switch (color) {
+    TileColor.red => '빨간 타일',
+    TileColor.blue => '파란 타일',
+    TileColor.yellow => '노란 타일',
+    TileColor.black => '검은 타일',
+  };
 }
 
 String tileEnhancementShortLabel(TileEnhancement enhancement) {

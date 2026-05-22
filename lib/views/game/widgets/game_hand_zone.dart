@@ -16,6 +16,7 @@ class GameHandZone extends StatefulWidget {
     required this.hand,
     required this.selectedHandTile,
     required this.onHandTileTap,
+    required this.onHandTileLongPress,
     required this.onDraw,
     required this.tileWidth,
   });
@@ -25,6 +26,7 @@ class GameHandZone extends StatefulWidget {
   final List<Tile> hand;
   final Tile? selectedHandTile;
   final ValueChanged<Tile> onHandTileTap;
+  final ValueChanged<Tile> onHandTileLongPress;
   final VoidCallback onDraw;
   final double tileWidth;
 
@@ -348,6 +350,7 @@ class _GameHandZoneState extends State<GameHandZone>
         angle: angle,
         child: GestureDetector(
           onTap: () => widget.onHandTileTap(tile),
+          onLongPress: () => widget.onHandTileLongPress(tile),
           child: _HandTileCard(
             tile: tile,
             selected: widget.selectedHandTile == tile,
@@ -425,6 +428,7 @@ class _GameHandZoneState extends State<GameHandZone>
         angle: angle,
         child: GestureDetector(
           onTap: () => widget.onHandTileTap(tile),
+          onLongPress: () => widget.onHandTileLongPress(tile),
           child: _HandTileCard(
             tile: tile,
             selected: widget.selectedHandTile == tile,

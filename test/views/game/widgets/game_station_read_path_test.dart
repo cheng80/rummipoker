@@ -608,6 +608,7 @@ void main() {
               hand: hand,
               selectedHandTile: null,
               onHandTileTap: (_) {},
+              onHandTileLongPress: (_) {},
               onDraw: () {},
               tileWidth: 48,
             ),
@@ -676,6 +677,7 @@ void main() {
               hand: hand,
               selectedHandTile: null,
               onHandTileTap: (_) {},
+              onHandTileLongPress: (_) {},
               onDraw: () {},
               tileWidth: 48,
             ),
@@ -746,6 +748,7 @@ void main() {
               hand: hand,
               selectedHandTile: null,
               onHandTileTap: (_) {},
+              onHandTileLongPress: (_) {},
               onDraw: () {},
               tileWidth: 48,
             ),
@@ -760,6 +763,93 @@ void main() {
     expect(find.byKey(const ValueKey('settled-K4#4')), findsOneWidget);
     expect(find.byKey(const ValueKey('settled-R5#5')), findsOneWidget);
     expect(find.text('가득 참'), findsOneWidget);
+  });
+
+  testWidgets('GameHandZone reports hand tile long press', (tester) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 3,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 2,
+        drawPileRemaining: 14,
+      ),
+    );
+    final tile = Tile(
+      id: 1,
+      color: TileColor.red,
+      number: 1,
+      enhancement: TileEnhancement.chipInlaid,
+    );
+    final hand = [tile];
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: hand,
+      scoringCellKeys: const {},
+    );
+    Tile? longPressedTile;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 120,
+            child: GameHandZone(
+              battle: battle,
+              station: station,
+              hand: hand,
+              selectedHandTile: null,
+              onHandTileTap: (_) {},
+              onHandTileLongPress: (tile) => longPressedTile = tile,
+              onDraw: () {},
+              tileWidth: 48,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.longPress(
+      find.descendant(
+        of: find.byKey(const ValueKey('settled-R1#1')),
+        matching: find.byType(GameRummiTileCard),
+      ),
+    );
+
+    expect(longPressedTile, tile);
+  });
+
+  testWidgets('GameHandTileInfoOverlay shows base info for normal tile', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameHandTileInfoOverlay(
+            tile: const Tile(id: 1, color: TileColor.red, number: 7),
+            constrained: false,
+            bossModifier: null,
+            onClose: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('R7'), findsOneWidget);
+    expect(find.text('빨간 타일 7 · 기준 칩 7'), findsWidgets);
+    expect(find.textContaining('확정 점수는 완성한 족보의 기본 칩'), findsOneWidget);
   });
 
   testWidgets('GameHandZone highlights added hand capacity near draw control', (
@@ -810,6 +900,7 @@ void main() {
               hand: hand,
               selectedHandTile: null,
               onHandTileTap: (_) {},
+              onHandTileLongPress: (_) {},
               onDraw: () {},
               tileWidth: 48,
             ),
