@@ -64,6 +64,16 @@ mkdir -p rummipoker && cp -r build/web/* rummipoker/
 
 `rummipoker/` 폴더를 업로드하면 `https://example.com/rummipoker/` 에서 서비스됩니다.
 
+**방법 A-1: NAS `/share/Web/rummipoker` 자동 배포**
+
+NAS 웹서버에 `deploy_rummipoker.php`를 올린 뒤, 로컬에서 빌드/압축/업로드를 한 번에 실행할 수 있습니다.
+
+```bash
+tools/deploy_rummipoker_web.sh
+```
+
+배포 토큰 생성, `.env` 작성, NAS 서버측 env 파일 작성법은 `docs/rummipoker_nas_deploy.md`를 따릅니다.
+
 **방법 B: Nginx/Apache 등 직접 설정 가능한 서버**
 
 1. `build/web/` 폴더 전체를 웹 서버에 업로드합니다.

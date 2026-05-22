@@ -1,0 +1,4 @@
+interface:
+  display_name: "Korean Commit Push"
+  short_description: "Commit with Korean summary and push."
+  default_prompt: "커밋 푸시해줘"
