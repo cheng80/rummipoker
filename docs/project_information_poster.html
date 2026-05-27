@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rummi Poker Grid Information Source</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #ffffff;
+      color: #171717;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(1080px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      border-bottom: 2px solid #111111;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 44px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 820px;
+      margin: 0;
+      color: #3f3f46;
+      font-size: 18px;
+    }
+
+    section {
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
+      padding: 18px;
+      margin-top: 16px;
+      background: #ffffff;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0;
+      color: #3f3f46;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #3f3f46;
+    }
+
+    li + li {
+      margin-top: 5px;
+    }
+
+    strong {
+      color: #111111;
+      font-weight: 750;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .span-4 {
+      grid-column: span 4;
+    }
+
+    .span-6 {
+      grid-column: span 6;
+    }
+
+    .span-12 {
+      grid-column: span 12;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      border: 1px solid #a1a1aa;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 14px;
+      color: #27272a;
+      background: #fafafa;
+    }
+
+    .identity-grid,
+    .deckbuilding-grid,
+    .loop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .loop-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .info-card {
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
+      padding: 14px;
+      background: #fafafa;
+    }
+
+    .rule-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .board-wrap {
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
+      padding: 16px;
+      background: #fafafa;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      width: min(380px, 100%);
+      margin: 0 auto 14px;
+      aspect-ratio: 1;
+    }
+
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      min-height: 0;
+      border: 1px solid #a1a1aa;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #52525b;
+      font-weight: 750;
+      font-size: 14px;
+      position: relative;
+    }
+
+    .row-line {
+      background: #fff7d6;
+      border-color: #c58b00;
+      color: #7a5400;
+    }
+
+    .col-line {
+      box-shadow: inset 0 0 0 3px #bfdbfe;
+      border-color: #2563eb;
+      color: #1d4ed8;
+    }
+
+    .diag-a::before,
+    .diag-b::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 130%;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(22, 163, 74, 0.75);
+      transform-origin: center;
+      pointer-events: none;
+    }
+
+    .diag-a::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .diag-b::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .center-point {
+      background: #dcfce7;
+      border: 3px solid #16a34a;
+      color: #166534;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .legend {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      color: #3f3f46;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border: 1px solid #71717a;
+      flex: 0 0 auto;
+      background: #ffffff;
+    }
+
+    .swatch.row {
+      background: #fff7d6;
+      border-color: #c58b00;
+    }
+
+    .swatch.col {
+      background: #bfdbfe;
+      border-color: #2563eb;
+    }
+
+    .swatch.diag {
+      background: #dcfce7;
+      border-color: #16a34a;
+    }
+
+    .note {
+      margin-top: 10px;
+      padding: 10px;
+      border-left: 4px solid #111111;
+      background: #f4f4f5;
+      color: #3f3f46;
+      font-size: 14px;
+    }
+
+    @media (max-width: 840px) {
+      main {
+        width: min(100vw - 24px, 680px);
+        padding-top: 24px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .span-4,
+      .span-6,
+      .span-12,
+      .rule-layout,
+      .identity-grid,
+      .deckbuilding-grid,
+      .loop-grid {
+        grid-column: span 12;
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Rummi Poker Grid</h1>
+      <p class="subtitle">
+        포커 족보를 5x5 빙고 보드 위에서 만들고, 덱빌딩 요소로 run마다 다른 점수 엔진을 구성하는 보드형 로그라이트 게임.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Poker Hands</span>
+        <span class="pill">Bingo Lines</span>
+        <span class="pill">Deckbuilding Roguelite</span>
+        <span class="pill">Flutter / Flame</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>1. 게임의 핵심 정체성</h2>
+      <div class="identity-grid">
+        <div class="info-card">
+          <h3>포커 족보</h3>
+          <p>같은 숫자, 연속 숫자, 같은 색, 조합 패턴으로 점수 족보를 만든다.</p>
+        </div>
+        <div class="info-card">
+          <h3>빙고 라인</h3>
+          <p>보드의 가로, 세로, 대각선 라인을 동시에 관리한다.</p>
+        </div>
+        <div class="info-card">
+          <h3>덱빌딩 성장</h3>
+          <p>Jester, Item, 특수 타일, 족보 레벨이 다음 전투의 판단 기준을 바꾼다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 포커 + 빙고 룰 다이어그램</h2>
+      <div class="rule-layout">
+        <div class="board-wrap">
+          <div class="board" aria-label="Rummi Poker Grid cross-line board diagram">
+            <div class="cell diag-a">R2</div>
+            <div class="cell">B6</div>
+            <div class="cell col-line">Y4</div>
+            <div class="cell">K11</div>
+            <div class="cell diag-b">R8</div>
+
+            <div class="cell">K3</div>
+            <div class="cell diag-a">B7</div>
+            <div class="cell col-line">Y5</div>
+            <div class="cell diag-b">R9</div>
+            <div class="cell">K1</div>
+
+            <div class="cell row-line">R7</div>
+            <div class="cell row-line">B7</div>
+            <div class="cell row-line col-line diag-a diag-b center-point">교차<br>점</div>
+            <div class="cell row-line">Y4</div>
+            <div class="cell row-line">K4</div>
+
+            <div class="cell">B12</div>
+            <div class="cell diag-b">K5</div>
+            <div class="cell col-line">Y8</div>
+            <div class="cell diag-a">R10</div>
+            <div class="cell">B1</div>
+
+            <div class="cell diag-b">Y13</div>
+            <div class="cell">R3</div>
+            <div class="cell col-line">Y9</div>
+            <div class="cell">K6</div>
+            <div class="cell diag-a">B11</div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="swatch row"></span><span>가로 라인: 포커 족보 후보를 만든다.</span></div>
+            <div class="legend-item"><span class="swatch col"></span><span>세로 라인: 같은 타일이 다른 족보 후보에 다시 쓰인다.</span></div>
+            <div class="legend-item"><span class="swatch diag"></span><span>대각선 2개: 중앙 타일에서 교차하며 overlap 전략을 만든다.</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3>교차점이 중요한 이유</h3>
+          <ul>
+            <li><strong>포커 룰:</strong> 한 줄 안의 타일 조합으로 족보를 만든다.</li>
+            <li><strong>빙고 룰:</strong> 같은 타일이 가로, 세로, 대각선 라인에 동시에 속할 수 있다.</li>
+            <li><strong>Overlap:</strong> 중앙 교차점 타일은 여러 라인의 점수 가능성을 동시에 살린다.</li>
+            <li><strong>확정 후 설계:</strong> contributor만 제거되므로 남은 타일이 다음 라인의 재료가 된다.</li>
+          </ul>
+          <div class="note">
+            포스터 핵심 메시지: 이 게임은 포커를 단순히 한 손패에서 판정하지 않는다. 보드 위 여러 라인에서 동시에 족보를 만들고, 교차점 선택으로 다음 턴의 가능성을 설계한다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. 전투 판단 흐름</h2>
+      <div class="loop-grid">
+        <div class="info-card">
+          <h3>배치</h3>
+          <p>손패 타일을 보드에 놓아 여러 라인의 족보 가능성을 만든다.</p>
+        </div>
+        <div class="info-card">
+          <h3>판정</h3>
+          <p>가로, 세로, 대각선을 각각 포커 족보처럼 읽는다.</p>
+        </div>
+        <div class="info-card">
+          <h3>확정</h3>
+          <p>완성된 족보의 contributor만 제거하고 점수와 보상을 계산한다.</p>
+        </div>
+        <div class="info-card">
+          <h3>재설계</h3>
+          <p>남은 타일과 새 손패로 다음 라인, 다음 확정, 다음 Market 선택을 설계한다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 덱빌딩이 룰을 바꾸는 방식</h2>
+      <div class="deckbuilding-grid">
+        <div class="info-card">
+          <h3>Jester</h3>
+          <p>특정 족보, 색상, 확정 방식, 경제 선택을 강화해 run의 점수 엔진을 만든다.</p>
+        </div>
+        <div class="info-card">
+          <h3>Item / Tool / Gear</h3>
+          <p>드로우, 이동, 버림, 다음 확정 보너스, Market 조작으로 전투와 성장 선택을 바꾼다.</p>
+        </div>
+        <div class="info-card">
+          <h3>Special Tiles</h3>
+          <p>타일 자체에 효과를 붙여 같은 보드라도 다른 라인 가치와 정산 결과를 만든다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. 플레이 루프</h2>
+      <div class="loop-grid">
+        <div class="info-card">
+          <h3>전투</h3>
+          <p>보드 위에 타일을 놓고 족보 라인을 만든다.</p>
+        </div>
+        <div class="info-card">
+          <h3>정산</h3>
+          <p>확정한 족보로 점수, 보상, 제거 타일을 계산한다.</p>
+        </div>
+        <div class="info-card">
+          <h3>Market</h3>
+          <p>Jester, Item, Tool, Gear, 특수 타일 후보를 구매하거나 교체한다.</p>
+        </div>
+        <div class="info-card">
+          <h3>다음 Station</h3>
+          <p>강해진 run 상태로 다음 전투와 보스 제약에 대응한다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. 기술 정보</h2>
+      <div class="grid">
+        <div class="span-6">
+          <h3>기술 스택</h3>
+          <ul>
+            <li>Flutter: UI와 앱 구조</li>
+            <li>Flame / flame_audio: 게임 렌더링 보조와 오디오</li>
+            <li>Riverpod: 세션 상태 관리</li>
+            <li>GoRouter: 화면 라우팅</li>
+            <li>easy_localization: 다국어 리소스</li>
+            <li>shared_preferences: 설정과 active run 저장</li>
+          </ul>
+        </div>
+        <div class="span-6">
+          <h3>프로젝트 구조</h3>
+          <ul>
+            <li>logic/rummi_poker_grid: 전투, 덱, 보드, Jester, Item, Market runtime</li>
+            <li>views: title, new-run, battle, market, archive, settings UI</li>
+            <li>services: save/restore, run setup, progression, unlock state</li>
+            <li>providers: Riverpod 기반 세션 상태와 화면 상태</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

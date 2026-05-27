@@ -21,6 +21,8 @@
 - [CURRENT_CODE_MAP.md](docs/current_system/CURRENT_CODE_MAP.md)
 - [CURRENT_TO_V4_GAP.md](docs/current_system/CURRENT_TO_V4_GAP.md)
 
+현재 활성 흐름은 공모전 제출 준비가 아니라 post-contest 런타임 고도화다. 공모전 문서는 닫힌 제출 이력과 증거 확인에만 사용하고, 다음 작업 선택은 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md)의 활성 트랙을 따른다.
+
 ## 새 세션 시작 지시문
 
 아래 문장 그대로 시작해도 된다.
@@ -28,7 +30,7 @@
 ```text
 작업 시작 전에 START_HERE.md, docs/00_docs_README.md, docs/current_system/CURRENT_SYSTEM_OVERVIEW.md, docs/current_system/CURRENT_CODE_MAP.md, docs/current_system/CURRENT_TO_V4_GAP.md 를 먼저 읽고,
 그 다음 docs/planning/ACTIVE_EXECUTION_PLAN.md 를 확인해 현재 활성 트랙과 다음 작업부터 이어서 진행해라.
-공모전 제출 준비 작업이면 docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md 를 상세 체크리스트로 확인해라.
+공모전 관련 문서는 현재 활성 큐가 아니라 닫힌 제출 이력과 증거 참고로만 확인해라.
 장기 Goal/레벨링 작업이면 docs/planning/goal/OVERALL_GOAL_PROGRESS.md 와 docs/planning/leveling/* 를 추가로 확인해라.
 문서는 목적형 폴더와 GCSE 역할 기준을 유지하고, 코드/테스트 중심으로 작업해라.
 ```
@@ -91,14 +93,14 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 | goals | Goal | `docs/goals/*` | 제품 목표, 방향성, 의사결정 원칙 |
 | current_system | Context | `docs/current_system/*` | 현재 구현 상태, 코드 맵, current-to-target gap, 레벨링 현재 정책 |
 | specs | Spec | `docs/specs/V4/*.md` | 기능별 V4 명세 |
-| planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/competition/*`, `docs/planning/goal/*`, `docs/planning/leveling/*`, `docs/planning/feature_plans/*`, `docs/planning/legacy/*`, `docs/planning/verification/*` | 현재 실행 라우터, 공모전 실행표, Goal 진도, 레벨링/경제 상태, 기능별 계획, legacy snapshot, 검증 절차 |
+| planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/competition/*`, `docs/planning/goal/*`, `docs/planning/leveling/*`, `docs/planning/feature_plans/*`, `docs/planning/legacy/*`, `docs/planning/verification/*` | 현재 실행 라우터, 닫힌 공모전 제출 이력, Goal 진도, 레벨링/경제 상태, 기능별 계획, legacy snapshot, 검증 절차 |
 | archive | Archive | `docs/archive/*`, generated/prompt/history 문서 | 최신 판단 기준은 아니지만 이력 검색에 사용할 수 있는 참고 자료 |
 
 ## Source of Truth
 
 - 현재 활성 트랙과 다음 작업: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
 - 실제 Goal 전체 진도: `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
-- 공모전 제출 준비 체크리스트: `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`
+- 공모전 제출 이력과 증거 참고: `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`
 - 레벨링 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 - 경제 계획: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 - 문서 정리 순서: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`

@@ -22,10 +22,11 @@
 
 - 실제 제품 완성도는 아직 `In progress`이며, 전체 추정 진도는 42%다.
 - 2026-05-15 12시경 공모전 최종 산출물을 우선 등록했으므로 공모전 트랙은 off다. 현재 활성 실행은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 post-contest 안정화/리팩터링 트랙이다.
-- 공모전 이후 첫 작업으로 손패 최대치 4장 이상 UI/효과 버그를 수정했다. 현재 정책은 손패 최대치 5장, 5장 초과 증가 효과 실패/미소모, 복합 효과 패널티 미적용이다.
-- 다음은 Jester/Item/Tool/Gear 정책 리스크를 상한/no-op/가격/표시 문제로 분해한 뒤, 리팩터링과 최적화에 들어간다.
+- 공모전 이후 안정화로 손패 최대치, 전투 자원, 보유/후보 슬롯 상한과 no-op 정책을 닫았다.
+- Jester/Item/Tool/Gear 정책 리스크는 상당 부분 분해/수정됐고, 현재 활성 초점은 특수 타일 modifier V1과 runtime state / transient presentation state 분리다.
+- 가격/가치 판단과 장기 경제 gate는 exploratory probe 단계로 남아 있으며, 런타임 반영 전 fresh 검증이 필요하다.
 
-공모전 이후 재개 대상:
+현재 재개 대상:
 
 - 장기 multi-seed r400/r800 밸런스 확정
 - ML 리포트 갱신과 NotebookLM용 재가공
@@ -37,8 +38,8 @@
 
 현재 재개 순서:
 
-1. 손패 최대치 버그처럼 실제 플레이에서 깨지는 post-contest 안정화 결함을 먼저 닫는다.
-2. Jester/Item/Tool/Gear 정책 리스크 리스트를 작은 구현 후보로 나눈다.
+1. `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` 기준으로 특수 타일 V1을 구현한다.
+2. modifier 없는 기존 저장 호환과 modifier 포함 저장/복원/전투/마켓 표시를 검증한다.
 3. runtime state와 transient presentation state 분리를 중심으로 리팩터링 계획을 확정한다.
 4. 장기 S1~S8 밸런스를 multi-seed r400/r800 기준으로 재검증한다.
 5. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
@@ -67,14 +68,14 @@
 
 전체 추정 진도: 42%
 
-출품용 프로토타입 추정 진도: 58%
+공모전 제출 트랙: Closed / off. 상세 증거는 `docs/planning/competition/`에서만 참고한다.
 
 주의:
 
 - 이 퍼센트는 확정 지표가 아니라 현재 증거 기준의 작업 진척 추정치다.
 - 큰 설계 변경, 장기 sweep, browser QA, 저장 구조 변경이 생기면 퍼센트는 다시 조정한다.
 - 퍼센트는 “작업량”이 아니라 “goal 완성에 필요한 증거가 얼마나 갖춰졌는가”를 기준으로 한다.
-- 출품용 프로토타입 퍼센트는 전체 완성이 아니라, 심사자가 플레이 가능한 핵심 vertical slice를 기준으로 한다.
+- 공모전 제출 퍼센트는 현재 의사결정 지표가 아니다.
 
 ## 2. Percent Checklist
 
@@ -95,9 +96,9 @@
 
 장기 Goal 관점의 현재 판단:
 
-- S1은 출품용 입구 안정성을 우선해 target 240/264/265와 red dampener 35% 감소로 낮췄다.
-- S1 path는 r240 smoke에서 94.2~95.0%이며, 후반 S8 병목은 남아 있다.
-- `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1`은 공모전 handoff 후보로는 충분하지만 장기 밸런스 완료가 아니다.
+- S1~S8 runtime target은 2026-05-19 post-contest 로그형 상향 표로 교체됐다.
+- `challenge`는 1.5배 target과 standard S8 클리어 기반 carryover 구조로 설계/적용됐다.
+- `runtime_station_pool_s4_rank_weight_v1 + growth_access_v1`은 이전 handoff 후보였지만 장기 밸런스 완료가 아니다.
 - `power none`이 일부 seed에서 목표보다 높고, `balanced v9`가 한 seed에서 목표 60%를 살짝 밑돈다.
 - 경제/가격/market availability는 즉시 경고는 없지만 장기 gate를 닫지 않는다.
 
@@ -106,7 +107,7 @@ ML/분석 상태:
 - 현재 런타임 레벨링은 실제 머신러닝이 자동 조정하지 않는다.
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
 - `analysis/leveling/`의 feature table과 model 결과는 planned transition scaffold다.
-- ML 갱신과 NotebookLM 보고서/인포그래픽 재생성은 공모전 이후로 보류한다.
+- ML 갱신과 NotebookLM 보고서/인포그래픽 재생성은 모델/데이터 기준이 실무 사용 수준에 도달하기 전까지 보류한다.
 - production ML 또는 runtime 자동 적용 표현은 계속 금지한다.
 
 상세 근거 위치:
@@ -116,122 +117,18 @@ ML/분석 상태:
 - 휴리스틱/시뮬레이션 진입 요약: `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`
 - 과거 순서 lock snapshot: `docs/planning/legacy/TEMP_WORK_SEQUENCE_PLAN.md`
 
-## 4. Competition Prototype Track
+## 4. Closed Competition Track
 
-목표: `2026-05-14 15:00 KST` BIC 일반부문 1차 접수용 플레이 가능 빌드.
+공모전 제출 트랙은 `Closed / off`다. 2026-05-15 12시경 최종 산출물을 우선 등록했고, 이후 공모전 문서는 현재 작업 큐가 아니라 제출 이력과 증거 확인용으로만 본다.
 
-상세 제출 준비 체크리스트는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 기준으로 진행한다. 현재 실행 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`가 고르고, 이 문서는 전체 진도와 gate 상태만 갱신한다.
+요약:
 
-공식 접수 안내 기준:
+- `ko`, `en` 표준/도전 S1~S8 Boss full-run과 최신 `ko` 재확인을 통과했다.
+- 제출 전 상점 회귀, 용어 UX, web BGM, 정산 overlay, 튜토리얼, 도감/보상/새 run 복귀 관련 주요 결함은 당시 기준으로 닫았다.
+- `ja`, `zh-CN`, `zh-TW` full-run과 S9+ 장기 생존은 제출 gate가 아니라 필요 시 여는 추가 검증 후보다.
+- 상세 로그, bot 조건, 제출 증거는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 공모전 이력 섹션에서만 참고한다.
 
-- 일반부문 접수 기간: `2026-04-08` ~ `2026-05-14`
-- 접수 시작/마감시간: 오후 3시 KST
-- 실행 가능한 게임 빌드 제출 필수
-- 접수 마감 이후 빌드 업데이트 불가
-
-출품용 프로토타입은 전체 goal 100%가 아니라 아래 조건을 잠그는 것을 목표로 한다.
-
-| Gate | Prototype target | Status | Progress |
-|---|---|---|---:|
-| Playable vertical slice | 새 run 시작 -> 전투 -> 마켓 -> 보스 -> 정산/패배 -> 실제 보상 -> 도감/새 run 복귀 흐름이 끊기지 않는다 | In progress | 62% |
-| Strategy readability | 타일/카드/아이템/보스 제약이 설명 없이도 선택 부담으로 읽힌다 | In progress | 55% |
-| Economy baseline | 골드와 가격이 과다 지급처럼 보이지 않고, 좋은 플레이는 부당하게 막지 않는다 | In progress | 58% |
-| Roguelite loop stub | 게임오버 보상과 다음 run 복귀가 최소 형태로 존재한다 | In progress | 42% |
-| Game feel baseline | 마켓/전투/정산/게임오버/도감의 대표 화면이 어색하지 않다 | In progress | 45% |
-| Submission QA | 웹 빌드, 저장/복구, 플레이 영상 촬영 가능한 안정성을 확보한다 | In progress | 38% |
-
-출품 모드 작업 원칙:
-
-- 세부 수치 완성보다 큰 구조를 먼저 잠근다.
-- 경제/레벨링은 `good enough` 기준으로 닫고, 상세 polishing은 출품 후 트랙으로 분리한다.
-- 신규 시스템은 심사용 플레이 흐름을 막는 경우에만 추가한다.
-- 5월 12일을 feature freeze로 보고, 5월 13일은 QA/빌드/영상/제출 자료에 둔다.
-- 5월 14일은 수정일이 아니라 제출 버퍼로 남긴다.
-
-작업 시간 산정 기준:
-
-- 기본 산정은 하루 8~10시간 실작업 기준이다.
-- 현실적인 공모전 대응 기준은 하루 10~12시간 집중 작업 + 야간 자동 실행이다.
-- 야간에는 r400/r800 sweep, 경제 probe, ML feature rebuild/train, `flutter test`, `flutter analyze`, `flutter build web`, submission smoke처럼 사람 판단이 적은 작업을 돌린다.
-- Boss pool 설계 판단, UI/텍스트/IP 네이밍 최종 결정, 런타임 값 적용 여부, 최종 browser/compute 시각 QA 판정은 사람이 깨어 있을 때 한다.
-- 2026-05-06 새벽 기준으로는 08:30 KST 전까지 현재 boss pool 기준 post lane-reroll 경제 raw probe처럼 이후 비교에 쓸 수 있는 자동 작업을 우선 돌린다.
-
-출품용 일정 잠금:
-
-| Date | Gate | Done 기준 |
-|---|---|---|
-| `2026-05-09` | 구조 잠금 | 새 run, 전투, 마켓, 보스, 정산, 게임오버/런 완료, 기억 카드 보상 루프가 하나의 playable vertical slice로 이어진다. |
-| `2026-05-10` | 경제/레벨링 잠금 | S1 입구 안정성, S2~S3 성장 필요 구간, S7~S8 후반 난도를 출품용 smoke로 확인하고 세부 수치 polishing은 분리한다. |
-| `2026-05-11` | 대표 연출 잠금 | 전투/마켓/정산 대표 액션이 어색하게 끊기지 않고, 신규 대형 연출 시스템 추가는 중단한다. |
-| `2026-05-12` | Feature freeze | 새 기능 추가를 멈추고 버그 수정, 문구, fixture 정리, 빌드 안정화만 허용한다. |
-| `2026-05-13` | Submission candidate | 제출 후보 웹 빌드, 핵심 테스트, browser/compute QA, 플레이 영상 촬영을 완료한다. |
-| `2026-05-14` | Submission buffer | `15:00 KST` 마감 전 제출만 수행한다. 수정일로 쓰지 않는다. |
-
-출품용으로 의도적으로 미루는 것:
-
-- S7/S8 장기 clear 비율의 정밀한 최종값.
-- 전체 카탈로그 가격 2차 재산정.
-- 깊은 meta growth tree와 다수의 run modifier.
-- 모든 플랫폼별 세부 레이아웃 polish.
-- 신규 후보군을 대량 추가하는 콘텐츠 확장.
-- 저장 포맷, UI/피드백 구조, 정산 reward tax line, Jester/Item 비활성 표시가 필요한 boss 후보 적용.
-
-출품용에 포함하는 Boss pool 작업:
-
-- 현재 S1~S8 boss는 station 난이도 level별 3~4개 seed 기반 pool로 확장했지만, 반복 플레이 다양성은 r80/r400 재검증 전이다.
-- 참고 원본 보스 패턴은 28개로 확인됐고, 현재 우리 게임은 이를 10개 simulation proxy와 14개 runtime modifier id로 압축해 둔 상태다.
-- 공모전용 품질 기준에서는 boss pool 확장을 미루지 않고, 먼저 원본 패턴을 우리 룰로 번역한 매핑표를 만든다.
-- 구현은 이름/IP를 가져오지 않고, 색/라인/타일/rank/확정/자원/골드/아이템·Jester 발동 제한 같은 룰 패턴으로 재작성한다.
-- 출품 전 1차 목표는 안정성을 해치지 않는 추가 boss modifier 후보를 station level pool 후보로 늘리는 것이다.
-- 저장 포맷 변경, 자동 자원 보정, 유저 선택 강제는 금지한다.
-- 저장/UI/정산/Jester·Item 비활성 표시가 필요한 나머지 boss 후보는 공모전 이후 적용 후보로 넘긴다.
-- 출품 전 boss 작업은 현재 runtime/simulation mirror pool을 기준으로 레벨링/경제 재검증을 닫는 데 집중한다.
-
-출품 전 필수 완료:
-
-- r400 경제 probe로 현재 가격 변경이 부작용을 만들지 않는지 확인. 현재는 공모전 handoff 후보이며 장기 완료는 아니다.
-- Boss pool 확장 매핑표와 출품용 1차 추가 범위를 확정한다. 현재 runtime pool은 적용됐지만 최신 브라우저 자연 QA로 체감 난도를 다시 본다.
-- `jester_hook` 가격 조정 r400 follow-up은 통과했으므로 추가 가격 후보 확장은 출품 후 polishing으로 넘긴다.
-- S1~S8 전체 sweep은 장기 확정용이 아니라 출품 안정성용 최소 판단으로 제한.
-- 게임오버 보상 루프는 기억 카드/보상 카드 획득 이력과 도감 반영까지 확인한다. 현재처럼 내부 수치를 카드처럼 표시하는 수준은 placeholder로만 본다.
-- 연출은 신규 대형 시스템보다 이미 있는 전투/마켓/정산 대표 액션의 어색함 제거에 집중.
-- 도감은 실물 카드 face를 쓰는 방향으로 맞췄지만, 실제 화면에서 카드 크기/밀도/읽힘/수집 욕구가 충분한지 다시 본다.
-- 게임오버는 `새 run 준비` CTA를 추가했지만, 패배 직후 재도전 욕구를 만드는 문구/버튼 위계/보상 피드백은 browser QA에서 다시 판단한다.
-- `flutter analyze`, 핵심 `flutter test`, `flutter build web`, browser/compute QA를 통과.
-
-최근 QA:
-
-- 2026-05-07 재정정: `COMPETITION_SUBMISSION_CHECKLIST.md`의 도감/보상/end-to-end 항목을 과하게 닫은 것을 되돌렸다.
-- 2026-05-07: 도감 수집 저장 1차 구현을 추가했다. `run_unlock_state_v1`에 마켓 노출 Jester/Item, 구매 Jester/Item, 만난 Boss, 깬 Station, 기억 카드 획득 이력을 저장하고 도감의 내 기록 섹션에서 확인한다.
-- 2026-05-07: 게임오버 dialog에 `새 run 준비` CTA를 추가해, 패배 후 기록을 남긴 뒤 바로 새 run 준비 화면으로 이동할 수 있게 했다.
-- 최신 Browser Use full route QA는 디버그 즉시 클리어와 fixture를 섞은 화면 전환 smoke다. 자연 진행 S1~S8 full-play 검증은 다시 열어 둔다.
-- 2026-05-07 재산정: 기능 체크만 기준으로 삼으면 출품용 68%로 보일 수 있지만, 자연 full-play, 최신 web build, 게임오버 재도전 유도력, 도감 심미성, 실제 플레이 영상 안정성이 아직 부족해 출품용 프로토타입 추정 진도를 58%로 낮춘다.
-
-- `c1f7185` 이후 `final_boss_cash_out_ready` fixture를 Chrome/Computer Use로 재검증했다.
-- S8 Boss 확정 후 정산 완료 sheet에 `기억 카드 획득`, `계속 진행`, `런 완료`가 표시된다.
-- `런 완료` 클릭 후 Title로 복귀하고 이어하기 저장은 비어 있다.
-- `계속 진행` 클릭 후 S8 승리 보상/해금을 1회 반영하고 Market을 거쳐 S9 Station Select로 이어진다.
-- 새 게임 화면에서는 내부 meta reward 값을 수치 재화로 노출하지 않고 `기억 카드 보유`, `기억 카드 필요`, `기억 카드로 해금`으로 표시된다.
-- `game_over_insight_ready` fixture로 Chrome/Computer Use QA를 수행했다.
-- 보드 꽉 참 + 보드 버림 0 상태에서 `드로우` 후 게임오버 dialog가 표시되고, `기억 카드 획득` 보상 카드가 보인다.
-- `나가기` 후 Title로 복귀하고 새 게임 화면에서 기억 카드/해금 상태가 최신 값으로 보인다.
-- `flutter analyze lib/services/debug_run_fixture_service.dart test/services/debug_run_fixture_service_test.dart` 통과.
-- `flutter test test/services/debug_run_fixture_service_test.dart --reporter expanded` 통과.
-- `tools/prototype_submission_smoke.sh`를 추가해 출품 후보용 analyze/test/web build gate를 한 명령으로 묶었다. 저장/복구 경계 확인을 위해 `test/services/active_run_save_service_test.dart`도 포함한다.
-- `tools/prototype_submission_smoke.sh --skip-build --skip-pub-get` 통과. 로그: `/tmp/rummipoker_submission_smoke/20260505_210713`
-- `tools/prototype_submission_smoke.sh --skip-pub-get` 통과. analyze, 저장/복구 포함 핵심 테스트, `flutter build web`을 모두 통과했다. 로그: `/tmp/rummipoker_submission_smoke/20260505_210901`
-- `prototype_stability_submission_r120` 레벨링 smoke 통과. balanced v9 `65.0%`, power v9 `65.8%`, S8 boss 병목 유지. 출품용 기준에서는 target/boss/market 추가 조정을 보류한다.
-- `flutter analyze lib/views/game_view.dart lib/views/game/widgets/game_cashout_widgets.dart lib/views/game/widgets/game_shared_widgets.dart lib/services/debug_run_fixture_service.dart test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart` 통과.
-- `flutter test test/views/game/game_view_test.dart test/views/game/widgets/game_cashout_widgets_test.dart test/services/debug_run_fixture_service_test.dart test/services/run_progression_service_test.dart test/services/run_unlock_state_service_test.dart test/services/run_completion_flow_test.dart --reporter expanded` 통과.
-- `flutter build web` 통과.
-
-출품 후 polishing으로 분리:
-
-- S7/S8 장기 clear 비율 정밀 조정.
-- 전체 카탈로그 가격 2차 재산정.
-- meta growth tree 확장.
-- 반복 플레이용 해금/런 modifier 깊이 확장.
-- 모바일/iPad 레이아웃 세부 polish.
+현재 Goal 판단에는 공모전 퍼센트나 출품 일정표를 쓰지 않는다. 이후 작업은 post-contest 런타임 고도화, 장기 밸런스, meta growth, 자연 full-play QA 기준으로 수렴한다.
 
 ## 5. Completed Progress So Far
 
@@ -337,7 +234,7 @@ Status: In progress
 - `first_reroll_free_v1` r400은 v9 final gold가 balanced 8.0G, power 11.2G라 경제적으로 더 안전하지만, balanced v9가 54.5%라 목표 60%에 못 닿는다. 다음 후보는 리롤 비용만이 아니라 후반 성장 후보 접근성과 구매 선택 조건을 같이 본다.
 - 후반 후보 접근성 실험 결과, `v15/v16 + first_reroll_free_v1`은 power에는 도움이 되지만 balanced를 안정적으로 60% 이상으로 올리지 못했다. 지금 문제는 “후보가 아예 안 보임” 하나가 아니라 “필요 후보가 보여도 balanced가 살 수 있는 가격/타이밍”까지 같이 묶인 문제다.
 - 최신 runtime 기준 `growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2` r400에서 none balanced 48.8%, none power 54.8%, v9 balanced 60.5%, v9 power 69.8%가 나왔다. 성장 후보 가격 상한은 이미 runtime에 있고, 첫 리롤 무료 정책도 runtime에 적용했다. 첫 리롤 무료는 “상점마다 첫 리롤 1회 무료”로 유지한다. 이 항목은 ML 재학습/추천표 갱신 전까지 “runtime 적용 후 검증 완료, ML 반영 대기” 상태다.
-- 셔플 검토 참고 자료는 `/Users/cheng80/Desktop/셔플.txt`에서 확인했다. 현재 방향은 Fisher-Yates/seed 기반 셔플 유지가 기본이며, Bag/Pity/Smart shuffle은 레벨링과 경제를 바꾸는 별도 룰 후보로만 검토한다.
+- 셔플 검토 참고 자료를 확인했다. 현재 방향은 Fisher-Yates/seed 기반 셔플 유지가 기본이며, Bag/Pity/Smart shuffle은 레벨링과 경제를 바꾸는 별도 룰 후보로만 검토한다.
 
 ### M2. S1~S8 Leveling Curve
 

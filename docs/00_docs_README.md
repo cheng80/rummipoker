@@ -90,7 +90,7 @@
 | 목적 | 위치 |
 |---|---|
 | 현재 활성 트랙과 다음 작업 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` |
-| 공모전 제출 실행표 | `docs/planning/competition/` |
+| 닫힌 공모전 제출 이력과 증거 참고 | `docs/planning/competition/` |
 | 실제 Goal 진도 | `docs/planning/goal/` |
 | 레벨링/경제/휴리스틱/ML 전환 상태 | `docs/planning/leveling/` |
 | 기능별 계획, runtime matrix, open decision | `docs/planning/feature_plans/` |

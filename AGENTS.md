@@ -65,6 +65,8 @@
 - 사용자가 **"특정 영역만 Git의 이전 상태와 비교/복원"** 하라고 지시하면, 그 범위만 `git show` 등으로 먼저 확인한 뒤 **지정된 파일/블록만** 되돌린다. 다른 최신 작업본은 추측으로 함께 건드리지 않는다.
 - 문서 source-of-truth나 archive 후보를 정리할 때는 `START_HERE.md`의 새 세션 진입 경로와 먼저 읽을 문서 목록을 먼저 맞춘다. 진입 문서에서 아직 current로 읽는 문서를 archive 후보로 먼저 밀어 넣지 않는다.
 - `START_HERE.md`는 전체 문서 체계와 읽는 순서를 잡는 최상위 진입 문서로 유지한다. 새 실행 라우터나 active plan 문서를 만들더라도 `START_HERE.md`를 대체 진입점으로 만들지 않고, `START_HERE.md`가 안내하는 planning 단계의 하위 문서로 둔다.
+- README, START_HERE, current_system 같은 진입/요약 문서를 갱신할 때는 공모전 트랙을 현재 활성 작업처럼 쓰지 않는다. 공모전 관련 문서는 closed/off 이력과 제출 증거 참고로 분리하고, 현재 활성 작업은 post-contest 런타임 고도화 기준으로 적는다.
+- 인포그래픽 전처리용 HTML은 최종 디자인 테마보다 구조화된 원천 정보와 명확한 룰 다이어그램을 우선한다. 색상/장식은 최소화하고, 포스터 생성 스킬이 재해석하기 쉬운 섹션 제목, 핵심 문장, 시각적 관계도를 둔다.
 - `docs/planning`을 정리할 때는 공모전 실행, 실제 Goal 진도, 레벨링/경제, 기능별 계획, legacy snapshot, verification 절차를 하위 폴더로 분리한다. 현재 실행 판단은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`에 모으고, legacy 문서는 현재 status나 active plan처럼 읽히지 않게 표시한다.
 - `docs/planning/competition/`과 `docs/planning/goal/` 문서는 첫 화면에 결론, 다음 작업 또는 재개 순서, Done 기준, 보류/위험 항목을 먼저 둔다. 긴 실험 로그와 세부 근거는 `leveling/`, `feature_plans/`, `legacy/`, `verification/`로 내려 보내고, competition/goal 문서에는 실행 판단에 필요한 요약만 남긴다.
 - 공모전 full-play QA 기준은 사람 수동 플레이가 아니라 제작된 bot 기준이다. 1차 제출 gate는 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌표·시각 조작을 결합한 hybrid bot이어야 한다. Browser-only selector/tap이 Flutter transform, canvas, semantics, FittedBox 때문에 흔들리면 Compute Use를 즉시 실행 계층으로 승격한다. debug fixture나 즉시 클리어 보조 없이 S1부터 S8까지 클리어하고, 중간 마켓 구매와 실제 플레이 흐름 증거를 남긴다. Codex 앱 내장 Browser Use는 실패 분석, 보조 눈검증, 최종 감각 확인에 사용한다.
