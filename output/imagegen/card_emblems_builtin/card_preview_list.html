@@ -1,0 +1,2021 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rummi Poker Card Emblem Composite Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #0b0f0d;
+      --panel: #101713;
+      --card: #15231d;
+      --slot: #0d1713;
+      --ink: #d8bd76;
+      --line: #304239;
+      --muted: #93a79a;
+      --text: #f1e7c2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1380px, 100%);
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .page-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 20px;
+      margin-bottom: 26px;
+      border-bottom: 1px solid #27362f;
+      padding-bottom: 18px;
+    }
+
+    h1, h2, p { margin: 0; }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .summary {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    section + section { margin-top: 38px; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+      gap: 18px 14px;
+    }
+
+    .card-tile {
+      min-width: 0;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+    }
+
+    .card-frame {
+      width: 108px;
+      height: 140px;
+      border: 2px solid #626a66;
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, #1a2b24, var(--card)),
+        var(--card);
+      box-shadow: inset 0 0 0 1px #26352e, 0 10px 22px #0008;
+      padding: 6px 7px 7px;
+      display: grid;
+      grid-template-rows: 10px 82px 1fr;
+      gap: 5px;
+      position: relative;
+    }
+
+    .rarity-bar {
+      width: calc(100% - 22px);
+      height: 10px;
+      border-radius: 4px;
+      box-shadow: inset 0 0 0 1px #ffffff38;
+      background: linear-gradient(90deg, #3f4642, #7f8983, #4b534e);
+    }
+
+    .type-badge {
+      position: absolute;
+      top: 6px;
+      right: 7px;
+      width: 18px;
+      height: 10px;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      z-index: 2;
+      color: #fff8d7;
+      font-size: 7px;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: inset 0 0 0 1px #ffffff55;
+      background: #75603a;
+    }
+
+    .jester .type-badge {
+      background: linear-gradient(180deg, #8b4fd1, #51327f);
+    }
+
+    .type-q .type-badge {
+      background: linear-gradient(180deg, #3f89d7, #22507f);
+    }
+
+    .type-utility .type-badge {
+      background: linear-gradient(180deg, #b0843c, #6c4c20);
+    }
+
+    .type-gear .type-badge {
+      background: linear-gradient(180deg, #6f8994, #3c555f);
+    }
+
+    .type-passive .type-badge {
+      background: linear-gradient(180deg, #4f9a6d, #2e6447);
+    }
+
+    .uncommon {
+      border-color: #5ab8c6;
+    }
+
+    .uncommon .rarity-bar {
+      background: linear-gradient(90deg, #246a79, #87e1ed, #2f8290);
+    }
+
+    .rare {
+      border-color: #9c86d7;
+    }
+
+    .rare .rarity-bar {
+      background: linear-gradient(90deg, #5d4aa0, #d6b46a, #5d4aa0);
+    }
+
+    .legendary {
+      border-color: #e39a45;
+    }
+
+    .legendary .rarity-bar {
+      background: linear-gradient(90deg, #9c4c23, #f5c76d, #d9782c);
+    }
+
+    .art-slot {
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--slot);
+      box-shadow: inset 0 0 0 1px var(--line), inset 0 0 18px #0009;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    .art-slot img {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .label {
+      min-width: 0;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+    }
+
+    .name {
+      color: #f0dfaa;
+      font-size: 10px;
+      line-height: 1.12;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .caption {
+      width: 124px;
+      display: grid;
+      gap: 2px;
+      text-align: center;
+    }
+
+    .caption strong {
+      font-size: 11px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .caption span {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 560px) {
+      main { padding: 18px 12px; }
+      .page-title {
+        align-items: start;
+        flex-direction: column;
+      }
+      .summary { text-align: left; }
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="page-title">
+      <div>
+        <h1>Rummi Poker Card Emblem Composite Preview</h1>
+      </div>
+      <p class="summary">97 generated emblems · deterministic card frame · 2x display scale</p>
+    </div>
+
+    <section>
+      <header>
+        <h2>Jester</h2>
+        <p>43 cards</p>
+      </header>
+      <div class="grid">
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">기본패</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>jester</strong>
+          <span>common · 점수 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_greedy_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">노랑 불씨</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>greedy_jester</strong>
+          <span>common · 색상 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_lusty_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">빨강 불씨</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>lusty_jester</strong>
+          <span>common · 색상 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_wrathful_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">파랑 불씨</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>wrathful_jester</strong>
+          <span>common · 색상 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_gluttonous_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">검정 불씨</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>gluttonous_jester</strong>
+          <span>common · 색상 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_jolly_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">페어 호출</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>jolly_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_zany_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">트리플 호출</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>zany_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_mad_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">투페어 호출</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>mad_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_crazy_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">연속 호출</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>crazy_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_droll_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">색상 호출</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>droll_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_sly_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">페어 칩</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>sly_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_wily_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">트리플 칩</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>wily_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_clever_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">투페어 칩</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>clever_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_devious_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">연속 칩</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>devious_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_crafty_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">색상 칩</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>crafty_jester</strong>
+          <span>common · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_half_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">작은 손</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>half_jester</strong>
+          <span>common · 점수 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_jester_stencil.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">빈 자리</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>jester_stencil</strong>
+          <span>common · 고배수 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_abstract_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">합창단</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>abstract_jester</strong>
+          <span>common · 점수 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_green_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">기세</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>green_jester</strong>
+          <span>rare · 성장/기억 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_blue_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">남은 덱</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>blue_jester</strong>
+          <span>common · 칩 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_scary_face.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">그림 칩</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>scary_face</strong>
+          <span>common · 숫자 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_smiley_face.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">그림 증폭</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>smiley_face</strong>
+          <span>common · 숫자 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_egg.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">예비 금화</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>egg</strong>
+          <span>common · 경제 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_bonus_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">칩 고정핀</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>bonus_jester</strong>
+          <span>common · 칩 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="uncommon">
+        <div class="card-frame uncommon jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_popcorn.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">시한 증폭</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>popcorn</strong>
+          <span>uncommon · 성장/기억 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="uncommon">
+        <div class="card-frame uncommon jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_ice_cream.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">줄어드는 칩</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>ice_cream</strong>
+          <span>uncommon · 성장/기억 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_delayed_gratification.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">미사용 환급</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>delayed_gratification</strong>
+          <span>common · 경제 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_walkie_talkie.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">10과 4</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>walkie_talkie</strong>
+          <span>common · 숫자 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_golden_jester.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">금빛 주머니</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>golden_jester</strong>
+          <span>common · 경제 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_mystic_summit.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">마지막 힘</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>mystic_summit</strong>
+          <span>common · 점수 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_even_steven.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">짝수 엔진</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>even_steven</strong>
+          <span>common · 숫자 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_odd_todd.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">홀수 엔진</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>odd_todd</strong>
+          <span>common · 숫자 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="common">
+        <div class="card-frame common jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_scholar.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">1번 장부</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>scholar</strong>
+          <span>common · 숫자 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_fibonacci.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">수열 보너스</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>fibonacci</strong>
+          <span>rare · 숫자 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_banner.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">남은 버림</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>banner</strong>
+          <span>rare · 칩 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_gros_michel.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">숙성 부스터</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>gros_michel</strong>
+          <span>rare · 점수 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_supernova.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">런 기억 장치</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>supernova</strong>
+          <span>rare · 성장/기억 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="uncommon">
+        <div class="card-frame uncommon jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_ride_the_bus.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">무사고 연속</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>ride_the_bus</strong>
+          <span>uncommon · 성장/기억 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_the_duo.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">페어 증폭</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>the_duo</strong>
+          <span>rare · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_the_trio.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">트리플 증폭</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>the_trio</strong>
+          <span>rare · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_the_family.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">4묶음 증폭</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>the_family</strong>
+          <span>rare · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_the_order.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">연속 증폭</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>the_order</strong>
+          <span>rare · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="jester" data-rarity="rare">
+        <div class="card-frame rare jester type-jester">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Jester">J</div>
+          <div class="art-slot">
+            <img src="all/jester_the_tribe.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">색상 증폭</div>
+            <div class="meta">jester</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>the_tribe</strong>
+          <span>rare · 족보 반응 Jester 문장</span>
+        </div>
+      </article>
+      </div>
+    </section>
+
+    <section>
+      <header>
+        <h2>Item / Tool / Gear / Passive</h2>
+        <p>54 cards</p>
+      </header>
+      <div class="grid">
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_reroll_token.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">리롤 칩</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>reroll_token</strong>
+          <span>common · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_coupon_stamp.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">할인 도장</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>coupon_stamp</strong>
+          <span>common · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_coin_cache.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">금화 보관함</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>coin_cache</strong>
+          <span>common · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_two_pair_study.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">투 페어 연구</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>two_pair_study</strong>
+          <span>uncommon · 족보 성장 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_triple_study.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">트리플 연구</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>triple_study</strong>
+          <span>uncommon · 족보 성장 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_straight_study.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">스트레이트 연구</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>straight_study</strong>
+          <span>uncommon · 족보 성장 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_flush_study.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">플러시 연구</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>flush_study</strong>
+          <span>uncommon · 족보 성장 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_full_house_study.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">풀하우스 연구</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>full_house_study</strong>
+          <span>rare · 족보 성장 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_four_kind_study.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">포카드 연구</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>four_kind_study</strong>
+          <span>rare · 족보 성장 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_straight_flush_study.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">스티플 연구</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>straight_flush_study</strong>
+          <span>rare · 족보 성장 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_board_scrap.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">보드 패스</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>board_scrap</strong>
+          <span>common · 안전/버림 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_hand_scrap.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">손패 패스</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>hand_scrap</strong>
+          <span>common · 안전/버림 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_chip_capsule.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">칩 충전구</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>chip_capsule</strong>
+          <span>common · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_mult_capsule.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">점수 충전구</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>mult_capsule</strong>
+          <span>common · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_line_polish.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">점수 광택제</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>line_polish</strong>
+          <span>uncommon · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_straight_oil.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">연속 준비</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>straight_oil</strong>
+          <span>uncommon · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_flush_powder.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">색상 준비</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>flush_powder</strong>
+          <span>uncommon · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_pair_splint.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">페어 고정대</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>pair_splint</strong>
+          <span>uncommon · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_overlap_pin.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">겹침 핀</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>overlap_pin</strong>
+          <span>rare · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_emergency_draw.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">비상 드로우</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>emergency_draw</strong>
+          <span>rare · 덱/손패 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_ledger_clip.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">장부 클립</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>ledger_clip</strong>
+          <span>common · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_discard_glove.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">보드 장갑</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>discard_glove</strong>
+          <span>common · 안전/버림 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_mulligan_sleeve.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">손패 슬리브</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>mulligan_sleeve</strong>
+          <span>uncommon · 안전/버림 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_jester_hook.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">Jester 후크</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>jester_hook</strong>
+          <span>rare · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_score_abacus.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">점수 주판</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>score_abacus</strong>
+          <span>rare · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_thin_caliper.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">짧은 줄</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>thin_caliper</strong>
+          <span>rare · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_stage_map.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">Station 지도</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>stage_map</strong>
+          <span>common · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_merchant_stamp.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">상점 도장</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>merchant_stamp</strong>
+          <span>uncommon · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_safety_net.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">안전 장치망</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>safety_net</strong>
+          <span>uncommon · 안전/버림 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_coin_funnel.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">보드 환급</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>coin_funnel</strong>
+          <span>uncommon · 안전/버림 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_hand_funnel.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">손패 환급</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>hand_funnel</strong>
+          <span>uncommon · 안전/버림 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_echo_bell.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">메아리 종</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>echo_bell</strong>
+          <span>rare · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="legendary">
+        <div class="card-frame legendary item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_boss_trophy.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">Boss 전리품</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>boss_trophy</strong>
+          <span>legendary · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_thin_wallet.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">빈 지갑</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>thin_wallet</strong>
+          <span>uncommon · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_trade_ticket.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">아이템 티켓</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>trade_ticket</strong>
+          <span>uncommon · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_jester_invoice.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">Jester 청구서</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>jester_invoice</strong>
+          <span>rare · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_item_invoice.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">아이템 청구서</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>item_invoice</strong>
+          <span>rare · 경제/상점 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_red_swatch.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">빨강 견본</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>red_swatch</strong>
+          <span>common · 색상 룬</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_blue_swatch.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">파랑 견본</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>blue_swatch</strong>
+          <span>common · 색상 룬</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_black_swatch.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">검정 견본</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>black_swatch</strong>
+          <span>common · 색상 룬</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_yellow_swatch.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">노랑 견본</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>yellow_swatch</strong>
+          <span>common · 색상 룬</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_rank_chalk.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">숫자 분필</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>rank_chalk</strong>
+          <span>uncommon · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_deck_needle.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">덱 바늘</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>deck_needle</strong>
+          <span>rare · 덱/손패 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_battle_pouch.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">전투 주머니</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>battle_pouch</strong>
+          <span>uncommon · 덱/손패 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="legendary">
+        <div class="card-frame legendary item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_tile_polisher.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">타일 광택기</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>tile_polisher</strong>
+          <span>legendary · 점수 증폭 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="common">
+        <div class="card-frame common item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_move_token.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">이동 칩</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>move_token</strong>
+          <span>common · 보드 이동 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_slide_wax.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">슬라이드 왁스</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>slide_wax</strong>
+          <span>uncommon · 보드 이동 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-utility">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Tool">T</div>
+          <div class="art-slot">
+            <img src="all/item_board_lift.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">이동 예약</div>
+            <div class="meta">utility</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>board_lift</strong>
+          <span>uncommon · 보드 이동 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-q">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Q-Slot">Q</div>
+          <div class="art-slot">
+            <img src="all/item_undo_seal.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">되돌림 표식</div>
+            <div class="meta">q</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>undo_seal</strong>
+          <span>rare · 보드 이동 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="uncommon">
+        <div class="card-frame uncommon item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_organizer_glove.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">정리 장갑</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>organizer_glove</strong>
+          <span>uncommon · 보드 이동 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_travel_pouch.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">여행 주머니</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>travel_pouch</strong>
+          <span>rare · 덱/손패 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="rare">
+        <div class="card-frame rare item type-gear">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Gear">G</div>
+          <div class="art-slot">
+            <img src="all/item_wide_grip.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">넓은 손잡이</div>
+            <div class="meta">gear</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>wide_grip</strong>
+          <span>rare · 덱/손패 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="legendary">
+        <div class="card-frame legendary item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_grand_satchel.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">큰 가방</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>grand_satchel</strong>
+          <span>legendary · 덱/손패 문장</span>
+        </div>
+      </article>
+
+      <article class="card-tile" data-kind="item" data-rarity="legendary">
+        <div class="card-frame legendary item type-passive">
+          <div class="rarity-bar"></div>
+          <div class="type-badge" title="Passive">P</div>
+          <div class="art-slot">
+            <img src="all/item_market_compass.png" alt="">
+          </div>
+          <div class="label">
+            <div class="name">상점 나침반</div>
+            <div class="meta">passive</div>
+          </div>
+        </div>
+        <div class="caption">
+          <strong>market_compass</strong>
+          <span>legendary · 경제/상점 문장</span>
+        </div>
+      </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

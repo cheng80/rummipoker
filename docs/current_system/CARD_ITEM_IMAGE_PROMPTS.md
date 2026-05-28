@@ -168,7 +168,7 @@ Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, desig
 | 족보 반응 Jester 문장 | `crazy_jester` | 연속 호출 | straight |
 | 족보 반응 Jester 문장 | `droll_jester` | 색상 호출 | flush |
 | 족보 반응 Jester 문장 | `sly_jester` | 페어 칩 | pair |
-| 족보 반응 Jester 문장 | `wily_jester` | 트리플 칩 | four_of_a_kind |
+| 족보 반응 Jester 문장 | `wily_jester` | 트리플 칩 | three_of_a_kind |
 | 족보 반응 Jester 문장 | `clever_jester` | 투페어 칩 | two_pair |
 | 족보 반응 Jester 문장 | `devious_jester` | 연속 칩 | straight |
 | 족보 반응 Jester 문장 | `crafty_jester` | 색상 칩 | flush |
@@ -197,7 +197,7 @@ Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, desig
 | 성장/기억 Jester 문장 | `ride_the_bus` | 무사고 연속 | 11~13 tiles |
 | 족보 반응 Jester 문장 | `the_duo` | 페어 증폭 | pair |
 | 족보 반응 Jester 문장 | `the_trio` | 트리플 증폭 | three_of_a_kind |
-| 족보 반응 Jester 문장 | `the_family` | 4묶음 증폭 | three_of_a_kind |
+| 족보 반응 Jester 문장 | `the_family` | 4묶음 증폭 | four_of_a_kind |
 | 족보 반응 Jester 문장 | `the_order` | 연속 증폭 | straight |
 | 족보 반응 Jester 문장 | `the_tribe` | 색상 증폭 | flush |
 
