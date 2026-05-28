@@ -381,15 +381,18 @@ void main() {
       ),
       findsNothing,
     );
-    expect(find.text('구매'), findsOneWidget);
+    expect(find.text('구매'), findsNothing);
 
     expect(find.text('리롤 칩'), findsWidgets);
-    expect(find.text('다음 상점 리롤 비용이 1 줄어듭니다.'), findsOneWidget);
-    expect(find.text('Common'), findsOneWidget);
-    expect(find.text('TOOL'), findsOneWidget);
     for (final text in tester.widgetList<Text>(find.text('리롤 칩'))) {
       expect(text.overflow, isNot(TextOverflow.ellipsis));
     }
+
+    await tester.tap(find.text('리롤 칩').last);
+    await tester.pumpAndSettle();
+    expect(find.text('다음 상점 리롤 비용이 1 줄어듭니다.'), findsOneWidget);
+    expect(find.text('Common'), findsOneWidget);
+    expect(find.text('TOOL'), findsWidgets);
     for (final text in tester.widgetList<Text>(find.text('TOOL'))) {
       expect(text.overflow, isNot(TextOverflow.ellipsis));
     }
@@ -410,9 +413,6 @@ void main() {
       find.byKey(const ValueKey('market-description-box')),
     );
     expect(descriptionBox.constraints.minHeight, greaterThanOrEqualTo(28));
-
-    await tester.tap(find.text('리롤 칩').last);
-    await tester.pumpAndSettle();
     final jesterBuyButton = find.text('구매', skipOffstage: false).first;
     await tester.ensureVisible(jesterBuyButton);
     await tester.tap(jesterBuyButton);
@@ -484,6 +484,10 @@ void main() {
     expect(find.text('Item Slots'), findsNothing);
     expect(find.text('Q-SLT'), findsWidgets);
     expect(find.text('PSV'), findsOneWidget);
+
+    await tester.tap(find.text('T').last);
+    await tester.pumpAndSettle();
+
     expect(find.text('점수형'), findsWidgets);
     expect(find.text('+칩'), findsWidgets);
     expect(find.text('1/5'), findsNothing);

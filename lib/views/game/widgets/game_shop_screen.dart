@@ -2246,9 +2246,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                             priceLabel:
                                                 '+${selectedOwned.sellPrice}',
                                             buttonLabel: '판매',
-                                            buttonColor: const Color(
-                                              0xFFB74B3B,
-                                            ),
+                                            buttonColor:
+                                                GameUiPalette.actionDanger,
                                             onPressed: () => _sellOwned(
                                               selectedOwned.slotIndex,
                                             ),
@@ -2258,9 +2257,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                             priceLabel:
                                                 '${selectedOffer.price}',
                                             buttonLabel: '구매',
-                                            buttonColor: const Color(
-                                              0xFFF4A81D,
-                                            ),
+                                            buttonColor:
+                                                GameUiPalette.actionGold,
                                             foreground: GameUiPalette.ink,
                                             onPressed:
                                                 selectedOffer.isAffordable
@@ -2295,9 +2293,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                             priceLabel:
                                                 '${selectedItemOffer.price}',
                                             buttonLabel: '구매',
-                                            buttonColor: const Color(
-                                              0xFFF4A81D,
-                                            ),
+                                            buttonColor:
+                                                GameUiPalette.actionGold,
                                             foreground: GameUiPalette.ink,
                                             onPressed:
                                                 selectedItemOffer.isAffordable
@@ -2336,9 +2333,8 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                 selectedTileOffer.isFreeReward
                                                 ? '선택'
                                                 : '구매',
-                                            buttonColor: const Color(
-                                              0xFFF4A81D,
-                                            ),
+                                            buttonColor:
+                                                GameUiPalette.actionGold,
                                             foreground: GameUiPalette.ink,
                                             onPressed:
                                                 selectedTileOffer.isAffordable
@@ -3655,9 +3651,9 @@ class _MarketOfferBonusBadge extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(
-                    0xFFFFD76B,
-                  ).withValues(alpha: 0.34 * pulse),
+                  color: GameUiPalette.marketSourceGear.withValues(
+                    alpha: 0.34 * pulse,
+                  ),
                   blurRadius: 14 * pulse,
                   spreadRadius: 2 * pulse,
                 ),
@@ -4432,16 +4428,16 @@ class _MarketDiscountTargetPulse extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
               border: Border.all(
-                color: const Color(
-                  0xFF86F4C3,
-                ).withValues(alpha: 0.24 + (0.52 * pulse)),
+                color: GameUiPalette.settlementActive.withValues(
+                  alpha: 0.24 + (0.52 * pulse),
+                ),
                 width: 1 + (1.6 * pulse),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(
-                    0xFF86F4C3,
-                  ).withValues(alpha: 0.24 * pulse),
+                  color: GameUiPalette.settlementActive.withValues(
+                    alpha: 0.24 * pulse,
+                  ),
                   blurRadius: 18 * pulse,
                   spreadRadius: 2 * pulse,
                 ),

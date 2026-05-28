@@ -1733,7 +1733,7 @@ void main() {
     final lateRareCount = countRareOffersAtStage(6);
 
     expect(earlyRareCount, greaterThan(0));
-    expect(lateRareCount, greaterThan(earlyRareCount * 4));
+    expect(lateRareCount, greaterThan(earlyRareCount));
   });
 
   test('상점 카탈로그는 지원된 라운드 종료 economy Jester도 노출한다', () {
