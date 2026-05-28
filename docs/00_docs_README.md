@@ -41,7 +41,12 @@
 - `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 - `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 
-이 3종은 `current_system`의 핵심 문서이며, 아래를 판단할 수 있어야 한다.
+카드형 아이템/Jester 시각 자산 작업은 아래 문서를 추가로 읽는다.
+
+- `docs/current_system/CARD_ITEM_ILLUSTRATION_GUIDE.md`
+- `docs/current_system/CARD_ITEM_IMAGE_PROMPTS.md`
+
+위 코드 기준 3종은 `current_system`의 핵심 문서이며, 아래를 판단할 수 있어야 한다.
 
 - 현재 앱이 실제로 구현한 기능
 - 먼저 읽어야 할 코드 파일과 책임 경계
