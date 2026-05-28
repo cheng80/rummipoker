@@ -2003,10 +2003,6 @@ class _GameItemPocketChip extends StatelessWidget {
         : ItemTranslationScope.of(
             context,
           ).resolveDisplayName(itemSlot.contentId, itemSlot.displayName);
-    final frameColor = selected
-        ? GameUiPalette.actionGoldBright
-        : GameUiPalette.textPrimary.withValues(alpha: 0.22);
-    final frameWidth = selected ? 2.2 : 1.1;
     final hasItem = itemSlot != null;
     final isActive = activeEffect != null;
     return GestureDetector(
@@ -2016,16 +2012,24 @@ class _GameItemPocketChip extends StatelessWidget {
           : () => onTap!(itemSlot),
       child: Stack(
         children: [
-          SizedBox(
+          const SizedBox(
             width: kBattleItemSlotWidth,
             height: kBattleItemSlotHeight,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(17),
-                border: Border.all(color: frameColor, width: frameWidth),
+          ),
+          if (selected)
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    kRuntimeCardOuterRadius + 2,
+                  ),
+                  border: Border.all(
+                    color: GameUiPalette.actionGoldBright,
+                    width: 2.2,
+                  ),
+                ),
               ),
             ),
-          ),
           Positioned.fill(
             child: Padding(
               padding: const EdgeInsets.all(kBattleSlotCardInset),
@@ -2036,9 +2040,9 @@ class _GameItemPocketChip extends StatelessWidget {
                   boxShadow: isActive
                       ? [
                           BoxShadow(
-                            color: const Color(
-                              0xFFF2C14E,
-                            ).withValues(alpha: 0.3),
+                            color: GameUiPalette.actionGoldBright.withValues(
+                              alpha: 0.3,
+                            ),
                             blurRadius: 12,
                             offset: const Offset(0, 3),
                           ),

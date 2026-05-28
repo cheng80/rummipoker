@@ -433,3 +433,4 @@ Installed release: `0.2.0`
 - 카드 확대/선택 정보창은 스크롤을 기본 UX로 삼지 않는다. 화면 높이에 맞춰 modal maxHeight를 충분히 키워 내용이 먼저 다 보이게 하고, `SingleChildScrollView`는 작은 화면 안전장치로만 유지한다.
 - 보스 약화/제약 preview는 빨간 계열, 정상 족보 preview는 노란 계열을 사용하므로 보드 셀의 일반 선택 표시를 이 둘과 겹치게 두지 않는다. 유저 선택은 굵은 주황(`#FF8A1F`) parent 프레임으로 표시해 약화/족보 preview와 구분한다.
 - 전투/마켓의 상태 의미 색상은 새 하드코딩 literal을 흩뿌리지 말고 `GameUiPalette` 같은 의미 기반 팔레트에 먼저 추가한다. 선택, 족보 preview, 보스 약화, 정산, 이동 상태처럼 여러 화면에서 재사용되는 색은 팔레트 값을 참조한다.
+- 빈/잠긴 Item 슬롯을 카드 face로 그릴 때는 기존 rounded pocket/frame을 바깥에 함께 남기지 않는다. 선택 상태가 아닌 슬롯은 카드 face 자체의 외곽선만 쓰고, 선택 강조가 필요할 때만 parent frame을 추가한다.
