@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../../views/game/widgets/game_ui_palette.dart';
 import 'rummi_particle_burst.dart';
 
 /// Flutter 보드 위에 얹는 presentation 전용 Flame 레이어.
@@ -12,7 +13,7 @@ class RummiEffectGame extends FlameGame {
   final List<_PendingBoardBurst> _pendingBoardBursts = [];
 
   @override
-  Color backgroundColor() => Colors.transparent;
+  Color backgroundColor() => GameUiPalette.transparent;
 
   @override
   Future<void> onLoad() async {
@@ -31,7 +32,7 @@ class RummiEffectGame extends FlameGame {
     _spawnBoardBurst(
       _PendingBoardBurst(
         centers: centers.toList(growable: false),
-        baseColor: const Color(0xFFF2C14E),
+        baseColor: GameUiPalette.actionGoldBright,
         count: 12,
         lifetime: 0.68,
         speedScale: 0.76,
@@ -45,7 +46,7 @@ class RummiEffectGame extends FlameGame {
     _spawnBoardBurst(
       _PendingBoardBurst(
         centers: centers.toList(growable: false),
-        baseColor: const Color(0xFFFF5A66),
+        baseColor: GameUiPalette.effectConstraint,
         count: 14,
         lifetime: 0.54,
         speedScale: 1.05,
@@ -59,7 +60,7 @@ class RummiEffectGame extends FlameGame {
     _spawnBoardBurst(
       _PendingBoardBurst(
         centers: centers.toList(growable: false),
-        baseColor: const Color(0xFF86F4C3),
+        baseColor: GameUiPalette.settlementActive,
         count: 18,
         lifetime: 0.72,
         speedScale: 1.18,

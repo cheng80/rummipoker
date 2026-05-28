@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../resources/asset_paths.dart';
+import '../views/game/widgets/game_ui_palette.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 enum _NoticeStyle { topBanner, bottomToast }
@@ -11,8 +12,8 @@ class GameDialogAction<T> {
   const GameDialogAction({
     required this.label,
     required this.value,
-    this.accent = const Color(0xFF3CAEE0),
-    this.textColor = Colors.white,
+    this.accent = GameUiPalette.dialogDefaultAccent,
+    this.textColor = GameUiPalette.textPrimary,
   });
 
   final String label;
@@ -26,7 +27,7 @@ class GameChromeButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.backgroundColor,
-    this.foregroundColor = Colors.white,
+    this.foregroundColor = GameUiPalette.textPrimary,
     this.onPressed,
     this.icon,
     this.height = 38,
@@ -59,7 +60,7 @@ class GameChromeButton extends StatelessWidget {
         : foregroundColor.withValues(alpha: 0.58);
 
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(borderRadius),
@@ -113,8 +114,8 @@ class GameIconButtonChip extends StatelessWidget {
     super.key,
     required this.icon,
     required this.onPressed,
-    this.backgroundColor = const Color(0xFF29453A),
-    this.foregroundColor = Colors.white,
+    this.backgroundColor = GameUiPalette.marketNeutralButton,
+    this.foregroundColor = GameUiPalette.textPrimary,
     this.size = 38,
     this.iconSize = 18,
     this.borderRadius = 14,
@@ -133,7 +134,7 @@ class GameIconButtonChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(borderRadius),
@@ -199,9 +200,11 @@ class GameDialogSection extends StatelessWidget {
       margin: margin,
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.16),
+        color: GameUiPalette.ink.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.10),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +214,7 @@ class GameDialogSection extends StatelessWidget {
               title!,
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
-                color: Colors.white.withValues(alpha: 0.72),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
                 fontSize: 13,
               ),
             ),
@@ -244,7 +247,7 @@ class GameMenuActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isEnabled = onTap != null;
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
@@ -283,7 +286,7 @@ class GameMenuActionTile extends StatelessWidget {
                       title,
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        color: Colors.white.withValues(
+                        color: GameUiPalette.textPrimary.withValues(
                           alpha: isEnabled ? 0.94 : 0.7,
                         ),
                         fontSize: 15,
@@ -294,7 +297,7 @@ class GameMenuActionTile extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: TextStyle(
-                          color: Colors.white.withValues(
+                          color: GameUiPalette.textPrimary.withValues(
                             alpha: isEnabled ? 0.7 : 0.46,
                           ),
                           fontSize: 12,
@@ -309,7 +312,9 @@ class GameMenuActionTile extends StatelessWidget {
               const SizedBox(width: 10),
               Icon(
                 Icons.arrow_forward_rounded,
-                color: Colors.white.withValues(alpha: isEnabled ? 0.82 : 0.46),
+                color: GameUiPalette.textPrimary.withValues(
+                  alpha: isEnabled ? 0.82 : 0.46,
+                ),
                 size: 18,
               ),
             ],
@@ -443,7 +448,7 @@ Future<T?> showGameChoiceDialog<T>(
             style: TextStyle(
               fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 26,
-              color: Colors.white.withValues(alpha: 0.96),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
               letterSpacing: 1.2,
             ),
           ),
@@ -452,7 +457,7 @@ Future<T?> showGameChoiceDialog<T>(
             Text(
               message,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.82),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 height: 1.45,
@@ -496,7 +501,7 @@ Future<bool> showConfirmDialog(
             style: TextStyle(
               fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 26,
-              color: Colors.white.withValues(alpha: 0.96),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
               letterSpacing: 1.2,
             ),
           ),
@@ -504,7 +509,7 @@ Future<bool> showConfirmDialog(
           Text(
             message,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.82),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
               fontSize: 14,
               fontWeight: FontWeight.w700,
               height: 1.45,
@@ -516,13 +521,13 @@ Future<bool> showConfirmDialog(
               GameDialogAction<bool>(
                 label: cancelLabel,
                 value: false,
-                accent: const Color(0xFF55615F),
+                accent: GameUiPalette.disabledControl,
               ),
               GameDialogAction<bool>(
                 label: confirmLabel,
                 value: true,
-                accent: const Color(0xFFF4A81D),
-                textColor: Colors.black,
+                accent: GameUiPalette.actionGold,
+                textColor: GameUiPalette.ink,
               ),
             ],
           ),
@@ -548,16 +553,16 @@ class _GameDialogFrame extends StatelessWidget {
       explicitChildNodes: true,
       label: label,
       child: Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: GameUiPalette.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 348),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: const Color(0xFF13251E),
+              color: GameUiPalette.chromePanelSurface,
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: const Color(0xFFE6D4A1).withValues(alpha: 0.24),
+                color: GameUiPalette.cardFallback.withValues(alpha: 0.24),
                 width: 1.2,
               ),
             ),
@@ -624,12 +629,14 @@ class _NoticeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTopBanner = style == _NoticeStyle.topBanner;
     final backgroundColor = isTopBanner
-        ? const Color(0xFFF4B326)
-        : const Color(0xEE102D25);
-    final borderColor = isTopBanner ? const Color(0xFFFFE08A) : Colors.white12;
+        ? GameUiPalette.noticeTopBannerSurface
+        : GameUiPalette.noticeBottomSurface;
+    final borderColor = isTopBanner
+        ? GameUiPalette.actionGoldText
+        : GameUiPalette.textPrimary.withValues(alpha: 0.12);
     final textColor = isTopBanner
-        ? const Color(0xFF1F1600)
-        : Colors.white.withValues(alpha: 0.94);
+        ? GameUiPalette.textOnGold
+        : GameUiPalette.textPrimary.withValues(alpha: 0.94);
     final icon = isTopBanner ? Icons.campaign_rounded : Icons.info_rounded;
 
     return TweenAnimationBuilder<double>(
@@ -650,7 +657,7 @@ class _NoticeCard extends StatelessWidget {
         ),
         constraints: BoxConstraints(maxWidth: isTopBanner ? 360 : 320),
         child: Material(
-          color: Colors.transparent,
+          color: GameUiPalette.transparent,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: backgroundColor,

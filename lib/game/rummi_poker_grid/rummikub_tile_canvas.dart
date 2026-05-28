@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../logic/rummi_poker_grid/models/tile.dart';
+import '../../views/game/widgets/game_ui_palette.dart';
 
 const double kRummikubTileCornerRadiusFactor = 0.11;
 
@@ -23,13 +24,13 @@ void paintRummikubTile(
     final path = Path()..addRRect(rr);
     canvas.drawShadow(
       path,
-      Colors.black.withValues(alpha: 0.38),
+      GameUiPalette.ink.withValues(alpha: 0.38),
       shadowElevation,
       false,
     );
   }
 
-  const face = Color(0xFFF2EDE6);
+  const face = GameUiPalette.tileFace;
   canvas.drawRRect(rr, Paint()..color = face);
 
   canvas.drawRRect(
@@ -37,7 +38,7 @@ void paintRummikubTile(
     Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4
-      ..color = const Color(0xFFC5BDB0),
+      ..color = GameUiPalette.tileFaceBorder,
   );
 
   final pad = rect.width * 0.06;
@@ -67,13 +68,7 @@ void paintRummikubTile(
     textDirection: TextDirection.ltr,
   )..layout();
   final digitTop = inner.top + barH + (bodyH - tp.height) * 0.42;
-  tp.paint(
-    canvas,
-    Offset(
-      inner.left + (inner.width - tp.width) / 2,
-      digitTop,
-    ),
-  );
+  tp.paint(canvas, Offset(inner.left + (inner.width - tp.width) / 2, digitTop));
 
   if (_isFaceRank(tile.number)) {
     final dotRadius = rect.shortestSide * 0.075;
@@ -84,7 +79,7 @@ void paintRummikubTile(
     canvas.drawCircle(
       dotCenter,
       dotRadius + 1.8,
-      Paint()..color = Colors.white.withValues(alpha: 0.92),
+      Paint()..color = GameUiPalette.textPrimary.withValues(alpha: 0.92),
     );
     canvas.drawCircle(dotCenter, dotRadius, Paint()..color = digitColor);
   }
@@ -97,7 +92,7 @@ void paintRummikubTile(
     canvas.drawRRect(
       ring,
       Paint()
-        ..color = const Color(0xFFFFC107)
+        ..color = GameUiPalette.tileSelectedStripe
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3,
     );
@@ -107,10 +102,10 @@ void paintRummikubTile(
 /// 루미큐브 4색에 가깝게: 검·파·빨·주황(노랑 타일).
 Color _colorForTileColor(TileColor c) {
   return switch (c) {
-    TileColor.red => const Color(0xFFC62828),
-    TileColor.blue => const Color(0xFF1565C0),
-    TileColor.yellow => const Color(0xFFE65100),
-    TileColor.black => const Color(0xFF212121),
+    TileColor.red => GameUiPalette.tileRed,
+    TileColor.blue => GameUiPalette.tileBlue,
+    TileColor.yellow => GameUiPalette.tileYellow,
+    TileColor.black => GameUiPalette.tileBlack,
   };
 }
 

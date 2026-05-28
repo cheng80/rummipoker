@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import '../../views/game/widgets/game_ui_palette.dart';
+
 /// 전투 보드 위에 짧게 터지는 파티클 묶음.
 ///
 /// 저장 가능한 게임 상태와 무관한 presentation 전용 컴포넌트이며, 수명이 끝나면
@@ -13,18 +15,18 @@ class RummiParticleBurst extends PositionComponent {
   static final Random _rng = Random();
   static const MaskFilter _glowBlur = MaskFilter.blur(BlurStyle.normal, 4);
   static const List<Color> _accentColors = [
-    Color(0xFFFFFFFF),
-    Color(0xFFF2C14E),
-    Color(0xFF86F4C3),
-    Color(0xFFFF8E7E),
-    Color(0xFF5EE7F7),
+    GameUiPalette.textPrimary,
+    GameUiPalette.actionGoldBright,
+    GameUiPalette.settlementActive,
+    GameUiPalette.particleDanger,
+    GameUiPalette.boardMoveSource,
   ];
 
   final List<_RummiParticle> _particles = [];
   final Paint _paint = Paint();
 
   void Function(RummiParticleBurst)? _onExpired;
-  Color _baseColor = Colors.white;
+  Color _baseColor = GameUiPalette.textPrimary;
   int _count = 8;
   double _lifetime = 0.4;
   double _speedScale = 1;
@@ -147,7 +149,7 @@ class _RummiParticle {
   double dx = 0;
   double dy = 0;
   double radius = 1;
-  Color color = Colors.white;
+  Color color = GameUiPalette.textPrimary;
 
   void reset({
     required double dx,

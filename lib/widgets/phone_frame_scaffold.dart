@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../views/game/widgets/game_ui_palette.dart';
+
 const double kPhoneFrameRefW = 390.0;
 const double kPhoneFrameRefH = 750.0;
 const double kPhoneFrameRefAspect = kPhoneFrameRefW / kPhoneFrameRefH;
@@ -24,10 +26,8 @@ class PhoneFrameScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final framedChild = Center(child: PhoneFrame(child: child));
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: useSafeArea
-          ? SafeArea(child: framedChild)
-          : framedChild,
+      backgroundColor: GameUiPalette.transparent,
+      body: useSafeArea ? SafeArea(child: framedChild) : framedChild,
     );
   }
 }

@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../views/game/widgets/game_ui_palette.dart';
+
 /// 우주 배경.
 ///
 /// - 별을 3 그룹으로 나눠 각각 [RepaintBoundary]로 래스터 캐싱.
@@ -32,7 +34,7 @@ class _StarryBackgroundState extends State<StarryBackground>
     // 각 그룹이 시간차(stagger)로 페이드 — 자연스러운 랜덤 느낌
     _groupAnimations = List.generate(_groupCount, (i) {
       final start = i / (_groupCount * 2); // 0.0, 0.167, 0.333
-      final end = start + 0.6;             // 0.6, 0.767, 0.933
+      final end = start + 0.6; // 0.6, 0.767, 0.933
       return Tween<double>(begin: 0.4, end: 1.0).animate(
         CurvedAnimation(
           parent: _controller,
@@ -98,11 +100,11 @@ class _GradientPainter extends CustomPainter {
   const _GradientPainter();
 
   static const _colors = [
-    Color(0xFF05051A),
-    Color(0xFF0A0A2E),
-    Color(0xFF12123A),
-    Color(0xFF0A0A2E),
-    Color(0xFF05051A),
+    GameUiPalette.starFieldDeep,
+    GameUiPalette.starFieldMid,
+    GameUiPalette.starFieldLight,
+    GameUiPalette.starFieldMid,
+    GameUiPalette.starFieldDeep,
   ];
 
   @override
@@ -170,13 +172,15 @@ class _StarPool {
     final groups = List.generate(groupCount, (_) => <_Star>[]);
 
     for (var i = 0; i < 100; i++) {
-      groups[i % groupCount].add(_Star(
-        nx: rng.nextDouble(),
-        ny: rng.nextDouble(),
-        radius: rng.nextDouble() * 1.6 + 0.3,
-        alpha: rng.nextDouble() * 0.5 + 0.3,
-        color: _starColor(rng),
-      ));
+      groups[i % groupCount].add(
+        _Star(
+          nx: rng.nextDouble(),
+          ny: rng.nextDouble(),
+          radius: rng.nextDouble() * 1.6 + 0.3,
+          alpha: rng.nextDouble() * 0.5 + 0.3,
+          color: _starColor(rng),
+        ),
+      );
     }
 
     return groups;
@@ -184,10 +188,10 @@ class _StarPool {
 
   static Color _starColor(Random rng) {
     final roll = rng.nextDouble();
-    if (roll < 0.7) return Colors.white;
-    if (roll < 0.85) return const Color(0xFFAADDFF);
-    if (roll < 0.95) return const Color(0xFFFFEEAA);
-    return const Color(0xFFFFAAAA);
+    if (roll < 0.7) return GameUiPalette.textPrimary;
+    if (roll < 0.85) return GameUiPalette.starBlue;
+    if (roll < 0.95) return GameUiPalette.starWarm;
+    return GameUiPalette.starRed;
   }
 }
 

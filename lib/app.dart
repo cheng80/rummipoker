@@ -11,6 +11,7 @@ import 'resources/item_translation_scope.dart';
 import 'resources/jester_translation_scope.dart';
 import 'resources/sound_manager.dart';
 import 'router.dart';
+import 'views/game/widgets/game_ui_palette.dart';
 import 'widgets/starry_background.dart';
 
 /// 앱의 루트 위젯. 테마, 라우팅 등 앱 전체 설정을 담당한다.
@@ -76,8 +77,8 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
               fontFamily: AssetPaths.fontNexonLv2Gothic,
             ),
             colorScheme: ColorScheme.dark(
-              primary: const Color(0xFF42A5F5),
-              secondary: const Color(0xFF64B5F6),
+              primary: GameUiPalette.appPrimaryBlue,
+              secondary: GameUiPalette.appSecondaryBlue,
             ),
           ),
           scrollBehavior: const AppScrollBehavior(),
@@ -85,7 +86,9 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
           builder: (context, child) {
             return Stack(
               children: [
-                const Positioned.fill(child: ColoredBox(color: Colors.black)),
+                const Positioned.fill(
+                  child: ColoredBox(color: GameUiPalette.ink),
+                ),
                 const Positioned.fill(child: StarryBackground()),
                 if (child != null) Positioned.fill(child: child),
               ],
