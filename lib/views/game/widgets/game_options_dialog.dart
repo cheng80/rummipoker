@@ -7,6 +7,7 @@ import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import 'game_shared_widgets.dart';
+import 'game_ui_palette.dart';
 
 enum GameOptionsCloseAction {
   resumeGame,
@@ -45,7 +46,9 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                       context.tr('gameOptions'),
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.95,
+                        ),
                       ),
                     ),
                   ),
@@ -74,7 +77,9 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                           child: SelectableText(
                             '$runSeed',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.92),
+                              color: GameUiPalette.textPrimary.withValues(
+                                alpha: 0.92,
+                              ),
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'monospace',
@@ -91,7 +96,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                             showTopNotice(context, '시드 번호를 복사했습니다.');
                           },
                           icon: Icons.copy_rounded,
-                          backgroundColor: const Color(0xFF21423A),
+                          backgroundColor: GameUiPalette.iconButtonMuted,
                         ),
                       ],
                     ),
@@ -108,7 +113,9 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                       Text(
                         _activeRunSummaryLabel(activeRunSaveView),
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.92),
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.92,
+                          ),
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           height: 1.35,
@@ -121,7 +128,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 title: context.tr('runInfoTitle'),
                 subtitle: context.tr('runInfoActionSubtitle'),
                 icon: Icons.bar_chart_rounded,
-                accentColor: const Color(0xFFF2C14E),
+                accentColor: GameUiPalette.actionGoldBright,
                 onTap: () async {
                   Navigator.of(
                     dialogContext,
@@ -133,7 +140,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 title: context.tr('tutorialBattleReplayTitle'),
                 subtitle: context.tr('tutorialBattleReplaySubtitle'),
                 icon: Icons.help_outline_rounded,
-                accentColor: Colors.lightGreenAccent.shade100,
+                accentColor: GameUiPalette.menuAccentTutorial,
                 onTap: () async {
                   Navigator.of(
                     dialogContext,
@@ -145,7 +152,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 title: isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
                 subtitle: '현재 진행을 유지한 채 이번 Station 시작 시점으로 되돌립니다.',
                 icon: Icons.refresh_rounded,
-                accentColor: Colors.amber.shade200,
+                accentColor: GameUiPalette.menuAccentRestart,
                 onTap: () async {
                   final changed = await onRestartRun();
                   if (!dialogContext.mounted || !changed) return;
@@ -159,7 +166,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 title: context.tr('settings'),
                 subtitle: '설정 화면을 열고 복귀 후 현재 메뉴를 다시 엽니다.',
                 icon: Icons.settings_rounded,
-                accentColor: Colors.lightBlueAccent.shade100,
+                accentColor: GameUiPalette.menuAccentSettings,
                 onTap: () async {
                   Navigator.of(
                     dialogContext,
@@ -171,7 +178,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 title: context.tr('exit'),
                 subtitle: '현재 런을 종료하고 타이틀 화면으로 돌아갑니다.',
                 icon: Icons.logout_rounded,
-                accentColor: Colors.redAccent.shade100,
+                accentColor: GameUiPalette.menuAccentExit,
                 onTap: () async {
                   final changed = await onExitToTitle();
                   if (!dialogContext.mounted || !changed) return;

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../utils/common_ui.dart';
 import 'game_shared_widgets.dart';
+import 'game_ui_palette.dart';
 
 Future<void> showGameTermsDialog({required BuildContext context}) {
   return showGameFramedDialog<void>(
@@ -23,7 +24,7 @@ Future<void> showGameTermsDialog({required BuildContext context}) {
                     context.tr('gameTermsTitle'),
                     style: TextStyle(
                       fontFamily: AssetPaths.fontNexonLv2Gothic,
-                      color: Colors.white.withValues(alpha: 0.96),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -81,10 +82,10 @@ class _GameTermRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFF12362D),
+        color: GameUiPalette.surfaceRunInfo,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFF6BAF9B).withValues(alpha: 0.38),
+          color: GameUiPalette.specialSoftMint.withValues(alpha: 0.38),
         ),
       ),
       child: Column(
@@ -93,7 +94,7 @@ class _GameTermRow extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              color: Color(0xFFF2C14E),
+              color: GameUiPalette.actionGoldBright,
               fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
@@ -102,7 +103,7 @@ class _GameTermRow extends StatelessWidget {
           Text(
             body,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.76),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
               fontSize: 12,
               fontWeight: FontWeight.w700,
               height: 1.35,

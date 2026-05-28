@@ -7,6 +7,7 @@ import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
+import 'game_ui_palette.dart';
 
 class GameHandZone extends StatefulWidget {
   const GameHandZone({
@@ -195,12 +196,12 @@ class _GameHandZoneState extends State<GameHandZone>
                         : 0.0;
                     return DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.18),
+                        color: GameUiPalette.ink.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: Color.lerp(
-                            Colors.white.withValues(alpha: 0.08),
-                            const Color(0xFF7DE0B8),
+                            GameUiPalette.textPrimary.withValues(alpha: 0.08),
+                            GameUiPalette.specialSoftMint,
                             glow,
                           )!,
                           width: 1 + glow,
@@ -281,9 +282,8 @@ class _GameHandZoneState extends State<GameHandZone>
                                       child: Text(
                                         '손패 비어 있음',
                                         style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.38,
-                                          ),
+                                          color: GameUiPalette.textPrimary
+                                              .withValues(alpha: 0.38),
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -458,12 +458,14 @@ class _HandDrawIncomingBadge extends StatelessWidget {
             offset: Offset(0, -6 * t),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFF123126).withValues(alpha: 0.96),
+                color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.96),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFF7DE0B8)),
+                border: Border.all(color: GameUiPalette.specialSoftMint),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF7DE0B8).withValues(alpha: 0.24),
+                    color: GameUiPalette.specialSoftMint.withValues(
+                      alpha: 0.24,
+                    ),
                     blurRadius: 12,
                     offset: const Offset(0, 5),
                   ),
@@ -475,7 +477,7 @@ class _HandDrawIncomingBadge extends StatelessWidget {
                   '드로우 +1',
                   maxLines: 1,
                   style: TextStyle(
-                    color: Color(0xFF7DE0B8),
+                    color: GameUiPalette.specialSoftMint,
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
                     height: 1,
@@ -514,13 +516,13 @@ class _DrawHandButton extends StatelessWidget {
         final glow = pulsing ? (1 - pulseValue).clamp(0.0, 1.0) : 0.0;
         final baseColor = canDraw
             ? Color.lerp(
-                const Color(0xFF267B67),
-                const Color(0xFF35A982),
+                GameUiPalette.marketPositive,
+                GameUiPalette.specialMint,
                 glow,
               )!
-            : const Color(0xFF3F5750);
+            : GameUiPalette.surfaceDrawButtonIdle;
         return Material(
-          color: Colors.transparent,
+          color: GameUiPalette.transparent,
           child: InkWell(
             onTap: onPressed,
             borderRadius: BorderRadius.circular(16),
@@ -531,8 +533,10 @@ class _DrawHandButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Color.lerp(
-                    Colors.white.withValues(alpha: canDraw ? 0.18 : 0.08),
-                    const Color(0xFF9AF0C9),
+                    GameUiPalette.textPrimary.withValues(
+                      alpha: canDraw ? 0.18 : 0.08,
+                    ),
+                    GameUiPalette.specialSoftMintText,
                     glow,
                   )!,
                   width: 1.4,
@@ -556,7 +560,7 @@ class _DrawHandButton extends StatelessWidget {
                     '드로우',
                     maxLines: 1,
                     style: TextStyle(
-                      color: Colors.white.withValues(
+                      color: GameUiPalette.textPrimary.withValues(
                         alpha: canDraw ? 1.0 : 0.56,
                       ),
                       fontSize: 13,
@@ -567,7 +571,7 @@ class _DrawHandButton extends StatelessWidget {
                     slotsRemaining > 0 ? '$slotsRemaining칸 남음' : '가득 참',
                     maxLines: 1,
                     style: TextStyle(
-                      color: Colors.white.withValues(
+                      color: GameUiPalette.textPrimary.withValues(
                         alpha: canDraw ? 0.86 : 0.46,
                       ),
                       fontSize: 10,
@@ -604,16 +608,16 @@ class _HandCapacityGainBadge extends StatelessWidget {
             offset: Offset(0, dy),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFF193D32),
+                color: GameUiPalette.surfaceHandPanel,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF9AF0C9)),
+                border: Border.all(color: GameUiPalette.specialSoftMintText),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Text(
                   '손패 +$amount',
                   style: const TextStyle(
-                    color: Color(0xFFD8FFE9),
+                    color: GameUiPalette.specialSuccessText,
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
                   ),

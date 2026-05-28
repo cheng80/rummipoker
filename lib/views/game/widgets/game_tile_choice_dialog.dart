@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
+import 'game_ui_palette.dart';
 
 class GameTileChoiceDialog extends StatefulWidget {
   const GameTileChoiceDialog({
@@ -53,13 +54,15 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
       explicitChildNodes: true,
       label: routeLabel,
       child: Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: GameUiPalette.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xFF123126).withValues(alpha: 0.98),
+            color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.98),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white12),
+            border: Border.all(
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+            ),
           ),
           child: Padding(
             padding: EdgeInsets.fromLTRB(
@@ -76,7 +79,7 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
                   widget.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: GameUiPalette.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w500,
                   ),
@@ -86,7 +89,10 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
                   Text(
                     widget.message!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: const TextStyle(
+                      color: GameUiPalette.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -115,7 +121,7 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
                   const SizedBox(height: 12),
                   GameActionButton(
                     label: widget.closeLabel!,
-                    background: const Color(0xFF4C5A55),
+                    background: GameUiPalette.passiveSlotAccent,
                     onPressed: _selectedIndex == null
                         ? () {
                             widget.onClose?.call();
@@ -176,7 +182,7 @@ class _TileChoiceButton extends StatelessWidget {
                     fit: StackFit.expand,
                     children: [
                       Material(
-                        color: Colors.transparent,
+                        color: GameUiPalette.transparent,
                         borderRadius: BorderRadius.circular(8),
                         child: InkWell(
                           onTap: disabled ? null : onTap,
@@ -194,7 +200,7 @@ class _TileChoiceButton extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: const Color(0xFFFFD86B),
+                              color: GameUiPalette.specialGoldLabel,
                               width: 3,
                             ),
                             boxShadow: [
@@ -222,7 +228,7 @@ class _TileChoiceButton extends StatelessWidget {
                                 ).withValues(alpha: 0.94),
                                 borderRadius: BorderRadius.circular(7),
                                 border: Border.all(
-                                  color: const Color(0xFFFFD86B),
+                                  color: GameUiPalette.specialGoldLabel,
                                   width: 1,
                                 ),
                               ),
@@ -235,7 +241,7 @@ class _TileChoiceButton extends StatelessWidget {
                                   '버림 확정',
                                   maxLines: 1,
                                   style: TextStyle(
-                                    color: Color(0xFFFFE39C),
+                                    color: GameUiPalette.specialGoldPale,
                                     fontSize: 9,
                                     fontWeight: FontWeight.w900,
                                     height: 1,
@@ -255,7 +261,7 @@ class _TileChoiceButton extends StatelessWidget {
               '후보 ${index + 1}',
               maxLines: 1,
               style: const TextStyle(
-                color: Colors.white70,
+                color: GameUiPalette.textSecondary,
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 height: 1,
@@ -266,7 +272,7 @@ class _TileChoiceButton extends StatelessWidget {
               tile.code,
               maxLines: 1,
               style: const TextStyle(
-                color: Color(0xFFF2C14E),
+                color: GameUiPalette.actionGoldBright,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
                 height: 1,

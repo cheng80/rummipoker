@@ -25,6 +25,15 @@ abstract final class GameUiPalette {
   static const Color surfaceDanger = Color(0xFF4C1F1B);
   static const Color surfaceDangerDeep = Color(0xFF3A1714);
   static const Color surfaceInfo = Color(0xFF172A27);
+  static const Color surfaceTutorial = Color(0xFF343241);
+  static const Color surfaceRunInfo = Color(0xFF12362D);
+  static const Color surfaceRunInfoDark = Color(0xFF0F2F29);
+  static const Color surfaceRunInfoGold = Color(0xFF102821);
+  static const Color surfaceEndless = Color(0xFF4A121C);
+  static const Color surfaceEndlessDeep = Color(0xFF2C050C);
+  static const Color surfaceDeckUpgrade = Color(0xFF12283E);
+  static const Color surfaceDrawButtonIdle = Color(0xFF3F5750);
+  static const Color surfaceHandPanel = Color(0xFF193D32);
   static const Color tutorialShadow = Color(0xFF05070D);
   static const Color stationClearSurface = Color(0xFF113B31);
   static const Color bossConstraintSurface = Color(0xFF441E1E);
@@ -47,6 +56,10 @@ abstract final class GameUiPalette {
   static const Color actionWarningText = Color(0xFFFFD8CC);
   static const Color actionSuccessText = Color(0xFF9FF2C2);
   static const Color disabledControl = Color(0xFF586463);
+  static const Color actionInfoBlue = Color(0xFF4FA3D8);
+  static const Color actionInfoBlueBorder = Color(0xFF66C7FF);
+  static const Color actionInfoBlueText = Color(0xFF9FE0FF);
+  static const Color actionInfoBluePale = Color(0xFFE8F7FF);
   static const Color iconButtonMuted = Color(0xFF21423A);
   static const Color debugToggleActive = Color(0xFF4AA78D);
   static const Color menuAccentTutorial = Color(0xFFCCFF90);
@@ -96,6 +109,9 @@ abstract final class GameUiPalette {
 
   static const Color specialGold = Color(0xFFFFC46B);
   static const Color specialDanger = Color(0xFFFF6B3D);
+  static const Color specialDangerHard = Color(0xFFFF3D2E);
+  static const Color specialDangerEffect = Color(0xFFFF3E35);
+  static const Color specialDangerEffectBorder = Color(0xFFFF675F);
   static const Color specialWarning = Color(0xFFFF8F5A);
   static const Color specialBlue = Color(0xFF72C7FF);
   static const Color specialMint = Color(0xFF8BE0B9);
@@ -105,9 +121,14 @@ abstract final class GameUiPalette {
   static const Color specialSuccessText = Color(0xFFE8FFF4);
   static const Color specialGoldLabel = Color(0xFFFFD568);
   static const Color specialGoldPale = Color(0xFFFFE39C);
+  static const Color specialGoldBorder = Color(0xFFFFE8A2);
+  static const Color specialEndlessText = Color(0xFFFFE5C2);
+  static const Color specialEndlessTextMuted = Color(0xFFFFD08A);
   static const Color specialDangerText = Color(0xFFFFB0A3);
   static const Color specialDangerPale = Color(0xFFFFE4DF);
   static const Color specialDangerBright = Color(0xFFFF8F74);
+  static const Color specialDangerSoft = Color(0xFFFFB4A8);
+  static const Color specialDangerWarm = Color(0xFFFFE6D6);
   static const Color specialDangerBorder = Color(0xFFFF6B57);
   static const Color specialMutedText = Color(0xFFEFE6C8);
   static const Color specialMintPale = Color(0xFFB9F6D3);

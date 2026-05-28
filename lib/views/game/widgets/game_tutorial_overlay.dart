@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../../../resources/asset_paths.dart';
+import 'game_ui_palette.dart';
 import 'game_word_wrap_text.dart';
 
 class GameTutorialStep {
@@ -67,7 +68,10 @@ TargetFocus _buildGameTutorialTarget({
     paddingFocus: 6,
     enableOverlayTab: false,
     enableTargetTab: false,
-    borderSide: const BorderSide(color: Color(0xFFF2C14E), width: 2),
+    borderSide: const BorderSide(
+      color: GameUiPalette.actionGoldBright,
+      width: 2,
+    ),
     contents: [
       TargetContent(
         align: contentAlign,
@@ -137,15 +141,15 @@ TargetPosition _tutorialTargetPosition(BuildContext context, GlobalKey key) {
 Widget buildGameTutorialSkipButton(String label) {
   return DecoratedBox(
     decoration: BoxDecoration(
-      color: const Color(0xFF343241),
+      color: GameUiPalette.surfaceTutorial,
       borderRadius: BorderRadius.circular(999),
       border: Border.all(
-        color: const Color(0xFFF2C14E).withValues(alpha: 0.9),
+        color: GameUiPalette.actionGoldBright.withValues(alpha: 0.9),
         width: 1.2,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.38),
+          color: GameUiPalette.ink.withValues(alpha: 0.38),
           blurRadius: 16,
           offset: const Offset(0, 8),
         ),
@@ -157,7 +161,7 @@ Widget buildGameTutorialSkipButton(String label) {
         label,
         style: const TextStyle(
           fontFamily: AssetPaths.fontNexonLv2Gothic,
-          color: Colors.white,
+          color: GameUiPalette.textPrimary,
           fontSize: 12,
           fontWeight: FontWeight.w900,
         ),
@@ -192,15 +196,15 @@ class _TutorialBubble extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 330),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xFF343241),
+            color: GameUiPalette.surfaceTutorial,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: const Color(0xFFF2C14E).withValues(alpha: 0.94),
+              color: GameUiPalette.actionGoldBright.withValues(alpha: 0.94),
               width: 1.4,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.48),
+                color: GameUiPalette.ink.withValues(alpha: 0.48),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
@@ -220,7 +224,7 @@ class _TutorialBubble extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontFamily: AssetPaths.fontNexonLv2Gothic,
-                    color: Color(0xFFF2C14E),
+                    color: GameUiPalette.actionGoldBright,
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
                     decoration: TextDecoration.underline,
@@ -233,7 +237,7 @@ class _TutorialBubble extends StatelessWidget {
                   centerBlock: true,
                   style: const TextStyle(
                     fontFamily: AssetPaths.fontNexonLv2Gothic,
-                    color: Colors.white,
+                    color: GameUiPalette.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     height: 1.32,
@@ -245,7 +249,9 @@ class _TutorialBubble extends StatelessWidget {
                     TextButton(
                       onPressed: onSkip,
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withValues(alpha: 0.82),
+                        foregroundColor: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.82,
+                        ),
                         textStyle: const TextStyle(
                           fontFamily: AssetPaths.fontNexonLv2Gothic,
                           fontWeight: FontWeight.w900,
@@ -258,8 +264,8 @@ class _TutorialBubble extends StatelessWidget {
                     FilledButton(
                       onPressed: onNext,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFF2C14E),
-                        foregroundColor: const Color(0xFF241B10),
+                        backgroundColor: GameUiPalette.actionGoldBright,
+                        foregroundColor: GameUiPalette.textOnGold,
                         minimumSize: const Size(72, 32),
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         textStyle: const TextStyle(

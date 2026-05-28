@@ -10,6 +10,7 @@ import '../../../utils/common_ui.dart';
 import 'game_cashout_widgets.dart';
 import 'game_shared_widgets.dart';
 import 'game_terms_dialog.dart';
+import 'game_ui_palette.dart';
 
 Future<void> showGameRunInfoDialog({
   required BuildContext context,
@@ -33,7 +34,7 @@ Future<void> showGameRunInfoDialog({
                     context.tr('runInfoTitle'),
                     style: TextStyle(
                       fontFamily: AssetPaths.fontNexonLv2Gothic,
-                      color: Colors.white.withValues(alpha: 0.96),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -43,7 +44,7 @@ Future<void> showGameRunInfoDialog({
                   tooltip: context.tr('gameTermsTitle'),
                   onPressed: () => showGameTermsDialog(context: dialogContext),
                   icon: Icons.menu_book_rounded,
-                  backgroundColor: const Color(0xFF36513D),
+                  backgroundColor: GameUiPalette.marketNeutralButton,
                 ),
                 const SizedBox(width: 6),
                 GameIconButtonChip(
@@ -207,11 +208,11 @@ class _RunInfoRankRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = row.completedCount > 0
-        ? const Color(0xFFF2C14E)
-        : const Color(0xFF8FAFA4);
+        ? GameUiPalette.actionGoldBright
+        : GameUiPalette.rarityCommon;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF12362D),
+        color: GameUiPalette.surfaceRunInfo,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: accent.withValues(alpha: 0.45)),
       ),
@@ -242,7 +243,7 @@ class _RunInfoRankRow extends StatelessWidget {
                   Text(
                     gameHandRankLabel(row.rank),
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.94),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                     ),
@@ -256,7 +257,7 @@ class _RunInfoRankRow extends StatelessWidget {
                           )
                         : '${context.tr('runInfoCompletedCount', namedArgs: {'count': '${row.completedCount}'})} · 성장 ${row.progress}/${row.requiredProgress}',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.62),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.62),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
@@ -276,7 +277,7 @@ class _RunInfoRankRow extends StatelessWidget {
                       namedArgs: {'score': '${row.currentScore}'},
                     ),
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.95),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.95),
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),
@@ -288,7 +289,7 @@ class _RunInfoRankRow extends StatelessWidget {
                       namedArgs: {'score': '${row.nextScore}'},
                     ),
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.58),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.58),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),
@@ -323,10 +324,10 @@ class _RunInfoDeckSummary extends StatelessWidget {
               .join(' ');
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF0F2F29),
+        color: GameUiPalette.surfaceRunInfoDark,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFF6BAF9B).withValues(alpha: 0.45),
+          color: GameUiPalette.specialSoftMint.withValues(alpha: 0.45),
         ),
       ),
       child: Padding(
@@ -337,7 +338,7 @@ class _RunInfoDeckSummary extends StatelessWidget {
             Text(
               summary,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
@@ -346,7 +347,7 @@ class _RunInfoDeckSummary extends StatelessWidget {
             Text(
               tileText,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.62),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.62),
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -365,10 +366,10 @@ class _RunInfoBaseTileChipGuide extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF102821),
+        color: GameUiPalette.surfaceRunInfoGold,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFFF2C14E).withValues(alpha: 0.38),
+          color: GameUiPalette.actionGoldBright.withValues(alpha: 0.38),
         ),
       ),
       child: Padding(
@@ -379,7 +380,7 @@ class _RunInfoBaseTileChipGuide extends StatelessWidget {
             Text(
               '타일 기준 칩',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
@@ -388,7 +389,7 @@ class _RunInfoBaseTileChipGuide extends StatelessWidget {
             Text(
               '색상과 관계없이 타일 숫자값으로 표시합니다. 현재 확정 점수는 족보 기본 칩을 기준으로 계산됩니다.',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.62),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.62),
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 height: 1.25,
@@ -419,10 +420,10 @@ class _RunInfoBaseTileChipPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFF2C14E).withValues(alpha: 0.16),
+        color: GameUiPalette.actionGoldBright.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: const Color(0xFFF2C14E).withValues(alpha: 0.36),
+          color: GameUiPalette.actionGoldBright.withValues(alpha: 0.36),
         ),
       ),
       child: Padding(
@@ -430,7 +431,7 @@ class _RunInfoBaseTileChipPill extends StatelessWidget {
         child: Text(
           '$number=칩 $number',
           style: const TextStyle(
-            color: Color(0xFFFFE08A),
+            color: GameUiPalette.actionGoldText,
             fontSize: 9,
             fontWeight: FontWeight.w900,
             height: 1.0,

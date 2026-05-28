@@ -15,6 +15,7 @@ import '../../../utils/common_ui.dart';
 import '../game_presentation_timings.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';
+import 'game_ui_palette.dart';
 
 String gameHandRankLabel(RummiHandRank rank) {
   return switch (rank) {
@@ -75,12 +76,11 @@ class GameStageClearOverlay extends StatelessWidget {
     final isSettlement = phase == GameStageFlowPhase.settlement;
     final isEndless = stageIndex > 8;
     final accentColor = isEndless
-        ? const Color(0xFFFF6B3D)
-        : const Color(0xFFF2C14E);
+        ? GameUiPalette.specialDanger
+        : GameUiPalette.actionGoldBright;
     return ColoredBox(
-      color: (isEndless ? const Color(0xFF2C050C) : Colors.black).withValues(
-        alpha: 0.58,
-      ),
+      color: (isEndless ? GameUiPalette.surfaceEndlessDeep : GameUiPalette.ink)
+          .withValues(alpha: 0.58),
       child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0.94, end: 1),
@@ -98,8 +98,8 @@ class GameStageClearOverlay extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
                 decoration: BoxDecoration(
                   color: isEndless
-                      ? const Color(0xFF4A121C)
-                      : const Color(0xFF153C31),
+                      ? GameUiPalette.surfaceEndless
+                      : GameUiPalette.surfacePanel,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: accentColor.withValues(alpha: 0.72),
@@ -107,7 +107,7 @@ class GameStageClearOverlay extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.28),
+                      color: GameUiPalette.ink.withValues(alpha: 0.28),
                       blurRadius: 18,
                       spreadRadius: 2,
                     ),
@@ -122,7 +122,7 @@ class GameStageClearOverlay extends StatelessWidget {
                           : (isSettlement ? 'SCORE SETTLED' : 'STATION CLEAR'),
                       style: TextStyle(
                         color: isSettlement
-                            ? Colors.white.withValues(alpha: 0.78)
+                            ? GameUiPalette.textPrimary.withValues(alpha: 0.78)
                             : accentColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
@@ -134,8 +134,8 @@ class GameStageClearOverlay extends StatelessWidget {
                       isEndless ? '무한 도전 S$stageIndex' : 'Station $stageIndex',
                       style: TextStyle(
                         color: isEndless
-                            ? const Color(0xFFFFE5C2)
-                            : Colors.white.withValues(alpha: 0.96),
+                            ? GameUiPalette.specialEndlessText
+                            : GameUiPalette.textPrimary.withValues(alpha: 0.96),
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
                       ),
@@ -162,7 +162,9 @@ class GameStageClearOverlay extends StatelessWidget {
                       Text(
                         isEndless ? '무한 도전 목표 달성' : 'Station Goal 달성',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.9,
+                          ),
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                         ),
@@ -171,7 +173,9 @@ class GameStageClearOverlay extends StatelessWidget {
                     Text(
                       isSettlement ? '이번 확정으로 +$scoreAdded' : '정산 중...',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.66),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.66,
+                        ),
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
@@ -315,7 +319,7 @@ class GameFloatingSettlementBurst extends StatelessWidget {
           alignment: const Alignment(0, -0.18),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.28),
+              color: GameUiPalette.ink.withValues(alpha: 0.28),
               borderRadius: BorderRadius.circular(22),
             ),
             child: Padding(
@@ -326,8 +330,10 @@ class GameFloatingSettlementBurst extends StatelessWidget {
                   _GameOutlinedLabel(
                     label,
                     textAlign: TextAlign.center,
-                    fillColor: Colors.white.withValues(alpha: 0.96),
-                    strokeColor: Colors.black.withValues(alpha: 0.82),
+                    fillColor: GameUiPalette.textPrimary.withValues(
+                      alpha: 0.96,
+                    ),
+                    strokeColor: GameUiPalette.ink.withValues(alpha: 0.82),
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.25,
@@ -335,8 +341,8 @@ class GameFloatingSettlementBurst extends StatelessWidget {
                   const SizedBox(height: 6),
                   _GameOutlinedLabel(
                     '+$displayedScore',
-                    fillColor: const Color(0xFFF2C14E),
-                    strokeColor: Colors.black.withValues(alpha: 0.88),
+                    fillColor: GameUiPalette.actionGoldBright,
+                    strokeColor: GameUiPalette.ink.withValues(alpha: 0.88),
                     fontSize: 34,
                     fontWeight: FontWeight.w900,
                     height: 1,
@@ -346,8 +352,10 @@ class GameFloatingSettlementBurst extends StatelessWidget {
                     _GameOutlinedLabel(
                       subLabel,
                       textAlign: TextAlign.center,
-                      fillColor: Colors.white.withValues(alpha: 0.78),
-                      strokeColor: Colors.black.withValues(alpha: 0.8),
+                      fillColor: GameUiPalette.textPrimary.withValues(
+                        alpha: 0.78,
+                      ),
+                      strokeColor: GameUiPalette.ink.withValues(alpha: 0.8),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -542,9 +550,11 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                 child: DecoratedBox(
                   key: const ValueKey('cashout-sheet-frame'),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF102D25),
+                    color: GameUiPalette.surfaceDark,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white12),
+                    border: Border.all(
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -555,7 +565,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                         const Text(
                           '정산 완료',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: GameUiPalette.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                           ),
@@ -675,8 +685,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                         if (widget.completesRun) ...[
                           GameChromeButton(
                             label: '무한 도전 진입',
-                            backgroundColor: const Color(0xFF4FA3D8),
-                            foregroundColor: Colors.white,
+                            backgroundColor: GameUiPalette.actionInfoBlue,
+                            foregroundColor: GameUiPalette.textPrimary,
                             height: 50,
                             borderRadius: 18,
                             fontSize: 17,
@@ -690,8 +700,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                           const SizedBox(height: 8),
                           GameChromeButton(
                             label: '런 완료',
-                            backgroundColor: const Color(0xFFF4A81D),
-                            foregroundColor: Colors.black,
+                            backgroundColor: GameUiPalette.actionGold,
+                            foregroundColor: GameUiPalette.ink,
                             height: 50,
                             borderRadius: 18,
                             fontSize: 17,
@@ -704,8 +714,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                         ] else
                           GameChromeButton(
                             label: 'Market으로',
-                            backgroundColor: const Color(0xFFF4A81D),
-                            foregroundColor: Colors.black,
+                            backgroundColor: GameUiPalette.actionGold,
+                            foregroundColor: GameUiPalette.ink,
                             height: 52,
                             borderRadius: 18,
                             fontSize: 17,
@@ -736,12 +746,12 @@ class _GameCashOutEndlessNotice extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF4A121C),
+        color: GameUiPalette.surfaceEndless,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFF6B3D), width: 1.4),
+        border: Border.all(color: GameUiPalette.specialDanger, width: 1.4),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF3D2E).withValues(alpha: 0.22),
+            color: GameUiPalette.specialDangerHard.withValues(alpha: 0.22),
             blurRadius: 14,
           ),
         ],
@@ -750,7 +760,7 @@ class _GameCashOutEndlessNotice extends StatelessWidget {
         children: [
           Icon(
             Icons.local_fire_department_rounded,
-            color: Color(0xFFFFC46B),
+            color: GameUiPalette.specialGold,
             size: 22,
           ),
           SizedBox(width: 8),
@@ -759,7 +769,7 @@ class _GameCashOutEndlessNotice extends StatelessWidget {
               'S8 이후는 무한 도전입니다. 보상은 받고, 다음 Station부터 목표 점수가 계속 상승합니다.',
               softWrap: true,
               style: TextStyle(
-                color: Color(0xFFFFE5C2),
+                color: GameUiPalette.specialEndlessText,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
                 height: 1.25,
@@ -780,20 +790,27 @@ class _GameCashOutChallengeCarryoverNotice extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF12283E),
+        color: GameUiPalette.surfaceDeckUpgrade,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF66C7FF), width: 1.2),
+        border: Border.all(
+          color: GameUiPalette.actionInfoBlueBorder,
+          width: 1.2,
+        ),
       ),
       child: const Row(
         children: [
-          Icon(Icons.upgrade_rounded, color: Color(0xFF9FE0FF), size: 21),
+          Icon(
+            Icons.upgrade_rounded,
+            color: GameUiPalette.actionInfoBlueText,
+            size: 21,
+          ),
           SizedBox(width: 8),
           Expanded(
             child: Text(
               '도전 모드는 족보 레벨과 추가 덱 카드만 계승합니다. 골드, Jester, 아이템, 마켓 상태는 새 런에서 초기화됩니다.',
               softWrap: true,
               style: TextStyle(
-                color: Color(0xFFE8F7FF),
+                color: GameUiPalette.actionInfoBluePale,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
                 height: 1.25,
@@ -820,10 +837,10 @@ class _GameCashOutGoldSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.22),
+        color: GameUiPalette.ink.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFF2C14E).withValues(alpha: 0.34),
+          color: GameUiPalette.actionGoldBright.withValues(alpha: 0.34),
         ),
       ),
       child: Row(
@@ -835,7 +852,7 @@ class _GameCashOutGoldSummary extends StatelessWidget {
               value: '${currentGold}G',
               valueKey: const ValueKey('cashout-current-gold-value'),
               valueStyle: const TextStyle(
-                color: Colors.white,
+                color: GameUiPalette.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
                 height: 1,
@@ -849,7 +866,7 @@ class _GameCashOutGoldSummary extends StatelessWidget {
             valueKey: const ValueKey('cashout-total-gold-value'),
             alignEnd: true,
             valueStyle: const TextStyle(
-              color: Color(0xFFF2C14E),
+              color: GameUiPalette.actionGoldBright,
               fontSize: 30,
               fontWeight: FontWeight.w900,
               height: 0.95,
@@ -887,7 +904,7 @@ class _GameCashOutGoldMetric extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: Colors.white70,
+            color: GameUiPalette.textSecondary,
             fontSize: 11,
             fontWeight: FontWeight.w900,
             height: 1,
@@ -920,7 +937,9 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF4FA3D8).withValues(alpha: 0.18 * pulse),
+                color: GameUiPalette.actionInfoBlue.withValues(
+                  alpha: 0.18 * pulse,
+                ),
                 blurRadius: 18 * pulse,
                 spreadRadius: 1.5 * pulse,
               ),
@@ -932,10 +951,10 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF4FA3D8).withValues(alpha: 0.12),
+          color: GameUiPalette.actionInfoBlue.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFF4FA3D8).withValues(alpha: 0.32),
+            color: GameUiPalette.actionInfoBlue.withValues(alpha: 0.32),
           ),
         ),
         child: Row(
@@ -960,7 +979,7 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
                   const Text(
                     '덱 타일 보상',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: GameUiPalette.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),
@@ -969,7 +988,7 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
                   Text(
                     entry.description,
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: GameUiPalette.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1061,8 +1080,8 @@ class _GameCashOutLine extends StatelessWidget {
               BoxShadow(
                 color:
                     (isEndless
-                            ? const Color(0xFFFF6B3D)
-                            : const Color(0xFFF2C14E))
+                            ? GameUiPalette.specialDanger
+                            : GameUiPalette.actionGoldBright)
                         .withValues(alpha: 0.18 * pulse),
                 blurRadius: 18 * pulse,
                 spreadRadius: 1.5 * pulse,
@@ -1075,7 +1094,7 @@ class _GameCashOutLine extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -1084,17 +1103,19 @@ class _GameCashOutLine extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               decoration: BoxDecoration(
                 color: isEndless
-                    ? const Color(0xFF7A1822)
-                    : const Color(0xFF183E32),
+                    ? GameUiPalette.surfaceDanger
+                    : GameUiPalette.cardEmptyFace,
                 borderRadius: BorderRadius.circular(10),
                 border: isEndless
-                    ? Border.all(color: const Color(0xFFFF6B3D), width: 1)
+                    ? Border.all(color: GameUiPalette.specialDanger, width: 1)
                     : null,
               ),
               child: Text(
                 leading,
                 style: TextStyle(
-                  color: isEndless ? const Color(0xFFFFE5C2) : Colors.white,
+                  color: isEndless
+                      ? GameUiPalette.specialEndlessText
+                      : GameUiPalette.textPrimary,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1105,7 +1126,9 @@ class _GameCashOutLine extends StatelessWidget {
               child: Text(
                 text,
                 style: TextStyle(
-                  color: isEndless ? const Color(0xFFFFD08A) : Colors.white70,
+                  color: isEndless
+                      ? GameUiPalette.specialEndlessTextMuted
+                      : GameUiPalette.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1145,16 +1168,19 @@ class _GameCashOutCollectBadge extends StatelessWidget {
           const Positioned.fill(child: _GameCashOutCoinBurst()),
           DecoratedBox(
             decoration: BoxDecoration(
-              color: const Color(0xFF2B2311),
+              color: GameUiPalette.specialGoldSurface,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFF2C14E), width: 1),
+              border: Border.all(
+                color: GameUiPalette.actionGoldBright,
+                width: 1,
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               child: Text(
                 '+$gold',
                 style: const TextStyle(
-                  color: Color(0xFFF2C14E),
+                  color: GameUiPalette.actionGoldBright,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   height: 1,
@@ -1218,11 +1244,11 @@ class _GameCashOutCoinSpark extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFFF2C14E),
-        border: Border.all(color: const Color(0xFFFFE8A2), width: 0.8),
+        color: GameUiPalette.actionGoldBright,
+        border: Border.all(color: GameUiPalette.specialGoldBorder, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFF2C14E).withValues(alpha: 0.32),
+            color: GameUiPalette.actionGoldBright.withValues(alpha: 0.32),
             blurRadius: 6,
           ),
         ],
@@ -1284,7 +1310,7 @@ class _GameOutlinedLabel extends StatelessWidget {
             height: height,
             shadows: [
               Shadow(
-                color: Colors.black.withValues(alpha: 0.35),
+                color: GameUiPalette.ink.withValues(alpha: 0.35),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

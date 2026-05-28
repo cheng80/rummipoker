@@ -6,6 +6,7 @@ import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../game_presentation_timings.dart';
+import 'game_ui_palette.dart';
 
 /// Flutter 보드 위에 얹는 투명 Flame 이펙트 레이어.
 ///
@@ -312,12 +313,16 @@ class _LineConfirmSweepCell extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
-                    color: const Color(0xFFF2C14E).withValues(alpha: 0.86),
+                    color: GameUiPalette.actionGoldBright.withValues(
+                      alpha: 0.86,
+                    ),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF2C14E).withValues(alpha: 0.34),
+                      color: GameUiPalette.actionGoldBright.withValues(
+                        alpha: 0.34,
+                      ),
                       blurRadius: 14,
                       spreadRadius: 1.2,
                     ),
@@ -404,15 +409,21 @@ class _ConstraintImpactCellFlash extends StatelessWidget {
               scale: scale,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF3E35).withValues(alpha: 0.13),
+                  color: GameUiPalette.specialDangerEffect.withValues(
+                    alpha: 0.13,
+                  ),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: const Color(0xFFFF675F).withValues(alpha: 0.9),
+                    color: GameUiPalette.specialDangerEffectBorder.withValues(
+                      alpha: 0.9,
+                    ),
                     width: 2.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF3E35).withValues(alpha: 0.34),
+                      color: GameUiPalette.specialDangerEffect.withValues(
+                        alpha: 0.34,
+                      ),
                       blurRadius: 18,
                       spreadRadius: 1.4,
                     ),
@@ -458,15 +469,21 @@ class _ConstraintImpactBadge extends StatelessWidget {
               scale: scale,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF351514).withValues(alpha: 0.92),
+                  color: GameUiPalette.surfaceDangerDeep.withValues(
+                    alpha: 0.92,
+                  ),
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
-                    color: const Color(0xFFFF675F).withValues(alpha: 0.95),
+                    color: GameUiPalette.specialDangerEffectBorder.withValues(
+                      alpha: 0.95,
+                    ),
                     width: 2.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF675F).withValues(alpha: 0.35),
+                      color: GameUiPalette.specialDangerEffectBorder.withValues(
+                        alpha: 0.35,
+                      ),
                       blurRadius: 18,
                       spreadRadius: 1.4,
                     ),
@@ -478,7 +495,7 @@ class _ConstraintImpactBadge extends StatelessWidget {
                     const Text(
                       'BOSS',
                       style: TextStyle(
-                        color: Color(0xFFFFB4A8),
+                        color: GameUiPalette.specialDangerSoft,
                         fontSize: 8,
                         fontWeight: FontWeight.w900,
                         height: 1,
@@ -488,7 +505,7 @@ class _ConstraintImpactBadge extends StatelessWidget {
                     Text(
                       label,
                       style: const TextStyle(
-                        color: Color(0xFFFFE6D6),
+                        color: GameUiPalette.specialDangerWarm,
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                         height: 1,
@@ -563,15 +580,21 @@ class _LargeScoreBurstBadge extends StatelessWidget {
               scale: scale,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF113B31).withValues(alpha: 0.94),
+                  color: GameUiPalette.stationClearSurface.withValues(
+                    alpha: 0.94,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: const Color(0xFF86F4C3).withValues(alpha: 0.95),
+                    color: GameUiPalette.settlementActive.withValues(
+                      alpha: 0.95,
+                    ),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF86F4C3).withValues(alpha: 0.36),
+                      color: GameUiPalette.settlementActive.withValues(
+                        alpha: 0.36,
+                      ),
                       blurRadius: 18,
                       spreadRadius: 1.4,
                     ),
@@ -581,7 +604,7 @@ class _LargeScoreBurstBadge extends StatelessWidget {
                   child: Text(
                     label,
                     style: const TextStyle(
-                      color: Color(0xFFE8FFF4),
+                      color: GameUiPalette.specialSuccessText,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -669,10 +692,12 @@ class _SettlementScoreMote extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFF2C14E).withValues(alpha: 0.9),
+                  color: GameUiPalette.actionGoldBright.withValues(alpha: 0.9),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF2C14E).withValues(alpha: 0.42),
+                      color: GameUiPalette.actionGoldBright.withValues(
+                        alpha: 0.42,
+                      ),
                       blurRadius: 9,
                       spreadRadius: 1,
                     ),
