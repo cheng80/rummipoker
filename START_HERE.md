@@ -73,14 +73,12 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 
 필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 
-- [STATUS.md](docs/planning/legacy/STATUS.md)
-- [IMPLEMENTATION_PLAN.md](docs/planning/legacy/IMPLEMENTATION_PLAN.md)
-- [MIGRATION_ROADMAP.md](docs/planning/legacy/MIGRATION_ROADMAP.md)
-- [CURRENT_LEVELING_ML_BASELINE.md](docs/current_system/CURRENT_LEVELING_ML_BASELINE.md)
 - [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md)
 - [13_ITEM_SYSTEM_CONTRACT.md](docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
 - [TEST_QA_ACCEPTANCE.md](docs/planning/verification/TEST_QA_ACCEPTANCE.md)
 - [OPEN_DECISIONS.md](docs/planning/feature_plans/OPEN_DECISIONS.md)
+- [planning legacy archive](docs/archive/planning_legacy_2026_05/README.md)
+- [deprecated leveling docs archive](docs/archive/leveling/deprecated_2026_05/README.md)
 - [feature plan archive](docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md)
 - [leveling archive](docs/archive/leveling/00_leveling_archive_README.md)
 
@@ -93,7 +91,7 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 | goals | Goal | `docs/goals/*` | 제품 목표, 방향성, 의사결정 원칙 |
 | current_system | Context | `docs/current_system/*` | 현재 구현 상태, 코드 맵, current-to-target gap, 레벨링 현재 정책 |
 | specs | Spec | `docs/specs/V4/*.md` | 기능별 V4 명세 |
-| planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/competition/*`, `docs/planning/goal/*`, `docs/planning/leveling/*`, `docs/planning/feature_plans/*`, `docs/planning/legacy/*`, `docs/planning/verification/*` | 현재 실행 라우터, 닫힌 공모전 제출 이력, Goal 진도, 레벨링/경제 상태, 기능별 계획, legacy snapshot, 검증 절차 |
+| planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/competition/*`, `docs/planning/goal/*`, `docs/planning/leveling/*`, `docs/planning/feature_plans/*`, `docs/planning/verification/*` | 현재 실행 라우터, 닫힌 공모전 제출 이력, Goal 진도, 레벨링/경제 상태, 기능별 계획, 검증 절차 |
 | archive | Archive | `docs/archive/*`, generated/prompt/history 문서 | 최신 판단 기준은 아니지만 이력 검색에 사용할 수 있는 참고 자료 |
 
 ## Source of Truth
@@ -112,8 +110,8 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - 레벨링 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 - 현재 코드 설명과 작업 재개 기준: `docs/current_system/*`
 - 기능 명세: `docs/specs/V4/*`
-- 과거 V4 진행 snapshot: `docs/planning/legacy/STATUS.md`, `docs/planning/legacy/IMPLEMENTATION_PLAN.md`, `docs/planning/legacy/MIGRATION_ROADMAP.md`
-- 과거 ML 경로 호환 안내: `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`
+- 과거 V4 진행 snapshot: `docs/archive/planning_legacy_2026_05/`
+- 과거 ML/레벨링 호환 안내: `docs/archive/leveling/deprecated_2026_05/`
 - 과거 참고: `docs/archive/*`
 
 `docs/archive/generated/RUMMI_POKER_GRID_V4_COMBINED.md`는 병합 스냅샷으로 보고, 개별 원본 문서보다 우선하지 않는다.

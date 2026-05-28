@@ -33,8 +33,7 @@
 14. `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`
 
 현재 활성 트랙과 다음 작업 선택은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 먼저 따른다.
-`docs/planning/legacy/TEMP_WORK_SEQUENCE_PLAN.md`는 과거 임시 작업 순서 lock snapshot이며, 현재 실행 판단 기준이 아니다.
-`docs/planning/legacy/STATUS.md`, `docs/planning/legacy/IMPLEMENTATION_PLAN.md`, `docs/planning/legacy/MIGRATION_ROADMAP.md`는 과거 진행 snapshot/compatibility 문서이며, current source of truth가 아니다.
+`docs/archive/planning_legacy_2026_05/`는 과거 진행 snapshot/compatibility 문서 archive이며, current source of truth가 아니다.
 
 코드 읽기 순서:
 

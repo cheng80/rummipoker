@@ -438,3 +438,4 @@ Installed release: `0.2.0`
 - 전투/마켓에서 유저가 현재 선택한 타일, Jester, Item, 후보 카드의 선택 프레임은 모두 `GameUiPalette.userSelection` 주황으로 통일한다. 금색/노란색은 골드, 보상, 정산, 활성 효과 같은 비선택 강조에만 쓴다.
 - 장기 밸런스/경제/ML 작업을 재개할 때는 구 시뮬레이션 row, 구 ML feature table, 구 추천 리포트를 현재 판단 근거로 바로 재사용하지 않는다. 먼저 현재 runtime/catalog/ruleset/bot policy/feature schema와 산출 시점의 차이를 감사하고, 재사용 등급을 `historical prior`, `schema reusable`, `fresh rerun required`처럼 나눈 뒤 fresh resimulation 또는 재학습 필요 여부를 결정한다.
 - 예정 연출 큐 마무리는 장기 밸런스/경제/ML 재검증과 같은 항목으로 묶지 않는다. transient presentation state와 timing/cue/눈검증 기준으로 별도 트랙에서 닫고, ML/레벨링 작업은 구 산출물 archive 후 fresh 데이터셋을 새로 쌓는 흐름으로 시작한다.
+- 더 이상 현재 작업에서 쓰지 않는 구 plan, deprecated compatibility, 과거 migration/status 문서는 `docs/planning/`이나 `docs/current_system/`에 남겨 현재 기준처럼 보이게 하지 않는다. 필요한 참조를 current 문서로 승격한 뒤 `docs/archive/` 하위로 옮기고, `START_HERE.md`와 source-of-truth map의 링크를 함께 갱신한다.

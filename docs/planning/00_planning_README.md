@@ -12,7 +12,7 @@ GCSE 역할: `Execution`
 
 현재 작업 순서 source-of-truth는 `ACTIVE_EXECUTION_PLAN.md`다.
 전체 Goal 진도는 `goal/OVERALL_GOAL_PROGRESS.md`, 공모전 제출 실행표는 `competition/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.
-오래된 `legacy/STATUS.md`, `legacy/IMPLEMENTATION_PLAN.md`, `legacy/MIGRATION_ROADMAP.md`, `legacy/TEMP_WORK_SEQUENCE_PLAN.md`는 현재 실행 판단 기준이 아니다.
+오래된 V4 status/migration/순서 lock snapshot은 `docs/archive/planning_legacy_2026_05/`로 이동했으며 현재 실행 판단 기준이 아니다.
 
 ## Folder Layout
 
@@ -23,7 +23,6 @@ GCSE 역할: `Execution`
 | `goal/` | 실제 제품 Goal 기준 전체 진도와 장기 track |
 | `leveling/` | 레벨링/경제/휴리스틱/ML 전환 상태 |
 | `feature_plans/` | 기능별 runtime matrix, open decision, 연출 후보 |
-| `legacy/` | 과거 V4 status, migration, 순서 lock snapshot |
 | `verification/` | QA, smoke, build 절차와 검증 로그 |
 
 ## Current Source-Of-Truth Documents
@@ -40,20 +39,12 @@ GCSE 역할: `Execution`
 | `feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md` | 아이템 runtime hook 적용 상태 |
 | `leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` | 현재 휴리스틱/시뮬레이션 레벨링 진입 요약 |
 
-## Legacy Or Compatibility Documents
+## Archive Documents
 
 | 문서 | 취급 |
 |---|---|
-| `legacy/STATUS.md` | 과거 V4 진행 snapshot. 현재 status처럼 읽지 않는다 |
-| `legacy/IMPLEMENTATION_PLAN.md` | 과거 대형 실행 계획. 남은 항목 확인 후 정리 |
-| `legacy/MIGRATION_ROADMAP.md` | 과거 migration roadmap. 현재 blocker 승격 여부 확인 후 정리 |
-| `leveling/ML_LEVELING_SIMULATION_DIRECTION.md` | deprecated compatibility path. 현재 기준은 `leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` |
-
-## Temporary Documents
-
-- `legacy/TEMP_WORK_SEQUENCE_PLAN.md`는 과거 작업 순서 lock snapshot이다.
-- 현재 실행 판단은 `ACTIVE_EXECUTION_PLAN.md`를 따른다.
-- 사람 검토 승인 전에는 삭제하지 않는다.
+| `docs/archive/planning_legacy_2026_05/` | 과거 V4 진행/migration/순서 lock snapshot. 현재 status처럼 읽지 않는다 |
+| `docs/archive/leveling/deprecated_2026_05/` | deprecated leveling/ML compatibility docs. 현재 기준은 `leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` |
 
 ## Allowed Documents
 

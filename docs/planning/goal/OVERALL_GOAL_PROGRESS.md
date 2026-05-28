@@ -121,7 +121,7 @@ ML/분석 상태:
 - 레벨링 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 - 경제/가격/리롤 probe: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 - 휴리스틱/시뮬레이션 진입 요약: `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`
-- 과거 순서 lock snapshot: `docs/planning/legacy/TEMP_WORK_SEQUENCE_PLAN.md`
+- 과거 순서 lock snapshot: `docs/archive/planning_legacy_2026_05/TEMP_WORK_SEQUENCE_PLAN.md`
 
 ## 4. Closed Competition Track
 

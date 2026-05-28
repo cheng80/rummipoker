@@ -274,6 +274,6 @@
 | 과거 공모전 full-play bot 제작 기준 | `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md` |
 | 실제 Goal 전체 진도 | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` |
 | 장기 레벨링/경제 적용 상태 | `docs/planning/leveling/*` |
-| 과거 V4/migration 순서 lock | `docs/planning/legacy/*` |
+| 과거 V4/migration 순서 lock | `docs/archive/planning_legacy_2026_05/*` |
 
-`docs/planning/legacy/*`는 현재 실행 판단 기준이 아니다.
+`docs/archive/planning_legacy_2026_05/*`는 현재 실행 판단 기준이 아니다.

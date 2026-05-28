@@ -99,7 +99,7 @@
 | 실제 Goal 진도 | `docs/planning/goal/` |
 | 레벨링/경제/휴리스틱/ML 전환 상태 | `docs/planning/leveling/` |
 | 기능별 계획, runtime matrix, open decision | `docs/planning/feature_plans/` |
-| 과거 V4 status, migration, 임시 순서 lock snapshot | `docs/planning/legacy/` |
 | QA, smoke, build 절차와 검증 로그 | `docs/planning/verification/` |
+| 과거 V4 status, migration, 임시 순서 lock snapshot | `docs/archive/planning_legacy_2026_05/` |
 
 `START_HERE.md`는 전체 문서 진입과 읽는 순서를 잡고, `ACTIVE_EXECUTION_PLAN.md`는 planning 단계에서 현재 실행 트랙만 고른다.

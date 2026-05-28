@@ -40,7 +40,7 @@
 | 현재 코드 baseline | `docs/current_system/CURRENT_BUILD_BASELINE.md` |
 | 현재 실행 순서 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` |
 | 실제 Goal 진행률 | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` |
-| legacy migration roadmap | `docs/planning/legacy/MIGRATION_ROADMAP.md` |
+| legacy migration roadmap | `docs/archive/planning_legacy_2026_05/MIGRATION_ROADMAP.md` |
 | Test/QA acceptance | `docs/planning/verification/TEST_QA_ACCEPTANCE.md` |
 | open decisions / experiments | `docs/planning/feature_plans/OPEN_DECISIONS.md` |
 | V3 -> V4 changelog | `docs/archive/legacy/V4_CHANGELOG_FROM_V3.md` |

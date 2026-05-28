@@ -50,7 +50,7 @@
    - 현재 정책과 충돌하는 실험안
    - 완료된 임시 QA 기록
    - 실제 ML이 아닌데 ML 적용처럼 읽히는 과거 보고서
-   - 단, `START_HERE.md` 또는 current 문서에서 아직 읽는 문서는 archive로 바로 보내지 않고 `docs/planning/legacy/`에 둔다.
+   - 2026-05-29 기준 구 planning/ML 호환 문서는 archive로 이동했다.
 
 4. 문서 링크 정리: 진행 중
    - current 문서 상단에 기준/후속/과거 문서 링크를 맞춘다.
@@ -73,7 +73,7 @@
 | `docs/current_system/CURRENT_LEVELING_POLICY.md` | 레벨링 정책 source-of-truth | 유지 |
 | `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md` | 런타임 레벨링 표 | 유지 |
 | `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md` | 시뮬레이션/휴리스틱 기준 | 유지 |
-| `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` | 과거 경로 호환용 deprecated 안내 | 유지하되 실제 ML 기준으로 인용 금지 |
+| `docs/archive/leveling/deprecated_2026_05/CURRENT_LEVELING_ML_BASELINE.md` | 과거 경로 호환용 deprecated 안내 | archive. 실제 ML 기준으로 인용 금지 |
 
 ### Planning
 
@@ -85,16 +85,13 @@
 | `docs/planning/leveling/LEVELING_APPLIED_STATUS.md` | 레벨링 적용 상태 | 유지 |
 | `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` | 경제 레벨링 실행 계획 | 유지, probe 완료/미완료 상태 갱신 필요 |
 | `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` | ML 명칭 정정 후 active summary | 유지 |
-| `docs/planning/leveling/ML_LEVELING_SIMULATION_DIRECTION.md` | 과거 경로 호환용 deprecated 안내 | 유지하되 current 링크만 제공 |
 | `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md` | 문서 정리 작업 계획 | 이번 정리 이력으로 유지 |
 | `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md` | 연출 작업 계획 | 출품 큐와 연결해 유지 |
 | `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md` | Item hook 적용 상태 | 유지 |
 | `docs/planning/feature_plans/OPEN_DECISIONS.md` | 열린 결정 목록 | 검토 후 current open decision만 남김 |
-| `docs/planning/legacy/STATUS.md` | 과거 진행 snapshot | 현재 실행 판단 기준 아님 |
-| `docs/planning/legacy/IMPLEMENTATION_PLAN.md` | 과거 대형 실행 계획 | 현재 실행 판단 기준 아님 |
-| `docs/planning/legacy/MIGRATION_ROADMAP.md` | 과거 migration roadmap | 현재 실행 판단 기준 아님 |
-| `docs/planning/legacy/TEMP_WORK_SEQUENCE_PLAN.md` | 과거 임시 순서 lock snapshot | 현재 실행 판단 기준 아님 |
 | `docs/planning/verification/` | 검증 절차와 QA 기록 | 유지. 오래된 daily log는 archive 후보 |
+| `docs/archive/planning_legacy_2026_05/` | 과거 V4 진행/migration/순서 lock snapshot | archive. 현재 실행 판단 기준 아님 |
+| `docs/archive/leveling/deprecated_2026_05/` | 과거 레벨링/ML 호환 문서와 boss pool mapping | archive. 현재 실행 판단 기준 아님 |
 
 ### Analysis
 
@@ -122,7 +119,7 @@
 | 시뮬레이션/휴리스틱 기준 | `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md` | `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` |
 | 경제 계획 | `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` | `tools/sim/economy_audit.py`, `logs/sim/` |
 | 실제 적용 여부 | `docs/planning/leveling/LEVELING_APPLIED_STATUS.md` | 테스트/커밋 이력 |
-| ML 전환 상태 | `analysis/leveling/README.md` | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`, `docs/archive/leveling/legacy_ml_outputs_2026_05/` |
+| ML 전환 상태 | `analysis/leveling/README.md` | `docs/archive/leveling/deprecated_2026_05/`, `docs/archive/leveling/legacy_ml_outputs_2026_05/` |
 
 ## 6. 다음 Archive 보류 후보
 
@@ -130,9 +127,6 @@
 
 | 후보 | 이유 | 선행 확인 |
 |---|---|---|
-| `docs/planning/legacy/STATUS.md` | 과거 작업 진행 snapshot이라 현재 status로 오해될 수 있음 | 필요한 최신 항목 승격, 링크 참조 확인 |
-| `docs/planning/legacy/IMPLEMENTATION_PLAN.md` | 대형 계획이 현재 진행표와 중복 | 남은 미완료 항목이 `OVERALL_GOAL_PROGRESS.md`로 승격됐는지 확인 |
-| `docs/planning/legacy/MIGRATION_ROADMAP.md` | migration 중심 과거 계획 | 현재 migration blocker가 남아 있는지 확인 |
 | 오래된 `docs/planning/verification/daily_logs/` | 검증 이력은 필요하지만 current planning를 흐릴 수 있음 | latest QA만 current에 요약됐는지 확인 |
 
 ## 7. 완료 조건
