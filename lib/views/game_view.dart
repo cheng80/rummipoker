@@ -48,6 +48,7 @@ import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
 import 'game/widgets/game_tile_choice_dialog.dart';
 import 'game/widgets/game_tutorial_overlay.dart';
+import 'game/widgets/game_surface_metrics.dart';
 import 'game/widgets/game_ui_palette.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
@@ -2607,7 +2608,7 @@ class _GameSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(kGameSurfaceFrameRadius),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -2620,23 +2621,23 @@ class _GameSurface extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: GameUiPalette.ink.withValues(alpha: 0.4),
-            blurRadius: 28,
-            spreadRadius: 4,
+            blurRadius: kGameSurfaceShadowBlur,
+            spreadRadius: kGameSurfaceShadowSpread,
           ),
         ],
         border: Border.all(
           color: GameUiPalette.marketFrameBorder.withValues(alpha: 0.55),
-          width: 1.2,
+          width: kGameSurfaceBorderWidth,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(kGameSurfaceFrameRadius),
         child: Stack(
           children: [
             const Positioned.fill(child: GameTableBackdrop()),
             Positioned.fill(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+                padding: kBattleSurfacePadding,
                 child: _GameLayout(
                   battle: battle,
                   station: station,

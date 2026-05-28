@@ -26,6 +26,7 @@ import 'game_market_feedback_widgets.dart';
 import 'game_market_metrics.dart';
 import 'game_run_info_dialog.dart';
 import 'game_shared_widgets.dart';
+import 'game_surface_metrics.dart';
 import 'game_tutorial_overlay.dart';
 import 'game_ui_palette.dart';
 
@@ -1802,7 +1803,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       child: _MarketEntryMotion(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(kGameSurfaceFrameRadius),
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -1815,23 +1816,23 @@ class _GameShopScreenState extends State<GameShopScreen>
             boxShadow: [
               BoxShadow(
                 color: GameUiPalette.ink.withValues(alpha: 0.36),
-                blurRadius: 28,
-                spreadRadius: 4,
+                blurRadius: kGameSurfaceShadowBlur,
+                spreadRadius: kGameSurfaceShadowSpread,
               ),
             ],
             border: Border.all(
               color: GameUiPalette.marketFrameBorder.withValues(alpha: 0.55),
-              width: 1.2,
+              width: kGameSurfaceBorderWidth,
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(kGameSurfaceFrameRadius),
             child: Stack(
               key: _marketSurfaceKey,
               children: [
                 const Positioned.fill(child: GameTableBackdrop()),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+                  padding: kMarketSurfacePadding,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
