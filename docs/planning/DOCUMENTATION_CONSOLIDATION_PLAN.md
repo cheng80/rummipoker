@@ -100,12 +100,14 @@
 
 | 문서/폴더 | 현재 역할 | 정리 판단 |
 |---|---|---|
-| `analysis/leveling/README.md` | 분석 폴더 성격 구분 | 유지 |
-| `analysis/leveling/data/raw/` | 선택된 summary snapshot | 유지하되 원본 provenance 명확화 |
-| `analysis/leveling/data/features/` | ML 전환 스캐폴딩 feature table | 유지 |
-| `analysis/leveling/models/` | 설명 baseline metric | 유지하되 runtime 적용 근거로 사용 금지 |
-| `analysis/leveling/reports/` | 분석/전환 요구사항 리포트 | 유지 |
-| `analysis/leveling/notebooks/` | 사람이 읽는 분석 노트북 | 유지 |
+| `analysis/leveling/README.md` | 새 fresh ML/레벨링 workspace 성격 구분 | 유지 |
+| `analysis/leveling/data/raw/` | 앞으로 새 fresh simulation 원본을 선별 저장할 위치 | 구 snapshot 제거 완료 |
+| `analysis/leveling/data/features/` | 앞으로 새 feature metadata를 둘 위치 | 구 metadata 제거 완료 |
+| `analysis/leveling/models/` | 앞으로 새 모델/metric을 둘 위치 | 구 모델 제거 완료 |
+| `analysis/leveling/reports/` | 앞으로 새 분석/전환 보고서를 둘 위치 | 구 리포트 제거 완료 |
+| `docs/archive/leveling/legacy_ml_outputs_2026_05/` | 구 tracked ML/레벨링 산출물 archive | historical prior로만 사용 |
+| `analysis/leveling/archive/legacy_pre_20260529/` | 구 generated feature CSV 로컬 archive | git 추적 제외 |
+| `logs/archive/legacy_pre_20260529/sim/` | 구 `logs/sim` 로컬 archive | git 추적 제외 |
 
 ## 5. Source-Of-Truth Map
 
@@ -120,7 +122,7 @@
 | 시뮬레이션/휴리스틱 기준 | `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md` | `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` |
 | 경제 계획 | `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` | `tools/sim/economy_audit.py`, `logs/sim/` |
 | 실제 적용 여부 | `docs/planning/leveling/LEVELING_APPLIED_STATUS.md` | 테스트/커밋 이력 |
-| ML 전환 상태 | `analysis/leveling/README.md`, `analysis/leveling/reports/leveling_analysis_methodology.md` | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md` |
+| ML 전환 상태 | `analysis/leveling/README.md` | `docs/current_system/CURRENT_LEVELING_ML_BASELINE.md`, `docs/archive/leveling/legacy_ml_outputs_2026_05/` |
 
 ## 6. 다음 Archive 보류 후보
 

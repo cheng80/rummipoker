@@ -436,3 +436,5 @@ Installed release: `0.2.0`
 - 빈/잠긴 Item 슬롯을 카드 face로 그릴 때는 기존 rounded pocket/frame을 바깥에 함께 남기지 않는다. 선택 상태가 아닌 슬롯은 카드 face 자체의 외곽선만 쓰고, 선택 강조가 필요할 때만 parent frame을 추가한다.
 - 정산 보상/정보 표시용 타일은 선택 가능한 타일이 아니므로 `selected`뿐 아니라 `accent` 강조도 끈다. 보상 카드 안에서 노란 선택 박스처럼 보이는 강조선이 나오면 실패다.
 - 전투/마켓에서 유저가 현재 선택한 타일, Jester, Item, 후보 카드의 선택 프레임은 모두 `GameUiPalette.userSelection` 주황으로 통일한다. 금색/노란색은 골드, 보상, 정산, 활성 효과 같은 비선택 강조에만 쓴다.
+- 장기 밸런스/경제/ML 작업을 재개할 때는 구 시뮬레이션 row, 구 ML feature table, 구 추천 리포트를 현재 판단 근거로 바로 재사용하지 않는다. 먼저 현재 runtime/catalog/ruleset/bot policy/feature schema와 산출 시점의 차이를 감사하고, 재사용 등급을 `historical prior`, `schema reusable`, `fresh rerun required`처럼 나눈 뒤 fresh resimulation 또는 재학습 필요 여부를 결정한다.
+- 예정 연출 큐 마무리는 장기 밸런스/경제/ML 재검증과 같은 항목으로 묶지 않는다. transient presentation state와 timing/cue/눈검증 기준으로 별도 트랙에서 닫고, ML/레벨링 작업은 구 산출물 archive 후 fresh 데이터셋을 새로 쌓는 흐름으로 시작한다.

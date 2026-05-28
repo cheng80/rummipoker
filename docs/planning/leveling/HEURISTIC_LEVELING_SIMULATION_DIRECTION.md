@@ -15,8 +15,8 @@
 - 이 문서와 일부 기존 파일명/도구명의 `ML`은 역사적 이름이다.
 - 현재까지 실제 적용된 것은 supervised model, train/test split, validation metric이 있는 학습 모델이 아니다.
 - 현재 파이프라인은 “시뮬레이션 기반 레벨링 분석”과 “규칙 기반 휴리스틱 라벨링”이다.
-- `analysis/leveling/`의 현재 feature table과 RandomForest 리포트는 실제 ML 전환 완료가 아니라, 전환을 준비하기 위한 스캐폴딩과 설명 baseline이다.
-- 향후 실제 ML 전환 시에는 기존 시뮬레이션 결과를 feature table로 정리하고, 휴리스틱 라벨은 초기 `silver label`로만 사용한다.
+- 기존 `analysis/leveling/` feature table과 RandomForest 리포트는 active workspace에서 내리고 `docs/archive/leveling/legacy_ml_outputs_2026_05/`에 보관한다.
+- 향후 실제 ML 전환 시에는 현재 runtime/catalog/ruleset/bot policy 기준 fresh simulation 결과를 새 feature table로 정리하고, 휴리스틱 라벨은 초기 `silver label`로만 사용한다.
 - 모델 추천은 런타임 자동 적용이 아니라 후보 추천, 재시뮬레이션 검증, 사람 승인 후 적용 순서로 다룬다.
 
 ## 현재 확정 정책 요약
@@ -43,6 +43,7 @@
 - 과거 시뮬레이션 데이터는 현재 게임의 결론값이 아니라 방향성 참고다.
 - 새 카드, 족보 성장, 슬롯 해금, 마켓/경제/보스 룰, 저장/정산 경로, bot policy가 바뀐 뒤에는 최신 runtime/catalog/ruleset으로 fresh resimulation을 다시 실행해야 한다.
 - 오래된 clear rate, 구매 event, path clear, ML 추천표는 현재 제출/레벨링 판단을 닫는 근거로 쓰지 않는다.
+- 구 산출물은 너무 많은 상태라 active workspace에서 제거했다. 새 학습/레벨링 데이터셋은 archive를 이어붙이지 않고 fresh run부터 다시 누적한다.
 - 과거 row를 feature table에 포함할 때는 `balance_version`, `ruleset_id`, `catalog_versions`, `experiment_id`, `market_profile`, `bot_policy`를 유지해 최신 row와 같은 그룹으로 섞이지 않게 한다.
 - 현재 판단은 `planner_v2` 같은 기존 proxy와, 실제 full-run 판단을 일반화한 `contest_policy_v1` 같은 최신 proxy를 나란히 비교한 fresh 결과를 우선한다.
 

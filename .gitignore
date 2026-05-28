@@ -167,6 +167,7 @@ analysis_benchmark.json
 # Leveling simulation / ML generated heavy artifacts
 logs/sim/*.jsonl
 analysis/leveling/generated/
+analysis/leveling/archive/
 analysis/leveling/data/features/*.csv
 analysis/leveling/data/raw/
 

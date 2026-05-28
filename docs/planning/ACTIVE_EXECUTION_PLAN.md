@@ -12,6 +12,7 @@
 |---|---|---|---|
 | 공모전 기준 완성 | Closed / off | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-15 12시경 최종 산출물을 우선 등록했다. 공모전 풀런봇/제출 체크리스트는 더 이상 활성 작업 큐가 아니며, 이후 공모전 문서는 제출 증거와 이력 참고로만 본다. |
 | Post-contest 덱 빌딩 확장 | Active | `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` | 기존 `shop_slot_market_v9` 구매 이벤트 추적, runtime 구매/사용 가치 probe, 가격/가치 판단 재개는 사용자에게 직접 보이는 작업이 아니므로 대기열로 내린다. 현재 활성 작업은 특수 타일 modifier V1/V2 플랜 기반으로, V1 데이터 모델/저장/마켓 표시/정산 반영을 순차 적용하는 것이다. |
+| UI/UX 예정 연출 큐 | Active side track | `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md` | 예정 연출 큐 마무리는 밸런스/경제/ML 재검증과 분리한다. transient presentation state, timing/cue 중앙화, browser/compute 눈검증 기준으로 별도 닫는다. |
 | 실제 Goal 기준 완성 | Active after stabilization | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1은 반영됐다. 공모전 이후에는 리팩터링, 최적화, 장기 밸런스, meta growth, 자연 full-play QA를 재개한다. |
 
 현재는 공모전 기준 풀런봇 QA 플랜을 제출용 handoff 상태에서 완전히 닫았다. 한 locale 사이클 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했고, S2/S4/S6 Boss 보상 슬롯 해금, Market 해금 연출, 시스템 locale 기본값, debug fixture, web 제출 산물/BGM/메뉴/정산 UI 회귀 수정 뒤 2026-05-10~11 최신 후보에서 `ko` standard→challenge 재확인도 통과했다. 2026-05-15 12시경 최종 산출물을 우선 등록했으므로 `ja`, `zh-CN`, `zh-TW` full-run은 제출 gate가 아니라 post-contest 추가 검증 후보로만 남긴다. S9+ 무한 도전 장기 생존도 별도 확장 검증이다.
@@ -28,12 +29,22 @@
    - `chip_inlaid`, `score_gilded`, `gold_tile`, `glass_tile`, `wild_painted`, `lucky_tile`, `blue_seal` 정산 반영.
    - glass 파괴와 런 덱 source 제거/복원.
 3. 대기열로 미룬 작업:
-   - `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
-   - 실제 runtime 후보 구매/사용 가치 probe.
-   - `trade_ticket`, `ride_the_bus`, 고급 study, `reroll_token` 가격/가치 판단 재개.
+   - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
+   - 현재 runtime 기준 fresh row 기반 실제 runtime 후보 구매/사용 가치 probe.
+   - fresh 경제/구매 데이터 기준 `trade_ticket`, `ride_the_bus`, 고급 study, `reroll_token` 가격/가치 판단 재개.
    - 장기 경제 gate와 `runtime_station_pool_economy_r400` 재검토.
 4. 병렬로 하지 말 것: full-run bot 재개, 장기 r400/r800 sweep, 특수 타일 V2 구현.
    - V2-A/B/C/D는 V1 runtime 반영과 기본 검증이 닫힌 뒤 연다.
+
+## 데이터 재시작 기준
+
+기존 `analysis/leveling` 모델/리포트/메타데이터와 대량 `logs/sim`은 active 판단 경로에서 내린다.
+
+- tracked legacy outputs: `docs/archive/leveling/legacy_ml_outputs_2026_05/`
+- ignored legacy generated artifacts: `analysis/leveling/archive/legacy_pre_20260529/`
+- ignored legacy simulation logs: `logs/archive/legacy_pre_20260529/sim/`
+
+새 장기 밸런스, 경제, ML 작업은 archive 데이터를 feature table에 바로 섞지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh run부터 다시 쌓는다.
 
 ## 2. Post-contest 다음 작업
 

@@ -41,10 +41,14 @@
 1. `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` 기준으로 특수 타일 V1을 구현한다.
 2. modifier 없는 기존 저장 호환과 modifier 포함 저장/복원/전투/마켓 표시를 검증한다.
 3. runtime state와 transient presentation state 분리를 중심으로 리팩터링 계획을 확정한다.
-4. 장기 S1~S8 밸런스를 multi-seed r400/r800 기준으로 재검증한다.
-5. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
-6. ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 갱신한다.
-7. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
+4. UI/UX 예정 연출 큐 마무리를 별도 트랙으로 닫는다.
+5. 구 시뮬레이션/ML 산출물을 active workspace에서 archive로 내리고, 새 학습 데이터셋은 fresh run부터 다시 쌓는다.
+   - 현재 runtime/catalog/ruleset/bot policy/feature schema와 산출 당시 조건이 다르면 현재 판단 근거로 바로 쓰지 않는다.
+   - 과거 row와 리포트는 `historical prior`로만 두고, 새 feature table에는 기본적으로 섞지 않는다.
+6. 장기 S1~S8 밸런스를 multi-seed r400/r800 기준으로 재검증한다.
+7. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
+8. 새 ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 fresh data에서 다시 만든다.
+9. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
 
 장기 Done 기준:
 
@@ -106,7 +110,9 @@ ML/분석 상태:
 
 - 현재 런타임 레벨링은 실제 머신러닝이 자동 조정하지 않는다.
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
-- `analysis/leveling/`의 feature table과 model 결과는 planned transition scaffold다.
+- 기존 `analysis/leveling/` feature table과 model 결과는 active workspace에서 제거하고 archive로 내렸다.
+- 과거 ML/시뮬레이션 데이터는 현재 runtime/catalog/ruleset/bot policy 기준 fresh row로 재검증되기 전까지 현재 수치 판단이나 추천 결론의 직접 근거로 쓰지 않는다.
+- 새 ML/레벨링 데이터셋은 archive 데이터를 이어붙이지 않고 fresh simulation row부터 다시 누적한다.
 - ML 갱신과 NotebookLM 보고서/인포그래픽 재생성은 모델/데이터 기준이 실무 사용 수준에 도달하기 전까지 보류한다.
 - production ML 또는 runtime 자동 적용 표현은 계속 금지한다.
 
@@ -268,6 +274,11 @@ Status: In progress
 
 - 예정된 연출 큐 마무리.
 - 사용자가 지시한 대로 예정 연출 작업 종료 후 다음 목표 승인 대기.
+
+분리 원칙:
+
+- 예정 연출 큐 마무리는 장기 밸런스/경제/ML 재검증과 같은 트랙으로 묶지 않는다.
+- 연출 작업은 transient presentation state와 `GamePresentationTimings`/`GamePresentationCue` 정리, browser/compute 눈검증 기준으로 별도 완료 처리한다.
 
 ### M4. Roguelite Meta Growth
 
