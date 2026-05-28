@@ -12,6 +12,7 @@ import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../resources/asset_paths.dart';
+import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
@@ -100,6 +101,7 @@ class _MarketPurchaseFlight {
     this.endOffset,
     this.jesterCard,
     this.tile,
+    this.itemId,
     this.itemPlacement,
     this.itemRarity,
   });
@@ -117,6 +119,7 @@ class _MarketPurchaseFlight {
   final Offset? endOffset;
   final RummiJesterCard? jesterCard;
   final Tile? tile;
+  final String? itemId;
   final ItemPlacement? itemPlacement;
   final ItemRarity? itemRarity;
 }
@@ -131,6 +134,7 @@ class _MarketSaleFlight {
     required this.endOffset,
     this.itemPlacement,
     this.itemRarity,
+    this.itemId,
     this.jesterCard,
   });
 
@@ -142,6 +146,7 @@ class _MarketSaleFlight {
   final Offset? endOffset;
   final ItemPlacement? itemPlacement;
   final ItemRarity? itemRarity;
+  final String? itemId;
   final RummiJesterCard? jesterCard;
 }
 
@@ -154,6 +159,7 @@ class _MarketItemUseFlight {
     required this.endOffset,
     required this.itemPlacement,
     required this.itemRarity,
+    required this.itemId,
   });
 
   final int tick;
@@ -163,6 +169,7 @@ class _MarketItemUseFlight {
   final Offset? endOffset;
   final ItemPlacement itemPlacement;
   final ItemRarity itemRarity;
+  final String itemId;
 }
 
 class _MarketEffectPresentation {
@@ -1019,6 +1026,7 @@ class _GameShopScreenState extends State<GameShopScreen>
           endOffset: endOffset,
           itemPlacement: boughtOffer.item.placement,
           itemRarity: boughtOffer.item.rarity,
+          itemId: boughtOffer.item.id,
         );
       } else {
         final nextEntries = _offerEntriesForLane(market, _currentOfferLane);
@@ -1126,6 +1134,7 @@ class _GameShopScreenState extends State<GameShopScreen>
     Tile? tile,
     ItemPlacement? itemPlacement,
     ItemRarity? itemRarity,
+    String? itemId,
   }) {
     final tick = _purchaseFlightTick + 1;
     _purchaseFlightTick = tick;
@@ -1143,6 +1152,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       endOffset: endOffset,
       jesterCard: jesterCard,
       tile: tile,
+      itemId: itemId,
       itemPlacement: itemPlacement,
       itemRarity: itemRarity,
     );
@@ -1169,6 +1179,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       endOffset: endOffset,
       itemPlacement: slot.placement,
       itemRarity: item.rarity,
+      itemId: item.id,
     );
     Future<void>.delayed(_marketPurchaseFlightDuration, () {
       if (!mounted || _saleFlight?.tick != tick) return;
@@ -1215,6 +1226,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       endOffset: endOffset,
       itemPlacement: slot.placement,
       itemRarity: item.rarity,
+      itemId: item.id,
     );
     Future<void>.delayed(_marketPurchaseFlightDuration, () {
       if (!mounted || _itemUseFlight?.tick != tick) return;
@@ -3878,6 +3890,9 @@ class _MarketItemGhostChip extends StatelessWidget {
                 placement: slot.placement,
                 rarity: slot.item!.rarity,
                 selected: selected,
+                imageAssetPath: slot.contentId == null
+                    ? null
+                    : CardEmblemAssets.item(slot.contentId!),
               ),
             ),
           );
@@ -4257,6 +4272,7 @@ class _MarketItemOfferCard extends StatelessWidget {
           placement: offer.item.placement,
           rarity: offer.item.rarity,
           selected: selected,
+          imageAssetPath: CardEmblemAssets.item(offer.item.id),
         ),
       ),
     );
@@ -4538,12 +4554,14 @@ class _MarketItemCardFace extends StatelessWidget {
     required this.placement,
     required this.rarity,
     required this.selected,
+    this.imageAssetPath,
   });
 
   final String label;
   final ItemPlacement placement;
   final ItemRarity rarity;
   final bool selected;
+  final String? imageAssetPath;
 
   @override
   Widget build(BuildContext context) {
@@ -4578,7 +4596,9 @@ class _MarketItemCardFace extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
+            _MarketCardEmblemImage(assetPath: imageAssetPath),
+            const SizedBox(height: 3),
             Expanded(
               child: Align(
                 alignment: Alignment.topCenter,
@@ -4670,6 +4690,33 @@ class _MarketSynergyChip extends StatelessWidget {
           fontWeight: FontWeight.w900,
           height: 1.0,
         ),
+      ),
+    );
+  }
+}
+
+class _MarketCardEmblemImage extends StatelessWidget {
+  const _MarketCardEmblemImage({this.assetPath});
+
+  final String? assetPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = assetPath;
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: path == null
+            ? const SizedBox(width: 30, height: 30)
+            : Image.asset(
+                path,
+                width: 30,
+                height: 30,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (_, _, _) =>
+                    const SizedBox(width: 30, height: 30),
+              ),
       ),
     );
   }
@@ -5050,6 +5097,9 @@ class _MarketPurchaseFlightCard extends StatelessWidget {
         placement: placement,
         rarity: rarity,
         selected: true,
+        imageAssetPath: flight.itemId == null
+            ? null
+            : CardEmblemAssets.item(flight.itemId!),
       );
     }
 
@@ -5182,6 +5232,9 @@ class _MarketSaleFlightCard extends StatelessWidget {
           placement: placement,
           rarity: rarity,
           selected: true,
+          imageAssetPath: flight.itemId == null
+              ? null
+              : CardEmblemAssets.item(flight.itemId!),
         ),
       ),
     );
@@ -5266,6 +5319,7 @@ class _MarketItemUseFlightCard extends StatelessWidget {
           placement: flight.itemPlacement,
           rarity: flight.itemRarity,
           selected: true,
+          imageAssetPath: CardEmblemAssets.item(flight.itemId),
         ),
       ),
     );

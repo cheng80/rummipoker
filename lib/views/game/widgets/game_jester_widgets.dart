@@ -4,6 +4,7 @@ import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
+import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../game_presentation_timings.dart';
 import 'game_card_name_text.dart';
@@ -380,7 +381,11 @@ class GameJesterSlot extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 4),
+                      _GameCardEmblemImage(
+                        assetPath: CardEmblemAssets.jester(card!.id),
+                      ),
+                      const SizedBox(height: 3),
                       Expanded(
                         child: Align(
                           alignment: Alignment.topCenter,
@@ -464,6 +469,29 @@ class GameJesterSlot extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _GameCardEmblemImage extends StatelessWidget {
+  const _GameCardEmblemImage({required this.assetPath});
+
+  final String assetPath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.asset(
+          assetPath,
+          width: 30,
+          height: 30,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: (_, _, _) => const SizedBox(width: 30, height: 30),
+        ),
       ),
     );
   }

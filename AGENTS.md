@@ -411,3 +411,5 @@ This repo currently has the `full` pack installed.
 Repo installs include the full generated skill pack. Heavy browser/runtime binaries stay machine-local in v1.
 Installed release: `0.2.0`
 <!-- END GSTACK-CODEX MANAGED BLOCK -->
+
+- 카드/Jester/Item 최종 일러스트는 생성 원본을 별도 보관 폴더에 유지하고, 앱 리소스는 실제 표시 크기의 2배 이상으로 리사이즈한 별도 asset 폴더에 둔 뒤 Flutter에서 실제 표시 크기로 줄여 그린다. 확대/애니메이션 중 깨짐을 막기 위해 미리보기용 저해상도 thumb를 앱 리소스로 쓰지 않는다.

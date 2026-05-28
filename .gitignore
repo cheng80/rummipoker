@@ -170,6 +170,13 @@ analysis/leveling/generated/
 analysis/leveling/data/features/*.csv
 analysis/leveling/data/raw/
 
+# AI image generation scratch artifacts.
+# Keep final originals and app-ready assets in git.
+output/imagegen/card_emblems_builtin/batch_*/
+output/imagegen/card_samples/
+output/imagegen/emblem_samples/
+tmp/imagegen/
+
 # Environment files
 .env
 *.env

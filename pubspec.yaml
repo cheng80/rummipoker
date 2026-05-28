@@ -131,6 +131,7 @@ flutter:
     - assets/translations/data/zh-TW/jesters.json
     - assets/translations/data/zh-TW/items.json
     - assets/images/
+    - assets/images/cards/emblems_2x/
     - assets/images/sprites/
     - assets/images/ui/
     - assets/audio/
