@@ -29,6 +29,8 @@ export 'game_card_metrics.dart';
 
 part 'game_shared_hud_widgets.dart';
 part 'game_shared_item_widgets.dart';
+part 'game_shared_item_overlays.dart';
+part 'game_shared_item_cards.dart';
 part 'game_shared_board_widgets.dart';
 
 const Color kGameModalBarrierColor = GameUiPalette.modalBarrier;
