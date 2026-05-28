@@ -9,6 +9,94 @@ import '../../../services/active_run_save_facade.dart';
 import '../../../services/active_run_save_service.dart';
 import '../../../services/new_run_setup.dart';
 
+/// 저장하지 않는 화면 입력, overlay, settlement animation 상태.
+///
+/// [GameSessionState]의 runtime source-of-truth와 분리해 둔다. 이 객체가 비어
+/// 있거나 초기화되어도 저장/복원 결과와 실제 게임 진행은 달라지면 안 된다.
+class GameSessionPresentationState {
+  const GameSessionPresentationState({
+    this.selectedHandTile,
+    this.selectedBoardRow,
+    this.selectedBoardCol,
+    this.selectedJesterOverlayIndex,
+    this.stageFlowPhase = GameStageFlowPhase.none,
+    this.stageScoreAdded = 0,
+    this.activeSettlementLine,
+    this.activeSettlementStep = ScoringPresentationStep.none,
+    this.activeSettlementEffectIndex,
+    this.activeSettlementEffectIndexes = const [],
+    this.settlementGoalDisplayScore,
+    this.settlementBoardSnapshot = const {},
+    this.settlementSequenceTick = 0,
+  });
+
+  final Tile? selectedHandTile;
+  final int? selectedBoardRow;
+  final int? selectedBoardCol;
+  final int? selectedJesterOverlayIndex;
+  final GameStageFlowPhase stageFlowPhase;
+  final int stageScoreAdded;
+  final ConfirmedLineBreakdown? activeSettlementLine;
+  final ScoringPresentationStep activeSettlementStep;
+  final int? activeSettlementEffectIndex;
+  final List<int> activeSettlementEffectIndexes;
+  final int? settlementGoalDisplayScore;
+  final Map<String, Tile> settlementBoardSnapshot;
+  final int settlementSequenceTick;
+
+  static const Object unsetValue = Object();
+  static const Object _unset = unsetValue;
+
+  GameSessionPresentationState copyWith({
+    Object? selectedHandTile = _unset,
+    Object? selectedBoardRow = _unset,
+    Object? selectedBoardCol = _unset,
+    Object? selectedJesterOverlayIndex = _unset,
+    GameStageFlowPhase? stageFlowPhase,
+    int? stageScoreAdded,
+    Object? activeSettlementLine = _unset,
+    ScoringPresentationStep? activeSettlementStep,
+    Object? activeSettlementEffectIndex = _unset,
+    List<int>? activeSettlementEffectIndexes,
+    Object? settlementGoalDisplayScore = _unset,
+    Map<String, Tile>? settlementBoardSnapshot,
+    int? settlementSequenceTick,
+  }) {
+    return GameSessionPresentationState(
+      selectedHandTile: selectedHandTile == _unset
+          ? this.selectedHandTile
+          : selectedHandTile as Tile?,
+      selectedBoardRow: selectedBoardRow == _unset
+          ? this.selectedBoardRow
+          : selectedBoardRow as int?,
+      selectedBoardCol: selectedBoardCol == _unset
+          ? this.selectedBoardCol
+          : selectedBoardCol as int?,
+      selectedJesterOverlayIndex: selectedJesterOverlayIndex == _unset
+          ? this.selectedJesterOverlayIndex
+          : selectedJesterOverlayIndex as int?,
+      stageFlowPhase: stageFlowPhase ?? this.stageFlowPhase,
+      stageScoreAdded: stageScoreAdded ?? this.stageScoreAdded,
+      activeSettlementLine: activeSettlementLine == _unset
+          ? this.activeSettlementLine
+          : activeSettlementLine as ConfirmedLineBreakdown?,
+      activeSettlementStep: activeSettlementStep ?? this.activeSettlementStep,
+      activeSettlementEffectIndex: activeSettlementEffectIndex == _unset
+          ? this.activeSettlementEffectIndex
+          : activeSettlementEffectIndex as int?,
+      activeSettlementEffectIndexes:
+          activeSettlementEffectIndexes ?? this.activeSettlementEffectIndexes,
+      settlementGoalDisplayScore: settlementGoalDisplayScore == _unset
+          ? this.settlementGoalDisplayScore
+          : settlementGoalDisplayScore as int?,
+      settlementBoardSnapshot:
+          settlementBoardSnapshot ?? this.settlementBoardSnapshot,
+      settlementSequenceTick:
+          settlementSequenceTick ?? this.settlementSequenceTick,
+    );
+  }
+}
+
 /// `GameView`가 구독하는 현재 런의 상태 스냅샷이다.
 ///
 /// 세션/진행도는 mutable 객체를 품고 있으므로, 내부 값이 바뀐 뒤에는
@@ -18,7 +106,7 @@ import '../../../services/new_run_setup.dart';
 /// Battle / Market / Settlement의 애니메이션, 선택, 표시 지연값은 transient
 /// presentation state이며 저장 데이터나 이어하기 복원 기준으로 사용하지 않는다.
 class GameSessionState {
-  const GameSessionState({
+  GameSessionState({
     this.session,
     this.runProgress,
     this.stageStartSnapshot,
@@ -31,22 +119,39 @@ class GameSessionState {
     this.runLoopPhase = GameRunLoopPhase.battle,
     this.activeRunScene = ActiveRunScene.battle,
     this.debugFixtureId,
-    this.selectedHandTile,
-    this.selectedBoardRow,
-    this.selectedBoardCol,
+    GameSessionPresentationState? presentationState,
+    Tile? selectedHandTile,
+    int? selectedBoardRow,
+    int? selectedBoardCol,
     this.jesterCatalog,
-    this.selectedJesterOverlayIndex,
-    this.stageFlowPhase = GameStageFlowPhase.none,
-    this.stageScoreAdded = 0,
-    this.activeSettlementLine,
-    this.activeSettlementStep = ScoringPresentationStep.none,
-    this.activeSettlementEffectIndex,
-    this.activeSettlementEffectIndexes = const [],
-    this.settlementGoalDisplayScore,
-    this.settlementBoardSnapshot = const {},
-    this.settlementSequenceTick = 0,
+    int? selectedJesterOverlayIndex,
+    GameStageFlowPhase stageFlowPhase = GameStageFlowPhase.none,
+    int stageScoreAdded = 0,
+    ConfirmedLineBreakdown? activeSettlementLine,
+    ScoringPresentationStep activeSettlementStep = ScoringPresentationStep.none,
+    int? activeSettlementEffectIndex,
+    List<int> activeSettlementEffectIndexes = const [],
+    int? settlementGoalDisplayScore,
+    Map<String, Tile> settlementBoardSnapshot = const {},
+    int settlementSequenceTick = 0,
     this.revision = 0,
-  });
+  }) : presentation =
+           presentationState ??
+           GameSessionPresentationState(
+             selectedHandTile: selectedHandTile,
+             selectedBoardRow: selectedBoardRow,
+             selectedBoardCol: selectedBoardCol,
+             selectedJesterOverlayIndex: selectedJesterOverlayIndex,
+             stageFlowPhase: stageFlowPhase,
+             stageScoreAdded: stageScoreAdded,
+             activeSettlementLine: activeSettlementLine,
+             activeSettlementStep: activeSettlementStep,
+             activeSettlementEffectIndex: activeSettlementEffectIndex,
+             activeSettlementEffectIndexes: activeSettlementEffectIndexes,
+             settlementGoalDisplayScore: settlementGoalDisplayScore,
+             settlementBoardSnapshot: settlementBoardSnapshot,
+             settlementSequenceTick: settlementSequenceTick,
+           );
 
   final RummiPokerGridSession? session;
   final RummiRunProgress? runProgress;
@@ -60,25 +165,32 @@ class GameSessionState {
   final GameRunLoopPhase runLoopPhase;
   final ActiveRunScene activeRunScene;
   final String? debugFixtureId;
+  final GameSessionPresentationState presentation;
 
-  // 화면 입력/선택 상태. 저장하지 않고 화면 재진입 시 기본값으로 돌아간다.
-  final Tile? selectedHandTile;
-  final int? selectedBoardRow;
-  final int? selectedBoardCol;
   final RummiJesterCatalog? jesterCatalog;
-  final int? selectedJesterOverlayIndex;
 
-  // Battle/Settlement 연출과 HUD 표시를 위한 일시 상태. 실제 점수/저장 값이 아니다.
-  final GameStageFlowPhase stageFlowPhase;
-  final int stageScoreAdded;
-  final ConfirmedLineBreakdown? activeSettlementLine;
-  final ScoringPresentationStep activeSettlementStep;
-  final int? activeSettlementEffectIndex;
-  final List<int> activeSettlementEffectIndexes;
-  final int? settlementGoalDisplayScore;
-  final Map<String, Tile> settlementBoardSnapshot;
-  final int settlementSequenceTick;
   final int revision;
+
+  Tile? get selectedHandTile => presentation.selectedHandTile;
+  int? get selectedBoardRow => presentation.selectedBoardRow;
+  int? get selectedBoardCol => presentation.selectedBoardCol;
+  int? get selectedJesterOverlayIndex =>
+      presentation.selectedJesterOverlayIndex;
+  GameStageFlowPhase get stageFlowPhase => presentation.stageFlowPhase;
+  int get stageScoreAdded => presentation.stageScoreAdded;
+  ConfirmedLineBreakdown? get activeSettlementLine =>
+      presentation.activeSettlementLine;
+  ScoringPresentationStep get activeSettlementStep =>
+      presentation.activeSettlementStep;
+  int? get activeSettlementEffectIndex =>
+      presentation.activeSettlementEffectIndex;
+  List<int> get activeSettlementEffectIndexes =>
+      presentation.activeSettlementEffectIndexes;
+  int? get settlementGoalDisplayScore =>
+      presentation.settlementGoalDisplayScore;
+  Map<String, Tile> get settlementBoardSnapshot =>
+      presentation.settlementBoardSnapshot;
+  int get settlementSequenceTick => presentation.settlementSequenceTick;
 
   bool get isReady => session != null && runProgress != null;
   bool get isUiLocked => stageFlowPhase != GameStageFlowPhase.none;
@@ -99,6 +211,7 @@ class GameSessionState {
     GameRunLoopPhase? runLoopPhase,
     ActiveRunScene? activeRunScene,
     Object? debugFixtureId = _unset,
+    Object? presentationState = _unset,
     Object? selectedHandTile = _unset,
     Object? selectedBoardRow = _unset,
     Object? selectedBoardCol = _unset,
@@ -115,6 +228,23 @@ class GameSessionState {
     int? settlementSequenceTick,
     int? revision,
   }) {
+    final nextPresentation = presentationState == _unset
+        ? presentation.copyWith(
+            selectedHandTile: selectedHandTile,
+            selectedBoardRow: selectedBoardRow,
+            selectedBoardCol: selectedBoardCol,
+            selectedJesterOverlayIndex: selectedJesterOverlayIndex,
+            stageFlowPhase: stageFlowPhase,
+            stageScoreAdded: stageScoreAdded,
+            activeSettlementLine: activeSettlementLine,
+            activeSettlementStep: activeSettlementStep,
+            activeSettlementEffectIndex: activeSettlementEffectIndex,
+            activeSettlementEffectIndexes: activeSettlementEffectIndexes,
+            settlementGoalDisplayScore: settlementGoalDisplayScore,
+            settlementBoardSnapshot: settlementBoardSnapshot,
+            settlementSequenceTick: settlementSequenceTick,
+          )
+        : presentationState as GameSessionPresentationState;
     return GameSessionState(
       session: session == _unset
           ? this.session
@@ -144,39 +274,10 @@ class GameSessionState {
       debugFixtureId: debugFixtureId == _unset
           ? this.debugFixtureId
           : debugFixtureId as String?,
-      selectedHandTile: selectedHandTile == _unset
-          ? this.selectedHandTile
-          : selectedHandTile as Tile?,
-      selectedBoardRow: selectedBoardRow == _unset
-          ? this.selectedBoardRow
-          : selectedBoardRow as int?,
-      selectedBoardCol: selectedBoardCol == _unset
-          ? this.selectedBoardCol
-          : selectedBoardCol as int?,
+      presentationState: nextPresentation,
       jesterCatalog: jesterCatalog == _unset
           ? this.jesterCatalog
           : jesterCatalog as RummiJesterCatalog?,
-      selectedJesterOverlayIndex: selectedJesterOverlayIndex == _unset
-          ? this.selectedJesterOverlayIndex
-          : selectedJesterOverlayIndex as int?,
-      stageFlowPhase: stageFlowPhase ?? this.stageFlowPhase,
-      stageScoreAdded: stageScoreAdded ?? this.stageScoreAdded,
-      activeSettlementLine: activeSettlementLine == _unset
-          ? this.activeSettlementLine
-          : activeSettlementLine as ConfirmedLineBreakdown?,
-      activeSettlementStep: activeSettlementStep ?? this.activeSettlementStep,
-      activeSettlementEffectIndex: activeSettlementEffectIndex == _unset
-          ? this.activeSettlementEffectIndex
-          : activeSettlementEffectIndex as int?,
-      activeSettlementEffectIndexes:
-          activeSettlementEffectIndexes ?? this.activeSettlementEffectIndexes,
-      settlementGoalDisplayScore: settlementGoalDisplayScore == _unset
-          ? this.settlementGoalDisplayScore
-          : settlementGoalDisplayScore as int?,
-      settlementBoardSnapshot:
-          settlementBoardSnapshot ?? this.settlementBoardSnapshot,
-      settlementSequenceTick:
-          settlementSequenceTick ?? this.settlementSequenceTick,
       revision: revision ?? this.revision,
     );
   }
