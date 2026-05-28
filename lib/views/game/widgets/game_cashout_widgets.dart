@@ -967,7 +967,7 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
                       key: const ValueKey('cashout-deck-tile-reward-face'),
                       tile: tile,
                       selected: false,
-                      accent: true,
+                      accent: false,
                     ),
             ),
             const SizedBox(width: 12),
