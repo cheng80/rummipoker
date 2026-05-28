@@ -221,7 +221,7 @@ abstract final class GameUiPalette {
   static const Color noticeBottomSurface = Color(0xEE102D25);
   static const Color tileFace = Color(0xFFF2EDE6);
   static const Color tileFaceBorder = Color(0xFFC5BDB0);
-  static const Color tileSelectedStripe = Color(0xFFFFC107);
+  static const Color tileSelectedStripe = Color(0xFFFF8A1F);
   static const Color tileRed = Color(0xFFC62828);
   static const Color tileBlue = Color(0xFF1565C0);
   static const Color tileYellow = Color(0xFFE65100);

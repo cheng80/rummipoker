@@ -4768,7 +4768,7 @@ class _MarketTileFace extends StatelessWidget {
                         (kMarketOfferCardWidth - 8) * 0.11,
                       ),
                       border: Border.all(
-                        color: GameUiPalette.actionGoldBright,
+                        color: GameUiPalette.userSelection,
                         width: kJesterSelectionBorderWidth,
                       ),
                     ),
@@ -4807,12 +4807,16 @@ class _MarketItemCardFace extends StatelessWidget {
         color: GameUiPalette.cardFace,
         borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
         border: Border.all(
-          color: selected ? accent : rarityColor.withValues(alpha: 0.78),
+          color: selected
+              ? GameUiPalette.userSelection
+              : rarityColor.withValues(alpha: 0.78),
           width: selected ? 1.5 : 1.1,
         ),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: selected ? 0.26 : 0.12),
+            color: (selected ? GameUiPalette.userSelection : accent).withValues(
+              alpha: selected ? 0.26 : 0.12,
+            ),
             blurRadius: selected ? 10 : 6,
             offset: const Offset(0, 3),
           ),
@@ -5072,7 +5076,7 @@ class _MarketSelectableCardFrame extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
                   border: Border.all(
-                    color: GameUiPalette.actionGoldBright,
+                    color: GameUiPalette.userSelection,
                     width: kJesterSelectionBorderWidth,
                   ),
                 ),

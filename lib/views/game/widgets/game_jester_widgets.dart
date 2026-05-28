@@ -231,7 +231,7 @@ class GameJesterSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final frameColor = selected
-        ? GameUiPalette.actionGoldBright
+        ? GameUiPalette.userSelection
         : GameUiPalette.textPrimary.withValues(alpha: 0.22);
     final frameWidth = selected ? 2.2 : 1.1;
     if (card == null) {

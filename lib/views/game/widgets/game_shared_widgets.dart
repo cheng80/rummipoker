@@ -2024,7 +2024,7 @@ class _GameItemPocketChip extends StatelessWidget {
                     kRuntimeCardOuterRadius + 2,
                   ),
                   border: Border.all(
-                    color: GameUiPalette.actionGoldBright,
+                    color: GameUiPalette.userSelection,
                     width: 2.2,
                   ),
                 ),
