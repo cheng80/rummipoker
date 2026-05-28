@@ -3,436 +3,905 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rummi Poker Grid Technical Infographic</title>
+  <title>Rummi Poker Technical Infographic</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: #efe8d6;
-      color: #1f2328;
+      background: #eee5d1;
+      color: #15191d;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.42;
+      line-height: 1.36;
     }
     .poster {
+      position: relative;
       width: 1400px;
-      min-height: 1900px;
+      min-height: 2100px;
       margin: 0 auto;
-      padding: 54px;
+      padding: 34px 36px 42px;
       background:
-        linear-gradient(rgba(255,255,255,0.35), rgba(255,255,255,0.35)),
-        #efe8d6;
+        radial-gradient(circle at 20% 12%, rgba(255,255,255,0.7) 0 1px, transparent 2px),
+        radial-gradient(circle at 72% 42%, rgba(35,30,20,0.055) 0 1px, transparent 2px),
+        linear-gradient(90deg, rgba(36,30,18,0.035) 0 1px, transparent 1px),
+        #f4ecd9;
+      background-size: 38px 38px, 46px 46px, 100% 100%;
+    }
+    .spark {
+      position: absolute;
+      left: 16px;
+      top: 28px;
+      color: #d79600;
+      font-size: 42px;
+      font-weight: 900;
+      transform: rotate(-8deg);
     }
     header {
-      border: 3px solid #1f2328;
-      border-radius: 18px;
-      background: #fff9eb;
-      padding: 34px 38px;
-      margin-bottom: 26px;
-    }
-    .kicker {
-      color: #32745d;
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
+      display: grid;
+      grid-template-columns: 1fr 415px;
+      gap: 30px;
+      align-items: start;
+      margin-bottom: 24px;
     }
     h1 {
       margin: 0;
+      padding-left: 36px;
       font-size: 76px;
-      line-height: 1;
+      line-height: 0.98;
       letter-spacing: 0;
+      font-weight: 950;
     }
+    h1 .ko {
+      display: inline-block;
+      margin-right: 12px;
+      font-size: 82px;
+      letter-spacing: 2px;
+    }
+    h1 .en { color: #0c6b3d; }
     .subtitle {
-      margin: 16px 0 0;
-      max-width: 980px;
-      color: #4a4f55;
-      font-size: 30px;
-      font-weight: 650;
+      margin: 18px 0 26px 64px;
+      font-size: 33px;
+      font-weight: 850;
     }
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 24px;
+    .hero-note {
+      margin-left: 0;
+      border: 4px solid #15191d;
+      border-radius: 20px;
+      padding: 26px 36px;
+      background: rgba(255,255,255,0.45);
+      font-size: 32px;
+      font-weight: 850;
+      text-align: center;
     }
-    .tag {
-      border: 2px solid #1f2328;
-      border-radius: 999px;
-      background: #ffffff;
-      padding: 10px 16px;
-      font-size: 22px;
-      font-weight: 800;
+    .hero-note strong { color: #0b6a3b; }
+    .overview {
+      border: 4px solid #14532d;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.42);
+      padding: 22px 24px;
     }
-    .grid {
+    .overview h2 {
+      margin: 0 0 18px;
+      color: #0b6a3b;
+      text-align: center;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+    .overview-row {
       display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 22px;
+      grid-template-columns: 72px 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-top: 18px;
     }
-    .panel {
-      border: 3px solid #1f2328;
-      border-radius: 18px;
-      padding: 24px;
-      background: #ffffff;
-    }
-    .green { background: #dff0df; }
-    .teal { background: #d9f0ef; }
-    .blue { background: #dfe9f7; }
-    .yellow { background: #fff1c6; }
-    .violet { background: #ece5f8; }
-    .red { background: #f6ded9; }
-    .span-4 { grid-column: span 4; }
-    .span-6 { grid-column: span 6; }
-    .span-12 { grid-column: span 12; }
-    h2 {
-      margin: 0 0 16px;
-      font-size: 34px;
-      line-height: 1.12;
-    }
-    h3 {
-      margin: 0 0 10px;
-      font-size: 28px;
-      line-height: 1.16;
+    .overview-row h3,
+    .rank-row h3,
+    .deck-row h3,
+    .step h3 {
+      margin: 0 0 4px;
+      font-size: 24px;
+      line-height: 1.14;
     }
     p {
       margin: 0;
-      color: #3f454b;
-      font-size: 22px;
-      font-weight: 600;
+      color: #20262b;
+      font-size: 20px;
+      font-weight: 680;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
-    ul {
-      margin: 0;
-      padding-left: 28px;
-      color: #3f454b;
-      font-size: 22px;
-      font-weight: 600;
-    }
-    li + li { margin-top: 8px; }
-    strong { color: #1f2328; font-weight: 850; }
-    .concepts {
+    .section-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-    }
-    .concept {
-      border: 2px solid #1f2328;
-      border-radius: 16px;
-      padding: 20px;
-      min-height: 165px;
-      background: rgba(255,255,255,0.68);
-    }
-    .diagram {
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 26px;
+      grid-template-columns: 350px 500px 1fr;
+      gap: 20px;
       align-items: stretch;
     }
-    .board-shell {
-      border: 2px solid #1f2328;
-      border-radius: 16px;
-      background: #fbfbf8;
-      padding: 24px;
+    .card {
+      border: 3px solid #15191d;
+      border-radius: 18px 22px 16px 20px;
+      background: rgba(255,255,255,0.48);
+      padding: 20px;
+      box-shadow: 3px 4px 0 rgba(21,25,29,0.08);
     }
-    .board {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 9px;
-      width: 500px;
-      height: 500px;
-      margin: 0 auto 22px;
-    }
-    .tile {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #1f2328;
-      border-radius: 12px;
-      background: #ffffff;
-      font-size: 24px;
-      font-weight: 900;
-      color: #4a4f55;
-      overflow: hidden;
-    }
-    .row {
-      background: #ffe39a;
-      color: #6f4a00;
-    }
-    .col {
-      box-shadow: inset 0 0 0 7px #91c8ff;
-      color: #154f92;
-    }
-    .diag-a::before,
-    .diag-b::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 150%;
-      height: 9px;
-      border-radius: 999px;
-      background: rgba(46, 145, 91, 0.82);
-      transform-origin: center;
-      pointer-events: none;
-    }
-    .diag-a::before { transform: translate(-50%, -50%) rotate(45deg); }
-    .diag-b::after { transform: translate(-50%, -50%) rotate(-45deg); }
-    .center {
-      border: 5px solid #2e915b;
-      background: #c9efcf;
-      color: #14532d;
-      font-size: 21px;
-      line-height: 1.1;
-      text-align: center;
-      z-index: 2;
-    }
-    .legend {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      font-size: 21px;
-      font-weight: 700;
-      color: #3f454b;
-    }
-    .legend-row {
+    .green-border { border-color: #0b6a3b; }
+    .blue-border { border-color: #086c9d; }
+    .orange-border { border-color: #c96a08; }
+    .violet-border { border-color: #56369c; }
+    .section-title {
       display: flex;
       align-items: center;
       gap: 12px;
+      margin-bottom: 14px;
+      color: #0b6a3b;
+      font-size: 29px;
+      font-weight: 900;
+      line-height: 1.1;
     }
-    .swatch {
-      width: 28px;
-      height: 22px;
-      border: 2px solid #1f2328;
-      border-radius: 6px;
-      flex: 0 0 auto;
+    .section-title .title-main { white-space: nowrap; }
+    .section-title .muted {
+      white-space: nowrap;
+      font-size: 24px;
     }
-    .swatch.row { background: #ffe39a; }
-    .swatch.col { background: #91c8ff; }
-    .swatch.diag { background: #c9efcf; }
-    .rule-card {
-      border: 2px solid #1f2328;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.72);
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .flow {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-    }
-    .flow-card {
-      border: 2px solid #1f2328;
-      border-radius: 16px;
-      background: #ffffff;
-      padding: 18px;
-      min-height: 150px;
-    }
-    .number {
+    .section-title.blue { color: #086c9d; }
+    .section-title.orange { color: #c96a08; }
+    .section-title.violet { color: #56369c; }
+    .badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #0b6a3b;
+      color: white;
+      font-size: 28px;
+      font-weight: 950;
+      flex: 0 0 auto;
+    }
+    .badge.blue { background: #086c9d; }
+    .badge.orange { background: #c96a08; }
+    .badge.violet { background: #56369c; }
+    .rank-row {
+      display: grid;
+      grid-template-columns: 46px 1fr 128px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 2px dashed rgba(21,25,29,0.28);
+    }
+    .rank-row:last-child { border-bottom: 0; }
+    .line-icon {
+      width: 58px;
+      height: 58px;
+      position: relative;
+      color: #15191d;
+    }
+    .draw-icon {
+      position: relative;
+      width: 58px;
+      height: 58px;
+    }
+    .icon-tiles::before,
+    .icon-tiles::after {
+      content: "";
+      position: absolute;
+      width: 30px;
+      height: 40px;
+      border: 3px solid #15191d;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.45);
+    }
+    .icon-tiles::before { left: 7px; top: 12px; transform: rotate(-7deg); }
+    .icon-tiles::after { right: 7px; top: 6px; transform: rotate(8deg); }
+    .icon-board::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 3px solid #15191d;
+      background:
+        linear-gradient(#15191d 0 0) 33% 0/3px 100% no-repeat,
+        linear-gradient(#15191d 0 0) 66% 0/3px 100% no-repeat,
+        linear-gradient(#15191d 0 0) 0 33%/100% 3px no-repeat,
+        linear-gradient(#15191d 0 0) 0 66%/100% 3px no-repeat;
+    }
+    .icon-cross::before,
+    .icon-cross::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 27px;
+      height: 4px;
+      border-radius: 999px;
+      background: #15191d;
+    }
+    .icon-cross::after { transform: rotate(90deg); }
+    .icon-cross .ring {
+      position: absolute;
+      left: 17px;
+      top: 17px;
+      width: 24px;
+      height: 24px;
+      border: 4px solid #15191d;
+      border-radius: 50%;
+      background: #f4ecd9;
+      z-index: 2;
+    }
+    .rank-symbol,
+    .deck-symbol,
+    .step-symbol,
+    .tech-symbol,
+    .check-mark {
+      position: relative;
+      display: block;
+      width: 50px;
+      height: 50px;
+      margin: 0 auto;
+    }
+    .rank-symbol.line::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 24px;
+      width: 38px;
+      height: 4px;
+      border-radius: 999px;
+      background: #15191d;
+      transform: rotate(-22deg);
+    }
+    .rank-symbol.same::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      border: 4px solid #15191d;
+      box-shadow: -16px 0 0 -5px #15191d, 16px 0 0 -5px #15191d;
+    }
+    .rank-symbol.group::before,
+    .rank-symbol.group::after {
+      content: "";
+      position: absolute;
+      border: 3px solid #15191d;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.38);
+    }
+    .rank-symbol.group::before { left: 6px; top: 9px; width: 18px; height: 28px; box-shadow: 12px 0 0 -3px #f4ecd9, 12px 0 0 0 #15191d; }
+    .rank-symbol.group::after { right: 6px; bottom: 7px; width: 18px; height: 28px; }
+    .rank-symbol.color::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 9px;
+      height: 7px;
+      border-radius: 999px;
+      background: #1266c3;
+      box-shadow: 0 11px 0 #1266c3, 0 22px 0 #1266c3;
+    }
+    .mini-tiles {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .mini {
+      position: relative;
+      width: 24px;
+      height: 38px;
+      border: 2px solid #15191d;
+      border-radius: 5px;
+      background: #fff7df;
+      display: grid;
+      place-items: center;
+      padding-top: 7px;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--tile-color);
+    }
+    .mini::before {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 5px;
+      right: 5px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--tile-color);
+    }
+    .red { --tile-color: #d8231d; }
+    .blue { --tile-color: #1266c3; }
+    .black { --tile-color: #1f2328; }
+    .orange { --tile-color: #d48700; }
+    .board-card {
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .board-card > p {
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+    .board {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, 72px);
+      grid-template-rows: repeat(5, 72px);
+      gap: 12px;
+      width: max-content;
+      margin: 0 auto 18px;
+    }
+    .tile {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #14532d;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #fff9df 0%, #fff0bd 66%, #e1b45b 100%);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,0.85), 0 4px 0 #9b6b24;
+      color: var(--tile-color);
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 950;
+      padding-top: 17px;
+    }
+    .tile::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 17%;
+      right: 17%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--tile-color);
+    }
+    .tile.center {
+      z-index: 5;
+      border-width: 5px;
+      background: linear-gradient(180deg, #fff7d7 0%, #dbf0d2 60%, #abd083 100%);
+      color: #14532d;
+    }
+    .center .star {
+      display: grid;
+      place-items: center;
       width: 42px;
       height: 42px;
       border-radius: 50%;
-      background: #1f2328;
-      color: #ffffff;
-      font-weight: 900;
-      font-size: 24px;
-      margin-bottom: 10px;
+      border: 4px solid #0b6a3b;
+      background: white;
+      font-size: 28px;
+      line-height: 1;
     }
-    .deck-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
+    .board-line {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 408px;
+      height: 408px;
+      pointer-events: none;
+      z-index: 4;
     }
-    .tech-grid {
+    .board-line span {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 470px;
+      height: 5px;
+      border-radius: 999px;
+      transform-origin: center;
+      opacity: 0.9;
+    }
+    .h-line { background: #d99a00; transform: translate(-50%, -50%); }
+    .v-line { background: #0789bd; transform: translate(-50%, -50%) rotate(90deg); }
+    .d-line-a { background: #0b7a42; transform: translate(-50%, -50%) rotate(45deg); }
+    .d-line-b { background: #7140a8; transform: translate(-50%, -50%) rotate(-45deg); }
+    .legend {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      gap: 8px 18px;
+      border: 2px solid rgba(21,25,29,0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.38);
+      text-align: left;
+      font-size: 18px;
+      font-weight: 820;
+    }
+    .legend i {
+      display: inline-block;
+      width: 54px;
+      height: 5px;
+      margin-right: 8px;
+      vertical-align: middle;
+      border-radius: 999px;
+    }
+    .right-stack {
+      display: grid;
       gap: 18px;
     }
+    .cross-card {
+      min-height: 352px;
+    }
+    .cross-body {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .cross {
+      position: relative;
+      width: 178px;
+      height: 178px;
+      margin: 4px auto;
+    }
+    .cross .mini-cell {
+      position: absolute;
+      width: 42px;
+      height: 50px;
+      border: 3px solid #15191d;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.55);
+    }
+    .cross .top { left: 68px; top: 0; }
+    .cross .right { right: 0; top: 64px; }
+    .cross .bottom { left: 68px; bottom: 0; }
+    .cross .left { left: 0; top: 64px; }
+    .cross .core {
+      position: absolute;
+      left: 58px;
+      top: 58px;
+      width: 62px;
+      height: 62px;
+      border: 5px solid #0b6a3b;
+      border-radius: 50%;
+      background: #e3f5d6;
+      display: grid;
+      place-items: center;
+      color: #0b6a3b;
+      font-size: 34px;
+      z-index: 3;
+    }
+    .cross .ray {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 205px;
+      height: 4px;
+      border-radius: 999px;
+      transform-origin: center;
+    }
+    .ray.h { background: #d99a00; transform: translate(-50%, -50%); }
+    .ray.v { background: #0789bd; transform: translate(-50%, -50%) rotate(90deg); }
+    .ray.a { background: #0b7a42; transform: translate(-50%, -50%) rotate(45deg); }
+    .ray.b { background: #7140a8; transform: translate(-50%, -50%) rotate(-45deg); }
+    .deck-row {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 2px solid rgba(8,108,157,0.25);
+    }
+    .deck-row:last-child { border-bottom: 0; }
+    .loop-card {
+      margin-top: 22px;
+      padding: 22px;
+    }
+    .loop {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+    .step {
+      position: relative;
+      min-height: 190px;
+      border: 2px solid rgba(21,25,29,0.7);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.42);
+      padding: 18px 14px 14px;
+      text-align: center;
+    }
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: 80px;
+      width: 32px;
+      height: 3px;
+      background: #15191d;
+      border-radius: 999px;
+    }
+    .step:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      right: -32px;
+      top: 74px;
+      width: 14px;
+      height: 14px;
+      border-top: 3px solid #15191d;
+      border-right: 3px solid #15191d;
+      transform: rotate(45deg);
+    }
+    .step-icon {
+      height: 62px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 8px;
+    }
+    .step-symbol.place::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      width: 28px;
+      height: 22px;
+      border: 4px solid #15191d;
+      transform: skew(-12deg);
+    }
+    .step-symbol.scan::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 9px;
+      width: 24px;
+      height: 24px;
+      border: 4px solid #15191d;
+      border-radius: 50%;
+    }
+    .step-symbol.scan::after {
+      content: "";
+      position: absolute;
+      left: 31px;
+      top: 32px;
+      width: 18px;
+      height: 4px;
+      border-radius: 999px;
+      background: #15191d;
+      transform: rotate(42deg);
+    }
+    .step-symbol.confirm::before {
+      content: "";
+      position: absolute;
+      left: 13px;
+      top: 24px;
+      width: 28px;
+      height: 15px;
+      border-left: 5px solid #15191d;
+      border-bottom: 5px solid #15191d;
+      transform: rotate(-45deg);
+    }
+    .step-symbol.remove::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      width: 28px;
+      height: 28px;
+      border: 4px solid #15191d;
+      border-radius: 6px;
+    }
+    .step-symbol.remove::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 24px;
+      width: 28px;
+      height: 4px;
+      border-radius: 999px;
+      background: #15191d;
+      transform: rotate(45deg);
+      box-shadow: 0 0 0 0 #15191d;
+    }
+    .step-symbol.market::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 17px;
+      width: 32px;
+      height: 24px;
+      border: 4px solid #15191d;
+      border-radius: 4px;
+    }
+    .step-symbol.market::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 9px;
+      width: 36px;
+      height: 12px;
+      border: 4px solid #15191d;
+      border-bottom: 0;
+      border-radius: 12px 12px 0 0;
+    }
+    .tech-row {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 370px;
+      gap: 20px;
+    }
     .tech-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 18px;
+      align-items: end;
     }
     .tech {
-      border: 2px solid #1f2328;
-      border-radius: 10px;
-      padding: 8px 12px;
-      background: #ffffff;
-      font-size: 20px;
-      font-weight: 850;
-    }
-    .callout {
-      border-left: 8px solid #2e915b;
-      background: #f7fbf2;
-      padding: 18px 22px;
-      font-size: 24px;
+      text-align: center;
       font-weight: 780;
-      color: #1f2328;
+      font-size: 18px;
     }
+    .tech-mark {
+      height: 72px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    .tech-symbol {
+      width: 48px;
+      height: 48px;
+      border: 4px solid currentColor;
+      border-radius: 12px;
+    }
+    .tech-symbol.diamond { transform: rotate(45deg); color: #27a8e0; }
+    .tech-symbol.drop {
+      color: #15191d;
+      border-radius: 50% 50% 50% 8px;
+      transform: rotate(-45deg);
+    }
+    .tech-symbol.loop {
+      color: #086c9d;
+      border-radius: 999px;
+      width: 62px;
+      height: 34px;
+      margin-top: 7px;
+    }
+    .tech-symbol.route {
+      color: #0b7a42;
+      width: 58px;
+      height: 16px;
+      border: 0;
+      border-top: 5px solid currentColor;
+      border-bottom: 5px solid currentColor;
+      border-radius: 0;
+      margin-top: 18px;
+    }
+    .tech-symbol.globe {
+      color: #15191d;
+      border-radius: 50%;
+      background:
+        linear-gradient(currentColor 0 0) 50% 0/4px 100% no-repeat,
+        linear-gradient(currentColor 0 0) 0 50%/100% 4px no-repeat;
+    }
+    .tech-symbol.storage {
+      color: #15191d;
+      border-radius: 50%/18%;
+      height: 50px;
+      background:
+        linear-gradient(currentColor 0 0) 0 32%/100% 4px no-repeat,
+        linear-gradient(currentColor 0 0) 0 64%/100% 4px no-repeat;
+    }
+    .note {
+      position: relative;
+      transform: rotate(2deg);
+      border: 3px solid #0b6a3b;
+      border-radius: 8px;
+      background: #fbf9e9;
+      padding: 22px;
+      box-shadow: 0 5px 0 rgba(0,0,0,0.08);
+    }
+    .note::before,
+    .note::after {
+      content: "";
+      position: absolute;
+      width: 56px;
+      height: 24px;
+      background: rgba(221,196,105,0.8);
+      border: 1px solid rgba(120,92,22,0.25);
+      transform: rotate(-18deg);
+    }
+    .note::before { left: -12px; top: -12px; }
+    .note::after { right: -10px; bottom: -12px; }
+    .note h3 {
+      margin: 0 0 12px;
+      color: #0b6a3b;
+      text-align: center;
+      font-size: 30px;
+    }
+    .check {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 20px;
+      font-weight: 760;
+    }
+    .check-mark::before {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 10px;
+      width: 18px;
+      height: 10px;
+      border-left: 4px solid #0b6a3b;
+      border-bottom: 4px solid #0b6a3b;
+      transform: rotate(-45deg);
+    }
+    .summary {
+      margin-top: 24px;
+      border: 2px dashed #273b85;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.36);
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 14px;
+      align-items: center;
+      font-size: 28px;
+      font-weight: 860;
+    }
+    .summary-icon {
+      position: relative;
+      width: 54px;
+      height: 54px;
+      border: 4px solid #15191d;
+      border-radius: 50%;
+    }
+    .summary-icon::before,
+    .summary-icon::after {
+      content: "";
+      position: absolute;
+      left: 23px;
+      top: -11px;
+      width: 4px;
+      height: 76px;
+      border-radius: 999px;
+      background: #15191d;
+    }
+    .summary-icon::after { transform: rotate(90deg); }
+    .muted { color: #4b5259; }
   </style>
 </head>
 <body>
   <main class="poster">
+    <div class="spark">✧</div>
     <header>
-      <div class="kicker">Technical Infographic</div>
-      <h1>Rummi Poker Grid</h1>
-      <p class="subtitle">포커 족보를 빙고 보드 위에서 만드는 덱빌딩 로그라이트</p>
-      <div class="tag-row">
-        <span class="tag">Poker Hands</span>
-        <span class="tag">Bingo Lines</span>
-        <span class="tag">Overlap Strategy</span>
-        <span class="tag">Deckbuilding</span>
+      <div>
+        <h1><span class="ko">루미포커</span><span class="en">Rummi Poker</span></h1>
+        <div class="subtitle">덱빌딩 로그라이트 × 빙고형 포커 보드 게임</div>
+        <div class="hero-note">한 장의 <strong>타일</strong>이 여러 <strong>라인</strong>을 완성하는 순간,<br>덱과 전략이 점수로 연결된다.</div>
       </div>
+      <aside class="overview">
+        <h2>핵심 한눈에 보기</h2>
+        <div class="overview-row">
+          <div class="line-icon">▤</div>
+          <div>
+            <h3>타일 족보로 라인 평가</h3>
+            <p>같은 숫자, 연속 숫자, 같은 색 조합으로 포커 족보의 형태를 만든다.</p>
+          </div>
+        </div>
+        <div class="overview-row">
+          <div class="line-icon">▦</div>
+          <div>
+            <h3>빙고 라인으로 점수화</h3>
+            <p>5×5 보드의 가로, 세로, 대각선 라인을 동시에 본다.</p>
+          </div>
+        </div>
+        <div class="overview-row">
+          <div class="line-icon">◎</div>
+          <div>
+            <h3>교차점 전략이 핵심</h3>
+            <p>라인이 겹치는 칸이 여러 족보 후보에 동시에 기여한다.</p>
+          </div>
+        </div>
+      </aside>
     </header>
 
-    <div class="grid">
-      <section class="panel green span-12">
-        <h2>핵심 정체성</h2>
-        <div class="concepts">
-          <div class="concept">
-            <h3>포커 족보</h3>
-            <p>같은 숫자, 연속 숫자, 같은 색, 조합 패턴으로 점수 족보를 만든다.</p>
-          </div>
-          <div class="concept">
-            <h3>빙고 라인</h3>
-            <p>보드의 가로, 세로, 대각선 라인을 동시에 관리한다.</p>
-          </div>
-          <div class="concept">
-            <h3>덱빌딩 성장</h3>
-            <p>Jester, Item, 특수 타일, 족보 레벨이 다음 판단 기준을 바꾼다.</p>
+    <section class="section-grid">
+      <div class="card green-border">
+        <div class="section-title"><span class="badge">1</span><span class="title-main">포커 족보</span> <span class="muted">(라인 평가)</span></div>
+        <p>포커 카드를 쓰지 않는다. 숫자/색 타일 배열을 포커 족보의 형태로 읽는다.</p>
+        <div class="rank-row">
+          <div class="line-icon">♕</div><h3>로열 스트레이트</h3>
+          <div class="mini-tiles"><span class="mini black">10</span><span class="mini black">11</span><span class="mini black">12</span><span class="mini black">13</span><span class="mini black">1</span></div>
+        </div>
+        <div class="rank-row">
+          <div class="line-icon">↗</div><h3>스트레이트</h3>
+          <div class="mini-tiles"><span class="mini red">5</span><span class="mini red">6</span><span class="mini red">7</span><span class="mini red">8</span><span class="mini red">9</span></div>
+        </div>
+        <div class="rank-row">
+          <div class="line-icon">♣</div><h3>포카드</h3>
+          <div class="mini-tiles"><span class="mini blue">7</span><span class="mini red">7</span><span class="mini black">7</span><span class="mini orange">7</span><span class="mini blue">2</span></div>
+        </div>
+        <div class="rank-row">
+          <div class="line-icon">⌂</div><h3>풀하우스</h3>
+          <div class="mini-tiles"><span class="mini orange">4</span><span class="mini red">4</span><span class="mini blue">4</span><span class="mini black">9</span><span class="mini red">9</span></div>
+        </div>
+        <div class="rank-row">
+          <div class="line-icon">●</div><h3>플러시</h3>
+          <div class="mini-tiles"><span class="mini blue">1</span><span class="mini blue">6</span><span class="mini blue">8</span><span class="mini blue">11</span><span class="mini blue">13</span></div>
+        </div>
+      </div>
+
+      <div class="card blue-border board-card">
+        <div class="section-title blue"><span class="badge blue">2</span>빙고 라인 <span class="muted">(보드 구조)</span></div>
+        <p>5×5 보드는 12개 라인으로 평가한다.</p>
+        <div class="board">
+          <div class="tile red">2</div><div class="tile blue">6</div><div class="tile orange">4</div><div class="tile black">11</div><div class="tile red">8</div>
+          <div class="tile black">3</div><div class="tile blue">7</div><div class="tile orange">5</div><div class="tile red">9</div><div class="tile black">1</div>
+          <div class="tile red">7</div><div class="tile blue">7</div><div class="tile orange center"><span class="star">★</span></div><div class="tile orange">4</div><div class="tile black">4</div>
+          <div class="tile blue">12</div><div class="tile black">5</div><div class="tile orange">8</div><div class="tile red">10</div><div class="tile blue">1</div>
+          <div class="tile orange">13</div><div class="tile red">3</div><div class="tile orange">9</div><div class="tile black">6</div><div class="tile blue">11</div>
+          <div class="board-line"><span class="h-line"></span><span class="v-line"></span><span class="d-line-a"></span><span class="d-line-b"></span></div>
+        </div>
+        <div class="legend">
+          <div><i style="background:#d99a00"></i>가로 5라인</div>
+          <div><i style="background:#0789bd"></i>세로 5라인</div>
+          <div><i style="background:#0b7a42"></i>대각선 ↘</div>
+          <div><i style="background:#7140a8"></i>대각선 ↗</div>
+        </div>
+      </div>
+
+      <div class="right-stack">
+        <div class="card green-border cross-card">
+          <div class="section-title"><span class="badge">3</span>교차점 전략</div>
+          <div class="cross-body">
+            <div class="cross">
+              <span class="ray h"></span><span class="ray v"></span><span class="ray a"></span><span class="ray b"></span>
+              <span class="mini-cell top"></span><span class="mini-cell right"></span><span class="mini-cell bottom"></span><span class="mini-cell left"></span>
+              <span class="core">★</span>
+            </div>
+            <div>
+              <p>교차점은 단일 칸이 아니라, 라인이 겹치는 모든 칸이 여러 족보에 동시에 기여하는 구조다.</p>
+              <p style="margin-top:16px; padding-top:14px; border-top:2px dashed rgba(21,25,29,0.35);">중앙뿐 아니라 모든 교차점이 전략의 핵심이다.</p>
+            </div>
           </div>
         </div>
-      </section>
 
-      <section class="panel yellow span-12">
-        <h2>포커 + 빙고 룰: 중앙 교차점이 전략의 핵심</h2>
-        <div class="diagram">
-          <div class="board-shell">
-            <div class="board">
-              <div class="tile diag-a">R2</div>
-              <div class="tile">B6</div>
-              <div class="tile col">Y4</div>
-              <div class="tile">K11</div>
-              <div class="tile diag-b">R8</div>
-              <div class="tile">K3</div>
-              <div class="tile diag-a">B7</div>
-              <div class="tile col">Y5</div>
-              <div class="tile diag-b">R9</div>
-              <div class="tile">K1</div>
-              <div class="tile row">R7</div>
-              <div class="tile row">B7</div>
-              <div class="tile row col diag-a diag-b center">교차점<br>Overlap</div>
-              <div class="tile row">Y4</div>
-              <div class="tile row">K4</div>
-              <div class="tile">B12</div>
-              <div class="tile diag-b">K5</div>
-              <div class="tile col">Y8</div>
-              <div class="tile diag-a">R10</div>
-              <div class="tile">B1</div>
-              <div class="tile diag-b">Y13</div>
-              <div class="tile">R3</div>
-              <div class="tile col">Y9</div>
-              <div class="tile">K6</div>
-              <div class="tile diag-a">B11</div>
-            </div>
-            <div class="legend">
-              <div class="legend-row"><span class="swatch row"></span>가로 라인: 한 줄 안에서 포커 족보 후보 생성</div>
-              <div class="legend-row"><span class="swatch col"></span>세로 라인: 같은 타일이 다른 족보 후보에 재사용</div>
-              <div class="legend-row"><span class="swatch diag"></span>대각선 2개: 중앙 타일에서 교차해 overlap 형성</div>
-            </div>
-          </div>
-
-          <div>
-            <div class="rule-card">
-              <h3>포커 룰</h3>
-              <p>각 라인은 같은 숫자, 연속 숫자, 같은 색, 조합 패턴으로 족보가 된다.</p>
-            </div>
-            <div class="rule-card">
-              <h3>빙고 룰</h3>
-              <p>가로, 세로, 두 대각선을 동시에 관리한다. 중앙 타일은 네 방향 라인에 모두 속한다.</p>
-            </div>
-            <div class="rule-card">
-              <h3>교차점 전략</h3>
-              <p>좋은 타일 하나가 여러 족보 후보를 동시에 살리면, 확정 점수와 다음 턴 선택지가 함께 커진다.</p>
-            </div>
-            <div class="callout">포스터 핵심: 포커를 한 손패에서만 판정하지 않고, 보드 위 여러 라인에서 동시에 설계한다.</div>
-          </div>
+        <div class="card blue-border">
+          <div class="section-title blue"><span class="badge blue">4</span>덱빌딩이 보드를 바꾼다</div>
+          <div class="deck-row"><div class="line-icon">♛</div><div><h3>Jester</h3><p>특정 족보, 색상, 확정 방식, 경제 선택을 강화한다.</p></div></div>
+          <div class="deck-row"><div class="line-icon">⚒</div><div><h3>Item / Tool / Gear</h3><p>드로우, 이동, 버림, Market 조작으로 위기 대응을 바꾼다.</p></div></div>
+          <div class="deck-row"><div class="line-icon">☆</div><div><h3>Special Tiles</h3><p>타일 효과가 보드 위치의 가치와 정산 결과를 바꾼다.</p></div></div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="panel blue span-12">
-        <h2>전투 판단 흐름</h2>
-        <div class="flow">
-          <div class="flow-card">
-            <span class="number">1</span>
-            <h3>배치</h3>
-            <p>손패 타일을 놓아 여러 라인의 족보 가능성을 만든다.</p>
-          </div>
-          <div class="flow-card">
-            <span class="number">2</span>
-            <h3>판정</h3>
-            <p>가로, 세로, 대각선을 각각 포커 족보처럼 읽는다.</p>
-          </div>
-          <div class="flow-card">
-            <span class="number">3</span>
-            <h3>확정</h3>
-            <p>완성된 족보의 contributor만 제거하고 점수를 계산한다.</p>
-          </div>
-          <div class="flow-card">
-            <span class="number">4</span>
-            <h3>재설계</h3>
-            <p>남은 타일과 보상으로 다음 라인, Market 선택을 설계한다.</p>
-          </div>
-        </div>
-      </section>
+    <section class="card orange-border loop-card">
+      <div class="section-title orange"><span class="badge orange">5</span>게임 플레이 루프</div>
+      <div class="loop">
+        <div class="step"><div class="step-icon">▱</div><h3>배치</h3><p>타일을 보드에 배치한다.</p></div>
+        <div class="step"><div class="step-icon">⌕</div><h3>판정</h3><p>라인을 족보 형태로 읽는다.</p></div>
+        <div class="step"><div class="step-icon">✓</div><h3>확정</h3><p>득점할 라인을 선택한다.</p></div>
+        <div class="step"><div class="step-icon">⌧</div><h3>제거</h3><p>기여한 타일만 제거한다.</p></div>
+        <div class="step"><div class="step-icon">▤</div><h3>재설계</h3><p>보상과 Market으로 다음 전투를 준비한다.</p></div>
+      </div>
+    </section>
 
-      <section class="panel violet span-12">
-        <h2>덱빌딩이 보드 판단을 바꾼다</h2>
-        <div class="deck-grid">
-          <div class="concept">
-            <h3>Jester</h3>
-            <p>특정 족보, 색상, 확정 방식, 경제 선택을 강화해 점수 엔진을 만든다.</p>
-          </div>
-          <div class="concept">
-            <h3>Item / Tool / Gear</h3>
-            <p>드로우, 이동, 버림, 다음 확정 보너스, Market 조작으로 위기 대응을 바꾼다.</p>
-          </div>
-          <div class="concept">
-            <h3>Special Tiles</h3>
-            <p>타일 자체에 효과를 붙여 같은 보드라도 다른 라인 가치와 정산 결과를 만든다.</p>
-          </div>
+    <section class="tech-row">
+      <div class="card violet-border">
+        <div class="section-title violet"><span class="badge violet">6</span>기술 스택</div>
+        <div class="tech-list">
+          <div class="tech"><div class="tech-mark flutter">◆</div>Flutter<br><span class="muted">프론트엔드</span></div>
+          <div class="tech"><div class="tech-mark flame">♨</div>Flame<br><span class="muted">게임 엔진</span></div>
+          <div class="tech"><div class="tech-mark riverpod">∞</div>Riverpod<br><span class="muted">상태 관리</span></div>
+          <div class="tech"><div class="tech-mark router">↔</div>GoRouter<br><span class="muted">라우팅</span></div>
+          <div class="tech"><div class="tech-mark">◎</div>easy_localization<br><span class="muted">다국어</span></div>
+          <div class="tech"><div class="tech-mark">▥</div>shared_preferences<br><span class="muted">로컬 저장소</span></div>
         </div>
-      </section>
+      </div>
+      <div class="note">
+        <h3>핵심 포인트</h3>
+        <div class="check"><span>✓</span><span>하나의 타일로 여러 라인 완성</span></div>
+        <div class="check"><span>✓</span><span>교차점이 여러 족보에 기여</span></div>
+        <div class="check"><span>✓</span><span>덱빌딩으로 강력한 시너지 창출</span></div>
+        <div class="check"><span>✓</span><span>모든 순간이 전략과 점수로 연결</span></div>
+      </div>
+    </section>
 
-      <section class="panel teal span-12">
-        <h2>기술 구성</h2>
-        <div class="tech-grid">
-          <div>
-            <h3>기술 스택</h3>
-            <div class="tech-list">
-              <span class="tech">Flutter</span>
-              <span class="tech">Flame</span>
-              <span class="tech">Riverpod</span>
-              <span class="tech">GoRouter</span>
-              <span class="tech">easy_localization</span>
-              <span class="tech">shared_preferences</span>
-            </div>
-          </div>
-          <div>
-            <h3>프로젝트 구조</h3>
-            <ul>
-              <li><strong>logic/rummi_poker_grid:</strong> 전투, 덱, 보드, Jester, Item, Market runtime</li>
-              <li><strong>views:</strong> title, new-run, battle, market, archive, settings UI</li>
-              <li><strong>services:</strong> save/restore, run setup, progression, unlock state</li>
-              <li><strong>providers:</strong> Riverpod 기반 세션 상태와 화면 상태</li>
-            </ul>
-          </div>
-        </div>
-      </section>
+    <div class="summary">
+      <div class="line-icon">☼</div>
+      <div>한 줄 요약: 교차점을 활용해 여러 족보를 동시에 완성하고, 덱빌딩으로 최고의 점수를 만든다.</div>
     </div>
   </main>
 </body>

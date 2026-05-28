@@ -4,6 +4,8 @@
 
 현재는 공모전 제출 트랙을 닫고 post-contest 런타임 고도화를 진행 중입니다. 다음 작업 기준은 [`START_HERE.md`](START_HERE.md)에서 진입한 뒤 [`docs/planning/ACTIVE_EXECUTION_PLAN.md`](docs/planning/ACTIVE_EXECUTION_PLAN.md)의 활성 트랙을 따릅니다.
 
+![루미포커 프로젝트 정보 포스터](docs/project_information_poster.png)
+
 ## 현재 초점
 
 - 특수 타일 modifier V1: 데이터 모델, 저장/복원, Market 표시, 전투/정산 반영

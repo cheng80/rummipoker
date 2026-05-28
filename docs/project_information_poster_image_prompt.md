@@ -1,82 +1,76 @@
-# Rummi Poker Grid Technical Infographic Image Prompt
+# Rummi Poker Technical Infographic Image Prompt
 
-Create a clean technical infographic poster for the game project **Rummi Poker Grid**.
+Create a tall vertical technical infographic poster for the game project **Rummi Poker**.
 
-Use this as a visual summary source, not a release-status report.
+This is an AI-generated poster path. The HTML source is only a structured information source, not the final rendered image.
 
 ## Core Message
 
-Rummi Poker Grid is a board-based deckbuilding roguelite where the player creates poker hands on a bingo-like 5x5 grid.
+Rummi Poker is a deckbuilding roguelite board game where the player builds poker-hand-like scoring patterns on a bingo-style 5x5 board using Rummikub-like number/color tiles.
 
-The poster must clearly show:
+Use Korean as the main poster language. Keep text short and readable.
 
-1. **Poker Hands**
-   - Lines are evaluated like poker hands.
-   - Same rank, sequence, same color, and combined patterns create scoring hands.
+## Required Visual Content
 
-2. **Bingo Lines**
-   - The board is read through horizontal, vertical, and diagonal lines.
-   - A tile can belong to multiple lines.
+1. Main title:
+   - `루미포커 Rummi Poker`
+   - Do not add `Grid` to the title.
 
-3. **Center Overlap Strategy**
-   - Show a 5x5 board diagram.
+2. Main sentence:
+   - `덱빌딩 로그라이트 × 빙고형 포커 보드 게임`
+   - `한 장의 타일이 여러 라인을 완성하는 순간, 덱과 전략이 점수로 연결된다.`
+
+3. Poker-hand section:
+   - Explain that poker is used as hand-pattern logic only.
+   - Show Rummikub-like number/color tiles, not playing cards.
+   - Example labels: `포커 족보`, `스트레이트`, `포카드`, `풀하우스`, `플러시`.
+
+4. Bingo-line section:
+   - Show a clear 5x5 board made of Rummikub-like tiles.
    - Highlight one horizontal line, one vertical line, and both diagonals.
-   - All highlighted lines must cross at the center tile.
-   - Label the center tile as the overlap point.
-   - This center point represents a high-value strategic placement because it can support multiple poker hands at once.
+   - Lines must visibly cross through the center tile.
+   - Use arrows/line colors to show horizontal, vertical, and diagonal reading.
 
-4. **Deckbuilding Changes the Board**
-   - Jesters strengthen scoring engines.
-   - Items / Tools / Gear change draw, movement, discard, market, or next-confirm decisions.
-   - Special tiles change the value of board positions and scoring outcomes.
+5. Intersection strategy section:
+   - Title: `교차점 전략`
+   - Do not write `(중앙 교차)`.
+   - Explain visually that intersections are important because one tile can support several scoring-line candidates.
+   - Show cross and diagonal line relationships, not just a single center-only idea.
 
-5. **Gameplay Loop**
-   - Place tiles.
-   - Evaluate lines as poker hands.
-   - Confirm scoring hands.
-   - Remove only contributor tiles.
-   - Use rewards and market choices to reshape the next battle.
+6. Deckbuilding section:
+   - Labels: `Jester`, `Item / Tool / Gear`, `Special Tiles`.
+   - Show simple custom line icons or tile-based icons that match the game.
 
-6. **Technology**
-   - Flutter
-   - Flame
-   - Riverpod
-   - GoRouter
-   - easy_localization
-   - shared_preferences
+7. Gameplay loop:
+   - `배치 → 판정 → 확정 → 제거 → 재설계`
+   - Use thin arrows and numbered circular step badges.
 
-## Visual Direction
+8. Technology strip:
+   - `Flutter`, `Flame`, `Riverpod`, `GoRouter`, `easy_localization`, `shared_preferences`
+   - Use clean simple labels. Avoid fake logos or random symbols.
 
-- Cream paper background.
-- Thin black outlines.
-- Clean sans-serif Korean typography.
-- Muted green, teal, blue, yellow, and violet panels.
-- Minimal decoration.
-- Clear arrows and connection lines.
-- The board diagram should be central and easy to understand.
-- Avoid dark theme.
-- Avoid stock images.
-- Avoid decorative blobs.
-- Avoid tiny dense paragraphs.
-- Do not include progress status, contest history, TODOs, or current task focus.
+## Visual Style
 
-## Text Style
+- Tall vertical technical infographic poster.
+- Off-white paper background.
+- Subtle paper texture.
+- Clean whiteboard explainer style.
+- Black ink sketch lines.
+- Hand-drawn engineering diagram feel.
+- Rounded rectangular section cards.
+- Thin arrows connecting steps.
+- Muted green, teal, orange, red, yellow, violet accents.
+- Numbered circular step badges.
+- Simple technical line icons only where meaningful.
+- Roomy spacing and large labels.
+- Small callout notes only where useful.
+- Startup technical blog / AI thread visual style.
 
-Use short Korean labels. Keep text minimal.
+## Important Visual Constraints
 
-Preferred Korean labels:
-
-- 포커 족보
-- 빙고 라인
-- 교차점 전략
-- 덱빌딩 성장
-- 배치
-- 판정
-- 확정
-- 재설계
-- Jester
-- Item / Tool / Gear
-- Special Tiles
-- Flutter / Flame
-
-Important: Generated text must be readable. If exact small text is hard, prioritize large labels and visual structure.
+- Use Rummikub-like cream tiles with colored top bars and large numbers.
+- Do not use poker playing cards or card suit imagery.
+- Do not use arbitrary Unicode symbols as icons.
+- Do not make it look like a webpage screenshot or standard web UI.
+- Do not include project progress, contest history, TODOs, or work-status content.
+- Keep generated Korean text large and legible.
