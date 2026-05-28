@@ -7,6 +7,8 @@ import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -863,5 +865,94 @@ void main() {
       expect(restored.runProgress.tileOffers.single.seal, TileSeal.redSeal);
       expect(restored.runProgress.pendingBossTileReward, isTrue);
     });
+
+    test(
+      'session tile modifiers survive deck board hand eliminated roundtrip',
+      () async {
+        const deckTile = Tile(
+          id: 11,
+          color: TileColor.red,
+          number: 3,
+          enhancement: TileEnhancement.chipInlaid,
+        );
+        const boardTile = Tile(
+          id: 12,
+          color: TileColor.blue,
+          number: 4,
+          seal: TileSeal.blueSeal,
+        );
+        const handTile = Tile(
+          id: 13,
+          color: TileColor.yellow,
+          number: 5,
+          enhancement: TileEnhancement.scoreGilded,
+          seal: TileSeal.redSeal,
+        );
+        const eliminatedTile = Tile(
+          id: 14,
+          color: TileColor.black,
+          number: 6,
+          enhancement: TileEnhancement.glassTile,
+        );
+        final board = RummiBoard()..setCell(2, 3, boardTile);
+        final session = RummiPokerGridSession.restored(
+          runSeed: 7373,
+          deckCopiesPerTile: 1,
+          maxHandSize: 3,
+          runRandomState: 37,
+          blind: RummiBlindState(
+            targetScore: 300,
+            boardDiscardsRemaining: 4,
+            handDiscardsRemaining: 2,
+          ),
+          deck: PokerDeck.fromSnapshot(const [deckTile]),
+          board: board,
+          hand: const [handTile],
+          eliminated: const [eliminatedTile],
+        );
+        final runtime = ActiveRunRuntimeState(
+          activeScene: ActiveRunScene.battle,
+          difficulty: NewRunDifficulty.standard,
+          runModifier: NewRunModifier.basic,
+          session: session,
+          runProgress: RummiRunProgress(),
+          stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
+            session: session,
+            runProgress: RummiRunProgress(),
+          ),
+        );
+
+        await ActiveRunSaveService.saveRuntimeState(runtime);
+        final restored = await ActiveRunSaveService.loadActiveRun();
+
+        expect(restored, isNotNull);
+        final restoredSession = restored!.session;
+        expect(
+          restoredSession.deck.snapshotPile().single.enhancement,
+          TileEnhancement.chipInlaid,
+        );
+        expect(restoredSession.board.cellAt(2, 3)?.seal, TileSeal.blueSeal);
+        expect(
+          restoredSession.hand.single.enhancement,
+          TileEnhancement.scoreGilded,
+        );
+        expect(restoredSession.hand.single.seal, TileSeal.redSeal);
+        expect(
+          restoredSession.eliminated.single.enhancement,
+          TileEnhancement.glassTile,
+        );
+        expect(
+          restored.stageStartSnapshot.session.deck
+              .snapshotPile()
+              .single
+              .enhancement,
+          TileEnhancement.chipInlaid,
+        );
+        expect(
+          restored.stageStartSnapshot.session.board.cellAt(2, 3)?.seal,
+          TileSeal.blueSeal,
+        );
+      },
+    );
   });
 }
