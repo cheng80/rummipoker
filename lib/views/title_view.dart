@@ -14,6 +14,7 @@ import '../services/active_run_save_service.dart';
 import '../services/debug_run_fixture_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/widgets/game_ui_palette.dart';
 import 'game/widgets/game_run_info_dialog.dart';
 import 'home_entry_widgets.dart';
 
@@ -91,24 +92,24 @@ class _TitleViewState extends ConsumerState<TitleView>
           const GameDialogAction<String>(
             label: '삭제',
             value: 'delete',
-            accent: Color(0xFF9C4735),
+            accent: GameUiPalette.titleDangerAccent,
           ),
           const GameDialogAction<String>(
             label: '취소',
             value: 'cancel',
-            accent: Color(0xFF55615F),
+            accent: GameUiPalette.disabledControl,
           ),
           GameDialogAction<String>(
             label: context.tr('runInfoTitle'),
             value: 'runInfo',
-            accent: const Color(0xFFF2C14E),
-            textColor: Colors.black,
+            accent: GameUiPalette.actionGoldBright,
+            textColor: GameUiPalette.ink,
           ),
           const GameDialogAction<String>(
             label: '이어하기',
             value: 'continue',
-            accent: Color(0xFFF4A81D),
-            textColor: Colors.black,
+            accent: GameUiPalette.actionGold,
+            textColor: GameUiPalette.ink,
           ),
         ],
       );
@@ -166,8 +167,8 @@ class _TitleViewState extends ConsumerState<TitleView>
           GameDialogAction<void>(
             label: '확인',
             value: null,
-            accent: Color(0xFFF2C14E),
-            textColor: Colors.black,
+            accent: GameUiPalette.actionGoldBright,
+            textColor: GameUiPalette.ink,
           ),
         ],
       );
@@ -195,12 +196,12 @@ class _TitleViewState extends ConsumerState<TitleView>
         GameDialogAction<String>(
           label: '취소',
           value: 'cancel',
-          accent: Color(0xFF55615F),
+          accent: GameUiPalette.disabledControl,
         ),
         GameDialogAction<String>(
           label: '삭제',
           value: 'delete',
-          accent: Color(0xFF9C4735),
+          accent: GameUiPalette.titleDangerAccent,
         ),
       ],
     );
@@ -250,7 +251,7 @@ class _TitleViewState extends ConsumerState<TitleView>
         GameDialogAction<String>(
           label: '취소',
           value: 'cancel',
-          accent: Color(0xFF55615F),
+          accent: GameUiPalette.disabledControl,
         ),
       ],
     );
@@ -336,7 +337,9 @@ class _TitleViewState extends ConsumerState<TitleView>
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.72,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -356,7 +359,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                                     : context.tr(
                                         'homeContinueEmptyDescription',
                                       )),
-                            accent: const Color(0xFFF4A81D),
+                            accent: GameUiPalette.actionGold,
                             enabled: hasStoredActiveRun,
                             onTap: _openContinueMenu,
                           ),
@@ -366,7 +369,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                             description: hasStoredActiveRun
                                 ? context.tr('homeRunInfoReadyDescription')
                                 : context.tr('homeRunInfoEmptyDescription'),
-                            accent: const Color(0xFFF2C14E),
+                            accent: GameUiPalette.actionGoldBright,
                             onTap: _openTitleRunInfo,
                           ),
                         ],
@@ -381,7 +384,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                           HomeEntryCard(
                             title: context.tr('homeNewRunTitle'),
                             description: context.tr('homeNewRunDescription'),
-                            accent: const Color(0xFF3CAEE0),
+                            accent: GameUiPalette.actionInfoBlue,
                             onTap: () => context.push(RoutePaths.newRun),
                           ),
                         ],
@@ -394,7 +397,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                       child: HomeEntryCard(
                         title: context.tr('archiveTitle'),
                         description: context.tr('homeArchiveDescription'),
-                        accent: const Color(0xFF5C7CFA),
+                        accent: GameUiPalette.titleDebugBlue,
                         onTap: () => context.push(RoutePaths.archive),
                       ),
                     ),
@@ -410,14 +413,14 @@ class _TitleViewState extends ConsumerState<TitleView>
                               description: context.tr(
                                 'homeSpecialModeDescription',
                               ),
-                              accent: const Color(0xFF8E5CF6),
+                              accent: GameUiPalette.titleDebugPurple,
                               onTap: () => context.push(RoutePaths.trial),
                             ),
                             const SizedBox(height: 12),
                             HomeEntryCard(
                               title: '디버그 픽스처',
                               description: '검증용 런 상태로 바로 시작',
-                              accent: const Color(0xFF7E57C2),
+                              accent: GameUiPalette.titleDebugPurpleDark,
                               onTap: _openDebugFixtureMenu,
                             ),
                           ],
@@ -431,7 +434,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                       child: HomeEntryCard(
                         title: context.tr('settings'),
                         description: context.tr('homeSettingsDescription'),
-                        accent: const Color(0xFF1976D2),
+                        accent: GameUiPalette.titleExternalBlue,
                         onTap: () {
                           context.push(RoutePaths.setting);
                         },
@@ -451,7 +454,9 @@ class _TitleViewState extends ConsumerState<TitleView>
                             child: Text(
                               text,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.58),
+                                color: GameUiPalette.textPrimary.withValues(
+                                  alpha: 0.58,
+                                ),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -499,15 +504,15 @@ class _DebugFixtureOption extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xFF17352C),
+            color: GameUiPalette.titlePanelSurface,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: const Color(0xFFE6D4A1).withValues(alpha: 0.32),
+              color: GameUiPalette.cardFallback.withValues(alpha: 0.32),
               width: 1.4,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
+                color: GameUiPalette.ink.withValues(alpha: 0.22),
                 blurRadius: 12,
                 offset: const Offset(0, 5),
               ),
@@ -530,7 +535,7 @@ class _DebugFixtureOption extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: GameUiPalette.textPrimary,
                         ),
                       ),
                       Text(
@@ -540,7 +545,9 @@ class _DebugFixtureOption extends StatelessWidget {
                           fontSize: 13,
                           height: 1.35,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.74),
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.74,
+                          ),
                         ),
                       ),
                     ],
@@ -548,10 +555,10 @@ class _DebugFixtureOption extends StatelessWidget {
                 ),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE6D4A1).withValues(alpha: 0.14),
+                    color: GameUiPalette.cardFallback.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color(0xFFE6D4A1).withValues(alpha: 0.26),
+                      color: GameUiPalette.cardFallback.withValues(alpha: 0.26),
                     ),
                   ),
                   child: const Padding(
@@ -559,7 +566,7 @@ class _DebugFixtureOption extends StatelessWidget {
                     child: Icon(
                       Icons.chevron_right_rounded,
                       size: 20,
-                      color: Color(0xFFEFE6C8),
+                      color: GameUiPalette.specialMutedText,
                     ),
                   ),
                 ),

@@ -12,6 +12,7 @@ import '../widgets/phone_frame_scaffold.dart';
 import 'game/widgets/game_card_name_text.dart';
 import 'game/widgets/game_jester_widgets.dart';
 import 'game/widgets/game_shared_widgets.dart';
+import 'game/widgets/game_ui_palette.dart';
 import 'home_entry_widgets.dart';
 
 class _ArchiveData {
@@ -82,7 +83,7 @@ class _ArchiveViewState extends State<ArchiveView> {
                 IconButton(
                   onPressed: () => context.pop(),
                   icon: const Icon(Icons.arrow_back_rounded),
-                  color: Colors.white,
+                  color: GameUiPalette.textPrimary,
                 ),
               ],
             ),
@@ -93,7 +94,7 @@ class _ArchiveViewState extends State<ArchiveView> {
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 38,
-                color: Colors.white.withValues(alpha: 0.96),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
                 letterSpacing: 1.8,
               ),
             ),
@@ -102,7 +103,7 @@ class _ArchiveViewState extends State<ArchiveView> {
               '런에서 만난 기억 카드, Jester, 아이템, 보스 규칙을 확인합니다.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 height: 1.45,
@@ -320,10 +321,10 @@ Set<String> _collectedItemIds(RunUnlockState state) {
 }
 
 enum _ArchiveCollectionStatus {
-  undiscovered('미발견', Color(0xFF8B9390)),
-  discovered('발견', Color(0xFFB9D8FF)),
-  acquired('획득', Color(0xFF9DF0BE)),
-  cleared('클리어', Color(0xFFF4C75D));
+  undiscovered('미발견', GameUiPalette.archiveUndiscovered),
+  discovered('발견', GameUiPalette.archiveDiscovered),
+  acquired('획득', GameUiPalette.gameOverRewardAccent),
+  cleared('클리어', GameUiPalette.archiveCleared);
 
   const _ArchiveCollectionStatus(this.label, this.color);
 
@@ -381,9 +382,11 @@ class _ArchiveCollectionSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.12),
+        color: GameUiPalette.ink.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.10),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,7 +394,7 @@ class _ArchiveCollectionSection extends StatelessWidget {
           Text(
             '$title $collectedCount/$totalCount',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.88),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.88),
               fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
@@ -693,7 +696,7 @@ class _ArchivePagedGridState extends State<_ArchivePagedGrid> {
               Text(
                 '${_pageIndex + 1} / $pageCount',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.74),
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.74),
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                 ),
@@ -737,11 +740,11 @@ class _ArchivePageButton extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       style: IconButton.styleFrom(
         backgroundColor: enabled
-            ? const Color(0xFF253D38)
-            : Colors.white.withValues(alpha: 0.08),
+            ? GameUiPalette.archiveChipSurface
+            : GameUiPalette.textPrimary.withValues(alpha: 0.08),
         foregroundColor: enabled
-            ? const Color(0xFF9DF0BE)
-            : Colors.white.withValues(alpha: 0.22),
+            ? GameUiPalette.gameOverRewardAccent
+            : GameUiPalette.textPrimary.withValues(alpha: 0.22),
         fixedSize: const Size(34, 34),
       ),
       onPressed: enabled ? onPressed : null,
@@ -798,10 +801,10 @@ class _ArchiveDetailCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF111D1B).withValues(alpha: 0.94),
+        color: GameUiPalette.archiveSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF9DF0BE).withValues(alpha: 0.2),
+          color: GameUiPalette.gameOverRewardAccent.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -812,7 +815,7 @@ class _ArchiveDetailCard extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             onPressed: onClose,
             icon: const Icon(Icons.keyboard_arrow_up_rounded),
-            color: Colors.white.withValues(alpha: 0.66),
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.66),
             tooltip: '접기',
           ),
         ],
@@ -901,7 +904,7 @@ class _ArchiveDetailText extends StatelessWidget {
         Text(
           subtitle,
           style: TextStyle(
-            color: const Color(0xFF9DF0BE).withValues(alpha: 0.82),
+            color: GameUiPalette.gameOverRewardAccent.withValues(alpha: 0.82),
             fontSize: 11,
             fontWeight: FontWeight.w900,
           ),
@@ -910,7 +913,7 @@ class _ArchiveDetailText extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            color: Colors.white,
+            color: GameUiPalette.textPrimary,
             fontSize: 15,
             fontWeight: FontWeight.w900,
             height: 1.15,
@@ -920,7 +923,7 @@ class _ArchiveDetailText extends StatelessWidget {
         Text(
           body,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.76),
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
             fontSize: 12,
             fontWeight: FontWeight.w700,
             height: 1.35,
@@ -980,8 +983,8 @@ class _ArchiveSelectableCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: selected
-                      ? const Color(0xFF9DF0BE)
-                      : Colors.transparent,
+                      ? GameUiPalette.gameOverRewardAccent
+                      : GameUiPalette.transparent,
                   width: _borderWidth,
                 ),
               ),
@@ -1022,12 +1025,12 @@ class _ArchiveStatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: status.color.withValues(alpha: 0.90),
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.16)),
+        border: Border.all(color: GameUiPalette.ink.withValues(alpha: 0.16)),
       ),
       child: Text(
         status.label,
         style: const TextStyle(
-          color: Colors.black,
+          color: GameUiPalette.ink,
           fontSize: 7,
           fontWeight: FontWeight.w900,
           height: 1.0,
@@ -1047,10 +1050,10 @@ class _ArchiveEmptyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1817).withValues(alpha: 0.82),
+        color: GameUiPalette.archiveDarkSurface.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.16),
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.16),
           width: 1.2,
         ),
       ),
@@ -1060,14 +1063,14 @@ class _ArchiveEmptyCard extends StatelessWidget {
           children: [
             Icon(
               Icons.lock_outline_rounded,
-              color: Colors.white.withValues(alpha: 0.26),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.26),
               size: 19,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.30),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.30),
                 fontSize: 9,
                 fontWeight: FontWeight.w900,
                 height: 1.0,
@@ -1089,12 +1092,15 @@ class _ArchiveMemoryCardFace extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF132520),
+        color: GameUiPalette.gameOverRewardIconSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF9DF0BE), width: 1.4),
+        border: Border.all(
+          color: GameUiPalette.gameOverRewardAccent,
+          width: 1.4,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF64D8A4).withValues(alpha: 0.16),
+            color: GameUiPalette.actionSuccess.withValues(alpha: 0.16),
             blurRadius: 7,
             offset: const Offset(0, 3),
           ),
@@ -1104,7 +1110,11 @@ class _ArchiveMemoryCardFace extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(5, 6, 5, 5),
         child: Column(
           children: [
-            const Icon(Icons.style_rounded, color: Color(0xFF9DF0BE), size: 20),
+            const Icon(
+              Icons.style_rounded,
+              color: GameUiPalette.gameOverRewardAccent,
+              size: 20,
+            ),
             const SizedBox(height: 4),
             Expanded(
               child: Center(
@@ -1112,7 +1122,7 @@ class _ArchiveMemoryCardFace extends StatelessWidget {
                   card.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Color(0xFFDDF7EA),
+                    color: GameUiPalette.archiveRewardText,
                     fontSize: 8,
                     fontWeight: FontWeight.w900,
                     height: 1.08,
@@ -1170,7 +1180,7 @@ class _ArchiveItemCardFace extends StatelessWidget {
                 child: GameCardNameText(
                   item.displayName,
                   style: const TextStyle(
-                    color: Color(0xFF26352F),
+                    color: GameUiPalette.specialGoldCardText,
                     fontSize: 8,
                     fontWeight: FontWeight.w900,
                     height: 1.08,
@@ -1197,14 +1207,14 @@ class _ArchiveItemBadge extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 26),
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.18),
+        color: GameUiPalette.ink.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
         label,
         maxLines: 1,
         style: const TextStyle(
-          color: Color(0xFF26352F),
+          color: GameUiPalette.specialGoldCardText,
           fontSize: 7,
           fontWeight: FontWeight.w900,
           height: 1.0,
@@ -1216,19 +1226,19 @@ class _ArchiveItemBadge extends StatelessWidget {
 
 Color _archiveItemSurface(ItemPlacement placement) {
   return switch (placement) {
-    ItemPlacement.quickSlot => const Color(0xFFDCEBFF),
-    ItemPlacement.passiveRack => const Color(0xFFE2F7DD),
-    ItemPlacement.inventory => const Color(0xFFFFF0C9),
-    ItemPlacement.equipped => const Color(0xFFEADFFF),
+    ItemPlacement.quickSlot => GameUiPalette.marketPlacementQuickSurface,
+    ItemPlacement.passiveRack => GameUiPalette.marketPlacementPassiveSurface,
+    ItemPlacement.inventory => GameUiPalette.specialGoldCard,
+    ItemPlacement.equipped => GameUiPalette.titleDebugPurpleDark,
   };
 }
 
 Color _archiveItemAccent(ItemPlacement placement) {
   return switch (placement) {
-    ItemPlacement.quickSlot => const Color(0xFF4E8BE8),
-    ItemPlacement.passiveRack => const Color(0xFF42A85A),
-    ItemPlacement.inventory => const Color(0xFFD6962B),
-    ItemPlacement.equipped => const Color(0xFF9B72D9),
+    ItemPlacement.quickSlot => GameUiPalette.marketPlacementQuickAccent,
+    ItemPlacement.passiveRack => GameUiPalette.marketPlacementPassiveAccent,
+    ItemPlacement.inventory => GameUiPalette.marketPlacementGearAccent,
+    ItemPlacement.equipped => GameUiPalette.titleDebugPurple,
   };
 }
 

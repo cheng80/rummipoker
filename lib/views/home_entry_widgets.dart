@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'game/widgets/game_ui_palette.dart';
+
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 
@@ -21,9 +23,11 @@ class HomeSection extends StatelessWidget {
       width: 332,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.16),
+        color: GameUiPalette.ink.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +37,7 @@ class HomeSection extends StatelessWidget {
             style: TextStyle(
               fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 20,
-              color: Colors.white.withValues(alpha: 0.95),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.95),
               letterSpacing: 1.1,
             ),
           ),
@@ -41,7 +45,7 @@ class HomeSection extends StatelessWidget {
           Text(
             subtitle,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.66),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.66),
               fontSize: 12,
               fontWeight: FontWeight.w700,
               height: 1.35,
@@ -73,14 +77,16 @@ class HomeEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = enabled ? accent : Colors.white24;
+    final baseColor = enabled
+        ? accent
+        : GameUiPalette.textPrimary.withValues(alpha: 0.24);
     final darkerColor = HSLColor.fromColor(baseColor)
         .withLightness(
           (HSLColor.fromColor(baseColor).lightness - 0.15).clamp(0.0, 1.0),
         )
         .toColor();
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -122,7 +128,7 @@ class HomeEntryCard extends StatelessWidget {
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
                         fontSize: 21,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white.withValues(
+                        color: GameUiPalette.textPrimary.withValues(
                           alpha: enabled ? 1 : 0.72,
                         ),
                         letterSpacing: 1.4,
@@ -139,7 +145,7 @@ class HomeEntryCard extends StatelessWidget {
                     Text(
                       description,
                       style: TextStyle(
-                        color: Colors.white.withValues(
+                        color: GameUiPalette.textPrimary.withValues(
                           alpha: enabled ? 0.82 : 0.6,
                         ),
                         fontSize: 11,
@@ -155,7 +161,9 @@ class HomeEntryCard extends StatelessWidget {
                 enabled
                     ? Icons.arrow_forward_rounded
                     : Icons.lock_clock_rounded,
-                color: Colors.white.withValues(alpha: enabled ? 0.92 : 0.65),
+                color: GameUiPalette.textPrimary.withValues(
+                  alpha: enabled ? 0.92 : 0.65,
+                ),
                 size: 22,
               ),
             ],
@@ -188,9 +196,11 @@ class HomeSnapshotCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.18),
+        color: GameUiPalette.ink.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +208,7 @@ class HomeSnapshotCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.64),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.64),
               fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.6,
@@ -208,7 +218,7 @@ class HomeSnapshotCard extends StatelessWidget {
           Text(
             summary,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.9),
               fontSize: 12,
               fontWeight: FontWeight.w700,
               height: 1.35,

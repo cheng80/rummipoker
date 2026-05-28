@@ -11,6 +11,7 @@ import '../services/new_run_setup.dart';
 import '../services/run_unlock_state_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/widgets/game_ui_palette.dart';
 import 'home_entry_widgets.dart';
 
 class NewRunView extends StatefulWidget {
@@ -86,9 +87,11 @@ class _NewRunViewState extends State<NewRunView> {
       title: context.tr('seedDialogTitle'),
       content: DecoratedBox(
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.18),
+          color: GameUiPalette.ink.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
@@ -99,13 +102,13 @@ class _NewRunViewState extends State<NewRunView> {
               decimal: false,
             ),
             style: const TextStyle(
-              color: Colors.white,
+              color: GameUiPalette.textPrimary,
               fontWeight: FontWeight.w800,
             ),
             decoration: InputDecoration(
               hintText: context.tr('seedHint'),
               hintStyle: TextStyle(
-                color: Colors.white.withValues(alpha: 0.34),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.34),
                 fontWeight: FontWeight.w700,
               ),
               border: InputBorder.none,
@@ -119,12 +122,12 @@ class _NewRunViewState extends State<NewRunView> {
         GameDialogAction<String>(
           label: context.tr('cancel'),
           value: 'cancel',
-          accent: const Color(0xFF55615F),
+          accent: GameUiPalette.disabledControl,
         ),
         GameDialogAction<String>(
           label: context.tr('ok'),
           value: 'submit',
-          accent: const Color(0xFF2DB872),
+          accent: GameUiPalette.rarityUncommon,
         ),
       ],
     );
@@ -207,7 +210,7 @@ class _NewRunViewState extends State<NewRunView> {
                 IconButton(
                   onPressed: _goBack,
                   icon: const Icon(Icons.arrow_back_rounded),
-                  color: Colors.white,
+                  color: GameUiPalette.textPrimary,
                 ),
               ],
             ),
@@ -218,7 +221,7 @@ class _NewRunViewState extends State<NewRunView> {
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 38,
-                color: Colors.white.withValues(alpha: 0.96),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
                 letterSpacing: 1.8,
               ),
             ),
@@ -263,14 +266,14 @@ class _NewRunViewState extends State<NewRunView> {
                   HomeEntryCard(
                     title: context.tr('entryRandomSeed'),
                     description: '무작위 시드로 바로 시작',
-                    accent: const Color(0xFF3CAEE0),
+                    accent: GameUiPalette.actionInfoBlue,
                     onTap: _startRandomRun,
                   ),
                   const SizedBox(height: 12),
                   HomeEntryCard(
                     title: context.tr('entryInputSeed'),
                     description: '시드를 직접 입력해 시작',
-                    accent: const Color(0xFF2DB872),
+                    accent: GameUiPalette.rarityUncommon,
                     onTap: _openSeedInputDialog,
                   ),
                 ],
@@ -300,14 +303,21 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF102D3A),
+        color: GameUiPalette.surfaceDeckUpgrade,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF67D0FF), width: 1.2),
+        border: Border.all(
+          color: GameUiPalette.actionInfoBlueSoftBorder,
+          width: 1.2,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.upgrade_rounded, color: Color(0xFF9FE0FF), size: 22),
+          const Icon(
+            Icons.upgrade_rounded,
+            color: GameUiPalette.actionInfoBlueText,
+            size: 22,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -316,7 +326,7 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
                 const Text(
                   '도전 계승',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: GameUiPalette.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
@@ -325,7 +335,7 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
                 Text(
                   summary,
                   style: const TextStyle(
-                    color: Color(0xFFE8F7FF),
+                    color: GameUiPalette.actionInfoBluePale,
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
                     height: 1.25,
@@ -335,7 +345,7 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
                 const Text(
                   '족보 레벨과 추가 덱 카드만 유지됩니다. 골드, Jester, 아이템, 마켓 상태는 새 런에서 초기화됩니다.',
                   style: TextStyle(
-                    color: Color(0xFFB7D7E8),
+                    color: GameUiPalette.actionInfoBlueMutedText,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     height: 1.25,
@@ -397,19 +407,19 @@ class _RunModifierCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = modifier == NewRunModifier.highStakes
-        ? const Color(0xFFFFB13B)
-        : const Color(0xFF4FC3F7);
+        ? GameUiPalette.actionOrangeSoft
+        : GameUiPalette.specialBlue;
     final borderColor = selected
         ? accent
-        : Colors.white.withValues(alpha: unlocked ? 0.12 : 0.07);
+        : GameUiPalette.textPrimary.withValues(alpha: unlocked ? 0.12 : 0.07);
     final fillColor = selected
         ? accent.withValues(alpha: 0.15)
-        : Colors.white.withValues(alpha: unlocked ? 0.05 : 0.025);
+        : GameUiPalette.textPrimary.withValues(alpha: unlocked ? 0.05 : 0.025);
     final status = unlocked
         ? (selected ? '선택됨' : '선택 가능')
         : (canUnlock ? '기억 카드로 해금' : '기억 카드 필요');
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -432,7 +442,7 @@ class _RunModifierCard extends StatelessWidget {
                     : Icons.lock_rounded,
                 color: unlocked || canUnlock
                     ? accent
-                    : Colors.white.withValues(alpha: 0.42),
+                    : GameUiPalette.textPrimary.withValues(alpha: 0.42),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -442,7 +452,9 @@ class _RunModifierCard extends StatelessWidget {
                     Text(
                       modifier.label,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.94),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.94,
+                        ),
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                       ),
@@ -451,7 +463,9 @@ class _RunModifierCard extends StatelessWidget {
                     Text(
                       _modifierEffectText(modifier),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.68),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.68,
+                        ),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         height: 1.25,
@@ -467,7 +481,7 @@ class _RunModifierCard extends StatelessWidget {
                 style: TextStyle(
                   color: (unlocked || canUnlock)
                       ? accent
-                      : Colors.white.withValues(alpha: 0.46),
+                      : GameUiPalette.textPrimary.withValues(alpha: 0.46),
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                 ),
@@ -534,11 +548,11 @@ class _DifficultyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final setup = NewRunSetup(difficulty: difficulty);
     final borderColor = selected
-        ? const Color(0xFF4FC3F7)
-        : Colors.white.withValues(alpha: 0.08);
+        ? GameUiPalette.specialBlue
+        : GameUiPalette.textPrimary.withValues(alpha: 0.08);
     final fillColor = selected
-        ? const Color(0xFF4FC3F7).withValues(alpha: 0.16)
-        : Colors.white.withValues(alpha: 0.04);
+        ? GameUiPalette.specialBlue.withValues(alpha: 0.16)
+        : GameUiPalette.textPrimary.withValues(alpha: 0.04);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -556,15 +570,15 @@ class _DifficultyButton extends StatelessWidget {
             Icon(
               selected ? Icons.check_circle_rounded : Icons.circle_outlined,
               color: selected
-                  ? const Color(0xFF4FC3F7)
-                  : Colors.white.withValues(alpha: 0.5),
+                  ? GameUiPalette.specialBlue
+                  : GameUiPalette.textPrimary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 6),
             Text(
               setup.difficultyLabel,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
               ),

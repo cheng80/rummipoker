@@ -9,6 +9,7 @@ import '../resources/sound_manager.dart';
 import '../services/in_app_review_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/widgets/game_ui_palette.dart';
 
 /// 설정 화면. 볼륨, 음소거, 화면 꺼짐 방지 설정.
 class SettingView extends ConsumerWidget {
@@ -26,17 +27,21 @@ class SettingView extends ConsumerWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF153E34), Color(0xFF102E27), Color(0xFF0A201A)],
+            colors: [
+              GameUiPalette.settingGradientStart,
+              GameUiPalette.settingGradientMid,
+              GameUiPalette.settingGradientEnd,
+            ],
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.36),
+              color: GameUiPalette.ink.withValues(alpha: 0.36),
               blurRadius: 28,
               spreadRadius: 4,
             ),
           ],
           border: Border.all(
-            color: const Color(0xFF507564).withValues(alpha: 0.55),
+            color: GameUiPalette.marketFrameBorder.withValues(alpha: 0.55),
             width: 1.2,
           ),
         ),
@@ -56,7 +61,7 @@ class SettingView extends ConsumerWidget {
                           fontFamily: AssetPaths.fontNexonLv2Gothic,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: GameUiPalette.textPrimary,
                         ),
                       ),
                     ),
@@ -66,7 +71,7 @@ class SettingView extends ConsumerWidget {
                         context.pop();
                       },
                       icon: const Icon(Icons.close_rounded),
-                      color: Colors.white,
+                      color: GameUiPalette.textPrimary,
                     ),
                   ],
                 ),
@@ -74,9 +79,13 @@ class SettingView extends ConsumerWidget {
                 Expanded(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.12),
+                      color: GameUiPalette.ink.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.10,
+                        ),
+                      ),
                     ),
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
@@ -94,7 +103,9 @@ class SettingView extends ConsumerWidget {
                           ),
                           _LanguageSection(currentLocale: context.locale),
                           Divider(
-                            color: Colors.white.withValues(alpha: 0.18),
+                            color: GameUiPalette.textPrimary.withValues(
+                              alpha: 0.18,
+                            ),
                             height: 1,
                           ),
                           _SectionTitle(
@@ -125,7 +136,9 @@ class SettingView extends ConsumerWidget {
                           ),
                           if (InAppReviewService.hasStoreListingId) ...[
                             Divider(
-                              color: Colors.white.withValues(alpha: 0.18),
+                              color: GameUiPalette.textPrimary.withValues(
+                                alpha: 0.18,
+                              ),
                               height: 1,
                             ),
                             _SectionTitle(
@@ -135,7 +148,7 @@ class SettingView extends ConsumerWidget {
                             ListTile(
                               leading: const Icon(
                                 Icons.star_border,
-                                color: Colors.amber,
+                                color: GameUiPalette.actionGoldBright,
                               ),
                               title: Text(
                                 context.tr('rateApp'),
@@ -197,8 +210,8 @@ class _LanguageSection extends StatelessWidget {
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
               color: _sameLocale(currentLocale, option.locale)
-                  ? Colors.amber
-                  : Colors.grey,
+                  ? GameUiPalette.actionGoldBright
+                  : GameUiPalette.disabledControl,
             ),
             title: Text(
               context.tr(option.labelKey),
@@ -240,7 +253,7 @@ class _SectionTitle extends StatelessWidget {
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 20, color: Colors.grey),
+            Icon(icon, size: 20, color: GameUiPalette.disabledControl),
             const SizedBox(width: 8),
           ],
           Text(
@@ -249,7 +262,7 @@ class _SectionTitle extends StatelessWidget {
               fontFamily: AssetPaths.fontNexonLv2Gothic,
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              color: GameUiPalette.disabledControl,
             ),
           ),
         ],
@@ -310,7 +323,7 @@ class _MuteSwitch extends StatelessWidget {
     return SwitchListTile(
       secondary: Icon(
         value ? Icons.volume_off : Icons.volume_up,
-        color: value ? Colors.grey : null,
+        color: value ? GameUiPalette.disabledControl : null,
       ),
       title: Text(
         label,

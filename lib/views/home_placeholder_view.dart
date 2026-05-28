@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../resources/asset_paths.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/widgets/game_ui_palette.dart';
 
 class HomePlaceholderView extends StatefulWidget {
   const HomePlaceholderView({
@@ -61,7 +62,7 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
             IconButton(
               onPressed: () => context.pop(),
               icon: const Icon(Icons.arrow_back_rounded),
-              color: Colors.white,
+              color: GameUiPalette.textPrimary,
             ),
             const SizedBox(height: 12),
             Text(
@@ -69,7 +70,7 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 34,
-                color: Colors.white.withValues(alpha: 0.96),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
                 letterSpacing: 1.5,
               ),
             ),
@@ -77,7 +78,7 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
             Text(
               widget.summary,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.76),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 height: 1.45,
@@ -88,9 +89,11 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: GameUiPalette.ink.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                border: Border.all(
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +101,7 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
                   Text(
                     widget.cardTitle,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.62),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.62),
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.7,
@@ -113,7 +116,9 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
                     Text(
                       widget.footer!,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.84),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.84,
+                        ),
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         height: 1.45,
@@ -145,7 +150,7 @@ class _PlaceholderBullet extends StatelessWidget {
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.76),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
               shape: BoxShape.circle,
             ),
           ),
@@ -155,7 +160,7 @@ class _PlaceholderBullet extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.9),
               fontSize: 14,
               fontWeight: FontWeight.w700,
               height: 1.45,

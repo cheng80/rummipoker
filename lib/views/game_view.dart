@@ -48,6 +48,7 @@ import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
 import 'game/widgets/game_tile_choice_dialog.dart';
 import 'game/widgets/game_tutorial_overlay.dart';
+import 'game/widgets/game_ui_palette.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 class GameView extends ConsumerStatefulWidget {
@@ -517,7 +518,7 @@ class _GameViewState extends ConsumerState<GameView>
           _battleTutorialFocusIndex = index.clamp(0, 3);
         },
       ),
-      colorShadow: const Color(0xFF05070D),
+      colorShadow: GameUiPalette.tutorialShadow,
       opacityShadow: 0.62,
       pulseEnable: false,
       paddingFocus: 6,
@@ -692,16 +693,18 @@ class _GameViewState extends ConsumerState<GameView>
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD34E4E),
+                      color: GameUiPalette.specialDangerNotice,
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: const Color(0xFFFFD0C8).withValues(alpha: 0.88),
+                        color: GameUiPalette.specialDangerNoticeText.withValues(
+                          alpha: 0.88,
+                        ),
                       ),
                     ),
                     alignment: Alignment.center,
                     child: const Icon(
                       Icons.warning_amber_rounded,
-                      color: Colors.white,
+                      color: GameUiPalette.textPrimary,
                       size: 18,
                     ),
                   ),
@@ -712,7 +715,9 @@ class _GameViewState extends ConsumerState<GameView>
                       softWrap: true,
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        color: Colors.white.withValues(alpha: 0.96),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.96,
+                        ),
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                       ),
@@ -727,7 +732,7 @@ class _GameViewState extends ConsumerState<GameView>
                   child: Text(
                     modifier.ruleText,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.82),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       height: 1.45,
@@ -738,8 +743,8 @@ class _GameViewState extends ConsumerState<GameView>
               const SizedBox(height: 16),
               GameChromeButton(
                 label: buttonLabel,
-                backgroundColor: const Color(0xFFF4A81D),
-                foregroundColor: const Color(0xFF173126),
+                backgroundColor: GameUiPalette.actionGold,
+                foregroundColor: GameUiPalette.surfacePanel,
                 onPressed: () => Navigator.of(dialogContext).pop(),
               ),
             ],
@@ -1952,7 +1957,7 @@ class _GameViewState extends ConsumerState<GameView>
     }
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: GameUiPalette.transparent,
       isScrollControlled: true,
       barrierLabel: '디버그 설정',
       routeSettings: const RouteSettings(name: '디버그 설정'),
@@ -1982,7 +1987,7 @@ class _GameViewState extends ConsumerState<GameView>
                                 child: Text(
                                   'DEBUG',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: GameUiPalette.textPrimary,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0.4,
@@ -2005,8 +2010,8 @@ class _GameViewState extends ConsumerState<GameView>
                                 width: 108,
                                 child: GameActionButton(
                                   label: 'MARKET',
-                                  background: const Color(0xFFF4A81D),
-                                  foreground: Colors.black,
+                                  background: GameUiPalette.actionGold,
+                                  foreground: GameUiPalette.ink,
                                   onPressed: () async {
                                     Navigator.of(sheetContext).pop();
                                     await WidgetsBinding.instance.endOfFrame;
@@ -2027,14 +2032,12 @@ class _GameViewState extends ConsumerState<GameView>
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.08,
-                                        ),
+                                        color: GameUiPalette.textPrimary
+                                            .withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.12,
-                                          ),
+                                          color: GameUiPalette.textPrimary
+                                              .withValues(alpha: 0.12),
                                         ),
                                       ),
                                       child: GameDebugHandSizeSegment(
@@ -2059,7 +2062,8 @@ class _GameViewState extends ConsumerState<GameView>
                                     title: '현재 구간 즉시 클리어',
                                     subtitle: '현재 선택된 구간을 즉시 정산 완료 상태로 넘깁니다.',
                                     icon: Icons.bug_report_rounded,
-                                    accentColor: Colors.orange.shade200,
+                                    accentColor:
+                                        GameUiPalette.menuAccentRestart,
                                     onTap: () async {
                                       Navigator.of(sheetContext).pop();
                                       await WidgetsBinding.instance.endOfFrame;
@@ -2072,7 +2076,7 @@ class _GameViewState extends ConsumerState<GameView>
                                     subtitle: '다음 Station Select로 바로 이행합니다.',
                                     icon: Icons.skip_next_rounded,
                                     accentColor:
-                                        Colors.lightGreenAccent.shade100,
+                                        GameUiPalette.menuAccentTutorial,
                                     onTap: () async {
                                       Navigator.of(sheetContext).pop();
                                       await WidgetsBinding.instance.endOfFrame;
@@ -2190,7 +2194,9 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: DecoratedBox(
-        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.50)),
+        decoration: BoxDecoration(
+          color: GameUiPalette.ink.withValues(alpha: 0.50),
+        ),
         child: Center(
           child: TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0, end: 1),
@@ -2209,15 +2215,15 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
               width: 282,
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
               decoration: BoxDecoration(
-                color: const Color(0xFF102D25),
+                color: GameUiPalette.surfaceDark,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: const Color(0xFFF4C64F).withValues(alpha: 0.66),
+                  color: GameUiPalette.scoringPreview.withValues(alpha: 0.66),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.34),
+                    color: GameUiPalette.ink.withValues(alpha: 0.34),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),
@@ -2228,7 +2234,7 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.storefront_rounded,
-                    color: Color(0xFFF4C64F),
+                    color: GameUiPalette.scoringPreview,
                     size: 32,
                   ),
                   const SizedBox(height: 10),
@@ -2236,7 +2242,7 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                     'Market 준비',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: GameUiPalette.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
@@ -2246,7 +2252,7 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                     '정산 보상 +${breakdown.totalGold} Gold',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.76),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                     ),
@@ -2263,9 +2269,11 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                         return LinearProgressIndicator(
                           value: value,
                           minHeight: 5,
-                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                          backgroundColor: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.12,
+                          ),
                           valueColor: const AlwaysStoppedAnimation<Color>(
-                            Color(0xFFF4C64F),
+                            GameUiPalette.scoringPreview,
                           ),
                         );
                       },
@@ -2286,12 +2294,12 @@ class _GamePresentationPauseVeil extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
-      color: Color(0xCC06110F),
-      child: Center(
+    return ColoredBox(
+      color: GameUiPalette.ink.withValues(alpha: 0.8),
+      child: const Center(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Color(0xFF153C31),
+            color: GameUiPalette.surfacePanel,
             borderRadius: BorderRadius.all(Radius.circular(18)),
           ),
           child: Padding(
@@ -2299,7 +2307,7 @@ class _GamePresentationPauseVeil extends StatelessWidget {
             child: Text(
               '일시정지',
               style: TextStyle(
-                color: Colors.white,
+                color: GameUiPalette.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
               ),
@@ -2318,7 +2326,9 @@ class _NextStationTransitionOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: DecoratedBox(
-        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.54)),
+        decoration: BoxDecoration(
+          color: GameUiPalette.ink.withValues(alpha: 0.54),
+        ),
         child: Center(
           child: TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0, end: 1),
@@ -2337,15 +2347,15 @@ class _NextStationTransitionOverlay extends StatelessWidget {
               width: 280,
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
               decoration: BoxDecoration(
-                color: const Color(0xFF102D25),
+                color: GameUiPalette.surfaceDark,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: const Color(0xFFF4C64F).withValues(alpha: 0.65),
+                  color: GameUiPalette.scoringPreview.withValues(alpha: 0.65),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.36),
+                    color: GameUiPalette.ink.withValues(alpha: 0.36),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),
@@ -2356,7 +2366,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.route_rounded,
-                    color: Color(0xFFF4C64F),
+                    color: GameUiPalette.scoringPreview,
                     size: 32,
                   ),
                   const SizedBox(height: 10),
@@ -2364,7 +2374,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                     '다음 Station 준비',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: GameUiPalette.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
@@ -2374,7 +2384,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                     'Station Select로 이동',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.72),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                     ),
@@ -2390,9 +2400,11 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                         return LinearProgressIndicator(
                           value: value,
                           minHeight: 5,
-                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                          backgroundColor: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.12,
+                          ),
                           valueColor: const AlwaysStoppedAnimation<Color>(
-                            Color(0xFFF4C64F),
+                            GameUiPalette.scoringPreview,
                           ),
                         );
                       },
@@ -2430,8 +2442,8 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = feedback.passive
-        ? const Color(0xFF6EE7B7)
-        : const Color(0xFFF4A81D);
+        ? GameUiPalette.marketSourcePassive
+        : GameUiPalette.actionGold;
     return Stack(
           clipBehavior: Clip.none,
           children: [
@@ -2442,7 +2454,7 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
             ),
             DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFF0F2B23).withValues(alpha: 0.95),
+                color: GameUiPalette.surfaceDark.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: accent.withValues(alpha: 0.75),
@@ -2455,7 +2467,7 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                     offset: const Offset(0, 8),
                   ),
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.28),
+                    color: GameUiPalette.ink.withValues(alpha: 0.28),
                     blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
@@ -2515,7 +2527,7 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                             feedback.title,
                             maxLines: 1,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: GameUiPalette.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
                               height: 1,
@@ -2832,17 +2844,21 @@ class _GameSurface extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1A4B3C), Color(0xFF12392E), Color(0xFF0B251F)],
+          colors: [
+            GameUiPalette.battleFrameGradientStart,
+            GameUiPalette.battleFrameGradientMid,
+            GameUiPalette.battleFrameGradientEnd,
+          ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: GameUiPalette.ink.withValues(alpha: 0.4),
             blurRadius: 28,
             spreadRadius: 4,
           ),
         ],
         border: Border.all(
-          color: const Color(0xFF507564).withValues(alpha: 0.55),
+          color: GameUiPalette.marketFrameBorder.withValues(alpha: 0.55),
           width: 1.2,
         ),
       ),
@@ -3239,7 +3255,7 @@ class _GameLayout extends StatelessWidget {
                         icon: Icons.bug_report_rounded,
                         iconSize: 16,
                         borderRadius: 8,
-                        backgroundColor: const Color(0xFF29453A),
+                        backgroundColor: GameUiPalette.marketNeutralButton,
                         onPressed: onDebugTap,
                       ),
                     ),
@@ -3281,7 +3297,7 @@ class _GameLayout extends StatelessWidget {
                 maxLines: 1,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.74),
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.74),
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),
@@ -3397,18 +3413,18 @@ class _BoardScoringCallout extends StatelessWidget {
       _ => ('점수', '+0', ''),
     };
     final valueColor = step == ScoringPresentationStep.constraint
-        ? const Color(0xFFFF8E7E)
-        : const Color(0xFFF2C14E);
+        ? GameUiPalette.specialDangerBright
+        : GameUiPalette.actionGoldBright;
     final accentColor = isConstraint
-        ? const Color(0xFFFF675F)
-        : const Color(0xFFF2C14E);
+        ? GameUiPalette.specialDangerEffectBorder
+        : GameUiPalette.actionGoldBright;
     return IgnorePointer(
       child:
           Align(
                 alignment: Alignment.topCenter,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: const Color(0xE6153C31),
+                    color: GameUiPalette.settlementEffectSurface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: accentColor.withValues(alpha: 0.78),
@@ -3421,7 +3437,7 @@ class _BoardScoringCallout extends StatelessWidget {
                         spreadRadius: 1,
                       ),
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.28),
+                        color: GameUiPalette.ink.withValues(alpha: 0.28),
                         blurRadius: 12,
                         offset: const Offset(0, 5),
                       ),
@@ -3447,7 +3463,7 @@ class _BoardScoringCallout extends StatelessWidget {
                                         softWrap: true,
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                          color: Colors.white,
+                                          color: GameUiPalette.textPrimary,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w900,
                                           height: 1.15,
@@ -3472,7 +3488,9 @@ class _BoardScoringCallout extends StatelessWidget {
                                   softWrap: true,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.72),
+                                    color: GameUiPalette.textPrimary.withValues(
+                                      alpha: 0.72,
+                                    ),
                                     fontSize: 10,
                                     fontWeight: FontWeight.w800,
                                     height: 1.25,
@@ -3488,7 +3506,7 @@ class _BoardScoringCallout extends StatelessWidget {
                                 title,
                                 maxLines: 1,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: GameUiPalette.textPrimary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
                                   height: 1,
@@ -3511,7 +3529,9 @@ class _BoardScoringCallout extends StatelessWidget {
                                   detail,
                                   maxLines: 1,
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.68),
+                                    color: GameUiPalette.textPrimary.withValues(
+                                      alpha: 0.68,
+                                    ),
                                     fontSize: 10,
                                     fontWeight: FontWeight.w800,
                                     height: 1,
@@ -3583,7 +3603,7 @@ class _BattleActionBar extends StatelessWidget {
                 label: '런\n정보',
                 size: buttonSide,
                 borderRadius: 7,
-                backgroundColor: const Color(0xFF65562E),
+                backgroundColor: GameUiPalette.battleActionHand,
                 onPressed: onRunInfo,
               ),
               const SizedBox(width: 16),
@@ -3592,7 +3612,7 @@ class _BattleActionBar extends StatelessWidget {
                 label: '선택\n해제',
                 size: buttonSide,
                 borderRadius: 7,
-                backgroundColor: const Color(0xFF4C5A55),
+                backgroundColor: GameUiPalette.passiveSlotAccent,
                 onPressed: utilityEnabled ? onClearSelection : null,
               ),
               const SizedBox(width: gap),
@@ -3601,7 +3621,7 @@ class _BattleActionBar extends StatelessWidget {
                 label: '타일\n이동',
                 size: buttonSide,
                 borderRadius: 7,
-                backgroundColor: const Color(0xFF315F68),
+                backgroundColor: GameUiPalette.battleActionTool,
                 onPressed: canStartBoardMove ? onStartBoardMove : null,
               ),
               const SizedBox(width: gap),
@@ -3610,7 +3630,7 @@ class _BattleActionBar extends StatelessWidget {
                 label: '보드\n버림',
                 size: buttonSide,
                 borderRadius: 7,
-                backgroundColor: const Color(0xFF44554C),
+                backgroundColor: GameUiPalette.battleActionPassive,
                 onPressed: utilityEnabled ? onBoardDiscard : null,
               ),
               const SizedBox(width: gap),
@@ -3619,7 +3639,7 @@ class _BattleActionBar extends StatelessWidget {
                 label: '손패\n버림',
                 size: buttonSide,
                 borderRadius: 7,
-                backgroundColor: const Color(0xFF5B4D33),
+                backgroundColor: GameUiPalette.battleActionDeck,
                 onPressed: utilityEnabled ? onHandDiscard : null,
               ),
               const SizedBox(width: confirmGap),
@@ -3629,9 +3649,11 @@ class _BattleActionBar extends StatelessWidget {
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: confirmReady
-                    ? const Color(0xFFF4A81D)
-                    : const Color(0xFF5A5D54),
-                foregroundColor: confirmReady ? Colors.black : Colors.white54,
+                    ? GameUiPalette.actionGold
+                    : GameUiPalette.actionDisabledMuted,
+                foregroundColor: confirmReady
+                    ? GameUiPalette.ink
+                    : GameUiPalette.textPrimary.withValues(alpha: 0.54),
                 onPressed: confirmEnabled ? onConfirm : null,
               ),
             ],
@@ -3656,8 +3678,8 @@ class _ScoringPreviewChip extends StatelessWidget {
     final preview = this.preview;
     final hasConstraint = preview?.hasConstraintPenalty ?? false;
     final accent = preview == null
-        ? Colors.white.withValues(alpha: 0.34)
-        : const Color(0xFFF4A81D);
+        ? GameUiPalette.textPrimary.withValues(alpha: 0.34)
+        : GameUiPalette.actionGold;
     final rankLabel = preview == null
         ? ''
         : gameHandRankLabel(preview.representativeRank);
@@ -3685,11 +3707,11 @@ class _ScoringPreviewChip extends StatelessWidget {
                     ? const ValueKey('scoring-preview-item-link-flash')
                     : null,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.16),
+                  color: GameUiPalette.ink.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: hasPendingItem
-                        ? const Color(0xFFFFD36B).withValues(alpha: 0.78)
+                        ? GameUiPalette.specialScoreText.withValues(alpha: 0.78)
                         : accent.withValues(alpha: 0.42),
                     width: hasPendingItem ? 1.4 : 1,
                   ),
@@ -3725,8 +3747,10 @@ class _ScoringPreviewChip extends StatelessWidget {
                           maxLines: 1,
                           style: TextStyle(
                             color: preview == null
-                                ? Colors.white54
-                                : Colors.white,
+                                ? GameUiPalette.textPrimary.withValues(
+                                    alpha: 0.54,
+                                  )
+                                : GameUiPalette.textPrimary,
                             fontSize: 10.5,
                             fontWeight: FontWeight.w900,
                             height: 1,
@@ -3799,7 +3823,7 @@ class _BattleRailButton extends StatelessWidget {
     required this.label,
     required this.backgroundColor,
     required this.onPressed,
-    this.foregroundColor = Colors.white,
+    this.foregroundColor = GameUiPalette.textPrimary,
     this.size = 58,
     this.borderRadius = 9,
   });
@@ -3825,7 +3849,7 @@ class _BattleRailButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.transparent,
+        color: GameUiPalette.transparent,
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(borderRadius),

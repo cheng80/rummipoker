@@ -11,6 +11,7 @@ import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/new_run_setup.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/widgets/game_ui_palette.dart';
 import 'home_entry_widgets.dart';
 
 class BlindSelectView extends StatefulWidget {
@@ -158,7 +159,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
                 IconButton(
                   onPressed: _goBack,
                   icon: const Icon(Icons.arrow_back_rounded),
-                  color: Colors.white,
+                  color: GameUiPalette.textPrimary,
                 ),
               ],
             ),
@@ -169,7 +170,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
                 fontSize: 38,
-                color: Colors.white.withValues(alpha: 0.96),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
                 letterSpacing: 1.8,
               ),
             ),
@@ -211,17 +212,17 @@ class _EndlessWarningBanner extends StatelessWidget {
       width: 332,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF4A121C),
+        color: GameUiPalette.surfaceEndless,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFFF6B3D), width: 1.8),
+        border: Border.all(color: GameUiPalette.specialDanger, width: 1.8),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF3D2E).withValues(alpha: 0.26),
+            color: GameUiPalette.specialDangerHard.withValues(alpha: 0.26),
             blurRadius: 18,
             spreadRadius: 1,
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.34),
+            color: GameUiPalette.ink.withValues(alpha: 0.34),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -234,13 +235,16 @@ class _EndlessWarningBanner extends StatelessWidget {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6B3D),
+              color: GameUiPalette.specialDanger,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFFD08A), width: 1.5),
+              border: Border.all(
+                color: GameUiPalette.specialEndlessTextMuted,
+                width: 1.5,
+              ),
             ),
             child: const Icon(
               Icons.local_fire_department_rounded,
-              color: Color(0xFF2B0710),
+              color: GameUiPalette.specialDangerDeepText,
               size: 28,
             ),
           ),
@@ -252,7 +256,7 @@ class _EndlessWarningBanner extends StatelessWidget {
                 Text(
                   '무한 도전',
                   style: TextStyle(
-                    color: Color(0xFFFFD08A),
+                    color: GameUiPalette.specialEndlessTextMuted,
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.1,
@@ -263,7 +267,7 @@ class _EndlessWarningBanner extends StatelessWidget {
                   '목표 점수가 계속 상승합니다. 여기부터는 기록 경쟁 구간입니다.',
                   softWrap: true,
                   style: TextStyle(
-                    color: Color(0xFFFFE5C2),
+                    color: GameUiPalette.specialEndlessText,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     height: 1.25,
@@ -332,7 +336,7 @@ class _BlindOptionCard extends StatelessWidget {
                       child: Text(
                         spec.title,
                         style: TextStyle(
-                          color: Colors.white.withValues(
+                          color: GameUiPalette.textPrimary.withValues(
                             alpha: isInteractive ? 0.95 : 0.78,
                           ),
                           fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -401,12 +405,14 @@ class _BlindConstraintChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = enabled
-        ? const Color(0xFFFFB4A8)
-        : const Color(0xFFFFB4A8).withValues(alpha: 0.62);
+        ? GameUiPalette.specialDangerSoft
+        : GameUiPalette.specialDangerSoft.withValues(alpha: 0.62);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF5A2B30).withValues(alpha: enabled ? 0.56 : 0.28),
+        color: GameUiPalette.specialDangerMutedSurface.withValues(
+          alpha: enabled ? 0.56 : 0.28,
+        ),
         borderRadius: BorderRadius.circular(9),
         border: Border.all(color: color.withValues(alpha: 0.54), width: 1),
       ),
@@ -426,7 +432,7 @@ class _BlindConstraintChip extends StatelessWidget {
               markerText,
               maxLines: 1,
               style: const TextStyle(
-                color: Color(0xFF24120D),
+                color: GameUiPalette.textOnWarm,
                 fontSize: 9,
                 fontWeight: FontWeight.w900,
                 height: 1,
@@ -466,13 +472,13 @@ class _BlindPlayButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final buttonColor = enabled
-        ? const Color(0xFFF4A81D)
-        : Colors.black.withValues(alpha: 0.14);
+        ? GameUiPalette.actionGold
+        : GameUiPalette.ink.withValues(alpha: 0.14);
     final iconColor = enabled
-        ? const Color(0xFF173126)
+        ? GameUiPalette.surfacePanel
         : status.stateColor.withValues(alpha: 0.68);
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -486,20 +492,20 @@ class _BlindPlayButton extends StatelessWidget {
             color: buttonColor,
             border: Border.all(
               color: enabled
-                  ? const Color(0xFFFFF0B0)
+                  ? GameUiPalette.actionOrangePale
                   : status.stateColor.withValues(alpha: 0.45),
               width: enabled ? 2 : 1.4,
             ),
             boxShadow: enabled
                 ? [
                     BoxShadow(
-                      color: const Color(0xFFF4A81D).withValues(alpha: 0.34),
+                      color: GameUiPalette.actionGold.withValues(alpha: 0.34),
                       blurRadius: 14,
                       spreadRadius: 1,
                       offset: const Offset(0, 4),
                     ),
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.28),
+                      color: GameUiPalette.ink.withValues(alpha: 0.28),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -528,7 +534,7 @@ class _BlindMetric extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.54),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.54),
               fontSize: 10,
               fontWeight: FontWeight.w800,
             ),
@@ -537,7 +543,7 @@ class _BlindMetric extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.92),
               fontSize: 15,
               fontWeight: FontWeight.w900,
             ),
@@ -557,43 +563,43 @@ String _conditionSummary(BlindSelectionSpec spec) {
 _BlindStatusStyle _statusStyleFor(BlindSelectionSpec spec) {
   if (spec.isCleared) {
     return const _BlindStatusStyle(
-      fillColor: Color(0x1629B36A),
-      borderColor: Color(0x8A6CCB8C),
-      badgeColor: Color(0xFF2E7D4B),
-      badgeTextColor: Colors.white,
-      stateColor: Color(0xFF8EE0AB),
+      fillColor: GameUiPalette.blindBasicFill,
+      borderColor: GameUiPalette.blindBasicBorder,
+      badgeColor: GameUiPalette.blindBasicBadge,
+      badgeTextColor: GameUiPalette.textPrimary,
+      stateColor: GameUiPalette.blindBasicState,
       badgeLabel: 'CLEAR',
       trailingIcon: Icons.check_circle_rounded,
     );
   }
   if (spec.isLocked) {
     return const _BlindStatusStyle(
-      fillColor: Color(0x10A57A1E),
-      borderColor: Color(0x72C8A24B),
-      badgeColor: Color(0x7A6B5A32),
-      badgeTextColor: Color(0xFFF5DA96),
-      stateColor: Color(0xFFF0C96A),
+      fillColor: GameUiPalette.blindChallengeFill,
+      borderColor: GameUiPalette.blindChallengeBorder,
+      badgeColor: GameUiPalette.blindChallengeBadge,
+      badgeTextColor: GameUiPalette.blindChallengeText,
+      stateColor: GameUiPalette.blindChallengeState,
       badgeLabel: 'LOCKED',
       trailingIcon: Icons.lock_rounded,
     );
   }
   if (spec.isEndless) {
     return const _BlindStatusStyle(
-      fillColor: Color(0x2EFF4B2E),
-      borderColor: Color(0xFFFF6B3D),
-      badgeColor: Color(0xFF7A1822),
-      badgeTextColor: Color(0xFFFFE5C2),
-      stateColor: Color(0xFFFFC46B),
+      fillColor: GameUiPalette.blindEndlessFill,
+      borderColor: GameUiPalette.specialDanger,
+      badgeColor: GameUiPalette.blindEndlessBadge,
+      badgeTextColor: GameUiPalette.specialEndlessText,
+      stateColor: GameUiPalette.specialGold,
       badgeLabel: 'DANGER',
       trailingIcon: Icons.local_fire_department_rounded,
     );
   }
   return const _BlindStatusStyle(
-    fillColor: Color(0x1840BDE8),
-    borderColor: Color(0xFF4FC3F7),
-    badgeColor: Color(0xFF275B49),
-    badgeTextColor: Colors.white,
-    stateColor: Color(0xFF82D9FF),
+    fillColor: GameUiPalette.blindCustomFill,
+    borderColor: GameUiPalette.blindCustomBorder,
+    badgeColor: GameUiPalette.blindCustomBadge,
+    badgeTextColor: GameUiPalette.textPrimary,
+    stateColor: GameUiPalette.blindCustomState,
     badgeLabel: 'OPEN',
     trailingIcon: Icons.play_arrow_rounded,
   );
