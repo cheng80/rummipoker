@@ -2,7 +2,7 @@
 class CardEmblemAssets {
   CardEmblemAssets._();
 
-  static const String _basePath = 'assets/images/cards/emblems_2x';
+  static const String _basePath = 'assets/images/cards/emblems_4x';
 
   static String jester(String id) => '$_basePath/jester_$id.png';
 

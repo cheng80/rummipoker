@@ -31,11 +31,17 @@ const double _marketOwnedCardHeight = kBattleItemSlotHeight;
 const double _marketOfferCardWidth = kBattleItemSlotWidth;
 const double _marketOfferCardHeight = kBattleItemSlotHeight;
 const double _marketCardSelectionInset = kJesterSelectionOutset;
+const double _marketOfferCardDisplayScale = 1.25;
+const double _marketOfferCardDisplayWidth =
+    (_marketOfferCardWidth + (_marketCardSelectionInset * 2)) *
+    _marketOfferCardDisplayScale;
+const double _marketOfferCardDisplayHeight =
+    (_marketOfferCardHeight + (_marketCardSelectionInset * 2)) *
+    _marketOfferCardDisplayScale;
 const Duration _marketPurchaseFlightDuration =
     GamePresentationTimings.marketPurchaseFlight;
-const double _marketShopCellWidth = 72.0;
-const double _marketShopCellHeight =
-    kBattleItemSlotHeight + (kJesterSelectionOutset * 2) + 16.0;
+const double _marketShopCellWidth = 84.0;
+const double _marketShopCellHeight = _marketOfferCardDisplayHeight + 22.0;
 const double _marketShopPanelHeight = 168.0;
 const double _marketSpeechPanelHeight = 132.0;
 const double _marketDescriptionFontSize = 12.0;
@@ -489,29 +495,10 @@ class _GameShopScreenState extends State<GameShopScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (_market.ownedEntries.isNotEmpty) {
-      _selectedOwnedIndex = 0;
-    } else if (_market.offers.isNotEmpty) {
-      _selectedOfferIndex = 0;
-    } else if (_market.tileOffers.isNotEmpty) {
-      _mainOfferLane = _MarketOfferLane.tile;
-      _selectedTileOfferIndex = 0;
-    }
     if (widget.initialItemShopTab) {
       _shopTab = _MarketShopTab.toolsAndGear;
       _utilityOfferLane = _MarketOfferLane.tool;
-      _selectedItemOfferIndex = -1;
-      _selectedTileOfferIndex = -1;
-      _selectedItemSlotIndex = -1;
-      for (final entry in _offerEntriesForLane(_market, _utilityOfferLane)) {
-        if (entry.kind == _MarketOfferEntryKind.item) {
-          _selectedItemOfferIndex = entry.itemIndex ?? -1;
-          break;
-        }
-      }
-      _selectedOwnedIndex = null;
-      _selectedOfferIndex = null;
-      _selectedTileOfferIndex = -1;
+      _clearMarketSelection();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -582,6 +569,10 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   void _selectOwned(int index) {
     setState(() {
+      if (_selectedOwnedIndex == index) {
+        _clearMarketSelection();
+        return;
+      }
       _selectedOwnedIndex = index;
       _selectedOfferIndex = null;
       _selectedItemOfferIndex = -1;
@@ -592,6 +583,10 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   void _selectOffer(int index) {
     setState(() {
+      if (_selectedOfferIndex == index) {
+        _clearMarketSelection();
+        return;
+      }
       _shopTab = _MarketShopTab.cardsAndQuickSlots;
       _mainOfferLane = _MarketOfferLane.jester;
       _selectedOfferIndex = index;
@@ -604,6 +599,10 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   void _selectItemOffer(int index) {
     setState(() {
+      if (_selectedItemOfferIndex == index) {
+        _clearMarketSelection();
+        return;
+      }
       _selectedItemOfferIndex = index;
       _selectedTileOfferIndex = -1;
       _selectedItemSlotIndex = -1;
@@ -614,6 +613,10 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   void _selectTileOffer(int index) {
     setState(() {
+      if (_selectedTileOfferIndex == index) {
+        _clearMarketSelection();
+        return;
+      }
       _shopTab = _MarketShopTab.cardsAndQuickSlots;
       _mainOfferLane = _MarketOfferLane.tile;
       _selectedTileOfferIndex = index;
@@ -627,6 +630,10 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _selectItemSlot(RummiMarketItemSlotView slot) {
     if (slot.locked || slot.item == null) return;
     setState(() {
+      if (_selectedItemSlotIndex == slot.slotIndex) {
+        _clearMarketSelection();
+        return;
+      }
       _shopTab = switch (slot.placement) {
         ItemPlacement.quickSlot ||
         ItemPlacement.passiveRack => _MarketShopTab.cardsAndQuickSlots,
@@ -645,9 +652,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   void _selectShopTab(_MarketShopTab tab) {
     setState(() {
       _shopTab = tab;
-      _selectedOwnedIndex = null;
-      final entries = _offerEntriesForLane(_market, _currentOfferLane);
-      _selectFirstEntry(entries);
+      _clearMarketSelection();
     });
   }
 
@@ -658,9 +663,16 @@ class _GameShopScreenState extends State<GameShopScreen>
       } else {
         _utilityOfferLane = lane;
       }
-      _selectedOwnedIndex = null;
-      _selectFirstEntry(_offerEntriesForLane(_market, lane));
+      _clearMarketSelection();
     });
+  }
+
+  void _clearMarketSelection() {
+    _selectedOwnedIndex = null;
+    _selectedOfferIndex = null;
+    _selectedItemOfferIndex = -1;
+    _selectedTileOfferIndex = -1;
+    _selectedItemSlotIndex = -1;
   }
 
   void _shiftOfferPage(int delta) {
@@ -813,6 +825,11 @@ class _GameShopScreenState extends State<GameShopScreen>
     final lane = _currentOfferLane;
     final laneLabel = _offerLaneLabel(lane);
     final rerollCost = _rerollCostForLane(_market, lane);
+    final hadCurrentLaneOfferSelection = switch (lane) {
+      _MarketOfferLane.jester => _selectedOfferIndex != null,
+      _MarketOfferLane.tile => _selectedTileOfferIndex >= 0,
+      _ => _selectedItemOfferIndex >= 0,
+    };
     final confirmed = await showGameFramedDialog<bool>(
       context: context,
       builder: (dialogContext) => GameModalCard(
@@ -887,10 +904,9 @@ class _GameShopScreenState extends State<GameShopScreen>
       final market = _market;
       _marketRerollFeedbackTick++;
       _clampOfferPageForLane(market, lane);
-      _selectedOwnedIndex = null;
-      _selectFirstEntry(_offerEntriesForLane(market, lane));
-      if (_selectedOfferIndex == null && _selectedItemOfferIndex < 0) {
-        _selectedOwnedIndex = market.ownedEntries.isEmpty ? null : 0;
+      _clearMarketSelection();
+      if (hadCurrentLaneOfferSelection) {
+        _selectFirstEntry(_offerEntriesForLane(market, lane));
       }
     });
     if (effectPresentation != null) {
@@ -2105,6 +2121,29 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                       ),
                                                     ),
                                                   );
+                                                  final previewCard = SizedBox(
+                                                    width:
+                                                        _marketOwnedCardWidth,
+                                                    height:
+                                                        _marketOwnedCardHeight,
+                                                    child: GameJesterSlot(
+                                                      card: card,
+                                                      runtimeValueText:
+                                                          card == null
+                                                          ? null
+                                                          : jesterRuntimeValueText(
+                                                              card,
+                                                              market
+                                                                  .runtimeSnapshot,
+                                                              slotIndex: index,
+                                                            ),
+                                                      extended: index == 4,
+                                                      activeEffect: null,
+                                                      settlementSequenceTick: 0,
+                                                      selected: false,
+                                                      locked: false,
+                                                    ),
+                                                  );
 
                                                   return SizedBox(
                                                     key: _jesterSlotKey(index),
@@ -2124,6 +2163,40 @@ class _GameShopScreenState extends State<GameShopScreen>
                                                                 _selectOwned(
                                                                   index,
                                                                 ),
+                                                            onLongPress: () => _showMarketCardPreview(
+                                                              context,
+                                                              previewCard,
+                                                              title:
+                                                                  localizedJesterName(
+                                                                    context,
+                                                                    card,
+                                                                  ),
+                                                              effectText:
+                                                                  localizedJesterEffect(
+                                                                    context,
+                                                                    card,
+                                                                  ),
+                                                              tags: [
+                                                                ..._jesterSynergyTags(
+                                                                  card,
+                                                                ),
+                                                                if (jesterRuntimeValueText(
+                                                                      card,
+                                                                      market
+                                                                          .runtimeSnapshot,
+                                                                      slotIndex:
+                                                                          index,
+                                                                    ) !=
+                                                                    null)
+                                                                  jesterRuntimeValueText(
+                                                                    card,
+                                                                    market
+                                                                        .runtimeSnapshot,
+                                                                    slotIndex:
+                                                                        index,
+                                                                  )!,
+                                                              ],
+                                                            ),
                                                             child: child,
                                                           ),
                                                   );
@@ -3889,11 +3962,26 @@ class _MarketItemGhostChip extends StatelessWidget {
                 label: displayName,
                 placement: slot.placement,
                 rarity: slot.item!.rarity,
-                selected: selected,
+                selected: false,
                 imageAssetPath: slot.contentId == null
                     ? null
                     : CardEmblemAssets.item(slot.contentId!),
               ),
+            ),
+          );
+    final previewCard = displayName == null || slot.item == null
+        ? null
+        : SizedBox(
+            width: _marketOfferCardWidth,
+            height: _marketOfferCardHeight,
+            child: _MarketItemCardFace(
+              label: displayName,
+              placement: slot.placement,
+              rarity: slot.item!.rarity,
+              selected: false,
+              imageAssetPath: slot.contentId == null
+                  ? null
+                  : CardEmblemAssets.item(slot.contentId!),
             ),
           );
     final foreground = locked
@@ -3938,7 +4026,7 @@ class _MarketItemGhostChip extends StatelessWidget {
                 color: locked
                     ? Colors.black.withValues(alpha: 0.24)
                     : Colors.black.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
                 border: Border.all(
                   color: selected
                       ? const Color(0xFFF4A81D)
@@ -3983,6 +4071,19 @@ class _MarketItemGhostChip extends StatelessWidget {
           onTap: locked || slot.item == null || onTap == null
               ? null
               : () => onTap!(slot),
+          onLongPress: occupiedCard == null
+              ? null
+              : () => _showMarketCardPreview(
+                  context,
+                  previewCard!,
+                  title: displayName!,
+                  effectText: localizedItemSlotEffect(context, slot),
+                  tags: [
+                    slot.slotLabel,
+                    'x${slot.count}',
+                    ..._itemSynergyTags(slot.item!),
+                  ],
+                ),
           child: _MarketSlotPulse(
             active: pulse,
             showUnlockLock: showUnlockLock,
@@ -4177,8 +4278,27 @@ class _GameShopOfferCard extends StatelessWidget {
         ),
       ),
     );
+    final previewCard = SizedBox(
+      width: _marketOfferCardWidth,
+      height: _marketOfferCardHeight,
+      child: GameJesterSlot(
+        card: offer.card,
+        runtimeValueText: null,
+        extended: false,
+        activeEffect: null,
+        settlementSequenceTick: 0,
+        selected: false,
+      ),
+    );
     return GestureDetector(
       onTap: onTap,
+      onLongPress: () => _showMarketCardPreview(
+        context,
+        previewCard,
+        title: localizedJesterName(context, offer.card),
+        effectText: localizedJesterEffect(context, offer.card),
+        tags: _jesterSynergyTags(offer.card),
+      ),
       child: SizedBox(
         width: _marketShopCellWidth,
         height: _marketShopCellHeight,
@@ -4188,7 +4308,7 @@ class _GameShopOfferCard extends StatelessWidget {
           children: [
             _MarketDiscountTargetPulse(
               active: offer.discountSourceLabel != null,
-              child: card,
+              child: _MarketOfferCardDisplay(child: card),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -4221,18 +4341,28 @@ class _MarketEmptyOfferCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
-            height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
-            child: Center(
-              child: Container(
-                width: _marketOfferCardWidth,
-                height: _marketOfferCardHeight,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.14),
-                    width: 1.4,
+            width: _marketOfferCardDisplayWidth,
+            height: _marketOfferCardDisplayHeight,
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: SizedBox(
+                width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+                height:
+                    _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+                child: Center(
+                  child: Container(
+                    width: _marketOfferCardWidth,
+                    height: _marketOfferCardHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(
+                        kRuntimeCardInnerRadius,
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        width: 1.4,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -4244,6 +4374,93 @@ class _MarketEmptyOfferCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MarketOfferCardDisplay extends StatelessWidget {
+  const _MarketOfferCardDisplay({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _marketOfferCardDisplayWidth,
+      height: _marketOfferCardDisplayHeight,
+      child: FittedBox(fit: BoxFit.contain, child: child),
+    );
+  }
+}
+
+void _showMarketCardPreview(
+  BuildContext context,
+  Widget card, {
+  required String title,
+  required String effectText,
+  required List<String> tags,
+}) {
+  showGameFramedDialog<void>(
+    context: context,
+    semanticLabel: '상점 카드 정보',
+    builder: (dialogContext) {
+      return GameModalCard(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 620),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: GameCardNameText(
+                        title,
+                        textAlign: TextAlign.start,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      color: Colors.white,
+                      visualDensity: VisualDensity.compact,
+                      tooltip: '닫기',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: SizedBox(
+                    width: _marketOfferCardWidth * 3,
+                    height: _marketOfferCardHeight * 3,
+                    child: FittedBox(fit: BoxFit.contain, child: card),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  effectText,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+                if (tags.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _MarketDetailTagWrap(tags: tags),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _MarketItemOfferCard extends StatelessWidget {
@@ -4271,13 +4488,31 @@ class _MarketItemOfferCard extends StatelessWidget {
           label: itemName,
           placement: offer.item.placement,
           rarity: offer.item.rarity,
-          selected: selected,
+          selected: false,
           imageAssetPath: CardEmblemAssets.item(offer.item.id),
         ),
       ),
     );
+    final previewCard = SizedBox(
+      width: _marketOfferCardWidth,
+      height: _marketOfferCardHeight,
+      child: _MarketItemCardFace(
+        label: itemName,
+        placement: offer.item.placement,
+        rarity: offer.item.rarity,
+        selected: false,
+        imageAssetPath: CardEmblemAssets.item(offer.item.id),
+      ),
+    );
     return GestureDetector(
       onTap: onTap,
+      onLongPress: () => _showMarketCardPreview(
+        context,
+        previewCard,
+        title: itemName,
+        effectText: localizedItemEffect(context, offer),
+        tags: _itemSynergyTags(offer.item),
+      ),
       child: SizedBox(
         width: _marketShopCellWidth,
         height: _marketShopCellHeight,
@@ -4287,7 +4522,7 @@ class _MarketItemOfferCard extends StatelessWidget {
           children: [
             _MarketDiscountTargetPulse(
               active: offer.discountSourceLabel != null,
-              child: card,
+              child: _MarketOfferCardDisplay(child: card),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -4327,7 +4562,7 @@ class _MarketDiscountTargetPulse extends StatelessWidget {
           child: DecoratedBox(
             key: const ValueKey('market-discount-offer-flash'),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
               border: Border.all(
                 color: const Color(
                   0xFF86F4C3,
@@ -4456,9 +4691,18 @@ class _MarketTileOfferCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-              width: _marketOfferCardWidth + (_marketCardSelectionInset * 2),
-              height: _marketOfferCardHeight + (_marketCardSelectionInset * 2),
-              child: _MarketTileFace(tile: offer.tile, selected: selected),
+              width: _marketOfferCardDisplayWidth,
+              height: _marketOfferCardDisplayHeight,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: SizedBox(
+                  width:
+                      _marketOfferCardWidth + (_marketCardSelectionInset * 2),
+                  height:
+                      _marketOfferCardHeight + (_marketCardSelectionInset * 2),
+                  child: _MarketTileFace(tile: offer.tile, selected: selected),
+                ),
+              ),
             ),
             const SizedBox(height: 3),
             Text(
@@ -4570,9 +4814,12 @@ class _MarketItemCardFace extends StatelessWidget {
     return Container(
       key: const ValueKey('market-item-card-face'),
       decoration: BoxDecoration(
-        color: _itemOfferSurface(placement),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.72)),
+        color: const Color(0xFF10271E),
+        borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
+        border: Border.all(
+          color: selected ? accent : rarityColor.withValues(alpha: 0.78),
+          width: selected ? 1.5 : 1.1,
+        ),
         boxShadow: [
           BoxShadow(
             color: accent.withValues(alpha: selected ? 0.26 : 0.12),
@@ -4582,77 +4829,66 @@ class _MarketItemCardFace extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
+        padding: const EdgeInsets.fromLTRB(3.5, 3, 3.5, 3.5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            FractionallySizedBox(
-              widthFactor: 0.82,
-              child: Container(
-                height: 7,
-                decoration: BoxDecoration(
-                  color: rarityColor,
-                  borderRadius: BorderRadius.circular(6),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: kRuntimeCardBarHeight,
+                    decoration: BoxDecoration(
+                      gradient: gameCardRarityBarGradient(rarityColor),
+                      borderRadius: BorderRadius.circular(
+                        kRuntimeCardSmallRadius,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          blurRadius: 0,
+                          spreadRadius: 0.4,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 2),
+                _MarketCardTypeBadge(
+                  label: _itemPlacementBadge(placement),
+                  gradient: _itemPlacementBadgeGradient(placement),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2.5),
             _MarketCardEmblemImage(assetPath: imageAssetPath),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2.5),
             Expanded(
               child: Align(
                 alignment: Alignment.topCenter,
-                child: GameCardNameText(
+                child: _MarketRuntimeCardNameText(
                   label,
                   style: const TextStyle(
-                    color: Color(0xFF26352F),
-                    fontSize: 8,
+                    color: Color(0xFFF5E9B6),
+                    fontSize: 5,
                     fontWeight: FontWeight.w900,
-                    height: 1.08,
+                    height: 1.12,
                   ),
                 ),
               ),
             ),
-            _MarketOfferBadge(
-              label: _itemSlotLabelForPlacement(placement),
-              accent: accent,
-              textColor: _itemOfferBadgeTextColor(placement),
+            Text(
+              _itemPlacementCardLabel(placement),
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: const Color(0xFFF5E9B6).withValues(alpha: 0.72),
+                fontSize: 3.5,
+                fontWeight: FontWeight.w800,
+                height: 1,
+              ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MarketOfferBadge extends StatelessWidget {
-  const _MarketOfferBadge({
-    required this.label,
-    required this.accent,
-    required this.textColor,
-  });
-
-  final String label;
-  final Color accent;
-  final Color textColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 26),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 7,
-          fontWeight: FontWeight.w900,
-          height: 1.0,
         ),
       ),
     );
@@ -4704,20 +4940,86 @@ class _MarketCardEmblemImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = assetPath;
     return Center(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: path == null
-            ? const SizedBox(width: 30, height: 30)
-            : Image.asset(
-                path,
-                width: 30,
-                height: 30,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.medium,
-                errorBuilder: (_, _, _) =>
-                    const SizedBox(width: 30, height: 30),
-              ),
+      child: Container(
+        width: 47,
+        height: kRuntimeCardArtHeight,
+        padding: const EdgeInsets.all(1.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF041613),
+          borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
+          border: Border.all(
+            color: const Color(0xFFB8D3B9).withValues(alpha: 0.28),
+            width: 0.8,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(kRuntimeCardArtRadius - 2),
+          child: path == null
+              ? const SizedBox.expand()
+              : Image.asset(
+                  path,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (_, _, _) => const SizedBox.expand(),
+                ),
+        ),
       ),
+    );
+  }
+}
+
+class _MarketCardTypeBadge extends StatelessWidget {
+  const _MarketCardTypeBadge({required this.label, required this.gradient});
+
+  final String label;
+  final LinearGradient gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: kRuntimeCardTypeBadgeWidth,
+      height: kRuntimeCardTypeBadgeHeight,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(kRuntimeCardSmallRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.34),
+            blurRadius: 0,
+            spreadRadius: 0.35,
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        style: TextStyle(
+          color: const Color(0xFFFFF8D7),
+          fontSize: 3.5,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketRuntimeCardNameText extends StatelessWidget {
+  const _MarketRuntimeCardNameText(this.text, {required this.style});
+
+  final String text;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 2,
+      softWrap: true,
+      overflow: TextOverflow.visible,
+      textAlign: TextAlign.center,
+      style: style,
     );
   }
 }
@@ -4751,7 +5053,7 @@ class _MarketSelectableCardFrame extends StatelessWidget {
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
                   border: Border.all(
                     color: const Color(0xFFF2C14E),
                     width: kJesterSelectionBorderWidth,
@@ -4949,10 +5251,10 @@ class _MarketSlotPulse extends StatelessWidget {
         final lockFadeProgress = ((value - 0.55) / 0.45).clamp(0.0, 1.0);
         final lockOpacity = 1 - lockFadeProgress;
         return Transform.scale(
-          scale: 1 + (0.10 * pulse),
+          scale: 1 + (0.08 * pulse),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius + 2),
               border: Border.all(
                 color: const Color(
                   0xFFF2C14E,
@@ -4978,7 +5280,9 @@ class _MarketSlotPulse extends StatelessWidget {
                     child: DecoratedBox(
                       key: const ValueKey('market-slot-pulse-flash'),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(
+                          kRuntimeCardOuterRadius,
+                        ),
                         color: const Color(
                           0xFFF2C14E,
                         ).withValues(alpha: 0.18 * flash),
@@ -5106,7 +5410,7 @@ class _MarketPurchaseFlightCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFFF7E7B8),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
         border: Border.all(color: const Color(0xFFF2C14E), width: 1.2),
       ),
       child: Center(
@@ -5550,15 +5854,6 @@ String? _ownedItemSlotNotice(RummiMarketItemSlotView slot) {
   };
 }
 
-String _itemSlotLabelForPlacement(ItemPlacement placement) {
-  return switch (placement) {
-    ItemPlacement.quickSlot => 'Q-SLT',
-    ItemPlacement.passiveRack => 'PSV',
-    ItemPlacement.equipped => 'GEAR',
-    ItemPlacement.inventory => 'TOOL',
-  };
-}
-
 List<String> _jesterSynergyTags(RummiJesterCard card) {
   final tags = <String>[
     _jesterRarityTag(card.rarity),
@@ -5759,6 +6054,49 @@ String _itemPlacementTag(ItemPlacement placement) {
   };
 }
 
+String _itemPlacementBadge(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => 'Q',
+    ItemPlacement.passiveRack => 'P',
+    ItemPlacement.equipped => 'G',
+    ItemPlacement.inventory => 'T',
+  };
+}
+
+String _itemPlacementCardLabel(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => 'Q-SLOT',
+    ItemPlacement.passiveRack => 'PASSIVE',
+    ItemPlacement.equipped => 'GEAR',
+    ItemPlacement.inventory => 'TOOL',
+  };
+}
+
+LinearGradient _itemPlacementBadgeGradient(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF3F89D7), Color(0xFF22507F)],
+    ),
+    ItemPlacement.passiveRack => const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF4F9A6D), Color(0xFF2E6447)],
+    ),
+    ItemPlacement.equipped => const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF6F8994), Color(0xFF3C555F)],
+    ),
+    ItemPlacement.inventory => const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFFB0843C), Color(0xFF6C4C20)],
+    ),
+  };
+}
+
 Color _itemOfferSurface(ItemPlacement placement) {
   return switch (placement) {
     ItemPlacement.quickSlot => const Color(0xFFC7D8FF),
@@ -5774,12 +6112,5 @@ Color _itemOfferAccent(ItemPlacement placement) {
     ItemPlacement.passiveRack => const Color(0xFF54B85C),
     ItemPlacement.equipped => const Color(0xFFD88918),
     ItemPlacement.inventory => const Color(0xFF24B8C6),
-  };
-}
-
-Color _itemOfferBadgeTextColor(ItemPlacement placement) {
-  return switch (placement) {
-    ItemPlacement.equipped => const Color(0xFF1F1203),
-    _ => const Color(0xFF07111F),
   };
 }

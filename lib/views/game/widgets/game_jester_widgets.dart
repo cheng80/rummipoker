@@ -7,13 +7,31 @@ import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../game_presentation_timings.dart';
-import 'game_card_name_text.dart';
 import 'game_shared_widgets.dart';
 
 const double kJesterCardWidth = kBattleItemSlotWidth;
 const double kJesterCardHeight = kBattleItemSlotHeight;
 const double kJesterSelectionOutset = 3.0;
 const double kJesterSelectionBorderWidth = 3.0;
+const double kRuntimeCardOuterRadius = 4.0;
+const double kRuntimeCardInnerRadius = 4.0;
+const double kRuntimeCardArtRadius = 3.0;
+const double kRuntimeCardSmallRadius = 2.0;
+const double kRuntimeCardBarHeight = 5.0;
+const double kRuntimeCardTypeBadgeWidth = 9.0;
+const double kRuntimeCardTypeBadgeHeight = 5.0;
+const double kRuntimeCardArtWidth = 41.0;
+const double kRuntimeCardArtHeight = 41.0;
+
+LinearGradient gameCardRarityBarGradient(Color color) {
+  return LinearGradient(
+    colors: [
+      Color.lerp(Colors.black, color, 0.58)!,
+      Color.lerp(Colors.white, color, 0.18)!,
+      Color.lerp(Colors.black, color, 0.64)!,
+    ],
+  );
+}
 
 String localizedJesterName(BuildContext context, RummiJesterCard card) {
   final translations = JesterTranslationScope.of(context);
@@ -232,7 +250,7 @@ class GameJesterSlot extends StatelessWidget {
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
                   border: Border.all(color: frameColor, width: frameWidth),
                 ),
               ),
@@ -244,7 +262,7 @@ class GameJesterSlot extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: const Color(0xFF183E32).withValues(alpha: 0.82),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.18),
                     width: 1.2,
@@ -332,7 +350,7 @@ class GameJesterSlot extends StatelessWidget {
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
                   border: Border.all(color: frameColor, width: frameWidth),
                 ),
               ),
@@ -343,8 +361,8 @@ class GameJesterSlot extends StatelessWidget {
               padding: const EdgeInsets.all(kBattleSlotCardInset),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: surfaceColor ?? const Color(0xFFEDE7DB),
-                  borderRadius: BorderRadius.circular(14),
+                  color: surfaceColor ?? const Color(0xFF10271E),
+                  borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
                   border: Border.all(
                     color: isActive
                         ? const Color(0xFFF2C14E)
@@ -362,66 +380,70 @@ class GameJesterSlot extends StatelessWidget {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
+                  padding: const EdgeInsets.fromLTRB(3.5, 3, 3.5, 3.5),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Align(
-                        alignment: Alignment.center,
-                        child: FractionallySizedBox(
-                          widthFactor: 0.82,
-                          child: Container(
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: card == null
-                                  ? const Color(0xFF385248)
-                                  : rarityColor,
-                              borderRadius: BorderRadius.circular(6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: kRuntimeCardBarHeight,
+                              decoration: BoxDecoration(
+                                gradient: gameCardRarityBarGradient(
+                                  rarityColor,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  kRuntimeCardSmallRadius,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                    blurRadius: 0,
+                                    spreadRadius: 0.4,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          _GameCardTypeBadge(
+                            label: 'J',
+                            color: rarityColor,
+                            textColor: const Color(0xFFF7EEC8),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2.5),
                       _GameCardEmblemImage(
                         assetPath: CardEmblemAssets.jester(card!.id),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2.5),
                       Expanded(
                         child: Align(
                           alignment: Alignment.topCenter,
-                          child: GameCardNameText(
+                          child: _RuntimeCardNameText(
                             displayName,
                             style: const TextStyle(
-                              color: Color(0xFF26352F),
-                              fontSize: 9,
+                              color: Color(0xFFF5E9B6),
+                              fontSize: 5,
                               fontWeight: FontWeight.w900,
-                              height: 1.05,
+                              height: 1.12,
                             ),
                           ),
                         ),
                       ),
-                      Container(
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
+                      Text(
+                        'JESTER',
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
                           color: const Color(
-                            0xFF385248,
-                          ).withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          jesterCategoryLabel(card!),
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF314239),
-                            fontSize: 7,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
+                            0xFFF5E9B6,
+                          ).withValues(alpha: 0.72),
+                          fontSize: 3.5,
+                          fontWeight: FontWeight.w800,
+                          height: 1,
                         ),
                       ),
                       if (activeEffect != null) ...[
@@ -482,17 +504,90 @@ class _GameCardEmblemImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: Image.asset(
-          assetPath,
-          width: 30,
-          height: 30,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.medium,
-          errorBuilder: (_, _, _) => const SizedBox(width: 30, height: 30),
+      child: Container(
+        width: kRuntimeCardArtWidth,
+        height: kRuntimeCardArtHeight,
+        padding: const EdgeInsets.all(2.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF041613),
+          borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
+          border: Border.all(
+            color: const Color(0xFFB8D3B9).withValues(alpha: 0.28),
+            width: 0.8,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(kRuntimeCardArtRadius - 2),
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+            errorBuilder: (_, _, _) => const SizedBox.expand(),
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _GameCardTypeBadge extends StatelessWidget {
+  const _GameCardTypeBadge({
+    required this.label,
+    required this.color,
+    required this.textColor,
+  });
+
+  final String label;
+  final Color color;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: kRuntimeCardTypeBadgeWidth,
+      height: kRuntimeCardTypeBadgeHeight,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(Colors.white, color, 0.18)!,
+            Color.lerp(Colors.black, color, 0.38)!,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(kRuntimeCardSmallRadius),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 3.5,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _RuntimeCardNameText extends StatelessWidget {
+  const _RuntimeCardNameText(this.text, {required this.style});
+
+  final String text;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 2,
+      softWrap: true,
+      overflow: TextOverflow.visible,
+      textAlign: TextAlign.center,
+      style: style,
     );
   }
 }
