@@ -1,18 +1,65 @@
 # 카드 일러스트 이미지 생성 프롬프트 팩
 
-이 문서는 `54 x 70` 카드 face에서 읽히는 작은 카드 일러스트 생성을 위한 프롬프트 모음이다. 최종 UI에 들어갈 그림은 텍스트 없이 **중앙 문장/룬/도형**만 생성하는 것을 기본으로 한다.
+이 문서는 `54 x 70` 카드 face 안에 들어갈 작은 중앙 아트 asset 생성을 위한 프롬프트 모음이다. 최종 UI에는 등급/희귀도 표시, 카드명, 하단 타입/카테고리 배지, 가격/선택 상태가 함께 표시되므로, 생성 이미지는 카드 전체 레이아웃을 대체하지 않는다. 그림은 텍스트 없이 **중앙 문장/룬/도형**만 생성하고, UI overlay가 올라갈 위/아래 영역을 침범하지 않는 것을 기본으로 한다.
+
+## 카드 정보 계층 전제
+
+- 희귀도/등급 판독은 별도 UI 작업으로 진행한다. 런타임 UI의 등급 pill/라벨, 색 띠, 테두리, 필요 시 독립된 장식 marker가 담당하며, 이미지 안에 별, 글자, 숫자, 등급 마크를 굽지 않는다.
+- 타입은 런타임 UI의 하단 배지로 표시한다. Item은 `Q-Slot`, `Tool`, `Gear`, `Relic` 배지가 붙고, Jester는 효과 카테고리 배지가 붙는다.
+- 이미지는 중앙 hard safe area 안에 한 개의 큰 문장만 둔다. 상단 22%, 하단 20%, 좌우 8%는 UI 전용 no-art zone으로 잠그고, 배경 질감 외의 선/문장/장식이 들어가면 실패로 본다.
+- 타입 차이는 이미지의 큰 실루엣 언어로만 보조한다. 예: `Q-Slot`은 즉발 룬/충전구, `Tool`은 작은 도구/소모품, `Gear`는 장착 장비, `Relic`은 유물/상징물, `Jester`는 효과 반응 문장.
+- Market 후보 카드와 보유 카드 모두 같은 asset을 쓰므로, 가격표나 구매 가능 표시처럼 상태에 따라 달라지는 정보는 이미지에 넣지 않는다.
+- 카드 UI 장식처럼 보이는 띠, 탭, pill, corner marker, badge 형태는 이미지 안에 만들지 않는다. 이런 요소는 실제 UI와 겹치거나 깨진 카드 장식처럼 보일 수 있으므로 실패로 본다.
 
 ## 마스터 프롬프트
 
 ```text
-Small game card illustration for Rummi Poker, aspect ratio 27:35, readable at 54x70 px. Dark talisman card background, muted green-black surface, thin gold or off-white ink linework, one central geometric magic-circle emblem, subtle Rummikub tile motif, clean silhouette, limited internal lines, premium roguelite deckbuilder item icon style. No text. No poker suits. No playing-card layout. No character portrait. No tiny decorative clutter.
+Small center-art asset for a Rummi Poker game card, aspect ratio 27:35, readable inside a 54x70 px card face with UI overlays. Hard layout lock: the top 22%, bottom 20%, left 8%, and right 8% are UI-only no-art zones; keep them flat, quiet, and free of linework except subtle background texture. Put exactly one large geometric magic-circle emblem fully inside the central safe rectangle, approximately x 8%-92% and y 22%-80%, with no part extending into the UI-only zones. Dark talisman card surface, muted green-black background, thin gold or off-white ink linework, subtle Rummikub tile motif, clean silhouette, limited internal lines, premium roguelite deckbuilder item icon style. No text. No letters. No price tag. No rarity badge. No type badge. No corner marker. No UI tab. No top banner. No bottom badge shape. No poker suits. No playing-card layout. No character portrait. No tiny decorative clutter.
 ```
 
 ## 네거티브 프롬프트
 
 ```text
-text, letters, numbers unless explicitly requested, poker suit symbols, playing cards, realistic portrait, detailed character face, complex scene, tiny UI text, photorealistic object, noisy background, overly bright neon, web icon, emoji, sticker style, cluttered fantasy painting
+text, letters, numbers unless explicitly requested, price, coin price label, rarity label, type label, badge text, top banner, bottom banner, UI tab, corner marker, attached shape marker, rarity icon, type icon, poker suit symbols, playing cards, realistic portrait, detailed character face, complex scene, tiny UI text, photorealistic object, noisy background, overly bright neon, web icon, emoji, sticker style, cluttered fantasy painting
 ```
+
+## Hard safe zone
+
+이미지 생성 시 카드 UI 영역은 권장 여백이 아니라 금지 구역이다.
+
+| 영역 | 비율 | 허용 | 금지 |
+|---|---:|---|---|
+| 상단 UI zone | y 0-22% | 낮은 대비 배경 질감 | 문장, 선, 아이콘, 탭, 띠, 밝은 장식 |
+| 중앙 art zone | x 8-92%, y 22-80% | 문장 1개, 효과군 실루엣 | 카드명/등급/타입처럼 보이는 요소 |
+| 하단 UI zone | y 80-100% | 낮은 대비 배경 질감 | 배지 모양, 선, 아이콘, 밝은 장식 |
+| 좌우 여백 | x 0-8%, x 92-100% | 낮은 대비 배경 질감 | 테두리처럼 보이는 선, corner marker |
+
+판정 기준:
+
+- 문장 외곽선이 상단/하단 UI zone을 침범하면 실패다.
+- 밝은 선이 카드명, 등급 pill, 타입 배지 뒤로 지나갈 것 같으면 실패다.
+- 생성 모델이 전체 카드 레이아웃, 테두리, 상단 띠, 하단 배지를 만들어 내면 실패다.
+- 중앙 art zone 안에서도 작은 내부선은 3-5개 이하로 유지한다.
+
+## UI와 일러스트 분리 원칙
+
+- 일러스트 작업은 카드 효과/정체성/컨셉군을 읽히게 하는 작업이다.
+- 등급/희귀도 보강 UI는 별도 작업이다. 색 띠 하나만으로 부족하면 카드 컴포넌트에서 등급 라벨, 테두리, 배지, 상세 패널 표시를 보강한다.
+- 일러스트는 희귀도 보강 UI를 대신하지 않는다. Common/Uncommon/Rare/Legendary를 이미지 스타일 차이로만 구분하려고 하지 않는다.
+- 생성 결과에 상단 띠 오른쪽이 깨진 듯한 장식, 탭처럼 붙은 marker, 배지처럼 보이는 도형이 생기면 UI 결함으로 오인될 수 있으므로 폐기하거나 재생성한다.
+
+## Pilot 순서
+
+바로 97장 전체를 생성하지 않는다. 먼저 카드 정보 계층이 살아 있는지 확인하는 UI 판독성 pilot 6장을 만든 뒤, 승인되면 컨셉군 대표 14장으로 확장한다. 단, pilot 판정은 이미지 단독이 아니라 강화된 카드 UI mock 또는 실제 런타임 카드 face 위에 얹어서 본다.
+
+1. Common Jester
+2. Rare Jester
+3. Legendary Jester
+4. Q-Slot Item
+5. Tool Item
+6. Gear 또는 Relic Item
+
+6장 pilot은 실제 카드 face에 상단 등급 pill/라벨, 희귀도 색 띠, 이름, 하단 타입/카테고리 배지를 얹었을 때 중앙 문장이 가려지지 않는지 확인하는 용도다. 여기서 통과한 safe area와 선 밀도를 14장 컨셉군 pilot 및 전체 97장 생성에 적용한다.
 
 ## 컨셉군별 프롬프트
 
