@@ -184,7 +184,8 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _market;
+      final market = _market;
+      _mutate(() => _syncCurrentLaneToAvailableOffers(market));
       _queueStateSave();
     });
     if (widget.autoAdvanceOnLoad) {

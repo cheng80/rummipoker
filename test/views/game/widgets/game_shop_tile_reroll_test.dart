@@ -161,6 +161,11 @@ void main() {
       },
     );
 
+    await tester.tap(
+      find.byKey(const ValueKey('market-tile-face'), skipOffstage: false),
+    );
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('구매'));
     await tester.pumpAndSettle();
 
@@ -183,6 +188,10 @@ void main() {
     expect(
       find.byKey(const ValueKey('market-tile-face'), skipOffstage: false),
       findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('market-tile-selector'), skipOffstage: false),
+      findsNothing,
     );
 
     final actionLabelsAfterReroll = tester

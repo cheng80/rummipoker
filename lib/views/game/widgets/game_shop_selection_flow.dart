@@ -123,6 +123,29 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
       ? _mainOfferLane
       : _utilityOfferLane;
 
+  void _syncCurrentLaneToAvailableOffers(RummiMarketRuntimeFacade market) {
+    final currentLane = _currentOfferLane;
+    if (_offerEntriesForLane(market, currentLane).isNotEmpty) return;
+    final fallbackLane = _firstAvailableLaneForCurrentTab(market);
+    if (fallbackLane == null || fallbackLane == currentLane) return;
+    if (_shopTab == _MarketShopTab.cardsAndQuickSlots) {
+      _mainOfferLane = fallbackLane;
+    } else {
+      _utilityOfferLane = fallbackLane;
+    }
+    _clearMarketSelection();
+    _clampOfferPageForLane(market, fallbackLane);
+  }
+
+  _MarketOfferLane? _firstAvailableLaneForCurrentTab(
+    RummiMarketRuntimeFacade market,
+  ) {
+    for (final lane in _offerLanesForTab(_shopTab)) {
+      if (_offerEntriesForLane(market, lane).isNotEmpty) return lane;
+    }
+    return null;
+  }
+
   void _setOfferLaneForPlacement(ItemPlacement placement) {
     switch (placement) {
       case ItemPlacement.quickSlot:

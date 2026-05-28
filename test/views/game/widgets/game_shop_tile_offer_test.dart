@@ -143,6 +143,16 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('market-tile-selector'), skipOffstage: false),
+      findsNothing,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('market-tile-face'), skipOffstage: false),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('market-tile-selector'), skipOffstage: false),
       findsOneWidget,
     );
     expect(find.text('유리 · 10G'), findsOneWidget);
