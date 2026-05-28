@@ -426,3 +426,10 @@ Installed release: `0.2.0`
 - 카드 선택 표시를 만들 때는 바깥 선택 프레임과 카드 face 내부 selected border를 동시에 켜지 않는다. 카드 고유 rarity border는 유지하되, 선택 강조는 한 레이어만 사용해 이중 셀렉트 박스처럼 보이지 않게 한다.
 - 카드 타입 뱃지 색상과 외곽선은 승인된 프리뷰 CSS의 type별 gradient와 얇은 inset/outline 느낌을 따른다. 런타임 placement accent를 그대로 뱃지 색으로 쓰면 프리뷰와 어긋난다.
 - 카드 확대 프리뷰나 후보 카드 표시 스케일을 키우면 기존 `2x` 리소스가 업스케일되는지 먼저 계산한다. 확대 표시 크기가 리소스 원본보다 커지면 원본 이미지에서 더 큰 앱 리소스를 다시 뽑아 적용한다.
+- 카드 face 리소스/레이아웃을 마켓에 적용하면 전투의 Q-Slot/Tool/Gear/Passive 슬롯과 선택 상세/사용 overlay에도 같은 카드 이미지 규칙을 동기화한다. 한 화면만 새 카드이고 다른 화면이 구 카드 상태로 남으면 실패로 본다.
+- 선택 표시가 parent cell/frame과 child face 양쪽에 있을 때는 한 레이어만 선택 강조를 담당한다. 보드 셀처럼 parent가 선택/이동 상태 테두리를 이미 그리면 내부 타일/card face의 selected ring은 끈다.
+- 카드 일러스트 `Image.asset`은 로딩/에러 상태를 빈 박스로 숨기지 않는다. `gaplessPlayback`과 명시적 fallback을 둬서 일시 로딩 지연이나 누락 파일이 UI에서 바로 드러나게 한다.
+- 카드 슬롯 UI를 갱신할 때는 점유 카드뿐 아니라 빈 슬롯과 잠긴 슬롯도 같은 카드형 frame 규칙으로 맞춘다. Jester 빈 슬롯만 최신이고 Item/Q-Slot/Passive/Tool/Gear 빈 슬롯이 구형 rounded chip으로 남으면 실패다.
+- 카드 확대/선택 정보창은 스크롤을 기본 UX로 삼지 않는다. 화면 높이에 맞춰 modal maxHeight를 충분히 키워 내용이 먼저 다 보이게 하고, `SingleChildScrollView`는 작은 화면 안전장치로만 유지한다.
+- 보스 약화/제약 preview는 빨간 계열, 정상 족보 preview는 노란 계열을 사용하므로 보드 셀의 일반 선택 표시를 이 둘과 겹치게 두지 않는다. 유저 선택은 굵은 주황(`#FF8A1F`) parent 프레임으로 표시해 약화/족보 preview와 구분한다.
+- 전투/마켓의 상태 의미 색상은 새 하드코딩 literal을 흩뿌리지 말고 `GameUiPalette` 같은 의미 기반 팔레트에 먼저 추가한다. 선택, 족보 preview, 보스 약화, 정산, 이동 상태처럼 여러 화면에서 재사용되는 색은 팔레트 값을 참조한다.

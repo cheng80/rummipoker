@@ -15,56 +15,58 @@ import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/asset_paths.dart';
+import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/blind_selection_setup.dart';
 import '../../../utils/common_ui.dart';
 import '../game_presentation_timings.dart';
+import 'game_card_metrics.dart';
 import 'game_card_name_text.dart';
+import 'game_ui_palette.dart';
 
-const double kGameTileAspectRatio = 1.0;
-const double kBoardFrameInset = 10.0;
-const double kBoardGridGap = 1.5;
-const double kBoardTileInnerPadding = 2.0;
-const double kBattleItemSlotWidth = 54.0;
-const double kBattleItemSlotHeight = 70.0;
-const double kBattleSlotCardInset = 2.0;
-const int kBattleQuickSlotDisplayCount = 3;
-const int kBattlePassiveSlotDisplayCount = 2;
-const int kBattleToolSlotDisplayCount = 3;
-const int kBattleGearSlotDisplayCount = 2;
-const int kBattleBaseUnlockedQuickSlots = 2;
-const int kBattleBaseUnlockedPassiveSlots = 1;
-const Color kGameModalBarrierColor = Color(0x70000000);
-const Color kGameFeedbackBarrierColor = Color(0x22000000);
+export 'game_card_metrics.dart';
+
+const Color kGameModalBarrierColor = GameUiPalette.modalBarrier;
+const Color kGameFeedbackBarrierColor = GameUiPalette.feedbackBarrier;
 
 Color gameJesterRarityColor(RummiJesterRarity rarity) {
   return switch (rarity) {
-    RummiJesterRarity.uncommon => const Color(0xFF35C96F),
-    RummiJesterRarity.rare => const Color(0xFF2F8CFF),
-    RummiJesterRarity.legendary => const Color(0xFFFFB12B),
-    RummiJesterRarity.common => const Color(0xFF8FAFA4),
+    RummiJesterRarity.uncommon => GameUiPalette.rarityUncommon,
+    RummiJesterRarity.rare => GameUiPalette.rarityRare,
+    RummiJesterRarity.legendary => GameUiPalette.rarityLegendary,
+    RummiJesterRarity.common => GameUiPalette.rarityCommon,
   };
 }
 
 Color gameItemRarityColor(ItemRarity rarity) {
   return switch (rarity) {
-    ItemRarity.uncommon => const Color(0xFF35C96F),
-    ItemRarity.rare => const Color(0xFF2F8CFF),
-    ItemRarity.legendary => const Color(0xFFFFB12B),
-    ItemRarity.common => const Color(0xFF8FAFA4),
+    ItemRarity.uncommon => GameUiPalette.rarityUncommon,
+    ItemRarity.rare => GameUiPalette.rarityRare,
+    ItemRarity.legendary => GameUiPalette.rarityLegendary,
+    ItemRarity.common => GameUiPalette.rarityCommon,
   };
 }
 
+LinearGradient gameItemRarityBarGradient(Color color) {
+  return LinearGradient(
+    colors: [
+      Color.lerp(GameUiPalette.ink, color, 0.58)!,
+      Color.lerp(GameUiPalette.textPrimary, color, 0.18)!,
+      Color.lerp(GameUiPalette.ink, color, 0.64)!,
+    ],
+  );
+}
+
 const TextStyle gameHudLabelStyle = TextStyle(
-  color: Colors.white70,
+  color: GameUiPalette.textSecondary,
   fontSize: 8.5,
   fontWeight: FontWeight.w800,
   letterSpacing: 0.35,
 );
 
 final TextStyle gameHudValueStyle = TextStyle(
-  color: Colors.white.withValues(alpha: 0.96),
+  color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
   fontWeight: FontWeight.w900,
   height: 1,
 );
@@ -84,7 +86,7 @@ class GameInputBarrier extends StatelessWidget {
 }
 
 const TextStyle gameHudSubStyle = TextStyle(
-  color: Colors.white70,
+  color: GameUiPalette.textSecondary,
   fontSize: 9,
   fontWeight: FontWeight.w700,
   height: 1.1,
@@ -144,11 +146,11 @@ class GameTopHud extends StatelessWidget {
         : 'S${battle.stageIndex} · $difficultyLabel';
     final goalLabel = isEndless ? 'ENDLESS GOAL' : 'STATION GOAL';
     final goalColor = isEndless
-        ? const Color(0xFFFFC46B)
-        : Colors.white.withValues(alpha: 0.92);
+        ? GameUiPalette.specialGold
+        : GameUiPalette.textPrimary.withValues(alpha: 0.92);
     final progressColor = isEndless
-        ? const Color(0xFFFF6B3D)
-        : const Color(0xFFF4A81D);
+        ? GameUiPalette.specialDanger
+        : GameUiPalette.actionGold;
 
     return SizedBox(
       height: 62,
@@ -170,7 +172,7 @@ class GameTopHud extends StatelessWidget {
                       stationLabel,
                       style: gameHudLabelStyle.copyWith(
                         color: isEndless
-                            ? const Color(0xFFFFC46B)
+                            ? GameUiPalette.specialGold
                             : gameHudLabelStyle.color,
                       ),
                       maxLines: 1,
@@ -250,7 +252,7 @@ class GameTopHud extends StatelessWidget {
                           goalLabel,
                           style: gameHudLabelStyle.copyWith(
                             color: isEndless
-                                ? const Color(0xFFFFC46B)
+                                ? GameUiPalette.specialGold
                                 : gameHudLabelStyle.color,
                           ),
                           maxLines: 1,
@@ -282,7 +284,7 @@ class GameTopHud extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 6,
-                            backgroundColor: Colors.black.withValues(
+                            backgroundColor: GameUiPalette.ink.withValues(
                               alpha: 0.3,
                             ),
                             valueColor: AlwaysStoppedAnimation<Color>(
@@ -369,7 +371,9 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
             boxShadow: [
               if (glow > 0)
                 BoxShadow(
-                  color: const Color(0xFFF2C14E).withValues(alpha: 0.26 * glow),
+                  color: GameUiPalette.actionGoldBright.withValues(
+                    alpha: 0.26 * glow,
+                  ),
                   blurRadius: 14,
                   spreadRadius: 1.4,
                 ),
@@ -457,7 +461,9 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
                         height: 22,
                         child: Icon(
                           Icons.more_vert_rounded,
-                          color: Colors.white.withValues(alpha: 0.88),
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.88,
+                          ),
                           size: 17,
                         ),
                       ),
@@ -486,7 +492,7 @@ class _GoldAssetFallbackIcon extends StatelessWidget {
       alignment: Alignment.center,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        color: Color(0xFFF2C14E),
+        color: GameUiPalette.actionGoldBright,
       ),
       child: Text(
         'G',
@@ -494,7 +500,7 @@ class _GoldAssetFallbackIcon extends StatelessWidget {
           fontFamily: AssetPaths.fontNexonLv2Gothic,
           fontSize: size * 0.58,
           fontWeight: FontWeight.w900,
-          color: Color(0xFF174131),
+          color: GameUiPalette.surfaceDeepGreen,
           height: 1,
         ),
       ),
@@ -509,15 +515,15 @@ class _StationGoalClearBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF113B31).withValues(alpha: 0.96),
+        color: GameUiPalette.stationClearSurface.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: const Color(0xFF86F4C3).withValues(alpha: 0.92),
+          color: GameUiPalette.settlementActive.withValues(alpha: 0.92),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF86F4C3).withValues(alpha: 0.24),
+            color: GameUiPalette.settlementActive.withValues(alpha: 0.24),
             blurRadius: 8,
             spreadRadius: 0.7,
           ),
@@ -528,7 +534,7 @@ class _StationGoalClearBadge extends StatelessWidget {
         child: Text(
           'CLEAR',
           style: TextStyle(
-            color: Color(0xFFE8FFF4),
+            color: GameUiPalette.specialSuccessText,
             fontSize: 8,
             fontWeight: FontWeight.w900,
             height: 1,
@@ -558,10 +564,10 @@ class _BossModifierHudLabel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 3),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFFF8A5B).withValues(alpha: 0.92),
+              color: GameUiPalette.actionWarning.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(3),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.45),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.45),
                 width: 0.7,
               ),
             ),
@@ -571,7 +577,7 @@ class _BossModifierHudLabel extends StatelessWidget {
                 modifier.markerText,
                 maxLines: 1,
                 style: const TextStyle(
-                  color: Color(0xFF24120D),
+                  color: GameUiPalette.textOnWarm,
                   fontSize: 8,
                   fontWeight: FontWeight.w900,
                   height: 1,
@@ -588,7 +594,7 @@ class _BossModifierHudLabel extends StatelessWidget {
                 compactLabel,
                 maxLines: 1,
                 style: gameHudSubStyle.copyWith(
-                  color: const Color(0xFFFFD8CC),
+                  color: GameUiPalette.actionWarningText,
                   fontSize: 8.5,
                   fontWeight: FontWeight.w900,
                 ),
@@ -625,15 +631,15 @@ String _battleBlindLabel(int tierIndex) {
 Color _battleBlindColor(int tierIndex, {bool isEndless = false}) {
   if (isEndless) {
     return switch (tierIndex) {
-      1 => const Color(0xFFFFC46B),
-      2 => const Color(0xFFFF6B3D),
-      _ => const Color(0xFFFF8F5A),
+      1 => GameUiPalette.specialGold,
+      2 => GameUiPalette.specialDanger,
+      _ => GameUiPalette.specialWarning,
     };
   }
   return switch (tierIndex) {
-    1 => const Color(0xFF72C7FF),
-    2 => const Color(0xFFFF8A5B),
-    _ => const Color(0xFF8BE0B9),
+    1 => GameUiPalette.specialBlue,
+    2 => GameUiPalette.actionWarning,
+    _ => GameUiPalette.specialMint,
   };
 }
 
@@ -794,7 +800,7 @@ class _BottomResourceText extends StatelessWidget {
       maxLines: 1,
       textAlign: textAlign,
       style: const TextStyle(
-        color: Colors.white70,
+        color: GameUiPalette.textSecondary,
         fontSize: 9,
         fontWeight: FontWeight.w800,
       ),
@@ -810,11 +816,17 @@ class _BottomResourceText extends StatelessWidget {
         return DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5),
-            color: const Color(0xFFF2C14E).withValues(alpha: 0.10 * glow),
+            color: GameUiPalette.actionGoldBright.withValues(
+              alpha: 0.10 * glow,
+            ),
           ),
           child: DefaultTextStyle.merge(
             style: TextStyle(
-              color: Color.lerp(Colors.white70, const Color(0xFFFFE08A), glow),
+              color: Color.lerp(
+                GameUiPalette.textSecondary,
+                GameUiPalette.actionGoldText,
+                glow,
+              ),
             ),
             child: child!,
           ),
@@ -894,9 +906,11 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
     );
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF173126).withValues(alpha: 0.78),
+        color: GameUiPalette.surfacePanel.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
@@ -927,7 +941,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                       )
                         _GameItemPocketChip(
                           label: 'Q${index + 1}',
-                          accent: const Color(0xFF267B67),
+                          accent: GameUiPalette.marketPositive,
                           itemSlot: index < quickSlots.length
                               ? quickSlots[index]
                               : null,
@@ -950,7 +964,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                       )
                         _GameItemPocketChip(
                           label: 'P${index + 1}',
-                          accent: const Color(0xFF4C5A55),
+                          accent: GameUiPalette.passiveSlotAccent,
                           itemSlot: index < passiveSlots.length
                               ? passiveSlots[index]
                               : null,
@@ -975,7 +989,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                       )
                         _GameItemPocketChip(
                           label: 'T${index + 1}',
-                          accent: const Color(0xFF2D7FA2),
+                          accent: GameUiPalette.toolSlotAccent,
                           itemSlot: index < toolSlots.length
                               ? toolSlots[index]
                               : null,
@@ -996,7 +1010,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                       )
                         _GameItemPocketChip(
                           label: 'G${index + 1}',
-                          accent: const Color(0xFFB88735),
+                          accent: GameUiPalette.gearSlotAccent,
                           itemSlot: index < gearSlots.length
                               ? gearSlots[index]
                               : null,
@@ -1038,14 +1052,16 @@ class _GameItemQueuedBadge extends StatelessWidget {
           return DecoratedBox(
             key: const ValueKey('battle-item-confirm-queued-badge'),
             decoration: BoxDecoration(
-              color: const Color(0xFFF4A81D).withValues(alpha: 0.16),
+              color: GameUiPalette.actionGold.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: const Color(0xFFF4A81D).withValues(alpha: 0.58),
+                color: GameUiPalette.actionGold.withValues(alpha: 0.58),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD36B).withValues(alpha: 0.32 * glow),
+                  color: GameUiPalette.specialScoreText.withValues(
+                    alpha: 0.32 * glow,
+                  ),
                   blurRadius: 14 * glow,
                   spreadRadius: 1.2 * glow,
                 ),
@@ -1060,7 +1076,7 @@ class _GameItemQueuedBadge extends StatelessWidget {
             '확정 대기 $count',
             maxLines: 1,
             style: const TextStyle(
-              color: Color(0xFFFFD36B),
+              color: GameUiPalette.specialScoreText,
               fontSize: 9,
               fontWeight: FontWeight.w900,
               height: 1,
@@ -1082,10 +1098,10 @@ class _GameItemBoardMoveQueuedBadge extends StatelessWidget {
       child: DecoratedBox(
         key: const ValueKey('battle-item-board-move-queued-badge'),
         decoration: BoxDecoration(
-          color: const Color(0xFF7DE0B8).withValues(alpha: 0.14),
+          color: GameUiPalette.specialSoftMint.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: const Color(0xFF7DE0B8).withValues(alpha: 0.54),
+            color: GameUiPalette.specialSoftMint.withValues(alpha: 0.54),
           ),
         ),
         child: Padding(
@@ -1097,7 +1113,7 @@ class _GameItemBoardMoveQueuedBadge extends StatelessWidget {
                 '이동 보너스 대기',
                 maxLines: 1,
                 style: TextStyle(
-                  color: Color(0xFF9AF0CB),
+                  color: GameUiPalette.specialSoftMintText,
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
                   height: 1,
@@ -1211,9 +1227,11 @@ class _GameItemZoneTabButton extends StatelessWidget {
         padding: EdgeInsets.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         backgroundColor: selected
-            ? const Color(0xFFF4A81D)
-            : Colors.black.withValues(alpha: 0.16),
-        foregroundColor: selected ? Colors.black : Colors.white70,
+            ? GameUiPalette.actionGold
+            : GameUiPalette.ink.withValues(alpha: 0.16),
+        foregroundColor: selected
+            ? GameUiPalette.ink
+            : GameUiPalette.textSecondary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Text(
@@ -1240,6 +1258,10 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = ItemTranslationScope.of(context);
+    final previewMaxHeight = min(
+      MediaQuery.sizeOf(context).height - 96,
+      620.0,
+    ).clamp(420.0, 620.0);
     final name = translations.resolveDisplayName(
       itemSlot.contentId,
       itemSlot.displayName,
@@ -1255,22 +1277,24 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
         itemSlot.placement == ItemPlacement.passiveRack ||
         itemSlot.placement == ItemPlacement.equipped;
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: const Color(0xFF123126).withValues(alpha: 0.96),
+          color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.28),
+              color: GameUiPalette.ink.withValues(alpha: 0.28),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
           ],
         ),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 360),
+          constraints: BoxConstraints(maxHeight: previewMaxHeight),
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -1285,7 +1309,7 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                           name,
                           textAlign: TextAlign.start,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: GameUiPalette.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                           ),
@@ -1294,15 +1318,36 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                       IconButton(
                         onPressed: onClose,
                         icon: const Icon(Icons.close_rounded),
-                        color: Colors.white,
+                        color: GameUiPalette.textPrimary,
                         visualDensity: VisualDensity.compact,
                       ),
                     ],
                   ),
+                  Center(
+                    child: SizedBox(
+                      width: kBattleItemSlotWidth * 3,
+                      height: kBattleItemSlotHeight * 3,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(
+                          width: kBattleItemSlotWidth,
+                          height: kBattleItemSlotHeight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(kBattleSlotCardInset),
+                            child: _GameBattleItemCardFace(
+                              itemSlot: itemSlot,
+                              itemName: name,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     effectText,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.82),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       height: 1.3,
@@ -1331,8 +1376,8 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                       width: double.infinity,
                       child: GameActionButton(
                         label: '사용',
-                        background: const Color(0xFFF4A81D),
-                        foreground: Colors.black,
+                        background: GameUiPalette.actionGold,
+                        foreground: GameUiPalette.ink,
                         onPressed: onUse,
                       ),
                     ),
@@ -1360,9 +1405,11 @@ class _GameToolItemNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.14),
+        ),
       ),
       child: const SizedBox(
         width: double.infinity,
@@ -1372,7 +1419,7 @@ class _GameToolItemNotice extends StatelessWidget {
             '상점용 도구 · Market에서 조건에 따라 사용',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white70,
+              color: GameUiPalette.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w900,
               height: 1.15,
@@ -1391,9 +1438,11 @@ class _GamePassiveItemNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.14),
+        ),
       ),
       child: const SizedBox(
         width: double.infinity,
@@ -1403,7 +1452,7 @@ class _GamePassiveItemNotice extends StatelessWidget {
             '패시브 효과 · 조건 충족 시 자동 발동',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white70,
+              color: GameUiPalette.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w900,
               height: 1.15,
@@ -1437,15 +1486,17 @@ class GameHandTileInfoOverlay extends StatelessWidget {
     final baseInfoText =
         '${tileColorDisplayName(tile.color)} ${tile.number} · 기준 칩 ${tile.baseChipValue}';
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: const Color(0xFF123126).withValues(alpha: 0.96),
+          color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.28),
+              color: GameUiPalette.ink.withValues(alpha: 0.28),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -1477,7 +1528,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                           tile.code,
                           maxLines: 1,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: GameUiPalette.textPrimary,
                             fontSize: 17,
                             fontWeight: FontWeight.w900,
                             height: 1,
@@ -1489,8 +1540,10 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                           maxLines: 2,
                           style: TextStyle(
                             color: hasModifier
-                                ? const Color(0xFFFFD36B)
-                                : Colors.white.withValues(alpha: 0.62),
+                                ? GameUiPalette.specialScoreText
+                                : GameUiPalette.textPrimary.withValues(
+                                    alpha: 0.62,
+                                  ),
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             height: 1.12,
@@ -1502,7 +1555,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                   IconButton(
                     onPressed: onClose,
                     icon: const Icon(Icons.close_rounded),
-                    color: Colors.white,
+                    color: GameUiPalette.textPrimary,
                     visualDensity: VisualDensity.compact,
                   ),
                 ],
@@ -1512,7 +1565,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                 Text(
                   modifierEffectText,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.84),
+                    color: GameUiPalette.textPrimary.withValues(alpha: 0.84),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
@@ -1522,7 +1575,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                 Text(
                   '$baseInfoText\n확정 점수는 완성한 족보의 기본 칩을 기준으로 계산됩니다.',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.72),
+                    color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
@@ -1549,10 +1602,10 @@ class _GameTileInfoConstraintCallout extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF441E1E).withValues(alpha: 0.7),
+        color: GameUiPalette.bossConstraintSurface.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFFFF8A5B).withValues(alpha: 0.42),
+          color: GameUiPalette.actionWarning.withValues(alpha: 0.42),
         ),
       ),
       child: Padding(
@@ -1565,13 +1618,13 @@ class _GameTileInfoConstraintCallout extends StatelessWidget {
               height: 18,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFFF8A5B).withValues(alpha: 0.92),
+                color: GameUiPalette.actionWarning.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
                 modifier.markerText,
                 style: const TextStyle(
-                  color: Color(0xFF24120D),
+                  color: GameUiPalette.textOnWarm,
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                   height: 1,
@@ -1583,7 +1636,7 @@ class _GameTileInfoConstraintCallout extends StatelessWidget {
               child: Text(
                 '${modifier.title}: ${modifier.ruleText}',
                 style: const TextStyle(
-                  color: Color(0xFFFFD8CC),
+                  color: GameUiPalette.actionWarningText,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   height: 1.25,
@@ -1606,16 +1659,18 @@ class _GameItemOverlayTag extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.18),
+        color: GameUiPalette.ink.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         child: Text(
           text,
           style: const TextStyle(
-            color: Colors.white,
+            color: GameUiPalette.textPrimary,
             fontSize: 11,
             fontWeight: FontWeight.w900,
             height: 1,
@@ -1624,6 +1679,299 @@ class _GameItemOverlayTag extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GameBattleItemCardFace extends StatelessWidget {
+  const _GameBattleItemCardFace({
+    required this.itemSlot,
+    required this.itemName,
+  });
+
+  final RummiBattleItemSlotView itemSlot;
+  final String itemName;
+
+  @override
+  Widget build(BuildContext context) {
+    final rarityColor = gameItemRarityColor(itemSlot.item.rarity);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: GameUiPalette.cardFace,
+        borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
+        border: Border.all(
+          color: rarityColor.withValues(alpha: 0.9),
+          width: 1.2,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: kRuntimeCardBarHeight,
+                    decoration: BoxDecoration(
+                      gradient: gameItemRarityBarGradient(rarityColor),
+                      borderRadius: BorderRadius.circular(
+                        kRuntimeCardSmallRadius,
+                      ),
+                      border: Border.all(
+                        color: GameUiPalette.textPrimary.withValues(alpha: 0.2),
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                _GameBattleItemTypeBadge(placement: itemSlot.placement),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: kRuntimeCardArtWidth,
+              height: kBattleRuntimeCardArtHeight,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: GameUiPalette.cardArtSurfaceDeep,
+                borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
+                border: Border.all(
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+                  width: 0.8,
+                ),
+              ),
+              child: Image.asset(
+                CardEmblemAssets.item(itemSlot.contentId),
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+                gaplessPlayback: true,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded || frame != null) {
+                    return child;
+                  }
+                  return _GameBattleItemEmblemFallback(color: rarityColor);
+                },
+                errorBuilder: (context, error, stackTrace) =>
+                    _GameBattleItemEmblemFallback(color: rarityColor),
+              ),
+            ),
+            const SizedBox(height: 3),
+            Expanded(
+              child: Center(
+                child: GameCardNameText(
+                  itemName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: GameUiPalette.cardNameWarm,
+                    fontSize: 6.2,
+                    fontWeight: FontWeight.w900,
+                    height: 0.94,
+                  ),
+                ),
+              ),
+            ),
+            Text(
+              _battleItemTypeText(itemSlot.placement),
+              maxLines: 1,
+              style: TextStyle(
+                color: GameUiPalette.cardTypeText.withValues(alpha: 0.78),
+                fontSize: 5.0,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GameBattleItemEmblemFallback extends StatelessWidget {
+  const _GameBattleItemEmblemFallback({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Icon(
+        Icons.auto_awesome_rounded,
+        size: 14,
+        color: color.withValues(alpha: 0.72),
+      ),
+    );
+  }
+}
+
+class _GameBattleEmptyItemSlotFace extends StatelessWidget {
+  const _GameBattleEmptyItemSlotFace({
+    required this.label,
+    required this.locked,
+  });
+
+  final String label;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: GameUiPalette.cardEmptyFace.withValues(
+          alpha: locked ? 0.58 : 0.82,
+        ),
+        borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(
+            alpha: locked ? 0.12 : 0.18,
+          ),
+          width: 1.2,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              locked ? 'LOCKED' : _battleEmptyItemTypeText(label),
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: GameUiPalette.textPrimary.withValues(
+                  alpha: locked ? 0.46 : 0.62,
+                ),
+                fontSize: 7.4,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.2,
+                height: 1,
+              ),
+            ),
+            const Spacer(),
+            Center(
+              child: Icon(
+                locked ? Icons.lock_rounded : Icons.add_box_outlined,
+                color: GameUiPalette.textPrimary.withValues(
+                  alpha: locked ? 0.36 : 0.28,
+                ),
+                size: 20,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Center(
+              child: Text(
+                locked ? _battleLockedSlotOrdinal(label) : label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: GameUiPalette.textPrimary.withValues(
+                    alpha: locked ? 0.48 : 0.42,
+                  ),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _battleEmptyItemTypeText(String label) {
+  return switch (label.isEmpty ? null : label[0]) {
+    'Q' => 'Q-SLOT',
+    'P' => 'PASSIVE',
+    'T' => 'TOOL',
+    'G' => 'GEAR',
+    _ => label,
+  };
+}
+
+String _battleLockedSlotOrdinal(String label) {
+  final match = RegExp(r'\d+').firstMatch(label);
+  final value = match == null ? null : int.tryParse(match.group(0)!);
+  return switch (value) {
+    1 => '1st',
+    2 => '2nd',
+    3 => '3rd',
+    4 => '4th',
+    5 => '5th',
+    _ => label,
+  };
+}
+
+class _GameBattleItemTypeBadge extends StatelessWidget {
+  const _GameBattleItemTypeBadge({required this.placement});
+
+  final ItemPlacement placement;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: kRuntimeCardTypeBadgeWidth,
+      height: kRuntimeCardTypeBadgeHeight,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: _battleItemTypeBadgeGradient(placement),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.5),
+          width: 0.7,
+        ),
+      ),
+      child: Text(
+        _battleItemTypeBadgeText(placement),
+        style: const TextStyle(
+          color: GameUiPalette.textPrimary,
+          fontSize: 3.8,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+LinearGradient _battleItemTypeBadgeGradient(ItemPlacement placement) {
+  final colors = switch (placement) {
+    ItemPlacement.quickSlot => (
+      GameUiPalette.itemBadgeQuickTop,
+      GameUiPalette.itemBadgeQuickBottom,
+    ),
+    ItemPlacement.inventory => (
+      GameUiPalette.itemBadgeToolTop,
+      GameUiPalette.itemBadgeToolBottom,
+    ),
+    ItemPlacement.equipped => (
+      GameUiPalette.itemBadgeGearTop,
+      GameUiPalette.itemBadgeGearBottom,
+    ),
+    ItemPlacement.passiveRack => (
+      GameUiPalette.itemBadgePassiveTop,
+      GameUiPalette.itemBadgePassiveBottom,
+    ),
+  };
+  return LinearGradient(colors: [colors.$1, colors.$2]);
+}
+
+String _battleItemTypeBadgeText(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => 'Q',
+    ItemPlacement.inventory => 'T',
+    ItemPlacement.equipped => 'G',
+    ItemPlacement.passiveRack => 'P',
+  };
+}
+
+String _battleItemTypeText(ItemPlacement placement) {
+  return switch (placement) {
+    ItemPlacement.quickSlot => 'Q-SLOT',
+    ItemPlacement.inventory => 'TOOL',
+    ItemPlacement.equipped => 'GEAR',
+    ItemPlacement.passiveRack => 'PASSIVE',
+  };
 }
 
 class _GameItemPocketChip extends StatelessWidget {
@@ -1656,13 +2004,10 @@ class _GameItemPocketChip extends StatelessWidget {
             context,
           ).resolveDisplayName(itemSlot.contentId, itemSlot.displayName);
     final frameColor = selected
-        ? const Color(0xFFF2C14E)
-        : Colors.white.withValues(alpha: 0.22);
+        ? GameUiPalette.actionGoldBright
+        : GameUiPalette.textPrimary.withValues(alpha: 0.22);
     final frameWidth = selected ? 2.2 : 1.1;
     final hasItem = itemSlot != null;
-    final itemRarityColor = hasItem
-        ? gameItemRarityColor(itemSlot.item.rarity)
-        : accent;
     final isActive = activeEffect != null;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1686,26 +2031,8 @@ class _GameItemPocketChip extends StatelessWidget {
               padding: const EdgeInsets.all(kBattleSlotCardInset),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: locked
-                      ? Colors.black.withValues(alpha: 0.26)
-                      : itemSlot == null
-                      ? Colors.black.withValues(alpha: 0.16)
-                      : const Color(0xFFDDE9E4),
+                  color: GameUiPalette.transparent,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isActive
-                        ? const Color(0xFFF2C14E)
-                        : locked
-                        ? Colors.white.withValues(alpha: 0.14)
-                        : itemSlot == null
-                        ? accent.withValues(alpha: 0.48)
-                        : itemRarityColor.withValues(alpha: 0.88),
-                    width: isActive
-                        ? 2
-                        : itemSlot == null
-                        ? 1
-                        : 1.2,
-                  ),
                   boxShadow: isActive
                       ? [
                           BoxShadow(
@@ -1719,7 +2046,7 @@ class _GameItemPocketChip extends StatelessWidget {
                       : hasItem
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.18),
+                            color: GameUiPalette.ink.withValues(alpha: 0.18),
                             blurRadius: 7,
                             offset: const Offset(0, 3),
                           ),
@@ -1727,111 +2054,55 @@ class _GameItemPocketChip extends StatelessWidget {
                       : null,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(5, 5, 5, 4),
-                  child: locked
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                  padding: EdgeInsets.zero,
+                  child: itemSlot == null || locked
+                      ? _GameBattleEmptyItemSlotFace(
+                          label: label,
+                          locked: locked,
+                        )
+                      : Stack(
+                          clipBehavior: Clip.none,
                           children: [
-                            Icon(
-                              Icons.lock_rounded,
-                              color: Colors.white.withValues(alpha: 0.40),
-                              size: 22,
-                            ),
-                            const SizedBox(height: 7),
-                            Text(
-                              label,
-                              maxLines: 1,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.48),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                height: 1,
+                            Positioned.fill(
+                              child: _GameBattleItemCardFace(
+                                itemSlot: itemSlot,
+                                itemName: itemName!,
                               ),
                             ),
-                          ],
-                        )
-                      : itemSlot == null
-                      ? Center(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              label,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              alignment: Alignment.center,
-                              child: FractionallySizedBox(
-                                widthFactor: 0.82,
+                            if (activeEffect != null)
+                              Positioned(
+                                left: 4,
+                                right: 4,
+                                top: 20,
                                 child: Container(
-                                  height: 7,
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: itemRarityColor,
-                                    borderRadius: BorderRadius.circular(6),
+                                    color: const Color(
+                                      0xFF1E4A3B,
+                                    ).withValues(alpha: 0.92),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: GameUiPalette.actionGoldBright,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _itemEffectBadge(activeEffect!),
+                                    maxLines: 1,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: GameUiPalette.textPrimary,
+                                      fontSize: 6.5,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            if (activeEffect != null) ...[
-                              Container(
-                                alignment: Alignment.center,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E4A3B),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  _itemEffectBadge(activeEffect!),
-                                  maxLines: 1,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 6.5,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                            ],
-                            Text(
-                              itemSlot.slotLabel,
-                              maxLines: 1,
-                              style: TextStyle(
-                                color: const Color(
-                                  0xFF26352F,
-                                ).withValues(alpha: 0.72),
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                height: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Expanded(
-                              child: Center(
-                                child: GameCardNameText(
-                                  itemName!,
-                                  style: const TextStyle(
-                                    color: Color(0xFF26352F),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1.05,
-                                  ),
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                 ),
@@ -1859,9 +2130,11 @@ class _GameItemPocketChip extends StatelessWidget {
               child: Center(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.42),
+                    color: GameUiPalette.ink.withValues(alpha: 0.42),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white24),
+                    border: Border.all(
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.24),
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -1871,7 +2144,7 @@ class _GameItemPocketChip extends StatelessWidget {
                     child: Text(
                       'x${itemSlot.count}',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: GameUiPalette.textPrimary,
                         fontSize: 8,
                         fontWeight: FontWeight.w900,
                         height: 1,
@@ -1935,14 +2208,14 @@ class _GameItemEffectBurst extends StatelessWidget {
       child: Center(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xE6143C31),
+            color: GameUiPalette.settlementEffectSurface,
             borderRadius: BorderRadius.circular(7),
             border: Border.all(
-              color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
+              color: GameUiPalette.actionGoldBright.withValues(alpha: 0.72),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFF2C14E).withValues(alpha: 0.18),
+                color: GameUiPalette.actionGoldBright.withValues(alpha: 0.18),
                 blurRadius: 10,
                 spreadRadius: 1,
               ),
@@ -1953,7 +2226,11 @@ class _GameItemEffectBurst extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(width: 3, height: 30, color: const Color(0xFFF2C14E)),
+                Container(
+                  width: 3,
+                  height: 30,
+                  color: GameUiPalette.actionGoldBright,
+                ),
                 const SizedBox(width: 7),
                 Flexible(
                   child: Column(
@@ -1964,7 +2241,9 @@ class _GameItemEffectBurst extends StatelessWidget {
                         sourceName,
                         maxLines: 1,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.92),
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.92,
+                          ),
                           fontSize: 7.5,
                           fontWeight: FontWeight.w900,
                           height: 1,
@@ -1975,7 +2254,7 @@ class _GameItemEffectBurst extends StatelessWidget {
                         _itemEffectBadge(effect),
                         maxLines: 1,
                         style: const TextStyle(
-                          color: Color(0xFFFFF4CF),
+                          color: GameUiPalette.textWarmPale,
                           fontSize: 9,
                           fontWeight: FontWeight.w900,
                           height: 1,
@@ -2010,9 +2289,11 @@ class GameDebugShopHandCluster extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: GameUiPalette.textPrimary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+        ),
       ),
       child: IntrinsicWidth(
         child: Column(
@@ -2023,7 +2304,7 @@ class GameDebugShopHandCluster extends StatelessWidget {
               'DEBUG',
               textAlign: TextAlign.left,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.42),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.42),
                 fontSize: 7.5,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.9,
@@ -2044,13 +2325,13 @@ class GameDebugShopHandCluster extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4A81D),
+                      color: GameUiPalette.actionGold,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Text(
                       'MARKET',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: GameUiPalette.ink,
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
                       ),
@@ -2094,7 +2375,7 @@ class GameDebugHandSizeSegment extends StatelessWidget {
             child: Text(
               'Hand',
               style: TextStyle(
-                color: Colors.white70,
+                color: GameUiPalette.textSecondary,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
               ),
@@ -2114,14 +2395,16 @@ class GameDebugHandSizeSegment extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: value == option
-                        ? const Color(0xFF4AA78D)
-                        : Colors.transparent,
+                        ? GameUiPalette.debugToggleActive
+                        : GameUiPalette.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '$option',
                     style: TextStyle(
-                      color: value == option ? Colors.white : Colors.white70,
+                      color: value == option
+                          ? GameUiPalette.textPrimary
+                          : GameUiPalette.textSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                     ),
@@ -2144,10 +2427,10 @@ class GameHudChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A4D3C).withValues(alpha: 0.68),
+        color: GameUiPalette.hudChipSurface.withValues(alpha: 0.68),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFF6A8E7C).withValues(alpha: 0.45),
+          color: GameUiPalette.boardHudBorder.withValues(alpha: 0.45),
         ),
       ),
       child: Padding(
@@ -2263,10 +2546,10 @@ class _GameBoardGridState extends State<GameBoardGrid> {
             height: side,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFF1A4B3A).withValues(alpha: 0.48),
+                color: GameUiPalette.surfaceSection.withValues(alpha: 0.48),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFF739785).withValues(alpha: 0.45),
+                  color: GameUiPalette.boardFrameBorder.withValues(alpha: 0.45),
                   width: 1,
                 ),
               ),
@@ -2757,20 +3040,20 @@ class GameBoardCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = moveSource
-        ? const Color(0xFF5EE7F7)
+        ? GameUiPalette.boardMoveSource
         : moveAvailable
-        ? const Color(0xFF85E9B8)
+        ? GameUiPalette.boardMoveAvailable
         : moveLocked
-        ? Colors.white.withValues(alpha: 0.18)
+        ? GameUiPalette.textPrimary.withValues(alpha: 0.18)
         : selected
-        ? const Color(0xFFF76D5E)
+        ? GameUiPalette.userSelection
         : settlementActive
-        ? const Color(0xFF86F4C3)
+        ? GameUiPalette.settlementActive
         : constrainedScoring
-        ? const Color(0xFFE45A5F)
+        ? GameUiPalette.bossWeakenPreview
         : scoring
-        ? const Color(0xFFF4C45A)
-        : Colors.white.withValues(alpha: 0.1);
+        ? GameUiPalette.scoringPreview
+        : GameUiPalette.textPrimary.withValues(alpha: 0.1);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -2778,7 +3061,7 @@ class GameBoardCell extends StatelessWidget {
         final cornerRadius = rummikubTileCornerRadiusForSide(side);
 
         return Material(
-          color: Colors.transparent,
+          color: GameUiPalette.transparent,
           child: InkWell(
             onTap: onTap,
             onLongPress: onLongPress,
@@ -2787,14 +3070,16 @@ class GameBoardCell extends StatelessWidget {
               duration: GamePresentationTimings.boardTileState,
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color(0xFF2A3B34)
+                    ? GameUiPalette.boardSelectedFill
                     : moveAvailable
-                    ? const Color(0xFF23654A).withValues(alpha: 0.86)
+                    ? GameUiPalette.boardMoveAvailableFill.withValues(
+                        alpha: 0.86,
+                      )
                     : moveLocked
-                    ? const Color(0xFF24312D).withValues(alpha: 0.78)
+                    ? GameUiPalette.boardMoveLockedFill.withValues(alpha: 0.78)
                     : settlementActive
-                    ? const Color(0xFF285A49)
-                    : const Color(0xFF204E3C).withValues(alpha: 0.88),
+                    ? GameUiPalette.boardSettlementFill
+                    : GameUiPalette.boardDefaultFill.withValues(alpha: 0.88),
                 borderRadius: BorderRadius.circular(cornerRadius),
                 border: Border.all(
                   color: borderColor,
@@ -2810,11 +3095,21 @@ class GameBoardCell extends StatelessWidget {
                 boxShadow: settlementActive
                     ? [
                         BoxShadow(
-                          color: const Color(
-                            0xFF86F4C3,
-                          ).withValues(alpha: 0.18),
+                          color: GameUiPalette.settlementActive.withValues(
+                            alpha: 0.18,
+                          ),
                           blurRadius: 10,
                           spreadRadius: 1,
+                        ),
+                      ]
+                    : selected
+                    ? [
+                        BoxShadow(
+                          color: GameUiPalette.userSelection.withValues(
+                            alpha: 0.32,
+                          ),
+                          blurRadius: 12,
+                          spreadRadius: 1.5,
                         ),
                       ]
                     : null,
@@ -2824,7 +3119,9 @@ class GameBoardCell extends StatelessWidget {
                         ? Center(
                             child: Icon(
                               Icons.open_with_rounded,
-                              color: Colors.white.withValues(alpha: 0.58),
+                              color: GameUiPalette.textPrimary.withValues(
+                                alpha: 0.58,
+                              ),
                               size: side * 0.32,
                             ),
                           )
@@ -2840,7 +3137,7 @@ class GameBoardCell extends StatelessWidget {
                               opacity: moveLocked ? 0.42 : 1,
                               child: GameRummiTileCard(
                                 tile: tile!,
-                                selected: selected || moveSource,
+                                selected: false,
                                 accent: false,
                                 aspectRatio: kGameTileAspectRatio,
                                 reserveConstraintBadgeSpace: constrained,
@@ -2923,13 +3220,13 @@ class GameConstraintBadge extends StatelessWidget {
                     maxLines: 1,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.96),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
                       fontSize: fontSize,
                       fontWeight: FontWeight.w900,
                       height: 1,
                       shadows: [
                         Shadow(
-                          color: Colors.black.withValues(alpha: 0.36),
+                          color: GameUiPalette.ink.withValues(alpha: 0.36),
                           blurRadius: 1.7,
                           offset: const Offset(0, 0.9),
                         ),
@@ -2952,7 +3249,7 @@ class GameActionButton extends StatelessWidget {
     required this.label,
     required this.background,
     required this.onPressed,
-    this.foreground = Colors.white,
+    this.foreground = GameUiPalette.textPrimary,
     this.compact = false,
   });
 
@@ -3059,8 +3356,8 @@ class GameTileModifierBadges extends StatelessWidget {
                     fontSize: metrics.fontSize,
                     background: tileEnhancementColor(enhancement),
                     foreground: enhancement == TileEnhancement.goldTile
-                        ? Colors.black
-                        : Colors.white,
+                        ? GameUiPalette.ink
+                        : GameUiPalette.textPrimary,
                   ),
                 ),
               if (seal != null)
@@ -3073,7 +3370,7 @@ class GameTileModifierBadges extends StatelessWidget {
                     height: metrics.badgeHeight,
                     fontSize: metrics.fontSize,
                     background: tileSealColor(seal),
-                    foreground: Colors.white,
+                    foreground: GameUiPalette.textPrimary,
                     circular: true,
                   ),
                 ),
@@ -3133,12 +3430,12 @@ class _TileModifierBadge extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(circular ? 999 : height * 0.28),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.82),
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
           width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.32),
+            color: GameUiPalette.ink.withValues(alpha: 0.32),
             blurRadius: 5,
             offset: const Offset(0, 1.5),
           ),
@@ -3246,19 +3543,19 @@ String tileSealEffectText(TileSeal seal) {
 
 Color tileEnhancementColor(TileEnhancement enhancement) {
   return switch (enhancement) {
-    TileEnhancement.chipInlaid => const Color(0xFF2D6F9E),
-    TileEnhancement.scoreGilded => const Color(0xFF7C4DFF),
-    TileEnhancement.goldTile => const Color(0xFFF2C14E),
-    TileEnhancement.glassTile => const Color(0xFF3BC7D6),
-    TileEnhancement.wildPainted => const Color(0xFF2EA66F),
-    TileEnhancement.luckyTile => const Color(0xFFC05AB8),
+    TileEnhancement.chipInlaid => GameUiPalette.tileChipInlaid,
+    TileEnhancement.scoreGilded => GameUiPalette.tileScoreGilded,
+    TileEnhancement.goldTile => GameUiPalette.actionGoldBright,
+    TileEnhancement.glassTile => GameUiPalette.tileGlass,
+    TileEnhancement.wildPainted => GameUiPalette.tileWild,
+    TileEnhancement.luckyTile => GameUiPalette.tileLucky,
   };
 }
 
 Color tileSealColor(TileSeal seal) {
   return switch (seal) {
-    TileSeal.blueSeal => const Color(0xFF246BCE),
-    TileSeal.redSeal => const Color(0xFFC0392B),
+    TileSeal.blueSeal => GameUiPalette.tileBlueSeal,
+    TileSeal.redSeal => GameUiPalette.tileRedSeal,
   };
 }
 
@@ -3295,7 +3592,7 @@ class _GameRummiTilePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
-        ..color = const Color(0xFFF2C14E).withValues(alpha: 0.75),
+        ..color = GameUiPalette.actionGoldBright.withValues(alpha: 0.75),
     );
   }
 
@@ -3326,17 +3623,21 @@ class _GameTableBackdropPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFF1B5644), Color(0xFF12392E), Color(0xFF0A211B)],
+        colors: [
+          GameUiPalette.gameTableGradientStart,
+          GameUiPalette.gameTableGradientMid,
+          GameUiPalette.gameTableGradientEnd,
+        ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, basePaint);
 
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10
-      ..color = Colors.white.withValues(alpha: 0.035);
+      ..color = GameUiPalette.textPrimary.withValues(alpha: 0.035);
     final shadowPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.black.withValues(alpha: 0.08);
+      ..color = GameUiPalette.ink.withValues(alpha: 0.08);
 
     final seeds = [
       Offset(size.width * 0.18, size.height * 0.16),
@@ -3371,9 +3672,11 @@ class GameModalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2E24),
+        color: GameUiPalette.surfaceModal,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -3406,7 +3709,7 @@ Future<T?> showGameFramedDialog<T>({
         explicitChildNodes: true,
         label: routeLabel,
         child: Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: GameUiPalette.transparent,
           insetPadding: const EdgeInsets.symmetric(
             horizontal: 18,
             vertical: 24,
@@ -3440,10 +3743,10 @@ class GameOverInsightRewardCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF233D38),
+        color: GameUiPalette.gameOverRewardSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF64D8A4).withValues(alpha: 0.42),
+          color: GameUiPalette.actionSuccess.withValues(alpha: 0.42),
         ),
       ),
       child: Row(
@@ -3453,14 +3756,17 @@ class GameOverInsightRewardCard extends StatelessWidget {
             width: 42,
             height: 54,
             decoration: BoxDecoration(
-              color: const Color(0xFF132520),
+              color: GameUiPalette.gameOverRewardIconSurface,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF9DF0BE), width: 1.4),
+              border: Border.all(
+                color: GameUiPalette.gameOverRewardAccent,
+                width: 1.4,
+              ),
             ),
             alignment: Alignment.center,
             child: const Icon(
               Icons.style_rounded,
-              color: Color(0xFF9DF0BE),
+              color: GameUiPalette.gameOverRewardAccent,
               size: 24,
             ),
           ),
@@ -3472,7 +3778,7 @@ class GameOverInsightRewardCard extends StatelessWidget {
                 const Text(
                   '기억 카드 획득',
                   style: TextStyle(
-                    color: Color(0xFF9DF0BE),
+                    color: GameUiPalette.gameOverRewardAccent,
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
@@ -3481,7 +3787,7 @@ class GameOverInsightRewardCard extends StatelessWidget {
                 Text(
                   '다음 런 준비에서 새 규칙을 여는 데 사용됩니다.',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.72),
+                    color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     height: 1.25,
@@ -3581,7 +3887,7 @@ void showGameOverDialog({
               _localizedGameResultTitle(context),
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
-                color: Colors.white.withValues(alpha: 0.95),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.95),
                 fontSize: 18,
               ),
             ),
@@ -3591,7 +3897,7 @@ void showGameOverDialog({
             Text(
               text,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.82),
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 height: 1.35,
@@ -3611,8 +3917,8 @@ void showGameOverDialog({
               children: [
                 GameActionButton(
                   label: '다시 도전',
-                  background: const Color(0xFFF4A81D),
-                  foreground: Colors.black,
+                  background: GameUiPalette.actionGold,
+                  foreground: GameUiPalette.ink,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
@@ -3623,8 +3929,8 @@ void showGameOverDialog({
                 const SizedBox(height: 10),
                 GameActionButton(
                   label: '새 run 준비',
-                  background: const Color(0xFF64D8A4),
-                  foreground: Colors.black,
+                  background: GameUiPalette.actionSuccess,
+                  foreground: GameUiPalette.ink,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
@@ -3635,7 +3941,7 @@ void showGameOverDialog({
                 const SizedBox(height: 10),
                 GameActionButton(
                   label: _localizedDialogLabel(context, 'exit', '나가기'),
-                  background: const Color(0xFF5D6B68),
+                  background: GameUiPalette.disabledControl,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
@@ -3661,10 +3967,10 @@ class _GameOverTauntPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF4C1F1B),
+        color: GameUiPalette.surfaceDanger,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFFF6B57).withValues(alpha: 0.46),
+          color: GameUiPalette.specialDangerBorder.withValues(alpha: 0.46),
         ),
       ),
       child: Padding(
@@ -3675,7 +3981,7 @@ class _GameOverTauntPanel extends StatelessWidget {
           children: [
             const Icon(
               Icons.theater_comedy_rounded,
-              color: Color(0xFFFFB0A3),
+              color: GameUiPalette.specialDangerText,
               size: 24,
             ),
             Expanded(
@@ -3683,7 +3989,7 @@ class _GameOverTauntPanel extends StatelessWidget {
                 text,
                 softWrap: true,
                 style: const TextStyle(
-                  color: Color(0xFFFFE4DF),
+                  color: GameUiPalette.specialDangerPale,
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                   height: 1.28,
@@ -3716,10 +4022,10 @@ class _GameOverRunSummaryCard extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF172A27),
+        color: GameUiPalette.surfaceInfo,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFE6D4A1).withValues(alpha: 0.26),
+          color: GameUiPalette.cardFallback.withValues(alpha: 0.26),
         ),
       ),
       child: Padding(
@@ -3731,7 +4037,7 @@ class _GameOverRunSummaryCard extends StatelessWidget {
             const Text(
               '이번 런 정산',
               style: TextStyle(
-                color: Color(0xFFEFE6C8),
+                color: GameUiPalette.specialMutedText,
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
               ),
@@ -3776,7 +4082,7 @@ class _GameOverSummaryRow extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.62),
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.62),
               fontSize: 12,
               fontWeight: FontWeight.w800,
               height: 1.25,
@@ -3788,7 +4094,7 @@ class _GameOverSummaryRow extends StatelessWidget {
             value,
             softWrap: true,
             style: const TextStyle(
-              color: Colors.white,
+              color: GameUiPalette.textPrimary,
               fontSize: 12.5,
               fontWeight: FontWeight.w900,
               height: 1.25,

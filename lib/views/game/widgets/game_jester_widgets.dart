@@ -8,27 +8,16 @@ import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
+import 'game_ui_palette.dart';
 
-const double kJesterCardWidth = kBattleItemSlotWidth;
-const double kJesterCardHeight = kBattleItemSlotHeight;
-const double kJesterSelectionOutset = 3.0;
-const double kJesterSelectionBorderWidth = 3.0;
-const double kRuntimeCardOuterRadius = 4.0;
-const double kRuntimeCardInnerRadius = 4.0;
-const double kRuntimeCardArtRadius = 3.0;
-const double kRuntimeCardSmallRadius = 2.0;
-const double kRuntimeCardBarHeight = 5.0;
-const double kRuntimeCardTypeBadgeWidth = 9.0;
-const double kRuntimeCardTypeBadgeHeight = 5.0;
-const double kRuntimeCardArtWidth = 41.0;
-const double kRuntimeCardArtHeight = 41.0;
+export 'game_card_metrics.dart';
 
 LinearGradient gameCardRarityBarGradient(Color color) {
   return LinearGradient(
     colors: [
-      Color.lerp(Colors.black, color, 0.58)!,
-      Color.lerp(Colors.white, color, 0.18)!,
-      Color.lerp(Colors.black, color, 0.64)!,
+      Color.lerp(GameUiPalette.ink, color, 0.58)!,
+      Color.lerp(GameUiPalette.textPrimary, color, 0.18)!,
+      Color.lerp(GameUiPalette.ink, color, 0.64)!,
     ],
   );
 }
@@ -179,9 +168,11 @@ class GameJesterZone extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF173126).withValues(alpha: 0.78),
+        color: GameUiPalette.surfacePanel.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 5, 10, 6),
@@ -240,8 +231,8 @@ class GameJesterSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final frameColor = selected
-        ? const Color(0xFFF2C14E)
-        : Colors.white.withValues(alpha: 0.22);
+        ? GameUiPalette.actionGoldBright
+        : GameUiPalette.textPrimary.withValues(alpha: 0.22);
     final frameWidth = selected ? 2.2 : 1.1;
     if (card == null) {
       return Stack(
@@ -261,10 +252,10 @@ class GameJesterSlot extends StatelessWidget {
               padding: const EdgeInsets.all(kBattleSlotCardInset),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF183E32).withValues(alpha: 0.82),
+                  color: GameUiPalette.cardEmptyFace.withValues(alpha: 0.82),
                   borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
+                    color: GameUiPalette.textPrimary.withValues(alpha: 0.18),
                     width: 1.2,
                   ),
                 ),
@@ -285,7 +276,7 @@ class GameJesterSlot extends StatelessWidget {
                         maxLines: 1,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white.withValues(
+                          color: GameUiPalette.textPrimary.withValues(
                             alpha: locked ? 0.46 : 0.62,
                           ),
                           fontSize: 8,
@@ -302,7 +293,7 @@ class GameJesterSlot extends StatelessWidget {
                               : extended
                               ? Icons.add_box_outlined
                               : Icons.style_outlined,
-                          color: Colors.white.withValues(
+                          color: GameUiPalette.textPrimary.withValues(
                             alpha: locked ? 0.36 : 0.28,
                           ),
                           size: 20,
@@ -318,7 +309,7 @@ class GameJesterSlot extends StatelessWidget {
                               : '+',
                           maxLines: 1,
                           style: TextStyle(
-                            color: Colors.white.withValues(
+                            color: GameUiPalette.textPrimary.withValues(
                               alpha: locked ? 0.48 : 0.42,
                             ),
                             fontSize: 10,
@@ -361,19 +352,21 @@ class GameJesterSlot extends StatelessWidget {
               padding: const EdgeInsets.all(kBattleSlotCardInset),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: surfaceColor ?? const Color(0xFF10271E),
+                  color: surfaceColor ?? GameUiPalette.cardFace,
                   borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
                   border: Border.all(
                     color: isActive
-                        ? const Color(0xFFF2C14E)
+                        ? GameUiPalette.actionGoldBright
                         : rarityColor.withValues(alpha: 0.72),
                     width: isActive ? 2 : 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: isActive
-                          ? const Color(0xFFF2C14E).withValues(alpha: 0.3)
-                          : Colors.black.withValues(alpha: 0.18),
+                          ? GameUiPalette.actionGoldBright.withValues(
+                              alpha: 0.3,
+                            )
+                          : GameUiPalette.ink.withValues(alpha: 0.18),
                       blurRadius: isActive ? 12 : 7,
                       offset: const Offset(0, 3),
                     ),
@@ -398,7 +391,9 @@ class GameJesterSlot extends StatelessWidget {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.white.withValues(alpha: 0.18),
+                                    color: GameUiPalette.textPrimary.withValues(
+                                      alpha: 0.18,
+                                    ),
                                     blurRadius: 0,
                                     spreadRadius: 0.4,
                                   ),
@@ -410,7 +405,7 @@ class GameJesterSlot extends StatelessWidget {
                           _GameCardTypeBadge(
                             label: 'J',
                             color: rarityColor,
-                            textColor: const Color(0xFFF7EEC8),
+                            textColor: GameUiPalette.cardBadgeText,
                           ),
                         ],
                       ),
@@ -425,7 +420,7 @@ class GameJesterSlot extends StatelessWidget {
                           child: _RuntimeCardNameText(
                             displayName,
                             style: const TextStyle(
-                              color: Color(0xFFF5E9B6),
+                              color: GameUiPalette.cardName,
                               fontSize: 5,
                               fontWeight: FontWeight.w900,
                               height: 1.12,
@@ -455,7 +450,7 @@ class GameJesterSlot extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E4A3B),
+                            color: GameUiPalette.surfacePanel,
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
@@ -463,7 +458,7 @@ class GameJesterSlot extends StatelessWidget {
                             maxLines: 1,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: GameUiPalette.textPrimary,
                               fontSize: 6.5,
                               fontWeight: FontWeight.w900,
                               height: 1,
@@ -509,10 +504,10 @@ class _GameCardEmblemImage extends StatelessWidget {
         height: kRuntimeCardArtHeight,
         padding: const EdgeInsets.all(2.5),
         decoration: BoxDecoration(
-          color: const Color(0xFF041613),
+          color: GameUiPalette.cardArtSurface,
           borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
           border: Border.all(
-            color: const Color(0xFFB8D3B9).withValues(alpha: 0.28),
+            color: GameUiPalette.cardArtBorder.withValues(alpha: 0.28),
             width: 0.8,
           ),
         ),
@@ -522,9 +517,31 @@ class _GameCardEmblemImage extends StatelessWidget {
             assetPath,
             fit: BoxFit.contain,
             filterQuality: FilterQuality.high,
-            errorBuilder: (_, _, _) => const SizedBox.expand(),
+            gaplessPlayback: true,
+            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+              if (wasSynchronouslyLoaded || frame != null) {
+                return child;
+              }
+              return const _GameCardEmblemFallback();
+            },
+            errorBuilder: (_, _, _) => const _GameCardEmblemFallback(),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _GameCardEmblemFallback extends StatelessWidget {
+  const _GameCardEmblemFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Icon(
+        Icons.auto_awesome_rounded,
+        size: 16,
+        color: GameUiPalette.cardFallback.withValues(alpha: 0.48),
       ),
     );
   }
@@ -552,12 +569,14 @@ class _GameCardTypeBadge extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color.lerp(Colors.white, color, 0.18)!,
-            Color.lerp(Colors.black, color, 0.38)!,
+            Color.lerp(GameUiPalette.textPrimary, color, 0.18)!,
+            Color.lerp(GameUiPalette.ink, color, 0.38)!,
           ],
         ),
         borderRadius: BorderRadius.circular(kRuntimeCardSmallRadius),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
+        border: Border.all(
+          color: GameUiPalette.textPrimary.withValues(alpha: 0.42),
+        ),
       ),
       child: Text(
         label,
@@ -627,14 +646,14 @@ class GameJesterEffectBurst extends StatelessWidget {
       child: Center(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xE6143C31),
+            color: GameUiPalette.surfaceDark.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(7),
             border: Border.all(
-              color: const Color(0xFFF2C14E).withValues(alpha: 0.72),
+              color: GameUiPalette.actionGoldBright.withValues(alpha: 0.72),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFF2C14E).withValues(alpha: 0.18),
+                color: GameUiPalette.actionGoldBright.withValues(alpha: 0.18),
                 blurRadius: 10,
                 spreadRadius: 1,
               ),
@@ -645,7 +664,11 @@ class GameJesterEffectBurst extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(width: 3, height: 30, color: const Color(0xFFF2C14E)),
+                Container(
+                  width: 3,
+                  height: 30,
+                  color: GameUiPalette.actionGoldBright,
+                ),
                 const SizedBox(width: 7),
                 Flexible(
                   child: Column(
@@ -654,16 +677,18 @@ class GameJesterEffectBurst extends StatelessWidget {
                     children: [
                       _GameOutlinedLabel(
                         sourceName,
-                        fillColor: Colors.white.withValues(alpha: 0.92),
-                        strokeColor: const Color(0xFF173126),
+                        fillColor: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.92,
+                        ),
+                        strokeColor: GameUiPalette.surfacePanel,
                         fontSize: 7.5,
                         fontWeight: FontWeight.w900,
                       ),
                       const SizedBox(height: 2),
                       _GameOutlinedLabel(
                         jesterEffectBadge(effect),
-                        fillColor: const Color(0xFFFFF4CF),
-                        strokeColor: const Color(0xFF173126),
+                        fillColor: GameUiPalette.cardNameWarm,
+                        strokeColor: GameUiPalette.surfacePanel,
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
                       ),
@@ -698,23 +723,27 @@ class GameJesterInfoOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notes = JesterTranslationScope.of(context).notes(card.id);
+    final viewportHeight = MediaQuery.sizeOf(context).height;
+    final previewMaxHeight = (viewportHeight - 96).clamp(420.0, 620.0);
     return Material(
-      color: Colors.transparent,
+      color: GameUiPalette.transparent,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: const Color(0xFF123126).withValues(alpha: 0.96),
+          color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.28),
+              color: GameUiPalette.ink.withValues(alpha: 0.28),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
           ],
         ),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 360),
+          constraints: BoxConstraints(maxHeight: previewMaxHeight),
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -728,7 +757,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
                         child: Text(
                           localizedJesterName(context, card),
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: GameUiPalette.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                           ),
@@ -737,15 +766,36 @@ class GameJesterInfoOverlay extends StatelessWidget {
                       IconButton(
                         onPressed: onClose,
                         icon: const Icon(Icons.close_rounded),
-                        color: Colors.white,
+                        color: GameUiPalette.textPrimary,
                         visualDensity: VisualDensity.compact,
                       ),
                     ],
                   ),
+                  Center(
+                    child: SizedBox(
+                      width: kJesterCardWidth * 3,
+                      height: kJesterCardHeight * 3,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(
+                          width: kJesterCardWidth,
+                          height: kJesterCardHeight,
+                          child: GameJesterSlot(
+                            card: card,
+                            runtimeValueText: runtimeValueText,
+                            extended: true,
+                            activeEffect: null,
+                            settlementSequenceTick: 0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     localizedJesterEffect(context, card),
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.82),
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       height: 1.3,
@@ -759,13 +809,13 @@ class GameJesterInfoOverlay extends StatelessWidget {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.18),
+                        color: GameUiPalette.ink.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         runtimeValueText!,
                         style: const TextStyle(
-                          color: Color(0xFFF4E6B1),
+                          color: GameUiPalette.cardName,
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                         ),
@@ -777,7 +827,9 @@ class GameJesterInfoOverlay extends StatelessWidget {
                     Text(
                       notes,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.64),
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.64,
+                        ),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         height: 1.3,
@@ -789,7 +841,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
                     width: double.infinity,
                     child: GameActionButton(
                       label: '판매 +$sellGold 골드',
-                      background: const Color(0xFFB74B3B),
+                      background: GameUiPalette.actionDanger,
                       onPressed: onSell,
                     ),
                   ),
@@ -843,7 +895,7 @@ class _GameOutlinedLabel extends StatelessWidget {
             fontWeight: fontWeight,
             shadows: [
               Shadow(
-                color: Colors.black.withValues(alpha: 0.35),
+                color: GameUiPalette.ink.withValues(alpha: 0.35),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

@@ -1,0 +1,157 @@
+import 'package:flutter/material.dart';
+
+/// Runtime UI semantic colors.
+///
+/// Keep state meaning here instead of scattering raw color literals across
+/// battle/market widgets.
+abstract final class GameUiPalette {
+  static const Color transparent = Colors.transparent;
+  static const Color ink = Colors.black;
+  static const Color textPrimary = Colors.white;
+  static const Color textSecondary = Colors.white70;
+  static const Color modalBarrier = Color(0x70000000);
+  static const Color feedbackBarrier = Color(0x22000000);
+  static const Color textOnWarm = Color(0xFF24120D);
+  static const Color textOnGold = Color(0xFF1F1600);
+  static const Color textWarmPale = Color(0xFFFFF4CF);
+
+  static const Color surfacePanel = Color(0xFF173126);
+  static const Color surfaceModal = Color(0xFF1A2E24);
+  static const Color surfaceModalInner = Color(0xFF123126);
+  static const Color surfaceSection = Color(0xFF1A4B3A);
+  static const Color surfaceDark = Color(0xFF102D25);
+  static const Color surfaceDeepGreen = Color(0xFF174131);
+  static const Color surfaceToastDark = Color(0xFF0F1D25);
+  static const Color surfaceDanger = Color(0xFF4C1F1B);
+  static const Color surfaceDangerDeep = Color(0xFF3A1714);
+  static const Color surfaceInfo = Color(0xFF172A27);
+  static const Color tutorialShadow = Color(0xFF05070D);
+  static const Color stationClearSurface = Color(0xFF113B31);
+  static const Color bossConstraintSurface = Color(0xFF441E1E);
+  static const Color settlementEffectSurface = Color(0xE6143C31);
+  static const Color hudChipSurface = Color(0xFF1A4D3C);
+  static const Color gameTableGradientStart = Color(0xFF1B5644);
+  static const Color gameTableGradientMid = Color(0xFF12392E);
+  static const Color gameTableGradientEnd = Color(0xFF0A211B);
+  static const Color marketFrameGradientStart = Color(0xFF123B32);
+  static const Color marketFrameGradientMid = Color(0xFF102E27);
+  static const Color marketFrameGradientEnd = Color(0xFF0A1F1A);
+  static const Color marketFrameBorder = Color(0xFF507564);
+
+  static const Color actionGold = Color(0xFFF4A81D);
+  static const Color actionGoldBright = Color(0xFFF2C14E);
+  static const Color actionGoldText = Color(0xFFFFE08A);
+  static const Color actionDanger = Color(0xFFB74B3B);
+  static const Color actionSuccess = Color(0xFF64D8A4);
+  static const Color actionWarning = Color(0xFFFF8A5B);
+  static const Color actionWarningText = Color(0xFFFFD8CC);
+  static const Color actionSuccessText = Color(0xFF9FF2C2);
+  static const Color disabledControl = Color(0xFF586463);
+  static const Color iconButtonMuted = Color(0xFF21423A);
+  static const Color debugToggleActive = Color(0xFF4AA78D);
+  static const Color menuAccentTutorial = Color(0xFFCCFF90);
+  static const Color menuAccentSettings = Color(0xFF80D8FF);
+  static const Color menuAccentRestart = Color(0xFFFFE082);
+  static const Color menuAccentExit = Color(0xFFFF8A80);
+  static const Color primaryButtonBlue = Color(0xFF2E8BC0);
+
+  static const Color userSelection = Color(0xFFFF8A1F);
+  static const Color scoringPreview = Color(0xFFF4C45A);
+  static const Color bossWeakenPreview = Color(0xFFE45A5F);
+  static const Color settlementActive = Color(0xFF86F4C3);
+  static const Color boardMoveSource = Color(0xFF5EE7F7);
+  static const Color boardMoveAvailable = Color(0xFF85E9B8);
+  static const Color boardMoveAvailableFill = Color(0xFF23654A);
+  static const Color boardMoveLockedFill = Color(0xFF24312D);
+  static const Color boardSelectedFill = Color(0xFF2A3B34);
+  static const Color boardSettlementFill = Color(0xFF285A49);
+  static const Color boardDefaultFill = Color(0xFF204E3C);
+  static const Color boardFrameBorder = Color(0xFF739785);
+  static const Color boardHudBorder = Color(0xFF6A8E7C);
+
+  static const Color cardFace = Color(0xFF10271E);
+  static const Color cardEmptyFace = Color(0xFF183E32);
+  static const Color cardArtSurface = Color(0xFF041613);
+  static const Color cardArtSurfaceDeep = Color(0xFF071713);
+  static const Color cardArtBorder = Color(0xFFB8D3B9);
+  static const Color cardName = Color(0xFFF5E9B6);
+  static const Color cardNameWarm = Color(0xFFFFF0B6);
+  static const Color cardTypeText = Color(0xFFE4E0BE);
+  static const Color cardBadgeText = Color(0xFFFFF8D7);
+  static const Color cardFallback = Color(0xFFE6D4A1);
+
+  static const Color rarityCommon = Color(0xFF8FAFA4);
+  static const Color rarityUncommon = Color(0xFF35C96F);
+  static const Color rarityRare = Color(0xFF2F8CFF);
+  static const Color rarityLegendary = Color(0xFFFFB12B);
+
+  static const Color itemBadgeQuickTop = Color(0xFF3F89D7);
+  static const Color itemBadgeQuickBottom = Color(0xFF22507F);
+  static const Color itemBadgeToolTop = Color(0xFFB0843C);
+  static const Color itemBadgeToolBottom = Color(0xFF6C4C20);
+  static const Color itemBadgeGearTop = Color(0xFF6F8994);
+  static const Color itemBadgeGearBottom = Color(0xFF3C555F);
+  static const Color itemBadgePassiveTop = Color(0xFF4F9A6D);
+  static const Color itemBadgePassiveBottom = Color(0xFF2E6447);
+
+  static const Color specialGold = Color(0xFFFFC46B);
+  static const Color specialDanger = Color(0xFFFF6B3D);
+  static const Color specialWarning = Color(0xFFFF8F5A);
+  static const Color specialBlue = Color(0xFF72C7FF);
+  static const Color specialMint = Color(0xFF8BE0B9);
+  static const Color specialSoftMint = Color(0xFF7DE0B8);
+  static const Color specialSoftMintText = Color(0xFF9AF0CB);
+  static const Color specialScoreText = Color(0xFFFFD36B);
+  static const Color specialSuccessText = Color(0xFFE8FFF4);
+  static const Color specialGoldLabel = Color(0xFFFFD568);
+  static const Color specialGoldPale = Color(0xFFFFE39C);
+  static const Color specialDangerText = Color(0xFFFFB0A3);
+  static const Color specialDangerPale = Color(0xFFFFE4DF);
+  static const Color specialDangerBright = Color(0xFFFF8F74);
+  static const Color specialDangerBorder = Color(0xFFFF6B57);
+  static const Color specialMutedText = Color(0xFFEFE6C8);
+  static const Color specialMintPale = Color(0xFFB9F6D3);
+  static const Color specialDenyText = Color(0xFFFFB6A6);
+  static const Color specialGoldSurface = Color(0xFF2B2311);
+  static const Color specialGoldPulse = Color(0xFFFFD45A);
+  static const Color specialGoldCard = Color(0xFFF7E7B8);
+  static const Color specialGoldCardText = Color(0xFF26352F);
+  static const Color specialSuccessSurface = Color(0xFF123829);
+  static const Color specialToastSurface = Color(0xFF111A26);
+
+  static const Color tileChipInlaid = Color(0xFF2D6F9E);
+  static const Color tileScoreGilded = Color(0xFF7C4DFF);
+  static const Color tileGlass = Color(0xFF3BC7D6);
+  static const Color tileWild = Color(0xFF2EA66F);
+  static const Color tileLucky = Color(0xFFC05AB8);
+  static const Color tileBlueSeal = Color(0xFF246BCE);
+  static const Color tileRedSeal = Color(0xFFC0392B);
+
+  static const Color marketSourceQuick = Color(0xFFF4A81D);
+  static const Color marketSourcePassive = Color(0xFF6EE7B7);
+  static const Color marketSourceTool = Color(0xFF86B7FF);
+  static const Color marketSourceGear = Color(0xFFFFD76B);
+  static const Color marketSourceJester = Color(0xFFFF8FA3);
+
+  static const Color marketPlacementQuickSurface = Color(0xFFC7D8FF);
+  static const Color marketPlacementPassiveSurface = Color(0xFFC9EDB1);
+  static const Color marketPlacementGearSurface = Color(0xFFF4C77F);
+  static const Color marketPlacementToolSurface = Color(0xFFC3F0EF);
+  static const Color marketPlacementQuickAccent = Color(0xFF4F82FF);
+  static const Color marketPlacementPassiveAccent = Color(0xFF54B85C);
+  static const Color marketPlacementGearAccent = Color(0xFFD88918);
+  static const Color marketPlacementToolAccent = Color(0xFF24B8C6);
+  static const Color marketSelectedTab = Color(0xFFEDE7DB);
+  static const Color marketUnselectedTab = Color(0xFF173D35);
+  static const Color marketTabTextDark = Color(0xFF152722);
+  static const Color marketNeutralButton = Color(0xFF29453A);
+  static const Color marketSectionStroke = Color(0xFF18382D);
+  static const Color marketSectionTextDark = Color(0xFF07110D);
+  static const Color marketPositive = Color(0xFF267B67);
+  static const Color passiveSlotAccent = Color(0xFF4C5A55);
+  static const Color toolSlotAccent = Color(0xFF2D7FA2);
+  static const Color gearSlotAccent = Color(0xFFB88735);
+  static const Color gameOverRewardSurface = Color(0xFF233D38);
+  static const Color gameOverRewardIconSurface = Color(0xFF132520);
+  static const Color gameOverRewardAccent = Color(0xFF9DF0BE);
+}
