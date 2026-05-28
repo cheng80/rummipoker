@@ -33,6 +33,8 @@ import 'game_ui_palette.dart';
 part 'game_shop_screen_models.dart';
 part 'game_shop_detail_widgets.dart';
 part 'game_shop_offer_widgets.dart';
+part 'game_shop_card_face_widgets.dart';
+part 'game_shop_flight_widgets.dart';
 part 'game_shop_shell_widgets.dart';
 part 'game_shop_text_helpers.dart';
 part 'game_shop_setup_flow.dart';
