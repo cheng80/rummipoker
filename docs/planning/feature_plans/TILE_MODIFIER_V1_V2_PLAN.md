@@ -135,8 +135,8 @@ V2 설계 주의:
 
 1차 적용 메모:
 
-- 현재 구현은 점수 x1.5만 적용한다.
-- 파괴는 active run save, stage restart snapshot, 다음 블라인드 덱 source 제거까지 같이 닫아야 하므로 별도 단계로 남긴다.
+- 현재 구현은 점수 x1.5와 파괴 판정을 적용한다.
+- 파괴된 `glass_tile`은 확정 breakdown에 기록되고, `RummiRunProgress.addedDeckTiles`에서 같은 물리 타일을 제거해 다음 블라인드 덱 source와 active run save/stage restart snapshot 경계가 함께 맞는다.
 
 ### Wild/Lucky 보류 사유
 

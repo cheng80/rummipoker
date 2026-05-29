@@ -24,10 +24,11 @@
    - 포함 경로: `addedDeckTiles`, `tileOffers`, deck pile, board cells, hand, eliminated JSON roundtrip.
    - Done 기준: modifier 없는 기존 저장 호환, modifier 포함 타일 저장/복원, `flutter analyze`, 관련 save/model 테스트 통과.
 2. 이후 V1 순서:
-   - Tile lane 특수 후보 생성과 가격 surcharge.
-   - 마켓/보드/손패/런 정보 modifier badge와 설명.
-   - `chip_inlaid`, `score_gilded`, `gold_tile`, `glass_tile`, `wild_painted`, `lucky_tile`, `blue_seal` 정산 반영.
-   - glass 파괴와 런 덱 source 제거/복원.
+   - 완료: Tile lane 특수 후보 생성과 가격 surcharge.
+   - 완료: 마켓/보드/손패/런 정보 modifier badge와 설명.
+   - 완료: `chip_inlaid`, `score_gilded`, `gold_tile`, `glass_tile`, `blue_seal`, `red_seal` 정산 반영.
+   - 완료: glass 파괴와 런 덱 source 제거/복원.
+   - 보류: `wild_painted`, `lucky_tile`은 evaluator/RNG 재현 정책이 더 필요해 V1 후속 또는 V2 후보로 둔다.
 3. 대기열로 미룬 작업:
    - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
    - 현재 runtime 기준 fresh row 기반 실제 runtime 후보 구매/사용 가치 probe.
