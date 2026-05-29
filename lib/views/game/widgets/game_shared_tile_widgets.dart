@@ -240,6 +240,19 @@ String tileModifierEffectText(Tile tile) {
   return parts.join(' / ');
 }
 
+List<String> tileModifierBadgeDescriptions(Tile tile) {
+  return [
+    if (tile.enhancement != null)
+      '${tileEnhancementShortLabel(tile.enhancement!)} ${tileEnhancementEffectText(tile.enhancement!)}',
+    if (tile.seal != null)
+      '${tileSealShortLabel(tile.seal!)} ${tileSealEffectText(tile.seal!)}',
+  ];
+}
+
+String tileModifierBadgeDescriptionText(Tile tile) {
+  return tileModifierBadgeDescriptions(tile).join(' / ');
+}
+
 String tileColorDisplayName(TileColor color) {
   return switch (color) {
     TileColor.red => '빨간 타일',

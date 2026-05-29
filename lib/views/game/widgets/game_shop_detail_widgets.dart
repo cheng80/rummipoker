@@ -227,15 +227,17 @@ class _MarketOfferDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _MarketDescriptionText(effectText),
-        if (tags.isNotEmpty) ...[
-          const SizedBox(height: 3),
-          _MarketDetailTagWrap(tags: tags),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MarketDescriptionText(effectText),
+          if (tags.isNotEmpty) ...[
+            const SizedBox(height: 3),
+            _MarketDetailTagWrap(tags: tags),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

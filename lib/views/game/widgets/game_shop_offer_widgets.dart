@@ -624,5 +624,5 @@ String _tileOfferCompactLabel(RummiMarketTileOfferView offer) {
 String _tileOfferDetailText(Tile tile) {
   const base = '다음 블라인드부터 드로우 덱에 추가됩니다.';
   if (!tile.hasModifier) return base;
-  return '$base ${tileModifierEffectText(tile)}';
+  return '$base ${tileModifierBadgeDescriptionText(tile)}';
 }

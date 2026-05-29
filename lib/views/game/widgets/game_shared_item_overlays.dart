@@ -238,7 +238,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final modifierSummary = tileModifierSummary(tile);
-    final modifierEffectText = tileModifierEffectText(tile);
+    final modifierEffectText = tileModifierBadgeDescriptionText(tile);
     final hasModifier = modifierSummary.isNotEmpty;
     final baseInfoText =
         '${tileColorDisplayName(tile.color)} ${tile.number} · 기준 칩 ${tile.baseChipValue}';

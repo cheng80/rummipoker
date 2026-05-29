@@ -852,6 +852,33 @@ void main() {
     expect(find.textContaining('확정 점수는 완성한 족보의 기본 칩'), findsOneWidget);
   });
 
+  testWidgets('GameHandTileInfoOverlay explains modifier badge labels', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameHandTileInfoOverlay(
+            tile: const Tile(
+              id: 1,
+              color: TileColor.blue,
+              number: 9,
+              enhancement: TileEnhancement.chipInlaid,
+              seal: TileSeal.blueSeal,
+            ),
+            constrained: false,
+            bossModifier: null,
+            onClose: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('B9'), findsOneWidget);
+    expect(find.textContaining('+C 확정 시 +20칩'), findsOneWidget);
+    expect(find.textContaining('B 확정 족보 성장 +1'), findsOneWidget);
+  });
+
   testWidgets('GameHandZone highlights added hand capacity near draw control', (
     tester,
   ) async {

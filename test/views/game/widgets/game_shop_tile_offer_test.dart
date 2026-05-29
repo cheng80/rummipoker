@@ -157,8 +157,8 @@ void main() {
     );
     expect(find.text('유리 · 10G'), findsOneWidget);
     expect(find.text('칩 7'), findsOneWidget);
-    expect(find.textContaining('확정 시 점수 x1.5'), findsOneWidget);
-    expect(find.textContaining('타일 효과 1회 재발동'), findsOneWidget);
+    expect(find.textContaining('x 확정 시 점수 x1.5'), findsWidgets);
+    expect(find.textContaining('R 타일 효과 1회 재발동'), findsWidgets);
     expect(
       find.byKey(const ValueKey('tile-enhancement-badge'), skipOffstage: false),
       findsWidgets,
