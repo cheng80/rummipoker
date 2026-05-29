@@ -114,11 +114,11 @@ class _TileModifierBadgeMetrics {
   });
 
   factory _TileModifierBadgeMetrics.forTileSide(double side) {
-    final badgeHeight = (side * 0.2).clamp(11.0, 13.0).toDouble();
+    final badgeHeight = (side * 0.2).clamp(11.0, 16.0).toDouble();
     return _TileModifierBadgeMetrics(
       badgeHeight: badgeHeight,
-      fontSize: (badgeHeight * 0.58).clamp(6.8, 8.2).toDouble(),
-      enhancementInset: -1.0,
+      fontSize: (badgeHeight * 0.58).clamp(6.8, 9.6).toDouble(),
+      enhancementInset: -3.0,
       sealInset: (side * 0.04).clamp(1.0, 3.0).toDouble(),
     );
   }
@@ -191,7 +191,7 @@ class _TileModifierBadge extends StatelessWidget {
       ),
       child: SizedBox(
         height: height,
-        width: circular ? height : height * 1.45,
+        width: circular ? height : height * 1.34,
         child: Center(
           child: Text(
             label,
