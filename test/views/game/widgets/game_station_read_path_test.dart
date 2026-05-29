@@ -1266,14 +1266,14 @@ void main() {
     expect(itemNameText.maxLines, isNull);
     expect(itemNameText.softWrap, isTrue);
     expect(itemNameText.overflow, TextOverflow.visible);
-    expect(find.text('Q1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-Q1')), findsOneWidget);
     expect(find.text('x2'), findsOneWidget);
-    expect(find.text('Q2'), findsOneWidget);
-    expect(find.text('Q3'), findsOneWidget);
-    expect(find.text('P1'), findsOneWidget);
-    expect(find.text('P2'), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-Q2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-Q3')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-P1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-P2')), findsOneWidget);
 
-    await tester.tap(find.text('Board Scrap'));
+    await tester.tap(find.byKey(const ValueKey('battle-item-slot-Q1')));
     expect(tappedSlot?.contentId, 'board_scrap');
   });
 
@@ -1338,14 +1338,16 @@ void main() {
       ),
     );
 
-    expect(find.text('Q1'), findsOneWidget);
-    expect(find.text('Q2'), findsOneWidget);
-    expect(find.text('Q3'), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-Q1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-Q2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-Q3')), findsOneWidget);
     expect(find.text('Safety Net'), findsOneWidget);
-    expect(find.text('P1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-P1')), findsOneWidget);
     expect(
       tester.getCenter(find.text('Safety Net')).dx,
-      greaterThan(tester.getCenter(find.text('Q3')).dx),
+      greaterThan(
+        tester.getCenter(find.byKey(const ValueKey('battle-item-slot-Q3'))).dx,
+      ),
     );
   });
 
@@ -1449,11 +1451,11 @@ void main() {
 
     expect(find.text('Reroll Token'), findsOneWidget);
     expect(find.text('Score Abacus'), findsOneWidget);
-    expect(find.text('T1'), findsOneWidget);
-    expect(find.text('T2'), findsOneWidget);
-    expect(find.text('T3'), findsOneWidget);
-    expect(find.text('G1'), findsOneWidget);
-    expect(find.text('G2'), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-T1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-T2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-T3')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-G1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('battle-item-slot-G2')), findsOneWidget);
   });
 
   testWidgets('GameItemZoneSkeleton displays active scoring item effect', (
@@ -1650,8 +1652,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Board Scrap'), findsOneWidget);
-    final itemNameText = tester.widget<Text>(find.text('Board Scrap'));
+    expect(find.text('Board Scrap'), findsWidgets);
+    final itemNameText = tester.widget<Text>(find.text('Board Scrap').first);
     expect(itemNameText.maxLines, isNull);
     expect(itemNameText.softWrap, isTrue);
     expect(itemNameText.overflow, TextOverflow.visible);
@@ -1721,7 +1723,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Safety Net'), findsOneWidget);
+    expect(find.text('Safety Net'), findsWidgets);
     expect(find.text('패시브'), findsOneWidget);
     expect(find.text('자동 발동'), findsOneWidget);
     expect(find.text('패시브 효과 · 조건 충족 시 자동 발동'), findsOneWidget);

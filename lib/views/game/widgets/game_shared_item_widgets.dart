@@ -438,6 +438,7 @@ class _GameItemPocketChip extends StatelessWidget {
     final hasItem = itemSlot != null;
     final isActive = activeEffect != null;
     return GestureDetector(
+      key: ValueKey('battle-item-slot-$label'),
       behavior: HitTestBehavior.opaque,
       onTap: locked || itemSlot == null || onTap == null
           ? null

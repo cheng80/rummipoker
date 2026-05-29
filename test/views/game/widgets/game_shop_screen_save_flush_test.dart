@@ -105,8 +105,8 @@ void main() {
                                     readActiveRunSaveView: () => currentSave,
                                     onReroll: () => null,
                                     onRerollItemOffers: (_) => null,
-                                    onBuyOffer: (index) {
-                                      expect(index, 0);
+                                    onBuyOffer: (offer) {
+                                      expect(offer.card.id, offerCard.id);
                                       currentMarket = RummiMarketRuntimeFacade(
                                         gold: 8,
                                         rerollCost: 5,
@@ -166,6 +166,9 @@ void main() {
 
     await tester.pumpAndSettle();
     await tester.tap(find.text('open shop'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Timing', skipOffstage: false).first);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('구매'));

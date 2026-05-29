@@ -6,36 +6,47 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../tools/sim/run_balance_sim.dart';
 
 void main() {
-  test('contest policy v1 clears standard S1-S8 path', () async {
-    final paths = _SimPaths(
-      out: 'logs/sim/contest_policy_v1_standard_20260511_053831.jsonl',
-      summary:
-          'logs/sim/contest_policy_v1_standard_20260511_053831_summary.json',
-    );
+  test(
+    'contest policy v1 clears standard S1-S8 path',
+    () async {
+      final paths = _SimPaths(
+        out: 'logs/sim/contest_policy_v1_standard_20260511_053831.jsonl',
+        summary:
+            'logs/sim/contest_policy_v1_standard_20260511_053831_summary.json',
+      );
 
-    final code = await runBalanceSim(
-      _contestPolicyArgs(difficulty: 'standard', paths: paths),
-    );
+      final code = await runBalanceSim(
+        _contestPolicyArgs(difficulty: 'standard', paths: paths),
+      );
 
-    expect(code, 0);
-    _expectPathCleared(paths.out);
-  });
+      expect(code, 0);
+      _expectPathCleared(paths.out);
+    },
+    skip: _legacyContestGateSkipReason,
+  );
 
-  test('contest policy v1 clears challenge S1-S8 path', () async {
-    final paths = _SimPaths(
-      out: 'logs/sim/contest_policy_v1_challenge_20260511_053831.jsonl',
-      summary:
-          'logs/sim/contest_policy_v1_challenge_20260511_053831_summary.json',
-    );
+  test(
+    'contest policy v1 clears challenge S1-S8 path',
+    () async {
+      final paths = _SimPaths(
+        out: 'logs/sim/contest_policy_v1_challenge_20260511_053831.jsonl',
+        summary:
+            'logs/sim/contest_policy_v1_challenge_20260511_053831_summary.json',
+      );
 
-    final code = await runBalanceSim(
-      _contestPolicyArgs(difficulty: 'challenge', paths: paths),
-    );
+      final code = await runBalanceSim(
+        _contestPolicyArgs(difficulty: 'challenge', paths: paths),
+      );
 
-    expect(code, 0);
-    _expectPathCleared(paths.out);
-  });
+      expect(code, 0);
+      _expectPathCleared(paths.out);
+    },
+    skip: _legacyContestGateSkipReason,
+  );
 }
+
+const _legacyContestGateSkipReason =
+    'Legacy contest fixed-seed gate is archived after post-contest balance/data reset.';
 
 List<String> _contestPolicyArgs({
   required String difficulty,

@@ -7,6 +7,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/resources/item_translation_scope.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
+import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 
 void main() {
@@ -116,6 +117,9 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(GameJesterSlot).first);
     await tester.pumpAndSettle();
 
     final runtimeText = tester.widget<Text>(

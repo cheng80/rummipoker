@@ -160,7 +160,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('market-sale-flight')),
-        matching: find.text('Q-SLT'),
+        matching: find.byKey(const ValueKey('market-item-card-face')),
       ),
       findsOneWidget,
     );
