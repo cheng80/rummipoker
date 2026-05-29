@@ -38,12 +38,20 @@ Future<LlmPolicyClientResult> requestLocalLlmAction({
   required LlmActionRequest request,
   required LlmPolicyClientConfig config,
 }) async {
-  final safeId = request.requestId.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
+  return requestLocalJsonAction(requestJson: request.toJson(), config: config);
+}
+
+Future<LlmPolicyClientResult> requestLocalJsonAction({
+  required Map<String, dynamic> requestJson,
+  required LlmPolicyClientConfig config,
+}) async {
+  final requestId = requestJson['request_id'] as String? ?? 'llm_request';
+  final safeId = requestId.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
   final requestPath = '${config.requestDir}/$safeId.json';
   final responsePath = '${config.responseDir}/$safeId.json';
   final requestFile = File(requestPath)..parent.createSync(recursive: true);
   requestFile.writeAsStringSync(
-    const JsonEncoder.withIndent('  ').convert(request.toJson()),
+    const JsonEncoder.withIndent('  ').convert(requestJson),
   );
   final started = DateTime.now();
   try {

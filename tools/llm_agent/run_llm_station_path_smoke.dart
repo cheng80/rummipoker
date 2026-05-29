@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/services/blind_selection_spec.dart';
@@ -15,8 +18,17 @@ import '../sim/planner_bot.dart';
 import 'llm_policy_client.dart';
 import 'llm_policy_guidance.dart';
 
+const _jesterCatalogPath = 'data/common/jesters_common_phase5.json';
+const _itemCatalogPath = 'data/common/items_common_v1.json';
+
 Future<void> main(List<String> args) async {
   final config = _Config.parse(args);
+  final jesterCatalog = RummiJesterCatalog.fromJsonString(
+    File(_jesterCatalogPath).readAsStringSync(),
+  );
+  final itemCatalog = ItemCatalog.fromJsonString(
+    File(_itemCatalogPath).readAsStringSync(),
+  );
   final out = File(config.outPath)..parent.createSync(recursive: true);
   final report = File(config.reportOutPath)..parent.createSync(recursive: true);
   final rows = <Map<String, Object?>>[];
@@ -62,7 +74,18 @@ Future<void> main(List<String> args) async {
           runProgress: runProgress,
           baselineProgress: baselineProgress,
         );
-        if (!blindRows.cleared) {
+        await _runMarketDecision(
+          config: config,
+          rows: rows,
+          runIndex: runIndex,
+          seed: seed,
+          station: station,
+          tier: tier,
+          runProgress: runProgress,
+          jesterCatalog: jesterCatalog,
+          itemCatalog: itemCatalog,
+        );
+        if (!blindRows.cleared && !config.continueAfterFail) {
           pathStopped = true;
           break;
         }
@@ -81,6 +104,238 @@ Future<void> main(List<String> args) async {
   report.writeAsStringSync(_buildReport(rows, config));
   stdout.writeln('out: ${out.path}');
   stdout.writeln('report: ${report.path}');
+}
+
+Future<void> _runMarketDecision({
+  required _Config config,
+  required List<Map<String, Object?>> rows,
+  required int runIndex,
+  required int seed,
+  required int station,
+  required BlindTier tier,
+  required RummiRunProgress runProgress,
+  required RummiJesterCatalog jesterCatalog,
+  required ItemCatalog itemCatalog,
+}) async {
+  runProgress.openShop(
+    catalog: jesterCatalog.shopCatalog,
+    rng: Random(seed + station * 31 + tier.index),
+  );
+  final facade = RummiMarketRuntimeFacade.fromRunProgress(
+    runProgress,
+    itemCatalog: itemCatalog,
+  );
+  final legalActions = _buildMarketLegalActions(facade, runProgress);
+  final requestId =
+      'llm_market_${config.seed}_${runIndex}_s${station}_${tier.name}';
+  final requestJson = <String, dynamic>{
+    'schema_version': 1,
+    'request_id': requestId,
+    'bot_policy': 'llm_gemma4_market_v1',
+    'state': {
+      'schema_version': 1,
+      'phase': 'market',
+      'station': station,
+      'blind_tier': tier.name,
+      'gold': runProgress.gold,
+      'owned_jesters': [
+        for (final entry in facade.ownedEntries)
+          {
+            'slot_index': entry.slotIndex,
+            'id': entry.contentId,
+            'sell_price': entry.sellPrice,
+          },
+      ],
+      'owned_items': [
+        for (final entry in runProgress.itemInventory.ownedItems)
+          {
+            'id': entry.itemId,
+            'count': entry.count,
+            'placement': entry.placement.name,
+          },
+      ],
+      'policy_guidance': const {
+        'contract_id': 'contest_full_run_market_guidance_v1',
+        'rules': [
+          'Preserve enough gold for Q-slot and key item opportunities.',
+          'Do not buy every Jester first if that starves item economy.',
+          'Sell only weak or redundant holdings to enable stronger purchases.',
+          'Reroll only when offers are low value and gold remains useful.',
+          'Skip when no purchase improves survival, score, or economy path.',
+        ],
+      },
+    },
+    'legal_actions': legalActions,
+  };
+  final responseResult = await requestLocalJsonAction(
+    requestJson: requestJson,
+    config: config.marketClientConfig,
+  );
+  final response = responseResult.response;
+  final selectedId = response?['selected_action_id'] as String?;
+  final selected = legalActions
+      .cast<Map<String, dynamic>>()
+      .where((action) => action['id'] == selectedId)
+      .firstOrNull;
+  final execute = selected == null
+      ? (ok: false, reason: 'invalid_or_missing_market_action')
+      : _executeMarketAction(
+          selected,
+          runProgress: runProgress,
+          itemCatalog: itemCatalog,
+        );
+  rows.add({
+    'schema_version': 1,
+    'row_type': 'llm_market_decision',
+    'run_index': runIndex,
+    'seed': seed,
+    'station': station,
+    'blind_tier': tier.name,
+    'request_id': requestId,
+    'model': config.model,
+    'gold_before': facade.gold,
+    'gold_after': runProgress.gold,
+    'candidate_count': legalActions.length,
+    'is_valid': selected != null,
+    'selected_action_id': selectedId,
+    'selected_action_type': selected?['type'],
+    'execute_ok': execute.ok,
+    'execute_reason': execute.reason,
+    'latency_ms': responseResult.latencyMs,
+    'llm_error': responseResult.error,
+  });
+}
+
+List<Map<String, Object?>> _buildMarketLegalActions(
+  RummiMarketRuntimeFacade facade,
+  RummiRunProgress runProgress,
+) {
+  final actions = <Map<String, Object?>>[];
+  for (final offer in facade.offers) {
+    if (!offer.isAffordable) continue;
+    actions.add({
+      'id': 'buy_jester_${offer.slotIndex}_${offer.contentId}',
+      'type': 'buyJester',
+      'offer_index': offer.slotIndex,
+      'content_id': offer.contentId,
+      'cost': offer.price,
+      'reason_hint': 'buy an affordable Jester offer',
+    });
+  }
+  for (final offer in facade.itemOffers) {
+    if (!offer.isAffordable) continue;
+    actions.add({
+      'id': 'buy_item_${offer.slotIndex}_${offer.contentId}',
+      'type': 'buyItem',
+      'offer_index': offer.slotIndex,
+      'content_id': offer.contentId,
+      'placement': offer.item.placement.name,
+      'cost': offer.price,
+      'reason_hint': 'buy an affordable item/tool/gear/passive offer',
+    });
+  }
+  for (final entry in facade.ownedEntries) {
+    if (entry.sellPrice <= 0) continue;
+    actions.add({
+      'id': 'sell_jester_${entry.slotIndex}_${entry.contentId}',
+      'type': 'sellJester',
+      'slot_index': entry.slotIndex,
+      'content_id': entry.contentId,
+      'gold_gain': entry.sellPrice,
+      'reason_hint': 'sell a Jester only if it enables a stronger path',
+    });
+  }
+  for (final entry in runProgress.itemInventory.ownedItems) {
+    if (entry.count <= 0) continue;
+    actions.add({
+      'id': 'sell_item_${entry.itemId}',
+      'type': 'sellItem',
+      'content_id': entry.itemId,
+      'placement': entry.placement.name,
+      'reason_hint': 'sell a weak or redundant item only when useful',
+    });
+  }
+  if (facade.gold >= facade.rerollCost) {
+    actions.add({
+      'id': 'reroll_jester',
+      'type': 'reroll',
+      'lane': 'jester',
+      'cost': facade.rerollCost,
+    });
+  }
+  for (final entry in [
+    ('quickSlot', ItemPlacement.quickSlot, facade.quickSlotRerollCost),
+    ('passive', ItemPlacement.passiveRack, facade.passiveRerollCost),
+    ('tool', ItemPlacement.inventory, facade.toolRerollCost),
+    ('gear', ItemPlacement.equipped, facade.gearRerollCost),
+  ]) {
+    if (facade.gold >= entry.$3) {
+      actions.add({
+        'id': 'reroll_${entry.$1}',
+        'type': 'reroll',
+        'lane': entry.$1,
+        'placement': entry.$2.name,
+        'cost': entry.$3,
+      });
+    }
+  }
+  actions.add(const {
+    'id': 'skip_market',
+    'type': 'skip',
+    'reason_hint': 'skip when no offer improves the run path',
+  });
+  return actions.take(32).toList(growable: false);
+}
+
+({bool ok, String reason}) _executeMarketAction(
+  Map<String, dynamic> action, {
+  required RummiRunProgress runProgress,
+  required ItemCatalog itemCatalog,
+}) {
+  switch (action['type']) {
+    case 'buyJester':
+      final index = action['offer_index'] as int? ?? -1;
+      return (ok: runProgress.buyOffer(index), reason: 'buyJester');
+    case 'buyItem':
+      final itemId = action['content_id'] as String?;
+      final item = itemId == null ? null : itemCatalog.findById(itemId);
+      if (item == null) return (ok: false, reason: 'missing_item');
+      return (
+        ok: runProgress.buyItem(item, itemCatalog: itemCatalog),
+        reason: 'buyItem',
+      );
+    case 'sellJester':
+      final slotIndex = action['slot_index'] as int? ?? -1;
+      return (
+        ok: runProgress.sellOwnedJester(slotIndex, itemCatalog: itemCatalog),
+        reason: 'sellJester',
+      );
+    case 'sellItem':
+      final itemId = action['content_id'] as String?;
+      final item = itemId == null ? null : itemCatalog.findById(itemId);
+      if (item == null) return (ok: false, reason: 'missing_item');
+      return (ok: runProgress.sellOwnedItem(item), reason: 'sellItem');
+    case 'reroll':
+      final placementRaw = action['placement'] as String?;
+      if (placementRaw == null) {
+        return (
+          ok: runProgress.rerollShop(catalog: const [], rng: Random(1)),
+          reason: 'rerollJester',
+        );
+      }
+      final placement = ItemPlacement.values.firstWhere(
+        (value) => value.name == placementRaw,
+        orElse: () => ItemPlacement.inventory,
+      );
+      return (
+        ok: runProgress.rerollItemOffers(placement: placement),
+        reason: 'rerollItem',
+      );
+    case 'skip':
+      return (ok: true, reason: 'skip');
+    default:
+      return (ok: false, reason: 'unknown_market_action');
+  }
 }
 
 Future<({bool cleared})> _runBlind({
@@ -295,9 +550,15 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
   final terminals = rows
       .where((row) => row['row_type'] == 'llm_station_path_terminal')
       .toList(growable: false);
+  final marketDecisions = rows
+      .where((row) => row['row_type'] == 'llm_market_decision')
+      .toList(growable: false);
   final valid = decisions.where((row) => row['is_valid'] == true).length;
   final fallback = decisions
       .where((row) => row['used_fallback'] == true)
+      .length;
+  final validMarket = marketDecisions
+      .where((row) => row['is_valid'] == true)
       .length;
   final diverged = decisions
       .where((row) => row['diverged_from_baseline'] == true)
@@ -323,9 +584,11 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     '- tiers: ${config.tiers.map((tier) => tier.name).join(', ')}',
     '- turn_cap_per_blind: ${config.turnCapPerBlind}',
     '- decisions: ${decisions.length}',
+    '- market_decisions: ${marketDecisions.length}',
     '- terminal_blinds: ${terminals.length}',
     '- cleared_blinds: $cleared',
     '- valid responses: $valid',
+    '- valid market responses: $validMarket',
     '- fallback executions: $fallback',
     '- fallback_rate: ${_rate(fallback, decisions.length)}',
     '- diverged_from_baseline: $diverged',
@@ -337,11 +600,20 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     for (final entry in _countBy(decisions, 'executed_action_type').entries)
       '- ${entry.key}: ${entry.value}',
     '',
+    '## Market Action Types',
+    '',
+    for (final entry in _countBy(
+      marketDecisions,
+      'selected_action_type',
+    ).entries)
+      '- ${entry.key}: ${entry.value}',
+    '',
     '## Scope',
     '',
     'This is the first S1-S8-capable LLM station path runner.',
     'It uses real blind specs, target scores, resources, and boss modifiers.',
-    'Market buy/sell/reroll and item-use choices are still pending before this can be treated as full balance evidence.',
+    'Market buy/sell/reroll decision contracts are included as smoke rows.',
+    'Battle item-use choices and full economy application are still pending before this can be treated as full balance evidence.',
   ].join('\n');
 }
 
@@ -369,6 +641,7 @@ class _Config {
     required this.stationEnd,
     required this.tiers,
     required this.turnCapPerBlind,
+    required this.continueAfterFail,
     required this.maxLegalActions,
     required this.difficulty,
     required this.model,
@@ -385,6 +658,7 @@ class _Config {
   final int stationEnd;
   final List<BlindTier> tiers;
   final int turnCapPerBlind;
+  final bool continueAfterFail;
   final int maxLegalActions;
   final NewRunDifficulty difficulty;
   final String model;
@@ -403,6 +677,17 @@ class _Config {
     );
   }
 
+  LlmPolicyClientConfig get marketClientConfig {
+    return LlmPolicyClientConfig(
+      model: model,
+      temperature: temperature,
+      topP: topP,
+      timeoutSeconds: timeoutSeconds,
+      requestDir: 'logs/llm/market_decision_requests',
+      responseDir: 'logs/llm/market_decision_responses',
+    );
+  }
+
   static _Config parse(List<String> args) {
     var outPath = 'logs/llm/station_path_smoke_20260529.jsonl';
     var reportOutPath =
@@ -413,6 +698,7 @@ class _Config {
     var stationEnd = 8;
     var tiers = const [BlindTier.small, BlindTier.big, BlindTier.boss];
     var turnCapPerBlind = 4;
+    var continueAfterFail = false;
     var maxLegalActions = 24;
     var difficulty = NewRunDifficulty.standard;
     var model = 'gemma4:e4b';
@@ -437,6 +723,8 @@ class _Config {
           tiers = _parseTiers(args[++i]);
         case '--turn-cap-per-blind':
           turnCapPerBlind = int.parse(args[++i]);
+        case '--continue-after-fail':
+          continueAfterFail = true;
         case '--max-legal-actions':
           maxLegalActions = int.parse(args[++i]);
         case '--difficulty':
@@ -471,6 +759,7 @@ class _Config {
       stationEnd: stationEnd,
       tiers: tiers,
       turnCapPerBlind: turnCapPerBlind,
+      continueAfterFail: continueAfterFail,
       maxLegalActions: maxLegalActions,
       difficulty: difficulty,
       model: model,

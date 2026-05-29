@@ -116,12 +116,16 @@ Run an S1-S8-capable station path smoke:
   --station-end 8 \
   --tiers small,big,boss \
   --turn-cap-per-blind 4 \
+  --continue-after-fail \
   --model gemma4:e4b
 ```
 
 This uses the real `BlindSelectionSpecBuilder` S1-S8 target table, resources,
-and boss modifier assignment. It is execution-capable but still not complete
-balance evidence until market buy/sell/reroll and item-use decisions are added.
+and boss modifier assignment. `--continue-after-fail` is useful for checking all
+S1-S8 specs even when a short smoke does not clear an early blind. Market
+buy/sell/reroll decision contracts are included as smoke rows. It is still not
+complete balance evidence until battle item-use and full economy application are
+added.
 
 ## Response Contract
 
