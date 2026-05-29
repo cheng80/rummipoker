@@ -104,7 +104,7 @@ def _item_summary(rows: list[dict[str, Any]]) -> list[str]:
 def build_report(rows: list[dict[str, Any]], source: Path) -> str:
     event_counts = Counter(row.get("event_type", "unknown") for row in rows)
     lines = [
-        "# Contest Full Run Trace Reference",
+        "# Full Run Bot Trace Reference",
         "",
         f"- source: `{source}`",
         f"- rows: {len(rows)}",
