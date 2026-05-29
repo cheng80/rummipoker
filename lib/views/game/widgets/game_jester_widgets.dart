@@ -511,20 +511,22 @@ class _GameCardEmblemImage extends StatelessWidget {
             width: 0.8,
           ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(kRuntimeCardArtRadius - 2),
-          child: Image.asset(
-            assetPath,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.high,
-            gaplessPlayback: true,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded || frame != null) {
-                return child;
-              }
-              return const _GameCardEmblemFallback();
-            },
-            errorBuilder: (_, _, _) => const _GameCardEmblemFallback(),
+        child: RepaintBoundary(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(kRuntimeCardArtRadius - 2),
+            child: Image.asset(
+              assetPath,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+              gaplessPlayback: true,
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded || frame != null) {
+                  return child;
+                }
+                return const _GameCardEmblemFallback();
+              },
+              errorBuilder: (_, _, _) => const _GameCardEmblemFallback(),
+            ),
           ),
         ),
       ),

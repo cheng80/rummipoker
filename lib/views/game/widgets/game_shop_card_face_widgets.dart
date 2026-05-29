@@ -204,37 +204,40 @@ class _MarketCardEmblemImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = assetPath;
-    return Center(
-      child: Container(
-        width: 47,
-        height: kRuntimeCardArtHeight,
-        padding: const EdgeInsets.all(1.5),
-        decoration: BoxDecoration(
-          color: GameUiPalette.cardArtSurface,
-          borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
-          border: Border.all(
-            color: GameUiPalette.cardArtBorder.withValues(alpha: 0.28),
-            width: 0.8,
+    return RepaintBoundary(
+      child: Center(
+        child: Container(
+          width: 47,
+          height: kRuntimeCardArtHeight,
+          padding: const EdgeInsets.all(1.5),
+          decoration: BoxDecoration(
+            color: GameUiPalette.cardArtSurface,
+            borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
+            border: Border.all(
+              color: GameUiPalette.cardArtBorder.withValues(alpha: 0.28),
+              width: 0.8,
+            ),
           ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(kRuntimeCardArtRadius - 2),
-          child: path == null
-              ? const SizedBox.expand()
-              : Image.asset(
-                  path,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
-                  gaplessPlayback: true,
-                  frameBuilder:
-                      (context, child, frame, wasSynchronouslyLoaded) {
-                        if (wasSynchronouslyLoaded || frame != null) {
-                          return child;
-                        }
-                        return const _MarketCardEmblemFallback();
-                      },
-                  errorBuilder: (_, _, _) => const _MarketCardEmblemFallback(),
-                ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(kRuntimeCardArtRadius - 2),
+            child: path == null
+                ? const SizedBox.expand()
+                : Image.asset(
+                    path,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                    gaplessPlayback: true,
+                    frameBuilder:
+                        (context, child, frame, wasSynchronouslyLoaded) {
+                          if (wasSynchronouslyLoaded || frame != null) {
+                            return child;
+                          }
+                          return const _MarketCardEmblemFallback();
+                        },
+                    errorBuilder: (_, _, _) =>
+                        const _MarketCardEmblemFallback(),
+                  ),
+          ),
         ),
       ),
     );

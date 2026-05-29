@@ -47,31 +47,36 @@ class _GameBattleItemCardFace extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Container(
-              width: kRuntimeCardArtWidth,
-              height: kBattleRuntimeCardArtHeight,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: GameUiPalette.cardArtSurfaceDeep,
-                borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
-                border: Border.all(
-                  color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
-                  width: 0.8,
+            RepaintBoundary(
+              child: Container(
+                width: kRuntimeCardArtWidth,
+                height: kBattleRuntimeCardArtHeight,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: GameUiPalette.cardArtSurfaceDeep,
+                  borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
+                  border: Border.all(
+                    color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+                    width: 0.8,
+                  ),
                 ),
-              ),
-              child: Image.asset(
-                CardEmblemAssets.item(itemSlot.contentId),
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
-                gaplessPlayback: true,
-                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                  if (wasSynchronouslyLoaded || frame != null) {
-                    return child;
-                  }
-                  return _GameBattleItemEmblemFallback(color: rarityColor);
-                },
-                errorBuilder: (context, error, stackTrace) =>
-                    _GameBattleItemEmblemFallback(color: rarityColor),
+                child: Image.asset(
+                  CardEmblemAssets.item(itemSlot.contentId),
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  gaplessPlayback: true,
+                  frameBuilder:
+                      (context, child, frame, wasSynchronouslyLoaded) {
+                        if (wasSynchronouslyLoaded || frame != null) {
+                          return child;
+                        }
+                        return _GameBattleItemEmblemFallback(
+                          color: rarityColor,
+                        );
+                      },
+                  errorBuilder: (context, error, stackTrace) =>
+                      _GameBattleItemEmblemFallback(color: rarityColor),
+                ),
               ),
             ),
             const SizedBox(height: 3),

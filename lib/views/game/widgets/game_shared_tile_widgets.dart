@@ -18,28 +18,30 @@ class GameRummiTileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: aspectRatio,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _GameRummiTilePainter(
-                tile: tile,
-                selected: selected,
-                accent: accent,
-              ),
-            ),
-          ),
-          if (tile.hasModifier)
+    return RepaintBoundary(
+      child: AspectRatio(
+        aspectRatio: aspectRatio,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
             Positioned.fill(
-              child: GameTileModifierBadges(
-                tile: tile,
-                reserveConstraintBadgeSpace: reserveConstraintBadgeSpace,
+              child: CustomPaint(
+                painter: _GameRummiTilePainter(
+                  tile: tile,
+                  selected: selected,
+                  accent: accent,
+                ),
               ),
             ),
-        ],
+            if (tile.hasModifier)
+              Positioned.fill(
+                child: GameTileModifierBadges(
+                  tile: tile,
+                  reserveConstraintBadgeSpace: reserveConstraintBadgeSpace,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

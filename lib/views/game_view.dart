@@ -58,6 +58,7 @@ part 'game/game_view_layout_widgets.dart';
 part 'game/game_view_battle_widgets.dart';
 part 'game/game_view_run_end_flow.dart';
 part 'game/game_view_battle_actions.dart';
+part 'game/game_view_battle_item_slots.dart';
 part 'game/game_view_stage_flow.dart';
 part 'game/game_view_dialog_routes.dart';
 
@@ -165,102 +166,12 @@ class _GameViewState extends ConsumerState<GameView>
   GameSessionState get _gameState =>
       ref.read(gameSessionNotifierProvider(_gameArgs));
   RummiBattleRuntimeFacade get _battleView => _gameState.battleView!;
-  RummiBattleRuntimeFacade get _battleViewWithItemSlots {
-    final battle = _battleView;
-    final catalog = _itemCatalog;
-    final runProgress = _gameState.runProgress;
-    final inventory = runProgress?.itemInventory;
-    if (catalog == null ||
-        runProgress == null ||
-        inventory == null ||
-        inventory.ownedItems.isEmpty) {
-      return battle;
-    }
-    final quickSlotCapacity = runProgress.quickSlotCapacity(
-      itemCatalog: catalog,
-    );
-
-    final itemInstances = OwnedContentInstances.itemInstances(
-      inventory: inventory,
-      catalog: catalog,
-    );
-    final instancesById = {
-      for (final instance in itemInstances) instance.id: instance,
-    };
-    final itemSlots = <RummiBattleItemSlotView>[];
-    var slotIndex = 0;
-
-    for (final itemId in inventory.quickSlotItemIds.take(quickSlotCapacity)) {
-      final instance = instancesById[itemId];
-      if (instance == null) continue;
-      itemSlots.add(
-        RummiBattleItemSlotView.fromInstance(
-          slotIndex: slotIndex,
-          slotLabel: 'Q${slotIndex + 1}',
-          instance: instance,
-        ),
+  RummiBattleRuntimeFacade get _battleViewWithItemSlots =>
+      _resolveBattleItemSlots(
+        battle: _battleView,
+        catalog: _itemCatalog,
+        runProgress: _gameState.runProgress,
       );
-      slotIndex += 1;
-    }
-
-    var passiveSlotIndex = 0;
-    for (final itemId in inventory.passiveRelicIds.take(
-      kBattlePassiveSlotDisplayCount,
-    )) {
-      final instance = instancesById[itemId];
-      if (instance == null) continue;
-      itemSlots.add(
-        RummiBattleItemSlotView.fromInstance(
-          slotIndex: slotIndex,
-          slotLabel: 'P${passiveSlotIndex + 1}',
-          instance: instance,
-        ),
-      );
-      slotIndex += 1;
-      passiveSlotIndex += 1;
-    }
-
-    var toolSlotIndex = 0;
-    for (final instance in itemInstances.where(
-      (item) => item.placement == ItemPlacement.inventory,
-    )) {
-      if (toolSlotIndex >= kBattleToolSlotDisplayCount) break;
-      itemSlots.add(
-        RummiBattleItemSlotView.fromInstance(
-          slotIndex: slotIndex,
-          slotLabel: 'T${toolSlotIndex + 1}',
-          instance: instance,
-        ),
-      );
-      slotIndex += 1;
-      toolSlotIndex += 1;
-    }
-
-    var gearSlotIndex = 0;
-    for (final itemId in inventory.equippedItemIds.take(
-      kBattleGearSlotDisplayCount,
-    )) {
-      final instance = instancesById[itemId];
-      if (instance == null) continue;
-      itemSlots.add(
-        RummiBattleItemSlotView.fromInstance(
-          slotIndex: slotIndex,
-          slotLabel: 'G${gearSlotIndex + 1}',
-          instance: instance,
-        ),
-      );
-      slotIndex += 1;
-      gearSlotIndex += 1;
-    }
-
-    return battle.withItemSlots(
-      itemSlots,
-      quickSlotCapacity: quickSlotCapacity,
-      passiveRelicCapacity: runProgress.passiveRelicCapacity(
-        itemCatalog: catalog,
-      ),
-    );
-  }
 
   RummiStationRuntimeFacade get _stationView => _gameState.stationView!;
   RummiMarketRuntimeFacade get _marketView => _gameState.marketView!;
