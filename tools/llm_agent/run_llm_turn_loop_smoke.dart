@@ -48,14 +48,14 @@ Future<void> main(List<String> args) async {
               response: LlmActionResponse.fromJson(responseResult.response!),
               legalActions: request.legalActions,
             );
-      final fallbackAction = const ContestPolicyV1BotPolicy().chooseAction(
+      final fallbackAction = const FullRunPolicyV1BotPolicy().chooseAction(
         llmSession,
         jesters: const [],
         runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
       );
       final selectedAction = validation.balanceAction ?? fallbackAction;
       final llmExecute = executeBalanceAction(llmSession, selectedAction);
-      final baselineAction = const ContestPolicyV1BotPolicy().chooseAction(
+      final baselineAction = const FullRunPolicyV1BotPolicy().chooseAction(
         baselineSession,
         jesters: const [],
         runtimeSnapshot: const RummiJesterRuntimeSnapshot(),

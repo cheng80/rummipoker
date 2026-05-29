@@ -80,7 +80,7 @@ python3 tools/llm_agent/run_llm_policy.py \
 /Users/cheng80/flutter/bin/dart run tools/sim/run_llm_balance_sim.dart \
   --runs 10 \
   --bot llm_gemma4_v1 \
-  --fallback-bot contest_policy_v1 \
+  --fallback-bot full_run_policy_v1 \
   --request-out logs/llm/requests_smoke.jsonl \
   --response-in logs/llm/responses_smoke.jsonl \
   --decision-log logs/llm/decisions_smoke.jsonl \
@@ -118,7 +118,7 @@ System prompt 핵심:
 - unknown action id: Dart validation에서 fallback
 - schema mismatch: Dart validation에서 fallback
 
-Fallback은 `contest_policy_v1`로 시작한다.
+Fallback은 `full_run_policy_v1`로 시작한다.
 같은 request 재요청 1회는 P1에서만 켠다.
 
 ## Git 추적 기준
@@ -148,7 +148,7 @@ P1 smoke는 아래를 만족해야 pass다.
 - fallback rate 기록
 - avg latency 기록
 - local LLM 서버가 꺼져 있으면 graceful error와 fallback 경로가 작동
-- 기존 `planner_v3`, `contest_policy_v1` 경로의 시뮬레이션 테스트는 영향 없음
+- 기존 `planner_v3`, `full_run_policy_v1` 경로의 시뮬레이션 테스트는 영향 없음
 
 ## 2026-05-29 Local Smoke
 

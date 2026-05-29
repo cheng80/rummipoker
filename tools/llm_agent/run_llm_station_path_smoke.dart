@@ -791,7 +791,7 @@ Future<({bool cleared})> _runBlind({
 
     final requestId =
         'llm_path_${config.seed}_${runIndex}_s${station}_${tier.name}_$turn';
-    final fallbackAction = const ContestPolicyV1BotPolicy().chooseAction(
+    final fallbackAction = const FullRunPolicyV1BotPolicy().chooseAction(
       llmSession,
       jesters: const [],
       runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
@@ -847,7 +847,7 @@ Future<({bool cleared})> _runBlind({
       selectedAction,
       runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
     );
-    final baselineAction = const ContestPolicyV1BotPolicy().chooseAction(
+    final baselineAction = const FullRunPolicyV1BotPolicy().chooseAction(
       baselineSession,
       jesters: const [],
       runtimeSnapshot: baselineProgress.buildRuntimeSnapshot(),

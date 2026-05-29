@@ -6,7 +6,7 @@ This folder contains the local Ollama runner for prompt-only RummiPoker autoplay
 
 The LLM policy is not a balance oracle.
 It is only a slow strategic sampler and decision-label source.
-Bulk balance decisions remain based on Dart simulator runs, `planner_v3`, `contest_policy_v1`, and tracked leveling reports.
+Bulk balance decisions remain based on Dart simulator runs, `planner_v3`, `full_run_policy_v1`, and tracked leveling reports.
 
 ## Local Model
 
@@ -86,7 +86,7 @@ Run a short multi-turn loop with baseline comparison:
 ```
 
 This invokes the local Ollama runner once per turn, validates the returned
-`selected_action_id`, falls back to `contest_policy_v1` on invalid responses,
+`selected_action_id`, falls back to `full_run_policy_v1` on invalid responses,
 and records divergence from a same-seed baseline policy. Keep raw JSONL under
 `logs/llm/`; commit only the summary report.
 
@@ -180,4 +180,4 @@ Dart validation uses only `selected_action_id`.
 ## Failure
 
 The runner returns `status=error` JSON for timeout, invalid JSON, empty response, or Ollama connection failure.
-Dart-side validation must fallback to `contest_policy_v1`.
+Dart-side validation must fallback to `full_run_policy_v1`.

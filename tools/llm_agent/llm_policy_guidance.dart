@@ -65,7 +65,7 @@ LlmActionRequest applyFullRunPolicyGuidance(
       if (recommendedAction != null)
         'default_recommended_action_type': recommendedAction.type,
       if (recommendedAction != null)
-        'default_recommendation_source': 'contest_policy_v1',
+        'default_recommendation_source': 'full_run_policy_v1',
       'candidate_count_before_guidance': request.legalActions.length,
       'candidate_count_after_guidance': ranked.length,
     },

@@ -50,7 +50,7 @@ Economy audit highlights:
 
 - 5000행 이상 fresh data 축적 조건은 충족했다.
 - 단, `planner_v2` 기반 수집은 빠른 fresh data bootstrap이다. 사용자가 말한 “기존 풀런봇 수준의 런타임 진행 계약”을 완전히 대체하지 않는다.
-- 중단한 `contest_policy_v1 --runs 160`은 15분 이상 CPU를 계속 사용했지만 종료 파일을 만들지 못했다. 장기 데이터 축적용 runner는 chunk 단위 flush/progress 출력 또는 병렬 chunk runner가 필요하다.
+- 중단한 `full_run_policy_v1 --runs 160`은 15분 이상 CPU를 계속 사용했지만 종료 파일을 만들지 못했다. 장기 데이터 축적용 runner는 chunk 단위 flush/progress 출력 또는 병렬 chunk runner가 필요하다.
 
 ## Trace 보강
 
@@ -73,9 +73,9 @@ Economy audit highlights:
 
 이에 맞춰 `run_balance_sim.dart --flush-every-rows`, `tools/sim/chunked_balance_run.py`, `tools/sim/summarize_balance_jsonl.dart`를 fresh data runner 기반으로 둔다.
 
-## Contest Policy Fresh Dataset
+## Full-Run Policy Fresh Dataset
 
-trace 보강 후 `contest_policy_v1` 기준 fresh data를 chunk runner로 다시 쌓았다.
+trace 보강 후 `full_run_policy_v1` 기준 fresh data를 chunk runner로 다시 쌓았다.
 
 - command shape: `python3 tools/sim/chunked_balance_run.py --resume --chunks 30 --runs-per-chunk 5 --seed 94600 --out-prefix logs/sim/fresh_runtime_20260529_contest_policy_chunked_r200 --dart /Users/cheng80/flutter/bin/dart -- ...`
 - raw JSONL: `logs/sim/fresh_runtime_20260529_contest_policy_chunked_r200.jsonl`
@@ -176,6 +176,6 @@ Judgment:
 
 1. Grid candidate report의 상위 economy/target 후보를 small fresh resimulation으로 분리 검증한다.
 2. classifier는 class balance와 candidate resimulation hit-rate를 같이 본다.
-3. `contest_policy_v1` raw action trace를 imitation learning용 schema로 분리할지 검토한다.
+3. `full_run_policy_v1` raw action trace를 imitation learning용 schema로 분리할지 검토한다.
 4. LLM autoplay P0 scaffold에서 만든 state/action request를 decision cache runner와 연결한다.
 5. archive row는 섞지 않고, 필요한 경우 historical prior로만 비교한다.

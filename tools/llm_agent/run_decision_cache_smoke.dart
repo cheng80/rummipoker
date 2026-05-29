@@ -34,7 +34,7 @@ Future<void> main(List<String> args) async {
             response: LlmActionResponse.fromJson(responseJson),
             legalActions: request.legalActions,
           );
-    final fallbackAction = const ContestPolicyV1BotPolicy().chooseAction(
+    final fallbackAction = const FullRunPolicyV1BotPolicy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),

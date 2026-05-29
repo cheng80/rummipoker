@@ -41,7 +41,7 @@
 6. 다음 활성 작업:
    - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
    - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
-   - 2026-05-29 contest policy fresh data: `contest_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
+   - 2026-05-29 full-run policy fresh data: `full_run_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
    - 2026-05-29 grid fresh data: `MODE=grid` chunked run 5,655 rows, market/loadout axis 확장, grid multi-target model, candidate probe report를 생성했다. `avg_score_ratio` 회귀는 R2 0.6030까지 개선됐지만, `cleared_majority` classifier는 balanced accuracy 0.6649로 gate 후보 선별에는 아직 약하다.
    - 다음은 grid candidate report의 상위 economy/target 후보를 small fresh resimulation으로 분리 검증하는 것이다.
    - LLM autoplay는 대량 밸런스 기준이 아니라 전략 샘플러/decision label 보조 축으로만 검토한다. 적용 계약은 `docs/planning/leveling/LLM_AUTOPLAY_LEVELING_PLAN.md`를 따른다.

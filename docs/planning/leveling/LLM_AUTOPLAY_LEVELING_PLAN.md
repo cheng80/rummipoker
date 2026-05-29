@@ -15,7 +15,7 @@ LLM autoplay는 RummiPoker의 대량 밸런스 기준으로 쓰지 않는다.
 - 향후 imitation learning용 decision label 수집
 - fresh 레벨링 리포트 해석 보조
 
-대량 clear rate, score ratio, economy gate, market value 판단은 계속 Dart simulator의 `planner_v3`, `contest_policy_v1`, fresh ML pipeline을 기준으로 한다.
+대량 clear rate, score ratio, economy gate, market value 판단은 계속 Dart simulator의 `planner_v3`, `full_run_policy_v1`, fresh ML pipeline을 기준으로 한다.
 
 ## 현재 구조와 맞는 적용 방식
 
@@ -31,7 +31,7 @@ LLM 호출은 latency, timeout, async I/O가 있으므로 기존 bot interface�
 2. 별도 LLM simulation runner
    - 기존 `run_balance_sim.dart`를 깨지 않고 `tools/sim/run_llm_balance_sim.dart` 또는 Python orchestrator에서 slow loop를 관리한다.
 
-기존 `run_balance_sim.dart --bot contest_policy_v1` 경로는 변경하지 않는다.
+기존 `run_balance_sim.dart --bot full_run_policy_v1` 경로는 변경하지 않는다.
 
 ## 핵심 계약
 
@@ -44,7 +44,7 @@ Dart가 legal action list를 만들고, LLM은 `selected_action_id`만 고른다
 - action type은 허용 목록이어야 한다.
 - 좌표, hand index, resource, confirm 가능 여부는 Dart session에서 재검증한다.
 - invalid면 같은 request 재시도 1회까지 허용한다.
-- 재시도 실패 시 `contest_policy_v1` fallback을 사용한다.
+- 재시도 실패 시 `full_run_policy_v1` fallback을 사용한다.
 - invalid count, fallback count, latency, selected action, reason은 별도 decision log에 남긴다.
 
 허용 action type:
@@ -102,14 +102,14 @@ P1 execution:
 
 1. decision cache 기반 LLM runner 연결
 2. `llm_gemma4_v1` smoke 10 runs
-3. `planner_v3`, `contest_policy_v1` 같은 seed 비교
+3. `planner_v3`, `full_run_policy_v1` 같은 seed 비교
 4. invalid/fallback/latency/clear/score/turn count 리포트 생성
 
 로컬 LLM 서버와 모델 세팅은 `docs/planning/leveling/LLM_LOCAL_SETUP_PLAN.md`를 따른다.
 
 P2 learning data:
 
-1. contest_policy_v1 decision log를 silver label로 export
+1. full_run_policy_v1 decision log를 silver label로 export
 2. LLM decision과 fallback 결과를 함께 저장
 3. 사람 검토용 disagreement report 생성
 4. SFT/LoRA는 데이터 품질 확인 뒤 별도 플랜으로 분리

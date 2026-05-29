@@ -376,8 +376,8 @@ class PlannerV3BotPolicy extends PlannerV2BotPolicy {
 /// 제출 QA 봇에서 검증된 일반 플레이 판단만 CLI 레벨링에 옮긴 proxy.
 ///
 /// retry recovery, 실패 route 회피, seed 기반 보정은 넣지 않는다.
-class ContestPolicyV1BotPolicy extends BalanceSimBotPolicy {
-  const ContestPolicyV1BotPolicy();
+class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
+  const FullRunPolicyV1BotPolicy();
 
   static const int _cleanConfirmScoreFloor = 70;
   static const int _highTargetConfirmTargetFloor = 600;
@@ -394,7 +394,7 @@ class ContestPolicyV1BotPolicy extends BalanceSimBotPolicy {
   static const int _lateDeckRemainingMax = 8;
 
   @override
-  String get id => 'contest_policy_v1';
+  String get id => 'full_run_policy_v1';
 
   @override
   BalanceSimAction chooseAction(

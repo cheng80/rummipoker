@@ -65,7 +65,7 @@ python3 tools/sim/economy_audit.py --jsonl logs/sim_balance.jsonl --summary logs
 장기 실행은 중간 산출물 유실을 막기 위해 chunk runner를 사용한다.
 
 ```bash
-python3 tools/sim/chunked_balance_run.py --chunks 10 --runs-per-chunk 20 --seed 94500 --out-prefix logs/sim/contest_policy_v1_chunked --dart /Users/cheng80/flutter/bin/dart -- --bot contest_policy_v1 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --difficulty standard --market-profile shop_slot_market_v9 --loadout-id progression_route_balanced
+python3 tools/sim/chunked_balance_run.py --chunks 10 --runs-per-chunk 20 --seed 94500 --out-prefix logs/sim/full_run_policy_v1_chunked --dart /Users/cheng80/flutter/bin/dart -- --bot full_run_policy_v1 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --difficulty standard --market-profile shop_slot_market_v9 --loadout-id progression_route_balanced
 ```
 
 후보 폴더:

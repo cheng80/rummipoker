@@ -48,7 +48,7 @@
 | ML terminology correction | Applied | `docs/archive/leveling/deprecated_2026_05/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
 | actual ML leveling transition | Paused for contest prototype | `analysis/leveling/` / `tools/leveling/` | pre-outcome station/tier table, sequence/path table, baseline metrics, candidate recommendation table, human-review MD report는 보조 신호로 존재. 공모전 기준에서는 ML 갱신을 보류하고 production ML이나 런타임 자동 적용은 하지 않음 |
 | historical leveling data reuse policy | Applied | `CURRENT_LEVELING_POLICY.md` / `HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `tools/leveling/README.md` | 과거 row는 `historical prior`로만 쓰고, 현재 clear rate/구매력/추천 결론은 최신 runtime/catalog/ruleset/bot policy fresh resimulation으로만 닫는다. |
-| contest-style CLI bot proxy | Workspace pending | `tools/sim/planner_bot.dart` / `tools/sim/run_balance_sim.dart` | `contest_policy_v1` 추가. full-run retry recovery와 seed route 회피는 제외하고, 일반 플레이 판단인 전략 draw, 고점수 확정 지연, lookahead 배치, board move/hand discard 실행 경로만 CLI 레벨링용 proxy로 분리했다. |
+| full-run CLI bot proxy | Workspace pending | `tools/sim/planner_bot.dart` / `tools/sim/run_balance_sim.dart` | `full_run_policy_v1` 추가. full-run retry recovery와 seed route 회피는 제외하고, 일반 플레이 판단인 전략 draw, 고점수 확정 지연, lookahead 배치, board move/hand discard 실행 경로만 CLI 레벨링용 proxy로 분리했다. |
 
 ## 2. Applied Runtime Details
 
@@ -246,9 +246,9 @@ First-reroll-free follow-up:
 
 Contest policy v1 fresh path smoke:
 
-- outputs: `logs/sim/contest_policy_v1_standard_20260511_053831.jsonl`, `logs/sim/contest_policy_v1_challenge_20260511_053831.jsonl`
-- summary: `logs/sim/contest_policy_v1_standard_20260511_053831_summary.json`, `logs/sim/contest_policy_v1_challenge_20260511_053831_summary.json`
-- 조건: `contest_policy_v1`, seed 91460, `progression_route_power`, `shop_slot_market_v9`, `gated_known_cost`, reward 0.40, price 2.2, first-reroll-free, growth access price, affordable alternative choice.
+- outputs: `logs/sim/full_run_policy_v1_standard_20260511_053831.jsonl`, `logs/sim/full_run_policy_v1_challenge_20260511_053831.jsonl`
+- summary: `logs/sim/full_run_policy_v1_standard_20260511_053831_summary.json`, `logs/sim/full_run_policy_v1_challenge_20260511_053831_summary.json`
+- 조건: `full_run_policy_v1`, seed 91460, `progression_route_power`, `shop_slot_market_v9`, `gated_known_cost`, reward 0.40, price 2.2, first-reroll-free, growth access price, affordable alternative choice.
 - 표준: S1 small부터 S8 boss까지 24/24 steps cleared, total turn 1234, total score ratio 1.122. S8 boss 1997/1750.
 - 도전: S1 small부터 S8 boss까지 24/24 steps cleared, total turn 1446, total score ratio 1.124. S8 boss 2320/2100.
 - 해석: 이 결과는 제출 QA 증거가 아니라 숙련 플레이어 proxy의 fresh 레벨링 smoke다. baseline start + market-only route 단일 seed는 S3/S4에서 deck exhausted가 남았고, progression route power를 붙였을 때 표준/도전 full path가 닫혔다.
@@ -268,10 +268,10 @@ Economy choice comparison r20:
 - 조건: 20 fresh station paths per row, `progression_route_power`, `shop_slot_market_v9`, reward 0.40, price 2.2, first-reroll-free, growth access price.
 - `planner_v2` standard: none 65%, affordable v1 60%, affordable v2 60%. final gold avg 약 48~50G. unaffordable 0회.
 - `planner_v2` challenge: none 30%, affordable v1 30%, affordable v2 35%. final gold avg 약 26~28G. unaffordable 0회.
-- `contest_policy_v1` standard: none/v1/v2 모두 100%. final gold avg 약 39~40G. unaffordable 0회.
-- `contest_policy_v1` challenge: none 85%, affordable v1 90%, affordable v2 90%. final gold avg 약 10.8~12.5G. unaffordable 각 1회.
-- 해석: 현재 가장 큰 차이는 market choice mode가 아니라 bot policy다. `planner_v2`는 구매력 문제가 없어도 S1/S2/S6/S7 boss 등에서 많이 흔들리고, `contest_policy_v1`은 같은 경제에서 standard를 안정적으로 닫고 challenge도 85~90%까지 유지한다. choice mode는 challenge에서만 소폭 개선 신호가 있으나 r20 기준으로 가격/보상 변경 근거는 아니다.
-- follow-up: r80/r120 확대는 12축 전체가 아니라 `contest_policy_v1 + challenge + none/v1/v2`로 좁혀 별도 장기 수동 probe로 실행한다. 현재 Flutter test harness 기준 r80은 장기 실행 비용이 커 기본 test suite에는 넣지 않는다.
+- `full_run_policy_v1` standard: none/v1/v2 모두 100%. final gold avg 약 39~40G. unaffordable 0회.
+- `full_run_policy_v1` challenge: none 85%, affordable v1 90%, affordable v2 90%. final gold avg 약 10.8~12.5G. unaffordable 각 1회.
+- 해석: 현재 가장 큰 차이는 market choice mode가 아니라 bot policy다. `planner_v2`는 구매력 문제가 없어도 S1/S2/S6/S7 boss 등에서 많이 흔들리고, `full_run_policy_v1`은 같은 경제에서 standard를 안정적으로 닫고 challenge도 85~90%까지 유지한다. choice mode는 challenge에서만 소폭 개선 신호가 있으나 r20 기준으로 가격/보상 변경 근거는 아니다.
+- follow-up: r80/r120 확대는 12축 전체가 아니라 `full_run_policy_v1 + challenge + none/v1/v2`로 좁혀 별도 장기 수동 probe로 실행한다. 현재 Flutter test harness 기준 r80은 장기 실행 비용이 커 기본 test suite에는 넣지 않는다.
 
 Shuffle reference note:
 

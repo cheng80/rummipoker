@@ -68,7 +68,7 @@ Future<void> main(List<String> args) async {
               response: LlmActionResponse.fromJson(responseResult.response!),
               legalActions: request.legalActions,
             );
-      final fallbackAction = const ContestPolicyV1BotPolicy().chooseAction(
+      final fallbackAction = const FullRunPolicyV1BotPolicy().chooseAction(
         llmSession,
         jesters: const [],
         runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
@@ -81,7 +81,7 @@ Future<void> main(List<String> args) async {
       );
       _applyRunProgressAfterAction(runProgress, llmExecute);
 
-      final baselineAction = const ContestPolicyV1BotPolicy().chooseAction(
+      final baselineAction = const FullRunPolicyV1BotPolicy().chooseAction(
         baselineSession,
         jesters: const [],
         runtimeSnapshot: baselineRunProgress.buildRuntimeSnapshot(),
