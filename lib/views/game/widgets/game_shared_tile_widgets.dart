@@ -101,8 +101,9 @@ class GameTileModifierBadges extends StatelessWidget {
                     height: metrics.badgeHeight,
                     fontSize: metrics.fontSize,
                     background: tileSealColor(seal),
-                    foreground: GameUiPalette.textPrimary,
+                    foreground: GameUiPalette.tileModifierBadgeText,
                     circular: true,
+                    highContrast: true,
                   ),
                 ),
             ],
@@ -148,6 +149,7 @@ class _TileModifierBadge extends StatelessWidget {
     required this.background,
     required this.foreground,
     this.circular = false,
+    this.highContrast = false,
   });
 
   final String label;
@@ -156,6 +158,7 @@ class _TileModifierBadge extends StatelessWidget {
   final Color background;
   final Color foreground;
   final bool circular;
+  final bool highContrast;
 
   @override
   Widget build(BuildContext context) {
@@ -170,12 +173,12 @@ class _TileModifierBadge extends StatelessWidget {
             Color.lerp(
               GameUiPalette.tileModifierBadgeSurfaceTop,
               background,
-              0.28,
+              highContrast ? 0.48 : 0.28,
             )!,
             Color.lerp(
               GameUiPalette.tileModifierBadgeSurfaceBottom,
               background,
-              0.12,
+              highContrast ? 0.22 : 0.12,
             )!,
           ],
         ),
@@ -183,9 +186,9 @@ class _TileModifierBadge extends StatelessWidget {
           color: Color.lerp(
             GameUiPalette.tileModifierBadgeBorder,
             background,
-            0.45,
+            highContrast ? 0.22 : 0.45,
           )!,
-          width: 1.15,
+          width: highContrast ? 1.35 : 1.15,
         ),
         boxShadow: [
           BoxShadow(
