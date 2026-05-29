@@ -63,35 +63,37 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
         builder: (context, constraints) {
           _scheduleBoardEffect(constraints);
           if (!_visible) return const SizedBox.expand();
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              GameWidget<RummiEffectGame>(game: _game),
-              if (_scoreMoteCenters.isNotEmpty)
-                _SettlementScoreMoteLayer(
-                  centers: _scoreMoteCenters,
-                  tick: _scoreMoteTick,
-                ),
-              if (_lineSweepCenters.isNotEmpty)
-                _LineConfirmSweepLayer(
-                  centers: _lineSweepCenters,
-                  tick: _scoreMoteTick,
-                ),
-              if (_constraintImpactCenter != null &&
-                  _constraintImpactLabel != null)
-                _ConstraintImpactBadgeLayer(
-                  centers: _constraintImpactCenters,
-                  center: _constraintImpactCenter!,
-                  label: _constraintImpactLabel!,
-                  tick: _scoreMoteTick,
-                ),
-              if (_largeScoreCenter != null && _largeScoreLabel != null)
-                _LargeScoreBurstBadgeLayer(
-                  center: _largeScoreCenter!,
-                  label: _largeScoreLabel!,
-                  tick: _scoreMoteTick,
-                ),
-            ],
+          return RepaintBoundary(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                GameWidget<RummiEffectGame>(game: _game),
+                if (_scoreMoteCenters.isNotEmpty)
+                  _SettlementScoreMoteLayer(
+                    centers: _scoreMoteCenters,
+                    tick: _scoreMoteTick,
+                  ),
+                if (_lineSweepCenters.isNotEmpty)
+                  _LineConfirmSweepLayer(
+                    centers: _lineSweepCenters,
+                    tick: _scoreMoteTick,
+                  ),
+                if (_constraintImpactCenter != null &&
+                    _constraintImpactLabel != null)
+                  _ConstraintImpactBadgeLayer(
+                    centers: _constraintImpactCenters,
+                    center: _constraintImpactCenter!,
+                    label: _constraintImpactLabel!,
+                    tick: _scoreMoteTick,
+                  ),
+                if (_largeScoreCenter != null && _largeScoreLabel != null)
+                  _LargeScoreBurstBadgeLayer(
+                    center: _largeScoreCenter!,
+                    label: _largeScoreLabel!,
+                    tick: _scoreMoteTick,
+                  ),
+              ],
+            ),
           );
         },
       ),
