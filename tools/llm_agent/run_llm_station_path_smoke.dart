@@ -494,6 +494,8 @@ Future<({bool cleared})> _runBlind({
       'used_fallback': !validation.isValid,
       'selected_action_id': validation.selectedAction?.id,
       'selected_action_type': validation.selectedAction?.type,
+      'response_confidence': validation.confidence,
+      'response_reason': validation.responseReason,
       'executed_action_type': selectedAction.type.name,
       'baseline_action_type': baselineAction.type.name,
       'diverged_from_baseline':

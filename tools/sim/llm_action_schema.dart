@@ -17,6 +17,8 @@ class LlmLegalAction {
     this.boardPressure,
     this.clearsTarget,
     this.reasonHint,
+    this.policyRank,
+    this.policyScore,
   });
 
   final String id;
@@ -32,6 +34,31 @@ class LlmLegalAction {
   final int? boardPressure;
   final bool? clearsTarget;
   final String? reasonHint;
+  final int? policyRank;
+  final int? policyScore;
+
+  LlmLegalAction withPolicyHint({
+    required int policyRank,
+    required int policyScore,
+  }) {
+    return LlmLegalAction(
+      id: id,
+      type: type,
+      action: action,
+      handIndex: handIndex,
+      row: row,
+      col: col,
+      toRow: toRow,
+      toCol: toCol,
+      previewScore: previewScore,
+      potentialScore: potentialScore,
+      boardPressure: boardPressure,
+      clearsTarget: clearsTarget,
+      reasonHint: reasonHint,
+      policyRank: policyRank,
+      policyScore: policyScore,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -46,6 +73,8 @@ class LlmLegalAction {
     if (boardPressure != null) 'board_pressure': boardPressure,
     if (clearsTarget != null) 'clears_target': clearsTarget,
     if (reasonHint != null) 'reason_hint': reasonHint,
+    if (policyRank != null) 'policy_rank': policyRank,
+    if (policyScore != null) 'policy_score': policyScore,
   };
 }
 

@@ -22,6 +22,13 @@ LlmActionRequest applyFullRunPolicyGuidance(
             .map((entry) => entry.action)
             .take(maxActions)
             .toList(growable: false);
+  final ranked = [
+    for (var index = 0; index < selected.length; index++)
+      selected[index].withPolicyHint(
+        policyRank: index + 1,
+        policyScore: _policyScore(selected[index]),
+      ),
+  ];
 
   return LlmActionRequest(
     requestId: request.requestId,
@@ -33,6 +40,7 @@ LlmActionRequest applyFullRunPolicyGuidance(
         'candidate_policy':
             'Legal actions are pre-ranked and filtered with full-run bot rules.',
         'rules': [
+          'Actions include policy_rank and policy_score; lower policy_rank is the default recommendation.',
           'Prefer actions that clear the target immediately.',
           'Do not spend board discard, hand discard, or board move only for evidence.',
           'Use discard or move only when it improves survival, scoring, or board lock recovery.',
@@ -42,9 +50,9 @@ LlmActionRequest applyFullRunPolicyGuidance(
         ],
       },
       'candidate_count_before_guidance': request.legalActions.length,
-      'candidate_count_after_guidance': selected.length,
+      'candidate_count_after_guidance': ranked.length,
     },
-    legalActions: selected,
+    legalActions: ranked,
   );
 }
 
