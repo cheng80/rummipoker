@@ -97,12 +97,10 @@ class GameTileModifierBadges extends StatelessWidget {
                   right: metrics.sealInset,
                   bottom: metrics.sealInset,
                   child: _TileModifierBadge(
-                    label: tileSealShortLabel(seal),
                     height: metrics.badgeHeight,
-                    fontSize: metrics.fontSize,
                     background: tileSealColor(seal),
-                    foreground: GameUiPalette.textPrimary,
                     circular: true,
+                    icon: _TileSealIcon(seal: seal),
                   ),
                 ),
             ],
@@ -142,20 +140,22 @@ class _TileModifierBadgeMetrics {
 
 class _TileModifierBadge extends StatelessWidget {
   const _TileModifierBadge({
-    required this.label,
     required this.height,
-    required this.fontSize,
     required this.background,
-    required this.foreground,
+    this.label,
+    this.fontSize,
+    this.foreground,
     this.circular = false,
+    this.icon,
   });
 
-  final String label;
+  final String? label;
   final double height;
-  final double fontSize;
+  final double? fontSize;
   final Color background;
-  final Color foreground;
+  final Color? foreground;
   final bool circular;
+  final Widget? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -204,20 +204,93 @@ class _TileModifierBadge extends StatelessWidget {
         height: height,
         width: circular ? height : height * 1.34,
         child: Center(
-          child: Text(
-            label,
-            maxLines: 1,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: foreground,
-              fontSize: fontSize,
-              fontWeight: FontWeight.w900,
-              height: 1,
-            ),
-          ),
+          child:
+              icon ??
+              Text(
+                label ?? '',
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: foreground ?? GameUiPalette.tileModifierBadgeText,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
         ),
       ),
     );
+  }
+}
+
+class _TileSealIcon extends StatelessWidget {
+  const _TileSealIcon({required this.seal});
+
+  final TileSeal seal;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _TileSealIconPainter(seal: seal, accent: tileSealColor(seal)),
+      size: Size.square(11),
+    );
+  }
+}
+
+class _TileSealIconPainter extends CustomPainter {
+  const _TileSealIconPainter({required this.seal, required this.accent});
+
+  final TileSeal seal;
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.shortestSide * 0.38;
+    final ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (size.shortestSide * 0.12).clamp(1.0, 1.4).toDouble()
+      ..strokeCap = StrokeCap.round
+      ..color = GameUiPalette.tileModifierBadgeText.withValues(alpha: 0.9);
+    final accentStrokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (size.shortestSide * 0.16).clamp(1.1, 1.7).toDouble()
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = Color.lerp(GameUiPalette.tileModifierBadgeText, accent, 0.72)!;
+    final accentFillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = Color.lerp(GameUiPalette.tileModifierBadgeText, accent, 0.78)!;
+
+    canvas.drawCircle(center, radius, ringPaint);
+
+    switch (seal) {
+      case TileSeal.blueSeal:
+        final mark = Path()
+          ..moveTo(center.dx, center.dy - radius * 0.82)
+          ..lineTo(center.dx + radius * 0.5, center.dy)
+          ..lineTo(center.dx, center.dy + radius * 0.82)
+          ..lineTo(center.dx - radius * 0.5, center.dy)
+          ..close();
+        canvas.drawPath(mark, accentFillPaint);
+      case TileSeal.redSeal:
+        final mark = Path()
+          ..moveTo(center.dx - radius * 0.48, center.dy - radius * 0.7)
+          ..lineTo(center.dx + radius * 0.22, center.dy - radius * 0.7)
+          ..lineTo(center.dx + radius * 0.02, center.dy - radius * 0.08)
+          ..lineTo(center.dx + radius * 0.52, center.dy - radius * 0.08)
+          ..lineTo(center.dx - radius * 0.18, center.dy + radius * 0.72)
+          ..lineTo(center.dx, center.dy + radius * 0.16)
+          ..lineTo(center.dx - radius * 0.48, center.dy + radius * 0.16)
+          ..close();
+        canvas.drawPath(mark, accentFillPaint);
+    }
+    canvas.drawCircle(center, radius * 0.62, accentStrokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TileSealIconPainter oldDelegate) {
+    return oldDelegate.seal != seal || oldDelegate.accent != accent;
   }
 }
 
