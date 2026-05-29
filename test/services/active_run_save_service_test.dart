@@ -819,6 +819,7 @@ void main() {
             number: 7,
             enhancement: TileEnhancement.chipInlaid,
             seal: TileSeal.blueSeal,
+            edition: TileEdition.silverEdition,
           ),
         )
         ..tileOffers.add(
@@ -827,6 +828,7 @@ void main() {
             number: 9,
             enhancement: TileEnhancement.glassTile,
             seal: TileSeal.redSeal,
+            edition: TileEdition.prismEdition,
           ),
         )
         ..pendingBossTileReward = true;
@@ -857,12 +859,20 @@ void main() {
         restored.runProgress.addedDeckTiles.single.seal,
         TileSeal.blueSeal,
       );
+      expect(
+        restored.runProgress.addedDeckTiles.single.edition,
+        TileEdition.silverEdition,
+      );
       expect(restored.runProgress.tileOffers.single.color, TileColor.blue);
       expect(
         restored.runProgress.tileOffers.single.enhancement,
         TileEnhancement.glassTile,
       );
       expect(restored.runProgress.tileOffers.single.seal, TileSeal.redSeal);
+      expect(
+        restored.runProgress.tileOffers.single.edition,
+        TileEdition.prismEdition,
+      );
       expect(restored.runProgress.pendingBossTileReward, isTrue);
     });
 
@@ -874,12 +884,14 @@ void main() {
           color: TileColor.red,
           number: 3,
           enhancement: TileEnhancement.chipInlaid,
+          edition: TileEdition.silverEdition,
         );
         const boardTile = Tile(
           id: 12,
           color: TileColor.blue,
           number: 4,
           seal: TileSeal.blueSeal,
+          edition: TileEdition.glowEdition,
         );
         const handTile = Tile(
           id: 13,
@@ -887,12 +899,14 @@ void main() {
           number: 5,
           enhancement: TileEnhancement.scoreGilded,
           seal: TileSeal.redSeal,
+          edition: TileEdition.prismEdition,
         );
         const eliminatedTile = Tile(
           id: 14,
           color: TileColor.black,
           number: 6,
           enhancement: TileEnhancement.glassTile,
+          edition: TileEdition.silverEdition,
         );
         final board = RummiBoard()..setCell(2, 3, boardTile);
         final session = RummiPokerGridSession.restored(
@@ -931,15 +945,28 @@ void main() {
           restoredSession.deck.snapshotPile().single.enhancement,
           TileEnhancement.chipInlaid,
         );
+        expect(
+          restoredSession.deck.snapshotPile().single.edition,
+          TileEdition.silverEdition,
+        );
         expect(restoredSession.board.cellAt(2, 3)?.seal, TileSeal.blueSeal);
+        expect(
+          restoredSession.board.cellAt(2, 3)?.edition,
+          TileEdition.glowEdition,
+        );
         expect(
           restoredSession.hand.single.enhancement,
           TileEnhancement.scoreGilded,
         );
         expect(restoredSession.hand.single.seal, TileSeal.redSeal);
+        expect(restoredSession.hand.single.edition, TileEdition.prismEdition);
         expect(
           restoredSession.eliminated.single.enhancement,
           TileEnhancement.glassTile,
+        );
+        expect(
+          restoredSession.eliminated.single.edition,
+          TileEdition.silverEdition,
         );
         expect(
           restored.stageStartSnapshot.session.deck
@@ -949,8 +976,16 @@ void main() {
           TileEnhancement.chipInlaid,
         );
         expect(
+          restored.stageStartSnapshot.session.deck.snapshotPile().single.edition,
+          TileEdition.silverEdition,
+        );
+        expect(
           restored.stageStartSnapshot.session.board.cellAt(2, 3)?.seal,
           TileSeal.blueSeal,
+        );
+        expect(
+          restored.stageStartSnapshot.session.board.cellAt(2, 3)?.edition,
+          TileEdition.glowEdition,
         );
       },
     );

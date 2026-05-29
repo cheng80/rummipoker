@@ -8,6 +8,13 @@ const double kBoardGridGap = 1.5;
 const double kBoardTileInnerPadding = 2.0;
 const double kHandTileModifierBadgeScale = 1.22;
 
+const double kGameHudHeight = 62.0;
+const double kGameHudBlindWidth = 76.0;
+const double kGameHudGoldWidth = 132.0;
+const double kGameHudGap = 6.0;
+const double kGameHudRadius = 18.0;
+const double kGameHudProgressRadius = 99.0;
+
 const double kBattleItemSlotWidth = 54.0;
 const double kBattleItemSlotHeight = 70.0;
 const double kBattleSlotCardInset = 2.0;

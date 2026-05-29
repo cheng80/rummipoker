@@ -333,11 +333,12 @@ String _settlementStepLabel(
           : JesterTranslationScope.of(
               context,
             ).resolveDisplayName(effect.jesterId, effect.displayName),
+    ScoringPresentationStep.tile => effect == null
+        ? '타일 효과'
+        : effect.displayName,
     ScoringPresentationStep.item =>
       effect == null
           ? 'Item 발동'
-          : effect.jesterId.startsWith('tile:')
-          ? effect.displayName
           : ItemTranslationScope.of(
               context,
             ).resolveDisplayName(effect.jesterId, effect.displayName),
@@ -362,7 +363,9 @@ String? _settlementStepSubLabel(
       line.constraintPenalties.isEmpty
           ? null
           : line.constraintPenalties.first.ruleText,
-    ScoringPresentationStep.jester || ScoringPresentationStep.item =>
+    ScoringPresentationStep.jester ||
+    ScoringPresentationStep.tile ||
+    ScoringPresentationStep.item =>
       effect == null ? null : jesterEffectBadge(effect),
     ScoringPresentationStep.finalScore => gameScoreBreakdownLabel(line),
     ScoringPresentationStep.none => gameScoreBreakdownLabel(line),
@@ -384,6 +387,7 @@ int _settlementStepScore(
           ? 0
           : line.constraintPenalties.first.scoreDelta,
     ScoringPresentationStep.jester ||
+    ScoringPresentationStep.tile ||
     ScoringPresentationStep.item => effect?.scoreDelta ?? 0,
     ScoringPresentationStep.finalScore ||
     ScoringPresentationStep.none => line.finalScore,

@@ -674,39 +674,63 @@ class RummiPokerGridSession {
         bonusRankProgress += 1;
       }
       final enhancement = tile.enhancement;
-      if (enhancement == null) continue;
-      final repeatCount = tile.seal == TileSeal.redSeal ? 2 : 1;
-      for (var repeat = 0; repeat < repeatCount; repeat += 1) {
-        final before = score;
-        switch (enhancement) {
-          case TileEnhancement.chipInlaid:
-            score += 20;
-          case TileEnhancement.scoreGilded:
-            score = (score * 1.2).round();
-          case TileEnhancement.goldTile:
-            goldBonus += 1;
-          case TileEnhancement.glassTile:
-            score = (score * 1.5).round();
-            if (repeat == 0 && runRandom.nextInt(4) == 0) {
-              destroyedTiles.add(tile);
-            }
-          case TileEnhancement.wildPainted:
-          case TileEnhancement.luckyTile:
-            break;
+      if (enhancement != null) {
+        final repeatCount = tile.seal == TileSeal.redSeal ? 2 : 1;
+        for (var repeat = 0; repeat < repeatCount; repeat += 1) {
+          final before = score;
+          switch (enhancement) {
+            case TileEnhancement.chipInlaid:
+              score += 20;
+            case TileEnhancement.scoreGilded:
+              score = (score * 1.2).round();
+            case TileEnhancement.goldTile:
+              goldBonus += 1;
+            case TileEnhancement.glassTile:
+              score = (score * 1.5).round();
+              if (repeat == 0 && runRandom.nextInt(4) == 0) {
+                destroyedTiles.add(tile);
+              }
+            case TileEnhancement.wildPainted:
+            case TileEnhancement.luckyTile:
+              break;
+          }
+          final delta = score - before;
+          if (delta <= 0) continue;
+          effects.add(
+            RummiJesterEffectBreakdown(
+              jesterId: 'tile:${enhancement.persistenceValue}',
+              displayName: _tileModifierDisplayName(enhancement),
+              chipsBonus: enhancement == TileEnhancement.chipInlaid ? 20 : 0,
+              multBonus: enhancement == TileEnhancement.scoreGilded ? 4 : 0,
+              xmultBonus: enhancement == TileEnhancement.glassTile ? 1.5 : 1.0,
+              scoreDelta: delta,
+            ),
+          );
         }
-        final delta = score - before;
-        if (delta <= 0) continue;
-        effects.add(
-          RummiJesterEffectBreakdown(
-            jesterId: 'tile:${enhancement.persistenceValue}',
-            displayName: _tileModifierDisplayName(enhancement),
-            chipsBonus: enhancement == TileEnhancement.chipInlaid ? 20 : 0,
-            multBonus: enhancement == TileEnhancement.scoreGilded ? 4 : 0,
-            xmultBonus: enhancement == TileEnhancement.glassTile ? 1.5 : 1.0,
-            scoreDelta: delta,
-          ),
-        );
       }
+      final edition = tile.edition;
+      if (edition == null) continue;
+      final beforeEdition = score;
+      switch (edition) {
+        case TileEdition.silverEdition:
+          score += 15;
+        case TileEdition.glowEdition:
+          score = (score * 1.15).round();
+        case TileEdition.prismEdition:
+          score = (score * 1.35).round();
+      }
+      final editionDelta = score - beforeEdition;
+      if (editionDelta <= 0) continue;
+      effects.add(
+        RummiJesterEffectBreakdown(
+          jesterId: 'tile_edition:${edition.persistenceValue}',
+          displayName: _tileEditionDisplayName(edition),
+          chipsBonus: edition == TileEdition.silverEdition ? 15 : 0,
+          multBonus: edition == TileEdition.glowEdition ? 3 : 0,
+          xmultBonus: edition == TileEdition.prismEdition ? 1.35 : 1.0,
+          scoreDelta: editionDelta,
+        ),
+      );
     }
 
     return (
@@ -726,6 +750,14 @@ class RummiPokerGridSession {
       TileEnhancement.glassTile => '유리 타일',
       TileEnhancement.wildPainted => '와일드 타일',
       TileEnhancement.luckyTile => '럭키 타일',
+    };
+  }
+
+  static String _tileEditionDisplayName(TileEdition edition) {
+    return switch (edition) {
+      TileEdition.silverEdition => '은빛 판본',
+      TileEdition.glowEdition => '빛무늬 판본',
+      TileEdition.prismEdition => '다색 판본',
     };
   }
 

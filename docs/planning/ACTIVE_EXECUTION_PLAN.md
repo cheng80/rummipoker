@@ -11,31 +11,44 @@
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
 | 공모전 기준 완성 | Closed / off | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-15 12시경 최종 산출물을 우선 등록했다. 공모전 풀런봇/제출 체크리스트는 더 이상 활성 작업 큐가 아니며, 이후 공모전 문서는 제출 증거와 이력 참고로만 본다. |
-| Post-contest 덱 빌딩 확장 | Active | `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` | 기존 `shop_slot_market_v9` 구매 이벤트 추적, runtime 구매/사용 가치 probe, 가격/가치 판단 재개는 사용자에게 직접 보이는 작업이 아니므로 대기열로 내린다. 현재 활성 작업은 특수 타일 modifier V1/V2 플랜 기반으로, V1 데이터 모델/저장/마켓 표시/정산 반영을 순차 적용하는 것이다. |
-| UI/UX 예정 연출 큐 | Active side track | `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md` | 예정 연출 큐 마무리는 밸런스/경제/ML 재검증과 분리한다. transient presentation state, timing/cue 중앙화, browser/compute 눈검증 기준으로 별도 닫는다. |
+| Post-contest 덱 빌딩 확장 | Active | `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` | 특수 타일 V1은 저장/마켓/손패/보드/런 정보/정산 반영까지 닫았고, V2-A 판본(`silver_edition`, `glow_edition`, `prism_edition`)도 additive 저장/마켓/정산/뱃지 경로를 열었다. 다음은 V2-B 이후가 아니라 fresh 데이터 기반 레벨링 재시작 전에 회귀 검증과 문서 정리 상태를 유지하는 것이다. |
+| UI/UX 예정 연출 큐 | Active side track | `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md` | transient presentation state는 runtime save source-of-truth와 분리되어 있고, settlement 큐에서 Jester / Tile modifier / Item 효과 단계가 분리됐다. timing/metric 일부도 공용화했다. 남은 polish는 별도 시각 QA 후보로 두며 밸런스/경제/ML 재검증과 섞지 않는다. |
 | 실제 Goal 기준 완성 | Active after stabilization | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1은 반영됐다. 공모전 이후에는 리팩터링, 최적화, 장기 밸런스, meta growth, 자연 full-play QA를 재개한다. |
 
 현재는 공모전 기준 풀런봇 QA 플랜을 제출용 handoff 상태에서 완전히 닫았다. 한 locale 사이클 기준은 fresh 표준 난이도 S1~S8 Boss 클리어, 이어서 같은 locale fresh 도전 난이도 S1~S8 Boss 클리어와 S8 정산/보상/무한 도전 진입 직전 확인까지다. `ko`, `en` cycle은 2026-05-10에 완료했고, S2/S4/S6 Boss 보상 슬롯 해금, Market 해금 연출, 시스템 locale 기본값, debug fixture, web 제출 산물/BGM/메뉴/정산 UI 회귀 수정 뒤 2026-05-10~11 최신 후보에서 `ko` standard→challenge 재확인도 통과했다. 2026-05-15 12시경 최종 산출물을 우선 등록했으므로 `ja`, `zh-CN`, `zh-TW` full-run은 제출 gate가 아니라 post-contest 추가 검증 후보로만 남긴다. S9+ 무한 도전 장기 생존도 별도 확장 검증이다.
 
 ## 다음 세션 시작점
 
-1. `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md`를 기준으로 특수 타일 V1을 시작한다.
-   - 첫 구현 단위: `Tile` 모델에 `enhancement`, `seal` 필드를 추가하고, 기존 저장 데이터가 modifier 없는 타일로 정상 복원되는지 테스트한다.
+1. 완료: `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` 기준 특수 타일 V1.
+   - `Tile` 모델에 `enhancement`, `seal` 저장 필드를 추가했고 modifier 없는 기존 저장 데이터는 정상 복원된다.
    - 포함 경로: `addedDeckTiles`, `tileOffers`, deck pile, board cells, hand, eliminated JSON roundtrip.
-   - Done 기준: modifier 없는 기존 저장 호환, modifier 포함 타일 저장/복원, `flutter analyze`, 관련 save/model 테스트 통과.
-2. 이후 V1 순서:
+   - 마켓/보드/손패/런 정보/정산/확정 preview에 modifier 정보가 표시된다.
+2. 완료: 특수 타일 V2-A 판본 1차.
+   - `Tile.edition`으로 `silver_edition`, `glow_edition`, `prism_edition`을 additive 저장한다.
+   - 마켓 가격 surcharge, 구매/저장/복원, 정산 breakdown, 타일 badge/설명, battle facade preview count를 검증했다.
+3. 완료: runtime state와 transient presentation state 1차 분리.
+   - 저장 기준은 `session`, `runProgress`, `stageStartSnapshot`으로 유지한다.
+   - 선택/overlay/settlement animation 상태는 `GameSessionPresentationState.initial`로 복원 경계에서 초기화한다.
+4. 완료: UI/UX 예정 연출 큐 1차.
+   - settlement 단계에서 Jester, Tile modifier, Item 효과가 분리되어 발동한다.
+   - 일부 HUD/timing 하드코딩 상수는 `game_card_metrics.dart`, `game_presentation_timings.dart`로 이동했다.
+5. V1 세부 상태:
    - 완료: Tile lane 특수 후보 생성과 가격 surcharge.
    - 완료: 마켓/보드/손패/런 정보 modifier badge와 설명.
    - 완료: `chip_inlaid`, `score_gilded`, `gold_tile`, `glass_tile`, `blue_seal`, `red_seal` 정산 반영.
    - 완료: glass 파괴와 런 덱 source 제거/복원.
    - 보류: `wild_painted`, `lucky_tile`은 evaluator/RNG 재현 정책이 더 필요해 V1 후속 또는 V2 후보로 둔다.
-3. 대기열로 미룬 작업:
+6. 다음 활성 작업:
+   - 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않는다.
+   - 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓는다.
+   - fresh 데이터 수집 뒤 feature schema, 레벨링 probe, 경제/가격 판단을 다시 연다.
+7. 대기열로 미룬 작업:
    - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
    - 현재 runtime 기준 fresh row 기반 실제 runtime 후보 구매/사용 가치 probe.
    - fresh 경제/구매 데이터 기준 `trade_ticket`, `ride_the_bus`, 고급 study, `reroll_token` 가격/가치 판단 재개.
    - 장기 경제 gate와 `runtime_station_pool_economy_r400` 재검토.
-4. 병렬로 하지 말 것: full-run bot 재개, 장기 r400/r800 sweep, 특수 타일 V2 구현.
-   - V2-A/B/C/D는 V1 runtime 반영과 기본 검증이 닫힌 뒤 연다.
+8. 병렬로 하지 말 것: full-run bot 재개, 장기 r400/r800 sweep, 특수 타일 V2-B/C/D 구현.
+   - V2-B/C/D는 fresh 데이터 baseline과 현 UI 회귀 검증이 닫힌 뒤 연다.
 
 ## 데이터 재시작 기준
 

@@ -161,11 +161,11 @@ class GameTopHud extends StatelessWidget {
         : GameUiPalette.actionGold;
 
     return SizedBox(
-      height: 62,
+      height: kGameHudHeight,
       child: Row(
         children: [
           SizedBox(
-            width: 76,
+            width: kGameHudBlindWidth,
             child: GestureDetector(
               key: const ValueKey('battle-blind-info-chip'),
               onTap: onBlindInfoTap,
@@ -220,7 +220,7 @@ class GameTopHud extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: kGameHudGap),
           Expanded(
             child: TweenAnimationBuilder<double>(
               key: ValueKey(
@@ -233,13 +233,13 @@ class GameTopHud extends StatelessWidget {
                 final glow = stationGoalPulse ? sin(value * pi) : 0.0;
                 return DecoratedBox(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(kGameHudRadius),
                     boxShadow: [
                       if (glow > 0)
                         BoxShadow(
-                          color: const Color(
-                            0xFFF2C14E,
-                          ).withValues(alpha: 0.24 * glow),
+                          color: GameUiPalette.actionGoldBright.withValues(
+                            alpha: 0.24 * glow,
+                          ),
                           blurRadius: 16,
                           spreadRadius: 2,
                         ),
@@ -288,7 +288,9 @@ class GameTopHud extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(99),
+                          borderRadius: BorderRadius.circular(
+                            kGameHudProgressRadius,
+                          ),
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 6,
@@ -314,9 +316,9 @@ class GameTopHud extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: kGameHudGap),
           SizedBox(
-            width: 132,
+            width: kGameHudGoldWidth,
             child: _GameGoldHudChip(
               gold: battle.currentGold,
               onOptionsTap: onOptionsTap,
@@ -702,7 +704,7 @@ class GameHudChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: GameUiPalette.hudChipSurface.withValues(alpha: 0.68),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(kGameHudRadius),
         border: Border.all(
           color: GameUiPalette.boardHudBorder.withValues(alpha: 0.45),
         ),

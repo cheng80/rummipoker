@@ -436,6 +436,9 @@ String _previewDetail(
         ? '아이템 적용 $applied/$pendingConfirmItemCount'
         : '아이템 조건 미충족 0/$pendingConfirmItemCount';
   }
+  if (preview.expectedTileModifierEffectCount > 0) {
+    return '타일 효과 ${preview.expectedTileModifierEffectCount}';
+  }
   return '칩 ${preview.baseScore}'
       '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
       ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';

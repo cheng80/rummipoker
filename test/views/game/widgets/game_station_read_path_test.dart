@@ -11,7 +11,7 @@ import 'package:rummipoker/views/game/widgets/game_hand_zone.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
 void main() {
-  testWidgets('GameRummiTileCard shows enhancement and seal badges', (
+  testWidgets('GameRummiTileCard shows enhancement seal and edition badges', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -26,6 +26,7 @@ void main() {
                 number: 9,
                 enhancement: TileEnhancement.chipInlaid,
                 seal: TileSeal.blueSeal,
+                edition: TileEdition.glowEdition,
               ),
               selected: false,
               accent: false,
@@ -44,8 +45,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('tile-seal-badge')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tile-edition-badge')), findsOneWidget);
     expect(find.text('+C'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
+    expect(find.text('L'), findsOneWidget);
   });
 
   testWidgets('GameTopHud renders station facade objective values', (

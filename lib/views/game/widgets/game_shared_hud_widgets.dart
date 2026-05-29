@@ -46,7 +46,7 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
         return DecoratedBox(
           key: _pulseTick > 0 ? const ValueKey('game-gold-pulse') : null,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(kGameHudRadius),
             boxShadow: [
               if (glow > 0)
                 BoxShadow(

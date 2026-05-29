@@ -21,6 +21,8 @@ class GameSessionPresentationState {
     this.settlementSequenceTick = 0,
   });
 
+  static const initial = GameSessionPresentationState();
+
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;

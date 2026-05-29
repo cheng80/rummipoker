@@ -15,6 +15,7 @@ class RummiScoringPreview {
     required this.overlapBonus,
     required this.expectedJesterEffectCount,
     required this.expectedItemEffectCount,
+    required this.expectedTileModifierEffectCount,
     required this.expectedScore,
     required this.constraintPenaltyPercent,
   });
@@ -30,15 +31,23 @@ class RummiScoringPreview {
     final effectIds = <String>{};
     var jesterEffectCount = 0;
     var itemEffectCount = 0;
+    var tileModifierEffectCount = 0;
     RummiConstraintPenaltyBreakdown? constraintPenalty;
     for (final line in lines) {
       if (constraintPenalty == null && line.constraintPenalties.isNotEmpty) {
         constraintPenalty = line.constraintPenalties.first;
       }
+      if (line.tileGoldBonus > 0) tileModifierEffectCount += line.tileGoldBonus;
+      if (line.bonusRankProgress > 0) {
+        tileModifierEffectCount += line.bonusRankProgress;
+      }
       for (final effect in line.effects) {
         final key = '${effect.jesterId}:${effect.displayToken}';
         if (!effectIds.add(key)) continue;
-        if (jesterIds.contains(effect.jesterId)) {
+        if (effect.jesterId.startsWith('tile:') ||
+            effect.jesterId.startsWith('tile_edition:')) {
+          tileModifierEffectCount += 1;
+        } else if (jesterIds.contains(effect.jesterId)) {
           jesterEffectCount += 1;
         } else {
           itemEffectCount += 1;
@@ -52,6 +61,7 @@ class RummiScoringPreview {
       overlapBonus: lines.fold<int>(0, (sum, line) => sum + line.overlapBonus),
       expectedJesterEffectCount: jesterEffectCount,
       expectedItemEffectCount: itemEffectCount,
+      expectedTileModifierEffectCount: tileModifierEffectCount,
       expectedScore: expectedScore,
       constraintPenaltyPercent: constraintPenalty == null
           ? null
@@ -65,11 +75,14 @@ class RummiScoringPreview {
   final int overlapBonus;
   final int expectedJesterEffectCount;
   final int expectedItemEffectCount;
+  final int expectedTileModifierEffectCount;
   final int expectedScore;
   final int? constraintPenaltyPercent;
 
   int get expectedEffectCount =>
-      expectedJesterEffectCount + expectedItemEffectCount;
+      expectedJesterEffectCount +
+      expectedItemEffectCount +
+      expectedTileModifierEffectCount;
   bool get hasConstraintPenalty => constraintPenaltyPercent != null;
 }
 

@@ -2,6 +2,9 @@
 
 ## 결론
 
+- 2026-05-29 현재 V1은 구현/검증 완료 상태다. `enhancement`, `seal`은 저장/복원, Tile lane 후보/가격, 마켓/전투/런 정보 badge, 확정 preview, 정산 breakdown, glass 파괴와 런 덱 source 제거까지 연결됐다.
+- V2-A도 1차 additive 구현 완료 상태다. `edition` 필드와 `silver_edition`, `glow_edition`, `prism_edition`은 기존 저장 호환을 유지하며 마켓 가격, 구매/저장/복원, 정산 효과, badge/설명, battle facade preview count에 반영됐다.
+- V2-B/C/D는 아직 열지 않는다. 기존 ML/시뮬레이션 산출물을 현재 판단에 직접 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row를 먼저 축적한 뒤 연다.
 - 기존 `shop_slot_market_v9` 구매 이벤트 추적, runtime 구매/사용 가치 probe, 가격/가치 판단 재개는 사용자에게 직접 보이는 기능이 아니라 내부 밸런스/검증 부채다. 이 작업은 나중에 반드시 재개하되, 현재 활성 구현 트랙에서는 뒤로 미룬다.
 - 다음 활성 작업은 타일 구매를 단순 덱 장수 증가가 아니라 플레이어가 눈으로 보고 선택하는 덱 빌딩 축으로 확장하는 것이다.
 - Balatro의 playing card modifier 구조는 최대한 참고하되, 이름/수치/발동 조건은 우리 게임의 타일, 라인, 확정, 다음 블라인드 덱 합성 구조로 변환한다.
@@ -42,7 +45,7 @@ V1 제약:
 
 - `enhancement` 1개까지.
 - `seal` 1개까지.
-- `edition`은 V1에서 보류하거나 내부 필드만 준비하지 않는다.
+- `edition`은 V1에서 보류했지만, 2026-05-29 V2-A로 additive 필드와 3개 판본을 열었다.
 - modifier가 없는 기존 저장 데이터는 정상 복원한다.
 - 물리 타일 identity는 계속 `color + number + id`를 기준으로 한다. modifier는 같은 물리 타일에 붙은 추가 속성이다.
 
@@ -87,6 +90,15 @@ V2 설계 주의:
 - Stone은 evaluator와 contributor 제거 정책을 크게 흔든다. 완전한 색/숫자 제거보다 “족보에는 기여하지 않는 라인 보너스 타일”로 변환한다.
 - Purple Seal은 전투 중 즉시 아이템 지급으로 처리하지 않는다. 다음 마켓 보상 예약 쪽이 UI와 저장 경계가 안전하다.
 - Edition은 Enhancement와 효과가 겹치므로, V2-A에서 하나의 modifier 계층으로만 표시하고 정산 순서를 명확히 한다.
+
+V2-A 적용 메모:
+
+- `silver_edition`: contributor면 확정 점수에 +15.
+- `glow_edition`: contributor면 확정 점수 +15%.
+- `prism_edition`: contributor면 확정 점수 x1.35.
+- 정산 순서는 V1 enhancement/seal 처리 후 edition을 적용한다.
+- settlement presentation에서는 `tile:`/`tile_edition:` source를 Item 단계가 아니라 Tile modifier 단계로 분리한다.
+- 저장 경로는 `addedDeckTiles`, `tileOffers`, deck pile, board cells, hand, eliminated, stageStartSnapshot까지 포함한다.
 
 ## 마켓 규칙
 

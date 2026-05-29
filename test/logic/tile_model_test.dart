@@ -15,13 +15,14 @@ void main() {
       expect(tile.toJson(), const {'color': 'red', 'number': 7, 'id': 2});
     });
 
-    test('enhancement and seal survive json roundtrip', () {
+    test('enhancement seal and edition survive json roundtrip', () {
       const tile = Tile(
         color: TileColor.blue,
         number: 11,
         id: 3,
         enhancement: TileEnhancement.glassTile,
         seal: TileSeal.blueSeal,
+        edition: TileEdition.prismEdition,
       );
 
       final restored = Tile.fromJson(tile.toJson());
@@ -31,6 +32,7 @@ void main() {
       expect(restored.id, 3);
       expect(restored.enhancement, TileEnhancement.glassTile);
       expect(restored.seal, TileSeal.blueSeal);
+      expect(restored.edition, TileEdition.prismEdition);
       expect(restored.hasModifier, isTrue);
       expect(restored.toJson(), {
         'color': 'blue',
@@ -38,6 +40,7 @@ void main() {
         'id': 3,
         'enhancement': 'glass_tile',
         'seal': 'blue_seal',
+        'edition': 'prism_edition',
       });
     });
 
@@ -48,6 +51,7 @@ void main() {
         number: 7,
         id: 1,
         enhancement: TileEnhancement.chipInlaid,
+        edition: TileEdition.silverEdition,
       );
 
       expect(enhanced, base);

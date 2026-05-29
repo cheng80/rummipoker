@@ -56,6 +56,25 @@ enum TileSeal {
   }
 }
 
+enum TileEdition {
+  silverEdition('silver_edition'),
+  glowEdition('glow_edition'),
+  prismEdition('prism_edition');
+
+  const TileEdition(this.persistenceValue);
+  final String persistenceValue;
+
+  static TileEdition? fromPersistenceValue(Object? value) {
+    if (value is! String || value.isEmpty) return null;
+    for (final edition in TileEdition.values) {
+      if (edition.persistenceValue == value || edition.name == value) {
+        return edition;
+      }
+    }
+    return null;
+  }
+}
+
 /// 숫자 1~13 + 색. 덱 장수는 `(4색 × 13랭크 × copiesPerTile)`로 결정된다.
 /// [id]는 `copiesPerTile > 1` 인 경우까지 포함해 물리 복제 타일 구분용이다.
 class Tile {
@@ -65,6 +84,7 @@ class Tile {
     this.id = 0,
     this.enhancement,
     this.seal,
+    this.edition,
   }) : assert(number >= 1 && number <= 13);
 
   final TileColor color;
@@ -75,8 +95,9 @@ class Tile {
 
   final TileEnhancement? enhancement;
   final TileSeal? seal;
+  final TileEdition? edition;
 
-  bool get hasModifier => enhancement != null || seal != null;
+  bool get hasModifier => enhancement != null || seal != null || edition != null;
 
   String get code => '${color.code}$number';
 
@@ -92,6 +113,7 @@ class Tile {
     'id': id,
     if (enhancement != null) 'enhancement': enhancement!.persistenceValue,
     if (seal != null) 'seal': seal!.persistenceValue,
+    if (edition != null) 'edition': edition!.persistenceValue,
   };
 
   static Tile fromJson(Map<String, dynamic> json) {
@@ -101,6 +123,7 @@ class Tile {
       id: (json['id'] as num?)?.toInt() ?? 0,
       enhancement: TileEnhancement.fromPersistenceValue(json['enhancement']),
       seal: TileSeal.fromPersistenceValue(json['seal']),
+      edition: TileEdition.fromPersistenceValue(json['edition']),
     );
   }
 

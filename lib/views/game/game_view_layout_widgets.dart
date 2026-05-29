@@ -606,6 +606,7 @@ List<RummiJesterEffectBreakdown> _visibleSettlementEffects(
   List<int> effectIndexes,
 ) {
   if (step != ScoringPresentationStep.jester &&
+      step != ScoringPresentationStep.tile &&
       step != ScoringPresentationStep.item) {
     return const [];
   }
@@ -630,6 +631,7 @@ bool _showsBoardScoringCallout(ScoringPresentationStep step) {
 
 bool _showsFloatingSettlementBurst(ScoringPresentationStep step) {
   return step == ScoringPresentationStep.jester ||
+      step == ScoringPresentationStep.tile ||
       step == ScoringPresentationStep.item ||
       step == ScoringPresentationStep.finalScore;
 }

@@ -66,6 +66,7 @@ class GameTileModifierBadges extends StatelessWidget {
   Widget build(BuildContext context) {
     final enhancement = tile.enhancement;
     final seal = tile.seal;
+    final edition = tile.edition;
     return IgnorePointer(
       key: const ValueKey('tile-modifier-badge-layer'),
       child: LayoutBuilder(
@@ -106,6 +107,20 @@ class GameTileModifierBadges extends StatelessWidget {
                     highContrast: true,
                   ),
                 ),
+              if (edition != null)
+                Positioned(
+                  key: const ValueKey('tile-edition-badge'),
+                  right: metrics.editionInset,
+                  top: metrics.enhancementInset,
+                  child: _TileModifierBadge(
+                    label: tileEditionShortLabel(edition),
+                    height: metrics.badgeHeight,
+                    fontSize: metrics.fontSize,
+                    background: tileEditionColor(edition),
+                    foreground: GameUiPalette.tileModifierBadgeText,
+                    highContrast: true,
+                  ),
+                ),
             ],
           );
         },
@@ -120,6 +135,7 @@ class _TileModifierBadgeMetrics {
     required this.fontSize,
     required this.enhancementInset,
     required this.sealInset,
+    required this.editionInset,
   });
 
   factory _TileModifierBadgeMetrics.forTileSide(
@@ -132,6 +148,7 @@ class _TileModifierBadgeMetrics {
       fontSize: (badgeHeight * 0.58).clamp(6.8, 9.6).toDouble(),
       enhancementInset: -3.0,
       sealInset: (side * 0.04).clamp(1.0, 3.0).toDouble(),
+      editionInset: (side * 0.04).clamp(1.0, 3.0).toDouble(),
     );
   }
 
@@ -139,6 +156,7 @@ class _TileModifierBadgeMetrics {
   final double fontSize;
   final double enhancementInset;
   final double sealInset;
+  final double editionInset;
 }
 
 class _TileModifierBadge extends StatelessWidget {
@@ -228,6 +246,7 @@ String tileModifierSummary(Tile tile) {
   final parts = <String>[
     if (tile.enhancement != null) tileEnhancementDisplayName(tile.enhancement!),
     if (tile.seal != null) tileSealDisplayName(tile.seal!),
+    if (tile.edition != null) tileEditionDisplayName(tile.edition!),
   ];
   return parts.join(' · ');
 }
@@ -236,6 +255,7 @@ String tileModifierEffectText(Tile tile) {
   final parts = <String>[
     if (tile.enhancement != null) tileEnhancementEffectText(tile.enhancement!),
     if (tile.seal != null) tileSealEffectText(tile.seal!),
+    if (tile.edition != null) tileEditionEffectText(tile.edition!),
   ];
   return parts.join(' / ');
 }
@@ -246,6 +266,8 @@ List<String> tileModifierBadgeDescriptions(Tile tile) {
       '${tileEnhancementShortLabel(tile.enhancement!)} ${tileEnhancementEffectText(tile.enhancement!)}',
     if (tile.seal != null)
       '${tileSealShortLabel(tile.seal!)} ${tileSealEffectText(tile.seal!)}',
+    if (tile.edition != null)
+      '${tileEditionShortLabel(tile.edition!)} ${tileEditionEffectText(tile.edition!)}',
   ];
 }
 
@@ -280,6 +302,14 @@ String tileSealShortLabel(TileSeal seal) {
   };
 }
 
+String tileEditionShortLabel(TileEdition edition) {
+  return switch (edition) {
+    TileEdition.silverEdition => 'S',
+    TileEdition.glowEdition => 'L',
+    TileEdition.prismEdition => 'P',
+  };
+}
+
 String tileEnhancementDisplayName(TileEnhancement enhancement) {
   return switch (enhancement) {
     TileEnhancement.chipInlaid => '칩 박힘',
@@ -295,6 +325,14 @@ String tileSealDisplayName(TileSeal seal) {
   return switch (seal) {
     TileSeal.blueSeal => '푸른 인장',
     TileSeal.redSeal => '붉은 인장',
+  };
+}
+
+String tileEditionDisplayName(TileEdition edition) {
+  return switch (edition) {
+    TileEdition.silverEdition => '은빛 판본',
+    TileEdition.glowEdition => '빛무늬 판본',
+    TileEdition.prismEdition => '다색 판본',
   };
 }
 
@@ -316,6 +354,14 @@ String tileSealEffectText(TileSeal seal) {
   };
 }
 
+String tileEditionEffectText(TileEdition edition) {
+  return switch (edition) {
+    TileEdition.silverEdition => '확정 시 +15칩',
+    TileEdition.glowEdition => '확정 시 점수 +15%',
+    TileEdition.prismEdition => '확정 시 점수 x1.35',
+  };
+}
+
 Color tileEnhancementColor(TileEnhancement enhancement) {
   return switch (enhancement) {
     TileEnhancement.chipInlaid => GameUiPalette.tileChipInlaid,
@@ -331,6 +377,14 @@ Color tileSealColor(TileSeal seal) {
   return switch (seal) {
     TileSeal.blueSeal => GameUiPalette.tileBlueSeal,
     TileSeal.redSeal => GameUiPalette.tileRedSeal,
+  };
+}
+
+Color tileEditionColor(TileEdition edition) {
+  return switch (edition) {
+    TileEdition.silverEdition => GameUiPalette.tileSilverEdition,
+    TileEdition.glowEdition => GameUiPalette.tileGlowEdition,
+    TileEdition.prismEdition => GameUiPalette.tilePrismEdition,
   };
 }
 

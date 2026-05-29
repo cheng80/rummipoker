@@ -23,8 +23,8 @@
 - 실제 제품 완성도는 아직 `In progress`이며, 전체 추정 진도는 42%다.
 - 2026-05-15 12시경 공모전 최종 산출물을 우선 등록했으므로 공모전 트랙은 off다. 현재 활성 실행은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 post-contest 안정화/리팩터링 트랙이다.
 - 공모전 이후 안정화로 손패 최대치, 전투 자원, 보유/후보 슬롯 상한과 no-op 정책을 닫았다.
-- Jester/Item/Tool/Gear 정책 리스크는 상당 부분 분해/수정됐고, 현재 활성 초점은 특수 타일 modifier V1과 runtime state / transient presentation state 분리다.
-- 가격/가치 판단과 장기 경제 gate는 exploratory probe 단계로 남아 있으며, 런타임 반영 전 fresh 검증이 필요하다.
+- Jester/Item/Tool/Gear 정책 리스크는 상당 부분 분해/수정됐다. 특수 타일 modifier V1과 V2-A 판본 1차, runtime state / transient presentation state 분리 1차, settlement 효과 단계 분리도 닫았다.
+- 가격/가치 판단과 장기 경제 gate는 exploratory probe 단계로 남아 있으며, 런타임 반영 전 fresh 검증이 필요하다. 기존 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime 기준 fresh row 5000건 이상 축적부터 다시 시작한다.
 
 현재 재개 대상:
 
@@ -38,17 +38,19 @@
 
 현재 재개 순서:
 
-1. `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` 기준으로 특수 타일 V1을 구현한다.
-2. modifier 없는 기존 저장 호환과 modifier 포함 저장/복원/전투/마켓 표시를 검증한다.
-3. runtime state와 transient presentation state 분리를 중심으로 리팩터링 계획을 확정한다.
-4. UI/UX 예정 연출 큐 마무리를 별도 트랙으로 닫는다.
-5. 구 시뮬레이션/ML 산출물을 active workspace에서 archive로 내리고, 새 학습 데이터셋은 fresh run부터 다시 쌓는다.
+1. 완료: `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` 기준 특수 타일 V1 구현.
+2. 완료: modifier 없는 기존 저장 호환과 modifier 포함 저장/복원/전투/마켓 표시 검증.
+3. 완료: 특수 타일 V2-A 판본 1차 구현과 저장/마켓/정산/badge 검증.
+4. 완료: runtime state와 transient presentation state 분리 1차.
+5. 완료: UI/UX 예정 연출 큐 1차. settlement에서 Jester / Tile modifier / Item 효과 단계를 분리했다.
+6. 완료: 1차 리팩터링/상수 분리. HUD/timing/카드 metric 일부를 공용 상수로 이동했다.
+7. 다음: 구 시뮬레이션/ML 산출물을 active workspace에서 archive로 내린 상태를 유지하고, 새 학습 데이터셋은 fresh run부터 다시 쌓는다.
    - 현재 runtime/catalog/ruleset/bot policy/feature schema와 산출 당시 조건이 다르면 현재 판단 근거로 바로 쓰지 않는다.
    - 과거 row와 리포트는 `historical prior`로만 두고, 새 feature table에는 기본적으로 섞지 않는다.
-6. 장기 S1~S8 밸런스를 multi-seed r400/r800 기준으로 재검증한다.
-7. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
-8. 새 ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 fresh data에서 다시 만든다.
-9. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
+8. 장기 S1~S8 밸런스를 fresh data 이후 multi-seed r400/r800 기준으로 재검증한다.
+9. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
+10. 새 ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 fresh data에서 다시 만든다.
+11. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
 
 장기 Done 기준:
 

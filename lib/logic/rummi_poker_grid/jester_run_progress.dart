@@ -391,6 +391,7 @@ class RummiRunProgress {
       id: copyId,
       enhancement: tile.enhancement,
       seal: tile.seal,
+      edition: tile.edition,
     );
     addedDeckTiles.add(addedTile);
     return addedTile;
@@ -442,7 +443,13 @@ class RummiRunProgress {
       TileSeal.redSeal => 4,
       null => 0,
     };
-    return enhancementSurcharge + sealSurcharge;
+    final editionSurcharge = switch (tile.edition) {
+      TileEdition.silverEdition => 3,
+      TileEdition.glowEdition => 4,
+      TileEdition.prismEdition => 5,
+      null => 0,
+    };
+    return enhancementSurcharge + sealSurcharge + editionSurcharge;
   }
 
   int _nextCopyIdForTile(Tile tile) {
@@ -460,7 +467,8 @@ class RummiRunProgress {
         a.number == b.number &&
         a.id == b.id &&
         a.enhancement == b.enhancement &&
-        a.seal == b.seal;
+        a.seal == b.seal &&
+        a.edition == b.edition;
   }
 
   int targetForStage(int stageNumber) {
@@ -1479,12 +1487,20 @@ class RummiRunProgress {
               ? TileSeal.blueSeal
               : TileSeal.redSeal)
         : null;
+    final edition = stageIndex >= 5 && _tileOfferRoll(seed, 43) < 12
+        ? const [
+            TileEdition.silverEdition,
+            TileEdition.glowEdition,
+            TileEdition.prismEdition,
+          ][_tileOfferRoll(seed, 47) % TileEdition.values.length]
+        : null;
     return Tile(
       color: tile.color,
       number: tile.number,
       id: tile.id,
       enhancement: enhancement,
       seal: seal,
+      edition: edition,
     );
   }
 

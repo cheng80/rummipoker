@@ -248,13 +248,14 @@ void main() {
 
     test('maps tile offers and added deck tiles into market facade', () {
       final progress = RummiRunProgress()
-        ..gold = 10
+        ..gold = 20
         ..tileOffers.add(
           const Tile(
             color: TileColor.red,
             number: 7,
             enhancement: TileEnhancement.glassTile,
             seal: TileSeal.blueSeal,
+            edition: TileEdition.glowEdition,
           ),
         )
         ..addDeckTile(
@@ -263,6 +264,7 @@ void main() {
             number: 9,
             enhancement: TileEnhancement.chipInlaid,
             seal: TileSeal.redSeal,
+            edition: TileEdition.prismEdition,
           ),
         );
 
@@ -274,7 +276,8 @@ void main() {
         TileEnhancement.glassTile,
       );
       expect(facade.tileOffers.single.tile.seal, TileSeal.blueSeal);
-      expect(facade.tileOffers.single.price, 10);
+      expect(facade.tileOffers.single.tile.edition, TileEdition.glowEdition);
+      expect(facade.tileOffers.single.price, 14);
       expect(facade.tileOffers.single.isAffordable, isTrue);
       expect(facade.addedDeckTiles.single.code, 'B9');
       expect(
@@ -282,6 +285,7 @@ void main() {
         TileEnhancement.chipInlaid,
       );
       expect(facade.addedDeckTiles.single.seal, TileSeal.redSeal);
+      expect(facade.addedDeckTiles.single.edition, TileEdition.prismEdition);
       expect(progress.effectiveTileOfferPrice(99), 0);
     });
 

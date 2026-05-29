@@ -64,6 +64,37 @@ void main() {
 
     expect(facade.pendingBoardMoveSlideBonus, isTrue);
   });
+
+  test('battle facade separates tile modifier preview effects from items', () {
+    final session = RummiPokerGridSession(
+      runSeed: 1,
+      blind: RummiBlindState(targetScore: 999),
+    );
+    session.board
+      ..setCell(
+        0,
+        0,
+        const Tile(
+          color: TileColor.red,
+          number: 2,
+          enhancement: TileEnhancement.chipInlaid,
+          seal: TileSeal.blueSeal,
+        ),
+      )
+      ..setCell(0, 1, const Tile(color: TileColor.blue, number: 2))
+      ..setCell(0, 2, const Tile(color: TileColor.red, number: 3))
+      ..setCell(0, 3, const Tile(color: TileColor.blue, number: 3))
+      ..setCell(0, 4, const Tile(color: TileColor.black, number: 5));
+
+    final facade = RummiBattleRuntimeFacade.fromRuntime(
+      session: session,
+      runProgress: RummiRunProgress(),
+    );
+
+    expect(facade.scoringPreview, isNotNull);
+    expect(facade.scoringPreview!.expectedTileModifierEffectCount, 2);
+    expect(facade.scoringPreview!.expectedItemEffectCount, 0);
+  });
 }
 
 RummiPokerGridSession _twoPairSession() {

@@ -42,9 +42,15 @@ extension _GameViewStageFlow on _GameViewState {
       for (var i = 0; i < line.effects.length; i++)
         if (jesterIds.contains(line.effects[i].jesterId)) i,
     ];
+    final tileEffectIndexes = <int>[
+      for (var i = 0; i < line.effects.length; i++)
+        if (_isTileSettlementEffect(line.effects[i].jesterId)) i,
+    ];
     final itemEffectIndexes = <int>[
       for (var i = 0; i < line.effects.length; i++)
-        if (!jesterIds.contains(line.effects[i].jesterId)) i,
+        if (!jesterIds.contains(line.effects[i].jesterId) &&
+            !_isTileSettlementEffect(line.effects[i].jesterId))
+          i,
     ];
 
     await _showSettlementStep(
@@ -91,6 +97,18 @@ extension _GameViewStageFlow on _GameViewState {
         line: line,
         step: ScoringPresentationStep.jester,
         effectIndexes: jesterEffectIndexes,
+        settlementGoalDisplayScore: lineGoalStartScore,
+        bump: true,
+        delay: GamePresentationTimings.settlementEffectStep,
+      );
+      if (!mounted) return;
+    }
+    if (tileEffectIndexes.isNotEmpty) {
+      await _showSettlementStep(
+        totalScore: totalScore,
+        line: line,
+        step: ScoringPresentationStep.tile,
+        effectIndexes: tileEffectIndexes,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
         delay: GamePresentationTimings.settlementEffectStep,
@@ -154,6 +172,11 @@ extension _GameViewStageFlow on _GameViewState {
       bumpSettlementSequence: bump,
     );
     await _presentationDelay(delay);
+  }
+
+  bool _isTileSettlementEffect(String effectId) {
+    return effectId.startsWith('tile:') ||
+        effectId.startsWith('tile_edition:');
   }
 
   Future<void> _runStageClearFlow(int scoreAdded) async {

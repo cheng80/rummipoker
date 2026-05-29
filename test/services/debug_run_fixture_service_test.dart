@@ -4,6 +4,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
@@ -316,6 +317,12 @@ void main() {
       isTrue,
     );
     expect(fixture.session.hand.any((tile) => tile.hasModifier), isTrue);
+
+    final battle = RummiBattleRuntimeFacade.fromRuntime(
+      session: fixture.session,
+      runProgress: fixture.runProgress,
+    );
+    expect(battle.scoringPreview?.expectedTileModifierEffectCount, greaterThan(0));
   });
 
   test('final boss cash-out fixture is ready to close the run', () {

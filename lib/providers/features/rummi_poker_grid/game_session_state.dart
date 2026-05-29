@@ -210,6 +210,7 @@ enum ScoringPresentationStep {
   overlap,
   constraint,
   jester,
+  tile,
   item,
   finalScore,
 }

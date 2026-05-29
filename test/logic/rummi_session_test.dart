@@ -535,6 +535,36 @@ void main() {
     );
   });
 
+  test('타일 판본은 확정 점수와 breakdown에 반영된다', () {
+    final board = RummiBoard();
+    board.setCell(
+      2,
+      0,
+      const Tile(
+        color: TileColor.red,
+        number: 1,
+        edition: TileEdition.silverEdition,
+      ),
+    );
+    board.setCell(2, 1, t(TileColor.blue, 2));
+    board.setCell(2, 2, t(TileColor.red, 3));
+    board.setCell(2, 3, t(TileColor.blue, 4));
+    board.setCell(2, 4, t(TileColor.red, 5));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.scoreAdded, 85);
+    final line = out.result.lineBreakdowns.single;
+    expect(line.baseScore, 70);
+    expect(line.finalScore, 85);
+    expect(line.effects.single.jesterId, 'tile_edition:silver_edition');
+  });
+
   test('유리 타일 파괴는 추가 덱 타일 source에서 제거된다', () {
     const glassTile = Tile(
       color: TileColor.red,

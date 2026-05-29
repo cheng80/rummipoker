@@ -110,9 +110,8 @@ class _GameViewState extends ConsumerState<GameView>
     with WidgetsBindingObserver {
   static const Duration _itemEffectFeedbackDuration =
       GamePresentationTimings.itemEffectFeedback;
-  static const Duration _inactiveLifecycleDebounce = Duration(
-    milliseconds: 250,
-  );
+  static const Duration _inactiveLifecycleDebounce =
+      GamePresentationTimings.inactiveLifecycleDebounce;
   static const int _finalStationIndex = 8;
 
   static const List<String> _shopInspectOfferIds = [
