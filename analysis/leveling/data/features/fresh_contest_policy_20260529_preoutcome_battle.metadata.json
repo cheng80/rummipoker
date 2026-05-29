@@ -7,5 +7,5 @@
   ],
   "output": "analysis/leveling/generated/features/fresh_contest_policy_20260529_preoutcome_battle.csv",
   "feature_mode": "preoutcome",
-  "note": "Pre-outcome feature table for planned ML transition scaffold. Outcome summary fields are excluded from model features; clear_rate remains the supervised target. This is not production ML and does not auto-apply runtime balance changes."
+  "note": "Pre-outcome feature table for planned ML transition scaffold. Outcome summary fields are excluded from model features; supported supervised targets include clear_rate, avg_score_ratio, and cleared_majority. This is not production ML and does not auto-apply runtime balance changes."
 }

@@ -1,0 +1,33 @@
+{
+  "row_count": 151,
+  "source_row_count": 251,
+  "before_filter_row_count": 251,
+  "min_run_count": 3,
+  "train_count": 113,
+  "test_count": 38,
+  "target": "avg_score_ratio",
+  "task": "regression",
+  "feature_mode": "preoutcome",
+  "model_strategy": "auto",
+  "uses_run_count_sample_weight": true,
+  "model_selection": {
+    "strategy": "auto",
+    "cv_splits": 3,
+    "scoring": "neg_root_mean_squared_error",
+    "candidate_models": [
+      "RandomForestRegressor",
+      "ExtraTreesRegressor"
+    ],
+    "best_params": {
+      "model": "RandomForestRegressor",
+      "model__max_features": "sqrt",
+      "model__min_samples_leaf": 1,
+      "model__n_estimators": 300
+    },
+    "best_cv_score": -0.05512000664731811,
+    "selected_model": "RandomForestRegressor"
+  },
+  "mae": 0.04578908383247574,
+  "rmse": 0.060320245102372695,
+  "r2": 0.44674294777103485
+}

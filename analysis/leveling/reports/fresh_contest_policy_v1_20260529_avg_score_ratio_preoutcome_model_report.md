@@ -3,8 +3,9 @@
 ## 최종 결론 요약
 
 - 결론: 현재 모델은 pre-outcome 후보 추천 scaffold이며 ML 마감 또는 추천 gate 완료 근거가 아니다.
-- 핵심 점수: MAE 0.1693, RMSE 0.2377, R2 0.3730.
-- 데이터: 151 rows, train 113, test 38, target `clear_rate`.
+- 핵심 점수: MAE 0.0458, RMSE 0.0603, R2 0.4467.
+- 데이터: 151 rows, train 113, test 38, target `avg_score_ratio`.
+- task: `regression`.
 - 사용 가능: 후속 시뮬레이션 후보를 고르는 참고 신호와 feature sanity check.
 - 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.
 - NotebookLM 상태: 지표가 사용 수준이 아니므로 보고서/인포그래픽 재생성 source로 쓰기 전 단계.
@@ -14,15 +15,15 @@
 
 | 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |
 |---|---:|---:|---|---|
-| MAE | 0.1693 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| RMSE | 0.2377 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
-| R2 | 0.3730 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |
+| MAE | 0.0458 | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| RMSE | 0.0603 | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |
+| R2 | 0.4467 | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | 실무 추천 기준에는 부족 |
 | Row | 151 | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |
 
 ## 범위
 
 이 리포트는 계획된 ML transition scaffold다.
-기존 outcome-derived summary feature를 제거하고, 시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 `clear_rate`를 예측한다.
+기존 outcome-derived summary feature를 제거하고, 시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 `avg_score_ratio`를 예측한다.
 모델은 후보 추천 루프를 설계하기 위한 오프라인 분석 도구이며, production ML이 아니고 런타임 target, boss, market, economy 값을 자동 변경하지 않는다.
 이 산출물만으로 production ML 자동 적용 완료를 주장하지 않는다. 후보 재시뮬레이션과 사람 검토 보고서를 함께 본다.
 
@@ -32,7 +33,8 @@
 - rows: 151
 - train rows: 113
 - test rows: 38
-- target: `clear_rate`
+- target: `avg_score_ratio`
+- task: `regression`
 - feature mode: `preoutcome`
 
 소스 summary:
@@ -43,7 +45,7 @@
 
 Target:
 
-- `clear_rate`: 집계된 시뮬레이션 그룹의 clear 비율.
+- `avg_score_ratio`: 목표 점수 대비 평균 최종 점수 비율.
 
 Pre-outcome numeric features:
 
@@ -127,7 +129,7 @@ Pre-outcome categorical features:
 ## 모델
 
 모델 전략: `auto`.
-선택된 모델: `ExtraTreesRegressor`.
+선택된 모델: `RandomForestRegressor`.
 
 선택 이유:
 
@@ -137,35 +139,35 @@ Pre-outcome categorical features:
 
 ## 지표
 
-- MAE: 0.1693
-- RMSE: 0.2377
-- R2: 0.3730
+- MAE: 0.0458
+- RMSE: 0.0603
+- R2: 0.4467
 
 해석:
 
 - post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.
-- RMSE `0.2377` 수준은 큰 오차에 더 민감한 회귀 오차다.
+- RMSE `0.0603` 수준은 큰 오차에 더 민감한 회귀 오차다.
 - signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.
 
 ## 피처 중요도 스냅샷
 
 | Feature | 중요도 |
 |---|---:|
-| `station_pressure_interaction` | 0.0845 |
-| `boss_pressure_index` | 0.0715 |
-| `sim_boss_constraint_id_blue_dampener_v1` | 0.0612 |
-| `blind_tier_boss` | 0.0489 |
-| `station_band_index` | 0.0482 |
-| `station_tier_index` | 0.0431 |
-| `sim_boss_constraint_id_` | 0.0423 |
-| `station_boss_interaction` | 0.0419 |
-| `station` | 0.0400 |
-| `is_boss_tier` | 0.0400 |
+| `station_pressure_interaction` | 0.1002 |
+| `station_tier_index` | 0.0849 |
+| `boss_pressure_index` | 0.0777 |
+| `station_boss_interaction` | 0.0672 |
+| `boss_family_index` | 0.0647 |
+| `station` | 0.0517 |
+| `boss_level_index` | 0.0484 |
+| `station_band_index` | 0.0362 |
+| `sim_boss_constraint_id_blue_dampener_v1` | 0.0362 |
+| `tier_index` | 0.0342 |
 
 ## 산출물
 
-- metrics JSON: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/clear_rate_preoutcome_metrics.json`
-- feature importance CSV: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/clear_rate_preoutcome_feature_importance.csv`
+- metrics JSON: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/avg_score_ratio/avg_score_ratio_preoutcome_metrics.json`
+- feature importance CSV: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/avg_score_ratio/avg_score_ratio_preoutcome_feature_importance.csv`
 
 ## 추천 경계
 

@@ -115,6 +115,8 @@ PREOUTCOME_CATEGORICAL_FIELDS = [
 PREOUTCOME_TARGET_FIELDS = [
     "clear_rate",
     "clear_rate_smoothed",
+    "avg_score_ratio",
+    "cleared_majority",
     "needs_balance_attention",
     "needs_balance_attention_v2",
 ]
@@ -481,6 +483,8 @@ def preoutcome_row_from_group(
         "sim_market_choice_mode": value_or_empty(sweep_context.get("sim_market_choice_mode") or "none"),
         "clear_rate": numeric_or_zero(raw.get("clear_rate")),
         "clear_rate_smoothed": smoothed_clear_rate(raw),
+        "avg_score_ratio": numeric_or_zero(raw.get("avg_score_ratio")),
+        "cleared_majority": int(numeric_or_zero(raw.get("clear_rate")) >= 0.5),
         "needs_balance_attention": numeric_or_zero(raw.get("needs_balance_attention")),
         "needs_balance_attention_v2": numeric_or_zero(raw.get("needs_balance_attention_v2")),
     }
@@ -795,7 +799,7 @@ def metadata_note(feature_mode: str) -> str:
     if feature_mode == "preoutcome":
         return (
             "Pre-outcome feature table for planned ML transition scaffold. "
-            "Outcome summary fields are excluded from model features; clear_rate remains the supervised target. "
+            "Outcome summary fields are excluded from model features; supported supervised targets include clear_rate, avg_score_ratio, and cleared_majority. "
             "This is not production ML and does not auto-apply runtime balance changes."
         )
     if feature_mode == "preoutcome_sequence":

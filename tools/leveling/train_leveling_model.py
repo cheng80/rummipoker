@@ -120,6 +120,12 @@ def main() -> int:
     )
     parser.add_argument("--features", default=None, help="feature table CSV")
     parser.add_argument("--target", default="clear_rate", help="예측 target 컬럼")
+    parser.add_argument(
+        "--task",
+        choices=["regression", "classification"],
+        default="regression",
+        help="target 학습 방식. cleared_majority 같은 0/1 target은 classification을 사용합니다.",
+    )
     parser.add_argument("--report-out", default=None, help="MD 리포트 출력 경로")
     parser.add_argument("--model-dir", default=DEFAULT_MODEL_DIR, help="모델 산출물 폴더")
     parser.add_argument("--test-size", type=float, default=0.25)
@@ -147,8 +153,21 @@ def main() -> int:
     try:
         import pandas as pd
         from sklearn.compose import ColumnTransformer
-        from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
-        from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+        from sklearn.ensemble import (
+            ExtraTreesClassifier,
+            ExtraTreesRegressor,
+            RandomForestClassifier,
+            RandomForestRegressor,
+        )
+        from sklearn.metrics import (
+            accuracy_score,
+            balanced_accuracy_score,
+            f1_score,
+            mean_absolute_error,
+            mean_squared_error,
+            r2_score,
+            roc_auc_score,
+        )
         from sklearn.model_selection import GridSearchCV, KFold, train_test_split
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import OneHotEncoder
@@ -223,17 +242,67 @@ def main() -> int:
         x[key] = x[key].fillna(0)
     for key in categorical_features:
         x[key] = x[key].fillna("")
-    y = df[args.target].astype(float)
+    y = df[args.target].astype(int) if args.task == "classification" else df[args.target].astype(float)
     sample_weight = None
     if args.feature_mode == "preoutcome" and "run_count" in df.columns:
         sample_weight = df["run_count"].fillna(1).clip(lower=1).astype(float)
 
+    if args.task == "classification" and y.nunique() < 2:
+        model_dir = Path(args.model_dir)
+        model_dir.mkdir(parents=True, exist_ok=True)
+        artifact_prefix = (
+            args.target
+            if args.feature_mode == "outcome_summary"
+            else f"{args.target}_{args.feature_mode}"
+        )
+        importance_path = model_dir / f"{artifact_prefix}_feature_importance.csv"
+        importance_path.write_text("feature,importance\n", encoding="utf-8")
+        metrics = {
+            "row_count": int(len(df)),
+            "source_row_count": int(original_row_count),
+            "before_filter_row_count": int(before_filter_row_count),
+            "min_run_count": int(args.min_run_count),
+            "train_count": 0,
+            "test_count": 0,
+            "target": args.target,
+            "task": args.task,
+            "feature_mode": args.feature_mode,
+            "model_strategy": args.model_strategy,
+            "uses_run_count_sample_weight": bool(sample_weight is not None),
+            "skipped": True,
+            "skip_reason": "classification target has fewer than two classes",
+            "class_counts": {str(key): int(value) for key, value in y.value_counts().to_dict().items()},
+        }
+        metrics_path = model_dir / f"{artifact_prefix}_metrics.json"
+        metrics_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        report_path = Path(args.report_out or DEFAULT_PREOUTCOME_REPORT)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(
+            build_report(
+                feature_path=feature_path,
+                metrics=metrics,
+                importance_path=importance_path,
+                metrics_path=metrics_path,
+                source_paths=read_feature_source_paths(feature_path),
+                feature_mode=args.feature_mode,
+                numeric_features=numeric_features,
+                categorical_features=categorical_features,
+            ),
+            encoding="utf-8",
+        )
+        print(f"report: {report_path}")
+        print(f"metrics: {metrics_path}")
+        print(f"feature importance: {importance_path}")
+        return 0
+
+    stratify = y if args.task == "classification" and y.value_counts().min() >= 2 else None
     if sample_weight is None:
         x_train, x_test, y_train, y_test = train_test_split(
             x,
             y,
             test_size=args.test_size,
             random_state=args.seed,
+            stratify=stratify,
         )
         train_weight = None
     else:
@@ -243,6 +312,7 @@ def main() -> int:
             sample_weight,
             test_size=args.test_size,
             random_state=args.seed,
+            stratify=stratify,
         )
 
     pipeline, model_selection = build_pipeline(
@@ -251,8 +321,9 @@ def main() -> int:
         strategy=args.model_strategy,
         seed=args.seed,
         row_count=len(df),
-        random_forest_cls=RandomForestRegressor,
-        extra_trees_cls=ExtraTreesRegressor,
+        task=args.task,
+        random_forest_cls=RandomForestClassifier if args.task == "classification" else RandomForestRegressor,
+        extra_trees_cls=ExtraTreesClassifier if args.task == "classification" else ExtraTreesRegressor,
         grid_search_cls=GridSearchCV,
         kfold_cls=KFold,
     )
@@ -264,7 +335,6 @@ def main() -> int:
         best_model = pipeline.best_estimator_.named_steps["model"]
         model_selection["selected_model"] = type(best_model).__name__
     predictions = pipeline.predict(x_test)
-    mse = mean_squared_error(y_test, predictions)
 
     metrics = {
         "row_count": int(len(df)),
@@ -274,14 +344,35 @@ def main() -> int:
         "train_count": int(len(x_train)),
         "test_count": int(len(x_test)),
         "target": args.target,
+        "task": args.task,
         "feature_mode": args.feature_mode,
         "model_strategy": args.model_strategy,
         "uses_run_count_sample_weight": bool(sample_weight is not None),
         "model_selection": model_selection,
-        "mae": float(mean_absolute_error(y_test, predictions)),
-        "rmse": float(mse ** 0.5),
-        "r2": float(r2_score(y_test, predictions)) if len(y_test) > 1 else 0.0,
     }
+    if args.task == "classification":
+        metrics.update(
+            {
+                "accuracy": float(accuracy_score(y_test, predictions)),
+                "balanced_accuracy": float(balanced_accuracy_score(y_test, predictions)),
+                "f1": float(f1_score(y_test, predictions, zero_division=0)),
+                "class_counts": {
+                    str(key): int(value) for key, value in y.value_counts().to_dict().items()
+                },
+            },
+        )
+        if hasattr(pipeline, "predict_proba") and y.nunique() == 2:
+            probabilities = pipeline.predict_proba(x_test)[:, 1]
+            metrics["roc_auc"] = float(roc_auc_score(y_test, probabilities))
+    else:
+        mse = mean_squared_error(y_test, predictions)
+        metrics.update(
+            {
+                "mae": float(mean_absolute_error(y_test, predictions)),
+                "rmse": float(mse ** 0.5),
+                "r2": float(r2_score(y_test, predictions)) if len(y_test) > 1 else 0.0,
+            },
+        )
 
     model_dir = Path(args.model_dir)
     model_dir.mkdir(parents=True, exist_ok=True)
@@ -321,6 +412,7 @@ def build_pipeline(
     strategy: str,
     seed: int,
     row_count: int,
+    task: str,
     random_forest_cls: Any,
     extra_trees_cls: Any,
     grid_search_cls: Any,
@@ -336,12 +428,15 @@ def build_pipeline(
             ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
         ],
     )
-    baseline_model = random_forest_cls(
-        n_estimators=160 if row_count > 50000 else 300,
-        min_samples_leaf=2,
-        n_jobs=2,
-        random_state=seed,
-    )
+    baseline_kwargs = {
+        "n_estimators": 160 if row_count > 50000 else 300,
+        "min_samples_leaf": 2,
+        "n_jobs": 2,
+        "random_state": seed,
+    }
+    if task == "classification":
+        baseline_kwargs["class_weight"] = "balanced"
+    baseline_model = random_forest_cls(**baseline_kwargs)
     baseline_pipeline = Pipeline(
         steps=[
             ("preprocessor", preprocessor),
@@ -351,7 +446,7 @@ def build_pipeline(
     if strategy == "baseline" or row_count < 40:
         return baseline_pipeline, {
             "strategy": "baseline",
-            "selected_model": "RandomForestRegressor",
+            "selected_model": "RandomForestClassifier" if task == "classification" else "RandomForestRegressor",
             "note": "row_count가 작거나 baseline 전략을 선택해 단일 모델을 사용했습니다.",
         }
 
@@ -366,13 +461,25 @@ def build_pipeline(
     max_features = ["sqrt"] if row_count > 50000 else ["sqrt", 1.0]
     param_grid = [
         {
-            "model": [random_forest_cls(n_jobs=2, random_state=seed)],
+            "model": [
+                random_forest_cls(
+                    n_jobs=2,
+                    random_state=seed,
+                    **({"class_weight": "balanced"} if task == "classification" else {}),
+                ),
+            ],
             "model__n_estimators": n_estimators,
             "model__min_samples_leaf": min_samples_leaf,
             "model__max_features": max_features,
         },
         {
-            "model": [extra_trees_cls(n_jobs=2, random_state=seed)],
+            "model": [
+                extra_trees_cls(
+                    n_jobs=2,
+                    random_state=seed,
+                    **({"class_weight": "balanced"} if task == "classification" else {}),
+                ),
+            ],
             "model__n_estimators": n_estimators,
             "model__min_samples_leaf": min_samples_leaf,
             "model__max_features": max_features,
@@ -382,15 +489,19 @@ def build_pipeline(
     search = grid_search_cls(
         estimator=candidate_pipeline,
         param_grid=param_grid,
-        scoring="neg_root_mean_squared_error",
+        scoring="balanced_accuracy" if task == "classification" else "neg_root_mean_squared_error",
         cv=kfold_cls(n_splits=cv_splits, shuffle=True, random_state=seed),
         n_jobs=2,
     )
     return search, {
         "strategy": "auto",
         "cv_splits": cv_splits,
-        "scoring": "neg_root_mean_squared_error",
-        "candidate_models": ["RandomForestRegressor", "ExtraTreesRegressor"],
+        "scoring": "balanced_accuracy" if task == "classification" else "neg_root_mean_squared_error",
+        "candidate_models": (
+            ["RandomForestClassifier", "ExtraTreesClassifier"]
+            if task == "classification"
+            else ["RandomForestRegressor", "ExtraTreesRegressor"]
+        ),
     }
 
 
@@ -635,6 +746,8 @@ def build_preoutcome_report(
     categorical_features: list[str],
 ) -> str:
     is_sequence = metrics.get("feature_mode") == "preoutcome_sequence"
+    task = metrics.get("task", "regression")
+    skipped = bool(metrics.get("skipped"))
     title = (
         "# 레벨링 Pre-Outcome Sequence 전환 스캐폴드 리포트"
         if is_sequence
@@ -647,7 +760,41 @@ def build_preoutcome_report(
         else "시뮬레이션 실행 전에 알 수 있는 조건만 feature로 사용해 "
         f"`{metrics['target']}`를 예측한다."
     )
-    if is_sequence and metrics["r2"] >= 0.9:
+    if skipped:
+        conclusion = f"모델 학습을 건너뛰었다. 사유: {metrics.get('skip_reason', 'unknown')}."
+        usable = "target 분포 점검과 데이터 수집 조건 수정."
+        notebook = "모델 산출물로 쓰지 않는다."
+        next_action = "양/음 class가 모두 나오도록 candidate grid 또는 run 수를 늘린다."
+        metric_rows = [
+            "| 항목 | 현재값 | 기준 | 판단 |",
+            "|---|---:|---|---|",
+            f"| Row | {metrics['row_count']} | 많을수록 좋음 | class 분포 부족 |",
+        ]
+    elif task == "classification":
+        balanced_accuracy = metrics.get("balanced_accuracy", 0.0)
+        if balanced_accuracy >= 0.75:
+            conclusion = "현재 classifier는 candidate probe 선별 보조 신호로 사용할 수 있다. 단, 런타임 자동 적용 근거는 아니다."
+            usable = "clear 가능/불가능 후보의 1차 ranking, class imbalance 점검."
+            notebook = "내부 source로 재가공 가능하나, fresh resimulation과 함께 본다."
+            next_action = "분류 hit rate가 높은 후보를 별도 fresh resimulation으로 검증한다."
+            classifier_judgment = "probe 선별용으로 사용 가능"
+        else:
+            conclusion = "현재 classifier는 feature sanity check 수준이며 추천 gate 완료 근거가 아니다."
+            usable = "class 분포와 feature sanity check."
+            notebook = "지표가 사용 수준이 아니므로 보고서/인포그래픽 재생성 source로 쓰기 전 단계."
+            next_action = "candidate grid와 class balance를 늘리고 balanced accuracy/F1을 재평가한다."
+            classifier_judgment = "실무 추천 기준에는 부족"
+        metric_rows = [
+            "| 항목 | 현재값 | 기준 | 판단 |",
+            "|---|---:|---|---|",
+            f"| Accuracy | {metrics.get('accuracy', 0.0):.4f} | 높을수록 좋음 | 참고 지표 |",
+            f"| Balanced accuracy | {balanced_accuracy:.4f} | class imbalance에서도 높아야 함 | {classifier_judgment} |",
+            f"| F1 | {metrics.get('f1', 0.0):.4f} | positive class 재현 필요 | 기준 정의 필요 |",
+            f"| Row | {metrics['row_count']} | 많을수록 좋음 | 데이터 규모 확인용 |",
+        ]
+        if "roc_auc" in metrics:
+            metric_rows.insert(-1, f"| ROC-AUC | {metrics['roc_auc']:.4f} | 높을수록 좋음 | 참고 지표 |")
+    elif is_sequence and metrics["r2"] >= 0.9:
         conclusion = "현재 모델은 전체 경로 후보를 고르는 내부 추천 신호로 사용 가능하다. 단, 런타임 자동 적용 근거는 아니다."
         usable = "S1~S8 전체 경로 후보 선별, fresh resimulation 우선순위 정리."
         notebook = "NotebookLM source로 재가공 가능하나, 외부 발표용 재생성은 문서 동기화 후 진행한다."
@@ -669,6 +816,64 @@ def build_preoutcome_report(
             if is_sequence and metrics["r2"] >= 0.9
             else "실무 추천 기준에는 부족"
         )
+    if not skipped and task == "regression":
+        metric_rows = [
+            "| 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |",
+            "|---|---:|---:|---|---|",
+            f"| MAE | {metrics['mae']:.4f} | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |",
+            f"| RMSE | {metrics['rmse']:.4f} | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |",
+            f"| R2 | {metrics['r2']:.4f} | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | {r2_judgment} |",
+            f"| Row | {metrics['row_count']} | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |",
+        ]
+    score_line = (
+        f"Accuracy {metrics.get('accuracy', 0.0):.4f}, balanced accuracy {metrics.get('balanced_accuracy', 0.0):.4f}, F1 {metrics.get('f1', 0.0):.4f}"
+        if task == "classification" and not skipped
+        else (
+            "skipped"
+            if skipped
+            else f"MAE {metrics['mae']:.4f}, RMSE {metrics['rmse']:.4f}, R2 {metrics['r2']:.4f}"
+        )
+    )
+    target_descriptions = {
+        "clear_rate": "집계된 시뮬레이션 그룹의 clear 비율.",
+        "clear_rate_smoothed": "run_count가 작은 그룹을 보정한 smoothed clear 비율.",
+        "avg_score_ratio": "목표 점수 대비 평균 최종 점수 비율.",
+        "cleared_majority": "clear_rate가 0.5 이상이면 1인 binary clear-majority label.",
+        "path_clear_rate": "S1~S8 sequence path clear 비율.",
+    }
+    target_description = target_descriptions.get(
+        str(metrics["target"]),
+        "선택한 supervised target.",
+    )
+    if skipped:
+        metric_detail_lines = [f"- skipped: {metrics.get('skip_reason', 'unknown')}"]
+        interpretation_lines = [
+            "- target class가 한쪽뿐이면 classifier가 유효한 decision boundary를 배울 수 없다.",
+            "- candidate grid와 run 수를 늘린 뒤 다시 학습한다.",
+        ]
+    elif task == "classification":
+        metric_detail_lines = [
+            f"- Accuracy: {metrics.get('accuracy', 0.0):.4f}",
+            f"- Balanced accuracy: {metrics.get('balanced_accuracy', 0.0):.4f}",
+            f"- F1: {metrics.get('f1', 0.0):.4f}",
+        ]
+        if "roc_auc" in metrics:
+            metric_detail_lines.append(f"- ROC-AUC: {metrics['roc_auc']:.4f}")
+        interpretation_lines = [
+            "- class imbalance가 있을 수 있으므로 accuracy보다 balanced accuracy와 F1을 함께 본다.",
+            "- classifier는 후보를 자동 적용하지 않고, clear 가능/불가능 후보 probe를 고르는 보조 신호다.",
+        ]
+    else:
+        metric_detail_lines = [
+            f"- MAE: {metrics['mae']:.4f}",
+            f"- RMSE: {metrics['rmse']:.4f}",
+            f"- R2: {metrics['r2']:.4f}",
+        ]
+        interpretation_lines = [
+            "- post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.",
+            f"- RMSE `{metrics['rmse']:.4f}` 수준은 큰 오차에 더 민감한 회귀 오차다.",
+            "- signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.",
+        ]
     return "\n".join(
         [
             title,
@@ -676,8 +881,9 @@ def build_preoutcome_report(
             "## 최종 결론 요약",
             "",
             f"- 결론: {conclusion}",
-            f"- 핵심 점수: MAE {metrics['mae']:.4f}, RMSE {metrics['rmse']:.4f}, R2 {metrics['r2']:.4f}.",
+            f"- 핵심 점수: {score_line}.",
             f"- 데이터: {metrics['row_count']} rows, train {metrics['train_count']}, test {metrics['test_count']}, target `{metrics['target']}`.",
+            f"- task: `{task}`.",
             f"- 사용 가능: {usable}",
             "- 사용 금지: runtime 자동 밸런싱, production ML 주장, 사람 승인 없는 target/boss/market/economy 적용.",
             f"- NotebookLM 상태: {notebook}",
@@ -685,12 +891,7 @@ def build_preoutcome_report(
             "",
             "## 핵심 점수",
             "",
-            "| 항목 | 현재값 | 이상값/최선 | 실무 사용 기준 | 판단 |",
-            "|---|---:|---:|---|---|",
-            f"| MAE | {metrics['mae']:.4f} | 0.0000 | target 0~1 기준 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |",
-            f"| RMSE | {metrics['rmse']:.4f} | 0.0000 | target 0~1 기준 큰 오차가 충분히 낮아야 함, 프로젝트 임계값 미정 | 기준 정의와 개선 필요 |",
-            f"| R2 | {metrics['r2']:.4f} | 1.0000 | 실무 추천용은 높은 설명력이 필요, 프로젝트 임계값 미정 | {r2_judgment} |",
-            f"| Row | {metrics['row_count']} | 많을수록 좋음 | 후보 grid와 run-level 다양성이 충분해야 함 | 데이터 규모 확인용 |",
+            *metric_rows,
             "",
             "## 범위",
             "",
@@ -706,6 +907,7 @@ def build_preoutcome_report(
             f"- train rows: {metrics['train_count']}",
             f"- test rows: {metrics['test_count']}",
             f"- target: `{metrics['target']}`",
+            f"- task: `{task}`",
             f"- feature mode: `{metrics['feature_mode']}`",
             "",
             "소스 summary:",
@@ -716,7 +918,7 @@ def build_preoutcome_report(
             "",
             "Target:",
             "",
-            f"- `{metrics['target']}`: 집계된 시뮬레이션 그룹의 clear 비율.",
+            f"- `{metrics['target']}`: {target_description}",
             "",
             "Pre-outcome numeric features:",
             "",
@@ -754,15 +956,11 @@ def build_preoutcome_report(
             "",
             "## 지표",
             "",
-            f"- MAE: {metrics['mae']:.4f}",
-            f"- RMSE: {metrics['rmse']:.4f}",
-            f"- R2: {metrics['r2']:.4f}",
+            *metric_detail_lines,
             "",
             "해석:",
             "",
-            "- post-run result를 볼 수 없으므로 이전 outcome-summary scaffold보다 점수가 약한 것이 자연스럽다.",
-            f"- RMSE `{metrics['rmse']:.4f}` 수준은 큰 오차에 더 민감한 회귀 오차다.",
-            "- signal이 약하면 모델 ranking에 기대기 전에 candidate 다양성이나 raw run-level data를 늘리고 MAE/RMSE/R2를 함께 재평가해야 한다.",
+            *interpretation_lines,
             "",
             "## 피처 중요도 스냅샷",
             "",

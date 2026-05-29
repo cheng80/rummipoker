@@ -6,6 +6,7 @@
   "train_count": 113,
   "test_count": 38,
   "target": "clear_rate",
+  "task": "regression",
   "feature_mode": "preoutcome",
   "model_strategy": "auto",
   "uses_run_count_sample_weight": true,
@@ -28,5 +29,5 @@
   },
   "mae": 0.16929134768502235,
   "rmse": 0.2377322078134176,
-  "r2": 0.3729960088875577
+  "r2": 0.37299600888755746
 }

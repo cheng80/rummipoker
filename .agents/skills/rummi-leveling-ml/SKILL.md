@@ -35,12 +35,29 @@ BOT=planner_v2 OUT_PREFIX=logs/sim/fresh_runtime_planner_probe \
   .agents/skills/rummi-leveling-ml/scripts/run_fresh_leveling_pipeline.sh
 ```
 
+Grid sweep mode widens the default market/loadout axes:
+
+```bash
+MODE=grid CHUNKS=12 RUNS_PER_CHUNK=4 \
+  .agents/skills/rummi-leveling-ml/scripts/run_fresh_leveling_pipeline.sh
+```
+
+Model target controls:
+
+```bash
+MODEL_TARGETS="clear_rate avg_score_ratio cleared_majority" \
+  .agents/skills/rummi-leveling-ml/scripts/run_fresh_leveling_pipeline.sh
+```
+
 Default pipeline:
 
 1. `tools/sim/chunked_balance_run.py --resume`
 2. `tools/sim/economy_audit.py`
 3. `tools/leveling/build_feature_table.py`
 4. optional `tools/leveling/train_leveling_model.py`
+   - `clear_rate`: regression
+   - `avg_score_ratio`: regression
+   - `cleared_majority`: classification
 5. print row count, summary paths, metadata/report paths
 
 ## Manual Checks
@@ -65,8 +82,8 @@ Expected quality gates:
 Commit these if changed:
 
 - `analysis/leveling/data/features/*.metadata.json`
-- `analysis/leveling/models/**/clear_rate_*_metrics.json`
-- `analysis/leveling/models/**/clear_rate_*_feature_importance.csv`
+- `analysis/leveling/models/**/*_metrics.json`
+- `analysis/leveling/models/**/*_feature_importance.csv`
 - `analysis/leveling/reports/*.md`
 - `tools/sim/*.dart`, `tools/sim/*.py`, `tools/leveling/*.py`
 - this skill and its scripts

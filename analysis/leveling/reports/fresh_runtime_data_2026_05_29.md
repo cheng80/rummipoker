@@ -98,18 +98,29 @@ Feature table 연결:
 
 Preoutcome model smoke:
 
-- report: `analysis/leveling/reports/fresh_contest_policy_20260529_preoutcome_model_report.md`
-- metrics: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/clear_rate_preoutcome_metrics.json`
-- feature importance: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/clear_rate_preoutcome_feature_importance.csv`
-- target: `clear_rate`
-- model: `ExtraTreesRegressor`
-- rows after min-run-count filter: 151
-- MAE 0.1693, RMSE 0.2377, R2 0.3730
-- judgment: model smoke is useful for feature sanity and candidate probe selection, but not enough for runtime balance recommendation.
+- `clear_rate` regression:
+  - report: `analysis/leveling/reports/fresh_contest_policy_v1_20260529_clear_rate_preoutcome_model_report.md`
+  - metrics: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/clear_rate/clear_rate_preoutcome_metrics.json`
+  - model: `ExtraTreesRegressor`
+  - rows after min-run-count filter: 151
+  - MAE 0.1693, RMSE 0.2377, R2 0.3730
+- `avg_score_ratio` regression:
+  - report: `analysis/leveling/reports/fresh_contest_policy_v1_20260529_avg_score_ratio_preoutcome_model_report.md`
+  - metrics: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/avg_score_ratio/avg_score_ratio_preoutcome_metrics.json`
+  - model: `RandomForestRegressor`
+  - rows after min-run-count filter: 151
+  - MAE 0.0458, RMSE 0.0603, R2 0.4467
+- `cleared_majority` classifier:
+  - report: `analysis/leveling/reports/fresh_contest_policy_v1_20260529_cleared_majority_preoutcome_model_report.md`
+  - metrics: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/cleared_majority/cleared_majority_preoutcome_metrics.json`
+  - model: `ExtraTreesClassifier`
+  - rows after min-run-count filter: 151
+  - accuracy 0.9211, balanced accuracy 0.9516, F1 0.9492, ROC-AUC 0.9862
+- judgment: `avg_score_ratio` is a better regression target than raw `clear_rate` for this dataset, and `cleared_majority` is promising as a classifier. Runtime balance recommendation still requires wider candidate grid and fresh resimulation validation.
 
 ## 다음 작업
 
-1. model score가 낮으므로 candidate grid를 넓혀 run-level 다양성을 늘린다.
-2. `score_ratio` regression과 `cleared` classifier를 별도 target으로 추가한다.
+1. `MODE=grid` fresh run을 5,000+ rows 이상으로 쌓아 market/loadout axis를 넓힌다.
+2. classifier는 class balance와 candidate resimulation hit-rate를 같이 본다.
 3. `contest_policy_v1` raw action trace를 imitation learning용 schema로 분리할지 검토한다.
 4. archive row는 섞지 않고, 필요한 경우 historical prior로만 비교한다.
