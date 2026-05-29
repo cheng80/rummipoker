@@ -60,6 +60,17 @@ python3 tools/llm_agent/validate_llm_responses.py \
   --csv-out analysis/leveling/models/llm_decision_cache_smoke_20260529.csv
 ```
 
+Run a one-step decision-cache execution smoke:
+
+```bash
+/Users/cheng80/flutter/bin/dart run tools/llm_agent/run_decision_cache_smoke.dart \
+  --responses logs/llm/responses_smoke_20260529_schema.jsonl \
+  --out logs/llm/decision_cache_one_step_20260529.jsonl \
+  --report-out analysis/leveling/reports/llm_decision_cache_one_step_20260529.md \
+  --count 10 \
+  --seed 20260529
+```
+
 ## Response Contract
 
 The model must return JSON only:

@@ -182,6 +182,24 @@ Note:
 - prompt-only JSON mode failed because the model returned keys like `action` or `selection` instead of `selected_action_id`.
 - JSON schema enum is required before moving to decision-cache autoplay.
 
+## 2026-05-29 One-Step Execution Smoke
+
+10개 validated response를 실제 deterministic smoke session에 1회 적용했다.
+
+- runner: `tools/llm_agent/run_decision_cache_smoke.dart`
+- input responses: `logs/llm/responses_smoke_20260529_schema.jsonl`
+- tracked report: `analysis/leveling/reports/llm_decision_cache_one_step_20260529.md`
+- valid responses: 10 / 10
+- fallback executions: 0 / 10
+- fallback_rate: 0.0000
+- executed action types: `place` 5, `moveBoard` 4, `draw` 1
+
+Judgment:
+
+- decision cache response를 Dart 쪽 legal action과 다시 매칭하고 실제 session action으로 실행하는 1-step loop가 동작한다.
+- 아직 battle clear까지 진행하는 autoplay가 아니라 단일 decision execution smoke다.
+- 다음 단계는 같은 구조를 turn loop로 확장해 fallback과 stop condition을 포함한 `run_llm_balance_sim.dart` 후보를 만드는 것이다.
+
 ## 보류
 
 - LoRA/SFT
