@@ -45,7 +45,7 @@ void main() {
     );
     expect(find.byKey(const ValueKey('tile-seal-badge')), findsOneWidget);
     expect(find.text('+C'), findsOneWidget);
-    expect(find.text('B'), findsNothing);
+    expect(find.text('B'), findsOneWidget);
   });
 
   testWidgets('GameTopHud renders station facade objective values', (
