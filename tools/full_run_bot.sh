@@ -257,7 +257,7 @@ install_chromedriver() {
   echo "Installing chromedriver@$chrome_version" >&2
   npx --yes @puppeteer/browsers install "chromedriver@$chrome_version" \
     --path "$cache_dir" >"$install_log" 2>&1
-  awk 'NF {path=$NF} END {print path}' "$install_log"
+  awk '/^chromedriver@/ {print $NF; exit}' "$install_log"
 }
 
 run_and_capture() {
