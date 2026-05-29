@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -39,6 +40,8 @@ Future<void> main(List<String> args) async {
     final baselineSession = RummiPokerGridSession(runSeed: seed);
     final runProgress = RummiRunProgress();
     final baselineProgress = RummiRunProgress();
+    _applyInitialState(config, runProgress, itemCatalog);
+    _applyInitialState(config, baselineProgress, itemCatalog);
 
     var pathStopped = false;
     for (
@@ -60,6 +63,10 @@ Future<void> main(List<String> args) async {
         _startBlind(baselineProgress, baselineSession, spec, station, seed);
         llmSession.blind.bossModifier = spec.bossModifier;
         baselineSession.blind.bossModifier = spec.bossModifier;
+        if (config.initialScore != null) {
+          llmSession.blind.scoreTowardBlind = config.initialScore!;
+          baselineSession.blind.scoreTowardBlind = config.initialScore!;
+        }
 
         final blindRows = await _runBlind(
           config: config,
@@ -73,6 +80,7 @@ Future<void> main(List<String> args) async {
           baselineSession: baselineSession,
           runProgress: runProgress,
           baselineProgress: baselineProgress,
+          itemCatalog: itemCatalog,
         );
         await _runMarketDecision(
           config: config,
@@ -104,6 +112,29 @@ Future<void> main(List<String> args) async {
   report.writeAsStringSync(_buildReport(rows, config));
   stdout.writeln('out: ${out.path}');
   stdout.writeln('report: ${report.path}');
+}
+
+void _applyInitialState(
+  _Config config,
+  RummiRunProgress runProgress,
+  ItemCatalog itemCatalog,
+) {
+  if (config.initialGold != null) {
+    runProgress.gold = config.initialGold!;
+  }
+  for (final itemId in config.initialItemIds) {
+    final item = itemCatalog.findById(itemId);
+    if (item == null) continue;
+    runProgress.itemInventory = runProgress.itemInventory.withAcquiredItem(
+      item,
+      quickSlotCapacity: runProgress.quickSlotCapacity(
+        itemCatalog: itemCatalog,
+      ),
+      passiveRelicCapacity: runProgress.passiveRelicCapacity(
+        itemCatalog: itemCatalog,
+      ),
+    );
+  }
 }
 
 Future<void> _runMarketDecision({
@@ -350,10 +381,16 @@ Future<({bool cleared})> _runBlind({
   required RummiPokerGridSession baselineSession,
   required RummiRunProgress runProgress,
   required RummiRunProgress baselineProgress,
+  required ItemCatalog itemCatalog,
 }) async {
   for (var turn = 0; turn < config.turnCapPerBlind; turn++) {
     final expiry = llmSession.evaluateExpirySignals();
     if (llmSession.blind.isTargetMet || expiry.isNotEmpty) {
+      _applyCashOutIfCleared(
+        session: llmSession,
+        runProgress: runProgress,
+        itemCatalog: itemCatalog,
+      );
       rows.add(
         _terminalRow(
           config: config,
@@ -371,6 +408,19 @@ Future<({bool cleared})> _runBlind({
       );
       return (cleared: llmSession.blind.isTargetMet);
     }
+
+    await _runBattleItemDecision(
+      config: config,
+      rows: rows,
+      runIndex: runIndex,
+      seed: seed,
+      station: station,
+      tier: tier,
+      turn: turn,
+      session: llmSession,
+      runProgress: runProgress,
+      itemCatalog: itemCatalog,
+    );
 
     final requestId =
         'llm_path_${config.seed}_${runIndex}_s${station}_${tier.name}_$turn';
@@ -465,6 +515,11 @@ Future<({bool cleared})> _runBlind({
     }
   }
 
+  _applyCashOutIfCleared(
+    session: llmSession,
+    runProgress: runProgress,
+    itemCatalog: itemCatalog,
+  );
   rows.add(
     _terminalRow(
       config: config,
@@ -479,6 +534,160 @@ Future<({bool cleared})> _runBlind({
     ),
   );
   return (cleared: llmSession.blind.isTargetMet);
+}
+
+Future<void> _runBattleItemDecision({
+  required _Config config,
+  required List<Map<String, Object?>> rows,
+  required int runIndex,
+  required int seed,
+  required int station,
+  required BlindTier tier,
+  required int turn,
+  required RummiPokerGridSession session,
+  required RummiRunProgress runProgress,
+  required ItemCatalog itemCatalog,
+}) async {
+  final legalActions = _buildBattleItemLegalActions(
+    runProgress: runProgress,
+    itemCatalog: itemCatalog,
+  );
+  if (legalActions.length == 1) return;
+  final requestId =
+      'llm_item_${config.seed}_${runIndex}_s${station}_${tier.name}_$turn';
+  final requestJson = <String, dynamic>{
+    'schema_version': 1,
+    'request_id': requestId,
+    'bot_policy': 'llm_gemma4_battle_item_v1',
+    'state': {
+      'schema_version': 1,
+      'phase': 'battle_item_use',
+      'station': station,
+      'blind_tier': tier.name,
+      'turn': turn,
+      'target_score': session.blind.targetScore,
+      'score_toward_blind': session.blind.scoreTowardBlind,
+      'remaining_score': max(
+        0,
+        session.blind.targetScore - session.blind.scoreTowardBlind,
+      ),
+      'board_occupancy': RummiPokerGridSession.countTilesOnBoard(session.board),
+      'hand_size': session.hand.length,
+      'deck_remaining': session.deck.remaining,
+      'board_discards_remaining': session.blind.boardDiscardsRemaining,
+      'hand_discards_remaining': session.blind.handDiscardsRemaining,
+      'board_moves_remaining': session.blind.boardMovesRemaining,
+      'policy_guidance': const {
+        'contract_id': 'contest_full_run_battle_item_guidance_v1',
+        'rules': [
+          'Do not use an item only for evidence.',
+          'Use resource items only when the resource is currently useful or near cap pressure.',
+          'Use confirm modifier items only when a confirm is near-term valuable.',
+          'Use draw items only when hand state makes the draw immediately useful.',
+          'Skip when item use does not improve survival or scoring path.',
+        ],
+      },
+    },
+    'legal_actions': legalActions,
+  };
+  final responseResult = await requestLocalJsonAction(
+    requestJson: requestJson,
+    config: config.itemClientConfig,
+  );
+  final response = responseResult.response;
+  final selectedId = response?['selected_action_id'] as String?;
+  final selected = legalActions
+      .cast<Map<String, dynamic>>()
+      .where((action) => action['id'] == selectedId)
+      .firstOrNull;
+  final execute = selected == null
+      ? (ok: false, reason: 'invalid_or_missing_item_action')
+      : _executeBattleItemAction(
+          selected,
+          session: session,
+          runProgress: runProgress,
+          itemCatalog: itemCatalog,
+        );
+  rows.add({
+    'schema_version': 1,
+    'row_type': 'llm_battle_item_decision',
+    'run_index': runIndex,
+    'seed': seed,
+    'station': station,
+    'blind_tier': tier.name,
+    'turn': turn,
+    'request_id': requestId,
+    'model': config.model,
+    'candidate_count': legalActions.length,
+    'is_valid': selected != null,
+    'selected_action_id': selectedId,
+    'selected_action_type': selected?['type'],
+    'execute_ok': execute.ok,
+    'execute_reason': execute.reason,
+    'latency_ms': responseResult.latencyMs,
+    'llm_error': responseResult.error,
+  });
+}
+
+List<Map<String, Object?>> _buildBattleItemLegalActions({
+  required RummiRunProgress runProgress,
+  required ItemCatalog itemCatalog,
+}) {
+  final actions = <Map<String, Object?>>[];
+  for (final entry in runProgress.itemInventory.ownedItems) {
+    if (entry.count <= 0 || entry.placement != ItemPlacement.quickSlot) {
+      continue;
+    }
+    final item = itemCatalog.findById(entry.itemId);
+    if (item == null || !item.usableInBattle) continue;
+    actions.add({
+      'id': 'use_item_${item.id}',
+      'type': 'useBattleItem',
+      'content_id': item.id,
+      'count': entry.count,
+      'effect_op': item.effect.op,
+      'effect_timing': item.effect.timing,
+      'consume': item.effect.consume,
+      'reason_hint': 'use only if it improves this battle path',
+    });
+  }
+  actions.add(const {
+    'id': 'skip_item_use',
+    'type': 'skip',
+    'reason_hint': 'skip when no item should be used now',
+  });
+  return actions;
+}
+
+({bool ok, String reason}) _executeBattleItemAction(
+  Map<String, dynamic> action, {
+  required RummiPokerGridSession session,
+  required RummiRunProgress runProgress,
+  required ItemCatalog itemCatalog,
+}) {
+  if (action['type'] == 'skip') return (ok: true, reason: 'skip');
+  final itemId = action['content_id'] as String?;
+  final item = itemId == null ? null : itemCatalog.findById(itemId);
+  if (item == null) return (ok: false, reason: 'missing_item');
+  final result = ItemEffectRuntime.useBattleItem(
+    item: item,
+    session: session,
+    runProgress: runProgress,
+  );
+  return (ok: result.isSuccess, reason: result.failMessage ?? item.effect.op);
+}
+
+void _applyCashOutIfCleared({
+  required RummiPokerGridSession session,
+  required RummiRunProgress runProgress,
+  required ItemCatalog itemCatalog,
+}) {
+  if (!session.blind.isTargetMet) return;
+  final breakdown = runProgress.buildCashOutBreakdown(
+    session,
+    itemCatalog: itemCatalog,
+  );
+  runProgress.applyCashOut(breakdown);
 }
 
 void _startBlind(
@@ -553,11 +762,17 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
   final marketDecisions = rows
       .where((row) => row['row_type'] == 'llm_market_decision')
       .toList(growable: false);
+  final itemDecisions = rows
+      .where((row) => row['row_type'] == 'llm_battle_item_decision')
+      .toList(growable: false);
   final valid = decisions.where((row) => row['is_valid'] == true).length;
   final fallback = decisions
       .where((row) => row['used_fallback'] == true)
       .length;
   final validMarket = marketDecisions
+      .where((row) => row['is_valid'] == true)
+      .length;
+  final validItem = itemDecisions
       .where((row) => row['is_valid'] == true)
       .length;
   final diverged = decisions
@@ -583,11 +798,17 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     '- station_range: S${config.stationStart}~S${config.stationEnd}',
     '- tiers: ${config.tiers.map((tier) => tier.name).join(', ')}',
     '- turn_cap_per_blind: ${config.turnCapPerBlind}',
+    if (config.initialGold != null) '- initial_gold: ${config.initialGold}',
+    if (config.initialScore != null) '- initial_score: ${config.initialScore}',
+    if (config.initialItemIds.isNotEmpty)
+      '- initial_items: ${config.initialItemIds.join(', ')}',
     '- decisions: ${decisions.length}',
+    '- item_decisions: ${itemDecisions.length}',
     '- market_decisions: ${marketDecisions.length}',
     '- terminal_blinds: ${terminals.length}',
     '- cleared_blinds: $cleared',
     '- valid responses: $valid',
+    '- valid item responses: $validItem',
     '- valid market responses: $validMarket',
     '- fallback executions: $fallback',
     '- fallback_rate: ${_rate(fallback, decisions.length)}',
@@ -598,6 +819,11 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     '## Action Types',
     '',
     for (final entry in _countBy(decisions, 'executed_action_type').entries)
+      '- ${entry.key}: ${entry.value}',
+    '',
+    '## Item Action Types',
+    '',
+    for (final entry in _countBy(itemDecisions, 'selected_action_type').entries)
       '- ${entry.key}: ${entry.value}',
     '',
     '## Market Action Types',
@@ -612,8 +838,9 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     '',
     'This is the first S1-S8-capable LLM station path runner.',
     'It uses real blind specs, target scores, resources, and boss modifiers.',
-    'Market buy/sell/reroll decision contracts are included as smoke rows.',
-    'Battle item-use choices and full economy application are still pending before this can be treated as full balance evidence.',
+    'Battle item-use and market buy/sell/reroll decision contracts are included as smoke rows.',
+    'Cleared blind cashout and market purchase/sell/reroll effects are applied to run progress.',
+    'Targeted item interactions, richer shop policy, and long S1-S8 runs are still pending before this can be treated as full balance evidence.',
   ].join('\n');
 }
 
@@ -642,6 +869,9 @@ class _Config {
     required this.tiers,
     required this.turnCapPerBlind,
     required this.continueAfterFail,
+    required this.initialGold,
+    required this.initialScore,
+    required this.initialItemIds,
     required this.maxLegalActions,
     required this.difficulty,
     required this.model,
@@ -659,6 +889,9 @@ class _Config {
   final List<BlindTier> tiers;
   final int turnCapPerBlind;
   final bool continueAfterFail;
+  final int? initialGold;
+  final int? initialScore;
+  final List<String> initialItemIds;
   final int maxLegalActions;
   final NewRunDifficulty difficulty;
   final String model;
@@ -688,6 +921,17 @@ class _Config {
     );
   }
 
+  LlmPolicyClientConfig get itemClientConfig {
+    return LlmPolicyClientConfig(
+      model: model,
+      temperature: temperature,
+      topP: topP,
+      timeoutSeconds: timeoutSeconds,
+      requestDir: 'logs/llm/battle_item_requests',
+      responseDir: 'logs/llm/battle_item_responses',
+    );
+  }
+
   static _Config parse(List<String> args) {
     var outPath = 'logs/llm/station_path_smoke_20260529.jsonl';
     var reportOutPath =
@@ -699,6 +943,9 @@ class _Config {
     var tiers = const [BlindTier.small, BlindTier.big, BlindTier.boss];
     var turnCapPerBlind = 4;
     var continueAfterFail = false;
+    int? initialGold;
+    int? initialScore;
+    var initialItemIds = const <String>[];
     var maxLegalActions = 24;
     var difficulty = NewRunDifficulty.standard;
     var model = 'gemma4:e4b';
@@ -725,6 +972,20 @@ class _Config {
           turnCapPerBlind = int.parse(args[++i]);
         case '--continue-after-fail':
           continueAfterFail = true;
+        case '--initial-gold':
+          initialGold = int.parse(args[++i]);
+        case '--initial-score':
+          initialScore = int.parse(args[++i]);
+        case '--initial-item':
+          initialItemIds = [...initialItemIds, args[++i]];
+        case '--initial-items':
+          initialItemIds = [
+            ...initialItemIds,
+            ...args[++i]
+                .split(',')
+                .map((part) => part.trim())
+                .where((part) => part.isNotEmpty),
+          ];
         case '--max-legal-actions':
           maxLegalActions = int.parse(args[++i]);
         case '--difficulty':
@@ -760,6 +1021,9 @@ class _Config {
       tiers: tiers,
       turnCapPerBlind: turnCapPerBlind,
       continueAfterFail: continueAfterFail,
+      initialGold: initialGold,
+      initialScore: initialScore,
+      initialItemIds: List<String>.unmodifiable(initialItemIds),
       maxLegalActions: maxLegalActions,
       difficulty: difficulty,
       model: model,

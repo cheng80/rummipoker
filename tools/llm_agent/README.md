@@ -127,6 +127,39 @@ buy/sell/reroll decision contracts are included as smoke rows. It is still not
 complete balance evidence until battle item-use and full economy application are
 added.
 
+For item-use contract smoke, seed a quick-slot item and enough gold for market
+choices:
+
+```bash
+/Users/cheng80/flutter/bin/dart run tools/llm_agent/run_llm_station_path_smoke.dart \
+  --out logs/llm/station_path_item_market_smoke_20260530.jsonl \
+  --report-out analysis/leveling/reports/llm_station_path_item_market_smoke_20260530.md \
+  --station-start 1 \
+  --station-end 1 \
+  --tiers small \
+  --turn-cap-per-blind 1 \
+  --initial-gold 20 \
+  --initial-item board_scrap \
+  --continue-after-fail \
+  --model gemma4:e4b
+```
+
+For cashout/economy handoff smoke, force a cleared blind with `--initial-score`
+equal to the target:
+
+```bash
+/Users/cheng80/flutter/bin/dart run tools/llm_agent/run_llm_station_path_smoke.dart \
+  --out logs/llm/station_path_cashout_smoke_20260530.jsonl \
+  --report-out analysis/leveling/reports/llm_station_path_cashout_smoke_20260530.md \
+  --station-start 1 \
+  --station-end 1 \
+  --tiers small \
+  --turn-cap-per-blind 1 \
+  --initial-score 480 \
+  --continue-after-fail \
+  --model gemma4:e4b
+```
+
 ## Response Contract
 
 The model must return JSON only:
