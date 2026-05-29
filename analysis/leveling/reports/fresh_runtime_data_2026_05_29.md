@@ -73,8 +73,43 @@ Economy audit highlights:
 
 이에 맞춰 `run_balance_sim.dart --flush-every-rows`, `tools/sim/chunked_balance_run.py`, `tools/sim/summarize_balance_jsonl.dart`를 fresh data runner 기반으로 둔다.
 
+## Contest Policy Fresh Dataset
+
+trace 보강 후 `contest_policy_v1` 기준 fresh data를 chunk runner로 다시 쌓았다.
+
+- command shape: `python3 tools/sim/chunked_balance_run.py --resume --chunks 30 --runs-per-chunk 5 --seed 94600 --out-prefix logs/sim/fresh_runtime_20260529_contest_policy_chunked_r200 --dart /Users/cheng80/flutter/bin/dart -- ...`
+- raw JSONL: `logs/sim/fresh_runtime_20260529_contest_policy_chunked_r200.jsonl`
+- summary: `logs/sim/fresh_runtime_20260529_contest_policy_chunked_r200_summary.json`
+- manifest: `logs/sim/fresh_runtime_20260529_contest_policy_chunked_r200_manifest.json`
+- economy audit: `logs/sim/fresh_runtime_20260529_contest_policy_chunked_r200_economy_audit.json`
+- rows: 5,133
+- sequence runs: 600
+- completed chunks: 30 / 30
+- purchase events: 1,458
+- missing cost events: 0
+- sequence groups: 4
+
+Feature table 연결:
+
+- battle preoutcome metadata: `analysis/leveling/data/features/fresh_contest_policy_20260529_preoutcome_battle.metadata.json`
+- battle outcome metadata: `analysis/leveling/data/features/fresh_contest_policy_20260529_outcome_summary.metadata.json`
+- sequence preoutcome metadata: `analysis/leveling/data/features/fresh_contest_policy_20260529_preoutcome_sequence.metadata.json`
+- generated CSV는 `analysis/leveling/generated/features/` 아래에 있으며 git 추적 대상이 아니다.
+
+Preoutcome model smoke:
+
+- report: `analysis/leveling/reports/fresh_contest_policy_20260529_preoutcome_model_report.md`
+- metrics: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/clear_rate_preoutcome_metrics.json`
+- feature importance: `analysis/leveling/models/fresh_contest_policy_20260529_preoutcome/clear_rate_preoutcome_feature_importance.csv`
+- target: `clear_rate`
+- model: `ExtraTreesRegressor`
+- rows after min-run-count filter: 151
+- MAE 0.1693, RMSE 0.2377, R2 0.3730
+- judgment: model smoke is useful for feature sanity and candidate probe selection, but not enough for runtime balance recommendation.
+
 ## 다음 작업
 
-1. `contest_policy_v1` 또는 full-runbot급 policy를 chunked data runner로 실행해 중간 산출물을 잃지 않게 한다.
-2. 보강된 trace schema로 5,000행 이상 fresh row를 다시 생성해 economy/market 학습 입력으로 승격한다.
-3. 5,049 fresh row와 trace-fix 이후 fresh row를 feature table builder의 새 입력으로 연결하되, archive row는 섞지 않는다.
+1. model score가 낮으므로 candidate grid를 넓혀 run-level 다양성을 늘린다.
+2. `score_ratio` regression과 `cleared` classifier를 별도 target으로 추가한다.
+3. `contest_policy_v1` raw action trace를 imitation learning용 schema로 분리할지 검토한다.
+4. archive row는 섞지 않고, 필요한 경우 historical prior로만 비교한다.
