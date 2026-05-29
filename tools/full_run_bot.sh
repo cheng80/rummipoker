@@ -17,6 +17,7 @@ ACTION_DELAY_MS="${FULL_RUN_BOT_ACTION_DELAY_MS:-250}"
 CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${FULL_RUN_BOT_WEB_PORT:-7357}"
 BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_run_bot/chrome_profile}"
+FLUTTER_BIN="${FLUTTER_BIN:-/Users/cheng80/flutter/bin/flutter}"
 RESUME_ACTIVE_RUN=false
 TUTORIALS_ALREADY_SEEN=false
 TARGET_STAGE="${FULL_RUN_BOT_TARGET_STAGE:-1}"
@@ -58,6 +59,7 @@ Options:
 Environment:
   CHROMEDRIVER_CMD          Custom chromedriver command.
   CHROMEDRIVER_PORT         WebDriver port. Default: 4444.
+  FLUTTER_BIN               Flutter executable. Default: /Users/cheng80/flutter/bin/flutter.
 EOF
 }
 
@@ -357,11 +359,11 @@ if [[ -f "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env" ]]; then
 fi
 
 if [[ "$PUB_GET" -eq 1 ]]; then
-  run_and_capture "$OUTPUT_DIR/00_pub_get.log" flutter pub get
+  run_and_capture "$OUTPUT_DIR/00_pub_get.log" "$FLUTTER_BIN" pub get
 fi
 
 run_flutter_drive_and_capture "$OUTPUT_DIR/10_full_run_bot.log" \
-  flutter drive \
+  "$FLUTTER_BIN" drive \
     --driver=test_driver/integration_test.dart \
     --target=integration_test/full_run_bot_test.dart \
     -d chrome \
