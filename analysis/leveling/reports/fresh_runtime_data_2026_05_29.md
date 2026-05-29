@@ -120,7 +120,62 @@ Preoutcome model smoke:
 
 ## 다음 작업
 
-1. `MODE=grid` fresh run을 5,000+ rows 이상으로 쌓아 market/loadout axis를 넓힌다.
+## Grid Fresh Dataset
+
+`MODE=grid`로 market/loadout axis를 넓힌 fresh data를 다시 쌓았다.
+
+- command shape: `MODE=grid CHUNKS=9 RUNS_PER_CHUNK=5 SEED=95600 OUT_PREFIX=logs/sim/fresh_runtime_20260529_contest_policy_grid_r200 ... run_fresh_leveling_pipeline.sh`
+- raw JSONL: `logs/sim/fresh_runtime_20260529_contest_policy_grid_r200.jsonl`
+- summary: `logs/sim/fresh_runtime_20260529_contest_policy_grid_r200_summary.json`
+- manifest: `logs/sim/fresh_runtime_20260529_contest_policy_grid_r200_manifest.json`
+- economy audit: `logs/sim/fresh_runtime_20260529_contest_policy_grid_r200_economy_audit.json`
+- rows: 5,655
+- completed chunks: 9 / 9
+- purchase events: 2,439
+- missing cost events: 0
+- market profiles: `none`, `shop_slot_market_v9`, `shop_slot_market_v12`, `shop_slot_market_v13`, `shop_slot_market_v16`
+- loadouts: `progression_route_balanced`, `progression_route_power`, `progression_route_delayed`
+
+Grid feature/model 산출물:
+
+- battle preoutcome metadata: `analysis/leveling/data/features/fresh_contest_policy_grid_20260529_preoutcome_battle.metadata.json`
+- battle outcome metadata: `analysis/leveling/data/features/fresh_contest_policy_grid_20260529_outcome_summary.metadata.json`
+- sequence preoutcome metadata: `analysis/leveling/data/features/fresh_contest_policy_grid_20260529_preoutcome_sequence.metadata.json`
+- candidate CSV: `analysis/leveling/models/fresh_contest_policy_grid_20260529_candidate_recommendations.csv`
+- candidate report: `analysis/leveling/reports/fresh_contest_policy_grid_20260529_candidate_probe_report.md`
+
+Grid model smoke:
+
+- `clear_rate` regression:
+  - report: `analysis/leveling/reports/fresh_contest_policy_grid_20260529_clear_rate_preoutcome_model_report.md`
+  - metrics: `analysis/leveling/models/fresh_contest_policy_grid_20260529_preoutcome/clear_rate/clear_rate_preoutcome_metrics.json`
+  - model: `RandomForestRegressor`
+  - rows after min-run-count filter: 323
+  - MAE 0.1289, RMSE 0.1921, R2 0.4958
+- `avg_score_ratio` regression:
+  - report: `analysis/leveling/reports/fresh_contest_policy_grid_20260529_avg_score_ratio_preoutcome_model_report.md`
+  - metrics: `analysis/leveling/models/fresh_contest_policy_grid_20260529_preoutcome/avg_score_ratio/avg_score_ratio_preoutcome_metrics.json`
+  - model: `RandomForestRegressor`
+  - rows after min-run-count filter: 323
+  - MAE 0.0354, RMSE 0.0509, R2 0.6030
+- `cleared_majority` classifier:
+  - report: `analysis/leveling/reports/fresh_contest_policy_grid_20260529_cleared_majority_preoutcome_model_report.md`
+  - metrics: `analysis/leveling/models/fresh_contest_policy_grid_20260529_preoutcome/cleared_majority/cleared_majority_preoutcome_metrics.json`
+  - model: `RandomForestClassifier`
+  - rows after min-run-count filter: 323
+  - accuracy 0.8395, balanced accuracy 0.6649, F1 0.9065, ROC-AUC 0.7319
+
+Judgment:
+
+- grid data에서 `clear_rate`와 `avg_score_ratio` 회귀는 이전보다 좋아졌다.
+- `avg_score_ratio`가 여전히 더 안정적인 regression target이다.
+- `cleared_majority` classifier는 class imbalance가 커져 balanced accuracy가 낮아졌으므로 gate 후보 선별용으로 쓰기에는 아직 약하다.
+- candidate probe 상위권도 market delta가 음수라 자동 적용 후보가 아니다. 다음은 상위 economy/target 후보를 분리해 fresh resimulation으로 실제 hit-rate를 검증한다.
+
+## 다음 작업
+
+1. Grid candidate report의 상위 economy/target 후보를 small fresh resimulation으로 분리 검증한다.
 2. classifier는 class balance와 candidate resimulation hit-rate를 같이 본다.
 3. `contest_policy_v1` raw action trace를 imitation learning용 schema로 분리할지 검토한다.
-4. archive row는 섞지 않고, 필요한 경우 historical prior로만 비교한다.
+4. LLM autoplay P0 scaffold에서 만든 state/action request를 decision cache runner와 연결한다.
+5. archive row는 섞지 않고, 필요한 경우 historical prior로만 비교한다.
