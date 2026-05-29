@@ -433,6 +433,11 @@ Future<({bool cleared})> _runBlind({
 
     final requestId =
         'llm_path_${config.seed}_${runIndex}_s${station}_${tier.name}_$turn';
+    final fallbackAction = const ContestPolicyV1BotPolicy().chooseAction(
+      llmSession,
+      jesters: const [],
+      runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+    );
     final request = applyFullRunPolicyGuidance(
       buildLlmActionRequest(
         llmSession,
@@ -444,6 +449,7 @@ Future<({bool cleared})> _runBlind({
         turnCount: turn,
       ),
       maxActions: config.maxLegalActions,
+      defaultRecommendation: fallbackAction,
     );
     final responseResult = await requestLocalLlmAction(
       request: request,
@@ -455,12 +461,22 @@ Future<({bool cleared})> _runBlind({
             response: LlmActionResponse.fromJson(responseResult.response!),
             legalActions: request.legalActions,
           );
-    final fallbackAction = const ContestPolicyV1BotPolicy().chooseAction(
-      llmSession,
-      jesters: const [],
-      runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+    final defaultRecommendedActionId =
+        request.state['default_recommended_action_id'] as String?;
+    final defaultRecommendedAction = defaultRecommendedActionId == null
+        ? null
+        : request.legalActions
+              .where((action) => action.id == defaultRecommendedActionId)
+              .firstOrNull;
+    final guardedSelection = _applyDefaultRecommendationGuard(
+      selected: validation.selectedAction,
+      defaultRecommendation: defaultRecommendedAction,
     );
-    final selectedAction = validation.balanceAction ?? fallbackAction;
+    final selectedAction = guardedSelection?.action ?? fallbackAction;
+    final policyGuardOverrode =
+        validation.selectedAction != null &&
+        guardedSelection != null &&
+        validation.selectedAction!.id != guardedSelection.id;
     final llmExecute = executeBalanceAction(
       llmSession,
       selectedAction,
@@ -494,6 +510,10 @@ Future<({bool cleared})> _runBlind({
       'used_fallback': !validation.isValid,
       'selected_action_id': validation.selectedAction?.id,
       'selected_action_type': validation.selectedAction?.type,
+      'default_recommended_action_id': defaultRecommendedAction?.id,
+      'default_recommended_action_type': defaultRecommendedAction?.type,
+      'policy_guard_overrode': policyGuardOverrode,
+      'executed_action_id': guardedSelection?.id,
       'response_confidence': validation.confidence,
       'response_reason': validation.responseReason,
       'executed_action_type': selectedAction.type.name,
@@ -545,6 +565,27 @@ Future<({bool cleared})> _runBlind({
     ),
   );
   return (cleared: llmSession.blind.isTargetMet);
+}
+
+LlmLegalAction? _applyDefaultRecommendationGuard({
+  required LlmLegalAction? selected,
+  required LlmLegalAction? defaultRecommendation,
+}) {
+  if (selected == null || defaultRecommendation == null) {
+    return selected;
+  }
+  if (selected.id == defaultRecommendation.id) return selected;
+  if (selected.clearsTarget == true &&
+      defaultRecommendation.clearsTarget != true) {
+    return selected;
+  }
+  final selectedPreview = selected.previewScore ?? selected.potentialScore ?? 0;
+  final defaultPreview =
+      defaultRecommendation.previewScore ??
+      defaultRecommendation.potentialScore ??
+      0;
+  if (selectedPreview > defaultPreview) return selected;
+  return defaultRecommendation;
 }
 
 Future<void> _runBattleItemDecision({

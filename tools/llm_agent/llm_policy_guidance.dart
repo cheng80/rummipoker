@@ -1,14 +1,24 @@
 import '../sim/llm_action_schema.dart';
+import '../sim/bot_policy.dart';
 
 const int kDefaultGuidedLegalActionLimit = 24;
 
 LlmActionRequest applyFullRunPolicyGuidance(
   LlmActionRequest request, {
   int maxActions = kDefaultGuidedLegalActionLimit,
+  BalanceSimAction? defaultRecommendation,
 }) {
+  final recommendedAction = defaultRecommendation == null
+      ? null
+      : _findMatchingAction(request.legalActions, defaultRecommendation);
   final scored = [
     for (final action in request.legalActions)
-      _GuidedAction(action: action, score: _policyScore(action)),
+      _GuidedAction(
+        action: action,
+        score:
+            _policyScore(action) +
+            (action.id == recommendedAction?.id ? 1000000 : 0),
+      ),
   ]..sort((a, b) => b.score.compareTo(a.score));
 
   final preferred = scored
@@ -40,6 +50,7 @@ LlmActionRequest applyFullRunPolicyGuidance(
         'candidate_policy':
             'Legal actions are pre-ranked and filtered with full-run bot rules.',
         'rules': [
+          'If default_recommended_action_id is present and no action clearly clears the target, choose that action.',
           'Actions include policy_rank and policy_score; lower policy_rank is the default recommendation.',
           'Prefer actions that clear the target immediately.',
           'Do not spend board discard, hand discard, or board move only for evidence.',
@@ -49,11 +60,35 @@ LlmActionRequest applyFullRunPolicyGuidance(
           'Preserve scarce resources unless the board is close to locked or target progress is blocked.',
         ],
       },
+      if (recommendedAction != null)
+        'default_recommended_action_id': recommendedAction.id,
+      if (recommendedAction != null)
+        'default_recommended_action_type': recommendedAction.type,
+      if (recommendedAction != null)
+        'default_recommendation_source': 'contest_policy_v1',
       'candidate_count_before_guidance': request.legalActions.length,
       'candidate_count_after_guidance': ranked.length,
     },
     legalActions: ranked,
   );
+}
+
+LlmLegalAction? _findMatchingAction(
+  List<LlmLegalAction> actions,
+  BalanceSimAction recommendation,
+) {
+  for (final action in actions) {
+    final candidate = action.action;
+    if (candidate.type == recommendation.type &&
+        candidate.handIndex == recommendation.handIndex &&
+        candidate.row == recommendation.row &&
+        candidate.col == recommendation.col &&
+        candidate.toRow == recommendation.toRow &&
+        candidate.toCol == recommendation.toCol) {
+      return action;
+    }
+  }
+  return null;
 }
 
 bool _isLowValueResourceSpend(LlmLegalAction action) {
