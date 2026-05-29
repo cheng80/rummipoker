@@ -753,27 +753,13 @@ void _startBlind(
     session,
     stationIndex: station,
     blindTierIndex: spec.tier.index,
-    shuffleSeed: _deriveBlindShuffleSeed(
-      runSeed: seed,
-      stationIndex: station,
-      blindTierIndex: spec.tier.index,
-    ),
+    shuffleSeed: RummiPokerGridSession.deriveStageShuffleSeed(seed, station),
     targetScore: spec.targetScore,
     boardDiscards: spec.boardDiscards,
     handDiscards: spec.handDiscards,
     maxHandSize: spec.maxHandSize,
     applyRoundEndDecay: false,
   );
-}
-
-int _deriveBlindShuffleSeed({
-  required int runSeed,
-  required int stationIndex,
-  required int blindTierIndex,
-}) {
-  final stageSeed = runSeed * 1103515245 + 12345 + stationIndex * 1013904223;
-  final mixed = (stageSeed + (blindTierIndex + 1) * 2654435761) & 0x7fffffff;
-  return mixed == 0 ? stationIndex + blindTierIndex + 1 : mixed;
 }
 
 Map<String, Object?> _terminalRow({
