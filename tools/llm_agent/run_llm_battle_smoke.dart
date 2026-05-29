@@ -7,10 +7,10 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart'
 import '../sim/balance_action_executor.dart';
 import '../sim/bot_policy.dart';
 import '../sim/llm_action_schema.dart';
+import '../sim/llm_state_exporter.dart';
 import '../sim/planner_bot.dart';
 import 'llm_policy_guidance.dart';
 import 'llm_policy_client.dart';
-import 'smoke_session_factory.dart';
 
 Future<void> main(List<String> args) async {
   final config = _Config.parse(args);
@@ -20,27 +20,47 @@ Future<void> main(List<String> args) async {
 
   for (var runIndex = 0; runIndex < config.runs; runIndex++) {
     final seed = config.seed + runIndex;
-    final llmSession = buildLlmSmokeSession(seed, runIndex);
-    final baselineSession = buildLlmSmokeSession(seed, runIndex);
+    final llmSession = _buildBattleSession(config, seed);
+    final baselineSession = _buildBattleSession(config, seed);
+    final runProgress = RummiRunProgress();
+    final baselineRunProgress = RummiRunProgress();
+    _startBattle(runProgress, llmSession, config, seed);
+    _startBattle(baselineRunProgress, baselineSession, config, seed);
+
     for (var turn = 0; turn < config.turnCap; turn++) {
-      if (_isTerminal(llmSession)) break;
-      final requestId = 'llm_loop_${config.seed}_${runIndex}_$turn';
+      final expiry = llmSession.evaluateExpirySignals();
+      if (llmSession.blind.isTargetMet || expiry.isNotEmpty) {
+        rows.add(
+          _terminalRow(
+            config: config,
+            runIndex: runIndex,
+            turn: turn,
+            session: llmSession,
+            baselineSession: baselineSession,
+            stopReason: llmSession.blind.isTargetMet
+                ? 'cleared'
+                : expiry.map((signal) => signal.name).join(','),
+          ),
+        );
+        break;
+      }
+
+      final requestId = 'llm_battle_${config.seed}_${runIndex}_$turn';
       final request = applyFullRunPolicyGuidance(
-        buildLimitedLlmSmokeRequest(
-          session: llmSession,
+        buildLlmActionRequest(
+          llmSession,
           requestId: requestId,
-          index: runIndex,
+          jesters: const [],
+          runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+          station: config.station,
+          blindTier: config.blindTier,
           turnCount: turn,
-          maxLegalActions: config.maxLegalActions * 2,
         ),
         maxActions: config.maxLegalActions,
       );
       final responseResult = await requestLocalLlmAction(
         request: request,
-        config: config.clientConfig(
-          requestDir: 'logs/llm/turn_loop_requests',
-          responseDir: 'logs/llm/turn_loop_responses',
-        ),
+        config: config.clientConfig,
       );
       final validation = responseResult.response == null
           ? LlmActionValidationResult.invalid(responseResult.error ?? 'no_llm')
@@ -51,23 +71,37 @@ Future<void> main(List<String> args) async {
       final fallbackAction = const ContestPolicyV1BotPolicy().chooseAction(
         llmSession,
         jesters: const [],
-        runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
       );
       final selectedAction = validation.balanceAction ?? fallbackAction;
-      final llmExecute = executeBalanceAction(llmSession, selectedAction);
+      final llmExecute = executeBalanceAction(
+        llmSession,
+        selectedAction,
+        runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+      );
+      _applyRunProgressAfterAction(runProgress, llmExecute);
+
       final baselineAction = const ContestPolicyV1BotPolicy().chooseAction(
         baselineSession,
         jesters: const [],
-        runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        runtimeSnapshot: baselineRunProgress.buildRuntimeSnapshot(),
       );
       final baselineExecute = executeBalanceAction(
         baselineSession,
         baselineAction,
+        runtimeSnapshot: baselineRunProgress.buildRuntimeSnapshot(),
       );
+      _applyRunProgressAfterAction(baselineRunProgress, baselineExecute);
+
       rows.add({
         'schema_version': 1,
+        'row_type': 'llm_battle_turn',
         'run_index': runIndex,
         'turn': turn,
+        'seed': seed,
+        'station': config.station,
+        'blind_tier': config.blindTier,
+        'target_score': config.targetScore,
         'request_id': requestId,
         'model': config.model,
         'is_valid': validation.isValid,
@@ -76,9 +110,6 @@ Future<void> main(List<String> args) async {
         'selected_action_id': validation.selectedAction?.id,
         'selected_action_type': validation.selectedAction?.type,
         'executed_action_type': selectedAction.type.name,
-        'fallback_action_type': validation.isValid
-            ? null
-            : fallbackAction.type.name,
         'baseline_action_type': baselineAction.type.name,
         'diverged_from_baseline':
             selectedAction.type != baselineAction.type ||
@@ -93,10 +124,8 @@ Future<void> main(List<String> args) async {
         'baseline_execute_reason': baselineExecute.reason,
         'llm_score_after': llmExecute.scoreAfter,
         'baseline_score_after': baselineExecute.scoreAfter,
-        'llm_reached_target':
-            llmExecute.scoreAfter >= llmSession.blind.targetScore,
-        'baseline_reached_target':
-            baselineExecute.scoreAfter >= baselineSession.blind.targetScore,
+        'llm_reached_target': llmSession.blind.isTargetMet,
+        'baseline_reached_target': baselineSession.blind.isTargetMet,
         'llm_score_delta': llmExecute.scoreDelta,
         'baseline_score_delta': baselineExecute.scoreDelta,
         'llm_hand_size_after': llmExecute.handSizeAfter,
@@ -105,10 +134,7 @@ Future<void> main(List<String> args) async {
         'latency_ms': responseResult.latencyMs,
         'llm_error': responseResult.error,
       });
-      if (selectedAction.type == BalanceSimActionType.stop ||
-          baselineAction.type == BalanceSimActionType.stop) {
-        break;
-      }
+      if (selectedAction.type == BalanceSimActionType.stop) break;
     }
   }
 
@@ -125,37 +151,100 @@ Future<void> main(List<String> args) async {
   stdout.writeln('report: ${report.path}');
 }
 
-bool _isTerminal(RummiPokerGridSession session) {
-  return session.blind.scoreTowardBlind >= session.blind.targetScore;
+RummiPokerGridSession _buildBattleSession(_Config config, int seed) {
+  final session = RummiPokerGridSession(runSeed: seed);
+  session.setDebugMaxHandSize(config.maxHandSize);
+  return session;
+}
+
+void _startBattle(
+  RummiRunProgress runProgress,
+  RummiPokerGridSession session,
+  _Config config,
+  int seed,
+) {
+  runProgress.startBlind(
+    session,
+    stationIndex: config.station,
+    blindTierIndex: _blindTierIndex(config.blindTier),
+    shuffleSeed: RummiPokerGridSession.deriveStageShuffleSeed(
+      seed,
+      config.station,
+    ),
+    targetScore: config.targetScore,
+    boardDiscards: config.boardDiscards,
+    handDiscards: config.handDiscards,
+    maxHandSize: config.maxHandSize,
+    applyRoundEndDecay: false,
+  );
+}
+
+void _applyRunProgressAfterAction(
+  RummiRunProgress runProgress,
+  BalanceActionExecutionResult result,
+) {
+  // The shared executor intentionally returns compact action results. Full
+  // line-breakdown growth sync belongs in the eventual production runner.
+  if (result.scoreDelta > 0) {
+    runProgress.gold += 0;
+  }
+}
+
+Map<String, Object?> _terminalRow({
+  required _Config config,
+  required int runIndex,
+  required int turn,
+  required RummiPokerGridSession session,
+  required RummiPokerGridSession baselineSession,
+  required String stopReason,
+}) {
+  return {
+    'schema_version': 1,
+    'row_type': 'llm_battle_terminal',
+    'run_index': runIndex,
+    'turn': turn,
+    'station': config.station,
+    'blind_tier': config.blindTier,
+    'target_score': config.targetScore,
+    'stop_reason': stopReason,
+    'llm_score_after': session.blind.scoreTowardBlind,
+    'baseline_score_after': baselineSession.blind.scoreTowardBlind,
+    'llm_reached_target': session.blind.isTargetMet,
+    'baseline_reached_target': baselineSession.blind.isTargetMet,
+  };
+}
+
+int _blindTierIndex(String tier) {
+  return switch (tier) {
+    'small' => 0,
+    'big' => 1,
+    'boss' => 2,
+    _ => 0,
+  };
 }
 
 String _buildReport(List<Map<String, Object?>> rows, _Config config) {
-  final total = rows.length;
-  final valid = rows.where((row) => row['is_valid'] == true).length;
-  final fallback = rows.where((row) => row['used_fallback'] == true).length;
-  final diverged = rows
+  final decisions = rows
+      .where((row) => row['row_type'] == 'llm_battle_turn')
+      .toList(growable: false);
+  final finalRows = _lastRowByRun(rows);
+  final valid = decisions.where((row) => row['is_valid'] == true).length;
+  final fallback = decisions
+      .where((row) => row['used_fallback'] == true)
+      .length;
+  final diverged = decisions
       .where((row) => row['diverged_from_baseline'] == true)
       .length;
-  final llmExecFail = rows.where((row) => row['llm_execute_ok'] != true).length;
-  final baselineExecFail = rows
-      .where((row) => row['baseline_execute_ok'] != true)
+  final llmExecFail = decisions
+      .where((row) => row['llm_execute_ok'] != true)
       .length;
-  final finalRows = _lastRowByRun(rows);
-  final llmTargetReached = finalRows.values
-      .where((row) => (row['llm_reached_target'] as bool?) == true)
-      .length;
-  final baselineTargetReached = finalRows.values
-      .where((row) => (row['baseline_reached_target'] as bool?) == true)
-      .length;
-  final actionTypes = _countBy(rows, 'executed_action_type');
-  final baselineTypes = _countBy(rows, 'baseline_action_type');
-  final avgLatency = total == 0
+  final avgLatency = decisions.isEmpty
       ? 0.0
-      : rows.fold<int>(
+      : decisions.fold<int>(
               0,
               (sum, row) => sum + ((row['latency_ms'] as num?)?.toInt() ?? 0),
             ) /
-            total;
+            decisions.length;
   final finalScoreDelta = finalRows.values.fold<int>(
     0,
     (sum, row) =>
@@ -164,38 +253,35 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
         ((row['baseline_score_after'] as num?)?.toInt() ?? 0),
   );
   return [
-    '# LLM Turn Loop Smoke',
+    '# LLM Battle Smoke',
     '',
     '## Summary',
     '',
     '- model: ${config.model}',
     '- runs: ${config.runs}',
     '- turn_cap: ${config.turnCap}',
-    '- decisions: $total',
+    '- station: ${config.station}',
+    '- blind_tier: ${config.blindTier}',
+    '- target_score: ${config.targetScore}',
+    '- decisions: ${decisions.length}',
     '- valid responses: $valid',
     '- fallback executions: $fallback',
-    '- fallback_rate: ${_rate(fallback, total)}',
+    '- fallback_rate: ${_rate(fallback, decisions.length)}',
     '- diverged_from_baseline: $diverged',
-    '- divergence_rate: ${_rate(diverged, total)}',
+    '- divergence_rate: ${_rate(diverged, decisions.length)}',
     '- llm_execute_failures: $llmExecFail',
-    '- baseline_execute_failures: $baselineExecFail',
     '- avg_latency_ms: ${avgLatency.toStringAsFixed(1)}',
-    '- llm_target_reached_runs: $llmTargetReached',
-    '- baseline_target_reached_runs: $baselineTargetReached',
     '- final_score_delta_vs_baseline: $finalScoreDelta',
     '',
     '## LLM/Fallback Executed Action Types',
     '',
-    for (final entry in actionTypes.entries) '- ${entry.key}: ${entry.value}',
-    '',
-    '## Baseline Action Types',
-    '',
-    for (final entry in baselineTypes.entries) '- ${entry.key}: ${entry.value}',
+    for (final entry in _countBy(decisions, 'executed_action_type').entries)
+      '- ${entry.key}: ${entry.value}',
     '',
     '## Scope',
     '',
-    'This is a short turn-loop smoke. It validates multi-turn wiring, fallback behavior, and baseline divergence only.',
-    'It is not yet a balance recommendation source.',
+    'This runner starts real blind sessions and uses the same session/action APIs as the simulator.',
+    'It is still a short smoke: no shop path, item inventory, or full run economy is applied yet.',
   ].join('\n');
 }
 
@@ -230,6 +316,12 @@ class _Config {
     required this.runs,
     required this.turnCap,
     required this.seed,
+    required this.station,
+    required this.blindTier,
+    required this.targetScore,
+    required this.boardDiscards,
+    required this.handDiscards,
+    required this.maxHandSize,
     required this.maxLegalActions,
     required this.model,
     required this.temperature,
@@ -242,33 +334,42 @@ class _Config {
   final int runs;
   final int turnCap;
   final int seed;
+  final int station;
+  final String blindTier;
+  final int targetScore;
+  final int boardDiscards;
+  final int handDiscards;
+  final int maxHandSize;
   final int maxLegalActions;
   final String model;
   final double temperature;
   final double topP;
   final int timeoutSeconds;
 
-  LlmPolicyClientConfig clientConfig({
-    required String requestDir,
-    required String responseDir,
-  }) {
+  LlmPolicyClientConfig get clientConfig {
     return LlmPolicyClientConfig(
       model: model,
       temperature: temperature,
       topP: topP,
       timeoutSeconds: timeoutSeconds,
-      requestDir: requestDir,
-      responseDir: responseDir,
+      requestDir: 'logs/llm/battle_smoke_requests',
+      responseDir: 'logs/llm/battle_smoke_responses',
     );
   }
 
   static _Config parse(List<String> args) {
-    var outPath = 'logs/llm/turn_loop_smoke_20260529.jsonl';
+    var outPath = 'logs/llm/battle_smoke_20260529.jsonl';
     var reportOutPath =
-        'analysis/leveling/reports/llm_turn_loop_smoke_20260529.md';
-    var runs = 2;
-    var turnCap = 3;
+        'analysis/leveling/reports/llm_battle_smoke_20260529.md';
+    var runs = 1;
+    var turnCap = 4;
     var seed = 20260529;
+    var station = 1;
+    var blindTier = 'small';
+    var targetScore = 300;
+    var boardDiscards = 4;
+    var handDiscards = 2;
+    var maxHandSize = 2;
     var maxLegalActions = 24;
     var model = 'gemma4:e4b';
     var temperature = 0.2;
@@ -286,6 +387,18 @@ class _Config {
           turnCap = int.parse(args[++i]);
         case '--seed':
           seed = int.parse(args[++i]);
+        case '--station':
+          station = int.parse(args[++i]);
+        case '--blind-tier':
+          blindTier = args[++i];
+        case '--target-score':
+          targetScore = int.parse(args[++i]);
+        case '--board-discards':
+          boardDiscards = int.parse(args[++i]);
+        case '--hand-discards':
+          handDiscards = int.parse(args[++i]);
+        case '--max-hand-size':
+          maxHandSize = int.parse(args[++i]);
         case '--max-legal-actions':
           maxLegalActions = int.parse(args[++i]);
         case '--model':
@@ -306,8 +419,8 @@ class _Config {
     if (turnCap <= 0) {
       throw const FormatException('--turn-cap must be positive');
     }
-    if (maxLegalActions <= 0) {
-      throw const FormatException('--max-legal-actions must be positive');
+    if (!const {'small', 'big', 'boss'}.contains(blindTier)) {
+      throw const FormatException('--blind-tier must be small, big, or boss');
     }
     return _Config(
       outPath: outPath,
@@ -315,6 +428,12 @@ class _Config {
       runs: runs,
       turnCap: turnCap,
       seed: seed,
+      station: station,
+      blindTier: blindTier,
+      targetScore: targetScore,
+      boardDiscards: boardDiscards,
+      handDiscards: handDiscards,
+      maxHandSize: maxHandSize,
       maxLegalActions: maxLegalActions,
       model: model,
       temperature: temperature,
@@ -326,8 +445,8 @@ class _Config {
 
 Never _printUsageAndExit() {
   stdout.writeln(
-    'Usage: dart run tools/llm_agent/run_llm_turn_loop_smoke.dart '
-    '--runs 2 --turn-cap 3 --model gemma4:e4b',
+    'Usage: dart run tools/llm_agent/run_llm_battle_smoke.dart '
+    '--runs 1 --turn-cap 4 --model gemma4:e4b',
   );
   exit(0);
 }

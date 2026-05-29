@@ -49,6 +49,9 @@ python3 tools/llm_agent/run_llm_policy.py \
 The runner accepts JSON or JSONL request files.
 Raw request/response logs stay under `logs/llm/` and are not tracked by git.
 The runner sends an Ollama JSON schema whose `selected_action_id` is an enum of the exported legal action ids. This is required for `gemma4:e4b`; prompt-only JSON mode produced invalid keys such as `action` or `selection`.
+The prompt also includes `prompts/rummi_full_run_policy_guide.md`; Dart runners
+mirror the same contract by pre-ranking/filtering legal actions before the
+request is sent.
 
 Validate response ids against the exported legal action list:
 
@@ -86,6 +89,39 @@ This invokes the local Ollama runner once per turn, validates the returned
 `selected_action_id`, falls back to `contest_policy_v1` on invalid responses,
 and records divergence from a same-seed baseline policy. Keep raw JSONL under
 `logs/llm/`; commit only the summary report.
+
+Run the first real-blind battle smoke:
+
+```bash
+/Users/cheng80/flutter/bin/dart run tools/llm_agent/run_llm_battle_smoke.dart \
+  --out logs/llm/battle_smoke_20260529.jsonl \
+  --report-out analysis/leveling/reports/llm_battle_smoke_20260529.md \
+  --runs 1 \
+  --turn-cap 4 \
+  --model gemma4:e4b
+```
+
+This starts real `RummiPokerGridSession` blind states through
+`RummiRunProgress.startBlind`, then collects validated LLM decisions turn by
+turn. It is the bridge from fixture smoke to future long-run data collection;
+shop path, item inventory, and full economy are still outside this smoke.
+
+Run an S1-S8-capable station path smoke:
+
+```bash
+/Users/cheng80/flutter/bin/dart run tools/llm_agent/run_llm_station_path_smoke.dart \
+  --out logs/llm/station_path_smoke_20260529.jsonl \
+  --report-out analysis/leveling/reports/llm_station_path_smoke_20260529.md \
+  --station-start 1 \
+  --station-end 8 \
+  --tiers small,big,boss \
+  --turn-cap-per-blind 4 \
+  --model gemma4:e4b
+```
+
+This uses the real `BlindSelectionSpecBuilder` S1-S8 target table, resources,
+and boss modifier assignment. It is execution-capable but still not complete
+balance evidence until market buy/sell/reroll and item-use decisions are added.
 
 ## Response Contract
 

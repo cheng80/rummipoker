@@ -16,6 +16,7 @@ from adapters.ollama_gemma import OllamaConfig, generate_json
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SYSTEM_PROMPT = ROOT / "prompts" / "rummi_policy_system.md"
 DEFAULT_SCHEMA_PROMPT = ROOT / "prompts" / "rummi_policy_action_schema.md"
+DEFAULT_POLICY_GUIDE = ROOT / "prompts" / "rummi_full_run_policy_guide.md"
 
 
 def main() -> int:
@@ -32,6 +33,7 @@ def main() -> int:
     parser.add_argument("--timeout-seconds", type=int, default=60)
     parser.add_argument("--system-prompt", default=str(DEFAULT_SYSTEM_PROMPT))
     parser.add_argument("--schema-prompt", default=str(DEFAULT_SCHEMA_PROMPT))
+    parser.add_argument("--policy-guide", default=str(DEFAULT_POLICY_GUIDE))
     parser.add_argument(
         "--limit",
         type=int,
@@ -44,6 +46,7 @@ def main() -> int:
     out_path = Path(args.out)
     system_prompt = Path(args.system_prompt).read_text(encoding="utf-8")
     schema_prompt = Path(args.schema_prompt).read_text(encoding="utf-8")
+    policy_guide = Path(args.policy_guide).read_text(encoding="utf-8")
     config = OllamaConfig(
         model=args.model,
         base_url=args.base_url,
@@ -66,6 +69,7 @@ def main() -> int:
                 request,
                 system_prompt=system_prompt,
                 schema_prompt=schema_prompt,
+                policy_guide=policy_guide,
             )
             response = generate_json(
                 prompt,
@@ -110,6 +114,7 @@ def build_prompt(
     *,
     system_prompt: str,
     schema_prompt: str,
+    policy_guide: str,
 ) -> str:
     action_ids = [
         str(action["id"])
@@ -119,6 +124,7 @@ def build_prompt(
     return "\n\n".join(
         [
             system_prompt.strip(),
+            policy_guide.strip(),
             schema_prompt.strip(),
             "Allowed selected_action_id values:",
             json.dumps(action_ids, ensure_ascii=False),
