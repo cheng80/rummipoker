@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
@@ -33,6 +34,7 @@ Future<void> main(List<String> args) async {
   final out = File(config.outPath)..parent.createSync(recursive: true);
   final report = File(config.reportOutPath)..parent.createSync(recursive: true);
   final rows = <Map<String, Object?>>[];
+  final traceRows = <Map<String, Object?>>[];
 
   for (var runIndex = 0; runIndex < config.runs; runIndex++) {
     final seed = config.seed + runIndex;
@@ -42,6 +44,20 @@ Future<void> main(List<String> args) async {
     final baselineProgress = RummiRunProgress();
     _applyInitialState(config, runProgress, itemCatalog);
     _applyInitialState(config, baselineProgress, itemCatalog);
+    _addTrace(traceRows, {
+      'event_type': 'run_start',
+      'run_index': runIndex,
+      'seed': seed,
+      'difficulty': config.difficulty.name,
+      'station_start': config.stationStart,
+      'station_end': config.stationEnd,
+      'tiers': [for (final tier in config.tiers) tier.name],
+      'initial_gold': runProgress.gold,
+      'initial_items': [
+        for (final entry in runProgress.itemInventory.ownedItems)
+          _ownedItemTrace(entry, itemCatalog),
+      ],
+    });
 
     var pathStopped = false;
     for (
@@ -67,10 +83,23 @@ Future<void> main(List<String> args) async {
           llmSession.blind.scoreTowardBlind = config.initialScore!;
           baselineSession.blind.scoreTowardBlind = config.initialScore!;
         }
+        _addTrace(traceRows, {
+          'event_type': 'blind_start',
+          'run_index': runIndex,
+          'seed': seed,
+          'station': station,
+          'blind_tier': tier.name,
+          'difficulty': config.difficulty.name,
+          'target_score': spec.targetScore,
+          'boss_modifier_id': spec.bossModifier?.id,
+          'session': _sessionTrace(llmSession),
+          'run_progress': _runProgressTrace(runProgress, itemCatalog),
+        });
 
         final blindRows = await _runBlind(
           config: config,
           rows: rows,
+          traceRows: traceRows,
           runIndex: runIndex,
           seed: seed,
           station: station,
@@ -86,6 +115,7 @@ Future<void> main(List<String> args) async {
           await _runMarketDecision(
             config: config,
             rows: rows,
+            traceRows: traceRows,
             runIndex: runIndex,
             seed: seed,
             station: station,
@@ -112,6 +142,19 @@ Future<void> main(List<String> args) async {
     await sink.close();
   }
   report.writeAsStringSync(_buildReport(rows, config));
+  final traceOutPath = config.traceOutPath;
+  if (traceOutPath != null) {
+    final traceOut = File(traceOutPath)..parent.createSync(recursive: true);
+    final traceSink = traceOut.openWrite();
+    try {
+      for (final row in traceRows) {
+        traceSink.writeln(jsonEncode(row));
+      }
+    } finally {
+      await traceSink.close();
+    }
+    stdout.writeln('trace: ${traceOut.path}');
+  }
   stdout.writeln('out: ${out.path}');
   stdout.writeln('report: ${report.path}');
 }
@@ -139,9 +182,253 @@ void _applyInitialState(
   }
 }
 
+void _addTrace(List<Map<String, Object?>> traceRows, Map<String, Object?> row) {
+  traceRows.add({
+    'schema_version': 1,
+    'row_type': 'full_run_trace_event',
+    ...row,
+  });
+}
+
+Map<String, Object?> _sessionTrace(RummiPokerGridSession session) {
+  return {
+    'target_score': session.blind.targetScore,
+    'score_toward_blind': session.blind.scoreTowardBlind,
+    'remaining_score': max(
+      0,
+      session.blind.targetScore - session.blind.scoreTowardBlind,
+    ),
+    'deck_remaining': session.deck.remaining,
+    'hand': [
+      for (var index = 0; index < session.hand.length; index++)
+        {'hand_index': index, ..._tileTrace(session.hand[index])},
+    ],
+    'board': [
+      for (var row = 0; row < 5; row++)
+        for (var col = 0; col < 5; col++)
+          if (session.board.cellAt(row, col) != null)
+            {
+              'row': row,
+              'col': col,
+              ..._tileTrace(session.board.cellAt(row, col)!),
+            },
+    ],
+    'board_occupancy': RummiPokerGridSession.countTilesOnBoard(session.board),
+    'resources': {
+      'board_discards_remaining': session.blind.boardDiscardsRemaining,
+      'hand_discards_remaining': session.blind.handDiscardsRemaining,
+      'board_moves_remaining': session.blind.boardMovesRemaining,
+      'max_hand_size': session.maxHandSize,
+    },
+    'confirm_state': {
+      'confirm_count_this_station': session.confirmCountThisStation,
+      'first_confirm_score_this_station': session.firstConfirmScoreThisStation,
+      'confirmed_ranks_this_station': [
+        for (final rank in session.confirmedRanksThisStation) rank.name,
+      ],
+      'confirm_modifier_count': session.confirmModifiers.length,
+    },
+  };
+}
+
+Map<String, Object?> _runProgressTrace(
+  RummiRunProgress runProgress,
+  ItemCatalog itemCatalog,
+) {
+  return {
+    'gold': runProgress.gold,
+    'owned_jesters': [
+      for (
+        var slotIndex = 0;
+        slotIndex < runProgress.ownedJesters.length;
+        slotIndex++
+      )
+        {
+          'slot_index': slotIndex,
+          ..._jesterCardTrace(runProgress.ownedJesters[slotIndex]),
+        },
+    ],
+    'owned_items': [
+      for (final entry in runProgress.itemInventory.ownedItems)
+        _ownedItemTrace(entry, itemCatalog),
+    ],
+    'quick_slot_capacity': runProgress.quickSlotCapacity(
+      itemCatalog: itemCatalog,
+    ),
+    'passive_relic_capacity': runProgress.passiveRelicCapacity(
+      itemCatalog: itemCatalog,
+    ),
+    'added_deck_tiles': [
+      for (final tile in runProgress.addedDeckTiles) _tileTrace(tile),
+    ],
+  };
+}
+
+Map<String, Object?> _tileTrace(Tile tile) {
+  return {
+    'tile_id': tile.id,
+    'code': tile.code,
+    'rank': tile.number,
+    'color': tile.color.name,
+    if (tile.enhancement != null)
+      'enhancement': tile.enhancement!.persistenceValue,
+    if (tile.seal != null) 'seal': tile.seal!.persistenceValue,
+    if (tile.edition != null) 'edition': tile.edition!.persistenceValue,
+  };
+}
+
+Map<String, Object?> _ownedItemTrace(
+  OwnedItemEntry entry,
+  ItemCatalog itemCatalog,
+) {
+  final item = itemCatalog.findById(entry.itemId);
+  return {
+    'id': entry.itemId,
+    'count': entry.count,
+    'placement': entry.placement.name,
+    'is_active': entry.isActive,
+    if (item != null) ..._itemDefinitionTrace(item),
+  };
+}
+
+Map<String, Object?> _jesterCardTrace(RummiJesterCard card) {
+  return {
+    'id': card.id,
+    'display_name': card.displayName,
+    'rarity': card.rarity.name,
+    'base_cost': card.baseCost,
+    'effect_type': card.effectType,
+    'trigger': card.trigger,
+    'condition_type': card.conditionType,
+    'condition_value': card.conditionValue,
+    'value': card.value,
+    'x_value': card.xValue,
+  };
+}
+
+Map<String, Object?> _itemDefinitionTrace(ItemDefinition item) {
+  return {
+    'display_name': item.displayName,
+    'type': item.type.name,
+    'rarity': item.rarity.name,
+    'base_price': item.basePrice,
+    'sell_price': item.sellPrice,
+    'stackable': item.stackable,
+    'usable_in_battle': item.usableInBattle,
+    'effect': {
+      'timing': item.effect.timing,
+      'op': item.effect.op,
+      'amount': item.effect.amount,
+      'consume': item.effect.consume,
+      'raw': item.effect.raw,
+    },
+    'tags': item.tags,
+  };
+}
+
+Map<String, Object?> _ownedJesterTrace(RummiMarketOwnedEntryView entry) {
+  return {
+    'slot_index': entry.slotIndex,
+    'content_id': entry.contentId,
+    'display_name': entry.displayName,
+    'sell_price': entry.sellPrice,
+    'state_value': entry.stateValue,
+    ..._jesterCardTrace(entry.card),
+  };
+}
+
+Map<String, Object?> _jesterOfferTrace(RummiMarketOfferView offer) {
+  return {
+    'offer_id': offer.offerId,
+    'slot_index': offer.slotIndex,
+    'content_id': offer.contentId,
+    'display_name': offer.displayName,
+    'price': offer.price,
+    'original_price': offer.originalPrice,
+    'currency': offer.currency,
+    'is_affordable': offer.isAffordable,
+    'discount_source_label': offer.discountSourceLabel,
+    ..._jesterCardTrace(offer.card),
+  };
+}
+
+Map<String, Object?> _itemOfferTrace(RummiMarketItemOfferView offer) {
+  return {
+    'offer_id': offer.offerId,
+    'slot_index': offer.slotIndex,
+    'content_id': offer.contentId,
+    'display_name': offer.displayName,
+    'price': offer.price,
+    'original_price': offer.originalPrice,
+    'currency': offer.currency,
+    'is_affordable': offer.isAffordable,
+    'discount_source_label': offer.discountSourceLabel,
+    ..._itemDefinitionTrace(offer.item),
+  };
+}
+
+Map<String, Object?> _tileOfferTrace(RummiMarketTileOfferView offer) {
+  return {
+    'offer_id': offer.offerId,
+    'slot_index': offer.slotIndex,
+    'price': offer.price,
+    'currency': offer.currency,
+    'is_affordable': offer.isAffordable,
+    'is_free_reward': offer.isFreeReward,
+    'tile': _tileTrace(offer.tile),
+  };
+}
+
+Map<String, Object?> _confirmPreviewTrace(
+  RummiPokerGridSession session, {
+  required List<RummiJesterCard> jesters,
+  required RummiJesterRuntimeSnapshot runtimeSnapshot,
+}) {
+  final preview = session.copySnapshot().confirmAllFullLines(
+    jesters: jesters,
+    runtimeSnapshot: runtimeSnapshot,
+    applyScoreToBlind: false,
+  );
+  return {
+    'ok': preview.result.ok,
+    'score_added': preview.result.scoreAdded,
+    'base_score': preview.result.baseScore,
+    'jester_bonus': preview.result.jesterBonus,
+    'lines': [
+      for (final line in preview.result.lineBreakdowns)
+        {
+          'line_kind': line.ref.kind.name,
+          'line_index': line.ref.index,
+          'rank': line.rank.name,
+          'base_score': line.baseScore,
+          'final_score': line.finalScore,
+          'jester_bonus': line.jesterBonus,
+          'rank_base_score': line.rankBaseScore,
+          'grown_rank_base_score': line.grownRankBaseScore,
+          'growth_level': line.growthLevel,
+          'growth_bonus': line.growthBonus,
+          'overlap_multiplier': line.overlapMultiplier,
+          'overlap_bonus': line.overlapBonus,
+          'tile_gold_bonus': line.tileGoldBonus,
+          'bonus_rank_progress': line.bonusRankProgress,
+          'contributing_cells': [
+            for (final cell in line.contributingCells)
+              {'row': cell.$1, 'col': cell.$2},
+          ],
+          'destroyed_tiles': [
+            for (final tile in line.destroyedTiles) _tileTrace(tile),
+          ],
+          'effect_count': line.effects.length,
+          'constraint_penalty_count': line.constraintPenalties.length,
+        },
+    ],
+  };
+}
+
 Future<void> _runMarketDecision({
   required _Config config,
   required List<Map<String, Object?>> rows,
+  required List<Map<String, Object?>> traceRows,
   required int runIndex,
   required int seed,
   required int station,
@@ -158,6 +445,38 @@ Future<void> _runMarketDecision({
     runProgress,
     itemCatalog: itemCatalog,
   );
+  _addTrace(traceRows, {
+    'event_type': 'market_enter',
+    'run_index': runIndex,
+    'seed': seed,
+    'station': station,
+    'blind_tier': tier.name,
+    'difficulty': config.difficulty.name,
+    'gold': facade.gold,
+    'reroll_costs': {
+      'jester': facade.rerollCost,
+      'quick_slot': facade.quickSlotRerollCost,
+      'passive': facade.passiveRerollCost,
+      'tool': facade.toolRerollCost,
+      'gear': facade.gearRerollCost,
+    },
+    'owned_jesters': [
+      for (final entry in facade.ownedEntries) _ownedJesterTrace(entry),
+    ],
+    'owned_items': [
+      for (final entry in runProgress.itemInventory.ownedItems)
+        _ownedItemTrace(entry, itemCatalog),
+    ],
+    'jester_offers': [
+      for (final offer in facade.offers) _jesterOfferTrace(offer),
+    ],
+    'item_offers': [
+      for (final offer in facade.itemOffers) _itemOfferTrace(offer),
+    ],
+    'tile_offers': [
+      for (final offer in facade.tileOffers) _tileOfferTrace(offer),
+    ],
+  });
   final legalActions = _buildMarketLegalActions(facade, runProgress);
   final requestId =
       'llm_market_${config.seed}_${runIndex}_s${station}_${tier.name}';
@@ -236,6 +555,26 @@ Future<void> _runMarketDecision({
     'execute_reason': execute.reason,
     'latency_ms': responseResult.latencyMs,
     'llm_error': responseResult.error,
+  });
+  _addTrace(traceRows, {
+    'event_type': 'market_decision',
+    'run_index': runIndex,
+    'seed': seed,
+    'station': station,
+    'blind_tier': tier.name,
+    'difficulty': config.difficulty.name,
+    'request_id': requestId,
+    'gold_before': facade.gold,
+    'gold_after': runProgress.gold,
+    'candidate_count': legalActions.length,
+    'selected_action': selected,
+    'execute_ok': execute.ok,
+    'execute_reason': execute.reason,
+    'owned_items_after': [
+      for (final entry in runProgress.itemInventory.ownedItems)
+        _ownedItemTrace(entry, itemCatalog),
+    ],
+    'run_progress_after': _runProgressTrace(runProgress, itemCatalog),
   });
 }
 
@@ -381,6 +720,7 @@ List<Map<String, Object?>> _buildMarketLegalActions(
 Future<({bool cleared})> _runBlind({
   required _Config config,
   required List<Map<String, Object?>> rows,
+  required List<Map<String, Object?>> traceRows,
   required int runIndex,
   required int seed,
   required int station,
@@ -415,12 +755,30 @@ Future<({bool cleared})> _runBlind({
               : expiry.map((signal) => signal.name).join(','),
         ),
       );
+      _addTrace(traceRows, {
+        'event_type': 'blind_terminal',
+        'run_index': runIndex,
+        'seed': seed,
+        'station': station,
+        'blind_tier': tier.name,
+        'difficulty': config.difficulty.name,
+        'turn': turn,
+        'target_score': spec.targetScore,
+        'boss_modifier_id': spec.bossModifier?.id,
+        'stop_reason': llmSession.blind.isTargetMet
+            ? 'cleared'
+            : expiry.map((signal) => signal.name).join(','),
+        'reached_target': llmSession.blind.isTargetMet,
+        'session': _sessionTrace(llmSession),
+        'run_progress': _runProgressTrace(runProgress, itemCatalog),
+      });
       return (cleared: llmSession.blind.isTargetMet);
     }
 
     await _runBattleItemDecision(
       config: config,
       rows: rows,
+      traceRows: traceRows,
       runIndex: runIndex,
       seed: seed,
       station: station,
@@ -477,6 +835,13 @@ Future<({bool cleared})> _runBlind({
         validation.selectedAction != null &&
         guardedSelection != null &&
         validation.selectedAction!.id != guardedSelection.id;
+    final confirmPreview = selectedAction.type == BalanceSimActionType.confirm
+        ? _confirmPreviewTrace(
+            llmSession,
+            jesters: const [],
+            runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+          )
+        : null;
     final llmExecute = executeBalanceAction(
       llmSession,
       selectedAction,
@@ -541,6 +906,47 @@ Future<({bool cleared})> _runBlind({
       'latency_ms': responseResult.latencyMs,
       'llm_error': responseResult.error,
     });
+    _addTrace(traceRows, {
+      'event_type': 'battle_action',
+      'run_index': runIndex,
+      'seed': seed,
+      'station': station,
+      'blind_tier': tier.name,
+      'difficulty': config.difficulty.name,
+      'turn': turn,
+      'target_score': spec.targetScore,
+      'boss_modifier_id': spec.bossModifier?.id,
+      'request_id': requestId,
+      'selected_action_id': validation.selectedAction?.id,
+      'selected_action_type': validation.selectedAction?.type,
+      'executed_action_id': guardedSelection?.id,
+      'executed_action_type': selectedAction.type.name,
+      'default_recommended_action_id': defaultRecommendedAction?.id,
+      'policy_guard_overrode': policyGuardOverrode,
+      'execute_ok': llmExecute.ok,
+      'execute_reason': llmExecute.reason,
+      'score_before': llmExecute.scoreBefore,
+      'score_after': llmExecute.scoreAfter,
+      'score_delta': llmExecute.scoreDelta,
+      'hand_size_after': llmExecute.handSizeAfter,
+      'deck_remaining_after': llmExecute.deckRemainingAfter,
+      'board_occupancy_after': llmExecute.boardOccupancyAfter,
+      if (selectedAction.type == BalanceSimActionType.place)
+        'placement': {
+          'hand_index': selectedAction.handIndex,
+          'row': selectedAction.row,
+          'col': selectedAction.col,
+        },
+      if (selectedAction.type == BalanceSimActionType.moveBoard)
+        'move': {
+          'from_row': selectedAction.row,
+          'from_col': selectedAction.col,
+          'to_row': selectedAction.toRow,
+          'to_col': selectedAction.toCol,
+        },
+      'confirm_preview': confirmPreview,
+      'session_after': _sessionTrace(llmSession),
+    });
     if (selectedAction.type == BalanceSimActionType.stop) {
       return (cleared: false);
     }
@@ -564,6 +970,21 @@ Future<({bool cleared})> _runBlind({
       stopReason: 'turn_cap',
     ),
   );
+  _addTrace(traceRows, {
+    'event_type': 'blind_terminal',
+    'run_index': runIndex,
+    'seed': seed,
+    'station': station,
+    'blind_tier': tier.name,
+    'difficulty': config.difficulty.name,
+    'turn': config.turnCapPerBlind,
+    'target_score': spec.targetScore,
+    'boss_modifier_id': spec.bossModifier?.id,
+    'stop_reason': llmSession.blind.isTargetMet ? 'cleared' : 'turn_cap',
+    'reached_target': llmSession.blind.isTargetMet,
+    'session': _sessionTrace(llmSession),
+    'run_progress': _runProgressTrace(runProgress, itemCatalog),
+  });
   return (cleared: llmSession.blind.isTargetMet);
 }
 
@@ -591,6 +1012,7 @@ LlmLegalAction? _applyDefaultRecommendationGuard({
 Future<void> _runBattleItemDecision({
   required _Config config,
   required List<Map<String, Object?>> rows,
+  required List<Map<String, Object?>> traceRows,
   required int runIndex,
   required int seed,
   required int station,
@@ -678,6 +1100,25 @@ Future<void> _runBattleItemDecision({
     'execute_reason': execute.reason,
     'latency_ms': responseResult.latencyMs,
     'llm_error': responseResult.error,
+  });
+  _addTrace(traceRows, {
+    'event_type': 'battle_item_decision',
+    'run_index': runIndex,
+    'seed': seed,
+    'station': station,
+    'blind_tier': tier.name,
+    'difficulty': config.difficulty.name,
+    'turn': turn,
+    'request_id': requestId,
+    'candidate_count': legalActions.length,
+    'selected_action': selected,
+    'execute_ok': execute.ok,
+    'execute_reason': execute.reason,
+    'session_after': _sessionTrace(session),
+    'owned_items_after': [
+      for (final entry in runProgress.itemInventory.ownedItems)
+        _ownedItemTrace(entry, itemCatalog),
+    ],
   });
 }
 
@@ -839,6 +1280,7 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     '- station_range: S${config.stationStart}~S${config.stationEnd}',
     '- tiers: ${config.tiers.map((tier) => tier.name).join(', ')}',
     '- turn_cap_per_blind: ${config.turnCapPerBlind}',
+    if (config.traceOutPath != null) '- trace_out: ${config.traceOutPath}',
     if (config.initialGold != null) '- initial_gold: ${config.initialGold}',
     if (config.initialScore != null) '- initial_score: ${config.initialScore}',
     if (config.initialItemIds.isNotEmpty)
@@ -910,6 +1352,7 @@ class _Config {
   const _Config({
     required this.outPath,
     required this.reportOutPath,
+    required this.traceOutPath,
     required this.runs,
     required this.seed,
     required this.stationStart,
@@ -930,6 +1373,7 @@ class _Config {
 
   final String outPath;
   final String reportOutPath;
+  final String? traceOutPath;
   final int runs;
   final int seed;
   final int stationStart;
@@ -984,6 +1428,7 @@ class _Config {
     var outPath = 'logs/llm/station_path_smoke_20260529.jsonl';
     var reportOutPath =
         'analysis/leveling/reports/llm_station_path_smoke_20260529.md';
+    String? traceOutPath;
     var runs = 1;
     var seed = 20260529;
     var stationStart = 1;
@@ -1006,6 +1451,8 @@ class _Config {
           outPath = args[++i];
         case '--report-out':
           reportOutPath = args[++i];
+        case '--trace-out':
+          traceOutPath = args[++i];
         case '--runs':
           runs = int.parse(args[++i]);
         case '--seed':
@@ -1062,6 +1509,7 @@ class _Config {
     return _Config(
       outPath: outPath,
       reportOutPath: reportOutPath,
+      traceOutPath: traceOutPath,
       runs: runs,
       seed: seed,
       stationStart: stationStart,
