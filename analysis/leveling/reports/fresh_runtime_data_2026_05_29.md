@@ -61,6 +61,18 @@ Economy audit highlights:
 - smoke audit: rows 510, purchase events 128, missing cost events 0, known spend 1,584G.
 - top purchased content에서 `shop_slot_market_v9`가 제거되고 실제 proxy/item/pack/planet/voucher id만 남는다.
 
+## 외부 검토 자료 반영
+
+사용자가 제공한 `rummipoker_leveling_ml_final_recommendations.md`의 결론은 현재 방향과 일치한다.
+
+- 외부 카드/RL 데이터셋을 직접 붙이지 않고, 현재 Dart simulator와 bot policy로 fresh JSONL을 만든다.
+- 첫 단계는 ML이 아니라 station/blind/bot/loadout/market별 통계 리포트다.
+- 초기 supervised target은 `score_ratio = final_score / target_score`와 `cleared`가 적합하다.
+- 강화학습은 legal action mask와 env 동기화 비용이 크므로 후순위다.
+- 모델은 candidate JSON과 보고서만 만들고, runtime balance는 사람 검토 후 별도 반영한다.
+
+이에 맞춰 `run_balance_sim.dart --flush-every-rows`, `tools/sim/chunked_balance_run.py`, `tools/sim/summarize_balance_jsonl.dart`를 fresh data runner 기반으로 둔다.
+
 ## 다음 작업
 
 1. `contest_policy_v1` 또는 full-runbot급 policy를 chunked data runner로 실행해 중간 산출물을 잃지 않게 한다.

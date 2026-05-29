@@ -26,6 +26,14 @@
 
 현재 사람 검토용 연결 보고서는 `analysis/leveling/reports/preoutcome_candidate_resimulation_report.md`다.
 
+## Fresh Data Runner
+
+장기 로그 수집은 `tools/sim/chunked_balance_run.py`를 우선 사용한다. 이 runner는 `run_balance_sim.dart`를 여러 chunk로 나눠 실행하고, 각 chunk JSONL/summary, merged JSONL, merged summary, manifest를 남긴다. 긴 `contest_policy_v1` 실행이 중간에 끊겨도 완료된 chunk를 재사용할 수 있게 하기 위한 도구다.
+
+`run_balance_sim.dart`는 `--flush-every-rows`를 지원한다. 장기 실행에서는 stdout progress와 디스크 flush를 남겨, 프로세스가 중단되어도 raw JSONL 손실 범위를 줄인다.
+
+Bot별 로그는 섞지 않는다. `greedy_v1`, `planner_v2`/`planner_v3`, `contest_policy_v1` 데이터는 같은 stage라도 다른 플레이어 proxy로 해석한다.
+
 ## Market Collection Audit
 
 전체 수집 가능성은 `tools/sim/runtime_market_offer_audit.dart`의 collection audit로 확인한다. 이 audit는 한 run의 `seen/bought` 기록을 누적하면서 S1~S8 market entry를 통과해, 모든 Jester/Item이 실제로 보이는지와 살 수 있는지, 그리고 실패가 돈/슬롯 중 어디서 나는지를 분리한다.

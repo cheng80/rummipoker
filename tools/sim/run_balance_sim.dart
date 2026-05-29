@@ -46,6 +46,19 @@ Future<int> runBalanceSim(List<String> args) async {
     final summary = config.summaryOutPath == null
         ? null
         : BalanceSimSummaryAccumulator(sourcePath: config.outPath);
+    var rowsWritten = 0;
+    Future<void> writeRow(Map<String, Object?> row) async {
+      sink.writeln(jsonEncode(row));
+      rowsWritten += 1;
+      final flushEveryRows = config.flushEveryRows;
+      if (flushEveryRows != null && rowsWritten % flushEveryRows == 0) {
+        await sink.flush();
+        stdout.writeln(
+          '[balance-sim] rows_written=$rowsWritten out=${config.outPath}',
+        );
+      }
+    }
+
     try {
       if (config.sequenceMode == BalanceSimSequenceMode.none) {
         final specs = config.runSpecs;
@@ -59,7 +72,7 @@ Future<int> runBalanceSim(List<String> args) async {
               jesterCatalog: jesterCatalog,
               itemCatalog: itemCatalog,
             );
-            sink.writeln(jsonEncode(row));
+            await writeRow(row);
             summary?.add(row);
           }
         }
@@ -76,10 +89,10 @@ Future<int> runBalanceSim(List<String> args) async {
               itemCatalog: itemCatalog,
             );
             for (final row in sequence.battleRows) {
-              sink.writeln(jsonEncode(row));
+              await writeRow(row);
               summary?.add(row);
             }
-            sink.writeln(jsonEncode(sequence.summaryRow));
+            await writeRow(sequence.summaryRow);
             summary?.add(sequence.summaryRow);
           }
         }
@@ -7819,6 +7832,7 @@ class BalanceSimCliConfig {
     required this.seed,
     required this.outPath,
     required this.summaryOutPath,
+    required this.flushEveryRows,
     required this.turnCap,
     required this.sequenceMode,
     required this.station,
@@ -7849,6 +7863,7 @@ class BalanceSimCliConfig {
     int? seed;
     String? outPath;
     String? summaryOutPath;
+    int? flushEveryRows;
     var turnCap = 300;
     var sequenceMode = BalanceSimSequenceMode.none;
     var station = 1;
@@ -7892,6 +7907,14 @@ class BalanceSimCliConfig {
           outPath = readValue();
         case '--summary-out':
           summaryOutPath = readValue();
+        case '--flush-every-rows':
+          final parsed = int.tryParse(readValue());
+          if (parsed == null || parsed <= 0) {
+            throw const FormatException(
+              '--flush-every-rows must be a positive integer',
+            );
+          }
+          flushEveryRows = parsed;
         case '--turn-cap':
           final parsed = int.tryParse(readValue());
           if (parsed == null || parsed <= 0) {
@@ -8004,6 +8027,7 @@ class BalanceSimCliConfig {
       seed: seed,
       outPath: outPath,
       summaryOutPath: summaryOutPath,
+      flushEveryRows: flushEveryRows,
       turnCap: turnCap,
       sequenceMode: sequenceMode,
       station: station,
@@ -8045,7 +8069,7 @@ class BalanceSimCliConfig {
   }
 
   static const usage =
-      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2|planner_v3|contest_policy_v1 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|challenge] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1, *_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1, *_boss_expansion_stage_a_probe_v1, *_boss_expansion_stage_a_*_probe_v1.';
+      'Usage: dart run tools/sim/run_balance_sim.dart --runs 10 --bot greedy_v1|planner_v1|planner_v2|planner_v3|contest_policy_v1 --seed 42 --out logs/sim_balance.jsonl [--summary-out logs/sim_summary.json] [--flush-every-rows n] [--turn-cap n] [--sequence-mode none|station_path] [--station n|--stations 1,2] [--blind-tier small|big|boss] [--difficulty standard|relaxed|challenge] [--run-modifier basic|high_stakes] [--experiment-id <id>|--experiment-ids <id,id>] [--target-multiplier S3:boss:0.85[:standard]] [--market-profile <profile>|--market-profiles <profile,profile>] [--loadout-id <preset>] [--jester id] [--item id]. Current boss expansion ids include base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1, *_boss_expansion_probe_v1, *_boss_expansion_min_contributor_probe_v1, *_boss_expansion_rank_family_probe_v1, *_boss_expansion_confirm_limit_probe_v1, *_boss_expansion_stage_a_probe_v1, *_boss_expansion_stage_a_*_probe_v1.';
 
   static BlindTier parseBlindTierForInternalUse(String raw) =>
       _parseBlindTier(raw);
@@ -8518,6 +8542,7 @@ class BalanceSimCliConfig {
   final int seed;
   final String outPath;
   final String? summaryOutPath;
+  final int? flushEveryRows;
   final int turnCap;
   final BalanceSimSequenceMode sequenceMode;
   final int station;

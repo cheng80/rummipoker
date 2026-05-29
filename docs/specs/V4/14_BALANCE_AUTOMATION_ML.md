@@ -1,7 +1,7 @@
 # 14. Balance Automation & ML Pipeline
 
 > 문서 성격: future technical option / balance tooling note
-> 코드 반영 상태: not implemented
+> 코드 반영 상태: partially implemented
 > 핵심 정책: 이 문서는 추후 도입 검토용이다. 현재 게임 밸런스나 런타임 규칙을 자동으로 바꾸지 않는다.
 
 ## 1. Purpose
@@ -28,7 +28,7 @@ PyTorch 모델로 난이도/성능을 예측하는 후보 구조를 정리한다
 
 ## 2. Recommended Shape
 
-[FUTURE]
+[PARTIAL]
 
 권장 파이프라인:
 
@@ -37,7 +37,7 @@ Dart game logic simulator
 + Bot policy
 + Random seed
 -> JSONL simulation logs
--> Python/PyTorch training
+-> Python statistics / supervised ML training
 -> evaluation report
 -> optional balance candidate JSON
 -> human review
@@ -49,17 +49,23 @@ Dart game logic simulator
 - `RummiPokerGridSession`, `HandEvaluator`, Jester effect, Item effect 같은 순수 로직을 CLI/test harness에서 반복 실행한다.
 - 생성된 데이터는 앱 런타임 저장과 분리한다.
 - 모델 결과는 참고 지표이며, 실제 수치 반영은 사람이 한다.
+- 초기는 강화학습이 아니라 통계 리포트와 supervised `score_ratio`/`cleared` 예측으로 시작한다.
 
 ## 3. Simulation CLI Target
 
-[TARGET]
+[PARTIAL]
 
-후보 명령:
+기본 명령:
 
 ```bash
-dart run tools/sim/run_balance_sim.dart --runs 50000 --bot greedy_v1 --seed 42 --out logs/sim_balance.jsonl
-python tools/balance_model/train.py --input logs/sim_balance.jsonl
-python tools/balance_model/evaluate.py --input logs/sim_balance.jsonl
+dart run tools/sim/run_balance_sim.dart --runs 100 --bot planner_v2 --seed 42 --out logs/sim_balance.jsonl --summary-out logs/sim_balance_summary.json
+python3 tools/sim/economy_audit.py --jsonl logs/sim_balance.jsonl --summary logs/sim_balance_summary.json --json-out logs/sim_balance_economy_audit.json
+```
+
+장기 실행은 중간 산출물 유실을 막기 위해 chunk runner를 사용한다.
+
+```bash
+python3 tools/sim/chunked_balance_run.py --chunks 10 --runs-per-chunk 20 --seed 94500 --out-prefix logs/sim/contest_policy_v1_chunked --dart /Users/cheng80/flutter/bin/dart -- --bot contest_policy_v1 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --difficulty standard --market-profile shop_slot_market_v9 --loadout-id progression_route_balanced
 ```
 
 후보 폴더:
@@ -68,16 +74,15 @@ python tools/balance_model/evaluate.py --input logs/sim_balance.jsonl
 tools/sim/
 - run_balance_sim.dart
 - bot_policy.dart
-- random_bot.dart
 - greedy_bot.dart
-- lookahead_bot.dart
+- planner_bot.dart
+- summarize_balance_jsonl.dart
+- chunked_balance_run.py
 
-tools/balance_model/
-- dataset.py
-- train.py
-- evaluate.py
-- export_report.py
-- README.md
+tools/leveling/
+- build_feature_table.py
+- train_leveling_model.py
+- recommend_sequence_candidates.py
 
 logs/
 - sim_balance.jsonl
