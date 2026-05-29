@@ -82,17 +82,19 @@ Future<void> main(List<String> args) async {
           baselineProgress: baselineProgress,
           itemCatalog: itemCatalog,
         );
-        await _runMarketDecision(
-          config: config,
-          rows: rows,
-          runIndex: runIndex,
-          seed: seed,
-          station: station,
-          tier: tier,
-          runProgress: runProgress,
-          jesterCatalog: jesterCatalog,
-          itemCatalog: itemCatalog,
-        );
+        if (blindRows.cleared || config.continueAfterFail) {
+          await _runMarketDecision(
+            config: config,
+            rows: rows,
+            runIndex: runIndex,
+            seed: seed,
+            station: station,
+            tier: tier,
+            runProgress: runProgress,
+            jesterCatalog: jesterCatalog,
+            itemCatalog: itemCatalog,
+          );
+        }
         if (!blindRows.cleared && !config.continueAfterFail) {
           pathStopped = true;
           break;
