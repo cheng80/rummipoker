@@ -12,17 +12,11 @@
 
 ## 권장 경로
 
-1차 권장: Ollama local server
+Ollama local server만 사용한다.
 
 - 설치/실행이 단순하다.
 - HTTP API가 안정적이다.
 - prompt-only smoke에 충분하다.
-
-2차 후보: LM Studio OpenAI-compatible local server
-
-- GUI로 모델 교체가 쉽다.
-- OpenAI-compatible API라 adapter 분리가 쉽다.
-- 다만 실행 상태와 모델 로딩이 GUI에 의존한다.
 
 처음부터 OpenAI API나 유료 원격 API를 쓰지 않는다.
 이 실험은 반복 호출과 실패 재시도가 있으므로 비용/쿼터 리스크가 있다.
@@ -31,12 +25,13 @@
 
 1차 smoke:
 
-- `gemma3:4b` 또는 로컬 환경에서 안정적으로 실행 가능한 Gemma 계열
+- `gemma4:e4b`
 - temperature `0.2`
 - top_p `0.9`
 - timeout `60s`
 
-Gemma4 명칭은 문서상 목표 이름으로 유지하되, 실제 로컬 런타임에서 사용 가능한 모델명은 adapter 설정값으로 분리한다.
+현재 로컬 `ollama list` 기준 `gemma4:e4b`가 설치되어 있다.
+`ollama show gemma4:e4b` 기준 architecture `gemma4`, parameters `8.0B`, quantization `Q4_K_M`이다.
 
 ## 세팅 순서
 
@@ -54,7 +49,6 @@ Gemma4 명칭은 문서상 목표 이름으로 유지하되, 실제 로컬 런�
    - 실패 시 `status=error` JSON 반환
 4. adapter 작성
    - `tools/llm_agent/adapters/ollama_gemma.py`
-   - `tools/llm_agent/adapters/lmstudio_openai_compatible.py`
 5. decision cache smoke
    - Dart가 request JSONL export
    - Python runner가 response JSONL 생성
@@ -75,7 +69,7 @@ python3 tools/llm_agent/run_llm_policy.py \
   --input logs/llm/requests_smoke.jsonl \
   --out logs/llm/responses_smoke.jsonl \
   --backend ollama \
-  --model gemma3:4b \
+  --model gemma4:e4b \
   --temperature 0.2 \
   --timeout-seconds 60
 ```
@@ -155,6 +149,17 @@ P1 smoke는 아래를 만족해야 pass다.
 - avg latency 기록
 - local LLM 서버가 꺼져 있으면 graceful error와 fallback 경로가 작동
 - 기존 `planner_v3`, `contest_policy_v1` 경로의 시뮬레이션 테스트는 영향 없음
+
+## 2026-05-29 Local Smoke
+
+`gemma4:e4b`로 단일 request JSON smoke를 실행했다.
+
+- runner: `tools/llm_agent/run_llm_policy.py`
+- model: `gemma4:e4b`
+- result: `status=ok`
+- selected action: `confirm_current`
+- latency: 31,698ms
+- judgment: Ollama 연결과 JSON-only 응답 계약은 동작한다. 첫 decision은 목표 클리어 가능한 confirm action을 정상 선택했다.
 
 ## 보류
 

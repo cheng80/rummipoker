@@ -91,7 +91,6 @@ P0 scaffold:
 5. Python local runner scaffold
    - `tools/llm_agent/run_llm_policy.py`
    - Ollama adapter
-   - LM Studio/OpenAI-compatible adapter
    - JSON-only response parsing
 6. README
    - 목적/비목표
