@@ -375,102 +375,107 @@ class GameJesterSlot extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(3.5, 3, 3.5, 3.5),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final showInlineEffectBadge =
+                        activeEffect != null && constraints.maxHeight >= 76;
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(3.5, 3, 3.5, 3.5),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            child: Container(
-                              height: kRuntimeCardBarHeight,
-                              decoration: BoxDecoration(
-                                gradient: gameCardRarityBarGradient(
-                                  rarityColor,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  kRuntimeCardSmallRadius,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: GameUiPalette.textPrimary.withValues(
-                                      alpha: 0.18,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: kRuntimeCardBarHeight,
+                                  decoration: BoxDecoration(
+                                    gradient: gameCardRarityBarGradient(
+                                      rarityColor,
                                     ),
-                                    blurRadius: 0,
-                                    spreadRadius: 0.4,
+                                    borderRadius: BorderRadius.circular(
+                                      kRuntimeCardSmallRadius,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: GameUiPalette.textPrimary
+                                            .withValues(alpha: 0.18),
+                                        blurRadius: 0,
+                                        spreadRadius: 0.4,
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              _GameCardTypeBadge(
+                                label: 'J',
+                                color: rarityColor,
+                                textColor: GameUiPalette.cardBadgeText,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2.5),
+                          _GameCardEmblemImage(
+                            assetPath: CardEmblemAssets.jester(card!.id),
+                          ),
+                          const SizedBox(height: 2.5),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: _RuntimeCardNameText(
+                                displayName,
+                                style: const TextStyle(
+                                  color: GameUiPalette.cardName,
+                                  fontSize: 5,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.12,
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          _GameCardTypeBadge(
-                            label: 'J',
-                            color: rarityColor,
-                            textColor: GameUiPalette.cardBadgeText,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2.5),
-                      _GameCardEmblemImage(
-                        assetPath: CardEmblemAssets.jester(card!.id),
-                      ),
-                      const SizedBox(height: 2.5),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: _RuntimeCardNameText(
-                            displayName,
-                            style: const TextStyle(
-                              color: GameUiPalette.cardName,
-                              fontSize: 5,
-                              fontWeight: FontWeight.w900,
-                              height: 1.12,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'JESTER',
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color(
-                            0xFFF5E9B6,
-                          ).withValues(alpha: 0.72),
-                          fontSize: 3.5,
-                          fontWeight: FontWeight.w800,
-                          height: 1,
-                        ),
-                      ),
-                      if (activeEffect != null) ...[
-                        const SizedBox(height: 3),
-                        Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: GameUiPalette.surfacePanel,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            jesterEffectBadge(activeEffect!),
+                          Text(
+                            'JESTER',
                             maxLines: 1,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: GameUiPalette.textPrimary,
-                              fontSize: 6.5,
-                              fontWeight: FontWeight.w900,
+                            style: TextStyle(
+                              color: const Color(
+                                0xFFF5E9B6,
+                              ).withValues(alpha: 0.72),
+                              fontSize: 3.5,
+                              fontWeight: FontWeight.w800,
                               height: 1,
                             ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                          if (showInlineEffectBadge) ...[
+                            const SizedBox(height: 3),
+                            Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: GameUiPalette.surfacePanel,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                jesterEffectBadge(activeEffect!),
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: GameUiPalette.textPrimary,
+                                  fontSize: 6.5,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
