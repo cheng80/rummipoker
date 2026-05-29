@@ -23,6 +23,7 @@ import 'game_session_state.dart';
 
 part 'game_session_notifier_models.dart';
 part 'game_session_notifier_bootstrap.dart';
+part 'game_session_notifier_save_commands.dart';
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
 final gameSessionNotifierProvider =
@@ -48,7 +49,8 @@ class DeckPeekBattleUseResult {
 }
 
 class GameSessionNotifier
-    extends FamilyNotifier<GameSessionState, GameSessionArgs> {
+    extends FamilyNotifier<GameSessionState, GameSessionArgs>
+    with GameSessionNotifierSaveCommands {
   @override
   GameSessionState build(GameSessionArgs args) {
     return _withDerivedViews(_buildInitialGameSessionState(args));
@@ -71,97 +73,6 @@ class GameSessionNotifier
         activeRunScene: scene,
         revision: state.revision + 1,
       ),
-    );
-  }
-
-  ActiveRunRuntimeState buildSaveRuntimeState({
-    ActiveRunScene? scene,
-    required NewRunDifficulty difficulty,
-    bool useStageStartSnapshotAsCurrent = false,
-  }) {
-    final currentScene = scene ?? state.activeRunScene;
-    if (useStageStartSnapshotAsCurrent) {
-      final stageStartSnapshot = state.stageStartSnapshot!;
-      final retrySnapshot = ActiveRunStageSnapshot(
-        session: stageStartSnapshot.session.copySnapshot(),
-        runProgress: stageStartSnapshot.runProgress.copySnapshot(),
-      );
-      return ActiveRunRuntimeState(
-        activeScene: ActiveRunScene.battle,
-        difficulty: difficulty,
-        runModifier: state.runModifier,
-        session: retrySnapshot.session,
-        runProgress: retrySnapshot.runProgress,
-        stageStartSnapshot: retrySnapshot,
-      );
-    }
-
-    return ActiveRunRuntimeState(
-      activeScene: currentScene,
-      difficulty: difficulty,
-      runModifier: state.runModifier,
-      session: state.session!,
-      runProgress: state.runProgress!,
-      stageStartSnapshot: state.stageStartSnapshot!,
-    );
-  }
-
-  void setStageStartSnapshot(ActiveRunStageSnapshot snapshot) {
-    _replaceState(
-      state.copyWith(
-        stageStartSnapshot: snapshot,
-        revision: state.revision + 1,
-      ),
-    );
-  }
-
-  void replaceRuntimeState({
-    required RummiPokerGridSession session,
-    required RummiRunProgress runProgress,
-    required ActiveRunStageSnapshot stageStartSnapshot,
-    ActiveRunScene activeRunScene = ActiveRunScene.battle,
-  }) {
-    _replaceState(
-      state.copyWith(
-        session: session,
-        runProgress: runProgress,
-        stageStartSnapshot: stageStartSnapshot,
-        runLoopPhase: _loopPhaseForScene(activeRunScene),
-        activeRunScene: activeRunScene,
-        debugFixtureId: state.debugFixtureId,
-        selectedHandTile: null,
-        selectedBoardRow: null,
-        selectedBoardCol: null,
-        selectedJesterOverlayIndex: null,
-        stageFlowPhase: GameStageFlowPhase.none,
-        stageScoreAdded: 0,
-        activeSettlementLine: null,
-        activeSettlementStep: ScoringPresentationStep.none,
-        activeSettlementEffectIndex: null,
-        activeSettlementEffectIndexes: const [],
-        settlementGoalDisplayScore: null,
-        settlementBoardSnapshot: const {},
-        settlementSequenceTick: 0,
-        revision: state.revision + 1,
-      ),
-    );
-  }
-
-  /// 현재 스테이지 시작 시점(stageStartSnapshot)으로 복원.
-  void restartCurrentStage() {
-    final snapshot = state.stageStartSnapshot;
-    if (snapshot == null) return;
-    final restoredSession = snapshot.session.copySnapshot();
-    final restoredRunProgress = snapshot.runProgress.copySnapshot();
-    final refreshedSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
-      session: restoredSession,
-      runProgress: restoredRunProgress,
-    );
-    replaceRuntimeState(
-      session: restoredSession,
-      runProgress: restoredRunProgress,
-      stageStartSnapshot: refreshedSnapshot,
-      activeRunScene: ActiveRunScene.battle,
     );
   }
 
@@ -1114,6 +1025,7 @@ class GameSessionNotifier
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
+  @override
   void _replaceState(GameSessionState next) {
     state = _withDerivedViews(next);
   }
