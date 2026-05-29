@@ -2,9 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
-import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
-import '../sim/bot_policy.dart';
+import '../sim/balance_action_executor.dart';
 import '../sim/llm_action_schema.dart';
 import '../sim/planner_bot.dart';
 import 'smoke_session_factory.dart';
@@ -41,7 +40,7 @@ Future<void> main(List<String> args) async {
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
     final selectedAction = validation.balanceAction ?? fallbackAction;
-    final execute = _executeOneStep(session, selectedAction);
+    final execute = executeBalanceAction(session, selectedAction);
     rows.add({
       'schema_version': 1,
       'request_id': requestId,
@@ -58,13 +57,11 @@ Future<void> main(List<String> args) async {
       'execute_ok': execute.ok,
       'execute_reason': execute.reason,
       'score_before': scoreBefore,
-      'score_after': session.blind.scoreTowardBlind,
-      'score_delta': session.blind.scoreTowardBlind - scoreBefore,
-      'hand_size_after': session.hand.length,
-      'deck_remaining_after': session.deck.remaining,
-      'board_occupancy_after': RummiPokerGridSession.countTilesOnBoard(
-        session.board,
-      ),
+      'score_after': execute.scoreAfter,
+      'score_delta': execute.scoreDelta,
+      'hand_size_after': execute.handSizeAfter,
+      'deck_remaining_after': execute.deckRemainingAfter,
+      'board_occupancy_after': execute.boardOccupancyAfter,
     });
   }
 
@@ -81,66 +78,6 @@ Future<void> main(List<String> args) async {
   report.writeAsStringSync(_buildReport(rows));
   stdout.writeln('out: ${out.path}');
   stdout.writeln('report: ${report.path}');
-}
-
-({bool ok, String reason}) _executeOneStep(
-  RummiPokerGridSession session,
-  BalanceSimAction action,
-) {
-  switch (action.type) {
-    case BalanceSimActionType.draw:
-      return (ok: session.drawToHand() != null, reason: 'draw');
-    case BalanceSimActionType.place:
-      final handIndex = action.handIndex;
-      final row = action.row;
-      final col = action.col;
-      if (handIndex == null ||
-          row == null ||
-          col == null ||
-          handIndex < 0 ||
-          handIndex >= session.hand.length) {
-        return (ok: false, reason: 'invalid_place_action');
-      }
-      final tile = session.hand[handIndex];
-      return (ok: session.tryPlaceFromHand(tile, row, col), reason: 'place');
-    case BalanceSimActionType.confirm:
-      final out = session.confirmAllFullLines();
-      return (ok: out.result.ok, reason: 'confirm');
-    case BalanceSimActionType.discardHand:
-      final handIndex = action.handIndex;
-      if (handIndex == null ||
-          handIndex < 0 ||
-          handIndex >= session.hand.length) {
-        return (ok: false, reason: 'invalid_discard_hand_action');
-      }
-      final discard = session.tryDiscardFromHand(session.hand[handIndex]);
-      return (ok: discard.fail == null, reason: 'discardHand');
-    case BalanceSimActionType.discardBoard:
-      final row = action.row;
-      final col = action.col;
-      if (row == null || col == null) {
-        return (ok: false, reason: 'invalid_discard_board_action');
-      }
-      final discard = session.tryDiscardFromBoard(row, col);
-      return (ok: discard.fail == null, reason: 'discardBoard');
-    case BalanceSimActionType.moveBoard:
-      final row = action.row;
-      final col = action.col;
-      final toRow = action.toRow;
-      final toCol = action.toCol;
-      if (row == null || col == null || toRow == null || toCol == null) {
-        return (ok: false, reason: 'invalid_move_board_action');
-      }
-      final fail = session.tryMoveBoardTile(
-        fromRow: row,
-        fromCol: col,
-        toRow: toRow,
-        toCol: toCol,
-      );
-      return (ok: fail == null, reason: fail?.name ?? 'moveBoard');
-    case BalanceSimActionType.stop:
-      return (ok: true, reason: action.reason ?? 'stop');
-  }
 }
 
 String _buildReport(List<Map<String, Object?>> rows) {

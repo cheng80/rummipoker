@@ -71,6 +71,22 @@ Run a one-step decision-cache execution smoke:
   --seed 20260529
 ```
 
+Run a short multi-turn loop with baseline comparison:
+
+```bash
+/Users/cheng80/flutter/bin/dart run tools/llm_agent/run_llm_turn_loop_smoke.dart \
+  --out logs/llm/turn_loop_smoke_20260529.jsonl \
+  --report-out analysis/leveling/reports/llm_turn_loop_smoke_20260529.md \
+  --runs 2 \
+  --turn-cap 3 \
+  --model gemma4:e4b
+```
+
+This invokes the local Ollama runner once per turn, validates the returned
+`selected_action_id`, falls back to `contest_policy_v1` on invalid responses,
+and records divergence from a same-seed baseline policy. Keep raw JSONL under
+`logs/llm/`; commit only the summary report.
+
 ## Response Contract
 
 The model must return JSON only:

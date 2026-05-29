@@ -51,6 +51,7 @@ LlmActionRequest buildLimitedLlmSmokeRequest({
   required RummiPokerGridSession session,
   required String requestId,
   required int index,
+  int? turnCount,
   int maxLegalActions = 32,
 }) {
   final request = buildLlmActionRequest(
@@ -64,7 +65,7 @@ LlmActionRequest buildLimitedLlmSmokeRequest({
       1 => 'big',
       _ => 'boss',
     },
-    turnCount: index * 3,
+    turnCount: turnCount ?? index * 3,
   );
   return limitLlmActionRequest(request, maxLegalActions);
 }
