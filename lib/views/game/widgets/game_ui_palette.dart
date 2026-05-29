@@ -162,6 +162,10 @@ abstract final class GameUiPalette {
   static const Color tileLucky = Color(0xFFC05AB8);
   static const Color tileBlueSeal = Color(0xFF246BCE);
   static const Color tileRedSeal = Color(0xFFC0392B);
+  static const Color tileModifierBadgeSurfaceTop = Color(0xFF23443A);
+  static const Color tileModifierBadgeSurfaceBottom = Color(0xFF10271E);
+  static const Color tileModifierBadgeBorder = Color(0xFFC9E3D0);
+  static const Color tileModifierBadgeText = Color(0xFFFFF4CF);
 
   static const Color marketSourceQuick = Color(0xFFF4A81D);
   static const Color marketSourcePassive = Color(0xFF6EE7B7);

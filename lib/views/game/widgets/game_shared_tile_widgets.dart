@@ -116,12 +116,12 @@ class _TileModifierBadgeMetrics {
   });
 
   factory _TileModifierBadgeMetrics.forTileSide(double side) {
-    final badgeHeight = (side * 0.22).clamp(12.0, 14.0).toDouble();
+    final badgeHeight = (side * 0.2).clamp(11.0, 13.0).toDouble();
     return _TileModifierBadgeMetrics(
       badgeHeight: badgeHeight,
-      fontSize: (badgeHeight * 0.62).clamp(7.0, 9.0).toDouble(),
-      enhancementInset: -2.0,
-      sealInset: (side * 0.055).clamp(2.0, 4.0).toDouble(),
+      fontSize: (badgeHeight * 0.58).clamp(6.8, 8.2).toDouble(),
+      enhancementInset: -1.0,
+      sealInset: (side * 0.04).clamp(1.0, 3.0).toDouble(),
     );
   }
 
@@ -150,19 +150,44 @@ class _TileModifierBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(circular ? 999 : height * 0.36);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(circular ? 999 : height * 0.28),
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(
+              GameUiPalette.tileModifierBadgeSurfaceTop,
+              background,
+              0.28,
+            )!,
+            Color.lerp(
+              GameUiPalette.tileModifierBadgeSurfaceBottom,
+              background,
+              0.12,
+            )!,
+          ],
+        ),
         border: Border.all(
-          color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
-          width: 0.8,
+          color: Color.lerp(
+            GameUiPalette.tileModifierBadgeBorder,
+            background,
+            0.45,
+          )!,
+          width: 1.15,
         ),
         boxShadow: [
           BoxShadow(
-            color: GameUiPalette.ink.withValues(alpha: 0.32),
-            blurRadius: 5,
-            offset: const Offset(0, 1.5),
+            color: background.withValues(alpha: 0.34),
+            blurRadius: 5.5,
+            spreadRadius: -0.8,
+          ),
+          BoxShadow(
+            color: GameUiPalette.ink.withValues(alpha: 0.34),
+            blurRadius: 4,
+            offset: const Offset(0, 1.2),
           ),
         ],
       ),
@@ -175,7 +200,9 @@ class _TileModifierBadge extends StatelessWidget {
             maxLines: 1,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: foreground,
+              color: foreground == GameUiPalette.ink
+                  ? GameUiPalette.textOnGold
+                  : GameUiPalette.tileModifierBadgeText,
               fontSize: fontSize,
               fontWeight: FontWeight.w900,
               height: 1,
