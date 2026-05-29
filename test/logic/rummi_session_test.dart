@@ -535,6 +535,33 @@ void main() {
     );
   });
 
+  test('유리 타일 파괴는 추가 덱 타일 source에서 제거된다', () {
+    const glassTile = Tile(
+      color: TileColor.red,
+      number: 1,
+      id: 1,
+      enhancement: TileEnhancement.glassTile,
+    );
+    final board = RummiBoard()..setCell(2, 0, glassTile);
+    for (var i = 1; i < kBoardSize; i++) {
+      board.setCell(2, i, t(i.isEven ? TileColor.red : TileColor.blue, i + 1));
+    }
+    final session = RummiPokerGridSession(
+      runSeed: 3,
+      blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+    final progress = RummiRunProgress()..addedDeckTiles.add(glassTile);
+
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+    progress.onConfirmedLines(out.result.lineBreakdowns);
+
+    expect(out.result.scoreAdded, 105);
+    expect(out.result.lineBreakdowns.single.destroyedTiles, [glassTile]);
+    expect(progress.addedDeckTiles, isEmpty);
+  });
+
   test('보스 색상 약화는 해당 색상 포함 점수 라인을 35% 줄인다', () {
     final board = RummiBoard();
     for (var i = 0; i < kBoardSize; i++) {

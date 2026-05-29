@@ -455,6 +455,14 @@ class RummiRunProgress {
     return maxId + 1;
   }
 
+  static bool _samePhysicalTile(Tile a, Tile b) {
+    return a.color == b.color &&
+        a.number == b.number &&
+        a.id == b.id &&
+        a.enhancement == b.enhancement &&
+        a.seal == b.seal;
+  }
+
   int targetForStage(int stageNumber) {
     const scoutTargets = <int>[480, 650, 900, 1250, 1750, 2450, 3450, 4850];
     if (stageNumber <= 1) return scoutTargets.first;
@@ -1234,6 +1242,9 @@ class RummiRunProgress {
       if (line.tileGoldBonus > 0) {
         gold += line.tileGoldBonus;
       }
+      if (line.destroyedTiles.isNotEmpty) {
+        removeAddedDeckTiles(line.destroyedTiles);
+      }
       recordHandRankCompletion(line.rank);
       for (var i = 0; i < line.bonusRankProgress; i += 1) {
         recordHandRankCompletion(line.rank);
@@ -1252,6 +1263,19 @@ class RummiRunProgress {
         _statefulValuesBySlot[slot] = next < 0 ? 0 : next;
       }
     }
+  }
+
+  int removeAddedDeckTiles(Iterable<Tile> tiles) {
+    var removed = 0;
+    for (final tile in tiles) {
+      final index = addedDeckTiles.indexWhere(
+        (candidate) => _samePhysicalTile(candidate, tile),
+      );
+      if (index < 0) continue;
+      addedDeckTiles.removeAt(index);
+      removed += 1;
+    }
+    return removed;
   }
 
   List<RummiOverkillGrowthBonus> claimOverkillGrowthBonus({

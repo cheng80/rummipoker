@@ -590,6 +590,7 @@ class RummiPokerGridSession {
           overlapBonus: overlapBonus,
           tileGoldBonus: tileModifierResult.goldBonus,
           bonusRankProgress: tileModifierResult.bonusRankProgress,
+          destroyedTiles: tileModifierResult.destroyedTiles,
           contributingCells: List<(int, int)>.unmodifiable(
             line.contributingCells,
           ),
@@ -656,6 +657,7 @@ class RummiPokerGridSession {
     List<RummiJesterEffectBreakdown> effects,
     int goldBonus,
     int bonusRankProgress,
+    List<Tile> destroyedTiles,
   })
   _applyTileModifiersToLine({
     required int lineScore,
@@ -665,6 +667,7 @@ class RummiPokerGridSession {
     var goldBonus = 0;
     var bonusRankProgress = 0;
     final effects = <RummiJesterEffectBreakdown>[];
+    final destroyedTiles = <Tile>[];
 
     for (final tile in scoringTiles) {
       if (tile.seal == TileSeal.blueSeal) {
@@ -684,6 +687,9 @@ class RummiPokerGridSession {
             goldBonus += 1;
           case TileEnhancement.glassTile:
             score = (score * 1.5).round();
+            if (repeat == 0 && runRandom.nextInt(4) == 0) {
+              destroyedTiles.add(tile);
+            }
           case TileEnhancement.wildPainted:
           case TileEnhancement.luckyTile:
             break;
@@ -708,6 +714,7 @@ class RummiPokerGridSession {
       effects: List<RummiJesterEffectBreakdown>.unmodifiable(effects),
       goldBonus: goldBonus,
       bonusRankProgress: bonusRankProgress,
+      destroyedTiles: List<Tile>.unmodifiable(destroyedTiles),
     );
   }
 

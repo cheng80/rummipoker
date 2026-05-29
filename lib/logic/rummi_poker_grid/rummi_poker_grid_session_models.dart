@@ -157,6 +157,7 @@ class ConfirmedLineBreakdown {
     this.overlapBonus = 0,
     this.tileGoldBonus = 0,
     this.bonusRankProgress = 0,
+    this.destroyedTiles = const [],
     this.contributingCells = const [],
     this.constraintPenalties = const [],
   });
@@ -176,6 +177,7 @@ class ConfirmedLineBreakdown {
   final int overlapBonus;
   final int tileGoldBonus;
   final int bonusRankProgress;
+  final List<Tile> destroyedTiles;
   final List<(int, int)> contributingCells;
   final List<RummiConstraintPenaltyBreakdown> constraintPenalties;
 }
