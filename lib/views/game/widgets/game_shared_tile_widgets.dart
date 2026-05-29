@@ -80,9 +80,7 @@ class GameTileModifierBadges extends StatelessWidget {
                     height: metrics.badgeHeight,
                     fontSize: metrics.fontSize,
                     background: tileEnhancementColor(enhancement),
-                    foreground: enhancement == TileEnhancement.goldTile
-                        ? GameUiPalette.ink
-                        : GameUiPalette.textPrimary,
+                    foreground: GameUiPalette.tileModifierBadgeText,
                   ),
                 ),
               if (seal != null)
@@ -200,9 +198,7 @@ class _TileModifierBadge extends StatelessWidget {
             maxLines: 1,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: foreground == GameUiPalette.ink
-                  ? GameUiPalette.textOnGold
-                  : GameUiPalette.tileModifierBadgeText,
+              color: foreground,
               fontSize: fontSize,
               fontWeight: FontWeight.w900,
               height: 1,
