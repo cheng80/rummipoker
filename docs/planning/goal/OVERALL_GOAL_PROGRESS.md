@@ -44,9 +44,10 @@
 4. 완료: runtime state와 transient presentation state 분리 1차.
 5. 완료: UI/UX 예정 연출 큐 1차. settlement에서 Jester / Tile modifier / Item 효과 단계를 분리했다.
 6. 완료: 1차 리팩터링/상수 분리. HUD/timing/카드 metric 일부를 공용 상수로 이동했다.
-7. 다음: 구 시뮬레이션/ML 산출물을 active workspace에서 archive로 내린 상태를 유지하고, 새 학습 데이터셋은 fresh run부터 다시 쌓는다.
+7. 진행 중: 구 시뮬레이션/ML 산출물을 active workspace에서 archive로 내린 상태를 유지하고, 새 학습 데이터셋은 fresh run부터 다시 쌓는다.
    - 현재 runtime/catalog/ruleset/bot policy/feature schema와 산출 당시 조건이 다르면 현재 판단 근거로 바로 쓰지 않는다.
    - 과거 row와 리포트는 `historical prior`로만 두고, 새 feature table에는 기본적으로 섞지 않는다.
+   - 2026-05-29 bootstrap으로 `planner_v2` fresh 5,049 JSONL rows를 생성했다. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
 8. 장기 S1~S8 밸런스를 fresh data 이후 multi-seed r400/r800 기준으로 재검증한다.
 9. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
 10. 새 ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 fresh data에서 다시 만든다.

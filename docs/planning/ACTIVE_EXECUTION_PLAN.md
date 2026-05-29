@@ -39,9 +39,9 @@
    - 완료: glass 파괴와 런 덱 source 제거/복원.
    - 보류: `wild_painted`, `lucky_tile`은 evaluator/RNG 재현 정책이 더 필요해 V1 후속 또는 V2 후보로 둔다.
 6. 다음 활성 작업:
-   - 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않는다.
-   - 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓는다.
-   - fresh 데이터 수집 뒤 feature schema, 레벨링 probe, 경제/가격 판단을 다시 연다.
+   - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
+   - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
+   - 다음은 feature schema 연결, `shop_slot_market_v9` source candidate/cost 추적 보강, full-runbot급 policy의 chunked long runner다.
 7. 대기열로 미룬 작업:
    - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
    - 현재 runtime 기준 fresh row 기반 실제 runtime 후보 구매/사용 가치 probe.
