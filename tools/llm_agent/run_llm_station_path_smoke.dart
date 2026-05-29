@@ -858,6 +858,12 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     '- divergence_rate: ${_rate(diverged, decisions.length)}',
     '- avg_latency_ms: ${avgLatency.toStringAsFixed(1)}',
     '',
+    '## Turn Count Semantics',
+    '',
+    '`turn` and `turn_cap_per_blind` are action-step counts, not deck-card counts.',
+    'A typical tile consumes two action steps: one `draw` and one `place`.',
+    'Additional `confirm`, discard, move, item, and market decisions are logged as separate rows.',
+    '',
     '## Action Types',
     '',
     for (final entry in _countBy(decisions, 'executed_action_type').entries)
