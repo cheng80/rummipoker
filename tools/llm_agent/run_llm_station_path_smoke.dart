@@ -255,6 +255,13 @@ List<Map<String, Object?>> _buildMarketLegalActions(
   }
   for (final offer in facade.itemOffers) {
     if (!offer.isAffordable) continue;
+    if (!runProgress.itemInventory.canAcquire(
+      offer.item,
+      quickSlotCapacity: runProgress.quickSlotCapacity(),
+      passiveRelicCapacity: runProgress.passiveRelicCapacity(),
+    )) {
+      continue;
+    }
     actions.add({
       'id': 'buy_item_${offer.slotIndex}_${offer.contentId}',
       'type': 'buyItem',
@@ -772,6 +779,9 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
   final validMarket = marketDecisions
       .where((row) => row['is_valid'] == true)
       .length;
+  final marketExecuteFailures = marketDecisions
+      .where((row) => row['execute_ok'] == false)
+      .length;
   final validItem = itemDecisions
       .where((row) => row['is_valid'] == true)
       .length;
@@ -810,6 +820,7 @@ String _buildReport(List<Map<String, Object?>> rows, _Config config) {
     '- valid responses: $valid',
     '- valid item responses: $validItem',
     '- valid market responses: $validMarket',
+    '- market_execute_failures: $marketExecuteFailures',
     '- fallback executions: $fallback',
     '- fallback_rate: ${_rate(fallback, decisions.length)}',
     '- diverged_from_baseline: $diverged',
