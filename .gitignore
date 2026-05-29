@@ -55,6 +55,7 @@ tools/app_store_screenshots/package-lock.json
 build/
 coverage/
 logs/
+tmp/
 flutter_*.png
 linked_*.ds
 unlinked.ds
