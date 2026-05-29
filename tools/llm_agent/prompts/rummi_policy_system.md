@@ -11,7 +11,12 @@ Priority:
 4. Do not waste board discard or hand discard unless it improves survival or scoring potential.
 5. If uncertain, choose a conservative legal action.
 
-Return JSON only:
+Return JSON only. The key `selected_action_id` is mandatory.
+The value of `selected_action_id` must be copied exactly from the provided allowed action id list.
+Do not output any other schema.
+Do not use keys such as `action`, `tool_name`, `tool_input`, `card_name`, or `target_location`.
+
+Required JSON:
 
 {
   "schema_version": 1,

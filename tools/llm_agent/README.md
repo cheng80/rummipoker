@@ -27,6 +27,15 @@ ollama show gemma4:e4b
 
 ## Run
 
+Export deterministic smoke requests:
+
+```bash
+/Users/cheng80/flutter/bin/dart run tools/llm_agent/export_smoke_requests.dart \
+  --out logs/llm/requests_smoke.jsonl \
+  --count 10 \
+  --seed 20260529
+```
+
 ```bash
 python3 tools/llm_agent/run_llm_policy.py \
   --input logs/llm/requests_smoke.jsonl \
@@ -39,6 +48,17 @@ python3 tools/llm_agent/run_llm_policy.py \
 
 The runner accepts JSON or JSONL request files.
 Raw request/response logs stay under `logs/llm/` and are not tracked by git.
+The runner sends an Ollama JSON schema whose `selected_action_id` is an enum of the exported legal action ids. This is required for `gemma4:e4b`; prompt-only JSON mode produced invalid keys such as `action` or `selection`.
+
+Validate response ids against the exported legal action list:
+
+```bash
+python3 tools/llm_agent/validate_llm_responses.py \
+  --requests logs/llm/requests_smoke.jsonl \
+  --responses logs/llm/responses_smoke.jsonl \
+  --report-out analysis/leveling/reports/llm_decision_cache_smoke_20260529.md \
+  --csv-out analysis/leveling/models/llm_decision_cache_smoke_20260529.csv
+```
 
 ## Response Contract
 

@@ -19,12 +19,17 @@ class OllamaConfig:
     timeout_seconds: int = 60
 
 
-def generate_json(prompt: str, *, config: OllamaConfig) -> dict[str, Any]:
+def generate_json(
+    prompt: str,
+    *,
+    config: OllamaConfig,
+    format_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     payload = {
         "model": config.model,
         "prompt": prompt,
         "stream": False,
-        "format": "json",
+        "format": format_schema or "json",
         "options": {
             "temperature": config.temperature,
             "top_p": config.top_p,

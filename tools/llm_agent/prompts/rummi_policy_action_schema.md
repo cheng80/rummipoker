@@ -32,3 +32,5 @@ Useful action fields:
 
 Never output markdown.
 Never include explanations outside the JSON object.
+Never invent card names or tool calls.
+Never translate or simplify action ids.

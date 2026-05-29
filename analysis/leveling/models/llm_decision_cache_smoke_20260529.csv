@@ -1,0 +1,11 @@
+request_id,model,status,selected_action_id,selected_action_type,is_valid,invalid_reason,confidence,latency_ms,clears_target,preview_score,legal_action_count,reason
+llm_smoke_20260529_0,gemma4:e4b,ok,place_h1_r1_c1,place,True,,,20088,False,150,32,
+llm_smoke_20260529_1,gemma4:e4b,ok,move_r1_c2_to_r4_c3,moveBoard,True,,,20210,False,,32,
+llm_smoke_20260529_2,gemma4:e4b,ok,place_h1_r1_c1,place,True,,,20543,False,0,32,
+llm_smoke_20260529_3,gemma4:e4b,ok,draw_deck,draw,True,,,22699,False,,32,
+llm_smoke_20260529_4,gemma4:e4b,ok,place_h1_r1_c1,place,True,,,20506,False,0,32,
+llm_smoke_20260529_5,gemma4:e4b,ok,move_r0_c0_to_r1_c1,moveBoard,True,,,20158,False,,32,
+llm_smoke_20260529_6,gemma4:e4b,ok,place_h1_r0_c0,place,True,,,20370,False,150,32,
+llm_smoke_20260529_7,gemma4:e4b,ok,move_r2_c2_to_r4_c3,moveBoard,True,,,20004,False,,32,
+llm_smoke_20260529_8,gemma4:e4b,ok,place_h1_r1_c1,place,True,,,19956,False,0,32,
+llm_smoke_20260529_9,gemma4:e4b,ok,move_r4_c0_to_r0_c1,moveBoard,True,,,19753,False,,32,

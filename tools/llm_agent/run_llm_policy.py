@@ -67,7 +67,11 @@ def main() -> int:
                 system_prompt=system_prompt,
                 schema_prompt=schema_prompt,
             )
-            response = generate_json(prompt, config=config)
+            response = generate_json(
+                prompt,
+                config=config,
+                format_schema=response_schema_for(request),
+            )
             response.setdefault("schema_version", 1)
             response.setdefault("status", "ok")
             response["request_id"] = request.get("request_id")
@@ -107,14 +111,47 @@ def build_prompt(
     system_prompt: str,
     schema_prompt: str,
 ) -> str:
+    action_ids = [
+        str(action["id"])
+        for action in request.get("legal_actions", [])
+        if isinstance(action, dict) and "id" in action
+    ]
     return "\n\n".join(
         [
             system_prompt.strip(),
             schema_prompt.strip(),
+            "Allowed selected_action_id values:",
+            json.dumps(action_ids, ensure_ascii=False),
+            "You must copy exactly one string from the allowed list into `selected_action_id`.",
+            "Do not return `action`, `tool_name`, `tool_input`, `card_name`, or any keys outside the required JSON contract.",
             "RummiPoker request JSON:",
             json.dumps(request, ensure_ascii=False, indent=2),
+            "Return the JSON object now.",
         ],
     )
+
+
+def response_schema_for(request: dict[str, Any]) -> dict[str, Any]:
+    action_ids = [
+        str(action["id"])
+        for action in request.get("legal_actions", [])
+        if isinstance(action, dict) and "id" in action
+    ]
+    selected_action_schema: dict[str, Any] = {"type": "string"}
+    if action_ids:
+        selected_action_schema["enum"] = action_ids
+    return {
+        "type": "object",
+        "properties": {
+            "schema_version": {"type": "integer", "const": 1},
+            "status": {"type": "string", "enum": ["ok"]},
+            "selected_action_id": selected_action_schema,
+            "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+            "reason": {"type": "string"},
+        },
+        "required": ["schema_version", "status", "selected_action_id"],
+        "additionalProperties": False,
+    }
 
 
 if __name__ == "__main__":

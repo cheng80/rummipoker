@@ -161,6 +161,27 @@ P1 smoke는 아래를 만족해야 pass다.
 - latency: 31,698ms
 - judgment: Ollama 연결과 JSON-only 응답 계약은 동작한다. 첫 decision은 목표 클리어 가능한 confirm action을 정상 선택했다.
 
+## 2026-05-29 Decision Cache Smoke
+
+10개 deterministic request를 export하고 Ollama response를 validation했다.
+
+- request export: `tools/llm_agent/export_smoke_requests.dart`
+- LLM runner: `tools/llm_agent/run_llm_policy.py`
+- validator: `tools/llm_agent/validate_llm_responses.py`
+- model: `gemma4:e4b`
+- response format: Ollama JSON schema with `selected_action_id` enum
+- tracked report: `analysis/leveling/reports/llm_decision_cache_smoke_20260529.md`
+- tracked CSV: `analysis/leveling/models/llm_decision_cache_smoke_20260529.csv`
+- valid responses: 10 / 10
+- invalid_action_rate: 0.0000
+- fallback_rate_if_executed: 0.0000
+- avg_latency_ms: 20,428.7
+
+Note:
+
+- prompt-only JSON mode failed because the model returned keys like `action` or `selection` instead of `selected_action_id`.
+- JSON schema enum is required before moving to decision-cache autoplay.
+
 ## 보류
 
 - LoRA/SFT
