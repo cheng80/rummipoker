@@ -64,7 +64,8 @@
 - 튜토리얼 target이 화면 하단에 가까울 때는 package의 기본 top/bottom align에만 맡기지 않는다. 설명 버블이 하단 버튼, safe area, 프레임 밖으로 잘릴 수 있으면 target 위쪽 custom position으로 고정하고, 충분한 하단 여백을 둔다.
 - 튜토리얼이 포커스 아웃, 옵션 진입, overlay 제거로 중단되면 다음 자동 표시나 다시 보기는 항상 첫 step부터 시작한다. 사용자 스킵은 seen 저장 후 완료 처리하며, 리사이즈 보정처럼 의도적으로 같은 step을 유지하는 경로만 예외로 둔다.
 - 공용 게임 UI 텍스트 helper를 추가할 때는 파일명과 책임을 맞춘다. 카드 이름 전용 파일에 일반 설명문 helper를 섞지 않고, 여러 화면에서 쓰는 helper는 별도 공용 파일로 분리한다.
-- 봇 정책 문서를 바꾼 뒤 `공모전 풀런봇`을 실행하기 전에는 해당 정책이 실제 policy code와 관련 테스트에 반영됐는지 먼저 확인한다. 문서 반영만으로 full-run을 재개하지 않는다.
+- 봇 정책 문서를 바꾼 뒤 `풀런봇`을 실행하기 전에는 해당 정책이 실제 policy code와 관련 테스트에 반영됐는지 먼저 확인한다. 문서 반영만으로 full-run을 재개하지 않는다.
+- 실제 UI를 조작해 S1~S8 run을 검증하는 bot의 호출명은 `풀런봇`, 영문 식별자는 `full_run_bot`으로 통일한다. 과거 문서의 `contest_full_run_bot` 표현은 제출 이력 참고로만 보고, 새 코드·스크립트·로그 prefix·응답에서는 쓰지 않는다.
 - 구현·레벨링·연출 방향을 잡을 때는 수정량 최소화보다 게임의 원래 목표에 가까워지는지를 우선한다. 먼저 현재 방향의 숨은 문제와 목표 대비 어긋나는 점을 짚고, 그 다음에 1차 안전 변경과 목표 달성을 위한 확장 실험을 분리해 설계한다.
 - 1차 후보는 저장 포맷·UI 변경이 적은 안전한 안을 우선할 수 있지만, 최종 판단을 그 범위에 가두지 않는다. 게임 완성도, 재미의 다양성, 장기 확장성이 Goal에 중요하면 저장 포맷 변경, UI/피드백 변경, 신규 상태 추적이 필요한 과감한 후보도 실험·검증 대상으로 올린다.
 - Boss pool, Jester, Item, 보스전, 마켓, 정산 룰을 확장할 때는 기존 family variant와 숫자 penalty 후보만 보지 말고, 파괴·변형·비활성·순서 변경·조건부 제약처럼 플레이 양상을 바꾸는 룰도 함께 검토한다. 단, 유저 선택 강제, 자동 지급, 특정 슬롯 고정 같은 금지 원칙은 유지하고, 필요한 저장/복원/표시/정산 검증 경로를 명시한다.
@@ -86,34 +87,34 @@
 - 스크린샷 제작용 fixture를 `SHOW_DEBUG_FIXTURES=true`로 실행하더라도 캡처 결과에는 디버그 벌레 버튼, QA notice, debug bottom sheet 진입점, 개발용 라벨이 남으면 안 된다. 캡처용 query는 fixture 상태만 만들고 debug chrome은 숨긴다.
 - Market debug URL에서 `debug_shop_tab=items`는 Tool/Gear 탭을 여는 옵션이다. Jester/Quick/Passive 슬롯 상태나 슬롯 해금 연출을 확인하는 fixture 문서/안내에는 이 옵션을 붙이지 않는다.
 - 슬롯 해금 자물쇠 연출은 사람이 눈으로 인지할 수 있을 만큼 유지한다. 구매 pulse처럼 짧은 0.5초대 연출로 처리하지 말고, 해금 전용 1회 연출은 약 1초 이상 유지한 뒤 후반에 fade-out한다.
-- 공모전 full-play QA hybrid bot의 호출 별명은 `공모전 풀런봇`으로 통일한다. 사용자가 “공모전 풀런봇 실행/준비/이어서”라고 말하면 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다. 영문 파일명·스크립트명·로그 prefix가 필요하면 `contest_full_run_bot`을 쓴다.
-- 공모전 풀런봇의 제출 gate는 locale별 1사이클 기준이다. 한 locale에서 fresh 표준 난이도 S1부터 S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1부터 S8 Boss를 다시 클리어하고 S8 정산/보상/무한 도전 진입 직전까지 확인해야 그 locale 사이클이 닫힌다. 이 사이클을 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`)에 대해 순서대로 5번 실행한다. S8 이후 S9+ 무한 도전 장기 생존은 제출 gate가 아니라 별도 확장 검증이다.
-- 공모전 풀런봇 실행 중 수정 범위는 game over만이 아니다. 실제 플레이 중 UI overflow, 튜토리얼 문구/target 문제, Jester/Item/자원 카드의 제목·설명 잘림, 다국어 텍스트 넘침이 보이면 제출 QA 결함으로 보고 code/test 또는 번역 자산을 수정한 뒤 같은 locale gate를 다시 실행한다.
-- 공모전 풀런봇의 튜토리얼 검증은 각 locale 실행 시작 전에 저장 세션/SharedPreferences를 지워 첫 전투와 첫 Market 튜토리얼이 실제로 표시되는 조건으로 한다. 사용자 스킵은 완료 처리되지만, 포커스 아웃/옵션/일시정지로 끊긴 튜토리얼은 다음 진입에서 다시 떠야 한다.
-- 공모전 풀런봇 전투 정책에서 보드 이동과 보드 버림은 증거 확보용으로 초반에 소비하지 않는다. 보드 이동은 공간이 아직 있는 중반에 다른 위치의 타일을 옮겨 족보 형성이 유리해질 때만 쓰고, 보드가 꽉 차갈수록 효용이 낮다고 본다. 보드 버림은 족보가 형성되지 못한 줄의 타일을 버리고 손패 타일을 배치해 족보를 만들 수 있을 때 우선한다. 남은 보드 버림, 손패 버림, 보드 이동은 정산 보너스 기회비용이 있으므로 족보 형성 이득이 없으면 아낀다.
-- 손패 최대치 증가와 덱 상단 확인/버림은 경제·전략 축으로 취급한다. 공모전 풀런봇은 손패가 비었을 때만 드로우하는 정책에 머무르지 말고, 손패 여유 칸을 후보 탐색에 활용하며, Deck Needle 같은 덱 조작 아이템은 증거용으로 초반 소모하지 않고 족보 형성에 유리한 타일 선별이 가능할 때만 사용한다. UI에서도 손패 최대치 증가는 작은 숫자 변화로만 두지 말고 드로우 가능 칸과 1회 강조 피드백으로 플레이어가 전략 변화를 알아차리게 한다.
-- 공모전 풀런봇이 고점수 구간에서 game over가 나면 봇 전용 난이도 완화나 보상 보정보다 먼저 중복 족보 확보 정책을 점검한다. 확정 타이밍, 손패 여유 칸 활용, 덱 상단 제어, 보드 이동/버림은 여러 줄이 동시에 점수화되는 보드 상태를 만들기 위한 수단으로 우선 조정한다.
-- 공모전 풀런봇 실행/실패/중단 뒤에는 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버가 남아 메모리를 잡지 않는지 확인한다. 봇 runner는 종료 trap에서 관련 프로세스를 정리하고, 새 풀런을 시작하기 전에도 남은 headless WebDriver/Chrome Helper 프로세스를 먼저 정리한다.
-- 공모전 풀런봇뿐 아니라 Browser/WebDriver/Chrome 기반 테스트는 성공, 실패, 사용자 중단, timeout 등 어떤 종료 경로든 한 번 실행이 끝날 때마다 Chrome Helper, WebDriver Chrome, ChromeDriver, Flutter web server 잔류 프로세스를 확인하고 정리한다. 정리 확인 전에는 다음 테스트를 시작하거나 최종 보고를 보내지 않는다.
+- full-play QA hybrid bot의 호출 별명은 `풀런봇`으로 통일한다. 사용자가 “풀런봇 실행/준비/이어서”라고 말하면 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다. 영문 파일명·스크립트명·로그 prefix가 필요하면 `full_run_bot`을 쓴다.
+- 풀런봇의 제출 gate는 locale별 1사이클 기준이다. 한 locale에서 fresh 표준 난이도 S1부터 S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1부터 S8 Boss를 다시 클리어하고 S8 정산/보상/무한 도전 진입 직전까지 확인해야 그 locale 사이클이 닫힌다. 이 사이클을 지원 locale 5개(`ko`, `en`, `ja`, `zh-CN`, `zh-TW`)에 대해 순서대로 5번 실행한다. S8 이후 S9+ 무한 도전 장기 생존은 제출 gate가 아니라 별도 확장 검증이다.
+- 풀런봇 실행 중 수정 범위는 game over만이 아니다. 실제 플레이 중 UI overflow, 튜토리얼 문구/target 문제, Jester/Item/자원 카드의 제목·설명 잘림, 다국어 텍스트 넘침이 보이면 제출 QA 결함으로 보고 code/test 또는 번역 자산을 수정한 뒤 같은 locale gate를 다시 실행한다.
+- 풀런봇의 튜토리얼 검증은 각 locale 실행 시작 전에 저장 세션/SharedPreferences를 지워 첫 전투와 첫 Market 튜토리얼이 실제로 표시되는 조건으로 한다. 사용자 스킵은 완료 처리되지만, 포커스 아웃/옵션/일시정지로 끊긴 튜토리얼은 다음 진입에서 다시 떠야 한다.
+- 풀런봇 전투 정책에서 보드 이동과 보드 버림은 증거 확보용으로 초반에 소비하지 않는다. 보드 이동은 공간이 아직 있는 중반에 다른 위치의 타일을 옮겨 족보 형성이 유리해질 때만 쓰고, 보드가 꽉 차갈수록 효용이 낮다고 본다. 보드 버림은 족보가 형성되지 못한 줄의 타일을 버리고 손패 타일을 배치해 족보를 만들 수 있을 때 우선한다. 남은 보드 버림, 손패 버림, 보드 이동은 정산 보너스 기회비용이 있으므로 족보 형성 이득이 없으면 아낀다.
+- 손패 최대치 증가와 덱 상단 확인/버림은 경제·전략 축으로 취급한다. 풀런봇은 손패가 비었을 때만 드로우하는 정책에 머무르지 말고, 손패 여유 칸을 후보 탐색에 활용하며, Deck Needle 같은 덱 조작 아이템은 증거용으로 초반 소모하지 않고 족보 형성에 유리한 타일 선별이 가능할 때만 사용한다. UI에서도 손패 최대치 증가는 작은 숫자 변화로만 두지 말고 드로우 가능 칸과 1회 강조 피드백으로 플레이어가 전략 변화를 알아차리게 한다.
+- 풀런봇이 고점수 구간에서 game over가 나면 봇 전용 난이도 완화나 보상 보정보다 먼저 중복 족보 확보 정책을 점검한다. 확정 타이밍, 손패 여유 칸 활용, 덱 상단 제어, 보드 이동/버림은 여러 줄이 동시에 점수화되는 보드 상태를 만들기 위한 수단으로 우선 조정한다.
+- 풀런봇 실행/실패/중단 뒤에는 WebDriver Chrome, Chrome Helper, ChromeDriver, Flutter web 서버가 남아 메모리를 잡지 않는지 확인한다. 봇 runner는 종료 trap에서 관련 프로세스를 정리하고, 새 풀런을 시작하기 전에도 남은 headless WebDriver/Chrome Helper 프로세스를 먼저 정리한다.
+- 풀런봇뿐 아니라 Browser/WebDriver/Chrome 기반 테스트는 성공, 실패, 사용자 중단, timeout 등 어떤 종료 경로든 한 번 실행이 끝날 때마다 Chrome Helper, WebDriver Chrome, ChromeDriver, Flutter web server 잔류 프로세스를 확인하고 정리한다. 정리 확인 전에는 다음 테스트를 시작하거나 최종 보고를 보내지 않는다.
 - Chrome/Simulator 실기 검증에서 대상 앱이나 브라우저가 이미 떠 있으면 새 Chrome 창이나 새 Simulator 창을 띄우지 않는다. 먼저 기존 창/탭/부팅된 시뮬레이터를 Computer Use로 선택해 재사용하고, 웹 검증이 필요하면 새 Chrome 실행 대신 web-server를 켠 뒤 기존 Chrome 탭에 URL을 입력한다.
 - 웹 사운드 문제를 고칠 때 화면·라우팅·게임 상태에 웹 전용 분기를 늘리지 않는다. 브라우저 자동재생 정책 대응은 `SoundManager` 내부로 제한하고, route 전환 중 짧은 `inactive`처럼 플랫폼별로 흔들리는 lifecycle 신호는 즉시 pause 확정이 아니라 짧은 debounce 후 공통 pause 경로로 처리한다.
-- 공모전 풀런봇은 튜토리얼 overlay가 떠 있으면 전투/마켓 액션보다 튜토리얼 처리를 먼저 한다. fresh locale gate에서는 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done` 완료 로그가 남기 전에는 해당 locale pass로 인정하지 않는다.
-- 공모전 풀런봇 fresh locale gate에서 튜토리얼을 반드시 다시 띄우려면 앱 SharedPreferences만 지우지 말고 WebDriver Chrome profile의 cookie/localStorage/sessionStorage까지 초기화한다. `--resume-active-run`이 아닌 실행은 browser profile dir을 새로 시작해야 한다.
-- 공모전 풀런봇 locale gate는 5개 언어를 한 번에 연속 실행하지 않는다. `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 순서는 유지하되, 각 locale의 표준→도전 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다.
-- 공모전 풀런봇에서 표준 run 통과 후 같은 locale 도전 run으로 넘어가는 것은 하나의 locale cycle 내부 진행이다. 사용자가 별도 중단을 지시하지 않는 한 표준 통과만으로 승인 대기하지 않고, 같은 locale의 도전 S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 이어서 실행한 뒤 그 locale cycle 결과를 보고하고 다음 locale 진입 승인을 받는다.
-- 공모전 풀런봇의 첫 전투/첫 Market 튜토리얼 검증은 locale cycle 시작 시 표준 run에서 확인한다. 같은 locale의 도전 run은 새 run으로 시작하되 같은 cycle 내부 진행이므로 튜토리얼 seen 상태를 유지해야 하며, 도전 시작 전 저장 초기화가 필요하면 active run/save는 지우되 battle/market tutorial seen flag는 다시 세팅한다.
-- 공모전 풀런봇의 seed 기반 보정은 1회 game over만으로 평상시 전투 정책을 바꾸지 않는다. 평소에는 손패, 덱 상단, 보드 점유, 확정 preview, action trace를 기록하고, 같은 run에서 2회 이상 game over가 누적된 뒤에만 retry recovery 전용 보정 정책을 켠다.
-- 공모전 풀런봇은 같은 seed에서 2회 이상 game over가 난 뒤에는 실패 route의 action key만 피하지 말고, 이미 관측된 덱 순서를 retry recovery 후보 평가에 반영한다. 다음 덱 패가 이어 만들 족보와 중복줄 가능성을 배치 lookahead에 넣되, 무의미한 버림/이동/아이템 사용으로 대체하지 않는다.
-- 공모전 풀런봇의 S8 boss 같은 고점수 구간 안정화는 즉시 점수 후보만 키우는 방향으로 닫지 않는다. `potentialScore`가 이미 반영하는 현재 배치 이득에 더해, 완성 직전 라인 수, 서로 교차하는 유망 라인 수, 현재 손패 남은 타일로 다음 1-step 배치까지 이어질 가능성을 lookahead 후보 평가에 넣는 방향을 먼저 검토한다. 이는 bot 전용 QA 정책 보정이며, runtime 난이도나 production 밸런스 완화로 처리하지 않는다.
-- 후반 고점수 구간에서 공모전 풀런봇이 game over가 나면 봇 전용 가중치 숫자를 임의로 올리는 것보다, 족보와 중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다. 레벨링상 특정 구간에서 마켓 등장 확률을 올린 Jester/Item은 그 구간의 의도된 성장 수단일 수 있으므로, 풀런봇도 후반 안정화 후보로 해당 카드/아이템을 우선 구매하거나 약한 보유물을 판매 후 교체하는 정책을 검토한다.
-- 공모전 풀런봇 중후반 Station에서 골드, Jester, Item이 비어 보이면 새 런 초기 상태로 추정하지 않는다. 먼저 저장 checkpoint의 `runProgress`와 `stageStartRunProgress`, 복원 route, Jester/Item catalog 로드 완료 시점, 화면 facade를 대조하고 실제 policy/bot 재실행 전에 회귀 테스트로 막는다.
-- 공모전 풀런봇을 fresh run으로 실행했는지 checkpoint resume으로 실행했는지 응답에서 혼동하지 않는다. `--resume-active-run` 없이 시작한 실행은 S1부터 시작하는 것이 정상이며, S4/S8 상태 검증은 해당 fresh run이 도달했을 때 하거나 명시적으로 resume checkpoint를 주입해 확인한다.
-- 공모전 풀런봇에서 아이템 사용, 보드 이동, 손패 버림, 보드 버림의 최상위 조건은 항상 족보 형성 또는 확정 점수 개선이다. 사용 로그를 남기기 위해 의미 없는 사용을 만들지 않고, evidence 요구사항도 무의미한 소비를 강제하는 방식으로 두지 않는다.
-- 공모전 풀런봇에서 `add_board_move`처럼 자원 수량만 늘리는 아이템은 현재 턴의 족보 형성 행동을 직접 보조하지 않으면 전투 시작 직후 자동 사용하지 않는다. `mark_next_board_move_bonus` 같은 보조 아이템도 실제 다음 행동이 보드 이동으로 확정됐을 때만 사용한다.
-- 공모전 풀런봇에서 버림은 죽은 줄을 살려 손패 타일 배치로 2줄 이상 확정을 만들 수 있거나, 버림 후 배치/이동 콤보로 중복 확정 줄을 만들 수 있을 때 사용한다. 단순 증거 확보나 잠재점수만을 위한 버림은 쓰지 않는다.
-- 공모전 풀런봇에서 낮은 target score는 의미 없는 자원 사용을 막는 보조 신호일 뿐, 실제 족보 형성이나 중복 확정으로 이어지는 이동·버림을 금지하는 절대 조건으로 쓰지 않는다.
-- 공모전 풀런봇에서 Q-Slot/Item을 사용할 때는 `Q1` 같은 내부 라벨 텍스트를 직접 탭하지 않는다. 실제 slot/chip 위젯 또는 안정된 key/predicate로 선택하고, 선택된 overlay가 기대 아이템인지 확인한 뒤 사용하며, 사용 후 인벤토리/상태 변화가 확인된 경우에만 사용 로그를 남긴다.
-- 공모전 풀런봇에서 `확정` 액션은 점수 숫자가 증가한 것만으로 다음 전투 행동을 시작하지 않는다. 정산/아이템 연출 phase가 한 번 시작되고 다시 `none`으로 돌아왔거나 cash-out UI가 준비된 것까지 확인한 뒤 다음 입력을 넣는다.
+- 풀런봇은 튜토리얼 overlay가 떠 있으면 전투/마켓 액션보다 튜토리얼 처리를 먼저 한다. fresh locale gate에서는 첫 전투와 첫 Market 튜토리얼이 표시되고 `Next/Done` 완료 로그가 남기 전에는 해당 locale pass로 인정하지 않는다.
+- 풀런봇 fresh locale gate에서 튜토리얼을 반드시 다시 띄우려면 앱 SharedPreferences만 지우지 말고 WebDriver Chrome profile의 cookie/localStorage/sessionStorage까지 초기화한다. `--resume-active-run`이 아닌 실행은 browser profile dir을 새로 시작해야 한다.
+- 풀런봇 locale gate는 5개 언어를 한 번에 연속 실행하지 않는다. `ko`, `en`, `ja`, `zh-CN`, `zh-TW` 순서는 유지하되, 각 locale의 표준→도전 사이클 완료 후 로그/console/UI 결함을 점검하고 사용자 승인받은 뒤 다음 locale을 시작한다.
+- 풀런봇에서 표준 run 통과 후 같은 locale 도전 run으로 넘어가는 것은 하나의 locale cycle 내부 진행이다. 사용자가 별도 중단을 지시하지 않는 한 표준 통과만으로 승인 대기하지 않고, 같은 locale의 도전 S8 Boss와 S8 정산/보상/무한 도전 진입 직전 확인까지 이어서 실행한 뒤 그 locale cycle 결과를 보고하고 다음 locale 진입 승인을 받는다.
+- 풀런봇의 첫 전투/첫 Market 튜토리얼 검증은 locale cycle 시작 시 표준 run에서 확인한다. 같은 locale의 도전 run은 새 run으로 시작하되 같은 cycle 내부 진행이므로 튜토리얼 seen 상태를 유지해야 하며, 도전 시작 전 저장 초기화가 필요하면 active run/save는 지우되 battle/market tutorial seen flag는 다시 세팅한다.
+- 풀런봇의 seed 기반 보정은 1회 game over만으로 평상시 전투 정책을 바꾸지 않는다. 평소에는 손패, 덱 상단, 보드 점유, 확정 preview, action trace를 기록하고, 같은 run에서 2회 이상 game over가 누적된 뒤에만 retry recovery 전용 보정 정책을 켠다.
+- 풀런봇은 같은 seed에서 2회 이상 game over가 난 뒤에는 실패 route의 action key만 피하지 말고, 이미 관측된 덱 순서를 retry recovery 후보 평가에 반영한다. 다음 덱 패가 이어 만들 족보와 중복줄 가능성을 배치 lookahead에 넣되, 무의미한 버림/이동/아이템 사용으로 대체하지 않는다.
+- 풀런봇의 S8 boss 같은 고점수 구간 안정화는 즉시 점수 후보만 키우는 방향으로 닫지 않는다. `potentialScore`가 이미 반영하는 현재 배치 이득에 더해, 완성 직전 라인 수, 서로 교차하는 유망 라인 수, 현재 손패 남은 타일로 다음 1-step 배치까지 이어질 가능성을 lookahead 후보 평가에 넣는 방향을 먼저 검토한다. 이는 bot 전용 QA 정책 보정이며, runtime 난이도나 production 밸런스 완화로 처리하지 않는다.
+- 후반 고점수 구간에서 풀런봇이 game over가 나면 봇 전용 가중치 숫자를 임의로 올리는 것보다, 족보와 중복줄 확정, 손패 여유 칸, 보드 이동/버림, 아이템 사용, 구매/판매 전략을 함께 점검한다. 레벨링상 특정 구간에서 마켓 등장 확률을 올린 Jester/Item은 그 구간의 의도된 성장 수단일 수 있으므로, 풀런봇도 후반 안정화 후보로 해당 카드/아이템을 우선 구매하거나 약한 보유물을 판매 후 교체하는 정책을 검토한다.
+- 풀런봇 중후반 Station에서 골드, Jester, Item이 비어 보이면 새 런 초기 상태로 추정하지 않는다. 먼저 저장 checkpoint의 `runProgress`와 `stageStartRunProgress`, 복원 route, Jester/Item catalog 로드 완료 시점, 화면 facade를 대조하고 실제 policy/bot 재실행 전에 회귀 테스트로 막는다.
+- 풀런봇을 fresh run으로 실행했는지 checkpoint resume으로 실행했는지 응답에서 혼동하지 않는다. `--resume-active-run` 없이 시작한 실행은 S1부터 시작하는 것이 정상이며, S4/S8 상태 검증은 해당 fresh run이 도달했을 때 하거나 명시적으로 resume checkpoint를 주입해 확인한다.
+- 풀런봇에서 아이템 사용, 보드 이동, 손패 버림, 보드 버림의 최상위 조건은 항상 족보 형성 또는 확정 점수 개선이다. 사용 로그를 남기기 위해 의미 없는 사용을 만들지 않고, evidence 요구사항도 무의미한 소비를 강제하는 방식으로 두지 않는다.
+- 풀런봇에서 `add_board_move`처럼 자원 수량만 늘리는 아이템은 현재 턴의 족보 형성 행동을 직접 보조하지 않으면 전투 시작 직후 자동 사용하지 않는다. `mark_next_board_move_bonus` 같은 보조 아이템도 실제 다음 행동이 보드 이동으로 확정됐을 때만 사용한다.
+- 풀런봇에서 버림은 죽은 줄을 살려 손패 타일 배치로 2줄 이상 확정을 만들 수 있거나, 버림 후 배치/이동 콤보로 중복 확정 줄을 만들 수 있을 때 사용한다. 단순 증거 확보나 잠재점수만을 위한 버림은 쓰지 않는다.
+- 풀런봇에서 낮은 target score는 의미 없는 자원 사용을 막는 보조 신호일 뿐, 실제 족보 형성이나 중복 확정으로 이어지는 이동·버림을 금지하는 절대 조건으로 쓰지 않는다.
+- 풀런봇에서 Q-Slot/Item을 사용할 때는 `Q1` 같은 내부 라벨 텍스트를 직접 탭하지 않는다. 실제 slot/chip 위젯 또는 안정된 key/predicate로 선택하고, 선택된 overlay가 기대 아이템인지 확인한 뒤 사용하며, 사용 후 인벤토리/상태 변화가 확인된 경우에만 사용 로그를 남긴다.
+- 풀런봇에서 `확정` 액션은 점수 숫자가 증가한 것만으로 다음 전투 행동을 시작하지 않는다. 정산/아이템 연출 phase가 한 번 시작되고 다시 `none`으로 돌아왔거나 cash-out UI가 준비된 것까지 확인한 뒤 다음 입력을 넣는다.
 - 공모전 이후 풀런봇에서 “플러시 위주 구성”을 적용할 때는 단순 line potential 가중치만 올리지 않는다. 실제 배치 후보 비교에서 놓는 타일과 닿는 row/col/diag의 색상 정렬, 색상 혼합 감점, 같은 색 교차 라인 보너스가 선택 좌표에 반영되는지 S1 로그로 확인한다.
 - 공모전 이후 풀런봇에서 보드가 꽉 찼더라도 해당 전투 target score 진행이 후반이 아니면 보드 버림/이동 콤보로 풀지 않는다. 이미 낮은 확정 점수가 있으면 먼저 확정해 보드를 비우고, 버림/이동은 후반 또는 명확한 target 마감/회복 구간에서만 허용되는지 로그로 확인한다.
 - 공모전 이후 풀런봇 마켓 정책에서 제스터를 먼저 전부 사서 Q-slot 구매 골드를 굶기지 않는다. Market 진입 후 Q-slot 아이템을 먼저 시도하고, 제스터 구매 뒤 남은 골드로 Q-slot을 다시 시도해 `items/quick` 상태와 구매 로그를 확인한다.

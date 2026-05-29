@@ -6,19 +6,19 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
 /// full-play integration test가 웹 타깃에서 직접 컴파일할 수 있는 전투 판단 경계.
-abstract class CompetitionBattleBotPolicy {
-  const CompetitionBattleBotPolicy();
+abstract class FullRunBattleBotPolicy {
+  const FullRunBattleBotPolicy();
 
   String get id;
 
-  CompetitionBattleAction chooseAction(
+  FullRunBattleAction chooseAction(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
   });
 }
 
-enum CompetitionBattleActionType {
+enum FullRunBattleActionType {
   draw,
   place,
   confirm,
@@ -28,33 +28,32 @@ enum CompetitionBattleActionType {
   stop,
 }
 
-bool contestBattleItemOpSupportsPlannedAction(
+bool fullRunBattleItemOpSupportsPlannedAction(
   String op,
-  CompetitionBattleActionType plannedActionType,
+  FullRunBattleActionType plannedActionType,
 ) {
   return switch (op) {
-    'add_board_move' =>
-      plannedActionType == CompetitionBattleActionType.moveBoard,
+    'add_board_move' => plannedActionType == FullRunBattleActionType.moveBoard,
     'mark_next_board_move_bonus' =>
-      plannedActionType == CompetitionBattleActionType.moveBoard,
+      plannedActionType == FullRunBattleActionType.moveBoard,
     'add_board_discard' =>
-      plannedActionType == CompetitionBattleActionType.discardBoard,
+      plannedActionType == FullRunBattleActionType.discardBoard,
     'add_hand_discard' =>
-      plannedActionType == CompetitionBattleActionType.discardHand,
+      plannedActionType == FullRunBattleActionType.discardHand,
     'chips_bonus' ||
     'mult_bonus' ||
     'xmult_bonus' ||
     'temporary_overlap_cap_bonus' ||
     'add_percent_of_first_confirm_score' =>
-      plannedActionType == CompetitionBattleActionType.confirm,
+      plannedActionType == FullRunBattleActionType.confirm,
     'draw_if_hand_empty' || 'increase_hand_size' || 'peek_deck_discard_one' =>
-      plannedActionType == CompetitionBattleActionType.draw,
+      plannedActionType == FullRunBattleActionType.draw,
     _ => false,
   };
 }
 
-class CompetitionBattleAction {
-  const CompetitionBattleAction._({
+class FullRunBattleAction {
+  const FullRunBattleAction._({
     required this.type,
     this.handIndex,
     this.row,
@@ -65,46 +64,36 @@ class CompetitionBattleAction {
     this.reason,
   });
 
-  const CompetitionBattleAction.draw()
-    : this._(type: CompetitionBattleActionType.draw);
+  const FullRunBattleAction.draw() : this._(type: FullRunBattleActionType.draw);
 
-  const CompetitionBattleAction.confirm()
-    : this._(type: CompetitionBattleActionType.confirm);
+  const FullRunBattleAction.confirm()
+    : this._(type: FullRunBattleActionType.confirm);
 
-  const CompetitionBattleAction.place({
+  const FullRunBattleAction.place({
     required int handIndex,
     required int row,
     required int col,
   }) : this._(
-         type: CompetitionBattleActionType.place,
+         type: FullRunBattleActionType.place,
          handIndex: handIndex,
          row: row,
          col: col,
        );
 
-  const CompetitionBattleAction.discardBoard({
-    required int row,
-    required int col,
-  }) : this._(
-         type: CompetitionBattleActionType.discardBoard,
-         row: row,
-         col: col,
-       );
+  const FullRunBattleAction.discardBoard({required int row, required int col})
+    : this._(type: FullRunBattleActionType.discardBoard, row: row, col: col);
 
-  const CompetitionBattleAction.discardHand({required int handIndex})
-    : this._(
-        type: CompetitionBattleActionType.discardHand,
-        handIndex: handIndex,
-      );
+  const FullRunBattleAction.discardHand({required int handIndex})
+    : this._(type: FullRunBattleActionType.discardHand, handIndex: handIndex);
 
-  const CompetitionBattleAction.moveBoard({
+  const FullRunBattleAction.moveBoard({
     required int row,
     required int col,
     required int toRow,
     required int toCol,
     int? gain,
   }) : this._(
-         type: CompetitionBattleActionType.moveBoard,
+         type: FullRunBattleActionType.moveBoard,
          row: row,
          col: col,
          toRow: toRow,
@@ -112,10 +101,10 @@ class CompetitionBattleAction {
          gain: gain,
        );
 
-  const CompetitionBattleAction.stop(String reason)
-    : this._(type: CompetitionBattleActionType.stop, reason: reason);
+  const FullRunBattleAction.stop(String reason)
+    : this._(type: FullRunBattleActionType.stop, reason: reason);
 
-  final CompetitionBattleActionType type;
+  final FullRunBattleActionType type;
   final int? handIndex;
   final int? row;
   final int? col;
@@ -127,37 +116,36 @@ class CompetitionBattleAction {
   @override
   String toString() {
     return switch (type) {
-      CompetitionBattleActionType.draw => 'draw',
-      CompetitionBattleActionType.confirm => 'confirm',
-      CompetitionBattleActionType.place => 'place($handIndex,$row,$col)',
-      CompetitionBattleActionType.discardHand => 'discardHand($handIndex)',
-      CompetitionBattleActionType.discardBoard => 'discardBoard($row,$col)',
-      CompetitionBattleActionType.moveBoard =>
+      FullRunBattleActionType.draw => 'draw',
+      FullRunBattleActionType.confirm => 'confirm',
+      FullRunBattleActionType.place => 'place($handIndex,$row,$col)',
+      FullRunBattleActionType.discardHand => 'discardHand($handIndex)',
+      FullRunBattleActionType.discardBoard => 'discardBoard($row,$col)',
+      FullRunBattleActionType.moveBoard =>
         'moveBoard($row,$col->$toRow,$toCol)',
-      CompetitionBattleActionType.stop => 'stop($reason)',
+      FullRunBattleActionType.stop => 'stop($reason)',
     };
   }
 }
 
-String contestBattleActionRouteKey(CompetitionBattleAction action) {
+String fullRunBattleActionRouteKey(FullRunBattleAction action) {
   return switch (action.type) {
-    CompetitionBattleActionType.place =>
+    FullRunBattleActionType.place =>
       'place:${action.handIndex}:${action.row}:${action.col}',
-    CompetitionBattleActionType.discardHand =>
-      'discardHand:${action.handIndex}',
-    CompetitionBattleActionType.discardBoard =>
+    FullRunBattleActionType.discardHand => 'discardHand:${action.handIndex}',
+    FullRunBattleActionType.discardBoard =>
       'discardBoard:${action.row}:${action.col}',
-    CompetitionBattleActionType.moveBoard =>
+    FullRunBattleActionType.moveBoard =>
       'moveBoard:${action.row}:${action.col}:${action.toRow}:${action.toCol}',
-    CompetitionBattleActionType.confirm => 'confirm',
-    CompetitionBattleActionType.draw => 'draw',
-    CompetitionBattleActionType.stop => 'stop:${action.reason ?? ''}',
+    FullRunBattleActionType.confirm => 'confirm',
+    FullRunBattleActionType.draw => 'draw',
+    FullRunBattleActionType.stop => 'stop:${action.reason ?? ''}',
   };
 }
 
 /// `tools/sim/planner_bot.dart`의 planner_v2 판단을 integration test용으로 옮긴다.
-class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
-  const CompetitionPlannerV2Policy({
+class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
+  const FullRunPlannerV2Policy({
     this.enableRetryRecoveryConfirmDelay = false,
     this.retryRecoveryAttempt = 0,
     this.avoidedActionRouteKeys = const <String>{},
@@ -189,10 +177,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
   static const int _retryDeckLookaheadTileCount = 5;
   static const int _lateRetryConfirmShortageWindow = 320;
   @override
-  String get id => 'competition_planner_v2';
+  String get id => 'full_run_planner_v2';
 
   @override
-  CompetitionBattleAction chooseAction(
+  FullRunBattleAction chooseAction(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
@@ -216,11 +204,11 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           confirmChoice,
           boardIsFull: boardIsFull,
         )) {
-      return const CompetitionBattleAction.confirm();
+      return const FullRunBattleAction.confirm();
     }
     final shouldUseStrategicUtility = _shouldUseStrategicUtility(session);
     if (session.hand.isEmpty) {
-      if (session.canDrawFromDeck) return const CompetitionBattleAction.draw();
+      if (session.canDrawFromDeck) return const FullRunBattleAction.draw();
       if ((shouldUseStrategicUtility || boardIsFull) &&
           _canUseBoardDiscardUtility(session) &&
           occupancy >= _boardDiscardReplacementMinOccupancy) {
@@ -242,15 +230,15 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       // 더 이상 드로우/배치가 불가능하면 카드 고갈 실패를 피하기 위해
       // 최소 2개 족보 조건을 마지막 수단으로만 완화한다.
       if (confirmChoice.shouldConfirmNow || confirmChoice.score > 0) {
-        return const CompetitionBattleAction.confirm();
+        return const FullRunBattleAction.confirm();
       }
-      return const CompetitionBattleAction.stop('no_hand_and_cannot_draw');
+      return const FullRunBattleAction.stop('no_hand_and_cannot_draw');
     }
 
     if (boardIsFull &&
         !_canUseBoardDiscardUtility(session) &&
         confirmChoice.score > 0) {
-      return const CompetitionBattleAction.confirm();
+      return const FullRunBattleAction.confirm();
     }
 
     if (_shouldUseBoardMoveNow(
@@ -284,7 +272,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       occupancy: occupancy,
       confirmChoice: confirmChoice,
     )) {
-      return const CompetitionBattleAction.draw();
+      return const FullRunBattleAction.draw();
     }
 
     if (_shouldSpendBoardDiscardForMystic(session, jesters)) {
@@ -304,7 +292,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     if (placement != null) return placement.action;
 
     if (confirmChoice.shouldConfirmNow) {
-      return const CompetitionBattleAction.confirm();
+      return const FullRunBattleAction.confirm();
     }
 
     if ((shouldUseStrategicUtility || boardIsFull) &&
@@ -327,7 +315,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       if (recoveryDiscard != null) return recoveryDiscard;
 
       if (_shouldConfirmInsteadOfLateHandDiscard(session, confirmChoice)) {
-        return const CompetitionBattleAction.confirm();
+        return const FullRunBattleAction.confirm();
       }
 
       final handDiscard = chooseHandDiscard(session);
@@ -335,14 +323,14 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
 
       // 보드가 꽉 찬 뒤 버림 수단도 없으면 2족보 원칙보다 진행 지속을 우선한다.
       if (confirmChoice.score > 0) {
-        return const CompetitionBattleAction.confirm();
+        return const FullRunBattleAction.confirm();
       }
     }
 
-    return const CompetitionBattleAction.stop('no_legal_action');
+    return const FullRunBattleAction.stop('no_legal_action');
   }
 
-  CompetitionBattleAction? chooseHandDiscard(RummiPokerGridSession session) {
+  FullRunBattleAction? chooseHandDiscard(RummiPokerGridSession session) {
     if (session.blind.handDiscardsRemaining <= 0 || session.hand.isEmpty) {
       return null;
     }
@@ -355,10 +343,10 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         worstIndex = index;
       }
     }
-    return CompetitionBattleAction.discardHand(handIndex: worstIndex);
+    return FullRunBattleAction.discardHand(handIndex: worstIndex);
   }
 
-  CompetitionBattleAction? chooseBoardMove(
+  FullRunBattleAction? chooseBoardMove(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
@@ -411,7 +399,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             }
             final potential = _plannerBoardPotentialScore(copy);
             final choice = _MoveChoice(
-              action: CompetitionBattleAction.moveBoard(
+              action: FullRunBattleAction.moveBoard(
                 row: fromRow,
                 col: fromCol,
                 toRow: toRow,
@@ -484,7 +472,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return _isBattleTargetLate(session);
   }
 
-  CompetitionBattleAction? bestPlacementForTest(
+  FullRunBattleAction? bestPlacementForTest(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
@@ -891,7 +879,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           );
           final immediateScore = preview.result.scoreAdded;
           if (remainingScore > 0 && immediateScore >= remainingScore) {
-            final action = CompetitionBattleAction.place(
+            final action = FullRunBattleAction.place(
               handIndex: handIndex,
               row: row,
               col: col,
@@ -929,7 +917,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             );
           }
 
-          final action = CompetitionBattleAction.place(
+          final action = FullRunBattleAction.place(
             handIndex: handIndex,
             row: row,
             col: col,
@@ -1015,9 +1003,9 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return candidate.boardPressure < best.boardPressure;
   }
 
-  bool _repeatsFailedRoute(CompetitionBattleAction action) {
+  bool _repeatsFailedRoute(FullRunBattleAction action) {
     return _shouldAvoidRepeatedFailedRoutes() &&
-        avoidedActionRouteKeys.contains(contestBattleActionRouteKey(action));
+        avoidedActionRouteKeys.contains(fullRunBattleActionRouteKey(action));
   }
 
   bool _shouldAvoidRepeatedFailedRoutes() {
@@ -1028,16 +1016,16 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return enableRetryRecoveryConfirmDelay && retryRecoveryAttempt >= 2;
   }
 
-  int _adjustedRouteScore(CompetitionBattleAction action, int baseScore) {
+  int _adjustedRouteScore(FullRunBattleAction action, int baseScore) {
     if (!_shouldAvoidRepeatedFailedRoutes()) return baseScore;
     final penalty =
-        avoidedActionRouteKeys.contains(contestBattleActionRouteKey(action))
+        avoidedActionRouteKeys.contains(fullRunBattleActionRouteKey(action))
         ? _failedRouteActionPenalty + retryRecoveryAttempt * 20
         : 0;
     return baseScore - penalty + _retryDiversityScore(action);
   }
 
-  int _retryDiversityScore(CompetitionBattleAction action) {
+  int _retryDiversityScore(FullRunBattleAction action) {
     if (!_shouldAvoidRepeatedFailedRoutes() || retryRecoveryAttempt < 3) {
       return 0;
     }
@@ -1210,7 +1198,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return (_lateRetryConfirmShortageWindow - shortage) * 8;
   }
 
-  CompetitionBattleAction? chooseBoardDiscard(
+  FullRunBattleAction? chooseBoardDiscard(
     RummiPokerGridSession session, {
     int minOccupancy = kBoardSize * kBoardSize - 3,
   }) {
@@ -1234,7 +1222,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
       }
     }
     if (worstCell == null) return null;
-    return CompetitionBattleAction.discardBoard(
+    return FullRunBattleAction.discardBoard(
       row: worstCell.$1,
       col: worstCell.$2,
     );
@@ -1281,7 +1269,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return best;
   }
 
-  CompetitionBattleAction? chooseScoringBoardDiscard(
+  FullRunBattleAction? chooseScoringBoardDiscard(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
@@ -1336,7 +1324,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
         }
 
         final choice = _BoardDiscardChoice(
-          action: CompetitionBattleAction.discardBoard(row: row, col: col),
+          action: FullRunBattleAction.discardBoard(row: row, col: col),
           immediateScore: combo.lineCount >= 2 ? combo.score : moveCombo!.gain!,
           potentialScore: potentialScore,
         );
@@ -1368,7 +1356,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
             candidate.potentialScore > best.potentialScore;
   }
 
-  CompetitionBattleAction? chooseRecoveryBoardDiscard(
+  FullRunBattleAction? chooseRecoveryBoardDiscard(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
@@ -1428,7 +1416,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           if (!improvesConfirm && !revivesDeadLine) continue;
 
           final choice = _BoardDiscardChoice(
-            action: CompetitionBattleAction.discardBoard(row: row, col: col),
+            action: FullRunBattleAction.discardBoard(row: row, col: col),
             immediateScore: score,
             potentialScore: potentialScore,
           );
@@ -1444,7 +1432,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
     return best?.action;
   }
 
-  CompetitionBattleAction? chooseMysticBoardDiscard(
+  FullRunBattleAction? chooseMysticBoardDiscard(
     RummiPokerGridSession session, {
     required List<RummiJesterCard> jesters,
     required RummiJesterRuntimeSnapshot runtimeSnapshot,
@@ -1499,7 +1487,7 @@ class CompetitionPlannerV2Policy extends CompetitionBattleBotPolicy {
           }
 
           final choice = _BoardDiscardChoice(
-            action: CompetitionBattleAction.discardBoard(row: row, col: col),
+            action: FullRunBattleAction.discardBoard(row: row, col: col),
             immediateScore: score + potentialGain,
             potentialScore: potentialScore,
           );
@@ -1602,7 +1590,7 @@ class _PlacementChoice {
     required this.repeatsFailedRoute,
   });
 
-  final CompetitionBattleAction action;
+  final FullRunBattleAction action;
   final bool clearsTarget;
   final int immediateScore;
   final int flushAlignmentScore;
@@ -1619,7 +1607,7 @@ class _MoveChoice {
     required this.potential,
   });
 
-  final CompetitionBattleAction action;
+  final FullRunBattleAction action;
   final int gain;
   final int potential;
 }
@@ -1638,7 +1626,7 @@ class _BoardDiscardChoice {
     required this.potentialScore,
   });
 
-  final CompetitionBattleAction action;
+  final FullRunBattleAction action;
   final int immediateScore;
   final int potentialScore;
 }

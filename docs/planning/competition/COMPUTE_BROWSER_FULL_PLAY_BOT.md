@@ -1,10 +1,10 @@
 # Compute + Browser Full-Play Bot
 
 > 문서 성격: 공모전 제출용 실제 UI full-play QA bot 제작 기준
-> 호출 별명: `공모전 풀런봇`
-> 영문 식별자: `contest_full_run_bot`
-> 부분 실행 별명: `공모전 서브런봇`
-> 부분 실행 영문 식별자: `contest_sub_run_bot`
+> 호출 별명: `풀런봇`
+> 영문 식별자: `full_run_bot`
+> 부분 실행 별명: `서브런봇`
+> 부분 실행 영문 식별자: `sub_run_bot`
 > 1차 실행 환경: Browser/WebDriver + Compute Use hybrid
 > 2차 보조 환경: Codex 앱 내장 Browser Use
 > 현재 실행 라우터: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
@@ -27,7 +27,7 @@ bot은 Browser/WebDriver의 실행·로그 수집과 Compute Use의 화면 좌�
 - 마켓 진입마다 가능한 경우 Jester 또는 Q-Slot에서 최소 1개 이상 구매/교체한다. 구매 기준은 현재 보이는 후보 중 점수 배점과 후반 플러시/성장 기여가 가장 높은 카드/아이템이다.
 - 마켓 진입마다 Gold가 허락하면 덱카드도 1장 구매한다. 덱카드 구매는 경제 재점검 증거이기도 하며, 후보 중 칩과 높은 숫자 기여가 큰 타일을 우선한다.
 
-2026-05-09 현재 `contest_full_run_bot`은 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss pass 증거를 확보했다. 2026-05-10에는 `ko`, `en` locale 표준→도전 2사이클도 통과했다.
+2026-05-09 현재 `full_run_bot`은 최신 룰/UI 후보에서 fresh 표준 난이도 S1~S8 boss pass 증거를 확보했다. 2026-05-10에는 `ko`, `en` locale 표준→도전 2사이클도 통과했다.
 이전 체크포인트/재시도 기반 S8 boss pass 증거와, S8 boss 실패/timeout을 만들었던 최신 보정 후보 로그도 기준선으로 남긴다.
 `slot_unlock_market` fixture 눈검증은 완료했다. 그 뒤 web icon/splash/OG image, 릴리즈 홈 메뉴, 웹 BGM unlock/scroll 묵음, 정산 밑줄, 정산 PhoneFrame 폭 회귀를 수정했다. 2026-05-10~11 최신 후보에서는 `ko` standard→challenge 재확인도 통과했다. 이번 제출용 full-run bot 플랜은 여기서 닫고, `ja`, `zh-CN`, `zh-TW` full-run은 문제가 발견될 때 또는 공모전 이후 추가 검증으로 둔다. 한 locale cycle의 원칙은 fresh 표준 난이도 S1~S8 Boss를 먼저 클리어한 뒤, 같은 locale fresh 도전 난이도 S1~S8 Boss와 S8 정산/보상/무한 도전 진입 직전까지 확인하는 것이다.
 fresh 표준 로그에 Flutter semantics route label 경고가 반복 출력됐으나, 2026-05-10 route/dialog label 보정 뒤 최신 build smoke에서는 재현되지 않았다.
@@ -43,19 +43,19 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
 과거 checkpoint pass 증거:
 
 - commit: `9262e6d Stabilize contest full run bot strategy`
-- 최종 pass 로그: `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`
+- 최종 pass 로그: `/tmp/rummipoker_full_run_bot/resume_s8_boss_final_pass/10_full_run_bot.log`
 - 핵심 로그:
   - `S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus`
   - `game over -> retry 1/24`
   - `All tests passed.`
 - 보조 검증:
-  - `flutter analyze integration_test/competition_bot_policy.dart integration_test/competition_full_play_bot_test.dart test/competition_bot_policy_test.dart`
-  - `flutter test test/competition_bot_policy_test.dart test/views/game/widgets/game_shop_screen_save_flush_test.dart`
+  - `flutter analyze integration_test/full_run_bot_policy.dart integration_test/full_run_bot_test.dart test/full_run_bot_policy_test.dart`
+  - `flutter test test/full_run_bot_policy_test.dart test/views/game/widgets/game_shop_screen_save_flush_test.dart`
 
 최신 보정 후보 기준선:
 
 - commit: `18f0b53 Tune boss retry deck scoring`
-- 로그: `/tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log`
+- 로그: `/tmp/rummipoker_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_full_run_bot.log`
 - S8 big retry 6:
   - `417 + 617 + 705 = 1739/1738`
   - `S8 big: cashout -> market`
@@ -67,15 +67,15 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
 - 판단:
   - 5장 deck lookahead와 late confirm 보정은 S8 big 통과에 효과가 있었다.
   - S8 boss는 같은 색상 플러시 축과 장기 족보 성장 축이 약해, bot 정책만으로 안정화하면 QA 보정이 과해진다.
-- 현재는 `contest_full_run_bot` 재실행보다 족보 성장/덱 확장 같은 런타임 규칙 보강을 먼저 한다.
+- 현재는 `full_run_bot` 재실행보다 족보 성장/덱 확장 같은 런타임 규칙 보강을 먼저 한다.
 - 족보 성장은 이번 1차 범위에서 게임오버 없이 이어지는 하나의 run 전체의 성장 기록과 이후 전투 점수 반영으로 다룬다. 게임오버 후 새 run까지 이어지는 영구 계승은 별도 검토로 남긴다.
 
 최신 fresh 표준 pass 기준선:
 
-- 로그: `/tmp/rummipoker_contest_full_run_bot/fresh_after_reward_tile_rules_20260509_201727/10_contest_full_run_bot.log`
+- 로그: `/tmp/rummipoker_full_run_bot/fresh_after_reward_tile_rules_20260509_201727/10_full_run_bot.log`
 - 실행 조건: `--seed 91460 --difficulty standard --web-port 7362 --skip-pub-get`
 - 결과:
-  - `CONTEST_FULL_RUN_BOT_PASS`
+  - `FULL_RUN_BOT_PASS`
   - `All tests passed!`
   - `S8 boss: run complete`
 - S8 boss 정산:
@@ -102,11 +102,11 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
 
 2026-05-10 `ko` fresh 표준 locale gate 증거:
 
-- 로그: `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511/10_contest_full_run_bot.log`
-- 출력 디렉터리: `/tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511`
-- 실행 조건: `--seed 91460 --difficulty standard --locale ko --web-port 7363 --browser-profile-dir /tmp/rummipoker_contest_full_run_bot/standard_ko_profile_20260510_104511 --output-dir /tmp/rummipoker_contest_full_run_bot/standard_ko_20260510_104511 --skip-pub-get`
+- 로그: `/tmp/rummipoker_full_run_bot/standard_ko_20260510_104511/10_full_run_bot.log`
+- 출력 디렉터리: `/tmp/rummipoker_full_run_bot/standard_ko_20260510_104511`
+- 실행 조건: `--seed 91460 --difficulty standard --locale ko --web-port 7363 --browser-profile-dir /tmp/rummipoker_full_run_bot/standard_ko_profile_20260510_104511 --output-dir /tmp/rummipoker_full_run_bot/standard_ko_20260510_104511 --skip-pub-get`
 - 결과:
-  - `CONTEST_FULL_RUN_BOT_PASS`
+  - `FULL_RUN_BOT_PASS`
   - `All tests passed!`
   - `S8 boss: run complete`
 - locale/fresh 조건:
@@ -135,11 +135,11 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
 
 2026-05-10 `ko` fresh 도전 locale gate 증거:
 
-- 로그: `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046/10_contest_full_run_bot.log`
-- 출력 디렉터리: `/tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046`
-- 실행 조건: `--seed 91460 --difficulty challenge --locale ko --web-port 7364 --browser-profile-dir /tmp/rummipoker_contest_full_run_bot/challenge_ko_profile_20260510_115046 --output-dir /tmp/rummipoker_contest_full_run_bot/challenge_ko_20260510_115046 --tutorials-already-seen --skip-pub-get`
+- 로그: `/tmp/rummipoker_full_run_bot/challenge_ko_20260510_115046/10_full_run_bot.log`
+- 출력 디렉터리: `/tmp/rummipoker_full_run_bot/challenge_ko_20260510_115046`
+- 실행 조건: `--seed 91460 --difficulty challenge --locale ko --web-port 7364 --browser-profile-dir /tmp/rummipoker_full_run_bot/challenge_ko_profile_20260510_115046 --output-dir /tmp/rummipoker_full_run_bot/challenge_ko_20260510_115046 --tutorials-already-seen --skip-pub-get`
 - 결과:
-  - `CONTEST_FULL_RUN_BOT_PASS`
+  - `FULL_RUN_BOT_PASS`
   - `All tests passed!`
   - `S8 boss: run complete`
 - locale/fresh 조건:
@@ -174,11 +174,11 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
 
 2026-05-10 `en` fresh 표준 locale gate 증거:
 
-- 로그: `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623/10_contest_full_run_bot.log`
-- 출력 디렉터리: `/tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623`
-- 실행 조건: `--seed 91460 --difficulty standard --locale en --web-port 7365 --browser-profile-dir /tmp/rummipoker_contest_full_run_bot/standard_en_profile_20260510_140623 --output-dir /tmp/rummipoker_contest_full_run_bot/standard_en_20260510_140623 --skip-pub-get`
+- 로그: `/tmp/rummipoker_full_run_bot/standard_en_20260510_140623/10_full_run_bot.log`
+- 출력 디렉터리: `/tmp/rummipoker_full_run_bot/standard_en_20260510_140623`
+- 실행 조건: `--seed 91460 --difficulty standard --locale en --web-port 7365 --browser-profile-dir /tmp/rummipoker_full_run_bot/standard_en_profile_20260510_140623 --output-dir /tmp/rummipoker_full_run_bot/standard_en_20260510_140623 --skip-pub-get`
 - 결과:
-  - `CONTEST_FULL_RUN_BOT_PASS`
+  - `FULL_RUN_BOT_PASS`
   - `All tests passed!`
   - `S8 boss: run complete`
 - locale/fresh 조건:
@@ -208,11 +208,11 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
 
 2026-05-10 `en` fresh 도전 locale gate 증거:
 
-- 로그: `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813/10_contest_full_run_bot.log`
-- 출력 디렉터리: `/tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813`
-- 실행 조건: `--seed 91460 --difficulty challenge --locale en --web-port 7366 --browser-profile-dir /tmp/rummipoker_contest_full_run_bot/challenge_en_profile_20260510_145813 --output-dir /tmp/rummipoker_contest_full_run_bot/challenge_en_20260510_145813 --tutorials-already-seen --skip-pub-get`
+- 로그: `/tmp/rummipoker_full_run_bot/challenge_en_20260510_145813/10_full_run_bot.log`
+- 출력 디렉터리: `/tmp/rummipoker_full_run_bot/challenge_en_20260510_145813`
+- 실행 조건: `--seed 91460 --difficulty challenge --locale en --web-port 7366 --browser-profile-dir /tmp/rummipoker_full_run_bot/challenge_en_profile_20260510_145813 --output-dir /tmp/rummipoker_full_run_bot/challenge_en_20260510_145813 --tutorials-already-seen --skip-pub-get`
 - 결과:
-  - `CONTEST_FULL_RUN_BOT_PASS`
+  - `FULL_RUN_BOT_PASS`
   - `All tests passed!`
   - `S8 boss: run complete`
 - locale/fresh 조건:
@@ -274,11 +274,11 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
   - `showGeneralDialog` 정산 overlay는 `PhoneFrame`으로 제한해 desktop/web 전체 화면 폭으로 새지 않게 수정
   - 검증: `flutter analyze`, `flutter test test/views/game/widgets/game_cashout_widgets_test.dart`, `flutter test test/views/game/game_view_test.dart`, `flutter build web --release --base-href "/rummipoker/"`
 
-앞으로 대화에서 `공모전 풀런봇 실행`, `공모전 풀런봇 준비`, `공모전 풀런봇 이어서`라고 말하면 이 문서의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다.
-스크립트, 로그 prefix, 파일명에는 영문 식별자 `contest_full_run_bot`을 사용한다.
+앞으로 대화에서 `풀런봇 실행`, `풀런봇 준비`, `풀런봇 이어서`라고 말하면 이 문서의 Browser/WebDriver + Compute Use hybrid full-play gate를 뜻한다.
+스크립트, 로그 prefix, 파일명에는 영문 식별자 `full_run_bot`을 사용한다.
 
-같은 엔진을 특정 목표 지점까지만 실행할 때는 `공모전 서브런봇`이라고 부른다.
-스크립트, 로그 prefix, 파일명에는 영문 식별자 `contest_sub_run_bot`을 사용한다.
+같은 엔진을 특정 목표 지점까지만 실행할 때는 `서브런봇`이라고 부른다.
+스크립트, 로그 prefix, 파일명에는 영문 식별자 `sub_run_bot`을 사용한다.
 
 제작 기준:
 
@@ -292,7 +292,7 @@ S2/S4/S6 Boss 클리어 후 다음 Market 진입에서는 Quick Item/Passive/Jes
 
 현재 구현/정책 요약:
 
-- full-run은 `tools/contest_full_run_bot.sh`로 실행한다.
+- full-run은 `tools/full_run_bot.sh`로 실행한다.
 - 실패 시 game over에서 재시도하며, 저장된 active run checkpoint부터 이어서 실행할 수 있다.
 - 체크포인트 재개 시 Jester/Item 구매 이력과 실제 전투 진행 상태를 저장 상태에서 복원한다.
 - 보스 클리어 덱 타일 보상은 마켓 tile offer 자리를 무료 보상으로 차지하지 않는다. 정산 화면에서 실제 타일 face로 보이고, 정산 시점에 즉시 덱에 추가되어 다음 전투부터 쓰인다.
@@ -324,27 +324,27 @@ Playwright나 Flutter `integration_test`의 selector/tap이 안정적이지 않�
 
 ## 0.2 실행 별명과 호출 예시
 
-`공모전 풀런봇`은 S1부터 S8 boss 이후 런 완료/보상/도감 확인까지 닫는 최종 제출 gate다.
-`공모전 서브런봇`은 같은 엔진을 쓰되 종료 조건만 제한해 특정 지점까지 빠르게 재현하는 부분 실행 bot이다.
+`풀런봇`은 S1부터 S8 boss 이후 런 완료/보상/도감 확인까지 닫는 최종 제출 gate다.
+`서브런봇`은 같은 엔진을 쓰되 종료 조건만 제한해 특정 지점까지 빠르게 재현하는 부분 실행 bot이다.
 
 | 별명 | 영문 식별자 | 목적 | 기본 종료 조건 |
 |---|---|---|---|
-| `공모전 풀런봇` | `contest_full_run_bot` | 최종 제출 full-play gate | 확인 대상 locale별 표준 S8 Boss clear 후 같은 locale 도전 S8 Boss clear, S8 정산/보상/무한 도전 진입 직전 확인. 이번 제출용 플랜은 `ko`, `en` cycle과 최신 `ko` 재확인으로 닫음 |
-| `공모전 서브런봇` | `contest_sub_run_bot` | 특정 stage/scene까지 재현, 실패 구간 격리 | 사용자가 지정한 target 도달 |
+| `풀런봇` | `full_run_bot` | 최종 제출 full-play gate | 확인 대상 locale별 표준 S8 Boss clear 후 같은 locale 도전 S8 Boss clear, S8 정산/보상/무한 도전 진입 직전 확인. 이번 제출용 플랜은 `ko`, `en` cycle과 최신 `ko` 재확인으로 닫음 |
+| `서브런봇` | `sub_run_bot` | 특정 stage/scene까지 재현, 실패 구간 격리 | 사용자가 지정한 target 도달 |
 
 사용자가 이렇게 말하면 같은 의미로 해석한다.
 
-- `공모전 풀런봇 실행`: S1부터 S8 boss 이후 제출 Done 기준까지 진행한다.
-- `공모전 풀런봇 이어서`: 마지막 중단 지점과 로그를 확인해 가능한 경우 이어서 진행한다.
-- `공모전 서브런봇 S3까지`: S3의 지정 tier 또는 기본 boss clear 후 정지한다. tier가 없으면 S3 boss clear를 기본 목표로 본다.
-- `공모전 서브런봇 S5 Market까지`: S5 전투 클리어 후 Market 진입을 확인하고 정지한다.
-- `공모전 서브런봇 S8 Boss 진입까지`: S8 boss 전투 화면 진입을 확인하고 정지한다.
-- `공모전 서브런봇 아이템 사용까지`: 실제 족보 형성 또는 확정 점수 개선에 도움이 되는 Item 사용이 발생하면 정지한다.
+- `풀런봇 실행`: S1부터 S8 boss 이후 제출 Done 기준까지 진행한다.
+- `풀런봇 이어서`: 마지막 중단 지점과 로그를 확인해 가능한 경우 이어서 진행한다.
+- `서브런봇 S3까지`: S3의 지정 tier 또는 기본 boss clear 후 정지한다. tier가 없으면 S3 boss clear를 기본 목표로 본다.
+- `서브런봇 S5 Market까지`: S5 전투 클리어 후 Market 진입을 확인하고 정지한다.
+- `서브런봇 S8 Boss 진입까지`: S8 boss 전투 화면 진입을 확인하고 정지한다.
+- `서브런봇 아이템 사용까지`: 실제 족보 형성 또는 확정 점수 개선에 도움이 되는 Item 사용이 발생하면 정지한다.
 
 서브런봇 target은 아래 필드로 기록한다.
 
 ```text
-contest_sub_run_bot target
+sub_run_bot target
 - targetStage: S1..S8
 - targetTier: small | big | boss | any
 - targetScene: Title | NewRunSetup | StationSelect | Battle | CashOut | Market | RunComplete | Archive
@@ -442,7 +442,7 @@ Browser/WebDriver에서 직접 읽은 runtime 상태를 `planner_v2` 입력으�
 - 슬롯이 부족하면 판매가 가능한 항목을 팔지, 구매를 포기할지 Compute 판단으로 결정하고 로그에 남긴다.
 - 리롤은 무료/할인 조건이 화면에 보일 때 우선 사용하되, S1~S8 클리어 안정성을 해치지 않는 선에서만 사용한다.
 
-세부 id별 구매/판매 가중치는 이 문서의 “현재 구현/정책 요약”을 source로 삼고, 실제 값은 `integration_test/competition_full_play_bot_test.dart`의 bot score 함수와 함께 검증한다.
+세부 id별 구매/판매 가중치는 이 문서의 “현재 구현/정책 요약”을 source로 삼고, 실제 값은 `integration_test/full_run_bot_test.dart`의 bot score 함수와 함께 검증한다.
 
 ## 4. Scene 상태 기계
 
@@ -510,9 +510,9 @@ Full-play bot run
 Full-play bot checkpoint-resume verification
 - date: 2026-05-08
 - commit: 9262e6d Stabilize contest full run bot strategy
-- runner: flutter drive integration_test/competition_full_play_bot_test.dart on Chrome
+- runner: flutter drive integration_test/full_run_bot_test.dart on Chrome
 - result: pass
-- final log: /tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log
+- final log: /tmp/rummipoker_full_run_bot/resume_s8_boss_final_pass/10_full_run_bot.log
 - reached stage: S8 boss run complete
 - market/item evidence:
   - S8 market: bought Item
@@ -529,9 +529,9 @@ Full-play bot checkpoint-resume verification
 Full-play bot latest regression baseline
 - date: 2026-05-09
 - commit: 18f0b53 Tune boss retry deck scoring
-- runner: tools/contest_full_run_bot.sh --resume-active-run on Chrome
+- runner: tools/full_run_bot.sh --resume-active-run on Chrome
 - result: fail/timeout, bot paused
-- final log: /tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log
+- final log: /tmp/rummipoker_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_full_run_bot.log
 - reached stage:
   - S8 big clear, S8 boss retry 2
 - S8 big evidence:
@@ -574,6 +574,6 @@ Full-play bot latest regression baseline
 4. bot 정책이 성장한 족보 점수와 플러시/스트레이트 장기 성장 가치를 평가하도록 동기화한다.
 5. `tools/prototype_submission_smoke.sh` 또는 동등한 analyze/test/build로 최신 후보를 만든다.
 6. 최신 build 또는 Flutter web-server URL을 Browser/WebDriver로 열고 console/trace 수집을 시작한다.
-7. `contest_full_run_bot`을 S8 boss checkpoint-resume부터 먼저 재검증하고, 통과하면 단일 fresh full-run 회귀를 실행한다.
+7. `full_run_bot`을 S8 boss checkpoint-resume부터 먼저 재검증하고, 통과하면 단일 fresh full-run 회귀를 실행한다.
 8. S8 boss clear 후 보상, 새 run 복귀, 도감 반영을 확인한다.
-9. console error/warn 0건과 실행 로그를 competition checklist에 반영한다.
+9. console error/warn 0건과 실행 로그를 submission checklist에 반영한다.

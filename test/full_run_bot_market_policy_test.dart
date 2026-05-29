@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 
-import '../integration_test/competition_bot_market_policy.dart';
+import '../integration_test/full_run_bot_market_policy.dart';
 
 void main() {
-  group('contestFullRunBotJesterScore', () {
+  group('fullRunBotJesterScore', () {
     late RummiJesterCatalog catalog;
 
     setUpAll(() {
@@ -21,8 +21,8 @@ void main() {
       final drollJester = catalog.findById('droll_jester')!;
 
       expect(
-        contestFullRunBotJesterScore(drollJester, stage: 8),
-        greaterThan(contestFullRunBotJesterScore(rideTheBus, stage: 8)),
+        fullRunBotJesterScore(drollJester, stage: 8),
+        greaterThan(fullRunBotJesterScore(rideTheBus, stage: 8)),
       );
     });
 
@@ -33,8 +33,8 @@ void main() {
         final gluttonousJester = catalog.findById('gluttonous_jester')!;
 
         expect(
-          contestFullRunBotJesterScore(gluttonousJester, stage: 7),
-          greaterThan(contestFullRunBotJesterScore(rideTheBus, stage: 7)),
+          fullRunBotJesterScore(gluttonousJester, stage: 7),
+          greaterThan(fullRunBotJesterScore(rideTheBus, stage: 7)),
         );
       },
     );
@@ -44,8 +44,8 @@ void main() {
       final drollJester = catalog.findById('droll_jester')!;
 
       expect(
-        contestFullRunBotJesterScore(drollJester, stage: 8),
-        greaterThan(contestFullRunBotJesterScore(cleverJester, stage: 8)),
+        fullRunBotJesterScore(drollJester, stage: 8),
+        greaterThan(fullRunBotJesterScore(cleverJester, stage: 8)),
       );
     });
 
@@ -56,25 +56,25 @@ void main() {
         final drollJester = catalog.findById('droll_jester')!;
 
         expect(
-          contestFullRunBotJesterScore(rideTheBus, stage: 8, stateValue: 35),
-          greaterThan(contestFullRunBotJesterScore(drollJester, stage: 8)),
+          fullRunBotJesterScore(rideTheBus, stage: 8, stateValue: 35),
+          greaterThan(fullRunBotJesterScore(drollJester, stage: 8)),
         );
       },
     );
 
-    test('prioritizes flush scoring for the post-contest bot policy', () {
+    test('prioritizes flush scoring for the full-run bot policy', () {
       final drollJester = catalog.findById('droll_jester')!;
       final jollyJester = catalog.findById('jolly_jester')!;
 
       expect(drollJester.conditionType, 'flush');
       expect(
-        contestFullRunBotJesterScore(drollJester, stage: 7),
-        greaterThan(contestFullRunBotJesterScore(jollyJester, stage: 7)),
+        fullRunBotJesterScore(drollJester, stage: 7),
+        greaterThan(fullRunBotJesterScore(jollyJester, stage: 7)),
       );
     });
   });
 
-  group('contestFullRunBotItemScore', () {
+  group('fullRunBotItemScore', () {
     late ItemCatalog catalog;
 
     setUpAll(() {
@@ -89,8 +89,8 @@ void main() {
 
       expect(straightStudy.placement, ItemPlacement.inventory);
       expect(
-        contestFullRunBotItemScore(straightStudy, stage: 6),
-        greaterThan(contestFullRunBotItemScore(boardLift, stage: 6)),
+        fullRunBotItemScore(straightStudy, stage: 6),
+        greaterThan(fullRunBotItemScore(boardLift, stage: 6)),
       );
     });
 
@@ -101,8 +101,8 @@ void main() {
         final deckNeedle = catalog.findById('deck_needle')!;
 
         expect(
-          contestFullRunBotItemScore(flushStudy, stage: 8),
-          greaterThan(contestFullRunBotItemScore(deckNeedle, stage: 8)),
+          fullRunBotItemScore(flushStudy, stage: 8),
+          greaterThan(fullRunBotItemScore(deckNeedle, stage: 8)),
         );
       },
     );
@@ -112,8 +112,8 @@ void main() {
       final straightStudy = catalog.findById('straight_study')!;
 
       expect(
-        contestFullRunBotItemScore(flushStudy, stage: 7),
-        greaterThan(contestFullRunBotItemScore(straightStudy, stage: 7)),
+        fullRunBotItemScore(flushStudy, stage: 7),
+        greaterThan(fullRunBotItemScore(straightStudy, stage: 7)),
       );
     });
   });

@@ -1,11 +1,11 @@
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 
-/// 공모전 풀런봇의 상점 구매/교체 판단 점수.
+/// 풀런봇의 상점 구매/교체 판단 점수.
 ///
 /// 후반 고점수 구간에서도 좁은 단일 족보 보너스만 보고 누적형 카드를
 /// 버리지 않는다. 실제 손패/보드 흐름에서 여러 족보가 이어지는지가 더 중요하다.
-int contestFullRunBotJesterScore(
+int fullRunBotJesterScore(
   RummiJesterCard card, {
   int stateValue = 0,
   int stage = 1,
@@ -109,11 +109,11 @@ int contestFullRunBotJesterScore(
   return score;
 }
 
-/// 공모전 풀런봇의 Item 구매 판단 점수.
+/// 풀런봇의 Item 구매 판단 점수.
 ///
 /// Q-Slot 증거 확보용 구매에 갇히지 않고, 후반 성장축이 되는 Tool/Gear도
 /// 같은 후보군에서 평가한다.
-int contestFullRunBotItemScore(ItemDefinition item, {required int stage}) {
+int fullRunBotItemScore(ItemDefinition item, {required int stage}) {
   var score = switch (item.rarity) {
     ItemRarity.legendary => 900,
     ItemRarity.rare => 700,

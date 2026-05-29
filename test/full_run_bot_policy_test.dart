@@ -8,35 +8,35 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
-import '../integration_test/competition_bot_policy.dart';
+import '../integration_test/full_run_bot_policy.dart';
 
 void main() {
   test('battle item use must support the planned battle action', () {
     expect(
-      contestBattleItemOpSupportsPlannedAction(
+      fullRunBattleItemOpSupportsPlannedAction(
         'add_board_move',
-        CompetitionBattleActionType.moveBoard,
+        FullRunBattleActionType.moveBoard,
       ),
       isTrue,
     );
     expect(
-      contestBattleItemOpSupportsPlannedAction(
+      fullRunBattleItemOpSupportsPlannedAction(
         'add_board_move',
-        CompetitionBattleActionType.draw,
+        FullRunBattleActionType.draw,
       ),
       isFalse,
     );
     expect(
-      contestBattleItemOpSupportsPlannedAction(
+      fullRunBattleItemOpSupportsPlannedAction(
         'mark_next_board_move_bonus',
-        CompetitionBattleActionType.moveBoard,
+        FullRunBattleActionType.moveBoard,
       ),
       isTrue,
     );
     expect(
-      contestBattleItemOpSupportsPlannedAction(
+      fullRunBattleItemOpSupportsPlannedAction(
         'mark_next_board_move_bonus',
-        CompetitionBattleActionType.draw,
+        FullRunBattleActionType.draw,
       ),
       isFalse,
     );
@@ -87,13 +87,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+    expect(action.type, isNot(FullRunBattleActionType.confirm));
   });
 
   test('high target waits instead of taking a small early confirm', () {
@@ -140,13 +140,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+    expect(action.type, isNot(FullRunBattleActionType.confirm));
   });
 
   test('growth score can make a single line confirm clear the target', () {
@@ -193,7 +193,7 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(
@@ -201,7 +201,7 @@ void main() {
       ),
     );
 
-    expect(action.type, CompetitionBattleActionType.confirm);
+    expect(action.type, FullRunBattleActionType.confirm);
   });
 
   test('placement policy prefers building same-color flush lines', () {
@@ -243,13 +243,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().bestPlacementForTest(
+    final action = const FullRunPlannerV2Policy().bestPlacementForTest(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action?.type, CompetitionBattleActionType.place);
+    expect(action?.type, FullRunBattleActionType.place);
     expect(action?.handIndex, 0);
     expect(action?.row, 0);
   });
@@ -293,13 +293,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().bestPlacementForTest(
+    final action = const FullRunPlannerV2Policy().bestPlacementForTest(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action?.type, CompetitionBattleActionType.place);
+    expect(action?.type, FullRunBattleActionType.place);
     expect(action?.handIndex, 0);
     expect((action?.row, action?.col), anyOf(const (0, 2), const (1, 1)));
   });
@@ -328,7 +328,7 @@ void main() {
       eliminated: const [],
     );
 
-    const policy = CompetitionPlannerV2Policy();
+    const policy = FullRunPlannerV2Policy();
 
     expect(policy.isBattleTargetLateForTest(early), isFalse);
     expect(policy.isBattleTargetLateForTest(late), isTrue);
@@ -379,13 +379,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, CompetitionBattleActionType.confirm);
+    expect(action.type, FullRunBattleActionType.confirm);
   });
 
   test('retry recovery full board does not force a low confirm', () {
@@ -433,7 +433,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
         ).chooseAction(
           session,
@@ -441,7 +441,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+    expect(action.type, isNot(FullRunBattleActionType.confirm));
   });
 
   test('early full board high target confirms instead of utility discard', () {
@@ -489,7 +489,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
         ).chooseAction(
           session,
@@ -497,7 +497,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, CompetitionBattleActionType.confirm);
+    expect(action.type, FullRunBattleActionType.confirm);
   });
 
   test('retry recovery delays a low value high target two-line confirm', () {
@@ -545,7 +545,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
         ).chooseAction(
           session,
@@ -553,18 +553,18 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+    expect(action.type, isNot(FullRunBattleActionType.confirm));
   });
 
   test('second retry raises the medium three-line confirm threshold', () {
     expect(
-      const CompetitionPlannerV2Policy(
+      const FullRunPlannerV2Policy(
         enableRetryRecoveryConfirmDelay: true,
       ).isHighTargetRecoveryBundleForTest(score: 266, lineCount: 3),
       isTrue,
     );
     expect(
-      const CompetitionPlannerV2Policy(
+      const FullRunPlannerV2Policy(
         enableRetryRecoveryConfirmDelay: true,
         retryRecoveryAttempt: 2,
       ).isHighTargetRecoveryBundleForTest(score: 266, lineCount: 3),
@@ -618,7 +618,7 @@ void main() {
     );
 
     final secondRecoveryAction =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
         ).chooseAction(
@@ -627,7 +627,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(secondRecoveryAction.type, CompetitionBattleActionType.draw);
+    expect(secondRecoveryAction.type, FullRunBattleActionType.draw);
   });
 
   test('second retry boss places before a medium confirm if hand remains', () {
@@ -676,7 +676,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
         ).chooseAction(
@@ -685,7 +685,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+    expect(action.type, isNot(FullRunBattleActionType.confirm));
   });
 
   test('second retry boss draws before a medium confirm if deck remains', () {
@@ -734,7 +734,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
         ).chooseAction(
@@ -743,7 +743,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, CompetitionBattleActionType.draw);
+    expect(action.type, FullRunBattleActionType.draw);
   });
 
   test('full board can discard to set up discard move place combo', () {
@@ -792,13 +792,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseScoringBoardDiscard(
+    final action = const FullRunPlannerV2Policy().chooseScoringBoardDiscard(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action?.type, CompetitionBattleActionType.discardBoard);
+    expect(action?.type, FullRunBattleActionType.discardBoard);
   });
 
   test('near full board continues discard move combo before placing', () {
@@ -846,13 +846,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, CompetitionBattleActionType.moveBoard);
+    expect(action.type, FullRunBattleActionType.moveBoard);
   });
 
   test(
@@ -907,7 +907,7 @@ void main() {
       );
 
       final action =
-          const CompetitionPlannerV2Policy(
+          const FullRunPlannerV2Policy(
             enableRetryRecoveryConfirmDelay: true,
           ).chooseAction(
             session,
@@ -915,7 +915,7 @@ void main() {
             runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
           );
 
-      expect(action.type, CompetitionBattleActionType.discardBoard);
+      expect(action.type, FullRunBattleActionType.discardBoard);
     },
   );
 
@@ -963,13 +963,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, CompetitionBattleActionType.place);
+    expect(action.type, FullRunBattleActionType.place);
     expect(action.handIndex, 0);
   });
 
@@ -1019,13 +1019,13 @@ void main() {
         eliminated: const [],
       );
 
-      final action = const CompetitionPlannerV2Policy().chooseAction(
+      final action = const FullRunPlannerV2Policy().chooseAction(
         session,
         jesters: const [],
         runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
       );
 
-      expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+      expect(action.type, isNot(FullRunBattleActionType.moveBoard));
     },
   );
 
@@ -1077,13 +1077,13 @@ void main() {
       ],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+    expect(action.type, isNot(FullRunBattleActionType.moveBoard));
   });
 
   test('board move is not repeated after placement clears undo history', () {
@@ -1131,13 +1131,13 @@ void main() {
       boardMoveHistory: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+    expect(action.type, isNot(FullRunBattleActionType.moveBoard));
   });
 
   test(
@@ -1192,7 +1192,7 @@ void main() {
       );
 
       final action =
-          const CompetitionPlannerV2Policy(
+          const FullRunPlannerV2Policy(
             enableRetryRecoveryConfirmDelay: true,
             retryRecoveryAttempt: 2,
           ).chooseAction(
@@ -1201,7 +1201,7 @@ void main() {
             runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
           );
 
-      expect(action.type, CompetitionBattleActionType.place);
+      expect(action.type, FullRunBattleActionType.place);
       expect(action.handIndex, 0);
     },
   );
@@ -1272,7 +1272,7 @@ void main() {
       );
 
       final action =
-          const CompetitionPlannerV2Policy(
+          const FullRunPlannerV2Policy(
             enableRetryRecoveryConfirmDelay: true,
             retryRecoveryAttempt: 2,
           ).chooseAction(
@@ -1281,7 +1281,7 @@ void main() {
             runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
           );
 
-      expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+      expect(action.type, isNot(FullRunBattleActionType.moveBoard));
     },
   );
 
@@ -1331,7 +1331,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
         ).chooseAction(
           session,
@@ -1339,7 +1339,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+    expect(action.type, isNot(FullRunBattleActionType.confirm));
   });
 
   test('retry recovery boss delays a low score three-line confirm', () {
@@ -1388,7 +1388,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
         ).chooseAction(
           session,
@@ -1396,7 +1396,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, isNot(CompetitionBattleActionType.confirm));
+    expect(action.type, isNot(FullRunBattleActionType.confirm));
   });
 
   test('retry recovery boss skips a low value repeated board move', () {
@@ -1446,7 +1446,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
         ).chooseAction(
           session,
@@ -1454,7 +1454,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+    expect(action.type, isNot(FullRunBattleActionType.moveBoard));
   });
 
   test('retry recovery confirms instead of burning late hand discards', () {
@@ -1507,7 +1507,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 4,
         ).chooseAction(
@@ -1516,7 +1516,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, CompetitionBattleActionType.confirm);
+    expect(action.type, FullRunBattleActionType.confirm);
   });
 
   test(
@@ -1568,7 +1568,7 @@ void main() {
       );
 
       final action =
-          const CompetitionPlannerV2Policy(
+          const FullRunPlannerV2Policy(
             enableRetryRecoveryConfirmDelay: true,
             retryRecoveryAttempt: 3,
           ).chooseAction(
@@ -1577,7 +1577,7 @@ void main() {
             runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
           );
 
-      expect(action.type, CompetitionBattleActionType.discardBoard);
+      expect(action.type, FullRunBattleActionType.discardBoard);
     },
   );
 
@@ -1627,7 +1627,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
         ).chooseAction(
@@ -1636,7 +1636,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, CompetitionBattleActionType.discardBoard);
+    expect(action.type, FullRunBattleActionType.discardBoard);
     expect(action.row, isNotNull);
     expect(action.col, isNotNull);
     expect(session.board.cellAt(action.row!, action.col!), isNotNull);
@@ -1686,13 +1686,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: [_jester('mystic_summit')],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.discardHand));
+    expect(action.type, isNot(FullRunBattleActionType.discardHand));
   });
 
   test('early low target keeps hand discard even near a full board', () {
@@ -1739,13 +1739,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: [_jester('mystic_summit')],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.discardHand));
+    expect(action.type, isNot(FullRunBattleActionType.discardHand));
   });
 
   test('early low target does not spend board move for evidence', () {
@@ -1792,13 +1792,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.moveBoard));
+    expect(action.type, isNot(FullRunBattleActionType.moveBoard));
   });
 
   test('early low target boss can move for duplicate confirm setup', () {
@@ -1846,13 +1846,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, CompetitionBattleActionType.moveBoard);
+    expect(action.type, FullRunBattleActionType.moveBoard);
   });
 
   test('early low target does not spend board discard for evidence', () {
@@ -1899,13 +1899,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: [_jester('mystic_summit')],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, isNot(CompetitionBattleActionType.discardBoard));
+    expect(action.type, isNot(FullRunBattleActionType.discardBoard));
   });
 
   test(
@@ -1955,13 +1955,13 @@ void main() {
         eliminated: const [],
       );
 
-      final action = const CompetitionPlannerV2Policy().chooseAction(
+      final action = const FullRunPlannerV2Policy().chooseAction(
         session,
         jesters: const [],
         runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
       );
 
-      expect(action.type, CompetitionBattleActionType.confirm);
+      expect(action.type, FullRunBattleActionType.confirm);
     },
   );
 
@@ -2011,13 +2011,13 @@ void main() {
         eliminated: const [],
       );
 
-      final action = const CompetitionPlannerV2Policy().bestPlacementForTest(
+      final action = const FullRunPlannerV2Policy().bestPlacementForTest(
         session,
         jesters: const [],
         runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
       );
 
-      expect(action?.type, CompetitionBattleActionType.place);
+      expect(action?.type, FullRunBattleActionType.place);
       expect(action?.row, 0);
       expect(action?.col, 4);
     },
@@ -2073,7 +2073,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
         ).bestPlacementForTest(
@@ -2082,7 +2082,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action?.type, CompetitionBattleActionType.place);
+    expect(action?.type, FullRunBattleActionType.place);
     expect(action?.row, 0);
     expect(action?.col, 4);
   });
@@ -2112,7 +2112,7 @@ void main() {
       eliminated: const [],
     );
 
-    final policy = const CompetitionPlannerV2Policy(
+    final policy = const FullRunPlannerV2Policy(
       enableRetryRecoveryConfirmDelay: true,
       retryRecoveryAttempt: 2,
     );
@@ -2128,7 +2128,7 @@ void main() {
   });
 
   test('boss retry rejects weak four-line confirms', () {
-    final policy = const CompetitionPlannerV2Policy(
+    final policy = const FullRunPlannerV2Policy(
       enableRetryRecoveryConfirmDelay: true,
       retryRecoveryAttempt: 2,
     );
@@ -2191,28 +2191,28 @@ void main() {
       eliminated: const [],
     );
 
-    final firstAction = const CompetitionPlannerV2Policy().bestPlacementForTest(
+    final firstAction = const FullRunPlannerV2Policy().bestPlacementForTest(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
     final secondRetryAction =
-        CompetitionPlannerV2Policy(
+        FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
-          avoidedActionRouteKeys: {contestBattleActionRouteKey(firstAction!)},
+          avoidedActionRouteKeys: {fullRunBattleActionRouteKey(firstAction!)},
         ).bestPlacementForTest(
           session,
           jesters: const [],
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
     final thirdRetryAction =
-        CompetitionPlannerV2Policy(
+        FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 3,
           avoidedActionRouteKeys: {
-            contestBattleActionRouteKey(firstAction),
-            contestBattleActionRouteKey(secondRetryAction!),
+            fullRunBattleActionRouteKey(firstAction),
+            fullRunBattleActionRouteKey(secondRetryAction!),
           },
         ).bestPlacementForTest(
           session,
@@ -2220,19 +2220,19 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(secondRetryAction.type, CompetitionBattleActionType.place);
+    expect(secondRetryAction.type, FullRunBattleActionType.place);
     expect(
-      contestBattleActionRouteKey(secondRetryAction),
-      isNot(contestBattleActionRouteKey(firstAction)),
+      fullRunBattleActionRouteKey(secondRetryAction),
+      isNot(fullRunBattleActionRouteKey(firstAction)),
     );
-    expect(thirdRetryAction?.type, CompetitionBattleActionType.place);
+    expect(thirdRetryAction?.type, FullRunBattleActionType.place);
     expect(
-      contestBattleActionRouteKey(thirdRetryAction!),
-      isNot(contestBattleActionRouteKey(firstAction)),
+      fullRunBattleActionRouteKey(thirdRetryAction!),
+      isNot(fullRunBattleActionRouteKey(firstAction)),
     );
     expect(
-      contestBattleActionRouteKey(thirdRetryAction),
-      isNot(contestBattleActionRouteKey(secondRetryAction)),
+      fullRunBattleActionRouteKey(thirdRetryAction),
+      isNot(fullRunBattleActionRouteKey(secondRetryAction)),
     );
   });
 
@@ -2257,13 +2257,13 @@ void main() {
       eliminated: const [],
     );
 
-    final action = const CompetitionPlannerV2Policy().chooseAction(
+    final action = const FullRunPlannerV2Policy().chooseAction(
       session,
       jesters: const [],
       runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     );
 
-    expect(action.type, CompetitionBattleActionType.draw);
+    expect(action.type, FullRunBattleActionType.draw);
   });
 
   test('late low deck retry uses board move before spending the hand tile', () {
@@ -2319,7 +2319,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
         ).chooseAction(
@@ -2328,7 +2328,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, CompetitionBattleActionType.moveBoard);
+    expect(action.type, FullRunBattleActionType.moveBoard);
   });
 
   test('late retry starts using board move before the final six cards', () {
@@ -2390,7 +2390,7 @@ void main() {
     );
 
     final action =
-        const CompetitionPlannerV2Policy(
+        const FullRunPlannerV2Policy(
           enableRetryRecoveryConfirmDelay: true,
           retryRecoveryAttempt: 2,
         ).chooseAction(
@@ -2399,7 +2399,7 @@ void main() {
           runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
         );
 
-    expect(action.type, CompetitionBattleActionType.moveBoard);
+    expect(action.type, FullRunBattleActionType.moveBoard);
   });
 }
 

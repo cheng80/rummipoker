@@ -6,17 +6,17 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 OUTPUT_DIR=""
-SEED="${CONTEST_BOT_SEED:-91460}"
-MAX_BATTLE_ACTIONS="${CONTEST_BOT_MAX_BATTLE_ACTIONS:-420}"
-MAX_GAME_OVER_RETRIES="${CONTEST_BOT_MAX_GAME_OVER_RETRIES:-24}"
-ACTION_DELAY_MS="${CONTEST_BOT_ACTION_DELAY_MS:-250}"
+SEED="${FULL_RUN_BOT_SEED:-91460}"
+MAX_BATTLE_ACTIONS="${FULL_RUN_BOT_MAX_BATTLE_ACTIONS:-420}"
+MAX_GAME_OVER_RETRIES="${FULL_RUN_BOT_MAX_GAME_OVER_RETRIES:-24}"
+ACTION_DELAY_MS="${FULL_RUN_BOT_ACTION_DELAY_MS:-250}"
 TARGET_STAGE=1
 TARGET_TIER="small"
 TARGET_SCENE="cashOut"
 REQUIRED_EVIDENCE=""
 CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
-WEB_PORT="${CONTEST_BOT_WEB_PORT:-7357}"
-BROWSER_PROFILE_DIR="${CONTEST_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_contest_bot/chrome_profile}"
+WEB_PORT="${FULL_RUN_BOT_WEB_PORT:-7357}"
+BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_run_bot/chrome_profile}"
 RESUME_ACTIVE_RUN=false
 PUB_GET=1
 CHROMEDRIVER_PID=""
@@ -24,7 +24,7 @@ CHROMEDRIVER_PID=""
 usage() {
   cat <<'EOF'
 Usage:
-  tools/contest_sub_run_bot.sh [options]
+  tools/sub_run_bot.sh [options]
 
 Options:
   --seed <number>             Run seed. Default: 91460.
@@ -38,7 +38,7 @@ Options:
   --required-evidence <name>  market_purchase | item_purchase | item_use.
   --resume-active-run         Load the saved active run from the checkpoint env file.
   --browser-profile-dir <p>   Directory used for bot checkpoint env files.
-                              Default: /tmp/rummipoker_contest_bot/chrome_profile.
+                              Default: /tmp/rummipoker_full_run_bot/chrome_profile.
   --web-port <number>         Fixed Flutter web port for persisted browser storage.
                               Default: 7357.
   --output-dir <path>         Directory for logs.
@@ -118,7 +118,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$OUTPUT_DIR" ]]; then
-  OUTPUT_DIR="/tmp/rummipoker_contest_sub_run_bot/$(date +%Y%m%d_%H%M%S)"
+  OUTPUT_DIR="/tmp/rummipoker_full_run_sub_run_bot/$(date +%Y%m%d_%H%M%S)"
 fi
 mkdir -p "$OUTPUT_DIR"
 
@@ -128,7 +128,7 @@ port_is_open() {
 
 cleanup_bot_processes() {
   [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill "$CHROMEDRIVER_PID" 2>/dev/null || true
-  pkill -f 'flutter drive.*integration_test/competition_full_play_bot_test.dart' \
+  pkill -f 'flutter drive.*integration_test/full_run_bot_test.dart' \
     2>/dev/null || true
   pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
   pkill -f 'chromedriver.*--port='"$CHROMEDRIVER_PORT" 2>/dev/null || true
@@ -222,7 +222,7 @@ run_flutter_drive_and_capture() {
       if kill -0 "$run_pid" 2>/dev/null; then
         echo "Detected pass; cleaning up lingering flutter drive session." \
           | tee -a "$log_file"
-        pkill -f 'flutter drive.*integration_test/competition_full_play_bot_test.dart' \
+        pkill -f 'flutter drive.*integration_test/full_run_bot_test.dart' \
           2>/dev/null || true
         pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
         cleanup_bot_processes
@@ -249,13 +249,13 @@ run_flutter_drive_and_capture() {
 persist_checkpoint() {
   local log_file="$1"
   local checkpoint
-  checkpoint="$(grep -a 'CONTEST_BOT_CHECKPOINT_B64:' "$log_file" 2>/dev/null \
-    | tail -1 | sed 's/^.*CONTEST_BOT_CHECKPOINT_B64://')"
+  checkpoint="$(grep -a 'FULL_RUN_BOT_CHECKPOINT_B64:' "$log_file" 2>/dev/null \
+    | tail -1 | sed 's/^.*FULL_RUN_BOT_CHECKPOINT_B64://')"
   if [[ -z "$checkpoint" ]]; then
     return
   fi
   mkdir -p "$BROWSER_PROFILE_DIR"
-  printf 'CONTEST_BOT_RESUME_SAVE_B64=%s\n' "$checkpoint" \
+  printf 'FULL_RUN_BOT_RESUME_SAVE_B64=%s\n' "$checkpoint" \
     >"$BROWSER_PROFILE_DIR/latest_checkpoint.env"
 }
 
@@ -271,25 +271,25 @@ if [[ "$PUB_GET" -eq 1 ]]; then
   run_and_capture "$OUTPUT_DIR/00_pub_get.log" flutter pub get
 fi
 
-run_flutter_drive_and_capture "$OUTPUT_DIR/10_contest_sub_run_bot.log" \
+run_flutter_drive_and_capture "$OUTPUT_DIR/10_sub_run_bot.log" \
   flutter drive \
     --driver=test_driver/integration_test.dart \
-    --target=integration_test/competition_full_play_bot_test.dart \
+    --target=integration_test/full_run_bot_test.dart \
     -d chrome \
     --web-port="$WEB_PORT" \
     --driver-port="$CHROMEDRIVER_PORT" \
     --no-keep-app-running \
     ${RESUME_DEFINE_ARG:+"$RESUME_DEFINE_ARG"} \
-    --dart-define=CONTEST_BOT_MODE=sub \
-    --dart-define=CONTEST_BOT_SEED="$SEED" \
-    --dart-define=CONTEST_BOT_MAX_BATTLE_ACTIONS="$MAX_BATTLE_ACTIONS" \
-    --dart-define=CONTEST_BOT_MAX_GAME_OVER_RETRIES="$MAX_GAME_OVER_RETRIES" \
-    --dart-define=CONTEST_BOT_ACTION_DELAY_MS="$ACTION_DELAY_MS" \
-    --dart-define=CONTEST_BOT_RESUME_ACTIVE_RUN="$RESUME_ACTIVE_RUN" \
-    --dart-define=CONTEST_SUB_TARGET_STAGE="$TARGET_STAGE" \
-    --dart-define=CONTEST_SUB_TARGET_TIER="$TARGET_TIER" \
-    --dart-define=CONTEST_SUB_TARGET_SCENE="$TARGET_SCENE" \
-    --dart-define=CONTEST_SUB_REQUIRED_EVIDENCE="$REQUIRED_EVIDENCE"
+    --dart-define=FULL_RUN_BOT_MODE=sub \
+    --dart-define=FULL_RUN_BOT_SEED="$SEED" \
+    --dart-define=FULL_RUN_BOT_MAX_BATTLE_ACTIONS="$MAX_BATTLE_ACTIONS" \
+    --dart-define=FULL_RUN_BOT_MAX_GAME_OVER_RETRIES="$MAX_GAME_OVER_RETRIES" \
+    --dart-define=FULL_RUN_BOT_ACTION_DELAY_MS="$ACTION_DELAY_MS" \
+    --dart-define=FULL_RUN_BOT_RESUME_ACTIVE_RUN="$RESUME_ACTIVE_RUN" \
+    --dart-define=FULL_RUN_BOT_TARGET_STAGE="$TARGET_STAGE" \
+    --dart-define=FULL_RUN_BOT_TARGET_TIER="$TARGET_TIER" \
+    --dart-define=FULL_RUN_BOT_TARGET_SCENE="$TARGET_SCENE" \
+    --dart-define=FULL_RUN_BOT_REQUIRED_EVIDENCE="$REQUIRED_EVIDENCE"
 
-echo "contest_sub_run_bot complete."
+echo "sub_run_bot complete."
 echo "Logs: $OUTPUT_DIR"

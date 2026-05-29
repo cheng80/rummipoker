@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:rummipoker/main.dart' as app;
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_catalog_loader.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -30,25 +32,26 @@ import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_tile_choice_dialog.dart';
 
-import 'competition_bot_policy.dart';
-import 'competition_bot_market_policy.dart';
+import 'full_run_bot_policy.dart';
+import 'full_run_bot_market_policy.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'competition bot runs through real browser UI',
+    'full-run bot runs through real browser UI',
     (tester) async {
       binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
       binding.shouldPropagateDevicePointerEvents = true;
 
-      final bot = _CompetitionFullPlayBot(
+      final bot = _FullRunBot(
         tester: tester,
-        config: _ContestBotConfig.fromEnvironment(),
+        config: _FullRunBotConfig.fromEnvironment(),
       );
       try {
         await bot.run();
       } finally {
+        await bot.flushTrace();
         binding.shouldPropagateDevicePointerEvents = false;
       }
     },
@@ -57,14 +60,14 @@ void main() {
   );
 }
 
-enum _ContestBotMode { full, sub }
+enum _FullRunBotMode { full, sub }
 
-enum _ContestBotScene { stationSelect, battle, cashOut, market, runComplete }
+enum _FullRunBotScene { stationSelect, battle, cashOut, market, runComplete }
 
-enum _ContestTutorialKind { battle, market }
+enum _FullRunTutorialKind { battle, market }
 
-class _ContestBotConfig {
-  const _ContestBotConfig({
+class _FullRunBotConfig {
+  const _FullRunBotConfig({
     required this.mode,
     required this.seed,
     required this.difficultyName,
@@ -80,71 +83,73 @@ class _ContestBotConfig {
     required this.targetTierName,
     required this.targetScene,
     required this.requiredEvidence,
+    required this.tracePath,
   });
 
-  factory _ContestBotConfig.fromEnvironment() {
+  factory _FullRunBotConfig.fromEnvironment() {
     const modeValue = String.fromEnvironment(
-      'CONTEST_BOT_MODE',
+      'FULL_RUN_BOT_MODE',
       defaultValue: 'full',
     );
-    return _ContestBotConfig(
-      mode: modeValue == 'sub' ? _ContestBotMode.sub : _ContestBotMode.full,
-      seed: const int.fromEnvironment('CONTEST_BOT_SEED', defaultValue: 91460),
+    return _FullRunBotConfig(
+      mode: modeValue == 'sub' ? _FullRunBotMode.sub : _FullRunBotMode.full,
+      seed: const int.fromEnvironment('FULL_RUN_BOT_SEED', defaultValue: 91460),
       difficultyName: const String.fromEnvironment(
-        'CONTEST_BOT_DIFFICULTY',
+        'FULL_RUN_BOT_DIFFICULTY',
         defaultValue: 'standard',
       ),
       localeName: const String.fromEnvironment(
-        'CONTEST_BOT_LOCALE',
+        'FULL_RUN_BOT_LOCALE',
         defaultValue: 'ko',
       ),
       maxBattleActions: const int.fromEnvironment(
-        'CONTEST_BOT_MAX_BATTLE_ACTIONS',
+        'FULL_RUN_BOT_MAX_BATTLE_ACTIONS',
         defaultValue: 420,
       ),
       maxGameOverRetries: const int.fromEnvironment(
-        'CONTEST_BOT_MAX_GAME_OVER_RETRIES',
+        'FULL_RUN_BOT_MAX_GAME_OVER_RETRIES',
         defaultValue: 24,
       ),
       resumeActiveRun: const bool.fromEnvironment(
-        'CONTEST_BOT_RESUME_ACTIVE_RUN',
+        'FULL_RUN_BOT_RESUME_ACTIVE_RUN',
       ),
       resumeSaveBase64: const String.fromEnvironment(
-        'CONTEST_BOT_RESUME_SAVE_B64',
+        'FULL_RUN_BOT_RESUME_SAVE_B64',
       ),
       challengeCarryoverBase64: const String.fromEnvironment(
-        'CONTEST_BOT_CHALLENGE_CARRYOVER_B64',
+        'FULL_RUN_BOT_CHALLENGE_CARRYOVER_B64',
       ),
       tutorialsAlreadySeen: const bool.fromEnvironment(
-        'CONTEST_BOT_TUTORIALS_ALREADY_SEEN',
+        'FULL_RUN_BOT_TUTORIALS_ALREADY_SEEN',
       ),
       actionDelay: Duration(
         milliseconds: const int.fromEnvironment(
-          'CONTEST_BOT_ACTION_DELAY_MS',
+          'FULL_RUN_BOT_ACTION_DELAY_MS',
           defaultValue: 250,
         ),
       ),
       targetStage: const int.fromEnvironment(
-        'CONTEST_SUB_TARGET_STAGE',
+        'FULL_RUN_BOT_TARGET_STAGE',
         defaultValue: 1,
       ),
       targetTierName: const String.fromEnvironment(
-        'CONTEST_SUB_TARGET_TIER',
+        'FULL_RUN_BOT_TARGET_TIER',
         defaultValue: 'boss',
       ),
       targetScene: _parseScene(
         const String.fromEnvironment(
-          'CONTEST_SUB_TARGET_SCENE',
+          'FULL_RUN_BOT_TARGET_SCENE',
           defaultValue: 'cashOut',
         ),
       ),
       requiredEvidence: const String.fromEnvironment(
-        'CONTEST_SUB_REQUIRED_EVIDENCE',
+        'FULL_RUN_BOT_REQUIRED_EVIDENCE',
       ),
+      tracePath: const String.fromEnvironment('FULL_RUN_BOT_TRACE_PATH'),
     );
   }
 
-  final _ContestBotMode mode;
+  final _FullRunBotMode mode;
   final int seed;
   final String difficultyName;
   final String localeName;
@@ -157,14 +162,16 @@ class _ContestBotConfig {
   final Duration actionDelay;
   final int targetStage;
   final String targetTierName;
-  final _ContestBotScene targetScene;
+  final _FullRunBotScene targetScene;
   final String requiredEvidence;
+  final String tracePath;
 
-  String get logPrefix => mode == _ContestBotMode.full
-      ? 'CONTEST_FULL_RUN_BOT'
-      : 'CONTEST_SUB_RUN_BOT';
+  String get logPrefix =>
+      mode == _FullRunBotMode.full ? 'FULL_RUN_BOT' : 'FULL_RUN_SUB_BOT';
 
-  bool get isFullRun => mode == _ContestBotMode.full;
+  bool get isFullRun => mode == _FullRunBotMode.full;
+
+  bool get traceEnabled => tracePath.isNotEmpty;
 
   bool get needsMarketPurchase =>
       isFullRun || requiredEvidence == 'market_purchase';
@@ -196,13 +203,13 @@ class _ContestBotConfig {
     return stage >= targetStage && tier == targetTier;
   }
 
-  static _ContestBotScene _parseScene(String value) {
+  static _FullRunBotScene _parseScene(String value) {
     return switch (value) {
-      'stationSelect' || 'StationSelect' => _ContestBotScene.stationSelect,
-      'battle' || 'Battle' => _ContestBotScene.battle,
-      'market' || 'Market' => _ContestBotScene.market,
-      'runComplete' || 'RunComplete' => _ContestBotScene.runComplete,
-      _ => _ContestBotScene.cashOut,
+      'stationSelect' || 'StationSelect' => _FullRunBotScene.stationSelect,
+      'battle' || 'Battle' => _FullRunBotScene.battle,
+      'market' || 'Market' => _FullRunBotScene.market,
+      'runComplete' || 'RunComplete' => _FullRunBotScene.runComplete,
+      _ => _FullRunBotScene.cashOut,
     };
   }
 
@@ -228,16 +235,17 @@ class _BattleItemChoice {
 ///
 /// 판단은 `planner_v2`가 맡고, 전투/마켓/정산 진행은 Flutter Chrome 화면의
 /// 버튼과 카드만 눌러 수행한다. debug fixture와 즉시 클리어 경로는 쓰지 않는다.
-class _CompetitionFullPlayBot {
-  _CompetitionFullPlayBot({required this.tester, required this.config});
+class _FullRunBot {
+  _FullRunBot({required this.tester, required this.config});
 
   final WidgetTester tester;
-  final _ContestBotConfig config;
-  final CompetitionPlannerV2Policy battlePolicy =
-      const CompetitionPlannerV2Policy();
-  final CompetitionPlannerV2Policy retryRecoveryBattlePolicy =
-      const CompetitionPlannerV2Policy(enableRetryRecoveryConfirmDelay: true);
+  final _FullRunBotConfig config;
+  final FullRunPlannerV2Policy battlePolicy = const FullRunPlannerV2Policy();
+  final FullRunPlannerV2Policy retryRecoveryBattlePolicy =
+      const FullRunPlannerV2Policy(enableRetryRecoveryConfirmDelay: true);
   final List<String> log = <String>[];
+  final List<Map<String, Object?>> traceRows = <Map<String, Object?>>[];
+  int traceSequence = 0;
   ItemCatalog? itemCatalog;
 
   bool boughtJester = false;
@@ -259,7 +267,7 @@ class _CompetitionFullPlayBot {
     await _startSeededRun();
     _syncEvidenceFromState();
     if (find.text('Station Select').evaluate().isNotEmpty &&
-        _shouldStopAt(scene: _ContestBotScene.stationSelect)) {
+        _shouldStopAt(scene: _FullRunBotScene.stationSelect)) {
       await _finishSubRun('target station select reached');
       return;
     }
@@ -268,7 +276,7 @@ class _CompetitionFullPlayBot {
       final progress = _readGameState().runProgress!;
       await _handleMarket(stage: progress.stageIndex);
       if (find.text('Station Select').evaluate().isNotEmpty &&
-          _shouldStopAt(scene: _ContestBotScene.stationSelect)) {
+          _shouldStopAt(scene: _FullRunBotScene.stationSelect)) {
         await _finishSubRun('target station select reached');
         return;
       }
@@ -291,7 +299,7 @@ class _CompetitionFullPlayBot {
       final stage = runProgress.stageIndex;
 
       if (_shouldStopAt(
-        scene: _ContestBotScene.cashOut,
+        scene: _FullRunBotScene.cashOut,
         stage: stage,
         tier: tier,
       )) {
@@ -302,7 +310,7 @@ class _CompetitionFullPlayBot {
 
       await _handleCashOut(stage: stage, tier: tier);
       if (_shouldStopAt(
-        scene: _ContestBotScene.market,
+        scene: _FullRunBotScene.market,
         stage: stage,
         tier: tier,
       )) {
@@ -324,22 +332,18 @@ class _CompetitionFullPlayBot {
       }
     }
 
-    expect(
-      boughtJester,
-      isTrue,
-      reason: 'contest_full_run_bot must buy a Jester',
-    );
-    expect(boughtItem, isTrue, reason: 'contest_full_run_bot must buy an Item');
+    expect(boughtJester, isTrue, reason: 'full_run_bot must buy a Jester');
+    expect(boughtItem, isTrue, reason: 'full_run_bot must buy an Item');
     if (!config.resumeActiveRun && !config.tutorialsAlreadySeen) {
       expect(
         battleTutorialCompleted,
         isTrue,
-        reason: 'fresh contest_full_run_bot must complete battle tutorial',
+        reason: 'fresh full_run_bot must complete battle tutorial',
       );
       expect(
         marketTutorialCompleted,
         isTrue,
-        reason: 'fresh contest_full_run_bot must complete market tutorial',
+        reason: 'fresh full_run_bot must complete market tutorial',
       );
     }
 
@@ -367,6 +371,10 @@ class _CompetitionFullPlayBot {
       '${config.locale.countryCode == null ? '' : '-${config.locale.countryCode}'} '
       'freshStorage=${!config.resumeActiveRun}',
     );
+    _trace('run_start', {
+      'fresh_storage': !config.resumeActiveRun,
+      'tutorials_already_seen': config.tutorialsAlreadySeen,
+    });
 
     if (config.resumeActiveRun) {
       final restored = await _loadResumeRuntime();
@@ -391,6 +399,13 @@ class _CompetitionFullPlayBot {
           'S${resumeRuntime.runProgress.stageIndex} '
           'tier=${resumeRuntime.runProgress.currentStationBlindTierIndex}',
         );
+        _trace('run_resumed', {
+          'active_scene': resumeRuntime.activeScene.name,
+          'stage': resumeRuntime.runProgress.stageIndex,
+          'tier_index': resumeRuntime.runProgress.currentStationBlindTierIndex,
+          'run_progress': _runProgressTrace(resumeRuntime.runProgress),
+          'session': _sessionTrace(resumeRuntime.session),
+        });
         if (resumeRuntime.activeScene == ActiveRunScene.shop) {
           await _pumpUntilVisible(find.text('다음 Station'));
           return;
@@ -417,6 +432,10 @@ class _CompetitionFullPlayBot {
       'seed=${config.seed} difficulty=${config.difficulty.name} modifier=basic '
       'mode=${config.mode.name} locale=${config.localeName}',
     );
+    _trace('seeded_run_opened', {
+      'modifier': 'basic',
+      'difficulty': config.difficulty.name,
+    });
   }
 
   Future<ActiveRunRuntimeState?> _loadResumeRuntime() async {
@@ -438,13 +457,23 @@ class _CompetitionFullPlayBot {
     await _pumpUntilVisible(find.text('드로우'));
     await _dismissBlockingDialogsIfVisible();
     await _completeTutorialIfVisible(
-      kind: _ContestTutorialKind.battle,
+      kind: _FullRunTutorialKind.battle,
       waitForAppearance:
           !config.resumeActiveRun &&
           !config.tutorialsAlreadySeen &&
           !battleTutorialCompleted,
     );
     await _pumpUntilVisible(find.text('드로우'));
+    final state = _tryReadGameState();
+    final progress = state?.runProgress;
+    if (state?.session != null && progress != null) {
+      _trace('blind_opened', {
+        'stage': progress.stageIndex,
+        'tier': BlindTier.values[progress.currentStationBlindTierIndex].name,
+        'session': _sessionTrace(state!.session!),
+        'run_progress': _runProgressTrace(progress),
+      });
+    }
   }
 
   Future<void> _playCurrentBattle() async {
@@ -454,7 +483,7 @@ class _CompetitionFullPlayBot {
         await _pumpUntilVisible(find.text('드로우'));
         continue;
       }
-      if (await _completeTutorialIfVisible(kind: _ContestTutorialKind.battle)) {
+      if (await _completeTutorialIfVisible(kind: _FullRunTutorialKind.battle)) {
         await _pumpUntilVisible(find.text('드로우'));
         continue;
       }
@@ -488,7 +517,7 @@ class _CompetitionFullPlayBot {
       final tier = BlindTier.values[runProgress.currentStationBlindTierIndex];
       final runtimeSnapshot = runProgress.buildRuntimeSnapshot();
       final policy = gameOverRetries >= 2
-          ? CompetitionPlannerV2Policy(
+          ? FullRunPlannerV2Policy(
               enableRetryRecoveryConfirmDelay: true,
               retryRecoveryAttempt: gameOverRetries,
               avoidedActionRouteKeys: failedBattleActionRouteKeys,
@@ -499,6 +528,8 @@ class _CompetitionFullPlayBot {
         jesters: runProgress.ownedJesters,
         runtimeSnapshot: runtimeSnapshot,
       );
+      final beforeTrace = _battleSnapshotTrace(state);
+      final actionTrace = _battleActionTrace(action, session);
 
       if (await _tryUseBattleItem(plannedAction: action)) {
         await _pumpFor(config.actionDelay + const Duration(seconds: 2));
@@ -510,17 +541,17 @@ class _CompetitionFullPlayBot {
         'score=${session.blind.scoreTowardBlind}/${session.blind.targetScore} '
         '${_battleTraceSuffix(session, runProgress, runtimeSnapshot)}',
       );
-      currentBattleActionRouteKeys.add(contestBattleActionRouteKey(action));
+      currentBattleActionRouteKeys.add(fullRunBattleActionRouteKey(action));
 
       switch (action.type) {
-        case CompetitionBattleActionType.draw:
+        case FullRunBattleActionType.draw:
           final handCount = session.hand.length;
           await _tapTextUntilState(
             '드로우',
             (next) => next.session!.hand.length > handCount,
           );
           break;
-        case CompetitionBattleActionType.place:
+        case FullRunBattleActionType.place:
           final tile = session.hand[action.handIndex!];
           await _tapHandTile(tile.toString());
           await _tapBoardCell(action.row!, action.col!);
@@ -529,7 +560,7 @@ class _CompetitionFullPlayBot {
                 next.session!.board.cellAt(action.row!, action.col!) != null,
           );
           break;
-        case CompetitionBattleActionType.confirm:
+        case FullRunBattleActionType.confirm:
           final score = session.blind.scoreTowardBlind;
           final targetScore = session.blind.targetScore;
           await _tapTextUntilState(
@@ -544,7 +575,7 @@ class _CompetitionFullPlayBot {
           );
           if (_isCashOutReady()) return;
           break;
-        case CompetitionBattleActionType.discardHand:
+        case FullRunBattleActionType.discardHand:
           final tile = session.hand[action.handIndex!];
           final handCount = session.hand.length;
           final handDiscards = session.blind.handDiscardsRemaining;
@@ -557,7 +588,7 @@ class _CompetitionFullPlayBot {
           );
           discardedHand = true;
           break;
-        case CompetitionBattleActionType.discardBoard:
+        case FullRunBattleActionType.discardBoard:
           await _tapBoardCell(action.row!, action.col!);
           await _tapText('보드\n버림');
           await _pumpUntilState(
@@ -566,7 +597,7 @@ class _CompetitionFullPlayBot {
           );
           discardedBoard = true;
           break;
-        case CompetitionBattleActionType.moveBoard:
+        case FullRunBattleActionType.moveBoard:
           await _tapBoardCell(action.row!, action.col!);
           await _tapText('타일\n이동');
           await _tapBoardCell(action.toRow!, action.toCol!);
@@ -580,7 +611,14 @@ class _CompetitionFullPlayBot {
           );
           movedBoard = true;
           break;
-        case CompetitionBattleActionType.stop:
+        case FullRunBattleActionType.stop:
+          _trace('battle_action_stop', {
+            'stage': runProgress.stageIndex,
+            'tier': tier.name,
+            'step': step,
+            'action': actionTrace,
+            'before': beforeTrace,
+          });
           if (await _retryGameOverAfterStop(action.reason ?? 'stop')) {
             step = 0;
             continue;
@@ -588,6 +626,18 @@ class _CompetitionFullPlayBot {
           await _saveBotCheckpoint();
           fail('battle bot stopped: ${action.reason}');
       }
+
+      final afterState = _tryReadGameState();
+      _trace('battle_action', {
+        'stage': runProgress.stageIndex,
+        'tier': tier.name,
+        'step': step,
+        'policy': policy.id,
+        'retry_recovery': gameOverRetries >= 2,
+        'action': actionTrace,
+        'before': beforeTrace,
+        if (afterState != null) 'after': _battleSnapshotTrace(afterState),
+      });
 
       step++;
       await _pumpFor(config.actionDelay);
@@ -617,6 +667,11 @@ class _CompetitionFullPlayBot {
     currentBattleActionRouteKeys.clear();
     await _saveBotCheckpoint();
     _record('game over -> retry $gameOverRetries/${config.maxGameOverRetries}');
+    _trace('game_over_retry', {
+      'retry': gameOverRetries,
+      'max_retries': config.maxGameOverRetries,
+      'failed_route_keys': failedBattleActionRouteKeys.toList(),
+    });
     await tester.tap(retryFinder.last, warnIfMissed: false);
     await _pumpFor(const Duration(milliseconds: 800));
     await _pumpUntilVisible(find.text('드로우'));
@@ -681,6 +736,11 @@ class _CompetitionFullPlayBot {
       _emitChallengeCarryover();
       await _tapText('런 완료');
       _record('S8 boss: run complete');
+      _trace('run_complete', {
+        'stage': stage,
+        'tier': tier.name,
+        'run_progress': _runProgressTrace(_readGameState().runProgress!),
+      });
       await _pumpFor(const Duration(seconds: 3));
       return;
     }
@@ -688,6 +748,11 @@ class _CompetitionFullPlayBot {
     _resetBattleRetryLearning();
     await _tapText('Market으로');
     _record('S$stage ${tier.name}: cashout -> market');
+    _trace('cashout_to_market', {
+      'stage': stage,
+      'tier': tier.name,
+      'run_progress': _runProgressTrace(_readGameState().runProgress!),
+    });
     await _pumpUntilVisible(find.text('다음 Station'));
     await _saveBotCheckpoint();
   }
@@ -724,7 +789,7 @@ class _CompetitionFullPlayBot {
       ),
     );
     final encoded = base64Encode(utf8.encode(jsonEncode(state.toJson())));
-    debugPrint('CONTEST_BOT_CHALLENGE_CARRYOVER_B64:$encoded');
+    debugPrint('FULL_RUN_BOT_CHALLENGE_CARRYOVER_B64:$encoded');
     _record(
       'challenge carryover exported '
       'grown=${state.challengeCarryover?.grownRankCount ?? 0} '
@@ -773,8 +838,9 @@ class _CompetitionFullPlayBot {
   }
 
   Future<void> _handleMarketEvidenceOnly({required int stage}) async {
+    _traceMarketState('market_enter', stage);
     await _completeTutorialIfVisible(
-      kind: _ContestTutorialKind.market,
+      kind: _FullRunTutorialKind.market,
       waitForAppearance:
           !config.resumeActiveRun &&
           !config.tutorialsAlreadySeen &&
@@ -785,6 +851,7 @@ class _CompetitionFullPlayBot {
     await _buyQuickSlotItemsIfPossible(stage);
     await _buyDeckTileIfPossible(stage);
     await _useMarketItemIfVisible(stage);
+    _traceMarketState('market_after_evidence', stage);
   }
 
   void _syncEvidenceFromState() {
@@ -848,7 +915,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _buyJestersIfPossible(int stage) async {
     if (!config.needsMarketPurchase && !config.isFullRun) return;
-    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
+    await _completeTutorialIfVisible(kind: _FullRunTutorialKind.market);
     await _tapTextIfVisible('Jester / Slots');
     await _tapTextIfVisible('Jester');
 
@@ -870,6 +937,14 @@ class _CompetitionFullPlayBot {
       );
       final offer = affordableOffers.first;
       final offerScore = _jesterBotScore(offer.card, stage: stage);
+      _trace('market_decision', {
+        'stage': stage,
+        'lane': 'jester',
+        'decision': 'consider_buy',
+        'offer': _jesterOfferTrace(offer),
+        'offer_score': offerScore,
+        'market': _marketTrace(market),
+      });
       final jesterSlotsFull =
           market.ownedEntries.length >= progress.jesterSlotCapacity();
       if (jesterSlotsFull) {
@@ -897,6 +972,14 @@ class _CompetitionFullPlayBot {
         final canBuyAfterSelling =
             market.gold + weakest.sellPrice >= offer.price;
         if (!canBuyAfterSelling || offerScore <= weakestScore + 40) return;
+        _trace('market_decision', {
+          'stage': stage,
+          'lane': 'jester',
+          'decision': 'sell_for_replacement',
+          'owned': _ownedJesterTrace(weakest),
+          'owned_score': weakestScore,
+          'target_offer': _jesterOfferTrace(offer),
+        });
         if (!await _sellSelectedJesterIfVisible(
           stage,
           contentId: weakest.contentId,
@@ -911,6 +994,7 @@ class _CompetitionFullPlayBot {
       boughtJester = true;
       _record('S$stage market: bought Jester');
       await _pumpFor(const Duration(seconds: 2));
+      _traceMarketState('market_bought_jester', stage);
     }
   }
 
@@ -918,8 +1002,7 @@ class _CompetitionFullPlayBot {
     RummiJesterCard card, {
     int stateValue = 0,
     int stage = 1,
-  }) =>
-      contestFullRunBotJesterScore(card, stateValue: stateValue, stage: stage);
+  }) => fullRunBotJesterScore(card, stateValue: stateValue, stage: stage);
 
   Future<bool> _sellSelectedJesterIfVisible(
     int stage, {
@@ -932,6 +1015,7 @@ class _CompetitionFullPlayBot {
     await _tapText('판매');
     _record('S$stage market: sold Jester for slot');
     await _pumpFor(const Duration(seconds: 2));
+    _traceMarketState('market_sold_jester', stage);
     return true;
   }
 
@@ -965,7 +1049,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _buyDeckTileIfPossible(int stage) async {
     if (!config.needsMarketPurchase && !config.isFullRun) return;
-    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
+    await _completeTutorialIfVisible(kind: _FullRunTutorialKind.market);
     final state = _readGameState();
     final tileOffers =
         _marketViewFromState(
@@ -981,12 +1065,20 @@ class _CompetitionFullPlayBot {
       return a.price.compareTo(b.price);
     });
     final bestOffer = tileOffers.first;
+    _trace('market_decision', {
+      'stage': stage,
+      'lane': 'tile',
+      'decision': 'consider_buy',
+      'offer': _tileOfferTrace(bestOffer),
+      'offer_score': _deckTileBotScore(bestOffer.tile),
+    });
     if (!await _selectTileOfferByPrice(bestOffer.price)) return;
     if (find.text('구매').evaluate().isEmpty) return;
     await _tapText('구매');
     boughtDeckTile = true;
     _record('S$stage market: bought deck tile ${bestOffer.tile.code}');
     await _pumpFor(const Duration(seconds: 2));
+    _traceMarketState('market_bought_deck_tile', stage);
   }
 
   int _deckTileBotScore(Tile tile) {
@@ -1006,7 +1098,7 @@ class _CompetitionFullPlayBot {
 
   Future<void> _buyQuickSlotItemsIfPossible(int stage) async {
     if (!config.needsItemPurchase && !config.isFullRun) return;
-    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
+    await _completeTutorialIfVisible(kind: _FullRunTutorialKind.market);
     await _tapTextIfVisible('Jester / Slots');
     await _tapTextIfVisible('Q-Slot');
 
@@ -1051,23 +1143,25 @@ class _CompetitionFullPlayBot {
         continue;
       }
       affordableOffers.sort(
-        (a, b) => contestFullRunBotItemScore(
+        (a, b) => fullRunBotItemScore(
           b.item,
           stage: stage,
-        ).compareTo(contestFullRunBotItemScore(a.item, stage: stage)),
+        ).compareTo(fullRunBotItemScore(a.item, stage: stage)),
       );
       final bestOffer = affordableOffers.first;
-      final offerScore = contestFullRunBotItemScore(
-        bestOffer.item,
-        stage: stage,
-      );
+      final offerScore = fullRunBotItemScore(bestOffer.item, stage: stage);
+      _trace('market_decision', {
+        'stage': stage,
+        'lane': bestOffer.item.placement.name,
+        'decision': 'consider_buy',
+        'offer': _itemOfferTrace(bestOffer),
+        'offer_score': offerScore,
+        'market': _marketTrace(market),
+      });
       if (quickSlotCount >= quickSlotCapacity) {
         final weakest = _weakestOwnedQuickSlotItem(market, stage: stage);
         if (weakest == null) return;
-        final weakestScore = contestFullRunBotItemScore(
-          weakest.item!,
-          stage: stage,
-        );
+        final weakestScore = fullRunBotItemScore(weakest.item!, stage: stage);
         final canBuyAfterSelling =
             market.gold + weakest.item!.sellPrice >= bestOffer.price;
         if (!canBuyAfterSelling || offerScore <= weakestScore + 25) return;
@@ -1094,6 +1188,7 @@ class _CompetitionFullPlayBot {
       boughtItem = true;
       _record('S$stage market: bought Q-Slot Item');
       await _pumpFor(const Duration(seconds: 2));
+      _traceMarketState('market_bought_item', stage);
     }
   }
 
@@ -1111,6 +1206,11 @@ class _CompetitionFullPlayBot {
     await _tapText('리롤');
     await _pumpFor(const Duration(seconds: 1));
     _record('market: rerolled ${placement.name} Item offers');
+    _trace('market_decision', {
+      'lane': placement.name,
+      'decision': 'reroll_item_offers',
+      'cost': rerollCost,
+    });
     return true;
   }
 
@@ -1161,10 +1261,10 @@ class _CompetitionFullPlayBot {
         .toList();
     if (candidates.isEmpty) return null;
     candidates.sort(
-      (a, b) => contestFullRunBotItemScore(
+      (a, b) => fullRunBotItemScore(
         a.item!,
         stage: stage,
-      ).compareTo(contestFullRunBotItemScore(b.item!, stage: stage)),
+      ).compareTo(fullRunBotItemScore(b.item!, stage: stage)),
     );
     return candidates.first;
   }
@@ -1180,6 +1280,7 @@ class _CompetitionFullPlayBot {
     await _tapText('판매');
     _record('S$stage market: sold Q-Slot Item for replacement');
     await _pumpFor(const Duration(seconds: 2));
+    _traceMarketState('market_sold_item', stage);
     return true;
   }
 
@@ -1204,19 +1305,20 @@ class _CompetitionFullPlayBot {
 
   Future<void> _useMarketItemIfVisible(int stage) async {
     if (!config.needsItemUse && !config.isFullRun) return;
-    await _completeTutorialIfVisible(kind: _ContestTutorialKind.market);
+    await _completeTutorialIfVisible(kind: _FullRunTutorialKind.market);
     if (usedItem || find.text('사용').evaluate().isEmpty) return;
     await _tapText('사용');
     usedItem = true;
     _record('S$stage market: used Item');
     await _pumpFor(const Duration(seconds: 2));
+    _traceMarketState('market_used_item', stage);
   }
 
   Future<bool> _tryUseBattleItem({
-    required CompetitionBattleAction plannedAction,
+    required FullRunBattleAction plannedAction,
   }) async {
     if (!config.needsItemUse && !config.isFullRun) return false;
-    await _completeTutorialIfVisible(kind: _ContestTutorialKind.battle);
+    await _completeTutorialIfVisible(kind: _FullRunTutorialKind.battle);
     if (usedItem && !config.isFullRun) return false;
     final state = _tryReadGameState();
     if (state == null) return false;
@@ -1231,6 +1333,16 @@ class _CompetitionFullPlayBot {
     if (find.text('사용').evaluate().isEmpty) return false;
     final beforeItemCount = _ownedItemCount(state.runProgress!, choice.item.id);
     final beforeQuickSlotIds = List<String>.of(inventory.quickSlotItemIds);
+    _trace('battle_item_use_start', {
+      'stage': state.runProgress!.stageIndex,
+      'tier': BlindTier
+          .values[state.runProgress!.currentStationBlindTierIndex]
+          .name,
+      'planned_action': _battleActionTrace(plannedAction, state.session!),
+      'slot_index': choice.slotIndex,
+      'item': _itemTrace(choice.item),
+      'before': _battleSnapshotTrace(state),
+    });
     await _tapText('사용');
     if (choice.item.effect.op == 'peek_deck_discard_one') {
       await _resolveDeckNeedleDialog(choice, state.session!);
@@ -1248,6 +1360,16 @@ class _CompetitionFullPlayBot {
       '${BlindTier.values[state.runProgress!.currentStationBlindTierIndex].name}: '
       'used battle Item ${choice.item.id} op=${choice.item.effect.op}',
     );
+    final afterState = _tryReadGameState();
+    _trace('battle_item_use_applied', {
+      'stage': state.runProgress!.stageIndex,
+      'tier': BlindTier
+          .values[state.runProgress!.currentStationBlindTierIndex]
+          .name,
+      'slot_index': choice.slotIndex,
+      'item': _itemTrace(choice.item),
+      if (afterState != null) 'after': _battleSnapshotTrace(afterState),
+    });
     await _pumpFor(const Duration(seconds: 1));
     return true;
   }
@@ -1347,11 +1469,24 @@ class _CompetitionFullPlayBot {
     }
     await tester.tap(tileFinder.at(discardIndex), warnIfMissed: false);
     _record('deck_needle: discarded top-window tile index $discardIndex');
+    _trace('battle_item_dialog_choice', {
+      'item_id': choice.item.id,
+      'dialog': 'deck_needle',
+      'discard_index': discardIndex,
+      'candidates': session
+          .peekDeckTop(
+            (choice.item.effect.value('lookAt') as num?)?.toInt() ??
+                (choice.item.effect.value('peek') as num?)?.toInt() ??
+                3,
+          )
+          .map(_tileTrace)
+          .toList(),
+    });
     await _pumpFor(const Duration(milliseconds: 600));
   }
 
   Future<bool> _completeTutorialIfVisible({
-    required _ContestTutorialKind kind,
+    required _FullRunTutorialKind kind,
     bool waitForAppearance = false,
   }) async {
     var sawTutorial = false;
@@ -1393,22 +1528,24 @@ class _CompetitionFullPlayBot {
     return null;
   }
 
-  void _markTutorialCompleted(_ContestTutorialKind kind) {
+  void _markTutorialCompleted(_FullRunTutorialKind kind) {
     switch (kind) {
-      case _ContestTutorialKind.battle:
+      case _FullRunTutorialKind.battle:
         if (battleTutorialCompleted) return;
         battleTutorialCompleted = true;
         _record('battle tutorial completed');
-      case _ContestTutorialKind.market:
+        _trace('tutorial_completed', {'kind': 'battle'});
+      case _FullRunTutorialKind.market:
         if (marketTutorialCompleted) return;
         marketTutorialCompleted = true;
         _record('market tutorial completed');
+        _trace('tutorial_completed', {'kind': 'market'});
     }
   }
 
   _BattleItemChoice? _chooseBattleItemToUse(
     GameSessionState state, {
-    required CompetitionBattleAction plannedAction,
+    required FullRunBattleAction plannedAction,
   }) {
     final catalog = itemCatalog;
     final session = state.session;
@@ -1439,7 +1576,7 @@ class _CompetitionFullPlayBot {
     RummiPokerGridSession session,
     RummiRunProgress runProgress, {
     required int pendingConfirmItemCount,
-    required CompetitionBattleAction plannedAction,
+    required FullRunBattleAction plannedAction,
   }) {
     if (item.placement != ItemPlacement.quickSlot || !item.usableInBattle) {
       return false;
@@ -1448,7 +1585,7 @@ class _CompetitionFullPlayBot {
       (entry) => entry.itemId == item.id && entry.count > 0,
     );
     if (!hasItem) return false;
-    if (!contestBattleItemOpSupportsPlannedAction(
+    if (!fullRunBattleItemOpSupportsPlannedAction(
       item.effect.op,
       plannedAction.type,
     )) {
@@ -1457,7 +1594,7 @@ class _CompetitionFullPlayBot {
 
     return switch (item.effect.op) {
       'add_board_move' =>
-        plannedAction.type == CompetitionBattleActionType.moveBoard &&
+        plannedAction.type == FullRunBattleActionType.moveBoard &&
             (plannedAction.gain ?? 0) >= 70 &&
             _isBattleTargetLate(session),
       'mark_next_board_move_bonus' => true,
@@ -1523,7 +1660,7 @@ class _CompetitionFullPlayBot {
     final candidates = session.peekDeckTop(windowSize);
     if (candidates.length < 2) return null;
     if (!session.canDrawFromDeck) return null;
-    final policy = const CompetitionPlannerV2Policy();
+    final policy = const FullRunPlannerV2Policy();
     var bestScore = -1 << 30;
     var worstScore = 1 << 30;
     var worstIndex = 0;
@@ -1545,7 +1682,7 @@ class _CompetitionFullPlayBot {
   }
 
   bool _shouldStopAt({
-    required _ContestBotScene scene,
+    required _FullRunBotScene scene,
     int? stage,
     BlindTier? tier,
   }) {
@@ -1560,22 +1697,18 @@ class _CompetitionFullPlayBot {
       expect(
         boughtJester,
         isTrue,
-        reason: 'contest_sub_run_bot needs purchase evidence',
+        reason: 'sub_run_bot needs purchase evidence',
       );
     }
     if (config.requiredEvidence == 'item_purchase') {
       expect(
         boughtItem,
         isTrue,
-        reason: 'contest_sub_run_bot needs item purchase evidence',
+        reason: 'sub_run_bot needs item purchase evidence',
       );
     }
     if (config.requiredEvidence == 'item_use') {
-      expect(
-        usedItem,
-        isTrue,
-        reason: 'contest_sub_run_bot needs item use evidence',
-      );
+      expect(usedItem, isTrue, reason: 'sub_run_bot needs item use evidence');
     }
     _printPassLog(reason);
   }
@@ -1613,7 +1746,7 @@ class _CompetitionFullPlayBot {
     final checkpointJson = ActiveRunSaveService.runtimeStateToJson(runtime);
     final checkpointBase64 = base64Encode(utf8.encode(checkpointJson));
     // 스크립트가 다음 resume 실행에 주입할 수 있도록 한 줄 checkpoint를 남긴다.
-    debugPrint('CONTEST_BOT_CHECKPOINT_B64:$checkpointBase64');
+    debugPrint('FULL_RUN_BOT_CHECKPOINT_B64:$checkpointBase64');
     _record(
       'checkpoint saved scene=${scene.name} '
       'S${runProgress.stageIndex} '
@@ -1623,10 +1756,15 @@ class _CompetitionFullPlayBot {
       'items=${runProgress.itemInventory.ownedItems.length} '
       'quick=${runProgress.itemInventory.quickSlotItemIds.length}',
     );
+    _trace('checkpoint_saved', {
+      'scene': scene.name,
+      'run_progress': _runProgressTrace(runProgress),
+      'session': _sessionTrace(session),
+    });
   }
 
   bool _shouldStopAtCurrentBattle() {
-    if (config.isFullRun || config.targetScene != _ContestBotScene.battle) {
+    if (config.isFullRun || config.targetScene != _FullRunBotScene.battle) {
       return false;
     }
     final state = _readGameState();
@@ -1636,6 +1774,325 @@ class _CompetitionFullPlayBot {
       tier: BlindTier.values[progress.currentStationBlindTierIndex],
     );
   }
+
+  Future<void> flushTrace() async {
+    if (!config.traceEnabled || traceRows.isEmpty) return;
+    final file = File(config.tracePath);
+    await file.parent.create(recursive: true);
+    final buffer = StringBuffer();
+    for (final row in traceRows) {
+      buffer.writeln(jsonEncode(row));
+    }
+    await file.writeAsString(buffer.toString());
+    debugPrint('${config.logPrefix}: trace_path=${file.path}');
+  }
+
+  void _trace(String eventType, Map<String, Object?> payload) {
+    if (!config.traceEnabled) return;
+    traceRows.add({
+      'schema_version': 1,
+      'row_type': 'full_run_trace_event',
+      'sequence': traceSequence++,
+      'event_type': eventType,
+      'timestamp': DateTime.now().toUtc().toIso8601String(),
+      'mode': config.mode.name,
+      'seed': config.seed,
+      'difficulty': config.difficulty.name,
+      'locale': config.localeName,
+      ...payload,
+    });
+  }
+
+  void _traceMarketState(String eventType, int stage) {
+    if (!config.traceEnabled) return;
+    final state = _tryReadGameState();
+    final progress = state?.runProgress;
+    final market = state == null ? null : _marketViewFromState(state);
+    _trace(eventType, {
+      'stage': stage,
+      if (progress != null) 'run_progress': _runProgressTrace(progress),
+      if (market != null) 'market': _marketTrace(market),
+    });
+  }
+
+  Map<String, Object?> _battleSnapshotTrace(GameSessionState state) {
+    final session = state.session;
+    final progress = state.runProgress;
+    return {
+      'stage_flow_phase': state.stageFlowPhase.name,
+      if (session != null) 'session': _sessionTrace(session),
+      if (progress != null) 'run_progress': _runProgressTrace(progress),
+      if (session != null && progress != null)
+        'confirm_preview': _confirmPreviewTrace(session, progress),
+    };
+  }
+
+  Map<String, Object?> _sessionTrace(RummiPokerGridSession session) {
+    return {
+      'score': session.blind.scoreTowardBlind,
+      'target_score': session.blind.targetScore,
+      'deck_remaining': session.deck.remaining,
+      'max_hand_size': session.maxHandSize,
+      'hand': session.hand.map(_tileTrace).toList(),
+      'deck_top_5': session.peekDeckTop(5).map(_tileTrace).toList(),
+      'board_occupied': RummiPokerGridSession.countTilesOnBoard(session.board),
+      'board': _boardTrace(session),
+      'resources': {
+        'hand_discards_remaining': session.blind.handDiscardsRemaining,
+        'hand_discards_max': session.blind.handDiscardsMax,
+        'board_discards_remaining': session.blind.boardDiscardsRemaining,
+        'board_discards_max': session.blind.boardDiscardsMax,
+        'board_moves_remaining': session.blind.boardMovesRemaining,
+        'board_moves_max': session.blind.boardMovesMax,
+      },
+    };
+  }
+
+  List<Map<String, Object?>> _boardTrace(RummiPokerGridSession session) {
+    final cells = <Map<String, Object?>>[];
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        final tile = session.board.cellAt(row, col);
+        if (tile == null) continue;
+        cells.add({'row': row, 'col': col, 'tile': _tileTrace(tile)});
+      }
+    }
+    return cells;
+  }
+
+  Map<String, Object?> _runProgressTrace(RummiRunProgress progress) {
+    return {
+      'stage': progress.stageIndex,
+      'tier_index': progress.currentStationBlindTierIndex,
+      'gold': progress.gold,
+      'jester_slots': {
+        'used': progress.ownedJesters.length,
+        'capacity': progress.jesterSlotCapacity(itemCatalog: itemCatalog),
+      },
+      'item_slots': {
+        'quick_used': progress.itemInventory.quickSlotItemIds.length,
+        'quick_capacity': progress.quickSlotCapacity(itemCatalog: itemCatalog),
+        'owned_count': progress.itemInventory.ownedItems.length,
+      },
+      'owned_jesters': progress.ownedJesters.map(_jesterCardTrace).toList(),
+      'owned_items': progress.itemInventory.ownedItems
+          .map((entry) => {'item_id': entry.itemId, 'count': entry.count})
+          .toList(),
+      'quick_slot_items': progress.itemInventory.quickSlotItemIds,
+      'added_deck_tiles': progress.addedDeckTiles.map(_tileTrace).toList(),
+      'played_hand_counts': progress.snapshotPlayedHandCounts().map(
+        (key, value) => MapEntry(key.name, value),
+      ),
+    };
+  }
+
+  Map<String, Object?>? _confirmPreviewTrace(
+    RummiPokerGridSession session,
+    RummiRunProgress progress,
+  ) {
+    if (!session.canConfirmAllFullLines) return null;
+    final preview = session.copySnapshot().confirmAllFullLines(
+      jesters: progress.ownedJesters,
+      runtimeSnapshot: progress.buildRuntimeSnapshot(),
+      applyScoreToBlind: false,
+    );
+    final result = preview.result;
+    return {
+      'ok': result.ok,
+      'score_added': result.scoreAdded,
+      'base_score': result.baseScore,
+      'jester_bonus': result.jesterBonus,
+      'line_count': result.lineBreakdowns.length,
+      'lines': result.lineBreakdowns.map(_lineBreakdownTrace).toList(),
+    };
+  }
+
+  Map<String, Object?> _lineBreakdownTrace(ConfirmedLineBreakdown line) {
+    return {
+      'line': {'kind': line.ref.kind.name, 'index': line.ref.index},
+      'rank': line.rank.name,
+      'base_score': line.baseScore,
+      'final_score': line.finalScore,
+      'jester_bonus': line.jesterBonus,
+      'growth_level': line.growthLevel,
+      'growth_bonus': line.growthBonus,
+      'overlap_multiplier': line.overlapMultiplier,
+      'overlap_bonus': line.overlapBonus,
+      'tile_gold_bonus': line.tileGoldBonus,
+      'bonus_rank_progress': line.bonusRankProgress,
+      'destroyed_tiles': line.destroyedTiles.map(_tileTrace).toList(),
+      'contributing_cells': line.contributingCells
+          .map((cell) => {'row': cell.$1, 'col': cell.$2})
+          .toList(),
+      'constraint_penalties': line.constraintPenalties
+          .map(
+            (penalty) => {
+              'modifier_id': penalty.modifierId,
+              'title': penalty.title,
+              'rule_text': penalty.ruleText,
+              'marker_text': penalty.markerText,
+              'score_delta': penalty.scoreDelta,
+              'score_multiplier': penalty.scoreMultiplier,
+              'affected_tile_colors': penalty.affectedTileColors
+                  .map((color) => color.name)
+                  .toList(),
+              'affected_line_kinds': penalty.affectedLineKinds
+                  .map((kind) => kind.name)
+                  .toList(),
+            },
+          )
+          .toList(),
+    };
+  }
+
+  Map<String, Object?> _battleActionTrace(
+    FullRunBattleAction action,
+    RummiPokerGridSession session,
+  ) {
+    Tile? selectedHandTile;
+    if (action.handIndex != null &&
+        action.handIndex! >= 0 &&
+        action.handIndex! < session.hand.length) {
+      selectedHandTile = session.hand[action.handIndex!];
+    }
+    final selectedBoardTile = action.row == null || action.col == null
+        ? null
+        : session.board.cellAt(action.row!, action.col!);
+    return {
+      'type': action.type.name,
+      if (action.handIndex != null) 'hand_index': action.handIndex,
+      if (selectedHandTile != null) 'hand_tile': _tileTrace(selectedHandTile),
+      if (action.row != null) 'row': action.row,
+      if (action.col != null) 'col': action.col,
+      if (selectedBoardTile != null)
+        'board_tile': _tileTrace(selectedBoardTile),
+      if (action.toRow != null) 'to_row': action.toRow,
+      if (action.toCol != null) 'to_col': action.toCol,
+      if (action.gain != null) 'gain': action.gain,
+      if (action.reason != null) 'reason': action.reason,
+    };
+  }
+
+  Map<String, Object?> _marketTrace(RummiMarketRuntimeFacade market) {
+    return {
+      'gold': market.gold,
+      'reroll_costs': {
+        'jester': market.rerollCost,
+        'tile': market.tileRerollCost,
+        'quick': market.quickSlotRerollCost,
+        'passive': market.passiveRerollCost,
+        'tool': market.toolRerollCost,
+        'gear': market.gearRerollCost,
+      },
+      'jester_slots': {
+        'used': market.ownedEntries.length,
+        'capacity': market.jesterSlotCapacity,
+        'max': market.maxOwnedSlots,
+      },
+      'quick_slot_capacity': market.quickSlotCapacity,
+      'owned_jesters': market.ownedEntries.map(_ownedJesterTrace).toList(),
+      'jester_offers': market.offers.map(_jesterOfferTrace).toList(),
+      'item_offers': market.itemOffers.map(_itemOfferTrace).toList(),
+      'tile_offers': market.tileOffers.map(_tileOfferTrace).toList(),
+      'item_slots': market.itemSlots.map(_itemSlotTrace).toList(),
+      'added_deck_tiles': market.addedDeckTiles.map(_tileTrace).toList(),
+    };
+  }
+
+  Map<String, Object?> _ownedJesterTrace(RummiMarketOwnedEntryView entry) => {
+    'slot_index': entry.slotIndex,
+    'content_id': entry.contentId,
+    'display_name': entry.displayName,
+    'state_value': entry.stateValue,
+    'sell_price': entry.sellPrice,
+    'card': _jesterCardTrace(entry.card),
+  };
+
+  Map<String, Object?> _jesterOfferTrace(RummiMarketOfferView offer) => {
+    'offer_id': offer.offerId,
+    'slot_index': offer.slotIndex,
+    'content_id': offer.contentId,
+    'display_name': offer.displayName,
+    'price': offer.price,
+    'original_price': offer.originalPrice,
+    'currency': offer.currency,
+    'is_affordable': offer.isAffordable,
+    'discount_source_label': offer.discountSourceLabel,
+    'card': _jesterCardTrace(offer.card),
+  };
+
+  Map<String, Object?> _itemOfferTrace(RummiMarketItemOfferView offer) => {
+    'offer_id': offer.offerId,
+    'slot_index': offer.slotIndex,
+    'content_id': offer.contentId,
+    'display_name': offer.displayName,
+    'display_name_key': offer.displayNameKey,
+    'effect_text_key': offer.effectTextKey,
+    'price': offer.price,
+    'original_price': offer.originalPrice,
+    'currency': offer.currency,
+    'is_affordable': offer.isAffordable,
+    'discount_source_label': offer.discountSourceLabel,
+    'item': _itemTrace(offer.item),
+  };
+
+  Map<String, Object?> _tileOfferTrace(RummiMarketTileOfferView offer) => {
+    'offer_id': offer.offerId,
+    'slot_index': offer.slotIndex,
+    'tile': _tileTrace(offer.tile),
+    'price': offer.price,
+    'currency': offer.currency,
+    'is_affordable': offer.isAffordable,
+    'is_free_reward': offer.isFreeReward,
+  };
+
+  Map<String, Object?> _itemSlotTrace(RummiMarketItemSlotView slot) => {
+    'slot_index': slot.slotIndex,
+    'slot_label': slot.slotLabel,
+    'placement': slot.placement.name,
+    'content_id': slot.contentId,
+    'display_name': slot.displayName,
+    'display_name_key': slot.displayNameKey,
+    'count': slot.count,
+    'locked': slot.locked,
+    'recently_unlocked': slot.recentlyUnlocked,
+    if (slot.item != null) 'item': _itemTrace(slot.item!),
+  };
+
+  Map<String, Object?> _jesterCardTrace(RummiJesterCard card) => {
+    'id': card.id,
+    'name': card.displayName,
+    'rarity': card.rarity.name,
+    'effect_type': card.effectType,
+    'trigger': card.trigger,
+    'condition_type': card.conditionType,
+    'condition_value': card.conditionValue?.toString(),
+    'value': card.value,
+    'x_value': card.xValue,
+  };
+
+  Map<String, Object?> _itemTrace(ItemDefinition item) => {
+    'id': item.id,
+    'display_name': item.displayName,
+    'display_name_key': item.displayNameKey,
+    'placement': item.placement.name,
+    'rarity': item.rarity.name,
+    'base_price': item.basePrice,
+    'sell_price': item.sellPrice,
+    'usable_in_battle': item.usableInBattle,
+    'effect': item.effect.raw,
+  };
+
+  Map<String, Object?> _tileTrace(Tile tile) => {
+    'code': tile.code,
+    'color': tile.color.name,
+    'number': tile.number,
+    'id': tile.id,
+    'base_chip_value': tile.baseChipValue,
+    'enhancement': tile.enhancement?.persistenceValue,
+    'seal': tile.seal?.persistenceValue,
+    'edition': tile.edition?.persistenceValue,
+  };
 
   void _printPassLog(String stopReason) {
     debugPrint('${config.logPrefix}_PASS');
