@@ -6,6 +6,7 @@ const double kGameTileAspectRatio = 1.0;
 const double kBoardFrameInset = 10.0;
 const double kBoardGridGap = 1.5;
 const double kBoardTileInnerPadding = 2.0;
+const double kHandTileModifierBadgeScale = 1.22;
 
 const double kBattleItemSlotWidth = 54.0;
 const double kBattleItemSlotHeight = 70.0;

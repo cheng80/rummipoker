@@ -8,6 +8,7 @@ class GameRummiTileCard extends StatelessWidget {
     required this.accent,
     this.aspectRatio = kGameTileAspectRatio,
     this.reserveConstraintBadgeSpace = false,
+    this.modifierBadgeScale = 1.0,
   });
 
   final Tile tile;
@@ -15,6 +16,7 @@ class GameRummiTileCard extends StatelessWidget {
   final bool accent;
   final double aspectRatio;
   final bool reserveConstraintBadgeSpace;
+  final double modifierBadgeScale;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +40,7 @@ class GameRummiTileCard extends StatelessWidget {
                 child: GameTileModifierBadges(
                   tile: tile,
                   reserveConstraintBadgeSpace: reserveConstraintBadgeSpace,
+                  scale: modifierBadgeScale,
                 ),
               ),
           ],
@@ -52,10 +55,12 @@ class GameTileModifierBadges extends StatelessWidget {
     super.key,
     required this.tile,
     this.reserveConstraintBadgeSpace = false,
+    this.scale = 1.0,
   });
 
   final Tile tile;
   final bool reserveConstraintBadgeSpace;
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +71,10 @@ class GameTileModifierBadges extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final side = constraints.biggest.shortestSide;
-          final metrics = _TileModifierBadgeMetrics.forTileSide(side);
+          final metrics = _TileModifierBadgeMetrics.forTileSide(
+            side,
+            scale: scale,
+          );
           return Stack(
             clipBehavior: Clip.none,
             children: [
@@ -113,8 +121,11 @@ class _TileModifierBadgeMetrics {
     required this.sealInset,
   });
 
-  factory _TileModifierBadgeMetrics.forTileSide(double side) {
-    final badgeHeight = (side * 0.2).clamp(11.0, 16.0).toDouble();
+  factory _TileModifierBadgeMetrics.forTileSide(
+    double side, {
+    double scale = 1.0,
+  }) {
+    final badgeHeight = (side * 0.2 * scale).clamp(11.0, 17.0).toDouble();
     return _TileModifierBadgeMetrics(
       badgeHeight: badgeHeight,
       fontSize: (badgeHeight * 0.58).clamp(6.8, 9.6).toDouble(),

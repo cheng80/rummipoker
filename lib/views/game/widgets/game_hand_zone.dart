@@ -652,6 +652,7 @@ class _HandTileCard extends StatelessWidget {
             selected: selected,
             accent: false,
             aspectRatio: kGameTileAspectRatio,
+            modifierBadgeScale: kHandTileModifierBadgeScale,
           ),
         ),
         if (constrained)
