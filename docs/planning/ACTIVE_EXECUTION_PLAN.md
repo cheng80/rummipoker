@@ -41,12 +41,15 @@
 6. 다음 활성 작업:
    - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
    - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
-   - 다음은 feature schema 연결, `shop_slot_market_v9` source candidate/cost 추적 보강, full-runbot급 policy의 chunked long runner다.
+   - 2026-05-29 contest policy fresh data: `contest_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
+   - 다음은 `MODE=grid` fresh run을 5,000+ rows 이상으로 다시 쌓아 market/loadout axis를 넓히고, classifier hit-rate가 높은 후보를 fresh resimulation으로 검증하는 것이다.
+   - LLM autoplay는 대량 밸런스 기준이 아니라 전략 샘플러/decision label 보조 축으로만 검토한다. 적용 계약은 `docs/planning/leveling/LLM_AUTOPLAY_LEVELING_PLAN.md`를 따른다.
 7. 대기열로 미룬 작업:
    - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
    - 현재 runtime 기준 fresh row 기반 실제 runtime 후보 구매/사용 가치 probe.
    - fresh 경제/구매 데이터 기준 `trade_ticket`, `ride_the_bus`, 고급 study, `reroll_token` 가격/가치 판단 재개.
    - 장기 경제 gate와 `runtime_station_pool_economy_r400` 재검토.
+   - LLM autoplay P0 scaffold: legal action request export, response validation, decision cache/local runner, fallback/decision log 분리.
 8. 병렬로 하지 말 것: full-run bot 재개, 장기 r400/r800 sweep, 특수 타일 V2-B/C/D 구현.
    - V2-B/C/D는 fresh 데이터 baseline과 현 UI 회귀 검증이 닫힌 뒤 연다.
 

@@ -9,6 +9,7 @@
 - 새 학습 데이터는 현재 runtime/catalog/ruleset/bot policy/feature schema 기준 fresh simulation에서 다시 쌓는다.
 - 실제 ML 전환은 pre-outcome feature, supervised target, train/test split, metric, 추천 후보 재시뮬레이션, 사람 승인까지 갖춘 뒤에만 “ML 기반 레벨링”으로 기록한다.
 - 휴리스틱 라벨은 향후 초기 `silver label`로만 사용할 수 있다.
+- LLM autoplay 데이터는 대량 밸런스 기준이 아니라 소량 전략 샘플/decision label 보조 자료로만 둔다. 적용 계약은 `docs/planning/leveling/LLM_AUTOPLAY_LEVELING_PLAN.md`를 따른다.
 
 ## 폴더
 
