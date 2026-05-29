@@ -52,8 +52,17 @@ Economy audit highlights:
 - 단, `planner_v2` 기반 수집은 빠른 fresh data bootstrap이다. 사용자가 말한 “기존 풀런봇 수준의 런타임 진행 계약”을 완전히 대체하지 않는다.
 - 중단한 `contest_policy_v1 --runs 160`은 15분 이상 CPU를 계속 사용했지만 종료 파일을 만들지 못했다. 장기 데이터 축적용 runner는 chunk 단위 flush/progress 출력 또는 병렬 chunk runner가 필요하다.
 
+## Trace 보강
+
+- `market_purchase_events`에서 `shop_slot_market_v9` 같은 sim policy container는 실제 구매가 아니므로 제외한다.
+- 실제 후보 이벤트에는 `selected_profile`, `scaled_cost`, `effective_cost`, `gold_before_market`, `gold_after_market`, `affordable`, `blocked_reason`을 남긴다.
+- source backlog 후보가 있는 이벤트는 `source_candidate_id`, `source_candidate_profile`을 평탄 필드로 함께 남긴다.
+- smoke command: `dart run tools/sim/run_balance_sim.dart --runs 20 --bot planner_v2 --seed 93400 --sequence-mode station_path --stations 1,2,3,4,5,6,7,8 --blind-tiers small,big,boss --difficulty standard --experiment-id base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068_runtime_station_pool_v1 --market-profiles none,shop_slot_market_v9 --loadout-id progression_route_balanced --loadout-id progression_route_power --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic`
+- smoke audit: rows 510, purchase events 128, missing cost events 0, known spend 1,584G.
+- top purchased content에서 `shop_slot_market_v9`가 제거되고 실제 proxy/item/pack/planet/voucher id만 남는다.
+
 ## 다음 작업
 
 1. `contest_policy_v1` 또는 full-runbot급 policy를 chunked data runner로 실행해 중간 산출물을 잃지 않게 한다.
-2. `shop_slot_market_v9` 구매 이벤트에 source candidate id와 실제 cost를 더 많이 남겨 missing cost 비중을 낮춘다.
-3. 5,049 fresh row를 feature table builder의 새 입력으로 연결하되, archive row는 섞지 않는다.
+2. 보강된 trace schema로 5,000행 이상 fresh row를 다시 생성해 economy/market 학습 입력으로 승격한다.
+3. 5,049 fresh row와 trace-fix 이후 fresh row를 feature table builder의 새 입력으로 연결하되, archive row는 섞지 않는다.

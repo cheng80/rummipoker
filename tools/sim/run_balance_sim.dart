@@ -650,12 +650,18 @@ BalanceSimSequenceOutput _runStationPathSequence({
         jesterCatalog: jesterCatalog,
         itemCatalog: itemCatalog,
         loadout: stationBaseLoadout,
-      );
+      ).map((event) => Map<String, Object?>.of(event)).toList();
       for (final event in marketPurchaseEvents) {
+        event['gold_before_market'] = simEconomyGold;
+        event['market_budget_before'] = remainingMarketBudget;
         final cost = event['cost'];
         if (cost is! num) {
           economyMissingCostThisStep += 1;
           marketEventsAffordable = false;
+          event['affordable'] = false;
+          event['blocked_reason'] = 'missing_cost';
+          event['gold_after_market'] = simEconomyGold;
+          event['market_budget_after'] = remainingMarketBudget;
           continue;
         }
         final resolvedCost = (cost * config.simPriceScale).round();
@@ -664,7 +670,14 @@ BalanceSimSequenceOutput _runStationPathSequence({
           event: event,
           fallbackCost: resolvedCost,
         );
-        if (bandedCost <= 0) continue;
+        event['scaled_cost'] = resolvedCost;
+        event['effective_cost'] = bandedCost;
+        if (bandedCost <= 0) {
+          event['affordable'] = true;
+          event['gold_after_market'] = simEconomyGold;
+          event['market_budget_after'] = remainingMarketBudget;
+          continue;
+        }
         final slotReplacement = _simMarketSlotReplacementForEvent(
           mode: config.simMarketSpendMode,
           event: event,
@@ -676,6 +689,8 @@ BalanceSimSequenceOutput _runStationPathSequence({
           simEconomyGold += slotReplacement.sellRecovery;
           economySellRecoveryThisStep += slotReplacement.sellRecovery;
           economySlotReplaceThisStep += 1;
+          event['slot_replaced'] = true;
+          event['sell_recovery'] = slotReplacement.sellRecovery;
         }
         final withinBudget =
             remainingMarketBudget == null ||
@@ -686,10 +701,17 @@ BalanceSimSequenceOutput _runStationPathSequence({
             remainingMarketBudget -= bandedCost;
           }
           economyKnownSpendThisStep += bandedCost;
+          event['affordable'] = true;
         } else {
           economyUnaffordableThisStep += 1;
           marketEventsAffordable = false;
+          event['affordable'] = false;
+          event['blocked_reason'] = simEconomyGold < bandedCost
+              ? 'insufficient_gold'
+              : 'market_budget';
         }
+        event['gold_after_market'] = simEconomyGold;
+        event['market_budget_after'] = remainingMarketBudget;
       }
       simEconomyKnownMarketSpend += economyKnownSpendThisStep;
       simEconomyRerollSpend += economyRerollSpendThisStep;
@@ -2019,6 +2041,7 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
     'voucher' => 8,
     _ => null,
   };
+  if (category == 'sim_pool' || category == 'sim_policy') return const [];
   final proxyJesterIds = category == 'jester'
       ? _simJesterProxyIds(
           marketProfile: marketProfile,
@@ -2032,13 +2055,18 @@ List<Map<String, Object?>> _sequenceMarketPurchaseEvents({
       'category': category,
       'content_id': contentId,
       'cost': cost,
+      'selected_profile': marketProfile.id,
       'simulated': true,
       if (proxyJesterIds.isNotEmpty) 'proxy_jester_ids': proxyJesterIds,
       if (category == 'pack')
         'deck_tiles_added': _simPackAddedTileCount(marketProfile),
       if (marketProfile.id.startsWith('s1_candidate_'))
         'proxy_effect': _simCandidateProxyEffect(marketProfile),
-      if (sourceCandidate != null) 'source_candidate': sourceCandidate.toJson(),
+      if (sourceCandidate != null) ...{
+        'source_candidate': sourceCandidate.toJson(),
+        'source_candidate_id': sourceCandidate.adaptedId,
+        'source_candidate_profile': sourceCandidate.proxyProfile.id,
+      },
     },
   ];
 }

@@ -1824,9 +1824,21 @@ void main() {
         final trace = row['sim_economy_trace'] as Map<String, dynamic>;
         expect(trace['market_choice_mode'], 'affordable_alternative_v1');
         expect(trace['market_spend_mode'], 'reroll_slot_sell_v1');
+        expect(trace['missing_cost_event_count'], 0);
         final resolvedProfile = row['resolved_market_profile'] as String;
         final shopSlots = row['market_shop_slots'] as List<dynamic>;
         expect(shopSlots, contains(resolvedProfile));
+        final events = row['market_purchase_events'] as List<dynamic>;
+        expect(events, isNotEmpty);
+        for (final rawEvent in events) {
+          final event = rawEvent as Map<String, dynamic>;
+          expect(event['content_id'], isNot('shop_slot_market_v9'));
+          expect(event['cost'], isA<num>());
+          expect(event['selected_profile'], resolvedProfile);
+          expect(event['gold_before_market'], isA<num>());
+          expect(event['gold_after_market'], isA<num>());
+          expect(event['affordable'], isA<bool>());
+        }
       }
     },
   );
