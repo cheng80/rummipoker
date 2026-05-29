@@ -26,6 +26,7 @@ part 'game_session_notifier_bootstrap.dart';
 part 'game_session_notifier_save_commands.dart';
 part 'game_session_notifier_battle_commands.dart';
 part 'game_session_notifier_market_commands.dart';
+part 'game_session_notifier_station_commands.dart';
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
 final gameSessionNotifierProvider =
@@ -55,7 +56,8 @@ class GameSessionNotifier
     with
         GameSessionNotifierSaveCommands,
         GameSessionNotifierBattleCommands,
-        GameSessionNotifierMarketCommands {
+        GameSessionNotifierMarketCommands,
+        GameSessionNotifierStationCommands {
   @override
   GameSessionState build(GameSessionArgs args) {
     return _withDerivedViews(_buildInitialGameSessionState(args));
@@ -218,111 +220,6 @@ class GameSessionNotifier
   }
 
   // -- Business logic --
-
-  /// 스테이지 잔여물 처리 + 캐시아웃 계산/적용. 결과 breakdown 반환.
-  RummiCashOutBreakdown prepareCashOut({ItemCatalog? itemCatalog}) {
-    final session = state.session!;
-    final runProgress = state.runProgress!;
-    session.discardStageRemainder();
-    var breakdown = runProgress.buildCashOutBreakdown(
-      session,
-      itemCatalog: itemCatalog,
-      rewardMultiplier: state.runModifier.rewardMultiplier,
-    );
-    runProgress.applyCashOut(breakdown);
-    if (runProgress.currentStationBlindTierIndex == BlindTier.boss.index) {
-      final rewardTile = runProgress.addBossClearDeckTileReward(
-        session.runRandom,
-      );
-      breakdown = breakdown.copyWith(deckTileRewards: [rewardTile]);
-      if (itemCatalog != null) {
-        ItemEffectRuntime.applyOwnedBossClearItems(
-          catalog: itemCatalog,
-          runProgress: runProgress,
-        );
-      }
-      runProgress.claimBossSlotUnlockRewards(itemCatalog: itemCatalog);
-      runProgress.recordSeenBossModifier(session.blind.bossModifier?.id);
-      runProgress.recordClearedStation(runProgress.stageIndex);
-    }
-    _replaceState(state.copyWith(revision: state.revision + 1));
-    return breakdown;
-  }
-
-  /// 전투 정산 직후 캐시아웃 준비를 notifier 경계로 모은다.
-  RummiCashOutBreakdown prepareSettlementAndCashOut({
-    ItemCatalog? itemCatalog,
-  }) {
-    final breakdown = prepareCashOut(itemCatalog: itemCatalog);
-    _replaceState(
-      state.copyWith(
-        runLoopPhase: GameRunLoopPhase.settlement,
-        activeRunScene: ActiveRunScene.battle,
-        revision: state.revision + 1,
-      ),
-    );
-    return breakdown;
-  }
-
-  /// market 종료 후 다음 station 로딩 직전의 짧은 전환 단계를 기록한다.
-  void beginNextStationTransition() {
-    _replaceState(
-      state.copyWith(
-        runLoopPhase: GameRunLoopPhase.nextStationTransition,
-        activeRunScene: ActiveRunScene.blindSelect,
-        revision: state.revision + 1,
-      ),
-    );
-  }
-
-  /// Market 종료 뒤 blind select route로 넘길 runtime을 station-loop 경계에서 만든다.
-  ActiveRunRuntimeState prepareNextStationBlindSelectRuntime({
-    required NewRunDifficulty difficulty,
-  }) {
-    beginNextStationTransition();
-    return BlindSelectionSetup.prepareRuntimeForBlindSelect(
-      runtime: buildSaveRuntimeState(
-        scene: ActiveRunScene.blindSelect,
-        difficulty: difficulty,
-      ),
-    );
-  }
-
-  /// 다음 스테이지로 진입 처리.
-  void advanceToNextStage(int runSeed, {ItemCatalog? itemCatalog}) {
-    final session = state.session!;
-    final runProgress = state.runProgress!;
-    runProgress.advanceStage(session, runSeed: runSeed);
-    if (itemCatalog != null) {
-      ItemEffectRuntime.applyOwnedStationStartItems(
-        catalog: itemCatalog,
-        session: session,
-        runProgress: runProgress,
-      );
-    }
-    clearSelections();
-    _replaceState(
-      state.copyWith(
-        stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
-          session: session,
-          runProgress: runProgress,
-        ),
-        runLoopPhase: GameRunLoopPhase.battle,
-        revision: state.revision + 1,
-      ),
-    );
-  }
-
-  /// market 종료 후 다음 station 진입까지를 notifier command로 감싼다.
-  void advanceToNextStation(int runSeed, {ItemCatalog? itemCatalog}) {
-    advanceToNextStage(runSeed, itemCatalog: itemCatalog);
-    _replaceState(
-      state.copyWith(
-        activeRunScene: ActiveRunScene.battle,
-        revision: state.revision + 1,
-      ),
-    );
-  }
 
   // -- 전투 액션 (View에서 직접 session을 조작하던 것을 이관) --
 
