@@ -6,7 +6,7 @@ mixin GameSessionNotifierBattleCommands
   void clearSelections();
   void setSelectedBoardCell(int? row, int? col);
   void setSettlementBoardSnapshot(Map<String, Tile> snapshot);
-  GameSessionState _withValidSelections(GameSessionState current);
+  GameSessionState withValidSelections(GameSessionState current);
 
   BattleBoardTapResult tapBoardCell(int row, int col) {
     final session = state.session;
@@ -263,7 +263,7 @@ mixin GameSessionNotifierBattleCommands
     );
     if (!result.isSuccess) return result.failMessage;
     _replaceState(
-      _withValidSelections(state).copyWith(revision: state.revision + 1),
+      withValidSelections(state).copyWith(revision: state.revision + 1),
     );
     return null;
   }
