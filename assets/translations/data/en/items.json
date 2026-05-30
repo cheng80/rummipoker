@@ -41,6 +41,10 @@
         "displayName": "Straight Flush Study",
         "effectText": "Use in the shop to give Straight Flush growth +1."
       },
+      "line_memory": {
+        "displayName": "Line Memory",
+        "effectText": "Use in battle to give the best current scoring line's hand rank growth +1."
+      },
       "board_scrap": {
         "displayName": "Board Pass",
         "effectText": "Gain +1 board discard for this Station."

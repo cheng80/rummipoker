@@ -13,6 +13,7 @@ ItemEffectCatalogRow _catalogRowFor(ItemDefinition item) {
     'use_battle:peek_deck_discard_one' ||
     'use_battle:draw_if_hand_empty' ||
     'use_battle:increase_hand_size' ||
+    'use_battle:add_hand_rank_progress_from_best_line' ||
     'market_reroll:free_next_reroll' ||
     'market_reroll:discount_next_reroll' ||
     'market_buy:discount_next_purchase' ||

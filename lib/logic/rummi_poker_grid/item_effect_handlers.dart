@@ -499,6 +499,37 @@ ItemUseResult _applyAddHandRankProgress(
   );
 }
 
+ItemUseResult _applyAddHandRankProgressFromBestLine(
+  ItemDefinition item,
+  RummiPokerGridSession session,
+  RummiRunProgress runProgress,
+) {
+  final rank = session.bestCurrentScoringLineRank();
+  final amount = _nonNegativeIntValue(item, 'amount');
+  if (rank == null) {
+    return ItemUseResult.failure(itemId: item.id, message: '성장시킬 완성 줄이 없습니다.');
+  }
+  if (amount <= 0) return _invalidAmount(item);
+  final didApply = runProgress.addHandRankProgress(rank, amount: amount);
+  if (!didApply) {
+    return ItemUseResult.failure(
+      itemId: item.id,
+      message: '이 족보는 성장시킬 수 없습니다.',
+    );
+  }
+  return ItemUseResult.success(
+    itemId: item.id,
+    events: [
+      ItemEffectEvent(
+        kind: ItemEffectEventKind.handRankProgressAdded,
+        itemId: item.id,
+        amount: amount,
+        detail: rank.name,
+      ),
+    ],
+  );
+}
+
 void _consumeIfNeeded(
   ItemDefinition item,
   RummiRunProgress runProgress,

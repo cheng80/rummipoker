@@ -41,6 +41,10 @@
         "displayName": "Straight Flush Study",
         "effectText": "在商店使用，使Straight Flush成長+1。"
       },
+      "line_memory": {
+        "displayName": "線路記憶",
+        "effectText": "在戰鬥中使用，使目前已完成的最高牌型線路成長+1。"
+      },
       "board_scrap": {
         "displayName": "Board Pass",
         "effectText": "本Station獲得+1次棋盤棄牌。"

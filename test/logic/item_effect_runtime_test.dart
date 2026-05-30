@@ -264,6 +264,79 @@ void main() {
       ]);
     });
 
+    test('useBattleItem grows the best current scoring line rank', () {
+      final item = _item(
+        id: 'line_memory',
+        op: 'add_hand_rank_progress_from_best_line',
+      );
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      _placeFlush(session);
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'line_memory',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['line_memory'],
+        );
+
+      final result = ItemEffectRuntime.useBattleItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(
+        runProgress.snapshotHandGrowthStates()[RummiHandRank.flush]?.level,
+        2,
+      );
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+      expect(result.events.map((event) => event.kind), [
+        ItemEffectEventKind.handRankProgressAdded,
+        ItemEffectEventKind.itemConsumed,
+      ]);
+      expect(result.events.first.detail, RummiHandRank.flush.name);
+    });
+
+    test('useBattleItem rejects line memory when no scoring line exists', () {
+      final item = _item(
+        id: 'line_memory',
+        op: 'add_hand_rank_progress_from_best_line',
+      );
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'line_memory',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['line_memory'],
+        );
+
+      final result = ItemEffectRuntime.useBattleItem(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.failMessage, '성장시킬 완성 줄이 없습니다.');
+      expect(runProgress.itemInventory.ownedItems.single.itemId, 'line_memory');
+    });
+
     test('useBattleItem caps hand capacity at five and reports no effect', () {
       final item = _item(id: 'battle_pouch', op: 'increase_hand_size');
       final session = RummiPokerGridSession(
@@ -1622,6 +1695,7 @@ void main() {
           'use_battle:peek_deck_discard_one',
           'use_battle:draw_if_hand_empty',
           'use_battle:increase_hand_size',
+          'use_battle:add_hand_rank_progress_from_best_line',
           'market_reroll:discount_next_reroll',
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',
@@ -1667,6 +1741,17 @@ void _placeTwoPair(RummiPokerGridSession session) {
   session.board.setCell(0, 1, Tile(color: TileColor.blue, number: 2));
   session.board.setCell(0, 2, Tile(color: TileColor.red, number: 3));
   session.board.setCell(0, 3, Tile(color: TileColor.blue, number: 3));
+}
+
+void _placeFlush(RummiPokerGridSession session) {
+  const numbers = [1, 3, 6, 8, 10];
+  for (var col = 0; col < 5; col += 1) {
+    session.board.setCell(
+      0,
+      col,
+      Tile(color: TileColor.red, number: numbers[col]),
+    );
+  }
 }
 
 ItemDefinition _item({

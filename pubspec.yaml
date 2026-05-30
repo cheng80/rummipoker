@@ -132,6 +132,7 @@ flutter:
     - assets/translations/data/zh-TW/items.json
     - assets/images/
     - assets/images/cards/emblems_4x/
+    - assets/images/cards/rituals_4x/
     - assets/images/sprites/
     - assets/images/ui/
     - assets/audio/

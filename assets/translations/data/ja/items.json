@@ -41,6 +41,10 @@
         "displayName": "Straight Flush Study",
         "effectText": "ショップで使うとStraight Flush成長+1。"
       },
+      "line_memory": {
+        "displayName": "ライン記憶",
+        "effectText": "バトルで使うと、現在完成している最も強いラインの役成長+1。"
+      },
       "board_scrap": {
         "displayName": "Board Pass",
         "effectText": "このStation中、ボード捨て+1。"

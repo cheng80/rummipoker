@@ -177,6 +177,15 @@ class ItemEffectRuntime {
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;
+      case 'add_hand_rank_progress_from_best_line':
+        final applied = _applyAddHandRankProgressFromBestLine(
+          item,
+          session,
+          runProgress,
+        );
+        if (!applied.isSuccess) return applied;
+        events.addAll(applied.events);
+        break;
       case 'chips_bonus':
       case 'mult_bonus':
       case 'xmult_bonus':

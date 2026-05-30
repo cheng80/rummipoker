@@ -84,13 +84,13 @@ void main() {
 
       expect(catalog.schemaVersion, 1);
       expect(catalog.catalogId, 'items_common_v1');
-      expect(catalog.all.length, 54);
+      expect(catalog.all.length, 55);
       expect(catalog.byType(ItemType.utility).length, 9);
-      expect(catalog.byType(ItemType.consumable).length, 26);
+      expect(catalog.byType(ItemType.consumable).length, 27);
       expect(catalog.byType(ItemType.equipment).length, 9);
       expect(catalog.byType(ItemType.passiveRelic).length, 10);
       expect(catalog.byPlacement(ItemPlacement.inventory).length, 15);
-      expect(catalog.byPlacement(ItemPlacement.quickSlot).length, 20);
+      expect(catalog.byPlacement(ItemPlacement.quickSlot).length, 21);
       expect(catalog.byPlacement(ItemPlacement.equipped).length, 9);
       expect(catalog.byPlacement(ItemPlacement.passiveRack).length, 10);
 
@@ -116,6 +116,11 @@ void main() {
       expect(catalog.findById('reroll_token')!.effect.amount, 1);
       expect(catalog.findById('battle_pouch')!.effect.op, 'increase_hand_size');
       expect(catalog.findById('battle_pouch')!.effect.timing, 'use_battle');
+      expect(
+        catalog.findById('line_memory')!.effect.op,
+        'add_hand_rank_progress_from_best_line',
+      );
+      expect(catalog.findById('line_memory')!.usableInBattle, isTrue);
       expect(catalog.findById('travel_pouch')!.effect.op, 'increase_hand_size');
       expect(catalog.findById('jester_hook')!.basePrice, 7);
       expect(catalog.findById('jester_hook')!.sellPrice, 3);

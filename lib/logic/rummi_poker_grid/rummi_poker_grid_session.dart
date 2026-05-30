@@ -385,6 +385,21 @@ class RummiPokerGridSession {
     confirmModifiers.add(modifier);
   }
 
+  RummiHandRank? bestCurrentScoringLineRank() {
+    final lines = engine.listEvaluatedLines(board, ruleset: ruleset);
+    RummiHandRank? bestRank;
+    var bestBaseScore = -1;
+    for (final entry in lines) {
+      final evaluation = entry.report.evaluation;
+      if (evaluation.isDeadLine) continue;
+      final baseScore = evaluation.baseScore;
+      if (baseScore <= bestBaseScore) continue;
+      bestRank = evaluation.rank;
+      bestBaseScore = baseScore;
+    }
+    return bestRank;
+  }
+
   RummiPokerGridSession copySnapshot() {
     return RummiPokerGridSession.restored(
       runSeed: runSeed,

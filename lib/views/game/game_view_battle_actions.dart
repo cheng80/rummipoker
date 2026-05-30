@@ -268,6 +268,7 @@ extension _GameViewBattleActions on _GameViewState {
       'undo_last_board_move' => '마지막 이동 되돌림',
       'draw_if_hand_empty' => '타일 1장 드로우',
       'increase_hand_size' => '손패 최대치 +${item.effect.value('amount') ?? 1}',
+      'add_hand_rank_progress_from_best_line' => '완성 줄 족보 성장 +1',
       'chips_bonus' => '다음 확정 칩 보너스',
       'mult_bonus' => '다음 확정 점수 +% 보너스',
       'xmult_bonus' => '다음 확정 점수 x 보너스',

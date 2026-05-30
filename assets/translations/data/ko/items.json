@@ -41,6 +41,10 @@
         "displayName": "스티플 연구",
         "effectText": "상점에서 사용하면 스티플 성장 +1."
       },
+      "line_memory": {
+        "displayName": "라인 기억",
+        "effectText": "전투에서 사용하면 현재 완성 줄 중 가장 높은 족보 성장 +1."
+      },
       "board_scrap": {
         "displayName": "보드 패스",
         "effectText": "이번 Station의 보드 버림 +1."
