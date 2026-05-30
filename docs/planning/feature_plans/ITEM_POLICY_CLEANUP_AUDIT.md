@@ -17,7 +17,7 @@ Board-Line Ritual: 0
 Direct Tile Modifier Item: 0
 ```
 
-따라서 다음 catalog 확장은 단순 점수 보정 아이템을 더 늘리지 않는다. 우선순위는 `Board-Line Ritual`, `Tile Modifier`, `Market Pool Mutation`, `Hand-Rank Growth`의 구분을 명확히 하고, 새 후보는 보드 라인 target과 trace가 있는 방향으로 추가한다.
+따라서 다음 catalog 확장은 단순 점수 보정 아이템을 더 늘리지 않는다. 우선순위는 `Board-Line Ritual`, `Tile Modifier`, `Market Pool Mutation`, `Hand-Rank Growth`의 구분을 명확히 하고, 새 후보는 보드 라인 target, 덱 변화, 타일 각인/강화, 족보 성장으로 플레이 양상을 바꾸는 방향으로 추가한다.
 
 ## 2. 분류 기준
 
@@ -142,7 +142,7 @@ Direct Tile Modifier Item: 0
 
 현재 catalog에는 0개다. 다음 확장 1순위다.
 
-초기 catalog 후보는 최소 9개 이상으로 잡되, 실제 첫 구현은 낮은 리스크부터 시작한다.
+초기 catalog 후보는 9개로 부족하다. 설계 pool은 최소 24개 이상, 현재 draft는 34개를 기준으로 잡고, 실제 첫 catalog draft는 18종 안팎에서 시작한다.
 
 | 우선 | 후보 | 이유 |
 |---|---|---|
@@ -180,74 +180,154 @@ Direct Tile Modifier Item: 0
 ## 5. 정화 진행 상태
 
 1. 완료: 현재 catalog 54개를 policy family 기준으로 1차 분류했다.
-2. 완료: Board-Line Ritual V1 9개 후보의 효과값, 가격, 희귀도, placement를 draft했다.
-3. 다음: `use_battle_select_line` target UI 계약을 작성한다.
-4. 다음: 풀런봇/시뮬레이터 trace 필드를 확정한다.
-5. 그 뒤에만 catalog/runtime 구현으로 넘어간다.
+2. 정정: 9개 후보는 너무 적다. 구현 안전 후보가 아니라 실제 카드 pool이 먼저 넓어야 한다.
+3. 현재 우선순위: 새로 추가할 아이템 카드와 효과 pool을 먼저 정한다.
+4. 정책 문서와 UI/풀런봇/시뮬레이션 계약은 카드 pool이 잡힌 뒤 그에 맞춰 갱신한다.
 
-## 6. Board-Line Ritual V1 Draft Catalog
+## 6. New Item Card Pool Direction
 
-아래 9개는 바로 JSON에 넣을 확정값이 아니라, 구현 전 계약을 닫기 위한 draft다. 공통 placement는 `quickSlot` 우선이며, 전투 중 `use_battle_select_line`으로 보드 라인을 선택한다.
+목표는 기존처럼 매판 같은 족보와 같은 성장 루트로 수렴하지 않게 만드는 것이다. 따라서 새 아이템 pool은 단순 점수 보정이 아니라 아래 질문에 답해야 한다.
 
-공통 target:
+- 이번 전투에서 이미 만든 라인을 다음 덱 방향으로 바꿀 수 있는가?
+- 점수 확정만이 아니라 덱 압축, 복사, 각인, 변형, 성장 투자가 선택지로 보이는가?
+- flush 위주 플레이만 강화하지 않고 숫자 족보, 교차 라인, 대각, 위치 기반 빌드도 살리는가?
+- 손패 직접 파괴/변형 없이도 Balatro의 Tarot/Spectral 같은 덱빌딩 변화를 줄 수 있는가?
+
+공통 원칙:
+
+- ML/시뮬레이션은 잠시 보류한다. 지금은 카드와 효과를 먼저 잡는다.
+- 첫 catalog pool은 최소 24종 이상을 기준으로 한다.
+- 첫 구현 slice는 그중 8~12종만 골라도 되지만, 설계 pool 자체는 좁히지 않는다.
+- 손패 직접 파괴/변형은 V1 금지다. 보드 라인, 덱 추가/제거 후보, 타일 각인/강화, 족보 성장으로 우회한다.
+
+## 7. New Item Card Candidate Pool
+
+아래 후보는 “추가 가능 카드 pool”이다. 바로 런타임에 넣는 확정 JSON이 아니라, 다음 catalog draft의 후보군이다.
+
+### 7.1 Line Memory / Growth
+
+| ID | 표시명 | rarity | price | 효과 | 설계 의도 |
+|---|---|---:|---:|---|---|
+| `line_memory` | 라인 기억 | uncommon | 7 | 선택 라인의 대표 족보 성장 +1 | 만든 족보를 run-long 성장으로 연결 |
+| `minor_memory` | 잔상 기억 | rare | 9 | 선택 라인의 두 번째 족보 후보 성장 +1 | 주력 족보 반복 완화 |
+| `cross_memory` | 교차 기억 | rare | 10 | 선택 타일의 row/col 중 낮은 성장 계열 +1 | 교차 빌드 유도 |
+| `thin_memory` | 얇은 기억 | common | 6 | 3~4타일 scoring line 족보 성장 +1 | 작은 라인 활용 |
+| `boss_memory` | 보스 기억 | rare | 11 | 보스전에서 선택 라인 대표 족보 성장 +2 | 위험 전투 보상 |
+
+### 7.2 Copy / Deck Injection
+
+| ID | 표시명 | rarity | price | 효과 | 설계 의도 |
+|---|---|---:|---:|---|---|
+| `keystone_copy` | 중심석 복사 | uncommon | 8 | 선택 라인 최고 기여 타일 1장을 덱에 복사 | 핵심 타일 중심 덱빌딩 |
+| `edge_copy` | 끝점 복사 | common | 6 | 선택 라인의 양끝 중 1장을 덱에 복사 | 위치 의미 부여 |
+| `rank_echo` | 숫자 메아리 | uncommon | 8 | 라인 내 반복 숫자 또는 pair 후보 1장 복사 | 숫자 족보 강화 |
+| `color_echo` | 색 메아리 | uncommon | 8 | 라인 다수 색 타일 1장 복사 | 색 빌드 지원 |
+| `scarce_copy` | 희소석 복사 | rare | 10 | 현재 덱에 적은 색/숫자 타일을 라인에서 복사 | 덱 편중 완화 |
+| `sealed_copy` | 각인 복사 | rare | 12 | 각인/강화가 있는 라인 타일을 약화 복사 | modifier 빌드 지원 |
+
+### 7.3 Seal / Enhancement
+
+| ID | 표시명 | rarity | price | 효과 | 설계 의도 |
+|---|---|---:|---:|---|---|
+| `line_seal_stamp` | 라인 각인 | uncommon | 8 | 라인 타일 1개에 `line_mark` 각인 | Ritual 기본 감각 |
+| `growth_seal` | 성장 각인 | rare | 10 | 해당 타일이 contributor가 되면 족보 성장 +1 후 소비 | 타일과 성장 연결 |
+| `gold_seal_stamp` | 금빛 각인 | uncommon | 8 | 해당 타일 포함 scoring line 확정 시 Gold +1 | 경제 빌드 축 |
+| `echo_seal` | 메아리 각인 | rare | 10 | 같은 타일이 두 번째 scoring line에도 기여하면 보너스 | overlap 유도 |
+| `anchor_seal` | 닻 각인 | uncommon | 7 | 보드 이동 후 해당 타일 포함 확정 시 보너스 | 이동 아이템 연계 |
+| `risk_seal` | 균열 각인 | legendary | 14 | 큰 보너스, 확정 후 덱 제거 후보가 됨 | Spectral-like tradeoff |
+
+### 7.4 Color / Number Conversion
+
+| ID | 표시명 | rarity | price | 효과 | 설계 의도 |
+|---|---|---:|---:|---|---|
+| `rank_concord` | 숫자 맞춤 의식 | rare | 11 | 라인 타일 1장을 pair/triple 후보 숫자로 전투 한정 처리 | 숫자 족보 지원 |
+| `step_rite` | 계단 의식 | uncommon | 9 | 라인 타일 1장을 straight에 가까운 숫자로 전투 한정 처리 | straight 지원 |
+| `color_concord` | 색 맞춤 의식 | rare | 11 | 라인 타일 1장을 다수 색으로 전투 한정 처리 | flush 조정 |
+| `off_color_rite` | 이색 의식 | uncommon | 8 | 라인 타일 1장을 다수 색이 아닌 색으로 전투 한정 처리 | flush 일변도 완화 |
+| `wild_thread` | 만능 실 | rare | 12 | 라인 타일 1장에 전투 한정 wild-color 부여 | 안전한 임시 변형 |
+| `number_mask` | 숫자 가면 | rare | 12 | 라인 타일 1장에 전투 한정 wild-rank 부여 | pair/straight 실험 |
+
+### 7.5 Prune / Sacrifice / Compression
+
+| ID | 표시명 | rarity | price | 효과 | 설계 의도 |
+|---|---|---:|---:|---|---|
+| `line_pruner` | 가지치기 의식 | rare | 10 | 라인 최저 기여 타일 1장을 덱 제거 후보로 기록, Gold +2 | 덱 압축 |
+| `trim_color` | 색 가지치기 | uncommon | 8 | 덱에 많은 색 타일을 라인에서 제거 후보로 기록 | 색 편중 관리 |
+| `trim_rank` | 숫자 가지치기 | uncommon | 8 | 덱에 많은 숫자 타일을 라인에서 제거 후보로 기록 | 숫자 편중 관리 |
+| `deadwood_burn` | 마른가지 소각 | rare | 10 | 확정 불가능한 4~5타일 라인을 정리하고 Gold 획득 | 실패 라인 회수 |
+| `sacrifice_line` | 제물 의식 | legendary | 15 | scoring line 점수를 포기하고 덱 변형 보상 획득 | 고위험 선택 |
+
+### 7.6 Geometry / Board State
+
+| ID | 표시명 | rarity | price | 효과 | 설계 의도 |
+|---|---|---:|---:|---|---|
+| `cross_rite` | 교차 의식 | rare | 11 | 선택 타일의 row/col 양쪽 preview를 강화 | 교차점 가치 상승 |
+| `corner_rite` | 모서리 의식 | uncommon | 8 | 모서리/끝점 포함 라인에 성장 또는 복사 보너스 | 배치 위치 의미 |
+| `center_rite` | 중심 의식 | uncommon | 8 | 중앙 포함 라인에 성장 또는 복사 보너스 | 중앙 싸움 유도 |
+| `diagonal_rite` | 대각 의식 | rare | 10 | 대각선 라인에만 강한 보상 | row/col 반복 완화 |
+| `bridge_rite` | 다리 의식 | rare | 12 | 두 미완성 라인이 같은 타일을 공유하면 marker 부여 | 미래 확정 설계 |
+
+### 7.7 Market / Pool Mutation
+
+| ID | 표시명 | rarity | price | 효과 | 설계 의도 |
+|---|---|---:|---:|---|---|
+| `ritual_coupon` | 의식 쿠폰 | common | 5 | 다음 Ritual 계열 구매 할인 | 새 family 진입 완화 |
+| `ritual_lens` | 의식 렌즈 | uncommon | 7 | 다음 Market에서 Ritual 후보 출현 가중치 증가 | 빌드 방향 선택 |
+| `line_pack_ticket` | 라인 팩 티켓 | rare | 10 | 다음 Market에 line 기반 선택 pack 후보 추가 | pack 확장 |
+| `seal_vendor` | 각인 상인 | uncommon | 8 | 다음 Market에 각인/강화 계열 가중 | modifier 빌드 지원 |
+| `prune_vendor` | 정리 상인 | uncommon | 8 | 다음 Market에 덱 압축 계열 가중 | 압축 빌드 지원 |
+
+## 8. First Catalog Draft Target
+
+후보 pool은 34종이다. 첫 catalog draft는 이 중 18종 안팎을 목표로 한다.
+
+권장 1차 구성:
 
 ```text
-target: completed_line | confirmable_line
-line types: row | column | diagonal
-minimum tiles: 3
-default consume: true
+Line Memory / Growth: 4
+Copy / Deck Injection: 4
+Seal / Enhancement: 4
+Color / Number Conversion: 2
+Prune / Compression: 2
+Geometry / Board State: 1
+Market / Pool Mutation: 1
 ```
 
-공통 trace:
+1차 추천 18종:
 
 ```text
-source_item_id
-target_line_ref
-target_line_kind
-target_tile_codes_before
-result_kind
-tiles_after
-deck_delta
-rank_progress_delta
-modifier_delta
-score_preview_delta
+line_memory
+minor_memory
+thin_memory
+boss_memory
+keystone_copy
+edge_copy
+rank_echo
+scarce_copy
+line_seal_stamp
+growth_seal
+gold_seal_stamp
+anchor_seal
+rank_concord
+step_rite
+line_pruner
+trim_color
+center_rite
+ritual_lens
 ```
 
-| ID | rarity | price | family | 효과 draft | V1 리스크 | 구현 판정 |
-|---|---:|---:|---|---|---|---|
-| `line_memory` | uncommon | 7 | growth | 선택 라인의 대표 족보 성장 +1 | 기존 study와 중복 | P0 |
-| `keystone_copy` | uncommon | 8 | copy/deck | 선택 라인에서 점수 기여가 가장 큰 타일 1장을 `addedDeckTiles`에 복사 | 덱 비대화 | P0 |
-| `line_seal_stamp` | uncommon | 8 | seal | 선택 라인 타일 1개에 `seal=line_mark` 부여. 다음 해당 타일 포함 확정 때 작은 성장/점수 보너스 | seal 표시/정산 필요 | P0 |
-| `minor_memory` | rare | 9 | growth | 선택 라인의 두 번째 족보 후보 성장 +1. 없으면 대표 족보 +1로 fallback | 후보 계산 설명 난이도 | P1 |
-| `edge_copy` | common | 6 | copy/deck | 선택 라인의 양끝 타일 중 하나를 선택해 `addedDeckTiles`에 복사 | endpoint UI 필요 | P1 |
-| `growth_seal` | rare | 10 | seal | 선택 타일에 `seal=growth_seal` 부여. 해당 타일이 contributor가 되면 그 족보 성장 +1 후 seal 소비 | 발동 추적 필요 | P1 |
-| `gold_seal_stamp` | uncommon | 8 | seal/economy | 선택 타일에 `seal=gold_seal` 부여. 해당 타일 포함 scoring line 확정 시 Gold +1 | 경제 snowball | P1 |
-| `rank_concord` | rare | 11 | conversion | 선택 라인 타일 1장을 pair/triple 후보 숫자로 전투 한정 wild-rank 처리 | 족보 판정 혼란 | P2 실험 |
-| `line_pruner` | rare | 10 | prune/deck | 선택 라인 최저 기여 타일 1장을 전투 후 덱 제거 후보로 기록. 즉시 Gold +2 | 영구 제거/undo 정책 | P2 실험 |
+뒤로 미룰 후보:
 
-V1 도입 최소 묶음:
+- `risk_seal`, `sacrifice_line`: 손실 tradeoff가 커서 UI/undo/보상 설명이 필요하다.
+- `line_transmute`, `mirror_line`, `void_mark`: 밸런스 파괴 리스크가 크다.
+- `wild_thread`, `number_mask`: evaluator와 preview 설명이 먼저 필요하다.
+- `line_pack_ticket`: pack UI가 아직 없다.
 
-```text
-P0: line_memory, keystone_copy, line_seal_stamp
-P1: minor_memory, edge_copy, growth_seal, gold_seal_stamp
-P2 experiment: rank_concord, line_pruner
-```
+## 9. Policy Update Order
 
-V1에서 아직 넣지 않는 후보:
+이제 정책 수정 순서는 아래로 바꾼다.
 
-- `sacrifice_line`: 라인 손실감과 undo/보상 설명이 무겁다.
-- `line_transmute`: flush/straight 밸런스를 크게 흔든다.
-- `mirror_line`: 덱 폭증이 크다.
-- `void_mark`: 보스 제약 강화와 보상 tradeoff UI가 아직 없다.
-
-## 7. Catalog 적용 Gate
-
-Draft 9개를 실제 `items_common_v1.json`에 넣기 전 조건:
-
-1. `use_battle_select_line` timing enum 또는 동등한 action path가 있다.
-2. 선택 가능한 line highlight가 row/column/diagonal에서 동작한다.
-3. 선택 후 item source, target line, result delta가 전투 UI에 표시된다.
-4. save/restore에서 line target 선택 전/후 상태가 깨지지 않는다.
-5. `addedDeckTiles`, `handRankProgress`, `Tile.seal/enhancement/edition` 변경이 JSON roundtrip된다.
-6. 풀런봇 action schema에 `use_item_on_line`이 추가된다.
-7. sim/LLM trace에 ritual 사용 전후 board/deck/rank/modifier delta가 남는다.
+1. 새 카드 pool과 1차 catalog draft를 먼저 확정한다.
+2. 각 카드가 요구하는 runtime capability를 역으로 도출한다.
+3. 그 capability 기준으로 `use_battle_select_line`, 저장/복원, 전투 표시, 정산 표시 정책을 쓴다.
+4. ML/시뮬레이션/풀런봇 계약은 마지막에 붙인다.

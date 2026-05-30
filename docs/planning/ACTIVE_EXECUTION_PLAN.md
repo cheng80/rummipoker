@@ -40,7 +40,7 @@
    - 완료: glass 파괴와 런 덱 source 제거/복원.
    - 보류: `wild_painted`, `lucky_tile`은 evaluator/RNG 재현 정책이 더 필요해 V1 후속 또는 V2 후보로 둔다.
 6. 다음 활성 작업:
-   - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 현재 catalog 54개와 새 Board-Line Ritual 후보를 family별로 재분류한다. 1차 audit는 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
+   - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 현재 catalog 54개와 새 Board-Line Ritual 후보를 family별로 재분류한다. 1차 audit와 새 카드 후보 pool은 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
    - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
    - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
    - 2026-05-29 full-run policy fresh data: `full_run_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
@@ -73,9 +73,10 @@
 
 1. 완료: 현재 catalog 54개를 `Jester`, `Quick Item`, `Passive Relic`, `Hand-Rank Growth`, `Tile Modifier`, `Board-Line Ritual`, `Market Pool Mutation` 관점으로 1차 재분류한다. 결과는 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`.
 2. 완료: 기존 아이템 중 반복 플레이를 고착시키는 효과와 새 덱빌딩 다양성을 만드는 효과를 나눈다.
-3. 완료: Board-Line Ritual 후보 pool은 넓게 유지하고, 실제 V1 catalog 투입 draft 후보 9개를 `ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다.
-4. 손패 직접 파괴/변형은 V1 금지로 유지한다. 보드 라인 target UI, 저장/복원, 정산/런 정보 표시, 풀런봇 trace가 닫히기 전에는 high-risk mutation을 구현하지 않는다.
-5. 정책 정화가 닫힌 뒤 fresh sim/ML/LLM 결과를 다시 읽어 가격/등장 weight/Station pool 판단에 사용한다.
+3. 완료: 9개 후보는 너무 적다는 판단으로 폐기하고, 새 카드 후보 pool을 34종으로 확장했다. 첫 catalog draft 목표는 18종 안팎이다.
+4. 다음: 34종 후보 중 실제 1차 추가 카드와 효과를 확정한다.
+5. 손패 직접 파괴/변형은 V1 금지로 유지한다. 카드 pool 확정 뒤 보드 라인 target UI, 저장/복원, 정산/런 정보 표시 정책을 역으로 도출한다.
+6. ML/시뮬레이션/풀런봇 계약은 잠시 보류한다. 새 카드와 효과가 먼저 확정된 뒤 마지막에 붙인다.
 
 ## 2. Post-contest 다음 작업
 

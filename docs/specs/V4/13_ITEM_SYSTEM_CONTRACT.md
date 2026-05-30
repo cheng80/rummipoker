@@ -653,7 +653,9 @@ market/boss interaction: 5%
 
 V1 catalog 투입 최소 조건:
 
-- 최소 9개 이상.
-- 성장, 복사, seal 계열을 각각 2개 이상 포함.
-- 변환 또는 prune 계열은 최소 1개만 넣고, 고위험 후보는 등장 가중치를 낮춘다.
-- 모든 후보는 target line 선택 UI와 trace 로그를 가져야 한다.
+- 설계 후보 pool은 최소 24개 이상. 현재 정화 audit 기준 후보 pool은 34개다.
+- 첫 catalog draft는 18종 안팎을 목표로 한다.
+- 성장, 복사, seal 계열을 각각 4개 안팎 포함한다.
+- 변환, prune, geometry, market pool mutation도 각각 최소 1개 이상 포함한다.
+- 고위험 후보는 첫 구현에서 제외하거나 등장 가중치를 낮춘다.
+- ML/시뮬레이션/풀런봇 계약은 잠시 보류한다. 먼저 카드와 효과를 확정한 뒤, 필요한 target UI와 저장/표시 정책을 역으로 도출한다.
