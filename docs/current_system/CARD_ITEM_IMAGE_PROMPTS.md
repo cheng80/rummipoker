@@ -323,13 +323,13 @@ Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, desig
 | 의식/각인 문장 | `echo_seal` | 메아리 각인 | ritual, seal, overlap_echo |
 | 의식/각인 문장 | `anchor_seal` | 닻 각인 | ritual, seal, moved_tile |
 | 의식/각인 문장 | `risk_seal` | 균열 각인 | ritual, seal, high_risk_tradeoff |
-| 의식/숫자 변환 문장 | `rank_concord` | 숫자 맞춤 의식 | ritual, temporary_rank, pair_triple |
-| 의식/숫자 변환 문장 | `step_rite` | 계단 의식 | ritual, temporary_rank, straight |
-| 의식/숫자 변환 문장 | `color_concord` | 색 맞춤 의식 | ritual, temporary_color, majority |
-| 의식/숫자 변환 문장 | `off_color_rite` | 이색 의식 | ritual, temporary_color, off_color |
-| 의식/숫자 변환 문장 | `wild_thread` | 만능 실 | ritual, wild_color, temporary |
-| 의식/숫자 변환 문장 | `number_mask` | 숫자 가면 | ritual, wild_rank, temporary |
-| 의식/덱 압축 문장 | `line_pruner` | 가지치기 의식 | ritual, deck_remove, weak_tile |
+| 의식/숫자 변환 문장 | `rank_concord` | 숫자 맞춤 의식 | ritual, hand_rank_override, three_kind |
+| 의식/숫자 변환 문장 | `step_rite` | 계단 의식 | ritual, hand_rank_override, straight |
+| 의식/숫자 변환 문장 | `color_concord` | 색 맞춤 의식 | ritual, hand_rank_override, flush |
+| 의식/숫자 변환 문장 | `off_color_rite` | 이색 의식 | ritual, hand_rank_override, full_house |
+| 의식/숫자 변환 문장 | `wild_thread` | 만능 실 | ritual, hand_rank_override, four_kind |
+| 의식/숫자 변환 문장 | `number_mask` | 숫자 가면 | ritual, hand_rank_override, five_kind |
+| 의식/덱 압축 문장 | `line_pruner` | 가지치기 의식 | ritual, deck_remove, selected_tile |
 | 의식/덱 압축 문장 | `trim_color` | 색 가지치기 | ritual, deck_remove, overrepresented_color |
 | 의식/덱 압축 문장 | `trim_rank` | 숫자 가지치기 | ritual, deck_remove, overrepresented_rank |
 | 의식/덱 압축 문장 | `deadwood_burn` | 마른가지 소각 | ritual, dead_line, gold_recovery |
