@@ -466,6 +466,14 @@ consumeItem
 
 이 목록은 `data/common/items_common_v1.json`에 즉시 추가할 확정 데이터가 아니라, Board-Line Ritual Mutation V1의 정책 후보 목록이다. 실제 catalog 반영 전에는 저장/복원, UI target 선택, 풀런봇, 시뮬레이터 재현을 먼저 닫는다.
 
+Balatro에서 참고할 축:
+
+- Tarot-like: card enhancement, suit/color conversion, rank/number conversion, economy gain.
+- Spectral-like: card copy/destruction, seal/edition 부여, 강한 보상과 손실 tradeoff.
+- Voucher-like: shop slot, discount, reroll, consumable slot, rarity/frequency 조정.
+
+Rummi Poker에서는 위 효과를 그대로 복사하지 않는다. 손패 직접 조작 대신 `보드 라인`, `확정 preview`, `addedDeckTiles`, `tile modifier`, `hand-rank progression`, `market pool`로 재해석한다.
+
 공통 규칙:
 
 - type: `consumable` 우선
@@ -512,3 +520,114 @@ consumeItem
 3. `line_seal_stamp`: 특수 타일 modifier UI와 연결되며 Ritual의 정체성을 만든다.
 
 이 3개가 안정화되기 전에는 색/숫자 변환과 라인 파괴를 catalog에 넣지 않는다.
+
+### 10.5 Expanded Ritual Pool
+
+정책 후보 pool은 구현 1차보다 넓게 유지한다. pool이 작으면 마켓에서 반복 구매 패턴이 고정되고, 결국 기존 flush/성장 루트만 강화한다.
+
+아래 목록은 Balatro 참고 축과 Rummi Poker 자체 보드 규칙을 섞은 장기 후보군이다.
+
+#### A. Line Memory / Growth
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `line_memory` | 라인 기억 | 선택 라인의 대표 족보 성장 +1 | 확정한 족보를 다음 성장 방향으로 연결 |
+| `minor_memory` | 잔상 기억 | 선택 라인의 두 번째로 강한 족보 후보 성장 +1 | 주력 족보만 반복하는 현상 완화 |
+| `cross_memory` | 교차 기억 | 선택 타일이 속한 row/col 중 낮은 점수 라인 계열 성장 +1 | 교차 라인 빌드 유도 |
+| `boss_memory` | 보스 기억 | 보스전에서만 선택 라인의 대표 족보 성장 +2 | 고위험 전투 보상 강화 |
+| `thin_memory` | 얇은 기억 | 4타일 이하로 확정 가능한 라인 계열 성장 +1 | 작은 족보/희소 라인 보정 |
+
+#### B. Copy / Deck Injection
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `keystone_copy` | 중심석 복사 | 라인 최고 기여 타일 1장을 덱에 복사 | 핵심 타일 중심 덱빌딩 |
+| `edge_copy` | 끝점 복사 | 라인의 양끝 중 하나를 선택해 덱에 복사 | line endpoint 의미 부여 |
+| `color_echo` | 색 메아리 | 라인 다수 색 타일 1장을 무작위 복사 | 색 빌드 지원 |
+| `rank_echo` | 숫자 메아리 | 라인 내 반복 숫자 또는 pair 후보 1장 복사 | pair/triple 루트 지원 |
+| `scarce_copy` | 희소석 복사 | 현재 덱에 적은 색/숫자 타일을 라인에서 복사 | 덱 편중 완화 |
+| `sealed_copy` | 각인 복사 | seal/enhancement가 있는 라인 타일을 약화 복사 | modifier 중심 빌드 지원 |
+
+#### C. Seal / Enhancement
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `line_seal_stamp` | 라인 각인 | 라인 타일 1개에 `line_mark` seal 부여 | Ritual의 기본 강화 감각 |
+| `growth_seal` | 성장 각인 | 다음 확정 때 해당 타일 포함 족보 성장 +1 | 타일과 성장 연결 |
+| `gold_seal_stamp` | 금빛 각인 | 해당 타일이 scoring line에 포함되면 Gold +1 | 경제 빌드 축 추가 |
+| `echo_seal` | 메아리 각인 | 해당 타일 포함 라인이 두 번째 확정이면 보너스 | 다중 confirm 유도 |
+| `anchor_seal` | 닻 각인 | 해당 타일이 보드 이동 후 확정되면 보너스 | 이동 아이템과 연계 |
+| `risk_seal` | 균열 각인 | 강한 점수 보너스, 단 확정 후 타일 제거 후보가 됨 | Spectral-like tradeoff |
+
+#### D. Color / Number Conversion
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `color_concord` | 색 맞춤 의식 | 라인 1~2장을 다수 색으로 전투 한정 변환 | flush 루트 조정 |
+| `off_color_rite` | 이색 의식 | 라인 1장을 다수 색이 아닌 색으로 변환 | flush 일변도 억제 |
+| `rank_concord` | 숫자 맞춤 의식 | 라인 1장을 pair/triple 후보 숫자로 전투 한정 변환 | 숫자 족보 루트 강화 |
+| `step_rite` | 계단 의식 | 라인 1장을 straight에 가까운 숫자로 변환 | straight 루트 지원 |
+| `wild_thread` | 만능 실 | 라인 타일 1장에 전투 한정 wild-color marker | 임시 변형의 안전 버전 |
+| `number_mask` | 숫자 가면 | 라인 타일 1장에 전투 한정 wild-rank marker | pair/straight 실험용 |
+
+#### E. Prune / Sacrifice / Compression
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `line_pruner` | 가지치기 의식 | 라인 최저 기여 타일 1장을 덱 제거 후보로 기록 | 덱 압축 |
+| `deadwood_burn` | 마른가지 소각 | 확정 불가능한 완성 라인을 제거하고 Gold 획득 | 실패 라인 회수 |
+| `sacrifice_line` | 제물 의식 | 확정 가능한 라인을 점수 대신 덱 변형 보상으로 교환 | 점수/성장 선택 |
+| `trim_color` | 색 가지치기 | 라인에서 덱 내 과다 색 타일 1장을 제거 후보로 기록 | 색 편중 관리 |
+| `trim_rank` | 숫자 가지치기 | 라인에서 덱 내 과다 숫자 타일 1장을 제거 후보로 기록 | 숫자 편중 관리 |
+| `void_mark` | 공허 표식 | 강한 seal 부여 후 다음 boss 제약 강화 | 고위험 보상 |
+
+#### F. Line Geometry / Board State
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `cross_rite` | 교차 의식 | 선택 타일의 row/col 양쪽 preview를 강화 | 보드 교차점 가치 상승 |
+| `corner_rite` | 모서리 의식 | 라인 끝점/모서리 타일 포함 시 보너스 | 배치 위치 의미 강화 |
+| `center_rite` | 중심 의식 | 중앙 포함 라인에 성장 또는 복사 보너스 | 중앙 싸움 유도 |
+| `diagonal_rite` | 대각 의식 | 대각선 라인에만 강한 보상 | row/col 반복 완화 |
+| `bridge_rite` | 다리 의식 | 두 미완성 라인이 같은 타일을 공유하면 marker 부여 | 미래 확정 설계 |
+| `line_swap` | 라인 교환 | 같은 길이의 row/col line 일부 타일 교환 | 고난도 보드 조작 |
+
+#### G. Market / Pool Mutation
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `ritual_coupon` | 의식 쿠폰 | Ritual 계열 다음 구매 할인 | 새 family 진입 완화 |
+| `ritual_lens` | 의식 렌즈 | 다음 Market에서 Ritual 후보 출현 가중치 증가 | 빌드 방향 선택 |
+| `line_pack_ticket` | 라인 팩 티켓 | 다음 Market에 라인 기반 선택 pack 후보 추가 | booster/pack 확장 후보 |
+| `seal_vendor` | 각인 상인 | 다음 Market에 seal/enhancement 계열만 가중 | modifier 빌드 지원 |
+| `prune_vendor` | 정리 상인 | 다음 Market에 덱 압축 계열만 가중 | 파괴/압축 빌드 지원 |
+
+#### H. Boss / Constraint Interaction
+
+| 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
+|---|---|---|---|
+| `constraint_etch` | 제약 새김 | 현재 boss 제약에 걸린 라인을 변형하면 보너스 | 제약을 회피가 아닌 재료로 사용 |
+| `tax_refund_rite` | 세금 환급 의식 | penalty 받은 라인에서 Gold/성장 보상 | 약화 라인 보상 |
+| `boss_scar` | 보스 흉터 | 보스전에서 살아남은 라인에 seal 부여 | 보스전 서사 강화 |
+| `redemption_rite` | 회복 의식 | 이전 blind에서 실패/낮은 점수 라인 계열 강화 | 실패 경험의 다음 선택화 |
+
+### 10.6 Pool Composition Target
+
+초기 Ritual pool이 너무 작으면 새 시스템이 또 하나의 고정 루트가 된다. 따라서 실제 catalog 투입 전에도 후보 pool은 다음 비율을 목표로 한다.
+
+```text
+growth/memory: 20%
+copy/deck injection: 20%
+seal/enhancement: 20%
+conversion: 15%
+prune/sacrifice: 10%
+geometry/board-state: 10%
+market/boss interaction: 5%
+```
+
+V1 catalog 투입 최소 조건:
+
+- 최소 9개 이상.
+- 성장, 복사, seal 계열을 각각 2개 이상 포함.
+- 변환 또는 prune 계열은 최소 1개만 넣고, 고위험 후보는 등장 가중치를 낮춘다.
+- 모든 후보는 target line 선택 UI와 trace 로그를 가져야 한다.

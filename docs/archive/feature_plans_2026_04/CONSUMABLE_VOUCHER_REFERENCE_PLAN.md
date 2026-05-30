@@ -46,6 +46,7 @@ Policy:
 - Do not expose voucher-like permanent passives as ordinary quick-use items.
 - Tile enhancement/conversion/removal Tarot-like effects and Spectral-like high-risk mutation are post-contest candidates, not current submission-blocking work.
 - Post-contest mutation priority is now `board-line ritual mutation` before hand mutation. Hand-card destruction/conversion remains out of scope until board-line target selection, save/restore, and simulator reproduction are stable.
+- The expanded candidate source is `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md` section 10.5. This reference plan should not become a second catalog.
 
 ## 3. Rummi Poker Mapping
 
@@ -56,6 +57,8 @@ Policy:
 | Spectral card | high-risk board-line/deck/Jester mutation item |
 | Voucher | run-long passive relic or separate `Run Voucher` content type |
 | Booster pack | market pack/choice offer, deferred |
+
+The mapping above is taxonomy only. Actual Rummi Poker candidates must be generated around board-line targets, `addedDeckTiles`, tile modifier, hand-rank progression, and market pool mutation rather than direct Balatro card text.
 
 ## 4. Consumable Taxonomy
 
