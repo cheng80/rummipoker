@@ -11,6 +11,7 @@
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
 | 공모전 기준 완성 | Closed / off | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-15 12시경 최종 산출물을 우선 등록했다. 풀런봇/제출 체크리스트는 더 이상 활성 작업 큐가 아니며, 이후 공모전 문서는 제출 증거와 이력 참고로만 본다. |
+| 아이템/덱빌딩 정책 정화 | Active / current | `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`, `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md` | 현재 기준점 태그 `policy-cleanup-baseline-20260530` 이후의 1순위 작업이다. Balatro 참고 축을 직접 복사하지 않고, Jester / Quick Item / Passive Relic / Hand-Rank Growth / Tile Modifier / Board-Line Ritual / Market Pool Mutation으로 다시 나눈다. |
 | Post-contest 덱 빌딩 확장 | Active | `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` | 특수 타일 V1은 저장/마켓/손패/보드/런 정보/정산 반영까지 닫았고, V2-A 판본(`silver_edition`, `glow_edition`, `prism_edition`)도 additive 저장/마켓/정산/뱃지 경로를 열었다. 다음은 V2-B 이후가 아니라 fresh 데이터 기반 레벨링 재시작 전에 회귀 검증과 문서 정리 상태를 유지하는 것이다. |
 | UI/UX 예정 연출 큐 | Active side track | `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md` | transient presentation state는 runtime save source-of-truth와 분리되어 있고, settlement 큐에서 Jester / Tile modifier / Item 효과 단계가 분리됐다. timing/metric 일부도 공용화했다. 남은 polish는 별도 시각 QA 후보로 두며 밸런스/경제/ML 재검증과 섞지 않는다. |
 | 실제 Goal 기준 완성 | Active after stabilization | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1은 반영됐다. 공모전 이후에는 리팩터링, 최적화, 장기 밸런스, meta growth, 자연 full-play QA를 재개한다. |
@@ -39,11 +40,12 @@
    - 완료: glass 파괴와 런 덱 source 제거/복원.
    - 보류: `wild_painted`, `lucky_tile`은 evaluator/RNG 재현 정책이 더 필요해 V1 후속 또는 V2 후보로 둔다.
 6. 다음 활성 작업:
+   - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 현재 catalog 54개와 새 Board-Line Ritual 후보를 family별로 재분류한다. 1차 audit는 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
    - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
    - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
    - 2026-05-29 full-run policy fresh data: `full_run_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
    - 2026-05-29 grid fresh data: `MODE=grid` chunked run 5,655 rows, market/loadout axis 확장, grid multi-target model, candidate probe report를 생성했다. `avg_score_ratio` 회귀는 R2 0.6030까지 개선됐지만, `cleared_majority` classifier는 balanced accuracy 0.6649로 gate 후보 선별에는 아직 약하다.
-   - 다음은 grid candidate report의 상위 economy/target 후보를 small fresh resimulation으로 분리 검증하는 것이다.
+   - 다음은 정책 정화 후 grid candidate report의 상위 economy/target 후보를 small fresh resimulation으로 분리 검증하는 것이다.
    - LLM autoplay는 대량 밸런스 기준이 아니라 전략 샘플러/decision label 보조 축으로만 검토한다. 적용 계약은 `docs/planning/leveling/LLM_AUTOPLAY_LEVELING_PLAN.md`를 따른다.
 7. 대기열로 미룬 작업:
    - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
@@ -64,6 +66,16 @@
 - ignored legacy simulation logs: `logs/archive/legacy_pre_20260529/sim/`
 
 새 장기 밸런스, 경제, ML 작업은 archive 데이터를 feature table에 바로 섞지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh run부터 다시 쌓는다.
+
+## 정책 정화 진행 순서
+
+기준 태그: `policy-cleanup-baseline-20260530`
+
+1. 완료: 현재 catalog 54개를 `Jester`, `Quick Item`, `Passive Relic`, `Hand-Rank Growth`, `Tile Modifier`, `Board-Line Ritual`, `Market Pool Mutation` 관점으로 1차 재분류한다. 결과는 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`.
+2. 기존 아이템 중 반복 플레이를 고착시키는 효과와 새 덱빌딩 다양성을 만드는 효과를 나눈다.
+3. Board-Line Ritual 후보 pool은 넓게 유지하고, 실제 V1 catalog 투입 후보는 낮은 리스크 9개 이상으로 좁힌다.
+4. 손패 직접 파괴/변형은 V1 금지로 유지한다. 보드 라인 target UI, 저장/복원, 정산/런 정보 표시, 풀런봇 trace가 닫히기 전에는 high-risk mutation을 구현하지 않는다.
+5. 정책 정화가 닫힌 뒤 fresh sim/ML/LLM 결과를 다시 읽어 가격/등장 weight/Station pool 판단에 사용한다.
 
 ## 2. Post-contest 다음 작업
 

@@ -74,7 +74,7 @@ passive_relic: 10
 - 모든 아이템은 `effect.op` 기반으로 런타임 구현이 가능해야 하며, 텍스트만 있는 아이템은 허용하지 않는다.
 - 가격과 희귀도는 초기 실사용 밸런스 후보이며, 실제 플레이 로그 기반으로 조정한다.
 - Tarot/Planet/Spectral/Voucher식 구조는 그대로 가져오지 않고, confirm modifier, tile enhancement, tile conversion, rank progression, high-risk mutation, run-long passive로 분리한다.
-- Planet-like rank progression은 특정 족보 성장 +1을 주는 직접 지원류로 다룬다. Tile enhancement/conversion과 Spectral-like high-risk mutation은 공모전 이후 검토한다.
+- Planet-like rank progression은 특정 족보 성장 +1을 주는 직접 지원류로 다룬다. Tile enhancement/conversion과 Spectral-like high-risk mutation은 현재 정책 정화에서 `Board-Line Ritual`과 특수 타일 modifier 축으로 재분류한 뒤 구현 범위를 정한다.
 
 ### 2.2 Board-Line Ritual Mutation Policy
 
@@ -115,6 +115,32 @@ asset path:
 ```dart
 AssetPaths.itemsCommon
 ```
+
+### 2.3 Policy Cleanup Gate
+
+[ACTIVE]
+
+현재 정책 정화는 기존 54개 아이템을 바로 갈아엎는 작업이 아니다. 먼저 콘텐츠 family와 구현 책임을 다시 나눈다.
+
+분류 기준:
+
+| Family | 역할 | 1차 적용 위치 | 금지/주의 |
+|---|---|---|---|
+| `Jester` | run-long 점수/조건 synergy | 장착 슬롯, 정산 | Item 슬롯/소모품처럼 보이면 안 됨 |
+| `Quick Item` | 전투/마켓에서 직접 쓰는 1회성 도구 | Q-Slot, Tool/Gear 후보 | 자동 지급/의미 없는 사용 금지 |
+| `Passive Relic` | 런/Station 단위 장기 효과 | Passive rack | Voucher처럼 보이면 별도 `Run Voucher` 검토 |
+| `Hand-Rank Growth` | 족보 레벨 성장 | 성장 아이템, 보상, 런 정보 | next-confirm 임시 보정으로 축소 금지 |
+| `Tile Modifier` | 타일 자체의 강화/각인/판본 | 타일 offer, 보드/손패/정산 | 마켓에서만 설명되고 전투에서 안 보이면 실패 |
+| `Board-Line Ritual` | 이미 만든 보드 라인에 적용하는 변형/복제/파괴 | 전투 line target UI | 손패 직접 파괴/변형 V1 금지 |
+| `Market Pool Mutation` | 다음/현재 마켓 후보 pool과 가격/pack 조정 | Market state, offer lane | 후보 수만 바꾸고 체감 없는 효과 금지 |
+
+정화 순서:
+
+1. 현재 catalog 54개를 위 family로 다시 태깅한다.
+2. 실제 runtime에 이미 있는 효과와 문서 후보를 분리한다.
+3. Balatro 참고 축은 taxonomy로만 유지하고, 표시명/효과값/대상은 Rummi Poker 원본으로 작성한다.
+4. Board-Line Ritual 후보 pool은 넓게 유지하되, 첫 catalog 투입은 `line_memory`, `keystone_copy`, `line_seal_stamp` 같은 낮은 리스크부터 시작한다.
+5. 새 family를 catalog에 넣기 전에는 저장/복원, target UI, 정산/런 정보 표시, 풀런봇 로그, 시뮬레이터 재현 경로를 먼저 정의한다.
 
 ## 3. Item Subtype UI Contract
 

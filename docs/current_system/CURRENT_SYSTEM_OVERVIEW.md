@@ -26,7 +26,7 @@
 2. 상점, Jester, cash-out, stage advance, continue/save, restart까지 1차 루프가 연결되어 있다.
 3. 새 run 난이도/계약 선택, 런 완료 보상, 기억 카드, 도감 수집판까지 1차 메타 루프가 붙어 있다.
 4. 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 전투/마켓 튜토리얼 V1은 런타임에 반영됐다.
-5. 현재 활성 작업은 특수 타일 modifier V1, Item/Jester/Tool/Gear 정책과 연출, runtime state와 presentation state 분리, 장기 밸런스/경제 재검증이다.
+5. 현재 활성 작업은 아이템/덱빌딩 정책 정화, 특수 타일 modifier V1 이후 관리, Item/Jester/Tool/Gear 정책과 연출, runtime state와 presentation state 분리, 장기 밸런스/경제 재검증이다.
 6. 따라서 현재 코드는 **“작동하는 코어 런타임 + 1차 메타/도감 + post-contest 고도화 진행 상태”** 이고, `V4`는 이를 장기 목표 구조로 확장하는 문서가 되어야 한다.
 
 ---

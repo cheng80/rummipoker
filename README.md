@@ -8,6 +8,7 @@
 
 ## 현재 초점
 
+- 아이템/덱빌딩 정책 정화: Balatro 참고 축을 직접 복사하지 않고 Board-Line Ritual, 족보 성장, 타일 modifier, 마켓 pool mutation으로 재분류
 - 특수 타일 modifier V1: 데이터 모델, 저장/복원, Market 표시, 전투/정산 반영
 - Item/Jester/Tool/Gear 런타임 정책: 상한, no-op, 가격/가치 probe, source-target-result 연출
 - runtime state와 transient presentation/dialog/animation state 분리
