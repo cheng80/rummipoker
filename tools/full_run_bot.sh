@@ -320,12 +320,13 @@ run_flutter_drive_and_capture() {
 
 extract_trace_from_log() {
   local log_file="$1"
-  local append_args=()
   if [[ "$TRACE_APPEND" == "1" && -f "$TRACE_PATH" ]]; then
-    append_args=(--append)
+    python3 tools/extract_full_run_trace_from_log.py "$log_file" \
+      --out "$TRACE_PATH" --append || true
+    return
   fi
   python3 tools/extract_full_run_trace_from_log.py "$log_file" \
-    --out "$TRACE_PATH" "${append_args[@]}" || true
+    --out "$TRACE_PATH" || true
 }
 
 persist_checkpoint() {
