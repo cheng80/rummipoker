@@ -21,6 +21,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("log_path", type=Path)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help="Append extracted rows instead of replacing the output file.",
+    )
     return parser.parse_args()
 
 
@@ -67,7 +72,8 @@ def main() -> int:
         return 1
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    with args.out.open("w", encoding="utf-8") as sink:
+    mode = "a" if args.append else "w"
+    with args.out.open(mode, encoding="utf-8") as sink:
         for row in rows:
             sink.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
             sink.write("\n")

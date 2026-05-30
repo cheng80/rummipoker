@@ -24,8 +24,10 @@ TARGET_STAGE="${FULL_RUN_BOT_TARGET_STAGE:-1}"
 TARGET_TIER="${FULL_RUN_BOT_TARGET_TIER:-boss}"
 TARGET_SCENE="${FULL_RUN_BOT_TARGET_SCENE:-cashOut}"
 REQUIRED_EVIDENCE="${FULL_RUN_BOT_REQUIRED_EVIDENCE:-}"
+BRIDGE_RESUME_LIMIT="${FULL_RUN_BOT_BRIDGE_RESUME_LIMIT:-12}"
 PUB_GET=1
 CHROMEDRIVER_PID=""
+TRACE_APPEND=0
 
 usage() {
   cat <<'EOF'
@@ -53,6 +55,8 @@ Options:
   --target-scene <name>     stationSelect | battle | cashOut | market | runComplete.
                             Default: cashOut.
   --required-evidence <key> market_purchase | item_purchase | item_use.
+  --bridge-resume-limit <n> Auto-resume count for FlutterDriver request_data
+                            bridge failures. Default: 12.
   --skip-pub-get            Skip `flutter pub get`.
   -h, --help                Show this help.
 
@@ -131,6 +135,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --required-evidence)
       REQUIRED_EVIDENCE="${2:?missing required evidence}"
+      shift 2
+      ;;
+    --bridge-resume-limit)
+      BRIDGE_RESUME_LIMIT="${2:?missing bridge resume limit}"
       shift 2
       ;;
     --skip-pub-get)
@@ -312,8 +320,12 @@ run_flutter_drive_and_capture() {
 
 extract_trace_from_log() {
   local log_file="$1"
+  local append_args=()
+  if [[ "$TRACE_APPEND" == "1" && -f "$TRACE_PATH" ]]; then
+    append_args=(--append)
+  fi
   python3 tools/extract_full_run_trace_from_log.py "$log_file" \
-    --out "$TRACE_PATH" || true
+    --out "$TRACE_PATH" "${append_args[@]}" || true
 }
 
 persist_checkpoint() {
@@ -370,32 +382,57 @@ if [[ "$PUB_GET" -eq 1 ]]; then
   run_and_capture "$OUTPUT_DIR/00_pub_get.log" "$FLUTTER_BIN" pub get
 fi
 
-run_flutter_drive_and_capture "$OUTPUT_DIR/10_full_run_bot.log" \
-  "$FLUTTER_BIN" drive \
-    --driver=test_driver/integration_test.dart \
-    --target=integration_test/full_run_bot_test.dart \
-    -d chrome \
-    --web-port="$WEB_PORT" \
-    --driver-port="$CHROMEDRIVER_PORT" \
-    --no-keep-app-running \
-    ${RESUME_DEFINE_ARG:+"$RESUME_DEFINE_ARG"} \
-    ${CARRYOVER_DEFINE_ARG:+"$CARRYOVER_DEFINE_ARG"} \
-    --dart-define=FULL_RUN_BOT_MODE="$MODE" \
-    --dart-define=FULL_RUN_BOT_SEED="$SEED" \
-    --dart-define=FULL_RUN_BOT_DIFFICULTY="$DIFFICULTY" \
-    --dart-define=FULL_RUN_BOT_LOCALE="$LOCALE" \
-    --dart-define=FULL_RUN_BOT_MAX_BATTLE_ACTIONS="$MAX_BATTLE_ACTIONS" \
-    --dart-define=FULL_RUN_BOT_MAX_GAME_OVER_RETRIES="$MAX_GAME_OVER_RETRIES" \
-    --dart-define=FULL_RUN_BOT_ACTION_DELAY_MS="$ACTION_DELAY_MS" \
-    --dart-define=FULL_RUN_BOT_RESUME_ACTIVE_RUN="$RESUME_ACTIVE_RUN" \
-    --dart-define=FULL_RUN_BOT_TUTORIALS_ALREADY_SEEN="$TUTORIALS_ALREADY_SEEN" \
-    --dart-define=FULL_RUN_BOT_TRACE_PATH="$TRACE_PATH" \
-    --dart-define=FULL_RUN_BOT_TARGET_STAGE="$TARGET_STAGE" \
-    --dart-define=FULL_RUN_BOT_TARGET_TIER="$TARGET_TIER" \
-    --dart-define=FULL_RUN_BOT_TARGET_SCENE="$TARGET_SCENE" \
-    --dart-define=FULL_RUN_BOT_REQUIRED_EVIDENCE="$REQUIRED_EVIDENCE"
+segment_index=0
+while true; do
+  if [[ "$segment_index" -eq 0 ]]; then
+    log_file="$OUTPUT_DIR/10_full_run_bot.log"
+  else
+    log_file="$OUTPUT_DIR/$(printf '%02d' $((10 + segment_index)))_full_run_bot_resume_${segment_index}.log"
+  fi
 
-extract_trace_from_log "$OUTPUT_DIR/10_full_run_bot.log"
+  if run_flutter_drive_and_capture "$log_file" \
+    "$FLUTTER_BIN" drive \
+      --driver=test_driver/integration_test.dart \
+      --target=integration_test/full_run_bot_test.dart \
+      -d chrome \
+      --web-port="$WEB_PORT" \
+      --driver-port="$CHROMEDRIVER_PORT" \
+      --no-keep-app-running \
+      ${RESUME_DEFINE_ARG:+"$RESUME_DEFINE_ARG"} \
+      ${CARRYOVER_DEFINE_ARG:+"$CARRYOVER_DEFINE_ARG"} \
+      --dart-define=FULL_RUN_BOT_MODE="$MODE" \
+      --dart-define=FULL_RUN_BOT_SEED="$SEED" \
+      --dart-define=FULL_RUN_BOT_DIFFICULTY="$DIFFICULTY" \
+      --dart-define=FULL_RUN_BOT_LOCALE="$LOCALE" \
+      --dart-define=FULL_RUN_BOT_MAX_BATTLE_ACTIONS="$MAX_BATTLE_ACTIONS" \
+      --dart-define=FULL_RUN_BOT_MAX_GAME_OVER_RETRIES="$MAX_GAME_OVER_RETRIES" \
+      --dart-define=FULL_RUN_BOT_ACTION_DELAY_MS="$ACTION_DELAY_MS" \
+      --dart-define=FULL_RUN_BOT_RESUME_ACTIVE_RUN="$RESUME_ACTIVE_RUN" \
+      --dart-define=FULL_RUN_BOT_TUTORIALS_ALREADY_SEEN="$TUTORIALS_ALREADY_SEEN" \
+      --dart-define=FULL_RUN_BOT_TRACE_PATH="$TRACE_PATH" \
+      --dart-define=FULL_RUN_BOT_TARGET_STAGE="$TARGET_STAGE" \
+      --dart-define=FULL_RUN_BOT_TARGET_TIER="$TARGET_TIER" \
+      --dart-define=FULL_RUN_BOT_TARGET_SCENE="$TARGET_SCENE" \
+      --dart-define=FULL_RUN_BOT_REQUIRED_EVIDENCE="$REQUIRED_EVIDENCE"; then
+    break
+  fi
+
+  status=$?
+  if [[ "$segment_index" -ge "$BRIDGE_RESUME_LIMIT" ]] || \
+     ! grep -q "DriverError: Error while reading FlutterDriver result.*request_data" "$log_file" || \
+     [[ ! -f "$BROWSER_PROFILE_DIR/latest_checkpoint.env" ]]; then
+    exit "$status"
+  fi
+
+  segment_index=$((segment_index + 1))
+  echo "FlutterDriver request_data bridge failed; resuming from checkpoint segment $segment_index/$BRIDGE_RESUME_LIMIT." \
+    | tee -a "$log_file"
+  RESUME_ACTIVE_RUN=true
+  RESUME_DEFINE_ARG="--dart-define-from-file=$BROWSER_PROFILE_DIR/latest_checkpoint.env"
+  TRACE_APPEND=1
+  cleanup_bot_processes
+  start_chromedriver
+done
 
 echo "full_run_bot complete."
 echo "Logs: $OUTPUT_DIR"
