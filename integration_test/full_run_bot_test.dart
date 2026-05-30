@@ -1847,7 +1847,7 @@ class _FullRunBot {
       'deck_remaining': session.deck.remaining,
       'max_hand_size': session.maxHandSize,
       'hand': session.hand.map(_compactTileTrace).toList(),
-      'deck_top_5': session.peekDeckTop(5).map(_compactTileTrace).toList(),
+      'deck_top_3': session.peekDeckTop(3).map(_compactTileTrace).toList(),
       'board_occupied': RummiPokerGridSession.countTilesOnBoard(session.board),
       'board': _compactBoardTrace(session),
       'resources': {
@@ -1908,14 +1908,13 @@ class _FullRunBot {
       'stage': progress.stageIndex,
       'tier_index': progress.currentStationBlindTierIndex,
       'gold': progress.gold,
+      'jester_count': progress.ownedJesters.length,
       'jester_ids': progress.ownedJesters.map((card) => card.id).toList(),
-      'owned_items': progress.itemInventory.ownedItems
+      'owned_item_counts': progress.itemInventory.ownedItems
           .map((entry) => '${entry.itemId}:${entry.count}')
           .toList(),
       'quick_slot_items': progress.itemInventory.quickSlotItemIds,
-      'added_deck_tiles': progress.addedDeckTiles
-          .map(_compactTileTrace)
-          .toList(),
+      'added_deck_tile_count': progress.addedDeckTiles.length,
       'played_hand_counts': progress.snapshotPlayedHandCounts().map(
         (key, value) => MapEntry(key.name, value),
       ),
@@ -1962,8 +1961,6 @@ class _FullRunBot {
     return {
       'ok': result.ok,
       'score_added': result.scoreAdded,
-      'base_score': result.baseScore,
-      'jester_bonus': result.jesterBonus,
       'line_count': result.lineBreakdowns.length,
       'lines': result.lineBreakdowns.map(_compactLineBreakdownTrace).toList(),
     };
@@ -1973,13 +1970,8 @@ class _FullRunBot {
     return {
       'line': '${line.ref.kind.name}:${line.ref.index}',
       'rank': line.rank.name,
-      'base_score': line.baseScore,
       'final_score': line.finalScore,
-      'jester_bonus': line.jesterBonus,
       'growth_level': line.growthLevel,
-      'growth_bonus': line.growthBonus,
-      'overlap_multiplier': line.overlapMultiplier,
-      'tile_gold_bonus': line.tileGoldBonus,
       'destroyed_tiles': line.destroyedTiles.map(_compactTileTrace).toList(),
       'cells': line.contributingCells
           .map((cell) => '${cell.$1}:${cell.$2}')
@@ -1990,12 +1982,6 @@ class _FullRunBot {
               'modifier_id': penalty.modifierId,
               'score_delta': penalty.scoreDelta,
               'score_multiplier': penalty.scoreMultiplier,
-              'affected_tile_colors': penalty.affectedTileColors
-                  .map((color) => color.name)
-                  .toList(),
-              'affected_line_kinds': penalty.affectedLineKinds
-                  .map((kind) => kind.name)
-                  .toList(),
             },
           )
           .toList(),
@@ -2018,11 +2004,12 @@ class _FullRunBot {
     return {
       'type': action.type.name,
       if (action.handIndex != null) 'hand_index': action.handIndex,
-      if (selectedHandTile != null) 'hand_tile': _tileTrace(selectedHandTile),
+      if (selectedHandTile != null)
+        'hand_tile': _compactTileTrace(selectedHandTile),
       if (action.row != null) 'row': action.row,
       if (action.col != null) 'col': action.col,
       if (selectedBoardTile != null)
-        'board_tile': _tileTrace(selectedBoardTile),
+        'board_tile': _compactTileTrace(selectedBoardTile),
       if (action.toRow != null) 'to_row': action.toRow,
       if (action.toCol != null) 'to_col': action.toCol,
       if (action.gain != null) 'gain': action.gain,
