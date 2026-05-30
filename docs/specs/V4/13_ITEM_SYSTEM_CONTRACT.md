@@ -139,7 +139,7 @@ AssetPaths.itemsCommon
 1. 현재 catalog 54개를 위 family로 다시 태깅한다.
 2. 실제 runtime에 이미 있는 효과와 문서 후보를 분리한다.
 3. Balatro 참고 축은 taxonomy로만 유지하고, 표시명/효과값/대상은 Rummi Poker 원본으로 작성한다.
-4. Board-Line Ritual 후보 pool은 넓게 유지하되, 첫 catalog 투입은 `line_memory`, `keystone_copy`, `line_seal_stamp` 같은 낮은 리스크부터 시작한다.
+4. Board-Line Ritual 후보 pool은 넓게 유지한다. 첫 catalog draft는 18종 안팎, 첫 구현 slice는 그중 8~12종으로 잡는다.
 5. 새 family를 catalog에 넣기 전에는 저장/복원, target UI, 정산/런 정보 표시, 풀런봇 로그, 시뮬레이터 재현 경로를 먼저 정의한다.
 
 ## 3. Item Subtype UI Contract
@@ -490,7 +490,7 @@ consumeItem
 
 [TARGET]
 
-이 목록은 `data/common/items_common_v1.json`에 즉시 추가할 확정 데이터가 아니라, Board-Line Ritual Mutation V1의 정책 후보 목록이다. 실제 catalog 반영 전에는 저장/복원, UI target 선택, 풀런봇, 시뮬레이터 재현을 먼저 닫는다.
+이 목록은 `data/common/items_common_v1.json`에 즉시 추가할 확정 데이터가 아니라, Board-Line Ritual Mutation 계열의 정책 후보 목록이다. 지금은 ML/시뮬레이션보다 먼저 실제 추가할 아이템 카드와 효과 pool을 넓게 잡는 단계다.
 
 Balatro에서 참고할 축:
 
@@ -507,18 +507,25 @@ Rummi Poker에서는 위 효과를 그대로 복사하지 않는다. 손패 직�
 - timing 후보: `use_battle_select_line`
 - target: `completed_line` 또는 `confirmable_line`
 - target line은 row/col/diag를 모두 지원하되, V1 UI가 어려우면 row/col부터 시작한다.
-- effect log에는 `source_item_id`, `target_line_ref`, `tiles_before`, `tiles_after`, `deck_delta`, `score_preview_delta`를 남긴다.
+- UI/저장/로그 계약은 카드 pool 확정 뒤 역으로 도출한다.
 
-### 10.1 V1 Safe Candidates
+### 10.1 First Catalog Draft Policy
 
-| 후보 ID | 한국어명 | 역할 | 대상 | 효과 | 리스크 | V1 판정 |
-|---|---|---|---|---|---|---|
-| `line_seal_stamp` | 라인 각인 | 강화 부여 | 완성 라인 1개 | 라인 내 선택 타일 1개에 `seal=line_mark`를 부여. 다음 확정 시 해당 타일 포함 라인 점수 +N 또는 성장 +1 | 타일 modifier UI 필요 | 1차 후보 |
-| `keystone_copy` | 중심석 복사 | 덱 복제 | 확정 가능한 라인 1개 | 라인에서 가장 높은 기여 타일 1장을 `addedDeckTiles`에 복사 | 덱 비대화 | 1차 후보 |
-| `line_pruner` | 가지치기 의식 | 파괴/압축 | 완성 라인 1개 | 라인 내 최저 기여 타일 1장을 전투 후 덱에서 1장 제거 후보로 기록하고 즉시 Gold +N 또는 성장 +1 | 영구 제거 정책 필요 | 1차 후보, 약하게 |
-| `color_concord` | 색 맞춤 의식 | 색 변환 | 완성 라인 1개 | 라인 내 타일 1~2장을 선택 line의 다수 색으로 임시 변환. 확정되면 복사 보상 타일도 해당 색으로 생성 | flush 편향 강화 가능 | 실험 후보 |
-| `rank_concord` | 숫자 맞춤 의식 | 숫자 변환 | 완성 라인 1개 | 라인 내 타일 1장을 선택 숫자 쪽으로 맞춰 pair/triple 후보를 만든다. 전투 한정부터 시작 | 족보 판정 혼란 | 실험 후보 |
-| `line_memory` | 라인 기억 | 성장 | 확정 가능한 라인 1개 | 해당 라인의 대표 족보 성장 +1. 이미 `*_study`가 있으므로 battle-earned growth 버전 | Planet-like와 중복 | 1차 후보 |
+첫 catalog draft는 38종 후보 pool에서 18종 안팎을 고른다. 9종 이하의 작은 pool은 반복 구매 패턴을 만들 가능성이 높으므로 폐기한다.
+
+구성 목표:
+
+```text
+Line Memory / Growth: 4
+Copy / Deck Injection: 4
+Seal / Enhancement: 4
+Color / Number Conversion: 2
+Prune / Compression: 2
+Geometry / Board State: 1
+Market / Pool Mutation: 1
+```
+
+첫 draft 후보는 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`를 기준으로 확정한다.
 
 ### 10.2 High-Risk Candidates
 
@@ -539,13 +546,16 @@ Rummi Poker에서는 위 효과를 그대로 복사하지 않는다. 손패 직�
 
 ### 10.4 First Implementation Slice
 
-첫 구현은 아래 3개만 후보로 본다.
+첫 구현 slice는 catalog draft 18종 중 8~12종만 골라도 된다. 단 설계 pool과 catalog draft 자체를 3~9종으로 축소하지 않는다.
 
-1. `line_memory`: 이미 있는 hand-rank progression과 연결하기 쉬워 저장/점수/UI 리스크가 낮다.
-2. `keystone_copy`: `addedDeckTiles` 경로가 이미 있어 덱빌딩 체감이 크다.
-3. `line_seal_stamp`: 특수 타일 modifier UI와 연결되며 Ritual의 정체성을 만든다.
+초기 구현은 아래 capability를 많이 공유하는 카드부터 시작한다.
 
-이 3개가 안정화되기 전에는 색/숫자 변환과 라인 파괴를 catalog에 넣지 않는다.
+1. line target + hand-rank growth
+2. line target + `addedDeckTiles`
+3. line target + tile seal
+4. line target + light deck prune
+
+색/숫자 변환, sacrifice, wild marker는 evaluator/preview 설명이 닫힌 뒤 구현한다.
 
 ### 10.5 Expanded Ritual Pool
 
@@ -653,7 +663,7 @@ market/boss interaction: 5%
 
 V1 catalog 투입 최소 조건:
 
-- 설계 후보 pool은 최소 24개 이상. 현재 정화 audit 기준 후보 pool은 34개다.
+- 설계 후보 pool은 최소 24개 이상. 현재 정화 audit 기준 후보 pool은 38개다.
 - 첫 catalog draft는 18종 안팎을 목표로 한다.
 - 성장, 복사, seal 계열을 각각 4개 안팎 포함한다.
 - 변환, prune, geometry, market pool mutation도 각각 최소 1개 이상 포함한다.
