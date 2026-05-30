@@ -1802,7 +1802,7 @@ class _FullRunBot {
       ...payload,
     };
     final encoded = base64Encode(utf8.encode(jsonEncode(row)));
-    const chunkSize = 700;
+    const chunkSize = 6000;
     final chunkCount = (encoded.length / chunkSize).ceil();
     for (var index = 0; index < chunkCount; index += 1) {
       final start = index * chunkSize;
@@ -1811,7 +1811,7 @@ class _FullRunBot {
       debugPrint(
         'FULL_RUN_BOT_TRACE_CHUNK:$sequence:$index:$chunkCount:'
         '${encoded.substring(start, end)}',
-        wrapWidth: 1024,
+        wrapWidth: 8192,
       );
     }
     traceRowCount += 1;
