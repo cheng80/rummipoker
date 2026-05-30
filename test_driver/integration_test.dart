@@ -22,6 +22,11 @@ Future<void> main() {
         await sink.close();
         print('Wrote full-run trace: $tracePath');
         data.remove('full_run_trace_rows');
+      } else if (tracePath is String && traceRows is int) {
+        print(
+          'Full-run trace streamed through driver log: '
+          '$tracePath ($traceRows rows)',
+        );
       }
 
       await writeResponseData(data);

@@ -279,8 +279,9 @@ run_flutter_drive_and_capture() {
 
   while kill -0 "$run_pid" 2>/dev/null; do
     if grep -q "All tests passed!" "$log_file" 2>/dev/null; then
-      persist_checkpoint "$log_file"
       sleep 3
+      persist_checkpoint "$log_file"
+      extract_trace_from_log "$log_file"
       if kill -0 "$run_pid" 2>/dev/null; then
         echo "Detected pass; cleaning up lingering flutter drive session." \
           | tee -a "$log_file"
@@ -300,12 +301,19 @@ run_flutter_drive_and_capture() {
   wait "$run_pid"
   local status=$?
   persist_checkpoint "$log_file"
+  extract_trace_from_log "$log_file"
   cleanup_bot_processes
   set -e
   if [[ "$status" -ne 0 ]] && grep -q "All tests passed!" "$log_file" 2>/dev/null; then
     return 0
   fi
   return "$status"
+}
+
+extract_trace_from_log() {
+  local log_file="$1"
+  python3 tools/extract_full_run_trace_from_log.py "$log_file" \
+    --out "$TRACE_PATH" || true
 }
 
 persist_checkpoint() {
@@ -386,6 +394,8 @@ run_flutter_drive_and_capture "$OUTPUT_DIR/10_full_run_bot.log" \
     --dart-define=FULL_RUN_BOT_TARGET_TIER="$TARGET_TIER" \
     --dart-define=FULL_RUN_BOT_TARGET_SCENE="$TARGET_SCENE" \
     --dart-define=FULL_RUN_BOT_REQUIRED_EVIDENCE="$REQUIRED_EVIDENCE"
+
+extract_trace_from_log "$OUTPUT_DIR/10_full_run_bot.log"
 
 echo "full_run_bot complete."
 echo "Logs: $OUTPUT_DIR"

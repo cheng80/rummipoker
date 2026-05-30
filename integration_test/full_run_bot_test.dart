@@ -243,8 +243,8 @@ class _FullRunBot {
   final FullRunPlannerV2Policy retryRecoveryBattlePolicy =
       const FullRunPlannerV2Policy(enableRetryRecoveryConfirmDelay: true);
   final List<String> log = <String>[];
-  final List<Map<String, Object?>> traceRows = <Map<String, Object?>>[];
   int traceSequence = 0;
+  int traceRowCount = 0;
   ItemCatalog? itemCatalog;
 
   bool boughtJester = false;
@@ -1775,23 +1775,24 @@ class _FullRunBot {
   }
 
   Future<void> flushTrace() async {
-    if (!config.traceEnabled || traceRows.isEmpty) return;
+    if (!config.traceEnabled || traceRowCount == 0) return;
     final binding = IntegrationTestWidgetsFlutterBinding.instance;
     binding.reportData ??= <String, dynamic>{};
     binding.reportData!['full_run_trace_path'] = config.tracePath;
-    binding.reportData!['full_run_trace_rows'] = traceRows;
+    binding.reportData!['full_run_trace_rows'] = traceRowCount;
     debugPrint(
       '${config.logPrefix}: trace_path=${config.tracePath} '
-      'trace_rows=${traceRows.length}',
+      'trace_rows=$traceRowCount',
     );
   }
 
   void _trace(String eventType, Map<String, Object?> payload) {
     if (!config.traceEnabled) return;
-    traceRows.add({
+    final sequence = traceSequence++;
+    final row = <String, Object?>{
       'schema_version': 1,
       'row_type': 'full_run_trace_event',
-      'sequence': traceSequence++,
+      'sequence': sequence,
       'event_type': eventType,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
       'mode': config.mode.name,
@@ -1799,7 +1800,21 @@ class _FullRunBot {
       'difficulty': config.difficulty.name,
       'locale': config.localeName,
       ...payload,
-    });
+    };
+    final encoded = base64Encode(utf8.encode(jsonEncode(row)));
+    const chunkSize = 700;
+    final chunkCount = (encoded.length / chunkSize).ceil();
+    for (var index = 0; index < chunkCount; index += 1) {
+      final start = index * chunkSize;
+      final proposedEnd = start + chunkSize;
+      final end = proposedEnd > encoded.length ? encoded.length : proposedEnd;
+      debugPrint(
+        'FULL_RUN_BOT_TRACE_CHUNK:$sequence:$index:$chunkCount:'
+        '${encoded.substring(start, end)}',
+        wrapWidth: 1024,
+      );
+    }
+    traceRowCount += 1;
   }
 
   void _traceMarketState(String eventType, int stage) {
