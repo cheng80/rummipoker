@@ -55,13 +55,13 @@ data/common/items_common_v1.json
 ```
 
 이 파일은 placeholder 샘플이 아니라 `common run`에서 사용할 v1 후보 카탈로그다.
-현재 수록 범위는 v1 baseline 49개에 Planet-like 족보 성장 직접 지원 아이템군을 더한 57개 아이템이며, 분포는 다음과 같다.
+현재 수록 범위는 v1 baseline에 Planet-like 족보 성장 직접 지원 아이템군을 더한 54개 아이템이며, 분포는 다음과 같다.
 
 ```text
 utility: 9
 consumable: 26
-equipment: 10
-passive_relic: 12
+equipment: 9
+passive_relic: 10
 ```
 
 런타임 연결 상태는 이 명세에 중복 기록하지 않는다. 실제 적용/미적용 상태는 `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`를 기준으로 본다.
@@ -75,6 +75,40 @@ passive_relic: 12
 - 가격과 희귀도는 초기 실사용 밸런스 후보이며, 실제 플레이 로그 기반으로 조정한다.
 - Tarot/Planet/Spectral/Voucher식 구조는 그대로 가져오지 않고, confirm modifier, tile enhancement, tile conversion, rank progression, high-risk mutation, run-long passive로 분리한다.
 - Planet-like rank progression은 특정 족보 성장 +1을 주는 직접 지원류로 다룬다. Tile enhancement/conversion과 Spectral-like high-risk mutation은 공모전 이후 검토한다.
+
+### 2.2 Board-Line Ritual Mutation Policy
+
+[TARGET]
+
+Balatro식 Tarot/Spectral 참고 축 중 `카드 파괴`, `카드 변형`, `문양/숫자 변환`, `복제`, `강화 부여`는 덱빌딩 다양성을 만드는 핵심이다. 다만 Rummi Poker의 손패는 작고, 손패 직접 변형은 UI, 저장/복원, 시뮬레이터 재현, 풀런봇 판단 비용이 크다.
+
+따라서 고위험 mutation 계열은 손패가 아니라 **이미 보드에 구성한 족보/라인**에 적용하는 `Ritual` 계열 Item으로 재해석한다.
+
+정책:
+
+- `Ritual`은 기존 `Item`의 하위 family이며, 별도 Jester가 아니다.
+- 1차 대상은 손패가 아니라 `보드 위 완성 라인(row/col/diag)`이다.
+- 가능하면 `확정 가능한 라인` 또는 `5칸 완성 라인`만 선택 대상으로 한다.
+- 변형 결과는 보드 타일, `addedDeckTiles`, hand-rank progression, next-confirm modifier 중 하나 이상으로 명확히 남아야 한다.
+- 사용 즉시 target line, source item, result delta가 보드/덱/런 정보/로그에서 읽혀야 한다.
+- 손패 직접 파괴/변형은 V1 범위에서 금지한다.
+- 무작위 파괴만 있고 선택/예고/보상이 없는 효과는 금지한다.
+- 현재 전투만 바꾸는 임시 효과와 덱에 영구 반영되는 효과를 데이터 필드로 분리한다.
+- 타일의 `enhancement`, `seal`, `edition` 필드는 이미 존재하므로, Ritual V1은 이 필드를 재사용하되 새 save schema가 필요하면 별도 migration plan을 먼저 세운다.
+
+왜 필요한가:
+
+- 현재 런은 강한 족보, 특히 flush 계열로 반복 수렴하기 쉽다.
+- line mutation은 플레이어가 이미 만든 족보를 재료로 써서 다음 덱 방향을 바꾸게 한다.
+- 보드는 손패보다 시각적으로 안정되어 target 선택, 연출, 풀런봇 로그 수집이 쉽다.
+- 덱 파괴/복제/변형이 들어가야 Market deckbuilding이 점수 보정 구매를 넘어선다.
+
+V1 구현 전제:
+
+- `use_battle_select_line` 같은 대상 선택 timing이 필요하다.
+- 선택 가능한 line highlight와 선택 후 confirm dialog가 필요하다.
+- 풀런봇은 처음에 `확정 가능 라인`, `고점 라인`, `중복 확정 후보 라인`에만 Ritual을 사용한다.
+- 시뮬레이터는 Ritual 사용 전후의 board/deck delta를 JSONL에 남긴다.
 
 asset path:
 
@@ -425,3 +459,56 @@ consumeItem
 - phone frame safe area 안에서 board 중심성이 유지된다.
 - confirm / draw 오동작 위험이 현저히 줄어든다.
 - 이후 item subtype이 추가되어도 Jester strip을 다시 설계하지 않아도 된다.
+
+## 10. Ritual Item Candidate List
+
+[TARGET]
+
+이 목록은 `data/common/items_common_v1.json`에 즉시 추가할 확정 데이터가 아니라, Board-Line Ritual Mutation V1의 정책 후보 목록이다. 실제 catalog 반영 전에는 저장/복원, UI target 선택, 풀런봇, 시뮬레이터 재현을 먼저 닫는다.
+
+공통 규칙:
+
+- type: `consumable` 우선
+- placement: V1은 `quickSlot` 또는 battle usable inventory로 제한
+- timing 후보: `use_battle_select_line`
+- target: `completed_line` 또는 `confirmable_line`
+- target line은 row/col/diag를 모두 지원하되, V1 UI가 어려우면 row/col부터 시작한다.
+- effect log에는 `source_item_id`, `target_line_ref`, `tiles_before`, `tiles_after`, `deck_delta`, `score_preview_delta`를 남긴다.
+
+### 10.1 V1 Safe Candidates
+
+| 후보 ID | 한국어명 | 역할 | 대상 | 효과 | 리스크 | V1 판정 |
+|---|---|---|---|---|---|---|
+| `line_seal_stamp` | 라인 각인 | 강화 부여 | 완성 라인 1개 | 라인 내 선택 타일 1개에 `seal=line_mark`를 부여. 다음 확정 시 해당 타일 포함 라인 점수 +N 또는 성장 +1 | 타일 modifier UI 필요 | 1차 후보 |
+| `keystone_copy` | 중심석 복사 | 덱 복제 | 확정 가능한 라인 1개 | 라인에서 가장 높은 기여 타일 1장을 `addedDeckTiles`에 복사 | 덱 비대화 | 1차 후보 |
+| `line_pruner` | 가지치기 의식 | 파괴/압축 | 완성 라인 1개 | 라인 내 최저 기여 타일 1장을 전투 후 덱에서 1장 제거 후보로 기록하고 즉시 Gold +N 또는 성장 +1 | 영구 제거 정책 필요 | 1차 후보, 약하게 |
+| `color_concord` | 색 맞춤 의식 | 색 변환 | 완성 라인 1개 | 라인 내 타일 1~2장을 선택 line의 다수 색으로 임시 변환. 확정되면 복사 보상 타일도 해당 색으로 생성 | flush 편향 강화 가능 | 실험 후보 |
+| `rank_concord` | 숫자 맞춤 의식 | 숫자 변환 | 완성 라인 1개 | 라인 내 타일 1장을 선택 숫자 쪽으로 맞춰 pair/triple 후보를 만든다. 전투 한정부터 시작 | 족보 판정 혼란 | 실험 후보 |
+| `line_memory` | 라인 기억 | 성장 | 확정 가능한 라인 1개 | 해당 라인의 대표 족보 성장 +1. 이미 `*_study`가 있으므로 battle-earned growth 버전 | Planet-like와 중복 | 1차 후보 |
+
+### 10.2 High-Risk Candidates
+
+| 후보 ID | 한국어명 | 역할 | 대상 | 효과 | 리스크 | V1 판정 |
+|---|---|---|---|---|---|---|
+| `line_transmute` | 라인 변환 | 대규모 변형 | 완성 라인 1개 | 라인 전체를 한 색 또는 한 숫자 family로 변환 | flush/족보 밸런스 파괴 | V2 이상 |
+| `sacrifice_line` | 제물 의식 | 파괴 보상 | 확정 가능한 라인 1개 | 라인을 확정하지 않고 제거하고 희귀 타일/Jester/Gold 보상 | 유저 손실감, undo 필요 | V2 이상 |
+| `mirror_line` | 거울 의식 | 복제 | 완성 라인 1개 | 라인 전체에서 2~3장을 덱에 복사 | 덱 폭증 | V2 이상 |
+| `void_mark` | 공허 표식 | 저주/보상 | 완성 라인 1개 | 강한 seal을 주지만 다음 boss modifier 강화 또는 Gold 0 | 규칙 설명 난이도 | V2 이상 |
+
+### 10.3 V1에서 금지
+
+- 손패 타일 직접 파괴.
+- 손패 타일 직접 색/숫자 변환.
+- 플레이어가 target을 이해하기 전에 무작위로 영구 덱을 바꾸는 효과.
+- 보드 라인을 지우기만 하고 보상/로그/되돌릴 수 있는 이해 경로가 없는 효과.
+- Jester 생성/파괴/edition 부여를 Ritual V1에 섞는 것. Jester mutation은 별도 family로 둔다.
+
+### 10.4 First Implementation Slice
+
+첫 구현은 아래 3개만 후보로 본다.
+
+1. `line_memory`: 이미 있는 hand-rank progression과 연결하기 쉬워 저장/점수/UI 리스크가 낮다.
+2. `keystone_copy`: `addedDeckTiles` 경로가 이미 있어 덱빌딩 체감이 크다.
+3. `line_seal_stamp`: 특수 타일 modifier UI와 연결되며 Ritual의 정체성을 만든다.
+
+이 3개가 안정화되기 전에는 색/숫자 변환과 라인 파괴를 catalog에 넣지 않는다.

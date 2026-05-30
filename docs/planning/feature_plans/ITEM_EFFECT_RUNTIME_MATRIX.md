@@ -163,6 +163,7 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 | 조건부 사용 no-op | `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품 | 이미 queue가 있거나 조건이 충족되지 않거나 0점 confirm에 묻히면 소모품이 의미 없이 사라질 수 있다. | 실패 시 미소모는 유지하고, 사용 전/후 피드백과 조건 표시를 보강한다. |
 | 가격/가치 이상 후보 | `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study` | catalog audit 기준 cheap high-impact 또는 expensive low-impact 후보가 있다. | 가격표를 바로 바꾸지 말고 실제 노출/구매/사용률, S7~S8 병목, v9 market 개선 여부를 함께 본다. |
 | 자동/직접 지급으로 보일 수 있는 효과 | `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`, `coin_funnel`, `hand_funnel` | 경제 보정이 선택 부담을 지우거나 자동 지급처럼 읽힐 수 있다. | 직접 지급 금지 원칙과 충돌하지 않는지, 조건/타이밍/표시가 플레이어 선택으로 읽히는지 확인한다. |
+| Board-Line Ritual 후보 | `line_memory`, `keystone_copy`, `line_seal_stamp` | 현재 catalog/runtime에는 없다. 손패 직접 파괴/변형 대신 보드에 구성된 완성/확정 가능 라인을 대상으로 덱 복제, 성장, seal 부여를 다루는 새 mutation family다. | `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`의 Ritual 정책과 후보 리스트를 기준으로 저장/복원, target 선택 UI, 풀런봇, 시뮬레이터 로그 계획을 먼저 닫는다. |
 
 2026-05-17 1차 적용:
 

@@ -2,7 +2,7 @@
 
 > 문서 성격: design reference / Item system follow-up
 > 코드 반영 상태: Planet-like hand-rank progression 일부 구현 진행 / Tarot tile mutation, Spectral-like mutation, Voucher-like chain은 post-contest 검토
-> 핵심 정책: Balatro의 Tarot / Planet / Spectral / Voucher 구조는 Item 확장 참고 자료로만 사용한다. Rummi Poker에서는 1회성 전술 도구, hand-rank progression, deck/tile mutation, run-long passive를 서로 다른 시스템 경계로 분리한다.
+> 핵심 정책: Balatro의 Tarot / Planet / Spectral / Voucher 구조는 Item 확장 참고 자료로만 사용한다. Rummi Poker에서는 1회성 전술 도구, hand-rank progression, board-line ritual mutation, deck/tile mutation, run-long passive를 서로 다른 시스템 경계로 분리한다.
 
 Reference:
 
@@ -45,6 +45,7 @@ Policy:
 - Do not add large deck/tile mutation before save/restore and simulator can reproduce it.
 - Do not expose voucher-like permanent passives as ordinary quick-use items.
 - Tile enhancement/conversion/removal Tarot-like effects and Spectral-like high-risk mutation are post-contest candidates, not current submission-blocking work.
+- Post-contest mutation priority is now `board-line ritual mutation` before hand mutation. Hand-card destruction/conversion remains out of scope until board-line target selection, save/restore, and simulator reproduction are stable.
 
 ## 3. Rummi Poker Mapping
 
@@ -52,7 +53,7 @@ Policy:
 |---|---|
 | Tarot card | consumable item that modifies next confirm, tile state, gold, or Jester/shop state |
 | Planet card | hand-rank progression system or rank-specific passive item |
-| Spectral card | high-risk tile/deck/Jester mutation item |
+| Spectral card | high-risk board-line/deck/Jester mutation item |
 | Voucher | run-long passive relic or separate `Run Voucher` content type |
 | Booster pack | market pack/choice offer, deferred |
 
@@ -101,6 +102,7 @@ Policy:
 
 - Must preserve deck conservation or explicitly log tile mutation.
 - Must define whether converted tiles persist only for battle, station, or full run.
+- V1 target is not the hand. It should target a completed or confirmable board line, because the board is already visible, selectable, and easier to log.
 
 ### D. Tile Removal / Copy Consumable
 
@@ -114,6 +116,7 @@ Policy:
 
 - High impact on balance.
 - Requires simulator reproduction and save schema review.
+- First implementation should use board-line sacrifice/copy semantics, not raw hand destruction.
 
 ### E. Economy / Market Consumable
 
@@ -173,8 +176,8 @@ Policy:
 
 Candidate categories:
 
-- destroy random/selected tile for gold
-- convert hand to one color/number family
+- destroy selected board-line tile for gold or growth
+- convert a completed board line to one color/number family
 - add strong Jester edition with hand size penalty
 - create rare/legendary Jester with gold reset
 - duplicate Jester while destroying others
@@ -185,6 +188,7 @@ Policy:
 - Do not add to common market pool early.
 - Requires explicit confirmation UI and undo/restart implications.
 - Must create a new balance version if added to normal runs.
+- Do not start with hand mutation. Rummi Poker should first prove line-targeted mutation on the board, then revisit hand mutation only if the UX and simulator can support it.
 
 ## 7. Voucher / Run Passive Taxonomy
 
