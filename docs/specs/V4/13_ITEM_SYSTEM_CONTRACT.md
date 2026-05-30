@@ -140,7 +140,7 @@ AssetPaths.itemsCommon
 2. 실제 runtime에 이미 있는 효과와 문서 후보를 분리한다.
 3. Balatro 참고 축은 taxonomy로만 유지하고, 표시명/효과값/대상은 Rummi Poker 원본으로 작성한다.
 4. Board-Line Ritual 후보 pool은 넓게 유지한다. 첫 catalog draft는 18종 안팎, 첫 구현 slice는 그중 8~12종으로 잡는다.
-5. 새 family를 catalog에 넣기 전에는 저장/복원, target UI, 정산/런 정보 표시, 풀런봇 로그, 시뮬레이터 재현 경로를 먼저 정의한다.
+5. 새 family를 catalog에 넣기 전에는 저장/복원, target UI, 정산/런 정보 표시를 먼저 정의한다. 풀런봇 로그와 시뮬레이터 재현 경로는 카드/효과와 런타임 capability가 확정된 뒤 후속으로 붙인다.
 
 ## 3. Item Subtype UI Contract
 

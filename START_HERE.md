@@ -103,6 +103,7 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - 경제 계획: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 - 문서 정리 순서: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
 - Item effect 실행 상태: `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
+- 현행 Jester/Q-Slot/Passive/Tool/Gear 카드 표: `docs/current_system/CURRENT_CARD_CATALOG_TABLE.md`
 - Item/Jester/덱빌딩 정책 계약: `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`
 - Item policy cleanup audit: `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`
 - Item effect 연출 계약: `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`
