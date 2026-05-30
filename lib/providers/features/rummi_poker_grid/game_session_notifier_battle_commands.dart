@@ -268,6 +268,24 @@ mixin GameSessionNotifierBattleCommands
     return null;
   }
 
+  String? useBattleItemOnLine(ItemDefinition item, LineRef lineRef) {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null) return '세션이 없습니다.';
+
+    final result = ItemEffectRuntime.useBattleItemOnLine(
+      item: item,
+      session: session,
+      runProgress: runProgress,
+      lineRef: lineRef,
+    );
+    if (!result.isSuccess) return result.failMessage;
+    _replaceState(
+      withValidSelections(state).copyWith(revision: state.revision + 1),
+    );
+    return null;
+  }
+
   DeckPeekBattleUseResult consumeBattleDeckPeekItem(ItemDefinition item) {
     final session = state.session;
     final runProgress = state.runProgress;

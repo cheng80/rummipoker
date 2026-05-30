@@ -118,7 +118,7 @@ void main() {
       expect(catalog.findById('battle_pouch')!.effect.timing, 'use_battle');
       expect(
         catalog.findById('line_memory')!.effect.op,
-        'add_hand_rank_progress_from_best_line',
+        'add_hand_rank_progress_from_selected_line',
       );
       expect(catalog.findById('line_memory')!.usableInBattle, isTrue);
       expect(catalog.findById('travel_pouch')!.effect.op, 'increase_hand_size');

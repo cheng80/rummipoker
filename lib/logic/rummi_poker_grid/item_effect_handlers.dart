@@ -499,18 +499,19 @@ ItemUseResult _applyAddHandRankProgress(
   );
 }
 
-ItemUseResult _applyAddHandRankProgressFromBestLine(
+ItemUseResult _applyAddHandRankProgressFromSelectedLine(
   ItemDefinition item,
   RummiPokerGridSession session,
   RummiRunProgress runProgress,
+  LineRef lineRef,
 ) {
-  final rank = session.bestCurrentScoringLineRank();
+  final line = session.currentScoringLineSummaryFor(lineRef);
   final amount = _nonNegativeIntValue(item, 'amount');
-  if (rank == null) {
-    return ItemUseResult.failure(itemId: item.id, message: '성장시킬 완성 줄이 없습니다.');
+  if (line == null) {
+    return ItemUseResult.failure(itemId: item.id, message: '선택한 완성 줄이 없습니다.');
   }
   if (amount <= 0) return _invalidAmount(item);
-  final didApply = runProgress.addHandRankProgress(rank, amount: amount);
+  final didApply = runProgress.addHandRankProgress(line.rank, amount: amount);
   if (!didApply) {
     return ItemUseResult.failure(
       itemId: item.id,
@@ -524,7 +525,7 @@ ItemUseResult _applyAddHandRankProgressFromBestLine(
         kind: ItemEffectEventKind.handRankProgressAdded,
         itemId: item.id,
         amount: amount,
-        detail: rank.name,
+        detail: '${line.rank.name}:${line.ref.kind.name}:${line.ref.index}',
       ),
     ],
   );

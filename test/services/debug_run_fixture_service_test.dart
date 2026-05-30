@@ -365,8 +365,8 @@ void main() {
     expect(fixture.runProgress.itemInventory.quickSlotItemIds, ['line_memory']);
     expect(fixture.session.canConfirmAllFullLines, isTrue);
     expect(
-      fixture.session.bestCurrentScoringLineRank(),
-      RummiHandRank.lowStraightFlush,
+      fixture.session.currentScoringLineSummaries().map((line) => line.rank),
+      contains(RummiHandRank.lowStraightFlush),
     );
   });
 

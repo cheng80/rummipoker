@@ -5,6 +5,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
@@ -264,10 +265,10 @@ void main() {
       ]);
     });
 
-    test('useBattleItem grows the best current scoring line rank', () {
+    test('useBattleItem requests scoring line selection for line memory', () {
       final item = _item(
         id: 'line_memory',
-        op: 'add_hand_rank_progress_from_best_line',
+        op: 'add_hand_rank_progress_from_selected_line',
       );
       final session = RummiPokerGridSession(
         runSeed: 1,
@@ -292,6 +293,41 @@ void main() {
         runProgress: runProgress,
       );
 
+      expect(result.isPending, isTrue);
+      expect(result.failMessage, '성장시킬 완성 줄 선택이 필요합니다.');
+      expect(result.events.single.detail, 'select_scoring_line');
+      expect(runProgress.itemInventory.ownedItems.single.itemId, 'line_memory');
+    });
+
+    test('useBattleItemOnLine grows the selected scoring line rank', () {
+      final item = _item(
+        id: 'line_memory',
+        op: 'add_hand_rank_progress_from_selected_line',
+      );
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      _placeFlush(session);
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'line_memory',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['line_memory'],
+        );
+
+      final result = ItemEffectRuntime.useBattleItemOnLine(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        lineRef: LineRef.row(0),
+      );
+
       expect(result.isSuccess, isTrue);
       expect(
         runProgress.snapshotHandGrowthStates()[RummiHandRank.flush]?.level,
@@ -302,13 +338,13 @@ void main() {
         ItemEffectEventKind.handRankProgressAdded,
         ItemEffectEventKind.itemConsumed,
       ]);
-      expect(result.events.first.detail, RummiHandRank.flush.name);
+      expect(result.events.first.detail, 'flush:row:0');
     });
 
     test('useBattleItem rejects line memory when no scoring line exists', () {
       final item = _item(
         id: 'line_memory',
-        op: 'add_hand_rank_progress_from_best_line',
+        op: 'add_hand_rank_progress_from_selected_line',
       );
       final session = RummiPokerGridSession(
         runSeed: 1,
@@ -326,14 +362,15 @@ void main() {
           quickSlotItemIds: ['line_memory'],
         );
 
-      final result = ItemEffectRuntime.useBattleItem(
+      final result = ItemEffectRuntime.useBattleItemOnLine(
         item: item,
         session: session,
         runProgress: runProgress,
+        lineRef: LineRef.row(0),
       );
 
       expect(result.isSuccess, isFalse);
-      expect(result.failMessage, '성장시킬 완성 줄이 없습니다.');
+      expect(result.failMessage, '선택한 완성 줄이 없습니다.');
       expect(runProgress.itemInventory.ownedItems.single.itemId, 'line_memory');
     });
 
@@ -1695,7 +1732,7 @@ void main() {
           'use_battle:peek_deck_discard_one',
           'use_battle:draw_if_hand_empty',
           'use_battle:increase_hand_size',
-          'use_battle:add_hand_rank_progress_from_best_line',
+          'use_battle:add_hand_rank_progress_from_selected_line',
           'market_reroll:discount_next_reroll',
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',

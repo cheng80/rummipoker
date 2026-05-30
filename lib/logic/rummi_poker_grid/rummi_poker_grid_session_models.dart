@@ -102,6 +102,20 @@ class RummiConfirmModifier {
   };
 }
 
+class RummiScoringLineSummary {
+  const RummiScoringLineSummary({
+    required this.ref,
+    required this.rank,
+    required this.baseScore,
+    required this.scoringTiles,
+  });
+
+  final LineRef ref;
+  final RummiHandRank rank;
+  final int baseScore;
+  final List<Tile> scoringTiles;
+}
+
 /// 족보 줄 일괄 확정 결과.
 class ConfirmClearResult {
   ConfirmClearResult._({

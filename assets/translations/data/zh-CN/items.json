@@ -43,7 +43,7 @@
       },
       "line_memory": {
         "displayName": "线路记忆",
-        "effectText": "在战斗中使用，使当前已完成的最高牌型线路成长+1。"
+        "effectText": "在战斗中选择一条已完成线，使该线的牌型成长+1。"
       },
       "board_scrap": {
         "displayName": "Board Pass",

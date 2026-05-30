@@ -170,6 +170,10 @@ extension _GameViewBattleActions on _GameViewState {
       await _useDeckNeedleItem(slot);
       return;
     }
+    if (slot.item.effect.op == 'add_hand_rank_progress_from_selected_line') {
+      await _useScoringLineTargetItem(slot);
+      return;
+    }
     final undoReturnCell = slot.item.effect.op == 'undo_last_board_move'
         ? _gameState.session?.boardMoveHistory.lastOrNull
         : null;
@@ -197,6 +201,75 @@ extension _GameViewBattleActions on _GameViewState {
     if (mounted) {
       _mutate(() => _selectedBattleItemSlot = null);
     }
+    await _saveActiveRun();
+  }
+
+  Future<void> _useScoringLineTargetItem(RummiBattleItemSlotView slot) async {
+    final session = _gameState.session;
+    if (session == null) {
+      _showSnack('세션이 없습니다.');
+      return;
+    }
+    final lines = session.currentScoringLineSummaries();
+    if (lines.isEmpty) {
+      _showSnack('선택할 완성 줄이 없습니다.');
+      return;
+    }
+    final itemName = ItemTranslationScope.of(
+      context,
+    ).resolveDisplayName(slot.contentId, slot.displayName);
+    final selected = await showDialog<RummiScoringLineSummary>(
+      context: context,
+      barrierDismissible: true,
+      routeSettings: const RouteSettings(name: '의식 줄 선택'),
+      builder: (context) => AlertDialog(
+        backgroundColor: GameUiPalette.surfaceModal,
+        title: Text('$itemName 대상 선택'),
+        content: SizedBox(
+          width: 360,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final line in lines)
+                ListTile(
+                  dense: true,
+                  title: Text(
+                    '${_lineChoiceLabel(line.ref)} · ${gameHandRankLabel(line.rank)}',
+                  ),
+                  subtitle: Text('칩 ${line.baseScore}'),
+                  onTap: () => Navigator.of(context).pop(line),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('취소'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null) return;
+
+    final failReason = _gameNotifier.useBattleItemOnLine(
+      slot.item,
+      selected.ref,
+    );
+    if (failReason != null) {
+      _showSnack(failReason);
+      return;
+    }
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    final targetLabel =
+        '${_lineChoiceLabel(selected.ref)} ${gameHandRankLabel(selected.rank)}';
+    _showSnack('$itemName 사용');
+    _showItemEffectFeedback(
+      title: itemName,
+      detail: '$targetLabel 성장 +${slot.item.effect.value('amount') ?? 1}',
+      sourceLabel: slot.slotLabel,
+    );
+    _mutate(() => _selectedBattleItemSlot = null);
     await _saveActiveRun();
   }
 
@@ -268,12 +341,21 @@ extension _GameViewBattleActions on _GameViewState {
       'undo_last_board_move' => '마지막 이동 되돌림',
       'draw_if_hand_empty' => '타일 1장 드로우',
       'increase_hand_size' => '손패 최대치 +${item.effect.value('amount') ?? 1}',
-      'add_hand_rank_progress_from_best_line' => '완성 줄 족보 성장 +1',
+      'add_hand_rank_progress_from_selected_line' => '선택 줄 족보 성장 +1',
       'chips_bonus' => '다음 확정 칩 보너스',
       'mult_bonus' => '다음 확정 점수 +% 보너스',
       'xmult_bonus' => '다음 확정 점수 x 보너스',
       'temporary_overlap_cap_bonus' => '다음 확정 overlap 보너스',
       _ => '효과 적용',
+    };
+  }
+
+  String _lineChoiceLabel(LineRef ref) {
+    return switch (ref.kind) {
+      LineKind.row => '가로 ${ref.index + 1}',
+      LineKind.col => '세로 ${ref.index + 1}',
+      LineKind.diagMain => '대각 ↘',
+      LineKind.diagAnti => '대각 ↙',
     };
   }
 

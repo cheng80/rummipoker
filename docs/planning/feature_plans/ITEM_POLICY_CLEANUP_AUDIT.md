@@ -208,17 +208,17 @@ Direct Tile Modifier Item: 0
 
 | ID | 표시명 | rarity | price | 효과 | 설계 의도 |
 |---|---|---:|---:|---|---|
-| `line_memory` | 라인 기억 | uncommon | 7 | 선택 라인의 대표 족보 성장 +1 | 만든 족보를 run-long 성장으로 연결 |
-| `minor_memory` | 잔상 기억 | rare | 9 | 선택 라인의 두 번째 족보 후보 성장 +1 | 주력 족보 반복 완화 |
+| `line_memory` | 라인 기억 | uncommon | 7 | 선택한 완성 줄의 족보 성장 +1 | 유저가 고른 족보를 run-long 성장으로 연결 |
+| `minor_memory` | 잔상 기억 | rare | 9 | 선택한 완성 줄의 족보 성장 +2, 이후 그 줄 점수 -25% | 고성장 리스크 선택 |
 | `cross_memory` | 교차 기억 | rare | 10 | 선택 타일의 row/col 중 낮은 성장 계열 +1 | 교차 빌드 유도 |
 | `thin_memory` | 얇은 기억 | common | 6 | 3~4타일 scoring line 족보 성장 +1 | 작은 라인 활용 |
-| `boss_memory` | 보스 기억 | rare | 11 | 보스전에서 선택 라인 대표 족보 성장 +2 | 위험 전투 보상 |
+| `boss_memory` | 보스 기억 | rare | 11 | 보스전에서 선택한 완성 줄의 족보 성장 +2 | 위험 전투 보상 |
 
 ### 7.2 Copy / Deck Injection
 
 | ID | 표시명 | rarity | price | 효과 | 설계 의도 |
 |---|---|---:|---:|---|---|
-| `keystone_copy` | 중심석 복사 | uncommon | 8 | 선택 라인 최고 기여 타일 1장을 덱에 복사 | 핵심 타일 중심 덱빌딩 |
+| `keystone_copy` | 중심석 복사 | uncommon | 8 | 선택한 줄의 가운데 타일 1장을 덱에 복사 | 핵심 타일 중심 덱빌딩 |
 | `edge_copy` | 끝점 복사 | common | 6 | 선택 라인의 양끝 중 1장을 덱에 복사 | 위치 의미 부여 |
 | `rank_echo` | 숫자 메아리 | uncommon | 8 | 라인 내 반복 숫자 또는 pair 후보 1장 복사 | 숫자 족보 강화 |
 | `color_echo` | 색 메아리 | uncommon | 8 | 라인 다수 색 타일 1장 복사 | 색 빌드 지원 |
@@ -336,12 +336,12 @@ ritual_lens
 
 | ID | 판정 | 이유 | 다음 조치 |
 |---|---|---|---|
-| `line_memory` | Draft | 가장 단순한 line -> 족보 성장 연결 | 대표 족보 판정 규칙 확정 |
+| `line_memory` | Draft | 가장 단순한 selected line -> 족보 성장 연결 | 선택 줄 UX와 성장 피드백 확정 |
 | `minor_memory` | Draft | 주력 족보 반복 완화 | 두 번째 후보 계산이 없으면 fallback 명시 |
 | `cross_memory` | Reserve | 교차 빌드 의도는 좋지만 target 선택이 복잡 | row/col 동시 preview가 생긴 뒤 재검토 |
 | `thin_memory` | Draft | 작은 라인 활용, 초반 선택 다양화 | 3~4타일 scoring 기준 확정 |
 | `boss_memory` | Draft | 보스전 보상성 명확 | 보스전 전용 표시 필요 |
-| `keystone_copy` | Draft | 덱빌딩 체감이 크고 구현 경로가 비교적 명확 | 최고 기여 타일 tie-break 필요 |
+| `keystone_copy` | Draft | 덱빌딩 체감이 크고 구현 경로가 비교적 명확 | 가운데 타일 복사 기준 검증 |
 | `edge_copy` | Draft | 위치 의미 부여, 구현 단순 | endpoint 선택 UI 단순화 |
 | `rank_echo` | Draft | 숫자 족보 강화로 flush 편향 완화 | 반복 숫자 없을 때 fallback 필요 |
 | `color_echo` | Reserve | flush 강화 가능성이 커 첫 draft에서는 감시 | flush 고착 완화 후보와 함께 재검토 |
@@ -406,11 +406,11 @@ ritual_lens
 
 | ID | effect family | target | result | required capability |
 |---|---|---|---|---|
-| `line_memory` | rank_growth | scoring/confirmable line | 대표 족보 성장 +1 | line hand-rank resolver |
-| `minor_memory` | rank_growth | scoring/confirmable line | 대표가 아닌 차선 족보 후보 성장 +1. 없으면 대표 족보 +1 | secondary hand-rank candidate resolver |
+| `line_memory` | rank_growth | selected completed line | 선택한 완성 줄의 족보 성장 +1 | selected-line hand-rank resolver |
+| `minor_memory` | rank_growth | selected completed line | 선택한 완성 줄의 족보 성장 +2, 이후 그 줄 점수 -25% | selected-line risk growth resolver |
 | `thin_memory` | rank_growth | 3~4 tile scoring line | 해당 족보 성장 +1 | partial-line scorer |
-| `boss_memory` | rank_growth | boss battle scoring/confirmable line | 대표 족보 성장 +2 | boss-only use condition |
-| `keystone_copy` | deck_add | scoring/confirmable line | 최고 기여 타일 1장을 덱에 추가 | contributor weight / tie-break |
+| `boss_memory` | rank_growth | selected boss completed line | 보스전에서 선택한 완성 줄의 족보 성장 +2 | boss-only selected-line condition |
+| `keystone_copy` | deck_add | selected completed line | 선택한 줄의 가운데 타일 1장을 덱에 추가 | selected-cell copy resolver |
 | `edge_copy` | deck_add | completed or 3+ tile line | 양끝 타일 중 선택한 1장을 덱에 추가 | endpoint tile selection |
 | `rank_echo` | deck_add | line with rank pair/repeat candidate | 반복 숫자 또는 pair 후보 타일 1장을 덱에 추가 | rank grouping resolver |
 | `scarce_copy` | deck_add | line with scarce color/rank tile | 현재 덱에서 희소한 색/숫자 타일 1장을 덱에 추가 | deck composition analyzer |

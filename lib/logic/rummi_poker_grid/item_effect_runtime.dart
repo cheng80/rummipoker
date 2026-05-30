@@ -1,6 +1,7 @@
 import 'item_definition.dart';
 import 'hand_rank.dart';
 import 'jester_meta.dart';
+import 'line_ref.dart';
 import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
 
@@ -177,15 +178,19 @@ class ItemEffectRuntime {
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;
-      case 'add_hand_rank_progress_from_best_line':
-        final applied = _applyAddHandRankProgressFromBestLine(
-          item,
-          session,
-          runProgress,
+      case 'add_hand_rank_progress_from_selected_line':
+        return ItemUseResult.pendingHook(
+          itemId: item.id,
+          message: '성장시킬 완성 줄 선택이 필요합니다.',
+          events: [
+            ItemEffectEvent(
+              kind: ItemEffectEventKind.interactionRequired,
+              itemId: item.id,
+              amount: 1,
+              detail: 'select_scoring_line',
+            ),
+          ],
         );
-        if (!applied.isSuccess) return applied;
-        events.addAll(applied.events);
-        break;
       case 'chips_bonus':
       case 'mult_bonus':
       case 'xmult_bonus':
@@ -229,6 +234,31 @@ class ItemEffectRuntime {
         );
     }
 
+    _consumeIfNeeded(item, runProgress, events);
+    return ItemUseResult.success(itemId: item.id, events: events);
+  }
+
+  static ItemUseResult useBattleItemOnLine({
+    required ItemDefinition item,
+    required RummiPokerGridSession session,
+    required RummiRunProgress runProgress,
+    required LineRef lineRef,
+  }) {
+    final validationMessage = _validateBattleUse(item, runProgress);
+    if (validationMessage != null) {
+      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+    }
+    if (item.effect.op != 'add_hand_rank_progress_from_selected_line') {
+      return ItemUseResult.failure(itemId: item.id, message: '줄 선택 아이템이 아닙니다.');
+    }
+    final applied = _applyAddHandRankProgressFromSelectedLine(
+      item,
+      session,
+      runProgress,
+      lineRef,
+    );
+    if (!applied.isSuccess) return applied;
+    final events = <ItemEffectEvent>[...applied.events];
     _consumeIfNeeded(item, runProgress, events);
     return ItemUseResult.success(itemId: item.id, events: events);
   }

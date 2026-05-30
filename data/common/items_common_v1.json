@@ -329,10 +329,10 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Use in battle to give the best current scoring line's hand rank growth +1.",
+      "effectText": "Use in battle to choose a completed line and give that line's hand rank growth +1.",
       "effect": {
         "timing": "use_battle",
-        "op": "add_hand_rank_progress_from_best_line",
+        "op": "add_hand_rank_progress_from_selected_line",
         "amount": 1,
         "consume": true
       },

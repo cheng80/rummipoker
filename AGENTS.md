@@ -442,3 +442,4 @@ Installed release: `0.2.0`
 - 예정 연출 큐 마무리는 장기 밸런스/경제/ML 재검증과 같은 항목으로 묶지 않는다. transient presentation state와 timing/cue/눈검증 기준으로 별도 트랙에서 닫고, ML/레벨링 작업은 구 산출물 archive 후 fresh 데이터셋을 새로 쌓는 흐름으로 시작한다.
 - 더 이상 현재 작업에서 쓰지 않는 구 plan, deprecated compatibility, 과거 migration/status 문서는 `docs/planning/`이나 `docs/current_system/`에 남겨 현재 기준처럼 보이게 하지 않는다. 필요한 참조를 current 문서로 승격한 뒤 `docs/archive/` 하위로 옮기고, `START_HERE.md`와 source-of-truth map의 링크를 함께 갱신한다.
 - 새 아이템 family나 덱빌딩 축을 설계할 때는 1차 구현 후보만 적어 후보군을 좁히지 않는다. Balatro 등 외부 참고 축은 taxonomy로만 쓰고, Rummi Poker 자체 보드 라인, `addedDeckTiles`, 타일 modifier, 족보 성장, 마켓 pool, 보스 제약 interaction을 섞어 장기 후보 pool과 최소 catalog 구성 비율을 함께 문서화한다.
+- 의식 카드류 효과는 유저가 파악하기 어려운 `가장 강한 줄`, `가장 약한 줄`, `대표 족보` 자동 판정에 의존하지 않는다. 기본 설계는 유저가 완성 줄을 직접 선택하고, 그 줄을 특정 족보/상태로 치환하거나 성장·파괴·변형하는 명확한 결과를 주는 방식으로 잡는다.

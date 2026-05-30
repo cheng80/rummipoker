@@ -43,7 +43,7 @@
       },
       "line_memory": {
         "displayName": "線路記憶",
-        "effectText": "在戰鬥中使用，使目前已完成的最高牌型線路成長+1。"
+        "effectText": "戰鬥中選擇一條已完成線，使該線的牌型成長+1。"
       },
       "board_scrap": {
         "displayName": "Board Pass",

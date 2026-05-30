@@ -141,11 +141,11 @@
 
 | ID | 이름 | 상태 | 희귀도 | 가격 | Family | 대상 | 효과 | 필요 capability |
 |---|---|---|---:|---:|---|---|---|---|
-| `line_memory` | 라인 기억 | Draft | uncommon | 7G | rank_growth | scoring/confirmable line | 대표 족보 성장 +1 | line hand-rank resolver |
-| `minor_memory` | 잔상 기억 | Draft | rare | 9G | rank_growth | scoring/confirmable line | 대표가 아닌 차선 족보 후보 성장 +1. 없으면 대표 족보 +1 | secondary hand-rank candidate resolver |
+| `line_memory` | 라인 기억 | Draft | uncommon | 7G | rank_growth | selected completed line | 선택한 완성 줄의 족보 성장 +1 | selected-line hand-rank resolver |
+| `minor_memory` | 잔상 기억 | Draft | rare | 9G | rank_growth | selected completed line | 선택한 완성 줄의 족보 성장 +2, 이후 그 줄 점수 -25% | selected-line risk growth resolver |
 | `thin_memory` | 얇은 기억 | Draft | common | 6G | rank_growth | 3~4 tile scoring line | 해당 족보 성장 +1 | partial-line scorer |
-| `boss_memory` | 보스 기억 | Draft | rare | 11G | rank_growth | boss battle scoring/confirmable line | 대표 족보 성장 +2 | boss-only use condition |
-| `keystone_copy` | 중심석 복사 | Draft | uncommon | 8G | deck_add | scoring/confirmable line | 최고 기여 타일 1장을 덱에 추가 | contributor weight / tie-break |
+| `boss_memory` | 보스 기억 | Draft | rare | 11G | rank_growth | selected boss completed line | 보스전에서 선택한 완성 줄의 족보 성장 +2 | boss-only selected-line condition |
+| `keystone_copy` | 중심석 복사 | Draft | uncommon | 8G | deck_add | selected completed line | 선택한 줄의 가운데 타일 1장을 덱에 추가 | selected-cell copy resolver |
 | `edge_copy` | 끝점 복사 | Draft | common | 6G | deck_add | completed or 3+ tile line | 양끝 타일 중 선택한 1장을 덱에 추가 | endpoint tile selection |
 | `rank_echo` | 숫자 메아리 | Draft | uncommon | 8G | deck_add | line with rank pair/repeat candidate | 반복 숫자 또는 pair 후보 타일 1장을 덱에 추가 | rank grouping resolver |
 | `scarce_copy` | 희소석 복사 | Draft | rare | 10G | deck_add | line with scarce color/rank tile | 현재 덱에서 희소한 색/숫자 타일 1장을 덱에 추가 | deck composition analyzer |

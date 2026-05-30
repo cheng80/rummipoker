@@ -385,19 +385,30 @@ class RummiPokerGridSession {
     confirmModifiers.add(modifier);
   }
 
-  RummiHandRank? bestCurrentScoringLineRank() {
+  List<RummiScoringLineSummary> currentScoringLineSummaries() {
     final lines = engine.listEvaluatedLines(board, ruleset: ruleset);
-    RummiHandRank? bestRank;
-    var bestBaseScore = -1;
-    for (final entry in lines) {
-      final evaluation = entry.report.evaluation;
-      if (evaluation.isDeadLine) continue;
-      final baseScore = evaluation.baseScore;
-      if (baseScore <= bestBaseScore) continue;
-      bestRank = evaluation.rank;
-      bestBaseScore = baseScore;
+    return List<RummiScoringLineSummary>.unmodifiable([
+      for (final entry in lines)
+        if (!entry.report.evaluation.isDeadLine)
+          RummiScoringLineSummary(
+            ref: entry.ref,
+            rank: entry.report.evaluation.rank,
+            baseScore: entry.report.evaluation.baseScore,
+            scoringTiles: List<Tile>.unmodifiable(
+              _buildScoringLineCandidate(
+                ref: entry.ref,
+                evaluation: entry.report.evaluation,
+              ).scoringTiles,
+            ),
+          ),
+    ]);
+  }
+
+  RummiScoringLineSummary? currentScoringLineSummaryFor(LineRef ref) {
+    for (final line in currentScoringLineSummaries()) {
+      if (line.ref == ref) return line;
     }
-    return bestRank;
+    return null;
   }
 
   RummiPokerGridSession copySnapshot() {

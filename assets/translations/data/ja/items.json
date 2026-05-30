@@ -43,7 +43,7 @@
       },
       "line_memory": {
         "displayName": "ライン記憶",
-        "effectText": "バトルで使うと、現在完成している最も強いラインの役成長+1。"
+        "effectText": "バトルで完成ラインを1つ選び、そのラインの役成長+1。"
       },
       "board_scrap": {
         "displayName": "Board Pass",

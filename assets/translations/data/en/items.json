@@ -43,7 +43,7 @@
       },
       "line_memory": {
         "displayName": "Line Memory",
-        "effectText": "Use in battle to give the best current scoring line's hand rank growth +1."
+        "effectText": "Use in battle to choose a completed line and give that line's hand rank growth +1."
       },
       "board_scrap": {
         "displayName": "Board Pass",
