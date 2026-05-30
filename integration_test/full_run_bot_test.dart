@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -1777,14 +1776,14 @@ class _FullRunBot {
 
   Future<void> flushTrace() async {
     if (!config.traceEnabled || traceRows.isEmpty) return;
-    final file = File(config.tracePath);
-    await file.parent.create(recursive: true);
-    final buffer = StringBuffer();
-    for (final row in traceRows) {
-      buffer.writeln(jsonEncode(row));
-    }
-    await file.writeAsString(buffer.toString());
-    debugPrint('${config.logPrefix}: trace_path=${file.path}');
+    final binding = IntegrationTestWidgetsFlutterBinding.instance;
+    binding.reportData ??= <String, dynamic>{};
+    binding.reportData!['full_run_trace_path'] = config.tracePath;
+    binding.reportData!['full_run_trace_rows'] = traceRows;
+    debugPrint(
+      '${config.logPrefix}: trace_path=${config.tracePath} '
+      'trace_rows=${traceRows.length}',
+    );
   }
 
   void _trace(String eventType, Map<String, Object?> payload) {
