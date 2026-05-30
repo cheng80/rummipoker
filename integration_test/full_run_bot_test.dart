@@ -2293,7 +2293,7 @@ class _FullRunBot {
   }
 
   Future<void> _tapTextIfVisible(String text) async {
-    final finder = _visibleButtonOrTextFinder(text);
+    final finder = _buttonOrTextFinder(text);
     if (finder.evaluate().isEmpty) return;
     await tester.tap(finder.last);
     await _pumpFor(const Duration(milliseconds: 500));
@@ -2376,9 +2376,9 @@ class _FullRunBot {
   }
 
   Finder _buttonOrTextFinder(String text) {
-    final finder = _visibleButtonOrTextFinder(text).hitTestable();
-    if (finder.evaluate().isNotEmpty) return finder;
-    return _visibleButtonOrTextFinder(text);
+    final actionButton = find.widgetWithText(GameActionButton, text).hitTestable();
+    if (actionButton.evaluate().isNotEmpty) return actionButton;
+    return find.text(text).hitTestable();
   }
 
   Finder _visibleButtonOrTextFinder(String text) {
@@ -2397,7 +2397,6 @@ class _FullRunBot {
       final finder = _visibleButtonOrTextFinder(text);
       final tappable = finder.hitTestable();
       if (tappable.evaluate().isNotEmpty) return tappable;
-      if (finder.evaluate().isNotEmpty) return finder;
     }
     fail('Timed out waiting for tappable text "$text"');
   }
