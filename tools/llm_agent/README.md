@@ -127,6 +127,20 @@ buy/sell/reroll decision contracts are included as smoke rows. It is still not
 complete balance evidence until battle item-use and full economy application are
 added.
 
+Compare an LLM station path smoke against a tracked full-run bot behavior prior:
+
+```bash
+python3 tools/llm_agent/compare_llm_to_full_run_prior.py \
+  --input logs/llm/station_path_s1_s8_item_market_sweep_20260530.jsonl \
+  --prior data/full_run_bot/reference_runs/ko_challenge_20260530_130411/full_run_policy_prior.json \
+  --out logs/llm/station_path_s1_s8_item_market_sweep_prior_compare_20260530.jsonl \
+  --summary-out analysis/leveling/reports/llm_full_run_prior_compare_s1_s8_item_market_20260530.json \
+  --report-out analysis/leveling/reports/llm_full_run_prior_compare_s1_s8_item_market_20260530.md
+```
+
+The comparison is diagnostic only. A prior gap means the tracked full-run
+reference does not cover that station/tier or market lane yet.
+
 For item-use contract smoke, seed a quick-slot item and enough gold for market
 choices:
 

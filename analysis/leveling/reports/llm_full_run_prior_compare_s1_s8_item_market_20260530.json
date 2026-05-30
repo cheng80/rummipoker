@@ -1,0 +1,145 @@
+{
+  "actions_by_stage": {
+    "S1:big": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S1:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S1:small": {
+      "buyJester": 1,
+      "draw": 1,
+      "place": 1,
+      "skip": 2
+    },
+    "S2:big": {
+      "buyJester": 1,
+      "draw": 1,
+      "place": 1,
+      "skip": 2
+    },
+    "S2:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S2:small": {
+      "buyJester": 1,
+      "draw": 1,
+      "place": 1,
+      "skip": 2
+    },
+    "S3:big": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S3:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S3:small": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S4:big": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S4:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S4:small": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S5:big": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S5:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S5:small": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S6:big": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S6:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S6:small": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S7:big": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S7:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S7:small": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S8:big": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S8:boss": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    },
+    "S8:small": {
+      "draw": 1,
+      "place": 1,
+      "skip": 3
+    }
+  },
+  "comparison_rows": 120,
+  "input_path": "logs/llm/station_path_s1_s8_item_market_sweep_20260530.jsonl",
+  "prior_available_rows": 63,
+  "prior_gap_rows": 57,
+  "prior_path": "data/full_run_bot/reference_runs/ko_challenge_20260530_130411/full_run_policy_prior.json",
+  "risk_flags": {
+    "diverged_from_baseline": 24,
+    "no_reference_prior_for_lane": 21,
+    "no_reference_prior_for_stage": 36,
+    "unknown_market_lane": 21
+  },
+  "row_type": "llm_full_run_prior_comparison_summary",
+  "rows_by_type": {
+    "llm_battle_item_decision": 48,
+    "llm_market_decision": 24,
+    "llm_station_path_turn": 48
+  },
+  "schema_version": 1
+}
