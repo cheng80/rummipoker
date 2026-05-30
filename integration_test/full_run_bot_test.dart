@@ -552,11 +552,10 @@ class _FullRunBot {
           break;
         case FullRunBattleActionType.place:
           final tile = session.hand[action.handIndex!];
-          await _tapHandTile(tile.toString());
-          await _tapBoardCell(action.row!, action.col!);
-          await _pumpUntilState(
-            (next) =>
-                next.session!.board.cellAt(action.row!, action.col!) != null,
+          await _placeHandTileOnBoard(
+            tile,
+            row: action.row!,
+            col: action.col!,
           );
           break;
         case FullRunBattleActionType.confirm:
@@ -2166,14 +2165,49 @@ class _FullRunBot {
   Future<void> _tapHandTile(String tileKey) async {
     final finder = find.byKey(ValueKey('settled-$tileKey'));
     await _pumpUntilVisible(finder);
-    await tester.tap(finder.first, warnIfMissed: false);
+    final tappable = finder.hitTestable();
+    await tester.tap(
+      tappable.evaluate().isNotEmpty ? tappable.last : finder.last,
+      warnIfMissed: false,
+    );
   }
 
   Future<void> _tapBoardCell(int row, int col) async {
+    final finder = find.byKey(ValueKey('board-cell-$row-$col'));
+    await _pumpUntilVisible(finder);
+    final tappable = finder.hitTestable();
     await tester.tap(
-      find.byKey(ValueKey('board-cell-$row-$col')),
+      tappable.evaluate().isNotEmpty ? tappable.last : finder.last,
       warnIfMissed: false,
     );
+  }
+
+  Future<void> _placeHandTileOnBoard(
+    Tile tile, {
+    required int row,
+    required int col,
+    Duration timeout = const Duration(seconds: 45),
+  }) async {
+    final end = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 100));
+      final state = _readGameState();
+      final session = state.session!;
+      if (session.board.cellAt(row, col) != null ||
+          !session.hand.contains(tile)) {
+        return;
+      }
+      if (await _retryGameOverIfVisible()) return;
+      await _dismissBlockingDialogsIfVisible();
+
+      if (state.selectedHandTile != tile) {
+        await _tapHandTile(tile.toString());
+        await tester.pump(const Duration(milliseconds: 150));
+      }
+      await _tapBoardCell(row, col);
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+    fail('Timed out placing ${tile.toString()} at $row,$col');
   }
 
   Future<void> _tapText(String text) async {
