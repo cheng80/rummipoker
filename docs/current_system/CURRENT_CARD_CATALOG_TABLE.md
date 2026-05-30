@@ -133,8 +133,60 @@
 | `wide_grip` | 넓은 손잡이 | equipment | rare | 11G | 5G | equipped | station_start / increase_hand_size_with_discard_penalty | 각 Station 시작 시 최대 손패 크기 +1, 보드 버림 -1. |
 | `tile_polisher` | 타일 광택기 | equipment | legendary | 14G | 7G | equipped | first_scored_tile_each_station / chips_bonus | 각 Station에서 처음 점수화된 타일에 칩 +20. |
 
+## Planned Ritual Cards
+
+> 아래 카드는 아직 현행 런타임 카탈로그가 아니다. 정책 정화 기준의 신규 추가 후보이며, 실제 JSON/번역/런타임 반영 전까지는 `Planned` 상태로 본다.
+
+### Ritual Draft 18
+
+| ID | 이름 | 상태 | 희귀도 | 가격 | Family | 대상 | 효과 | 필요 capability |
+|---|---|---|---:|---:|---|---|---|---|
+| `line_memory` | 라인 기억 | Draft | uncommon | 7G | rank_growth | scoring/confirmable line | 대표 족보 성장 +1 | line hand-rank resolver |
+| `minor_memory` | 잔상 기억 | Draft | rare | 9G | rank_growth | scoring/confirmable line | 대표가 아닌 차선 족보 후보 성장 +1. 없으면 대표 족보 +1 | secondary hand-rank candidate resolver |
+| `thin_memory` | 얇은 기억 | Draft | common | 6G | rank_growth | 3~4 tile scoring line | 해당 족보 성장 +1 | partial-line scorer |
+| `boss_memory` | 보스 기억 | Draft | rare | 11G | rank_growth | boss battle scoring/confirmable line | 대표 족보 성장 +2 | boss-only use condition |
+| `keystone_copy` | 중심석 복사 | Draft | uncommon | 8G | deck_add | scoring/confirmable line | 최고 기여 타일 1장을 덱에 추가 | contributor weight / tie-break |
+| `edge_copy` | 끝점 복사 | Draft | common | 6G | deck_add | completed or 3+ tile line | 양끝 타일 중 선택한 1장을 덱에 추가 | endpoint tile selection |
+| `rank_echo` | 숫자 메아리 | Draft | uncommon | 8G | deck_add | line with rank pair/repeat candidate | 반복 숫자 또는 pair 후보 타일 1장을 덱에 추가 | rank grouping resolver |
+| `scarce_copy` | 희소석 복사 | Draft | rare | 10G | deck_add | line with scarce color/rank tile | 현재 덱에서 희소한 색/숫자 타일 1장을 덱에 추가 | deck composition analyzer |
+| `line_seal_stamp` | 라인 각인 | Draft | uncommon | 8G | seal_apply | line tile | `line_mark` 각인 부여 | tile seal write/display |
+| `growth_seal` | 성장 각인 | Draft | rare | 10G | seal_apply | line tile | contributor 확정 시 족보 성장 +1 후 각인 소비 | seal trigger on settlement |
+| `gold_seal_stamp` | 금빛 각인 | Draft | uncommon | 8G | seal_apply | line tile | 포함 scoring line 확정 시 Gold +1 | seal gold settlement |
+| `anchor_seal` | 닻 각인 | Draft | uncommon | 7G | seal_apply | line tile | 보드 이동 후 포함 확정 시 보너스 | moved-tile marker |
+| `rank_concord` | 숫자 맞춤 의식 | Draft | rare | 11G | temporary_conversion | line tile | 이번 전투 동안 pair/triple 후보 숫자로 취급 | temporary rank override |
+| `step_rite` | 계단 의식 | Draft | uncommon | 9G | temporary_conversion | line tile | 이번 전투 동안 straight에 가까운 숫자로 취급 | straight gap resolver |
+| `line_pruner` | 가지치기 의식 | Draft | rare | 10G | deck_remove_candidate | scoring/confirmable line | 최저 기여 타일 1장을 전투 후 덱 제거 후보로 기록, Gold +2 | deferred deck removal |
+| `trim_color` | 색 가지치기 | Draft | uncommon | 8G | deck_remove_candidate | line tile with overrepresented color | 과다 색 타일 1장을 제거 후보로 기록 | deck color distribution |
+| `center_rite` | 중심 의식 | Draft | uncommon | 8G | geometry_bonus | center-including line | 성장 또는 복사 보너스 중 하나 | center line detector |
+| `ritual_lens` | 의식 렌즈 | Draft | uncommon | 7G | market_pool_weight | market state | 다음 Market Ritual 후보 출현 가중치 증가 | next-market family weight |
+
+### Ritual Reserve / Later
+
+| ID | 이름 | 상태 | 희귀도 | 가격 | 효과 요약 | 보류 이유 |
+|---|---|---|---:|---:|---|---|
+| `cross_memory` | 교차 기억 | Reserve | rare | 10G | 선택 타일의 row/col 중 낮은 성장 계열 +1 | row/col 동시 preview 필요 |
+| `color_echo` | 색 메아리 | Reserve | uncommon | 8G | 라인 다수 색 타일 1장 복사 | flush 고착 위험 감시 |
+| `sealed_copy` | 각인 복사 | Reserve | rare | 12G | 각인/강화가 있는 라인 타일을 약화 복사 | 선행 seal 카드 안정 필요 |
+| `echo_seal` | 메아리 각인 | Reserve | rare | 10G | 같은 타일이 두 번째 scoring line에도 기여하면 보너스 | overlap 표시 강화 필요 |
+| `color_concord` | 색 맞춤 의식 | Reserve | rare | 11G | 라인 타일 1장을 다수 색으로 전투 한정 처리 | flush 고착 위험 |
+| `off_color_rite` | 이색 의식 | Reserve | uncommon | 8G | 라인 타일 1장을 다수 색이 아닌 색으로 전투 한정 처리 | 보상 설명 필요 |
+| `trim_rank` | 숫자 가지치기 | Reserve | uncommon | 8G | 덱에 많은 숫자 타일을 라인에서 제거 후보로 기록 | `trim_color` 반응 후 검토 |
+| `cross_rite` | 교차 의식 | Reserve | rare | 11G | 선택 타일의 row/col 양쪽 preview 강화 | UI 복잡 |
+| `corner_rite` | 모서리 의식 | Reserve | uncommon | 8G | 모서리/끝점 포함 라인 보너스 | geometry 확장 때 검토 |
+| `diagonal_rite` | 대각 의식 | Reserve | rare | 10G | 대각선 라인에만 강한 보상 | 대각 highlight 안정 필요 |
+| `ritual_coupon` | 의식 쿠폰 | Reserve | common | 5G | 다음 Ritual 계열 구매 할인 | 할인만으로 재미가 약함 |
+| `seal_vendor` | 각인 상인 | Reserve | uncommon | 8G | 다음 Market에 각인/강화 계열 가중 | seal 카드 안정 후 |
+| `prune_vendor` | 정리 상인 | Reserve | uncommon | 8G | 다음 Market에 덱 압축 계열 가중 | prune 카드 안정 후 |
+| `risk_seal` | 균열 각인 | Later | legendary | 14G | 큰 보너스, 확정 후 덱 제거 후보 | 손실 설명/보상 UX 필요 |
+| `wild_thread` | 만능 실 | Later | rare | 12G | 전투 한정 wild-color | wildcard ruleset 필요 |
+| `number_mask` | 숫자 가면 | Later | rare | 12G | 전투 한정 wild-rank | wildcard ruleset 필요 |
+| `deadwood_burn` | 마른가지 소각 | Later | rare | 10G | 확정 불가능한 4~5타일 라인을 정리하고 Gold 획득 | dead line UI 필요 |
+| `bridge_rite` | 다리 의식 | Later | rare | 12G | 두 미완성 라인이 같은 타일을 공유하면 marker 부여 | future-line marker 설계 필요 |
+| `line_pack_ticket` | 라인 팩 티켓 | Later | rare | 10G | 다음 Market에 line 기반 선택 pack 후보 추가 | pack UI 필요 |
+| `sacrifice_line` | 제물 의식 | Reject V1 | legendary | 15G | scoring line 점수를 포기하고 덱 변형 보상 획득 | V1 손실감/undo 리스크 큼 |
+
 ## Notes
 
 - `Q-Slot`, `Passive`, `Tool`, `Gear` 분류는 현재 item `slotHint`/`placement` 기준이다.
 - 이 문서는 사람이 읽는 현행 카탈로그 표다. 실제 런타임 원본은 JSON catalog와 번역 파일이다.
-- 신규 Ritual/Board-Line 계열 후보는 아직 현행 카탈로그가 아니므로 `ITEM_POLICY_CLEANUP_AUDIT.md`에서 따로 관리한다.
+- 신규 Ritual/Board-Line 계열 후보는 `Planned Ritual Cards` 섹션에 함께 표기하되, 아직 현행 런타임 카탈로그는 아니다. 세부 정책 source는 `ITEM_POLICY_CLEANUP_AUDIT.md`다.
