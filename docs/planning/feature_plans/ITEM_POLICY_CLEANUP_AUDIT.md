@@ -440,6 +440,121 @@ ritual_lens
 
 이 8종은 required capability가 비교적 분리되어 있고, 성장/복사/각인/압축/마켓 가중치를 모두 한 번씩 검증한다.
 
+## 10. Runtime Capability Contract
+
+Draft 18은 개별 구현보다 capability 단위로 먼저 나눈다. 같은 capability를 공유하는 카드를 묶어야 저장/표시/정산이 중복 구현되지 않는다.
+
+### 10.1 Capability Groups
+
+| Capability | 포함 카드 | 상태 변화 | 저장 대상 | 표시 대상 |
+|---|---|---|---|---|
+| line target selection | Draft 18 중 `ritual_lens` 제외 17종 | 전투 중 보드 라인/타일 target 선택 | 적용 완료 결과만 저장. targeting/preview는 저장하지 않음 | 선택 가능 라인, 선택 라인, preview panel |
+| line hand-rank resolver | `line_memory`, `minor_memory`, `thin_memory`, `boss_memory` | `playedHandCounts` 또는 hand-rank progression 증가 | runProgress hand-rank growth | 전투 적용 toast, 런 정보 성장 표 |
+| deck add | `keystone_copy`, `edge_copy`, `rank_echo`, `scarce_copy` | `addedDeckTiles`에 타일 추가 | runProgress `addedDeckTiles` | 덱 변화 badge, 런 정보 덱 추가 목록 |
+| seal apply | `line_seal_stamp`, `growth_seal`, `gold_seal_stamp`, `anchor_seal` | board/deck tile에 seal 부여 | Tile `seal` field | 타일 badge, long-press 상세, 정산 발동 |
+| temporary conversion | `rank_concord`, `step_rite` | 전투 한정 rank override | 전투 runtime state. run save에는 적용 완료 후에도 영구 저장하지 않음 | 타일 temporary badge, 확정 preview |
+| deck remove candidate | `line_pruner`, `trim_color` | 전투 후 제거할 덱 타일 후보 기록 | 적용 완료 시 pending remove list 또는 즉시 제거 결과 | 덱 압축 badge, 결과 panel |
+| geometry bonus | `center_rite` | center 포함 라인에 성장/복사 보너스 | 선택 결과에 따라 growth 또는 deck add로 저장 | 중앙 라인 highlight |
+| market pool weight | `ritual_lens` | 다음 Market Ritual 후보 가중치 증가 | runProgress next-market modifier | Market 후보 영역 badge |
+
+### 10.2 Line Target Selection
+
+`use_battle_select_line`은 Draft 18의 핵심 action이다.
+
+상태 흐름:
+
+```text
+idle
+-> item_selected
+-> line_targeting
+-> line_preview
+-> confirm_apply
+-> applying
+-> idle
+```
+
+규칙:
+
+- Ritual item을 누르면 바로 소비하지 않는다.
+- 선택 가능한 line만 highlight한다.
+- 빈칸, 불가능한 line, 일반 타일 tap은 item을 소모하지 않는다.
+- preview에는 대상 line, 예상 결과, item 소모 여부를 보여준다.
+- 적용 버튼을 누른 뒤에만 item을 소비한다.
+- targeting/preview/dialog open 상태는 저장하지 않는다. 앱이 종료되면 idle로 복원되고 item은 남아 있어야 한다.
+
+Target 후보:
+
+| 조건 | 정책 |
+|---|---|
+| 3타일 이상 line | 기본 허용 후보 |
+| 점수 성립 가능한 line | 우선 highlight |
+| 현재 확정 preview에 포함된 line | 우선 highlight |
+| 5칸 완성 line | 허용 |
+| 1~2타일 line | V1 금지 |
+| empty line | 금지 |
+| 이미 적용 불가 상태의 line | 비활성 표시 |
+
+Line 종류:
+
+- row
+- column
+- main diagonal
+- anti diagonal
+
+V1 구현이 복잡하면 row/column부터 열 수 있다. 단 데이터 모델과 UI 용어는 diagonal까지 확장 가능해야 한다.
+
+### 10.3 Save / Restore Policy
+
+저장한다:
+
+- item 소비 결과
+- `addedDeckTiles` 변화
+- hand-rank progression 변화
+- Tile `seal` 변화
+- 전투 후 확정된 deck remove 결과
+- next-market Ritual 가중치
+
+저장하지 않는다:
+
+- line targeting 중인 선택 상태
+- hover/highlight
+- preview panel/dialog open state
+- temporary conversion의 preview-only 상태
+
+전투 한정 temporary conversion은 active battle state 안에서만 유지한다. confirm 또는 battle 종료 뒤에는 원본 타일 데이터와 분리되어야 한다.
+
+### 10.4 Battle / Settlement Display Policy
+
+적용 직후:
+
+- item source card가 짧게 pulse한다.
+- target line 전체가 highlight된다.
+- result panel에 `족보 성장 +1`, `덱에 B10 추가`, `금빛 각인 부여`처럼 결과가 직접 표시된다.
+
+정산 중:
+
+- seal 발동은 tile modifier settlement step에서 보여준다.
+- hand-rank growth는 성장 증가가 실제로 반영된 시점에 별도 callout을 띄운다.
+- deck add/remove는 정산 끝 또는 battle result panel에서 덱 변화 요약으로 보여준다.
+
+런 정보:
+
+- 성장한 족보, 추가된 덱 타일, 각인/강화 타일, 다음 Market 가중치를 확인할 수 있어야 한다.
+- Ritual 효과가 전투 중에만 보이고 run info에서 사라지면 덱빌딩 가치 전달 실패로 본다.
+
+### 10.5 Capability Implementation Order
+
+첫 구현 slice 8종 기준 권장 순서:
+
+1. `use_battle_select_line` target shell
+2. `line_memory`, `thin_memory`: line -> hand-rank growth
+3. `keystone_copy`, `edge_copy`: line -> `addedDeckTiles`
+4. `line_seal_stamp`, `gold_seal_stamp`: line tile -> seal apply/settlement
+5. `line_pruner`: line -> deck remove candidate
+6. `ritual_lens`: next Market family weight
+
+이 순서가 닫히기 전에는 `rank_concord`, `step_rite` 같은 temporary conversion을 구현하지 않는다. conversion은 evaluator/preview 혼란이 크다.
+
 ### Reserve 13
 
 ```text

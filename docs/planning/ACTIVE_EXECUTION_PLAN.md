@@ -75,9 +75,10 @@
 2. 완료: 기존 아이템 중 반복 플레이를 고착시키는 효과와 새 덱빌딩 다양성을 만드는 효과를 나눈다.
 3. 완료: 9개 후보는 너무 적다는 판단으로 폐기하고, 새 카드 후보 pool을 38종으로 확장했다. 첫 catalog draft 목표는 18종 안팎이다.
 4. 완료: 38종 후보 중 첫 catalog draft 18종과 첫 구현 slice 권장 8종을 `ITEM_POLICY_CLEANUP_AUDIT.md`에 확정했다.
-5. 다음: Draft 18이 요구하는 runtime capability를 기준으로 `use_battle_select_line`, 저장/복원, 정산/런 정보 표시 정책을 역으로 도출한다.
-6. 손패 직접 파괴/변형은 V1 금지로 유지한다.
-7. ML/시뮬레이션/풀런봇 계약은 잠시 보류한다. 새 카드와 효과가 먼저 확정된 뒤 마지막에 붙인다.
+5. 완료: Draft 18이 요구하는 runtime capability를 기준으로 `use_battle_select_line`, 저장/복원, 정산/런 정보 표시 정책을 역으로 도출했다.
+6. 다음: 첫 구현 slice 8종 기준으로 실제 catalog JSON/번역 초안을 만들기 전, effect op/schema 이름을 확정한다.
+7. 손패 직접 파괴/변형은 V1 금지로 유지한다.
+8. ML/시뮬레이션/풀런봇 계약은 잠시 보류한다. 새 카드와 효과가 먼저 확정된 뒤 마지막에 붙인다.
 
 ## 2. Post-contest 다음 작업
 
