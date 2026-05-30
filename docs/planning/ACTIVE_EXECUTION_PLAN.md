@@ -72,8 +72,8 @@
 기준 태그: `policy-cleanup-baseline-20260530`
 
 1. 완료: 현재 catalog 54개를 `Jester`, `Quick Item`, `Passive Relic`, `Hand-Rank Growth`, `Tile Modifier`, `Board-Line Ritual`, `Market Pool Mutation` 관점으로 1차 재분류한다. 결과는 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`.
-2. 기존 아이템 중 반복 플레이를 고착시키는 효과와 새 덱빌딩 다양성을 만드는 효과를 나눈다.
-3. Board-Line Ritual 후보 pool은 넓게 유지하고, 실제 V1 catalog 투입 후보는 낮은 리스크 9개 이상으로 좁힌다.
+2. 완료: 기존 아이템 중 반복 플레이를 고착시키는 효과와 새 덱빌딩 다양성을 만드는 효과를 나눈다.
+3. 완료: Board-Line Ritual 후보 pool은 넓게 유지하고, 실제 V1 catalog 투입 draft 후보 9개를 `ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다.
 4. 손패 직접 파괴/변형은 V1 금지로 유지한다. 보드 라인 target UI, 저장/복원, 정산/런 정보 표시, 풀런봇 trace가 닫히기 전에는 high-risk mutation을 구현하지 않는다.
 5. 정책 정화가 닫힌 뒤 fresh sim/ML/LLM 결과를 다시 읽어 가격/등장 weight/Station pool 판단에 사용한다.
 

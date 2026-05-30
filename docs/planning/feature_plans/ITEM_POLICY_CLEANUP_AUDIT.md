@@ -177,10 +177,77 @@ Direct Tile Modifier Item: 0
 - 마켓에서만 설명되고 전투/정산에서 일반 타일처럼 보이면 실패다.
 - 특수 타일 뱃지, 보스 제약 X, 숫자, 선택 표시가 겹치지 않아야 한다.
 
-## 5. 다음 작업
+## 5. 정화 진행 상태
 
-1. 이 audit 기준으로 `items_common_v1.json`에 policy family/tag를 추가할지, 별도 generated audit table로 둘지 결정한다.
-2. Board-Line Ritual V1 9개 후보의 구체 효과값, 가격, 희귀도, placement를 draft한다.
-3. `use_battle_select_line` target UI 계약을 작성한다.
-4. 풀런봇/시뮬레이터 trace 필드를 확정한다.
+1. 완료: 현재 catalog 54개를 policy family 기준으로 1차 분류했다.
+2. 완료: Board-Line Ritual V1 9개 후보의 효과값, 가격, 희귀도, placement를 draft했다.
+3. 다음: `use_battle_select_line` target UI 계약을 작성한다.
+4. 다음: 풀런봇/시뮬레이터 trace 필드를 확정한다.
 5. 그 뒤에만 catalog/runtime 구현으로 넘어간다.
+
+## 6. Board-Line Ritual V1 Draft Catalog
+
+아래 9개는 바로 JSON에 넣을 확정값이 아니라, 구현 전 계약을 닫기 위한 draft다. 공통 placement는 `quickSlot` 우선이며, 전투 중 `use_battle_select_line`으로 보드 라인을 선택한다.
+
+공통 target:
+
+```text
+target: completed_line | confirmable_line
+line types: row | column | diagonal
+minimum tiles: 3
+default consume: true
+```
+
+공통 trace:
+
+```text
+source_item_id
+target_line_ref
+target_line_kind
+target_tile_codes_before
+result_kind
+tiles_after
+deck_delta
+rank_progress_delta
+modifier_delta
+score_preview_delta
+```
+
+| ID | rarity | price | family | 효과 draft | V1 리스크 | 구현 판정 |
+|---|---:|---:|---|---|---|---|
+| `line_memory` | uncommon | 7 | growth | 선택 라인의 대표 족보 성장 +1 | 기존 study와 중복 | P0 |
+| `keystone_copy` | uncommon | 8 | copy/deck | 선택 라인에서 점수 기여가 가장 큰 타일 1장을 `addedDeckTiles`에 복사 | 덱 비대화 | P0 |
+| `line_seal_stamp` | uncommon | 8 | seal | 선택 라인 타일 1개에 `seal=line_mark` 부여. 다음 해당 타일 포함 확정 때 작은 성장/점수 보너스 | seal 표시/정산 필요 | P0 |
+| `minor_memory` | rare | 9 | growth | 선택 라인의 두 번째 족보 후보 성장 +1. 없으면 대표 족보 +1로 fallback | 후보 계산 설명 난이도 | P1 |
+| `edge_copy` | common | 6 | copy/deck | 선택 라인의 양끝 타일 중 하나를 선택해 `addedDeckTiles`에 복사 | endpoint UI 필요 | P1 |
+| `growth_seal` | rare | 10 | seal | 선택 타일에 `seal=growth_seal` 부여. 해당 타일이 contributor가 되면 그 족보 성장 +1 후 seal 소비 | 발동 추적 필요 | P1 |
+| `gold_seal_stamp` | uncommon | 8 | seal/economy | 선택 타일에 `seal=gold_seal` 부여. 해당 타일 포함 scoring line 확정 시 Gold +1 | 경제 snowball | P1 |
+| `rank_concord` | rare | 11 | conversion | 선택 라인 타일 1장을 pair/triple 후보 숫자로 전투 한정 wild-rank 처리 | 족보 판정 혼란 | P2 실험 |
+| `line_pruner` | rare | 10 | prune/deck | 선택 라인 최저 기여 타일 1장을 전투 후 덱 제거 후보로 기록. 즉시 Gold +2 | 영구 제거/undo 정책 | P2 실험 |
+
+V1 도입 최소 묶음:
+
+```text
+P0: line_memory, keystone_copy, line_seal_stamp
+P1: minor_memory, edge_copy, growth_seal, gold_seal_stamp
+P2 experiment: rank_concord, line_pruner
+```
+
+V1에서 아직 넣지 않는 후보:
+
+- `sacrifice_line`: 라인 손실감과 undo/보상 설명이 무겁다.
+- `line_transmute`: flush/straight 밸런스를 크게 흔든다.
+- `mirror_line`: 덱 폭증이 크다.
+- `void_mark`: 보스 제약 강화와 보상 tradeoff UI가 아직 없다.
+
+## 7. Catalog 적용 Gate
+
+Draft 9개를 실제 `items_common_v1.json`에 넣기 전 조건:
+
+1. `use_battle_select_line` timing enum 또는 동등한 action path가 있다.
+2. 선택 가능한 line highlight가 row/column/diagonal에서 동작한다.
+3. 선택 후 item source, target line, result delta가 전투 UI에 표시된다.
+4. save/restore에서 line target 선택 전/후 상태가 깨지지 않는다.
+5. `addedDeckTiles`, `handRankProgress`, `Tile.seal/enhancement/edition` 변경이 JSON roundtrip된다.
+6. 풀런봇 action schema에 `use_item_on_line`이 추가된다.
+7. sim/LLM trace에 ritual 사용 전후 board/deck/rank/modifier delta가 남는다.
