@@ -1833,10 +1833,28 @@ class _FullRunBot {
     final progress = state.runProgress;
     return {
       'stage_flow_phase': state.stageFlowPhase.name,
-      if (session != null) 'session': _sessionTrace(session),
-      if (progress != null) 'run_progress': _runProgressTrace(progress),
+      if (session != null) 'session': _battleSessionTrace(session),
+      if (progress != null) 'run_progress': _battleRunProgressTrace(progress),
       if (session != null && progress != null)
-        'confirm_preview': _confirmPreviewTrace(session, progress),
+        'confirm_preview': _compactConfirmPreviewTrace(session, progress),
+    };
+  }
+
+  Map<String, Object?> _battleSessionTrace(RummiPokerGridSession session) {
+    return {
+      'score': session.blind.scoreTowardBlind,
+      'target_score': session.blind.targetScore,
+      'deck_remaining': session.deck.remaining,
+      'max_hand_size': session.maxHandSize,
+      'hand': session.hand.map(_compactTileTrace).toList(),
+      'deck_top_5': session.peekDeckTop(5).map(_compactTileTrace).toList(),
+      'board_occupied': RummiPokerGridSession.countTilesOnBoard(session.board),
+      'board': _compactBoardTrace(session),
+      'resources': {
+        'hand_discards_remaining': session.blind.handDiscardsRemaining,
+        'board_discards_remaining': session.blind.boardDiscardsRemaining,
+        'board_moves_remaining': session.blind.boardMovesRemaining,
+      },
     };
   }
 
@@ -1873,6 +1891,37 @@ class _FullRunBot {
     return cells;
   }
 
+  List<String> _compactBoardTrace(RummiPokerGridSession session) {
+    final cells = <String>[];
+    for (var row = 0; row < kBoardSize; row++) {
+      for (var col = 0; col < kBoardSize; col++) {
+        final tile = session.board.cellAt(row, col);
+        if (tile == null) continue;
+        cells.add('$row:$col:${_compactTileTrace(tile)}');
+      }
+    }
+    return cells;
+  }
+
+  Map<String, Object?> _battleRunProgressTrace(RummiRunProgress progress) {
+    return {
+      'stage': progress.stageIndex,
+      'tier_index': progress.currentStationBlindTierIndex,
+      'gold': progress.gold,
+      'jester_ids': progress.ownedJesters.map((card) => card.id).toList(),
+      'owned_items': progress.itemInventory.ownedItems
+          .map((entry) => '${entry.itemId}:${entry.count}')
+          .toList(),
+      'quick_slot_items': progress.itemInventory.quickSlotItemIds,
+      'added_deck_tiles': progress.addedDeckTiles
+          .map(_compactTileTrace)
+          .toList(),
+      'played_hand_counts': progress.snapshotPlayedHandCounts().map(
+        (key, value) => MapEntry(key.name, value),
+      ),
+    };
+  }
+
   Map<String, Object?> _runProgressTrace(RummiRunProgress progress) {
     return {
       'stage': progress.stageIndex,
@@ -1899,7 +1948,7 @@ class _FullRunBot {
     };
   }
 
-  Map<String, Object?>? _confirmPreviewTrace(
+  Map<String, Object?>? _compactConfirmPreviewTrace(
     RummiPokerGridSession session,
     RummiRunProgress progress,
   ) {
@@ -1916,13 +1965,13 @@ class _FullRunBot {
       'base_score': result.baseScore,
       'jester_bonus': result.jesterBonus,
       'line_count': result.lineBreakdowns.length,
-      'lines': result.lineBreakdowns.map(_lineBreakdownTrace).toList(),
+      'lines': result.lineBreakdowns.map(_compactLineBreakdownTrace).toList(),
     };
   }
 
-  Map<String, Object?> _lineBreakdownTrace(ConfirmedLineBreakdown line) {
+  Map<String, Object?> _compactLineBreakdownTrace(ConfirmedLineBreakdown line) {
     return {
-      'line': {'kind': line.ref.kind.name, 'index': line.ref.index},
+      'line': '${line.ref.kind.name}:${line.ref.index}',
       'rank': line.rank.name,
       'base_score': line.baseScore,
       'final_score': line.finalScore,
@@ -1930,20 +1979,15 @@ class _FullRunBot {
       'growth_level': line.growthLevel,
       'growth_bonus': line.growthBonus,
       'overlap_multiplier': line.overlapMultiplier,
-      'overlap_bonus': line.overlapBonus,
       'tile_gold_bonus': line.tileGoldBonus,
-      'bonus_rank_progress': line.bonusRankProgress,
-      'destroyed_tiles': line.destroyedTiles.map(_tileTrace).toList(),
-      'contributing_cells': line.contributingCells
-          .map((cell) => {'row': cell.$1, 'col': cell.$2})
+      'destroyed_tiles': line.destroyedTiles.map(_compactTileTrace).toList(),
+      'cells': line.contributingCells
+          .map((cell) => '${cell.$1}:${cell.$2}')
           .toList(),
       'constraint_penalties': line.constraintPenalties
           .map(
             (penalty) => {
               'modifier_id': penalty.modifierId,
-              'title': penalty.title,
-              'rule_text': penalty.ruleText,
-              'marker_text': penalty.markerText,
               'score_delta': penalty.scoreDelta,
               'score_multiplier': penalty.scoreMultiplier,
               'affected_tile_colors': penalty.affectedTileColors
@@ -2106,6 +2150,18 @@ class _FullRunBot {
     'seal': tile.seal?.persistenceValue,
     'edition': tile.edition?.persistenceValue,
   };
+
+  String _compactTileTrace(Tile tile) {
+    final code = tile.toString();
+    final tags = [
+      if (tile.enhancement != null) 'e=${tile.enhancement!.persistenceValue}',
+      if (tile.seal != null) 's=${tile.seal!.persistenceValue}',
+      if (tile.edition != null) 'd=${tile.edition!.persistenceValue}',
+      if (tile.baseChipValue != tile.number) 'c=${tile.baseChipValue}',
+    ];
+    if (tags.isEmpty) return code;
+    return '$code(${tags.join(',')})';
+  }
 
   void _printPassLog(String stopReason) {
     debugPrint('${config.logPrefix}_PASS');
