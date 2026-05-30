@@ -415,11 +415,17 @@ while true; do
       --dart-define=FULL_RUN_BOT_TARGET_SCENE="$TARGET_SCENE" \
       --dart-define=FULL_RUN_BOT_REQUIRED_EVIDENCE="$REQUIRED_EVIDENCE"; then
     break
+  else
+    status=$?
   fi
 
-  status=$?
+  has_bridge_failure=0
+  if grep -q "DriverError: Error while reading FlutterDriver result.*request_data" "$log_file"; then
+    has_bridge_failure=1
+  fi
+
   if [[ "$segment_index" -ge "$BRIDGE_RESUME_LIMIT" ]] || \
-     ! grep -q "DriverError: Error while reading FlutterDriver result.*request_data" "$log_file" || \
+     [[ "$has_bridge_failure" -ne 1 ]] || \
      [[ ! -f "$BROWSER_PROFILE_DIR/latest_checkpoint.env" ]]; then
     exit "$status"
   fi
