@@ -15,6 +15,19 @@ Included files:
 - `full_run_trace.jsonl`: raw full-run trace events extracted from the driver log.
 - `full_run_trace_reference.md`: compact human-readable run summary.
 - `full_run_decision_reference.json`: compact decision reference for simulation probes.
+- `full_run_policy_dataset.jsonl`: chosen-action rows for ML/LLM schema smoke.
+- `full_run_policy_prior.json`: compact behavior prior for LLM comparison and sim probes.
+- `full_run_policy_dataset_report.md`: data-quality and use-case report.
+
+Regenerate derived files:
+
+```bash
+python3 tools/full_run_policy_dataset.py \
+  data/full_run_bot/reference_runs/ko_challenge_20260530_130411/full_run_trace.jsonl \
+  --dataset-out data/full_run_bot/reference_runs/ko_challenge_20260530_130411/full_run_policy_dataset.jsonl \
+  --prior-out data/full_run_bot/reference_runs/ko_challenge_20260530_130411/full_run_policy_prior.json \
+  --report-out data/full_run_bot/reference_runs/ko_challenge_20260530_130411/full_run_policy_dataset_report.md
+```
 
 Excluded files:
 

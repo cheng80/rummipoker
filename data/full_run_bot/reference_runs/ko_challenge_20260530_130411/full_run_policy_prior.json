@@ -1,0 +1,166 @@
+{
+  "battle_action_priors": {
+    "S7:big": {
+      "confirm": 1,
+      "draw": 27,
+      "place": 27
+    },
+    "S7:boss": {
+      "confirm": 1,
+      "draw": 27,
+      "moveBoard": 1,
+      "place": 27
+    },
+    "S7:small": {
+      "draw": 15,
+      "place": 15
+    },
+    "S8:big": {
+      "confirm": 1,
+      "draw": 25,
+      "place": 25
+    },
+    "S8:boss": {
+      "confirm": 4,
+      "draw": 52,
+      "moveBoard": 1,
+      "place": 52
+    },
+    "S8:small": {
+      "confirm": 2,
+      "draw": 32,
+      "moveBoard": 1,
+      "place": 32
+    }
+  },
+  "battle_item_observations": {
+    "line_polish": 1,
+    "move_token": 1,
+    "yellow_swatch": 2
+  },
+  "confirm_score_stats": {
+    "S7:big": {
+      "avg": 3360.17,
+      "count": 29,
+      "max": 5045,
+      "min": 3300
+    },
+    "S7:boss": {
+      "avg": 5193.1,
+      "count": 10,
+      "max": 8921,
+      "min": 874
+    },
+    "S7:small": {
+      "avg": 3275.0,
+      "count": 8,
+      "max": 3275,
+      "min": 3275
+    },
+    "S8:big": {
+      "avg": 3783.53,
+      "count": 15,
+      "max": 7703,
+      "min": 3500
+    },
+    "S8:boss": {
+      "avg": 3662.48,
+      "count": 23,
+      "max": 5504,
+      "min": 525
+    },
+    "S8:small": {
+      "avg": 2666.54,
+      "count": 13,
+      "max": 4969,
+      "min": 1424
+    }
+  },
+  "coverage": {
+    "difficulties": {
+      "challenge": 435
+    },
+    "has_success_terminal": true,
+    "locales": {
+      "ko": 435
+    },
+    "stage_keys": {
+      "S6:unknown": 11,
+      "S7:big": 58,
+      "S7:boss": 61,
+      "S7:small": 33,
+      "S7:unknown": 18,
+      "S8:big": 56,
+      "S8:boss": 113,
+      "S8:small": 72,
+      "S8:unknown": 12,
+      "S?:unknown": 1
+    }
+  },
+  "dataset_rows": 392,
+  "event_counts": {
+    "battle_action": 368,
+    "battle_item_use_applied": 4,
+    "battle_item_use_start": 4,
+    "blind_opened": 6,
+    "cashout_to_market": 5,
+    "checkpoint_saved": 5,
+    "market_after_evidence": 6,
+    "market_bought_item": 3,
+    "market_bought_jester": 3,
+    "market_decision": 20,
+    "market_enter": 6,
+    "market_sold_jester": 2,
+    "run_complete": 1,
+    "run_resumed": 1,
+    "run_start": 1
+  },
+  "llm_usage": {
+    "guidance": [
+      "Use as full_run_bot behavior prior, not as an automatic balance patch.",
+      "Compare LLM decisions against action-type and market lane priors by stage.",
+      "Do not treat this single successful seed as general policy truth."
+    ],
+    "status": "reference_prior_only"
+  },
+  "market_content_observations": {
+    "jester": {
+      "clever_jester": 1,
+      "crafty_jester": 1,
+      "devious_jester": 1,
+      "gluttonous_jester": 1,
+      "half_jester": 1,
+      "jolly_jester": 3,
+      "scholar": 1,
+      "the_duo": 2
+    },
+    "quickSlot": {
+      "line_polish": 1,
+      "pair_splint": 2
+    }
+  },
+  "market_decision_priors": {
+    "jester": {
+      "consider_buy": 9,
+      "sell_for_replacement": 2
+    },
+    "quickSlot": {
+      "consider_buy": 3
+    },
+    "tile": {
+      "consider_buy": 6
+    }
+  },
+  "ml_usage": {
+    "limitations": [
+      "Single seed and single challenge run.",
+      "Chosen actions are present, but full legal-action candidate sets are absent.",
+      "Useful for feature sanity and imitation schema smoke before broad collection."
+    ],
+    "status": "chosen_action_descriptive_dataset"
+  },
+  "row_type": "full_run_policy_prior",
+  "schema_version": 1,
+  "source_path": "data/full_run_bot/reference_runs/ko_challenge_20260530_130411/full_run_trace.jsonl",
+  "trace_rows": 435
+}
