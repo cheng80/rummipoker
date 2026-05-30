@@ -59,6 +59,13 @@ FAMILY_VISUALS = {
     "점수 Jester 문장": "score wave emblem with central star or lens and two outward rings",
     "족보 반응 Jester 문장": "tile-dot hand-rank emblem; pair as twin circles, triple as triangle, four-kind as cross, straight as rising diagonal, flush as same-color five-dot cluster",
     "족보 성장 문장": "planet-study orbit rune with hand-rank dot pattern arranged like small star orbits",
+    "의식/라인 기억 문장": "board line stored inside a circular memory orbit, three to five line nodes and one small memory node",
+    "의식/덱 복사 문장": "key Rummikub-like tile copied into a deck, central tile with one ghost duplicate and a short orbital arrow",
+    "의식/각인 문장": "small square tile stamped with a circular seal, two or three tiny light points",
+    "의식/숫자 변환 문장": "abstract dot pattern changing from one tile rank arrangement into another, no readable numerals",
+    "의식/덱 압축 문장": "weak tile pruned from a line, small pruning curve or shear silhouette and fading tile",
+    "의식/보드 위치 문장": "tiny board grid with one glowing center, corner, diagonal, or bridge node inside a ritual circle",
+    "의식/마켓 렌즈 문장": "ritual lens focusing on two small card-offer silhouettes with thin focus lines",
     "칩 Jester 문장": "coin-shaped chip magic circle with outer ring, inner dot, short radial ticks",
 }
 
@@ -178,6 +185,45 @@ def build_jobs(limit: int | None = None, *, mode: str = "emblem") -> list[dict]:
     return jobs[:limit] if limit else jobs
 
 
+def build_planned_ritual_jobs(limit: int | None = None, *, mode: str = "emblem") -> list[dict]:
+    doc = PROMPT_DOC.read_text(encoding="utf-8")
+    ritual_meta = parse_prompt_table(doc, "## 카드별 프롬프트 토큰: Planned Ritual")
+    jobs: list[dict] = []
+    for card_id, meta in ritual_meta.items():
+        rarity = "uncommon"
+        if any(token in meta["token"] for token in ("boss", "secondary", "scarce", "sealed", "wild", "high_risk", "line_pack")):
+            rarity = "rare"
+        if any(token in meta["token"] for token in ("legendary", "sacrifice", "high_risk_tradeoff")):
+            rarity = "legendary"
+        if any(token in meta["token"] for token in ("small_line", "endpoint", "discount")):
+            rarity = "common"
+        entry = {
+            "id": card_id,
+            "displayName": meta["name"],
+            "rarity": rarity,
+            "slotHint": "q",
+        }
+        jobs.append(
+            {
+                "id": card_id,
+                "kind": "ritual",
+                "prompt": prompt_for(entry, "planned_ritual", meta, mode=mode),
+                "use_case": "stylized-concept",
+                "style": "dark talisman roguelite ritual card emblem",
+                "composition": (
+                    "square inner illustration plate, one centered ritual emblem, generous padding"
+                    if mode == "emblem"
+                    else "portrait 27:35 card face, one centered ritual emblem, generous padding"
+                ),
+                "constraints": CONSTRAINTS,
+                "size": "1024x1024" if mode == "emblem" else "1024x1536",
+                "out": f"ritual_{card_id}.png",
+                "output": f"{mode}/rituals/{card_id}.png",
+            }
+        )
+    return jobs[:limit] if limit else jobs
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
@@ -188,9 +234,18 @@ def main() -> None:
         default="emblem",
         help="emblem generates only the inner art area; card keeps the older full-card prompt.",
     )
+    parser.add_argument(
+        "--planned-ritual",
+        action="store_true",
+        help="Build prompt jobs for Planned Ritual candidates from CARD_ITEM_IMAGE_PROMPTS.md.",
+    )
     args = parser.parse_args()
 
-    jobs = build_jobs(limit=args.limit, mode=args.mode)
+    jobs = (
+        build_planned_ritual_jobs(limit=args.limit, mode=args.mode)
+        if args.planned_ritual
+        else build_jobs(limit=args.limit, mode=args.mode)
+    )
     out_path = args.out if args.out.is_absolute() else ROOT / args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as fh:

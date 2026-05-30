@@ -147,6 +147,48 @@ Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, desig
 Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 연구/행성 카드 느낌의 궤도 룬. 족보별 점 배열을 작은 별궤도처럼 배치. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
 ```
 
+### 의식/라인 기억 문장
+
+```text
+Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 보드 라인 하나가 원형 기억 궤도로 저장되는 의식 문장. 라인 점 3~5개와 작은 기억 노드가 중심 링 안에 정렬된다. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
+```
+
+### 의식/덱 복사 문장
+
+```text
+Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 보드 라인의 핵심 타일이 덱으로 복사되는 룬. 중앙 타일 하나와 뒤에 희미한 복제 타일 그림자, 짧은 궤도 화살표. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
+```
+
+### 의식/각인 문장
+
+```text
+Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 한 타일 위에 각인 도장이 찍히는 룬. 작은 사각 타일, 원형 seal, 짧은 빛 점 2~3개만 사용. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
+```
+
+### 의식/숫자 변환 문장
+
+```text
+Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 라인 위 타일의 숫자 성질이 바뀌는 추상 룬. 실제 숫자 글자는 쓰지 말고 점 배열이 한 패턴에서 다른 패턴으로 이동하는 모습. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
+```
+
+### 의식/덱 압축 문장
+
+```text
+Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 라인에서 약한 타일 하나를 가지치기해 덱을 압축하는 룬. 작은 가위/가지치기 곡선과 사라지는 타일 실루엣. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
+```
+
+### 의식/보드 위치 문장
+
+```text
+Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 5x5 보드의 중심/모서리/대각 위치가 의식 원 안에서 강조되는 문장. 작은 격자와 한 개의 빛나는 위치 노드. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
+```
+
+### 의식/마켓 렌즈 문장
+
+```text
+Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, designed to remain readable at 54x70 px. Dark talisman card background, muted green-black ink, thin gold outline, single central geometric magic-circle emblem. Visual concept: 다음 Market 후보를 비추는 의식 렌즈. 작은 렌즈 원, 카드 후보 실루엣 2개, 가느다란 초점선. No text, no poker suits, no playing-card layout, no character portrait, no tiny details. Use one strong silhouette and 3 to 5 internal line details only.
+```
+
 ### 칩 Jester 문장
 
 ```text
@@ -259,6 +301,49 @@ Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, desig
 | 덱/손패 문장 | `wide_grip` | 넓은 손잡이 | equipment, hand_size, penalty |
 | 덱/손패 문장 | `grand_satchel` | 큰 가방 | relic, hand_size, legendary, penalty |
 | 경제/상점 문장 | `market_compass` | 상점 나침반 | relic, market, legendary, discount |
+
+## 카드별 프롬프트 토큰: Planned Ritual
+
+| 컨셉군 | ID | 이름 | 태그 토큰 |
+|---|---|---|---|
+| 의식/라인 기억 문장 | `line_memory` | 라인 기억 | ritual, line, hand_rank_growth, primary |
+| 의식/라인 기억 문장 | `minor_memory` | 잔상 기억 | ritual, line, secondary_rank_growth |
+| 의식/라인 기억 문장 | `cross_memory` | 교차 기억 | ritual, cross_line, row_column_memory |
+| 의식/라인 기억 문장 | `thin_memory` | 얇은 기억 | ritual, small_line, partial_line_growth |
+| 의식/라인 기억 문장 | `boss_memory` | 보스 기억 | ritual, boss, double_growth |
+| 의식/덱 복사 문장 | `keystone_copy` | 중심석 복사 | ritual, deck_add, key_tile |
+| 의식/덱 복사 문장 | `edge_copy` | 끝점 복사 | ritual, deck_add, endpoint_tile |
+| 의식/덱 복사 문장 | `rank_echo` | 숫자 메아리 | ritual, deck_add, repeated_rank |
+| 의식/덱 복사 문장 | `color_echo` | 색 메아리 | ritual, deck_add, majority_color |
+| 의식/덱 복사 문장 | `scarce_copy` | 희소석 복사 | ritual, deck_add, scarce_tile |
+| 의식/덱 복사 문장 | `sealed_copy` | 각인 복사 | ritual, deck_add, sealed_tile |
+| 의식/각인 문장 | `line_seal_stamp` | 라인 각인 | ritual, seal, line_mark |
+| 의식/각인 문장 | `growth_seal` | 성장 각인 | ritual, seal, growth |
+| 의식/각인 문장 | `gold_seal_stamp` | 금빛 각인 | ritual, seal, gold |
+| 의식/각인 문장 | `echo_seal` | 메아리 각인 | ritual, seal, overlap_echo |
+| 의식/각인 문장 | `anchor_seal` | 닻 각인 | ritual, seal, moved_tile |
+| 의식/각인 문장 | `risk_seal` | 균열 각인 | ritual, seal, high_risk_tradeoff |
+| 의식/숫자 변환 문장 | `rank_concord` | 숫자 맞춤 의식 | ritual, temporary_rank, pair_triple |
+| 의식/숫자 변환 문장 | `step_rite` | 계단 의식 | ritual, temporary_rank, straight |
+| 의식/숫자 변환 문장 | `color_concord` | 색 맞춤 의식 | ritual, temporary_color, majority |
+| 의식/숫자 변환 문장 | `off_color_rite` | 이색 의식 | ritual, temporary_color, off_color |
+| 의식/숫자 변환 문장 | `wild_thread` | 만능 실 | ritual, wild_color, temporary |
+| 의식/숫자 변환 문장 | `number_mask` | 숫자 가면 | ritual, wild_rank, temporary |
+| 의식/덱 압축 문장 | `line_pruner` | 가지치기 의식 | ritual, deck_remove, weak_tile |
+| 의식/덱 압축 문장 | `trim_color` | 색 가지치기 | ritual, deck_remove, overrepresented_color |
+| 의식/덱 압축 문장 | `trim_rank` | 숫자 가지치기 | ritual, deck_remove, overrepresented_rank |
+| 의식/덱 압축 문장 | `deadwood_burn` | 마른가지 소각 | ritual, dead_line, gold_recovery |
+| 의식/덱 압축 문장 | `sacrifice_line` | 제물 의식 | ritual, sacrifice, high_risk_reward |
+| 의식/보드 위치 문장 | `cross_rite` | 교차 의식 | ritual, geometry, cross_point |
+| 의식/보드 위치 문장 | `corner_rite` | 모서리 의식 | ritual, geometry, corner |
+| 의식/보드 위치 문장 | `center_rite` | 중심 의식 | ritual, geometry, center |
+| 의식/보드 위치 문장 | `diagonal_rite` | 대각 의식 | ritual, geometry, diagonal |
+| 의식/보드 위치 문장 | `bridge_rite` | 다리 의식 | ritual, geometry, future_line |
+| 의식/마켓 렌즈 문장 | `ritual_coupon` | 의식 쿠폰 | ritual, market, discount |
+| 의식/마켓 렌즈 문장 | `ritual_lens` | 의식 렌즈 | ritual, market, family_weight |
+| 의식/마켓 렌즈 문장 | `line_pack_ticket` | 라인 팩 티켓 | ritual, market, line_pack |
+| 의식/마켓 렌즈 문장 | `seal_vendor` | 각인 상인 | ritual, market, seal_weight |
+| 의식/마켓 렌즈 문장 | `prune_vendor` | 정리 상인 | ritual, market, prune_weight |
 
 ## 사용 예시
 
