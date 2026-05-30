@@ -743,6 +743,88 @@ ActiveRunRuntimeState _buildSpecialTileBattlePreview() {
   );
 }
 
+ActiveRunRuntimeState _buildLineMemoryMarketPreview() {
+  final base = _buildStage2MarketResume();
+  final runProgress = base.runProgress.copySnapshot()
+    ..stageIndex = 4
+    ..gold = 24;
+  runProgress.pinCurrentItemOfferKeys([
+    RummiMarketModifierState.itemOfferKey(
+      ItemPlacement.quickSlot,
+      'line_memory',
+    ),
+  ]);
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.shop,
+    difficulty: NewRunDifficulty.standard,
+    session: base.session.copySnapshot(),
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: base.stageStartSnapshot.session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
+ActiveRunRuntimeState _buildLineMemoryBattlePreview() {
+  final board = RummiBoard()
+    ..setCell(1, 0, _tile(TileColor.red, 1))
+    ..setCell(1, 1, _tile(TileColor.red, 2))
+    ..setCell(1, 2, _tile(TileColor.red, 3))
+    ..setCell(1, 3, _tile(TileColor.red, 4))
+    ..setCell(1, 4, _tile(TileColor.red, 5))
+    ..setCell(3, 1, _tile(TileColor.blue, 9))
+    ..setCell(4, 3, _tile(TileColor.yellow, 12));
+  final session = RummiPokerGridSession.restored(
+    runSeed: 2026053101,
+    deckCopiesPerTile: kDefaultCopiesPerTile,
+    maxHandSize: 2,
+    runRandomState: SeededRandom(2026053101).state,
+    blind: RummiBlindState(
+      targetScore: 720,
+      boardDiscardsRemaining: 4,
+      handDiscardsRemaining: 2,
+      scoreTowardBlind: 0,
+    ),
+    deck: PokerDeck.remainingAfterPlaced(
+      board: board,
+      random: Random(2026053101),
+    ),
+    board: board,
+    hand: const [],
+    eliminated: const [],
+  );
+  final runProgress = RummiRunProgress.restore(
+    stageIndex: 4,
+    gold: 24,
+    rerollCost: RummiRunProgress.shopBaseRerollCost,
+    ownedJesters: const [],
+    shopOffers: const [],
+    statefulValuesBySlot: const {},
+    playedHandCounts: const <RummiHandRank, int>{},
+    itemInventory: const RunInventoryState(
+      ownedItems: [
+        OwnedItemEntry(
+          itemId: 'line_memory',
+          count: 1,
+          placement: ItemPlacement.quickSlot,
+        ),
+      ],
+      quickSlotItemIds: ['line_memory'],
+    ),
+  );
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.battle,
+    difficulty: NewRunDifficulty.standard,
+    session: session,
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
 ActiveRunRuntimeState _buildSettlementCashOutReady() {
   final board = RummiBoard();
   for (var row = 0; row < kBoardSize; row++) {

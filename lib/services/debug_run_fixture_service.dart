@@ -55,6 +55,8 @@ class DebugRunFixtureService {
   static const String marketItemMotionEyeCheck = 'market_item_motion_eye_check';
   static const String specialTileMarketPreview = 'special_tile_market_preview';
   static const String specialTileBattlePreview = 'special_tile_battle_preview';
+  static const String lineMemoryMarketPreview = 'line_memory_market_preview';
+  static const String lineMemoryBattlePreview = 'line_memory_battle_preview';
   static const String finalBossCashOutReady = 'final_boss_cash_out_ready';
   static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
   static const String bossColumnConstraintPreview =

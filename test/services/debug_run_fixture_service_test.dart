@@ -1,10 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
@@ -322,7 +327,47 @@ void main() {
       session: fixture.session,
       runProgress: fixture.runProgress,
     );
-    expect(battle.scoringPreview?.expectedTileModifierEffectCount, greaterThan(0));
+    expect(
+      battle.scoringPreview?.expectedTileModifierEffectCount,
+      greaterThan(0),
+    );
+  });
+
+  test('line memory market fixture pins ritual item offer', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.lineMemoryMarketPreview,
+    );
+    final catalog = ItemCatalog.fromJson(
+      jsonDecode(File('data/common/items_common_v1.json').readAsStringSync())
+          as Map<String, dynamic>,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
+
+    final market = RummiMarketRuntimeFacade.fromRunProgress(
+      fixture.runProgress,
+      itemCatalog: catalog,
+    );
+    expect(
+      market.itemOffers.map((offer) => offer.contentId),
+      contains('line_memory'),
+    );
+  });
+
+  test('line memory battle fixture starts with usable scoring line', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.lineMemoryBattlePreview,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.runProgress.itemInventory.quickSlotItemIds, ['line_memory']);
+    expect(fixture.session.canConfirmAllFullLines, isTrue);
+    expect(
+      fixture.session.bestCurrentScoringLineRank(),
+      RummiHandRank.lowStraightFlush,
+    );
   });
 
   test('final boss cash-out fixture is ready to close the run', () {

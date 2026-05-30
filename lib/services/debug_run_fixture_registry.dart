@@ -101,6 +101,18 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     builder: _buildSpecialTileBattlePreview,
   ),
   DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.lineMemoryMarketPreview,
+    label: 'Line Memory Market 미리보기',
+    description: 'Line Memory 의식 카드가 상점 후보 카드로 보이는지 검증용',
+    builder: _buildLineMemoryMarketPreview,
+  ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.lineMemoryBattlePreview,
+    label: 'Line Memory 전투 미리보기',
+    description: '완성 줄 + Line Memory Q-slot 보유 + 사용 피드백 검증용',
+    builder: _buildLineMemoryBattlePreview,
+  ),
+  DebugRunFixtureDefinition(
     id: DebugRunFixtureService.finalBossCashOutReady,
     label: '최종 Boss 런 완료 체크',
     description: 'S8 Boss 확정 1회로 런 완료 + 기억 카드 보상 시트 검증용',
