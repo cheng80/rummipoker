@@ -20,6 +20,7 @@ Last updated: 2026-05-31
 - Exact duplicate inside new Ritual set: none.
 - App resource size: 216x216, matching existing `emblems_4x`.
 - Original generated size: 1254x1254, preserved separately.
+- 2026-05-31 policy update: prompt manifest was regenerated after Ritual effects moved from temporary rank/color conversion to explicit selected-line hand-rank override. Existing bitmap assets still pass as first art candidates because their central silhouettes already read as rank/line ritual emblems.
 
 ## Overlap Notes
 
@@ -46,6 +47,7 @@ No forced regeneration now.
 
 Optional later polish:
 
+- `rank_concord`, `color_concord`, `off_color_rite`, `wild_thread`, `number_mask`: if card-frame preview does not clearly read as forced hand-rank override, regenerate with stronger triangle/flush/full-house/cross/crown silhouettes.
 - `cross_memory`: make row/column memory less similar to `overlap_pin` if the runtime card frame makes both too close.
 - `ritual_coupon`: add stronger ritual discount token shape if it reads too close to existing coupon/trade items.
 - `line_seal_stamp`: add stronger line-node context if it reads too close to generic stamp items at small card size.

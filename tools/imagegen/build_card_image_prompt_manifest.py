@@ -62,8 +62,8 @@ FAMILY_VISUALS = {
     "의식/라인 기억 문장": "board line stored inside a circular memory orbit, three to five line nodes and one small memory node",
     "의식/덱 복사 문장": "key Rummikub-like tile copied into a deck, central tile with one ghost duplicate and a short orbital arrow",
     "의식/각인 문장": "small square tile stamped with a circular seal, two or three tiny light points",
-    "의식/숫자 변환 문장": "abstract dot pattern changing from one tile rank arrangement into another, no readable numerals",
-    "의식/덱 압축 문장": "weak tile pruned from a line, small pruning curve or shear silhouette and fading tile",
+    "의식/숫자 변환 문장": "a chosen board line being overwritten into a clear hand-rank ritual pattern: three-kind triangle, straight stair, flush color cluster, full-house split, four-kind cross, or five-kind crown; no readable numerals",
+    "의식/덱 압축 문장": "a user-selected tile pruned from a board line, small pruning curve or shear silhouette and fading tile",
     "의식/보드 위치 문장": "tiny board grid with one glowing center, corner, diagonal, or bridge node inside a ritual circle",
     "의식/마켓 렌즈 문장": "ritual lens focusing on two small card-offer silhouettes with thin focus lines",
     "칩 Jester 문장": "coin-shaped chip magic circle with outer ring, inner dot, short radial ticks",
@@ -191,9 +191,9 @@ def build_planned_ritual_jobs(limit: int | None = None, *, mode: str = "emblem")
     jobs: list[dict] = []
     for card_id, meta in ritual_meta.items():
         rarity = "uncommon"
-        if any(token in meta["token"] for token in ("boss", "secondary", "scarce", "sealed", "wild", "high_risk", "line_pack")):
+        if any(token in meta["token"] for token in ("boss", "secondary", "scarce", "sealed", "wild", "high_risk", "line_pack", "three_kind", "flush", "full_house", "four_kind")):
             rarity = "rare"
-        if any(token in meta["token"] for token in ("legendary", "sacrifice", "high_risk_tradeoff")):
+        if any(token in meta["token"] for token in ("legendary", "sacrifice", "high_risk_tradeoff", "five_kind")):
             rarity = "legendary"
         if any(token in meta["token"] for token in ("small_line", "endpoint", "discount")):
             rarity = "common"
