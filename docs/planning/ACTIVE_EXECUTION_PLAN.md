@@ -40,7 +40,7 @@
    - 완료: glass 파괴와 런 덱 source 제거/복원.
    - 보류: `wild_painted`, `lucky_tile`은 evaluator/RNG 재현 정책이 더 필요해 V1 후속 또는 V2 후보로 둔다.
 6. 다음 활성 작업:
-   - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 현재 catalog 54개와 새 Board-Line Ritual 후보를 family별로 재분류한다. 1차 audit와 새 카드 후보 pool은 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
+   - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 기존 catalog 54개에 Board-Line Ritual 38종을 추가한 현재 catalog 92개를 family별로 관리한다. 1차 audit와 새 카드 후보 pool은 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
    - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
    - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
    - 2026-05-29 full-run policy fresh data: `full_run_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
@@ -73,12 +73,20 @@
 
 1. 완료: 현재 catalog 54개를 `Jester`, `Quick Item`, `Passive Relic`, `Hand-Rank Growth`, `Tile Modifier`, `Board-Line Ritual`, `Market Pool Mutation` 관점으로 1차 재분류한다. 결과는 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`.
 2. 완료: 기존 아이템 중 반복 플레이를 고착시키는 효과와 새 덱빌딩 다양성을 만드는 효과를 나눈다.
-3. 완료: 9개 후보는 너무 적다는 판단으로 폐기하고, 새 카드 후보 pool을 38종으로 확장했다. 첫 catalog draft 목표는 18종 안팎이다.
-4. 완료: 38종 후보 중 첫 catalog draft 18종과 첫 구현 slice 권장 8종을 `ITEM_POLICY_CLEANUP_AUDIT.md`에 확정했다.
+3. 완료: 9개 후보는 너무 적다는 판단으로 폐기하고, 새 카드 후보 pool을 38종으로 확장했다.
+4. 완료: 과거에는 38종 중 첫 draft 18종/구현 slice 8종을 먼저 권장했지만, 현재는 38종 전체를 catalog/runtime에 넣은 상태다. 이후 판단은 `ITEM_POLICY_CLEANUP_AUDIT.md`의 V1 QA/정책 정리 항목을 따른다.
 5. 완료: Draft 18이 요구하는 runtime capability를 기준으로 `use_battle_select_line`, 저장/복원, 정산/런 정보 표시 정책을 역으로 도출했다.
-6. 다음: 첫 구현 slice 8종 기준으로 실제 catalog JSON/번역 초안을 만들기 전, effect op/schema 이름을 확정한다.
-7. 손패 직접 파괴/변형은 V1 금지로 유지한다.
-8. ML/시뮬레이션/풀런봇 계약은 잠시 보류한다. 새 카드와 효과가 먼저 확정된 뒤 마지막에 붙인다.
+6. 완료: 38종 Board-Line Ritual catalog/번역/이미지 asset/runtime hook을 실제로 추가했다. `ritual_line_effect` op와 `ritualAction` 기반으로 성장, 복사, 각인, 족보 강제 판정, 덱 제거 후보, 보드 선 제거/회수, 마켓 보조 계열을 연결했다.
+7. 완료: Ritual target은 scoring line만이 아니라 보드 선 단위로 확장했다. 성장/점수 보너스는 여전히 점수 족보 선을 요구하고, 타일 각인/복사/압축/보드 선 제거 계열은 비어 있지 않은 보드 선을, 강제 판정 계열은 타일 3개 이상 보드 선을 대상으로 한다.
+8. 완료: 전투 사용 UI는 일반 list dialog에서 보드 미니 프리뷰 + 선 후보 chip dialog로 바꿨고, `ko/en/ja/zh-CN/zh-TW` 효과 문구도 현재 target 조건에 맞게 정리했다.
+9. 다음: Ritual V1을 기능 추가에서 QA/정책 정리 단계로 넘긴다. 우선순위는 아래 순서다.
+   - 전투 눈검증: 대표 카드 8종 이상으로 보드 선 선택 dialog, 미완성 선 target, 강제 판정 preview, 각인/복사/압축 결과를 확인한다.
+   - 결과 전달: 적용 직후 source item -> target board line -> result delta가 충분히 읽히는지 보고 부족하면 result panel/toast/line flash를 보강한다.
+   - 런 정보/로그: addedDeckTiles, 제거 후보, seal/marker, hand-rank growth가 run info와 trace/log에서 확인 가능한지 점검한다.
+   - 마켓 정책: `ritual_lens`, `ritual_coupon`, `seal_vendor`, `prune_vendor`, `line_pack_ticket`이 단순 할인/후보 수 변경으로만 보이지 않는지 재검토한다.
+   - 밸런스: 38종 전부가 바로 pool에 들어간 상태이므로 희귀도/가격/출현 weight와 강제 판정 상위권(`wild_thread`, `number_mask`) 과강도를 소규모 fresh resimulation으로 본다.
+10. 손패 직접 파괴/변형은 V1 금지로 유지한다.
+11. ML/시뮬레이션/풀런봇 계약은 Ritual QA와 pool/가격 1차 정리 뒤 붙인다.
 
 ## 2. Post-contest 다음 작업
 

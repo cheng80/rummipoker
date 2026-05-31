@@ -5,7 +5,7 @@
 
 ## 1. 결론
 
-현재 `data/common/items_common_v1.json`의 54개 아이템은 런타임 동작은 넓게 갖췄지만, 덱빌딩 다양성 관점에서는 아래로 치우쳐 있다.
+기준점 `policy-cleanup-baseline-20260530` 당시 `data/common/items_common_v1.json`의 54개 아이템은 런타임 동작은 넓게 갖췄지만, 덱빌딩 다양성 관점에서는 아래로 치우쳐 있었다.
 
 ```text
 Hand-Rank Growth: 7
@@ -17,7 +17,12 @@ Board-Line Ritual: 0
 Direct Tile Modifier Item: 0
 ```
 
-따라서 다음 catalog 확장은 단순 점수 보정 아이템을 더 늘리지 않는다. 우선순위는 `Board-Line Ritual`, `Tile Modifier`, `Market Pool Mutation`, `Hand-Rank Growth`의 구분을 명확히 하고, 새 후보는 보드 라인 target, 덱 변화, 타일 각인/강화, 족보 성장으로 플레이 양상을 바꾸는 방향으로 추가한다.
+현재는 Board-Line Ritual 38종을 실제 catalog에 추가해 총 92개 아이템 상태다. 따라서 다음 catalog 확장은 단순 점수 보정 아이템을 더 늘리는 일이 아니라, 추가된 Ritual 38종이 아래 기준을 만족하는지 닫는 작업이다.
+
+- 효과별 target 조건이 유저에게 읽히는가.
+- 적용 결과가 board/deck/growth/seal/run info/log에 남는가.
+- `ritual_lens`, `ritual_coupon`, `seal_vendor`, `prune_vendor`, `line_pack_ticket`이 단순 할인/후보 수 변경처럼 약하게 보이지 않는가.
+- 38종 전부를 한 번에 pool에 넣은 상태에서 희귀도/가격/출현 weight가 과하지 않은가.
 
 ## 2. 분류 기준
 
@@ -140,9 +145,9 @@ Direct Tile Modifier Item: 0
 
 ### 4.1 Board-Line Ritual
 
-현재 catalog에는 0개다. 다음 확장 1순위다.
+기준점 당시 catalog에는 0개였고, 다음 확장 1순위였다. 현재는 38종이 실제 catalog/runtime/번역/이미지 경로에 들어갔다.
 
-초기 catalog 후보는 9개로 부족하다. 설계 pool은 최소 24개 이상, 현재 draft는 38개를 기준으로 잡고, 실제 첫 catalog draft는 18종 안팎에서 시작한다.
+초기 9개 후보는 부족하다는 판단으로 폐기했고, 설계 pool 38종 전체를 먼저 연결했다. 기존 Draft/Reserve/Later 표는 “구현 순서 후보” 기록으로만 보고, 현재 실행 판단은 아래 V1 QA/정책 정리 기준을 따른다.
 
 | 우선 | 후보 | 이유 |
 |---|---|---|
@@ -181,8 +186,29 @@ Direct Tile Modifier Item: 0
 
 1. 완료: 현재 catalog 54개를 policy family 기준으로 1차 분류했다.
 2. 정정: 9개 후보는 너무 적다. 구현 안전 후보가 아니라 실제 카드 pool이 먼저 넓어야 한다.
-3. 현재 우선순위: 새로 추가할 아이템 카드와 효과 pool을 먼저 정한다.
-4. 정책 문서와 UI/풀런봇/시뮬레이션 계약은 카드 pool이 잡힌 뒤 그에 맞춰 갱신한다.
+3. 완료: Board-Line Ritual 후보 38종을 실제 catalog에 추가했다.
+4. 완료: 성장, 복사, 각인, 족보 강제 판정, 압축/제거 후보, 보드 선 제거/회수, geometry, market 보조 계열을 `ritual_line_effect`/`ritualAction` 또는 기존 market op로 연결했다.
+5. 완료: Ritual line target을 scoring line 밖의 보드 선까지 확장했다. 효과별 target 조건은 점수 족보 선, 타일 3개 이상 보드 선, 보드 선 안의 타일로 나뉜다.
+6. 완료: 전투 선택 UI는 보드 미니 프리뷰 + line choice chip dialog로 교체했고, 다국어 효과 문구도 현재 조건에 맞게 정리했다.
+7. 현재 우선순위: 새 카드 추가가 아니라 V1 QA/정책 정리다.
+
+### 5.1 Ritual V1 다음 작업
+
+1. 대표 8종 이상 눈검증:
+   - `line_memory`, `thin_memory`: 점수 족보 선 성장.
+   - `keystone_copy`, `edge_copy`, `rank_echo`: 보드 선 기반 덱 추가.
+   - `line_seal_stamp`, `gold_seal_stamp`, `growth_seal`: 타일 각인/정산 발동.
+   - `rank_concord`, `step_rite`, `number_mask`: 타일 3개 이상 보드 선 강제 판정.
+   - `deadwood_burn`, `sacrifice_line`: 보드 선 제거/회수.
+2. result communication 보강:
+   - item source, target board line, result delta가 한 흐름으로 보이는지 확인한다.
+   - 부족하면 line flash, result panel, toast/callout, run info delta를 보강한다.
+3. run info/log 보강:
+   - `addedDeckTiles`, 제거 후보, seal/marker, hand-rank growth가 런 정보와 trace에서 확인되는지 본다.
+4. market 보조 계열 재검토:
+   - `ritual_lens`, `ritual_coupon`, `seal_vendor`, `prune_vendor`, `line_pack_ticket`은 지금 효과가 기존 할인/후보 수 변경 op를 재사용하므로 Ritual family 정체성이 약할 수 있다.
+5. balance watch:
+   - `wild_thread`, `number_mask`, `sacrifice_line`, `risk_seal`은 효과가 강하고 손실/보상이 커서 가격/희귀도/출현률을 소규모 fresh run으로 본다.
 
 ## 6. New Item Card Pool Direction
 
@@ -291,9 +317,9 @@ Ritual 성장 카드는 자동으로 "가장 강한/약한/대표" 줄을 고르
 | `seal_vendor` | 각인 상인 | uncommon | 8 | 다음 Market | seal/enhancement Ritual 후보 가중치 증가 | modifier 빌드 지원 |
 | `prune_vendor` | 정리 상인 | uncommon | 8 | 다음 Market | prune/compression Ritual 후보 가중치 증가 | 압축 빌드 지원 |
 
-## 8. First Catalog Draft Target
+## 8. First Catalog Draft Target (Historical)
 
-후보 pool은 38종이다. 첫 catalog draft는 이 중 18종 안팎을 목표로 한다.
+후보 pool은 38종이다. 이 섹션은 38종 전체를 catalog에 넣기 전의 18종 draft 계획 기록이다. 현재 실행 판단은 위 `5.1 Ritual V1 다음 작업`을 따른다.
 
 권장 1차 구성:
 
@@ -337,7 +363,7 @@ ritual_lens
 - `wild_thread`, `number_mask`: evaluator와 preview 설명이 먼저 필요하다.
 - `line_pack_ticket`: pack UI가 아직 없다.
 
-## 9. Candidate Decision Table
+## 9. Candidate Decision Table (Historical)
 
 38종 후보를 1차 draft 관점에서 다시 분류한다.
 
@@ -389,7 +415,7 @@ ritual_lens
 | `seal_vendor` | Reserve | modifier 빌드 지원 | seal 카드 안정 후 |
 | `prune_vendor` | Reserve | 압축 빌드 지원 | prune 카드 안정 후 |
 
-### Draft 18
+### Draft 18 (Historical)
 
 첫 catalog draft는 아래 18종으로 본다.
 
@@ -414,7 +440,7 @@ center_rite
 ritual_lens
 ```
 
-### Draft 18 Effect Contract
+### Draft 18 Effect Contract (Historical)
 
 이 표는 구현 전 효과 계약이다. 실제 JSON 반영 전 이름/가격/수치는 한 번 더 잠근다.
 

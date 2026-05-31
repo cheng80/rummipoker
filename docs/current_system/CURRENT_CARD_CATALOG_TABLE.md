@@ -6,9 +6,10 @@
 ## Summary
 
 - Jester: 43
-- Q-Slot: 21
+- Item total: 92
+- Q-Slot: 53
 - Passive: 10
-- Tool: 14
+- Tool: 20
 - Gear: 9
 
 ## Jester
@@ -133,60 +134,53 @@
 | `wide_grip` | 넓은 손잡이 | equipment | rare | 11G | 5G | equipped | station_start / increase_hand_size_with_discard_penalty | 각 Station 시작 시 최대 손패 크기 +1, 보드 버림 -1. |
 | `tile_polisher` | 타일 광택기 | equipment | legendary | 14G | 7G | equipped | first_scored_tile_each_station / chips_bonus | 각 Station에서 처음 점수화된 타일에 칩 +20. |
 
-## Planned Ritual Cards
+## Ritual Cards
 
-> 아래 카드는 아직 현행 런타임 카탈로그가 아니다. 정책 정화 기준의 신규 추가 후보이며, 실제 JSON/번역/런타임 반영 전까지는 `Planned` 상태로 본다.
+> 아래 38종은 현재 `data/common/items_common_v1.json`에 들어간 실제 catalog 항목이다. 기존 Draft/Reserve/Later 구분은 과거 설계 기록이며, 현재 판단은 runtime/QA/밸런스 상태로 본다.
 
-### Ritual Draft 18
-
-| ID | 이름 | 상태 | 희귀도 | 가격 | Family | 대상 | 효과 | 필요 capability |
-|---|---|---|---:|---:|---|---|---|---|
-| `line_memory` | 라인 기억 | Draft | uncommon | 7G | rank_growth | selected completed line | 선택한 완성 줄의 현재 족보 성장 +1 | selected-line hand-rank resolver |
-| `minor_memory` | 잔상 기억 | Draft | rare | 9G | rank_growth | selected completed line | 선택한 완성 줄의 현재 족보 성장 +2, 이번 확정 점수 -25% | selected-line risk growth resolver |
-| `thin_memory` | 얇은 기억 | Draft | common | 6G | rank_growth | selected 3~4 tile scoring line | 선택 줄의 현재 족보 성장 +1, 이번 확정 점수 -10% | partial-line scorer |
-| `boss_memory` | 보스 기억 | Draft | rare | 11G | rank_growth | selected boss completed line | 보스전에서 선택한 완성 줄의 현재 족보 성장 +2 | boss-only selected-line condition |
-| `keystone_copy` | 중심석 복사 | Draft | uncommon | 8G | deck_add | selected completed line center tile | 가운데 타일 1장을 덱에 추가 | selected-cell copy resolver |
-| `edge_copy` | 끝점 복사 | Draft | common | 6G | deck_add | selected completed line endpoint tile | 유저가 고른 끝점 타일 1장을 덱에 추가 | endpoint tile selection |
-| `rank_echo` | 숫자 메아리 | Draft | uncommon | 8G | deck_add | selected completed line tile | 같은 숫자, 무작위 색 타일 1장을 덱에 추가 | rank copy resolver |
-| `scarce_copy` | 희소석 복사 | Draft | rare | 10G | deck_add | selected completed line tile | 덱에 같은 색/숫자가 적으면 같은 타일 1장을 덱에 추가 | deck composition analyzer |
-| `line_seal_stamp` | 라인 각인 | Draft | uncommon | 8G | seal_apply | selected line tile | `line_mark` 각인 부여. 포함 줄 확정 시 칩 +10% | tile seal write/display |
-| `growth_seal` | 성장 각인 | Draft | rare | 10G | seal_apply | selected line tile | 포함 줄 확정 시 족보 성장 +1 후 각인 소비 | seal trigger on settlement |
-| `gold_seal_stamp` | 금빛 각인 | Draft | uncommon | 8G | seal_apply | selected line tile | 포함 줄 확정 시 Gold +1 후 각인 소비 | seal gold settlement |
-| `anchor_seal` | 닻 각인 | Draft | uncommon | 7G | seal_apply | selected line tile | 보드 이동 후 포함 확정 시 배수 +0.2 | moved-tile marker |
-| `rank_concord` | 숫자 맞춤 의식 | Draft | rare | 11G | hand_rank_override | selected completed line | 이번 확정에서 Three of a Kind로 강제 판정 | hand-rank override preview |
-| `step_rite` | 계단 의식 | Draft | uncommon | 9G | hand_rank_override | selected completed line | 이번 확정에서 Straight로 강제 판정 | hand-rank override preview |
-| `line_pruner` | 가지치기 의식 | Draft | rare | 10G | deck_remove_candidate | selected completed line tile | 같은 타일을 전투 후 덱 제거 후보로 기록, Gold +2 | deferred deck removal |
-| `trim_color` | 색 가지치기 | Draft | uncommon | 8G | deck_remove_candidate | selected completed line tile | 같은 색 타일 1장을 제거 후보로 기록 | deck color distribution |
-| `center_rite` | 중심 의식 | Draft | uncommon | 8G | geometry_bonus | selected center-including line | 선택 줄의 현재 족보 성장 +1 | center line detector |
-| `ritual_lens` | 의식 렌즈 | Draft | uncommon | 7G | market_pool_weight | next market | 다음 Market Ritual 후보 출현 가중치 증가, 후보 badge 표시 | next-market family weight |
-
-### Ritual Reserve / Later
-
-| ID | 이름 | 상태 | 희귀도 | 가격 | 효과 요약 | 보류 이유 |
-|---|---|---|---:|---:|---|---|
-| `cross_memory` | 교차 기억 | Reserve | rare | 10G | 교차 타일과 row/col 중 선택 줄의 현재 족보 성장 +1 | row/col 동시 preview 필요 |
-| `color_echo` | 색 메아리 | Reserve | uncommon | 8G | 선택 줄의 타일과 같은 색, 무작위 숫자 타일 1장 추가 | flush 고착 위험 감시 |
-| `sealed_copy` | 각인 복사 | Reserve | rare | 12G | 선택 줄의 각인/강화 타일을 약화 복사 | 선행 seal 카드 안정 필요 |
-| `echo_seal` | 메아리 각인 | Reserve | rare | 10G | 선택 타일이 두 줄 이상에 기여하면 두 번째 줄 점수 +25% | overlap 표시 강화 필요 |
-| `color_concord` | 색 맞춤 의식 | Reserve | rare | 11G | 선택 줄을 이번 확정에서 Flush로 강제 판정 | flush 고착 위험 |
-| `off_color_rite` | 이색 의식 | Reserve | rare | 12G | 선택 줄을 이번 확정에서 Full House로 강제 판정 | 보상 설명 필요 |
-| `trim_rank` | 숫자 가지치기 | Reserve | uncommon | 8G | 선택 줄 타일과 같은 숫자 타일 1장을 제거 후보로 기록 | `trim_color` 반응 후 검토 |
-| `cross_rite` | 교차 의식 | Reserve | rare | 11G | 교차 타일의 선택 줄 +25%, 반대 줄 다음 확정 +10% marker | UI 복잡 |
-| `corner_rite` | 모서리 의식 | Reserve | uncommon | 8G | 모서리 포함 선택 줄의 끝점 타일 1장 복사 | geometry 확장 때 검토 |
-| `diagonal_rite` | 대각 의식 | Reserve | rare | 10G | 선택한 대각선 완성 줄 점수 +35% | 대각 highlight 안정 필요 |
-| `ritual_coupon` | 의식 쿠폰 | Reserve | common | 5G | 다음 Ritual 계열 첫 구매 가격 -2G | 할인만으로 재미가 약함 |
-| `seal_vendor` | 각인 상인 | Reserve | uncommon | 8G | 다음 Market에 seal/enhancement Ritual 후보 가중 | seal 카드 안정 후 |
-| `prune_vendor` | 정리 상인 | Reserve | uncommon | 8G | 다음 Market에 prune/compression Ritual 후보 가중 | prune 카드 안정 후 |
-| `risk_seal` | 균열 각인 | Later | legendary | 14G | 선택 타일 포함 줄 확정 시 배수 +0.5, 이후 덱 제거 후보 | 손실 설명/보상 UX 필요 |
-| `wild_thread` | 만능 실 | Later | rare | 13G | 선택 줄을 이번 확정에서 Four of a Kind로 강제 판정 | 강제 판정 preview 필요 |
-| `number_mask` | 숫자 가면 | Later | legendary | 15G | 선택 줄을 이번 확정에서 Five of a Kind로 강제 판정, 이후 타일 제거 후보 | 손실 설명/보상 UX 필요 |
-| `deadwood_burn` | 마른가지 소각 | Later | rare | 10G | 선택한 미확정/실패 줄을 비우고 Gold +3 | dead line UI 필요 |
-| `bridge_rite` | 다리 의식 | Later | rare | 12G | 두 줄 공유 타일에 marker, 두 줄 모두 확정 시 Gold +3 | future-line marker 설계 필요 |
-| `line_pack_ticket` | 라인 팩 티켓 | Later | rare | 10G | 다음 Market에 완성 줄 기반 Ritual 3택1 pack 후보 추가 | pack UI 필요 |
-| `sacrifice_line` | 제물 의식 | Reject V1 | legendary | 15G | 선택 줄 점수 0, 줄 타일 2장 복사 및 1장 제거 후보 | V1 손실감/undo 리스크 큼 |
+| ID | 이름 | 희귀도 | 가격 | 위치 | Timing / op | 효과 |
+|---|---|---:|---:|---|---|---|
+| `line_memory` | 라인 기억 | uncommon | 7G | quickSlot | use_battle / add_hand_rank_progress_from_selected_line: growth | 점수 족보 선을 선택합니다. 해당 족보 성장 +1. |
+| `prune_vendor` | 정리 상인 | uncommon | 8G | inventory | market_buy_if_category / discount_next_purchase | 다음 아이템 구매 가격이 1 줄어듭니다. |
+| `seal_vendor` | 각인 상인 | uncommon | 8G | inventory | market_buy_if_category / discount_next_purchase | 다음 아이템 구매 가격이 1 줄어듭니다. |
+| `line_pack_ticket` | 라인 팩 티켓 | rare | 10G | inventory | market_build_offers / extra_item_offer_slot | 다음 상점의 아이템 후보 슬롯 +1. |
+| `ritual_lens` | 의식 렌즈 | uncommon | 7G | inventory | use_market / reroll_item_offers_only | 현재 아이템 후보를 다시 뽑고 의식 선택지를 노립니다. |
+| `ritual_coupon` | 의식 쿠폰 | common | 5G | inventory | market_buy_if_category / discount_next_purchase | 다음 아이템 구매 가격이 2 줄어듭니다. |
+| `bridge_rite` | 다리 의식 | rare | 12G | quickSlot | use_battle / ritual_line_effect: seal_bridge | 선택 타일에 다리 표식을 부여합니다. |
+| `diagonal_rite` | 대각 의식 | rare | 10G | quickSlot | use_battle / ritual_line_effect: line_bonus_35 | 점수 족보 대각선을 선택합니다. 이번 확정에서 그 선 점수 +35%. |
+| `center_rite` | 중심 의식 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: center_growth | 중앙을 포함한 점수 족보 선을 선택합니다. 해당 족보 성장 +1. |
+| `corner_rite` | 모서리 의식 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_endpoint | 모서리를 포함한 보드 선을 선택합니다. 끝 타일 1장을 덱에 복사합니다. |
+| `cross_rite` | 교차 의식 | rare | 11G | quickSlot | use_battle / ritual_line_effect: line_bonus_25 | 교차 가능한 점수 족보 선을 선택합니다. 이번 확정에서 그 선 점수 +25%. |
+| `sacrifice_line` | 제물 의식 | legendary | 15G | quickSlot | use_battle / ritual_line_effect: sacrifice_line | 보드 선 하나를 지웁니다. 타일 최대 2장을 덱에 복사하고 복사 타일 1장에 제거 표식을 남깁니다. |
+| `deadwood_burn` | 마른가지 소각 | rare | 10G | quickSlot | use_battle / ritual_line_effect: burn_line | 보드 선 하나를 지웁니다. 그 선의 보드 타일을 제거하고 골드 +3. |
+| `trim_rank` | 숫자 가지치기 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: remove_same_rank | 보드 선 안의 타일을 선택합니다. 같은 숫자 덱 타일 1장에 제거 표식을 남깁니다. |
+| `trim_color` | 색 가지치기 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: remove_same_color | 보드 선 안의 타일을 선택합니다. 같은 색 덱 타일 1장에 제거 표식을 남깁니다. |
+| `line_pruner` | 가지치기 의식 | rare | 10G | quickSlot | use_battle / ritual_line_effect: remove_same_tile | 보드 선 안의 타일을 선택합니다. 일치하는 덱 타일 1장에 제거 표식을 남기고 골드 +2. |
+| `number_mask` | 숫자 가면 | legendary | 15G | quickSlot | use_battle / ritual_line_effect: override_five_kind | 타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 파이브카드로 판정합니다. |
+| `wild_thread` | 만능 실 | rare | 13G | quickSlot | use_battle / ritual_line_effect: override_four_kind | 타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 포카드로 판정합니다. |
+| `off_color_rite` | 이색 의식 | rare | 12G | quickSlot | use_battle / ritual_line_effect: override_full_house | 타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 풀하우스로 판정합니다. |
+| `color_concord` | 색 맞춤 의식 | rare | 11G | quickSlot | use_battle / ritual_line_effect: override_flush | 타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 플러시로 판정합니다. |
+| `step_rite` | 계단 의식 | uncommon | 9G | quickSlot | use_battle / ritual_line_effect: override_straight | 타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 스트레이트로 판정합니다. |
+| `rank_concord` | 숫자 맞춤 의식 | rare | 11G | quickSlot | use_battle / ritual_line_effect: override_three_kind | 타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 트리플로 판정합니다. |
+| `risk_seal` | 균열 각인 | legendary | 14G | quickSlot | use_battle / ritual_line_effect: seal_risk | 보드 선 안의 타일을 선택합니다. 균열 봉인을 부여해 큰 점수 보너스와 이후 제거 위험을 줍니다. |
+| `anchor_seal` | 닻 각인 | uncommon | 7G | quickSlot | use_battle / ritual_line_effect: seal_anchor | 보드 선 안의 타일을 선택합니다. 닻 봉인을 부여해 이동 후 점수화 보너스를 줍니다. |
+| `echo_seal` | 메아리 각인 | rare | 10G | quickSlot | use_battle / ritual_line_effect: seal_echo | 보드 선 안의 타일을 선택합니다. 메아리 봉인을 부여해 겹친 점수화 보너스를 줍니다. |
+| `gold_seal_stamp` | 금빛 각인 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: seal_gold | 보드 선 안의 타일을 선택합니다. 금 봉인을 부여해 점수화 시 골드 +1. |
+| `growth_seal` | 성장 각인 | rare | 10G | quickSlot | use_battle / ritual_line_effect: seal_growth | 보드 선 안의 타일을 선택합니다. 성장 봉인을 부여해 점수화 시 해당 족보 성장 +1. |
+| `line_seal_stamp` | 라인 각인 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: seal_line_mark | 보드 선 안의 타일을 선택합니다. 라인 봉인을 부여해 점수화 시 칩 보너스를 줍니다. |
+| `sealed_copy` | 각인 복사 | rare | 12G | quickSlot | use_battle / ritual_line_effect: copy_selected | 봉인 또는 강화된 보드 선 타일을 선택합니다. 복사본을 덱에 추가합니다. |
+| `scarce_copy` | 희소석 복사 | rare | 10G | quickSlot | use_battle / ritual_line_effect: copy_selected | 보드 선 안의 타일을 선택합니다. 복사본을 덱에 추가합니다. |
+| `color_echo` | 색 메아리 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_color | 보드 선 안의 타일을 선택합니다. 같은 색의 무작위 숫자 타일을 덱에 추가합니다. |
+| `rank_echo` | 숫자 메아리 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_rank | 보드 선 안의 타일을 선택합니다. 같은 숫자의 무작위 색 타일을 덱에 추가합니다. |
+| `edge_copy` | 끝점 복사 | common | 6G | quickSlot | use_battle / ritual_line_effect: copy_selected | 보드 선의 끝 타일을 선택합니다. 복사본을 덱에 추가합니다. |
+| `keystone_copy` | 중심석 복사 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_center | 보드 선 하나를 선택합니다. 중앙 타일을 덱에 추가합니다. |
+| `boss_memory` | 보스 기억 | rare | 11G | quickSlot | use_battle / ritual_line_effect: boss_growth | 보스전에서 점수 족보 선을 선택합니다. 해당 족보 성장 +2. |
+| `thin_memory` | 얇은 기억 | common | 6G | quickSlot | use_battle / ritual_line_effect: thin_growth | 타일 3-4개의 점수 족보 선을 선택합니다. 해당 족보 성장 +1, 이번 확정에서 그 선 점수 -10%. |
+| `cross_memory` | 교차 기억 | rare | 10G | quickSlot | use_battle / ritual_line_effect: growth_marker | 교차 가능한 점수 족보 선을 선택합니다. 해당 족보 성장 +1 및 교차 기억 표식 부여. |
+| `minor_memory` | 잔상 기억 | rare | 9G | quickSlot | use_battle / ritual_line_effect: growth_risk | 점수 족보 선을 선택합니다. 해당 족보 성장 +2, 이번 확정에서 그 선 점수 -25%. |
 
 ## Notes
 
 - `Q-Slot`, `Passive`, `Tool`, `Gear` 분류는 현재 item `slotHint`/`placement` 기준이다.
 - 이 문서는 사람이 읽는 현행 카탈로그 표다. 실제 런타임 원본은 JSON catalog와 번역 파일이다.
-- 신규 Ritual/Board-Line 계열 후보는 `Planned Ritual Cards` 섹션에 함께 표기하되, 아직 현행 런타임 카탈로그는 아니다. 세부 정책 source는 `ITEM_POLICY_CLEANUP_AUDIT.md`다.
+- Ritual/Board-Line 계열 38종은 현재 런타임 카탈로그다. 세부 정책 source는 `ITEM_POLICY_CLEANUP_AUDIT.md`, 실제 runtime hook 상태는 `ITEM_EFFECT_RUNTIME_MATRIX.md`다.

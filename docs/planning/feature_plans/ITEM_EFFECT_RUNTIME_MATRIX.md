@@ -5,6 +5,14 @@
 
 기준 데이터: `data/common/items_common_v1.json`
 
+현재 기준:
+
+- Item catalog: 92개
+- 기존 v1 baseline: 54개
+- Board-Line Ritual 계열: 38개
+- `applied`: 92개
+- `pendingHook`: 0개
+
 이 문서는 v1 Item catalog의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
 Item 효과의 화면 연출 계약은 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`를 따른다.
 과거 소모품/바우처 장기 확장 reference는 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
@@ -90,6 +98,43 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 | `wide_grip` | 손패 한도 +1, 보드 버림 -1 | `station_start` / `increase_hand_size_with_discard_penalty` | `applyStationStartItem` | `applied` |
 | `grand_satchel` | 손패 한도 +2, 손패 버림 -1 | `station_start` / `increase_hand_size_with_discard_penalty` | `applyStationStartItem` | `applied` |
 | `market_compass` | market 진입 시 가장 싼 첫 offer 할인 -1 | `enter_market` / `discount_cheapest_first_offer` | `applyEnterMarketItem` | `applied` |
+| `prune_vendor` | 다음 item 구매 가격 -1 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
+| `seal_vendor` | 다음 item 구매 가격 -1 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
+| `line_pack_ticket` | 다음 market item offer slot +1 | `market_build_offers` / `extra_item_offer_slot` | `applyEnterMarketItem` | `applied` |
+| `ritual_lens` | item offer reroll | `use_market` / `reroll_item_offers_only` | `applyMarketUseItem` | `applied` |
+| `ritual_coupon` | 다음 item 구매 가격 -2 | `market_buy_if_category` / `discount_next_purchase` | `applyMarketBuyItem` | `applied` |
+| `bridge_rite` | 선택 보드 선 타일에 bridge seal | `use_battle` / `ritual_line_effect: seal_bridge` | `useBattleItemOnLine` | `applied` |
+| `diagonal_rite` | 선택 점수 대각선 score bonus | `use_battle` / `ritual_line_effect: line_bonus_35` | `useBattleItemOnLine` | `applied` |
+| `center_rite` | 중앙 포함 점수 족보 성장 +1 | `use_battle` / `ritual_line_effect: center_growth` | `useBattleItemOnLine` | `applied` |
+| `corner_rite` | 모서리 포함 보드 선 끝 타일 복사 | `use_battle` / `ritual_line_effect: copy_endpoint` | `useBattleItemOnLine` | `applied` |
+| `cross_rite` | 교차 가능한 점수 족보 score bonus | `use_battle` / `ritual_line_effect: line_bonus_25` | `useBattleItemOnLine` | `applied` |
+| `sacrifice_line` | 보드 선 제거, 타일 복사/제거 후보 | `use_battle` / `ritual_line_effect: sacrifice_line` | `useBattleItemOnLine` | `applied` |
+| `deadwood_burn` | 보드 선 제거, Gold +3 | `use_battle` / `ritual_line_effect: burn_line` | `useBattleItemOnLine` | `applied` |
+| `trim_rank` | 보드 선 타일과 같은 숫자 제거 후보 | `use_battle` / `ritual_line_effect: remove_same_rank` | `useBattleItemOnLine` | `applied` |
+| `trim_color` | 보드 선 타일과 같은 색 제거 후보 | `use_battle` / `ritual_line_effect: remove_same_color` | `useBattleItemOnLine` | `applied` |
+| `line_pruner` | 보드 선 타일과 같은 타일 제거 후보, Gold +2 | `use_battle` / `ritual_line_effect: remove_same_tile` | `useBattleItemOnLine` | `applied` |
+| `number_mask` | 타일 3개 이상 보드 선을 Five of a Kind로 override | `use_battle` / `ritual_line_effect: override_five_kind` | `useBattleItemOnLine` | `applied` |
+| `wild_thread` | 타일 3개 이상 보드 선을 Four of a Kind로 override | `use_battle` / `ritual_line_effect: override_four_kind` | `useBattleItemOnLine` | `applied` |
+| `off_color_rite` | 타일 3개 이상 보드 선을 Full House로 override | `use_battle` / `ritual_line_effect: override_full_house` | `useBattleItemOnLine` | `applied` |
+| `color_concord` | 타일 3개 이상 보드 선을 Flush로 override | `use_battle` / `ritual_line_effect: override_flush` | `useBattleItemOnLine` | `applied` |
+| `step_rite` | 타일 3개 이상 보드 선을 Straight로 override | `use_battle` / `ritual_line_effect: override_straight` | `useBattleItemOnLine` | `applied` |
+| `rank_concord` | 타일 3개 이상 보드 선을 Three of a Kind로 override | `use_battle` / `ritual_line_effect: override_three_kind` | `useBattleItemOnLine` | `applied` |
+| `risk_seal` | 보드 선 타일에 crack seal | `use_battle` / `ritual_line_effect: seal_risk` | `useBattleItemOnLine` | `applied` |
+| `anchor_seal` | 보드 선 타일에 anchor seal | `use_battle` / `ritual_line_effect: seal_anchor` | `useBattleItemOnLine` | `applied` |
+| `echo_seal` | 보드 선 타일에 echo seal | `use_battle` / `ritual_line_effect: seal_echo` | `useBattleItemOnLine` | `applied` |
+| `gold_seal_stamp` | 보드 선 타일에 gold seal | `use_battle` / `ritual_line_effect: seal_gold` | `useBattleItemOnLine` | `applied` |
+| `growth_seal` | 보드 선 타일에 growth seal | `use_battle` / `ritual_line_effect: seal_growth` | `useBattleItemOnLine` | `applied` |
+| `line_seal_stamp` | 보드 선 타일에 line seal | `use_battle` / `ritual_line_effect: seal_line_mark` | `useBattleItemOnLine` | `applied` |
+| `sealed_copy` | 봉인/강화 보드 선 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
+| `scarce_copy` | 보드 선 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
+| `color_echo` | 같은 색 무작위 숫자 타일 추가 | `use_battle` / `ritual_line_effect: copy_color` | `useBattleItemOnLine` | `applied` |
+| `rank_echo` | 같은 숫자 무작위 색 타일 추가 | `use_battle` / `ritual_line_effect: copy_rank` | `useBattleItemOnLine` | `applied` |
+| `edge_copy` | 보드 선 끝 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
+| `keystone_copy` | 보드 선 중앙 타일 복사 | `use_battle` / `ritual_line_effect: copy_center` | `useBattleItemOnLine` | `applied` |
+| `boss_memory` | 보스전 점수 족보 성장 +2 | `use_battle` / `ritual_line_effect: boss_growth` | `useBattleItemOnLine` | `applied` |
+| `thin_memory` | 3-4타일 점수 족보 성장 +1, score penalty | `use_battle` / `ritual_line_effect: thin_growth` | `useBattleItemOnLine` | `applied` |
+| `cross_memory` | 교차 가능한 점수 족보 성장 +1 | `use_battle` / `ritual_line_effect: growth_marker` | `useBattleItemOnLine` | `applied` |
+| `minor_memory` | 점수 족보 성장 +2, score penalty | `use_battle` / `ritual_line_effect: growth_risk` | `useBattleItemOnLine` | `applied` |
 
 ## 현재 실제 적용 완료
 
@@ -132,8 +177,10 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 
 현재 실제 런타임 기준:
 
-- 총 54개 중 `applied` 54개
+- 총 92개 중 `applied` 92개
 - 남은 `pendingHook` 0개
+
+Ritual 계열의 다음 검증은 runtime hook 존재 여부가 아니라 UX/밸런스다. 특히 line choice dialog, result communication, run info/log visibility, market pool 계열 정체성, 강제 판정/고위험 카드 가격과 출현률을 별도 확인한다.
 
 ## Post-contest 정책 재검토 리스트
 

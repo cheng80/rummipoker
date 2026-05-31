@@ -55,11 +55,11 @@ data/common/items_common_v1.json
 ```
 
 이 파일은 placeholder 샘플이 아니라 `common run`에서 사용할 v1 후보 카탈로그다.
-현재 수록 범위는 v1 baseline에 Planet-like 족보 성장 직접 지원 아이템군을 더한 54개 아이템이며, 분포는 다음과 같다.
+현재 수록 범위는 v1 baseline에 Planet-like 족보 성장 직접 지원 아이템군과 Board-Line Ritual 38종을 더한 92개 아이템이며, 분포는 다음과 같다.
 
 ```text
-utility: 9
-consumable: 26
+utility: 14
+consumable: 59
 equipment: 9
 passive_relic: 10
 ```
@@ -78,17 +78,26 @@ passive_relic: 10
 
 ### 2.2 Board-Line Ritual Mutation Policy
 
-[TARGET]
+[ACTIVE]
 
 Balatro식 Tarot/Spectral 참고 축 중 `카드 파괴`, `카드 변형`, `문양/숫자 변환`, `복제`, `강화 부여`는 덱빌딩 다양성을 만드는 핵심이다. 다만 Rummi Poker의 손패는 작고, 손패 직접 변형은 UI, 저장/복원, 시뮬레이터 재현, 풀런봇 판단 비용이 크다.
 
 따라서 고위험 mutation 계열은 손패가 아니라 **이미 보드에 구성한 족보/라인**에 적용하는 `Ritual` 계열 Item으로 재해석한다.
 
+현재 반영 상태:
+
+- `ritual_line_effect` op와 `ritualAction`으로 38종 Ritual이 catalog에 들어갔다.
+- 전투 선택 UI는 보드 미니 프리뷰와 line choice chip을 쓰며, targeting/preview 상태는 저장하지 않는다.
+- `RummiScoringLineSummary`는 line의 실제 타일/cell, 점수 성립 여부, 점유 수를 함께 들고 다닌다.
+- `currentBoardLineSummaries()`와 `currentBoardLineSummaryFor(LineRef)`가 scoring line 밖의 보드 선도 다룬다.
+- 성장/점수 보너스는 점수 족보 선을 요구하고, 강제 판정은 타일 3개 이상 보드 선, 타일 각인/복사/압축/보드 제거 계열은 비어 있지 않은 보드 선을 대상으로 한다.
+- 문구는 `점수 족보 선`, `타일 3개 이상 보드 선`, `보드 선 안의 타일`처럼 target 조건을 분리해 표시한다.
+
 정책:
 
 - `Ritual`은 기존 `Item`의 하위 family이며, 별도 Jester가 아니다.
-- 1차 대상은 손패가 아니라 `보드 위 완성 라인(row/col/diag)`이다.
-- 가능하면 `확정 가능한 라인` 또는 `5칸 완성 라인`만 선택 대상으로 한다.
+- 1차 대상은 손패가 아니라 `보드 위 라인(row/col/diag)`이다.
+- 모든 Ritual이 완성 줄만 요구하지 않는다. 효과별로 target 조건을 명시한다.
 - 변형 결과는 보드 타일, `addedDeckTiles`, hand-rank progression, next-confirm modifier 중 하나 이상으로 명확히 남아야 한다.
 - 사용 즉시 target line, source item, result delta가 보드/덱/런 정보/로그에서 읽혀야 한다.
 - 손패 직접 파괴/변형은 V1 범위에서 금지한다.
@@ -103,12 +112,13 @@ Balatro식 Tarot/Spectral 참고 축 중 `카드 파괴`, `카드 변형`, `문�
 - 보드는 손패보다 시각적으로 안정되어 target 선택, 연출, 풀런봇 로그 수집이 쉽다.
 - 덱 파괴/복제/변형이 들어가야 Market deckbuilding이 점수 보정 구매를 넘어선다.
 
-V1 구현 전제:
+V1 구현/검증 전제:
 
-- `use_battle_select_line` 같은 대상 선택 timing이 필요하다.
-- 선택 가능한 line highlight와 선택 후 confirm dialog가 필요하다.
-- 풀런봇은 처음에 `확정 가능 라인`, `고점 라인`, `중복 확정 후보 라인`에만 Ritual을 사용한다.
-- 시뮬레이터는 Ritual 사용 전후의 board/deck delta를 JSONL에 남긴다.
+- Ritual item을 누르면 적용 가능한 보드 선을 먼저 고르고, 적용이 성공한 뒤에만 소모한다.
+- line selection dialog는 모바일 높이에서 잘리지 않아야 하고, 미완성/무득점 선이 허용되는 효과와 점수 족보 선만 허용되는 효과를 구분한다.
+- 풀런봇은 처음에 `확정 가능 라인`, `고점 라인`, `중복 확정 후보 라인`, `타일 3개 이상 강제 판정 후보`만 Ritual 후보로 본다.
+- 시뮬레이터는 Ritual 사용 전후의 board/deck/growth/seal delta를 JSONL에 남긴다.
+- 다음 작업은 기능 추가보다 result communication, run info/log visibility, market pool/가격/희귀도 정리다.
 
 asset path:
 
@@ -139,8 +149,8 @@ AssetPaths.itemsCommon
 1. 현재 catalog 54개를 위 family로 다시 태깅한다.
 2. 실제 runtime에 이미 있는 효과와 문서 후보를 분리한다.
 3. Balatro 참고 축은 taxonomy로만 유지하고, 표시명/효과값/대상은 Rummi Poker 원본으로 작성한다.
-4. Board-Line Ritual 후보 pool은 넓게 유지한다. 첫 catalog draft는 18종 안팎, 첫 구현 slice는 그중 8~12종으로 잡는다.
-5. 새 family를 catalog에 넣기 전에는 저장/복원, target UI, 정산/런 정보 표시를 먼저 정의한다. 풀런봇 로그와 시뮬레이터 재현 경로는 카드/효과와 런타임 capability가 확정된 뒤 후속으로 붙인다.
+4. Board-Line Ritual 후보 pool은 38종을 현재 catalog에 넣은 상태다. 이제 draft/later 구분보다 runtime 안정성, UI 전달력, 출현/가격 밸런스로 관리한다.
+5. 새 family를 더 늘리기 전에는 저장/복원, target UI, 정산/런 정보 표시, 풀런봇 로그와 시뮬레이터 재현 경로를 먼저 닫는다.
 
 ## 3. Item Subtype UI Contract
 
@@ -488,9 +498,9 @@ consumeItem
 
 ## 10. Ritual Item Candidate List
 
-[TARGET]
+[HISTORICAL DESIGN POOL]
 
-이 목록은 `data/common/items_common_v1.json`에 즉시 추가할 확정 데이터가 아니라, Board-Line Ritual Mutation 계열의 정책 후보 목록이다. 지금은 ML/시뮬레이션보다 먼저 실제 추가할 아이템 카드와 효과 pool을 넓게 잡는 단계다.
+이 목록은 Board-Line Ritual 38종을 실제 catalog에 넣기 전의 설계 pool 기록이다. 현재는 `data/common/items_common_v1.json`에 38종이 반영됐으므로, 아래 Draft/Reserve/Later 표현은 최신 실행 상태가 아니라 후보를 넓게 잡았던 근거로만 본다.
 
 Balatro에서 참고할 축:
 
@@ -500,7 +510,12 @@ Balatro에서 참고할 축:
 
 Rummi Poker에서는 위 효과를 그대로 복사하지 않는다. 손패 직접 조작 대신 `보드 라인`, `확정 preview`, `addedDeckTiles`, `tile modifier`, `hand-rank progression`, `market pool`로 재해석한다.
 
-공통 규칙:
+현재 최신 실행 상태:
+
+- 38종 모두 catalog/runtime/번역/이미지 경로에 들어갔다.
+- 다음 작업은 새 후보 확정이 아니라 V1 QA, result communication, run info/log visibility, market pool 계열 정체성, 가격/희귀도/출현 weight 정리다.
+
+당시 공통 규칙:
 
 - type: `consumable` 우선
 - placement: V1은 `quickSlot` 또는 battle usable inventory로 제한
@@ -509,7 +524,7 @@ Rummi Poker에서는 위 효과를 그대로 복사하지 않는다. 손패 직�
 - target line은 row/col/diag를 모두 지원하되, V1 UI가 어려우면 row/col부터 시작한다.
 - UI/저장/로그 계약은 카드 pool 확정 뒤 역으로 도출한다.
 
-### 10.1 First Catalog Draft Policy
+### 10.1 First Catalog Draft Policy (Historical)
 
 첫 catalog draft는 38종 후보 pool에서 18종 안팎을 고른다. 9종 이하의 작은 pool은 반복 구매 패턴을 만들 가능성이 높으므로 폐기한다.
 
@@ -544,7 +559,7 @@ Market / Pool Mutation: 1
 - 보드 라인을 지우기만 하고 보상/로그/되돌릴 수 있는 이해 경로가 없는 효과.
 - Jester 생성/파괴/edition 부여를 Ritual V1에 섞는 것. Jester mutation은 별도 family로 둔다.
 
-### 10.4 First Implementation Slice
+### 10.4 First Implementation Slice (Historical)
 
 첫 구현 slice는 catalog draft 18종 중 8~12종만 골라도 된다. 단 설계 pool과 catalog draft 자체를 3~9종으로 축소하지 않는다.
 
@@ -636,7 +651,7 @@ Market / Pool Mutation: 1
 | `seal_vendor` | 각인 상인 | 다음 Market에 seal/enhancement 계열만 가중 | modifier 빌드 지원 |
 | `prune_vendor` | 정리 상인 | 다음 Market에 덱 압축 계열만 가중 | 파괴/압축 빌드 지원 |
 
-### 10.6 Pool Composition Target
+### 10.6 Pool Composition Target (Historical)
 
 초기 Ritual pool이 너무 작으면 새 시스템이 또 하나의 고정 루트가 된다. 따라서 실제 catalog 투입 전에도 후보 pool은 다음 비율을 목표로 한다.
 
