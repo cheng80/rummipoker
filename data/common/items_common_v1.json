@@ -329,7 +329,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. Its current hand rank gains growth +1.",
+      "effectText": "Choose a scoring line. Its current hand rank gains growth +1.",
       "effect": {
         "timing": "use_battle",
         "op": "add_hand_rank_progress_from_selected_line",
@@ -534,7 +534,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed diagonal line. This confirm gives that line score +35%.",
+      "effectText": "Choose a scoring diagonal line. This confirm gives that line score +35%.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -565,7 +565,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a line containing the center. Its current hand rank gains growth +1.",
+      "effectText": "Choose a scoring line containing the center. Its current hand rank gains growth +1.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -596,7 +596,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a line containing a corner. Copy one endpoint tile to your deck.",
+      "effectText": "Choose a board line containing a corner. Copy one endpoint tile to your deck.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -627,7 +627,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a crossing line. This confirm gives that line score +25%.",
+      "effectText": "Choose a scoring crossing line. This confirm gives that line score +25%.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -658,7 +658,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. Give up its score, copy two tiles, and mark one tile for removal.",
+      "effectText": "Choose any board line. Clear it, copy up to two tiles to your deck, and mark one copied tile for removal.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -689,7 +689,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a failed or completed line. Clear its board tiles and gain Gold +3.",
+      "effectText": "Choose any board line. Clear its board tiles and gain Gold +3.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -720,7 +720,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Mark a same-number deck tile for removal.",
+      "effectText": "Choose a tile from any board line. Mark a same-number deck tile for removal.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -751,7 +751,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Mark a same-color deck tile for removal.",
+      "effectText": "Choose a tile from any board line. Mark a same-color deck tile for removal.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -782,7 +782,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Mark a matching deck tile for removal and gain Gold +2.",
+      "effectText": "Choose a tile from any board line. Mark a matching deck tile for removal and gain Gold +2.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -813,7 +813,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. This confirm treats it as Five of a Kind.",
+      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Five of a Kind.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -844,7 +844,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. This confirm treats it as Four of a Kind.",
+      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Four of a Kind.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -875,7 +875,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. This confirm treats it as Full House.",
+      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Full House.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -906,7 +906,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. This confirm treats it as Flush.",
+      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Flush.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -937,7 +937,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. This confirm treats it as Straight.",
+      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Straight.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -968,7 +968,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. This confirm treats it as Three of a Kind.",
+      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Three of a Kind.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -999,7 +999,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add a crack seal; it gives a large score bonus and later removal risk.",
+      "effectText": "Choose a tile from any board line. Add a crack seal; it gives a large score bonus and later removal risk.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1030,7 +1030,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add an anchor seal; moved scoring gains a bonus.",
+      "effectText": "Choose a tile from any board line. Add an anchor seal; moved scoring gains a bonus.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1061,7 +1061,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add an echo seal; overlapping scoring gains a bonus.",
+      "effectText": "Choose a tile from any board line. Add an echo seal; overlapping scoring gains a bonus.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1092,7 +1092,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add a gold seal; when scored, gain Gold +1.",
+      "effectText": "Choose a tile from any board line. Add a gold seal; when scored, gain Gold +1.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1123,7 +1123,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add a growth seal; when scored, the hand rank grows +1.",
+      "effectText": "Choose a tile from any board line. Add a growth seal; when scored, the hand rank grows +1.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1154,7 +1154,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add a line seal; when scored, it grants chip bonus.",
+      "effectText": "Choose a tile from any board line. Add a line seal; when scored, it grants chip bonus.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1185,7 +1185,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a sealed or enhanced tile from a completed line. Add a copy to your deck.",
+      "effectText": "Choose a sealed or enhanced tile from any board line. Add a copy to your deck.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1216,7 +1216,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add a copy to your deck.",
+      "effectText": "Choose a tile from any board line. Add a copy to your deck.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1247,7 +1247,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add a random-number tile with the same color to your deck.",
+      "effectText": "Choose a tile from any board line. Add a random-number tile with the same color to your deck.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1278,7 +1278,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from a completed line. Add a random-color tile with the same number to your deck.",
+      "effectText": "Choose a tile from any board line. Add a random-color tile with the same number to your deck.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1309,7 +1309,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose an endpoint tile from a completed line. Add a copy to your deck.",
+      "effectText": "Choose an endpoint tile from any board line. Add a copy to your deck.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1340,7 +1340,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. Add its center tile to your deck.",
+      "effectText": "Choose any board line. Add its center tile to your deck.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1371,7 +1371,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "During a boss battle, choose a completed line. Its current hand rank gains growth +2.",
+      "effectText": "During a boss battle, choose a scoring line. Its current hand rank gains growth +2.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1433,7 +1433,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed crossing line. Its current hand rank gains growth +1 and the line receives a cross memory marker.",
+      "effectText": "Choose a scoring crossing line. Its current hand rank gains growth +1 and the line receives a cross memory marker.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
@@ -1464,7 +1464,7 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a completed line. Its current hand rank gains growth +2, and that line scores -25% on this confirm.",
+      "effectText": "Choose a scoring line. Its current hand rank gains growth +2, and that line scores -25% on this confirm.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",

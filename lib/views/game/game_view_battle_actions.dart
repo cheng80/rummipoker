@@ -225,38 +225,49 @@ extension _GameViewBattleActions on _GameViewState {
     final selected = await showDialog<RummiScoringLineSummary>(
       context: context,
       barrierDismissible: true,
-      routeSettings: const RouteSettings(name: '의식 줄 선택'),
-      builder: (context) => AlertDialog(
-        backgroundColor: GameUiPalette.surfaceModal,
-        title: Text('$itemName 대상 선택'),
-        content: SizedBox(
-          width: 360,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final line in lines)
-                ListTile(
-                  dense: true,
-                  title: Text(
-                    '${_lineChoiceLabel(line.ref)} · ${_lineChoiceRankLabel(line)}',
+      routeSettings: RouteSettings(name: isRitual ? '의식 보드 선 선택' : '의식 줄 선택'),
+      builder: (context) {
+        if (isRitual) {
+          return _RitualBoardLineChoiceDialog(
+            title: '$itemName 대상 선택',
+            board: session.board,
+            lines: lines,
+            lineLabel: _lineChoiceLabel,
+            rankLabel: _lineChoiceRankLabel,
+          );
+        }
+        return AlertDialog(
+          backgroundColor: GameUiPalette.surfaceModal,
+          title: Text('$itemName 대상 선택'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final line in lines)
+                  ListTile(
+                    dense: true,
+                    title: Text(
+                      '${_lineChoiceLabel(line.ref)} · ${_lineChoiceRankLabel(line)}',
+                    ),
+                    subtitle: Text(
+                      line.isScoringLine
+                          ? '칩 ${line.baseScore} · 타일 ${line.occupiedCount}'
+                          : '미완성/무득점 · 타일 ${line.occupiedCount}',
+                    ),
+                    onTap: () => Navigator.of(context).pop(line),
                   ),
-                  subtitle: Text(
-                    line.isScoringLine
-                        ? '칩 ${line.baseScore} · 타일 ${line.occupiedCount}'
-                        : '미완성/무득점 · 타일 ${line.occupiedCount}',
-                  ),
-                  onTap: () => Navigator.of(context).pop(line),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+          ],
+        );
+      },
     );
     if (!mounted || selected == null) return;
 
@@ -571,4 +582,270 @@ extension _GameViewBattleActions on _GameViewState {
       }),
     );
   }
+}
+
+class _RitualBoardLineChoiceDialog extends StatelessWidget {
+  const _RitualBoardLineChoiceDialog({
+    required this.title,
+    required this.board,
+    required this.lines,
+    required this.lineLabel,
+    required this.rankLabel,
+  });
+
+  final String title;
+  final RummiBoard board;
+  final List<RummiScoringLineSummary> lines;
+  final String Function(LineRef ref) lineLabel;
+  final String Function(RummiScoringLineSummary line) rankLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: GameUiPalette.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: GameUiPalette.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '보드 선을 선택합니다. 미완성/무득점 선도 효과에 따라 사용할 수 있습니다.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: GameUiPalette.textSecondary,
+                  fontSize: 11.5,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: SizedBox(
+                  width: 238,
+                  height: 238,
+                  child: _RitualBoardLinePreview(board: board, lines: lines),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 190),
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      for (final line in lines)
+                        _RitualLineChoiceChip(
+                          line: line,
+                          label: lineLabel(line.ref),
+                          rankText: rankLabel(line),
+                          onTap: () => Navigator.of(context).pop(line),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('취소'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RitualBoardLinePreview extends StatelessWidget {
+  const _RitualBoardLinePreview({required this.board, required this.lines});
+
+  final RummiBoard board;
+  final List<RummiScoringLineSummary> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      foregroundPainter: _RitualLinePreviewPainter(lines),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: GameUiPalette.surfacePanel.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: kBoardSize,
+              mainAxisSpacing: 3,
+              crossAxisSpacing: 3,
+            ),
+            itemCount: kBoardSize * kBoardSize,
+            itemBuilder: (context, index) {
+              final row = index ~/ kBoardSize;
+              final col = index % kBoardSize;
+              return _RitualBoardMiniCell(tile: board.cellAt(row, col));
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RitualBoardMiniCell extends StatelessWidget {
+  const _RitualBoardMiniCell({required this.tile});
+
+  final Tile? tile;
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = this.tile;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tile == null
+            ? GameUiPalette.ink.withValues(alpha: 0.52)
+            : GameUiPalette.cardArtSurface,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(
+          color: tile == null
+              ? GameUiPalette.textPrimary.withValues(alpha: 0.08)
+              : _ritualTileColor(tile.color).withValues(alpha: 0.9),
+          width: tile == null ? 1 : 1.4,
+        ),
+      ),
+      child: tile == null
+          ? null
+          : Center(
+              child: Text(
+                '${tile.number}',
+                style: TextStyle(
+                  color: _ritualTileColor(tile.color),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _RitualLineChoiceChip extends StatelessWidget {
+  const _RitualLineChoiceChip({
+    required this.line,
+    required this.label,
+    required this.rankText,
+    required this.onTap,
+  });
+
+  final RummiScoringLineSummary line;
+  final String label;
+  final String rankText;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = line.isScoringLine
+        ? GameUiPalette.actionGold
+        : GameUiPalette.tileBlueSeal;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Color.lerp(GameUiPalette.ink, color, 0.18),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.82), width: 1.4),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Text(
+            '$label · $rankText · ${line.occupiedCount}',
+            style: const TextStyle(
+              color: GameUiPalette.textPrimary,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RitualLinePreviewPainter extends CustomPainter {
+  const _RitualLinePreviewPainter(this.lines);
+
+  final List<RummiScoringLineSummary> lines;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final inset = 10.0;
+    final gap = 3.0;
+    final gridSide = size.shortestSide - inset * 2;
+    final cellSide = (gridSide - gap * (kBoardSize - 1)) / kBoardSize;
+    Offset centerFor(int row, int col) {
+      return Offset(
+        inset + col * (cellSide + gap) + cellSide / 2,
+        inset + row * (cellSide + gap) + cellSide / 2,
+      );
+    }
+
+    for (final line in lines) {
+      final cells = line.ref.cells();
+      final start = centerFor(cells.first.$1, cells.first.$2);
+      final end = centerFor(cells.last.$1, cells.last.$2);
+      final color = line.isScoringLine
+          ? GameUiPalette.actionGold
+          : GameUiPalette.tileBlueSeal;
+      final paint = Paint()
+        ..color = color.withValues(alpha: line.isScoringLine ? 0.52 : 0.38)
+        ..strokeWidth = line.isScoringLine ? 7 : 5
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(start, end, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RitualLinePreviewPainter oldDelegate) {
+    return oldDelegate.lines != lines;
+  }
+}
+
+Color _ritualTileColor(TileColor color) {
+  return switch (color) {
+    TileColor.red => GameUiPalette.tileRed,
+    TileColor.blue => GameUiPalette.tileBlue,
+    TileColor.yellow => GameUiPalette.tileYellow,
+    TileColor.black => GameUiPalette.tileBlack,
+  };
 }
