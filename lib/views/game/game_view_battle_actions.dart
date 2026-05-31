@@ -665,77 +665,80 @@ class _RitualBoardLineChoiceDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: GameUiPalette.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.98),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: kPhoneFrameRefW - 24),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.98),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: GameUiPalette.textPrimary,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                '보드 선을 선택합니다. 미완성/무득점 선도 효과에 따라 사용할 수 있습니다.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: GameUiPalette.textSecondary,
-                  fontSize: 11.5,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Center(
-                child: SizedBox(
-                  width: 238,
-                  height: 238,
-                  child: _RitualBoardLinePreview(board: board, lines: lines),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 190),
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 7,
-                    runSpacing: 7,
-                    children: [
-                      for (final line in lines)
-                        _RitualLineChoiceChip(
-                          line: line,
-                          label: lineLabel(line.ref),
-                          rankText: rankLabel(line),
-                          onTap: () => Navigator.of(context).pop(line),
-                        ),
-                    ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: GameUiPalette.textPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('취소'),
+                const SizedBox(height: 6),
+                const Text(
+                  '보드 선을 선택합니다. 미완성/무득점 선도 효과에 따라 사용할 수 있습니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: GameUiPalette.textSecondary,
+                    fontSize: 11.5,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Center(
+                  child: SizedBox(
+                    width: 238,
+                    height: 238,
+                    child: _RitualBoardLinePreview(board: board, lines: lines),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 190),
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: [
+                        for (final line in lines)
+                          _RitualLineChoiceChip(
+                            line: line,
+                            label: lineLabel(line.ref),
+                            rankText: rankLabel(line),
+                            onTap: () => Navigator.of(context).pop(line),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('취소'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
