@@ -113,6 +113,24 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     builder: _buildLineMemoryBattlePreview,
   ),
   DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.ritualGrowthCopyBattlePreview,
+    label: 'Ritual 성장/복사 전투',
+    description: '라인 기억/중심석 복사/숫자 메아리 보드 선 선택 검증용',
+    builder: _buildRitualGrowthCopyBattlePreview,
+  ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.ritualSealOverrideBattlePreview,
+    label: 'Ritual 각인/변환 전투',
+    description: '라인 각인/금빛 각인/숫자 맞춤 의식 선택 검증용',
+    builder: _buildRitualSealOverrideBattlePreview,
+  ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.ritualPruneBurnBattlePreview,
+    label: 'Ritual 압축/소각 전투',
+    description: '가지치기/마른가지 소각/숫자 가면 선택 검증용',
+    builder: _buildRitualPruneBurnBattlePreview,
+  ),
+  DebugRunFixtureDefinition(
     id: DebugRunFixtureService.finalBossCashOutReady,
     label: '최종 Boss 런 완료 체크',
     description: 'S8 Boss 확정 1회로 런 완료 + 기억 카드 보상 시트 검증용',

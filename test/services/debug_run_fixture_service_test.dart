@@ -370,6 +370,52 @@ void main() {
     );
   });
 
+  test('ritual battle preview fixtures expose representative item groups', () {
+    final cases = [
+      (
+        id: DebugRunFixtureService.ritualGrowthCopyBattlePreview,
+        items: ['line_memory', 'keystone_copy', 'rank_echo'],
+      ),
+      (
+        id: DebugRunFixtureService.ritualSealOverrideBattlePreview,
+        items: ['line_seal_stamp', 'gold_seal_stamp', 'rank_concord'],
+      ),
+      (
+        id: DebugRunFixtureService.ritualPruneBurnBattlePreview,
+        items: ['line_pruner', 'deadwood_burn', 'number_mask'],
+      ),
+    ];
+
+    for (final c in cases) {
+      final fixture = DebugRunFixtureService.build(c.id);
+
+      expect(fixture, isNotNull, reason: c.id);
+      expect(fixture!.activeScene, ActiveRunScene.battle, reason: c.id);
+      expect(
+        fixture.runProgress.itemInventory.quickSlotItemIds,
+        c.items,
+        reason: c.id,
+      );
+      expect(
+        fixture.runProgress.quickSlotCapacity(),
+        RunInventoryState.maxQuickSlotCapacity,
+        reason: c.id,
+      );
+      expect(
+        fixture.session.currentScoringLineSummaries(),
+        isNotEmpty,
+        reason: c.id,
+      );
+      expect(
+        fixture.session.currentBoardLineSummaries().any(
+          (line) => !line.isScoringLine && line.occupiedCount >= 3,
+        ),
+        isTrue,
+        reason: c.id,
+      );
+    }
+  });
+
   test('final boss cash-out fixture is ready to close the run', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.finalBossCashOutReady,

@@ -825,6 +825,95 @@ ActiveRunRuntimeState _buildLineMemoryBattlePreview() {
   );
 }
 
+ActiveRunRuntimeState _buildRitualGrowthCopyBattlePreview() {
+  return _buildRitualV1BattlePreview(
+    runSeed: 2026060101,
+    itemIds: const ['line_memory', 'keystone_copy', 'rank_echo'],
+  );
+}
+
+ActiveRunRuntimeState _buildRitualSealOverrideBattlePreview() {
+  return _buildRitualV1BattlePreview(
+    runSeed: 2026060102,
+    itemIds: const ['line_seal_stamp', 'gold_seal_stamp', 'rank_concord'],
+  );
+}
+
+ActiveRunRuntimeState _buildRitualPruneBurnBattlePreview() {
+  return _buildRitualV1BattlePreview(
+    runSeed: 2026060103,
+    itemIds: const ['line_pruner', 'deadwood_burn', 'number_mask'],
+  );
+}
+
+ActiveRunRuntimeState _buildRitualV1BattlePreview({
+  required int runSeed,
+  required List<String> itemIds,
+}) {
+  final board = RummiBoard()
+    // Scoring straight-flush line for growth and scoring-only rituals.
+    ..setCell(0, 0, _tile(TileColor.red, 1))
+    ..setCell(0, 1, _tile(TileColor.red, 2))
+    ..setCell(0, 2, _tile(TileColor.red, 3))
+    ..setCell(0, 3, _tile(TileColor.red, 4))
+    ..setCell(0, 4, _tile(TileColor.red, 5))
+    // Three occupied tiles that are not a scoring hand, for board-line rituals.
+    ..setCell(2, 0, _tile(TileColor.blue, 2))
+    ..setCell(2, 2, _tile(TileColor.yellow, 7))
+    ..setCell(2, 4, _tile(TileColor.black, 11))
+    // Three of a kind line for override comparison.
+    ..setCell(4, 1, _tile(TileColor.blue, 9))
+    ..setCell(4, 2, _tile(TileColor.red, 9))
+    ..setCell(4, 3, _tile(TileColor.black, 9));
+  final session = RummiPokerGridSession.restored(
+    runSeed: runSeed,
+    deckCopiesPerTile: kDefaultCopiesPerTile,
+    maxHandSize: 2,
+    runRandomState: SeededRandom(runSeed).state,
+    blind: RummiBlindState(
+      targetScore: 720,
+      boardDiscardsRemaining: 4,
+      handDiscardsRemaining: 2,
+      scoreTowardBlind: 0,
+    ),
+    deck: PokerDeck.remainingAfterPlaced(board: board, random: Random(runSeed)),
+    board: board,
+    hand: const [],
+    eliminated: const [],
+  );
+  final runProgress = RummiRunProgress.restore(
+    stageIndex: 4,
+    gold: 24,
+    rerollCost: RummiRunProgress.shopBaseRerollCost,
+    ownedJesters: const [],
+    shopOffers: const [],
+    statefulValuesBySlot: const {},
+    playedHandCounts: const <RummiHandRank, int>{},
+    unlockedQuickSlotCapacity: RunInventoryState.maxQuickSlotCapacity,
+    itemInventory: RunInventoryState(
+      ownedItems: [
+        for (final itemId in itemIds)
+          OwnedItemEntry(
+            itemId: itemId,
+            count: 1,
+            placement: ItemPlacement.quickSlot,
+          ),
+      ],
+      quickSlotItemIds: itemIds,
+    ),
+  );
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.battle,
+    difficulty: NewRunDifficulty.standard,
+    session: session,
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
 ActiveRunRuntimeState _buildSettlementCashOutReady() {
   final board = RummiBoard();
   for (var row = 0; row < kBoardSize; row++) {

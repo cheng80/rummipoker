@@ -57,6 +57,12 @@ class DebugRunFixtureService {
   static const String specialTileBattlePreview = 'special_tile_battle_preview';
   static const String lineMemoryMarketPreview = 'line_memory_market_preview';
   static const String lineMemoryBattlePreview = 'line_memory_battle_preview';
+  static const String ritualGrowthCopyBattlePreview =
+      'ritual_growth_copy_battle_preview';
+  static const String ritualSealOverrideBattlePreview =
+      'ritual_seal_override_battle_preview';
+  static const String ritualPruneBurnBattlePreview =
+      'ritual_prune_burn_battle_preview';
   static const String finalBossCashOutReady = 'final_boss_cash_out_ready';
   static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
   static const String bossColumnConstraintPreview =
