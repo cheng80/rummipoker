@@ -441,6 +441,14 @@ class RummiRunProgress {
     final sealSurcharge = switch (tile.seal) {
       TileSeal.blueSeal => 3,
       TileSeal.redSeal => 4,
+      TileSeal.lineMark ||
+      TileSeal.growthSeal ||
+      TileSeal.goldSeal ||
+      TileSeal.echoSeal ||
+      TileSeal.anchorSeal ||
+      TileSeal.riskSeal ||
+      TileSeal.crossMemory ||
+      TileSeal.bridgeSeal => 3,
       null => 0,
     };
     final editionSurcharge = switch (tile.edition) {

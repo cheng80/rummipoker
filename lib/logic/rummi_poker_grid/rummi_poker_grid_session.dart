@@ -390,17 +390,21 @@ class RummiPokerGridSession {
     return List<RummiScoringLineSummary>.unmodifiable([
       for (final entry in lines)
         if (!entry.report.evaluation.isDeadLine)
-          RummiScoringLineSummary(
-            ref: entry.ref,
-            rank: entry.report.evaluation.rank,
-            baseScore: entry.report.evaluation.baseScore,
-            scoringTiles: List<Tile>.unmodifiable(
-              _buildScoringLineCandidate(
-                ref: entry.ref,
-                evaluation: entry.report.evaluation,
-              ).scoringTiles,
-            ),
-          ),
+          () {
+            final candidate = _buildScoringLineCandidate(
+              ref: entry.ref,
+              evaluation: entry.report.evaluation,
+            );
+            return RummiScoringLineSummary(
+              ref: entry.ref,
+              rank: entry.report.evaluation.rank,
+              baseScore: entry.report.evaluation.baseScore,
+              scoringTiles: List<Tile>.unmodifiable(candidate.scoringTiles),
+              contributingCells: List<(int, int)>.unmodifiable(
+                candidate.contributingCells,
+              ),
+            );
+          }(),
     ]);
   }
 
@@ -409,6 +413,38 @@ class RummiPokerGridSession {
       if (line.ref == ref) return line;
     }
     return null;
+  }
+
+  bool replaceBoardTile(Tile target, Tile replacement) {
+    for (var r = 0; r < kBoardSize; r++) {
+      for (var c = 0; c < kBoardSize; c++) {
+        if (board.cellAt(r, c) == target) {
+          board.setCell(r, c, replacement);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  int clearLine(LineRef ref) {
+    var removed = 0;
+    for (final (r, c) in ref.cells()) {
+      final tile = board.cellAt(r, c);
+      if (tile == null) continue;
+      eliminated.add(tile);
+      board.setCell(r, c, null);
+      removed += 1;
+    }
+    if (removed > 0) boardMoveHistory.clear();
+    return removed;
+  }
+
+  Tile? removeDeckTileMatching(bool Function(Tile tile) test) {
+    final tile = deck.removeFirstWhere(test);
+    if (tile == null) return null;
+    eliminated.add(tile);
+    return tile;
   }
 
   RummiPokerGridSession copySnapshot() {
@@ -505,7 +541,7 @@ class RummiPokerGridSession {
 
     for (var lineIndex = 0; lineIndex < scoringLines.length; lineIndex++) {
       final line = scoringLines[lineIndex];
-      final evaluation = line.evaluation;
+      final evaluation = _overrideEvaluationForLine(line.evaluation, line.ref);
       final hasScoringFaceCard = line.scoringTiles.any(
         (tile) => tile.number >= 11 && tile.number <= 13,
       );
@@ -577,6 +613,7 @@ class RummiPokerGridSession {
       final itemResult = _applyConfirmModifiersToLine(
         lineScore: lineScore,
         rank: evaluation.rank,
+        lineRef: line.ref,
         scoringTiles: line.scoringTiles,
         lineIndex: lineIndex,
         confirmOrdinal: confirmOrdinal,
@@ -768,6 +805,26 @@ class RummiPokerGridSession {
     );
   }
 
+  HandEvaluation _overrideEvaluationForLine(
+    HandEvaluation evaluation,
+    LineRef lineRef,
+  ) {
+    for (final modifier in confirmModifiers) {
+      if (modifier.op != 'line_hand_rank_override') continue;
+      if (modifier.lineRef != lineRef) continue;
+      final rank = modifier.rank;
+      if (rank == null || isDeadLineRank(rank)) continue;
+      return HandEvaluation(
+        rank: rank,
+        baseScore: gddBaseScore(rank),
+        canClearLine: true,
+        contributingIndexes: evaluation.contributingIndexes,
+        isDeadLine: false,
+      );
+    }
+    return evaluation;
+  }
+
   static String _tileModifierDisplayName(TileEnhancement enhancement) {
     return switch (enhancement) {
       TileEnhancement.chipInlaid => '칩 박힘 타일',
@@ -874,6 +931,7 @@ class RummiPokerGridSession {
   _applyConfirmModifiersToLine({
     required int lineScore,
     required RummiHandRank rank,
+    required LineRef lineRef,
     required List<Tile> scoringTiles,
     required int lineIndex,
     required int confirmOrdinal,
@@ -882,10 +940,17 @@ class RummiPokerGridSession {
     var score = lineScore;
     final effects = <RummiJesterEffectBreakdown>[];
     for (final modifier in List<RummiConfirmModifier>.from(confirmModifiers)) {
+      if (modifier.op == 'line_hand_rank_override' &&
+          modifier.lineRef == lineRef &&
+          modifier.consumeOnApply) {
+        consumedModifiers.add(modifier);
+        continue;
+      }
       final applied = _scoreWithConfirmModifier(
         modifier: modifier,
         lineScore: score,
         rank: rank,
+        lineRef: lineRef,
         scoringTiles: scoringTiles,
         lineIndex: lineIndex,
         confirmOrdinal: confirmOrdinal,
@@ -965,6 +1030,7 @@ class RummiPokerGridSession {
     required RummiConfirmModifier modifier,
     required int lineScore,
     required RummiHandRank rank,
+    required LineRef lineRef,
     required List<Tile> scoringTiles,
     required int lineIndex,
     required int confirmOrdinal,
@@ -972,6 +1038,7 @@ class RummiPokerGridSession {
     if (!_confirmModifierMatches(
       modifier,
       rank: rank,
+      lineRef: lineRef,
       scoringTiles: scoringTiles,
       lineIndex: lineIndex,
       confirmOrdinal: confirmOrdinal,
@@ -996,8 +1063,26 @@ class RummiPokerGridSession {
         xmultBonus = modifier.amount <= 0 ? 1.0 : modifier.amount;
       case 'temporary_overlap_cap_bonus':
         xmultBonus = 1 + modifier.amount;
+      case 'line_score_multiplier':
+        final multiplier = modifier.scoreMultiplier ?? modifier.amount;
+        final nextScore = (lineScore * multiplier).round().clamp(0, 1 << 30);
+        final delta = nextScore - lineScore;
+        if (delta == 0) return null;
+        return (
+          score: nextScore,
+          effect: RummiJesterEffectBreakdown(
+            jesterId: modifier.itemId,
+            displayName: modifier.itemId,
+            chipsBonus: 0,
+            multBonus: 0,
+            xmultBonus: multiplier,
+            scoreDelta: delta,
+          ),
+        );
       case 'add_percent_of_first_confirm_score':
         scoreBonus = (firstConfirmScoreThisStation * modifier.percent).round();
+      case 'line_hand_rank_override':
+        scoreBonus = 0;
       default:
         return null;
     }
@@ -1028,10 +1113,14 @@ class RummiPokerGridSession {
   bool _confirmModifierMatches(
     RummiConfirmModifier modifier, {
     required RummiHandRank rank,
+    required LineRef lineRef,
     required List<Tile> scoringTiles,
     required int lineIndex,
     required int confirmOrdinal,
   }) {
+    if (modifier.lineRef != null && modifier.lineRef != lineRef) {
+      return false;
+    }
     switch (modifier.timing) {
       case 'next_confirm':
         return true;

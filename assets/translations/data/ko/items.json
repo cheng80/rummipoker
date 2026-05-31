@@ -43,7 +43,7 @@
       },
       "line_memory": {
         "displayName": "라인 기억",
-        "effectText": "전투에서 사용하면 완성 줄 하나를 선택해 그 줄의 족보 성장 +1."
+        "effectText": "전투에서 완성 줄 하나를 선택해 그 줄의 족보 성장 +1."
       },
       "board_scrap": {
         "displayName": "보드 패스",
@@ -220,6 +220,154 @@
       "market_compass": {
         "displayName": "상점 나침반",
         "effectText": "Market에 들어갈 때 아이템/Jester 첫 후보 중 더 싼 쪽을 1골드 할인합니다."
+      },
+      "minor_memory": {
+        "displayName": "잔상 기억",
+        "effectText": "완성 줄 하나를 선택해 족보 성장 +2. 이번 확정에서 그 줄 점수 -25%."
+      },
+      "cross_memory": {
+        "displayName": "교차 기억",
+        "effectText": "교차 줄을 선택해 족보 성장 +1과 교차 표식을 부여합니다."
+      },
+      "thin_memory": {
+        "displayName": "얇은 기억",
+        "effectText": "3~4타일 scoring 줄을 선택해 족보 성장 +1. 이번 확정 점수 -10%."
+      },
+      "boss_memory": {
+        "displayName": "보스 기억",
+        "effectText": "보스전에서 완성 줄 하나를 선택해 족보 성장 +2."
+      },
+      "keystone_copy": {
+        "displayName": "중심석 복사",
+        "effectText": "완성 줄의 가운데 타일을 덱에 추가합니다."
+      },
+      "edge_copy": {
+        "displayName": "끝점 복사",
+        "effectText": "완성 줄의 끝점 타일 하나를 선택해 덱에 추가합니다."
+      },
+      "rank_echo": {
+        "displayName": "숫자 메아리",
+        "effectText": "선택 타일과 같은 숫자의 무작위 색 타일을 덱에 추가합니다."
+      },
+      "color_echo": {
+        "displayName": "색 메아리",
+        "effectText": "선택 타일과 같은 색의 무작위 숫자 타일을 덱에 추가합니다."
+      },
+      "scarce_copy": {
+        "displayName": "희소석 복사",
+        "effectText": "선택 타일을 덱에 추가합니다."
+      },
+      "sealed_copy": {
+        "displayName": "각인 복사",
+        "effectText": "각인/강화 타일을 선택해 덱에 추가합니다."
+      },
+      "line_seal_stamp": {
+        "displayName": "라인 각인",
+        "effectText": "선택 타일에 라인 각인을 부여합니다. 포함 줄 확정 시 칩 보너스."
+      },
+      "growth_seal": {
+        "displayName": "성장 각인",
+        "effectText": "선택 타일에 성장 각인을 부여합니다. 포함 줄 확정 시 족보 성장 +1."
+      },
+      "gold_seal_stamp": {
+        "displayName": "금빛 각인",
+        "effectText": "선택 타일에 금빛 각인을 부여합니다. 포함 줄 확정 시 골드 +1."
+      },
+      "echo_seal": {
+        "displayName": "메아리 각인",
+        "effectText": "선택 타일에 메아리 각인을 부여합니다. 겹침 확정 시 보너스."
+      },
+      "anchor_seal": {
+        "displayName": "닻 각인",
+        "effectText": "선택 타일에 닻 각인을 부여합니다. 이동 후 확정 시 보너스."
+      },
+      "risk_seal": {
+        "displayName": "균열 각인",
+        "effectText": "선택 타일에 균열 각인을 부여합니다. 큰 보너스와 제거 위험."
+      },
+      "rank_concord": {
+        "displayName": "숫자 맞춤 의식",
+        "effectText": "선택 줄을 이번 확정에서 트리플로 판정합니다."
+      },
+      "step_rite": {
+        "displayName": "계단 의식",
+        "effectText": "선택 줄을 이번 확정에서 스트레이트로 판정합니다."
+      },
+      "color_concord": {
+        "displayName": "색 맞춤 의식",
+        "effectText": "선택 줄을 이번 확정에서 플러시로 판정합니다."
+      },
+      "off_color_rite": {
+        "displayName": "이색 의식",
+        "effectText": "선택 줄을 이번 확정에서 풀하우스로 판정합니다."
+      },
+      "wild_thread": {
+        "displayName": "만능 실",
+        "effectText": "선택 줄을 이번 확정에서 포카드로 판정합니다."
+      },
+      "number_mask": {
+        "displayName": "숫자 가면",
+        "effectText": "선택 줄을 이번 확정에서 파이브카드로 판정합니다."
+      },
+      "line_pruner": {
+        "displayName": "가지치기 의식",
+        "effectText": "선택 타일과 같은 타일을 덱 제거 후보로 기록하고 골드 +2."
+      },
+      "trim_color": {
+        "displayName": "색 가지치기",
+        "effectText": "선택 타일과 같은 색 타일 1장을 덱 제거 후보로 기록합니다."
+      },
+      "trim_rank": {
+        "displayName": "숫자 가지치기",
+        "effectText": "선택 타일과 같은 숫자 타일 1장을 덱 제거 후보로 기록합니다."
+      },
+      "deadwood_burn": {
+        "displayName": "마른가지 소각",
+        "effectText": "선택 줄의 보드 타일을 비우고 골드 +3. 점수 확정은 하지 않습니다."
+      },
+      "sacrifice_line": {
+        "displayName": "제물 의식",
+        "effectText": "선택 줄의 점수를 포기하고 타일 2장 복사 및 1장 제거 후보를 기록합니다."
+      },
+      "cross_rite": {
+        "displayName": "교차 의식",
+        "effectText": "선택 교차 줄의 이번 확정 점수 +25%."
+      },
+      "corner_rite": {
+        "displayName": "모서리 의식",
+        "effectText": "모서리를 포함한 줄의 끝점 타일을 덱에 추가합니다."
+      },
+      "center_rite": {
+        "displayName": "중심 의식",
+        "effectText": "중앙을 포함한 줄의 족보 성장 +1."
+      },
+      "diagonal_rite": {
+        "displayName": "대각 의식",
+        "effectText": "선택 대각선 줄의 이번 확정 점수 +35%."
+      },
+      "bridge_rite": {
+        "displayName": "다리 의식",
+        "effectText": "선택 타일에 다리 표식을 부여합니다."
+      },
+      "ritual_coupon": {
+        "displayName": "의식 쿠폰",
+        "effectText": "다음 아이템 구매 가격이 2 줄어듭니다."
+      },
+      "ritual_lens": {
+        "displayName": "의식 렌즈",
+        "effectText": "현재 아이템 후보를 다시 뽑고 의식 선택지를 노립니다."
+      },
+      "line_pack_ticket": {
+        "displayName": "라인 팩 티켓",
+        "effectText": "다음 상점의 아이템 후보 슬롯 +1."
+      },
+      "seal_vendor": {
+        "displayName": "각인 상인",
+        "effectText": "다음 아이템 구매 가격이 1 줄어듭니다."
+      },
+      "prune_vendor": {
+        "displayName": "정리 상인",
+        "effectText": "다음 아이템 구매 가격이 1 줄어듭니다."
       }
     }
   }

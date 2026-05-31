@@ -59,6 +59,8 @@ class RummiConfirmModifier {
     this.tileColor,
     this.maxTiles,
     this.consumeOnApply = true,
+    this.lineRef,
+    this.scoreMultiplier,
   });
 
   factory RummiConfirmModifier.fromJson(Map<String, dynamic> json) {
@@ -76,6 +78,10 @@ class RummiConfirmModifier {
           : TileColor.values.byName(json['tileColor'] as String),
       maxTiles: (json['maxTiles'] as num?)?.toInt(),
       consumeOnApply: json['consumeOnApply'] as bool? ?? true,
+      lineRef: json['lineRef'] == null
+          ? null
+          : LineRef.fromJson((json['lineRef'] as Map).cast<String, dynamic>()),
+      scoreMultiplier: (json['scoreMultiplier'] as num?)?.toDouble(),
     );
   }
 
@@ -88,6 +94,8 @@ class RummiConfirmModifier {
   final TileColor? tileColor;
   final int? maxTiles;
   final bool consumeOnApply;
+  final LineRef? lineRef;
+  final double? scoreMultiplier;
 
   Map<String, dynamic> toJson() => {
     'itemId': itemId,
@@ -99,6 +107,8 @@ class RummiConfirmModifier {
     if (tileColor != null) 'tileColor': tileColor!.name,
     if (maxTiles != null) 'maxTiles': maxTiles,
     'consumeOnApply': consumeOnApply,
+    if (lineRef != null) 'lineRef': lineRef!.toJson(),
+    if (scoreMultiplier != null) 'scoreMultiplier': scoreMultiplier,
   };
 }
 
@@ -108,12 +118,14 @@ class RummiScoringLineSummary {
     required this.rank,
     required this.baseScore,
     required this.scoringTiles,
+    required this.contributingCells,
   });
 
   final LineRef ref;
   final RummiHandRank rank;
   final int baseScore;
   final List<Tile> scoringTiles;
+  final List<(int, int)> contributingCells;
 }
 
 /// 족보 줄 일괄 확정 결과.

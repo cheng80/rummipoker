@@ -531,6 +531,454 @@ ItemUseResult _applyAddHandRankProgressFromSelectedLine(
   );
 }
 
+ItemUseResult _applyRitualLineEffect(
+  ItemDefinition item,
+  RummiPokerGridSession session,
+  RummiRunProgress runProgress,
+  LineRef lineRef,
+  int? tileIndex,
+) {
+  final line = session.currentScoringLineSummaryFor(lineRef);
+  if (line == null) {
+    return ItemUseResult.failure(itemId: item.id, message: '선택한 완성 줄이 없습니다.');
+  }
+  final action = item.effect.value('ritualAction') as String? ?? '';
+  final amount = _nonNegativeIntValue(item, 'amount');
+  final selectedTile = _selectedRitualTile(line, tileIndex);
+  final events = <ItemEffectEvent>[];
+
+  ItemUseResult growSelectedLine(int growthAmount) {
+    if (growthAmount <= 0) return _invalidAmount(item);
+    final didApply = runProgress.addHandRankProgress(
+      line.rank,
+      amount: growthAmount,
+    );
+    if (!didApply) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '이 족보는 성장시킬 수 없습니다.',
+      );
+    }
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.handRankProgressAdded,
+          itemId: item.id,
+          amount: growthAmount,
+          detail: '${line.rank.name}:${line.ref.kind.name}:${line.ref.index}',
+        ),
+      ],
+    );
+  }
+
+  switch (action) {
+    case 'growth':
+    case 'center_growth':
+      return growSelectedLine(amount);
+    case 'growth_marker':
+      final result = growSelectedLine(amount);
+      if (!result.isSuccess || selectedTile == null) return result;
+      _applySealToBoardTile(session, selectedTile, TileSeal.crossMemory);
+      return ItemUseResult.success(
+        itemId: item.id,
+        events: [
+          ...result.events,
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.settlementModifierQueued,
+            itemId: item.id,
+            amount: 1,
+            detail: 'cross_memory',
+          ),
+        ],
+      );
+    case 'boss_growth':
+      if (session.blind.bossModifier == null) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '보스전에서만 사용할 수 있습니다.',
+        );
+      }
+      return growSelectedLine(amount);
+    case 'thin_growth':
+      if (line.scoringTiles.length > 4) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '3~4타일 scoring 줄에만 사용할 수 있습니다.',
+        );
+      }
+      final result = growSelectedLine(amount);
+      if (!result.isSuccess) return result;
+      _queueLineScoreMultiplier(item, session, line.ref, 0.9);
+      return ItemUseResult.success(
+        itemId: item.id,
+        events: [
+          ...result.events,
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.nextConfirmModifierQueued,
+            itemId: item.id,
+            amount: -10,
+            detail: 'line_score_multiplier:0.9',
+          ),
+        ],
+      );
+    case 'growth_risk':
+      final result = growSelectedLine(amount);
+      if (!result.isSuccess) return result;
+      _queueLineScoreMultiplier(item, session, line.ref, 0.75);
+      return ItemUseResult.success(
+        itemId: item.id,
+        events: [
+          ...result.events,
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.nextConfirmModifierQueued,
+            itemId: item.id,
+            amount: -25,
+            detail: 'line_score_multiplier:0.75',
+          ),
+        ],
+      );
+    case 'copy_center':
+      final center = _centerTileForLine(line);
+      if (center == null) return _noTileTarget(item);
+      final added = runProgress.addDeckTile(center);
+      events.add(_deckAddEvent(item, added));
+      break;
+    case 'copy_endpoint':
+      final tile = _endpointTileForLine(line) ?? selectedTile;
+      if (tile == null) return _noTileTarget(item);
+      final added = runProgress.addDeckTile(tile);
+      events.add(_deckAddEvent(item, added));
+      break;
+    case 'copy_selected':
+      if (selectedTile == null) return _noTileTarget(item);
+      final added = runProgress.addDeckTile(selectedTile);
+      events.add(_deckAddEvent(item, added));
+      break;
+    case 'copy_rank':
+      if (selectedTile == null) return _noTileTarget(item);
+      final color =
+          TileColor.values[session.runRandom.nextInt(TileColor.values.length)];
+      final added = runProgress.addDeckTile(
+        Tile(color: color, number: selectedTile.number),
+      );
+      events.add(_deckAddEvent(item, added));
+      break;
+    case 'copy_color':
+      if (selectedTile == null) return _noTileTarget(item);
+      final number = session.runRandom.nextInt(13) + 1;
+      final added = runProgress.addDeckTile(
+        Tile(color: selectedTile.color, number: number),
+      );
+      events.add(_deckAddEvent(item, added));
+      break;
+    case 'seal_line_mark':
+      return _applyRitualSeal(item, session, selectedTile, TileSeal.lineMark);
+    case 'seal_growth':
+      return _applyRitualSeal(item, session, selectedTile, TileSeal.growthSeal);
+    case 'seal_gold':
+      return _applyRitualSeal(item, session, selectedTile, TileSeal.goldSeal);
+    case 'seal_echo':
+      return _applyRitualSeal(item, session, selectedTile, TileSeal.echoSeal);
+    case 'seal_anchor':
+      return _applyRitualSeal(item, session, selectedTile, TileSeal.anchorSeal);
+    case 'seal_risk':
+      return _applyRitualSeal(item, session, selectedTile, TileSeal.riskSeal);
+    case 'seal_bridge':
+      return _applyRitualSeal(item, session, selectedTile, TileSeal.bridgeSeal);
+    case 'override_three_kind':
+      return _queueLineRankOverride(
+        item,
+        session,
+        line.ref,
+        RummiHandRank.threeOfAKind,
+      );
+    case 'override_straight':
+      return _queueLineRankOverride(
+        item,
+        session,
+        line.ref,
+        RummiHandRank.straight,
+      );
+    case 'override_flush':
+      return _queueLineRankOverride(
+        item,
+        session,
+        line.ref,
+        RummiHandRank.flush,
+      );
+    case 'override_full_house':
+      return _queueLineRankOverride(
+        item,
+        session,
+        line.ref,
+        RummiHandRank.fullHouse,
+      );
+    case 'override_four_kind':
+      return _queueLineRankOverride(
+        item,
+        session,
+        line.ref,
+        RummiHandRank.fourOfAKind,
+      );
+    case 'override_five_kind':
+      return _queueLineRankOverride(
+        item,
+        session,
+        line.ref,
+        RummiHandRank.fiveOfAKind,
+      );
+    case 'line_bonus_25':
+      _queueLineScoreMultiplier(item, session, line.ref, 1.25);
+      events.add(_lineMultiplierEvent(item, 25));
+      break;
+    case 'line_bonus_35':
+      _queueLineScoreMultiplier(item, session, line.ref, 1.35);
+      events.add(_lineMultiplierEvent(item, 35));
+      break;
+    case 'remove_same_tile':
+      if (selectedTile == null) return _noTileTarget(item);
+      final removed = session.removeDeckTileMatching(
+        (tile) =>
+            tile.color == selectedTile.color &&
+            tile.number == selectedTile.number,
+      );
+      if (removed == null) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '덱에서 같은 타일을 찾지 못했습니다.',
+        );
+      }
+      runProgress.gold += 2;
+      events
+        ..add(
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.deckTileDiscarded,
+            itemId: item.id,
+            amount: 1,
+            detail: removed.code,
+          ),
+        )
+        ..add(
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.goldGained,
+            itemId: item.id,
+            amount: 2,
+            detail: selectedTile.code,
+          ),
+        );
+      break;
+    case 'remove_same_color':
+      if (selectedTile == null) return _noTileTarget(item);
+      final removedColor = session.removeDeckTileMatching(
+        (tile) => tile.color == selectedTile.color,
+      );
+      if (removedColor == null) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '덱에서 같은 색 타일을 찾지 못했습니다.',
+        );
+      }
+      events.add(
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.deckTileDiscarded,
+          itemId: item.id,
+          amount: 1,
+          detail: removedColor.code,
+        ),
+      );
+      break;
+    case 'remove_same_rank':
+      if (selectedTile == null) return _noTileTarget(item);
+      final removedRank = session.removeDeckTileMatching(
+        (tile) => tile.number == selectedTile.number,
+      );
+      if (removedRank == null) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '덱에서 같은 숫자 타일을 찾지 못했습니다.',
+        );
+      }
+      events.add(
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.deckTileDiscarded,
+          itemId: item.id,
+          amount: 1,
+          detail: removedRank.code,
+        ),
+      );
+      break;
+    case 'burn_line':
+      final removed = session.clearLine(line.ref);
+      runProgress.gold += 3;
+      events
+        ..add(
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.boardDiscardRemoved,
+            itemId: item.id,
+            amount: removed,
+            detail: 'burn_line',
+          ),
+        )
+        ..add(
+          ItemEffectEvent(
+            kind: ItemEffectEventKind.goldGained,
+            itemId: item.id,
+            amount: 3,
+          ),
+        );
+      break;
+    case 'sacrifice_line':
+      for (final tile in line.scoringTiles.take(2)) {
+        events.add(_deckAddEvent(item, runProgress.addDeckTile(tile)));
+      }
+      final removed = session.clearLine(line.ref);
+      events.add(
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.boardDiscardRemoved,
+          itemId: item.id,
+          amount: removed,
+          detail: 'sacrifice_line',
+        ),
+      );
+      break;
+    default:
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '알 수 없는 의식 효과입니다.',
+      );
+  }
+  return ItemUseResult.success(itemId: item.id, events: events);
+}
+
+Tile? _selectedRitualTile(RummiScoringLineSummary line, int? tileIndex) {
+  if (line.scoringTiles.isEmpty) return null;
+  if (tileIndex == null) return line.scoringTiles.first;
+  if (tileIndex < 0 || tileIndex >= line.scoringTiles.length) return null;
+  return line.scoringTiles[tileIndex];
+}
+
+Tile? _centerTileForLine(RummiScoringLineSummary line) {
+  final centerCell = line.ref.cells()[2];
+  final index = line.contributingCells.indexWhere((cell) => cell == centerCell);
+  return index >= 0 && index < line.scoringTiles.length
+      ? line.scoringTiles[index]
+      : null;
+}
+
+Tile? _endpointTileForLine(RummiScoringLineSummary line) {
+  final cells = line.ref.cells();
+  for (final endpoint in [cells.first, cells.last]) {
+    final index = line.contributingCells.indexWhere((cell) => cell == endpoint);
+    if (index >= 0 && index < line.scoringTiles.length) {
+      return line.scoringTiles[index];
+    }
+  }
+  return null;
+}
+
+ItemUseResult _applyRitualSeal(
+  ItemDefinition item,
+  RummiPokerGridSession session,
+  Tile? tile,
+  TileSeal seal,
+) {
+  if (tile == null) return _noTileTarget(item);
+  final applied = _applySealToBoardTile(session, tile, seal);
+  if (!applied) {
+    return ItemUseResult.failure(itemId: item.id, message: '선택 타일을 찾지 못했습니다.');
+  }
+  return ItemUseResult.success(
+    itemId: item.id,
+    events: [
+      ItemEffectEvent(
+        kind: ItemEffectEventKind.settlementModifierQueued,
+        itemId: item.id,
+        amount: 1,
+        detail: seal.persistenceValue,
+      ),
+    ],
+  );
+}
+
+bool _applySealToBoardTile(
+  RummiPokerGridSession session,
+  Tile tile,
+  TileSeal seal,
+) {
+  return session.replaceBoardTile(tile, tile.copyWith(seal: seal));
+}
+
+ItemUseResult _queueLineRankOverride(
+  ItemDefinition item,
+  RummiPokerGridSession session,
+  LineRef lineRef,
+  RummiHandRank rank,
+) {
+  session.addConfirmModifier(
+    RummiConfirmModifier(
+      itemId: item.id,
+      timing: 'next_confirm',
+      op: 'line_hand_rank_override',
+      rank: rank,
+      consumeOnApply: true,
+      lineRef: lineRef,
+    ),
+  );
+  return ItemUseResult.success(
+    itemId: item.id,
+    events: [
+      ItemEffectEvent(
+        kind: ItemEffectEventKind.nextConfirmModifierQueued,
+        itemId: item.id,
+        amount: 1,
+        detail: 'override:${rank.name}',
+      ),
+    ],
+  );
+}
+
+void _queueLineScoreMultiplier(
+  ItemDefinition item,
+  RummiPokerGridSession session,
+  LineRef lineRef,
+  double multiplier,
+) {
+  session.addConfirmModifier(
+    RummiConfirmModifier(
+      itemId: item.id,
+      timing: 'next_confirm',
+      op: 'line_score_multiplier',
+      amount: multiplier,
+      scoreMultiplier: multiplier,
+      consumeOnApply: true,
+      lineRef: lineRef,
+    ),
+  );
+}
+
+ItemEffectEvent _deckAddEvent(ItemDefinition item, Tile tile) {
+  return ItemEffectEvent(
+    kind: ItemEffectEventKind.tileDrawn,
+    itemId: item.id,
+    amount: 1,
+    detail: 'deck_add:${tile.code}',
+  );
+}
+
+ItemEffectEvent _lineMultiplierEvent(ItemDefinition item, int percent) {
+  return ItemEffectEvent(
+    kind: ItemEffectEventKind.nextConfirmModifierQueued,
+    itemId: item.id,
+    amount: percent,
+    detail: 'line_score_multiplier',
+  );
+}
+
+ItemUseResult _noTileTarget(ItemDefinition item) {
+  return ItemUseResult.failure(itemId: item.id, message: '선택할 타일이 없습니다.');
+}
+
 void _consumeIfNeeded(
   ItemDefinition item,
   RummiRunProgress runProgress,

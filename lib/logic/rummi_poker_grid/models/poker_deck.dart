@@ -128,4 +128,10 @@ class PokerDeck {
     if (topIndex >= visible.length) return null;
     return _pile.removeAt(_pile.length - 1 - topIndex);
   }
+
+  Tile? removeFirstWhere(bool Function(Tile tile) test) {
+    final index = _pile.indexWhere(test);
+    if (index < 0) return null;
+    return _pile.removeAt(index);
+  }
 }

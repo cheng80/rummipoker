@@ -170,7 +170,8 @@ extension _GameViewBattleActions on _GameViewState {
       await _useDeckNeedleItem(slot);
       return;
     }
-    if (slot.item.effect.op == 'add_hand_rank_progress_from_selected_line') {
+    if (slot.item.effect.op == 'add_hand_rank_progress_from_selected_line' ||
+        slot.item.effect.op == 'ritual_line_effect') {
       await _useScoringLineTargetItem(slot);
       return;
     }
@@ -252,10 +253,32 @@ extension _GameViewBattleActions on _GameViewState {
     );
     if (!mounted || selected == null) return;
 
-    final failReason = _gameNotifier.useBattleItemOnLine(
-      slot.item,
-      selected.ref,
-    );
+    int? tileIndex;
+    Tile? selectedTile;
+    final needsTileTarget = slot.item.effect.value('target') == 'tile';
+    if (needsTileTarget) {
+      tileIndex = await showDialog<int>(
+        context: context,
+        barrierDismissible: true,
+        routeSettings: const RouteSettings(name: '의식 타일 선택'),
+        builder: (context) => GameTileChoiceDialog(
+          title: '$itemName 타일 선택',
+          message: '선택한 줄 안에서 효과를 적용할 타일을 고릅니다.',
+          tiles: selected.scoringTiles,
+          closeLabel: '취소',
+        ),
+      );
+      if (!mounted || tileIndex == null) return;
+      selectedTile = selected.scoringTiles[tileIndex];
+    }
+
+    final failReason = slot.item.effect.op == 'ritual_line_effect'
+        ? _gameNotifier.useBattleItemOnRitualTarget(
+            slot.item,
+            selected.ref,
+            tileIndex: tileIndex,
+          )
+        : _gameNotifier.useBattleItemOnLine(slot.item, selected.ref);
     if (failReason != null) {
       _showSnack(failReason);
       return;
@@ -266,7 +289,11 @@ extension _GameViewBattleActions on _GameViewState {
     _showSnack('$itemName 사용');
     _showItemEffectFeedback(
       title: itemName,
-      detail: '$targetLabel 성장 +${slot.item.effect.value('amount') ?? 1}',
+      detail: _scoringLineTargetFeedbackDetail(
+        slot.item,
+        targetLabel,
+        selectedTile,
+      ),
       sourceLabel: slot.slotLabel,
     );
     _mutate(() => _selectedBattleItemSlot = null);
@@ -342,11 +369,59 @@ extension _GameViewBattleActions on _GameViewState {
       'draw_if_hand_empty' => '타일 1장 드로우',
       'increase_hand_size' => '손패 최대치 +${item.effect.value('amount') ?? 1}',
       'add_hand_rank_progress_from_selected_line' => '선택 줄 족보 성장 +1',
+      'ritual_line_effect' => _ritualActionLabel(
+        item.effect.value('ritualAction'),
+      ),
       'chips_bonus' => '다음 확정 칩 보너스',
       'mult_bonus' => '다음 확정 점수 +% 보너스',
       'xmult_bonus' => '다음 확정 점수 x 보너스',
       'temporary_overlap_cap_bonus' => '다음 확정 overlap 보너스',
       _ => '효과 적용',
+    };
+  }
+
+  String _scoringLineTargetFeedbackDetail(
+    ItemDefinition item,
+    String targetLabel,
+    Tile? tile,
+  ) {
+    if (item.effect.op != 'ritual_line_effect') {
+      return '$targetLabel 성장 +${item.effect.value('amount') ?? 1}';
+    }
+    final tileLabel = tile == null ? '' : ' · ${tile.code}';
+    return '$targetLabel$tileLabel · ${_ritualActionLabel(item.effect.value('ritualAction'))}';
+  }
+
+  String _ritualActionLabel(Object? actionValue) {
+    return switch (actionValue?.toString()) {
+      'growth' || 'center_growth' => '족보 성장',
+      'growth_marker' => '성장 표식',
+      'boss_growth' => '보스전 성장',
+      'thin_growth' => '얇은 줄 성장',
+      'growth_risk' => '위험 성장',
+      'copy_center' ||
+      'copy_endpoint' ||
+      'copy_selected' ||
+      'copy_rank' ||
+      'copy_color' => '덱 복제',
+      'seal_line_mark' ||
+      'seal_growth' ||
+      'seal_gold' ||
+      'seal_echo' ||
+      'seal_anchor' ||
+      'seal_risk' ||
+      'seal_bridge' => '타일 봉인',
+      'override_three_kind' ||
+      'override_straight' ||
+      'override_flush' ||
+      'override_full_house' ||
+      'override_four_kind' ||
+      'override_five_kind' => '족보 강제 치환',
+      'line_bonus_25' || 'line_bonus_35' => '선택 줄 보너스',
+      'remove_same_tile' || 'remove_same_color' || 'remove_same_rank' => '덱 파괴',
+      'burn_line' => '줄 파괴',
+      'sacrifice_line' => '줄 희생',
+      _ => '의식 효과',
     };
   }
 

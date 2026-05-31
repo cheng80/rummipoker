@@ -6,6 +6,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
@@ -339,6 +340,57 @@ void main() {
         ItemEffectEventKind.itemConsumed,
       ]);
       expect(result.events.first.detail, 'flush:row:0');
+    });
+
+    test('all ritual battle actions can resolve a selected target', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      final ritualItems = catalog.all
+          .where((item) => item.effect.op == 'ritual_line_effect')
+          .toList(growable: false);
+
+      expect(ritualItems.length, 32);
+
+      for (final item in ritualItems) {
+        final action = item.effect.value('ritualAction')?.toString();
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(
+            targetScore: 999,
+            bossModifier: action == 'boss_growth'
+                ? RummiBossModifier.redDampener
+                : null,
+          ),
+        );
+        if (action == 'thin_growth') {
+          _placeTwoPair(session);
+        } else {
+          _placeFlush(session);
+        }
+        final runProgress = RummiRunProgress()
+          ..itemInventory = RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: item.id,
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: [item.id],
+          );
+
+        final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+          lineRef: LineRef.row(0),
+          tileIndex: item.effect.value('target') == 'tile' ? 0 : null,
+        );
+
+        expect(result.isSuccess, isTrue, reason: '${item.id}: $action');
+        expect(runProgress.itemInventory.ownedItems, isEmpty);
+      }
     });
 
     test('useBattleItem rejects line memory when no scoring line exists', () {
@@ -1733,6 +1785,7 @@ void main() {
           'use_battle:draw_if_hand_empty',
           'use_battle:increase_hand_size',
           'use_battle:add_hand_rank_progress_from_selected_line',
+          'use_battle:ritual_line_effect',
           'market_reroll:discount_next_reroll',
           'market_buy:discount_next_purchase',
           'market_buy_if_category:discount_next_purchase',
@@ -1743,6 +1796,7 @@ void main() {
           'enter_market:gain_gold',
           'enter_market:discount_first_reroll',
           'enter_market:discount_cheapest_first_offer',
+          'market_build_offers:extra_item_offer_slot',
           'boss_blind_clear_reward:gain_gold',
           'boss_blind_clear_market:extra_jester_offer_next_market',
           'settlement:board_discard_reward_bonus',

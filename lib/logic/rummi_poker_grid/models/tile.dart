@@ -40,7 +40,15 @@ enum TileEnhancement {
 
 enum TileSeal {
   blueSeal('blue_seal'),
-  redSeal('red_seal');
+  redSeal('red_seal'),
+  lineMark('line_mark'),
+  growthSeal('growth_seal'),
+  goldSeal('gold_seal'),
+  echoSeal('echo_seal'),
+  anchorSeal('anchor_seal'),
+  riskSeal('risk_seal'),
+  crossMemory('cross_memory'),
+  bridgeSeal('bridge_seal');
 
   const TileSeal(this.persistenceValue);
   final String persistenceValue;
@@ -97,9 +105,28 @@ class Tile {
   final TileSeal? seal;
   final TileEdition? edition;
 
-  bool get hasModifier => enhancement != null || seal != null || edition != null;
+  bool get hasModifier =>
+      enhancement != null || seal != null || edition != null;
 
   String get code => '${color.code}$number';
+
+  Tile copyWith({
+    TileColor? color,
+    int? number,
+    int? id,
+    TileEnhancement? enhancement,
+    TileSeal? seal,
+    TileEdition? edition,
+  }) {
+    return Tile(
+      color: color ?? this.color,
+      number: number ?? this.number,
+      id: id ?? this.id,
+      enhancement: enhancement ?? this.enhancement,
+      seal: seal ?? this.seal,
+      edition: edition ?? this.edition,
+    );
+  }
 
   /// UI에서 덱 타일의 기준 가치를 보여줄 때 쓰는 값이다.
   ///

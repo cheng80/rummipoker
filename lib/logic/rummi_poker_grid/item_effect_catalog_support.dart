@@ -14,6 +14,7 @@ ItemEffectCatalogRow _catalogRowFor(ItemDefinition item) {
     'use_battle:draw_if_hand_empty' ||
     'use_battle:increase_hand_size' ||
     'use_battle:add_hand_rank_progress_from_selected_line' ||
+    'use_battle:ritual_line_effect' ||
     'market_reroll:free_next_reroll' ||
     'market_reroll:discount_next_reroll' ||
     'market_buy:discount_next_purchase' ||

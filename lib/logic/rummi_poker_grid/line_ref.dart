@@ -1,12 +1,7 @@
 import 'models/board.dart';
 
 /// 12줄 중 하나.
-enum LineKind {
-  row,
-  col,
-  diagMain,
-  diagAnti,
-}
+enum LineKind { row, col, diagMain, diagAnti }
 
 /// 행/열은 `index` 0~4, 대각은 인덱스 미사용(항상 0).
 class LineRef {
@@ -28,14 +23,29 @@ class LineRef {
   final LineKind kind;
   final int index;
 
+  factory LineRef.fromJson(Map<String, dynamic> json) {
+    final kind = LineKind.values.byName(json['kind'] as String);
+    final index = (json['index'] as num?)?.toInt() ?? 0;
+    return switch (kind) {
+      LineKind.row => LineRef.row(index),
+      LineKind.col => LineRef.col(index),
+      LineKind.diagMain => LineRef.diagMain,
+      LineKind.diagAnti => LineRef.diagAnti,
+    };
+  }
+
+  Map<String, dynamic> toJson() => {'kind': kind.name, 'index': index};
+
   /// 이 줄이 차지하는 `(row,col)` 목록(항상 5칸).
   List<(int, int)> cells() {
     return switch (kind) {
       LineKind.row => List.generate(kBoardSize, (c) => (index, c)),
       LineKind.col => List.generate(kBoardSize, (r) => (r, index)),
       LineKind.diagMain => List.generate(kBoardSize, (i) => (i, i)),
-      LineKind.diagAnti =>
-        List.generate(kBoardSize, (i) => (i, kBoardSize - 1 - i)),
+      LineKind.diagAnti => List.generate(
+        kBoardSize,
+        (i) => (i, kBoardSize - 1 - i),
+      ),
     };
   }
 

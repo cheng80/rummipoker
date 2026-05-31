@@ -299,6 +299,14 @@ String tileSealShortLabel(TileSeal seal) {
   return switch (seal) {
     TileSeal.blueSeal => 'B',
     TileSeal.redSeal => 'R',
+    TileSeal.lineMark => 'L',
+    TileSeal.growthSeal => '+',
+    TileSeal.goldSeal => 'G',
+    TileSeal.echoSeal => 'E',
+    TileSeal.anchorSeal => 'A',
+    TileSeal.riskSeal => '!',
+    TileSeal.crossMemory => 'X',
+    TileSeal.bridgeSeal => 'Br',
   };
 }
 
@@ -325,6 +333,14 @@ String tileSealDisplayName(TileSeal seal) {
   return switch (seal) {
     TileSeal.blueSeal => '푸른 인장',
     TileSeal.redSeal => '붉은 인장',
+    TileSeal.lineMark => '라인 각인',
+    TileSeal.growthSeal => '성장 각인',
+    TileSeal.goldSeal => '금빛 각인',
+    TileSeal.echoSeal => '메아리 각인',
+    TileSeal.anchorSeal => '닻 각인',
+    TileSeal.riskSeal => '균열 각인',
+    TileSeal.crossMemory => '교차 기억',
+    TileSeal.bridgeSeal => '다리 표식',
   };
 }
 
@@ -351,6 +367,14 @@ String tileSealEffectText(TileSeal seal) {
   return switch (seal) {
     TileSeal.blueSeal => '확정 족보 성장 +1',
     TileSeal.redSeal => '타일 효과 1회 재발동',
+    TileSeal.lineMark => '포함 줄 확정 시 칩 보너스',
+    TileSeal.growthSeal => '포함 줄 확정 시 족보 성장 +1',
+    TileSeal.goldSeal => '포함 줄 확정 시 골드 +1',
+    TileSeal.echoSeal => '겹침 확정 시 점수 보너스',
+    TileSeal.anchorSeal => '이동 후 확정 시 점수 보너스',
+    TileSeal.riskSeal => '큰 점수 보너스와 제거 위험',
+    TileSeal.crossMemory => '교차 줄 성장 표식',
+    TileSeal.bridgeSeal => '두 줄 확정 연결 보상',
   };
 }
 
@@ -377,6 +401,14 @@ Color tileSealColor(TileSeal seal) {
   return switch (seal) {
     TileSeal.blueSeal => GameUiPalette.tileBlueSeal,
     TileSeal.redSeal => GameUiPalette.tileRedSeal,
+    TileSeal.lineMark => GameUiPalette.actionGold,
+    TileSeal.growthSeal => GameUiPalette.actionSuccess,
+    TileSeal.goldSeal => GameUiPalette.actionGoldBright,
+    TileSeal.echoSeal => GameUiPalette.tileBlueSeal,
+    TileSeal.anchorSeal => GameUiPalette.tileSilverEdition,
+    TileSeal.riskSeal => GameUiPalette.actionDanger,
+    TileSeal.crossMemory => GameUiPalette.rarityRare,
+    TileSeal.bridgeSeal => GameUiPalette.rarityUncommon,
   };
 }
 

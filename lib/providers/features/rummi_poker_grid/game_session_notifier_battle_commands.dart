@@ -286,6 +286,29 @@ mixin GameSessionNotifierBattleCommands
     return null;
   }
 
+  String? useBattleItemOnRitualTarget(
+    ItemDefinition item,
+    LineRef lineRef, {
+    int? tileIndex,
+  }) {
+    final session = state.session;
+    final runProgress = state.runProgress;
+    if (session == null || runProgress == null) return '세션이 없습니다.';
+
+    final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+      item: item,
+      session: session,
+      runProgress: runProgress,
+      lineRef: lineRef,
+      tileIndex: tileIndex,
+    );
+    if (!result.isSuccess) return result.failMessage;
+    _replaceState(
+      withValidSelections(state).copyWith(revision: state.revision + 1),
+    );
+    return null;
+  }
+
   DeckPeekBattleUseResult consumeBattleDeckPeekItem(ItemDefinition item) {
     final session = state.session;
     final runProgress = state.runProgress;

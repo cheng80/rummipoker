@@ -474,17 +474,17 @@ void main() {
     expect(lateScoreCount, greaterThan(0));
   });
 
-  test('CLI accepts contest policy v1 and records utility actions', () async {
+  test('CLI accepts full run policy v1 and records utility actions', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
     addTearDown(() => dir.deleteSync(recursive: true));
 
-    final firstOut = '${dir.path}/contest_policy_first.jsonl';
-    final secondOut = '${dir.path}/contest_policy_second.jsonl';
+    final firstOut = '${dir.path}/full_run_policy_first.jsonl';
+    final secondOut = '${dir.path}/full_run_policy_second.jsonl';
     final args = [
       '--runs',
       '2',
       '--bot',
-      'contest_policy_v1',
+      'full_run_policy_v1',
       '--seed',
       '91460',
       '--station',
@@ -515,7 +515,7 @@ void main() {
     expect(rows, hasLength(2));
     for (final row in rows) {
       _expectBalanceSimRowContract(row);
-      expect(row['bot_policy'], 'contest_policy_v1');
+      expect(row['bot_policy'], 'full_run_policy_v1');
       final result = row['result'] as Map<String, dynamic>;
       expect(result['stop_reason'], isNot(startsWith('invalid_')));
       expect(result['discarded_hand_count'], isA<int>());

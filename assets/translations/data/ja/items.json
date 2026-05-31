@@ -42,8 +42,8 @@
         "effectText": "ショップで使うとStraight Flush成長+1。"
       },
       "line_memory": {
-        "displayName": "ライン記憶",
-        "effectText": "バトルで完成ラインを1つ選び、そのラインの役成長+1。"
+        "displayName": "Line Memory",
+        "effectText": "Choose a completed line. Its current hand rank gains growth +1."
       },
       "board_scrap": {
         "displayName": "Board Pass",
@@ -220,6 +220,154 @@
       "market_compass": {
         "displayName": "Shop Compass",
         "effectText": "ショップ入場時、Item/Jester候補のうち安い最初の候補を1 Gold割引。"
+      },
+      "minor_memory": {
+        "displayName": "Afterimage Memory",
+        "effectText": "Choose a completed line. Its current hand rank gains growth +2, and that line scores -25% on this confirm."
+      },
+      "cross_memory": {
+        "displayName": "Cross Memory",
+        "effectText": "Choose a completed crossing line. Its current hand rank gains growth +1 and the line receives a cross memory marker."
+      },
+      "thin_memory": {
+        "displayName": "Thin Memory",
+        "effectText": "Choose a 3-4 tile scoring line. Its current hand rank gains growth +1, and that line scores -10% on this confirm."
+      },
+      "boss_memory": {
+        "displayName": "Boss Memory",
+        "effectText": "During a boss battle, choose a completed line. Its current hand rank gains growth +2."
+      },
+      "keystone_copy": {
+        "displayName": "Keystone Copy",
+        "effectText": "Choose a completed line. Add its center tile to your deck."
+      },
+      "edge_copy": {
+        "displayName": "Endpoint Copy",
+        "effectText": "Choose an endpoint tile from a completed line. Add a copy to your deck."
+      },
+      "rank_echo": {
+        "displayName": "Rank Echo",
+        "effectText": "Choose a tile from a completed line. Add a random-color tile with the same number to your deck."
+      },
+      "color_echo": {
+        "displayName": "Color Echo",
+        "effectText": "Choose a tile from a completed line. Add a random-number tile with the same color to your deck."
+      },
+      "scarce_copy": {
+        "displayName": "Scarce Copy",
+        "effectText": "Choose a tile from a completed line. Add a copy to your deck."
+      },
+      "sealed_copy": {
+        "displayName": "Seal Copy",
+        "effectText": "Choose a sealed or enhanced tile from a completed line. Add a copy to your deck."
+      },
+      "line_seal_stamp": {
+        "displayName": "Line Seal",
+        "effectText": "Choose a tile from a completed line. Add a line seal; when scored, it grants chip bonus."
+      },
+      "growth_seal": {
+        "displayName": "Growth Seal",
+        "effectText": "Choose a tile from a completed line. Add a growth seal; when scored, the hand rank grows +1."
+      },
+      "gold_seal_stamp": {
+        "displayName": "Gold Seal",
+        "effectText": "Choose a tile from a completed line. Add a gold seal; when scored, gain Gold +1."
+      },
+      "echo_seal": {
+        "displayName": "Echo Seal",
+        "effectText": "Choose a tile from a completed line. Add an echo seal; overlapping scoring gains a bonus."
+      },
+      "anchor_seal": {
+        "displayName": "Anchor Seal",
+        "effectText": "Choose a tile from a completed line. Add an anchor seal; moved scoring gains a bonus."
+      },
+      "risk_seal": {
+        "displayName": "Crack Seal",
+        "effectText": "Choose a tile from a completed line. Add a crack seal; it gives a large score bonus and later removal risk."
+      },
+      "rank_concord": {
+        "displayName": "Rank Concord Rite",
+        "effectText": "Choose a completed line. This confirm treats it as Three of a Kind."
+      },
+      "step_rite": {
+        "displayName": "Step Rite",
+        "effectText": "Choose a completed line. This confirm treats it as Straight."
+      },
+      "color_concord": {
+        "displayName": "Color Concord Rite",
+        "effectText": "Choose a completed line. This confirm treats it as Flush."
+      },
+      "off_color_rite": {
+        "displayName": "Off-Color Rite",
+        "effectText": "Choose a completed line. This confirm treats it as Full House."
+      },
+      "wild_thread": {
+        "displayName": "Wild Thread",
+        "effectText": "Choose a completed line. This confirm treats it as Four of a Kind."
+      },
+      "number_mask": {
+        "displayName": "Number Mask",
+        "effectText": "Choose a completed line. This confirm treats it as Five of a Kind."
+      },
+      "line_pruner": {
+        "displayName": "Line Pruner Rite",
+        "effectText": "Choose a tile from a completed line. Mark a matching deck tile for removal and gain Gold +2."
+      },
+      "trim_color": {
+        "displayName": "Color Pruner",
+        "effectText": "Choose a tile from a completed line. Mark a same-color deck tile for removal."
+      },
+      "trim_rank": {
+        "displayName": "Rank Pruner",
+        "effectText": "Choose a tile from a completed line. Mark a same-number deck tile for removal."
+      },
+      "deadwood_burn": {
+        "displayName": "Deadwood Burn",
+        "effectText": "Choose a failed or completed line. Clear its board tiles and gain Gold +3."
+      },
+      "sacrifice_line": {
+        "displayName": "Sacrifice Line",
+        "effectText": "Choose a completed line. Give up its score, copy two tiles, and mark one tile for removal."
+      },
+      "cross_rite": {
+        "displayName": "Cross Rite",
+        "effectText": "Choose a crossing line. This confirm gives that line score +25%."
+      },
+      "corner_rite": {
+        "displayName": "Corner Rite",
+        "effectText": "Choose a line containing a corner. Copy one endpoint tile to your deck."
+      },
+      "center_rite": {
+        "displayName": "Center Rite",
+        "effectText": "Choose a line containing the center. Its current hand rank gains growth +1."
+      },
+      "diagonal_rite": {
+        "displayName": "Diagonal Rite",
+        "effectText": "Choose a completed diagonal line. This confirm gives that line score +35%."
+      },
+      "bridge_rite": {
+        "displayName": "Bridge Rite",
+        "effectText": "Choose a shared crossing tile. Add a bridge marker; future dual-line scoring gains Gold."
+      },
+      "ritual_coupon": {
+        "displayName": "Ritual Coupon",
+        "effectText": "The next item purchase costs 2 less Gold."
+      },
+      "ritual_lens": {
+        "displayName": "Ritual Lens",
+        "effectText": "Reroll current item offers and favor ritual choices."
+      },
+      "line_pack_ticket": {
+        "displayName": "Line Pack Ticket",
+        "effectText": "Add one extra item offer slot in the next Market."
+      },
+      "seal_vendor": {
+        "displayName": "Seal Vendor",
+        "effectText": "The next item purchase costs 1 less Gold."
+      },
+      "prune_vendor": {
+        "displayName": "Prune Vendor",
+        "effectText": "The next item purchase costs 1 less Gold."
       }
     }
   }

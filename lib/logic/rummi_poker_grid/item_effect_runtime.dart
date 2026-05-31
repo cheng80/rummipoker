@@ -191,6 +191,19 @@ class ItemEffectRuntime {
             ),
           ],
         );
+      case 'ritual_line_effect':
+        return ItemUseResult.pendingHook(
+          itemId: item.id,
+          message: '의식 대상 선택이 필요합니다.',
+          events: [
+            ItemEffectEvent(
+              kind: ItemEffectEventKind.interactionRequired,
+              itemId: item.id,
+              amount: 1,
+              detail: 'select_ritual_target',
+            ),
+          ],
+        );
       case 'chips_bonus':
       case 'mult_bonus':
       case 'xmult_bonus':
@@ -248,15 +261,55 @@ class ItemEffectRuntime {
     if (validationMessage != null) {
       return ItemUseResult.failure(itemId: item.id, message: validationMessage);
     }
-    if (item.effect.op != 'add_hand_rank_progress_from_selected_line') {
+    if (item.effect.op != 'add_hand_rank_progress_from_selected_line' &&
+        item.effect.op != 'ritual_line_effect') {
       return ItemUseResult.failure(itemId: item.id, message: '줄 선택 아이템이 아닙니다.');
     }
-    final applied = _applyAddHandRankProgressFromSelectedLine(
-      item,
-      session,
-      runProgress,
-      lineRef,
-    );
+    final applied =
+        item.effect.op == 'add_hand_rank_progress_from_selected_line'
+        ? _applyAddHandRankProgressFromSelectedLine(
+            item,
+            session,
+            runProgress,
+            lineRef,
+          )
+        : _applyRitualLineEffect(item, session, runProgress, lineRef, null);
+    if (!applied.isSuccess) return applied;
+    final events = <ItemEffectEvent>[...applied.events];
+    _consumeIfNeeded(item, runProgress, events);
+    return ItemUseResult.success(itemId: item.id, events: events);
+  }
+
+  static ItemUseResult useBattleItemOnRitualTarget({
+    required ItemDefinition item,
+    required RummiPokerGridSession session,
+    required RummiRunProgress runProgress,
+    required LineRef lineRef,
+    int? tileIndex,
+  }) {
+    final validationMessage = _validateBattleUse(item, runProgress);
+    if (validationMessage != null) {
+      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+    }
+    if (item.effect.op != 'ritual_line_effect' &&
+        item.effect.op != 'add_hand_rank_progress_from_selected_line') {
+      return ItemUseResult.failure(itemId: item.id, message: '의식 아이템이 아닙니다.');
+    }
+    final applied =
+        item.effect.op == 'add_hand_rank_progress_from_selected_line'
+        ? _applyAddHandRankProgressFromSelectedLine(
+            item,
+            session,
+            runProgress,
+            lineRef,
+          )
+        : _applyRitualLineEffect(
+            item,
+            session,
+            runProgress,
+            lineRef,
+            tileIndex,
+          );
     if (!applied.isSuccess) return applied;
     final events = <ItemEffectEvent>[...applied.events];
     _consumeIfNeeded(item, runProgress, events);
