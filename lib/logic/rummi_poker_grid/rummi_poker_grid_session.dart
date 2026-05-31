@@ -390,26 +390,37 @@ class RummiPokerGridSession {
     return List<RummiScoringLineSummary>.unmodifiable([
       for (final entry in lines)
         if (!entry.report.evaluation.isDeadLine)
-          () {
-            final candidate = _buildScoringLineCandidate(
-              ref: entry.ref,
-              evaluation: entry.report.evaluation,
-            );
-            return RummiScoringLineSummary(
-              ref: entry.ref,
-              rank: entry.report.evaluation.rank,
-              baseScore: entry.report.evaluation.baseScore,
-              scoringTiles: List<Tile>.unmodifiable(candidate.scoringTiles),
-              contributingCells: List<(int, int)>.unmodifiable(
-                candidate.contributingCells,
-              ),
-            );
-          }(),
+          _lineSummaryFor(
+            ref: entry.ref,
+            evaluation: entry.report.evaluation,
+            occupiedCount: entry.report.occupiedCount,
+            isScoringLine: true,
+          ),
+    ]);
+  }
+
+  List<RummiScoringLineSummary> currentBoardLineSummaries() {
+    final lines = engine.listEvaluatedLines(board, ruleset: ruleset);
+    return List<RummiScoringLineSummary>.unmodifiable([
+      for (final entry in lines)
+        _lineSummaryFor(
+          ref: entry.ref,
+          evaluation: entry.report.evaluation,
+          occupiedCount: entry.report.occupiedCount,
+          isScoringLine: !entry.report.evaluation.isDeadLine,
+        ),
     ]);
   }
 
   RummiScoringLineSummary? currentScoringLineSummaryFor(LineRef ref) {
     for (final line in currentScoringLineSummaries()) {
+      if (line.ref == ref) return line;
+    }
+    return null;
+  }
+
+  RummiScoringLineSummary? currentBoardLineSummaryFor(LineRef ref) {
+    for (final line in currentBoardLineSummaries()) {
       if (line.ref == ref) return line;
     }
     return null;
@@ -505,10 +516,12 @@ class RummiPokerGridSession {
     final lines = engine.listEvaluatedLines(board, ruleset: ruleset);
     final scoringLines = <_ScoringLineCandidate>[
       for (final entry in lines)
-        if (!entry.report.evaluation.isDeadLine)
+        if (!entry.report.evaluation.isDeadLine ||
+            _hasLineRankOverride(entry.ref))
           _buildScoringLineCandidate(
             ref: entry.ref,
             evaluation: entry.report.evaluation,
+            forceAllOccupied: entry.report.evaluation.isDeadLine,
           ),
     ];
     if (scoringLines.isEmpty) {
@@ -823,6 +836,17 @@ class RummiPokerGridSession {
       );
     }
     return evaluation;
+  }
+
+  bool _hasLineRankOverride(LineRef lineRef) {
+    for (final modifier in confirmModifiers) {
+      if (modifier.op != 'line_hand_rank_override') continue;
+      if (modifier.lineRef != lineRef) continue;
+      final rank = modifier.rank;
+      if (rank == null || isDeadLineRank(rank)) continue;
+      return true;
+    }
+    return false;
   }
 
   static String _tileModifierDisplayName(TileEnhancement enhancement) {
@@ -1185,11 +1209,15 @@ class RummiPokerGridSession {
   _ScoringLineCandidate _buildScoringLineCandidate({
     required LineRef ref,
     required HandEvaluation evaluation,
+    bool forceAllOccupied = false,
   }) {
     final lineCells = ref.cells();
     final contributingCells = <(int, int)>[];
     final scoringTiles = <Tile>[];
-    for (final index in evaluation.contributingIndexes) {
+    final indexes = forceAllOccupied && evaluation.contributingIndexes.isEmpty
+        ? List<int>.generate(lineCells.length, (index) => index)
+        : evaluation.contributingIndexes;
+    for (final index in indexes) {
       if (index < 0 || index >= lineCells.length) continue;
       final (row, col) = lineCells[index];
       final tile = board.cellAt(row, col);
@@ -1202,6 +1230,45 @@ class RummiPokerGridSession {
       evaluation: evaluation,
       contributingCells: List<(int, int)>.unmodifiable(contributingCells),
       scoringTiles: List<Tile>.unmodifiable(scoringTiles),
+    );
+  }
+
+  RummiScoringLineSummary _lineSummaryFor({
+    required LineRef ref,
+    required HandEvaluation evaluation,
+    required int occupiedCount,
+    required bool isScoringLine,
+  }) {
+    final candidate = _buildScoringLineCandidate(
+      ref: ref,
+      evaluation: evaluation,
+      forceAllOccupied: !isScoringLine,
+    );
+    final lineCells = ref.cells();
+    final occupiedCells = <(int, int)>[];
+    final lineTiles = <Tile>[];
+    for (final (row, col) in lineCells) {
+      final tile = board.cellAt(row, col);
+      if (tile == null) continue;
+      occupiedCells.add((row, col));
+      lineTiles.add(tile);
+    }
+    return RummiScoringLineSummary(
+      ref: ref,
+      rank: evaluation.rank,
+      baseScore: evaluation.baseScore,
+      scoringTiles: List<Tile>.unmodifiable(
+        candidate.scoringTiles.isEmpty ? lineTiles : candidate.scoringTiles,
+      ),
+      contributingCells: List<(int, int)>.unmodifiable(
+        candidate.contributingCells.isEmpty
+            ? occupiedCells
+            : candidate.contributingCells,
+      ),
+      lineTiles: List<Tile>.unmodifiable(lineTiles),
+      lineCells: List<(int, int)>.unmodifiable(occupiedCells),
+      occupiedCount: occupiedCount,
+      isScoringLine: isScoringLine,
     );
   }
 

@@ -538,9 +538,12 @@ ItemUseResult _applyRitualLineEffect(
   LineRef lineRef,
   int? tileIndex,
 ) {
-  final line = session.currentScoringLineSummaryFor(lineRef);
+  final line = session.currentBoardLineSummaryFor(lineRef);
   if (line == null) {
-    return ItemUseResult.failure(itemId: item.id, message: '선택한 완성 줄이 없습니다.');
+    return ItemUseResult.failure(
+      itemId: item.id,
+      message: '선택한 보드 선이 비어 있습니다.',
+    );
   }
   final action = item.effect.value('ritualAction') as String? ?? '';
   final amount = _nonNegativeIntValue(item, 'amount');
@@ -548,6 +551,12 @@ ItemUseResult _applyRitualLineEffect(
   final events = <ItemEffectEvent>[];
 
   ItemUseResult growSelectedLine(int growthAmount) {
+    if (!line.isScoringLine) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '성장시킬 완성 족보가 없습니다.',
+      );
+    }
     if (growthAmount <= 0) return _invalidAmount(item);
     final didApply = runProgress.addHandRankProgress(
       line.rank,
@@ -570,6 +579,16 @@ ItemUseResult _applyRitualLineEffect(
         ),
       ],
     );
+  }
+
+  ItemUseResult forceLineRank(RummiHandRank rank) {
+    if (line.occupiedCount < 3) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '족보 치환은 타일이 3개 이상 있는 선에만 사용할 수 있습니다.',
+      );
+    }
+    return _queueLineRankOverride(item, session, line.ref, rank);
   }
 
   switch (action) {
@@ -687,52 +706,34 @@ ItemUseResult _applyRitualLineEffect(
     case 'seal_bridge':
       return _applyRitualSeal(item, session, selectedTile, TileSeal.bridgeSeal);
     case 'override_three_kind':
-      return _queueLineRankOverride(
-        item,
-        session,
-        line.ref,
-        RummiHandRank.threeOfAKind,
-      );
+      return forceLineRank(RummiHandRank.threeOfAKind);
     case 'override_straight':
-      return _queueLineRankOverride(
-        item,
-        session,
-        line.ref,
-        RummiHandRank.straight,
-      );
+      return forceLineRank(RummiHandRank.straight);
     case 'override_flush':
-      return _queueLineRankOverride(
-        item,
-        session,
-        line.ref,
-        RummiHandRank.flush,
-      );
+      return forceLineRank(RummiHandRank.flush);
     case 'override_full_house':
-      return _queueLineRankOverride(
-        item,
-        session,
-        line.ref,
-        RummiHandRank.fullHouse,
-      );
+      return forceLineRank(RummiHandRank.fullHouse);
     case 'override_four_kind':
-      return _queueLineRankOverride(
-        item,
-        session,
-        line.ref,
-        RummiHandRank.fourOfAKind,
-      );
+      return forceLineRank(RummiHandRank.fourOfAKind);
     case 'override_five_kind':
-      return _queueLineRankOverride(
-        item,
-        session,
-        line.ref,
-        RummiHandRank.fiveOfAKind,
-      );
+      return forceLineRank(RummiHandRank.fiveOfAKind);
     case 'line_bonus_25':
+      if (!line.isScoringLine) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '보너스를 적용할 완성 족보가 없습니다.',
+        );
+      }
       _queueLineScoreMultiplier(item, session, line.ref, 1.25);
       events.add(_lineMultiplierEvent(item, 25));
       break;
     case 'line_bonus_35':
+      if (!line.isScoringLine) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '보너스를 적용할 완성 족보가 없습니다.',
+        );
+      }
       _queueLineScoreMultiplier(item, session, line.ref, 1.35);
       events.add(_lineMultiplierEvent(item, 35));
       break;

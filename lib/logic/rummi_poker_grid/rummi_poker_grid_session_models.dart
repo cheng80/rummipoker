@@ -119,6 +119,10 @@ class RummiScoringLineSummary {
     required this.baseScore,
     required this.scoringTiles,
     required this.contributingCells,
+    this.lineTiles = const [],
+    this.lineCells = const [],
+    this.occupiedCount = 0,
+    this.isScoringLine = true,
   });
 
   final LineRef ref;
@@ -126,6 +130,10 @@ class RummiScoringLineSummary {
   final int baseScore;
   final List<Tile> scoringTiles;
   final List<(int, int)> contributingCells;
+  final List<Tile> lineTiles;
+  final List<(int, int)> lineCells;
+  final int occupiedCount;
+  final bool isScoringLine;
 }
 
 /// 족보 줄 일괄 확정 결과.

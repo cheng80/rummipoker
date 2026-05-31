@@ -211,9 +211,12 @@ extension _GameViewBattleActions on _GameViewState {
       _showSnack('세션이 없습니다.');
       return;
     }
-    final lines = session.currentScoringLineSummaries();
+    final isRitual = slot.item.effect.op == 'ritual_line_effect';
+    final lines = isRitual
+        ? session.currentBoardLineSummaries()
+        : session.currentScoringLineSummaries();
     if (lines.isEmpty) {
-      _showSnack('선택할 완성 줄이 없습니다.');
+      _showSnack(isRitual ? '선택할 보드 선이 없습니다.' : '선택할 완성 줄이 없습니다.');
       return;
     }
     final itemName = ItemTranslationScope.of(
@@ -235,9 +238,13 @@ extension _GameViewBattleActions on _GameViewState {
                 ListTile(
                   dense: true,
                   title: Text(
-                    '${_lineChoiceLabel(line.ref)} · ${gameHandRankLabel(line.rank)}',
+                    '${_lineChoiceLabel(line.ref)} · ${_lineChoiceRankLabel(line)}',
                   ),
-                  subtitle: Text('칩 ${line.baseScore}'),
+                  subtitle: Text(
+                    line.isScoringLine
+                        ? '칩 ${line.baseScore} · 타일 ${line.occupiedCount}'
+                        : '미완성/무득점 · 타일 ${line.occupiedCount}',
+                  ),
                   onTap: () => Navigator.of(context).pop(line),
                 ),
             ],
@@ -285,7 +292,7 @@ extension _GameViewBattleActions on _GameViewState {
     }
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final targetLabel =
-        '${_lineChoiceLabel(selected.ref)} ${gameHandRankLabel(selected.rank)}';
+        '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}';
     _showSnack('$itemName 사용');
     _showItemEffectFeedback(
       title: itemName,
@@ -432,6 +439,11 @@ extension _GameViewBattleActions on _GameViewState {
       LineKind.diagMain => '대각 ↘',
       LineKind.diagAnti => '대각 ↙',
     };
+  }
+
+  String _lineChoiceRankLabel(RummiScoringLineSummary line) {
+    if (!line.isScoringLine) return '미완성/무득점';
+    return gameHandRankLabel(line.rank);
   }
 
   void _confirmLines() async {

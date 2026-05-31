@@ -393,6 +393,114 @@ void main() {
       }
     });
 
+    test('ritual rank override can target an unfinished board line', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      final item = catalog.findById('step_rite')!;
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      _placeDeadThreeTileLine(session);
+      final runProgress = RummiRunProgress()
+        ..itemInventory = RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: item.id,
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: [item.id],
+        );
+
+      final useResult = ItemEffectRuntime.useBattleItemOnRitualTarget(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        lineRef: LineRef.row(0),
+      );
+      final confirmResult = session.confirmAllFullLines(
+        runtimeSnapshot: runProgress.buildRuntimeSnapshot(),
+      );
+
+      expect(useResult.isSuccess, isTrue);
+      expect(confirmResult.result.ok, isTrue);
+      expect(confirmResult.result.scoreAdded, greaterThan(0));
+      expect(session.board.cellAt(0, 0), isNull);
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+    });
+
+    test('ritual tile effects can target a non-scoring board line', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      final item = catalog.findById('growth_seal')!;
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      _placeDeadThreeTileLine(session);
+      final runProgress = RummiRunProgress()
+        ..itemInventory = RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: item.id,
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: [item.id],
+        );
+
+      final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        lineRef: LineRef.row(0),
+        tileIndex: 0,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(session.board.cellAt(0, 0)?.seal, TileSeal.growthSeal);
+      expect(runProgress.itemInventory.ownedItems, isEmpty);
+    });
+
+    test('ritual line score bonus still requires a scoring line', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      final item = catalog.findById('cross_rite')!;
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      _placeDeadThreeTileLine(session);
+      final runProgress = RummiRunProgress()
+        ..itemInventory = RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: item.id,
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: [item.id],
+        );
+
+      final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        lineRef: LineRef.row(0),
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.failMessage, '보너스를 적용할 완성 족보가 없습니다.');
+      expect(runProgress.itemInventory.ownedItems.single.itemId, item.id);
+    });
+
     test('useBattleItem rejects line memory when no scoring line exists', () {
       final item = _item(
         id: 'line_memory',
@@ -1843,6 +1951,12 @@ void _placeFlush(RummiPokerGridSession session) {
       Tile(color: TileColor.red, number: numbers[col]),
     );
   }
+}
+
+void _placeDeadThreeTileLine(RummiPokerGridSession session) {
+  session.board.setCell(0, 0, Tile(color: TileColor.red, number: 1));
+  session.board.setCell(0, 1, Tile(color: TileColor.blue, number: 3));
+  session.board.setCell(0, 2, Tile(color: TileColor.black, number: 5));
 }
 
 ItemDefinition _item({
