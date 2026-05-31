@@ -212,9 +212,12 @@ extension _GameViewBattleActions on _GameViewState {
       return;
     }
     final isRitual = slot.item.effect.op == 'ritual_line_effect';
-    final lines = isRitual
+    final allLines = isRitual
         ? session.currentBoardLineSummaries()
         : session.currentScoringLineSummaries();
+    final lines = isRitual
+        ? _ritualSelectableLinesForItem(slot.item, allLines)
+        : allLines;
     if (lines.isEmpty) {
       _showSnack(isRitual ? '선택할 보드 선이 없습니다.' : '선택할 완성 줄이 없습니다.');
       return;
@@ -316,6 +319,65 @@ extension _GameViewBattleActions on _GameViewState {
     );
     _mutate(() => _selectedBattleItemSlot = null);
     await _saveActiveRun();
+  }
+
+  List<RummiScoringLineSummary> _ritualSelectableLinesForItem(
+    ItemDefinition item,
+    List<RummiScoringLineSummary> lines,
+  ) {
+    final action = item.effect.value('ritualAction') as String? ?? '';
+    bool hasSelectedTile(RummiScoringLineSummary line) =>
+        line.scoringTiles.isNotEmpty;
+    bool hasCenterTile(RummiScoringLineSummary line) {
+      final centerCell = line.ref.cells()[2];
+      return line.contributingCells.any((cell) => cell == centerCell);
+    }
+
+    bool hasEndpointOrTile(RummiScoringLineSummary line) {
+      final cells = line.ref.cells();
+      return line.contributingCells.any(
+            (cell) => cell == cells.first || cell == cells.last,
+          ) ||
+          hasSelectedTile(line);
+    }
+
+    return List<RummiScoringLineSummary>.unmodifiable([
+      for (final line in lines)
+        if (switch (action) {
+          'growth' ||
+          'center_growth' ||
+          'growth_marker' ||
+          'boss_growth' ||
+          'thin_growth' ||
+          'growth_risk' ||
+          'line_bonus_25' ||
+          'line_bonus_35' => line.isScoringLine,
+          'override_three_kind' ||
+          'override_straight' ||
+          'override_flush' ||
+          'override_full_house' ||
+          'override_four_kind' ||
+          'override_five_kind' => line.occupiedCount >= 3,
+          'copy_center' => hasCenterTile(line),
+          'copy_endpoint' => hasEndpointOrTile(line),
+          'copy_selected' ||
+          'copy_rank' ||
+          'copy_color' ||
+          'seal_line_mark' ||
+          'seal_growth' ||
+          'seal_gold' ||
+          'seal_echo' ||
+          'seal_anchor' ||
+          'seal_risk' ||
+          'seal_bridge' ||
+          'remove_same_tile' ||
+          'remove_same_color' ||
+          'remove_same_rank' => hasSelectedTile(line),
+          'burn_line' || 'sacrifice_line' => line.occupiedCount > 0,
+          _ => line.occupiedCount > 0,
+        })
+          line,
+    ]);
   }
 
   Future<void> _useDeckNeedleItem(RummiBattleItemSlotView slot) async {
