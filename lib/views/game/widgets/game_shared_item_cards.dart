@@ -94,16 +94,6 @@ class _GameBattleItemCardFace extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
-              _battleItemTypeText(itemSlot.placement),
-              maxLines: 1,
-              style: TextStyle(
-                color: GameUiPalette.cardTypeText.withValues(alpha: 0.78),
-                fontSize: 5.0,
-                fontWeight: FontWeight.w900,
-                height: 1,
-              ),
-            ),
           ],
         ),
       ),
@@ -286,14 +276,5 @@ String _battleItemTypeBadgeText(ItemPlacement placement) {
     ItemPlacement.inventory => 'T',
     ItemPlacement.equipped => 'G',
     ItemPlacement.passiveRack => 'P',
-  };
-}
-
-String _battleItemTypeText(ItemPlacement placement) {
-  return switch (placement) {
-    ItemPlacement.quickSlot => 'Q-SLOT',
-    ItemPlacement.inventory => 'TOOL',
-    ItemPlacement.equipped => 'GEAR',
-    ItemPlacement.passiveRack => 'PASSIVE',
   };
 }

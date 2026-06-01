@@ -434,19 +434,6 @@ class GameJesterSlot extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Text(
-                            'JESTER',
-                            maxLines: 1,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: const Color(
-                                0xFFF5E9B6,
-                              ).withValues(alpha: 0.72),
-                              fontSize: 3.5,
-                              fontWeight: FontWeight.w800,
-                              height: 1,
-                            ),
-                          ),
                           if (showInlineEffectBadge) ...[
                             const SizedBox(height: 3),
                             Container(

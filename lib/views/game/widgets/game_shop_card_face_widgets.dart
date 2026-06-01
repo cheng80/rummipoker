@@ -140,17 +140,6 @@ class _MarketItemCardFace extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
-              _itemPlacementCardLabel(placement),
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: GameUiPalette.cardName.withValues(alpha: 0.72),
-                fontSize: 3.5,
-                fontWeight: FontWeight.w800,
-                height: 1,
-              ),
-            ),
           ],
         ),
       ),
