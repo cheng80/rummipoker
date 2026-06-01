@@ -136,7 +136,7 @@
 
 ## Ritual Cards
 
-> 아래 38종은 현재 `data/common/items_common_v1.json`에 들어간 실제 catalog 항목이다. 기존 Draft/Reserve/Later 구분은 과거 설계 기록이며, 현재 판단은 runtime/QA/밸런스 상태로 본다.
+> 아래 38종은 현재 `data/common/items_common_v1.json`에 들어간 검토용 catalog 항목이다. 2026-06-01 기준 Ritual 계열은 전투 즉시성/효과 전달 실패로 일반 마켓 pool에서 제외되어 실제 런에는 노출하지 않는다. Catalog, 번역, 이미지, debug fixture, runtime hook은 재설계용 자산으로만 유지한다.
 
 | ID | 이름 | 희귀도 | 가격 | 위치 | Timing / op | 효과 |
 |---|---|---:|---:|---|---|---|

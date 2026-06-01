@@ -661,6 +661,44 @@ void main() {
       expect(after.itemOffers.map((offer) => offer.contentId), ['hand_scrap']);
     });
 
+    test('experimental ritual items do not appear in normal market offers', () {
+      final catalog = ItemCatalog.fromJson({
+        'schemaVersion': 1,
+        'catalogId': 'items_test',
+        'items': [
+          _itemJson(
+            id: 'line_memory',
+            timing: 'use_battle',
+            op: 'add_hand_rank_progress_from_selected_line',
+            placement: 'quickSlot',
+            tags: const ['battle', 'ritual', 'line_target'],
+          ),
+          _itemJson(
+            id: 'board_scrap',
+            timing: 'use_battle',
+            op: 'add_board_discard',
+            placement: 'quickSlot',
+          ),
+        ],
+      });
+      final progress = RummiRunProgress()..gold = 20;
+      progress.pinCurrentItemOfferKeys([
+        RummiMarketModifierState.itemOfferKey(
+          ItemPlacement.quickSlot,
+          'line_memory',
+        ),
+      ]);
+
+      final facade = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      );
+
+      expect(facade.itemOffers.map((offer) => offer.contentId), [
+        'board_scrap',
+      ]);
+    });
+
     test('buying an item offer does not refill the empty market slot', () {
       final catalog = ItemCatalog.fromJson({
         'schemaVersion': 1,

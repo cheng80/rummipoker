@@ -17,6 +17,7 @@ List<RummiMarketItemOfferView> _buildItemOffers(
   final shouldUsePinnedOffers = pinnedKeys.isNotEmpty;
   final candidates = items
       .where((item) => !consumedIds.contains(item.id))
+      .where((item) => !_isExperimentalRitualItem(item))
       .where(
         (item) => _canAppearAsItemOffer(
           progress: progress,
@@ -52,21 +53,24 @@ List<RummiMarketItemOfferView> _buildItemOffers(
         }
         pinnedItems.add(item);
       }
-      for (final item in pinnedItems) {
-        offers.add(
-          RummiMarketItemOfferView.fromItemDefinition(
-            item,
-            slotIndex: offers.length,
-            currentGold: progress.gold,
-            price: progress.effectiveItemPrice(
+      if (pinnedItems.isNotEmpty) {
+        for (final item in pinnedItems) {
+          offers.add(
+            RummiMarketItemOfferView.fromItemDefinition(
               item,
-              includeCheapestFirstOfferDiscount: false,
+              slotIndex: offers.length,
+              currentGold: progress.gold,
+              price: progress.effectiveItemPrice(
+                item,
+                includeCheapestFirstOfferDiscount: false,
+              ),
+              originalPrice: progress.effectiveItemBasePrice(item),
             ),
-            originalPrice: progress.effectiveItemBasePrice(item),
-          ),
-        );
+          );
+        }
+        continue;
       }
-      continue;
+      generatedMissingPinnedPlacement = true;
     }
 
     if (shouldUsePinnedOffers) {
@@ -76,8 +80,9 @@ List<RummiMarketItemOfferView> _buildItemOffers(
       progress,
       candidates
           .where((item) => item.placement == placement)
+          .where((item) => !_isExperimentalRitualItem(item))
           .toList(growable: false),
-      items,
+      items.where((item) => !_isExperimentalRitualItem(item)).toList(),
       placement: placement,
       pressureProfile: pressureProfile,
     );
@@ -104,6 +109,10 @@ List<RummiMarketItemOfferView> _buildItemOffers(
   }
   progress.recordSeenMarketItems(offers.map((offer) => offer.contentId));
   return offers;
+}
+
+bool _isExperimentalRitualItem(ItemDefinition item) {
+  return item.tags.contains('ritual');
 }
 
 _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(

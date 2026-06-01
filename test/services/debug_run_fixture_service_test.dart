@@ -333,27 +333,30 @@ void main() {
     );
   });
 
-  test('line memory market fixture pins ritual item offer', () {
-    final fixture = DebugRunFixtureService.build(
-      DebugRunFixtureService.lineMemoryMarketPreview,
-    );
-    final catalog = ItemCatalog.fromJson(
-      jsonDecode(File('data/common/items_common_v1.json').readAsStringSync())
-          as Map<String, dynamic>,
-    );
+  test(
+    'line memory market fixture keeps deferred ritual offers out of market',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.lineMemoryMarketPreview,
+      );
+      final catalog = ItemCatalog.fromJson(
+        jsonDecode(File('data/common/items_common_v1.json').readAsStringSync())
+            as Map<String, dynamic>,
+      );
 
-    expect(fixture, isNotNull);
-    expect(fixture!.activeScene, ActiveRunScene.shop);
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.shop);
 
-    final market = RummiMarketRuntimeFacade.fromRunProgress(
-      fixture.runProgress,
-      itemCatalog: catalog,
-    );
-    expect(
-      market.itemOffers.map((offer) => offer.contentId),
-      contains('line_memory'),
-    );
-  });
+      final market = RummiMarketRuntimeFacade.fromRunProgress(
+        fixture.runProgress,
+        itemCatalog: catalog,
+      );
+      expect(
+        market.itemOffers.map((offer) => offer.contentId),
+        isNot(contains('line_memory')),
+      );
+    },
+  );
 
   test('line memory battle fixture starts with usable scoring line', () {
     final fixture = DebugRunFixtureService.build(
