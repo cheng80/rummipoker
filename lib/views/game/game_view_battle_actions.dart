@@ -646,7 +646,7 @@ extension _GameViewBattleActions on _GameViewState {
   }
 }
 
-class _RitualBoardLineChoiceDialog extends StatelessWidget {
+class _RitualBoardLineChoiceDialog extends StatefulWidget {
   const _RitualBoardLineChoiceDialog({
     required this.title,
     required this.board,
@@ -660,6 +660,25 @@ class _RitualBoardLineChoiceDialog extends StatelessWidget {
   final List<RummiScoringLineSummary> lines;
   final String Function(LineRef ref) lineLabel;
   final String Function(RummiScoringLineSummary line) rankLabel;
+
+  @override
+  State<_RitualBoardLineChoiceDialog> createState() =>
+      _RitualBoardLineChoiceDialogState();
+}
+
+class _RitualBoardLineChoiceDialogState
+    extends State<_RitualBoardLineChoiceDialog> {
+  RummiScoringLineSummary? _selectedLine;
+
+  void _selectLine(RummiScoringLineSummary line) {
+    setState(() => _selectedLine = line);
+  }
+
+  void _confirmSelection() {
+    final selectedLine = _selectedLine;
+    if (selectedLine == null) return;
+    Navigator.of(context).pop(selectedLine);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -683,7 +702,7 @@ class _RitualBoardLineChoiceDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  title,
+                  widget.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: GameUiPalette.textPrimary,
@@ -706,7 +725,12 @@ class _RitualBoardLineChoiceDialog extends StatelessWidget {
                   child: SizedBox(
                     width: 238,
                     height: 238,
-                    child: _RitualBoardLinePreview(board: board, lines: lines),
+                    child: _RitualBoardLinePreview(
+                      board: widget.board,
+                      lines: widget.lines,
+                      selectedLine: _selectedLine,
+                      onLineSelected: _selectLine,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -718,24 +742,34 @@ class _RitualBoardLineChoiceDialog extends StatelessWidget {
                       spacing: 7,
                       runSpacing: 7,
                       children: [
-                        for (final line in lines)
+                        for (final line in widget.lines)
                           _RitualLineChoiceChip(
                             line: line,
-                            label: lineLabel(line.ref),
-                            rankText: rankLabel(line),
-                            onTap: () => Navigator.of(context).pop(line),
+                            selected: line.ref == _selectedLine?.ref,
+                            label: widget.lineLabel(line.ref),
+                            rankText: widget.rankLabel(line),
+                            onTap: () => _selectLine(line),
                           ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('취소'),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('취소'),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: _selectedLine == null
+                          ? null
+                          : _confirmSelection,
+                      child: const Text('확인'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -747,41 +781,82 @@ class _RitualBoardLineChoiceDialog extends StatelessWidget {
 }
 
 class _RitualBoardLinePreview extends StatelessWidget {
-  const _RitualBoardLinePreview({required this.board, required this.lines});
+  const _RitualBoardLinePreview({
+    required this.board,
+    required this.lines,
+    required this.selectedLine,
+    required this.onLineSelected,
+  });
 
   final RummiBoard board;
   final List<RummiScoringLineSummary> lines;
+  final RummiScoringLineSummary? selectedLine;
+  final ValueChanged<RummiScoringLineSummary> onLineSelected;
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      foregroundPainter: _RitualLinePreviewPainter(lines),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: GameUiPalette.surfacePanel.withValues(alpha: 0.72),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: kBoardSize,
-              mainAxisSpacing: 3,
-              crossAxisSpacing: 3,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        RummiScoringLineSummary? lineAt(Offset localPosition) {
+          final metric = _RitualLinePreviewMetric(
+            Size(constraints.maxWidth, constraints.maxHeight),
+          );
+          RummiScoringLineSummary? closestLine;
+          var closestDistance = double.infinity;
+          for (final line in lines) {
+            final cells = line.ref.cells();
+            final start = metric.centerFor(cells.first.$1, cells.first.$2);
+            final end = metric.centerFor(cells.last.$1, cells.last.$2);
+            final distance = _distanceToSegment(localPosition, start, end);
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestLine = line;
+            }
+          }
+          return closestDistance <= 18 ? closestLine : null;
+        }
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) {
+            final line = lineAt(details.localPosition);
+            if (line == null) return;
+            onLineSelected(line);
+          },
+          child: CustomPaint(
+            foregroundPainter: _RitualLinePreviewPainter(
+              lines,
+              selectedLine: selectedLine,
             ),
-            itemCount: kBoardSize * kBoardSize,
-            itemBuilder: (context, index) {
-              final row = index ~/ kBoardSize;
-              final col = index % kBoardSize;
-              return _RitualBoardMiniCell(tile: board.cellAt(row, col));
-            },
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: GameUiPalette.surfacePanel.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: kBoardSize,
+                    mainAxisSpacing: 3,
+                    crossAxisSpacing: 3,
+                  ),
+                  itemCount: kBoardSize * kBoardSize,
+                  itemBuilder: (context, index) {
+                    final row = index ~/ kBoardSize;
+                    final col = index % kBoardSize;
+                    return _RitualBoardMiniCell(tile: board.cellAt(row, col));
+                  },
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -829,12 +904,14 @@ class _RitualLineChoiceChip extends StatelessWidget {
     required this.line,
     required this.label,
     required this.rankText,
+    required this.selected,
     required this.onTap,
   });
 
   final RummiScoringLineSummary line;
   final String label;
   final String rankText;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
@@ -847,9 +924,14 @@ class _RitualLineChoiceChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: Color.lerp(GameUiPalette.ink, color, 0.18),
+          color: selected
+              ? GameUiPalette.userSelection.withValues(alpha: 0.24)
+              : Color.lerp(GameUiPalette.ink, color, 0.18),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color.withValues(alpha: 0.82), width: 1.4),
+          border: Border.all(
+            color: selected ? GameUiPalette.userSelection : color,
+            width: selected ? 2 : 1.4,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -868,33 +950,32 @@ class _RitualLineChoiceChip extends StatelessWidget {
 }
 
 class _RitualLinePreviewPainter extends CustomPainter {
-  const _RitualLinePreviewPainter(this.lines);
+  const _RitualLinePreviewPainter(this.lines, {required this.selectedLine});
 
   final List<RummiScoringLineSummary> lines;
+  final RummiScoringLineSummary? selectedLine;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final inset = 10.0;
-    final gap = 3.0;
-    final gridSide = size.shortestSide - inset * 2;
-    final cellSide = (gridSide - gap * (kBoardSize - 1)) / kBoardSize;
-    Offset centerFor(int row, int col) {
-      return Offset(
-        inset + col * (cellSide + gap) + cellSide / 2,
-        inset + row * (cellSide + gap) + cellSide / 2,
-      );
-    }
+    final metric = _RitualLinePreviewMetric(size);
 
     for (final line in lines) {
       final cells = line.ref.cells();
-      final start = centerFor(cells.first.$1, cells.first.$2);
-      final end = centerFor(cells.last.$1, cells.last.$2);
+      final start = metric.centerFor(cells.first.$1, cells.first.$2);
+      final end = metric.centerFor(cells.last.$1, cells.last.$2);
+      final selected = line.ref == selectedLine?.ref;
       final color = line.isScoringLine
           ? GameUiPalette.actionGold
           : GameUiPalette.tileBlueSeal;
       final paint = Paint()
-        ..color = color.withValues(alpha: line.isScoringLine ? 0.52 : 0.38)
-        ..strokeWidth = line.isScoringLine ? 7 : 5
+        ..color = selected
+            ? GameUiPalette.userSelection.withValues(alpha: 0.88)
+            : color.withValues(alpha: line.isScoringLine ? 0.52 : 0.38)
+        ..strokeWidth = selected
+            ? 9
+            : line.isScoringLine
+            ? 7
+            : 5
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(start, end, paint);
     }
@@ -902,8 +983,41 @@ class _RitualLinePreviewPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RitualLinePreviewPainter oldDelegate) {
-    return oldDelegate.lines != lines;
+    return oldDelegate.lines != lines ||
+        oldDelegate.selectedLine?.ref != selectedLine?.ref;
   }
+}
+
+class _RitualLinePreviewMetric {
+  const _RitualLinePreviewMetric(this.size);
+
+  final Size size;
+
+  static const double _inset = 10;
+  static const double _gap = 3;
+
+  double get _gridSide => size.shortestSide - _inset * 2;
+  double get _cellSide => (_gridSide - _gap * (kBoardSize - 1)) / kBoardSize;
+
+  Offset centerFor(int row, int col) {
+    return Offset(
+      _inset + col * (_cellSide + _gap) + _cellSide / 2,
+      _inset + row * (_cellSide + _gap) + _cellSide / 2,
+    );
+  }
+}
+
+double _distanceToSegment(Offset point, Offset start, Offset end) {
+  final dx = end.dx - start.dx;
+  final dy = end.dy - start.dy;
+  final lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared == 0) return (point - start).distance;
+  final t =
+      (((point.dx - start.dx) * dx) + ((point.dy - start.dy) * dy)) /
+      lengthSquared;
+  final clamped = t.clamp(0.0, 1.0);
+  final projection = Offset(start.dx + dx * clamped, start.dy + dy * clamped);
+  return (point - projection).distance;
 }
 
 Color _ritualTileColor(TileColor color) {
