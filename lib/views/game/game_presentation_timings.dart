@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 /// 전투/정산 연출의 시간 기준을 한곳에서 관리한다.
 ///
 /// 실제 게임 결과와 저장 상태는 이 값에 의존하지 않고, 화면에서 읽히는 박자만 조정한다.
@@ -54,6 +56,7 @@ class GamePresentationTimings {
   static const Duration boardTileState = Duration(milliseconds: 120);
   static const Duration boardTileMoveFlight = Duration(milliseconds: 280);
   static const Duration boardMoveBonusFlash = Duration(milliseconds: 620);
+  static const Duration fateLineTransformFlash = Duration(milliseconds: 920);
   static const Duration boardTileRemoveFlight = Duration(milliseconds: 280);
   static const Duration boardTilePlacePop = Duration(milliseconds: 260);
   static const Duration settlementTileLift = Duration(milliseconds: 420);
@@ -71,6 +74,8 @@ class GamePresentationTimings {
   static const Duration settlementEffectBurst = Duration(milliseconds: 940);
   static const Duration itemEffectSparkBurst = Duration(milliseconds: 560);
   static const Duration itemEffectToastIn = Duration(milliseconds: 340);
+  static const Duration ritualGoldFlight = Duration(milliseconds: 1400);
+  static const Duration ritualDeckTileFlight = Duration(milliseconds: 1800);
   static const Duration boardScoringCalloutIn = Duration(milliseconds: 420);
   static const Duration scoringPreviewFadeIn = Duration(milliseconds: 260);
   static const Duration scoringPreviewScale = Duration(milliseconds: 300);
@@ -129,4 +134,24 @@ class GamePresentationCues {
     duration: GamePresentationTimings.marketOfferReveal,
     stagger: GamePresentationTimings.marketOfferRevealStagger,
   );
+}
+
+class GamePresentationMotion {
+  const GamePresentationMotion._();
+
+  static double flightProgress(double value) {
+    final t = value.clamp(0.0, 1.0);
+    if (t < 0.5) return 8 * t * t * t * t;
+    final inverse = -2 * t + 2;
+    return 1 - (inverse * inverse * inverse * inverse) / 2;
+  }
+
+  static Offset flightOffset(Offset start, Offset end, double value) =>
+      Offset.lerp(start, end, flightProgress(value))!;
+
+  static Alignment flightAlignment(
+    Alignment start,
+    Alignment end,
+    double value,
+  ) => Alignment.lerp(start, end, flightProgress(value))!;
 }

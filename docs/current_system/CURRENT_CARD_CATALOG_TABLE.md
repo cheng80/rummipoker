@@ -6,11 +6,26 @@
 ## Summary
 
 - Jester: 43
-- Item total: 92
-- Q-Slot: 53
+- Item total: 94
+- Q-Slot: 55
 - Passive: 10
 - Tool: 20
 - Gear: 9
+
+### Fate/Ritual Card Classification
+
+현재 `ritual_line_effect`로 전투 중 보드 선을 선택해 쓰는 운명/의식 카드는 총 31장이다. 성장/점수/표식/위치 의식 중 `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory`는 적용군이다. 삭제된 기억 의식 3종은 catalog, 번역, 이미지, 런타임 대상에서 제거했다.
+
+| 분류 | 수 | 상태 | 카드 |
+|---|---:|---|---|
+| 족보 변환형 운명 | 16 | 활성 | `trim_rank`, `line_pruner`, `fate_three_kind_high`, `color_concord`, `step_rite`, `rank_concord`, `fate_full_house_low`, `flush_house_fate`, `flush_five_fate`, `fate_flush_high`, `fate_flush_low`, `fate_straight_high`, `fate_straight_low`, `wild_thread`, `off_color_rite`, `number_mask` |
+| 성장/점수/표식/위치 의식 | 6 | 활성 | `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory` |
+| 덱 복사/메아리 | 6 | 활성 | `sealed_copy`, `scarce_copy`, `color_echo`, `rank_echo`, `edge_copy`, `keystone_copy` |
+| 제거/소각/제물 | 3 | 활성 | `trim_color`, `deadwood_burn`, `sacrifice_line` |
+
+족보 변환형 운명 16장은 선택한 보드 선 5칸을 실제 타일 세트로 덮어쓴다. 적용 직후 evaluator가 새 족보를 다시 판정한다.
+
+마켓 노출 기준: 족보 변환형 운명 16장은 Normal Market에 common/uncommon으로 노출하지 않는다. 전부 rare 이상이며, `number_mask`, `flush_five_fate`, `flush_house_fate`, `wild_thread`, `off_color_rite`는 legendary 고가 카드로 유지한다. `RummiStationBandMarketPolicy`는 `fate_transform` 태그에 초반/중반 가중치 감산을 적용해, 강한 운명 카드가 초반부터 일반 보정 아이템처럼 자주 뜨지 않게 한다.
 
 ## Jester
 
@@ -136,7 +151,60 @@
 
 ## Ritual Cards
 
-> 아래 38종은 현재 `data/common/items_common_v1.json`에 들어간 검토용 catalog 항목이다. 2026-06-01 기준 Ritual 계열은 전투 즉시성/효과 전달 실패로 일반 마켓 pool에서 제외되어 실제 런에는 노출하지 않는다. Catalog, 번역, 이미지, debug fixture, runtime hook은 재설계용 자산으로만 유지한다.
+> 아래 37종은 현재 `data/common/items_common_v1.json`에 들어간 Ritual/Item 확장 계열 catalog 항목이다. 이 중 전투 보드 선 선택형 `ritual_line_effect`는 31장이고, 실제 보드 선을 특정 족보 세트로 치환하는 족보 변환형 운명 카드는 16장이다.
+
+### 족보 변환형 운명 (16)
+
+| ID | 이름 | 효과 |
+|---|---|---|
+| `trim_rank` | 투페어 운명 | 보드 선을 선택합니다. 최고 숫자와 차순위 높은 숫자 기준 투페어 세트로 변환합니다. |
+| `line_pruner` | 하위 트리플 운명 | 보드 선을 선택합니다. 차순위 낮은 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다. |
+| `fate_three_kind_high` | 상위 트리플 운명 | 보드 선을 선택합니다. 최고 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다. |
+| `color_concord` | 상위 포카드 운명 | 보드 선을 선택합니다. 그 선의 최고 숫자 기준 포카드 세트로 변환합니다. |
+| `step_rite` | 하위 포카드 운명 | 보드 선을 선택합니다. 그 선의 최저 숫자 기준 포카드 세트로 변환합니다. |
+| `rank_concord` | 상위 풀하우스 운명 | 보드 선을 선택합니다. 최고 숫자 트리플과 차순위 높은 숫자 원페어 풀하우스 세트로 변환합니다. |
+| `fate_full_house_low` | 하위 풀하우스 운명 | 보드 선을 선택합니다. 차순위 낮은 숫자 트리플과 최고 숫자 원페어 풀하우스 세트로 변환합니다. |
+| `flush_house_fate` | 플러시 하우스 운명 | 보드 선을 선택합니다. 최고 숫자 3장과 차순위 높은 숫자 2장을 같은 색으로 변환합니다. |
+| `flush_five_fate` | 플러시 파이브 운명 | 보드 선을 선택합니다. 최고 숫자 5장을 같은 색으로 변환합니다. |
+| `fate_flush_high` | 상위 플러시 운명 | 보드 선을 선택합니다. 그 선의 최고 숫자 색상 기준 플러시 세트로 변환합니다. |
+| `fate_flush_low` | 하위 플러시 운명 | 보드 선을 선택합니다. 그 선의 최저 숫자 색상 기준 플러시 세트로 변환합니다. |
+| `fate_straight_high` | 상행 스트레이트 운명 | 보드 선을 선택합니다. 최고 숫자 기준 가장 높은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다. |
+| `fate_straight_low` | 하행 스트레이트 운명 | 보드 선을 선택합니다. 최저 숫자 기준 가장 낮은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다. |
+| `wild_thread` | 상행 스티플 운명 | 보드 선을 선택합니다. 그 선의 최고 숫자와 색상 기준으로 만들 수 있는 가장 높은 스티플 세트로 변환합니다. |
+| `off_color_rite` | 하행 스티플 운명 | 보드 선을 선택합니다. 그 선의 최저 숫자와 색상 기준으로 만들 수 있는 가장 낮은 스티플 세트로 변환합니다. |
+| `number_mask` | 로얄 운명 | 보드 선을 선택합니다. 1 타일이 있으면 그 색상, 없으면 최고 숫자 색상 기준으로 동색 10-11-12-13-1 로얄플러시 세트로 변환합니다. |
+
+### 성장/점수/표식/위치 의식 (9)
+
+| ID | 이름 | 효과 |
+|---|---|---|
+| `bridge_rite` | 다리 의식 | 겹친 줄 타일을 선택합니다. 다리 표식이 붙고, 겹친 줄 확정 시 줄마다 골드 +2. |
+| `diagonal_rite` | 대각 의식 | 점수 족보 대각선을 선택합니다. 이번 확정에서 그 선 점수 +35%. |
+| `center_rite` | 중심 의식 | 중앙을 포함한 점수 족보 선을 선택합니다. 해당 족보 성장 +1. |
+| `corner_rite` | 모서리 의식 | 모서리를 포함한 보드 선을 선택합니다. 끝 타일 1장을 덱에 복사합니다. |
+| `cross_rite` | 교차 의식 | 교차 가능한 점수 족보 선을 선택합니다. 이번 확정에서 그 선 점수 +25%. |
+| `cross_memory` | 교차 기억 | 교차 가능한 점수 족보 선을 선택합니다. 해당 족보 성장 +1 및 교차 기억 표식 부여. |
+
+### 덱 복사/메아리 (6)
+
+| ID | 이름 | 효과 |
+|---|---|---|
+| `sealed_copy` | 각인 복사 | 봉인 또는 강화된 점수 타일을 선택합니다. 복사본을 덱 맨 위에 추가해 다음 드로우 후보로 만듭니다. |
+| `scarce_copy` | 희소석 복사 | 보드 선 안의 점수 타일을 선택합니다. 복사본을 덱 맨 위에 추가해 다음 드로우 후보로 만듭니다. |
+| `color_echo` | 색 메아리 | 보드 선 안의 점수 타일을 선택합니다. 같은 색의 무작위 숫자 타일을 덱 맨 위에 추가합니다. |
+| `rank_echo` | 숫자 메아리 | 보드 선 안의 점수 타일을 선택합니다. 같은 숫자의 무작위 색 타일을 덱 맨 위에 추가합니다. |
+| `edge_copy` | 끝점 복사 | 보드 선 양끝의 점수 타일을 선택합니다. 복사본을 덱 맨 위에 추가해 다음 드로우 후보로 만듭니다. |
+| `keystone_copy` | 중심석 복사 | 보드 선 하나를 선택합니다. 중앙 점수 타일을 덱 맨 위에 추가합니다. |
+
+### 제거/소각/제물 (3)
+
+| ID | 이름 | 효과 |
+|---|---|---|
+| `trim_color` | 색 가지치기 | 보드 선 안의 타일을 선택합니다. 선택한 색이 아닌 타일을 그 선에서 제거하고, 제거한 수만큼 같은 색 타일을 덱 맨 위에 올립니다. |
+| `deadwood_burn` | 마른가지 소각 | 보드 선 하나를 지웁니다. 그 선의 보드 타일을 제거하고 골드 +3. |
+| `sacrifice_line` | 제물 의식 | 보드 선 하나를 지웁니다. 그 선의 타일 2장을 복사해 덱 맨 위에 올립니다. |
+
+### 전체 Ritual/Item 확장 표
 
 | ID | 이름 | 희귀도 | 가격 | 위치 | Timing / op | 효과 |
 |---|---|---:|---:|---|---|---|
@@ -146,41 +214,40 @@
 | `line_pack_ticket` | 라인 팩 티켓 | rare | 10G | inventory | market_build_offers / extra_item_offer_slot | 다음 상점의 아이템 후보 슬롯 +1. |
 | `ritual_lens` | 의식 렌즈 | uncommon | 7G | inventory | use_market / reroll_item_offers_only | 현재 아이템 후보를 다시 뽑고 의식 선택지를 노립니다. |
 | `ritual_coupon` | 의식 쿠폰 | common | 5G | inventory | market_buy_if_category / discount_next_purchase | 다음 아이템 구매 가격이 2 줄어듭니다. |
-| `bridge_rite` | 다리 의식 | rare | 12G | quickSlot | use_battle / ritual_line_effect: seal_bridge | 선택 타일에 다리 표식을 부여합니다. |
+| `bridge_rite` | 다리 의식 | rare | 12G | quickSlot | use_battle / ritual_line_effect: seal_bridge | 겹친 줄 타일을 선택합니다. 다리 표식이 붙고, 겹친 줄 확정 시 줄마다 골드 +2. |
 | `diagonal_rite` | 대각 의식 | rare | 10G | quickSlot | use_battle / ritual_line_effect: line_bonus_35 | 점수 족보 대각선을 선택합니다. 이번 확정에서 그 선 점수 +35%. |
 | `center_rite` | 중심 의식 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: center_growth | 중앙을 포함한 점수 족보 선을 선택합니다. 해당 족보 성장 +1. |
 | `corner_rite` | 모서리 의식 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_endpoint | 모서리를 포함한 보드 선을 선택합니다. 끝 타일 1장을 덱에 복사합니다. |
 | `cross_rite` | 교차 의식 | rare | 11G | quickSlot | use_battle / ritual_line_effect: line_bonus_25 | 교차 가능한 점수 족보 선을 선택합니다. 이번 확정에서 그 선 점수 +25%. |
-| `sacrifice_line` | 제물 의식 | legendary | 15G | quickSlot | use_battle / ritual_line_effect: sacrifice_line | 보드 선 하나를 지웁니다. 타일 최대 2장을 덱에 복사하고 복사 타일 1장에 제거 표식을 남깁니다. |
+| `sacrifice_line` | 제물 의식 | legendary | 15G | quickSlot | use_battle / ritual_line_effect: sacrifice_line | 보드 선 하나를 지웁니다. 그 선의 타일 2장을 복사해 덱 맨 위에 올립니다. |
 | `deadwood_burn` | 마른가지 소각 | rare | 10G | quickSlot | use_battle / ritual_line_effect: burn_line | 보드 선 하나를 지웁니다. 그 선의 보드 타일을 제거하고 골드 +3. |
-| `trim_rank` | 투페어 운명 | common | 7G | quickSlot | use_battle / ritual_line_effect: fate_two_pair_high | 보드 선을 선택합니다. 최고 숫자와 차순위 높은 숫자 기준 투페어 세트로 변환합니다. |
-| `trim_color` | 색 가지치기 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: remove_same_color | 보드 선 안의 타일을 선택합니다. 같은 색 덱 타일 1장에 제거 표식을 남깁니다. |
-| `line_pruner` | 하위 트리플 운명 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: fate_three_kind_low | 보드 선을 선택합니다. 차순위 낮은 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다. |
-| `number_mask` | 로얄 운명 | legendary | 16G | quickSlot | use_battle / ritual_line_effect: fate_royal_flush | 보드 선을 선택합니다. 그 선의 최고 숫자 색상 기준으로 동색 9-13 로얄플러시 세트로 변환합니다. |
-| `wild_thread` | 상행 스티플 운명 | rare | 14G | quickSlot | use_battle / ritual_line_effect: fate_straight_flush_high | 보드 선을 선택합니다. 그 선의 최고 숫자와 색상 기준으로 만들 수 있는 가장 높은 스티플 세트로 변환합니다. |
-| `off_color_rite` | 하행 스티플 운명 | rare | 13G | quickSlot | use_battle / ritual_line_effect: fate_straight_flush_low | 보드 선을 선택합니다. 그 선의 최저 숫자와 색상 기준으로 만들 수 있는 가장 낮은 스티플 세트로 변환합니다. |
-| `color_concord` | 상위 포카드 운명 | rare | 12G | quickSlot | use_battle / ritual_line_effect: fate_four_kind_high | 보드 선을 선택합니다. 그 선의 최고 숫자 기준 포카드 세트로 변환합니다. |
-| `step_rite` | 하위 포카드 운명 | rare | 12G | quickSlot | use_battle / ritual_line_effect: fate_four_kind_low | 보드 선을 선택합니다. 그 선의 최저 숫자 기준 포카드 세트로 변환합니다. |
-| `rank_concord` | 상위 풀하우스 운명 | rare | 12G | quickSlot | use_battle / ritual_line_effect: fate_full_house_high | 보드 선을 선택합니다. 최고 숫자 트리플과 차순위 높은 숫자 원페어 풀하우스 세트로 변환합니다. |
-| `risk_seal` | 하위 풀하우스 운명 | rare | 12G | quickSlot | use_battle / ritual_line_effect: fate_full_house_low | 보드 선을 선택합니다. 차순위 낮은 숫자 트리플과 최고 숫자 원페어 풀하우스 세트로 변환합니다. |
-| `anchor_seal` | 상위 플러시 운명 | uncommon | 10G | quickSlot | use_battle / ritual_line_effect: fate_flush_high | 보드 선을 선택합니다. 그 선의 최고 숫자 색상 기준 플러시 세트로 변환합니다. |
-| `echo_seal` | 하위 플러시 운명 | uncommon | 10G | quickSlot | use_battle / ritual_line_effect: fate_flush_low | 보드 선을 선택합니다. 그 선의 최저 숫자 색상 기준 플러시 세트로 변환합니다. |
-| `gold_seal_stamp` | 상행 스트레이트 운명 | uncommon | 9G | quickSlot | use_battle / ritual_line_effect: fate_straight_high | 보드 선을 선택합니다. 최고 숫자 기준 가장 높은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다. |
-| `growth_seal` | 하행 스트레이트 운명 | uncommon | 9G | quickSlot | use_battle / ritual_line_effect: fate_straight_low | 보드 선을 선택합니다. 최저 숫자 기준 가장 낮은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다. |
-| `line_seal_stamp` | 상위 트리플 운명 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: fate_three_kind_high | 보드 선을 선택합니다. 최고 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다. |
-| `sealed_copy` | 각인 복사 | rare | 12G | quickSlot | use_battle / ritual_line_effect: copy_selected | 봉인 또는 강화된 보드 선 타일을 선택합니다. 복사본을 덱에 추가합니다. |
-| `scarce_copy` | 희소석 복사 | rare | 10G | quickSlot | use_battle / ritual_line_effect: copy_selected | 보드 선 안의 타일을 선택합니다. 복사본을 덱에 추가합니다. |
-| `color_echo` | 색 메아리 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_color | 보드 선 안의 타일을 선택합니다. 같은 색의 무작위 숫자 타일을 덱에 추가합니다. |
-| `rank_echo` | 숫자 메아리 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_rank | 보드 선 안의 타일을 선택합니다. 같은 숫자의 무작위 색 타일을 덱에 추가합니다. |
-| `edge_copy` | 끝점 복사 | common | 6G | quickSlot | use_battle / ritual_line_effect: copy_selected | 보드 선의 끝 타일을 선택합니다. 복사본을 덱에 추가합니다. |
-| `keystone_copy` | 중심석 복사 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_center | 보드 선 하나를 선택합니다. 중앙 타일을 덱에 추가합니다. |
-| `boss_memory` | 보스 기억 | rare | 11G | quickSlot | use_battle / ritual_line_effect: boss_growth | 보스전에서 점수 족보 선을 선택합니다. 해당 족보 성장 +2. |
-| `thin_memory` | 얇은 기억 | common | 6G | quickSlot | use_battle / ritual_line_effect: thin_growth | 타일 3-4개의 점수 족보 선을 선택합니다. 해당 족보 성장 +1, 이번 확정에서 그 선 점수 -10%. |
+| `trim_rank` | 투페어 운명 | rare | 11G | quickSlot | use_battle / ritual_line_effect: fate_two_pair_high | 보드 선을 선택합니다. 최고 숫자와 차순위 높은 숫자 기준 투페어 세트로 변환합니다. |
+| `trim_color` | 색 가지치기 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: prune_line_to_color | 보드 선 안의 타일을 선택합니다. 선택한 색이 아닌 타일을 그 선에서 제거하고, 제거한 수만큼 같은 색 타일을 덱 맨 위에 올립니다. |
+| `line_pruner` | 하위 트리플 운명 | rare | 12G | quickSlot | use_battle / ritual_line_effect: fate_three_kind_low | 보드 선을 선택합니다. 차순위 낮은 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다. |
+| `number_mask` | 로얄 운명 | legendary | 20G | quickSlot | use_battle / ritual_line_effect: fate_royal_flush | 보드 선을 선택합니다. 1 타일이 있으면 그 색상, 없으면 최고 숫자 색상 기준으로 동색 10-11-12-13-1 로얄플러시 세트로 변환합니다. |
+| `wild_thread` | 상행 스티플 운명 | legendary | 18G | quickSlot | use_battle / ritual_line_effect: fate_straight_flush_high | 보드 선을 선택합니다. 그 선의 최고 숫자와 색상 기준으로 만들 수 있는 가장 높은 스티플 세트로 변환합니다. |
+| `off_color_rite` | 하행 스티플 운명 | legendary | 17G | quickSlot | use_battle / ritual_line_effect: fate_straight_flush_low | 보드 선을 선택합니다. 그 선의 최저 숫자와 색상 기준으로 만들 수 있는 가장 낮은 스티플 세트로 변환합니다. |
+| `color_concord` | 상위 포카드 운명 | rare | 15G | quickSlot | use_battle / ritual_line_effect: fate_four_kind_high | 보드 선을 선택합니다. 그 선의 최고 숫자 기준 포카드 세트로 변환합니다. |
+| `step_rite` | 하위 포카드 운명 | rare | 15G | quickSlot | use_battle / ritual_line_effect: fate_four_kind_low | 보드 선을 선택합니다. 그 선의 최저 숫자 기준 포카드 세트로 변환합니다. |
+| `rank_concord` | 상위 풀하우스 운명 | rare | 15G | quickSlot | use_battle / ritual_line_effect: fate_full_house_high | 보드 선을 선택합니다. 최고 숫자 트리플과 차순위 높은 숫자 원페어 풀하우스 세트로 변환합니다. |
+| `fate_full_house_low` | 하위 풀하우스 운명 | rare | 15G | quickSlot | use_battle / ritual_line_effect: fate_full_house_low | 보드 선을 선택합니다. 차순위 낮은 숫자 트리플과 최고 숫자 원페어 풀하우스 세트로 변환합니다. |
+| `flush_house_fate` | 플러시 하우스 운명 | legendary | 20G | quickSlot | use_battle / ritual_line_effect: fate_flush_house | 보드 선을 선택합니다. 최고 숫자 3장과 차순위 높은 숫자 2장을 같은 색으로 변환합니다. |
+| `flush_five_fate` | 플러시 파이브 운명 | legendary | 22G | quickSlot | use_battle / ritual_line_effect: fate_flush_five | 보드 선을 선택합니다. 최고 숫자 5장을 같은 색으로 변환합니다. |
+| `fate_flush_high` | 상위 플러시 운명 | rare | 14G | quickSlot | use_battle / ritual_line_effect: fate_flush_high | 보드 선을 선택합니다. 그 선의 최고 숫자 색상 기준 플러시 세트로 변환합니다. |
+| `fate_flush_low` | 하위 플러시 운명 | rare | 14G | quickSlot | use_battle / ritual_line_effect: fate_flush_low | 보드 선을 선택합니다. 그 선의 최저 숫자 색상 기준 플러시 세트로 변환합니다. |
+| `fate_straight_high` | 상행 스트레이트 운명 | rare | 13G | quickSlot | use_battle / ritual_line_effect: fate_straight_high | 보드 선을 선택합니다. 최고 숫자 기준 가장 높은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다. |
+| `fate_straight_low` | 하행 스트레이트 운명 | rare | 13G | quickSlot | use_battle / ritual_line_effect: fate_straight_low | 보드 선을 선택합니다. 최저 숫자 기준 가장 낮은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다. |
+| `fate_three_kind_high` | 상위 트리플 운명 | rare | 12G | quickSlot | use_battle / ritual_line_effect: fate_three_kind_high | 보드 선을 선택합니다. 최고 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다. |
+| `sealed_copy` | 각인 복사 | rare | 12G | quickSlot | use_battle / ritual_line_effect: copy_selected | 봉인 또는 강화된 점수 타일을 선택합니다. 복사본을 덱 맨 위에 추가해 다음 드로우 후보로 만듭니다. |
+| `scarce_copy` | 희소석 복사 | rare | 10G | quickSlot | use_battle / ritual_line_effect: copy_selected | 보드 선 안의 점수 타일을 선택합니다. 복사본을 덱 맨 위에 추가해 다음 드로우 후보로 만듭니다. |
+| `color_echo` | 색 메아리 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_color | 보드 선 안의 점수 타일을 선택합니다. 같은 색의 무작위 숫자 타일을 덱 맨 위에 추가합니다. |
+| `rank_echo` | 숫자 메아리 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_rank | 보드 선 안의 점수 타일을 선택합니다. 같은 숫자의 무작위 색 타일을 덱 맨 위에 추가합니다. |
+| `edge_copy` | 끝점 복사 | common | 6G | quickSlot | use_battle / ritual_line_effect: copy_selected | 보드 선 양끝의 점수 타일을 선택합니다. 복사본을 덱 맨 위에 추가해 다음 드로우 후보로 만듭니다. |
+| `keystone_copy` | 중심석 복사 | uncommon | 8G | quickSlot | use_battle / ritual_line_effect: copy_center | 보드 선 하나를 선택합니다. 중앙 점수 타일을 덱 맨 위에 추가합니다. |
 | `cross_memory` | 교차 기억 | rare | 10G | quickSlot | use_battle / ritual_line_effect: growth_marker | 교차 가능한 점수 족보 선을 선택합니다. 해당 족보 성장 +1 및 교차 기억 표식 부여. |
-| `minor_memory` | 잔상 기억 | rare | 9G | quickSlot | use_battle / ritual_line_effect: growth_risk | 점수 족보 선을 선택합니다. 해당 족보 성장 +2, 이번 확정에서 그 선 점수 -25%. |
 
 ## Notes
 
 - `Q-Slot`, `Passive`, `Tool`, `Gear` 분류는 현재 item `slotHint`/`placement` 기준이다.
 - 이 문서는 사람이 읽는 현행 카탈로그 표다. 실제 런타임 원본은 JSON catalog와 번역 파일이다.
-- Ritual/Board-Line 계열 38종은 현재 런타임 카탈로그다. 세부 정책 source는 `ITEM_POLICY_CLEANUP_AUDIT.md`, 실제 runtime hook 상태는 `ITEM_EFFECT_RUNTIME_MATRIX.md`다.
+- Ritual/Item 확장 계열 37종은 현재 런타임 카탈로그다. 전투 보드 선 선택형은 31장, 족보 변환형 운명은 16장이다. 세부 정책 source는 `ITEM_POLICY_CLEANUP_AUDIT.md`, 실제 runtime hook 상태는 `ITEM_EFFECT_RUNTIME_MATRIX.md`다.

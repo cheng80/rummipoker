@@ -291,9 +291,24 @@ mixin GameSessionNotifierBattleCommands
     LineRef lineRef, {
     int? tileIndex,
   }) {
+    final result = useBattleItemOnRitualTargetResult(
+      item,
+      lineRef,
+      tileIndex: tileIndex,
+    );
+    return result.isSuccess ? null : result.failMessage;
+  }
+
+  ItemUseResult useBattleItemOnRitualTargetResult(
+    ItemDefinition item,
+    LineRef lineRef, {
+    int? tileIndex,
+  }) {
     final session = state.session;
     final runProgress = state.runProgress;
-    if (session == null || runProgress == null) return '세션이 없습니다.';
+    if (session == null || runProgress == null) {
+      return ItemUseResult.failure(itemId: item.id, message: '세션이 없습니다.');
+    }
 
     final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
       item: item,
@@ -302,11 +317,11 @@ mixin GameSessionNotifierBattleCommands
       lineRef: lineRef,
       tileIndex: tileIndex,
     );
-    if (!result.isSuccess) return result.failMessage;
+    if (!result.isSuccess) return result;
     _replaceState(
       withValidSelections(state).copyWith(revision: state.revision + 1),
     );
-    return null;
+    return result;
   }
 
   DeckPeekBattleUseResult consumeBattleDeckPeekItem(ItemDefinition item) {

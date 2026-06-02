@@ -13,6 +13,7 @@ import '../logic/rummi_poker_grid/boss_modifier.dart';
 import '../logic/rummi_poker_grid/hand_rank.dart';
 import '../logic/rummi_poker_grid/item_catalog_loader.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
+import '../logic/rummi_poker_grid/item_effect_runtime.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/line_ref.dart';
@@ -42,6 +43,7 @@ import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
+import 'game/widgets/game_market_feedback_widgets.dart';
 import 'game/widgets/game_options_dialog.dart';
 import 'game/widgets/game_run_info_dialog.dart';
 import 'game/widgets/game_effect_overlay.dart';
@@ -79,6 +81,7 @@ class GameView extends ConsumerStatefulWidget {
     this.debugCompleteRunOnClear = false,
     this.debugCompleteRunOnLoad = false,
     this.debugAutoUseItemId,
+    this.debugItemCatalogOverride,
     this.debugStartItemShop = false,
     this.debugShowGameOverOnLoad = false,
     this.debugOpenRunInfoOnLoad = false,
@@ -98,6 +101,7 @@ class GameView extends ConsumerStatefulWidget {
   final bool debugCompleteRunOnClear;
   final bool debugCompleteRunOnLoad;
   final String? debugAutoUseItemId;
+  final ItemCatalog? debugItemCatalogOverride;
   final bool debugStartItemShop;
   final bool debugShowGameOverOnLoad;
   final bool debugOpenRunInfoOnLoad;
@@ -138,6 +142,8 @@ class _GameViewState extends ConsumerState<GameView>
   Tile? _selectedHandInfoTile;
   _ItemEffectFeedback? _itemEffectFeedback;
   int _itemEffectFeedbackTick = 0;
+  _RitualEffectFlight? _ritualEffectFlight;
+  int _ritualEffectFlightTick = 0;
   bool _boardMoveMode = false;
   bool _nextStationTransitionVisible = false;
   RummiCashOutBreakdown? _settlementToMarketTransition;
@@ -145,6 +151,9 @@ class _GameViewState extends ConsumerState<GameView>
   int? _pendingBoardMoveSourceCol;
   String? _boardMoveBonusTargetCellKey;
   int _boardMoveBonusFlashTick = 0;
+  _FateLineSelection? _fateLineSelection;
+  LineRef? _fateTransformFlashLineRef;
+  int _fateTransformFlashTick = 0;
   bool _bossConstraintIntroShown = false;
   bool _pendingLifecycleOptions = false;
   bool _pausedLifecycleDuringStageFlow = false;
@@ -226,12 +235,18 @@ class _GameViewState extends ConsumerState<GameView>
     );
     _shouldResumeMarketOnCatalogLoad =
         widget.restoredRun?.activeScene == ActiveRunScene.shop;
+    _itemCatalog = widget.debugItemCatalogOverride;
     // BGM·카탈로그 로드를 첫 프레임 이후로 지연 — 전환 시 프레임 드롭 방지
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       SoundManager.playBgm(AssetPaths.bgmMain);
       _loadJesterCatalog();
-      _loadItemCatalog();
+      if (widget.debugItemCatalogOverride == null) {
+        _loadItemCatalog();
+      } else {
+        _resumeRestoredMarketWhenCatalogsReady();
+        _scheduleDebugAutoUseItem();
+      }
       if (_isDebugFixtureRun && !widget.debugSuppressFixtureNotice) {
         showTopNotice(context, '디버그 픽스처 모드: 이어하기 저장은 남기지 않습니다.');
       }
@@ -681,7 +696,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   void _scheduleDebugAutoUseItem() {
     final itemId = widget.debugAutoUseItemId;
-    if (itemId == null || !_isDebugFixtureRun || _debugAutoUseItemStarted) {
+    if (itemId == null || _debugAutoUseItemStarted) {
       return;
     }
     _debugAutoUseItemStarted = true;
@@ -804,11 +819,16 @@ class _GameViewState extends ConsumerState<GameView>
             pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
             boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
             boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
+            fateLineSelection: _fateLineSelection,
+            fateTransformFlashLineRef: _fateTransformFlashLineRef,
+            fateTransformFlashTick: _fateTransformFlashTick,
             selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
             selectedBattleItemSlot: _selectedBattleItemSlot,
             selectedHandInfoTile: _selectedHandInfoTile,
             itemEffectFeedback: _itemEffectFeedback,
             itemEffectFeedbackTick: _itemEffectFeedbackTick,
+            ritualEffectFlight: _ritualEffectFlight,
+            ritualEffectFlightTick: _ritualEffectFlightTick,
             suppressDebugChrome: widget.debugSuppressFixtureNotice,
             difficultyLabel: NewRunSetup(
               difficulty: widget.difficulty,
@@ -826,6 +846,10 @@ class _GameViewState extends ConsumerState<GameView>
             onHandTileTap: _toggleHandTile,
             onHandTileLongPress: _openHandTileInfoOverlay,
             onBoardCellTap: _onBoardCellTap,
+            onFateLineTap: _selectFateLine,
+            onFateTileTap: _selectFateTile,
+            onFateConfirm: _confirmFateLineSelection,
+            onFateCancel: _cancelFateLineSelection,
             onDraw: _drawTile,
             onBoardDiscard: _discardSelectedBoardTile,
             onHandDiscard: _discardSelectedHandTile,

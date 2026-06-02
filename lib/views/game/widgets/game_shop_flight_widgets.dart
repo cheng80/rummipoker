@@ -24,10 +24,14 @@ class _MarketPurchaseFlightOverlay extends StatelessWidget {
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
             duration: kMarketPurchaseFlightDuration,
-            curve: Curves.easeInOutCubic,
+            curve: Curves.linear,
             builder: (context, value, child) {
               if (startOffset != null && endOffset != null) {
-                final offset = Offset.lerp(startOffset, endOffset, value)!;
+                final offset = GamePresentationMotion.flightOffset(
+                  startOffset,
+                  endOffset,
+                  value,
+                );
                 return Positioned(
                   left:
                       offset.dx -
@@ -41,7 +45,11 @@ class _MarketPurchaseFlightOverlay extends StatelessWidget {
                   child: child!,
                 );
               }
-              final alignment = Alignment.lerp(start, end, value)!;
+              final alignment = GamePresentationMotion.flightAlignment(
+                start,
+                end,
+                value,
+              );
               return Align(alignment: alignment, child: child);
             },
             child: _MarketPurchaseFlightCard(flight: flight),
@@ -159,10 +167,14 @@ class _MarketSaleFlightOverlay extends StatelessWidget {
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
             duration: kMarketPurchaseFlightDuration,
-            curve: Curves.easeInOutCubic,
+            curve: Curves.linear,
             builder: (context, value, child) {
               if (startOffset != null && endOffset != null) {
-                final offset = Offset.lerp(startOffset, endOffset, value)!;
+                final offset = GamePresentationMotion.flightOffset(
+                  startOffset,
+                  endOffset,
+                  value,
+                );
                 return Positioned(
                   left:
                       offset.dx -
@@ -177,11 +189,11 @@ class _MarketSaleFlightOverlay extends StatelessWidget {
                 );
               }
               return Align(
-                alignment: Alignment.lerp(
+                alignment: GamePresentationMotion.flightAlignment(
                   const Alignment(-0.48, -0.10),
                   const Alignment(0.58, -0.84),
                   value,
-                )!,
+                ),
                 child: child,
               );
             },
@@ -273,10 +285,14 @@ class _MarketItemUseFlightOverlay extends StatelessWidget {
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
             duration: kMarketPurchaseFlightDuration,
-            curve: Curves.easeInOutCubic,
+            curve: Curves.linear,
             builder: (context, value, child) {
               if (startOffset != null && endOffset != null) {
-                final offset = Offset.lerp(startOffset, endOffset, value)!;
+                final offset = GamePresentationMotion.flightOffset(
+                  startOffset,
+                  endOffset,
+                  value,
+                );
                 return Positioned(
                   left:
                       offset.dx -
@@ -291,13 +307,13 @@ class _MarketItemUseFlightOverlay extends StatelessWidget {
                 );
               }
               return Align(
-                alignment: Alignment.lerp(
+                alignment: GamePresentationMotion.flightAlignment(
                   const Alignment(-0.48, -0.10),
                   flight.goldGain == null
                       ? const Alignment(0, 0.08)
                       : const Alignment(0.58, -0.84),
                   value,
-                )!,
+                ),
                 child: child,
               );
             },

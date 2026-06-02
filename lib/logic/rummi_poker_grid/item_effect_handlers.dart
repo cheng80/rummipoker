@@ -643,67 +643,24 @@ ItemUseResult _applyRitualLineEffect(
           ),
         ],
       );
-    case 'boss_growth':
-      if (session.blind.bossModifier == null) {
-        return ItemUseResult.failure(
-          itemId: item.id,
-          message: '보스전에서만 사용할 수 있습니다.',
-        );
-      }
-      return growSelectedLine(amount);
-    case 'thin_growth':
-      if (line.scoringTiles.length > 4) {
-        return ItemUseResult.failure(
-          itemId: item.id,
-          message: '3~4타일 scoring 줄에만 사용할 수 있습니다.',
-        );
-      }
-      final result = growSelectedLine(amount);
-      if (!result.isSuccess) return result;
-      _queueLineScoreMultiplier(item, session, line.ref, 0.9);
-      return ItemUseResult.success(
-        itemId: item.id,
-        events: [
-          ...result.events,
-          ItemEffectEvent(
-            kind: ItemEffectEventKind.nextConfirmModifierQueued,
-            itemId: item.id,
-            amount: -10,
-            detail: 'line_score_multiplier:0.9',
-          ),
-        ],
-      );
-    case 'growth_risk':
-      final result = growSelectedLine(amount);
-      if (!result.isSuccess) return result;
-      _queueLineScoreMultiplier(item, session, line.ref, 0.75);
-      return ItemUseResult.success(
-        itemId: item.id,
-        events: [
-          ...result.events,
-          ItemEffectEvent(
-            kind: ItemEffectEventKind.nextConfirmModifierQueued,
-            itemId: item.id,
-            amount: -25,
-            detail: 'line_score_multiplier:0.75',
-          ),
-        ],
-      );
     case 'copy_center':
       final center = _centerTileForLine(line);
       if (center == null) return _noTileTarget(item);
       final added = runProgress.addDeckTile(center);
+      session.addDeckTilesToTopInDrawOrder([added]);
       events.add(_deckAddEvent(item, added));
       break;
     case 'copy_endpoint':
       final tile = _endpointTileForLine(line) ?? selectedTile;
       if (tile == null) return _noTileTarget(item);
       final added = runProgress.addDeckTile(tile);
+      session.addDeckTilesToTopInDrawOrder([added]);
       events.add(_deckAddEvent(item, added));
       break;
     case 'copy_selected':
       if (selectedTile == null) return _noTileTarget(item);
       final added = runProgress.addDeckTile(selectedTile);
+      session.addDeckTilesToTopInDrawOrder([added]);
       events.add(_deckAddEvent(item, added));
       break;
     case 'copy_rank':
@@ -713,6 +670,7 @@ ItemUseResult _applyRitualLineEffect(
       final added = runProgress.addDeckTile(
         Tile(color: color, number: selectedTile.number),
       );
+      session.addDeckTilesToTopInDrawOrder([added]);
       events.add(_deckAddEvent(item, added));
       break;
     case 'copy_color':
@@ -721,6 +679,7 @@ ItemUseResult _applyRitualLineEffect(
       final added = runProgress.addDeckTile(
         Tile(color: selectedTile.color, number: number),
       );
+      session.addDeckTilesToTopInDrawOrder([added]);
       events.add(_deckAddEvent(item, added));
       break;
     case 'seal_line_mark':
@@ -734,7 +693,12 @@ ItemUseResult _applyRitualLineEffect(
     case 'seal_anchor':
       return _applyRitualSeal(item, session, selectedTile, TileSeal.anchorSeal);
     case 'seal_risk':
-      return _applyRitualSeal(item, session, selectedTile, TileSeal.riskSeal);
+      return _applyRitualSeal(
+        item,
+        session,
+        selectedTile,
+        TileSeal.fractureSeal,
+      );
     case 'seal_bridge':
       return _applyRitualSeal(item, session, selectedTile, TileSeal.bridgeSeal);
     case 'override_three_kind':
@@ -756,6 +720,8 @@ ItemUseResult _applyRitualLineEffect(
     case 'fate_four_kind_low':
     case 'fate_full_house_high':
     case 'fate_full_house_low':
+    case 'fate_flush_house':
+    case 'fate_flush_five':
     case 'fate_flush_high':
     case 'fate_flush_low':
     case 'fate_straight_high':
@@ -816,23 +782,36 @@ ItemUseResult _applyRitualLineEffect(
           ),
         );
       break;
-    case 'remove_same_color':
+    case 'prune_line_to_color':
       if (selectedTile == null) return _noTileTarget(item);
-      final removedColor = session.removeDeckTileMatching(
-        (tile) => tile.color == selectedTile.color,
+      final removedOffColor = session.clearLineTilesWhere(
+        line.ref,
+        (tile) => tile.color != selectedTile.color,
       );
-      if (removedColor == null) {
+      if (removedOffColor.isEmpty) {
         return ItemUseResult.failure(
           itemId: item.id,
-          message: '덱에서 같은 색 타일을 찾지 못했습니다.',
+          message: '가지칠 다른 색 타일이 없습니다.',
         );
       }
+      final addedTiles = <Tile>[];
+      for (var i = 0; i < removedOffColor.length; i += 1) {
+        final generated = Tile(
+          color: selectedTile.color,
+          number: session.runRandom.nextInt(13) + 1,
+        );
+        final added = runProgress.addDeckTile(generated);
+        addedTiles.add(added);
+        events.add(_deckAddEvent(item, added, detailPrefix: 'prune_color'));
+      }
+      session.addDeckTilesToTopInDrawOrder(addedTiles);
       events.add(
         ItemEffectEvent(
-          kind: ItemEffectEventKind.deckTileDiscarded,
+          kind: ItemEffectEventKind.boardDiscardRemoved,
           itemId: item.id,
-          amount: 1,
-          detail: removedColor.code,
+          amount: removedOffColor.length,
+          detail:
+              'prune_line_to_color:${selectedTile.color.name}:removed=${removedOffColor.map((tile) => tile.code).join(",")}:added=${addedTiles.map((tile) => tile.code).join(",")}',
         ),
       );
       break;
@@ -877,16 +856,28 @@ ItemUseResult _applyRitualLineEffect(
         );
       break;
     case 'sacrifice_line':
-      for (final tile in line.scoringTiles.take(2)) {
-        events.add(_deckAddEvent(item, runProgress.addDeckTile(tile)));
+      final sourceTiles = line.lineTiles.take(2).toList(growable: false);
+      if (sourceTiles.length < 2) {
+        return ItemUseResult.failure(
+          itemId: item.id,
+          message: '제물 의식은 타일이 2개 이상 있는 선에만 사용할 수 있습니다.',
+        );
       }
+      final addedTiles = <Tile>[];
+      for (final tile in sourceTiles) {
+        final added = runProgress.addDeckTile(tile);
+        addedTiles.add(added);
+        events.add(_deckAddEvent(item, added, detailPrefix: 'sacrifice_line'));
+      }
+      session.addDeckTilesToTopInDrawOrder(addedTiles);
       final removed = session.clearLine(line.ref);
       events.add(
         ItemEffectEvent(
           kind: ItemEffectEventKind.boardDiscardRemoved,
           itemId: item.id,
           amount: removed,
-          detail: 'sacrifice_line',
+          detail:
+              'sacrifice_line:added=${addedTiles.map((tile) => tile.code).join(",")}',
         ),
       );
       break;
@@ -908,7 +899,13 @@ List<Tile>? _buildFateLineTiles(RummiScoringLineSummary line, String action) {
 
   switch (action) {
     case 'fate_royal_flush':
-      return _sameColorTiles(highTile.color, const [9, 10, 11, 12, 13]);
+      return _sameColorTiles(_royalAnchorTile(tiles).color, const [
+        1,
+        10,
+        11,
+        12,
+        13,
+      ]);
     case 'fate_straight_flush_high':
       return _sameColorTiles(
         highTile.color,
@@ -936,6 +933,16 @@ List<Tile>? _buildFateLineTiles(RummiScoringLineSummary line, String action) {
         pairNumber: _highestDistinct(triple, uniqueNumbers),
         color: lowTile.color,
       );
+    case 'fate_flush_house':
+      return _flushHouseSet(
+        tripleNumber: uniqueNumbers.last,
+        pairNumber: _nextLowerDistinct(uniqueNumbers.last, uniqueNumbers),
+        color: highTile.color,
+      );
+    case 'fate_flush_five':
+      return _sameColorTiles(highTile.color, [
+        for (var i = 0; i < 5; i++) highTile.number,
+      ]);
     case 'fate_flush_high':
       return _flushSet(highTile.number, highTile.color);
     case 'fate_flush_low':
@@ -1016,7 +1023,7 @@ List<int> _straightSequenceContaining(int number, {required bool preferHigh}) {
     [6, 7, 8, 9, 10],
     [7, 8, 9, 10, 11],
     [8, 9, 10, 11, 12],
-    [10, 11, 12, 13, 1],
+    [9, 10, 11, 12, 13],
   ];
   final candidates = [
     for (final sequence in sequences)
@@ -1028,6 +1035,13 @@ List<int> _straightSequenceContaining(int number, {required bool preferHigh}) {
 
 List<Tile> _sameColorTiles(TileColor color, List<int> numbers) {
   return [for (final number in numbers) Tile(color: color, number: number)];
+}
+
+Tile _royalAnchorTile(List<Tile> tiles) {
+  for (final tile in tiles) {
+    if (tile.number == 1) return tile;
+  }
+  return _tileByNumber(tiles, preferHigh: true);
 }
 
 List<Tile> _fourKindSet(int number, TileColor color) {
@@ -1053,6 +1067,20 @@ List<Tile> _fullHouseSet({
     Tile(color: _thirdColor(color), number: tripleNumber),
     Tile(color: color, number: pairNumber),
     Tile(color: _nextColor(color), number: pairNumber),
+  ];
+}
+
+List<Tile> _flushHouseSet({
+  required int tripleNumber,
+  required int pairNumber,
+  required TileColor color,
+}) {
+  if (pairNumber == tripleNumber) {
+    pairNumber = _fallbackDistinctNumber(tripleNumber, preferHigh: false);
+  }
+  return [
+    for (var i = 0; i < 3; i++) Tile(color: color, number: tripleNumber),
+    for (var i = 0; i < 2; i++) Tile(color: color, number: pairNumber),
   ];
 }
 
@@ -1241,12 +1269,23 @@ void _queueLineScoreMultiplier(
   );
 }
 
-ItemEffectEvent _deckAddEvent(ItemDefinition item, Tile tile) {
+ItemEffectEvent _deckAddEvent(
+  ItemDefinition item,
+  Tile tile, {
+  String detailPrefix = 'deck_add',
+}) {
+  final modifierDetails = [
+    if (tile.enhancement != null)
+      'enhancement=${tile.enhancement!.persistenceValue}',
+    if (tile.seal != null) 'seal=${tile.seal!.persistenceValue}',
+    if (tile.edition != null) 'edition=${tile.edition!.persistenceValue}',
+  ];
+  final detail = [detailPrefix, tile.code, ...modifierDetails].join(':');
   return ItemEffectEvent(
-    kind: ItemEffectEventKind.tileDrawn,
+    kind: ItemEffectEventKind.deckTileAdded,
     itemId: item.id,
     amount: 1,
-    detail: 'deck_add:${tile.code}',
+    detail: detail,
   );
 }
 

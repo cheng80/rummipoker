@@ -122,6 +122,8 @@ RummiHandRank? _parseRank(Object? value) {
     'lowStraightFlush' => RummiHandRank.lowStraightFlush,
     'royalStraightFlush' => RummiHandRank.royalStraightFlush,
     'fiveOfAKind' => RummiHandRank.fiveOfAKind,
+    'flushHouse' => RummiHandRank.flushHouse,
+    'flushFive' => RummiHandRank.flushFive,
     _ => null,
   };
 }

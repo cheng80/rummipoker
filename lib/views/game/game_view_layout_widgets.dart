@@ -23,11 +23,16 @@ class _GameSurface extends StatelessWidget {
     required this.pendingBoardMoveSourceCol,
     required this.boardMoveBonusTargetCellKey,
     required this.boardMoveBonusFlashTick,
+    required this.fateLineSelection,
+    required this.fateTransformFlashLineRef,
+    required this.fateTransformFlashTick,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
     required this.selectedHandInfoTile,
     required this.itemEffectFeedback,
     required this.itemEffectFeedbackTick,
+    required this.ritualEffectFlight,
+    required this.ritualEffectFlightTick,
     required this.suppressDebugChrome,
     required this.difficultyLabel,
     required this.battleBoardTutorialKey,
@@ -43,6 +48,10 @@ class _GameSurface extends StatelessWidget {
     required this.onHandTileTap,
     required this.onHandTileLongPress,
     required this.onBoardCellTap,
+    required this.onFateLineTap,
+    required this.onFateTileTap,
+    required this.onFateConfirm,
+    required this.onFateCancel,
     required this.onDraw,
     required this.onBoardDiscard,
     required this.onHandDiscard,
@@ -78,11 +87,16 @@ class _GameSurface extends StatelessWidget {
   final int? pendingBoardMoveSourceCol;
   final String? boardMoveBonusTargetCellKey;
   final int boardMoveBonusFlashTick;
+  final _FateLineSelection? fateLineSelection;
+  final LineRef? fateTransformFlashLineRef;
+  final int fateTransformFlashTick;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final Tile? selectedHandInfoTile;
   final _ItemEffectFeedback? itemEffectFeedback;
   final int itemEffectFeedbackTick;
+  final _RitualEffectFlight? ritualEffectFlight;
+  final int ritualEffectFlightTick;
   final bool suppressDebugChrome;
   final String difficultyLabel;
   final GlobalKey battleBoardTutorialKey;
@@ -98,6 +112,10 @@ class _GameSurface extends StatelessWidget {
   final ValueChanged<Tile> onHandTileTap;
   final ValueChanged<Tile> onHandTileLongPress;
   final void Function(int row, int col) onBoardCellTap;
+  final ValueChanged<RummiScoringLineSummary> onFateLineTap;
+  final ValueChanged<GameBoardTileSelectionTarget> onFateTileTap;
+  final VoidCallback onFateConfirm;
+  final VoidCallback onFateCancel;
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
   final VoidCallback onHandDiscard;
@@ -166,6 +184,9 @@ class _GameSurface extends StatelessWidget {
                   pendingBoardMoveSourceCol: pendingBoardMoveSourceCol,
                   boardMoveBonusTargetCellKey: boardMoveBonusTargetCellKey,
                   boardMoveBonusFlashTick: boardMoveBonusFlashTick,
+                  fateLineSelection: fateLineSelection,
+                  fateTransformFlashLineRef: fateTransformFlashLineRef,
+                  fateTransformFlashTick: fateTransformFlashTick,
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   selectedBattleItemSlot: selectedBattleItemSlot,
                   suppressDebugChrome: suppressDebugChrome,
@@ -183,6 +204,10 @@ class _GameSurface extends StatelessWidget {
                   onHandTileTap: onHandTileTap,
                   onHandTileLongPress: onHandTileLongPress,
                   onBoardCellTap: onBoardCellTap,
+                  onFateLineTap: onFateLineTap,
+                  onFateTileTap: onFateTileTap,
+                  onFateConfirm: onFateConfirm,
+                  onFateCancel: onFateCancel,
                   onDraw: onDraw,
                   onBoardDiscard: onBoardDiscard,
                   onHandDiscard: onHandDiscard,
@@ -209,6 +234,32 @@ class _GameSurface extends StatelessWidget {
                     ),
                   ),
                 ),
+            if (fateLineSelection != null)
+              Positioned.fill(
+                child: _FateLineSelectionBarrier(
+                  boardKey: battleBoardTutorialKey,
+                ),
+              ),
+            if (fateLineSelection != null)
+              Positioned.fill(
+                child: _FateBoardLineSelectionLayer(
+                  boardKey: battleBoardTutorialKey,
+                  selection: fateLineSelection!,
+                  onTapLine: onFateLineTap,
+                  onTapTile: onFateTileTap,
+                ),
+              ),
+            if (fateLineSelection != null)
+              Positioned(
+                left: 20,
+                right: 20,
+                top: 132,
+                child: _FateLineSelectionPanel(
+                  selection: fateLineSelection!,
+                  onConfirm: onFateConfirm,
+                  onCancel: onFateCancel,
+                ),
+              ),
             if (!presentationPaused &&
                 (stageFlowPhase == GameStageFlowPhase.cleared ||
                     stageFlowPhase == GameStageFlowPhase.settlement))
@@ -219,7 +270,7 @@ class _GameSurface extends StatelessWidget {
                   scoreAdded: stageScoreAdded,
                 ),
               ),
-            if (itemEffectFeedback != null)
+            if (itemEffectFeedback != null && ritualEffectFlight == null)
               const Positioned.fill(child: GameInputBarrier.feedback()),
             if (itemEffectFeedback != null)
               Positioned(
@@ -229,6 +280,13 @@ class _GameSurface extends StatelessWidget {
                 child: _ItemEffectFeedbackToast(
                   key: ValueKey('item-effect-$itemEffectFeedbackTick'),
                   feedback: itemEffectFeedback!,
+                ),
+              ),
+            if (ritualEffectFlight != null)
+              Positioned.fill(
+                child: _RitualEffectFlightOverlay(
+                  key: ValueKey('ritual-effect-flight-$ritualEffectFlightTick'),
+                  flight: ritualEffectFlight!,
                 ),
               ),
             if (selectedJesterOverlayIndex != null &&
@@ -306,6 +364,151 @@ class _GameSurface extends StatelessWidget {
   }
 }
 
+class _FateLineSelectionBarrier extends StatefulWidget {
+  const _FateLineSelectionBarrier({required this.boardKey});
+
+  final GlobalKey boardKey;
+
+  @override
+  State<_FateLineSelectionBarrier> createState() =>
+      _FateLineSelectionBarrierState();
+}
+
+class _FateLineSelectionBarrierState extends State<_FateLineSelectionBarrier> {
+  Rect? _boardRect;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncBoardRect());
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final frameHeight = constraints.maxHeight;
+        final boardRect = _boardRect;
+        if (boardRect == null || boardRect.isEmpty) {
+          return const GameInputBarrier.modal();
+        }
+        final topHeight = math.max(0.0, boardRect.top);
+        final bottomTop = boardRect.bottom;
+        return Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              right: 0,
+              height: topHeight,
+              child: const GameInputBarrier.modal(),
+            ),
+            Positioned(
+              left: 0,
+              top: bottomTop,
+              right: 0,
+              height: math.max(0.0, frameHeight - bottomTop),
+              child: const GameInputBarrier.modal(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _syncBoardRect() {
+    if (!mounted) return;
+    final rootBox = context.findRenderObject();
+    final boardContext = widget.boardKey.currentContext;
+    final boardBox = boardContext?.findRenderObject();
+    if (rootBox is! RenderBox ||
+        boardBox is! RenderBox ||
+        !rootBox.attached ||
+        !boardBox.attached) {
+      return;
+    }
+    final nextRect =
+        boardBox.localToGlobal(Offset.zero, ancestor: rootBox) & boardBox.size;
+    if (_boardRect == nextRect) return;
+    setState(() => _boardRect = nextRect);
+  }
+}
+
+class _FateBoardLineSelectionLayer extends StatefulWidget {
+  const _FateBoardLineSelectionLayer({
+    required this.boardKey,
+    required this.selection,
+    required this.onTapLine,
+    required this.onTapTile,
+  });
+
+  final GlobalKey boardKey;
+  final _FateLineSelection selection;
+  final ValueChanged<RummiScoringLineSummary> onTapLine;
+  final ValueChanged<GameBoardTileSelectionTarget> onTapTile;
+
+  @override
+  State<_FateBoardLineSelectionLayer> createState() =>
+      _FateBoardLineSelectionLayerState();
+}
+
+class _FateBoardLineSelectionLayerState
+    extends State<_FateBoardLineSelectionLayer> {
+  Rect? _boardRect;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncBoardRect());
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final frameRect = Rect.fromLTWH(
+          0,
+          0,
+          constraints.maxWidth,
+          constraints.maxHeight,
+        );
+        final gridRect = _boardRect
+            ?.deflate(kBoardFrameInset)
+            .intersect(frameRect);
+        if (gridRect == null || gridRect.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Stack(
+          children: [
+            Positioned.fromRect(
+              rect: gridRect,
+              child: widget.selection.needsTileTarget
+                  ? GameBoardTileSelectionOverlay(
+                      targets: widget.selection.tileTargets,
+                      selectedLineRef: widget.selection.selectedLine?.ref,
+                      selectedTileIndex: widget.selection.selectedTileIndex,
+                      onTapTile: widget.onTapTile,
+                    )
+                  : GameBoardLineSelectionOverlay(
+                      lines: widget.selection.lines,
+                      selectedLineRef: widget.selection.selectedLine?.ref,
+                      onTapLine: widget.onTapLine,
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _syncBoardRect() {
+    if (!mounted) return;
+    final rootBox = context.findRenderObject();
+    final boardContext = widget.boardKey.currentContext;
+    final boardBox = boardContext?.findRenderObject();
+    if (rootBox is! RenderBox ||
+        boardBox is! RenderBox ||
+        !rootBox.attached ||
+        !boardBox.attached) {
+      return;
+    }
+    final nextRect =
+        boardBox.localToGlobal(Offset.zero, ancestor: rootBox) & boardBox.size;
+    if (_boardRect == nextRect) return;
+    setState(() => _boardRect = nextRect);
+  }
+}
+
 class _GameLayout extends StatelessWidget {
   const _GameLayout({
     required this.battle,
@@ -327,6 +530,9 @@ class _GameLayout extends StatelessWidget {
     required this.pendingBoardMoveSourceCol,
     required this.boardMoveBonusTargetCellKey,
     required this.boardMoveBonusFlashTick,
+    required this.fateLineSelection,
+    required this.fateTransformFlashLineRef,
+    required this.fateTransformFlashTick,
     required this.selectedJesterOverlayIndex,
     required this.selectedBattleItemSlot,
     required this.onHandTileLongPress,
@@ -344,6 +550,10 @@ class _GameLayout extends StatelessWidget {
     required this.onJesterTap,
     required this.onHandTileTap,
     required this.onBoardCellTap,
+    required this.onFateLineTap,
+    required this.onFateTileTap,
+    required this.onFateConfirm,
+    required this.onFateCancel,
     required this.onDraw,
     required this.onBoardDiscard,
     required this.onHandDiscard,
@@ -372,6 +582,9 @@ class _GameLayout extends StatelessWidget {
   final int? pendingBoardMoveSourceCol;
   final String? boardMoveBonusTargetCellKey;
   final int boardMoveBonusFlashTick;
+  final _FateLineSelection? fateLineSelection;
+  final LineRef? fateTransformFlashLineRef;
+  final int fateTransformFlashTick;
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final bool suppressDebugChrome;
@@ -389,6 +602,10 @@ class _GameLayout extends StatelessWidget {
   final ValueChanged<Tile> onHandTileTap;
   final ValueChanged<Tile> onHandTileLongPress;
   final void Function(int row, int col) onBoardCellTap;
+  final ValueChanged<RummiScoringLineSummary> onFateLineTap;
+  final ValueChanged<GameBoardTileSelectionTarget> onFateTileTap;
+  final VoidCallback onFateConfirm;
+  final VoidCallback onFateCancel;
   final VoidCallback onDraw;
   final VoidCallback onBoardDiscard;
   final VoidCallback onHandDiscard;
@@ -488,6 +705,11 @@ class _GameLayout extends StatelessWidget {
                                 moveSourceCol: pendingBoardMoveSourceCol,
                                 bonusFlashCellKey: boardMoveBonusTargetCellKey,
                                 bonusFlashTick: boardMoveBonusFlashTick,
+                                lineSelectionLines: const [],
+                                selectedLineRef: null,
+                                onTapLine: null,
+                                lineFlashRef: fateTransformFlashLineRef,
+                                lineFlashTick: fateTransformFlashTick,
                                 onTapCell: onBoardCellTap,
                                 onLongPressTile: onHandTileLongPress,
                               ),

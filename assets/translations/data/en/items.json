@@ -221,67 +221,55 @@
         "displayName": "Shop Compass",
         "effectText": "When entering the shop, discount the cheaper first offer between item and Jester offers by 1 Gold."
       },
-      "minor_memory": {
-        "displayName": "Afterimage Memory",
-        "effectText": "Choose a scoring line. Its current hand rank gains growth +2, and that line scores -25% on this confirm."
-      },
       "cross_memory": {
         "displayName": "Cross Memory",
-        "effectText": "Choose a scoring crossing line. Its current hand rank gains growth +1 and the line receives a cross memory marker."
-      },
-      "thin_memory": {
-        "displayName": "Thin Memory",
-        "effectText": "Choose a 3-4 tile scoring line. Its current hand rank gains growth +1, and that line scores -10% on this confirm."
-      },
-      "boss_memory": {
-        "displayName": "Boss Memory",
-        "effectText": "During a boss battle, choose a scoring line. Its current hand rank gains growth +2."
+        "effectText": "Mark one crossing scoring tile. If that tile later scores as an overlap tile, gain extra hand-rank growth."
       },
       "keystone_copy": {
         "displayName": "Keystone Copy",
-        "effectText": "Choose any board line. Add its center tile to your deck."
+        "effectText": "Choose any board line. Add its center scoring tile to the top of your deck."
       },
       "edge_copy": {
         "displayName": "Endpoint Copy",
-        "effectText": "Choose an endpoint tile from any board line. Add a copy to your deck."
+        "effectText": "Choose an endpoint scoring tile from any board line. Add a copy to the top of your deck."
       },
       "rank_echo": {
         "displayName": "Rank Echo",
-        "effectText": "Choose a tile from any board line. Add a random-color tile with the same number to your deck."
+        "effectText": "Choose a scoring tile from any board line. Add a random-color tile with the same number to the top of your deck."
       },
       "color_echo": {
         "displayName": "Color Echo",
-        "effectText": "Choose a tile from any board line. Add a random-number tile with the same color to your deck."
+        "effectText": "Choose a scoring tile from any board line. Add a random-number tile with the same color to the top of your deck."
       },
       "scarce_copy": {
         "displayName": "Scarce Copy",
-        "effectText": "Choose a tile from any board line. Add a copy to your deck."
+        "effectText": "Choose a scoring tile from any board line. Add a copy to the top of your deck."
       },
       "sealed_copy": {
         "displayName": "Seal Copy",
-        "effectText": "Choose a sealed or enhanced tile from any board line. Add a copy to your deck."
+        "effectText": "Choose a sealed or enhanced scoring tile. Add a copy to the top of your deck."
       },
-      "line_seal_stamp": {
+      "fate_three_kind_high": {
         "displayName": "High Triple Fate",
         "effectText": "Choose a board line. Transform it into a three-of-a-kind set using the line's highest number; the other numbers do not overlap."
       },
-      "growth_seal": {
+      "fate_straight_low": {
         "displayName": "Low Straight Fate",
         "effectText": "Choose a board line. Transform it into the lowest straight set possible from the line's lowest tile, with that tile off-color."
       },
-      "gold_seal_stamp": {
+      "fate_straight_high": {
         "displayName": "High Straight Fate",
         "effectText": "Choose a board line. Transform it into the highest straight set possible from the line's highest tile, with that tile off-color."
       },
-      "echo_seal": {
+      "fate_flush_low": {
         "displayName": "Low Flush Fate",
         "effectText": "Choose a board line. Transform it into a flush set using the line's lowest tile color."
       },
-      "anchor_seal": {
+      "fate_flush_high": {
         "displayName": "High Flush Fate",
         "effectText": "Choose a board line. Transform it into a flush set using the line's highest tile color."
       },
-      "risk_seal": {
+      "fate_full_house_low": {
         "displayName": "Low Full-House Fate",
         "effectText": "Choose a board line. Transform it into a full house with the second-lowest number as triple and highest number as pair."
       },
@@ -307,7 +295,15 @@
       },
       "number_mask": {
         "displayName": "Royal Fate",
-        "effectText": "Choose a board line. Transform it into a same-color 9-13 royal flush set using the line's highest tile color."
+        "effectText": "Choose a board line. If the line has a 1 tile, use that tile color; otherwise use the highest tile color. Transform it into a same-color 10-11-12-13-1 royal flush set."
+      },
+      "flush_house_fate": {
+        "displayName": "Flush-House Fate",
+        "effectText": "Choose a board line. Transform it into a same-color full house using the highest and next-highest numbers."
+      },
+      "flush_five_fate": {
+        "displayName": "Flush-Five Fate",
+        "effectText": "Choose a board line. Transform it into five same-color copies of the highest number."
       },
       "line_pruner": {
         "displayName": "Low Triple Fate",
@@ -315,7 +311,7 @@
       },
       "trim_color": {
         "displayName": "Color Pruner",
-        "effectText": "Choose a tile from any board line. Mark a same-color deck tile for removal."
+        "effectText": "Choose a tile from any board line. Remove off-color tiles from that line, then put the same number of matching-color tiles on top of your deck."
       },
       "trim_rank": {
         "displayName": "Two-Pair Fate",
@@ -327,7 +323,7 @@
       },
       "sacrifice_line": {
         "displayName": "Sacrifice Line",
-        "effectText": "Choose any board line. Clear it, copy up to two tiles to your deck, and mark one copied tile for removal."
+        "effectText": "Choose any board line. Clear it and copy 2 of its tiles onto the top of your deck."
       },
       "cross_rite": {
         "displayName": "Cross Rite",
@@ -347,7 +343,7 @@
       },
       "bridge_rite": {
         "displayName": "Bridge Rite",
-        "effectText": "Choose a shared crossing tile. Add a bridge marker; future dual-line scoring gains Gold."
+        "effectText": "Choose a shared crossing tile. Add a bridge seal; each overlapping scoring line gains Gold +2."
       },
       "ritual_coupon": {
         "displayName": "Ritual Coupon",

@@ -38,9 +38,9 @@ void main() {
       expect(isDeadLineRank(RummiHandRank.twoPair), isFalse);
     });
 
-    test('royal straight flush 9–13 same color is hidden rank', () {
+    test('royal straight flush 1-10-11-12-13 same color is hidden rank', () {
       final e = HandEvaluator.evaluateFive([
-        t(TileColor.red, 9),
+        t(TileColor.red, 1),
         t(TileColor.red, 10),
         t(TileColor.red, 11),
         t(TileColor.red, 12),
@@ -49,6 +49,17 @@ void main() {
       expect(e.rank, RummiHandRank.royalStraightFlush);
       expect(e.baseScore, 200);
       expect(e.canClearLine, true);
+    });
+
+    test('9-13 same color is straight flush, not royal', () {
+      final e = HandEvaluator.evaluateFive([
+        t(TileColor.red, 9),
+        t(TileColor.red, 10),
+        t(TileColor.red, 11),
+        t(TileColor.red, 12),
+        t(TileColor.red, 13),
+      ]);
+      expect(e.rank, RummiHandRank.straightFlush);
     });
 
     test('five of a kind beats four of a kind', () {
@@ -62,6 +73,31 @@ void main() {
       expect(e.rank, RummiHandRank.fiveOfAKind);
       expect(e.baseScore, 220);
       expect(e.contributingIndexes, [0, 1, 2, 3, 4]);
+    });
+
+    test('flush five beats five of a kind', () {
+      final e = HandEvaluator.evaluateFive([
+        const Tile(color: TileColor.blue, number: 7, id: 0),
+        const Tile(color: TileColor.blue, number: 7, id: 1),
+        const Tile(color: TileColor.blue, number: 7, id: 2),
+        const Tile(color: TileColor.blue, number: 7, id: 3),
+        const Tile(color: TileColor.blue, number: 7, id: 4),
+      ]);
+      expect(e.rank, RummiHandRank.flushFive);
+      expect(e.baseScore, 260);
+      expect(e.contributingIndexes, [0, 1, 2, 3, 4]);
+    });
+
+    test('flush house beats full house', () {
+      final e = HandEvaluator.evaluateFive([
+        t(TileColor.yellow, 8),
+        t(TileColor.yellow, 8),
+        t(TileColor.yellow, 8),
+        t(TileColor.yellow, 12),
+        t(TileColor.yellow, 12),
+      ]);
+      expect(e.rank, RummiHandRank.flushHouse);
+      expect(e.baseScore, 240);
     });
 
     test('low straight flush is hidden rank', () {
@@ -138,7 +174,7 @@ void main() {
       expect(e.isDeadLine, true);
     });
 
-    test('straight flush wheel same color', () {
+    test('royal wheel same color is royal straight flush', () {
       final e = HandEvaluator.evaluateFive([
         t(TileColor.blue, 10),
         t(TileColor.blue, 11),
@@ -146,7 +182,7 @@ void main() {
         t(TileColor.blue, 13),
         t(TileColor.blue, 1),
       ]);
-      expect(e.rank, RummiHandRank.straightFlush);
+      expect(e.rank, RummiHandRank.royalStraightFlush);
     });
 
     test('flush not straight', () {

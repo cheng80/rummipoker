@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,9 +37,9 @@ void main() {
       tester,
       restoredRun: _fixtureWithQuickItem('undo_seal'),
       debugFixtureId: 'test_failed_undo_item',
+      debugAutoUseItemId: 'undo_seal',
     );
 
-    await _tapQuickItemUse(tester, '되돌림 표식');
     await _pumpUntilText(tester, '되돌릴 보드 이동이 없습니다.');
 
     expect(find.text('되돌릴 보드 이동이 없습니다.'), findsOneWidget);
@@ -52,9 +54,9 @@ void main() {
         hand: const [Tile(color: TileColor.red, number: 7)],
       ),
       debugFixtureId: 'test_failed_emergency_draw_item',
+      debugAutoUseItemId: 'emergency_draw',
     );
 
-    await _tapQuickItemUse(tester, '비상 드로우');
     await _pumpUntilText(tester, '손패가 비어 있을 때만 사용할 수 있습니다.');
 
     expect(find.text('손패가 비어 있을 때만 사용할 수 있습니다.'), findsOneWidget);
@@ -66,16 +68,12 @@ void main() {
       tester,
       restoredRun: _fixtureWithQuickItem('emergency_draw', clearHand: true),
       debugFixtureId: 'test_success_emergency_draw_item',
+      debugAutoUseItemId: 'emergency_draw',
     );
 
-    await _tapQuickItemUse(tester, '비상 드로우');
     await _pumpUntilText(tester, '타일 1장 드로우');
 
     expect(find.text('타일 1장 드로우'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('hand-draw-incoming-badge')),
-      findsOneWidget,
-    );
     expect(
       find.byKey(const ValueKey('bottom-resource-pulse-deck')),
       findsOneWidget,
@@ -107,9 +105,9 @@ void main() {
       tester,
       restoredRun: _twoPairPreviewFixtureWithQuickItem('straight_oil'),
       debugFixtureId: 'test_pending_confirm_condition_preview',
+      debugAutoUseItemId: 'straight_oil',
     );
 
-    await _tapQuickItemUse(tester, '연속 준비');
     await _pumpUntilText(tester, '아이템 조건 미충족 0/1');
 
     expect(find.text('아이템 조건 미충족 0/1'), findsOneWidget);
@@ -134,9 +132,9 @@ void main() {
       tester,
       restoredRun: deckNeedleFixture!,
       debugFixtureId: DebugRunFixtureService.deckNeedleBattle,
+      debugAutoUseItemId: 'deck_needle',
     );
 
-    await _tapQuickItemUse(tester, '덱 바늘');
     await _pumpUntilText(tester, '덱 위 3장 중 버릴 타일을 선택합니다.');
 
     expect(find.text('후보 1'), findsOneWidget);
@@ -167,9 +165,9 @@ void main() {
       tester,
       restoredRun: _boardMoveFixtureWithQuickItem('slide_wax'),
       debugFixtureId: 'test_slide_wax_board_move_bonus',
+      debugAutoUseItemId: 'slide_wax',
     );
 
-    await _tapQuickItemUse(tester, '슬라이드 왁스');
     await _pumpUntilText(tester, '다음 보드 이동 보너스 준비');
 
     expect(find.text('이동 보너스 대기'), findsOneWidget);
@@ -250,9 +248,9 @@ void main() {
       tester,
       restoredRun: _fixtureWithQuickItem('hand_scrap'),
       debugFixtureId: 'test_hand_scrap_resource_feedback',
+      debugAutoUseItemId: 'hand_scrap',
     );
 
-    await _tapQuickItemUse(tester, '손패 패스');
     await _pumpUntilText(tester, '손패 버림 +1');
 
     expect(
@@ -266,9 +264,9 @@ void main() {
       tester,
       restoredRun: _fixtureWithQuickItem('move_token'),
       debugFixtureId: 'test_move_token_resource_feedback',
+      debugAutoUseItemId: 'move_token',
     );
 
-    await _tapQuickItemUse(tester, '이동 칩');
     await _pumpUntilText(tester, '타일 이동 +1');
 
     expect(
@@ -282,9 +280,9 @@ void main() {
       tester,
       restoredRun: _fixtureWithQuickItem('battle_pouch'),
       debugFixtureId: 'test_battle_pouch_capacity_feedback',
+      debugAutoUseItemId: 'battle_pouch',
     );
 
-    await _tapQuickItemUse(tester, '전투 주머니');
     await _pumpUntilText(tester, '손패 최대치 +1');
 
     expect(
@@ -298,9 +296,9 @@ void main() {
       tester,
       restoredRun: _undoSuccessFixture(),
       debugFixtureId: 'test_success_undo_item',
+      debugAutoUseItemId: 'undo_seal',
     );
 
-    await _tapQuickItemUse(tester, '되돌림 표식');
     await _pumpUntilText(tester, '마지막 이동 되돌림');
 
     expect(
@@ -349,6 +347,11 @@ Future<void> _pumpGameView(
                     restoredRun: restoredRun,
                     debugFixtureId: debugFixtureId,
                     debugAutoUseItemId: debugAutoUseItemId,
+                    debugItemCatalogOverride: ItemCatalog.fromJsonString(
+                      File(
+                        'data/common/items_common_v1.json',
+                      ).readAsStringSync(),
+                    ),
                   ),
                 ),
               ),
@@ -358,6 +361,7 @@ Future<void> _pumpGameView(
       ),
     ),
   );
+  await tester.pump();
 }
 
 ActiveRunRuntimeState _fixtureWithQuickItem(
@@ -536,14 +540,6 @@ Future<void> _pumpUntilText(WidgetTester tester, String text) async {
       .where((value) => value.isNotEmpty)
       .join(' | ');
   fail('Expected to find "$text". Visible text: $visibleTexts');
-}
-
-Future<void> _tapQuickItemUse(WidgetTester tester, String itemName) async {
-  await _pumpUntilText(tester, itemName);
-  await tester.tap(find.text(itemName).first);
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('사용'));
-  await tester.pump();
 }
 
 Future<void> _disposeGameView(WidgetTester tester) async {

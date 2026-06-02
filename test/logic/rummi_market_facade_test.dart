@@ -661,43 +661,87 @@ void main() {
       expect(after.itemOffers.map((offer) => offer.contentId), ['hand_scrap']);
     });
 
-    test('experimental ritual items do not appear in normal market offers', () {
-      final catalog = ItemCatalog.fromJson({
-        'schemaVersion': 1,
-        'catalogId': 'items_test',
-        'items': [
-          _itemJson(
-            id: 'line_memory',
-            timing: 'use_battle',
-            op: 'add_hand_rank_progress_from_selected_line',
-            placement: 'quickSlot',
-            tags: const ['battle', 'ritual', 'line_target'],
-          ),
-          _itemJson(
-            id: 'board_scrap',
-            timing: 'use_battle',
-            op: 'add_board_discard',
-            placement: 'quickSlot',
-          ),
-        ],
-      });
-      final progress = RummiRunProgress()..gold = 20;
-      progress.pinCurrentItemOfferKeys([
-        RummiMarketModifierState.itemOfferKey(
-          ItemPlacement.quickSlot,
+    test(
+      'deferred ritual items are filtered while active ritual items remain',
+      () {
+        const activeRitualIds = [
+          'trim_rank',
+          'line_pruner',
+          'fate_three_kind_high',
+          'color_concord',
+          'step_rite',
+          'rank_concord',
+          'fate_full_house_low',
+          'flush_house_fate',
+          'flush_five_fate',
+          'fate_flush_high',
+          'fate_flush_low',
+          'fate_straight_high',
+          'fate_straight_low',
+          'wild_thread',
+          'off_color_rite',
+          'number_mask',
+          'trim_color',
+          'deadwood_burn',
+          'sacrifice_line',
+          'sealed_copy',
+          'scarce_copy',
+          'color_echo',
+          'rank_echo',
+          'edge_copy',
+          'keystone_copy',
           'line_memory',
-        ),
-      ]);
+          'bridge_rite',
+          'diagonal_rite',
+          'center_rite',
+          'corner_rite',
+          'cross_rite',
+          'cross_memory',
+        ];
+        const deferredRitualIds = [
+          'ritual_coupon',
+          'ritual_lens',
+          'line_pack_ticket',
+          'seal_vendor',
+          'prune_vendor',
+        ];
+        final catalog = ItemCatalog.fromJson({
+          'schemaVersion': 1,
+          'catalogId': 'items_test',
+          'items': [
+            for (final id in [...activeRitualIds, ...deferredRitualIds])
+              _itemJson(
+                id: id,
+                timing: 'use_battle',
+                op: 'ritual_line_effect',
+                placement: 'quickSlot',
+                tags: const ['battle', 'ritual', 'line_target'],
+              ),
+            _itemJson(
+              id: 'board_scrap',
+              timing: 'use_battle',
+              op: 'add_board_discard',
+              placement: 'quickSlot',
+            ),
+          ],
+        });
+        final progress = RummiRunProgress()..gold = 20;
+        progress.pinCurrentItemOfferKeys([
+          for (final id in [...activeRitualIds, ...deferredRitualIds])
+            RummiMarketModifierState.itemOfferKey(ItemPlacement.quickSlot, id),
+        ]);
 
-      final facade = RummiMarketRuntimeFacade.fromRunProgress(
-        progress,
-        itemCatalog: catalog,
-      );
+        final facade = RummiMarketRuntimeFacade.fromRunProgress(
+          progress,
+          itemCatalog: catalog,
+        );
 
-      expect(facade.itemOffers.map((offer) => offer.contentId), [
-        'board_scrap',
-      ]);
-    });
+        expect(
+          facade.itemOffers.map((offer) => offer.contentId),
+          activeRitualIds,
+        );
+      },
+    );
 
     test('buying an item offer does not refill the empty market slot', () {
       final catalog = ItemCatalog.fromJson({
@@ -848,6 +892,54 @@ void main() {
       expect(
         mid.jesterRarityWeight(RummiJesterRarity.legendary),
         greaterThan(0),
+      );
+    });
+
+    test('fate transforms stay rare market pressure picks', () {
+      final early = RummiStationBandMarketPolicy.forStage(1);
+      final mid = RummiStationBandMarketPolicy.forStage(4);
+      final late = RummiStationBandMarketPolicy.forStage(8);
+      final economyItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'coin_cache',
+          timing: 'use_market',
+          op: 'gain_gold',
+          placement: 'inventory',
+          tags: const ['gold', 'economy'],
+        ),
+      );
+      final fateItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'number_mask',
+          timing: 'use_battle',
+          op: 'ritual_line_transform',
+          placement: 'quickSlot',
+          rarity: 'legendary',
+          tags: const ['ritual', 'fate_transform', 'line_target', 'legendary'],
+        ),
+      );
+      final rareFateItem = ItemDefinition.fromJson(
+        _itemJson(
+          id: 'fate_flush_high',
+          timing: 'use_battle',
+          op: 'ritual_line_transform',
+          placement: 'quickSlot',
+          rarity: 'rare',
+          tags: const ['ritual', 'fate_transform', 'line_target'],
+        ),
+      );
+
+      expect(
+        early.itemOfferWeight(fateItem),
+        lessThan(early.itemOfferWeight(economyItem)),
+      );
+      expect(
+        mid.itemOfferWeight(fateItem),
+        lessThan(mid.itemOfferWeight(rareFateItem)),
+      );
+      expect(
+        late.itemOfferWeight(fateItem),
+        greaterThan(mid.itemOfferWeight(fateItem)),
       );
     });
 

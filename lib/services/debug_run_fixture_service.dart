@@ -59,10 +59,30 @@ class DebugRunFixtureService {
   static const String lineMemoryBattlePreview = 'line_memory_battle_preview';
   static const String ritualGrowthCopyBattlePreview =
       'ritual_growth_copy_battle_preview';
+  static const String ritualDeckEchoBattlePreview =
+      'ritual_deck_echo_battle_preview';
   static const String ritualSealOverrideBattlePreview =
       'ritual_seal_override_battle_preview';
   static const String ritualPruneBurnBattlePreview =
       'ritual_prune_burn_battle_preview';
+  static const Map<String, String> fateLineTransformPreviewItemsByFixture = {
+    'fate_royal_flush_battle_preview': 'number_mask',
+    'fate_straight_flush_high_battle_preview': 'wild_thread',
+    'fate_straight_flush_low_battle_preview': 'off_color_rite',
+    'fate_four_kind_high_battle_preview': 'color_concord',
+    'fate_four_kind_low_battle_preview': 'step_rite',
+    'fate_full_house_high_battle_preview': 'rank_concord',
+    'fate_full_house_low_battle_preview': 'fate_full_house_low',
+    'fate_flush_house_battle_preview': 'flush_house_fate',
+    'fate_flush_five_battle_preview': 'flush_five_fate',
+    'fate_flush_high_battle_preview': 'fate_flush_high',
+    'fate_flush_low_battle_preview': 'fate_flush_low',
+    'fate_straight_high_battle_preview': 'fate_straight_high',
+    'fate_straight_low_battle_preview': 'fate_straight_low',
+    'fate_three_kind_high_battle_preview': 'fate_three_kind_high',
+    'fate_three_kind_low_battle_preview': 'line_pruner',
+    'fate_two_pair_high_battle_preview': 'trim_rank',
+  };
   static const String finalBossCashOutReady = 'final_boss_cash_out_ready';
   static const String bossRowConstraintPreview = 'boss_row_constraint_preview';
   static const String bossColumnConstraintPreview =

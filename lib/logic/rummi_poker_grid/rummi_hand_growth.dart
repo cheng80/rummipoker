@@ -116,6 +116,8 @@ class RummiHandGrowth {
     RummiHandRank.lowStraightFlush,
     RummiHandRank.royalStraightFlush,
     RummiHandRank.fiveOfAKind,
+    RummiHandRank.flushHouse,
+    RummiHandRank.flushFive,
   ];
 
   static bool grows(RummiHandRank rank) => !isDeadLineRank(rank);
@@ -146,6 +148,8 @@ class RummiHandGrowth {
     RummiHandRank.lowStraightFlush => 36,
     RummiHandRank.royalStraightFlush => 40,
     RummiHandRank.fiveOfAKind => 44,
+    RummiHandRank.flushHouse => 48,
+    RummiHandRank.flushFive => 52,
     RummiHandRank.highCard || RummiHandRank.onePair => 0,
   };
 

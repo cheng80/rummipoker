@@ -119,6 +119,12 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     builder: _buildRitualGrowthCopyBattlePreview,
   ),
   DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.ritualDeckEchoBattlePreview,
+    label: 'Ritual 덱 복사/메아리 전투',
+    description: '각인 복사/희소석 복사/색 메아리 scoringTiles 선택 검증용',
+    builder: _buildRitualDeckEchoBattlePreview,
+  ),
+  DebugRunFixtureDefinition(
     id: DebugRunFixtureService.ritualSealOverrideBattlePreview,
     label: 'Ritual 각인/변환 전투',
     description: '라인 각인/금빛 각인/숫자 맞춤 의식 선택 검증용',
@@ -127,9 +133,20 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
   DebugRunFixtureDefinition(
     id: DebugRunFixtureService.ritualPruneBurnBattlePreview,
     label: 'Ritual 압축/소각 전투',
-    description: '가지치기/마른가지 소각/숫자 가면 선택 검증용',
+    description: '색 가지치기/마른가지 소각/제물 의식 선택 검증용',
     builder: _buildRitualPruneBurnBattlePreview,
   ),
+  for (final entry
+      in DebugRunFixtureService.fateLineTransformPreviewItemsByFixture.entries)
+    DebugRunFixtureDefinition(
+      id: entry.key,
+      label: '운명 변환 전투: ${entry.value}',
+      description: '${entry.value} Q1 보유 / row 2 선택 변환 눈검증용',
+      builder: () => _buildFateLineTransformBattlePreview(
+        fixtureId: entry.key,
+        itemId: entry.value,
+      ),
+    ),
   DebugRunFixtureDefinition(
     id: DebugRunFixtureService.finalBossCashOutReady,
     label: '최종 Boss 런 완료 체크',

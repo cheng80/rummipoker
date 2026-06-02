@@ -565,6 +565,122 @@ void main() {
     expect(line.effects.single.jesterId, 'tile_edition:silver_edition');
   });
 
+  test('각인 타일은 확정 점수, 골드, 족보 성장에 반영된다', () {
+    ConfirmClearResult confirmSingleLineWithSeal(TileSeal seal) {
+      final board = RummiBoard();
+      board.setCell(2, 0, Tile(color: TileColor.red, number: 1, seal: seal));
+      board.setCell(2, 1, t(TileColor.blue, 2));
+      board.setCell(2, 2, t(TileColor.red, 3));
+      board.setCell(2, 3, t(TileColor.blue, 4));
+      board.setCell(2, 4, t(TileColor.red, 5));
+      final session = RummiPokerGridSession(
+        blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+        deck: PokerDeck.remainingAfterPlaced(board: board),
+        board: board,
+      );
+      return session.confirmAllFullLines(applyScoreToBlind: false).result;
+    }
+
+    final lineMark = confirmSingleLineWithSeal(TileSeal.lineMark);
+    expect(lineMark.scoreAdded, 77);
+    expect(
+      lineMark.lineBreakdowns.single.effects.single.jesterId,
+      'tile_seal:line_mark',
+    );
+
+    final growth = confirmSingleLineWithSeal(TileSeal.growthSeal);
+    expect(growth.scoreAdded, 70);
+    expect(growth.lineBreakdowns.single.bonusRankProgress, 1);
+
+    final gold = confirmSingleLineWithSeal(TileSeal.goldSeal);
+    expect(gold.scoreAdded, 70);
+    expect(gold.lineBreakdowns.single.tileGoldBonus, 1);
+
+    final fracture = confirmSingleLineWithSeal(TileSeal.fractureSeal);
+    expect(fracture.scoreAdded, 105);
+    expect(
+      fracture.lineBreakdowns.single.effects.single.jesterId,
+      'tile_seal:fracture_seal',
+    );
+    expect(
+      fracture.lineBreakdowns.single.destroyedTiles.single.seal,
+      TileSeal.fractureSeal,
+    );
+  });
+
+  test('닻 각인은 이번 Station에 이동한 타일에만 점수 보너스를 준다', () {
+    final board = RummiBoard();
+    board.setCell(
+      0,
+      0,
+      const Tile(color: TileColor.red, number: 1, seal: TileSeal.anchorSeal),
+    );
+    board.setCell(2, 1, t(TileColor.blue, 2));
+    board.setCell(2, 2, t(TileColor.red, 3));
+    board.setCell(2, 3, t(TileColor.blue, 4));
+    board.setCell(2, 4, t(TileColor.red, 5));
+    final session = RummiPokerGridSession(
+      blind: RummiBlindState(
+        targetScore: 999,
+        discardsRemaining: 4,
+        boardMovesRemaining: 1,
+      ),
+      deck: PokerDeck.remainingAfterPlaced(board: board),
+      board: board,
+    );
+
+    expect(
+      session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 2, toCol: 0),
+      isNull,
+    );
+    final out = session.confirmAllFullLines(applyScoreToBlind: false);
+
+    expect(out.result.scoreAdded, 84);
+    expect(
+      out.result.lineBreakdowns.single.effects.single.jesterId,
+      'tile_seal:anchor_seal',
+    );
+  });
+
+  test('겹친 각인은 같은 타일이 두 줄 이상에 기여할 때만 발동한다', () {
+    ConfirmClearResult confirmOverlapWithSeal(TileSeal seal) {
+      final board = RummiBoard();
+      board.setCell(1, 2, t(TileColor.yellow, 7));
+      board.setCell(2, 1, t(TileColor.blue, 7));
+      board.setCell(2, 2, Tile(color: TileColor.red, number: 7, seal: seal));
+      board.setCell(2, 3, t(TileColor.black, 7));
+      board.setCell(3, 2, t(TileColor.red, 7));
+      final session = RummiPokerGridSession(
+        blind: RummiBlindState(targetScore: 999, discardsRemaining: 4),
+        deck: PokerDeck.remainingAfterPlaced(board: board),
+        board: board,
+      );
+      return session.confirmAllFullLines(applyScoreToBlind: false).result;
+    }
+
+    final echo = confirmOverlapWithSeal(TileSeal.echoSeal);
+    expect(echo.lineBreakdowns, hasLength(2));
+    expect(echo.scoreAdded, 130);
+    expect(
+      echo.lineBreakdowns.map((line) => line.effects.single.jesterId),
+      everyElement('tile_seal:echo_seal'),
+    );
+
+    final crossMemory = confirmOverlapWithSeal(TileSeal.crossMemory);
+    expect(crossMemory.scoreAdded, 104);
+    expect(
+      crossMemory.lineBreakdowns.map((line) => line.bonusRankProgress),
+      everyElement(1),
+    );
+
+    final bridge = confirmOverlapWithSeal(TileSeal.bridgeSeal);
+    expect(bridge.scoreAdded, 104);
+    expect(
+      bridge.lineBreakdowns.map((line) => line.tileGoldBonus),
+      everyElement(2),
+    );
+  });
+
   test('유리 타일 파괴는 추가 덱 타일 source에서 제거된다', () {
     const glassTile = Tile(
       color: TileColor.red,

@@ -212,6 +212,9 @@ extension _GameViewBattleActions on _GameViewState {
       return;
     }
     final isRitual = slot.item.effect.op == 'ritual_line_effect';
+    final usesBoardLineSelection =
+        isRitual ||
+        slot.item.effect.op == 'add_hand_rank_progress_from_selected_line';
     final allLines = isRitual
         ? session.currentBoardLineSummaries()
         : session.currentScoringLineSummaries();
@@ -225,6 +228,10 @@ extension _GameViewBattleActions on _GameViewState {
     final itemName = ItemTranslationScope.of(
       context,
     ).resolveDisplayName(slot.contentId, slot.displayName);
+    if (usesBoardLineSelection) {
+      _startFateLineSelection(slot: slot, itemName: itemName, lines: lines);
+      return;
+    }
     final selected = await showDialog<RummiScoringLineSummary>(
       context: context,
       barrierDismissible: true,
@@ -321,6 +328,160 @@ extension _GameViewBattleActions on _GameViewState {
     await _saveActiveRun();
   }
 
+  void _startFateLineSelection({
+    required RummiBattleItemSlotView slot,
+    required String itemName,
+    required List<RummiScoringLineSummary> lines,
+  }) {
+    _clearSelections();
+    _mutate(() {
+      _selectedBattleItemSlot = null;
+      _fateLineSelection = _FateLineSelection(
+        slot: slot,
+        itemName: itemName,
+        lines: lines,
+      );
+    });
+    _showSnack(
+      slot.item.effect.value('target') == 'tile'
+          ? '보드에서 적용할 타일을 선택하세요.'
+          : '보드에서 적용할 선을 선택하세요.',
+    );
+  }
+
+  void _selectFateLine(RummiScoringLineSummary line) {
+    final current = _fateLineSelection;
+    if (current == null) return;
+    _mutate(
+      () => _fateLineSelection = current.copyWith(
+        selectedLine: line,
+        selectedTileIndex: current.needsTileTarget ? -1 : null,
+      ),
+    );
+  }
+
+  void _selectFateTile(GameBoardTileSelectionTarget target) {
+    final current = _fateLineSelection;
+    if (current == null) return;
+    _mutate(
+      () => _fateLineSelection = current.copyWith(
+        selectedLine: target.line,
+        selectedTileIndex: target.tileIndex,
+      ),
+    );
+  }
+
+  void _cancelFateLineSelection() {
+    if (_fateLineSelection == null) return;
+    _mutate(() => _fateLineSelection = null);
+  }
+
+  Future<void> _confirmFateLineSelection() async {
+    final selection = _fateLineSelection;
+    final selected = selection?.selectedLine;
+    if (selection == null || selected == null) {
+      _showSnack(
+        selection?.needsTileTarget == true
+            ? '적용할 보드 타일을 먼저 선택하세요.'
+            : '적용할 보드 선을 먼저 선택하세요.',
+      );
+      return;
+    }
+    if (selection.needsTileTarget && selection.selectedTileIndex == null) {
+      _showSnack('적용할 보드 타일을 먼저 선택하세요.');
+      return;
+    }
+    final useResult = _gameNotifier.useBattleItemOnRitualTargetResult(
+      selection.slot.item,
+      selected.ref,
+      tileIndex: selection.selectedTileIndex,
+    );
+    if (!useResult.isSuccess) {
+      _showSnack(useResult.failMessage ?? '아이템을 사용할 수 없습니다.');
+      return;
+    }
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    _mutate(() {
+      _fateLineSelection = null;
+      _fateTransformFlashLineRef = selected.ref;
+      _fateTransformFlashTick += 1;
+    });
+    _showSnack('${selection.itemName} 사용');
+    final feedbackDetail = _scoringLineTargetFeedbackDetail(
+      selection.slot.item,
+      '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}',
+      selection.selectedTile,
+    );
+    final feedbackDelay = _ritualFlightDurationForEvents(useResult.events);
+    if (feedbackDelay == Duration.zero) {
+      _showItemEffectFeedback(
+        title: selection.itemName,
+        detail: feedbackDetail,
+        sourceLabel: selection.slot.slotLabel,
+      );
+    } else {
+      unawaited(
+        Future<void>.delayed(feedbackDelay, () {
+          if (!mounted) return;
+          _showItemEffectFeedback(
+            title: selection.itemName,
+            detail: feedbackDetail,
+            sourceLabel: selection.slot.slotLabel,
+          );
+        }),
+      );
+    }
+    _showRitualEffectFlight(useResult.events);
+    final tick = _fateTransformFlashTick;
+    unawaited(
+      Future<void>.delayed(GamePresentationTimings.fateLineTransformFlash, () {
+        if (!mounted || _fateTransformFlashTick != tick) return;
+        _mutate(() => _fateTransformFlashLineRef = null);
+      }),
+    );
+    await _saveActiveRun();
+  }
+
+  Duration _ritualFlightDurationForEvents(List<ItemEffectEvent> events) {
+    if (events.any((event) => event.kind == ItemEffectEventKind.goldGained)) {
+      return GamePresentationTimings.ritualGoldFlight;
+    }
+    if (events.any(
+      (event) => event.kind == ItemEffectEventKind.deckTileAdded,
+    )) {
+      return GamePresentationTimings.ritualDeckTileFlight;
+    }
+    return Duration.zero;
+  }
+
+  void _showRitualEffectFlight(List<ItemEffectEvent> events) {
+    final gold = events
+        .where((event) => event.kind == ItemEffectEventKind.goldGained)
+        .fold<int>(0, (sum, event) => sum + event.amount.round());
+    final deckTiles = [
+      for (final event in events)
+        if (event.kind == ItemEffectEventKind.deckTileAdded)
+          _tileFromEffectDetail(event.detail),
+    ].nonNulls.toList(growable: false);
+    if (gold <= 0 && deckTiles.isEmpty) return;
+    final tick = _ritualEffectFlightTick + 1;
+    _mutate(() {
+      _ritualEffectFlightTick = tick;
+      _ritualEffectFlight = gold > 0
+          ? _RitualEffectFlight.gold(gold)
+          : _RitualEffectFlight.deck(deckTiles);
+    });
+    final duration = gold > 0
+        ? GamePresentationTimings.ritualGoldFlight
+        : GamePresentationTimings.ritualDeckTileFlight;
+    unawaited(
+      Future<void>.delayed(duration, () {
+        if (!mounted || _ritualEffectFlightTick != tick) return;
+        _mutate(() => _ritualEffectFlight = null);
+      }),
+    );
+  }
+
   List<RummiScoringLineSummary> _ritualSelectableLinesForItem(
     ItemDefinition item,
     List<RummiScoringLineSummary> lines,
@@ -328,6 +489,24 @@ extension _GameViewBattleActions on _GameViewState {
     final action = item.effect.value('ritualAction') as String? ?? '';
     bool hasSelectedTile(RummiScoringLineSummary line) =>
         line.scoringTiles.isNotEmpty;
+    bool hasValidTileTarget(RummiScoringLineSummary line) {
+      final maxCount = math.min(
+        line.scoringTiles.length,
+        line.contributingCells.length,
+      );
+      for (var i = 0; i < maxCount; i += 1) {
+        if (_isValidRitualTileTarget(
+          item,
+          line,
+          line.scoringTiles[i],
+          line.contributingCells[i],
+        )) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     bool hasCenterTile(RummiScoringLineSummary line) {
       final centerCell = line.ref.cells()[2];
       return line.contributingCells.any((cell) => cell == centerCell);
@@ -347,9 +526,6 @@ extension _GameViewBattleActions on _GameViewState {
           'growth' ||
           'center_growth' ||
           'growth_marker' ||
-          'boss_growth' ||
-          'thin_growth' ||
-          'growth_risk' ||
           'line_bonus_25' ||
           'line_bonus_35' => line.isScoringLine,
           'override_three_kind' ||
@@ -365,6 +541,8 @@ extension _GameViewBattleActions on _GameViewState {
           'fate_four_kind_low' ||
           'fate_full_house_high' ||
           'fate_full_house_low' ||
+          'fate_flush_house' ||
+          'fate_flush_five' ||
           'fate_flush_high' ||
           'fate_flush_low' ||
           'fate_straight_high' ||
@@ -377,6 +555,8 @@ extension _GameViewBattleActions on _GameViewState {
           'copy_selected' ||
           'copy_rank' ||
           'copy_color' ||
+          'prune_line_to_color' ||
+          'growth_marker' => hasValidTileTarget(line),
           'seal_line_mark' ||
           'seal_growth' ||
           'seal_gold' ||
@@ -385,9 +565,9 @@ extension _GameViewBattleActions on _GameViewState {
           'seal_risk' ||
           'seal_bridge' ||
           'remove_same_tile' ||
-          'remove_same_color' ||
           'remove_same_rank' => hasSelectedTile(line),
-          'burn_line' || 'sacrifice_line' => line.occupiedCount > 0,
+          'burn_line' => line.occupiedCount > 0,
+          'sacrifice_line' => line.occupiedCount >= 2,
           _ => line.occupiedCount > 0,
         })
           line,
@@ -489,10 +669,7 @@ extension _GameViewBattleActions on _GameViewState {
   String _ritualActionLabel(Object? actionValue) {
     return switch (actionValue?.toString()) {
       'growth' || 'center_growth' => '족보 성장',
-      'growth_marker' => '성장 표식',
-      'boss_growth' => '보스전 성장',
-      'thin_growth' => '얇은 줄 성장',
-      'growth_risk' => '위험 성장',
+      'growth_marker' => '교차 기억 표식',
       'copy_center' ||
       'copy_endpoint' ||
       'copy_selected' ||
@@ -515,12 +692,15 @@ extension _GameViewBattleActions on _GameViewState {
       'fate_straight_flush_high' || 'fate_straight_flush_low' => '스티플 세트 변환',
       'fate_four_kind_high' || 'fate_four_kind_low' => '포카드 세트 변환',
       'fate_full_house_high' || 'fate_full_house_low' => '풀하우스 세트 변환',
+      'fate_flush_house' => '플러시 하우스 세트 변환',
+      'fate_flush_five' => '플러시 파이브 세트 변환',
       'fate_flush_high' || 'fate_flush_low' => '플러시 세트 변환',
       'fate_straight_high' || 'fate_straight_low' => '스트레이트 세트 변환',
       'fate_three_kind_high' || 'fate_three_kind_low' => '트리플 세트 변환',
       'fate_two_pair_high' => '투페어 세트 변환',
       'line_bonus_25' || 'line_bonus_35' => '선택 줄 보너스',
-      'remove_same_tile' || 'remove_same_color' || 'remove_same_rank' => '덱 파괴',
+      'remove_same_tile' || 'remove_same_rank' => '덱 파괴',
+      'prune_line_to_color' => '색 가지치기',
       'burn_line' => '줄 파괴',
       'sacrifice_line' => '줄 희생',
       _ => '의식 효과',
@@ -666,6 +846,403 @@ extension _GameViewBattleActions on _GameViewState {
       }),
     );
   }
+}
+
+class _FateLineSelection {
+  const _FateLineSelection({
+    required this.slot,
+    required this.itemName,
+    required this.lines,
+    this.selectedLine,
+    this.selectedTileIndex,
+  });
+
+  final RummiBattleItemSlotView slot;
+  final String itemName;
+  final List<RummiScoringLineSummary> lines;
+  final RummiScoringLineSummary? selectedLine;
+  final int? selectedTileIndex;
+
+  bool get needsTileTarget => slot.item.effect.value('target') == 'tile';
+
+  Tile? get selectedTile {
+    final line = selectedLine;
+    final index = selectedTileIndex;
+    if (line == null || index == null) return null;
+    if (index < 0 || index >= line.scoringTiles.length) return null;
+    return line.scoringTiles[index];
+  }
+
+  List<GameBoardTileSelectionTarget> get tileTargets {
+    final targets = <GameBoardTileSelectionTarget>[];
+    for (final line in lines) {
+      final maxCount = math.min(
+        line.scoringTiles.length,
+        line.contributingCells.length,
+      );
+      for (var i = 0; i < maxCount; i += 1) {
+        final tile = line.scoringTiles[i];
+        final cell = line.contributingCells[i];
+        if (!_isValidRitualTileTarget(slot.item, line, tile, cell)) continue;
+        targets.add(
+          GameBoardTileSelectionTarget(
+            line: line,
+            tileIndex: i,
+            cell: cell,
+            tile: tile,
+          ),
+        );
+      }
+    }
+    return List<GameBoardTileSelectionTarget>.unmodifiable(targets);
+  }
+
+  _FateLineSelection copyWith({
+    RummiScoringLineSummary? selectedLine,
+    int? selectedTileIndex,
+  }) {
+    return _FateLineSelection(
+      slot: slot,
+      itemName: itemName,
+      lines: lines,
+      selectedLine: selectedLine ?? this.selectedLine,
+      selectedTileIndex: selectedTileIndex == -1
+          ? null
+          : selectedTileIndex ?? this.selectedTileIndex,
+    );
+  }
+}
+
+class _FateLineSelectionPanel extends StatelessWidget {
+  const _FateLineSelectionPanel({
+    required this.selection,
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  final _FateLineSelection selection;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedLine = selection.selectedLine;
+    final selectedTile = selection.selectedTile;
+    final previewText = selectedLine == null
+        ? selection.needsTileTarget
+              ? '보드 위 파란 테두리 타일 후보를 직접 선택하세요.'
+              : '보드 위 파란 테두리 줄 후보를 직접 선택하세요.'
+        : _ritualSelectionPreviewText(
+            selection.slot.item,
+            selectedLine,
+            selectedTile,
+          );
+    final targetText = selectedLine == null
+        ? '선택 없음'
+        : selection.needsTileTarget
+        ? '${_lineLabel(selectedLine.ref)} · ${selectedTile?.code ?? '타일 선택 필요'}'
+        : '${_lineLabel(selectedLine.ref)} · ${_rankLabel(selectedLine)} · 타일 ${selectedLine.occupiedCount}';
+    final confirmEnabled =
+        selectedLine != null &&
+        (!selection.needsTileTarget || selectedTile != null);
+    final confirmLabel = _isFateLineTransformDefinition(selection.slot.item)
+        ? '변환'
+        : '확인';
+    final countText = selection.needsTileTarget
+        ? '${selection.tileTargets.length}개 타일'
+        : '${selection.lines.length}개 선';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: GameUiPalette.surfaceModalInner,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: GameUiPalette.userSelection.withValues(alpha: 0.72),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: GameUiPalette.ink.withValues(alpha: 0.34),
+            blurRadius: 18,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    selection.itemName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: GameUiPalette.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Text(
+                  countText,
+                  style: const TextStyle(
+                    color: GameUiPalette.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              targetText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: GameUiPalette.userSelection,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              previewText,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: GameUiPalette.textPrimary,
+                fontSize: 11.5,
+                height: 1.18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(onPressed: onCancel, child: const Text('취소')),
+                const SizedBox(width: 6),
+                FilledButton(
+                  onPressed: confirmEnabled ? onConfirm : null,
+                  child: Text(confirmLabel),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+bool _isValidRitualTileTarget(
+  ItemDefinition item,
+  RummiScoringLineSummary line,
+  Tile tile,
+  (int, int) cell,
+) {
+  return switch (item.effect.value('ritualAction')?.toString()) {
+    'prune_line_to_color' => line.lineTiles.any(
+      (candidate) => candidate.color != tile.color,
+    ),
+    'copy_selected' when item.id == 'sealed_copy' =>
+      tile.seal != null || tile.enhancement != null,
+    'copy_selected' when item.id == 'edge_copy' => _isLineEndpoint(
+      line.ref,
+      cell,
+    ),
+    _ => true,
+  };
+}
+
+bool _isLineEndpoint(LineRef ref, (int, int) cell) {
+  final cells = ref.cells();
+  return cell == cells.first || cell == cells.last;
+}
+
+bool _isFateLineTransformDefinition(ItemDefinition item) {
+  return switch (item.effect.value('ritualAction')?.toString()) {
+    'fate_royal_flush' ||
+    'fate_straight_flush_high' ||
+    'fate_straight_flush_low' ||
+    'fate_four_kind_high' ||
+    'fate_four_kind_low' ||
+    'fate_full_house_high' ||
+    'fate_full_house_low' ||
+    'fate_flush_house' ||
+    'fate_flush_five' ||
+    'fate_flush_high' ||
+    'fate_flush_low' ||
+    'fate_straight_high' ||
+    'fate_straight_low' ||
+    'fate_three_kind_high' ||
+    'fate_three_kind_low' ||
+    'fate_two_pair_high' => true,
+    _ => false,
+  };
+}
+
+String _ritualSelectionPreviewText(
+  ItemDefinition item,
+  RummiScoringLineSummary line,
+  Tile? selectedTile,
+) {
+  final action = item.effect.value('ritualAction')?.toString();
+  final centerCell = line.ref.cells()[2];
+  final centerIndex = line.contributingCells.indexWhere(
+    (cell) => cell == centerCell,
+  );
+  final centerTile = centerIndex >= 0 && centerIndex < line.scoringTiles.length
+      ? line.scoringTiles[centerIndex]
+      : null;
+  final chosenTileText = selectedTile == null
+      ? '선택한 점수 타일'
+      : '${selectedTile.code} 점수 타일';
+  final centerTileText = centerTile == null
+      ? '중앙 점수 타일'
+      : '${centerTile.code} 중앙 점수 타일';
+  return switch (action) {
+    'prune_line_to_color' =>
+      selectedTile == null
+          ? '선택 색이 아닌 타일을 제거하고 같은 색 타일을 덱 맨 위에 올립니다.'
+          : '${_colorLabel(selectedTile.color)}기준: 다른 색 타일 제거 후 덱 위 보충.',
+    'burn_line' => '선택한 줄을 지우고 골드 +3을 얻습니다.',
+    'sacrifice_line' => '선택한 줄을 지우고 앞의 타일 2장을 덱 맨 위에 복사합니다.',
+    'copy_center' => '$centerTileText 복사본을 덱 맨 위에 추가합니다.',
+    'copy_selected' => '$chosenTileText 복사본을 덱 맨 위에 추가합니다.',
+    'copy_color' => '$chosenTileText 색상과 같은 무작위 숫자 타일을 덱 맨 위에 추가합니다.',
+    'copy_rank' => '$chosenTileText 숫자와 같은 무작위 색 타일을 덱 맨 위에 추가합니다.',
+    'copy_endpoint' => '$chosenTileText 끝점 복사본을 덱 맨 위에 추가합니다.',
+    'growth_marker' => '$chosenTileText에 교차 기억 표식을 붙입니다. 이후 겹친 줄 정산 시 추가 성장.',
+    _ => _fateLinePreviewText(item, line),
+  };
+}
+
+String _fateLinePreviewText(ItemDefinition item, RummiScoringLineSummary line) {
+  final action = item.effect.value('ritualAction')?.toString();
+  final high = _tileByNumberForPreview(line.lineTiles, preferHigh: true);
+  final low = _tileByNumberForPreview(line.lineTiles, preferHigh: false);
+  final royalAnchor = _royalAnchorTileForPreview(line.lineTiles);
+  String tileText(Tile? tile) =>
+      tile == null ? '기준 없음' : '${_colorLabel(tile.color)}${tile.number}';
+  return switch (action) {
+    'fate_royal_flush' =>
+      '로얄 기준 ${tileText(royalAnchor)} 색상으로 10-11-12-13-1 로얄플러시 세트.',
+    'fate_straight_flush_high' => '최고 기준 ${tileText(high)}에서 가능한 가장 높은 스티플 세트.',
+    'fate_straight_flush_low' => '최저 기준 ${tileText(low)}에서 가능한 가장 낮은 스티플 세트.',
+    'fate_four_kind_high' => '최고 숫자 ${high?.number ?? '-'} 포카드 세트.',
+    'fate_four_kind_low' => '최저 숫자 ${low?.number ?? '-'} 포카드 세트.',
+    'fate_full_house_high' => '최고 숫자 triple + 차순위 높은 숫자 pair 풀하우스 세트.',
+    'fate_full_house_low' => '차순위 낮은 숫자 triple + 최고 숫자 pair 풀하우스 세트.',
+    'fate_flush_house' => '최고 숫자 3장 + 차순위 높은 숫자 2장을 같은 색으로 만드는 플러시 하우스 세트.',
+    'fate_flush_five' => '최고 숫자 5장을 같은 색으로 만드는 플러시 파이브 세트.',
+    'fate_flush_high' => '최고 기준 ${tileText(high)} 색상 플러시 세트.',
+    'fate_flush_low' => '최저 기준 ${tileText(low)} 색상 플러시 세트.',
+    'fate_straight_high' => '최고 기준 ${tileText(high)}에서 가능한 높은 스트레이트 세트.',
+    'fate_straight_low' => '최저 기준 ${tileText(low)}에서 가능한 낮은 스트레이트 세트.',
+    'fate_three_kind_high' => '최고 숫자 ${high?.number ?? '-'} 트리플 세트.',
+    'fate_three_kind_low' => '차순위 낮은 숫자 트리플 세트.',
+    'fate_two_pair_high' => '최고/차순위 높은 숫자 투페어 세트.',
+    _ => '선택한 보드 선을 운명 세트로 변환합니다.',
+  };
+}
+
+Tile? _tileByNumberForPreview(List<Tile> tiles, {required bool preferHigh}) {
+  if (tiles.isEmpty) return null;
+  return tiles.reduce((a, b) {
+    final compare = a.number.compareTo(b.number);
+    if (compare == 0) return a;
+    return preferHigh ? (compare > 0 ? a : b) : (compare < 0 ? a : b);
+  });
+}
+
+Tile? _royalAnchorTileForPreview(List<Tile> tiles) {
+  for (final tile in tiles) {
+    if (tile.number == 1) return tile;
+  }
+  return _tileByNumberForPreview(tiles, preferHigh: true);
+}
+
+String _lineLabel(LineRef ref) {
+  return switch (ref.kind) {
+    LineKind.row => '가로 ${ref.index + 1}',
+    LineKind.col => '세로 ${ref.index + 1}',
+    LineKind.diagMain => '대각 ↘',
+    LineKind.diagAnti => '대각 ↙',
+  };
+}
+
+String _rankLabel(RummiScoringLineSummary line) {
+  if (!line.isScoringLine) return '미완성/무득점';
+  return switch (line.rank) {
+    RummiHandRank.twoPair => '투페어',
+    RummiHandRank.threeOfAKind => '트리플',
+    RummiHandRank.straight => '스트레이트',
+    RummiHandRank.flush => '플러시',
+    RummiHandRank.fullHouse => '풀하우스',
+    RummiHandRank.fourOfAKind => '포카드',
+    RummiHandRank.straightFlush => '스티플',
+    RummiHandRank.prismStraight => '프리즘 스트레이트',
+    RummiHandRank.crownFourOfAKind => '왕관 포카드',
+    RummiHandRank.lowStraightFlush => '로우 스티플',
+    RummiHandRank.royalStraightFlush => '로얄 스티플',
+    RummiHandRank.fiveOfAKind => '파이브카드',
+    RummiHandRank.flushHouse => '플러시 하우스',
+    RummiHandRank.flushFive => '플러시 파이브',
+    RummiHandRank.highCard => '하이카드',
+    RummiHandRank.onePair => '원페어',
+  };
+}
+
+String _colorLabel(TileColor color) {
+  return switch (color) {
+    TileColor.red => '빨강 ',
+    TileColor.blue => '파랑 ',
+    TileColor.yellow => '노랑 ',
+    TileColor.black => '검정 ',
+  };
+}
+
+Tile? _tileFromEffectDetail(String? detail) {
+  if (detail == null || detail.isEmpty) return null;
+  final parts = detail.split(':');
+  final code = parts.firstWhere(
+    (part) =>
+        part.length >= 2 &&
+        const ['R', 'B', 'Y', 'K'].contains(part[0]) &&
+        int.tryParse(part.substring(1).split('#').first) != null,
+    orElse: () => '',
+  );
+  if (code.length < 2) return null;
+  final color = switch (code[0]) {
+    'R' => TileColor.red,
+    'B' => TileColor.blue,
+    'Y' => TileColor.yellow,
+    'K' => TileColor.black,
+    _ => null,
+  };
+  if (color == null) return null;
+  final number = int.tryParse(code.substring(1).split('#').first);
+  if (number == null || number < 1 || number > 13) return null;
+  String? valueFor(String key) {
+    final prefix = '$key=';
+    for (final part in parts) {
+      if (part.startsWith(prefix)) return part.substring(prefix.length);
+    }
+    return null;
+  }
+
+  return Tile(
+    color: color,
+    number: number,
+    enhancement: TileEnhancement.fromPersistenceValue(valueFor('enhancement')),
+    seal: TileSeal.fromPersistenceValue(valueFor('seal')),
+    edition: TileEdition.fromPersistenceValue(valueFor('edition')),
+  );
 }
 
 class _RitualBoardLineChoiceDialog extends StatefulWidget {

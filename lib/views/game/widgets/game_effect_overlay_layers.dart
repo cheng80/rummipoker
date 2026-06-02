@@ -416,7 +416,7 @@ class _SettlementScoreMote extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: GamePresentationCues.settlementScoreMote.duration,
-      curve: Curves.easeOutCubic,
+      curve: Curves.linear,
       builder: (context, rawValue, child) {
         final delayRatio =
             delay.inMilliseconds /
@@ -425,7 +425,11 @@ class _SettlementScoreMote extends StatelessWidget {
           0.0,
           1.0,
         );
-        final position = Offset.lerp(start, target, value)!;
+        final position = GamePresentationMotion.flightOffset(
+          start,
+          target,
+          value,
+        );
         final opacity = value < 0.82 ? 1.0 : 1.0 - ((value - 0.82) / 0.18);
         final scale = 1.0 - (value * 0.22);
         return Positioned(

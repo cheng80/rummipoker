@@ -46,7 +46,7 @@ enum TileSeal {
   goldSeal('gold_seal'),
   echoSeal('echo_seal'),
   anchorSeal('anchor_seal'),
-  riskSeal('risk_seal'),
+  fractureSeal('fracture_seal'),
   crossMemory('cross_memory'),
   bridgeSeal('bridge_seal');
 
@@ -55,6 +55,9 @@ enum TileSeal {
 
   static TileSeal? fromPersistenceValue(Object? value) {
     if (value is! String || value.isEmpty) return null;
+    if (value == 'risk_seal' || value == 'riskSeal') {
+      return TileSeal.fractureSeal;
+    }
     for (final seal in TileSeal.values) {
       if (seal.persistenceValue == value || seal.name == value) {
         return seal;

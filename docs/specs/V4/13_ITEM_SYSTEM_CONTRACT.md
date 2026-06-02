@@ -583,10 +583,7 @@ Market / Pool Mutation: 1
 | 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
 |---|---|---|---|
 | `line_memory` | 라인 기억 | 선택한 완성 줄의 족보 성장 +1 | 유저가 직접 고른 줄을 다음 성장 방향으로 연결 |
-| `minor_memory` | 잔상 기억 | 선택한 완성 줄의 족보 성장 +2, 이후 그 줄 점수 -25% | 고성장 리스크 선택 |
-| `cross_memory` | 교차 기억 | 교차 타일 1개와 row/col 중 유저가 고른 완성 줄의 현재 족보 성장 +1 | 교차 라인 빌드 유도 |
-| `boss_memory` | 보스 기억 | 보스전에서 선택한 완성 줄의 족보 성장 +2 | 고위험 전투 보상 강화 |
-| `thin_memory` | 얇은 기억 | 유저가 고른 3~4타일 scoring 줄의 현재 족보 성장 +1, 이번 점수 -10% | 작은 족보/희소 라인 보정 |
+| `cross_memory` | 교차 기억 | 교차 점수 타일 1개에 표식. 이후 해당 타일이 겹친 줄 정산에 포함되면 추가 족보 성장 | 겹친 줄 핵심 타일을 장기 성장 축으로 연결 |
 
 #### B. Copy / Deck Injection
 
@@ -601,14 +598,18 @@ Market / Pool Mutation: 1
 
 #### C. Seal / Enhancement
 
+이 표의 `*_seal`은 카드 ID가 아니라 타일 modifier persistence value다. 운명 변환 카드는 이 값을 ID로 재사용하지 않고 `fate_*` 계열 ID를 쓴다.
+
 | 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
 |---|---|---|---|
-| `line_seal_stamp` | 라인 각인 | 선택 줄의 타일 1장에 `line_mark` seal 부여. 포함 줄 확정 시 칩 +10% | Ritual의 기본 강화 감각 |
-| `growth_seal` | 성장 각인 | 선택 줄의 타일 1장에 seal 부여. 포함 줄 확정 시 해당 족보 성장 +1 후 소비 | 타일과 성장 연결 |
-| `gold_seal_stamp` | 금빛 각인 | 선택 줄의 타일 1장에 seal 부여. 포함 줄 확정 시 Gold +1 후 소비 | 경제 빌드 축 추가 |
-| `echo_seal` | 메아리 각인 | 선택 줄의 타일 1장에 seal 부여. 같은 확정에서 두 줄 이상에 기여하면 두 번째 줄 점수 +25% | 다중 confirm 유도 |
-| `anchor_seal` | 닻 각인 | 선택 줄의 타일 1장에 seal 부여. 보드 이동 후 포함 확정 시 배수 +0.2 | 이동 아이템과 연계 |
-| `risk_seal` | 균열 각인 | 선택 줄의 타일 1장에 seal 부여. 포함 줄 확정 시 배수 +0.5, 이후 덱 제거 후보 | Spectral-like tradeoff |
+| `line_mark` | 라인 각인 | 선택 줄의 타일 1장에 seal 부여. 포함 줄 확정 시 점수 +10% | Ritual의 기본 강화 감각 |
+| `growth_seal` | 성장 각인 | 선택 줄의 타일 1장에 seal 부여. 포함 줄 확정 시 해당 족보 성장 +1 | 타일과 성장 연결 |
+| `gold_seal` | 금빛 각인 | 선택 줄의 타일 1장에 seal 부여. 포함 줄 확정 시 Gold +1 | 경제 빌드 축 추가 |
+| `echo_seal` | 메아리 각인 | 선택 줄의 타일 1장에 seal 부여. 같은 확정에서 두 줄 이상에 기여하면 포함 줄마다 점수 +25% | 다중 confirm 유도 |
+| `anchor_seal` | 닻 각인 | 선택 줄의 타일 1장에 seal 부여. 이번 Station에 보드 이동한 뒤 포함 확정 시 점수 +20% | 이동 아이템과 연계 |
+| `fracture_seal` | 균열 각인 | 선택 줄의 타일 1장에 seal 부여. 포함 줄 확정 시 점수 +50%, 이후 각인이 붙은 이 타일 자신 제거 | Spectral-like tradeoff |
+| `cross_memory` | 교차 기억 | 교차 점수 타일 1장에 seal 부여. 이후 그 타일이 겹친 줄 정산에 포함되면 추가 족보 성장 +1 | overlap 성장 보상 |
+| `bridge_seal` | 다리 표식 | 두 줄 이상에 기여하는 타일 1장에 seal 부여. 겹친 줄 확정 시 포함 줄마다 Gold +2 | overlap 경제 보상 |
 
 #### D. Color / Number Conversion
 
@@ -619,17 +620,17 @@ Market / Pool Mutation: 1
 | `color_concord` | 색 맞춤 의식 | 선택한 완성 줄을 이번 확정에서 `Flush`로 강제 판정 | 색 빌드 지원 |
 | `off_color_rite` | 이색 의식 | 선택한 완성 줄을 이번 확정에서 `Full House`로 강제 판정 | flush 일변도 억제 |
 | `wild_thread` | 만능 실 | 선택한 완성 줄을 이번 확정에서 `Four of a Kind`로 강제 판정 | 고위험 숫자 빌드 보상 |
-| `number_mask` | 숫자 가면 | 선택한 완성 줄을 이번 확정에서 `Five of a Kind`로 강제 판정, 이후 줄 타일 1장 제거 후보 | 강한 Spectral-like 변형 |
+| `number_mask` | 숫자 가면 | 선택한 완성 줄을 이번 확정에서 `Five of a Kind`로 강제 판정, 확정 뒤 그 줄의 물리 타일 1장 제거 | 강한 Spectral-like 변형 |
 
 #### E. Prune / Sacrifice / Compression
 
 | 후보 ID | 한국어명 | 효과 요약 | 설계 의도 |
 |---|---|---|---|
-| `line_pruner` | 가지치기 의식 | 선택 줄의 타일 1장을 고르고, 같은 타일을 덱 제거 후보로 기록 | 덱 압축 |
+| `line_pruner` | 가지치기 의식 | 선택 줄의 타일 1장을 고르고, 같은 색/숫자의 추가 덱 타일을 제거 기록에 넣음 | 덱 압축 |
 | `deadwood_burn` | 마른가지 소각 | 유저가 고른 미확정/실패 줄을 비우고 Gold +3. 점수 확정은 하지 않음 | 실패 라인 회수 |
-| `sacrifice_line` | 제물 의식 | 선택한 완성 줄의 이번 점수를 0으로 만들고, 줄 타일 2장 복사 및 1장 제거 후보 기록 | 점수/성장 선택 |
-| `trim_color` | 색 가지치기 | 선택 줄의 타일 1장을 고르고, 같은 색 타일 1장을 덱 제거 후보로 기록 | 색 편중 관리 |
-| `trim_rank` | 숫자 가지치기 | 선택 줄의 타일 1장을 고르고, 같은 숫자 타일 1장을 덱 제거 후보로 기록 | 숫자 편중 관리 |
+| `sacrifice_line` | 제물 의식 | 선택한 보드 선을 비우고, 보이는 타일 2장을 덱 맨 위에 복사 | 점수/성장 선택 |
+| `trim_color` | 색 가지치기 | 선택 색이 아닌 보드 선 타일을 제거하고, 같은 수의 선택색 타일을 덱 맨 위에 추가 | 색 편중 관리 |
+| `trim_rank` | 숫자 가지치기 | 선택 줄의 타일 1장을 고르고, 같은 숫자의 추가 덱 타일을 제거 기록에 넣음 | 숫자 편중 관리 |
 
 #### F. Line Geometry / Board State
 
@@ -639,7 +640,7 @@ Market / Pool Mutation: 1
 | `corner_rite` | 모서리 의식 | 모서리 타일을 포함한 선택 줄의 끝점 타일 1장을 덱에 복사 | 배치 위치 의미 강화 |
 | `center_rite` | 중심 의식 | 중앙 타일을 포함한 선택 줄의 현재 족보 성장 +1 | 중앙 싸움 유도 |
 | `diagonal_rite` | 대각 의식 | 선택한 대각선 완성 줄의 이번 확정 점수 +35% | row/col 반복 완화 |
-| `bridge_rite` | 다리 의식 | 두 줄이 공유하는 선택 타일에 marker 부여. 이후 두 줄 모두 확정되면 Gold +3 | 미래 확정 설계 |
+| `bridge_rite` | 다리 의식 | 두 줄이 공유하는 선택 타일에 `bridge_seal` 부여. 겹친 줄 확정 시 포함 줄마다 Gold +2 | overlap 경제 보상 |
 
 #### G. Market / Pool Mutation
 

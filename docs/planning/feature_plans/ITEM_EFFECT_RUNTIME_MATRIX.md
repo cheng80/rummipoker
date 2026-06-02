@@ -7,10 +7,12 @@
 
 현재 기준:
 
-- Item catalog: 92개
+- Item catalog: 94개
 - 기존 v1 baseline: 54개
-- Board-Line Ritual 계열: 38개
-- `applied`: 92개
+- Ritual/Item 확장 계열: 40개
+- 전투 보드 선 선택형 `ritual_line_effect`: 34개
+- 족보 변환형 운명(`fate_*`): 16개
+- `applied`: 94개
 - `pendingHook`: 0개
 
 이 문서는 v1 Item catalog의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
@@ -18,6 +20,17 @@ Item 효과의 화면 연출 계약은 `docs/planning/feature_plans/ITEM_PRESENT
 과거 소모품/바우처 장기 확장 reference는 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
 아이템의 발동/대상/결과 연출 coverage는 `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md`와 함께 본다.
 이 문서의 `applied`는 런타임 상태 변경과 소모 정책이 연결됐다는 뜻이며, 플레이어가 효과를 충분히 이해할 수 있는 UX까지 완료됐다는 뜻은 아니다.
+
+## 운명/의식 Runtime 분류
+
+| 분류 | 수 | Runtime action |
+|---|---:|---|
+| 족보 변환형 운명 | 16 | `fate_two_pair_high`, `fate_three_kind_low`, `fate_three_kind_high`, `fate_four_kind_high`, `fate_four_kind_low`, `fate_full_house_high`, `fate_full_house_low`, `fate_flush_house`, `fate_flush_five`, `fate_flush_high`, `fate_flush_low`, `fate_straight_high`, `fate_straight_low`, `fate_straight_flush_high`, `fate_straight_flush_low`, `fate_royal_flush` |
+| 성장/점수/표식/위치 의식 | 7 활성 | 활성: `line_memory`, `seal_bridge`, `line_bonus_35`, `center_growth`, `copy_endpoint`, `line_bonus_25`, `growth_marker`. 삭제된 기억 의식 3종의 전용 action은 runtime에서 제거했다. |
+| 덱 복사/메아리 | 6 | `copy_selected`, `copy_color`, `copy_rank`, `copy_center` |
+| 제거/소각/제물 | 3 | `prune_line_to_color`, `burn_line`, `sacrifice_line` |
+
+족보 변환형 운명은 override 점수 보정이 아니라 보드 선 타일을 실제 세트로 치환한다. `number_mask`는 선택 줄에 1 타일이 있으면 1의 색상, 없으면 최고 숫자 색상을 기준으로 `10-11-12-13-1` 로얄플러시 세트를 만든다.
 badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만 기록한다. 실제 연출은 `ANIMATION_EFFECTS_PLAN.md`의 아이템 source -> target/목적지 -> result 기준으로 별도 판단/구현한다.
 상태 의미:
 
@@ -108,33 +121,33 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 | `center_rite` | 중앙 포함 점수 족보 성장 +1 | `use_battle` / `ritual_line_effect: center_growth` | `useBattleItemOnLine` | `applied` |
 | `corner_rite` | 모서리 포함 보드 선 끝 타일 복사 | `use_battle` / `ritual_line_effect: copy_endpoint` | `useBattleItemOnLine` | `applied` |
 | `cross_rite` | 교차 가능한 점수 족보 score bonus | `use_battle` / `ritual_line_effect: line_bonus_25` | `useBattleItemOnLine` | `applied` |
-| `sacrifice_line` | 보드 선 제거, 타일 복사/제거 후보 | `use_battle` / `ritual_line_effect: sacrifice_line` | `useBattleItemOnLine` | `applied` |
+| `sacrifice_line` | 보드 선 제거, 타일 2장 덱 맨 위 복사 | `use_battle` / `ritual_line_effect: sacrifice_line` | `useBattleItemOnLine` | `applied` |
 | `deadwood_burn` | 보드 선 제거, Gold +3 | `use_battle` / `ritual_line_effect: burn_line` | `useBattleItemOnLine` | `applied` |
 | `trim_rank` | 최고/차순위 높은 숫자 기준 Two Pair 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_two_pair_high` | `useBattleItemOnLine` | `applied` |
-| `trim_color` | 보드 선 타일과 같은 색 제거 후보 | `use_battle` / `ritual_line_effect: remove_same_color` | `useBattleItemOnLine` | `applied` |
+| `trim_color` | 선택 색 외 타일 제거, 같은 색 타일 덱 맨 위 보충 | `use_battle` / `ritual_line_effect: prune_line_to_color` | `useBattleItemOnLine` | `applied` |
 | `line_pruner` | 차순위 낮은 숫자 기준 Three of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_three_kind_low` | `useBattleItemOnLine` | `applied` |
-| `number_mask` | 최고 숫자 색상 기준 Royal Straight Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_royal_flush` | `useBattleItemOnLine` | `applied` |
+| `number_mask` | 1 타일 우선, 없으면 최고 숫자 색상 기준 Royal Straight Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_royal_flush` | `useBattleItemOnLine` | `applied` |
 | `wild_thread` | 최고 숫자/색상 기준 높은 Straight Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_straight_flush_high` | `useBattleItemOnLine` | `applied` |
 | `off_color_rite` | 최저 숫자/색상 기준 낮은 Straight Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_straight_flush_low` | `useBattleItemOnLine` | `applied` |
 | `color_concord` | 최고 숫자 기준 Four of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_four_kind_high` | `useBattleItemOnLine` | `applied` |
 | `step_rite` | 최저 숫자 기준 Four of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_four_kind_low` | `useBattleItemOnLine` | `applied` |
 | `rank_concord` | 최고 숫자 triple + 차순위 높은 숫자 pair Full House 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_full_house_high` | `useBattleItemOnLine` | `applied` |
-| `risk_seal` | 차순위 낮은 숫자 triple + 최고 숫자 pair Full House 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_full_house_low` | `useBattleItemOnLine` | `applied` |
-| `anchor_seal` | 최고 숫자 색상 기준 Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_high` | `useBattleItemOnLine` | `applied` |
-| `echo_seal` | 최저 숫자 색상 기준 Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_low` | `useBattleItemOnLine` | `applied` |
-| `gold_seal_stamp` | 최고 숫자 기준 높은 Straight 세트로 보드 선 변환, 기준 타일 off-color | `use_battle` / `ritual_line_effect: fate_straight_high` | `useBattleItemOnLine` | `applied` |
-| `growth_seal` | 최저 숫자 기준 낮은 Straight 세트로 보드 선 변환, 기준 타일 off-color | `use_battle` / `ritual_line_effect: fate_straight_low` | `useBattleItemOnLine` | `applied` |
-| `line_seal_stamp` | 최고 숫자 기준 Three of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_three_kind_high` | `useBattleItemOnLine` | `applied` |
-| `sealed_copy` | 봉인/강화 보드 선 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
-| `scarce_copy` | 보드 선 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
-| `color_echo` | 같은 색 무작위 숫자 타일 추가 | `use_battle` / `ritual_line_effect: copy_color` | `useBattleItemOnLine` | `applied` |
-| `rank_echo` | 같은 숫자 무작위 색 타일 추가 | `use_battle` / `ritual_line_effect: copy_rank` | `useBattleItemOnLine` | `applied` |
-| `edge_copy` | 보드 선 끝 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
-| `keystone_copy` | 보드 선 중앙 타일 복사 | `use_battle` / `ritual_line_effect: copy_center` | `useBattleItemOnLine` | `applied` |
-| `boss_memory` | 보스전 점수 족보 성장 +2 | `use_battle` / `ritual_line_effect: boss_growth` | `useBattleItemOnLine` | `applied` |
-| `thin_memory` | 3-4타일 점수 족보 성장 +1, score penalty | `use_battle` / `ritual_line_effect: thin_growth` | `useBattleItemOnLine` | `applied` |
-| `cross_memory` | 교차 가능한 점수 족보 성장 +1 | `use_battle` / `ritual_line_effect: growth_marker` | `useBattleItemOnLine` | `applied` |
-| `minor_memory` | 점수 족보 성장 +2, score penalty | `use_battle` / `ritual_line_effect: growth_risk` | `useBattleItemOnLine` | `applied` |
+| `fate_full_house_low` | 차순위 낮은 숫자 triple + 최고 숫자 pair Full House 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_full_house_low` | `useBattleItemOnLine` | `applied` |
+| `flush_house_fate` | 최고 숫자 triple + 차순위 높은 숫자 pair를 같은 색으로 만드는 Flush House 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_house` | `useBattleItemOnLine` | `applied` |
+| `flush_five_fate` | 최고 숫자 5장을 같은 색으로 만드는 Flush Five 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_five` | `useBattleItemOnLine` | `applied` |
+| `fate_flush_high` | 최고 숫자 색상 기준 Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_high` | `useBattleItemOnLine` | `applied` |
+| `fate_flush_low` | 최저 숫자 색상 기준 Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_low` | `useBattleItemOnLine` | `applied` |
+| `fate_straight_high` | 최고 숫자 기준 높은 Straight 세트로 보드 선 변환, 기준 타일 off-color | `use_battle` / `ritual_line_effect: fate_straight_high` | `useBattleItemOnLine` | `applied` |
+| `fate_straight_low` | 최저 숫자 기준 낮은 Straight 세트로 보드 선 변환, 기준 타일 off-color | `use_battle` / `ritual_line_effect: fate_straight_low` | `useBattleItemOnLine` | `applied` |
+| `fate_three_kind_high` | 최고 숫자 기준 Three of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_three_kind_high` | `useBattleItemOnLine` | `applied` |
+| `sealed_copy` | 봉인/강화 scoringTile 복사, 다음 draw 후보로 덱 맨 위 추가 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
+| `scarce_copy` | scoringTile 복사, 다음 draw 후보로 덱 맨 위 추가 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
+| `color_echo` | 선택 scoringTile과 같은 색 무작위 숫자 타일을 덱 맨 위 추가 | `use_battle` / `ritual_line_effect: copy_color` | `useBattleItemOnLine` | `applied` |
+| `rank_echo` | 선택 scoringTile과 같은 숫자 무작위 색 타일을 덱 맨 위 추가 | `use_battle` / `ritual_line_effect: copy_rank` | `useBattleItemOnLine` | `applied` |
+| `edge_copy` | 보드 선 양끝 scoringTile 복사, 다음 draw 후보로 덱 맨 위 추가 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
+| `keystone_copy` | 보드 선 중앙 scoringTile 복사, 다음 draw 후보로 덱 맨 위 추가 | `use_battle` / `ritual_line_effect: copy_center` | `useBattleItemOnLine` | `applied` |
+| `line_memory` | 선택한 점수 족보 선 성장 +1 | `use_battle` / `add_hand_rank_progress_from_selected_line` | `useBattleItemOnLine` | `applied` |
+| `cross_memory` | 선택한 교차 점수 타일에 표식, 이후 겹친 줄 정산 시 추가 족보 성장 | `use_battle` / `ritual_line_effect: growth_marker` | `useBattleItemOnLine` | `applied` |
 
 ## 현재 실제 적용 완료
 
@@ -210,7 +223,7 @@ Ritual 계열의 다음 검증은 runtime hook 존재 여부가 아니라 UX/밸
 | 조건부 사용 no-op | `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품 | 이미 queue가 있거나 조건이 충족되지 않거나 0점 confirm에 묻히면 소모품이 의미 없이 사라질 수 있다. | 실패 시 미소모는 유지하고, 사용 전/후 피드백과 조건 표시를 보강한다. |
 | 가격/가치 이상 후보 | `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study` | catalog audit 기준 cheap high-impact 또는 expensive low-impact 후보가 있다. | 가격표를 바로 바꾸지 말고 실제 노출/구매/사용률, S7~S8 병목, v9 market 개선 여부를 함께 본다. |
 | 자동/직접 지급으로 보일 수 있는 효과 | `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`, `coin_funnel`, `hand_funnel` | 경제 보정이 선택 부담을 지우거나 자동 지급처럼 읽힐 수 있다. | 직접 지급 금지 원칙과 충돌하지 않는지, 조건/타이밍/표시가 플레이어 선택으로 읽히는지 확인한다. |
-| Board-Line Ritual 후보 | `line_memory`, `keystone_copy`, `line_seal_stamp`부터 시작. 확장 pool은 계약 문서 10.5 기준 | 현재 catalog/runtime에는 없다. 손패 직접 파괴/변형 대신 보드에 구성된 완성/확정 가능 라인을 대상으로 덱 복제, 성장, seal 부여를 다루는 새 mutation family다. 후보군은 growth/copy/seal/conversion/prune/geometry/market/boss 축으로 넓게 유지한다. | `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`의 Ritual 정책과 후보 리스트를 기준으로 저장/복원, target 선택 UI, 풀런봇, 시뮬레이터 로그 계획을 먼저 닫는다. |
+| Board-Line Ritual 후보 | 활성: Fate 변환 16, 제거/소각/제물 3, 덱 복사/메아리 6, 성장/점수/표식/위치 7. 보류: legacy ritual market helpers | 손패 직접 파괴/변형 대신 보드에 구성된 선과 scoringTiles를 대상으로 즉시 전투에 읽히는 변환, 제거, 덱 맨 위 보충, 성장/점수/표식/위치 보상을 다룬다. | 활성 32종은 runtime/market 노출/선택 UI/flight 검증을 닫고, 폐기 3종은 catalog/runtime에서 제거했다. |
 
 2026-05-17 1차 적용:
 

@@ -132,6 +132,7 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: GameActionButton(
+                        key: const ValueKey('battle-item-overlay-use-button'),
                         label: '사용',
                         background: GameUiPalette.actionGold,
                         foreground: GameUiPalette.ink,

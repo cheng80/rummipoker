@@ -13,6 +13,7 @@ class _GameBattleItemCardFace extends StatelessWidget {
   Widget build(BuildContext context) {
     final rarityColor = gameItemRarityColor(itemSlot.item.rarity);
     return DecoratedBox(
+      key: ValueKey('battle-item-card-${itemSlot.contentId}'),
       decoration: BoxDecoration(
         color: GameUiPalette.cardFace,
         borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),

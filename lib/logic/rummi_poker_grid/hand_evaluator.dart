@@ -63,6 +63,13 @@ class HandEvaluator {
     switch (tiles.length) {
       case 5:
         if (_listEquals(counts, <int>[5])) {
+          if (flush) {
+            return _result(
+              RummiHandRank.flushFive,
+              contributingIndexes: List<int>.unmodifiable(originalIndexes),
+              ruleset: ruleset,
+            );
+          }
           return _result(
             RummiHandRank.fiveOfAKind,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
@@ -70,7 +77,7 @@ class HandEvaluator {
           );
         }
         if (flush && straight) {
-          if (_listEquals(ranks, <int>[9, 10, 11, 12, 13])) {
+          if (_listEquals(ranks, <int>[1, 10, 11, 12, 13])) {
             return _result(
               RummiHandRank.royalStraightFlush,
               contributingIndexes: List<int>.unmodifiable(originalIndexes),
@@ -112,6 +119,13 @@ class HandEvaluator {
           );
         }
         if (_listEquals(counts, <int>[3, 2])) {
+          if (flush) {
+            return _result(
+              RummiHandRank.flushHouse,
+              contributingIndexes: List<int>.unmodifiable(originalIndexes),
+              ruleset: ruleset,
+            );
+          }
           return _result(
             RummiHandRank.fullHouse,
             contributingIndexes: List<int>.unmodifiable(originalIndexes),
@@ -313,7 +327,7 @@ class HandEvaluator {
   }) {
     if (sortedRanks.length != 5) return false;
     if (sortedRanks.toSet().length != 5) return false;
-    // 정렬 후 [1,10,11,12,13] 이면 휠 스트레이트 (10–J–Q–K–A, A=1).
+    // 정렬 후 [1,10,11,12,13] 이면 숫자 1을 높은 끝으로도 쓰는 스트레이트.
     if (wheelStraightAllowed &&
         sortedRanks[0] == 1 &&
         sortedRanks[1] == 10 &&

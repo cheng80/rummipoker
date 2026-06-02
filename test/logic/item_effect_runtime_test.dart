@@ -6,7 +6,6 @@ import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
-import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
@@ -350,21 +349,16 @@ void main() {
           .where((item) => item.effect.op == 'ritual_line_effect')
           .toList(growable: false);
 
-      expect(ritualItems.length, 32);
+      expect(ritualItems.length, 31);
 
       for (final item in ritualItems) {
         final action = item.effect.value('ritualAction')?.toString();
         final session = RummiPokerGridSession(
           runSeed: 1,
-          blind: RummiBlindState(
-            targetScore: 999,
-            bossModifier: action == 'boss_growth'
-                ? RummiBossModifier.redDampener
-                : null,
-          ),
+          blind: RummiBlindState(targetScore: 999),
         );
-        if (action == 'thin_growth') {
-          _placeTwoPair(session);
+        if (action == 'prune_line_to_color') {
+          _placeMixedColorLine(session);
         } else {
           _placeFlush(session);
         }
@@ -445,12 +439,14 @@ void main() {
           'color_concord': RummiHandRank.fourOfAKind,
           'step_rite': RummiHandRank.fourOfAKind,
           'rank_concord': RummiHandRank.fullHouse,
-          'risk_seal': RummiHandRank.fullHouse,
-          'anchor_seal': RummiHandRank.flush,
-          'echo_seal': RummiHandRank.flush,
-          'gold_seal_stamp': RummiHandRank.straight,
-          'growth_seal': RummiHandRank.straight,
-          'line_seal_stamp': RummiHandRank.threeOfAKind,
+          'fate_full_house_low': RummiHandRank.fullHouse,
+          'flush_house_fate': RummiHandRank.flushHouse,
+          'flush_five_fate': RummiHandRank.flushFive,
+          'fate_flush_high': RummiHandRank.flush,
+          'fate_flush_low': RummiHandRank.flush,
+          'fate_straight_high': RummiHandRank.straight,
+          'fate_straight_low': RummiHandRank.straight,
+          'fate_three_kind_high': RummiHandRank.threeOfAKind,
           'line_pruner': RummiHandRank.threeOfAKind,
           'trim_rank': RummiHandRank.twoPair,
         };
@@ -497,6 +493,46 @@ void main() {
       },
     );
 
+    test('royal fate uses number 1 color before highest tile color', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      final item = catalog.findById('number_mask')!;
+      final session = RummiPokerGridSession(
+        runSeed: 1,
+        blind: RummiBlindState(targetScore: 999),
+      );
+      session.board
+        ..setCell(0, 0, Tile(color: TileColor.red, number: 1))
+        ..setCell(0, 1, Tile(color: TileColor.blue, number: 2))
+        ..setCell(0, 2, Tile(color: TileColor.blue, number: 7));
+      final runProgress = RummiRunProgress()
+        ..itemInventory = RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: item.id,
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: [item.id],
+        );
+
+      final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+        item: item,
+        session: session,
+        runProgress: runProgress,
+        lineRef: LineRef.row(0),
+      );
+      final transformed = session.currentBoardLineSummaryFor(LineRef.row(0));
+
+      expect(result.isSuccess, isTrue);
+      expect(transformed?.rank, RummiHandRank.royalStraightFlush);
+      expect(transformed?.lineTiles.map((tile) => tile.color).toSet(), {
+        TileColor.red,
+      });
+    });
+
     test('ritual tile effects can target a non-scoring board line', () {
       final catalog = ItemCatalog.fromJsonString(
         File('data/common/items_common_v1.json').readAsStringSync(),
@@ -531,6 +567,208 @@ void main() {
       expect(session.board.cellAt(0, 0)?.seal, TileSeal.bridgeSeal);
       expect(runProgress.itemInventory.ownedItems, isEmpty);
     });
+
+    test('ritual copy effects add scoring tile results to the next draw', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      final copyCases = <String>[
+        'sealed_copy',
+        'scarce_copy',
+        'color_echo',
+        'rank_echo',
+        'edge_copy',
+        'keystone_copy',
+      ];
+
+      for (final itemId in copyCases) {
+        final item = catalog.findById(itemId)!;
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+        );
+        _placeFlush(session);
+        if (itemId == 'sealed_copy') {
+          session.board.setCell(
+            0,
+            0,
+            const Tile(
+              color: TileColor.red,
+              number: 1,
+              seal: TileSeal.bridgeSeal,
+            ),
+          );
+        }
+        final line = session.currentBoardLineSummaryFor(LineRef.row(0))!;
+        final sourceTile = itemId == 'keystone_copy'
+            ? line.scoringTiles[2]
+            : line.scoringTiles.first;
+        final runProgress = RummiRunProgress()
+          ..itemInventory = RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: item.id,
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: [item.id],
+          );
+
+        final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+          lineRef: LineRef.row(0),
+          tileIndex: 0,
+        );
+        final nextDraw = session.drawToHand();
+
+        expect(result.isSuccess, isTrue, reason: itemId);
+        expect(
+          result.events.where(
+            (event) => event.kind == ItemEffectEventKind.deckTileAdded,
+          ),
+          hasLength(1),
+          reason: itemId,
+        );
+        final deckAddEvent = result.events.singleWhere(
+          (event) => event.kind == ItemEffectEventKind.deckTileAdded,
+        );
+        expect(nextDraw, isNotNull, reason: itemId);
+        switch (itemId) {
+          case 'sealed_copy':
+            expect(
+              deckAddEvent.detail,
+              contains('seal=${TileSeal.bridgeSeal.persistenceValue}'),
+              reason: itemId,
+            );
+            expect(nextDraw!.color, sourceTile.color, reason: itemId);
+            expect(nextDraw.number, sourceTile.number, reason: itemId);
+            expect(
+              nextDraw.enhancement,
+              sourceTile.enhancement,
+              reason: itemId,
+            );
+            expect(nextDraw.seal, sourceTile.seal, reason: itemId);
+          case 'scarce_copy':
+          case 'edge_copy':
+          case 'keystone_copy':
+            expect(nextDraw!.color, sourceTile.color, reason: itemId);
+            expect(nextDraw.number, sourceTile.number, reason: itemId);
+            expect(
+              nextDraw.enhancement,
+              sourceTile.enhancement,
+              reason: itemId,
+            );
+            expect(nextDraw.seal, sourceTile.seal, reason: itemId);
+          case 'color_echo':
+            expect(nextDraw!.color, sourceTile.color, reason: itemId);
+          case 'rank_echo':
+            expect(nextDraw!.number, sourceTile.number, reason: itemId);
+        }
+      }
+    });
+
+    test(
+      'color pruner removes off-color board tiles and queues same-color top draws',
+      () {
+        final catalog = ItemCatalog.fromJsonString(
+          File('data/common/items_common_v1.json').readAsStringSync(),
+        );
+        final item = catalog.findById('trim_color')!;
+        final session = RummiPokerGridSession(
+          runSeed: 7,
+          blind: RummiBlindState(targetScore: 999),
+        );
+        _placeMixedColorLine(session);
+        final beforeDeck = session.deck.remaining;
+        final runProgress = RummiRunProgress()
+          ..itemInventory = RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: item.id,
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: [item.id],
+          );
+
+        final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+          lineRef: LineRef.row(0),
+          tileIndex: 0,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(session.board.cellAt(0, 0)?.color, TileColor.red);
+        expect(session.board.cellAt(0, 1), isNull);
+        expect(session.board.cellAt(0, 3), isNull);
+        expect(session.deck.remaining, beforeDeck + 2);
+        expect(session.peekDeckTop(2).map((tile) => tile.color).toList(), [
+          TileColor.red,
+          TileColor.red,
+        ]);
+        expect(runProgress.addedDeckTiles.length, 2);
+        expect(
+          result.events.where(
+            (event) => event.kind == ItemEffectEventKind.deckTileAdded,
+          ),
+          hasLength(2),
+        );
+      },
+    );
+
+    test(
+      'sacrifice line clears the line and places two copied tiles on deck top',
+      () {
+        final catalog = ItemCatalog.fromJsonString(
+          File('data/common/items_common_v1.json').readAsStringSync(),
+        );
+        final item = catalog.findById('sacrifice_line')!;
+        final session = RummiPokerGridSession(
+          runSeed: 8,
+          blind: RummiBlindState(targetScore: 999),
+        );
+        _placeDeadThreeTileLine(session);
+        final beforeDeck = session.deck.remaining;
+        final runProgress = RummiRunProgress()
+          ..itemInventory = RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: item.id,
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: [item.id],
+          );
+
+        final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+          lineRef: LineRef.row(0),
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(session.board.cellAt(0, 0), isNull);
+        expect(session.board.cellAt(0, 1), isNull);
+        expect(session.board.cellAt(0, 2), isNull);
+        expect(session.deck.remaining, beforeDeck + 2);
+        expect(session.peekDeckTop(2).map((tile) => tile.code).toList(), [
+          'R1',
+          'B3',
+        ]);
+        expect(runProgress.addedDeckTiles.map((tile) => tile.code).toList(), [
+          'R1',
+          'B3',
+        ]);
+      },
+    );
 
     test('ritual line score bonus still requires a scoring line', () {
       final catalog = ItemCatalog.fromJsonString(
@@ -2016,6 +2254,13 @@ void _placeFlush(RummiPokerGridSession session) {
       Tile(color: TileColor.red, number: numbers[col]),
     );
   }
+}
+
+void _placeMixedColorLine(RummiPokerGridSession session) {
+  session.board.setCell(0, 0, Tile(color: TileColor.red, number: 1));
+  session.board.setCell(0, 1, Tile(color: TileColor.blue, number: 3));
+  session.board.setCell(0, 2, Tile(color: TileColor.red, number: 6));
+  session.board.setCell(0, 3, Tile(color: TileColor.black, number: 8));
 }
 
 void _placeDeadThreeTileLine(RummiPokerGridSession session) {

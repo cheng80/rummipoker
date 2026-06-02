@@ -84,13 +84,13 @@ void main() {
 
       expect(catalog.schemaVersion, 1);
       expect(catalog.catalogId, 'items_common_v1');
-      expect(catalog.all.length, 55);
-      expect(catalog.byType(ItemType.utility).length, 9);
-      expect(catalog.byType(ItemType.consumable).length, 27);
+      expect(catalog.all.length, 91);
+      expect(catalog.byType(ItemType.utility).length, 14);
+      expect(catalog.byType(ItemType.consumable).length, 58);
       expect(catalog.byType(ItemType.equipment).length, 9);
       expect(catalog.byType(ItemType.passiveRelic).length, 10);
-      expect(catalog.byPlacement(ItemPlacement.inventory).length, 15);
-      expect(catalog.byPlacement(ItemPlacement.quickSlot).length, 21);
+      expect(catalog.byPlacement(ItemPlacement.inventory).length, 20);
+      expect(catalog.byPlacement(ItemPlacement.quickSlot).length, 52);
       expect(catalog.byPlacement(ItemPlacement.equipped).length, 9);
       expect(catalog.byPlacement(ItemPlacement.passiveRack).length, 10);
 
@@ -121,6 +121,12 @@ void main() {
         'add_hand_rank_progress_from_selected_line',
       );
       expect(catalog.findById('line_memory')!.usableInBattle, isTrue);
+      expect(catalog.findById('cross_memory')!.effect.op, 'ritual_line_effect');
+      expect(catalog.findById('cross_memory')!.effect.value('target'), 'tile');
+      expect(
+        catalog.findById('cross_memory')!.effect.value('ritualAction'),
+        'growth_marker',
+      );
       expect(catalog.findById('travel_pouch')!.effect.op, 'increase_hand_size');
       expect(catalog.findById('jester_hook')!.basePrice, 7);
       expect(catalog.findById('jester_hook')!.sellPrice, 3);
@@ -175,6 +181,88 @@ void main() {
           reason: 'Item data must not expose "$term" wording',
         );
       }
+    });
+
+    test('fate transform items stay rare-or-higher and expensive', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      const fateIds = [
+        'trim_rank',
+        'line_pruner',
+        'fate_three_kind_high',
+        'color_concord',
+        'step_rite',
+        'rank_concord',
+        'fate_full_house_low',
+        'flush_house_fate',
+        'flush_five_fate',
+        'fate_flush_high',
+        'fate_flush_low',
+        'fate_straight_high',
+        'fate_straight_low',
+        'wild_thread',
+        'off_color_rite',
+        'number_mask',
+      ];
+
+      for (final id in fateIds) {
+        final item = catalog.findById(id);
+        expect(item, isNotNull, reason: id);
+        expect(
+          item!.rarity,
+          isNot(anyOf(ItemRarity.common, ItemRarity.uncommon)),
+          reason: '$id must not be common/uncommon in the normal market',
+        );
+        expect(
+          item.basePrice,
+          greaterThanOrEqualTo(11),
+          reason: '$id must be priced as a high-impact fate item',
+        );
+      }
+
+      const legendaryFateIds = [
+        'number_mask',
+        'flush_five_fate',
+        'flush_house_fate',
+        'wild_thread',
+        'off_color_rite',
+      ];
+      for (final id in legendaryFateIds) {
+        expect(catalog.findById(id)!.rarity, ItemRarity.legendary, reason: id);
+      }
+      expect(catalog.findById('number_mask')!.basePrice, 20);
+      expect(catalog.findById('flush_house_fate')!.basePrice, 20);
+      expect(catalog.findById('flush_five_fate')!.basePrice, 22);
+    });
+
+    test('legacy fate item ids resolve to canonical item ids', () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+
+      const legacyToCanonical = {
+        'risk_seal': 'fate_full_house_low',
+        'anchor_seal': 'fate_flush_high',
+        'echo_seal': 'fate_flush_low',
+        'gold_seal_stamp': 'fate_straight_high',
+        'growth_seal': 'fate_straight_low',
+        'line_seal_stamp': 'fate_three_kind_high',
+      };
+
+      for (final entry in legacyToCanonical.entries) {
+        expect(catalog.findById(entry.key)?.id, entry.value);
+      }
+
+      final inventory = RunInventoryState.fromJson(const {
+        'ownedItems': [
+          {'itemId': 'risk_seal', 'count': 1, 'placement': 'quickSlot'},
+        ],
+        'quickSlotItemIds': ['risk_seal'],
+      });
+
+      expect(inventory.ownedItems.single.itemId, 'fate_full_house_low');
+      expect(inventory.quickSlotItemIds, ['fate_full_house_low']);
     });
 
     test('owned item inventory state roundtrips storage shape', () {

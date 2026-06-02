@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/item_effect_runtime.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
@@ -333,30 +334,27 @@ void main() {
     );
   });
 
-  test(
-    'line memory market fixture keeps deferred ritual offers out of market',
-    () {
-      final fixture = DebugRunFixtureService.build(
-        DebugRunFixtureService.lineMemoryMarketPreview,
-      );
-      final catalog = ItemCatalog.fromJson(
-        jsonDecode(File('data/common/items_common_v1.json').readAsStringSync())
-            as Map<String, dynamic>,
-      );
+  test('line memory market fixture exposes active ritual offer', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.lineMemoryMarketPreview,
+    );
+    final catalog = ItemCatalog.fromJson(
+      jsonDecode(File('data/common/items_common_v1.json').readAsStringSync())
+          as Map<String, dynamic>,
+    );
 
-      expect(fixture, isNotNull);
-      expect(fixture!.activeScene, ActiveRunScene.shop);
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.shop);
 
-      final market = RummiMarketRuntimeFacade.fromRunProgress(
-        fixture.runProgress,
-        itemCatalog: catalog,
-      );
-      expect(
-        market.itemOffers.map((offer) => offer.contentId),
-        isNot(contains('line_memory')),
-      );
-    },
-  );
+    final market = RummiMarketRuntimeFacade.fromRunProgress(
+      fixture.runProgress,
+      itemCatalog: catalog,
+    );
+    expect(
+      market.itemOffers.map((offer) => offer.contentId),
+      contains('line_memory'),
+    );
+  });
 
   test('line memory battle fixture starts with usable scoring line', () {
     final fixture = DebugRunFixtureService.build(
@@ -380,12 +378,16 @@ void main() {
         items: ['line_memory', 'keystone_copy', 'rank_echo'],
       ),
       (
+        id: DebugRunFixtureService.ritualDeckEchoBattlePreview,
+        items: ['sealed_copy', 'scarce_copy', 'color_echo'],
+      ),
+      (
         id: DebugRunFixtureService.ritualSealOverrideBattlePreview,
-        items: ['line_seal_stamp', 'gold_seal_stamp', 'rank_concord'],
+        items: ['fate_three_kind_high', 'fate_straight_high', 'rank_concord'],
       ),
       (
         id: DebugRunFixtureService.ritualPruneBurnBattlePreview,
-        items: ['line_pruner', 'deadwood_burn', 'number_mask'],
+        items: ['trim_color', 'deadwood_burn', 'sacrifice_line'],
       ),
     ];
 
@@ -418,6 +420,123 @@ void main() {
       );
     }
   });
+
+  test('fate transform fixtures expose one card each in review order', () {
+    expect(
+      DebugRunFixtureService.fateLineTransformPreviewItemsByFixture.values
+          .toList(),
+      [
+        'number_mask',
+        'wild_thread',
+        'off_color_rite',
+        'color_concord',
+        'step_rite',
+        'rank_concord',
+        'fate_full_house_low',
+        'flush_house_fate',
+        'flush_five_fate',
+        'fate_flush_high',
+        'fate_flush_low',
+        'fate_straight_high',
+        'fate_straight_low',
+        'fate_three_kind_high',
+        'line_pruner',
+        'trim_rank',
+      ],
+    );
+
+    for (final entry
+        in DebugRunFixtureService
+            .fateLineTransformPreviewItemsByFixture
+            .entries) {
+      final fixture = DebugRunFixtureService.build(entry.key);
+
+      expect(fixture, isNotNull, reason: entry.key);
+      expect(fixture!.activeScene, ActiveRunScene.battle, reason: entry.key);
+      expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
+        entry.value,
+      ], reason: entry.key);
+      expect(
+        fixture.session
+            .currentBoardLineSummaryFor(LineRef.row(2))
+            ?.isScoringLine,
+        isFalse,
+        reason: entry.key,
+      );
+    }
+  });
+
+  test(
+    'fate transform fixtures apply selected line into expected hand rank',
+    () {
+      final catalog = ItemCatalog.fromJsonString(
+        File('data/common/items_common_v1.json').readAsStringSync(),
+      );
+      final expectedRanks = <String, RummiHandRank>{
+        'number_mask': RummiHandRank.royalStraightFlush,
+        'wild_thread': RummiHandRank.straightFlush,
+        'off_color_rite': RummiHandRank.lowStraightFlush,
+        'color_concord': RummiHandRank.crownFourOfAKind,
+        'step_rite': RummiHandRank.fourOfAKind,
+        'rank_concord': RummiHandRank.fullHouse,
+        'fate_full_house_low': RummiHandRank.fullHouse,
+        'flush_house_fate': RummiHandRank.flushHouse,
+        'flush_five_fate': RummiHandRank.flushFive,
+        'fate_flush_high': RummiHandRank.flush,
+        'fate_flush_low': RummiHandRank.flush,
+        'fate_straight_high': RummiHandRank.straight,
+        'fate_straight_low': RummiHandRank.straight,
+        'fate_three_kind_high': RummiHandRank.threeOfAKind,
+        'line_pruner': RummiHandRank.threeOfAKind,
+        'trim_rank': RummiHandRank.twoPair,
+      };
+
+      for (final entry
+          in DebugRunFixtureService
+              .fateLineTransformPreviewItemsByFixture
+              .entries) {
+        final fixture = DebugRunFixtureService.build(entry.key)!;
+        final item = catalog.findById(entry.value)!;
+        expect(
+          item.id,
+          entry.value,
+          reason: '${entry.key} must use canonical id',
+        );
+        expect(
+          item.effect.op,
+          'ritual_line_effect',
+          reason: '${entry.key} must stay a ritual line fixture',
+        );
+        expect(
+          item.effect.value('ritualAction'),
+          startsWith('fate_'),
+          reason: '${entry.key} must use a fate transform action',
+        );
+        final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
+          item: item,
+          session: fixture.session,
+          runProgress: fixture.runProgress,
+          lineRef: LineRef.row(2),
+        );
+        final transformed = fixture.session.currentBoardLineSummaryFor(
+          LineRef.row(2),
+        );
+
+        expect(result.isSuccess, isTrue, reason: entry.value);
+        expect(transformed?.occupiedCount, 5, reason: entry.value);
+        expect(
+          transformed?.rank,
+          expectedRanks[entry.value],
+          reason: entry.value,
+        );
+        expect(
+          fixture.runProgress.itemInventory.quickSlotItemIds,
+          isEmpty,
+          reason: entry.value,
+        );
+      }
+    },
+  );
 
   test('final boss cash-out fixture is ready to close the run', () {
     final fixture = DebugRunFixtureService.build(

@@ -7,23 +7,22 @@ class CardEmblemAssets {
 
   static const Set<String> _ritualItemIds = {
     'line_memory',
-    'minor_memory',
     'cross_memory',
-    'thin_memory',
-    'boss_memory',
     'keystone_copy',
     'edge_copy',
     'rank_echo',
     'color_echo',
     'scarce_copy',
     'sealed_copy',
-    'line_seal_stamp',
-    'growth_seal',
-    'gold_seal_stamp',
-    'echo_seal',
-    'anchor_seal',
-    'risk_seal',
+    'fate_three_kind_high',
+    'fate_straight_low',
+    'fate_straight_high',
+    'fate_flush_low',
+    'fate_flush_high',
+    'fate_full_house_low',
     'rank_concord',
+    'flush_house_fate',
+    'flush_five_fate',
     'step_rite',
     'color_concord',
     'off_color_rite',
@@ -48,7 +47,22 @@ class CardEmblemAssets {
 
   static String jester(String id) => '$_basePath/jester_$id.png';
 
-  static String item(String id) => _ritualItemIds.contains(id)
-      ? '$_ritualBasePath/ritual_$id.png'
-      : '$_basePath/item_$id.png';
+  static String item(String id) {
+    final assetId = _legacyRitualAssetId(id);
+    return _ritualItemIds.contains(id)
+        ? '$_ritualBasePath/ritual_$assetId.png'
+        : '$_basePath/item_$id.png';
+  }
+
+  static String _legacyRitualAssetId(String id) {
+    return switch (id) {
+      'fate_full_house_low' => 'risk_seal',
+      'fate_flush_high' => 'anchor_seal',
+      'fate_flush_low' => 'echo_seal',
+      'fate_straight_high' => 'gold_seal_stamp',
+      'fate_straight_low' => 'growth_seal',
+      'fate_three_kind_high' => 'line_seal_stamp',
+      _ => id,
+    };
+  }
 }

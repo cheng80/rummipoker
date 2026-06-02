@@ -458,6 +458,23 @@ class RummiPokerGridSession {
     return tile;
   }
 
+  void addDeckTilesToTopInDrawOrder(Iterable<Tile> tiles) {
+    deck.addToTopInDrawOrder(tiles);
+  }
+
+  List<Tile> clearLineTilesWhere(LineRef ref, bool Function(Tile tile) test) {
+    final removed = <Tile>[];
+    for (final (r, c) in ref.cells()) {
+      final tile = board.cellAt(r, c);
+      if (tile == null || !test(tile)) continue;
+      eliminated.add(tile);
+      board.setCell(r, c, null);
+      removed.add(tile);
+    }
+    if (removed.isNotEmpty) boardMoveHistory.clear();
+    return List<Tile>.unmodifiable(removed);
+  }
+
   RummiPokerGridSession copySnapshot() {
     return RummiPokerGridSession.restored(
       runSeed: runSeed,
@@ -538,6 +555,9 @@ class RummiPokerGridSession {
         );
       }
     }
+    final movedCellsThisStation = <(int, int)>{
+      for (final move in boardMoveHistory) (move.toRow, move.toCol),
+    };
 
     var scoreSum = 0;
     var baseScoreSum = 0;
@@ -620,6 +640,9 @@ class RummiPokerGridSession {
       final tileModifierResult = _applyTileModifiersToLine(
         lineScore: lineScore,
         scoringTiles: line.scoringTiles,
+        contributingCells: line.contributingCells,
+        contributionCounts: contributionCounts,
+        movedCells: movedCellsThisStation,
       );
       lineScore = tileModifierResult.score;
       effects.addAll(tileModifierResult.effects);
@@ -738,6 +761,9 @@ class RummiPokerGridSession {
   _applyTileModifiersToLine({
     required int lineScore,
     required List<Tile> scoringTiles,
+    required List<(int, int)> contributingCells,
+    required Map<(int, int), int> contributionCounts,
+    required Set<(int, int)> movedCells,
   }) {
     var score = lineScore;
     var goldBonus = 0;
@@ -745,10 +771,66 @@ class RummiPokerGridSession {
     final effects = <RummiJesterEffectBreakdown>[];
     final destroyedTiles = <Tile>[];
 
-    for (final tile in scoringTiles) {
-      if (tile.seal == TileSeal.blueSeal) {
-        bonusRankProgress += 1;
+    void addSealMultiplierEffect(TileSeal seal, double multiplier) {
+      final before = score;
+      score = (score * multiplier).round();
+      final delta = score - before;
+      if (delta <= 0) return;
+      effects.add(
+        RummiJesterEffectBreakdown(
+          jesterId: 'tile_seal:${seal.persistenceValue}',
+          displayName: _tileSealDisplayName(seal),
+          chipsBonus: 0,
+          multBonus: 0,
+          xmultBonus: multiplier,
+          scoreDelta: delta,
+        ),
+      );
+    }
+
+    for (var index = 0; index < scoringTiles.length; index += 1) {
+      final tile = scoringTiles[index];
+      final cell = index < contributingCells.length
+          ? contributingCells[index]
+          : null;
+      final isOverlapTile = cell != null && (contributionCounts[cell] ?? 1) > 1;
+      final wasMovedThisStation = cell != null && movedCells.contains(cell);
+
+      switch (tile.seal) {
+        case TileSeal.blueSeal:
+        case TileSeal.growthSeal:
+          bonusRankProgress += 1;
+        case TileSeal.redSeal:
+          break;
+        case TileSeal.lineMark:
+          addSealMultiplierEffect(tile.seal!, 1.1);
+        case TileSeal.goldSeal:
+          goldBonus += 1;
+        case TileSeal.echoSeal:
+          if (isOverlapTile) {
+            addSealMultiplierEffect(tile.seal!, 1.25);
+          }
+        case TileSeal.anchorSeal:
+          if (wasMovedThisStation) {
+            addSealMultiplierEffect(tile.seal!, 1.2);
+          }
+        case TileSeal.fractureSeal:
+          addSealMultiplierEffect(tile.seal!, 1.5);
+          if (!destroyedTiles.contains(tile)) {
+            destroyedTiles.add(tile);
+          }
+        case TileSeal.crossMemory:
+          if (isOverlapTile) {
+            bonusRankProgress += 1;
+          }
+        case TileSeal.bridgeSeal:
+          if (isOverlapTile) {
+            goldBonus += 2;
+          }
+        case null:
+          break;
       }
+
       final enhancement = tile.enhancement;
       if (enhancement != null) {
         final repeatCount = tile.seal == TileSeal.redSeal ? 2 : 1;
@@ -865,6 +947,21 @@ class RummiPokerGridSession {
       TileEdition.silverEdition => '은빛 판본',
       TileEdition.glowEdition => '빛무늬 판본',
       TileEdition.prismEdition => '다색 판본',
+    };
+  }
+
+  static String _tileSealDisplayName(TileSeal seal) {
+    return switch (seal) {
+      TileSeal.blueSeal => '푸른 인장',
+      TileSeal.redSeal => '붉은 인장',
+      TileSeal.lineMark => '라인 각인',
+      TileSeal.growthSeal => '성장 각인',
+      TileSeal.goldSeal => '금빛 각인',
+      TileSeal.echoSeal => '메아리 각인',
+      TileSeal.anchorSeal => '닻 각인',
+      TileSeal.fractureSeal => '균열 각인',
+      TileSeal.crossMemory => '교차 기억',
+      TileSeal.bridgeSeal => '다리 표식',
     };
   }
 

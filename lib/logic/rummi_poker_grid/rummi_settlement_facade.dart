@@ -195,5 +195,7 @@ String _handRankLabel(RummiHandRank rank) {
     RummiHandRank.lowStraightFlush => '로우 스티플',
     RummiHandRank.royalStraightFlush => '로열 스티플',
     RummiHandRank.fiveOfAKind => '파이브 카드',
+    RummiHandRank.flushHouse => '플러시 하우스',
+    RummiHandRank.flushFive => '플러시 파이브',
   };
 }

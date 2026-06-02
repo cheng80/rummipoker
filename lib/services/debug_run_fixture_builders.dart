@@ -832,27 +832,46 @@ ActiveRunRuntimeState _buildRitualGrowthCopyBattlePreview() {
   );
 }
 
+ActiveRunRuntimeState _buildRitualDeckEchoBattlePreview() {
+  return _buildRitualV1BattlePreview(
+    runSeed: 2026060104,
+    itemIds: const ['sealed_copy', 'scarce_copy', 'color_echo'],
+    sealFirstScoringTile: true,
+  );
+}
+
 ActiveRunRuntimeState _buildRitualSealOverrideBattlePreview() {
   return _buildRitualV1BattlePreview(
     runSeed: 2026060102,
-    itemIds: const ['line_seal_stamp', 'gold_seal_stamp', 'rank_concord'],
+    itemIds: const [
+      'fate_three_kind_high',
+      'fate_straight_high',
+      'rank_concord',
+    ],
   );
 }
 
 ActiveRunRuntimeState _buildRitualPruneBurnBattlePreview() {
   return _buildRitualV1BattlePreview(
     runSeed: 2026060103,
-    itemIds: const ['line_pruner', 'deadwood_burn', 'number_mask'],
+    itemIds: const ['trim_color', 'deadwood_burn', 'sacrifice_line'],
   );
 }
 
 ActiveRunRuntimeState _buildRitualV1BattlePreview({
   required int runSeed,
   required List<String> itemIds,
+  bool sealFirstScoringTile = false,
 }) {
   final board = RummiBoard()
     // Scoring straight-flush line for growth and scoring-only rituals.
-    ..setCell(0, 0, _tile(TileColor.red, 1))
+    ..setCell(
+      0,
+      0,
+      sealFirstScoringTile
+          ? const Tile(color: TileColor.red, number: 1, seal: TileSeal.blueSeal)
+          : _tile(TileColor.red, 1),
+    )
     ..setCell(0, 1, _tile(TileColor.red, 2))
     ..setCell(0, 2, _tile(TileColor.red, 3))
     ..setCell(0, 3, _tile(TileColor.red, 4))
@@ -900,6 +919,75 @@ ActiveRunRuntimeState _buildRitualV1BattlePreview({
           ),
       ],
       quickSlotItemIds: itemIds,
+    ),
+  );
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.battle,
+    difficulty: NewRunDifficulty.standard,
+    session: session,
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
+ActiveRunRuntimeState _buildFateLineTransformBattlePreview({
+  required String fixtureId,
+  required String itemId,
+}) {
+  final fixtureIndex = DebugRunFixtureService
+      .fateLineTransformPreviewItemsByFixture
+      .keys
+      .toList(growable: false)
+      .indexOf(fixtureId);
+  final runSeed = 2026060200 + (fixtureIndex < 0 ? 0 : fixtureIndex);
+  final board = RummiBoard()
+    // Row 2 is the visible target line: full, but not already a poker hand.
+    ..setCell(2, 0, _tile(TileColor.blue, 2))
+    ..setCell(2, 1, _tile(TileColor.yellow, 5))
+    ..setCell(2, 2, _tile(TileColor.black, 8))
+    ..setCell(2, 3, _tile(TileColor.red, 11))
+    ..setCell(2, 4, _tile(TileColor.black, 13))
+    // Sparse context tiles make row/column/diagonal selection easier to see.
+    ..setCell(0, 0, _tile(TileColor.red, 1))
+    ..setCell(0, 4, _tile(TileColor.yellow, 12))
+    ..setCell(4, 0, _tile(TileColor.blue, 7))
+    ..setCell(4, 4, _tile(TileColor.red, 3));
+  final session = RummiPokerGridSession.restored(
+    runSeed: runSeed,
+    deckCopiesPerTile: kDefaultCopiesPerTile,
+    maxHandSize: 2,
+    runRandomState: SeededRandom(runSeed).state,
+    blind: RummiBlindState(
+      targetScore: 720,
+      boardDiscardsRemaining: 4,
+      handDiscardsRemaining: 2,
+      scoreTowardBlind: 0,
+    ),
+    deck: PokerDeck.remainingAfterPlaced(board: board, random: Random(runSeed)),
+    board: board,
+    hand: const [],
+    eliminated: const [],
+  );
+  final runProgress = RummiRunProgress.restore(
+    stageIndex: 4,
+    gold: 24,
+    rerollCost: RummiRunProgress.shopBaseRerollCost,
+    ownedJesters: const [],
+    shopOffers: const [],
+    statefulValuesBySlot: const {},
+    playedHandCounts: const <RummiHandRank, int>{},
+    itemInventory: RunInventoryState(
+      ownedItems: [
+        OwnedItemEntry(
+          itemId: itemId,
+          count: 1,
+          placement: ItemPlacement.quickSlot,
+        ),
+      ],
+      quickSlotItemIds: [itemId],
     ),
   );
   return ActiveRunRuntimeState(

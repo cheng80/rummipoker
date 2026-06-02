@@ -20,6 +20,7 @@ enum ItemEffectEventKind {
   boardMoveUndone,
   maxHandSizeIncreased,
   tileDrawn,
+  deckTileAdded,
   deckTileDiscarded,
   goldGained,
   itemConsumed,

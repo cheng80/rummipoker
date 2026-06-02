@@ -5132,6 +5132,8 @@ _BalanceSimRankFamily _simBossRankFamily(RummiHandRank rank) {
     RummiHandRank.prismStraight => _BalanceSimRankFamily.sequence,
     RummiHandRank.flush => _BalanceSimRankFamily.color,
     RummiHandRank.fullHouse ||
+    RummiHandRank.flushHouse ||
+    RummiHandRank.flushFive ||
     RummiHandRank.straightFlush ||
     RummiHandRank.lowStraightFlush ||
     RummiHandRank.royalStraightFlush => _BalanceSimRankFamily.hybrid,

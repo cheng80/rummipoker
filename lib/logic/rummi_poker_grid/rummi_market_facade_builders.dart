@@ -12,7 +12,9 @@ List<RummiMarketItemOfferView> _buildItemOffers(
   final passiveRelicCapacity = progress.passiveRelicCapacity(
     itemCatalog: catalog,
   );
-  final consumedIds = progress.marketModifiers.consumedItemOfferIds.toSet();
+  final consumedIds = progress.marketModifiers.consumedItemOfferIds
+      .map(canonicalItemId)
+      .toSet();
   final pinnedKeys = progress.marketModifiers.pinnedItemOfferKeys;
   final shouldUsePinnedOffers = pinnedKeys.isNotEmpty;
   final candidates = items
@@ -112,7 +114,46 @@ List<RummiMarketItemOfferView> _buildItemOffers(
 }
 
 bool _isExperimentalRitualItem(ItemDefinition item) {
-  return item.tags.contains('ritual');
+  if (!item.tags.contains('ritual')) return false;
+  return !_isActiveRitualMarketItem(item);
+}
+
+bool _isActiveRitualMarketItem(ItemDefinition item) {
+  return switch (item.id) {
+    'trim_rank' ||
+    'line_pruner' ||
+    'fate_three_kind_high' ||
+    'color_concord' ||
+    'step_rite' ||
+    'rank_concord' ||
+    'fate_full_house_low' ||
+    'flush_house_fate' ||
+    'flush_five_fate' ||
+    'fate_flush_high' ||
+    'fate_flush_low' ||
+    'fate_straight_high' ||
+    'fate_straight_low' ||
+    'wild_thread' ||
+    'off_color_rite' ||
+    'number_mask' ||
+    'trim_color' ||
+    'deadwood_burn' ||
+    'sacrifice_line' ||
+    'sealed_copy' ||
+    'scarce_copy' ||
+    'color_echo' ||
+    'rank_echo' ||
+    'edge_copy' ||
+    'keystone_copy' ||
+    'line_memory' ||
+    'bridge_rite' ||
+    'diagonal_rite' ||
+    'center_rite' ||
+    'corner_rite' ||
+    'cross_rite' ||
+    'cross_memory' => true,
+    _ => false,
+  };
 }
 
 _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(

@@ -6,6 +6,18 @@ enum ItemRarity { common, uncommon, rare, legendary }
 
 enum ItemPlacement { inventory, quickSlot, equipped, passiveRack }
 
+String canonicalItemId(String id) {
+  return switch (id) {
+    'risk_seal' => 'fate_full_house_low',
+    'anchor_seal' => 'fate_flush_high',
+    'echo_seal' => 'fate_flush_low',
+    'gold_seal_stamp' => 'fate_straight_high',
+    'growth_seal' => 'fate_straight_low',
+    'line_seal_stamp' => 'fate_three_kind_high',
+    _ => id,
+  };
+}
+
 class ItemEffectDefinition {
   const ItemEffectDefinition({
     required this.timing,
@@ -57,7 +69,7 @@ class ItemDefinition {
   });
 
   factory ItemDefinition.fromJson(Map<String, dynamic> json) {
-    final id = json['id'] as String? ?? '';
+    final id = canonicalItemId(json['id'] as String? ?? '');
     return ItemDefinition(
       id: id,
       displayName: json['displayName'] as String? ?? id,
@@ -181,8 +193,9 @@ class ItemCatalog {
   List<ItemDefinition> get all => List<ItemDefinition>.unmodifiable(_items);
 
   ItemDefinition? findById(String id) {
+    final canonicalId = canonicalItemId(id);
     for (final item in _items) {
-      if (item.id == id) return item;
+      if (item.id == canonicalId) return item;
     }
     return null;
   }
@@ -208,7 +221,7 @@ class OwnedItemEntry {
 
   factory OwnedItemEntry.fromJson(Map<String, dynamic> json) {
     return OwnedItemEntry(
-      itemId: json['itemId'] as String? ?? '',
+      itemId: canonicalItemId(json['itemId'] as String? ?? ''),
       count: (json['count'] as num?)?.toInt() ?? 0,
       placement: ItemDefinition._placementFromString(
         json['placement'] as String?,
@@ -343,8 +356,9 @@ class RunInventoryState {
   }
 
   RunInventoryState withConsumedItem(String itemId) {
+    final canonicalId = canonicalItemId(itemId);
     final existingIndex = ownedItems.indexWhere(
-      (entry) => entry.itemId == itemId,
+      (entry) => entry.itemId == canonicalId,
     );
     if (existingIndex < 0) return this;
 
@@ -365,13 +379,13 @@ class RunInventoryState {
     return RunInventoryState(
       ownedItems: List<OwnedItemEntry>.unmodifiable(nextOwnedItems),
       equippedItemIds: removed
-          ? _idsWithoutItem(equippedItemIds, itemId)
+          ? _idsWithoutItem(equippedItemIds, canonicalId)
           : equippedItemIds,
       passiveRelicIds: removed
-          ? _idsWithoutItem(passiveRelicIds, itemId)
+          ? _idsWithoutItem(passiveRelicIds, canonicalId)
           : passiveRelicIds,
       quickSlotItemIds: removed
-          ? _idsWithoutItem(quickSlotItemIds, itemId)
+          ? _idsWithoutItem(quickSlotItemIds, canonicalId)
           : quickSlotItemIds,
     );
   }
@@ -388,9 +402,10 @@ class RunInventoryState {
   };
 
   static List<String> _stringListFromJson(Object? value) {
-    return (value as List<dynamic>? ?? const []).whereType<String>().toList(
-      growable: false,
-    );
+    return (value as List<dynamic>? ?? const [])
+        .whereType<String>()
+        .map(canonicalItemId)
+        .toList(growable: false);
   }
 
   static List<String> _idsWithPlacementItem(
@@ -398,14 +413,20 @@ class RunInventoryState {
     ItemDefinition item,
     ItemPlacement placement,
   ) {
-    if (item.placement != placement || currentIds.contains(item.id)) {
-      return List<String>.unmodifiable(currentIds);
+    final normalizedIds = currentIds
+        .map(canonicalItemId)
+        .toList(growable: false);
+    if (item.placement != placement || normalizedIds.contains(item.id)) {
+      return List<String>.unmodifiable(normalizedIds);
     }
-    return List<String>.unmodifiable([...currentIds, item.id]);
+    return List<String>.unmodifiable([...normalizedIds, item.id]);
   }
 
   static List<String> _idsWithoutItem(List<String> currentIds, String itemId) {
-    return List<String>.unmodifiable(currentIds.where((id) => id != itemId));
+    final canonicalId = canonicalItemId(itemId);
+    return List<String>.unmodifiable(
+      currentIds.map(canonicalItemId).where((id) => id != canonicalId),
+    );
   }
 }
 

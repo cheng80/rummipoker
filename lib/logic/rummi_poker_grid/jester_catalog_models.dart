@@ -304,6 +304,16 @@ class RummiStationBandMarketPolicy {
   int _itemTagBonus(List<String> tags) {
     var bonus = 0;
     bool has(String tag) => tags.contains(tag);
+    if (has('fate_transform')) {
+      bonus -= switch (band) {
+        RummiStationMarketBand.early => 120,
+        RummiStationMarketBand.mid => 70,
+        RummiStationMarketBand.late => 20,
+      };
+    }
+    if (has('ritual') && !has('fate_transform')) {
+      bonus -= band == RummiStationMarketBand.early ? 55 : 25;
+    }
     switch (band) {
       case RummiStationMarketBand.early:
         if (has('economy') || has('market')) bonus += 120;
@@ -537,7 +547,7 @@ class RummiMarketModifierState {
   }
 
   static String itemOfferKey(ItemPlacement placement, String itemId) {
-    return '${placement.name}:$itemId';
+    return '${placement.name}:${canonicalItemId(itemId)}';
   }
 
   static bool itemOfferKeyMatchesPlacement(
@@ -550,7 +560,7 @@ class RummiMarketModifierState {
   static String itemIdFromOfferKey(String key) {
     final separator = key.indexOf(':');
     if (separator < 0 || separator == key.length - 1) return key;
-    return key.substring(separator + 1);
+    return canonicalItemId(key.substring(separator + 1));
   }
 
   static int _nonNegativeJsonInt(Object? value) {

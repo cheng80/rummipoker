@@ -16,6 +16,11 @@ class GameBoardGrid extends StatefulWidget {
     required this.onTapCell,
     required this.onLongPressTile,
     this.constrainedCells = const {},
+    this.lineSelectionLines = const [],
+    this.selectedLineRef,
+    this.onTapLine,
+    this.lineFlashRef,
+    this.lineFlashTick = 0,
     this.bonusFlashCellKey,
     this.bonusFlashTick = 0,
     this.alignment = Alignment.center,
@@ -25,6 +30,11 @@ class GameBoardGrid extends StatefulWidget {
   final Set<String> scoringCells;
   final Set<String> constrainedScoringCells;
   final Set<String> constrainedCells;
+  final List<RummiScoringLineSummary> lineSelectionLines;
+  final LineRef? selectedLineRef;
+  final ValueChanged<RummiScoringLineSummary>? onTapLine;
+  final LineRef? lineFlashRef;
+  final int lineFlashTick;
   final Set<String> activeSettlementCells;
   final Map<String, Tile> settlementBoardSnapshot;
   final int? selectedRow;
@@ -188,6 +198,22 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                       _BoardMoveFlightOverlay(flight: _moveFlight!),
                     if (_removeFlight != null)
                       _BoardRemoveFlightOverlay(flight: _removeFlight!),
+                    if (widget.lineFlashRef != null && widget.lineFlashTick > 0)
+                      Positioned.fill(
+                        child: _BoardLineFlashOverlay(
+                          lineRef: widget.lineFlashRef!,
+                          tick: widget.lineFlashTick,
+                        ),
+                      ),
+                    if (widget.onTapLine != null &&
+                        widget.lineSelectionLines.isNotEmpty)
+                      Positioned.fill(
+                        child: GameBoardLineSelectionOverlay(
+                          lines: widget.lineSelectionLines,
+                          selectedLineRef: widget.selectedLineRef,
+                          onTapLine: widget.onTapLine!,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -322,6 +348,345 @@ class _BoardMoveBonusFlash extends StatelessWidget {
   }
 }
 
+class GameBoardLineSelectionOverlay extends StatelessWidget {
+  const GameBoardLineSelectionOverlay({
+    super.key,
+    required this.lines,
+    required this.selectedLineRef,
+    required this.onTapLine,
+  });
+
+  final List<RummiScoringLineSummary> lines;
+  final LineRef? selectedLineRef;
+  final ValueChanged<RummiScoringLineSummary> onTapLine;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        RummiScoringLineSummary? lineAt(Offset localPosition) {
+          final metric = _BoardLineOverlayMetric(
+            Size(constraints.maxWidth, constraints.maxHeight),
+          );
+          RummiScoringLineSummary? closestLine;
+          var closestDistance = double.infinity;
+          for (final line in lines) {
+            final cells = line.ref.cells();
+            final start = metric.centerFor(cells.first.$1, cells.first.$2);
+            final end = metric.centerFor(cells.last.$1, cells.last.$2);
+            final distance = _distanceToSegment(localPosition, start, end);
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestLine = line;
+            }
+          }
+          return closestDistance <= metric.tapTolerance ? closestLine : null;
+        }
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) {
+            final line = lineAt(details.localPosition);
+            if (line != null) onTapLine(line);
+          },
+          child: CustomPaint(
+            painter: _BoardLineSelectionPainter(
+              lines,
+              selectedLineRef: selectedLineRef,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class GameBoardTileSelectionTarget {
+  const GameBoardTileSelectionTarget({
+    required this.line,
+    required this.tileIndex,
+    required this.cell,
+    required this.tile,
+  });
+
+  final RummiScoringLineSummary line;
+  final int tileIndex;
+  final (int, int) cell;
+  final Tile tile;
+}
+
+class GameBoardTileSelectionOverlay extends StatelessWidget {
+  const GameBoardTileSelectionOverlay({
+    super.key,
+    required this.targets,
+    required this.selectedLineRef,
+    required this.selectedTileIndex,
+    required this.onTapTile,
+  });
+
+  final List<GameBoardTileSelectionTarget> targets;
+  final LineRef? selectedLineRef;
+  final int? selectedTileIndex;
+  final ValueChanged<GameBoardTileSelectionTarget> onTapTile;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        GameBoardTileSelectionTarget? targetAt(Offset localPosition) {
+          final metric = _BoardLineOverlayMetric(
+            Size(constraints.maxWidth, constraints.maxHeight),
+          );
+          GameBoardTileSelectionTarget? closestTarget;
+          var closestDistance = double.infinity;
+          for (final target in targets) {
+            final (row, col) = target.cell;
+            final rect = metric
+                .rectFor(row, col)
+                .inflate(metric.tapTolerance * 0.2);
+            if (!rect.contains(localPosition)) continue;
+            final distance =
+                (metric.centerFor(row, col) - localPosition).distance;
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestTarget = target;
+            }
+          }
+          return closestTarget;
+        }
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) {
+            final target = targetAt(details.localPosition);
+            if (target != null) onTapTile(target);
+          },
+          child: CustomPaint(
+            painter: _BoardTileSelectionPainter(
+              targets,
+              selectedLineRef: selectedLineRef,
+              selectedTileIndex: selectedTileIndex,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BoardLineFlashOverlay extends StatelessWidget {
+  const _BoardLineFlashOverlay({required this.lineRef, required this.tick});
+
+  final LineRef lineRef;
+  final int tick;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey('fate-line-flash-$tick'),
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: GamePresentationTimings.fateLineTransformFlash,
+        curve: Curves.easeInOutQuart,
+        builder: (context, value, _) {
+          return CustomPaint(
+            painter: _BoardLineFlashPainter(lineRef, progress: value),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _BoardTileSelectionPainter extends CustomPainter {
+  const _BoardTileSelectionPainter(
+    this.targets, {
+    required this.selectedLineRef,
+    required this.selectedTileIndex,
+  });
+
+  final List<GameBoardTileSelectionTarget> targets;
+  final LineRef? selectedLineRef;
+  final int? selectedTileIndex;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final metric = _BoardLineOverlayMetric(size);
+    for (final target in targets) {
+      final selected =
+          target.line.ref == selectedLineRef &&
+          target.tileIndex == selectedTileIndex;
+      final color = selected
+          ? GameUiPalette.userSelection
+          : GameUiPalette.tileBlueSeal;
+      final glow = Paint()
+        ..color = color.withValues(alpha: selected ? 0.24 : 0.12)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = selected ? 8 : 5
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      final stroke = Paint()
+        ..color = color.withValues(alpha: selected ? 0.98 : 0.68)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = selected ? 4.4 : 2.6
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round;
+      final (row, col) = target.cell;
+      final rect = metric.rectFor(row, col).deflate(selected ? 2 : 4);
+      final rrect = RRect.fromRectAndRadius(
+        rect,
+        Radius.circular(metric.cellCornerRadius),
+      );
+      canvas
+        ..drawRRect(rrect, glow)
+        ..drawRRect(rrect, stroke);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BoardTileSelectionPainter oldDelegate) {
+    return oldDelegate.targets != targets ||
+        oldDelegate.selectedLineRef != selectedLineRef ||
+        oldDelegate.selectedTileIndex != selectedTileIndex;
+  }
+}
+
+class _BoardLineSelectionPainter extends CustomPainter {
+  const _BoardLineSelectionPainter(this.lines, {required this.selectedLineRef});
+
+  final List<RummiScoringLineSummary> lines;
+  final LineRef? selectedLineRef;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final metric = _BoardLineOverlayMetric(size);
+    for (final line in lines) {
+      final selected = line.ref == selectedLineRef;
+      final cells = line.ref.cells();
+      final color = selected
+          ? GameUiPalette.userSelection
+          : GameUiPalette.tileBlueSeal;
+      final glow = Paint()
+        ..color = color.withValues(alpha: selected ? 0.20 : 0.10)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = selected ? 8 : 5
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      final stroke = Paint()
+        ..color = selected
+            ? color.withValues(alpha: 0.96)
+            : color.withValues(alpha: 0.58)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = selected ? 4.4 : 2.4
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round;
+      for (final (row, col) in cells) {
+        final rect = metric.rectFor(row, col).deflate(selected ? 2 : 4);
+        final rrect = RRect.fromRectAndRadius(
+          rect,
+          Radius.circular(metric.cellCornerRadius),
+        );
+        canvas
+          ..drawRRect(rrect, glow)
+          ..drawRRect(rrect, stroke);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BoardLineSelectionPainter oldDelegate) {
+    return oldDelegate.lines != lines ||
+        oldDelegate.selectedLineRef != selectedLineRef;
+  }
+}
+
+class _BoardLineFlashPainter extends CustomPainter {
+  const _BoardLineFlashPainter(this.lineRef, {required this.progress});
+
+  final LineRef lineRef;
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final metric = _BoardLineOverlayMetric(size);
+    final cells = lineRef.cells();
+    final wave = sin(pi * progress).clamp(0.0, 1.0);
+    final fade = (1 - progress).clamp(0.0, 1.0);
+    final reveal = progress < 0.36 ? progress / 0.36 : 1.0;
+    final glow = Paint()
+      ..color = GameUiPalette.userSelection.withValues(alpha: 0.72 * fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 9 + 7 * wave
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 * wave);
+    final fill = Paint()
+      ..color = GameUiPalette.userSelection.withValues(alpha: 0.12 * fade)
+      ..style = PaintingStyle.fill;
+    final core = Paint()
+      ..color = GameUiPalette.actionGoldBright.withValues(alpha: 0.95 * fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final visibleCount = (cells.length * reveal).ceil().clamp(1, cells.length);
+    for (final (row, col) in cells.take(visibleCount)) {
+      final rect = metric.rectFor(row, col).deflate(2);
+      final rrect = RRect.fromRectAndRadius(
+        rect,
+        Radius.circular(metric.cellCornerRadius),
+      );
+      canvas
+        ..drawRRect(rrect, fill)
+        ..drawRRect(rrect, glow)
+        ..drawRRect(rrect, core);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BoardLineFlashPainter oldDelegate) {
+    return oldDelegate.lineRef != lineRef || oldDelegate.progress != progress;
+  }
+}
+
+class _BoardLineOverlayMetric {
+  const _BoardLineOverlayMetric(this.size);
+
+  final Size size;
+
+  double get _cellSide =>
+      (size.shortestSide - kBoardGridGap * (kBoardSize - 1)) / kBoardSize;
+  double get tapTolerance => max(18, _cellSide * 0.36);
+  double get cellCornerRadius => max(8, _cellSide * 0.13);
+
+  Offset centerFor(int row, int col) {
+    return Offset(
+      col * (_cellSide + kBoardGridGap) + _cellSide / 2,
+      row * (_cellSide + kBoardGridGap) + _cellSide / 2,
+    );
+  }
+
+  Rect rectFor(int row, int col) {
+    return Rect.fromLTWH(
+      col * (_cellSide + kBoardGridGap),
+      row * (_cellSide + kBoardGridGap),
+      _cellSide,
+      _cellSide,
+    );
+  }
+}
+
+double _distanceToSegment(Offset point, Offset start, Offset end) {
+  final dx = end.dx - start.dx;
+  final dy = end.dy - start.dy;
+  final lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared == 0) {
+    return (point - start).distance;
+  }
+  final t =
+      (((point.dx - start.dx) * dx + (point.dy - start.dy) * dy) /
+              lengthSquared)
+          .clamp(0.0, 1.0);
+  final projection = Offset(start.dx + t * dx, start.dy + t * dy);
+  return (point - projection).distance;
+}
+
 class _BoardMoveFlight {
   const _BoardMoveFlight({
     required this.tick,
@@ -390,11 +755,16 @@ class _BoardMoveFlightOverlay extends StatelessWidget {
             key: ValueKey<int>(flight.tick),
             tween: Tween<double>(begin: 0, end: 1),
             duration: GamePresentationTimings.boardTileMoveFlight,
-            curve: Curves.easeInOutCubic,
+            curve: Curves.linear,
             builder: (context, value, child) {
-              final offset = Offset.lerp(fromOffset, toOffset, value)!;
-              final arc = sin(pi * value) * -10;
-              final pulse = sin(pi * value);
+              final travel = GamePresentationMotion.flightProgress(value);
+              final offset = GamePresentationMotion.flightOffset(
+                fromOffset,
+                toOffset,
+                value,
+              );
+              final arc = sin(pi * travel) * -10;
+              final pulse = sin(pi * travel);
               return Stack(
                 children: [
                   Positioned(

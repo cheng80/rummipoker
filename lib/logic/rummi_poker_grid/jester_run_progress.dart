@@ -446,7 +446,7 @@ class RummiRunProgress {
       TileSeal.goldSeal ||
       TileSeal.echoSeal ||
       TileSeal.anchorSeal ||
-      TileSeal.riskSeal ||
+      TileSeal.fractureSeal ||
       TileSeal.crossMemory ||
       TileSeal.bridgeSeal => 3,
       null => 0,

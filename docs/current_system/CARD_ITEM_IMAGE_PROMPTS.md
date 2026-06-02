@@ -302,36 +302,37 @@ Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, desig
 | 덱/손패 문장 | `grand_satchel` | 큰 가방 | relic, hand_size, legendary, penalty |
 | 경제/상점 문장 | `market_compass` | 상점 나침반 | relic, market, legendary, discount |
 
-## 카드별 프롬프트 토큰: Planned Ritual
+## 카드별 프롬프트 토큰: Current Ritual/Fate
+
+현재 Ritual/Item 확장 계열은 37종이다. 전투 보드 선 선택형 `ritual_line_effect`는 31장이고, 이 중 족보 변환형 운명은 16장이다. 이미지 프롬프트도 아래 분류를 기준으로 생성/재생성한다.
 
 | 컨셉군 | ID | 이름 | 태그 토큰 |
 |---|---|---|---|
 | 의식/라인 기억 문장 | `line_memory` | 라인 기억 | ritual, line, hand_rank_growth, primary |
-| 의식/라인 기억 문장 | `minor_memory` | 잔상 기억 | ritual, line, secondary_rank_growth |
 | 의식/라인 기억 문장 | `cross_memory` | 교차 기억 | ritual, cross_line, row_column_memory |
-| 의식/라인 기억 문장 | `thin_memory` | 얇은 기억 | ritual, small_line, partial_line_growth |
-| 의식/라인 기억 문장 | `boss_memory` | 보스 기억 | ritual, boss, double_growth |
 | 의식/덱 복사 문장 | `keystone_copy` | 중심석 복사 | ritual, deck_add, key_tile |
 | 의식/덱 복사 문장 | `edge_copy` | 끝점 복사 | ritual, deck_add, endpoint_tile |
 | 의식/덱 복사 문장 | `rank_echo` | 숫자 메아리 | ritual, deck_add, repeated_rank |
 | 의식/덱 복사 문장 | `color_echo` | 색 메아리 | ritual, deck_add, majority_color |
 | 의식/덱 복사 문장 | `scarce_copy` | 희소석 복사 | ritual, deck_add, scarce_tile |
 | 의식/덱 복사 문장 | `sealed_copy` | 각인 복사 | ritual, deck_add, sealed_tile |
-| 의식/각인 문장 | `line_seal_stamp` | 라인 각인 | ritual, seal, line_mark |
-| 의식/각인 문장 | `growth_seal` | 성장 각인 | ritual, seal, growth |
-| 의식/각인 문장 | `gold_seal_stamp` | 금빛 각인 | ritual, seal, gold |
-| 의식/각인 문장 | `echo_seal` | 메아리 각인 | ritual, seal, overlap_echo |
-| 의식/각인 문장 | `anchor_seal` | 닻 각인 | ritual, seal, moved_tile |
-| 의식/각인 문장 | `risk_seal` | 균열 각인 | ritual, seal, high_risk_tradeoff |
-| 의식/숫자 변환 문장 | `rank_concord` | 숫자 맞춤 의식 | ritual, hand_rank_override, three_kind |
-| 의식/숫자 변환 문장 | `step_rite` | 계단 의식 | ritual, hand_rank_override, straight |
-| 의식/숫자 변환 문장 | `color_concord` | 색 맞춤 의식 | ritual, hand_rank_override, flush |
-| 의식/숫자 변환 문장 | `off_color_rite` | 이색 의식 | ritual, hand_rank_override, full_house |
-| 의식/숫자 변환 문장 | `wild_thread` | 만능 실 | ritual, hand_rank_override, four_kind |
-| 의식/숫자 변환 문장 | `number_mask` | 숫자 가면 | ritual, hand_rank_override, five_kind |
-| 의식/덱 압축 문장 | `line_pruner` | 가지치기 의식 | ritual, deck_remove, selected_tile |
-| 의식/덱 압축 문장 | `trim_color` | 색 가지치기 | ritual, deck_remove, overrepresented_color |
-| 의식/덱 압축 문장 | `trim_rank` | 숫자 가지치기 | ritual, deck_remove, overrepresented_rank |
+| 의식/족보 변환 문장 | `trim_rank` | 투페어 운명 | ritual, fate_transform, two_pair |
+| 의식/족보 변환 문장 | `line_pruner` | 하위 트리플 운명 | ritual, fate_transform, low_three_kind |
+| 의식/족보 변환 문장 | `fate_three_kind_high` | 상위 트리플 운명 | ritual, fate_transform, high_three_kind |
+| 의식/족보 변환 문장 | `color_concord` | 상위 포카드 운명 | ritual, fate_transform, high_four_kind |
+| 의식/족보 변환 문장 | `step_rite` | 하위 포카드 운명 | ritual, fate_transform, low_four_kind |
+| 의식/족보 변환 문장 | `rank_concord` | 상위 풀하우스 운명 | ritual, fate_transform, high_full_house |
+| 의식/족보 변환 문장 | `fate_full_house_low` | 하위 풀하우스 운명 | ritual, fate_transform, low_full_house |
+| 의식/족보 변환 문장 | `flush_house_fate` | 플러시 하우스 운명 | ritual, fate_transform, flush_house |
+| 의식/족보 변환 문장 | `flush_five_fate` | 플러시 파이브 운명 | ritual, fate_transform, flush_five |
+| 의식/족보 변환 문장 | `fate_flush_high` | 상위 플러시 운명 | ritual, fate_transform, high_flush |
+| 의식/족보 변환 문장 | `fate_flush_low` | 하위 플러시 운명 | ritual, fate_transform, low_flush |
+| 의식/족보 변환 문장 | `fate_straight_high` | 상행 스트레이트 운명 | ritual, fate_transform, high_straight |
+| 의식/족보 변환 문장 | `fate_straight_low` | 하행 스트레이트 운명 | ritual, fate_transform, low_straight |
+| 의식/족보 변환 문장 | `wild_thread` | 상행 스티플 운명 | ritual, fate_transform, high_straight_flush |
+| 의식/족보 변환 문장 | `off_color_rite` | 하행 스티플 운명 | ritual, fate_transform, low_straight_flush |
+| 의식/족보 변환 문장 | `number_mask` | 로얄 운명 | ritual, fate_transform, royal_flush |
+| 의식/색 정리 문장 | `trim_color` | 색 가지치기 | ritual, color_prune, deck_top_refill |
 | 의식/덱 압축 문장 | `deadwood_burn` | 마른가지 소각 | ritual, dead_line, gold_recovery |
 | 의식/덱 압축 문장 | `sacrifice_line` | 제물 의식 | ritual, sacrifice, high_risk_reward |
 | 의식/보드 위치 문장 | `cross_rite` | 교차 의식 | ritual, geometry, cross_point |

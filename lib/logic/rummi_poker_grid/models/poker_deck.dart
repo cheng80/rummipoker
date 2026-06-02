@@ -122,6 +122,15 @@ class PokerDeck {
     return _pile.removeLast();
   }
 
+  /// Add tiles so [draw] returns them before the existing pile.
+  /// The first tile in [tiles] becomes the next drawn tile.
+  void addToTopInDrawOrder(Iterable<Tile> tiles) {
+    final ordered = tiles.toList(growable: false);
+    for (final tile in ordered.reversed) {
+      _pile.add(tile);
+    }
+  }
+
   Tile? discardFromTopWindow({required int topIndex, required int windowSize}) {
     if (topIndex < 0 || windowSize <= 0) return null;
     final visible = peekTop(windowSize);
