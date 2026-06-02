@@ -262,64 +262,64 @@
         "effectText": "Choose a sealed or enhanced tile from any board line. Add a copy to your deck."
       },
       "line_seal_stamp": {
-        "displayName": "Line Seal",
-        "effectText": "Choose a tile from any board line. Add a line seal; when scored, it grants chip bonus."
+        "displayName": "High Triple Fate",
+        "effectText": "Choose a board line. Transform it into a three-of-a-kind set using the line's highest number; the other numbers do not overlap."
       },
       "growth_seal": {
-        "displayName": "Growth Seal",
-        "effectText": "Choose a tile from any board line. Add a growth seal; when scored, the hand rank grows +1."
+        "displayName": "Low Straight Fate",
+        "effectText": "Choose a board line. Transform it into the lowest straight set possible from the line's lowest tile, with that tile off-color."
       },
       "gold_seal_stamp": {
-        "displayName": "Gold Seal",
-        "effectText": "Choose a tile from any board line. Add a gold seal; when scored, gain Gold +1."
+        "displayName": "High Straight Fate",
+        "effectText": "Choose a board line. Transform it into the highest straight set possible from the line's highest tile, with that tile off-color."
       },
       "echo_seal": {
-        "displayName": "Echo Seal",
-        "effectText": "Choose a tile from any board line. Add an echo seal; overlapping scoring gains a bonus."
+        "displayName": "Low Flush Fate",
+        "effectText": "Choose a board line. Transform it into a flush set using the line's lowest tile color."
       },
       "anchor_seal": {
-        "displayName": "Anchor Seal",
-        "effectText": "Choose a tile from any board line. Add an anchor seal; moved scoring gains a bonus."
+        "displayName": "High Flush Fate",
+        "effectText": "Choose a board line. Transform it into a flush set using the line's highest tile color."
       },
       "risk_seal": {
-        "displayName": "Crack Seal",
-        "effectText": "Choose a tile from any board line. Add a crack seal; it gives a large score bonus and later removal risk."
+        "displayName": "Low Full-House Fate",
+        "effectText": "Choose a board line. Transform it into a full house with the second-lowest number as triple and highest number as pair."
       },
       "rank_concord": {
-        "displayName": "Rank Concord Rite",
-        "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Three of a Kind."
+        "displayName": "High Full-House Fate",
+        "effectText": "Choose a board line. Transform it into a full house with the highest number as triple and next-highest number as pair."
       },
       "step_rite": {
-        "displayName": "Step Rite",
-        "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Straight."
+        "displayName": "Low Four Fate",
+        "effectText": "Choose a board line. Transform it into a four-of-a-kind set using the line's lowest number."
       },
       "color_concord": {
-        "displayName": "Color Concord Rite",
-        "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Flush."
+        "displayName": "High Four Fate",
+        "effectText": "Choose a board line. Transform it into a four-of-a-kind set using the line's highest number."
       },
       "off_color_rite": {
-        "displayName": "Off-Color Rite",
-        "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Full House."
+        "displayName": "Low Straight-Flush Fate",
+        "effectText": "Choose a board line. Transform it into the lowest straight-flush set possible from the line's lowest tile."
       },
       "wild_thread": {
-        "displayName": "Wild Thread",
-        "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Four of a Kind."
+        "displayName": "High Straight-Flush Fate",
+        "effectText": "Choose a board line. Transform it into the highest straight-flush set possible from the line's highest tile."
       },
       "number_mask": {
-        "displayName": "Number Mask",
-        "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Five of a Kind."
+        "displayName": "Royal Fate",
+        "effectText": "Choose a board line. Transform it into a same-color 9-13 royal flush set using the line's highest tile color."
       },
       "line_pruner": {
-        "displayName": "Line Pruner Rite",
-        "effectText": "Choose a tile from any board line. Mark a matching deck tile for removal and gain Gold +2."
+        "displayName": "Low Triple Fate",
+        "effectText": "Choose a board line. Transform it into a three-of-a-kind set using the second-lowest number; the other numbers do not overlap."
       },
       "trim_color": {
         "displayName": "Color Pruner",
         "effectText": "Choose a tile from any board line. Mark a same-color deck tile for removal."
       },
       "trim_rank": {
-        "displayName": "Rank Pruner",
-        "effectText": "Choose a tile from any board line. Mark a same-number deck tile for removal."
+        "displayName": "Two-Pair Fate",
+        "effectText": "Choose a board line. Transform it into a two-pair set using the highest and next-highest numbers."
       },
       "deadwood_burn": {
         "displayName": "Deadwood Burn",

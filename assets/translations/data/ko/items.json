@@ -262,64 +262,64 @@
         "effectText": "봉인 또는 강화된 보드 선 타일을 선택합니다. 복사본을 덱에 추가합니다."
       },
       "line_seal_stamp": {
-        "displayName": "라인 각인",
-        "effectText": "보드 선 안의 타일을 선택합니다. 라인 봉인을 부여해 점수화 시 칩 보너스를 줍니다."
+        "displayName": "상위 트리플 운명",
+        "effectText": "보드 선을 선택합니다. 최고 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다."
       },
       "growth_seal": {
-        "displayName": "성장 각인",
-        "effectText": "보드 선 안의 타일을 선택합니다. 성장 봉인을 부여해 점수화 시 해당 족보 성장 +1."
+        "displayName": "하행 스트레이트 운명",
+        "effectText": "보드 선을 선택합니다. 최저 숫자 기준 가장 낮은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다."
       },
       "gold_seal_stamp": {
-        "displayName": "금빛 각인",
-        "effectText": "보드 선 안의 타일을 선택합니다. 금 봉인을 부여해 점수화 시 골드 +1."
+        "displayName": "상행 스트레이트 운명",
+        "effectText": "보드 선을 선택합니다. 최고 숫자 기준 가장 높은 스트레이트 세트로 변환하고, 기준 타일 색상 하나를 다르게 둡니다."
       },
       "echo_seal": {
-        "displayName": "메아리 각인",
-        "effectText": "보드 선 안의 타일을 선택합니다. 메아리 봉인을 부여해 겹친 점수화 보너스를 줍니다."
+        "displayName": "하위 플러시 운명",
+        "effectText": "보드 선을 선택합니다. 그 선의 최저 숫자 색상 기준 플러시 세트로 변환합니다."
       },
       "anchor_seal": {
-        "displayName": "닻 각인",
-        "effectText": "보드 선 안의 타일을 선택합니다. 닻 봉인을 부여해 이동 후 점수화 보너스를 줍니다."
+        "displayName": "상위 플러시 운명",
+        "effectText": "보드 선을 선택합니다. 그 선의 최고 숫자 색상 기준 플러시 세트로 변환합니다."
       },
       "risk_seal": {
-        "displayName": "균열 각인",
-        "effectText": "보드 선 안의 타일을 선택합니다. 균열 봉인을 부여해 큰 점수 보너스와 이후 제거 위험을 줍니다."
+        "displayName": "하위 풀하우스 운명",
+        "effectText": "보드 선을 선택합니다. 차순위 낮은 숫자 트리플과 최고 숫자 원페어 풀하우스 세트로 변환합니다."
       },
       "rank_concord": {
-        "displayName": "숫자 맞춤 의식",
-        "effectText": "타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 트리플로 판정합니다."
+        "displayName": "상위 풀하우스 운명",
+        "effectText": "보드 선을 선택합니다. 최고 숫자 트리플과 차순위 높은 숫자 원페어 풀하우스 세트로 변환합니다."
       },
       "step_rite": {
-        "displayName": "계단 의식",
-        "effectText": "타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 스트레이트로 판정합니다."
+        "displayName": "하위 포카드 운명",
+        "effectText": "보드 선을 선택합니다. 그 선의 최저 숫자 기준 포카드 세트로 변환합니다."
       },
       "color_concord": {
-        "displayName": "색 맞춤 의식",
-        "effectText": "타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 플러시로 판정합니다."
+        "displayName": "상위 포카드 운명",
+        "effectText": "보드 선을 선택합니다. 그 선의 최고 숫자 기준 포카드 세트로 변환합니다."
       },
       "off_color_rite": {
-        "displayName": "이색 의식",
-        "effectText": "타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 풀하우스로 판정합니다."
+        "displayName": "하행 스티플 운명",
+        "effectText": "보드 선을 선택합니다. 그 선의 최저 숫자와 색상 기준으로 만들 수 있는 가장 낮은 스티플 세트로 변환합니다."
       },
       "wild_thread": {
-        "displayName": "만능 실",
-        "effectText": "타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 포카드로 판정합니다."
+        "displayName": "상행 스티플 운명",
+        "effectText": "보드 선을 선택합니다. 그 선의 최고 숫자와 색상 기준으로 만들 수 있는 가장 높은 스티플 세트로 변환합니다."
       },
       "number_mask": {
-        "displayName": "숫자 가면",
-        "effectText": "타일 3개 이상인 보드 선을 선택합니다. 이번 확정에서 파이브카드로 판정합니다."
+        "displayName": "로얄 운명",
+        "effectText": "보드 선을 선택합니다. 그 선의 최고 숫자 색상 기준으로 동색 9-13 로얄플러시 세트로 변환합니다."
       },
       "line_pruner": {
-        "displayName": "가지치기 의식",
-        "effectText": "보드 선 안의 타일을 선택합니다. 일치하는 덱 타일 1장에 제거 표식을 남기고 골드 +2."
+        "displayName": "하위 트리플 운명",
+        "effectText": "보드 선을 선택합니다. 차순위 낮은 숫자 트리플 세트로 변환합니다. 나머지 숫자는 트리플 숫자와 겹치지 않습니다."
       },
       "trim_color": {
         "displayName": "색 가지치기",
         "effectText": "보드 선 안의 타일을 선택합니다. 같은 색 덱 타일 1장에 제거 표식을 남깁니다."
       },
       "trim_rank": {
-        "displayName": "숫자 가지치기",
-        "effectText": "보드 선 안의 타일을 선택합니다. 같은 숫자 덱 타일 1장에 제거 표식을 남깁니다."
+        "displayName": "투페어 운명",
+        "effectText": "보드 선을 선택합니다. 최고 숫자와 차순위 높은 숫자 기준 투페어 세트로 변환합니다."
       },
       "deadwood_burn": {
         "displayName": "마른가지 소각",

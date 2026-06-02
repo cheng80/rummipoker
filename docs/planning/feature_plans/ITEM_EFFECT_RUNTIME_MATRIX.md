@@ -110,21 +110,21 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 | `cross_rite` | 교차 가능한 점수 족보 score bonus | `use_battle` / `ritual_line_effect: line_bonus_25` | `useBattleItemOnLine` | `applied` |
 | `sacrifice_line` | 보드 선 제거, 타일 복사/제거 후보 | `use_battle` / `ritual_line_effect: sacrifice_line` | `useBattleItemOnLine` | `applied` |
 | `deadwood_burn` | 보드 선 제거, Gold +3 | `use_battle` / `ritual_line_effect: burn_line` | `useBattleItemOnLine` | `applied` |
-| `trim_rank` | 보드 선 타일과 같은 숫자 제거 후보 | `use_battle` / `ritual_line_effect: remove_same_rank` | `useBattleItemOnLine` | `applied` |
+| `trim_rank` | 최고/차순위 높은 숫자 기준 Two Pair 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_two_pair_high` | `useBattleItemOnLine` | `applied` |
 | `trim_color` | 보드 선 타일과 같은 색 제거 후보 | `use_battle` / `ritual_line_effect: remove_same_color` | `useBattleItemOnLine` | `applied` |
-| `line_pruner` | 보드 선 타일과 같은 타일 제거 후보, Gold +2 | `use_battle` / `ritual_line_effect: remove_same_tile` | `useBattleItemOnLine` | `applied` |
-| `number_mask` | 타일 3개 이상 보드 선을 Five of a Kind로 override | `use_battle` / `ritual_line_effect: override_five_kind` | `useBattleItemOnLine` | `applied` |
-| `wild_thread` | 타일 3개 이상 보드 선을 Four of a Kind로 override | `use_battle` / `ritual_line_effect: override_four_kind` | `useBattleItemOnLine` | `applied` |
-| `off_color_rite` | 타일 3개 이상 보드 선을 Full House로 override | `use_battle` / `ritual_line_effect: override_full_house` | `useBattleItemOnLine` | `applied` |
-| `color_concord` | 타일 3개 이상 보드 선을 Flush로 override | `use_battle` / `ritual_line_effect: override_flush` | `useBattleItemOnLine` | `applied` |
-| `step_rite` | 타일 3개 이상 보드 선을 Straight로 override | `use_battle` / `ritual_line_effect: override_straight` | `useBattleItemOnLine` | `applied` |
-| `rank_concord` | 타일 3개 이상 보드 선을 Three of a Kind로 override | `use_battle` / `ritual_line_effect: override_three_kind` | `useBattleItemOnLine` | `applied` |
-| `risk_seal` | 보드 선 타일에 crack seal | `use_battle` / `ritual_line_effect: seal_risk` | `useBattleItemOnLine` | `applied` |
-| `anchor_seal` | 보드 선 타일에 anchor seal | `use_battle` / `ritual_line_effect: seal_anchor` | `useBattleItemOnLine` | `applied` |
-| `echo_seal` | 보드 선 타일에 echo seal | `use_battle` / `ritual_line_effect: seal_echo` | `useBattleItemOnLine` | `applied` |
-| `gold_seal_stamp` | 보드 선 타일에 gold seal | `use_battle` / `ritual_line_effect: seal_gold` | `useBattleItemOnLine` | `applied` |
-| `growth_seal` | 보드 선 타일에 growth seal | `use_battle` / `ritual_line_effect: seal_growth` | `useBattleItemOnLine` | `applied` |
-| `line_seal_stamp` | 보드 선 타일에 line seal | `use_battle` / `ritual_line_effect: seal_line_mark` | `useBattleItemOnLine` | `applied` |
+| `line_pruner` | 차순위 낮은 숫자 기준 Three of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_three_kind_low` | `useBattleItemOnLine` | `applied` |
+| `number_mask` | 최고 숫자 색상 기준 Royal Straight Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_royal_flush` | `useBattleItemOnLine` | `applied` |
+| `wild_thread` | 최고 숫자/색상 기준 높은 Straight Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_straight_flush_high` | `useBattleItemOnLine` | `applied` |
+| `off_color_rite` | 최저 숫자/색상 기준 낮은 Straight Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_straight_flush_low` | `useBattleItemOnLine` | `applied` |
+| `color_concord` | 최고 숫자 기준 Four of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_four_kind_high` | `useBattleItemOnLine` | `applied` |
+| `step_rite` | 최저 숫자 기준 Four of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_four_kind_low` | `useBattleItemOnLine` | `applied` |
+| `rank_concord` | 최고 숫자 triple + 차순위 높은 숫자 pair Full House 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_full_house_high` | `useBattleItemOnLine` | `applied` |
+| `risk_seal` | 차순위 낮은 숫자 triple + 최고 숫자 pair Full House 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_full_house_low` | `useBattleItemOnLine` | `applied` |
+| `anchor_seal` | 최고 숫자 색상 기준 Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_high` | `useBattleItemOnLine` | `applied` |
+| `echo_seal` | 최저 숫자 색상 기준 Flush 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_flush_low` | `useBattleItemOnLine` | `applied` |
+| `gold_seal_stamp` | 최고 숫자 기준 높은 Straight 세트로 보드 선 변환, 기준 타일 off-color | `use_battle` / `ritual_line_effect: fate_straight_high` | `useBattleItemOnLine` | `applied` |
+| `growth_seal` | 최저 숫자 기준 낮은 Straight 세트로 보드 선 변환, 기준 타일 off-color | `use_battle` / `ritual_line_effect: fate_straight_low` | `useBattleItemOnLine` | `applied` |
+| `line_seal_stamp` | 최고 숫자 기준 Three of a Kind 세트로 보드 선 변환 | `use_battle` / `ritual_line_effect: fate_three_kind_high` | `useBattleItemOnLine` | `applied` |
 | `sealed_copy` | 봉인/강화 보드 선 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
 | `scarce_copy` | 보드 선 타일 복사 | `use_battle` / `ritual_line_effect: copy_selected` | `useBattleItemOnLine` | `applied` |
 | `color_echo` | 같은 색 무작위 숫자 타일 추가 | `use_battle` / `ritual_line_effect: copy_color` | `useBattleItemOnLine` | `applied` |

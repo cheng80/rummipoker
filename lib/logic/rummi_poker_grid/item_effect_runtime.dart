@@ -31,6 +31,7 @@ enum ItemEffectEventKind {
   expiryGuardTriggered,
   interactionRequired,
   handRankProgressAdded,
+  boardLineTransformed,
 }
 
 class ItemEffectEvent {

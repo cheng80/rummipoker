@@ -358,6 +358,20 @@ extension _GameViewBattleActions on _GameViewState {
           'override_full_house' ||
           'override_four_kind' ||
           'override_five_kind' => line.occupiedCount >= 3,
+          'fate_royal_flush' ||
+          'fate_straight_flush_high' ||
+          'fate_straight_flush_low' ||
+          'fate_four_kind_high' ||
+          'fate_four_kind_low' ||
+          'fate_full_house_high' ||
+          'fate_full_house_low' ||
+          'fate_flush_high' ||
+          'fate_flush_low' ||
+          'fate_straight_high' ||
+          'fate_straight_low' ||
+          'fate_three_kind_high' ||
+          'fate_three_kind_low' ||
+          'fate_two_pair_high' => line.occupiedCount > 0,
           'copy_center' => hasCenterTile(line),
           'copy_endpoint' => hasEndpointOrTile(line),
           'copy_selected' ||
@@ -497,6 +511,14 @@ extension _GameViewBattleActions on _GameViewState {
       'override_full_house' ||
       'override_four_kind' ||
       'override_five_kind' => '족보 강제 치환',
+      'fate_royal_flush' => '로얄플러시 세트 변환',
+      'fate_straight_flush_high' || 'fate_straight_flush_low' => '스티플 세트 변환',
+      'fate_four_kind_high' || 'fate_four_kind_low' => '포카드 세트 변환',
+      'fate_full_house_high' || 'fate_full_house_low' => '풀하우스 세트 변환',
+      'fate_flush_high' || 'fate_flush_low' => '플러시 세트 변환',
+      'fate_straight_high' || 'fate_straight_low' => '스트레이트 세트 변환',
+      'fate_three_kind_high' || 'fate_three_kind_low' => '트리플 세트 변환',
+      'fate_two_pair_high' => '투페어 세트 변환',
       'line_bonus_25' || 'line_bonus_35' => '선택 줄 보너스',
       'remove_same_tile' || 'remove_same_color' || 'remove_same_rank' => '덱 파괴',
       'burn_line' => '줄 파괴',

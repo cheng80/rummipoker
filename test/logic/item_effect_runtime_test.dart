@@ -432,11 +432,76 @@ void main() {
       expect(runProgress.itemInventory.ownedItems, isEmpty);
     });
 
+    test(
+      'fate cards transform selected board lines into scoring tile sets',
+      () {
+        final catalog = ItemCatalog.fromJsonString(
+          File('data/common/items_common_v1.json').readAsStringSync(),
+        );
+        final cases = <String, RummiHandRank>{
+          'number_mask': RummiHandRank.royalStraightFlush,
+          'wild_thread': RummiHandRank.straightFlush,
+          'off_color_rite': RummiHandRank.lowStraightFlush,
+          'color_concord': RummiHandRank.fourOfAKind,
+          'step_rite': RummiHandRank.fourOfAKind,
+          'rank_concord': RummiHandRank.fullHouse,
+          'risk_seal': RummiHandRank.fullHouse,
+          'anchor_seal': RummiHandRank.flush,
+          'echo_seal': RummiHandRank.flush,
+          'gold_seal_stamp': RummiHandRank.straight,
+          'growth_seal': RummiHandRank.straight,
+          'line_seal_stamp': RummiHandRank.threeOfAKind,
+          'line_pruner': RummiHandRank.threeOfAKind,
+          'trim_rank': RummiHandRank.twoPair,
+        };
+
+        for (final entry in cases.entries) {
+          final item = catalog.findById(entry.key)!;
+          final session = RummiPokerGridSession(
+            runSeed: 1,
+            blind: RummiBlindState(targetScore: 999),
+          );
+          _placeDeadThreeTileLine(session);
+          final runProgress = RummiRunProgress()
+            ..itemInventory = RunInventoryState(
+              ownedItems: [
+                OwnedItemEntry(
+                  itemId: item.id,
+                  count: 1,
+                  placement: ItemPlacement.quickSlot,
+                ),
+              ],
+              quickSlotItemIds: [item.id],
+            );
+
+          final useResult = ItemEffectRuntime.useBattleItemOnRitualTarget(
+            item: item,
+            session: session,
+            runProgress: runProgress,
+            lineRef: LineRef.row(0),
+          );
+          final transformed = session.currentBoardLineSummaryFor(
+            LineRef.row(0),
+          );
+
+          expect(useResult.isSuccess, isTrue, reason: item.id);
+          expect(
+            useResult.events.first.kind,
+            ItemEffectEventKind.boardLineTransformed,
+            reason: item.id,
+          );
+          expect(transformed?.occupiedCount, 5, reason: item.id);
+          expect(transformed?.rank, entry.value, reason: item.id);
+          expect(runProgress.itemInventory.ownedItems, isEmpty);
+        }
+      },
+    );
+
     test('ritual tile effects can target a non-scoring board line', () {
       final catalog = ItemCatalog.fromJsonString(
         File('data/common/items_common_v1.json').readAsStringSync(),
       );
-      final item = catalog.findById('growth_seal')!;
+      final item = catalog.findById('bridge_rite')!;
       final session = RummiPokerGridSession(
         runSeed: 1,
         blind: RummiBlindState(targetScore: 999),
@@ -463,7 +528,7 @@ void main() {
       );
 
       expect(result.isSuccess, isTrue);
-      expect(session.board.cellAt(0, 0)?.seal, TileSeal.growthSeal);
+      expect(session.board.cellAt(0, 0)?.seal, TileSeal.bridgeSeal);
       expect(runProgress.itemInventory.ownedItems, isEmpty);
     });
 

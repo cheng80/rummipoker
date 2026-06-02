@@ -591,6 +591,38 @@ ItemUseResult _applyRitualLineEffect(
     return _queueLineRankOverride(item, session, line.ref, rank);
   }
 
+  ItemUseResult transformLineToFateSet(String fateAction) {
+    if (line.occupiedCount <= 0) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '운명 변환은 기준 타일이 있는 선에만 사용할 수 있습니다.',
+      );
+    }
+    final transformed = _buildFateLineTiles(line, fateAction);
+    if (transformed == null) {
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '이 선에서는 해당 운명 세트를 만들 수 없습니다.',
+      );
+    }
+    final cells = line.ref.cells();
+    for (var i = 0; i < cells.length; i++) {
+      final (row, col) = cells[i];
+      session.board.setCell(row, col, transformed[i]);
+    }
+    return ItemUseResult.success(
+      itemId: item.id,
+      events: [
+        ItemEffectEvent(
+          kind: ItemEffectEventKind.boardLineTransformed,
+          itemId: item.id,
+          amount: 1,
+          detail: '$fateAction:${line.ref.kind.name}:${line.ref.index}',
+        ),
+      ],
+    );
+  }
+
   switch (action) {
     case 'growth':
     case 'center_growth':
@@ -717,6 +749,21 @@ ItemUseResult _applyRitualLineEffect(
       return forceLineRank(RummiHandRank.fourOfAKind);
     case 'override_five_kind':
       return forceLineRank(RummiHandRank.fiveOfAKind);
+    case 'fate_royal_flush':
+    case 'fate_straight_flush_high':
+    case 'fate_straight_flush_low':
+    case 'fate_four_kind_high':
+    case 'fate_four_kind_low':
+    case 'fate_full_house_high':
+    case 'fate_full_house_low':
+    case 'fate_flush_high':
+    case 'fate_flush_low':
+    case 'fate_straight_high':
+    case 'fate_straight_low':
+    case 'fate_three_kind_high':
+    case 'fate_three_kind_low':
+    case 'fate_two_pair_high':
+      return transformLineToFateSet(action);
     case 'line_bonus_25':
       if (!line.isScoringLine) {
         return ItemUseResult.failure(
@@ -850,6 +897,242 @@ ItemUseResult _applyRitualLineEffect(
       );
   }
   return ItemUseResult.success(itemId: item.id, events: events);
+}
+
+List<Tile>? _buildFateLineTiles(RummiScoringLineSummary line, String action) {
+  final tiles = line.lineTiles;
+  if (tiles.isEmpty) return null;
+  final highTile = _tileByNumber(tiles, preferHigh: true);
+  final lowTile = _tileByNumber(tiles, preferHigh: false);
+  final uniqueNumbers = _uniqueSortedNumbers(tiles);
+
+  switch (action) {
+    case 'fate_royal_flush':
+      return _sameColorTiles(highTile.color, const [9, 10, 11, 12, 13]);
+    case 'fate_straight_flush_high':
+      return _sameColorTiles(
+        highTile.color,
+        _straightSequenceContaining(highTile.number, preferHigh: true),
+      );
+    case 'fate_straight_flush_low':
+      return _sameColorTiles(
+        lowTile.color,
+        _straightSequenceContaining(lowTile.number, preferHigh: false),
+      );
+    case 'fate_four_kind_high':
+      return _fourKindSet(highTile.number, highTile.color);
+    case 'fate_four_kind_low':
+      return _fourKindSet(lowTile.number, lowTile.color);
+    case 'fate_full_house_high':
+      return _fullHouseSet(
+        tripleNumber: uniqueNumbers.last,
+        pairNumber: _nextLowerDistinct(uniqueNumbers.last, uniqueNumbers),
+        color: highTile.color,
+      );
+    case 'fate_full_house_low':
+      final triple = _secondLowestOrFallback(uniqueNumbers);
+      return _fullHouseSet(
+        tripleNumber: triple,
+        pairNumber: _highestDistinct(triple, uniqueNumbers),
+        color: lowTile.color,
+      );
+    case 'fate_flush_high':
+      return _flushSet(highTile.number, highTile.color);
+    case 'fate_flush_low':
+      return _flushSet(lowTile.number, lowTile.color);
+    case 'fate_straight_high':
+      return _straightSet(
+        _straightSequenceContaining(highTile.number, preferHigh: true),
+        baseColor: highTile.color,
+        offColorNumber: highTile.number,
+      );
+    case 'fate_straight_low':
+      return _straightSet(
+        _straightSequenceContaining(lowTile.number, preferHigh: false),
+        baseColor: lowTile.color,
+        offColorNumber: lowTile.number,
+      );
+    case 'fate_three_kind_high':
+      return _threeKindSet(highTile.number, highTile.color);
+    case 'fate_three_kind_low':
+      return _threeKindSet(
+        _secondLowestOrFallback(uniqueNumbers),
+        lowTile.color,
+      );
+    case 'fate_two_pair_high':
+      return _twoPairSet(
+        highPairNumber: uniqueNumbers.last,
+        lowPairNumber: _nextLowerDistinct(uniqueNumbers.last, uniqueNumbers),
+        color: highTile.color,
+      );
+    default:
+      return null;
+  }
+}
+
+Tile _tileByNumber(List<Tile> tiles, {required bool preferHigh}) {
+  return tiles.reduce((a, b) {
+    final compare = a.number.compareTo(b.number);
+    if (compare == 0) return a;
+    return preferHigh ? (compare > 0 ? a : b) : (compare < 0 ? a : b);
+  });
+}
+
+List<int> _uniqueSortedNumbers(List<Tile> tiles) {
+  return tiles.map((tile) => tile.number).toSet().toList()..sort();
+}
+
+int _nextLowerDistinct(int number, List<int> sortedNumbers) {
+  for (final candidate in sortedNumbers.reversed) {
+    if (candidate != number) return candidate;
+  }
+  return _fallbackDistinctNumber(number, preferHigh: false);
+}
+
+int _highestDistinct(int number, List<int> sortedNumbers) {
+  for (final candidate in sortedNumbers.reversed) {
+    if (candidate != number) return candidate;
+  }
+  return _fallbackDistinctNumber(number, preferHigh: true);
+}
+
+int _secondLowestOrFallback(List<int> sortedNumbers) {
+  if (sortedNumbers.length >= 2) return sortedNumbers[1];
+  return _fallbackDistinctNumber(sortedNumbers.single, preferHigh: false);
+}
+
+int _fallbackDistinctNumber(int number, {required bool preferHigh}) {
+  if (preferHigh) return number == 13 ? 12 : 13;
+  return number == 1 ? 2 : 1;
+}
+
+List<int> _straightSequenceContaining(int number, {required bool preferHigh}) {
+  const sequences = <List<int>>[
+    [1, 2, 3, 4, 5],
+    [2, 3, 4, 5, 6],
+    [3, 4, 5, 6, 7],
+    [4, 5, 6, 7, 8],
+    [5, 6, 7, 8, 9],
+    [6, 7, 8, 9, 10],
+    [7, 8, 9, 10, 11],
+    [8, 9, 10, 11, 12],
+    [10, 11, 12, 13, 1],
+  ];
+  final candidates = [
+    for (final sequence in sequences)
+      if (sequence.contains(number)) sequence,
+  ];
+  if (candidates.isEmpty) return const [1, 2, 3, 4, 5];
+  return preferHigh ? candidates.last : candidates.first;
+}
+
+List<Tile> _sameColorTiles(TileColor color, List<int> numbers) {
+  return [for (final number in numbers) Tile(color: color, number: number)];
+}
+
+List<Tile> _fourKindSet(int number, TileColor color) {
+  final kicker = _fallbackDistinctNumber(number, preferHigh: number < 7);
+  return [
+    for (final tileColor in TileColor.values)
+      Tile(color: tileColor, number: number),
+    Tile(color: color, number: kicker),
+  ];
+}
+
+List<Tile> _fullHouseSet({
+  required int tripleNumber,
+  required int pairNumber,
+  required TileColor color,
+}) {
+  if (pairNumber == tripleNumber) {
+    pairNumber = _fallbackDistinctNumber(tripleNumber, preferHigh: false);
+  }
+  return [
+    Tile(color: color, number: tripleNumber),
+    Tile(color: _nextColor(color), number: tripleNumber),
+    Tile(color: _thirdColor(color), number: tripleNumber),
+    Tile(color: color, number: pairNumber),
+    Tile(color: _nextColor(color), number: pairNumber),
+  ];
+}
+
+List<Tile> _flushSet(int anchorNumber, TileColor color) {
+  final numbers = <int>[anchorNumber];
+  for (final number in const [1, 3, 5, 8, 11, 13, 2, 6, 10]) {
+    if (numbers.length >= 5) break;
+    if (number != anchorNumber) numbers.add(number);
+  }
+  return _sameColorTiles(color, numbers);
+}
+
+List<Tile> _straightSet(
+  List<int> numbers, {
+  required TileColor baseColor,
+  required int offColorNumber,
+}) {
+  final offColor = _nextColor(baseColor);
+  return [
+    for (final number in numbers)
+      Tile(
+        color: number == offColorNumber ? offColor : baseColor,
+        number: number,
+      ),
+  ];
+}
+
+List<Tile> _threeKindSet(int tripleNumber, TileColor color) {
+  final kickers = _kickersExcluding(tripleNumber, count: 2);
+  return [
+    Tile(color: color, number: tripleNumber),
+    Tile(color: _nextColor(color), number: tripleNumber),
+    Tile(color: _thirdColor(color), number: tripleNumber),
+    Tile(color: color, number: kickers[0]),
+    Tile(color: _nextColor(color), number: kickers[1]),
+  ];
+}
+
+List<Tile> _twoPairSet({
+  required int highPairNumber,
+  required int lowPairNumber,
+  required TileColor color,
+}) {
+  if (lowPairNumber == highPairNumber) {
+    lowPairNumber = _fallbackDistinctNumber(highPairNumber, preferHigh: false);
+  }
+  final kicker = _kickersExcluding(
+    highPairNumber,
+    alsoExclude: lowPairNumber,
+    count: 1,
+  ).single;
+  return [
+    Tile(color: color, number: highPairNumber),
+    Tile(color: _nextColor(color), number: highPairNumber),
+    Tile(color: color, number: lowPairNumber),
+    Tile(color: _nextColor(color), number: lowPairNumber),
+    Tile(color: _thirdColor(color), number: kicker),
+  ];
+}
+
+List<int> _kickersExcluding(
+  int number, {
+  int? alsoExclude,
+  required int count,
+}) {
+  final out = <int>[];
+  for (final candidate in const [1, 13, 2, 12, 3, 11, 4, 10, 5, 9, 6, 8, 7]) {
+    if (candidate == number || candidate == alsoExclude) continue;
+    out.add(candidate);
+    if (out.length >= count) break;
+  }
+  return out;
+}
+
+TileColor _nextColor(TileColor color) {
+  return TileColor.values[(color.index + 1) % TileColor.values.length];
+}
+
+TileColor _thirdColor(TileColor color) {
+  return TileColor.values[(color.index + 2) % TileColor.values.length];
 }
 
 Tile? _selectedRitualTile(RummiScoringLineSummary line, int? tileIndex) {

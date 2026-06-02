@@ -709,31 +709,31 @@
     },
     {
       "id": "trim_rank",
-      "displayName": "Rank Pruner",
+      "displayName": "Two-Pair Fate",
       "type": "consumable",
-      "rarity": "uncommon",
-      "basePrice": 8,
-      "sellPrice": 4,
+      "rarity": "common",
+      "basePrice": 7,
+      "sellPrice": 3,
       "stackable": false,
       "maxStack": 1,
       "sellable": true,
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Mark a same-number deck tile for removal.",
+      "effectText": "Choose a board line. Transform it into a two-pair set using the highest and next-highest numbers.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "remove_same_rank",
-        "target": "tile",
+        "ritualAction": "fate_two_pair_high",
+        "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
-        "tile_target",
-        "remove_same_rank"
+        "fate",
+        "line_target",
+        "two_pair"
       ],
       "displayNameKey": "data.items.trim_rank.displayName",
       "effectTextKey": "data.items.trim_rank.effectText"
@@ -771,41 +771,72 @@
     },
     {
       "id": "line_pruner",
-      "displayName": "Line Pruner Rite",
+      "displayName": "Low Triple Fate",
       "type": "consumable",
-      "rarity": "rare",
-      "basePrice": 10,
-      "sellPrice": 5,
+      "rarity": "uncommon",
+      "basePrice": 8,
+      "sellPrice": 4,
       "stackable": false,
       "maxStack": 1,
       "sellable": true,
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Mark a matching deck tile for removal and gain Gold +2.",
+      "effectText": "Choose a board line. Transform it into a three-of-a-kind set using the second-lowest number; the other numbers do not overlap.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "remove_same_tile",
-        "target": "tile",
+        "ritualAction": "fate_three_kind_low",
+        "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
-        "tile_target",
-        "remove_same_tile"
+        "fate",
+        "line_target",
+        "three_kind"
       ],
       "displayNameKey": "data.items.line_pruner.displayName",
       "effectTextKey": "data.items.line_pruner.effectText"
     },
     {
       "id": "number_mask",
-      "displayName": "Number Mask",
+      "displayName": "Royal Fate",
       "type": "consumable",
       "rarity": "legendary",
-      "basePrice": 15,
+      "basePrice": 16,
+      "sellPrice": 8,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": true,
+      "placement": "quickSlot",
+      "slotHint": "q",
+      "effectText": "Choose a board line. Transform it into a same-color 9-13 royal flush set using the line's highest tile color.",
+      "effect": {
+        "timing": "use_battle",
+        "op": "ritual_line_effect",
+        "ritualAction": "fate_royal_flush",
+        "target": "line",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "battle",
+        "fate",
+        "line_target",
+        "royal_flush"
+      ],
+      "displayNameKey": "data.items.number_mask.displayName",
+      "effectTextKey": "data.items.number_mask.effectText"
+    },
+    {
+      "id": "wild_thread",
+      "displayName": "High Straight-Flush Fate",
+      "type": "consumable",
+      "rarity": "rare",
+      "basePrice": 14,
       "sellPrice": 7,
       "stackable": false,
       "maxStack": 1,
@@ -813,27 +844,27 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Five of a Kind.",
+      "effectText": "Choose a board line. Transform it into the highest straight-flush set possible from the line's highest tile.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "override_five_kind",
+        "ritualAction": "fate_straight_flush_high",
         "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
+        "fate",
         "line_target",
-        "override_five_kind"
+        "straight_flush"
       ],
-      "displayNameKey": "data.items.number_mask.displayName",
-      "effectTextKey": "data.items.number_mask.effectText"
+      "displayNameKey": "data.items.wild_thread.displayName",
+      "effectTextKey": "data.items.wild_thread.effectText"
     },
     {
-      "id": "wild_thread",
-      "displayName": "Wild Thread",
+      "id": "off_color_rite",
+      "displayName": "Low Straight-Flush Fate",
       "type": "consumable",
       "rarity": "rare",
       "basePrice": 13,
@@ -844,27 +875,27 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Four of a Kind.",
+      "effectText": "Choose a board line. Transform it into the lowest straight-flush set possible from the line's lowest tile.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "override_four_kind",
+        "ritualAction": "fate_straight_flush_low",
         "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
+        "fate",
         "line_target",
-        "override_four_kind"
+        "straight_flush"
       ],
-      "displayNameKey": "data.items.wild_thread.displayName",
-      "effectTextKey": "data.items.wild_thread.effectText"
+      "displayNameKey": "data.items.off_color_rite.displayName",
+      "effectTextKey": "data.items.off_color_rite.effectText"
     },
     {
-      "id": "off_color_rite",
-      "displayName": "Off-Color Rite",
+      "id": "color_concord",
+      "displayName": "High Four Fate",
       "type": "consumable",
       "rarity": "rare",
       "basePrice": 12,
@@ -875,30 +906,123 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Full House.",
+      "effectText": "Choose a board line. Transform it into a four-of-a-kind set using the line's highest number.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "override_full_house",
+        "ritualAction": "fate_four_kind_high",
         "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
+        "fate",
         "line_target",
-        "override_full_house"
+        "four_kind"
       ],
-      "displayNameKey": "data.items.off_color_rite.displayName",
-      "effectTextKey": "data.items.off_color_rite.effectText"
+      "displayNameKey": "data.items.color_concord.displayName",
+      "effectTextKey": "data.items.color_concord.effectText"
     },
     {
-      "id": "color_concord",
-      "displayName": "Color Concord Rite",
+      "id": "step_rite",
+      "displayName": "Low Four Fate",
       "type": "consumable",
       "rarity": "rare",
-      "basePrice": 11,
+      "basePrice": 12,
+      "sellPrice": 6,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": true,
+      "placement": "quickSlot",
+      "slotHint": "q",
+      "effectText": "Choose a board line. Transform it into a four-of-a-kind set using the line's lowest number.",
+      "effect": {
+        "timing": "use_battle",
+        "op": "ritual_line_effect",
+        "ritualAction": "fate_four_kind_low",
+        "target": "line",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "battle",
+        "fate",
+        "line_target",
+        "four_kind"
+      ],
+      "displayNameKey": "data.items.step_rite.displayName",
+      "effectTextKey": "data.items.step_rite.effectText"
+    },
+    {
+      "id": "rank_concord",
+      "displayName": "High Full-House Fate",
+      "type": "consumable",
+      "rarity": "rare",
+      "basePrice": 12,
+      "sellPrice": 6,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": true,
+      "placement": "quickSlot",
+      "slotHint": "q",
+      "effectText": "Choose a board line. Transform it into a full house with the highest number as triple and next-highest number as pair.",
+      "effect": {
+        "timing": "use_battle",
+        "op": "ritual_line_effect",
+        "ritualAction": "fate_full_house_high",
+        "target": "line",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "battle",
+        "fate",
+        "line_target",
+        "full_house"
+      ],
+      "displayNameKey": "data.items.rank_concord.displayName",
+      "effectTextKey": "data.items.rank_concord.effectText"
+    },
+    {
+      "id": "risk_seal",
+      "displayName": "Low Full-House Fate",
+      "type": "consumable",
+      "rarity": "rare",
+      "basePrice": 12,
+      "sellPrice": 6,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": true,
+      "placement": "quickSlot",
+      "slotHint": "q",
+      "effectText": "Choose a board line. Transform it into a full house with the second-lowest number as triple and highest number as pair.",
+      "effect": {
+        "timing": "use_battle",
+        "op": "ritual_line_effect",
+        "ritualAction": "fate_full_house_low",
+        "target": "line",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "battle",
+        "fate",
+        "line_target",
+        "full_house"
+      ],
+      "displayNameKey": "data.items.risk_seal.displayName",
+      "effectTextKey": "data.items.risk_seal.effectText"
+    },
+    {
+      "id": "anchor_seal",
+      "displayName": "High Flush Fate",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "basePrice": 10,
       "sellPrice": 5,
       "stackable": false,
       "maxStack": 1,
@@ -906,27 +1030,58 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Flush.",
+      "effectText": "Choose a board line. Transform it into a flush set using the line's highest tile color.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "override_flush",
+        "ritualAction": "fate_flush_high",
         "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
+        "fate",
         "line_target",
-        "override_flush"
+        "flush"
       ],
-      "displayNameKey": "data.items.color_concord.displayName",
-      "effectTextKey": "data.items.color_concord.effectText"
+      "displayNameKey": "data.items.anchor_seal.displayName",
+      "effectTextKey": "data.items.anchor_seal.effectText"
     },
     {
-      "id": "step_rite",
-      "displayName": "Step Rite",
+      "id": "echo_seal",
+      "displayName": "Low Flush Fate",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "basePrice": 10,
+      "sellPrice": 5,
+      "stackable": false,
+      "maxStack": 1,
+      "sellable": true,
+      "usableInBattle": true,
+      "placement": "quickSlot",
+      "slotHint": "q",
+      "effectText": "Choose a board line. Transform it into a flush set using the line's lowest tile color.",
+      "effect": {
+        "timing": "use_battle",
+        "op": "ritual_line_effect",
+        "ritualAction": "fate_flush_low",
+        "target": "line",
+        "amount": 1,
+        "consume": true
+      },
+      "tags": [
+        "battle",
+        "fate",
+        "line_target",
+        "flush"
+      ],
+      "displayNameKey": "data.items.echo_seal.displayName",
+      "effectTextKey": "data.items.echo_seal.effectText"
+    },
+    {
+      "id": "gold_seal_stamp",
+      "displayName": "High Straight Fate",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 9,
@@ -937,213 +1092,58 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Straight.",
+      "effectText": "Choose a board line. Transform it into the highest straight set possible from the line's highest tile, with that tile off-color.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "override_straight",
+        "ritualAction": "fate_straight_high",
         "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
+        "fate",
         "line_target",
-        "override_straight"
-      ],
-      "displayNameKey": "data.items.step_rite.displayName",
-      "effectTextKey": "data.items.step_rite.effectText"
-    },
-    {
-      "id": "rank_concord",
-      "displayName": "Rank Concord Rite",
-      "type": "consumable",
-      "rarity": "rare",
-      "basePrice": 11,
-      "sellPrice": 5,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": true,
-      "placement": "quickSlot",
-      "slotHint": "q",
-      "effectText": "Choose a board line with 3+ tiles. This confirm treats it as Three of a Kind.",
-      "effect": {
-        "timing": "use_battle",
-        "op": "ritual_line_effect",
-        "ritualAction": "override_three_kind",
-        "target": "line",
-        "amount": 1,
-        "consume": true
-      },
-      "tags": [
-        "battle",
-        "ritual",
-        "line_target",
-        "override_three_kind"
-      ],
-      "displayNameKey": "data.items.rank_concord.displayName",
-      "effectTextKey": "data.items.rank_concord.effectText"
-    },
-    {
-      "id": "risk_seal",
-      "displayName": "Crack Seal",
-      "type": "consumable",
-      "rarity": "legendary",
-      "basePrice": 14,
-      "sellPrice": 7,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": true,
-      "placement": "quickSlot",
-      "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Add a crack seal; it gives a large score bonus and later removal risk.",
-      "effect": {
-        "timing": "use_battle",
-        "op": "ritual_line_effect",
-        "ritualAction": "seal_risk",
-        "target": "tile",
-        "amount": 1,
-        "consume": true
-      },
-      "tags": [
-        "battle",
-        "ritual",
-        "tile_target",
-        "seal_risk"
-      ],
-      "displayNameKey": "data.items.risk_seal.displayName",
-      "effectTextKey": "data.items.risk_seal.effectText"
-    },
-    {
-      "id": "anchor_seal",
-      "displayName": "Anchor Seal",
-      "type": "consumable",
-      "rarity": "uncommon",
-      "basePrice": 7,
-      "sellPrice": 3,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": true,
-      "placement": "quickSlot",
-      "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Add an anchor seal; moved scoring gains a bonus.",
-      "effect": {
-        "timing": "use_battle",
-        "op": "ritual_line_effect",
-        "ritualAction": "seal_anchor",
-        "target": "tile",
-        "amount": 1,
-        "consume": true
-      },
-      "tags": [
-        "battle",
-        "ritual",
-        "tile_target",
-        "seal_anchor"
-      ],
-      "displayNameKey": "data.items.anchor_seal.displayName",
-      "effectTextKey": "data.items.anchor_seal.effectText"
-    },
-    {
-      "id": "echo_seal",
-      "displayName": "Echo Seal",
-      "type": "consumable",
-      "rarity": "rare",
-      "basePrice": 10,
-      "sellPrice": 5,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": true,
-      "placement": "quickSlot",
-      "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Add an echo seal; overlapping scoring gains a bonus.",
-      "effect": {
-        "timing": "use_battle",
-        "op": "ritual_line_effect",
-        "ritualAction": "seal_echo",
-        "target": "tile",
-        "amount": 1,
-        "consume": true
-      },
-      "tags": [
-        "battle",
-        "ritual",
-        "tile_target",
-        "seal_echo"
-      ],
-      "displayNameKey": "data.items.echo_seal.displayName",
-      "effectTextKey": "data.items.echo_seal.effectText"
-    },
-    {
-      "id": "gold_seal_stamp",
-      "displayName": "Gold Seal",
-      "type": "consumable",
-      "rarity": "uncommon",
-      "basePrice": 8,
-      "sellPrice": 4,
-      "stackable": false,
-      "maxStack": 1,
-      "sellable": true,
-      "usableInBattle": true,
-      "placement": "quickSlot",
-      "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Add a gold seal; when scored, gain Gold +1.",
-      "effect": {
-        "timing": "use_battle",
-        "op": "ritual_line_effect",
-        "ritualAction": "seal_gold",
-        "target": "tile",
-        "amount": 1,
-        "consume": true
-      },
-      "tags": [
-        "battle",
-        "ritual",
-        "tile_target",
-        "seal_gold"
+        "straight"
       ],
       "displayNameKey": "data.items.gold_seal_stamp.displayName",
       "effectTextKey": "data.items.gold_seal_stamp.effectText"
     },
     {
       "id": "growth_seal",
-      "displayName": "Growth Seal",
+      "displayName": "Low Straight Fate",
       "type": "consumable",
-      "rarity": "rare",
-      "basePrice": 10,
-      "sellPrice": 5,
+      "rarity": "uncommon",
+      "basePrice": 9,
+      "sellPrice": 4,
       "stackable": false,
       "maxStack": 1,
       "sellable": true,
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Add a growth seal; when scored, the hand rank grows +1.",
+      "effectText": "Choose a board line. Transform it into the lowest straight set possible from the line's lowest tile, with that tile off-color.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "seal_growth",
-        "target": "tile",
+        "ritualAction": "fate_straight_low",
+        "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
-        "tile_target",
-        "seal_growth"
+        "fate",
+        "line_target",
+        "straight"
       ],
       "displayNameKey": "data.items.growth_seal.displayName",
       "effectTextKey": "data.items.growth_seal.effectText"
     },
     {
       "id": "line_seal_stamp",
-      "displayName": "Line Seal",
+      "displayName": "High Triple Fate",
       "type": "consumable",
       "rarity": "uncommon",
       "basePrice": 8,
@@ -1154,20 +1154,20 @@
       "usableInBattle": true,
       "placement": "quickSlot",
       "slotHint": "q",
-      "effectText": "Choose a tile from any board line. Add a line seal; when scored, it grants chip bonus.",
+      "effectText": "Choose a board line. Transform it into a three-of-a-kind set using the line's highest number; the other numbers do not overlap.",
       "effect": {
         "timing": "use_battle",
         "op": "ritual_line_effect",
-        "ritualAction": "seal_line_mark",
-        "target": "tile",
+        "ritualAction": "fate_three_kind_high",
+        "target": "line",
         "amount": 1,
         "consume": true
       },
       "tags": [
         "battle",
-        "ritual",
-        "tile_target",
-        "seal_line_mark"
+        "fate",
+        "line_target",
+        "three_kind"
       ],
       "displayNameKey": "data.items.line_seal_stamp.displayName",
       "effectTextKey": "data.items.line_seal_stamp.effectText"

@@ -79,16 +79,15 @@
 6. 완료: 38종 Board-Line Ritual catalog/번역/이미지 asset/runtime hook을 실제로 추가했다. `ritual_line_effect` op와 `ritualAction` 기반으로 성장, 복사, 각인, 족보 강제 판정, 덱 제거 후보, 보드 선 제거/회수, 마켓 보조 계열을 연결했다.
 7. 완료: Ritual target은 scoring line만이 아니라 보드 선 단위로 확장했다. 성장/점수 보너스는 여전히 점수 족보 선을 요구하고, 타일 각인/복사/압축/보드 선 제거 계열은 비어 있지 않은 보드 선을, 강제 판정 계열은 타일 3개 이상 보드 선을 대상으로 한다.
 8. 완료: 전투 사용 UI는 일반 list dialog에서 보드 미니 프리뷰 + 선 후보 chip dialog로 바꿨고, `ko/en/ja/zh-CN/zh-TW` 효과 문구도 현재 target 조건에 맞게 정리했다.
-9. 보류: Ritual V1은 실제 게임 마켓 pool에서 제외했다. 전투 중 즉시 도움이 안 되는 `addedDeckTiles`/다음 전투 예약형 효과가 체감 실패로 확인되었고, 38종 전체 효과를 전투 즉시성 기준으로 재설계하기 전까지 일반 런에 노출하지 않는다. Catalog, 번역, 이미지, debug fixture, runtime hook은 검토 자산으로 남긴다.
-10. 다음: Ritual V1을 기능 추가에서 정책 재설계 단계로 되돌린다. 우선순위는 아래 순서다.
-   - 효과 원칙: 전투 중 사용 카드는 현재 전투의 배치/확정/점수/자원/드로우에 즉시 읽히는 변화를 만든다. 다음 전투 덱 예약형 효과는 별도 장기 덱빌딩 카드군으로 분리한다.
-   - 전투 눈검증: 대표 카드 8종 이상으로 보드 선 선택 dialog, 미완성 선 target, 강제 판정 preview, 각인/복사/압축 결과를 확인한다.
-   - 결과 전달: 적용 직후 source item -> target board line -> result delta가 충분히 읽히는지 보고 부족하면 result panel/toast/line flash를 보강한다.
-   - 런 정보/로그: 덱 조작, 제거 후보, seal/marker, hand-rank growth가 run info와 trace/log에서 확인 가능한지 점검한다.
-   - 마켓 정책: `ritual_lens`, `ritual_coupon`, `seal_vendor`, `prune_vendor`, `line_pack_ticket`이 단순 할인/후보 수 변경으로만 보이지 않는지 재검토한다.
-   - 밸런스: 재설계된 카드만 pool에 다시 넣고 희귀도/가격/출현 weight와 강제 판정 상위권(`wild_thread`, `number_mask`) 과강도를 소규모 fresh resimulation으로 본다.
-11. 손패 직접 파괴/변형은 V1 금지로 유지한다.
-12. ML/시뮬레이션/풀런봇 계약은 Ritual 재설계와 pool/가격 1차 정리 뒤 붙인다.
+9. 완료: Ritual V1 전체 노출은 폐기하고, 전투 즉시성이 있는 `fate` 변환 14종만 일반 마켓 pool에 재진입시켰다. 기존 나머지 `ritual` 태그 카드는 catalog/이미지/fixture 검토 자산으로 남기되 normal market offer에서는 계속 제외한다.
+10. 완료: 운명 변환은 override가 아니라 선택한 보드 선 5칸을 실제 타일 세트로 덮어쓴다. 적용 직후 current board evaluator가 로얄/스티플/포카드/풀하우스/플러시/스트레이트/트리플/투페어를 읽는다.
+11. 다음: 운명 카드 QA/정책 정리.
+   - 전투 눈검증: 대표 운명 카드로 보드 선 선택 dialog, 미완성 선 target, 변환 직후 줄 변화, 확정 preview를 확인한다.
+   - 결과 전달: 적용 직후 source item -> target board line -> result hand rank가 충분히 읽히는지 보고 부족하면 result panel/toast/line flash를 보강한다.
+   - 밸런스: 재진입한 14종의 가격/희귀도/출현 weight와 상위권(`number_mask`, `wild_thread`, `off_color_rite`) 과강도를 fresh run으로 본다.
+   - 보류군: 다음 전투 덱 예약형, 각인/복사/제거 후보형, 마켓 보조형 Ritual은 별도 카드군으로 다시 설계하기 전까지 normal market에 넣지 않는다.
+12. 손패 직접 파괴/변형은 V1 금지로 유지한다.
+13. ML/시뮬레이션/풀런봇 계약은 운명 카드 QA와 pool/가격 1차 정리 뒤 붙인다.
 
 ## 2. Post-contest 다음 작업
 
