@@ -56,8 +56,8 @@ void main() {
         binding.shouldPropagateDevicePointerEvents = false;
       }
     },
-    // fresh S1~S8 full-run은 브라우저 구동과 retry 로그까지 포함해 길게 잡는다.
-    timeout: const Timeout(Duration(minutes: 120)),
+    // fresh S1~S8 full-run은 retry/recovery 검증까지 포함하므로 외부에서만 중단한다.
+    timeout: Timeout.none,
   );
 }
 
@@ -72,10 +72,13 @@ class _FullRunBotConfig {
     required this.mode,
     required this.seed,
     required this.difficultyName,
+    required this.runModifierName,
     required this.localeName,
     required this.maxBattleActions,
     required this.maxGameOverRetries,
+    required this.retryRecoveryMinAttempt,
     required this.resumeActiveRun,
+    required this.restartStageOnResume,
     required this.resumeSaveBase64,
     required this.challengeCarryoverBase64,
     required this.tutorialsAlreadySeen,
@@ -99,6 +102,10 @@ class _FullRunBotConfig {
         'FULL_RUN_BOT_DIFFICULTY',
         defaultValue: 'standard',
       ),
+      runModifierName: const String.fromEnvironment(
+        'FULL_RUN_BOT_RUN_MODIFIER',
+        defaultValue: 'basic',
+      ),
       localeName: const String.fromEnvironment(
         'FULL_RUN_BOT_LOCALE',
         defaultValue: 'ko',
@@ -111,8 +118,15 @@ class _FullRunBotConfig {
         'FULL_RUN_BOT_MAX_GAME_OVER_RETRIES',
         defaultValue: 24,
       ),
+      retryRecoveryMinAttempt: const int.fromEnvironment(
+        'FULL_RUN_BOT_RETRY_RECOVERY_MIN_ATTEMPT',
+        defaultValue: 2,
+      ),
       resumeActiveRun: const bool.fromEnvironment(
         'FULL_RUN_BOT_RESUME_ACTIVE_RUN',
+      ),
+      restartStageOnResume: const bool.fromEnvironment(
+        'FULL_RUN_BOT_RESTART_STAGE_ON_RESUME',
       ),
       resumeSaveBase64: const String.fromEnvironment(
         'FULL_RUN_BOT_RESUME_SAVE_B64',
@@ -153,10 +167,13 @@ class _FullRunBotConfig {
   final _FullRunBotMode mode;
   final int seed;
   final String difficultyName;
+  final String runModifierName;
   final String localeName;
   final int maxBattleActions;
   final int maxGameOverRetries;
+  final int retryRecoveryMinAttempt;
   final bool resumeActiveRun;
+  final bool restartStageOnResume;
   final String resumeSaveBase64;
   final String challengeCarryoverBase64;
   final bool tutorialsAlreadySeen;
@@ -182,9 +199,20 @@ class _FullRunBotConfig {
 
   bool get needsItemUse => isFullRun || requiredEvidence == 'item_use';
 
+  bool retryRecoveryEnabledFor(int gameOverRetries) {
+    return gameOverRetries >= retryRecoveryMinAttempt;
+  }
+
+  int retryRecoveryAttemptFor(int gameOverRetries) {
+    if (!retryRecoveryEnabledFor(gameOverRetries)) return gameOverRetries;
+    return gameOverRetries < 2 ? 2 : gameOverRetries;
+  }
+
   NewRunDifficulty get difficulty => NewRunSetup.resolveSelectableDifficulty(
     NewRunSetup.parseDifficulty(difficultyName),
   );
+
+  NewRunModifier get runModifier => NewRunModifier.parse(runModifierName);
 
   Locale get locale => _parseLocale(localeName);
 
@@ -381,11 +409,15 @@ class _FullRunBot {
     if (config.resumeActiveRun) {
       final restored = await _loadResumeRuntime();
       if (restored != null) {
-        final resumeRuntime = restored.activeScene == ActiveRunScene.blindSelect
-            ? BlindSelectionSetup.prepareRuntimeForBlindSelect(
-                runtime: restored,
-              )
+        final restartRuntime = config.restartStageOnResume
+            ? _restartRuntimeFromStageStart(restored)
             : restored;
+        final resumeRuntime =
+            restartRuntime.activeScene == ActiveRunScene.blindSelect
+            ? BlindSelectionSetup.prepareRuntimeForBlindSelect(
+                runtime: restartRuntime,
+              )
+            : restartRuntime;
         final route = resumeRuntime.activeScene == ActiveRunScene.blindSelect
             ? RoutePaths.blindSelect
             : RoutePaths.game;
@@ -399,7 +431,8 @@ class _FullRunBot {
           'resumed active run '
           'scene=${resumeRuntime.activeScene.name} '
           'S${resumeRuntime.runProgress.stageIndex} '
-          'tier=${resumeRuntime.runProgress.currentStationBlindTierIndex}',
+          'tier=${resumeRuntime.runProgress.currentStationBlindTierIndex}'
+          '${config.restartStageOnResume ? ' restartedStage=true' : ''}',
         );
         _trace('run_resumed', {
           'active_scene': resumeRuntime.activeScene.name,
@@ -427,15 +460,16 @@ class _FullRunBot {
 
     appRouter.go(
       '${RoutePaths.blindSelect}?seed=${config.seed}'
-      '&difficulty=${config.difficulty.name}&modifier=basic',
+      '&difficulty=${config.difficulty.name}&modifier=${config.runModifier.id}',
     );
     await _pumpUntilVisible(find.text('Station Select'));
     log.add(
-      'seed=${config.seed} difficulty=${config.difficulty.name} modifier=basic '
+      'seed=${config.seed} difficulty=${config.difficulty.name} '
+      'modifier=${config.runModifier.id} '
       'mode=${config.mode.name} locale=${config.localeName}',
     );
     _trace('seeded_run_opened', {
-      'modifier': 'basic',
+      'modifier': config.runModifier.id,
       'difficulty': config.difficulty.name,
     });
   }
@@ -446,6 +480,23 @@ class _FullRunBot {
       return ActiveRunSaveService.runtimeStateFromJson(jsonString);
     }
     return ActiveRunSaveService.loadActiveRun();
+  }
+
+  ActiveRunRuntimeState _restartRuntimeFromStageStart(
+    ActiveRunRuntimeState runtime,
+  ) {
+    final stageStartSnapshot = ActiveRunStageSnapshot(
+      session: runtime.stageStartSnapshot.session.copySnapshot(),
+      runProgress: runtime.stageStartSnapshot.runProgress.copySnapshot(),
+    );
+    return ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.battle,
+      difficulty: runtime.difficulty,
+      runModifier: runtime.runModifier,
+      session: stageStartSnapshot.session,
+      runProgress: stageStartSnapshot.runProgress,
+      stageStartSnapshot: stageStartSnapshot,
+    );
   }
 
   Future<void> _chooseOpenBlind() async {
@@ -518,10 +569,13 @@ class _FullRunBot {
       final runProgress = state.runProgress!;
       final tier = BlindTier.values[runProgress.currentStationBlindTierIndex];
       final runtimeSnapshot = runProgress.buildRuntimeSnapshot();
-      final policy = gameOverRetries >= 2
+      final retryRecovery = config.retryRecoveryEnabledFor(gameOverRetries);
+      final policy = retryRecovery
           ? FullRunPlannerV2Policy(
               enableRetryRecoveryConfirmDelay: true,
-              retryRecoveryAttempt: gameOverRetries,
+              retryRecoveryAttempt: config.retryRecoveryAttemptFor(
+                gameOverRetries,
+              ),
               avoidedActionRouteKeys: failedBattleActionRouteKeys,
             )
           : battlePolicy;
@@ -544,6 +598,18 @@ class _FullRunBot {
         '${_battleTraceSuffix(session, runProgress, runtimeSnapshot)}',
       );
       currentBattleActionRouteKeys.add(fullRunBattleActionRouteKey(action));
+      _trace('battle_action_planned', {
+        'stage': runProgress.stageIndex,
+        'tier': tier.name,
+        'step': step,
+        'policy': policy.id,
+        'retry_recovery': retryRecovery,
+        'retry_recovery_attempt': config.retryRecoveryAttemptFor(
+          gameOverRetries,
+        ),
+        'action': actionTrace,
+        'before': beforeTrace,
+      });
 
       switch (action.type) {
         case FullRunBattleActionType.draw:
@@ -630,7 +696,10 @@ class _FullRunBot {
         'tier': tier.name,
         'step': step,
         'policy': policy.id,
-        'retry_recovery': gameOverRetries >= 2,
+        'retry_recovery': retryRecovery,
+        'retry_recovery_attempt': config.retryRecoveryAttemptFor(
+          gameOverRetries,
+        ),
         'action': actionTrace,
         'before': beforeTrace,
         if (afterState != null) 'after': _battleSnapshotTrace(afterState),
@@ -844,10 +913,10 @@ class _FullRunBot {
           !config.tutorialsAlreadySeen &&
           !marketTutorialCompleted,
     );
-    await _buyQuickSlotItemsIfPossible(stage);
     await _buyJestersIfPossible(stage);
-    await _buyQuickSlotItemsIfPossible(stage);
     await _buyDeckTileIfPossible(stage);
+    await _buyQuickSlotItemsIfPossible(stage);
+    await _buyUtilityItemsIfPossible(stage);
     await _useMarketItemIfVisible(stage);
     _traceMarketState('market_after_evidence', stage);
   }
@@ -970,6 +1039,12 @@ class _FullRunBot {
         final canBuyAfterSelling =
             market.gold + weakest.sellPrice >= offer.price;
         if (!canBuyAfterSelling || offerScore <= weakestScore + 40) return;
+        _record(
+          'S$stage market: replacing Jester '
+          'owned=${weakest.contentId} score=$weakestScore '
+          'offer=${offer.contentId} score=$offerScore '
+          'delta=${offerScore - weakestScore}',
+        );
         _trace('market_decision', {
           'stage': stage,
           'lane': 'jester',
@@ -1070,7 +1145,7 @@ class _FullRunBot {
       'offer': _tileOfferTrace(bestOffer),
       'offer_score': _deckTileBotScore(bestOffer.tile),
     });
-    if (!await _selectTileOfferByPrice(bestOffer.price)) return;
+    if (!await _selectTileOffer(bestOffer)) return;
     if (find.text('구매').evaluate().isEmpty) return;
     await _tapText('구매');
     boughtDeckTile = true;
@@ -1079,63 +1154,79 @@ class _FullRunBot {
     _traceMarketState('market_bought_deck_tile', stage);
   }
 
-  int _deckTileBotScore(Tile tile) {
-    final rankScore = tile.number >= 10 ? 18 : tile.number;
-    return 40 + rankScore + tile.baseChipValue;
-  }
+  int _deckTileBotScore(Tile tile) => fullRunBotDeckTileScore(tile);
 
-  Future<bool> _selectTileOfferByPrice(int price) async {
+  Future<bool> _selectTileOffer(RummiMarketTileOfferView offer) async {
     await _tapTextIfVisible('Jester / Slots');
     await _tapTextIfVisible('Tile');
-    final priceFinder = find.text('${price}G');
-    if (priceFinder.evaluate().isEmpty) return false;
-    await tester.tap(priceFinder.first, warnIfMissed: false);
+    final key = ValueKey(
+      'market-tile-offer-${offer.slotIndex}-${offer.tile.code}-${offer.price}',
+    );
+    if (!await _tapOfferKeyAcrossPages(key)) return false;
     await _pumpFor(const Duration(milliseconds: 600));
     return true;
   }
 
   Future<void> _buyQuickSlotItemsIfPossible(int stage) async {
+    await _buyItemsForPlacementsIfPossible(stage, const {
+      ItemPlacement.quickSlot,
+    });
+  }
+
+  Future<void> _buyUtilityItemsIfPossible(int stage) async {
+    await _buyItemsForPlacementsIfPossible(stage, const {
+      ItemPlacement.inventory,
+      ItemPlacement.equipped,
+    });
+  }
+
+  Future<void> _buyItemsForPlacementsIfPossible(
+    int stage,
+    Set<ItemPlacement> placements,
+  ) async {
     if (!config.needsItemPurchase && !config.isFullRun) return;
     await _completeTutorialIfVisible(kind: _FullRunTutorialKind.market);
-    await _tapTextIfVisible('Jester / Slots');
-    await _tapTextIfVisible('Q-Slot');
+    for (final placement in placements) {
+      await _selectItemOfferLaneForPlacement(placement);
+      await _buyItemsForPlacementIfPossible(stage, placement);
+    }
+  }
 
+  Future<void> _buyItemsForPlacementIfPossible(
+    int stage,
+    ItemPlacement placement,
+  ) async {
     for (var attempt = 0; attempt < 10; attempt++) {
       final state = _readGameState();
       final market = _marketViewFromState(state);
       final progress = state.runProgress;
       if (market == null || progress == null) return;
-      final quickSlotCapacity = progress.quickSlotCapacity(
-        itemCatalog: itemCatalog,
-      );
-      final quickSlotCount = progress.itemInventory.quickSlotItemIds.length;
-      final quickSlotOffers = market.itemOffers
-          .where((offer) => offer.item.placement == ItemPlacement.quickSlot)
+      final capacity = _itemPlacementCapacity(market, placement);
+      final ownedCount = _ownedItemPlacementCount(market, placement);
+      final placementOffers = market.itemOffers
+          .where((offer) => offer.item.placement == placement)
           .toList(growable: false);
       _record(
-        'S$stage market Q-slot attempt=$attempt gold=${market.gold} '
-        'quick=$quickSlotCount/$quickSlotCapacity '
+        'S$stage market ${placement.name} attempt=$attempt '
+        'gold=${market.gold} owned=$ownedCount/$capacity '
         'itemOffers=${market.itemOffers.length} '
-        'quickOffers=${quickSlotOffers.length} '
-        'affordableQuick=${quickSlotOffers.where((offer) => offer.isAffordable).length}',
+        'laneOffers=${placementOffers.length} '
+        'affordableLane=${placementOffers.where((offer) => offer.isAffordable).length}',
       );
-      if (quickSlotCount >= quickSlotCapacity) {
-        _record('S$stage market Q-slot skipped: slots full');
+      if (ownedCount >= capacity) {
+        _record('S$stage market ${placement.name} skipped: slots full');
         return;
       }
       final affordableOffers = market.itemOffers
           .where(
-            (offer) =>
-                offer.item.placement == ItemPlacement.quickSlot &&
-                offer.isAffordable,
+            (offer) => offer.item.placement == placement && offer.isAffordable,
           )
           .toList();
       if (affordableOffers.isEmpty) {
-        if (!await _rerollItemOffersForPlacementIfPossible(
-          ItemPlacement.quickSlot,
-          market,
-        )) {
-          _record('S$stage market Q-slot skipped: no affordable offer/reroll');
+        if (!await _rerollItemOffersForPlacementIfPossible(placement, market)) {
+          _record(
+            'S$stage market ${placement.name} skipped: no affordable offer/reroll',
+          );
           return;
         }
         continue;
@@ -1156,35 +1247,43 @@ class _FullRunBot {
         'offer_score': offerScore,
         'market': _marketTrace(market),
       });
-      if (quickSlotCount >= quickSlotCapacity) {
-        final weakest = _weakestOwnedQuickSlotItem(market, stage: stage);
+      if (ownedCount >= capacity) {
+        final weakest = _weakestOwnedItemForPlacement(
+          market,
+          stage: stage,
+          placement: placement,
+        );
         if (weakest == null) return;
         final weakestScore = fullRunBotItemScore(weakest.item!, stage: stage);
         final canBuyAfterSelling =
             market.gold + weakest.item!.sellPrice >= bestOffer.price;
         if (!canBuyAfterSelling || offerScore <= weakestScore + 25) return;
+        _record(
+          'S$stage market: replacing ${placement.name} Item '
+          'owned=${weakest.contentId} score=$weakestScore '
+          'offer=${bestOffer.contentId} score=$offerScore '
+          'delta=${offerScore - weakestScore}',
+        );
         if (!await _sellMarketItemSlotIfVisible(stage, weakest)) return;
       }
 
-      if (!await _selectVisibleItemOfferForPlacement(
-        bestOffer.item.placement,
-      )) {
+      if (!await _selectVisibleItemOfferForPlacement(bestOffer)) {
         _record(
-          'S$stage market Q-slot skipped: visible offer tap failed '
+          'S$stage market ${placement.name} skipped: visible offer tap failed '
           'item=${bestOffer.item.id} price=${bestOffer.price}',
         );
         return;
       }
       if (find.text('구매').evaluate().isEmpty) {
         _record(
-          'S$stage market Q-slot skipped: purchase button missing '
+          'S$stage market ${placement.name} skipped: purchase button missing '
           'item=${bestOffer.item.id} price=${bestOffer.price}',
         );
         return;
       }
       await _tapText('구매');
       boughtItem = true;
-      _record('S$stage market: bought Q-Slot Item');
+      _record('S$stage market: bought ${placement.name} Item');
       await _pumpFor(const Duration(seconds: 2));
       _traceMarketState('market_bought_item', stage);
     }
@@ -1230,31 +1329,62 @@ class _FullRunBot {
   }
 
   Future<bool> _selectVisibleItemOfferForPlacement(
-    ItemPlacement placement,
+    RummiMarketItemOfferView offer,
   ) async {
-    await _selectItemOfferLaneForPlacement(placement);
-    final offerFinder = find.byWidgetPredicate((widget) {
-      if (widget.runtimeType.toString() != '_MarketItemOfferCard') {
-        return false;
-      }
-      return true;
-    }).hitTestable();
-    if (offerFinder.evaluate().isEmpty) return false;
-    await tester.tap(offerFinder.first, warnIfMissed: false);
+    await _selectItemOfferLaneForPlacement(offer.item.placement);
+    final key = ValueKey(
+      'market-item-offer-${offer.item.placement.name}-${offer.contentId}-${offer.price}',
+    );
+    if (!await _tapOfferKeyAcrossPages(key)) return false;
     await _pumpFor(const Duration(milliseconds: 600));
     return true;
   }
 
-  RummiMarketItemSlotView? _weakestOwnedQuickSlotItem(
+  Future<bool> _tapOfferKeyAcrossPages(ValueKey<String> key) async {
+    for (var attempt = 0; attempt < 6; attempt++) {
+      final finder = find.byKey(key).hitTestable();
+      if (finder.evaluate().isNotEmpty) {
+        await tester.tap(finder.first, warnIfMissed: false);
+        return true;
+      }
+      final nextFinder = find.byIcon(Icons.chevron_right_rounded).hitTestable();
+      if (nextFinder.evaluate().isEmpty) return false;
+      await tester.tap(nextFinder.first, warnIfMissed: false);
+      await _pumpFor(const Duration(milliseconds: 300));
+    }
+    return false;
+  }
+
+  int _itemPlacementCapacity(
+    RummiMarketRuntimeFacade market,
+    ItemPlacement placement,
+  ) {
+    return market.itemSlots
+        .where((slot) => slot.placement == placement && !slot.locked)
+        .length;
+  }
+
+  int _ownedItemPlacementCount(
+    RummiMarketRuntimeFacade market,
+    ItemPlacement placement,
+  ) {
+    return market.itemSlots
+        .where(
+          (slot) =>
+              slot.placement == placement && !slot.locked && slot.item != null,
+        )
+        .length;
+  }
+
+  RummiMarketItemSlotView? _weakestOwnedItemForPlacement(
     RummiMarketRuntimeFacade market, {
     required int stage,
+    required ItemPlacement placement,
   }) {
     final candidates = market.itemSlots
         .where(
           (slot) =>
-              slot.placement == ItemPlacement.quickSlot &&
-              !slot.locked &&
-              slot.item != null,
+              slot.placement == placement && !slot.locked && slot.item != null,
         )
         .toList();
     if (candidates.isEmpty) return null;

@@ -8,9 +8,7 @@ extension _GameViewPresentationFlow on _GameViewState {
       _pausePresentation();
     }
     SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
-    if (!isShopScene && !_optionsDialogOpen) {
-      _pendingLifecycleOptions = true;
-    } else if (!isShopScene && _stageFlowPhase != GameStageFlowPhase.none) {
+    if (!isShopScene && _stageFlowPhase != GameStageFlowPhase.none) {
       _pausedLifecycleDuringStageFlow = true;
     }
     _saveActiveRun();

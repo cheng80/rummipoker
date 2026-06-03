@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 
 import '../integration_test/full_run_bot_market_policy.dart';
 
@@ -114,6 +115,22 @@ void main() {
       expect(
         fullRunBotItemScore(flushStudy, stage: 7),
         greaterThan(fullRunBotItemScore(straightStudy, stage: 7)),
+      );
+    });
+  });
+
+  group('fullRunBotDeckTileScore', () {
+    test('prioritizes special tile modifiers over plain high-rank tiles', () {
+      const plainHighRank = Tile(color: TileColor.red, number: 13);
+      const specialLowRank = Tile(
+        color: TileColor.blue,
+        number: 4,
+        enhancement: TileEnhancement.chipInlaid,
+      );
+
+      expect(
+        fullRunBotDeckTileScore(specialLowRank),
+        greaterThan(fullRunBotDeckTileScore(plainHighRank)),
       );
     });
   });

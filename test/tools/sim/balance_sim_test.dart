@@ -690,7 +690,7 @@ void main() {
     _expectBalanceSimRowContract(smallRow);
     _expectBalanceSimRowContract(bossRow);
     expect(smallRow['boss_modifier_id'], isNull);
-    expect(bossRow['boss_modifier_id'], 'red_dampener_v1');
+    expect(bossRow['boss_modifier_id'], 'blue_dampener_v1');
     expect(bossRow['target_score'], greaterThan(smallRow['target_score']));
     expect(bossRow['target_score'], 960);
     expect(bossResult['final_score'], lessThan(smallResult['final_score']));

@@ -7,7 +7,7 @@ import 'package:integration_test/integration_test_driver.dart';
 
 Future<void> main() {
   return integrationDriver(
-    timeout: const Duration(minutes: 120),
+    timeout: const Duration(days: 7),
     responseDataCallback: (data) async {
       if (data == null) return;
 

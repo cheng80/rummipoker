@@ -219,18 +219,11 @@ class _GameShopScreenState extends State<GameShopScreen>
       case AppLifecycleState.paused:
         _dismissMarketTutorial();
         SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
-        if (!_optionsDialogOpen) {
-          _pendingLifecycleOptions = true;
-        }
         _queueStateSave();
         break;
       case AppLifecycleState.resumed:
         if (_pendingLifecycleOptions) {
           _pendingLifecycleOptions = false;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            _openOptions();
-          });
         }
         break;
       case AppLifecycleState.detached:

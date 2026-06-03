@@ -193,6 +193,51 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('inactive 복귀는 옵션창을 자동으로 열지 않는다', (tester) async {
+    addTearDown(() {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    });
+
+    await tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const [Locale('ko'), Locale('en')],
+        path: 'assets/translations',
+        fallbackLocale: const Locale('ko'),
+        startLocale: const Locale('ko'),
+        saveLocale: false,
+        child: Builder(
+          builder: (context) {
+            return ProviderScope(
+              child: MaterialApp(
+                locale: context.locale,
+                supportedLocales: context.supportedLocales,
+                localizationsDelegates: context.localizationDelegates,
+                home: JesterTranslationScope(
+                  child: GameView(
+                    runSeed: 902,
+                    restoredRun: _restoredBattleForLifecycleTest(),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump(const Duration(milliseconds: 300));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('옵션'), findsNothing);
+    expect(find.text('설정 화면을 열고 복귀 후 현재 메뉴를 다시 엽니다.'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('game over reward card가 기억 카드 보상을 보여준다', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(

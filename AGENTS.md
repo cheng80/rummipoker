@@ -472,3 +472,9 @@ Installed release: `0.2.0`
 - 정산/스테이지 클리어 연출 중 lifecycle inactive/paused 후 resumed가 들어오면 옵션창 예약보다 진행 중인 presentation resume을 우선한다. 정산 delay가 `_presentationPaused` completer를 기다린 채 멈추지 않도록 lifecycle 회귀 테스트를 함께 유지한다.
 - `RummiRunProgress.restore`처럼 런타임 중 add/update 되는 collection은 const/unmodifiable 입력을 그대로 필드에 대입하지 않고 mutable copy로 보관한다.
 - 보스전 보드 금지 패턴은 표준/완화 runtime boss pool 기준으로 1~7번만 S3~S5에, 주대각선/역대각선 8~9번만 S6+에 출현시킨다. 도전 모드는 S1부터 보드 금지를 열고 S7~S8에 10~14번 고난도 패턴도 출현시킨다.
+- 풀런봇/시뮬 전투 정책은 보스전 보드 금지칸으로 4칸 이하만 사용 가능한 줄에서 플러시, 스트레이트, 풀하우스 이상처럼 5칸을 요구하는 족보를 목표 후보로 보지 않는다. 원페어는 점수화하지 않고, 4칸 제한 줄은 투페어/트리플/포카드 중심으로 평가한다.
+- 풀런봇으로 runtime gate를 돌릴 때 사용자가 전체 재도전을 승인하면 기본, 기본 high stakes, 도전, 도전 high stakes 조합을 승인 대기 없이 순차 실행한다. 게임 오버는 max retries/bridge resume/action cap을 충분히 크게 잡고, 기존 기준처럼 2회 게임 오버 이후 retry recovery 정책이 작동하게 하며, 별도 시간 제한을 두지 않는다.
+- 풀런봇 마켓 정책은 Jester를 최우선으로 사고, 그 다음 타일 1장, Q-Slot, Tool/Gear 순으로 돈이 되는 한 많은 칸을 채우는 방향으로 구매한다. 타일은 마켓당 한 번만 구매하되 특수 타일 offer가 있으면 일반 고랭크 타일보다 우선 검토하고, 후보 선택은 가격 텍스트나 첫 번째 카드 탭이 아니라 content id/slot index 기반의 안정 key로 수행한다.
+- 풀런봇 마켓 정책에서 보유 슬롯이 가득 찼을 때는 다음 구매 후보가 현재 보유물보다 명확히 더 좋은 조건일 때만 판매 후 교체한다. 단순히 골드가 있거나 빈 evidence를 채우기 위해 같은 급 또는 약한 Jester/Item을 팔고 사지 않는다.
+- 앱 lifecycle inactive/paused/resumed나 테스트/봇/브라우저 포커스 흔들림만으로 전투/Market 옵션창이나 설정 화면을 자동으로 열지 않는다. lifecycle 처리는 저장, BGM pause/resume, presentation pause/resume까지만 수행하고, 옵션/설정 진입은 명시적 유저 버튼 입력에만 반응하게 유지한다.
+- 새 게임의 시드 입력처럼 dialog action이 이미 `Navigator.pop(value)`로 닫힌 뒤 처리되는 경로에서는 submit handler가 다시 route pop을 호출하지 않는다. 기존 active-run 저장이 있어도 `clearActiveRun()` 후 입력 시드로 blind select에 진입하는 위젯 테스트를 유지한다.

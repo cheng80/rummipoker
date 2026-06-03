@@ -10,9 +10,11 @@ TRACE_PATH="${FULL_RUN_BOT_TRACE_PATH:-}"
 MODE="${FULL_RUN_BOT_MODE:-full}"
 SEED="${FULL_RUN_BOT_SEED:-91460}"
 DIFFICULTY="${FULL_RUN_BOT_DIFFICULTY:-standard}"
+RUN_MODIFIER="${FULL_RUN_BOT_RUN_MODIFIER:-basic}"
 LOCALE="${FULL_RUN_BOT_LOCALE:-ko}"
 MAX_BATTLE_ACTIONS="${FULL_RUN_BOT_MAX_BATTLE_ACTIONS:-420}"
 MAX_GAME_OVER_RETRIES="${FULL_RUN_BOT_MAX_GAME_OVER_RETRIES:-24}"
+RETRY_RECOVERY_MIN_ATTEMPT="${FULL_RUN_BOT_RETRY_RECOVERY_MIN_ATTEMPT:-2}"
 ACTION_DELAY_MS="${FULL_RUN_BOT_ACTION_DELAY_MS:-250}"
 CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${FULL_RUN_BOT_WEB_PORT:-7357}"
@@ -20,6 +22,7 @@ BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_ru
 FLUTTER_BIN="${FLUTTER_BIN:-/Users/cheng80/flutter/bin/flutter}"
 FLUTTER_DRIVE_MODE="${FULL_RUN_BOT_FLUTTER_MODE:-debug}"
 RESUME_ACTIVE_RUN=false
+RESTART_STAGE_ON_RESUME=false
 TUTORIALS_ALREADY_SEEN=false
 TARGET_STAGE="${FULL_RUN_BOT_TARGET_STAGE:-1}"
 TARGET_TIER="${FULL_RUN_BOT_TARGET_TIER:-boss}"
@@ -29,6 +32,9 @@ BRIDGE_RESUME_LIMIT="${FULL_RUN_BOT_BRIDGE_RESUME_LIMIT:-12}"
 PUB_GET=1
 CHROMEDRIVER_PID=""
 TRACE_APPEND=0
+HEADLESS=true
+DDS=true
+START_CHROMEDRIVER=true
 
 usage() {
   cat <<'EOF'
@@ -39,11 +45,17 @@ Options:
   --seed <number>           Run seed. Default: 91460.
   --mode <name>             full | sub. Default: full.
   --difficulty <name>       standard | challenge. Default: standard.
+  --run-modifier <name>     basic | high_stakes. Default: basic.
   --locale <code>           ko | en | ja | zh-CN | zh-TW. Default: ko.
   --max-actions <number>    Max battle actions per station. Default: 420.
   --max-retries <number>    Max game-over retries per bot run. Default: 24.
+  --retry-recovery-min-attempt <n>
+                            Enable retry recovery policy at retry n.
+                            Default: 2. Use 0 for hard-section reinforcement.
   --action-delay-ms <ms>    Delay after battle actions. Default: 250.
   --resume-active-run       Load the saved active run from the checkpoint env file.
+  --restart-stage-on-resume Restart the saved active run from its Station start
+                            snapshot after loading the checkpoint.
   --tutorials-already-seen  Start with battle/market tutorial seen flags enabled.
   --browser-profile-dir <p> Directory used for bot checkpoint env files.
                             Default: /tmp/rummipoker_full_run_bot/chrome_profile.
@@ -58,6 +70,9 @@ Options:
   --required-evidence <key> market_purchase | item_purchase | item_use.
   --bridge-resume-limit <n> Auto-resume count for FlutterDriver request_data
                             bridge failures. Default: 12.
+  --no-headless             Run WebDriver Chrome visibly instead of headless.
+  --no-dds                  Disable Dart Developer Service for flutter drive.
+  --no-start-chromedriver   Let flutter drive manage WebDriver server startup.
   --skip-pub-get            Skip `flutter pub get`.
   -h, --help                Show this help.
 
@@ -84,6 +99,10 @@ while [[ $# -gt 0 ]]; do
       DIFFICULTY="${2:?missing difficulty}"
       shift 2
       ;;
+    --run-modifier)
+      RUN_MODIFIER="${2:?missing run modifier}"
+      shift 2
+      ;;
     --locale)
       LOCALE="${2:?missing locale}"
       shift 2
@@ -96,12 +115,20 @@ while [[ $# -gt 0 ]]; do
       MAX_GAME_OVER_RETRIES="${2:?missing max retries}"
       shift 2
       ;;
+    --retry-recovery-min-attempt)
+      RETRY_RECOVERY_MIN_ATTEMPT="${2:?missing retry recovery min attempt}"
+      shift 2
+      ;;
     --action-delay-ms)
       ACTION_DELAY_MS="${2:?missing action delay}"
       shift 2
       ;;
     --resume-active-run)
       RESUME_ACTIVE_RUN=true
+      shift
+      ;;
+    --restart-stage-on-resume)
+      RESTART_STAGE_ON_RESUME=true
       shift
       ;;
     --tutorials-already-seen)
@@ -144,6 +171,18 @@ while [[ $# -gt 0 ]]; do
       BRIDGE_RESUME_LIMIT="${2:?missing bridge resume limit}"
       shift 2
       ;;
+    --no-headless)
+      HEADLESS=false
+      shift
+      ;;
+    --no-dds)
+      DDS=false
+      shift
+      ;;
+    --no-start-chromedriver)
+      START_CHROMEDRIVER=false
+      shift
+      ;;
     --skip-pub-get)
       PUB_GET=0
       shift
@@ -182,6 +221,14 @@ esac
 DRIVE_MODE_ARGS=()
 if [[ "$FLUTTER_DRIVE_MODE" != "debug" ]]; then
   DRIVE_MODE_ARGS=(--"$FLUTTER_DRIVE_MODE")
+fi
+HEADLESS_ARG="--headless"
+if [[ "$HEADLESS" != "true" ]]; then
+  HEADLESS_ARG="--no-headless"
+fi
+DDS_ARG="--dds"
+if [[ "$DDS" != "true" ]]; then
+  DDS_ARG="--no-dds"
 fi
 
 port_is_open() {
@@ -382,7 +429,9 @@ if [[ "$RESUME_ACTIVE_RUN" != "true" ]]; then
   fi
   rm -rf "$BROWSER_PROFILE_DIR"
 fi
-start_chromedriver
+if [[ "$START_CHROMEDRIVER" == "true" ]]; then
+  start_chromedriver
+fi
 mkdir -p "$BROWSER_PROFILE_DIR"
 if [[ -n "$CARRYOVER_ENV_BACKUP" && -f "$CARRYOVER_ENV_BACKUP" ]]; then
   cp "$CARRYOVER_ENV_BACKUP" "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env"
@@ -412,23 +461,30 @@ while true; do
 
   if run_flutter_drive_and_capture "$log_file" \
     "$FLUTTER_BIN" drive \
-      "${DRIVE_MODE_ARGS[@]}" \
+      ${DRIVE_MODE_ARGS[@]+"${DRIVE_MODE_ARGS[@]}"} \
       --driver=test_driver/integration_test.dart \
       --target=integration_test/full_run_bot_test.dart \
       -d chrome \
+      --no-start-paused \
       --web-port="$WEB_PORT" \
+      --web-launch-url="http://127.0.0.1:$WEB_PORT/" \
       --driver-port="$CHROMEDRIVER_PORT" \
+      "$HEADLESS_ARG" \
+      "$DDS_ARG" \
       --no-keep-app-running \
       ${RESUME_DEFINE_ARG:+"$RESUME_DEFINE_ARG"} \
       ${CARRYOVER_DEFINE_ARG:+"$CARRYOVER_DEFINE_ARG"} \
       --dart-define=FULL_RUN_BOT_MODE="$MODE" \
       --dart-define=FULL_RUN_BOT_SEED="$SEED" \
       --dart-define=FULL_RUN_BOT_DIFFICULTY="$DIFFICULTY" \
+      --dart-define=FULL_RUN_BOT_RUN_MODIFIER="$RUN_MODIFIER" \
       --dart-define=FULL_RUN_BOT_LOCALE="$LOCALE" \
       --dart-define=FULL_RUN_BOT_MAX_BATTLE_ACTIONS="$MAX_BATTLE_ACTIONS" \
       --dart-define=FULL_RUN_BOT_MAX_GAME_OVER_RETRIES="$MAX_GAME_OVER_RETRIES" \
+      --dart-define=FULL_RUN_BOT_RETRY_RECOVERY_MIN_ATTEMPT="$RETRY_RECOVERY_MIN_ATTEMPT" \
       --dart-define=FULL_RUN_BOT_ACTION_DELAY_MS="$ACTION_DELAY_MS" \
       --dart-define=FULL_RUN_BOT_RESUME_ACTIVE_RUN="$RESUME_ACTIVE_RUN" \
+      --dart-define=FULL_RUN_BOT_RESTART_STAGE_ON_RESUME="$RESTART_STAGE_ON_RESUME" \
       --dart-define=FULL_RUN_BOT_TUTORIALS_ALREADY_SEEN="$TUTORIALS_ALREADY_SEEN" \
       --dart-define=FULL_RUN_BOT_TRACE_PATH="$TRACE_PATH" \
       --dart-define=FULL_RUN_BOT_TARGET_STAGE="$TARGET_STAGE" \

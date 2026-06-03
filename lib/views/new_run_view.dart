@@ -132,16 +132,16 @@ class _NewRunViewState extends State<NewRunView> {
       ],
     );
     if (!mounted || action != 'submit') return;
-    await _trySubmitSeed(context);
+    await _trySubmitSeed();
   }
 
-  Future<void> _trySubmitSeed(BuildContext dialogContext) async {
+  Future<void> _trySubmitSeed() async {
     final value = int.tryParse(_seedInputController.text.trim());
     if (value == null) {
       showTopNotice(context, context.tr('seedInvalid'));
       return;
     }
-    Navigator.of(dialogContext).pop();
+    WidgetsBinding.instance.scheduleFrame();
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     SoundManager.unlockForWeb();

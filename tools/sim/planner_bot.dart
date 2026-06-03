@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -260,7 +261,10 @@ class PlannerV2BotPolicy extends BalanceSimBotPolicy {
               ),
               clearsTarget: true,
               immediateScore: immediateScore,
-              potentialScore: _plannerBoardPotentialScore(copy.board),
+              potentialScore: _plannerBoardPotentialScore(
+                copy.board,
+                blockedCellKeys: _blockedCellKeysForSession(session),
+              ),
               boardPressure: RummiPokerGridSession.countTilesOnBoard(
                 copy.board,
               ),
@@ -275,7 +279,10 @@ class PlannerV2BotPolicy extends BalanceSimBotPolicy {
             ),
             clearsTarget: false,
             immediateScore: immediateScore,
-            potentialScore: _plannerBoardPotentialScore(copy.board),
+            potentialScore: _plannerBoardPotentialScore(
+              copy.board,
+              blockedCellKeys: _blockedCellKeysForSession(session),
+            ),
             boardPressure: RummiPokerGridSession.countTilesOnBoard(copy.board),
           );
 
@@ -313,13 +320,21 @@ class PlannerV2BotPolicy extends BalanceSimBotPolicy {
 
     (int, int)? worstCell;
     var worstLoss = 1 << 30;
-    final basePotential = _plannerBoardPotentialScore(session.board);
+    final basePotential = _plannerBoardPotentialScore(
+      session.board,
+      blockedCellKeys: _blockedCellKeysForSession(session),
+    );
     for (var row = 0; row < kBoardSize; row++) {
       for (var col = 0; col < kBoardSize; col++) {
         if (session.board.cellAt(row, col) == null) continue;
         final copy = session.board.copy();
         copy.setCell(row, col, null);
-        final loss = basePotential - _plannerBoardPotentialScore(copy);
+        final loss =
+            basePotential -
+            _plannerBoardPotentialScore(
+              copy,
+              blockedCellKeys: _blockedCellKeysForSession(session),
+            );
         if (loss < worstLoss) {
           worstLoss = loss;
           worstCell = (row, col);
@@ -560,9 +575,11 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
     _PlacementChoice? best;
     final remainingScore =
         session.blind.targetScore - session.blind.scoreTowardBlind;
+    final blockedCellKeys = _blockedCellKeysForSession(session);
     final basePotential = _plannerBoardPotentialScoreForJesters(
       session.board,
       jesters,
+      blockedCellKeys: blockedCellKeys,
     );
 
     for (var handIndex = 0; handIndex < session.hand.length; handIndex++) {
@@ -581,6 +598,7 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
           final potentialScore = _plannerBoardPotentialScoreForJesters(
             copy.board,
             jesters,
+            blockedCellKeys: blockedCellKeys,
           );
           final action = BalanceSimAction.place(
             handIndex: handIndex,
@@ -641,19 +659,43 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
     required int basePotential,
     required List<RummiJesterCard> jesters,
   }) {
-    final lines = <List<Tile?>>[
-      afterPlacement.board.row(row),
-      afterPlacement.board.col(col),
+    final blockedCellKeys = _blockedCellKeysForSession(afterPlacement);
+    final lines = <_PlannerLine>[
+      _PlannerLine(
+        tiles: afterPlacement.board.row(row),
+        capacity: _rowCapacity(row, blockedCellKeys),
+      ),
+      _PlannerLine(
+        tiles: afterPlacement.board.col(col),
+        capacity: _colCapacity(col, blockedCellKeys),
+      ),
     ];
-    if (row == col) lines.add(afterPlacement.board.diagMain());
-    if (row + col == kBoardSize - 1) lines.add(afterPlacement.board.diagAnti());
+    if (row == col) {
+      lines.add(
+        _PlannerLine(
+          tiles: afterPlacement.board.diagMain(),
+          capacity: _diagMainCapacity(blockedCellKeys),
+        ),
+      );
+    }
+    if (row + col == kBoardSize - 1) {
+      lines.add(
+        _PlannerLine(
+          tiles: afterPlacement.board.diagAnti(),
+          capacity: _diagAntiCapacity(blockedCellKeys),
+        ),
+      );
+    }
 
     var nearlyCompleteLines = 0;
     var promisingLines = 0;
     for (final line in lines) {
-      final filled = line.whereType<Tile>().length;
-      final potential = _plannerLinePotentialScore(line);
-      if (filled >= kBoardSize - 1 && potential > 0) nearlyCompleteLines++;
+      final filled = line.tiles.whereType<Tile>().length;
+      final potential = _plannerLinePotentialScore(
+        line.tiles,
+        capacity: line.capacity,
+      );
+      if (filled >= line.capacity - 1 && potential > 0) nearlyCompleteLines++;
       if (filled >= 3 && potential > 0) promisingLines++;
     }
 
@@ -661,6 +703,7 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
     final currentPotential = _plannerBoardPotentialScoreForJesters(
       afterPlacement.board,
       jesters,
+      blockedCellKeys: _blockedCellKeysForSession(afterPlacement),
     );
     for (var index = 0; index < afterPlacement.hand.length; index++) {
       final nextPotential = _bestPlacementPotential(afterPlacement, index);
@@ -684,7 +727,13 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
         if (session.board.cellAt(row, col) != null) continue;
         final copy = session.copySnapshot();
         if (!copy.tryPlaceFromHand(tile, row, col)) continue;
-        best = max(best, _plannerBoardPotentialScore(copy.board));
+        best = max(
+          best,
+          _plannerBoardPotentialScore(
+            copy.board,
+            blockedCellKeys: _blockedCellKeysForSession(copy),
+          ),
+        );
       }
     }
     return best == -1 << 30 ? 0 : best;
@@ -725,6 +774,7 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
             final potential = _plannerBoardPotentialScoreForJesters(
               movedBoard,
               jesters,
+              blockedCellKeys: _blockedCellKeysForSession(session),
             );
             final choice = _MoveChoice(
               action: BalanceSimAction.moveBoard(
@@ -811,6 +861,7 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
         final afterDiscardPotential = _plannerBoardPotentialScoreForJesters(
           afterDiscard.board,
           jesters,
+          blockedCellKeys: _blockedCellKeysForSession(afterDiscard),
         );
         for (final tile in session.hand) {
           final copy = afterDiscard.copySnapshot();
@@ -825,6 +876,7 @@ class FullRunPolicyV1BotPolicy extends BalanceSimBotPolicy {
           final potentialScore = _plannerBoardPotentialScoreForJesters(
             copy.board,
             jesters,
+            blockedCellKeys: _blockedCellKeysForSession(copy),
           );
           final improvesConfirm =
               lineCount > currentLineCount ||
@@ -924,24 +976,50 @@ class _BoardDiscardChoice {
   final int potentialScore;
 }
 
-int _plannerBoardPotentialScore(RummiBoard board) {
+class _PlannerLine {
+  const _PlannerLine({required this.tiles, required this.capacity});
+
+  final List<Tile?> tiles;
+  final int capacity;
+}
+
+int _plannerBoardPotentialScore(
+  RummiBoard board, {
+  Set<String> blockedCellKeys = const <String>{},
+}) {
   var score = 0;
   for (var row = 0; row < kBoardSize; row++) {
-    score += _plannerLinePotentialScore(board.row(row));
+    score += _plannerLinePotentialScore(
+      board.row(row),
+      capacity: _rowCapacity(row, blockedCellKeys),
+    );
   }
   for (var col = 0; col < kBoardSize; col++) {
-    score += _plannerLinePotentialScore(board.col(col));
+    score += _plannerLinePotentialScore(
+      board.col(col),
+      capacity: _colCapacity(col, blockedCellKeys),
+    );
   }
-  score += _plannerLinePotentialScore(board.diagMain());
-  score += _plannerLinePotentialScore(board.diagAnti());
+  score += _plannerLinePotentialScore(
+    board.diagMain(),
+    capacity: _diagMainCapacity(blockedCellKeys),
+  );
+  score += _plannerLinePotentialScore(
+    board.diagAnti(),
+    capacity: _diagAntiCapacity(blockedCellKeys),
+  );
   return score;
 }
 
 int _plannerBoardPotentialScoreForJesters(
   RummiBoard board,
-  List<RummiJesterCard> jesters,
-) {
-  var score = _plannerBoardPotentialScore(board);
+  List<RummiJesterCard> jesters, {
+  Set<String> blockedCellKeys = const <String>{},
+}) {
+  var score = _plannerBoardPotentialScore(
+    board,
+    blockedCellKeys: blockedCellKeys,
+  );
   final wantsFlush = jesters.any(
     (jester) =>
         jester.conditionType == 'flush' ||
@@ -961,6 +1039,7 @@ int _plannerBoardPotentialScoreForJesters(
   for (var row = 0; row < kBoardSize; row++) {
     score += _plannerJesterLineBonus(
       board.row(row),
+      capacity: _rowCapacity(row, blockedCellKeys),
       wantsFlush: wantsFlush,
       wantsFourKind: wantsFourKind,
       wantsPairs: wantsPairs,
@@ -969,6 +1048,7 @@ int _plannerBoardPotentialScoreForJesters(
   for (var col = 0; col < kBoardSize; col++) {
     score += _plannerJesterLineBonus(
       board.col(col),
+      capacity: _colCapacity(col, blockedCellKeys),
       wantsFlush: wantsFlush,
       wantsFourKind: wantsFourKind,
       wantsPairs: wantsPairs,
@@ -976,12 +1056,14 @@ int _plannerBoardPotentialScoreForJesters(
   }
   score += _plannerJesterLineBonus(
     board.diagMain(),
+    capacity: _diagMainCapacity(blockedCellKeys),
     wantsFlush: wantsFlush,
     wantsFourKind: wantsFourKind,
     wantsPairs: wantsPairs,
   );
   score += _plannerJesterLineBonus(
     board.diagAnti(),
+    capacity: _diagAntiCapacity(blockedCellKeys),
     wantsFlush: wantsFlush,
     wantsFourKind: wantsFourKind,
     wantsPairs: wantsPairs,
@@ -991,13 +1073,14 @@ int _plannerBoardPotentialScoreForJesters(
 
 int _plannerJesterLineBonus(
   List<Tile?> line, {
+  int capacity = kBoardSize,
   required bool wantsFlush,
   required bool wantsFourKind,
   required bool wantsPairs,
 }) {
   final tiles = line.whereType<Tile>().toList(growable: false);
   if (tiles.isEmpty) return 0;
-  final missing = kBoardSize - tiles.length;
+  final missing = max(0, capacity - tiles.length);
   final colorCounts = <TileColor, int>{};
   final rankCounts = <int, int>{};
   for (final tile in tiles) {
@@ -1006,7 +1089,7 @@ int _plannerJesterLineBonus(
   }
 
   var bonus = 0;
-  if (wantsFlush) {
+  if (wantsFlush && capacity >= kBoardSize) {
     final maxSameColor = colorCounts.values.fold<int>(
       0,
       (maxValue, count) => count > maxValue ? count : maxValue,
@@ -1031,10 +1114,10 @@ int _plannerJesterLineBonus(
   return bonus;
 }
 
-int _plannerLinePotentialScore(List<Tile?> line) {
+int _plannerLinePotentialScore(List<Tile?> line, {int capacity = kBoardSize}) {
   final tiles = line.whereType<Tile>().toList(growable: false);
   if (tiles.isEmpty) return 0;
-  final missing = kBoardSize - tiles.length;
+  final missing = max(0, capacity - tiles.length);
   final rankCounts = <int, int>{};
   final colorCounts = <TileColor, int>{};
   for (final tile in tiles) {
@@ -1052,21 +1135,73 @@ int _plannerLinePotentialScore(List<Tile?> line) {
     (maxValue, count) => count > maxValue ? count : maxValue,
   );
   final straightRun = _plannerLongestStraightRun(rankCounts.keys.toList());
+  final allowsFiveTileHands = capacity >= kBoardSize;
 
   var score = 0;
   // 좋은 족보로 이어지는 축은 비워 둔 칸이 있어도 높게 평가한다.
   if (maxSameRank + missing >= 4) score += 90;
   if (pairCount >= 2 || pairCount == 1 && missing >= 2) score += 45;
   if (maxSameRank >= 3 && missing >= 1) score += 35;
-  if (maxSameColor + missing >= 5) score += 65;
-  if (straightRun + missing >= 5) score += 70;
+  if (allowsFiveTileHands && maxSameColor + missing >= 5) score += 65;
+  if (allowsFiveTileHands && straightRun + missing >= 5) score += 70;
   score += tiles.length * 2;
 
   // 같은 줄 안에서 색·숫자가 모두 흩어지면 확정 가능한 족보까지 오래 걸린다.
-  if (missing <= 1 && maxSameRank < 2 && maxSameColor < 4 && straightRun < 4) {
+  if (missing <= 1 &&
+      maxSameRank < 2 &&
+      (allowsFiveTileHands ? maxSameColor < 4 : true) &&
+      (allowsFiveTileHands ? straightRun < 4 : true)) {
     score -= 50;
   }
   return score;
+}
+
+Set<String> _blockedCellKeysForSession(RummiPokerGridSession session) {
+  final modifier = session.blind.bossModifier;
+  if (modifier?.category != RummiBossModifierCategory.boardCellBlock) {
+    return const <String>{};
+  }
+  return {
+    for (final cell in modifier!.blockedCells) _boardCellKey(cell.$1, cell.$2),
+  };
+}
+
+String _boardCellKey(int row, int col) => '$row:$col';
+
+int _rowCapacity(int row, Set<String> blockedCellKeys) {
+  var blocked = 0;
+  for (var col = 0; col < kBoardSize; col++) {
+    if (blockedCellKeys.contains(_boardCellKey(row, col))) blocked++;
+  }
+  return kBoardSize - blocked;
+}
+
+int _colCapacity(int col, Set<String> blockedCellKeys) {
+  var blocked = 0;
+  for (var row = 0; row < kBoardSize; row++) {
+    if (blockedCellKeys.contains(_boardCellKey(row, col))) blocked++;
+  }
+  return kBoardSize - blocked;
+}
+
+int _diagMainCapacity(Set<String> blockedCellKeys) {
+  var blocked = 0;
+  for (var index = 0; index < kBoardSize; index++) {
+    if (blockedCellKeys.contains(_boardCellKey(index, index))) blocked++;
+  }
+  return kBoardSize - blocked;
+}
+
+int _diagAntiCapacity(Set<String> blockedCellKeys) {
+  var blocked = 0;
+  for (var index = 0; index < kBoardSize; index++) {
+    if (blockedCellKeys.contains(
+      _boardCellKey(index, kBoardSize - 1 - index),
+    )) {
+      blocked++;
+    }
+  }
+  return kBoardSize - blocked;
 }
 
 int _plannerLongestStraightRun(List<int> ranks) {

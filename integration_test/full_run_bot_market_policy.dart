@@ -1,5 +1,6 @@
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 
 /// 풀런봇의 상점 구매/교체 판단 점수.
 ///
@@ -155,6 +156,45 @@ int fullRunBotItemScore(ItemDefinition item, {required int stage}) {
     case 'xmult_bonus':
     case 'add_percent_of_first_confirm_score':
       score += stage >= 6 ? 220 : 120;
+  }
+  return score;
+}
+
+int fullRunBotDeckTileScore(Tile tile) {
+  final rankScore = tile.number >= 10 ? 18 : tile.number;
+  var score = 40 + rankScore + tile.baseChipValue;
+  if (tile.enhancement != null) score += 36;
+  if (tile.seal != null) score += 34;
+  if (tile.edition != null) score += 38;
+  switch (tile.enhancement) {
+    case TileEnhancement.wildPainted:
+      score += 24;
+    case TileEnhancement.glassTile:
+      score += 20;
+    case TileEnhancement.scoreGilded:
+      score += 16;
+    case TileEnhancement.chipInlaid:
+    case TileEnhancement.goldTile:
+    case TileEnhancement.luckyTile:
+      score += 12;
+    case null:
+      break;
+  }
+  switch (tile.seal) {
+    case TileSeal.redSeal:
+    case TileSeal.anchorSeal:
+    case TileSeal.echoSeal:
+    case TileSeal.crossMemory:
+    case TileSeal.bridgeSeal:
+      score += 18;
+    case TileSeal.blueSeal:
+    case TileSeal.lineMark:
+    case TileSeal.growthSeal:
+    case TileSeal.goldSeal:
+    case TileSeal.fractureSeal:
+      score += 12;
+    case null:
+      break;
   }
   return score;
 }

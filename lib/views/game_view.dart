@@ -299,16 +299,10 @@ class _GameViewState extends ConsumerState<GameView>
         }
         if (_pendingLifecycleOptions) {
           _pendingLifecycleOptions = false;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            _openGameOptions(allowDuringStageFlow: true);
-          });
-        } else if (_pausedLifecycleDuringStageFlow) {
+        }
+        if (_pausedLifecycleDuringStageFlow || _presentationPaused) {
           _pausedLifecycleDuringStageFlow = false;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            _openGameOptions(allowDuringStageFlow: true);
-          });
+          _resumePresentation();
         }
         break;
       case AppLifecycleState.detached:

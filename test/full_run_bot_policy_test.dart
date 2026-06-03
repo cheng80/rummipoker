@@ -304,6 +304,187 @@ void main() {
     expect((action?.row, action?.col), anyOf(const (0, 2), const (1, 1)));
   });
 
+  test(
+    'board block boss avoids chasing five-tile flush on four-cell lines',
+    () {
+      final session = RummiPokerGridSession.restored(
+        runSeed: 91460,
+        deckCopiesPerTile: 1,
+        maxHandSize: 2,
+        runRandomState: 1,
+        blind: RummiBlindState(
+          targetScore: 900,
+          bossModifier: RummiBossModifier.blockRightColumn,
+        ),
+        deck: PokerDeck.fromSnapshot(const []),
+        board: RummiBoard.fromSnapshot([
+          _tile(TileColor.red, 1),
+          _tile(TileColor.red, 2),
+          _tile(TileColor.red, 3),
+          null,
+          null,
+          _tile(TileColor.black, 9),
+          _tile(TileColor.blue, 9),
+          _tile(TileColor.black, 10),
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+        ]),
+        hand: [_tile(TileColor.red, 4), _tile(TileColor.blue, 10)],
+        eliminated: const [],
+      );
+
+      final action = const FullRunPlannerV2Policy().bestPlacementForTest(
+        session,
+        jesters: const [],
+        runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+      );
+
+      expect(action?.type, FullRunBattleActionType.place);
+      expect(action?.handIndex, 1);
+      expect((action?.row, action?.col), const (1, 3));
+    },
+  );
+
+  test('board block boss treats filled playable cells as board pressure', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 17100,
+        scoreTowardBlind: 2210,
+        boardDiscardsRemaining: 3,
+        boardMovesRemaining: 3,
+        handDiscardsRemaining: 0,
+        bossModifier: RummiBossModifier.blockCheckerB,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.yellow, 10),
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.red, 10),
+      ]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 11),
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 13),
+        _tile(TileColor.blue, 9),
+        _tile(TileColor.red, 1),
+        _tile(TileColor.yellow, 5),
+        null,
+        _tile(TileColor.yellow, 7),
+        null,
+        _tile(TileColor.black, 8),
+        _tile(TileColor.red, 9),
+        _tile(TileColor.blue, 7),
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.red, 2),
+        _tile(TileColor.black, 2),
+        _tile(TileColor.red, 3),
+        null,
+        _tile(TileColor.blue, 11),
+        null,
+        _tile(TileColor.black, 12),
+        _tile(TileColor.yellow, 3),
+        _tile(TileColor.yellow, 4),
+        _tile(TileColor.yellow, 3),
+        _tile(TileColor.blue, 8),
+        _tile(TileColor.yellow, 11),
+      ]),
+      hand: [_tile(TileColor.yellow, 10)],
+      eliminated: const [],
+    );
+
+    final action =
+        const FullRunPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).chooseAction(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action.type, FullRunBattleActionType.discardBoard);
+  });
+
+  test('board block boss avoids moving tiles into blocked cells', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 2860,
+        scoreTowardBlind: 2265,
+        boardDiscardsRemaining: 3,
+        handDiscardsRemaining: 2,
+        boardMovesRemaining: 4,
+        bossModifier: RummiBossModifier.blockBottomRow,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.black, 7),
+        _tile(TileColor.black, 9),
+      ]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 10),
+        _tile(TileColor.red, 1),
+        _tile(TileColor.red, 5),
+        _tile(TileColor.blue, 4),
+        _tile(TileColor.blue, 5),
+        null,
+        _tile(TileColor.black, 5),
+        _tile(TileColor.black, 9),
+        null,
+        _tile(TileColor.black, 7),
+        _tile(TileColor.yellow, 11),
+        _tile(TileColor.red, 5),
+        _tile(TileColor.yellow, 3),
+        _tile(TileColor.yellow, 4),
+        _tile(TileColor.red, 13),
+        _tile(TileColor.blue, 8),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.blue, 8),
+        null,
+        _tile(TileColor.blue, 12),
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]),
+      hand: [_tile(TileColor.blue, 13)],
+      eliminated: const [],
+    );
+
+    final action =
+        const FullRunPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).chooseBoardMove(
+          session,
+          jesters: const [],
+          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+        );
+
+    expect(action, isNull);
+  });
+
   test('battle late is based on target progress, not station number', () {
     final early = RummiPokerGridSession.restored(
       runSeed: 91460,
@@ -2127,6 +2308,70 @@ void main() {
     );
   });
 
+  test('late retry can delay a board-full confirm with recovery resources', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 720,
+        scoreTowardBlind: 355,
+        boardDiscardsRemaining: 1,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 0,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.red, 6),
+        _tile(TileColor.black, 8),
+      ]),
+      board: RummiBoard.fromSnapshot(
+        List<Tile?>.filled(25, _tile(TileColor.blue, 7)),
+      ),
+      hand: const [],
+      eliminated: const [],
+    );
+
+    final policy = const FullRunPlannerV2Policy(
+      enableRetryRecoveryConfirmDelay: true,
+      retryRecoveryAttempt: 2,
+    );
+
+    expect(
+      policy.delaysLateRetryConfirmForTest(
+        session,
+        score: 290,
+        lineCount: 4,
+        boardIsFull: true,
+      ),
+      isTrue,
+    );
+  });
+
+  test('retry deck lookahead is enabled for challenge S1 high target', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(targetScore: 720),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.red, 6),
+        _tile(TileColor.black, 8),
+      ]),
+      board: RummiBoard(),
+      hand: const [],
+      eliminated: const [],
+    );
+
+    final policy = const FullRunPlannerV2Policy(
+      enableRetryRecoveryConfirmDelay: true,
+      retryRecoveryAttempt: 2,
+    );
+
+    expect(policy.usesRetryDeckLookaheadForTest(session), isTrue);
+  });
+
   test('boss retry rejects weak four-line confirms', () {
     final policy = const FullRunPlannerV2Policy(
       enableRetryRecoveryConfirmDelay: true,
@@ -2143,6 +2388,22 @@ void main() {
     );
     expect(
       policy.isBossRetryRecoveryBundleForTest(score: 365, lineCount: 5),
+      isTrue,
+    );
+  });
+
+  test('boss retry accepts a medium two-line confirm under pressure', () {
+    final policy = const FullRunPlannerV2Policy(
+      enableRetryRecoveryConfirmDelay: true,
+      retryRecoveryAttempt: 2,
+    );
+
+    expect(
+      policy.isBossRetryRecoveryBundleForTest(score: 359, lineCount: 2),
+      isFalse,
+    );
+    expect(
+      policy.isBossRetryRecoveryBundleForTest(score: 368, lineCount: 2),
       isTrue,
     );
   });
@@ -2408,6 +2669,7 @@ Tile _tile(TileColor color, int number) => Tile(color: color, number: number);
 RummiJesterCard _jester(
   String id, {
   String effectType = '',
+  String conditionType = '',
   Object? conditionValue,
   int? value,
   double? xValue,
@@ -2420,7 +2682,7 @@ RummiJesterCard _jester(
     effectText: '',
     effectType: effectType,
     trigger: '',
-    conditionType: '',
+    conditionType: conditionType,
     conditionValue: conditionValue,
     value: value,
     xValue: xValue,

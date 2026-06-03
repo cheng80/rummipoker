@@ -385,6 +385,9 @@ class _MarketItemOfferCard extends StatelessWidget {
       ),
     );
     return GestureDetector(
+      key: ValueKey(
+        'market-item-offer-${offer.item.placement.name}-${offer.contentId}-${offer.price}',
+      ),
       onTap: onTap,
       onLongPress: () => _showMarketCardPreview(
         context,
@@ -566,6 +569,9 @@ class _MarketTileOfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      key: ValueKey(
+        'market-tile-offer-${offer.slotIndex}-${offer.tile.code}-${offer.price}',
+      ),
       onTap: onTap,
       child: SizedBox(
         width: kMarketShopCellWidth,
