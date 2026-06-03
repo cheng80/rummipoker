@@ -72,6 +72,8 @@ class GameShopScreen extends StatefulWidget {
     this.readActiveRunSaveView,
     this.initialItemShopTab = false,
     this.autoAdvanceOnLoad = false,
+    this.initialItemPresentationEvents = const [],
+    this.onItemPresentationEventsShown,
   });
 
   final int runSeed;
@@ -95,6 +97,8 @@ class GameShopScreen extends StatefulWidget {
   final RummiActiveRunSaveFacade? Function()? readActiveRunSaveView;
   final bool initialItemShopTab;
   final bool autoAdvanceOnLoad;
+  final List<ItemPresentationEvent> initialItemPresentationEvents;
+  final VoidCallback? onItemPresentationEventsShown;
 
   @override
   State<GameShopScreen> createState() => _GameShopScreenState();
@@ -178,6 +182,13 @@ class _GameShopScreenState extends State<GameShopScreen>
       if (!mounted) return;
       final market = _market;
       _mutate(() => _syncCurrentLaneToAvailableOffers(market));
+      if (widget.initialItemPresentationEvents.isNotEmpty) {
+        widget.onItemPresentationEventsShown?.call();
+        _startEffectPresentationSummary(
+          widget.initialItemPresentationEvents,
+          title: 'Market 진입 아이템 발동',
+        );
+      }
       _queueStateSave();
     });
     if (widget.autoAdvanceOnLoad) {

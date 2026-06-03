@@ -454,6 +454,10 @@ extension _GameViewStageFlow on _GameViewState {
           onRestartRun: _restartCurrentRun,
           isDebugFixtureRun: _isDebugFixtureRun,
           initialItemShopTab: widget.debugStartItemShop,
+          initialItemPresentationEvents:
+              _gameState.pendingItemPresentationEvents,
+          onItemPresentationEventsShown:
+              _gameNotifier.clearPendingItemPresentationEvents,
           autoAdvanceOnLoad:
               autoAdvanceOnLoad || widget.autoAdvanceMarketOnLoad,
         ),

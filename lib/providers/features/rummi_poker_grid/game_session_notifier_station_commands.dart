@@ -84,12 +84,20 @@ mixin GameSessionNotifierStationCommands
     final session = state.session!;
     final runProgress = state.runProgress!;
     runProgress.advanceStage(session, runSeed: runSeed);
+    var pendingItemPresentationEvents = state.pendingItemPresentationEvents;
     if (itemCatalog != null) {
-      ItemEffectRuntime.applyOwnedStationStartItems(
+      final results = ItemEffectRuntime.applyOwnedStationStartItems(
         catalog: itemCatalog,
         session: session,
         runProgress: runProgress,
       );
+      pendingItemPresentationEvents = [
+        ...pendingItemPresentationEvents,
+        ..._itemPresentationEventsForResults(
+          catalog: itemCatalog,
+          results: results,
+        ),
+      ];
     }
     clearSelections();
     _replaceState(
@@ -99,6 +107,7 @@ mixin GameSessionNotifierStationCommands
           runProgress: runProgress,
         ),
         runLoopPhase: GameRunLoopPhase.battle,
+        pendingItemPresentationEvents: pendingItemPresentationEvents,
         revision: state.revision + 1,
       ),
     );
@@ -113,5 +122,32 @@ mixin GameSessionNotifierStationCommands
         revision: state.revision + 1,
       ),
     );
+  }
+
+  List<ItemPresentationEvent> _itemPresentationEventsForResults({
+    required ItemCatalog catalog,
+    required List<ItemUseResult> results,
+  }) {
+    final events = <ItemPresentationEvent>[];
+    for (final result in results) {
+      if (!result.isSuccess || result.events.isEmpty) continue;
+      final item = catalog.findById(result.itemId);
+      if (item == null) continue;
+      final effectEvent = result.events.firstWhere(
+        (event) => event.kind != ItemEffectEventKind.itemConsumed,
+        orElse: () => result.events.first,
+      );
+      events.add(
+        ItemPresentationEvent(
+          itemId: item.id,
+          sourceKind: itemPresentationSourceKindForPlacement(item.placement),
+          sourceLabel: item.displayName,
+          target: itemPresentationTargetForEvent(item, effectEvent),
+          resultLabel: '발동: ${itemUseResultPresentationLabel(result)}',
+          effectEvent: effectEvent,
+        ),
+      );
+    }
+    return List<ItemPresentationEvent>.unmodifiable(events);
   }
 }

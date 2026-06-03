@@ -465,3 +465,6 @@ Installed release: `0.2.0`
 - 손실형 타일 modifier 설명은 `제거 후보`처럼 대상이 흐린 표현을 쓰지 않는다. 확정 뒤 덱에서 제거되는지, 보드 위 물리 타일 자신이 제거되는지, 복사본/추가 덱 타일 source에서 제거되는지 유저 노출 문구와 정책 문서에 명시한다.
 - 긴 로그, 대형 diff, full_run_bot trace, 시뮬레이션 리포트처럼 다음 세션 문맥 보존이 필요한 산출물은 `rummi-headroom-context` 스킬과 `tools/headroom_context.py`로 압축하되, 요약본은 source-of-truth가 아니다. 정확한 코드 수정이나 버그 판단 전에는 manifest의 원본 경로와 해시를 기준으로 원본을 다시 확인한다.
 - ultrawork reviewer가 긴 artifact bundle에 응답하지 않으면 같은 대형 요청을 반복하지 않는다. 먼저 100~150줄 내외 compact review packet을 만들어 목표, diff 범위, RED/GREEN 증거, cleanup receipt, 남은 리스크만 담고, reviewer에게 그 파일만 검토시킨다.
+- 다음 전투, 다음 Market, 다음 구매/리롤, 다음 확정처럼 지연 발동하는 아이템은 소모/예약 시점에 언제 발동하는지 명시하고, 실제 발동 시점에도 어떤 아이템이 발동했는지와 효과/소모 여부를 별도 피드백으로 보여준다.
+- 여러 지연 발동 아이템이 같은 시점에 동시에 발동하면 개별 toast를 연속으로 빠르게 띄우지 않는다. 하나의 요약 표시 안에 아이템명과 효과/소모 여부를 묶고, 유저가 읽을 수 있을 만큼 유지 시간을 확보한다.
+- 덱 확인/타일 선택 dialog의 후보 타일은 선택 전부터 accent/highlight를 켜지 않는다. 선택 상태는 별도 border, label, motion으로만 표시해 후보 타일 안에 노란 사각형처럼 보이는 pre-highlight가 남지 않게 한다.

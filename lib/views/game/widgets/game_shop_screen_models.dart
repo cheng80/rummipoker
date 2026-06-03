@@ -123,8 +123,23 @@ class _MarketItemUseFlight {
 }
 
 class _MarketEffectPresentation {
-  const _MarketEffectPresentation({required this.tick, required this.event});
+  const _MarketEffectPresentation({
+    required this.tick,
+    required this.events,
+    this.title,
+  });
+
+  factory _MarketEffectPresentation.single({
+    required int tick,
+    required ItemPresentationEvent event,
+  }) {
+    return _MarketEffectPresentation(tick: tick, events: [event]);
+  }
 
   final int tick;
-  final ItemPresentationEvent event;
+  final List<ItemPresentationEvent> events;
+  final String? title;
+
+  ItemPresentationEvent get event => events.first;
+  bool get isSummary => events.length > 1;
 }

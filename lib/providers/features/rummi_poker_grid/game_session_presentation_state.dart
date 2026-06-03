@@ -19,6 +19,7 @@ class GameSessionPresentationState {
     this.settlementGoalDisplayScore,
     this.settlementBoardSnapshot = const {},
     this.settlementSequenceTick = 0,
+    this.pendingItemPresentationEvents = const [],
   });
 
   static const initial = GameSessionPresentationState();
@@ -36,6 +37,7 @@ class GameSessionPresentationState {
   final int? settlementGoalDisplayScore;
   final Map<String, Tile> settlementBoardSnapshot;
   final int settlementSequenceTick;
+  final List<ItemPresentationEvent> pendingItemPresentationEvents;
 
   static const Object unsetValue = Object();
   static const Object _unset = unsetValue;
@@ -54,6 +56,7 @@ class GameSessionPresentationState {
     Object? settlementGoalDisplayScore = _unset,
     Map<String, Tile>? settlementBoardSnapshot,
     int? settlementSequenceTick,
+    List<ItemPresentationEvent>? pendingItemPresentationEvents,
   }) {
     return GameSessionPresentationState(
       selectedHandTile: selectedHandTile == _unset
@@ -86,6 +89,8 @@ class GameSessionPresentationState {
           settlementBoardSnapshot ?? this.settlementBoardSnapshot,
       settlementSequenceTick:
           settlementSequenceTick ?? this.settlementSequenceTick,
+      pendingItemPresentationEvents:
+          pendingItemPresentationEvents ?? this.pendingItemPresentationEvents,
     );
   }
 }

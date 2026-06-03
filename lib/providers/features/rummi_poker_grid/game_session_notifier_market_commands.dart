@@ -16,10 +16,24 @@ mixin GameSessionNotifierMarketCommands
       pressureProfile: _marketPressureProfileFor(state.runModifier),
     );
     if (itemCatalog != null) {
-      ItemEffectRuntime.applyOwnedEnterMarketItems(
+      final results = ItemEffectRuntime.applyOwnedEnterMarketItems(
         catalog: itemCatalog,
         runProgress: runProgress,
       );
+      final pendingItemPresentationEvents = [
+        ...state.pendingItemPresentationEvents,
+        ..._itemPresentationEventsForMarketResults(
+          catalog: itemCatalog,
+          results: results,
+        ),
+      ];
+      _replaceState(
+        state.copyWith(
+          pendingItemPresentationEvents: pendingItemPresentationEvents,
+          revision: state.revision + 1,
+        ),
+      );
+      return;
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
@@ -165,6 +179,33 @@ mixin GameSessionNotifierMarketCommands
       }
     }
     return null;
+  }
+
+  List<ItemPresentationEvent> _itemPresentationEventsForMarketResults({
+    required ItemCatalog catalog,
+    required List<ItemUseResult> results,
+  }) {
+    final events = <ItemPresentationEvent>[];
+    for (final result in results) {
+      if (!result.isSuccess || result.events.isEmpty) continue;
+      final item = catalog.findById(result.itemId);
+      if (item == null) continue;
+      final effectEvent = result.events.firstWhere(
+        (event) => event.kind != ItemEffectEventKind.itemConsumed,
+        orElse: () => result.events.first,
+      );
+      events.add(
+        ItemPresentationEvent(
+          itemId: item.id,
+          sourceKind: itemPresentationSourceKindForPlacement(item.placement),
+          sourceLabel: item.displayName,
+          target: itemPresentationTargetForEvent(item, effectEvent),
+          resultLabel: '발동: ${itemUseResultPresentationLabel(result)}',
+          effectEvent: effectEvent,
+        ),
+      );
+    }
+    return List<ItemPresentationEvent>.unmodifiable(events);
   }
 
   String? buyShopOffer(int offerIndex, {ItemCatalog? itemCatalog}) {

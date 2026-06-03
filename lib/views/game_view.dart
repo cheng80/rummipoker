@@ -14,6 +14,7 @@ import '../logic/rummi_poker_grid/hand_rank.dart';
 import '../logic/rummi_poker_grid/item_catalog_loader.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/item_effect_runtime.dart';
+import '../logic/rummi_poker_grid/item_presentation_event.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../logic/rummi_poker_grid/line_ref.dart';
@@ -572,6 +573,50 @@ class _GameViewState extends ConsumerState<GameView>
     showTopNotice(context, message);
   }
 
+  void _schedulePendingItemPresentationFeedback(GameSessionState gameState) {
+    if (gameState.activeRunScene != ActiveRunScene.battle) return;
+    final events = gameState.pendingItemPresentationEvents;
+    if (events.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final pendingEvents = _gameState.pendingItemPresentationEvents;
+      if (pendingEvents.isEmpty) return;
+      _gameNotifier.clearPendingItemPresentationEvents();
+      unawaited(_showPendingItemPresentationFeedback(pendingEvents));
+    });
+  }
+
+  Future<void> _showPendingItemPresentationFeedback(
+    List<ItemPresentationEvent> events,
+  ) async {
+    for (final event in events) {
+      if (!mounted) return;
+      final item = _itemCatalog?.findById(event.itemId);
+      final translatedItemName = item?.displayNameKey.tr();
+      _showItemEffectFeedback(
+        title: item == null
+            ? event.sourceLabel
+            : translatedItemName == item.displayNameKey
+            ? item.displayName
+            : translatedItemName!,
+        detail: event.resultLabel,
+        sourceLabel: _itemPresentationSourceLabel(event.sourceKind),
+        passive: event.sourceKind == ItemPresentationSourceKind.passive,
+      );
+      await Future<void>.delayed(GamePresentationTimings.itemEffectFeedback);
+    }
+  }
+
+  String _itemPresentationSourceLabel(ItemPresentationSourceKind kind) {
+    return switch (kind) {
+      ItemPresentationSourceKind.quickSlot => 'Q-Slot',
+      ItemPresentationSourceKind.passive => 'Passive',
+      ItemPresentationSourceKind.tool => 'Tool',
+      ItemPresentationSourceKind.gear => 'Gear',
+      ItemPresentationSourceKind.jester => 'Jester',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameSessionNotifierProvider(_gameArgs));
@@ -581,6 +626,7 @@ class _GameViewState extends ConsumerState<GameView>
       );
     }
     _scheduleBattleTutorialIfNeeded();
+    _schedulePendingItemPresentationFeedback(gameState);
     return PhoneFrameScaffold(
       child: Stack(
         children: [

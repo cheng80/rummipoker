@@ -21,7 +21,34 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final tick = _effectPresentationTick + 1;
     _effectPresentationTick = tick;
     _mutate(() {
-      _effectPresentation = _MarketEffectPresentation(tick: tick, event: event);
+      _effectPresentation = _MarketEffectPresentation.single(
+        tick: tick,
+        event: event,
+      );
+    });
+    Future<void>.delayed(GamePresentationTimings.marketUseFeedbackHold, () {
+      if (!mounted || _effectPresentation?.tick != tick) return;
+      _mutate(() => _effectPresentation = null);
+    });
+  }
+
+  void _startEffectPresentationSummary(
+    List<ItemPresentationEvent> events, {
+    required String title,
+  }) {
+    if (events.isEmpty) return;
+    if (events.length == 1) {
+      _startEffectPresentation(events.single);
+      return;
+    }
+    final tick = _effectPresentationTick + 1;
+    _effectPresentationTick = tick;
+    _mutate(() {
+      _effectPresentation = _MarketEffectPresentation(
+        tick: tick,
+        events: events,
+        title: title,
+      );
     });
     Future<void>.delayed(GamePresentationTimings.marketUseFeedbackHold, () {
       if (!mounted || _effectPresentation?.tick != tick) return;
@@ -50,7 +77,11 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
         kind: ItemPresentationTargetKind.marketReroll,
         label: _offerLaneLabel(lane),
       ),
-      resultLabel: market.rerollCost <= 0 ? '리롤 무료 적용' : '리롤 비용 할인',
+      resultLabel: item.effect.consume
+          ? '${market.rerollCost <= 0 ? '발동: 리롤 무료' : '발동: 리롤 비용 할인'} · 소모됨'
+          : market.rerollCost <= 0
+          ? '발동: 리롤 무료'
+          : '발동: 리롤 비용 할인',
     );
   }
 
@@ -86,7 +117,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
               : ItemPresentationTargetKind.itemOffer,
           label: targetLabel,
         ),
-        resultLabel: '구매가 -1G',
+        resultLabel: '발동: 구매가 -1G',
       );
     }
     final labels = <String>[
@@ -108,8 +139,19 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
             : ItemPresentationTargetKind.itemOffer,
         label: targetLabel,
       ),
-      resultLabel: discount > 0 ? '구매가 -${discount}G' : '할인 적용',
+      resultLabel: _marketPurchaseResultLabel(
+        discount: discount,
+        consumed: purchaseSource?.item?.effect.consume ?? false,
+      ),
     );
+  }
+
+  String _marketPurchaseResultLabel({
+    required int discount,
+    required bool consumed,
+  }) {
+    final effectLabel = discount > 0 ? '구매가 -${discount}G' : '할인 적용';
+    return consumed ? '발동: $effectLabel · 소모됨' : '발동: $effectLabel';
   }
 
   int _marketPurchaseDiscountAmount({

@@ -135,6 +135,16 @@ mixin GameSessionNotifierPresentationCommands
     );
   }
 
+  void clearPendingItemPresentationEvents() {
+    if (state.pendingItemPresentationEvents.isEmpty) return;
+    _replacePresentationState(
+      state.copyWith(
+        pendingItemPresentationEvents: const [],
+        revision: state.revision + 1,
+      ),
+    );
+  }
+
   GameSessionState withValidSelections(GameSessionState current) {
     final session = current.session;
     if (session == null) return current;

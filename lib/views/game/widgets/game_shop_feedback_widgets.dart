@@ -124,6 +124,7 @@ class _MarketEffectPresentationToast extends StatelessWidget {
   Widget build(BuildContext context) {
     final event = presentation.event;
     final accent = _effectAccent(event.sourceKind);
+    final summary = presentation.isSummary;
     return IgnorePointer(
       child: Align(
         alignment: const Alignment(0, -0.68),
@@ -142,7 +143,7 @@ class _MarketEffectPresentationToast extends StatelessWidget {
             );
           },
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 330),
+            constraints: BoxConstraints(maxWidth: summary ? 360 : 330),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: GameUiPalette.surfaceToastDark.withValues(alpha: 0.96),
@@ -166,9 +167,9 @@ class _MarketEffectPresentationToast extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      event.sourceLabel,
+                      presentation.title ?? event.sourceLabel,
                       key: const ValueKey('market-effect-source'),
-                      maxLines: 1,
+                      maxLines: summary ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: accent,
@@ -178,42 +179,48 @@ class _MarketEffectPresentationToast extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 7),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            event.target.label,
-                            key: const ValueKey('market-effect-target'),
+                    if (summary)
+                      _MarketEffectSummaryList(
+                        events: presentation.events,
+                        accent: accent,
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              event.target.label,
+                              key: const ValueKey('market-effect-target'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: GameUiPalette.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: accent,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            event.resultLabel,
+                            key: const ValueKey('market-effect-result'),
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: GameUiPalette.textPrimary,
-                              fontSize: 13,
+                            style: TextStyle(
+                              color: accent,
+                              fontSize: 14,
                               fontWeight: FontWeight.w900,
                               height: 1.1,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: accent,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          event.resultLabel,
-                          key: const ValueKey('market-effect-result'),
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: accent,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            height: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -232,5 +239,54 @@ class _MarketEffectPresentationToast extends StatelessWidget {
       ItemPresentationSourceKind.gear => GameUiPalette.marketSourceGear,
       ItemPresentationSourceKind.jester => GameUiPalette.marketSourceJester,
     };
+  }
+}
+
+class _MarketEffectSummaryList extends StatelessWidget {
+  const _MarketEffectSummaryList({required this.events, required this.accent});
+
+  final List<ItemPresentationEvent> events;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 5,
+      children: [
+        for (final event in events)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const SizedBox(width: 5, height: 5),
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  '${event.sourceLabel}: ${event.resultLabel}',
+                  key: ValueKey('market-effect-summary-${event.itemId}'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: GameUiPalette.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    height: 1.22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
   }
 }

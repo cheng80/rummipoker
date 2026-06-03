@@ -190,7 +190,7 @@ class _TileChoiceButton extends StatelessWidget {
                           child: GameRummiTileCard(
                             tile: tile,
                             selected: selected,
-                            accent: true,
+                            accent: false,
                           ),
                         ),
                       ),

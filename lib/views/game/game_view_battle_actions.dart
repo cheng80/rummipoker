@@ -641,6 +641,9 @@ extension _GameViewBattleActions on _GameViewState {
   }
 
   String _battleItemFeedbackDetail(ItemDefinition item) {
+    if (isDelayedItemActivation(item)) {
+      return delayedItemConsumedTimingLabel(item);
+    }
     return switch (item.effect.op) {
       'add_board_discard' => '보드 버림 +${item.effect.value('amount') ?? 1}',
       'add_hand_discard' => '손패 버림 +${item.effect.value('amount') ?? 1}',

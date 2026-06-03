@@ -1,4 +1,5 @@
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
+import '../../../logic/rummi_poker_grid/item_presentation_event.dart';
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
@@ -105,6 +106,8 @@ class GameSessionState {
   Map<String, Tile> get settlementBoardSnapshot =>
       presentation.settlementBoardSnapshot;
   int get settlementSequenceTick => presentation.settlementSequenceTick;
+  List<ItemPresentationEvent> get pendingItemPresentationEvents =>
+      presentation.pendingItemPresentationEvents;
 
   bool get isReady => session != null && runProgress != null;
   bool get isUiLocked => stageFlowPhase != GameStageFlowPhase.none;
@@ -140,6 +143,7 @@ class GameSessionState {
     Object? settlementGoalDisplayScore = _unset,
     Map<String, Tile>? settlementBoardSnapshot,
     int? settlementSequenceTick,
+    List<ItemPresentationEvent>? pendingItemPresentationEvents,
     int? revision,
   }) {
     final nextPresentation = presentationState == _unset
@@ -157,6 +161,7 @@ class GameSessionState {
             settlementGoalDisplayScore: settlementGoalDisplayScore,
             settlementBoardSnapshot: settlementBoardSnapshot,
             settlementSequenceTick: settlementSequenceTick,
+            pendingItemPresentationEvents: pendingItemPresentationEvents,
           )
         : presentationState as GameSessionPresentationState;
     return GameSessionState(
