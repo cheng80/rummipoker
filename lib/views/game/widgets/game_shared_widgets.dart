@@ -33,6 +33,8 @@ part 'game_shared_item_widgets.dart';
 part 'game_shared_item_overlays.dart';
 part 'game_shared_item_cards.dart';
 part 'game_shared_board_widgets.dart';
+part 'game_shared_board_motion_widgets.dart';
+part 'game_shared_board_remove_motion_widgets.dart';
 part 'game_shared_tile_widgets.dart';
 part 'game_shared_game_over_widgets.dart';
 part 'game_shared_modal_widgets.dart';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/line_ref.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -93,6 +94,28 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1350));
   });
 
+  testWidgets('아이템 정산 단계에서 적용 라인 pulse를 띄운다', (tester) async {
+    await tester.pumpWidget(
+      _effectOverlayHost(
+        activeSettlementStep: ScoringPresentationStep.item,
+        line: _lineWithItemEffect(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(_gameWidgetFinder(), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settlement-effect-line-pulse-layer')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('settlement-effect-line-pulse-1-0')),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(milliseconds: 1350));
+  });
+
   testWidgets('작은 final score 정산 단계는 보드 이펙트를 띄우지 않는다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(
@@ -168,5 +191,27 @@ ConfirmedLineBreakdown _line({
     effects: const [],
     contributingCells: const [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)],
     constraintPenalties: constraintPenalties,
+  );
+}
+
+ConfirmedLineBreakdown _lineWithItemEffect() {
+  return ConfirmedLineBreakdown(
+    ref: LineRef.row(2),
+    rank: RummiHandRank.straight,
+    baseScore: 70,
+    finalScore: 92,
+    jesterBonus: 22,
+    hasScoringFaceCard: false,
+    effects: const [
+      RummiJesterEffectBreakdown(
+        jesterId: 'straight_oil',
+        displayName: '연속 준비',
+        chipsBonus: 22,
+        multBonus: 0,
+        xmultBonus: 1.0,
+        scoreDelta: 22,
+      ),
+    ],
+    contributingCells: const [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)],
   );
 }

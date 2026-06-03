@@ -9,6 +9,7 @@ import '../game_presentation_timings.dart';
 import 'game_ui_palette.dart';
 
 part 'game_effect_overlay_layers.dart';
+part 'game_effect_overlay_settlement_effect_layers.dart';
 
 /// Flutter 보드 위에 얹는 투명 Flame 이펙트 레이어.
 ///
@@ -78,6 +79,14 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
                     centers: _lineSweepCenters,
                     tick: _scoreMoteTick,
                   ),
+                if (_lineSweepCenters.isNotEmpty &&
+                    _showsSettlementEffectLinePulse(
+                      widget.activeSettlementStep,
+                    ))
+                  _SettlementEffectLinePulseLayer(
+                    centers: _lineSweepCenters,
+                    tick: _scoreMoteTick,
+                  ),
                 if (_constraintImpactCenter != null &&
                     _constraintImpactLabel != null)
                   _ConstraintImpactBadgeLayer(
@@ -112,6 +121,10 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       ScoringPresentationStep.finalScore
           when line.finalScore >= _largeScoreBurstThreshold =>
         _BoardEffectKind.largeScore,
+      ScoringPresentationStep.jester ||
+      ScoringPresentationStep.tile ||
+      ScoringPresentationStep.item when line.effects.isNotEmpty =>
+        _BoardEffectKind.lineConfirm,
       _ => null,
     };
     if (effectKind == null) return;
