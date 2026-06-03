@@ -7,6 +7,10 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_battle_facade.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
 void main() {
+  test('battle item art uses the same height as jester art', () {
+    expect(kBattleRuntimeCardArtHeight, kRuntimeCardArtHeight);
+  });
+
   testWidgets('battle item stack badge does not cover card name', (
     tester,
   ) async {
