@@ -1,5 +1,12 @@
 part of 'game_shop_screen.dart';
 
+const TextStyle _marketDescriptionTextStyle = TextStyle(
+  color: GameUiPalette.textSecondary,
+  fontSize: kMarketDescriptionFontSize,
+  fontWeight: FontWeight.w700,
+  height: kMarketDescriptionLineHeight,
+);
+
 String localizedItemName(BuildContext context, RummiMarketItemOfferView offer) {
   return ItemTranslationScope.of(
     context,

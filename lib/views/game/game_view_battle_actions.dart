@@ -103,6 +103,8 @@ extension _GameViewBattleActions on _GameViewState {
     _resumePresentation();
     await SoundManager.stopBgm();
     if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     context.go(RoutePaths.title);
   }
 

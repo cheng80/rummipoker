@@ -209,6 +209,8 @@ extension _GameShopOptionsFlow on _GameShopScreenState {
         case _MarketOptionsCloseAction.openSettings:
           SoundManager.beginBgmAutoResumeBlock();
           try {
+            await WidgetsBinding.instance.endOfFrame;
+            if (!mounted) return;
             await widget.onOpenSettings();
           } finally {
             SoundManager.endBgmAutoResumeBlock();

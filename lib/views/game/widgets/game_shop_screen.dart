@@ -48,21 +48,6 @@ part 'game_shop_purchase_flow.dart';
 part 'game_shop_item_action_flow.dart';
 part 'game_shop_options_flow.dart';
 
-enum _MarketOptionsCloseAction {
-  resumeGame,
-  keepPaused,
-  openSettings,
-  openRunInfo,
-  openMarketTutorial,
-}
-
-const TextStyle _marketDescriptionTextStyle = TextStyle(
-  color: GameUiPalette.textSecondary,
-  fontSize: kMarketDescriptionFontSize,
-  fontWeight: FontWeight.w700,
-  height: kMarketDescriptionLineHeight,
-);
-
 class GameShopScreen extends StatefulWidget {
   const GameShopScreen({
     super.key,

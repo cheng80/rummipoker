@@ -56,6 +56,8 @@ extension _GameViewRunEndFlow on _GameViewState {
     await ActiveRunSaveService.clearActiveRun();
     await SoundManager.stopBgm();
     if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     context.go(RoutePaths.newRun);
   }
 

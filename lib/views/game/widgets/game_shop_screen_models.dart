@@ -6,6 +6,14 @@ enum _MarketOfferLane { jester, tile, quickSlot, passive, tool, gear }
 
 enum _MarketOfferEntryKind { jester, item, tile }
 
+enum _MarketOptionsCloseAction {
+  resumeGame,
+  keepPaused,
+  openSettings,
+  openRunInfo,
+  openMarketTutorial,
+}
+
 class _MarketOfferEntry {
   const _MarketOfferEntry.jester(this.jesterIndex)
     : kind = _MarketOfferEntryKind.jester,

@@ -175,8 +175,7 @@ extension _GameViewStageFlow on _GameViewState {
   }
 
   bool _isTileSettlementEffect(String effectId) {
-    return effectId.startsWith('tile:') ||
-        effectId.startsWith('tile_edition:');
+    return effectId.startsWith('tile:') || effectId.startsWith('tile_edition:');
   }
 
   Future<void> _runStageClearFlow(int scoreAdded) async {
@@ -329,6 +328,8 @@ extension _GameViewStageFlow on _GameViewState {
     if (!mounted) return;
     await _playNextStationTransition();
     if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     context.go(
       '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
       extra: blindSelectRuntime,
@@ -389,6 +390,8 @@ extension _GameViewStageFlow on _GameViewState {
     if (!mounted) return;
     await _playNextStationTransition();
     if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     context.go(
       '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
       extra: blindSelectRuntime,
@@ -442,6 +445,9 @@ extension _GameViewStageFlow on _GameViewState {
               .read(gameSessionNotifierProvider(_gameArgs))
               .activeRunSaveView,
           onOpenSettings: () async {
+            await WidgetsBinding.instance.endOfFrame;
+            if (!mounted) return;
+            if (!context.mounted) return;
             await context.push(RoutePaths.setting);
           },
           onExitToTitle: _goToTitleAfterStoppingBgm,
