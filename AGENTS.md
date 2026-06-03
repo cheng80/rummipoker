@@ -478,3 +478,6 @@ Installed release: `0.2.0`
 - 풀런봇 마켓 정책에서 보유 슬롯이 가득 찼을 때는 다음 구매 후보가 현재 보유물보다 명확히 더 좋은 조건일 때만 판매 후 교체한다. 단순히 골드가 있거나 빈 evidence를 채우기 위해 같은 급 또는 약한 Jester/Item을 팔고 사지 않는다.
 - 앱 lifecycle inactive/paused/resumed나 테스트/봇/브라우저 포커스 흔들림만으로 전투/Market 옵션창이나 설정 화면을 자동으로 열지 않는다. lifecycle 처리는 저장, BGM pause/resume, presentation pause/resume까지만 수행하고, 옵션/설정 진입은 명시적 유저 버튼 입력에만 반응하게 유지한다.
 - 새 게임의 시드 입력처럼 dialog action이 이미 `Navigator.pop(value)`로 닫힌 뒤 처리되는 경로에서는 submit handler가 다시 route pop을 호출하지 않는다. 기존 active-run 저장이 있어도 `clearActiveRun()` 후 입력 시드로 blind select에 진입하는 위젯 테스트를 유지한다.
+- 전투 HUD의 Station 라벨은 난이도뿐 아니라 `high_stakes` 같은 런 modifier도 함께 표시한다. 표준/도전 기본과 하이 스테이크 조합이 전투 화면에서 같은 라벨로 보이면 안 된다.
+- 전투 HUD의 무한 구간 Station 라벨은 좁은 왼쪽 칩을 고려해 `무한 S9`처럼 긴 접두어를 쓰지 않고 `∞S9`처럼 짧은 표기로 유지한다. 하이 스테이크 조합에서도 라벨이 잘리지 않는지 테스트한다.
+- 전투 HUD의 무한 구간 `∞` 표식은 나머지 Station/난이도/modifier 텍스트와 다른 색으로 렌더링해 무한 구간 신호가 즉시 구분되게 한다.

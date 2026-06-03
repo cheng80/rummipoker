@@ -1494,6 +1494,55 @@ ActiveRunRuntimeState _buildChallengeS8EndpointRecovery() {
   );
 }
 
+ActiveRunRuntimeState _buildEndlessHighStakesHudPreview() {
+  final board = RummiBoard()
+    ..setCell(0, 0, _tile(TileColor.red, 1))
+    ..setCell(0, 1, _tile(TileColor.red, 2))
+    ..setCell(0, 2, _tile(TileColor.red, 3));
+  final session = RummiPokerGridSession.restored(
+    runSeed: 2026060409,
+    deckCopiesPerTile: kDefaultCopiesPerTile,
+    maxHandSize: 1,
+    runRandomState: SeededRandom(2026060409).state,
+    blind: RummiBlindState(
+      targetScore: 199999999,
+      scoreTowardBlind: 10000000,
+      boardDiscardsRemaining: 3,
+      handDiscardsRemaining: 1,
+      boardMovesRemaining: 3,
+      boardMovesMax: 3,
+      bossModifier: RummiBossModifier.allScoreDampener,
+    ),
+    deck: PokerDeck.remainingAfterPlaced(
+      board: board,
+      random: Random(2026060409),
+    ),
+    board: board,
+    hand: const [],
+    eliminated: const [],
+  );
+  final runProgress = RummiRunProgress.restore(
+    stageIndex: 9,
+    gold: 123456,
+    rerollCost: RummiRunProgress.shopBaseRerollCost,
+    ownedJesters: const [],
+    shopOffers: const [],
+    statefulValuesBySlot: const {},
+    playedHandCounts: const <RummiHandRank, int>{},
+  )..currentStationBlindTierIndex = 2;
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.battle,
+    difficulty: NewRunDifficulty.challenge,
+    runModifier: NewRunModifier.highStakes,
+    session: session,
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
 ActiveRunRuntimeState _buildBossColumnConstraintPreview() {
   final board = RummiBoard()
     ..setCell(0, 2, _tile(TileColor.red, 1))

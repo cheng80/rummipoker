@@ -148,6 +148,12 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     description: '도전 S8 Boss / 체커 B 금지 / 풀런봇 실패 지점 직접 플레이용',
     builder: _buildChallengeS8EndpointRecovery,
   ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.endlessHighStakesHudPreview,
+    label: '무한 하이 HUD',
+    description: 'S9 도전 하이 / 무한 라벨과 긴 목표 점수 표시 검증용',
+    builder: _buildEndlessHighStakesHudPreview,
+  ),
   for (final entry
       in DebugRunFixtureService.fateLineTransformPreviewItemsByFixture.entries)
     DebugRunFixtureDefinition(

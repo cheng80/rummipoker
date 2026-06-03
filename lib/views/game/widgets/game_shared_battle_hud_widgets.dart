@@ -43,7 +43,7 @@ class GameTopHud extends StatelessWidget {
     );
     final bossModifier = battle.bossModifier;
     final stationLabel = isEndless
-        ? '무한 S${battle.stageIndex} · $difficultyLabel'
+        ? '∞S${battle.stageIndex} · $difficultyLabel'
         : 'S${battle.stageIndex} · $difficultyLabel';
     final goalLabel = isEndless ? 'ENDLESS GOAL' : 'STATION GOAL';
     final goalColor = isEndless
@@ -69,15 +69,16 @@ class GameTopHud extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      stationLabel,
-                      style: gameHudLabelStyle.copyWith(
-                        color: isEndless
-                            ? GameUiPalette.specialGold
-                            : gameHudLabelStyle.color,
+                    SizedBox(
+                      height: 12,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.center,
+                        child: _StationLabelText(
+                          label: stationLabel,
+                          isEndless: isEndless,
+                        ),
                       ),
-                      maxLines: 1,
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 2),
                     Expanded(
@@ -166,15 +167,10 @@ class GameTopHud extends StatelessWidget {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.center,
-                              child: Text(
-                                '$scoreTowardObjective/${objective.targetScore}',
-                                maxLines: 1,
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.visible,
-                                style: gameHudValueStyle.copyWith(
-                                  color: goalColor,
-                                  fontSize: 17,
-                                ),
+                              child: _StationGoalScoreText(
+                                score: scoreTowardObjective,
+                                targetScore: objective.targetScore,
+                                color: goalColor,
                               ),
                             ),
                           ),
@@ -220,6 +216,87 @@ class GameTopHud extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StationLabelText extends StatelessWidget {
+  const _StationLabelText({required this.label, required this.isEndless});
+
+  final String label;
+  final bool isEndless;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = gameHudLabelStyle.copyWith(
+      color: isEndless ? GameUiPalette.specialGold : gameHudLabelStyle.color,
+    );
+    if (!isEndless || !label.startsWith('∞')) {
+      return Text(
+        label,
+        style: baseStyle,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+      );
+    }
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '∞',
+            style: baseStyle.copyWith(color: GameUiPalette.specialDanger),
+          ),
+          TextSpan(text: label.substring(1), style: baseStyle),
+        ],
+      ),
+      maxLines: 1,
+      textAlign: TextAlign.center,
+    );
+  }
+}
+
+class _StationGoalScoreText extends StatelessWidget {
+  const _StationGoalScoreText({
+    required this.score,
+    required this.targetScore,
+    required this.color,
+  });
+
+  final int score;
+  final int targetScore;
+  final Color color;
+
+  static const int _singleLineMaxLength = 11;
+
+  @override
+  Widget build(BuildContext context) {
+    final singleLineText = '$score/$targetScore';
+    final baseStyle = gameHudValueStyle.copyWith(color: color, fontSize: 17);
+    if (singleLineText.length <= _singleLineMaxLength) {
+      return Text(
+        singleLineText,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.visible,
+        style: baseStyle,
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$score',
+          maxLines: 1,
+          textAlign: TextAlign.center,
+          style: baseStyle.copyWith(fontSize: 14, height: 0.9),
+        ),
+        Text(
+          '/$targetScore',
+          maxLines: 1,
+          textAlign: TextAlign.center,
+          style: baseStyle.copyWith(fontSize: 14, height: 0.9),
+        ),
+      ],
     );
   }
 }

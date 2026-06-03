@@ -663,9 +663,10 @@ class _GameViewState extends ConsumerState<GameView>
             ritualEffectFlight: _ritualEffectFlight,
             ritualEffectFlightTick: _ritualEffectFlightTick,
             suppressDebugChrome: widget.debugSuppressFixtureNotice,
-            difficultyLabel: NewRunSetup(
+            difficultyLabel: _battleRunContextLabel(
               difficulty: widget.difficulty,
-            ).difficultyLabel,
+              runModifier: gameState.runModifier,
+            ),
             battleBoardTutorialKey: _battleBoardTutorialKey,
             battlePreviewTutorialKey: _battlePreviewTutorialKey,
             battleActionsTutorialKey: _battleActionsTutorialKey,
@@ -710,4 +711,13 @@ class _GameViewState extends ConsumerState<GameView>
       ),
     );
   }
+}
+
+String _battleRunContextLabel({
+  required NewRunDifficulty difficulty,
+  required NewRunModifier runModifier,
+}) {
+  final difficultyLabel = NewRunSetup(difficulty: difficulty).difficultyLabel;
+  if (runModifier == NewRunModifier.basic) return difficultyLabel;
+  return '$difficultyLabel · 하이';
 }

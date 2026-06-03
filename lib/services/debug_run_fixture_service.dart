@@ -70,6 +70,8 @@ class DebugRunFixtureService {
       's8_color_jester_stack_preview';
   static const String challengeS8EndpointRecovery =
       'challenge_s8_endpoint_recovery';
+  static const String endlessHighStakesHudPreview =
+      'endless_high_stakes_hud_preview';
   static const Map<String, String> fateLineTransformPreviewItemsByFixture = {
     'fate_royal_flush_battle_preview': 'number_mask',
     'fate_straight_flush_high_battle_preview': 'wild_thread',

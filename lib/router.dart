@@ -87,7 +87,8 @@ final GoRouter appRouter = GoRouter(
         final debugSuppressFixtureNotice =
             state.uri.queryParameters['debug_suppress_fixture_notice'] == '1';
         final difficulty = NewRunSetup.parseDifficulty(
-          state.uri.queryParameters['difficulty'],
+          restoredRun?.difficulty.name ??
+              state.uri.queryParameters['difficulty'],
         );
         final challengeCarryover =
             restoredRun == null &&

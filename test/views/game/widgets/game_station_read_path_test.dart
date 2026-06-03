@@ -100,6 +100,50 @@ void main() {
     expect(find.text('27'), findsOneWidget);
   });
 
+  testWidgets('GameTopHud can show high stakes run context', (tester) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 900,
+        scoreTowardObjective: 360,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 4,
+      currentBlindTierIndex: 1,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameTopHud(
+            station: station,
+            battle: battle,
+            difficultyLabel: '도전 · 하이',
+            onOptionsTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('S4 · 도전 · 하이'), findsOneWidget);
+  });
+
   testWidgets('GameTopHud marks S9 and later as endless danger mode', (
     tester,
   ) async {
@@ -143,10 +187,72 @@ void main() {
       ),
     );
 
-    expect(find.text('무한 S9 · 도전'), findsOneWidget);
+    expect(find.text('∞S9 · 도전'), findsOneWidget);
     expect(find.text('ENDLESS GOAL'), findsOneWidget);
     expect(find.text('BOSS'), findsOneWidget);
     expect(find.text('1200/3602'), findsOneWidget);
+  });
+
+  testWidgets('GameTopHud keeps endless high stakes label compact', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 3602,
+        scoreTowardObjective: 1200,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 9,
+      currentBlindTierIndex: 2,
+      currentGold: 27,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameTopHud(
+            station: station,
+            battle: battle,
+            difficultyLabel: '도전 · 하이',
+            onOptionsTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    final label = tester.widget<RichText>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText &&
+            widget.text.toPlainText() == '∞S9 · 도전 · 하이',
+      ),
+    );
+    final labelSpan = label.text as TextSpan;
+    final labelSpans = _flattenTextSpans(labelSpan);
+    final infinitySpan = labelSpans.firstWhere((span) => span.text == '∞');
+    final restSpan = labelSpans.firstWhere(
+      (span) => span.text == 'S9 · 도전 · 하이',
+    );
+
+    expect(label.text.toPlainText(), '∞S9 · 도전 · 하이');
+    expect(infinitySpan.style!.color, isNot(restSpan.style!.color));
+    expect(find.text('무한 S9 · 도전 · 하이'), findsNothing);
   });
 
   testWidgets('GameTopHud keeps four-digit station goal visible', (
@@ -196,6 +302,57 @@ void main() {
 
     expect(find.text('487/1037'), findsOneWidget);
     expect(find.text('487/103'), findsNothing);
+  });
+
+  testWidgets('GameTopHud splits very long station goal over two lines', (
+    tester,
+  ) async {
+    const station = RummiStationRuntimeFacade(
+      stationType: RummiStationType.currentStage,
+      objective: RummiStationObjectiveView(
+        targetScore: 199999999,
+        scoreTowardObjective: 10000000,
+      ),
+      resources: RummiStationResourceView(
+        boardDiscardsRemaining: 2,
+        boardDiscardsMax: 4,
+        handDiscardsRemaining: 1,
+        handDiscardsMax: 2,
+        boardMovesRemaining: 3,
+        boardMovesMax: 3,
+        maxHandSize: 3,
+        drawPileRemaining: 18,
+      ),
+    );
+    final battle = RummiBattleRuntimeFacade(
+      stageIndex: 12,
+      currentBlindTierIndex: 2,
+      currentGold: 116,
+      totalDeckSize: 52,
+      board: RummiBoard(),
+      hand: [],
+      scoringCellKeys: {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 390,
+            child: GameTopHud(
+              station: station,
+              battle: battle,
+              difficultyLabel: '도전 · 하이',
+              onOptionsTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('10000000'), findsOneWidget);
+    expect(find.text('/199999999'), findsOneWidget);
+    expect(find.text('10000000/199999999'), findsNothing);
   });
 
   testWidgets('GameTopHud goal pulse keeps chip layout fixed', (tester) async {
@@ -1760,4 +1917,17 @@ void main() {
     expect(find.text('사용'), findsNothing);
     expect(useCount, 0);
   });
+}
+
+List<TextSpan> _flattenTextSpans(TextSpan span) {
+  final spans = <TextSpan>[];
+  if (span.text != null) spans.add(span);
+  final children = span.children;
+  if (children == null) return spans;
+  for (final child in children) {
+    if (child is TextSpan) {
+      spans.addAll(_flattenTextSpans(child));
+    }
+  }
+  return spans;
 }
