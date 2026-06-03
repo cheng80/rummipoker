@@ -27,9 +27,14 @@
 .codex/
 .kiro/
 
-# Local agent verification evidence.
-# Existing tracked evidence stays in git; new logs/screenshots are regenerated.
-.omo/evidence/
+# Local ad-hoc verification artifacts.
+# Keep curated evidence packets commit-able; ignore repeated run logs/screenshots.
+.omo/evidence/*-analyze.txt
+.omo/evidence/*-cleanup.txt
+.omo/evidence/*-git-diff-check.txt
+.omo/evidence/*-tests.txt
+.omo/evidence/*-fixture-*.png
+.omo/evidence/*-screenshot*.png
 
 ############################################################
 # Node.js
