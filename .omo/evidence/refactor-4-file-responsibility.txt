@@ -1,0 +1,22 @@
+refactor 4 file responsibility 2026-06-03 11:09:09 KST
+     884 lib/views/game_view.dart
+    1275 lib/views/game/game_view_battle_actions.dart
+     193 lib/views/game/game_view_fate_selection_widgets.dart
+     169 lib/views/game/game_view_fate_selection_preview.dart
+     876 lib/views/game/game_view_layout_widgets.dart
+     804 lib/views/game/widgets/game_shared_widgets.dart
+     262 lib/views/game/widgets/game_shop_screen.dart
+    4463 total
+
+lib/views/game/game_view_fate_selection_preview.dart:3:bool _isValidRitualTileTarget(
+lib/views/game/game_view_fate_selection_preview.dart:28:bool _isFateLineTransformDefinition(ItemDefinition item) {
+lib/views/game/game_view_fate_selection_preview.dart:50:String _ritualSelectionPreviewText(
+lib/views/game/game_view_fate_selection_preview.dart:82:    _ => _fateLinePreviewText(item, line),
+lib/views/game/game_view_fate_selection_preview.dart:86:String _fateLinePreviewText(ItemDefinition item, RummiScoringLineSummary line) {
+lib/views/game/game_view_battle_actions.dart:416:    final fateTransformFeedback = _isFateLineTransformDefinition(
+lib/views/game/game_view_battle_actions.dart:503:        if (_isValidRitualTileTarget(
+lib/views/game/game_view_fate_selection_widgets.dart:3:class _FateLineSelection {
+lib/views/game/game_view_fate_selection_widgets.dart:38:        if (!_isValidRitualTileTarget(slot.item, line, tile, cell)) continue;
+lib/views/game/game_view_fate_selection_widgets.dart:68:class _FateLineSelectionPanel extends StatelessWidget {
+lib/views/game/game_view_fate_selection_widgets.dart:87:        : _ritualSelectionPreviewText(
+lib/views/game/game_view_fate_selection_widgets.dart:100:    final confirmLabel = _isFateLineTransformDefinition(selection.slot.item)

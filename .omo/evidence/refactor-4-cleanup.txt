@@ -1,0 +1,4 @@
+cleanup receipt 2026-06-03 11:09:24 KST
+tmux: unavailable
+flutter/webdriver/headless residue after excluding this receipt command:
+conclusion: no refactor-4 Flutter test/WebDriver/Chrome residue remains.

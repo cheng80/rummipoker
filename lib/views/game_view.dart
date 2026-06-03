@@ -60,6 +60,8 @@ part 'game/game_view_item_effect_widgets.dart';
 part 'game/game_view_layout_widgets.dart';
 part 'game/game_view_battle_widgets.dart';
 part 'game/game_view_run_end_flow.dart';
+part 'game/game_view_fate_selection_widgets.dart';
+part 'game/game_view_fate_selection_preview.dart';
 part 'game/game_view_battle_actions.dart';
 part 'game/game_view_battle_item_slots.dart';
 part 'game/game_view_stage_flow.dart';
