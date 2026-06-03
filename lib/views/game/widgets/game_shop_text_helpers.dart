@@ -212,7 +212,7 @@ String _itemEffectTag(String op) {
     'sell_price_bonus' => '판매 보너스',
     'rescue_first_expiry_each_station' => 'Rescue',
     'add_percent_of_first_confirm_score' => 'Echo',
-    'draw_if_hand_empty' => 'Draw',
+    'draw_if_hand_empty' => 'Create',
     'reroll_item_offers_only' => 'Item Reroll',
     'peek_deck_discard_one' => 'Deck',
     _ => '',

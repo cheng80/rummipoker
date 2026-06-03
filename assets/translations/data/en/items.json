@@ -83,7 +83,7 @@
       },
       "emergency_draw": {
         "displayName": "Emergency Draw",
-        "effectText": "If your hand is empty and the deck has tiles, draw 1 tile now."
+        "effectText": "If your hand is empty, create 1 random tile without consuming the deck."
       },
       "ledger_clip": {
         "displayName": "Ledger Clip",

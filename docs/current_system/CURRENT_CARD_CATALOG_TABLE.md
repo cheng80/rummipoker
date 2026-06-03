@@ -100,7 +100,7 @@
 | `slide_wax` | 슬라이드 왁스 | consumable | uncommon | 6G | 3G | quickSlot | use_battle / mark_next_board_move_bonus | 다음 보드 이동이 슬라이드 보너스도 발동합니다. |
 | `straight_oil` | 연속 준비 | consumable | uncommon | 5G | 2G | quickSlot | next_confirm_if_rank_at_least / chips_bonus | 다음 스트레이트 이상 확정에 칩 +40. |
 | `deck_needle` | 덱 바늘 | utility | rare | 9G | 4G | quickSlot | use_battle / peek_deck_discard_one | 덱 맨 위 타일 3장을 보고 1장을 버립니다. |
-| `emergency_draw` | 비상 드로우 | consumable | rare | 7G | 3G | quickSlot | use_battle / draw_if_hand_empty | 손패가 비어 있고 덱이 남아 있으면 즉시 타일 1장을 뽑습니다. |
+| `emergency_draw` | 비상 드로우 | consumable | rare | 7G | 3G | quickSlot | use_battle / draw_if_hand_empty | 손패가 비어 있으면 덱을 소모하지 않고 무작위 타일 1장을 즉시 생성합니다. |
 | `overlap_pin` | 겹침 핀 | consumable | rare | 8G | 4G | quickSlot | next_confirm / temporary_overlap_cap_bonus | 다음 확정의 겹침 보너스 한도가 조금 증가합니다. |
 | `undo_seal` | 되돌림 표식 | consumable | rare | 9G | 4G | quickSlot | use_battle / undo_last_board_move | 마지막 보드 이동을 1회 되돌립니다. |
 

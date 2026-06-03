@@ -1461,73 +1461,14 @@ class RummiRunProgress {
       final tile = allTiles[rng.nextInt(allTiles.length)];
       final code = tile.code;
       if (!usedCodes.add(code)) continue;
-      tileOffers.add(_decorateTileOffer(tile, tileOffers.length));
+      tileOffers.add(
+        decorateTileWithMarketStyleModifiers(
+          tile,
+          stageIndex: stageIndex,
+          offerIndex: tileOffers.length,
+        ),
+      );
     }
-  }
-
-  Tile _decorateTileOffer(Tile tile, int offerIndex) {
-    final enhancementChance = stageIndex >= 6
-        ? 45
-        : stageIndex >= 3
-        ? 30
-        : 15;
-    final seed = _tileOfferModifierSeed(tile, offerIndex);
-    if (_tileOfferRoll(seed, 11) >= enhancementChance) {
-      return tile;
-    }
-
-    final enhancementPool = stageIndex >= 3
-        ? const [
-            TileEnhancement.chipInlaid,
-            TileEnhancement.scoreGilded,
-            TileEnhancement.goldTile,
-            TileEnhancement.glassTile,
-          ]
-        : const [
-            TileEnhancement.chipInlaid,
-            TileEnhancement.scoreGilded,
-            TileEnhancement.goldTile,
-          ];
-    final enhancement =
-        enhancementPool[_tileOfferRoll(seed, 23) % enhancementPool.length];
-    final seal = stageIndex >= 4 && _tileOfferRoll(seed, 37) < 20
-        ? (_tileOfferRoll(seed, 41).isEven
-              ? TileSeal.blueSeal
-              : TileSeal.redSeal)
-        : null;
-    final edition = stageIndex >= 5 && _tileOfferRoll(seed, 43) < 12
-        ? const [
-            TileEdition.silverEdition,
-            TileEdition.glowEdition,
-            TileEdition.prismEdition,
-          ][_tileOfferRoll(seed, 47) % TileEdition.values.length]
-        : null;
-    return Tile(
-      color: tile.color,
-      number: tile.number,
-      id: tile.id,
-      enhancement: enhancement,
-      seal: seal,
-      edition: edition,
-    );
-  }
-
-  int _tileOfferModifierSeed(Tile tile, int offerIndex) {
-    return Object.hash(
-      stageIndex,
-      offerIndex,
-      tile.color.index,
-      tile.number,
-      tile.id,
-    );
-  }
-
-  int _tileOfferRoll(int seed, int salt) {
-    var value = seed ^ (salt * 0x45d9f3b);
-    value = ((value >> 16) ^ value) * 0x45d9f3b;
-    value = ((value >> 16) ^ value) * 0x45d9f3b;
-    value = (value >> 16) ^ value;
-    return value.abs() % 100;
   }
 
   RummiJesterCard _pickWeightedShopJester({

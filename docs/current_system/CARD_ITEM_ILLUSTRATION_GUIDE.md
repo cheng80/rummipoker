@@ -145,7 +145,7 @@ Hard safe zone 기준:
 | 점수 증폭 문장 | Q-Slot | `flush_powder` | 색상 준비 | 다음 플러시 이상 확정에 점수 +40%. | 5G | 2G | Uncommon |
 | 점수 증폭 문장 | Q-Slot | `pair_splint` | 페어 고정대 | 다음 투 페어 확정에 칩 +35. | 5G | 2G | Uncommon |
 | 점수 증폭 문장 | Q-Slot | `overlap_pin` | 겹침 핀 | 다음 확정의 겹침 보너스 한도가 조금 증가합니다. | 8G | 4G | Rare |
-| 덱/손패 문장 | Q-Slot | `emergency_draw` | 비상 드로우 | 손패가 비어 있고 덱이 남아 있으면 즉시 타일 1장을 뽑습니다. | 7G | 3G | Rare |
+| 덱/손패 문장 | Q-Slot | `emergency_draw` | 비상 드로우 | 손패가 비어 있으면 덱을 소모하지 않고 무작위 타일 1장을 즉시 생성합니다. | 7G | 3G | Rare |
 | 경제/상점 문장 | Gear | `ledger_clip` | 장부 클립 | 상점에 들어갈 때 골드 +1. | 5G | 2G | Common |
 | 안전/버림 문장 | Gear | `discard_glove` | 보드 장갑 | 각 Station 시작 시 보드 버림 +1. | 6G | 3G | Common |
 | 안전/버림 문장 | Gear | `mulligan_sleeve` | 손패 슬리브 | 각 Station 시작 시 손패 버림 +1. | 7G | 3G | Uncommon |

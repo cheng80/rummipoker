@@ -2412,6 +2412,52 @@ void main() {
       );
     });
 
+    test('비상 드로우가 있어도 덱과 손패가 비면 전투 막힘으로 본다', () {
+      final session = RummiPokerGridSession(
+        runSeed: 701,
+        blind: RummiBlindState(
+          targetScore: 999,
+          boardDiscardsRemaining: 0,
+          handDiscardsRemaining: 0,
+          boardMovesRemaining: 0,
+        ),
+        deck: PokerDeck.fromSnapshot(const []),
+      );
+      final runProgress = RummiRunProgress()
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'emergency_draw',
+              count: 1,
+              placement: ItemPlacement.quickSlot,
+            ),
+          ],
+          quickSlotItemIds: ['emergency_draw'],
+        );
+      final restoredRun = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: session.copySnapshot(),
+          runProgress: runProgress.copySnapshot(),
+        ),
+      );
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final args = GameSessionArgs(runSeed: 701, restoredRun: restoredRun);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      expect(
+        notifier.evaluateExpiry(),
+        contains(RummiExpirySignal.drawPileExhausted),
+      );
+    });
+
     test('S4 복원 runtime은 골드, Jester, 아이템 facade를 유지한다', () {
       final session = RummiPokerGridSession(runSeed: 91460);
       final jester = _testJester('droll_jester');

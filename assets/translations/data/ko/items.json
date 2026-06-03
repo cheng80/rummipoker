@@ -83,7 +83,7 @@
       },
       "emergency_draw": {
         "displayName": "비상 드로우",
-        "effectText": "손패가 비어 있고 덱이 남아 있으면 즉시 타일 1장을 뽑습니다."
+        "effectText": "손패가 비어 있으면 덱을 소모하지 않고 무작위 타일 1장을 즉시 생성합니다."
       },
       "ledger_clip": {
         "displayName": "장부 클립",

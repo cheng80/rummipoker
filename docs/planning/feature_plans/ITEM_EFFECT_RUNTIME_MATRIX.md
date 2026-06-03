@@ -77,7 +77,7 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 | `flush_powder` | 다음 Flush 이상 confirm mult +8 | `next_confirm_if_rank_at_least` / `mult_bonus` | `applyConfirmModifierItem` | `applied` |
 | `pair_splint` | 다음 Two Pair confirm chips +35 | `next_confirm_if_rank` / `chips_bonus` | `applyConfirmModifierItem` | `applied` |
 | `overlap_pin` | 다음 confirm overlap cap bonus +0.25 | `next_confirm` / `temporary_overlap_cap_bonus` | `applyConfirmModifierItem` | `applied` |
-| `emergency_draw` | 손패가 비었으면 즉시 1장 draw | `use_battle` / `draw_if_hand_empty` | `useBattleItem` | `applied` |
+| `emergency_draw` | 손패가 비었으면 덱 소모 없이 무작위 타일 1장 생성 | `use_battle` / `draw_if_hand_empty` | `useBattleItem` | `applied` |
 | `ledger_clip` | market 진입 시 Gold +1 | `enter_market` / `gain_gold` | `applyEnterMarketItem` | `applied` |
 | `discard_glove` | Station 시작 시 보드 버림 +1 | `station_start` / `add_board_discard` | `applyStationStartItem` | `applied` |
 | `mulligan_sleeve` | Station 시작 시 손패 버림 +1 | `station_start` / `add_hand_discard` | `applyStationStartItem` | `applied` |
@@ -155,7 +155,7 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 - `hand_scrap`: 손패 버림 +1, consume
 - `move_token`: 보드 이동 +1, consume
 - `slide_wax`: 다음 성공한 보드 이동에 slide bonus trigger marker 저장/소비, consume
-- `emergency_draw`: 손패가 비었을 때 1장 draw, consume
+- `emergency_draw`: 손패가 비었을 때 덱 소모 없이 무작위 타일 1장 생성, consume
 - `deck_needle`: 덱 위 3장 중 선택한 1장을 버림, consume
 - `discard_glove`: Station 시작 시 보드 버림 +1
 - `mulligan_sleeve`: Station 시작 시 손패 버림 +1
@@ -237,7 +237,7 @@ Ritual 계열의 다음 검증은 runtime hook 존재 여부가 아니라 UX/밸
 - next-confirm 대기 상태: 수동 소모품은 사용 즉시 Quick slot에서 사라지므로 원래 slot-local badge 대신 Item zone 내부에 `확정 대기 N` badge를 표시한다.
 - next-confirm 확정 순간: 정산 presentation의 item/jester step에서도 floating settlement burst를 띄워 실제 적용된 item delta를 보여준다. item 이름은 `ItemTranslationScope`로 resolve해 현지화된 이름과 `+N 칩`, `+N 점수 보정`, `xN` 결과를 callout으로 읽게 한다.
 - `deck_needle`: 덱 확인 dialog의 후보마다 `후보 N`과 타일 코드를 표시하고, 선택 후보를 짧게 강조한 뒤 실제 제거된 타일 코드를 notice/toast에 보여준다. 런타임 소비/버림 규칙은 그대로 두고 대상/결과 read path와 필요한 최소 presentation만 보강했다.
-- `emergency_draw`: 성공 시 기존 hand tile incoming 전환과 함께 hand zone에 `드로우 +1` badge를 표시한다. deck/hand resource pulse도 함께 검증해 Quick slot -> 덱/손패 -> 결과 체인을 고정했다. 실패 시 `손패가 비어 있을 때만 사용할 수 있습니다.` notice만 보이고 성공 burst가 뜨지 않는 정책을 유지한다.
+- `emergency_draw`: 성공 시 기존 hand tile incoming 전환과 함께 hand zone에 `드로우 +1` badge를 표시한다. 덱은 소모하지 않고 손패에 생성된 타일을 추가한다. 실패 시 `손패가 비어 있을 때만 사용할 수 있습니다.` notice만 보이고 성공 burst가 뜨지 않는 정책을 유지한다.
 - `slide_wax`: session의 `nextBoardMoveSlideBonusQueued`를 battle facade로 노출하고 Item zone에 `이동 보너스 대기` badge를 표시한다. 다음 보드 이동 성공 시 queued marker가 소비되고 `슬라이드 왁스 / 이동 보너스 발동` feedback과 이동 도착 칸 bonus flash를 보여준다.
 - `boss_trophy`: 다음 Market Jester 후보 슬롯 보너스가 적용 중이면 market facade에 `트로피 +N` label을 노출하고, Jester offer lane pager badge로 표시한다.
 - `deck_needle`: 선택한 후보에 `버림 확정` result badge를 붙여 선택 후보가 discard 결과로 이어졌음을 dialog 안에서 즉시 보여준다.

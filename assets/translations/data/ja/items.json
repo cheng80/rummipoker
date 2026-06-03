@@ -83,7 +83,7 @@
       },
       "emergency_draw": {
         "displayName": "Emergency Draw",
-        "effectText": "手札が空でデッキにタイルがあれば、今1枚引く。"
+        "effectText": "手札が空なら、デッキを消費せずランダムなタイルを1枚生成する。"
       },
       "ledger_clip": {
         "displayName": "Ledger Clip",

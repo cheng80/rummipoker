@@ -4,6 +4,7 @@ import 'jester_meta.dart';
 import 'line_ref.dart';
 import 'models/tile.dart';
 import 'rummi_poker_grid_session.dart';
+import 'tile_generation.dart';
 
 part 'item_effect_catalog_support.dart';
 part 'item_effect_handlers.dart';
@@ -171,7 +172,7 @@ class ItemEffectRuntime {
         events.addAll(applied.events);
         break;
       case 'draw_if_hand_empty':
-        final applied = _applyDrawIfHandEmpty(item, session);
+        final applied = _applyDrawIfHandEmpty(item, session, runProgress);
         if (!applied.isSuccess) return applied;
         events.addAll(applied.events);
         break;

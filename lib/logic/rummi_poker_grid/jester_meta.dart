@@ -7,6 +7,7 @@ import 'models/tile.dart';
 import 'models/poker_deck.dart';
 import 'rummi_hand_growth.dart';
 import 'rummi_poker_grid_session.dart';
+import 'tile_generation.dart';
 
 part 'jester_card.dart';
 part 'jester_catalog_models.dart';

@@ -199,37 +199,118 @@ void main() {
       ]);
     });
 
-    test('useBattleItem supports emergency draw when hand is empty', () {
-      final item = _item(id: 'emergency_draw', op: 'draw_if_hand_empty');
-      final session = RummiPokerGridSession(
-        runSeed: 1,
-        blind: RummiBlindState(targetScore: 999),
-      );
-      final runProgress = RummiRunProgress()
-        ..itemInventory = const RunInventoryState(
-          ownedItems: [
-            OwnedItemEntry(
-              itemId: 'emergency_draw',
-              count: 1,
-              placement: ItemPlacement.quickSlot,
-            ),
-          ],
-          quickSlotItemIds: ['emergency_draw'],
+    test(
+      'useBattleItem creates emergency draw tile without consuming the deck',
+      () {
+        final item = _item(id: 'emergency_draw', op: 'draw_if_hand_empty');
+        final top = Tile(color: TileColor.red, number: 1);
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+          deck: PokerDeck.fromSnapshot([top]),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'emergency_draw',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['emergency_draw'],
+          );
+        final beforeDeckRemaining = session.deck.remaining;
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
         );
 
-      final result = ItemEffectRuntime.useBattleItem(
-        item: item,
-        session: session,
-        runProgress: runProgress,
-      );
+        expect(result.isSuccess, isTrue);
+        expect(session.hand.length, 1);
+        expect(session.deck.remaining, beforeDeckRemaining);
+        expect(session.peekDeckTop(1), [top]);
+        expect(runProgress.itemInventory.ownedItems, isEmpty);
+        expect(result.events.map((event) => event.kind), [
+          ItemEffectEventKind.tileDrawn,
+          ItemEffectEventKind.itemConsumed,
+        ]);
+      },
+    );
 
-      expect(result.isSuccess, isTrue);
-      expect(session.hand.length, 1);
-      expect(runProgress.itemInventory.ownedItems, isEmpty);
-      expect(result.events.map((event) => event.kind), [
-        ItemEffectEventKind.tileDrawn,
-        ItemEffectEventKind.itemConsumed,
-      ]);
+    test(
+      'useBattleItem creates emergency draw tile even when deck is empty',
+      () {
+        final item = _item(id: 'emergency_draw', op: 'draw_if_hand_empty');
+        final session = RummiPokerGridSession(
+          runSeed: 1,
+          blind: RummiBlindState(targetScore: 999),
+          deck: PokerDeck.fromSnapshot(const []),
+        );
+        final runProgress = RummiRunProgress()
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'emergency_draw',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['emergency_draw'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(session.hand.length, 1);
+        expect(session.deck.remaining, 0);
+        expect(runProgress.itemInventory.ownedItems, isEmpty);
+      },
+    );
+
+    test('useBattleItem can create special emergency draw tiles', () {
+      final item = _item(id: 'emergency_draw', op: 'draw_if_hand_empty');
+      Tile? generatedSpecialTile;
+
+      for (var runSeed = 1; runSeed <= 200; runSeed++) {
+        final session = RummiPokerGridSession(
+          runSeed: runSeed,
+          blind: RummiBlindState(targetScore: 999),
+          deck: PokerDeck.fromSnapshot(const []),
+        );
+        final runProgress = RummiRunProgress()
+          ..stageIndex = 6
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'emergency_draw',
+                count: 1,
+                placement: ItemPlacement.quickSlot,
+              ),
+            ],
+            quickSlotItemIds: ['emergency_draw'],
+          );
+
+        final result = ItemEffectRuntime.useBattleItem(
+          item: item,
+          session: session,
+          runProgress: runProgress,
+        );
+
+        expect(result.isSuccess, isTrue);
+        if (session.hand.single.hasModifier) {
+          generatedSpecialTile = session.hand.single;
+          break;
+        }
+      }
+
+      expect(generatedSpecialTile, isNotNull);
     });
 
     test('useBattleItem supports temporary hand capacity increase', () {

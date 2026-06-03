@@ -139,7 +139,7 @@ Watchlist value lock:
 | `board_lift` | 보드 이동 + | 유지, inventory/quick 역할 재검토 |
 | `undo_seal` | 마지막 보드 이동 취소 | 유지 |
 | `organizer_glove` | 보드 이동 + 장비 | 유지 |
-| `emergency_draw` | 손패 비었을 때 드로우 | 유지 |
+| `emergency_draw` | 손패 비었을 때 덱 소모 없는 타일 생성 | 유지 |
 | `deck_needle` | 덱 상단 확인/버림 | 유지, 전략 축 중요 |
 | `battle_pouch` | 손패 최대치 증가 | 유지, 상한/피드백 필수 |
 | `travel_pouch` | 손패 최대치 증가 passive | 유지 |

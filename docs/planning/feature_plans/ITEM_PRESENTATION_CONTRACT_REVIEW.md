@@ -66,7 +66,7 @@ presentation queue는 save/continue source of truth가 아니다. 저장 가능�
 | `flush_powder` | Quick slot | Confirm 버튼/족보 조건 표시 | Flush 이상 조건부 점수 +% 예약 | P2 보강 필요 |
 | `pair_splint` | Quick slot | Confirm 버튼/족보 조건 표시 | Two Pair 조건부 칩 보너스 예약 | P2 보강 필요 |
 | `overlap_pin` | Quick slot | Confirm preview overlap 항목 | 다음 확정 overlap cap 보너스 예약 | P2 보강 필요 |
-| `emergency_draw` | Quick slot | 손패/덱 HUD | 손패가 비었을 때 1장 draw, 조건 실패 미소모 | P1 보강 필요 |
+| `emergency_draw` | Quick slot | 손패 HUD | 손패가 비었을 때 덱 소모 없이 1장 생성, 조건 실패 미소모 | P1 보강 필요 |
 | `ledger_clip` | Gear | Market 진입 Gold HUD | Market 진입 시 Gold +1 | P3 보강 필요 |
 | `discard_glove` | Gear | 전투 시작 보드 버림 HUD | Station 시작 보드 버림 +1 | P3 보강 필요 |
 | `mulligan_sleeve` | Gear | 전투 시작 손패 버림 HUD | Station 시작 손패 버림 +1 | P3 보강 필요 |

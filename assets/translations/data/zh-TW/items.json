@@ -83,7 +83,7 @@
       },
       "emergency_draw": {
         "displayName": "Emergency Draw",
-        "effectText": "如果手牌為空且牌庫有牌，立即抽1張。"
+        "effectText": "如果手牌為空，不消耗牌庫並生成1張隨機牌塊。"
       },
       "ledger_clip": {
         "displayName": "Ledger Clip",

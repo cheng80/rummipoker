@@ -346,6 +346,7 @@ ItemUseResult _applyMarkNextBoardMoveBonus(
 ItemUseResult _applyDrawIfHandEmpty(
   ItemDefinition item,
   RummiPokerGridSession session,
+  RummiRunProgress runProgress,
 ) {
   final amount = _positiveIntAmount(item);
   if (amount == null) return _invalidAmount(item);
@@ -356,9 +357,18 @@ ItemUseResult _applyDrawIfHandEmpty(
     );
   }
   var drawn = 0;
-  for (var i = 0; i < amount; i++) {
-    final tile = session.drawToHand();
-    if (tile == null) break;
+  for (
+    var i = 0;
+    i < amount && session.hand.length < session.maxHandSize;
+    i++
+  ) {
+    session.hand.add(
+      generateRandomMarketStyleTile(
+        rng: session.runRandom,
+        stageIndex: runProgress.stageIndex,
+        offerIndex: i,
+      ),
+    );
     drawn += 1;
   }
   if (drawn <= 0) {
