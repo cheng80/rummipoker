@@ -142,6 +142,12 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     description: 'S8 Boss / 색상 호출 + 색상 증폭 보유 / 플러시 확정 발동 재현용',
     builder: _buildS8ColorJesterStackPreview,
   ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.challengeS8EndpointRecovery,
+    label: '도전 S8 엔드포인트 복구',
+    description: '도전 S8 Boss / 체커 B 금지 / 풀런봇 실패 지점 직접 플레이용',
+    builder: _buildChallengeS8EndpointRecovery,
+  ),
   for (final entry
       in DebugRunFixtureService.fateLineTransformPreviewItemsByFixture.entries)
     DebugRunFixtureDefinition(

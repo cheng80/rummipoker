@@ -5,6 +5,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/board.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/rummi_hand_growth.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
@@ -2662,9 +2663,259 @@ void main() {
 
     expect(action.type, FullRunBattleActionType.moveBoard);
   });
+
+  test('retry board block boss uses move to create a tempo clear', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 17100,
+        scoreTowardBlind: 13942,
+        boardDiscardsRemaining: 0,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 2,
+        boardMovesMax: 3,
+        bossModifier: RummiBossModifier.blockCheckerB,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.red, 13),
+        _tile(TileColor.red, 7),
+        _tile(TileColor.black, 7),
+        _tile(TileColor.black, 6),
+        _tile(TileColor.red, 5),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.blue, 12),
+        _tile(TileColor.red, 6),
+      ]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 5),
+        _tile(TileColor.yellow, 12),
+        _tile(TileColor.yellow, 6),
+        _tile(TileColor.red, 1),
+        _tile(TileColor.black, 9),
+        _tile(TileColor.yellow, 7),
+        null,
+        _tile(TileColor.blue, 6),
+        null,
+        _tile(TileColor.black, 6),
+        _tile(TileColor.blue, 8),
+        null,
+        _tile(TileColor.blue, 5),
+        _tile(TileColor.blue, 4),
+        null,
+        _tile(TileColor.yellow, 11),
+        null,
+        null,
+        null,
+        null,
+        _tile(TileColor.black, 11),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.yellow, 13),
+        _tile(TileColor.yellow, 4),
+        _tile(TileColor.black, 2),
+      ]),
+      hand: [_tile(TileColor.yellow, 8)],
+      eliminated: const [],
+    );
+
+    const policy = FullRunPlannerV2Policy(
+      enableRetryRecoveryConfirmDelay: true,
+      retryRecoveryAttempt: 2,
+    );
+    final action = policy.chooseAction(
+      session,
+      jesters: _s8RecoveryJesters,
+      runtimeSnapshot: _s8RecoverySnapshot,
+    );
+
+    expect(action.type, FullRunBattleActionType.moveBoard);
+
+    final moved = session.copySnapshot();
+    final moveFailure = moved.tryMoveBoardTile(
+      fromRow: action.row!,
+      fromCol: action.col!,
+      toRow: action.toRow!,
+      toCol: action.toCol!,
+    );
+    expect(moveFailure, isNull);
+
+    final confirmAction = policy.chooseAction(
+      moved,
+      jesters: _s8RecoveryJesters,
+      runtimeSnapshot: _s8RecoverySnapshot,
+    );
+
+    expect(confirmAction.type, FullRunBattleActionType.confirm);
+  });
+
+  test('retry board block boss keeps the S8 checkpoint from filling the board', () {
+    final session = RummiPokerGridSession.restored(
+      runSeed: 91460,
+      deckCopiesPerTile: 1,
+      maxHandSize: 1,
+      runRandomState: 1,
+      blind: RummiBlindState(
+        targetScore: 17100,
+        scoreTowardBlind: 13942,
+        boardDiscardsRemaining: 0,
+        handDiscardsRemaining: 1,
+        boardMovesRemaining: 2,
+        boardMovesMax: 3,
+        bossModifier: RummiBossModifier.blockCheckerB,
+      ),
+      deck: PokerDeck.fromSnapshot([
+        _tile(TileColor.red, 13, id: 1),
+        _tile(TileColor.blue, 1),
+        _tile(
+          TileColor.red,
+          1,
+          id: 4,
+          enhancement: TileEnhancement.chipInlaid,
+          edition: TileEdition.silverEdition,
+        ),
+        _tile(TileColor.red, 7),
+        _tile(TileColor.black, 7),
+        _tile(TileColor.black, 6, id: 1),
+        _tile(TileColor.red, 5),
+        _tile(TileColor.blue, 10),
+        _tile(TileColor.blue, 12, id: 1),
+        _tile(TileColor.red, 6),
+      ]),
+      board: RummiBoard.fromSnapshot([
+        _tile(TileColor.red, 5, id: 1, enhancement: TileEnhancement.scoreGilded),
+        _tile(TileColor.yellow, 12),
+        _tile(TileColor.yellow, 6),
+        _tile(TileColor.red, 1, id: 3),
+        _tile(TileColor.black, 9),
+        _tile(TileColor.yellow, 7),
+        null,
+        _tile(TileColor.blue, 6),
+        null,
+        _tile(TileColor.black, 6, id: 2),
+        _tile(TileColor.blue, 8, id: 2),
+        null,
+        _tile(TileColor.blue, 5),
+        _tile(TileColor.blue, 4, id: 2),
+        null,
+        _tile(TileColor.yellow, 11, id: 2),
+        null,
+        null,
+        null,
+        null,
+        _tile(TileColor.black, 11),
+        _tile(TileColor.red, 3),
+        _tile(TileColor.yellow, 13),
+        _tile(TileColor.yellow, 4),
+        _tile(TileColor.black, 2),
+      ]),
+      hand: [_tile(TileColor.yellow, 8)],
+      eliminated: const [],
+    );
+
+    final action =
+        const FullRunPlannerV2Policy(
+          enableRetryRecoveryConfirmDelay: true,
+          retryRecoveryAttempt: 2,
+        ).chooseAction(
+          session,
+          jesters: _s8RecoveryJesters,
+          runtimeSnapshot: _s8RecoverySnapshot,
+        );
+
+    expect(action.type, FullRunBattleActionType.moveBoard);
+  });
 }
 
-Tile _tile(TileColor color, int number) => Tile(color: color, number: number);
+final _s8RecoveryJesters = [
+  _jester(
+    'the_trio',
+    effectType: 'xmult_bonus',
+    conditionType: 'three_of_a_kind',
+    conditionValue: 'contains_three_of_a_kind',
+    xValue: 3,
+  ),
+  _jester(
+    'the_duo',
+    effectType: 'xmult_bonus',
+    conditionType: 'pair',
+    conditionValue: 'pair_or_contains_pair',
+    xValue: 2,
+  ),
+  _jester(
+    'droll_jester',
+    effectType: 'mult_bonus',
+    conditionType: 'flush',
+    conditionValue: 'contains_flush',
+    value: 10,
+  ),
+  _jester(
+    'lusty_jester',
+    effectType: 'mult_bonus',
+    conditionType: 'tile_color_scored',
+    conditionValue: 'red',
+    value: 3,
+  ),
+  _jester(
+    'gluttonous_jester',
+    effectType: 'mult_bonus',
+    conditionType: 'tile_color_scored',
+    conditionValue: 'black',
+    value: 3,
+  ),
+];
+
+const _s8RecoverySnapshot = RummiJesterRuntimeSnapshot(
+  playedHandCounts: {
+    RummiHandRank.flush: 94,
+    RummiHandRank.twoPair: 59,
+    RummiHandRank.straight: 4,
+    RummiHandRank.threeOfAKind: 35,
+    RummiHandRank.prismStraight: 1,
+  },
+  handGrowthStates: {
+    RummiHandRank.flush: RummiHandGrowthState(
+      level: 95,
+      progress: 0,
+      requiredProgress: 1,
+    ),
+    RummiHandRank.twoPair: RummiHandGrowthState(
+      level: 60,
+      progress: 0,
+      requiredProgress: 1,
+    ),
+    RummiHandRank.straight: RummiHandGrowthState(
+      level: 5,
+      progress: 0,
+      requiredProgress: 1,
+    ),
+    RummiHandRank.threeOfAKind: RummiHandGrowthState(
+      level: 36,
+      progress: 0,
+      requiredProgress: 1,
+    ),
+    RummiHandRank.prismStraight: RummiHandGrowthState(
+      level: 2,
+      progress: 0,
+      requiredProgress: 1,
+    ),
+  },
+);
+
+Tile _tile(
+  TileColor color,
+  int number, {
+  int id = 0,
+  TileEnhancement? enhancement,
+  TileEdition? edition,
+}) => Tile(
+  color: color,
+  number: number,
+  id: id,
+  enhancement: enhancement,
+  edition: edition,
+);
 
 RummiJesterCard _jester(
   String id, {

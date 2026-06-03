@@ -1988,8 +1988,12 @@ class _FullRunBot {
       'board': _compactBoardTrace(session),
       'resources': {
         'hand_discards_remaining': session.blind.handDiscardsRemaining,
+        'hand_discards_max': session.blind.handDiscardsMax,
         'board_discards_remaining': session.blind.boardDiscardsRemaining,
+        'board_discards_max': session.blind.boardDiscardsMax,
         'board_moves_remaining': session.blind.boardMovesRemaining,
+        'board_moves_max': session.blind.boardMovesMax,
+        'board_move_history_length': session.boardMoveHistory.length,
       },
     };
   }

@@ -8,6 +8,7 @@ import '../logic/rummi_poker_grid/models/board.dart';
 import '../logic/rummi_poker_grid/models/poker_deck.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_blind_state.dart';
+import '../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../utils/seeded_random.dart';
 import 'active_run_save_service.dart';
@@ -67,6 +68,8 @@ class DebugRunFixtureService {
       'ritual_prune_burn_battle_preview';
   static const String s8ColorJesterStackPreview =
       's8_color_jester_stack_preview';
+  static const String challengeS8EndpointRecovery =
+      'challenge_s8_endpoint_recovery';
   static const Map<String, String> fateLineTransformPreviewItemsByFixture = {
     'fate_royal_flush_battle_preview': 'number_mask',
     'fate_straight_flush_high_battle_preview': 'wild_thread',

@@ -180,7 +180,7 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
   static const int _retryPressureSingleLineConfirmFloor =
       _highTargetConfirmScoreFloor;
   @override
-  String get id => 'full_run_planner_v2';
+  String get id => 'full_run_planner_v2_tempo_clear';
 
   @override
   FullRunBattleAction chooseAction(
@@ -211,6 +211,11 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
     }
     final shouldUseStrategicUtility = _shouldUseStrategicUtility(session);
     if (session.hand.isEmpty) {
+      if (_shouldUseBoardBlockTempoClear(session) &&
+          confirmChoice.lineCount >= 1 &&
+          confirmChoice.score > 0) {
+        return const FullRunBattleAction.confirm();
+      }
       if (session.canDrawFromDeck) return const FullRunBattleAction.draw();
       if ((shouldUseStrategicUtility || boardIsFull) &&
           _canUseBoardDiscardUtility(session) &&
@@ -254,7 +259,13 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
         jesters: jesters,
         runtimeSnapshot: runtimeSnapshot,
       );
-      if (move != null && (move.gain ?? 0) >= _midBoardMoveMinGain) {
+      final minGain = _shouldSpendBoardMoveBeforeBoardLock(
+        session,
+        occupancy: occupancy,
+      )
+          ? 1
+          : _midBoardMoveMinGain;
+      if (move != null && (move.gain ?? 0) >= minGain) {
         return move;
       }
     }
@@ -370,6 +381,17 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
     }
     _MoveChoice? best;
     final blockedCellKeys = _blockedCellKeysForSession(session);
+    final acceptsBoardLockTempoMove = _shouldSpendBoardMoveBeforeBoardLock(
+      session,
+      occupancy: RummiPokerGridSession.countTilesOnBoard(session.board),
+    );
+    final basePotential = acceptsBoardLockTempoMove
+        ? _plannerBoardPotentialScoreForJesters(
+            session.board,
+            jesters,
+            blockedCellKeys: blockedCellKeys,
+          )
+        : 0;
 
     for (var fromRow = 0; fromRow < kBoardSize; fromRow++) {
       for (var fromCol = 0; fromCol < kBoardSize; fromCol++) {
@@ -396,8 +418,24 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
               runtimeSnapshot: runtimeSnapshot,
               blockedCellKeys: blockedCellKeys,
             );
-            if (followUp.lineCount < 2 || followUp.score <= 0) continue;
+            final acceptsBoardLockSingleLine =
+                _shouldAcceptBoardLockMove(session, followUp);
+            final potential = _plannerBoardPotentialScoreForJesters(
+              copy,
+              jesters,
+              blockedCellKeys: blockedCellKeys,
+            );
+            final potentialGain = potential - basePotential;
+            final acceptsBoardLockPotentialMove =
+                acceptsBoardLockTempoMove && potentialGain > 0;
+            if (!acceptsBoardLockSingleLine &&
+                !acceptsBoardLockPotentialMove &&
+                (followUp.lineCount < 2 || followUp.score <= 0)) {
+              continue;
+            }
             if (allowsRepeatedStrategicMove &&
+                !acceptsBoardLockSingleLine &&
+                !acceptsBoardLockPotentialMove &&
                 !_isHighTargetRecoveryBundle(followUp) &&
                 !_isLateDeckBoardMoveBundle(
                   session,
@@ -408,19 +446,15 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
                 )) {
               continue;
             }
-            final potential = _plannerBoardPotentialScore(
-              copy,
-              blockedCellKeys: _blockedCellKeysForSession(session),
-            );
             final choice = _MoveChoice(
               action: FullRunBattleAction.moveBoard(
                 row: fromRow,
                 col: fromCol,
                 toRow: toRow,
                 toCol: toCol,
-                gain: followUp.score,
+                gain: max(followUp.score, potentialGain),
               ),
-              gain: followUp.score,
+              gain: max(followUp.score, potentialGain),
               potential: potential,
             );
             if (best == null || _isBetterMoveChoice(choice, best)) {
@@ -584,6 +618,10 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
       // 보스전은 덱 고갈 리스크가 커서 작은 2줄 확정을 참는다.
       // 보드를 충분히 채워 3줄 이상 또는 고득점 묶음을 노리는 것이 목적이다.
       if (isRetryRecoveryHighTarget) {
+        final isTempoClear =
+            _shouldUseBoardBlockTempoClear(session) &&
+            lineCount >= 1 &&
+            score > 0;
         final hasRecoveryBundle = _isBossRetryRecoveryBundle(
           _ImmediateConfirmChoice(score: score, lineCount: lineCount),
         );
@@ -594,7 +632,8 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
         return _ConfirmChoice(
           lineCount: lineCount,
           score: score,
-          shouldConfirmNow: hasRecoveryBundle || isForcedBoardLock,
+          shouldConfirmNow:
+              hasRecoveryBundle || isForcedBoardLock || isTempoClear,
         );
       }
       final hasLargeBundle =
@@ -728,13 +767,56 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
     if (session.blind.targetScore < _strategicUtilityTargetScoreFloor) {
       return false;
     }
-    if (session.deck.remaining > _lateDeckUtilityRemainingMax) return false;
     if (session.blind.boardMovesRemaining <= 0) return false;
     final remainingScore =
         session.blind.targetScore - session.blind.scoreTowardBlind;
     if (remainingScore <= 0) return false;
+    if (_shouldSpendBoardMoveBeforeBoardLock(session, occupancy: occupancy)) {
+      return true;
+    }
+    if (session.deck.remaining > _lateDeckUtilityRemainingMax) return false;
     return occupancy >= _lateDeckBoardMoveMinOccupancy &&
         occupancy <= _midBoardMoveMaxOccupancy;
+  }
+
+  bool _shouldUseBoardBlockTempoClear(RummiPokerGridSession session) {
+    if (!enableRetryRecoveryConfirmDelay || retryRecoveryAttempt < 2) {
+      return false;
+    }
+    if (session.blind.bossModifier?.category !=
+        RummiBossModifierCategory.boardCellBlock) {
+      return false;
+    }
+    if (session.blind.boardDiscardsRemaining > 0) return false;
+    final remainingScore =
+        session.blind.targetScore - session.blind.scoreTowardBlind;
+    if (remainingScore <= 0) return false;
+    return _openPlayableCellCount(session) <= 4;
+  }
+
+  bool _shouldSpendBoardMoveBeforeBoardLock(
+    RummiPokerGridSession session, {
+    required int occupancy,
+  }) {
+    if (session.blind.boardMovesRemaining <= 0) return false;
+    if (session.hand.isNotEmpty && session.boardMoveHistory.isNotEmpty) {
+      return false;
+    }
+    return _shouldUseBoardBlockTempoClear(session) &&
+        occupancy >= _lateDeckBoardMoveMinOccupancy;
+  }
+
+  bool _shouldAcceptBoardLockMove(
+    RummiPokerGridSession session,
+    _ImmediateConfirmChoice choice,
+  ) {
+    if (!_shouldSpendBoardMoveBeforeBoardLock(
+      session,
+      occupancy: RummiPokerGridSession.countTilesOnBoard(session.board),
+    )) {
+      return false;
+    }
+    return choice.lineCount >= 1 && choice.score > 0;
   }
 
   bool _isBattleTargetLate(RummiPokerGridSession session) {
@@ -992,7 +1074,7 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
             repeatsFailedRoute: _repeatsFailedRoute(action),
           );
 
-          if (best == null || _isBetterPlacement(choice, best)) {
+          if (best == null || _isBetterPlacement(choice, best, session)) {
             best = choice;
           }
         }
@@ -1002,7 +1084,11 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
     return best;
   }
 
-  bool _isBetterPlacement(_PlacementChoice candidate, _PlacementChoice best) {
+  bool _isBetterPlacement(
+    _PlacementChoice candidate,
+    _PlacementChoice best,
+    RummiPokerGridSession session,
+  ) {
     if (candidate.clearsTarget != best.clearsTarget) {
       return candidate.clearsTarget;
     }
@@ -1025,6 +1111,11 @@ class FullRunPlannerV2Policy extends FullRunBattleBotPolicy {
     }
     if (candidate.immediateScore != best.immediateScore &&
         candidate.immediateScore >= _cleanConfirmScoreFloor) {
+      return candidate.immediateScore > best.immediateScore;
+    }
+    if (_shouldUseBoardBlockTempoClear(session) &&
+        candidate.immediateScore != best.immediateScore &&
+        (candidate.immediateScore > 0 || best.immediateScore > 0)) {
       return candidate.immediateScore > best.immediateScore;
     }
     if (!_isRetryRecoveryPlacementMode() &&
@@ -2001,15 +2092,20 @@ Set<String> _blockedCellKeysForSession(RummiPokerGridSession session) {
 }
 
 bool _hasNoOpenPlayableCells(RummiPokerGridSession session) {
+  return _openPlayableCellCount(session) == 0;
+}
+
+int _openPlayableCellCount(RummiPokerGridSession session) {
   final blockedCellKeys = _blockedCellKeysForSession(session);
+  var count = 0;
   for (var row = 0; row < kBoardSize; row++) {
     for (var col = 0; col < kBoardSize; col++) {
       if (session.board.cellAt(row, col) != null) continue;
       if (blockedCellKeys.contains(_boardCellKey(row, col))) continue;
-      return false;
+      count++;
     }
   }
-  return true;
+  return count;
 }
 
 String _boardCellKey(int row, int col) => '$row:$col';
