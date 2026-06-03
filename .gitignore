@@ -27,6 +27,10 @@
 .codex/
 .kiro/
 
+# Local agent verification evidence.
+# Existing tracked evidence stays in git; new logs/screenshots are regenerated.
+.omo/evidence/
+
 ############################################################
 # Node.js
 ############################################################
