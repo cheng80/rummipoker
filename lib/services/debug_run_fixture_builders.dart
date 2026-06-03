@@ -176,7 +176,7 @@ ActiveRunRuntimeState _buildDeckNeedleBattle() {
       ownedItems: [
         OwnedItemEntry(
           itemId: 'deck_needle',
-          count: 1,
+          count: 2,
           placement: ItemPlacement.quickSlot,
         ),
       ],

@@ -444,6 +444,7 @@ class _GameItemPocketChip extends StatelessWidget {
           ? null
           : () => onTap!(itemSlot),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           const SizedBox(
             width: kBattleItemSlotWidth,
@@ -561,31 +562,29 @@ class _GameItemPocketChip extends StatelessWidget {
             ),
           if (itemSlot != null && itemSlot.count > 1)
             Positioned(
-              left: 0,
-              right: 0,
-              bottom: 4,
-              child: Center(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: GameUiPalette.ink.withValues(alpha: 0.42),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: GameUiPalette.textPrimary.withValues(alpha: 0.24),
-                    ),
+              right: -2,
+              top: -4,
+              child: DecoratedBox(
+                key: const ValueKey('battle-item-stack-count-badge'),
+                decoration: BoxDecoration(
+                  color: GameUiPalette.ink.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: GameUiPalette.textPrimary.withValues(alpha: 0.32),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 1,
-                    ),
-                    child: Text(
-                      'x${itemSlot.count}',
-                      style: const TextStyle(
-                        color: GameUiPalette.textPrimary,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  child: Text(
+                    'x${itemSlot.count}',
+                    style: const TextStyle(
+                      color: GameUiPalette.textPrimary,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
                     ),
                   ),
                 ),

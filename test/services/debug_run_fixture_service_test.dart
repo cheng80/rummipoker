@@ -130,6 +130,7 @@ void main() {
       expect(fixture.runProgress.itemInventory.quickSlotItemIds, [
         'deck_needle',
       ]);
+      expect(fixture.runProgress.itemInventory.ownedItems.single.count, 2);
       expect(fixture.session.peekDeckTop(3).map((tile) => tile.number), [
         1,
         2,
