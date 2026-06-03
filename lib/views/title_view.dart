@@ -36,10 +36,12 @@ class TitleView extends ConsumerStatefulWidget {
 class _TitleViewState extends ConsumerState<TitleView>
     with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
+  late final Future<PackageInfo> _packageInfoFuture;
 
   @override
   void initState() {
     super.initState();
+    _packageInfoFuture = PackageInfo.fromPlatform();
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -444,7 +446,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
                       child: FutureBuilder<PackageInfo>(
-                        future: PackageInfo.fromPlatform(),
+                        future: _packageInfoFuture,
                         builder: (context, snapshot) {
                           final v = snapshot.data;
                           final text = v != null

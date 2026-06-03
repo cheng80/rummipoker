@@ -5,7 +5,6 @@ mixin GameSessionNotifierBattleCommands
   void _replaceState(GameSessionState next);
   void clearSelections();
   void setSelectedBoardCell(int? row, int? col);
-  void setSettlementBoardSnapshot(Map<String, Tile> snapshot);
   GameSessionState withValidSelections(GameSessionState current);
 
   BattleBoardTapResult tapBoardCell(int row, int col) {
@@ -58,8 +57,15 @@ mixin GameSessionNotifierBattleCommands
     if (!out.result.ok) return null;
 
     runProgress.onConfirmedLines(out.result.lineBreakdowns);
-    clearSelections();
-    setSettlementBoardSnapshot(snapshot);
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        settlementBoardSnapshot: snapshot,
+        revision: state.revision + 1,
+      ),
+    );
     return ConfirmLinesResult(
       totalScore: out.result.scoreAdded,
       lineBreakdowns: out.result.lineBreakdowns,
@@ -94,8 +100,14 @@ mixin GameSessionNotifierBattleCommands
     );
     final applied = appliedResults.isNotEmpty;
     if (!applied) return null;
-    clearSelections();
-    _replaceState(state.copyWith(revision: state.revision + 1));
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        revision: state.revision + 1,
+      ),
+    );
     return ExpiryGuardResult(
       signals: signals,
       events: [for (final result in appliedResults) ...result.events],
@@ -132,8 +144,14 @@ mixin GameSessionNotifierBattleCommands
     if (session == null) return false;
     final placed = session.tryPlaceFromHand(tile, row, col);
     if (!placed) return false;
-    clearSelections();
-    _replaceState(state.copyWith(revision: state.revision + 1));
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        revision: state.revision + 1,
+      ),
+    );
     return true;
   }
 
@@ -166,8 +184,14 @@ mixin GameSessionNotifierBattleCommands
       };
     }
     runProgress.onDiscardUsed();
-    clearSelections();
-    _replaceState(state.copyWith(revision: state.revision + 1));
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        revision: state.revision + 1,
+      ),
+    );
     return null;
   }
 
@@ -195,8 +219,14 @@ mixin GameSessionNotifierBattleCommands
       };
     }
     runProgress.onDiscardUsed();
-    clearSelections();
-    state = state.copyWith(revision: state.revision + 1);
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        revision: state.revision + 1,
+      ),
+    );
     return null;
   }
 
@@ -229,8 +259,14 @@ mixin GameSessionNotifierBattleCommands
         BoardMoveFailReason.destinationOccupied => '이동할 칸이 비어 있지 않습니다.',
       };
     }
-    clearSelections();
-    _replaceState(state.copyWith(revision: state.revision + 1));
+    _replaceState(
+      state.copyWith(
+        selectedHandTile: null,
+        selectedBoardRow: null,
+        selectedBoardCol: null,
+        revision: state.revision + 1,
+      ),
+    );
     return null;
   }
 

@@ -12,14 +12,11 @@ import '../widgets/phone_frame_scaffold.dart';
 import 'game/widgets/game_ui_palette.dart';
 
 /// 설정 화면. 볼륨, 음소거, 화면 꺼짐 방지 설정.
-class SettingView extends ConsumerWidget {
+class SettingView extends StatelessWidget {
   const SettingView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsNotifierProvider);
-    final notifier = ref.read(settingsNotifierProvider.notifier);
-
+  Widget build(BuildContext context) {
     return PhoneFrameScaffold(
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -87,54 +84,21 @@ class SettingView extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _SectionTitle(
-                            icon: Icons.phone_android,
-                            title: context.tr('sectionScreen'),
-                          ),
-                          _MuteSwitch(
-                            label: context.tr('keepScreenOn'),
-                            value: settings.keepScreenOn,
-                            onChanged: notifier.setKeepScreenOn,
-                          ),
-                          _LanguageSection(currentLocale: context.locale),
-                          Divider(
-                            color: GameUiPalette.textPrimary.withValues(
-                              alpha: 0.18,
+                    child: Material(
+                      color: GameUiPalette.transparent,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _SectionTitle(
+                              icon: Icons.phone_android,
+                              title: context.tr('sectionScreen'),
                             ),
-                            height: 1,
-                          ),
-                          _SectionTitle(
-                            icon: Icons.volume_up,
-                            title: context.tr('sectionSound'),
-                          ),
-                          _VolumeSlider(
-                            label: context.tr('bgmVolume'),
-                            value: settings.bgmVolume,
-                            enabled: !settings.bgmMuted,
-                            onChanged: notifier.setBgmVolume,
-                          ),
-                          _MuteSwitch(
-                            label: context.tr('bgm'),
-                            value: settings.bgmMuted,
-                            onChanged: notifier.setBgmMuted,
-                          ),
-                          _VolumeSlider(
-                            label: context.tr('sfxVolume'),
-                            value: settings.sfxVolume,
-                            enabled: !settings.sfxMuted,
-                            onChanged: notifier.setSfxVolume,
-                          ),
-                          _MuteSwitch(
-                            label: context.tr('sfx'),
-                            value: settings.sfxMuted,
-                            onChanged: notifier.setSfxMuted,
-                          ),
-                          if (InAppReviewService.hasStoreListingId) ...[
+                            _KeepScreenOnTile(
+                              label: context.tr('keepScreenOn'),
+                            ),
+                            _LanguageSection(currentLocale: context.locale),
                             Divider(
                               color: GameUiPalette.textPrimary.withValues(
                                 alpha: 0.18,
@@ -142,35 +106,51 @@ class SettingView extends ConsumerWidget {
                               height: 1,
                             ),
                             _SectionTitle(
-                              icon: Icons.star,
-                              title: context.tr('rateApp'),
+                              icon: Icons.volume_up,
+                              title: context.tr('sectionSound'),
                             ),
-                            ListTile(
-                              leading: const Icon(
-                                Icons.star_border,
-                                color: GameUiPalette.actionGoldBright,
-                              ),
-                              title: Text(
-                                context.tr('rateApp'),
-                                style: const TextStyle(
-                                  fontFamily: AssetPaths.fontNexonLv2Gothic,
-                                  fontSize: 16,
+                            _BgmVolumeTile(label: context.tr('bgmVolume')),
+                            _BgmMuteTile(label: context.tr('bgm')),
+                            _SfxVolumeTile(label: context.tr('sfxVolume')),
+                            _SfxMuteTile(label: context.tr('sfx')),
+                            if (InAppReviewService.hasStoreListingId) ...[
+                              Divider(
+                                color: GameUiPalette.textPrimary.withValues(
+                                  alpha: 0.18,
                                 ),
+                                height: 1,
                               ),
-                              onTap: () async {
-                                final result =
-                                    await InAppReviewService.openStoreListing();
-                                if (!context.mounted) return;
-                                if (result == false) {
-                                  showTopNotice(
-                                    context,
-                                    context.tr('rateAppAfterRelease'),
-                                  );
-                                }
-                              },
-                            ),
+                              _SectionTitle(
+                                icon: Icons.star,
+                                title: context.tr('rateApp'),
+                              ),
+                              ListTile(
+                                leading: const Icon(
+                                  Icons.star_border,
+                                  color: GameUiPalette.actionGoldBright,
+                                ),
+                                title: Text(
+                                  context.tr('rateApp'),
+                                  style: const TextStyle(
+                                    fontFamily: AssetPaths.fontNexonLv2Gothic,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                onTap: () async {
+                                  final result =
+                                      await InAppReviewService.openStoreListing();
+                                  if (!context.mounted) return;
+                                  if (result == false) {
+                                    showTopNotice(
+                                      context,
+                                      context.tr('rateAppAfterRelease'),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -180,6 +160,109 @@ class SettingView extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _KeepScreenOnTile extends ConsumerWidget {
+  const _KeepScreenOnTile({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(
+      settingsNotifierProvider.select((state) => state.keepScreenOn),
+    );
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    return _MuteSwitch(
+      label: label,
+      value: value,
+      onChanged: notifier.setKeepScreenOn,
+    );
+  }
+}
+
+class _BgmVolumeTile extends ConsumerWidget {
+  const _BgmVolumeTile({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final volume = ref.watch(
+      settingsNotifierProvider.select((state) => state.bgmVolume),
+    );
+    final muted = ref.watch(
+      settingsNotifierProvider.select((state) => state.bgmMuted),
+    );
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    return _VolumeSlider(
+      label: label,
+      value: volume,
+      enabled: !muted,
+      onChanged: notifier.setBgmVolume,
+    );
+  }
+}
+
+class _BgmMuteTile extends ConsumerWidget {
+  const _BgmMuteTile({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(
+      settingsNotifierProvider.select((state) => state.bgmMuted),
+    );
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    return _MuteSwitch(
+      label: label,
+      value: value,
+      onChanged: notifier.setBgmMuted,
+    );
+  }
+}
+
+class _SfxVolumeTile extends ConsumerWidget {
+  const _SfxVolumeTile({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final volume = ref.watch(
+      settingsNotifierProvider.select((state) => state.sfxVolume),
+    );
+    final muted = ref.watch(
+      settingsNotifierProvider.select((state) => state.sfxMuted),
+    );
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    return _VolumeSlider(
+      label: label,
+      value: volume,
+      enabled: !muted,
+      onChanged: notifier.setSfxVolume,
+    );
+  }
+}
+
+class _SfxMuteTile extends ConsumerWidget {
+  const _SfxMuteTile({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(
+      settingsNotifierProvider.select((state) => state.sfxMuted),
+    );
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    return _MuteSwitch(
+      label: label,
+      value: value,
+      onChanged: notifier.setSfxMuted,
     );
   }
 }

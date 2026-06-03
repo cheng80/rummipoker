@@ -4,12 +4,16 @@ mixin GameSessionNotifierPresentationCommands
     on FamilyNotifier<GameSessionState, GameSessionArgs> {
   void _replaceState(GameSessionState next);
 
+  void _replacePresentationState(GameSessionState next) {
+    state = next;
+  }
+
   void markDirty() {
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
   void setJesterCatalog(RummiJesterCatalog? catalog) {
-    _replaceState(
+    _replacePresentationState(
       state.copyWith(jesterCatalog: catalog, revision: state.revision + 1),
     );
   }
@@ -46,7 +50,7 @@ mixin GameSessionNotifierPresentationCommands
   }
 
   void clearSelections() {
-    _replaceState(
+    _replacePresentationState(
       state.copyWith(
         selectedHandTile: null,
         selectedBoardRow: null,
@@ -57,7 +61,7 @@ mixin GameSessionNotifierPresentationCommands
   }
 
   void setSelectedHandTile(Tile? tile) {
-    _replaceState(
+    _replacePresentationState(
       state.copyWith(
         selectedHandTile: tile,
         selectedBoardRow: tile == null ? state.selectedBoardRow : null,
@@ -72,7 +76,7 @@ mixin GameSessionNotifierPresentationCommands
   }
 
   void setSelectedBoardCell(int? row, int? col) {
-    _replaceState(
+    _replacePresentationState(
       state.copyWith(
         selectedBoardRow: row,
         selectedBoardCol: col,
@@ -85,7 +89,7 @@ mixin GameSessionNotifierPresentationCommands
   }
 
   void setSelectedJesterOverlayIndex(int? index) {
-    _replaceState(
+    _replacePresentationState(
       state.copyWith(
         selectedJesterOverlayIndex: index,
         revision: state.revision + 1,
@@ -94,7 +98,7 @@ mixin GameSessionNotifierPresentationCommands
   }
 
   void setSettlementBoardSnapshot(Map<String, Tile> snapshot) {
-    _replaceState(
+    _replacePresentationState(
       state.copyWith(
         settlementBoardSnapshot: snapshot,
         revision: state.revision + 1,
@@ -113,7 +117,7 @@ mixin GameSessionNotifierPresentationCommands
     Map<String, Tile>? settlementBoardSnapshot,
     bool bumpSettlementSequence = false,
   }) {
-    _replaceState(
+    _replacePresentationState(
       state.copyWith(
         stageFlowPhase: phase,
         stageScoreAdded: stageScoreAdded,

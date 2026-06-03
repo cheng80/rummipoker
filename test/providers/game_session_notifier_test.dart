@@ -181,7 +181,8 @@ void main() {
     });
 
     test('discard selected commands는 내부 선택 상태만으로 버림을 처리한다', () {
-      final container = ProviderContainer();
+      final observer = _GameSessionStateObserver();
+      final container = ProviderContainer(observers: [observer]);
       addTearDown(container.dispose);
       const args = GameSessionArgs(runSeed: 61);
 
@@ -194,11 +195,14 @@ void main() {
       final tile = initial.battleView!.hand.single;
 
       notifier.toggleSelectedHandTile(tile);
+      observer.reset();
       expect(notifier.discardSelectedHandTileFromState(), isNull);
+      expect(observer.updateCount, 1);
       final afterHandDiscard = container.read(
         gameSessionNotifierProvider(args),
       );
       expect(afterHandDiscard.battleView!.hand, hasLength(1));
+      expect(afterHandDiscard.battleView!.hand, afterHandDiscard.session!.hand);
       expect(afterHandDiscard.selectedHandTile, isNull);
 
       final replacement = afterHandDiscard.battleView!.hand.single;
@@ -2480,6 +2484,26 @@ void main() {
       expect(marketWithItems.itemSlots.first.item?.id, 'move_token');
     });
   });
+}
+
+class _GameSessionStateObserver extends ProviderObserver {
+  int updateCount = 0;
+
+  void reset() {
+    updateCount = 0;
+  }
+
+  @override
+  void didUpdateProvider(
+    ProviderBase<Object?> provider,
+    Object? previousValue,
+    Object? newValue,
+    ProviderContainer container,
+  ) {
+    if (newValue is GameSessionState) {
+      updateCount += 1;
+    }
+  }
 }
 
 RummiJesterCard _testJester(String id) {
