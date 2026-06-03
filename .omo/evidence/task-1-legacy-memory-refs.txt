@@ -1,0 +1,5 @@
+channel: cli stdout
+command: rg "boss_memory|thin_memory|minor_memory" data docs lib test
+test/logic/item_definition_test.dart:244:          '`boss_memory`, `thin_memory`, `minor_memory`는 catalog에서 삭제된 legacy 기억 의식',
+docs/planning/POST_RITUAL_RUNTIME_REMAINING_WORK.md:50:- `boss_memory`, `thin_memory`, `minor_memory`는 catalog에서 삭제된 legacy 기억 의식으로 유지
+PASS condition: no data/lib runtime references; remaining doc reference states catalog-deleted legacy memory status.

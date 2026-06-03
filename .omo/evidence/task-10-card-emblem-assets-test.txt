@@ -1,0 +1,3 @@
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/resources/card_emblem_assets_test.dart
+00:00 +0: all catalog item emblem asset paths exist
+00:00 +1: All tests passed!

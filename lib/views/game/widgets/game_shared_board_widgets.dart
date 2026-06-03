@@ -384,16 +384,40 @@ class GameBoardLineSelectionOverlay extends StatelessWidget {
         }
 
         return GestureDetector(
+          key: const ValueKey('fate-line-selection-overlay'),
           behavior: HitTestBehavior.opaque,
           onTapUp: (details) {
             final line = lineAt(details.localPosition);
             if (line != null) onTapLine(line);
           },
-          child: CustomPaint(
-            painter: _BoardLineSelectionPainter(
-              lines,
-              selectedLineRef: selectedLineRef,
-            ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _BoardLineSelectionPainter(
+                    lines,
+                    selectedLineRef: selectedLineRef,
+                  ),
+                ),
+              ),
+              for (final line in lines)
+                Positioned.fromRect(
+                  rect: _lineMarkerRect(
+                    line.ref,
+                    Size(constraints.maxWidth, constraints.maxHeight),
+                  ),
+                  child: GestureDetector(
+                    key: ValueKey(
+                      'fate-line-selection-'
+                      '${line.ref == selectedLineRef ? 'selected' : 'candidate'}-'
+                      '${_lineRefTestKey(line.ref)}',
+                    ),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onTapLine(line),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -456,17 +480,41 @@ class GameBoardTileSelectionOverlay extends StatelessWidget {
         }
 
         return GestureDetector(
+          key: const ValueKey('fate-tile-selection-overlay'),
           behavior: HitTestBehavior.opaque,
           onTapUp: (details) {
             final target = targetAt(details.localPosition);
             if (target != null) onTapTile(target);
           },
-          child: CustomPaint(
-            painter: _BoardTileSelectionPainter(
-              targets,
-              selectedLineRef: selectedLineRef,
-              selectedTileIndex: selectedTileIndex,
-            ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _BoardTileSelectionPainter(
+                    targets,
+                    selectedLineRef: selectedLineRef,
+                    selectedTileIndex: selectedTileIndex,
+                  ),
+                ),
+              ),
+              for (final target in targets)
+                Positioned.fromRect(
+                  rect: _tileMarkerRect(
+                    target.cell,
+                    Size(constraints.maxWidth, constraints.maxHeight),
+                  ),
+                  child: GestureDetector(
+                    key: ValueKey(
+                      'fate-tile-selection-'
+                      '${target.line.ref == selectedLineRef && target.tileIndex == selectedTileIndex ? 'selected' : 'candidate'}-'
+                      '${_lineRefTestKey(target.line.ref)}-${target.tileIndex}',
+                    ),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onTapTile(target),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -482,20 +530,40 @@ class _BoardLineFlashOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: TweenAnimationBuilder<double>(
-        key: ValueKey('fate-line-flash-$tick'),
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: GamePresentationTimings.fateLineTransformFlash,
-        curve: Curves.easeInOutQuart,
-        builder: (context, value, _) {
-          return CustomPaint(
-            painter: _BoardLineFlashPainter(lineRef, progress: value),
-          );
-        },
+    return KeyedSubtree(
+      key: ValueKey('fate-line-transform-flash-${_lineRefTestKey(lineRef)}'),
+      child: IgnorePointer(
+        child: TweenAnimationBuilder<double>(
+          key: ValueKey('fate-line-flash-$tick'),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: GamePresentationTimings.fateLineTransformFlash,
+          curve: Curves.easeInOutQuart,
+          builder: (context, value, _) {
+            return CustomPaint(
+              painter: _BoardLineFlashPainter(lineRef, progress: value),
+            );
+          },
+        ),
       ),
     );
   }
+}
+
+String _lineRefTestKey(LineRef ref) => '${ref.kind.name}-${ref.index}';
+
+Rect _lineMarkerRect(LineRef ref, Size size) {
+  final metric = _BoardLineOverlayMetric(size);
+  final cells = ref.cells();
+  final start = metric.centerFor(cells.first.$1, cells.first.$2);
+  final next = metric.centerFor(cells[1].$1, cells[1].$2);
+  final center = Offset.lerp(start, next, 0.5)!;
+  final side = metric.tapTolerance * 1.6;
+  return Rect.fromCenter(center: center, width: side, height: side);
+}
+
+Rect _tileMarkerRect((int, int) cell, Size size) {
+  final metric = _BoardLineOverlayMetric(size);
+  return metric.rectFor(cell.$1, cell.$2).inflate(metric.tapTolerance * 0.1);
 }
 
 class _BoardTileSelectionPainter extends CustomPainter {

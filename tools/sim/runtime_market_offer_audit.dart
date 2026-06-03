@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
@@ -19,6 +20,13 @@ const _watchIds = <String>{
   'straight_flush_study',
   'ride_the_bus',
   'jester_hook',
+};
+const _holdItemIds = <String>{
+  'ritual_coupon',
+  'ritual_lens',
+  'line_pack_ticket',
+  'seal_vendor',
+  'prune_vendor',
 };
 
 void main(List<String> args) {
@@ -118,6 +126,7 @@ Map<String, Object?> _buildReport({
 
   return <String, Object?>{
     'schema_version': 1,
+    'fresh_run_metadata': _buildFreshRunMetadata(options),
     'runs_per_stage': options.runs,
     'seed': options.seed,
     'stages': options.stages,
@@ -131,6 +140,32 @@ Map<String, Object?> _buildReport({
   };
 }
 
+Map<String, Object?> _buildFreshRunMetadata(_Options options) {
+  return <String, Object?>{
+    'generated_at': DateTime.now().toUtc().toIso8601String(),
+    'commit_hash': _currentCommitHash(),
+    'item_catalog_sha256': _fileSha256(options.itemCatalogPath),
+    'jester_catalog_sha256': _fileSha256(options.jesterCatalogPath),
+    'inputs': <String, Object?>{
+      'items': options.itemCatalogPath,
+      'jesters': options.jesterCatalogPath,
+    },
+    'archive_inputs': <String>[],
+    'advisory_only': true,
+  };
+}
+
+String _currentCommitHash() {
+  final result = Process.runSync('git', ['rev-parse', 'HEAD']);
+  if (result.exitCode != 0) return 'unknown';
+  final hash = result.stdout.toString().trim();
+  return hash.isEmpty ? 'unknown' : hash;
+}
+
+String _fileSha256(String path) {
+  return sha256.convert(File(path).readAsBytesSync()).toString();
+}
+
 Map<String, Object?> _buildCollectionAudit({
   required _Options options,
   required RummiJesterCatalog jesterCatalog,
@@ -142,6 +177,7 @@ Map<String, Object?> _buildCollectionAudit({
       .toSet();
   final itemIds = itemCatalog.all
       .map((item) => item.id)
+      .where((id) => !_holdItemIds.contains(id))
       .where((id) => id.isNotEmpty)
       .toSet();
   final itemById = {for (final item in itemCatalog.all) item.id: item};

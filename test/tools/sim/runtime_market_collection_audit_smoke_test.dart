@@ -15,11 +15,14 @@ void main() {
     final standardReport = _runAudit(outPath: standardOutPath, cashoutGold: 10);
     final standardCollection =
         standardReport['collection_audit'] as Map<String, dynamic>;
+    final standardCatalogTotals =
+        standardCollection['catalog_totals'] as Map<String, dynamic>;
     final standardSeen = standardCollection['seen'] as Map<String, dynamic>;
     final standardBought = standardCollection['bought'] as Map<String, dynamic>;
     final standardBlocked =
         standardCollection['blocked'] as Map<String, dynamic>;
 
+    expect(standardCatalogTotals['items'], 86);
     expect(standardSeen['jester_coverage'], greaterThanOrEqualTo(0.95));
     expect(standardSeen['item_coverage'], greaterThanOrEqualTo(0.95));
     expect(standardBought['jester_coverage'], greaterThanOrEqualTo(0.80));

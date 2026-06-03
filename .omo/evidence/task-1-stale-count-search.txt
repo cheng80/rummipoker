@@ -1,0 +1,7 @@
+command: rg stale current-count patterns
+docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md:530:첫 catalog draft는 38종 후보 pool에서 18종 안팎을 고른다. 9종 이하의 작은 pool은 반복 구매 패턴을 만들 가능성이 높으므로 폐기한다.
+docs/planning/leveling/ECONOMY_LEVELING_PLAN.md:335:  - item 49개, Jester 43개, 총 92개 후보를 점검한다.
+docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md:5:> 과거 1차 결론: 당시 55개 검토 중 `shop_lens` 1개 삭제, 활성 Item 54개 보강 계획.
+docs/planning/ACTIVE_EXECUTION_PLAN.md:78:3. 완료: 9개 후보는 너무 적다는 판단으로 폐기하고, 새 카드 후보 pool을 40종으로 확장했다. 이후 기억 의식 3종은 재설계 가치가 낮아 삭제했다.
+docs/planning/ACTIVE_EXECUTION_PLAN.md:123:   - 완료: 당시 전체 Item 55개를 `발동 객체 -> 적용 대상 -> 결과` 기준으로 재검토하는 1차 계약표를 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`에 만들었다. `shop_lens`는 삭제 상태로 두고, 당시 활성 54개는 P0~P3 보강 우선순위로 분류했다.
+PASS condition: no stale count remains in current source-of-truth statements; remaining matches are historical candidate/presentation/leveling records.

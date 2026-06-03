@@ -358,8 +358,8 @@ String tileEnhancementEffectText(TileEnhancement enhancement) {
     TileEnhancement.scoreGilded => '확정 시 점수 +20%',
     TileEnhancement.goldTile => '확정 후 골드 +1',
     TileEnhancement.glassTile => '확정 시 점수 x1.5',
-    TileEnhancement.wildPainted => '색상 판정 확장 예정',
-    TileEnhancement.luckyTile => '확률 발동 예정',
+    TileEnhancement.wildPainted => '현재 확정 점수 효과 없음',
+    TileEnhancement.luckyTile => '현재 확정 점수 효과 없음',
   };
 }
 

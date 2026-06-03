@@ -413,11 +413,15 @@ extension _GameViewBattleActions on _GameViewState {
       selection.selectedTile,
     );
     final feedbackDelay = _ritualFlightDurationForEvents(useResult.events);
+    final fateTransformFeedback = _isFateLineTransformDefinition(
+      selection.slot.item,
+    );
     if (feedbackDelay == Duration.zero) {
       _showItemEffectFeedback(
         title: selection.itemName,
         detail: feedbackDetail,
         sourceLabel: selection.slot.slotLabel,
+        fateTransform: fateTransformFeedback,
       );
     } else {
       unawaited(
@@ -427,6 +431,7 @@ extension _GameViewBattleActions on _GameViewState {
             title: selection.itemName,
             detail: feedbackDetail,
             sourceLabel: selection.slot.slotLabel,
+            fateTransform: fateTransformFeedback,
           );
         }),
       );
@@ -1027,6 +1032,7 @@ class _FateLineSelectionPanel extends StatelessWidget {
                 TextButton(onPressed: onCancel, child: const Text('취소')),
                 const SizedBox(width: 6),
                 FilledButton(
+                  key: const ValueKey('fate-line-confirm-button'),
                   onPressed: confirmEnabled ? onConfirm : null,
                   child: Text(confirmLabel),
                 ),

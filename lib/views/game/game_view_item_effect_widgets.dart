@@ -6,12 +6,14 @@ class _ItemEffectFeedback {
     required this.detail,
     this.sourceLabel,
     required this.passive,
+    this.fateTransform = false,
   });
 
   final String title;
   final String detail;
   final String? sourceLabel;
   final bool passive;
+  final bool fateTransform;
 }
 
 class _ItemEffectFeedbackToast extends StatelessWidget {
@@ -24,152 +26,164 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
     final accent = feedback.passive
         ? GameUiPalette.marketSourcePassive
         : GameUiPalette.actionGold;
-    return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 16,
-              top: -12,
-              child: _ItemEffectSparkBurst(accent: accent),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: GameUiPalette.surfaceDark.withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.75),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.22),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
+    return KeyedSubtree(
+      key: feedback.fateTransform
+          ? const ValueKey('fate-line-transform-result-feedback')
+          : const ValueKey('item-effect-feedback-toast'),
+      child:
+          Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: 16,
+                    top: -12,
+                    child: _ItemEffectSparkBurst(accent: accent),
                   ),
-                  BoxShadow(
-                    color: GameUiPalette.ink.withValues(alpha: 0.28),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      feedback.passive
-                          ? Icons.shield_rounded
-                          : Icons.bolt_rounded,
-                      color: accent,
-                      size: 28,
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: GameUiPalette.surfaceDark.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: accent.withValues(alpha: 0.75),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accent.withValues(alpha: 0.22),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                        BoxShadow(
+                          color: GameUiPalette.ink.withValues(alpha: 0.28),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
                         children: [
-                          if (feedback.sourceLabel != null) ...[
+                          Icon(
+                            feedback.passive
+                                ? Icons.shield_rounded
+                                : Icons.bolt_rounded,
+                            color: accent,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (feedback.sourceLabel != null) ...[
+                                  DecoratedBox(
+                                    key: const ValueKey(
+                                      'item-effect-source-label',
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: accent.withValues(alpha: 0.16),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: accent.withValues(alpha: 0.52),
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      child: Text(
+                                        feedback.sourceLabel!,
+                                        style: TextStyle(
+                                          color: accent,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _ItemEffectSourceToResultTrail(
+                                    accent: accent,
+                                  ),
+                                  const SizedBox(height: 4),
+                                ],
+                                Text(
+                                  feedback.title,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    color: GameUiPalette.textPrimary,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  feedback.detail,
+                                  key: const ValueKey(
+                                    'item-effect-result-label',
+                                  ),
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    color: accent,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (feedback.passive)
                             DecoratedBox(
-                              key: const ValueKey('item-effect-source-label'),
                               decoration: BoxDecoration(
-                                color: accent.withValues(alpha: 0.16),
+                                color: accent.withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: accent.withValues(alpha: 0.52),
+                                  color: accent.withValues(alpha: 0.35),
                                 ),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
+                                  horizontal: 9,
+                                  vertical: 5,
                                 ),
                                 child: Text(
-                                  feedback.sourceLabel!,
+                                  '패시브',
                                   style: TextStyle(
                                     color: accent,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w900,
                                     height: 1,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            _ItemEffectSourceToResultTrail(accent: accent),
-                            const SizedBox(height: 4),
-                          ],
-                          Text(
-                            feedback.title,
-                            maxLines: 1,
-                            style: const TextStyle(
-                              color: GameUiPalette.textPrimary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              height: 1,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            feedback.detail,
-                            key: const ValueKey('item-effect-result-label'),
-                            maxLines: 1,
-                            style: TextStyle(
-                              color: accent,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              height: 1,
-                            ),
-                          ),
                         ],
                       ),
                     ),
-                    if (feedback.passive)
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: accent.withValues(alpha: 0.35),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            '패시브',
-                            style: TextStyle(
-                              color: accent,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              height: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
+                ],
+              )
+              .animate()
+              .fadeIn(
+                duration: GamePresentationTimings.itemEffectToastIn,
+                curve: Curves.easeOutCubic,
+              )
+              .slideY(
+                begin: 0.12,
+                end: 0,
+                duration: GamePresentationTimings.itemEffectToastIn,
+                curve: Curves.easeOutCubic,
               ),
-            ),
-          ],
-        )
-        .animate()
-        .fadeIn(
-          duration: GamePresentationTimings.itemEffectToastIn,
-          curve: Curves.easeOutCubic,
-        )
-        .slideY(
-          begin: 0.12,
-          end: 0,
-          duration: GamePresentationTimings.itemEffectToastIn,
-          curve: Curves.easeOutCubic,
-        );
+    );
   }
 }
 
@@ -310,9 +324,11 @@ class _RitualGoldCoinFlights extends StatelessWidget {
   Widget build(BuildContext context) {
     final coinCount = gold.clamp(3, 7);
     return Stack(
+      key: const ValueKey('ritual-gold-flight'),
       children: [
         for (var i = 0; i < coinCount; i++)
           _RitualGoldCoin(
+            key: ValueKey('ritual-gold-flight-coin-$i'),
             progress: progress,
             start: start + Offset((i - 2) * 8.0, (i.isEven ? -10 : 4)),
             end: end + Offset((i % 3 - 1) * 9.0, (i - 3) * 2.0),
@@ -336,6 +352,7 @@ class _RitualGoldCoinFlights extends StatelessWidget {
 
 class _RitualGoldCoin extends StatelessWidget {
   const _RitualGoldCoin({
+    super.key,
     required this.progress,
     required this.start,
     required this.end,
@@ -435,12 +452,15 @@ class _RitualDeckTileFlightPayload extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (final tile in tiles.take(2)) ...[
+            for (final entry in tiles.take(2).indexed) ...[
               SizedBox(
+                key: ValueKey(
+                  'ritual-deck-flight-tile-${entry.$1}-${entry.$2.code}',
+                ),
                 width: 34,
                 height: 44,
                 child: GameRummiTileCard(
-                  tile: tile,
+                  tile: entry.$2,
                   selected: false,
                   accent: true,
                   aspectRatio: kGameTileAspectRatio,

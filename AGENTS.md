@@ -463,3 +463,4 @@ Installed release: `0.2.0`
 - Fate/운명 변환 카드는 common/uncommon 등급으로 normal market에 풀지 않는다. Normal market에 노출되더라도 모든 운명 변환 카드는 rare 이상이어야 하며, 로얄/스티플/숨은 상위 족보 계열은 legendary 고가 카드로 유지한다.
 - 손실형 타일 modifier 설명은 `제거 후보`처럼 대상이 흐린 표현을 쓰지 않는다. 확정 뒤 덱에서 제거되는지, 보드 위 물리 타일 자신이 제거되는지, 복사본/추가 덱 타일 source에서 제거되는지 유저 노출 문구와 정책 문서에 명시한다.
 - 긴 로그, 대형 diff, full_run_bot trace, 시뮬레이션 리포트처럼 다음 세션 문맥 보존이 필요한 산출물은 `rummi-headroom-context` 스킬과 `tools/headroom_context.py`로 압축하되, 요약본은 source-of-truth가 아니다. 정확한 코드 수정이나 버그 판단 전에는 manifest의 원본 경로와 해시를 기준으로 원본을 다시 확인한다.
+- ultrawork reviewer가 긴 artifact bundle에 응답하지 않으면 같은 대형 요청을 반복하지 않는다. 먼저 100~150줄 내외 compact review packet을 만들어 목표, diff 범위, RED/GREEN 증거, cleanup receipt, 남은 리스크만 담고, reviewer에게 그 파일만 검토시킨다.

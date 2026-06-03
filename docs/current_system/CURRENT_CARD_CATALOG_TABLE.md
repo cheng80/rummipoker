@@ -6,15 +6,15 @@
 ## Summary
 
 - Jester: 43
-- Item total: 94
-- Q-Slot: 55
+- Item total: 91
+- Q-Slot: 52
 - Passive: 10
 - Tool: 20
 - Gear: 9
 
 ### Fate/Ritual Card Classification
 
-현재 `ritual_line_effect`로 전투 중 보드 선을 선택해 쓰는 운명/의식 카드는 총 31장이다. 성장/점수/표식/위치 의식 중 `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory`는 적용군이다. 삭제된 기억 의식 3종은 catalog, 번역, 이미지, 런타임 대상에서 제거했다.
+현재 `ritual_line_effect`로 전투 중 보드 선을 선택해 쓰는 운명/의식 카드는 총 31장이다. 성장/점수/표식/위치 의식 중 `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory`는 적용군이다. active Ritual 31장은 normal market 후보이며, hold 마켓 보조 5종과 debug 전용 0종은 normal market 제외다. deleted legacy 3종은 catalog, 번역, 이미지, 런타임 대상에서 제거했다.
 
 | 분류 | 수 | 상태 | 카드 |
 |---|---:|---|---|
@@ -22,6 +22,9 @@
 | 성장/점수/표식/위치 의식 | 6 | 활성 | `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory` |
 | 덱 복사/메아리 | 6 | 활성 | `sealed_copy`, `scarce_copy`, `color_echo`, `rank_echo`, `edge_copy`, `keystone_copy` |
 | 제거/소각/제물 | 3 | 활성 | `trim_color`, `deadwood_burn`, `sacrifice_line` |
+| 마켓 보조 의식 | 5 | Hold / normal market 제외 | `ritual_coupon`, `ritual_lens`, `line_pack_ticket`, `seal_vendor`, `prune_vendor` |
+| Debug 전용 | 0 | debug 전용 0종 | 없음 |
+| 삭제 legacy 기억 의식 | 3 | deleted legacy 3종 | `boss_memory`, `thin_memory`, `minor_memory` |
 
 족보 변환형 운명 16장은 선택한 보드 선 5칸을 실제 타일 세트로 덮어쓴다. 적용 직후 evaluator가 새 족보를 다시 판정한다.
 
@@ -174,7 +177,7 @@
 | `off_color_rite` | 하행 스티플 운명 | 보드 선을 선택합니다. 그 선의 최저 숫자와 색상 기준으로 만들 수 있는 가장 낮은 스티플 세트로 변환합니다. |
 | `number_mask` | 로얄 운명 | 보드 선을 선택합니다. 1 타일이 있으면 그 색상, 없으면 최고 숫자 색상 기준으로 동색 10-11-12-13-1 로얄플러시 세트로 변환합니다. |
 
-### 성장/점수/표식/위치 의식 (9)
+### 성장/점수/표식/위치 의식 (6)
 
 | ID | 이름 | 효과 |
 |---|---|---|

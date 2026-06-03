@@ -1,0 +1,16 @@
+item total: 91
+jester total: 43
+normal item 86: True
+normal Jester 43: True
+hold item 5: ['line_pack_ticket', 'prune_vendor', 'ritual_coupon', 'ritual_lens', 'seal_vendor']
+debug item 0: true
+deleted legacy 3: ['boss_memory', 'minor_memory', 'thin_memory']
+item placement counts: {'inventory': 20, 'quickSlot': 52, 'equipped': 9, 'passiveRack': 10}
+item rarity counts: {'common': 17, 'uncommon': 30, 'rare': 34, 'legendary': 10}
+jester rarity counts: {'common': 30, 'rare': 10, 'uncommon': 3}
+watchlist item: reroll_token common 5G 1G discount_next_reroll
+watchlist item: trade_ticket uncommon 6G 3G reroll_item_offers_only
+watchlist item: full_house_study rare 9G 4G add_hand_rank_progress
+watchlist item: four_kind_study rare 10G 5G add_hand_rank_progress
+watchlist item: straight_flush_study rare 12G 6G add_hand_rank_progress
+watchlist jester: ride_the_bus uncommon 6G stateful_growth consecutive_hands_without_scoring_face_card

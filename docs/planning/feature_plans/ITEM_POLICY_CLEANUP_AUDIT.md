@@ -17,12 +17,12 @@ Board-Line Ritual: 0
 Direct Tile Modifier Item: 0
 ```
 
-현재는 Board-Line Ritual 38종을 실제 catalog에 추가해 총 92개 아이템 상태다. 따라서 다음 catalog 확장은 단순 점수 보정 아이템을 더 늘리는 일이 아니라, 추가된 Ritual 38종이 아래 기준을 만족하는지 닫는 작업이다.
+현재는 Ritual/Item 확장 계열 37종을 실제 catalog에 추가해 총 91개 아이템 상태다. 전투 보드 선 선택형 `ritual_line_effect`는 31장이고, Fate 변환 16종은 그 안의 고강도 변환 축으로 관리한다. active Ritual 31장은 normal market 후보, hold 마켓 보조 5종은 normal market 제외, debug 전용 0종은 현재 없음, deleted legacy 3종은 `boss_memory`, `thin_memory`, `minor_memory`다. 따라서 다음 catalog 확장은 단순 점수 보정 아이템을 더 늘리는 일이 아니라, 추가된 Ritual/Item 확장 계열이 아래 기준을 만족하는지 닫는 작업이다.
 
 - 효과별 target 조건이 유저에게 읽히는가.
 - 적용 결과가 board/deck/growth/seal/run info/log에 남는가.
 - `ritual_lens`, `ritual_coupon`, `seal_vendor`, `prune_vendor`, `line_pack_ticket`이 단순 할인/후보 수 변경처럼 약하게 보이지 않는가.
-- 38종 전부를 한 번에 pool에 넣은 상태에서 희귀도/가격/출현 weight가 과하지 않은가.
+- active Ritual 31종과 hold 마켓 보조 5종의 희귀도/가격/출현 weight가 과하지 않은가.
 
 ## 2. 분류 기준
 
@@ -33,8 +33,53 @@ Direct Tile Modifier Item: 0
 | `Resource / Board Action` | 손패, 보드 버림, 이동, 되돌리기, 덱 확인 | 유지. 풀런봇 정책과 UI 피드백 기준으로 가치 재점검. |
 | `Market / Economy / Pool` | 할인, 골드, 후보 교체, 후보 수/가격 조정 | 유지하되 자동 지급처럼 보이는 항목은 조건/표시 보강. |
 | `Survival` | 실패 방지/구제 | 희소하게 유지. 자동 완화처럼 보이지 않게 표시 필요. |
-| `Board-Line Ritual` | 보드 라인을 재료로 복제/각인/변형/압축 | 현재 catalog 0개. 새 덱빌딩 다양성의 1순위. |
+| `Board-Line Ritual` | 보드 라인을 재료로 복제/각인/변형/압축 | 현재 active Ritual 31장. 새 덱빌딩 다양성의 1순위였고, 지금은 active/hold 경계를 유지하며 가격/가중치와 전달력을 검증한다. |
 | `Direct Tile Modifier Item` | 타일 enhancement/seal/edition 직접 부여 | 현재 catalog 0개. 특수 타일 시스템과 연결해 확장. |
+
+### 2.1 Exposure group source of truth
+
+Task 6의 1차 정화 범위는 catalog 값을 바로 바꾸는 것이 아니라, 현재 노출 정책을 코드/문서/test에서 같은 기준으로 고정하는 것이다. 현행 catalog 기준 노출 그룹은 아래와 같다.
+
+| Group | Count | Policy |
+|---|---:|---|
+| normal item 86 | 86 | normal market 후보. 기존 Q-Slot/Tool/Gear/Passive와 active Ritual 31장을 포함한다. |
+| normal Jester 43 | 43 | normal market Jester 후보. 현재 Jester catalog 전부가 normal 노출이다. |
+| hold item 5 | 5 | Ritual 마켓 보조 후보. 재설계 전까지 normal market 제외. |
+| debug item 0 | 0 | 현재 debug 전용 item catalog 항목 없음. |
+| deleted legacy 3 | 3 | `boss_memory`, `thin_memory`, `minor_memory`; catalog/runtime/translation 대상에서 제거된 legacy 이름. |
+
+Normal item 86:
+
+`reroll_token`, `coupon_stamp`, `coin_cache`, `two_pair_study`, `triple_study`, `straight_study`, `flush_study`, `full_house_study`, `four_kind_study`, `straight_flush_study`, `line_memory`, `bridge_rite`
+`diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `sacrifice_line`, `deadwood_burn`, `trim_rank`, `trim_color`, `line_pruner`, `number_mask`, `wild_thread`, `off_color_rite`
+`color_concord`, `step_rite`, `rank_concord`, `fate_full_house_low`, `flush_house_fate`, `flush_five_fate`, `fate_flush_high`, `fate_flush_low`, `fate_straight_high`, `fate_straight_low`, `fate_three_kind_high`, `sealed_copy`
+`scarce_copy`, `color_echo`, `rank_echo`, `edge_copy`, `keystone_copy`, `cross_memory`, `board_scrap`, `hand_scrap`, `chip_capsule`, `mult_capsule`, `line_polish`, `straight_oil`
+`flush_powder`, `pair_splint`, `overlap_pin`, `emergency_draw`, `ledger_clip`, `discard_glove`, `mulligan_sleeve`, `jester_hook`, `score_abacus`, `thin_caliper`, `stage_map`, `merchant_stamp`
+`safety_net`, `coin_funnel`, `hand_funnel`, `echo_bell`, `boss_trophy`, `thin_wallet`, `trade_ticket`, `jester_invoice`, `item_invoice`, `red_swatch`, `blue_swatch`, `black_swatch`
+`yellow_swatch`, `rank_chalk`, `deck_needle`, `battle_pouch`, `tile_polisher`, `move_token`, `slide_wax`, `board_lift`, `undo_seal`, `organizer_glove`, `travel_pouch`, `wide_grip`
+`grand_satchel`, `market_compass`
+
+Normal Jester 43:
+
+`jester`, `greedy_jester`, `lusty_jester`, `wrathful_jester`, `gluttonous_jester`, `jolly_jester`, `zany_jester`, `mad_jester`, `crazy_jester`, `droll_jester`, `sly_jester`, `wily_jester`
+`clever_jester`, `devious_jester`, `crafty_jester`, `half_jester`, `jester_stencil`, `abstract_jester`, `green_jester`, `blue_jester`, `scary_face`, `smiley_face`, `egg`, `bonus_jester`
+`popcorn`, `ice_cream`, `delayed_gratification`, `walkie_talkie`, `golden_jester`, `mystic_summit`, `even_steven`, `odd_todd`, `scholar`, `fibonacci`, `banner`, `gros_michel`
+`supernova`, `ride_the_bus`, `the_duo`, `the_trio`, `the_family`, `the_order`, `the_tribe`
+
+Hold item 5:
+
+`ritual_coupon`, `ritual_lens`, `line_pack_ticket`, `seal_vendor`, `prune_vendor`
+
+Watchlist value lock:
+
+| ID | rarity | price | sell | Task 6 decision |
+|---|---|---:|---:|---|
+| `reroll_token` | common | 5G | 1G | low-tier utility. 유지하되 구매 가치 probe 대상. |
+| `trade_ticket` | uncommon | 6G | 3G | market pool mutation. Item 후보만 교체하는 기준 사례로 유지. |
+| `full_house_study` | rare | 9G | 4G | advanced study probe. Broad sim 전 fresh probe에서 구매/성장 빈도 확인. |
+| `four_kind_study` | rare | 10G | 5G | advanced study probe. Broad sim 전 fresh probe에서 구매/성장 빈도 확인. |
+| `straight_flush_study` | rare | 12G | 6G | advanced study probe. Broad sim 전 fresh probe에서 구매/성장 빈도 확인. |
+| `ride_the_bus` | uncommon | 6G | stateful_growth | redesign watch. 현재 Jester 값은 유지하되 stateful 성장 가독성과 face-card 조건 전달을 재검토한다. |
 
 ## 3. 현재 Catalog 분류
 
@@ -145,7 +190,7 @@ Direct Tile Modifier Item: 0
 
 ### 4.1 Board-Line Ritual
 
-기준점 당시 catalog에는 0개였고, 다음 확장 1순위였다. 현재는 40종이 실제 catalog/runtime/번역/이미지 경로에 들어갔다. 전투 보드 선 선택형 `ritual_line_effect`는 34장이고, normal market 노출 후보는 31장으로 제한한다.
+기준점 당시 catalog에는 0개였고, 다음 확장 1순위였다. 현재는 Ritual/Item 확장 계열 37종이 실제 catalog/runtime/번역/이미지 경로에 들어갔다. 전투 보드 선 선택형 `ritual_line_effect`는 31장이고, normal market 노출 후보도 현재 active Ritual 31장으로 제한한다.
 
 현재 실행 분류:
 
@@ -154,8 +199,11 @@ Direct Tile Modifier Item: 0
 | 족보 변환형 운명 | 16 | Active | `trim_rank`, `line_pruner`, `fate_three_kind_high`, `color_concord`, `step_rite`, `rank_concord`, `fate_full_house_low`, `flush_house_fate`, `flush_five_fate`, `fate_flush_high`, `fate_flush_low`, `fate_straight_high`, `fate_straight_low`, `wild_thread`, `off_color_rite`, `number_mask` |
 | 제거/소각/제물 | 3 | Active | `trim_color`, `deadwood_burn`, `sacrifice_line` |
 | 덱 복사/메아리 | 6 | Active | `sealed_copy`, `scarce_copy`, `color_echo`, `rank_echo`, `edge_copy`, `keystone_copy` |
-| 성장/점수/표식/위치 의식 | 7 | Active | `line_memory`, `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory` |
+| 성장/점수/표식/위치 의식 | 6 | Active | `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory` |
 | 마켓 보조 의식 | 5 | Hold | `ritual_coupon`, `ritual_lens`, `line_pack_ticket`, `seal_vendor`, `prune_vendor` |
+| Debug 전용 | 0 | debug 전용 0종 | 없음 |
+| 삭제 legacy 기억 의식 | 3 | deleted legacy 3종 | `boss_memory`, `thin_memory`, `minor_memory` |
+| 비-Ritual 선 성장 | 1 | Active quickSlot | `line_memory` |
 
 정리 원칙:
 
@@ -189,7 +237,7 @@ Direct Tile Modifier Item: 0
 
 1. 완료: 현재 catalog 54개를 policy family 기준으로 1차 분류했다.
 2. 정정: 9개 후보는 너무 적다. 구현 안전 후보가 아니라 실제 카드 pool이 먼저 넓어야 한다.
-3. 완료: Board-Line Ritual 후보 38종을 실제 catalog에 추가했다.
+3. 완료: Ritual/Item 확장 계열 37종을 실제 catalog에 추가했다.
 4. 완료: 성장, 복사, 각인, 족보 강제 판정, 압축/즉시 제거, 보드 선 제거/회수, geometry, market 보조 계열을 `ritual_line_effect`/`ritualAction` 또는 기존 market op로 연결했다.
 5. 완료: Ritual line target을 scoring line 밖의 보드 선까지 확장했다. 효과별 target 조건은 점수 족보 선, 타일 3개 이상 보드 선, 보드 선 안의 타일로 나뉜다.
 6. 완료: 전투 선택 UI는 보드 미니 프리뷰 + line choice chip dialog로 교체했고, 다국어 효과 문구도 현재 조건에 맞게 정리했다.
@@ -347,7 +395,7 @@ Ritual 성장 카드는 자동으로 "가장 강한/약한/대표" 줄을 고르
 | fate transform | 운명 변환 16종 | 선택 보드 선 5칸을 실제 타일 세트로 치환 | board state | 선택 선, 변환 전후 타일, 확정 preview |
 | deck add | `sealed_copy`, `scarce_copy`, `color_echo`, `rank_echo`, `edge_copy`, `keystone_copy` | scoringTiles 기반 타일을 `addedDeckTiles`와 session deck top에 추가 | runProgress `addedDeckTiles`, session deck top | 덱 변화 flight, 다음 draw 반영 |
 | prune / burn / sacrifice | `trim_color`, `deadwood_burn`, `sacrifice_line` | 보드 선 제거, 골드/덱 보충 | board state, deck top, gold | 제거 line, 골드 flight, 덱 flight |
-| growth / geometry / marker | `line_memory`, `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory` | 위치 조건에 따른 성장, 점수, 복사, 표식 보상 | 선택 결과별 runtime/runProgress | 중앙/대각/교차/모서리/겹친 줄 highlight |
+| growth / geometry / marker | `line_memory`, `bridge_rite`, `diagonal_rite`, `center_rite`, `corner_rite`, `cross_rite`, `cross_memory` | 위치 조건에 따른 성장, 점수, 복사, 표식 보상. `line_memory`는 `ritual_line_effect`가 아닌 별도 선 성장형 quickSlot이다. | 선택 결과별 runtime/runProgress | 중앙/대각/교차/모서리/겹친 줄 highlight |
 | hold / redesign | 마켓 보조 의식 5종 | normal market 제외 | catalog 검토 자산만 유지 | 별도 재설계 후 |
 
 ## 10. Policy Update Order

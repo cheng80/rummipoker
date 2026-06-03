@@ -7,12 +7,12 @@
 
 현재 기준:
 
-- Item catalog: 94개
+- Item catalog: 91개
 - 기존 v1 baseline: 54개
-- Ritual/Item 확장 계열: 40개
-- 전투 보드 선 선택형 `ritual_line_effect`: 34개
-- 족보 변환형 운명(`fate_*`): 16개
-- `applied`: 94개
+- Ritual/Item 확장 계열: 37개
+- 전투 보드 선 선택형 `ritual_line_effect`는 31장
+- Fate 변환 16종
+- `applied`: 91개
 - `pendingHook`: 0개
 
 이 문서는 v1 Item catalog의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
@@ -26,7 +26,7 @@ Item 효과의 화면 연출 계약은 `docs/planning/feature_plans/ITEM_PRESENT
 | 분류 | 수 | Runtime action |
 |---|---:|---|
 | 족보 변환형 운명 | 16 | `fate_two_pair_high`, `fate_three_kind_low`, `fate_three_kind_high`, `fate_four_kind_high`, `fate_four_kind_low`, `fate_full_house_high`, `fate_full_house_low`, `fate_flush_house`, `fate_flush_five`, `fate_flush_high`, `fate_flush_low`, `fate_straight_high`, `fate_straight_low`, `fate_straight_flush_high`, `fate_straight_flush_low`, `fate_royal_flush` |
-| 성장/점수/표식/위치 의식 | 7 활성 | 활성: `line_memory`, `seal_bridge`, `line_bonus_35`, `center_growth`, `copy_endpoint`, `line_bonus_25`, `growth_marker`. 삭제된 기억 의식 3종의 전용 action은 runtime에서 제거했다. |
+| 성장/점수/표식/위치 의식 | 6 Ritual + `line_memory` 별도 | Ritual 활성: `seal_bridge`, `line_bonus_35`, `center_growth`, `copy_endpoint`, `line_bonus_25`, `growth_marker`. `line_memory`는 `ritual_line_effect`가 아닌 별도 선 성장형 quickSlot이다. 삭제된 기억 의식 3종의 전용 action은 runtime에서 제거했다. |
 | 덱 복사/메아리 | 6 | `copy_selected`, `copy_color`, `copy_rank`, `copy_center` |
 | 제거/소각/제물 | 3 | `prune_line_to_color`, `burn_line`, `sacrifice_line` |
 
@@ -190,7 +190,7 @@ badge, notice, toast, label만 추가한 항목은 "표시/피드백 1차"로만
 
 현재 실제 런타임 기준:
 
-- 총 92개 중 `applied` 92개
+- 총 91개 중 `applied` 91개
 - 남은 `pendingHook` 0개
 
 Ritual 계열의 다음 검증은 runtime hook 존재 여부가 아니라 UX/밸런스다. 특히 line choice dialog, result communication, run info/log visibility, market pool 계열 정체성, 강제 판정/고위험 카드 가격과 출현률을 별도 확인한다.
@@ -223,7 +223,7 @@ Ritual 계열의 다음 검증은 runtime hook 존재 여부가 아니라 UX/밸
 | 조건부 사용 no-op | `slide_wax`, `undo_seal`, `emergency_draw`, `deck_needle`, next-confirm 계열 소모품 | 이미 queue가 있거나 조건이 충족되지 않거나 0점 confirm에 묻히면 소모품이 의미 없이 사라질 수 있다. | 실패 시 미소모는 유지하고, 사용 전/후 피드백과 조건 표시를 보강한다. |
 | 가격/가치 이상 후보 | `ride_the_bus`, `reroll_token`, `trade_ticket`, `full_house_study`, `four_kind_study`, `straight_flush_study` | catalog audit 기준 cheap high-impact 또는 expensive low-impact 후보가 있다. | 가격표를 바로 바꾸지 말고 실제 노출/구매/사용률, S7~S8 병목, v9 market 개선 여부를 함께 본다. |
 | 자동/직접 지급으로 보일 수 있는 효과 | `coin_cache`, `thin_wallet`, `ledger_clip`, `stage_map`, `coin_funnel`, `hand_funnel` | 경제 보정이 선택 부담을 지우거나 자동 지급처럼 읽힐 수 있다. | 직접 지급 금지 원칙과 충돌하지 않는지, 조건/타이밍/표시가 플레이어 선택으로 읽히는지 확인한다. |
-| Board-Line Ritual 후보 | 활성: Fate 변환 16, 제거/소각/제물 3, 덱 복사/메아리 6, 성장/점수/표식/위치 7. 보류: legacy ritual market helpers | 손패 직접 파괴/변형 대신 보드에 구성된 선과 scoringTiles를 대상으로 즉시 전투에 읽히는 변환, 제거, 덱 맨 위 보충, 성장/점수/표식/위치 보상을 다룬다. | 활성 32종은 runtime/market 노출/선택 UI/flight 검증을 닫고, 폐기 3종은 catalog/runtime에서 제거했다. |
+| Board-Line Ritual 후보 | active Ritual 31: Fate 변환 16, 제거/소각/제물 3, 덱 복사/메아리 6, 성장/점수/표식/위치 Ritual 6. `line_memory`는 별도 선 성장형 quickSlot. hold 마켓 보조 5종: `ritual_coupon`, `ritual_lens`, `line_pack_ticket`, `seal_vendor`, `prune_vendor`. debug 전용 0종. deleted legacy 3종: `boss_memory`, `thin_memory`, `minor_memory`. | 손패 직접 파괴/변형 대신 보드에 구성된 선과 scoringTiles를 대상으로 즉시 전투에 읽히는 변환, 제거, 덱 맨 위 보충, 성장/점수/표식/위치 보상을 다룬다. hold/debug는 normal market 제외다. | 활성 Ritual 31종은 runtime/market 노출/선택 UI/flight 검증을 닫고, deleted legacy 3종은 catalog/runtime에서 제거했다. |
 
 2026-05-17 1차 적용:
 

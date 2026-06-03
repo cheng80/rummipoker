@@ -1,0 +1,13 @@
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/item_definition_test.dart
+00:00 +0: ItemCatalog parses item definitions and exposes lookup helpers
+00:00 +1: ItemCatalog v1 catalog keeps Korean text in localization data only
+00:00 +2: ItemCatalog player-facing item data does not use voucher wording
+00:00 +3: ItemCatalog catalog census docs match current catalog
+00:00 +4: ItemCatalog fate transform items stay rare-or-higher and expensive
+00:00 +5: ItemCatalog ritual pool split docs match catalog groups
+00:00 +6: ItemCatalog legacy fate item ids resolve to canonical item ids
+00:00 +7: ItemCatalog owned item inventory state roundtrips storage shape
+00:00 +8: ItemCatalog owned item inventory acquires items by placement and stack limit
+00:00 +9: ItemCatalog quick slot acquisition respects dynamic slot capacity
+00:00 +10: ItemCatalog owned item inventory consumes stacks and removes empty slot ids
+00:00 +11: All tests passed!

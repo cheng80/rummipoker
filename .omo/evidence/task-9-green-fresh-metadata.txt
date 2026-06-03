@@ -1,0 +1,40 @@
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/tools/sim/runtime_market_offer_audit_metadata_test.dart
+00:00 +0: runtime market offer audit records fresh current-only metadata
+# Runtime market offer audit
+- runs per stage: 2
+- seed: 93000
+- pressure profile: standard
+## Watchlist
+- reroll_token: 2
+- trade_ticket: 0
+- full_house_study: 0
+- four_kind_study: 0
+- straight_flush_study: 2
+- ride_the_bus: 0
+- jester_hook: 2
+## Top Jesters
+- fibonacci: 1
+- greedy_jester: 1
+- jester: 1
+- scholar: 1
+- supernova: 1
+- zany_jester: 1
+## Top Items
+- black_swatch: 2
+- board_lift: 2
+- board_scrap: 2
+- jester_hook: 2
+- ledger_clip: 2
+- line_polish: 2
+- merchant_stamp: 2
+- mulligan_sleeve: 2
+- reroll_token: 2
+- stage_map: 2
+- straight_flush_study: 2
+- travel_pouch: 2
+## Collection audit
+- seen coverage: jesters 0.1395, items 0.1395
+- bought coverage: jesters 0.0465, items 0.0116
+- blocked: gold jester 0, gold item 1, capacity jester 0, capacity item 0
+- pre-collection blocked: gold jester 0, gold item 1, capacity jester 0, capacity item 0
+00:00 +1: All tests passed!

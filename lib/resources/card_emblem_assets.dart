@@ -62,6 +62,8 @@ class CardEmblemAssets {
       'fate_straight_high' => 'gold_seal_stamp',
       'fate_straight_low' => 'growth_seal',
       'fate_three_kind_high' => 'line_seal_stamp',
+      'flush_house_fate' => 'rank_concord',
+      'flush_five_fate' => 'color_concord',
       _ => id,
     };
   }

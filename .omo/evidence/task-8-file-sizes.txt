@@ -1,0 +1,53 @@
+Task 8 file responsibility evidence 2026-06-03 10:27:58 KST
+
+Before evidence:
+before 2026-06-03 10:24:57 KST
+     882 lib/views/game/widgets/game_shared_widgets.dart
+     411 lib/views/game/widgets/game_shared_game_over_widgets.dart
+     262 lib/views/game/widgets/game_shop_screen.dart
+     882 lib/views/game_view.dart
+    2437 total
+
+lib/views/game/widgets/game_shop_offer_widgets.dart:285:      return GameModalCard(
+lib/views/game_view.dart:621:      builder: (dialogContext) => GameModalCard(
+lib/views/game/widgets/game_run_info_dialog.dart:24:    builder: (dialogContext) => GameModalCard(
+lib/views/game/game_view_stage_flow.dart:252:      barrierColor: kGameModalBarrierColor,
+lib/views/game/widgets/game_shared_game_over_widgets.dart:147:    builder: (ctx) => GameModalCard(
+lib/views/game/widgets/game_options_dialog.dart:33:    builder: (dialogContext) => GameModalCard(
+lib/views/game/widgets/game_shop_purchase_flow.dart:15:      builder: (dialogContext) => GameModalCard(
+lib/views/game/game_view_layout_widgets.dart:274:              const Positioned.fill(child: GameInputBarrier.feedback()),
+lib/views/game/game_view_layout_widgets.dart:297:                    const GameInputBarrier.modal(),
+lib/views/game/game_view_layout_widgets.dart:325:                    const GameInputBarrier.modal(),
+lib/views/game/game_view_layout_widgets.dart:343:                    const GameInputBarrier.modal(),
+lib/views/game/game_view_layout_widgets.dart:388:          return const GameInputBarrier.modal();
+lib/views/game/game_view_layout_widgets.dart:399:              child: const GameInputBarrier.modal(),
+lib/views/game/game_view_layout_widgets.dart:406:              child: const GameInputBarrier.modal(),
+lib/views/game/game_view_dialog_routes.dart:125:                    child: GameModalCard(
+lib/views/game/widgets/game_terms_dialog.dart:14:    builder: (dialogContext) => GameModalCard(
+lib/views/game/widgets/game_shared_widgets.dart:39:const Color kGameModalBarrierColor = GameUiPalette.modalBarrier;
+lib/views/game/widgets/game_shared_widgets.dart:40:const Color kGameFeedbackBarrierColor = GameUiPalette.feedbackBarrier;
+lib/views/game/widgets/game_shared_widgets.dart:83:class GameInputBarrier extends StatelessWidget {
+lib/views/game/widgets/game_shared_widgets.dart:84:  const GameInputBarrier.modal({super.key}) : color = kGameModalBarrierColor;
+lib/views/game/widgets/game_shared_widgets.dart:86:  const GameInputBarrier.feedback({super.key})
+lib/views/game/widgets/game_shared_widgets.dart:87:    : color = kGameFeedbackBarrierColor;
+lib/views/game/widgets/game_shared_widgets.dart:814:class GameModalCard extends StatelessWidget {
+lib/views/game/widgets/game_shared_widgets.dart:815:  const GameModalCard({super.key, required this.child});
+lib/views/game/widgets/game_shared_widgets.dart:848:    barrierColor: kGameModalBarrierColor,
+lib/views/game/widgets/game_shop_options_flow.dart:49:        builder: (dialogContext) => GameModalCard(
+
+After line counts:
+     804 lib/views/game/widgets/game_shared_widgets.dart
+      80 lib/views/game/widgets/game_shared_modal_widgets.dart
+     262 lib/views/game/widgets/game_shop_screen.dart
+     882 lib/views/game_view.dart
+    2028 total
+
+Moved modal responsibilities:
+lib/views/game/widgets/game_shared_modal_widgets.dart:3:const Color kGameModalBarrierColor = GameUiPalette.modalBarrier;
+lib/views/game/widgets/game_shared_modal_widgets.dart:4:const Color kGameFeedbackBarrierColor = GameUiPalette.feedbackBarrier;
+lib/views/game/widgets/game_shared_modal_widgets.dart:6:class GameInputBarrier extends StatelessWidget {
+lib/views/game/widgets/game_shared_modal_widgets.dart:7:  const GameInputBarrier.modal({super.key}) : color = kGameModalBarrierColor;
+lib/views/game/widgets/game_shared_modal_widgets.dart:10:    : color = kGameFeedbackBarrierColor;
+lib/views/game/widgets/game_shared_modal_widgets.dart:21:class GameModalCard extends StatelessWidget {
+lib/views/game/widgets/game_shared_modal_widgets.dart:45:Future<T?> showGameFramedDialog<T>({
+lib/views/game/widgets/game_shared_modal_widgets.dart:55:    barrierColor: kGameModalBarrierColor,

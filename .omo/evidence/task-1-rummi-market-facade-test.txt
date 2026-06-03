@@ -1,0 +1,45 @@
+command: /Users/cheng80/flutter/bin/flutter test test/logic/rummi_market_facade_test.dart
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/rummi_market_facade_test.dart
+00:00 +0: RummiMarketRuntimeFacade maps current shop offers into market offers
+00:00 +1: RummiMarketRuntimeFacade keeps remaining jester offer prices after buying another offer
+00:00 +2: RummiMarketRuntimeFacade keeps remaining jester offers normally priced after any offer purchase
+00:00 +3: RummiMarketRuntimeFacade consumes jester purchase discount after one offer purchase
+00:00 +4: RummiMarketRuntimeFacade item purchase discount does not leak into jester offer prices
+00:00 +5: RummiMarketRuntimeFacade consumes item purchase discount after one item purchase
+00:00 +6: RummiMarketRuntimeFacade maps tile offers and added deck tiles into market facade
+00:00 +7: RummiMarketRuntimeFacade maps item definitions into item market offers without jester slots
+00:00 +8: RummiMarketRuntimeFacade maps market modifiers into displayed reroll and offer prices
+00:00 +9: RummiMarketRuntimeFacade market compass discounts one visible cheapest item offer
+00:00 +10: RummiMarketRuntimeFacade market compass skips zero price item offers
+00:00 +11: RummiMarketRuntimeFacade maps owned jesters into sellable market entries
+00:00 +12: RummiMarketRuntimeFacade applies owned sell item modifiers
+00:00 +13: RummiMarketRuntimeFacade maps owned item inventory into market item slots
+00:00 +14: RummiMarketRuntimeFacade consumed item offers are removed from market item offers
+00:00 +15: RummiMarketRuntimeFacade deferred ritual items are filtered while active ritual items remain
+00:00 +16: RummiMarketRuntimeFacade buying an item offer does not refill the empty market slot
+00:00 +17: RummiMarketRuntimeFacade station band market policy keeps early economy and late boss growth
+00:00 +18: RummiMarketRuntimeFacade mid station market policy keeps score growth ahead of resources
+00:00 +19: RummiMarketRuntimeFacade fate transforms stay rare market pressure picks
+00:00 +20: RummiMarketRuntimeFacade final station market policy keeps shape correction available
+00:00 +21: RummiMarketRuntimeFacade missing growth correction only changes market appearance weight
+00:00 +22: RummiMarketRuntimeFacade collection correction only changes market appearance weight
+00:00 +23: RummiMarketRuntimeFacade collection correction makes unseen jester offers observable
+00:00 +24: RummiMarketRuntimeFacade high stakes market pressure adds transient item offer room
+00:00 +25: RummiMarketRuntimeFacade full passive rack still shows sell-and-replace passive offers
+00:00 +26: RummiMarketRuntimeFacade full quick slots still show sell-and-replace quick item offers
+00:00 +27: RummiMarketRuntimeFacade missing growth exposure can focus a random item offer slot
+00:00 +28: RummiMarketRuntimeFacade missing growth exposure can focus a random jester offer slot
+00:00 +29: RummiMarketRuntimeFacade marks unaffordable offers and carries runtime snapshot values
+00:00 +30: RummiMarketRuntimeFacade tile gold bonus and blue seal progress apply after confirm
+00:00 +31: RummiMarketRuntimeFacade base run leaves the fifth jester slot locked until boss reward
+00:00 +32: RummiMarketRuntimeFacade boss slot rewards unlock quick and passive capacities
+00:00 +33: RummiMarketRuntimeFacade boss trophy next-market jester slot applies for one market
+00:00 +34: RummiMarketRuntimeFacade boss trophy jester slot bonus is exposed as market label
+00:00 +35: RummiMarketRuntimeFacade jester, tile, and item reroll costs advance independently
+00:00 +36: RummiMarketRuntimeFacade first free jester reroll is not restored on the next market
+00:00 +37: RummiMarketRuntimeFacade tile reroll refills only tile offers and consumes tile first free reroll
+00:00 +38: RummiMarketRuntimeFacade first free reroll consumed lanes survive restore
+00:00 +39: RummiMarketRuntimeFacade tile reroll keeps tile card offers available after bought tiles
+00:00 +40: RummiMarketRuntimeFacade late shop tile offers can generate special modifiers
+00:00 +41: RummiMarketRuntimeFacade facade is snapshot-based and requires re-creation after mutations
+00:00 +42: All tests passed!

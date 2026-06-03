@@ -1,0 +1,43 @@
+Running build hooks...Running build hooks...# Runtime market offer audit
+- runs per stage: 80
+- seed: 93020
+- pressure profile: standard
+## Watchlist
+- reroll_token: 400
+- trade_ticket: 240
+- full_house_study: 80
+- four_kind_study: 0
+- straight_flush_study: 80
+- ride_the_bus: 16
+- jester_hook: 320
+## Top Jesters
+- blue_jester: 69
+- crafty_jester: 66
+- greedy_jester: 62
+- even_steven: 61
+- walkie_talkie: 61
+- clever_jester: 60
+- gluttonous_jester: 59
+- lusty_jester: 59
+- scholar: 59
+- smiley_face: 59
+- devious_jester: 58
+- droll_jester: 56
+## Top Items
+- discard_glove: 400
+- reroll_token: 400
+- echo_bell: 320
+- flush_study: 320
+- jester_hook: 320
+- line_polish: 320
+- merchant_stamp: 320
+- score_abacus: 320
+- stage_map: 320
+- travel_pouch: 320
+- mulligan_sleeve: 240
+- organizer_glove: 240
+## Collection audit
+- seen coverage: jesters 1.0, items 0.9884
+- bought coverage: jesters 1.0, items 0.8837
+- blocked: gold jester 8, gold item 1107, capacity jester 0, capacity item 0
+- pre-collection blocked: gold jester 0, gold item 1107, capacity jester 0, capacity item 0

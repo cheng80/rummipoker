@@ -1,0 +1,5 @@
+channel: cli stdout
+command: /Users/cheng80/flutter/bin/flutter test test/logic/item_definition_test.dart --name "catalog census docs match current catalog"
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/item_definition_test.dart
+00:00 +0: ItemCatalog catalog census docs match current catalog
+00:00 +1: All tests passed!

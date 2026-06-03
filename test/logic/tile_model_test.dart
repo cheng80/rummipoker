@@ -44,6 +44,36 @@ void main() {
       });
     });
 
+    test('all persisted modifier values survive json roundtrip', () {
+      for (final enhancement in TileEnhancement.values) {
+        final restored = Tile.fromJson(
+          Tile(
+            color: TileColor.red,
+            number: 1,
+            enhancement: enhancement,
+          ).toJson(),
+        );
+        expect(restored.enhancement, enhancement, reason: enhancement.name);
+      }
+
+      for (final seal in TileSeal.values) {
+        final restored = Tile.fromJson(
+          Tile(color: TileColor.blue, number: 2, seal: seal).toJson(),
+        );
+        expect(restored.seal, seal, reason: seal.name);
+      }
+
+      for (final edition in TileEdition.values) {
+        final restored = Tile.fromJson(
+          Tile(color: TileColor.yellow, number: 3, edition: edition).toJson(),
+        );
+        expect(restored.edition, edition, reason: edition.name);
+      }
+
+      expect(TileSeal.fromPersistenceValue('risk_seal'), TileSeal.fractureSeal);
+      expect(TileSeal.fromPersistenceValue('riskSeal'), TileSeal.fractureSeal);
+    });
+
     test('physical equality ignores modifiers', () {
       const base = Tile(color: TileColor.red, number: 7, id: 1);
       const enhanced = Tile(

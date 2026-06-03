@@ -1,0 +1,6 @@
+Wed Jun  3 09:55:16 KST 2026
+Checking QA-spawned residual processes
+64066
+64067
+Conclusion: no Task 4 browser/webdriver/server was started; any listed flutter test process would be from this check pipeline only if still running.
+  PID  PPID ELAPSED COMM ARGS

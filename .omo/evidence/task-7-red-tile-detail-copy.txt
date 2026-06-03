@@ -1,0 +1,15 @@
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/views/game/widgets/game_tile_modifier_copy_test.dart
+00:00 +0: tile modifier copy every persisted modifier has concrete display and effect text
+00:00 +0 -1: tile modifier copy every persisted modifier has concrete display and effect text [E]
+  Expected: not contains '예정'
+    Actual: '색상 판정 확장 예정'
+  wildPainted
+  
+  package:matcher                                                  expect
+  package:flutter_test/src/widget_tester.dart 473:18               expect
+  test/views/game/widgets/game_tile_modifier_copy_test.dart 19:13  main.<fn>.<fn>
+  
+00:00 +0 -1: Some tests failed.
+
+Failing tests:
+  /Users/cheng80/Desktop/flame_binggo_card/test/views/game/widgets/game_tile_modifier_copy_test.dart: tile modifier copy every persisted modifier has concrete display and effect text

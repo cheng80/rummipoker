@@ -765,6 +765,7 @@ class _GameViewState extends ConsumerState<GameView>
     required String detail,
     String? sourceLabel,
     bool passive = false,
+    bool fateTransform = false,
   }) {
     if (!mounted) return;
     final tick = _itemEffectFeedbackTick + 1;
@@ -775,6 +776,7 @@ class _GameViewState extends ConsumerState<GameView>
         detail: detail,
         sourceLabel: sourceLabel,
         passive: passive,
+        fateTransform: fateTransform,
       );
     });
     unawaited(

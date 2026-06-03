@@ -1,0 +1,3 @@
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/item_effect_runtime_test.dart
+00:00 +0: ItemEffectRuntime ritual copy effects add scoring tile results to the next draw
+00:00 +1: All tests passed!

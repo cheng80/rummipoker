@@ -1,0 +1,6 @@
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/tile_model_test.dart
+00:00 +0: Tile modifier persistence legacy tile json restores without modifiers
+00:00 +1: Tile modifier persistence enhancement seal and edition survive json roundtrip
+00:00 +2: Tile modifier persistence all persisted modifier values survive json roundtrip
+00:00 +3: Tile modifier persistence physical equality ignores modifiers
+00:00 +4: All tests passed!

@@ -1,0 +1,10 @@
+Task 9 archive isolation
+offer audit inputs: {'items': 'data/common/items_common_v1.json', 'jesters': 'data/common/jesters_common_phase5.json'}
+offer audit archive_inputs: []
+offer audit advisory_only: True
+item_catalog_sha256: 12a5907abd10a4278fd1847c596e1fb7cd3232346619432664cb180502b701d5
+jester_catalog_sha256: 539a19213ec2a2186481249751a45e63425cef61f5ca679f8f26bf48985e1b97
+commit_hash: adea1717562c13cdb5be52b2c38b428703fd5e30
+checked files: ['logs/sim/task9_runtime_market_offer_audit_20260603.json', 'logs/sim/task9_fresh_small_probe_20260603_summary.json', 'logs/sim/task9_fresh_small_probe_20260603_economy_audit.json']
+archive/path hits: []
+conclusion: current generated artifacts do not consume legacy archive paths as inputs.

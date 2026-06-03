@@ -1,0 +1,30 @@
+command: /Users/cheng80/flutter/bin/flutter test test/services/debug_run_fixture_service_test.dart
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/services/debug_run_fixture_service_test.dart
+00:00 +0: fixture registry exposes stage2 scoring snapshot entry
+00:00 +1: fixture registry exposes stage2 market resume entry
+00:00 +2: fixture registry exposes slot unlock market entry
+00:00 +3: debug fixtures do not auto start tutorials by default
+00:00 +4: stage2 scoring snapshot fixture restores expected board and meta
+00:00 +5: stage2 market resume fixture opens in shop scene with offers
+00:00 +6: slot unlock market fixture opens pending unlock presentation state
+00:00 +7: deck needle battle fixture starts with quick slot item and known deck top
+00:00 +8: hand capacity deck control fixture exposes larger hand and deck needle
+00:00 +9: hand capacity increase preview fixture starts before capacity pulse
+00:00 +10: screenshot run growth fixture exposes played hand growth state
+00:00 +11: market modifier fixture opens shop with discounted market state
+00:00 +12: animation effects fixture exposes score and item feedback setup
+00:00 +13: item motion fixture exposes battle item motion setup
+00:00 +14: next confirm motion fixture exposes queued item setup
+00:00 +15: market item motion fixture exposes gold and non-gold use items
+00:00 +16: special tile market fixture exposes modified tile offers
+00:00 +17: special tile battle fixture exposes modified board and hand tiles
+00:00 +18: line memory market fixture exposes active ritual offer
+00:00 +19: line memory battle fixture starts with usable scoring line
+00:00 +20: ritual battle preview fixtures expose representative item groups
+00:00 +21: fate transform fixtures expose one card each in review order
+00:00 +22: fate transform fixtures apply selected line into expected hand rank
+00:00 +23: final boss cash-out fixture is ready to close the run
+00:00 +24: boss line constraint fixtures expose confirmable line penalties
+00:00 +25: safety net fixture starts with board-full expiry guard state
+00:00 +26: game over fixture starts with board-full expiry state
+00:00 +27: All tests passed!

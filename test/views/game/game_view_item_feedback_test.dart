@@ -539,7 +539,11 @@ Future<void> _pumpUntilText(WidgetTester tester, String text) async {
       })
       .where((value) => value.isNotEmpty)
       .join(' | ');
-  fail('Expected to find "$text". Visible text: $visibleTexts');
+  final exception = tester.takeException();
+  fail(
+    'Expected to find "$text". Visible text: $visibleTexts'
+    '${exception == null ? '' : '\nPending exception: $exception'}',
+  );
 }
 
 Future<void> _disposeGameView(WidgetTester tester) async {

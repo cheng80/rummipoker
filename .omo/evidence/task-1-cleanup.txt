@@ -1,0 +1,3 @@
+cleanup check final with command names:
+cleanup: no QA-spawned flutter test/flutter_tester/webdriver/server process remains; no tmux installed.
+note: pre-existing user Chrome and flutter daemon were not killed.

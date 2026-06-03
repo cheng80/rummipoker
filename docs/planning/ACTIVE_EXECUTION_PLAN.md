@@ -6,6 +6,8 @@
 이 문서는 닫힌 공모전 제출 이력과 post-contest 실제 Goal 실행을 분리한다.
 새 세션은 `START_HERE.md`와 `current_system` 기준 문서를 읽은 뒤, 이 문서에서 현재 활성 트랙과 다음 작업만 확인한다.
 
+`ritual-runtime-20260603` 태그 이후 남은 작업 큐는 `docs/planning/POST_RITUAL_RUNTIME_REMAINING_WORK.md`를 기준으로 본다. 이 큐는 운명/Fate 마무리, Ritual 보류군 재설계, Item/Jester/Tool/Gear 정책 정화, 구조/성능 리팩터링, 데이터/시뮬레이션 재개, 후순위 눈검증 순서로 진행한다.
+
 ## 1. 현재 활성 트랙
 
 | Track | Status | 기준 문서 | 지금 판단 |
@@ -40,7 +42,7 @@
    - 완료: glass 파괴와 런 덱 source 제거/복원.
    - 보류: `wild_painted`, `lucky_tile`은 evaluator/RNG 재현 정책이 더 필요해 V1 후속 또는 V2 후보로 둔다.
 6. 다음 활성 작업:
-   - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 기존 catalog 54개에 Ritual/Item 확장 계열 40종을 추가한 현재 item catalog 94개를 family별로 관리한다. 전투 보드 선 선택형 `ritual_line_effect`는 34장이고, 이 중 족보 변환형 운명은 16장이다. 1차 audit와 새 카드 후보 pool은 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
+   - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 기존 catalog 54개에 Ritual/Item 확장 계열 37종을 추가한 현재 item catalog 91개를 family별로 관리한다. 전투 보드 선 선택형 `ritual_line_effect`는 31장이고, 이 중 족보 변환형 운명은 16장이다. 1차 audit와 새 카드 후보 pool은 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
    - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
    - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
    - 2026-05-29 full-run policy fresh data: `full_run_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
@@ -79,12 +81,12 @@
 6. 완료: Ritual/Item 확장 계열 37종 catalog/번역/이미지 asset/runtime hook을 실제로 추가했다. 이 중 전투 보드 선 선택형 `ritual_line_effect`는 31장이고, 별도 선 성장형 `line_memory`까지 포함해 성장, 복사, 각인, 족보 변환, 즉시 덱 제거, 보드 선 제거/회수, 마켓 보조 계열을 연결했다.
 7. 완료: Ritual target은 scoring line만이 아니라 보드 선 단위로 확장했다. 성장/점수 보너스는 여전히 점수 족보 선을 요구하고, 타일 각인/복사/압축/보드 선 제거 계열은 비어 있지 않은 보드 선을, 강제 판정 계열은 타일 3개 이상 보드 선을 대상으로 한다.
 8. 완료: 전투 사용 UI는 일반 list dialog에서 보드 미니 프리뷰 + 선 후보 chip dialog로 바꿨고, `ko/en/ja/zh-CN/zh-TW` 효과 문구도 현재 target 조건에 맞게 정리했다.
-9. 완료: Ritual V1 전체 노출은 폐기하고, 전투 즉시성이 있는 적용군 32종을 일반 마켓 pool 재진입 후보로 분리했다. 활성군은 `fate` 변환 16종, 제거/소각/제물 3종, 덱 복사/메아리 6종, 성장/점수/표식/위치 의식 7종이다. 삭제된 기억 의식 3종은 catalog/이미지/fixture/runtime 대상에서 제거했다.
+9. 완료: Ritual V1 전체 노출은 폐기하고, 전투 즉시성이 있는 `ritual_line_effect` 적용군 31종을 일반 마켓 pool 재진입 후보로 분리했다. 활성군은 `fate` 변환 16종, 제거/소각/제물 3종, 덱 복사/메아리 6종, 성장/점수/표식/위치 의식 6종이다. `line_memory`는 별도 선 성장형 quickSlot 카드이며 `ritual_line_effect` 카운트에는 넣지 않는다. 삭제된 기억 의식 3종은 catalog/이미지/fixture/runtime 대상에서 제거했다.
 10. 완료: 운명 변환은 override가 아니라 선택한 보드 선 5칸을 실제 타일 세트로 덮어쓴다. 적용 직후 current board evaluator가 로얄/스티플/포카드/풀하우스/플러시/스트레이트/트리플/투페어를 읽는다.
 11. 다음: 운명 카드 QA/정책 정리.
    - 전투 눈검증: 대표 운명 카드로 보드 선 선택 dialog, 미완성 선 target, 변환 직후 줄 변화, 확정 preview를 확인한다.
    - 결과 전달: 적용 직후 source item -> target board line -> result hand rank가 충분히 읽히는지 보고 부족하면 result panel/toast/line flash를 보강한다.
-   - 밸런스: 재진입 후보인 활성 32종의 가격/희귀도/출현 weight와 상위권(`number_mask`, `flush_five_fate`, `flush_house_fate`, `wild_thread`, `off_color_rite`, `bridge_rite`, `diagonal_rite`) 과강도를 fresh run으로 본다.
+   - 밸런스: 재진입 후보인 활성 Ritual 31종의 가격/희귀도/출현 weight와 상위권(`number_mask`, `flush_five_fate`, `flush_house_fate`, `wild_thread`, `off_color_rite`, `bridge_rite`, `diagonal_rite`) 과강도를 fresh run으로 본다.
    - 운명 변환 16종은 common/uncommon 금지. normal market에는 나올 수 있어도 rare 이상으로만 노출하고, `number_mask`, `flush_five_fate`, `flush_house_fate`, `wild_thread`, `off_color_rite`는 legendary 고가 카드로 유지한다.
    - 보류군: 마켓 보조형 Ritual은 별도 카드군으로 다시 설계하기 전까지 normal market에 넣지 않는다.
 12. 손패 직접 파괴/변형은 V1 금지로 유지한다.
@@ -118,7 +120,7 @@
    - 완료: `spare_pouch`는 Boss 보유 슬롯 해금과 겹쳐 삭제했다.
    - 완료: `lucky_counter`는 눈에 보이는 피드백이 없는 rarity weight 효과라 카탈로그에서 삭제했다.
    - 완료: `market_compass`는 현재 Market의 보이는 Jester/Item 후보 중 1G 이상 최저가 1개에만 `나침반` 할인 배지를 붙인다. 0G 후보에는 적용하지 않는다.
-   - 완료: 전체 Item 55개를 `발동 객체 -> 적용 대상 -> 결과` 기준으로 재검토하는 1차 계약표를 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`에 만들었다. `shop_lens`는 삭제 상태로 두고, 남은 활성 54개는 P0~P3 보강 우선순위로 분류했다.
+   - 완료: 당시 전체 Item 55개를 `발동 객체 -> 적용 대상 -> 결과` 기준으로 재검토하는 1차 계약표를 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`에 만들었다. `shop_lens`는 삭제 상태로 두고, 당시 활성 54개는 P0~P3 보강 우선순위로 분류했다.
    - 완료: `ItemPresentationEvent` / `ItemPresentationTarget` transient model 1차와 Market P0 일부 연출을 추가했다. 현재 Market reroll 할인, 구매 할인, `market_compass` 할인은 source -> target -> result toast를 표시하고, 구매 flight의 spent Gold는 실제 Gold 차이 기준으로 보정했다.
    - 다음 세션 프롬프트: `docs/planning/feature_plans/NEXT_SESSION_ITEM_PRESENTATION_PROMPT.md`
    - 완료: Chrome에서 Market P0 1차 연출을 눈검증했다. `market_compass`의 `나침반` 배지, 구매 시 `나침반 -> 기세 -> 구매가 -1G` source-target-result toast, 실제 Gold 18 -> 16 차감, `slot_unlock_market`의 `shop_lens` 없는 슬롯 해금 상태, Tile Shop `칩 N · 3G`, `런 정보`의 `타일 기준 칩` 표기를 확인했다. 기능뿐 아니라 overflow/잘림/겹침/프레임 누수 기준으로 봤고 미통과 항목은 없었다. 기록: `docs/planning/verification/daily_logs/2026-05-16.md`.

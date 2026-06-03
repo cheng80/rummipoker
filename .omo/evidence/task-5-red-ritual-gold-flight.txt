@@ -1,0 +1,43 @@
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/views/game/game_view_ritual_gold_feedback_test.dart
+00:00 +0: ritual burn requires confirm and shows gold coin flight
+[90m[🌎 Easy Localization] [DEBUG] Localization initialized[0m
+[90m[🌎 Easy Localization] [DEBUG] Start[0m
+[90m[🌎 Easy Localization] [DEBUG] Init state[0m
+[32m[🌎 Easy Localization] [INFO] Start locale loaded ko[0m
+[90m[🌎 Easy Localization] [DEBUG] Build[0m
+[90m[🌎 Easy Localization] [DEBUG] Init Localization Delegate[0m
+[90m[🌎 Easy Localization] [DEBUG] Init provider[0m
+[90m[🌎 Easy Localization] [DEBUG] Load Localization Delegate[0m
+[90m[🌎 Easy Localization] [DEBUG] Load asset from assets/translations[0m
+[90m[🌎 Easy Localization] [DEBUG] Build[0m
+[90m[🌎 Easy Localization] [DEBUG] Init Localization Delegate[0m
+[90m[🌎 Easy Localization] [DEBUG] Init provider[0m
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _KeyWidgetFinder:<Found 0 widgets with key [<'ritual-gold-flight'>]: []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/cheng80/Desktop/flame_binggo_card/test/views/game/game_view_ritual_gold_feedback_test.dart:72:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/cheng80/Desktop/flame_binggo_card/test/views/game/game_view_ritual_gold_feedback_test.dart line 72
+The test description was:
+  ritual burn requires confirm and shows gold coin flight
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:01 +0 -1: ritual burn requires confirm and shows gold coin flight [E]
+  Test failed. See exception logs above.
+  The test description was: ritual burn requires confirm and shows gold coin flight
+  
+00:01 +0 -1: Some tests failed.
+
+Failing tests:
+  /Users/cheng80/Desktop/flame_binggo_card/test/views/game/game_view_ritual_gold_feedback_test.dart: ritual burn requires confirm and shows gold coin flight

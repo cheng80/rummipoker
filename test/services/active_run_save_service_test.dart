@@ -876,6 +876,55 @@ void main() {
       expect(restored.runProgress.pendingBossTileReward, isTrue);
     });
 
+    test('run progress saves and restores tileOffers modifiers', () async {
+      final runProgress = RummiRunProgress()
+        ..tileOffers.addAll(const [
+          Tile(
+            color: TileColor.blue,
+            number: 9,
+            enhancement: TileEnhancement.glassTile,
+            seal: TileSeal.redSeal,
+            edition: TileEdition.prismEdition,
+          ),
+          Tile(
+            color: TileColor.yellow,
+            number: 12,
+            enhancement: TileEnhancement.goldTile,
+            seal: TileSeal.bridgeSeal,
+            edition: TileEdition.glowEdition,
+          ),
+        ]);
+      final runtime = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.shop,
+        difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.basic,
+        session: RummiPokerGridSession(runSeed: 10),
+        runProgress: runProgress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: RummiPokerGridSession(runSeed: 10),
+          runProgress: runProgress.copySnapshot(),
+        ),
+      );
+
+      await ActiveRunSaveService.saveRuntimeState(runtime);
+      final restored = await ActiveRunSaveService.loadActiveRun();
+
+      expect(restored, isNotNull);
+      expect(restored!.runProgress.tileOffers, hasLength(2));
+      expect(restored.runProgress.tileOffers.map((tile) => tile.enhancement), [
+        TileEnhancement.glassTile,
+        TileEnhancement.goldTile,
+      ]);
+      expect(restored.runProgress.tileOffers.map((tile) => tile.seal), [
+        TileSeal.redSeal,
+        TileSeal.bridgeSeal,
+      ]);
+      expect(restored.runProgress.tileOffers.map((tile) => tile.edition), [
+        TileEdition.prismEdition,
+        TileEdition.glowEdition,
+      ]);
+    });
+
     test(
       'session tile modifiers survive deck board hand eliminated roundtrip',
       () async {
@@ -976,7 +1025,10 @@ void main() {
           TileEnhancement.chipInlaid,
         );
         expect(
-          restored.stageStartSnapshot.session.deck.snapshotPile().single.edition,
+          restored.stageStartSnapshot.session.deck
+              .snapshotPile()
+              .single
+              .edition,
           TileEdition.silverEdition,
         );
         expect(

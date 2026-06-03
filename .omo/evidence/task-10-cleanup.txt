@@ -1,0 +1,4 @@
+cleanup receipt 2026-06-03 10:49:31 KST
+tmux: unavailable
+flutter/webdriver/headless residue after excluding this receipt command:
+conclusion: no Task 10 Flutter web-server, Flutter test, WebDriver, ChromeDriver, or headless Chrome residue remains.

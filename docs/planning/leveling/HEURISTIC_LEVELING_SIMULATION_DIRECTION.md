@@ -72,3 +72,13 @@
 2. 기존 장기 sweep 맥락을 볼 때만 archive history를 검색한다.
 3. 조정 후보를 적을 때마다 “직접 지급인가, 마켓 노출인가?”를 먼저 판정한다.
 4. 직접 지급으로 읽히는 후보는 폐기하거나 market-only 후보로 다시 번역한다.
+
+## 2026-06-03 fresh small probe gate
+
+- evidence: `.omo/evidence/task-9-small-probe.md`
+- current input: `data/common/items_common_v1.json`, `data/common/jesters_common_phase5.json`
+- archive input: none
+- runtime offer audit now treats the normal item market denominator as 86 current normal-market candidates, excluding the 5 hold/redesign item IDs.
+- S1-S4 standard tiny sequence probe is advisory-only. `none` and `shop_slot_market_v9` both had path_clear_rate 0.0 in the small sample, while avg_total_score_ratio stayed near 1.03.
+- Early-game overpowered Fate/watchlist frequency was not observed from the sequence purchase trace; catalog watchlist content/source purchase events were 0 in this probe.
+- Do not apply pricing, target, rarity, or market weight changes from this probe alone. Broad S1-S8 multi-seed restart must start from current catalog/runtime artifacts, not archived ML outputs.

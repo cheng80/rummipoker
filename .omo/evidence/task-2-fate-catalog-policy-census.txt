@@ -1,0 +1,19 @@
+Task 2 Fate Runtime And Market Policy Census
+fateIdCount: 16
+highTierLegendaryIds: number_mask, flush_five_fate, flush_house_fate, wild_thread, off_color_rite
+- number_mask | action=fate_royal_flush | expectedRank=royalStraightFlush | rarity=legendary | price=20 | normalMarketTier=rare_or_higher
+- wild_thread | action=fate_straight_flush_high | expectedRank=straightFlush | rarity=legendary | price=18 | normalMarketTier=rare_or_higher
+- off_color_rite | action=fate_straight_flush_low | expectedRank=lowStraightFlush | rarity=legendary | price=17 | normalMarketTier=rare_or_higher
+- color_concord | action=fate_four_kind_high | expectedRank=fourOfAKind | rarity=rare | price=15 | normalMarketTier=rare_or_higher
+- step_rite | action=fate_four_kind_low | expectedRank=fourOfAKind | rarity=rare | price=15 | normalMarketTier=rare_or_higher
+- rank_concord | action=fate_full_house_high | expectedRank=fullHouse | rarity=rare | price=15 | normalMarketTier=rare_or_higher
+- fate_full_house_low | action=fate_full_house_low | expectedRank=fullHouse | rarity=rare | price=15 | normalMarketTier=rare_or_higher
+- flush_house_fate | action=fate_flush_house | expectedRank=flushHouse | rarity=legendary | price=20 | normalMarketTier=rare_or_higher
+- flush_five_fate | action=fate_flush_five | expectedRank=flushFive | rarity=legendary | price=22 | normalMarketTier=rare_or_higher
+- fate_flush_high | action=fate_flush_high | expectedRank=flush | rarity=rare | price=14 | normalMarketTier=rare_or_higher
+- fate_flush_low | action=fate_flush_low | expectedRank=flush | rarity=rare | price=14 | normalMarketTier=rare_or_higher
+- fate_straight_high | action=fate_straight_high | expectedRank=straight | rarity=rare | price=13 | normalMarketTier=rare_or_higher
+- fate_straight_low | action=fate_straight_low | expectedRank=straight | rarity=rare | price=13 | normalMarketTier=rare_or_higher
+- fate_three_kind_high | action=fate_three_kind_high | expectedRank=threeOfAKind | rarity=rare | price=12 | normalMarketTier=rare_or_higher
+- line_pruner | action=fate_three_kind_low | expectedRank=threeOfAKind | rarity=rare | price=12 | normalMarketTier=rare_or_higher
+- trim_rank | action=fate_two_pair_high | expectedRank=twoPair | rarity=rare | price=11 | normalMarketTier=rare_or_higher

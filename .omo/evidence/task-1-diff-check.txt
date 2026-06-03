@@ -1,0 +1,2 @@
+command: git diff --check
+cleanup: no tmux installed; no tmux sessions to kill

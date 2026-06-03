@@ -55,11 +55,11 @@ data/common/items_common_v1.json
 ```
 
 이 파일은 placeholder 샘플이 아니라 `common run`에서 사용할 v1 후보 카탈로그다.
-현재 수록 범위는 v1 baseline에 Planet-like 족보 성장 직접 지원 아이템군과 Board-Line Ritual 38종을 더한 92개 아이템이며, 분포는 다음과 같다.
+현재 수록 범위는 v1 baseline에 Planet-like 족보 성장 직접 지원 아이템군과 Ritual/Item 확장 계열 37종을 더한 91개 아이템이며, 분포는 다음과 같다.
 
 ```text
 utility: 14
-consumable: 59
+consumable: 58
 equipment: 9
 passive_relic: 10
 ```
@@ -86,7 +86,8 @@ Balatro식 Tarot/Spectral 참고 축 중 `카드 파괴`, `카드 변형`, `문�
 
 현재 반영 상태:
 
-- `ritual_line_effect` op와 `ritualAction`으로 38종 Ritual이 catalog에 들어갔다.
+- `ritual_line_effect`는 31장이다. 그중 Fate 변환 16종은 선택 보드 선 5칸을 실제 타일 세트로 치환하는 고강도 변환 축이다.
+- `line_memory`는 `ritual_line_effect`가 아닌 별도 선 성장형 quickSlot으로 남긴다.
 - 전투 선택 UI는 보드 미니 프리뷰와 line choice chip을 쓰며, targeting/preview 상태는 저장하지 않는다.
 - `RummiScoringLineSummary`는 line의 실제 타일/cell, 점수 성립 여부, 점유 수를 함께 들고 다닌다.
 - `currentBoardLineSummaries()`와 `currentBoardLineSummaryFor(LineRef)`가 scoring line 밖의 보드 선도 다룬다.
@@ -149,7 +150,7 @@ AssetPaths.itemsCommon
 1. 현재 catalog 54개를 위 family로 다시 태깅한다.
 2. 실제 runtime에 이미 있는 효과와 문서 후보를 분리한다.
 3. Balatro 참고 축은 taxonomy로만 유지하고, 표시명/효과값/대상은 Rummi Poker 원본으로 작성한다.
-4. Board-Line Ritual 후보 pool은 38종을 현재 catalog에 넣은 상태다. 이제 draft/later 구분보다 runtime 안정성, UI 전달력, 출현/가격 밸런스로 관리한다.
+4. Ritual/Item 확장 계열 37종을 현재 catalog에 넣은 상태다. 이제 draft/later 구분보다 runtime 안정성, UI 전달력, 출현/가격 밸런스로 관리한다.
 5. 새 family를 더 늘리기 전에는 저장/복원, target UI, 정산/런 정보 표시, 풀런봇 로그와 시뮬레이터 재현 경로를 먼저 닫는다.
 
 ## 3. Item Subtype UI Contract
@@ -500,7 +501,7 @@ consumeItem
 
 [HISTORICAL DESIGN POOL]
 
-이 목록은 Board-Line Ritual 38종을 실제 catalog에 넣기 전의 설계 pool 기록이다. 현재는 `data/common/items_common_v1.json`에 38종이 반영됐으므로, 아래 Draft/Reserve/Later 표현은 최신 실행 상태가 아니라 후보를 넓게 잡았던 근거로만 본다.
+이 목록은 Board-Line Ritual 후보를 실제 catalog에 넣기 전의 설계 pool 기록이다. 현재는 `data/common/items_common_v1.json`에 Ritual/Item 확장 계열 37종이 반영됐으므로, 아래 Draft/Reserve/Later 표현은 최신 실행 상태가 아니라 후보를 넓게 잡았던 근거로만 본다.
 
 Balatro에서 참고할 축:
 
@@ -512,7 +513,7 @@ Rummi Poker에서는 위 효과를 그대로 복사하지 않는다. 손패 직�
 
 현재 최신 실행 상태:
 
-- 38종 모두 catalog/runtime/번역/이미지 경로에 들어갔다.
+- Ritual/Item 확장 계열 37종이 catalog/runtime/번역/이미지 경로에 들어갔다.
 - 다음 작업은 새 후보 확정이 아니라 V1 QA, result communication, run info/log visibility, market pool 계열 정체성, 가격/희귀도/출현 weight 정리다.
 
 당시 공통 규칙:

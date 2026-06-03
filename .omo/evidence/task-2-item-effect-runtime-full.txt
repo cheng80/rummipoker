@@ -1,0 +1,58 @@
+command: /Users/cheng80/flutter/bin/flutter test test/logic/item_effect_runtime_test.dart
+00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/item_effect_runtime_test.dart
+00:00 +0: ItemEffectRuntime useBattleItem applies board discard effect and emits events
+00:00 +1: ItemEffectRuntime useBattleItem requests explicit deck discard choice
+00:00 +2: ItemEffectRuntime useBattleItem does not open deck discard choice when deck is empty
+00:00 +3: ItemEffectRuntime consumeBattleDeckPeekItem consumes when deck window is revealed
+00:00 +4: ItemEffectRuntime useBattleDeckPeekDiscardItem discards chosen top-window tile
+00:00 +5: ItemEffectRuntime useBattleItem supports emergency draw when hand is empty
+00:00 +6: ItemEffectRuntime useBattleItem supports temporary hand capacity increase
+00:00 +7: ItemEffectRuntime useBattleItem requests scoring line selection for line memory
+00:00 +8: ItemEffectRuntime useBattleItemOnLine grows the selected scoring line rank
+00:00 +9: ItemEffectRuntime all ritual battle actions can resolve a selected target
+00:00 +10: ItemEffectRuntime ritual rank override can target an unfinished board line
+00:00 +11: ItemEffectRuntime fate cards transform selected board lines into scoring tile sets
+00:00 +12: ItemEffectRuntime royal fate uses number 1 color before highest tile color
+00:00 +13: ItemEffectRuntime ritual tile effects can target a non-scoring board line
+00:00 +14: ItemEffectRuntime ritual copy effects add scoring tile results to the next draw
+00:00 +15: ItemEffectRuntime color pruner removes off-color board tiles and queues same-color top draws
+00:00 +16: ItemEffectRuntime sacrifice line clears the line and places two copied tiles on deck top
+00:00 +17: ItemEffectRuntime ritual line score bonus still requires a scoring line
+00:00 +18: ItemEffectRuntime useBattleItem rejects line memory when no scoring line exists
+00:00 +19: ItemEffectRuntime useBattleItem caps hand capacity at five and reports no effect
+00:00 +20: ItemEffectRuntime useBattleItem applies board move effect and consumes stack
+00:00 +21: ItemEffectRuntime useBattleItem caps board discard at supported maximum without consume
+00:00 +22: ItemEffectRuntime useBattleItem caps hand discard at supported maximum without consume
+00:00 +23: ItemEffectRuntime useBattleItem caps board move at supported maximum without consume
+00:00 +24: ItemEffectRuntime station start board move applies only available amount before cap
+00:00 +25: ItemEffectRuntime useBattleItem queues next board move slide bonus and consumes stack
+00:00 +26: ItemEffectRuntime useBattleItem does not consume slide wax when no board move remains
+00:00 +27: ItemEffectRuntime successful board move consumes queued slide bonus marker
+00:00 +28: ItemEffectRuntime useBattleItem queues next confirm chips modifier and consumes stack
+00:00 +29: ItemEffectRuntime useBattleItem does not consume next-confirm item when one is queued
+00:00 +30: ItemEffectRuntime useBattleItem undoes last board move and consumes stack
+00:00 +31: ItemEffectRuntime useBattleItem does not consume undo item when no move history exists
+00:00 +32: ItemEffectRuntime station start item applies max hand size with discard penalty
+00:00 +33: ItemEffectRuntime station start hand capacity item does not apply penalty at cap
+00:00 +34: ItemEffectRuntime owned station start items apply active hand size and move effects
+00:00 +35: ItemEffectRuntime owned confirm modifier equipment queues at station start
+00:00 +36: ItemEffectRuntime owned quick slot confirm consumables are not queued at station start
+00:00 +37: ItemEffectRuntime market reroll item queues free reroll and consumes inventory stack
+00:00 +38: ItemEffectRuntime market reroll discount item uses its amount instead of making reroll free
+00:00 +39: ItemEffectRuntime market use item gains gold and consumes inventory stack
+00:00 +40: ItemEffectRuntime market use trade ticket advances item offer reroll offset
+00:00 +41: ItemEffectRuntime market use item respects low-gold threshold
+00:00 +42: ItemEffectRuntime applyMarketUseItem directly adds hand rank growth progress
+00:00 +43: ItemEffectRuntime market buy item queues category discount and consumes on purchase
+00:00 +44: ItemEffectRuntime sell jester item reports sell price bonus modifier
+00:00 +45: ItemEffectRuntime expiry guard item rescues the first combat lock once
+00:00 +46: ItemEffectRuntime owned enter market items queue first reroll modifier
+00:00 +47: ItemEffectRuntime legacy market build item offer slot fails at supported cap
+00:00 +48: ItemEffectRuntime owned enter market gain-gold item applies immediately
+00:00 +49: ItemEffectRuntime owned boss clear gain-gold item applies on boss reward hook
+00:00 +50: ItemEffectRuntime owned boss trophy queues next market jester offer slot
+00:00 +51: ItemEffectRuntime boss trophy queues only available jester offer slots before cap
+00:00 +52: ItemEffectRuntime boss trophy fails when next jester offer slots are already capped
+00:00 +53: ItemEffectRuntime settlement item returns settlement modifier event
+00:00 +54: ItemEffectRuntime catalogEffectRows assigns every v1 item to a runtime handler
+00:00 +55: All tests passed!
