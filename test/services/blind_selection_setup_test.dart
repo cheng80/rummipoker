@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
@@ -140,7 +141,7 @@ void main() {
       ]);
     });
 
-    test('run seed가 있으면 station별 boss pool이 3~4개로 고르게 분산된다', () {
+    test('run seed가 있으면 station별 boss pool이 5~7개로 분산된다', () {
       for (var station = 1; station <= 8; station++) {
         final ids = <String>{};
         for (var seed = 1; seed <= 64; seed++) {
@@ -154,9 +155,127 @@ void main() {
           ids.add(boss.bossModifier!.id);
         }
 
-        expect(ids.length, greaterThanOrEqualTo(3), reason: 'S$station');
-        expect(ids.length, lessThanOrEqualTo(4), reason: 'S$station');
+        expect(ids.length, greaterThanOrEqualTo(5), reason: 'S$station');
+        expect(ids.length, lessThanOrEqualTo(7), reason: 'S$station');
       }
+    });
+
+    test('보드 금지 boss modifier는 모두 5칸 이하만 막는다', () {
+      final boardBlockers = RummiBossModifier.allKnownModifiers.where(
+        (modifier) =>
+            modifier.category == RummiBossModifierCategory.boardCellBlock,
+      );
+
+      expect(boardBlockers.length, 14);
+      for (final modifier in boardBlockers) {
+        expect(
+          modifier.blockedCells.length,
+          lessThanOrEqualTo(5),
+          reason: modifier.id,
+        );
+      }
+    });
+
+    test('보드 금지 boss modifier는 난이도 정책에 따라 pool에 분산된다', () {
+      final stationBlocks = <int, Set<String>>{};
+      for (var station = 1; station <= 8; station++) {
+        final ids = <String>{};
+        for (var seed = 1; seed <= 128; seed++) {
+          final boss = BlindSelectionSetup.resolveSpec(
+            tier: BlindTier.boss,
+            stationIndex: station,
+            difficulty: NewRunDifficulty.standard,
+            runSeed: seed,
+            ruleset: RummiRuleset.currentDefaults,
+          ).bossModifier!;
+          if (boss.category == RummiBossModifierCategory.boardCellBlock) {
+            ids.add(boss.id);
+          }
+        }
+        stationBlocks[station] = ids;
+      }
+
+      expect(stationBlocks[1], isEmpty);
+      expect(stationBlocks[2], isEmpty);
+      expect(stationBlocks[3], {
+        RummiBossModifier.blockRightColumn.id,
+        RummiBossModifier.blockTopRow.id,
+      });
+      expect(stationBlocks[4], {
+        RummiBossModifier.blockLeftColumn.id,
+        RummiBossModifier.blockBottomRow.id,
+        RummiBossModifier.blockFourCorners.id,
+      });
+      expect(stationBlocks[5], {
+        RummiBossModifier.blockCenterRow.id,
+        RummiBossModifier.blockCenterColumn.id,
+      });
+      for (final station in [6, 7, 8]) {
+        expect(stationBlocks[station], {
+          RummiBossModifier.blockMainDiagonal.id,
+          RummiBossModifier.blockAntiDiagonal.id,
+        });
+      }
+
+      final postponed = {
+        RummiBossModifier.blockCenterCross.id,
+        RummiBossModifier.blockCornersCenter.id,
+        RummiBossModifier.blockInnerX.id,
+        RummiBossModifier.blockCheckerA.id,
+        RummiBossModifier.blockCheckerB.id,
+      };
+      expect(
+        stationBlocks.values
+            .expand((ids) => ids)
+            .toSet()
+            .intersection(postponed),
+        isEmpty,
+      );
+    });
+
+    test('도전 모드 보드 금지 boss modifier는 S1부터 고난도 패턴까지 연다', () {
+      final stationBlocks = <int, Set<String>>{};
+      for (var station = 1; station <= 8; station++) {
+        final ids = <String>{};
+        for (var seed = 1; seed <= 128; seed++) {
+          final boss = BlindSelectionSetup.resolveSpec(
+            tier: BlindTier.boss,
+            stationIndex: station,
+            difficulty: NewRunDifficulty.challenge,
+            runSeed: seed,
+            ruleset: RummiRuleset.currentDefaults,
+          ).bossModifier!;
+          if (boss.category == RummiBossModifierCategory.boardCellBlock) {
+            ids.add(boss.id);
+          }
+        }
+        stationBlocks[station] = ids;
+      }
+
+      expect(stationBlocks[1], {
+        RummiBossModifier.blockRightColumn.id,
+        RummiBossModifier.blockTopRow.id,
+      });
+      expect(stationBlocks[2], {RummiBossModifier.blockLeftColumn.id});
+      expect(stationBlocks[3], {RummiBossModifier.blockBottomRow.id});
+      expect(stationBlocks[4], {
+        RummiBossModifier.blockFourCorners.id,
+        RummiBossModifier.blockCenterColumn.id,
+      });
+      expect(stationBlocks[5], {RummiBossModifier.blockCenterRow.id});
+      expect(stationBlocks[6], {
+        RummiBossModifier.blockMainDiagonal.id,
+        RummiBossModifier.blockAntiDiagonal.id,
+      });
+      expect(stationBlocks[7], {
+        RummiBossModifier.blockCenterCross.id,
+        RummiBossModifier.blockCornersCenter.id,
+      });
+      expect(stationBlocks[8], {
+        RummiBossModifier.blockInnerX.id,
+        RummiBossModifier.blockCheckerA.id,
+        RummiBossModifier.blockCheckerB.id,
+      });
     });
 
     test('boss 클리어 후 blind select runtime은 다음 station small 시작 상태로 리셋된다', () {

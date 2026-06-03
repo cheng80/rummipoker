@@ -291,6 +291,12 @@ class _GameViewState extends ConsumerState<GameView>
           _pausedLifecycleDuringStageFlow = false;
           break;
         }
+        if (_stageFlowPhase != GameStageFlowPhase.none) {
+          _pendingLifecycleOptions = false;
+          _pausedLifecycleDuringStageFlow = false;
+          _resumePresentation();
+          break;
+        }
         if (_pendingLifecycleOptions) {
           _pendingLifecycleOptions = false;
           WidgetsBinding.instance.addPostFrameCallback((_) {

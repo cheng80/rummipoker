@@ -34,9 +34,17 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
+
+  testWidgets('GameBoardGrid shows boss blocked cell marker', (tester) async {
+    await tester.pumpWidget(_host(RummiBoard(), blockedCellKeys: {'0:4'}));
+    await tester.pump();
+
+    expect(find.byType(GameBoardBlockedCellBadge), findsOneWidget);
+    expect(find.text('X'), findsOneWidget);
+  });
 }
 
-Widget _host(RummiBoard board) {
+Widget _host(RummiBoard board, {Set<String> blockedCellKeys = const {}}) {
   return MaterialApp(
     home: Scaffold(
       body: Center(
@@ -46,6 +54,7 @@ Widget _host(RummiBoard board) {
             board: board,
             scoringCells: const {},
             constrainedScoringCells: const {},
+            blockedCellKeys: blockedCellKeys,
             activeSettlementCells: const {},
             settlementBoardSnapshot: const {},
             selectedRow: null,

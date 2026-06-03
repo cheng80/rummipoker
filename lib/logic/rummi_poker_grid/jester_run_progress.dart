@@ -34,12 +34,12 @@ class RummiRunProgress {
         const <RummiSlotUnlockKind>{},
     this.itemInventory = const RunInventoryState(),
     this.marketModifiers = const RummiMarketModifierState(),
-    this.seenMarketJesterIds = const <String>{},
-    this.seenMarketItemIds = const <String>{},
-    this.boughtJesterIds = const <String>{},
-    this.boughtItemIds = const <String>{},
-    this.seenBossModifierIds = const <String>{},
-    this.clearedStationKeys = const <String>{},
+    Set<String> seenMarketJesterIds = const <String>{},
+    Set<String> seenMarketItemIds = const <String>{},
+    Set<String> boughtJesterIds = const <String>{},
+    Set<String> boughtItemIds = const <String>{},
+    Set<String> seenBossModifierIds = const <String>{},
+    Set<String> clearedStationKeys = const <String>{},
   }) {
     this.unlockedJesterSlots = (unlockedJesterSlots ?? baseUnlockedJesterSlots)
         .clamp(baseUnlockedJesterSlots, maxJesterSlots)
@@ -97,6 +97,12 @@ class RummiRunProgress {
       );
     }
     _pendingSlotUnlockPresentations.addAll(pendingSlotUnlockPresentations);
+    this.seenMarketJesterIds = Set<String>.from(seenMarketJesterIds);
+    this.seenMarketItemIds = Set<String>.from(seenMarketItemIds);
+    this.boughtJesterIds = Set<String>.from(boughtJesterIds);
+    this.boughtItemIds = Set<String>.from(boughtItemIds);
+    this.seenBossModifierIds = Set<String>.from(seenBossModifierIds);
+    this.clearedStationKeys = Set<String>.from(clearedStationKeys);
   }
 
   static const int maxJesterSlots = 5;

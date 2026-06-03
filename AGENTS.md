@@ -468,3 +468,7 @@ Installed release: `0.2.0`
 - 다음 전투, 다음 Market, 다음 구매/리롤, 다음 확정처럼 지연 발동하는 아이템은 소모/예약 시점에 언제 발동하는지 명시하고, 실제 발동 시점에도 어떤 아이템이 발동했는지와 효과/소모 여부를 별도 피드백으로 보여준다.
 - 여러 지연 발동 아이템이 같은 시점에 동시에 발동하면 개별 toast를 연속으로 빠르게 띄우지 않는다. 하나의 요약 표시 안에 아이템명과 효과/소모 여부를 묶고, 유저가 읽을 수 있을 만큼 유지 시간을 확보한다.
 - 덱 확인/타일 선택 dialog의 후보 타일은 선택 전부터 accent/highlight를 켜지 않는다. 선택 상태는 별도 border, label, motion으로만 표시해 후보 타일 안에 노란 사각형처럼 보이는 pre-highlight가 남지 않게 한다.
+- 보스전 보드 금지 패턴을 제안하거나 구현할 때는 `0` 칸 수를 실제로 세어 5칸 이하인지 먼저 검증한다. 예시 마스크와 구현 좌표가 다르면 그 차이를 명시하고, 7칸 이상 패턴을 5칸 타입처럼 부르지 않는다.
+- 정산/스테이지 클리어 연출 중 lifecycle inactive/paused 후 resumed가 들어오면 옵션창 예약보다 진행 중인 presentation resume을 우선한다. 정산 delay가 `_presentationPaused` completer를 기다린 채 멈추지 않도록 lifecycle 회귀 테스트를 함께 유지한다.
+- `RummiRunProgress.restore`처럼 런타임 중 add/update 되는 collection은 const/unmodifiable 입력을 그대로 필드에 대입하지 않고 mutable copy로 보관한다.
+- 보스전 보드 금지 패턴은 표준/완화 runtime boss pool 기준으로 1~7번만 S3~S5에, 주대각선/역대각선 8~9번만 S6+에 출현시킨다. 도전 모드는 S1부터 보드 금지를 열고 S7~S8에 10~14번 고난도 패턴도 출현시킨다.

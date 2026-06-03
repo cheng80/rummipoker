@@ -316,6 +316,7 @@ Iterable<(int, int)> _constrainedPreviewCells({
       yield* line.contributingCells;
     case RummiBossModifierCategory.repeatHandRankWeaken:
     case RummiBossModifierCategory.singleHandRankPressure:
+    case RummiBossModifierCategory.boardCellBlock:
       return;
   }
 }

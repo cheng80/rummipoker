@@ -177,4 +177,22 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     description: '대각선 약화 보스전 / 확정 가능한 대각선 표시 검증용',
     builder: _buildBossDiagonalConstraintPreview,
   ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.bossBoardCellBlockPreview,
+    label: 'Boss 보드칸 금지',
+    description: '보드 금지칸 X 표시와 배치 제한 검증용',
+    builder: _buildBossBoardCellBlockPreview,
+  ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.bossBoardCellBlockRightColumnPreview,
+    label: 'Boss 오른쪽 열 금지',
+    description: '오른쪽 열 금지 X 표시와 배치 제한 검증용',
+    builder: _buildBossBoardCellBlockRightColumnPreview,
+  ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.bossBoardCellBlockMainDiagonalPreview,
+    label: 'Boss 주대각선 금지',
+    description: '주대각선 금지 X 표시와 배치 제한 검증용',
+    builder: _buildBossBoardCellBlockMainDiagonalPreview,
+  ),
 ];

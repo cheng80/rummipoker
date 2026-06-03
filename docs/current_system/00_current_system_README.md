@@ -55,6 +55,7 @@ GCSE 역할: `Context`
 - 저장/복원 구조와 schema 보호 기준
 - 현재 데이터 카탈로그와 loader 위치
 - 현재 Jester/Q-Slot/Passive/Tool/Gear 사람이 읽는 표: `CURRENT_CARD_CATALOG_TABLE.md`
+- 현재 보스전 보드 칸 금지 패턴: `BOSS_BOARD_CELL_BLOCK_PATTERNS.md`
 - 현재 구현된 기능과 미구현/부분 구현 기능
 - 코드 변경 전 확인해야 할 테스트 또는 smoke script
 

@@ -16,6 +16,7 @@ class GameBoardGrid extends StatefulWidget {
     required this.onTapCell,
     required this.onLongPressTile,
     this.constrainedCells = const {},
+    this.blockedCellKeys = const {},
     this.lineSelectionLines = const [],
     this.selectedLineRef,
     this.onTapLine,
@@ -30,6 +31,7 @@ class GameBoardGrid extends StatefulWidget {
   final Set<String> scoringCells;
   final Set<String> constrainedScoringCells;
   final Set<String> constrainedCells;
+  final Set<String> blockedCellKeys;
   final List<RummiScoringLineSummary> lineSelectionLines;
   final LineRef? selectedLineRef;
   final ValueChanged<RummiScoringLineSummary>? onTapLine;
@@ -153,6 +155,8 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                         final constrained = widget.constrainedCells.contains(
                           cellKey,
                         );
+                        final placementBlocked = widget.blockedCellKeys
+                            .contains(cellKey);
                         final settlementActive = widget.activeSettlementCells
                             .contains(cellKey);
                         final isMoveSource =
@@ -160,11 +164,13 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                             widget.moveSourceRow == row &&
                             widget.moveSourceCol == col;
                         final isMoveAvailable =
-                            widget.boardMoveMode && tile == null;
+                            widget.boardMoveMode &&
+                            tile == null &&
+                            !placementBlocked;
                         final isMoveLocked =
                             widget.boardMoveMode &&
-                            tile != null &&
-                            !isMoveSource;
+                            (placementBlocked ||
+                                (tile != null && !isMoveSource));
                         Widget child = GameBoardCell(
                           key: ValueKey('board-cell-$row-$col'),
                           tile: tile,
@@ -172,6 +178,7 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                           scoring: scoring,
                           constrainedScoring: constrainedScoring,
                           constrained: constrained,
+                          placementBlocked: placementBlocked,
                           settlementActive: settlementActive,
                           moveSource: isMoveSource,
                           moveAvailable: isMoveAvailable,
@@ -810,6 +817,7 @@ class GameBoardCell extends StatelessWidget {
     required this.scoring,
     required this.constrainedScoring,
     required this.constrained,
+    required this.placementBlocked,
     required this.settlementActive,
     required this.moveSource,
     required this.moveAvailable,
@@ -823,6 +831,7 @@ class GameBoardCell extends StatelessWidget {
   final bool scoring;
   final bool constrainedScoring;
   final bool constrained;
+  final bool placementBlocked;
   final bool settlementActive;
   final bool moveSource;
   final bool moveAvailable;
@@ -836,6 +845,8 @@ class GameBoardCell extends StatelessWidget {
         ? GameUiPalette.boardMoveSource
         : moveAvailable
         ? GameUiPalette.boardMoveAvailable
+        : placementBlocked
+        ? GameUiPalette.bossWeakenPreview
         : moveLocked
         ? GameUiPalette.textPrimary.withValues(alpha: 0.18)
         : selected
@@ -870,6 +881,8 @@ class GameBoardCell extends StatelessWidget {
                       )
                     : moveLocked
                     ? GameUiPalette.boardMoveLockedFill.withValues(alpha: 0.78)
+                    : placementBlocked
+                    ? GameUiPalette.surfaceDangerDeep.withValues(alpha: 0.76)
                     : settlementActive
                     ? GameUiPalette.boardSettlementFill
                     : GameUiPalette.boardDefaultFill.withValues(alpha: 0.88),
@@ -908,7 +921,9 @@ class GameBoardCell extends StatelessWidget {
                     : null,
               ),
               child: tile == null
-                  ? moveAvailable
+                  ? placementBlocked
+                        ? GameBoardBlockedCellBadge(side: side)
+                        : moveAvailable
                         ? Center(
                             child: Icon(
                               Icons.open_with_rounded,
@@ -952,6 +967,37 @@ class GameBoardCell extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class GameBoardBlockedCellBadge extends StatelessWidget {
+  const GameBoardBlockedCellBadge({super.key, required this.side});
+
+  final double side;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Center(
+        child: Text(
+          'X',
+          maxLines: 1,
+          style: TextStyle(
+            color: GameUiPalette.bossWeakenPreview.withValues(alpha: 0.96),
+            fontSize: side * 0.58,
+            fontWeight: FontWeight.w900,
+            height: 0.9,
+            shadows: [
+              Shadow(
+                color: GameUiPalette.ink.withValues(alpha: 0.72),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

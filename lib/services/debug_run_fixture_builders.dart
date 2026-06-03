@@ -1325,11 +1325,70 @@ ActiveRunRuntimeState _buildBossDiagonalConstraintPreview() {
   );
 }
 
+ActiveRunRuntimeState _buildBossBoardCellBlockPreview() {
+  final board = RummiBoard()
+    ..setCell(1, 0, _tile(TileColor.red, 4))
+    ..setCell(1, 1, _tile(TileColor.blue, 5))
+    ..setCell(1, 2, _tile(TileColor.black, 6))
+    ..setCell(1, 3, _tile(TileColor.yellow, 7))
+    ..setCell(1, 4, _tile(TileColor.red, 8))
+    ..setCell(3, 2, _tile(TileColor.red, 8))
+    ..setCell(4, 1, _tile(TileColor.blue, 9))
+    ..setCell(4, 2, _tile(TileColor.black, 10))
+    ..setCell(4, 3, _tile(TileColor.yellow, 11));
+  return _buildBossLineConstraintPreview(
+    seed: 2026050404,
+    stageIndex: 7,
+    board: board,
+    modifier: RummiBossModifier.blockCornersCenter,
+    targetScore: 60,
+  );
+}
+
+ActiveRunRuntimeState _buildBossBoardCellBlockRightColumnPreview() {
+  final board = RummiBoard()
+    ..setCell(0, 0, _tile(TileColor.red, 4))
+    ..setCell(1, 0, _tile(TileColor.blue, 5))
+    ..setCell(2, 0, _tile(TileColor.black, 6))
+    ..setCell(3, 0, _tile(TileColor.yellow, 7))
+    ..setCell(4, 0, _tile(TileColor.red, 8))
+    ..setCell(1, 2, _tile(TileColor.yellow, 10))
+    ..setCell(3, 3, _tile(TileColor.black, 12));
+  return _buildBossLineConstraintPreview(
+    seed: 2026050405,
+    stageIndex: 7,
+    board: board,
+    modifier: RummiBossModifier.blockRightColumn,
+    targetScore: 60,
+  );
+}
+
+ActiveRunRuntimeState _buildBossBoardCellBlockMainDiagonalPreview() {
+  final board = RummiBoard()
+    ..setCell(0, 1, _tile(TileColor.red, 4))
+    ..setCell(0, 2, _tile(TileColor.blue, 4))
+    ..setCell(0, 3, _tile(TileColor.black, 5))
+    ..setCell(0, 4, _tile(TileColor.yellow, 5))
+    ..setCell(1, 0, _tile(TileColor.black, 6))
+    ..setCell(1, 3, _tile(TileColor.yellow, 7))
+    ..setCell(2, 4, _tile(TileColor.red, 8))
+    ..setCell(3, 1, _tile(TileColor.blue, 9))
+    ..setCell(4, 2, _tile(TileColor.black, 10));
+  return _buildBossLineConstraintPreview(
+    seed: 2026050406,
+    stageIndex: 7,
+    board: board,
+    modifier: RummiBossModifier.blockMainDiagonal,
+    targetScore: 60,
+  );
+}
+
 ActiveRunRuntimeState _buildBossLineConstraintPreview({
   required int seed,
   required int stageIndex,
   required RummiBoard board,
   required RummiBossModifier modifier,
+  int targetScore = 285,
 }) {
   final session = RummiPokerGridSession.restored(
     runSeed: seed,
@@ -1337,7 +1396,7 @@ ActiveRunRuntimeState _buildBossLineConstraintPreview({
     maxHandSize: 1,
     runRandomState: SeededRandom(seed).state,
     blind: RummiBlindState(
-      targetScore: 285,
+      targetScore: targetScore,
       boardDiscardsRemaining: 4,
       handDiscardsRemaining: 2,
       scoreTowardBlind: 0,

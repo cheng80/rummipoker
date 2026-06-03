@@ -303,6 +303,49 @@ void main() {
     expect(session.board.cellAt(3, 3), isNull);
   });
 
+  test('보스 금지칸에는 손패 타일을 놓을 수 없다', () {
+    final tile = t(TileColor.red, 7);
+    final session = RummiPokerGridSession(
+      runSeed: 306,
+      blind: RummiBlindState(
+        targetScore: 9999,
+        bossModifier: RummiBossModifier.blockRightColumn,
+      ),
+    );
+    session.hand.add(tile);
+
+    expect(session.tryPlaceFromHand(tile, 0, 4), isFalse);
+    expect(session.hand, contains(tile));
+    expect(session.board.cellAt(0, 4), isNull);
+
+    expect(session.tryPlaceFromHand(tile, 0, 3), isTrue);
+    expect(session.hand, isEmpty);
+    expect(session.board.cellAt(0, 3), tile);
+  });
+
+  test('보드 이동 목적지가 보스 금지칸이면 실패한다', () {
+    final board = RummiBoard();
+    final source = t(TileColor.blue, 8);
+    board.setCell(0, 0, source);
+    final session = RummiPokerGridSession(
+      runSeed: 307,
+      blind: RummiBlindState(
+        targetScore: 9999,
+        boardMovesRemaining: 1,
+        bossModifier: RummiBossModifier.blockRightColumn,
+      ),
+      board: board,
+    );
+
+    expect(
+      session.tryMoveBoardTile(fromRow: 0, fromCol: 0, toRow: 2, toCol: 4),
+      BoardMoveFailReason.destinationBlockedByBoss,
+    );
+    expect(session.blind.boardMovesRemaining, 1);
+    expect(session.board.cellAt(0, 0), source);
+    expect(session.board.cellAt(2, 4), isNull);
+  });
+
   test('덱이 비고 손패/확정 줄도 없을 때만 drawPileExhausted', () {
     final emptyDeck = PokerDeck.shuffled(Random(1), <Tile>[]);
     final session = RummiPokerGridSession(
@@ -2325,6 +2368,35 @@ void main() {
     expect(restored.currentStationBlindTierIndex, 1);
     expect(snapshot.stateValueForSlot(0), 1);
     expect(snapshot.playedCountForRank(RummiHandRank.straight), 1);
+  });
+
+  test('RummiRunProgress.restore 기본 이력 set은 이후 갱신 가능하다', () {
+    final restored = RummiRunProgress.restore(
+      stageIndex: 7,
+      gold: 30,
+      rerollCost: RummiRunProgress.shopBaseRerollCost,
+      ownedJesters: const [],
+      shopOffers: const [],
+      statefulValuesBySlot: const {},
+      playedHandCounts: const {},
+    );
+
+    restored.recordSeenMarketItems(['item_ticket']);
+    restored.recordSeenBossModifier(RummiBossModifier.blockCornersCenter.id);
+    restored.recordClearedStation(7);
+    restored.seenMarketJesterIds.add('run_call');
+    restored.boughtJesterIds.add('run_call');
+    restored.boughtItemIds.add('item_ticket');
+
+    expect(restored.seenMarketItemIds, contains('item_ticket'));
+    expect(
+      restored.seenBossModifierIds,
+      contains(RummiBossModifier.blockCornersCenter.id),
+    );
+    expect(restored.clearedStationKeys, contains('station_7'));
+    expect(restored.seenMarketJesterIds, contains('run_call'));
+    expect(restored.boughtJesterIds, contains('run_call'));
+    expect(restored.boughtItemIds, contains('item_ticket'));
   });
 
   test('fromJson: originalSuitRefs만으로 tile_color 색을 합성한다', () {

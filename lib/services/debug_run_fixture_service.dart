@@ -91,6 +91,12 @@ class DebugRunFixtureService {
       'boss_column_constraint_preview';
   static const String bossDiagonalConstraintPreview =
       'boss_diagonal_constraint_preview';
+  static const String bossBoardCellBlockPreview =
+      'boss_board_cell_block_preview';
+  static const String bossBoardCellBlockRightColumnPreview =
+      'boss_board_cell_block_right_column_preview';
+  static const String bossBoardCellBlockMainDiagonalPreview =
+      'boss_board_cell_block_main_diagonal_preview';
 
   static List<DebugRunFixtureDefinition> get fixtures =>
       List<DebugRunFixtureDefinition>.unmodifiable(_debugRunFixtures);

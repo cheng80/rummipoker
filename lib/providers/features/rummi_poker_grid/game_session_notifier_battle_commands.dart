@@ -15,6 +15,9 @@ mixin GameSessionNotifierBattleCommands
 
     final selectedHand = state.selectedHandTile;
     if (selectedHand != null) {
+      if (session.blind.bossModifier?.blocksBoardCell(row, col) ?? false) {
+        return const BattleBoardTapResult.fail('Boss 제약 칸에는 놓을 수 없습니다.');
+      }
       final placed = tryPlaceTile(selectedHand, row, col);
       if (!placed) {
         return const BattleBoardTapResult.fail('이 칸에 둘 수 없습니다.');
@@ -257,6 +260,8 @@ mixin GameSessionNotifierBattleCommands
         BoardMoveFailReason.noBoardMovesLeft => '보드 이동 횟수가 없습니다.',
         BoardMoveFailReason.sourceCellEmpty => '이동할 타일이 없습니다.',
         BoardMoveFailReason.destinationOccupied => '이동할 칸이 비어 있지 않습니다.',
+        BoardMoveFailReason.destinationBlockedByBoss =>
+          'Boss 제약 칸에는 이동할 수 없습니다.',
       };
     }
     _replaceState(

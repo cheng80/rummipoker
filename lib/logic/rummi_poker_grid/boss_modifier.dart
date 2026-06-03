@@ -11,6 +11,7 @@ enum RummiBossModifierCategory {
   confirmCountWeaken,
   repeatHandRankWeaken,
   singleHandRankPressure,
+  boardCellBlock,
 }
 
 class RummiBossModifier {
@@ -23,25 +24,15 @@ class RummiBossModifier {
     required this.scoreMultiplier,
     this.affectedTileColors = const [],
     this.affectedLineKinds = const [],
+    this.blockedCells = const [],
     this.firstAffectedConfirmOrdinal = 3,
   });
 
   factory RummiBossModifier.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String?;
-    if (id == redDampener.id) return redDampener;
-    if (id == blueDampener.id) return blueDampener;
-    if (id == blackDampener.id) return blackDampener;
-    if (id == yellowDampener.id) return yellowDampener;
-    if (id == rowDampener.id) return rowDampener;
-    if (id == columnDampener.id) return columnDampener;
-    if (id == diagonalDampener.id) return diagonalDampener;
-    if (id == faceDampener.id) return faceDampener;
-    if (id == allScoreDampener.id) return allScoreDampener;
-    if (id == firstConfirmTax.id) return firstConfirmTax;
-    if (id == confirmCountTax.id) return confirmCountTax;
-    if (id == confirmLimitTax.id) return confirmLimitTax;
-    if (id == repeatRankPressure.id) return repeatRankPressure;
-    if (id == singleRankPressure.id) return singleRankPressure;
+    for (final modifier in allKnownModifiers) {
+      if (id == modifier.id) return modifier;
+    }
     return RummiBossModifier(
       id: id ?? redDampener.id,
       category: RummiBossModifierCategory.values.byName(
@@ -58,6 +49,17 @@ class RummiBossModifier {
       affectedLineKinds:
           (json['affectedLineKinds'] as List<dynamic>?)
               ?.map((value) => LineKind.values.byName(value as String))
+              .toList(growable: false) ??
+          const [],
+      blockedCells:
+          (json['blockedCells'] as List<dynamic>?)
+              ?.map((value) {
+                final cell = Map<String, dynamic>.from(value as Map);
+                return (
+                  (cell['row'] as num).toInt(),
+                  (cell['col'] as num).toInt(),
+                );
+              })
               .toList(growable: false) ??
           const [],
       scoreMultiplier:
@@ -165,6 +167,146 @@ class RummiBossModifier {
     scoreMultiplier: 0.7,
   );
 
+  static const blockRightColumn = RummiBossModifier(
+    id: 'board_block_right_column_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '오른쪽 열 금지',
+    ruleText: '오른쪽 끝 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 4), (1, 4), (2, 4), (3, 4), (4, 4)],
+  );
+
+  static const blockTopRow = RummiBossModifier(
+    id: 'board_block_top_row_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '위쪽 행 금지',
+    ruleText: '맨 위 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)],
+  );
+
+  static const blockLeftColumn = RummiBossModifier(
+    id: 'board_block_left_column_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '왼쪽 열 금지',
+    ruleText: '왼쪽 끝 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
+  );
+
+  static const blockBottomRow = RummiBossModifier(
+    id: 'board_block_bottom_row_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '아래쪽 행 금지',
+    ruleText: '맨 아래 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(4, 0), (4, 1), (4, 2), (4, 3), (4, 4)],
+  );
+
+  static const blockCornersCenter = RummiBossModifier(
+    id: 'board_block_corners_center_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '모서리와 중심 금지',
+    ruleText: '네 모서리와 중앙 칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 0), (0, 4), (2, 2), (4, 0), (4, 4)],
+  );
+
+  static const blockInnerX = RummiBossModifier(
+    id: 'board_block_inner_x_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '내부 X 금지',
+    ruleText: '안쪽 X 형태 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(1, 1), (1, 3), (2, 2), (3, 1), (3, 3)],
+  );
+
+  static const blockFourCorners = RummiBossModifier(
+    id: 'board_block_four_corners_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '네 모서리 금지',
+    ruleText: '네 모서리 칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 0), (0, 4), (4, 0), (4, 4)],
+  );
+
+  static const blockCenterColumn = RummiBossModifier(
+    id: 'board_block_center_column_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '가운데 열 금지',
+    ruleText: '가운데 세로 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2)],
+  );
+
+  static const blockCenterRow = RummiBossModifier(
+    id: 'board_block_center_row_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '가운데 행 금지',
+    ruleText: '가운데 가로 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)],
+  );
+
+  static const blockMainDiagonal = RummiBossModifier(
+    id: 'board_block_main_diagonal_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '주대각선 금지',
+    ruleText: '왼쪽 위에서 오른쪽 아래로 이어지는 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)],
+  );
+
+  static const blockAntiDiagonal = RummiBossModifier(
+    id: 'board_block_anti_diagonal_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '역대각선 금지',
+    ruleText: '오른쪽 위에서 왼쪽 아래로 이어지는 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 4), (1, 3), (2, 2), (3, 1), (4, 0)],
+  );
+
+  static const blockCenterCross = RummiBossModifier(
+    id: 'board_block_center_cross_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '중앙 십자 금지',
+    ruleText: '중앙을 가르는 십자 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(1, 2), (2, 1), (2, 2), (2, 3), (3, 2)],
+  );
+
+  static const blockCheckerA = RummiBossModifier(
+    id: 'board_block_checker_a_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '체커 A 금지',
+    ruleText: '흩어진 5칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(0, 0), (0, 4), (2, 1), (2, 3), (4, 2)],
+  );
+
+  static const blockCheckerB = RummiBossModifier(
+    id: 'board_block_checker_b_v1',
+    category: RummiBossModifierCategory.boardCellBlock,
+    title: '체커 B 금지',
+    ruleText: '안쪽으로 흩어진 4칸에는 타일을 놓을 수 없습니다.',
+    markerText: '금지',
+    scoreMultiplier: 1,
+    blockedCells: [(1, 1), (1, 3), (3, 1), (3, 3)],
+  );
+
   static const confirmCountTax = RummiBossModifier(
     id: 'confirm_count_tax_v2',
     category: RummiBossModifierCategory.confirmCountWeaken,
@@ -209,8 +351,40 @@ class RummiBossModifier {
   final String markerText;
   final List<TileColor> affectedTileColors;
   final List<LineKind> affectedLineKinds;
+  final List<(int row, int col)> blockedCells;
   final double scoreMultiplier;
   final int firstAffectedConfirmOrdinal;
+
+  static const List<RummiBossModifier> allKnownModifiers = [
+    redDampener,
+    blueDampener,
+    blackDampener,
+    yellowDampener,
+    rowDampener,
+    columnDampener,
+    diagonalDampener,
+    faceDampener,
+    allScoreDampener,
+    firstConfirmTax,
+    confirmCountTax,
+    confirmLimitTax,
+    repeatRankPressure,
+    singleRankPressure,
+    blockRightColumn,
+    blockTopRow,
+    blockLeftColumn,
+    blockBottomRow,
+    blockCornersCenter,
+    blockInnerX,
+    blockFourCorners,
+    blockCenterColumn,
+    blockCenterRow,
+    blockMainDiagonal,
+    blockAntiDiagonal,
+    blockCenterCross,
+    blockCheckerA,
+    blockCheckerB,
+  ];
 
   bool affectsTile(Tile tile) {
     return affectedTileColors.contains(tile.color) ||
@@ -221,6 +395,11 @@ class RummiBossModifier {
   bool affectsAnyTile(Iterable<Tile> tiles) => tiles.any(affectsTile);
 
   bool affectsLineKind(LineKind kind) => affectedLineKinds.contains(kind);
+
+  bool blocksBoardCell(int row, int col) {
+    return category == RummiBossModifierCategory.boardCellBlock &&
+        blockedCells.any((cell) => cell.$1 == row && cell.$2 == col);
+  }
 
   bool affectsConfirmOrdinal(int ordinal) {
     return switch (category) {
@@ -257,6 +436,9 @@ class RummiBossModifier {
     'markerText': markerText,
     'affectedTileColors': [for (final color in affectedTileColors) color.name],
     'affectedLineKinds': [for (final kind in affectedLineKinds) kind.name],
+    'blockedCells': [
+      for (final cell in blockedCells) {'row': cell.$1, 'col': cell.$2},
+    ],
     'scoreMultiplier': scoreMultiplier,
     'firstAffectedConfirmOrdinal': firstAffectedConfirmOrdinal,
   };

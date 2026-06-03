@@ -551,6 +551,12 @@ class _GameLayout extends StatelessWidget {
                                 constrainedScoringCells:
                                     battle.constrainedScoringCellKeys,
                                 constrainedCells: constrainedCells,
+                                blockedCellKeys: {
+                                  for (final cell
+                                      in battle.bossModifier?.blockedCells ??
+                                          const <(int, int)>[])
+                                    '${cell.$1}:${cell.$2}',
+                                },
                                 activeSettlementCells: activeSettlementCells,
                                 settlementBoardSnapshot:
                                     settlementBoardSnapshot,

@@ -590,6 +590,73 @@ void main() {
     }
   });
 
+  test(
+    'boss board cell block fixture exposes blocked cells and scoring line',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.bossBoardCellBlockPreview,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.battle);
+      expect(fixture.runProgress.currentStationBlindTierIndex, 2);
+      expect(
+        fixture.session.blind.bossModifier?.id,
+        RummiBossModifier.blockCornersCenter.id,
+      );
+      expect(fixture.session.blind.bossModifier?.blockedCells, hasLength(5));
+      expect(fixture.session.canConfirmAllFullLines, isTrue);
+
+      final out = fixture.session.confirmAllFullLines(applyScoreToBlind: false);
+      expect(out.result.lineBreakdowns, isNotEmpty);
+      expect(out.result.lineBreakdowns.first.constraintPenalties, isEmpty);
+      expect(out.result.scoreAdded, greaterThanOrEqualTo(60));
+    },
+  );
+
+  test('boss board cell block variant fixtures expose requested patterns', () {
+    final cases = [
+      (
+        id: DebugRunFixtureService.bossBoardCellBlockRightColumnPreview,
+        modifier: RummiBossModifier.blockRightColumn,
+        canConfirm: true,
+      ),
+      (
+        id: DebugRunFixtureService.bossBoardCellBlockMainDiagonalPreview,
+        modifier: RummiBossModifier.blockMainDiagonal,
+        canConfirm: true,
+      ),
+    ];
+
+    for (final c in cases) {
+      final fixture = DebugRunFixtureService.build(c.id);
+
+      expect(fixture, isNotNull, reason: c.id);
+      expect(fixture!.activeScene, ActiveRunScene.battle, reason: c.id);
+      expect(fixture.runProgress.currentStationBlindTierIndex, 2);
+      expect(fixture.session.blind.bossModifier?.id, c.modifier.id);
+      expect(fixture.session.blind.bossModifier?.blockedCells, hasLength(5));
+      for (final cell in c.modifier.blockedCells) {
+        expect(
+          fixture.session.board.cellAt(cell.$1, cell.$2),
+          isNull,
+          reason: '${c.id} keeps blocked cell $cell empty',
+        );
+      }
+      expect(
+        fixture.session.canConfirmAllFullLines,
+        c.canConfirm,
+        reason: c.id,
+      );
+      if (c.canConfirm) {
+        final out = fixture.session.confirmAllFullLines(
+          applyScoreToBlind: false,
+        );
+        expect(out.result.lineBreakdowns, isNotEmpty, reason: c.id);
+      }
+    }
+  });
+
   test('safety net fixture starts with board-full expiry guard state', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.safetyNetExpiryGuard,
@@ -656,9 +723,6 @@ void main() {
       '+50%',
       '점수 x2',
     ]);
-    expect(
-      line.effects.every((effect) => effect.scoreDelta > 0),
-      isTrue,
-    );
+    expect(line.effects.every((effect) => effect.scoreDelta > 0), isTrue);
   });
 }

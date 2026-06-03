@@ -227,6 +227,7 @@ enum BoardMoveFailReason {
   noBoardMovesLeft,
   sourceCellEmpty,
   destinationOccupied,
+  destinationBlockedByBoss,
 }
 
 enum BoardMoveUndoFailReason { noMoveHistory, sourceOccupied, destinationEmpty }

@@ -246,6 +246,7 @@ class RummiPokerGridSession {
   bool tryPlaceFromHand(Tile tile, int row, int col) {
     final i = hand.indexWhere((t) => t == tile);
     if (i < 0) return false;
+    if (blind.bossModifier?.blocksBoardCell(row, col) ?? false) return false;
     if (board.cellAt(row, col) != null) return false;
     boardMoveHistory.clear();
     hand.removeAt(i);
@@ -313,6 +314,9 @@ class RummiPokerGridSession {
     }
     if (board.cellAt(toRow, toCol) != null) {
       return BoardMoveFailReason.destinationOccupied;
+    }
+    if (blind.bossModifier?.blocksBoardCell(toRow, toCol) ?? false) {
+      return BoardMoveFailReason.destinationBlockedByBoss;
     }
     final moved = board.moveCell(
       fromRow: fromRow,
@@ -1123,6 +1127,7 @@ class RummiPokerGridSession {
           rank,
           confirmedRanks: confirmedRanksThisStation,
         ),
+      RummiBossModifierCategory.boardCellBlock => false,
     };
     if (!affected) {
       return (score: score, penalty: null);

@@ -296,5 +296,6 @@ String _bossModifierCompactHudLabel(RummiBossModifier modifier) {
     RummiBossModifierCategory.confirmCountWeaken => '확정',
     RummiBossModifierCategory.repeatHandRankWeaken => '반복',
     RummiBossModifierCategory.singleHandRankPressure => '첫 족보',
+    RummiBossModifierCategory.boardCellBlock => '칸 금지',
   };
 }

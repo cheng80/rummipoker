@@ -230,7 +230,11 @@ class BlindSelectionSpecBuilder {
       availability: availability,
       isEndless: isEndless,
       bossModifier: tier == BlindTier.boss
-          ? _bossModifierForStation(stationIndex, runSeed: runSeed)
+          ? _bossModifierForStation(
+              stationIndex,
+              difficulty: difficulty,
+              runSeed: runSeed,
+            )
           : null,
       lockReason: lockReason,
     );
@@ -238,12 +242,12 @@ class BlindSelectionSpecBuilder {
 
   static RummiBossModifier _bossModifierForStation(
     int stationIndex, {
+    required NewRunDifficulty difficulty,
     int? runSeed,
   }) {
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
-    final pool =
-        _bossStationPools[(normalizedStationIndex - 1) %
-            _bossStationPools.length];
+    final pools = _bossStationPoolsForDifficulty(difficulty);
+    final pool = pools[(normalizedStationIndex - 1) % pools.length];
     if (runSeed == null) return pool.modifiers.first;
     return pool.modifiers[_bossVariantIndex(
       runSeed: runSeed,
@@ -252,13 +256,25 @@ class BlindSelectionSpecBuilder {
     )];
   }
 
-  static const List<_BossStationPool> _bossStationPools = [
+  static List<_BossStationPool> _bossStationPoolsForDifficulty(
+    NewRunDifficulty difficulty,
+  ) {
+    return switch (difficulty) {
+      NewRunDifficulty.challenge => _challengeBossStationPools,
+      NewRunDifficulty.standard ||
+      NewRunDifficulty.relaxed => _standardBossStationPools,
+    };
+  }
+
+  static const List<_BossStationPool> _standardBossStationPools = [
     _BossStationPool(
       level: _BossPoolLevel.entry,
       modifiers: [
         RummiBossModifier.redDampener,
         RummiBossModifier.yellowDampener,
         RummiBossModifier.rowDampener,
+        RummiBossModifier.blueDampener,
+        RummiBossModifier.blackDampener,
       ],
     ),
     _BossStationPool(
@@ -268,6 +284,7 @@ class BlindSelectionSpecBuilder {
         RummiBossModifier.blueDampener,
         RummiBossModifier.yellowDampener,
         RummiBossModifier.faceDampener,
+        RummiBossModifier.redDampener,
       ],
     ),
     _BossStationPool(
@@ -277,6 +294,8 @@ class BlindSelectionSpecBuilder {
         RummiBossModifier.blackDampener,
         RummiBossModifier.blueDampener,
         RummiBossModifier.columnDampener,
+        RummiBossModifier.blockRightColumn,
+        RummiBossModifier.blockTopRow,
       ],
     ),
     _BossStationPool(
@@ -285,7 +304,10 @@ class BlindSelectionSpecBuilder {
         RummiBossModifier.columnDampener,
         RummiBossModifier.singleRankPressure,
         RummiBossModifier.repeatRankPressure,
-        RummiBossModifier.singleRankPressure,
+        RummiBossModifier.faceDampener,
+        RummiBossModifier.blockLeftColumn,
+        RummiBossModifier.blockBottomRow,
+        RummiBossModifier.blockFourCorners,
       ],
     ),
     _BossStationPool(
@@ -295,6 +317,8 @@ class BlindSelectionSpecBuilder {
         RummiBossModifier.confirmLimitTax,
         RummiBossModifier.repeatRankPressure,
         RummiBossModifier.singleRankPressure,
+        RummiBossModifier.blockCenterRow,
+        RummiBossModifier.blockCenterColumn,
       ],
     ),
     _BossStationPool(
@@ -304,6 +328,8 @@ class BlindSelectionSpecBuilder {
         RummiBossModifier.allScoreDampener,
         RummiBossModifier.firstConfirmTax,
         RummiBossModifier.confirmCountTax,
+        RummiBossModifier.blockMainDiagonal,
+        RummiBossModifier.blockAntiDiagonal,
       ],
     ),
     _BossStationPool(
@@ -313,6 +339,8 @@ class BlindSelectionSpecBuilder {
         RummiBossModifier.confirmCountTax,
         RummiBossModifier.confirmLimitTax,
         RummiBossModifier.allScoreDampener,
+        RummiBossModifier.blockMainDiagonal,
+        RummiBossModifier.blockAntiDiagonal,
       ],
     ),
     _BossStationPool(
@@ -322,6 +350,96 @@ class BlindSelectionSpecBuilder {
         RummiBossModifier.allScoreDampener,
         RummiBossModifier.firstConfirmTax,
         RummiBossModifier.confirmLimitTax,
+        RummiBossModifier.blockMainDiagonal,
+        RummiBossModifier.blockAntiDiagonal,
+      ],
+    ),
+  ];
+
+  static const List<_BossStationPool> _challengeBossStationPools = [
+    _BossStationPool(
+      level: _BossPoolLevel.entry,
+      modifiers: [
+        RummiBossModifier.redDampener,
+        RummiBossModifier.yellowDampener,
+        RummiBossModifier.rowDampener,
+        RummiBossModifier.blockRightColumn,
+        RummiBossModifier.blockTopRow,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.early,
+      modifiers: [
+        RummiBossModifier.rowDampener,
+        RummiBossModifier.blueDampener,
+        RummiBossModifier.yellowDampener,
+        RummiBossModifier.faceDampener,
+        RummiBossModifier.blockLeftColumn,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.growthCheck,
+      modifiers: [
+        RummiBossModifier.faceDampener,
+        RummiBossModifier.blackDampener,
+        RummiBossModifier.blueDampener,
+        RummiBossModifier.columnDampener,
+        RummiBossModifier.blockBottomRow,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.mid,
+      modifiers: [
+        RummiBossModifier.columnDampener,
+        RummiBossModifier.singleRankPressure,
+        RummiBossModifier.repeatRankPressure,
+        RummiBossModifier.singleRankPressure,
+        RummiBossModifier.blockFourCorners,
+        RummiBossModifier.blockCenterColumn,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.midLate,
+      modifiers: [
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.confirmLimitTax,
+        RummiBossModifier.repeatRankPressure,
+        RummiBossModifier.singleRankPressure,
+        RummiBossModifier.blockCenterRow,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.late,
+      modifiers: [
+        RummiBossModifier.diagonalDampener,
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.firstConfirmTax,
+        RummiBossModifier.confirmCountTax,
+        RummiBossModifier.blockMainDiagonal,
+        RummiBossModifier.blockAntiDiagonal,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.late,
+      modifiers: [
+        RummiBossModifier.firstConfirmTax,
+        RummiBossModifier.confirmCountTax,
+        RummiBossModifier.confirmLimitTax,
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.blockCenterCross,
+        RummiBossModifier.blockCornersCenter,
+      ],
+    ),
+    _BossStationPool(
+      level: _BossPoolLevel.finalGate,
+      modifiers: [
+        RummiBossModifier.confirmCountTax,
+        RummiBossModifier.allScoreDampener,
+        RummiBossModifier.firstConfirmTax,
+        RummiBossModifier.confirmLimitTax,
+        RummiBossModifier.blockInnerX,
+        RummiBossModifier.blockCheckerA,
+        RummiBossModifier.blockCheckerB,
       ],
     ),
   ];

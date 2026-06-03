@@ -124,8 +124,14 @@ void main() {
     );
 
     await tester.pump();
+    for (var i = 0; i < 10 && find.byTooltip('확정').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     await tester.tap(find.byTooltip('확정'));
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump(const Duration(milliseconds: 300));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 250));
     }
