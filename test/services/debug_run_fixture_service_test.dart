@@ -622,4 +622,43 @@ void main() {
     );
     expect(fixture.runProgress.itemInventory.passiveRelicIds, isEmpty);
   });
+
+  test('S8 color Jester stack fixture reproduces stacked flush effects', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.s8ColorJesterStackPreview,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.runProgress.stageIndex, 8);
+    expect(fixture.runProgress.currentStationBlindTierIndex, 2);
+    expect(fixture.session.blind.bossModifier?.id, 'all_score_dampener_v1');
+    expect(fixture.runProgress.ownedJesters.map((card) => card.id), [
+      'droll_jester',
+      'the_tribe',
+    ]);
+    expect(fixture.session.canConfirmAllFullLines, isTrue);
+
+    final out = fixture.session.confirmAllFullLines(
+      jesters: fixture.runProgress.ownedJesters,
+      runtimeSnapshot: fixture.runProgress.buildRuntimeSnapshot(),
+      applyScoreToBlind: false,
+    );
+    final line = out.result.lineBreakdowns.single;
+
+    expect(line.rank, RummiHandRank.flush);
+    expect(line.constraintPenalties.single.modifierId, 'all_score_dampener_v1');
+    expect(line.effects.map((effect) => effect.jesterId), [
+      'droll_jester',
+      'the_tribe',
+    ]);
+    expect(line.effects.map((effect) => effect.displayToken), [
+      '+50%',
+      '점수 x2',
+    ]);
+    expect(
+      line.effects.every((effect) => effect.scoreDelta > 0),
+      isTrue,
+    );
+  });
 }

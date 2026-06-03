@@ -18,6 +18,7 @@ CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${FULL_RUN_BOT_WEB_PORT:-7357}"
 BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_run_bot/chrome_profile}"
 FLUTTER_BIN="${FLUTTER_BIN:-/Users/cheng80/flutter/bin/flutter}"
+FLUTTER_DRIVE_MODE="${FULL_RUN_BOT_FLUTTER_MODE:-debug}"
 RESUME_ACTIVE_RUN=false
 TUTORIALS_ALREADY_SEEN=false
 TARGET_STAGE="${FULL_RUN_BOT_TARGET_STAGE:-1}"
@@ -64,6 +65,8 @@ Environment:
   CHROMEDRIVER_CMD          Custom chromedriver command.
   CHROMEDRIVER_PORT         WebDriver port. Default: 4444.
   FLUTTER_BIN               Flutter executable. Default: /Users/cheng80/flutter/bin/flutter.
+  FULL_RUN_BOT_FLUTTER_MODE Flutter drive mode: debug | profile | release.
+                            Default: debug.
 EOF
 }
 
@@ -165,6 +168,21 @@ if [[ -z "$TRACE_PATH" ]]; then
 fi
 mkdir -p "$(dirname "$TRACE_PATH")"
 mkdir -p "$OUTPUT_DIR"
+
+case "$FLUTTER_DRIVE_MODE" in
+  debug|profile|release)
+    ;;
+  *)
+    echo "Invalid FULL_RUN_BOT_FLUTTER_MODE: $FLUTTER_DRIVE_MODE" >&2
+    echo "Expected: debug, profile, or release." >&2
+    exit 1
+    ;;
+esac
+
+DRIVE_MODE_ARGS=()
+if [[ "$FLUTTER_DRIVE_MODE" != "debug" ]]; then
+  DRIVE_MODE_ARGS=(--"$FLUTTER_DRIVE_MODE")
+fi
 
 port_is_open() {
   nc -z 127.0.0.1 "$CHROMEDRIVER_PORT" >/dev/null 2>&1
@@ -382,6 +400,7 @@ fi
 if [[ "$PUB_GET" -eq 1 ]]; then
   run_and_capture "$OUTPUT_DIR/00_pub_get.log" "$FLUTTER_BIN" pub get
 fi
+export FULL_RUN_BOT_BROWSER_PROFILE_DIR="$BROWSER_PROFILE_DIR"
 
 segment_index=0
 while true; do
@@ -393,6 +412,7 @@ while true; do
 
   if run_flutter_drive_and_capture "$log_file" \
     "$FLUTTER_BIN" drive \
+      "${DRIVE_MODE_ARGS[@]}" \
       --driver=test_driver/integration_test.dart \
       --target=integration_test/full_run_bot_test.dart \
       -d chrome \

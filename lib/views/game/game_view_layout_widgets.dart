@@ -224,7 +224,7 @@ class _GameSurface extends StatelessWidget {
                 Positioned.fill(
                   child: GameFloatingSettlementBurst(
                     key: ValueKey(
-                      'settlement-$settlementSequenceTick-$activeSettlementStep-$activeSettlementEffectIndex',
+                      'settlement-$settlementSequenceTick-$activeSettlementStep-$activeSettlementEffectIndex-${activeSettlementEffectIndexes.join(",")}',
                     ),
                     line: activeSettlementLine,
                     step: activeSettlementStep,
@@ -232,6 +232,7 @@ class _GameSurface extends StatelessWidget {
                       activeSettlementEffectIndex,
                       activeSettlementEffectIndexes,
                     ),
+                    effectIndexes: activeSettlementEffectIndexes,
                   ),
                 ),
             if (fateLineSelection != null)

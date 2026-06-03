@@ -210,34 +210,37 @@ class GameFloatingSettlementBurst extends StatelessWidget {
     required this.line,
     required this.step,
     required this.effectIndex,
+    this.effectIndexes = const [],
   });
 
   final ConfirmedLineBreakdown? line;
   final ScoringPresentationStep step;
   final int? effectIndex;
+  final List<int> effectIndexes;
 
   @override
   Widget build(BuildContext context) {
     final currentLine = line;
-    final activeEffect =
-        currentLine != null &&
-            effectIndex != null &&
-            effectIndex! >= 0 &&
-            effectIndex! < currentLine.effects.length
-        ? currentLine.effects[effectIndex!]
+    final activeEffects = _settlementStepEffects(
+      currentLine,
+      effectIndex,
+      effectIndexes,
+    );
+    final activeEffect = activeEffects.length == 1
+        ? activeEffects.single
         : null;
-    final label = _settlementStepLabel(
-      context,
-      currentLine,
-      step,
-      activeEffect,
-    );
-    final subLabel = _settlementStepSubLabel(currentLine, step, activeEffect);
-    final displayedScore = _settlementStepScore(
-      currentLine,
-      step,
-      activeEffect,
-    );
+    final label = activeEffects.length > 1
+        ? _settlementStepMultiEffectLabel(context, step, activeEffects)
+        : _settlementStepLabel(context, currentLine, step, activeEffect);
+    final subLabel = activeEffects.length > 1
+        ? _settlementStepMultiEffectSubLabel(activeEffects)
+        : _settlementStepSubLabel(currentLine, step, activeEffect);
+    final displayedScore = activeEffects.length > 1
+        ? activeEffects.fold<int>(
+            0,
+            (sum, effect) => sum + effect.scoreDelta,
+          )
+        : _settlementStepScore(currentLine, step, activeEffect);
 
     return IgnorePointer(
       child: TweenAnimationBuilder<double>(
@@ -309,6 +312,60 @@ class GameFloatingSettlementBurst extends StatelessWidget {
       ),
     );
   }
+}
+
+List<RummiJesterEffectBreakdown> _settlementStepEffects(
+  ConfirmedLineBreakdown? line,
+  int? effectIndex,
+  List<int> effectIndexes,
+) {
+  if (line == null) return const [];
+  if (effectIndexes.isNotEmpty) {
+    return [
+      for (final index in effectIndexes)
+        if (index >= 0 && index < line.effects.length) line.effects[index],
+    ];
+  }
+  if (effectIndex == null ||
+      effectIndex < 0 ||
+      effectIndex >= line.effects.length) {
+    return const [];
+  }
+  return [line.effects[effectIndex]];
+}
+
+String _settlementStepMultiEffectLabel(
+  BuildContext context,
+  ScoringPresentationStep step,
+  List<RummiJesterEffectBreakdown> effects,
+) {
+  if (effects.length <= 2) {
+    return effects
+        .map((effect) {
+          return switch (step) {
+            ScoringPresentationStep.jester => JesterTranslationScope.of(
+              context,
+            ).resolveDisplayName(effect.jesterId, effect.displayName),
+            ScoringPresentationStep.item => ItemTranslationScope.of(
+              context,
+            ).resolveDisplayName(effect.jesterId, effect.displayName),
+            _ => effect.displayName,
+          };
+        })
+        .join(' · ');
+  }
+  return switch (step) {
+    ScoringPresentationStep.jester => 'Jester 발동 x${effects.length}',
+    ScoringPresentationStep.tile => '타일 효과 x${effects.length}',
+    ScoringPresentationStep.item => 'Item 발동 x${effects.length}',
+    _ => '점수 효과 x${effects.length}',
+  };
+}
+
+String _settlementStepMultiEffectSubLabel(
+  List<RummiJesterEffectBreakdown> effects,
+) {
+  return effects.map(jesterEffectBadge).join(' · ');
 }
 
 String _settlementStepLabel(

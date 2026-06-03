@@ -65,6 +65,8 @@ class DebugRunFixtureService {
       'ritual_seal_override_battle_preview';
   static const String ritualPruneBurnBattlePreview =
       'ritual_prune_burn_battle_preview';
+  static const String s8ColorJesterStackPreview =
+      's8_color_jester_stack_preview';
   static const Map<String, String> fateLineTransformPreviewItemsByFixture = {
     'fate_royal_flush_battle_preview': 'number_mask',
     'fate_straight_flush_high_battle_preview': 'wild_thread',

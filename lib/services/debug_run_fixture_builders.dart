@@ -1208,6 +1208,89 @@ ActiveRunRuntimeState _buildBossRowConstraintPreview() {
   );
 }
 
+ActiveRunRuntimeState _buildS8ColorJesterStackPreview() {
+  final seed = 2026060308;
+  final board = RummiBoard()
+    ..setCell(0, 0, _tile(TileColor.blue, 12))
+    ..setCell(0, 1, _tile(TileColor.blue, 1))
+    ..setCell(0, 2, _tile(TileColor.blue, 4))
+    ..setCell(0, 3, _tile(TileColor.blue, 2))
+    ..setCell(0, 4, _tile(TileColor.blue, 10))
+    ..setCell(2, 1, _tile(TileColor.red, 7))
+    ..setCell(2, 2, _tile(TileColor.yellow, 7))
+    ..setCell(4, 3, _tile(TileColor.black, 9));
+  final session = RummiPokerGridSession.restored(
+    runSeed: seed,
+    deckCopiesPerTile: kDefaultCopiesPerTile,
+    maxHandSize: 1,
+    runRandomState: SeededRandom(seed).state,
+    blind: RummiBlindState(
+      targetScore: 11400,
+      boardDiscardsRemaining: 3,
+      handDiscardsRemaining: 1,
+      boardMovesRemaining: 3,
+      boardMovesMax: 3,
+      scoreTowardBlind: 0,
+      bossModifier: RummiBossModifier.allScoreDampener,
+    ),
+    deck: PokerDeck.remainingAfterPlaced(board: board, random: Random(seed)),
+    board: board,
+    hand: const [],
+    eliminated: const [],
+  );
+  final runProgress = RummiRunProgress.restore(
+    stageIndex: 8,
+    gold: 217,
+    rerollCost: RummiRunProgress.shopBaseRerollCost,
+    ownedJesters: const [
+      RummiJesterCard(
+        id: 'droll_jester',
+        displayName: 'Color Call',
+        rarity: RummiJesterRarity.common,
+        baseCost: 4,
+        effectText: 'If the scoring line uses one color, score +50%.',
+        effectType: 'mult_bonus',
+        trigger: 'onScore',
+        conditionType: 'flush',
+        conditionValue: 'contains_flush',
+        value: 10,
+        xValue: null,
+        mappedTileColors: [],
+        mappedTileNumbers: [],
+      ),
+      RummiJesterCard(
+        id: 'the_tribe',
+        displayName: 'Color Pact',
+        rarity: RummiJesterRarity.rare,
+        baseCost: 8,
+        effectText: 'If the scoring line uses one color, score x2.',
+        effectType: 'xmult_bonus',
+        trigger: 'onScore',
+        conditionType: 'flush',
+        conditionValue: 'contains_flush',
+        value: null,
+        xValue: 2.0,
+        mappedTileColors: [],
+        mappedTileNumbers: [],
+      ),
+    ],
+    shopOffers: const [],
+    statefulValuesBySlot: const {},
+    playedHandCounts: const <RummiHandRank, int>{RummiHandRank.flush: 74},
+  )..currentStationBlindTierIndex = 2;
+
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.battle,
+    difficulty: NewRunDifficulty.standard,
+    session: session,
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
 ActiveRunRuntimeState _buildBossColumnConstraintPreview() {
   final board = RummiBoard()
     ..setCell(0, 2, _tile(TileColor.red, 1))

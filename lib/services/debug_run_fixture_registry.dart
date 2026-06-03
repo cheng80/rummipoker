@@ -136,6 +136,12 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     description: '색 가지치기/마른가지 소각/제물 의식 선택 검증용',
     builder: _buildRitualPruneBurnBattlePreview,
   ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.s8ColorJesterStackPreview,
+    label: 'S8 색상 Jester 중첩 전투',
+    description: 'S8 Boss / 색상 호출 + 색상 증폭 보유 / 플러시 확정 발동 재현용',
+    builder: _buildS8ColorJesterStackPreview,
+  ),
   for (final entry
       in DebugRunFixtureService.fateLineTransformPreviewItemsByFixture.entries)
     DebugRunFixtureDefinition(

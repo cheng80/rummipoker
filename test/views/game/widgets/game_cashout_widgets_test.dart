@@ -51,6 +51,28 @@ void main() {
     expect(find.text('점수 x1.5'), findsWidgets);
   });
 
+  testWidgets('GameFloatingSettlementBurst combines stacked Jester effects', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameFloatingSettlementBurst(
+            line: _lineWithStackedJesterEffects(),
+            step: ScoringPresentationStep.jester,
+            effectIndex: null,
+            effectIndexes: const [0, 1],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('색상 호출 · 색상 증폭'), findsWidgets);
+    expect(find.text('+75'), findsWidgets);
+    expect(find.text('+50% 점수 · 점수 x2'), findsWidgets);
+    expect(find.text('+0'), findsNothing);
+  });
+
   testWidgets(
     'GameStageClearOverlay shows spark field only during station clear',
     (tester) async {
@@ -559,6 +581,35 @@ ConfirmedLineBreakdown _lineWithTileEffect() {
         multBonus: 0,
         xmultBonus: 1.5,
         scoreDelta: 35,
+      ),
+    ],
+  );
+}
+
+ConfirmedLineBreakdown _lineWithStackedJesterEffects() {
+  return ConfirmedLineBreakdown(
+    ref: LineRef.row(0),
+    rank: RummiHandRank.flush,
+    baseScore: 50,
+    finalScore: 125,
+    jesterBonus: 75,
+    hasScoringFaceCard: false,
+    effects: const [
+      RummiJesterEffectBreakdown(
+        jesterId: 'droll_jester',
+        displayName: '색상 호출',
+        chipsBonus: 0,
+        multBonus: 10,
+        xmultBonus: 1,
+        scoreDelta: 25,
+      ),
+      RummiJesterEffectBreakdown(
+        jesterId: 'the_tribe',
+        displayName: '색상 증폭',
+        chipsBonus: 0,
+        multBonus: 0,
+        xmultBonus: 2,
+        scoreDelta: 50,
       ),
     ],
   );

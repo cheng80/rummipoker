@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -243,6 +245,7 @@ class _FullRunBot {
   final FullRunPlannerV2Policy retryRecoveryBattlePolicy =
       const FullRunPlannerV2Policy(enableRetryRecoveryConfirmDelay: true);
   final List<String> log = <String>[];
+  final List<Map<String, Object?>> traceRows = <Map<String, Object?>>[];
   int traceSequence = 0;
   int traceRowCount = 0;
   ItemCatalog? itemCatalog;
@@ -552,11 +555,7 @@ class _FullRunBot {
           break;
         case FullRunBattleActionType.place:
           final tile = session.hand[action.handIndex!];
-          await _placeHandTileOnBoard(
-            tile,
-            row: action.row!,
-            col: action.col!,
-          );
+          await _placeHandTileOnBoard(tile, row: action.row!, col: action.col!);
           break;
         case FullRunBattleActionType.confirm:
           final score = session.blind.scoreTowardBlind;
@@ -787,7 +786,8 @@ class _FullRunBot {
       ),
     );
     final encoded = base64Encode(utf8.encode(jsonEncode(state.toJson())));
-    debugPrint('FULL_RUN_BOT_CHALLENGE_CARRYOVER_B64:$encoded');
+    _setReportData('full_run_challenge_carryover_b64', encoded);
+    print('FULL_RUN_BOT_CHALLENGE_CARRYOVER_B64:$encoded');
     _record(
       'challenge carryover exported '
       'grown=${state.challengeCarryover?.grownRankCount ?? 0} '
@@ -1743,8 +1743,9 @@ class _FullRunBot {
     await ActiveRunSaveService.saveRuntimeState(runtime);
     final checkpointJson = ActiveRunSaveService.runtimeStateToJson(runtime);
     final checkpointBase64 = base64Encode(utf8.encode(checkpointJson));
+    _setReportData('full_run_checkpoint_b64', checkpointBase64);
     // 스크립트가 다음 resume 실행에 주입할 수 있도록 한 줄 checkpoint를 남긴다.
-    debugPrint('FULL_RUN_BOT_CHECKPOINT_B64:$checkpointBase64');
+    print('FULL_RUN_BOT_CHECKPOINT_B64:$checkpointBase64');
     _record(
       'checkpoint saved scene=${scene.name} '
       'S${runProgress.stageIndex} '
@@ -1775,11 +1776,10 @@ class _FullRunBot {
 
   Future<void> flushTrace() async {
     if (!config.traceEnabled || traceRowCount == 0) return;
-    final binding = IntegrationTestWidgetsFlutterBinding.instance;
-    binding.reportData ??= <String, dynamic>{};
-    binding.reportData!['full_run_trace_path'] = config.tracePath;
-    binding.reportData!['full_run_trace_rows'] = traceRowCount;
-    debugPrint(
+    _setReportData('full_run_trace_path', config.tracePath);
+    _setReportData('full_run_trace_rows', traceRows);
+    _setReportData('full_run_trace_row_count', traceRowCount);
+    print(
       '${config.logPrefix}: trace_path=${config.tracePath} '
       'trace_rows=$traceRowCount',
     );
@@ -1807,13 +1807,19 @@ class _FullRunBot {
       final start = index * chunkSize;
       final proposedEnd = start + chunkSize;
       final end = proposedEnd > encoded.length ? encoded.length : proposedEnd;
-      debugPrint(
+      print(
         'FULL_RUN_BOT_TRACE_CHUNK:$sequence:$index:$chunkCount:'
         '${encoded.substring(start, end)}',
-        wrapWidth: 8192,
       );
     }
+    traceRows.add(row);
     traceRowCount += 1;
+  }
+
+  void _setReportData(String key, Object? value) {
+    final binding = IntegrationTestWidgetsFlutterBinding.instance;
+    binding.reportData ??= <String, dynamic>{};
+    binding.reportData![key] = value;
   }
 
   void _traceMarketState(String eventType, int stage) {
@@ -2151,16 +2157,16 @@ class _FullRunBot {
   }
 
   void _printPassLog(String stopReason) {
-    debugPrint('${config.logPrefix}_PASS');
-    debugPrint('${config.logPrefix}: stop_reason=$stopReason');
+    print('${config.logPrefix}_PASS');
+    print('${config.logPrefix}: stop_reason=$stopReason');
     for (final entry in log) {
-      debugPrint('${config.logPrefix}: $entry');
+      print('${config.logPrefix}: $entry');
     }
   }
 
   void _record(String entry) {
     log.add(entry);
-    debugPrint('${config.logPrefix}: $entry');
+    print('${config.logPrefix}: $entry');
   }
 
   GameSessionState _readGameState() {
@@ -2363,7 +2369,9 @@ class _FullRunBot {
   }
 
   Finder _buttonOrTextFinder(String text) {
-    final actionButton = find.widgetWithText(GameActionButton, text).hitTestable();
+    final actionButton = find
+        .widgetWithText(GameActionButton, text)
+        .hitTestable();
     if (actionButton.evaluate().isNotEmpty) return actionButton;
     return find.text(text).hitTestable();
   }
