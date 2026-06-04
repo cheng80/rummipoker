@@ -26,6 +26,7 @@
 .ag/
 .codex/
 .kiro/
+.serena/
 
 # Local ad-hoc verification artifacts.
 # Keep curated evidence packets commit-able; ignore repeated run logs/screenshots.
