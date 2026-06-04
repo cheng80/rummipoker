@@ -451,6 +451,8 @@ extension _GameViewStageFlow on _GameViewState {
             await context.push(RoutePaths.setting);
           },
           onExitToTitle: _goToTitleAfterStoppingBgm,
+          onBookmarkRun: _bookmarkCurrentRun,
+          onLoadBookmarkRun: _loadBookmarkRunFromOptions,
           onRestartRun: _restartCurrentRun,
           isDebugFixtureRun: _isDebugFixtureRun,
           initialItemShopTab: widget.debugStartItemShop,

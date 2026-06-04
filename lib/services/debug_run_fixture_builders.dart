@@ -1103,6 +1103,45 @@ ActiveRunRuntimeState _buildSafetyNetExpiryGuard() {
   );
 }
 
+ActiveRunRuntimeState _buildGameOverPreFadeTrigger() {
+  final session = RummiPokerGridSession.restored(
+    runSeed: 2026060401,
+    deckCopiesPerTile: kDefaultCopiesPerTile,
+    maxHandSize: 1,
+    runRandomState: SeededRandom(2026060401).state,
+    blind: RummiBlindState(
+      targetScore: 360,
+      boardDiscardsRemaining: 4,
+      handDiscardsRemaining: 1,
+      boardMovesRemaining: 3,
+      scoreTowardBlind: 0,
+    ),
+    deck: PokerDeck.fromSnapshot(const []),
+    board: RummiBoard(),
+    hand: const [Tile(id: 2026060401, color: TileColor.red, number: 7)],
+    eliminated: const [],
+  );
+  final runProgress = RummiRunProgress.restore(
+    stageIndex: 1,
+    gold: 0,
+    rerollCost: RummiRunProgress.shopBaseRerollCost,
+    ownedJesters: const [],
+    shopOffers: const [],
+    statefulValuesBySlot: const {},
+    playedHandCounts: const <RummiHandRank, int>{},
+  );
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.battle,
+    difficulty: NewRunDifficulty.standard,
+    session: session,
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
 ActiveRunRuntimeState _buildGameOverInsightReady() {
   return _buildBoardFullExpiryState(
     runSeed: 2026050501,

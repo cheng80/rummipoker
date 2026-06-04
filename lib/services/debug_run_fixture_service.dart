@@ -48,6 +48,7 @@ class DebugRunFixtureService {
   static const String marketModifierShop = 'market_modifier_shop';
   static const String slotUnlockMarket = 'slot_unlock_market';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
+  static const String gameOverPreFadeTrigger = 'game_over_pre_fade_trigger';
   static const String gameOverInsightReady = 'game_over_insight_ready';
   static const String animationEffectsEyeCheck = 'animation_effects_eye_check';
   static const String itemMotionEyeCheck = 'item_motion_eye_check';

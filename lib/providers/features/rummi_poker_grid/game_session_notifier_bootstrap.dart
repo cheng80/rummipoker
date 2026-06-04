@@ -7,6 +7,7 @@ GameSessionState _buildInitialGameSessionState(GameSessionArgs args) {
       session: restoredRun.session,
       runProgress: restoredRun.runProgress,
       stageStartSnapshot: restoredRun.stageStartSnapshot,
+      stakeStartSnapshot: restoredRun.stakeStartSnapshot,
       ruleset: args.ruleset,
       runModifier: restoredRun.runModifier,
       runLoopPhase: _loopPhaseForScene(restoredRun.activeScene),
@@ -64,15 +65,17 @@ GameSessionState _buildInitialGameSessionState(GameSessionArgs args) {
     );
   }
   runProgress.recordSeenBossModifier(initialBlind.bossModifier?.id);
+  final startSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+    session: session,
+    runProgress: runProgress,
+  );
   return GameSessionState(
     session: session,
     runProgress: runProgress,
     ruleset: ruleset,
     runModifier: args.runModifier,
-    stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
-      session: session,
-      runProgress: runProgress,
-    ),
+    stageStartSnapshot: startSnapshot,
+    stakeStartSnapshot: startSnapshot,
     runLoopPhase: GameRunLoopPhase.battle,
     activeRunScene: ActiveRunScene.battle,
     debugFixtureId: args.debugFixtureId,

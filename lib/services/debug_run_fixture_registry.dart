@@ -58,6 +58,12 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     builder: _buildSafetyNetExpiryGuard,
   ),
   DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.gameOverPreFadeTrigger,
+    label: '게임오버 직전 페이드 체크',
+    description: '덱 0 / 손패 1 / 손패 버림 1회 남음 / 손패 버림 즉시 게임오버',
+    builder: _buildGameOverPreFadeTrigger,
+  ),
+  DebugRunFixtureDefinition(
     id: DebugRunFixtureService.gameOverInsightReady,
     label: '게임오버 기억 카드 체크',
     description: '보드 꽉 참 + 보드 버림 0 / 패배 보상 카드 검증용',

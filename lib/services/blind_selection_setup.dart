@@ -91,10 +91,14 @@ class BlindSelectionSetup {
         runProgress: runProgress,
       );
     }
-    final stageStartSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+    final stakeStartSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
       session: session,
       runProgress: runProgress,
     );
+    final stageStartSnapshot =
+        runtime.stageStartSnapshot.runProgress.stageIndex == stationIndex
+        ? runtime.stageStartSnapshot
+        : stakeStartSnapshot;
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
@@ -103,6 +107,7 @@ class BlindSelectionSetup {
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
+      stakeStartSnapshot: stakeStartSnapshot,
     );
   }
 
@@ -123,6 +128,7 @@ class BlindSelectionSetup {
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: runtime.stageStartSnapshot,
+      stakeStartSnapshot: runtime.stakeStartSnapshot,
     );
   }
 

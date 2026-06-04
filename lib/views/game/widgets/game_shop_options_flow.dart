@@ -154,6 +154,35 @@ extension _GameShopOptionsFlow on _GameShopScreenState {
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
+                title: '북마크하기',
+                subtitle: '현재 진행 상태를 북마크 슬롯 3개 중 하나에 저장합니다.',
+                icon: Icons.bookmark_add_rounded,
+                accentColor: GameUiPalette.actionInfoBlue,
+                onTap: () async {
+                  final saved = await widget.onBookmarkRun?.call() ?? false;
+                  if (!dialogContext.mounted || !saved) return;
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(_MarketOptionsCloseAction.resumeGame);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
+                title: '북마크 불러오기',
+                subtitle: '저장된 북마크를 불러오고 이어하기 데이터를 덮어씁니다.',
+                icon: Icons.bookmarks_rounded,
+                accentColor: GameUiPalette.titleDebugBlue,
+                onTap: () async {
+                  final loaded =
+                      await widget.onLoadBookmarkRun?.call() ?? false;
+                  if (!dialogContext.mounted || !loaded) return;
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(_MarketOptionsCloseAction.resumeGame);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
                 title: context.tr('settings'),
                 subtitle: '설정 화면을 열고, Market으로 다시 돌아옵니다.',
                 icon: Icons.settings_rounded,

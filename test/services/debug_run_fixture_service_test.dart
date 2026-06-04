@@ -183,6 +183,30 @@ void main() {
     },
   );
 
+  test('game over pre fade fixture expires after last hand discard', () {
+    final fixture = DebugRunFixtureService.build(
+      DebugRunFixtureService.gameOverPreFadeTrigger,
+    );
+
+    expect(fixture, isNotNull);
+    expect(fixture!.activeScene, ActiveRunScene.battle);
+    expect(fixture.session.deck.remaining, 0);
+    expect(fixture.session.hand.length, 1);
+    expect(fixture.session.blind.handDiscardsRemaining, 1);
+    expect(fixture.session.evaluateExpirySignals(), isEmpty);
+
+    final discardResult = fixture.session.tryDiscardFromHand(
+      fixture.session.hand.single,
+    );
+
+    expect(discardResult.fail, isNull);
+    expect(fixture.session.hand, isEmpty);
+    expect(fixture.session.blind.handDiscardsRemaining, 0);
+    expect(fixture.session.evaluateExpirySignals(), [
+      RummiExpirySignal.drawPileExhausted,
+    ]);
+  });
+
   test('screenshot run growth fixture exposes played hand growth state', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.screenshotRunGrowthBattle,

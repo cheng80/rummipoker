@@ -19,8 +19,9 @@ class AppConfig {
   ///
   /// 시연/제출 영상에 개발용 진입점이 섞이지 않도록 모든 빌드에서
   /// 기본 숨김 처리하고, QA 빌드에서만 dart-define으로 노출한다.
-  static const bool showDebugFixtures =
-      bool.fromEnvironment('SHOW_DEBUG_FIXTURES');
+  static const bool showDebugFixtures = bool.fromEnvironment(
+    'SHOW_DEBUG_FIXTURES',
+  );
 }
 
 /// 로컬 저장소(SharedPreferences) 키 상수.
@@ -40,6 +41,10 @@ class StorageKeys {
   static const String tutorialMarketIntroSeen = 'tutorial_market_intro_seen';
   static const String activeRunPayloadV1 = 'active_run_payload_v1';
   static const String activeRunSignatureV1 = 'active_run_signature_v1';
+  static const String activeRunBookmarkPayloadPrefix =
+      'active_run_bookmark_payload_v1_';
+  static const String activeRunBookmarkSignaturePrefix =
+      'active_run_bookmark_signature_v1_';
   static const String saveDeviceKeyV1 = 'save_device_key_v1';
   static const String runUnlockStateV1 = 'run_unlock_state_v1';
 }

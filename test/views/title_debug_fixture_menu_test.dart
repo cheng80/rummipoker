@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/title_view.dart';
@@ -27,7 +28,7 @@ void main() {
     GameSettings.sfxMuted = true;
   });
 
-  testWidgets('title run info entry opens an empty-run explanation', (
+  testWidgets('debug fixture menu shows registry order numbers', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1170, 2532);
@@ -51,7 +52,10 @@ void main() {
                 locale: context.locale,
                 supportedLocales: context.supportedLocales,
                 localizationsDelegates: context.localizationDelegates,
-                home: const TitleView(showDebugEntriesOverride: false),
+                home: const TitleView(
+                  showDebugEntriesOverride: true,
+                  debugScrollPreset: 'bottom',
+                ),
               ),
             );
           },
@@ -60,20 +64,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('버전 1.0.0+1'), findsOneWidget);
-    expect(find.text('도감'), findsWidgets);
-    expect(find.text('보상 카드, Jester, Item 수집 상태 확인'), findsOneWidget);
-    expect(find.text('북마크 불러오기'), findsOneWidget);
-    expect(find.text('저장해 둔 3개 슬롯 중 하나에서 런을 복원합니다.'), findsOneWidget);
-    expect(find.text('특별 모드'), findsNothing);
-    expect(find.text('디버그 픽스처'), findsNothing);
-
-    await tester.tap(find.text('런 정보').first);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.tap(find.text('디버그 픽스처'));
     await tester.pumpAndSettle();
 
-    expect(find.text('런 정보'), findsWidgets);
-    expect(find.textContaining('진행 중인 런이 없습니다.'), findsOneWidget);
-    expect(find.textContaining('족보 성장과 추가 덱 정보'), findsOneWidget);
+    final fixtures = DebugRunFixtureService.fixtures;
+    expect(fixtures, isNotEmpty);
+    expect(find.text('1. ${fixtures.first.label}'), findsOneWidget);
+    expect(find.text('2. ${fixtures[1].label}'), findsOneWidget);
+    expect(find.text('디버그 픽스처'), findsWidgets);
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpWidget(const SizedBox.shrink());

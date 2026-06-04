@@ -12,7 +12,8 @@ class ActiveRunRuntimeState {
     required this.session,
     required this.runProgress,
     required this.stageStartSnapshot,
-  });
+    ActiveRunStageSnapshot? stakeStartSnapshot,
+  }) : stakeStartSnapshot = stakeStartSnapshot ?? stageStartSnapshot;
 
   final ActiveRunScene activeScene;
   final NewRunDifficulty difficulty;
@@ -20,6 +21,7 @@ class ActiveRunRuntimeState {
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
   final ActiveRunStageSnapshot stageStartSnapshot;
+  final ActiveRunStageSnapshot stakeStartSnapshot;
 }
 
 class ActiveRunStageSnapshot {
@@ -43,6 +45,8 @@ class ActiveRunSaveData {
     required this.runProgress,
     required this.stageStartSession,
     required this.stageStartRunProgress,
+    this.stakeStartSession,
+    this.stakeStartRunProgress,
   });
 
   final int schemaVersion;
@@ -54,18 +58,29 @@ class ActiveRunSaveData {
   final SavedRunProgressData runProgress;
   final SavedSessionData stageStartSession;
   final SavedRunProgressData stageStartRunProgress;
+  final SavedSessionData? stakeStartSession;
+  final SavedRunProgressData? stakeStartRunProgress;
 
-  Map<String, dynamic> toJson() => {
-    'schemaVersion': schemaVersion,
-    'savedAt': savedAtIso8601,
-    'activeScene': activeScene,
-    'difficulty': difficulty,
-    'runModifier': runModifier,
-    'session': session.toJson(),
-    'runProgress': runProgress.toJson(),
-    'stageStartSession': stageStartSession.toJson(),
-    'stageStartRunProgress': stageStartRunProgress.toJson(),
-  };
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{
+      'schemaVersion': schemaVersion,
+      'savedAt': savedAtIso8601,
+      'activeScene': activeScene,
+      'difficulty': difficulty,
+      'runModifier': runModifier,
+      'session': session.toJson(),
+      'runProgress': runProgress.toJson(),
+      'stageStartSession': stageStartSession.toJson(),
+      'stageStartRunProgress': stageStartRunProgress.toJson(),
+    };
+    final stakeSession = stakeStartSession;
+    final stakeRunProgress = stakeStartRunProgress;
+    if (stakeSession != null && stakeRunProgress != null) {
+      json['stakeStartSession'] = stakeSession.toJson();
+      json['stakeStartRunProgress'] = stakeRunProgress.toJson();
+    }
+    return json;
+  }
 
   static ActiveRunSaveData fromJson(Map<String, dynamic> json) {
     return ActiveRunSaveData(
@@ -87,6 +102,16 @@ class ActiveRunSaveData {
       stageStartRunProgress: SavedRunProgressData.fromJson(
         json['stageStartRunProgress'] as Map<String, dynamic>,
       ),
+      stakeStartSession: json['stakeStartSession'] == null
+          ? null
+          : SavedSessionData.fromJson(
+              json['stakeStartSession'] as Map<String, dynamic>,
+            ),
+      stakeStartRunProgress: json['stakeStartRunProgress'] == null
+          ? null
+          : SavedRunProgressData.fromJson(
+              json['stakeStartRunProgress'] as Map<String, dynamic>,
+            ),
     );
   }
 }

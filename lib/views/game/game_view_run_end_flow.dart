@@ -1,7 +1,118 @@
 part of '../game_view.dart';
 
 extension _GameViewRunEndFlow on _GameViewState {
+  Future<bool> _bookmarkCurrentRun() async {
+    final runtime = _gameNotifier.buildSaveRuntimeState(
+      scene: _gameState.activeRunScene,
+      difficulty: widget.difficulty,
+    );
+    final slots = await ActiveRunSaveService.loadBookmarkSlots();
+    if (!mounted) return false;
+    final slotIndex = await showBookmarkSlotDialog(
+      context: context,
+      title: '북마크하기',
+      message: '저장할 슬롯을 선택하세요. 저장된 슬롯을 선택하면 해당 북마크를 덮어씁니다.',
+      slots: slots,
+    );
+    if (!mounted || slotIndex == null) return false;
+    final selected = slots[slotIndex];
+    if (!selected.isEmpty) {
+      final confirmed = await showConfirmDialog(
+        context,
+        title: '북마크 덮어쓰기',
+        message: '${selected.label}\n\n이 슬롯을 현재 진행 상태로 덮어쓸까요?',
+        cancelLabel: '취소',
+        confirmLabel: '덮어쓰기',
+      );
+      if (!mounted || !confirmed) return false;
+    }
+    await ActiveRunSaveService.saveBookmarkSlot(
+      slotIndex: slotIndex,
+      runtime: runtime,
+    );
+    if (!mounted) return false;
+    showTopNotice(context, '북마크 슬롯 ${slotIndex + 1}에 저장했습니다.');
+    return true;
+  }
+
+  Future<bool> _loadBookmarkRunFromOptions() async {
+    final slots = await ActiveRunSaveService.loadBookmarkSlots();
+    if (!mounted) return false;
+    final slotIndex = await showBookmarkSlotDialog(
+      context: context,
+      title: '북마크 불러오기',
+      message: '불러올 슬롯을 선택하세요. 북마크를 불러오면 현재 이어하기 데이터가 선택한 북마크로 덮어써집니다.',
+      slots: slots,
+    );
+    if (!mounted || slotIndex == null) return false;
+    final selected = slots[slotIndex];
+    if (selected.isEmpty) {
+      showTopNotice(context, '비어 있는 북마크 슬롯입니다.');
+      return false;
+    }
+    final confirmed = await showConfirmDialog(
+      context,
+      title: '북마크 불러오기',
+      message:
+          '${selected.label}\n\n'
+          '이 북마크를 불러오면 현재 이어하기 데이터가 이 상태로 바뀝니다.',
+      cancelLabel: '취소',
+      confirmLabel: '불러오기',
+    );
+    if (!mounted || !confirmed) return false;
+    final runtime = await ActiveRunSaveService.restoreBookmarkToActiveRun(
+      slotIndex,
+    );
+    if (!mounted) return false;
+    if (runtime == null) {
+      showTopNotice(context, '북마크를 불러오지 못했습니다.');
+      return false;
+    }
+    _resumePresentation();
+    _persistRetrySnapshotOnSave = false;
+    _gameNotifier.replaceRuntimeState(
+      session: runtime.session,
+      runProgress: runtime.runProgress,
+      stageStartSnapshot: runtime.stageStartSnapshot,
+      stakeStartSnapshot: runtime.stakeStartSnapshot,
+      activeRunScene: runtime.activeScene,
+    );
+    showTopNotice(context, '북마크 슬롯 ${slotIndex + 1}을 불러왔습니다.');
+    return true;
+  }
+
+  Future<bool> _restartCurrentStakeWithConfirm() async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: '현재 전투 재시작',
+      message: '현재 전투 시작 시점으로 되돌릴까요?\n이번 전투에서 만든 보드와 점수 진행은 취소됩니다.',
+      cancelLabel: '취소',
+      confirmLabel: '현재 전투 재시작',
+    );
+    if (!mounted || !confirmed) return false;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return false;
+
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    await _restartFromStakeSnapshot();
+    return true;
+  }
+
   Future<bool> _restartCurrentRun() async {
+    if (_battleView.stageIndex >= 9) {
+      final warned = await showConfirmDialog(
+        context,
+        title: '무한 Station 재시작',
+        message:
+            '무한 구간에서 Station 재시작은 현재 무한 진행을 크게 되돌릴 수 있습니다.\n'
+            '계속할까요?',
+        cancelLabel: '취소',
+        confirmLabel: 'Station 재시작',
+      );
+      if (!mounted || !warned) return false;
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return false;
+    }
     final confirmed = await showConfirmDialog(
       context,
       title: '현재 Station 재시작',
@@ -37,13 +148,41 @@ extension _GameViewRunEndFlow on _GameViewState {
   }
 
   Future<void> _restartFromStageSnapshot() async {
+    _clearGameOverPresentation();
     _resumePresentation();
     _persistRetrySnapshotOnSave = false;
     _gameNotifier.restartCurrentStage();
     await _saveActiveRun(scene: ActiveRunScene.battle);
   }
 
+  Future<void> _restartFromStageSnapshotAfterGameOver() async {
+    if (_battleView.stageIndex >= 9) {
+      final confirmed = await showConfirmDialog(
+        context,
+        title: '무한 Station 재시작',
+        message:
+            '무한 구간에서 Station 재시작은 현재 무한 진행을 크게 되돌릴 수 있습니다.\n'
+            '계속할까요?',
+        cancelLabel: '취소',
+        confirmLabel: 'Station 재시작',
+      );
+      if (!mounted || !confirmed) return;
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+    }
+    await _restartFromStageSnapshot();
+  }
+
+  Future<void> _restartFromStakeSnapshot() async {
+    _clearGameOverPresentation();
+    _resumePresentation();
+    _persistRetrySnapshotOnSave = false;
+    _gameNotifier.restartCurrentStake();
+    await _saveActiveRun(scene: ActiveRunScene.battle);
+  }
+
   Future<void> _exitAfterGameOver() async {
+    _clearGameOverPresentation();
     _persistRetrySnapshotOnSave = false;
     await _recordRunEndIfNeeded(_expiredRunSummary());
     await ActiveRunSaveService.clearActiveRun();
@@ -51,6 +190,7 @@ extension _GameViewRunEndFlow on _GameViewState {
   }
 
   Future<void> _startNewRunAfterGameOver() async {
+    _clearGameOverPresentation();
     _persistRetrySnapshotOnSave = false;
     await _recordRunEndIfNeeded(_expiredRunSummary());
     await ActiveRunSaveService.clearActiveRun();
@@ -62,6 +202,7 @@ extension _GameViewRunEndFlow on _GameViewState {
   }
 
   Future<void> _completeRunAndReturnToTitle() async {
+    _clearGameOverPresentation();
     _persistRetrySnapshotOnSave = false;
     await _recordRunEndIfNeeded(_completedRunSummary());
     await ActiveRunSaveService.clearActiveRun();
@@ -98,7 +239,30 @@ extension _GameViewRunEndFlow on _GameViewState {
     return completed ? stageIndex : math.max(0, stageIndex - 1);
   }
 
-  void _showGameOver(List<RummiExpirySignal> signals) {
+  void _clearGameOverPresentation() {
+    if (!mounted) return;
+    _mutate(() {
+      _gameOverFadeVisible = false;
+      _gameOverSequenceInProgress = false;
+    });
+  }
+
+  Future<void> _startGameOverSequence(List<RummiExpirySignal> signals) async {
+    if (_gameOverSequenceInProgress) return;
+    _dismissBattleTutorial();
+    _clearSelections();
+    SoundManager.unlockForWeb();
+    SoundManager.playSfx(AssetPaths.sfxTimeUp);
+    _mutate(() {
+      _gameOverSequenceInProgress = true;
+      _gameOverFadeVisible = true;
+    });
+    await Future<void>.delayed(GamePresentationTimings.gameOverFade);
+    if (!mounted) return;
+    _showGameOverDialog(signals);
+  }
+
+  void _showGameOverDialog(List<RummiExpirySignal> signals) {
     if (!mounted) return;
     final summary = RunEndSummary(
       result: RunEndResult.expired,
@@ -111,7 +275,8 @@ extension _GameViewRunEndFlow on _GameViewState {
       signals: signals,
       insightReward: RunProgressionService.calculateInsightReward(summary),
       runSummary: _gameOverRunSummary(),
-      onRetry: _restartFromStageSnapshot,
+      onRetryStake: _restartFromStakeSnapshot,
+      onRetryStation: _restartFromStageSnapshotAfterGameOver,
       onNewRun: _startNewRunAfterGameOver,
       onExit: _exitAfterGameOver,
     );
@@ -178,10 +343,12 @@ extension _GameViewRunEndFlow on _GameViewState {
       await Future<void>.delayed(const Duration(milliseconds: 220));
       if (!mounted) return;
       final signals = _gameNotifier.evaluateExpiry();
-      _showGameOver(
-        signals.isEmpty
-            ? const [RummiExpirySignal.boardFullAfterDcExhausted]
-            : signals,
+      unawaited(
+        _startGameOverSequence(
+          signals.isEmpty
+              ? const [RummiExpirySignal.boardFullAfterDcExhausted]
+              : signals,
+        ),
       );
     });
   }

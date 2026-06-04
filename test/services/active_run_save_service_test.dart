@@ -728,6 +728,82 @@ void main() {
       );
     });
 
+    test('북마크 슬롯은 런 상태를 저장하고 이어하기로 복원한다', () async {
+      final session = RummiPokerGridSession(
+        runSeed: 9090,
+        blind: RummiBlindState(targetScore: 700),
+      );
+      final runProgress = RummiRunProgress()
+        ..stageIndex = 3
+        ..currentStationBlindTierIndex = 0
+        ..gold += 31;
+      final stageStartSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      );
+      final drawn = session.drawToHand();
+      expect(drawn, isNotNull);
+      expect(session.tryPlaceFromHand(drawn!, 0, 0), isTrue);
+      runProgress.gold += 7;
+      final stakeStartSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      );
+      final runtime = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        runModifier: NewRunModifier.highStakes,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: stageStartSnapshot,
+        stakeStartSnapshot: stakeStartSnapshot,
+      );
+
+      await ActiveRunSaveService.saveBookmarkSlot(
+        slotIndex: 1,
+        runtime: runtime,
+      );
+
+      final slots = await ActiveRunSaveService.loadBookmarkSlots();
+      expect(slots, hasLength(ActiveRunSaveService.bookmarkSlotCount));
+      expect(slots[0].isEmpty, isTrue);
+      expect(slots[1].label, 'S3 · 표준 · 하이 · SCOUT');
+
+      final restoredBookmark = await ActiveRunSaveService.loadBookmarkRun(1);
+      expect(restoredBookmark, isNotNull);
+      expect(restoredBookmark!.runModifier, NewRunModifier.highStakes);
+      expect(restoredBookmark.session.board.cellAt(0, 0), isNotNull);
+      expect(
+        restoredBookmark.stakeStartSnapshot.session.board.cellAt(0, 0),
+        isNotNull,
+      );
+      expect(
+        restoredBookmark.stageStartSnapshot.session.board.cellAt(0, 0),
+        isNull,
+      );
+
+      await ActiveRunSaveService.saveRuntimeState(
+        ActiveRunRuntimeState(
+          activeScene: ActiveRunScene.shop,
+          difficulty: NewRunDifficulty.challenge,
+          session: RummiPokerGridSession(runSeed: 1),
+          runProgress: RummiRunProgress(),
+          stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
+            session: RummiPokerGridSession(runSeed: 1),
+            runProgress: RummiRunProgress(),
+          ),
+        ),
+      );
+      final restoredActive =
+          await ActiveRunSaveService.restoreBookmarkToActiveRun(1);
+      expect(restoredActive, isNotNull);
+      expect(restoredActive!.session.runSeed, 9090);
+      expect(
+        (await ActiveRunSaveService.loadActiveRun())!.session.runSeed,
+        9090,
+      );
+    });
+
     test('confirm transaction 저장은 완료된 점수와 보드 제거 상태를 복원한다', () async {
       final session = RummiPokerGridSession(
         runSeed: 6262,

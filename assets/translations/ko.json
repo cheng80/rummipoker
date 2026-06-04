@@ -99,7 +99,7 @@
   "gameTermScorePercentTitle": "점수 +%",
   "gameTermScorePercentBody": "칩을 바탕으로 이번 확정 점수를 비율로 올립니다. 점수 +20%는 최종 점수를 1.2배로 만듭니다.",
   "gameTermScoreMultiplierTitle": "점수 xN",
-  "gameTermScoreMultiplierBody": "마지막에 적용되는 강한 곱셈 보정입니다. 점수 x2는 실제로 2배를 곱합니다.",
+  "gameTermScoreMultiplierBody": "마지막에 적용되는 배수 보정입니다. 점수 x2는 실제로 2배를 곱합니다.",
   "gameTermGoldTitle": "골드",
   "gameTermGoldBody": "상점에서 Jester와 Item을 구매하거나 리롤할 때 쓰는 재화입니다."
 }

@@ -16,6 +16,7 @@ import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/widgets/game_ui_palette.dart';
 import 'game/widgets/game_run_info_dialog.dart';
+import 'game/widgets/game_bookmark_slot_dialog.dart';
 import 'home_entry_widgets.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
@@ -188,6 +189,52 @@ class _TitleViewState extends ConsumerState<TitleView>
     );
   }
 
+  Future<void> _openBookmarkLoadMenu() async {
+    final slots = await ActiveRunSaveService.loadBookmarkSlots();
+    if (!mounted) return;
+    final slotIndex = await showBookmarkSlotDialog(
+      context: context,
+      title: '북마크 불러오기',
+      message: '북마크를 불러오면 현재 이어하기 데이터가 선택한 북마크로 덮어써집니다.',
+      slots: slots,
+    );
+    if (!mounted || slotIndex == null) return;
+    final selected = slots[slotIndex];
+    if (selected.isEmpty) {
+      showTopNotice(context, '비어 있는 북마크 슬롯입니다.');
+      return;
+    }
+    final confirmed = await showConfirmDialog(
+      context,
+      title: '북마크 불러오기',
+      message:
+          '${selected.label}\n\n'
+          '이 북마크를 불러오면 현재 이어하기 데이터가 이 상태로 바뀝니다.',
+      cancelLabel: '취소',
+      confirmLabel: '불러오기',
+    );
+    if (!mounted || !confirmed) return;
+    final restoredRun = await ActiveRunSaveService.restoreBookmarkToActiveRun(
+      slotIndex,
+    );
+    if (!mounted) return;
+    if (restoredRun == null) {
+      showTopNotice(context, '북마크를 불러오지 못했습니다.');
+      return;
+    }
+    SoundManager.unlockForWeb();
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    final router = GoRouter.of(context);
+    await SoundManager.stopBgm();
+    if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final route = restoredRun.activeScene == ActiveRunScene.blindSelect
+        ? '${RoutePaths.blindSelect}?difficulty=${restoredRun.difficulty.name}'
+        : '${RoutePaths.game}?difficulty=${restoredRun.difficulty.name}';
+    router.go(route, extra: restoredRun);
+  }
+
   Future<void> _showCorruptedSaveDialog() async {
     final action = await showGameChoiceDialog<String>(
       context,
@@ -235,13 +282,16 @@ class _TitleViewState extends ConsumerState<TitleView>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: fixtures
+                .asMap()
+                .entries
                 .map(
-                  (fixture) => Padding(
+                  (entry) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _DebugFixtureOption(
-                      label: fixture.label,
-                      description: fixture.description,
-                      onTap: () => Navigator.of(context).pop(fixture.id),
+                      number: entry.key + 1,
+                      label: entry.value.label,
+                      description: entry.value.description,
+                      onTap: () => Navigator.of(context).pop(entry.value.id),
                     ),
                   ),
                 )
@@ -374,6 +424,13 @@ class _TitleViewState extends ConsumerState<TitleView>
                             accent: GameUiPalette.actionGoldBright,
                             onTap: _openTitleRunInfo,
                           ),
+                          const SizedBox(height: 12),
+                          HomeEntryCard(
+                            title: '북마크 불러오기',
+                            description: '저장해 둔 3개 슬롯 중 하나에서 런을 복원합니다.',
+                            accent: GameUiPalette.titleDebugBlue,
+                            onTap: _openBookmarkLoadMenu,
+                          ),
                         ],
                       ),
                     ),
@@ -487,20 +544,23 @@ String _continueDialogMessage(RummiActiveRunSaveFacade? summary) {
 
 class _DebugFixtureOption extends StatelessWidget {
   const _DebugFixtureOption({
+    required this.number,
     required this.label,
     required this.description,
     required this.onTap,
   });
 
+  final int number;
   final String label;
   final String description;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final numberedLabel = '$number. $label';
     return Semantics(
       button: true,
-      label: label,
+      label: numberedLabel,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
@@ -532,7 +592,7 @@ class _DebugFixtureOption extends StatelessWidget {
                     spacing: 6,
                     children: [
                       Text(
-                        label,
+                        numberedLabel,
                         softWrap: true,
                         style: const TextStyle(
                           fontSize: 16,

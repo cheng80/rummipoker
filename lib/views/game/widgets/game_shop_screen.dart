@@ -67,6 +67,8 @@ class GameShopScreen extends StatefulWidget {
     required this.onStateChanged,
     required this.onOpenSettings,
     required this.onExitToTitle,
+    this.onBookmarkRun,
+    this.onLoadBookmarkRun,
     required this.onRestartRun,
     required this.isDebugFixtureRun,
     this.readActiveRunSaveView,
@@ -92,6 +94,8 @@ class GameShopScreen extends StatefulWidget {
   final Future<void> Function() onStateChanged;
   final Future<void> Function() onOpenSettings;
   final Future<void> Function() onExitToTitle;
+  final Future<bool> Function()? onBookmarkRun;
+  final Future<bool> Function()? onLoadBookmarkRun;
   final Future<void> Function() onRestartRun;
   final bool isDebugFixtureRun;
   final RummiActiveRunSaveFacade? Function()? readActiveRunSaveView;

@@ -284,7 +284,8 @@ void main() {
                         boughtItemCount: 4,
                         addedDeckTileCount: 1,
                       ),
-                      onRetry: () async {},
+                      onRetryStake: () async {},
+                      onRetryStation: () async {},
                       onNewRun: () async {},
                       onExit: () async {},
                     );
@@ -308,6 +309,8 @@ void main() {
     expect(find.text('1065 / 1738'), findsOneWidget);
     expect(find.text('플러시 · 칩 80'), findsOneWidget);
     expect(find.text('투페어 (3)'), findsOneWidget);
+    expect(find.text('현재 전투 재시작'), findsOneWidget);
+    expect(find.text('현재 Station 재시작'), findsOneWidget);
     expect(find.text('추가 타일 1 · 777'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());

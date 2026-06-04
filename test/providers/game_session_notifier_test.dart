@@ -2341,6 +2341,72 @@ void main() {
       },
     );
 
+    test('restartCurrentStake는 station 시작점이 아니라 현재 전투 시작점으로 되돌린다', () {
+      final stationStartSession = RummiPokerGridSession(
+        runSeed: 501,
+        blind: RummiBlindState(targetScore: 300),
+      );
+      final stationStartProgress = RummiRunProgress()..stageIndex = 4;
+      final stakeStartSession = stationStartSession.copySnapshot();
+      final stakeStartProgress = stationStartProgress.copySnapshot()
+        ..currentStationBlindTierIndex = 1
+        ..gold += 5;
+      stakeStartSession.board.setCell(
+        1,
+        1,
+        const Tile(id: 1001, color: TileColor.red, number: 7),
+      );
+      final currentSession = stakeStartSession.copySnapshot();
+      final currentProgress = stakeStartProgress.copySnapshot()..gold += 11;
+      currentSession.board.setCell(
+        2,
+        2,
+        const Tile(id: 1002, color: TileColor.blue, number: 8),
+      );
+      final restoredRun = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        session: currentSession,
+        runProgress: currentProgress,
+        stageStartSnapshot: ActiveRunStageSnapshot(
+          session: stationStartSession.copySnapshot(),
+          runProgress: stationStartProgress.copySnapshot(),
+        ),
+        stakeStartSnapshot: ActiveRunStageSnapshot(
+          session: stakeStartSession.copySnapshot(),
+          runProgress: stakeStartProgress.copySnapshot(),
+        ),
+      );
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final args = GameSessionArgs(runSeed: 501, restoredRun: restoredRun);
+
+      container
+          .read(gameSessionNotifierProvider(args).notifier)
+          .restartCurrentStake();
+
+      final restartedStake = container.read(gameSessionNotifierProvider(args));
+      expect(restartedStake.session!.board.cellAt(1, 1), isNotNull);
+      expect(restartedStake.session!.board.cellAt(2, 2), isNull);
+      expect(
+        restartedStake.runProgress!.gold,
+        RummiEconomyConfig.startingGold + 5,
+      );
+
+      container
+          .read(gameSessionNotifierProvider(args).notifier)
+          .restartCurrentStage();
+
+      final restartedStation = container.read(
+        gameSessionNotifierProvider(args),
+      );
+      expect(restartedStation.session!.board.cellAt(1, 1), isNull);
+      expect(
+        restartedStation.runProgress!.gold,
+        RummiEconomyConfig.startingGold,
+      );
+    });
+
     test('clear confirm 직후에도 expiry 신호가 동시에 나올 수 있는 상태를 재현한다', () {
       final session = RummiPokerGridSession(
         runSeed: 700,

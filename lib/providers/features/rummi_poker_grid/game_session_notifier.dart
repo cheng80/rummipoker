@@ -102,9 +102,17 @@ class GameSessionNotifier
         ActiveRunRuntimeState(
           activeScene: next.activeRunScene,
           difficulty: arg.difficulty,
+          runModifier: next.runModifier,
           session: session,
           runProgress: runProgress,
           stageStartSnapshot:
+              next.stageStartSnapshot ??
+              ActiveRunSaveService.captureStageStartSnapshot(
+                session: session,
+                runProgress: runProgress,
+              ),
+          stakeStartSnapshot:
+              next.stakeStartSnapshot ??
               next.stageStartSnapshot ??
               ActiveRunSaveService.captureStageStartSnapshot(
                 session: session,

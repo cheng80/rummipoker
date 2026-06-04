@@ -10,6 +10,7 @@ class AssetPaths {
   static const String sfxFail = 'sfx/Fail.mp3';
   static const String sfxBtnSnd = 'sfx/BtnSnd.mp3';
   static const String sfxClear = 'sfx/Clear.mp3';
+  static const String sfxTimeUp = 'sfx/TimeUp.wav';
 
   /// BGM 경로. FlameAudio.bgm에는 assets/audio/ 이후 상대 경로를 전달한다.
   static const String bgmMenu = 'music/Menu_BGM.mp3';

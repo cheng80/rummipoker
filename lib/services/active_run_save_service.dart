@@ -29,6 +29,7 @@ class ActiveRunSaveService {
   ActiveRunSaveService._();
 
   static const int schemaVersion = 2;
+  static const int bookmarkSlotCount = 3;
 
   static Future<ActiveRunAvailability> inspectActiveRun() async {
     final payload = StorageHelper.readString(
@@ -80,6 +81,7 @@ class ActiveRunSaveService {
     required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
     required ActiveRunStageSnapshot stageStartSnapshot,
+    ActiveRunStageSnapshot? stakeStartSnapshot,
   }) async {
     final payload = runtimeStateToJson(
       ActiveRunRuntimeState(
@@ -89,6 +91,7 @@ class ActiveRunSaveService {
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: stageStartSnapshot,
+        stakeStartSnapshot: stakeStartSnapshot,
       ),
     );
     final deviceKey = await _ensureDeviceKey();
@@ -105,6 +108,7 @@ class ActiveRunSaveService {
       session: runtime.session,
       runProgress: runtime.runProgress,
       stageStartSnapshot: runtime.stageStartSnapshot,
+      stakeStartSnapshot: runtime.stakeStartSnapshot,
     );
   }
 
@@ -130,6 +134,15 @@ class ActiveRunSaveService {
       session: _restoreSession(save.stageStartSession),
       runProgress: _restoreRunProgress(save.stageStartRunProgress, catalog),
     );
+    final stakeStartSnapshot = ActiveRunStageSnapshot(
+      session: _restoreSession(
+        save.stakeStartSession ?? save.stageStartSession,
+      ),
+      runProgress: _restoreRunProgress(
+        save.stakeStartRunProgress ?? save.stageStartRunProgress,
+        catalog,
+      ),
+    );
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.values.byName(save.activeScene),
@@ -138,6 +151,7 @@ class ActiveRunSaveService {
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
+      stakeStartSnapshot: stakeStartSnapshot,
     );
   }
 
@@ -156,6 +170,12 @@ class ActiveRunSaveService {
       stageStartRunProgress: _buildSavedRunProgressData(
         runtime.stageStartSnapshot.runProgress,
       ),
+      stakeStartSession: _buildSavedSessionData(
+        runtime.stakeStartSnapshot.session,
+      ),
+      stakeStartRunProgress: _buildSavedRunProgressData(
+        runtime.stakeStartSnapshot.runProgress,
+      ),
     );
     return jsonEncode(save.toJson());
   }
@@ -169,6 +189,56 @@ class ActiveRunSaveService {
   static Future<void> clearActiveRun() async {
     await StorageHelper.remove(StorageKeys.activeRunPayloadV1);
     await StorageHelper.remove(StorageKeys.activeRunSignatureV1);
+  }
+
+  static Future<List<ActiveRunBookmarkSlotView>> loadBookmarkSlots() async {
+    final slots = <ActiveRunBookmarkSlotView>[];
+    for (var slotIndex = 0; slotIndex < bookmarkSlotCount; slotIndex++) {
+      final save = await _loadVerifiedSaveDataForKeys(
+        payloadKey: _bookmarkPayloadKey(slotIndex),
+        signatureKey: _bookmarkSignatureKey(slotIndex),
+      );
+      slots.add(
+        ActiveRunBookmarkSlotView(
+          slotIndex: slotIndex,
+          summary: save == null
+              ? null
+              : RummiActiveRunSaveFacade.fromSaveData(save),
+        ),
+      );
+    }
+    return List<ActiveRunBookmarkSlotView>.unmodifiable(slots);
+  }
+
+  static Future<void> saveBookmarkSlot({
+    required int slotIndex,
+    required ActiveRunRuntimeState runtime,
+  }) async {
+    _checkBookmarkSlotIndex(slotIndex);
+    final payload = runtimeStateToJson(runtime);
+    final deviceKey = await _ensureDeviceKey();
+    final signature = _signPayload(payload, deviceKey);
+    await StorageHelper.write(_bookmarkPayloadKey(slotIndex), payload);
+    await StorageHelper.write(_bookmarkSignatureKey(slotIndex), signature);
+  }
+
+  static Future<ActiveRunRuntimeState?> loadBookmarkRun(int slotIndex) async {
+    _checkBookmarkSlotIndex(slotIndex);
+    final save = await _loadVerifiedSaveDataForKeys(
+      payloadKey: _bookmarkPayloadKey(slotIndex),
+      signatureKey: _bookmarkSignatureKey(slotIndex),
+    );
+    if (save == null) return null;
+    return runtimeStateFromSaveData(save);
+  }
+
+  static Future<ActiveRunRuntimeState?> restoreBookmarkToActiveRun(
+    int slotIndex,
+  ) async {
+    final runtime = await loadBookmarkRun(slotIndex);
+    if (runtime == null) return null;
+    await saveRuntimeState(runtime);
+    return runtime;
   }
 
   static ActiveRunStageSnapshot captureStageStartSnapshot({
@@ -187,21 +257,42 @@ class ActiveRunSaveService {
   }
 
   static Future<ActiveRunSaveData?> _loadVerifiedSaveData() async {
-    final availability = await inspectActiveRun();
-    if (availability != ActiveRunAvailability.available) {
-      return null;
-    }
-
-    final payload = StorageHelper.readString(
-      StorageKeys.activeRunPayloadV1,
-      defaultValue: '',
+    return _loadVerifiedSaveDataForKeys(
+      payloadKey: StorageKeys.activeRunPayloadV1,
+      signatureKey: StorageKeys.activeRunSignatureV1,
     );
-    if (payload.isEmpty) {
+  }
+
+  static Future<ActiveRunSaveData?> _loadVerifiedSaveDataForKeys({
+    required String payloadKey,
+    required String signatureKey,
+  }) async {
+    final payload = StorageHelper.readString(payloadKey, defaultValue: '');
+    final signature = StorageHelper.readString(signatureKey, defaultValue: '');
+    if (payload.isEmpty || signature.isEmpty) return null;
+    final deviceKey = await _readDeviceKey();
+    if (deviceKey == null || deviceKey.isEmpty) return null;
+    if (_signPayload(payload, deviceKey) != signature) return null;
+    try {
+      final decoded = jsonDecode(payload) as Map<String, dynamic>;
+      final save = ActiveRunSaveData.fromJson(decoded);
+      if (save.schemaVersion != schemaVersion) return null;
+      return save;
+    } catch (_) {
       return null;
     }
+  }
 
-    final decoded = jsonDecode(payload) as Map<String, dynamic>;
-    return ActiveRunSaveData.fromJson(decoded);
+  static String _bookmarkPayloadKey(int slotIndex) =>
+      '${StorageKeys.activeRunBookmarkPayloadPrefix}$slotIndex';
+
+  static String _bookmarkSignatureKey(int slotIndex) =>
+      '${StorageKeys.activeRunBookmarkSignaturePrefix}$slotIndex';
+
+  static void _checkBookmarkSlotIndex(int slotIndex) {
+    if (slotIndex < 0 || slotIndex >= bookmarkSlotCount) {
+      throw RangeError.range(slotIndex, 0, bookmarkSlotCount - 1, 'slotIndex');
+    }
   }
 
   static Future<String> _ensureDeviceKey() async {

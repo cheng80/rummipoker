@@ -23,6 +23,7 @@ mixin GameSessionNotifierSaveCommands
         session: retrySnapshot.session,
         runProgress: retrySnapshot.runProgress,
         stageStartSnapshot: retrySnapshot,
+        stakeStartSnapshot: retrySnapshot,
       );
     }
 
@@ -33,6 +34,7 @@ mixin GameSessionNotifierSaveCommands
       session: state.session!,
       runProgress: state.runProgress!,
       stageStartSnapshot: state.stageStartSnapshot!,
+      stakeStartSnapshot: state.stakeStartSnapshot ?? state.stageStartSnapshot!,
     );
   }
 
@@ -40,6 +42,7 @@ mixin GameSessionNotifierSaveCommands
     _replaceState(
       state.copyWith(
         stageStartSnapshot: snapshot,
+        stakeStartSnapshot: snapshot,
         revision: state.revision + 1,
       ),
     );
@@ -49,6 +52,7 @@ mixin GameSessionNotifierSaveCommands
     required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
     required ActiveRunStageSnapshot stageStartSnapshot,
+    ActiveRunStageSnapshot? stakeStartSnapshot,
     ActiveRunScene activeRunScene = ActiveRunScene.battle,
   }) {
     _replaceState(
@@ -56,6 +60,7 @@ mixin GameSessionNotifierSaveCommands
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: stageStartSnapshot,
+        stakeStartSnapshot: stakeStartSnapshot ?? stageStartSnapshot,
         runLoopPhase: _loopPhaseForScene(activeRunScene),
         activeRunScene: activeRunScene,
         debugFixtureId: state.debugFixtureId,
@@ -79,6 +84,27 @@ mixin GameSessionNotifierSaveCommands
       session: restoredSession,
       runProgress: restoredRunProgress,
       stageStartSnapshot: refreshedSnapshot,
+      stakeStartSnapshot: refreshedSnapshot,
+      activeRunScene: ActiveRunScene.battle,
+    );
+  }
+
+  /// 현재 전투 시작 시점(stakeStartSnapshot)으로 복원.
+  void restartCurrentStake() {
+    final snapshot = state.stakeStartSnapshot ?? state.stageStartSnapshot;
+    if (snapshot == null) return;
+    final restoredSession = snapshot.session.copySnapshot();
+    final restoredRunProgress = snapshot.runProgress.copySnapshot();
+    final refreshedStakeSnapshot =
+        ActiveRunSaveService.captureStageStartSnapshot(
+          session: restoredSession,
+          runProgress: restoredRunProgress,
+        );
+    replaceRuntimeState(
+      session: restoredSession,
+      runProgress: restoredRunProgress,
+      stageStartSnapshot: state.stageStartSnapshot ?? refreshedStakeSnapshot,
+      stakeStartSnapshot: refreshedStakeSnapshot,
       activeRunScene: ActiveRunScene.battle,
     );
   }

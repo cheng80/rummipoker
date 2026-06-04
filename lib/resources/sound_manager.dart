@@ -235,10 +235,7 @@ class SoundManager {
         FlameAudio.bgm
             .stop()
             .then(
-              (_) => FlameAudio.bgm.play(
-                path,
-                volume: GameSettings.bgmVolume,
-              ),
+              (_) => FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume),
             )
             .then((_) {
               if (_currentBgm == path) {
@@ -272,6 +269,7 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxFail),
       FlameAudio.audioCache.load(AssetPaths.sfxBtnSnd),
       FlameAudio.audioCache.load(AssetPaths.sfxClear),
+      FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
     ]);
   }
 

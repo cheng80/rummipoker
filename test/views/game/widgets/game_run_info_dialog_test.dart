@@ -83,6 +83,8 @@ void main() {
     expect(find.text('칩'), findsWidgets);
     expect(find.text('점수 +%'), findsOneWidget);
     expect(find.text('점수 xN'), findsOneWidget);
+    expect(find.textContaining('마지막에 적용되는 배수 보정'), findsOneWidget);
+    expect(find.textContaining('강한 곱셈'), findsNothing);
     expect(find.text('골드'), findsOneWidget);
 
     await tester.tap(find.byTooltip('취소').last);

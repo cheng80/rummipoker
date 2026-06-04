@@ -9,6 +9,7 @@ class GamePresentationTimings {
   static const Duration presentationPauseTick = Duration(milliseconds: 50);
   static const Duration inactiveLifecycleDebounce = Duration(milliseconds: 250);
   static const Duration itemEffectFeedback = Duration(seconds: 2);
+  static const Duration gameOverFade = Duration(seconds: 2);
 
   static const Duration stageClearClearedHold = Duration(milliseconds: 850);
   static const Duration stageClearSettlementHold = Duration(milliseconds: 950);

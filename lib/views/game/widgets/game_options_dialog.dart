@@ -21,6 +21,9 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
   required BuildContext context,
   required int runSeed,
   RummiActiveRunSaveFacade? activeRunSaveView,
+  Future<bool> Function()? onBookmarkRun,
+  Future<bool> Function()? onLoadBookmarkRun,
+  Future<bool> Function()? onRestartStake,
   required Future<bool> Function() onRestartRun,
   required Future<bool> Function() onExitToTitle,
   required bool isDebugFixtureRun,
@@ -145,6 +148,48 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                   Navigator.of(
                     dialogContext,
                   ).pop(GameOptionsCloseAction.openBattleTutorial);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
+                title: '북마크하기',
+                subtitle: '현재 진행 상태를 북마크 슬롯 3개 중 하나에 저장합니다.',
+                icon: Icons.bookmark_add_rounded,
+                accentColor: GameUiPalette.actionInfoBlue,
+                onTap: () async {
+                  final saved = await onBookmarkRun?.call() ?? false;
+                  if (!dialogContext.mounted || !saved) return;
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(GameOptionsCloseAction.resumeGame);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
+                title: '북마크 불러오기',
+                subtitle: '저장된 북마크를 불러오고 이어하기 데이터를 덮어씁니다.',
+                icon: Icons.bookmarks_rounded,
+                accentColor: GameUiPalette.titleDebugBlue,
+                onTap: () async {
+                  final loaded = await onLoadBookmarkRun?.call() ?? false;
+                  if (!dialogContext.mounted || !loaded) return;
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(GameOptionsCloseAction.resumeGame);
+                },
+              ),
+              const SizedBox(height: 8),
+              GameMenuActionTile(
+                title: '현재 전투 재시작',
+                subtitle: '현재 전투 시작 시점으로만 되돌립니다.',
+                icon: Icons.replay_rounded,
+                accentColor: GameUiPalette.menuAccentRestart,
+                onTap: () async {
+                  final changed = await onRestartStake?.call() ?? false;
+                  if (!dialogContext.mounted || !changed) return;
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(GameOptionsCloseAction.resumeGame);
                 },
               ),
               const SizedBox(height: 8),

@@ -2,6 +2,7 @@ import '../logic/rummi_poker_grid/hand_rank.dart';
 import '../logic/rummi_poker_grid/models/tile.dart';
 import '../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import 'active_run_save_service.dart';
+import 'new_run_setup.dart';
 
 /// V4 target-term read model over the current active run save/runtime.
 ///
@@ -54,13 +55,30 @@ class RummiStationCheckpointSaveView {
   final int gold;
 }
 
+class ActiveRunBookmarkSlotView {
+  const ActiveRunBookmarkSlotView({
+    required this.slotIndex,
+    required this.summary,
+  });
+
+  final int slotIndex;
+  final RummiActiveRunSaveFacade? summary;
+
+  bool get isEmpty => summary == null;
+  String get title => '슬롯 ${slotIndex + 1}';
+  String get label => summary?.bookmarkLabel ?? '비어 있음';
+}
+
 class RummiActiveRunSaveFacade {
   const RummiActiveRunSaveFacade({
     required this.schemaVersion,
     required this.activeScene,
     required this.sceneAlias,
+    this.difficultyLabel = '표준',
+    this.runModifierLabel,
     required this.currentStageIndex,
     required this.currentStationIndex,
+    this.currentBlindTierIndex = 0,
     required this.currentRunSeed,
     required this.currentGold,
     required this.checkpoint,
@@ -74,8 +92,15 @@ class RummiActiveRunSaveFacade {
       schemaVersion: save.schemaVersion,
       activeScene: save.activeScene,
       sceneAlias: _sceneAliasFromName(save.activeScene),
+      difficultyLabel: NewRunSetup(
+        difficulty: NewRunSetup.parseDifficulty(save.difficulty),
+      ).difficultyLabel,
+      runModifierLabel: _runModifierLabel(
+        NewRunModifier.parse(save.runModifier),
+      ),
       currentStageIndex: save.runProgress.stageIndex,
       currentStationIndex: save.runProgress.stageIndex,
+      currentBlindTierIndex: save.runProgress.currentStationBlindTierIndex,
       currentRunSeed: save.session.runSeed,
       currentGold: save.runProgress.gold,
       currentPlayedHandCounts: _parsePlayedHandCounts(
@@ -97,8 +122,13 @@ class RummiActiveRunSaveFacade {
       schemaVersion: ActiveRunSaveService.schemaVersion,
       activeScene: runtime.activeScene.name,
       sceneAlias: _sceneAliasFromScene(runtime.activeScene),
+      difficultyLabel: NewRunSetup(
+        difficulty: runtime.difficulty,
+      ).difficultyLabel,
+      runModifierLabel: _runModifierLabel(runtime.runModifier),
       currentStageIndex: runtime.runProgress.stageIndex,
       currentStationIndex: runtime.runProgress.stageIndex,
+      currentBlindTierIndex: runtime.runProgress.currentStationBlindTierIndex,
       currentRunSeed: runtime.session.runSeed,
       currentGold: runtime.runProgress.gold,
       currentPlayedHandCounts: runtime.runProgress.snapshotPlayedHandCounts(),
@@ -111,8 +141,11 @@ class RummiActiveRunSaveFacade {
   final int schemaVersion;
   final String activeScene;
   final RummiSaveSceneAlias sceneAlias;
+  final String difficultyLabel;
+  final String? runModifierLabel;
   final int currentStageIndex;
   final int currentStationIndex;
+  final int currentBlindTierIndex;
   final int currentRunSeed;
   final int currentGold;
   final Map<RummiHandRank, int> currentPlayedHandCounts;
@@ -124,6 +157,17 @@ class RummiActiveRunSaveFacade {
       '현재 Station $currentStationIndex · ${rummiSaveSceneLabel(sceneAlias)} · Gold $currentGold';
 
   String get checkpointSummary => '체크포인트 Station ${checkpoint.stationIndex}';
+
+  String get bookmarkLabel {
+    final stationLabel = currentStageIndex >= 9
+        ? '∞S$currentStageIndex'
+        : 'S$currentStageIndex';
+    final modifier = runModifierLabel;
+    final modeLabel = modifier == null || modifier.isEmpty
+        ? difficultyLabel
+        : '$difficultyLabel · $modifier';
+    return '$stationLabel · $modeLabel · ${_blindTierLabel(currentBlindTierIndex)}';
+  }
 
   String snapshotSummaryLabel({bool includeCheckpoint = true}) {
     if (!includeCheckpoint) {
@@ -205,4 +249,20 @@ class RummiActiveRunSaveFacade {
     }
     return Map<RummiHandRank, RummiHandGrowthState>.unmodifiable(out);
   }
+}
+
+String? _runModifierLabel(NewRunModifier modifier) {
+  return switch (modifier) {
+    NewRunModifier.basic => null,
+    NewRunModifier.highStakes => '하이',
+  };
+}
+
+String _blindTierLabel(int tierIndex) {
+  return switch (tierIndex) {
+    0 => 'SCOUT',
+    1 => 'CLASH',
+    2 => 'BOSS',
+    _ => '선택 전',
+  };
 }

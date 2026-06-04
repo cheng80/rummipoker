@@ -118,7 +118,8 @@ String gameOverTauntLineForSeed(int seed) {
 }
 
 /// 만료 신호 목록으로 게임오버 다이얼로그를 표시한다.
-/// [onRetry]는 현재 스테이지 시작 스냅샷으로 즉시 복원한다.
+/// [onRetryStake]는 현재 전투 시작 스냅샷으로 즉시 복원한다.
+/// [onRetryStation]은 현재 Station 시작 스냅샷으로 즉시 복원한다.
 /// [onNewRun]은 이번 런 기록을 남기고 새 run 준비로 이동한다.
 /// [onExit]는 저장을 정리하고 타이틀로 이동한다.
 void showGameOverDialog({
@@ -127,7 +128,8 @@ void showGameOverDialog({
   required int insightReward,
   GameOverRunSummary? runSummary,
   String? tauntLine,
-  required Future<void> Function() onRetry,
+  required Future<void> Function() onRetryStake,
+  required Future<void> Function() onRetryStation,
   required Future<void> Function() onNewRun,
   required Future<void> Function() onExit,
 }) {
@@ -183,14 +185,26 @@ void showGameOverDialog({
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 GameActionButton(
-                  label: '다시 도전',
+                  label: '현재 전투 재시작',
                   background: GameUiPalette.actionGold,
                   foreground: GameUiPalette.ink,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                    await onRetry();
+                    await onRetryStake();
+                  },
+                ),
+                const SizedBox(height: 10),
+                GameActionButton(
+                  label: '현재 Station 재시작',
+                  background: GameUiPalette.menuAccentRestart,
+                  foreground: GameUiPalette.ink,
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await WidgetsBinding.instance.endOfFrame;
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    await onRetryStation();
                   },
                 ),
                 const SizedBox(height: 10),

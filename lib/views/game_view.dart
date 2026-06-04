@@ -45,6 +45,7 @@ import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
 import 'game/widgets/game_market_feedback_widgets.dart';
+import 'game/widgets/game_bookmark_slot_dialog.dart';
 import 'game/widgets/game_options_dialog.dart';
 import 'game/widgets/game_run_info_dialog.dart';
 import 'game/widgets/game_effect_overlay.dart';
@@ -162,6 +163,8 @@ class _GameViewState extends ConsumerState<GameView>
   bool _pausedLifecycleDuringStageFlow = false;
   bool _optionsDialogOpen = false;
   bool _presentationPaused = false;
+  bool _gameOverFadeVisible = false;
+  bool _gameOverSequenceInProgress = false;
   Timer? _inactiveLifecycleTimer;
   bool _battleTutorialScheduled = false;
   bool _battleTutorialShouldMarkSeenOnFinish = false;
@@ -707,6 +710,8 @@ class _GameViewState extends ConsumerState<GameView>
             const Positioned.fill(child: _NextStationTransitionOverlay()),
           if (_presentationPaused)
             const Positioned.fill(child: _GamePresentationPauseVeil()),
+          if (_gameOverFadeVisible)
+            const Positioned.fill(child: _GameOverFadeVeil()),
         ],
       ),
     );
@@ -720,4 +725,29 @@ String _battleRunContextLabel({
   final difficultyLabel = NewRunSetup(difficulty: difficulty).difficultyLabel;
   if (runModifier == NewRunModifier.basic) return difficultyLabel;
   return '$difficultyLabel · 하이';
+}
+
+class _GameOverFadeVeil extends StatelessWidget {
+  const _GameOverFadeVeil();
+
+  @override
+  Widget build(BuildContext context) {
+    return AbsorbPointer(
+      key: const ValueKey('game-over-fade-veil'),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: GamePresentationTimings.gameOverFade,
+        curve: Curves.easeInCubic,
+        builder: (context, value, child) {
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: GameUiPalette.specialDangerHard.withValues(
+                alpha: 0.18 + (value * 0.58),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

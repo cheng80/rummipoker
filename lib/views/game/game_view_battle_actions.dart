@@ -14,7 +14,7 @@ extension _GameViewBattleActions on _GameViewState {
     _persistRetrySnapshotOnSave = true;
     await _saveActiveRun(scene: ActiveRunScene.battle);
     if (!mounted) return true;
-    _showGameOver(signals);
+    await _startGameOverSequence(signals);
     return true;
   }
 

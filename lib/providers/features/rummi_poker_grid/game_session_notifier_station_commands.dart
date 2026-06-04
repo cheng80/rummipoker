@@ -100,12 +100,14 @@ mixin GameSessionNotifierStationCommands
       ];
     }
     clearSelections();
+    final startSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+      session: session,
+      runProgress: runProgress,
+    );
     _replaceState(
       state.copyWith(
-        stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
-          session: session,
-          runProgress: runProgress,
-        ),
+        stageStartSnapshot: startSnapshot,
+        stakeStartSnapshot: startSnapshot,
         runLoopPhase: GameRunLoopPhase.battle,
         pendingItemPresentationEvents: pendingItemPresentationEvents,
         revision: state.revision + 1,

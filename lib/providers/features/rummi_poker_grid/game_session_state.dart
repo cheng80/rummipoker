@@ -25,6 +25,7 @@ class GameSessionState {
     this.session,
     this.runProgress,
     this.stageStartSnapshot,
+    this.stakeStartSnapshot,
     this.ruleset = RummiRuleset.currentDefaults,
     this.runModifier = NewRunModifier.basic,
     this.stationView,
@@ -71,6 +72,7 @@ class GameSessionState {
   final RummiPokerGridSession? session;
   final RummiRunProgress? runProgress;
   final ActiveRunStageSnapshot? stageStartSnapshot;
+  final ActiveRunStageSnapshot? stakeStartSnapshot;
   final RummiRuleset ruleset;
   final NewRunModifier runModifier;
   final RummiStationRuntimeFacade? stationView;
@@ -119,6 +121,7 @@ class GameSessionState {
     Object? session = _unset,
     Object? runProgress = _unset,
     Object? stageStartSnapshot = _unset,
+    Object? stakeStartSnapshot = _unset,
     RummiRuleset? ruleset,
     NewRunModifier? runModifier,
     Object? stationView = _unset,
@@ -174,6 +177,9 @@ class GameSessionState {
       stageStartSnapshot: stageStartSnapshot == _unset
           ? this.stageStartSnapshot
           : stageStartSnapshot as ActiveRunStageSnapshot?,
+      stakeStartSnapshot: stakeStartSnapshot == _unset
+          ? this.stakeStartSnapshot
+          : stakeStartSnapshot as ActiveRunStageSnapshot?,
       ruleset: ruleset ?? this.ruleset,
       runModifier: runModifier ?? this.runModifier,
       stationView: stationView == _unset
