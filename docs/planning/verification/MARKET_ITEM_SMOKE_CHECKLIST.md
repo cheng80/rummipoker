@@ -23,6 +23,23 @@
 | `offer_stability` | Bought Item offer leaves an empty slot until reroll/next Market; `trade_ticket` rerolls Item candidates only | `rummi_market_facade_test.dart`, `debug_run_fixture_service_test.dart`, `game_shop_screen_trade_ticket_test.dart` |
 | `slot_height` | Jester/Slots and Tool/Gear tab sections keep matching outer heights; cards animate without moving outer containers | `/game?fixture=market_item_motion_eye_check` browser eye-check |
 
+### 2026-06-10 Closing Status
+
+- `tool_use_feedback`: Closed. Browser fixture confirms Tool use source/result feedback, Gold `+NG` placement, and post-use selection clear.
+- `offer_stability`: Closed. Browser fixture confirms a bought Tool offer is removed without immediate refill, and `trade_ticket` rerolls Item candidates only.
+- `slot_height`: Closed. Browser fixture confirms `Jester / Slots` and `Tool / Gear` tab sections keep stable outer heights during tab switch, buy, and Tool use feedback.
+
+Browser evidence:
+
+- `/tmp/rummi_offer_stability_tool_before_buy.png`
+- `/tmp/rummi_offer_stability_after_buy.png`
+- `/tmp/rummi_trade_ticket_tool_before.png`
+- `/tmp/rummi_trade_ticket_tool_after.png`
+- `/tmp/rummi_trade_ticket_jester_before.png`
+- `/tmp/rummi_trade_ticket_jester_after.png`
+- `/tmp/rummi_trade_ticket_tile_before.png`
+- `/tmp/rummi_trade_ticket_tile_after.png`
+
 ## Market Flow Smoke
 
 - Enter Market after cash-out and verify the title is `Market`, not `Jester Market`.

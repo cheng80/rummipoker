@@ -75,6 +75,7 @@
 3. 다음: 이후 작업은 예정 연출 큐와 장기 경제/레벨링을 섞지 않는다.
    - 마켓/전투 표시 결함은 작은 fixture + targeted test로 닫고, 경제/가격 판단은 fresh runtime probe 기준으로 별도 재개한다.
    - 2026-06-10 완료: Market Tool 사용 후 detail panel이 다른 Tool/offer로 자동 이동하지 않게 했다. 성공한 Tool 사용 후에는 선택 없음으로 돌아가고, 실패/deny 경로만 기존 선택을 유지한다.
+   - 2026-06-10 완료: `MARKET_ITEM_SMOKE_CHECKLIST.md` 기준 `tool_use_feedback`, `offer_stability`, `slot_height` browser smoke를 닫았다. Item 구매 후 후보 즉시 보충 없음, `trade_ticket` Item 후보 전용 교체, tab/section height 안정성을 fixture로 확인했다.
 
 ## 데이터 재시작 기준
 
