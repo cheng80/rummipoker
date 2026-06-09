@@ -14,6 +14,15 @@
   - `flutter test test/views/game/widgets/game_shop_screen_test.dart`
   - `flutter test test/views/game/widgets/game_station_read_path_test.dart`
 
+## Targeted Market Buckets
+
+| Bucket | Check | Primary tests / fixture |
+| --- | --- | --- |
+| `reroll_policy` | S1 first Market free reroll copy, stale first-reroll cleanup, item/passive discounted reroll copy and cost | `game_shop_reroll_confirmation_test.dart`, `game_shop_discounted_reroll_test.dart`, `rummi_market_facade_test.dart`, `/game?fixture=stale_first_reroll_market` |
+| `tool_use_feedback` | Tool use source item name, result label, Gold HUD `+NG` duration, non-Gold use feedback | `game_shop_use_feedback_test.dart`, `game_shop_growth_use_feedback_test.dart`, `game_shop_non_gold_use_flight_test.dart`, `game_shop_screen_trade_ticket_test.dart`, `/game?fixture=market_item_motion_eye_check` |
+| `offer_stability` | Bought Item offer leaves an empty slot until reroll/next Market; `trade_ticket` rerolls Item candidates only | `rummi_market_facade_test.dart`, `debug_run_fixture_service_test.dart`, `game_shop_screen_trade_ticket_test.dart` |
+| `slot_height` | Jester/Slots and Tool/Gear tab sections keep matching outer heights; cards animate without moving outer containers | `/game?fixture=market_item_motion_eye_check` browser eye-check |
+
 ## Market Flow Smoke
 
 - Enter Market after cash-out and verify the title is `Market`, not `Jester Market`.

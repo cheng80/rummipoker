@@ -122,7 +122,7 @@ class MarketGoldGainBadge extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('market-gold-gain-badge'),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: GamePresentationTimings.marketGoldBadge,
+      duration: GamePresentationTimings.marketGoldGainBadge,
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = value < 0.72 ? 1.0 : (1 - value) / 0.28;

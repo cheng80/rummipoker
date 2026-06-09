@@ -277,8 +277,8 @@ class _MarketItemUseFlightOverlay extends StatelessWidget {
         children: [
           if (flight.goldGain != null)
             Positioned(
-              top: 16,
-              right: 42,
+              top: 58,
+              right: 220,
               child: MarketGoldGainBadge(gold: flight.goldGain!),
             ),
           TweenAnimationBuilder<double>(
@@ -287,6 +287,7 @@ class _MarketItemUseFlightOverlay extends StatelessWidget {
             duration: kMarketPurchaseFlightDuration,
             curve: Curves.linear,
             builder: (context, value, child) {
+              if (value >= 1) return const SizedBox.shrink();
               if (startOffset != null && endOffset != null) {
                 final offset = GamePresentationMotion.flightOffset(
                   startOffset,

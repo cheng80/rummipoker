@@ -63,13 +63,16 @@
 
 ## 2026-06-09 Next Plan
 
-1. Market 리롤 smoke를 짧게 재확인한다.
+1. 완료: Market 리롤 smoke를 짧게 재확인했다.
    - S1 기본 첫 Market: 버튼 `첫 리롤 무료`, 확인창 `상점 입장 보너스로 첫 리롤은 무료입니다.`
    - 아이템/패시브 할인: `리롤 5→4` 같은 할인 표기.
    - stale save/fixture 또는 S1 이후 Market: `리롤 5`, 무료 보상 없음.
-2. Market 직접 사용류의 남은 피드백 길이를 조정한다.
-   - Tool 사용 완료 toast는 충분하지만, Gold HUD 옆 `+NG` 피드백이 너무 짧은 항목을 `GamePresentationTimings` 상수 기준으로 늘린다.
-3. 이후 작업은 예정 연출 큐와 장기 경제/레벨링을 섞지 않는다.
+   - 검증: `game_shop_reroll_confirmation_test`, `game_shop_discounted_reroll_test`, `rummi_market_facade_test`.
+2. 완료: Market 직접 사용 Tool의 Gold HUD `+NG` 피드백 길이를 조정했다.
+   - `marketGoldGainBadge` timing을 1400ms로 분리해 획득 badge만 더 오래 보이게 하고, 카드 use flight는 기존 flight duration 뒤 숨긴다.
+   - Browser fixture에서 `+3G`가 상단에 잘리지 않도록 Gold HUD 옆 위치로 내렸다.
+   - 검증: `game_shop_use_feedback_test`, `market_item_motion_eye_check` browser recheck.
+3. 다음: 이후 작업은 예정 연출 큐와 장기 경제/레벨링을 섞지 않는다.
    - 마켓/전투 표시 결함은 작은 fixture + targeted test로 닫고, 경제/가격 판단은 fresh runtime probe 기준으로 별도 재개한다.
 
 ## 데이터 재시작 기준

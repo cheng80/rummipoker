@@ -155,10 +155,14 @@ void main() {
     );
     expect(find.byKey(const ValueKey('market-gold-gain-badge')), findsNothing);
     expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
+    expect(find.text('아이템 티켓'), findsWidgets);
     expect(find.text('Item 후보 교체'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.byKey(const ValueKey('market-item-use-flight')), findsNothing);
+    expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1200));
     expect(find.byKey(const ValueKey('market-use-feedback')), findsNothing);
   });
 }

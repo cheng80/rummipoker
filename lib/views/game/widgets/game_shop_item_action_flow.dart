@@ -209,7 +209,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
         _pinnedItemOffers = null;
       }
       _marketUseFeedbackTick = feedbackTick;
-      _marketUseFeedbackLabel = '사용 완료';
+      _marketUseFeedbackLabel = localizedItemSlotName(context, slot);
       _marketUseFeedbackDelta = _marketUseFeedbackDeltaLabel(item);
       _startMarketItemUseFlight(
         slot: slot,

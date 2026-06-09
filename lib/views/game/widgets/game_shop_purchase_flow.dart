@@ -424,7 +424,10 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       itemRarity: item.rarity,
       itemId: item.id,
     );
-    Future<void>.delayed(kMarketPurchaseFlightDuration, () {
+    final overlayHold = goldGain == null
+        ? kMarketPurchaseFlightDuration
+        : GamePresentationTimings.marketGoldGainBadge;
+    Future<void>.delayed(overlayHold, () {
       if (!mounted || _itemUseFlight?.tick != tick) return;
       _mutate(() => _itemUseFlight = null);
     });

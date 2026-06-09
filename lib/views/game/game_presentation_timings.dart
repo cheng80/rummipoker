@@ -95,6 +95,7 @@ class GamePresentationTimings {
   static const Duration marketOfferRevealStagger = Duration(milliseconds: 42);
   static const Duration marketPassiveEffectPulse = Duration(milliseconds: 620);
   static const Duration marketGoldBadge = Duration(milliseconds: 460);
+  static const Duration marketGoldGainBadge = Duration(milliseconds: 1400);
   static const Duration marketSlotPulse = Duration(milliseconds: 520);
   static const Duration marketSlotUnlockBannerDelay = Duration(
     milliseconds: 850,

@@ -251,11 +251,12 @@ void main() {
     expect(find.byKey(const ValueKey('market-effect-source')), findsOneWidget);
     expect(find.text('Item 후보 영역'), findsOneWidget);
     expect(find.text('후보 교체 완료'), findsOneWidget);
+    expect(find.text('아이템 티켓'), findsWidgets);
     expect(find.text('Item 후보 교체'), findsOneWidget);
     expect(find.text('New Tool'), findsWidgets);
     expect(tester.takeException(), isNull);
 
-    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump(const Duration(milliseconds: 1900));
     expect(find.byKey(const ValueKey('market-effect-source')), findsNothing);
   });
 }
