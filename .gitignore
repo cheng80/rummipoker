@@ -187,7 +187,6 @@ analysis/leveling/data/raw/
 output/imagegen/card_emblems_builtin/batch_*/
 output/imagegen/card_samples/
 output/imagegen/emblem_samples/
-output/headroom_context/
 output/screenshots/
 tmp/imagegen/
 
