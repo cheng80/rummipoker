@@ -168,6 +168,7 @@ void main() {
     expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
     expect(find.text('금화 보관함'), findsWidgets);
     expect(find.text('+3G'), findsWidgets);
+    expect(find.text('선택된 카드 없음'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.byKey(const ValueKey('market-item-use-flight')), findsNothing);

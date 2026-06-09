@@ -74,6 +74,7 @@
    - 검증: `game_shop_use_feedback_test`, `market_item_motion_eye_check` browser recheck.
 3. 다음: 이후 작업은 예정 연출 큐와 장기 경제/레벨링을 섞지 않는다.
    - 마켓/전투 표시 결함은 작은 fixture + targeted test로 닫고, 경제/가격 판단은 fresh runtime probe 기준으로 별도 재개한다.
+   - 2026-06-10 완료: Market Tool 사용 후 detail panel이 다른 Tool/offer로 자동 이동하지 않게 했다. 성공한 Tool 사용 후에는 선택 없음으로 돌아가고, 실패/deny 경로만 기존 선택을 유지한다.
 
 ## 데이터 재시작 기준
 

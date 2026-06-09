@@ -157,6 +157,7 @@ void main() {
     expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
     expect(find.text('아이템 티켓'), findsWidgets);
     expect(find.text('Item 후보 교체'), findsOneWidget);
+    expect(find.text('선택된 카드 없음'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.byKey(const ValueKey('market-item-use-flight')), findsNothing);

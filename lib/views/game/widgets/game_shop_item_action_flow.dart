@@ -218,15 +218,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
         startOffset: startOffset,
         endOffset: endOffset,
       );
-      final market = _market;
-      final stillExists = market.itemSlots.any(
-        (nextSlot) =>
-            nextSlot.slotIndex == slot.slotIndex && nextSlot.item != null,
-      );
-      if (!stillExists) {
-        _selectedItemSlotIndex = -1;
-        _selectFirstEntry(_offerEntriesForLane(market, _currentOfferLane));
-      }
+      _clearMarketSelection();
     });
     if (effectPresentation != null) {
       _startEffectPresentation(effectPresentation);
