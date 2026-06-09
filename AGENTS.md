@@ -491,3 +491,4 @@ Installed release: `0.2.0`
 - S1 첫 Market 보상으로 리롤 비용이 0G가 된 경우 UI는 할인 표기 `리롤 5→0`가 아니라 `첫 리롤 무료`와 보상 문구를 보여준다. `리롤 5→4` 같은 원가→할인가 표기는 `리롤 칩`, `상점 도장`처럼 실제 아이템/패시브 할인에만 사용한다.
 - UI 회귀를 고쳤다고 보고하기 전에 사용자가 실제 화면 잔존 문제를 지적했으면, 단위/위젯 테스트만으로 닫지 말고 해당 상태를 재현하는 debug fixture 또는 실제 저장 상태를 Browser/Chrome으로 열어 화면 캡처까지 확인한다.
 - Market Tool/Gear 아이템을 성공적으로 사용한 뒤에는 다른 카드나 후보를 자동 선택하지 않는다. 사용 결과 피드백이 남아 있는 동안 detail panel은 `선택된 카드 없음` 상태로 돌아가야 하며, 실패/deny 경로만 기존 선택을 유지한다.
+- gstack은 전역 설치본을 사용한다. 이 repo의 `.agents/skills/`에는 RummiPoker 전용 스킬만 두고, `gstack*` skill bundle이나 `.gstack-codex-manifest.json`을 다시 vendoring하지 않는다.
