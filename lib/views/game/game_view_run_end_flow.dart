@@ -340,7 +340,9 @@ extension _GameViewRunEndFlow on _GameViewState {
     }
     _debugGameOverDialogShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future<void>.delayed(const Duration(milliseconds: 220));
+      await Future<void>.delayed(
+        GamePresentationTimings.debugGameOverOnLoadDelay,
+      );
       if (!mounted) return;
       final signals = _gameNotifier.evaluateExpiry();
       unawaited(

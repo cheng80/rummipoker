@@ -89,7 +89,7 @@ class _BoardMoveFlightOverlay extends StatelessWidget {
                     width: tileSide,
                     height: tileSide,
                     child: Transform.scale(
-                      scale: 1 + (0.05 * pulse),
+                      scale: 1 + (0.04 * pulse),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(9),

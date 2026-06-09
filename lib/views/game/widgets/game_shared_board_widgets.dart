@@ -775,26 +775,29 @@ class _BoardPlacePop extends StatelessWidget {
       duration: GamePresentationTimings.boardTilePlacePop,
       curve: Curves.easeOutBack,
       builder: (context, value, child) {
-        final glow = (1 - value).clamp(0.0, 1.0);
         final progress = value.clamp(0.0, 1.0);
-        final travel = (1 - Curves.easeOutCubic.transform(progress)) * 18;
+        final travel = progress < 0.35
+            ? 18 + (-20 * (progress / 0.35))
+            : -2 + (2 * ((progress - 0.35) / 0.65));
+        final scale = progress < 0.35
+            ? 0.90 + (0.14 * (progress / 0.35))
+            : 1.04 + (-0.04 * ((progress - 0.35) / 0.65));
+        final glow = 0.24 * (1 - progress);
         return Transform.translate(
           key: const ValueKey('board-place-flight'),
           offset: Offset(0, travel),
           child: Opacity(
             opacity: (0.72 + (progress * 0.28)).clamp(0.0, 1.0),
             child: Transform.scale(
-              scale: 0.9 + (value * 0.1),
+              scale: scale,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(9),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(
-                        0xFFF2C14E,
-                      ).withValues(alpha: 0.24 * glow),
-                      blurRadius: 16 * glow,
-                      spreadRadius: 1.5 * glow,
+                      color: const Color(0xFFF2C14E).withValues(alpha: glow),
+                      blurRadius: 16 * (glow / 0.24),
+                      spreadRadius: 1.5 * (glow / 0.24),
                     ),
                   ],
                 ),

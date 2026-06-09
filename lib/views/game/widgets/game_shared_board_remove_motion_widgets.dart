@@ -32,8 +32,16 @@ class _BoardRemoveFlightOverlay extends StatelessWidget {
             duration: GamePresentationTimings.boardTileRemoveFlight,
             curve: Curves.easeOutCubic,
             builder: (context, value, child) {
-              final rise = value * 20;
-              final opacity = (1 - value).clamp(0.0, 1.0);
+              final progress = value.clamp(0.0, 1.0);
+              final rise = progress < 0.32
+                  ? 8 * (progress / 0.32)
+                  : 8 + (10 * ((progress - 0.32) / 0.68));
+              final scale = progress < 0.32
+                  ? 1.00 + (0.06 * (progress / 0.32))
+                  : 1.06 + (-0.24 * ((progress - 0.32) / 0.68));
+              final opacity = progress < 0.32
+                  ? 1.0
+                  : (1 - ((progress - 0.32) / 0.68)).clamp(0.0, 1.0);
               return Stack(
                 children: [
                   Positioned(
@@ -45,9 +53,9 @@ class _BoardRemoveFlightOverlay extends StatelessWidget {
                     child: Opacity(
                       opacity: opacity,
                       child: Transform.scale(
-                        scale: 1 - (0.08 * value),
+                        scale: scale,
                         child: Transform.rotate(
-                          angle: -0.08 * value,
+                          angle: -0.035 * progress,
                           child: child,
                         ),
                       ),

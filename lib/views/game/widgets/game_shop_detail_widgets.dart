@@ -74,7 +74,7 @@ class _MarketActionPane extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final shake = denyActive
-            ? math.sin(value * math.pi * 5) * 5 * (1 - value)
+            ? math.sin(value * math.pi * 5) * 4 * (1 - value)
             : 0.0;
         return Transform.translate(offset: Offset(shake, 0), child: child);
       },

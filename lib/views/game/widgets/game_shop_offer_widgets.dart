@@ -68,6 +68,7 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fade;
+  late final Animation<double> _scale;
   late final Animation<Offset> _offset;
 
   @override
@@ -78,6 +79,10 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
       duration: GamePresentationCues.marketOfferReveal.duration,
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _scale = Tween<double>(
+      begin: 0.98,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _offset = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
@@ -112,7 +117,10 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
     return FadeTransition(
       key: ValueKey<String>('market-offer-stagger-${widget.index}'),
       opacity: _fade,
-      child: SlideTransition(position: _offset, child: widget.child),
+      child: SlideTransition(
+        position: _offset,
+        child: ScaleTransition(scale: _scale, child: widget.child),
+      ),
     );
   }
 }

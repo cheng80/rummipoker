@@ -96,6 +96,16 @@ class GamePresentationTimings {
   static const Duration marketPassiveEffectPulse = Duration(milliseconds: 620);
   static const Duration marketGoldBadge = Duration(milliseconds: 460);
   static const Duration marketSlotPulse = Duration(milliseconds: 520);
+  static const Duration marketSlotUnlockBannerDelay = Duration(
+    milliseconds: 850,
+  );
+  static const Duration marketSlotUnlockBannerVisible = Duration(
+    milliseconds: 1250,
+  );
+  static const Duration marketSlotUnlockPulse = Duration(milliseconds: 1200);
+  static const Duration marketSlotUnlockBannerIn = Duration(milliseconds: 420);
+
+  static const Duration debugGameOverOnLoadDelay = Duration(milliseconds: 220);
 }
 
 /// 반복되는 duration/stagger 조합을 이름 붙여 쓰는 presentation 전용 보조 타입.

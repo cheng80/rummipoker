@@ -25,9 +25,13 @@ const double kMarketDescriptionMinHeight =
 const int kMarketOfferRowPageSlots = 3;
 const double kMarketOfferRowGap = 8.0;
 
-const Duration kMarketSlotUnlockBannerDelay = Duration(milliseconds: 850);
-const Duration kMarketSlotUnlockBannerVisible = Duration(milliseconds: 1250);
-const Duration kMarketSlotUnlockPulseDuration = Duration(milliseconds: 1200);
-const Duration kMarketSlotUnlockBannerIn = Duration(milliseconds: 420);
+const Duration kMarketSlotUnlockBannerDelay =
+    GamePresentationTimings.marketSlotUnlockBannerDelay;
+const Duration kMarketSlotUnlockBannerVisible =
+    GamePresentationTimings.marketSlotUnlockBannerVisible;
+const Duration kMarketSlotUnlockPulseDuration =
+    GamePresentationTimings.marketSlotUnlockPulse;
+const Duration kMarketSlotUnlockBannerIn =
+    GamePresentationTimings.marketSlotUnlockBannerIn;
 const Duration kMarketPurchaseFlightDuration =
     GamePresentationTimings.marketPurchaseFlight;

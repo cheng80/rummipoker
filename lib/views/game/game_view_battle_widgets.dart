@@ -325,94 +325,95 @@ class _ScoringPreviewChip extends StatelessWidget {
     );
     return SizedBox(
       height: 28,
-      child:
-          DecoratedBox(
-                key: hasPendingItem
-                    ? const ValueKey('scoring-preview-item-link-flash')
-                    : null,
-                decoration: BoxDecoration(
-                  color: GameUiPalette.ink.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: hasPendingItem
-                        ? GameUiPalette.specialScoreText.withValues(alpha: 0.78)
-                        : accent.withValues(alpha: 0.42),
-                    width: hasPendingItem ? 1.4 : 1,
-                  ),
-                  boxShadow: hasPendingItem
-                      ? [
-                          BoxShadow(
-                            color: const Color(
-                              0xFFFFD36B,
-                            ).withValues(alpha: 0.18),
-                            blurRadius: 12,
-                          ),
-                        ]
-                      : null,
+      child: TweenAnimationBuilder<double>(
+        key: pulseKey,
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: GamePresentationTimings.scoringPreviewScale,
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          final progress = value.clamp(0.0, 1.0);
+          final fadeEnd =
+              GamePresentationTimings.scoringPreviewFadeIn.inMilliseconds /
+              GamePresentationTimings.scoringPreviewScale.inMilliseconds;
+          final opacity = (progress / fadeEnd).clamp(0.0, 1.0);
+          final scale = progress < 0.45
+              ? 0.94 + (0.12 * (progress / 0.45))
+              : 1.06 + (-0.06 * ((progress - 0.45) / 0.55));
+          return Opacity(
+            opacity: opacity,
+            child: Transform.scale(scale: scale, child: child),
+          );
+        },
+        child: DecoratedBox(
+          key: hasPendingItem
+              ? const ValueKey('scoring-preview-item-link-flash')
+              : null,
+          decoration: BoxDecoration(
+            color: GameUiPalette.ink.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: hasPendingItem
+                  ? GameUiPalette.specialScoreText.withValues(alpha: 0.78)
+                  : accent.withValues(alpha: 0.42),
+              width: hasPendingItem ? 1.4 : 1,
+            ),
+            boxShadow: hasPendingItem
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFFFD36B).withValues(alpha: 0.18),
+                      blurRadius: 12,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: Row(
+              children: [
+                Icon(
+                  preview == null
+                      ? Icons.info_outline_rounded
+                      : Icons.auto_awesome_rounded,
+                  color: accent,
+                  size: 14,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        preview == null
-                            ? Icons.info_outline_rounded
-                            : Icons.auto_awesome_rounded,
-                        color: accent,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: preview == null
-                                ? GameUiPalette.textPrimary.withValues(
-                                    alpha: 0.54,
-                                  )
-                                : GameUiPalette.textPrimary,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: hasConstraint ? 58 : 92,
-                        ),
-                        child: Text(
-                          detail,
-                          maxLines: 1,
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            color: accent,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: preview == null
+                          ? GameUiPalette.textPrimary.withValues(alpha: 0.54)
+                          : GameUiPalette.textPrimary,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
                   ),
                 ),
-              )
-              .animate(key: pulseKey)
-              .fadeIn(
-                duration: GamePresentationTimings.scoringPreviewFadeIn,
-                curve: Curves.easeOutCubic,
-              )
-              .scale(
-                begin: const Offset(0.985, 0.985),
-                end: const Offset(1, 1),
-                duration: GamePresentationTimings.scoringPreviewScale,
-                curve: Curves.easeOutCubic,
-              ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: hasConstraint ? 58 : 92,
+                  ),
+                  child: Text(
+                    detail,
+                    maxLines: 1,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
