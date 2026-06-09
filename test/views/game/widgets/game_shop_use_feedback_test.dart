@@ -88,6 +88,7 @@ void main() {
               home: JesterTranslationScope(
                 child: ItemTranslationScope(
                   child: GameShopScreen(
+                    key: UniqueKey(),
                     runSeed: 77,
                     readMarketView: () => currentMarket,
                     readActiveRunSaveView: () => const RummiActiveRunSaveFacade(
@@ -143,9 +144,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Tool / Gear'));
+    await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const ValueKey('market-item-slot-T1')));
     await tester.pumpAndSettle();
     final noticeText = tester.widget<Text>(find.text('상점에서 수동 사용').first);
@@ -170,6 +171,9 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.byKey(const ValueKey('market-item-use-flight')), findsNothing);
+    expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1200));
     expect(find.byKey(const ValueKey('market-use-feedback')), findsNothing);
     expect(find.text('7'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));

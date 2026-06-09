@@ -114,6 +114,31 @@ void main() {
       expect(updated.activeRunSaveView!.sceneAlias, RummiSaveSceneAlias.market);
     });
 
+    test('adjustDebugGold는 골드를 10단위로 조정하고 0 아래로 내리지 않는다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 77);
+
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      notifier.adjustDebugGold(10);
+      var state = container.read(gameSessionNotifierProvider(args));
+      expect(state.runProgress!.gold, RummiEconomyConfig.startingGold + 10);
+      expect(state.marketView!.gold, RummiEconomyConfig.startingGold + 10);
+      expect(
+        state.battleView!.currentGold,
+        RummiEconomyConfig.startingGold + 10,
+      );
+
+      notifier.adjustDebugGold(-999);
+      state = container.read(gameSessionNotifierProvider(args));
+      expect(state.runProgress!.gold, 0);
+      expect(state.marketView!.gold, 0);
+      expect(state.battleView!.currentGold, 0);
+    });
+
     test('battle facade state가 draw와 배치 후에도 함께 갱신된다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -1632,6 +1657,89 @@ void main() {
       expect(updated.runProgress!.rerollCost, 7);
       expect(updated.runProgress!.itemInventory.ownedItems, isEmpty);
       expect(updated.runProgress!.shopOffers.single.card.id, 'green_jester');
+    });
+
+    test('rerollShopFromState는 할인 후에도 골드가 부족하면 리롤 칩을 보존한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 34);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final state = container.read(gameSessionNotifierProvider(args));
+      notifier.setJesterCatalog(
+        RummiJesterCatalog.fromJsonString('''
+[
+  {
+    "id": "green_jester",
+    "displayName": "Green Jester",
+    "rarity": "common",
+    "baseCost": 3,
+    "effectText": "",
+    "effectType": "stateful_growth",
+    "trigger": "passive",
+    "conditionType": "none",
+    "conditionValue": null,
+    "value": 1,
+    "xValue": null,
+    "mappedTileColors": [],
+    "mappedTileNumbers": []
+  }
+]
+'''),
+      );
+      final itemCatalog = ItemCatalog.fromJson(const {
+        'schemaVersion': 1,
+        'catalogId': 'test',
+        'items': [
+          {
+            'id': 'reroll_token',
+            'displayName': 'Reroll Token',
+            'type': 'utility',
+            'rarity': 'common',
+            'basePrice': 3,
+            'sellPrice': 1,
+            'stackable': true,
+            'maxStack': 3,
+            'sellable': true,
+            'usableInBattle': false,
+            'placement': 'inventory',
+            'slotHint': 'utility',
+            'effectText': 'The next Market reroll costs 1 less Gold.',
+            'effect': {
+              'timing': 'market_reroll',
+              'op': 'discount_next_reroll',
+              'amount': 1,
+              'consume': true,
+            },
+          },
+        ],
+      });
+      state.runProgress!
+        ..gold = 3
+        ..rerollCost = 5
+        ..itemInventory = const RunInventoryState(
+          ownedItems: [
+            OwnedItemEntry(
+              itemId: 'reroll_token',
+              count: 1,
+              placement: ItemPlacement.inventory,
+            ),
+          ],
+        );
+      notifier.markDirty();
+
+      final message = notifier.rerollShopFromState(itemCatalog: itemCatalog);
+      final updated = container.read(gameSessionNotifierProvider(args));
+
+      expect(message, '리롤 골드가 부족합니다.');
+      expect(updated.runProgress!.gold, 3);
+      expect(updated.runProgress!.rerollCost, 5);
+      expect(updated.runProgress!.marketModifiers.nextRerollDiscount, 0);
+      expect(
+        updated.runProgress!.itemInventory.ownedItems.single.itemId,
+        'reroll_token',
+      );
     });
 
     test(

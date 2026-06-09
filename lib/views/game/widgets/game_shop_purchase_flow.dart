@@ -4,7 +4,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
   Future<void> _reroll() async {
     final lane = _currentOfferLane;
     final laneLabel = _offerLaneLabel(lane);
-    final rerollCost = _rerollCostForLane(_market, lane);
+    final rerollQuote = _rerollCostQuoteForLane(_market, lane);
     final hadCurrentLaneOfferSelection = switch (lane) {
       _MarketOfferLane.jester => _selectedOfferIndex != null,
       _MarketOfferLane.tile => _selectedTileOfferIndex >= 0,
@@ -27,7 +27,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
             ),
             const SizedBox(height: 12),
             Text(
-              _rerollConfirmMessage(laneLabel, rerollCost),
+              _rerollConfirmMessage(laneLabel, rerollQuote),
               style: const TextStyle(
                 color: GameUiPalette.textSecondary,
                 fontSize: 14,
@@ -48,7 +48,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GameActionButton(
-                    label: _rerollConfirmActionLabel(rerollCost),
+                    label: _rerollConfirmActionLabel(rerollQuote),
                     background: GameUiPalette.actionGold,
                     foreground: GameUiPalette.ink,
                     onPressed: () => Navigator.of(dialogContext).pop(true),

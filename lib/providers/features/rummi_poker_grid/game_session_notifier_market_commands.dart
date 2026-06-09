@@ -87,6 +87,13 @@ mixin GameSessionNotifierMarketCommands
       itemRerollPlacement: placement,
     );
     if (rerollItem != null) {
+      if (!_canAffordRerollAfterItemDiscount(
+        item: rerollItem,
+        runProgress: runProgress,
+        itemRerollPlacement: placement,
+      )) {
+        return '리롤 골드가 부족합니다.';
+      }
       final result = ItemEffectRuntime.applyMarketRerollItem(
         item: rerollItem,
         runProgress: runProgress,
@@ -112,6 +119,13 @@ mixin GameSessionNotifierMarketCommands
       runProgress: runProgress,
     );
     if (rerollItem != null) {
+      if (!_canAffordRerollAfterItemDiscount(
+        item: rerollItem,
+        runProgress: runProgress,
+        currentCostOverride: runProgress.effectiveTileRerollCost(),
+      )) {
+        return '리롤 골드가 부족합니다.';
+      }
       final result = ItemEffectRuntime.applyMarketRerollItem(
         item: rerollItem,
         runProgress: runProgress,
@@ -138,6 +152,12 @@ mixin GameSessionNotifierMarketCommands
       runProgress: runProgress,
     );
     if (rerollItem != null) {
+      if (!_canAffordRerollAfterItemDiscount(
+        item: rerollItem,
+        runProgress: runProgress,
+      )) {
+        return '리롤 골드가 부족합니다.';
+      }
       final result = ItemEffectRuntime.applyMarketRerollItem(
         item: rerollItem,
         runProgress: runProgress,
@@ -154,6 +174,35 @@ mixin GameSessionNotifierMarketCommands
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
+  }
+
+  bool _canAffordRerollAfterItemDiscount({
+    required ItemDefinition item,
+    required RummiRunProgress runProgress,
+    ItemPlacement? itemRerollPlacement,
+    int? currentCostOverride,
+  }) {
+    final currentCost =
+        currentCostOverride ??
+        (itemRerollPlacement != null
+            ? runProgress.effectiveItemRerollCostFor(itemRerollPlacement)
+            : runProgress.effectiveRerollCost());
+    final discount = _marketRerollItemDiscountAmount(
+      item: item,
+      currentCost: currentCost,
+    );
+    return runProgress.gold >= (currentCost - discount).clamp(0, currentCost);
+  }
+
+  int _marketRerollItemDiscountAmount({
+    required ItemDefinition item,
+    required int currentCost,
+  }) {
+    return switch (item.effect.op) {
+      'free_next_reroll' => currentCost,
+      'discount_next_reroll' => item.effect.amount?.toInt() ?? 0,
+      _ => 0,
+    };
   }
 
   ItemDefinition? _nextOwnedMarketRerollItem({

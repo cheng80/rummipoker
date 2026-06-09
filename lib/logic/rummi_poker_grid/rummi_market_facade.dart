@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'item_definition.dart';
 import 'jester_meta.dart';
 import 'models/tile.dart';
@@ -17,7 +19,9 @@ class RummiMarketRuntimeFacade {
   const RummiMarketRuntimeFacade({
     required this.gold,
     required this.rerollCost,
+    int? originalRerollCost,
     int? tileRerollCost,
+    int? originalTileRerollCost,
     required this.maxOwnedSlots,
     required this.runtimeSnapshot,
     required this.ownedEntries,
@@ -29,15 +33,30 @@ class RummiMarketRuntimeFacade {
     this.jesterSlotCapacity = RummiRunProgress.baseUnlockedJesterSlots,
     this.pendingSlotUnlockPresentations = const <RummiSlotUnlockKind>{},
     this.itemRerollCost = RummiRunProgress.shopBaseRerollCost,
+    int? originalItemRerollCost,
     this.quickSlotRerollCost = RummiRunProgress.shopBaseRerollCost,
+    int? originalQuickSlotRerollCost,
     this.passiveRerollCost = RummiRunProgress.shopBaseRerollCost,
+    int? originalPassiveRerollCost,
     this.toolRerollCost = RummiRunProgress.shopBaseRerollCost,
+    int? originalToolRerollCost,
     this.gearRerollCost = RummiRunProgress.shopBaseRerollCost,
+    int? originalGearRerollCost,
     this.itemOffers = const [],
     this.tileOffers = const [],
     this.addedDeckTiles = const [],
     this.itemSlots = const [],
-  }) : tileRerollCost = tileRerollCost ?? rerollCost;
+  }) : originalRerollCost = originalRerollCost ?? rerollCost,
+       tileRerollCost = tileRerollCost ?? rerollCost,
+       originalTileRerollCost =
+           originalTileRerollCost ?? tileRerollCost ?? rerollCost,
+       originalItemRerollCost = originalItemRerollCost ?? itemRerollCost,
+       originalQuickSlotRerollCost =
+           originalQuickSlotRerollCost ?? quickSlotRerollCost,
+       originalPassiveRerollCost =
+           originalPassiveRerollCost ?? passiveRerollCost,
+       originalToolRerollCost = originalToolRerollCost ?? toolRerollCost,
+       originalGearRerollCost = originalGearRerollCost ?? gearRerollCost;
 
   factory RummiMarketRuntimeFacade.fromRunProgress(
     RummiRunProgress progress, {
@@ -69,23 +88,62 @@ class RummiMarketRuntimeFacade {
       jesterOffers: jesterOffers,
       itemOffers: itemOffers,
     );
+    final effectiveJesterRerollCost = progress.effectiveRerollCost();
+    final effectiveTileRerollCost = progress.effectiveTileRerollCost();
+    final effectiveItemRerollCost = progress.effectiveItemRerollCost();
+    final effectiveQuickSlotRerollCost = progress.effectiveItemRerollCostFor(
+      ItemPlacement.quickSlot,
+    );
+    final effectivePassiveRerollCost = progress.effectiveItemRerollCostFor(
+      ItemPlacement.passiveRack,
+    );
+    final effectiveToolRerollCost = progress.effectiveItemRerollCostFor(
+      ItemPlacement.inventory,
+    );
+    final effectiveGearRerollCost = progress.effectiveItemRerollCostFor(
+      ItemPlacement.equipped,
+    );
+    final pendingRerollDiscount = _pendingOwnedMarketRerollDiscount(
+      progress,
+      itemCatalog,
+    );
     return RummiMarketRuntimeFacade(
       gold: progress.gold,
-      rerollCost: progress.effectiveRerollCost(),
-      tileRerollCost: progress.effectiveTileRerollCost(),
-      itemRerollCost: progress.effectiveItemRerollCost(),
-      quickSlotRerollCost: progress.effectiveItemRerollCostFor(
-        ItemPlacement.quickSlot,
+      rerollCost: _applyPendingRerollDiscount(
+        effectiveJesterRerollCost,
+        pendingRerollDiscount,
       ),
-      passiveRerollCost: progress.effectiveItemRerollCostFor(
-        ItemPlacement.passiveRack,
+      originalRerollCost: progress.rerollCost,
+      tileRerollCost: _applyPendingRerollDiscount(
+        effectiveTileRerollCost,
+        pendingRerollDiscount,
       ),
-      toolRerollCost: progress.effectiveItemRerollCostFor(
-        ItemPlacement.inventory,
+      originalTileRerollCost: progress.tileRerollCost,
+      itemRerollCost: _applyPendingRerollDiscount(
+        effectiveItemRerollCost,
+        pendingRerollDiscount,
       ),
-      gearRerollCost: progress.effectiveItemRerollCostFor(
-        ItemPlacement.equipped,
+      originalItemRerollCost: progress.itemRerollCost,
+      quickSlotRerollCost: _applyPendingRerollDiscount(
+        effectiveQuickSlotRerollCost,
+        pendingRerollDiscount,
       ),
+      originalQuickSlotRerollCost: progress.quickSlotRerollCost,
+      passiveRerollCost: _applyPendingRerollDiscount(
+        effectivePassiveRerollCost,
+        pendingRerollDiscount,
+      ),
+      originalPassiveRerollCost: progress.passiveRerollCost,
+      toolRerollCost: _applyPendingRerollDiscount(
+        effectiveToolRerollCost,
+        pendingRerollDiscount,
+      ),
+      originalToolRerollCost: progress.toolRerollCost,
+      gearRerollCost: _applyPendingRerollDiscount(
+        effectiveGearRerollCost,
+        pendingRerollDiscount,
+      ),
+      originalGearRerollCost: progress.gearRerollCost,
       maxOwnedSlots: RummiRunProgress.maxJesterSlots,
       runtimeSnapshot: progress.buildRuntimeSnapshot(),
       ownedEntries: OwnedContentInstances.jesterInstances(progress)
@@ -123,12 +181,19 @@ class RummiMarketRuntimeFacade {
     return RummiMarketRuntimeFacade(
       gold: gold,
       rerollCost: rerollCost,
+      originalRerollCost: originalRerollCost,
       tileRerollCost: tileRerollCost,
+      originalTileRerollCost: originalTileRerollCost,
       itemRerollCost: itemRerollCost,
+      originalItemRerollCost: originalItemRerollCost,
       quickSlotRerollCost: quickSlotRerollCost,
+      originalQuickSlotRerollCost: originalQuickSlotRerollCost,
       passiveRerollCost: passiveRerollCost,
+      originalPassiveRerollCost: originalPassiveRerollCost,
       toolRerollCost: toolRerollCost,
+      originalToolRerollCost: originalToolRerollCost,
       gearRerollCost: gearRerollCost,
+      originalGearRerollCost: originalGearRerollCost,
       maxOwnedSlots: maxOwnedSlots,
       runtimeSnapshot: runtimeSnapshot,
       ownedEntries: ownedEntries,
@@ -148,12 +213,19 @@ class RummiMarketRuntimeFacade {
 
   final int gold;
   final int rerollCost;
+  final int originalRerollCost;
   final int tileRerollCost;
+  final int originalTileRerollCost;
   final int itemRerollCost;
+  final int originalItemRerollCost;
   final int quickSlotRerollCost;
+  final int originalQuickSlotRerollCost;
   final int passiveRerollCost;
+  final int originalPassiveRerollCost;
   final int toolRerollCost;
+  final int originalToolRerollCost;
   final int gearRerollCost;
+  final int originalGearRerollCost;
   final int maxOwnedSlots;
   final RummiJesterRuntimeSnapshot runtimeSnapshot;
   final List<RummiMarketOwnedEntryView> ownedEntries;
@@ -177,6 +249,15 @@ class RummiMarketRuntimeFacade {
       ItemPlacement.equipped => gearRerollCost,
     };
   }
+
+  int originalItemRerollCostFor(ItemPlacement placement) {
+    return switch (placement) {
+      ItemPlacement.quickSlot => originalQuickSlotRerollCost,
+      ItemPlacement.passiveRack => originalPassiveRerollCost,
+      ItemPlacement.inventory => originalToolRerollCost,
+      ItemPlacement.equipped => originalGearRerollCost,
+    };
+  }
 }
 
 class _CompassDiscountedOffers {
@@ -187,4 +268,31 @@ class _CompassDiscountedOffers {
 
   final List<RummiMarketOfferView> jesterOffers;
   final List<RummiMarketItemOfferView> itemOffers;
+}
+
+int _applyPendingRerollDiscount(int cost, int discount) {
+  if (cost <= 0 || discount <= 0) return cost;
+  return max(0, cost - discount);
+}
+
+int _pendingOwnedMarketRerollDiscount(
+  RummiRunProgress progress,
+  ItemCatalog? catalog,
+) {
+  if (catalog == null) return 0;
+  for (final entry in progress.itemInventory.ownedItems) {
+    if (entry.count <= 0 || !entry.isActive) continue;
+    final item = catalog.findById(entry.itemId);
+    if (item == null ||
+        item.effect.timing != 'market_reroll' ||
+        !item.effect.consume) {
+      continue;
+    }
+    return switch (item.effect.op) {
+      'free_next_reroll' => RummiRunProgress.shopBaseRerollCost,
+      'discount_next_reroll' => item.effect.amount?.toInt() ?? 0,
+      _ => 0,
+    };
+  }
+  return 0;
 }

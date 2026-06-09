@@ -95,6 +95,10 @@ class RummiRunProgress {
           _marketRerollLaneKeys.contains,
         ),
       );
+      if (_firstShopRerollDiscountConsumedLanes.isNotEmpty) {
+        firstShopRerollDiscountConsumed = true;
+        _firstShopRerollDiscountConsumedLanes.addAll(_marketRerollLaneKeys);
+      }
     }
     _pendingSlotUnlockPresentations.addAll(pendingSlotUnlockPresentations);
     this.seenMarketJesterIds = Set<String>.from(seenMarketJesterIds);
@@ -676,9 +680,14 @@ class RummiRunProgress {
     gearRerollCost = shopBaseRerollCost;
     final nextMarketExtraJesterOfferSlots =
         marketModifiers.nextMarketExtraJesterOfferSlots;
+    firstShopRerollDiscountConsumed = false;
+    _firstShopRerollDiscountConsumedLanes.clear();
+    final firstRerollDiscount = stageIndex == 1
+        ? RummiEconomyConfig.shopFirstRerollDiscount
+        : 0;
     marketModifiers = marketModifiers.copyWith(
       nextRerollDiscount: 0,
-      firstRerollDiscount: RummiEconomyConfig.shopFirstRerollDiscount,
+      firstRerollDiscount: firstRerollDiscount,
       nextPurchaseDiscount: 0,
       nextJesterPurchaseDiscount: 0,
       nextItemPurchaseDiscount: 0,
@@ -735,8 +744,7 @@ class RummiRunProgress {
 
   int _effectiveRerollCostForRawCost(int rawCost, String laneKey) {
     final firstRerollDiscount =
-        rawCost == shopBaseRerollCost &&
-            !_firstShopRerollDiscountConsumedLanes.contains(laneKey)
+        rawCost == shopBaseRerollCost && !firstShopRerollDiscountConsumed
         ? marketModifiers.firstRerollDiscount
         : 0;
     return max(
@@ -972,7 +980,7 @@ class RummiRunProgress {
     }
     gold -= cost;
     rerollCost += shopRerollCostStep;
-    _markFirstShopRerollDiscountConsumed(_jesterRerollLaneKey);
+    _markFirstShopRerollDiscountConsumed();
     marketModifiers = marketModifiers.copyWith(nextRerollDiscount: 0);
     _generateOffers(
       catalog: catalog,
@@ -991,7 +999,7 @@ class RummiRunProgress {
     }
     gold -= cost;
     tileRerollCost += shopRerollCostStep;
-    _markFirstShopRerollDiscountConsumed(_tileRerollLaneKey);
+    _markFirstShopRerollDiscountConsumed();
     marketModifiers = marketModifiers.copyWith(nextRerollDiscount: 0);
     _generateTileOffers(rng);
     return true;
@@ -1004,7 +1012,7 @@ class RummiRunProgress {
     }
     gold -= cost;
     _increaseItemRerollCostFor(placement);
-    _markFirstShopRerollDiscountConsumed(_rerollLaneKeyForPlacement(placement));
+    _markFirstShopRerollDiscountConsumed();
     final nextOffset =
         marketModifiers.itemOfferRerollOffsetFor(placement) +
         marketModifiers.itemOfferSlotCount;
@@ -1033,10 +1041,10 @@ class RummiRunProgress {
     return true;
   }
 
-  void _markFirstShopRerollDiscountConsumed(String laneKey) {
+  void _markFirstShopRerollDiscountConsumed() {
     if (marketModifiers.firstRerollDiscount > 0 &&
-        !_firstShopRerollDiscountConsumedLanes.contains(laneKey)) {
-      _firstShopRerollDiscountConsumedLanes.add(laneKey);
+        !firstShopRerollDiscountConsumed) {
+      _firstShopRerollDiscountConsumedLanes.addAll(_marketRerollLaneKeys);
       firstShopRerollDiscountConsumed = true;
     }
   }

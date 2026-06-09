@@ -73,6 +73,7 @@ List<RummiMarketItemOfferView> _buildItemOffers(
         continue;
       }
       generatedMissingPinnedPlacement = true;
+      continue;
     }
 
     if (shouldUsePinnedOffers) {

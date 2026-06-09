@@ -113,6 +113,7 @@ extension _GameViewDialogRoutes on _GameViewState {
       routeSettings: const RouteSettings(name: '디버그 설정'),
       builder: (sheetContext) {
         var handSize = _stationView.resources.maxHandSize;
+        var debugGold = _gameState.runProgress?.gold ?? 0;
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Semantics(
@@ -150,6 +151,70 @@ extension _GameViewDialogRoutes on _GameViewState {
                                     Navigator.of(sheetContext).pop(),
                                 icon: Icons.close_rounded,
                                 size: 34,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 88,
+                                child: GameActionButton(
+                                  label: 'G -10',
+                                  background: GameUiPalette.disabledControl,
+                                  onPressed: debugGold <= 0
+                                      ? null
+                                      : () {
+                                          _adjustDebugGold(-10);
+                                          setModalState(() {
+                                            debugGold =
+                                                _gameState.runProgress?.gold ??
+                                                0;
+                                          });
+                                        },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Container(
+                                  height: 40,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: GameUiPalette.textPrimary.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: GameUiPalette.textPrimary
+                                          .withValues(alpha: 0.12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'GOLD $debugGold',
+                                    style: const TextStyle(
+                                      color: GameUiPalette.actionGoldBright,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 88,
+                                child: GameActionButton(
+                                  label: 'G +10',
+                                  background: GameUiPalette.actionGold,
+                                  foreground: GameUiPalette.ink,
+                                  onPressed: () {
+                                    _adjustDebugGold(10);
+                                    setModalState(() {
+                                      debugGold =
+                                          _gameState.runProgress?.gold ?? 0;
+                                    });
+                                  },
+                                ),
                               ),
                             ],
                           ),

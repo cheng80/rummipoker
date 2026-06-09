@@ -277,4 +277,25 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
         ? market.rerollCost
         : market.itemRerollCostFor(placement);
   }
+
+  int _originalRerollCostForLane(
+    RummiMarketRuntimeFacade market,
+    _MarketOfferLane lane,
+  ) {
+    final placement = _placementForOfferLane(lane);
+    if (lane == _MarketOfferLane.tile) return market.originalTileRerollCost;
+    return placement == null
+        ? market.originalRerollCost
+        : market.originalItemRerollCostFor(placement);
+  }
+
+  _MarketRerollCostQuote _rerollCostQuoteForLane(
+    RummiMarketRuntimeFacade market,
+    _MarketOfferLane lane,
+  ) {
+    return _MarketRerollCostQuote(
+      cost: _rerollCostForLane(market, lane),
+      originalCost: _originalRerollCostForLane(market, lane),
+    );
+  }
 }

@@ -245,9 +245,35 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final amount = _marketUseGoldGain(item);
     return switch (item.effect.op) {
       'gain_gold' when amount != null => '+${amount}G',
+      'add_hand_rank_progress' => _marketUseRankGrowthLabel(item),
       'reroll_item_offers_only' => 'Item 후보 교체',
       _ => null,
     };
+  }
+
+  String? _marketUseRankGrowthLabel(ItemDefinition item) {
+    final rank = item.effect.value('rank');
+    final amount = item.effect.amount?.toInt();
+    if (rank is! String || amount == null || amount <= 0) return null;
+    final label = switch (rank) {
+      'twoPair' => '투페어',
+      'threeOfAKind' => '트리플',
+      'straight' => '스트레이트',
+      'flush' => '플러시',
+      'fullHouse' => '풀하우스',
+      'fourOfAKind' => '포카드',
+      'straightFlush' => '스티플',
+      'prismStraight' => '프리즘 스트레이트',
+      'crownFourOfAKind' => '크라운 포카드',
+      'lowStraightFlush' => '로우 스티플',
+      'royalStraightFlush' => '로열 스티플',
+      'fiveOfAKind' => '파이브 카드',
+      'flushHouse' => '플러시 하우스',
+      'flushFive' => '플러시 파이브',
+      _ => null,
+    };
+    if (label == null) return null;
+    return '$label 성장 +$amount';
   }
 
   ItemPresentationEvent? _marketUsePresentation(

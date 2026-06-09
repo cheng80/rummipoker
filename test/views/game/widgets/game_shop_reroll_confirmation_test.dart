@@ -55,7 +55,11 @@ ItemDefinition _quickSlotItem() {
   });
 }
 
-Future<void> _pumpShopScreen(WidgetTester tester, {int rerollCost = 5}) async {
+Future<void> _pumpShopScreen(
+  WidgetTester tester, {
+  int rerollCost = 5,
+  int? originalRerollCost,
+}) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump();
 
@@ -64,6 +68,7 @@ Future<void> _pumpShopScreen(WidgetTester tester, {int rerollCost = 5}) async {
   final market = RummiMarketRuntimeFacade(
     gold: 20,
     rerollCost: rerollCost,
+    originalRerollCost: originalRerollCost ?? rerollCost,
     maxOwnedSlots: RummiRunProgress.maxJesterSlots,
     runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
     ownedEntries: const [],
@@ -148,7 +153,7 @@ Future<void> _pumpShopScreen(WidgetTester tester, {int rerollCost = 5}) async {
     ),
   );
   await tester.pumpAndSettle();
-  await tester.pump(const Duration(milliseconds: 50));
+  await tester.pump(const Duration(milliseconds: 200));
   await tester.pumpAndSettle();
 }
 

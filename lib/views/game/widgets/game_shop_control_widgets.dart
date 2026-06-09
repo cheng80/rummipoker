@@ -77,16 +77,33 @@ class _MarketOfferLaneBar extends StatelessWidget {
   }
 }
 
-String _rerollButtonLabel(int rerollCost) {
-  return rerollCost <= 0 ? '첫 리롤 무료' : '리롤 $rerollCost';
+class _MarketRerollCostQuote {
+  const _MarketRerollCostQuote({
+    required this.cost,
+    required this.originalCost,
+  });
+
+  final int cost;
+  final int originalCost;
+
+  bool get hasDiscount => originalCost > cost;
 }
 
-String _rerollConfirmActionLabel(int rerollCost) {
-  return rerollCost <= 0 ? '무료 리롤' : '리롤';
+String _rerollButtonLabel(_MarketRerollCostQuote quote) {
+  if (quote.hasDiscount) return '리롤 ${quote.originalCost}→${quote.cost}';
+  return quote.cost <= 0 ? '첫 리롤 무료' : '리롤 ${quote.cost}';
 }
 
-String _rerollConfirmMessage(String laneLabel, int rerollCost) {
-  if (rerollCost > 0) return '$laneLabel 후보를 리롤할까요?';
+String _rerollConfirmActionLabel(_MarketRerollCostQuote quote) {
+  return quote.cost <= 0 ? '무료 리롤' : '리롤';
+}
+
+String _rerollConfirmMessage(String laneLabel, _MarketRerollCostQuote quote) {
+  if (quote.hasDiscount) {
+    return '$laneLabel 후보를 리롤할까요?\n'
+        '리롤 할인 적용: ${quote.originalCost}G → ${quote.cost}G';
+  }
+  if (quote.cost > 0) return '$laneLabel 후보를 리롤할까요?';
   return '$laneLabel 후보를 리롤할까요?\n상점 입장 보너스로 첫 리롤은 무료입니다.';
 }
 
@@ -96,7 +113,7 @@ class _MarketPagerBar extends StatelessWidget {
     required this.pageCount,
     required this.onPrev,
     required this.onNext,
-    required this.rerollCost,
+    required this.rerollQuote,
     required this.feedbackTick,
     required this.bonusLabel,
     required this.onReroll,
@@ -106,7 +123,7 @@ class _MarketPagerBar extends StatelessWidget {
   final int pageCount;
   final VoidCallback onPrev;
   final VoidCallback onNext;
-  final int rerollCost;
+  final _MarketRerollCostQuote rerollQuote;
   final int feedbackTick;
   final String? bonusLabel;
   final VoidCallback? onReroll;
@@ -145,13 +162,13 @@ class _MarketPagerBar extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         SizedBox(
-          width: 86,
+          width: 100,
           child: Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
               GameActionButton(
-                label: _rerollButtonLabel(rerollCost),
+                label: _rerollButtonLabel(rerollQuote),
                 background: GameUiPalette.tileChipInlaid,
                 compact: true,
                 onPressed: onReroll,

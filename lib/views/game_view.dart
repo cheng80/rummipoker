@@ -571,6 +571,11 @@ class _GameViewState extends ConsumerState<GameView>
     _saveActiveRun();
   }
 
+  void _adjustDebugGold(int delta) {
+    _gameNotifier.adjustDebugGold(delta);
+    _saveActiveRun();
+  }
+
   void _showSnack(String message) {
     if (!mounted) return;
     showTopNotice(context, message);

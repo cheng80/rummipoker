@@ -52,7 +52,10 @@ extension _GameShopBuildFlow on _GameShopScreenState {
       currentOfferEntries,
       currentOfferPage,
     );
-    final currentRerollCost = _rerollCostForLane(market, currentOfferLane);
+    final currentRerollQuote = _rerollCostQuoteForLane(
+      market,
+      currentOfferLane,
+    );
     final selectedOwnedRuntimeValue = selectedOwned == null
         ? null
         : jesterRuntimeValueText(
@@ -674,7 +677,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                             ),
                                             onPrev: () => _shiftOfferPage(-1),
                                             onNext: () => _shiftOfferPage(1),
-                                            rerollCost: currentRerollCost,
+                                            rerollQuote: currentRerollQuote,
                                             feedbackTick:
                                                 _marketRerollFeedbackTick,
                                             bonusLabel: _offerLaneBonusLabel(

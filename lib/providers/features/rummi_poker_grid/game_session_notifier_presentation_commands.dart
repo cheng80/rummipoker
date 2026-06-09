@@ -49,6 +49,13 @@ mixin GameSessionNotifierPresentationCommands
     );
   }
 
+  void adjustDebugGold(int delta) {
+    final runProgress = state.runProgress;
+    if (runProgress == null) return;
+    runProgress.gold = max(0, runProgress.gold + delta);
+    _replaceState(state.copyWith(revision: state.revision + 1));
+  }
+
   void clearSelections() {
     _replacePresentationState(
       state.copyWith(
