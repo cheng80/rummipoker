@@ -46,6 +46,12 @@ final List<DebugRunFixtureDefinition> _debugRunFixtures = [
     builder: _buildMarketModifierShop,
   ),
   DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.staleFirstRerollMarket,
+    label: '오래된 첫 리롤 무료 저장값',
+    description: 'S1 다음 Market / 저장된 firstRerollDiscount 잔존 / 리롤 5 표시 검증용',
+    builder: _buildStaleFirstRerollMarket,
+  ),
+  DebugRunFixtureDefinition(
     id: DebugRunFixtureService.slotUnlockMarket,
     label: '슬롯 해금 Market',
     description: 'S2/S4/S6 Boss 보상 슬롯 해금 배너와 Jester/Item/Passive 열린 상태 검증용',

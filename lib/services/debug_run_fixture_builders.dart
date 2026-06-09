@@ -388,6 +388,36 @@ ActiveRunRuntimeState _buildMarketModifierShop() {
   );
 }
 
+ActiveRunRuntimeState _buildStaleFirstRerollMarket() {
+  final base = _buildStage2MarketResume();
+  final runProgress = base.runProgress.copySnapshot()
+    ..stageIndex = 1
+    ..currentStationBlindTierIndex = 1
+    ..gold = 94
+    ..rerollCost = RummiRunProgress.shopBaseRerollCost
+    ..tileRerollCost = RummiRunProgress.shopBaseRerollCost
+    ..itemRerollCost = RummiRunProgress.shopBaseRerollCost
+    ..quickSlotRerollCost = RummiRunProgress.shopBaseRerollCost
+    ..passiveRerollCost = RummiRunProgress.shopBaseRerollCost
+    ..toolRerollCost = RummiRunProgress.shopBaseRerollCost
+    ..gearRerollCost = RummiRunProgress.shopBaseRerollCost;
+  runProgress.queueMarketModifier(
+    op: 'discount_first_reroll',
+    amount: RummiEconomyConfig.shopFirstRerollDiscount,
+  );
+
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.shop,
+    difficulty: NewRunDifficulty.standard,
+    session: base.session.copySnapshot(),
+    runProgress: runProgress,
+    stageStartSnapshot: ActiveRunStageSnapshot(
+      session: base.stageStartSnapshot.session.copySnapshot(),
+      runProgress: runProgress.copySnapshot(),
+    ),
+  );
+}
+
 ActiveRunRuntimeState _buildScreenshotRunGrowthBattle() {
   final base = _buildHandCapacityDeckControlBattle();
   final runProgress = base.runProgress.copySnapshot()

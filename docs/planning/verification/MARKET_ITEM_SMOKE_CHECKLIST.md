@@ -44,15 +44,24 @@
 
 ## Reroll Smoke
 
-- First reroll in a Market costs `5` Gold.
+- S1 basic first Market shows `첫 리롤 무료`, not `리롤 5→0`.
+- S1 basic first Market reroll confirmation says `상점 입장 보너스로 첫 리롤은 무료입니다.`
+- The S1 basic first Market bonus is Market-wide once: using it in one lane consumes it for the other lanes.
+- Later Markets and stale restored `firstRerollDiscount` state show normal `리롤 5`.
+- Item/passive reroll discounts show original and discounted price, such as `리롤 5→4`.
+- Normal first reroll outside the S1 basic first Market costs `5` Gold.
 - Each reroll in the same Market increases the next reroll cost by `+2`.
 - Entering the next Market resets reroll cost to `5`.
 - With `Reroll Token` owned:
   - Buying it does not trigger a reroll.
-  - Pressing reroll consumes one token.
-  - Gold does not decrease for that reroll.
+  - Pressing reroll consumes one token when the discount applies.
+  - Gold decreases by the discounted cost, not by the undiscounted cost.
   - Next reroll cost still increases by `+2`.
-- Reroll button is disabled or not shown as actionable for `Tool / Gear` if current policy keeps reroll tied to the card/slot offer lane.
+- Stale first-reroll fixture:
+  - Open `/game?fixture=stale_first_reroll_market&debug_suppress_fixture_notice=1`.
+  - Verify Jester lane button says `리롤 5`.
+  - Switch to `Tool / Gear` and verify Tool lane button says `리롤 5`.
+  - Verify no `첫 리롤 무료` and no `리롤 5→0` are visible.
 
 ## Deferred / Next-Entry Item Smoke
 

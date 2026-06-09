@@ -389,6 +389,11 @@ class SavedRunProgressData {
   };
 
   static SavedRunProgressData fromJson(Map<String, dynamic> json) {
+    final hasBlindTierIndex = json.containsKey('currentStationBlindTierIndex');
+    final marketModifiers = RummiMarketModifierState.fromJson(
+      (json['marketModifiers'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{},
+    );
     return SavedRunProgressData(
       stageIndex: (json['stageIndex'] as num).toInt(),
       currentStationBlindTierIndex:
@@ -441,10 +446,9 @@ class SavedRunProgressData {
         (json['itemInventory'] as Map?)?.cast<String, dynamic>() ??
             const <String, dynamic>{},
       ),
-      marketModifiers: RummiMarketModifierState.fromJson(
-        (json['marketModifiers'] as Map?)?.cast<String, dynamic>() ??
-            const <String, dynamic>{},
-      ),
+      marketModifiers: hasBlindTierIndex
+          ? marketModifiers
+          : marketModifiers.copyWith(firstRerollDiscount: 0),
       seenMarketJesterIds: _jsonStringList(json['seenMarketJesterIds']),
       seenMarketItemIds: _jsonStringList(json['seenMarketItemIds']),
       boughtJesterIds: _jsonStringList(json['boughtJesterIds']),

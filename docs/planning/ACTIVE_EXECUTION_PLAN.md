@@ -49,6 +49,8 @@
    - 2026-05-29 grid fresh data: `MODE=grid` chunked run 5,655 rows, market/loadout axis 확장, grid multi-target model, candidate probe report를 생성했다. `avg_score_ratio` 회귀는 R2 0.6030까지 개선됐지만, `cleared_majority` classifier는 balanced accuracy 0.6649로 gate 후보 선별에는 아직 약하다.
    - 다음은 정책 정화 후 grid candidate report의 상위 economy/target 후보를 small fresh resimulation으로 분리 검증하는 것이다.
    - LLM autoplay는 대량 밸런스 기준이 아니라 전략 샘플러/decision label 보조 축으로만 검토한다. 적용 계약은 `docs/planning/leveling/LLM_AUTOPLAY_LEVELING_PLAN.md`를 따른다.
+   - 2026-06-09 완료: Market 첫 리롤 무료 정책과 표시를 현재 합의 기준으로 정리했다. S1 기본 첫 Market(`stageIndex == 1 && currentStationBlindTierIndex == 0`)에서만 Market 전체 1회 `첫 리롤 무료` 보상이 보이고, 오래된 저장/fixture에 남은 `firstRerollDiscount`는 eligibility 밖에서 무시한다. 아이템/패시브 리롤 할인은 `리롤 5→4`처럼 원가→할인가로 표시하고, S1 첫 Market 보상은 `리롤 5→0`이 아니라 `첫 리롤 무료`로 표시한다.
+   - 2026-06-09 검증: `flutter analyze`, `flutter test --concurrency=1 test/views/game/widgets/game_shop_reroll_confirmation_test.dart test/views/game/widgets/game_shop_discounted_reroll_test.dart test/services/active_run_save_service_test.dart test/services/debug_run_fixture_service_test.dart test/logic/rummi_market_facade_test.dart`. Chrome 저장 상태 확인으로 사용자의 이어하기 화면이 S1 첫 Market이라 무료 보상이 정상임을 확인했고, `stale_first_reroll_market` fixture에서 Jester/Tool lane 모두 `리롤 5`로 보이는 것을 확인했다. 상세는 `docs/planning/verification/daily_logs/2026-06-09.md`.
 7. 대기열로 미룬 작업:
    - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
    - 현재 runtime 기준 fresh row 기반 실제 runtime 후보 구매/사용 가치 probe.
@@ -58,6 +60,17 @@
    - 다음 LLM 작업: `docs/planning/leveling/LLM_LOCAL_SETUP_PLAN.md` 기준 decision cache/local runner, fallback/decision log 분리.
 8. 병렬로 하지 말 것: full-run bot 재개, 장기 r400/r800 sweep, 특수 타일 V2-B/C/D 구현.
    - V2-B/C/D는 fresh 데이터 baseline과 현 UI 회귀 검증이 닫힌 뒤 연다.
+
+## 2026-06-09 Next Plan
+
+1. Market 리롤 smoke를 짧게 재확인한다.
+   - S1 기본 첫 Market: 버튼 `첫 리롤 무료`, 확인창 `상점 입장 보너스로 첫 리롤은 무료입니다.`
+   - 아이템/패시브 할인: `리롤 5→4` 같은 할인 표기.
+   - stale save/fixture 또는 S1 이후 Market: `리롤 5`, 무료 보상 없음.
+2. Market 직접 사용류의 남은 피드백 길이를 조정한다.
+   - Tool 사용 완료 toast는 충분하지만, Gold HUD 옆 `+NG` 피드백이 너무 짧은 항목을 `GamePresentationTimings` 상수 기준으로 늘린다.
+3. 이후 작업은 예정 연출 큐와 장기 경제/레벨링을 섞지 않는다.
+   - 마켓/전투 표시 결함은 작은 fixture + targeted test로 닫고, 경제/가격 판단은 fresh runtime probe 기준으로 별도 재개한다.
 
 ## 데이터 재시작 기준
 

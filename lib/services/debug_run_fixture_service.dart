@@ -46,6 +46,7 @@ class DebugRunFixtureService {
   static const String screenshotRunGrowthBattle =
       'screenshot_run_growth_battle';
   static const String marketModifierShop = 'market_modifier_shop';
+  static const String staleFirstRerollMarket = 'stale_first_reroll_market';
   static const String slotUnlockMarket = 'slot_unlock_market';
   static const String safetyNetExpiryGuard = 'safety_net_expiry_guard';
   static const String gameOverPreFadeTrigger = 'game_over_pre_fade_trigger';

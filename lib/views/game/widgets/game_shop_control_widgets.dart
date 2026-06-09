@@ -90,8 +90,9 @@ class _MarketRerollCostQuote {
 }
 
 String _rerollButtonLabel(_MarketRerollCostQuote quote) {
+  if (quote.cost <= 0) return '첫 리롤 무료';
   if (quote.hasDiscount) return '리롤 ${quote.originalCost}→${quote.cost}';
-  return quote.cost <= 0 ? '첫 리롤 무료' : '리롤 ${quote.cost}';
+  return '리롤 ${quote.cost}';
 }
 
 String _rerollConfirmActionLabel(_MarketRerollCostQuote quote) {
@@ -99,12 +100,14 @@ String _rerollConfirmActionLabel(_MarketRerollCostQuote quote) {
 }
 
 String _rerollConfirmMessage(String laneLabel, _MarketRerollCostQuote quote) {
+  if (quote.cost <= 0) {
+    return '$laneLabel 후보를 리롤할까요?\n상점 입장 보너스로 첫 리롤은 무료입니다.';
+  }
   if (quote.hasDiscount) {
     return '$laneLabel 후보를 리롤할까요?\n'
         '리롤 할인 적용: ${quote.originalCost}G → ${quote.cost}G';
   }
-  if (quote.cost > 0) return '$laneLabel 후보를 리롤할까요?';
-  return '$laneLabel 후보를 리롤할까요?\n상점 입장 보너스로 첫 리롤은 무료입니다.';
+  return '$laneLabel 후보를 리롤할까요?';
 }
 
 class _MarketPagerBar extends StatelessWidget {

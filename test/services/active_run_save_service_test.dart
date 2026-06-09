@@ -521,6 +521,22 @@ void main() {
       },
     );
 
+    test('legacy saved run progress drops stale first reroll discount', () {
+      final restored = SavedRunProgressData.fromJson(const <String, dynamic>{
+        'stageIndex': 1,
+        'gold': 94,
+        'rerollCost': 5,
+        'ownedJesterIds': <String>[],
+        'shopOffers': <SavedShopOfferData>[],
+        'statefulValuesBySlot': <String, int>{},
+        'playedHandCounts': <String, int>{},
+        'marketModifiers': <String, dynamic>{'firstRerollDiscount': 5},
+      });
+
+      expect(restored.currentStationBlindTierIndex, 0);
+      expect(restored.marketModifiers.firstRerollDiscount, 0);
+    });
+
     test(
       'save -> inspect -> summary/load -> clear 전체 active run 저장 흐름이 동작한다',
       () async {

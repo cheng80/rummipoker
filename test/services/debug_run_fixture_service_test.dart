@@ -246,6 +246,29 @@ void main() {
     ]);
   });
 
+  test(
+    'stale first reroll fixture shows paid reroll after S1 first market',
+    () {
+      final fixture = DebugRunFixtureService.build(
+        DebugRunFixtureService.staleFirstRerollMarket,
+      );
+
+      expect(fixture, isNotNull);
+      expect(fixture!.activeScene, ActiveRunScene.shop);
+      expect(fixture.runProgress.stageIndex, 1);
+      expect(fixture.runProgress.currentStationBlindTierIndex, 1);
+      expect(fixture.runProgress.gold, 94);
+      expect(
+        fixture.runProgress.marketModifiers.firstRerollDiscount,
+        RummiEconomyConfig.shopFirstRerollDiscount,
+      );
+      expect(
+        fixture.runProgress.effectiveRerollCost(),
+        RummiRunProgress.shopBaseRerollCost,
+      );
+    },
+  );
+
   test('animation effects fixture exposes score and item feedback setup', () {
     final fixture = DebugRunFixtureService.build(
       DebugRunFixtureService.animationEffectsEyeCheck,

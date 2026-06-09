@@ -682,7 +682,7 @@ class RummiRunProgress {
         marketModifiers.nextMarketExtraJesterOfferSlots;
     firstShopRerollDiscountConsumed = false;
     _firstShopRerollDiscountConsumedLanes.clear();
-    final firstRerollDiscount = stageIndex == 1
+    final firstRerollDiscount = _isFirstMarketRerollDiscountEligible
         ? RummiEconomyConfig.shopFirstRerollDiscount
         : 0;
     marketModifiers = marketModifiers.copyWith(
@@ -744,7 +744,9 @@ class RummiRunProgress {
 
   int _effectiveRerollCostForRawCost(int rawCost, String laneKey) {
     final firstRerollDiscount =
-        rawCost == shopBaseRerollCost && !firstShopRerollDiscountConsumed
+        rawCost == shopBaseRerollCost &&
+            _isFirstMarketRerollDiscountEligible &&
+            !firstShopRerollDiscountConsumed
         ? marketModifiers.firstRerollDiscount
         : 0;
     return max(
@@ -752,6 +754,9 @@ class RummiRunProgress {
       rawCost - marketModifiers.nextRerollDiscount - firstRerollDiscount,
     );
   }
+
+  bool get _isFirstMarketRerollDiscountEligible =>
+      stageIndex == 1 && currentStationBlindTierIndex == 0;
 
   String _rerollLaneKeyForPlacement(ItemPlacement placement) {
     return switch (placement) {

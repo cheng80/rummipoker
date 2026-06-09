@@ -1631,46 +1631,52 @@ void main() {
       expect(progress.shopOffers.map((offer) => offer.card.id), jesterOfferIds);
     });
 
-    test(
-      'initial first free reroll is market-wide and expires next market',
-      () {
-        final catalog = List<RummiJesterCard>.generate(
-          5,
-          (index) => _jester(id: 'offer_$index'),
-        );
-        final progress = RummiRunProgress()..gold = 20;
+    test('first free reroll is only for S1 first market', () {
+      final catalog = List<RummiJesterCard>.generate(
+        5,
+        (index) => _jester(id: 'offer_$index'),
+      );
+      final progress = RummiRunProgress()..gold = 20;
 
-        progress.openShop(catalog: catalog, rng: Random(1));
-        expect(progress.effectiveRerollCost(), 0);
+      progress.openShop(catalog: catalog, rng: Random(1));
+      expect(progress.effectiveRerollCost(), 0);
 
-        expect(progress.rerollShop(catalog: catalog, rng: Random(2)), isTrue);
-        expect(progress.gold, 20);
-        expect(
-          progress.effectiveTileRerollCost(),
-          RummiRunProgress.shopBaseRerollCost,
-        );
-        expect(
-          progress.effectiveItemRerollCostFor(ItemPlacement.quickSlot),
-          RummiRunProgress.shopBaseRerollCost,
-        );
+      expect(progress.rerollShop(catalog: catalog, rng: Random(2)), isTrue);
+      expect(progress.gold, 20);
+      expect(
+        progress.effectiveTileRerollCost(),
+        RummiRunProgress.shopBaseRerollCost,
+      );
+      expect(
+        progress.effectiveItemRerollCostFor(ItemPlacement.quickSlot),
+        RummiRunProgress.shopBaseRerollCost,
+      );
 
-        progress.stageIndex = 2;
-        progress.openShop(catalog: catalog, rng: Random(3));
+      progress.currentStationBlindTierIndex = 1;
+      progress.openShop(catalog: catalog, rng: Random(3));
 
-        expect(
-          progress.effectiveRerollCost(),
-          RummiRunProgress.shopBaseRerollCost,
-        );
-        expect(
-          progress.effectiveTileRerollCost(),
-          RummiRunProgress.shopBaseRerollCost,
-        );
-        expect(
-          progress.effectiveItemRerollCostFor(ItemPlacement.quickSlot),
-          RummiRunProgress.shopBaseRerollCost,
-        );
-      },
-    );
+      expect(
+        progress.effectiveRerollCost(),
+        RummiRunProgress.shopBaseRerollCost,
+      );
+      expect(
+        progress.effectiveTileRerollCost(),
+        RummiRunProgress.shopBaseRerollCost,
+      );
+      expect(
+        progress.effectiveItemRerollCostFor(ItemPlacement.quickSlot),
+        RummiRunProgress.shopBaseRerollCost,
+      );
+
+      progress.stageIndex = 2;
+      progress.currentStationBlindTierIndex = 0;
+      progress.openShop(catalog: catalog, rng: Random(4));
+
+      expect(
+        progress.effectiveRerollCost(),
+        RummiRunProgress.shopBaseRerollCost,
+      );
+    });
 
     test(
       'tile reroll refills only tile offers and consumes market first free reroll',
@@ -1733,6 +1739,41 @@ void main() {
         RummiRunProgress.shopBaseRerollCost,
       );
     });
+
+    test(
+      'stale first free reroll restore is ignored after S1 first market',
+      () {
+        final restored = RummiRunProgress.restore(
+          stageIndex: 1,
+          currentStationBlindTierIndex: 1,
+          gold: 94,
+          rerollCost: RummiRunProgress.shopBaseRerollCost,
+          tileRerollCost: RummiRunProgress.shopBaseRerollCost,
+          itemRerollCost: RummiRunProgress.shopBaseRerollCost,
+          ownedJesters: const [],
+          shopOffers: const [],
+          statefulValuesBySlot: const {},
+          playedHandCounts: const {},
+          firstShopRerollDiscountConsumed: false,
+          marketModifiers: const RummiMarketModifierState(
+            firstRerollDiscount: RummiEconomyConfig.shopFirstRerollDiscount,
+          ),
+        );
+
+        expect(
+          restored.effectiveRerollCost(),
+          RummiRunProgress.shopBaseRerollCost,
+        );
+        expect(
+          restored.effectiveTileRerollCost(),
+          RummiRunProgress.shopBaseRerollCost,
+        );
+        expect(
+          restored.effectiveItemRerollCostFor(ItemPlacement.quickSlot),
+          RummiRunProgress.shopBaseRerollCost,
+        );
+      },
+    );
 
     test('tile reroll keeps tile card offers available after bought tiles', () {
       final progress = RummiRunProgress()..gold = 30;

@@ -194,7 +194,7 @@ void main() {
     await tester.tap(find.text('취소'));
     await tester.pumpAndSettle();
 
-    await _pumpShopScreen(tester, rerollCost: 0);
+    await _pumpShopScreen(tester, rerollCost: 0, originalRerollCost: 5);
 
     await tester.tap(find.text('Jester / Slots'));
     await tester.pumpAndSettle();
@@ -202,6 +202,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('첫 리롤 무료'), findsOneWidget);
+    expect(find.text('리롤 5→0'), findsNothing);
 
     await tester.tap(find.text('첫 리롤 무료'));
     await tester.pumpAndSettle();
@@ -210,6 +211,7 @@ void main() {
       find.text('Jester 후보를 리롤할까요?\n상점 입장 보너스로 첫 리롤은 무료입니다.'),
       findsOneWidget,
     );
+    expect(find.textContaining('리롤 할인 적용'), findsNothing);
     expect(find.text('무료 리롤'), findsOneWidget);
   });
 }

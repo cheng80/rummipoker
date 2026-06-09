@@ -23,7 +23,7 @@
 - 실제 제품 완성도는 아직 `In progress`이며, 전체 추정 진도는 42%다.
 - 2026-05-15 12시경 공모전 최종 산출물을 우선 등록했으므로 공모전 트랙은 off다. 현재 활성 실행은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 post-contest 안정화/리팩터링 트랙이다.
 - 공모전 이후 안정화로 손패 최대치, 전투 자원, 보유/후보 슬롯 상한과 no-op 정책을 닫았다.
-- Jester/Item/Tool/Gear 정책 리스크는 상당 부분 분해/수정됐다. 특수 타일 modifier V1과 V2-A 판본 1차, runtime state / transient presentation state 분리 1차, settlement 효과 단계 분리도 닫았다.
+- Jester/Item/Tool/Gear 정책 리스크는 상당 부분 분해/수정됐다. 특수 타일 modifier V1과 V2-A 판본 1차, runtime state / transient presentation state 분리 1차, settlement 효과 단계 분리도 닫았다. 2026-06-09에는 S1 첫 Market 무료 리롤 보상, 아이템/패시브 리롤 할인 표시, stale save guard를 현재 정책 기준으로 다시 잠갔다.
 - 가격/가치 판단과 장기 경제 gate는 exploratory probe 단계로 남아 있으며, 런타임 반영 전 fresh 검증이 필요하다. 기존 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime 기준 fresh row 5000건 이상 축적부터 다시 시작한다.
 
 현재 재개 대상:
@@ -90,8 +90,8 @@
 |---|---:|---|---|
 | Battle rules and scoring | 77% | 전투/정산/보스 제약 다수 구현, fixture와 provider 테스트 존재, S1 entry smoke 개선 | S2~S8 장기 station curve 재검증 필요 |
 | Boss modifier runtime/sim pool | 88% | S1~S8 station 난이도 level별 3~4개 seed 기반 boss pool 적용, S4 rank pressure 후보 가중 보정, simulation runtime-station mirror/variant profile 추가, fresh r400에서 S1/S8 boss 실패 유지 | 장기 밸런스에서는 multi-seed/r800 재검증 |
-| Market offer and inventory | 70% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한, 첫 리롤 무료 runtime 적용 | 셔플/추가 밸런스 변경 시 재검증 |
-| Economy reward and price | 76% | runtime reward/price scale, growth-access price cap, 첫 리롤 무료, catalog audit, runtime offer audit, fresh r400 economy audit 즉시 경고 없음 | power none 높음은 known risk, 장기 밸런스에서 재검증 |
+| Market offer and inventory | 71% | Jester/Slots와 Tool/Gear 탭별 리롤 분리, 구매/판매/사용, 슬롯 제한, S1 첫 Market 무료 리롤 보상, stale save guard | 셔플/추가 밸런스 변경 시 재검증 |
+| Economy reward and price | 76% | runtime reward/price scale, growth-access price cap, S1 첫 Market 무료 리롤 보상, catalog audit, runtime offer audit, fresh r400 economy audit 즉시 경고 없음 | power none 높음은 known risk, 장기 밸런스에서 재검증 |
 | Animation/game feel | 45% | timing 중앙화, 마켓 flight, 정산 reveal 개선 진행 | 게임오버 CTA, 도감 실물 카드 표시, 마켓/전투/정산 시각 연결감 QA |
 | Save/restore stability | 65% | active run save/restore, 정산 cash-out 복구 검증 이력 | 새 meta/gameover loop 추가 시 재검증 |
 | Roguelite meta growth | 38% | 기억 카드 보상 표시, high stakes 해금, 기억 카드 획득 이력, 마켓/구매/Boss/Station 수집형 도감 저장 | 보상이 다시 시작 욕구를 만드는지 시각/문구 QA, unlock tree 확장, 항목별 상태 UI |
@@ -242,7 +242,7 @@ Status: In progress
 - `slot_sell_v1`은 목표 clear에 도달했지만 v9 final gold 평균이 16~24G로 올라간다. 리롤 비용을 완전히 제거할지, 첫 리롤/조건부 할인/아이템 보강으로 옮길지 정책 영향 검토가 남아 있다.
 - `first_reroll_free_v1` r400은 v9 final gold가 balanced 8.0G, power 11.2G라 경제적으로 더 안전하지만, balanced v9가 54.5%라 목표 60%에 못 닿는다. 다음 후보는 리롤 비용만이 아니라 후반 성장 후보 접근성과 구매 선택 조건을 같이 본다.
 - 후반 후보 접근성 실험 결과, `v15/v16 + first_reroll_free_v1`은 power에는 도움이 되지만 balanced를 안정적으로 60% 이상으로 올리지 못했다. 지금 문제는 “후보가 아예 안 보임” 하나가 아니라 “필요 후보가 보여도 balanced가 살 수 있는 가격/타이밍”까지 같이 묶인 문제다.
-- 최신 runtime 기준 `growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2` r400에서 none balanced 48.8%, none power 54.8%, v9 balanced 60.5%, v9 power 69.8%가 나왔다. 성장 후보 가격 상한은 이미 runtime에 있고, 첫 리롤 무료 정책도 runtime에 적용했다. 첫 리롤 무료는 “상점마다 첫 리롤 1회 무료”로 유지한다. 이 항목은 ML 재학습/추천표 갱신 전까지 “runtime 적용 후 검증 완료, ML 반영 대기” 상태다.
+- 최신 runtime 기준 `growth_access_v1 + first_reroll_free_v1 + affordable_alternative_v2` r400에서 none balanced 48.8%, none power 54.8%, v9 balanced 60.5%, v9 power 69.8%가 나왔다. 성장 후보 가격 상한은 이미 runtime에 있다. 단, 제품 UI 기준 첫 리롤 무료는 “상점마다 무료”가 아니라 S1 기본 첫 Market 이용 보상 1회로 잠갔다. 아이템/패시브 리롤 할인은 별도 할인으로 표시한다. 이 항목은 ML 재학습/추천표 갱신 전까지 “runtime 적용 후 검증 완료, ML 반영 대기” 상태다.
 - 셔플 검토 참고 자료를 확인했다. 현재 방향은 Fisher-Yates/seed 기반 셔플 유지가 기본이며, Bag/Pity/Smart shuffle은 레벨링과 경제를 바꾸는 별도 룰 후보로만 검토한다.
 
 ### M2. S1~S8 Leveling Curve
