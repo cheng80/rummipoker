@@ -207,14 +207,18 @@ void main() {
     expect(find.text('Tool Slots'), findsOneWidget);
     expect(find.text('Gear Slots'), findsOneWidget);
     expect(find.text('TOOL'), findsWidgets);
+    final rerollButton = find.text('리롤 5');
+    final toolRerollTop = tester.getTopLeft(rerollButton).dy;
 
     await tester.tap(find.text('Jester / Slots'));
     await tester.pumpAndSettle();
 
+    final jesterRerollTop = tester.getTopLeft(rerollButton).dy;
     expect(find.text('Jester Slots'), findsOneWidget);
     expect(find.text('Item Slots'), findsNothing);
     expect(find.text('Q-SLT'), findsWidgets);
     expect(find.text('PSV'), findsOneWidget);
+    expect((jesterRerollTop - toolRerollTop).abs(), lessThanOrEqualTo(1));
     expect(tester.takeException(), isNull);
   });
 }

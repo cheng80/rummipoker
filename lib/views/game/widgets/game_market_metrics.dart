@@ -15,6 +15,12 @@ const double kMarketOfferCardDisplayHeight =
     kMarketOfferCardDisplayScale;
 const double kMarketShopCellWidth = 84.0;
 const double kMarketShopCellHeight = kMarketOfferCardDisplayHeight + 22.0;
+const double kMarketOwnedSlotRowHeight =
+    kMarketOwnedCardHeight + (kMarketCardSelectionInset * 2);
+const double kMarketOwnedTabSectionHeight = 108.0;
+const double kMarketOwnedTabSectionGap = 6.0;
+const double kMarketOwnedTabAreaHeight =
+    (kMarketOwnedTabSectionHeight * 2) + kMarketOwnedTabSectionGap;
 const double kMarketShopPanelHeight = 168.0;
 const double kMarketSpeechPanelHeight = 132.0;
 const double kMarketDescriptionFontSize = 12.0;

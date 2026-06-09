@@ -125,7 +125,7 @@ class _MarketQuickPassiveSlotsSection extends StatelessWidget {
         .toList(growable: false);
     return _MarketSectionBox(
       title: null,
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -181,7 +181,7 @@ class _MarketSlotGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _MarketSectionTitleBadge(label: label),
-        const SizedBox(height: 5),
+        const SizedBox(height: 4),
         Row(
           children: [
             for (var i = 0; i < slots.length; i++) ...[
@@ -225,7 +225,7 @@ class _MarketItemSlotsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MarketSectionBox(
       title: title,
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Row(
