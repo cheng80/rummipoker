@@ -1450,7 +1450,7 @@ void main() {
 
     expect(find.text('Board Scrap'), findsOneWidget);
     final itemNameText = tester.widget<Text>(find.text('Board Scrap'));
-    expect(itemNameText.maxLines, isNull);
+    expect(itemNameText.maxLines, 2);
     expect(itemNameText.softWrap, isTrue);
     expect(itemNameText.overflow, TextOverflow.visible);
     expect(find.byKey(const ValueKey('battle-item-slot-Q1')), findsOneWidget);

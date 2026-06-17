@@ -89,12 +89,9 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                         child: SizedBox(
                           width: kBattleItemSlotWidth,
                           height: kBattleItemSlotHeight,
-                          child: Padding(
-                            padding: const EdgeInsets.all(kBattleSlotCardInset),
-                            child: _GameBattleItemCardFace(
-                              itemSlot: itemSlot,
-                              itemName: name,
-                            ),
+                          child: _GameBattleItemCardFace(
+                            itemSlot: itemSlot,
+                            itemName: name,
                           ),
                         ),
                       ),

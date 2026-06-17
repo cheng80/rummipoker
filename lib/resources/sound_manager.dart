@@ -150,6 +150,15 @@ class SoundManager {
     return pendingBgm == requestedBgm && !resumeInFlight && !resumeAlreadyTried;
   }
 
+  @visibleForTesting
+  static bool debugShouldPreloadAudioCache({required bool isWeb}) {
+    return _shouldPreloadAudioCache(isWeb: isWeb);
+  }
+
+  static bool _shouldPreloadAudioCache({required bool isWeb}) {
+    return !isWeb;
+  }
+
   /// Pause 메뉴에서 설정을 여는 동안 mute 해제가 BGM을 자동 재개하지 못하게 막는다.
   static void beginBgmAutoResumeBlock() {
     _bgmAutoResumeBlockDepth++;
@@ -260,6 +269,7 @@ class SoundManager {
 
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
   static Future<void> preload() async {
+    if (!_shouldPreloadAudioCache(isWeb: kIsWeb)) return;
     await Future.wait([
       FlameAudio.audioCache.load(AssetPaths.bgmMenu),
       FlameAudio.audioCache.load(AssetPaths.bgmMain),

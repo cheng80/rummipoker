@@ -7,17 +7,19 @@ class GameCardNameText extends StatelessWidget {
     super.key,
     required this.style,
     this.textAlign = TextAlign.center,
+    this.maxLines,
   });
 
   final String text;
   final TextStyle style;
   final TextAlign textAlign;
+  final int? maxLines;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
-      maxLines: null,
+      maxLines: maxLines,
       softWrap: true,
       overflow: TextOverflow.visible,
       textAlign: textAlign,

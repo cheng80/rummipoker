@@ -196,9 +196,9 @@ class _MarketCardEmblemImage extends StatelessWidget {
     return RepaintBoundary(
       child: Center(
         child: Container(
-          width: 47,
+          width: kRuntimeCardArtWidth,
           height: kRuntimeCardArtHeight,
-          padding: const EdgeInsets.all(1.5),
+          padding: const EdgeInsets.all(2.5),
           decoration: BoxDecoration(
             color: GameUiPalette.cardArtSurface,
             borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),

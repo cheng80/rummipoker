@@ -23,7 +23,7 @@ class _GameBattleItemCardFace extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
+        padding: const EdgeInsets.fromLTRB(3.5, 3, 3.5, 3.5),
         child: Column(
           children: [
             Row(
@@ -47,12 +47,12 @@ class _GameBattleItemCardFace extends StatelessWidget {
                 _GameBattleItemTypeBadge(placement: itemSlot.placement),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2.5),
             RepaintBoundary(
               child: Container(
                 width: kRuntimeCardArtWidth,
                 height: kBattleRuntimeCardArtHeight,
-                padding: const EdgeInsets.all(3),
+                padding: const EdgeInsets.all(2.5),
                 decoration: BoxDecoration(
                   color: GameUiPalette.cardArtSurfaceDeep,
                   borderRadius: BorderRadius.circular(kRuntimeCardArtRadius),
@@ -82,15 +82,17 @@ class _GameBattleItemCardFace extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Expanded(
-              child: Center(
+              child: Align(
+                alignment: Alignment.topCenter,
                 child: GameCardNameText(
                   itemName,
+                  maxLines: 2,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: GameUiPalette.cardNameWarm,
-                    fontSize: 6.2,
+                    color: GameUiPalette.cardName,
+                    fontSize: 5,
                     fontWeight: FontWeight.w900,
-                    height: 0.94,
+                    height: 1.12,
                   ),
                 ),
               ),

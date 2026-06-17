@@ -103,5 +103,16 @@ void main() {
         isFalse,
       );
     });
+
+    test('skips audio cache preload on web', () {
+      expect(
+        SoundManager.debugShouldPreloadAudioCache(isWeb: true),
+        isFalse,
+      );
+      expect(
+        SoundManager.debugShouldPreloadAudioCache(isWeb: false),
+        isTrue,
+      );
+    });
   });
 }

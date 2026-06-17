@@ -39,5 +39,5 @@ const double kRuntimeCardBarHeight = 5.0;
 const double kRuntimeCardTypeBadgeWidth = 9.0;
 const double kRuntimeCardTypeBadgeHeight = 5.0;
 const double kRuntimeCardArtWidth = 41.0;
-const double kRuntimeCardArtHeight = 41.0;
+const double kRuntimeCardArtHeight = 38.0;
 const double kBattleRuntimeCardArtHeight = kRuntimeCardArtHeight;
