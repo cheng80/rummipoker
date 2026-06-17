@@ -1,5 +1,0 @@
-channel: cli stdout
-command: /Users/cheng80/flutter/bin/flutter test test/services/debug_run_fixture_service_test.dart --name "fate transform fixtures apply selected line into expected hand rank"
-00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/services/debug_run_fixture_service_test.dart
-00:00 +0: fate transform fixtures apply selected line into expected hand rank
-00:00 +1: All tests passed!

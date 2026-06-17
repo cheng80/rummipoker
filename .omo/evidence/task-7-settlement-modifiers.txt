@@ -1,9 +1,0 @@
-00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/rummi_session_test.dart
-00:00 +0: 특수 타일 점수 보정은 확정 점수와 breakdown에 반영된다
-00:00 +1: 빨간 봉인은 특수 타일 점수 효과를 한 번 더 적용한다
-00:00 +2: 타일 판본은 확정 점수와 breakdown에 반영된다
-00:00 +3: 각인 타일은 확정 점수, 골드, 족보 성장에 반영된다
-00:00 +4: 닻 각인은 이번 Station에 이동한 타일에만 점수 보너스를 준다
-00:00 +5: 겹친 각인은 같은 타일이 두 줄 이상에 기여할 때만 발동한다
-00:00 +6: 유리 타일 파괴는 추가 덱 타일 source에서 제거된다
-00:00 +7: All tests passed!

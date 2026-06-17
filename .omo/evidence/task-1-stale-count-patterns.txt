@@ -1,7 +1,0 @@
-item catalog 94
-Item total: 94
-Q-Slot: 55
-ritual_line_effect`는 34장
-적용군 32종
-확장 계열 40종
-성장/점수/표식/위치 의식 (9)

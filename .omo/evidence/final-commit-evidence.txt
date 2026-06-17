@@ -1,4 +1,0 @@
-commit evidence 2026-06-03 10:57:08 KST
-227d1db 운명 의식 카드 후속 QA 정리
-
- M .omo/evidence/final-commit-evidence.txt

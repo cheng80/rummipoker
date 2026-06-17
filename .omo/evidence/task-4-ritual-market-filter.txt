@@ -1,3 +1,0 @@
-00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/rummi_market_facade_test.dart
-00:00 +0: RummiMarketRuntimeFacade deferred ritual items are filtered while active ritual items remain
-00:00 +1: All tests passed!

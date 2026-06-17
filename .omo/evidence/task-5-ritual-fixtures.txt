@@ -1,3 +1,0 @@
-00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/services/debug_run_fixture_service_test.dart
-00:00 +0: ritual battle preview fixtures expose representative item groups
-00:00 +1: All tests passed!

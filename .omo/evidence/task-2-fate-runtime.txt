@@ -1,5 +1,0 @@
-channel: cli stdout
-command: /Users/cheng80/flutter/bin/flutter test test/logic/item_effect_runtime_test.dart --name "fate cards transform selected board lines into scoring tile sets"
-00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/item_effect_runtime_test.dart
-00:00 +0: ItemEffectRuntime fate cards transform selected board lines into scoring tile sets
-00:00 +1: All tests passed!

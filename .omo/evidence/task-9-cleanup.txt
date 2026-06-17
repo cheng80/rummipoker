@@ -1,4 +1,0 @@
-cleanup receipt 2026-06-03 10:36:17 KST
-tmux: unavailable
-flutter/webdriver/headless residue after excluding this receipt command:
-conclusion: no Task 9 test/sim residue requiring cleanup.

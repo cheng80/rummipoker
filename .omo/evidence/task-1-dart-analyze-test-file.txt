@@ -1,3 +1,0 @@
-command: /Users/cheng80/flutter/bin/dart analyze test/logic/item_definition_test.dart
-Analyzing item_definition_test.dart...
-No issues found!

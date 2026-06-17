@@ -1,5 +1,0 @@
-cleanup receipt 2026-06-03 10:06:52 KST
-tmux: unavailable
-flutter/webdriver/headless residue after excluding this receipt command:
-user chrome helper note: existing parent Chrome pid 1021 helpers are user browser state, not spawned by these Flutter widget tests.
-conclusion: no flutter test/flutter_tester/chromedriver/webdriver/flutter web server/headless Chrome residue from Task 5 tests.

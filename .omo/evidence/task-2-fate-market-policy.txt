@@ -1,5 +1,0 @@
-channel: cli stdout
-command: /Users/cheng80/flutter/bin/flutter test test/logic/item_definition_test.dart --name "fate transform items stay rare-or-higher and expensive"
-00:00 +0: loading /Users/cheng80/Desktop/flame_binggo_card/test/logic/item_definition_test.dart
-00:00 +0: ItemCatalog fate transform items stay rare-or-higher and expensive
-00:00 +1: All tests passed!
