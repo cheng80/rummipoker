@@ -64,24 +64,27 @@ void main() {
       );
     });
 
-    test('does not start duplicate web replay while the same BGM is in flight', () {
-      expect(
-        SoundManager.debugShouldStartWebBgmReplay(
-          replayInFlight: true,
-          requestedBgm: AssetPaths.bgmMain,
-          pendingBgm: AssetPaths.bgmMain,
-        ),
-        isFalse,
-      );
-      expect(
-        SoundManager.debugShouldStartWebBgmReplay(
-          replayInFlight: true,
-          requestedBgm: AssetPaths.bgmMenu,
-          pendingBgm: AssetPaths.bgmMain,
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not start duplicate web replay while the same BGM is in flight',
+      () {
+        expect(
+          SoundManager.debugShouldStartWebBgmReplay(
+            replayInFlight: true,
+            requestedBgm: AssetPaths.bgmMain,
+            pendingBgm: AssetPaths.bgmMain,
+          ),
+          isFalse,
+        );
+        expect(
+          SoundManager.debugShouldStartWebBgmReplay(
+            replayInFlight: true,
+            requestedBgm: AssetPaths.bgmMenu,
+            pendingBgm: AssetPaths.bgmMain,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('tries resume before web replay fallback for pending recovery', () {
       expect(
@@ -105,13 +108,21 @@ void main() {
     });
 
     test('skips audio cache preload on web', () {
+      expect(SoundManager.debugShouldPreloadAudioCache(isWeb: true), isFalse);
+      expect(SoundManager.debugShouldPreloadAudioCache(isWeb: false), isTrue);
+    });
+
+    test('uses a direct Flutter web asset URL for web SFX', () {
       expect(
-        SoundManager.debugShouldPreloadAudioCache(isWeb: true),
-        isFalse,
+        SoundManager.debugWebSfxAssetUrl(AssetPaths.sfxBtnSnd),
+        'assets/assets/audio/sfx/BtnSnd.mp3',
       );
+    });
+
+    test('uses a direct Flutter web asset URL for web BGM', () {
       expect(
-        SoundManager.debugShouldPreloadAudioCache(isWeb: false),
-        isTrue,
+        SoundManager.debugWebBgmAssetUrl(AssetPaths.bgmMenu),
+        'assets/assets/audio/music/Menu_BGM.mp3',
       );
     });
   });

@@ -76,6 +76,16 @@ extension _GameViewDialogRoutes on _GameViewState {
     }
   }
 
+  Future<void> _openLifecycleOptionsAfterResume() async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted ||
+        _optionsDialogOpen ||
+        _gameState.activeRunScene == ActiveRunScene.shop) {
+      return;
+    }
+    await _openGameOptions(allowDuringStageFlow: true);
+  }
+
   Future<void> _openRunInfo() async {
     if (_optionsDialogOpen) return;
     await showGameRunInfoDialog(

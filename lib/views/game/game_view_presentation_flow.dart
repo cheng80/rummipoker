@@ -4,6 +4,11 @@ extension _GameViewPresentationFlow on _GameViewState {
   void _handleLifecyclePause() {
     _dismissBattleTutorial();
     final isShopScene = _gameState.activeRunScene == ActiveRunScene.shop;
+    if (!isShopScene &&
+        !_optionsDialogOpen &&
+        _stageFlowPhase == GameStageFlowPhase.none) {
+      _pendingLifecycleOptions = true;
+    }
     if (!isShopScene) {
       _pausePresentation();
     }

@@ -294,14 +294,16 @@ class _GameViewState extends ConsumerState<GameView>
           _pausedLifecycleDuringStageFlow = false;
           break;
         }
-        if (_stageFlowPhase != GameStageFlowPhase.none) {
+        if (_pendingLifecycleOptions) {
           _pendingLifecycleOptions = false;
+          _pausedLifecycleDuringStageFlow = false;
+          unawaited(_openLifecycleOptionsAfterResume());
+          break;
+        }
+        if (_stageFlowPhase != GameStageFlowPhase.none) {
           _pausedLifecycleDuringStageFlow = false;
           _resumePresentation();
           break;
-        }
-        if (_pendingLifecycleOptions) {
-          _pendingLifecycleOptions = false;
         }
         if (_pausedLifecycleDuringStageFlow || _presentationPaused) {
           _pausedLifecycleDuringStageFlow = false;

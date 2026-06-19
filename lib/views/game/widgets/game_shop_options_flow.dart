@@ -266,4 +266,10 @@ extension _GameShopOptionsFlow on _GameShopScreenState {
       }
     }
   }
+
+  Future<void> _openLifecycleOptionsAfterResume() async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || _optionsDialogOpen) return;
+    await _openOptions();
+  }
 }

@@ -154,6 +154,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   List<RummiMarketItemOfferView>? _pinnedItemOffers;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
+  Timer? _inactiveLifecycleTimer;
   bool _slotUnlockPresentationScheduled = false;
   bool _slotUnlockBannerVisible = false;
   Set<RummiSlotUnlockKind> _activeSlotUnlockPresentation =
@@ -210,6 +211,7 @@ class _GameShopScreenState extends State<GameShopScreen>
 
   @override
   void dispose() {
+    _inactiveLifecycleTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _dismissMarketTutorial();
     super.dispose();
@@ -219,18 +221,42 @@ class _GameShopScreenState extends State<GameShopScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.hidden:
-      case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = null;
+        if (!_optionsDialogOpen) {
+          _pendingLifecycleOptions = true;
+        }
         _dismissMarketTutorial();
         SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
         _queueStateSave();
         break;
+      case AppLifecycleState.inactive:
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = Timer(
+          GamePresentationTimings.inactiveLifecycleDebounce,
+          () {
+            if (!mounted) return;
+            if (!_optionsDialogOpen) {
+              _pendingLifecycleOptions = true;
+            }
+            _dismissMarketTutorial();
+            SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+            _queueStateSave();
+          },
+        );
+        break;
       case AppLifecycleState.resumed:
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = null;
         if (_pendingLifecycleOptions) {
           _pendingLifecycleOptions = false;
+          unawaited(_openLifecycleOptionsAfterResume());
         }
         break;
       case AppLifecycleState.detached:
+        _inactiveLifecycleTimer?.cancel();
+        _inactiveLifecycleTimer = null;
         break;
     }
   }

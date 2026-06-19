@@ -110,6 +110,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
     if (!selected.isSelectable) return;
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    SoundManager.playBgmFromUserGesture(AssetPaths.bgmMain);
     if (!mounted) return;
     final restoredRun = widget.restoredRun;
     if (restoredRun != null) {

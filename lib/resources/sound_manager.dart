@@ -22,6 +22,8 @@ class SoundManager {
   static bool _webBgmReplayInFlight = false;
   static bool _webBgmResumeInFlight = false;
   static bool _webPendingResumeTried = false;
+  static AudioPlayer? _webBgmPlayer;
+  static final Set<AudioPlayer> _webSfxPlayers = <AudioPlayer>{};
 
   @visibleForTesting
   static String? get debugCurrentBgm => _currentBgm;
@@ -37,6 +39,7 @@ class SoundManager {
     _webBgmReplayInFlight = false;
     _webBgmResumeInFlight = false;
     _webPendingResumeTried = false;
+    _webBgmPlayer = null;
   }
 
   @visibleForTesting
@@ -159,6 +162,28 @@ class SoundManager {
     return !isWeb;
   }
 
+  @visibleForTesting
+  static String debugWebSfxAssetUrl(String path) {
+    return _webAudioAssetUrl(path);
+  }
+
+  @visibleForTesting
+  static String debugWebBgmAssetUrl(String path) {
+    return _webAudioAssetUrl(path);
+  }
+
+  static String _webAudioAssetUrl(String path) {
+    final encodedPath = path.split('/').map(Uri.encodeComponent).join('/');
+    return 'assets/assets/audio/$encodedPath';
+  }
+
+  static bool get _bgmReportsPlaying {
+    if (kIsWeb) {
+      return _webBgmPlayer?.state == PlayerState.playing;
+    }
+    return FlameAudio.bgm.audioPlayer.state == PlayerState.playing;
+  }
+
   /// Pause 메뉴에서 설정을 여는 동안 mute 해제가 BGM을 자동 재개하지 못하게 막는다.
   static void beginBgmAutoResumeBlock() {
     _bgmAutoResumeBlockDepth++;
@@ -180,8 +205,7 @@ class SoundManager {
       requestedBgm: target,
       currentBgm: _currentBgm,
       pendingBgm: _pendingBgm,
-      audioPlayerReportsPlaying:
-          FlameAudio.bgm.audioPlayer.state == PlayerState.playing,
+      audioPlayerReportsPlaying: _bgmReportsPlaying,
     )) {
       return;
     }
@@ -211,7 +235,7 @@ class SoundManager {
     _webBgmResumeInFlight = true;
     _webPendingResumeTried = true;
     unawaited(
-      _resumeBgm(path, replayFallback: false).whenComplete(() {
+      _resumeBgm(path).whenComplete(() {
         _webBgmResumeInFlight = false;
       }),
     );
@@ -232,39 +256,64 @@ class SoundManager {
       requestedBgm: path,
       currentBgm: previousBgm,
       pendingBgm: pendingBeforeReplay,
-      audioPlayerReportsPlaying:
-          FlameAudio.bgm.audioPlayer.state == PlayerState.playing,
+      audioPlayerReportsPlaying: _bgmReportsPlaying,
     )) {
       return;
     }
-    _bgmRequestSerial++;
+    final requestId = ++_bgmRequestSerial;
     _webBgmReplayInFlight = true;
     try {
       unawaited(
-        FlameAudio.bgm
-            .stop()
-            .then(
-              (_) => FlameAudio.bgm.play(path, volume: GameSettings.bgmVolume),
-            )
-            .then((_) {
-              if (_currentBgm == path) {
-                _pendingBgm = null;
-                _webPendingResumeTried = false;
-              }
-            })
-            .catchError((Object _) {
-              _pendingBgm = path;
-              FlameAudio.bgm.isPlaying = false;
-            })
-            .whenComplete(() {
-              _webBgmReplayInFlight = false;
-            }),
+        _playBgmDirectlyForWeb(path, requestId).whenComplete(() {
+          _webBgmReplayInFlight = false;
+        }),
       );
     } catch (_) {
       _pendingBgm = path;
-      FlameAudio.bgm.isPlaying = false;
       _webBgmReplayInFlight = false;
     }
+  }
+
+  static Future<void> _playBgmDirectlyForWeb(String path, int requestId) async {
+    AudioPlayer? player;
+    try {
+      await _disposeWebBgmPlayer();
+      if (_currentBgm != path || requestId != _bgmRequestSerial) return;
+      player = AudioPlayer();
+      _webBgmPlayer = player;
+      await player.setReleaseMode(ReleaseMode.loop);
+      await player.play(
+        UrlSource(_webAudioAssetUrl(path)),
+        volume: GameSettings.bgmVolume,
+        mode: PlayerMode.mediaPlayer,
+      );
+      if (_currentBgm == path && requestId == _bgmRequestSerial) {
+        _pendingBgm = null;
+        _webPendingResumeTried = false;
+      }
+    } catch (_) {
+      if (_currentBgm == path && requestId == _bgmRequestSerial) {
+        _pendingBgm = path;
+      }
+      if (identical(_webBgmPlayer, player)) {
+        _webBgmPlayer = null;
+      }
+      try {
+        await player?.dispose();
+      } catch (_) {}
+    }
+  }
+
+  static Future<void> _disposeWebBgmPlayer() async {
+    final player = _webBgmPlayer;
+    _webBgmPlayer = null;
+    if (player == null) return;
+    try {
+      await player.stop();
+    } catch (_) {}
+    try {
+      await player.dispose();
+    } catch (_) {}
   }
 
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
@@ -297,8 +346,7 @@ class SoundManager {
         requestedBgm: path,
         currentBgm: _currentBgm,
         pendingBgm: _pendingBgm,
-        audioPlayerReportsPlaying:
-            FlameAudio.bgm.audioPlayer.state == PlayerState.playing,
+        audioPlayerReportsPlaying: _bgmReportsPlaying,
       )) {
         return;
       }
@@ -308,6 +356,10 @@ class SoundManager {
         return;
       }
       if (requestId != _bgmRequestSerial) return;
+      if (kIsWeb) {
+        await _playBgmDirectlyForWeb(path, requestId);
+        return;
+      }
       try {
         await FlameAudio.bgm.stop();
         if (requestId != _bgmRequestSerial) return;
@@ -326,6 +378,10 @@ class SoundManager {
     _pendingBgm = null;
     _webPendingResumeTried = false;
     _currentBgm = null;
+    if (kIsWeb) {
+      await _disposeWebBgmPlayer();
+      return;
+    }
     try {
       await FlameAudio.bgm.stop();
     } catch (_) {}
@@ -346,6 +402,10 @@ class SoundManager {
       _pendingBgm = pendingAfterPause;
       _webPendingResumeTried = false;
     }
+    if (kIsWeb) {
+      unawaited(_webBgmPlayer?.pause().catchError((Object _) {}));
+      return;
+    }
     unawaited(FlameAudio.bgm.pause().catchError((Object _) {}));
   }
 
@@ -362,8 +422,7 @@ class SoundManager {
     )) {
       return;
     }
-    if (FlameAudio.bgm.audioPlayer.state == PlayerState.playing &&
-        (!kIsWeb || _pendingBgm != target)) {
+    if (_bgmReportsPlaying && (!kIsWeb || _pendingBgm != target)) {
       return;
     }
     if (kIsWeb && !_webUnlocked) return;
@@ -376,7 +435,11 @@ class SoundManager {
   }) async {
     final resumeRequestSerial = _bgmRequestSerial;
     try {
-      await FlameAudio.bgm.resume();
+      if (kIsWeb) {
+        await _webBgmPlayer?.resume();
+      } else {
+        await FlameAudio.bgm.resume();
+      }
     } catch (_) {}
     await Future<void>.delayed(_resumeStateSettleDelay);
     if (_currentBgm != target ||
@@ -384,8 +447,7 @@ class SoundManager {
         GameSettings.bgmMuted) {
       return;
     }
-    if (FlameAudio.bgm.audioPlayer.state == PlayerState.playing ||
-        FlameAudio.bgm.isPlaying) {
+    if (_bgmReportsPlaying || (!kIsWeb && FlameAudio.bgm.isPlaying)) {
       if (kIsWeb && _pendingBgm == target) {
         _pendingBgm = null;
         _webPendingResumeTried = false;
@@ -410,16 +472,19 @@ class SoundManager {
   /// BGM 볼륨을 설정에 맞게 적용. 볼륨 슬라이더 변경 시 호출.
   static void applyBgmVolume() {
     if (GameSettings.bgmMuted) return;
+    if (kIsWeb) {
+      _webBgmPlayer?.setVolume(GameSettings.bgmVolume);
+      return;
+    }
     FlameAudio.bgm.audioPlayer.setVolume(GameSettings.bgmVolume);
   }
 
   /// 효과음 재생. 음소거 시 무시, 볼륨은 GameSettings.sfxVolume 적용.
   /// 웹: unlock 전이면 무시 (카운트다운 등 자동 재생 방지).
   ///
-  /// **웹(kIsWeb):** [FlameAudio.play]는 내부적으로 [PlayerMode.lowLatency]를 쓰는데,
-  /// 브라우저에서는 자주 묵음/재생 실패가 난다. HTML5 `<audio>`에 가까운
-  /// [PlayerMode.mediaPlayer] 경로인 [FlameAudio.playLongAudio]로 재생한다.
-  /// BGM은 기존처럼 [FlameAudio.bgm]을 그대로 사용한다.
+  /// **웹(kIsWeb):** [FlameAudio.playLongAudio]와 [AssetSource]는
+  /// [AudioCache.loadPath]를 거쳐 `dart:io` 파일 체크를 호출할 수 있다.
+  /// 브라우저에서는 asset URL을 직접 재생해 그 경로를 피한다.
   static void playSfx(String path) {
     if (GameSettings.sfxMuted) return;
     if (kIsWeb && !_webUnlocked) return;
@@ -433,8 +498,35 @@ class SoundManager {
     } catch (_) {}
   }
 
-  /// 웹 전용 SFX — [FlameAudio.playLongAudio] = mediaPlayer 모드 (짧은 클립에도 사용 가능).
+  /// 웹 전용 SFX — AudioCache를 거치지 않도록 asset URL을 직접 재생한다.
   static void _playSfxWeb(String path, double volume) {
-    FlameAudio.playLongAudio(path, volume: volume);
+    final player = AudioPlayer();
+    _webSfxPlayers.add(player);
+
+    StreamSubscription<void>? completionSub;
+    Future<void> disposePlayer() async {
+      await completionSub?.cancel();
+      _webSfxPlayers.remove(player);
+      await player.dispose();
+    }
+
+    completionSub = player.onPlayerComplete.listen((_) {
+      unawaited(disposePlayer());
+    });
+
+    unawaited(
+      (() async {
+        try {
+          await player.setReleaseMode(ReleaseMode.release);
+          await player.play(
+            UrlSource(_webAudioAssetUrl(path)),
+            volume: volume,
+            mode: PlayerMode.mediaPlayer,
+          );
+        } catch (_) {
+          await disposePlayer();
+        }
+      })(),
+    );
   }
 }
