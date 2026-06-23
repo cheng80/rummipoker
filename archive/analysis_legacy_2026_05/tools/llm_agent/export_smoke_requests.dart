@@ -37,7 +37,7 @@ class _Config {
   final int seed;
 
   static _Config parse(List<String> args) {
-    var outPath = 'logs/llm/requests_smoke.jsonl';
+    var outPath = 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/requests_smoke.jsonl';
     var count = 10;
     var seed = 20260529;
     for (var i = 0; i < args.length; i++) {
@@ -63,8 +63,8 @@ class _Config {
 
 Never _printUsageAndExit() {
   stdout.writeln(
-    'Usage: dart run tools/llm_agent/export_smoke_requests.dart '
-    '--out logs/llm/requests_smoke.jsonl [--count 10] [--seed 20260529]',
+    'Usage: dart run archive/analysis_legacy_2026_05/tools/llm_agent/export_smoke_requests.dart '
+    '--out archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/requests_smoke.jsonl [--count 10] [--seed 20260529]',
   );
   exit(0);
 }

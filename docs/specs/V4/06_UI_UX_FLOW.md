@@ -61,7 +61,7 @@ New Run
 -> Battle
 ```
 
-Starting deck/archetype selection은 v1 New Run 범위가 아니다. 후속으로 추가할 경우 `run_archetype_id` 기준을 우선하고, 과거 상세 plan은 `docs/archive/feature_plans_2026_04/STARTING_DECK_ARCHETYPE_PLAN.md`에서 검색한다.
+Starting deck/archetype selection은 v1 New Run 범위가 아니다. 후속으로 추가할 경우 `run_archetype_id` 기준을 우선한다.
 
 Blind select card는 최소한 아래 정보를 함께 보여야 한다.
 
@@ -94,7 +94,7 @@ Station Preview v1 결정:
 
 Constraint visual rule:
 
-- 제약 표시는 현재 UI 구현과 `AGENTS.md`의 말줄임/제약 가시성 규칙을 우선한다. 과거 visual language plan은 `docs/archive/feature_plans_2026_04/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md`에서 검색한다.
+- 제약 표시는 현재 UI 구현과 `AGENTS.md`의 말줄임/제약 가시성 규칙을 우선한다.
 - Boss/Station 제약이 있으면 전투 진입 시 팝업 또는 bottom sheet로 제약 이름, 대상, 한 줄 규칙을 먼저 설명한다.
 - 전투 중에는 타일/Jester/Item 위에 짧은 marker를 유지하되, 작은 점이나 단독 `!`처럼 약한 표시는 피한다. 점수 영향이 즉시 읽히는 각진 badge와 높은 대비를 사용한다.
 - 실제 감점은 점수 발생 위치의 짧은 float로 보여 준다.

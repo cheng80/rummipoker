@@ -42,9 +42,9 @@ GCSE 역할: `Context`
 
 이 3개만 읽어도 코드 작업을 이어갈 수 있어야 한다.
 
-레벨링/마켓 정책을 다룰 때는 `CURRENT_LEVELING_POLICY.md`, `CURRENT_LEVELING_SIMULATION_BASELINE.md`, `CURRENT_LEVELING_RUNTIME_SPEC.md`를 추가로 읽는다. 이 문서들은 과거 시뮬레이션 로그나 archive 문서보다 우선한다.
+레벨링/마켓 정책을 다룰 때는 `CURRENT_LEVELING_POLICY.md`, `CURRENT_LEVELING_SIMULATION_BASELINE.md`, `CURRENT_LEVELING_RUNTIME_SPEC.md`를 추가로 읽는다. 이 문서들은 과거 시뮬레이션 로그보다 우선한다.
 
-과거 `CURRENT_LEVELING_ML_BASELINE.md`는 `docs/archive/leveling/deprecated_2026_05/`로 이동했다. 현재 기준은 실제 머신러닝이 아니라 시뮬레이션과 휴리스틱 진단이다. 구 ML 산출물은 `docs/archive/leveling/legacy_ml_outputs_2026_05/`로 이동했으며, 새 ML 전환 상태는 `analysis/leveling/README.md`에서 fresh workspace 기준으로 확인한다.
+현재 기준은 실제 머신러닝이 아니라 시뮬레이션과 휴리스틱 진단이다. 구 ML 산출물과 분석 workspace는 현재 판단 경로에서 제거됐으며, 새 ML 전환 상태 문서로 읽지 않는다.
 
 `CURRENT_BUILD_BASELINE.md`는 V4 문서 생성 시점의 상세 baseline에서 분리한 보조 문서다. 작업 재개 기준은 위 3개 문서가 우선이며, baseline 표가 필요할 때만 추가로 확인한다.
 

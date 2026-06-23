@@ -19,5 +19,5 @@
 ## Update Rule
 
 - 실제 출시 절차나 빌드 명령이 바뀌면 이 폴더를 갱신한다.
-- 공모전 제출 이력은 `docs/archive/competition_history_2026_06/`에 둔다.
-- 구 앱 자료는 `docs/archive/delete_candidates_after_parity/old_doc_data/`에서 parity 확인 후 처리한다.
+- 공모전 제출 이력은 현재 출시 판단 기준이 아니다.
+- 구 앱 자료는 Rummi Poker 기준으로 재작성한 문서만 사용한다.

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import '../sim/llm_action_schema.dart';
+import '../../../../tools/sim/llm_action_schema.dart';
 
 class LlmPolicyClientConfig {
   const LlmPolicyClientConfig({
@@ -56,7 +56,7 @@ Future<LlmPolicyClientResult> requestLocalJsonAction({
   final started = DateTime.now();
   try {
     final result = await Process.run('python3', [
-      'tools/llm_agent/run_llm_policy.py',
+      'archive/analysis_legacy_2026_05/tools/llm_agent/run_llm_policy.py',
       '--input',
       requestPath,
       '--out',

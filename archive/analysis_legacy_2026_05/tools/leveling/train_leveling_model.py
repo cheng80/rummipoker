@@ -12,12 +12,12 @@ from typing import Any
 from feature_table_autogen import ensure_feature_table
 
 
-DEFAULT_FEATURES = "analysis/leveling/generated/features/leveling_feature_table.csv"
-DEFAULT_PREOUTCOME_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
-DEFAULT_PREOUTCOME_SEQUENCE_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv"
-DEFAULT_REPORT = "analysis/leveling/reports/model_recommendation_report.md"
-DEFAULT_PREOUTCOME_REPORT = "analysis/leveling/reports/preoutcome_baseline_model_report.md"
-DEFAULT_MODEL_DIR = "analysis/leveling/models"
+DEFAULT_FEATURES = ".omo/legacy_leveling/generated/features/leveling_feature_table.csv"
+DEFAULT_PREOUTCOME_FEATURES = ".omo/legacy_leveling/generated/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_PREOUTCOME_SEQUENCE_FEATURES = ".omo/legacy_leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv"
+DEFAULT_REPORT = ".omo/legacy_leveling/reports/model_recommendation_report.md"
+DEFAULT_PREOUTCOME_REPORT = ".omo/legacy_leveling/reports/preoutcome_baseline_model_report.md"
+DEFAULT_MODEL_DIR = ".omo/legacy_leveling/models"
 
 NUMERIC_FEATURES = [
     "station",
@@ -1039,7 +1039,7 @@ def feature_metadata_candidates(feature_path: Path) -> list[Path]:
     generated_marker = ("analysis", "leveling", "generated", "features")
     if parts[: len(generated_marker)] == generated_marker:
         candidates.append(
-            Path("analysis/leveling/data/features")
+            Path(".omo/legacy_leveling/data/features")
             / feature_path.with_suffix(".metadata.json").name
         )
     return candidates

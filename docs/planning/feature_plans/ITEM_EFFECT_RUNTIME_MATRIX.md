@@ -17,7 +17,7 @@
 
 이 문서는 v1 Item catalog의 발동 효과를 `ItemEffectRuntime` 기준으로 정리한다.
 Item 효과의 화면 연출 계약은 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`를 따른다.
-과거 소모품/바우처 장기 확장 reference는 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
+과거 소모품/바우처 장기 확장 reference에서 현재 필요한 원칙은 이 문서에 승격했다.
 아이템의 발동/대상/결과 연출 coverage는 `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md`와 함께 본다.
 이 문서의 `applied`는 런타임 상태 변경과 소모 정책이 연결됐다는 뜻이며, 플레이어가 효과를 충분히 이해할 수 있는 UX까지 완료됐다는 뜻은 아니다.
 

@@ -12,11 +12,11 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/services/blind_selection_spec.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 
-import '../sim/balance_action_executor.dart';
-import '../sim/bot_policy.dart';
-import '../sim/llm_action_schema.dart';
-import '../sim/llm_state_exporter.dart';
-import '../sim/planner_bot.dart';
+import '../../../../tools/sim/balance_action_executor.dart';
+import '../../../../tools/sim/bot_policy.dart';
+import '../../../../tools/sim/llm_action_schema.dart';
+import '../../../../tools/sim/llm_state_exporter.dart';
+import '../../../../tools/sim/planner_bot.dart';
 import 'llm_policy_client.dart';
 import 'llm_policy_guidance.dart';
 
@@ -1397,8 +1397,8 @@ class _Config {
       temperature: temperature,
       topP: topP,
       timeoutSeconds: timeoutSeconds,
-      requestDir: 'logs/llm/station_path_requests',
-      responseDir: 'logs/llm/station_path_responses',
+      requestDir: 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/station_path_requests',
+      responseDir: 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/station_path_responses',
     );
   }
 
@@ -1408,8 +1408,8 @@ class _Config {
       temperature: temperature,
       topP: topP,
       timeoutSeconds: timeoutSeconds,
-      requestDir: 'logs/llm/market_decision_requests',
-      responseDir: 'logs/llm/market_decision_responses',
+      requestDir: 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/market_decision_requests',
+      responseDir: 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/market_decision_responses',
     );
   }
 
@@ -1419,15 +1419,15 @@ class _Config {
       temperature: temperature,
       topP: topP,
       timeoutSeconds: timeoutSeconds,
-      requestDir: 'logs/llm/battle_item_requests',
-      responseDir: 'logs/llm/battle_item_responses',
+      requestDir: 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/battle_item_requests',
+      responseDir: 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/battle_item_responses',
     );
   }
 
   static _Config parse(List<String> args) {
-    var outPath = 'logs/llm/station_path_smoke_20260529.jsonl';
+    var outPath = 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/station_path_smoke_20260529.jsonl';
     var reportOutPath =
-        'analysis/leveling/reports/llm_station_path_smoke_20260529.md';
+        'archive/analysis_legacy_2026_05/analysis/leveling/reports/llm_station_path_smoke_20260529.md';
     String? traceOutPath;
     var runs = 1;
     var seed = 20260529;
@@ -1551,7 +1551,7 @@ NewRunDifficulty _parseDifficulty(String raw) {
 
 Never _printUsageAndExit() {
   stdout.writeln(
-    'Usage: dart run tools/llm_agent/run_llm_station_path_smoke.dart '
+    'Usage: dart run archive/analysis_legacy_2026_05/tools/llm_agent/run_llm_station_path_smoke.dart '
     '--station-start 1 --station-end 8 --tiers small,big,boss '
     '--turn-cap-per-blind 4',
   );

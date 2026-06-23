@@ -9,7 +9,7 @@
 
 - 실제 코드
 - `START_HERE.md`
-- `docs/archive/`
+- 승격 완료된 current/spec/planning 문서
 
 이 문서는 장기 목표 문서가 아니다.  
 의미는 “현재 프로토타입이 여기까지 와 있다”는 사실 정리다.

@@ -7,7 +7,7 @@ GCSE 역할: `Execution`
 ## Current Rule
 
 - 현재 실행 라우터는 `ACTIVE_EXECUTION_PLAN.md` 하나다.
-- 완료된 대형 feature plan, 과거 큐, prompt, 긴 검증 로그는 `docs/archive/`로 내린다.
+- 완료된 대형 feature plan, 과거 큐, prompt, 긴 검증 로그는 archive 폴더로 내리고 active 문서에서 직접 링크하지 않는다.
 - `planning` 문서는 코드 사실이나 기능 계약을 대신하지 않는다. 코드 사실은 `docs/current_system/`, 기능 계약은 `docs/specs/`를 우선한다.
 
 ## Folder Layout
@@ -26,16 +26,16 @@ GCSE 역할: `Execution`
 
 - 현재 catalog, item policy, runtime matrix, open decision처럼 다음 구현 판단에 직접 필요하다.
 - active plan에서 현재 트랙이나 가까운 side track으로 참조한다.
-- 완료 이력만 남은 문서는 `docs/archive/feature_plan_history/`로 옮긴다.
+- 완료 이력만 남은 문서는 archive 폴더로 옮긴다.
 
 현재 완료 이력으로 내린 문서:
 
-- `docs/archive/feature_plan_history/TILE_MODIFIER_V1_V2_PLAN.md`
-- `docs/archive/feature_plan_history/RUN_HAND_GROWTH_AND_RUN_INFO_PLAN.md`
-- `docs/archive/planning_superseded/POST_RITUAL_RUNTIME_REMAINING_WORK.md`
+- 특수 타일 V1/V2 완료 이력
+- 족보 성장과 런 정보 완료 이력
+- superseded runtime queue
 
 ## Update Rule
 
 - 구현 상태만 바뀌면 해당 feature/goal/leveling 문서를 갱신한다.
 - 현재 활성 트랙이 바뀌면 `ACTIVE_EXECUTION_PLAN.md`를 갱신한다.
-- 긴 날짜별 검증 로그는 `docs/archive/verification_daily_logs/`에 둔다.
+- 긴 날짜별 검증 로그는 archive 폴더에만 둔다.

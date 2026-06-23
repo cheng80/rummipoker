@@ -2,7 +2,7 @@
 
 > 문서 성격: current policy / leveling source of truth
 > 적용 범위: target score, boss constraint, market candidate availability, market weight, simulation interpretation
-> 우선순위: 실제 코드와 테스트 다음으로 이 문서를 우선한다. 과거 planning/archive 문서가 이 문서와 충돌하면 이 문서를 따른다.
+> 우선순위: 실제 코드와 테스트 다음으로 이 문서를 우선한다. 과거 planning 문서나 실험 이력이 이 문서와 충돌하면 이 문서를 따른다.
 > 시뮬레이션 기준값: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 > 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 
@@ -59,8 +59,8 @@
 
 ## 7. 과거 자료 사용법
 
-- 긴 실험 로그와 이전 후보는 `docs/archive/leveling/`에서 검색한다.
-- archive 문서는 현재 기준이 아니다. 필요한 내용은 이 문서나 current/spec 문서로 승격한 뒤 사용한다.
+- 긴 실험 로그와 이전 후보는 현재 기준이 아니다.
+- 필요한 내용은 이 문서나 current/spec 문서로 승격한 뒤 사용한다.
 - 과거 문서의 `resource +1`, `soft_resource`, `sustain` 표현은 당시 실험 이름으로 보고 현재 정책으로 해석하지 않는다.
 
 ## 8. 과거 데이터 재사용 기준

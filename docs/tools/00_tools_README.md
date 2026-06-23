@@ -15,4 +15,4 @@
 ## Update Rule
 
 - asset 생성 방식이나 safe zone 규칙이 바뀌면 `card_assets/` 문서를 갱신한다.
-- 특정 시점의 이미지 겹침 검수 결과는 `docs/archive/visual_asset_reviews/`에 보관하고, 반복 적용할 규칙만 도구 문서로 승격한다.
+- 특정 시점의 이미지 겹침 검수 결과는 현재 도구 기준이 아니다. 반복 적용할 규칙만 도구 문서로 승격한다.

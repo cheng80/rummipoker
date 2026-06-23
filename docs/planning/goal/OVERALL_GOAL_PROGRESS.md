@@ -38,7 +38,7 @@
 
 현재 재개 순서:
 
-1. 완료: `docs/archive/feature_plan_history/TILE_MODIFIER_V1_V2_PLAN.md` 기준 특수 타일 V1 구현.
+1. 완료: 특수 타일 V1 구현.
 2. 완료: modifier 없는 기존 저장 호환과 modifier 포함 저장/복원/전투/마켓 표시 검증.
 3. 완료: 특수 타일 V2-A 판본 1차 구현과 저장/마켓/정산/badge 검증.
 4. 완료: runtime state와 transient presentation state 분리 1차.
@@ -47,10 +47,10 @@
 7. 진행 중: 구 시뮬레이션/ML 산출물을 active workspace에서 archive로 내린 상태를 유지하고, 새 학습 데이터셋은 fresh run부터 다시 쌓는다.
    - 현재 runtime/catalog/ruleset/bot policy/feature schema와 산출 당시 조건이 다르면 현재 판단 근거로 바로 쓰지 않는다.
    - 과거 row와 리포트는 `historical prior`로만 두고, 새 feature table에는 기본적으로 섞지 않는다.
-   - 2026-05-29 bootstrap으로 `planner_v2` fresh 5,049 JSONL rows를 생성했다. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
+   - 2026-05-29 bootstrap으로 `planner_v2` fresh 5,049 JSONL rows를 생성했지만, 현재는 폐기된 실험 이력으로 분류한다.
 8. 장기 S1~S8 밸런스를 fresh data 이후 multi-seed r400/r800 기준으로 재검증한다.
 9. 경제/가격/market availability를 `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` 기준으로 다시 연다.
-10. 새 ML/휴리스틱 산출물은 `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`와 `analysis/leveling/` 기준으로 fresh data에서 다시 만든다.
+10. 새 ML 산출물 축적은 중단한다. 레벨링 판단은 current 정책과 휴리스틱 시뮬레이션 기준만 따른다.
 11. 깊은 meta growth, 해금 tree, run modifier, 반복 플레이 polish를 실제 Goal track으로 확장한다.
 
 장기 Done 기준:
@@ -75,7 +75,7 @@
 
 전체 추정 진도: 42%
 
-공모전 제출 트랙: Closed / off. 상세 증거는 `docs/archive/competition_history_2026_06/`에서만 참고한다.
+공모전 제출 트랙: Closed / off. 현재 Goal 판단 기준이 아니다.
 
 주의:
 
@@ -113,9 +113,9 @@ ML/분석 상태:
 
 - 현재 런타임 레벨링은 실제 머신러닝이 자동 조정하지 않는다.
 - 현재 기준은 Flutter CLI 시뮬레이션, bot proxy, 규칙 기반 휴리스틱 라벨, 사람 승인 절차다.
-- 기존 `analysis/leveling/` feature table과 model 결과는 active workspace에서 제거하고 archive로 내렸다.
+- 기존 분석 workspace의 feature table과 model 결과는 active 판단 경로에서 제거했다.
 - 과거 ML/시뮬레이션 데이터는 현재 runtime/catalog/ruleset/bot policy 기준 fresh row로 재검증되기 전까지 현재 수치 판단이나 추천 결론의 직접 근거로 쓰지 않는다.
-- 새 ML/레벨링 데이터셋은 archive 데이터를 이어붙이지 않고 fresh simulation row부터 다시 누적한다.
+- 새 ML/레벨링 데이터셋 축적은 중단한다. 경제/레벨링 판단은 현재 runtime과 휴리스틱 시뮬레이션 기준으로만 갱신한다.
 - ML 갱신과 NotebookLM 보고서/인포그래픽 재생성은 모델/데이터 기준이 실무 사용 수준에 도달하기 전까지 보류한다.
 - production ML 또는 runtime 자동 적용 표현은 계속 금지한다.
 
@@ -124,7 +124,7 @@ ML/분석 상태:
 - 레벨링 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 - 경제/가격/리롤 probe: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
 - 휴리스틱/시뮬레이션 진입 요약: `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`
-- 과거 순서 lock snapshot: `docs/archive/planning_legacy_2026_05/TEMP_WORK_SEQUENCE_PLAN.md`
+- 과거 순서 lock snapshot은 현재 진행 기준이 아니다.
 
 ## 4. Closed Competition Track
 
@@ -135,7 +135,7 @@ ML/분석 상태:
 - `ko`, `en` 표준/도전 S1~S8 Boss full-run과 최신 `ko` 재확인을 통과했다.
 - 제출 전 상점 회귀, 용어 UX, web BGM, 정산 overlay, 튜토리얼, 도감/보상/새 run 복귀 관련 주요 결함은 당시 기준으로 닫았다.
 - `ja`, `zh-CN`, `zh-TW` full-run과 S9+ 장기 생존은 제출 gate가 아니라 필요 시 여는 추가 검증 후보다.
-- 상세 로그, bot 조건, 제출 증거는 `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 공모전 이력 섹션에서만 참고한다.
+- 상세 로그, bot 조건, 제출 증거는 현재 Goal 진행 판단에서 제외한다.
 
 현재 Goal 판단에는 공모전 퍼센트나 출품 일정표를 쓰지 않는다. 이후 작업은 post-contest 런타임 고도화, 장기 밸런스, meta growth, 자연 full-play QA 기준으로 수렴한다.
 
@@ -183,14 +183,14 @@ Status: In progress / source-of-truth cleanup still open
 완료 조건:
 
 - `docs/current_system/`과 `docs/planning/`의 current 문서가 서로 충돌하지 않는다.
-- 과거 실험과 폐기 후보는 `docs/archive/`에서만 historical context로 읽힌다.
+- 과거 실험과 폐기 후보는 현재 판단 기준이 아니다.
 - ML/휴리스틱/시뮬레이션/경제/출품 문서의 source-of-truth가 명확하다.
-- `analysis/leveling/`은 실제 ML 완료가 아니라 스캐폴딩으로 표시된다.
+- 구 분석 workspace는 실제 ML 완료가 아니라 폐기된 실험 workspace로 본다.
 
 현재 남은 일:
 
 - `START_HERE.md`의 먼저 읽을 문서와 Source of Truth를 현재 문서 체계와 맞춘다.
-- 문서 inventory 작성: `docs/archive/planning_superseded/DOCUMENTATION_CONSOLIDATION_PLAN.md` 기준.
+- 문서 inventory 작성 기준은 현재 문서 체계로 갱신했다.
 - current 문서와 archive 문서의 경계 정리.
 - 중복 planning 문서 통합 또는 archive 이동은 `START_HERE.md` 참조와 필요한 내용 승격을 확인한 뒤 진행한다.
 - 다음 작업 큐가 `OVERALL_GOAL_PROGRESS.md` 기준으로 읽히도록 갱신하되, 실제 ML 이행을 공모전 작업 앞에 유지한다.

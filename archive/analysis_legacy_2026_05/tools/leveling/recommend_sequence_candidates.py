@@ -12,10 +12,10 @@ from typing import Any
 from feature_table_autogen import ensure_feature_table
 
 
-DEFAULT_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv"
-DEFAULT_METRICS = "analysis/leveling/models/path_clear_rate_preoutcome_sequence_metrics.json"
-DEFAULT_OUT = "analysis/leveling/models/preoutcome_sequence_candidate_recommendations.csv"
-DEFAULT_REPORT = "analysis/leveling/reports/preoutcome_sequence_candidate_recommendation_report.md"
+DEFAULT_FEATURES = ".omo/legacy_leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv"
+DEFAULT_METRICS = ".omo/legacy_leveling/models/path_clear_rate_preoutcome_sequence_metrics.json"
+DEFAULT_OUT = ".omo/legacy_leveling/models/preoutcome_sequence_candidate_recommendations.csv"
+DEFAULT_REPORT = ".omo/legacy_leveling/reports/preoutcome_sequence_candidate_recommendation_report.md"
 
 NUMERIC_FEATURES = [
     "station_path_length",

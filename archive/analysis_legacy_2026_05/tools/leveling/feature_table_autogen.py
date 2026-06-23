@@ -76,7 +76,7 @@ def feature_metadata_path(feature_path: Path) -> Path:
     generated_marker = ("analysis", "leveling", "generated", "features")
     if parts[: len(generated_marker)] == generated_marker:
         return (
-            Path("analysis/leveling/data/features")
+            Path(".omo/legacy_leveling/data/features")
             / feature_path.with_suffix(".metadata.json").name
         )
     return feature_path.with_suffix(".metadata.json")

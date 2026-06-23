@@ -13,9 +13,9 @@ from typing import Any
 from feature_table_autogen import ensure_feature_table
 
 
-DEFAULT_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
-DEFAULT_OUT = "analysis/leveling/models/preoutcome_candidate_recommendations.csv"
-DEFAULT_REPORT = "analysis/leveling/reports/preoutcome_candidate_recommendation_report.md"
+DEFAULT_FEATURES = ".omo/legacy_leveling/generated/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_OUT = ".omo/legacy_leveling/models/preoutcome_candidate_recommendations.csv"
+DEFAULT_REPORT = ".omo/legacy_leveling/reports/preoutcome_candidate_recommendation_report.md"
 
 NUMERIC_FEATURES = [
     "station",

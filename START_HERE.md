@@ -24,7 +24,7 @@
 - [CURRENT_CODE_MAP.md](docs/current_system/CURRENT_CODE_MAP.md)
 - [CURRENT_TO_V4_GAP.md](docs/current_system/CURRENT_TO_V4_GAP.md)
 
-현재 활성 흐름은 공모전 제출 준비가 아니라 post-contest 런타임 고도화다. 공모전 문서는 닫힌 제출 이력과 증거 확인에만 사용하고, 다음 작업 선택은 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md)의 활성 트랙을 따른다.
+현재 활성 흐름은 공모전 제출 준비가 아니라 post-contest 런타임 고도화다. 공모전 이력은 현재 작업 선택 기준이 아니며, 다음 작업 선택은 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md)의 활성 트랙을 따른다.
 
 ## 새 세션 시작 지시문
 
@@ -33,7 +33,7 @@
 ```text
 작업 시작 전에 START_HERE.md, docs/00_docs_README.md, docs/current_system/CURRENT_SYSTEM_OVERVIEW.md, docs/current_system/CURRENT_CODE_MAP.md, docs/current_system/CURRENT_TO_V4_GAP.md 를 먼저 읽고,
 그 다음 docs/planning/ACTIVE_EXECUTION_PLAN.md 를 확인해 현재 활성 트랙과 다음 작업부터 이어서 진행해라.
-공모전 관련 문서는 현재 활성 큐가 아니라 닫힌 제출 이력과 증거 참고로만 확인해라.
+공모전 관련 문서는 현재 활성 큐가 아니므로 새 작업 판단 기준으로 읽지 마라.
 장기 Goal/레벨링 작업이면 docs/planning/goal/OVERALL_GOAL_PROGRESS.md 와 docs/planning/leveling/* 를 추가로 확인해라.
 문서는 목적형 폴더와 GCSE 역할 기준을 유지하고, 코드/테스트 중심으로 작업해라.
 ```
@@ -74,7 +74,7 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 13. [ECONOMY_LEVELING_PLAN.md](docs/planning/leveling/ECONOMY_LEVELING_PLAN.md)
 14. [TEST_QA_ACCEPTANCE.md](docs/planning/verification/TEST_QA_ACCEPTANCE.md)
 
-필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
+필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니므로 이 진입 목록에서 직접 연결하지 않는다.
 
 - [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md)
 - [13_ITEM_SYSTEM_CONTRACT.md](docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
@@ -82,11 +82,6 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - [OPEN_DECISIONS.md](docs/planning/feature_plans/OPEN_DECISIONS.md)
 - [release docs](docs/release/submission_kit/README.md)
 - [tool docs](docs/tools/huashu-design-codex-usage.md)
-- [closed competition archive](docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md)
-- [planning legacy archive](docs/archive/planning_legacy_2026_05/README.md)
-- [deprecated leveling docs archive](docs/archive/leveling/deprecated_2026_05/README.md)
-- [feature plan archive](docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md)
-- [leveling archive](docs/archive/leveling/00_leveling_archive_README.md)
 
 ## 현재 문서 매핑
 
@@ -100,7 +95,7 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 | planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/goal/*`, `docs/planning/leveling/*`, 현재 `docs/planning/feature_plans/*`, `docs/planning/verification/*` | 현재 실행 라우터, Goal 진도, 레벨링/경제 상태, 아직 current 판단에 필요한 기능별 계획, 검증 절차 |
 | release | Release | `docs/release/*` | 출시, 빌드, 스토어, 스크린샷, 배포 준비 |
 | tools | Tools | `docs/tools/*` | 도구 사용법, 이미지/카드 asset 생성 기준 |
-| archive | Archive | `docs/archive/*`, generated/prompt/history 문서 | 최신 판단 기준은 아니지만 이력 검색에 사용할 수 있는 참고 자료 |
+| archive | Archive | 격리된 과거 문서와 생성 산출물 | 최신 판단 기준이 아니며, active 문서에서 직접 링크하지 않는다 |
 
 ## Source of Truth
 
@@ -111,7 +106,7 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - Item effect 실행 상태: `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
 - 현행 Jester/Q-Slot/Passive/Tool/Gear 카드 표: `docs/current_system/CURRENT_CARD_CATALOG_TABLE.md`
 - Item/Jester/덱빌딩 정책 계약: `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`
-- archive에서 승격한 장기 정책 요약: `docs/specs/V4/15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md`
+- 과거 문서에서 승격한 장기 정책 요약: `docs/specs/V4/15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md`
 - Item policy cleanup audit: `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`
 - Item effect 연출 계약: `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`
 - 레벨링 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
@@ -121,12 +116,7 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - 기능 명세: `docs/specs/V4/*`
 - 출시/빌드/스토어 준비: `docs/release/*`
 - 도구/asset 생성 기준: `docs/tools/*`
-- 공모전 제출 이력과 증거 참고: `docs/archive/competition_history_2026_06/`
-- 과거 V4 진행 snapshot: `docs/archive/planning_legacy_2026_05/`
-- 과거 ML/레벨링 호환 안내: `docs/archive/leveling/deprecated_2026_05/`
-- 과거 참고: `docs/archive/*`
-
-`docs/archive/generated/RUMMI_POKER_GRID_V4_COMBINED.md`는 병합 스냅샷으로 보고, 개별 원본 문서보다 우선하지 않는다.
+과거 문서와 생성 스냅샷은 current/spec/planning 문서보다 우선하지 않는다.
 
 코드 구조가 바뀌면 `CURRENT_CODE_MAP.md`, 구현 상태가 바뀌면 `CURRENT_SYSTEM_OVERVIEW.md`, current-to-target 차이가 바뀌면 `CURRENT_TO_V4_GAP.md`를 갱신한다.
 
@@ -175,4 +165,4 @@ web 저장/라우팅/입력 경계가 바뀌면 아래 스크립트를 먼저 �
 
 - `tools/web_build_smoke.sh`
 
-의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md), [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md) 또는 해당 source-of-truth 문서에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 `docs/archive/verification_daily_logs/YYYY-MM-DD.md` 날짜별 파일에 남긴다.
+의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md), [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md) 또는 해당 source-of-truth 문서에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 active 문서에 직접 연결하지 않는다.

@@ -74,6 +74,7 @@
 - 문서 source-of-truth나 archive 후보를 정리할 때는 `START_HERE.md`의 새 세션 진입 경로와 먼저 읽을 문서 목록을 먼저 맞춘다. 진입 문서에서 아직 current로 읽는 문서를 archive 후보로 먼저 밀어 넣지 않는다.
 - `START_HERE.md`는 전체 문서 체계와 읽는 순서를 잡는 최상위 진입 문서로 유지한다. 새 실행 라우터나 active plan 문서를 만들더라도 `START_HERE.md`를 대체 진입점으로 만들지 않고, `START_HERE.md`가 안내하는 planning 단계의 하위 문서로 둔다.
 - README, START_HERE, current_system 같은 진입/요약 문서를 갱신할 때는 공모전 트랙을 현재 활성 작업처럼 쓰지 않는다. 공모전 관련 문서는 closed/off 이력과 제출 증거 참고로 분리하고, 현재 활성 작업은 post-contest 런타임 고도화 기준으로 적는다.
+- `analysis/leveling`과 과거 ML/LLM autoplay 산출물은 더 이상 active leveling 자료 축적 경로로 보지 않는다. 필요한 tracked 이력은 archive에 격리하고, archive 밖 docs/current_system/specs/planning/release/tools 문서에는 `docs/archive`나 `analysis/leveling` 직접 경로 참조를 남기지 않는다.
 - 인포그래픽 전처리용 HTML은 최종 디자인 테마보다 구조화된 원천 정보와 명확한 룰 다이어그램을 우선한다. 색상/장식은 최소화하고, 포스터 생성 스킬이 재해석하기 쉬운 섹션 제목, 핵심 문장, 시각적 관계도를 둔다.
 - Rummi Poker 인포그래픽 제목에는 `Grid`를 붙이지 않는다. 포커는 족보 형태만 차용한 룰로 설명하고, 시각 예시는 포커 카드 이미지가 아니라 숫자와 색을 가진 루미큐브식 타일로 표현한다.
 - 사용자가 테크니컬 인포메이션/인포그래픽 스킬로 최종 이미지를 만들라고 하면 HTML 스크린샷 렌더를 최종물로 대체하지 않는다. HTML은 원천 정보와 구조 정리용으로만 쓰고, 최종 이미지는 해당 스킬의 AI poster/image-generation 경로로 생성한다.

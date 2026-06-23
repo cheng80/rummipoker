@@ -215,7 +215,7 @@ Boss 220%: 성장 +1, +2G
 
 현재 결정:
 
-- `docs/archive/feature_plan_history/OVERKILL_HAND_GROWTH_PROGRESS_PLAN.md`에 위 규칙을 반영했다.
+- 위 규칙은 현재 open decision 기준에 반영했다.
 - 추가 골드가 너무 자주 크게 나오면 cap을 두기보다 target score가 낮다는 신호로 보고 target/boss/economy 레벨링을 다시 본다.
 - `RummiCashOutBreakdown.overkillGoldBonus`와 settlement read model의 `overkillGoldBonus` 라인을 추가해 구현까지 닫았다.
 - 검증: `rummi_overkill_growth_test`, `rummi_settlement_facade_test`, targeted `flutter analyze`.
@@ -355,7 +355,7 @@ PyTorch 모델로 station / blind / market / item 조합의 난이도 경향을 
 
 Boss blind는 단순히 목표 점수와 자원을 올리는 전투가 아니라, 전투 시작 전 공개되는 제약/변형 규칙을 갖는 방향으로 본다.
 
-과거 상세 taxonomy와 적용 순서는 `docs/archive/feature_plans_2026_04/BOSS_MODIFIER_TAXONOMY_PLAN.md`에서 검색한다.
+과거 상세 taxonomy와 적용 순서에서 현재 필요한 원칙은 이 문서에 승격했다.
 
 후보 범주:
 
@@ -415,7 +415,7 @@ Balatro의 시작 덱과 카드 강화 구조는 run archetype과 tile modifier 
 - 카드 강화/인장/에디션류는 후속 `tile_modifier_id` 또는 Jester/Item edition 후보로 분리한다.
 - 시작 덱 선택은 balance simulation readiness 이후, simulator가 archetype별 결과를 비교할 수 있을 때 검토한다.
 
-과거 상세 기준은 `docs/archive/feature_plans_2026_04/STARTING_DECK_ARCHETYPE_PLAN.md`에서 검색한다.
+과거 상세 기준에서 현재 필요한 원칙은 이 문서에 승격했다.
 
 ### 3.4 Jester Reference Taxonomy
 
@@ -431,7 +431,7 @@ Balatro의 Joker 목록은 Jester catalog 확장과 ML feature 설계의 taxonom
 - edition/penalty는 base Jester id가 아니라 owned Jester instance modifier로 본다.
 - 새 effect category는 scoring feedback과 simulator log에 나타나기 전까지 Market에 노출하지 않는다.
 
-과거 상세 기준은 `docs/archive/feature_plans_2026_04/JESTER_REFERENCE_TAXONOMY_PLAN.md`에서 검색한다.
+과거 상세 기준에서 현재 필요한 원칙은 이 문서에 승격했다.
 
 ### 3.5 Consumable / Voucher Reference Taxonomy
 
@@ -447,7 +447,7 @@ Balatro의 Tarot / Planet / Spectral / Voucher 구조는 Item 확장 taxonomy re
 - Spectral-like 효과는 high-risk mutation 후보로 분리하고 일반 market pool에는 바로 넣지 않는다.
 - Voucher-like 효과는 ordinary quick-use item이 아니라 run-long passive 또는 후속 `Run Voucher` content type으로 다룬다.
 
-과거 상세 기준은 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
+과거 상세 기준에서 현재 필요한 원칙은 이 문서에 승격했다.
 
 ## 4. Known Code Notes
 

@@ -33,4 +33,4 @@ GCSE 역할: `Spec`
 - V3/V4 변경 이력 원문
 - 전체 문서 병합본
 
-현재 코드 baseline은 `docs/current_system/`, 진행 상태와 구현 순서는 `docs/planning/`, 과거 변경 이력과 병합본은 `docs/archive/`를 참조한다.
+현재 코드 baseline은 `docs/current_system/`, 진행 상태와 구현 순서는 `docs/planning/`을 참조한다. 과거 변경 이력과 병합본은 현재 spec 판단 기준이 아니다.

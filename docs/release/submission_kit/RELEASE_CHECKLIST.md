@@ -27,7 +27,7 @@
 - [ ] 표준 난이도 fresh full-run 증거 확인
 - [ ] 도전 난이도 fresh S1~S8 `contest_full_run_bot` full-run 확인
 - [ ] Game over, 보상, 런 정보, 무한 도전 진입 흐름 눈검증
-- [ ] `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md` 결과 동기화
+- [ ] 닫힌 공모전 제출 이력을 현재 출시 체크리스트 기준으로 재검토하지 않음
 
 ## 제출 증거 기준
 

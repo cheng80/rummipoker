@@ -43,11 +43,11 @@
 | runtime offer audit | Workspace pending | `tools/sim/runtime_market_offer_audit.dart` | 실제 runtime offer r200 watchlist: `reroll_token` 1000, `trade_ticket` 600, `full_house_study` 200, `four_kind_study` 0, `straight_flush_study` 200, `ride_the_bus` 77, `jester_hook` 0. 다음 판단 축은 가격표 변경이 아니라 구매력/구매 이벤트/source candidate 추적이다. |
 | jester hook economy probe | Applied | `tools/sim/run_balance_sim.dart` | r400에서 balanced none 52.2%, balanced v9 57.5%, power none 60.8%, power v9 61.3%. `jester_hook` 가격 조정은 즉시 부작용 없음 |
 | Pack/Tarot-like/Planet-like role mapping | Spec only | docs only | 현재는 Item/market candidate role로 해석. 별도 타입 런타임은 미도입 |
-| smoke sweep after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v87 r120 runtime parity smoke 완료 |
-| r400 revalidation after shape floor | Applied | `tools/sim/ml_sweep_dataset.py` | v88 r400 runtime parity sweep 완료 |
-| ML terminology correction | Applied | `docs/archive/leveling/deprecated_2026_05/CURRENT_LEVELING_ML_BASELINE.md` / `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `analysis/leveling/` | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
-| actual ML leveling transition | Paused for contest prototype | `analysis/leveling/` / `tools/leveling/` | pre-outcome station/tier table, sequence/path table, baseline metrics, candidate recommendation table, human-review MD report는 보조 신호로 존재. 공모전 기준에서는 ML 갱신을 보류하고 production ML이나 런타임 자동 적용은 하지 않음 |
-| historical leveling data reuse policy | Applied | `CURRENT_LEVELING_POLICY.md` / `HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` / `tools/leveling/README.md` | 과거 row는 `historical prior`로만 쓰고, 현재 clear rate/구매력/추천 결론은 최신 runtime/catalog/ruleset/bot policy fresh resimulation으로만 닫는다. |
+| smoke sweep after shape floor | Archived | historical ML sweep artifact | v87 r120 runtime parity smoke는 과거 근거로만 보관 |
+| r400 revalidation after shape floor | Archived | historical ML sweep artifact | v88 r400 runtime parity sweep는 과거 근거로만 보관 |
+| ML terminology correction | Applied | current leveling docs | 현재 파이프라인은 시뮬레이션 + 휴리스틱 진단으로 명시. 기존 `ML` 명칭은 역사적 이름으로 정정 |
+| actual ML leveling transition | Deprecated | archived legacy scripts | pre-outcome table, sequence/path table, baseline metrics, candidate recommendation은 현재 보조 신호로도 쓰지 않는다. production ML이나 런타임 자동 적용은 하지 않음 |
+| historical leveling data reuse policy | Applied | `CURRENT_LEVELING_POLICY.md` / `HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` | 과거 row는 `historical prior`로만 쓰고, 현재 clear rate/구매력/추천 결론은 최신 runtime/catalog/ruleset/bot policy fresh resimulation으로만 닫는다. |
 | full-run CLI bot proxy | Workspace pending | `tools/sim/planner_bot.dart` / `tools/sim/run_balance_sim.dart` | `full_run_policy_v1` 추가. full-run retry recovery와 seed route 회피는 제외하고, 일반 플레이 판단인 전략 draw, 고점수 확정 지연, lookahead 배치, board move/hand discard 실행 경로만 CLI 레벨링용 proxy로 분리했다. |
 
 ## 2. Applied Runtime Details
@@ -303,7 +303,7 @@ S7~S8 shape correction workspace probe:
 
 v87 smoke, pre-parity:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 87200 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_shape_floor_v87_smoke_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/ml_sweep_shape_floor_v87_smoke_r120_summary.json`
 - report: `logs/sim/ml_sweep_shape_floor_v87_smoke_r120_report.md`
 
@@ -323,7 +323,7 @@ v87 smoke, pre-parity:
 
 v87 runtime parity smoke:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 87200 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_shape_floor_v87_runtime_parity_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/ml_sweep_shape_floor_v87_runtime_parity_r120_summary.json`
 - report: `logs/sim/ml_sweep_shape_floor_v87_runtime_parity_r120_report.md`
 
@@ -350,7 +350,7 @@ Final band v9 slot exposure:
 
 v88 runtime parity r400:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 400 --seed 88400 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_shape_floor_v88_runtime_parity_r400`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/ml_sweep_shape_floor_v88_runtime_parity_r400_summary.json`
 - report: `logs/sim/ml_sweep_shape_floor_v88_runtime_parity_r400_report.md`
 
@@ -385,7 +385,7 @@ Key bottlenecks:
 
 v89 face boss runtime smoke:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 88900 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_face_boss_v89_smoke_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/ml_sweep_face_boss_v89_smoke_r120_summary.json`
 - report: `logs/sim/ml_sweep_face_boss_v89_smoke_r120_report.md`
 
@@ -404,7 +404,7 @@ v89 face boss runtime smoke:
 
 v90 boss runtime phase 1 proxy smoke:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 89000 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_boss_runtime_v90_smoke_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_summary.json`
 - report: `logs/sim/ml_sweep_boss_runtime_v90_smoke_r120_report.md`
 - note: 이 sweep은 Python sim의 boss proxy 기준이며, 당시 Dart runtime cycle 자체는 `blind_selection_setup_test.dart`로 검증했다.
@@ -438,7 +438,7 @@ Historical runtime S1~S8 boss cycle:
 
 v90 boss runtime long sweep:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 800 --seed 90800 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/ml_sweep_boss_runtime_v90_long_r800`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/ml_sweep_boss_runtime_v90_long_r800_summary.json`
 - report: `logs/sim/ml_sweep_boss_runtime_v90_long_r800_report.md`
 - note: r120 smoke에서 확인한 당시 boss runtime cycle을 기존 장기 sweep 기준인 r800으로 재검증했다.
@@ -460,7 +460,7 @@ v90 boss runtime long sweep:
 
 v91 출품용 S1 entry smoke:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 90515 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/prototype_stability_v91_s1_easy_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/prototype_stability_v91_s1_easy_r120_summary.json`
 - S1 focused summary: `logs/sim/prototype_s1_easy_entry_v91_r240_summary.json`
 - note: r120은 출품 안정성 확인용 smoke이며, 장기 확정 sweep이 아니다.
@@ -490,7 +490,7 @@ S1 focused r240:
 
 v91 submission candidate leveling smoke:
 
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 90516 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --summary-only --jobs 4 --out-prefix logs/sim/prototype_stability_submission_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/prototype_stability_submission_r120_summary.json`
 - report: `logs/sim/prototype_stability_submission_r120_report.md`
 - note: r120은 출품 안정성 확인용 smoke이며, 장기 확정 sweep이 아니다.
@@ -563,7 +563,7 @@ Economy leveling gate:
 - runtime catalog applied: 자기 회수형/저가 성장 후보의 기준가를 정수로 보정했다. `reroll_token` 5G, `coin_cache` 4G, `thin_wallet` 7G, `green_jester` 8G, `popcorn` 6G, `ice_cream` 7G, `banner` 7G, `gros_michel` 7G, `supernova` 8G.
 - updated audit: 새 런타임 기준 reward envelope는 S1 small 자원 미사용 16G, 자원 전부 사용 6G다. runtime effective price 기준 자기 회수 flag는 남지 않는다.
 - v91 runtime economy long sweep: `reward 0.40 / price 2.2 / catalog_normalized_v1 / reroll_slot_sell_v1 / affordable_alternative_v1` r800을 실행했다.
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 800 --seed 99800 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --jobs 4 --out-prefix logs/sim/economy_runtime_v91_long_r800`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - summary: `logs/sim/economy_runtime_v91_long_r800_summary.json`
 - report: `logs/sim/economy_runtime_v91_long_r800_report.md`
 - audit: `logs/sim/economy_runtime_v91_long_r800_economy_audit.json`
@@ -590,7 +590,7 @@ Economy leveling gate:
 - S8 `confirm_count_tax_v2` 병목은 모든 조합에서 여전히 최상위다. 다만 v9에서 S8 boss stop이 balanced 49/800, power 42/800으로 남는 수준이라 즉시 완화보다 후속 후보군 availability probe가 먼저다.
 - board locked가 draw exhausted보다 많다. 자원 +1 지급으로 풀지 않고, board/move/discard 후보의 마켓 등장성 및 가격 접근성을 다음 probe 후보로 본다.
 - v91 market availability probe: `shop_slot_market_v10`~`shop_slot_market_v13`을 같은 economy 조건에서 r120 탐색 비교했다.
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 99920 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9,shop_slot_market_v10,shop_slot_market_v11,shop_slot_market_v12,shop_slot_market_v13 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --summary-only --jobs 4 --out-prefix logs/sim/economy_runtime_v91_market_probe_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 
 | market | balanced clear | power clear | 1차 해석 |
 |---|---:|---:|---|
@@ -602,7 +602,7 @@ Economy leveling gate:
 | v13 | 65.8% | 65.8% | 좋아 보이나 seed 안정성 확인 필요 |
 
 - v13 raw check: 같은 economy 조건에서 `none,v9,v13`만 JSONL 포함 r120으로 재검사했다.
-- command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 120 --seed 99980 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9,shop_slot_market_v13 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --jobs 4 --out-prefix logs/sim/economy_runtime_v91_market_probe_raw_r120`
+- archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
 - raw check result: balanced none 56.7%, balanced v9 59.2%, balanced v13 51.7%, power none 65.8%, power v9 65.8%, power v13 60.0%.
 - raw audit: v9 final gold avg 6.51G, v13 final gold avg 6.45G로 경제 압박은 비슷하다. v13이 더 낮은 clear를 보인 이유는 잔고 완화가 아니라 후보/선택 proxy 안정성 문제로 본다.
 - 판정: 어느 정도 압박은 필요하지만, 이상적인 플레이 proxy가 none보다 낮아지면 안 된다. v13은 seed에 따라 none보다 낮아지는 케이스가 있어 적용하지 않는다. 현재는 v9를 유지하고, 다음 조정은 “압박 제거”가 아니라 “좋은 선택을 했을 때 통과 가능성 확보” 기준으로 별도 후보를 설계한다.
@@ -610,12 +610,12 @@ Economy leveling gate:
 Run modifier probe:
 
 - runtime applied: `high_stakes`는 Insight 20 해금 후 선택 가능한 명시적 run modifier다. 현재 target score 1.04, blind reward 1.12를 적용하며 직접 골드/아이템/Jester/자원을 지급하지 않는다.
-- tool update: `tools/sim/run_balance_sim.dart`와 `tools/sim/ml_sweep_dataset.py`가 `--run-modifier basic|high_stakes`를 받는다. sim economy reward scale은 입력 scale에 modifier reward multiplier를 곱한 effective scale로 기록한다.
+- tool update: `tools/sim/run_balance_sim.dart`가 `--run-modifier basic|high_stakes`를 받는다. historical sweep runner는 archive로 내렸으며, current check는 runtime sim 또는 `full_run_bot` 증거로 닫는다.
 - r120 proxy note: 전용 CLI 추가 전 `target 1.08 / reward 0.448` 조합으로 current economy 조건의 탐색 probe를 돌렸지만, seed 흔들림이 커서 tuning 근거로 쓰지 않는다.
 - current signal: high stakes는 balanced none/v9를 크게 누르고, power 계열은 어느 정도 유지한다. 장기 판단 전에는 반드시 `--run-modifier high_stakes` direct sweep으로 다시 비교한다.
 - next check: basic/high_stakes를 같은 economy 조건에서 r400 이상으로 비교하고, 좋은 market 선택 proxy가 같은 modifier의 none/control보다 낮아지는지 먼저 본다.
 - direct r400 check:
-  - basic command: `python3 tools/sim/ml_sweep_dataset.py --mode experiment_matrix --runs 400 --seed 90300 --bot planner_v2 --stations 1,2,3,4,5,6,7,8 --difficulty standard --experiment-ids base_score_curve_v2_boss_constraint_pool_v4_s1_soft_v2_late_guard_v1_s1_resource_weighted_boss_v3_late_boss_068 --loadout-ids progression_route_balanced,progression_route_power --market-profiles none,shop_slot_market_v9 --sim-economy-mode gated_known_cost --sim-reward-scale 0.40 --sim-price-scale 2.2 --sim-market-spend-mode reroll_slot_sell_v1 --sim-market-choice-mode affordable_alternative_v1 --sim-price-band-mode catalog_normalized_v1 --run-modifier basic --summary-only --jobs 4 --out-prefix logs/sim/run_modifier_basic_direct_r400`
+  - archived command: historical ML sweep runner 기준 기록이다. 현재 실행 지시로 사용하지 않는다.
   - high stakes command: same options with `--run-modifier high_stakes --out-prefix logs/sim/run_modifier_high_stakes_direct_r400`
 
 | modifier | loadout | market | path clear | avg total turn | top bottlenecks | stop reason |
@@ -749,4 +749,4 @@ Status: grouped validation added / production auto-balancing disabled.
 3. `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 4. `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 5. `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
-6. 필요한 경우에만 `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
+6. 과거 실험 로그는 현재 판단 기준에서 제외

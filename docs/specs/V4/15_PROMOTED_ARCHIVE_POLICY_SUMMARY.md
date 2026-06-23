@@ -1,18 +1,18 @@
 # 15. Promoted Archive Policy Summary
 
-이 문서는 archive 원문 중 현재 게임 정책이 무너지지 않게 보존해야 하는 원칙만 승격한 요약이다.
+이 문서는 과거 원문 중 현재 게임 정책이 무너지지 않게 보존해야 하는 원칙만 승격한 요약이다.
 
-원문 archive는 현재 source-of-truth가 아니다. 새 구현 판단은 이 문서와 `docs/current_system/`, `docs/specs/V4/`, 실제 코드/테스트를 우선한다.
+과거 원문은 현재 source-of-truth가 아니다. 새 구현 판단은 이 문서와 `docs/current_system/`, `docs/specs/V4/`, 실제 코드/테스트를 우선한다.
 
-## 1. 승격 원문
+## 1. 승격 원칙
 
-| Archive 원문 | 현재로 승격한 내용 |
+| 승격 원칙 | 현재로 승격한 내용 |
 | --- | --- |
-| `docs/archive/legacy/DESIGN.md` | felt/tabletop 계열의 절제된 카드 게임 UI, 정보 위계, 과장된 랜딩/장식 배제 |
-| `docs/archive/feature_plans_2026_04/BOSS_MODIFIER_TAXONOMY_PLAN.md` | 보스 제약은 단순 숫자 penalty만이 아니라 배치, 사용, 순서, 변형, 비활성 제약을 포함한다 |
-| `docs/archive/feature_plans_2026_04/CONSTRAINT_VISUAL_LANGUAGE_PLAN.md` | 보스/제약은 전투 중 읽히는 시각 언어와 설명 문구를 함께 가져야 한다 |
-| `docs/archive/feature_plans_2026_04/JESTER_REFERENCE_TAXONOMY_PLAN.md` | Jester는 점수 가산 외에 보드/라인/마켓/자원/조건부 운용 축으로 확장한다 |
-| `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md` | Item/Tool/Gear/Ritual/Fate는 사용 타이밍, 지속성, 저장/복원, 전투 표시 책임을 분리한다 |
+| restrained tabletop UI | felt/tabletop 계열의 절제된 카드 게임 UI, 정보 위계, 과장된 랜딩/장식 배제 |
+| boss modifier taxonomy | 보스 제약은 단순 숫자 penalty만이 아니라 배치, 사용, 순서, 변형, 비활성 제약을 포함한다 |
+| constraint visual language | 보스/제약은 전투 중 읽히는 시각 언어와 설명 문구를 함께 가져야 한다 |
+| Jester extension taxonomy | Jester는 점수 가산 외에 보드/라인/마켓/자원/조건부 운용 축으로 확장한다 |
+| Item/Tool/Gear/Ritual/Fate timing taxonomy | Item/Tool/Gear/Ritual/Fate는 사용 타이밍, 지속성, 저장/복원, 전투 표시 책임을 분리한다 |
 
 ## 2. 디자인 원칙
 

@@ -3,7 +3,7 @@
 > 문서 성격: current leveling baseline / simulation-derived standard
 > 명칭 주의: 이 파일명에는 `ML`이 남아 있지만, 현재 기준은 학습 모델이 아니라 시뮬레이션 결과와 규칙 기반 휴리스틱 라벨 해석이다.
 > supervised model, train/test split, validation metric이 있는 실제 머신러닝 기준으로 인용하지 않는다.
-> 근거 이력: `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
+> 근거 이력: 과거 실험 로그에서 승격한 현재 기준만 이 문서에 남긴다.
 > 정책 기준: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 > 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 > 적용 상태: 일부 runtime 반영 완료, 추가 조정은 market-only 원칙으로 검토
@@ -217,6 +217,5 @@ S8 boss 슬롯 노출률:
 - 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 - 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 - active 진입 요약: `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md`
-- 긴 실험 이력: `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
 - 시뮬 CLI: `tools/sim/run_balance_sim.dart`
-- sweep dataset: `tools/sim/ml_sweep_dataset.py`
+- historical sweep dataset runner: root archive로 이동. 현재 실행 기준은 `tools/sim/run_balance_sim.dart`와 `full_run_bot` 증거다.

@@ -17,7 +17,7 @@
 현재 목표는 완성 규칙 확정이 아니라,
 `레이아웃 리팩터링과 도메인 분리 구현을 다시 뜯지 않게 만드는 것`이다.
 
-과거 소모품/바우처류 장기 확장 reference는 `docs/archive/feature_plans_2026_04/CONSUMABLE_VOUCHER_REFERENCE_PLAN.md`에서 검색한다.
+과거 소모품/바우처류 장기 확장 reference에서 현재 필요한 원칙은 이 문서에 승격했다.
 
 ## 2. Core Separation
 

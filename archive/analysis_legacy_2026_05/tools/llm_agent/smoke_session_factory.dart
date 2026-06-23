@@ -3,8 +3,8 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 
-import '../sim/llm_action_schema.dart';
-import '../sim/llm_state_exporter.dart';
+import '../../../../tools/sim/llm_action_schema.dart';
+import '../../../../tools/sim/llm_state_exporter.dart';
 
 RummiPokerGridSession buildLlmSmokeSession(int seed, int index) {
   final session = RummiPokerGridSession(

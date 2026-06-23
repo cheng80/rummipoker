@@ -58,7 +58,7 @@ lib/
 - [`docs/specs/V4/00_README.md`](docs/specs/V4/00_README.md) — V4 기능 명세 진입점
 - [`docs/release/web_build.md`](docs/release/web_build.md) — Web 빌드
 
-`docs/archive/competition_history_2026_06/`은 닫힌 공모전 제출 이력과 증거 참고입니다. `docs/archive/` 문서는 레거시 참고 자료이며, 현재 기준과 충돌하면 실제 `lib/` 코드와 테스트, `AGENTS.md`, `START_HERE.md`, `docs/00_docs_README.md`, `docs/current_system/*`, `docs/specs/*`, `docs/planning/*` 순서로 우선합니다.
+과거 공모전/ML/실험 문서는 현재 작업 진입점이 아닙니다. 현재 기준과 충돌하면 실제 `lib/` 코드와 테스트, `AGENTS.md`, `START_HERE.md`, `docs/00_docs_README.md`, `docs/current_system/*`, `docs/specs/*`, `docs/planning/*` 순서로 우선합니다.
 
 ## 실행
 

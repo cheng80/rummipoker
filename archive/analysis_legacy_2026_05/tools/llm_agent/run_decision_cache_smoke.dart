@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 
-import '../sim/balance_action_executor.dart';
-import '../sim/llm_action_schema.dart';
-import '../sim/planner_bot.dart';
+import '../../../../tools/sim/balance_action_executor.dart';
+import '../../../../tools/sim/llm_action_schema.dart';
+import '../../../../tools/sim/planner_bot.dart';
 import 'smoke_session_factory.dart';
 
 Future<void> main(List<String> args) async {
@@ -133,10 +133,10 @@ class _Config {
   final int seed;
 
   static _Config parse(List<String> args) {
-    var responsesPath = 'logs/llm/responses_smoke_20260529_schema.jsonl';
-    var outPath = 'logs/llm/decision_cache_one_step_20260529.jsonl';
+    var responsesPath = 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/responses_smoke_20260529_schema.jsonl';
+    var outPath = 'archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/decision_cache_one_step_20260529.jsonl';
     var reportOutPath =
-        'analysis/leveling/reports/llm_decision_cache_one_step_20260529.md';
+        'archive/analysis_legacy_2026_05/analysis/leveling/reports/llm_decision_cache_one_step_20260529.md';
     var count = 10;
     var seed = 20260529;
     for (var i = 0; i < args.length; i++) {
@@ -169,8 +169,8 @@ class _Config {
 
 Never _printUsageAndExit() {
   stdout.writeln(
-    'Usage: dart run tools/llm_agent/run_decision_cache_smoke.dart '
-    '--responses logs/llm/responses_smoke_20260529_schema.jsonl',
+    'Usage: dart run archive/analysis_legacy_2026_05/tools/llm_agent/run_decision_cache_smoke.dart '
+    '--responses archive/analysis_legacy_2026_05/local_ignored_generated/logs/llm/responses_smoke_20260529_schema.jsonl',
   );
   exit(0);
 }

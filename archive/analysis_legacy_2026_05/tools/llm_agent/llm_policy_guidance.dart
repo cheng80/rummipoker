@@ -1,5 +1,5 @@
-import '../sim/llm_action_schema.dart';
-import '../sim/bot_policy.dart';
+import '../../../../tools/sim/llm_action_schema.dart';
+import '../../../../tools/sim/bot_policy.dart';
 
 const int kDefaultGuidedLegalActionLimit = 24;
 

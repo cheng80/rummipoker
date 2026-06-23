@@ -15,10 +15,10 @@ from train_leveling_model import (
 )
 
 
-DEFAULT_STATION_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
-DEFAULT_SEQUENCE_FEATURES = "analysis/leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv"
-DEFAULT_OUT = "analysis/leveling/reports/preoutcome_grouped_validation_report.md"
-DEFAULT_JSON = "analysis/leveling/models/preoutcome_grouped_validation_metrics.json"
+DEFAULT_STATION_FEATURES = ".omo/legacy_leveling/generated/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_SEQUENCE_FEATURES = ".omo/legacy_leveling/generated/features/leveling_preoutcome_sequence_feature_table.csv"
+DEFAULT_OUT = ".omo/legacy_leveling/reports/preoutcome_grouped_validation_report.md"
+DEFAULT_JSON = ".omo/legacy_leveling/models/preoutcome_grouped_validation_metrics.json"
 
 SEQUENCE_NUMERIC_FEATURES = [
     "station_path_length",

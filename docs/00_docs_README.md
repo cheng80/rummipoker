@@ -25,7 +25,7 @@
 7. `docs/planning/*`
 8. `docs/release/*`
 9. `docs/tools/*`
-10. `docs/archive/*`
+10. 격리된 과거 문서
 
 문서는 현재 목적형 폴더 기준으로 배치한다. 새 문서도 같은 기준으로 추가한다.
 
@@ -90,7 +90,7 @@
 | 진행 상태, 구현 순서, open decision, 테스트 게이트 | `docs/planning/` |
 | 출시, 빌드, 스토어, 스크린샷, 배포 준비 | `docs/release/` |
 | 도구 사용법, 카드/이미지 asset 생성 기준 | `docs/tools/` |
-| 과거 문서, 병합본, 중복 요약, 프롬프트 | `docs/archive/` |
+| 과거 문서, 병합본, 중복 요약, 프롬프트 | archive 폴더 |
 
 `specs`에는 현재 baseline 원본, roadmap, QA 실행 계획, open decision, changelog, master summary를 두지 않는다. 해당 문서는 각각 `current_system`, `planning`, `archive`로 분리한다.
 
@@ -101,15 +101,15 @@
 | 목적 | 위치 |
 |---|---|
 | 현재 활성 트랙과 다음 작업 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` |
-| 닫힌 공모전 제출 이력과 증거 참고 | `docs/archive/competition_history_2026_06/` |
+| 닫힌 공모전 제출 이력과 증거 참고 | archive 폴더 |
 | 실제 Goal 진도 | `docs/planning/goal/` |
 | 레벨링/경제/휴리스틱/ML 전환 상태 | `docs/planning/leveling/` |
 | 현재 판단에 필요한 기능별 계획, runtime matrix, open decision | `docs/planning/feature_plans/` |
 | QA, smoke, build 절차와 검증 로그 | `docs/planning/verification/` |
 | 출시, 빌드, 스토어, 스크린샷, 배포 | `docs/release/` |
 | 도구 사용법과 asset 생성 기준 | `docs/tools/` |
-| 과거 V4 status, migration, 임시 순서 lock snapshot | `docs/archive/planning_legacy_2026_05/` |
+| 과거 V4 status, migration, 임시 순서 lock snapshot | archive 폴더 |
 
 `START_HERE.md`는 전체 문서 진입과 읽는 순서를 잡고, `ACTIVE_EXECUTION_PLAN.md`는 planning 단계에서 현재 실행 트랙만 고른다.
 
-완료된 대형 feature plan, 과거 큐, prompt, 긴 이력 문서는 `docs/archive/feature_plan_history/`, `docs/archive/planning_superseded/`, `docs/archive/verification_daily_logs/`로 내린다.
+완료된 대형 feature plan, 과거 큐, prompt, 긴 이력 문서는 archive 폴더로 내리고 active 문서에서 직접 링크하지 않는다.

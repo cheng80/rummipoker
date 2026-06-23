@@ -6,15 +6,15 @@
 이 문서는 닫힌 공모전 제출 이력과 post-contest 실제 Goal 실행을 분리한다.
 새 세션은 `START_HERE.md`와 `current_system` 기준 문서를 읽은 뒤, 이 문서에서 현재 활성 트랙과 다음 작업만 확인한다.
 
-`ritual-runtime-20260603` 태그 이후 남은 작업 큐의 원문은 `docs/archive/planning_superseded/POST_RITUAL_RUNTIME_REMAINING_WORK.md`에 보관한다. 현재 실행 판단은 이 문서의 활성 트랙 표와 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`, `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`, `docs/planning/feature_plans/OPEN_DECISIONS.md`를 우선한다.
+`ritual-runtime-20260603` 태그 이후의 현재 실행 판단은 이 문서의 활성 트랙 표와 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`, `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`, `docs/planning/feature_plans/OPEN_DECISIONS.md`를 우선한다.
 
 ## 1. 현재 활성 트랙
 
 | Track | Status | 기준 문서 | 지금 판단 |
 |---|---|---|---|
-| 공모전 기준 완성 | Closed / off | `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md` | 2026-05-15 12시경 최종 산출물을 우선 등록했다. 풀런봇/제출 체크리스트는 더 이상 활성 작업 큐가 아니며, 이후 공모전 문서는 제출 증거와 이력 참고로만 본다. |
+| 공모전 기준 완성 | Closed / off | 현재 작업 기준 아님 | 2026-05-15 12시경 최종 산출물을 우선 등록했다. 풀런봇/제출 체크리스트는 더 이상 활성 작업 큐가 아니다. |
 | 아이템/덱빌딩 정책 정화 | Active / current | `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`, `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md` | 현재 기준점 태그 `policy-cleanup-baseline-20260530` 이후의 1순위 작업이다. Balatro 참고 축을 직접 복사하지 않고, Jester / Quick Item / Passive Relic / Hand-Rank Growth / Tile Modifier / Board-Line Ritual / Market Pool Mutation으로 다시 나눈다. |
-| Post-contest 덱 빌딩 확장 | Completed / archive reference | `docs/archive/feature_plan_history/TILE_MODIFIER_V1_V2_PLAN.md` | 특수 타일 V1과 V2-A 판본(`silver_edition`, `glow_edition`, `prism_edition`)은 1차 구현/검증을 닫았다. 원문은 archive 이력이며, 현재 새 구현 판단은 Item 정책 정화와 fresh 데이터 기반 레벨링 재시작 뒤에 연다. |
+| Post-contest 덱 빌딩 확장 | Completed | 현재 구현 상태 | 특수 타일 V1과 V2-A 판본(`silver_edition`, `glow_edition`, `prism_edition`)은 1차 구현/검증을 닫았다. 현재 새 구현 판단은 Item 정책 정화와 fresh 데이터 기반 레벨링 재시작 뒤에 연다. |
 | UI/UX 예정 연출 큐 | Active side track | `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md` | transient presentation state는 runtime save source-of-truth와 분리되어 있고, settlement 큐에서 Jester / Tile modifier / Item 효과 단계가 분리됐다. timing/metric 일부도 공용화했다. 남은 polish는 별도 시각 QA 후보로 두며 밸런스/경제/ML 재검증과 섞지 않는다. |
 | 실제 Goal 기준 완성 | Active after stabilization | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 족보 레벨 성장, 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상, 타일 구매 연출/선택 표시 보강, 타이틀 로고/서브타이틀, 전투/마켓 튜토리얼 V1은 반영됐다. 공모전 이후에는 리팩터링, 최적화, 장기 밸런스, meta growth, 자연 full-play QA를 재개한다. |
 
@@ -22,7 +22,7 @@
 
 ## 다음 세션 시작점
 
-1. 완료 이력: `docs/archive/feature_plan_history/TILE_MODIFIER_V1_V2_PLAN.md` 기준 특수 타일 V1.
+1. 완료 이력: 특수 타일 V1.
    - `Tile` 모델에 `enhancement`, `seal` 저장 필드를 추가했고 modifier 없는 기존 저장 데이터는 정상 복원된다.
    - 포함 경로: `addedDeckTiles`, `tileOffers`, deck pile, board cells, hand, eliminated JSON roundtrip.
    - 마켓/보드/손패/런 정보/정산/확정 preview에 modifier 정보가 표시된다.
@@ -44,20 +44,20 @@
 6. 다음 활성 작업:
    - 진행 중: 정책 정화. `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`를 source-of-truth로 두고, 기존 catalog 54개에 Ritual/Item 확장 계열 37종을 추가한 현재 item catalog 91개를 family별로 관리한다. 전투 보드 선 선택형 `ritual_line_effect`는 31장이고, 이 중 족보 변환형 운명은 16장이다. 1차 audit와 새 카드 후보 pool은 `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`에 둔다. 이 작업이 끝나기 전에는 새 ML/경제 추천을 catalog 변경 근거로 쓰지 않는다.
    - 완료: 구 ML/시뮬레이션 산출물은 active 판단 근거로 재사용하지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh row 5000건 이상을 먼저 쌓기 시작했다.
-   - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. tracked 요약은 `analysis/leveling/reports/fresh_runtime_data_2026_05_29.md`.
+   - 2026-05-29 bootstrap: `logs/sim/fresh_runtime_20260529_planner_r200.jsonl` 5,049 rows, summary/economy audit 생성. 이 산출물은 현재 판단 근거가 아니라 폐기된 실험 이력이다.
    - 2026-05-29 full-run policy fresh data: `full_run_policy_v1` chunked run 5,133 rows, 구매 event source/cost 추적, pre-outcome multi-target model scaffold(`clear_rate`, `avg_score_ratio`, `cleared_majority`)까지 생성했다.
    - 2026-05-29 grid fresh data: `MODE=grid` chunked run 5,655 rows, market/loadout axis 확장, grid multi-target model, candidate probe report를 생성했다. `avg_score_ratio` 회귀는 R2 0.6030까지 개선됐지만, `cleared_majority` classifier는 balanced accuracy 0.6649로 gate 후보 선별에는 아직 약하다.
    - 다음은 정책 정화 후 grid candidate report의 상위 economy/target 후보를 small fresh resimulation으로 분리 검증하는 것이다.
-   - LLM autoplay는 대량 밸런스 기준이 아니라 전략 샘플러/decision label 보조 축으로만 검토한다. 적용 계약은 `docs/archive/leveling/llm_experiment_history/LLM_AUTOPLAY_LEVELING_PLAN.md`를 따른다.
+   - LLM autoplay는 대량 밸런스 기준이 아니며, 현재는 새 자료를 쌓는 경로로 쓰지 않는다.
    - 2026-06-09 완료: Market 첫 리롤 무료 정책과 표시를 현재 합의 기준으로 정리했다. S1 기본 첫 Market(`stageIndex == 1 && currentStationBlindTierIndex == 0`)에서만 Market 전체 1회 `첫 리롤 무료` 보상이 보이고, 오래된 저장/fixture에 남은 `firstRerollDiscount`는 eligibility 밖에서 무시한다. 아이템/패시브 리롤 할인은 `리롤 5→4`처럼 원가→할인가로 표시하고, S1 첫 Market 보상은 `리롤 5→0`이 아니라 `첫 리롤 무료`로 표시한다.
-   - 2026-06-09 검증: `flutter analyze`, `flutter test --concurrency=1 test/views/game/widgets/game_shop_reroll_confirmation_test.dart test/views/game/widgets/game_shop_discounted_reroll_test.dart test/services/active_run_save_service_test.dart test/services/debug_run_fixture_service_test.dart test/logic/rummi_market_facade_test.dart`. Chrome 저장 상태 확인으로 사용자의 이어하기 화면이 S1 첫 Market이라 무료 보상이 정상임을 확인했고, `stale_first_reroll_market` fixture에서 Jester/Tool lane 모두 `리롤 5`로 보이는 것을 확인했다. 상세는 `docs/archive/verification_daily_logs/2026-06-09.md`.
+   - 2026-06-09 검증: `flutter analyze`, `flutter test --concurrency=1 test/views/game/widgets/game_shop_reroll_confirmation_test.dart test/views/game/widgets/game_shop_discounted_reroll_test.dart test/services/active_run_save_service_test.dart test/services/debug_run_fixture_service_test.dart test/logic/rummi_market_facade_test.dart`. Chrome 저장 상태 확인으로 사용자의 이어하기 화면이 S1 첫 Market이라 무료 보상이 정상임을 확인했고, `stale_first_reroll_market` fixture에서 Jester/Tool lane 모두 `리롤 5`로 보이는 것을 확인했다.
 7. 대기열로 미룬 작업:
    - 구 산출물을 직접 이어 쓰지 않는 새 데이터셋 기반 `shop_slot_market_v9` 구매 이벤트 source candidate 추적.
    - 현재 runtime 기준 fresh row 기반 실제 runtime 후보 구매/사용 가치 probe.
    - fresh 경제/구매 데이터 기준 `trade_ticket`, `ride_the_bus`, 고급 study, `reroll_token` 가격/가치 판단 재개.
    - 장기 경제 gate와 `runtime_station_pool_economy_r400` 재검토.
    - 완료: LLM autoplay P0 scaffold 중 legal action request export와 response validation은 추가했다.
-   - 다음 LLM 작업: `docs/archive/leveling/llm_experiment_history/LLM_LOCAL_SETUP_PLAN.md` 기준 decision cache/local runner, fallback/decision log 분리.
+   - 다음 LLM 작업은 현재 활성 큐에서 제외한다.
 8. 병렬로 하지 말 것: full-run bot 재개, 장기 r400/r800 sweep, 특수 타일 V2-B/C/D 구현.
    - V2-B/C/D는 fresh 데이터 baseline과 현 UI 회귀 검증이 닫힌 뒤 연다.
 
@@ -79,13 +79,13 @@
 
 ## 데이터 재시작 기준
 
-기존 `analysis/leveling` 모델/리포트/메타데이터와 대량 `logs/sim`은 active 판단 경로에서 내린다.
+기존 분석 workspace의 모델/리포트/메타데이터와 대량 `logs/sim`은 active 판단 경로에서 제거한다.
 
-- tracked legacy outputs: `docs/archive/leveling/legacy_ml_outputs_2026_05/`
-- ignored legacy generated artifacts: `analysis/leveling/archive/legacy_pre_20260529/`
+- tracked legacy outputs: 현재 판단 기준 아님
+- ignored legacy generated artifacts: 로컬 폐기 캐시
 - ignored legacy simulation logs: `logs/archive/legacy_pre_20260529/sim/`
 
-새 장기 밸런스, 경제, ML 작업은 archive 데이터를 feature table에 바로 섞지 않고, 현재 runtime/catalog/ruleset/bot policy 기준 fresh run부터 다시 쌓는다.
+새 장기 밸런스와 경제 작업은 폐기된 ML/LLM 산출물을 feature table에 바로 섞지 않는다. ML 작업은 현재 새 자료 축적 경로에서 제외한다.
 
 ## 정책 정화 진행 순서
 
@@ -140,8 +140,7 @@
    - 완료: `market_compass`는 현재 Market의 보이는 Jester/Item 후보 중 1G 이상 최저가 1개에만 `나침반` 할인 배지를 붙인다. 0G 후보에는 적용하지 않는다.
    - 완료: 당시 전체 Item 55개를 `발동 객체 -> 적용 대상 -> 결과` 기준으로 재검토하는 1차 계약표를 `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`에 만들었다. `shop_lens`는 삭제 상태로 두고, 당시 활성 54개는 P0~P3 보강 우선순위로 분류했다.
    - 완료: `ItemPresentationEvent` / `ItemPresentationTarget` transient model 1차와 Market P0 일부 연출을 추가했다. 현재 Market reroll 할인, 구매 할인, `market_compass` 할인은 source -> target -> result toast를 표시하고, 구매 flight의 spent Gold는 실제 Gold 차이 기준으로 보정했다.
-   - 과거 다음 세션 프롬프트: `docs/archive/feature_plan_history/NEXT_SESSION_ITEM_PRESENTATION_PROMPT.md`
-   - 완료: Chrome에서 Market P0 1차 연출을 눈검증했다. `market_compass`의 `나침반` 배지, 구매 시 `나침반 -> 기세 -> 구매가 -1G` source-target-result toast, 실제 Gold 18 -> 16 차감, `slot_unlock_market`의 `shop_lens` 없는 슬롯 해금 상태, Tile Shop `칩 N · 3G`, `런 정보`의 `타일 기준 칩` 표기를 확인했다. 기능뿐 아니라 overflow/잘림/겹침/프레임 누수 기준으로 봤고 미통과 항목은 없었다. 기록: `docs/archive/verification_daily_logs/2026-05-16.md`.
+   - 완료: Chrome에서 Market P0 1차 연출을 눈검증했다. `market_compass`의 `나침반` 배지, 구매 시 `나침반 -> 기세 -> 구매가 -1G` source-target-result toast, 실제 Gold 18 -> 16 차감, `slot_unlock_market`의 `shop_lens` 없는 슬롯 해금 상태, Tile Shop `칩 N · 3G`, `런 정보`의 `타일 기준 칩` 표기를 확인했다. 기능뿐 아니라 overflow/잘림/겹침/프레임 누수 기준으로 봤고 미통과 항목은 없었다.
    - 완료: `trade_ticket`은 보유 Tool source -> Item 후보 영역 target -> 후보 교체 완료 result toast를 표시한다. 기존 lower feedback도 `Item 후보 교체`로 바꿨고, 테스트 중 발견한 Tool/Gear 사용/판매 action pane overflow를 고쳤다. 검증: `game_shop_screen_trade_ticket_test`, `game_shop_screen_test`, targeted analyze, `git diff --check`.
    - 완료: 조건부 사용 no-op 1차를 테스트 우선으로 닫았다. `slide_wax`는 보드 이동 자원이 없으면 `사용 가능한 보드 이동이 없습니다.`로 실패/미소모, `deck_needle`은 덱 확인 대상이 없으면 선택 overlay를 열지 않고 `덱에 확인할 타일이 없습니다.`로 실패/미소모, next-confirm 소모품은 이미 수동 one-shot confirm modifier가 queued이면 `이미 다음 확정 보너스가 준비되어 있습니다.`로 실패/미소모 처리한다.
    - 완료: `GameView` 전투 아이템 UI에서 `undo_seal` 이동 기록 없음, `emergency_draw` 손패 보유 상태 실패가 각각 명시 notice로 보이고 성공 burst가 뜨지 않는지 위젯 테스트로 고정했다.
@@ -178,7 +177,7 @@
 
 ## 4. 공모전 기준 닫힌 작업
 
-상세 체크리스트는 `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`를 따른다.
+상세 체크리스트는 현재 활성 실행 기준이 아니다.
 아래 목록은 현재 실행 순서가 아니라 닫힌 제출 이력이다.
 
 1. 완료: `full_run_bot` `ko` locale 표준 난이도 fresh S1~S8 Boss full-run 통과.
@@ -333,11 +332,11 @@
 | docs 폴더 분류 규칙 | `docs/00_docs_README.md` |
 | 현재 코드 사실과 보호 규칙 | `docs/current_system/*` |
 | 현재 실행 트랙 선택 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` |
-| 공모전 제출 이력 참고 | `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md` |
-| 과거 공모전 제출 handoff | `docs/archive/competition_history_2026_06/NEXT_SESSION_SUBMISSION_HANDOFF_PROMPT.md` |
-| 과거 공모전 full-play bot 제작 기준 | `docs/archive/competition_history_2026_06/COMPUTE_BROWSER_FULL_PLAY_BOT.md` |
+| 공모전 제출 이력 참고 | 현재 활성 기준 아님 |
+| 과거 공모전 제출 handoff | 현재 활성 기준 아님 |
+| 과거 공모전 full-play bot 제작 기준 | 현재 활성 기준 아님 |
 | 실제 Goal 전체 진도 | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` |
 | 장기 레벨링/경제 적용 상태 | `docs/planning/leveling/*` |
-| 과거 V4/migration 순서 lock | `docs/archive/planning_legacy_2026_05/*` |
+| 과거 V4/migration 순서 lock | 현재 활성 기준 아님 |
 
-`docs/archive/planning_legacy_2026_05/*`는 현재 실행 판단 기준이 아니다.
+과거 V4/migration snapshot은 현재 실행 판단 기준이 아니다.

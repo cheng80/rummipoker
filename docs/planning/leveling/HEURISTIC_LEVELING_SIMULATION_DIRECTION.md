@@ -8,15 +8,15 @@
 > 시뮬레이션/휴리스틱 기준: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 > 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 > 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
-> 긴 실험 이력: `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`
+> 긴 실험 이력은 현재 판단 경로에서 제외한다.
 
 ## 용어 정정
 
 - 이 문서와 일부 기존 파일명/도구명의 `ML`은 역사적 이름이다.
 - 현재까지 실제 적용된 것은 supervised model, train/test split, validation metric이 있는 학습 모델이 아니다.
 - 현재 파이프라인은 “시뮬레이션 기반 레벨링 분석”과 “규칙 기반 휴리스틱 라벨링”이다.
-- 기존 `analysis/leveling/` feature table과 RandomForest 리포트는 active workspace에서 내리고 `docs/archive/leveling/legacy_ml_outputs_2026_05/`에 보관한다.
-- 향후 실제 ML 전환 시에는 현재 runtime/catalog/ruleset/bot policy 기준 fresh simulation 결과를 새 feature table로 정리하고, 휴리스틱 라벨은 초기 `silver label`로만 사용한다.
+- 기존 분석 workspace의 feature table과 RandomForest 리포트는 active 판단 경로에서 제거한다.
+- 실제 ML 전환은 현재 계획에서 제외한다. 레벨링은 current 정책과 휴리스틱 시뮬레이션 기준으로만 판단한다.
 - 모델 추천은 런타임 자동 적용이 아니라 후보 추천, 재시뮬레이션 검증, 사람 승인 후 적용 순서로 다룬다.
 
 ## 현재 확정 정책 요약
@@ -32,7 +32,7 @@
 
 ## 과거 실험 해석 주의사항
 
-- `docs/archive/leveling/ML_LEVELING_SIMULATION_DIRECTION_HISTORY.md`는 과거 실험 로그이며 현재 정책 기준이 아니다.
+- 과거 실험 로그는 현재 정책 기준이 아니다.
 - 과거 문서의 `resource`, `sustain`, `voucher_resource`, `resource +1`, `soft_resource` 표현은 당시 sim proxy 이름으로만 본다.
 - 자동 resource +1이 포함된 과거 experiment는 실제 적용 후보가 아니라 폐기/비교용 이력이다.
 - bot 선택은 유저 선택 성향 proxy다. bot이 구매한 결과를 게임이 지급해야 한다는 뜻으로 해석하지 않는다.

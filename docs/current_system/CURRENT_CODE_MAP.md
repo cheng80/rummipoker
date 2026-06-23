@@ -29,11 +29,9 @@
 10. `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
 11. `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 12. `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
-13. `docs/archive/planning_superseded/DOCUMENTATION_CONSOLIDATION_PLAN.md`
-14. `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`
 
 현재 활성 트랙과 다음 작업 선택은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 먼저 따른다.
-`docs/archive/planning_legacy_2026_05/`는 과거 진행 snapshot/compatibility 문서 archive이며, current source of truth가 아니다.
+과거 진행 snapshot/compatibility 문서는 current source of truth가 아니다.
 
 코드 읽기 순서:
 

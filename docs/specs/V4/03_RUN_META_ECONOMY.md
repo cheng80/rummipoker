@@ -7,7 +7,7 @@
 현재 run loop와 economy 수치 상세는 `docs/current_system/CURRENT_BUILD_BASELINE.md`를 기준으로 본다.
 현재 실행 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 기준으로 본다.
 진행 상태와 장기 Goal 판단은 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`, `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`, `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`를 기준으로 본다.
-`docs/archive/planning_legacy_2026_05/MIGRATION_ROADMAP.md`는 과거 migration plan이므로 current 작업 순서의 기준으로 쓰지 않는다.
+과거 migration plan은 current 작업 순서의 기준으로 쓰지 않는다.
 
 ## 1. Current Boundary Reference
 
@@ -74,9 +74,9 @@ Station Preview v1은 현재 `BlindSelectView`를 기준으로 한다.
 - 별도 branch형 Station Map graph는 v1 범위가 아니다.
 - Station modifier는 v1 로그 필드에서 빈 배열로 시작하고, 후속 Station modifier pass에서 채운다.
 
-과거 상세 scope decision은 `docs/archive/feature_plans_2026_04/STATION_PREVIEW_MAP_SCOPE_PLAN.md`에서 검색한다.
+과거 상세 scope decision에서 현재 필요한 원칙은 이 문서에 승격했다.
 
-Boss objective는 장기적으로 visible rule modifier를 포함한다. 과거 Boss modifier taxonomy와 Balatro Boss/Stake reference-only 정리는 `docs/archive/feature_plans_2026_04/BOSS_MODIFIER_TAXONOMY_PLAN.md`에서 검색한다.
+Boss objective는 장기적으로 visible rule modifier를 포함한다. 과거 Boss modifier taxonomy와 Balatro Boss/Stake reference-only 정리에서 현재 필요한 원칙은 이 문서에 승격했다.
 
 ## 4. Station Modifier Contract
 
@@ -132,7 +132,7 @@ Starting deck은 cosmetic deck skin이 아니라 run 시작 규칙 preset으로 
 - resource, slot, tile composition, starting build, scoring formula preset은 서로 다른 축으로 분리한다.
 - tile enhancement / seal / edition류는 starting deck이 아니라 후속 `tile_modifier_id` 또는 Jester/Item edition 후보로 본다.
 
-과거 reference와 ML 필드 후보는 `docs/archive/feature_plans_2026_04/STARTING_DECK_ARCHETYPE_PLAN.md`에서 검색한다.
+과거 reference와 ML 필드 후보는 현재 기준으로 쓰지 않는다.
 
 ## 6. Risk Grade / Trial Contract
 

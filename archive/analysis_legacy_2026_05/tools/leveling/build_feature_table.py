@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_OUT = "analysis/leveling/generated/features/leveling_feature_table.csv"
-DEFAULT_PREOUTCOME_OUT = "analysis/leveling/generated/features/leveling_preoutcome_feature_table.csv"
+DEFAULT_OUT = ".omo/legacy_leveling/generated/features/leveling_feature_table.csv"
+DEFAULT_PREOUTCOME_OUT = ".omo/legacy_leveling/generated/features/leveling_preoutcome_feature_table.csv"
 
 
 NUMERIC_FIELDS = [
@@ -248,7 +248,7 @@ def default_metadata_path(out_path: Path) -> Path:
     parts = out_path.parts
     generated_marker = ("analysis", "leveling", "generated", "features")
     if parts[: len(generated_marker)] == generated_marker:
-        return Path("analysis/leveling/data/features") / out_path.with_suffix(".metadata.json").name
+        return Path(".omo/legacy_leveling/data/features") / out_path.with_suffix(".metadata.json").name
     return out_path.with_suffix(".metadata.json")
 
 
