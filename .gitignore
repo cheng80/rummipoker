@@ -30,12 +30,16 @@
 
 # Local ad-hoc verification artifacts.
 # Keep curated evidence packets commit-able; ignore repeated run logs/screenshots.
+.omo/ultraresearch/
+.omo/visual-qa/
 .omo/evidence/*-analyze.txt
 .omo/evidence/*-cleanup.txt
 .omo/evidence/*-git-diff-check.txt
 .omo/evidence/*-tests.txt
 .omo/evidence/*-fixture-*.png
 .omo/evidence/*-screenshot*.png
+.omo/evidence/*-visual-gate-review.md
+.omo/evidence/*-visual-qa-gate-review.md
 
 ############################################################
 # Node.js
