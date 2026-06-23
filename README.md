@@ -4,7 +4,7 @@
 
 현재는 공모전 제출 트랙을 닫고 post-contest 런타임 고도화를 진행 중입니다. 다음 작업 기준은 [`START_HERE.md`](START_HERE.md)에서 진입한 뒤 [`docs/planning/ACTIVE_EXECUTION_PLAN.md`](docs/planning/ACTIVE_EXECUTION_PLAN.md)의 활성 트랙을 따릅니다.
 
-![루미포커 프로젝트 정보 포스터](docs/project_information_poster.png)
+![루미포커 프로젝트 정보 포스터](docs/release/project_information_poster.png)
 
 ## 현재 초점
 
@@ -56,9 +56,9 @@ lib/
 - [`docs/planning/ACTIVE_EXECUTION_PLAN.md`](docs/planning/ACTIVE_EXECUTION_PLAN.md) — 현재 활성 작업과 다음 실행 순서
 - [`docs/planning/goal/OVERALL_GOAL_PROGRESS.md`](docs/planning/goal/OVERALL_GOAL_PROGRESS.md) — 장기 Goal 진행 상태
 - [`docs/specs/V4/00_README.md`](docs/specs/V4/00_README.md) — V4 기능 명세 진입점
-- [`docs/web_build.md`](docs/web_build.md) — Web 빌드
+- [`docs/release/web_build.md`](docs/release/web_build.md) — Web 빌드
 
-`docs/planning/competition/`은 닫힌 공모전 제출 이력과 증거 참고입니다. `docs/archive/` 문서는 레거시 참고 자료이며, 현재 기준과 충돌하면 실제 `lib/` 코드와 테스트, `AGENTS.md`, `START_HERE.md`, `docs/00_docs_README.md`, `docs/current_system/*`, `docs/specs/*`, `docs/planning/*` 순서로 우선합니다.
+`docs/archive/competition_history_2026_06/`은 닫힌 공모전 제출 이력과 증거 참고입니다. `docs/archive/` 문서는 레거시 참고 자료이며, 현재 기준과 충돌하면 실제 `lib/` 코드와 테스트, `AGENTS.md`, `START_HERE.md`, `docs/00_docs_README.md`, `docs/current_system/*`, `docs/specs/*`, `docs/planning/*` 순서로 우선합니다.
 
 ## 실행
 
@@ -94,4 +94,4 @@ tools/web_build_smoke.sh
 | Android/iOS | `flutter build apk` / `flutter build ios` |
 | Web | `flutter build web --release --base-href "/rummipoker/"` |
 
-→ 상세: [`docs/web_build.md`](docs/web_build.md)
+→ 상세: [`docs/release/web_build.md`](docs/release/web_build.md)

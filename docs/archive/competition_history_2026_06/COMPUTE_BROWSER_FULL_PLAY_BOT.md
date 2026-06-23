@@ -8,7 +8,7 @@
 > 1차 실행 환경: Browser/WebDriver + Compute Use hybrid
 > 2차 보조 환경: Codex 앱 내장 Browser Use
 > 현재 실행 라우터: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
-> 공모전 체크리스트: `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`
+> 공모전 체크리스트: `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`
 
 ## 0. 제작 결론
 

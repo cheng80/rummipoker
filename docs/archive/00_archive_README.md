@@ -16,7 +16,18 @@
 - `generated/`: 병합본, 스냅샷, 자동 생성 산출물
 - `prompts/`: 과거 AI/Codex 지시서와 프롬프트
 - `feature_plans_2026_04/`: 완료되었거나 현재 기준 역할을 잃은 2026-04 feature plan 스냅샷
+- `feature_plan_history/`: planning에서 내려온 과거 feature plan과 prompt
 - `leveling/`: 긴 레벨링 시뮬레이션 이력과 과거 후보 기록
+- `leveling/automation_ml/`: 현재 spec에서 제외한 balance automation/ML 문서
+- `leveling/llm_experiment_history/`: LLM autoplay/setup 실험 문서
+- `leveling/target_curve_history/`: 과거 target curve 계산/brief 문서
+- `competition_history_2026_06/`: 닫힌 공모전 제출 이력과 full-run bot 증거 참고
+- `verification_daily_logs/`: 과거 날짜별 검증 로그
+- `planning_superseded/`: 현재 planning에서 제외한 문서 정리/폴더 설명 snapshot
+- `redundant_build_docs/`: release 문서로 흡수한 중복 build 문서
+- `visual_asset_reviews/`: 특정 시점의 이미지/asset 검수 결과
+- `delete_candidates_after_parity/`: 삭제 전 parity 확인이 필요한 구 앱 자료
+- `docs_reorganization_2026_06/`: 문서 재정리 판정표와 작업 이력
 
 ## Rule
 

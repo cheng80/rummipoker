@@ -12,6 +12,9 @@
 - `current_system`: Context, 현재 코드/시스템 상태와 배경 맥락
 - `specs`: Spec, 기능 규칙, UX, 데이터 계약, 아키텍처 명세
 - `planning`: Execution, 진행 상태, 구현 계획, 체크리스트, 검증 절차
+- `release`: 출시, 빌드, 스토어, 스크린샷, 배포 준비 문서
+- `tools`: 문서/이미지/디자인 제작 도구와 재생성 가능한 프롬프트
+- `archive`: 현재 기준이 아닌 과거 이력, 실험, 삭제 후보 격리
 
 전체 문서 분류 규칙은 [docs/00_docs_README.md](docs/00_docs_README.md)를 먼저 따른다.
 
@@ -64,19 +67,22 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 6. [CURRENT_LEVELING_POLICY.md](docs/current_system/CURRENT_LEVELING_POLICY.md)
 7. [CURRENT_LEVELING_SIMULATION_BASELINE.md](docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md)
 8. [CURRENT_LEVELING_RUNTIME_SPEC.md](docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md)
-9. [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md)
-10. [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md)
-11. [LEVELING_APPLIED_STATUS.md](docs/planning/leveling/LEVELING_APPLIED_STATUS.md)
-12. [ECONOMY_LEVELING_PLAN.md](docs/planning/leveling/ECONOMY_LEVELING_PLAN.md)
-13. [DOCUMENTATION_CONSOLIDATION_PLAN.md](docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md)
-14. [COMPETITION_SUBMISSION_CHECKLIST.md](docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md)
+9. [00_planning_README.md](docs/planning/00_planning_README.md)
+10. [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md)
+11. [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md)
+12. [LEVELING_APPLIED_STATUS.md](docs/planning/leveling/LEVELING_APPLIED_STATUS.md)
+13. [ECONOMY_LEVELING_PLAN.md](docs/planning/leveling/ECONOMY_LEVELING_PLAN.md)
+14. [TEST_QA_ACCEPTANCE.md](docs/planning/verification/TEST_QA_ACCEPTANCE.md)
 
 필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.
 
 - [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md)
 - [13_ITEM_SYSTEM_CONTRACT.md](docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
-- [TEST_QA_ACCEPTANCE.md](docs/planning/verification/TEST_QA_ACCEPTANCE.md)
+- [15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md](docs/specs/V4/15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md)
 - [OPEN_DECISIONS.md](docs/planning/feature_plans/OPEN_DECISIONS.md)
+- [release docs](docs/release/submission_kit/README.md)
+- [tool docs](docs/tools/huashu-design-codex-usage.md)
+- [closed competition archive](docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md)
 - [planning legacy archive](docs/archive/planning_legacy_2026_05/README.md)
 - [deprecated leveling docs archive](docs/archive/leveling/deprecated_2026_05/README.md)
 - [feature plan archive](docs/archive/feature_plans_2026_04/00_feature_plans_2026_04_README.md)
@@ -91,28 +97,31 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 | goals | Goal | `docs/goals/*` | 제품 목표, 방향성, 의사결정 원칙 |
 | current_system | Context | `docs/current_system/*` | 현재 구현 상태, 코드 맵, current-to-target gap, 레벨링 현재 정책 |
 | specs | Spec | `docs/specs/V4/*.md` | 기능별 V4 명세 |
-| planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/competition/*`, `docs/planning/goal/*`, `docs/planning/leveling/*`, `docs/planning/feature_plans/*`, `docs/planning/verification/*` | 현재 실행 라우터, 닫힌 공모전 제출 이력, Goal 진도, 레벨링/경제 상태, 기능별 계획, 검증 절차 |
+| planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/goal/*`, `docs/planning/leveling/*`, 현재 `docs/planning/feature_plans/*`, `docs/planning/verification/*` | 현재 실행 라우터, Goal 진도, 레벨링/경제 상태, 아직 current 판단에 필요한 기능별 계획, 검증 절차 |
+| release | Release | `docs/release/*` | 출시, 빌드, 스토어, 스크린샷, 배포 준비 |
+| tools | Tools | `docs/tools/*` | 도구 사용법, 이미지/카드 asset 생성 기준 |
 | archive | Archive | `docs/archive/*`, generated/prompt/history 문서 | 최신 판단 기준은 아니지만 이력 검색에 사용할 수 있는 참고 자료 |
 
 ## Source of Truth
 
 - 현재 활성 트랙과 다음 작업: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
 - 실제 Goal 전체 진도: `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
-- 공모전 제출 이력과 증거 참고: `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`
 - 레벨링 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 - 경제 계획: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
-- 문서 정리 순서: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
 - Item effect 실행 상태: `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
 - 현행 Jester/Q-Slot/Passive/Tool/Gear 카드 표: `docs/current_system/CURRENT_CARD_CATALOG_TABLE.md`
 - Item/Jester/덱빌딩 정책 계약: `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`
+- archive에서 승격한 장기 정책 요약: `docs/specs/V4/15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md`
 - Item policy cleanup audit: `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`
 - Item effect 연출 계약: `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`
-- Item effect 다음 세션 프롬프트: `docs/planning/feature_plans/NEXT_SESSION_ITEM_PRESENTATION_PROMPT.md`
 - 레벨링 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
 - 레벨링 시뮬레이션/휴리스틱 기준값: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
 - 레벨링 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
 - 현재 코드 설명과 작업 재개 기준: `docs/current_system/*`
 - 기능 명세: `docs/specs/V4/*`
+- 출시/빌드/스토어 준비: `docs/release/*`
+- 도구/asset 생성 기준: `docs/tools/*`
+- 공모전 제출 이력과 증거 참고: `docs/archive/competition_history_2026_06/`
 - 과거 V4 진행 snapshot: `docs/archive/planning_legacy_2026_05/`
 - 과거 ML/레벨링 호환 안내: `docs/archive/leveling/deprecated_2026_05/`
 - 과거 참고: `docs/archive/*`
@@ -166,4 +175,4 @@ web 저장/라우팅/입력 경계가 바뀌면 아래 스크립트를 먼저 �
 
 - `tools/web_build_smoke.sh`
 
-의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md), [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md) 또는 해당 source-of-truth 문서에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에 남긴다.
+의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md), [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md) 또는 해당 source-of-truth 문서에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 `docs/archive/verification_daily_logs/YYYY-MM-DD.md` 날짜별 파일에 남긴다.

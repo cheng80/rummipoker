@@ -15,7 +15,7 @@
 
 - 이 문서의 기존 1~6단계는 공모전 기준으로 “임시 handoff 가능” 상태다.
 - ML 갱신, production ML, 장기 밸런스 최종화는 제출 전 필수 gate가 아니다.
-- 지금 활성 작업은 7번 “공모전 기준 남은 작업 재개”이며, 세부 순서는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`의 Competition Prototype Track을 따른다.
+- 지금 활성 작업은 7번 “공모전 기준 남은 작업 재개”이며, 세부 순서는 `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`의 Competition Prototype Track을 따른다.
 - 기능 구현 체크만으로 닫지 않는다. 자연 full-play, 최신 web build, 브라우저 콘솔, 도감 실물 카드 표시, 게임오버 재도전 유도력, 플레이 영상 촬영 가능성을 별도 제출 gate로 본다.
 
 이 문서가 남아 있는 동안 아래 순서를 바꾸지 않는다.

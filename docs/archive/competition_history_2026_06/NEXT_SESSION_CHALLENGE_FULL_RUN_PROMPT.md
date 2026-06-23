@@ -24,9 +24,9 @@
 먼저 읽을 문서:
 - START_HERE.md
 - docs/planning/ACTIVE_EXECUTION_PLAN.md
-- docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md
-- docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md
-- docs/planning/competition/NEXT_SESSION_CHALLENGE_FULL_RUN_PROMPT.md
+- docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md
+- docs/archive/competition_history_2026_06/COMPUTE_BROWSER_FULL_PLAY_BOT.md
+- docs/archive/competition_history_2026_06/NEXT_SESSION_CHALLENGE_FULL_RUN_PROMPT.md
 
 최근 표준 fresh pass 증거:
 - 로그: /tmp/rummipoker_contest_full_run_bot/fresh_after_reward_tile_rules_20260509_201727/10_contest_full_run_bot.log
@@ -45,7 +45,7 @@
 
 이번 세션 첫 작업 순서:
 1. git status --short, git log -3 --oneline으로 시작한다.
-2. `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`의 “0.1 최근 24시간 이내 추가 항목과 검증 대기 목록”을 먼저 확인한다.
+2. `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`의 “0.1 최근 24시간 이내 추가 항목과 검증 대기 목록”을 먼저 확인한다.
    - 족보 성장 UI/점수 반영
    - 행성카드형 성장 아이템
    - 초과 점수 기반 대표 족보 성장
@@ -95,7 +95,7 @@
 - 덱 추가, 히든 족보 V1, 보스 클리어 덱 타일 보상: 구현/테스트 완료. 표준 fresh full-run에서도 덱 증가 확인됨.
 - S8 boss 이후 `무한 도전 진입`, S9+ Station Select/전투 HUD/정산 라벨 위험 색상, target 비율: 구현/테스트/눈검증 완료.
 - 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런`: 구현/커밋 완료.
-- `docs/submission_kit/` 제출 문서 세트, Android signing/key.properties 예시, 플랫폼별 빌드 가이드, store metadata: 문서화 완료.
+- `docs/release/submission_kit/` 제출 문서 세트, Android signing/key.properties 예시, 플랫폼별 빌드 가이드, store metadata: 문서화 완료.
 - 인앱 리뷰는 store id가 없으면 진입 메뉴 버튼을 숨기는 방향으로 반영됨.
 - 전투/마켓 튜토리얼은 `tutorial_coach_mark`로 구현. 자동 튜토리얼은 끝까지 완료된 경우만 seen 저장, skip/focus-out/options 진입은 다음에 다시 뜨게 한다.
 - 튜토리얼 최신 보정: focus 위치/크기를 FittedBox 변환 후 실제 화면 좌표로 계산하고, 창 크기 변경 시 현재 step 유지 후 overlay 재생성. `flutter analyze`, 핵심 widget test, `flutter build web` 통과. 남은 항목은 Browser/기기에서 리사이즈 후 크기 눈검증.
@@ -126,8 +126,8 @@
 
 완료 시 해야 할 일:
 - docs/planning/ACTIVE_EXECUTION_PLAN.md 업데이트
-- docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md 업데이트
-- docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md 업데이트
+- docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md 업데이트
+- docs/archive/competition_history_2026_06/COMPUTE_BROWSER_FULL_PLAY_BOT.md 업데이트
 - 필요 시 AGENTS.md에 재발 방지 규칙 추가
 - 테스트/빌드/풀런 로그 경로를 응답에 남긴다.
 - 변경 내용을 커밋/푸시한다.

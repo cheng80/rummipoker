@@ -72,7 +72,7 @@ NAS 웹서버에 `deploy_rummipoker.php`를 올린 뒤, 로컬에서 빌드/압�
 tools/deploy_rummipoker_web.sh
 ```
 
-배포 토큰 생성, `.env` 작성, NAS 서버측 env 파일 작성법은 `docs/rummipoker_nas_deploy.md`를 따릅니다.
+배포 토큰 생성, `.env` 작성, NAS 서버측 env 파일 작성법은 `docs/release/rummipoker_nas_deploy.md`를 따릅니다.
 
 **방법 B: Nginx/Apache 등 직접 설정 가능한 서버**
 
@@ -106,7 +106,7 @@ Alias /rummipoker /path/to/build/web
 ### 로컬 확인
 
 개발 서버에서 debug fixture를 켜고 고정 포트로 눈검증하는 절차는
-`docs/submission_kit/WEB_BUILD_GUIDE.md`의 "고정 포트 Chrome 눈검증"을 따른다.
+`docs/release/submission_kit/WEB_BUILD_GUIDE.md`의 "고정 포트 Chrome 눈검증"을 따른다.
 
 빌드 후 로컬에서 서브패스 동작을 확인하려면:
 

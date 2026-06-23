@@ -215,7 +215,7 @@ Boss 220%: 성장 +1, +2G
 
 현재 결정:
 
-- `docs/planning/feature_plans/OVERKILL_HAND_GROWTH_PROGRESS_PLAN.md`에 위 규칙을 반영했다.
+- `docs/archive/feature_plan_history/OVERKILL_HAND_GROWTH_PROGRESS_PLAN.md`에 위 규칙을 반영했다.
 - 추가 골드가 너무 자주 크게 나오면 cap을 두기보다 target score가 낮다는 신호로 보고 target/boss/economy 레벨링을 다시 본다.
 - `RummiCashOutBreakdown.overkillGoldBonus`와 settlement read model의 `overkillGoldBonus` 라인을 추가해 구현까지 닫았다.
 - 검증: `rummi_overkill_growth_test`, `rummi_settlement_facade_test`, targeted `flutter analyze`.

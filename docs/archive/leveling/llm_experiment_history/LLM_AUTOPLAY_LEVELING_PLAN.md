@@ -105,7 +105,7 @@ P1 execution:
 3. `planner_v3`, `full_run_policy_v1` 같은 seed 비교
 4. invalid/fallback/latency/clear/score/turn count 리포트 생성
 
-로컬 LLM 서버와 모델 세팅은 `docs/planning/leveling/LLM_LOCAL_SETUP_PLAN.md`를 따른다.
+로컬 LLM 서버와 모델 세팅은 `docs/archive/leveling/llm_experiment_history/LLM_LOCAL_SETUP_PLAN.md`를 따른다.
 
 P2 learning data:
 

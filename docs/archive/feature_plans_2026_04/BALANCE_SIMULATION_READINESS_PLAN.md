@@ -3,7 +3,7 @@
 > GCSE role: `Execution`
 > Role: `/plan-eng-review` 입력용 실행 범위 정리.
 
-이 문서는 `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md`를 바로 구현 지시로 쓰기 전에, 첫 simulator skeleton의 범위를 작게 고정하기 위한 계획이다.
+이 문서는 `docs/archive/leveling/automation_ml/14_BALANCE_AUTOMATION_ML.md`를 바로 구현 지시로 쓰기 전에, 첫 simulator skeleton의 범위를 작게 고정하기 위한 계획이다.
 
 ## 0. Source Basis
 
@@ -13,7 +13,7 @@
 - `docs/planning/legacy/STATUS.md`: 다음 구현 초점은 `balance simulation readiness`다.
 - `docs/planning/legacy/MIGRATION_ROADMAP.md`: V4는 current prototype을 교체하지 않고 흡수/확장한다.
 - `docs/planning/feature_plans/OPEN_DECISIONS.md`: Balance Automation은 Flutter UI 자동 클릭이 아니라 Dart game logic simulator + bot policy + JSONL 로그 구조다.
-- `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md`: `RummiPokerGridSession`, `HandEvaluator`, Jester effect, Item effect를 CLI/test harness에서 반복 실행하는 방향이다.
+- `docs/archive/leveling/automation_ml/14_BALANCE_AUTOMATION_ML.md`: `RummiPokerGridSession`, `HandEvaluator`, Jester effect, Item effect를 CLI/test harness에서 반복 실행하는 방향이다.
 - `/office-hours` design doc: 첫 deliverable은 local Dart CLI 개발 도구이며, raw log는 git에 넣지 않는다.
 
 따라서 이 pass의 성격은 새 게임 구조 설계가 아니라, 현재 런타임이 UI 없이 반복 호출될 수 있는지 확인하는 준비 작업이다.
@@ -172,7 +172,7 @@ turn_count
 - `lib/logic/rummi_poker_grid/item_effect_runtime.dart`
 - `lib/services/blind_selection_setup.dart`
 - `lib/services/active_run_save_service.dart`
-- `docs/specs/V4/14_BALANCE_AUTOMATION_ML.md`
+- `docs/archive/leveling/automation_ml/14_BALANCE_AUTOMATION_ML.md`
 
 ### Candidate files to create
 

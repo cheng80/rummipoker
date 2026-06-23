@@ -1,7 +1,7 @@
 # LLM Local Setup Plan
 
 > Status: Draft
-> Parent: `docs/planning/leveling/LLM_AUTOPLAY_LEVELING_PLAN.md`
+> Parent: `docs/archive/leveling/llm_experiment_history/LLM_AUTOPLAY_LEVELING_PLAN.md`
 
 ## 목적
 

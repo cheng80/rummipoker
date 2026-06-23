@@ -2,7 +2,7 @@
 
 > 문서 성격: 기능별 V4 명세 색인
 > GCSE 역할: `Spec`
-> 범위: 전투, 런/경제, 콘텐츠, 저장, UI, 아키텍처, 용어, 아이템, 밸런스 자동화 계약
+> 범위: 전투, 런/경제, 콘텐츠, 저장, UI, 아키텍처, 용어, 아이템, archive 승격 정책
 
 `docs/specs/V4/`는 V4의 기능 계약을 기능 영역별로 나눈 폴더다.
 
@@ -31,7 +31,7 @@
 | `07_TECHNICAL_ARCHITECTURE.md` | 현재 코드 경계와 목표 아키텍처 |
 | `10_TERMINOLOGY_ALIAS.md` | 용어 정책과 코드 리네임 원칙 |
 | `13_ITEM_SYSTEM_CONTRACT.md` | Item UI 계약, 도메인 모델, 화면 정보 구조 |
-| `14_BALANCE_AUTOMATION_ML.md` | 자동 시뮬레이션 로그와 밸런스 예측 파이프라인 후보 |
+| `15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md` | archive 원문에서 현재 정책으로 승격한 디자인/보스/Jester/Item 확장 원칙 |
 
 ## 3. 다른 폴더로 분리한 문서
 
@@ -43,6 +43,7 @@
 | legacy migration roadmap | `docs/archive/planning_legacy_2026_05/MIGRATION_ROADMAP.md` |
 | Test/QA acceptance | `docs/planning/verification/TEST_QA_ACCEPTANCE.md` |
 | open decisions / experiments | `docs/planning/feature_plans/OPEN_DECISIONS.md` |
+| balance automation / ML experiment | `docs/archive/leveling/automation_ml/14_BALANCE_AUTOMATION_ML.md` |
 | V3 -> V4 changelog | `docs/archive/legacy/V4_CHANGELOG_FROM_V3.md` |
 | V4 master summary | `docs/archive/generated/V4_MASTER_SPEC.md` |
 

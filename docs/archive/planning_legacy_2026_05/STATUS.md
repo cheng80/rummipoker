@@ -6,7 +6,7 @@
 > 실제 Goal 진도 source of truth: `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
 > 레벨링 source of truth: `docs/current_system/CURRENT_LEVELING_POLICY.md`, `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`, `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 
-이 문서는 과거 V4 진행 스냅샷으로 남아 있으며, 현재 최신 작업 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 따른다. 이전 상세 체크리스트는 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색하고, 검증/산출물 이력은 `docs/planning/verification/daily_logs/YYYY-MM-DD.md` 날짜별 파일에서 검색한다.
+이 문서는 과거 V4 진행 스냅샷으로 남아 있으며, 현재 최신 작업 순서는 `docs/planning/ACTIVE_EXECUTION_PLAN.md`를 따른다. 이전 상세 체크리스트는 `docs/archive/legacy/V4_STATUS_HISTORY_2026-04-22.md`에서 검색하고, 검증/산출물 이력은 `docs/archive/verification_daily_logs/YYYY-MM-DD.md` 날짜별 파일에서 검색한다.
 
 ## 1. Status Summary
 
@@ -75,7 +75,7 @@
 - `tools/ios_sim_smoke.sh`
 - `tools/web_build_smoke.sh`
 
-검증/산출물 이력은 `docs/planning/verification/daily_logs/`의 날짜별 파일에 남긴다.
+검증/산출물 이력은 `docs/archive/verification_daily_logs/`의 날짜별 파일에 남긴다.
 
 최근 iOS smoke:
 
@@ -84,11 +84,11 @@
 - 2026-04-25 추가: `inventory_sell_hook_shop` fixture에서 `jester_hook` 판매가 `+3` 표시, `inventory_quick_slot_battle` fixture에서 `spare_pouch` quick slot 3칸 표시 확인.
 - 2026-04-25 추가: `safety_net_expiry_guard` fixture에서 Safety Net 보유와 보드가 꽉 찬 종료 위기 상태 확인. 구조 feedback은 provider test로 확인하고, snackbar는 필요 시 수동 eye-check 대상이다.
 - 2026-04-26 추가: `inventory_quick_slot_battle` fixture에서 Q1-Q3/P1-P2 분리, Q/P 잠금 표시, item name 2줄 표시 확인. `inventory_sell_hook_shop` fixture에서 Jester 5th 잠금과 Item Slot Q3/P2 잠금 표시 확인.
-- 2026-04-27 추가: market/battle slot tabs 정리 후 default launch, `inventory_sell_hook_shop`, `inventory_quick_slot_battle` iOS smoke 통과. Battle HUD blind label, Jester/item shared card sizing, rarity bars, item card face color, selected slot frame, and centered item count badge follow-up까지 반영. 산출물은 `docs/planning/verification/daily_logs/2026-04-27.md` 참고.
-- 2026-04-28 추가: Home/New Run/Blind Select 시작 화면 정보량 축소 후 default launch, `/new-run`, `/blind-select?seed=12345&difficulty=standard` iOS smoke 통과. Blind Select는 3개 card가 한 화면에 들어오고, 시작 액션은 card 전체 tap이 아닌 play button으로 분리됐다. 산출물은 `docs/planning/verification/daily_logs/2026-04-28.md` 참고.
-- 2026-04-30 추가: Balatro-style scoring feedback 리뷰용 iOS smoke 통과. `inventory_quick_slot_battle`, `stage2_market_resume`, `stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1` route를 iPhone 17에서 확인했다. 산출물은 `docs/planning/verification/daily_logs/2026-04-30.md` 참고.
-- 2026-04-30 추가: scoring feedback P0 구현 후 required iOS smoke 재실행 통과. `inventory_quick_slot_battle`, `stage2_market_resume`, `stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1` route를 iPhone 17에서 확인했다. 산출물은 `docs/planning/verification/daily_logs/2026-04-30.md` 참고.
-- 2026-04-30 추가: `slide_wax` runtime hook, full loop/save-restore boundary recheck, Market -> Blind Select transition affordance 적용 후 targeted tests와 iOS auto loop smoke가 통과했다. 산출물은 `docs/planning/verification/daily_logs/2026-04-30.md` 참고.
+- 2026-04-27 추가: market/battle slot tabs 정리 후 default launch, `inventory_sell_hook_shop`, `inventory_quick_slot_battle` iOS smoke 통과. Battle HUD blind label, Jester/item shared card sizing, rarity bars, item card face color, selected slot frame, and centered item count badge follow-up까지 반영. 산출물은 `docs/archive/verification_daily_logs/2026-04-27.md` 참고.
+- 2026-04-28 추가: Home/New Run/Blind Select 시작 화면 정보량 축소 후 default launch, `/new-run`, `/blind-select?seed=12345&difficulty=standard` iOS smoke 통과. Blind Select는 3개 card가 한 화면에 들어오고, 시작 액션은 card 전체 tap이 아닌 play button으로 분리됐다. 산출물은 `docs/archive/verification_daily_logs/2026-04-28.md` 참고.
+- 2026-04-30 추가: Balatro-style scoring feedback 리뷰용 iOS smoke 통과. `inventory_quick_slot_battle`, `stage2_market_resume`, `stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1` route를 iPhone 17에서 확인했다. 산출물은 `docs/archive/verification_daily_logs/2026-04-30.md` 참고.
+- 2026-04-30 추가: scoring feedback P0 구현 후 required iOS smoke 재실행 통과. `inventory_quick_slot_battle`, `stage2_market_resume`, `stage2_scoring_snapshot&auto_cashout_loop=1&auto_enter_market=1&auto_advance_market=1` route를 iPhone 17에서 확인했다. 산출물은 `docs/archive/verification_daily_logs/2026-04-30.md` 참고.
+- 2026-04-30 추가: `slide_wax` runtime hook, full loop/save-restore boundary recheck, Market -> Blind Select transition affordance 적용 후 targeted tests와 iOS auto loop smoke가 통과했다. 산출물은 `docs/archive/verification_daily_logs/2026-04-30.md` 참고.
 - 확인 필요: title launch에서 iOS in-app review prompt가 화면을 가림. item bonus row leading label `I`는 추후 product/design 판단 가능.
 
 ## 4. Recommended Reading
@@ -107,7 +107,7 @@
 9. `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
 10. `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
 11. `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
-12. `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md`
+12. `docs/archive/planning_superseded/DOCUMENTATION_CONSOLIDATION_PLAN.md`
 13. `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
 
 필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니라 과거 참고다.

@@ -45,7 +45,7 @@
 - 2026-05-10 검증: `flutter analyze`, 핵심 `flutter test`, `flutter build web` 통과.
 - 2026-05-10 Browser/CDP smoke: `/`, `/new-run`, `/archive`, `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`, `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1` 모두 앱 warn/error/exception 0건. Headless Chrome의 `Falling back to CPU-only rendering`은 WebGL 없는 headless 환경 경고라 앱 경고로 집계하지 않는다.
 - 2026-05-10 추가 검증: 무한 도전 target 산식, S9+ Station Select 표시, 전투 HUD 무한 라벨, 정산 무한 라벨/CTA 테스트와 `flutter build web` 통과.
-- 2026-05-10 추가 작업: 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런`을 적용했고, `docs/submission_kit/`에 플랫폼별 빌드/스토어/튜토리얼/인앱 리뷰 문서를 정리했다.
+- 2026-05-10 추가 작업: 타이틀 로고 이미지와 서브타이틀 `타일로 만드는 포커 런`을 적용했고, `docs/release/submission_kit/`에 플랫폼별 빌드/스토어/튜토리얼/인앱 리뷰 문서를 정리했다.
 - 2026-05-10 튜토리얼: `showcaseview` 대신 `tutorial_coach_mark` 기반 전투/마켓 첫 설명과 다시 보기를 구현했다. 옵션/포커스 아웃 시 overlay가 위에 남지 않게 닫고, FittedBox 변환 뒤 실제 화면 rect로 focus 위치/크기를 계산하도록 보정했다. Browser/기기 리사이즈 후 focus 위치/크기 눈검증도 완료했다.
 - 2026-05-10 `ko` 표준 locale gate: `locale=ko`, `resolvedLocale=ko`, `freshStorage=true`, 첫 battle/market tutorial completed, S8 boss 정산 `951/3 -> 778/2 -> 246/1`, 목표 `1739` 통과, S2 `deck=53`부터 S8 `deck=59`까지 증가, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
 - 2026-05-10 `ko` 도전 locale gate: `locale=ko`, `resolvedLocale=ko`, `freshStorage=true`, `difficulty=challenge`, `--tutorials-already-seen`으로 같은 locale cycle의 tutorial seen 상태 유지, S8 small `1622/2 -> 230/1` 목표 `1729` 통과, S8 big `1009/2 -> 1032/2 -> 368/1` 목표 `2086` 통과, S8 boss `1010/3 -> 869/2 -> 312/1` 목표 `2087` 통과, S8 시작 `deck=59`, game over/retry/Flutter semantics warning/UI overflow/error/warn 0건.
@@ -109,7 +109,7 @@
   - 구현 상태: 이미지 로고를 적용하고 서브타이틀을 `타일로 만드는 포커 런`으로 고정했다.
   - 검증: `title_view_test`, `flutter analyze`, `flutter build web` 기준으로 확인. 최종 스토어용 스크린샷은 별도 촬영 필요.
 - [x] submission kit 문서 세트
-  - 구현 상태: `docs/submission_kit/`에 플랫폼별 빌드 가이드, release checklist, store metadata, promo copy, tutorial plan, in-app review guide를 정리했다.
+  - 구현 상태: `docs/release/submission_kit/`에 플랫폼별 빌드 가이드, release checklist, store metadata, promo copy, tutorial plan, in-app review guide를 정리했다.
   - 검증: 문서 구조와 old doc 흡수 범위 확인. 이번 웹 제출 기준에서는 문서화로 닫고, 실제 Android/iOS release artifact 생성은 해당 플랫폼 제출 시 별도 gate로 둔다.
 - [x] 인앱 리뷰 store id gate
   - 구현 상태: market id/store id가 없으면 진입 메뉴의 인앱 리뷰 버튼이 보이지 않게 처리했다.
@@ -209,7 +209,7 @@ Known risk / 공모전 이후 검토:
 - 세부 레벨링 재조정보다 플레이 가능성, 이해도, 제출 안정성을 우선한다.
 - 도감, 보상 카드, 해금 확인 흐름은 공모전 이해도에 필요한 항목으로 본다. 필요하면 UI와 저장 구조 변경도 구현 대상으로 올린다.
 - 완료 체크는 기능 존재만으로 닫지 않는다. 게임완성도, 심미성, 재미도, full-play bot 증거, 최신 제출 후보 빌드 기준으로 다시 본다.
-- full-play bot 제작 기준은 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`를 따른다.
+- full-play bot 제작 기준은 `docs/archive/competition_history_2026_06/COMPUTE_BROWSER_FULL_PLAY_BOT.md`를 따른다.
 
 ## 2. 공모전 마감 재점검
 
@@ -391,7 +391,7 @@ Status: Closed for submission handoff
 - 이전 `127.0.0.1:7360` 서버는 stale 문자열을 보여줄 수 있으므로, 제출 전 확인은 최신 빌드 또는 새로 띄운 서버 기준으로 한다.
 - `127.0.0.1:7361` Browser Use full route QA 후 `tab.dev.logs` 기준 error/warn 0건을 확인했다.
 - 이후 도감/게임오버/수집 저장 변경 뒤 제출 후보 build와 browser QA를 다시 닫았다.
-- 2026-05-08 기준 공모전 full-play QA는 사람 수동 플레이가 아니라 `docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid bot 기준으로 닫는다.
+- 2026-05-08 기준 공모전 full-play QA는 사람 수동 플레이가 아니라 `docs/archive/competition_history_2026_06/COMPUTE_BROWSER_FULL_PLAY_BOT.md`의 Browser/WebDriver + Compute Use hybrid bot 기준으로 닫는다.
 - 2026-05-08 `contest_full_run_bot`은 checkpoint/resume 기반으로 S8 boss까지 클리어했고, 과거 pass 로그는 `/tmp/rummipoker_contest_full_run_bot/resume_s8_boss_final_pass/10_contest_full_run_bot.log`다.
 - 과거 pass 로그에는 `S8 boss: used battle Item slide_wax op=mark_next_board_move_bonus`, `game over -> retry 1/24`, `All tests passed.`가 포함된다.
 - 2026-05-09 최신 보정 후보 로그는 `/tmp/rummipoker_contest_full_run_bot/resume_s8_shop_boss_score_weight_20260509_140900/10_contest_full_run_bot.log`다.

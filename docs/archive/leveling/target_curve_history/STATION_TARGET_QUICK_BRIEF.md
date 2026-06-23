@@ -3,7 +3,7 @@
 > 문서 성격: 개별 확인용 핵심 축약
 > 최신 기준일: 2026-05-19
 > 상세 기준: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-> 변경 노트: `docs/planning/leveling/STATION_TARGET_LOG_CURVE_2026_05_19.md`
+> 변경 노트: `docs/archive/leveling/target_curve_history/STATION_TARGET_LOG_CURVE_2026_05_19.md`
 
 ## 한 줄 결론
 

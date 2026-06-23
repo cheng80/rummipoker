@@ -2,7 +2,7 @@
 
 ## 목적
 
-Android Play Store 제출 후보 빌드 절차다. Android 빌드만 진행할 때는 이 문서 하나만 보면 된다. `docs/old_doc_data/ANDROID_GRADLE_MIGRATION.md`의 과거 앱 package, signing, icon 설정은 그대로 가져오지 않는다.
+Android Play Store 제출 후보 빌드 절차다. Android 빌드만 진행할 때는 이 문서 하나만 보면 된다. `docs/archive/delete_candidates_after_parity/old_doc_data/ANDROID_GRADLE_MIGRATION.md`의 과거 앱 package, signing, icon 설정은 그대로 가져오지 않는다.
 
 ## 공통 준비
 

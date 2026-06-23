@@ -80,12 +80,12 @@
 | 문서 | 현재 역할 | 정리 판단 |
 |---|---|---|
 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` | 현재 활성 트랙과 다음 작업 source-of-truth | 유지 |
-| `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | 공모전 제출 실행표 | 유지 |
+| `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md` | 공모전 제출 실행표 | 유지 |
 | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | 전체 Goal 진도와 장기 track | 유지 |
 | `docs/planning/leveling/LEVELING_APPLIED_STATUS.md` | 레벨링 적용 상태 | 유지 |
 | `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md` | 경제 레벨링 실행 계획 | 유지, probe 완료/미완료 상태 갱신 필요 |
 | `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` | ML 명칭 정정 후 active summary | 유지 |
-| `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md` | 문서 정리 작업 계획 | 이번 정리 이력으로 유지 |
+| `docs/archive/planning_superseded/DOCUMENTATION_CONSOLIDATION_PLAN.md` | 문서 정리 작업 계획 | 이번 정리 이력으로 유지 |
 | `docs/planning/feature_plans/ANIMATION_EFFECTS_PLAN.md` | 연출 작업 계획 | 출품 큐와 연결해 유지 |
 | `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md` | Item hook 적용 상태 | 유지 |
 | `docs/planning/feature_plans/OPEN_DECISIONS.md` | 열린 결정 목록 | 검토 후 current open decision만 남김 |
@@ -111,9 +111,9 @@
 | 주제 | 기준 문서 | 보조/이력 |
 |---|---|---|
 | 새 세션 진입 경로 | `START_HERE.md` | `docs/00_docs_README.md` |
-| 현재 실행 트랙과 다음 작업 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` | `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md` |
+| 현재 실행 트랙과 다음 작업 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` | `docs/archive/planning_superseded/DOCUMENTATION_CONSOLIDATION_PLAN.md` |
 | 실제 Goal 전체 진도 | `docs/planning/goal/OVERALL_GOAL_PROGRESS.md` | `docs/goals/V4_PRODUCT_GOAL.md` |
-| 공모전 제출 실행표 | `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md` | browser/compute QA 기록 |
+| 공모전 제출 실행표 | `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md` | browser/compute QA 기록 |
 | 레벨링 정책 | `docs/current_system/CURRENT_LEVELING_POLICY.md` | `docs/archive/leveling/` |
 | 런타임 target/boss/market 표 | `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md` | `docs/planning/leveling/LEVELING_APPLIED_STATUS.md` |
 | 시뮬레이션/휴리스틱 기준 | `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md` | `docs/planning/leveling/HEURISTIC_LEVELING_SIMULATION_DIRECTION.md` |
@@ -127,7 +127,7 @@
 
 | 후보 | 이유 | 선행 확인 |
 |---|---|---|
-| 오래된 `docs/planning/verification/daily_logs/` | 검증 이력은 필요하지만 current planning를 흐릴 수 있음 | latest QA만 current에 요약됐는지 확인 |
+| 오래된 `docs/archive/verification_daily_logs/` | 검증 이력은 필요하지만 current planning를 흐릴 수 있음 | latest QA만 current에 요약됐는지 확인 |
 
 ## 7. 완료 조건
 

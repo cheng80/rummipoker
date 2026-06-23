@@ -38,7 +38,7 @@
 
 현재 재개 순서:
 
-1. 완료: `docs/planning/feature_plans/TILE_MODIFIER_V1_V2_PLAN.md` 기준 특수 타일 V1 구현.
+1. 완료: `docs/archive/feature_plan_history/TILE_MODIFIER_V1_V2_PLAN.md` 기준 특수 타일 V1 구현.
 2. 완료: modifier 없는 기존 저장 호환과 modifier 포함 저장/복원/전투/마켓 표시 검증.
 3. 완료: 특수 타일 V2-A 판본 1차 구현과 저장/마켓/정산/badge 검증.
 4. 완료: runtime state와 transient presentation state 분리 1차.
@@ -75,7 +75,7 @@
 
 전체 추정 진도: 42%
 
-공모전 제출 트랙: Closed / off. 상세 증거는 `docs/planning/competition/`에서만 참고한다.
+공모전 제출 트랙: Closed / off. 상세 증거는 `docs/archive/competition_history_2026_06/`에서만 참고한다.
 
 주의:
 
@@ -135,7 +135,7 @@ ML/분석 상태:
 - `ko`, `en` 표준/도전 S1~S8 Boss full-run과 최신 `ko` 재확인을 통과했다.
 - 제출 전 상점 회귀, 용어 UX, web BGM, 정산 overlay, 튜토리얼, 도감/보상/새 run 복귀 관련 주요 결함은 당시 기준으로 닫았다.
 - `ja`, `zh-CN`, `zh-TW` full-run과 S9+ 장기 생존은 제출 gate가 아니라 필요 시 여는 추가 검증 후보다.
-- 상세 로그, bot 조건, 제출 증거는 `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 공모전 이력 섹션에서만 참고한다.
+- 상세 로그, bot 조건, 제출 증거는 `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`와 `docs/planning/ACTIVE_EXECUTION_PLAN.md`의 공모전 이력 섹션에서만 참고한다.
 
 현재 Goal 판단에는 공모전 퍼센트나 출품 일정표를 쓰지 않는다. 이후 작업은 post-contest 런타임 고도화, 장기 밸런스, meta growth, 자연 full-play QA 기준으로 수렴한다.
 
@@ -190,7 +190,7 @@ Status: In progress / source-of-truth cleanup still open
 현재 남은 일:
 
 - `START_HERE.md`의 먼저 읽을 문서와 Source of Truth를 현재 문서 체계와 맞춘다.
-- 문서 inventory 작성: `docs/planning/DOCUMENTATION_CONSOLIDATION_PLAN.md` 기준.
+- 문서 inventory 작성: `docs/archive/planning_superseded/DOCUMENTATION_CONSOLIDATION_PLAN.md` 기준.
 - current 문서와 archive 문서의 경계 정리.
 - 중복 planning 문서 통합 또는 archive 이동은 `START_HERE.md` 참조와 필요한 내용 승격을 확인한 뒤 진행한다.
 - 다음 작업 큐가 `OVERALL_GOAL_PROGRESS.md` 기준으로 읽히도록 갱신하되, 실제 ML 이행을 공모전 작업 앞에 유지한다.

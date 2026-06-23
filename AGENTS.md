@@ -386,6 +386,7 @@
 - 장기 밸런스/경제/ML 작업을 재개할 때는 구 시뮬레이션 row, 구 ML feature table, 구 추천 리포트를 현재 판단 근거로 바로 재사용하지 않는다. 먼저 현재 runtime/catalog/ruleset/bot policy/feature schema와 산출 시점의 차이를 감사하고, 재사용 등급을 `historical prior`, `schema reusable`, `fresh rerun required`처럼 나눈 뒤 fresh resimulation 또는 재학습 필요 여부를 결정한다.
 - 예정 연출 큐 마무리는 장기 밸런스/경제/ML 재검증과 같은 항목으로 묶지 않는다. transient presentation state와 timing/cue/눈검증 기준으로 별도 트랙에서 닫고, ML/레벨링 작업은 구 산출물 archive 후 fresh 데이터셋을 새로 쌓는 흐름으로 시작한다.
 - 더 이상 현재 작업에서 쓰지 않는 구 plan, deprecated compatibility, 과거 migration/status 문서는 `docs/planning/`이나 `docs/current_system/`에 남겨 현재 기준처럼 보이게 하지 않는다. 필요한 참조를 current 문서로 승격한 뒤 `docs/archive/` 하위로 옮기고, `START_HERE.md`와 source-of-truth map의 링크를 함께 갱신한다.
+- `docs/archive/` 하위 문서를 정리하거나 보고서에서 분류할 때는 경로만 보고 단순 archive로 확정하지 않는다. 먼저 `START_HERE.md`, `README.md`, `docs/00_docs_README.md`, `docs/current_system/`, `docs/specs/`, `docs/planning/`, 코드/테스트에서 해당 문서를 현재 기준·보조 reference·historical prior 중 무엇으로 참조하는지 비교한 뒤, 실제로 current 문서로 승격해야 할 내용이 남아 있는지 명시한다.
 - 새 아이템 family나 덱빌딩 축을 설계할 때는 1차 구현 후보만 적어 후보군을 좁히지 않는다. Balatro 등 외부 참고 축은 taxonomy로만 쓰고, Rummi Poker 자체 보드 라인, `addedDeckTiles`, 타일 modifier, 족보 성장, 마켓 pool, 보스 제약 interaction을 섞어 장기 후보 pool과 최소 catalog 구성 비율을 함께 문서화한다.
 - 의식 카드류 효과는 유저가 파악하기 어려운 `가장 강한 줄`, `가장 약한 줄`, `대표 족보` 자동 판정에 의존하지 않는다. 기본 설계는 유저가 완성 줄을 직접 선택하고, 그 줄을 특정 족보/상태로 치환하거나 성장·파괴·변형하는 명확한 결과를 주는 방식으로 잡는다.
 - 의식 카드의 줄 선택 UI에서 텍스트 chip/list는 보조 설명으로만 취급한다. 실제 선택은 화면에 표시된 보드 선 preview를 직접 탭해 이루어져야 하며, 선을 탭하자마자 효과를 적용하지 않고 선택 강조 후 별도 확인 버튼을 거쳐 적용한다.

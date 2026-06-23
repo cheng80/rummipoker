@@ -1,6 +1,6 @@
 # Rummi Poker 제출 준비 문서
 
-이 폴더는 `docs/old_doc_data/`의 과거 HabitCell/TagDo 제출 문서를 Rummi Poker 기준으로 다시 정리한 작업용 문서다. 원본 자료는 참고용으로 남기고, 실제 제출 준비와 다음 구현 판단은 이 폴더와 `docs/planning/competition/` 문서를 기준으로 한다.
+이 폴더는 `docs/archive/delete_candidates_after_parity/old_doc_data/`의 과거 HabitCell/TagDo 제출 문서를 Rummi Poker 기준으로 다시 정리한 작업용 문서다. 원본 자료는 참고용으로 남기고, 실제 제출 준비와 다음 구현 판단은 이 폴더와 `docs/archive/competition_history_2026_06/` 문서를 기준으로 한다.
 
 ## 현재 앱 기준
 

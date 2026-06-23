@@ -123,4 +123,4 @@ Use `tools/ios_sim_smoke.sh` when UI layout changes are complete.
 - Confirm no bottom safe-area clipping in Market and title/continue screens.
 - Confirm Market two-tab layout does not overflow on the target iPhone viewport.
 - Confirm battle item zone tabs do not make the board unusably small.
-- Capture output path in `docs/planning/verification/daily_logs/YYYY-MM-DD.md` when run.
+- Capture output path in `docs/archive/verification_daily_logs/YYYY-MM-DD.md` when run.

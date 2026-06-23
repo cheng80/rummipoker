@@ -1,6 +1,6 @@
 # daily_logs Folder Definition
 
-`docs/planning/verification/daily_logs/`는 날짜별 검증/산출물 이력을 기록하는 폴더다.
+`docs/archive/verification_daily_logs/`는 날짜별 검증/산출물 이력을 기록하는 폴더다.
 
 GCSE 역할: `Execution`
 

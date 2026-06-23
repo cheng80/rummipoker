@@ -16,16 +16,16 @@
 먼저 읽을 문서:
 - START_HERE.md
 - docs/planning/ACTIVE_EXECUTION_PLAN.md
-- docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md
-- docs/planning/competition/COMPUTE_BROWSER_FULL_PLAY_BOT.md
-- docs/submission_kit/README.md
-- docs/submission_kit/RELEASE_CHECKLIST.md
-- docs/submission_kit/WEB_BUILD_GUIDE.md
-- docs/submission_kit/STORE_METADATA_KO_EN.md
-- docs/submission_kit/SCREENSHOT_PROMO_COPY_KO_EN.md
+- docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md
+- docs/archive/competition_history_2026_06/COMPUTE_BROWSER_FULL_PLAY_BOT.md
+- docs/release/submission_kit/README.md
+- docs/release/submission_kit/RELEASE_CHECKLIST.md
+- docs/release/submission_kit/WEB_BUILD_GUIDE.md
+- docs/release/submission_kit/STORE_METADATA_KO_EN.md
+- docs/release/submission_kit/SCREENSHOT_PROMO_COPY_KO_EN.md
 
 주의:
-- docs/planning/competition/NEXT_SESSION_CHALLENGE_FULL_RUN_PROMPT.md 는 보존 중인 과거 full-run 재개 프롬프트다.
+- docs/archive/competition_history_2026_06/NEXT_SESSION_CHALLENGE_FULL_RUN_PROMPT.md 는 보존 중인 과거 full-run 재개 프롬프트다.
 - 그 문서는 5개 locale full-run을 제출 필수 gate로 보던 시점의 문서라, 다음 작업 판단 기준으로 쓰지 않는다.
 - 최신 기준은 ACTIVE_EXECUTION_PLAN, COMPETITION_SUBMISSION_CHECKLIST, 이 handoff 문서다.
 - 2026-05-11 이후 `full_run_policy_v1`, market collection audit, economy choice probe가 추가됐지만 이는 레벨링 분석 보조 자료다. 공모전 제출 handoff 기준을 바꾸거나 full-run gate를 재개하는 근거로 쓰지 않는다.
@@ -86,8 +86,8 @@
 이번 세션 첫 작업 순서:
 1. `git status --short`, `git log -3 --oneline`으로 시작한다.
 2. `docs/planning/ACTIVE_EXECUTION_PLAN.md`에서 공모전 기준 완성이 `Closed for submission QA handoff`인지 확인한다.
-3. `docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md`에서 오래된 `Status: In progress` 또는 `Reopened`가 새로 생기지 않았는지 확인한다.
-4. Web 제출이면 `docs/submission_kit/WEB_BUILD_GUIDE.md`와 `docs/submission_kit/RELEASE_CHECKLIST.md` 기준으로 최종 빌드를 만든다.
+3. `docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md`에서 오래된 `Status: In progress` 또는 `Reopened`가 새로 생기지 않았는지 확인한다.
+4. Web 제출이면 `docs/release/submission_kit/WEB_BUILD_GUIDE.md`와 `docs/release/submission_kit/RELEASE_CHECKLIST.md` 기준으로 최종 빌드를 만든다.
    - 배포 경로가 `/rummipoker/`면 `flutter build web --release --base-href "/rummipoker/"` 기준이다.
    - 로컬 smoke만이면 base-href 없이도 가능하지만, 제출 배포 산물은 실제 배포 경로 기준으로 맞춘다.
 5. 최종 산물 업로드/배포 후 실제 URL에서 빠른 smoke를 한다.
@@ -97,7 +97,7 @@
    - 필요 시 `/game?fixture=game_over_insight_ready&debug_show_game_over_on_load=1`
    - 필요 시 `/game?fixture=final_boss_cash_out_ready&debug_complete_run_on_load=1`
    - 웹 BGM은 첫 터치/버튼 tap, 스크롤 중 묵음 없음, focus-out 후 복귀 시 사운드가 완전히 먹통으로 남지 않는지만 확인한다. BGM 위치가 항상 유지되는지까지 제출 blocker로 보지 않는다.
-6. 제출 폼/스토어 문구는 `docs/submission_kit/STORE_METADATA_KO_EN.md`와 `docs/submission_kit/SCREENSHOT_PROMO_COPY_KO_EN.md`를 참고한다.
+6. 제출 폼/스토어 문구는 `docs/release/submission_kit/STORE_METADATA_KO_EN.md`와 `docs/release/submission_kit/SCREENSHOT_PROMO_COPY_KO_EN.md`를 참고한다.
 7. 제출 전 최종 응답에는 빌드 명령, 산출물 경로, 배포 URL, smoke 결과, git 상태를 남긴다.
 
 하지 말 것:
@@ -107,7 +107,7 @@
 - 장기 밸런스, ML 리포트, 타로/유령카드류, 영구 족보 계승, 정산 progress bar를 제출 전 새 작업으로 열지 않는다.
 - 웹 focus-out BGM을 더 파지 않는다. 현재 `SoundManager`의 resume-first/fallback-on-next-gesture 정책을 제출 전 기준으로 유지한다.
 - 용어를 다시 `기초`로 바꾸지 않는다. 한국어 Chips는 현재 제출 후보에서 `칩`으로 유지하고, 의미 보강은 `게임 용어` 다이얼로그로 처리한다.
-- Android/iOS release artifact는 이번 웹 제출 범위가 아니라면 만들지 않는다. 필요해진 경우에만 `docs/submission_kit/ANDROID_BUILD_NOTES.md`와 `docs/submission_kit/IOS_PROFILE_BUILD.md`를 따른다.
+- Android/iOS release artifact는 이번 웹 제출 범위가 아니라면 만들지 않는다. 필요해진 경우에만 `docs/release/submission_kit/ANDROID_BUILD_NOTES.md`와 `docs/release/submission_kit/IOS_PROFILE_BUILD.md`를 따른다.
 
 공모전 이후로 둔 항목:
 - `ja`, `zh-CN`, `zh-TW` full-run.
@@ -119,7 +119,7 @@
 - 장기 multi-seed 밸런스와 ML 리포트 갱신.
 
 완료 시 해야 할 일:
-- 필요하면 docs/planning/ACTIVE_EXECUTION_PLAN.md와 docs/planning/competition/COMPETITION_SUBMISSION_CHECKLIST.md에 제출 산물/URL/smoke 결과를 업데이트한다.
+- 필요하면 docs/planning/ACTIVE_EXECUTION_PLAN.md와 docs/archive/competition_history_2026_06/COMPETITION_SUBMISSION_CHECKLIST.md에 제출 산물/URL/smoke 결과를 업데이트한다.
 - 변경이 있으면 커밋/푸시한다.
 - 최종 응답에 산출물 경로, 배포 URL, smoke 결과, 커밋 해시를 남긴다.
 ```
