@@ -4,6 +4,11 @@
 연출은 모두 transient presentation state이며, save/continue와 simulator 결과의
 source of truth는 runtime state다.
 
+모션 감각과 레퍼런스 게임별 연출 언어는
+[RUMMI_POKER_REFERENCE_GAME_MOTION_STYLE_GUIDE.md](RUMMI_POKER_REFERENCE_GAME_MOTION_STYLE_GUIDE.md)를
+참조한다. 이 문서는 구현 순서와 적용 범위를 관리하고, reference guide는 타일 조작,
+점수/정산, 마켓, 보상/해금의 모션 아트 디렉션 기준으로 사용한다.
+
 ## 현재 적용 상태
 
 - cash-out sheet의 단계별 보상 라인 등장
