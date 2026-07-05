@@ -7,48 +7,48 @@ import '../../../tools/sim/run_balance_sim.dart';
 
 void main() {
   test(
-    'contest policy v1 clears standard S1-S8 path',
+    'full-run policy v1 clears standard S1-S8 path',
     () async {
       final paths = _SimPaths(
-        out: 'logs/sim/contest_policy_v1_standard_20260511_053831.jsonl',
+        out: 'logs/sim/full_run_policy_v1_standard_20260511_053831.jsonl',
         summary:
-            'logs/sim/contest_policy_v1_standard_20260511_053831_summary.json',
+            'logs/sim/full_run_policy_v1_standard_20260511_053831_summary.json',
       );
 
       final code = await runBalanceSim(
-        _contestPolicyArgs(difficulty: 'standard', paths: paths),
+        _fullRunPolicyArgs(difficulty: 'standard', paths: paths),
       );
 
       expect(code, 0);
       _expectPathCleared(paths.out);
     },
-    skip: _legacyContestGateSkipReason,
+    skip: _manualFullRunGateSkipReason,
   );
 
   test(
-    'contest policy v1 clears challenge S1-S8 path',
+    'full-run policy v1 clears challenge S1-S8 path',
     () async {
       final paths = _SimPaths(
-        out: 'logs/sim/contest_policy_v1_challenge_20260511_053831.jsonl',
+        out: 'logs/sim/full_run_policy_v1_challenge_20260511_053831.jsonl',
         summary:
-            'logs/sim/contest_policy_v1_challenge_20260511_053831_summary.json',
+            'logs/sim/full_run_policy_v1_challenge_20260511_053831_summary.json',
       );
 
       final code = await runBalanceSim(
-        _contestPolicyArgs(difficulty: 'challenge', paths: paths),
+        _fullRunPolicyArgs(difficulty: 'challenge', paths: paths),
       );
 
       expect(code, 0);
       _expectPathCleared(paths.out);
     },
-    skip: _legacyContestGateSkipReason,
+    skip: _manualFullRunGateSkipReason,
   );
 }
 
-const _legacyContestGateSkipReason =
-    'Legacy contest fixed-seed gate is archived after post-contest balance/data reset.';
+const _manualFullRunGateSkipReason =
+    'Manual fixed-seed full-run policy gate; run only when refreshing leveling docs.';
 
-List<String> _contestPolicyArgs({
+List<String> _fullRunPolicyArgs({
   required String difficulty,
   required _SimPaths paths,
 }) {
@@ -56,7 +56,7 @@ List<String> _contestPolicyArgs({
     '--runs',
     '1',
     '--bot',
-    'contest_policy_v1',
+    'full_run_policy_v1',
     '--seed',
     '91460',
     '--sequence-mode',

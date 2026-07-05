@@ -2,7 +2,7 @@
 
 ## 결론
 
-현재 제출 준비의 1차 gate는 Rummi Poker 최신 빌드에서 분석, 테스트, 빌드, Browser/Compute smoke, `contest_full_run_bot` 증거를 모두 맞추는 것이다. Debug fixture는 재현과 눈검증에만 쓰고, 제출 증거는 자연 플레이 흐름 기준으로 남긴다.
+현재 출시 준비의 1차 gate는 Rummi Poker 최신 빌드에서 분석, 테스트, 빌드, Browser/Compute smoke, `풀런봇`(`full_run_bot`) 증거를 모두 맞추는 것이다. Debug fixture는 재현과 눈검증에만 쓰고, 제출 증거는 자연 플레이 흐름 기준으로 남긴다.
 
 ## 앱 정보
 
@@ -16,7 +16,7 @@
 | 지원 URL | 제출 전 확정 필요 |
 | 개인정보 처리방침 URL | 제출 전 확정 필요 |
 
-## 공모전 제출 전 필수 확인
+## 출시 제출 전 필수 확인
 
 - [ ] `flutter analyze`
 - [ ] 핵심 `flutter test`
@@ -25,14 +25,14 @@
 - [ ] QA용 빌드에서 `--dart-define=SHOW_DEBUG_FIXTURES=true`로 fixture가 보이는지 확인
 - [ ] Browser/WebDriver 또는 Browser Use 기준 console error/warn 0건 확인
 - [ ] 표준 난이도 fresh full-run 증거 확인
-- [ ] 도전 난이도 fresh S1~S8 `contest_full_run_bot` full-run 확인
+- [ ] 도전 난이도 fresh S1~S8 `풀런봇`(`full_run_bot`) full-run 확인
 - [ ] Game over, 보상, 런 정보, 무한 도전 진입 흐름 눈검증
 - [ ] 닫힌 공모전 제출 이력을 현재 출시 체크리스트 기준으로 재검토하지 않음
 
 ## 제출 증거 기준
 
 - Debug fixture, 즉시 클리어, forced reward는 full-play evidence가 아니다.
-- `contest_full_run_bot` 로그는 fresh run인지 checkpoint resume인지 명확히 적는다.
+- `full_run_bot` 로그는 fresh run인지 checkpoint resume인지 명확히 적는다.
 - 봇 실패 후 WebDriver Chrome, ChromeDriver, Flutter web server 잔여 프로세스를 확인한다.
 - 정책 문서를 바꾼 뒤 full-run을 재개하기 전에는 실제 policy code/test 반영 여부를 먼저 확인한다.
 

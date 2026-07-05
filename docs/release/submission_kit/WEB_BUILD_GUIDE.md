@@ -2,7 +2,7 @@
 
 ## 목적
 
-공모전 제출 후보와 Browser QA를 위한 Web 빌드 절차다. Web 제출이나 QA만 진행할 때는 이 문서 하나만 보면 된다.
+출시 후보와 Browser QA를 위한 Web 빌드 절차다. Web 제출이나 QA만 진행할 때는 이 문서 하나만 보면 된다.
 
 ## 공통 준비
 
@@ -41,7 +41,7 @@ flutter build web --dart-define=SHOW_DEBUG_FIXTURES=true --build-name=<버전명
 
 - 일반 release 빌드에는 Debug fixture 진입점이 보이면 안 된다.
 - QA fixture는 눈검증과 버그 재현용이다.
-- 공모전 full-play 증거는 fixture 없이 `contest_full_run_bot`으로 남긴다.
+- full-play 증거는 fixture 없이 `풀런봇`(`full_run_bot`)으로 남긴다.
 
 ## 고정 포트 Chrome 눈검증
 
@@ -125,8 +125,8 @@ Web 빌드 후 로컬 서버로 열어 다음을 확인한다.
 - QA 빌드에서 Debug fixture 노출
 - console error/warn 0건
 
-## 공모전 full-play 기준
+## full-play 기준
 
-- 사람 수동 플레이가 아니라 `contest_full_run_bot` 기준으로 닫는다.
+- 사람 수동 플레이가 아니라 `풀런봇`(`full_run_bot`) 기준으로 닫는다.
 - Debug fixture, 즉시 클리어, forced reward는 full-play evidence가 아니다.
 - 로그에는 fresh run인지 checkpoint resume인지 명확히 남긴다.

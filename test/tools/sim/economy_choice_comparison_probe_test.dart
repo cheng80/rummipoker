@@ -12,7 +12,7 @@ void main() {
       const outDir = 'logs/sim/economy_choice_comparison_20260511_r20';
       final rows = <Map<String, Object?>>[];
 
-      for (final bot in const ['planner_v2', 'contest_policy_v1']) {
+      for (final bot in const ['planner_v2', 'full_run_policy_v1']) {
         for (final difficulty in const ['standard', 'challenge']) {
           for (final choiceMode in const [
             'none',

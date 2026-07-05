@@ -119,9 +119,8 @@ storeFile=/Users/cheng80/android_keystore/rummipoker_keystore.jks
 - Android 13+ 권한 안내가 실제 사용 권한과 맞는지
 - Debug fixture 진입점이 release에서 숨겨지는지
 
-## 이관 주의점
+## 제출 주의점
 
 - HabitCell/TagDo 시대의 앱명, 아이콘, 스플래시, package id는 재사용하지 않는다.
 - Gradle 문법이나 Android plugin 버전은 현재 프로젝트 파일을 기준으로 판단한다.
-- `old_doc_data/icon_splash/` 자산은 현재 게임 룩과 다르므로 제출 자산으로 복사하지 않는다.
 - 스토어 데이터 보안 설문은 실제 SDK와 네트워크 사용 기준으로 제출 직전 재확인한다.
