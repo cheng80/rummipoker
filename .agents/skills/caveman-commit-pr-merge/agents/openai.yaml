@@ -1,0 +1,4 @@
+interface:
+  display_name: "Caveman Commit PR Merge"
+  short_description: "Commit, push, PR, and merge safely"
+  default_prompt: "Use $caveman-commit-pr-merge to integrate the current repository changes."
