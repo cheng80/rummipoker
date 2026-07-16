@@ -1,169 +1,48 @@
 # START_HERE
 
-이 문서는 새 세션에서 가장 먼저 읽는 진입 문서다.
+이 문서는 새 세션의 3분 진입 지도이자 프로젝트 문서의 최상위 진입점이다.
+게임 사실은 코드·데이터·테스트와 `docs/core/`가 소유한다.
 
-상세 진행률, 긴 변경 내역, 검증 로그는 여기 두지 않는다. 최신 진행 상태는 `planning` 성격의 문서를 source of truth로 본다.
+## 현재 위치
 
-## 문서 체계
+- 현재 흐름은 post-contest 런타임 고도화와 문서 권위 수렴이다.
+- 다음 실행 판단은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`가 소유한다.
+- Planning은 이 문서 아래에서 현재 작업만 고르며 진입 순서를 대체하지 않는다.
+- Release는 빌드·배포·스토어·홍보를 위한 별도 문서군이며 여기서 연결하지 않는다.
 
-이 프로젝트 문서는 목적형 폴더로 정리하고, 각 폴더의 `GCSE` 역할을 정의한다.
+## 기본 진입 순서
 
-- `goals`: Goal, 제품 목표, 방향성, 의사결정 원칙
-- `current_system`: Context, 현재 코드/시스템 상태와 배경 맥락
-- `specs`: Spec, 기능 규칙, UX, 데이터 계약, 아키텍처 명세
-- `planning`: Execution, 진행 상태, 구현 계획, 체크리스트, 검증 절차
-- `release`: 출시, 빌드, 스토어, 스크린샷, 배포 준비 문서
-- `tools`: 문서/이미지/디자인 제작 도구와 재생성 가능한 프롬프트
-- `archive`: 현재 기준이 아닌 과거 이력, 실험, 삭제 후보 격리
+새 작업은 아래 네 단계만 기본으로 읽는다.
 
-전체 문서 분류 규칙은 [docs/00_docs_README.md](docs/00_docs_README.md)를 먼저 따른다.
+1. [START_HERE](START_HERE.md)
+2. [GAME_DESIGN](docs/core/GAME_DESIGN.md)
+3. [SYSTEM_ARCHITECTURE](docs/core/SYSTEM_ARCHITECTURE.md)
+4. [ACTIVE_EXECUTION_PLAN](docs/planning/ACTIVE_EXECUTION_PLAN.md)
 
-코드 작업은 `current_system` 기준 문서 3종을 먼저 읽고 이어간다.
+네 번째 문서는 current active track, next action, blocker, Done evidence만 보완한다.
+구현 사실이 필요하면 planning 설명을 늘리지 말고 관련 core와 source를 확인한다.
 
-- [CURRENT_SYSTEM_OVERVIEW.md](docs/current_system/CURRENT_SYSTEM_OVERVIEW.md)
-- [CURRENT_CODE_MAP.md](docs/current_system/CURRENT_CODE_MAP.md)
-- [CURRENT_TO_V4_GAP.md](docs/current_system/CURRENT_TO_V4_GAP.md)
+## 작업별 추가 문서
 
-현재 활성 흐름은 공모전 제출 준비가 아니라 post-contest 런타임 고도화다. 공모전 이력은 현재 작업 선택 기준이 아니며, 다음 작업 선택은 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md)의 활성 트랙을 따른다.
+- 전투 규칙·족보·확정·Boss 제약: [GAME_RULES](docs/core/GAME_RULES.md)
+- 성장·골드·정산·Market: [RUN_ECONOMY](docs/core/RUN_ECONOMY.md)
+- Jester·Item·Tile modifier·Boss family: [CONTENT_SYSTEM](docs/core/CONTENT_SYSTEM.md)
+- 화면·튜토리얼·연출·사운드·다국어: [UI_UX](docs/core/UI_UX.md)
+- 저장·복원·재시작·무결성: [SAVE_DATA](docs/core/SAVE_DATA.md)
+- 정확한 Jester·Item 목록: [CONTENT_CATALOG](docs/generated/CONTENT_CATALOG.md)
+- 정확한 Boss board pattern: [BOSS_PATTERNS](docs/generated/BOSS_PATTERNS.md)
 
-## 새 세션 시작 지시문
+필요한 주제 문서만 추가로 읽는다.
+Generated 표는 목록 확인용이며 source나 core 계약을 대신하지 않는다.
 
-아래 문장 그대로 시작해도 된다.
+## 판단 우선순위
 
-```text
-작업 시작 전에 START_HERE.md, docs/00_docs_README.md, docs/current_system/CURRENT_SYSTEM_OVERVIEW.md, docs/current_system/CURRENT_CODE_MAP.md, docs/current_system/CURRENT_TO_V4_GAP.md 를 먼저 읽고,
-그 다음 docs/planning/ACTIVE_EXECUTION_PLAN.md 를 확인해 현재 활성 트랙과 다음 작업부터 이어서 진행해라.
-공모전 관련 문서는 현재 활성 큐가 아니므로 새 작업 판단 기준으로 읽지 마라.
-장기 Goal/레벨링 작업이면 docs/planning/goal/OVERALL_GOAL_PROGRESS.md 와 docs/planning/leveling/* 를 추가로 확인해라.
-문서는 목적형 폴더와 GCSE 역할 기준을 유지하고, 코드/테스트 중심으로 작업해라.
-```
+1. 실제 코드·데이터·테스트
+2. 프로젝트 작업 규칙인 `AGENTS.md`
+3. 현재 계약을 설명하는 `docs/core/`
+4. 다음 행동과 미결 결정을 설명하는 `docs/planning/`
 
-gstack 흐름으로 이어갈 때는 목적에 따라 아래처럼 시작한다.
-
-```text
-/plan-eng-review
-START_HERE.md와 docs/planning/ACTIVE_EXECUTION_PLAN.md를 먼저 읽고, 현재 활성 트랙 기준 다음 구현 후보를 진행하기 위한 최소 구현 계획을 검토해라.
-단, 새 구조 설계가 아니라 기존 runtime을 CLI에서 얇게 호출 가능한지 확인하는 import spike/skeleton 중심으로 봐라.
-저장 가능한 runtime state와 transient presentation state는 분리하고, presentation queue는 save/continue 기준에 포함하지 않는다.
-```
-
-UI 연출 구조를 먼저 정리하려면 아래처럼 시작한다.
-
-```text
-/plan-eng-review
-START_HERE.md와 docs/planning/ACTIVE_EXECUTION_PLAN.md를 먼저 읽고, 활성 트랙에서 허용되는 범위 안에서 Battle/Market/Settlement 연출을 GamePresentationEvent / presentationQueue 같은 transient event list로 묶을지 검토해라.
-save/continue source of truth는 runtime state로 유지하고, queue는 저장하지 않는 조건으로 최소 리팩터링 범위만 제안해라.
-```
-
-## 먼저 읽을 문서
-
-읽는 순서는 아래로 고정한다.
-
-1. [START_HERE.md](START_HERE.md)
-2. [docs/00_docs_README.md](docs/00_docs_README.md)
-3. [CURRENT_SYSTEM_OVERVIEW.md](docs/current_system/CURRENT_SYSTEM_OVERVIEW.md)
-4. [CURRENT_CODE_MAP.md](docs/current_system/CURRENT_CODE_MAP.md)
-5. [CURRENT_TO_V4_GAP.md](docs/current_system/CURRENT_TO_V4_GAP.md)
-6. [CURRENT_LEVELING_POLICY.md](docs/current_system/CURRENT_LEVELING_POLICY.md)
-7. [CURRENT_LEVELING_SIMULATION_BASELINE.md](docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md)
-8. [CURRENT_LEVELING_RUNTIME_SPEC.md](docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md)
-9. [00_planning_README.md](docs/planning/00_planning_README.md)
-10. [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md)
-11. [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md)
-12. [LEVELING_APPLIED_STATUS.md](docs/planning/leveling/LEVELING_APPLIED_STATUS.md)
-13. [ECONOMY_LEVELING_PLAN.md](docs/planning/leveling/ECONOMY_LEVELING_PLAN.md)
-14. [TEST_QA_ACCEPTANCE.md](docs/planning/verification/TEST_QA_ACCEPTANCE.md)
-
-필요할 때만 추가로 본다. archive 문서는 현재 기준이 아니므로 이 진입 목록에서 직접 연결하지 않는다.
-
-- [ITEM_EFFECT_RUNTIME_MATRIX.md](docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md)
-- [13_ITEM_SYSTEM_CONTRACT.md](docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md)
-- [15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md](docs/specs/V4/15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md)
-- [OPEN_DECISIONS.md](docs/planning/feature_plans/OPEN_DECISIONS.md)
-- [release docs](docs/release/submission_kit/README.md)
-- [Firebase release handoff](docs/release/submission_kit/FIREBASE_RELEASE_SETUP.md): Android 관측 상태와 iOS 후속 확인이 필요할 때
-- [tool docs](docs/tools/huashu-design-codex-usage.md)
-
-## 현재 문서 매핑
-
-문서는 아래 위치를 기준으로 읽는다.
-
-| 폴더 | GCSE 역할 | 현재 경로 | 역할 |
-| --- | --- | --- | --- |
-| goals | Goal | `docs/goals/*` | 제품 목표, 방향성, 의사결정 원칙 |
-| current_system | Context | `docs/current_system/*` | 현재 구현 상태, 코드 맵, current-to-target gap, 레벨링 현재 정책 |
-| specs | Spec | `docs/specs/V4/*.md` | 기능별 V4 명세 |
-| planning | Execution | `docs/planning/ACTIVE_EXECUTION_PLAN.md`, `docs/planning/goal/*`, `docs/planning/leveling/*`, 현재 `docs/planning/feature_plans/*`, `docs/planning/verification/*` | 현재 실행 라우터, Goal 진도, 레벨링/경제 상태, 아직 current 판단에 필요한 기능별 계획, 검증 절차 |
-| release | Release | `docs/release/*` | 출시, 빌드, 스토어, 스크린샷, 배포 준비 |
-| tools | Tools | `docs/tools/*` | 도구 사용법, 이미지/카드 asset 생성 기준 |
-| archive | Archive | 격리된 과거 문서와 생성 산출물 | 최신 판단 기준이 아니며, active 문서에서 직접 링크하지 않는다 |
-
-## Source of Truth
-
-- 현재 활성 트랙과 다음 작업: `docs/planning/ACTIVE_EXECUTION_PLAN.md`
-- 실제 Goal 전체 진도: `docs/planning/goal/OVERALL_GOAL_PROGRESS.md`
-- 레벨링 적용 상태: `docs/planning/leveling/LEVELING_APPLIED_STATUS.md`
-- 경제 계획: `docs/planning/leveling/ECONOMY_LEVELING_PLAN.md`
-- Item effect 실행 상태: `docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md`
-- 현행 Jester/Q-Slot/Passive/Tool/Gear 카드 표: `docs/current_system/CURRENT_CARD_CATALOG_TABLE.md`
-- Item/Jester/덱빌딩 정책 계약: `docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md`
-- 과거 문서에서 승격한 장기 정책 요약: `docs/specs/V4/15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md`
-- Item policy cleanup audit: `docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md`
-- Item effect 연출 계약: `docs/planning/feature_plans/ITEM_PRESENTATION_CONTRACT_REVIEW.md`
-- 레벨링 현재 정책: `docs/current_system/CURRENT_LEVELING_POLICY.md`
-- 레벨링 시뮬레이션/휴리스틱 기준값: `docs/current_system/CURRENT_LEVELING_SIMULATION_BASELINE.md`
-- 레벨링 런타임 기준표: `docs/current_system/CURRENT_LEVELING_RUNTIME_SPEC.md`
-- 현재 코드 설명과 작업 재개 기준: `docs/current_system/*`
-- 기능 명세: `docs/specs/V4/*`
-- 출시/빌드/스토어 준비: `docs/release/*`
-- 도구/asset 생성 기준: `docs/tools/*`
-과거 문서와 생성 스냅샷은 current/spec/planning 문서보다 우선하지 않는다.
-
-코드 구조가 바뀌면 `CURRENT_CODE_MAP.md`, 구현 상태가 바뀌면 `CURRENT_SYSTEM_OVERVIEW.md`, current-to-target 차이가 바뀌면 `CURRENT_TO_V4_GAP.md`를 갱신한다.
-
-## 현재 작업 원칙
-
-- 현재 프로토타입은 V4 이행의 기준선이다.
-- 현재 코어 루프는 보호하고, 변경은 V4 구조로 가는 다리여야 한다.
-- 문서는 과하게 늘리지 않는다.
-- 새 문서는 꼭 필요할 때만 만들고, 가능하면 기존 목적형 폴더에 통합한다.
-- 작업은 문서보다 코드와 테스트 중심으로 진행한다.
-- debug 편의 기능은 일반 런과 의미가 섞이면 분리한다.
-- UI 표시, 화면 전환, 저장/복귀 동선, settlement/market/next station loop를 바꾼 작업은 자동 테스트 통과만으로 끝내지 말고, iOS 시뮬레이터 스모크 또는 개발자 눈검증 필요 여부를 작업 결과에 명시한다. 필요하면 `tools/ios_sim_smoke.sh`를 우선 사용한다.
-
-## 하지 말아야 할 것
-
-- One Pair 점수 변경
-- save schema 즉시 교체
-- Jester id 변경
-- 대규모 symbol rename
-- DB 엔진 도입
-- 현재 프로토타입 편의 기능을 이유 없이 대규모 정리
-- 진행 상태를 여러 문서에 중복 기록
-
-## 주 타깃 플랫폼
-
-- 1차 기본: `iOS`
-- 2차 보조: `Chrome`
-
-실행 테스트 기준도 mobile-first로 본다.
-
-## 재사용 검증 프로세스
-
-iOS 시뮬레이터 실구동/스크린샷 검증은 필요할 때마다 ad-hoc으로 하지 않고 아래 스크립트를 우선 사용한다.
-
-- `tools/ios_sim_smoke.sh`
-
-기본 예시:
-
-```bash
-tools/ios_sim_smoke.sh
-tools/ios_sim_smoke.sh --route "/game?fixture=stage2_scoring_snapshot"
-tools/ios_sim_smoke.sh --open-url "https://example.com" --relaunch
-```
-
-web 저장/라우팅/입력 경계가 바뀌면 아래 스크립트를 먼저 확인한다.
-
-- `tools/web_build_smoke.sh`
-
-의미 있는 앱 실구동 검증을 했으면 최신 판단에 필요한 요약만 [ACTIVE_EXECUTION_PLAN.md](docs/planning/ACTIVE_EXECUTION_PLAN.md), [OVERALL_GOAL_PROGRESS.md](docs/planning/goal/OVERALL_GOAL_PROGRESS.md) 또는 해당 source-of-truth 문서에 남긴다. 긴 route/시나리오와 산출물 경로 이력은 active 문서에 직접 연결하지 않는다.
+Generated 문서는 source에서 만든 검증 가능한 projection으로 사용한다.
+문서와 source가 충돌하면 source를 확인하고 소유 문서를 같은 변경에서 갱신한다.
+진행률과 완료 이력을 core나 이 문서에 복제하지 않는다.
+새 문서를 만들기 전에 기존 authority 문서의 책임인지 먼저 확인한다.

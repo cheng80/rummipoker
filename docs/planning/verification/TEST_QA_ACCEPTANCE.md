@@ -1,197 +1,94 @@
-# 09. Test, QA & Acceptance Criteria
+# Test and QA Acceptance
 
-> 문서 성격: QA baseline + migration acceptance
-> 코드 반영 상태: planned test expansion
-> 핵심 정책: V4 migration은 테스트 보호망 없이 시작하지 않는다.
+> 역할: 변경 유형별로 반복 가능한 검증 명령, 수동 smoke, Done evidence를 정의한다. 실행 상태와 미결 정책은 각각 [ACTIVE_EXECUTION_PLAN.md](../ACTIVE_EXECUTION_PLAN.md), [OPEN_DECISIONS.md](../OPEN_DECISIONS.md)가 소유한다.
 
-## 1. Test Policy
+## Automated Gates
 
-[V4_DECISION]
+변경 범위에 맞는 targeted suite를 먼저 실행하고 최종 통합 gate를 실행한다.
 
-V4 migration에서 테스트는 문서보다 강한 보호 장치다. 특히 다음 영역은 테스트 없이 수정하지 않는다.
-
-- HandEvaluator
-- confirm transaction
-- contributor removal
-- overlap
-- Jester scoring
-- active run save/load
-- stageStartSnapshot restart
-- shop buy/sell/reroll
-
-## 2. Combat Logic Tests
-
-[MIGRATION]
-
-필수 케이스:
-
-### Dead line
-
-- 1장 line은 High Card, score 0, 확정 불가
-- 2장 pair는 One Pair, score 0, 확정 불가
-- 3장 pair + kicker는 One Pair, score 0, 확정 불가
-
-### Partial scoring
-
-- 3장 같은 rank는 Three of a Kind, score 40, 3장 제거
-- 4장 `A,A,A,K`는 Three of a Kind, A 3장 제거, K 유지
-- 4장 `A,A,K,K`는 Two Pair, 4장 제거
-- 4장 `A,A,A,A`는 Four of a Kind, 4장 제거
-
-### 5-card scoring
-
-- Straight score 70
-- Flush score 50
-- Full House score 80
-- Four of a Kind score 100, kicker 유지
-- Straight Flush score 150
-- `10-11-12-13-1` straight 인정
-
-## 3. Confirm Transaction Tests
-
-[MIGRATION]
-
-필수 검증:
-
-- 12줄 중 scoring candidate만 정산
-- 여러 line이 동시에 성립하면 모두 정산
-- contributor cell union만 제거
-- 같은 타일이 두 line에 겹치면 한 번만 제거
-- overlap multiplier line별 계산
-- baseScoreSum, jesterBonusSum, scoreAdded 일관성
-- stage clear signal이 target score 기준으로 계산
-
-## 4. Overlap Tests
-
-[MIGRATION]
-
-필수 케이스:
-
-| contribution count | expected multiplier |
-|---:|---:|
-| 1 | 1.0 |
-| 2 | 1.3 |
-| 3 | 1.6 |
-| 4 | 1.9 |
-| 5+ | 2.0 |
-
-테스트는 round 후 line score도 확인한다.
-
-## 5. Jester Tests
-
-[MIGRATION]
-
-필수 검증:
-
-- Jester는 dead line에 적용되지 않는다.
-- Jester는 contributor scoringTiles만 본다.
-- face card 조건은 contributor에 있는 face card만 센다.
-- scholar는 Ace contributor 기준으로 동작한다.
-- slot order 적용이 안정적이다.
-- stateful slot index가 save/load 후 유지된다.
-- `green_jester` confirm/discard 변화
-- `ride_the_bus` face card scoring 시 reset
-- `ice_cream` confirm 후 감소
-- `popcorn` round end decay
-- `supernova` played hand count 참조
-
-## 6. Deck Conservation Tests
-
-[MIGRATION]
-
-항상 유지해야 하는 불변식:
-
-```text
-deck.remaining + hand.length + boardTileCount + eliminated.length == totalDeckSize
+```sh
+dart run tools/generate_docs.dart --check
+flutter test
+flutter analyze
+git diff --check
 ```
 
-검증 액션:
+| 변경 영역 | 최소 targeted suite |
+|---|---|
+| 족보 판정·확정·overlap | `test/logic/hand_evaluator_test.dart`, `test/logic/rummi_session_test.dart` |
+| Item runtime·inventory | `test/logic/item_definition_test.dart`, `test/logic/item_effect_runtime_test.dart` |
+| Market economy·facade | `test/logic/rummi_market_facade_test.dart`, `test/providers/game_session_notifier_test.dart` |
+| 저장·재시작 | `test/services/active_run_save_service_test.dart`, notifier의 restart/restore tests |
+| Market UI | 관련 `test/views/game/widgets/game_shop_*_test.dart` |
+| generated docs | `test/tools/generate_docs_test.dart`, generator `--check` |
 
-- draw
-- place
-- board discard
-- hand discard
-- confirm
-- discardStageRemainder
-- prepareNextBlind
-- save/load 후 conservation
+## Core Runtime Acceptance
 
-## 7. Save / Load Tests
+- dead line은 확정 후보가 아니고 부분 족보는 contributor만 제거한다.
+- 여러 scoring line과 overlap은 같은 tile을 한 번만 제거하며 line별 multiplier를 유지한다.
+- draw, place, discard, confirm, next Blind, save/load 뒤 deck conservation이 유지된다.
+- valid save는 scene과 snapshot을 복원하고 invalid HMAC·exact schema mismatch는 invalid로 판정한다.
+- current Stage/Stake restart는 각각 저장된 snapshot 경계로 돌아가며 transient presentation은 복원하지 않는다.
+- Battle → settlement → Market → next Blind flow가 provider와 UI에서 같은 runtime state를 읽는다.
 
-[MIGRATION]
+## Market and Item Automated Smoke
 
-필수 검증:
+반복 실행 가능한 bucket만 유지한다. 날짜별 closing status와 일회성 screenshot 경로는 Git history가 소유한다.
 
-- valid save restore
-- invalid HMAC이면 invalid
-- missing payload/signature 처리
-- schemaVersion mismatch invalid
-- activeScene battle restore
-- activeScene shop restore
-- stageStartSnapshot restore
-- ownedJesterIds restore
-- shopOffers restore
-- statefulValuesBySlot restore
-- playedHandCounts restore
-- deckPile/boardCells/hand/eliminated restore
-- runRandomState restore
+| Bucket | 검증 | Primary tests / fixture |
+|---|---|---|
+| `reroll_policy` | S1 첫 Market 무료 1회, stale flag 무시, Item/Passive 할인 비용과 문구 | `game_shop_reroll_confirmation_test.dart`, `game_shop_discounted_reroll_test.dart`, `rummi_market_facade_test.dart`, `/game?fixture=stale_first_reroll_market` |
+| `tool_use_feedback` | source Item, target, result label, Gold `+NG`, non-Gold feedback, 사용 후 선택 해제 | `game_shop_use_feedback_test.dart`, `game_shop_growth_use_feedback_test.dart`, `game_shop_non_gold_use_flight_test.dart`, `game_shop_screen_trade_ticket_test.dart`, `/game?fixture=market_item_motion_eye_check` |
+| `offer_stability` | 구매한 Item 후보는 빈자리로 남고 `trade_ticket`은 Item 후보만 교체 | `rummi_market_facade_test.dart`, `debug_run_fixture_service_test.dart`, `game_shop_screen_trade_ticket_test.dart` |
+| `slot_height` | Jester/Slots와 Tool/Gear section 외곽 높이가 tab·구매·사용 중 유지 | `/game?fixture=market_item_motion_eye_check` browser eye-check |
 
-## 8. Restart Tests
+## Market Flow Smoke
 
-[MIGRATION]
+1. 정산 뒤 Market에 진입하고 title, Gold, 현재 tab을 확인한다.
+2. `Jester / Slots`에서 Jester offer와 `Q1-Q3`, `P1-P2` 보유 slot을 확인한다.
+3. `Tool / Gear`에서 Tool/Gear offer와 `T1-T3`, `G1-G2` 보유 slot을 확인한다.
+4. Q-slot Item을 구매하고 Gold 차감, 다음 빈 Q slot 배치, 현재 offer 빈자리를 확인한다.
+5. Passive, Tool, Gear를 각각 구매해 지정 placement에만 들어가는지 확인한다.
+6. 구매, tab switch, Tool 사용 중 두 tab의 외곽 높이와 card animation이 container를 움직이지 않는지 확인한다.
 
-필수 검증:
+## Reroll Smoke
 
-- current stage 중 액션 후 restart하면 stage 시작점으로 돌아간다.
-- gold, owned Jesters, shopOffers, stateful values도 stage 시작점으로 돌아간다.
-- restart는 run 전체 초기화가 아니다.
-- game over retry는 stageStartSnapshot을 사용한다.
+- S1 basic 첫 Market은 `첫 리롤 무료`를 표시하고 `리롤 5→0`을 표시하지 않는다.
+- 무료 보상은 lane별이 아니라 Market 전체에서 한 번만 소비된다.
+- 이후 Market과 stale `firstRerollDiscount` restore는 정상 비용 `리롤 5`를 표시한다.
+- Item/Passive 할인은 `리롤 5→4`처럼 원가와 실제 비용을 함께 표시한다.
+- reroll할 때마다 다음 비용은 `+2`, 다음 Market 진입 시 기본 `5`로 reset된다.
+- Reroll Token은 구매만으로 발동하지 않고 eligible reroll 시 stack과 실제 할인 Gold만 소비한다.
+- stale fixture는 `/game?fixture=stale_first_reroll_market&debug_suppress_fixture_notice=1`로 열어 Jester와 Tool lane 모두 정상 비용인지 확인한다.
 
-## 9. Provider / UI Flow Tests
+## Item Trigger Smoke
 
-[MIGRATION]
+- `market_buy`: 자신을 할인하지 않고 다음 eligible 구매 성공 때만 stack을 소비한다.
+- `enter_market`: 다음 Market 진입 뒤 한 번 적용되고 새 trigger 없이 반복되지 않는다.
+- `boss_trophy`: 다음 Market의 Jester offer slot만 한 칸 늘리고 reroll 동안 유지한 뒤 다음 Market에서 제거된다.
+- `trade_ticket`: Item offer만 교체하며 Jester/Tile offer는 유지한다.
+- `coin_cache`, `thin_wallet`: 명시적 사용 또는 각 conditional rule이 성공한 경우에만 Gold를 바꾼다.
+- 실패/no-op 경로는 Item을 소비하거나 다른 offer를 선택하지 않는다.
 
-필수 검증:
+## Battle Item Zone Smoke
 
-- `GameSessionNotifier.confirmLines`가 result 반환
-- confirm result가 없을 때 null
-- applyConfirmedLineScore가 점수 반영
-- prepareCashOut가 gold 반영
-- openShop이 offers 생성
-- buy/sell/reroll 동작
-- advanceToNextStage가 stageStartSnapshot 갱신
-- pendingResumeShop 처리
+- 기본 tab은 `Slots`; `Q1-Q3`, `P1-P2`를 표시한다.
+- `Tool / Gear` tab은 `T1-T3`, `G1-G2`를 표시한다.
+- Jester와 Item card는 공용 54×70 sizing/inset을 따르고 count badge가 다른 정보와 겹치지 않는다.
+- Q-slot usable Item은 detail overlay에 `사용` action을 표시한다.
+- Passive/Gear는 자동 효과 안내, Tool은 Market 사용 안내를 표시하고 Battle action을 노출하지 않는다.
 
-## 10. Manual QA Checklist
+## Device and Accessibility Eye-Check
 
-[MIGRATION]
+- 기존 Chrome/Simulator 창을 재사용하고 새 창을 중복 실행하지 않는다.
+- 대상 phone frame에서 Market 두 tab, Battle item zone, bottom safe area가 잘리거나 overflow하지 않는지 확인한다.
+- locale `ko`, `en`, `ja`, `zh-CN`, `zh-TW`에서 핵심 label이 card/action 영역을 넘지 않는지 확인한다.
+- focus-out/options 진입 전 tutorial이 닫히고 강제 종료 뒤 첫 step부터 복구되는지 확인한다.
+- 실행 종료 뒤 Chrome Helper, WebDriver, ChromeDriver, Flutter web server 잔류 process를 정리한다.
 
-새 build마다 최소 확인:
+## Evidence and Done Gate
 
-1. 새 랜덤 run 시작
-2. 시드 run 시작
-3. 타이틀에서 이어하기
-4. 손상 save 삭제 flow
-5. draw/place/confirm
-6. One Pair 확정 불가
-7. Three of a Kind 부분 확정 가능
-8. overlap 시 점수 증가 표시
-9. contributor만 사라지는지 확인
-10. stage clear → cash-out → shop → next stage
-11. shop에서 buy/sell/reroll
-12. app background 후 복귀 save 유지
-13. 현재 stage 재시작
-14. game over retry
-
-## 11. Merge Gate
-
-[V4_DECISION]
-
-다음 조건을 만족하지 않으면 V4 migration PR은 merge하지 않는다.
-
-- current baseline 테스트 통과
-- save/load 테스트 통과
-- 기존 save 호환성 판단 명시
-- 변경된 ruleset이 있으면 default false
-- docs의 `[CURRENT]`와 코드가 불일치하지 않음
-- 디버그 전용 기능이 release UI에 노출되지 않음
+- 실행한 명령, exit code, pass/fail 수, fixture/locale/viewport를 기록한다.
+- 발견한 overflow, text clipping, stale offer, 잘못된 Gold·inventory 변화는 실패로 기록하고 같은 bucket을 재실행한다.
+- 실행하지 않은 검증은 통과로 쓰지 않는다.
+- 관련 targeted suite, generator freshness, `git diff --check`, scope check가 통과해야 Done이다.

@@ -183,83 +183,6 @@ void main() {
       }
     });
 
-    test('catalog census docs match current catalog', () {
-      final catalog = ItemCatalog.fromJsonString(
-        File('data/common/items_common_v1.json').readAsStringSync(),
-      );
-      final currentCatalogDoc = File(
-        'docs/current_system/CURRENT_CARD_CATALOG_TABLE.md',
-      ).readAsStringSync();
-      final activePlanDoc = File(
-        'docs/planning/ACTIVE_EXECUTION_PLAN.md',
-      ).readAsStringSync();
-      final remainingWorkDoc = File(
-        'docs/planning/POST_RITUAL_RUNTIME_REMAINING_WORK.md',
-      ).readAsStringSync();
-      final policyAuditDoc = File(
-        'docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md',
-      ).readAsStringSync();
-      final runtimeMatrixDoc = File(
-        'docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md',
-      ).readAsStringSync();
-      final itemContractDoc = File(
-        'docs/specs/V4/13_ITEM_SYSTEM_CONTRACT.md',
-      ).readAsStringSync();
-
-      const fateActions = {
-        'fate_royal_flush',
-        'fate_straight_flush_high',
-        'fate_straight_flush_low',
-        'fate_four_kind_high',
-        'fate_four_kind_low',
-        'fate_full_house_high',
-        'fate_full_house_low',
-        'fate_flush_house',
-        'fate_flush_five',
-        'fate_flush_high',
-        'fate_flush_low',
-        'fate_straight_high',
-        'fate_straight_low',
-        'fate_three_kind_high',
-        'fate_three_kind_low',
-        'fate_two_pair_high',
-      };
-      final ritualItems = catalog.all
-          .where((item) => item.effect.op == 'ritual_line_effect')
-          .toList(growable: false);
-      final fateItems = ritualItems
-          .where(
-            (item) => fateActions.contains(item.effect.value('ritualAction')),
-          )
-          .toList(growable: false);
-
-      expect(
-        currentCatalogDoc,
-        contains('- Item total: ${catalog.all.length}'),
-      );
-      expect(
-        currentCatalogDoc,
-        contains('전투 보드 선 선택형 `ritual_line_effect`는 ${ritualItems.length}장'),
-      );
-      expect(currentCatalogDoc, contains('족보 변환형 운명 카드는 ${fateItems.length}장'));
-      expect(activePlanDoc, contains('현재 item catalog ${catalog.all.length}개'));
-      expect(
-        activePlanDoc,
-        contains('전투 보드 선 선택형 `ritual_line_effect`는 ${ritualItems.length}장'),
-      );
-      expect(
-        remainingWorkDoc,
-        contains(
-          '`boss_memory`, `thin_memory`, `minor_memory`는 catalog에서 삭제된 legacy 기억 의식',
-        ),
-      );
-      for (final doc in [policyAuditDoc, runtimeMatrixDoc, itemContractDoc]) {
-        expect(doc, contains('${catalog.all.length}개'));
-        expect(doc, contains('`ritual_line_effect`는 ${ritualItems.length}장'));
-        expect(doc, contains('Fate 변환 ${fateItems.length}'));
-      }
-    });
-
     test('fate transform items stay rare-or-higher and expensive', () {
       final catalog = ItemCatalog.fromJsonString(
         File('data/common/items_common_v1.json').readAsStringSync(),
@@ -313,75 +236,7 @@ void main() {
       expect(catalog.findById('flush_five_fate')!.basePrice, 22);
     });
 
-    test('ritual pool split docs match catalog groups', () {
-      final catalog = ItemCatalog.fromJsonString(
-        File('data/common/items_common_v1.json').readAsStringSync(),
-      );
-      final currentCatalogDoc = File(
-        'docs/current_system/CURRENT_CARD_CATALOG_TABLE.md',
-      ).readAsStringSync();
-      final policyAuditDoc = File(
-        'docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md',
-      ).readAsStringSync();
-      final runtimeMatrixDoc = File(
-        'docs/planning/feature_plans/ITEM_EFFECT_RUNTIME_MATRIX.md',
-      ).readAsStringSync();
-      final docs = [
-        currentCatalogDoc,
-        policyAuditDoc,
-        runtimeMatrixDoc,
-      ].join('\n');
-
-      const holdRitualIds = [
-        'ritual_coupon',
-        'ritual_lens',
-        'line_pack_ticket',
-        'seal_vendor',
-        'prune_vendor',
-      ];
-      const deletedLegacyRitualIds = [
-        'boss_memory',
-        'thin_memory',
-        'minor_memory',
-      ];
-      final activeRitualIds = catalog.all
-          .where((item) => item.effect.op == 'ritual_line_effect')
-          .map((item) => item.id)
-          .toSet();
-
-      expect(activeRitualIds.length, 31);
-      for (final id in activeRitualIds) {
-        expect(docs, contains('`$id`'), reason: '$id must be documented');
-      }
-      for (final id in holdRitualIds) {
-        expect(catalog.findById(id), isNotNull, reason: id);
-        expect(
-          docs,
-          contains('`$id`'),
-          reason: '$id must be documented as hold/redesign',
-        );
-      }
-      for (final id in deletedLegacyRitualIds) {
-        expect(catalog.findById(id), isNull, reason: id);
-        expect(
-          docs,
-          contains('`$id`'),
-          reason: '$id must be documented as deleted legacy',
-        );
-      }
-
-      expect(docs, contains('active Ritual 31'));
-      expect(docs, contains('hold 마켓 보조 5종'));
-      expect(docs, contains('debug 전용 0종'));
-      expect(docs, contains('deleted legacy 3종'));
-      expect(
-        docs,
-        contains('normal market 제외'),
-        reason: 'hold/debug Ritual groups must be explicitly excluded',
-      );
-    });
-
-    test('policy cleanup docs classify full catalog and watchlist values', () {
+    test('policy watchlist catalog values stay stable', () {
       final itemCatalog = ItemCatalog.fromJsonString(
         File('data/common/items_common_v1.json').readAsStringSync(),
       );
@@ -392,79 +247,6 @@ void main() {
                 ).readAsStringSync(),
               )
               as List<dynamic>;
-      final policyAuditDoc = File(
-        'docs/planning/feature_plans/ITEM_POLICY_CLEANUP_AUDIT.md',
-      ).readAsStringSync();
-      final currentCatalogDoc = File(
-        'docs/current_system/CURRENT_CARD_CATALOG_TABLE.md',
-      ).readAsStringSync();
-      final docs = '$policyAuditDoc\n$currentCatalogDoc';
-
-      final jesterIds = jesterData
-          .cast<Map<String, dynamic>>()
-          .map((entry) => entry['id'] as String)
-          .toSet();
-      const holdItemIds = {
-        'ritual_coupon',
-        'ritual_lens',
-        'line_pack_ticket',
-        'seal_vendor',
-        'prune_vendor',
-      };
-      const deletedLegacyIds = {'boss_memory', 'thin_memory', 'minor_memory'};
-      final normalItemIds = itemCatalog.all
-          .map((item) => item.id)
-          .where((id) => !holdItemIds.contains(id))
-          .toSet();
-
-      expect(normalItemIds.length, 86);
-      expect(jesterIds.length, 43);
-      expect(holdItemIds.length, 5);
-
-      expect(docs, contains('Exposure group source of truth'));
-      expect(docs, contains('normal item 86'));
-      expect(docs, contains('normal Jester 43'));
-      expect(docs, contains('hold item 5'));
-      expect(docs, contains('debug item 0'));
-      expect(docs, contains('deleted legacy 3'));
-      expect(
-        policyAuditDoc,
-        isNot(
-          contains(
-            '| `Board-Line Ritual` | 보드 라인을 재료로 복제/각인/변형/압축 | 현재 catalog 0개',
-          ),
-        ),
-        reason:
-            'current policy docs must not retain the pre-Ritual baseline as current state',
-      );
-      expect(
-        policyAuditDoc,
-        contains('현재 active Ritual 31장'),
-        reason:
-            'classification row must point at the current active Ritual pool',
-      );
-
-      for (final id in normalItemIds) {
-        expect(docs, contains('`$id`'), reason: '$id missing from policy docs');
-      }
-      for (final id in jesterIds) {
-        expect(docs, contains('`$id`'), reason: '$id missing from policy docs');
-      }
-      for (final id in holdItemIds) {
-        expect(
-          docs,
-          contains('`$id`'),
-          reason: '$id missing from hold policy docs',
-        );
-      }
-      for (final id in deletedLegacyIds) {
-        expect(
-          docs,
-          contains('`$id`'),
-          reason: '$id missing from deleted legacy policy docs',
-        );
-      }
-
       final watchlistItems = {
         'reroll_token': ('common', 5, 1, 'low-tier utility'),
         'trade_ticket': ('uncommon', 6, 3, 'market pool mutation'),
@@ -477,12 +259,6 @@ void main() {
         expect(item.rarity.name, value.$1, reason: key);
         expect(item.basePrice, value.$2, reason: key);
         expect(item.sellPrice, value.$3, reason: key);
-        expect(
-          docs,
-          contains('`$key` | ${value.$1} | ${value.$2}G | ${value.$3}G'),
-          reason: '$key watchlist values must be documented',
-        );
-        expect(docs, contains(value.$4), reason: key);
       }
 
       final rideTheBus = jesterData.cast<Map<String, dynamic>>().singleWhere(
@@ -491,11 +267,6 @@ void main() {
       expect(rideTheBus['rarity'], 'uncommon');
       expect(rideTheBus['baseCost'], 6);
       expect(rideTheBus['effectType'], 'stateful_growth');
-      expect(
-        docs,
-        contains('`ride_the_bus` | uncommon | 6G | stateful_growth'),
-      );
-      expect(docs, contains('redesign watch'));
     });
 
     test('legacy fate item ids resolve to canonical item ids', () {
