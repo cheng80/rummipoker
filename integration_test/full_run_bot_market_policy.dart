@@ -167,15 +167,12 @@ int fullRunBotDeckTileScore(Tile tile) {
   if (tile.seal != null) score += 34;
   if (tile.edition != null) score += 38;
   switch (tile.enhancement) {
-    case TileEnhancement.wildPainted:
-      score += 24;
     case TileEnhancement.glassTile:
       score += 20;
     case TileEnhancement.scoreGilded:
       score += 16;
     case TileEnhancement.chipInlaid:
     case TileEnhancement.goldTile:
-    case TileEnhancement.luckyTile:
       score += 12;
     case null:
       break;
