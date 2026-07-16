@@ -852,9 +852,6 @@ class RummiPokerGridSession {
               if (repeat == 0 && runRandom.nextInt(4) == 0) {
                 destroyedTiles.add(tile);
               }
-            case TileEnhancement.wildPainted:
-            case TileEnhancement.luckyTile:
-              break;
           }
           final delta = score - before;
           if (delta <= 0) continue;
@@ -941,8 +938,6 @@ class RummiPokerGridSession {
       TileEnhancement.scoreGilded => '점수 도금 타일',
       TileEnhancement.goldTile => '골드 타일',
       TileEnhancement.glassTile => '유리 타일',
-      TileEnhancement.wildPainted => '와일드 타일',
-      TileEnhancement.luckyTile => '럭키 타일',
     };
   }
 

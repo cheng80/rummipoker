@@ -444,8 +444,6 @@ class RummiRunProgress {
       TileEnhancement.scoreGilded => 3,
       TileEnhancement.goldTile => 2,
       TileEnhancement.glassTile => 4,
-      TileEnhancement.wildPainted => 4,
-      TileEnhancement.luckyTile => 3,
       null => 0,
     };
     final sealSurcharge = switch (tile.seal) {

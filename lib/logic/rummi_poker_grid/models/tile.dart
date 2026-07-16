@@ -20,9 +20,7 @@ enum TileEnhancement {
   chipInlaid('chip_inlaid'),
   scoreGilded('score_gilded'),
   goldTile('gold_tile'),
-  glassTile('glass_tile'),
-  wildPainted('wild_painted'),
-  luckyTile('lucky_tile');
+  glassTile('glass_tile');
 
   const TileEnhancement(this.persistenceValue);
   final String persistenceValue;

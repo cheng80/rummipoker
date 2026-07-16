@@ -290,8 +290,6 @@ String tileEnhancementShortLabel(TileEnhancement enhancement) {
     TileEnhancement.scoreGilded => '+%',
     TileEnhancement.goldTile => 'G',
     TileEnhancement.glassTile => 'x',
-    TileEnhancement.wildPainted => 'W',
-    TileEnhancement.luckyTile => '?',
   };
 }
 
@@ -324,8 +322,6 @@ String tileEnhancementDisplayName(TileEnhancement enhancement) {
     TileEnhancement.scoreGilded => '점수 도금',
     TileEnhancement.goldTile => '골드',
     TileEnhancement.glassTile => '유리',
-    TileEnhancement.wildPainted => '와일드',
-    TileEnhancement.luckyTile => '럭키',
   };
 }
 
@@ -358,8 +354,6 @@ String tileEnhancementEffectText(TileEnhancement enhancement) {
     TileEnhancement.scoreGilded => '확정 시 점수 +20%',
     TileEnhancement.goldTile => '확정 후 골드 +1',
     TileEnhancement.glassTile => '확정 시 점수 x1.5',
-    TileEnhancement.wildPainted => '현재 확정 점수 효과 없음',
-    TileEnhancement.luckyTile => '현재 확정 점수 효과 없음',
   };
 }
 
@@ -392,8 +386,6 @@ Color tileEnhancementColor(TileEnhancement enhancement) {
     TileEnhancement.scoreGilded => GameUiPalette.tileScoreGilded,
     TileEnhancement.goldTile => GameUiPalette.actionGoldBright,
     TileEnhancement.glassTile => GameUiPalette.tileGlass,
-    TileEnhancement.wildPainted => GameUiPalette.tileWild,
-    TileEnhancement.luckyTile => GameUiPalette.tileLucky,
   };
 }
 

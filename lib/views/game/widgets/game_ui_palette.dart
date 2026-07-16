@@ -158,8 +158,6 @@ abstract final class GameUiPalette {
   static const Color tileChipInlaid = Color(0xFF2D6F9E);
   static const Color tileScoreGilded = Color(0xFF7C4DFF);
   static const Color tileGlass = Color(0xFF3BC7D6);
-  static const Color tileWild = Color(0xFF2EA66F);
-  static const Color tileLucky = Color(0xFFC05AB8);
   static const Color tileBlueSeal = Color(0xFF246BCE);
   static const Color tileRedSeal = Color(0xFFC0392B);
   static const Color tileSilverEdition = Color(0xFFB7C2C8);
