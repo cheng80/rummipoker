@@ -301,6 +301,43 @@ Create a small game card illustration for Rummi Poker. Aspect ratio 27:35, desig
 | 덱/손패 문장 | `wide_grip` | 넓은 손잡이 | equipment, hand_size, penalty |
 | 덱/손패 문장 | `grand_satchel` | 큰 가방 | relic, hand_size, legendary, penalty |
 | 경제/상점 문장 | `market_compass` | 상점 나침반 | relic, market, legendary, discount |
+| 의식/라인 기억 문장 | `line_memory` | 라인 기억 | ritual, line, hand_rank_growth, primary |
+| 의식/라인 기억 문장 | `cross_memory` | 교차 기억 | ritual, cross_line, row_column_memory |
+| 의식/덱 복사 문장 | `keystone_copy` | 중심석 복사 | ritual, deck_add, key_tile |
+| 의식/덱 복사 문장 | `edge_copy` | 끝점 복사 | ritual, deck_add, endpoint_tile |
+| 의식/덱 복사 문장 | `rank_echo` | 숫자 메아리 | ritual, deck_add, repeated_rank |
+| 의식/덱 복사 문장 | `color_echo` | 색 메아리 | ritual, deck_add, majority_color |
+| 의식/덱 복사 문장 | `scarce_copy` | 희소석 복사 | ritual, deck_add, scarce_tile |
+| 의식/덱 복사 문장 | `sealed_copy` | 각인 복사 | ritual, deck_add, sealed_tile |
+| 의식/족보 변환 문장 | `trim_rank` | 투페어 운명 | ritual, fate_transform, two_pair |
+| 의식/족보 변환 문장 | `line_pruner` | 하위 트리플 운명 | ritual, fate_transform, low_three_kind |
+| 의식/족보 변환 문장 | `fate_three_kind_high` | 상위 트리플 운명 | ritual, fate_transform, high_three_kind |
+| 의식/족보 변환 문장 | `color_concord` | 상위 포카드 운명 | ritual, fate_transform, high_four_kind |
+| 의식/족보 변환 문장 | `step_rite` | 하위 포카드 운명 | ritual, fate_transform, low_four_kind |
+| 의식/족보 변환 문장 | `rank_concord` | 상위 풀하우스 운명 | ritual, fate_transform, high_full_house |
+| 의식/족보 변환 문장 | `fate_full_house_low` | 하위 풀하우스 운명 | ritual, fate_transform, low_full_house |
+| 의식/족보 변환 문장 | `flush_house_fate` | 플러시 하우스 운명 | ritual, fate_transform, flush_house |
+| 의식/족보 변환 문장 | `flush_five_fate` | 플러시 파이브 운명 | ritual, fate_transform, flush_five |
+| 의식/족보 변환 문장 | `fate_flush_high` | 상위 플러시 운명 | ritual, fate_transform, high_flush |
+| 의식/족보 변환 문장 | `fate_flush_low` | 하위 플러시 운명 | ritual, fate_transform, low_flush |
+| 의식/족보 변환 문장 | `fate_straight_high` | 상행 스트레이트 운명 | ritual, fate_transform, high_straight |
+| 의식/족보 변환 문장 | `fate_straight_low` | 하행 스트레이트 운명 | ritual, fate_transform, low_straight |
+| 의식/족보 변환 문장 | `wild_thread` | 상행 스티플 운명 | ritual, fate_transform, high_straight_flush |
+| 의식/족보 변환 문장 | `off_color_rite` | 하행 스티플 운명 | ritual, fate_transform, low_straight_flush |
+| 의식/족보 변환 문장 | `number_mask` | 로얄 운명 | ritual, fate_transform, royal_flush |
+| 의식/색 정리 문장 | `trim_color` | 색 가지치기 | ritual, color_prune, deck_top_refill |
+| 의식/덱 압축 문장 | `deadwood_burn` | 마른가지 소각 | ritual, dead_line, gold_recovery |
+| 의식/덱 압축 문장 | `sacrifice_line` | 제물 의식 | ritual, sacrifice, high_risk_reward |
+| 의식/보드 위치 문장 | `cross_rite` | 교차 의식 | ritual, geometry, cross_point |
+| 의식/보드 위치 문장 | `corner_rite` | 모서리 의식 | ritual, geometry, corner |
+| 의식/보드 위치 문장 | `center_rite` | 중심 의식 | ritual, geometry, center |
+| 의식/보드 위치 문장 | `diagonal_rite` | 대각 의식 | ritual, geometry, diagonal |
+| 의식/보드 위치 문장 | `bridge_rite` | 다리 의식 | ritual, geometry, future_line |
+| 의식/마켓 렌즈 문장 | `ritual_coupon` | 의식 쿠폰 | ritual, market, discount |
+| 의식/마켓 렌즈 문장 | `ritual_lens` | 의식 렌즈 | ritual, market, family_weight |
+| 의식/마켓 렌즈 문장 | `line_pack_ticket` | 라인 팩 티켓 | ritual, market, line_pack |
+| 의식/마켓 렌즈 문장 | `seal_vendor` | 각인 상인 | ritual, market, seal_weight |
+| 의식/마켓 렌즈 문장 | `prune_vendor` | 정리 상인 | ritual, market, prune_weight |
 
 ## 카드별 프롬프트 토큰: Current Ritual/Fate
 

@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PROMPT_DOC = ROOT / "docs/current_system/CARD_ITEM_IMAGE_PROMPTS.md"
+PROMPT_DOC = ROOT / "docs/tools/card_assets/CARD_ITEM_IMAGE_PROMPTS.md"
 JESTERS_JSON = ROOT / "data/common/jesters_common_phase5.json"
 ITEMS_JSON = ROOT / "data/common/items_common_v1.json"
 MANIFEST_JSONL = ROOT / "tmp/imagegen/card_emblem_prompts.jsonl"

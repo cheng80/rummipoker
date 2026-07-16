@@ -4,7 +4,7 @@
 
 `docs/tools/`는 문서 제작, 디자인 제작, 카드/이미지 asset 생성처럼 재사용 가능한 작업 도구 문서를 모은다.
 
-이 폴더는 현재 코드 사실이나 기능 명세의 source-of-truth가 아니다. 도구가 생성한 결과를 런타임 정책으로 반영하려면 `docs/current_system/` 또는 `docs/specs/`에 별도로 요약해야 한다.
+이 폴더는 현재 코드 사실이나 기능 명세의 source-of-truth가 아니다. 도구 결과를 런타임 정책에 반영할 때는 [문서 경계](../00_docs_README.md)에서 owner를 확인하고, 확정 동작은 관련 `docs/core/*.md`, 미결 결정과 실행 판단은 `docs/planning/*.md`에 갱신한다.
 
 ## Contents
 
