@@ -160,6 +160,14 @@ Boss modifier는 전투 목표의 규칙 제약이다. 현재 category는 다음
 - 행동·confirm·overlap·expiry: [rummi_poker_grid_session.dart](../../lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart), [rummi_session_test.dart](../../test/logic/rummi_session_test.dart)
 - Boss category와 제약: [boss_modifier.dart](../../lib/logic/rummi_poker_grid/boss_modifier.dart), [BOSS_PATTERNS.md](../generated/BOSS_PATTERNS.md)
 
+
+
+## Presentation vs Calculation
+
+- Confirm 계산 순서는 growth → overlap → Jester(slot 순) → tile → Item → Boss다.
+- UI settlement 연출 step 이름과 라벨이 이 순서와 다를 수 있다. 특히 합산 effect 라벨이 `Jester`로 보이더라도 tile/Item/Boss 기여를 포함할 수 있다.
+- 연출 순서를 계산 권위로 쓰지 않는다. 판정 권위는 session confirm transaction이다.
+
 ## Source와 Update Trigger
 
 코드·데이터·테스트가 이 문서보다 우선한다. 다음 항목이 바뀌면 같은 변경에서 이 문서와 관련 보호 테스트를 갱신한다.

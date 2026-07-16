@@ -89,6 +89,15 @@ Market 후보 구현은 [jester_catalog_models.dart](../../lib/logic/rummi_poker
 
 Core 문서는 위 표의 행을 복제하지 않는다. generated view가 stale이면 원본을 수정한 뒤 generator를 실행하며 generated Markdown을 손으로 고치지 않는다.
 
+
+
+## Build Relevance Gap
+
+- 현재 Market focus는 S3 이후 확률적으로 같은 family 내 결손 태그를 보정할 뿐, hand 성장·주력 rank/color·보드 상태·교차 family 시너지를 읽지 않는다.
+- 직접 hand-rank 성장 Tool 일부는 `add_hand_rank_progress` effect지만 focus가 찾는 `rank` 태그와 어긋나 의도 선택되지 않을 수 있다.
+- runtime market audit는 ID 노출/수집 집계만 남기며 Market별 build-relevant hit rate를 측정하지 않는다. Item lane offset 회귀 때문에 기존 r800 Item 빈도 보고서는 독립 표본으로 쓰지 않는다.
+- “매 Station에 build-relevant 선택지 최소 1개” 보장은 코드·문서·테스트 어디에도 없다. 관련 지표를 쓰려면 build needs, offer capability, affordability/placeability/applicability를 먼저 정의해야 한다.
+
 ## Source와 Update Trigger
 
 코드·데이터·테스트가 이 문서보다 우선한다. 다음이 바뀌면 같은 변경에서 이 문서와 generated view를 갱신한다.
