@@ -1,0 +1,29 @@
+name: Documentation Structure
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**/*.md'
+      - 'README.md'
+      - 'START_HERE.md'
+      - 'tools/check_docs_structure.dart'
+      - '.github/workflows/docs-structure.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**/*.md'
+      - 'README.md'
+      - 'START_HERE.md'
+      - 'tools/check_docs_structure.dart'
+      - '.github/workflows/docs-structure.yml'
+
+jobs:
+  docs-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Check documentation structure
+        run: dart tools/check_docs_structure.dart
