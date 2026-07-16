@@ -1,6 +1,6 @@
 ---
 name: caveman-commit-push
-description: Safely commit current repository changes with a caveman-commit style Conventional Commit message and push the current branch. Use when the user says "커밋 푸시", "커밋/푸시", "commit push", "caveman commit push", or asks to commit and push with a terse commit message.
+description: Safely commit current repository changes with a caveman-commit style Conventional Commit message, push the current branch, create a Pull Request, and merge it after verification. Use when the user says "커밋 푸시", "커밋/푸시", "commit push", "caveman commit push", or asks to commit, push, and integrate changes.
 ---
 
 # Caveman Commit Push
@@ -107,6 +107,31 @@ git push -u origin "$(git branch --show-current)"
 Do not force push. Do not run `git reset --hard`, `git checkout --`, or
 destructive cleanup commands unless the user explicitly asks.
 
+7. Create a Pull Request only after the commit is pushed and the diff and CI
+checks are reviewed. Use a Korean title and body with these sections:
+
+```text
+## 변경 내용
+## 변경 이유
+## 검증
+## 제외 범위 및 주의사항
+```
+
+Keep the Pull Request limited to one logical purpose. Do not create a Draft
+Pull Request for work that is ready to merge.
+
+8. After CI and the final diff review pass, squash-merge the Pull Request and
+delete the feature branch. Do not merge when CI is failing or required review
+is missing. If merge is blocked, report the blocker and its smallest fix.
+
+```bash
+gh pr merge <number> --squash --delete-branch
+```
+
+After a successful merge, synchronize the base branch and remove any local
+feature worktree or branch that is no longer needed. Never force-push or use
+destructive reset/checkout commands.
+
 ## Reporting
 
 Report in Korean with:
@@ -116,6 +141,10 @@ Report in Korean with:
 - Commit hash.
 - Branch pushed.
 - Push result.
+- Pull Request URL, title, and review/CI result.
+- Merge commit and branch/worktree cleanup result.
 
 If there is nothing to commit, say so and do not create an empty commit unless
-the user explicitly asks.
+the user explicitly asks. If there is no new commit but an existing pushed
+branch has an unmerged Pull Request, inspect it and continue only when the
+user requested the full integration flow.
