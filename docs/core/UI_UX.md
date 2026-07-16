@@ -44,7 +44,7 @@ Market은 `/game` 위의 fullscreen dialog이며 active save scene은 `shop`이�
 - `Jester / Slots`와 `Tool / Gear` 두 탭이 같은 화면 위치를 공유한다.
 - 현재 lane의 보유 slot, 선택 상세, 후보, 가격·할인, 구매·판매·사용·리롤 action을 함께 보여준다.
 - 구매·리롤은 확인과 affordability/cap guard를 거친다. 거절은 shake/badge/notice, 성공은 flight/pulse/reveal로 구분한다.
-- state-changing action은 save queue에 들어가고, Market을 닫거나 다음 Blind로 이동하기 전에 flush한다.
+- state-changing action은 save queue에 들어간다. 다음 Blind/auto-advance 경로에서는 flush하지만 Main Menu·options exit는 현재 flush하지 않는다.
 - 첫 자동 tutorial은 entry와 tab layout이 안정된 뒤 시작하고, 수동 다시보기는 현재 layout에서 즉시 시작한다.
 
 화면은 [game_shop_screen.dart](../../lib/views/game/widgets/game_shop_screen.dart), 선택·guard는 [game_shop_selection_flow.dart](../../lib/views/game/widgets/game_shop_selection_flow.dart), 구매 feedback은 [game_shop_purchase_flow.dart](../../lib/views/game/widgets/game_shop_purchase_flow.dart)가 소유한다.
@@ -106,6 +106,22 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 - settlement/Market: [game_cashout_widgets_test.dart](../../test/views/game/widgets/game_cashout_widgets_test.dart), [game_shop_screen_test.dart](../../test/views/game/widgets/game_shop_screen_test.dart)
 - lifecycle/tutorial: [game_view_lifecycle_test.dart](../../test/views/game/game_view_lifecycle_test.dart), [game_shop_lifecycle_test.dart](../../test/views/game/widgets/game_shop_lifecycle_test.dart), [tutorial_state_service_test.dart](../../test/services/tutorial_state_service_test.dart)
 - settings/locale/archive: [setting_view_test.dart](../../test/views/setting_view_test.dart), [archive_view_test.dart](../../test/views/archive_view_test.dart)
+
+
+
+## Known Presentation Gaps
+
+역기획 기준 현재 화면 정보는 아래처럼 runtime 사실과 어긋날 수 있다. 이를 의도된 UX 계약으로 쓰지 않는다.
+
+- Blind Select 보상 미리보기는 Scout/Clash/Boss를 4/8/12 또는 High Stakes 4/9/13으로 보여 주지만 Settlement 기본 골드는 모든 tier 4다.
+- 점수 정산 라벨의 `Jester` 합계는 Jester뿐 아니라 tile/Item/Boss 효과 합을 포함할 수 있다. seal ID `tile_seal:*`는 Item으로 오분류될 수 있다.
+- cash-out 네비게이션 버튼은 step 3에서 열릴 수 있지만 최종 합계 reveal은 step 4/5까지 이어질 수 있다.
+- Game Over의 `기억 카드 획득` 문구는 실제 지급 금액 없이 선택 전에 표시되며, Retry는 지급하지 않는다.
+- Challenge carryover 안내가 보이지만 현재 completion summary는 growth/deck 필드를 채우지 않아 실완료 후 snapshot이 비어 있다.
+- Tool/Gear UI는 3/2 슬롯만 렌더하지만 구매 cap이 없어 숨은 보유가 생길 수 있다.
+- Archive 분모는 Item 91개를 쓰지만 normal Market 노출에서 제외된 5개가 있어 일반 수집 91/91은 도달 불가하다.
+- Battle/Market coach mark만 있고 Blind, Boss 규칙, cash-out, 실패 학습, unlock spend, Archive 온보딩은 없다.
+- locale 설정은 세션 전용(`saveLocale:false`)이며 핵심 화면 문자열 일부와 content catalog 번역이 미완이다.
 
 ## Source and Update Trigger
 

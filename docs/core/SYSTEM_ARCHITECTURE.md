@@ -112,6 +112,16 @@ Title은 `available/none/invalid`를 읽어 continue 또는 delete recovery를 �
 
 이 표는 change boundary를 설명하며 파일 수나 directory snapshot을 inventory로 고정하지 않는다.
 
+
+
+## Analytics and Monetization Boundary
+
+- 현재 runtime event는 기계적 funnel 중심이며 Continue/resume, save health, bookmark, retry-vs-abandon 구분, unlock spend, locale, review 결과가 없다.
+- `run_end(expired)`는 Game Over 첫 표시 때 기록되어 Retry와 실제 종료를 구분하지 못한다. S8 completed도 endless 선택 전에 찍힐 수 있다.
+- restored route argument 기본값 때문에 High Stakes/Clash/Boss resume analytics가 오분류될 수 있다.
+- iOS `IS_ANALYTICS_ENABLED=false` 설정이 남아 있어 수집 여부는 device 검증 전까지 unknown이다.
+- 광고 SDK, IAP, consent/CMP, ATT, reward ledger, server-side verification은 없다. 광고·유료화는 현재 아키텍처 계약이 아니라 planning 후보다.
+
 ## Source and Update Trigger
 
 bootstrap/container 순서, layer ownership, durable/transient 경계, 세 critical flow, catalog load 순서, Firebase event/privacy boundary 또는 module test boundary가 바뀌면 이 문서와 직접 보호 테스트를 같은 변경에서 갱신한다.

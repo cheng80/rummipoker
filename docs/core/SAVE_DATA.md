@@ -145,6 +145,20 @@ inspect/load
 - scene/restart/presentation reset: [game_session_notifier_save_commands.dart](../../lib/providers/features/rummi_poker_grid/game_session_notifier_save_commands.dart), [game_session_notifier_test.dart](../../test/providers/game_session_notifier_test.dart)
 - StorageHelper: [storage_helper.dart](../../lib/utils/storage_helper.dart), [storage_helper_test.dart](../../test/utils/storage_helper_test.dart)
 
+
+
+## Known Durability Gaps
+
+현재 save/resume 계약은 아래 위험을 가진다. 플레이어-facing “이어하기/북마크 보장”으로 과장하지 않는다.
+
+- New Run은 기존 active run을 먼저 지우고, 새 run의 첫 자동 저장은 GameView에서 Jester catalog load 성공 뒤에야 이뤄진다. 그 사이 강제 종료는 양쪽 run을 잃을 수 있다.
+- payload와 signature는 순차 두 쓰기이며 원자적 rollback이 없다. 중간 상태는 invalid/none recovery로 간다.
+- Battle pause save는 await하지 않는 best-effort이고, Market pause는 queue만 하며 detach/Main Menu/options exit가 flush를 보장하지 않는다.
+- cash-out은 보상을 적용한 뒤 `battle` scene을 저장할 수 있어 복원 시 settlement를 재실행할 수 있다. settlement transaction ID가 없다.
+- terminal Insight/collection 기록과 active-run 삭제 사이에 claim marker가 없거나 늦게 쓰여 재지급 위험이 있다.
+- restored Market과 already-cleared Battle은 Item catalog load 성공에 의존하며 실패 시 조용히 멈출 수 있다.
+- 정확한 schema v2만 허용하며 cross-version migration은 없다.
+
 ## Source and Update Trigger
 
 schema version/key set, exact-version policy, scene enum, durable field, stage/stake/bookmark semantics, device key/HMAC/storage boundary, corruption recovery, catalog ID coupling 또는 delete 범위가 바뀌면 이 문서와 save roundtrip·integrity·restart tests를 같은 변경에서 갱신한다.

@@ -55,6 +55,7 @@
 | `docs/generated/CONTENT_CATALOG.md` | generated | 데이터에서 생성한 콘텐츠 목록 |
 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` | planning | 현재 실행 상태·다음 행동 |
 | `docs/planning/OPEN_DECISIONS.md` | planning | code/test 근거가 있는 미결정 |
+| `docs/planning/REVERSE_DESIGN_SYNTHESIS.md` | planning | 역기획 비교·재미 후보·BM 권고 요약 |
 | `docs/planning/verification/TEST_QA_ACCEPTANCE.md` | planning | 반복 검증 절차·acceptance |
 | `docs/release/00_release_README.md` | release | 출시 문서군 정의 |
 | `docs/release/APP_STORE_SCREENSHOTS_SKILL_USAGE_KO.md` | release | 스토어 스크린샷 스킬 안내 |

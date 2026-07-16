@@ -13,7 +13,7 @@
 | Market | Settlement 완료 또는 S8에서 무한 도전 선택 | Jester·Item·타일 후보를 구매·판매·리롤한다 | 같은 Station의 다음 Blind Select; Boss 뒤에는 다음 Station Blind Select |
 | S8 Boss 종료 선택 | S8 Boss Settlement 완료 | `런 완료`는 completed 기록 후 active run을 지운다. `무한 도전 진입`은 completed 보상을 한 번 기록하고 Market을 계속한다 | Title 또는 Market → S9 |
 | Endless | Station 9 이상 | Station 기본 목표가 직전 규칙에서 1.25배씩 증가하고 Scout/Clash/Boss가 1/1.5/2배를 사용한다 | 같은 loop를 제한 없이 반복 |
-| Terminal | 만료 후 새 run/나가기, 자발적 종료, 또는 런 완료 | run 결과·수집·Insight를 기록하고 종료를 확정한 경로는 active run을 지운다 | New Run 또는 Title |
+| Terminal | 만료 후 새 run/나가기, 또는 런 완료 | run 결과·수집·Insight를 기록하고 종료를 확정한 경로는 active run을 지운다. 자발적 retirement 기록 경로는 현재 없다 | New Run 또는 Title |
 
 진행 상태 정규화는 [blind_selection_setup.dart](../../lib/services/blind_selection_setup.dart), 화면 전환은 [game_session_notifier_station_commands.dart](../../lib/providers/features/rummi_poker_grid/game_session_notifier_station_commands.dart)와 [game_view_stage_flow.dart](../../lib/views/game/game_view_stage_flow.dart)가 소유한다.
 
@@ -26,6 +26,16 @@
 | `relaxed` | 일반 선택 불가 | 기준값 ×0.8, 반올림 | 보드 버림 +1, 손패 버림 +1 | 저장 호환용 ID이며 선택 요청은 `standard`로 정규화 |
 
 `basic` modifier는 목표·보상 1배다. `high_stakes`는 해금에 Insight 20을 사용하고 목표 ×1.04, 기본 Blind 보상 ×1.12를 각각 반올림한다. 난이도와 modifier 배율은 차례로 적용된다. 현재 선택 가능 여부와 배율의 권위는 [new_run_setup.dart](../../lib/services/new_run_setup.dart), tier별 목표·자원은 [blind_selection_spec.dart](../../lib/services/blind_selection_spec.dart)다.
+
+### 현재 문서/표시 불일치
+
+- Blind Select의 `rewardPreview`는 Scout/Clash/Boss를 4/8/12로 표시하지만 Settlement 기본 골드는 모든 tier에서 `round(4 × rewardMultiplier)`다. High Stakes에서도 `round(4 × 1.12) = 4`라서 기본 보상 차이는 없다.
+- Settlement 적용 뒤 `battle` scene으로 저장한 상태를 복원하면 cash-out이 다시 들어가 기본/잔여 자원/Jester/Item 골드를 재지급할 수 있다. 별도 settlement transaction marker는 없다.
+- S8 completed 보상과 Insight 기록도 claim 전에 외부 가시 쓰기가 이뤄져 중단 시 재적용 위험이 있다.
+- `RunEndResult.retired` enum과 서비스 테스트는 있지만 플레이어 경로의 자발적 종료 기록은 없다. 옵션 종료는 active run을 보존하고, 새 run/삭제는 retirement 없이 지운다.
+- Tool/Gear 구매 cap은 Quick/Passive와 달리 강제되지 않는데 UI는 Tool 3/Gear 2만 노출한다. 초과 보유는 숨긴 채 효과만 남을 수 있다.
+- Station Map 같은 Boss 후 골드 효과는 breakdown 생성 뒤에 지갑에 더해져 표시 합계·analytics에서 빠질 수 있다.
+- 할인 Item은 구매 성공 affordability 검사 전에 소비될 수 있어 잔액 부족 탭에서 할인만 사라질 수 있다.
 
 ## Current Economy Constants
 
@@ -60,7 +70,7 @@
 | Jester 슬롯 | 기본 4, S6 Boss 보상 +1 | Jester 보유; 판매 시 점유 해제 | 최대 5 | 같은 run에서 지속, 새 run reset |
 | Quick 슬롯 | 기본 2, S2 Boss 보상 +1 | Quick Item 보유 | 최대 3 | 같은 run에서 지속, 새 run reset |
 | Passive 슬롯 | 기본 1, S4 Boss 보상 +1 | Passive Item 보유 | 최대 2 | 같은 run에서 지속, 새 run reset |
-| Item stack | 구매·효과 획득 | 사용·판매 | Item별 `stackable`·`maxStack`; Quick/Passive는 위 슬롯 cap도 적용 | 같은 run에서 지속, 새 run reset |
+| Item stack | 구매·효과 획득 | 사용·판매 | Item별 `stackable`·`maxStack`; Quick/Passive는 위 슬롯 cap도 적용. Tool/Gear는 acquisition cap이 없어 UI 3/2를 넘을 수 있음 | 같은 run에서 지속, 새 run reset |
 | 추가 덱 타일 | Boss 클리어 보상, 구매·복사·생성 효과 | 파괴·제거 효과 | 명시적 총량 cap 없음; 물리 ID로 구분 | 같은 run의 다음 Blind 덱에 포함; 새 run reset |
 | 족보 성장 | 점수 족보 확정, 성장 Item·타일, 초과 달성 보너스 | 소비 없음 | 레벨 cap 없음; dead line은 성장하지 않음 | 같은 run에서 지속; 새 run reset |
 

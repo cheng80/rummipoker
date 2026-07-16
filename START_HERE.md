@@ -7,6 +7,7 @@
 
 - 현재 흐름은 post-contest 런타임 고도화와 문서 권위 수렴이다.
 - 다음 실행 판단은 `docs/planning/ACTIVE_EXECUTION_PLAN.md`가 소유한다.
+- 역기획 비교·재미 후보·광고 BM 요약은 `docs/planning/REVERSE_DESIGN_SYNTHESIS.md`가 소유한다.
 - Planning은 이 문서 아래에서 현재 작업만 고르며 진입 순서를 대체하지 않는다.
 - Release는 빌드·배포·스토어·홍보를 위한 별도 문서군이며 여기서 연결하지 않는다.
 
