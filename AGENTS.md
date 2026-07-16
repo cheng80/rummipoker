@@ -8,6 +8,26 @@
 - `caveman lite`는 filler와 불필요한 hedging을 줄이되, 문장 구조와 기술적 명확성은 유지하는 모드로 사용한다.
 - 사용자가 일반 모드, 더 자세한 설명, 다른 말투, 또는 `stop caveman`을 요청하면 그 지시를 우선한다.
 
+## RTK 사용 규칙
+
+RTK가 설치되어 있으면 긴 출력이 예상되는 명령은 `rtk` 래퍼를 우선 사용한다.
+
+예:
+
+- `rtk git status`
+- `rtk git diff`
+- `rtk ls .`
+- `rtk grep "<pattern>" .`
+- `rtk pytest`
+
+RTK가 없거나 실패하면 일반 명령으로 대체한다.
+
+Claude Code 전용 초기화나 전역 훅 설정은 사용하지 않는다.
+
+- `rtk init -g`
+- `rtk init --global`
+- `~/.claude` 설정 변경
+
 ## 1. 계획 먼저, 승인 후 코딩
 
 - 코드를 작성하기 **전에** 접근 방식을 설명하고 승인을 기다리세요.
