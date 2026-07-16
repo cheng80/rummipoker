@@ -12,6 +12,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
+import 'package:rummipoker/services/game_analytics_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
@@ -27,6 +28,11 @@ void main() {
     await StorageHelper.init();
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
+    GameAnalyticsService.debugResetForTest();
+  });
+
+  tearDown(() {
+    GameAnalyticsService.debugResetForTest();
   });
 
   testWidgets('stage clear settlement sheet와 game over dialog가 함께 뜨지 않는다', (
@@ -87,6 +93,14 @@ void main() {
       4,
       const Tile(id: 5, color: TileColor.red, number: 5),
     );
+    final analyticsEvents = <_CapturedEvent>[];
+    GameAnalyticsService.debugSetInstanceForTest(
+      GameAnalyticsService(
+        sink: (name, parameters) async {
+          analyticsEvents.add(_CapturedEvent(name, parameters));
+        },
+      ),
+    );
 
     final restoredRun = ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
@@ -144,6 +158,50 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('cashout-sheet-frame'))).width,
       lessThanOrEqualTo(390),
     );
+    final scoreEvents = analyticsEvents
+        .where((event) => event.name == 'score_confirm')
+        .toList();
+    expect(scoreEvents, hasLength(1));
+    expect(scoreEvents.single.parameters['line_count'], 1);
+    expect(scoreEvents.single.parameters['max_rank'], 'prismStraight');
+    expect(scoreEvents.single.parameters['target_before'], 0);
+    expect(scoreEvents.single.parameters['station_cleared'], true);
+    expect(
+      analyticsEvents.where((event) => event.name == 'station_clear'),
+      hasLength(1),
+    );
+    expect(
+      analyticsEvents.where((event) => event.name == 'cashout_result'),
+      isEmpty,
+    );
+
+    final marketButton = find.ancestor(
+      of: find.text('Market으로'),
+      matching: find.byType(InkWell),
+    );
+    for (var i = 0; i < 10; i++) {
+      final button = tester.widget<InkWell>(marketButton);
+      if (button.onTap != null) break;
+      await tester.pump(const Duration(milliseconds: 260));
+    }
+    expect(tester.widget<InkWell>(marketButton).onTap, isNotNull);
+
+    tester.widget<InkWell>(marketButton).onTap!();
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+
+    final cashOutEvents = analyticsEvents
+        .where((event) => event.name == 'cashout_result')
+        .toList();
+    expect(cashOutEvents, hasLength(1));
+    expect(cashOutEvents.single.parameters['cashout_action'], 'enterMarket');
+    expect(cashOutEvents.single.parameters['total_gold'], isA<int>());
+    final marketEntryEvents = analyticsEvents
+        .where((event) => event.name == 'market_entry')
+        .toList();
+    expect(marketEntryEvents, hasLength(1));
+    expect(marketEntryEvents.single.parameters['gold'], isA<int>());
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
@@ -227,4 +285,11 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
+}
+
+class _CapturedEvent {
+  const _CapturedEvent(this.name, this.parameters);
+
+  final String name;
+  final Map<String, Object> parameters;
 }

@@ -69,7 +69,7 @@ extension _GameViewPresentationFlow on _GameViewState {
         _presentationPaused ||
         _gameState.activeRunScene != ActiveRunScene.battle ||
         _stageFlowPhase != GameStageFlowPhase.none ||
-        TutorialStateService.battleIntroSeen) {
+        _battleIntroSeenForAnalytics()) {
       return;
     }
     _battleTutorialScheduled = true;
@@ -81,12 +81,21 @@ extension _GameViewPresentationFlow on _GameViewState {
           _presentationPaused ||
           _gameState.activeRunScene != ActiveRunScene.battle ||
           _stageFlowPhase != GameStageFlowPhase.none ||
-          TutorialStateService.battleIntroSeen) {
+          _battleIntroSeenForAnalytics()) {
         _battleTutorialScheduled = false;
         return;
       }
       await _startBattleTutorial(markSeen: true);
     });
+  }
+
+  bool _battleIntroSeenForAnalytics() {
+    final seen = TutorialStateService.battleIntroSeen;
+    if (seen && !_battleTutorialAlreadySeenLogged) {
+      _battleTutorialAlreadySeenLogged = true;
+      TutorialStateService.logBattleIntroAlreadySeen();
+    }
+    return seen;
   }
 
   Future<void> _waitForBattleTutorialLayout() async {
@@ -112,6 +121,7 @@ extension _GameViewPresentationFlow on _GameViewState {
     _battleTutorialFocusIndex = initialFocus.clamp(0, 3);
     if (markSeen) {
       _battleTutorialShouldMarkSeenOnFinish = true;
+      TutorialStateService.logBattleIntroStart();
     } else {
       _battleTutorialShouldMarkSeenOnFinish = false;
     }
@@ -161,7 +171,9 @@ extension _GameViewPresentationFlow on _GameViewState {
       initialFocus: _battleTutorialFocusIndex,
       onFinish: _markBattleTutorialSeenOnFinish,
       onSkip: () {
-        TutorialStateService.markBattleIntroSeen();
+        TutorialStateService.markBattleIntroSeen(
+          outcome: TutorialStateService.skipOutcome,
+        );
         _battleTutorialShouldMarkSeenOnFinish = false;
         _battleTutorialScheduled = false;
         _battleTutorialFocusIndex = 0;

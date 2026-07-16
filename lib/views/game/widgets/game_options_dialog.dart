@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,6 +9,8 @@ import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
 import 'game_shared_widgets.dart';
 import 'game_ui_palette.dart';
+
+const bool _enableTestCrash = bool.fromEnvironment('ENABLE_TEST_CRASH');
 
 enum GameOptionsCloseAction {
   resumeGame,
@@ -218,6 +221,18 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                   ).pop(GameOptionsCloseAction.openSettings);
                 },
               ),
+              if (_enableTestCrash) ...[
+                const SizedBox(height: 8),
+                GameMenuActionTile(
+                  title: 'Crashlytics 테스트 크래시',
+                  subtitle: 'Firebase Console 수신 확인용입니다.',
+                  icon: Icons.bug_report_rounded,
+                  accentColor: GameUiPalette.menuAccentExit,
+                  onTap: () {
+                    FirebaseCrashlytics.instance.crash();
+                  },
+                ),
+              ],
               const SizedBox(height: 8),
               GameMenuActionTile(
                 title: context.tr('exit'),

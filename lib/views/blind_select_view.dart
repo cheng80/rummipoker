@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +11,7 @@ import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
+import '../services/game_analytics_service.dart';
 import '../services/new_run_setup.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/widgets/game_ui_palette.dart';
@@ -112,6 +115,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     SoundManager.playBgmFromUserGesture(AssetPaths.bgmMain);
     if (!mounted) return;
+    _logStationSelect(selected);
     final restoredRun = widget.restoredRun;
     if (restoredRun != null) {
       final nextRuntime =
@@ -133,6 +137,27 @@ class _BlindSelectViewState extends State<BlindSelectView> {
       '&difficulty=${_effectiveDifficulty.name}'
       '&modifier=${_effectiveRunModifier.id}'
       '&blind_tier=${selected.tier.name}',
+    );
+  }
+
+  void _logStationSelect(BlindSelectionSpec selected) {
+    unawaited(
+      GameAnalyticsService.instance.logEvent(
+        'station_select',
+        parameters: {
+          'seed_mode': widget.restoredRun == null ? 'new' : 'restored',
+          'seed_bucket': _effectiveRunSeed.abs() % 100,
+          'difficulty': _effectiveDifficulty.name,
+          'modifier': _effectiveRunModifier.id,
+          'station_index': _stationIndex,
+          'blind_tier': selected.tier.name,
+          'target_score': selected.targetScore,
+          'board_discards': selected.boardDiscards,
+          'hand_discards': selected.handDiscards,
+          'max_hand_size': selected.maxHandSize,
+          'is_endless': selected.isEndless,
+        },
+      ),
     );
   }
 

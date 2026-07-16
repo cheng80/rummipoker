@@ -12,6 +12,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
+import 'package:rummipoker/services/game_analytics_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
@@ -27,6 +28,11 @@ void main() {
     await StorageHelper.write(StorageKeys.tutorialBattleIntroSeen, true);
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
+    GameAnalyticsService.debugResetForTest();
+  });
+
+  tearDown(() {
+    GameAnalyticsService.debugResetForTest();
   });
 
   testWidgets('game over는 빨간 fade 후 dialog를 연다', (tester) async {
@@ -51,6 +57,14 @@ void main() {
       ..stageIndex = 1
       ..currentStationBlindTierIndex = 0
       ..gold = 0;
+    final analyticsEvents = <_CapturedEvent>[];
+    GameAnalyticsService.debugSetInstanceForTest(
+      GameAnalyticsService(
+        sink: (name, parameters) async {
+          analyticsEvents.add(_CapturedEvent(name, parameters));
+        },
+      ),
+    );
     final restoredRun = ActiveRunRuntimeState(
       activeScene: ActiveRunScene.battle,
       difficulty: NewRunDifficulty.standard,
@@ -87,6 +101,17 @@ void main() {
     );
 
     await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('손패 버림'));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final failureEvents = analyticsEvents
+        .where((event) => event.name == 'battle_action_fail')
+        .toList();
+    expect(failureEvents, hasLength(1));
+    expect(failureEvents.single.parameters['action'], 'hand_discard');
+    expect(failureEvents.single.parameters['difficulty'], 'standard');
+    expect(failureEvents.single.parameters['station_index'], 1);
+
     await tester.tap(find.byKey(const ValueKey('settled-R7#903')));
     await tester.pump(const Duration(milliseconds: 100));
     await tester.tap(find.byTooltip('손패 버림'));
@@ -94,6 +119,21 @@ void main() {
 
     expect(find.byKey(const ValueKey('game-over-fade-veil')), findsOneWidget);
     expect(find.text('이번 런 정산'), findsNothing);
+    final actionEvents = analyticsEvents
+        .where((event) => event.name == 'battle_action')
+        .toList();
+    expect(actionEvents, hasLength(1));
+    expect(actionEvents.single.parameters['action'], 'hand_discard');
+    final runEndEvents = analyticsEvents
+        .where((event) => event.name == 'run_end')
+        .toList();
+    expect(runEndEvents, hasLength(1));
+    expect(runEndEvents.single.parameters['result'], 'expired');
+    expect(runEndEvents.single.parameters['station_index'], 1);
+    expect(
+      runEndEvents.single.parameters['primary_expiry_signal'],
+      isA<String>(),
+    );
 
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
@@ -105,4 +145,11 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
+}
+
+class _CapturedEvent {
+  const _CapturedEvent(this.name, this.parameters);
+
+  final String name;
+  final Map<String, Object> parameters;
 }

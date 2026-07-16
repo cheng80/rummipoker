@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -142,6 +143,7 @@ class _GameShopScreenState extends State<GameShopScreen>
   final GlobalKey _marketToolsRerollTutorialKey = GlobalKey();
   bool _marketTutorialScheduled = false;
   bool _marketTutorialShouldMarkSeenOnFinish = false;
+  bool _marketTutorialAlreadySeenLogged = false;
   int _marketTutorialFocusIndex = 0;
   TutorialCoachMark? _marketTutorialCoachMark;
   int _marketDenyTick = 0;

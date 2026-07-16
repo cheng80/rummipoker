@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
+import '../services/game_analytics_service.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_unlock_state_service.dart';
 import '../utils/common_ui.dart';
@@ -77,6 +80,7 @@ class _NewRunViewState extends State<NewRunView> {
     final seed = RummiPokerGridSession.rollNewRunSeed();
     await ActiveRunSaveService.clearActiveRun();
     if (!mounted) return;
+    _logRunStart(seedMode: 'random', seed: seed);
     context.push(_buildStartRoute(seed: seed));
   }
 
@@ -148,7 +152,28 @@ class _NewRunViewState extends State<NewRunView> {
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await ActiveRunSaveService.clearActiveRun();
     if (!mounted) return;
+    _logRunStart(seedMode: 'manual', seed: value);
     context.push(_buildStartRoute(seed: value));
+  }
+
+  void _logRunStart({required String seedMode, required int seed}) {
+    final difficulty = _unlockState.isDifficultyUnlocked(_selectedDifficulty)
+        ? _selectedDifficulty
+        : NewRunDifficulty.standard;
+    final runModifier = _unlockState.isRunModifierUnlocked(_selectedRunModifier)
+        ? _selectedRunModifier
+        : NewRunModifier.basic;
+    unawaited(
+      GameAnalyticsService.instance.logEvent(
+        'run_start',
+        parameters: {
+          'seed_mode': seedMode,
+          'seed_bucket': seed.abs() % 100,
+          'difficulty': difficulty.name,
+          'modifier': runModifier.id,
+        },
+      ),
+    );
   }
 
   void _goBack() {

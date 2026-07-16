@@ -1,5 +1,7 @@
 part of 'game_shop_screen.dart';
 
+const bool _enableMarketTestCrash = bool.fromEnvironment('ENABLE_TEST_CRASH');
+
 extension _GameShopOptionsFlow on _GameShopScreenState {
   Future<bool> _restartCurrentRun() async {
     final confirmed = await showConfirmDialog(
@@ -209,6 +211,18 @@ extension _GameShopOptionsFlow on _GameShopScreenState {
                   ).pop(_MarketOptionsCloseAction.resumeGame);
                 },
               ),
+              if (_enableMarketTestCrash) ...[
+                const SizedBox(height: 8),
+                GameMenuActionTile(
+                  title: 'Crashlytics 테스트 크래시',
+                  subtitle: 'Firebase Console 수신 확인용입니다.',
+                  icon: Icons.bug_report_rounded,
+                  accentColor: GameUiPalette.menuAccentExit,
+                  onTap: () {
+                    FirebaseCrashlytics.instance.crash();
+                  },
+                ),
+              ],
               const SizedBox(height: 8),
               GameMenuActionTile(
                 title: context.tr('exit'),

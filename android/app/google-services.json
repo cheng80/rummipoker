@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "871961943336",
+    "project_id": "rummi-poker",
+    "storage_bucket": "rummi-poker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871961943336:android:a558a876accfe695cb441d",
+        "android_client_info": {
+          "package_name": "com.cheng80.rummipoker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuwL9RffG0wuE3QCXSovVCguV819DcJ9M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

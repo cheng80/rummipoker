@@ -68,7 +68,7 @@ extension _GameShopSetupFlow on _GameShopScreenState {
         !widget.autoStartTutorials ||
         _optionsDialogOpen ||
         widget.autoAdvanceOnLoad ||
-        TutorialStateService.marketIntroSeen) {
+        _marketIntroSeenForAnalytics()) {
       return;
     }
     _marketTutorialScheduled = true;
@@ -78,12 +78,21 @@ extension _GameShopSetupFlow on _GameShopScreenState {
           _optionsDialogOpen ||
           !widget.autoStartTutorials ||
           widget.autoAdvanceOnLoad ||
-          TutorialStateService.marketIntroSeen) {
+          _marketIntroSeenForAnalytics()) {
         _marketTutorialScheduled = false;
         return;
       }
       await _startMarketTutorial(markSeen: true);
     });
+  }
+
+  bool _marketIntroSeenForAnalytics() {
+    final seen = TutorialStateService.marketIntroSeen;
+    if (seen && !_marketTutorialAlreadySeenLogged) {
+      _marketTutorialAlreadySeenLogged = true;
+      TutorialStateService.logMarketIntroAlreadySeen();
+    }
+    return seen;
   }
 
   Future<void> _waitForMarketTutorialLayout() async {
@@ -103,6 +112,7 @@ extension _GameShopSetupFlow on _GameShopScreenState {
     _marketTutorialFocusIndex = initialFocus.clamp(0, 3);
     if (markSeen) {
       _marketTutorialShouldMarkSeenOnFinish = true;
+      TutorialStateService.logMarketIntroStart();
     } else {
       _marketTutorialShouldMarkSeenOnFinish = false;
     }
@@ -153,7 +163,9 @@ extension _GameShopSetupFlow on _GameShopScreenState {
       initialFocus: _marketTutorialFocusIndex,
       onFinish: _markMarketTutorialSeenOnFinish,
       onSkip: () {
-        TutorialStateService.markMarketIntroSeen();
+        TutorialStateService.markMarketIntroSeen(
+          outcome: TutorialStateService.skipOutcome,
+        );
         _marketTutorialShouldMarkSeenOnFinish = false;
         _marketTutorialScheduled = false;
         _marketTutorialFocusIndex = 0;

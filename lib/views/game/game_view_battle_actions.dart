@@ -1,6 +1,72 @@
 part of '../game_view.dart';
 
 extension _GameViewBattleActions on _GameViewState {
+  GameAnalyticsContext get _gameAnalyticsContext => GameAnalyticsContext(
+    debugFixture:
+        _isDebugFixtureRun ||
+        widget.autoAdvanceMarketOnLoad ||
+        widget.autoEnterMarketOnCashOut ||
+        widget.autoCashOutLoopOnLoad ||
+        widget.debugCompleteRunOnClear ||
+        widget.debugCompleteRunOnLoad ||
+        widget.debugAutoUseItemId != null ||
+        widget.debugStartItemShop ||
+        widget.debugShowGameOverOnLoad ||
+        widget.debugOpenRunInfoOnLoad,
+  );
+
+  Map<String, Object> _battleAnalyticsBaseParams() {
+    final battle = _battleView;
+    final station = _stationView;
+    return {
+      'difficulty': widget.difficulty.name,
+      'modifier': widget.runModifier.id,
+      'station_index': battle.stageIndex,
+      'blind_tier': widget.blindTier.name,
+      'target_score': station.objective.targetScore,
+      'score': station.objective.scoreTowardObjective,
+      'deck_remaining': station.resources.drawPileRemaining,
+      'hand_count': battle.hand.length,
+      'board_tiles': battle.board.snapshotCells().nonNulls.length,
+    };
+  }
+
+  void _logBattleAction(
+    String action, {
+    Map<String, Object?> parameters = const {},
+  }) {
+    unawaited(
+      GameAnalyticsService.instance.logEvent(
+        'battle_action',
+        parameters: {
+          ..._battleAnalyticsBaseParams(),
+          'action': action,
+          ...parameters,
+        },
+        context: _gameAnalyticsContext,
+      ),
+    );
+  }
+
+  void _logBattleActionFail(
+    String action,
+    String reason, {
+    Map<String, Object?> parameters = const {},
+  }) {
+    unawaited(
+      GameAnalyticsService.instance.logEvent(
+        'battle_action_fail',
+        parameters: {
+          ..._battleAnalyticsBaseParams(),
+          'action': action,
+          'fail_reason': reason,
+          ...parameters,
+        },
+        context: _gameAnalyticsContext,
+      ),
+    );
+  }
+
   Future<bool> _afterAction() async {
     if (_stageFlowPhase != GameStageFlowPhase.none ||
         _stationView.objective.isMet) {
@@ -116,10 +182,16 @@ extension _GameViewBattleActions on _GameViewState {
     }
     final result = _gameNotifier.tapBoardCell(row, col);
     if (result.failMessage != null) {
+      _logBattleActionFail(
+        'board_place',
+        result.failMessage!,
+        parameters: {'row': row, 'col': col},
+      );
       _showSnack(result.failMessage!);
       return;
     }
     if (result.didPlaceTile) {
+      _logBattleAction('board_place', parameters: {'row': row, 'col': col});
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
       final didGameOver = await _afterAction();
       if (didGameOver) return;
@@ -131,9 +203,11 @@ extension _GameViewBattleActions on _GameViewState {
     if (_isBattleInputLocked) return;
     final failReason = _gameNotifier.drawTile();
     if (failReason != null) {
+      _logBattleActionFail('draw', failReason);
       _showSnack(failReason);
       return;
     }
+    _logBattleAction('draw');
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final didGameOver = await _afterAction();
     if (didGameOver) return;
@@ -144,9 +218,11 @@ extension _GameViewBattleActions on _GameViewState {
     if (_isBattleInputLocked) return;
     final failReason = _gameNotifier.discardSelectedBoardTileFromState();
     if (failReason != null) {
+      _logBattleActionFail('board_discard', failReason);
       _showSnack(failReason);
       return;
     }
+    _logBattleAction('board_discard');
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final didGameOver = await _afterAction();
     if (didGameOver) return;
@@ -157,9 +233,11 @@ extension _GameViewBattleActions on _GameViewState {
     if (_isBattleInputLocked) return;
     final failReason = _gameNotifier.discardSelectedHandTileFromState();
     if (failReason != null) {
+      _logBattleActionFail('hand_discard', failReason);
       _showSnack(failReason);
       return;
     }
+    _logBattleAction('hand_discard');
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final didGameOver = await _afterAction();
     if (didGameOver) return;
@@ -182,9 +260,18 @@ extension _GameViewBattleActions on _GameViewState {
         : null;
     final failReason = _gameNotifier.useBattleItem(slot.item);
     if (failReason != null) {
+      _logBattleActionFail(
+        'battle_item_use',
+        failReason,
+        parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+      );
       _showSnack(failReason);
       return;
     }
+    _logBattleAction(
+      'battle_item_use',
+      parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+    );
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final itemName = ItemTranslationScope.of(
       context,
@@ -224,6 +311,11 @@ extension _GameViewBattleActions on _GameViewState {
         ? _ritualSelectableLinesForItem(slot.item, allLines)
         : allLines;
     if (lines.isEmpty) {
+      _logBattleActionFail(
+        'targeted_item_use',
+        'no_target_lines',
+        parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+      );
       _showSnack(isRitual ? '선택할 보드 선이 없습니다.' : '선택할 완성 줄이 없습니다.');
       return;
     }
@@ -310,9 +402,18 @@ extension _GameViewBattleActions on _GameViewState {
           )
         : _gameNotifier.useBattleItemOnLine(slot.item, selected.ref);
     if (failReason != null) {
+      _logBattleActionFail(
+        'targeted_item_use',
+        failReason,
+        parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+      );
       _showSnack(failReason);
       return;
     }
+    _logBattleAction(
+      'targeted_item_use',
+      parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+    );
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final targetLabel =
         '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}';
@@ -399,9 +500,24 @@ extension _GameViewBattleActions on _GameViewState {
       tileIndex: selection.selectedTileIndex,
     );
     if (!useResult.isSuccess) {
+      _logBattleActionFail(
+        'targeted_item_use',
+        useResult.failMessage ?? 'item_use_failed',
+        parameters: {
+          'item_id': selection.slot.contentId,
+          'item_op': selection.slot.item.effect.op,
+        },
+      );
       _showSnack(useResult.failMessage ?? '아이템을 사용할 수 없습니다.');
       return;
     }
+    _logBattleAction(
+      'targeted_item_use',
+      parameters: {
+        'item_id': selection.slot.contentId,
+        'item_op': selection.slot.item.effect.op,
+      },
+    );
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     _mutate(() {
       _fateLineSelection = null;
@@ -584,6 +700,11 @@ extension _GameViewBattleActions on _GameViewState {
   Future<void> _useDeckNeedleItem(RummiBattleItemSlotView slot) async {
     final useResult = _gameNotifier.consumeBattleDeckPeekItem(slot.item);
     if (!useResult.isSuccess) {
+      _logBattleActionFail(
+        'deck_peek_discard',
+        useResult.failMessage ?? 'item_use_failed',
+        parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+      );
       _showSnack(useResult.failMessage ?? '아이템을 사용할 수 없습니다.');
       return;
     }
@@ -611,6 +732,10 @@ extension _GameViewBattleActions on _GameViewState {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     if (selectedIndex == null) {
+      _logBattleAction(
+        'deck_peek',
+        parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+      );
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
       _showSnack('$itemName 사용');
       _showItemEffectFeedback(
@@ -627,9 +752,18 @@ extension _GameViewBattleActions on _GameViewState {
       selectedIndex,
     );
     if (failReason != null) {
+      _logBattleActionFail(
+        'deck_peek_discard',
+        failReason,
+        parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+      );
       _showSnack(failReason);
       return;
     }
+    _logBattleAction(
+      'deck_peek_discard',
+      parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
+    );
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     _showSnack('${selectedTile.code} 제거');
     _showItemEffectFeedback(
@@ -738,10 +872,25 @@ extension _GameViewBattleActions on _GameViewState {
       if (await _tryApplyExpiryGuard()) return;
       final didGameOver = await _afterAction();
       if (didGameOver) return;
+      _logBattleActionFail('confirm_lines', 'no_scoring_lines');
       _showSnack('확정할 족보 줄이 없습니다.');
       return;
     }
     final settlementGoalBaseScore = _stationView.objective.scoreTowardObjective;
+    _logBattleAction(
+      'confirm_lines',
+      parameters: {
+        'line_count': result.lineBreakdowns.length,
+        'score_delta': result.totalScore,
+        'stage_cleared': result.stageCleared,
+      },
+    );
+    _logScoreConfirm(
+      lines: result.lineBreakdowns,
+      totalScore: result.totalScore,
+      stageCleared: result.stageCleared,
+      targetBefore: settlementGoalBaseScore,
+    );
     _gameNotifier.setStageFlow(
       phase: GameStageFlowPhase.confirmSettlement,
       activeSettlementLine: null,
@@ -770,10 +919,12 @@ extension _GameViewBattleActions on _GameViewState {
     final row = _selectedBoardRow;
     final col = _selectedBoardCol;
     if (row == null || col == null) {
+      _logBattleActionFail('board_move_start', 'no_source_tile');
       _showSnack('이동할 보드 타일을 먼저 선택하세요.');
       return;
     }
     if (_stationView.resources.boardMovesRemaining <= 0) {
+      _logBattleActionFail('board_move_start', 'no_board_moves');
       _showSnack('보드 이동 횟수가 없습니다.');
       return;
     }
@@ -806,6 +957,16 @@ extension _GameViewBattleActions on _GameViewState {
       return;
     }
     if (_battleView.board.cellAt(row, col) != null) {
+      _logBattleActionFail(
+        'board_move',
+        'destination_occupied',
+        parameters: {
+          'from_row': fromRow,
+          'from_col': fromCol,
+          'to_row': row,
+          'to_col': col,
+        },
+      );
       _showSnack('빈 칸으로만 이동할 수 있습니다.');
       return;
     }
@@ -829,9 +990,29 @@ extension _GameViewBattleActions on _GameViewState {
       toCol: col,
     );
     if (failReason != null) {
+      _logBattleActionFail(
+        'board_move',
+        failReason,
+        parameters: {
+          'from_row': fromRow,
+          'from_col': fromCol,
+          'to_row': row,
+          'to_col': col,
+        },
+      );
       _showSnack(failReason);
       return;
     }
+    _logBattleAction(
+      'board_move',
+      parameters: {
+        'from_row': fromRow,
+        'from_col': fromCol,
+        'to_row': row,
+        'to_col': col,
+        'slide_bonus': hadSlideBonus,
+      },
+    );
     _cancelBoardMoveMode();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     _showSnack(hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.');

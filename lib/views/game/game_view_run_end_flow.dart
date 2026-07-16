@@ -212,7 +212,39 @@ extension _GameViewRunEndFlow on _GameViewState {
   Future<void> _recordRunEndIfNeeded(RunEndSummary summary) async {
     // 디버그 fixture는 눈검증용이므로 보상/도감 저장 상태를 바꾸지 않는다.
     if (_isDebugFixtureRun) return;
+    _logRunEndSummaryForAnalytics(summary);
     await RunProgressionService.handleRunEnded(summary);
+  }
+
+  void _logRunEndSummaryForAnalytics(RunEndSummary summary) {
+    if (summary.result == RunEndResult.expired) {
+      if (_analyticsExpiredRunLogged) return;
+      _analyticsExpiredRunLogged = true;
+    } else {
+      if (_analyticsCompletedRunLogged) return;
+      _analyticsCompletedRunLogged = true;
+    }
+    unawaited(
+      GameAnalyticsService.instance.logEvent(
+        'run_end',
+        parameters: {
+          'result': summary.result.name,
+          'difficulty': summary.difficulty.name,
+          'modifier': widget.runModifier.id,
+          'station_index': _battleView.stageIndex,
+          'blind_tier': widget.blindTier.name,
+          'reached_stage_index': summary.reachedStageIndex,
+          'defeated_boss_count': summary.defeatedBossCount,
+          'seen_jester_count': summary.seenMarketJesterIds.length,
+          'seen_item_count': summary.seenMarketItemIds.length,
+          'bought_jester_count': summary.boughtJesterIds.length,
+          'bought_item_count': summary.boughtItemIds.length,
+          'boss_modifier_count': summary.seenBossModifierIds.length,
+          'cleared_station_count': summary.clearedStationKeys.length,
+        },
+        context: _gameAnalyticsContext,
+      ),
+    );
   }
 
   RunEndSummary _expiredRunSummary() {
@@ -249,6 +281,7 @@ extension _GameViewRunEndFlow on _GameViewState {
 
   Future<void> _startGameOverSequence(List<RummiExpirySignal> signals) async {
     if (_gameOverSequenceInProgress) return;
+    _logExpiredRunEnd(signals);
     _dismissBattleTutorial();
     _clearSelections();
     SoundManager.unlockForWeb();
@@ -260,6 +293,31 @@ extension _GameViewRunEndFlow on _GameViewState {
     await Future<void>.delayed(GamePresentationTimings.gameOverFade);
     if (!mounted) return;
     _showGameOverDialog(signals);
+  }
+
+  void _logExpiredRunEnd(List<RummiExpirySignal> signals) {
+    if (_analyticsExpiredRunLogged) return;
+    _analyticsExpiredRunLogged = true;
+    unawaited(
+      GameAnalyticsService.instance.logEvent(
+        'run_end',
+        parameters: {
+          'result': 'expired',
+          'difficulty': widget.difficulty.name,
+          'modifier': widget.runModifier.id,
+          'station_index': _battleView.stageIndex,
+          'blind_tier': widget.blindTier.name,
+          'target_score': _stationView.objective.targetScore,
+          'score': _stationView.objective.scoreTowardObjective,
+          'defeated_boss_count': _defeatedBossCountForRunEnd(completed: false),
+          'expiry_signal_count': signals.length,
+          'primary_expiry_signal': signals.isEmpty
+              ? 'unknown'
+              : signals.first.name,
+        },
+        context: _gameAnalyticsContext,
+      ),
+    );
   }
 
   void _showGameOverDialog(List<RummiExpirySignal> signals) {

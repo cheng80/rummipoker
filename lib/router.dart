@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,6 +20,9 @@ import 'views/title_view.dart';
 /// 앱 전체 라우팅 설정.
 final GoRouter appRouter = GoRouter(
   initialLocation: RoutePaths.title,
+  observers: [
+    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+  ],
   routes: [
     GoRoute(
       path: RoutePaths.title,
@@ -180,6 +184,7 @@ CustomTransitionPage<void> _instantPage({
 }) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    name: state.matchedLocation,
     transitionDuration: Duration.zero,
     reverseTransitionDuration: Duration.zero,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
