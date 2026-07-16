@@ -37,19 +37,8 @@ archive/analysis_legacy_2026_05/analysis/leveling/archive/
 archive/analysis_legacy_2026_05/analysis/leveling/data/features/*.csv
 archive/analysis_legacy_2026_05/analysis/leveling/data/raw/
 
-# Local ad-hoc verification artifacts.
-# Keep curated evidence packets commit-able; ignore repeated run logs/screenshots.
-.omo/ultraresearch/
-.omo/visual-qa/
-.omo/legacy_leveling/
-.omo/evidence/*-analyze.txt
-.omo/evidence/*-cleanup.txt
-.omo/evidence/*-git-diff-check.txt
-.omo/evidence/*-tests.txt
-.omo/evidence/*-fixture-*.png
-.omo/evidence/*-screenshot*.png
-.omo/evidence/*-visual-gate-review.md
-.omo/evidence/*-visual-qa-gate-review.md
+# Local agent drafts, plans, and verification artifacts.
+.omo/
 
 ############################################################
 # Node.js
