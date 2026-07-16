@@ -11,16 +11,30 @@ Rummi Poker 앱 출시 전 Firebase Core, Google Analytics, Crashlytics를 붙�
 
 ## 1. Firebase Console Project
 
-- [x] Firebase console에서 `프로젝트 만들기` 화면 진입
-- [ ] 프로젝트 이름 입력: `Rummi Poker`
-- [ ] 프로젝트 ID 확인
-  - 권장 예: `rummi-poker`, `rummi-poker-prod`, `rummipoker`
-  - 이미 사용 중이면 Firebase가 붙이는 숫자 suffix 허용
-- [ ] `계속` 클릭
-- [ ] Google Analytics 사용 설정 켜기
-- [ ] Analytics 계정 선택 또는 새 계정 생성: `Rummi Poker`
-- [ ] 약관/지역 설정 확인
-- [ ] 프로젝트 생성 완료
+- [x] Firebase project `rummi-poker` 및 Android/iOS app id가 설정 파일과 일치
+- [x] Android Google Analytics 이벤트 수집 확인
+- [ ] iOS Analytics/Crashlytics 실기기 확인
+
+## 1.1 Latest Handoff (2026-07-16)
+
+- Android: Firebase Core, Analytics, Crashlytics 및 Crashlytics Gradle plugin을 연결했고 debug/release APK 빌드를 통과했다.
+- Android Analytics: 실행 중인 에뮬레이터에서 DebugView를 활성화한 뒤 `station_select`, `battle_action`, `tutorial_already_seen` 전송과 Google Analytics HTTP 204 응답을 확인했다. 튜토리얼 완료, 첫 전투, 첫 Market 구매까지 수동 진행했다.
+- Android Crashlytics: 콘솔 집계 화면 갱신을 기다리는 중이다. 테스트 크래시 issue 수신은 아직 완료 처리하지 않는다.
+- iOS: `GoogleService-Info.plist`의 `IS_ANALYTICS_ENABLED=false` 의미와 실기기 Analytics/Crashlytics 수신을 재확인해야 한다.
+- 저장: 에뮬레이터의 기존 이어하기 데이터가 손상/호환 불가 안내를 보였다. 원인은 로그에서 확인하지 못했으므로 사용자 데이터를 삭제하지 말고, 다음 진단은 `ActiveRunSaveService.inspectActiveRun`의 invalid 사유를 확인하는 것부터 시작한다.
+
+Android DebugView를 다시 켤 때:
+
+```bash
+adb shell setprop debug.firebase.analytics.app com.cheng80.rummipoker
+adb logcat -s FA FA-SVC
+```
+
+확인 후 해제:
+
+```bash
+adb shell setprop debug.firebase.analytics.app .none.
+```
 
 ## 2. Local CLI 준비
 
@@ -150,24 +164,29 @@ flutter pub add firebase_core firebase_analytics firebase_crashlytics
 
 Android:
 
-- [ ] `flutter analyze`
+- [x] `flutter analyze lib test`
+- [x] `flutter build apk --debug`
 - [x] `flutter build apk --release`
-- [ ] Firebase console에서 Android 앱 등록 상태 확인
-- [ ] Crashlytics test crash 수신 확인
+- [x] Firebase console에서 Android 앱 등록 상태와 app id 일치 확인
+- [x] Analytics DebugView/로그 전송 확인
+- [x] `com.google.firebase.crashlytics` Gradle plugin 적용 및 release mapping upload task 확인
+- [ ] Crashlytics test crash issue 수신 확인
 
 iOS:
 
 - [ ] `flutter analyze`
 - [x] `flutter build ios --release --no-codesign`
 - [ ] Firebase console에서 iOS 앱 등록 상태 확인
+- [ ] `IS_ANALYTICS_ENABLED=false` 설정과 Analytics 수집 여부 확인
 - [ ] Xcode archive 또는 실기기 실행 확인
 - [ ] Crashlytics test crash 수신 확인
 
 ## 7. Release Gate
 
-- [ ] Firebase 초기화 실패 없이 앱 시작
-- [ ] Analytics DebugView 또는 Realtime에서 이벤트 확인
-- [ ] Crashlytics 콘솔에서 테스트 크래시 확인
+- [x] Android Firebase 초기화 실패 없이 앱 시작
+- [x] Android Analytics DebugView/Realtime 전송 확인
+- [ ] Android Crashlytics 콘솔에서 테스트 크래시 issue 확인
+- [ ] iOS Firebase 초기화/Analytics/Crashlytics 실기기 확인
 - [x] Android release APK 빌드 확인
 - [x] iOS release app 빌드 확인 (`--no-codesign`)
 - [ ] iOS App Store archive/signing 확인
@@ -190,13 +209,13 @@ iOS:
 - [x] `flutter build apk --release`
 - [x] `flutter build ios --release --no-codesign`
 
-아직 Firebase Console 또는 실기기에서 직접 확인해야 하는 항목:
+다음 세션에서 직접 확인할 항목:
 
-- [ ] Android release 앱에서 Analytics DebugView/Realtime 이벤트 수신
 - [ ] iOS release 앱에서 Analytics DebugView/Realtime 이벤트 수신
-- [ ] Android Crashlytics test crash 수신
+- [ ] Android Crashlytics test crash issue 수신과 콘솔 집계 갱신
 - [ ] iOS Crashlytics test crash 수신
 - [ ] iOS App Store archive/signing
+- [ ] 기존 Android 이어하기 저장 손상/호환 불가 안내의 invalid 사유 진단
 
 ## Notes
 

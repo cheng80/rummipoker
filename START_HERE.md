@@ -81,6 +81,7 @@ save/continue source of truth는 runtime state로 유지하고, queue는 저장�
 - [15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md](docs/specs/V4/15_PROMOTED_ARCHIVE_POLICY_SUMMARY.md)
 - [OPEN_DECISIONS.md](docs/planning/feature_plans/OPEN_DECISIONS.md)
 - [release docs](docs/release/submission_kit/README.md)
+- [Firebase release handoff](docs/release/submission_kit/FIREBASE_RELEASE_SETUP.md): Android 관측 상태와 iOS 후속 확인이 필요할 때
 - [tool docs](docs/tools/huashu-design-codex-usage.md)
 
 ## 현재 문서 매핑
