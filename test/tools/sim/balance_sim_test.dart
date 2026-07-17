@@ -474,54 +474,58 @@ void main() {
     expect(lateScoreCount, greaterThan(0));
   });
 
-  test('CLI accepts full run policy v1 and records utility actions', () async {
-    final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
-    addTearDown(() => dir.deleteSync(recursive: true));
+  test(
+    'CLI accepts full run policy v1 and records utility actions',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
 
-    final firstOut = '${dir.path}/full_run_policy_first.jsonl';
-    final secondOut = '${dir.path}/full_run_policy_second.jsonl';
-    final args = [
-      '--runs',
-      '2',
-      '--bot',
-      'full_run_policy_v1',
-      '--seed',
-      '91460',
-      '--station',
-      '8',
-      '--blind-tier',
-      'boss',
-      '--difficulty',
-      'challenge',
-      '--loadout-id',
-      's5_power_build',
-    ];
+      final firstOut = '${dir.path}/full_run_policy_first.jsonl';
+      final secondOut = '${dir.path}/full_run_policy_second.jsonl';
+      final args = [
+        '--runs',
+        '2',
+        '--bot',
+        'full_run_policy_v1',
+        '--seed',
+        '91460',
+        '--station',
+        '8',
+        '--blind-tier',
+        'boss',
+        '--difficulty',
+        'challenge',
+        '--loadout-id',
+        's5_power_build',
+      ];
 
-    final firstCode = await runBalanceSim([...args, '--out', firstOut]);
-    final secondCode = await runBalanceSim([...args, '--out', secondOut]);
+      final firstCode = await runBalanceSim([...args, '--out', firstOut]);
+      final secondCode = await runBalanceSim([...args, '--out', secondOut]);
 
-    expect(firstCode, 0);
-    expect(secondCode, 0);
-    expect(
-      File(firstOut).readAsStringSync(),
-      File(secondOut).readAsStringSync(),
-    );
+      expect(firstCode, 0);
+      expect(secondCode, 0);
+      expect(
+        File(firstOut).readAsStringSync(),
+        File(secondOut).readAsStringSync(),
+      );
 
-    final rows = File(firstOut)
-        .readAsLinesSync()
-        .map((line) => jsonDecode(line) as Map<String, dynamic>)
-        .toList();
+      final rows = File(firstOut)
+          .readAsLinesSync()
+          .map((line) => jsonDecode(line) as Map<String, dynamic>)
+          .toList();
 
-    expect(rows, hasLength(2));
-    for (final row in rows) {
-      _expectBalanceSimRowContract(row);
-      expect(row['bot_policy'], 'full_run_policy_v1');
-      final result = row['result'] as Map<String, dynamic>;
-      expect(result['stop_reason'], isNot(startsWith('invalid_')));
-      expect(result['discarded_hand_count'], isA<int>());
-      expect(result['board_move_count'], isA<int>());
-    }
-  });
+      expect(rows, hasLength(2));
+      for (final row in rows) {
+        _expectBalanceSimRowContract(row);
+        expect(row['bot_policy'], 'full_run_policy_v1');
+        final result = row['result'] as Map<String, dynamic>;
+        expect(result['stop_reason'], isNot(startsWith('invalid_')));
+        expect(result['discarded_hand_count'], isA<int>());
+        expect(result['board_move_count'], isA<int>());
+      }
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 
   test('CLI records loadout feature summary for ML grouping', () async {
     final dir = Directory.systemTemp.createTempSync('balance_sim_test_');
