@@ -53,6 +53,8 @@
 
 - 새 문서는 먼저 기존 문서 확장으로 해결할 수 있는지 확인한다. 새 파일은 아래 registry에 경로·유형·역할을 추가해야 한다.
 - Markdown 문서는 `docs/core/`, `docs/planning/`, `docs/generated/`, `docs/release/`, `docs/tools/`, `docs/archive/` 중 하나에만 둔다. `docs/00_docs_README.md`는 이 registry의 정본이다.
+- `docs/superpowers/specs/**`와 `docs/superpowers/plans/**`는 선택적 스킬 산출물이다. registry와 `START_HERE.md` 등록 대상에서 제외하며 제품 정본으로 사용하지 않는다.
+- Superpowers 산출물에서 확정된 제품 계약과 현재 실행 상태는 각각 `docs/core/`와 `docs/planning/`의 담당 문서에 반영한다.
 - 모든 Markdown 문서는 H1 제목을 갖는다. `docs/planning/` 문서는 첫 화면에 `> 역할:`을 둔다.
 - `docs/generated/` 문서는 `DO NOT EDIT`와 generator 경로를 헤더에 남기고, source와 generator를 수정해 재생성한다.
 - 문서 삭제·이동·신규 추가는 `dart run tools/check_docs_structure.dart`를 통과해야 한다.
