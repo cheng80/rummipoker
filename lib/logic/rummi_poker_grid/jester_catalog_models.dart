@@ -129,6 +129,97 @@ class RummiCashOutBreakdown {
       totalGold: totalGold,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'stageIndex': stageIndex,
+    'targetScore': targetScore,
+    'blindReward': blindReward,
+    'remainingBoardDiscards': remainingBoardDiscards,
+    'remainingHandDiscards': remainingHandDiscards,
+    'remainingBoardMoves': remainingBoardMoves,
+    'perBoardDiscardBonus': perBoardDiscardBonus,
+    'perHandDiscardBonus': perHandDiscardBonus,
+    'perBoardMoveBonus': perBoardMoveBonus,
+    'boardDiscardGold': boardDiscardGold,
+    'handDiscardGold': handDiscardGold,
+    'boardMoveGold': boardMoveGold,
+    'economyBonuses': [
+      for (final b in economyBonuses)
+        {'jesterId': b.jesterId, 'displayName': b.displayName, 'gold': b.gold},
+    ],
+    'economyGold': economyGold,
+    'firstBlindClearBonusGold': firstBlindClearBonusGold,
+    'itemBonuses': [
+      for (final b in itemBonuses)
+        {'itemId': b.itemId, 'displayName': b.displayName, 'gold': b.gold},
+    ],
+    'itemGold': itemGold,
+    'deckTileRewards': deckTileRewards.map((tile) => tile.toJson()).toList(),
+    'overkillGrowthBonuses': [
+      for (final b in overkillGrowthBonuses)
+        {
+          'rank': b.rank.name,
+          'amount': b.amount,
+          'finalScore': b.finalScore,
+          'thresholdScore': b.thresholdScore,
+        },
+    ],
+    'overkillGoldBonus': overkillGoldBonus,
+    'totalGold': totalGold,
+  };
+
+  factory RummiCashOutBreakdown.fromJson(
+    Map<String, dynamic> json,
+  ) => RummiCashOutBreakdown(
+    stageIndex: (json['stageIndex'] as num).toInt(),
+    targetScore: (json['targetScore'] as num).toInt(),
+    blindReward: (json['blindReward'] as num).toInt(),
+    remainingBoardDiscards: (json['remainingBoardDiscards'] as num).toInt(),
+    remainingHandDiscards: (json['remainingHandDiscards'] as num).toInt(),
+    remainingBoardMoves: (json['remainingBoardMoves'] as num?)?.toInt() ?? 0,
+    perBoardDiscardBonus: (json['perBoardDiscardBonus'] as num).toInt(),
+    perHandDiscardBonus: (json['perHandDiscardBonus'] as num).toInt(),
+    perBoardMoveBonus: (json['perBoardMoveBonus'] as num?)?.toInt() ?? 0,
+    boardDiscardGold: (json['boardDiscardGold'] as num).toInt(),
+    handDiscardGold: (json['handDiscardGold'] as num).toInt(),
+    boardMoveGold: (json['boardMoveGold'] as num?)?.toInt() ?? 0,
+    economyBonuses: [
+      for (final b in json['economyBonuses'] as List<dynamic>? ?? const [])
+        RummiRoundEndEconomyBonus(
+          jesterId: b['jesterId'] as String,
+          displayName: b['displayName'] as String,
+          gold: (b['gold'] as num).toInt(),
+        ),
+    ],
+    economyGold: (json['economyGold'] as num).toInt(),
+    firstBlindClearBonusGold:
+        (json['firstBlindClearBonusGold'] as num?)?.toInt() ?? 0,
+    itemBonuses: [
+      for (final b in json['itemBonuses'] as List<dynamic>? ?? const [])
+        RummiRoundEndItemBonus(
+          itemId: b['itemId'] as String,
+          displayName: b['displayName'] as String,
+          gold: (b['gold'] as num).toInt(),
+        ),
+    ],
+    itemGold: (json['itemGold'] as num?)?.toInt() ?? 0,
+    deckTileRewards: [
+      for (final tile in json['deckTileRewards'] as List<dynamic>? ?? const [])
+        Tile.fromJson(Map<String, dynamic>.from(tile as Map)),
+    ],
+    overkillGrowthBonuses: [
+      for (final b
+          in json['overkillGrowthBonuses'] as List<dynamic>? ?? const [])
+        RummiOverkillGrowthBonus(
+          rank: RummiHandRank.values.byName(b['rank'] as String),
+          amount: (b['amount'] as num).toInt(),
+          finalScore: (b['finalScore'] as num).toInt(),
+          thresholdScore: (b['thresholdScore'] as num).toInt(),
+        ),
+    ],
+    overkillGoldBonus: (json['overkillGoldBonus'] as num?)?.toInt() ?? 0,
+    totalGold: (json['totalGold'] as num).toInt(),
+  );
 }
 
 class RummiRoundEndEconomyBonus {

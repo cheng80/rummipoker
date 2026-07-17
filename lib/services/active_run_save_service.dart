@@ -32,14 +32,10 @@ class ActiveRunSaveService {
   static const int bookmarkSlotCount = 3;
 
   static Future<ActiveRunAvailability> inspectActiveRun() async {
-    final payload = StorageHelper.readString(
-      StorageKeys.activeRunPayloadV1,
-      defaultValue: '',
-    );
-    final signature = StorageHelper.readString(
-      StorageKeys.activeRunSignatureV1,
-      defaultValue: '',
-    );
+    final record = _readActiveRunRecord();
+    if (record.isInvalid) return ActiveRunAvailability.invalid;
+    final payload = record.payload;
+    final signature = record.signature;
     if (payload.isEmpty || signature.isEmpty) {
       return ActiveRunAvailability.none;
     }
@@ -63,6 +59,10 @@ class ActiveRunSaveService {
   }
 
   static bool hasStoredActiveRun() {
+    final record = StorageHelper.readString(
+      StorageKeys.activeRunRecordV1,
+      defaultValue: '',
+    );
     final payload = StorageHelper.readString(
       StorageKeys.activeRunPayloadV1,
       defaultValue: '',
@@ -71,7 +71,7 @@ class ActiveRunSaveService {
       StorageKeys.activeRunSignatureV1,
       defaultValue: '',
     );
-    return payload.isNotEmpty || signature.isNotEmpty;
+    return record.isNotEmpty || payload.isNotEmpty || signature.isNotEmpty;
   }
 
   static Future<void> saveActiveRun({
@@ -96,8 +96,12 @@ class ActiveRunSaveService {
     );
     final deviceKey = await _ensureDeviceKey();
     final signature = _signPayload(payload, deviceKey);
-    await StorageHelper.write(StorageKeys.activeRunPayloadV1, payload);
-    await StorageHelper.write(StorageKeys.activeRunSignatureV1, signature);
+    await StorageHelper.write(
+      StorageKeys.activeRunRecordV1,
+      jsonEncode(<String, String>{'payload': payload, 'signature': signature}),
+    );
+    await StorageHelper.remove(StorageKeys.activeRunPayloadV1);
+    await StorageHelper.remove(StorageKeys.activeRunSignatureV1);
   }
 
   static Future<void> saveRuntimeState(ActiveRunRuntimeState runtime) {
@@ -143,6 +147,9 @@ class ActiveRunSaveService {
         catalog,
       ),
     );
+    final stableRunClaimId = runProgress.runClaimId;
+    stageStartSnapshot.runProgress.runClaimId = stableRunClaimId;
+    stakeStartSnapshot.runProgress.runClaimId = stableRunClaimId;
 
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.values.byName(save.activeScene),
@@ -187,6 +194,7 @@ class ActiveRunSaveService {
   }
 
   static Future<void> clearActiveRun() async {
+    await StorageHelper.remove(StorageKeys.activeRunRecordV1);
     await StorageHelper.remove(StorageKeys.activeRunPayloadV1);
     await StorageHelper.remove(StorageKeys.activeRunSignatureV1);
   }
@@ -237,6 +245,7 @@ class ActiveRunSaveService {
   ) async {
     final runtime = await loadBookmarkRun(slotIndex);
     if (runtime == null) return null;
+    await saveBookmarkSlot(slotIndex: slotIndex, runtime: runtime);
     await saveRuntimeState(runtime);
     return runtime;
   }
@@ -257,9 +266,42 @@ class ActiveRunSaveService {
   }
 
   static Future<ActiveRunSaveData?> _loadVerifiedSaveData() async {
-    return _loadVerifiedSaveDataForKeys(
-      payloadKey: StorageKeys.activeRunPayloadV1,
-      signatureKey: StorageKeys.activeRunSignatureV1,
+    final record = _readActiveRunRecord();
+    if (record.isInvalid) return null;
+    return _loadVerifiedSaveDataFromValues(record.payload, record.signature);
+  }
+
+  static _ActiveRunRecord _readActiveRunRecord() {
+    final raw = StorageHelper.readString(
+      StorageKeys.activeRunRecordV1,
+      defaultValue: '',
+    );
+    if (raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is! Map) return const _ActiveRunRecord.invalid();
+        final payload = decoded['payload'];
+        final signature = decoded['signature'];
+        if (payload is! String ||
+            payload.isEmpty ||
+            signature is! String ||
+            signature.isEmpty) {
+          return const _ActiveRunRecord.invalid();
+        }
+        return _ActiveRunRecord(payload, signature);
+      } catch (_) {
+        return const _ActiveRunRecord.invalid();
+      }
+    }
+    return _ActiveRunRecord(
+      StorageHelper.readString(
+        StorageKeys.activeRunPayloadV1,
+        defaultValue: '',
+      ),
+      StorageHelper.readString(
+        StorageKeys.activeRunSignatureV1,
+        defaultValue: '',
+      ),
     );
   }
 
@@ -269,6 +311,13 @@ class ActiveRunSaveService {
   }) async {
     final payload = StorageHelper.readString(payloadKey, defaultValue: '');
     final signature = StorageHelper.readString(signatureKey, defaultValue: '');
+    return _loadVerifiedSaveDataFromValues(payload, signature);
+  }
+
+  static Future<ActiveRunSaveData?> _loadVerifiedSaveDataFromValues(
+    String payload,
+    String signature,
+  ) async {
     if (payload.isEmpty || signature.isEmpty) return null;
     final deviceKey = await _readDeviceKey();
     if (deviceKey == null || deviceKey.isEmpty) return null;
@@ -321,4 +370,16 @@ class ActiveRunSaveService {
       return Random();
     }
   }
+}
+
+class _ActiveRunRecord {
+  const _ActiveRunRecord(this.payload, this.signature) : isInvalid = false;
+  const _ActiveRunRecord.invalid()
+    : payload = '',
+      signature = '',
+      isInvalid = true;
+
+  final String payload;
+  final String signature;
+  final bool isInvalid;
 }

@@ -86,6 +86,21 @@ void main() {
       expect(state.isRunModifierUnlocked(NewRunModifier.highStakes), isFalse);
     });
 
+    test('같은 run claim ID의 insight는 한 번만 지급한다', () async {
+      expect(
+        await RunUnlockStateService.claimInsight('run-claim-1', 12),
+        isTrue,
+      );
+      expect(
+        await RunUnlockStateService.claimInsight('run-claim-1', 12),
+        isFalse,
+      );
+
+      final state = await RunUnlockStateService.load();
+      expect(state.insight, 12);
+      expect(state.processedRunClaimIds, contains('run-claim-1'));
+    });
+
     test('런 수집 기록을 저장 후 다시 읽을 수 있다', () async {
       await RunUnlockStateService.recordRunCollection(
         const RunCollectionUpdate(

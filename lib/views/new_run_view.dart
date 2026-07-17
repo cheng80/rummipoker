@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../resources/asset_paths.dart';
+import '../providers/features/rummi_poker_grid/game_session_notifier.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/game_analytics_service.dart';
@@ -78,10 +79,10 @@ class _NewRunViewState extends State<NewRunView> {
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final seed = RummiPokerGridSession.rollNewRunSeed();
-    await ActiveRunSaveService.clearActiveRun();
+    final initialRun = await _saveInitialRun(seed);
     if (!mounted) return;
     _logRunStart(seedMode: 'random', seed: seed);
-    context.push(_buildStartRoute(seed: seed));
+    context.push(_buildStartRoute(seed: seed), extra: initialRun);
   }
 
   Future<void> _openSeedInputDialog() async {
@@ -150,10 +151,10 @@ class _NewRunViewState extends State<NewRunView> {
     if (!mounted) return;
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    await ActiveRunSaveService.clearActiveRun();
+    final initialRun = await _saveInitialRun(value);
     if (!mounted) return;
     _logRunStart(seedMode: 'manual', seed: value);
-    context.push(_buildStartRoute(seed: value));
+    context.push(_buildStartRoute(seed: value), extra: initialRun);
   }
 
   void _logRunStart({required String seedMode, required int seed}) {
@@ -176,13 +177,30 @@ class _NewRunViewState extends State<NewRunView> {
     );
   }
 
+  Future<ActiveRunRuntimeState> _saveInitialRun(int seed) async {
+    final difficulty = _unlockState.isDifficultyUnlocked(_selectedDifficulty)
+        ? _selectedDifficulty
+        : NewRunDifficulty.standard;
+    final modifier = _unlockState.isRunModifierUnlocked(_selectedRunModifier)
+        ? _selectedRunModifier
+        : NewRunModifier.basic;
+    final runtime = buildInitialRunRuntime(
+      GameSessionArgs(
+        runSeed: seed,
+        difficulty: difficulty,
+        runModifier: modifier,
+        challengeCarryover: difficulty == NewRunDifficulty.challenge
+            ? _unlockState.challengeCarryover
+            : null,
+      ),
+    );
+    await ActiveRunSaveService.saveRuntimeState(runtime);
+    return runtime;
+  }
+
   void _goBack() {
     SoundManager.playBgm(AssetPaths.bgmMenu);
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
-    context.go(RoutePaths.title);
+    context.pushReplacement(RoutePaths.title);
   }
 
   String _buildStartRoute({required int seed}) {

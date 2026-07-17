@@ -97,6 +97,7 @@ class RunUnlockState {
     this.seenBossModifierIds = const <String>{},
     this.clearedStationKeys = const <String>{},
     this.earnedMemoryCardIds = const <String>{},
+    this.processedRunClaimIds = const <String>{},
     this.challengeCarryover,
   });
 
@@ -147,6 +148,7 @@ class RunUnlockState {
       seenBossModifierIds: _stringSet(json['seenBossModifierIds']),
       clearedStationKeys: _stringSet(json['clearedStationKeys']),
       earnedMemoryCardIds: _stringSet(json['earnedMemoryCardIds']),
+      processedRunClaimIds: _stringSet(json['processedRunClaimIds']),
       challengeCarryover: _challengeCarryover(json['challengeCarryover']),
     );
   }
@@ -163,6 +165,7 @@ class RunUnlockState {
   final Set<String> seenBossModifierIds;
   final Set<String> clearedStationKeys;
   final Set<String> earnedMemoryCardIds;
+  final Set<String> processedRunClaimIds;
   final ChallengeCarryoverSnapshot? challengeCarryover;
 
   Map<String, dynamic> toJson() => {
@@ -178,6 +181,7 @@ class RunUnlockState {
     'seenBossModifierIds': seenBossModifierIds.toList()..sort(),
     'clearedStationKeys': clearedStationKeys.toList()..sort(),
     'earnedMemoryCardIds': earnedMemoryCardIds.toList()..sort(),
+    'processedRunClaimIds': processedRunClaimIds.toList()..sort(),
     if (challengeCarryover != null)
       'challengeCarryover': challengeCarryover!.toJson(),
   };
@@ -211,6 +215,7 @@ class RunUnlockState {
     Set<String>? seenBossModifierIds,
     Set<String>? clearedStationKeys,
     Set<String>? earnedMemoryCardIds,
+    Set<String>? processedRunClaimIds,
     Object? challengeCarryover = _unset,
   }) {
     return RunUnlockState(
@@ -229,6 +234,7 @@ class RunUnlockState {
       seenBossModifierIds: seenBossModifierIds ?? this.seenBossModifierIds,
       clearedStationKeys: clearedStationKeys ?? this.clearedStationKeys,
       earnedMemoryCardIds: earnedMemoryCardIds ?? this.earnedMemoryCardIds,
+      processedRunClaimIds: processedRunClaimIds ?? this.processedRunClaimIds,
       challengeCarryover: challengeCarryover == _unset
           ? this.challengeCarryover
           : challengeCarryover as ChallengeCarryoverSnapshot?,
@@ -352,6 +358,22 @@ class RunUnlockStateService {
     if (amount <= 0) return;
     final current = await load();
     await save(current.copyWith(insight: current.insight + amount));
+  }
+
+  static Future<bool> claimInsight(String claimId, int amount) async {
+    if (claimId.isEmpty || amount <= 0) return false;
+    final current = await load();
+    if (current.processedRunClaimIds.contains(claimId)) return false;
+    await save(
+      current.copyWith(
+        insight: current.insight + amount,
+        processedRunClaimIds: <String>{
+          ...current.processedRunClaimIds,
+          claimId,
+        },
+      ),
+    );
+    return true;
   }
 
   static Future<void> saveChallengeCarryover(

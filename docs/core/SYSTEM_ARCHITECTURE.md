@@ -24,7 +24,7 @@
 | Durable domain / save 대상 | Transient presentation / save 제외 |
 |---|---|
 | `RummiPokerGridSession`: RNG, ruleset, Blind, deck, board, hand, eliminated, move history, confirm modifiers·counters | selected hand/board/Jester/Item overlay, board-move selection mode, dialog open state |
-| `RummiRunProgress`: Station/tier, gold, reroll lanes, inventory, Jester slot state, growth, added/tile offers, unlock·collection state | `GameStageFlowPhase`, active settlement line/step/effect index, displayed score, board snapshot, animation tick |
+| `RummiRunProgress`: Station/tier, gold, reroll lanes, inventory, Jester slot state, growth, added/tile offers, stable run claim ID, settlement receipt, unlock·collection state | `GameStageFlowPhase`, active settlement line/step/effect index, displayed score, board snapshot, animation tick |
 | active scene, difficulty, run modifier | tutorial overlay/focus index, pause veil, game-over fade, Market selection/tab animation, feedback flight |
 | stage-start와 stake-start snapshot | pending item presentation event와 view-local timers/completer |
 
@@ -50,6 +50,7 @@ View는 input lock과 selection mode를 확인하고 notifier command를 호출�
 ```text
 target clear
 → notifier prepareSettlementAndCashOut
+→ 최초 breakdown과 Station/tier receipt를 함께 반영
 → battle scene save
 → settlement/cash-out presentation
 → enterMarketAfterCashOut + shop scene
@@ -58,7 +59,7 @@ target clear
 → router 이동
 ```
 
-Settlement command가 gold, Boss reward, growth, scene/loop phase를 갱신한다. Market open은 offer와 enter-market Item effect를 만든다. Market widget은 command callback만 호출하고 durable inventory/economy는 notifier/run progress가 소유한다. 다음 이동 전 save scene을 `blindSelect`로 바꾸고 Boss tier 뒤 Station index를 정규화한다.
+Settlement command가 gold, Boss reward, growth, scene/loop phase와 receipt를 한 번에 갱신한다. 같은 Blind의 재호출은 receipt를 반환하고 다시 적용하지 않는다. Market open은 offer와 enter-market Item effect를 만든다. Market widget은 command callback만 호출하고 durable inventory/economy는 notifier/run progress가 소유한다. 다음 이동 전 save scene을 `blindSelect`로 바꾸고 Boss tier 뒤 Station index를 정규화한다.
 
 ## 흐름 3: 저장과 복원
 
@@ -66,7 +67,7 @@ Settlement command가 gold, Boss reward, growth, scene/loop phase를 갱신한�
 notifier buildSaveRuntimeState
 → codec DTO / JSON
 → device key HMAC-SHA256
-→ StorageHelper payload + signature
+→ StorageHelper 단일 active envelope
 → Title inspect
 → signature/schema verify
 → catalog ID rebind + runtime restore
@@ -74,7 +75,7 @@ notifier buildSaveRuntimeState
 → notifier bootstrap + presentation reset
 ```
 
-Title은 `available/none/invalid`를 읽어 continue 또는 delete recovery를 제공한다. `blindSelect` scene은 해당 route로, `battle`과 `shop`은 `/game`으로 복원한다. `shop` restore는 Jester와 Item catalog가 준비된 뒤 Market dialog를 다시 연다. 세부 계약은 [SAVE_DATA.md](SAVE_DATA.md)가 소유한다.
+Title은 `available/none/invalid`를 읽어 continue 또는 delete recovery를 제공한다. 새 envelope이 없을 때만 legacy v2 두 키를 읽고 다음 저장에서 전환한다. `blindSelect` scene은 해당 route로, `battle`과 `shop`은 `/game`으로 복원한다. `shop` restore는 Jester와 Item catalog가 준비된 뒤 Market dialog를 다시 연다. 세부 계약은 [SAVE_DATA.md](SAVE_DATA.md)가 소유한다.
 
 ## 콘텐츠를 불러오는 과정
 

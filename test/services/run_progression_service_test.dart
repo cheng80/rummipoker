@@ -50,6 +50,7 @@ void main() {
           },
           addedDeckTiles: [Tile(color: TileColor.red, number: 7, id: 1)],
         ),
+        runClaimId: 'standard-clear',
       );
 
       final state = await RunUnlockStateService.load();
@@ -77,12 +78,51 @@ void main() {
           reachedStageIndex: 11,
           defeatedBossCount: 4,
         ),
+        runClaimId: 'challenge-clear',
       );
 
       final state = await RunUnlockStateService.load();
       expect(state.isDifficultyCleared(NewRunDifficulty.challenge), isTrue);
       expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isTrue);
       expect(state.insight, 31);
+    });
+
+    test('같은 run claim ID의 완료 보상은 한 번만 지급한다', () async {
+      const summary = RunEndSummary(
+        result: RunEndResult.completed,
+        difficulty: NewRunDifficulty.standard,
+        reachedStageIndex: 8,
+        defeatedBossCount: 3,
+      );
+
+      await RunProgressionService.handleRunEnded(
+        summary,
+        runClaimId: 'completed-run-1',
+      );
+      await RunProgressionService.handleRunEnded(
+        summary,
+        runClaimId: 'completed-run-1',
+      );
+
+      final state = await RunUnlockStateService.load();
+      expect(state.insight, 26);
+      expect(state.processedRunClaimIds, {'completed-run-1'});
+      expect(state.isDifficultyCleared(NewRunDifficulty.standard), isTrue);
+      expect(state.isDifficultyUnlocked(NewRunDifficulty.challenge), isTrue);
+    });
+
+    test('완료 보상은 stable run claim ID 없이는 처리하지 않는다', () async {
+      await expectLater(
+        RunProgressionService.handleRunEnded(
+          const RunEndSummary(
+            result: RunEndResult.completed,
+            difficulty: NewRunDifficulty.standard,
+            reachedStageIndex: 8,
+          ),
+        ),
+        throwsStateError,
+      );
+      expect((await RunUnlockStateService.load()).insight, 0);
     });
 
     test('retire 보상은 누적되지만 난이도를 해금하지 않는다', () async {

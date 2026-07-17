@@ -7,6 +7,9 @@ class RummiRunProgress {
     required this.stageIndex,
     this.currentStationBlindTierIndex = 0,
     this.runCompletionRewardClaimed = false,
+    String? runClaimId,
+    this.settlementReceiptKey,
+    this.settlementReceipt,
     required this.gold,
     required this.rerollCost,
     int? tileRerollCost,
@@ -41,6 +44,7 @@ class RummiRunProgress {
     Set<String> seenBossModifierIds = const <String>{},
     Set<String> clearedStationKeys = const <String>{},
   }) {
+    this.runClaimId = runClaimId ?? _newRunClaimId();
     this.unlockedJesterSlots = (unlockedJesterSlots ?? baseUnlockedJesterSlots)
         .clamp(baseUnlockedJesterSlots, maxJesterSlots)
         .toInt();
@@ -138,6 +142,9 @@ class RummiRunProgress {
   int stageIndex = 1;
   int currentStationBlindTierIndex = 0;
   bool runCompletionRewardClaimed = false;
+  String runClaimId = _newRunClaimId();
+  String? settlementReceiptKey;
+  RummiCashOutBreakdown? settlementReceipt;
   int gold = RummiEconomyConfig.startingGold;
   int rerollCost = shopBaseRerollCost;
   int tileRerollCost = shopBaseRerollCost;
@@ -233,6 +240,9 @@ class RummiRunProgress {
       stageIndex: stageIndex,
       currentStationBlindTierIndex: currentStationBlindTierIndex,
       runCompletionRewardClaimed: runCompletionRewardClaimed,
+      runClaimId: runClaimId,
+      settlementReceiptKey: settlementReceiptKey,
+      settlementReceipt: settlementReceipt,
       gold: gold,
       rerollCost: rerollCost,
       itemRerollCost: itemRerollCost,
@@ -284,6 +294,9 @@ class RummiRunProgress {
       clearedStationKeys: Set<String>.from(clearedStationKeys),
     );
   }
+
+  static String _newRunClaimId() =>
+      '${DateTime.now().microsecondsSinceEpoch}-${Random().nextInt(0x7fffffff)}';
 
   /// 도감에 남길 마켓 노출 이력을 런 진행 상태에 쌓는다.
   void recordSeenMarketItems(Iterable<String> itemIds) {
@@ -511,6 +524,8 @@ class RummiRunProgress {
   }) {
     stageIndex = stationIndex;
     currentStationBlindTierIndex = blindTierIndex;
+    settlementReceiptKey = null;
+    settlementReceipt = null;
     _stationRankFinalScores.clear();
     if (applyRoundEndDecay) {
       _applyRoundEndStateDecay();

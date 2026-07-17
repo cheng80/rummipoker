@@ -88,6 +88,7 @@ class _FullRunBotConfig {
     required this.targetScene,
     required this.requiredEvidence,
     required this.tracePath,
+    required this.manualQaHold,
   });
 
   factory _FullRunBotConfig.fromEnvironment() {
@@ -161,6 +162,7 @@ class _FullRunBotConfig {
         'FULL_RUN_BOT_REQUIRED_EVIDENCE',
       ),
       tracePath: const String.fromEnvironment('FULL_RUN_BOT_TRACE_PATH'),
+      manualQaHold: const bool.fromEnvironment('FULL_RUN_BOT_MANUAL_QA_HOLD'),
     );
   }
 
@@ -183,6 +185,7 @@ class _FullRunBotConfig {
   final _FullRunBotScene targetScene;
   final String requiredEvidence;
   final String tracePath;
+  final bool manualQaHold;
 
   String get logPrefix =>
       mode == _FullRunBotMode.full ? 'FULL_RUN_BOT' : 'FULL_RUN_SUB_BOT';
@@ -443,6 +446,7 @@ class _FullRunBot {
         });
         if (resumeRuntime.activeScene == ActiveRunScene.shop) {
           await _pumpUntilVisible(find.text('다음 Station'));
+          await _holdForManualQaIfNeeded();
           return;
         }
         if (resumeRuntime.activeScene == ActiveRunScene.blindSelect) {
@@ -1839,6 +1843,15 @@ class _FullRunBot {
       expect(usedItem, isTrue, reason: 'sub_run_bot needs item use evidence');
     }
     _printPassLog(reason);
+    await _holdForManualQaIfNeeded();
+  }
+
+  Future<void> _holdForManualQaIfNeeded() async {
+    if (!config.manualQaHold) return;
+    print('FULL_RUN_BOT: manual QA hold');
+    while (true) {
+      await tester.pump(const Duration(seconds: 1));
+    }
   }
 
   Future<void> _saveBotCheckpoint() async {

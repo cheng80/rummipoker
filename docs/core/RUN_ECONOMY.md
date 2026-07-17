@@ -29,11 +29,14 @@
 
 `basic` modifier는 목표·보상 1배다. `high_stakes`는 해금에 Insight 20을 사용하고 목표 ×1.04, 기본 Blind 보상 ×1.12를 각각 반올림한다. 난이도와 modifier 배율은 차례로 적용된다. 현재 선택 가능 여부와 배율의 권위는 [new_run_setup.dart](../../lib/services/new_run_setup.dart), tier별 목표·자원은 [blind_selection_spec.dart](../../lib/services/blind_selection_spec.dart)다.
 
-### 현재 문서/표시 불일치
+### 보상·정산 신뢰 계약
 
-- Blind Select의 `rewardPreview`는 Scout/Clash/Boss를 4/8/12로 표시하지만 Settlement 기본 골드는 모든 tier에서 `round(4 × rewardMultiplier)`다. High Stakes에서도 `round(4 × 1.12) = 4`라서 기본 보상 차이는 없다.
-- Settlement 적용 뒤 `battle` scene으로 저장한 상태를 복원하면 cash-out이 다시 들어가 기본/잔여 자원/Jester/Item 골드를 재지급할 수 있다. 별도 settlement transaction marker는 없다.
-- S8 completed 보상과 Insight 기록도 claim 전에 외부 가시 쓰기가 이뤄져 중단 시 재적용 위험이 있다.
+- Blind Select의 모든 tier는 Settlement와 같은 `round(4 × rewardMultiplier)`를 미리보기로 표시한다. High Stakes도 `round(4 × 1.12) = 4`다.
+- cash-out은 Station/tier key와 최초 breakdown을 durable receipt로 저장한다. 같은 Blind에서 다시 호출되면 상태를 바꾸지 않고 receipt의 breakdown을 반환한다. 다음 Blind를 시작할 때 receipt를 비운다.
+- 새 run은 stable claim ID를 가진다. S8 completed Insight는 unlock state에 처리한 claim ID와 증가분을 한 번에 저장하며 같은 ID의 재요청은 지급하지 않는다. `runCompletionRewardClaimed`는 화면 흐름 표식으로 유지한다.
+
+### 남은 경제 불일치
+
 - `RunEndResult.retired` enum과 서비스 테스트는 있지만 플레이어 경로의 자발적 종료 기록은 없다. 옵션 종료는 active run을 보존하고, 새 run/삭제는 retirement 없이 지운다.
 - Tool/Gear 구매 cap은 Quick/Passive와 달리 강제되지 않는데 UI는 Tool 3/Gear 2만 노출한다. 초과 보유는 숨긴 채 효과만 남을 수 있다.
 - Station Map 같은 Boss 후 골드 효과는 breakdown 생성 뒤에 지갑에 더해져 표시 합계·analytics에서 빠질 수 있다.
@@ -113,7 +116,7 @@ Boss 클리어는 무작위 추가 덱 타일 하나를 지급하고 S2/S4/S6의
 - 성장 progress 요구량은 현재 모든 성장 가능 족보에서 레벨당 1이다. 완성 또는 progress +1은 곧 레벨 +1이며 초과 progress는 반복 적용된다.
 - 점수 보너스는 `(level - 1) × 족보별 growthStep`이고 현재 확정은 성장 적용 전 상태로 점수를 계산한 뒤 완료 기록을 올린다. 즉 이번 완성으로 오른 레벨은 다음 완성부터 점수에 반영된다.
 - 일반 점수 족보와 숨은 고급 족보 모두 성장 가능하며 step은 [rummi_hand_growth.dart](../../lib/logic/rummi_poker_grid/rummi_hand_growth.dart)가 단일 권위다.
-- 성장, 완성 횟수, 추가 덱 타일은 active run에 저장되고 그 run의 다음 Blind에서 유지된다. 새 run은 이를 reset한다. Challenge setup에는 저장된 carryover snapshot을 읽는 호환 경계가 있지만 현재 game completion summary는 새 snapshot을 채우지 않으므로 이를 일반적인 새 run 계승 규칙으로 보지 않는다. Jester·Item·골드는 carryover 대상이 아니다.
+- 성장, 완성 횟수, 추가 덱 타일은 active run에 저장되고 그 run의 다음 Blind에서 유지된다. 표준 런 완료 시 이 세 상태를 Challenge carryover snapshot으로 저장하며 다음 Challenge 새 런이 계승한다. 다른 새 run은 이를 reset하고 Jester·Item·골드는 carryover 대상이 아니다.
 
 ## Source와 Test Anchors
 

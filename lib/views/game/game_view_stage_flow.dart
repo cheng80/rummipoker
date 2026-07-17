@@ -758,6 +758,9 @@ extension _GameViewStageFlow on _GameViewState {
       boughtItemIds: _runProgressCollection.boughtItemIds,
       seenBossModifierIds: _runProgressCollection.seenBossModifierIds,
       clearedStationKeys: _runProgressCollection.clearedStationKeys,
+      playedHandCounts: _runProgressCollection.snapshotPlayedHandCounts(),
+      handGrowthStates: _runProgressCollection.snapshotHandGrowthStates(),
+      addedDeckTiles: List<Tile>.from(_runProgressCollection.addedDeckTiles),
     );
   }
 
