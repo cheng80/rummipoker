@@ -1,4 +1,6 @@
-# 카드형 아이템/제스터 일러스트 가이드
+# 카드형 Item/Jester 일러스트 안내
+
+카드 안의 그림은 카드 전체 UI가 아니라 중앙 장식 영역만 채운다. 카드명, 가격, 등급, 타입은 게임 화면이 따로 그린다.
 
 > Source: `data/common/items_common_v1.json`, `data/common/jesters_common_phase5.json`, `assets/translations/data/ko/items.json`, `assets/translations/data/ko/jesters.json`, `lib/views/game/widgets/game_shared_widgets.dart`, `lib/views/game/widgets/game_shop_screen.dart`, `lib/views/game/widgets/game_jester_widgets.dart`.
 
@@ -39,7 +41,7 @@ Hard safe zone 기준:
 
 ## UI와 일러스트 분리 원칙
 
-일러스트는 카드 효과와 컨셉군을 읽히게 하는 중앙 아트다. 희귀도/등급, 타입, 가격, 선택 상태는 카드 UI가 책임진다. 따라서 일러스트 pilot과 등급 보강 UI는 별도 작업으로 진행한다.
+일러스트는 카드 효과와 컨셉을 보여 주는 중앙 그림이다. 희귀도·등급, 타입, 가격, 선택 상태는 카드 UI가 따로 표시한다. 일러스트 시험과 등급 보강 UI도 별도 작업으로 진행한다.
 
 - 등급 보강 UI는 카드 컴포넌트에서 처리한다. 예: `C/U/R/L` 또는 짧은 등급명, 색, 테두리, 상세 정보 표시.
 - 일러스트는 등급 UI를 대신하지 않는다. 카드가 Rare라서 이미지 안에 별, 왕관, 등급 문자를 넣는 방식은 쓰지 않는다.

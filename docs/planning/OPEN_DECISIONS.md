@@ -1,33 +1,33 @@
 # Open Decisions
 
-> 역할: code/test에서 현재 표현은 존재하지만 runtime 계약과 검증이 완성되지 않은 선택지만 기록한다. 확정 정책은 [core 문서](../core/CONTENT_SYSTEM.md), 비교·BM 후보는 [REVERSE_DESIGN_SYNTHESIS.md](REVERSE_DESIGN_SYNTHESIS.md), 완료 이력은 Git history가 소유한다.
+> 역할: 코드에는 흔적이 있지만 아직 어떤 방식으로 확정할지 정하지 못한 내용만 적는다. 확정된 규칙은 [core 문서](../core/CONTENT_SYSTEM.md), 비교·BM 후보는 [REVERSE_DESIGN_SYNTHESIS.md](REVERSE_DESIGN_SYNTHESIS.md), 완료 이력은 Git history가 맡는다.
 
-## Admission Rule
+## 이 문서에 남길 기준
 
-항목은 다음 조건을 모두 만족할 때만 이 문서에 남긴다.
+아래 세 가지를 모두 만족할 때만 이 문서에 남긴다.
 
-1. current code에 명시적인 variant, branch 또는 consumer seam이 있다.
-2. runtime 동작을 확정하는 구현이나 test가 없다.
-3. 선택 결과가 저장, deterministic replay, 점수 또는 플레이어 피드백 계약을 바꾼다.
+1. 현재 코드에 선택지나 분기, 실제로 연결된 사용 지점이 있다.
+2. 어떤 방식으로 동작할지 정한 구현이나 테스트가 아직 없다.
+3. 결정 결과가 저장, 같은 seed 재현, 점수, 플레이어 안내 중 하나를 바꾼다.
 
 아이디어, 벤치마크 후보, 완료된 정책, 과거 제출 이력, 날짜별 로그는 open decision으로 보존하지 않는다. 광고 BM·재미 강화 아이디어는 synthesis 문서의 후보로 두고 여기 넣지 않는다. 단, 이미 code seam이 있는 거짓 계약은 아래에 남긴다.
 
-## Admitted Decisions
+## 아직 정하지 못한 내용
 
 ### OD-01 Challenge carryover producer 공백
 
-- Code seam: completion UI notice, New Run carryover reader, `RunProgressionService` snapshot consumer.
-- Missing: `_completedRunSummary()`가 growth/deck/played counts를 채우지 않아 실완료 snapshot이 비거나 무시된다.
-- Impact: 플레이어-facing “Challenge 계승” 약속이 저장 계약과 불일치.
-- Options: (A) summary 필드 복구 + integration test, (B) UI/문서 약속 제거.
+- 연결된 코드: 완료 화면 안내, New Run의 Challenge 계승 읽기, `RunProgressionService`의 기준점 사용.
+- 빠진 부분: `_completedRunSummary()`가 성장·덱·플레이 횟수를 채우지 않아 실제 완료 뒤 기준점이 비거나 무시된다.
+- 영향: 플레이어에게 한 “Challenge 계승” 약속과 저장 내용이 다르다.
+- 선택지: (A) 완료 요약 필드를 복구하고 통합 테스트 추가, (B) 화면과 문서에서 약속 제거.
 - Status: open / 선행 수정 필요.
 
 ### OD-02 Settlement / terminal reward 멱등성
 
-- Code seam: cash-out 후 `battle` save, completion Insight write, `runCompletionRewardClaimed`.
-- Missing: durable settlement/claim transaction identity와 restore 재진입 방지 test.
-- Impact: kill/restore 시 골드·Boss 보상·Insight 재지급 가능.
-- Options: 지급 전 claim marker 저장, restore path skip, fault-injection tests.
+- 연결된 코드: cash-out 뒤 `battle` 저장, 완료 Insight 기록, `runCompletionRewardClaimed`.
+- 빠진 부분: 정산과 보상 지급을 한 번만 처리했다는 표식, 복원 때 다시 들어가지 않는 테스트.
+- 영향: 강제 종료 후 다시 열면 골드·Boss 보상·Insight가 다시 지급될 수 있다.
+- 선택지: 지급 전에 완료 표식을 저장하고, 복원 경로에서 재처리를 막으며, 강제 종료 테스트를 추가한다.
 - Status: open / P0.
 
 ### OD-03 Tool/Gear capacity vs UI slots
@@ -54,7 +54,7 @@
 - Options: preview를 Settlement formula에 맞추거나 tier 차등 보상을 실제로 도입.
 - Status: open / P0 display truth.
 
-## Explicitly Not Admitted Here
+## 이 문서에 넣지 않는 내용
 
 - Rewarded ad pilot, premium vs demo, build-relevant guarantee, failure-cause card: synthesis 후보이며 현재 production seam이 없거나 정책 결정 전이다.
 - Balatro 1.1 content assumptions: 출시 미확인.

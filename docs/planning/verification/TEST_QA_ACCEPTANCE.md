@@ -1,10 +1,10 @@
-# Test and QA Acceptance
+# 테스트와 QA 기준
 
-> 역할: 변경 유형별로 반복 가능한 검증 명령, 수동 smoke, Done evidence를 정의한다. 실행 상태와 미결 정책은 각각 [ACTIVE_EXECUTION_PLAN.md](../ACTIVE_EXECUTION_PLAN.md), [OPEN_DECISIONS.md](../OPEN_DECISIONS.md)가 소유한다.
+> 역할: 변경 종류별로 어떤 명령을 실행하고 무엇을 직접 확인해야 하는지 적는다. 진행 상황은 [ACTIVE_EXECUTION_PLAN.md](../ACTIVE_EXECUTION_PLAN.md), 아직 정하지 못한 정책은 [OPEN_DECISIONS.md](../OPEN_DECISIONS.md)가 맡는다.
 
-## Automated Gates
+## 자동으로 확인할 항목
 
-변경 범위에 맞는 targeted suite를 먼저 실행하고 최종 통합 gate를 실행한다.
+바꾼 범위에 맞는 작은 테스트를 먼저 돌린 뒤, 마지막에 전체 문서·빌드 검사를 돌린다.
 
 ```sh
 dart run tools/generate_docs.dart --check
@@ -22,7 +22,7 @@ git diff --check
 | Market UI | 관련 `test/views/game/widgets/game_shop_*_test.dart` |
 | generated docs | `test/tools/generate_docs_test.dart`, generator `--check` |
 
-## Core Runtime Acceptance
+## 게임 핵심 흐름이 지켜졌는지 확인
 
 - dead line은 확정 후보가 아니고 부분 족보는 contributor만 제거한다.
 - 여러 scoring line과 overlap은 같은 tile을 한 번만 제거하며 line별 multiplier를 유지한다.
@@ -31,7 +31,7 @@ git diff --check
 - current Stage/Stake restart는 각각 저장된 snapshot 경계로 돌아가며 transient presentation은 복원하지 않는다.
 - Battle → settlement → Market → next Blind flow가 provider와 UI에서 같은 runtime state를 읽는다.
 
-## Market and Item Automated Smoke
+## Market과 Item 자동 점검
 
 반복 실행 가능한 bucket만 유지한다. 날짜별 closing status와 일회성 screenshot 경로는 Git history가 소유한다.
 
@@ -42,7 +42,7 @@ git diff --check
 | `offer_stability` | 구매한 Item 후보는 빈자리로 남고 `trade_ticket`은 Item 후보만 교체 | `rummi_market_facade_test.dart`, `debug_run_fixture_service_test.dart`, `game_shop_screen_trade_ticket_test.dart` |
 | `slot_height` | Jester/Slots와 Tool/Gear section 외곽 높이가 tab·구매·사용 중 유지 | `/game?fixture=market_item_motion_eye_check` browser eye-check |
 
-## Market Flow Smoke
+## Market 직접 확인
 
 1. 정산 뒤 Market에 진입하고 title, Gold, 현재 tab을 확인한다.
 2. `Jester / Slots`에서 Jester offer와 `Q1-Q3`, `P1-P2` 보유 slot을 확인한다.

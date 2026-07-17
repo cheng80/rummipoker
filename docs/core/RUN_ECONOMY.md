@@ -1,15 +1,17 @@
-# Run and Economy
+# 런과 경제
 
-## Run Flow
+한 판을 시작하면 골드 0으로 출발한다. 전투에서 점수를 내고, 정산으로 골드를 받은 뒤, Market에서 다음 전투를 준비한다. 이 문서는 그 흐름과 현재 숫자를 설명한다.
+
+## 한 판의 흐름
 
 한 Station은 `Scout → Clash → Boss` 순서의 세 Blind로 구성된다. 각 Blind를 클리어할 때마다 Settlement와 Market을 거치며, Boss 뒤에만 Station 번호가 증가한다.
 
-| 현재 상태 | 진입 조건 | 처리 | 다음 상태 |
+| 지금 있는 곳 | 언제 들어가나 | 여기서 하는 일 | 다음 장소 |
 |---|---|---|---|
-| New Run | `표준` 또는 `도전`, 해금된 run modifier와 seed 선택 | 새 run 자원과 S1 Blind 진행도를 만든다 | S1 Blind Select |
-| Blind Select | 현재 Station에서 직전 tier가 클리어됨 | 다음 selectable tier의 목표·자원·Boss 제약과 덱을 준비한다 | Battle |
-| Battle | 선택한 Blind 시작 | 타일 배치·확정으로 누적 점수가 목표 이상이면 클리어; 만료 신호를 보호 효과가 막지 못하면 game over | Settlement 또는 종료 처리 |
-| Settlement | Blind 클리어 | 잔여 보드·손패를 정리하고 골드·족보 성장·Boss 보상을 한 번 계산해 적용한다 | Market; 단 S8 Boss는 종료 선택 |
+| New Run | `표준` 또는 `도전`, 해금된 run modifier와 seed 선택 | 새 run의 자원과 S1 진행도를 만든다 | S1 Blind Select |
+| Blind Select | 현재 Station의 앞 단계가 클리어됨 | 다음 전투의 목표·자원·Boss 제약과 덱을 준비한다 | Battle |
+| Battle | Blind를 선택함 | 타일을 놓고 확정해 목표 점수에 도달한다. 더 진행할 수 없으면 game over다 | Settlement 또는 종료 |
+| Settlement | Blind를 클리어함 | 남은 자원으로 골드를 계산하고, 족보 성장과 Boss 보상을 적용한다 | Market; S8 Boss는 종료 선택 |
 | Market | Settlement 완료 또는 S8에서 무한 도전 선택 | Jester·Item·타일 후보를 구매·판매·리롤한다 | 같은 Station의 다음 Blind Select; Boss 뒤에는 다음 Station Blind Select |
 | S8 Boss 종료 선택 | S8 Boss Settlement 완료 | `런 완료`는 completed 기록 후 active run을 지운다. `무한 도전 진입`은 completed 보상을 한 번 기록하고 Market을 계속한다 | Title 또는 Market → S9 |
 | Endless | Station 9 이상 | Station 기본 목표가 직전 규칙에서 1.25배씩 증가하고 Scout/Clash/Boss가 1/1.5/2배를 사용한다 | 같은 loop를 제한 없이 반복 |
@@ -17,7 +19,7 @@
 
 진행 상태 정규화는 [blind_selection_setup.dart](../../lib/services/blind_selection_setup.dart), 화면 전환은 [game_session_notifier_station_commands.dart](../../lib/providers/features/rummi_poker_grid/game_session_notifier_station_commands.dart)와 [game_view_stage_flow.dart](../../lib/views/game/game_view_stage_flow.dart)가 소유한다.
 
-## Difficulty와 Run Modifier
+## 난이도와 런 보정
 
 | 선택 | 현재 노출 | 목표 점수 | Blind 자원 | 추가 규칙 |
 |---|---|---|---|---|
@@ -37,7 +39,7 @@
 - Station Map 같은 Boss 후 골드 효과는 breakdown 생성 뒤에 지갑에 더해져 표시 합계·analytics에서 빠질 수 있다.
 - 할인 Item은 구매 성공 affordability 검사 전에 소비될 수 있어 잔액 부족 탭에서 할인만 사라질 수 있다.
 
-## Current Economy Constants
+## 현재 경제 수치
 
 | 계약 | 현재 값 | 적용 |
 |---|---:|---|
@@ -50,12 +52,12 @@
 | Market 가격 배율 | `11 / 5` | 양수 base price에 곱해 반올림 |
 | Market 기본 리롤 비용 | 5골드 | lane별 첫 raw cost |
 | 리롤 비용 증가 | 사용마다 +2골드 | 사용한 lane에만 누적 |
-| S1 Scout 첫 Market 리롤 할인 | 5골드 | 모든 lane 중 처음 사용한 리롤 한 번; 따라서 기본 비용이면 0골드 |
+| S1 Scout 첫 Market 리롤 할인 | 5골드 | 모든 lane 중 처음 사용하는 리롤 한 번; 기본 비용이면 0골드 |
 | 기본 후보 수 | 3 | Jester와 기본 Item offer 계약; 효과로 Item/Jester 후보가 늘 수 있음 |
 
 상수와 가격 계산은 [jester_catalog_models.dart](../../lib/logic/rummi_poker_grid/jester_catalog_models.dart)의 `RummiEconomyConfig`, 적용은 [jester_run_progress.dart](../../lib/logic/rummi_poker_grid/jester_run_progress.dart)가 소유한다.
 
-## Source, Sink, Cap, Reset
+## 자원이 들어오고 나가는 곳
 
 | 자원·상태 | Source | Sink/소비 | Cap 또는 하한 | Reset·지속 범위 |
 |---|---|---|---|---|
@@ -76,7 +78,7 @@
 
 전투 자원 cap은 [item_effect_runtime.dart](../../lib/logic/rummi_poker_grid/item_effect_runtime.dart), 슬롯 cap과 Boss 해금은 [jester_run_progress.dart](../../lib/logic/rummi_poker_grid/jester_run_progress.dart), run 밖 Insight는 [run_progression_service.dart](../../lib/services/run_progression_service.dart)와 [run_unlock_state_service.dart](../../lib/services/run_unlock_state_service.dart)가 소유한다.
 
-## Settlement와 초과 달성
+## 정산과 초과 달성
 
 Settlement 총 골드는 다음 항의 합이다.
 
@@ -95,7 +97,7 @@ round(4 × runModifier.rewardMultiplier)
 
 Boss 클리어는 무작위 추가 덱 타일 하나를 지급하고 S2/S4/S6의 슬롯 보상을 판정한다. 이 계약은 [jester_run_progress.dart](../../lib/logic/rummi_poker_grid/jester_run_progress.dart)와 [rummi_overkill_growth_test.dart](../../test/logic/rummi_overkill_growth_test.dart)가 보호한다.
 
-## Market 거래 계약
+## Market에서 사고파는 규칙
 
 - 구매 가격은 먼저 `round(basePrice × 11 / 5)`로 만든다. 성장 접근 Jester/Item은 희귀도별 5/7/8/14골드 cap을 적용한 뒤, 다음 구매·category·최저가 후보 할인을 빼고 최소 0으로 만든다.
 - Jester, 타일, Quick, Passive, Tool, Gear 리롤은 각각 비용을 가진다. 성공한 lane만 +2가 되고, 다음 Market에서 모두 5로 돌아간다.
@@ -105,7 +107,7 @@ Boss 클리어는 무작위 추가 덱 타일 하나를 지급하고 S2/S4/S6의
 
 거래 precondition과 가격은 [jester_run_progress.dart](../../lib/logic/rummi_poker_grid/jester_run_progress.dart), Item 후보 구성은 [rummi_market_facade_builders.dart](../../lib/logic/rummi_poker_grid/rummi_market_facade_builders.dart)가 소유한다.
 
-## Leveling Invariants
+## 성장 규칙
 
 - `High Card`와 `One Pair`는 dead line이며 레벨 0, 성장 보너스 0이다. 나머지 족보는 레벨 1에서 시작한다.
 - 성장 progress 요구량은 현재 모든 성장 가능 족보에서 레벨당 1이다. 완성 또는 progress +1은 곧 레벨 +1이며 초과 progress는 반복 적용된다.

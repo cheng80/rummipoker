@@ -1,4 +1,4 @@
-# Store Metadata Draft
+# 스토어 등록 문구 초안
 
 ## 한국어
 

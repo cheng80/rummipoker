@@ -1,6 +1,8 @@
-# Content System
+# 콘텐츠 구조
 
-## Authority와 Four Families
+게임 안의 효과 콘텐츠는 Jester, Item, Tile modifier, Boss 네 종류로 나뉜다. 이 문서는 목록을 외우게 하는 대신, 각 콘텐츠가 언제 등장하고 게임 상태에 어떻게 연결되는지 설명한다.
+
+## 네 가지 콘텐츠와 담당 파일
 
 정확한 Jester·Item 행 목록은 [CONTENT_CATALOG.md](../generated/CONTENT_CATALOG.md), Boss 금지칸 mask는 [BOSS_PATTERNS.md](../generated/BOSS_PATTERNS.md)가 소유한다. 이 문서는 목록을 복제하지 않고 콘텐츠가 runtime에 도달하는 계약만 소유한다.
 
@@ -11,7 +13,7 @@
 | Tile modifier | [tile.dart](../../lib/logic/rummi_poker_grid/models/tile.dart)의 enhancement·seal·edition enum과 persistence value | 각 물리 `Tile`에 최대 enhancement 1, seal 1, edition 1; 덱·손패·보드 이동과 함께 유지 | [rummi_poker_grid_session.dart](../../lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart)의 line 정산과 관련 Item handler | Market 타일 후보와 Boss/Item 보상이 타일을 생성·변형; ID 대신 enum persistence value가 정체성 |
 | Boss | [boss_modifier.dart](../../lib/logic/rummi_poker_grid/boss_modifier.dart)의 known modifier 상수 | 현재 Blind의 `RummiBlindState.bossModifier`; Boss tier에만 하나 배치 | 배치 금지 precondition과 확정 마지막 점수 제약을 session이 적용 | [blind_selection_spec.dart](../../lib/services/blind_selection_spec.dart)의 난이도별 Station pool에서 seed로 결정 |
 
-## ID와 Schema Stability
+## ID와 저장 호환성
 
 - Jester ID는 catalog lookup, owned slot, Market offer, 수집 상태, active-run restore의 join key다. active save는 ID만 저장하고 restore 시 현재 catalog에서 다시 찾으므로 ID 제거·변경은 저장 복원을 깨뜨린다.
 - Item ID는 catalog, translation, inventory, offer, 효과 event, save의 join key다. parser의 canonicalization은 입력 호환 경계일 뿐 새 저장과 runtime ownership은 canonical ID를 사용한다.
@@ -21,7 +23,7 @@
 - Boss save는 modifier ID와 rule fields를 직렬화하고 restore는 known ID를 우선 해석한다. ID, category 또는 rule 의미 변경은 Blind save와 score 재현성에 영향을 준다.
 - 같은 family 안에서 ID는 고유해야 한다. 정확한 catalog 수량과 중복 검사는 생성 문서의 self-check와 [generate_docs_test.dart](../../test/tools/generate_docs_test.dart)가 담당한다.
 
-## Ownership과 Lifecycle
+## 콘텐츠가 게임에 들어오는 과정
 
 | 단계 | Jester | Item | Tile modifier | Boss |
 |---|---|---|---|---|
@@ -34,7 +36,7 @@
 
 보유 인스턴스와 정의를 결합하는 read model은 [owned_content_instance.dart](../../lib/logic/rummi_poker_grid/owned_content_instance.dart), save 결합은 [active_run_save_codec.dart](../../lib/services/active_run_save_codec.dart)가 소유한다.
 
-## Trigger, Stacking, Order
+## 발동·중첩·적용 순서
 
 확정 line 하나의 현재 계산 순서는 다음과 같다.
 
@@ -52,7 +54,7 @@
 - Tile modifier: 한 타일 안에서는 seal → enhancement → edition 순서다. `redSeal`은 enhancement를 한 번 더 발동시키며, 여러 contributor 타일은 line의 scoring tile 순서대로 누적된다.
 - Boss: 한 Blind에 modifier 하나다. `boardCellBlock`은 점수 배율과 stack하지 않고 배치·이동을 거부하며, 나머지 category는 조건이 맞는 line마다 한 번 적용된다.
 
-## Pool과 Offer
+## Market 후보가 정해지는 방법
 
 - Jester catalog 전체가 곧 Market pool은 아니다. `isSupportedInCurrentRunMeta`를 통과한 카드만 `shopCatalog`에 들어간다.
 - Item 정의의 `timing:op`가 runtime handler에 연결되는지는 [item_effect_catalog_support.dart](../../lib/logic/rummi_poker_grid/item_effect_catalog_support.dart)가 판정한다. catalog에 존재한다는 사실만으로 모든 상황에서 자동 발동하는 것은 아니다.
@@ -62,9 +64,9 @@
 
 Market 후보 구현은 [jester_catalog_models.dart](../../lib/logic/rummi_poker_grid/jester_catalog_models.dart), [rummi_market_facade_builders.dart](../../lib/logic/rummi_poker_grid/rummi_market_facade_builders.dart), [jester_run_progress.dart](../../lib/logic/rummi_poker_grid/jester_run_progress.dart)가 함께 소유한다.
 
-## Data to UI to Test Chain
+## 데이터가 화면과 테스트로 이어지는 경로
 
-| Family | Data → loader/model → runtime → UI → test |
+| 종류 | 데이터 → 불러오기 → 게임 적용 → 화면 → 테스트 |
 |---|---|
 | Jester | JSON → [jester_catalog_loader.dart](../../lib/logic/rummi_poker_grid/jester_catalog_loader.dart) / `RummiJesterCard` → Jester effect·run progress → [game_jester_widgets.dart](../../lib/views/game/widgets/game_jester_widgets.dart) / Market card → [jester_effect_runtime_test.dart](../../test/logic/jester_effect_runtime_test.dart), [rummi_session_test.dart](../../test/logic/rummi_session_test.dart) |
 | Item | JSON → [item_catalog_loader.dart](../../lib/logic/rummi_poker_grid/item_catalog_loader.dart) / `ItemDefinition` → Item effect runtime·handlers → [game_shared_item_widgets.dart](../../lib/views/game/widgets/game_shared_item_widgets.dart) / Market action flow → [item_definition_test.dart](../../test/logic/item_definition_test.dart), [item_effect_runtime_test.dart](../../test/logic/item_effect_runtime_test.dart) |
@@ -73,15 +75,15 @@ Market 후보 구현은 [jester_catalog_models.dart](../../lib/logic/rummi_poker
 
 한 단계의 필드나 ID를 바꾸면 오른쪽의 모든 소비자를 같은 변경에서 확인한다. UI 문자열만 맞고 runtime op가 빠졌거나, runtime은 동작하지만 save lookup이 끊기는 상태를 유효한 콘텐츠로 보지 않는다.
 
-## Localization과 Save Coupling
+## 번역과 저장의 연결
 
 - Jester와 Item은 locale별 JSON을 ID로 조회한다. 번역이 없으면 catalog의 영문 `displayName`·`effectText` fallback을 사용한다. 경로와 fallback은 [jester_translation_scope.dart](../../lib/resources/jester_translation_scope.dart), [item_translation_scope.dart](../../lib/resources/item_translation_scope.dart)가 소유한다.
 - 새 Jester/Item ID는 정의 JSON, 지원 runtime, 모든 지원 locale 번역, UI 노출, generator self-check, save restore test를 함께 만족해야 한다.
 - 저장은 번역문을 소유하지 않는다. ID와 durable state만 저장하고 현재 catalog·translation을 다시 결합한다.
 - Tile modifier의 player-facing 이름·설명과 Boss title·rule은 현재 Dart presentation/code에 있다. 외부 번역 JSON이 있다고 가정하지 않으며, locale 구조를 바꿀 때 persistence value와 Boss ID는 유지한다.
-- active run에 남은 Jester ID가 catalog에 없으면 restore는 실패한다. Item lookup이 없으면 보유 entry는 남을 수 있지만 runtime/read model에서 정의를 결합하지 못한다. 따라서 정의 삭제는 save compatibility 검토 없이 허용하지 않는다.
+- active run에 남은 Jester ID가 catalog에 없으면 restore는 실패한다. Item lookup이 없으면 보유 entry는 남을 수 있지만 실행 상태와 화면에 정의를 붙일 수 없다. 정의를 지울 때는 save compatibility를 먼저 확인한다.
 
-## Generated Views
+## 자동 생성 목록
 
 - [CONTENT_CATALOG.md](../generated/CONTENT_CATALOG.md): current Jester·Item ID, player-facing 한국어, 가격, placement, trigger/timing/op의 재현 가능한 전체 표
 - [BOSS_PATTERNS.md](../generated/BOSS_PATTERNS.md): current `boardCellBlock` ID, rule, blocked coordinates, 5×5 mask

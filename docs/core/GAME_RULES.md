@@ -1,15 +1,17 @@
-# Game Rules
+# 게임 규칙
 
-## 보드와 평가 라인
+이 문서는 전투에서 무엇이 가능한지 설명한다. 처음 읽을 때는 ‘보드와 평가 라인’, ‘행동과 조건’, ‘확정 처리’만 먼저 보면 된다. 코드 이름은 테스트와 맞춰야 하므로 그대로 둔다.
+
+## 보드와 점수 줄
 
 - 보드는 5×5, 좌표는 row와 column 각각 0..4다.
 - 평가 라인은 행 5개, 열 5개, 주대각선 1개, 역대각선 1개로 총 12개다.
 - 빈 칸이 있는 줄도 현재 놓인 타일만으로 평가한다.
-- 점수 후보는 `High Card`와 `One Pair`를 제외한 non-dead-line 족보다.
+- 점수 후보는 `High Card`와 `One Pair`를 제외한 족보다. 이 둘은 현재 점수를 주지 않는 dead line이다.
 
 기본값은 [rummi_ruleset.dart](../../lib/logic/rummi_poker_grid/rummi_ruleset.dart)의 `RummiRuleset.currentDefaults`와 `kCurrentEvaluationLineCount`가 소유한다.
 
-## 덱과 손패
+## 덱과 손에 든 타일
 
 - 타일은 네 색과 숫자 1..13, 물리 identity로 구성된다.
 - 기본 덱은 `4 × 13 × copiesPerTile`이며 기본 `copiesPerTile`은 1이다.
@@ -17,7 +19,7 @@
 - 드로우는 손패가 최대치보다 작고 덱이 비어 있지 않을 때만 성공한다.
 - 기본 draw/place/discard/move 흐름에서는 덱, 손패, 보드, 제거 더미의 타일 합이 전투의 초기 덱 크기를 보존한다. `emergency_draw` 같은 명시적 새 타일 생성·복사 효과는 예외이며, 현재 구현은 덱을 소모하지 않고 손패에 새 타일을 추가할 수 있다([item_effect_handlers.dart](../../lib/logic/rummi_poker_grid/item_effect_handlers.dart), [item_effect_runtime_test.dart](../../test/logic/item_effect_runtime_test.dart)).
 
-## 행동과 Precondition
+## 행동과 가능한 조건
 
 | 행동 | 성공 조건 | 성공 결과 | 실패 시 불변식 |
 |---|---|---|---|
@@ -28,7 +30,7 @@
 | 보드 이동 | 보드 이동이 1 이상, source에 타일 존재, destination이 비었고 Boss 금지칸이 아님 | 자원 1 소모, 타일 위치 변경, 이동 이력 기록 | 자원과 보드 유지 |
 | 확정 | 현재 보드에 non-dead-line 점수 줄이 1개 이상 있음 | 모든 점수 줄 계산, contributor 합집합 제거, 정산 결과 생성 | 점수 줄이 없으면 `nothing`, 보드 유지 |
 
-현재 기본 전투 자원은 보드 버림 4, 손패 버림 2, 보드 이동 3이다. Blind 선택과 난이도는 전투 진입 시 이 값을 조정할 수 있으므로 실제 전투에서는 `RummiBlindState` 값을 따른다.
+기본 전투 자원은 보드 버림 4회, 손패 버림 2회, 보드 이동 3회다. 난이도와 Blind에 따라 숫자가 달라질 수 있으므로 실제 전투에서는 `RummiBlindState`에 들어 있는 값을 사용한다.
 
 ## 족보 ID와 기본 점수
 
@@ -68,24 +70,24 @@
 
 부분 평가는 빈 칸을 압축하지 않고 원래 줄 좌표를 contributor index로 돌려준다. 예를 들어 5칸 중 index 1, 2, 4에 같은 숫자 타일이 있으면 `threeOfAKind`, 40점, contributor `[1, 2, 4]`다.
 
-## Confirm Transaction
+## ‘확정’을 누르면 일어나는 일
 
 확정은 현재 보드의 모든 non-dead-line 줄을 한 transaction으로 처리한다.
 
-1. 12개 라인을 평가하고 점수 후보를 수집한다.
-2. 각 후보의 contributor 좌표와 타일을 만든다.
-3. contributor 좌표별 참여 횟수를 세어 line별 overlap 배율을 구한다.
+1. 12개 점수 줄을 살펴보고 점수를 낼 수 있는 줄을 찾는다.
+2. 각 줄에서 점수에 실제로 필요한 타일과 위치를 기록한다.
+3. 같은 타일이 여러 줄에 쓰였는지 세어 줄마다 겹침 배율을 계산한다.
 4. 족보 성장 상태가 반영된 base score에 overlap을 적용하고 반올림한다.
 5. 장착 Jester를 slot index 순서로 적용한다.
 6. 타일 modifier, confirm Item modifier, Boss 점수 제약 순으로 적용한다.
 7. line breakdown과 총점을 만든다.
-8. 모든 후보의 contributor 좌표 합집합만 보드에서 제거해 제거 더미로 옮긴다.
+8. 점수에 쓰인 타일만 한 번씩 보드에서 빼서 제거 더미로 옮긴다.
 9. 사용된 one-shot modifier와 이동 이력을 정리하고, 확정 횟수·확정 족보 이력을 갱신한다.
 10. 누적 점수가 목표 이상이면 clear signal을 반환한다.
 
 UI 정산 연출에서는 `applyScoreToBlind: false`로 같은 계산 결과를 만든 뒤 line별 점수를 순차 반영할 수 있다. 이는 표시 시점을 나누는 것이며 판정·제거 transaction을 바꾸지 않는다.
 
-## Contributor와 Overlap
+## 점수에 쓰인 타일과 겹침
 
 Contributor는 족보 성립에 실제로 필요한 타일이다. 투 페어의 kicker, 트리플의 나머지 타일, 포카드의 kicker는 제거되지 않는다. 여러 점수 줄이 공유한 contributor는 보드에서 한 번만 제거된다.
 
@@ -107,7 +109,7 @@ lineBaseScore = round(grownRankBaseScore × multiplier)
 - 보드 이동은 source 타일을 destination 빈 칸으로 옮기며 덱·손패·제거 더미를 바꾸지 않는다.
 - Boss 금지칸은 손패 배치와 보드 이동 destination 모두를 거부한다.
 
-## Boss Constraint
+## Boss 제약
 
 Boss modifier는 전투 목표의 규칙 제약이다. 현재 category는 다음 의미를 가진다.
 
@@ -125,7 +127,7 @@ Boss modifier는 전투 목표의 규칙 제약이다. 현재 category는 다음
 
 현재 14개 `boardCellBlock` ID와 정확한 5×5 mask는 생성 문서 [BOSS_PATTERNS.md](../generated/BOSS_PATTERNS.md)가 소유한다.
 
-## Expiry와 Game Over
+## 만료와 Game Over
 
 전투 session은 다음 두 expiry signal을 낸다.
 

@@ -1,8 +1,8 @@
-# Firebase Release Setup Checklist
+# Firebase 출시 설정 체크리스트
 
-Rummi Poker 앱 출시 전 Firebase Core, Google Analytics, Crashlytics를 붙이기 위한 순차 체크리스트.
+Rummi Poker를 출시하기 전에 Firebase Core, Google Analytics, Crashlytics가 제대로 연결됐는지 순서대로 확인하는 목록이다. 각 단계는 실제 앱에서 확인한 뒤 체크한다.
 
-## Current App IDs
+## 현재 앱 식별자
 
 - Android package name: `com.cheng80.rummipoker`
 - iOS bundle id: `com.cheng80.rummipoker`
