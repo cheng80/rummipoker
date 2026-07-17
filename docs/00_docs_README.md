@@ -1,8 +1,8 @@
-# Documentation Boundaries
+# 문서 안내
 
-이 문서는 문서군의 책임, 사실 권위, 갱신 소유권만 정의한다. 새 세션의 읽기 순서는 루트 `START_HERE.md`가 소유한다.
+이 문서는 각 문서가 무슨 일을 맡는지 알려 주는 안내서다. 게임 규칙을 찾을 때는 [START_HERE.md](../START_HERE.md)의 읽기 순서를 따르면 된다. 파일 이름은 `START_HERE.md`다.
 
-## Boundaries
+## 문서 종류와 역할
 
 | 문서군 | 경계 | 소유자 |
 |---|---|---|
@@ -13,7 +13,7 @@
 | `docs/release/` | 빌드·배포·스토어·홍보를 위한 별도 문서군 | 출시 작업 책임자 |
 | `docs/tools/` | 문서·이미지·asset 생성 입력과 사용법 | 해당 도구 변경 작업자 |
 
-## Authority Priority
+## 무엇을 가장 믿어야 하나
 
 사실 판단 순서는 `code/data/test → generated → core → planning`이다. 하위 단계는 상위 단계의 사실을 덮어쓰지 않는다.
 
@@ -23,7 +23,24 @@
 - Verification은 실행 절차와 pass/fail evidence를 소유하며 제품 계약을 새로 정의하지 않는다.
 - Release는 별도 운영 문서군이며 core/planning 사실 권위에 참여하지 않는다.
 
-## Update Rules
+## 자주 나오는 개발 용어
+
+문서에 코드와 같은 이름을 남겨야 하는 곳이 있어 아래처럼 읽으면 된다.
+
+| 문서 용어 | 쉽게 말하면 |
+|---|---|
+| runtime | 앱을 실제로 실행했을 때의 상태 |
+| source of truth | 내용이 다를 때 가장 먼저 믿는 기준 |
+| facade | 복잡한 상태를 화면이 읽기 좋은 모양으로 바꾼 값 |
+| snapshot | 나중에 되돌아가기 위해 저장해 둔 기준점 |
+| schema | 저장 파일의 항목과 형식 약속 |
+| slot | Jester나 Item을 넣어 두는 보관칸 |
+| pool / offer | Market에 나올 수 있는 후보 목록과 이번에 보여 준 후보 |
+| trigger / hook | 효과가 실행되는 시점과 실행 지점 |
+| restore | 저장해 둔 게임을 다시 여는 일 |
+| migration | 예전 저장 형식을 새 형식으로 바꾸는 일 |
+
+## 문서를 고치는 규칙
 
 - Runtime behavior나 save contract가 바뀌면 관련 code/test와 같은 변경에서 담당 core 문서를 갱신한다.
 - Catalog, translation, Boss pattern source가 바뀌면 generator를 실행하고 `--check`를 통과시킨다.
@@ -32,7 +49,7 @@
 - 재사용 test·QA 절차가 바뀌면 `TEST_QA_ACCEPTANCE.md`를 갱신한다.
 - 같은 사실을 두 문서군에 복사하지 않고 authority가 낮은 문서는 소유 문서로 안내한다.
 
-## Authoring Contract
+## 새 문서를 만들거나 고칠 때
 
 - 새 문서는 먼저 기존 문서 확장으로 해결할 수 있는지 확인한다. 새 파일은 아래 registry에 경로·유형·역할을 추가해야 한다.
 - Markdown 문서는 `docs/core/`, `docs/planning/`, `docs/generated/`, `docs/release/`, `docs/tools/`, `docs/archive/` 중 하나에만 둔다. `docs/00_docs_README.md`는 이 registry의 정본이다.

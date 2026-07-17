@@ -1,8 +1,8 @@
-# Rummi Poker NAS 웹 배포
+# Rummi Poker 웹 배포
 
-이 문서는 로컬 Flutter 웹 빌드 결과를 NAS 웹서버의 `/share/Web/rummipoker`에 배포하는 절차입니다.
+이 문서는 로컬에서 만든 Flutter 웹 빌드를 NAS 웹서버의 `/share/Web/rummipoker`에 올리는 방법을 설명한다. 명령어는 그대로 실행하고, 앞뒤 확인 단계도 순서대로 진행한다.
 
-최종 흐름:
+## 한눈에 보는 순서
 
 ```bash
 flutter build web --release --base-href "/rummipoker/"

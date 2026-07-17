@@ -1,10 +1,12 @@
-# UI and UX
+# 화면과 사용성
 
-## Route and Screen State Matrix
+이 문서는 플레이어가 실제로 보는 화면과 조작 흐름을 설명한다. 화면 이름과 코드 경로는 개발자가 찾기 쉽게 남기고, 앞의 설명은 처음 보는 사람도 이해할 수 있게 쓴다.
 
-[router.dart](../../lib/router.dart)와 [app_config.dart](../../lib/app_config.dart)가 소유하는 current route는 정확히 7개다.
+## 화면별로 할 수 있는 일
 
-| Route / screen state | 주요 입력 | Guard | 결과 | Recovery |
+[router.dart](../../lib/router.dart)와 [app_config.dart](../../lib/app_config.dart)가 관리하는 화면은 모두 7개다.
+
+| 화면 | 주요 입력 | 들어갈 수 있는 조건 | 결과 | 문제가 생기면 |
 |---|---|---|---|---|
 | `/` Title | 새 run, 이어하기, 북마크 불러오기, Run 정보, 설정, 도감, 특별 모드 | 이어하기는 payload·signature 존재와 `ActiveRunAvailability.available`을 요구; 북마크는 비어 있지 않아야 함 | 선택 route로 이동하거나 verified active scene을 복원 | invalid save는 삭제/취소 dialog; 복원 실패는 손상 dialog; 빈 북마크는 notice |
 | `/new-run` New Run | 표준/도전, basic/high-stakes, random seed 또는 정수 seed | 난이도와 modifier는 unlock state를 통과해야 하고 seed는 정수여야 함 | 기존 active run을 지우고 `/blind-select`로 이동 | 잠긴 선택은 기본값으로 정규화; 잘못된 seed는 notice; 뒤로가기는 Title |
@@ -16,14 +18,14 @@
 
 Title의 저장 복구는 [title_view.dart](../../lib/views/title_view.dart), New Run guard는 [new_run_view.dart](../../lib/views/new_run_view.dart), Blind 순서는 [blind_select_view.dart](../../lib/views/blind_select_view.dart)가 소유한다.
 
-## Battle HUD, Board, and Hand
+## 전투 화면은 위에서 아래로 읽는다
 
 Battle 화면은 위에서 아래로 다음 read/action hierarchy를 유지한다.
 
-1. Top HUD: Station·난이도, Blind/Boss 제약, 현재 점수/목표 progress, 골드, options와 tutorial 진입.
+1. 상단 정보: Station·난이도, Blind/Boss 제약, 현재 점수와 목표, 골드, 설정과 튜토리얼 버튼.
 2. Jester zone: slot 순서, 잠금 상태, 정산 중 활성 효과.
 3. Item zone: Quick/Passive와 Tool/Gear 탭, stack·사용 가능 상태, 정산 효과.
-4. 5×5 board: 선택, 점수 contributor, Boss 제약·금지칸, 이동 source/destination, 정산 line과 effect overlay.
+4. 5×5 보드: 선택한 타일, 점수에 쓰이는 타일, Boss 금지칸, 이동 전·후 위치, 정산 연출.
 5. Scoring preview와 action bar: 예상 족보·점수·효과 수, 확정, Run 정보, 이동·보드 버림·손패 버림.
 6. Bottom info와 hand: 덱, 이동, 두 버림 자원, 손패 현재/최대, draw 가능 칸, 선택·long press 상세.
 
@@ -31,13 +33,13 @@ View는 mutable session을 직접 표시하지 않고 `RummiStationRuntimeFacade
 
 Jester와 Item card/slot의 current logical size는 `54 × 70`이다. [game_card_metrics.dart](../../lib/views/game/widgets/game_card_metrics.dart)의 `kBattleItemSlotWidth = 54.0`, `kBattleItemSlotHeight = 70.0`가 단일 권위이며 Jester도 같은 값을 참조한다.
 
-## Settlement
+## 정산 화면
 
 확정은 판정을 한 번 계산한 뒤 표시만 단계화한다. `boardLine → handRank → overlap → constraint → jester → tile → item → finalScore` 순서의 `ScoringPresentationStep`이 line callout, 타일 강조, effect burst, 목표 점수 증가를 제어한다. 이 presentation sequence는 저장 가능한 점수 결과를 다시 계산하지 않는다.
 
 Blind clear 뒤에는 cleared/settlement overlay, cash-out sheet, gold·deck reward reveal이 이어진다. S8 Boss cash-out은 `무한 도전 진입`과 `런 완료`를 분리하고, 일반 cash-out은 Market 진입만 제공한다. cash-out dialog는 결과가 준비되기 전 action을 비활성화하며 SafeArea 안에서 표시된다. 구현은 [game_view_stage_flow.dart](../../lib/views/game/game_view_stage_flow.dart)와 [game_cashout_widgets.dart](../../lib/views/game/widgets/game_cashout_widgets.dart)가 소유한다.
 
-## Market
+## Market 화면
 
 Market은 `/game` 위의 fullscreen dialog이며 active save scene은 `shop`이다.
 
@@ -49,11 +51,11 @@ Market은 `/game` 위의 fullscreen dialog이며 active save scene은 `shop`이�
 
 화면은 [game_shop_screen.dart](../../lib/views/game/widgets/game_shop_screen.dart), 선택·guard는 [game_shop_selection_flow.dart](../../lib/views/game/widgets/game_shop_selection_flow.dart), 구매 feedback은 [game_shop_purchase_flow.dart](../../lib/views/game/widgets/game_shop_purchase_flow.dart)가 소유한다.
 
-## Archive
+## Archive 화면
 
 Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기억 카드, 발견/구매한 콘텐츠, Boss/Station 기록을 표시한다. 미수집 항목과 수집 항목을 구분하고 runtime 구매나 active run을 바꾸지 않는다. load 전에는 기본 state와 loading card를 표시한다. 현재 Future error 전용 상태와 retry button은 구현돼 있지 않으므로 이를 복구 완료로 간주하지 않는다. 근거는 [archive_view.dart](../../lib/views/archive_view.dart)와 [archive_view_test.dart](../../test/views/archive_view_test.dart)다.
 
-## Tutorial, Dialog, and Focus-Out Hierarchy
+## 튜토리얼과 팝업이 겹칠 때의 우선순위
 
 위계는 `screen content < tutorial overlay < presentation pause veil / modal dialog`다. options, pause, focus-out, route 전환 전에 tutorial overlay를 먼저 제거하므로 tutorial이 dialog 위에 남지 않는다.
 
@@ -67,9 +69,9 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 
 상태 저장은 [tutorial_state_service.dart](../../lib/services/tutorial_state_service.dart), Battle 위계는 [game_view_presentation_flow.dart](../../lib/views/game/game_view_presentation_flow.dart), Market 위계는 [game_shop_setup_flow.dart](../../lib/views/game/widgets/game_shop_setup_flow.dart)가 소유한다.
 
-## Feedback, Motion, and Sound Cues
+## 행동 결과를 알려 주는 신호
 
-| 사건 | Visual cue | Sound / recovery cue |
+| 일어난 일 | 화면에서 보이는 변화 | 소리와 다음 안내 |
 |---|---|---|
 | tap·select | selection border, button state, tile pop | button SFX; web는 user gesture에서 audio unlock |
 | invalid battle action | action 유지, top notice | 상태를 바꾸지 않고 이유 표시 |
@@ -82,7 +84,7 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 
 시간 상수는 [game_presentation_timings.dart](../../lib/views/game/game_presentation_timings.dart), audio 정책은 [sound_manager.dart](../../lib/resources/sound_manager.dart)가 소유한다. motion은 결과 state를 소유하지 않으며 pause 중 duration 진행을 멈춘다.
 
-## Accessibility and Locale Status
+## 접근성과 언어 지원 현황
 
 | 영역 | 구현됨 | 테스트로 보호됨 | 검증 gap |
 |---|---|---|---|
@@ -93,7 +95,7 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 
 구현됨은 code path가 존재한다는 뜻이고, 보호됨은 명시적 assertion이 있다는 뜻이다. gap 항목은 현재 완료 상태가 아니다. locale bootstrap은 [main.dart](../../lib/main.dart), locale code mapping은 [translation_locale_code.dart](../../lib/resources/translation_locale_code.dart), word wrap은 [game_word_wrap_text.dart](../../lib/views/game/widgets/game_word_wrap_text.dart)가 소유한다.
 
-## Phone Frame and Safe Area
+## 휴대폰 화면 크기와 안전 영역
 
 모든 7 route는 기본적으로 `PhoneFrameScaffold`를 사용한다. Scaffold는 SafeArea 안에 logical `390 × 750` frame을 중앙 배치하고, available width/height 중 작은 scale로 `BoxFit.contain`한다. frame 내부 MediaQuery size만 390×750으로 고정하며 locale과 text scaler는 상위 값을 유지한다. notice와 cash-out/modal도 별도 SafeArea를 사용한다.
 

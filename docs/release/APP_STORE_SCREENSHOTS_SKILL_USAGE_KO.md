@@ -1,8 +1,8 @@
-# app-store-screenshots 글로벌 스킬 사용 설명서
+# 스토어 스크린샷 작업 안내
 
-## 결론 요약
+## 먼저 알아둘 점
 
-`ParthJadhav/app-store-screenshots` 스킬은 Codex 글로벌 스킬로 설치 가능하며, 현재 다음 위치에 설치되어 있다.
+`ParthJadhav/app-store-screenshots` 스킬은 Codex에서 스토어용 이미지를 만들 때 사용한다. 현재 설치 위치는 다음과 같다.
 
 - 설치 경로: `/Users/cheng80/.codex/skills/app-store-screenshots`
 - 스킬 파일: `/Users/cheng80/.codex/skills/app-store-screenshots/SKILL.md`

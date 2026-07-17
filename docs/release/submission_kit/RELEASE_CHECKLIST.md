@@ -1,8 +1,8 @@
-# Release Checklist
+# 출시 체크리스트
 
-## 결론
+## 먼저 확인할 것
 
-현재 출시 준비의 1차 gate는 Rummi Poker 최신 빌드에서 분석, 테스트, 빌드, Browser/Compute smoke, `풀런봇`(`full_run_bot`) 증거를 모두 맞추는 것이다. Debug fixture는 재현과 눈검증에만 쓰고, 제출 증거는 자연 플레이 흐름 기준으로 남긴다.
+출시 전 첫 관문은 최신 빌드에서 분석, 테스트, 빌드, Browser/Compute smoke, `풀런봇`(`full_run_bot`) 결과를 모두 확인하는 것이다. Debug fixture는 문제를 재현하거나 화면을 확인할 때만 쓰고, 제출 근거는 실제 플레이 흐름으로 남긴다.
 
 ## 앱 정보
 

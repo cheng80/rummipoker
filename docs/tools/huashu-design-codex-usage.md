@@ -1,6 +1,6 @@
-# Huashu Design Codex 사용 가이드
+# Huashu Design Codex 사용 안내
 
-## 설치 상태
+## 현재 설치 상태
 
 - 설치 위치: `~/.codex/skills/huashu-design`
 - 원본 저장소: `https://github.com/alchaincyf/huashu-design`
@@ -164,4 +164,3 @@ huashu-design을 써서 디자인 방향 3개만 먼저 제안해줘. 아직 HTM
 ```text
 방향 2번으로 진행해줘. 클릭 가능한 HTML 프로토타입을 만들고 Playwright screenshot으로 검증해줘.
 ```
-

@@ -1,10 +1,10 @@
-# Web Build Guide
+# Web 빌드 안내
 
-## 목적
+## 이 문서의 목적
 
-출시 후보와 Browser QA를 위한 Web 빌드 절차다. Web 제출이나 QA만 진행할 때는 이 문서 하나만 보면 된다.
+출시 후보를 만들거나 Browser QA를 할 때 필요한 Web 빌드 절차다. Web만 작업할 때는 이 문서 하나를 순서대로 따라간다.
 
-## 공통 준비
+## 빌드 전에 준비할 것
 
 ```bash
 flutter pub get

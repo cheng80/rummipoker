@@ -1,10 +1,12 @@
-# Save Data
+# 저장 데이터
 
-## Schema v2 Envelope
+저장은 ‘지금 어느 화면에 있는지’와 ‘다음에 이어갈 게임 상태’를 함께 기록한다. 연출 중인 화면은 저장하지 않고, 다시 열 때 안정된 상태에서 시작한다.
 
-[active_run_save_service.dart](../../lib/services/active_run_save_service.dart)의 `ActiveRunSaveService.schemaVersion = 2`가 current exact version이다. top-level JSON key는 다음과 같다.
+## 저장 파일의 기본 틀
 
-| Key | Type / meaning |
+[active_run_save_service.dart](../../lib/services/active_run_save_service.dart)의 `ActiveRunSaveService.schemaVersion = 2`가 현재 저장 형식의 버전이다. 저장 파일 맨 위에는 다음 항목이 들어간다.
+
+| 항목 | 자료형과 의미 |
 |---|---|
 | `schemaVersion` | integer, 반드시 2 |
 | `savedAt` | UTC ISO-8601 string |
@@ -18,11 +20,11 @@
 | `stakeStartSession` | current Blind-start session snapshot |
 | `stakeStartRunProgress` | current Blind-start run snapshot |
 
-`stakeStart*`가 없는 v2 payload는 restore 시 `stageStart*`를 fallback으로 사용한다. 이는 v2 내부 optional-field 처리이며 version migration은 아니다. DTO key와 parsing은 [active_run_save_models.dart](../../lib/services/active_run_save_models.dart)가 소유한다.
+`stakeStart*`가 없는 v2 저장 파일은 불러올 때 `stageStart*`를 대신 사용한다. 같은 v2 안에서 빠진 선택 항목을 보완하는 처리이며, 예전 버전을 새 버전으로 바꾸는 migration은 아니다. 항목 이름과 읽는 방법은 [active_run_save_models.dart](../../lib/services/active_run_save_models.dart)가 정한다.
 
-## Scene Contract
+## 화면별 저장 시점
 
-| Scene | 저장 시점 | Continue result |
+| 저장 상태 | 언제 저장하나 | 앱을 다시 열면 |
 |---|---|---|
 | `battle` | Battle action 뒤 stable state, clear/cash-out 전후의 명시적 boundary, retry | `/game`으로 restore; 이미 target을 넘긴 battle이면 cash-out 재개 가능 |
 | `shop` | cash-out 뒤 Market 진입, 구매·판매·사용·리롤, options/lifecycle flush | `/game`으로 restore한 뒤 catalog가 준비되면 Market fullscreen dialog 재개 |
@@ -30,7 +32,7 @@
 
 enum은 [active_run_save_models.dart](../../lib/services/active_run_save_models.dart)의 `ActiveRunScene { battle, shop, blindSelect }`다. UI의 `Market` 명칭은 save string `shop`의 presentation alias이며 저장 값 자체를 바꾸지 않는다.
 
-## Exact Durable State
+## 게임을 이어가기 위해 저장하는 상태
 
 `session`과 각 session snapshot은 다음 key를 저장한다.
 
@@ -65,7 +67,7 @@ slot capacity key 세 개는 encoder가 non-null일 때 쓴다. decoder는 빠�
 
 선택된 타일, overlay, tutorial, dialog, settlement animation step/tick, pause veil 같은 presentation state는 저장하지 않는다. restore/restart는 [game_session_presentation_state.dart](../../lib/providers/features/rummi_poker_grid/game_session_presentation_state.dart)의 initial state로 시작한다.
 
-## Stage, Stake, and Bookmark Snapshots
+## 다시 시작할 때 돌아갈 기준점과 북마크
 
 - `stageStartSnapshot`: Station 시작 기준이다. 같은 Station의 Scout/Clash/Boss 사이에는 보존되고 Boss 뒤 새 Station에서 교체된다. `restartCurrentStage`는 current session/run progress를 이 snapshot으로 되돌린다.
 - `stakeStartSnapshot`: 현재 Blind 시작 기준이다. Blind를 선택할 때마다 갱신된다. `restartCurrentStake`는 이 snapshot으로 되돌리되 Station snapshot은 유지한다.
@@ -74,9 +76,9 @@ slot capacity key 세 개는 encoder가 non-null일 때 쓴다. decoder는 빠�
 
 snapshot 복사와 restart command는 [game_session_notifier_save_commands.dart](../../lib/providers/features/rummi_poker_grid/game_session_notifier_save_commands.dart), bookmark UI flow는 [game_bookmark_slot_dialog.dart](../../lib/views/game/widgets/game_bookmark_slot_dialog.dart)가 소유한다.
 
-## Storage, Device Key, and Integrity
+## 저장 위치와 위변조 확인
 
-| Component | Current behavior |
+| 저장 항목 | 현재 동작 |
 |---|---|
 | payload store | `StorageHelper`가 감싼 SharedPreferences string |
 | active keys | `active_run_payload_v1`, `active_run_signature_v1` |

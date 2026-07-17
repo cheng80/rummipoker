@@ -1,10 +1,10 @@
-# iOS Profile Build
+# iOS Profile 빌드
 
-## 목적
+## 이 문서의 목적
 
-iOS profile/release 빌드와 App Store Connect 업로드 절차다. iOS 빌드만 진행할 때는 이 문서 하나만 보면 된다.
+iOS profile/release 빌드를 만들고 App Store Connect에 올리는 절차다. iOS만 작업할 때는 이 문서 하나를 순서대로 따라간다.
 
-## 공통 준비
+## 빌드 전에 준비할 것
 
 ```bash
 flutter pub get

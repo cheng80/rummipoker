@@ -1,8 +1,8 @@
-# Tutorial Coach Mark Plan
+# 튜토리얼 안내창 계획
 
-## 결론
+## 현재 방식
 
-`tutorial_coach_mark`는 전투 첫 진입 설명과 마켓 첫 진입 설명에 사용한다. Rummi Poker의 핵심 재미를 해치지 않도록 정답 후보나 추천 빌드를 알려주지 않고, 화면 영역과 조작 흐름만 짧게 안내한다.
+`tutorial_coach_mark`는 전투와 Market에 처음 들어왔을 때 짧은 설명을 보여 주는 도구다. 정답 후보나 추천 빌드는 알려 주지 않고, 어디를 누르고 어떤 순서로 움직이는지만 안내한다.
 
 이전 후보였던 `showcaseview`는 `PhoneFrame`의 `FittedBox`, 웹 창 크기 변경, dialog z-order와 맞지 않아 제거했다. 현재 구현은 `tutorial_coach_mark`의 skip/finish 제어와 명시 target을 사용한다.
 

@@ -1,10 +1,10 @@
-# Android Build Notes
+# Android 빌드 메모
 
-## 목적
+## 이 문서의 목적
 
-Android Play Store 제출 후보 빌드 절차다. Android 빌드만 진행할 때는 이 문서 하나만 보면 된다. 과거 앱 package, signing, icon 설정은 그대로 가져오지 않는다.
+Google Play에 올릴 Android 빌드를 만드는 절차다. Android만 작업할 때는 이 문서만 따라가면 된다. 예전 앱의 package, signing, icon 설정은 현재 값과 다시 대조한다.
 
-## 공통 준비
+## 빌드 전에 준비할 것
 
 ```bash
 flutter pub get
