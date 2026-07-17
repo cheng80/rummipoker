@@ -195,7 +195,19 @@ class _FullRunBotConfig {
   bool get traceEnabled => tracePath.isNotEmpty;
 
   bool get needsMarketPurchase =>
-      isFullRun || requiredEvidence == 'market_purchase';
+      isFullRun ||
+      requiredEvidence == 'market_purchase' ||
+      verifyMarketPersistence;
+
+  bool get verifyMarketPersistence => requiredEvidence == 'market_persistence';
+
+  String get continueLabel => switch (localeName) {
+    'en' => 'Continue',
+    'ja' => '続ける',
+    'zh-CN' || 'zh_CN' => '继续',
+    'zh-TW' || 'zh_TW' => '繼續',
+    _ => '계속하기',
+  };
 
   bool get needsItemPurchase =>
       isFullRun || requiredEvidence == 'item_purchase';
@@ -291,6 +303,9 @@ class _FullRunBot {
   bool discardedBoard = false;
   bool movedBoard = false;
   int gameOverRetries = 0;
+  int? marketGoldAtEntry;
+  int? marketGoldAfterPurchase;
+  bool marketPersistenceVerified = false;
   final Set<String> failedBattleActionRouteKeys = <String>{};
   final Set<String> currentBattleActionRouteKeys = <String>{};
 
@@ -298,6 +313,10 @@ class _FullRunBot {
     itemCatalog = await ItemCatalogLoader.loadFromAsset(AssetPaths.itemsCommon);
     _syncEvidenceFromResumeConfig();
     await _startSeededRun();
+    if (marketPersistenceVerified) {
+      _printPassLog('market purchase persistence verified through Continue');
+      return;
+    }
     _syncEvidenceFromState();
     if (find.text('Station Select').evaluate().isNotEmpty &&
         _shouldStopAt(scene: _FullRunBotScene.stationSelect)) {
@@ -410,6 +429,10 @@ class _FullRunBot {
     });
 
     if (config.resumeActiveRun) {
+      if (config.verifyMarketPersistence) {
+        await _resumeMarketThroughContinue();
+        return;
+      }
       final restored = await _loadResumeRuntime();
       if (restored != null) {
         final restartRuntime = config.restartStageOnResume
@@ -484,6 +507,48 @@ class _FullRunBot {
       return ActiveRunSaveService.runtimeStateFromJson(jsonString);
     }
     return ActiveRunSaveService.loadActiveRun();
+  }
+
+  Future<void> _resumeMarketThroughContinue() async {
+    final expected = await _loadResumeRuntime();
+    expect(expected, isNotNull, reason: 'purchase checkpoint is required');
+    expect(expected!.activeScene, ActiveRunScene.shop);
+
+    await _tapText(config.continueLabel);
+    await _pumpUntilVisible(find.text('이어하기'));
+    await _tapText('이어하기');
+    await _pumpUntilVisible(find.text('다음 Station'));
+
+    final restored = _readGameState();
+    final progress = restored.runProgress!;
+    expect(restored.activeRunScene, ActiveRunScene.shop);
+    expect(progress.gold, expected.runProgress.gold);
+    expect(progress.boughtJesterIds, expected.runProgress.boughtJesterIds);
+    expect(progress.boughtItemIds, expected.runProgress.boughtItemIds);
+    expect(
+      progress.ownedJesters.map((card) => card.id),
+      expected.runProgress.ownedJesters.map((card) => card.id),
+    );
+    expect(
+      progress.itemInventory.toJson(),
+      expected.runProgress.itemInventory.toJson(),
+    );
+    expect(
+      progress.addedDeckTiles.map((tile) => tile.toJson()),
+      expected.runProgress.addedDeckTiles.map((tile) => tile.toJson()),
+    );
+    marketPersistenceVerified = true;
+    _record(
+      'Continue restored market purchase '
+      'gold=${progress.gold} '
+      'jesters=${progress.ownedJesters.length} '
+      'items=${progress.itemInventory.ownedItems.length} '
+      'tiles=${progress.addedDeckTiles.length}',
+    );
+    _trace('continue_persistence_verified', {
+      'active_scene': restored.activeRunScene.name,
+      'run_progress': _runProgressTrace(progress),
+    });
   }
 
   ActiveRunRuntimeState _restartRuntimeFromStageStart(
@@ -909,6 +974,7 @@ class _FullRunBot {
   }
 
   Future<void> _handleMarketEvidenceOnly({required int stage}) async {
+    marketGoldAtEntry ??= _marketViewFromState(_readGameState())?.gold;
     _traceMarketState('market_enter', stage);
     await _completeTutorialIfVisible(
       kind: _FullRunTutorialKind.market,
@@ -922,6 +988,7 @@ class _FullRunBot {
     await _buyQuickSlotItemsIfPossible(stage);
     await _buyUtilityItemsIfPossible(stage);
     await _useMarketItemIfVisible(stage);
+    marketGoldAfterPurchase = _marketViewFromState(_readGameState())?.gold;
     _traceMarketState('market_after_evidence', stage);
   }
 
@@ -1831,6 +1898,21 @@ class _FullRunBot {
         isTrue,
         reason: 'sub_run_bot needs purchase evidence',
       );
+    }
+    if (config.verifyMarketPersistence) {
+      expect(boughtJester, isTrue, reason: 'persistence QA needs a purchase');
+      expect(marketGoldAtEntry, isNotNull);
+      expect(marketGoldAfterPurchase, isNotNull);
+      expect(
+        marketGoldAfterPurchase,
+        lessThan(marketGoldAtEntry!),
+        reason: 'market purchase must reduce gold before restart',
+      );
+      _trace('market_purchase_persistence_baseline', {
+        'gold_before': marketGoldAtEntry,
+        'gold_after': marketGoldAfterPurchase,
+        'run_progress': _runProgressTrace(_readGameState().runProgress!),
+      });
     }
     if (config.requiredEvidence == 'item_purchase') {
       expect(
