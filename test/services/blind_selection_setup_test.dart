@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
@@ -6,11 +8,14 @@ import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
+import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
 import 'package:rummipoker/services/blind_selection_setup.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('BlindSelectionSetup', () {
     test('station 1에서는 small만 열리고 big/boss는 잠긴다', () {
       final options = BlindSelectionSetup.buildForStation(
@@ -74,9 +79,6 @@ void main() {
 
     test('모든 tier의 보상 preview는 실제 기본 정산 보상과 같다', () {
       for (final modifier in NewRunModifier.values) {
-        final expected =
-            (RummiRunProgress.stageClearGoldBase * modifier.rewardMultiplier)
-                .round();
         for (final tier in BlindTier.values) {
           final spec = BlindSelectionSetup.resolveSpec(
             tier: tier,
@@ -85,8 +87,20 @@ void main() {
             runModifier: modifier,
             ruleset: RummiRuleset.currentDefaults,
           );
+          final session = RummiPokerGridSession(runSeed: 4400 + tier.index);
+          final progress = RummiRunProgress()
+            ..stageIndex = 4
+            ..currentStationBlindTierIndex = tier.index;
+          final actual = progress.buildCashOutBreakdown(
+            session,
+            rewardMultiplier: modifier.rewardMultiplier,
+          );
 
-          expect(spec.rewardPreview, expected, reason: '${modifier.id}/$tier');
+          expect(
+            spec.rewardPreview,
+            actual.blindReward,
+            reason: '${modifier.id}/$tier',
+          );
         }
       }
     });
@@ -178,6 +192,60 @@ void main() {
         expect(ids.length, lessThanOrEqualTo(7), reason: 'S$station');
       }
     });
+
+    test(
+      'initial blind select save roundtrip preserves boss weakness',
+      () async {
+        final runtime = buildInitialRunRuntime(
+          const GameSessionArgs(runSeed: 5),
+        );
+        final before = BlindSelectionSetup.resolveSpec(
+          tier: BlindTier.boss,
+          stationIndex: runtime.runProgress.stageIndex,
+          difficulty: runtime.difficulty,
+          runModifier: runtime.runModifier,
+          runSeed: runtime.session.runSeed,
+          ruleset: runtime.session.ruleset,
+        ).bossModifier!;
+        final payload = ActiveRunSaveService.runtimeStateToJson(runtime);
+        final decoded = jsonDecode(payload) as Map<String, dynamic>;
+        final savedPreview = decoded['blindSelectBossModifier'] as Map?;
+
+        expect(before.id, RummiBossModifier.redDampener.id);
+        expect(runtime.blindSelectBossModifier?.id, before.id);
+        expect(runtime.session.blind.bossModifier, isNull);
+        expect(runtime.stageStartSnapshot.session.blind.bossModifier, isNull);
+        expect(savedPreview?['id'], before.id);
+
+        final restored = await ActiveRunSaveService.runtimeStateFromJson(
+          payload,
+        );
+        final restoredOptions = BlindSelectionSetup.buildForStation(
+          stationIndex: restored.runProgress.stageIndex,
+          clearedBlindTierIndex:
+              restored.runProgress.currentStationBlindTierIndex,
+          difficulty: restored.difficulty,
+          runModifier: restored.runModifier,
+          runSeed: restored.session.runSeed,
+          ruleset: restored.session.ruleset,
+          bossModifierOverride: restored.blindSelectBossModifier,
+        );
+        final selectedBoss =
+            BlindSelectionSetup.prepareContinuedRunForSelectedBlind(
+              runtime: restored,
+              tier: BlindTier.boss,
+            );
+
+        expect(restored.session.runSeed, runtime.session.runSeed);
+        expect(restored.blindSelectBossModifier?.id, before.id);
+        expect(restored.session.blind.bossModifier, isNull);
+        expect(
+          restoredOptions[BlindTier.boss.index].bossModifier?.id,
+          before.id,
+        );
+        expect(selectedBoss.session.blind.bossModifier?.id, before.id);
+      },
+    );
 
     test('보드 금지 boss modifier는 모두 5칸 이하만 막는다', () {
       final boardBlockers = RummiBossModifier.allKnownModifiers.where(

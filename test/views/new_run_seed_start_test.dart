@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// ignore: depend_on_referenced_packages
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 
 import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
@@ -28,6 +30,18 @@ class _MemoryDeviceKeyStore implements DeviceKeyStore {
   @override
   Future<void> write(String nextValue) async {
     value = nextValue;
+  }
+}
+
+class _FailingActiveRecordStore extends InMemorySharedPreferencesStore {
+  _FailingActiveRecordStore.withData(super.data) : super.withData();
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) {
+    if (key == 'flutter.${StorageKeys.activeRunRecordV1}') {
+      return Future<bool>.value(false);
+    }
+    return super.setValue(valueType, key, value);
   }
 }
 
@@ -75,6 +89,7 @@ void main() {
     );
 
     int? openedSeed;
+    ActiveRunRuntimeState? openedRuntime;
     final router = GoRouter(
       initialLocation: RoutePaths.newRun,
       routes: [
@@ -85,6 +100,7 @@ void main() {
         GoRoute(
           path: RoutePaths.blindSelect,
           builder: (context, state) {
+            openedRuntime = state.extra as ActiveRunRuntimeState?;
             final seed = int.tryParse(state.uri.queryParameters['seed'] ?? '');
             openedSeed = seed;
             return BlindSelectView(
@@ -95,6 +111,7 @@ void main() {
               runModifier: NewRunModifier.parse(
                 state.uri.queryParameters['modifier'],
               ),
+              restoredRun: openedRuntime,
             );
           },
         ),
@@ -137,10 +154,51 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     expect(find.text('올바른 정수를 입력하세요'), findsNothing);
     expect(openedSeed, 91460);
+    expect(openedRuntime, isNotNull);
+    expect(openedRuntime!.activeScene, ActiveRunScene.blindSelect);
+    expect(openedRuntime!.runProgress.currentStationBlindTierIndex, -1);
     expect(ActiveRunSaveService.hasStoredActiveRun(), isTrue);
-    final activeRun = await ActiveRunSaveService.loadActiveRun();
-    expect(activeRun?.session.runSeed, 91460);
-    expect(activeRun?.activeScene, ActiveRunScene.blindSelect);
+    final savedRuntime = await ActiveRunSaveService.loadActiveRun();
+    expect(savedRuntime, isNotNull);
+    expect(savedRuntime!.session.runSeed, openedRuntime!.session.runSeed);
+    expect(savedRuntime.difficulty, openedRuntime!.difficulty);
+    expect(savedRuntime.runModifier, openedRuntime!.runModifier);
+    expect(
+      savedRuntime.runProgress.runClaimId,
+      openedRuntime!.runProgress.runClaimId,
+    );
     expect(find.text('Station Select'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeEntryCard), findsWidgets);
+    final oldRecord = StorageHelper.readString(StorageKeys.activeRunRecordV1);
+    final originalStore = SharedPreferencesStorePlatform.instance;
+    addTearDown(() {
+      SharedPreferences.resetStatic();
+      SharedPreferencesStorePlatform.instance = originalStore;
+      StorageHelper.resetForTest();
+    });
+    SharedPreferencesStorePlatform.instance =
+        _FailingActiveRecordStore.withData(<String, Object>{
+          'flutter.${StorageKeys.activeRunRecordV1}': oldRecord,
+        });
+
+    await tester.tap(find.byType(HomeEntryCard).first);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      RoutePaths.newRun,
+    );
+    expect(find.text('저장에 실패했습니다. 다시 시도해 주세요.'), findsOneWidget);
+
+    SharedPreferences.resetStatic();
+    StorageHelper.resetForTest();
+    await StorageHelper.init();
+    expect(StorageHelper.readString(StorageKeys.activeRunRecordV1), oldRecord);
+    await tester.pump(const Duration(seconds: 3));
   });
 }

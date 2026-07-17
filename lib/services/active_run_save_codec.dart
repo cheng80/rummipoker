@@ -193,8 +193,9 @@ RummiPokerGridSession _restoreSession(SavedSessionData data) {
 
 RummiRunProgress _restoreRunProgress(
   SavedRunProgressData data,
-  RummiJesterCatalog catalog,
-) {
+  RummiJesterCatalog catalog, {
+  String? runClaimId,
+}) {
   final ownedJesters = data.ownedJesterIds
       .map((id) => _findCardOrThrow(catalog, id))
       .toList(growable: false);
@@ -232,7 +233,7 @@ RummiRunProgress _restoreRunProgress(
     stageIndex: data.stageIndex,
     currentStationBlindTierIndex: data.currentStationBlindTierIndex,
     runCompletionRewardClaimed: data.runCompletionRewardClaimed,
-    runClaimId: data.runClaimId,
+    runClaimId: runClaimId ?? data.runClaimId,
     settlementReceiptKey: data.settlementReceiptKey,
     settlementReceipt: data.settlementReceipt == null
         ? null

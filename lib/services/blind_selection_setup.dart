@@ -1,5 +1,6 @@
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/item_effect_runtime.dart';
+import '../logic/rummi_poker_grid/boss_modifier.dart';
 import '../logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'active_run_save_service.dart';
 import 'blind_selection_spec.dart';
@@ -23,6 +24,7 @@ class BlindSelectionSetup {
     NewRunModifier runModifier = NewRunModifier.basic,
     int? runSeed,
     required RummiRuleset ruleset,
+    RummiBossModifier? bossModifierOverride,
   }) => BlindSelectionSpecBuilder.buildForStation(
     stationIndex: stationIndex,
     clearedBlindTierIndex: clearedBlindTierIndex,
@@ -30,6 +32,7 @@ class BlindSelectionSetup {
     runModifier: runModifier,
     runSeed: runSeed,
     ruleset: ruleset,
+    bossModifierOverride: bossModifierOverride,
   );
 
   static BlindSelectionSpec resolveSpec({
@@ -39,6 +42,7 @@ class BlindSelectionSetup {
     NewRunModifier runModifier = NewRunModifier.basic,
     int? runSeed,
     required RummiRuleset ruleset,
+    RummiBossModifier? bossModifierOverride,
   }) => BlindSelectionSpecBuilder.resolveSpec(
     tier: tier,
     stationIndex: stationIndex,
@@ -46,6 +50,7 @@ class BlindSelectionSetup {
     runModifier: runModifier,
     runSeed: runSeed,
     ruleset: ruleset,
+    bossModifierOverride: bossModifierOverride,
   );
 
   /// 시장 이후 다음 Station 진입 직전에 선택한 블라인드 조건을 런타임에 반영한다.
@@ -64,6 +69,7 @@ class BlindSelectionSetup {
       runModifier: runtime.runModifier,
       runSeed: session.runSeed,
       ruleset: session.ruleset,
+      bossModifierOverride: runtime.blindSelectBossModifier,
     );
 
     runProgress.startBlind(
@@ -121,10 +127,19 @@ class BlindSelectionSetup {
       runProgress.stageIndex += 1;
       runProgress.currentStationBlindTierIndex = -1;
     }
+    final blindSelectBossModifier = resolveSpec(
+      tier: BlindTier.boss,
+      stationIndex: runProgress.stageIndex,
+      difficulty: runtime.difficulty,
+      runModifier: runtime.runModifier,
+      runSeed: session.runSeed,
+      ruleset: session.ruleset,
+    ).bossModifier;
     return ActiveRunRuntimeState(
       activeScene: ActiveRunScene.blindSelect,
       difficulty: runtime.difficulty,
       runModifier: runtime.runModifier,
+      blindSelectBossModifier: blindSelectBossModifier,
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: runtime.stageStartSnapshot,

@@ -13,6 +13,7 @@
 | `activeScene` | `battle`, `shop`, `blindSelect` 중 하나 |
 | `difficulty` | New Run difficulty name |
 | `runModifier` | run modifier ID |
+| `blindSelectBossModifier` | `blindSelect`에서 표시·선택할 optional Boss modifier JSON |
 | `session` | current `SavedSessionData` |
 | `runProgress` | current `SavedRunProgressData` |
 | `stageStartSession` | Station-start session snapshot |
@@ -45,12 +46,13 @@ confirmCountThisStation, firstConfirmScoreThisStation,
 confirmedRanksThisStation, expiryGuardUsedThisStation
 ```
 
-`blind` 안에는 target/score, 보드·손패 버림과 보드 이동의 remaining/max, optional Boss modifier가 들어간다. 타일 JSON은 color, number, physical ID와 optional enhancement/seal/edition persistence value를 보존한다.
+`blind` 안에는 target/score, 보드·손패 버림과 보드 이동의 remaining/max, optional Boss modifier가 들어간다. `blindSelectBossModifier`는 화면에 확정 표시한 현재 Station Boss의 전체 JSON을 별도로 보존한다. 필드가 없는 기존 v2 save는 run seed로 preview를 다시 만들고, 실제 Blind를 선택할 때 current `blind.bossModifier`를 선택 결과로 설정한다. 타일 JSON은 color, number, physical ID와 optional enhancement/seal/edition persistence value를 보존한다.
 
 `runProgress`와 각 run-progress snapshot은 다음 key를 저장한다.
 
 ```text
-stageIndex, currentStationBlindTierIndex, runCompletionRewardClaimed, gold,
+stageIndex, currentStationBlindTierIndex, runCompletionRewardClaimed,
+runClaimId, settlementReceiptKey, settlementReceipt, gold,
 rerollCost, tileRerollCost, itemRerollCost, quickSlotRerollCost,
 passiveRerollCost, toolRerollCost, gearRerollCost,
 ownedJesterIds, shopOffers, statefulValuesBySlot, playedHandCounts,
@@ -86,9 +88,9 @@ snapshot 복사와 restart command는 [game_session_notifier_save_commands.dart]
 | bookmark keys | payload/signature prefix + slot index 0..2 |
 | device key | 처음 저장할 때 32 random bytes를 base64url encode; `DeviceKeyStore` 기본 구현도 StorageHelper의 `save_device_key_v1` 사용 |
 | signature | device key를 secret으로 한 HMAC-SHA256 over exact UTF-8 JSON payload |
-| verification | payload와 signature, device key, HMAC, JSON parse, exact schema version을 모두 통과해야 available/load 가능 |
+| verification | record 안의 payload와 signature, device key, HMAC, JSON parse, exact schema version을 모두 통과해야 available/load 가능 |
 
-HMAC은 payload integrity check이며 암호화가 아니다. payload와 default device key가 같은 local preference boundary에 있으므로 서버 인증이나 공격자가 storage 전체를 통제하는 상황의 보안을 보증하지 않는다. active run은 payload와 signature를 envelope 한 값으로 저장해 두 키 사이의 종료 구간을 없앤다. bookmark는 기존 두 키 형식을 유지한다. device key abstraction은 [device_key_store.dart](../../lib/services/device_key_store.dart), 기본 store는 [device_key_store_default.dart](../../lib/services/device_key_store_default.dart), primitive store는 [storage_helper.dart](../../lib/utils/storage_helper.dart)가 소유한다.
+HMAC은 payload 무결성을 확인할 뿐 암호화하지 않는다. payload와 default device key가 같은 local preference 경계에 있으므로 storage 전체를 통제하는 공격자나 서버 인증에 대한 보안은 보장하지 않는다. active run은 payload와 signature를 한 envelope에 담아 SharedPreferences에 한 번만 써서 두 키 사이의 종료 구간을 없앤다. 저장 API가 `false`를 반환하면 실패로 처리하고 기존 envelope은 먼저 지우지 않는다. bookmark는 기존 두 키 형식을 유지한다. device key abstraction은 [device_key_store.dart](../../lib/services/device_key_store.dart), 기본 store는 [device_key_store_default.dart](../../lib/services/device_key_store_default.dart), primitive store는 [storage_helper.dart](../../lib/utils/storage_helper.dart)가 소유한다.
 
 ## Encode, Persist, Restore, and Delete
 
@@ -98,32 +100,35 @@ runtime
 → JSON encode with schemaVersion 2 and savedAt
 → ensure device key
 → HMAC-SHA256
-→ {payload, signature} envelope 한 번 쓰기
+→ {payload, signature} active envelope 단일 write
 → legacy active 두 키 제거
 ```
 
 ```text
 inspect/load
-→ read payload + signature
+→ read active record
+→ record가 없을 때만 legacy payload + signature fallback
 → read device key
 → constant string equality against recomputed HMAC
 → JSON decode
 → exact version check
 → Jester catalog load and ID rebind
 → session/runProgress/stage/stake restore
+→ runClaimId가 빠졌거나 snapshot끼리 다르면 하나로 정규화해 즉시 다시 저장
 → scene-specific route
 ```
 
+- new run: `blindSelect` runtime을 먼저 저장하고, 성공한 같은 runtime을 route extra로 넘긴다. 저장 실패 시 기존 active run을 유지하고 New Run 화면에 남는다.
 - continue: Title이 `available`일 때만 load하며 restored scene에 맞는 route로 이동한다.
 - restart: provider가 in-memory stage/stake snapshot을 copy해 current runtime을 교체하고 presentation을 reset한 뒤 save한다.
 - bookmark restore: verified slot을 active run으로 다시 저장한 뒤 route한다.
-- delete: `clearActiveRun`은 새 active envelope과 legacy active 두 키를 지운다. bookmark, device key, settings, unlock/collection state는 지우지 않는다.
-- terminal: run complete, game-over new run/exit 경로는 run result를 기록한 뒤 active payload/signature를 지운다.
+- delete: `clearActiveRun`은 active envelope과 legacy active 두 키를 지운다. bookmark, device key, settings, unlock/collection state는 지우지 않는다.
+- terminal: run complete, game-over new run/exit 경로는 run result를 기록한 뒤 active envelope과 legacy active 두 키를 지운다.
 
 ## Corruption and Version Policy
 
-- 새 envelope의 필드 누락·JSON 오류는 `invalid`다. 새 envelope이 있으면 손상 여부와 관계없이 legacy 값으로 fallback하지 않는다.
-- 새 envelope이 없을 때만 legacy payload/signature를 읽는다. 둘 중 하나만 남으면 load는 null이고 Title은 raw key를 보고 손상 복구를 제공할 수 있다.
+- active envelope이 있으면 legacy key를 보지 않는다. envelope JSON이 깨졌거나 payload/signature가 빠지면 `invalid`/null이다.
+- active envelope이 없을 때만 legacy payload/signature를 읽는다. 둘 중 하나만 남으면 inspect는 `none`, load는 null이며 raw key는 `hasStoredActiveRun`에서 감지해 Title 손상 복구를 제공할 수 있다.
 - device key가 없거나 HMAC이 다르면 `invalid`/null이다.
 - malformed JSON, 잘못된 required field type, 알 수 없는 scene enum, 현재 catalog에 없는 owned Jester ID는 restore를 실패시킨다.
 - `schemaVersion != 2`는 즉시 reject한다. current service에는 cross-version migration 함수, version chain, 자동 rewrite가 없다.
@@ -156,10 +161,11 @@ inspect/load
 현재 save/resume 계약의 남은 위험은 아래와 같다. 플레이어-facing “이어하기/북마크 보장”으로 과장하지 않는다.
 
 - New Run은 initial `blindSelect` runtime을 저장한 뒤 이동한다. 기존 active run을 먼저 지우지 않고 새 envelope 한 번 쓰기로 교체하므로, 새 쓰기가 실패하면 이전 envelope을 유지한다.
-- Battle pause save는 await하지 않는 best-effort다. Market의 state-changing action은 queue에 넣고 다음 Blind와 options의 Title 이동 전에 flush한다.
+- Battle pause save는 await하지 않는 best-effort다. Market의 state-changing action은 queue에 넣고 다음 Blind와 Title 이탈 전에 flush하지만, OS가 프로세스를 즉시 종료하는 상황까지 보장하지 않는다.
 - cash-out receipt와 run claim ledger는 중복 지급을 막지만, 저장 장치 자체의 지속성은 SharedPreferences 성공 결과에 의존한다.
 - restored Market과 already-cleared Battle은 Item catalog load 성공에 의존하며 실패 시 조용히 멈출 수 있다.
 - 정확한 schema v2만 허용하며 cross-version migration은 없다.
+- HMAC key와 payload가 같은 local preference 경계에 있어 서버 인증이나 storage 전체 탈취에 대한 보안 수단은 아니다.
 
 ## Source and Update Trigger
 

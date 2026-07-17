@@ -73,10 +73,12 @@ void main() {
         gold: 12,
       ),
     );
-    var pendingStateSave = Completer<void>();
+    final pendingPurchaseSave = Completer<void>();
+    Completer<void>? pendingExitSave;
+    var failExitSave = false;
     var saveCallCount = 0;
+    var exitCalls = 0;
     bool? poppedValue;
-    var exitToTitleCalled = false;
 
     await tester.pumpWidget(
       EasyLocalization(
@@ -140,16 +142,23 @@ void main() {
                                     onSellMarketItem: (_) => false,
                                     onStateChanged: () async {
                                       saveCallCount++;
+                                      final exitSave = pendingExitSave;
+                                      if (exitSave != null) {
+                                        await exitSave.future;
+                                        if (failExitSave) {
+                                          throw StateError('save failed');
+                                        }
+                                        return;
+                                      }
                                       if (saveCallCount == 2) {
-                                        await pendingStateSave.future;
+                                        await pendingPurchaseSave.future;
                                       }
                                     },
                                     onOpenSettings: () async {},
-                                    onExitToTitle: () async {
-                                      exitToTitleCalled = true;
-                                    },
+                                    onExitToTitle: () async => exitCalls++,
                                     onRestartRun: () async {},
                                     isDebugFixtureRun: false,
+                                    autoStartTutorials: false,
                                   ),
                                 ),
                               ),
@@ -182,44 +191,89 @@ void main() {
     expect(poppedValue, isNull);
     expect(find.text('다음 Station'), findsOneWidget);
 
-    pendingStateSave.complete();
+    pendingPurchaseSave.complete();
     await tester.pumpAndSettle();
 
     expect(poppedValue, isTrue);
     expect(find.text('open shop'), findsOneWidget);
 
-    currentMarket = RummiMarketRuntimeFacade(
-      gold: 12,
-      rerollCost: 5,
-      maxOwnedSlots: RummiRunProgress.maxJesterSlots,
-      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
-      ownedEntries: const [],
-      offers: [
-        RummiMarketOfferView.fromShopOffer(
-          RummiShopOffer(slotIndex: 0, card: offerCard, price: 4),
-          currentGold: 12,
-        ),
-      ],
-      itemOfferSlotCount: 3,
-      quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
-    );
-    pendingStateSave = Completer<void>();
-    saveCallCount = 0;
+    for (final viaOptions in <bool>[false, true]) {
+      final exitCallsBefore = exitCalls;
+      failExitSave = false;
+      pendingExitSave = Completer<void>();
+      final saveCallsBefore = saveCallCount;
+      await tester.tap(find.text('open shop'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 20 && saveCallCount == saveCallsBefore; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(saveCallCount, greaterThan(saveCallsBefore));
+      await _triggerTitleExit(tester, viaOptions: viaOptions);
+      await tester.pump(const Duration(milliseconds: 120));
 
-    await tester.tap(find.text('open shop'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Timing', skipOffstage: false).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('구매'));
-    await tester.pump(const Duration(milliseconds: 120));
-    await tester.tap(find.text('메인 메뉴'));
-    await tester.pump(const Duration(milliseconds: 120));
+      expect(exitCalls, exitCallsBefore);
+      pendingExitSave.complete();
+      await tester.pumpAndSettle();
 
-    expect(exitToTitleCalled, isFalse);
+      expect(exitCalls, exitCallsBefore + 1);
+      if (viaOptions) {
+        Navigator.of(tester.element(find.byType(GameShopScreen))).pop(false);
+        await tester.pumpAndSettle();
+      }
+      expect(find.text('open shop'), findsOneWidget);
+      pendingExitSave = null;
+    }
 
-    pendingStateSave.complete();
-    await tester.pumpAndSettle();
+    for (final viaOptions in <bool>[false, true]) {
+      final exitCallsBefore = exitCalls;
+      failExitSave = true;
+      pendingExitSave = Completer<void>();
+      final saveCallsBefore = saveCallCount;
+      await tester.tap(find.text('open shop'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 20 && saveCallCount == saveCallsBefore; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(saveCallCount, greaterThan(saveCallsBefore));
 
-    expect(exitToTitleCalled, isTrue);
+      await _triggerTitleExit(tester, viaOptions: viaOptions);
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(exitCalls, exitCallsBefore);
+      pendingExitSave.complete();
+      for (
+        var i = 0;
+        i < 20 && find.text('저장에 실패했습니다. 다시 시도해 주세요.').evaluate().isEmpty;
+        i++
+      ) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      expect(tester.takeException(), isNull);
+      expect(exitCalls, exitCallsBefore);
+      expect(find.text('저장에 실패했습니다. 다시 시도해 주세요.'), findsOneWidget);
+      expect(find.byType(GameShopScreen), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+      if (!viaOptions) {
+        Navigator.of(tester.element(find.byType(GameShopScreen))).pop(false);
+        await tester.pumpAndSettle();
+        expect(find.text('open shop'), findsOneWidget);
+      }
+      pendingExitSave = null;
+    }
   });
+}
+
+Future<void> _triggerTitleExit(
+  WidgetTester tester, {
+  required bool viaOptions,
+}) async {
+  if (!viaOptions) {
+    await tester.tap(find.text('메인 메뉴'));
+    return;
+  }
+  await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byIcon(Icons.logout_rounded));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('나가기').last);
 }

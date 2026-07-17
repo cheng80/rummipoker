@@ -33,10 +33,17 @@ extension _GameShopOptionsFlow on _GameShopScreenState {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return false;
 
-    await _flushStateSave();
-    if (!mounted) return false;
-    await widget.onExitToTitle();
-    return true;
+    try {
+      await _flushStateSave();
+      if (!mounted) return false;
+      await widget.onExitToTitle();
+      return true;
+    } catch (_) {
+      if (mounted) {
+        showBottomNotice(context, '저장에 실패했습니다. 다시 시도해 주세요.');
+      }
+      return false;
+    }
   }
 
   Future<void> _openOptions() async {

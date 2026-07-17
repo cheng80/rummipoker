@@ -77,6 +77,7 @@ class BlindSelectionSpecBuilder {
     NewRunModifier runModifier = NewRunModifier.basic,
     int? runSeed,
     required RummiRuleset ruleset,
+    RummiBossModifier? bossModifierOverride,
   }) {
     final normalizedStationIndex = stationIndex < 1 ? 1 : stationIndex;
     final normalizedClearedBlindTierIndex = clearedBlindTierIndex.clamp(-1, 2);
@@ -115,6 +116,7 @@ class BlindSelectionSpecBuilder {
         runModifier: runModifier,
         runSeed: runSeed,
         ruleset: ruleset,
+        bossModifierOverride: bossModifierOverride,
         availability: normalizedClearedBlindTierIndex >= BlindTier.boss.index
             ? BlindSelectionAvailability.cleared
             : normalizedClearedBlindTierIndex >= BlindTier.big.index
@@ -134,6 +136,7 @@ class BlindSelectionSpecBuilder {
     NewRunModifier runModifier = NewRunModifier.basic,
     int? runSeed,
     required RummiRuleset ruleset,
+    RummiBossModifier? bossModifierOverride,
   }) {
     return _buildSpec(
       tier: tier,
@@ -142,6 +145,7 @@ class BlindSelectionSpecBuilder {
       runModifier: runModifier,
       runSeed: runSeed,
       ruleset: ruleset,
+      bossModifierOverride: bossModifierOverride,
       availability: BlindSelectionAvailability.selectable,
     );
   }
@@ -153,6 +157,7 @@ class BlindSelectionSpecBuilder {
     required NewRunModifier runModifier,
     int? runSeed,
     required RummiRuleset ruleset,
+    RummiBossModifier? bossModifierOverride,
     required BlindSelectionAvailability availability,
     String? lockReason,
   }) {
@@ -225,11 +230,12 @@ class BlindSelectionSpecBuilder {
       availability: availability,
       isEndless: isEndless,
       bossModifier: tier == BlindTier.boss
-          ? _bossModifierForStation(
-              stationIndex,
-              difficulty: difficulty,
-              runSeed: runSeed,
-            )
+          ? bossModifierOverride ??
+                _bossModifierForStation(
+                  stationIndex,
+                  difficulty: difficulty,
+                  runSeed: runSeed,
+                )
           : null,
       lockReason: lockReason,
     );

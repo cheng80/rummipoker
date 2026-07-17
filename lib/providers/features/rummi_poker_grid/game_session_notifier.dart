@@ -41,17 +41,27 @@ final gameSessionNotifierProvider =
 
 ActiveRunRuntimeState buildInitialRunRuntime(GameSessionArgs args) {
   final state = _buildInitialGameSessionState(args);
+  final session = state.session!;
   final runProgress = state.runProgress!.copySnapshot()
     ..currentStationBlindTierIndex = -1;
   final startSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
-    session: state.session!,
+    session: session,
     runProgress: runProgress,
   );
+  final blindSelectBossModifier = BlindSelectionSetup.resolveSpec(
+    tier: BlindTier.boss,
+    stationIndex: runProgress.stageIndex,
+    difficulty: args.difficulty,
+    runModifier: args.runModifier,
+    runSeed: session.runSeed,
+    ruleset: session.ruleset,
+  ).bossModifier;
   return ActiveRunRuntimeState(
     activeScene: ActiveRunScene.blindSelect,
     difficulty: args.difficulty,
     runModifier: args.runModifier,
-    session: state.session!,
+    blindSelectBossModifier: blindSelectBossModifier,
+    session: session,
     runProgress: runProgress,
     stageStartSnapshot: startSnapshot,
     stakeStartSnapshot: startSnapshot,

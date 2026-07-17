@@ -8,9 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
+import 'package:rummipoker/services/active_run_save_service.dart';
+import 'package:rummipoker/services/device_key_store.dart';
 import 'package:rummipoker/services/game_analytics_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
-import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/blind_select_view.dart';
@@ -19,7 +20,11 @@ import 'package:rummipoker/views/new_run_view.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late _MemoryDeviceKeyStore deviceKeyStore;
+
   setUp(() async {
+    deviceKeyStore = _MemoryDeviceKeyStore();
+    overrideDeviceKeyStoreForTest(deviceKeyStore);
     StorageHelper.resetForTest();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     PackageInfo.setMockInitialValues(
@@ -37,6 +42,7 @@ void main() {
   });
 
   tearDown(() {
+    overrideDeviceKeyStoreForTest(null);
     SoundManager.debugResetForTest();
     GameAnalyticsService.debugResetForTest();
   });
@@ -44,8 +50,8 @@ void main() {
   testWidgets('new run to blind select keeps back navigation to title', (
     tester,
   ) async {
-    ActiveRunRuntimeState? routedRun;
     final analyticsEvents = <_CapturedEvent>[];
+    final openedRuntimes = <ActiveRunRuntimeState>[];
     GameAnalyticsService.debugSetInstanceForTest(
       GameAnalyticsService(
         sink: (name, parameters) async {
@@ -72,20 +78,20 @@ void main() {
         GoRoute(
           path: RoutePaths.blindSelect,
           builder: (context, state) {
-            routedRun = state.extra is ActiveRunRuntimeState
-                ? state.extra as ActiveRunRuntimeState
-                : null;
+            final runtime = state.extra as ActiveRunRuntimeState?;
+            if (runtime != null) openedRuntimes.add(runtime);
             final seed = int.tryParse(state.uri.queryParameters['seed'] ?? '');
             return BlindSelectView(
-              runSeed: routedRun?.session.runSeed ?? seed ?? 77,
+              runSeed: runtime?.session.runSeed ?? seed ?? 77,
               difficulty: NewRunSetup.parseDifficulty(
-                routedRun?.difficulty.name ??
+                runtime?.difficulty.name ??
                     state.uri.queryParameters['difficulty'],
               ),
               runModifier: NewRunModifier.parse(
-                state.uri.queryParameters['modifier'],
+                runtime?.runModifier.id ??
+                    state.uri.queryParameters['modifier'],
               ),
-              restoredRun: routedRun,
+              restoredRun: runtime,
             );
           },
         ),
@@ -134,21 +140,21 @@ void main() {
     expect(runStartEvents.single.parameters['difficulty'], 'standard');
     expect(runStartEvents.single.parameters['modifier'], 'basic');
     expect(find.text('Station Select'), findsOneWidget);
-    final savedRandomRun = await ActiveRunSaveService.loadActiveRun();
-    expect(routedRun, isNotNull);
-    expect(routedRun!.runProgress.runClaimId, isNotEmpty);
+    expect(openedRuntimes, hasLength(1));
+    final randomRuntime = openedRuntimes.single;
+    final randomSaved = await ActiveRunSaveService.loadActiveRun();
+    expect(randomRuntime.runProgress.runClaimId, isNotEmpty);
+    expect(randomSaved, isNotNull);
+    expect(randomSaved!.session.runSeed, randomRuntime.session.runSeed);
     expect(
-      routedRun!.runProgress.runClaimId,
-      savedRandomRun!.runProgress.runClaimId,
+      randomSaved.runProgress.runClaimId,
+      randomRuntime.runProgress.runClaimId,
     );
     expect(
       await ActiveRunSaveService.inspectActiveRun(),
       ActiveRunAvailability.available,
     );
-    expect(
-      (await ActiveRunSaveService.loadActiveRun())?.activeScene,
-      ActiveRunScene.blindSelect,
-    );
+    expect(randomSaved.activeScene, ActiveRunScene.blindSelect);
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
@@ -175,11 +181,18 @@ void main() {
     expect(manualRunStartEvents.last.parameters['difficulty'], 'standard');
     expect(manualRunStartEvents.last.parameters['modifier'], 'basic');
     expect(find.text('Station Select'), findsOneWidget);
-    final savedManualRun = await ActiveRunSaveService.loadActiveRun();
-    expect(routedRun, isNotNull);
+    expect(openedRuntimes, hasLength(2));
+    final manualRuntime = openedRuntimes.last;
+    final manualSaved = await ActiveRunSaveService.loadActiveRun();
+    expect(manualSaved, isNotNull);
+    expect(manualSaved!.session.runSeed, manualRuntime.session.runSeed);
     expect(
-      routedRun!.runProgress.runClaimId,
-      savedManualRun!.runProgress.runClaimId,
+      manualSaved.runProgress.runClaimId,
+      manualRuntime.runProgress.runClaimId,
+    );
+    expect(
+      manualRuntime.runProgress.runClaimId,
+      isNot(randomRuntime.runProgress.runClaimId),
     );
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
@@ -196,6 +209,16 @@ void main() {
     );
     expect(find.text('랜덤 시작'), findsNothing);
   });
+}
+
+class _MemoryDeviceKeyStore implements DeviceKeyStore {
+  String? value;
+
+  @override
+  Future<String?> read() async => value;
+
+  @override
+  Future<void> write(String nextValue) async => value = nextValue;
 }
 
 class _CapturedEvent {

@@ -828,10 +828,19 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                               label: '메인 메뉴',
                               background: GameUiPalette.disabledControl,
                               onPressed: () async {
-                                await _flushStateSave();
-                                if (!context.mounted) return;
-                                Navigator.of(context).pop(false);
-                                await widget.onExitToTitle();
+                                try {
+                                  await _flushStateSave();
+                                  if (!context.mounted) return;
+                                  Navigator.of(context).pop(false);
+                                  await widget.onExitToTitle();
+                                } catch (_) {
+                                  if (context.mounted) {
+                                    showBottomNotice(
+                                      context,
+                                      '저장에 실패했습니다. 다시 시도해 주세요.',
+                                    );
+                                  }
+                                }
                               },
                             ),
                           ),

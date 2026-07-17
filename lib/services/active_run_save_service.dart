@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 
 import '../app_config.dart';
+import '../logic/rummi_poker_grid/boss_modifier.dart';
 import '../logic/rummi_poker_grid/hand_rank.dart';
 import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
@@ -78,6 +79,7 @@ class ActiveRunSaveService {
     required ActiveRunScene activeScene,
     required NewRunDifficulty difficulty,
     NewRunModifier runModifier = NewRunModifier.basic,
+    RummiBossModifier? blindSelectBossModifier,
     required RummiPokerGridSession session,
     required RummiRunProgress runProgress,
     required ActiveRunStageSnapshot stageStartSnapshot,
@@ -88,6 +90,7 @@ class ActiveRunSaveService {
         activeScene: activeScene,
         difficulty: difficulty,
         runModifier: runModifier,
+        blindSelectBossModifier: blindSelectBossModifier,
         session: session,
         runProgress: runProgress,
         stageStartSnapshot: stageStartSnapshot,
@@ -109,6 +112,7 @@ class ActiveRunSaveService {
       activeScene: runtime.activeScene,
       difficulty: runtime.difficulty,
       runModifier: runtime.runModifier,
+      blindSelectBossModifier: runtime.blindSelectBossModifier,
       session: runtime.session,
       runProgress: runtime.runProgress,
       stageStartSnapshot: runtime.stageStartSnapshot,
@@ -119,7 +123,18 @@ class ActiveRunSaveService {
   static Future<ActiveRunRuntimeState?> loadActiveRun() async {
     final save = await _loadVerifiedSaveData();
     if (save == null) return null;
-    return runtimeStateFromSaveData(save);
+    final runtime = await runtimeStateFromSaveData(save);
+    final savedClaimIds = <String?>[
+      save.runProgress.runClaimId,
+      save.stageStartRunProgress.runClaimId,
+      save.stakeStartRunProgress?.runClaimId,
+    ];
+    if (savedClaimIds.any(
+      (id) => id == null || id.isEmpty || id != runtime.runProgress.runClaimId,
+    )) {
+      await saveRuntimeState(runtime);
+    }
+    return runtime;
   }
 
   static Future<ActiveRunRuntimeState> runtimeStateFromJson(String jsonString) {
@@ -133,10 +148,23 @@ class ActiveRunSaveService {
     final catalog = await _loadCatalog();
 
     final session = _restoreSession(save.session);
-    final runProgress = _restoreRunProgress(save.runProgress, catalog);
+    final savedRunClaimId =
+        save.runProgress.runClaimId ??
+        save.stageStartRunProgress.runClaimId ??
+        save.stakeStartRunProgress?.runClaimId;
+    final runProgress = _restoreRunProgress(
+      save.runProgress,
+      catalog,
+      runClaimId: savedRunClaimId,
+    );
+    final runClaimId = runProgress.runClaimId;
     final stageStartSnapshot = ActiveRunStageSnapshot(
       session: _restoreSession(save.stageStartSession),
-      runProgress: _restoreRunProgress(save.stageStartRunProgress, catalog),
+      runProgress: _restoreRunProgress(
+        save.stageStartRunProgress,
+        catalog,
+        runClaimId: runClaimId,
+      ),
     );
     final stakeStartSnapshot = ActiveRunStageSnapshot(
       session: _restoreSession(
@@ -145,6 +173,7 @@ class ActiveRunSaveService {
       runProgress: _restoreRunProgress(
         save.stakeStartRunProgress ?? save.stageStartRunProgress,
         catalog,
+        runClaimId: runClaimId,
       ),
     );
     final stableRunClaimId = runProgress.runClaimId;
@@ -155,6 +184,9 @@ class ActiveRunSaveService {
       activeScene: ActiveRunScene.values.byName(save.activeScene),
       difficulty: NewRunSetup.parseDifficulty(save.difficulty),
       runModifier: NewRunModifier.parse(save.runModifier),
+      blindSelectBossModifier: save.blindSelectBossModifier == null
+          ? null
+          : RummiBossModifier.fromJson(save.blindSelectBossModifier!),
       session: session,
       runProgress: runProgress,
       stageStartSnapshot: stageStartSnapshot,
@@ -169,6 +201,7 @@ class ActiveRunSaveService {
       activeScene: runtime.activeScene.name,
       difficulty: runtime.difficulty.name,
       runModifier: runtime.runModifier.id,
+      blindSelectBossModifier: runtime.blindSelectBossModifier?.toJson(),
       session: _buildSavedSessionData(runtime.session),
       runProgress: _buildSavedRunProgressData(runtime.runProgress),
       stageStartSession: _buildSavedSessionData(

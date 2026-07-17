@@ -50,6 +50,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
       runModifier: _effectiveRunModifier,
       runSeed: _effectiveRunSeed,
       ruleset: _effectiveRuleset,
+      bossModifierOverride: widget.restoredRun?.blindSelectBossModifier,
     );
     _loadItemCatalog();
   }

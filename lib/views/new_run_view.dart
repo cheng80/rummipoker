@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../app_config.dart';
 import '../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
-import '../resources/asset_paths.dart';
 import '../providers/features/rummi_poker_grid/game_session_notifier.dart';
+import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/game_analytics_service.dart';
@@ -79,10 +79,10 @@ class _NewRunViewState extends State<NewRunView> {
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final seed = RummiPokerGridSession.rollNewRunSeed();
-    final initialRun = await _saveInitialRun(seed);
-    if (!mounted) return;
+    final runtime = await _saveInitialRun(seed);
+    if (!mounted || runtime == null) return;
     _logRunStart(seedMode: 'random', seed: seed);
-    context.push(_buildStartRoute(seed: seed), extra: initialRun);
+    context.push(_buildStartRoute(seed: seed), extra: runtime);
   }
 
   Future<void> _openSeedInputDialog() async {
@@ -151,10 +151,10 @@ class _NewRunViewState extends State<NewRunView> {
     if (!mounted) return;
     SoundManager.unlockForWeb();
     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    final initialRun = await _saveInitialRun(value);
-    if (!mounted) return;
+    final runtime = await _saveInitialRun(value);
+    if (!mounted || runtime == null) return;
     _logRunStart(seedMode: 'manual', seed: value);
-    context.push(_buildStartRoute(seed: value), extra: initialRun);
+    context.push(_buildStartRoute(seed: value), extra: runtime);
   }
 
   void _logRunStart({required String seedMode, required int seed}) {
@@ -177,7 +177,7 @@ class _NewRunViewState extends State<NewRunView> {
     );
   }
 
-  Future<ActiveRunRuntimeState> _saveInitialRun(int seed) async {
+  Future<ActiveRunRuntimeState?> _saveInitialRun(int seed) async {
     final difficulty = _unlockState.isDifficultyUnlocked(_selectedDifficulty)
         ? _selectedDifficulty
         : NewRunDifficulty.standard;
@@ -194,8 +194,15 @@ class _NewRunViewState extends State<NewRunView> {
             : null,
       ),
     );
-    await ActiveRunSaveService.saveRuntimeState(runtime);
-    return runtime;
+    try {
+      await ActiveRunSaveService.saveRuntimeState(runtime);
+      return runtime;
+    } catch (_) {
+      if (mounted) {
+        showTopNotice(context, '저장에 실패했습니다. 다시 시도해 주세요.');
+      }
+      return null;
+    }
   }
 
   void _goBack() {

@@ -31,19 +31,20 @@ class StorageHelper {
   /// 쓰기
   static Future<void> write(String key, dynamic value) async {
     final prefs = _instance;
+    late final bool saved;
     switch (value) {
       case bool v:
-        await prefs.setBool(key, v);
+        saved = await prefs.setBool(key, v);
       case int v:
-        await prefs.setInt(key, v);
+        saved = await prefs.setInt(key, v);
       case double v:
-        await prefs.setDouble(key, v);
+        saved = await prefs.setDouble(key, v);
       case String v:
-        await prefs.setString(key, v);
+        saved = await prefs.setString(key, v);
       case List<String> v:
-        await prefs.setStringList(key, v);
+        saved = await prefs.setStringList(key, v);
       case null:
-        await prefs.remove(key);
+        saved = await prefs.remove(key);
       default:
         throw ArgumentError.value(
           value,
@@ -51,6 +52,7 @@ class StorageHelper {
           'Unsupported SharedPreferences value type: ${value.runtimeType}',
         );
     }
+    if (!saved) throw StateError('SharedPreferences write failed: $key');
   }
 
   /// 삭제

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// ignore: depend_on_referenced_packages
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 
 import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
@@ -30,6 +32,15 @@ class _MemoryDeviceKeyStore implements DeviceKeyStore {
   @override
   Future<void> write(String nextValue) async {
     value = nextValue;
+  }
+}
+
+class _FailingSharedPreferencesStore extends InMemorySharedPreferencesStore {
+  _FailingSharedPreferencesStore() : super.empty();
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) async {
+    return false;
   }
 }
 
@@ -537,6 +548,160 @@ void main() {
 
       expect(restored.currentStationBlindTierIndex, 0);
       expect(restored.marketModifiers.firstRerollDiscount, 0);
+    });
+
+    test(
+      'legacy v2 missing claim ID는 current·stage·stake에 한 ID를 저장해 재로드한다',
+      () async {
+        const deviceKey = 'legacy-device-key';
+        deviceKeyStore.value = deviceKey;
+        final session = RummiPokerGridSession(runSeed: 7272);
+        final progress = RummiRunProgress();
+        final snapshot = ActiveRunSaveService.captureStageStartSnapshot(
+          session: session,
+          runProgress: progress,
+        );
+        final payloadMap =
+            jsonDecode(
+                  ActiveRunSaveService.runtimeStateToJson(
+                    ActiveRunRuntimeState(
+                      activeScene: ActiveRunScene.battle,
+                      difficulty: NewRunDifficulty.standard,
+                      session: session,
+                      runProgress: progress,
+                      stageStartSnapshot: snapshot,
+                      stakeStartSnapshot: snapshot,
+                    ),
+                  ),
+                )
+                as Map<String, dynamic>;
+        for (final key in <String>[
+          'runProgress',
+          'stageStartRunProgress',
+          'stakeStartRunProgress',
+        ]) {
+          (payloadMap[key] as Map<String, dynamic>).remove('runClaimId');
+        }
+        final legacyPayload = jsonEncode(payloadMap);
+        final legacySignature = Hmac(
+          sha256,
+          utf8.encode(deviceKey),
+        ).convert(utf8.encode(legacyPayload)).toString();
+        await StorageHelper.write(
+          StorageKeys.activeRunPayloadV1,
+          legacyPayload,
+        );
+        await StorageHelper.write(
+          StorageKeys.activeRunSignatureV1,
+          legacySignature,
+        );
+
+        final restored = await ActiveRunSaveService.loadActiveRun();
+
+        expect(restored, isNotNull);
+        final claimId = restored!.runProgress.runClaimId;
+        expect(claimId, isNotEmpty);
+        expect(restored.stageStartSnapshot.runProgress.runClaimId, claimId);
+        expect(restored.stakeStartSnapshot.runProgress.runClaimId, claimId);
+        expect(StorageHelper.hasData(StorageKeys.activeRunRecordV1), isTrue);
+        expect(StorageHelper.hasData(StorageKeys.activeRunPayloadV1), isFalse);
+        expect(
+          StorageHelper.hasData(StorageKeys.activeRunSignatureV1),
+          isFalse,
+        );
+
+        StorageHelper.resetForTest();
+        await StorageHelper.init();
+        final reloaded = await ActiveRunSaveService.loadActiveRun();
+
+        expect(reloaded, isNotNull);
+        expect(reloaded!.runProgress.runClaimId, claimId);
+        expect(reloaded.stageStartSnapshot.runProgress.runClaimId, claimId);
+        expect(reloaded.stakeStartSnapshot.runProgress.runClaimId, claimId);
+      },
+    );
+
+    test('active save는 envelope 한 key만 기록한다', () async {
+      await ActiveRunSaveService.saveRuntimeState(_runtimeForTest(7301));
+
+      final raw = StorageHelper.readString(StorageKeys.activeRunRecordV1);
+      final record = jsonDecode(raw) as Map<String, dynamic>;
+      expect(record['payload'], isA<String>());
+      expect(record['signature'], isA<String>());
+      expect(StorageHelper.hasData(StorageKeys.activeRunPayloadV1), isFalse);
+      expect(StorageHelper.hasData(StorageKeys.activeRunSignatureV1), isFalse);
+      expect(
+        (await ActiveRunSaveService.loadActiveRun())!.session.runSeed,
+        7301,
+      );
+    });
+
+    test('partial legacy key는 저장 흔적만 남고 load하지 않는다', () async {
+      for (final key in <String>[
+        StorageKeys.activeRunPayloadV1,
+        StorageKeys.activeRunSignatureV1,
+      ]) {
+        await ActiveRunSaveService.clearActiveRun();
+        await StorageHelper.write(key, 'partial');
+
+        expect(ActiveRunSaveService.hasStoredActiveRun(), isTrue);
+        expect(
+          await ActiveRunSaveService.inspectActiveRun(),
+          ActiveRunAvailability.none,
+        );
+        expect(await ActiveRunSaveService.loadActiveRun(), isNull);
+      }
+    });
+
+    test('clearActiveRun은 envelope과 legacy 두 key를 모두 지운다', () async {
+      await StorageHelper.write(StorageKeys.activeRunRecordV1, 'record');
+      await StorageHelper.write(StorageKeys.activeRunPayloadV1, 'payload');
+      await StorageHelper.write(StorageKeys.activeRunSignatureV1, 'signature');
+
+      await ActiveRunSaveService.clearActiveRun();
+
+      expect(StorageHelper.hasData(StorageKeys.activeRunRecordV1), isFalse);
+      expect(StorageHelper.hasData(StorageKeys.activeRunPayloadV1), isFalse);
+      expect(StorageHelper.hasData(StorageKeys.activeRunSignatureV1), isFalse);
+    });
+
+    test('bookmark는 기존 payload·signature 두 key 계약을 유지한다', () async {
+      await ActiveRunSaveService.saveBookmarkSlot(
+        slotIndex: 1,
+        runtime: _runtimeForTest(7304),
+      );
+
+      expect(
+        StorageHelper.hasData('${StorageKeys.activeRunBookmarkPayloadPrefix}1'),
+        isTrue,
+      );
+      expect(
+        StorageHelper.hasData(
+          '${StorageKeys.activeRunBookmarkSignaturePrefix}1',
+        ),
+        isTrue,
+      );
+      expect(StorageHelper.hasData(StorageKeys.activeRunRecordV1), isFalse);
+    });
+
+    test('SharedPreferences false write는 save 성공으로 처리하지 않는다', () async {
+      final originalStore = SharedPreferencesStorePlatform.instance;
+      addTearDown(() {
+        SharedPreferences.resetStatic();
+        SharedPreferencesStorePlatform.instance = originalStore;
+        StorageHelper.resetForTest();
+      });
+      SharedPreferences.resetStatic();
+      SharedPreferencesStorePlatform.instance =
+          _FailingSharedPreferencesStore();
+      StorageHelper.resetForTest();
+      await StorageHelper.init();
+      deviceKeyStore.value = 'existing-device-key';
+
+      await expectLater(
+        ActiveRunSaveService.saveRuntimeState(_runtimeForTest(7305)),
+        throwsStateError,
+      );
     });
 
     test(
@@ -1363,4 +1528,21 @@ void main() {
       },
     );
   });
+}
+
+ActiveRunRuntimeState _runtimeForTest(int seed) {
+  final session = RummiPokerGridSession(runSeed: seed);
+  final runProgress = RummiRunProgress();
+  final snapshot = ActiveRunSaveService.captureStageStartSnapshot(
+    session: session,
+    runProgress: runProgress,
+  );
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.battle,
+    difficulty: NewRunDifficulty.standard,
+    session: session,
+    runProgress: runProgress,
+    stageStartSnapshot: snapshot,
+    stakeStartSnapshot: snapshot,
+  );
 }

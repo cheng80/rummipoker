@@ -8,8 +8,8 @@
 
 | 화면 | 주요 입력 | 들어갈 수 있는 조건 | 결과 | 문제가 생기면 |
 |---|---|---|---|---|
-| `/` Title | 새 run, 이어하기, 북마크 불러오기, Run 정보, 설정, 도감, 특별 모드 | 이어하기는 payload·signature 존재와 `ActiveRunAvailability.available`을 요구; 북마크는 비어 있지 않아야 함 | 선택 route로 이동하거나 verified active scene을 복원 | invalid save는 삭제/취소 dialog; 복원 실패는 손상 dialog; 빈 북마크는 notice |
-| `/new-run` New Run | 표준/도전, basic/high-stakes, random seed 또는 정수 seed | 난이도와 modifier는 unlock state를 통과해야 하고 seed는 정수여야 함 | 기존 active run을 지우고 `/blind-select`로 이동 | 잠긴 선택은 기본값으로 정규화; 잘못된 seed는 notice; 뒤로가기는 Title |
+| `/` Title | 새 run, 이어하기, 북마크 불러오기, Run 정보, 설정, 도감, 특별 모드 | 이어하기는 active record 또는 완전한 legacy pair가 `ActiveRunAvailability.available`이어야 함; 북마크는 비어 있지 않아야 함 | 선택 route로 이동하거나 verified active scene을 복원 | invalid save는 삭제/취소 dialog; 복원 실패는 손상 dialog; 빈 북마크는 notice |
+| `/new-run` New Run | 표준/도전, basic/high-stakes, random seed 또는 정수 seed | 난이도와 modifier는 unlock state를 통과해야 하고 seed는 정수여야 함 | 새 `blindSelect` runtime을 저장하고 같은 객체를 `/blind-select`로 전달 | 저장 실패는 기존 active run을 유지한 채 notice; 잠긴 선택은 기본값으로 정규화; 잘못된 seed는 notice; 뒤로가기는 Title |
 | `/blind-select` Blind Select | Scout, Clash, Boss 선택 | 직전 tier clear 뒤에만 다음 tier가 selectable | 선택한 목표·자원·Boss 제약으로 `/game` 진입 | locked card는 비활성·사유 표시; 뒤로가기는 restored run이면 Title, 새 run이면 New Run |
 | `/game` Battle / Settlement / Market host | draw, 타일 선택·배치, 버림, 이동, Item, 확정, options, tutorial, Run 정보 | `GameStageFlowPhase`, board-move mode, scene, 자원·target precondition이 입력을 잠금 | runtime 갱신, 정산 연출, cash-out, Market dialog, 다음 Blind 또는 terminal | options에서 현재 Battle/Station 재시작·북마크·Title; expiry dialog에서 retry/new run/exit; lifecycle 복귀 시 options |
 | `/setting` Settings | 화면 켜짐 유지, locale, BGM/SFX volume·mute, 닫기 | volume은 0..1 clamp; mute 시 slider 비활성 | StorageHelper와 Sound/Wakelock에 즉시 반영 | 닫기로 이전 route 복귀; 플랫폼 Wakelock 실패는 gameplay를 막지 않음 |
@@ -46,7 +46,7 @@ Market은 `/game` 위의 fullscreen dialog이며 active save scene은 `shop`이�
 - `Jester / Slots`와 `Tool / Gear` 두 탭이 같은 화면 위치를 공유한다.
 - 현재 lane의 보유 slot, 선택 상세, 후보, 가격·할인, 구매·판매·사용·리롤 action을 함께 보여준다.
 - 구매·리롤은 확인과 affordability/cap guard를 거친다. 거절은 shake/badge/notice, 성공은 flight/pulse/reveal로 구분한다.
-- state-changing action은 save queue에 들어간다. 다음 Blind/auto-advance 경로에서는 flush하지만 Main Menu·options exit는 현재 flush하지 않는다.
+- state-changing action은 save queue에 넣는다. 다음 Blind, auto-advance, 화면 하단 메인 메뉴, options의 Title 이탈은 queue를 flush한 뒤 이동한다. flush에 실패하면 Market에 남아 notice를 표시한다.
 - 첫 자동 tutorial은 entry와 tab layout이 안정된 뒤 시작하고, 수동 다시보기는 현재 layout에서 즉시 시작한다.
 
 화면은 [game_shop_screen.dart](../../lib/views/game/widgets/game_shop_screen.dart), 선택·guard는 [game_shop_selection_flow.dart](../../lib/views/game/widgets/game_shop_selection_flow.dart), 구매 feedback은 [game_shop_purchase_flow.dart](../../lib/views/game/widgets/game_shop_purchase_flow.dart)가 소유한다.

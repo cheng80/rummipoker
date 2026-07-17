@@ -9,6 +9,7 @@ class ActiveRunRuntimeState {
     required this.activeScene,
     required this.difficulty,
     this.runModifier = NewRunModifier.basic,
+    this.blindSelectBossModifier,
     required this.session,
     required this.runProgress,
     required this.stageStartSnapshot,
@@ -18,6 +19,7 @@ class ActiveRunRuntimeState {
   final ActiveRunScene activeScene;
   final NewRunDifficulty difficulty;
   final NewRunModifier runModifier;
+  final RummiBossModifier? blindSelectBossModifier;
   final RummiPokerGridSession session;
   final RummiRunProgress runProgress;
   final ActiveRunStageSnapshot stageStartSnapshot;
@@ -41,6 +43,7 @@ class ActiveRunSaveData {
     required this.activeScene,
     required this.difficulty,
     this.runModifier = 'basic',
+    this.blindSelectBossModifier,
     required this.session,
     required this.runProgress,
     required this.stageStartSession,
@@ -54,6 +57,7 @@ class ActiveRunSaveData {
   final String activeScene;
   final String difficulty;
   final String runModifier;
+  final Map<String, dynamic>? blindSelectBossModifier;
   final SavedSessionData session;
   final SavedRunProgressData runProgress;
   final SavedSessionData stageStartSession;
@@ -68,6 +72,8 @@ class ActiveRunSaveData {
       'activeScene': activeScene,
       'difficulty': difficulty,
       'runModifier': runModifier,
+      if (blindSelectBossModifier != null)
+        'blindSelectBossModifier': blindSelectBossModifier,
       'session': session.toJson(),
       'runProgress': runProgress.toJson(),
       'stageStartSession': stageStartSession.toJson(),
@@ -90,6 +96,9 @@ class ActiveRunSaveData {
       difficulty:
           json['difficulty'] as String? ?? NewRunDifficulty.standard.name,
       runModifier: json['runModifier'] as String? ?? NewRunModifier.basic.id,
+      blindSelectBossModifier: json['blindSelectBossModifier'] == null
+          ? null
+          : Map<String, dynamic>.from(json['blindSelectBossModifier'] as Map),
       session: SavedSessionData.fromJson(
         json['session'] as Map<String, dynamic>,
       ),

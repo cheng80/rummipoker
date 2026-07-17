@@ -50,11 +50,12 @@ View는 input lock과 selection mode를 확인하고 notifier command를 호출�
 ```text
 target clear
 → notifier prepareSettlementAndCashOut
-→ 최초 breakdown과 Station/tier receipt를 함께 반영
+→ Blind별 receipt를 확인하고 최초 breakdown과 Station/tier reward를 한 번만 반영
 → battle scene save
 → settlement/cash-out presentation
 → enterMarketAfterCashOut + shop scene
-→ Market commands + queued/flush save
+→ Market commands + queued save
+→ 다음 단계·Title 이탈 전 flush
 → blindSelect runtime 생성·저장
 → router 이동
 ```
@@ -67,15 +68,16 @@ Settlement command가 gold, Boss reward, growth, scene/loop phase와 receipt를 
 notifier buildSaveRuntimeState
 → codec DTO / JSON
 → device key HMAC-SHA256
-→ StorageHelper 단일 active envelope
+→ StorageHelper {payload, signature} 단일 active envelope
 → Title inspect
 → signature/schema verify
 → catalog ID rebind + runtime restore
+→ legacy/missing runClaimId 정규화 저장
 → active scene route
 → notifier bootstrap + presentation reset
 ```
 
-Title은 `available/none/invalid`를 읽어 continue 또는 delete recovery를 제공한다. 새 envelope이 없을 때만 legacy v2 두 키를 읽고 다음 저장에서 전환한다. `blindSelect` scene은 해당 route로, `battle`과 `shop`은 `/game`으로 복원한다. `shop` restore는 Jester와 Item catalog가 준비된 뒤 Market dialog를 다시 연다. 세부 계약은 [SAVE_DATA.md](SAVE_DATA.md)가 소유한다.
+Title은 `available/none/invalid`를 읽어 continue 또는 delete recovery를 제공한다. active envelope이 없을 때만 legacy v2 payload/signature 두 키를 읽고 다음 저장에서 envelope으로 전환한다. `blindSelect` scene은 해당 route로, `battle`과 `shop`은 `/game`으로 복원한다. `shop` restore는 Jester와 Item catalog가 준비된 뒤 Market dialog를 다시 연다. New Run은 첫 `blindSelect` runtime 저장이 성공해야 같은 객체로 이동하며, 실패하면 기존 저장을 보존한다. 세부 계약은 [SAVE_DATA.md](SAVE_DATA.md)가 소유한다.
 
 ## 콘텐츠를 불러오는 과정
 

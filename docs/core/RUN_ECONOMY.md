@@ -27,7 +27,9 @@
 | `challenge` | 선택 가능 | 기준값 ×1.5, 반올림 | 보드 버림 -1, 손패 버림 -1 | 저장된 challenge carryover snapshot이 이미 있으면 시작 상태에 적용 |
 | `relaxed` | 일반 선택 불가 | 기준값 ×0.8, 반올림 | 보드 버림 +1, 손패 버림 +1 | 저장 호환용 ID이며 선택 요청은 `standard`로 정규화 |
 
-`basic` modifier는 목표·보상 1배다. `high_stakes`는 해금에 Insight 20을 사용하고 목표 ×1.04, 기본 Blind 보상 ×1.12를 각각 반올림한다. 난이도와 modifier 배율은 차례로 적용된다. 현재 선택 가능 여부와 배율의 권위는 [new_run_setup.dart](../../lib/services/new_run_setup.dart), tier별 목표·자원은 [blind_selection_spec.dart](../../lib/services/blind_selection_spec.dart)다.
+`basic` modifier는 목표·보상 1배다. `high_stakes`는 해금에 Insight 20을 사용하고 목표 ×1.04, 기본 Blind 보상 ×1.12를 각각 반올림한다. 난이도와 modifier 배율은 차례로 적용된다. Blind Select의 `rewardPreview`도 같은 기본 보상 계산을 사용한다. 현재 선택 가능 여부와 배율의 권위는 [new_run_setup.dart](../../lib/services/new_run_setup.dart), tier별 목표·자원은 [blind_selection_spec.dart](../../lib/services/blind_selection_spec.dart)다.
+
+Settlement는 Blind마다 `Station:Blind tier` key로 cash-out 영수증을 run progress에 남긴다. 같은 Blind 정산을 다시 요청하거나 저장 상태를 복원해도 기존 breakdown을 반환하고 골드·Boss 덱 타일·Item 효과·slot 해금을 다시 적용하지 않는다. completed Insight는 run마다 만든 `runClaimId`를 영구 claim 목록과 대조해 한 번만 지급한다.
 
 ### 보상·정산 신뢰 계약
 
@@ -65,7 +67,7 @@
 | 자원·상태 | Source | Sink/소비 | Cap 또는 하한 | Reset·지속 범위 |
 |---|---|---|---|---|
 | 골드 | Settlement 기본·잔여 행동·초과 달성 보상, Jester/Item 경제 효과, 점수 타일 효과, 판매 | 구매, lane 리롤 | 명시적 상한 없음; 구매·리롤은 잔액 부족 시 거부되어 0 미만이 되지 않음 | 새 run 0; 같은 run 전체에서 지속 |
-| Insight | run 종료 시 `도달 Station + Boss 격파 수×2 + completed 12` | `high_stakes` 해금 20 | 명시적 상한 없음; 양수만 적립 | run 밖에 영구 저장 |
+| Insight | run 종료 시 `도달 Station + Boss 격파 수×2 + completed 12` | `high_stakes` 해금 20 | 명시적 상한 없음; 양수만 적립 | run 밖에 영구 저장; completed는 `runClaimId`별 한 번만 지급 |
 | Blind 점수 | 확정한 line들의 최종 점수 | 목표 달성 판정 | 명시적 상한 없음 | Blind마다 0 |
 | 보드 버림 | 난이도·tier 초기값, Item 효과 | 보드 타일 버림 1회당 1 | Item 증가 지원 상한 6, 0 하한 | Blind마다 다시 계산 |
 | 손패 버림 | 난이도·tier 초기값, Item 효과 | 손패 타일 버림 1회당 1 | Item 증가 지원 상한 4, 0 하한 | Blind마다 다시 계산 |

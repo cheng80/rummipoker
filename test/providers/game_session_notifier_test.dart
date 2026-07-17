@@ -2025,6 +2025,100 @@ void main() {
       expect(after.runProgress!.gold, initialGold + first.totalGold);
     });
 
+    test(
+      'cash-out receipt는 저장 복원 뒤 Gold·Boss·slot·Item 보상을 재적용하지 않는다',
+      () async {
+        final itemCatalog = ItemCatalog.fromJson({
+          'schemaVersion': 1,
+          'catalogId': 'test',
+          'items': [
+            _itemJson(
+              id: 'coin_funnel',
+              timing: 'settlement',
+              op: 'board_discard_reward_bonus',
+              placement: 'equipped',
+            ),
+            _itemJson(
+              id: 'stage_map',
+              timing: 'boss_blind_clear_reward',
+              op: 'gain_gold',
+              placement: 'passiveRack',
+            ),
+          ],
+        });
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        const args = GameSessionArgs(runSeed: 43022);
+        final notifier = container.read(
+          gameSessionNotifierProvider(args).notifier,
+        );
+        final before = container.read(gameSessionNotifierProvider(args));
+        before.session!.blind.boardDiscardsRemaining = 2;
+        before.runProgress!
+          ..stageIndex = 2
+          ..currentStationBlindTierIndex = BlindTier.boss.index
+          ..itemInventory = const RunInventoryState(
+            ownedItems: [
+              OwnedItemEntry(
+                itemId: 'coin_funnel',
+                count: 1,
+                placement: ItemPlacement.equipped,
+              ),
+              OwnedItemEntry(
+                itemId: 'stage_map',
+                count: 1,
+                placement: ItemPlacement.passiveRack,
+              ),
+            ],
+            equippedItemIds: ['coin_funnel'],
+            passiveRelicIds: ['stage_map'],
+          );
+        final initialGold = before.runProgress!.gold;
+
+        final first = notifier.prepareSettlementAndCashOut(
+          itemCatalog: itemCatalog,
+        );
+        final afterFirst = container.read(gameSessionNotifierProvider(args));
+        final savedRuntime = notifier.buildSaveRuntimeState(
+          difficulty: NewRunDifficulty.standard,
+        );
+        final restoredRuntime = await ActiveRunSaveService.runtimeStateFromJson(
+          ActiveRunSaveService.runtimeStateToJson(savedRuntime),
+        );
+        final restoredContainer = ProviderContainer();
+        addTearDown(restoredContainer.dispose);
+        final restoredArgs = GameSessionArgs(
+          runSeed: restoredRuntime.session.runSeed,
+          restoredRun: restoredRuntime,
+        );
+        final restoredNotifier = restoredContainer.read(
+          gameSessionNotifierProvider(restoredArgs).notifier,
+        );
+
+        final second = restoredNotifier.prepareSettlementAndCashOut(
+          itemCatalog: itemCatalog,
+        );
+        final afterSecond = restoredContainer.read(
+          gameSessionNotifierProvider(restoredArgs),
+        );
+
+        expect(second.toJson(), first.toJson());
+        expect(first.itemGold, 2);
+        expect(afterFirst.runProgress!.gold, initialGold + first.totalGold + 1);
+        expect(afterSecond.runProgress!.gold, afterFirst.runProgress!.gold);
+        expect(afterSecond.runProgress!.addedDeckTiles, first.deckTileRewards);
+        expect(afterSecond.runProgress!.quickSlotCapacity(), 3);
+        expect(
+          afterSecond.runProgress!.snapshotPendingSlotUnlockPresentations(),
+          afterFirst.runProgress!.snapshotPendingSlotUnlockPresentations(),
+        );
+        expect(
+          afterSecond.runProgress!.itemInventory.toJson(),
+          afterFirst.runProgress!.itemInventory.toJson(),
+        );
+      },
+    );
+
     test('S1 small cash-out는 첫 블라인드 클리어 보너스 골드를 지급한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -2088,50 +2182,6 @@ void main() {
         afterCashOut.runProgress!,
       );
       expect(market.tileOffers.every((offer) => !offer.isFreeReward), isTrue);
-    });
-
-    test('boss cash-out 저장을 복원해 다시 호출해도 보상을 재적용하지 않는다', () async {
-      final firstContainer = ProviderContainer();
-      addTearDown(firstContainer.dispose);
-      const firstArgs = GameSessionArgs(runSeed: 43041);
-      final firstNotifier = firstContainer.read(
-        gameSessionNotifierProvider(firstArgs).notifier,
-      );
-      final firstState = firstContainer.read(
-        gameSessionNotifierProvider(firstArgs),
-      );
-      firstState.runProgress!.currentStationBlindTierIndex =
-          BlindTier.boss.index;
-
-      final firstBreakdown = firstNotifier.prepareSettlementAndCashOut();
-      final savedRuntime = firstNotifier.buildSaveRuntimeState(
-        difficulty: NewRunDifficulty.standard,
-      );
-      final restoredRuntime = await ActiveRunSaveService.runtimeStateFromJson(
-        ActiveRunSaveService.runtimeStateToJson(savedRuntime),
-      );
-      final restoredGold = restoredRuntime.runProgress.gold;
-      final restoredAddedTiles = List<Tile>.of(
-        restoredRuntime.runProgress.addedDeckTiles,
-      );
-
-      final secondContainer = ProviderContainer();
-      addTearDown(secondContainer.dispose);
-      final secondArgs = GameSessionArgs(
-        runSeed: restoredRuntime.session.runSeed,
-        restoredRun: restoredRuntime,
-      );
-      final secondNotifier = secondContainer.read(
-        gameSessionNotifierProvider(secondArgs).notifier,
-      );
-      final secondBreakdown = secondNotifier.prepareSettlementAndCashOut();
-      final afterSecond = secondContainer.read(
-        gameSessionNotifierProvider(secondArgs),
-      );
-
-      expect(secondBreakdown.toJson(), firstBreakdown.toJson());
-      expect(afterSecond.runProgress!.gold, restoredGold);
-      expect(afterSecond.runProgress!.addedDeckTiles, restoredAddedTiles);
     });
 
     test('boss cash-out는 정해진 stage에서 다음 Market 슬롯 해금을 예약한다', () {
@@ -2525,6 +2575,53 @@ void main() {
         expect(restarted.runLoopPhase, GameRunLoopPhase.battle);
       },
     );
+
+    test('stage·stake restart는 restored run claim ID를 유지한다', () {
+      const claimId = 'restored-run-claim';
+      final session = RummiPokerGridSession(runSeed: 6062);
+      final progress = RummiRunProgress()..runClaimId = claimId;
+      final stageSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: progress,
+      );
+      progress.gold += 3;
+      final stakeSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: progress,
+      );
+      final runtime = ActiveRunRuntimeState(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        session: session,
+        runProgress: progress,
+        stageStartSnapshot: stageSnapshot,
+        stakeStartSnapshot: stakeSnapshot,
+      );
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final args = GameSessionArgs(runSeed: 6062, restoredRun: runtime);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+
+      notifier.restartCurrentStage();
+      expect(
+        container
+            .read(gameSessionNotifierProvider(args))
+            .runProgress!
+            .runClaimId,
+        claimId,
+      );
+
+      notifier.restartCurrentStake();
+      expect(
+        container
+            .read(gameSessionNotifierProvider(args))
+            .runProgress!
+            .runClaimId,
+        claimId,
+      );
+    });
 
     test('restartCurrentStake는 station 시작점이 아니라 현재 전투 시작점으로 되돌린다', () {
       final stationStartSession = RummiPokerGridSession(

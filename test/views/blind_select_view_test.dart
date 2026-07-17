@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rummipoker/app_config.dart';
+import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_ruleset.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
@@ -88,6 +89,81 @@ void main() {
     final text = tester.widget<Text>(finder);
     expect(text.overflow, isNull);
     expect(text.softWrap, isTrue);
+  });
+
+  testWidgets('restored blind select shows the saved boss weakness', (
+    tester,
+  ) async {
+    final session = RummiPokerGridSession(runSeed: 1);
+    final runProgress = RummiRunProgress()..currentStationBlindTierIndex = -1;
+    final snapshot = ActiveRunSaveService.captureStageStartSnapshot(
+      session: session,
+      runProgress: runProgress,
+    );
+    final seedDerivedBoss = BlindSelectionSetup.resolveSpec(
+      tier: BlindTier.boss,
+      stationIndex: runProgress.stageIndex,
+      difficulty: NewRunDifficulty.standard,
+      runSeed: session.runSeed,
+      ruleset: session.ruleset,
+    ).bossModifier!;
+    final runtime = ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.blindSelect,
+      difficulty: NewRunDifficulty.standard,
+      blindSelectBossModifier: RummiBossModifier.redDampener,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: snapshot,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlindSelectView(
+          runSeed: session.runSeed,
+          difficulty: NewRunDifficulty.standard,
+          restoredRun: runtime,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(seedDerivedBoss, RummiBossModifier.yellowDampener);
+    expect(find.text(RummiBossModifier.redDampener.title), findsOneWidget);
+    expect(find.text(RummiBossModifier.yellowDampener.title), findsNothing);
+  });
+
+  testWidgets('legacy blind select ignores the previous station boss', (
+    tester,
+  ) async {
+    final session = RummiPokerGridSession(runSeed: 2)
+      ..blind.bossModifier = RummiBossModifier.redDampener;
+    final runProgress = RummiRunProgress()
+      ..stageIndex = 2
+      ..currentStationBlindTierIndex = -1;
+    final runtime = ActiveRunRuntimeState(
+      activeScene: ActiveRunScene.blindSelect,
+      difficulty: NewRunDifficulty.standard,
+      session: session,
+      runProgress: runProgress,
+      stageStartSnapshot: ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlindSelectView(
+          runSeed: session.runSeed,
+          difficulty: NewRunDifficulty.standard,
+          restoredRun: runtime,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(RummiBossModifier.blueDampener.title), findsOneWidget);
+    expect(find.text(RummiBossModifier.redDampener.title), findsNothing);
   });
 
   testWidgets('S9 이후 blind select는 무한 도전으로 표시한다', (tester) async {
