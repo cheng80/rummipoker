@@ -828,6 +828,8 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                               label: '메인 메뉴',
                               background: GameUiPalette.disabledControl,
                               onPressed: () async {
+                                await _flushStateSave();
+                                if (!context.mounted) return;
                                 Navigator.of(context).pop(false);
                                 await widget.onExitToTitle();
                               },

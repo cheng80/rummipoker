@@ -29,11 +29,14 @@
 
 `basic` modifier는 목표·보상 1배다. `high_stakes`는 해금에 Insight 20을 사용하고 목표 ×1.04, 기본 Blind 보상 ×1.12를 각각 반올림한다. 난이도와 modifier 배율은 차례로 적용된다. 현재 선택 가능 여부와 배율의 권위는 [new_run_setup.dart](../../lib/services/new_run_setup.dart), tier별 목표·자원은 [blind_selection_spec.dart](../../lib/services/blind_selection_spec.dart)다.
 
-### 현재 문서/표시 불일치
+### 보상·정산 신뢰 계약
 
-- Blind Select의 `rewardPreview`는 Scout/Clash/Boss를 4/8/12로 표시하지만 Settlement 기본 골드는 모든 tier에서 `round(4 × rewardMultiplier)`다. High Stakes에서도 `round(4 × 1.12) = 4`라서 기본 보상 차이는 없다.
-- Settlement 적용 뒤 `battle` scene으로 저장한 상태를 복원하면 cash-out이 다시 들어가 기본/잔여 자원/Jester/Item 골드를 재지급할 수 있다. 별도 settlement transaction marker는 없다.
-- S8 completed 보상과 Insight 기록도 claim 전에 외부 가시 쓰기가 이뤄져 중단 시 재적용 위험이 있다.
+- Blind Select의 모든 tier는 Settlement와 같은 `round(4 × rewardMultiplier)`를 미리보기로 표시한다. High Stakes도 `round(4 × 1.12) = 4`다.
+- cash-out은 Station/tier key와 최초 breakdown을 durable receipt로 저장한다. 같은 Blind에서 다시 호출되면 상태를 바꾸지 않고 receipt의 breakdown을 반환한다. 다음 Blind를 시작할 때 receipt를 비운다.
+- 새 run은 stable claim ID를 가진다. S8 completed Insight는 unlock state에 처리한 claim ID와 증가분을 한 번에 저장하며 같은 ID의 재요청은 지급하지 않는다. `runCompletionRewardClaimed`는 화면 흐름 표식으로 유지한다.
+
+### 남은 경제 불일치
+
 - `RunEndResult.retired` enum과 서비스 테스트는 있지만 플레이어 경로의 자발적 종료 기록은 없다. 옵션 종료는 active run을 보존하고, 새 run/삭제는 retirement 없이 지운다.
 - Tool/Gear 구매 cap은 Quick/Passive와 달리 강제되지 않는데 UI는 Tool 3/Gear 2만 노출한다. 초과 보유는 숨긴 채 효과만 남을 수 있다.
 - Station Map 같은 Boss 후 골드 효과는 breakdown 생성 뒤에 지갑에 더해져 표시 합계·analytics에서 빠질 수 있다.

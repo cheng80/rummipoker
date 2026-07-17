@@ -22,15 +22,7 @@
 - 선택지: (A) 완료 요약 필드를 복구하고 통합 테스트 추가, (B) 화면과 문서에서 약속 제거.
 - Status: open / 선행 수정 필요.
 
-### OD-02 Settlement / terminal reward 멱등성
-
-- 연결된 코드: cash-out 뒤 `battle` 저장, 완료 Insight 기록, `runCompletionRewardClaimed`.
-- 빠진 부분: 정산과 보상 지급을 한 번만 처리했다는 표식, 복원 때 다시 들어가지 않는 테스트.
-- 영향: 강제 종료 후 다시 열면 골드·Boss 보상·Insight가 다시 지급될 수 있다.
-- 선택지: 지급 전에 완료 표식을 저장하고, 복원 경로에서 재처리를 막으며, 강제 종료 테스트를 추가한다.
-- Status: open / P0.
-
-### OD-03 Tool/Gear capacity vs UI slots
+### OD-02 Tool/Gear capacity vs UI slots
 
 - Code seam: Tool/Gear acquisition은 cap 없이 허용, Market UI는 3/2만 렌더.
 - Missing: capacity enforce 또는 overflow use/sale UI + tests.
@@ -38,21 +30,13 @@
 - Options: (A) acquisition cap, (B) overflow UI.
 - Status: open.
 
-### OD-04 Voluntary retirement contract
+### OD-03 Voluntary retirement contract
 
 - Code seam: `RunEndResult.retired` enum + service test.
 - Missing: 플레이어 경로에서 retirement 기록/Insight 처리 없음.
 - Impact: 문서·enum이 실제 terminal 선택과 불일치.
 - Options: (A) 자발적 종료 경로 구현, (B) retired 계약 제거.
 - Status: open.
-
-### OD-05 Blind rewardPreview SSoT
-
-- Code seam: `BlindSelectionSpec.rewardPreview` 4/8/12 display vs Settlement base 4.
-- Missing: 표시와 cash-out 단일 권위 + widget/runtime tests.
-- Impact: Blind Select 보상 정보가 거짓.
-- Options: preview를 Settlement formula에 맞추거나 tier 차등 보상을 실제로 도입.
-- Status: open / P0 display truth.
 
 ## 이 문서에 넣지 않는 내용
 

@@ -10,6 +10,7 @@ import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/game_analytics_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
+import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/blind_select_view.dart';
@@ -43,6 +44,7 @@ void main() {
   testWidgets('new run to blind select keeps back navigation to title', (
     tester,
   ) async {
+    ActiveRunRuntimeState? routedRun;
     final analyticsEvents = <_CapturedEvent>[];
     GameAnalyticsService.debugSetInstanceForTest(
       GameAnalyticsService(
@@ -70,15 +72,20 @@ void main() {
         GoRoute(
           path: RoutePaths.blindSelect,
           builder: (context, state) {
+            routedRun = state.extra is ActiveRunRuntimeState
+                ? state.extra as ActiveRunRuntimeState
+                : null;
             final seed = int.tryParse(state.uri.queryParameters['seed'] ?? '');
             return BlindSelectView(
-              runSeed: seed ?? 77,
+              runSeed: routedRun?.session.runSeed ?? seed ?? 77,
               difficulty: NewRunSetup.parseDifficulty(
-                state.uri.queryParameters['difficulty'],
+                routedRun?.difficulty.name ??
+                    state.uri.queryParameters['difficulty'],
               ),
               runModifier: NewRunModifier.parse(
                 state.uri.queryParameters['modifier'],
               ),
+              restoredRun: routedRun,
             );
           },
         ),
@@ -127,6 +134,21 @@ void main() {
     expect(runStartEvents.single.parameters['difficulty'], 'standard');
     expect(runStartEvents.single.parameters['modifier'], 'basic');
     expect(find.text('Station Select'), findsOneWidget);
+    final savedRandomRun = await ActiveRunSaveService.loadActiveRun();
+    expect(routedRun, isNotNull);
+    expect(routedRun!.runProgress.runClaimId, isNotEmpty);
+    expect(
+      routedRun!.runProgress.runClaimId,
+      savedRandomRun!.runProgress.runClaimId,
+    );
+    expect(
+      await ActiveRunSaveService.inspectActiveRun(),
+      ActiveRunAvailability.available,
+    );
+    expect(
+      (await ActiveRunSaveService.loadActiveRun())?.activeScene,
+      ActiveRunScene.blindSelect,
+    );
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
@@ -153,6 +175,12 @@ void main() {
     expect(manualRunStartEvents.last.parameters['difficulty'], 'standard');
     expect(manualRunStartEvents.last.parameters['modifier'], 'basic');
     expect(find.text('Station Select'), findsOneWidget);
+    final savedManualRun = await ActiveRunSaveService.loadActiveRun();
+    expect(routedRun, isNotNull);
+    expect(
+      routedRun!.runProgress.runClaimId,
+      savedManualRun!.runProgress.runClaimId,
+    );
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();

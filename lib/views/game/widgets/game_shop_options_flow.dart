@@ -33,6 +33,8 @@ extension _GameShopOptionsFlow on _GameShopScreenState {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return false;
 
+    await _flushStateSave();
+    if (!mounted) return false;
     await widget.onExitToTitle();
     return true;
   }

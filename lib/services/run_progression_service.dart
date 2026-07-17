@@ -41,9 +41,19 @@ class RunEndSummary {
 class RunProgressionService {
   RunProgressionService._();
 
-  static Future<void> handleRunEnded(RunEndSummary summary) async {
+  static Future<void> handleRunEnded(
+    RunEndSummary summary, {
+    String? runClaimId,
+  }) async {
+    if (summary.result == RunEndResult.completed && runClaimId == null) {
+      throw StateError('Completed run requires a stable claim ID.');
+    }
     final memoryCardReward = calculateInsightReward(summary);
-    await RunUnlockStateService.addInsight(memoryCardReward);
+    if (summary.result == RunEndResult.completed) {
+      await RunUnlockStateService.claimInsight(runClaimId!, memoryCardReward);
+    } else {
+      await RunUnlockStateService.addInsight(memoryCardReward);
+    }
     await RunUnlockStateService.recordRunCollection(
       RunCollectionUpdate(
         seenMarketJesterIds: summary.seenMarketJesterIds,

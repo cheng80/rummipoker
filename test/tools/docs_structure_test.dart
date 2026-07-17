@@ -58,4 +58,34 @@ void main() {
       contains('문서 registry 미등록: docs/core/NEW.md'),
     );
   });
+
+  test(
+    'allows optional Superpowers specs and plans without registry entries',
+    () async {
+      final root = Directory.systemTemp.createTempSync(
+        'docs_superpowers_test_',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+
+      final docs = Directory('${root.path}/docs')..createSync(recursive: true);
+      File('${docs.path}/00_docs_README.md').writeAsStringSync(
+        '# Documentation Boundaries\n\n'
+        '<!-- DOCUMENT_REGISTRY_START -->\n'
+        '| 경로 | 유형 | 역할 |\n'
+        '|---|---|---|\n'
+        '| `docs/00_docs_README.md` | governance | 규칙 |\n'
+        '<!-- DOCUMENT_REGISTRY_END -->\n',
+      );
+      final specs = Directory('${docs.path}/superpowers/specs')
+        ..createSync(recursive: true);
+      final plans = Directory('${docs.path}/superpowers/plans')
+        ..createSync(recursive: true);
+      File('${specs.path}/feature.md').writeAsStringSync('# Feature Design\n');
+      File('${plans.path}/feature.md').writeAsStringSync('# Feature Plan\n');
+
+      final result = await _runChecker(root.path);
+
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+    },
+  );
 }

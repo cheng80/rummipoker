@@ -32,11 +32,13 @@ void main(List<String> args) {
 
   for (final path in markdownPaths) {
     final group = _groupOf(path);
-    if (path != 'docs/00_docs_README.md' &&
+    final isSuperpowersArtifact = _isSuperpowersArtifact(path);
+    if (!isSuperpowersArtifact &&
+        path != 'docs/00_docs_README.md' &&
         (group == null || !_allowedGroups.contains(group))) {
       errors.add('허용되지 않은 문서 경로: $path');
     }
-    if (!registryPaths.contains(path)) {
+    if (!isSuperpowersArtifact && !registryPaths.contains(path)) {
       errors.add('문서 registry 미등록: $path');
     }
 
@@ -61,7 +63,10 @@ void main(List<String> args) {
   }
 
   final missingFromRegistry = markdownPaths
-      .where((path) => !registryPaths.contains(path))
+      .where(
+        (path) =>
+            !_isSuperpowersArtifact(path) && !registryPaths.contains(path),
+      )
       .toSet();
   final missingFromDisk = registryPaths
       .where((path) => !markdownPaths.contains(path))
@@ -130,6 +135,11 @@ Set<String> _registryPaths(String content, List<String> errors) {
 String? _groupOf(String path) {
   final parts = path.split('/');
   return parts.length >= 3 && parts[0] == 'docs' ? parts[1] : null;
+}
+
+bool _isSuperpowersArtifact(String path) {
+  return path.startsWith('docs/superpowers/specs/') ||
+      path.startsWith('docs/superpowers/plans/');
 }
 
 String _relativePath(Directory root, File file) {

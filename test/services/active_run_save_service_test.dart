@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:rummipoker/app_config.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/boss_modifier.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
@@ -605,6 +607,26 @@ void main() {
           stageStartSnapshot: stageStartSnapshot,
         );
 
+        final record = StorageHelper.readString(
+          StorageKeys.activeRunRecordV1,
+          defaultValue: '',
+        );
+        expect(record, isNotEmpty);
+        expect(
+          StorageHelper.readString(
+            StorageKeys.activeRunPayloadV1,
+            defaultValue: '',
+          ),
+          isEmpty,
+        );
+        expect(
+          StorageHelper.readString(
+            StorageKeys.activeRunSignatureV1,
+            defaultValue: '',
+          ),
+          isEmpty,
+        );
+
         expect(
           await ActiveRunSaveService.inspectActiveRun(),
           ActiveRunAvailability.available,
@@ -682,6 +704,159 @@ void main() {
         expect(await ActiveRunSaveService.loadActiveRun(), isNull);
       },
     );
+
+    test('기존 v2 두 키를 읽고 다음 저장에서 단일 envelope로 전환한다', () async {
+      final session = RummiPokerGridSession(runSeed: 4243);
+      final runProgress = RummiRunProgress()..gold = 7;
+      final snapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      );
+
+      await ActiveRunSaveService.saveActiveRun(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: snapshot,
+      );
+      final envelope =
+          jsonDecode(
+                StorageHelper.readString(
+                  StorageKeys.activeRunRecordV1,
+                  defaultValue: '',
+                ),
+              )
+              as Map<String, dynamic>;
+      await StorageHelper.remove(StorageKeys.activeRunRecordV1);
+      await StorageHelper.write(
+        StorageKeys.activeRunPayloadV1,
+        envelope['payload'] as String,
+      );
+      await StorageHelper.write(
+        StorageKeys.activeRunSignatureV1,
+        envelope['signature'] as String,
+      );
+
+      expect(
+        await ActiveRunSaveService.inspectActiveRun(),
+        ActiveRunAvailability.available,
+      );
+      final restored = await ActiveRunSaveService.loadActiveRun();
+      expect(restored?.runProgress.gold, 7);
+
+      await ActiveRunSaveService.saveRuntimeState(restored!);
+      expect(
+        StorageHelper.readString(
+          StorageKeys.activeRunRecordV1,
+          defaultValue: '',
+        ),
+        isNotEmpty,
+      );
+      expect(
+        StorageHelper.readString(
+          StorageKeys.activeRunPayloadV1,
+          defaultValue: '',
+        ),
+        isEmpty,
+      );
+      expect(
+        StorageHelper.readString(
+          StorageKeys.activeRunSignatureV1,
+          defaultValue: '',
+        ),
+        isEmpty,
+      );
+    });
+
+    test('손상된 envelope이 있으면 정상 legacy v2로 fallback하지 않는다', () async {
+      final session = RummiPokerGridSession(runSeed: 4244);
+      final runProgress = RummiRunProgress();
+      final snapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      );
+      await ActiveRunSaveService.saveActiveRun(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: snapshot,
+      );
+      final envelope =
+          jsonDecode(
+                StorageHelper.readString(
+                  StorageKeys.activeRunRecordV1,
+                  defaultValue: '',
+                ),
+              )
+              as Map<String, dynamic>;
+      await StorageHelper.write(
+        StorageKeys.activeRunPayloadV1,
+        envelope['payload'] as String,
+      );
+      await StorageHelper.write(
+        StorageKeys.activeRunSignatureV1,
+        envelope['signature'] as String,
+      );
+      await StorageHelper.write(
+        StorageKeys.activeRunRecordV1,
+        '{"payload":"broken"}',
+      );
+
+      expect(
+        await ActiveRunSaveService.inspectActiveRun(),
+        ActiveRunAvailability.invalid,
+      );
+      expect(await ActiveRunSaveService.loadActiveRun(), isNull);
+    });
+
+    test('run claim ID와 settlement receipt를 저장 후 복원한다', () async {
+      final session = RummiPokerGridSession(runSeed: 4245);
+      final runProgress = RummiRunProgress.restore(
+        stageIndex: 2,
+        currentStationBlindTierIndex: 1,
+        runClaimId: 'stable-run-claim',
+        settlementReceiptKey: '2:1',
+        settlementReceipt: const RummiCashOutBreakdown(
+          stageIndex: 2,
+          targetScore: 1000,
+          blindReward: 4,
+          remainingBoardDiscards: 1,
+          remainingHandDiscards: 1,
+          perBoardDiscardBonus: 2,
+          perHandDiscardBonus: 1,
+          boardDiscardGold: 2,
+          handDiscardGold: 1,
+          economyBonuses: [],
+          economyGold: 0,
+          totalGold: 7,
+        ),
+        gold: 7,
+        rerollCost: 5,
+        ownedJesters: [],
+        shopOffers: [],
+        statefulValuesBySlot: {},
+        playedHandCounts: {},
+      );
+      final snapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      );
+
+      await ActiveRunSaveService.saveActiveRun(
+        activeScene: ActiveRunScene.battle,
+        difficulty: NewRunDifficulty.standard,
+        session: session,
+        runProgress: runProgress,
+        stageStartSnapshot: snapshot,
+      );
+
+      final restored = await ActiveRunSaveService.loadActiveRun();
+      expect(restored?.runProgress.runClaimId, 'stable-run-claim');
+      expect(restored?.runProgress.settlementReceiptKey, '2:1');
+      expect(restored?.runProgress.settlementReceipt?.totalGold, 7);
+    });
 
     test('saveRuntimeState는 ActiveRunRuntimeState를 그대로 저장한다', () async {
       final session = RummiPokerGridSession(runSeed: 5151);
@@ -817,6 +992,60 @@ void main() {
       expect(
         (await ActiveRunSaveService.loadActiveRun())!.session.runSeed,
         9090,
+      );
+    });
+
+    test('claim ID가 없는 legacy 북마크는 첫 복원 ID를 슬롯에 고정한다', () async {
+      final session = RummiPokerGridSession(runSeed: 9091);
+      final runProgress = RummiRunProgress();
+      final snapshot = ActiveRunSaveService.captureStageStartSnapshot(
+        session: session,
+        runProgress: runProgress,
+      );
+      await ActiveRunSaveService.saveBookmarkSlot(
+        slotIndex: 0,
+        runtime: ActiveRunRuntimeState(
+          activeScene: ActiveRunScene.battle,
+          difficulty: NewRunDifficulty.standard,
+          session: session,
+          runProgress: runProgress,
+          stageStartSnapshot: snapshot,
+        ),
+      );
+
+      final payloadKey = '${StorageKeys.activeRunBookmarkPayloadPrefix}0';
+      final signatureKey = '${StorageKeys.activeRunBookmarkSignaturePrefix}0';
+      final legacyJson =
+          jsonDecode(StorageHelper.readString(payloadKey, defaultValue: ''))
+              as Map<String, dynamic>;
+      (legacyJson['runProgress'] as Map<String, dynamic>).remove('runClaimId');
+      (legacyJson['stageStartRunProgress'] as Map<String, dynamic>).remove(
+        'runClaimId',
+      );
+      (legacyJson['stakeStartRunProgress'] as Map<String, dynamic>).remove(
+        'runClaimId',
+      );
+      final legacyPayload = jsonEncode(legacyJson);
+      final signature = Hmac(
+        sha256,
+        utf8.encode(deviceKeyStore.value!),
+      ).convert(utf8.encode(legacyPayload)).toString();
+      await StorageHelper.write(payloadKey, legacyPayload);
+      await StorageHelper.write(signatureKey, signature);
+
+      final first = await ActiveRunSaveService.restoreBookmarkToActiveRun(0);
+      final second = await ActiveRunSaveService.restoreBookmarkToActiveRun(0);
+
+      expect(first, isNotNull);
+      expect(second, isNotNull);
+      expect(second!.runProgress.runClaimId, first!.runProgress.runClaimId);
+      expect(
+        second.stageStartSnapshot.runProgress.runClaimId,
+        first.runProgress.runClaimId,
+      );
+      expect(
+        second.stakeStartSnapshot.runProgress.runClaimId,
+        first.runProgress.runClaimId,
       );
     });
 
