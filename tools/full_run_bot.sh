@@ -32,8 +32,10 @@ BRIDGE_RESUME_LIMIT="${FULL_RUN_BOT_BRIDGE_RESUME_LIMIT:-12}"
 PUB_GET=1
 CHROMEDRIVER_PID=""
 TRACE_APPEND=0
+VERIFY_MARKET_PERSISTENCE=false
+PERSISTENCE_RESUME_STARTED=false
 HEADLESS=true
-DDS=true
+DDS=false
 START_CHROMEDRIVER=true
 
 usage() {
@@ -67,7 +69,7 @@ Options:
   --target-tier <name>      small | big | boss. Default: boss.
   --target-scene <name>     stationSelect | battle | cashOut | market | runComplete.
                             Default: cashOut.
-  --required-evidence <key> market_purchase | item_purchase | item_use.
+  --required-evidence <key> market_purchase | market_persistence | item_purchase | item_use.
   --bridge-resume-limit <n> Auto-resume count for FlutterDriver request_data
                             bridge failures. Default: 12.
   --no-headless             Run WebDriver Chrome visibly instead of headless.
@@ -204,6 +206,9 @@ if [[ -z "$OUTPUT_DIR" ]]; then
 fi
 if [[ -z "$TRACE_PATH" ]]; then
   TRACE_PATH="$OUTPUT_DIR/full_run_trace.jsonl"
+fi
+if [[ "$REQUIRED_EVIDENCE" == "market_persistence" ]]; then
+  VERIFY_MARKET_PERSISTENCE=true
 fi
 mkdir -p "$(dirname "$TRACE_PATH")"
 mkdir -p "$OUTPUT_DIR"
@@ -464,11 +469,12 @@ while true; do
       ${DRIVE_MODE_ARGS[@]+"${DRIVE_MODE_ARGS[@]}"} \
       --driver=test_driver/integration_test.dart \
       --target=integration_test/full_run_bot_test.dart \
-      -d chrome \
+      -d web-server \
       --no-start-paused \
       --web-port="$WEB_PORT" \
       --web-launch-url="http://127.0.0.1:$WEB_PORT/" \
       --driver-port="$CHROMEDRIVER_PORT" \
+      --web-browser-flag="--user-data-dir=$BROWSER_PROFILE_DIR/chrome" \
       "$HEADLESS_ARG" \
       "$DDS_ARG" \
       --no-keep-app-running \
@@ -491,6 +497,18 @@ while true; do
       --dart-define=FULL_RUN_BOT_TARGET_TIER="$TARGET_TIER" \
       --dart-define=FULL_RUN_BOT_TARGET_SCENE="$TARGET_SCENE" \
       --dart-define=FULL_RUN_BOT_REQUIRED_EVIDENCE="$REQUIRED_EVIDENCE"; then
+    if [[ "$VERIFY_MARKET_PERSISTENCE" == "true" && \
+          "$PERSISTENCE_RESUME_STARTED" != "true" ]]; then
+      cp "$TRACE_PATH" "$OUTPUT_DIR/full_run_trace_fresh.jsonl"
+      PERSISTENCE_RESUME_STARTED=true
+      RESUME_ACTIVE_RUN=true
+      RESUME_DEFINE_ARG="--dart-define-from-file=$BROWSER_PROFILE_DIR/latest_checkpoint.env"
+      TRACE_APPEND=1
+      segment_index=$((segment_index + 1))
+      cleanup_bot_processes
+      start_chromedriver
+      continue
+    fi
     break
   else
     status=$?
