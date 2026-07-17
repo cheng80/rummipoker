@@ -21,6 +21,7 @@ void main() {
           difficulty: NewRunDifficulty.standard,
           reachedStageIndex: 4,
         ),
+        runClaimId: 'completion-flow',
       );
 
       final state = await RunUnlockStateService.load();

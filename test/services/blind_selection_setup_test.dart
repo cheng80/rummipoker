@@ -72,6 +72,25 @@ void main() {
       expect(NewRunModifier.highStakes.unlockCostInsight, 20);
     });
 
+    test('모든 tier의 보상 preview는 실제 기본 정산 보상과 같다', () {
+      for (final modifier in NewRunModifier.values) {
+        final expected =
+            (RummiRunProgress.stageClearGoldBase * modifier.rewardMultiplier)
+                .round();
+        for (final tier in BlindTier.values) {
+          final spec = BlindSelectionSetup.resolveSpec(
+            tier: tier,
+            stationIndex: 4,
+            difficulty: NewRunDifficulty.standard,
+            runModifier: modifier,
+            ruleset: RummiRuleset.currentDefaults,
+          );
+
+          expect(spec.rewardPreview, expected, reason: '${modifier.id}/$tier');
+        }
+      }
+    });
+
     test('station 2에서는 small은 clear 비활성이고 big만 선택 가능하다', () {
       final options = BlindSelectionSetup.buildForStation(
         stationIndex: 1,

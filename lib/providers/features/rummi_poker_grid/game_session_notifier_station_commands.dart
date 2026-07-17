@@ -14,6 +14,12 @@ mixin GameSessionNotifierStationCommands
   RummiCashOutBreakdown prepareCashOut({ItemCatalog? itemCatalog}) {
     final session = state.session!;
     final runProgress = state.runProgress!;
+    final receiptKey =
+        '${runProgress.stageIndex}:${runProgress.currentStationBlindTierIndex}';
+    final receipt = runProgress.settlementReceipt;
+    if (runProgress.settlementReceiptKey == receiptKey && receipt != null) {
+      return receipt;
+    }
     session.discardStageRemainder();
     var breakdown = runProgress.buildCashOutBreakdown(
       session,
@@ -36,6 +42,9 @@ mixin GameSessionNotifierStationCommands
       runProgress.recordSeenBossModifier(session.blind.bossModifier?.id);
       runProgress.recordClearedStation(runProgress.stageIndex);
     }
+    runProgress
+      ..settlementReceiptKey = receiptKey
+      ..settlementReceipt = breakdown;
     _replaceState(state.copyWith(revision: state.revision + 1));
     return breakdown;
   }

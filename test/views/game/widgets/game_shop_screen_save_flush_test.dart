@@ -32,7 +32,7 @@ RummiJesterCard _jester({required String id, required String displayName}) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('다음 Station은 직전 market 저장 완료 후 route를 닫는다', (tester) async {
+  testWidgets('다음 Station과 Title 이동은 직전 market 저장 완료를 기다린다', (tester) async {
     tester.view.physicalSize = const Size(1280, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() async {
@@ -73,9 +73,10 @@ void main() {
         gold: 12,
       ),
     );
-    final pendingPurchaseSave = Completer<void>();
+    var pendingStateSave = Completer<void>();
     var saveCallCount = 0;
     bool? poppedValue;
+    var exitToTitleCalled = false;
 
     await tester.pumpWidget(
       EasyLocalization(
@@ -140,11 +141,13 @@ void main() {
                                     onStateChanged: () async {
                                       saveCallCount++;
                                       if (saveCallCount == 2) {
-                                        await pendingPurchaseSave.future;
+                                        await pendingStateSave.future;
                                       }
                                     },
                                     onOpenSettings: () async {},
-                                    onExitToTitle: () async {},
+                                    onExitToTitle: () async {
+                                      exitToTitleCalled = true;
+                                    },
                                     onRestartRun: () async {},
                                     isDebugFixtureRun: false,
                                   ),
@@ -179,10 +182,44 @@ void main() {
     expect(poppedValue, isNull);
     expect(find.text('다음 Station'), findsOneWidget);
 
-    pendingPurchaseSave.complete();
+    pendingStateSave.complete();
     await tester.pumpAndSettle();
 
     expect(poppedValue, isTrue);
     expect(find.text('open shop'), findsOneWidget);
+
+    currentMarket = RummiMarketRuntimeFacade(
+      gold: 12,
+      rerollCost: 5,
+      maxOwnedSlots: RummiRunProgress.maxJesterSlots,
+      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
+      ownedEntries: const [],
+      offers: [
+        RummiMarketOfferView.fromShopOffer(
+          RummiShopOffer(slotIndex: 0, card: offerCard, price: 4),
+          currentGold: 12,
+        ),
+      ],
+      itemOfferSlotCount: 3,
+      quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
+    );
+    pendingStateSave = Completer<void>();
+    saveCallCount = 0;
+
+    await tester.tap(find.text('open shop'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Timing', skipOffstage: false).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('구매'));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.tap(find.text('메인 메뉴'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(exitToTitleCalled, isFalse);
+
+    pendingStateSave.complete();
+    await tester.pumpAndSettle();
+
+    expect(exitToTitleCalled, isTrue);
   });
 }

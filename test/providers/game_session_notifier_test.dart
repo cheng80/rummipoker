@@ -22,6 +22,8 @@ import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/services/run_unlock_state_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('GameSessionNotifier', () {
     test('새 런 초기화 시 세션과 진행도가 준비된다', () {
       final container = ProviderContainer();
@@ -39,6 +41,19 @@ void main() {
       expect(state.battleView, isNotNull);
       expect(state.activeRunSaveView, isNotNull);
       expect(state.runLoopPhase, GameRunLoopPhase.battle);
+    });
+
+    test('최초 blind select 저장 runtime은 아직 클리어한 tier가 없다', () {
+      final runtime = buildInitialRunRuntime(
+        const GameSessionArgs(runSeed: 12346),
+      );
+
+      expect(runtime.activeScene, ActiveRunScene.blindSelect);
+      expect(runtime.runProgress.currentStationBlindTierIndex, -1);
+      expect(
+        runtime.stageStartSnapshot.runProgress.currentStationBlindTierIndex,
+        -1,
+      );
     });
 
     test('challenge 새 런은 족보 레벨과 추가 덱 카드만 계승한다', () {
@@ -1992,6 +2007,24 @@ void main() {
       expect(updated.marketView!.gold, initialGold + breakdown.totalGold);
     });
 
+    test('같은 Blind cash-out을 두 번 호출해도 보상은 한 번만 적용한다', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      const args = GameSessionArgs(runSeed: 43021);
+      final notifier = container.read(
+        gameSessionNotifierProvider(args).notifier,
+      );
+      final before = container.read(gameSessionNotifierProvider(args));
+      final initialGold = before.runProgress!.gold;
+
+      final first = notifier.prepareSettlementAndCashOut();
+      final second = notifier.prepareSettlementAndCashOut();
+      final after = container.read(gameSessionNotifierProvider(args));
+
+      expect(second.totalGold, first.totalGold);
+      expect(after.runProgress!.gold, initialGold + first.totalGold);
+    });
+
     test('S1 small cash-out는 첫 블라인드 클리어 보너스 골드를 지급한다', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -2055,6 +2088,50 @@ void main() {
         afterCashOut.runProgress!,
       );
       expect(market.tileOffers.every((offer) => !offer.isFreeReward), isTrue);
+    });
+
+    test('boss cash-out 저장을 복원해 다시 호출해도 보상을 재적용하지 않는다', () async {
+      final firstContainer = ProviderContainer();
+      addTearDown(firstContainer.dispose);
+      const firstArgs = GameSessionArgs(runSeed: 43041);
+      final firstNotifier = firstContainer.read(
+        gameSessionNotifierProvider(firstArgs).notifier,
+      );
+      final firstState = firstContainer.read(
+        gameSessionNotifierProvider(firstArgs),
+      );
+      firstState.runProgress!.currentStationBlindTierIndex =
+          BlindTier.boss.index;
+
+      final firstBreakdown = firstNotifier.prepareSettlementAndCashOut();
+      final savedRuntime = firstNotifier.buildSaveRuntimeState(
+        difficulty: NewRunDifficulty.standard,
+      );
+      final restoredRuntime = await ActiveRunSaveService.runtimeStateFromJson(
+        ActiveRunSaveService.runtimeStateToJson(savedRuntime),
+      );
+      final restoredGold = restoredRuntime.runProgress.gold;
+      final restoredAddedTiles = List<Tile>.of(
+        restoredRuntime.runProgress.addedDeckTiles,
+      );
+
+      final secondContainer = ProviderContainer();
+      addTearDown(secondContainer.dispose);
+      final secondArgs = GameSessionArgs(
+        runSeed: restoredRuntime.session.runSeed,
+        restoredRun: restoredRuntime,
+      );
+      final secondNotifier = secondContainer.read(
+        gameSessionNotifierProvider(secondArgs).notifier,
+      );
+      final secondBreakdown = secondNotifier.prepareSettlementAndCashOut();
+      final afterSecond = secondContainer.read(
+        gameSessionNotifierProvider(secondArgs),
+      );
+
+      expect(secondBreakdown.toJson(), firstBreakdown.toJson());
+      expect(afterSecond.runProgress!.gold, restoredGold);
+      expect(afterSecond.runProgress!.addedDeckTiles, restoredAddedTiles);
     });
 
     test('boss cash-out는 정해진 stage에서 다음 Market 슬롯 해금을 예약한다', () {

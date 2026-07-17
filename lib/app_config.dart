@@ -45,6 +45,7 @@ class StorageKeys {
       'tutorial_market_intro_outcome';
   static const String activeRunPayloadV1 = 'active_run_payload_v1';
   static const String activeRunSignatureV1 = 'active_run_signature_v1';
+  static const String activeRunRecordV1 = 'active_run_record_v1';
   static const String activeRunBookmarkPayloadPrefix =
       'active_run_bookmark_payload_v1_';
   static const String activeRunBookmarkSignaturePrefix =

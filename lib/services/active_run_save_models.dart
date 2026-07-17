@@ -271,6 +271,9 @@ class SavedRunProgressData {
     required this.stageIndex,
     this.currentStationBlindTierIndex = 0,
     this.runCompletionRewardClaimed = false,
+    this.runClaimId,
+    this.settlementReceiptKey,
+    this.settlementReceipt,
     required this.gold,
     required this.rerollCost,
     int? tileRerollCost,
@@ -314,6 +317,9 @@ class SavedRunProgressData {
   final int stageIndex;
   final int currentStationBlindTierIndex;
   final bool runCompletionRewardClaimed;
+  final String? runClaimId;
+  final String? settlementReceiptKey;
+  final Map<String, dynamic>? settlementReceipt;
   final int gold;
   final int rerollCost;
   final int tileRerollCost;
@@ -351,6 +357,10 @@ class SavedRunProgressData {
     'stageIndex': stageIndex,
     'currentStationBlindTierIndex': currentStationBlindTierIndex,
     'runCompletionRewardClaimed': runCompletionRewardClaimed,
+    if (runClaimId != null) 'runClaimId': runClaimId,
+    if (settlementReceiptKey != null)
+      'settlementReceiptKey': settlementReceiptKey,
+    if (settlementReceipt != null) 'settlementReceipt': settlementReceipt,
     'gold': gold,
     'rerollCost': rerollCost,
     'tileRerollCost': tileRerollCost,
@@ -400,6 +410,10 @@ class SavedRunProgressData {
           (json['currentStationBlindTierIndex'] as num?)?.toInt() ?? 0,
       runCompletionRewardClaimed:
           json['runCompletionRewardClaimed'] as bool? ?? false,
+      runClaimId: json['runClaimId'] as String?,
+      settlementReceiptKey: json['settlementReceiptKey'] as String?,
+      settlementReceipt: (json['settlementReceipt'] as Map?)
+          ?.cast<String, dynamic>(),
       gold: (json['gold'] as num).toInt(),
       rerollCost: (json['rerollCost'] as num).toInt(),
       tileRerollCost: (json['tileRerollCost'] as num?)?.toInt(),

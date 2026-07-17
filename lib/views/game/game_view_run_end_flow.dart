@@ -213,7 +213,12 @@ extension _GameViewRunEndFlow on _GameViewState {
     // 디버그 fixture는 눈검증용이므로 보상/도감 저장 상태를 바꾸지 않는다.
     if (_isDebugFixtureRun) return;
     _logRunEndSummaryForAnalytics(summary);
-    await RunProgressionService.handleRunEnded(summary);
+    await RunProgressionService.handleRunEnded(
+      summary,
+      runClaimId: summary.result == RunEndResult.completed
+          ? _gameState.runProgress?.runClaimId
+          : null,
+    );
   }
 
   void _logRunEndSummaryForAnalytics(RunEndSummary summary) {

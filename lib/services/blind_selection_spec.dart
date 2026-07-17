@@ -191,12 +191,7 @@ class BlindSelectionSpecBuilder {
       BlindTier.big => baseHandSize,
       BlindTier.boss => baseHandSize > 1 ? baseHandSize - 1 : 1,
     };
-    final rewardPreview = switch (tier) {
-      BlindTier.small => rewardBase,
-      BlindTier.big => rewardBase + 4,
-      BlindTier.boss => rewardBase + 8,
-    };
-    final modifiedRewardPreview = (rewardPreview * runModifier.rewardMultiplier)
+    final modifiedRewardPreview = (rewardBase * runModifier.rewardMultiplier)
         .round();
 
     return BlindSelectionSpec(

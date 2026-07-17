@@ -39,6 +39,25 @@ final gameSessionNotifierProvider =
       GameSessionArgs
     >(GameSessionNotifier.new);
 
+ActiveRunRuntimeState buildInitialRunRuntime(GameSessionArgs args) {
+  final state = _buildInitialGameSessionState(args);
+  final runProgress = state.runProgress!.copySnapshot()
+    ..currentStationBlindTierIndex = -1;
+  final startSnapshot = ActiveRunSaveService.captureStageStartSnapshot(
+    session: state.session!,
+    runProgress: runProgress,
+  );
+  return ActiveRunRuntimeState(
+    activeScene: ActiveRunScene.blindSelect,
+    difficulty: args.difficulty,
+    runModifier: args.runModifier,
+    session: state.session!,
+    runProgress: runProgress,
+    stageStartSnapshot: startSnapshot,
+    stakeStartSnapshot: startSnapshot,
+  );
+}
+
 class DeckPeekBattleUseResult {
   const DeckPeekBattleUseResult._({required this.candidates, this.failMessage});
 

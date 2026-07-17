@@ -82,6 +82,9 @@ SavedRunProgressData _buildSavedRunProgressData(RummiRunProgress runProgress) {
     stageIndex: runProgress.stageIndex,
     currentStationBlindTierIndex: runProgress.currentStationBlindTierIndex,
     runCompletionRewardClaimed: runProgress.runCompletionRewardClaimed,
+    runClaimId: runProgress.runClaimId,
+    settlementReceiptKey: runProgress.settlementReceiptKey,
+    settlementReceipt: runProgress.settlementReceipt?.toJson(),
     gold: runProgress.gold,
     rerollCost: runProgress.rerollCost,
     tileRerollCost: runProgress.tileRerollCost,
@@ -229,6 +232,11 @@ RummiRunProgress _restoreRunProgress(
     stageIndex: data.stageIndex,
     currentStationBlindTierIndex: data.currentStationBlindTierIndex,
     runCompletionRewardClaimed: data.runCompletionRewardClaimed,
+    runClaimId: data.runClaimId,
+    settlementReceiptKey: data.settlementReceiptKey,
+    settlementReceipt: data.settlementReceipt == null
+        ? null
+        : RummiCashOutBreakdown.fromJson(data.settlementReceipt!),
     gold: data.gold,
     rerollCost: data.rerollCost,
     tileRerollCost: data.tileRerollCost,

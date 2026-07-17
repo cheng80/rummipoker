@@ -137,7 +137,10 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     expect(find.text('올바른 정수를 입력하세요'), findsNothing);
     expect(openedSeed, 91460);
-    expect(ActiveRunSaveService.hasStoredActiveRun(), isFalse);
+    expect(ActiveRunSaveService.hasStoredActiveRun(), isTrue);
+    final activeRun = await ActiveRunSaveService.loadActiveRun();
+    expect(activeRun?.session.runSeed, 91460);
+    expect(activeRun?.activeScene, ActiveRunScene.blindSelect);
     expect(find.text('Station Select'), findsOneWidget);
   });
 }
