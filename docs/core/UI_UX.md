@@ -115,7 +115,6 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 
 역기획 기준 현재 화면 정보는 아래처럼 runtime 사실과 어긋날 수 있다. 이를 의도된 UX 계약으로 쓰지 않는다.
 
-- Blind Select 보상 미리보기는 Scout/Clash/Boss를 4/8/12 또는 High Stakes 4/9/13으로 보여 주지만 Settlement 기본 골드는 모든 tier 4다.
 - 점수 정산 라벨의 `Jester` 합계는 Jester뿐 아니라 tile/Item/Boss 효과 합을 포함할 수 있다. seal ID `tile_seal:*`는 Item으로 오분류될 수 있다.
 - cash-out 네비게이션 버튼은 step 3에서 열릴 수 있지만 최종 합계 reveal은 step 4/5까지 이어질 수 있다.
 - Game Over의 `기억 카드 획득` 문구는 실제 지급 금액 없이 선택 전에 표시되며, Retry는 지급하지 않는다.

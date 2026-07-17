@@ -81,13 +81,14 @@ snapshot 복사와 restart command는 [game_session_notifier_save_commands.dart]
 | 저장 항목 | 현재 동작 |
 |---|---|
 | payload store | `StorageHelper`가 감싼 SharedPreferences string |
-| active keys | `active_run_payload_v1`, `active_run_signature_v1` |
+| active key | `{payload, signature}` JSON envelope을 담는 `active_run_record_v1` |
+| legacy active keys | 기존 v2 호환용 `active_run_payload_v1`, `active_run_signature_v1`; 새 envelope이 없을 때만 읽고 다음 저장에서 제거 |
 | bookmark keys | payload/signature prefix + slot index 0..2 |
 | device key | 처음 저장할 때 32 random bytes를 base64url encode; `DeviceKeyStore` 기본 구현도 StorageHelper의 `save_device_key_v1` 사용 |
 | signature | device key를 secret으로 한 HMAC-SHA256 over exact UTF-8 JSON payload |
 | verification | payload와 signature, device key, HMAC, JSON parse, exact schema version을 모두 통과해야 available/load 가능 |
 
-HMAC은 payload integrity check이며 암호화가 아니다. payload와 default device key가 같은 local preference boundary에 있으므로 서버 인증이나 공격자가 storage 전체를 통제하는 상황의 보안을 보증하지 않는다. write는 payload 뒤 signature 순서의 두 작업이며 transactional rollback은 없다. 중간 상태는 다음 inspect에서 none/invalid recovery path로 간다. device key abstraction은 [device_key_store.dart](../../lib/services/device_key_store.dart), 기본 store는 [device_key_store_default.dart](../../lib/services/device_key_store_default.dart), primitive store는 [storage_helper.dart](../../lib/utils/storage_helper.dart)가 소유한다.
+HMAC은 payload integrity check이며 암호화가 아니다. payload와 default device key가 같은 local preference boundary에 있으므로 서버 인증이나 공격자가 storage 전체를 통제하는 상황의 보안을 보증하지 않는다. active run은 payload와 signature를 envelope 한 값으로 저장해 두 키 사이의 종료 구간을 없앤다. bookmark는 기존 두 키 형식을 유지한다. device key abstraction은 [device_key_store.dart](../../lib/services/device_key_store.dart), 기본 store는 [device_key_store_default.dart](../../lib/services/device_key_store_default.dart), primitive store는 [storage_helper.dart](../../lib/utils/storage_helper.dart)가 소유한다.
 
 ## Encode, Persist, Restore, and Delete
 
@@ -97,8 +98,8 @@ runtime
 → JSON encode with schemaVersion 2 and savedAt
 → ensure device key
 → HMAC-SHA256
-→ payload write
-→ signature write
+→ {payload, signature} envelope 한 번 쓰기
+→ legacy active 두 키 제거
 ```
 
 ```text
@@ -116,12 +117,13 @@ inspect/load
 - continue: Title이 `available`일 때만 load하며 restored scene에 맞는 route로 이동한다.
 - restart: provider가 in-memory stage/stake snapshot을 copy해 current runtime을 교체하고 presentation을 reset한 뒤 save한다.
 - bookmark restore: verified slot을 active run으로 다시 저장한 뒤 route한다.
-- delete: `clearActiveRun`은 active payload와 signature만 지운다. bookmark, device key, settings, unlock/collection state는 지우지 않는다.
+- delete: `clearActiveRun`은 새 active envelope과 legacy active 두 키를 지운다. bookmark, device key, settings, unlock/collection state는 지우지 않는다.
 - terminal: run complete, game-over new run/exit 경로는 run result를 기록한 뒤 active payload/signature를 지운다.
 
 ## Corruption and Version Policy
 
-- payload 또는 signature가 모두 갖춰지지 않으면 load는 null이다. Title은 raw key가 남아 있으면 손상 dialog를 열 수 있다.
+- 새 envelope의 필드 누락·JSON 오류는 `invalid`다. 새 envelope이 있으면 손상 여부와 관계없이 legacy 값으로 fallback하지 않는다.
+- 새 envelope이 없을 때만 legacy payload/signature를 읽는다. 둘 중 하나만 남으면 load는 null이고 Title은 raw key를 보고 손상 복구를 제공할 수 있다.
 - device key가 없거나 HMAC이 다르면 `invalid`/null이다.
 - malformed JSON, 잘못된 required field type, 알 수 없는 scene enum, 현재 catalog에 없는 owned Jester ID는 restore를 실패시킨다.
 - `schemaVersion != 2`는 즉시 reject한다. current service에는 cross-version migration 함수, version chain, 자동 rewrite가 없다.
@@ -151,13 +153,11 @@ inspect/load
 
 ## Known Durability Gaps
 
-현재 save/resume 계약은 아래 위험을 가진다. 플레이어-facing “이어하기/북마크 보장”으로 과장하지 않는다.
+현재 save/resume 계약의 남은 위험은 아래와 같다. 플레이어-facing “이어하기/북마크 보장”으로 과장하지 않는다.
 
-- New Run은 기존 active run을 먼저 지우고, 새 run의 첫 자동 저장은 GameView에서 Jester catalog load 성공 뒤에야 이뤄진다. 그 사이 강제 종료는 양쪽 run을 잃을 수 있다.
-- payload와 signature는 순차 두 쓰기이며 원자적 rollback이 없다. 중간 상태는 invalid/none recovery로 간다.
-- Battle pause save는 await하지 않는 best-effort이고, Market pause는 queue만 하며 detach/Main Menu/options exit가 flush를 보장하지 않는다.
-- cash-out은 보상을 적용한 뒤 `battle` scene을 저장할 수 있어 복원 시 settlement를 재실행할 수 있다. settlement transaction ID가 없다.
-- terminal Insight/collection 기록과 active-run 삭제 사이에 claim marker가 없거나 늦게 쓰여 재지급 위험이 있다.
+- New Run은 initial `blindSelect` runtime을 저장한 뒤 이동한다. 기존 active run을 먼저 지우지 않고 새 envelope 한 번 쓰기로 교체하므로, 새 쓰기가 실패하면 이전 envelope을 유지한다.
+- Battle pause save는 await하지 않는 best-effort다. Market의 state-changing action은 queue에 넣고 다음 Blind와 options의 Title 이동 전에 flush한다.
+- cash-out receipt와 run claim ledger는 중복 지급을 막지만, 저장 장치 자체의 지속성은 SharedPreferences 성공 결과에 의존한다.
 - restored Market과 already-cleared Battle은 Item catalog load 성공에 의존하며 실패 시 조용히 멈출 수 있다.
 - 정확한 schema v2만 허용하며 cross-version migration은 없다.
 
