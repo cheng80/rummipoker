@@ -116,7 +116,7 @@ Boss 클리어는 무작위 추가 덱 타일 하나를 지급하고 S2/S4/S6의
 - 성장 progress 요구량은 현재 모든 성장 가능 족보에서 레벨당 1이다. 완성 또는 progress +1은 곧 레벨 +1이며 초과 progress는 반복 적용된다.
 - 점수 보너스는 `(level - 1) × 족보별 growthStep`이고 현재 확정은 성장 적용 전 상태로 점수를 계산한 뒤 완료 기록을 올린다. 즉 이번 완성으로 오른 레벨은 다음 완성부터 점수에 반영된다.
 - 일반 점수 족보와 숨은 고급 족보 모두 성장 가능하며 step은 [rummi_hand_growth.dart](../../lib/logic/rummi_poker_grid/rummi_hand_growth.dart)가 단일 권위다.
-- 성장, 완성 횟수, 추가 덱 타일은 active run에 저장되고 그 run의 다음 Blind에서 유지된다. 새 run은 이를 reset한다. Challenge setup에는 저장된 carryover snapshot을 읽는 호환 경계가 있지만 현재 game completion summary는 새 snapshot을 채우지 않으므로 이를 일반적인 새 run 계승 규칙으로 보지 않는다. Jester·Item·골드는 carryover 대상이 아니다.
+- 성장, 완성 횟수, 추가 덱 타일은 active run에 저장되고 그 run의 다음 Blind에서 유지된다. 표준 런 완료 시 이 세 상태를 Challenge carryover snapshot으로 저장하며 다음 Challenge 새 런이 계승한다. 다른 새 run은 이를 reset하고 Jester·Item·골드는 carryover 대상이 아니다.
 
 ## Source와 Test Anchors
 
