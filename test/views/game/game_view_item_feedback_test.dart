@@ -71,12 +71,12 @@ void main() {
       debugAutoUseItemId: 'emergency_draw',
     );
 
-    await _pumpUntilText(tester, '타일 1장 드로우');
+    await _pumpUntilText(tester, '타일 1장 생성');
 
-    expect(find.text('타일 1장 드로우'), findsOneWidget);
+    expect(find.text('타일 1장 생성'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('bottom-resource-pulse-deck')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.byKey(const ValueKey('bottom-resource-pulse-hand')),

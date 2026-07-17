@@ -570,11 +570,11 @@ void main() {
         base.boardDiscards - 1,
       );
       expect(
-        prepared.stageStartSnapshot.session.maxHandSize,
+        prepared.stakeStartSnapshot.session.maxHandSize,
         prepared.session.maxHandSize,
       );
       expect(
-        prepared.stageStartSnapshot.session.blind.boardDiscardsRemaining,
+        prepared.stakeStartSnapshot.session.blind.boardDiscardsRemaining,
         prepared.session.blind.boardDiscardsRemaining,
       );
     });

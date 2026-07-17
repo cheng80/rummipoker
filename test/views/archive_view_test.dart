@@ -32,6 +32,9 @@ void main() {
       const MaterialApp(home: Scaffold(body: ArchiveView())),
     );
 
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('도감'), findsOneWidget);
