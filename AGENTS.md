@@ -35,6 +35,10 @@
 
 - 기능 하나를 하나의 작업 단위, Worktree, `codex/` feature branch, Pull Request로 관리한다.
 - 기본 checkout의 `main`은 확인·병합·정리에만 사용하고 구현은 Worktree에서 진행한다.
+- Codex 앱에서 기능 구현·수정 요청을 받았고 현재 작업이 기본 checkout이면, 셸에서 Worktree만 만든 뒤 현재 작업을 계속하지 않는다. 앱의 `fork_thread`를 `environment: worktree`로 호출해 Worktree 기준의 새 Codex 작업을 자동 생성하고, 완료된 기획·설계와 사용자의 구현 요청을 새 작업에 전달한다.
+- 현재 Codex 작업이 이미 해당 기능의 Worktree를 기준으로 열려 있으면 새 작업을 중복 생성하지 않고 그대로 진행한다.
+- 새 Worktree 작업 생성이 성공하기 전에는 기본 checkout에서 구현 파일을 수정하지 않는다. 생성 실패 또는 작업 전달 실패 시 기본 checkout으로 우회하지 말고 [failure-reporting.md](.github/instructions/failure-reporting.md)에 따라 원인과 재시도 방법을 보고한다.
+- `exec_command(workdir: ...)`는 Codex/LSP 기준 작업 폴더를 바꾸지 못하므로 Worktree 작업 생성의 대체 수단으로 사용하지 않는다.
 - 범위 밖 파일, 다른 작업자의 변경, untracked 산출물을 추측으로 수정·삭제하지 않는다.
 - 사용자가 특정 파일·블록만 Git 이전 상태와 비교·복원하라고 하면 그 범위만 `git show`로 확인해 처리한다.
 - 파괴적 변경, 원격 저장소 변경, Pull Request 생성과 Merge는 명시적 요청 없이 실행하지 않는다.
