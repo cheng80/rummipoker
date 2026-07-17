@@ -14,14 +14,6 @@
 
 ## 아직 정하지 못한 내용
 
-### OD-01 Challenge carryover producer 공백
-
-- 연결된 코드: 완료 화면 안내, New Run의 Challenge 계승 읽기, `RunProgressionService`의 기준점 사용.
-- 빠진 부분: `_completedRunSummary()`가 성장·덱·플레이 횟수를 채우지 않아 실제 완료 뒤 기준점이 비거나 무시된다.
-- 영향: 플레이어에게 한 “Challenge 계승” 약속과 저장 내용이 다르다.
-- 선택지: (A) 완료 요약 필드를 복구하고 통합 테스트 추가, (B) 화면과 문서에서 약속 제거.
-- Status: open / 선행 수정 필요.
-
 ### OD-02 Tool/Gear capacity vs UI slots
 
 - Code seam: Tool/Gear acquisition은 cap 없이 허용, Market UI는 3/2만 렌더.

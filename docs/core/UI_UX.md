@@ -118,7 +118,6 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 - 점수 정산 라벨의 `Jester` 합계는 Jester뿐 아니라 tile/Item/Boss 효과 합을 포함할 수 있다. seal ID `tile_seal:*`는 Item으로 오분류될 수 있다.
 - cash-out 네비게이션 버튼은 step 3에서 열릴 수 있지만 최종 합계 reveal은 step 4/5까지 이어질 수 있다.
 - Game Over의 `기억 카드 획득` 문구는 실제 지급 금액 없이 선택 전에 표시되며, Retry는 지급하지 않는다.
-- Challenge carryover 안내가 보이지만 현재 completion summary는 growth/deck 필드를 채우지 않아 실완료 후 snapshot이 비어 있다.
 - Tool/Gear UI는 3/2 슬롯만 렌더하지만 구매 cap이 없어 숨은 보유가 생길 수 있다.
 - Archive 분모는 Item 91개를 쓰지만 normal Market 노출에서 제외된 5개가 있어 일반 수집 91/91은 도달 불가하다.
 - Battle/Market coach mark만 있고 Blind, Boss 규칙, cash-out, 실패 학습, unlock spend, Archive 온보딩은 없다.
