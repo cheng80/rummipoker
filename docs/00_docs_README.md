@@ -76,6 +76,7 @@
 | `docs/planning/OPEN_DECISIONS.md` | planning | code/test 근거가 있는 미결정 |
 | `docs/planning/REVERSE_DESIGN_SYNTHESIS.md` | planning | 역기획 비교·재미 후보·BM 권고 요약 |
 | `docs/planning/verification/TEST_QA_ACCEPTANCE.md` | planning | 반복 검증 절차·acceptance |
+| `docs/planning/verification/ko_cycle_review.md` | planning | ko locale gate 실행·검토 결과 |
 | `docs/release/00_release_README.md` | release | 출시 문서군 정의 |
 | `docs/release/APP_STORE_SCREENSHOTS_SKILL_USAGE_KO.md` | release | 스토어 스크린샷 스킬 안내 |
 | `docs/release/project_information_poster_image_prompt.md` | release | 포스터 생성 원천 prompt |
