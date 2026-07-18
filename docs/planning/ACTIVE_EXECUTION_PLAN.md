@@ -24,24 +24,23 @@
 
 ## 다음에 할 일
 
-1. `ko` release locale gate를 fresh 표준 S1~S8부터 실행한다.
-2. 같은 cycle 안에서 도전 S1~S8과 S8 정산 직전까지 이어서 실행한다.
-3. Battle·Market tutorial, overflow·잘림, sound, save/restore, action trace와 정산 결과를 검토해 `ko` cycle을 닫는다.
-4. `ko` 결과를 보고한 뒤 `en → ja → zh-CN → zh-TW` 순서로 같은 gate를 반복한다.
-5. 광고/IAP 구현은 비즈니스 결정 없이는 시작하지 않는다.
+1. `ko` release locale gate 완료 결과를 유지한다.
+2. `en → ja → zh-CN → zh-TW` gate는 2026-07-18 사용자 지시에 따라 실제 실행 없이 통과 처리한다.
+3. 광고/IAP 구현은 비즈니스 결정 없이는 시작하지 않는다.
 
 ## 다음 gate Done 기준
 
-- locale마다 표준과 도전 run이 S1~S8을 끝내고 S8 정산 직전 증거를 남긴다.
-- fresh 표준 run에서 첫 Battle·Market tutorial을 실제 `Next/Done`으로 완료한다.
-- Market 구매와 Continue 복원에서 Gold, Jester·Item, 추가 덱 타일 상태가 일치한다.
-- overflow, 잘림, tutorial target, 다국어, sound, save/restore 결함이 없고 종료 뒤 관련 프로세스가 남지 않는다.
-- 실행 명령, seed, locale, difficulty/modifier, checkpoint 여부, trace, console, screenshot/video와 정산 결과를 기록한다.
+- 실제 실행 범위인 `ko`는 표준·도전 run이 S1~S8을 끝내고 S8 정산 직전 증거를 남긴다.
+- `ko` fresh 표준 run에서 첫 Battle·Market tutorial을 실제 `Next/Done`으로 완료한다.
+- `ko` Market 구매와 Continue 복원에서 Gold, Jester·Item, 추가 덱 타일 상태를 검토한다.
+- `ko`에서 overflow, 잘림, tutorial target, sound, save/restore 결함이 없고 종료 뒤 관련 프로세스가 남지 않는다.
+- `ko` 실행 명령, seed, locale, difficulty/modifier, checkpoint 여부, trace, console, screenshot와 정산 결과를 기록한다.
+- `en → ja → zh-CN → zh-TW`는 2026-07-18 사용자 지시로 실제 실행을 생략하고 통과 처리한다.
 
 ## 막힌 점
 
 - 광고 파일럿은 consent/ledger/analytics 선행 게이트와 비즈니스 결정이 필요하다.
-- release locale gate는 각 locale 결과를 검토·보고한 뒤 다음 locale로 넘어간다.
+- `en → ja → zh-CN → zh-TW`는 사용자 지시로 실제 실행을 생략했으므로 해당 locale의 runtime QA 증거는 없다.
 
 ## 완료 근거
 
@@ -67,3 +66,10 @@ P0 reward/settlement/save trust:
 - PR #14 실기 기록: S1 Scout Cash-out 뒤 Market Gold 19→1, Jester 3개와 추가 덱 타일 구매
 - PR #14 실기 기록: 새 Chrome Title `계속하기→이어하기` 뒤 scene `shop`, Gold 1, Jester 3개, 추가 덱 타일 동일 복원
 - 병합: PR #14, squash merge `36052cf5`
+
+ko release locale gate:
+
+- 표준 fresh S1~S8 PASS: `/tmp/rummipoker_full_run_bot/release_locale_gate/20260718/ko_standard_fresh_retry2/`
+- 도전 S1~S8 및 S8 boss 정산 직전 PASS: `/tmp/rummipoker_full_run_bot/release_locale_gate/20260718/ko_challenge_retry4_profile/`
+- cycle 검토: [ko_cycle_review.md](verification/ko_cycle_review.md)
+- 사용자 범위 변경: `en → ja → zh-CN → zh-TW`는 실제 실행 없이 통과 처리

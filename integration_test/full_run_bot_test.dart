@@ -789,8 +789,22 @@ class _FullRunBot {
   }
 
   Future<bool> _retryGameOverIfVisible() async {
-    final retryFinder = _visibleButtonOrTextFinder('다시 도전');
-    if (retryFinder.evaluate().isEmpty) return false;
+    // Game over UI labels are hardcoded Korean restart actions.
+    Finder? retryFinder;
+    for (final label in const [
+      '현재 전투 재시작',
+      '현재 Station 재시작',
+      '다시 도전',
+      '다시하기',
+      'Retry',
+    ]) {
+      final finder = _visibleButtonOrTextFinder(label);
+      if (finder.evaluate().isNotEmpty) {
+        retryFinder = finder;
+        break;
+      }
+    }
+    if (retryFinder == null) return false;
     gameOverRetries++;
     if (gameOverRetries > config.maxGameOverRetries) {
       fail(
@@ -951,7 +965,7 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       if (_isCashOutReady()) return;
       if (await _retryGameOverIfVisible()) return;
     }
@@ -1617,7 +1631,7 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(const Duration(seconds: 8));
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       final next = _tryReadGameState();
       final progress = next?.runProgress;
       if (progress == null) continue;
@@ -1691,7 +1705,7 @@ class _FullRunBot {
     var sawTutorial = false;
     final maxSteps = waitForAppearance ? 24 : 8;
     for (var step = 0; step < maxSteps; step++) {
-      await tester.pump(const Duration(milliseconds: 350));
+      await _pump(const Duration(milliseconds: 350));
       final doneFinder = _firstVisibleTutorialButton(config.tutorialDoneLabels);
       if (doneFinder != null) {
         sawTutorial = true;
@@ -1932,7 +1946,7 @@ class _FullRunBot {
     if (!config.manualQaHold) return;
     print('FULL_RUN_BOT: manual QA hold');
     while (true) {
-      await tester.pump(const Duration(seconds: 1));
+      await _pump(const Duration(seconds: 1));
     }
   }
 
@@ -1942,7 +1956,7 @@ class _FullRunBot {
     while (DateTime.now().isBefore(end)) {
       state = _tryReadGameState();
       if (state != null) break;
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
     }
     if (state == null) return;
     final session = state.session;
@@ -2468,7 +2482,7 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       final state = _readGameState();
       final session = state.session!;
       if (session.board.cellAt(row, col) != null ||
@@ -2480,10 +2494,10 @@ class _FullRunBot {
 
       if (state.selectedHandTile != tile) {
         await _tapHandTile(tile.toString());
-        await tester.pump(const Duration(milliseconds: 150));
+        await _pump(const Duration(milliseconds: 150));
       }
       await _tapBoardCell(row, col);
-      await tester.pump(const Duration(milliseconds: 250));
+      await _pump(const Duration(milliseconds: 250));
     }
     fail('Timed out placing ${tile.toString()} at $row,$col');
   }
@@ -2500,7 +2514,7 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       if (resultFinders.any((finder) => finder.evaluate().isNotEmpty)) return;
 
       final actionFinder = _buttonOrTextFinder(actionText);
@@ -2552,7 +2566,7 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       if (predicate(_readGameState())) return;
       if (await _retryGameOverIfVisible()) return;
       await _dismissBlockingDialogsIfVisible();
@@ -2573,7 +2587,7 @@ class _FullRunBot {
     var sawSettlementPhase = false;
     final end = DateTime.now().add(const Duration(minutes: 2));
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       if (await _retryGameOverIfVisible()) return;
       if (_isCashOutReady()) {
         await _pumpUntilCashOutReady();
@@ -2617,7 +2631,7 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       final finder = _visibleButtonOrTextFinder(text);
       final tappable = finder.hitTestable();
       if (tappable.evaluate().isNotEmpty) return tappable;
@@ -2631,16 +2645,26 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
       if (finder.evaluate().isNotEmpty) return;
     }
     fail('Timed out waiting for $finder');
   }
 
+  Future<void> _pump(Duration duration) {
+    return tester
+        .pump(duration)
+        .timeout(
+          const Duration(seconds: 30),
+          onTimeout: () =>
+              throw StateError('full-run bot pump timed out after 30 seconds'),
+        );
+  }
+
   Future<void> _pumpFor(Duration duration) async {
     final end = DateTime.now().add(duration);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pump(const Duration(milliseconds: 100));
     }
   }
 
@@ -2650,7 +2674,7 @@ class _FullRunBot {
   }) async {
     final end = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(end)) {
-      await tester.pump(const Duration(milliseconds: 50));
+      await _pump(const Duration(milliseconds: 50));
       if (predicate(_readGameState())) return;
       if (await _retryGameOverIfVisible()) return;
     }
