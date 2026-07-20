@@ -1,0 +1,1681 @@
+{
+  "schema_version": 1,
+  "note": "Reference index only: category/name crawl from the two Balatro guide pages. Effects/tips are intentionally not copied verbatim.",
+  "sources": [
+    {
+      "source_id": "danbain_balatro_jokers",
+      "url": "https://danbain.tistory.com/entry/%EB%B0%9C%EB%9D%BC%ED%8A%B8%EB%A1%9C-%EA%B3%B5%EB%9E%B5-4-%EC%A1%B0%EC%BB%A4",
+      "section_counts": {
+        "조커 강화 및 패널티": 8,
+        "일반": 60,
+        "희귀": 61,
+        "레어": 19,
+        "전설": 5
+      }
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "url": "https://danbain.tistory.com/entry/%EB%B0%9C%EB%9D%BC%ED%8A%B8%EB%A1%9C-%EA%B3%B5%EB%9E%B5-5-%EC%86%8C%EB%AA%A8%ED%92%88-%EB%B0%94%EC%9A%B0%EC%B2%98",
+      "section_counts": {
+        "타로카드": 22,
+        "행성카드": 12,
+        "유령카드": 18,
+        "바우처": 31
+      }
+    }
+  ],
+  "items": [
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "기본 카드",
+      "en_name": "Base",
+      "source_text_line_index": 52
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "포일",
+      "en_name": "Foil",
+      "source_text_line_index": 54
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "홀로그래픽",
+      "en_name": "Holographic",
+      "source_text_line_index": 56
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "폴리크롬",
+      "en_name": "Polychrome",
+      "source_text_line_index": 58
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "네거티브",
+      "en_name": "Negative",
+      "source_text_line_index": 60
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "이터널",
+      "en_name": "Eternal",
+      "source_text_line_index": 62
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "부패",
+      "en_name": "Perishable",
+      "source_text_line_index": 64
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "조커 강화 및 패널티",
+      "ko_name": "렌탈",
+      "en_name": "Rental",
+      "source_text_line_index": 66
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "인색한 조커",
+      "en_name": "Greedy Joker",
+      "source_text_line_index": 72
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "음욕의 조커",
+      "en_name": "Lusty Joker",
+      "source_text_line_index": 76
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "분노하는 조커",
+      "en_name": "Wrathful Joker",
+      "source_text_line_index": 78
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "탐욕스러운 조커",
+      "en_name": "Gluttonous Joker",
+      "source_text_line_index": 80
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "쾌활한 조커",
+      "en_name": "Jolly Joker",
+      "source_text_line_index": 82
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "엉뚱한 조커",
+      "en_name": "Zany Joker",
+      "source_text_line_index": 85
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "미친 조커",
+      "en_name": "Mad Joker",
+      "source_text_line_index": 88
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "정신나간 조커",
+      "en_name": "Crazy Joker",
+      "source_text_line_index": 91
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "괴짜 조커",
+      "en_name": "Droll Joker",
+      "source_text_line_index": 94
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "교활한 조커",
+      "en_name": "Sly Joker",
+      "source_text_line_index": 97
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "악랄한 조커",
+      "en_name": "Wily Joker",
+      "source_text_line_index": 100
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "영리한 조커",
+      "en_name": "Clever Joker",
+      "source_text_line_index": 103
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "기만적인 조커",
+      "en_name": "Devious Joker",
+      "source_text_line_index": 106
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "간교한 조커",
+      "en_name": "Crafty Joker",
+      "source_text_line_index": 109
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "반쪽짜리 조커",
+      "en_name": "Half Joker",
+      "source_text_line_index": 112
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "신용 카드",
+      "en_name": "Credit Card",
+      "source_text_line_index": 115
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "깃발",
+      "en_name": "Banner",
+      "source_text_line_index": 119
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "신비의 정점",
+      "en_name": "Mystic Summit",
+      "source_text_line_index": 122
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "8번 공",
+      "en_name": "8 Ball",
+      "source_text_line_index": 125
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "인쇄 오류",
+      "en_name": "Misprint",
+      "source_text_line_index": 128
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "들어올린 주먹",
+      "en_name": "Raised Fist",
+      "source_text_line_index": 132
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "혼돈의 광대",
+      "en_name": "Chaos the Clown",
+      "source_text_line_index": 135
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "무서운 얼굴",
+      "en_name": "Scary Face",
+      "source_text_line_index": 138
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "추상화 조커",
+      "en_name": "Abstract Joker",
+      "source_text_line_index": 141
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "늦춰진 희열",
+      "en_name": "Delayed Gratification",
+      "source_text_line_index": 144
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "그로 미셸",
+      "en_name": "Gros Michel",
+      "source_text_line_index": 148
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "이븐 스티븐",
+      "en_name": "Even Steven",
+      "source_text_line_index": 151
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "오드 토드",
+      "en_name": "Odd Todd",
+      "source_text_line_index": 154
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "학자",
+      "en_name": "Scholar",
+      "source_text_line_index": 157
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "명함",
+      "en_name": "Buisness Card",
+      "source_text_line_index": 160
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "초신성",
+      "en_name": "Supernova",
+      "source_text_line_index": 163
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "버스 탑승",
+      "en_name": "Ride the Bus",
+      "source_text_line_index": 166
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "알",
+      "en_name": "Egg",
+      "source_text_line_index": 169
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "주자",
+      "en_name": "Runner",
+      "source_text_line_index": 172
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "아이스크림",
+      "en_name": "Ice Cream",
+      "source_text_line_index": 175
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "첨벙",
+      "en_name": "Splash",
+      "source_text_line_index": 178
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "블루 조커",
+      "en_name": "Blue Joker",
+      "source_text_line_index": 184
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "얼굴 없는 조커",
+      "en_name": "Faceless Joker",
+      "source_text_line_index": 187
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "그린 조커",
+      "en_name": "Green Joker",
+      "source_text_line_index": 190
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "중첩",
+      "en_name": "Superposition",
+      "source_text_line_index": 193
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "할 일 목록",
+      "en_name": "To Do List",
+      "source_text_line_index": 196
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "캐번디시",
+      "en_name": "Cavendish",
+      "source_text_line_index": 199
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "레드카드",
+      "en_name": "Red Card",
+      "source_text_line_index": 203
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "정사각형 조커",
+      "en_name": "Square Joker",
+      "source_text_line_index": 206
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "조무래기",
+      "en_name": "Riff-Raff",
+      "source_text_line_index": 210
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "사진",
+      "en_name": "Photograph",
+      "source_text_line_index": 214
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "지정 주차 공간",
+      "en_name": "Reserved Parking",
+      "source_text_line_index": 217
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "우편 할인",
+      "en_name": "Mail-In Rebate",
+      "source_text_line_index": 220
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "환각",
+      "en_name": "Hallucination",
+      "source_text_line_index": 223
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "점쟁이",
+      "en_name": "Forture Teller",
+      "source_text_line_index": 226
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "저글러",
+      "en_name": "Juggler",
+      "source_text_line_index": 229
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "술고래",
+      "en_name": "Drunkard",
+      "source_text_line_index": 232
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "골든 조커",
+      "en_name": "Golden Joker",
+      "source_text_line_index": 235
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "팝콘",
+      "en_name": "Popcorn",
+      "source_text_line_index": 238
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "워키토키",
+      "en_name": "Walkie Talkie",
+      "source_text_line_index": 242
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "웃는 얼굴",
+      "en_name": "Smiley Face",
+      "source_text_line_index": 245
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "골든 티켓",
+      "en_name": "Golden Ticket",
+      "source_text_line_index": 248
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "해적",
+      "en_name": "Swashbuckler",
+      "source_text_line_index": 252
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "해달린 종이 조각",
+      "en_name": "Hanging Chad",
+      "source_text_line_index": 256
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "일반",
+      "ko_name": "야반도주",
+      "en_name": "Shoot the Moon",
+      "source_text_line_index": 260
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "조커 스텐실",
+      "en_name": "Joker Stencil",
+      "source_text_line_index": 269
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "네 개의 손가락",
+      "en_name": "Four Fingers",
+      "source_text_line_index": 274
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "마임",
+      "en_name": "Mime",
+      "source_text_line_index": 277
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "의식용 단검",
+      "en_name": "Ceremonial Dagger",
+      "source_text_line_index": 280
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "대리석 조커",
+      "en_name": "Marble Joker",
+      "source_text_line_index": 284
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "로열티 카드",
+      "en_name": "Loyalty Card",
+      "source_text_line_index": 287
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "땅거미",
+      "en_name": "Dusk",
+      "source_text_line_index": 290
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "피보나치",
+      "en_name": "Fibonacci",
+      "source_text_line_index": 293
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "강철 조커",
+      "en_name": "Steel Joker",
+      "source_text_line_index": 296
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "삼류",
+      "en_name": "Hack",
+      "source_text_line_index": 299
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "변상증",
+      "en_name": "Pareidolia",
+      "source_text_line_index": 302
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "우주 조커",
+      "en_name": "Space Joker",
+      "source_text_line_index": 305
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "절도범",
+      "en_name": "Burglar",
+      "source_text_line_index": 308
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "칠판",
+      "en_name": "Blackboard",
+      "source_text_line_index": 311
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "육감",
+      "en_name": "Sixth Sense",
+      "source_text_line_index": 314
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "별자리",
+      "en_name": "Constellation",
+      "source_text_line_index": 317
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "도보 여행자",
+      "en_name": "Hiker",
+      "source_text_line_index": 320
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "야바위꾼",
+      "en_name": "Card Sharp",
+      "source_text_line_index": 323
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "광기",
+      "en_name": "Madness",
+      "source_text_line_index": 326
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "뱀파이어",
+      "en_name": "Vampire",
+      "source_text_line_index": 332
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "지름길",
+      "en_name": "Shortcut",
+      "source_text_line_index": 335
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "클라우드 9",
+      "en_name": "Cloud 9",
+      "source_text_line_index": 338
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "로켓",
+      "en_name": "Rocket",
+      "source_text_line_index": 341
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "미다스 가면",
+      "en_name": "Midas Mask",
+      "source_text_line_index": 344
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "루차도르",
+      "en_name": "Luchador",
+      "source_text_line_index": 347
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "상품권",
+      "en_name": "Gift Card",
+      "source_text_line_index": 350
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "거북이콩",
+      "en_name": "Turtle Bean",
+      "source_text_line_index": 353
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "침식",
+      "en_name": "Erosion",
+      "source_text_line_index": 356
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "폭등 기원",
+      "en_name": "To the Moon",
+      "source_text_line_index": 359
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "스톤 조커",
+      "en_name": "Stone Joker",
+      "source_text_line_index": 362
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "행운의 고양이",
+      "en_name": "Lucky Cat",
+      "source_text_line_index": 365
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "황소",
+      "en_name": "Bull",
+      "source_text_line_index": 368
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "다이어트 콜라",
+      "en_name": "Diet Cola",
+      "source_text_line_index": 371
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "트레이딩 카드",
+      "en_name": "Trading Card",
+      "source_text_line_index": 374
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "암기용 카드",
+      "en_name": "Flash Card",
+      "source_text_line_index": 377
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "여벌 바지",
+      "en_name": "Spare Trousers",
+      "source_text_line_index": 380
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "라면",
+      "en_name": "Ramen",
+      "source_text_line_index": 383
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "탄산수",
+      "en_name": "Seltzer",
+      "source_text_line_index": 386
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "성",
+      "en_name": "Castle",
+      "source_text_line_index": 389
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "해골 아저씨",
+      "en_name": "Mr. Bones",
+      "source_text_line_index": 392
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "곡예사",
+      "en_name": "Acrobat",
+      "source_text_line_index": 396
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "희극과 비극",
+      "en_name": "Sock and Buskin",
+      "source_text_line_index": 400
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "음유시인",
+      "en_name": "Troubadour",
+      "source_text_line_index": 403
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "증명서",
+      "en_name": "Certification",
+      "source_text_line_index": 407
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "얼룩진 조커",
+      "en_name": "Smeared Joker",
+      "source_text_line_index": 411
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "회상",
+      "en_name": "Throwback",
+      "source_text_line_index": 414
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "원석",
+      "en_name": "Rough Gem",
+      "source_text_line_index": 418
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "혈석",
+      "en_name": "Bloodstone",
+      "source_text_line_index": 424
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "화살촉",
+      "en_name": "Arrowhead",
+      "source_text_line_index": 427
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "흑마노",
+      "en_name": "Onyx Agate",
+      "source_text_line_index": 430
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "글래스 조커",
+      "en_name": "Glass Joker",
+      "source_text_line_index": 433
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "쇼맨",
+      "en_name": "Showman",
+      "source_text_line_index": 437
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "화분",
+      "en_name": "Flower Pot",
+      "source_text_line_index": 441
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "즐거운 앤디",
+      "en_name": "Merry Andy",
+      "source_text_line_index": 445
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "우상",
+      "en_name": "The Idol",
+      "source_text_line_index": 453
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "둘로 보기",
+      "en_name": "Seeing Double",
+      "source_text_line_index": 457
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "투우사",
+      "en_name": "Matador",
+      "source_text_line_index": 461
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "인공위성",
+      "en_name": "Satellite",
+      "source_text_line_index": 465
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "카드 점술가",
+      "en_name": "Cartomancer",
+      "source_text_line_index": 469
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "천문학자",
+      "en_name": "Astronomer",
+      "source_text_line_index": 473
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "희귀",
+      "ko_name": "자력",
+      "en_name": "Bootstrap",
+      "source_text_line_index": 476
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "DNA",
+      "en_name": "DNA",
+      "source_text_line_index": 485
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "방랑자",
+      "en_name": "Vagabond",
+      "source_text_line_index": 488
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "남작",
+      "en_name": "Baron",
+      "source_text_line_index": 492
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "오벨리스크",
+      "en_name": "Obelisk",
+      "source_text_line_index": 495
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "야구 카드",
+      "en_name": "Baseball Card",
+      "source_text_line_index": 498
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "고대 조커",
+      "en_name": "Ancient Joker",
+      "source_text_line_index": 501
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "캠프파이어",
+      "en_name": "Campfile",
+      "source_text_line_index": 504
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "청사진",
+      "en_name": "Blueprint",
+      "source_text_line_index": 507
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "조그마한 조커",
+      "en_name": "Wee Joker",
+      "source_text_line_index": 510
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "여행 출발",
+      "en_name": "Hit the Road",
+      "source_text_line_index": 513
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "듀오",
+      "en_name": "The Duo",
+      "source_text_line_index": 516
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "트리오",
+      "en_name": "The Trio",
+      "source_text_line_index": 519
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "가족",
+      "en_name": "The Family",
+      "source_text_line_index": 522
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "조직",
+      "en_name": "The Order",
+      "source_text_line_index": 525
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "부족",
+      "en_name": "The Tribe",
+      "source_text_line_index": 528
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "스턴트맨",
+      "en_name": "Stuntman",
+      "source_text_line_index": 531
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "투명 조커",
+      "en_name": "Invisible Joker",
+      "source_text_line_index": 534
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "브레인스토밍",
+      "en_name": "Brainstorm",
+      "source_text_line_index": 537
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "레어",
+      "ko_name": "타버린 조커",
+      "en_name": "Burnt Joker",
+      "source_text_line_index": 543
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "전설",
+      "ko_name": "카니오",
+      "en_name": "Canio",
+      "source_text_line_index": 552
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "전설",
+      "ko_name": "트리뷸렛",
+      "en_name": "Triboulet",
+      "source_text_line_index": 555
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "전설",
+      "ko_name": "요릭",
+      "en_name": "Yorick",
+      "source_text_line_index": 558
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "전설",
+      "ko_name": "치코",
+      "en_name": "Chicot",
+      "source_text_line_index": 561
+    },
+    {
+      "source_id": "danbain_balatro_jokers",
+      "section": "전설",
+      "ko_name": "페르케오",
+      "en_name": "Perkeo",
+      "source_text_line_index": 564
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "바보",
+      "en_name": "The Fool",
+      "source_text_line_index": 21
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "마법사",
+      "en_name": "The Magician",
+      "source_text_line_index": 23
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "고위 여사제",
+      "en_name": "The High Priestess",
+      "source_text_line_index": 25
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "여제",
+      "en_name": "The Empress",
+      "source_text_line_index": 27
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "황제",
+      "en_name": "The Emperor",
+      "source_text_line_index": 29
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "교황",
+      "en_name": "The Hierophant",
+      "source_text_line_index": 31
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "연인",
+      "en_name": "The Lovers",
+      "source_text_line_index": 33
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "전차",
+      "en_name": "The Chariot",
+      "source_text_line_index": 35
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "정의",
+      "en_name": "Justice",
+      "source_text_line_index": 37
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "은둔자",
+      "en_name": "The Hermit",
+      "source_text_line_index": 39
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "운명의 수레바퀴",
+      "en_name": "The Wheel of Fortune",
+      "source_text_line_index": 41
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "힘",
+      "en_name": "Strength",
+      "source_text_line_index": 43
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "매달린 남자",
+      "en_name": "The Hanged Man",
+      "source_text_line_index": 45
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "죽음",
+      "en_name": "Death",
+      "source_text_line_index": 47
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "절제",
+      "en_name": "Temperance",
+      "source_text_line_index": 49
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "악마",
+      "en_name": "The Devil",
+      "source_text_line_index": 51
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "탑",
+      "en_name": "The Tower",
+      "source_text_line_index": 53
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "별",
+      "en_name": "The Star",
+      "source_text_line_index": 55
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "달",
+      "en_name": "The Moon",
+      "source_text_line_index": 57
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "태양",
+      "en_name": "The Sun",
+      "source_text_line_index": 59
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "심판",
+      "en_name": "Judgement",
+      "source_text_line_index": 61
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "타로카드",
+      "ko_name": "세계",
+      "en_name": "The World",
+      "source_text_line_index": 63
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "수성",
+      "en_name": "Mercury",
+      "source_text_line_index": 72
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "금성",
+      "en_name": "Venus",
+      "source_text_line_index": 76
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "지구",
+      "en_name": "Earth",
+      "source_text_line_index": 80
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "화성",
+      "en_name": "Mars",
+      "source_text_line_index": 84
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "목성",
+      "en_name": "Jupiter",
+      "source_text_line_index": 88
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "토성",
+      "en_name": "Saturn",
+      "source_text_line_index": 92
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "천왕성",
+      "en_name": "Uranos",
+      "source_text_line_index": 96
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "해왕성",
+      "en_name": "Neptune",
+      "source_text_line_index": 100
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "명왕성",
+      "en_name": "Pluto",
+      "source_text_line_index": 104
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "플래닛 X",
+      "en_name": "Planet X",
+      "source_text_line_index": 114
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "세레스",
+      "en_name": "Ceres",
+      "source_text_line_index": 118
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "행성카드",
+      "ko_name": "에리스",
+      "en_name": "Eris",
+      "source_text_line_index": 122
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "사역마",
+      "en_name": "Familiar",
+      "source_text_line_index": 131
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "암울",
+      "en_name": "Grim",
+      "source_text_line_index": 133
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "주문",
+      "en_name": "Incantation",
+      "source_text_line_index": 135
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "부적",
+      "en_name": "Talisman",
+      "source_text_line_index": 137
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "아우라",
+      "en_name": "Aura",
+      "source_text_line_index": 139
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "망령",
+      "en_name": "Wraith",
+      "source_text_line_index": 141
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "상징",
+      "en_name": "Sigil",
+      "source_text_line_index": 143
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "점판",
+      "en_name": "Ouija",
+      "source_text_line_index": 145
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "심령체",
+      "en_name": "Ectoplasm",
+      "source_text_line_index": 147
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "화형",
+      "en_name": "Immolate",
+      "source_text_line_index": 149
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "앙크",
+      "en_name": "Ankh",
+      "source_text_line_index": 151
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "데자뷰",
+      "en_name": "Deja Vu",
+      "source_text_line_index": 153
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "헥스",
+      "en_name": "Hex",
+      "source_text_line_index": 155
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "최면",
+      "en_name": "Trance",
+      "source_text_line_index": 157
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "영매",
+      "en_name": "Medium",
+      "source_text_line_index": 159
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "괴물",
+      "en_name": "Cryptid",
+      "source_text_line_index": 161
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "영혼",
+      "en_name": "The Soul",
+      "source_text_line_index": 163
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "유령카드",
+      "ko_name": "블랙홀",
+      "en_name": "Black Hole",
+      "source_text_line_index": 165
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "과잉 재고",
+      "en_name": "Overstock",
+      "source_text_line_index": 170
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "과잉 재고 플러스",
+      "en_name": "Overstock Plus",
+      "source_text_line_index": 173
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "대방출 세일",
+      "en_name": "Clearance Sale",
+      "source_text_line_index": 178
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "청산",
+      "en_name": "Liquidation",
+      "source_text_line_index": 181
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "연마",
+      "en_name": "Hone",
+      "source_text_line_index": 185
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "정변",
+      "en_name": "Glow Up",
+      "source_text_line_index": 188
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "새로고침 잉여",
+      "en_name": "Reroll Surplus",
+      "source_text_line_index": 191
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "새로고침 과잉",
+      "en_name": "Reroll Glut",
+      "source_text_line_index": 194
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "수정 구슬",
+      "en_name": "Crystal Ball",
+      "source_text_line_index": 198
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "징조의 구",
+      "en_name": "Omen Globe",
+      "source_text_line_index": 201
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "망원경",
+      "en_name": "Telescope",
+      "source_text_line_index": 204
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "천문대",
+      "en_name": "Observatory",
+      "source_text_line_index": 207
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "붙잡는 손",
+      "en_name": "Grabber",
+      "source_text_line_index": 211
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "나초 집게",
+      "en_name": "Nacho Tong",
+      "source_text_line_index": 214
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "낭비벽",
+      "en_name": "Wasteful",
+      "source_text_line_index": 217
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "재활용술",
+      "en_name": "Recyclomancy",
+      "source_text_line_index": 220
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "타로 상인",
+      "en_name": "Tarot Merchant",
+      "source_text_line_index": 223
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "타로 거물",
+      "en_name": "Tarot Tycoon",
+      "source_text_line_index": 226
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "행성 상인",
+      "en_name": "Planet Merchant",
+      "source_text_line_index": 229
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "행성 거물",
+      "en_name": "Planet Tycoon",
+      "source_text_line_index": 232
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "종잣돈",
+      "en_name": "Seed Money",
+      "source_text_line_index": 235
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "돈나무",
+      "en_name": "Money Tree",
+      "source_text_line_index": 238
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "백지",
+      "en_name": "Blank",
+      "source_text_line_index": 241
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "반물질",
+      "en_name": "Antimatter",
+      "source_text_line_index": 244
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "마술",
+      "en_name": "Magic Trick",
+      "source_text_line_index": 247
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "환상",
+      "en_name": "Illusion",
+      "source_text_line_index": 251
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "상형문자",
+      "en_name": "Hieroglyph",
+      "source_text_line_index": 254
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "암각화",
+      "en_name": "Petroglyph",
+      "source_text_line_index": 258
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "레트콘",
+      "en_name": "Retcon",
+      "source_text_line_index": 264
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "화필",
+      "en_name": "Paint Brush",
+      "source_text_line_index": 268
+    },
+    {
+      "source_id": "danbain_balatro_consumables_vouchers",
+      "section": "바우처",
+      "ko_name": "팔레트",
+      "en_name": "Palette",
+      "source_text_line_index": 271
+    }
+  ]
+}

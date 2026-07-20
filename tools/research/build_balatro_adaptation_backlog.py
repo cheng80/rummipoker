@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any
 
 
-SOURCE_DEFAULT = Path("logs/research/balatro_reference_index.json")
-OUT_DEFAULT = Path("logs/research/rummi_balatro_adaptation_backlog.json")
+SOURCE_DEFAULT = Path("test/fixtures/research/balatro_reference_index.json")
+OUT_DEFAULT = Path("test/fixtures/research/rummi_balatro_adaptation_backlog.json")
 
 SECTION_CATEGORY = {
     "조커 강화 및 패널티": "edition_or_sticker",

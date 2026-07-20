@@ -22,7 +22,7 @@ const _balanceVersion = 'v4_pacing_baseline_1';
 const _jesterCatalogPath = 'data/common/jesters_common_phase5.json';
 const _itemCatalogPath = 'data/common/items_common_v1.json';
 const _balatroBacklogPath =
-    'logs/research/rummi_balatro_adaptation_backlog.json';
+    'test/fixtures/research/rummi_balatro_adaptation_backlog.json';
 const _slowClearTurnThreshold = 130;
 
 Future<void> main(List<String> args) async {
