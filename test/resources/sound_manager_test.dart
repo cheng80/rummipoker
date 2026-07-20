@@ -125,5 +125,11 @@ void main() {
         'assets/assets/audio/music/Menu_BGM.mp3',
       );
     });
+
+    test('uses pools for repeated SFX but keeps BGM out of the pool', () {
+      expect(SoundManager.debugShouldUseSfxPool(AssetPaths.sfxBtnSnd), isTrue);
+      expect(SoundManager.debugShouldUseSfxPool(AssetPaths.sfxClear), isTrue);
+      expect(SoundManager.debugShouldUseSfxPool(AssetPaths.bgmMain), isFalse);
+    });
   });
 }
