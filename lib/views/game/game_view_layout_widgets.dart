@@ -143,13 +143,7 @@ class _GameSurface extends StatelessWidget {
             GameUiPalette.battleFrameGradientEnd,
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: GameUiPalette.ink.withValues(alpha: 0.4),
-            blurRadius: kGameSurfaceShadowBlur,
-            spreadRadius: kGameSurfaceShadowSpread,
-          ),
-        ],
+        boxShadow: const [],
         border: Border.all(
           color: GameUiPalette.marketFrameBorder.withValues(alpha: 0.55),
           width: kGameSurfaceBorderWidth,
