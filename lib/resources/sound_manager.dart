@@ -12,6 +12,13 @@ class SoundManager {
   SoundManager._();
 
   static const Duration _resumeStateSettleDelay = Duration(milliseconds: 120);
+  static const int _sfxPoolMaxPlayers = 3;
+  static const Set<String> _pooledSfxPaths = <String>{
+    AssetPaths.sfxBtnSnd,
+    AssetPaths.sfxCollect,
+    AssetPaths.sfxClear,
+    AssetPaths.sfxTimeUp,
+  };
 
   static String? _currentBgm;
   static bool _webUnlocked = false;
@@ -24,6 +31,8 @@ class SoundManager {
   static bool _webPendingResumeTried = false;
   static AudioPlayer? _webBgmPlayer;
   static final Set<AudioPlayer> _webSfxPlayers = <AudioPlayer>{};
+  static final Map<String, Future<AudioPool>> _sfxPools =
+      <String, Future<AudioPool>>{};
 
   @visibleForTesting
   static String? get debugCurrentBgm => _currentBgm;
@@ -40,7 +49,15 @@ class SoundManager {
     _webBgmResumeInFlight = false;
     _webPendingResumeTried = false;
     _webBgmPlayer = null;
+    _sfxPools.clear();
   }
+
+  @visibleForTesting
+  static bool debugShouldUseSfxPool(String path) {
+    return _shouldUseSfxPool(path);
+  }
+
+  static bool _shouldUseSfxPool(String path) => _pooledSfxPaths.contains(path);
 
   @visibleForTesting
   static bool debugShouldReplayWebBgm({
@@ -489,6 +506,10 @@ class SoundManager {
     if (GameSettings.sfxMuted) return;
     if (kIsWeb && !_webUnlocked) return;
     final vol = GameSettings.sfxVolume;
+    if (_shouldUseSfxPool(path)) {
+      unawaited(_playSfxFromPool(path, vol));
+      return;
+    }
     try {
       if (kIsWeb) {
         _playSfxWeb(path, vol);
@@ -496,6 +517,40 @@ class SoundManager {
         FlameAudio.play(path, volume: vol);
       }
     } catch (_) {}
+  }
+
+  static Future<void> _playSfxFromPool(String path, double volume) async {
+    final poolFuture = _sfxPools.putIfAbsent(path, () => _createSfxPool(path));
+    try {
+      final pool = await poolFuture;
+      await pool.start(volume: volume);
+    } catch (_) {
+      if (identical(_sfxPools[path], poolFuture)) {
+        _sfxPools.remove(path);
+      }
+      try {
+        if (kIsWeb) {
+          _playSfxWeb(path, volume);
+        } else {
+          await FlameAudio.play(path, volume: volume);
+        }
+      } catch (_) {}
+    }
+  }
+
+  static Future<AudioPool> _createSfxPool(String path) {
+    if (kIsWeb) {
+      return AudioPool.create(
+        source: UrlSource(_webAudioAssetUrl(path)),
+        minPlayers: 1,
+        maxPlayers: _sfxPoolMaxPlayers,
+      );
+    }
+    return FlameAudio.createPool(
+      path,
+      minPlayers: 1,
+      maxPlayers: _sfxPoolMaxPlayers,
+    );
   }
 
   /// 웹 전용 SFX — AudioCache를 거치지 않도록 asset URL을 직접 재생한다.
