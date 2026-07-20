@@ -11,6 +11,7 @@ import 'resources/item_translation_scope.dart';
 import 'resources/jester_translation_scope.dart';
 import 'resources/sound_manager.dart';
 import 'router.dart';
+import 'services/frame_timing_metrics.dart';
 import 'views/game/widgets/game_ui_palette.dart';
 import 'widgets/starry_background.dart';
 
@@ -50,6 +51,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
+        FrameTimingMetrics.instance.reportAndReset();
         SoundManager.pauseBgm(recoverOnNextWebGesture: true);
         break;
       case AppLifecycleState.resumed:
@@ -90,7 +92,8 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
                   child: ColoredBox(color: GameUiPalette.ink),
                 ),
                 const Positioned.fill(child: StarryBackground()),
-                if (child != null) Positioned.fill(child: child),
+                if (child != null)
+                  Positioned.fill(child: RepaintBoundary(child: child)),
               ],
             );
           },

@@ -12,6 +12,7 @@ import 'app.dart';
 import 'firebase_options.dart';
 import 'resources/sound_manager.dart';
 import 'services/in_app_review_service.dart';
+import 'services/frame_timing_metrics.dart';
 import 'utils/app_locale.dart';
 import 'utils/storage_helper.dart';
 
@@ -20,6 +21,7 @@ import 'utils/storage_helper.dart';
 /// Wakelock 적용은 App → SettingsNotifier.applyInitialWakelock()에서 처리.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FrameTimingMetrics.instance.start();
   if (kIsWeb) {
     usePathUrlStrategy();
   }
