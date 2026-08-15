@@ -23,6 +23,7 @@ alwaysApply: false
 ## Overlay, tutorial, lifecycle
 
 - 위계는 `content < tutorial < pause veil/modal`이다. options, focus-out, route 전환 전에 tutorial을 제거한다.
+- `showDialog`, `showModalBottomSheet`, 키보드처럼 UI overlay가 닫힌 직후 route를 전환할 때는 `WidgetsBinding.instance.endOfFrame`을 기다리고 `mounted`를 다시 확인한다. 고정 `Future.delayed`로 프레임 차이를 보정하지 않으며, overlay 없는 단순 전환에는 이 대기를 추가하지 않는다.
 - 자동 tutorial은 해당 scene과 layout이 안정된 뒤 시작한다. 수동 다시보기는 즉시 시작할 수 있고 Battle·Market 모두 상단 버튼과 options에서 접근한다.
 - 사용자 Skip은 seen 처리한다. focus-out, options, route 전환, dispose 같은 강제 종료는 seen 처리하지 않고 다음 진입 때 첫 step부터 다시 시작한다. resize 보정만 현재 step 유지가 가능하다.
 - modal 입력 차단은 공용 barrier 한 장으로 처리한다. lifecycle 변화만으로 options를 자동으로 열지 않으며 진행 중 정산·전환 연출의 resume을 우선한다.

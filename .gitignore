@@ -21,13 +21,8 @@
 **/.history/
 **/*history/
 
-# AI Coding Tools
-.cursor/
-.antigravity/
-.ag/
+# Current AI coding tool local state
 .codex/
-.kiro/
-.serena/
 
 # Deprecated local analysis workspace.
 # Current leveling policy does not use ML/LLM experiment outputs as source-of-truth.
@@ -37,9 +32,6 @@ archive/analysis_legacy_2026_05/analysis/leveling/generated/
 archive/analysis_legacy_2026_05/analysis/leveling/archive/
 archive/analysis_legacy_2026_05/analysis/leveling/data/features/*.csv
 archive/analysis_legacy_2026_05/analysis/leveling/data/raw/
-
-# Local agent drafts, plans, and verification artifacts.
-.omo/
 
 ############################################################
 # Node.js
@@ -230,4 +222,3 @@ app.*.map.json
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
-.gstack/

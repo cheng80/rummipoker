@@ -8,7 +8,6 @@
 
 ## 문서 구성
 
-- `huashu-design-codex-usage.md`: Huashu Design Codex 사용법
 - `card_assets/CARD_ITEM_ILLUSTRATION_GUIDE.md`: 카드형 Item/Jester 일러스트 가이드
 - `card_assets/CARD_ITEM_IMAGE_PROMPTS.md`: 카드 일러스트 이미지 생성 프롬프트 팩
 

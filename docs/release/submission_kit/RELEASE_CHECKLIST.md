@@ -11,8 +11,8 @@
 | 표시명 | Rummi Poker |
 | 서브타이틀 | 타일로 만드는 포커 런 |
 | 장르 | 타일 배치 / 포커 핸드 / 로그라이트 |
-| Bundle ID | 제출 전 확정 필요 |
-| Android applicationId | 제출 전 확정 필요 |
+| Bundle ID | `com.cheng80.rummipoker` |
+| Android applicationId | `com.cheng80.rummipoker` |
 | 지원 URL | 제출 전 확정 필요 |
 | 개인정보 처리방침 URL | 제출 전 확정 필요 |
 

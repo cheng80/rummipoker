@@ -29,6 +29,8 @@
 
 ## 근거 경로
 
+아래 경로는 실행 당시 생성된 임시 경로이며 현재 보존되어 있지 않다. 이 문서는 당시 검토 결과의 요약이고, release 제출용 실행 증거가 필요하면 같은 명령으로 다시 생성한다.
+
 - 표준: `/tmp/rummipoker_full_run_bot/release_locale_gate/20260718/ko_standard_fresh_retry2/`
 - 도전: `/tmp/rummipoker_full_run_bot/release_locale_gate/20260718/ko_challenge_retry4_profile/`
 - release visual: `/tmp/rummipoker_full_run_bot/release_locale_gate/20260718/ko_visual_release/`

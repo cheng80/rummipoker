@@ -154,8 +154,8 @@ class ItemCatalog {
     required this.schemaVersion,
     required this.catalogId,
     required this.rarityWeights,
-    required List<ItemDefinition> items,
-  }) : _items = items;
+    required this._items,
+  });
 
   factory ItemCatalog.fromJsonString(String jsonString) {
     final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
