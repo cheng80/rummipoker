@@ -9,6 +9,22 @@
     token: 0,
   }));
   const stats = { plays: 0, drops: 0, errors: 0, unlocks: 0, lastError: '' };
+  let needsUnlock = true;
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'hidden') return;
+    needsUnlock = true;
+    for (const slot of slots) {
+      slot.token += 1;
+      clearTimeout(slot.timer);
+      slot.timer = 0;
+      slot.busy = false;
+      slot.audio.pause();
+      slot.audio.currentTime = 0;
+      slot.audio.onended = null;
+      slot.audio.onerror = null;
+    }
+  });
 
   const resolveAsset = (path) =>
     new URL(`assets/assets/audio/${path}`, document.baseURI).href;
@@ -38,8 +54,11 @@
   };
 
   const unlock = () => {
+    if (!needsUnlock) return;
+    needsUnlock = false;
     stats.unlocks += 1;
     for (const slot of slots) {
+      if (slot.busy) continue;
       const token = ++slot.token;
       const audio = slot.audio;
       const previousVolume = audio.volume;

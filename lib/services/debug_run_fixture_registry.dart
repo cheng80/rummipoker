@@ -3,6 +3,18 @@ part of 'debug_run_fixture_service.dart';
 /// 새 디버그 픽스처는 여기에 등록하고, 대응하는 builder는 builders part에 둔다.
 final List<DebugRunFixtureDefinition> _debugRunFixtures = [
   DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.audioGameOverResume,
+    label: '오디오 복귀: 게임오버',
+    description: '게임오버 결과창에서 포커스 이탈·복귀 후 Retry BGM/SFX 검증용',
+    builder: _buildGameOverInsightReady,
+  ),
+  DebugRunFixtureDefinition(
+    id: DebugRunFixtureService.audioMarketResume,
+    label: '오디오 복귀: Market',
+    description: 'Market에서 포커스 이탈·복귀 후 BGM/SFX 검증용',
+    builder: _buildStage2MarketResume,
+  ),
+  DebugRunFixtureDefinition(
     id: DebugRunFixtureService.stage2ScoringSnapshot,
     label: 'Stage 2 점수 스냅샷',
     description:

@@ -36,6 +36,8 @@ class DebugRunFixtureDefinition {
 class DebugRunFixtureService {
   DebugRunFixtureService._();
 
+  static const String audioGameOverResume = 'audio_game_over_resume';
+  static const String audioMarketResume = 'audio_market_resume';
   static const String stage2ScoringSnapshot = 'stage2_scoring_snapshot';
   static const String stage2MarketResume = 'stage2_market_resume';
   static const String deckNeedleBattle = 'deck_needle_battle';
@@ -125,4 +127,7 @@ class DebugRunFixtureService {
     if (fixtureId == null) return true;
     return find(fixtureId)?.autoTutorialsEnabled ?? false;
   }
+
+  static bool shouldShowGameOverOnLoad(String? fixtureId) =>
+      fixtureId == audioGameOverResume;
 }

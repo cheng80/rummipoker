@@ -11,6 +11,7 @@ DEPLOY_TOKEN="${RUMMIPOKER_DEPLOY_TOKEN:-}"
 BASE_HREF="/rummipoker/"
 PACKAGE_DIR="$ROOT_DIR/rummipoker"
 ZIP_PATH="$ROOT_DIR/rummipoker.zip"
+SHOW_DEBUG_FIXTURES=false
 CURRENT_STEP="startup"
 TOTAL_STEPS=6
 
@@ -23,6 +24,7 @@ Options:
   --env-file <path>      Env file path. Default: .env
   --deploy-url <url>     Override RUMMIPOKER_DEPLOY_URL
   --token <token>        Override RUMMIPOKER_DEPLOY_TOKEN
+  --debug-fixtures       Build with SHOW_DEBUG_FIXTURES=true for QA
   -h, --help             Show this help.
 
 Required env:
@@ -120,6 +122,10 @@ while [[ $# -gt 0 ]]; do
       DEPLOY_TOKEN="${2:?missing deploy token}"
       shift 2
       ;;
+    --debug-fixtures)
+      SHOW_DEBUG_FIXTURES=true
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -168,7 +174,12 @@ log_info "curl: $(command -v curl)"
 
 log_step 2 "Flutter 웹 릴리즈 빌드"
 log_info "base href: $BASE_HREF"
-flutter build web --release --base-href "$BASE_HREF"
+build_args=(web --release --base-href "$BASE_HREF")
+if [[ "$SHOW_DEBUG_FIXTURES" == true ]]; then
+  build_args+=(--dart-define=SHOW_DEBUG_FIXTURES=true)
+  log_info "debug fixtures: enabled"
+fi
+flutter build "${build_args[@]}"
 
 log_step 3 "로컬 rummipoker 폴더 재생성"
 log_info "package directory: $PACKAGE_DIR"

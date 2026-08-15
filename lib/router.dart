@@ -85,7 +85,8 @@ final GoRouter appRouter = GoRouter(
             state.uri.queryParameters['debug_auto_use_item'];
         final debugShopTab = state.uri.queryParameters['debug_shop_tab'];
         final debugShowGameOverOnLoad =
-            state.uri.queryParameters['debug_show_game_over_on_load'] == '1';
+            state.uri.queryParameters['debug_show_game_over_on_load'] == '1' ||
+            DebugRunFixtureService.shouldShowGameOverOnLoad(fixtureId);
         final debugOpenRunInfoOnLoad =
             state.uri.queryParameters['debug_open_run_info'] == '1';
         final debugSuppressFixtureNotice =
