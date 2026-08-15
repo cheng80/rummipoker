@@ -78,19 +78,10 @@ class SoundManager {
   static bool _shouldHandleWebAudioGesture({required bool isWeb}) => isWeb;
 
   @visibleForTesting
-  static bool debugShouldPrimeWebSfx({
-    required bool isWeb,
-    required bool alreadyUnlocked,
-  }) {
-    return _shouldPrimeWebSfx(isWeb: isWeb, alreadyUnlocked: alreadyUnlocked);
-  }
+  static bool debugShouldForwardWebSfxUnlock({required bool isWeb}) =>
+      _shouldForwardWebSfxUnlock(isWeb: isWeb);
 
-  static bool _shouldPrimeWebSfx({
-    required bool isWeb,
-    required bool alreadyUnlocked,
-  }) {
-    return isWeb && !alreadyUnlocked;
-  }
+  static bool _shouldForwardWebSfxUnlock({required bool isWeb}) => isWeb;
 
   @visibleForTesting
   static bool debugShouldReplayWebBgm({
@@ -254,10 +245,10 @@ class SoundManager {
   /// 웹: 사용자 상호작용 시 호출. 대기 중인 BGM을 제스처 안에서 바로 재생한다.
   static void unlockForWeb() {
     if (!_shouldHandleWebAudioGesture(isWeb: kIsWeb)) return;
-    if (_shouldPrimeWebSfx(isWeb: kIsWeb, alreadyUnlocked: _webUnlocked)) {
-      _webUnlocked = true;
+    if (_shouldForwardWebSfxUnlock(isWeb: kIsWeb)) {
       unlockWebSfx();
     }
+    _webUnlocked = true;
     if (_bgmAutoResumeBlockDepth > 0) return;
     if (GameSettings.bgmMuted) return;
     final target = _pendingBgm ?? _currentBgm;

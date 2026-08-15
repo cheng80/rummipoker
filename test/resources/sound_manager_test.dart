@@ -157,26 +157,13 @@ void main() {
         SoundManager.debugShouldHandleWebAudioGesture(isWeb: true),
         isTrue,
       );
-      expect(
-        SoundManager.debugShouldPrimeWebSfx(
-          isWeb: true,
-          alreadyUnlocked: false,
-        ),
-        isTrue,
-      );
-      expect(
-        SoundManager.debugShouldPrimeWebSfx(isWeb: true, alreadyUnlocked: true),
-        isFalse,
-      );
+      expect(SoundManager.debugShouldForwardWebSfxUnlock(isWeb: true), isTrue);
       expect(
         SoundManager.debugShouldHandleWebAudioGesture(isWeb: false),
         isFalse,
       );
       expect(
-        SoundManager.debugShouldPrimeWebSfx(
-          isWeb: false,
-          alreadyUnlocked: false,
-        ),
+        SoundManager.debugShouldForwardWebSfxUnlock(isWeb: false),
         isFalse,
       );
     });

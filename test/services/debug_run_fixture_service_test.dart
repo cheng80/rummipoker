@@ -16,6 +16,21 @@ import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 
 void main() {
+  test('audio QA fixtures open game-over and Market states directly', () {
+    final gameOver = DebugRunFixtureService.build('audio_game_over_resume');
+    final market = DebugRunFixtureService.build('audio_market_resume');
+
+    expect(gameOver, isNotNull);
+    expect(gameOver!.activeScene, ActiveRunScene.battle);
+    expect(gameOver.session.evaluateExpirySignals(), isNotEmpty);
+    expect(
+      DebugRunFixtureService.shouldShowGameOverOnLoad('audio_game_over_resume'),
+      isTrue,
+    );
+    expect(market, isNotNull);
+    expect(market!.activeScene, ActiveRunScene.shop);
+  });
+
   test('fixture registry exposes stage2 scoring snapshot entry', () {
     final fixtures = DebugRunFixtureService.fixtures;
     final fixture = fixtures.where(
