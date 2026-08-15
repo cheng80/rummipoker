@@ -5,6 +5,7 @@ import 'package:flame_audio/flame_audio.dart';
 
 import '../services/game_settings.dart';
 import 'asset_paths.dart';
+import 'web_sfx_bridge.dart';
 
 /// 앱 전역 사운드 관리. BGM·효과음 재생, 볼륨·음소거 적용.
 /// 웹: 사용자 상호작용 전까지 자동재생 차단. 첫 탭 시 unlock.
@@ -29,13 +30,20 @@ class SoundManager {
   static bool _webBgmReplayInFlight = false;
   static bool _webBgmResumeInFlight = false;
   static bool _webPendingResumeTried = false;
+  static int _debugUserGestureBgmResumeCount = 0;
   static AudioPlayer? _webBgmPlayer;
-  static final Set<AudioPlayer> _webSfxPlayers = <AudioPlayer>{};
   static final Map<String, Future<AudioPool>> _sfxPools =
       <String, Future<AudioPool>>{};
 
   @visibleForTesting
   static String? get debugCurrentBgm => _currentBgm;
+
+  @visibleForTesting
+  static int get debugUserGestureBgmResumeCount =>
+      _debugUserGestureBgmResumeCount;
+
+  @visibleForTesting
+  static bool get debugBgmAutoResumeBlocked => _bgmAutoResumeBlockDepth > 0;
 
   @visibleForTesting
   static void debugResetForTest() {
@@ -48,16 +56,41 @@ class SoundManager {
     _webBgmReplayInFlight = false;
     _webBgmResumeInFlight = false;
     _webPendingResumeTried = false;
+    _debugUserGestureBgmResumeCount = 0;
     _webBgmPlayer = null;
     _sfxPools.clear();
   }
 
   @visibleForTesting
-  static bool debugShouldUseSfxPool(String path) {
-    return _shouldUseSfxPool(path);
+  static bool debugShouldUseSfxPool(String path, {required bool isWeb}) {
+    return _shouldUseSfxPool(path, isWeb: isWeb);
   }
 
-  static bool _shouldUseSfxPool(String path) => _pooledSfxPaths.contains(path);
+  static bool _shouldUseSfxPool(String path, {required bool isWeb}) {
+    return !isWeb && _pooledSfxPaths.contains(path);
+  }
+
+  @visibleForTesting
+  static bool debugShouldHandleWebAudioGesture({required bool isWeb}) {
+    return _shouldHandleWebAudioGesture(isWeb: isWeb);
+  }
+
+  static bool _shouldHandleWebAudioGesture({required bool isWeb}) => isWeb;
+
+  @visibleForTesting
+  static bool debugShouldPrimeWebSfx({
+    required bool isWeb,
+    required bool alreadyUnlocked,
+  }) {
+    return _shouldPrimeWebSfx(isWeb: isWeb, alreadyUnlocked: alreadyUnlocked);
+  }
+
+  static bool _shouldPrimeWebSfx({
+    required bool isWeb,
+    required bool alreadyUnlocked,
+  }) {
+    return isWeb && !alreadyUnlocked;
+  }
 
   @visibleForTesting
   static bool debugShouldReplayWebBgm({
@@ -124,6 +157,13 @@ class SoundManager {
   }) {
     return !(isWeb && pendingBgm == target);
   }
+
+  @visibleForTesting
+  static bool debugShouldRestartBgmFromUserGesture({required bool isWeb}) {
+    return _shouldRestartBgmFromUserGesture(isWeb: isWeb);
+  }
+
+  static bool _shouldRestartBgmFromUserGesture({required bool isWeb}) => isWeb;
 
   @visibleForTesting
   static bool debugShouldStartWebBgmReplay({
@@ -213,8 +253,12 @@ class SoundManager {
 
   /// 웹: 사용자 상호작용 시 호출. 대기 중인 BGM을 제스처 안에서 바로 재생한다.
   static void unlockForWeb() {
-    if (!kIsWeb) return;
-    _webUnlocked = true;
+    if (!_shouldHandleWebAudioGesture(isWeb: kIsWeb)) return;
+    if (_shouldPrimeWebSfx(isWeb: kIsWeb, alreadyUnlocked: _webUnlocked)) {
+      _webUnlocked = true;
+      unlockWebSfx();
+    }
+    if (_bgmAutoResumeBlockDepth > 0) return;
     if (GameSettings.bgmMuted) return;
     final target = _pendingBgm ?? _currentBgm;
     if (target == null) return;
@@ -246,6 +290,25 @@ class SoundManager {
     }
     _webUnlocked = true;
     _playBgmImmediatelyForWeb(path);
+  }
+
+  /// 실제 게임 복귀 사용자 제스처에서 웹 BGM을 다시 시작한다.
+  static void resumeBgmFromUserGesture({String? onlyIfCurrent}) {
+    assert(() {
+      _debugUserGestureBgmResumeCount++;
+      return true;
+    }());
+    if (!_shouldRestartBgmFromUserGesture(isWeb: kIsWeb)) {
+      resumeBgm(onlyIfCurrent: onlyIfCurrent);
+      return;
+    }
+    if (onlyIfCurrent != null && _currentBgm != onlyIfCurrent) return;
+    if (GameSettings.bgmMuted) return;
+    final target = _currentBgm;
+    if (target == null) return;
+    _webUnlocked = true;
+    _pendingBgm = target;
+    _playBgmImmediatelyForWeb(target);
   }
 
   static void _resumePendingBgmForWebGesture(String path) {
@@ -335,7 +398,10 @@ class SoundManager {
 
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
   static Future<void> preload() async {
-    if (!_shouldPreloadAudioCache(isWeb: kIsWeb)) return;
+    if (kIsWeb) {
+      initializeWebSfx(AssetPaths.sfxCollect);
+      return;
+    }
     await Future.wait([
       FlameAudio.audioCache.load(AssetPaths.bgmMenu),
       FlameAudio.audioCache.load(AssetPaths.bgmMain),
@@ -506,16 +572,16 @@ class SoundManager {
     if (GameSettings.sfxMuted) return;
     if (kIsWeb && !_webUnlocked) return;
     final vol = GameSettings.sfxVolume;
-    if (_shouldUseSfxPool(path)) {
+    if (kIsWeb) {
+      playWebSfx(path, vol);
+      return;
+    }
+    if (_shouldUseSfxPool(path, isWeb: false)) {
       unawaited(_playSfxFromPool(path, vol));
       return;
     }
     try {
-      if (kIsWeb) {
-        _playSfxWeb(path, vol);
-      } else {
-        FlameAudio.play(path, volume: vol);
-      }
+      FlameAudio.play(path, volume: vol);
     } catch (_) {}
   }
 
@@ -529,59 +595,16 @@ class SoundManager {
         _sfxPools.remove(path);
       }
       try {
-        if (kIsWeb) {
-          _playSfxWeb(path, volume);
-        } else {
-          await FlameAudio.play(path, volume: volume);
-        }
+        await FlameAudio.play(path, volume: volume);
       } catch (_) {}
     }
   }
 
   static Future<AudioPool> _createSfxPool(String path) {
-    if (kIsWeb) {
-      return AudioPool.create(
-        source: UrlSource(_webAudioAssetUrl(path)),
-        minPlayers: 1,
-        maxPlayers: _sfxPoolMaxPlayers,
-      );
-    }
     return FlameAudio.createPool(
       path,
       minPlayers: 1,
       maxPlayers: _sfxPoolMaxPlayers,
-    );
-  }
-
-  /// 웹 전용 SFX — AudioCache를 거치지 않도록 asset URL을 직접 재생한다.
-  static void _playSfxWeb(String path, double volume) {
-    final player = AudioPlayer();
-    _webSfxPlayers.add(player);
-
-    StreamSubscription<void>? completionSub;
-    Future<void> disposePlayer() async {
-      await completionSub?.cancel();
-      _webSfxPlayers.remove(player);
-      await player.dispose();
-    }
-
-    completionSub = player.onPlayerComplete.listen((_) {
-      unawaited(disposePlayer());
-    });
-
-    unawaited(
-      (() async {
-        try {
-          await player.setReleaseMode(ReleaseMode.release);
-          await player.play(
-            UrlSource(_webAudioAssetUrl(path)),
-            volume: volume,
-            mode: PlayerMode.mediaPlayer,
-          );
-        } catch (_) {
-          await disposePlayer();
-        }
-      })(),
     );
   }
 }

@@ -160,11 +160,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 icon: Icons.bookmark_add_rounded,
                 accentColor: GameUiPalette.actionInfoBlue,
                 onTap: () async {
-                  final saved = await onBookmarkRun?.call() ?? false;
-                  if (!dialogContext.mounted || !saved) return;
-                  Navigator.of(
-                    dialogContext,
-                  ).pop(GameOptionsCloseAction.resumeGame);
+                  await onBookmarkRun?.call();
                 },
               ),
               const SizedBox(height: 8),

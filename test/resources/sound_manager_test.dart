@@ -64,6 +64,17 @@ void main() {
       );
     });
 
+    test('restarts web BGM on the gameplay resume gesture', () {
+      expect(
+        SoundManager.debugShouldRestartBgmFromUserGesture(isWeb: true),
+        isTrue,
+      );
+      expect(
+        SoundManager.debugShouldRestartBgmFromUserGesture(isWeb: false),
+        isFalse,
+      );
+    });
+
     test(
       'does not start duplicate web replay while the same BGM is in flight',
       () {
@@ -126,10 +137,48 @@ void main() {
       );
     });
 
-    test('uses pools for repeated SFX but keeps BGM out of the pool', () {
-      expect(SoundManager.debugShouldUseSfxPool(AssetPaths.sfxBtnSnd), isTrue);
-      expect(SoundManager.debugShouldUseSfxPool(AssetPaths.sfxClear), isTrue);
-      expect(SoundManager.debugShouldUseSfxPool(AssetPaths.bgmMain), isFalse);
+    test('keeps audioplayers pools native-only', () {
+      expect(
+        SoundManager.debugShouldUseSfxPool(AssetPaths.sfxBtnSnd, isWeb: false),
+        isTrue,
+      );
+      expect(
+        SoundManager.debugShouldUseSfxPool(AssetPaths.sfxBtnSnd, isWeb: true),
+        isFalse,
+      );
+      expect(
+        SoundManager.debugShouldUseSfxPool(AssetPaths.bgmMain, isWeb: false),
+        isFalse,
+      );
+    });
+
+    test('keeps handling BGM gestures after priming web SFX', () {
+      expect(
+        SoundManager.debugShouldHandleWebAudioGesture(isWeb: true),
+        isTrue,
+      );
+      expect(
+        SoundManager.debugShouldPrimeWebSfx(
+          isWeb: true,
+          alreadyUnlocked: false,
+        ),
+        isTrue,
+      );
+      expect(
+        SoundManager.debugShouldPrimeWebSfx(isWeb: true, alreadyUnlocked: true),
+        isFalse,
+      );
+      expect(
+        SoundManager.debugShouldHandleWebAudioGesture(isWeb: false),
+        isFalse,
+      );
+      expect(
+        SoundManager.debugShouldPrimeWebSfx(
+          isWeb: false,
+          alreadyUnlocked: false,
+        ),
+        isFalse,
+      );
     });
   });
 }
