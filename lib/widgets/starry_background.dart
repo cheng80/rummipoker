@@ -6,49 +6,11 @@ import '../views/game/widgets/game_ui_palette.dart';
 
 /// 우주 배경.
 ///
-/// - 별을 3 그룹으로 나눠 각각 [RepaintBoundary]로 래스터 캐싱.
-/// - 깜빡임은 [FadeTransition](GPU 컴포지터 alpha)으로만 처리하므로
-///   paint()가 최초 1회 이후 **다시 호출되지 않는다**.
-class StarryBackground extends StatefulWidget {
+/// 별을 3개 [RepaintBoundary]로 나눠 정적으로 래스터 캐싱한다.
+class StarryBackground extends StatelessWidget {
   const StarryBackground({super.key});
 
-  @override
-  State<StarryBackground> createState() => _StarryBackgroundState();
-}
-
-class _StarryBackgroundState extends State<StarryBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final List<Animation<double>> _groupAnimations;
-
   static const _groupCount = 3;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    )..repeat(reverse: true);
-
-    // 각 그룹이 시간차(stagger)로 페이드 — 자연스러운 랜덤 느낌
-    _groupAnimations = List.generate(_groupCount, (i) {
-      final start = i / (_groupCount * 2); // 0.0, 0.167, 0.333
-      final end = start + 0.6; // 0.6, 0.767, 0.933
-      return Tween<double>(begin: 0.4, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: Interval(start, end.clamp(0.0, 1.0), curve: Curves.easeInOut),
-        ),
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,18 +32,15 @@ class _StarryBackgroundState extends State<StarryBackground>
                 ),
               ),
             ),
-            // 별 그룹 레이어 — 각 그룹이 FadeTransition으로 깜빡임
+            // 별 그룹 레이어 — 지속 합성 없이 정적으로 캐시한다.
             for (var i = 0; i < _groupCount; i++)
               Positioned.fill(
-                child: FadeTransition(
-                  opacity: _groupAnimations[i],
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      size: size,
-                      painter: _StarGroupPainter(stars: groups[i]),
-                      isComplex: true,
-                      willChange: false,
-                    ),
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    size: size,
+                    painter: _StarGroupPainter(stars: groups[i]),
+                    isComplex: true,
+                    willChange: false,
                   ),
                 ),
               ),
