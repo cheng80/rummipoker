@@ -26,23 +26,31 @@ extension _GameViewDialogRoutes on _GameViewState {
       _optionsDialogOpen = true;
       SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
       if (!mounted) return;
-      final action = await showGameOptionsDialog(
-        context: context,
-        runSeed: widget.runSeed,
-        activeRunSaveView: _gameState.activeRunSaveView,
-        onBookmarkRun: _bookmarkCurrentRun,
-        onLoadBookmarkRun: _loadBookmarkRunFromOptions,
-        onRestartStake: _restartCurrentStakeWithConfirm,
-        onRestartRun: _restartCurrentRun,
-        onExitToTitle: _exitToTitleWithConfirm,
-        isDebugFixtureRun: _isDebugFixtureRun,
-      );
-      _optionsDialogOpen = false;
+      late final GameOptionsCloseAction action;
+      SoundManager.beginBgmAutoResumeBlock();
+      try {
+        action = await showGameOptionsDialog(
+          context: context,
+          runSeed: widget.runSeed,
+          activeRunSaveView: _gameState.activeRunSaveView,
+          onBookmarkRun: _bookmarkCurrentRun,
+          onLoadBookmarkRun: _loadBookmarkRunFromOptions,
+          onRestartStake: _restartCurrentStakeWithConfirm,
+          onRestartRun: _restartCurrentRun,
+          onExitToTitle: _exitToTitleWithConfirm,
+          isDebugFixtureRun: _isDebugFixtureRun,
+        );
+      } finally {
+        SoundManager.endBgmAutoResumeBlock();
+        _optionsDialogOpen = false;
+      }
       if (!mounted) return;
       switch (action) {
         case GameOptionsCloseAction.resumeGame:
           _resumePresentation();
-          SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+          SoundManager.resumeBgmFromUserGesture(
+            onlyIfCurrent: AssetPaths.bgmMain,
+          );
           return;
         case GameOptionsCloseAction.keepPaused:
           return;

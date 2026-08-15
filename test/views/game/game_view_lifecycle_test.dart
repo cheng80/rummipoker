@@ -9,6 +9,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
@@ -26,9 +27,10 @@ void main() {
     await TutorialStateService.markBattleIntroSeen();
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
+    SoundManager.debugResetForTest();
   });
 
-  testWidgets('짧은 inactive는 무시하고 paused 복귀는 옵션창을 연다', (tester) async {
+  testWidgets('lifecycle 옵션은 실제 계속하기 전까지 BGM 복귀를 막는다', (tester) async {
     await tester.pumpWidget(
       EasyLocalization(
         supportedLocales: const [Locale('ko'), Locale('en')],
@@ -78,9 +80,41 @@ void main() {
     expect(find.text('옵션'), findsOneWidget);
     expect(find.text('설정 화면을 열고 복귀 후 현재 메뉴를 다시 엽니다.'), findsOneWidget);
     expect(find.text('일시정지'), findsOneWidget);
+    expect(SoundManager.debugUserGestureBgmResumeCount, 0);
+    expect(SoundManager.debugBgmAutoResumeBlocked, isTrue);
 
     await tester.tap(find.byTooltip('취소'));
     await tester.pumpAndSettle();
+    expect(find.text('옵션'), findsNothing);
+    expect(SoundManager.debugUserGestureBgmResumeCount, 1);
+    expect(SoundManager.debugBgmAutoResumeBlocked, isFalse);
+
+    _sendGameLifecycle(tester, AppLifecycleState.inactive);
+    await tester.pump();
+    _sendGameLifecycle(tester, AppLifecycleState.paused);
+    await tester.pump();
+    _sendGameLifecycle(tester, AppLifecycleState.resumed);
+    await tester.pump();
+    for (var i = 0; i < 10 && find.text('옵션').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.tap(find.text('북마크하기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('슬롯 1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('옵션'), findsOneWidget);
+    expect(SoundManager.debugUserGestureBgmResumeCount, 1);
+    expect(SoundManager.debugBgmAutoResumeBlocked, isTrue);
+
+    await tester.tap(find.byTooltip('취소'));
+    await tester.pumpAndSettle();
+    expect(find.text('옵션'), findsNothing);
+    expect(SoundManager.debugUserGestureBgmResumeCount, 2);
+    expect(SoundManager.debugBgmAutoResumeBlocked, isFalse);
+
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
