@@ -15,10 +15,10 @@
 |---|---|---|
 | 진행 | Station은 Scout→Clash→Boss 순서다. Blind가 끝나면 정산과 Market을 거친다. S8에서 완료하거나 Endless로 이어간다 | Blind Select는 큰 보상 분기라기보다 다음 전투를 확인하는 화면이다 |
 | 전투 | 5×5 보드의 12줄을 보고, 일부만 놓인 줄도 평가한다. 여러 줄에 쓰인 타일은 겹침으로 보너스를 받는다 | 점수를 계산하는 순서와 화면에 보여 주는 순서는 다를 수 있다 |
-| 돈 | 0G로 시작한다. 기본 Blind 보상은 4G이고, Market 리롤은 5G에서 시작해 사용한 줄만 2G씩 오른다 | 화면의 4/8/12 보상 미리보기는 실제 정산과 맞지 않는다. High Stakes ×1.12도 기본 4G를 반올림하면 4G다 |
+| 돈 | 0G로 시작한다. 기본 Blind 보상은 4G이고, Market 리롤은 5G에서 시작해 사용한 줄만 2G씩 오른다 | 보상 미리보기와 정산은 같은 계산을 사용한다. High Stakes ×1.12도 기본 4G를 반올림하면 4G다 |
 | 성장 | 점수 족보를 완성하면 성장하고, Boss를 깨면 타일이나 슬롯 해금을 받는다 | Market이 대신 사 주는 것은 금지하지만, 전투를 이겨 받는 보상은 자동 적용된다 |
-| 저장 | v2 형식으로 전투·Market·Blind Select 상태와 복원용 기준점을 저장한다 | 새 게임의 첫 저장 전 종료, 두 단계 저장, 정산 후 재진입 위험이 있다 |
-| 측정 | 시작·전투·Market 같은 기본 이벤트는 있다 | 재시작과 포기, 복원한 런의 상태, 저장 실패는 제대로 구분하지 못한다 |
+| 저장 | v2 형식으로 전투·Market·Blind Select 상태와 복원용 기준점을 저장한다 | New Run 첫 저장, active envelope 단일 write, 정산 영수증과 run claim으로 중복 지급을 막는다. 즉시 프로세스 종료와 cross-version migration은 제한으로 남는다 |
+| 측정 | 시작·전투·점수·정산·Market·런 종료 이벤트를 수집하고 debug fixture를 제외한다 | consent/opt-out UI와 iOS·Crashlytics release 검증은 남아 있다 |
 
 상세 불일치는 core 문서의 Known Gaps 절을 본다.
 
@@ -35,12 +35,12 @@
 
 | 우선순위 | 후보 | 근거 비교축 | 기대 효과 | 위험 | 검증 지표 | 상태 |
 |---|---|---|---|---|---|---|
-| P0 | Blind reward preview를 실제 4/4/4(+modifier)와 일치 | Balatro/deckbuilder: 보상 진실이 위험보상 전제 | 선택 신뢰 회복 | 없음; 표시 수정 | Blind Select 표시 = Settlement base | 선행 수정 |
-| P0 | 정산·런 종료 보상을 한 번만 지급 | 저장 신뢰 | 골드·Insight 중복 지급 제거 | 저장 형식과 처리 단계 추가 필요 | 강제 종료 후 다시 열어도 1회만 지급 | 선행 수정 |
-| P0 | first-save gap / Market exit flush / payload+signature 원자성 | premium mobile peer 불만 축 | 이어하기 신뢰 | storage 경계 변경 | New Run 직후 kill, Market→Title 복원 | 선행 수정 |
+| P0 | Blind reward preview를 실제 4/4/4(+modifier)와 일치 | Balatro/deckbuilder: 보상 진실이 위험보상 전제 | 선택 신뢰 회복 | 없음; 표시 수정 | Blind Select 표시 = Settlement base | 완료 |
+| P0 | 정산·런 종료 보상을 한 번만 지급 | 저장 신뢰 | 골드·Insight 중복 지급 제거 | 저장 형식과 처리 단계 추가 필요 | 강제 종료 후 다시 열어도 1회만 지급 | 완료 |
+| P0 | first-save gap / Market exit flush / payload+signature 원자성 | premium mobile peer 불만 축 | 이어하기 신뢰 | storage 경계 변경 | New Run 직후 kill, Market→Title 복원 | 완료 |
 | P1 | Game Over에 부족 점수·남은 행동을 보여 주는 카드 + `loss_snapshot` | 플레이어의 실패 이해 | 다음 도전에서 판단하기 쉬움 | 원인을 단정하거나 비난하지 않음 | 이해도 QA, 이벤트 연결 | 후보 |
 | P1 | 정산 라벨/연출을 계산 순서(growth→overlap→Jester→tile→Item→Boss)에 맞춤 | Balatro ordered theatrical resolve | 빌드 학습 | 연출 시간 증가 | 라벨 정확도 테스트 | 후보 |
-| P1 | Challenge 계승을 실제로 기록하거나 안내 문구를 제거 | 현재 잘못된 안내 | 다음 런 목표를 믿고 세울 수 있음 | 밸런스 영향 | S8 완료 후 Challenge 시작 상태 확인 | 선행 수정 또는 문구 삭제 |
+| P1 | Challenge 계승을 실제로 기록하거나 안내 문구를 제거 | 현재 잘못된 안내 | 다음 런 목표를 믿고 세울 수 있음 | 밸런스 영향 | S8 완료 후 Challenge 시작 상태 확인 | 완료 |
 | P2 | Market에서 다음 Blind/Boss의 목표와 제약을 미리 보여 주기 | 덱빌더의 눈에 보이는 선택 | 무엇을 살지 판단하기 쉬움 | 보상 표시를 먼저 바로잡아야 함 | 다음 목표·자원 표시가 실제와 같은지 확인 | 후보 |
 | P2 | ‘지금 빌드에 맞는 후보’의 기준을 정한 뒤 Market 조정 | Balatro/STS의 옆길 발견 | 쓸모없는 Market 감소 | 아직 기준과 측정 방법이 없음 | Station별 적합 후보 등장률 | 후보/측정 선행 |
 | P2 | 원자적 효과 문구 상한·미사용/과강 효과 정리 | Balatro terse Jokers | 가독성·조합 공간 | 콘텐츠 삭제 반발 | 효과 이해 테스트, usage | 후보 |
@@ -95,13 +95,11 @@
 
 ## 다음에 할 일
 
-1. 보상 진실·정산 멱등·save 신뢰 P0 수정 track을 연다.
-2. 실패 사실 카드와 analytics terminal 분리를 후보 설계로 남긴다.
-3. BM은 premium 기본으로 두고, 광고/IAP 구현은 비즈니스 결정 후에만 연다.
-4. build-relevant guarantee 문구는 계측 정의 전까지 쓰지 않는다.
+1. 보상 진실·정산 멱등·save 신뢰 P0는 완료 상태를 회귀 테스트로 유지한다.
+2. 다음 제품 변경은 [OPEN_DECISIONS.md](OPEN_DECISIONS.md)의 OD-02·OD-03 중 하나를 선택한 뒤 시작한다.
+3. 실패 사실 카드와 analytics terminal 분리는 후보 설계로 남긴다.
+4. BM은 premium 기본으로 두고, 광고/IAP 구현은 비즈니스 결정 후에만 연다.
 
-## 조사 자료 위치
+## 조사 자료 경계
 
-- 조사 세션: `.omo/ulw-research/20260717-071150/`
-- 광고 정책/UX: `.omo/teams/team-1a03fc22/artifacts/ad-policy-map.md`, `ad-ux-economics.md`
-- 모바일 포지셔닝: `.omo/teams/team-1a03fc22/artifacts/mobile-market.md`
+초기 조사 원본은 Git에 포함되지 않은 임시 산출물이었다. 현재 제품 판단은 이 문서와 관련 core 문서를 기준으로 하며, 폐기된 도구 경로를 활성 근거로 사용하지 않는다.
