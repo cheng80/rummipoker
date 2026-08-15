@@ -94,7 +94,6 @@
 | `docs/release/submission_kit/TUTORIAL_COACH_MARK_PLAN.md` | release | 튜토리얼 coach mark 계획 |
 | `docs/release/submission_kit/WEB_BUILD_GUIDE.md` | release | 웹 제출 빌드 안내 |
 | `docs/tools/00_tools_README.md` | tools | 도구 문서군 정의 |
-| `docs/tools/huashu-design-codex-usage.md` | tools | Huashu Design Codex 사용법 |
 | `docs/tools/card_assets/CARD_ITEM_ILLUSTRATION_GUIDE.md` | tools | 카드 일러스트 규칙 |
 | `docs/tools/card_assets/CARD_ITEM_IMAGE_PROMPTS.md` | tools | 카드 이미지 prompt |
 <!-- DOCUMENT_REGISTRY_END -->
