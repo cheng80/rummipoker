@@ -186,9 +186,8 @@ void main() {
     await tester.tap(find.text('타일\n이동'));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('board-cell-0-1')));
-    await _pumpUntilText(tester, '보드 이동');
-    await tester.tap(find.text('이동').last);
     await tester.pump();
+    expect(find.text('보드 이동'), findsNothing);
     await _pumpUntilText(tester, '이동 보너스 발동');
 
     expect(find.text('이동 보너스 대기'), findsNothing);

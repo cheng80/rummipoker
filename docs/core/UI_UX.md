@@ -31,6 +31,8 @@ Battle 화면은 위에서 아래로 다음 read/action hierarchy를 유지한�
 
 View는 mutable session을 직접 표시하지 않고 `RummiStationRuntimeFacade`, `RummiBattleRuntimeFacade`, `RummiMarketRuntimeFacade`를 읽는다. board/hand 선택은 presentation state이고 save 정답 상태가 아니다. layout은 [game_view_layout_widgets.dart](../../lib/views/game/game_view_layout_widgets.dart), HUD는 [game_shared_battle_hud_widgets.dart](../../lib/views/game/widgets/game_shared_battle_hud_widgets.dart), hand는 [game_hand_zone.dart](../../lib/views/game/widgets/game_hand_zone.dart)가 소유한다.
 
+보드 이동은 타일 선택 → `타일 이동` → 빈 목적지 칸 선택 순서로 조작하며, 목적지를 선택하면 별도 확인 없이 즉시 이동한다. 이동 횟수가 없거나 목적지가 유효하지 않으면 상태를 바꾸지 않고 notice로 이유를 알린다.
+
 Jester와 Item card/slot의 current logical size는 `54 × 70`이다. [game_card_metrics.dart](../../lib/views/game/widgets/game_card_metrics.dart)의 `kBattleItemSlotWidth = 54.0`, `kBattleItemSlotHeight = 70.0`가 단일 권위이며 Jester도 같은 값을 참조한다.
 
 ## 정산 화면

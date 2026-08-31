@@ -971,16 +971,6 @@ extension _GameViewBattleActions on _GameViewState {
       return;
     }
 
-    final confirmed = await showConfirmDialog(
-      context,
-      title: '보드 이동',
-      message: '선택한 타일을 빈 칸으로 이동합니다.\n이동 횟수 1회를 사용합니다.',
-      cancelLabel: '취소',
-      confirmLabel: '이동',
-      barrierDismissible: false,
-    );
-    if (!confirmed || !mounted) return;
-
     final hadSlideBonus =
         _gameState.session?.nextBoardMoveSlideBonusQueued ?? false;
     final failReason = _gameNotifier.moveBoardTile(
