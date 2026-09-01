@@ -71,7 +71,7 @@ slot capacity key 세 개는 encoder가 non-null일 때 쓴다. decoder는 빠�
 
 ## 다시 시작할 때 돌아갈 기준점과 북마크
 
-- `stageStartSnapshot`: Station 시작 기준이다. 같은 Station의 Scout/Clash/Boss 사이에는 보존되고 Boss 뒤 새 Station에서 교체된다. `restartCurrentStage`는 current session/run progress를 이 snapshot으로 되돌린다.
+- `stageStartSnapshot`: Station 시작 기준이다. 같은 Station의 Scout/Clash/Boss 사이에는 보존되고 Boss 뒤 새 Station에서 교체된다. `restartCurrentStage`는 current session/run progress를 이 snapshot으로 되돌린다. Station 재시작 UI는 복원한 runtime을 `blindSelect` scene으로 저장한 뒤 `/blind-select`로 이동한다.
 - `stakeStartSnapshot`: 현재 Blind 시작 기준이다. Blind를 선택할 때마다 갱신된다. `restartCurrentStake`는 이 snapshot으로 되돌리되 Station snapshot은 유지한다.
 - bookmark: 3개 slot이 각각 current runtime 전체와 signature를 저장한다. 저장 시 같은 slot을 덮어쓰며, 불러오기는 먼저 bookmark를 verify/restore한 뒤 active-run payload를 그 runtime으로 덮어쓴다.
 - active run과 bookmark는 같은 schema/codec/HMAC을 사용하지만 서로 다른 StorageHelper key를 사용한다.
