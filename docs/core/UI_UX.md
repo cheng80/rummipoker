@@ -39,6 +39,18 @@ Jester와 Item card/slot의 current logical size는 `54 × 70`이다. [game_card
 
 확정은 판정을 한 번 계산한 뒤 표시만 단계화한다. `boardLine → handRank → overlap → constraint → jester → tile → item → finalScore` 순서의 `ScoringPresentationStep`이 line callout, 타일 강조, effect burst, 목표 점수 증가를 제어한다. 이 presentation sequence는 저장 가능한 점수 결과를 다시 계산하지 않는다.
 
+정산 한 박자는 다음 순서로 보인다. 박자와 등급 기준은 [game_settlement_pacing.dart](../../lib/views/game/game_settlement_pacing.dart)와 `GamePresentationTimings`의 전투 레인 구역이 소유한다.
+
+- callout과 발동 요약은 채점 중인 줄을 가리지 않는 보드 가장자리에 놓인다. 위·아래 두 줄 띠와 좌·우 두 칸 폭 중 contributor 칸과 겹치지 않는 첫 자리를 쓴다.
+- 줄 안의 타일은 하나씩 반응한다. 음높이는 한 확정 전체에 걸쳐 tick마다 약 1.6%씩 오르며, 줄이 바뀌어도 처음으로 돌아가지 않는다. 여러 줄에 기여한 교차 타일은 맞을 때마다 다른 음색과 더 큰 juice를 쓰고, 맞은 횟수만큼 주황 글로우로 달아오른다.
+- Jester는 왼쪽 슬롯부터 한 장씩 발동한다. 모션은 효과 유형별 세 가지다. 칩 가산은 내려찍기, % 가산은 부풀기, ×N 곱연산은 회전 섬광이다. 타일 modifier와 Item은 Jester의 금색과 다른 색 파티클을 쓰고, Boss 감점은 감점음을 낸다.
+- 목표 점수와 골드는 약 0.5초 동안 count-up하며 tick 소리를 내고, 목표 진행 바도 함께 찬다.
+- 줄 점수 등급은 목표 점수 대비 비율(10%·25%·50%)로 4단계다. 단계마다 callout 문구(5개 언어)와 소리가 다르며, hit-stop과 화면 흔들림, 큰 점수 burst는 상위 2단계만 쓴다.
+- 미리보기 점수가 남은 목표를 넘으면 확정 버튼과 목표 바가 초과 폭의 로그에 비례해 달아오른다. 그 확정의 마지막 finalScore는 짧은 hit-stop과 0.5배 슬로모션을 주는 피니셔다.
+- 확정이 끝나면 contributor 타일이 줄 방향을 따라 35ms 간격으로 부풀었다 터지고, 빈 칸에 약 0.4초 잔광이 남으며, 남은 타일은 한 번 출렁인다. 이 연출은 입력을 막지 않는다.
+- 설정의 정산 속도를 따르고, 한 확정에서 스텝이 8개를 넘으면 최대 2.5배까지 자동으로 가속한다. 정산 중 HUD 아래를 탭하면 남은 연출을 건너뛴다. 속도, 자동 가속, 스킵, 동작 줄이기 중 무엇을 써도 최종 점수·보드·골드·덱 상태는 같다.
+- cash-out sheet는 짧은 fade·slide로 등장한다(동작 줄이기에서는 즉시).
+
 Blind clear 뒤에는 cleared/settlement overlay, cash-out sheet, gold·deck reward reveal이 이어진다. S8 Boss cash-out은 `무한 도전 진입`과 `런 완료`를 분리하고, 일반 cash-out은 Market 진입만 제공한다. cash-out dialog는 결과가 준비되기 전 action을 비활성화하며 SafeArea 안에서 표시된다. 구현은 [game_view_stage_flow.dart](../../lib/views/game/game_view_stage_flow.dart)와 [game_cashout_widgets.dart](../../lib/views/game/widgets/game_cashout_widgets.dart)가 소유한다.
 
 ## Market 화면
@@ -75,9 +87,11 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 
 | 일어난 일 | 화면에서 보이는 변화 | 소리와 다음 안내 |
 |---|---|---|
-| tap·select | selection border, button state, tile pop | button SFX; web는 user gesture에서 audio unlock |
-| invalid battle action | action 유지, top notice | 상태를 바꾸지 않고 이유 표시 |
-| confirm | line sweep, contributor lift/remove, rank/overlap/effect callout, score mote | clear 시 clear SFX |
+| tap·select | 전투 액션 버튼 누름 찌그러짐·juice, 손패 선택 시 떠오름·확대·기울기(spring-follow), 덱→손패·손패→보드 호 비행과 착지 파문 | 행동별 의미 키(배치·드로우·버림·아이템·줄 변환·이동·선택·미리보기 변화); web는 user gesture에서 audio unlock |
+| battle 진입·예고 | 보드·손패 stagger deal, Boss `X`·제약 표시 찍힘, 점수 줄 숨쉬기 3회 뒤 정지, 한 칸 남은 줄 희미한 힌트, 확정 버튼 장전, 마지막 이동·버림·덱 0 자원 경고 | 정보 전달용이며 점수가 나지 않는 결과는 축하하지 않는다 |
+| invalid battle action | action 유지, top notice 문구 유지, 해당 영역 좌우 흔들림 | 오류음과 error 햅틱. 무효 배치, 점유 칸 이동, 점수 줄 없는 확정, 아이템 실패, 가득 찬 손패 드로우, 잠긴 Jester·Item 슬롯 탭이 같은 입구(`_denyBattleAction`)를 쓴다 |
+| confirm | callout, 타일 tick, 겹침 체인, Jester 순차 발동, 등급 callout, count-up, contributor 순차 제거 | tick pitch 상승, 등급별 소리, clear 시 clear SFX |
+| battle Jester sell | 슬롯에서 카드 조각·코인 burst, 골드 count-up | sell cue |
 | Item/Jester/tile effect | source badge, burst, flight, 2초 feedback | effect 결과 label 유지 |
 | Market deny/success | deny shake·badge 또는 purchase flight·slot pulse·offer reveal | notice로 guard 이유 표시 |
 | cash-out | 단계별 reward reveal, coin burst, total gold | collect SFX |
@@ -131,6 +145,7 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 - settlement/Market: [game_cashout_widgets_test.dart](../../test/views/game/widgets/game_cashout_widgets_test.dart), [game_shop_screen_test.dart](../../test/views/game/widgets/game_shop_screen_test.dart)
 - lifecycle/tutorial: [game_view_lifecycle_test.dart](../../test/views/game/game_view_lifecycle_test.dart), [game_shop_lifecycle_test.dart](../../test/views/game/widgets/game_shop_lifecycle_test.dart), [tutorial_state_service_test.dart](../../test/services/tutorial_state_service_test.dart)
 - settings/locale/archive: [setting_view_test.dart](../../test/views/setting_view_test.dart), [setting_view_effects_test.dart](../../test/views/setting_view_effects_test.dart), [archive_view_test.dart](../../test/views/archive_view_test.dart)
+- 전투 레인 연출: [settlement_speed_equivalence_test.dart](../../test/views/game/battle_lane/settlement_speed_equivalence_test.dart), [settlement_pacing_test.dart](../../test/views/game/battle_lane/settlement_pacing_test.dart), [contributor_clear_test.dart](../../test/views/game/battle_lane/contributor_clear_test.dart), [battle_input_feel_test.dart](../../test/views/game/battle_lane/battle_input_feel_test.dart)
 - 연출 기반: [presentation_clock_test.dart](../../test/widgets/fx/presentation_clock_test.dart), [motion_fx_test.dart](../../test/widgets/fx/motion_fx_test.dart), [game_feedback_test.dart](../../test/resources/game_feedback_test.dart), [rummi_poker_sfx_test.mjs](../../test/web/rummi_poker_sfx_test.mjs)
 
 
