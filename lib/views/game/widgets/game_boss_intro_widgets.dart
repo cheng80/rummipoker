@@ -358,17 +358,19 @@ class _BossMarkIconView extends StatelessWidget {
       return Container(
         height: 26,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: GameUiPalette.specialDangerSoft.withValues(alpha: 0.88),
           borderRadius: BorderRadius.circular(6),
         ),
-        child: Text(
-          icon.text ?? '',
-          style: const TextStyle(
-            color: GameUiPalette.textOnWarm,
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
+        child: Center(
+          widthFactor: 1,
+          child: Text(
+            icon.text ?? '',
+            style: const TextStyle(
+              color: GameUiPalette.textOnWarm,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       );
@@ -485,83 +487,78 @@ class _GameBossMarkFlightLayerState extends State<GameBossMarkFlightLayer>
 
   @override
   Widget build(BuildContext context) {
+    final stagger = GameBossMarkFlightLayer._stagger(widget.flights.length);
+    final total = _controller.duration!.inMicroseconds;
+    final flight = GamePresentationTimings.bossMarkFlight.inMicroseconds;
     return IgnorePointer(
       child: RepaintBoundary(
-        child: CustomPaint(
+        child: AnimatedBuilder(
           key: const ValueKey('boss-mark-flight-layer'),
-          size: Size.infinite,
-          painter: _BossMarkFlightPainter(
-            controller: _controller,
-            flights: widget.flights,
-            stagger: GameBossMarkFlightLayer._stagger(widget.flights.length),
+          animation: _controller,
+          builder: (context, _) {
+            final elapsed = _controller.value * total;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                for (var i = 0; i < widget.flights.length; i++)
+                  _flightMark(
+                    widget.flights[i],
+                    (elapsed - stagger.inMicroseconds * i) / flight,
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  static const double _baseSize = 20;
+
+  Widget _flightMark(GameBossMarkFlight f, double raw) {
+    if (raw <= 0) return const SizedBox.shrink();
+    final t = Curves.easeInOutCubic.transform(raw.clamp(0.0, 1.0));
+    final to = f.to.center;
+    final control = Offset(
+      (f.from.dx + to.dx) / 2,
+      math.min(f.from.dy, to.dy) - 70,
+    );
+    final u = 1 - t;
+    final p = f.from * (u * u) + control * (2 * u * t) + to * (t * t);
+    // 목표 도장 시작 크기: 목표 글자 높이를 1.9배로 키운 크기.
+    final endHeight = f.to.height * 1.9;
+    final scale = (_baseSize + (endHeight - _baseSize) * t) / _baseSize;
+    return Positioned(
+      left: p.dx - _baseSize,
+      top: p.dy - _baseSize,
+      width: _baseSize * 2,
+      height: _baseSize * 2,
+      child: Transform.rotate(
+        angle: (1 - t) * -0.5,
+        child: Transform.scale(
+          scale: scale,
+          child: const Center(
+            child: Text(
+              'X',
+              style: TextStyle(
+                color: GameUiPalette.bossWeakenPreview,
+                fontSize: _baseSize,
+                fontWeight: FontWeight.w900,
+                height: 1,
+                shadows: [
+                  Shadow(
+                    color: GameUiPalette.ink,
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-class _BossMarkFlightPainter extends CustomPainter {
-  _BossMarkFlightPainter({
-    required this.controller,
-    required this.flights,
-    required this.stagger,
-  }) : super(repaint: controller);
-
-  final AnimationController controller;
-  final List<GameBossMarkFlight> flights;
-  final Duration stagger;
-
-  static final TextPainter _mark = TextPainter(
-    text: const TextSpan(
-      text: 'X',
-      style: TextStyle(
-        color: GameUiPalette.bossWeakenPreview,
-        fontSize: 20,
-        fontWeight: FontWeight.w900,
-        height: 1,
-        shadows: [
-          Shadow(color: GameUiPalette.ink, blurRadius: 2, offset: Offset(0, 1)),
-        ],
-      ),
-    ),
-    textDirection: TextDirection.ltr,
-  )..layout();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final total = controller.duration!.inMicroseconds;
-    final elapsed = controller.value * total;
-    final flight = GamePresentationTimings.bossMarkFlight.inMicroseconds;
-    for (var i = 0; i < flights.length; i++) {
-      final raw = (elapsed - stagger.inMicroseconds * i) / flight;
-      if (raw <= 0) continue;
-      final t = Curves.easeInOutCubic.transform(raw.clamp(0.0, 1.0));
-      final f = flights[i];
-      final to = f.to.center;
-      final control = Offset(
-        (f.from.dx + to.dx) / 2,
-        math.min(f.from.dy, to.dy) - 70,
-      );
-      final u = 1 - t;
-      final p = f.from * (u * u) + control * (2 * u * t) + to * (t * t);
-      // 목표 도장 시작 크기: 목표 글자 높이를 1.9배로 키운 크기.
-      final endHeight = f.to.height * 1.9;
-      final startHeight = _mark.height;
-      final height = startHeight + (endHeight - startHeight) * t;
-      final scale = height / _mark.height;
-      canvas.save();
-      canvas.translate(p.dx, p.dy);
-      canvas.rotate((1 - t) * -0.5);
-      canvas.scale(scale);
-      _mark.paint(canvas, Offset(-_mark.width / 2, -_mark.height / 2));
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BossMarkFlightPainter oldDelegate) =>
-      oldDelegate.flights != flights;
 }
 
 /// [root] 아래에서 Boss 제약 표시([GameStampIn]) 안 `X` 글자의 전역 사각형을 모은다.
