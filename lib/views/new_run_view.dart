@@ -15,6 +15,10 @@ import '../services/new_run_setup.dart';
 import '../services/run_unlock_state_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/fx/fx_layer.dart';
+import '../widgets/fx/juice.dart';
+import 'game/game_feedback_cues.dart';
+import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_ui_palette.dart';
 import 'home_entry_widgets.dart';
 
@@ -33,6 +37,9 @@ class _NewRunViewState extends State<NewRunView> {
   RunUnlockState _unlockState = RunUnlockState.defaults();
   NewRunDifficulty _selectedDifficulty = NewRunDifficulty.standard;
   NewRunModifier _selectedRunModifier = NewRunModifier.basic;
+  // 카드별 거절·해금 연출 트리거. 다른 카드의 값이 바뀌어도 이 카드는 튕기지 않는다.
+  final Map<NewRunModifier, int> _modifierDenyTicks = {};
+  final Map<NewRunModifier, int> _modifierUnlockTicks = {};
 
   @override
   void initState() {
@@ -77,7 +84,6 @@ class _NewRunViewState extends State<NewRunView> {
 
   Future<void> _startRandomRun() async {
     SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     final seed = RummiPokerGridSession.rollNewRunSeed();
     final runtime = await _saveInitialRun(seed);
     if (!mounted || runtime == null) return;
@@ -150,7 +156,7 @@ class _NewRunViewState extends State<NewRunView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.runStart);
     final runtime = await _saveInitialRun(value);
     if (!mounted || runtime == null) return;
     _logRunStart(seedMode: 'manual', seed: value);
@@ -231,6 +237,7 @@ class _NewRunViewState extends State<NewRunView> {
 
   Future<void> _selectOrUnlockRunModifier(NewRunModifier modifier) async {
     if (_unlockState.isRunModifierUnlocked(modifier)) {
+      GameFeedback.play(GameCue.choiceSelect);
       setState(() => _selectedRunModifier = modifier);
       return;
     }
@@ -241,9 +248,18 @@ class _NewRunViewState extends State<NewRunView> {
       _unlockState = latest;
       if (unlocked) {
         _selectedRunModifier = modifier;
+        _modifierUnlockTicks.update(modifier, (v) => v + 1, ifAbsent: () => 1);
+      } else {
+        // 잠긴 카드 흔들림과 오류음은 카드의 PressFeedback이 낸다.
+        _modifierDenyTicks.update(modifier, (v) => v + 1, ifAbsent: () => 1);
       }
     });
-    showTopNotice(context, unlocked ? '${modifier.label} 해금' : '기억 카드가 부족합니다.');
+    if (unlocked) GameFeedback.play(GameCue.unlock);
+    showTopNotice(
+      context,
+      unlocked ? '${modifier.label} 해금' : '기억 카드가 부족합니다.',
+      cue: null,
+    );
   }
 
   @override
@@ -283,9 +299,10 @@ class _NewRunViewState extends State<NewRunView> {
                 child: _DifficultyPicker(
                   difficulties: _availableDifficulties,
                   selectedDifficulty: _selectedDifficulty,
-                  onChanged: (difficulty) => setState(() {
-                    _selectedDifficulty = difficulty;
-                  }),
+                  onChanged: (difficulty) {
+                    GameFeedback.play(GameCue.choiceSelect);
+                    setState(() => _selectedDifficulty = difficulty);
+                  },
                 ),
               ),
               const SizedBox(height: 18),
@@ -302,6 +319,8 @@ class _NewRunViewState extends State<NewRunView> {
               child: _RunModifierPicker(
                 selectedRunModifier: _selectedRunModifier,
                 unlockState: _unlockState,
+                denyTicks: _modifierDenyTicks,
+                unlockTicks: _modifierUnlockTicks,
                 onSelect: _selectOrUnlockRunModifier,
               ),
             ),
@@ -317,6 +336,8 @@ class _NewRunViewState extends State<NewRunView> {
                     title: context.tr('entryRandomSeed'),
                     description: '무작위 시드로 바로 시작',
                     accent: GameUiPalette.actionInfoBlue,
+                    cue: GameCue.runStart,
+                    decision: true,
                     onTap: _startRandomRun,
                   ),
                   const SizedBox(height: 12),
@@ -414,11 +435,15 @@ class _RunModifierPicker extends StatelessWidget {
   const _RunModifierPicker({
     required this.selectedRunModifier,
     required this.unlockState,
+    required this.denyTicks,
+    required this.unlockTicks,
     required this.onSelect,
   });
 
   final NewRunModifier selectedRunModifier;
   final RunUnlockState unlockState;
+  final Map<NewRunModifier, int> denyTicks;
+  final Map<NewRunModifier, int> unlockTicks;
   final ValueChanged<NewRunModifier> onSelect;
 
   @override
@@ -428,10 +453,13 @@ class _RunModifierPicker extends StatelessWidget {
       children: [
         for (final modifier in NewRunModifier.values)
           _RunModifierCard(
+            key: ValueKey('run-modifier-${modifier.id}'),
             modifier: modifier,
             selected: modifier == selectedRunModifier,
             unlocked: unlockState.isRunModifierUnlocked(modifier),
             canUnlock: unlockState.insight >= modifier.unlockCostInsight,
+            denyTrigger: denyTicks[modifier] ?? 0,
+            unlockTrigger: unlockTicks[modifier] ?? 0,
             onTap: () => onSelect(modifier),
           ),
       ],
@@ -441,10 +469,13 @@ class _RunModifierPicker extends StatelessWidget {
 
 class _RunModifierCard extends StatelessWidget {
   const _RunModifierCard({
+    super.key,
     required this.modifier,
     required this.selected,
     required this.unlocked,
     required this.canUnlock,
+    required this.denyTrigger,
+    required this.unlockTrigger,
     required this.onTap,
   });
 
@@ -452,6 +483,8 @@ class _RunModifierCard extends StatelessWidget {
   final bool selected;
   final bool unlocked;
   final bool canUnlock;
+  final int denyTrigger;
+  final int unlockTrigger;
   final VoidCallback onTap;
 
   @override
@@ -468,75 +501,89 @@ class _RunModifierCard extends StatelessWidget {
     final status = unlocked
         ? (selected ? '선택됨' : '선택 가능')
         : (canUnlock ? '기억 카드로 해금' : '기억 카드 필요');
-    return Material(
-      color: GameUiPalette.transparent,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
+    return _UnlockBurst(
+      trigger: unlockTrigger,
+      color: accent,
+      child: PressFeedback(
         onTap: onTap,
-        child: Ink(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
-          decoration: BoxDecoration(
-            color: fillColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor, width: selected ? 1.8 : 1),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                unlocked
-                    ? (selected
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_unchecked_rounded)
-                    : Icons.lock_rounded,
-                color: unlocked || canUnlock
-                    ? accent
-                    : GameUiPalette.textPrimary.withValues(alpha: 0.42),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      modifier.label,
-                      style: TextStyle(
-                        color: GameUiPalette.textPrimary.withValues(
-                          alpha: 0.94,
-                        ),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _modifierEffectText(modifier),
-                      style: TextStyle(
-                        color: GameUiPalette.textPrimary.withValues(
-                          alpha: 0.68,
-                        ),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
+        denyTrigger: denyTrigger,
+        haptic: null,
+        builder: (context, onTap) => Material(
+          color: GameUiPalette.transparent,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: AnimatedContainer(
+              duration: GamePresentationTimings.choiceSelect,
+              curve: Curves.easeOut,
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+              decoration: BoxDecoration(
+                color: fillColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: borderColor,
+                  width: selected ? 1.8 : 1,
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                status,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  color: (unlocked || canUnlock)
-                      ? accent
-                      : GameUiPalette.textPrimary.withValues(alpha: 0.46),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                ),
+              child: Row(
+                children: [
+                  _ChoiceIcon(
+                    icon: unlocked
+                        ? (selected
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked_rounded)
+                        : Icons.lock_rounded,
+                    color: unlocked || canUnlock
+                        ? accent
+                        : GameUiPalette.textPrimary.withValues(alpha: 0.42),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          modifier.label,
+                          style: TextStyle(
+                            color: GameUiPalette.textPrimary.withValues(
+                              alpha: 0.94,
+                            ),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _modifierEffectText(modifier),
+                          style: TextStyle(
+                            color: GameUiPalette.textPrimary.withValues(
+                              alpha: 0.68,
+                            ),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    status,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: (unlocked || canUnlock)
+                          ? accent
+                          : GameUiPalette.textPrimary.withValues(alpha: 0.46),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -603,39 +650,116 @@ class _DifficultyButton extends StatelessWidget {
     final fillColor = selected
         ? GameUiPalette.specialBlue.withValues(alpha: 0.16)
         : GameUiPalette.textPrimary.withValues(alpha: 0.04);
-    return InkWell(
+    return PressFeedback(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-        decoration: BoxDecoration(
-          color: fillColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-              color: selected
-                  ? GameUiPalette.specialBlue
-                  : GameUiPalette.textPrimary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              setup.difficultyLabel,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
+      haptic: null,
+      builder: (context, onTap) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: GamePresentationTimings.choiceSelect,
+          curve: Curves.easeOut,
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+          decoration: BoxDecoration(
+            color: fillColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ChoiceIcon(
+                icon: selected
+                    ? Icons.check_circle_rounded
+                    : Icons.circle_outlined,
+                color: selected
+                    ? GameUiPalette.specialBlue
+                    : GameUiPalette.textPrimary.withValues(alpha: 0.5),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                setup.difficultyLabel,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// 선택 아이콘을 짧은 fade·scale로 바꾼다.
+class _ChoiceIcon extends StatelessWidget {
+  const _ChoiceIcon({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: GamePresentationTimings.choiceSelect,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.6, end: 1).animate(animation),
+          child: child,
+        ),
+      ),
+      child: Icon(icon, key: ValueKey(icon), color: color),
+    );
+  }
+}
+
+/// modifier 해금 순간 카드가 크게 튕기고 불꽃이 튄다.
+class _UnlockBurst extends StatefulWidget {
+  const _UnlockBurst({
+    required this.trigger,
+    required this.color,
+    required this.child,
+  });
+
+  final int trigger;
+  final Color color;
+  final Widget child;
+
+  @override
+  State<_UnlockBurst> createState() => _UnlockBurstState();
+}
+
+class _UnlockBurstState extends State<_UnlockBurst> {
+  static const double _juiceStrength = 2.2;
+
+  @override
+  void didUpdateWidget(covariant _UnlockBurst oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.trigger == oldWidget.trigger) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = context.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) return;
+      final size = box.size;
+      Fx.emit(context, FxPresets.sparks.copyWith(color: widget.color), [
+        size.centerLeft(Offset(size.width * 0.12, 0)),
+        size.center(Offset.zero),
+        size.centerRight(Offset(-size.width * 0.12, 0)),
+      ]);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Juice(
+      trigger: widget.trigger,
+      strength: _juiceStrength,
+      child: widget.child,
     );
   }
 }

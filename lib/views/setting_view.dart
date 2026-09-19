@@ -12,6 +12,7 @@ import '../services/in_app_review_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/game_feedback_cues.dart';
 import 'game/widgets/game_ui_palette.dart';
 
 /// 설정 화면. 볼륨, 음소거, 화면 꺼짐 방지 설정.
@@ -399,7 +400,7 @@ class _ChoiceTile<T> extends StatelessWidget {
                   alpha: 0.32,
                 ),
                 onSelected: (_) {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  GameFeedback.play(GameCue.choiceSelect);
                   onSelected(value);
                 },
               ),
@@ -481,7 +482,7 @@ class _LanguageSection extends StatelessWidget {
               ),
             ),
             onTap: () async {
-              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              GameFeedback.play(GameCue.choiceSelect);
               await context.setLocale(option.locale);
             },
           ),

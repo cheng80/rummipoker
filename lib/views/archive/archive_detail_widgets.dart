@@ -209,27 +209,31 @@ class _ArchiveSelectableCard extends StatelessWidget {
       height: totalHeight(height),
       child: Column(
         children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              width: width,
-              height: height + ((_outerPadding + _borderWidth) * 2),
-              padding: const EdgeInsets.all(_outerPadding),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: selected
-                      ? GameUiPalette.gameOverRewardAccent
-                      : GameUiPalette.transparent,
-                  width: _borderWidth,
+          PressFeedback(
+            onTap: _handleTap,
+            haptic: null,
+            builder: (context, onTap) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: AnimatedContainer(
+                duration: GamePresentationTimings.choiceSelect,
+                width: width,
+                height: height + ((_outerPadding + _borderWidth) * 2),
+                padding: const EdgeInsets.all(_outerPadding),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: selected
+                        ? GameUiPalette.gameOverRewardAccent
+                        : GameUiPalette.transparent,
+                    width: _borderWidth,
+                  ),
                 ),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: height,
-                child: child,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: height,
+                  child: child,
+                ),
               ),
             ),
           ),
@@ -243,6 +247,11 @@ class _ArchiveSelectableCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _handleTap() {
+    GameFeedback.play(GameCue.choiceSelect);
+    onTap();
   }
 }
 

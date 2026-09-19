@@ -13,7 +13,9 @@ import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/game_analytics_service.dart';
 import '../services/new_run_setup.dart';
+import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/game_feedback_cues.dart';
 import 'game/widgets/game_ui_palette.dart';
 import 'home_entry_widgets.dart';
 
@@ -113,7 +115,7 @@ class _BlindSelectViewState extends State<BlindSelectView> {
   Future<void> _startBlind(BlindSelectionSpec selected) async {
     if (!selected.isSelectable) return;
     SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.battleStart);
     SoundManager.playBgmFromUserGesture(AssetPaths.bgmMain);
     if (!mounted) return;
     _logStationSelect(selected);
@@ -504,42 +506,49 @@ class _BlindPlayButton extends StatelessWidget {
     final iconColor = enabled
         ? GameUiPalette.surfacePanel
         : status.stateColor.withValues(alpha: 0.68);
-    return Material(
-      color: GameUiPalette.transparent,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        customBorder: const CircleBorder(),
-        child: Ink(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: buttonColor,
-            border: Border.all(
-              color: enabled
-                  ? GameUiPalette.actionOrangePale
-                  : status.stateColor.withValues(alpha: 0.45),
-              width: enabled ? 2 : 1.4,
+    // 잠김·완료 상태의 탭은 거절 흔들림·오류음만 내고 상태는 바꾸지 않는다.
+    return PressFeedback(
+      onTap: enabled ? onTap : null,
+      deny: true,
+      decision: true,
+      haptic: null,
+      builder: (context, onTap) => Material(
+        color: GameUiPalette.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Ink(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: buttonColor,
+              border: Border.all(
+                color: enabled
+                    ? GameUiPalette.actionOrangePale
+                    : status.stateColor.withValues(alpha: 0.45),
+                width: enabled ? 2 : 1.4,
+              ),
+              boxShadow: enabled
+                  ? [
+                      BoxShadow(
+                        color: GameUiPalette.actionGold.withValues(alpha: 0.34),
+                        blurRadius: 14,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 4),
+                      ),
+                      BoxShadow(
+                        color: GameUiPalette.ink.withValues(alpha: 0.28),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ]
+                  : null,
             ),
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                      color: GameUiPalette.actionGold.withValues(alpha: 0.34),
-                      blurRadius: 14,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 4),
-                    ),
-                    BoxShadow(
-                      color: GameUiPalette.ink.withValues(alpha: 0.28),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ]
-                : null,
+            child: Icon(status.trailingIcon, color: iconColor, size: 26),
           ),
-          child: Icon(status.trailingIcon, color: iconColor, size: 26),
         ),
       ),
     );

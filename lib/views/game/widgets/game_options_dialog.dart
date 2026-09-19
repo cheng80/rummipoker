@@ -7,6 +7,7 @@ import '../../../resources/asset_paths.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
+import '../game_feedback_cues.dart';
 import 'game_shared_widgets.dart';
 import 'game_ui_palette.dart';
 
@@ -32,7 +33,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
   required bool isDebugFixtureRun,
 }) async {
   SoundManager.unlockForWeb();
-  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+  GameFeedback.play(GameCue.panelOpen);
   final action = await showGameFramedDialog<GameOptionsCloseAction>(
     context: context,
     barrierDismissible: false,

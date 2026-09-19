@@ -14,6 +14,8 @@ import '../services/active_run_save_service.dart';
 import '../services/debug_run_fixture_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import 'game/game_feedback_cues.dart';
+import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_ui_palette.dart';
 import 'game/widgets/game_run_info_dialog.dart';
 import 'game/widgets/game_bookmark_slot_dialog.dart';
@@ -139,9 +141,9 @@ class _TitleViewState extends ConsumerState<TitleView>
         return;
       }
       SoundManager.unlockForWeb();
-      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+      GameFeedback.play(GameCue.runRestore);
       final router = GoRouter.of(context);
-      await SoundManager.stopBgm();
+      await SoundManager.fadeOutBgm(GamePresentationTimings.titleBgmFadeOut);
       if (!mounted) return;
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
@@ -223,9 +225,9 @@ class _TitleViewState extends ConsumerState<TitleView>
       return;
     }
     SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.runRestore);
     final router = GoRouter.of(context);
-    await SoundManager.stopBgm();
+    await SoundManager.fadeOutBgm(GamePresentationTimings.titleBgmFadeOut);
     if (!mounted) return;
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
@@ -403,6 +405,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                       child: Column(
                         children: [
                           HomeEntryCard(
+                            key: const ValueKey('home-entry-continue'),
                             title: context.tr('continueGame'),
                             description:
                                 storedRunSummary?.currentLocationSummary ??
@@ -561,78 +564,83 @@ class _DebugFixtureOption extends StatelessWidget {
     return Semantics(
       button: true,
       label: numberedLabel,
-      child: GestureDetector(
+      child: PressFeedback(
         onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: GameUiPalette.titlePanelSurface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: GameUiPalette.cardFallback.withValues(alpha: 0.32),
-              width: 1.4,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: GameUiPalette.ink.withValues(alpha: 0.22),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
+        builder: (context, onTap) => GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: GameUiPalette.titlePanelSurface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: GameUiPalette.cardFallback.withValues(alpha: 0.32),
+                width: 1.4,
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-            child: Row(
-              spacing: 10,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 6,
-                    children: [
-                      Text(
-                        numberedLabel,
-                        softWrap: true,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: GameUiPalette.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        description,
-                        softWrap: true,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.35,
-                          fontWeight: FontWeight.w700,
-                          color: GameUiPalette.textPrimary.withValues(
-                            alpha: 0.74,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: GameUiPalette.cardFallback.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: GameUiPalette.cardFallback.withValues(alpha: 0.26),
-                    ),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      size: 20,
-                      color: GameUiPalette.specialMutedText,
-                    ),
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: GameUiPalette.ink.withValues(alpha: 0.22),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+              child: Row(
+                spacing: 10,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 6,
+                      children: [
+                        Text(
+                          numberedLabel,
+                          softWrap: true,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: GameUiPalette.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          description,
+                          softWrap: true,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.35,
+                            fontWeight: FontWeight.w700,
+                            color: GameUiPalette.textPrimary.withValues(
+                              alpha: 0.74,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: GameUiPalette.cardFallback.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: GameUiPalette.cardFallback.withValues(
+                          alpha: 0.26,
+                        ),
+                      ),
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: GameUiPalette.specialMutedText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
