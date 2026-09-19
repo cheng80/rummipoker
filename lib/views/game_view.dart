@@ -623,9 +623,10 @@ class _GameViewState extends ConsumerState<GameView>
     _saveActiveRun();
   }
 
-  void _showSnack(String message) {
+  /// [silent]는 호출부가 이미 자체 cue를 냈을 때 알림 등급 소리만 끈다.
+  void _showSnack(String message, {bool silent = false}) {
     if (!mounted) return;
-    showTopNotice(context, message);
+    showTopNotice(context, message, cue: silent ? null : GameCue.noticeTop);
   }
 
   void _schedulePendingItemPresentationFeedback(GameSessionState gameState) {

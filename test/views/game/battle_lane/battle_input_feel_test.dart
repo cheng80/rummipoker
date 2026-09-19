@@ -58,6 +58,11 @@ void main() {
     await tester.pump();
     expect(find.text('확정할 족보 줄이 없습니다.'), findsOneWidget);
     expect(sfx, contains(AssetPaths.sfxFail));
+    expect(
+      sfx,
+      isNot(contains(AssetPaths.sfxTimeTic)),
+      reason: '거절 때 notice 소리가 겹치면 안 된다',
+    );
     expect(haptics, contains(HapticGrade.error));
     expect(find.byKey(const ValueKey('game-deny-shake-1')), findsOneWidget);
     expect(find.byKey(const ValueKey('battle-confirm-armed')), findsNothing);

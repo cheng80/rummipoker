@@ -132,7 +132,7 @@ extension _GameViewBattleActions on _GameViewState {
     if (!ok) return;
     GameFeedback.play(GameCue.sell);
     if (slotIndex != null) _emitJesterSaleBurst(slotIndex);
-    _showSnack('제스터를 판매했습니다.');
+    _showSnack('제스터를 판매했습니다.', silent: true);
   }
 
   /// 상점 판매처럼 팔린 슬롯에서 카드 조각과 코인이 튄다.
@@ -163,7 +163,7 @@ extension _GameViewBattleActions on _GameViewState {
       _battleDenyTarget = target;
       _battleDenyTick++;
     });
-    _showSnack(message);
+    _showSnack(message, silent: true);
   }
 
   void _openBattleItemOverlay(RummiBattleItemSlotView slot) {
@@ -312,7 +312,7 @@ extension _GameViewBattleActions on _GameViewState {
     final itemName = ItemTranslationScope.of(
       context,
     ).resolveDisplayName(slot.contentId, slot.displayName);
-    _showSnack('$itemName 사용');
+    _showSnack('$itemName 사용', silent: true);
     _showItemEffectFeedback(
       title: itemName,
       detail: _battleItemFeedbackDetail(slot.item),
@@ -456,7 +456,7 @@ extension _GameViewBattleActions on _GameViewState {
     GameFeedback.play(GameCue.itemUse);
     final targetLabel =
         '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}';
-    _showSnack('$itemName 사용');
+    _showSnack('$itemName 사용', silent: true);
     _showItemEffectFeedback(
       title: itemName,
       detail: _scoringLineTargetFeedbackDetail(
@@ -570,7 +570,7 @@ extension _GameViewBattleActions on _GameViewState {
       _fateTransformFlashLineRef = selected.ref;
       _fateTransformFlashTick += 1;
     });
-    _showSnack('${selection.itemName} 사용');
+    _showSnack('${selection.itemName} 사용', silent: true);
     final feedbackDetail = _scoringLineTargetFeedbackDetail(
       selection.slot.item,
       '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}',
@@ -786,7 +786,7 @@ extension _GameViewBattleActions on _GameViewState {
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
       GameFeedback.play(GameCue.itemUse);
-      _showSnack('$itemName 사용');
+      _showSnack('$itemName 사용', silent: true);
       _showItemEffectFeedback(
         title: itemName,
         detail: '덱 확인',
@@ -814,7 +814,7 @@ extension _GameViewBattleActions on _GameViewState {
       parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
     );
     GameFeedback.play(GameCue.discard);
-    _showSnack('${selectedTile.code} 제거');
+    _showSnack('${selectedTile.code} 제거', silent: true);
     _showItemEffectFeedback(
       title: itemName,
       detail: '${selectedTile.code} 제거',
@@ -1058,7 +1058,10 @@ extension _GameViewBattleActions on _GameViewState {
     );
     _cancelBoardMoveMode();
     GameFeedback.play(GameCue.tileMove);
-    _showSnack(hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.');
+    _showSnack(
+      hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.',
+      silent: true,
+    );
     if (hadSlideBonus) {
       _showBoardMoveBonusFlash(row: row, col: col);
       _showItemEffectFeedback(title: '슬라이드 왁스', detail: '이동 보너스 발동');
