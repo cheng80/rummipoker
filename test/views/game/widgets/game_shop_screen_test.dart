@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,6 +101,7 @@ Future<void> _pumpShopScreen(
 }
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('GameShopScreen reads refreshed market/save facades after buy', (

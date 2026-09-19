@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,7 @@ import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('GameShopScreen shows feedback after market item use', (
@@ -88,6 +90,7 @@ void main() {
               home: JesterTranslationScope(
                 child: ItemTranslationScope(
                   child: GameShopScreen(
+                    autoStartTutorials: false,
                     key: UniqueKey(),
                     runSeed: 77,
                     readMarketView: () => currentMarket,
@@ -179,10 +182,7 @@ void main() {
     expect(find.byKey(const ValueKey('market-use-feedback')), findsOneWidget);
     expect(find.text('7'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 1200));
-    expect(
-      find.byKey(const ValueKey('market-gold-gain-badge')),
-      findsNothing,
-    );
+    expect(find.byKey(const ValueKey('market-gold-gain-badge')), findsNothing);
     expect(find.byKey(const ValueKey('market-use-feedback')), findsNothing);
     expect(find.text('7'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
