@@ -111,11 +111,11 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 
 특수 타일은 기존 글자 배지를 유지하면서 면과 가장자리에 재질을 더한다. 칩 박힘은 작은 금속 점, 점수 도금은 얇은 세로선, 골드는 금색 안쪽 테두리, 유리는 대각 반사광으로 구분한다. 은빛·빛무늬·다색 판본은 각각 은색·청록색·무지개색 가장자리를 쓴다. 인장은 왼쪽 아래에 점이나 빗금으로 새기며 오른쪽 아래의 글자 배지는 그대로 남는다.
 
-작은 보드 타일과 큰 상세 타일은 `TileMaterialMetrics`를 공유한다. 면의 무늬는 숫자와 색 띠보다 먼저 그리고 움직이는 반사광은 가장자리에 제한한다. 숫자, 인장·판본 배지, Boss 제약 `X`, 선택 테두리의 위치는 바꾸지 않는다. 구현은 [tile_material.dart](../../lib/widgets/fx/tile_material.dart)와 [rummikub_tile_canvas.dart](../../lib/game/rummi_poker_grid/rummikub_tile_canvas.dart)에 있다.
+작은 보드 타일과 큰 상세 타일은 `TileMaterialMetrics`를 공유한다. 면의 무늬는 숫자와 색 띠보다 먼저 그리고 움직이는 반사광은 가장자리에 제한한다. 아이템 효과의 `accent`가 켜지면 가장자리 재질 띠를 생략해 금색 대상 링을 보존한다. 숫자, 인장·판본 배지, Boss 제약 `X`, 선택 테두리의 위치는 바꾸지 않는다. 구현은 [tile_material.dart](../../lib/widgets/fx/tile_material.dart)와 [rummikub_tile_canvas.dart](../../lib/game/rummi_poker_grid/rummikub_tile_canvas.dart)에 있다.
 
-반사광은 공용 시계 하나로 200ms마다 갱신하며 화면에 보이는 타일은 최대 4장까지 움직인다. 나머지는 정적 재질을 표시한다. 화면 밖으로 나가거나 숨겨진 타일은 갱신하지 않는다. 재질 타일이 없거나 연출 강도가 꺼져 있거나 OS 동작 줄이기가 켜져 있으면 시계를 멈춘다. 앱 비활성 상태에서도 움직이지 않으며 정산 속도를 바꾸거나 연출을 생략해도 타일 데이터는 달라지지 않는다.
+반사광은 공용 시계 하나로 200ms마다 갱신하며 화면에 보이는 타일은 최대 4장까지 움직인다. 나머지는 타일 안쪽에 하이라이트가 놓이는 phase 0.25에서 시작한다. 가시성 검사는 한 프레임에 한 번 예약하고 tick 안에서는 검사 결과를 재사용한다. 화면 밖으로 나가거나 숨겨진 타일은 갱신하지 않는다. 재질 타일이 없거나 연출 강도가 꺼져 있거나 OS 동작 줄이기가 켜져 있으면 시계를 멈춘다. 앱 비활성 상태에서도 움직이지 않으며 정산 속도를 바꾸거나 연출을 생략해도 타일 데이터는 달라지지 않는다.
 
-별 배경은 F의 구운 `FxSprites` atlas를 `drawRawAtlas`로 그린다. 별의 알파만 바꾸는 레이어를 `RepaintBoundary`로 분리하고 기본 그라디언트의 raster cache 힌트는 유지한다. 연출 강도 끔·동작 줄이기에서는 정지 배경을 표시한다.
+별 배경은 F의 구운 `FxSprites` atlas를 `drawRawAtlas`로 그린다. 별의 알파만 바꾸는 레이어를 `RepaintBoundary`로 분리하고 기본 그라디언트의 raster cache 힌트는 유지한다. 연출 강도 끔·동작 줄이기에서는 정지 배경을 표시한다. 배경 위젯이 교체돼도 남아 있는 소유자가 공유 시계를 유지하며, 연출을 다시 켜면 메뉴 색조도 즉시 다시 그린다.
 
 [FxAmbient](../../lib/widgets/fx/fx_ambient.dart)는 `setMood(FxAmbientMood.battle | market | boss | reward | menu)`와 `pulse(strength)`를 제공한다. 분위기 색조는 900ms에 걸쳐 목표 색으로 바뀌고 짧은 밝기 반응은 800ms 안에 끝난다. 화면별 호출은 통합 단계에서 연결한다. 이 API는 화면 분위기만 바꾸며 게임 결과와 입력 가능 여부에는 관여하지 않는다. 성능 비교는 픽스처 확정 구간의 `frameCount`가 300 이상인 회차만 사용한다. 유효 회차를 전후 3회씩 얻지 못하면 환경 부하로 측정 불가로 기록하고 통합 단계에서 다시 확인한다.
 
