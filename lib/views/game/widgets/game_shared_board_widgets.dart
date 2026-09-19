@@ -1,5 +1,13 @@
 part of 'game_shared_widgets.dart';
 
+/// 교차 타일이 맞을수록 달아오르는 색.
+const Color _kOverlapHeatColor = Color(0xFFFF8A3D);
+
+Tile? _boardTileAtKey(RummiBoard board, String cellKey) {
+  final (row, col) = _parseBoardCellKey(cellKey);
+  return board.cellAt(row, col);
+}
+
 class GameBoardGrid extends StatefulWidget {
   const GameBoardGrid({
     super.key,
@@ -24,6 +32,8 @@ class GameBoardGrid extends StatefulWidget {
     this.lineFlashTick = 0,
     this.bonusFlashCellKey,
     this.bonusFlashTick = 0,
+    this.settlementTileHeat = const {},
+    this.settlementTileHitSerial = const {},
     this.alignment = Alignment.center,
   });
 
@@ -46,6 +56,12 @@ class GameBoardGrid extends StatefulWidget {
   final int? moveSourceCol;
   final String? bonusFlashCellKey;
   final int bonusFlashTick;
+
+  /// 한 확정 안에서 여러 줄에 기여한 교차 타일이 맞은 횟수. 달아오름 표시에 쓴다.
+  final Map<String, int> settlementTileHeat;
+
+  /// 정산 tick이 칸을 마지막으로 친 순번. 바뀌면 그 칸이 튕긴다.
+  final Map<String, int> settlementTileHitSerial;
   final void Function(int row, int col) onTapCell;
   final ValueChanged<Tile> onLongPressTile;
   final AlignmentGeometry alignment;
@@ -62,6 +78,10 @@ class _GameBoardGridState extends State<GameBoardGrid> {
   _BoardRemoveFlight? _removeFlight;
   int _moveFlightTick = 0;
   int _removeFlightTick = 0;
+  _ContributorClear? _contributorClear;
+  int _contributorClearTick = 0;
+  int _boardWobbleSerial = 0;
+  final List<Timer> _clearTimers = [];
 
   @override
   void initState() {
@@ -97,11 +117,113 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       appearedCells: appearedCells,
       previousTiles: _previousTiles,
     );
+    _startContributorClearIfNeeded(oldWidget);
+    _emitSettlementHitSparks(oldWidget);
     _previousTileKeys = currentTileKeys;
     _previousTiles = _tilesForBoard(widget.board);
     _appearingCells = _moveFlight == null
         ? appearingCells
         : appearingCells.difference({_moveFlight!.toCellKey});
+  }
+
+  @override
+  void dispose() {
+    for (final timer in _clearTimers) {
+      timer.cancel();
+    }
+    super.dispose();
+  }
+
+  /// 확정 뒤 snapshot이 비워질 때 사라지는 contributor 타일을 줄 방향으로 터뜨린다.
+  ///
+  /// 보드 state는 이미 갱신되어 있고 overlay는 입력을 막지 않는다.
+  void _startContributorClearIfNeeded(GameBoardGrid oldWidget) {
+    if (oldWidget.settlementBoardSnapshot.isEmpty ||
+        widget.settlementBoardSnapshot.isNotEmpty) {
+      return;
+    }
+    final cleared = <(String, Tile)>[
+      for (final entry in oldWidget.settlementBoardSnapshot.entries)
+        if (_boardTileAtKey(widget.board, entry.key) == null)
+          (entry.key, entry.value),
+    ];
+    if (cleared.isEmpty || MotionPolicy.juiceScale <= 0) return;
+    final tick = ++_contributorClearTick;
+    _boardWobbleSerial++;
+    _contributorClear = _ContributorClear(tick: tick, tiles: cleared);
+    for (final timer in _clearTimers) {
+      timer.cancel();
+    }
+    _clearTimers.clear();
+    const stagger = GamePresentationTimings.contributorClearStagger;
+    final popAt = GamePresentationTimings.contributorClearPop * 0.4;
+    for (var i = 0; i < cleared.length; i++) {
+      final key = cleared[i].$1;
+      _clearTimers.add(
+        Timer(stagger * i + popAt, () {
+          if (!mounted) return;
+          final center = _cellCenter(key);
+          if (center == null) return;
+          Fx.emit(context, FxPresets.shards, [center]);
+        }),
+      );
+    }
+    final total =
+        stagger * cleared.length +
+        GamePresentationTimings.contributorClearPop +
+        GamePresentationTimings.contributorClearAfterglow;
+    _clearTimers.add(
+      Timer(total, () {
+        if (!mounted || _contributorClear?.tick != tick) return;
+        setState(() => _contributorClear = null);
+      }),
+    );
+  }
+
+  /// 정산 tick으로 새로 맞은 칸에서 불꽃을 튀긴다. 교차 타일은 맞을수록 크게.
+  void _emitSettlementHitSparks(GameBoardGrid oldWidget) {
+    final hits = <String>[
+      for (final entry in widget.settlementTileHitSerial.entries)
+        if (oldWidget.settlementTileHitSerial[entry.key] != entry.value)
+          entry.key,
+    ];
+    if (hits.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final key in hits) {
+        final center = _cellCenter(key);
+        if (center == null) continue;
+        final heat = widget.settlementTileHeat[key] ?? 0;
+        Fx.emit(
+          context,
+          heat > 1
+              ? FxPresets.burst.copyWith(
+                  color: _kOverlapHeatColor,
+                  count: 10 + 6 * heat,
+                )
+              : FxPresets.sparks.copyWith(count: 6),
+          [center],
+        );
+      }
+    });
+  }
+
+  Offset? _cellCenter(String cellKey) {
+    final size = context.size;
+    if (size == null || size.isEmpty) return null;
+    final side = min(size.width, size.height);
+    final inner = side - kBoardFrameInset * 2;
+    final cell = (inner - kBoardGridGap * (kBoardSize - 1)) / kBoardSize;
+    final (row, col) = _parseBoardCellKey(cellKey);
+    final origin = Offset(
+      (size.width - side) / 2 + kBoardFrameInset,
+      (size.height - side) / 2 + kBoardFrameInset,
+    );
+    return origin +
+        Offset(
+          col * (cell + kBoardGridGap) + cell / 2,
+          row * (cell + kBoardGridGap) + cell / 2,
+        );
   }
 
   @override
@@ -195,12 +317,35 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                             child: child,
                           );
                         }
+                        final heat = widget.settlementTileHeat[cellKey] ?? 0;
+                        if (heat > 0) {
+                          child = FxBoxGlow(
+                            key: ValueKey('board-cell-heat-$row-$col-$heat'),
+                            color: _kOverlapHeatColor.withValues(
+                              alpha: min(0.85, 0.3 + 0.2 * heat),
+                            ),
+                            blurRadius: 8 + 4.0 * heat,
+                            spreadRadius: 1.0 * heat,
+                            child: child,
+                          );
+                        }
+                        child = Juice(
+                          trigger: _boardWobbleSerial,
+                          strength: 0.35,
+                          child: Juice(
+                            trigger: widget.settlementTileHitSerial[cellKey],
+                            strength: heat > 0 ? 0.9 + 0.45 * heat : 0.7,
+                            child: child,
+                          ),
+                        );
                         if (!_appearingCells.contains(cellKey)) {
                           return child;
                         }
                         return _BoardPlacePop(child: child);
                       },
                     ),
+                    if (_contributorClear != null)
+                      _ContributorClearOverlay(clear: _contributorClear!),
                     if (_moveFlight != null)
                       _BoardMoveFlightOverlay(flight: _moveFlight!),
                     if (_removeFlight != null)

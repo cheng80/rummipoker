@@ -15,6 +15,9 @@ class _GameSurface extends StatelessWidget {
     required this.settlementGoalDisplayScore,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
+    required this.settlementTileHeat,
+    required this.settlementTileHitSerial,
+    required this.settlementGrade,
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
@@ -64,6 +67,7 @@ class _GameSurface extends StatelessWidget {
     required this.onBattleItemUse,
     required this.onBattleItemOverlayClose,
     required this.onHandTileInfoOverlayClose,
+    required this.onSettlementSkip,
   });
 
   final RummiBattleRuntimeFacade battle;
@@ -79,6 +83,9 @@ class _GameSurface extends StatelessWidget {
   final int? settlementGoalDisplayScore;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
+  final Map<String, int> settlementTileHeat;
+  final Map<String, int> settlementTileHitSerial;
+  final int settlementGrade;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
@@ -128,6 +135,7 @@ class _GameSurface extends StatelessWidget {
   final ValueChanged<RummiBattleItemSlotView> onBattleItemUse;
   final VoidCallback onBattleItemOverlayClose;
   final VoidCallback onHandTileInfoOverlayClose;
+  final VoidCallback onSettlementSkip;
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +178,9 @@ class _GameSurface extends StatelessWidget {
                   activeSettlementLine: activeSettlementLine,
                   settlementSequenceTick: settlementSequenceTick,
                   settlementBoardSnapshot: settlementBoardSnapshot,
+                  settlementTileHeat: settlementTileHeat,
+                  settlementTileHitSerial: settlementTileHitSerial,
+                  settlementGrade: settlementGrade,
                   selectedHandTile: selectedHandTile,
                   selectedBoardRow: selectedBoardRow,
                   selectedBoardCol: selectedBoardCol,
@@ -212,6 +223,18 @@ class _GameSurface extends StatelessWidget {
                 ),
               ),
             ),
+            if (stageFlowPhase == GameStageFlowPhase.confirmSettlement)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                top: kBattleSurfacePadding.top + kGameHudHeight,
+                child: GestureDetector(
+                  key: const ValueKey('settlement-skip-area'),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onSettlementSkip,
+                ),
+              ),
             if (!presentationPaused &&
                 stageFlowPhase == GameStageFlowPhase.confirmSettlement)
               if (_showsFloatingSettlementBurst(activeSettlementStep))
@@ -372,6 +395,9 @@ class _GameLayout extends StatelessWidget {
     required this.activeSettlementLine,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
+    required this.settlementTileHeat,
+    required this.settlementTileHitSerial,
+    required this.settlementGrade,
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
@@ -424,6 +450,9 @@ class _GameLayout extends StatelessWidget {
   final ConfirmedLineBreakdown? activeSettlementLine;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
+  final Map<String, int> settlementTileHeat;
+  final Map<String, int> settlementTileHitSerial;
+  final int settlementGrade;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
@@ -487,6 +516,16 @@ class _GameLayout extends StatelessWidget {
       activeSettlementEffectIndexes,
     );
 
+    final preview = battle.scoringPreview;
+    final goalHeat = preview == null
+        ? 0.0
+        : GameSettlementPacing.goalHeat(
+            expectedScore: preview.expectedScore,
+            remaining:
+                station.objective.targetScore -
+                station.objective.scoreTowardObjective,
+          );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final boardSide = constraints.maxWidth;
@@ -504,6 +543,7 @@ class _GameLayout extends StatelessWidget {
               stationGoalPulse:
                   activeSettlementStep == ScoringPresentationStep.finalScore,
               stationGoalPulseTick: settlementSequenceTick,
+              goalHeat: goalHeat,
               onTutorialTap: onTutorialTap,
             ),
             const SizedBox(height: 4),
@@ -554,6 +594,9 @@ class _GameLayout extends StatelessWidget {
                                 activeSettlementCells: activeSettlementCells,
                                 settlementBoardSnapshot:
                                     settlementBoardSnapshot,
+                                settlementTileHeat: settlementTileHeat,
+                                settlementTileHitSerial:
+                                    settlementTileHitSerial,
                                 selectedRow: selectedBoardRow,
                                 selectedCol: selectedBoardCol,
                                 boardMoveMode: boardMoveMode,
@@ -580,22 +623,24 @@ class _GameLayout extends StatelessWidget {
                       activeSettlementLine: activeSettlementLine,
                       activeSettlementStep: activeSettlementStep,
                       settlementSequenceTick: settlementSequenceTick,
+                      settlementGrade: settlementGrade,
                       frameInset: kBoardFrameInset,
                       gridGap: kBoardGridGap,
                     ),
                   ),
                   if (_showsBoardScoringCallout(activeSettlementStep) &&
                       activeSettlementLine != null)
-                    Positioned(
-                      left: 12,
-                      right: 12,
-                      top: 10,
-                      child: _BoardScoringCallout(
-                        key: ValueKey(
-                          'board-score-$settlementSequenceTick-$activeSettlementStep',
-                        ),
+                    Positioned.fill(
+                      child: _BoardScoringCalloutPlacement(
                         line: activeSettlementLine!,
-                        step: activeSettlementStep,
+                        child: _BoardScoringCallout(
+                          key: ValueKey(
+                            'board-score-$settlementSequenceTick-$activeSettlementStep',
+                          ),
+                          line: activeSettlementLine!,
+                          step: activeSettlementStep,
+                          grade: settlementGrade,
+                        ),
                       ),
                     ),
                   if (AppConfig.showDebugFixtures && !suppressDebugChrome)
@@ -704,7 +749,8 @@ bool _showsBoardScoringCallout(ScoringPresentationStep step) {
   return step == ScoringPresentationStep.boardLine ||
       step == ScoringPresentationStep.handRank ||
       step == ScoringPresentationStep.overlap ||
-      step == ScoringPresentationStep.constraint;
+      step == ScoringPresentationStep.constraint ||
+      step == ScoringPresentationStep.finalScore;
 }
 
 bool _showsFloatingSettlementBurst(ScoringPresentationStep step) {

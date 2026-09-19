@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
@@ -6,6 +8,8 @@ import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/jester_translation_scope.dart';
+import '../../../widgets/fx/fx_sprites.dart';
+import '../../../widgets/fx/motion_policy.dart';
 import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
 import 'game_ui_palette.dart';
@@ -337,150 +341,158 @@ class GameJesterSlot extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
-                  border: Border.all(color: frameColor, width: frameWidth),
+      child: GameJesterFireMotion(
+        effect: activeEffect,
+        tick: settlementSequenceTick,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                      kRuntimeCardOuterRadius,
+                    ),
+                    border: Border.all(color: frameColor, width: frameWidth),
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.all(kBattleSlotCardInset),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: surfaceColor ?? GameUiPalette.cardFace,
-                  borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
-                  border: Border.all(
-                    color: isActive
-                        ? GameUiPalette.actionGoldBright
-                        : rarityColor.withValues(alpha: 0.72),
-                    width: isActive ? 2 : 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isActive
-                          ? GameUiPalette.actionGoldBright.withValues(
-                              alpha: 0.3,
-                            )
-                          : GameUiPalette.ink.withValues(alpha: 0.18),
-                      blurRadius: isActive ? 12 : 7,
-                      offset: const Offset(0, 3),
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(kBattleSlotCardInset),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: surfaceColor ?? GameUiPalette.cardFace,
+                    borderRadius: BorderRadius.circular(
+                      kRuntimeCardInnerRadius,
                     ),
-                  ],
-                ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final showInlineEffectBadge =
-                        activeEffect != null && constraints.maxHeight >= 76;
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(3.5, 3, 3.5, 3.5),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: kRuntimeCardBarHeight,
-                                  decoration: BoxDecoration(
-                                    gradient: gameCardRarityBarGradient(
-                                      rarityColor,
-                                    ),
-                                    borderRadius: BorderRadius.circular(
-                                      kRuntimeCardSmallRadius,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: GameUiPalette.textPrimary
-                                            .withValues(alpha: 0.18),
-                                        blurRadius: 0,
-                                        spreadRadius: 0.4,
+                    border: Border.all(
+                      color: isActive
+                          ? GameUiPalette.actionGoldBright
+                          : rarityColor.withValues(alpha: 0.72),
+                      width: isActive ? 2 : 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isActive
+                            ? GameUiPalette.actionGoldBright.withValues(
+                                alpha: 0.3,
+                              )
+                            : GameUiPalette.ink.withValues(alpha: 0.18),
+                        blurRadius: isActive ? 12 : 7,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final showInlineEffectBadge =
+                          activeEffect != null && constraints.maxHeight >= 76;
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(3.5, 3, 3.5, 3.5),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: kRuntimeCardBarHeight,
+                                    decoration: BoxDecoration(
+                                      gradient: gameCardRarityBarGradient(
+                                        rarityColor,
                                       ),
-                                    ],
+                                      borderRadius: BorderRadius.circular(
+                                        kRuntimeCardSmallRadius,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: GameUiPalette.textPrimary
+                                              .withValues(alpha: 0.18),
+                                          blurRadius: 0,
+                                          spreadRadius: 0.4,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                _GameCardTypeBadge(
+                                  label: 'J',
+                                  color: rarityColor,
+                                  textColor: GameUiPalette.cardBadgeText,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2.5),
+                            _GameCardEmblemImage(
+                              assetPath: CardEmblemAssets.jester(card!.id),
+                            ),
+                            const SizedBox(height: 2.5),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: _RuntimeCardNameText(
+                                  displayName,
+                                  style: const TextStyle(
+                                    color: GameUiPalette.cardName,
+                                    fontSize: 5,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.12,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              _GameCardTypeBadge(
-                                label: 'J',
-                                color: rarityColor,
-                                textColor: GameUiPalette.cardBadgeText,
+                            ),
+                            if (showInlineEffectBadge) ...[
+                              const SizedBox(height: 3),
+                              Container(
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: GameUiPalette.surfacePanel,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  jesterEffectBadge(activeEffect!),
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: GameUiPalette.textPrimary,
+                                    fontSize: 6.5,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
+                                ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 2.5),
-                          _GameCardEmblemImage(
-                            assetPath: CardEmblemAssets.jester(card!.id),
-                          ),
-                          const SizedBox(height: 2.5),
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.topCenter,
-                              child: _RuntimeCardNameText(
-                                displayName,
-                                style: const TextStyle(
-                                  color: GameUiPalette.cardName,
-                                  fontSize: 5,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.12,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (showInlineEffectBadge) ...[
-                            const SizedBox(height: 3),
-                            Container(
-                              alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: GameUiPalette.surfacePanel,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                jesterEffectBadge(activeEffect!),
-                                maxLines: 1,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: GameUiPalette.textPrimary,
-                                  fontSize: 6.5,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1,
-                                ),
-                              ),
-                            ),
                           ],
-                        ],
-                      ),
-                    );
-                  },
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-          if (activeEffect != null)
-            Positioned(
-              left: 4,
-              right: 4,
-              top: -16,
-              child: GameJesterEffectBurst(
-                key: ValueKey(
-                  'jester-burst-${activeEffect!.jesterId}-$settlementSequenceTick',
+            if (activeEffect != null)
+              Positioned(
+                left: 4,
+                right: 4,
+                top: -16,
+                child: GameJesterEffectBurst(
+                  key: ValueKey(
+                    'jester-burst-${activeEffect!.jesterId}-$settlementSequenceTick',
+                  ),
+                  effect: activeEffect!,
+                  sourceName: displayName,
                 ),
-                effect: activeEffect!,
-                sourceName: displayName,
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -21,13 +21,14 @@ class GamePresentationTimings {
   );
   static const Duration nextStationOverlayIn = Duration(milliseconds: 420);
 
-  static const Duration settlementBoardLineStep = Duration(milliseconds: 720);
-  static const Duration settlementHandRankStep = Duration(milliseconds: 720);
-  static const Duration settlementOverlapStep = Duration(milliseconds: 680);
-  static const Duration settlementConstraintStep = Duration(milliseconds: 1240);
-  static const Duration settlementEffectStep = Duration(milliseconds: 1040);
-  static const Duration settlementFinalScoreStep = Duration(milliseconds: 920);
-  static const Duration settlementLineTail = Duration(milliseconds: 300);
+  // 전투 레인: boardLine은 타일 tick 뒤 남은 정지 시간이다.
+  static const Duration settlementBoardLineStep = Duration(milliseconds: 260);
+  static const Duration settlementHandRankStep = Duration(milliseconds: 560);
+  static const Duration settlementOverlapStep = Duration(milliseconds: 520);
+  static const Duration settlementConstraintStep = Duration(milliseconds: 960);
+  static const Duration settlementEffectStep = Duration(milliseconds: 640);
+  static const Duration settlementFinalScoreStep = Duration(milliseconds: 720);
+  static const Duration settlementLineTail = Duration(milliseconds: 180);
   static const Duration settlementStepCalloutIn = Duration(milliseconds: 280);
 
   static const Duration stageClearOverlayPop = Duration(milliseconds: 320);
@@ -107,6 +108,60 @@ class GamePresentationTimings {
   static const Duration marketSlotUnlockBannerIn = Duration(milliseconds: 420);
 
   static const Duration debugGameOverOnLoadDelay = Duration(milliseconds: 220);
+
+  // ── 전투 레인(T2 정산 클라이맥스 · T1 전투 입력) ──
+  /// 줄 안 타일 하나가 반응하는 박자.
+  static const Duration settlementTileTick = Duration(milliseconds: 80);
+
+  /// Jester 한 장이 발동하는 박자(왼쪽부터 한 장씩).
+  static const Duration settlementJesterFire = Duration(milliseconds: 420);
+
+  /// Jester 발동 모션(내려찍기·부풀기·회전 섬광) 길이.
+  static const Duration jesterFireMotion = Duration(milliseconds: 380);
+
+  /// 목표 점수·골드 count-up과 진행 바 채움.
+  static const Duration hudCountUp = Duration(milliseconds: 500);
+
+  /// count-up tick 소리 간격.
+  static const Duration hudCountTickInterval = Duration(milliseconds: 70);
+
+  /// 상위 등급 줄의 hit-stop.
+  static const Duration settlementGradeHitStop = Duration(milliseconds: 90);
+
+  /// 목표 달성 피니셔의 마지막 타격 hit-stop.
+  static const Duration settlementFinisherHitStop = Duration(milliseconds: 100);
+
+  /// 피니셔 finalScore 스텝의 슬로모션 배율.
+  static const double settlementFinisherSlowMo = 0.5;
+
+  /// 확정 후 contributor 타일이 줄 방향을 따라 터지는 간격.
+  static const Duration contributorClearStagger = Duration(milliseconds: 35);
+
+  /// contributor 타일 하나가 터지며 사라지는 길이.
+  static const Duration contributorClearPop = Duration(milliseconds: 220);
+
+  /// 빈 칸에 남는 잔광.
+  static const Duration contributorClearAfterglow = Duration(milliseconds: 420);
+
+  /// 정산 결과 시트 등장 전환.
+  static const Duration cashOutSheetIn = Duration(milliseconds: 260);
+
+  /// 줄 예고 숨쉬기 한 주기와 반복 횟수(유휴 시 멈춘다).
+  static const Duration lineHintBreath = Duration(milliseconds: 1400);
+  static const int lineHintBreathCycles = 3;
+
+  /// 타일 착지 뒤 주변 타일 파문 간격.
+  static const Duration landingRippleStagger = Duration(milliseconds: 25);
+
+  /// 덱→손패, 손패→보드 호 비행.
+  static const Duration tileArcFlight = Duration(milliseconds: 300);
+
+  /// 전투 진입 stagger.
+  static const Duration battleEntryStagger = Duration(milliseconds: 28);
+  static const Duration battleEntryDeal = Duration(milliseconds: 320);
+
+  /// Boss 제약 표시가 찍히는 모션.
+  static const Duration bossMarkStamp = Duration(milliseconds: 360);
 }
 
 /// 반복되는 duration/stagger 조합을 이름 붙여 쓰는 presentation 전용 보조 타입.

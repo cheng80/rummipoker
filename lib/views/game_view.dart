@@ -42,7 +42,9 @@ import '../services/run_progression_service.dart';
 import '../services/run_unlock_state_service.dart';
 import '../services/tutorial_state_service.dart';
 import '../utils/common_ui.dart';
+import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
+import 'game/game_settlement_pacing.dart';
 import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
@@ -57,7 +59,9 @@ import 'game/widgets/game_tile_choice_dialog.dart';
 import 'game/widgets/game_tutorial_overlay.dart';
 import 'game/widgets/game_surface_metrics.dart';
 import 'game/widgets/game_ui_palette.dart';
+import '../widgets/fx/motion_policy.dart';
 import '../widgets/fx/presentation_clock.dart';
+import '../widgets/fx/screen_shake.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 part 'game/game_view_transition_overlays.dart';
@@ -181,11 +185,32 @@ class _GameViewState extends ConsumerState<GameView>
   final GlobalKey _battleActionsTutorialKey = GlobalKey();
   final GlobalKey _battleHandTutorialKey = GlobalKey();
 
+  // 한 확정의 정산 연출 전용 상태. 저장·게임 결과와 무관하다.
+  bool _settlementSkipRequested = false;
+  bool _settlementSlowMo = false;
+  int _settlementStepCount = 0;
+  int _settlementTickIndex = 0;
+  int _settlementHitSerial = 0;
+  int _settlementGrade = 0;
+  Map<String, int> _settlementTileHeat = const {};
+  Map<String, int> _settlementTileHitSerial = const {};
+
   /// 정산·전환 연출 대기의 단일 시계. pause·정산 속도·hit-stop을 반영한다.
   late final PresentationClock _presentationClock = PresentationClock(
     tick: GamePresentationTimings.presentationPauseTick,
-    speed: () => GameSettings.settlementSpeed.multiplier,
+    speed: _presentationSpeed,
   );
+
+  /// 설정 속도 × 자동 가속 × 피니셔 슬로모션. 탭 스킵이면 즉시.
+  double _presentationSpeed() {
+    if (_settlementSkipRequested) return double.infinity;
+    final base = GameSettings.settlementSpeed.multiplier;
+    if (base.isInfinite) return base;
+    final slowMo = _settlementSlowMo
+        ? GamePresentationTimings.settlementFinisherSlowMo
+        : 1.0;
+    return base * GameSettlementPacing.autoAccel(_settlementStepCount) * slowMo;
+  }
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
@@ -666,6 +691,9 @@ class _GameViewState extends ConsumerState<GameView>
             settlementGoalDisplayScore: _settlementGoalDisplayScore,
             settlementSequenceTick: _settlementSequenceTick,
             settlementBoardSnapshot: _settlementBoardSnapshot,
+            settlementTileHeat: _settlementTileHeat,
+            settlementTileHitSerial: _settlementTileHitSerial,
+            settlementGrade: _settlementGrade,
             selectedHandTile: _selectedHandTile,
             selectedBoardRow: _selectedBoardRow,
             selectedBoardCol: _selectedBoardCol,
@@ -718,6 +746,7 @@ class _GameViewState extends ConsumerState<GameView>
             onBattleItemUse: _useBattleItem,
             onBattleItemOverlayClose: _closeBattleItemOverlay,
             onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
+            onSettlementSkip: _skipSettlementPresentation,
           ),
           if (_settlementToMarketTransition != null)
             Positioned.fill(

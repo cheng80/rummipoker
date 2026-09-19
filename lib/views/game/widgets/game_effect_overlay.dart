@@ -20,6 +20,7 @@ class GameBoardEffectOverlay extends StatefulWidget {
     required this.activeSettlementLine,
     required this.activeSettlementStep,
     required this.settlementSequenceTick,
+    this.settlementGrade = 0,
     required this.frameInset,
     required this.gridGap,
   });
@@ -27,6 +28,9 @@ class GameBoardEffectOverlay extends StatefulWidget {
   final ConfirmedLineBreakdown? activeSettlementLine;
   final ScoringPresentationStep activeSettlementStep;
   final int settlementSequenceTick;
+
+  /// 현재 줄의 점수 등급(0~3). 상위 2단계만 큰 점수 burst를 쓴다.
+  final int settlementGrade;
   final double frameInset;
   final double gridGap;
 
@@ -37,7 +41,7 @@ class GameBoardEffectOverlay extends StatefulWidget {
 class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   static const Duration _effectVisibleDuration =
       GamePresentationTimings.boardEffectVisible;
-  static const int _largeScoreBurstThreshold = 100;
+  static const int _largeScoreBurstGrade = 2;
 
   String? _lastEffectSignature;
   bool _visible = false;
@@ -111,7 +115,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           when line.constraintPenalties.isNotEmpty =>
         _BoardEffectKind.constraintImpact,
       ScoringPresentationStep.finalScore
-          when line.finalScore >= _largeScoreBurstThreshold =>
+          when widget.settlementGrade >= _largeScoreBurstGrade =>
         _BoardEffectKind.largeScore,
       ScoringPresentationStep.jester ||
       ScoringPresentationStep.tile ||
@@ -182,6 +186,13 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
         });
       }
       Fx.emit(context, switch (effectKind) {
+        // 타일 modifier와 Item은 Jester(금색)와 다른 색·모양으로 구분한다.
+        _BoardEffectKind.lineConfirm
+            when widget.activeSettlementStep == ScoringPresentationStep.tile =>
+          FxPresets.sparks.copyWith(color: GameUiPalette.specialMint),
+        _BoardEffectKind.lineConfirm
+            when widget.activeSettlementStep == ScoringPresentationStep.item =>
+          FxPresets.burst.copyWith(color: GameUiPalette.specialBlue),
         _BoardEffectKind.lineConfirm => FxPresets.lineConfirm,
         _BoardEffectKind.constraintImpact => FxPresets.constraintImpact,
         _BoardEffectKind.largeScore => FxPresets.largeScore,

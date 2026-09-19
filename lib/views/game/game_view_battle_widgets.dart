@@ -1,18 +1,75 @@
 part of '../game_view.dart';
 
+/// 채점 중인 줄을 가리지 않는 보드 가장자리에 callout을 놓는다.
+///
+/// 위·아래 두 줄 띠와 좌·우 두 칸 폭 후보 중 contributor 칸과 겹치지 않는 첫 자리를 고른다.
+class _BoardScoringCalloutPlacement extends StatelessWidget {
+  const _BoardScoringCalloutPlacement({
+    required this.line,
+    required this.child,
+  });
+
+  final ConfirmedLineBreakdown line;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final slot = boardCalloutSlotFor(line.contributingCells);
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+        final side = math.min(width, height);
+        final boardLeft = (width - side) / 2;
+        final boardTop = (height - side) / 2;
+        final inner = side - kBoardFrameInset * 2;
+        final cell = (inner - kBoardGridGap * (kBoardSize - 1)) / kBoardSize;
+        final twoCells = cell * 2 + kBoardGridGap;
+        final left = boardLeft + kBoardFrameInset;
+        final (slotLeft, slotWidth) = switch (slot.horizontal) {
+          BoardCalloutHorizontal.full => (left, inner),
+          BoardCalloutHorizontal.left => (left, twoCells),
+          BoardCalloutHorizontal.right => (left + inner - twoCells, twoCells),
+        };
+        final edge = kBoardFrameInset + 2;
+        return Stack(
+          children: [
+            Positioned(
+              key: ValueKey('board-score-callout-slot-${slot.name}'),
+              left: slotLeft,
+              width: slotWidth,
+              top: slot.top ? boardTop + edge : null,
+              bottom: slot.top ? null : height - (boardTop + side) + edge,
+              child: Align(
+                alignment: slot.top
+                    ? Alignment.topCenter
+                    : Alignment.bottomCenter,
+                child: child,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _BoardScoringCallout extends StatelessWidget {
   const _BoardScoringCallout({
     super.key,
     required this.line,
     required this.step,
+    this.grade = 0,
   });
 
   final ConfirmedLineBreakdown line;
   final ScoringPresentationStep step;
+  final int grade;
 
   @override
   Widget build(BuildContext context) {
     final isConstraint = step == ScoringPresentationStep.constraint;
+    final isFinal = step == ScoringPresentationStep.finalScore;
     final (title, value, detail) = switch (step) {
       ScoringPresentationStep.boardLine => (
         '${gameLineRefShortLabel(line.ref)} 라인',
@@ -34,136 +91,123 @@ class _BoardScoringCallout extends StatelessWidget {
         line.constraintPenalties.first.markerText,
         line.constraintPenalties.first.ruleText,
       ),
+      ScoringPresentationStep.finalScore => (
+        context.tr('settlementGrade${grade.clamp(0, 3)}'),
+        '+${line.finalScore}',
+        '',
+      ),
       _ => ('점수', '+0', ''),
     };
-    final valueColor = step == ScoringPresentationStep.constraint
+    final valueColor = isConstraint
         ? GameUiPalette.specialDangerBright
         : GameUiPalette.actionGoldBright;
     final accentColor = isConstraint
         ? GameUiPalette.specialDangerEffectBorder
         : GameUiPalette.actionGoldBright;
+    final titleSize = isFinal ? 12.0 + grade * 1.5 : 12.0;
     return IgnorePointer(
       child:
-          Align(
-                alignment: Alignment.topCenter,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: GameUiPalette.settlementEffectSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: accentColor.withValues(alpha: 0.78),
-                      width: 1.4,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentColor.withValues(alpha: 0.16),
-                        blurRadius: 14,
-                        spreadRadius: 1,
-                      ),
-                      BoxShadow(
-                        color: GameUiPalette.ink.withValues(alpha: 0.28),
-                        blurRadius: 12,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+          DecoratedBox(
+                key: isFinal ? ValueKey('board-score-grade-$grade') : null,
+                decoration: BoxDecoration(
+                  color: GameUiPalette.settlementEffectSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.78),
+                    width: 1.4,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.16),
+                      blurRadius: 14,
+                      spreadRadius: 1,
                     ),
-                    child: isConstraint
-                        ? ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 290),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        title,
-                                        softWrap: true,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: GameUiPalette.textPrimary,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w900,
-                                          height: 1.15,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      value,
-                                      style: TextStyle(
-                                        color: valueColor,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w900,
-                                        height: 1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  detail,
-                                  softWrap: true,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: GameUiPalette.textPrimary.withValues(
-                                      alpha: 0.72,
-                                    ),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.25,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                title,
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  color: GameUiPalette.textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                value,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  color: valueColor,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Flexible(
-                                child: Text(
-                                  detail,
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    color: GameUiPalette.textPrimary.withValues(
-                                      alpha: 0.68,
-                                    ),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1,
-                                  ),
-                                ),
-                              ),
-                            ],
+                    BoxShadow(
+                      color: GameUiPalette.ink.withValues(alpha: 0.28),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final stacked =
+                          isConstraint || constraints.maxWidth < 240;
+                      final titleText = Text(
+                        title,
+                        softWrap: true,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isFinal
+                              ? GameUiPalette.actionGoldBright
+                              : GameUiPalette.textPrimary,
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.w900,
+                          height: 1.15,
+                        ),
+                      );
+                      final valueText = Text(
+                        value,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: valueColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      );
+                      final detailText = Text(
+                        detail,
+                        softWrap: true,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: 0.72,
                           ),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          height: 1.25,
+                        ),
+                      );
+                      if (!stacked) {
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            titleText,
+                            const SizedBox(width: 10),
+                            valueText,
+                            if (detail.isNotEmpty) ...[
+                              const SizedBox(width: 10),
+                              Flexible(child: detailText),
+                            ],
+                          ],
+                        );
+                      }
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 290),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 2,
+                              children: [titleText, valueText],
+                            ),
+                            if (detail.isNotEmpty) ...[
+                              const SizedBox(height: 5),
+                              detailText,
+                            ],
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               )
