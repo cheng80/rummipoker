@@ -402,6 +402,8 @@ class _FxLayerState extends State<FxLayer> with SingleTickerProviderStateMixin {
     super.initState();
     _ticker = createTicker(_onTick);
     _controller._wake = _wake;
+    // 첫 프레임 직후 스프라이트를 굽는다. 확정 연출 같은 게임플레이 프레임에서 굽지 않게 한다.
+    SchedulerBinding.instance.addPostFrameCallback((_) => FxSprites.warmUp());
   }
 
   void _wake() {

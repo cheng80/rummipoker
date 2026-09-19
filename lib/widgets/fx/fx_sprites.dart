@@ -24,6 +24,13 @@ class FxSprites {
 
   static ui.Image get atlas => _atlas ??= _bakeAtlas();
 
+  /// 두 스프라이트를 미리 굽는다. 게임플레이 도중 첫 사용 프레임에서 굽지 않도록
+  /// [FxLayer]가 첫 프레임 직후에 부른다.
+  static void warmUp() {
+    atlas;
+    boxGlow;
+  }
+
   static Rect rectOf(FxSprite sprite) =>
       Rect.fromLTWH(sprite.index * cell, 0, cell, cell);
 
