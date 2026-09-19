@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
@@ -9,6 +10,7 @@ import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 import 'game_localized_test_app.dart';
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
@@ -77,6 +79,7 @@ void main() {
       await pumpLocalizedGameWidget(
         tester,
         child: GameShopScreen(
+          autoStartTutorials: false,
           runSeed: 77,
           readMarketView: () => currentMarket,
           readActiveRunSaveView: () => const RummiActiveRunSaveFacade(

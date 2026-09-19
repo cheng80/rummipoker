@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,6 +37,8 @@ Future<void> _pumpShopScreen(
   required RummiMarketRuntimeFacade Function() readMarketView,
   required RummiActiveRunSaveFacade Function() readActiveRunSaveView,
   required String? Function(RummiMarketOfferView offer) onBuyOffer,
+  bool Function(String category, String contentId)? isFirstAcquisition,
+  bool autoStartTutorials = false,
   String? Function(RummiMarketItemOfferView offer)? onBuyItemOffer,
   String? Function(int offerIndex)? onBuyTileOffer,
   String? Function(ItemDefinition item)? onUseMarketItem,
@@ -68,6 +71,8 @@ Future<void> _pumpShopScreen(
                   onReroll: () => null,
                   onRerollItemOffers: onRerollItemOffers,
                   onBuyOffer: onBuyOffer,
+                  isFirstAcquisition: isFirstAcquisition,
+                  autoStartTutorials: autoStartTutorials,
                   onBuyItemOffer: onBuyItemOffer ?? ((_) => null),
                   onBuyTileOffer: onBuyTileOffer ?? ((_) => null),
                   onUseMarketItem: onUseMarketItem ?? ((_) => null),
@@ -96,6 +101,7 @@ Future<void> _pumpShopScreen(
 }
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('GameShopScreen reads refreshed market/save facades after buy', (
@@ -111,6 +117,8 @@ void main() {
     });
 
     final trophyOfferCard = _jester(id: 'blueprint', displayName: 'Blueprint');
+    final acquiredIds = <String>{};
+    final firstAcquisitionResults = <bool>[];
     final trophyMarket = RummiMarketRuntimeFacade(
       gold: 12,
       rerollCost: 5,
@@ -276,8 +284,14 @@ void main() {
       tester,
       readMarketView: () => currentMarket,
       readActiveRunSaveView: () => currentSave,
+      isFirstAcquisition: (_, contentId) {
+        final result = !acquiredIds.contains(contentId);
+        firstAcquisitionResults.add(result);
+        return result;
+      },
       onBuyItemOffer: (offer) {
         boughtItemId = offer.contentId;
+        acquiredIds.add(offer.contentId);
         final nextItemOffer = RummiMarketItemOfferView.fromItemDefinition(
           offer.item,
           slotIndex: offer.slotIndex,
@@ -326,6 +340,7 @@ void main() {
       },
       onBuyOffer: (offer) {
         expect(offer.slotIndex, 0);
+        acquiredIds.add(offer.contentId);
         currentMarket = RummiMarketRuntimeFacade(
           gold: 5,
           rerollCost: 5,
@@ -518,6 +533,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('5'), findsOneWidget);
+    expect(firstAcquisitionResults, contains(true));
+    expect(firstAcquisitionResults.every((result) => result), isTrue);
     expect(find.text('1/5'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.more_horiz_rounded));

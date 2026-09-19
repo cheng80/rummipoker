@@ -111,7 +111,8 @@ class _GameCashOutGoldSummary extends StatelessWidget {
           Expanded(
             child: _GameCashOutGoldMetric(
               label: '보유 골드',
-              value: '${currentGold}G',
+              beginValue: (currentGold - totalGold).clamp(0, currentGold),
+              endValue: currentGold,
               valueKey: const ValueKey('cashout-current-gold-value'),
               valueStyle: const TextStyle(
                 color: GameUiPalette.textPrimary,
@@ -124,7 +125,8 @@ class _GameCashOutGoldSummary extends StatelessWidget {
           const SizedBox(width: 12),
           _GameCashOutGoldMetric(
             label: '총 획득',
-            value: '+${totalGold}G',
+            beginValue: 0,
+            endValue: totalGold,
             valueKey: const ValueKey('cashout-total-gold-value'),
             alignEnd: true,
             valueStyle: const TextStyle(
@@ -143,14 +145,16 @@ class _GameCashOutGoldSummary extends StatelessWidget {
 class _GameCashOutGoldMetric extends StatelessWidget {
   const _GameCashOutGoldMetric({
     required this.label,
-    required this.value,
+    required this.beginValue,
+    required this.endValue,
     required this.valueKey,
     required this.valueStyle,
     this.alignEnd = false,
   });
 
   final String label;
-  final String value;
+  final int beginValue;
+  final int endValue;
   final Key valueKey;
   final TextStyle valueStyle;
   final bool alignEnd;
@@ -173,8 +177,74 @@ class _GameCashOutGoldMetric extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 7),
-        Text(value, key: valueKey, style: valueStyle),
+        TweenAnimationBuilder<int>(
+          tween: IntTween(begin: beginValue, end: endValue),
+          duration: GamePresentationTimings.cashOutLinePulse,
+          curve: Curves.easeOutCubic,
+          builder: (context, animatedValue, _) => Text(
+            alignEnd ? '+${animatedValue}G' : '${animatedValue}G',
+            key: valueKey,
+            style: valueStyle,
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _GameCashOutGrowthRewardSection extends StatelessWidget {
+  const _GameCashOutGrowthRewardSection({required this.entries});
+
+  final List<RummiSettlementEntryView> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('cashout-growth-reward'),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      decoration: BoxDecoration(
+        color: GameUiPalette.actionInfoBlue.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: GameUiPalette.actionInfoBlueBorder.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.trending_up_rounded,
+                color: GameUiPalette.actionInfoBlueText,
+                size: 18,
+              ),
+              SizedBox(width: 6),
+              Text(
+                context.tr('t3CashoutGrowthReward'),
+                style: TextStyle(
+                  color: GameUiPalette.actionInfoBluePale,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final entry in entries) ...[
+            Text(
+              entry.description,
+              softWrap: true,
+              style: const TextStyle(
+                color: GameUiPalette.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (entry != entries.last) const SizedBox(height: 4),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -198,7 +268,10 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
           color: GameUiPalette.actionInfoBlue.withValues(alpha: 0.18 * pulse),
           blurRadius: 18 * pulse,
           spreadRadius: 1.5 * pulse,
-          child: child!,
+          child: Transform.scale(
+            scale: 0.96 + (0.04 * value),
+            child: Transform.rotate(angle: (1 - value) * 0.035, child: child!),
+          ),
         );
       },
       child: Container(

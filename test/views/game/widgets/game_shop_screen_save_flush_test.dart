@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -30,6 +31,7 @@ RummiJesterCard _jester({required String id, required String displayName}) {
 }
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('다음 Station과 Title 이동은 직전 market 저장 완료를 기다린다', (tester) async {

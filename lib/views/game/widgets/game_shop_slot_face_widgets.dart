@@ -18,7 +18,6 @@ class _MarketItemGhostChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locked = slot.locked;
     final displayName = slot.displayName == null
         ? null
         : localizedItemSlotName(context, slot);
@@ -91,7 +90,7 @@ class _MarketItemGhostChip extends StatelessWidget {
         child: GestureDetector(
           key: ValueKey<String>('market-item-slot-${slot.slotLabel}'),
           behavior: HitTestBehavior.opaque,
-          onTap: locked || slot.item == null || onTap == null
+          onTap: onTap == null || (!slot.locked && slot.item == null)
               ? null
               : () => onTap!(slot),
           onLongPress: occupiedCard == null

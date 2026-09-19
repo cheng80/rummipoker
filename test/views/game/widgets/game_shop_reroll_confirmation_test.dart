@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -127,6 +128,7 @@ Future<void> _pumpShopScreen(
             home: JesterTranslationScope(
               child: ItemTranslationScope(
                 child: GameShopScreen(
+                  autoStartTutorials: false,
                   runSeed: 77,
                   readMarketView: () => market,
                   readActiveRunSaveView: () => save,
@@ -158,6 +160,7 @@ Future<void> _pumpShopScreen(
 }
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('reroll confirmation names the lane and explains a free reroll', (

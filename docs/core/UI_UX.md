@@ -51,7 +51,7 @@ Jester와 Item card/slot의 current logical size는 `54 × 70`이다. [game_card
 - 설정의 정산 속도를 따르고, 한 확정에서 스텝이 8개를 넘으면 최대 2.5배까지 자동으로 가속한다. 정산 중 HUD 아래를 탭하면 남은 연출을 건너뛴다. 속도, 자동 가속, 스킵, 동작 줄이기 중 무엇을 써도 최종 점수·보드·골드·덱 상태는 같다.
 - cash-out sheet는 짧은 fade·slide로 등장한다(동작 줄이기에서는 즉시).
 
-Blind clear 뒤에는 cleared/settlement overlay, cash-out sheet, gold·deck reward reveal이 이어진다. S8 Boss cash-out은 `무한 도전 진입`과 `런 완료`를 분리하고, 일반 cash-out은 Market 진입만 제공한다. cash-out dialog는 결과가 준비되기 전 action을 비활성화하며 SafeArea 안에서 표시된다. 구현은 [game_view_stage_flow.dart](../../lib/views/game/game_view_stage_flow.dart)와 [game_cashout_widgets.dart](../../lib/views/game/widgets/game_cashout_widgets.dart)가 소유한다.
+Blind clear 뒤에는 cleared/settlement overlay, cash-out sheet, gold·deck reward reveal이 이어진다. 골드는 현재 보유량과 이번 정산 합계를 분리해 최종값으로 표시하고, 성장 보상은 별도 묶음으로 읽힌다. S8 Boss cash-out은 `무한 도전 진입`과 `런 완료`를 분리하고, 일반 cash-out은 Market 진입만 제공한다. cash-out dialog는 결과가 준비되기 전 action을 비활성화하며 SafeArea 안에서 표시된다. 구현은 [game_view_stage_flow.dart](../../lib/views/game/game_view_stage_flow.dart)와 [game_cashout_widgets.dart](../../lib/views/game/widgets/game_cashout_widgets.dart)가 소유한다.
 
 ## Market 화면
 
@@ -60,6 +60,9 @@ Market은 `/game` 위의 fullscreen dialog이며 active save scene은 `shop`이�
 - `Jester / Slots`와 `Tool / Gear` 두 탭이 같은 화면 위치를 공유한다.
 - 현재 lane의 보유 slot, 선택 상세, 후보, 가격·할인, 구매·판매·사용·리롤 action을 함께 보여준다.
 - 구매·리롤은 확인과 affordability/cap guard를 거친다. 거절은 shake/badge/notice, 성공은 flight/pulse/reveal로 구분한다.
+- 첫 획득은 구매 전 collection state를 기준으로 `NEW`와 reveal cue를 내며, 이미 보유한 콘텐츠에는 반복 표시하지 않는다.
+- 탭·lane·offer page 변경은 짧은 방향성 전환으로 현재 위치를 보여주고, 리롤된 후보는 카드 flip과 stagger reveal을 사용한다. 동작 줄이기와 연출 끔에서는 결과를 즉시 교체한다.
+- 잠긴 slot과 부족한 골드의 입력은 상태를 바꾸지 않고 deny cue와 이유 notice만 표시한다.
 - state-changing action은 save queue에 넣는다. 다음 Blind, auto-advance, 화면 하단 메인 메뉴, options의 Title 이탈은 queue를 flush한 뒤 이동한다. flush에 실패하면 Market에 남아 notice를 표시한다.
 - 첫 자동 tutorial은 entry와 tab layout이 안정된 뒤 시작하고, 수동 다시보기는 현재 layout에서 즉시 시작한다.
 
@@ -93,8 +96,8 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 | confirm | callout, 타일 tick, 겹침 체인, Jester 순차 발동, 등급 callout, count-up, contributor 순차 제거 | tick pitch 상승, 등급별 소리, clear 시 clear SFX |
 | battle Jester sell | 슬롯에서 카드 조각·코인 burst, 골드 count-up | sell cue |
 | Item/Jester/tile effect | source badge, burst, flight, 2초 feedback | effect 결과 label 유지 |
-| Market deny/success | deny shake·badge 또는 purchase flight·slot pulse·offer reveal | notice로 guard 이유 표시 |
-| cash-out | 단계별 reward reveal, coin burst, total gold | collect SFX |
+| Market deny/success | deny shake·badge 또는 purchase flight·slot pulse·offer reveal·NEW reveal | notice로 guard 이유 표시, 구매 전 collection state 확인 |
+| cash-out | 단계별 reward reveal, coin burst, 최종 current/total gold, 성장 보상 묶음 | collect SFX |
 | game over | 2초 danger fade 뒤 modal | time-up SFX; retry/new run/exit 제공 |
 | focus-out | tutorial 제거, veil/options, animation time pause | BGM pause; resume에서 적절한 scene BGM 복구 |
 

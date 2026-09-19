@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -110,6 +111,7 @@ Future<void> _pumpShopScreen(
                   onExitToTitle: () async {},
                   onRestartRun: () async {},
                   isDebugFixtureRun: false,
+                  autoStartTutorials: false,
                   initialItemShopTab: true,
                 ),
               ),
@@ -123,6 +125,7 @@ Future<void> _pumpShopScreen(
 }
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('compact market smoke keeps type labels readable', (
@@ -207,6 +210,7 @@ void main() {
     expect(find.text('Tool Slots'), findsOneWidget);
     expect(find.text('Gear Slots'), findsOneWidget);
     expect(find.text('TOOL'), findsWidgets);
+
     final rerollButton = find.text('리롤 5');
     final toolRerollTop = tester.getTopLeft(rerollButton).dy;
 
@@ -218,6 +222,10 @@ void main() {
     expect(find.text('Item Slots'), findsNothing);
     expect(find.text('Q-SLT'), findsWidgets);
     expect(find.text('PSV'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('market-item-slot-Q3')));
+    await tester.pump();
+    expect(find.text('잠긴 슬롯입니다.'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
     expect((jesterRerollTop - toolRerollTop).abs(), lessThanOrEqualTo(1));
     expect(tester.takeException(), isNull);
   });

@@ -970,6 +970,13 @@ extension _GameViewStageFlow on _GameViewState {
           onBuyOffer: _buyJesterOfferForAnalytics,
           onBuyItemOffer: _buyItemOfferForAnalytics,
           onBuyTileOffer: _buyTileOfferForAnalytics,
+          isFirstAcquisition: (category, contentId) => switch (category) {
+            'jester' => !_runProgressCollection.boughtJesterIds.contains(
+              contentId,
+            ),
+            'item' => !_runProgressCollection.boughtItemIds.contains(contentId),
+            _ => false,
+          },
           onUseMarketItem: _useMarketItemForAnalytics,
           onSellOwnedJester: _sellOwnedJesterForAnalytics,
           onSellMarketItem: _sellMarketItemForAnalytics,

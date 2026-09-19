@@ -16,6 +16,21 @@ import 'package:rummipoker/services/debug_run_fixture_service.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 
 void main() {
+  test('market paging fixture provides five distinct tile offers', () {
+    final fixture = DebugRunFixtureService.build(
+      'market_offer_paging_eye_check',
+    )!;
+    expect(fixture.activeScene, ActiveRunScene.shop);
+    expect(fixture.runProgress.tileOffers.length, 5);
+    expect(
+      fixture.runProgress.tileOffers
+          .map((tile) => '${tile.color}:${tile.number}')
+          .toSet()
+          .length,
+      5,
+    );
+  });
+
   test('audio QA fixtures open game-over and Market states directly', () {
     final gameOver = DebugRunFixtureService.build('audio_game_over_resume');
     final market = DebugRunFixtureService.build('audio_market_resume');

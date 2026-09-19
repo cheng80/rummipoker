@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,7 @@ import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('GameShopScreen flies sold jester card toward gold chip', (
@@ -79,6 +81,7 @@ void main() {
               home: JesterTranslationScope(
                 child: ItemTranslationScope(
                   child: GameShopScreen(
+                    autoStartTutorials: false,
                     runSeed: 77,
                     readMarketView: () => currentMarket,
                     readActiveRunSaveView: () => const RummiActiveRunSaveFacade(

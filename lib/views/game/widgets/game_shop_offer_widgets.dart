@@ -70,6 +70,7 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
   late final Animation<double> _fade;
   late final Animation<double> _scale;
   late final Animation<Offset> _offset;
+  late final Animation<double> _flip;
 
   @override
   void initState() {
@@ -87,6 +88,10 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
       begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _flip = Tween<double>(
+      begin: math.pi * 0.5,
+      end: 0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _play();
   }
 
@@ -100,6 +105,10 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
 
   Future<void> _play() async {
     _controller.value = 0;
+    if (MotionPolicy.reduceMotion || MotionPolicy.juiceScale == 0) {
+      _controller.value = 1;
+      return;
+    }
     final delay = GamePresentationCues.marketOfferReveal.delayFor(widget.index);
     await Future<void>.delayed(delay);
     if (!mounted) return;
@@ -119,8 +128,51 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
       opacity: _fade,
       child: SlideTransition(
         position: _offset,
-        child: ScaleTransition(scale: _scale, child: widget.child),
+        child: ScaleTransition(
+          scale: _scale,
+          child: AnimatedBuilder(
+            animation: _flip,
+            builder: (context, child) => Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateY(_flip.value),
+              child: child,
+            ),
+            child: widget.child,
+          ),
+        ),
       ),
+    );
+  }
+}
+
+/// 진열 카드가 정지 화면에서도 물성을 유지하도록 아주 느리게 부유시킨다.
+/// 동작 줄이기 또는 연출 끔에서는 ticker를 만들지 않는다.
+class _MarketOfferAmbientMotion extends StatelessWidget {
+  const _MarketOfferAmbientMotion({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !MotionPolicy.reduceMotion && MotionPolicy.juiceScale > 0;
+    if (!enabled) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: GamePresentationTimings.marketOfferAmbientCycle,
+      curve: Curves.easeInOut,
+      child: child,
+      builder: (context, value, child) {
+        final phase = math.sin(value * math.pi);
+        return SpringFollow(
+          offset: Offset(0, -1.6 * phase),
+          rotation: 0.004 * phase,
+          positionRate: 24,
+          rotationRate: 20,
+          child: child!,
+        );
+      },
     );
   }
 }
@@ -174,6 +226,7 @@ class _GameShopOfferCard extends StatelessWidget {
       ),
     );
     return GestureDetector(
+      key: ValueKey<String>('market-jester-offer-${offer.contentId}'),
       onTap: onTap,
       onLongPress: () => _showMarketCardPreview(
         context,
@@ -191,7 +244,19 @@ class _GameShopOfferCard extends StatelessWidget {
           children: [
             _MarketDiscountTargetPulse(
               active: offer.discountSourceLabel != null,
-              child: _MarketOfferCardDisplay(child: card),
+              child: _MarketOfferCardDisplay(
+                child: Juice(
+                  trigger: selected ? 'selected' : 'idle',
+                  strength: 1.05,
+                  child: _MarketOfferAmbientMotion(
+                    child: SpringFollow(
+                      offset: selected ? const Offset(0, -4) : Offset.zero,
+                      scale: selected ? 1.05 : 1,
+                      child: card,
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -413,7 +478,19 @@ class _MarketItemOfferCard extends StatelessWidget {
           children: [
             _MarketDiscountTargetPulse(
               active: offer.discountSourceLabel != null,
-              child: _MarketOfferCardDisplay(child: card),
+              child: _MarketOfferCardDisplay(
+                child: Juice(
+                  trigger: selected ? 'selected' : 'idle',
+                  strength: 1.05,
+                  child: _MarketOfferAmbientMotion(
+                    child: SpringFollow(
+                      offset: selected ? const Offset(0, -4) : Offset.zero,
+                      scale: selected ? 1.05 : 1,
+                      child: card,
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -596,7 +673,20 @@ class _MarketTileOfferCard extends StatelessWidget {
                       kMarketOfferCardWidth + (kMarketCardSelectionInset * 2),
                   height:
                       kMarketOfferCardHeight + (kMarketCardSelectionInset * 2),
-                  child: _MarketTileFace(tile: offer.tile, selected: selected),
+                  child: Juice(
+                    trigger: selected ? 'selected' : 'idle',
+                    strength: 1.05,
+                    child: _MarketOfferAmbientMotion(
+                      child: SpringFollow(
+                        offset: selected ? const Offset(0, -4) : Offset.zero,
+                        scale: selected ? 1.05 : 1,
+                        child: _MarketTileFace(
+                          tile: offer.tile,
+                          selected: selected,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

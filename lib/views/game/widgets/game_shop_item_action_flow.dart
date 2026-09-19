@@ -1,6 +1,17 @@
 part of 'game_shop_screen.dart';
 
 extension _GameShopItemActionFlow on _GameShopScreenState {
+  void _startNewAcquisitionReveal(String label) {
+    final tick = _newRevealTick + 1;
+    _newRevealTick = tick;
+    _mutate(() => _newRevealLabel = label);
+    Future<void>.delayed(GamePresentationTimings.marketNewReveal, () {
+      if (!mounted || _newRevealTick != tick) return;
+      _mutate(() => _newRevealLabel = null);
+    });
+    GameFeedback.play(GameCue.newReveal);
+  }
+
   void _startMarketDenyFeedback(String target, String reason) {
     final tick = _marketDenyTick + 1;
     _mutate(() {
@@ -15,6 +26,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
         _marketDenyReason = null;
       });
     });
+    GameFeedback.play(GameCue.deny);
   }
 
   void _startEffectPresentation(ItemPresentationEvent event) {
@@ -231,6 +243,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       });
     });
     _queueStateSave();
+    GameFeedback.play(GameCue.itemUse);
   }
 
   String? _marketUseFeedbackDeltaLabel(ItemDefinition item) {
@@ -347,6 +360,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       }
     });
     _queueStateSave();
+    GameFeedback.play(GameCue.sell);
   }
 
   void _sellMarketItem(RummiMarketItemSlotView slot) {
@@ -371,5 +385,6 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       _selectFirstEntry(_offerEntriesForLane(market, _currentOfferLane));
     });
     _queueStateSave();
+    GameFeedback.play(GameCue.sell);
   }
 }

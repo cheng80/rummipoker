@@ -95,6 +95,8 @@ class GamePresentationTimings {
   static const Duration marketDenyFeedbackHold = Duration(milliseconds: 560);
   static const Duration marketUseFeedbackHold = Duration(milliseconds: 1800);
   static const Duration marketTabSwitch = Duration(milliseconds: 140);
+  static const Duration marketDetailSwitch = Duration(milliseconds: 180);
+  static const Duration marketOfferFlip = Duration(milliseconds: 260);
   static const Duration marketEntryIntro = Duration(milliseconds: 220);
   static const Duration marketUseFeedbackIn = Duration(milliseconds: 260);
   static const Duration marketActionDenyShake = Duration(milliseconds: 360);
@@ -114,6 +116,8 @@ class GamePresentationTimings {
   );
   static const Duration marketSlotUnlockPulse = Duration(milliseconds: 1200);
   static const Duration marketSlotUnlockBannerIn = Duration(milliseconds: 420);
+  static const Duration marketOfferAmbientCycle = Duration(milliseconds: 3200);
+  static const Duration marketNewReveal = Duration(milliseconds: 620);
 
   static const Duration debugGameOverOnLoadDelay = Duration(milliseconds: 220);
 
