@@ -59,6 +59,23 @@ void main() {
     );
   });
 
+  testWidgets('전투 진입 deal은 짧게 돌고 끝나며, 동작 줄이기에서는 돌지 않는다', (tester) async {
+    final board = RummiBoard()
+      ..setCell(1, 1, const Tile(color: TileColor.black, number: 9));
+    MotionPolicy.debugReduceMotionOverride = false;
+    await tester.pumpWidget(_host(board, const {}, [], dealOnEnter: true));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(tester.hasRunningAnimations, isTrue);
+    await tester.pump(const Duration(milliseconds: 1100));
+    expect(tester.hasRunningAnimations, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    MotionPolicy.debugReduceMotionOverride = true;
+    await tester.pumpWidget(_host(board, const {}, [], dealOnEnter: true));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
   testWidgets('교차 타일은 맞은 횟수만큼 달아오른다', (tester) async {
     final board = RummiBoard()
       ..setCell(0, 0, const Tile(color: TileColor.black, number: 9));
@@ -83,6 +100,7 @@ Widget _host(
   List<String> taps, {
   Map<String, int> heat = const {},
   Map<String, int> hitSerial = const {},
+  bool dealOnEnter = false,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -97,6 +115,7 @@ Widget _host(
             settlementBoardSnapshot: snapshot,
             settlementTileHeat: heat,
             settlementTileHitSerial: hitSerial,
+            dealOnEnter: dealOnEnter,
             selectedRow: null,
             selectedCol: null,
             boardMoveMode: false,
