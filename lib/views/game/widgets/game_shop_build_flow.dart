@@ -744,9 +744,9 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                               vertical: 2,
                                             ),
                                             child: MarketDirectionalSwitcher(
+                                              key: _marketOfferSwitcherKey,
                                               direction:
-                                                  _marketPanelTransitionDirection +
-                                                  _marketPageTransitionDirection,
+                                                  _marketTransitionDirection,
                                               child: KeyedSubtree(
                                                 key: ValueKey<String>(
                                                   'market-offers-${_shopTab.name}-${currentOfferLane.name}-$currentOfferPage',

@@ -161,8 +161,9 @@ class _GameShopScreenState extends State<GameShopScreen>
   String? _marketUseFeedbackLabel;
   String? _marketUseFeedbackDelta;
   int _marketRerollFeedbackTick = 0;
-  int _marketPanelTransitionDirection = 1;
-  int _marketPageTransitionDirection = 1;
+  // Tutorial targets change with the tab; preserve the outgoing offer row.
+  final _marketOfferSwitcherKey = GlobalKey();
+  int _marketTransitionDirection = 1;
   List<RummiMarketItemOfferView>? _pinnedItemOffers;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;

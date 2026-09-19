@@ -267,7 +267,7 @@ class MarketDirectionalSwitcher extends StatelessWidget {
       layoutBuilder: (currentChild, previousChildren) => Stack(
         alignment: Alignment.topCenter,
         children: <Widget>[
-          ...previousChildren,
+          ...previousChildren.map((child) => IgnorePointer(child: child)),
           currentChild ?? const SizedBox.shrink(),
         ],
       ),

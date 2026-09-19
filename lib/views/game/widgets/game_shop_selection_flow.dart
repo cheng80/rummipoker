@@ -92,7 +92,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   void _selectShopTab(_MarketShopTab tab) {
     final changed = _shopTab != tab;
     if (changed) {
-      _marketPanelTransitionDirection = tab.index > _shopTab.index ? 1 : -1;
+      _marketTransitionDirection = tab.index > _shopTab.index ? 1 : -1;
     }
     _mutate(() {
       _shopTab = tab;
@@ -105,7 +105,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
     final changed = _currentOfferLane != lane;
     if (changed) {
       final lanes = _offerLanesForTab(_shopTab);
-      _marketPanelTransitionDirection =
+      _marketTransitionDirection =
           lanes.indexOf(lane) >= lanes.indexOf(_currentOfferLane) ? 1 : -1;
     }
     _mutate(() {
@@ -133,7 +133,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
     if (pageCount <= 1) return;
     final nextPage = (_offerPageFor(lane) + delta).clamp(0, pageCount - 1);
     if (nextPage == _offerPageFor(lane)) return;
-    _marketPageTransitionDirection = delta > 0 ? 1 : -1;
+    _marketTransitionDirection = delta > 0 ? 1 : -1;
     _mutate(() => _offerPages[lane] = nextPage);
     GameFeedback.play(GameCue.marketPage, pitch: delta > 0 ? 1.04 : 0.94);
   }
