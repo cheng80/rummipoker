@@ -3,6 +3,12 @@ part of 'debug_run_fixture_service.dart';
 /// 새 디버그 픽스처는 여기에 등록하고, 대응하는 builder는 builders part에 둔다.
 final List<DebugRunFixtureDefinition> _debugRunFixtures = [
   DebugRunFixtureDefinition(
+    id: 'market_offer_paging_eye_check',
+    label: '마켓 후보 페이지 눈검증',
+    description: '타일 후보 5장의 앞·뒤 페이지 전환과 퇴장 카드 입력 검증용',
+    builder: _buildMarketOfferPagingEyeCheck,
+  ),
+  DebugRunFixtureDefinition(
     id: DebugRunFixtureService.audioGameOverResume,
     label: '오디오 복귀: 게임오버',
     description: '게임오버 결과창에서 포커스 이탈·복귀 후 Retry BGM/SFX 검증용',

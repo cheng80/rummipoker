@@ -613,6 +613,15 @@ ActiveRunRuntimeState _buildMarketItemMotionEyeCheck() {
   );
 }
 
+ActiveRunRuntimeState _buildMarketOfferPagingEyeCheck() {
+  final state = _buildSpecialTileMarketPreview();
+  state.runProgress.tileOffers.addAll(const [
+    Tile(color: TileColor.black, number: 2),
+    Tile(color: TileColor.red, number: 11),
+  ]);
+  return state;
+}
+
 ActiveRunRuntimeState _buildSpecialTileMarketPreview() {
   final base = _buildStage2ScoringSnapshot();
   final runProgress = base.runProgress.copySnapshot()
