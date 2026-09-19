@@ -36,7 +36,9 @@ class GameRummiTileCard extends StatelessWidget {
               ),
             ),
             if (tile.hasModifier)
-              Positioned.fill(child: TileMaterialSurface(tile: tile)),
+              Positioned.fill(
+                child: TileMaterialSurface(tile: tile, accent: accent),
+              ),
             if (tile.hasModifier)
               Positioned.fill(
                 child: GameTileModifierBadges(

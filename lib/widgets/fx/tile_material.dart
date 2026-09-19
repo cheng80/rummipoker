@@ -14,7 +14,7 @@ import 'motion_policy.dart';
 class TileMaterialLease extends ChangeNotifier {
   TileMaterialLease(this.visible);
   final bool Function() visible;
-  double phase = 0;
+  double phase = .25;
   void advance(double value) {
     phase = value;
     notifyListeners();
@@ -27,12 +27,23 @@ class TileMaterialClock with WidgetsBindingObserver {
   static const maxAnimatedTiles = 4;
   final _leases = <TileMaterialLease>[];
   Timer? _timer;
+  bool _refreshScheduled = false;
+  List<TileMaterialLease> _animated = [];
   double _phase = 0;
   bool _resumed = true;
   bool get isRunning => _timer != null;
-  int get animatedCount => MotionPolicy.juiceScale <= 0 || !_resumed
-      ? 0
-      : _leases.where((lease) => lease.visible()).take(maxAnimatedTiles).length;
+  int get animatedCount => _animated.length;
+
+  /// Rebuild·scroll·설정 변경을 프레임 끝의 검사 한 번으로 합친다.
+  void scheduleRefresh() {
+    if (_refreshScheduled) return;
+    _refreshScheduled = true;
+    WidgetsBinding.instance.ensureVisualUpdate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_refreshScheduled) return;
+      refresh();
+    });
+  }
 
   void attach(TileMaterialLease lease) {
     if (_leases.isEmpty) {
@@ -41,17 +52,35 @@ class TileMaterialClock with WidgetsBindingObserver {
       _resumed = state == null || state == AppLifecycleState.resumed;
     }
     _leases.add(lease);
-    refresh();
+    scheduleRefresh();
   }
 
   void detach(TileMaterialLease lease) {
     _leases.remove(lease);
-    if (_leases.isEmpty) WidgetsBinding.instance.removeObserver(this);
-    refresh();
+    _animated.remove(lease);
+    if (_leases.isEmpty) {
+      WidgetsBinding.instance.removeObserver(this);
+      _refreshScheduled = false;
+      _timer?.cancel();
+      _timer = null;
+    } else {
+      scheduleRefresh();
+    }
   }
 
+  @visibleForTesting
+  int debugVisibilityPasses = 0;
+
   void refresh() {
-    if (animatedCount == 0) {
+    _refreshScheduled = false;
+    debugVisibilityPasses++;
+    _animated = MotionPolicy.juiceScale <= 0 || !_resumed
+        ? []
+        : _leases
+              .where((lease) => lease.visible())
+              .take(maxAnimatedTiles)
+              .toList();
+    if (_animated.isEmpty) {
       _timer?.cancel();
       _timer = null;
       return;
@@ -64,11 +93,7 @@ class TileMaterialClock with WidgetsBindingObserver {
               GamePresentationTimings.t5MaterialTick.inMicroseconds /
                   GamePresentationTimings.t5SheenPeriod.inMicroseconds) %
           1;
-      for (final lease
-          in _leases
-              .where((l) => l.visible())
-              .take(maxAnimatedTiles)
-              .toList()) {
+      for (final lease in _animated) {
         lease.advance(_phase);
       }
     });
@@ -97,9 +122,11 @@ class TileMaterialMetrics {
 
 /// 면 위의 좁은 가장자리만 칠하므로 숫자·배지·Boss X를 덮지 않는다.
 class TileMaterialPainter extends CustomPainter {
-  TileMaterialPainter({required this.tile, this.lease}) : super(repaint: lease);
+  TileMaterialPainter({required this.tile, this.lease, this.accent = false})
+    : super(repaint: lease);
   final Tile tile;
   final TileMaterialLease? lease;
+  final bool accent;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -154,28 +181,31 @@ class TileMaterialPainter extends CustomPainter {
         null => const [Color(0xFFB1AC9F), Color(0xFFE6DED0), Color(0xFFB1AC9F)],
       },
     };
-    canvas.drawPath(
-      border,
-      Paint()
-        ..shader = LinearGradient(
-          colors: colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(m.face),
-    );
-    final phase = lease?.phase ?? .25;
-    canvas.save();
-    canvas.clipPath(border);
-    final x = m.face.width * (phase * 2 - .5);
-    final band = Rect.fromLTWH(x, 0, m.face.width * .5, m.face.height);
-    canvas.drawRect(
-      band,
-      Paint()
-        ..shader = const LinearGradient(
-          colors: [Color(0x00FFFFFF), Color(0xC0FFFFFF), Color(0x00FFFFFF)],
-        ).createShader(band),
-    );
-    canvas.restore();
+    // 영향받는 타일의 accent 링을 가장자리 재질보다 우선한다.
+    if (!accent) {
+      canvas.drawPath(
+        border,
+        Paint()
+          ..shader = LinearGradient(
+            colors: colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(m.face),
+      );
+      final phase = lease?.phase ?? .25;
+      canvas.save();
+      canvas.clipPath(border);
+      final x = m.face.width * (phase * 2 - .5);
+      final band = Rect.fromLTWH(x, 0, m.face.width * .5, m.face.height);
+      canvas.drawRect(
+        band,
+        Paint()
+          ..shader = const LinearGradient(
+            colors: [Color(0x00FFFFFF), Color(0xC0FFFFFF), Color(0x00FFFFFF)],
+          ).createShader(band),
+      );
+      canvas.restore();
+    }
     // 각인은 왼쪽 아래 여백에 서로 다른 점/선 패턴으로 새긴다.
     final seal = tile.seal;
     if (seal != null) {
@@ -205,12 +235,18 @@ class TileMaterialPainter extends CustomPainter {
       oldDelegate.tile.enhancement != tile.enhancement ||
       oldDelegate.tile.seal != tile.seal ||
       oldDelegate.tile.edition != tile.edition ||
-      oldDelegate.lease != lease;
+      oldDelegate.lease != lease ||
+      oldDelegate.accent != accent;
 }
 
 class TileMaterialSurface extends StatefulWidget {
-  const TileMaterialSurface({super.key, required this.tile});
+  const TileMaterialSurface({
+    super.key,
+    required this.tile,
+    this.accent = false,
+  });
   final Tile tile;
+  final bool accent;
   @override
   State<TileMaterialSurface> createState() => _TileMaterialSurfaceState();
 }
@@ -275,12 +311,10 @@ class _TileMaterialSurfaceState extends State<TileMaterialSurface> {
         (_, _) => _refresh(),
       );
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refresh();
-    });
+    _refresh();
   }
 
-  void _refresh() => TileMaterialClock.instance.refresh();
+  void _refresh() => TileMaterialClock.instance.scheduleRefresh();
 
   @override
   void deactivate() {
@@ -293,9 +327,7 @@ class _TileMaterialSurfaceState extends State<TileMaterialSurface> {
   void activate() {
     super.activate();
     _active = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refresh();
-    });
+    _refresh();
   }
 
   @override
@@ -310,13 +342,15 @@ class _TileMaterialSurfaceState extends State<TileMaterialSurface> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refresh();
-    });
+    _refresh();
     return IgnorePointer(
       child: RepaintBoundary(
         child: CustomPaint(
-          painter: TileMaterialPainter(tile: widget.tile, lease: _lease),
+          painter: TileMaterialPainter(
+            tile: widget.tile,
+            lease: _lease,
+            accent: widget.accent,
+          ),
         ),
       ),
     );

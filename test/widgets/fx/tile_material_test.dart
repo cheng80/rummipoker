@@ -60,10 +60,11 @@ void main() {
       for (final lease in leases) {
         clock.attach(lease);
       }
+      await tester.pump();
       expect(clock.animatedCount, 4);
       await tester.pump(const Duration(milliseconds: 200));
-      expect(leases.take(4).every((l) => l.phase > 0), isTrue);
-      expect(leases.skip(4).every((l) => l.phase == 0), isTrue);
+      expect(leases.take(4).every((l) => l.phase != .25), isTrue);
+      expect(leases.skip(4).every((l) => l.phase == .25), isTrue);
       for (final lease in leases) {
         clock.detach(lease);
         lease.dispose();
@@ -79,6 +80,7 @@ void main() {
     final clock = TileMaterialClock();
     final lease = TileMaterialLease(() => visible);
     clock.attach(lease);
+    await tester.pump();
     expect(clock.isRunning, isTrue);
     GameSettings.fxIntensity = FxIntensity.off;
     clock.refresh();
@@ -228,4 +230,121 @@ void main() {
       expect(TileMaterialClock.instance.isRunning, isFalse);
     },
   );
+  testWidgets('twelve material rebuilds share one visibility pass per frame', (
+    tester,
+  ) async {
+    Widget host() => MaterialApp(
+      home: Row(
+        children: [
+          for (var i = 0; i < 12; i++)
+            SizedBox(
+              width: 28,
+              height: 40,
+              child: TileMaterialSurface(tile: tile),
+            ),
+        ],
+      ),
+    );
+    final clock = TileMaterialClock.instance;
+    await tester.pumpWidget(host());
+    final before = clock.debugVisibilityPasses;
+    await tester.pumpWidget(host());
+    expect(clock.debugVisibilityPasses - before, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('one timer tick inspects each candidate at most once', (
+    tester,
+  ) async {
+    final clock = TileMaterialClock();
+    var calls = 0;
+    final leases = List.generate(
+      12,
+      (_) => TileMaterialLease(() {
+        calls++;
+        return true;
+      }),
+    );
+    for (final lease in leases) {
+      clock.attach(lease);
+    }
+    await tester.pump();
+    calls = 0;
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(calls, TileMaterialClock.maxAnimatedTiles);
+    for (final lease in leases) {
+      clock.detach(lease);
+      lease.dispose();
+    }
+  });
+
+  test('unassigned material starts with an in-face static highlight', () {
+    final lease = TileMaterialLease(() => true);
+    expect(lease.phase, .25);
+    lease.dispose();
+  });
+
+  for (final side in [28.0, 54.0, 160.0]) {
+    testWidgets('accent ring pixels survive material overlay at $side', (
+      tester,
+    ) async {
+      GameSettings.fxIntensity = FxIntensity.off;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: side,
+              child: const GameRummiTileCard(
+                tile: tile,
+                selected: false,
+                accent: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      final paints = tester
+          .widgetList<CustomPaint>(
+            find.descendant(
+              of: find.byType(GameRummiTileCard),
+              matching: find.byType(CustomPaint),
+            ),
+          )
+          .toList();
+      final base = paints
+          .firstWhere((p) => p.painter is! TileMaterialPainter)
+          .painter!;
+      final material = paints
+          .firstWhere((p) => p.painter is TileMaterialPainter)
+          .painter!;
+      final size = tester.getSize(find.byType(TileMaterialSurface));
+      await tester.runAsync(() async {
+        Future<List<int>> ringPixel(bool overlay) async {
+          final recorder = ui.PictureRecorder();
+          final canvas = Canvas(recorder);
+          base.paint(canvas, size);
+          if (overlay) material.paint(canvas, size);
+          final picture = recorder.endRecording();
+          final image = await picture.toImage(
+            size.width.ceil(),
+            size.height.ceil(),
+          );
+          final bytes = (await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          ))!;
+          final offset = (3 * image.width + image.width ~/ 2) * 4;
+          final pixel = List.generate(4, (i) => bytes.getUint8(offset + i));
+          image.dispose();
+          picture.dispose();
+          return pixel;
+        }
+
+        final original = await ringPixel(false);
+        expect(original[3], 255);
+        expect(original[0], greaterThan(original[2]));
+        expect(await ringPixel(true), original);
+      });
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
 }
