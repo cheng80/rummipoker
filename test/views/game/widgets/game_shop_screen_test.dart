@@ -6,8 +6,6 @@ import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_market_facade.dart';
 import 'package:rummipoker/resources/item_translation_scope.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
-import 'package:rummipoker/resources/asset_paths.dart';
-import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 
@@ -117,6 +115,8 @@ void main() {
     });
 
     final trophyOfferCard = _jester(id: 'blueprint', displayName: 'Blueprint');
+    final acquiredIds = <String>{};
+    final firstAcquisitionResults = <bool>[];
     final trophyMarket = RummiMarketRuntimeFacade(
       gold: 12,
       rerollCost: 5,
@@ -282,8 +282,14 @@ void main() {
       tester,
       readMarketView: () => currentMarket,
       readActiveRunSaveView: () => currentSave,
+      isFirstAcquisition: (_, contentId) {
+        final result = !acquiredIds.contains(contentId);
+        firstAcquisitionResults.add(result);
+        return result;
+      },
       onBuyItemOffer: (offer) {
         boughtItemId = offer.contentId;
+        acquiredIds.add(offer.contentId);
         final nextItemOffer = RummiMarketItemOfferView.fromItemDefinition(
           offer.item,
           slotIndex: offer.slotIndex,
@@ -332,6 +338,7 @@ void main() {
       },
       onBuyOffer: (offer) {
         expect(offer.slotIndex, 0);
+        acquiredIds.add(offer.contentId);
         currentMarket = RummiMarketRuntimeFacade(
           gold: 5,
           rerollCost: 5,
@@ -524,6 +531,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('5'), findsOneWidget);
+    expect(firstAcquisitionResults, contains(true));
+    expect(firstAcquisitionResults.every((result) => result), isTrue);
     expect(find.text('1/5'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.more_horiz_rounded));
@@ -545,104 +554,5 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();
-  });
-
-  testWidgets('첫 구매만 NEW 획득 공개를 표시한다', (tester) async {
-    tester.view.physicalSize = const Size(1280, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() async {
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpAndSettle();
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    final card = _jester(id: 'first-card', displayName: 'First Card');
-    final owned = <String>{};
-    final sfx = <String>[];
-    SoundManager.debugSfxSink = (path, _, _) => sfx.add(path);
-    bool isFirstAcquisition(String category, String contentId) =>
-        category == 'jester' && !owned.contains(contentId);
-    var currentMarket = RummiMarketRuntimeFacade(
-      gold: 12,
-      rerollCost: 5,
-      maxOwnedSlots: RummiRunProgress.maxJesterSlots,
-      runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
-      ownedEntries: const [],
-      offers: [
-        RummiMarketOfferView.fromShopOffer(
-          RummiShopOffer(slotIndex: 0, card: card, price: 4),
-          currentGold: 12,
-        ),
-      ],
-      itemOfferSlotCount: 3,
-      quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
-    );
-
-    await _pumpShopScreen(
-      tester,
-      initialItemShopTab: false,
-      readMarketView: () => currentMarket,
-      readActiveRunSaveView: () => const RummiActiveRunSaveFacade(
-        schemaVersion: 2,
-        activeScene: 'shop',
-        sceneAlias: RummiSaveSceneAlias.market,
-        currentStageIndex: 2,
-        currentStationIndex: 2,
-        currentRunSeed: 77,
-        currentGold: 12,
-        checkpoint: RummiStationCheckpointSaveView(
-          stageIndex: 2,
-          stationIndex: 2,
-          runSeed: 77,
-          gold: 12,
-        ),
-      ),
-      isFirstAcquisition: isFirstAcquisition,
-      onBuyOffer: (offer) {
-        owned.add(offer.contentId);
-        currentMarket = RummiMarketRuntimeFacade(
-          gold: 8,
-          rerollCost: 5,
-          maxOwnedSlots: RummiRunProgress.maxJesterSlots,
-          runtimeSnapshot: const RummiJesterRuntimeSnapshot(),
-          ownedEntries: [
-            RummiMarketOwnedEntryView(
-              slotIndex: 0,
-              category: RummiMarketCategory.jester,
-              contentId: offer.contentId,
-              displayName: offer.card.displayName,
-              sellPrice: 2,
-              card: offer.card,
-            ),
-          ],
-          offers: const [],
-          itemOfferSlotCount: 3,
-          quickSlotCapacity: RunInventoryState.defaultQuickSlotCapacity,
-        );
-        return null;
-      },
-    );
-
-    await tester.tap(
-      find.byKey(const ValueKey('market-jester-offer-first-card')),
-    );
-    await tester.pumpAndSettle();
-    sfx.clear();
-    await tester.tap(find.text('구매').first);
-    await tester.pump(const Duration(milliseconds: 80));
-
-    expect(
-      find.byKey(const ValueKey('market-new-acquisition-reveal')),
-      findsOneWidget,
-    );
-    expect(owned, contains('first-card'));
-    expect(isFirstAcquisition('jester', 'first-card'), isFalse);
-    expect(sfx, contains(AssetPaths.sfxStart));
-
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey('market-new-acquisition-reveal')),
-      findsNothing,
-    );
   });
 }

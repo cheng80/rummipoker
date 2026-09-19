@@ -18,7 +18,6 @@ class _MarketItemGhostChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locked = slot.locked;
     final displayName = slot.displayName == null
         ? null
         : localizedItemSlotName(context, slot);
