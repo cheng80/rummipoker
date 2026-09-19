@@ -123,11 +123,15 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
                     Expanded(
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: Text(
-                          goldDisplayValue,
-                          maxLines: 1,
-                          textAlign: TextAlign.right,
-                          style: gameHudValueStyle.copyWith(fontSize: 17),
+                        child: GameCountUpInt(
+                          key: const ValueKey('game-gold-count-up'),
+                          value: widget.gold,
+                          builder: (context, shown) => Text(
+                            '$shown',
+                            maxLines: 1,
+                            textAlign: TextAlign.right,
+                            style: gameHudValueStyle.copyWith(fontSize: 17),
+                          ),
                         ),
                       ),
                     ),
@@ -298,4 +302,71 @@ String _bossModifierCompactHudLabel(RummiBossModifier modifier) {
     RummiBossModifierCategory.singleHandRankPressure => '첫 족보',
     RummiBossModifierCategory.boardCellBlock => '칸 금지',
   };
+}
+
+/// 숫자가 바뀌면 [GamePresentationTimings.hudCountUp] 동안 올라가며 tick 소리를 낸다.
+///
+/// 줄어들 때와 동작 줄이기·정산 즉시에서는 바로 새 값을 보여 준다. 표시만 바꾼다.
+class GameCountUpInt extends StatefulWidget {
+  const GameCountUpInt({super.key, required this.value, required this.builder});
+
+  final int value;
+  final Widget Function(BuildContext context, int shown) builder;
+
+  @override
+  State<GameCountUpInt> createState() => _GameCountUpIntState();
+}
+
+class _GameCountUpIntState extends State<GameCountUpInt>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late int _from = widget.value;
+  late int _shown = widget.value;
+  Duration _lastTickSound = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this)..addListener(_onTick);
+  }
+
+  @override
+  void didUpdateWidget(covariant GameCountUpInt oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value == oldWidget.value) return;
+    final speed = GameSettings.settlementSpeed.multiplier;
+    if (widget.value < _shown ||
+        MotionPolicy.reduceMotion ||
+        speed.isInfinite) {
+      _controller.stop();
+      _shown = widget.value;
+      return;
+    }
+    _from = _shown;
+    _lastTickSound = Duration.zero;
+    _controller.duration = GamePresentationTimings.hudCountUp * (1 / speed);
+    _controller.forward(from: 0);
+  }
+
+  void _onTick() {
+    final t = Curves.easeOutCubic.transform(_controller.value);
+    final next = (_from + (widget.value - _from) * t).round();
+    if (next == _shown) return;
+    final elapsed = _controller.lastElapsedDuration ?? Duration.zero;
+    if (elapsed - _lastTickSound >=
+        GamePresentationTimings.hudCountTickInterval) {
+      _lastTickSound = elapsed;
+      GameFeedback.play(GameCue.countTick, pitch: 1 + 0.25 * t);
+    }
+    setState(() => _shown = next);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _shown);
 }

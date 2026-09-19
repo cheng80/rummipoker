@@ -111,5 +111,9 @@
   "gameTermScoreMultiplierTitle": "Score xN",
   "gameTermScoreMultiplierBody": "A stronger multiplier applied at the end. Score x2 really doubles the score.",
   "gameTermGoldTitle": "Gold",
-  "gameTermGoldBody": "Currency used in the market to buy Jesters and Items or reroll offers."
+  "gameTermGoldBody": "Currency used in the market to buy Jesters and Items or reroll offers.",
+  "settlementGrade0": "Nice",
+  "settlementGrade1": "Great!",
+  "settlementGrade2": "Superb!!",
+  "settlementGrade3": "Legendary!!!"
 }

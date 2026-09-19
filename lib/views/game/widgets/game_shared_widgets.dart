@@ -21,7 +21,12 @@ import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/blind_selection_setup.dart';
 import '../../../utils/common_ui.dart';
+import '../../../services/game_settings.dart';
+import '../../../widgets/fx/fx_layer.dart';
 import '../../../widgets/fx/fx_sprites.dart';
+import '../../../widgets/fx/juice.dart';
+import '../../../widgets/fx/motion_policy.dart';
+import '../game_feedback_cues.dart';
 import '../game_presentation_timings.dart';
 import 'game_card_metrics.dart';
 import 'game_card_name_text.dart';
@@ -158,6 +163,7 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
           child: _BottomResourceText(
             pulseKey: 'deck',
             pulsing: _pulsingKeys.contains('deck'),
+            warning: resources.drawPileRemaining == 0,
             label:
                 '덱 ${resources.drawPileRemaining}/${widget.battle.totalDeckSize}',
             textAlign: TextAlign.left,
@@ -167,6 +173,7 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
           child: _BottomResourceText(
             pulseKey: 'board-move',
             pulsing: _pulsingKeys.contains('board-move'),
+            warning: resources.boardMovesRemaining == 1,
             label:
                 '이동 ${resources.boardMovesRemaining}/${resources.boardMovesMax}',
             textAlign: TextAlign.center,
@@ -176,6 +183,7 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
           child: _BottomResourceText(
             pulseKey: 'board-discard',
             pulsing: _pulsingKeys.contains('board-discard'),
+            warning: resources.boardDiscardsRemaining == 1,
             label:
                 '보드 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
             textAlign: TextAlign.center,
@@ -185,6 +193,7 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
           child: _BottomResourceText(
             pulseKey: 'hand',
             pulsing: _pulsingKeys.contains('hand'),
+            warning: resources.handDiscardsRemaining == 1,
             label:
                 '손패 ${widget.battle.hand.length}/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
             textAlign: TextAlign.right,
@@ -239,6 +248,7 @@ class _BottomResourceText extends StatelessWidget {
     required this.pulsing,
     required this.label,
     required this.textAlign,
+    this.warning = false,
   });
 
   final String pulseKey;
@@ -246,18 +256,40 @@ class _BottomResourceText extends StatelessWidget {
   final String label;
   final TextAlign textAlign;
 
+  /// 마지막 이동·마지막 버림·덱 0. 경고 색과 테두리로 바뀐다.
+  final bool warning;
+
   @override
   Widget build(BuildContext context) {
-    final text = Text(
+    Widget text = Text(
       label,
       maxLines: 1,
       textAlign: textAlign,
-      style: const TextStyle(
-        color: GameUiPalette.textSecondary,
+      style: TextStyle(
+        color: warning
+            ? GameUiPalette.specialDangerBright
+            : GameUiPalette.textSecondary,
         fontSize: 9,
-        fontWeight: FontWeight.w800,
+        fontWeight: warning ? FontWeight.w900 : FontWeight.w800,
       ),
     );
+    if (warning) {
+      text = DecoratedBox(
+        key: ValueKey('bottom-resource-warning-$pulseKey'),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(5),
+          color: GameUiPalette.specialDangerBright.withValues(alpha: 0.1),
+          border: Border.all(
+            color: GameUiPalette.specialDangerBright.withValues(alpha: 0.55),
+            width: 0.8,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+          child: text,
+        ),
+      );
+    }
     if (!pulsing) return text;
     return TweenAnimationBuilder<double>(
       key: ValueKey('bottom-resource-pulse-$pulseKey'),
@@ -558,4 +590,30 @@ String expirySignalLabel(RummiExpirySignal signal) {
     RummiExpirySignal.drawPileExhausted =>
       '드로우 덱이 소진되었고 더 이상 사용할 손패나 확정할 줄이 없습니다.',
   };
+}
+
+/// 거절 입력에 좌우로 짧게 흔들린다. 상점 거절 흔들림과 같은 길이다.
+///
+/// [tick]이 바뀔 때마다 한 번 흔들리고, 동작 줄이기에서는 움직이지 않는다.
+class GameDenyShake extends StatelessWidget {
+  const GameDenyShake({super.key, required this.tick, required this.child});
+
+  final int tick;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final strength = MotionPolicy.juiceScale;
+    if (tick == 0 || strength <= 0) return child;
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('game-deny-shake-$tick'),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: GamePresentationTimings.marketActionDenyShake,
+      builder: (context, t, child) => Transform.translate(
+        offset: Offset(sin(t * pi * 6) * (1 - t) * 6 * strength, 0),
+        child: child,
+      ),
+      child: child,
+    );
+  }
 }

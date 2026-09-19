@@ -79,11 +79,12 @@ void main() {
     );
   });
 
-  testWidgets('큰 final score 정산 단계에서 보드 이펙트를 띄운다', (tester) async {
+  testWidgets('상위 등급 final score 정산 단계에서 보드 이펙트를 띄운다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(
         activeSettlementStep: ScoringPresentationStep.finalScore,
         line: _line(finalScore: 150),
+        settlementGrade: 2,
       ),
     );
     await tester.pump();
@@ -120,7 +121,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1350));
   });
 
-  testWidgets('작은 final score 정산 단계는 보드 이펙트를 띄우지 않는다', (tester) async {
+  testWidgets('하위 등급 final score 정산 단계는 보드 이펙트를 띄우지 않는다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(
         activeSettlementStep: ScoringPresentationStep.finalScore,
@@ -140,6 +141,7 @@ void main() {
 Widget _effectOverlayHost({
   required ScoringPresentationStep activeSettlementStep,
   required ConfirmedLineBreakdown line,
+  int settlementGrade = 0,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -152,6 +154,7 @@ Widget _effectOverlayHost({
                 activeSettlementLine: line,
                 activeSettlementStep: activeSettlementStep,
                 settlementSequenceTick: 1,
+                settlementGrade: settlementGrade,
                 frameInset: 6,
                 gridGap: 4,
               ),

@@ -37,6 +37,15 @@ enum GameCue {
   panelOpen,
   noticeTop,
   noticeBottom,
+
+  // ── 전투 레인 ──
+  countTick,
+  tileModifierFire,
+  itemFire,
+  tileMove,
+  lineTransform,
+  previewChange,
+  confirmPress,
 }
 
 /// 의미 키 하나가 내는 소리와 햅틱.
@@ -203,6 +212,40 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.noticeTop: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.35),
   GameCue.noticeBottom: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.6),
+
+  // ── 전투 레인 ──
+  GameCue.countTick: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.35),
+  GameCue.tileModifierFire: GameCueSpec(
+    sfx: AssetPaths.sfxTimeTic,
+    pitch: 1.5,
+    haptic: HapticGrade.select,
+  ),
+  GameCue.itemFire: GameCueSpec(
+    sfx: AssetPaths.sfxStart,
+    pitch: 1.3,
+    haptic: HapticGrade.impact,
+  ),
+  GameCue.tileMove: GameCueSpec(
+    sfx: AssetPaths.sfxBtnSnd,
+    pitch: 1.1,
+    pitchVariance: 0.06,
+    haptic: HapticGrade.place,
+  ),
+  GameCue.lineTransform: GameCueSpec(
+    sfx: AssetPaths.sfxStart,
+    pitch: 0.95,
+    haptic: HapticGrade.impact,
+  ),
+  GameCue.previewChange: GameCueSpec(
+    sfx: AssetPaths.sfxTimeTic,
+    pitch: 1.6,
+    pitchVariance: 0.05,
+  ),
+  GameCue.confirmPress: GameCueSpec(
+    sfx: AssetPaths.sfxCollect,
+    pitch: 0.9,
+    haptic: HapticGrade.impact,
+  ),
 };
 
 /// 의미 키로 소리와 햅틱을 같은 시점에 낸다.

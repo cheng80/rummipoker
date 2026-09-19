@@ -111,5 +111,9 @@
   "gameTermScoreMultiplierTitle": "得点 xN",
   "gameTermScoreMultiplierBody": "最後に適用される強い乗算補正です。得点 x2は実際に2倍します。",
   "gameTermGoldTitle": "Gold",
-  "gameTermGoldBody": "MarketでJesterやItemを買ったり、候補をリロールするときに使う通貨です。"
+  "gameTermGoldBody": "MarketでJesterやItemを買ったり、候補をリロールするときに使う通貨です。",
+  "settlementGrade0": "ナイス",
+  "settlementGrade1": "グレート!",
+  "settlementGrade2": "スーパー!!",
+  "settlementGrade3": "レジェンド!!!"
 }

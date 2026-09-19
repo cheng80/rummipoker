@@ -111,5 +111,9 @@
   "gameTermScoreMultiplierTitle": "점수 xN",
   "gameTermScoreMultiplierBody": "마지막에 적용되는 배수 보정입니다. 점수 x2는 실제로 2배를 곱합니다.",
   "gameTermGoldTitle": "골드",
-  "gameTermGoldBody": "상점에서 Jester와 Item을 구매하거나 리롤할 때 쓰는 재화입니다."
+  "gameTermGoldBody": "상점에서 Jester와 Item을 구매하거나 리롤할 때 쓰는 재화입니다.",
+  "settlementGrade0": "좋아요",
+  "settlementGrade1": "훌륭해요!",
+  "settlementGrade2": "대단해요!!",
+  "settlementGrade3": "전설적!!!"
 }

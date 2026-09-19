@@ -111,5 +111,9 @@
   "gameTermScoreMultiplierTitle": "分数 xN",
   "gameTermScoreMultiplierBody": "最后应用的强力乘法修正。分数 x2会真正翻倍。",
   "gameTermGoldTitle": "Gold",
-  "gameTermGoldBody": "在Market购买Jester和Item，或刷新候选时使用的货币。"
+  "gameTermGoldBody": "在Market购买Jester和Item，或刷新候选时使用的货币。",
+  "settlementGrade0": "不错",
+  "settlementGrade1": "很棒!",
+  "settlementGrade2": "精彩!!",
+  "settlementGrade3": "传奇!!!"
 }
