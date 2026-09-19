@@ -181,6 +181,9 @@ class _GameSurface extends StatelessWidget {
                   settlementTileHeat: settlementTileHeat,
                   settlementTileHitSerial: settlementTileHitSerial,
                   settlementGrade: settlementGrade,
+                  showsFloatingSettlementBurst:
+                      !presentationPaused &&
+                      stageFlowPhase == GameStageFlowPhase.confirmSettlement,
                   selectedHandTile: selectedHandTile,
                   selectedBoardRow: selectedBoardRow,
                   selectedBoardCol: selectedBoardCol,
@@ -235,23 +238,6 @@ class _GameSurface extends StatelessWidget {
                   onTap: onSettlementSkip,
                 ),
               ),
-            if (!presentationPaused &&
-                stageFlowPhase == GameStageFlowPhase.confirmSettlement)
-              if (_showsFloatingSettlementBurst(activeSettlementStep))
-                Positioned.fill(
-                  child: GameFloatingSettlementBurst(
-                    key: ValueKey(
-                      'settlement-$settlementSequenceTick-$activeSettlementStep-$activeSettlementEffectIndex-${activeSettlementEffectIndexes.join(",")}',
-                    ),
-                    line: activeSettlementLine,
-                    step: activeSettlementStep,
-                    effectIndex: _floatingSettlementEffectIndex(
-                      activeSettlementEffectIndex,
-                      activeSettlementEffectIndexes,
-                    ),
-                    effectIndexes: activeSettlementEffectIndexes,
-                  ),
-                ),
             if (fateLineSelection != null)
               Positioned.fill(
                 child: _FateLineSelectionBarrier(
@@ -398,6 +384,7 @@ class _GameLayout extends StatelessWidget {
     required this.settlementTileHeat,
     required this.settlementTileHitSerial,
     required this.settlementGrade,
+    required this.showsFloatingSettlementBurst,
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
@@ -453,6 +440,7 @@ class _GameLayout extends StatelessWidget {
   final Map<String, int> settlementTileHeat;
   final Map<String, int> settlementTileHitSerial;
   final int settlementGrade;
+  final bool showsFloatingSettlementBurst;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
@@ -643,6 +631,27 @@ class _GameLayout extends StatelessWidget {
                         ),
                       ),
                     ),
+                  // Jester·타일·Item 발동 요약도 채점 줄을 피한 자리에 띄운다.
+                  if (showsFloatingSettlementBurst &&
+                      activeSettlementLine != null &&
+                      _showsFloatingSettlementBurst(activeSettlementStep))
+                    Positioned.fill(
+                      child: _BoardScoringCalloutPlacement(
+                        line: activeSettlementLine!,
+                        child: GameFloatingSettlementBurst(
+                          key: ValueKey(
+                            'settlement-$settlementSequenceTick-$activeSettlementStep-$activeSettlementEffectIndex-${activeSettlementEffectIndexes.join(",")}',
+                          ),
+                          line: activeSettlementLine,
+                          step: activeSettlementStep,
+                          effectIndex: _floatingSettlementEffectIndex(
+                            activeSettlementEffectIndex,
+                            activeSettlementEffectIndexes,
+                          ),
+                          effectIndexes: activeSettlementEffectIndexes,
+                        ),
+                      ),
+                    ),
                   if (AppConfig.showDebugFixtures && !suppressDebugChrome)
                     Positioned(
                       right: 0,
@@ -753,11 +762,11 @@ bool _showsBoardScoringCallout(ScoringPresentationStep step) {
       step == ScoringPresentationStep.finalScore;
 }
 
+/// finalScore는 등급 callout이 같은 자리에서 합계를 보여 준다.
 bool _showsFloatingSettlementBurst(ScoringPresentationStep step) {
   return step == ScoringPresentationStep.jester ||
       step == ScoringPresentationStep.tile ||
-      step == ScoringPresentationStep.item ||
-      step == ScoringPresentationStep.finalScore;
+      step == ScoringPresentationStep.item;
 }
 
 int? _floatingSettlementEffectIndex(int? effectIndex, List<int> effectIndexes) {
