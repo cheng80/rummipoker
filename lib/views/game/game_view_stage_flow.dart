@@ -615,8 +615,7 @@ extension _GameViewStageFlow on _GameViewState {
     _settlementStepCount = 0;
     _settlementTickIndex = 0;
     _settlementGrade = 0;
-    _settlementTileHeat = const {};
-    _settlementTileHitSerial = const {};
+    _settlementTicks.value = SettlementTileTicks.empty;
   }
 
   /// 정산 도중 탭하면 남은 연출을 건너뛴다. 스텝은 그대로 진행되어 최종 상태가 같다.
@@ -637,17 +636,13 @@ extension _GameViewStageFlow on _GameViewState {
       if (!mounted) return;
       final key = '$row:$col';
       final crossing = (cellAppearances[key] ?? 0) > 1;
-      final heat = crossing ? (_settlementTileHeat[key] ?? 0) + 1 : 0;
-      _mutate(() {
-        _settlementHitSerial++;
-        _settlementTileHitSerial = {
-          ..._settlementTileHitSerial,
-          key: _settlementHitSerial,
-        };
-        if (crossing) {
-          _settlementTileHeat = {..._settlementTileHeat, key: heat};
-        }
-      });
+      final ticks = _settlementTicks.value;
+      final heat = crossing ? (ticks.heat[key] ?? 0) + 1 : 0;
+      _settlementHitSerial++;
+      _settlementTicks.value = SettlementTileTicks(
+        heat: crossing ? {...ticks.heat, key: heat} : ticks.heat,
+        hitSerial: {...ticks.hitSerial, key: _settlementHitSerial},
+      );
       if (!_settlementSkipRequested) {
         final pitch = GameSettlementPacing.tickPitch(_settlementTickIndex);
         if (heat > 1) {

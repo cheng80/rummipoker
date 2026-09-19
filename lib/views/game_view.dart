@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -200,8 +201,11 @@ class _GameViewState extends ConsumerState<GameView>
   int _settlementTickIndex = 0;
   int _settlementHitSerial = 0;
   int _settlementGrade = 0;
-  Map<String, int> _settlementTileHeat = const {};
-  Map<String, int> _settlementTileHitSerial = const {};
+
+  /// 타일 tick은 매 박자 바뀌므로 화면 전체가 아니라 보드만 다시 그린다.
+  final ValueNotifier<SettlementTileTicks> _settlementTicks = ValueNotifier(
+    SettlementTileTicks.empty,
+  );
 
   /// 정산·전환 연출 대기의 단일 시계. pause·정산 속도·hit-stop을 반영한다.
   late final PresentationClock _presentationClock = PresentationClock(
@@ -310,6 +314,7 @@ class _GameViewState extends ConsumerState<GameView>
   void dispose() {
     _inactiveLifecycleTimer?.cancel();
     _presentationClock.dispose();
+    _settlementTicks.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _dismissBattleTutorial();
     super.dispose();
@@ -715,8 +720,7 @@ class _GameViewState extends ConsumerState<GameView>
             settlementGoalDisplayScore: _settlementGoalDisplayScore,
             settlementSequenceTick: _settlementSequenceTick,
             settlementBoardSnapshot: _settlementBoardSnapshot,
-            settlementTileHeat: _settlementTileHeat,
-            settlementTileHitSerial: _settlementTileHitSerial,
+            settlementTicks: _settlementTicks,
             settlementGrade: _settlementGrade,
             selectedHandTile: _selectedHandTile,
             selectedBoardRow: _selectedBoardRow,
