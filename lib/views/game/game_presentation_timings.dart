@@ -210,6 +210,9 @@ class GamePresentationTimings {
   static const Duration bossMarkFlight = Duration(milliseconds: 420);
   static const Duration bossMarkFlightStagger = Duration(milliseconds: 60);
 
+  /// 비행이 끝났다는 신호가 오지 않아도 이 시간이 더 지나면 제약 표시를 드러낸다.
+  static const Duration bossMarkFlightGuard = Duration(milliseconds: 600);
+
   /// Blind 카드 고른 뒤 전투로 넘어가기 전 선택 강조(입력 잠금 상한).
   static const Duration blindPlayCommit = Duration(milliseconds: 240);
 
@@ -228,9 +231,7 @@ class GamePresentationTimings {
 
   /// 게임오버 결과 창의 기억 카드 공개.
   static const Duration gameOverRewardReveal = Duration(milliseconds: 420);
-  static const Duration gameOverRewardRevealDelay = Duration(
-    milliseconds: 260,
-  );
+  static const Duration gameOverRewardRevealDelay = Duration(milliseconds: 260);
 
   /// 타이틀 로고 내려앉기와 강도 '강'의 idle 흔들림 한 주기.
   static const Duration titleLogoSettle = Duration(milliseconds: 520);

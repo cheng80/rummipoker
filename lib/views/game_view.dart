@@ -176,6 +176,8 @@ class _GameViewState extends ConsumerState<GameView>
   // --- T4: Boss 인트로 배너와 제약 표시 비행 ---
   bool _bossIntroSettled = false;
   List<GameBossMarkFlight>? _bossMarkFlights;
+  Timer? _bossIntroGuardTimer;
+  int _bossIntroGuardRetries = 0;
   final GlobalKey _gameStackKey = GlobalKey();
   final GlobalKey _bossIntroMarksKey = GlobalKey();
   // --- T4: 런 완료 승리 장면 ---
@@ -343,6 +345,7 @@ class _GameViewState extends ConsumerState<GameView>
   @override
   void dispose() {
     _inactiveLifecycleTimer?.cancel();
+    _bossIntroGuardTimer?.cancel();
     _presentationClock.dispose();
     _settlementTicks.dispose();
     SoundManager.rampGlobalPitch(1, Duration.zero);
@@ -575,6 +578,7 @@ class _GameViewState extends ConsumerState<GameView>
       return;
     }
     final from = stackBox.globalToLocal(source.center);
+    _startBossIntroGuard(targets.length);
     _mutate(() {
       _bossMarkFlights = [
         for (final rect in targets)
@@ -589,7 +593,32 @@ class _GameViewState extends ConsumerState<GameView>
     });
   }
 
+  /// 비행이 닿았다는 신호가 오지 않아도 상한 시간이 지나면 제약 표시를 드러낸다.
+  ///
+  /// 일시정지 중이면 몇 번 더 기다리되, 영원히 미루지는 않는다.
+  void _startBossIntroGuard(int count) {
+    final bound =
+        GameBossMarkFlightLayer.totalDuration(count) +
+        GamePresentationTimings.bossMarkFlightGuard;
+    _bossIntroGuardRetries = 0;
+    _scheduleBossIntroGuard(bound);
+  }
+
+  void _scheduleBossIntroGuard(Duration bound) {
+    _bossIntroGuardTimer?.cancel();
+    _bossIntroGuardTimer = Timer(bound, () {
+      if (_bossIntroSettled || !mounted) return;
+      if (_presentationPaused && _bossIntroGuardRetries < 3) {
+        _bossIntroGuardRetries++;
+        _scheduleBossIntroGuard(bound);
+        return;
+      }
+      _settleBossIntro();
+    });
+  }
+
   void _onBossMarksLanded() {
+    if (_bossIntroSettled) return;
     final flights = _bossMarkFlights;
     _settleBossIntro();
     final stackContext = _gameStackKey.currentContext;
@@ -601,12 +630,14 @@ class _GameViewState extends ConsumerState<GameView>
     ]);
   }
 
+  /// 여러 번 불려도 한 번만 동작한다. 화면이 사라진 뒤에도 잠금은 남긴다.
   void _settleBossIntro() {
+    _bossIntroGuardTimer?.cancel();
+    _bossIntroGuardTimer = null;
+    if (_bossIntroSettled) return;
+    _bossIntroSettled = true;
     if (!mounted) return;
-    _mutate(() {
-      _bossIntroSettled = true;
-      _bossMarkFlights = null;
-    });
+    _mutate(() => _bossMarkFlights = null);
   }
 
   void _scheduleDebugAutoUseItem() {
