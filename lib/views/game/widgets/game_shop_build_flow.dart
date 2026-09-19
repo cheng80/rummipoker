@@ -743,105 +743,105 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                               horizontal: 0,
                                               vertical: 2,
                                             ),
-                                            child: visibleOfferEntries.isEmpty
-                                                ? Center(
-                                                    child: Text(
-                                                      _shopTab ==
-                                                              _MarketShopTab
-                                                                  .cardsAndQuickSlots
-                                                          ? '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.'
-                                                          : '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.',
-                                                      style: TextStyle(
-                                                        color: GameUiPalette
-                                                            .textPrimary
-                                                            .withValues(
-                                                              alpha: 0.68,
-                                                            ),
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                      ),
-                                                    ),
-                                                  )
-                                                : _MarketOfferRow(
-                                                    itemCount:
-                                                        visibleOfferEntries
-                                                            .length,
-                                                    children: [
-                                                      for (
-                                                        var i = 0;
-                                                        i <
-                                                            visibleOfferEntries
-                                                                .length;
-                                                        i++
-                                                      )
-                                                        KeyedSubtree(
-                                                          key: _offerKey(
-                                                            visibleOfferEntries[i],
-                                                          ),
-                                                          child: _MarketOfferReveal(
-                                                            index: i,
-                                                            signature:
-                                                                _offerEntrySignature(
-                                                                  market,
-                                                                  visibleOfferEntries[i],
+                                            child: MarketDirectionalSwitcher(
+                                              direction:
+                                                  _marketPanelTransitionDirection +
+                                                  _marketPageTransitionDirection,
+                                              child: KeyedSubtree(
+                                                key: ValueKey<String>(
+                                                  'market-offers-${_shopTab.name}-${currentOfferLane.name}-$currentOfferPage',
+                                                ),
+                                                child:
+                                                    visibleOfferEntries.isEmpty
+                                                    ? Center(
+                                                        child: Text(
+                                                          _shopTab ==
+                                                                  _MarketShopTab
+                                                                      .cardsAndQuickSlots
+                                                              ? '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.'
+                                                              : '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.',
+                                                          style: TextStyle(
+                                                            color: GameUiPalette
+                                                                .textPrimary
+                                                                .withValues(
+                                                                  alpha: 0.68,
                                                                 ),
-                                                            child:
-                                                                _isPurchaseSourceIndex(
-                                                                  i,
-                                                                )
-                                                                ? const _MarketEmptyOfferCard()
-                                                                : switch (visibleOfferEntries[i]
-                                                                      .kind) {
-                                                                    _MarketOfferEntryKind.jester => _GameShopOfferCard(
-                                                                      offer:
-                                                                          market
-                                                                              .offers[visibleOfferEntries[i]
-                                                                              .jesterIndex!],
-                                                                      selected:
-                                                                          _selectedOfferIndex ==
-                                                                          visibleOfferEntries[i]
-                                                                              .jesterIndex,
-                                                                      canAfford: market
-                                                                          .offers[visibleOfferEntries[i]
-                                                                              .jesterIndex!]
-                                                                          .isAffordable,
-                                                                      onTap: () => _selectOffer(
-                                                                        visibleOfferEntries[i]
-                                                                            .jesterIndex!,
-                                                                      ),
-                                                                    ),
-                                                                    _MarketOfferEntryKind
-                                                                        .item =>
-                                                                      _MarketItemOfferCard(
-                                                                        offer: market
-                                                                            .itemOffers[visibleOfferEntries[i].itemIndex!],
-                                                                        selected:
-                                                                            _selectedItemOfferIndex ==
-                                                                            visibleOfferEntries[i].itemIndex,
-                                                                        onTap: () => _selectItemOffer(
-                                                                          visibleOfferEntries[i]
-                                                                              .itemIndex!,
-                                                                        ),
-                                                                      ),
-                                                                    _MarketOfferEntryKind
-                                                                        .tile =>
-                                                                      _MarketTileOfferCard(
-                                                                        offer: market
-                                                                            .tileOffers[visibleOfferEntries[i].tileIndex!],
-                                                                        selected:
-                                                                            _selectedTileOfferIndex ==
-                                                                            visibleOfferEntries[i].tileIndex,
-                                                                        onTap: () => _selectTileOffer(
-                                                                          visibleOfferEntries[i]
-                                                                              .tileIndex!,
-                                                                        ),
-                                                                      ),
-                                                                  },
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.w700,
                                                           ),
                                                         ),
-                                                    ],
-                                                  ),
+                                                      )
+                                                    : _MarketOfferRow(
+                                                        itemCount:
+                                                            visibleOfferEntries
+                                                                .length,
+                                                        children: [
+                                                          for (
+                                                            var i = 0;
+                                                            i <
+                                                                visibleOfferEntries
+                                                                    .length;
+                                                            i++
+                                                          )
+                                                            KeyedSubtree(
+                                                              key: _offerKey(
+                                                                visibleOfferEntries[i],
+                                                              ),
+                                                              child: _MarketOfferReveal(
+                                                                index: i,
+                                                                signature:
+                                                                    _offerEntrySignature(
+                                                                      market,
+                                                                      visibleOfferEntries[i],
+                                                                    ),
+                                                                child:
+                                                                    _isPurchaseSourceIndex(
+                                                                      i,
+                                                                    )
+                                                                    ? const _MarketEmptyOfferCard()
+                                                                    : switch (visibleOfferEntries[i]
+                                                                          .kind) {
+                                                                        _MarketOfferEntryKind.jester => _GameShopOfferCard(
+                                                                          offer:
+                                                                              market.offers[visibleOfferEntries[i].jesterIndex!],
+                                                                          selected:
+                                                                              _selectedOfferIndex ==
+                                                                              visibleOfferEntries[i].jesterIndex,
+                                                                          canAfford: market
+                                                                              .offers[visibleOfferEntries[i].jesterIndex!]
+                                                                              .isAffordable,
+                                                                          onTap: () => _selectOffer(
+                                                                            visibleOfferEntries[i].jesterIndex!,
+                                                                          ),
+                                                                        ),
+                                                                        _MarketOfferEntryKind.item => _MarketItemOfferCard(
+                                                                          offer:
+                                                                              market.itemOffers[visibleOfferEntries[i].itemIndex!],
+                                                                          selected:
+                                                                              _selectedItemOfferIndex ==
+                                                                              visibleOfferEntries[i].itemIndex,
+                                                                          onTap: () => _selectItemOffer(
+                                                                            visibleOfferEntries[i].itemIndex!,
+                                                                          ),
+                                                                        ),
+                                                                        _MarketOfferEntryKind.tile => _MarketTileOfferCard(
+                                                                          offer:
+                                                                              market.tileOffers[visibleOfferEntries[i].tileIndex!],
+                                                                          selected:
+                                                                              _selectedTileOfferIndex ==
+                                                                              visibleOfferEntries[i].tileIndex,
+                                                                          onTap: () => _selectTileOffer(
+                                                                            visibleOfferEntries[i].tileIndex!,
+                                                                          ),
+                                                                        ),
+                                                                      },
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ],

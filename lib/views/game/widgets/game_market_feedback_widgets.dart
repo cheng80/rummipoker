@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../widgets/fx/fx_sprites.dart';
+import '../../../widgets/fx/motion_policy.dart';
 import '../game_presentation_timings.dart';
 import 'game_card_metrics.dart';
 import 'game_market_metrics.dart';
@@ -183,59 +184,57 @@ class MarketNewAcquisitionReveal extends StatelessWidget {
             final fade = (1 - ((value - 0.76) / 0.24)).clamp(0.0, 1.0);
             return Transform.scale(
               scale: 0.82 + (0.18 * value),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: GameUiPalette.specialGoldSurface.withValues(
-                    alpha: 0.96 * fade,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: GameUiPalette.actionGoldBright.withValues(
-                      alpha: fade,
-                    ),
-                    width: 1.4,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: GameUiPalette.actionGoldBright.withValues(
-                        alpha: 0.28 * fade,
-                      ),
-                      blurRadius: 18,
-                    ),
-                  ],
+              child: FxBoxGlow(
+                color: GameUiPalette.actionGoldBright.withValues(
+                  alpha: 0.28 * fade,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
+                blurRadius: 18,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: GameUiPalette.specialGoldSurface.withValues(
+                      alpha: 0.96 * fade,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: GameUiPalette.actionGoldBright.withValues(
+                        alpha: fade,
+                      ),
+                      width: 1.4,
+                    ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'NEW',
-                        style: TextStyle(
-                          color: GameUiPalette.actionGoldBright.withValues(
-                            alpha: fade,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          context.tr('t3MarketNew'),
+                          style: TextStyle(
+                            color: GameUiPalette.actionGoldBright.withValues(
+                              alpha: fade,
+                            ),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            height: 1,
                           ),
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                          height: 1,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          color: GameUiPalette.textPrimary.withValues(
-                            alpha: fade,
+                        const SizedBox(height: 4),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            color: GameUiPalette.textPrimary.withValues(
+                              alpha: fade,
+                            ),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
                           ),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -243,6 +242,48 @@ class MarketNewAcquisitionReveal extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class MarketDirectionalSwitcher extends StatelessWidget {
+  const MarketDirectionalSwitcher({
+    super.key,
+    required this.direction,
+    required this.child,
+  });
+
+  final int direction;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = MotionPolicy.reduceMotion || MotionPolicy.juiceScale == 0
+        ? Duration.zero
+        : GamePresentationTimings.marketDetailSwitch;
+    final sign = direction < 0 ? -1.0 : 1.0;
+    return AnimatedSwitcher(
+      duration: duration,
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        alignment: Alignment.topCenter,
+        children: <Widget>[
+          ...previousChildren,
+          currentChild ?? const SizedBox.shrink(),
+        ],
+      ),
+      transitionBuilder: (entry, animation) {
+        final offset = Tween<Offset>(
+          begin: Offset(sign, 0),
+          end: Offset.zero,
+        ).animate(animation);
+        return ClipRect(
+          child: FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: offset, child: entry),
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

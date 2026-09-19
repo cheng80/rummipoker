@@ -79,6 +79,7 @@ Future<void> _pumpShopScreen(
                   onExitToTitle: () async {},
                   onRestartRun: () async {},
                   isDebugFixtureRun: false,
+                  autoStartTutorials: false,
                 ),
               ),
             ),
