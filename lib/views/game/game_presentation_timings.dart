@@ -107,6 +107,26 @@ class GamePresentationTimings {
   static const Duration marketSlotUnlockBannerIn = Duration(milliseconds: 420);
 
   static const Duration debugGameOverOnLoadDelay = Duration(milliseconds: 220);
+
+  // --- T0: 공통 입력·팝업·화면 전환 ---
+  /// 팝업 scale-pop 등장과 barrier fade.
+  static const Duration dialogPopIn = Duration(milliseconds: 220);
+
+  /// 팝업 닫힘. 등장보다 짧게 둔다.
+  static const Duration dialogPopOut = Duration(milliseconds: 140);
+
+  /// 화면 전환 fade·slide. 지시 상한 400ms보다 짧게 둔다.
+  static const Duration routeTransition = Duration(milliseconds: 280);
+  static const Duration routeReverseTransition = Duration(milliseconds: 220);
+
+  /// 타이틀 이탈 때 BGM 페이드 아웃.
+  static const Duration titleBgmFadeOut = Duration(milliseconds: 320);
+
+  /// 거절 좌우 흔들림.
+  static const Duration denyShake = Duration(milliseconds: 320);
+
+  /// 난이도·modifier·Archive 카드 선택 상태 전환.
+  static const Duration choiceSelect = Duration(milliseconds: 180);
 }
 
 /// 반복되는 duration/stagger 조합을 이름 붙여 쓰는 presentation 전용 보조 타입.

@@ -416,19 +416,22 @@ class _ArchivePageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton.filled(
-      visualDensity: VisualDensity.compact,
-      style: IconButton.styleFrom(
-        backgroundColor: enabled
-            ? GameUiPalette.archiveChipSurface
-            : GameUiPalette.textPrimary.withValues(alpha: 0.08),
-        foregroundColor: enabled
-            ? GameUiPalette.gameOverRewardAccent
-            : GameUiPalette.textPrimary.withValues(alpha: 0.22),
-        fixedSize: const Size(34, 34),
+    return PressFeedback(
+      onTap: enabled ? onPressed : null,
+      builder: (context, onTap) => IconButton.filled(
+        visualDensity: VisualDensity.compact,
+        style: IconButton.styleFrom(
+          backgroundColor: enabled
+              ? GameUiPalette.archiveChipSurface
+              : GameUiPalette.textPrimary.withValues(alpha: 0.08),
+          foregroundColor: enabled
+              ? GameUiPalette.gameOverRewardAccent
+              : GameUiPalette.textPrimary.withValues(alpha: 0.22),
+          fixedSize: const Size(34, 34),
+        ),
+        onPressed: onTap,
+        icon: Icon(icon, size: 22),
       ),
-      onPressed: enabled ? onPressed : null,
-      icon: Icon(icon, size: 22),
     );
   }
 }
