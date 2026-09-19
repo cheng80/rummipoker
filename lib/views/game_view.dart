@@ -59,6 +59,9 @@ import 'game/widgets/game_tile_choice_dialog.dart';
 import 'game/widgets/game_tutorial_overlay.dart';
 import 'game/widgets/game_surface_metrics.dart';
 import 'game/widgets/game_ui_palette.dart';
+import '../widgets/fx/fx_layer.dart';
+import '../widgets/fx/fx_sprites.dart';
+import '../widgets/fx/juice.dart';
 import '../widgets/fx/motion_policy.dart';
 import '../widgets/fx/presentation_clock.dart';
 import '../widgets/fx/screen_shake.dart';
@@ -184,6 +187,11 @@ class _GameViewState extends ConsumerState<GameView>
   final GlobalKey _battlePreviewTutorialKey = GlobalKey();
   final GlobalKey _battleActionsTutorialKey = GlobalKey();
   final GlobalKey _battleHandTutorialKey = GlobalKey();
+  final GlobalKey _battleJesterZoneKey = GlobalKey();
+
+  /// 마지막 거절 입력이 흔들 대상과 순번. 연출 전용이다.
+  _BattleDenyTarget _battleDenyTarget = _BattleDenyTarget.actions;
+  int _battleDenyTick = 0;
 
   // 한 확정의 정산 연출 전용 상태. 저장·게임 결과와 무관하다.
   bool _settlementSkipRequested = false;
@@ -669,7 +677,23 @@ class _GameViewState extends ConsumerState<GameView>
     final gameState = ref.watch(gameSessionNotifierProvider(_gameArgs));
     if (!gameState.isReady) {
       return const PhoneFrameScaffold(
-        child: Center(child: CircularProgressIndicator()),
+        child: Stack(
+          children: [
+            Positioned.fill(child: GameTableBackdrop()),
+            Center(
+              child: SizedBox.square(
+                key: ValueKey('game-view-loading'),
+                dimension: 34,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  strokeCap: StrokeCap.round,
+                  color: GameUiPalette.actionGoldBright,
+                  backgroundColor: GameUiPalette.surfacePanel,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
     _scheduleBattleTutorialIfNeeded();
@@ -721,6 +745,11 @@ class _GameViewState extends ConsumerState<GameView>
             battlePreviewTutorialKey: _battlePreviewTutorialKey,
             battleActionsTutorialKey: _battleActionsTutorialKey,
             battleHandTutorialKey: _battleHandTutorialKey,
+            battleJesterZoneKey: _battleJesterZoneKey,
+            denyTarget: _battleDenyTarget,
+            denyTick: _battleDenyTick,
+            onLockedSlotTap: () =>
+                _denyBattleAction('잠긴 슬롯입니다.', target: _BattleDenyTarget.slots),
             onOptionsTap: _openGameOptions,
             onTutorialTap: () => _startBattleTutorial(markSeen: false),
             onRunInfoTap: _openRunInfo,
@@ -765,6 +794,9 @@ class _GameViewState extends ConsumerState<GameView>
     );
   }
 }
+
+/// 거절 입력에서 흔들리는 영역.
+enum _BattleDenyTarget { board, actions, hand, slots }
 
 String _battleRunContextLabel({
   required NewRunDifficulty difficulty,

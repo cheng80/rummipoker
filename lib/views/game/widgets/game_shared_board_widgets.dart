@@ -34,6 +34,8 @@ class GameBoardGrid extends StatefulWidget {
     this.bonusFlashTick = 0,
     this.settlementTileHeat = const {},
     this.settlementTileHitSerial = const {},
+    this.dealOnEnter = false,
+    this.showLineHints = false,
     this.alignment = Alignment.center,
   });
 
@@ -62,6 +64,12 @@ class GameBoardGrid extends StatefulWidget {
 
   /// 정산 tick이 칸을 마지막으로 친 순번. 바뀌면 그 칸이 튕긴다.
   final Map<String, int> settlementTileHitSerial;
+
+  /// 처음 그릴 때 타일과 Boss 표시가 짧은 stagger로 깔린다(전투 진입).
+  final bool dealOnEnter;
+
+  /// 지금 확정하면 점수가 나는 줄을 숨쉬듯 비추고, 한 칸 남은 줄에 희미한 힌트를 준다.
+  final bool showLineHints;
   final void Function(int row, int col) onTapCell;
   final ValueChanged<Tile> onLongPressTile;
   final AlignmentGeometry alignment;
@@ -70,7 +78,8 @@ class GameBoardGrid extends StatefulWidget {
   State<GameBoardGrid> createState() => _GameBoardGridState();
 }
 
-class _GameBoardGridState extends State<GameBoardGrid> {
+class _GameBoardGridState extends State<GameBoardGrid>
+    with SingleTickerProviderStateMixin {
   late Map<String, String?> _previousTileKeys;
   late Map<String, Tile?> _previousTiles;
   Set<String> _appearingCells = const {};
@@ -82,12 +91,25 @@ class _GameBoardGridState extends State<GameBoardGrid> {
   int _contributorClearTick = 0;
   int _boardWobbleSerial = 0;
   final List<Timer> _clearTimers = [];
+  final Map<String, int> _rippleSerial = {};
+  final List<Timer> _rippleTimers = [];
+  late final AnimationController _dealController;
 
   @override
   void initState() {
     super.initState();
     _previousTileKeys = _tileKeysForBoard(widget.board);
     _previousTiles = _tilesForBoard(widget.board);
+    final deal = widget.dealOnEnter && !MotionPolicy.reduceMotion;
+    _dealController = AnimationController(
+      vsync: this,
+      duration:
+          GamePresentationTimings.battleEntryDeal +
+          GamePresentationTimings.battleEntryStagger *
+              (kBoardSize * kBoardSize),
+      value: deal ? 0 : 1,
+    );
+    if (deal) _dealController.forward();
   }
 
   @override
@@ -118,6 +140,9 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       previousTiles: _previousTiles,
     );
     _startContributorClearIfNeeded(oldWidget);
+    if (appearedCells.length == 1 && _moveFlight == null) {
+      _startLandingRipple(appearedCells.single);
+    }
     _emitSettlementHitSparks(oldWidget);
     _previousTileKeys = currentTileKeys;
     _previousTiles = _tilesForBoard(widget.board);
@@ -128,9 +153,10 @@ class _GameBoardGridState extends State<GameBoardGrid> {
 
   @override
   void dispose() {
-    for (final timer in _clearTimers) {
+    for (final timer in [..._clearTimers, ..._rippleTimers]) {
       timer.cancel();
     }
+    _dealController.dispose();
     super.dispose();
   }
 
@@ -180,6 +206,44 @@ class _GameBoardGridState extends State<GameBoardGrid> {
     );
   }
 
+  /// 타일이 착지하면 주변 타일이 거리순으로 20~30ms 간격 파문을 탄다.
+  void _startLandingRipple(String cellKey) {
+    if (MotionPolicy.juiceScale <= 0) return;
+    final (row, col) = _parseBoardCellKey(cellKey);
+    final landing = GamePresentationTimings.boardTilePlacePop * 0.45;
+    for (var r = 0; r < kBoardSize; r++) {
+      for (var c = 0; c < kBoardSize; c++) {
+        final distance = (r - row).abs() + (c - col).abs();
+        if (distance == 0 || distance > 2) continue;
+        if (widget.board.cellAt(r, c) == null) continue;
+        final key = '$r:$c';
+        _rippleTimers.add(
+          Timer(
+            landing + GamePresentationTimings.landingRippleStagger * distance,
+            () {
+              if (!mounted) return;
+              setState(
+                () => _rippleSerial[key] = (_rippleSerial[key] ?? 0) + 1,
+              );
+            },
+          ),
+        );
+      }
+    }
+    _rippleTimers.removeWhere((timer) => !timer.isActive);
+  }
+
+  /// 진입 deal에서 [index]번째 칸의 진행도(0~1).
+  double _dealProgress(int index) {
+    if (_dealController.isCompleted) return 1;
+    final elapsed = _dealController.duration! * _dealController.value;
+    final local =
+        (elapsed - GamePresentationTimings.battleEntryStagger * index)
+            .inMicroseconds /
+        GamePresentationTimings.battleEntryDeal.inMicroseconds;
+    return local.clamp(0.0, 1.0);
+  }
+
   /// 정산 tick으로 새로 맞은 칸에서 불꽃을 튀긴다. 교차 타일은 맞을수록 크게.
   void _emitSettlementHitSparks(GameBoardGrid oldWidget) {
     final hits = <String>[
@@ -206,6 +270,32 @@ class _GameBoardGridState extends State<GameBoardGrid> {
         );
       }
     });
+  }
+
+  /// 네 칸이 찼고 한 칸만 빈 줄의 빈 칸. 이미 점수 줄에 든 칸은 뺀다.
+  Set<String> _nearCompleteCells() {
+    final refs = [
+      for (var i = 0; i < kBoardSize; i++) LineRef.row(i),
+      for (var i = 0; i < kBoardSize; i++) LineRef.col(i),
+      LineRef.diagMain,
+      LineRef.diagAnti,
+    ];
+    final out = <String>{};
+    for (final ref in refs) {
+      final cells = ref.cells();
+      final empty = [
+        for (final (r, c) in cells)
+          if (widget.board.cellAt(r, c) == null) '$r:$c',
+      ];
+      if (empty.length != 1) continue;
+      final key = empty.single;
+      if (widget.blockedCellKeys.contains(key)) continue;
+      final alreadyScoring = cells.every(
+        (cell) => widget.scoringCells.contains('${cell.$1}:${cell.$2}'),
+      );
+      if (!alreadyScoring) out.add(key);
+    }
+    return out;
   }
 
   Offset? _cellCenter(String cellKey) {
@@ -330,7 +420,7 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                           );
                         }
                         child = Juice(
-                          trigger: _boardWobbleSerial,
+                          trigger: (_boardWobbleSerial, _rippleSerial[cellKey]),
                           strength: 0.35,
                           child: Juice(
                             trigger: widget.settlementTileHitSerial[cellKey],
@@ -338,12 +428,40 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                             child: child,
                           ),
                         );
+                        if (!_dealController.isCompleted &&
+                            (tile != null || placementBlocked)) {
+                          child = AnimatedBuilder(
+                            animation: _dealController,
+                            child: child,
+                            builder: (context, child) {
+                              final t = Curves.easeOutBack.transform(
+                                _dealProgress(index),
+                              );
+                              return Transform.translate(
+                                offset: Offset(0, -24 * (1 - t)),
+                                child: Transform.scale(
+                                  scale: 0.6 + 0.4 * t,
+                                  child: child,
+                                ),
+                              );
+                            },
+                          );
+                        }
                         if (!_appearingCells.contains(cellKey)) {
                           return child;
                         }
                         return _BoardPlacePop(child: child);
                       },
                     ),
+                    if (widget.showLineHints &&
+                        !widget.boardMoveMode &&
+                        widget.activeSettlementCells.isEmpty)
+                      Positioned.fill(
+                        child: _BoardLineHintLayer(
+                          scoringCells: widget.scoringCells,
+                          nearCells: _nearCompleteCells(),
+                        ),
+                      ),
                     if (_contributorClear != null)
                       _ContributorClearOverlay(clear: _contributorClear!),
                     if (_moveFlight != null)
@@ -928,6 +1046,7 @@ double _distanceToSegment(Offset point, Offset start, Offset end) {
   return (point - projection).distance;
 }
 
+/// 손패 쪽(아래)에서 호를 그리며 들어와 착지할 때 눌렸다 펴진다.
 class _BoardPlacePop extends StatelessWidget {
   const _BoardPlacePop({required this.child});
 
@@ -939,29 +1058,35 @@ class _BoardPlacePop extends StatelessWidget {
       key: const ValueKey('board-place-pop'),
       tween: Tween<double>(begin: 0, end: 1),
       duration: GamePresentationTimings.boardTilePlacePop,
-      curve: Curves.easeOutBack,
       builder: (context, value, child) {
         final progress = value.clamp(0.0, 1.0);
-        final travel = progress < 0.35
-            ? 18 + (-20 * (progress / 0.35))
-            : -2 + (2 * ((progress - 0.35) / 0.65));
-        final scale = progress < 0.35
-            ? 0.90 + (0.14 * (progress / 0.35))
-            : 1.04 + (-0.04 * ((progress - 0.35) / 0.65));
+        // 0~0.45 비행(아래에서 위로, 옆으로 살짝 휘며), 이후 착지 찌그러짐.
+        final flight = Curves.easeOutCubic.transform(
+          (progress / 0.45).clamp(0.0, 1.0),
+        );
+        final travel = 34 * (1 - flight);
+        final sway = 8 * sin(pi * flight);
+        final landing = progress < 0.45
+            ? 0.0
+            : sin(pi * ((progress - 0.45) / 0.55)) * (1 - progress) * 2;
         final glow = 0.24 * (1 - progress);
         return Transform.translate(
           key: const ValueKey('board-place-flight'),
-          offset: Offset(0, travel),
-          child: Opacity(
-            opacity: (0.72 + (progress * 0.28)).clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: scale,
-              child: FxBoxGlow(
-                color: const Color(0xFFF2C14E).withValues(alpha: glow),
-                blurRadius: 16 * (glow / 0.24),
-                spreadRadius: 1.5 * (glow / 0.24),
-                child: child!,
+          offset: Offset(sway, travel),
+          child: Transform(
+            alignment: Alignment.bottomCenter,
+            transform: Matrix4.identity()
+              ..scaleByDouble(
+                (0.86 + 0.14 * flight) * (1 + 0.1 * landing),
+                (0.86 + 0.14 * flight) * (1 - 0.12 * landing),
+                1,
+                1,
               ),
+            child: FxBoxGlow(
+              color: const Color(0xFFF2C14E).withValues(alpha: glow),
+              blurRadius: 16 * (glow / 0.24),
+              spreadRadius: 1.5 * (glow / 0.24),
+              child: child!,
             ),
           ),
         );
@@ -969,6 +1094,101 @@ class _BoardPlacePop extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// 점수 줄 예고: 3번 숨쉬듯 빛난 뒤 은은하게 멈춘다. 한 칸 남은 줄은 빈 칸에 희미한 테두리만.
+class _BoardLineHintLayer extends StatelessWidget {
+  const _BoardLineHintLayer({
+    required this.scoringCells,
+    required this.nearCells,
+  });
+
+  final Set<String> scoringCells;
+  final Set<String> nearCells;
+
+  @override
+  Widget build(BuildContext context) {
+    if (scoringCells.isEmpty && nearCells.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    const breath = GamePresentationTimings.lineHintBreath;
+    const cycles = GamePresentationTimings.lineHintBreathCycles;
+    final signature = ([...scoringCells]..sort()).join('|');
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: TweenAnimationBuilder<double>(
+          key: ValueKey('board-line-hint-$signature'),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: MotionPolicy.reduceMotion ? Duration.zero : breath * cycles,
+          builder: (context, t, _) {
+            // 끝나면 0.5 밝기로 멈춘다. 반복 루프를 두지 않는다.
+            final phase = t >= 1 ? 0.5 : 0.5 - 0.5 * cos(2 * pi * cycles * t);
+            return CustomPaint(
+              key: const ValueKey('board-line-hint'),
+              painter: _BoardLineHintPainter(
+                scoringCells: scoringCells,
+                nearCells: nearCells,
+                pulse: phase,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _BoardLineHintPainter extends CustomPainter {
+  const _BoardLineHintPainter({
+    required this.scoringCells,
+    required this.nearCells,
+    required this.pulse,
+  });
+
+  final Set<String> scoringCells;
+  final Set<String> nearCells;
+  final double pulse;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final metric = _BoardLineOverlayMetric(size);
+    for (final key in scoringCells) {
+      final (row, col) = _parseBoardCellKey(key);
+      final rrect = RRect.fromRectAndRadius(
+        metric.rectFor(row, col).deflate(1),
+        Radius.circular(metric.cellCornerRadius),
+      );
+      _paintGlowStroke(
+        canvas,
+        rrect,
+        color: GameUiPalette.scoringPreview.withValues(
+          alpha: 0.18 + 0.4 * pulse,
+        ),
+        strokeWidth: 2,
+        sigma: 3 + 3 * pulse,
+      );
+    }
+    final faint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = GameUiPalette.scoringPreview.withValues(alpha: 0.32);
+    for (final key in nearCells) {
+      final (row, col) = _parseBoardCellKey(key);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          metric.rectFor(row, col).deflate(5),
+          Radius.circular(metric.cellCornerRadius),
+        ),
+        faint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BoardLineHintPainter oldDelegate) =>
+      oldDelegate.pulse != pulse ||
+      oldDelegate.scoringCells != scoringCells ||
+      oldDelegate.nearCells != nearCells;
 }
 
 class GameBoardCell extends StatelessWidget {
@@ -1141,25 +1361,47 @@ class GameBoardBlockedCellBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: Center(
-        child: Text(
-          'X',
-          maxLines: 1,
-          style: TextStyle(
-            color: GameUiPalette.bossWeakenPreview.withValues(alpha: 0.96),
-            fontSize: side * 0.58,
-            fontWeight: FontWeight.w900,
-            height: 0.9,
-            shadows: [
-              Shadow(
-                color: GameUiPalette.ink.withValues(alpha: 0.72),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
+      child: GameStampIn(
+        child: Center(
+          child: Text(
+            'X',
+            maxLines: 1,
+            style: TextStyle(
+              color: GameUiPalette.bossWeakenPreview.withValues(alpha: 0.96),
+              fontSize: side * 0.58,
+              fontWeight: FontWeight.w900,
+              height: 0.9,
+              shadows: [
+                Shadow(
+                  color: GameUiPalette.ink.withValues(alpha: 0.72),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Boss 제약 표시가 처음 나타날 때 도장처럼 크게 찍혔다 자리 잡는다.
+class GameStampIn extends StatelessWidget {
+  const GameStampIn({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MotionPolicy.juiceScale <= 0) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: GamePresentationTimings.bossMarkStamp,
+      curve: Curves.easeOutBack,
+      builder: (context, t, child) =>
+          Transform.scale(scale: 1.9 - 0.9 * t, child: child),
+      child: child,
     );
   }
 }
@@ -1208,30 +1450,34 @@ class GameConstraintBadge extends StatelessWidget {
         final fontSize = barHeight * 0.98;
 
         return IgnorePointer(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(pad, pad, pad, 0),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: innerWidth,
-                height: barHeight,
-                child: Center(
-                  child: Text(
-                    'X',
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                      shadows: [
-                        Shadow(
-                          color: GameUiPalette.ink.withValues(alpha: 0.36),
-                          blurRadius: 1.7,
-                          offset: const Offset(0, 0.9),
+          child: GameStampIn(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(pad, pad, pad, 0),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: innerWidth,
+                  height: barHeight,
+                  child: Center(
+                    child: Text(
+                      'X',
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.96,
                         ),
-                      ],
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        shadows: [
+                          Shadow(
+                            color: GameUiPalette.ink.withValues(alpha: 0.36),
+                            blurRadius: 1.7,
+                            offset: const Offset(0, 0.9),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

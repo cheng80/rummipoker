@@ -105,6 +105,7 @@ class GameJesterStrip extends StatelessWidget {
     required this.settlementSequenceTick,
     required this.selectedIndex,
     required this.onTapCard,
+    this.onLockedTap,
   });
 
   final RummiMarketRuntimeFacade market;
@@ -112,6 +113,9 @@ class GameJesterStrip extends StatelessWidget {
   final int settlementSequenceTick;
   final int? selectedIndex;
   final ValueChanged<int> onTapCard;
+
+  /// 잠긴 슬롯을 탭했을 때 거절 피드백.
+  final VoidCallback? onLockedTap;
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +150,11 @@ class GameJesterStrip extends StatelessWidget {
               settlementSequenceTick: settlementSequenceTick,
               selected: selectedIndex == index,
               locked: locked,
-              onTap: card != null && !locked ? () => onTapCard(index) : null,
+              onTap: locked
+                  ? onLockedTap
+                  : card != null
+                  ? () => onTapCard(index)
+                  : null,
             ),
           );
         }),
@@ -163,6 +171,7 @@ class GameJesterZone extends StatelessWidget {
     required this.settlementSequenceTick,
     required this.selectedIndex,
     required this.onTapCard,
+    this.onLockedTap,
   });
 
   final RummiMarketRuntimeFacade market;
@@ -170,6 +179,9 @@ class GameJesterZone extends StatelessWidget {
   final int settlementSequenceTick;
   final int? selectedIndex;
   final ValueChanged<int> onTapCard;
+
+  /// 잠긴 슬롯을 탭했을 때 거절 피드백.
+  final VoidCallback? onLockedTap;
 
   @override
   Widget build(BuildContext context) {
@@ -203,6 +215,7 @@ class GameJesterZone extends StatelessWidget {
               settlementSequenceTick: settlementSequenceTick,
               selectedIndex: selectedIndex,
               onTapCard: onTapCard,
+              onLockedTap: onLockedTap,
             ),
           ],
         ),
@@ -242,96 +255,105 @@ class GameJesterSlot extends StatelessWidget {
         : GameUiPalette.textPrimary.withValues(alpha: 0.22);
     final frameWidth = selected ? 2.2 : 1.1;
     if (card == null) {
-      return Stack(
-        children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
-                  border: Border.all(color: frameColor, width: frameWidth),
+      return GestureDetector(
+        key: locked ? const ValueKey('battle-jester-slot-locked') : null,
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                      kRuntimeCardOuterRadius,
+                    ),
+                    border: Border.all(color: frameColor, width: frameWidth),
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.all(kBattleSlotCardInset),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: GameUiPalette.cardEmptyFace.withValues(alpha: 0.82),
-                  borderRadius: BorderRadius.circular(kRuntimeCardInnerRadius),
-                  border: Border.all(
-                    color: GameUiPalette.textPrimary.withValues(alpha: 0.18),
-                    width: 1.2,
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(kBattleSlotCardInset),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: GameUiPalette.cardEmptyFace.withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(
+                      kRuntimeCardInnerRadius,
+                    ),
+                    border: Border.all(
+                      color: GameUiPalette.textPrimary.withValues(alpha: 0.18),
+                      width: 1.2,
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 6,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        locked
-                            ? 'LOCKED'
-                            : extended
-                            ? 'EXT'
-                            : 'JESTER',
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: GameUiPalette.textPrimary.withValues(
-                            alpha: locked ? 0.46 : 0.62,
-                          ),
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.55,
-                          height: 1,
-                        ),
-                      ),
-                      const Spacer(),
-                      Center(
-                        child: Icon(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 6,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
                           locked
-                              ? Icons.lock_rounded
+                              ? 'LOCKED'
                               : extended
-                              ? Icons.add_box_outlined
-                              : Icons.style_outlined,
-                          color: GameUiPalette.textPrimary.withValues(
-                            alpha: locked ? 0.36 : 0.28,
-                          ),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Center(
-                        child: Text(
-                          locked
-                              ? (extended ? '5th' : '잠김')
-                              : extended
-                              ? '5th'
-                              : '+',
+                              ? 'EXT'
+                              : 'JESTER',
                           maxLines: 1,
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: GameUiPalette.textPrimary.withValues(
-                              alpha: locked ? 0.48 : 0.42,
+                              alpha: locked ? 0.46 : 0.62,
                             ),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.55,
                             height: 1,
                           ),
                         ),
-                      ),
-                    ],
+                        const Spacer(),
+                        Center(
+                          child: Icon(
+                            locked
+                                ? Icons.lock_rounded
+                                : extended
+                                ? Icons.add_box_outlined
+                                : Icons.style_outlined,
+                            color: GameUiPalette.textPrimary.withValues(
+                              alpha: locked ? 0.36 : 0.28,
+                            ),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Center(
+                          child: Text(
+                            locked
+                                ? (extended ? '5th' : '잠김')
+                                : extended
+                                ? '5th'
+                                : '+',
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: GameUiPalette.textPrimary.withValues(
+                                alpha: locked ? 0.48 : 0.42,
+                              ),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 

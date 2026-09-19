@@ -42,6 +42,10 @@ class _GameSurface extends StatelessWidget {
     required this.battlePreviewTutorialKey,
     required this.battleActionsTutorialKey,
     required this.battleHandTutorialKey,
+    required this.battleJesterZoneKey,
+    required this.denyTarget,
+    required this.denyTick,
+    required this.onLockedSlotTap,
     required this.onOptionsTap,
     required this.onTutorialTap,
     required this.onRunInfoTap,
@@ -110,6 +114,10 @@ class _GameSurface extends StatelessWidget {
   final GlobalKey battlePreviewTutorialKey;
   final GlobalKey battleActionsTutorialKey;
   final GlobalKey battleHandTutorialKey;
+  final GlobalKey battleJesterZoneKey;
+  final _BattleDenyTarget denyTarget;
+  final int denyTick;
+  final VoidCallback onLockedSlotTap;
   final VoidCallback onOptionsTap;
   final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
@@ -203,6 +211,10 @@ class _GameSurface extends StatelessWidget {
                   battlePreviewTutorialKey: battlePreviewTutorialKey,
                   battleActionsTutorialKey: battleActionsTutorialKey,
                   battleHandTutorialKey: battleHandTutorialKey,
+                  battleJesterZoneKey: battleJesterZoneKey,
+                  denyTarget: denyTarget,
+                  denyTick: denyTick,
+                  onLockedSlotTap: onLockedSlotTap,
                   onOptionsTap: onOptionsTap,
                   onTutorialTap: onTutorialTap,
                   onRunInfoTap: onRunInfoTap,
@@ -405,6 +417,10 @@ class _GameLayout extends StatelessWidget {
     required this.battlePreviewTutorialKey,
     required this.battleActionsTutorialKey,
     required this.battleHandTutorialKey,
+    required this.battleJesterZoneKey,
+    required this.denyTarget,
+    required this.denyTick,
+    required this.onLockedSlotTap,
     required this.onOptionsTap,
     required this.onTutorialTap,
     required this.onRunInfoTap,
@@ -460,6 +476,10 @@ class _GameLayout extends StatelessWidget {
   final GlobalKey battlePreviewTutorialKey;
   final GlobalKey battleActionsTutorialKey;
   final GlobalKey battleHandTutorialKey;
+  final GlobalKey battleJesterZoneKey;
+  final _BattleDenyTarget denyTarget;
+  final int denyTick;
+  final VoidCallback onLockedSlotTap;
   final VoidCallback onOptionsTap;
   final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
@@ -480,6 +500,10 @@ class _GameLayout extends StatelessWidget {
   final ValueChanged<RummiBattleItemSlotView> onBattleItemTap;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
+
+  /// [target]이 마지막 거절 대상일 때만 흔들림 순번을 준다.
+  int _denyTickFor(_BattleDenyTarget target) =>
+      denyTarget == target ? denyTick : 0;
 
   @override
   Widget build(BuildContext context) {
@@ -535,20 +559,32 @@ class _GameLayout extends StatelessWidget {
               onTutorialTap: onTutorialTap,
             ),
             const SizedBox(height: 4),
-            GameJesterZone(
-              market: market,
-              activeEffects: visibleSettlementEffects,
-              settlementSequenceTick: settlementSequenceTick,
-              selectedIndex: selectedJesterOverlayIndex,
-              onTapCard: onJesterTap,
-            ),
-            const SizedBox(height: 4),
-            GameItemZoneSkeleton(
-              battle: battle,
-              activeEffects: visibleSettlementEffects,
-              settlementSequenceTick: settlementSequenceTick,
-              selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
-              onItemSlotTap: onBattleItemTap,
+            GameDenyShake(
+              tick: _denyTickFor(_BattleDenyTarget.slots),
+              child: Column(
+                children: [
+                  KeyedSubtree(
+                    key: battleJesterZoneKey,
+                    child: GameJesterZone(
+                      market: market,
+                      activeEffects: visibleSettlementEffects,
+                      settlementSequenceTick: settlementSequenceTick,
+                      selectedIndex: selectedJesterOverlayIndex,
+                      onTapCard: onJesterTap,
+                      onLockedTap: onLockedSlotTap,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  GameItemZoneSkeleton(
+                    battle: battle,
+                    activeEffects: visibleSettlementEffects,
+                    settlementSequenceTick: settlementSequenceTick,
+                    selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
+                    onItemSlotTap: onBattleItemTap,
+                    onLockedSlotTap: onLockedSlotTap,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 5),
             Expanded(
@@ -567,38 +603,44 @@ class _GameLayout extends StatelessWidget {
                             dimension: side,
                             child: _GameTutorialTarget(
                               showcaseKey: battleBoardTutorialKey,
-                              child: GameBoardGrid(
-                                board: battle.board,
-                                scoringCells: scoringCells,
-                                constrainedScoringCells:
-                                    battle.constrainedScoringCellKeys,
-                                constrainedCells: constrainedCells,
-                                blockedCellKeys: {
-                                  for (final cell
-                                      in battle.bossModifier?.blockedCells ??
-                                          const <(int, int)>[])
-                                    '${cell.$1}:${cell.$2}',
-                                },
-                                activeSettlementCells: activeSettlementCells,
-                                settlementBoardSnapshot:
-                                    settlementBoardSnapshot,
-                                settlementTileHeat: settlementTileHeat,
-                                settlementTileHitSerial:
-                                    settlementTileHitSerial,
-                                selectedRow: selectedBoardRow,
-                                selectedCol: selectedBoardCol,
-                                boardMoveMode: boardMoveMode,
-                                moveSourceRow: pendingBoardMoveSourceRow,
-                                moveSourceCol: pendingBoardMoveSourceCol,
-                                bonusFlashCellKey: boardMoveBonusTargetCellKey,
-                                bonusFlashTick: boardMoveBonusFlashTick,
-                                lineSelectionLines: const [],
-                                selectedLineRef: null,
-                                onTapLine: null,
-                                lineFlashRef: fateTransformFlashLineRef,
-                                lineFlashTick: fateTransformFlashTick,
-                                onTapCell: onBoardCellTap,
-                                onLongPressTile: onHandTileLongPress,
+                              child: GameDenyShake(
+                                tick: _denyTickFor(_BattleDenyTarget.board),
+                                child: GameBoardGrid(
+                                  board: battle.board,
+                                  scoringCells: scoringCells,
+                                  constrainedScoringCells:
+                                      battle.constrainedScoringCellKeys,
+                                  constrainedCells: constrainedCells,
+                                  blockedCellKeys: {
+                                    for (final cell
+                                        in battle.bossModifier?.blockedCells ??
+                                            const <(int, int)>[])
+                                      '${cell.$1}:${cell.$2}',
+                                  },
+                                  activeSettlementCells: activeSettlementCells,
+                                  settlementBoardSnapshot:
+                                      settlementBoardSnapshot,
+                                  settlementTileHeat: settlementTileHeat,
+                                  settlementTileHitSerial:
+                                      settlementTileHitSerial,
+                                  dealOnEnter: true,
+                                  showLineHints: true,
+                                  selectedRow: selectedBoardRow,
+                                  selectedCol: selectedBoardCol,
+                                  boardMoveMode: boardMoveMode,
+                                  moveSourceRow: pendingBoardMoveSourceRow,
+                                  moveSourceCol: pendingBoardMoveSourceCol,
+                                  bonusFlashCellKey:
+                                      boardMoveBonusTargetCellKey,
+                                  bonusFlashTick: boardMoveBonusFlashTick,
+                                  lineSelectionLines: const [],
+                                  selectedLineRef: null,
+                                  onTapLine: null,
+                                  lineFlashRef: fateTransformFlashLineRef,
+                                  lineFlashTick: fateTransformFlashTick,
+                                  onTapCell: onBoardCellTap,
+                                  onLongPressTile: onHandTileLongPress,
+                                ),
                               ),
                             ),
                           ),
@@ -680,21 +722,25 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 4),
             _GameTutorialTarget(
               showcaseKey: battleActionsTutorialKey,
-              child: _BattleActionBar(
-                scoringPreview: battle.scoringPreview,
-                canStartBoardMove:
-                    !boardMoveMode &&
-                    selectedBoardRow != null &&
-                    selectedBoardCol != null &&
-                    station.resources.boardMovesRemaining > 0,
-                onConfirm: onConfirm,
-                onClearSelection: onClearSelection,
-                onRunInfo: onRunInfoTap,
-                onStartBoardMove: onStartBoardMove,
-                onBoardDiscard: onBoardDiscard,
-                onHandDiscard: onHandDiscard,
-                confirmEnabled: !boardMoveMode,
-                utilityEnabled: !boardMoveMode,
+              child: GameDenyShake(
+                tick: _denyTickFor(_BattleDenyTarget.actions),
+                child: _BattleActionBar(
+                  scoringPreview: battle.scoringPreview,
+                  canStartBoardMove:
+                      !boardMoveMode &&
+                      selectedBoardRow != null &&
+                      selectedBoardCol != null &&
+                      station.resources.boardMovesRemaining > 0,
+                  onConfirm: onConfirm,
+                  onClearSelection: onClearSelection,
+                  onRunInfo: onRunInfoTap,
+                  onStartBoardMove: onStartBoardMove,
+                  onBoardDiscard: onBoardDiscard,
+                  onHandDiscard: onHandDiscard,
+                  confirmEnabled: !boardMoveMode,
+                  utilityEnabled: !boardMoveMode,
+                  goalHeat: goalHeat,
+                ),
               ),
             ),
             if (boardMoveMode) ...[
@@ -713,15 +759,18 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 6),
             _GameTutorialTarget(
               showcaseKey: battleHandTutorialKey,
-              child: GameHandZone(
-                battle: battle,
-                station: station,
-                hand: battle.hand,
-                selectedHandTile: selectedHandTile,
-                onHandTileTap: onHandTileTap,
-                onHandTileLongPress: onHandTileLongPress,
-                onDraw: onDraw,
-                tileWidth: tileWidth,
+              child: GameDenyShake(
+                tick: _denyTickFor(_BattleDenyTarget.hand),
+                child: GameHandZone(
+                  battle: battle,
+                  station: station,
+                  hand: battle.hand,
+                  selectedHandTile: selectedHandTile,
+                  onHandTileTap: onHandTileTap,
+                  onHandTileLongPress: onHandTileLongPress,
+                  onDraw: onDraw,
+                  tileWidth: tileWidth,
+                ),
               ),
             ),
           ],

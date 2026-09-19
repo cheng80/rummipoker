@@ -10,6 +10,7 @@ class GameItemZoneSkeleton extends StatefulWidget {
     required this.settlementSequenceTick,
     this.selectedSlotIndex,
     this.onItemSlotTap,
+    this.onLockedSlotTap,
   });
 
   final RummiBattleRuntimeFacade battle;
@@ -17,6 +18,9 @@ class GameItemZoneSkeleton extends StatefulWidget {
   final int settlementSequenceTick;
   final int? selectedSlotIndex;
   final ValueChanged<RummiBattleItemSlotView>? onItemSlotTap;
+
+  /// 잠긴 슬롯을 탭했을 때 거절 피드백.
+  final VoidCallback? onLockedSlotTap;
 
   @override
   State<GameItemZoneSkeleton> createState() => _GameItemZoneSkeletonState();
@@ -119,6 +123,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                                   widget.selectedSlotIndex,
                           locked: index >= unlockedQuickSlots,
                           onTap: widget.onItemSlotTap,
+                          onLockedTap: widget.onLockedSlotTap,
                         ),
                       for (
                         var index = 0;
@@ -142,6 +147,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                                   widget.selectedSlotIndex,
                           locked: index >= unlockedPassiveSlots,
                           onTap: widget.onItemSlotTap,
+                          onLockedTap: widget.onLockedSlotTap,
                         ),
                     ]
                   : [
@@ -414,6 +420,7 @@ class _GameItemPocketChip extends StatelessWidget {
     this.activeEffect,
     required this.settlementSequenceTick,
     this.onTap,
+    this.onLockedTap,
   });
 
   final String label;
@@ -424,6 +431,7 @@ class _GameItemPocketChip extends StatelessWidget {
   final RummiJesterEffectBreakdown? activeEffect;
   final int settlementSequenceTick;
   final ValueChanged<RummiBattleItemSlotView>? onTap;
+  final VoidCallback? onLockedTap;
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +446,9 @@ class _GameItemPocketChip extends StatelessWidget {
     return GestureDetector(
       key: ValueKey('battle-item-slot-$label'),
       behavior: HitTestBehavior.opaque,
-      onTap: locked || itemSlot == null || onTap == null
+      onTap: locked
+          ? onLockedTap
+          : itemSlot == null || onTap == null
           ? null
           : () => onTap!(itemSlot),
       child: Stack(
