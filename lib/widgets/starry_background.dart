@@ -33,11 +33,23 @@ class _StarryBackgroundState extends State<StarryBackground>
   bool _tickerModeEnabled = true;
   bool _active = true;
 
+  static final _owners = <FxAmbientController, Set<_StarryBackgroundState>>{};
+
+  void _syncLifecycle() {
+    _ambient.setLifecycleActive(
+      _owners[_ambient]?.any(
+            (owner) => owner._active && owner._lifecycleActive,
+          ) ??
+          false,
+    );
+  }
+
   static final List<FxAmbientStar> _stars = createFxAmbientStars();
 
   @override
   void initState() {
     super.initState();
+    (_owners[_ambient] ??= {}).add(this);
     WidgetsBinding.instance.addObserver(this);
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     _lifecycleActive =
@@ -86,7 +98,7 @@ class _StarryBackgroundState extends State<StarryBackground>
         !features.reduceMotion &&
         !MotionPolicy.reduceMotion;
     _ambient.setMotionEnabled(enabled);
-    _ambient.setLifecycleActive(_lifecycleActive);
+    _syncLifecycle();
     _ambient.setTickerModeEnabled(_tickerModeEnabled);
     _ambient.setHasAnimatedStars(enabled);
     _ticker.attach();
@@ -101,14 +113,14 @@ class _StarryBackgroundState extends State<StarryBackground>
     final active = state == AppLifecycleState.resumed;
     if (_lifecycleActive == active) return;
     _lifecycleActive = active;
-    _ambient.setLifecycleActive(active);
+    _syncLifecycle();
     _ticker.attach();
   }
 
   @override
   void deactivate() {
     _active = false;
-    _ambient.setLifecycleActive(false);
+    _syncLifecycle();
     _ticker.attach();
     super.deactivate();
   }
@@ -117,7 +129,7 @@ class _StarryBackgroundState extends State<StarryBackground>
   void activate() {
     super.activate();
     _active = true;
-    _ambient.setLifecycleActive(_lifecycleActive);
+    _syncLifecycle();
     _ticker.attach();
   }
 
@@ -126,8 +138,11 @@ class _StarryBackgroundState extends State<StarryBackground>
     WidgetsBinding.instance.removeObserver(this);
     _settingsSubscription?.close();
     _ticker.dispose();
+    final owners = _owners[_ambient];
+    owners?.remove(this);
+    if (owners?.isEmpty ?? false) _owners.remove(_ambient);
     _active = false;
-    _ambient.setLifecycleActive(false);
+    _syncLifecycle();
     super.dispose();
   }
 

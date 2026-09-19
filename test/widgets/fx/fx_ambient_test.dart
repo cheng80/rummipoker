@@ -79,18 +79,33 @@ void main() {
     animated.dispose();
     skipped.dispose();
   });
-  test('controller without stars wakes for mood and pulse then returns to idle', () {
-    final controller = FxAmbientController()..setHasAnimatedStars(false);
-    expect(controller.shouldAnimate, isFalse);
-    controller.setMood(FxAmbientMood.market);
-    expect(controller.shouldAnimate, isTrue);
-    controller.advance(1);
-    expect(controller.moodColor, controller.moodTargetColor);
-    expect(controller.shouldAnimate, isFalse);
-    controller.pulse(.5);
-    expect(controller.shouldAnimate, isTrue);
-    controller.advance(1);
-    expect(controller.shouldAnimate, isFalse);
-    controller.dispose();
+  test(
+    'controller without stars wakes for mood and pulse then returns to idle',
+    () {
+      final controller = FxAmbientController()..setHasAnimatedStars(false);
+      expect(controller.shouldAnimate, isFalse);
+      controller.setMood(FxAmbientMood.market);
+      expect(controller.shouldAnimate, isTrue);
+      controller.advance(1);
+      expect(controller.moodColor, controller.moodTargetColor);
+      expect(controller.shouldAnimate, isFalse);
+      controller.pulse(.5);
+      expect(controller.shouldAnimate, isTrue);
+      controller.advance(1);
+      expect(controller.shouldAnimate, isFalse);
+      controller.dispose();
+    },
+  );
+  test('menu tint repaints on both off and on without a mood change', () {
+    final controller = FxAmbientController();
+    addTearDown(controller.dispose);
+    final strengths = <double>[];
+    controller.moodRepaint.addListener(
+      () => strengths.add(controller.moodTintStrength),
+    );
+    controller.setMotionEnabled(false);
+    controller.setMotionEnabled(true);
+    expect(strengths, [0, .10]);
+    expect(controller.mood, FxAmbientMood.menu);
   });
 }

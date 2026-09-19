@@ -83,4 +83,24 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     controller.dispose();
   });
+  testWidgets(
+    'shared background survives key replacement with motion enabled',
+    (tester) async {
+      FxAmbient.debugReset();
+      final controller = FxAmbient.controller;
+      Widget host(int key) =>
+          MaterialApp(home: StarryBackground(key: ValueKey(key)));
+      await tester.pumpWidget(host(1));
+      await tester.pump(const Duration(milliseconds: 200));
+      final previous = controller.elapsed;
+      await tester.pumpWidget(host(2));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(controller.motionAllowed, isTrue);
+      expect(controller.elapsed, greaterThan(previous));
+      controller.setMood(FxAmbientMood.boss);
+      expect(controller.isTransitioning, isTrue);
+      await tester.pumpWidget(const SizedBox());
+      expect(controller.shouldAnimate, isFalse);
+    },
+  );
 }

@@ -145,8 +145,8 @@ class FxAmbientController extends ChangeNotifier {
       _transitionElapsed = transitionDuration.inMicroseconds.toDouble();
       _pulseElapsed = pulseDuration.inMicroseconds.toDouble();
       _pulseStrength = 0;
-      _moodRepaint.ping();
     }
+    _moodRepaint.ping();
     notifyListeners();
   }
 
