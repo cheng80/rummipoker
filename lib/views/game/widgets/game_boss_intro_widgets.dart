@@ -440,6 +440,9 @@ class GameBossMarkFlightLayer extends StatefulWidget {
   });
 
   final List<GameBossMarkFlight> flights;
+
+  /// 비행이 닿았을 때 한 번 부른다. 다 닿기 전에 레이어가 사라져도 한 번 부른다.
+  /// 호출부는 이 신호로 숨겨 둔 제약 표시를 드러낸다.
   final VoidCallback onLanded;
 
   static Duration totalDuration(int count) =>
@@ -464,6 +467,7 @@ class GameBossMarkFlightLayer extends StatefulWidget {
 class _GameBossMarkFlightLayerState extends State<GameBossMarkFlightLayer>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _notified = false;
 
   @override
   void initState() {
@@ -476,12 +480,25 @@ class _GameBossMarkFlightLayerState extends State<GameBossMarkFlightLayer>
   }
 
   void _onStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed) widget.onLanded();
+    if (status == AnimationStatus.completed) _notifyOnce();
+  }
+
+  void _notifyOnce() {
+    if (_notified) return;
+    _notified = true;
+    widget.onLanded();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    // 끝까지 가지 못하고 사라져도 숨겨 둔 제약 표시가 남지 않게 알린다.
+    // dispose 중에는 setState를 할 수 없으므로 다음 프레임에 알린다.
+    if (!_notified) {
+      _notified = true;
+      final onLanded = widget.onLanded;
+      WidgetsBinding.instance.addPostFrameCallback((_) => onLanded());
+    }
     super.dispose();
   }
 
