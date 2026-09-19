@@ -580,6 +580,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                       showBottomNotice(
                                                         context,
                                                         reason,
+                                                        cue: null,
                                                       );
                                                     },
                                               disabledReason:
@@ -616,6 +617,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                       showBottomNotice(
                                                         context,
                                                         reason,
+                                                        cue: null,
                                                       );
                                                     },
                                               disabledReason:
@@ -657,6 +659,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                       showBottomNotice(
                                                         context,
                                                         reason,
+                                                        cue: null,
                                                       );
                                                     },
                                               disabledReason:

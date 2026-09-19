@@ -65,7 +65,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
     if (slot.locked) {
       final message = context.tr('t3MarketLockedSlot');
       _startMarketDenyFeedback('locked-slot', message);
-      showBottomNotice(context, message);
+      showBottomNotice(context, message, cue: null);
       return;
     }
     if (slot.item == null) return;

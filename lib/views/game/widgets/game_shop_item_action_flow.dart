@@ -207,7 +207,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final failMessage = widget.onUseMarketItem(item);
     if (failMessage != null) {
       _startMarketDenyFeedback('item-use', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     final feedbackTick = _marketUseFeedbackTick + 1;
@@ -343,7 +343,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellOwnedJester(index);
     if (!ok) return;
-    showBottomNotice(context, '제스터를 판매했습니다.');
+    showBottomNotice(context, '제스터를 판매했습니다.', cue: null);
     _mutate(() {
       _pinnedItemOffers = marketBeforeSell.itemOffers;
       _startJesterSaleFlight(
@@ -371,7 +371,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellMarketItem(item);
     if (!ok) return;
-    showBottomNotice(context, '아이템을 판매했습니다.');
+    showBottomNotice(context, '아이템을 판매했습니다.', cue: null);
     _mutate(() {
       _pinnedItemOffers = marketBeforeSell.itemOffers;
       _startSaleFlight(

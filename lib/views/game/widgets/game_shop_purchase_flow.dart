@@ -76,7 +76,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
         : widget.onRerollItemOffers!(placement);
     if (failMessage != null) {
       _startMarketDenyFeedback('reroll', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -122,7 +122,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     final failMessage = widget.onBuyOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('jester-buy', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -194,7 +194,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     final failMessage = widget.onBuyItemOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('item-buy', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -271,7 +271,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     final failMessage = widget.onBuyTileOffer(index);
     if (failMessage != null) {
       _startMarketDenyFeedback('tile-buy', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -294,7 +294,11 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     });
     _queueStateSave();
     GameFeedback.play(GameCue.buy);
-    showBottomNotice(context, '${_tileLabel(boughtOffer.tile)} 덱 추가');
+    showBottomNotice(
+      context,
+      '${_tileLabel(boughtOffer.tile)} 덱 추가',
+      cue: null,
+    );
   }
 
   RummiMarketItemSlotView? _findPurchasedItemSlot(
