@@ -17,6 +17,7 @@ import '../services/new_run_setup.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/fx/entrance_in.dart';
+import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/motion_policy.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
@@ -61,6 +62,7 @@ class _BlindSelectViewState extends State<BlindSelectView>
   @override
   void initState() {
     super.initState();
+    FxAmbient.setMoodAfterFrame(FxAmbientMood.menu);
     _introStatic = MotionPolicy.juiceScale <= 0;
     _intro = AnimationController(vsync: this, duration: _introDuration);
     if (_introStatic) {

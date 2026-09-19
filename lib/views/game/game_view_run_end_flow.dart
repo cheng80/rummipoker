@@ -152,6 +152,7 @@ extension _GameViewRunEndFlow on _GameViewState {
     _resumePresentation();
     _persistRetrySnapshotOnSave = false;
     _gameNotifier.restartCurrentStage();
+    FxAmbient.setMood(_battleAmbientMood);
     await _saveActiveRun(scene: ActiveRunScene.battle);
   }
 
@@ -178,6 +179,7 @@ extension _GameViewRunEndFlow on _GameViewState {
     _resumePresentation();
     _persistRetrySnapshotOnSave = false;
     _gameNotifier.restartCurrentStake();
+    FxAmbient.setMood(_battleAmbientMood);
     await _saveActiveRun(scene: ActiveRunScene.battle);
   }
 

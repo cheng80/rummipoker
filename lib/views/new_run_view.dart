@@ -15,6 +15,7 @@ import '../services/new_run_setup.dart';
 import '../services/run_unlock_state_service.dart';
 import '../utils/common_ui.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/fx_layer.dart';
 import '../widgets/fx/juice.dart';
 import 'game/game_feedback_cues.dart';
@@ -45,6 +46,7 @@ class _NewRunViewState extends State<NewRunView> {
   void initState() {
     super.initState();
     SoundManager.playBgm(AssetPaths.bgmMenu);
+    FxAmbient.setMoodAfterFrame(FxAmbientMood.menu);
     _applyDebugScrollPreset();
     _loadUnlockState();
   }

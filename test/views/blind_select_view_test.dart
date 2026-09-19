@@ -15,6 +15,7 @@ import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/blind_select_view.dart';
+import 'package:rummipoker/widgets/fx/fx_ambient.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -28,6 +29,7 @@ void main() {
     GameSettings.sfxMuted = true;
     SoundManager.debugResetForTest();
     GameAnalyticsService.debugResetForTest();
+    FxAmbient.debugReset();
   });
 
   tearDown(() {
@@ -36,6 +38,7 @@ void main() {
   });
 
   testWidgets('blind select requests menu BGM on entry', (tester) async {
+    FxAmbient.setMood(FxAmbientMood.battle);
     await tester.pumpWidget(
       const MaterialApp(
         home: BlindSelectView(
@@ -51,6 +54,7 @@ void main() {
     await tester.pump();
 
     expect(SoundManager.debugCurrentBgm, AssetPaths.bgmMenu);
+    expect(FxAmbient.controller.mood, FxAmbientMood.menu);
   });
 
   testWidgets('boss constraint chip keeps long rule text out of card', (

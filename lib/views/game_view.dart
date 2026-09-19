@@ -500,6 +500,7 @@ class _GameViewState extends ConsumerState<GameView>
     final modifier = _gameState.session?.blind.bossModifier;
     if (modifier == null) return;
     _bossConstraintIntroShown = true;
+    FxAmbient.setMood(FxAmbientMood.boss);
     Rect? marksRect;
     await _showBossConstraintInfo(
       modifier: modifier,

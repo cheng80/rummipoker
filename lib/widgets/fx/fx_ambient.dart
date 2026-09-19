@@ -196,6 +196,10 @@ class FxAmbient {
 
   static void setMood(FxAmbientMood mood) => controller.setMood(mood);
 
+  /// build 중에도 안전하도록 첫 프레임 뒤에 mood를 바꾼다. 화면 진입에서 쓴다.
+  static void setMoodAfterFrame(FxAmbientMood mood) =>
+      WidgetsBinding.instance.addPostFrameCallback((_) => setMood(mood));
+
   static void pulse(double strength) => controller.pulse(strength);
 
   @visibleForTesting

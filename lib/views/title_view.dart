@@ -18,6 +18,7 @@ import '../services/debug_run_fixture_service.dart';
 import '../utils/common_ui.dart';
 import '../services/game_settings.dart';
 import '../widgets/fx/entrance_in.dart';
+import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/game_feedback_cues.dart';
@@ -64,6 +65,7 @@ class _TitleViewState extends ConsumerState<TitleView>
   @override
   void initState() {
     super.initState();
+    FxAmbient.setMoodAfterFrame(FxAmbientMood.menu);
     _playEntrance = !_entrancePlayed;
     _entrancePlayed = true;
     _packageInfoFuture = PackageInfo.fromPlatform();
