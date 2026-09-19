@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../resources/asset_paths.dart';
+import '../resources/game_haptics.dart';
 import '../views/game/widgets/game_ui_palette.dart';
+import '../widgets/fx/juice.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 enum _NoticeStyle { topBanner, bottomToast }
@@ -22,7 +24,10 @@ class GameDialogAction<T> {
   final Color textColor;
 }
 
-class GameChromeButton extends StatelessWidget {
+/// 공용 버튼. pointer-down에 살짝 찌그러지고, 뗄 때 juice와 가벼운 햅틱을 낸다.
+///
+/// 소리는 기존처럼 [onPressed] 안에서 호출한다. 햅틱은 그 직전, 같은 tap 시점에 낸다.
+class GameChromeButton extends StatefulWidget {
   const GameChromeButton({
     super.key,
     required this.label,
@@ -49,7 +54,33 @@ class GameChromeButton extends StatelessWidget {
   final FontWeight? fontWeight;
 
   @override
+  State<GameChromeButton> createState() => _GameChromeButtonState();
+}
+
+class _GameChromeButtonState extends State<GameChromeButton> {
+  bool _pressed = false;
+  int _releaseTick = 0;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  void _handleTap() {
+    final onPressed = widget.onPressed;
+    if (onPressed == null) return;
+    setState(() => _releaseTick++);
+    GameHaptics.play(HapticGrade.select);
+    onPressed();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final onPressed = widget.onPressed;
+    final backgroundColor = widget.backgroundColor;
+    final foregroundColor = widget.foregroundColor;
+    final borderRadius = widget.borderRadius;
+    final icon = widget.icon;
     final isEnabled = onPressed != null;
     final baseColor = isEnabled
         ? backgroundColor
@@ -59,10 +90,42 @@ class GameChromeButton extends StatelessWidget {
         ? foregroundColor
         : foregroundColor.withValues(alpha: 0.58);
 
+    return Juice(
+      trigger: _releaseTick,
+      pressed: _pressed && isEnabled,
+      child: Listener(
+        onPointerDown: (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: _buildSurface(
+          isEnabled: isEnabled,
+          baseColor: baseColor,
+          borderColor: borderColor,
+          baseForeground: baseForeground,
+          borderRadius: borderRadius,
+          icon: icon,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSurface({
+    required bool isEnabled,
+    required Color baseColor,
+    required Color borderColor,
+    required Color baseForeground,
+    required double borderRadius,
+    required IconData? icon,
+  }) {
+    final height = widget.height;
+    final padding = widget.padding;
+    final label = widget.label;
+    final fontSize = widget.fontSize;
+    final fontWeight = widget.fontWeight;
     return Material(
       color: GameUiPalette.transparent,
       child: InkWell(
-        onTap: onPressed,
+        onTap: isEnabled ? _handleTap : null,
         borderRadius: BorderRadius.circular(borderRadius),
         child: Ink(
           height: height,
