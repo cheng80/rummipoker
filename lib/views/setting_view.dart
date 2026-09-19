@@ -5,9 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/features/settings/settings_notifier.dart';
 import '../resources/asset_paths.dart';
+import '../resources/game_haptics.dart';
 import '../resources/sound_manager.dart';
+import '../services/game_settings.dart';
 import '../services/in_app_review_service.dart';
 import '../utils/common_ui.dart';
+import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/widgets/game_ui_palette.dart';
 
@@ -113,6 +116,17 @@ class SettingView extends StatelessWidget {
                             _BgmMuteTile(label: context.tr('bgm')),
                             _SfxVolumeTile(label: context.tr('sfxVolume')),
                             _SfxMuteTile(label: context.tr('sfx')),
+                            Divider(
+                              color: GameUiPalette.textPrimary.withValues(
+                                alpha: 0.18,
+                              ),
+                              height: 1,
+                            ),
+                            _SectionTitle(
+                              icon: Icons.auto_awesome,
+                              title: context.tr('sectionEffects'),
+                            ),
+                            const _EffectSettingsSection(),
                             if (InAppReviewService.hasStoreListingId) ...[
                               Divider(
                                 color: GameUiPalette.textPrimary.withValues(
@@ -244,6 +258,7 @@ class _SfxVolumeTile extends ConsumerWidget {
       value: volume,
       enabled: !muted,
       onChanged: notifier.setSfxVolume,
+      onChangeEnd: (_) => SoundManager.playSfx(AssetPaths.sfxBtnSnd),
     );
   }
 }
@@ -263,6 +278,168 @@ class _SfxMuteTile extends ConsumerWidget {
       label: label,
       value: value,
       onChanged: notifier.setSfxMuted,
+    );
+  }
+}
+
+/// 연출 강도·정산 속도·흔들림·진동 설정.
+class _EffectSettingsSection extends ConsumerWidget {
+  const _EffectSettingsSection();
+
+  static const _intensityLabels = <FxIntensity, String>{
+    FxIntensity.off: 'fxIntensityOff',
+    FxIntensity.normal: 'fxIntensityNormal',
+    FxIntensity.strong: 'fxIntensityStrong',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsNotifierProvider);
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    final reduceMotion =
+        MediaQuery.of(context).disableAnimations || MotionPolicy.reduceMotion;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ChoiceTile<FxIntensity>(
+          key: const ValueKey('setting-fx-intensity'),
+          label: context.tr('fxIntensity'),
+          values: FxIntensity.values,
+          selected: settings.fxIntensity,
+          labelOf: (value) => context.tr(_intensityLabels[value]!),
+          onSelected: notifier.setFxIntensity,
+        ),
+        _ChoiceTile<SettlementSpeed>(
+          key: const ValueKey('setting-settlement-speed'),
+          label: context.tr('settlementSpeed'),
+          values: SettlementSpeed.values,
+          selected: settings.settlementSpeed,
+          labelOf: (value) => value == SettlementSpeed.instant
+              ? context.tr('settlementSpeedInstant')
+              : '${value.multiplier.toInt()}x',
+          onSelected: notifier.setSettlementSpeed,
+        ),
+        _PlainSwitch(
+          key: const ValueKey('setting-screen-shake'),
+          icon: Icons.vibration,
+          label: context.tr('screenShake'),
+          value: settings.screenShakeEnabled,
+          onChanged: notifier.setScreenShakeEnabled,
+        ),
+        _PlainSwitch(
+          key: const ValueKey('setting-haptics'),
+          icon: Icons.touch_app,
+          label: context.tr('haptics'),
+          value: settings.hapticsEnabled,
+          onChanged: (value) {
+            notifier.setHapticsEnabled(value);
+            if (value) GameHaptics.play(HapticGrade.select);
+          },
+        ),
+        if (reduceMotion)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(
+              context.tr('reduceMotionActive'),
+              style: const TextStyle(
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
+                fontSize: 13,
+                color: GameUiPalette.disabledControl,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ChoiceTile<T> extends StatelessWidget {
+  const _ChoiceTile({
+    super.key,
+    required this.label,
+    required this.values,
+    required this.selected,
+    required this.labelOf,
+    required this.onSelected,
+  });
+
+  final String label;
+  final List<T> values;
+  final T selected;
+  final String Function(T value) labelOf;
+  final ValueChanged<T> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: AssetPaths.fontNexonLv2Gothic,
+          fontSize: 16,
+        ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            for (final value in values)
+              ChoiceChip(
+                label: Text(
+                  labelOf(value),
+                  style: const TextStyle(
+                    fontFamily: AssetPaths.fontNexonLv2Gothic,
+                    fontSize: 14,
+                  ),
+                ),
+                selected: value == selected,
+                selectedColor: GameUiPalette.actionGoldBright.withValues(
+                  alpha: 0.32,
+                ),
+                onSelected: (_) {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  onSelected(value);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlainSwitch extends StatelessWidget {
+  const _PlainSwitch({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      secondary: Icon(
+        icon,
+        color: value ? null : GameUiPalette.disabledControl,
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: AssetPaths.fontNexonLv2Gothic,
+          fontSize: 16,
+        ),
+      ),
+      value: value,
+      onChanged: onChanged,
     );
   }
 }
@@ -360,12 +537,14 @@ class _VolumeSlider extends StatelessWidget {
     required this.value,
     required this.enabled,
     required this.onChanged,
+    this.onChangeEnd,
   });
 
   final String label;
   final double value;
   final bool enabled;
   final ValueChanged<double> onChanged;
+  final ValueChanged<double>? onChangeEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -384,7 +563,11 @@ class _VolumeSlider extends StatelessWidget {
           overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
           trackShape: const RoundedRectSliderTrackShape(),
         ),
-        child: Slider(value: value, onChanged: enabled ? onChanged : null),
+        child: Slider(
+          value: value,
+          onChanged: enabled ? onChanged : null,
+          onChangeEnd: enabled ? onChangeEnd : null,
+        ),
       ),
     );
   }

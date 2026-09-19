@@ -20,6 +20,10 @@ class SettingsNotifier extends Notifier<SettingsState> {
       bgmMuted: GameSettings.bgmMuted,
       sfxMuted: GameSettings.sfxMuted,
       keepScreenOn: GameSettings.keepScreenOn,
+      fxIntensity: GameSettings.fxIntensity,
+      settlementSpeed: GameSettings.settlementSpeed,
+      screenShakeEnabled: GameSettings.screenShakeEnabled,
+      hapticsEnabled: GameSettings.hapticsEnabled,
     );
   }
 
@@ -49,6 +53,26 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setSfxMuted(bool value) {
     GameSettings.sfxMuted = value;
     state = state.copyWith(sfxMuted: value);
+  }
+
+  void setFxIntensity(FxIntensity value) {
+    GameSettings.fxIntensity = value;
+    state = state.copyWith(fxIntensity: value);
+  }
+
+  void setSettlementSpeed(SettlementSpeed value) {
+    GameSettings.settlementSpeed = value;
+    state = state.copyWith(settlementSpeed: value);
+  }
+
+  void setScreenShakeEnabled(bool value) {
+    GameSettings.screenShakeEnabled = value;
+    state = state.copyWith(screenShakeEnabled: value);
+  }
+
+  void setHapticsEnabled(bool value) {
+    GameSettings.hapticsEnabled = value;
+    state = state.copyWith(hapticsEnabled: value);
   }
 
   void setKeepScreenOn(bool value) {

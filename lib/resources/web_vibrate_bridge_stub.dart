@@ -1,0 +1,1 @@
+void vibrateWeb(int milliseconds) {}

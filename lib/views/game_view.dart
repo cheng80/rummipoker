@@ -35,6 +35,7 @@ import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/debug_run_fixture_service.dart';
+import '../services/game_settings.dart';
 import '../services/game_analytics_service.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_progression_service.dart';
@@ -56,6 +57,7 @@ import 'game/widgets/game_tile_choice_dialog.dart';
 import 'game/widgets/game_tutorial_overlay.dart';
 import 'game/widgets/game_surface_metrics.dart';
 import 'game/widgets/game_ui_palette.dart';
+import '../widgets/fx/presentation_clock.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 part 'game/game_view_transition_overlays.dart';
@@ -178,7 +180,12 @@ class _GameViewState extends ConsumerState<GameView>
   final GlobalKey _battlePreviewTutorialKey = GlobalKey();
   final GlobalKey _battleActionsTutorialKey = GlobalKey();
   final GlobalKey _battleHandTutorialKey = GlobalKey();
-  Completer<void>? _presentationResumeCompleter;
+
+  /// 정산·전환 연출 대기의 단일 시계. pause·정산 속도·hit-stop을 반영한다.
+  late final PresentationClock _presentationClock = PresentationClock(
+    tick: GamePresentationTimings.presentationPauseTick,
+    speed: () => GameSettings.settlementSpeed.multiplier,
+  );
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
@@ -269,6 +276,7 @@ class _GameViewState extends ConsumerState<GameView>
   @override
   void dispose() {
     _inactiveLifecycleTimer?.cancel();
+    _presentationClock.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _dismissBattleTutorial();
     super.dispose();

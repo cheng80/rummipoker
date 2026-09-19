@@ -25,7 +25,7 @@ extension _GameViewPresentationFlow on _GameViewState {
     _mutate(() {
       _presentationPaused = true;
     });
-    _presentationResumeCompleter ??= Completer<void>();
+    _presentationClock.pause();
   }
 
   void _resumePresentation() {
@@ -33,34 +33,15 @@ extension _GameViewPresentationFlow on _GameViewState {
     _mutate(() {
       _presentationPaused = false;
     });
-    final completer = _presentationResumeCompleter;
-    _presentationResumeCompleter = null;
-    if (completer != null && !completer.isCompleted) {
-      completer.complete();
-    }
+    _presentationClock.resume();
   }
 
-  Future<void> _waitWhilePresentationPaused() async {
-    while (mounted && _presentationPaused) {
-      final completer = _presentationResumeCompleter;
-      if (completer == null) return;
-      await completer.future;
-    }
-  }
+  Future<void> _waitWhilePresentationPaused() =>
+      _presentationClock.waitWhilePaused();
 
-  Future<void> _presentationDelay(Duration duration) async {
-    var remaining = duration;
-    const tick = GamePresentationTimings.presentationPauseTick;
-    while (mounted && remaining > Duration.zero) {
-      await _waitWhilePresentationPaused();
-      if (!mounted) return;
-      final chunk = remaining < tick ? remaining : tick;
-      await Future<void>.delayed(chunk);
-      if (!_presentationPaused) {
-        remaining -= chunk;
-      }
-    }
-  }
+  /// pause 중에는 멈추고, 설정한 정산 속도와 hit-stop을 반영해 기다린다.
+  Future<void> _presentationDelay(Duration duration) =>
+      _presentationClock.delay(duration);
 
   void _scheduleBattleTutorialIfNeeded() {
     if (_battleTutorialScheduled ||

@@ -1,5 +1,5 @@
-void initializeWebSfx(String defaultPath) {}
+void initializeWebSfx(String path) {}
 
 void unlockWebSfx() {}
 
-bool playWebSfx(String path, double volume) => false;
+bool playWebSfx(String path, double volume, double rate) => false;

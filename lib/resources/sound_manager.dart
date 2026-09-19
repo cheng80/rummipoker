@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flame_audio/flame_audio.dart';
@@ -34,6 +35,23 @@ class SoundManager {
   static AudioPlayer? _webBgmPlayer;
   static final Map<String, Future<AudioPool>> _sfxPools =
       <String, Future<AudioPool>>{};
+  static final math.Random _pitchRandom = math.Random();
+  static double _globalPitch = 1;
+  static Timer? _globalPitchRamp;
+
+  static const List<String> _sfxPaths = <String>[
+    AssetPaths.sfxTimeTic,
+    AssetPaths.sfxStart,
+    AssetPaths.sfxCollect,
+    AssetPaths.sfxFail,
+    AssetPaths.sfxBtnSnd,
+    AssetPaths.sfxClear,
+    AssetPaths.sfxTimeUp,
+  ];
+
+  /// 테스트에서 실제 재생 대신 (path, volume, rate)를 받는다.
+  @visibleForTesting
+  static void Function(String path, double volume, double rate)? debugSfxSink;
 
   @visibleForTesting
   static String? get debugCurrentBgm => _currentBgm;
@@ -59,6 +77,10 @@ class SoundManager {
     _debugUserGestureBgmResumeCount = 0;
     _webBgmPlayer = null;
     _sfxPools.clear();
+    _globalPitchRamp?.cancel();
+    _globalPitchRamp = null;
+    _globalPitch = 1;
+    debugSfxSink = null;
   }
 
   @visibleForTesting
@@ -390,19 +412,15 @@ class SoundManager {
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
   static Future<void> preload() async {
     if (kIsWeb) {
-      initializeWebSfx(AssetPaths.sfxCollect);
+      for (final path in _sfxPaths) {
+        initializeWebSfx(path);
+      }
       return;
     }
     await Future.wait([
       FlameAudio.audioCache.load(AssetPaths.bgmMenu),
       FlameAudio.audioCache.load(AssetPaths.bgmMain),
-      FlameAudio.audioCache.load(AssetPaths.sfxTimeTic),
-      FlameAudio.audioCache.load(AssetPaths.sfxStart),
-      FlameAudio.audioCache.load(AssetPaths.sfxCollect),
-      FlameAudio.audioCache.load(AssetPaths.sfxFail),
-      FlameAudio.audioCache.load(AssetPaths.sfxBtnSnd),
-      FlameAudio.audioCache.load(AssetPaths.sfxClear),
-      FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
+      for (final path in _sfxPaths) FlameAudio.audioCache.load(path),
     ]);
   }
 
@@ -556,15 +574,37 @@ class SoundManager {
   /// 효과음 재생. 음소거 시 무시, 볼륨은 GameSettings.sfxVolume 적용.
   /// 웹: unlock 전이면 무시 (카운트다운 등 자동 재생 방지).
   ///
-  /// **웹(kIsWeb):** [FlameAudio.playLongAudio]와 [AssetSource]는
-  /// [AudioCache.loadPath]를 거쳐 `dart:io` 파일 체크를 호출할 수 있다.
-  /// 브라우저에서는 asset URL을 직접 재생해 그 경로를 피한다.
-  static void playSfx(String path) {
+  /// [pitch]는 재생 배율(1 = 원음)이고 [pitchVariance]는 ±비율의 무작위 변주다.
+  /// 여기에 전역 배율 [globalPitch]를 곱한다.
+  ///
+  /// **웹(kIsWeb):** Web Audio `playbackRate`로 음높이를 바꾼다.
+  /// [FlameAudio.playLongAudio]와 [AssetSource]는 [AudioCache.loadPath]를 거쳐
+  /// `dart:io` 파일 체크를 호출할 수 있어 브라우저에서는 JS 브리지를 쓴다.
+  ///
+  /// **네이티브:** pitch를 무시하고 원음으로 재생한다. iOS audioplayers는
+  /// `timeDomain` 알고리즘으로 음높이를 유지한 채 속도만 바꾸고, [AudioPool]은
+  /// 재생별 rate를 받지 않기 때문이다.
+  static void playSfx(
+    String path, {
+    double pitch = 1,
+    double pitchVariance = 0,
+  }) {
     if (GameSettings.sfxMuted) return;
-    if (kIsWeb && !_webUnlocked) return;
     final vol = GameSettings.sfxVolume;
+    final rate = resolveSfxRate(
+      pitch: pitch,
+      pitchVariance: pitchVariance,
+      globalPitch: _globalPitch,
+      random: _pitchRandom.nextDouble(),
+    );
+    final sink = debugSfxSink;
+    if (sink != null) {
+      sink(path, vol, rate);
+      return;
+    }
+    if (kIsWeb && !_webUnlocked) return;
     if (kIsWeb) {
-      playWebSfx(path, vol);
+      playWebSfx(path, vol, rate);
       return;
     }
     if (_shouldUseSfxPool(path, isWeb: false)) {
@@ -574,6 +614,55 @@ class SoundManager {
     try {
       FlameAudio.play(path, volume: vol);
     } catch (_) {}
+  }
+
+  /// [random]은 0..1 값이다. 결과는 0.25..4로 제한한다.
+  @visibleForTesting
+  static double resolveSfxRate({
+    required double pitch,
+    required double pitchVariance,
+    required double globalPitch,
+    required double random,
+  }) {
+    final variation = 1 + (random * 2 - 1) * pitchVariance;
+    return (pitch * variation * globalPitch).clamp(0.25, 4.0);
+  }
+
+  /// 전역 pitch 배율. 모든 효과음에 곱한다.
+  static double get globalPitch => _globalPitch;
+
+  /// 전역 pitch를 [target]으로 [duration] 동안 선형으로 옮긴다.
+  ///
+  /// 게임오버 때 `rampGlobalPitch(0.5, ...)`로 소리를 끌어내리고, 다음 run이나 재시도에서
+  /// `rampGlobalPitch(1, Duration.zero)`로 되돌린다. BGM에는 재생 속도로 근사한다
+  /// (웹 BGM은 HTMLAudio라 음높이 대신 속도만 바뀐다).
+  static void rampGlobalPitch(double target, Duration duration) {
+    _globalPitchRamp?.cancel();
+    _globalPitchRamp = null;
+    final start = _globalPitch;
+    const step = Duration(milliseconds: 50);
+    final steps = duration.inMilliseconds ~/ step.inMilliseconds;
+    if (steps <= 0) {
+      _setGlobalPitch(target);
+      return;
+    }
+    var i = 0;
+    _globalPitchRamp = Timer.periodic(step, (timer) {
+      i++;
+      _setGlobalPitch(start + (target - start) * (i / steps));
+      if (i >= steps) {
+        timer.cancel();
+        _globalPitchRamp = null;
+      }
+    });
+  }
+
+  static void _setGlobalPitch(double value) {
+    _globalPitch = value.clamp(0.25, 4.0);
+    if (debugSfxSink != null) return;
+    final player = kIsWeb ? _webBgmPlayer : FlameAudio.bgm.audioPlayer;
+    if (player == null) return;
+    unawaited(player.setPlaybackRate(_globalPitch).catchError((Object _) {}));
   }
 
   static Future<void> _playSfxFromPool(String path, double volume) async {
