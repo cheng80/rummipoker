@@ -28,6 +28,15 @@ enum GameCue {
   bossIntro,
   victory,
   gameOver,
+
+  // --- T0: 공통 입력·팝업·화면 전환 ---
+  runStart,
+  battleStart,
+  runRestore,
+  choiceSelect,
+  panelOpen,
+  noticeTop,
+  noticeBottom,
 }
 
 /// 의미 키 하나가 내는 소리와 햅틱.
@@ -165,6 +174,35 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
     sfx: AssetPaths.sfxTimeUp,
     haptic: HapticGrade.heavy,
   ),
+
+  // --- T0: 공통 입력·팝업·화면 전환 ---
+  GameCue.runStart: GameCueSpec(
+    sfx: AssetPaths.sfxStart,
+    haptic: HapticGrade.impact,
+  ),
+  GameCue.battleStart: GameCueSpec(
+    sfx: AssetPaths.sfxStart,
+    pitch: 0.9,
+    haptic: HapticGrade.heavy,
+  ),
+  GameCue.runRestore: GameCueSpec(
+    sfx: AssetPaths.sfxStart,
+    pitch: 1.1,
+    haptic: HapticGrade.impact,
+  ),
+  GameCue.choiceSelect: GameCueSpec(
+    sfx: AssetPaths.sfxTimeTic,
+    pitch: 1.1,
+    pitchVariance: 0.03,
+    haptic: HapticGrade.select,
+  ),
+  GameCue.panelOpen: GameCueSpec(
+    sfx: AssetPaths.sfxBtnSnd,
+    pitch: 1.15,
+    haptic: HapticGrade.select,
+  ),
+  GameCue.noticeTop: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.35),
+  GameCue.noticeBottom: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.6),
 };
 
 /// 의미 키로 소리와 햅틱을 같은 시점에 낸다.

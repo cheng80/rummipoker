@@ -48,12 +48,12 @@ Future<T?> showGameFramedDialog<T>({
   bool barrierDismissible = true,
   String semanticLabel = '게임 대화상자',
 }) {
-  return showDialog<T>(
-    context: context,
+  return pushGameDialog<T>(
+    context,
     barrierDismissible: barrierDismissible,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: kGameModalBarrierColor,
-    routeSettings: RouteSettings(name: semanticLabel),
+    settings: RouteSettings(name: semanticLabel),
     builder: (dialogContext) {
       final routeLabel = semanticLabel.trim().isEmpty
           ? '게임 대화상자'

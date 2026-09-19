@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flame_audio/flame_audio.dart';
 
 import '../services/game_settings.dart';
+import '../utils/storage_helper.dart';
 import 'asset_paths.dart';
 import 'web_sfx_bridge.dart';
 
@@ -479,6 +480,41 @@ class SoundManager {
     } catch (_) {}
   }
 
+  /// BGM을 [duration] 동안 줄인 뒤 멈춘다. 상태는 [stopBgm]처럼 즉시 비운다.
+  ///
+  /// 웹은 현재 플레이어를 떼어 내 따로 줄이므로 곧이어 [playBgm]을 불러도 새 BGM은
+  /// 영향을 받지 않는다.
+  // ponytail: 네이티브 FlameAudio.bgm은 플레이어가 하나라 페이드 없이 멈춘다.
+  // 네이티브 전환음이 거슬리면 전용 AudioPlayer로 옮긴다.
+  static Future<void> fadeOutBgm(Duration duration) async {
+    final player = kIsWeb ? _webBgmPlayer : null;
+    if (player == null || duration <= Duration.zero) {
+      await stopBgm();
+      return;
+    }
+    _webBgmPlayer = null;
+    await stopBgm();
+    unawaited(_fadeOutDetachedPlayer(player, duration));
+  }
+
+  static Future<void> _fadeOutDetachedPlayer(
+    AudioPlayer player,
+    Duration duration,
+  ) async {
+    const steps = 8;
+    final start = GameSettings.bgmVolume;
+    try {
+      for (var i = 1; i <= steps; i++) {
+        await Future<void>.delayed(duration ~/ steps);
+        await player.setVolume(start * (1 - i / steps));
+      }
+      await player.stop();
+    } catch (_) {}
+    try {
+      await player.dispose();
+    } catch (_) {}
+  }
+
   /// BGM 일시정지. [onlyIfCurrent]가 지정되면 현재 BGM과 일치할 때만 적용.
   static void pauseBgm({
     String? onlyIfCurrent,
@@ -589,7 +625,8 @@ class SoundManager {
     double pitch = 1,
     double pitchVariance = 0,
   }) {
-    if (GameSettings.sfxMuted) return;
+    // 설정 저장소가 준비되기 전(앱 부팅 전, 저장소 없는 위젯 테스트)에는 재생하지 않는다.
+    if (!StorageHelper.isInitialized || GameSettings.sfxMuted) return;
     final vol = GameSettings.sfxVolume;
     final rate = resolveSfxRate(
       pitch: pitch,

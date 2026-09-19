@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../resources/asset_paths.dart';
 import '../resources/game_haptics.dart';
+import '../views/game/game_feedback_cues.dart';
+import '../views/game/game_presentation_timings.dart';
 import '../views/game/widgets/game_ui_palette.dart';
 import '../widgets/fx/juice.dart';
+import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 enum _NoticeStyle { topBanner, bottomToast }
@@ -58,29 +62,11 @@ class GameChromeButton extends StatefulWidget {
 }
 
 class _GameChromeButtonState extends State<GameChromeButton> {
-  bool _pressed = false;
-  int _releaseTick = 0;
-
-  void _setPressed(bool value) {
-    if (_pressed == value) return;
-    setState(() => _pressed = value);
-  }
-
-  void _handleTap() {
-    final onPressed = widget.onPressed;
-    if (onPressed == null) return;
-    setState(() => _releaseTick++);
-    GameHaptics.play(HapticGrade.select);
-    onPressed();
-  }
-
   @override
   Widget build(BuildContext context) {
     final onPressed = widget.onPressed;
     final backgroundColor = widget.backgroundColor;
     final foregroundColor = widget.foregroundColor;
-    final borderRadius = widget.borderRadius;
-    final icon = widget.icon;
     final isEnabled = onPressed != null;
     final baseColor = isEnabled
         ? backgroundColor
@@ -90,27 +76,21 @@ class _GameChromeButtonState extends State<GameChromeButton> {
         ? foregroundColor
         : foregroundColor.withValues(alpha: 0.58);
 
-    return Juice(
-      trigger: _releaseTick,
-      pressed: _pressed && isEnabled,
-      child: Listener(
-        onPointerDown: (_) => _setPressed(true),
-        onPointerUp: (_) => _setPressed(false),
-        onPointerCancel: (_) => _setPressed(false),
-        child: _buildSurface(
-          isEnabled: isEnabled,
-          baseColor: baseColor,
-          borderColor: borderColor,
-          baseForeground: baseForeground,
-          borderRadius: borderRadius,
-          icon: icon,
-        ),
+    return PressFeedback(
+      onTap: onPressed,
+      builder: (context, onTap) => _buildSurface(
+        onTap: onTap,
+        baseColor: baseColor,
+        borderColor: borderColor,
+        baseForeground: baseForeground,
+        borderRadius: widget.borderRadius,
+        icon: widget.icon,
       ),
     );
   }
 
   Widget _buildSurface({
-    required bool isEnabled,
+    required VoidCallback? onTap,
     required Color baseColor,
     required Color borderColor,
     required Color baseForeground,
@@ -125,7 +105,7 @@ class _GameChromeButtonState extends State<GameChromeButton> {
     return Material(
       color: GameUiPalette.transparent,
       child: InkWell(
-        onTap: isEnabled ? _handleTap : null,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(borderRadius),
         child: Ink(
           height: height,
@@ -172,6 +152,117 @@ class _GameChromeButtonState extends State<GameChromeButton> {
   }
 }
 
+/// 입력 부품 공용 누름 반응.
+///
+/// pointer-down에 살짝 찌그러지고, tap에 juice와 [haptic]을 낸 뒤 [onTap]을 부른다.
+/// [decision]은 런 시작·전투 시작처럼 무게가 있는 결정 버튼용으로 juice를 키운다.
+/// [onTap]이 null이고 [deny]가 true면 탭에 좌우 흔들림·오류음·error 햅틱으로
+/// 거절을 알린다. 거절은 게임 상태를 바꾸지 않는다. [denyTrigger]가 바뀔 때도
+/// 같은 거절을 낸다(비동기 판정 뒤 거절할 때).
+///
+/// [builder]는 실제 탭 콜백을 받아 InkWell 등에 넘긴다. 비활성이면 null이다.
+class PressFeedback extends StatefulWidget {
+  const PressFeedback({
+    super.key,
+    required this.onTap,
+    required this.builder,
+    this.decision = false,
+    this.deny = false,
+    this.denyTrigger,
+    this.haptic = HapticGrade.select,
+  });
+
+  final VoidCallback? onTap;
+  final Widget Function(BuildContext context, VoidCallback? onTap) builder;
+  final bool decision;
+  final bool deny;
+  final Object? denyTrigger;
+
+  /// 호출부가 햅틱을 포함한 [GameFeedback] cue를 직접 내면 null로 둔다.
+  final HapticGrade? haptic;
+
+  @override
+  State<PressFeedback> createState() => _PressFeedbackState();
+}
+
+class _PressFeedbackState extends State<PressFeedback>
+    with SingleTickerProviderStateMixin {
+  static const double _denyAmplitude = 7;
+  static const double _denyCycles = 3;
+
+  late final AnimationController _denyController = AnimationController(
+    vsync: this,
+    duration: GamePresentationTimings.denyShake,
+    value: 1,
+  );
+  bool _pressed = false;
+  int _releaseTick = 0;
+
+  @override
+  void didUpdateWidget(covariant PressFeedback oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.denyTrigger != oldWidget.denyTrigger) _playDeny();
+    if (widget.onTap == null) _pressed = false;
+  }
+
+  @override
+  void dispose() {
+    _denyController.dispose();
+    super.dispose();
+  }
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  void _handleTap() {
+    final onTap = widget.onTap;
+    if (onTap == null) return;
+    setState(() => _releaseTick++);
+    final haptic = widget.haptic;
+    if (haptic != null) GameHaptics.play(haptic);
+    onTap();
+  }
+
+  void _playDeny() {
+    GameFeedback.play(GameCue.deny);
+    if (MotionPolicy.juiceScale > 0) _denyController.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null;
+    final VoidCallback? tap = enabled
+        ? _handleTap
+        : (widget.deny ? _playDeny : null);
+    final juiced = Juice(
+      trigger: _releaseTick,
+      strength: widget.decision ? 1.6 : 1,
+      pressed: _pressed && enabled,
+      child: Listener(
+        onPointerDown: enabled ? (_) => _setPressed(true) : null,
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: widget.builder(context, tap),
+      ),
+    );
+    return AnimatedBuilder(
+      animation: _denyController,
+      child: juiced,
+      builder: (context, child) {
+        final t = _denyController.value;
+        final dx =
+            _denyAmplitude *
+            MotionPolicy.juiceScale *
+            (1 - t) *
+            math.sin(t * _denyCycles * 2 * math.pi);
+        return Transform.translate(offset: Offset(dx, 0), child: child);
+      },
+    );
+  }
+}
+
 class GameIconButtonChip extends StatelessWidget {
   const GameIconButtonChip({
     super.key,
@@ -196,33 +287,36 @@ class GameIconButtonChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = Material(
-      color: GameUiPalette.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: Ink(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: onPressed != null
-                ? backgroundColor
-                : backgroundColor.withValues(alpha: 0.34),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: _toneBorderColor(
-                backgroundColor,
-                enabled: onPressed != null,
+    final child = PressFeedback(
+      onTap: onPressed,
+      builder: (context, onTap) => Material(
+        color: GameUiPalette.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Ink(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: onPressed != null
+                  ? backgroundColor
+                  : backgroundColor.withValues(alpha: 0.34),
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: _toneBorderColor(
+                  backgroundColor,
+                  enabled: onPressed != null,
+                ),
+                width: 1.4,
               ),
-              width: 1.4,
             ),
-          ),
-          child: Icon(
-            icon,
-            size: iconSize,
-            color: onPressed != null
-                ? foregroundColor
-                : foregroundColor.withValues(alpha: 0.58),
+            child: Icon(
+              icon,
+              size: iconSize,
+              color: onPressed != null
+                  ? foregroundColor
+                  : foregroundColor.withValues(alpha: 0.58),
+            ),
           ),
         ),
       ),
@@ -309,78 +403,81 @@ class GameMenuActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEnabled = onTap != null;
-    return Material(
-      color: GameUiPalette.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          decoration: BoxDecoration(
-            color: const Color(
-              0xFF173126,
-            ).withValues(alpha: isEnabled ? 1 : 0.5),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: accentColor.withValues(alpha: isEnabled ? 0.55 : 0.22),
+    return PressFeedback(
+      onTap: onTap,
+      builder: (context, onTap) => Material(
+        color: GameUiPalette.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: const Color(
+                0xFF173126,
+              ).withValues(alpha: isEnabled ? 1 : 0.5),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: accentColor.withValues(alpha: isEnabled ? 0.55 : 0.22),
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: accentColor.withValues(alpha: 0.42),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: accentColor.withValues(alpha: 0.42),
+                    ),
+                  ),
+                  child: Icon(icon, color: accentColor, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontFamily: AssetPaths.fontNexonLv2Gothic,
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: isEnabled ? 0.94 : 0.7,
+                          ),
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle!,
+                          style: TextStyle(
+                            color: GameUiPalette.textPrimary.withValues(
+                              alpha: isEnabled ? 0.7 : 0.46,
+                            ),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                child: Icon(icon, color: accentColor, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        color: GameUiPalette.textPrimary.withValues(
-                          alpha: isEnabled ? 0.94 : 0.7,
-                        ),
-                        fontSize: 15,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle!,
-                        style: TextStyle(
-                          color: GameUiPalette.textPrimary.withValues(
-                            alpha: isEnabled ? 0.7 : 0.46,
-                          ),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                        ),
-                      ),
-                    ],
-                  ],
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  color: GameUiPalette.textPrimary.withValues(
+                    alpha: isEnabled ? 0.82 : 0.46,
+                  ),
+                  size: 18,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Icon(
-                Icons.arrow_forward_rounded,
-                color: GameUiPalette.textPrimary.withValues(
-                  alpha: isEnabled ? 0.82 : 0.46,
-                ),
-                size: 18,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -388,15 +485,18 @@ class GameMenuActionTile extends StatelessWidget {
   }
 }
 
+/// [cue]는 알림 등급 소리다. 호출부가 이미 거절음 등 다른 cue를 냈으면 null로 둔다.
 void showTopNotice(
   BuildContext context,
   String message, {
   Duration duration = const Duration(milliseconds: 2200),
+  GameCue? cue = GameCue.noticeTop,
 }) {
   final overlay = Overlay.maybeOf(context, rootOverlay: true);
   if (overlay == null) {
     return;
   }
+  if (cue != null) GameFeedback.play(cue);
 
   late final OverlayEntry entry;
   entry = OverlayEntry(
@@ -431,11 +531,13 @@ void showBottomNotice(
   BuildContext context,
   String message, {
   Duration duration = const Duration(milliseconds: 1800),
+  GameCue? cue = GameCue.noticeBottom,
 }) {
   final overlay = Overlay.maybeOf(context, rootOverlay: true);
   if (overlay == null) {
     return;
   }
+  if (cue != null) GameFeedback.play(cue);
 
   late final OverlayEntry entry;
   entry = OverlayEntry(
@@ -476,14 +578,89 @@ Future<T?> showAppDialog<T>(
   required WidgetBuilder builder,
 }) {
   final safeRouteName = routeName.trim().isEmpty ? '게임 대화상자' : routeName;
-  return showDialog<T>(
-    context: context,
+  return pushGameDialog<T>(
+    context,
     barrierDismissible: barrierDismissible,
     useRootNavigator: useRootNavigator,
     barrierLabel: safeRouteName,
-    routeSettings: RouteSettings(name: safeRouteName),
+    settings: RouteSettings(name: safeRouteName),
     builder: builder,
   );
+}
+
+/// [showDialog]와 같은 dialog route를 scale-pop 등장·짧은 닫힘으로 연다.
+///
+/// barrier는 route 애니메이션을 따라 fade된다. 닫힘 뒤 route를 전환할 때의
+/// `endOfFrame` 대기 규칙은 호출부가 그대로 따른다.
+Future<T?> pushGameDialog<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  bool barrierDismissible = true,
+  bool useRootNavigator = true,
+  Color? barrierColor,
+  String? barrierLabel,
+  RouteSettings? settings,
+}) {
+  final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
+  return navigator.push<T>(
+    _GamePopDialogRoute<T>(
+      context: context,
+      builder: builder,
+      barrierColor:
+          barrierColor ??
+          DialogTheme.of(context).barrierColor ??
+          Colors.black54,
+      barrierDismissible: barrierDismissible,
+      barrierLabel: barrierLabel,
+      settings: settings,
+      themes: InheritedTheme.capture(from: context, to: navigator.context),
+    ),
+  );
+}
+
+class _GamePopDialogRoute<T> extends DialogRoute<T> {
+  _GamePopDialogRoute({
+    required super.context,
+    required super.builder,
+    super.barrierColor,
+    super.barrierDismissible,
+    super.barrierLabel,
+    super.settings,
+    super.themes,
+  });
+
+  static const double _popFromScale = 0.88;
+
+  @override
+  Duration get transitionDuration => GamePresentationTimings.dialogPopIn;
+
+  @override
+  Duration get reverseTransitionDuration =>
+      GamePresentationTimings.dialogPopOut;
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final fade = FadeTransition(
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      child: child,
+    );
+    if (MotionPolicy.reduceMotion) return fade;
+    return ScaleTransition(
+      scale: Tween<double>(begin: _popFromScale, end: 1).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeIn,
+        ),
+      ),
+      child: fade,
+    );
+  }
 }
 
 Future<T?> showGameChoiceDialog<T>(
