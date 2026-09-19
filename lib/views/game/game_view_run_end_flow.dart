@@ -204,9 +204,61 @@ extension _GameViewRunEndFlow on _GameViewState {
   Future<void> _completeRunAndReturnToTitle() async {
     _clearGameOverPresentation();
     _persistRetrySnapshotOnSave = false;
-    await _recordRunEndIfNeeded(_completedRunSummary());
+    final summary = _completedRunSummary();
+    await _recordRunEndIfNeeded(summary);
     await ActiveRunSaveService.clearActiveRun();
-    await _goToTitleAfterStoppingBgm();
+    // 기록과 save 정리가 끝난 뒤에만 승리 장면을 보여 준다. 장면은 상태를 바꾸지 않는다.
+    if (_skipsFlowPresentation || !mounted) {
+      await _goToTitleAfterStoppingBgm();
+      return;
+    }
+    await _playRunVictory(summary);
+    if (!mounted) return;
+    _resumePresentation();
+    await SoundManager.fadeOutBgm(GamePresentationTimings.runVictoryBgmFadeOut);
+    if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    context.go(RoutePaths.title);
+  }
+
+  Future<void> _playRunVictory(RunEndSummary summary) {
+    final done = Completer<void>();
+    _mutate(() {
+      _runVictoryStats = [
+        GameRunVictoryStat(
+          labelKey: 'flowVictoryStations',
+          value: summary.reachedStageIndex,
+        ),
+        GameRunVictoryStat(
+          labelKey: 'flowVictoryBosses',
+          value: summary.defeatedBossCount,
+        ),
+        GameRunVictoryStat(
+          labelKey: 'flowVictoryHands',
+          value: summary.playedHandCounts.values.fold(
+            0,
+            (sum, count) => sum + math.max(0, count),
+          ),
+        ),
+        GameRunVictoryStat(
+          labelKey: 'flowVictoryJesters',
+          value: summary.boughtJesterIds.length,
+        ),
+        GameRunVictoryStat(
+          labelKey: 'flowVictoryInsight',
+          value: RunProgressionService.calculateInsightReward(summary),
+        ),
+      ];
+      _runVictoryDone = done;
+    });
+    return done.future;
+  }
+
+  void _onRunVictoryDone() {
+    final done = _runVictoryDone;
+    _runVictoryDone = null;
+    if (done != null && !done.isCompleted) done.complete();
   }
 
   Future<void> _recordRunEndIfNeeded(RunEndSummary summary) async {
@@ -277,6 +329,8 @@ extension _GameViewRunEndFlow on _GameViewState {
   }
 
   void _clearGameOverPresentation() {
+    // 게임오버에서 내려간 전역 pitch를 어느 출구에서든 원래대로 돌린다.
+    SoundManager.rampGlobalPitch(1, Duration.zero);
     if (!mounted) return;
     _mutate(() {
       _gameOverFadeVisible = false;
@@ -289,12 +343,14 @@ extension _GameViewRunEndFlow on _GameViewState {
     _logExpiredRunEnd(signals);
     _dismissBattleTutorial();
     _clearSelections();
-    SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxTimeUp);
     _mutate(() {
       _gameOverSequenceInProgress = true;
       _gameOverFadeVisible = true;
     });
+    SoundManager.unlockForWeb();
+    GameFeedback.play(GameCue.gameOver);
+    // 위험 fade 동안 전체 소리가 테이프 늘어지듯 내려간다. 출구에서 1로 되돌린다.
+    SoundManager.rampGlobalPitch(0.5, GamePresentationTimings.gameOverFade);
     await Future<void>.delayed(GamePresentationTimings.gameOverFade);
     if (!mounted) return;
     _showGameOverDialog(signals);

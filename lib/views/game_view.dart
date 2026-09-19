@@ -53,6 +53,7 @@ import 'game/widgets/game_bookmark_slot_dialog.dart';
 import 'game/widgets/game_boss_intro_widgets.dart';
 import 'game/widgets/game_options_dialog.dart';
 import 'game/widgets/game_run_info_dialog.dart';
+import 'game/widgets/game_run_victory_widgets.dart';
 import 'game/widgets/game_effect_overlay.dart';
 import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
@@ -175,6 +176,9 @@ class _GameViewState extends ConsumerState<GameView>
   List<GameBossMarkFlight>? _bossMarkFlights;
   final GlobalKey _gameStackKey = GlobalKey();
   final GlobalKey _bossIntroMarksKey = GlobalKey();
+  // --- T4: 런 완료 승리 장면 ---
+  List<GameRunVictoryStat>? _runVictoryStats;
+  Completer<void>? _runVictoryDone;
   bool _pendingLifecycleOptions = false;
   bool _pausedLifecycleDuringStageFlow = false;
   bool _optionsDialogOpen = false;
@@ -334,6 +338,7 @@ class _GameViewState extends ConsumerState<GameView>
   void dispose() {
     _inactiveLifecycleTimer?.cancel();
     _presentationClock.dispose();
+    SoundManager.rampGlobalPitch(1, Duration.zero);
     WidgetsBinding.instance.removeObserver(this);
     _dismissBattleTutorial();
     super.dispose();
@@ -742,85 +747,88 @@ class _GameViewState extends ConsumerState<GameView>
       child: Stack(
         key: _gameStackKey,
         children: [
-          GameBossMarkVeil(
-            hidden: _bossMarksHidden,
-            child: _GameSurface(
-              battle: _battleViewWithItemSlots,
-              station: _stationView,
-              market: _marketView,
-              stageFlowPhase: _stageFlowPhase,
-              presentationPaused: _presentationPaused,
-              stageScoreAdded: _stageScoreAdded,
-              activeSettlementLine: _activeSettlementLine,
-              activeSettlementStep: _activeSettlementStep,
-              activeSettlementEffectIndex: _activeSettlementEffectIndex,
-              activeSettlementEffectIndexes: _activeSettlementEffectIndexes,
-              settlementGoalDisplayScore: _settlementGoalDisplayScore,
-              settlementSequenceTick: _settlementSequenceTick,
-              settlementBoardSnapshot: _settlementBoardSnapshot,
-              settlementTileHeat: _settlementTileHeat,
-              settlementTileHitSerial: _settlementTileHitSerial,
-              settlementGrade: _settlementGrade,
-              selectedHandTile: _selectedHandTile,
-              selectedBoardRow: _selectedBoardRow,
-              selectedBoardCol: _selectedBoardCol,
-              boardMoveMode: _boardMoveMode,
-              pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
-              pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
-              boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
-              boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
-              fateLineSelection: _fateLineSelection,
-              fateTransformFlashLineRef: _fateTransformFlashLineRef,
-              fateTransformFlashTick: _fateTransformFlashTick,
-              selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
-              selectedBattleItemSlot: _selectedBattleItemSlot,
-              selectedHandInfoTile: _selectedHandInfoTile,
-              itemEffectFeedback: _itemEffectFeedback,
-              itemEffectFeedbackTick: _itemEffectFeedbackTick,
-              ritualEffectFlight: _ritualEffectFlight,
-              ritualEffectFlightTick: _ritualEffectFlightTick,
-              suppressDebugChrome: widget.debugSuppressFixtureNotice,
-              difficultyLabel: _battleRunContextLabel(
-                difficulty: widget.difficulty,
-                runModifier: gameState.runModifier,
+          _GameOverSlump(
+            active: _gameOverFadeVisible,
+            child: GameBossMarkVeil(
+              hidden: _bossMarksHidden,
+              child: _GameSurface(
+                battle: _battleViewWithItemSlots,
+                station: _stationView,
+                market: _marketView,
+                stageFlowPhase: _stageFlowPhase,
+                presentationPaused: _presentationPaused,
+                stageScoreAdded: _stageScoreAdded,
+                activeSettlementLine: _activeSettlementLine,
+                activeSettlementStep: _activeSettlementStep,
+                activeSettlementEffectIndex: _activeSettlementEffectIndex,
+                activeSettlementEffectIndexes: _activeSettlementEffectIndexes,
+                settlementGoalDisplayScore: _settlementGoalDisplayScore,
+                settlementSequenceTick: _settlementSequenceTick,
+                settlementBoardSnapshot: _settlementBoardSnapshot,
+                settlementTileHeat: _settlementTileHeat,
+                settlementTileHitSerial: _settlementTileHitSerial,
+                settlementGrade: _settlementGrade,
+                selectedHandTile: _selectedHandTile,
+                selectedBoardRow: _selectedBoardRow,
+                selectedBoardCol: _selectedBoardCol,
+                boardMoveMode: _boardMoveMode,
+                pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
+                pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
+                boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
+                boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
+                fateLineSelection: _fateLineSelection,
+                fateTransformFlashLineRef: _fateTransformFlashLineRef,
+                fateTransformFlashTick: _fateTransformFlashTick,
+                selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
+                selectedBattleItemSlot: _selectedBattleItemSlot,
+                selectedHandInfoTile: _selectedHandInfoTile,
+                itemEffectFeedback: _itemEffectFeedback,
+                itemEffectFeedbackTick: _itemEffectFeedbackTick,
+                ritualEffectFlight: _ritualEffectFlight,
+                ritualEffectFlightTick: _ritualEffectFlightTick,
+                suppressDebugChrome: widget.debugSuppressFixtureNotice,
+                difficultyLabel: _battleRunContextLabel(
+                  difficulty: widget.difficulty,
+                  runModifier: gameState.runModifier,
+                ),
+                battleBoardTutorialKey: _battleBoardTutorialKey,
+                battlePreviewTutorialKey: _battlePreviewTutorialKey,
+                battleActionsTutorialKey: _battleActionsTutorialKey,
+                battleHandTutorialKey: _battleHandTutorialKey,
+                battleJesterZoneKey: _battleJesterZoneKey,
+                denyTarget: _battleDenyTarget,
+                denyTick: _battleDenyTick,
+                onLockedSlotTap: () => _denyBattleAction(
+                  '잠긴 슬롯입니다.',
+                  target: _BattleDenyTarget.slots,
+                ),
+                onOptionsTap: _openGameOptions,
+                onTutorialTap: () => _startBattleTutorial(markSeen: false),
+                onRunInfoTap: _openRunInfo,
+                onBlindInfoTap: _openBossConstraintInfo,
+                onDebugTap: () => _openDebugBottomSheet(context),
+                onJesterTap: _openJesterOverlay,
+                onHandTileTap: _toggleHandTile,
+                onHandTileLongPress: _openHandTileInfoOverlay,
+                onBoardCellTap: _onBoardCellTap,
+                onFateLineTap: _selectFateLine,
+                onFateTileTap: _selectFateTile,
+                onFateConfirm: _confirmFateLineSelection,
+                onFateCancel: _cancelFateLineSelection,
+                onDraw: _drawTile,
+                onBoardDiscard: _discardSelectedBoardTile,
+                onHandDiscard: _discardSelectedHandTile,
+                onStartBoardMove: _startBoardMoveMode,
+                onBattleItemTap: _openBattleItemOverlay,
+                onConfirm: _confirmLines,
+                onClearSelection: _clearSelections,
+                onJesterSell: _sellOwnedJesterFromOverlay,
+                onJesterOverlayClose: _closeJesterOverlay,
+                onBattleItemUse: _useBattleItem,
+                onBattleItemOverlayClose: _closeBattleItemOverlay,
+                onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
+                onSettlementSkip: _skipSettlementPresentation,
               ),
-              battleBoardTutorialKey: _battleBoardTutorialKey,
-              battlePreviewTutorialKey: _battlePreviewTutorialKey,
-              battleActionsTutorialKey: _battleActionsTutorialKey,
-              battleHandTutorialKey: _battleHandTutorialKey,
-              battleJesterZoneKey: _battleJesterZoneKey,
-              denyTarget: _battleDenyTarget,
-              denyTick: _battleDenyTick,
-              onLockedSlotTap: () => _denyBattleAction(
-                '잠긴 슬롯입니다.',
-                target: _BattleDenyTarget.slots,
-              ),
-              onOptionsTap: _openGameOptions,
-              onTutorialTap: () => _startBattleTutorial(markSeen: false),
-              onRunInfoTap: _openRunInfo,
-              onBlindInfoTap: _openBossConstraintInfo,
-              onDebugTap: () => _openDebugBottomSheet(context),
-              onJesterTap: _openJesterOverlay,
-              onHandTileTap: _toggleHandTile,
-              onHandTileLongPress: _openHandTileInfoOverlay,
-              onBoardCellTap: _onBoardCellTap,
-              onFateLineTap: _selectFateLine,
-              onFateTileTap: _selectFateTile,
-              onFateConfirm: _confirmFateLineSelection,
-              onFateCancel: _cancelFateLineSelection,
-              onDraw: _drawTile,
-              onBoardDiscard: _discardSelectedBoardTile,
-              onHandDiscard: _discardSelectedHandTile,
-              onStartBoardMove: _startBoardMoveMode,
-              onBattleItemTap: _openBattleItemOverlay,
-              onConfirm: _confirmLines,
-              onClearSelection: _clearSelections,
-              onJesterSell: _sellOwnedJesterFromOverlay,
-              onJesterOverlayClose: _closeJesterOverlay,
-              onBattleItemUse: _useBattleItem,
-              onBattleItemOverlayClose: _closeBattleItemOverlay,
-              onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
-              onSettlementSkip: _skipSettlementPresentation,
             ),
           ),
           if (_bossMarkFlights != null)
@@ -842,6 +850,13 @@ class _GameViewState extends ConsumerState<GameView>
             const Positioned.fill(child: _GamePresentationPauseVeil()),
           if (_gameOverFadeVisible)
             const Positioned.fill(child: _GameOverFadeVeil()),
+          if (_runVictoryStats != null)
+            Positioned.fill(
+              child: GameRunVictoryOverlay(
+                stats: _runVictoryStats!,
+                onDone: _onRunVictoryDone,
+              ),
+            ),
         ],
       ),
     );
@@ -872,15 +887,51 @@ class _GameOverFadeVeil extends StatelessWidget {
         duration: GamePresentationTimings.gameOverFade,
         curve: Curves.easeInCubic,
         builder: (context, value, child) {
+          // 채도를 빼는 ColorFiltered 대신 붉은 막 위에 어두운 막을 색 알파로 겹친다.
           return DecoratedBox(
             decoration: BoxDecoration(
               color: GameUiPalette.specialDangerHard.withValues(
                 alpha: 0.18 + (value * 0.58),
               ),
             ),
+            child: ColoredBox(
+              color: GameUiPalette.ink.withValues(alpha: 0.32 * value),
+            ),
           );
         },
       ),
+    );
+  }
+}
+
+/// 게임오버 위험 fade 동안 보드가 조금씩 가라앉고 기우는 느낌을 Transform만으로 만든다.
+///
+/// 트리 구조는 항상 같아서 켜고 꺼도 아래 상태가 다시 만들어지지 않는다.
+/// 동작 줄이기와 연출 강도 끔에서는 움직이지 않는다.
+class _GameOverSlump extends StatelessWidget {
+  const _GameOverSlump({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = active && MotionPolicy.juiceScale > 0;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: on ? 1 : 0),
+      duration: on ? GamePresentationTimings.gameOverFade : Duration.zero,
+      curve: Curves.easeInCubic,
+      child: child,
+      builder: (context, t, child) {
+        return Transform(
+          alignment: Alignment.bottomCenter,
+          transform: Matrix4.identity()
+            ..translateByDouble(0, 18 * t, 0, 1)
+            ..rotateZ(0.02 * t)
+            ..scaleByDouble(1 - 0.04 * t, 1 - 0.06 * t, 1, 1),
+          child: child,
+        );
+      },
     );
   }
 }
