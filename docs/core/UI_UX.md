@@ -107,6 +107,18 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 - 화면 흔들림과 진동은 각각 끌 수 있다. 진동은 네이티브에서 `HapticFeedback`, Android 웹에서 20ms 이하 `navigator.vibrate`를 쓰고 iOS 웹에서는 아무것도 하지 않는다.
 - 웹 효과음은 Web Audio `playbackRate`로 음높이를 바꾼다. 반면 네이티브는 audioplayers가 음높이를 유지한 채 속도만 바꾸므로 원음으로 재생한다. 전역 pitch 배율은 게임오버 연출용이며 다음 run에서 1로 되돌린다.
 
+### 공통 입력, 팝업, 화면 전환
+
+전투·정산·상점 밖의 입력은 모두 같은 규칙으로 반응한다. 플레이어는 눌렀는지, 받아들여졌는지, 거절됐는지를 손과 귀로 구분할 수 있다.
+
+- 누름: 입력 부품은 공용 `PressFeedback`([common_ui.dart](../../lib/utils/common_ui.dart))을 거친다. pointer-down에 살짝 찌그러지고, tap에는 juice와 햅틱이 따른다. 공용 버튼, 아이콘 칩, 메뉴 타일, 타이틀·New Run 카드, Blind play 버튼, 난이도·modifier 카드, Archive 카드와 페이지 버튼이 여기에 해당한다. 런 시작과 전투 시작 같은 결정 버튼은 juice를 더 크게 준다.
+- 거절: 비활성 이어하기 카드, 잠기거나 이미 끝난 Blind의 play 버튼, 기억 카드가 모자란 modifier는 눌러도 상태가 바뀌지 않는다. 대신 좌우로 짧게 흔들리고 `deny` 소리와 error 햅틱이 난다. 화면 전체를 번쩍이지는 않는다.
+- 의미 소리: 런 시작(`runStart`), 전투 시작(`battleStart`), 이어하기·북마크 복원(`runRestore`), 난이도·modifier·언어·연출 설정 선택(`choiceSelect`), 옵션 열기(`panelOpen`)는 일반 클릭음 대신 의미 cue를 쓴다. top·bottom notice는 등급별 cue(`noticeTop`, `noticeBottom`)를 낸다. 호출부가 이미 다른 cue를 냈다면 `cue: null`로 끈다.
+- modifier 해금: 기억 카드로 modifier를 해금하면 그 카드가 크게 튕기고 FX 레이어 불꽃이 튀며 `unlock` 소리가 난다.
+- 팝업: `showAppDialog`와 `showGameFramedDialog`는 220ms scale-pop으로 열리고 140ms 만에 닫힌다. barrier는 route 애니메이션을 따라 fade된다. 닫힌 직후 route를 바꿀 때 `endOfFrame`을 기다리는 규칙은 변함없이 적용된다.
+- 화면 전환: route는 280ms fade와 짧은 slide로 바뀐다. 디버그 픽스처, `auto_*`·`debug_*` 쿼리, OS 동작 줄이기에서는 즉시 전환해 풀런봇과 자동 흐름을 늦추지 않는다. 타이틀에서 전투로 나갈 때 웹 BGM은 320ms 동안 줄어든 뒤 멈춘다.
+- 동작 줄이기에서는 흔들림, juice, 팝업 scale이 모두 빠진다. 소리, 햅틱, fade는 남는다. 시간 값은 `GamePresentationTimings`에, cue 매핑은 `gameFeedbackCues`의 T0 구역에 있다.
+
 ## 접근성과 언어 지원 현황
 
 | 영역 | 구현됨 | 테스트로 보호됨 | 검증 gap |
@@ -131,6 +143,7 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 - settlement/Market: [game_cashout_widgets_test.dart](../../test/views/game/widgets/game_cashout_widgets_test.dart), [game_shop_screen_test.dart](../../test/views/game/widgets/game_shop_screen_test.dart)
 - lifecycle/tutorial: [game_view_lifecycle_test.dart](../../test/views/game/game_view_lifecycle_test.dart), [game_shop_lifecycle_test.dart](../../test/views/game/widgets/game_shop_lifecycle_test.dart), [tutorial_state_service_test.dart](../../test/services/tutorial_state_service_test.dart)
 - settings/locale/archive: [setting_view_test.dart](../../test/views/setting_view_test.dart), [setting_view_effects_test.dart](../../test/views/setting_view_effects_test.dart), [archive_view_test.dart](../../test/views/archive_view_test.dart)
+- 공통 입력·팝업·전환: [common_input_feedback_test.dart](../../test/utils/common_input_feedback_test.dart), [title_continue_deny_test.dart](../../test/views/title_continue_deny_test.dart), [new_run_modifier_unlock_feedback_test.dart](../../test/views/new_run_modifier_unlock_feedback_test.dart)
 - 연출 기반: [presentation_clock_test.dart](../../test/widgets/fx/presentation_clock_test.dart), [motion_fx_test.dart](../../test/widgets/fx/motion_fx_test.dart), [game_feedback_test.dart](../../test/resources/game_feedback_test.dart), [rummi_poker_sfx_test.mjs](../../test/web/rummi_poker_sfx_test.mjs)
 
 
