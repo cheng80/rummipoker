@@ -71,12 +71,15 @@ class _ArchiveCollectionSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$title $collectedCount/$totalCount',
-            style: TextStyle(
-              color: GameUiPalette.textPrimary.withValues(alpha: 0.88),
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
+          _ArchiveCountUp(
+            value: collectedCount,
+            builder: (shown) => Text(
+              '$title $shown/$totalCount',
+              style: TextStyle(
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.88),
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -92,17 +95,23 @@ class _ArchiveJesterGrid extends StatefulWidget {
     required this.cards,
     required this.seenIds,
     required this.boughtIds,
+    this.newIds = const <String>{},
   });
 
   final List<RummiJesterCard> cards;
   final Set<String> seenIds;
   final Set<String> boughtIds;
+  final Set<String> newIds;
 
   @override
   State<_ArchiveJesterGrid> createState() => _ArchiveJesterGridState();
 }
 
-class _ArchiveJesterGridState extends State<_ArchiveJesterGrid> {
+class _ArchiveJesterGridState extends State<_ArchiveJesterGrid>
+    with _ArchiveNewRevealState {
+  @override
+  Set<String> get initialNewIds => widget.newIds;
+
   RummiJesterCard? _selectedCard;
   bool _detailOpen = false;
 
@@ -124,9 +133,12 @@ class _ArchiveJesterGridState extends State<_ArchiveJesterGrid> {
                   boughtIds: widget.boughtIds,
                 ),
                 selected: _detailOpen && _selectedCard?.id == card.id,
+                isNew: newIds.contains(card.id),
+                flipTick: flipTickFor(card.id),
                 onTap: () => setState(() {
                   _selectedCard = card;
                   _detailOpen = true;
+                  revealIfNew(card.id, ArchiveSeenService.jesterId(card.id));
                 }),
                 child:
                     widget.seenIds.contains(card.id) ||
@@ -166,17 +178,23 @@ class _ArchiveItemGrid extends StatefulWidget {
     required this.items,
     required this.seenIds,
     required this.boughtIds,
+    this.newIds = const <String>{},
   });
 
   final List<ItemDefinition> items;
   final Set<String> seenIds;
   final Set<String> boughtIds;
+  final Set<String> newIds;
 
   @override
   State<_ArchiveItemGrid> createState() => _ArchiveItemGridState();
 }
 
-class _ArchiveItemGridState extends State<_ArchiveItemGrid> {
+class _ArchiveItemGridState extends State<_ArchiveItemGrid>
+    with _ArchiveNewRevealState {
+  @override
+  Set<String> get initialNewIds => widget.newIds;
+
   ItemDefinition? _selectedItem;
   bool _detailOpen = false;
 
@@ -198,9 +216,12 @@ class _ArchiveItemGridState extends State<_ArchiveItemGrid> {
                   boughtIds: widget.boughtIds,
                 ),
                 selected: _detailOpen && _selectedItem?.id == item.id,
+                isNew: newIds.contains(item.id),
+                flipTick: flipTickFor(item.id),
                 onTap: () => setState(() {
                   _selectedItem = item;
                   _detailOpen = true;
+                  revealIfNew(item.id, ArchiveSeenService.itemId(item.id));
                 }),
                 child:
                     widget.seenIds.contains(item.id) ||
@@ -233,16 +254,22 @@ class _ArchiveMemoryCardGrid extends StatefulWidget {
   const _ArchiveMemoryCardGrid({
     required this.cards,
     required this.collectedIds,
+    this.newIds = const <String>{},
   });
 
   final List<_ArchiveMemoryCardDefinition> cards;
   final Set<String> collectedIds;
+  final Set<String> newIds;
 
   @override
   State<_ArchiveMemoryCardGrid> createState() => _ArchiveMemoryCardGridState();
 }
 
-class _ArchiveMemoryCardGridState extends State<_ArchiveMemoryCardGrid> {
+class _ArchiveMemoryCardGridState extends State<_ArchiveMemoryCardGrid>
+    with _ArchiveNewRevealState {
+  @override
+  Set<String> get initialNewIds => widget.newIds;
+
   _ArchiveMemoryCardDefinition? _selectedCard;
   bool _detailOpen = false;
 
@@ -263,9 +290,12 @@ class _ArchiveMemoryCardGridState extends State<_ArchiveMemoryCardGrid> {
                   collected: widget.collectedIds.contains(card.id),
                 ),
                 selected: _detailOpen && _selectedCard?.id == card.id,
+                isNew: newIds.contains(card.id),
+                flipTick: flipTickFor(card.id),
                 onTap: () => setState(() {
                   _selectedCard = card;
                   _detailOpen = true;
+                  revealIfNew(card.id, ArchiveSeenService.memoryId(card.id));
                 }),
                 child: widget.collectedIds.contains(card.id)
                     ? _ArchiveMemoryCardFace(card: card)
@@ -443,4 +473,55 @@ List<List<T>> _chunked<T>(List<T> values, int size) {
     chunks.add(values.sublist(index, end));
   }
   return chunks;
+}
+
+/// NEW 항목을 처음 열 때 한 번 뒤집어 공개하고 확인한 것으로 기록한다.
+mixin _ArchiveNewRevealState<T extends StatefulWidget> on State<T> {
+  Set<String> get initialNewIds;
+
+  late final Set<String> newIds = {...initialNewIds};
+  String? _flipId;
+  int _flipTick = 0;
+
+  int flipTickFor(String id) => _flipId == id ? _flipTick : 0;
+
+  /// setState 안에서 부른다. 새 항목이 아니면 아무것도 하지 않는다.
+  void revealIfNew(String id, String prefixedId) {
+    if (!newIds.remove(id)) return;
+    _flipId = id;
+    _flipTick++;
+    GameFeedback.play(GameCue.unlock);
+    unawaited(ArchiveSeenService.acknowledge(prefixedId));
+  }
+}
+
+/// 처음 그릴 때 0에서 [value]까지 count-up한다. 전투의 [GameCountUpInt]를 그대로 쓴다.
+class _ArchiveCountUp extends StatefulWidget {
+  const _ArchiveCountUp({required this.value, required this.builder});
+
+  final int value;
+  final Widget Function(int shown) builder;
+
+  @override
+  State<_ArchiveCountUp> createState() => _ArchiveCountUpState();
+}
+
+class _ArchiveCountUpState extends State<_ArchiveCountUp> {
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _started = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GameCountUpInt(
+      value: _started ? widget.value : 0,
+      builder: (context, shown) => widget.builder(shown),
+    );
+  }
 }

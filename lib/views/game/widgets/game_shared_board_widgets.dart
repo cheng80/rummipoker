@@ -1394,6 +1394,10 @@ class GameStampIn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // T4: Boss 인트로 배너가 닫히기 전에는 숨겼다가, 풀리는 순간 도장을 찍는다.
+    if (GameBossMarkVeil.hiddenOf(context)) {
+      return Opacity(opacity: 0, child: child);
+    }
     if (MotionPolicy.juiceScale <= 0) return child;
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),

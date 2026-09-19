@@ -118,5 +118,17 @@
   "settlementGrade0": "Nice",
   "settlementGrade1": "Great!",
   "settlementGrade2": "Superb!!",
-  "settlementGrade3": "Legendary!!!"
+  "settlementGrade3": "Legendary!!!",
+  "flowBossIntroTag": "BOSS · Check the constraints",
+  "flowRunProgressLabel": "Run progress S{} of S{}",
+  "flowRunProgressEndless": "Endless S{}",
+  "flowHighStakesChip": "High Stakes · Goal ×{} · Reward ×{}",
+  "flowVictoryTitle": "Run Complete!",
+  "flowVictoryStations": "Stations cleared",
+  "flowVictoryBosses": "Bosses defeated",
+  "flowVictoryHands": "Hands completed",
+  "flowVictoryJesters": "Jesters bought",
+  "flowVictoryInsight": "Memory cards earned",
+  "flowVictorySkipHint": "Tap to continue",
+  "flowArchiveNew": "NEW"
 }

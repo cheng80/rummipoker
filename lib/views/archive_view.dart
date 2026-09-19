@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,8 +11,11 @@ import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../resources/asset_paths.dart';
+import '../services/archive_seen_service.dart';
 import '../services/run_unlock_state_service.dart';
 import '../utils/common_ui.dart';
+import '../widgets/fx/entrance_in.dart';
+import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
@@ -27,9 +34,13 @@ class _ArchiveData {
     required this.state,
     required this.jesterCatalog,
     required this.itemCatalog,
+    required this.acknowledgedIds,
   });
 
   final RunUnlockState state;
+
+  /// Archive에서 이미 확인한 발견 항목(접두 포함). 여기 없는 발견 항목이 NEW다.
+  final Set<String> acknowledgedIds;
   final RummiJesterCatalog jesterCatalog;
   final ItemCatalog itemCatalog;
 }
@@ -127,6 +138,9 @@ class _ArchiveViewState extends State<ArchiveView> {
                 final collectedJesterIds = _collectedJesterIds(state);
                 final collectedItemIds = _collectedItemIds(state);
                 final collectedMemoryCardIds = state.earnedMemoryCardIds;
+                final acknowledged = data?.acknowledgedIds ?? const <String>{};
+                bool isNew(String prefixedId) =>
+                    !acknowledged.contains(prefixedId);
                 return HomeSection(
                   title: '내 기록',
                   subtitle: '이번 기기에서 런을 이어가며 남은 수집 기록',
@@ -153,6 +167,10 @@ class _ArchiveViewState extends State<ArchiveView> {
                           child: _ArchiveMemoryCardGrid(
                             cards: _archiveMemoryCards,
                             collectedIds: collectedMemoryCardIds,
+                            newIds: {
+                              for (final id in collectedMemoryCardIds)
+                                if (isNew(ArchiveSeenService.memoryId(id))) id,
+                            },
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -164,6 +182,10 @@ class _ArchiveViewState extends State<ArchiveView> {
                             cards: data.jesterCatalog.all,
                             seenIds: state.seenMarketJesterIds,
                             boughtIds: state.boughtJesterIds,
+                            newIds: {
+                              for (final id in collectedJesterIds)
+                                if (isNew(ArchiveSeenService.jesterId(id))) id,
+                            },
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -175,6 +197,10 @@ class _ArchiveViewState extends State<ArchiveView> {
                             items: data.itemCatalog.all,
                             seenIds: state.seenMarketItemIds,
                             boughtIds: state.boughtItemIds,
+                            newIds: {
+                              for (final id in collectedItemIds)
+                                if (isNew(ArchiveSeenService.itemId(id))) id,
+                            },
                           ),
                         ),
                       ] else ...[
@@ -266,6 +292,7 @@ class _ArchiveViewState extends State<ArchiveView> {
     final loadedState = results[0] as RunUnlockState;
     return _ArchiveData(
       state: loadedState,
+      acknowledgedIds: await ArchiveSeenService.loadOrInitialize(loadedState),
       jesterCatalog: results[1] as RummiJesterCatalog,
       itemCatalog: results[2] as ItemCatalog,
     );

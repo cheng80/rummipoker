@@ -118,5 +118,17 @@
   "settlementGrade0": "不错",
   "settlementGrade1": "很棒!",
   "settlementGrade2": "精彩!!",
-  "settlementGrade3": "传奇!!!"
+  "settlementGrade3": "传奇!!!",
+  "flowBossIntroTag": "首领登场 · 确认限制",
+  "flowRunProgressLabel": "本局进度 S{} / S{}",
+  "flowRunProgressEndless": "无尽 S{}",
+  "flowHighStakesChip": "高赌注 · 目标 ×{} · 奖励 ×{}",
+  "flowVictoryTitle": "本局完成！",
+  "flowVictoryStations": "突破的 Station",
+  "flowVictoryBosses": "击败的 Boss",
+  "flowVictoryHands": "完成的牌型",
+  "flowVictoryJesters": "购买的 Jester",
+  "flowVictoryInsight": "获得的记忆卡",
+  "flowVictorySkipHint": "点击继续",
+  "flowArchiveNew": "NEW"
 }

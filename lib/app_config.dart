@@ -56,6 +56,9 @@ class StorageKeys {
       'active_run_bookmark_signature_v1_';
   static const String saveDeviceKeyV1 = 'save_device_key_v1';
   static const String runUnlockStateV1 = 'run_unlock_state_v1';
+
+  /// T4: Archive에서 이미 확인한 발견 항목 id 집합(`jester:`·`item:`·`memory:` 접두).
+  static const String archiveAcknowledgedIdsV1 = 'archive_acknowledged_ids_v1';
 }
 
 /// 인앱 리뷰: TitleView에서 일정 기간(일) 경과 후 requestReview 호출.

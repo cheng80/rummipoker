@@ -194,6 +194,50 @@ class GamePresentationTimings {
 
   /// Boss 제약 표시가 찍히는 모션.
   static const Duration bossMarkStamp = Duration(milliseconds: 360);
+
+  // --- T4: 흐름과 메타 화면 ---
+  /// 화면 진입 때 카드·배너가 차례로 들어오는 한 장의 길이와 간격.
+  static const Duration flowEntranceIn = Duration(milliseconds: 320);
+  static const Duration flowEntranceStagger = Duration(milliseconds: 80);
+
+  /// Boss 인트로 배너 등장, 이름 도장, 제약 아이콘 낙하 간격.
+  static const Duration bossIntroBannerIn = Duration(milliseconds: 280);
+  static const Duration bossIntroTitleStamp = Duration(milliseconds: 300);
+  static const Duration bossIntroIconDrop = Duration(milliseconds: 260);
+  static const Duration bossIntroIconStagger = Duration(milliseconds: 90);
+
+  /// 배너가 닫힌 뒤 제약 표시가 보드 칸으로 날아가는 길이와 칸 사이 간격.
+  static const Duration bossMarkFlight = Duration(milliseconds: 420);
+  static const Duration bossMarkFlightStagger = Duration(milliseconds: 60);
+
+  /// Blind 카드 고른 뒤 전투로 넘어가기 전 선택 강조(입력 잠금 상한).
+  static const Duration blindPlayCommit = Duration(milliseconds: 240);
+
+  /// Blind 상태 배지 전환과 Boss 위험 표시 맥동(횟수만큼 돌고 멈춘다).
+  static const Duration blindBadgeSwap = Duration(milliseconds: 260);
+  static const Duration blindDangerPulse = Duration(milliseconds: 520);
+  static const int blindDangerPulseCycles = 3;
+
+  /// 런 진행 띠에서 현재 위치가 한 칸 나아가는 길이.
+  static const Duration runProgressAdvance = Duration(milliseconds: 520);
+
+  /// 런 완료 승리 장면 전체 길이(탭으로 건너뛸 수 있다)와 수치 tally 간격.
+  static const Duration runVictoryHold = Duration(milliseconds: 2400);
+  static const Duration runVictoryTallyStagger = Duration(milliseconds: 260);
+  static const Duration runVictoryBgmFadeOut = Duration(milliseconds: 420);
+
+  /// 게임오버 결과 창의 기억 카드 공개.
+  static const Duration gameOverRewardReveal = Duration(milliseconds: 420);
+  static const Duration gameOverRewardRevealDelay = Duration(
+    milliseconds: 260,
+  );
+
+  /// 타이틀 로고 내려앉기와 강도 '강'의 idle 흔들림 한 주기.
+  static const Duration titleLogoSettle = Duration(milliseconds: 520);
+  static const Duration titleLogoIdle = Duration(milliseconds: 3200);
+
+  /// Archive 새 항목 카드가 처음 열릴 때 뒤집히는 공개.
+  static const Duration archiveNewReveal = Duration(milliseconds: 420);
 }
 
 /// 반복되는 duration/stagger 조합을 이름 붙여 쓰는 presentation 전용 보조 타입.
