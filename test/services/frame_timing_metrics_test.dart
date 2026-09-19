@@ -30,6 +30,7 @@ void main() {
 
     expect(summary.frameCount, 5);
     expect(summary.build.p50.inMicroseconds, 300);
+    expect(summary.build.p90.inMicroseconds, 500);
     expect(summary.build.p95.inMicroseconds, 500);
     expect(summary.build.p99.inMicroseconds, 500);
     expect(summary.raster.average.inMicroseconds, 300);
