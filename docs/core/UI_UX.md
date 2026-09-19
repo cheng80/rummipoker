@@ -100,7 +100,7 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 | Item/Jester/tile effect | source badge, burst, flight, 2초 feedback | effect 결과 label 유지 |
 | Market deny/success | deny shake·badge 또는 purchase flight·slot pulse·offer reveal·NEW reveal | notice로 guard 이유 표시, 구매 전 collection state 확인 |
 | cash-out | 단계별 reward reveal, coin burst, 최종 current/total gold, 성장 보상 묶음 | collect SFX |
-| game over | 2초 danger fade 뒤 modal | time-up SFX; retry/new run/exit 제공 |
+| game over | 2초 danger fade 동안 보드가 가라앉고 소리 하강, 뒤이어 modal | time-up SFX; retry/new run/exit 제공 |
 | focus-out | tutorial 제거, veil/options, animation time pause | BGM pause; resume에서 적절한 scene BGM 복구 |
 
 시간 상수는 [game_presentation_timings.dart](../../lib/views/game/game_presentation_timings.dart), audio 정책은 [sound_manager.dart](../../lib/resources/sound_manager.dart)가 소유한다. motion은 결과 state를 소유하지 않으며 pause 중 duration 진행을 멈춘다.
@@ -138,18 +138,6 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 - 화면 전환: route는 280ms fade와 짧은 slide로 바뀐다. 디버그 픽스처, `auto_*`·`debug_*` 쿼리, OS 동작 줄이기에서는 즉시 전환해 풀런봇과 자동 흐름을 늦추지 않는다. 타이틀에서 전투로 나갈 때 웹 BGM은 320ms 동안 줄어든 뒤 멈춘다.
 - 동작 줄이기에서는 흔들림, juice, 팝업 scale이 모두 빠진다. 소리, 햅틱, fade는 남는다. 시간 값은 `GamePresentationTimings`에, cue 매핑은 `gameFeedbackCues`의 T0 구역에 있다.
 
-## 특수 타일 재질과 배경 분위기
-
-특수 타일은 기존 글자 배지를 유지하면서 면과 가장자리에 재질을 더한다. 칩 박힘은 작은 금속 점, 점수 도금은 얇은 세로선, 골드는 금색 안쪽 테두리, 유리는 대각 반사광으로 구분한다. 은빛·빛무늬·다색 판본은 각각 은색·청록색·무지개색 가장자리를 쓴다. 인장은 왼쪽 아래에 점이나 빗금으로 새기며 오른쪽 아래의 글자 배지는 그대로 남는다.
-
-작은 보드 타일과 큰 상세 타일은 `TileMaterialMetrics`를 공유한다. 면의 무늬는 숫자와 색 띠보다 먼저 그리고 움직이는 반사광은 가장자리에 제한한다. 아이템 효과의 `accent`가 켜지면 가장자리 재질 띠를 생략해 금색 대상 링을 보존한다. 숫자, 인장·판본 배지, Boss 제약 `X`, 선택 테두리의 위치는 바꾸지 않는다. 구현은 [tile_material.dart](../../lib/widgets/fx/tile_material.dart)와 [rummikub_tile_canvas.dart](../../lib/game/rummi_poker_grid/rummikub_tile_canvas.dart)에 있다.
-
-반사광은 공용 시계 하나로 200ms마다 갱신하며 화면에 보이는 타일은 최대 4장까지 움직인다. 나머지는 타일 안쪽에 하이라이트가 놓이는 phase 0.25에서 시작한다. 가시성 검사는 한 프레임에 한 번 예약하고 tick 안에서는 검사 결과를 재사용한다. 화면 밖으로 나가거나 숨겨진 타일은 갱신하지 않는다. 재질 타일이 없거나 연출 강도가 꺼져 있거나 OS 동작 줄이기가 켜져 있으면 시계를 멈춘다. 앱 비활성 상태에서도 움직이지 않으며 정산 속도를 바꾸거나 연출을 생략해도 타일 데이터는 달라지지 않는다.
-
-별 배경은 F의 구운 `FxSprites` atlas를 `drawRawAtlas`로 그린다. 별의 알파만 바꾸는 레이어를 `RepaintBoundary`로 분리하고 기본 그라디언트의 raster cache 힌트는 유지한다. 연출 강도 끔·동작 줄이기에서는 정지 배경을 표시한다. 배경 위젯이 교체돼도 남아 있는 소유자가 공유 시계를 유지하며, 연출을 다시 켜면 메뉴 색조도 즉시 다시 그린다.
-
-[FxAmbient](../../lib/widgets/fx/fx_ambient.dart)는 `setMood(FxAmbientMood.battle | market | boss | reward | menu)`와 `pulse(strength)`를 제공한다. 분위기 색조는 900ms에 걸쳐 목표 색으로 바뀌고 짧은 밝기 반응은 800ms 안에 끝난다. 화면별 호출은 통합 단계에서 연결한다. 이 API는 화면 분위기만 바꾸며 게임 결과와 입력 가능 여부에는 관여하지 않는다. 성능 비교는 픽스처 확정 구간의 `frameCount`가 300 이상인 회차만 사용한다. 유효 회차를 전후 3회씩 얻지 못하면 환경 부하로 측정 불가로 기록하고 통합 단계에서 다시 확인한다.
-
 ### 흐름과 메타 화면
 
 한 런이 열리는 순간과 닫히는 순간, 그리고 그 사이를 잇는 화면은 같은 규칙으로 반응한다. 연출은 결과 state를 바꾸지 않으며, 읽어야 하는 글자를 가리지 않는다.
@@ -161,6 +149,18 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 - 타이틀과 웹 splash: 앱을 켜고 처음 타이틀에 올 때만 로고가 내려앉고 진입 카드가 차례로 들어온다. 버전 문자열은 fade로 바뀐다. 상시 idle 움직임은 연출 강도 `강`에서만 돌고 화면을 떠나면 멈춘다. 웹 splash는 첫 프레임 위에서 240ms fade한 뒤 사라진다.
 - Archive: 수집 카운터는 0에서 count-up되고, 상태 배지는 미발견·발견·획득마다 서로 다른 결로 전환된다. 마지막으로 확인한 뒤 새로 발견한 항목에는 `NEW` 꼬리표가 붙고, 그 카드를 처음 열면 한 번 뒤집히며 공개된다.
 - 동작 줄이기와 연출 강도 `끔`에서는 위 움직임이 모두 빠지고 같은 정보와 같은 탭으로 흐름이 이어진다. `auto_*` 자동 흐름에서는 Boss 제약 비행과 승리 장면을 건너뛰어 봇을 늦추지 않는다. 시간 값은 `GamePresentationTimings`의 T4 구역에 있다.
+
+## 특수 타일 재질과 배경 분위기
+
+특수 타일은 기존 글자 배지를 유지하면서 면과 가장자리에 재질을 더한다. 칩 박힘은 작은 금속 점, 점수 도금은 얇은 세로선, 골드는 금색 안쪽 테두리, 유리는 대각 반사광으로 구분한다. 은빛·빛무늬·다색 판본은 각각 은색·청록색·무지개색 가장자리를 쓴다. 인장은 왼쪽 아래에 점이나 빗금으로 새기며 오른쪽 아래의 글자 배지는 그대로 남는다.
+
+작은 보드 타일과 큰 상세 타일은 `TileMaterialMetrics`를 공유한다. 면의 무늬는 숫자와 색 띠보다 먼저 그리고 움직이는 반사광은 가장자리에 제한한다. 아이템 효과의 `accent`가 켜지면 가장자리 재질 띠를 생략해 금색 대상 링을 보존한다. 숫자, 인장·판본 배지, Boss 제약 `X`, 선택 테두리의 위치는 바꾸지 않는다. 구현은 [tile_material.dart](../../lib/widgets/fx/tile_material.dart)와 [rummikub_tile_canvas.dart](../../lib/game/rummi_poker_grid/rummikub_tile_canvas.dart)에 있다.
+
+반사광은 공용 시계 하나로 200ms마다 갱신하며 화면에 보이는 타일은 최대 4장까지 움직인다. 나머지는 타일 안쪽에 하이라이트가 놓이는 phase 0.25에서 시작한다. 가시성 검사는 한 프레임에 한 번 예약하고 tick 안에서는 검사 결과를 재사용한다. 화면 밖으로 나가거나 숨겨진 타일은 갱신하지 않는다. 재질 타일이 없거나 연출 강도가 꺼져 있거나 OS 동작 줄이기가 켜져 있으면 시계를 멈춘다. 앱 비활성 상태에서도 움직이지 않으며 정산 속도를 바꾸거나 연출을 생략해도 타일 데이터는 달라지지 않는다.
+
+별 배경은 F의 구운 `FxSprites` atlas를 `drawRawAtlas`로 그린다. 별의 알파만 바꾸는 레이어를 `RepaintBoundary`로 분리하고 기본 그라디언트의 raster cache 힌트는 유지한다. 연출 강도 끔·동작 줄이기에서는 정지 배경을 표시한다. 배경 위젯이 교체돼도 남아 있는 소유자가 공유 시계를 유지하며, 연출을 다시 켜면 메뉴 색조도 즉시 다시 그린다.
+
+[FxAmbient](../../lib/widgets/fx/fx_ambient.dart)는 `setMood(FxAmbientMood.battle | market | boss | reward | menu)`와 `pulse(strength)`를 제공한다. 분위기 색조는 900ms에 걸쳐 목표 색으로 바뀌고 짧은 밝기 반응은 800ms 안에 끝난다. 호출은 상태가 바뀌는 순간에 한 번만 한다. 타이틀·New Run·Blind Select 진입은 `menu`, 전투 진입과 Station 재시작은 현재 blind에 맞춰 `battle` 또는 `boss`, Boss 인트로가 열릴 때는 `boss`, 스테이지 클리어와 cash-out은 `reward`, Market이 열려 있는 동안은 `market`이고 닫히면 전투 분위기로 돌아온다. 점수 등급이 상위 두 단계일 때는 결과 state를 반영한 뒤 `pulse`를 한 번 부른다. 설정과 도감은 타이틀에서만 들어가므로 따로 호출하지 않는다. 이 API는 화면 분위기만 바꾸며 게임 결과와 입력 가능 여부에는 관여하지 않는다. 성능 비교는 픽스처 확정 구간의 `frameCount`가 300 이상인 회차만 사용한다. 유효 회차를 전후 3회씩 얻지 못하면 환경 부하로 측정 불가로 기록하고 통합 단계에서 다시 확인한다.
 
 ## 접근성과 언어 지원 현황
 
@@ -189,9 +189,8 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 - 공통 입력·팝업·전환: [common_input_feedback_test.dart](../../test/utils/common_input_feedback_test.dart), [title_continue_deny_test.dart](../../test/views/title_continue_deny_test.dart), [new_run_modifier_unlock_feedback_test.dart](../../test/views/new_run_modifier_unlock_feedback_test.dart)
 - 전투 레인 연출: [settlement_speed_equivalence_test.dart](../../test/views/game/battle_lane/settlement_speed_equivalence_test.dart), [settlement_pacing_test.dart](../../test/views/game/battle_lane/settlement_pacing_test.dart), [contributor_clear_test.dart](../../test/views/game/battle_lane/contributor_clear_test.dart), [battle_input_feel_test.dart](../../test/views/game/battle_lane/battle_input_feel_test.dart)
 - 흐름과 메타 화면: [boss_intro_flow_test.dart](../../test/views/game/flow_meta/boss_intro_flow_test.dart), [run_end_flow_test.dart](../../test/views/game/flow_meta/run_end_flow_test.dart), [run_complete_flow_test.dart](../../test/views/game/flow_meta/run_complete_flow_test.dart), [run_victory_overlay_test.dart](../../test/views/game/flow_meta/run_victory_overlay_test.dart), [blind_select_flow_test.dart](../../test/views/flow_meta/blind_select_flow_test.dart), [title_entrance_test.dart](../../test/views/flow_meta/title_entrance_test.dart), [archive_new_test.dart](../../test/views/flow_meta/archive_new_test.dart), [archive_seen_service_test.dart](../../test/services/archive_seen_service_test.dart)
+- 배경 분위기: [game_view_ambient_test.dart](../../test/views/game/game_view_ambient_test.dart), [game_view_test.dart](../../test/views/game/game_view_test.dart)의 정산→Market 흐름
 - 연출 기반: [presentation_clock_test.dart](../../test/widgets/fx/presentation_clock_test.dart), [motion_fx_test.dart](../../test/widgets/fx/motion_fx_test.dart), [game_feedback_test.dart](../../test/resources/game_feedback_test.dart), [rummi_poker_sfx_test.mjs](../../test/web/rummi_poker_sfx_test.mjs)
-
-
 
 ## Known Presentation Gaps
 
