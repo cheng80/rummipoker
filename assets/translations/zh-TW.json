@@ -115,5 +115,17 @@
   "settlementGrade0": "不錯",
   "settlementGrade1": "很棒!",
   "settlementGrade2": "精彩!!",
-  "settlementGrade3": "傳奇!!!"
+  "settlementGrade3": "傳奇!!!",
+  "flowBossIntroTag": "首領登場 · 確認限制",
+  "flowRunProgressLabel": "本局進度 S{} / S{}",
+  "flowRunProgressEndless": "無盡 S{}",
+  "flowHighStakesChip": "高賭注 · 目標 ×{} · 獎勵 ×{}",
+  "flowVictoryTitle": "本局完成！",
+  "flowVictoryStations": "突破的 Station",
+  "flowVictoryBosses": "擊敗的 Boss",
+  "flowVictoryHands": "完成的牌型",
+  "flowVictoryJesters": "購買的 Jester",
+  "flowVictoryInsight": "獲得的記憶卡",
+  "flowVictorySkipHint": "點擊繼續",
+  "flowArchiveNew": "NEW"
 }

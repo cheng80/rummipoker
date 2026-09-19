@@ -115,5 +115,17 @@
   "settlementGrade0": "좋아요",
   "settlementGrade1": "훌륭해요!",
   "settlementGrade2": "대단해요!!",
-  "settlementGrade3": "전설적!!!"
+  "settlementGrade3": "전설적!!!",
+  "flowBossIntroTag": "보스 등장 · 제약 확인",
+  "flowRunProgressLabel": "런 진행 S{} / S{}",
+  "flowRunProgressEndless": "무한 S{}",
+  "flowHighStakesChip": "하이 스테이크 · 목표 ×{} · 보상 ×{}",
+  "flowVictoryTitle": "런 완료!",
+  "flowVictoryStations": "돌파한 Station",
+  "flowVictoryBosses": "처치한 Boss",
+  "flowVictoryHands": "완성한 족보",
+  "flowVictoryJesters": "구매한 Jester",
+  "flowVictoryInsight": "받은 기억 카드",
+  "flowVictorySkipHint": "탭해서 계속",
+  "flowArchiveNew": "NEW"
 }

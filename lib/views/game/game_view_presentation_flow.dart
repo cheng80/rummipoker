@@ -50,6 +50,7 @@ extension _GameViewPresentationFlow on _GameViewState {
         _presentationPaused ||
         _gameState.activeRunScene != ActiveRunScene.battle ||
         _stageFlowPhase != GameStageFlowPhase.none ||
+        _bossIntroPending ||
         _battleIntroSeenForAnalytics()) {
       return;
     }
@@ -62,6 +63,7 @@ extension _GameViewPresentationFlow on _GameViewState {
           _presentationPaused ||
           _gameState.activeRunScene != ActiveRunScene.battle ||
           _stageFlowPhase != GameStageFlowPhase.none ||
+          _bossIntroPending ||
           _battleIntroSeenForAnalytics()) {
         _battleTutorialScheduled = false;
         return;

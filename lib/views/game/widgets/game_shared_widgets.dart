@@ -28,6 +28,7 @@ import '../../../widgets/fx/juice.dart';
 import '../../../widgets/fx/motion_policy.dart';
 import '../game_feedback_cues.dart';
 import '../game_presentation_timings.dart';
+import 'game_boss_intro_widgets.dart';
 import 'game_card_metrics.dart';
 import 'game_card_name_text.dart';
 import 'game_ui_palette.dart';

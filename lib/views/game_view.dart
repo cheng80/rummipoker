@@ -50,6 +50,7 @@ import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
 import 'game/widgets/game_market_feedback_widgets.dart';
 import 'game/widgets/game_bookmark_slot_dialog.dart';
+import 'game/widgets/game_boss_intro_widgets.dart';
 import 'game/widgets/game_options_dialog.dart';
 import 'game/widgets/game_run_info_dialog.dart';
 import 'game/widgets/game_effect_overlay.dart';
@@ -169,6 +170,11 @@ class _GameViewState extends ConsumerState<GameView>
   LineRef? _fateTransformFlashLineRef;
   int _fateTransformFlashTick = 0;
   bool _bossConstraintIntroShown = false;
+  // --- T4: Boss 인트로 배너와 제약 표시 비행 ---
+  bool _bossIntroSettled = false;
+  List<GameBossMarkFlight>? _bossMarkFlights;
+  final GlobalKey _gameStackKey = GlobalKey();
+  final GlobalKey _bossIntroMarksKey = GlobalKey();
   bool _pendingLifecycleOptions = false;
   bool _pausedLifecycleDuringStageFlow = false;
   bool _optionsDialogOpen = false;
@@ -258,6 +264,24 @@ class _GameViewState extends ConsumerState<GameView>
       DebugRunFixtureService.shouldAutoStartTutorials(
         _gameState.debugFixtureId,
       );
+
+  /// 자동 흐름(풀런봇·자동 cash-out 등)이나 OS 동작 줄이기에서는 흐름 연출을 건너뛴다.
+  bool get _skipsFlowPresentation =>
+      MotionPolicy.reduceMotion ||
+      widget.autoAdvanceMarketOnLoad ||
+      widget.autoEnterMarketOnCashOut ||
+      widget.autoCashOutLoopOnLoad ||
+      widget.debugAutoUseItemId != null;
+
+  /// Boss 인트로 배너와 제약 표시 비행이 아직 끝나지 않았다. 자동 튜토리얼은 이 뒤에 시작한다.
+  bool get _bossIntroPending =>
+      !_bossIntroSettled &&
+      _gameState.activeRunScene == ActiveRunScene.battle &&
+      _gameState.session?.blind.bossModifier != null;
+
+  /// 배너가 닫히고 비행이 닿기 전까지 보드·손패의 제약 표시를 숨긴다.
+  bool get _bossMarksHidden => _bossIntroPending && !_skipsFlowPresentation;
+
   bool get _isBattleInputLocked =>
       _isUiLocked ||
       _boardMoveMode ||
@@ -464,7 +488,15 @@ class _GameViewState extends ConsumerState<GameView>
     final modifier = _gameState.session?.blind.bossModifier;
     if (modifier == null) return;
     _bossConstraintIntroShown = true;
-    await _showBossConstraintInfo(modifier: modifier, buttonLabel: '전투 시작');
+    Rect? marksRect;
+    await _showBossConstraintInfo(
+      modifier: modifier,
+      buttonLabel: '전투 시작',
+      intro: true,
+      onBeforeClose: () => marksRect = _globalRectOf(_bossIntroMarksKey),
+    );
+    if (!mounted) return;
+    await _playBossMarkFlight(marksRect);
   }
 
   Future<void> _openBossConstraintInfo() async {
@@ -477,84 +509,91 @@ class _GameViewState extends ConsumerState<GameView>
   Future<void> _showBossConstraintInfo({
     required RummiBossModifier modifier,
     required String buttonLabel,
+    bool intro = false,
+    VoidCallback? onBeforeClose,
   }) async {
     await showGameFramedDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => GameModalCard(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.72,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: GameUiPalette.specialDangerNotice,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: GameUiPalette.specialDangerNoticeText.withValues(
-                          alpha: 0.88,
-                        ),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.warning_amber_rounded,
-                      color: GameUiPalette.textPrimary,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      modifier.title,
-                      softWrap: true,
-                      style: TextStyle(
-                        fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        color: GameUiPalette.textPrimary.withValues(
-                          alpha: 0.96,
-                        ),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: SingleChildScrollView(
-                  key: const ValueKey('boss-constraint-rule-scroll'),
-                  child: Text(
-                    modifier.ruleText,
-                    style: TextStyle(
-                      color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              GameChromeButton(
-                label: buttonLabel,
-                backgroundColor: GameUiPalette.actionGold,
-                foregroundColor: GameUiPalette.surfacePanel,
-                onPressed: () => Navigator.of(dialogContext).pop(),
-              ),
-            ],
-          ),
-        ),
+      builder: (dialogContext) => GameBossIntroCard(
+        modifier: modifier,
+        buttonLabel: buttonLabel,
+        animate: intro && !MotionPolicy.reduceMotion,
+        marksKey: intro ? _bossIntroMarksKey : null,
+        maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.72,
+        onConfirm: () {
+          onBeforeClose?.call();
+          Navigator.of(dialogContext).pop();
+        },
       ),
     );
+  }
+
+  Rect? _globalRectOf(GlobalKey key) {
+    final box = key.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  /// 배너가 닫힌 뒤 제약 표시를 배너 위치에서 보드 칸으로 날려 보낸다.
+  ///
+  /// 상태는 바꾸지 않는다. 연출을 건너뛰는 경로에서는 곧바로 끝낸다.
+  Future<void> _playBossMarkFlight(Rect? source) async {
+    if (_skipsFlowPresentation || source == null) {
+      _settleBossIntro();
+      return;
+    }
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final stackBox = _gameStackKey.currentContext?.findRenderObject();
+    final stackContext = _gameStackKey.currentContext;
+    if (stackBox is! RenderBox ||
+        stackContext == null ||
+        !stackContext.mounted) {
+      _settleBossIntro();
+      return;
+    }
+    final targets = collectBossMarkTargets(
+      stackContext,
+      fallbackKey: const ValueKey('battle-blind-info-chip'),
+    );
+    if (targets.isEmpty) {
+      _settleBossIntro();
+      return;
+    }
+    final from = stackBox.globalToLocal(source.center);
+    _mutate(() {
+      _bossMarkFlights = [
+        for (final rect in targets)
+          GameBossMarkFlight(
+            from: from,
+            to: Rect.fromPoints(
+              stackBox.globalToLocal(rect.topLeft),
+              stackBox.globalToLocal(rect.bottomRight),
+            ),
+          ),
+      ];
+    });
+  }
+
+  void _onBossMarksLanded() {
+    final flights = _bossMarkFlights;
+    _settleBossIntro();
+    final stackContext = _gameStackKey.currentContext;
+    if (flights == null || stackContext == null) return;
+    GameFeedback.play(GameCue.penalty);
+    ScreenShake.instance.add(0.2);
+    Fx.emit(stackContext, FxPresets.constraintImpact, [
+      for (final flight in flights) flight.to.center,
+    ]);
+  }
+
+  void _settleBossIntro() {
+    if (!mounted) return;
+    _mutate(() {
+      _bossIntroSettled = true;
+      _bossMarkFlights = null;
+    });
   }
 
   void _scheduleDebugAutoUseItem() {
@@ -701,83 +740,96 @@ class _GameViewState extends ConsumerState<GameView>
     _schedulePendingItemPresentationFeedback(gameState);
     return PhoneFrameScaffold(
       child: Stack(
+        key: _gameStackKey,
         children: [
-          _GameSurface(
-            battle: _battleViewWithItemSlots,
-            station: _stationView,
-            market: _marketView,
-            stageFlowPhase: _stageFlowPhase,
-            presentationPaused: _presentationPaused,
-            stageScoreAdded: _stageScoreAdded,
-            activeSettlementLine: _activeSettlementLine,
-            activeSettlementStep: _activeSettlementStep,
-            activeSettlementEffectIndex: _activeSettlementEffectIndex,
-            activeSettlementEffectIndexes: _activeSettlementEffectIndexes,
-            settlementGoalDisplayScore: _settlementGoalDisplayScore,
-            settlementSequenceTick: _settlementSequenceTick,
-            settlementBoardSnapshot: _settlementBoardSnapshot,
-            settlementTileHeat: _settlementTileHeat,
-            settlementTileHitSerial: _settlementTileHitSerial,
-            settlementGrade: _settlementGrade,
-            selectedHandTile: _selectedHandTile,
-            selectedBoardRow: _selectedBoardRow,
-            selectedBoardCol: _selectedBoardCol,
-            boardMoveMode: _boardMoveMode,
-            pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
-            pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
-            boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
-            boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
-            fateLineSelection: _fateLineSelection,
-            fateTransformFlashLineRef: _fateTransformFlashLineRef,
-            fateTransformFlashTick: _fateTransformFlashTick,
-            selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
-            selectedBattleItemSlot: _selectedBattleItemSlot,
-            selectedHandInfoTile: _selectedHandInfoTile,
-            itemEffectFeedback: _itemEffectFeedback,
-            itemEffectFeedbackTick: _itemEffectFeedbackTick,
-            ritualEffectFlight: _ritualEffectFlight,
-            ritualEffectFlightTick: _ritualEffectFlightTick,
-            suppressDebugChrome: widget.debugSuppressFixtureNotice,
-            difficultyLabel: _battleRunContextLabel(
-              difficulty: widget.difficulty,
-              runModifier: gameState.runModifier,
+          GameBossMarkVeil(
+            hidden: _bossMarksHidden,
+            child: _GameSurface(
+              battle: _battleViewWithItemSlots,
+              station: _stationView,
+              market: _marketView,
+              stageFlowPhase: _stageFlowPhase,
+              presentationPaused: _presentationPaused,
+              stageScoreAdded: _stageScoreAdded,
+              activeSettlementLine: _activeSettlementLine,
+              activeSettlementStep: _activeSettlementStep,
+              activeSettlementEffectIndex: _activeSettlementEffectIndex,
+              activeSettlementEffectIndexes: _activeSettlementEffectIndexes,
+              settlementGoalDisplayScore: _settlementGoalDisplayScore,
+              settlementSequenceTick: _settlementSequenceTick,
+              settlementBoardSnapshot: _settlementBoardSnapshot,
+              settlementTileHeat: _settlementTileHeat,
+              settlementTileHitSerial: _settlementTileHitSerial,
+              settlementGrade: _settlementGrade,
+              selectedHandTile: _selectedHandTile,
+              selectedBoardRow: _selectedBoardRow,
+              selectedBoardCol: _selectedBoardCol,
+              boardMoveMode: _boardMoveMode,
+              pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
+              pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
+              boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
+              boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
+              fateLineSelection: _fateLineSelection,
+              fateTransformFlashLineRef: _fateTransformFlashLineRef,
+              fateTransformFlashTick: _fateTransformFlashTick,
+              selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
+              selectedBattleItemSlot: _selectedBattleItemSlot,
+              selectedHandInfoTile: _selectedHandInfoTile,
+              itemEffectFeedback: _itemEffectFeedback,
+              itemEffectFeedbackTick: _itemEffectFeedbackTick,
+              ritualEffectFlight: _ritualEffectFlight,
+              ritualEffectFlightTick: _ritualEffectFlightTick,
+              suppressDebugChrome: widget.debugSuppressFixtureNotice,
+              difficultyLabel: _battleRunContextLabel(
+                difficulty: widget.difficulty,
+                runModifier: gameState.runModifier,
+              ),
+              battleBoardTutorialKey: _battleBoardTutorialKey,
+              battlePreviewTutorialKey: _battlePreviewTutorialKey,
+              battleActionsTutorialKey: _battleActionsTutorialKey,
+              battleHandTutorialKey: _battleHandTutorialKey,
+              battleJesterZoneKey: _battleJesterZoneKey,
+              denyTarget: _battleDenyTarget,
+              denyTick: _battleDenyTick,
+              onLockedSlotTap: () => _denyBattleAction(
+                '잠긴 슬롯입니다.',
+                target: _BattleDenyTarget.slots,
+              ),
+              onOptionsTap: _openGameOptions,
+              onTutorialTap: () => _startBattleTutorial(markSeen: false),
+              onRunInfoTap: _openRunInfo,
+              onBlindInfoTap: _openBossConstraintInfo,
+              onDebugTap: () => _openDebugBottomSheet(context),
+              onJesterTap: _openJesterOverlay,
+              onHandTileTap: _toggleHandTile,
+              onHandTileLongPress: _openHandTileInfoOverlay,
+              onBoardCellTap: _onBoardCellTap,
+              onFateLineTap: _selectFateLine,
+              onFateTileTap: _selectFateTile,
+              onFateConfirm: _confirmFateLineSelection,
+              onFateCancel: _cancelFateLineSelection,
+              onDraw: _drawTile,
+              onBoardDiscard: _discardSelectedBoardTile,
+              onHandDiscard: _discardSelectedHandTile,
+              onStartBoardMove: _startBoardMoveMode,
+              onBattleItemTap: _openBattleItemOverlay,
+              onConfirm: _confirmLines,
+              onClearSelection: _clearSelections,
+              onJesterSell: _sellOwnedJesterFromOverlay,
+              onJesterOverlayClose: _closeJesterOverlay,
+              onBattleItemUse: _useBattleItem,
+              onBattleItemOverlayClose: _closeBattleItemOverlay,
+              onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
+              onSettlementSkip: _skipSettlementPresentation,
             ),
-            battleBoardTutorialKey: _battleBoardTutorialKey,
-            battlePreviewTutorialKey: _battlePreviewTutorialKey,
-            battleActionsTutorialKey: _battleActionsTutorialKey,
-            battleHandTutorialKey: _battleHandTutorialKey,
-            battleJesterZoneKey: _battleJesterZoneKey,
-            denyTarget: _battleDenyTarget,
-            denyTick: _battleDenyTick,
-            onLockedSlotTap: () =>
-                _denyBattleAction('잠긴 슬롯입니다.', target: _BattleDenyTarget.slots),
-            onOptionsTap: _openGameOptions,
-            onTutorialTap: () => _startBattleTutorial(markSeen: false),
-            onRunInfoTap: _openRunInfo,
-            onBlindInfoTap: _openBossConstraintInfo,
-            onDebugTap: () => _openDebugBottomSheet(context),
-            onJesterTap: _openJesterOverlay,
-            onHandTileTap: _toggleHandTile,
-            onHandTileLongPress: _openHandTileInfoOverlay,
-            onBoardCellTap: _onBoardCellTap,
-            onFateLineTap: _selectFateLine,
-            onFateTileTap: _selectFateTile,
-            onFateConfirm: _confirmFateLineSelection,
-            onFateCancel: _cancelFateLineSelection,
-            onDraw: _drawTile,
-            onBoardDiscard: _discardSelectedBoardTile,
-            onHandDiscard: _discardSelectedHandTile,
-            onStartBoardMove: _startBoardMoveMode,
-            onBattleItemTap: _openBattleItemOverlay,
-            onConfirm: _confirmLines,
-            onClearSelection: _clearSelections,
-            onJesterSell: _sellOwnedJesterFromOverlay,
-            onJesterOverlayClose: _closeJesterOverlay,
-            onBattleItemUse: _useBattleItem,
-            onBattleItemOverlayClose: _closeBattleItemOverlay,
-            onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
-            onSettlementSkip: _skipSettlementPresentation,
           ),
+          if (_bossMarkFlights != null)
+            Positioned.fill(
+              child: GameBossMarkFlightLayer(
+                flights: _bossMarkFlights!,
+                onLanded: _onBossMarksLanded,
+              ),
+            ),
           if (_settlementToMarketTransition != null)
             Positioned.fill(
               child: _SettlementToMarketTransitionOverlay(

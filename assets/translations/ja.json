@@ -115,5 +115,17 @@
   "settlementGrade0": "ナイス",
   "settlementGrade1": "グレート!",
   "settlementGrade2": "スーパー!!",
-  "settlementGrade3": "レジェンド!!!"
+  "settlementGrade3": "レジェンド!!!",
+  "flowBossIntroTag": "ボス出現 · 制約を確認",
+  "flowRunProgressLabel": "ラン進行 S{} / S{}",
+  "flowRunProgressEndless": "エンドレス S{}",
+  "flowHighStakesChip": "ハイステークス · 目標 ×{} · 報酬 ×{}",
+  "flowVictoryTitle": "ラン完了！",
+  "flowVictoryStations": "突破したStation",
+  "flowVictoryBosses": "倒したBoss",
+  "flowVictoryHands": "完成した役",
+  "flowVictoryJesters": "購入したJester",
+  "flowVictoryInsight": "獲得した記憶カード",
+  "flowVictorySkipHint": "タップして続ける",
+  "flowArchiveNew": "NEW"
 }
