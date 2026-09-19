@@ -6,6 +6,14 @@ import 'package:flutter/widgets.dart';
 class GamePresentationTimings {
   const GamePresentationTimings._();
 
+  // --- T5: 재질과 분위기
+  static const t5MaterialTick = Duration(milliseconds: 200);
+  static const t5SheenPeriod = Duration(seconds: 4);
+  static const t5AmbientTransition = Duration(milliseconds: 900);
+  static const t5AmbientPulse = Duration(milliseconds: 800);
+  static const t5AmbientTick = Duration(milliseconds: 200);
+  static const t5StarPeriod = Duration(seconds: 4);
+
   static const Duration presentationPauseTick = Duration(milliseconds: 50);
   static const Duration inactiveLifecycleDebounce = Duration(milliseconds: 250);
   static const Duration itemEffectFeedback = Duration(seconds: 2);
