@@ -17,6 +17,8 @@
 | 서비스 | 저장 형식과 무결성, 해금, 콘텐츠 불러오기, 튜토리얼, 분석, 사운드·설정의 경계를 맡는다 | 특정 위젯의 선택과 애니메이션은 맡지 않는다 |
 | 화면·위젯 | 입력, 버튼, 팝업, 연출, 번역 문구, 저장 호출 시점을 맡는다 | 점수와 경제 규칙을 따로 계산하거나 연출 상태를 저장하지 않는다 |
 
+연출 기반은 화면·위젯 영역에 속한다. [lib/widgets/fx](../../lib/widgets/fx/)는 연출 시계, juice, spring-follow, 화면 흔들림, 전역 FX 레이어, 구운 글로우를 두고, 설정과 동작 줄이기를 하나로 합친 `MotionPolicy`도 함께 둔다. 소리와 햅틱의 플랫폼 출력은 [sound_manager.dart](../../lib/resources/sound_manager.dart)와 [game_haptics.dart](../../lib/resources/game_haptics.dart)가, 의미 키 매핑은 [game_feedback_cues.dart](../../lib/views/game/game_feedback_cues.dart)가 맡는다. 연출 설정은 [game_settings.dart](../../lib/services/game_settings.dart)에 키를 추가해 저장하며 run save에는 들어가지 않는다. Flame은 파티클을 그리지 않고 `flame_audio`로 네이티브 오디오만 맡는다.
+
 핵심 runtime은 [rummi_poker_grid_session.dart](../../lib/logic/rummi_poker_grid/rummi_poker_grid_session.dart), provider 경계는 [game_session_notifier.dart](../../lib/providers/features/rummi_poker_grid/game_session_notifier.dart), view host는 [game_view.dart](../../lib/views/game_view.dart)가 소유한다.
 
 ## 저장하는 상태와 저장하지 않는 연출
@@ -24,7 +26,7 @@
 | Durable domain / save 대상 | Transient presentation / save 제외 |
 |---|---|
 | `RummiPokerGridSession`: RNG, ruleset, Blind, deck, board, hand, eliminated, move history, confirm modifiers·counters | selected hand/board/Jester/Item overlay, board-move selection mode, dialog open state |
-| `RummiRunProgress`: Station/tier, gold, reroll lanes, inventory, Jester slot state, growth, added/tile offers, stable run claim ID, settlement receipt, unlock·collection state | `GameStageFlowPhase`, active settlement line/step/effect index, displayed score, board snapshot, animation tick |
+| `RummiRunProgress`: Station/tier, gold, reroll lanes, inventory, Jester slot state, growth, added/tile offers, stable run claim ID, settlement receipt, unlock·collection state | `GameStageFlowPhase`, active settlement line/step/effect index, displayed score, board snapshot, animation tick, 연출 시계·FX 파티클·흔들림 trauma |
 | active scene, difficulty, run modifier | tutorial overlay/focus index, pause veil, game-over fade, Market selection/tab animation, feedback flight |
 | stage-start와 stake-start snapshot | pending item presentation event와 view-local timers/completer |
 
@@ -109,7 +111,7 @@ Title은 `available/none/invalid`를 읽어 continue 또는 delete recovery를 �
 | scoring/action | logic → notifier facade → Battle UI → save snapshot | `rummi_session_test`, `game_session_notifier_test`, station read-path tests |
 | Station/Market economy | run progress → Market facade/commands → settlement/Market UI → save | Market facade/notifier, cash-out, Market widget tests |
 | content field/ID | JSON → loader/model → runtime → translation/UI → save rebind | generator check, Item/Jester runtime, active save tests |
-| presentation/timing | presentation state → overlays/dialog/lifecycle | game/shop lifecycle, motion/effect/cash-out widget tests; durable diff가 없어야 함 |
+| presentation/timing | presentation state → 연출 시계·FX 레이어 → overlays/dialog/lifecycle | game/shop lifecycle, motion/effect/cash-out widget tests, `test/widgets/fx`; durable diff가 없어야 함 |
 | route/continue | router → Title/New Run/Blind Select → active scene restore | title, navigation, Blind Select, active save tests |
 | save field/schema | runtime → codec → HMAC/storage → restore/restart | active save service와 notifier restart tests |
 | locale/accessibility | translation scopes → fixed frame/widgets → semantics | settings/navigation/overflow tests와 별도 수동 assistive-tech 검증 |

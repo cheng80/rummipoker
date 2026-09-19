@@ -17,15 +17,30 @@
 
 | Track | 상태 | 다음 판단 |
 |---|---|---|
-| 현재 활성 구현 track | 없음 / 선택 필요 | [OD-02·OD-03](OPEN_DECISIONS.md) 중 하나를 해결하거나 release 준비를 시작한다 |
+| 현재 활성 구현 track | 연출 보강 | 트랙 F(연출 공통 기반)를 먼저 닫고 T0~T5를 그 위에 올린다 |
 | release 준비 | 미완료 | [출시 체크리스트](../release/submission_kit/RELEASE_CHECKLIST.md)의 build·실기 QA·store 항목을 처리한다 |
 | 광고/IAP | 보류 | 비즈니스 결정과 선행 gate 없이는 시작하지 않는다 |
 
+## 연출 보강 track
+
+버튼을 누르거나 점수가 오를 때의 손맛을 키우는 작업이다. 공통 기반을 한 번 만들고, 이후 트랙은 그 기반의 API만 호출한다. 게임 결과와 저장 형식은 바꾸지 않는다.
+
+| 트랙 | 범위 | Done 기준 |
+|---|---|---|
+| F 연출 공통 기반 | 연출 시계, juice, spring-follow, 화면 흔들림, 전역 FX 레이어, pitch·햅틱, 의미 레지스트리, 연출 설정, 비싼 렌더 패턴 제거 | analyze·전체 test·release web build 통과, 새 로직 단위 테스트, 변경 전후 frame timing, main 빌드와 같은 픽스처 눈검증 비교 |
+| T0 공통 입력 | 버튼·칩·타일 선택처럼 모든 화면이 공유하는 누름 반응과 소리·햅틱 | 공용 입력이 pointer-down에 반응하고 `GameCue`로 소리·햅틱을 같은 시점에 낸다. 동작 줄이기에서 juice가 0이다 |
+| T1 전투 입력 | 드로우, 배치, 이동, 버림, 확정 입력의 연출 | 입력마다 즉시 반응이 보이고 입력 잠금이 늘지 않는다. 위젯 테스트와 눈검증 몽타주가 있다 |
+| T2 정산 | 단계별 pitch 상승, 점수 카운트업, hit-stop, 큰 점수 단계, 정산 속도 반영 | 정산 결과가 바뀌지 않고, 1x·4x·즉시에서 끝 상태가 같다. 흔들림·파티클은 설정을 따른다 |
+| T3 상점·보상 | 구매·판매·리롤·거절, 보상 공개의 전용 연출 | 경제 동사마다 다른 소리·햅틱과 연출이 있고 거절은 상태를 바꾸지 않는다 |
+| T4 흐름·메타 | 화면 전환, 보스 소개, 게임오버 전역 pitch 하강, 해금 | 전환 중 입력과 저장 순서가 기존 계약을 지키고, 게임오버 뒤 pitch가 1로 복귀한다 |
+| T5 재질·분위기 | 타일 edition 광택, 배경 분위기 | 모바일 웹 raster 비용이 트랙 F 기준보다 크게 늘지 않고, 동작 줄이기에서 idle 모션이 0이다 |
+
 ## 다음에 할 일
 
-1. 다음 활성 track을 [OPEN_DECISIONS.md](OPEN_DECISIONS.md)의 OD-02·OD-03 또는 [출시 체크리스트](../release/submission_kit/RELEASE_CHECKLIST.md) 중에서 고른다.
-2. release 준비를 고르면 최신 build에서 analyze, test, build, 실기 QA, full-run 증거를 새로 남긴다.
-3. 광고/IAP 구현은 비즈니스 결정 없이는 시작하지 않는다.
+1. 트랙 F를 리뷰·병합한 뒤 T0부터 순서대로 진행한다.
+2. 연출 보강 뒤에는 [OPEN_DECISIONS.md](OPEN_DECISIONS.md)의 OD-02·OD-03 또는 [출시 체크리스트](../release/submission_kit/RELEASE_CHECKLIST.md) 중에서 다음 track을 고른다.
+3. release 준비를 고르면 최신 build에서 analyze, test, build, 실기 QA, full-run 증거를 새로 남긴다.
+4. 광고/IAP 구현은 비즈니스 결정 없이는 시작하지 않는다.
 
 ## 다음 작업 Done 기준
 
@@ -36,7 +51,7 @@
 
 ## 막힌 점
 
-- 활성 track을 아직 고르지 않았다. 구현을 막는 확인된 기술 blocker는 없다.
+- 연출 보강 track의 구현을 막는 확인된 기술 blocker는 없다. iOS 웹은 진동 API가 없고, 네이티브 효과음은 음높이 변주를 적용하지 않는다.
 - 광고 파일럿은 consent/ledger/analytics 선행 gate와 비즈니스 결정이 필요하다.
 - `en → ja → zh-CN → zh-TW`는 사용자 지시로 실제 실행을 생략했으므로 해당 locale의 runtime QA 증거는 없다.
 

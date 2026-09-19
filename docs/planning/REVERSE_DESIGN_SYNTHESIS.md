@@ -55,6 +55,16 @@
 - **Poker Squares / Sage Solitaire / Triple Town / Isle of Arrows / Grindstone**: 격자 배치, 공간 회복, 짧은 재도전.
 - **비전이**: exact preview 부재, 숨은 핵심 규칙, 카지노 테마 강화, Completionist급 체크리스트 압박.
 
+### 연출(손맛) 조사 요약
+
+2026-09 연출 보강 track을 위해 기존 연출과 전 화면 터치포인트를 조사하고 Balatro 등 레퍼런스의 기법을 정리했다.
+
+- 현재 게임은 정산 순서 연출은 있지만 버튼 눌림, 햅틱, 화면 흔들림, 음높이 변화, 연출 속도 설정이 없었다. 효과음 7개 중 3개는 쓰이지 않았다.
+- 비용 대비 효과가 큰 기법은 공용 juice(찌그러짐 뒤 감쇠 진동), 정산 단계마다 조금씩 오르는 음높이, 1/2/4배속과 즉시 옵션, 등급 햅틱, trauma 기반 흔들림, 동작 줄이기 존중 순이었다.
+- 모바일 웹에서는 애니메이션되는 `Opacity`, 프레임마다 바뀌는 blur, `saveLayer` 계열이 비싸다. 파티클은 구운 스프라이트와 atlas 한 번 그리기로 처리한다.
+- HTMLAudio의 재생 속도는 음높이를 바꾸지 않으므로 음높이 변주는 Web Audio로 한다. iOS 웹에는 진동 API가 없다.
+- 레퍼런스 게임의 코드는 가져오지 않고 기법과 수치 감각만 참고한다. 실행 계획은 [ACTIVE_EXECUTION_PLAN.md](ACTIVE_EXECUTION_PLAN.md)의 연출 보강 track이 맡는다.
+
 ## 광고와 수익 모델을 넣는다면
 
 ### 기본 방향
