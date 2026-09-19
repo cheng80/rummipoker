@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../views/game/widgets/game_ui_palette.dart';
+import 'fx/screen_shake.dart';
 
 const double kPhoneFrameRefW = 390.0;
 const double kPhoneFrameRefH = 750.0;
@@ -48,7 +49,7 @@ class PhoneFrame extends StatelessWidget {
           child: SizedBox(
             width: kPhoneFrameRefW,
             height: kPhoneFrameRefH,
-            child: child,
+            child: ScreenShakeHost(child: child),
           ),
         );
         final fittedScale = min(

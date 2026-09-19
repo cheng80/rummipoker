@@ -8,6 +8,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/views/game/widgets/game_effect_overlay.dart';
+import 'package:rummipoker/widgets/fx/fx_layer.dart';
 
 void main() {
   testWidgets('보드 라인 정산 단계에서 점수 조각 연출을 띄운다', (tester) async {
@@ -41,7 +42,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsOneWidget);
+    expect(Fx.controller.particleCount, greaterThan(0));
     expect(
       find.byKey(const ValueKey('constraint-impact-badge-layer')),
       findsOneWidget,
@@ -68,7 +69,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsNothing);
+    expect(Fx.controller.particleCount, 0);
     expect(
       find.byKey(const ValueKey('constraint-impact-badge-layer')),
       findsNothing,
@@ -85,7 +86,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsOneWidget);
+    expect(Fx.controller.particleCount, greaterThan(0));
     expect(
       find.byKey(const ValueKey('large-score-burst-badge-layer')),
       findsOneWidget,
@@ -104,7 +105,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsOneWidget);
+    expect(Fx.controller.particleCount, greaterThan(0));
     expect(
       find.byKey(const ValueKey('settlement-effect-line-pulse-layer')),
       findsOneWidget,
@@ -125,18 +126,12 @@ void main() {
     );
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsNothing);
+    expect(Fx.controller.particleCount, 0);
     expect(
       find.byKey(const ValueKey('large-score-burst-badge-layer')),
       findsNothing,
     );
   });
-}
-
-Finder _gameWidgetFinder() {
-  return find.byWidgetPredicate(
-    (widget) => widget.runtimeType.toString().startsWith('GameWidget<'),
-  );
 }
 
 Widget _effectOverlayHost({
@@ -145,17 +140,22 @@ Widget _effectOverlayHost({
 }) {
   return MaterialApp(
     home: Scaffold(
-      body: Center(
-        child: SizedBox.square(
-          dimension: 240,
-          child: GameBoardEffectOverlay(
-            activeSettlementLine: line,
-            activeSettlementStep: activeSettlementStep,
-            settlementSequenceTick: 1,
-            frameInset: 6,
-            gridGap: 4,
+      body: Stack(
+        children: [
+          Center(
+            child: SizedBox.square(
+              dimension: 240,
+              child: GameBoardEffectOverlay(
+                activeSettlementLine: line,
+                activeSettlementStep: activeSettlementStep,
+                settlementSequenceTick: 1,
+                frameInset: 6,
+                gridGap: 4,
+              ),
+            ),
           ),
-        ),
+          const Positioned.fill(child: FxLayer()),
+        ],
       ),
     ),
   );

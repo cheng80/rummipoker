@@ -1,19 +1,18 @@
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-import '../../../game/rummi_poker_grid/rummi_effect_game.dart';
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
+import '../../../widgets/fx/fx_layer.dart';
 import '../game_presentation_timings.dart';
 import 'game_ui_palette.dart';
 
 part 'game_effect_overlay_layers.dart';
 part 'game_effect_overlay_settlement_effect_layers.dart';
 
-/// Flutter 보드 위에 얹는 투명 Flame 이펙트 레이어.
+/// Flutter 보드 위에 얹는 정산 이펙트 레이어.
 ///
-/// 좌표 변환과 파티클 발화만 담당하며, save/continue 기준 상태는 보관하지 않는다.
+/// 좌표 변환과 발화만 담당한다. 파티클은 앱 전역 [FxLayer]가 그리며, save/continue 기준 상태는 보관하지 않는다.
 class GameBoardEffectOverlay extends StatefulWidget {
   const GameBoardEffectOverlay({
     super.key,
@@ -39,7 +38,6 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
       GamePresentationTimings.boardEffectVisible;
   static const int _largeScoreBurstThreshold = 100;
 
-  late final RummiEffectGame _game;
   String? _lastEffectSignature;
   bool _visible = false;
   List<Offset> _scoreMoteCenters = const [];
@@ -52,12 +50,6 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   int _scoreMoteTick = 0;
 
   @override
-  void initState() {
-    super.initState();
-    _game = RummiEffectGame();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: LayoutBuilder(
@@ -68,7 +60,6 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                GameWidget<RummiEffectGame>(game: _game),
                 if (_scoreMoteCenters.isNotEmpty)
                   _SettlementScoreMoteLayer(
                     centers: _scoreMoteCenters,
@@ -149,7 +140,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
         setState(() => _visible = true);
       }
       final scoreMoteCenters = effectKind == _BoardEffectKind.lineConfirm
-          ? [for (final center in centers) Offset(center.x, center.y)]
+          ? centers
           : const <Offset>[];
       final constraintImpactCenter =
           effectKind == _BoardEffectKind.constraintImpact
@@ -157,7 +148,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           : null;
       final constraintImpactCenters =
           effectKind == _BoardEffectKind.constraintImpact
-          ? [for (final center in centers) Offset(center.x, center.y)]
+          ? centers
           : const <Offset>[];
       final constraintImpactLabel =
           effectKind == _BoardEffectKind.constraintImpact
@@ -189,14 +180,11 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _scoreMoteTick = widget.settlementSequenceTick;
         });
       }
-      switch (effectKind) {
-        case _BoardEffectKind.lineConfirm:
-          _game.spawnLineConfirmBurst(centers);
-        case _BoardEffectKind.constraintImpact:
-          _game.spawnConstraintImpactBurst(centers);
-        case _BoardEffectKind.largeScore:
-          _game.spawnLargeScoreBurst(centers);
-      }
+      Fx.emit(context, switch (effectKind) {
+        _BoardEffectKind.lineConfirm => FxPresets.lineConfirm,
+        _BoardEffectKind.constraintImpact => FxPresets.constraintImpact,
+        _BoardEffectKind.largeScore => FxPresets.largeScore,
+      }, centers);
       Future<void>.delayed(_effectVisibleDuration, () {
         if (!mounted) return;
         if (_lastEffectSignature != signature) return;
@@ -214,7 +202,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
     });
   }
 
-  List<Vector2> _cellCentersForLine(
+  List<Offset> _cellCentersForLine(
     ConfirmedLineBreakdown line,
     BoxConstraints constraints,
   ) {
@@ -237,7 +225,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
     return [
       for (final (row, col) in line.contributingCells)
         if (row >= 0 && row < kBoardSize && col >= 0 && col < kBoardSize)
-          Vector2(
+          Offset(
             boardLeft +
                 widget.frameInset +
                 col * (tileSide + widget.gridGap) +
@@ -250,12 +238,12 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
     ];
   }
 
-  Offset _averageOffset(List<Vector2> centers) {
+  Offset _averageOffset(List<Offset> centers) {
     var dx = 0.0;
     var dy = 0.0;
     for (final center in centers) {
-      dx += center.x;
-      dy += center.y;
+      dx += center.dx;
+      dy += center.dy;
     }
     return Offset(dx / centers.length, dy / centers.length);
   }
