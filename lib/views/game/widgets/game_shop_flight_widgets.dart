@@ -393,6 +393,7 @@ class _MarketGoldChipState extends State<_MarketGoldChip>
   late final AnimationController _controller;
   late int _from = widget.gold;
   late int _to = widget.gold;
+  late int _announcedGold = widget.gold;
 
   @override
   void initState() {
@@ -410,6 +411,7 @@ class _MarketGoldChipState extends State<_MarketGoldChip>
     final current = lerpDouble(_from, _to, _controller.value)!.round();
     _from = current;
     _to = widget.gold;
+    _announcedGold = widget.gold;
     _controller.forward(from: 0);
   }
 
@@ -445,7 +447,7 @@ class _MarketGoldChipState extends State<_MarketGoldChip>
                     children: [
                       Semantics(
                         label: 'Gold',
-                        value: '$gold',
+                        value: '$_announcedGold',
                         child: ExcludeSemantics(
                           child: Image.asset(
                             AssetPaths.uiGreed,

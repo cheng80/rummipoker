@@ -63,8 +63,9 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
 
   void _selectItemSlot(RummiMarketItemSlotView slot) {
     if (slot.locked) {
-      _startMarketDenyFeedback('locked-slot', '잠긴 슬롯입니다.');
-      showBottomNotice(context, '잠긴 슬롯입니다.');
+      final message = context.tr('t3MarketLockedSlot');
+      _startMarketDenyFeedback('locked-slot', message);
+      showBottomNotice(context, message);
       return;
     }
     if (slot.item == null) return;
@@ -89,17 +90,24 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   }
 
   void _selectShopTab(_MarketShopTab tab) {
-    if (_shopTab == tab) return;
-    GameFeedback.play(GameCue.marketTab);
+    final changed = _shopTab != tab;
+    if (changed) {
+      _marketPanelTransitionDirection = tab.index > _shopTab.index ? 1 : -1;
+    }
     _mutate(() {
       _shopTab = tab;
       _clearMarketSelection();
     });
+    if (changed) GameFeedback.play(GameCue.marketTab);
   }
 
   void _selectOfferLane(_MarketOfferLane lane) {
-    if (_currentOfferLane == lane) return;
-    GameFeedback.play(GameCue.marketTab);
+    final changed = _currentOfferLane != lane;
+    if (changed) {
+      final lanes = _offerLanesForTab(_shopTab);
+      _marketPanelTransitionDirection =
+          lanes.indexOf(lane) >= lanes.indexOf(_currentOfferLane) ? 1 : -1;
+    }
     _mutate(() {
       if (_shopTab == _MarketShopTab.cardsAndQuickSlots) {
         _mainOfferLane = lane;
@@ -108,6 +116,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
       }
       _clearMarketSelection();
     });
+    if (changed) GameFeedback.play(GameCue.marketTab);
   }
 
   void _clearMarketSelection() {
@@ -124,8 +133,9 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
     if (pageCount <= 1) return;
     final nextPage = (_offerPageFor(lane) + delta).clamp(0, pageCount - 1);
     if (nextPage == _offerPageFor(lane)) return;
-    GameFeedback.play(GameCue.marketPage, pitch: delta > 0 ? 1.04 : 0.94);
+    _marketPageTransitionDirection = delta > 0 ? 1 : -1;
     _mutate(() => _offerPages[lane] = nextPage);
+    GameFeedback.play(GameCue.marketPage, pitch: delta > 0 ? 1.04 : 0.94);
   }
 
   _MarketOfferLane get _currentOfferLane =>

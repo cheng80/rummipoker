@@ -212,7 +212,7 @@ class _GameCashOutGrowthRewardSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.trending_up_rounded,
@@ -221,7 +221,7 @@ class _GameCashOutGrowthRewardSection extends StatelessWidget {
               ),
               SizedBox(width: 6),
               Text(
-                '성장 보상',
+                context.tr('t3CashoutGrowthReward'),
                 style: TextStyle(
                   color: GameUiPalette.actionInfoBluePale,
                   fontSize: 13,

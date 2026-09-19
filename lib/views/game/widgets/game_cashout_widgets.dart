@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/hand_rank.dart';
@@ -132,19 +133,19 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
 
   void _setStep(int step) {
     if (!mounted) return;
-    GameFeedback.play(GameCue.cashOutCollect, pitch: 1 + (0.04 * (step - 1)));
     setState(() => _step = step);
+    GameFeedback.play(GameCue.cashOutCollect, pitch: 1 + (0.04 * (step - 1)));
   }
 
   void _closeWithFeedback(GameCashOutAction action) {
-    GameFeedback.play(GameCue.buttonTap);
-    _closeWith(action);
+    if (_closeWith(action)) GameFeedback.play(GameCue.buttonTap);
   }
 
-  void _closeWith(GameCashOutAction action) {
+  bool _closeWith(GameCashOutAction action) {
     final route = ModalRoute.of(context);
-    if (route?.isCurrent != true) return;
+    if (route?.isCurrent != true) return false;
     Navigator.of(context).pop(action);
+    return true;
   }
 
   @override

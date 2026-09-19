@@ -221,17 +221,12 @@ class GameFeedback {
   /// [pitch]는 cue 기본 pitch에 곱한다. 정산 단계마다 올라가는 음 등에 쓴다.
   static void play(GameCue cue, {double pitch = 1}) {
     final spec = gameFeedbackCues[cue]!;
-    try {
-      SoundManager.playSfx(
-        spec.sfx,
-        pitch: spec.pitch * pitch,
-        pitchVariance: spec.pitchVariance,
-      );
-      final haptic = spec.haptic;
-      if (haptic != null) GameHaptics.play(haptic);
-    } on StateError {
-      // 위젯 테스트 또는 앱 bootstrap 직전에는 저장소가 아직 준비되지 않을
-      // 수 있다. 연출은 게임 상태를 소유하지 않으므로 이때 조용히 건너뛴다.
-    }
+    SoundManager.playSfx(
+      spec.sfx,
+      pitch: spec.pitch * pitch,
+      pitchVariance: spec.pitchVariance,
+    );
+    final haptic = spec.haptic;
+    if (haptic != null) GameHaptics.play(haptic);
   }
 }

@@ -115,6 +115,9 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       targetLabel: flightLabel,
       discountSourceLabel: boughtOffer.discountSourceLabel,
     );
+    final isFirstAcquisition =
+        widget.isFirstAcquisition?.call('jester', boughtOffer.contentId) ??
+        false;
     final failMessage = widget.onBuyOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('jester-buy', failMessage);
@@ -122,8 +125,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       return;
     }
     GameFeedback.play(GameCue.buy);
-    if (widget.isFirstAcquisition?.call('jester', boughtOffer.contentId) ??
-        false) {
+    if (isFirstAcquisition) {
       _startNewAcquisitionReveal(flightLabel);
     }
     _mutate(() {
@@ -186,6 +188,8 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       targetLabel: flightLabel,
       discountSourceLabel: boughtOffer.discountSourceLabel,
     );
+    final isFirstAcquisition =
+        widget.isFirstAcquisition?.call('item', boughtOffer.contentId) ?? false;
     final failMessage = widget.onBuyItemOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('item-buy', failMessage);
@@ -193,8 +197,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       return;
     }
     GameFeedback.play(GameCue.buy);
-    if (widget.isFirstAcquisition?.call('item', boughtOffer.contentId) ??
-        false) {
+    if (isFirstAcquisition) {
       _startNewAcquisitionReveal(flightLabel);
     }
     _mutate(() {

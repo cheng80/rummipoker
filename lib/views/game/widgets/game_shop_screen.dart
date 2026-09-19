@@ -161,6 +161,8 @@ class _GameShopScreenState extends State<GameShopScreen>
   String? _marketUseFeedbackLabel;
   String? _marketUseFeedbackDelta;
   int _marketRerollFeedbackTick = 0;
+  int _marketPanelTransitionDirection = 1;
+  int _marketPageTransitionDirection = 1;
   List<RummiMarketItemOfferView>? _pinnedItemOffers;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
@@ -197,9 +199,9 @@ class _GameShopScreenState extends State<GameShopScreen>
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      GameFeedback.play(GameCue.marketEntry);
       final market = _market;
       _mutate(() => _syncCurrentLaneToAvailableOffers(market));
+      GameFeedback.play(GameCue.marketEntry);
       if (widget.initialItemPresentationEvents.isNotEmpty) {
         widget.onItemPresentationEventsShown?.call();
         _startEffectPresentationSummary(

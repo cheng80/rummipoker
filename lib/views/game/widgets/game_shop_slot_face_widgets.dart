@@ -91,9 +91,7 @@ class _MarketItemGhostChip extends StatelessWidget {
         child: GestureDetector(
           key: ValueKey<String>('market-item-slot-${slot.slotLabel}'),
           behavior: HitTestBehavior.opaque,
-          onTap: locked || slot.item == null || onTap == null
-              ? null
-              : () => onTap!(slot),
+          onTap: onTap == null ? null : () => onTap!(slot),
           onLongPress: occupiedCard == null
               ? null
               : () => _showMarketCardPreview(
