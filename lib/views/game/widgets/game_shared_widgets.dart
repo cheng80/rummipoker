@@ -21,6 +21,7 @@ import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/blind_selection_setup.dart';
 import '../../../utils/common_ui.dart';
+import '../../../widgets/fx/fx_sprites.dart';
 import '../game_presentation_timings.dart';
 import 'game_card_metrics.dart';
 import 'game_card_name_text.dart';

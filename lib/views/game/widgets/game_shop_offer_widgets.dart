@@ -450,27 +450,25 @@ class _MarketDiscountTargetPulse extends StatelessWidget {
         final pulse = math.sin(math.pi * value);
         return Transform.scale(
           scale: 1 + (0.05 * pulse),
-          child: DecoratedBox(
-            key: const ValueKey('market-discount-offer-flash'),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
-              border: Border.all(
-                color: GameUiPalette.settlementActive.withValues(
-                  alpha: 0.24 + (0.52 * pulse),
-                ),
-                width: 1 + (1.6 * pulse),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: GameUiPalette.settlementActive.withValues(
-                    alpha: 0.24 * pulse,
-                  ),
-                  blurRadius: 18 * pulse,
-                  spreadRadius: 2 * pulse,
-                ),
-              ],
+          child: FxBoxGlow(
+            color: GameUiPalette.settlementActive.withValues(
+              alpha: 0.24 * pulse,
             ),
-            child: child,
+            blurRadius: 18 * pulse,
+            spreadRadius: 2 * pulse,
+            child: DecoratedBox(
+              key: const ValueKey('market-discount-offer-flash'),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(kRuntimeCardOuterRadius),
+                border: Border.all(
+                  color: GameUiPalette.settlementActive.withValues(
+                    alpha: 0.24 + (0.52 * pulse),
+                  ),
+                  width: 1 + (1.6 * pulse),
+                ),
+              ),
+              child: child,
+            ),
           ),
         );
       },

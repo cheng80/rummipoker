@@ -19,6 +19,7 @@ import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../services/tutorial_state_service.dart';
 import '../../../utils/common_ui.dart';
+import '../../../widgets/fx/fx_sprites.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
 import '../game_presentation_timings.dart';
 import 'game_card_name_text.dart';

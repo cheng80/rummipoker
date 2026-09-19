@@ -194,20 +194,11 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final pulse = (1 - value).clamp(0.0, 1.0);
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: GameUiPalette.actionInfoBlue.withValues(
-                  alpha: 0.18 * pulse,
-                ),
-                blurRadius: 18 * pulse,
-                spreadRadius: 1.5 * pulse,
-              ),
-            ],
-          ),
-          child: child,
+        return FxBoxGlow(
+          color: GameUiPalette.actionInfoBlue.withValues(alpha: 0.18 * pulse),
+          blurRadius: 18 * pulse,
+          spreadRadius: 1.5 * pulse,
+          child: child!,
         );
       },
       child: Container(
@@ -335,22 +326,15 @@ class _GameCashOutLine extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final pulse = (1 - value).clamp(0.0, 1.0);
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color:
-                    (isEndless
-                            ? GameUiPalette.specialDanger
-                            : GameUiPalette.actionGoldBright)
-                        .withValues(alpha: 0.18 * pulse),
-                blurRadius: 18 * pulse,
-                spreadRadius: 1.5 * pulse,
-              ),
-            ],
-          ),
-          child: child,
+        return FxBoxGlow(
+          color:
+              (isEndless
+                      ? GameUiPalette.specialDanger
+                      : GameUiPalette.actionGoldBright)
+                  .withValues(alpha: 0.18 * pulse),
+          blurRadius: 18 * pulse,
+          spreadRadius: 1.5 * pulse,
+          child: child!,
         );
       },
       child: Container(
@@ -416,48 +400,56 @@ class _GameCashOutCollectBadge extends StatelessWidget {
       tween: Tween<double>(begin: 0, end: 1),
       duration: GamePresentationTimings.cashOutCollectBadge,
       curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
+      builder: (context, value, _) {
         final scale = lerpDouble(0.94, 1, value)!;
-        return Opacity(
-          opacity: value,
-          child: Transform.scale(scale: scale, child: child),
-        );
-      },
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          const Positioned.fill(child: _GameCashOutCoinBurst()),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: GameUiPalette.specialGoldSurface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: GameUiPalette.actionGoldBright,
-                width: 1,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              child: Text(
-                '+$gold',
-                style: const TextStyle(
-                  color: GameUiPalette.actionGoldBright,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
+        final opacity = value.clamp(0.0, 1.0);
+        // 알파를 색에 직접 곱해 Opacity 합성을 피한다.
+        Color fade(Color color) => color.withValues(alpha: color.a * opacity);
+        return Transform.scale(
+          scale: scale,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Positioned.fill(child: _GameCashOutCoinBurst(opacity: opacity)),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: fade(GameUiPalette.specialGoldSurface),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: fade(GameUiPalette.actionGoldBright),
+                    width: 1,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  child: Text(
+                    '+$gold',
+                    style: TextStyle(
+                      color: fade(GameUiPalette.actionGoldBright),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _GameCashOutCoinBurst extends StatelessWidget {
-  const _GameCashOutCoinBurst();
+  const _GameCashOutCoinBurst({this.opacity = 1});
+
+  /// 바깥 배지 페이드. 스파크 색에 곱한다.
+  final double opacity;
 
   static const List<Offset> _targets = [
     Offset(-18, -16),
@@ -483,11 +475,10 @@ class _GameCashOutCoinBurst extends StatelessWidget {
                 left: 18 + _targets[i].dx * value,
                 top:
                     10 + _targets[i].dy * value + math.sin(value * math.pi) * 4,
-                child: Opacity(
-                  opacity: opacity.clamp(0.0, 1.0),
-                  child: Transform.scale(
-                    scale: 0.78 + 0.22 * (1 - value),
-                    child: const _GameCashOutCoinSpark(),
+                child: Transform.scale(
+                  scale: 0.78 + 0.22 * (1 - value),
+                  child: _GameCashOutCoinSpark(
+                    opacity: (opacity * this.opacity).clamp(0.0, 1.0),
                   ),
                 ),
               ),
@@ -499,18 +490,27 @@ class _GameCashOutCoinBurst extends StatelessWidget {
 }
 
 class _GameCashOutCoinSpark extends StatelessWidget {
-  const _GameCashOutCoinSpark();
+  const _GameCashOutCoinSpark({required this.opacity});
+
+  final double opacity;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: GameUiPalette.actionGoldBright,
-        border: Border.all(color: GameUiPalette.specialGoldBorder, width: 0.8),
+        color: GameUiPalette.actionGoldBright.withValues(alpha: opacity),
+        border: Border.all(
+          color: GameUiPalette.specialGoldBorder.withValues(
+            alpha: GameUiPalette.specialGoldBorder.a * opacity,
+          ),
+          width: 0.8,
+        ),
         boxShadow: [
           BoxShadow(
-            color: GameUiPalette.actionGoldBright.withValues(alpha: 0.32),
+            color: GameUiPalette.actionGoldBright.withValues(
+              alpha: 0.32 * opacity,
+            ),
             blurRadius: 6,
           ),
         ],

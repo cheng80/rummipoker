@@ -319,31 +319,27 @@ class _BoardMoveBonusFlash extends StatelessWidget {
             Positioned.fill(
               key: const ValueKey('board-move-bonus-flash'),
               child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(
-                        0xFFFFD86B,
-                      ).withValues(alpha: 0.95 * fade),
-                      width: 2 + (1.5 * wave),
+                child: FxBoxGlow(
+                  color: const Color(0xFFFFD86B).withValues(alpha: 0.48 * wave),
+                  blurRadius: 18 * wave,
+                  spreadRadius: 2.5 * wave,
+                  child: FxBoxGlow(
+                    color: const Color(
+                      0xFF80F7CA,
+                    ).withValues(alpha: 0.35 * wave),
+                    blurRadius: 22 * wave,
+                    spreadRadius: 1.5 * wave,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(
+                            0xFFFFD86B,
+                          ).withValues(alpha: 0.95 * fade),
+                          width: 2 + (1.5 * wave),
+                        ),
+                      ),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(
-                          0xFFFFD86B,
-                        ).withValues(alpha: 0.48 * wave),
-                        blurRadius: 18 * wave,
-                        spreadRadius: 2.5 * wave,
-                      ),
-                      BoxShadow(
-                        color: const Color(
-                          0xFF80F7CA,
-                        ).withValues(alpha: 0.35 * wave),
-                        blurRadius: 22 * wave,
-                        spreadRadius: 1.5 * wave,
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -573,6 +569,31 @@ Rect _tileMarkerRect((int, int) cell, Size size) {
   return metric.rectFor(cell.$1, cell.$2).inflate(metric.tapTolerance * 0.1);
 }
 
+/// `MaskFilter.blur` 없이 번진 stroke를 그린다.
+///
+/// ponytail: blur 대신 폭을 넓힌 반투명 stroke 3장을 겹쳐 가우시안 번짐을
+/// 근사한다. 번짐이 더 부드러워야 하면 구운 링 스프라이트로 바꾼다.
+void _paintGlowStroke(
+  Canvas canvas,
+  RRect rrect, {
+  required Color color,
+  required double strokeWidth,
+  required double sigma,
+}) {
+  if (color.a <= 0) return;
+  final paint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeJoin = StrokeJoin.round;
+  const spreads = [2.0, 1.2, 0.4];
+  const weights = [0.2, 0.32, 0.5];
+  for (var i = 0; i < spreads.length; i++) {
+    paint
+      ..color = color.withValues(alpha: color.a * weights[i])
+      ..strokeWidth = strokeWidth + 2 * spreads[i] * sigma;
+    canvas.drawRRect(rrect, paint);
+  }
+}
+
 class _BoardTileSelectionPainter extends CustomPainter {
   const _BoardTileSelectionPainter(
     this.targets, {
@@ -594,11 +615,6 @@ class _BoardTileSelectionPainter extends CustomPainter {
       final color = selected
           ? GameUiPalette.userSelection
           : GameUiPalette.tileBlueSeal;
-      final glow = Paint()
-        ..color = color.withValues(alpha: selected ? 0.24 : 0.12)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = selected ? 8 : 5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       final stroke = Paint()
         ..color = color.withValues(alpha: selected ? 0.98 : 0.68)
         ..style = PaintingStyle.stroke
@@ -611,9 +627,14 @@ class _BoardTileSelectionPainter extends CustomPainter {
         rect,
         Radius.circular(metric.cellCornerRadius),
       );
-      canvas
-        ..drawRRect(rrect, glow)
-        ..drawRRect(rrect, stroke);
+      _paintGlowStroke(
+        canvas,
+        rrect,
+        color: color.withValues(alpha: selected ? 0.24 : 0.12),
+        strokeWidth: selected ? 8 : 5,
+        sigma: 4,
+      );
+      canvas.drawRRect(rrect, stroke);
     }
   }
 
@@ -640,11 +661,6 @@ class _BoardLineSelectionPainter extends CustomPainter {
       final color = selected
           ? GameUiPalette.userSelection
           : GameUiPalette.tileBlueSeal;
-      final glow = Paint()
-        ..color = color.withValues(alpha: selected ? 0.20 : 0.10)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = selected ? 8 : 5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       final stroke = Paint()
         ..color = selected
             ? color.withValues(alpha: 0.96)
@@ -659,9 +675,14 @@ class _BoardLineSelectionPainter extends CustomPainter {
           rect,
           Radius.circular(metric.cellCornerRadius),
         );
-        canvas
-          ..drawRRect(rrect, glow)
-          ..drawRRect(rrect, stroke);
+        _paintGlowStroke(
+          canvas,
+          rrect,
+          color: color.withValues(alpha: selected ? 0.20 : 0.10),
+          strokeWidth: selected ? 8 : 5,
+          sigma: 4,
+        );
+        canvas.drawRRect(rrect, stroke);
       }
     }
   }
@@ -686,11 +707,6 @@ class _BoardLineFlashPainter extends CustomPainter {
     final wave = sin(pi * progress).clamp(0.0, 1.0);
     final fade = (1 - progress).clamp(0.0, 1.0);
     final reveal = progress < 0.36 ? progress / 0.36 : 1.0;
-    final glow = Paint()
-      ..color = GameUiPalette.userSelection.withValues(alpha: 0.72 * fade)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 9 + 7 * wave
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 * wave);
     final fill = Paint()
       ..color = GameUiPalette.userSelection.withValues(alpha: 0.12 * fade)
       ..style = PaintingStyle.fill;
@@ -707,10 +723,15 @@ class _BoardLineFlashPainter extends CustomPainter {
         rect,
         Radius.circular(metric.cellCornerRadius),
       );
-      canvas
-        ..drawRRect(rrect, fill)
-        ..drawRRect(rrect, glow)
-        ..drawRRect(rrect, core);
+      canvas.drawRRect(rrect, fill);
+      _paintGlowStroke(
+        canvas,
+        rrect,
+        color: GameUiPalette.userSelection.withValues(alpha: 0.72 * fade),
+        strokeWidth: 9 + 7 * wave,
+        sigma: 8 * wave,
+      );
+      canvas.drawRRect(rrect, core);
     }
   }
 
@@ -790,18 +811,11 @@ class _BoardPlacePop extends StatelessWidget {
             opacity: (0.72 + (progress * 0.28)).clamp(0.0, 1.0),
             child: Transform.scale(
               scale: scale,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF2C14E).withValues(alpha: glow),
-                      blurRadius: 16 * (glow / 0.24),
-                      spreadRadius: 1.5 * (glow / 0.24),
-                    ),
-                  ],
-                ),
-                child: child,
+              child: FxBoxGlow(
+                color: const Color(0xFFF2C14E).withValues(alpha: glow),
+                blurRadius: 16 * (glow / 0.24),
+                spreadRadius: 1.5 * (glow / 0.24),
+                child: child!,
               ),
             ),
           ),

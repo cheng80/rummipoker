@@ -90,20 +90,13 @@ class _BoardMoveFlightOverlay extends StatelessWidget {
                     height: tileSide,
                     child: Transform.scale(
                       scale: 1 + (0.04 * pulse),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(9),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF86F4C3,
-                              ).withValues(alpha: 0.22 * pulse),
-                              blurRadius: 14 * pulse,
-                              spreadRadius: 1.2 * pulse,
-                            ),
-                          ],
-                        ),
-                        child: child,
+                      child: FxBoxGlow(
+                        color: const Color(
+                          0xFF86F4C3,
+                        ).withValues(alpha: 0.22 * pulse),
+                        blurRadius: 14 * pulse,
+                        spreadRadius: 1.2 * pulse,
+                        child: child!,
                       ),
                     ),
                   ),
@@ -155,6 +148,7 @@ class _BoardMoveFlightRing extends StatelessWidget {
     final eased = Curves.easeOutCubic.transform(progress.clamp(0.0, 1.0));
     final visible = isSource ? (1 - eased).clamp(0.0, 1.0) : eased;
     final pulse = sin(pi * progress).clamp(0.0, 1.0);
+    final opacity = (0.28 + visible * 0.72).clamp(0.0, 1.0);
     final color = isSource
         ? GameUiPalette.boardMoveSource
         : GameUiPalette.boardMoveAvailable;
@@ -164,24 +158,19 @@ class _BoardMoveFlightRing extends StatelessWidget {
       width: tileSide,
       height: tileSide,
       child: IgnorePointer(
-        child: Opacity(
-          opacity: (0.28 + visible * 0.72).clamp(0.0, 1.0),
-          child: Transform.scale(
-            scale: 1 + (pulse * 0.08),
+        child: Transform.scale(
+          scale: 1 + (pulse * 0.08),
+          child: FxBoxGlow(
+            color: color.withValues(alpha: (0.28 + pulse * 0.18) * opacity),
+            blurRadius: 12 + pulse * 8,
+            spreadRadius: 1.2 + pulse,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(9),
                 border: Border.all(
-                  color: color.withValues(alpha: 0.84),
+                  color: color.withValues(alpha: 0.84 * opacity),
                   width: 2,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.28 + pulse * 0.18),
-                    blurRadius: 12 + pulse * 8,
-                    spreadRadius: 1.2 + pulse,
-                  ),
-                ],
               ),
             ),
           ),

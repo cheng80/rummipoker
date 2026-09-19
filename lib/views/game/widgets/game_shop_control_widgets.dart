@@ -208,21 +208,14 @@ class _MarketOfferBonusBadge extends StatelessWidget {
         final pulse = math.sin(math.pi * value);
         return Transform.scale(
           scale: 1 + (0.08 * pulse),
-          child: DecoratedBox(
+          child: FxBoxGlow(
             key: const ValueKey('market-offer-bonus-lane-flash'),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              boxShadow: [
-                BoxShadow(
-                  color: GameUiPalette.marketSourceGear.withValues(
-                    alpha: 0.34 * pulse,
-                  ),
-                  blurRadius: 14 * pulse,
-                  spreadRadius: 2 * pulse,
-                ),
-              ],
+            color: GameUiPalette.marketSourceGear.withValues(
+              alpha: 0.34 * pulse,
             ),
-            child: child,
+            blurRadius: 14 * pulse,
+            spreadRadius: 2 * pulse,
+            child: child!,
           ),
         );
       },
@@ -269,29 +262,26 @@ class _MarketRerollSuccessFeedback extends StatelessWidget {
           builder: (context, value, child) {
             final opacity = (1 - value).clamp(0.0, 1.0);
             final scale = 1.0 + (value * 0.18);
-            return Opacity(
-              opacity: opacity,
-              child: Transform.scale(
-                scale: scale,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: GameUiPalette.specialGoldPulse.withValues(
-                        alpha: 0.9,
-                      ),
-                      width: 2,
+            return Transform.scale(
+              scale: scale,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: GameUiPalette.specialGoldPulse.withValues(
+                      alpha: 0.9 * opacity,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: GameUiPalette.specialGoldPulse.withValues(
-                          alpha: 0.35,
-                        ),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                      ),
-                    ],
+                    width: 2,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GameUiPalette.specialGoldPulse.withValues(
+                        alpha: 0.35 * opacity,
+                      ),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
               ),
             );

@@ -48,33 +48,29 @@ class _LineConfirmSweepCell extends StatelessWidget {
           1.0,
         );
         final opacity = value < 0.72 ? 1.0 : 1.0 - ((value - 0.72) / 0.28);
+        final fade = opacity.clamp(0.0, 1.0);
         return Positioned(
           left: center.dx - 18,
           top: center.dy - 18,
           width: 36,
           height: 36,
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: 0.72 + (value * 0.34),
+          child: Transform.scale(
+            scale: 0.72 + (value * 0.34),
+            child: FxBoxGlow(
+              color: GameUiPalette.actionGoldBright.withValues(
+                alpha: 0.34 * fade,
+              ),
+              blurRadius: 14,
+              spreadRadius: 1.2,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
                     color: GameUiPalette.actionGoldBright.withValues(
-                      alpha: 0.86,
+                      alpha: 0.86 * fade,
                     ),
                     width: 2,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: GameUiPalette.actionGoldBright.withValues(
-                        alpha: 0.34,
-                      ),
-                      blurRadius: 14,
-                      spreadRadius: 1.2,
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -145,37 +141,33 @@ class _ConstraintImpactCellFlash extends StatelessWidget {
           1.0,
         );
         final opacity = value < 0.72 ? 1.0 : 1.0 - ((value - 0.72) / 0.28);
+        final fade = opacity.clamp(0.0, 1.0);
         final scale = 0.72 + value * 0.42;
         return Positioned(
           left: center.dx - 20,
           top: center.dy - 20,
           width: 40,
           height: 40,
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: scale,
+          child: Transform.scale(
+            scale: scale,
+            child: FxBoxGlow(
+              color: GameUiPalette.specialDangerEffect.withValues(
+                alpha: 0.34 * fade,
+              ),
+              blurRadius: 18,
+              spreadRadius: 1.4,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: GameUiPalette.specialDangerEffect.withValues(
-                    alpha: 0.13,
+                    alpha: 0.13 * fade,
                   ),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: GameUiPalette.specialDangerEffectBorder.withValues(
-                      alpha: 0.9,
+                      alpha: 0.9 * fade,
                     ),
                     width: 2.2,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: GameUiPalette.specialDangerEffect.withValues(
-                        alpha: 0.34,
-                      ),
-                      blurRadius: 18,
-                      spreadRadius: 1.4,
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -204,6 +196,7 @@ class _ConstraintImpactBadge extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = value < 0.84 ? 1.0 : 1.0 - ((value - 0.84) / 0.16);
+        final fade = opacity.clamp(0.0, 1.0);
         final dy = -12 * value;
         final scale = 0.78 + (value * 0.26);
         return Positioned(
@@ -211,39 +204,34 @@ class _ConstraintImpactBadge extends StatelessWidget {
           top: center.dy - 25 + dy,
           width: 84,
           height: 38,
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: scale,
+          child: Transform.scale(
+            scale: scale,
+            child: FxBoxGlow(
+              color: GameUiPalette.specialDangerEffectBorder.withValues(
+                alpha: 0.35 * fade,
+              ),
+              blurRadius: 18,
+              spreadRadius: 1.4,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: GameUiPalette.surfaceDangerDeep.withValues(
-                    alpha: 0.92,
+                    alpha: 0.92 * fade,
                   ),
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
                     color: GameUiPalette.specialDangerEffectBorder.withValues(
-                      alpha: 0.95,
+                      alpha: 0.95 * fade,
                     ),
                     width: 2.2,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: GameUiPalette.specialDangerEffectBorder.withValues(
-                        alpha: 0.35,
-                      ),
-                      blurRadius: 18,
-                      spreadRadius: 1.4,
-                    ),
-                  ],
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'BOSS',
                       style: TextStyle(
-                        color: GameUiPalette.specialDangerSoft,
+                        color: _fade(GameUiPalette.specialDangerSoft, fade),
                         fontSize: 8,
                         fontWeight: FontWeight.w900,
                         height: 1,
@@ -252,8 +240,8 @@ class _ConstraintImpactBadge extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       label,
-                      style: const TextStyle(
-                        color: GameUiPalette.specialDangerWarm,
+                      style: TextStyle(
+                        color: _fade(GameUiPalette.specialDangerWarm, fade),
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                         height: 1,
@@ -315,6 +303,7 @@ class _LargeScoreBurstBadge extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacity = value < 0.76 ? 1.0 : 1.0 - ((value - 0.76) / 0.24);
+        final fade = opacity.clamp(0.0, 1.0);
         final dy = -16 * value;
         final scale = 0.78 + (value * 0.32);
         return Positioned(
@@ -322,37 +311,32 @@ class _LargeScoreBurstBadge extends StatelessWidget {
           top: center.dy - 24 + dy,
           width: 84,
           height: 38,
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: scale,
+          child: Transform.scale(
+            scale: scale,
+            child: FxBoxGlow(
+              color: GameUiPalette.settlementActive.withValues(
+                alpha: 0.36 * fade,
+              ),
+              blurRadius: 18,
+              spreadRadius: 1.4,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: GameUiPalette.stationClearSurface.withValues(
-                    alpha: 0.94,
+                    alpha: 0.94 * fade,
                   ),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: GameUiPalette.settlementActive.withValues(
-                      alpha: 0.95,
+                      alpha: 0.95 * fade,
                     ),
                     width: 2,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: GameUiPalette.settlementActive.withValues(
-                        alpha: 0.36,
-                      ),
-                      blurRadius: 18,
-                      spreadRadius: 1.4,
-                    ),
-                  ],
                 ),
                 child: Center(
                   child: Text(
                     label,
-                    style: const TextStyle(
-                      color: GameUiPalette.specialSuccessText,
+                    style: TextStyle(
+                      color: _fade(GameUiPalette.specialSuccessText, fade),
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -431,29 +415,27 @@ class _SettlementScoreMote extends StatelessWidget {
           value,
         );
         final opacity = value < 0.82 ? 1.0 : 1.0 - ((value - 0.82) / 0.18);
+        final fade = opacity.clamp(0.0, 1.0);
         final scale = 1.0 - (value * 0.22);
         return Positioned(
           left: position.dx - 4,
           top: position.dy - 4,
           width: 8,
           height: 8,
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: scale,
+          child: Transform.scale(
+            scale: scale,
+            child: FxBoxGlow(
+              color: GameUiPalette.actionGoldBright.withValues(
+                alpha: 0.42 * fade,
+              ),
+              blurRadius: 9,
+              spreadRadius: 1,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: GameUiPalette.actionGoldBright.withValues(alpha: 0.9),
-                  boxShadow: [
-                    BoxShadow(
-                      color: GameUiPalette.actionGoldBright.withValues(
-                        alpha: 0.42,
-                      ),
-                      blurRadius: 9,
-                      spreadRadius: 1,
-                    ),
-                  ],
+                  color: GameUiPalette.actionGoldBright.withValues(
+                    alpha: 0.9 * fade,
+                  ),
                 ),
               ),
             ),
@@ -463,3 +445,6 @@ class _SettlementScoreMote extends StatelessWidget {
     );
   }
 }
+
+Color _fade(Color color, double opacity) =>
+    color.withValues(alpha: color.a * opacity);

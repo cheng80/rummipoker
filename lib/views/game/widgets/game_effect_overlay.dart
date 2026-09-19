@@ -4,6 +4,7 @@ import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../../../widgets/fx/fx_layer.dart';
+import '../../../widgets/fx/fx_sprites.dart';
 import '../game_presentation_timings.dart';
 import 'game_ui_palette.dart';
 

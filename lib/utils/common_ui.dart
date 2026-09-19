@@ -705,58 +705,60 @@ class _NoticeCard extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(milliseconds: 220),
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, (1 - value) * beginOffsetY),
-            child: child,
+      builder: (context, value, _) {
+        // 알파를 색에 직접 곱해 Opacity 오프스크린 합성을 피한다.
+        Color fade(Color color) => color.withValues(alpha: color.a * value);
+        return Transform.translate(
+          offset: Offset(0, (1 - value) * beginOffsetY),
+          child: ConstrainedBox(
+            key: ValueKey(
+              isTopBanner ? 'common-top-notice' : 'common-bottom-notice',
+            ),
+            constraints: BoxConstraints(maxWidth: isTopBanner ? 360 : 320),
+            child: Material(
+              color: GameUiPalette.transparent,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: fade(backgroundColor),
+                  borderRadius: BorderRadius.circular(isTopBanner ? 18 : 16),
+                  border: Border.all(color: fade(borderColor)),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTopBanner ? 16 : 14,
+                    vertical: isTopBanner ? 12 : 10,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        color: fade(textColor),
+                        size: isTopBanner ? 20 : 16,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          message,
+                          textAlign: isTopBanner
+                              ? TextAlign.left
+                              : TextAlign.center,
+                          style: TextStyle(
+                            color: fade(textColor),
+                            fontSize: isTopBanner ? 14 : 13,
+                            fontWeight: FontWeight.w900,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },
-      child: ConstrainedBox(
-        key: ValueKey(
-          isTopBanner ? 'common-top-notice' : 'common-bottom-notice',
-        ),
-        constraints: BoxConstraints(maxWidth: isTopBanner ? 360 : 320),
-        child: Material(
-          color: GameUiPalette.transparent,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(isTopBanner ? 18 : 16),
-              border: Border.all(color: borderColor),
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isTopBanner ? 16 : 14,
-                vertical: isTopBanner ? 12 : 10,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, color: textColor, size: isTopBanner ? 20 : 16),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      message,
-                      textAlign: isTopBanner
-                          ? TextAlign.left
-                          : TextAlign.center,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: isTopBanner ? 14 : 13,
-                        fontWeight: FontWeight.w900,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

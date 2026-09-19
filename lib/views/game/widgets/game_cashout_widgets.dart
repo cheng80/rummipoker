@@ -12,6 +12,7 @@ import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
 import '../../../utils/common_ui.dart';
+import '../../../widgets/fx/fx_sprites.dart';
 import '../game_presentation_timings.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';

@@ -55,60 +55,63 @@ class _MarketUseFeedbackToast extends StatelessWidget {
           tween: Tween<double>(begin: 0, end: 1),
           duration: GamePresentationTimings.marketUseFeedbackIn,
           curve: Curves.easeOutCubic,
-          builder: (context, value, child) {
-            return Opacity(
-              opacity: value,
-              child: Transform.translate(
-                offset: Offset(0, 8 * (1 - value)),
-                child: child,
+          builder: (context, value, _) {
+            // 알파를 색에 직접 곱해 Opacity 합성을 피한다.
+            Color fade(Color color) => color.withValues(alpha: color.a * value);
+            return Transform.translate(
+              offset: Offset(0, 8 * (1 - value)),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: fade(GameUiPalette.cardEmptyFace),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: GameUiPalette.settlementActive.withValues(
+                      alpha: 0.72 * value,
+                    ),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GameUiPalette.ink.withValues(alpha: 0.26 * value),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 8,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: fade(GameUiPalette.specialMintPale),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                      if (deltaLabel != null)
+                        Text(
+                          deltaLabel!,
+                          style: TextStyle(
+                            color: fade(GameUiPalette.actionGoldBright),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             );
           },
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: GameUiPalette.cardEmptyFace,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: GameUiPalette.settlementActive.withValues(alpha: 0.72),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: GameUiPalette.ink.withValues(alpha: 0.26),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 8,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: GameUiPalette.specialMintPale,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                    ),
-                  ),
-                  if (deltaLabel != null)
-                    Text(
-                      deltaLabel!,
-                      style: const TextStyle(
-                        color: GameUiPalette.actionGoldBright,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
     );

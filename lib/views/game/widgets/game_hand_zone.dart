@@ -452,36 +452,39 @@ class _HandDrawIncomingBadge extends StatelessWidget {
       builder: (context, _) {
         final t = Curves.easeOutCubic.transform(animation.value);
         final opacity = (1 - (t - 0.72).clamp(0.0, 1.0) / 0.28).clamp(0.0, 1.0);
-        return Opacity(
-          opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, -6 * t),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.96),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: GameUiPalette.specialSoftMint),
-                boxShadow: [
-                  BoxShadow(
-                    color: GameUiPalette.specialSoftMint.withValues(
-                      alpha: 0.24,
-                    ),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+        return Transform.translate(
+          offset: Offset(0, -6 * t),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: GameUiPalette.surfaceModalInner.withValues(
+                alpha: 0.96 * opacity,
               ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                child: Text(
-                  '드로우 +1',
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: GameUiPalette.specialSoftMint,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: GameUiPalette.specialSoftMint.withValues(alpha: opacity),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: GameUiPalette.specialSoftMint.withValues(
+                    alpha: 0.24 * opacity,
                   ),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              child: Text(
+                '드로우 +1',
+                maxLines: 1,
+                style: TextStyle(
+                  color: GameUiPalette.specialSoftMint.withValues(
+                    alpha: opacity,
+                  ),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
                 ),
               ),
             ),
@@ -602,25 +605,26 @@ class _HandCapacityGainBadge extends StatelessWidget {
         final t = Curves.easeOutCubic.transform(animation.value);
         final opacity = (1 - t).clamp(0.0, 1.0);
         final dy = lerpDouble(0, -10, t)!;
-        return Opacity(
-          opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, dy),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: GameUiPalette.surfaceHandPanel,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: GameUiPalette.specialSoftMintText),
+        // 알파를 색에 직접 곱해 Opacity 합성을 피한다.
+        Color fade(Color color) => color.withValues(alpha: color.a * opacity);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: fade(GameUiPalette.surfaceHandPanel),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: fade(GameUiPalette.specialSoftMintText),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(
-                  '손패 +$amount',
-                  style: const TextStyle(
-                    color: GameUiPalette.specialSuccessText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                  ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                '손패 +$amount',
+                style: TextStyle(
+                  color: fade(GameUiPalette.specialSuccessText),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
