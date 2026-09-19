@@ -50,8 +50,6 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   List<Offset> _constraintImpactCenters = const [];
   Offset? _constraintImpactCenter;
   String? _constraintImpactLabel;
-  Offset? _largeScoreCenter;
-  String? _largeScoreLabel;
   int _scoreMoteTick = 0;
 
   @override
@@ -89,12 +87,6 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
                     centers: _constraintImpactCenters,
                     center: _constraintImpactCenter!,
                     label: _constraintImpactLabel!,
-                    tick: _scoreMoteTick,
-                  ),
-                if (_largeScoreCenter != null && _largeScoreLabel != null)
-                  _LargeScoreBurstBadgeLayer(
-                    center: _largeScoreCenter!,
-                    label: _largeScoreLabel!,
                     tick: _scoreMoteTick,
                   ),
               ],
@@ -159,32 +151,23 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           effectKind == _BoardEffectKind.constraintImpact
           ? _constraintPenaltyLabel(line)
           : null;
-      final largeScoreCenter = effectKind == _BoardEffectKind.largeScore
-          ? _averageOffset(centers)
-          : null;
-      final largeScoreLabel = effectKind == _BoardEffectKind.largeScore
-          ? '+${line.finalScore}'
-          : null;
       if (scoreMoteCenters.isNotEmpty ||
           _scoreMoteCenters.isNotEmpty ||
           _lineSweepCenters.isNotEmpty ||
           constraintImpactCenters.isNotEmpty ||
           _constraintImpactCenters.isNotEmpty ||
           constraintImpactCenter != null ||
-          _constraintImpactCenter != null ||
-          largeScoreCenter != null ||
-          _largeScoreCenter != null) {
+          _constraintImpactCenter != null) {
         setState(() {
           _scoreMoteCenters = scoreMoteCenters;
           _lineSweepCenters = scoreMoteCenters;
           _constraintImpactCenters = constraintImpactCenters;
           _constraintImpactCenter = constraintImpactCenter;
           _constraintImpactLabel = constraintImpactLabel;
-          _largeScoreCenter = largeScoreCenter;
-          _largeScoreLabel = largeScoreLabel;
           _scoreMoteTick = widget.settlementSequenceTick;
         });
       }
+      // 큰 점수는 파티클만 낸다. 합계 `+점수`는 채점 줄을 피한 등급 callout이 보여 준다.
       Fx.emit(context, switch (effectKind) {
         // 타일 modifier와 Item은 Jester(금색)와 다른 색·모양으로 구분한다.
         _BoardEffectKind.lineConfirm
@@ -207,8 +190,6 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _constraintImpactCenters = const [];
           _constraintImpactCenter = null;
           _constraintImpactLabel = null;
-          _largeScoreCenter = null;
-          _largeScoreLabel = null;
         });
       });
     });

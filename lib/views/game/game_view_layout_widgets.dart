@@ -15,8 +15,7 @@ class _GameSurface extends StatelessWidget {
     required this.settlementGoalDisplayScore,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
-    required this.settlementTileHeat,
-    required this.settlementTileHitSerial,
+    required this.settlementTicks,
     required this.settlementGrade,
     required this.selectedHandTile,
     required this.selectedBoardRow,
@@ -87,8 +86,7 @@ class _GameSurface extends StatelessWidget {
   final int? settlementGoalDisplayScore;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
-  final Map<String, int> settlementTileHeat;
-  final Map<String, int> settlementTileHitSerial;
+  final ValueListenable<SettlementTileTicks> settlementTicks;
   final int settlementGrade;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
@@ -186,8 +184,7 @@ class _GameSurface extends StatelessWidget {
                   activeSettlementLine: activeSettlementLine,
                   settlementSequenceTick: settlementSequenceTick,
                   settlementBoardSnapshot: settlementBoardSnapshot,
-                  settlementTileHeat: settlementTileHeat,
-                  settlementTileHitSerial: settlementTileHitSerial,
+                  settlementTicks: settlementTicks,
                   settlementGrade: settlementGrade,
                   showsFloatingSettlementBurst:
                       !presentationPaused &&
@@ -393,8 +390,7 @@ class _GameLayout extends StatelessWidget {
     required this.activeSettlementLine,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
-    required this.settlementTileHeat,
-    required this.settlementTileHitSerial,
+    required this.settlementTicks,
     required this.settlementGrade,
     required this.showsFloatingSettlementBurst,
     required this.selectedHandTile,
@@ -453,8 +449,7 @@ class _GameLayout extends StatelessWidget {
   final ConfirmedLineBreakdown? activeSettlementLine;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
-  final Map<String, int> settlementTileHeat;
-  final Map<String, int> settlementTileHitSerial;
+  final ValueListenable<SettlementTileTicks> settlementTicks;
   final int settlementGrade;
   final bool showsFloatingSettlementBurst;
   final Tile? selectedHandTile;
@@ -605,41 +600,46 @@ class _GameLayout extends StatelessWidget {
                               showcaseKey: battleBoardTutorialKey,
                               child: GameDenyShake(
                                 tick: _denyTickFor(_BattleDenyTarget.board),
-                                child: GameBoardGrid(
-                                  board: battle.board,
-                                  scoringCells: scoringCells,
-                                  constrainedScoringCells:
-                                      battle.constrainedScoringCellKeys,
-                                  constrainedCells: constrainedCells,
-                                  blockedCellKeys: {
-                                    for (final cell
-                                        in battle.bossModifier?.blockedCells ??
-                                            const <(int, int)>[])
-                                      '${cell.$1}:${cell.$2}',
-                                  },
-                                  activeSettlementCells: activeSettlementCells,
-                                  settlementBoardSnapshot:
-                                      settlementBoardSnapshot,
-                                  settlementTileHeat: settlementTileHeat,
-                                  settlementTileHitSerial:
-                                      settlementTileHitSerial,
-                                  dealOnEnter: true,
-                                  showLineHints: true,
-                                  selectedRow: selectedBoardRow,
-                                  selectedCol: selectedBoardCol,
-                                  boardMoveMode: boardMoveMode,
-                                  moveSourceRow: pendingBoardMoveSourceRow,
-                                  moveSourceCol: pendingBoardMoveSourceCol,
-                                  bonusFlashCellKey:
-                                      boardMoveBonusTargetCellKey,
-                                  bonusFlashTick: boardMoveBonusFlashTick,
-                                  lineSelectionLines: const [],
-                                  selectedLineRef: null,
-                                  onTapLine: null,
-                                  lineFlashRef: fateTransformFlashLineRef,
-                                  lineFlashTick: fateTransformFlashTick,
-                                  onTapCell: onBoardCellTap,
-                                  onLongPressTile: onHandTileLongPress,
+                                child: ValueListenableBuilder(
+                                  valueListenable: settlementTicks,
+                                  builder: (context, ticks, _) => GameBoardGrid(
+                                    board: battle.board,
+                                    scoringCells: scoringCells,
+                                    constrainedScoringCells:
+                                        battle.constrainedScoringCellKeys,
+                                    constrainedCells: constrainedCells,
+                                    blockedCellKeys: {
+                                      for (final cell
+                                          in battle
+                                                  .bossModifier
+                                                  ?.blockedCells ??
+                                              const <(int, int)>[])
+                                        '${cell.$1}:${cell.$2}',
+                                    },
+                                    activeSettlementCells:
+                                        activeSettlementCells,
+                                    settlementBoardSnapshot:
+                                        settlementBoardSnapshot,
+                                    settlementTileHeat: ticks.heat,
+                                    settlementTileHitSerial: ticks.hitSerial,
+                                    dealOnEnter: true,
+                                    showLineHints: true,
+                                    selectedRow: selectedBoardRow,
+                                    selectedCol: selectedBoardCol,
+                                    boardMoveMode: boardMoveMode,
+                                    moveSourceRow: pendingBoardMoveSourceRow,
+                                    moveSourceCol: pendingBoardMoveSourceCol,
+                                    bonusFlashCellKey:
+                                        boardMoveBonusTargetCellKey,
+                                    bonusFlashTick: boardMoveBonusFlashTick,
+                                    lineSelectionLines: const [],
+                                    selectedLineRef: null,
+                                    onTapLine: null,
+                                    lineFlashRef: fateTransformFlashLineRef,
+                                    lineFlashTick: fateTransformFlashTick,
+                                    onTapCell: onBoardCellTap,
+                                    onLongPressTile: onHandTileLongPress,
+                                  ),
                                 ),
                               ),
                             ),

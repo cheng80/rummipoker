@@ -91,11 +91,12 @@ void main() {
     await tester.pump();
 
     expect(Fx.controller.particleCount, greaterThan(0));
+    // 합계는 등급 callout이 채점 줄을 피해 보여 주므로 줄 위 배지는 없다.
     expect(
       find.byKey(const ValueKey('large-score-burst-badge-layer')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('+150'), findsOneWidget);
+    expect(find.text('+150'), findsNothing);
     await tester.pump(const Duration(milliseconds: 1350));
   });
 

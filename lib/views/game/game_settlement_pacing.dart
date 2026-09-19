@@ -99,3 +99,16 @@ BoardCalloutSlot boardCalloutSlotFor(
   }
   return candidates.first;
 }
+
+/// 정산 tick 상태. 보드만 다시 그리도록 `ValueNotifier`로 전달한다.
+class SettlementTileTicks {
+  const SettlementTileTicks({this.heat = const {}, this.hitSerial = const {}});
+
+  static const SettlementTileTicks empty = SettlementTileTicks();
+
+  /// 교차 타일이 맞은 횟수.
+  final Map<String, int> heat;
+
+  /// 칸을 마지막으로 친 tick 순번.
+  final Map<String, int> hitSerial;
+}
