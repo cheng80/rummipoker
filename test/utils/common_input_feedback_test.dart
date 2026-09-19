@@ -103,6 +103,33 @@ void main() {
     expect(denyOffsetX(tester), 0);
   });
 
+  testWidgets('denyTrigger change shakes an enabled target after async check', (
+    tester,
+  ) async {
+    Widget build(int trigger) => MaterialApp(
+      home: Center(
+        child: PressFeedback(
+          onTap: () {},
+          denyTrigger: trigger,
+          builder: (context, tap) => GestureDetector(
+            key: const ValueKey('press-target'),
+            behavior: HitTestBehavior.opaque,
+            onTap: tap,
+            child: const SizedBox(width: 80, height: 40),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpWidget(build(0));
+    await tester.pumpWidget(build(1));
+    await tester.pump(const Duration(milliseconds: 40));
+
+    expect(sfx, [AssetPaths.sfxFail]);
+    expect(denyOffsetX(tester), isNot(0));
+    await tester.pumpAndSettle();
+    expect(denyOffsetX(tester), 0);
+  });
+
   testWidgets('disabled press without deny stays silent', (tester) async {
     await tester.pumpWidget(pressTarget());
     await tester.tap(find.byKey(const ValueKey('press-target')));
