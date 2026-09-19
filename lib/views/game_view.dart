@@ -60,6 +60,7 @@ import 'game/widgets/game_tile_choice_dialog.dart';
 import 'game/widgets/game_tutorial_overlay.dart';
 import 'game/widgets/game_surface_metrics.dart';
 import 'game/widgets/game_ui_palette.dart';
+import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/fx_layer.dart';
 import '../widgets/fx/fx_sprites.dart';
 import '../widgets/fx/juice.dart';
@@ -294,6 +295,7 @@ class _GameViewState extends ConsumerState<GameView>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       SoundManager.playBgm(AssetPaths.bgmMain);
+      FxAmbient.setMood(_battleAmbientMood);
       _loadJesterCatalog();
       if (widget.debugItemCatalogOverride == null) {
         _loadItemCatalog();
@@ -626,6 +628,14 @@ class _GameViewState extends ConsumerState<GameView>
   void _adjustDebugGold(int delta) {
     _gameNotifier.adjustDebugGold(delta);
     _saveActiveRun();
+  }
+
+  FxAmbientMood get _battleAmbientMood {
+    final tierIndex =
+        _gameState.battleView?.currentBlindTierIndex ?? widget.blindTier.index;
+    return tierIndex >= BlindTier.boss.index
+        ? FxAmbientMood.boss
+        : FxAmbientMood.battle;
   }
 
   /// [silent]는 호출부가 이미 자체 cue를 냈을 때 알림 등급 소리만 끈다.

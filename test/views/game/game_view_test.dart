@@ -17,6 +17,7 @@ import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
+import 'package:rummipoker/widgets/fx/fx_ambient.dart';
 import 'package:rummipoker/views/game/widgets/game_shared_widgets.dart';
 
 void main() {
@@ -29,6 +30,7 @@ void main() {
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
     GameAnalyticsService.debugResetForTest();
+    FxAmbient.debugReset();
   });
 
   tearDown(() {
@@ -141,6 +143,7 @@ void main() {
     for (var i = 0; i < 10 && find.byTooltip('확정').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
+    expect(FxAmbient.controller.mood, FxAmbientMood.battle);
     await tester.tap(find.byTooltip('확정'));
     await tester.pump(const Duration(milliseconds: 100));
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
@@ -152,6 +155,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('정산 완료'), findsOneWidget);
+    expect(FxAmbient.controller.mood, FxAmbientMood.reward);
     expect(find.text('게임결과'), findsNothing);
     expect(find.text('Market으로'), findsOneWidget);
     expect(
@@ -202,6 +206,14 @@ void main() {
         .toList();
     expect(marketEntryEvents, hasLength(1));
     expect(marketEntryEvents.single.parameters['gold'], isA<int>());
+    expect(FxAmbient.controller.mood, FxAmbientMood.market);
+
+    // Market을 닫으면 현재 전투(일반)의 분위기로 돌아온다.
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop(false);
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+    expect(FxAmbient.controller.mood, FxAmbientMood.battle);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

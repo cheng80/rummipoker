@@ -239,8 +239,7 @@ void main() {
     final label = tester.widget<RichText>(
       find.byWidgetPredicate(
         (widget) =>
-            widget is RichText &&
-            widget.text.toPlainText() == '∞S9 · 도전 · 하이',
+            widget is RichText && widget.text.toPlainText() == '∞S9 · 도전 · 하이',
       ),
     );
     final labelSpan = label.text as TextSpan;

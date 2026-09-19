@@ -557,6 +557,9 @@ extension _GameViewStageFlow on _GameViewState {
       _settlementGrade = grade;
       _settlementSlowMo = isFinisher;
     });
+    if (grade >= GameSettlementPacing.impactGrade) {
+      FxAmbient.pulse(grade >= 3 ? 1.0 : 0.6);
+    }
     if (!_settlementSkipRequested) {
       if (isFinisher) {
         _presentationClock.hitStop(
@@ -702,6 +705,7 @@ extension _GameViewStageFlow on _GameViewState {
 
   Future<void> _runStageClearFlow(int scoreAdded) async {
     _logStationClear(scoreAdded);
+    FxAmbient.setMood(FxAmbientMood.reward);
     final canContinue = await _runStageClearPresentation(scoreAdded);
     if (!canContinue) return;
     if (widget.debugCompleteRunOnClear) {
@@ -956,9 +960,10 @@ extension _GameViewStageFlow on _GameViewState {
     _mutate(() => _nextStationTransitionVisible = false);
   }
 
-  Future<bool?> _showShopScreen({bool autoAdvanceOnLoad = false}) {
+  Future<bool?> _showShopScreen({bool autoAdvanceOnLoad = false}) async {
     _removeBattleTutorialForPause();
-    return Navigator.of(context).push<bool>(
+    FxAmbient.setMood(FxAmbientMood.market);
+    final nextStage = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (context) => GameShopScreen(
@@ -1010,5 +1015,7 @@ extension _GameViewStageFlow on _GameViewState {
         ),
       ),
     );
+    if (mounted) FxAmbient.setMood(_battleAmbientMood);
+    return nextStage;
   }
 }
