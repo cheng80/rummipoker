@@ -74,9 +74,11 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
         ? widget.onReroll()
         : widget.onRerollItemOffers!(placement);
     if (failMessage != null) {
+      _startMarketDenyFeedback('reroll', failMessage);
       showBottomNotice(context, failMessage);
       return;
     }
+    GameFeedback.play(GameCue.reroll);
     _mutate(() {
       if (placement != null) {
         _pinnedItemOffers = null;
@@ -118,6 +120,11 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startMarketDenyFeedback('jester-buy', failMessage);
       showBottomNotice(context, failMessage);
       return;
+    }
+    GameFeedback.play(GameCue.buy);
+    if (widget.isFirstAcquisition?.call('jester', boughtOffer.contentId) ??
+        false) {
+      _startNewAcquisitionReveal(flightLabel);
     }
     _mutate(() {
       final market = _market;
@@ -184,6 +191,11 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startMarketDenyFeedback('item-buy', failMessage);
       showBottomNotice(context, failMessage);
       return;
+    }
+    GameFeedback.play(GameCue.buy);
+    if (widget.isFirstAcquisition?.call('item', boughtOffer.contentId) ??
+        false) {
+      _startNewAcquisitionReveal(flightLabel);
     }
     _mutate(() {
       _pinnedItemOffers = null;
@@ -258,6 +270,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       showBottomNotice(context, failMessage);
       return;
     }
+    GameFeedback.play(GameCue.buy);
     _mutate(() {
       final market = _market;
       _clampOfferPageForLane(market, _MarketOfferLane.tile);

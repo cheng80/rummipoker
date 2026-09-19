@@ -125,6 +125,36 @@ class _MarketOfferRevealState extends State<_MarketOfferReveal>
   }
 }
 
+/// 진열 카드가 정지 화면에서도 물성을 유지하도록 아주 느리게 부유시킨다.
+/// 동작 줄이기 또는 연출 끔에서는 ticker를 만들지 않는다.
+class _MarketOfferAmbientMotion extends StatelessWidget {
+  const _MarketOfferAmbientMotion({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !MotionPolicy.reduceMotion && MotionPolicy.juiceScale > 0;
+    if (!enabled) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: GamePresentationTimings.marketOfferAmbientCycle,
+      curve: Curves.easeInOut,
+      child: child,
+      builder: (context, value, child) {
+        final phase = math.sin(value * math.pi);
+        return SpringFollow(
+          offset: Offset(0, -1.6 * phase),
+          rotation: 0.004 * phase,
+          positionRate: 24,
+          rotationRate: 20,
+          child: child!,
+        );
+      },
+    );
+  }
+}
+
 String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
   return summary.snapshotSummaryLabel();
 }
@@ -191,7 +221,19 @@ class _GameShopOfferCard extends StatelessWidget {
           children: [
             _MarketDiscountTargetPulse(
               active: offer.discountSourceLabel != null,
-              child: _MarketOfferCardDisplay(child: card),
+              child: _MarketOfferCardDisplay(
+                child: Juice(
+                  trigger: selected ? 'selected' : 'idle',
+                  strength: 1.05,
+                  child: _MarketOfferAmbientMotion(
+                    child: SpringFollow(
+                      offset: selected ? const Offset(0, -4) : Offset.zero,
+                      scale: selected ? 1.05 : 1,
+                      child: card,
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -413,7 +455,19 @@ class _MarketItemOfferCard extends StatelessWidget {
           children: [
             _MarketDiscountTargetPulse(
               active: offer.discountSourceLabel != null,
-              child: _MarketOfferCardDisplay(child: card),
+              child: _MarketOfferCardDisplay(
+                child: Juice(
+                  trigger: selected ? 'selected' : 'idle',
+                  strength: 1.05,
+                  child: _MarketOfferAmbientMotion(
+                    child: SpringFollow(
+                      offset: selected ? const Offset(0, -4) : Offset.zero,
+                      scale: selected ? 1.05 : 1,
+                      child: card,
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -596,7 +650,20 @@ class _MarketTileOfferCard extends StatelessWidget {
                       kMarketOfferCardWidth + (kMarketCardSelectionInset * 2),
                   height:
                       kMarketOfferCardHeight + (kMarketCardSelectionInset * 2),
-                  child: _MarketTileFace(tile: offer.tile, selected: selected),
+                  child: Juice(
+                    trigger: selected ? 'selected' : 'idle',
+                    strength: 1.05,
+                    child: _MarketOfferAmbientMotion(
+                      child: SpringFollow(
+                        offset: selected ? const Offset(0, -4) : Offset.zero,
+                        scale: selected ? 1.05 : 1,
+                        child: _MarketTileFace(
+                          tile: offer.tile,
+                          selected: selected,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

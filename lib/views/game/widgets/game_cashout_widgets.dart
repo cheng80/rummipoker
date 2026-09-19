@@ -14,6 +14,7 @@ import '../../../resources/jester_translation_scope.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/fx/fx_sprites.dart';
 import '../game_presentation_timings.dart';
+import '../game_feedback_cues.dart';
 import 'game_jester_widgets.dart';
 import 'game_shared_widgets.dart';
 import 'game_ui_palette.dart';
@@ -109,24 +110,35 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
 
     await Future<void>.delayed(initialDelay);
     if (!mounted) return;
-    setState(() => _step = 1);
+    _setStep(1);
     await Future<void>.delayed(stepDelay);
     if (!mounted) return;
-    setState(() => _step = 2);
+    _setStep(2);
     await Future<void>.delayed(stepDelay);
     if (!mounted) return;
-    setState(() => _step = 3);
+    _setStep(3);
     await Future<void>.delayed(stepDelay);
     if (!mounted) return;
-    setState(() => _step = 4);
+    _setStep(4);
     await Future<void>.delayed(stepDelay);
     if (!mounted) return;
-    setState(() => _step = 5);
+    _setStep(5);
     if (widget.autoEnterMarketOnLoad && !widget.completesRun) {
       await Future<void>.delayed(autoAdvanceDelay);
       if (!mounted) return;
       _closeWith(GameCashOutAction.enterMarket);
     }
+  }
+
+  void _setStep(int step) {
+    if (!mounted) return;
+    GameFeedback.play(GameCue.cashOutCollect, pitch: 1 + (0.04 * (step - 1)));
+    setState(() => _step = step);
+  }
+
+  void _closeWithFeedback(GameCashOutAction action) {
+    GameFeedback.play(GameCue.buttonTap);
+    _closeWith(action);
   }
 
   void _closeWith(GameCashOutAction action) {
@@ -138,7 +150,16 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
   @override
   Widget build(BuildContext context) {
     final settlement = widget.settlement;
-    final hasBonuses = settlement.entries.any((e) => e.isBonus);
+    final bonusEntries = settlement.entries
+        .where((entry) => entry.isBonus)
+        .toList(growable: false);
+    final growthEntries = bonusEntries
+        .where((entry) => entry.isOverkillGrowthBonus)
+        .toList(growable: false);
+    final otherBonusEntries = bonusEntries
+        .where((entry) => !entry.isOverkillGrowthBonus)
+        .toList(growable: false);
+    final hasBonuses = bonusEntries.isNotEmpty;
     final deckRewardEntries = settlement.entries
         .where((entry) => entry.isDeckTileReward)
         .toList(growable: false);
@@ -224,10 +245,15 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                                     visible: _step >= 4,
                                     child: Column(
                                       children: [
+                                        if (growthEntries.isNotEmpty) ...[
+                                          _GameCashOutGrowthRewardSection(
+                                            entries: growthEntries,
+                                          ),
+                                          if (otherBonusEntries.isNotEmpty)
+                                            const SizedBox(height: 8),
+                                        ],
                                         for (final entry
-                                            in settlement.entries.where(
-                                              (entry) => entry.isBonus,
-                                            )) ...[
+                                            in otherBonusEntries) ...[
                                           _GameCashOutLine(
                                             leading: entry.leadingLabel,
                                             text: _bonusEntryDescription(
@@ -309,7 +335,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                             fontWeight: FontWeight.w900,
                             onPressed: _step < 3
                                 ? null
-                                : () => _closeWith(
+                                : () => _closeWithFeedback(
                                     GameCashOutAction.continueEndless,
                                   ),
                           ),
@@ -324,8 +350,9 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                             fontWeight: FontWeight.w900,
                             onPressed: _step < 3
                                 ? null
-                                : () =>
-                                      _closeWith(GameCashOutAction.completeRun),
+                                : () => _closeWithFeedback(
+                                    GameCashOutAction.completeRun,
+                                  ),
                           ),
                         ] else
                           GameChromeButton(
@@ -338,8 +365,9 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                             fontWeight: FontWeight.w900,
                             onPressed: _step < 3
                                 ? null
-                                : () =>
-                                      _closeWith(GameCashOutAction.enterMarket),
+                                : () => _closeWithFeedback(
+                                    GameCashOutAction.enterMarket,
+                                  ),
                           ),
                       ],
                     ),

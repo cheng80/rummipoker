@@ -110,6 +110,143 @@ class MarketGoldGainBadge extends StatelessWidget {
   }
 }
 
+class MarketCoinBurst extends StatelessWidget {
+  const MarketCoinBurst({super.key});
+
+  static const List<Offset> _targets = <Offset>[
+    Offset(-14, -10),
+    Offset(-4, -17),
+    Offset(8, -14),
+    Offset(15, -4),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: SizedBox(
+        width: 34,
+        height: 30,
+        child: TweenAnimationBuilder<double>(
+          key: const ValueKey('market-coin-burst'),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: GamePresentationTimings.marketGoldBadge,
+          curve: Curves.easeOutCubic,
+          builder: (context, value, _) {
+            final fade = (1 - value).clamp(0.0, 1.0);
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                for (final target in _targets)
+                  Positioned(
+                    left: 15 + target.dx * value,
+                    top: 13 + target.dy * value,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: GameUiPalette.actionGoldBright.withValues(
+                          alpha: 0.9 * fade,
+                        ),
+                        border: Border.all(
+                          color: GameUiPalette.specialGoldBorder.withValues(
+                            alpha: fade,
+                          ),
+                        ),
+                      ),
+                      child: const SizedBox.square(dimension: 5),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class MarketNewAcquisitionReveal extends StatelessWidget {
+  const MarketNewAcquisitionReveal({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(0, -0.08),
+        child: TweenAnimationBuilder<double>(
+          key: const ValueKey('market-new-acquisition-reveal'),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: GamePresentationTimings.marketNewReveal,
+          curve: Curves.easeOutBack,
+          builder: (context, value, _) {
+            final fade = (1 - ((value - 0.76) / 0.24)).clamp(0.0, 1.0);
+            return Transform.scale(
+              scale: 0.82 + (0.18 * value),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: GameUiPalette.specialGoldSurface.withValues(
+                    alpha: 0.96 * fade,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: GameUiPalette.actionGoldBright.withValues(
+                      alpha: fade,
+                    ),
+                    width: 1.4,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GameUiPalette.actionGoldBright.withValues(
+                        alpha: 0.28 * fade,
+                      ),
+                      blurRadius: 18,
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'NEW',
+                        style: TextStyle(
+                          color: GameUiPalette.actionGoldBright.withValues(
+                            alpha: fade,
+                          ),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: GameUiPalette.textPrimary.withValues(
+                            alpha: fade,
+                          ),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 /// Market 피드백 배지 공통 골격. 투명도를 색에 곱해 Opacity 합성을 피한다.
 class _MarketFeedbackBadgeBox extends StatelessWidget {
   const _MarketFeedbackBadgeBox({

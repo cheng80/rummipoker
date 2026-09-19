@@ -62,7 +62,12 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   }
 
   void _selectItemSlot(RummiMarketItemSlotView slot) {
-    if (slot.locked || slot.item == null) return;
+    if (slot.locked) {
+      _startMarketDenyFeedback('locked-slot', '잠긴 슬롯입니다.');
+      showBottomNotice(context, '잠긴 슬롯입니다.');
+      return;
+    }
+    if (slot.item == null) return;
     _mutate(() {
       if (_selectedItemSlotIndex == slot.slotIndex) {
         _clearMarketSelection();
@@ -84,6 +89,8 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   }
 
   void _selectShopTab(_MarketShopTab tab) {
+    if (_shopTab == tab) return;
+    GameFeedback.play(GameCue.marketTab);
     _mutate(() {
       _shopTab = tab;
       _clearMarketSelection();
@@ -91,6 +98,8 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   }
 
   void _selectOfferLane(_MarketOfferLane lane) {
+    if (_currentOfferLane == lane) return;
+    GameFeedback.play(GameCue.marketTab);
     _mutate(() {
       if (_shopTab == _MarketShopTab.cardsAndQuickSlots) {
         _mainOfferLane = lane;
@@ -113,9 +122,10 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
     final lane = _currentOfferLane;
     final pageCount = _pageCount(_offerEntriesForLane(_market, lane).length);
     if (pageCount <= 1) return;
-    _mutate(() {
-      _offerPages[lane] = (_offerPageFor(lane) + delta).clamp(0, pageCount - 1);
-    });
+    final nextPage = (_offerPageFor(lane) + delta).clamp(0, pageCount - 1);
+    if (nextPage == _offerPageFor(lane)) return;
+    GameFeedback.play(GameCue.marketPage, pitch: delta > 0 ? 1.04 : 0.94);
+    _mutate(() => _offerPages[lane] = nextPage);
   }
 
   _MarketOfferLane get _currentOfferLane =>

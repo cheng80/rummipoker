@@ -53,6 +53,7 @@ extension _GameShopSetupFlow on _GameShopScreenState {
     _slotUnlockPresentationScheduled = true;
     _activeSlotUnlockPresentation = market.pendingSlotUnlockPresentations;
     _slotUnlockBannerVisible = true;
+    GameFeedback.play(GameCue.unlock);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future<void>.delayed(kMarketSlotUnlockBannerDelay);
       if (!mounted) return;

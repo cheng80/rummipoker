@@ -18,7 +18,17 @@ class _MarketPurchaseFlightOverlay extends StatelessWidget {
             Positioned(
               top: 16,
               right: 42,
-              child: MarketGoldSpendBadge(spentGold: flight.spentGold),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  MarketGoldSpendBadge(spentGold: flight.spentGold),
+                  const Positioned(
+                    right: 34,
+                    top: 10,
+                    child: MarketCoinBurst(),
+                  ),
+                ],
+              ),
             ),
           TweenAnimationBuilder<double>(
             key: ValueKey<int>(flight.tick),
@@ -161,7 +171,13 @@ class _MarketSaleFlightOverlay extends StatelessWidget {
           Positioned(
             top: 16,
             right: 42,
-            child: MarketGoldGainBadge(gold: flight.sellGold),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                MarketGoldGainBadge(gold: flight.sellGold),
+                const Positioned(right: 34, top: 10, child: MarketCoinBurst()),
+              ],
+            ),
           ),
           TweenAnimationBuilder<double>(
             key: ValueKey<int>(flight.tick),
@@ -279,7 +295,17 @@ class _MarketItemUseFlightOverlay extends StatelessWidget {
             Positioned(
               top: 58,
               right: 220,
-              child: MarketGoldGainBadge(gold: flight.goldGain!),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  MarketGoldGainBadge(gold: flight.goldGain!),
+                  const Positioned(
+                    right: 34,
+                    top: 10,
+                    child: MarketCoinBurst(),
+                  ),
+                ],
+              ),
             ),
           TweenAnimationBuilder<double>(
             key: ValueKey<int>(flight.tick),
@@ -353,60 +379,101 @@ class _MarketItemUseFlightCard extends StatelessWidget {
   }
 }
 
-class _MarketGoldChip extends StatelessWidget {
+class _MarketGoldChip extends StatefulWidget {
   const _MarketGoldChip({required this.gold});
 
   final int gold;
 
   @override
+  State<_MarketGoldChip> createState() => _MarketGoldChipState();
+}
+
+class _MarketGoldChipState extends State<_MarketGoldChip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late int _from = widget.gold;
+  late int _to = widget.gold;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: GamePresentationTimings.marketGoldBadge,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _MarketGoldChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.gold == widget.gold) return;
+    final current = lerpDouble(_from, _to, _controller.value)!.round();
+    _from = current;
+    _to = widget.gold;
+    _controller.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 118,
-      height: 48,
-      child: GameHudChip(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'GOLD',
-              style: gameHudLabelStyle,
-              maxLines: 1,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 1),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Semantics(
-                    label: 'Gold',
-                    value: '$gold',
-                    child: ExcludeSemantics(
-                      child: Image.asset(
-                        AssetPaths.uiGreed,
-                        width: 20,
-                        height: 20,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) =>
-                            const _MarketGoldFallbackIcon(size: 20),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final gold = lerpDouble(_from, _to, _controller.value)!.round();
+        return SizedBox(
+          width: 118,
+          height: 48,
+          child: GameHudChip(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'GOLD',
+                  style: gameHudLabelStyle,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 1),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Semantics(
+                        label: 'Gold',
+                        value: '$gold',
+                        child: ExcludeSemantics(
+                          child: Image.asset(
+                            AssetPaths.uiGreed,
+                            width: 20,
+                            height: 20,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) =>
+                                const _MarketGoldFallbackIcon(size: 20),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '$gold',
+                          maxLines: 1,
+                          textAlign: TextAlign.right,
+                          style: gameHudValueStyle.copyWith(fontSize: 20),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '$gold',
-                      maxLines: 1,
-                      textAlign: TextAlign.right,
-                      style: gameHudValueStyle.copyWith(fontSize: 20),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
