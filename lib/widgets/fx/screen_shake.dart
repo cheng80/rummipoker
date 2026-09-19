@@ -53,6 +53,16 @@ class ScreenShake extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 테스트 사이에 trauma·시간·티커 상태가 남지 않게 초기 상태로 되돌린다.
+  @visibleForTesting
+  void debugReset() {
+    _trauma = 0;
+    _time = 0;
+    _lastTick = Duration.zero;
+    _ticker?.dispose();
+    _ticker = null;
+  }
+
   void reset() {
     _trauma = 0;
     _ticker?.stop();

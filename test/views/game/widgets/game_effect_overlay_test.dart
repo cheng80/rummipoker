@@ -11,6 +11,9 @@ import 'package:rummipoker/views/game/widgets/game_effect_overlay.dart';
 import 'package:rummipoker/widgets/fx/fx_layer.dart';
 
 void main() {
+  setUp(Fx.debugReset);
+  tearDown(Fx.debugReset);
+
   testWidgets('보드 라인 정산 단계에서 점수 조각 연출을 띄운다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(

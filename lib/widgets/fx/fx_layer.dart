@@ -254,6 +254,13 @@ class FxController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 테스트 사이에 파티클과 호스트 wake 콜백이 남지 않게 초기 상태로 되돌린다.
+  @visibleForTesting
+  void debugReset() {
+    _particles.clear();
+    _wake = null;
+  }
+
   // drawRawAtlas 버퍼. 프레임마다 새로 만들지 않도록 키워서 재사용한다.
   Float32List _transforms = Float32List(0);
   Float32List _rects = Float32List(0);
@@ -351,6 +358,10 @@ class Fx {
   Fx._();
 
   static final FxController controller = FxController();
+
+  /// 전역 [controller]를 테스트용으로 초기화한다.
+  @visibleForTesting
+  static void debugReset() => controller.debugReset();
 
   /// [context]의 로컬 좌표 [localPoints]에 파티클을 발사한다.
   static void emit(

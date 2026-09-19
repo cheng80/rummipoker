@@ -18,10 +18,14 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await StorageHelper.init();
     MotionPolicy.debugReduceMotionOverride = false;
+    ScreenShake.instance.debugReset();
+    Fx.debugReset();
   });
 
   tearDown(() {
     MotionPolicy.debugReduceMotionOverride = null;
+    ScreenShake.instance.debugReset();
+    Fx.debugReset();
   });
 
   group('ScreenShake', () {
@@ -31,13 +35,16 @@ void main() {
       shake.add(0.3);
       expect(shake.trauma, closeTo(0.6, 1e-9));
       shake.advance(0.25);
-      expect(shake.trauma, closeTo(0.6 - ScreenShake.decayPerSecond * 0.25,
-          1e-9));
+      expect(
+        shake.trauma,
+        closeTo(0.6 - ScreenShake.decayPerSecond * 0.25, 1e-9),
+      );
       final magnitude = shake.offset.distance;
       expect(
         magnitude,
-        lessThanOrEqualTo(shake.trauma * shake.trauma * ScreenShake.maxOffset *
-            1.5),
+        lessThanOrEqualTo(
+          shake.trauma * shake.trauma * ScreenShake.maxOffset * 1.5,
+        ),
       );
       shake.advance(2);
       expect(shake.trauma, 0);
