@@ -13,6 +13,9 @@ import '../services/in_app_review_service.dart';
 import '../services/active_run_save_service.dart';
 import '../services/debug_run_fixture_service.dart';
 import '../utils/common_ui.dart';
+import '../services/game_settings.dart';
+import '../widgets/fx/entrance_in.dart';
+import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
@@ -41,9 +44,25 @@ class _TitleViewState extends ConsumerState<TitleView>
   final ScrollController _scrollController = ScrollController();
   late final Future<PackageInfo> _packageInfoFuture;
 
+  // --- T4: 앱을 켜고 처음 타이틀에 올 때만 등장 연출을 한다.
+  static bool _entrancePlayed = false;
+  late final bool _playEntrance;
+
+  /// 진입 카드 묶음 [index]의 등장.
+  Widget _entrance(int index, Widget child) => EntranceIn(
+    enabled: _playEntrance,
+    delay:
+        GamePresentationTimings.titleLogoSettle * 0.5 +
+        GamePresentationTimings.flowEntranceStagger * index,
+    duration: GamePresentationTimings.flowEntranceIn,
+    child: child,
+  );
+
   @override
   void initState() {
     super.initState();
+    _playEntrance = !_entrancePlayed;
+    _entrancePlayed = true;
     _packageInfoFuture = PackageInfo.fromPlatform();
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
@@ -374,13 +393,24 @@ class _TitleViewState extends ConsumerState<TitleView>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 28),
-                    Semantics(
-                      label: context.tr('gameTitleBlock').replaceAll('\n', ' '),
-                      image: true,
-                      child: Image.asset(
-                        AssetPaths.uiRummiPokerLogo,
-                        width: 318,
-                        fit: BoxFit.contain,
+                    EntranceIn(
+                      enabled: _playEntrance,
+                      duration: GamePresentationTimings.titleLogoSettle,
+                      offset: const Offset(0, -0.35),
+                      scaleFrom: 1.08,
+                      curve: Curves.easeOutBack,
+                      child: _TitleLogoIdle(
+                        child: Semantics(
+                          label: context
+                              .tr('gameTitleBlock')
+                              .replaceAll('\n', ' '),
+                          image: true,
+                          child: Image.asset(
+                            AssetPaths.uiRummiPokerLogo,
+                            width: 318,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -397,109 +427,126 @@ class _TitleViewState extends ConsumerState<TitleView>
                       ),
                     ),
                     const SizedBox(height: 24),
-                    HomeSection(
-                      title: context.tr('homeContinueSectionTitle'),
-                      subtitle: hasStoredActiveRun
-                          ? context.tr('homeContinueSectionReady')
-                          : context.tr('homeContinueSectionEmpty'),
-                      child: Column(
-                        children: [
-                          HomeEntryCard(
-                            key: const ValueKey('home-entry-continue'),
-                            title: context.tr('continueGame'),
-                            description:
-                                storedRunSummary?.currentLocationSummary ??
-                                (hasStoredActiveRun
-                                    ? context.tr('homeContinueReadyDescription')
-                                    : context.tr(
-                                        'homeContinueEmptyDescription',
-                                      )),
-                            accent: GameUiPalette.actionGold,
-                            enabled: hasStoredActiveRun,
-                            onTap: _openContinueMenu,
-                          ),
-                          const SizedBox(height: 12),
-                          HomeEntryCard(
-                            title: context.tr('runInfoTitle'),
-                            description: hasStoredActiveRun
-                                ? context.tr('homeRunInfoReadyDescription')
-                                : context.tr('homeRunInfoEmptyDescription'),
-                            accent: GameUiPalette.actionGoldBright,
-                            onTap: _openTitleRunInfo,
-                          ),
-                          const SizedBox(height: 12),
-                          HomeEntryCard(
-                            title: '북마크 불러오기',
-                            description: '저장해 둔 3개 슬롯 중 하나에서 런을 복원합니다.',
-                            accent: GameUiPalette.titleDebugBlue,
-                            onTap: _openBookmarkLoadMenu,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    HomeSection(
-                      title: context.tr('homeNewRunSectionTitle'),
-                      subtitle: context.tr('homeNewRunSectionSubtitle'),
-                      child: Column(
-                        children: [
-                          HomeEntryCard(
-                            title: context.tr('homeNewRunTitle'),
-                            description: context.tr('homeNewRunDescription'),
-                            accent: GameUiPalette.actionInfoBlue,
-                            onTap: () => context.push(RoutePaths.newRun),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    HomeSection(
-                      title: context.tr('homeOtherMenuSectionTitle'),
-                      subtitle: context.tr('homeOtherMenuSectionSubtitle'),
-                      child: HomeEntryCard(
-                        title: context.tr('archiveTitle'),
-                        description: context.tr('homeArchiveDescription'),
-                        accent: GameUiPalette.titleDebugBlue,
-                        onTap: () => context.push(RoutePaths.archive),
-                      ),
-                    ),
-                    if (_showDebugEntries) ...[
-                      const SizedBox(height: 18),
+                    _entrance(
+                      0,
                       HomeSection(
-                        title: '디버그',
-                        subtitle: '개발과 검증용 진입만 모아 둔 영역',
+                        title: context.tr('homeContinueSectionTitle'),
+                        subtitle: hasStoredActiveRun
+                            ? context.tr('homeContinueSectionReady')
+                            : context.tr('homeContinueSectionEmpty'),
                         child: Column(
                           children: [
                             HomeEntryCard(
-                              title: context.tr('homeSpecialModeTitle'),
-                              description: context.tr(
-                                'homeSpecialModeDescription',
-                              ),
-                              accent: GameUiPalette.titleDebugPurple,
-                              onTap: () => context.push(RoutePaths.trial),
+                              key: const ValueKey('home-entry-continue'),
+                              title: context.tr('continueGame'),
+                              description:
+                                  storedRunSummary?.currentLocationSummary ??
+                                  (hasStoredActiveRun
+                                      ? context.tr(
+                                          'homeContinueReadyDescription',
+                                        )
+                                      : context.tr(
+                                          'homeContinueEmptyDescription',
+                                        )),
+                              accent: GameUiPalette.actionGold,
+                              enabled: hasStoredActiveRun,
+                              onTap: _openContinueMenu,
                             ),
                             const SizedBox(height: 12),
                             HomeEntryCard(
-                              title: '디버그 픽스처',
-                              description: '검증용 런 상태로 바로 시작',
-                              accent: GameUiPalette.titleDebugPurpleDark,
-                              onTap: _openDebugFixtureMenu,
+                              title: context.tr('runInfoTitle'),
+                              description: hasStoredActiveRun
+                                  ? context.tr('homeRunInfoReadyDescription')
+                                  : context.tr('homeRunInfoEmptyDescription'),
+                              accent: GameUiPalette.actionGoldBright,
+                              onTap: _openTitleRunInfo,
+                            ),
+                            const SizedBox(height: 12),
+                            HomeEntryCard(
+                              title: '북마크 불러오기',
+                              description: '저장해 둔 3개 슬롯 중 하나에서 런을 복원합니다.',
+                              accent: GameUiPalette.titleDebugBlue,
+                              onTap: _openBookmarkLoadMenu,
                             ),
                           ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 18),
+                    _entrance(
+                      1,
+                      HomeSection(
+                        title: context.tr('homeNewRunSectionTitle'),
+                        subtitle: context.tr('homeNewRunSectionSubtitle'),
+                        child: Column(
+                          children: [
+                            HomeEntryCard(
+                              title: context.tr('homeNewRunTitle'),
+                              description: context.tr('homeNewRunDescription'),
+                              accent: GameUiPalette.actionInfoBlue,
+                              onTap: () => context.push(RoutePaths.newRun),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _entrance(
+                      2,
+                      HomeSection(
+                        title: context.tr('homeOtherMenuSectionTitle'),
+                        subtitle: context.tr('homeOtherMenuSectionSubtitle'),
+                        child: HomeEntryCard(
+                          title: context.tr('archiveTitle'),
+                          description: context.tr('homeArchiveDescription'),
+                          accent: GameUiPalette.titleDebugBlue,
+                          onTap: () => context.push(RoutePaths.archive),
+                        ),
+                      ),
+                    ),
+                    if (_showDebugEntries) ...[
+                      const SizedBox(height: 18),
+                      _entrance(
+                        3,
+                        HomeSection(
+                          title: '디버그',
+                          subtitle: '개발과 검증용 진입만 모아 둔 영역',
+                          child: Column(
+                            children: [
+                              HomeEntryCard(
+                                title: context.tr('homeSpecialModeTitle'),
+                                description: context.tr(
+                                  'homeSpecialModeDescription',
+                                ),
+                                accent: GameUiPalette.titleDebugPurple,
+                                onTap: () => context.push(RoutePaths.trial),
+                              ),
+                              const SizedBox(height: 12),
+                              HomeEntryCard(
+                                title: '디버그 픽스처',
+                                description: '검증용 런 상태로 바로 시작',
+                                accent: GameUiPalette.titleDebugPurpleDark,
+                                onTap: _openDebugFixtureMenu,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 18),
-                    HomeSection(
-                      title: context.tr('settings'),
-                      subtitle: context.tr('homeSettingsSectionSubtitle'),
-                      child: HomeEntryCard(
+                    _entrance(
+                      4,
+                      HomeSection(
                         title: context.tr('settings'),
-                        description: context.tr('homeSettingsDescription'),
-                        accent: GameUiPalette.titleExternalBlue,
-                        onTap: () {
-                          context.push(RoutePaths.setting);
-                        },
+                        subtitle: context.tr('homeSettingsSectionSubtitle'),
+                        child: HomeEntryCard(
+                          title: context.tr('settings'),
+                          description: context.tr('homeSettingsDescription'),
+                          accent: GameUiPalette.titleExternalBlue,
+                          onTap: () {
+                            context.push(RoutePaths.setting);
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -512,9 +559,12 @@ class _TitleViewState extends ConsumerState<TitleView>
                           final text = v != null
                               ? '${context.tr('appVersion')} ${v.version}+${v.buildNumber}'
                               : context.tr('appVersion');
-                          return Center(
+                          // 버전 값이 늦게 와도 툭 튀지 않게 fade로 바꾼다.
+                          return AnimatedSwitcher(
+                            duration: GamePresentationTimings.flowEntranceIn,
                             child: Text(
                               text,
+                              key: ValueKey(text),
                               style: TextStyle(
                                 color: GameUiPalette.textPrimary.withValues(
                                   alpha: 0.58,
@@ -644,6 +694,63 @@ class _DebugFixtureOption extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// 테스트에서 '앱을 켜고 처음 온 타이틀' 상태로 되돌린다.
+@visibleForTesting
+void debugResetTitleEntrance() => _TitleViewState._entrancePlayed = false;
+
+/// 연출 강도 '강'에서만 로고가 천천히 떠다닌다. 기본 강도에서는 멈춰 있다.
+class _TitleLogoIdle extends StatefulWidget {
+  const _TitleLogoIdle({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_TitleLogoIdle> createState() => _TitleLogoIdleState();
+}
+
+class _TitleLogoIdleState extends State<_TitleLogoIdle>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _idle;
+  late final bool _on =
+      GameSettings.fxIntensity == FxIntensity.strong &&
+      !MotionPolicy.reduceMotion;
+
+  @override
+  void initState() {
+    super.initState();
+    _idle = AnimationController(
+      vsync: this,
+      duration: GamePresentationTimings.titleLogoIdle,
+    );
+    // ponytail: '강'에서만 도는 의도된 상시 루프. 화면을 떠나면 dispose로 멈춘다.
+    if (_on) _idle.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _idle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_on) return widget.child;
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _idle,
+        child: widget.child,
+        builder: (context, child) {
+          final t = Curves.easeInOut.transform(_idle.value);
+          return Transform.translate(
+            offset: Offset(0, -4 + 8 * t),
+            child: Transform.rotate(angle: -0.008 + 0.016 * t, child: child),
+          );
+        },
       ),
     );
   }
