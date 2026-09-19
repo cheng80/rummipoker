@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import '../providers/features/rummi_poker_grid/title_notifier.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_facade.dart';
+import '../services/archive_seen_service.dart';
 import '../services/in_app_review_service.dart';
 import '../services/active_run_save_service.dart';
 import '../services/debug_run_fixture_service.dart';
@@ -69,6 +72,8 @@ class _TitleViewState extends ConsumerState<TitleView>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(titleNotifierProvider.notifier).refreshAvailability();
+      // 키가 없는 기존 사용자는 지금까지의 발견을 모두 확인한 것으로 맞춘다.
+      unawaited(ArchiveSeenService.ensureInitialized());
     });
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) InAppReviewService.maybeRequestReviewOnTitleIfEligible();

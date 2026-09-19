@@ -180,6 +180,8 @@ class _ArchiveSelectableCard extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.child,
+    this.isNew = false,
+    this.flipTick = 0,
   });
 
   final double width;
@@ -188,6 +190,12 @@ class _ArchiveSelectableCard extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final Widget child;
+
+  /// 마지막으로 확인한 뒤 새로 발견한 항목.
+  final bool isNew;
+
+  /// 바뀌면 카드가 한 번 뒤집히며 공개된다.
+  final int flipTick;
 
   static const double _labelGap = 4;
   static const double _labelHeight = _ArchiveStatusBadge.height;
@@ -232,7 +240,20 @@ class _ArchiveSelectableCard extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   height: height,
-                  child: child,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned.fill(
+                        child: _ArchiveFlipReveal(tick: flipTick, child: child),
+                      ),
+                      if (isNew)
+                        const Positioned(
+                          top: -4,
+                          right: -4,
+                          child: _ArchiveNewTag(),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -265,6 +286,27 @@ class _ArchiveStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 상태마다 등장 결을 다르게 한다. 미발견은 그대로, 발견은 아래에서 올라오고,
+    // 획득·클리어는 튀어나오듯 커진다.
+    final badge = _badge();
+    return switch (status) {
+      _ArchiveCollectionStatus.undiscovered => badge,
+      _ArchiveCollectionStatus.discovered => EntranceIn(
+        duration: GamePresentationTimings.flowEntranceIn,
+        offset: const Offset(0, 0.8),
+        child: badge,
+      ),
+      _ => EntranceIn(
+        duration: GamePresentationTimings.flowEntranceIn,
+        offset: Offset.zero,
+        scaleFrom: 0.5,
+        curve: Curves.easeOutBack,
+        child: badge,
+      ),
+    };
+  }
+
+  Widget _badge() {
     return Container(
       width: width,
       height: height,
@@ -514,4 +556,85 @@ String _archiveItemRarityLabel(ItemRarity rarity) {
     ItemRarity.rare => '레어',
     ItemRarity.legendary => '전설',
   };
+}
+
+class _ArchiveNewTag extends StatelessWidget {
+  const _ArchiveNewTag();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('archive-new-tag'),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: GameUiPalette.actionGoldBright,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: GameUiPalette.ink.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        'flowArchiveNew'.tr(),
+        style: const TextStyle(
+          color: GameUiPalette.ink,
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+/// [tick]이 바뀌면 카드가 옆면(90도)에서 앞면으로 한 번 돌아 공개된다.
+class _ArchiveFlipReveal extends StatefulWidget {
+  const _ArchiveFlipReveal({required this.tick, required this.child});
+
+  final int tick;
+  final Widget child;
+
+  @override
+  State<_ArchiveFlipReveal> createState() => _ArchiveFlipRevealState();
+}
+
+class _ArchiveFlipRevealState extends State<_ArchiveFlipReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _flip = AnimationController(
+    vsync: this,
+    duration: GamePresentationTimings.archiveNewReveal,
+    value: 1,
+  );
+
+  @override
+  void didUpdateWidget(covariant _ArchiveFlipReveal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tick != oldWidget.tick &&
+        widget.tick > 0 &&
+        MotionPolicy.juiceScale > 0) {
+      _flip.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _flip.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _flip,
+      child: widget.child,
+      builder: (context, child) {
+        final t = Curves.easeOutBack.transform(_flip.value);
+        return Transform(
+          key: const ValueKey('archive-flip-reveal'),
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0015)
+            ..rotateY((1 - t) * math.pi / 2),
+          child: child,
+        );
+      },
+    );
+  }
 }
