@@ -19,6 +19,12 @@ void main() {
   });
 
   testWidgets('승리 장면은 탭으로 건너뛰고, 탭이 없으면 제한 시간 안에 한 번만 끝난다', (tester) async {
+    tester.view.physicalSize = const Size(390, 750);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
     var done = 0;
     Widget overlay() => EasyLocalization(
       supportedLocales: const [Locale('ko')],
@@ -50,6 +56,11 @@ void main() {
       lessThanOrEqualTo(const Duration(milliseconds: 2500)),
     );
     expect(find.text('8'), findsNWidgets(2), reason: '수치 tally가 끝값에 닿는다');
+    for (final value in tester.widgetList<Text>(find.text('8'))) {
+      final rect = tester.getRect(find.byWidget(value));
+      expect(rect.right, lessThanOrEqualTo(390), reason: '폰 프레임 안에 남는다');
+      expect(rect.left, greaterThanOrEqualTo(0));
+    }
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(overlay());

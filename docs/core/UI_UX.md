@@ -69,6 +69,8 @@ Market은 `/game` 위의 fullscreen dialog이며 active save scene은 `shop`이�
 
 Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기억 카드, 발견/구매한 콘텐츠, Boss/Station 기록을 표시한다. 미수집 항목과 수집 항목을 구분하고 runtime 구매나 active run을 바꾸지 않는다. load 전에는 기본 state와 loading card를 표시한다. 현재 Future error 전용 상태와 retry button은 구현돼 있지 않으므로 이를 복구 완료로 간주하지 않는다. 근거는 [archive_view.dart](../../lib/views/archive_view.dart)와 [archive_view_test.dart](../../test/views/archive_view_test.dart)다.
 
+Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별도 키 `archive_acknowledged_ids_v1`에 저장한다. 기존 발견 기록과 저장 포맷은 바꾸지 않으며, 키가 없는 사용자는 지금까지 발견한 것을 모두 확인한 것으로 처리한다.
+
 ## 튜토리얼과 팝업이 겹칠 때의 우선순위
 
 위계는 `screen content < tutorial overlay < presentation pause veil / modal dialog`다. options, pause, focus-out, route 전환 전에 tutorial overlay를 먼저 제거하므로 tutorial이 dialog 위에 남지 않는다.
@@ -133,6 +135,18 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 - 화면 전환: route는 280ms fade와 짧은 slide로 바뀐다. 디버그 픽스처, `auto_*`·`debug_*` 쿼리, OS 동작 줄이기에서는 즉시 전환해 풀런봇과 자동 흐름을 늦추지 않는다. 타이틀에서 전투로 나갈 때 웹 BGM은 320ms 동안 줄어든 뒤 멈춘다.
 - 동작 줄이기에서는 흔들림, juice, 팝업 scale이 모두 빠진다. 소리, 햅틱, fade는 남는다. 시간 값은 `GamePresentationTimings`에, cue 매핑은 `gameFeedbackCues`의 T0 구역에 있다.
 
+### 흐름과 메타 화면
+
+한 런을 여는 순간, 닫는 순간, 그 사이를 잇는 화면은 같은 규칙으로 반응한다. 연출은 결과 state를 바꾸지 않으며, 읽어야 하는 글자를 가리지 않는다.
+
+- Boss 인트로: Boss Station에 들어가면 붉은 띠가 들어오고 Boss 이름이 도장처럼 찍히며 제약 아이콘이 차례로 떨어진다. `bossIntro` cue와 가벼운 흔들림을 쓴다. 배너는 자동으로 닫히지 않고 플레이어가 확인 버튼을 눌러야 닫힌다. 닫히면 제약 표시가 배너 자리에서 보드·손패의 해당 칸으로 날아가고, 닿는 순간 기존 `GameStampIn` 도장이 찍힌다. 그때까지 보드의 Boss 표시는 숨어 있다. 자동 튜토리얼은 이 흐름이 끝난 뒤 시작한다.
+- Blind Select: 카드가 80ms 간격으로 차례로 들어오고, 상태 배지는 방금 깬 tier를 OPEN에서 CLEAR로, 새로 열린 tier를 LOCKED에서 OPEN으로 짧게 바꾼다. Boss 카드의 위험 표시는 세 번 맥동하고 멈춘다. play를 누르면 고른 카드가 커지고 나머지가 물러난 뒤 240ms 안에 전투로 넘어간다. 화면 위쪽 진행 띠는 S1부터 마지막 Station까지를 그리고, Market에서 돌아와 Station이 올라가면 현재 위치가 한 칸 나아간다. 무한 구간은 모든 칸을 완료로 두고 끝에 무한 표시를 붙인다. 띠는 저장 필드를 더하지 않고 현재 run 상태만 읽는다.
+- 런 완료: 마지막 Boss를 깬 뒤 기록 저장과 save 정리가 끝나면 승리 장면이 뜬다. `victory` cue와 코인·불꽃 뒤 런 요약 수치가 차례로 count-up된다. 수치는 이미 있는 run 기록에서만 가져온다. 2.4초 안에 스스로 끝나고 어디를 탭해도 바로 끝나며, 끝나면 BGM이 줄어든 뒤 타이틀로 간다.
+- 게임 오버: 기존 2초 위험 fade 동안 전체 소리가 `rampGlobalPitch(0.5, ...)`로 내려가고 보드가 Transform으로 가라앉으며 기운다. 채도를 빼는 대신 어두운 막을 색 알파로 겹친다. 결과 창의 기억 카드는 세로축으로 한 번 돌아 공개되고, 네 버튼은 의미에 맞는 cue를 쓴다. 어느 출구로 나가도, GameView가 사라질 때도 전역 pitch는 1로 돌아온다.
+- 타이틀과 웹 splash: 앱을 켜고 처음 타이틀에 올 때만 로고가 내려앉고 진입 카드가 차례로 들어온다. 버전 문자열은 fade로 바뀐다. 상시 idle 움직임은 연출 강도 `강`에서만 돌고 화면을 떠나면 멈춘다. 웹 splash는 첫 프레임 위에서 240ms fade한 뒤 사라진다.
+- Archive: 수집 카운터는 0에서 count-up되고, 상태 배지는 미발견·발견·획득이 서로 다른 결로 들어온다. 마지막으로 확인한 뒤 새로 발견한 항목에는 `NEW` 꼬리표가 붙고, 그 카드를 처음 열면 한 번 뒤집히며 공개된다.
+- 동작 줄이기와 연출 강도 `끔`에서는 위 움직임이 모두 빠지고 같은 정보와 같은 탭으로 흐름이 이어진다. `auto_*` 자동 흐름에서는 Boss 제약 비행과 승리 장면을 건너뛰어 봇을 늦추지 않는다. 시간 값은 `GamePresentationTimings`의 T4 구역에 있다.
+
 ## 접근성과 언어 지원 현황
 
 | 영역 | 구현됨 | 테스트로 보호됨 | 검증 gap |
@@ -159,6 +173,7 @@ Archive는 `RunUnlockState`, Jester catalog, Item catalog를 함께 읽어 기�
 - settings/locale/archive: [setting_view_test.dart](../../test/views/setting_view_test.dart), [setting_view_effects_test.dart](../../test/views/setting_view_effects_test.dart), [archive_view_test.dart](../../test/views/archive_view_test.dart)
 - 공통 입력·팝업·전환: [common_input_feedback_test.dart](../../test/utils/common_input_feedback_test.dart), [title_continue_deny_test.dart](../../test/views/title_continue_deny_test.dart), [new_run_modifier_unlock_feedback_test.dart](../../test/views/new_run_modifier_unlock_feedback_test.dart)
 - 전투 레인 연출: [settlement_speed_equivalence_test.dart](../../test/views/game/battle_lane/settlement_speed_equivalence_test.dart), [settlement_pacing_test.dart](../../test/views/game/battle_lane/settlement_pacing_test.dart), [contributor_clear_test.dart](../../test/views/game/battle_lane/contributor_clear_test.dart), [battle_input_feel_test.dart](../../test/views/game/battle_lane/battle_input_feel_test.dart)
+- 흐름과 메타 화면: [boss_intro_flow_test.dart](../../test/views/game/flow_meta/boss_intro_flow_test.dart), [run_end_flow_test.dart](../../test/views/game/flow_meta/run_end_flow_test.dart), [run_complete_flow_test.dart](../../test/views/game/flow_meta/run_complete_flow_test.dart), [run_victory_overlay_test.dart](../../test/views/game/flow_meta/run_victory_overlay_test.dart), [blind_select_flow_test.dart](../../test/views/flow_meta/blind_select_flow_test.dart), [title_entrance_test.dart](../../test/views/flow_meta/title_entrance_test.dart), [archive_new_test.dart](../../test/views/flow_meta/archive_new_test.dart), [archive_seen_service_test.dart](../../test/services/archive_seen_service_test.dart)
 - 연출 기반: [presentation_clock_test.dart](../../test/widgets/fx/presentation_clock_test.dart), [motion_fx_test.dart](../../test/widgets/fx/motion_fx_test.dart), [game_feedback_test.dart](../../test/resources/game_feedback_test.dart), [rummi_poker_sfx_test.mjs](../../test/web/rummi_poker_sfx_test.mjs)
 
 

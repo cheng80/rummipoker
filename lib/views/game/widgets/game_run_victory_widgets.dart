@@ -117,55 +117,57 @@ class _GameRunVictoryOverlayState extends State<GameRunVictoryOverlay>
               parent: _controller,
               curve: const Interval(0, 0.12, curve: Curves.easeOut),
             ),
-            child: ColoredBox(color: GameUiPalette.ink.withValues(alpha: 0.74)),
+            child: ColoredBox(color: GameUiPalette.ink.withValues(alpha: 0.88)),
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  EntranceIn(
-                    duration: GamePresentationTimings.flowEntranceIn,
-                    offset: Offset.zero,
-                    scaleFrom: 1.6,
-                    curve: Curves.easeOutBack,
-                    child: Text(
-                      context.tr('flowVictoryTitle'),
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                      style: const TextStyle(
-                        fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        color: GameUiPalette.actionGoldBright,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w900,
-                        shadows: [
-                          Shadow(
-                            color: GameUiPalette.ink,
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    EntranceIn(
+                      duration: GamePresentationTimings.flowEntranceIn,
+                      offset: Offset.zero,
+                      scaleFrom: 1.6,
+                      curve: Curves.easeOutBack,
+                      child: Text(
+                        context.tr('flowVictoryTitle'),
+                        textAlign: TextAlign.center,
+                        softWrap: true,
+                        style: const TextStyle(
+                          fontFamily: AssetPaths.fontNexonLv2Gothic,
+                          color: GameUiPalette.actionGoldBright,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w900,
+                          shadows: [
+                            Shadow(
+                              color: GameUiPalette.ink,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 22),
-                  for (var i = 0; i < widget.stats.length; i++)
-                    _VictoryStatRow(
-                      key: ValueKey('run-victory-stat-$i'),
-                      stat: widget.stats[i],
-                      revealed: i < _revealedStats,
+                    const SizedBox(height: 22),
+                    for (var i = 0; i < widget.stats.length; i++)
+                      _VictoryStatRow(
+                        key: ValueKey('run-victory-stat-$i'),
+                        stat: widget.stats[i],
+                        revealed: i < _revealedStats,
+                      ),
+                    const SizedBox(height: 26),
+                    Text(
+                      context.tr('flowVictorySkipHint'),
+                      style: TextStyle(
+                        color: GameUiPalette.textPrimary.withValues(alpha: 0.6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  const SizedBox(height: 26),
-                  Text(
-                    context.tr('flowVictorySkipHint'),
-                    style: TextStyle(
-                      color: GameUiPalette.textPrimary.withValues(alpha: 0.6),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
