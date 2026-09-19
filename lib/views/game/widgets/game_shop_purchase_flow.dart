@@ -48,6 +48,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GameActionButton(
+                    key: const ValueKey('market-reroll-confirm'),
                     label: _rerollConfirmActionLabel(rerollQuote),
                     background: GameUiPalette.actionGold,
                     foreground: GameUiPalette.ink,
@@ -78,7 +79,6 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       showBottomNotice(context, failMessage);
       return;
     }
-    GameFeedback.play(GameCue.reroll);
     _mutate(() {
       if (placement != null) {
         _pinnedItemOffers = null;
@@ -95,6 +95,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startEffectPresentation(effectPresentation);
     }
     await widget.onStateChanged();
+    GameFeedback.play(GameCue.reroll);
   }
 
   void _buySelected() {
@@ -123,10 +124,6 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startMarketDenyFeedback('jester-buy', failMessage);
       showBottomNotice(context, failMessage);
       return;
-    }
-    GameFeedback.play(GameCue.buy);
-    if (isFirstAcquisition) {
-      _startNewAcquisitionReveal(flightLabel);
     }
     _mutate(() {
       final market = _market;
@@ -169,6 +166,10 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startEffectPresentation(effectPresentation);
     }
     _queueStateSave();
+    GameFeedback.play(GameCue.buy);
+    if (isFirstAcquisition) {
+      _startNewAcquisitionReveal(flightLabel);
+    }
   }
 
   void _buySelectedItem() {
@@ -195,10 +196,6 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startMarketDenyFeedback('item-buy', failMessage);
       showBottomNotice(context, failMessage);
       return;
-    }
-    GameFeedback.play(GameCue.buy);
-    if (isFirstAcquisition) {
-      _startNewAcquisitionReveal(flightLabel);
     }
     _mutate(() {
       _pinnedItemOffers = null;
@@ -255,6 +252,10 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startEffectPresentation(effectPresentation);
     }
     _queueStateSave();
+    GameFeedback.play(GameCue.buy);
+    if (isFirstAcquisition) {
+      _startNewAcquisitionReveal(flightLabel);
+    }
   }
 
   void _buySelectedTile() {
@@ -273,7 +274,6 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       showBottomNotice(context, failMessage);
       return;
     }
-    GameFeedback.play(GameCue.buy);
     _mutate(() {
       final market = _market;
       _clampOfferPageForLane(market, _MarketOfferLane.tile);
@@ -293,6 +293,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       );
     });
     _queueStateSave();
+    GameFeedback.play(GameCue.buy);
     showBottomNotice(context, '${_tileLabel(boughtOffer.tile)} 덱 추가');
   }
 

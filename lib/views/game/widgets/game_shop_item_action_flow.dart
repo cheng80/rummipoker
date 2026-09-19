@@ -4,16 +4,15 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
   void _startNewAcquisitionReveal(String label) {
     final tick = _newRevealTick + 1;
     _newRevealTick = tick;
-    GameFeedback.play(GameCue.newReveal);
     _mutate(() => _newRevealLabel = label);
     Future<void>.delayed(GamePresentationTimings.marketNewReveal, () {
       if (!mounted || _newRevealTick != tick) return;
       _mutate(() => _newRevealLabel = null);
     });
+    GameFeedback.play(GameCue.newReveal);
   }
 
   void _startMarketDenyFeedback(String target, String reason) {
-    GameFeedback.play(GameCue.deny);
     final tick = _marketDenyTick + 1;
     _mutate(() {
       _marketDenyTick = tick;
@@ -27,6 +26,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
         _marketDenyReason = null;
       });
     });
+    GameFeedback.play(GameCue.deny);
   }
 
   void _startEffectPresentation(ItemPresentationEvent event) {
@@ -210,7 +210,6 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       showBottomNotice(context, failMessage);
       return;
     }
-    GameFeedback.play(GameCue.itemUse);
     final feedbackTick = _marketUseFeedbackTick + 1;
     final goldGain = _marketUseGoldGain(item);
     final effectPresentation = _marketUsePresentation(slot, item);
@@ -244,6 +243,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       });
     });
     _queueStateSave();
+    GameFeedback.play(GameCue.itemUse);
   }
 
   String? _marketUseFeedbackDeltaLabel(ItemDefinition item) {
@@ -343,7 +343,6 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellOwnedJester(index);
     if (!ok) return;
-    GameFeedback.play(GameCue.sell);
     showBottomNotice(context, '제스터를 판매했습니다.');
     _mutate(() {
       _pinnedItemOffers = marketBeforeSell.itemOffers;
@@ -361,6 +360,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       }
     });
     _queueStateSave();
+    GameFeedback.play(GameCue.sell);
   }
 
   void _sellMarketItem(RummiMarketItemSlotView slot) {
@@ -371,7 +371,6 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellMarketItem(item);
     if (!ok) return;
-    GameFeedback.play(GameCue.sell);
     showBottomNotice(context, '아이템을 판매했습니다.');
     _mutate(() {
       _pinnedItemOffers = marketBeforeSell.itemOffers;
@@ -386,5 +385,6 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       _selectFirstEntry(_offerEntriesForLane(market, _currentOfferLane));
     });
     _queueStateSave();
+    GameFeedback.play(GameCue.sell);
   }
 }
