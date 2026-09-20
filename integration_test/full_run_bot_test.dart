@@ -1,8 +1,10 @@
 // ignore_for_file: avoid_print
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -88,6 +90,7 @@ class _FullRunBotConfig {
     required this.targetScene,
     required this.requiredEvidence,
     required this.tracePath,
+    required this.progressUrl,
     required this.manualQaHold,
   });
 
@@ -162,6 +165,7 @@ class _FullRunBotConfig {
         'FULL_RUN_BOT_REQUIRED_EVIDENCE',
       ),
       tracePath: const String.fromEnvironment('FULL_RUN_BOT_TRACE_PATH'),
+      progressUrl: const String.fromEnvironment('FULL_RUN_BOT_PROGRESS_URL'),
       manualQaHold: const bool.fromEnvironment('FULL_RUN_BOT_MANUAL_QA_HOLD'),
     );
   }
@@ -185,6 +189,7 @@ class _FullRunBotConfig {
   final _FullRunBotScene targetScene;
   final String requiredEvidence;
   final String tracePath;
+  final String progressUrl;
   final bool manualQaHold;
 
   String get logPrefix =>
@@ -193,6 +198,8 @@ class _FullRunBotConfig {
   bool get isFullRun => mode == _FullRunBotMode.full;
 
   bool get traceEnabled => tracePath.isNotEmpty;
+
+  bool get progressBeaconEnabled => progressUrl.isNotEmpty;
 
   bool get needsMarketPurchase =>
       isFullRun ||
@@ -2408,6 +2415,23 @@ class _FullRunBot {
   void _record(String entry) {
     log.add(entry);
     print('${config.logPrefix}: $entry');
+    _sendProgressBeacon(entry);
+  }
+
+  /// 진행 위치를 로컬 수집기로 흘려보낸다.
+  ///
+  /// 봇은 브라우저 안에서 돌기 때문에 진행 로그가 브라우저 콘솔에만 남는다.
+  /// 그 콘솔을 밖에서 읽으려면 WebDriver `/se/log`를 호출해야 하는데, 그 호출은
+  /// `flutter drive`가 같은 세션에서 쓰는 명령과 겹친다. 대신 브라우저가 직접
+  /// HTTP로 한 줄씩 보내면 WebDriver를 전혀 건드리지 않고도 실행 중에 위치를
+  /// 파일로 확인할 수 있다. 실패는 무시한다. 관측 장치가 본 실행을 막으면 안 된다.
+  void _sendProgressBeacon(String entry) {
+    if (!config.progressBeaconEnabled) return;
+    unawaited(
+      http
+          .post(Uri.parse(config.progressUrl), body: entry)
+          .catchError((Object _) => http.Response('', 599)),
+    );
   }
 
   GameSessionState _readGameState() {
