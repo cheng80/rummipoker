@@ -126,25 +126,41 @@ port_is_open() {
   nc -z 127.0.0.1 "$CHROMEDRIVER_PORT" >/dev/null 2>&1
 }
 
+# 이 실행이 띄운 프로세스만 정리한다. 같은 장비에서 다른 봇 실행이나 다른 Chrome
+# 작업이 함께 돌 수 있으므로, 이름 패턴으로 넓게 죽이면 남의 프로세스를 끊는다.
+# 기준은 이 실행이 기억한 PID, 이 실행 전용 user-data-dir, 그리고 자기 포트다.
+kill_pids() {
+  [[ "$#" -eq 0 ]] && return 0
+  kill "$@" 2>/dev/null || true
+  sleep 1
+  local alive=()
+  local pid
+  for pid in "$@"; do
+    kill -0 "$pid" 2>/dev/null && alive+=("$pid")
+  done
+  [[ "${#alive[@]}" -gt 0 ]] && kill -9 "${alive[@]}" 2>/dev/null || true
+  return 0
+}
+
+# 이 실행 전용 프로필 경로를 명령줄에 달고 있는 프로세스만 고른다. Chrome 본체와
+# Chrome Helper, flutter tools가 띄운 브라우저가 모두 여기에 해당한다.
+pids_using_browser_profile() {
+  [[ -z "${BROWSER_PROFILE_DIR:-}" ]] && return 0
+  ps -axo pid,command | awk -v profile="$BROWSER_PROFILE_DIR" -v self="$$" \
+    '!/awk/ && $1 != self && index($0, profile) > 0 {print $1}'
+}
+
 cleanup_bot_processes() {
-  [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill "$CHROMEDRIVER_PID" 2>/dev/null || true
-  pkill -f 'flutter drive.*integration_test/full_run_bot_test.dart' \
-    2>/dev/null || true
-  pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
-  pkill -f 'chromedriver.*--port='"$CHROMEDRIVER_PORT" 2>/dev/null || true
+  [[ -n "${DRIVE_PID:-}" ]] && kill_pids "$DRIVE_PID"
+  DRIVE_PID=""
+  [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill_pids "$CHROMEDRIVER_PID"
+  local profile_pids
+  profile_pids="$(pids_using_browser_profile)"
+  [[ -n "$profile_pids" ]] && kill_pids $profile_pids
   local web_pids
   web_pids="$(lsof -ti tcp:"$WEB_PORT" 2>/dev/null || true)"
-  [[ -n "$web_pids" ]] && kill $web_pids 2>/dev/null || true
-  local webdriver_pids
-  webdriver_pids="$(ps -axo pid,command | awk \
-    '/--test-type=webdriver/ && /Google Chrome/ && !/awk/ {print $1}')"
-  if [[ -n "$webdriver_pids" ]]; then
-    kill $webdriver_pids 2>/dev/null || true
-    sleep 1
-    webdriver_pids="$(ps -axo pid,command | awk \
-      '/--test-type=webdriver/ && /Google Chrome/ && !/awk/ {print $1}')"
-    [[ -n "$webdriver_pids" ]] && kill -9 $webdriver_pids 2>/dev/null || true
-  fi
+  [[ -n "$web_pids" ]] && kill_pids $web_pids
+  return 0
 }
 trap cleanup_bot_processes EXIT
 
@@ -212,8 +228,9 @@ run_flutter_drive_and_capture() {
   shift
   echo "Running: $*"
   set +e
-  "$@" 2>&1 | tee "$log_file" &
+  "$@" > >(tee "$log_file") 2>&1 &
   local run_pid=$!
+  DRIVE_PID="$run_pid"
 
   while kill -0 "$run_pid" 2>/dev/null; do
     if grep -q "All tests passed!" "$log_file" 2>/dev/null; then
@@ -222,12 +239,8 @@ run_flutter_drive_and_capture() {
       if kill -0 "$run_pid" 2>/dev/null; then
         echo "Detected pass; cleaning up lingering flutter drive session." \
           | tee -a "$log_file"
-        pkill -f 'flutter drive.*integration_test/full_run_bot_test.dart' \
-          2>/dev/null || true
-        pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
         cleanup_bot_processes
-        pkill -f "tee $log_file" 2>/dev/null || true
-        kill "$run_pid" 2>/dev/null || true
+        kill_pids "$run_pid"
       fi
       set -e
       return 0
@@ -237,6 +250,7 @@ run_flutter_drive_and_capture() {
 
   wait "$run_pid"
   local status=$?
+  DRIVE_PID=""
   persist_checkpoint "$log_file"
   cleanup_bot_processes
   set -e
