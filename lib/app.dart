@@ -16,6 +16,33 @@ import 'views/game/widgets/game_ui_palette.dart';
 import 'widgets/fx/fx_layer.dart';
 import 'widgets/starry_background.dart';
 
+/// 기본 폰트(NEXON Lv2 Gothic)에 글리프가 없는 글자를 그릴 폰트 순서.
+/// 이 fallback이 없으면 웹(CanvasKit)이 빠진 글자를 Google 서버의 Noto 폰트로 그때그때 내려받아
+/// 받기 전까지 빈 네모가 보이고, 오프라인·차단 환경에서는 계속 네모로 남는다.
+/// 텍스트 스타일마다 덧대지 않도록 테마 한 곳에서만 지정한다.
+const List<String> appFontFamilyFallback = <String>[
+  AssetPaths.fontNotoSansCjkUiSubset,
+];
+
+/// 앱 전체 테마. 글꼴과 fallback을 여기 한 곳에서만 정한다.
+ThemeData buildAppTheme() {
+  final baseTheme = ThemeData.dark();
+  return baseTheme.copyWith(
+    textTheme: baseTheme.textTheme.apply(
+      fontFamily: AssetPaths.fontNexonLv2Gothic,
+      fontFamilyFallback: appFontFamilyFallback,
+    ),
+    primaryTextTheme: baseTheme.primaryTextTheme.apply(
+      fontFamily: AssetPaths.fontNexonLv2Gothic,
+      fontFamilyFallback: appFontFamilyFallback,
+    ),
+    colorScheme: ColorScheme.dark(
+      primary: GameUiPalette.appPrimaryBlue,
+      secondary: GameUiPalette.appSecondaryBlue,
+    ),
+  );
+}
+
 /// 앱의 루트 위젯. 테마, 라우팅 등 앱 전체 설정을 담당한다.
 /// main.dart와 분리한 이유:
 ///   - main()에 초기화 코드가 늘어나도(Firebase, 환경변수 등) 이 파일은 변경 없이 유지된다.
@@ -63,7 +90,6 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final baseTheme = ThemeData.dark();
     final app = JesterTranslationScope(
       child: ItemTranslationScope(
         child: MaterialApp.router(
@@ -72,18 +98,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
-          theme: baseTheme.copyWith(
-            textTheme: baseTheme.textTheme.apply(
-              fontFamily: AssetPaths.fontNexonLv2Gothic,
-            ),
-            primaryTextTheme: baseTheme.primaryTextTheme.apply(
-              fontFamily: AssetPaths.fontNexonLv2Gothic,
-            ),
-            colorScheme: ColorScheme.dark(
-              primary: GameUiPalette.appPrimaryBlue,
-              secondary: GameUiPalette.appSecondaryBlue,
-            ),
-          ),
+          theme: buildAppTheme(),
           scrollBehavior: const AppScrollBehavior(),
           routerConfig: appRouter,
           builder: (context, child) {
