@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/app_translation.dart';
+import '../../../widgets/semantic_text.dart';
+
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
@@ -47,7 +50,9 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final routeLabel = widget.title.trim().isEmpty ? '타일 선택' : widget.title;
+    final routeLabel = widget.title.trim().isEmpty
+        ? context.translate('battleWidgetsTileChoice')
+        : widget.title;
     return Semantics(
       scopesRoute: true,
       namesRoute: true,
@@ -86,7 +91,7 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
                 ),
                 if (widget.message != null) ...[
                   const SizedBox(height: 6),
-                  Text(
+                  SemanticText(
                     widget.message!,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
@@ -162,7 +167,10 @@ class _TileChoiceButton extends StatelessWidget {
       width: size,
       child: Semantics(
         button: true,
-        label: '후보 ${index + 1} ${tile.code}',
+        label: context.translate(
+          'battleWidgetsTileCandidateLabel',
+          namedArgs: {'index': '${index + 1}', 'code': tile.code},
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -232,13 +240,15 @@ class _TileChoiceButton extends StatelessWidget {
                                   width: 1,
                                 ),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
                                   horizontal: 5,
                                   vertical: 2,
                                 ),
                                 child: Text(
-                                  '버림 확정',
+                                  context.translate(
+                                    'battleWidgetsDiscardConfirmed',
+                                  ),
                                   maxLines: 1,
                                   style: TextStyle(
                                     color: GameUiPalette.specialGoldPale,
@@ -258,8 +268,12 @@ class _TileChoiceButton extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              '후보 ${index + 1}',
+              context.translate(
+                'battleWidgetsTileCandidate',
+                namedArgs: {'index': '${index + 1}'},
+              ),
               maxLines: 1,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: GameUiPalette.textSecondary,
                 fontSize: 10,

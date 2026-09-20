@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/hand_rank.dart';
@@ -6,7 +5,9 @@ import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/models/poker_deck.dart';
 import '../../../logic/rummi_poker_grid/rummi_hand_growth.dart';
 import '../../../resources/asset_paths.dart';
+import '../../../utils/app_translation.dart';
 import '../../../utils/common_ui.dart';
+import '../../../widgets/semantic_text.dart';
 import 'game_cashout_widgets.dart';
 import 'game_shared_widgets.dart';
 import 'game_terms_dialog.dart';
@@ -31,7 +32,7 @@ Future<void> showGameRunInfoDialog({
               children: [
                 Expanded(
                   child: Text(
-                    context.tr('runInfoTitle'),
+                    context.translate('runInfoTitle'),
                     style: TextStyle(
                       fontFamily: AssetPaths.fontNexonLv2Gothic,
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
@@ -41,14 +42,14 @@ Future<void> showGameRunInfoDialog({
                   ),
                 ),
                 GameIconButtonChip(
-                  tooltip: context.tr('gameTermsTitle'),
+                  tooltip: context.translate('gameTermsTitle'),
                   onPressed: () => showGameTermsDialog(context: dialogContext),
                   icon: Icons.menu_book_rounded,
                   backgroundColor: GameUiPalette.marketNeutralButton,
                 ),
                 const SizedBox(width: 6),
                 GameIconButtonChip(
-                  tooltip: context.tr('cancel'),
+                  tooltip: context.translate('cancel'),
                   onPressed: () => Navigator.of(dialogContext).pop(),
                   icon: Icons.close_rounded,
                 ),
@@ -223,7 +224,7 @@ class _RunInfoRankRow extends StatelessWidget {
             SizedBox(
               width: 54,
               child: Text(
-                context.tr(
+                context.translate(
                   'runInfoRankLevel',
                   namedArgs: {'level': '${row.level}'},
                 ),
@@ -241,7 +242,7 @@ class _RunInfoRankRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    gameHandRankLabel(row.rank),
+                    gameHandRankLabel(row.rank, context: context),
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
                       fontSize: 14,
@@ -251,11 +252,18 @@ class _RunInfoRankRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     row.requiredProgress <= 0
-                        ? context.tr(
+                        ? context.translate(
                             'runInfoCompletedCount',
                             namedArgs: {'count': '${row.completedCount}'},
                           )
-                        : '${context.tr('runInfoCompletedCount', namedArgs: {'count': '${row.completedCount}'})} · 성장 ${row.progress}/${row.requiredProgress}',
+                        : context.translate(
+                            'runInfoHandGrowthProgress',
+                            namedArgs: {
+                              'count': '${row.completedCount}',
+                              'progress': '${row.progress}',
+                              'required': '${row.requiredProgress}',
+                            },
+                          ),
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.62),
                       fontSize: 11,
@@ -272,7 +280,7 @@ class _RunInfoRankRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    context.tr(
+                    context.translate(
                       'runInfoCurrentChips',
                       namedArgs: {'score': '${row.currentScore}'},
                     ),
@@ -284,7 +292,7 @@ class _RunInfoRankRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    context.tr(
+                    context.translate(
                       'runInfoNextScore',
                       namedArgs: {'score': '${row.nextScore}'},
                     ),
@@ -312,14 +320,28 @@ class _RunInfoDeckSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = addedDeckTiles.isEmpty
-        ? '기본 덱 $kBasePokerTileCount장'
-        : '덱 ${kBasePokerTileCount + addedDeckTiles.length}장 · 추가 ${addedDeckTiles.length}장';
+        ? context.translate(
+            'runInfoDeckSummaryBase',
+            namedArgs: {'count': '$kBasePokerTileCount'},
+          )
+        : context.translate(
+            'runInfoDeckSummaryExtended',
+            namedArgs: {
+              'total': '${kBasePokerTileCount + addedDeckTiles.length}',
+              'added': '${addedDeckTiles.length}',
+            },
+          );
     final tileText = addedDeckTiles.isEmpty
-        ? '추가 타일 없음'
+        ? context.translate('runInfoNoAddedTiles')
         : addedDeckTiles
               .map(
-                (tile) =>
-                    '${tile.color.code}${tile.number}(칩 ${tile.baseChipValue})',
+                (tile) => context.translate(
+                  'runInfoAddedTileEntry',
+                  namedArgs: {
+                    'tile': '${tile.color.code}${tile.number}',
+                    'chips': '${tile.baseChipValue}',
+                  },
+                ),
               )
               .join(' ');
     return DecoratedBox(
@@ -378,7 +400,7 @@ class _RunInfoBaseTileChipGuide extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '타일 기준 칩',
+              context.translate('runInfoTileChipTitle'),
               style: TextStyle(
                 color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
                 fontSize: 13,
@@ -386,8 +408,8 @@ class _RunInfoBaseTileChipGuide extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 3),
-            Text(
-              '색상과 관계없이 타일 숫자값으로 표시합니다. 현재 확정 점수는 족보 기본 칩을 기준으로 계산됩니다.',
+            SemanticText(
+              context.translate('runInfoTileChipDescription'),
               style: TextStyle(
                 color: GameUiPalette.textPrimary.withValues(alpha: 0.62),
                 fontSize: 10,
@@ -429,7 +451,10 @@ class _RunInfoBaseTileChipPill extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         child: Text(
-          '$number=칩 $number',
+          context.translate(
+            'runInfoTileChipEntry',
+            namedArgs: {'number': '$number', 'chips': '$number'},
+          ),
           style: const TextStyle(
             color: GameUiPalette.actionGoldText,
             fontSize: 9,

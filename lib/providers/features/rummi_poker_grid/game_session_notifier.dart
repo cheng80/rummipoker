@@ -73,16 +73,23 @@ ActiveRunRuntimeState buildInitialRunRuntime(GameSessionArgs args) {
 }
 
 class DeckPeekBattleUseResult {
-  const DeckPeekBattleUseResult._({required this.candidates, this.failMessage});
+  const DeckPeekBattleUseResult._({
+    required this.candidates,
+    this.failMessage,
+    this.failure,
+  });
 
   const DeckPeekBattleUseResult.success(List<Tile> candidates)
     : this._(candidates: candidates);
 
-  const DeckPeekBattleUseResult.failure(String message)
-    : this._(candidates: const [], failMessage: message);
+  const DeckPeekBattleUseResult.failure(
+    String message, {
+    ActionFailure? failure,
+  }) : this._(candidates: const [], failMessage: message, failure: failure);
 
   final List<Tile> candidates;
   final String? failMessage;
+  final ActionFailure? failure;
 
   bool get isSuccess => failMessage == null;
 }

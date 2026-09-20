@@ -1,12 +1,13 @@
 import 'dart:math' as math;
 
-import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/boss_modifier.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../utils/common_ui.dart';
+import '../../../utils/app_translation.dart';
+import '../../../widgets/semantic_text.dart';
 import '../../../widgets/fx/motion_policy.dart';
 import '../../../widgets/fx/screen_shake.dart';
 import '../game_feedback_cues.dart';
@@ -155,7 +156,9 @@ class _GameBossIntroCardState extends State<GameBossIntroCard>
               ).animate(banner),
               child: FadeTransition(
                 opacity: banner,
-                child: _BossIntroStrip(label: context.tr('flowBossIntroTag')),
+                child: _BossIntroStrip(
+                  label: context.translate('flowBossIntroTag'),
+                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -193,7 +196,9 @@ class _GameBossIntroCardState extends State<GameBossIntroCard>
                         Curves.easeOut,
                       ),
                       child: Text(
-                        modifier.title,
+                        modifier.displayKeys == null
+                            ? modifier.title
+                            : context.translate(modifier.displayKeys!.titleKey),
                         softWrap: true,
                         style: TextStyle(
                           fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -229,7 +234,10 @@ class _GameBossIntroCardState extends State<GameBossIntroCard>
                       GamePresentationTimings.bossIntroIconDrop * 0.5,
                       Curves.easeOut,
                     ),
-                    child: _BossMarkIconView(icon: _icons[i]),
+                    child: _BossMarkIconView(
+                      icon: _icons[i],
+                      modifier: modifier,
+                    ),
                   ),
               ],
             ),
@@ -237,8 +245,10 @@ class _GameBossIntroCardState extends State<GameBossIntroCard>
             Flexible(
               child: SingleChildScrollView(
                 key: const ValueKey('boss-constraint-rule-scroll'),
-                child: Text(
-                  modifier.ruleText,
+                child: SemanticText(
+                  modifier.displayKeys == null
+                      ? modifier.ruleText
+                      : context.translate(modifier.displayKeys!.ruleTextKey),
                   style: TextStyle(
                     color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
                     fontSize: 14,
@@ -327,17 +337,16 @@ class _DropIn extends StatelessWidget {
 enum _BossMarkKind { marker, blockedCell, tileColor, line }
 
 class _BossMarkIcon {
-  const _BossMarkIcon(this.kind, {this.text, this.color});
+  const _BossMarkIcon(this.kind, {this.color});
 
   final _BossMarkKind kind;
-  final String? text;
   final TileColor? color;
 }
 
 /// 배너에 떨어지는 제약 아이콘 목록. 규칙 데이터에 있는 값만 쓴다.
 List<_BossMarkIcon> _bossIntroMarkIcons(RummiBossModifier modifier) {
   return [
-    _BossMarkIcon(_BossMarkKind.marker, text: modifier.markerText),
+    const _BossMarkIcon(_BossMarkKind.marker),
     for (final _ in modifier.blockedCells.take(5))
       const _BossMarkIcon(_BossMarkKind.blockedCell),
     for (final color in modifier.affectedTileColors)
@@ -348,9 +357,10 @@ List<_BossMarkIcon> _bossIntroMarkIcons(RummiBossModifier modifier) {
 }
 
 class _BossMarkIconView extends StatelessWidget {
-  const _BossMarkIconView({required this.icon});
+  const _BossMarkIconView({required this.icon, required this.modifier});
 
   final _BossMarkIcon icon;
+  final RummiBossModifier modifier;
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +375,9 @@ class _BossMarkIconView extends StatelessWidget {
         child: Center(
           widthFactor: 1,
           child: Text(
-            icon.text ?? '',
+            modifier.displayKeys == null
+                ? modifier.markerText
+                : context.translate(modifier.displayKeys!.markerTextKey),
             style: const TextStyle(
               color: GameUiPalette.textOnWarm,
               fontSize: 11,

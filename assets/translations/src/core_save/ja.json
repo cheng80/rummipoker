@@ -1,0 +1,17 @@
+{
+  "coreSaveBlindUnlock": "{required}クリアで{blind}解放",
+  "coreSaveBlindUnselected": "未選択",
+  "coreSaveBookmark": "{station} · {mode} · {blind}",
+  "coreSaveCheckpoint": "チェックポイント Station {station}",
+  "coreSaveContinue": "保存したランを復元します。\n{summary}\n削除するか、そのまま続けるか選んでください。",
+  "coreSaveEmpty": "空き",
+  "coreSaveLocation": "現在 Station {station} · {scene} · Gold {gold}",
+  "coreSaveModeModifier": "{difficulty} · {modifier}",
+  "coreSaveSceneBattle": "バトル",
+  "coreSaveSceneBlindSelect": "Station選択",
+  "coreSaveSceneMarket": "マーケット",
+  "coreSaveSlotSemantic": "{slot}: {summary}",
+  "coreSaveSlotTitle": "スロット{slot}",
+  "coreSaveSnapshot": "{location}\n{checkpoint}",
+  "coreSaveStationMode": "{station} · {mode}"
+}

@@ -1,0 +1,1743 @@
+{
+  "generator": "tools/semantic_wrap/generate_semantic_wrap_fixture.mjs",
+  "source": "@semantic-wrap/core and @semantic-wrap/ko, version 0.4.0, Apache-2.0",
+  "charWidth": 10,
+  "cases": [
+    {
+      "text": "빨간 타일이 포함된 점수 라인은 35% 감소합니다.",
+      "maxWidth": 140,
+      "breaks": [
+        13
+      ],
+      "lines": [
+        "빨간 타일이 포함된 점수",
+        "라인은 35% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "빨간 타일이 포함된 점수 라인은 35% 감소합니다.",
+      "maxWidth": 93,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "빨간 타일이",
+        "포함된 점수",
+        "라인은 35%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "빨간 타일이 포함된 점수 라인은 35% 감소합니다.",
+      "maxWidth": 70,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "빨간 타일이",
+        "포함된 점수",
+        "라인은 35%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "가로줄 점수가 25% 감소합니다.",
+      "maxWidth": 90,
+      "breaks": [
+        7,
+        11
+      ],
+      "lines": [
+        "가로줄 점수가",
+        "25%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "가로줄 점수가 25% 감소합니다.",
+      "maxWidth": 60,
+      "breaks": [
+        3,
+        7,
+        11
+      ],
+      "lines": [
+        "가로줄",
+        "점수가",
+        "25%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "가로줄 점수가 25% 감소합니다.",
+      "maxWidth": 45,
+      "breaks": [],
+      "lines": [
+        "가로줄 점수가 25% 감소합니다."
+      ],
+      "applied": false,
+      "overflow": true
+    },
+    {
+      "text": "파란 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 140,
+      "breaks": [
+        13
+      ],
+      "lines": [
+        "파란 타일이 포함된 점수",
+        "라인은 40% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "파란 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 93,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "파란 타일이",
+        "포함된 점수",
+        "라인은 40%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "파란 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 70,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "파란 타일이",
+        "포함된 점수",
+        "라인은 40%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "검은 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 140,
+      "breaks": [
+        13
+      ],
+      "lines": [
+        "검은 타일이 포함된 점수",
+        "라인은 40% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "검은 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 93,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "검은 타일이",
+        "포함된 점수",
+        "라인은 40%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "검은 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 70,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "검은 타일이",
+        "포함된 점수",
+        "라인은 40%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "노란 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 140,
+      "breaks": [
+        13
+      ],
+      "lines": [
+        "노란 타일이 포함된 점수",
+        "라인은 40% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "노란 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 93,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "노란 타일이",
+        "포함된 점수",
+        "라인은 40%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "노란 타일이 포함된 점수 라인은 40% 감소합니다.",
+      "maxWidth": 70,
+      "breaks": [
+        6,
+        13,
+        21
+      ],
+      "lines": [
+        "노란 타일이",
+        "포함된 점수",
+        "라인은 40%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "세로줄 점수가 25% 감소합니다.",
+      "maxWidth": 90,
+      "breaks": [
+        7,
+        11
+      ],
+      "lines": [
+        "세로줄 점수가",
+        "25%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "세로줄 점수가 25% 감소합니다.",
+      "maxWidth": 60,
+      "breaks": [
+        3,
+        7,
+        11
+      ],
+      "lines": [
+        "세로줄",
+        "점수가",
+        "25%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "세로줄 점수가 25% 감소합니다.",
+      "maxWidth": 45,
+      "breaks": [],
+      "lines": [
+        "세로줄 점수가 25% 감소합니다."
+      ],
+      "applied": false,
+      "overflow": true
+    },
+    {
+      "text": "대각선 점수가 25% 감소합니다.",
+      "maxWidth": 90,
+      "breaks": [
+        7,
+        11
+      ],
+      "lines": [
+        "대각선 점수가",
+        "25%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "대각선 점수가 25% 감소합니다.",
+      "maxWidth": 60,
+      "breaks": [
+        3,
+        7,
+        11
+      ],
+      "lines": [
+        "대각선",
+        "점수가",
+        "25%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "대각선 점수가 25% 감소합니다.",
+      "maxWidth": 45,
+      "breaks": [],
+      "lines": [
+        "대각선 점수가 25% 감소합니다."
+      ],
+      "applied": false,
+      "overflow": true
+    },
+    {
+      "text": "11~13 타일이 포함된 점수 라인은 35% 감소합니다.",
+      "maxWidth": 155,
+      "breaks": [
+        9,
+        20
+      ],
+      "lines": [
+        "11~13 타일이",
+        "포함된 점수 라인은",
+        "35% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "11~13 타일이 포함된 점수 라인은 35% 감소합니다.",
+      "maxWidth": 103,
+      "breaks": [
+        9,
+        20
+      ],
+      "lines": [
+        "11~13 타일이",
+        "포함된 점수 라인은",
+        "35% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "11~13 타일이 포함된 점수 라인은 35% 감소합니다.",
+      "maxWidth": 78,
+      "breaks": [
+        5,
+        9,
+        16,
+        24
+      ],
+      "lines": [
+        "11~13",
+        "타일이",
+        "포함된 점수",
+        "라인은 35%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "모든 점수 라인이 20% 감소합니다.",
+      "maxWidth": 100,
+      "breaks": [
+        9
+      ],
+      "lines": [
+        "모든 점수 라인이",
+        "20% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "모든 점수 라인이 20% 감소합니다.",
+      "maxWidth": 67,
+      "breaks": [
+        5,
+        9,
+        13
+      ],
+      "lines": [
+        "모든 점수",
+        "라인이",
+        "20%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "모든 점수 라인이 20% 감소합니다.",
+      "maxWidth": 50,
+      "breaks": [],
+      "lines": [
+        "모든 점수 라인이 20% 감소합니다."
+      ],
+      "applied": false,
+      "overflow": true
+    },
+    {
+      "text": "첫 확정 점수 라인은 30% 감소합니다.",
+      "maxWidth": 110,
+      "breaks": [
+        11
+      ],
+      "lines": [
+        "첫 확정 점수 라인은",
+        "30% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "첫 확정 점수 라인은 30% 감소합니다.",
+      "maxWidth": 73,
+      "breaks": [
+        7,
+        15
+      ],
+      "lines": [
+        "첫 확정 점수",
+        "라인은 30%",
+        "감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "첫 확정 점수 라인은 30% 감소합니다.",
+      "maxWidth": 55,
+      "breaks": [],
+      "lines": [
+        "첫 확정 점수 라인은 30% 감소합니다."
+      ],
+      "applied": false,
+      "overflow": true
+    },
+    {
+      "text": "오른쪽 끝 5칸에는 타일을 놓을 수 없습니다.",
+      "maxWidth": 125,
+      "breaks": [
+        10,
+        17
+      ],
+      "lines": [
+        "오른쪽 끝 5칸에는",
+        "타일을 놓을",
+        "수 없습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "오른쪽 끝 5칸에는 타일을 놓을 수 없습니다.",
+      "maxWidth": 83,
+      "breaks": [
+        5,
+        10,
+        17
+      ],
+      "lines": [
+        "오른쪽 끝",
+        "5칸에는",
+        "타일을 놓을",
+        "수 없습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "오른쪽 끝 5칸에는 타일을 놓을 수 없습니다.",
+      "maxWidth": 63,
+      "breaks": [
+        5,
+        10,
+        14,
+        19
+      ],
+      "lines": [
+        "오른쪽 끝",
+        "5칸에는",
+        "타일을",
+        "놓을 수",
+        "없습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "맨 위 5칸에는 타일을 놓을 수 없습니다.",
+      "maxWidth": 115,
+      "breaks": [
+        8,
+        15
+      ],
+      "lines": [
+        "맨 위 5칸에는",
+        "타일을 놓을",
+        "수 없습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "맨 위 5칸에는 타일을 놓을 수 없습니다.",
+      "maxWidth": 77,
+      "breaks": [
+        3,
+        8,
+        15
+      ],
+      "lines": [
+        "맨 위",
+        "5칸에는",
+        "타일을 놓을",
+        "수 없습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "맨 위 5칸에는 타일을 놓을 수 없습니다.",
+      "maxWidth": 58,
+      "breaks": [
+        3,
+        8,
+        12,
+        17
+      ],
+      "lines": [
+        "맨 위",
+        "5칸에는",
+        "타일을",
+        "놓을 수",
+        "없습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이전 확정에서 사용한 족보를 다시 확정하면 점수 라인이 20% 감소합니다.",
+      "maxWidth": 205,
+      "breaks": [
+        11,
+        23
+      ],
+      "lines": [
+        "이전 확정에서 사용한",
+        "족보를 다시 확정하면",
+        "점수 라인이 20% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이전 확정에서 사용한 족보를 다시 확정하면 점수 라인이 20% 감소합니다.",
+      "maxWidth": 137,
+      "breaks": [
+        7,
+        18,
+        30
+      ],
+      "lines": [
+        "이전 확정에서",
+        "사용한 족보를 다시",
+        "확정하면 점수 라인이",
+        "20% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이전 확정에서 사용한 족보를 다시 확정하면 점수 라인이 20% 감소합니다.",
+      "maxWidth": 103,
+      "breaks": [
+        7,
+        15,
+        23,
+        30
+      ],
+      "lines": [
+        "이전 확정에서",
+        "사용한 족보를",
+        "다시 확정하면",
+        "점수 라인이",
+        "20% 감소합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 라인의 노란 타일마다 점수 +15%.",
+      "maxWidth": 115,
+      "breaks": [
+        6,
+        14
+      ],
+      "lines": [
+        "점수 라인의",
+        "노란 타일마다",
+        "점수 +15%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 라인의 노란 타일마다 점수 +15%.",
+      "maxWidth": 77,
+      "breaks": [
+        6,
+        14,
+        17
+      ],
+      "lines": [
+        "점수 라인의",
+        "노란 타일마다",
+        "점수",
+        "+15%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 라인의 노란 타일마다 점수 +15%.",
+      "maxWidth": 58,
+      "breaks": [
+        2,
+        6,
+        9,
+        14,
+        17
+      ],
+      "lines": [
+        "점수",
+        "라인의",
+        "노란",
+        "타일마다",
+        "점수",
+        "+15%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "원 페어 이상 점수 라인을 확정하면 점수 +40%.",
+      "maxWidth": 140,
+      "breaks": [
+        14
+      ],
+      "lines": [
+        "원 페어 이상 점수 라인을",
+        "확정하면 점수 +40%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "원 페어 이상 점수 라인을 확정하면 점수 +40%.",
+      "maxWidth": 93,
+      "breaks": [
+        7,
+        14,
+        19
+      ],
+      "lines": [
+        "원 페어 이상",
+        "점수 라인을",
+        "확정하면",
+        "점수 +40%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "원 페어 이상 점수 라인을 확정하면 점수 +40%.",
+      "maxWidth": 70,
+      "breaks": [
+        7,
+        14,
+        22
+      ],
+      "lines": [
+        "원 페어 이상",
+        "점수 라인을",
+        "확정하면 점수",
+        "+40%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "스트레이트 이상 점수 라인을 확정하면 칩 +100.",
+      "maxWidth": 140,
+      "breaks": [
+        11,
+        20
+      ],
+      "lines": [
+        "스트레이트 이상 점수",
+        "라인을 확정하면",
+        "칩 +100."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "스트레이트 이상 점수 라인을 확정하면 칩 +100.",
+      "maxWidth": 93,
+      "breaks": [
+        8,
+        15,
+        20
+      ],
+      "lines": [
+        "스트레이트 이상",
+        "점수 라인을",
+        "확정하면",
+        "칩 +100."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "스트레이트 이상 점수 라인을 확정하면 칩 +100.",
+      "maxWidth": 70,
+      "breaks": [
+        5,
+        11,
+        15,
+        20
+      ],
+      "lines": [
+        "스트레이트",
+        "이상 점수",
+        "라인을",
+        "확정하면",
+        "칩 +100."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "3장 이하 점수 라인을 확정하면 점수 +100%.",
+      "maxWidth": 135,
+      "breaks": [
+        8,
+        17
+      ],
+      "lines": [
+        "3장 이하 점수",
+        "라인을 확정하면",
+        "점수 +100%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "3장 이하 점수 라인을 확정하면 점수 +100%.",
+      "maxWidth": 90,
+      "breaks": [
+        8,
+        17
+      ],
+      "lines": [
+        "3장 이하 점수",
+        "라인을 확정하면",
+        "점수 +100%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "3장 이하 점수 라인을 확정하면 점수 +100%.",
+      "maxWidth": 68,
+      "breaks": [
+        5,
+        12,
+        17,
+        20
+      ],
+      "lines": [
+        "3장 이하",
+        "점수 라인을",
+        "확정하면",
+        "점수",
+        "+100%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "빈 Jester 슬롯마다 1배 보너스.",
+      "maxWidth": 105,
+      "breaks": [
+        8,
+        13
+      ],
+      "lines": [
+        "빈 Jester",
+        "슬롯마다",
+        "1배 보너스."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "빈 Jester 슬롯마다 1배 보너스.",
+      "maxWidth": 70,
+      "breaks": [
+        1,
+        8,
+        13
+      ],
+      "lines": [
+        "빈",
+        "Jester",
+        "슬롯마다",
+        "1배 보너스."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "빈 Jester 슬롯마다 1배 보너스.",
+      "maxWidth": 53,
+      "breaks": [],
+      "lines": [
+        "빈 Jester 슬롯마다 1배 보너스."
+      ],
+      "applied": false,
+      "overflow": true
+    },
+    {
+      "text": "확정할 때마다 점수 +5%. 버릴 때마다 점수 -5%.",
+      "maxWidth": 150,
+      "breaks": [
+        15
+      ],
+      "lines": [
+        "확정할 때마다 점수 +5%.",
+        "버릴 때마다 점수 -5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "확정할 때마다 점수 +5%. 버릴 때마다 점수 -5%.",
+      "maxWidth": 100,
+      "breaks": [
+        7,
+        15,
+        22
+      ],
+      "lines": [
+        "확정할 때마다",
+        "점수 +5%.",
+        "버릴 때마다",
+        "점수 -5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "확정할 때마다 점수 +5%. 버릴 때마다 점수 -5%.",
+      "maxWidth": 75,
+      "breaks": [
+        7,
+        15,
+        22
+      ],
+      "lines": [
+        "확정할 때마다",
+        "점수 +5%.",
+        "버릴 때마다",
+        "점수 -5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 +100%. Station을 마칠 때마다 점수 -20%.",
+      "maxWidth": 170,
+      "breaks": [
+        9,
+        25
+      ],
+      "lines": [
+        "점수 +100%.",
+        "Station을 마칠 때마다",
+        "점수 -20%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 +100%. Station을 마칠 때마다 점수 -20%.",
+      "maxWidth": 113,
+      "breaks": [
+        9,
+        18,
+        25
+      ],
+      "lines": [
+        "점수 +100%.",
+        "Station을",
+        "마칠 때마다",
+        "점수 -20%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 +100%. Station을 마칠 때마다 점수 -20%.",
+      "maxWidth": 85,
+      "breaks": [
+        2,
+        9,
+        18,
+        25
+      ],
+      "lines": [
+        "점수",
+        "+100%.",
+        "Station을",
+        "마칠 때마다",
+        "점수 -20%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이번 런에서 같은 족보를 확정한 횟수마다 점수 +5%.",
+      "maxWidth": 150,
+      "breaks": [
+        13,
+        22
+      ],
+      "lines": [
+        "이번 런에서 같은 족보를",
+        "확정한 횟수마다",
+        "점수 +5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이번 런에서 같은 족보를 확정한 횟수마다 점수 +5%.",
+      "maxWidth": 100,
+      "breaks": [
+        6,
+        13,
+        22
+      ],
+      "lines": [
+        "이번 런에서",
+        "같은 족보를",
+        "확정한 횟수마다",
+        "점수 +5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이번 런에서 같은 족보를 확정한 횟수마다 점수 +5%.",
+      "maxWidth": 75,
+      "breaks": [
+        6,
+        13,
+        17,
+        22
+      ],
+      "lines": [
+        "이번 런에서",
+        "같은 족보를",
+        "확정한",
+        "횟수마다",
+        "점수 +5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "11~13 타일 없이 확정할 때마다 점수 +5%.",
+      "maxWidth": 135,
+      "breaks": [
+        11,
+        19
+      ],
+      "lines": [
+        "11~13 타일 없이",
+        "확정할 때마다",
+        "점수 +5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "11~13 타일 없이 확정할 때마다 점수 +5%.",
+      "maxWidth": 90,
+      "breaks": [
+        5,
+        11,
+        19
+      ],
+      "lines": [
+        "11~13",
+        "타일 없이",
+        "확정할 때마다",
+        "점수 +5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "11~13 타일 없이 확정할 때마다 점수 +5%.",
+      "maxWidth": 68,
+      "breaks": [
+        5,
+        11,
+        15,
+        22
+      ],
+      "lines": [
+        "11~13",
+        "타일 없이",
+        "확정할",
+        "때마다 점수",
+        "+5%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 라인의 1, 2, 3, 5, 8 타일마다 점수 +40%.",
+      "maxWidth": 170,
+      "breaks": [
+        12,
+        25
+      ],
+      "lines": [
+        "점수 라인의 1, 2,",
+        "3, 5, 8 타일마다",
+        "점수 +40%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 라인의 1, 2, 3, 5, 8 타일마다 점수 +40%.",
+      "maxWidth": 113,
+      "breaks": [
+        6,
+        15,
+        25
+      ],
+      "lines": [
+        "점수 라인의",
+        "1, 2, 3,",
+        "5, 8 타일마다",
+        "점수 +40%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "점수 라인의 1, 2, 3, 5, 8 타일마다 점수 +40%.",
+      "maxWidth": 85,
+      "breaks": [
+        6,
+        12,
+        18,
+        25
+      ],
+      "lines": [
+        "점수 라인의",
+        "1, 2,",
+        "3, 5,",
+        "8 타일마다",
+        "점수 +40%."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "정산 시 남은 버림마다 골드 +2.",
+      "maxWidth": 95,
+      "breaks": [
+        4,
+        12
+      ],
+      "lines": [
+        "정산 시",
+        "남은 버림마다",
+        "골드 +2."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "정산 시 남은 버림마다 골드 +2.",
+      "maxWidth": 63,
+      "breaks": [
+        2,
+        7,
+        12
+      ],
+      "lines": [
+        "정산",
+        "시 남은",
+        "버림마다",
+        "골드 +2."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "정산 시 남은 버림마다 골드 +2.",
+      "maxWidth": 48,
+      "breaks": [
+        2,
+        7,
+        12,
+        15
+      ],
+      "lines": [
+        "정산",
+        "시 남은",
+        "버림마다",
+        "골드",
+        "+2."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이번 런의 족보 레벨과 칩 성장을 봅니다.",
+      "maxWidth": 115,
+      "breaks": [
+        8,
+        18
+      ],
+      "lines": [
+        "이번 런의 족보",
+        "레벨과 칩 성장을",
+        "봅니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이번 런의 족보 레벨과 칩 성장을 봅니다.",
+      "maxWidth": 77,
+      "breaks": [
+        5,
+        12,
+        18
+      ],
+      "lines": [
+        "이번 런의",
+        "족보 레벨과",
+        "칩 성장을",
+        "봅니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이번 런의 족보 레벨과 칩 성장을 봅니다.",
+      "maxWidth": 58,
+      "breaks": [
+        2,
+        8,
+        12,
+        18
+      ],
+      "lines": [
+        "이번",
+        "런의 족보",
+        "레벨과",
+        "칩 성장을",
+        "봅니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "전투 기본 조작 안내를 다시 봅니다.",
+      "maxWidth": 100,
+      "breaks": [
+        5,
+        12
+      ],
+      "lines": [
+        "전투 기본",
+        "조작 안내를",
+        "다시 봅니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "전투 기본 조작 안내를 다시 봅니다.",
+      "maxWidth": 67,
+      "breaks": [
+        5,
+        12,
+        15
+      ],
+      "lines": [
+        "전투 기본",
+        "조작 안내를",
+        "다시",
+        "봅니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "전투 기본 조작 안내를 다시 봅니다.",
+      "maxWidth": 50,
+      "breaks": [
+        2,
+        8,
+        12,
+        15
+      ],
+      "lines": [
+        "전투",
+        "기본 조작",
+        "안내를",
+        "다시",
+        "봅니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "손패 타일을 빈칸에 놓아 가로, 세로, 대각선 라인을 만듭니다.",
+      "maxWidth": 175,
+      "breaks": [
+        17
+      ],
+      "lines": [
+        "손패 타일을 빈칸에 놓아 가로,",
+        "세로, 대각선 라인을 만듭니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "손패 타일을 빈칸에 놓아 가로, 세로, 대각선 라인을 만듭니다.",
+      "maxWidth": 117,
+      "breaks": [
+        10,
+        17,
+        29
+      ],
+      "lines": [
+        "손패 타일을 빈칸에",
+        "놓아 가로,",
+        "세로, 대각선 라인을",
+        "만듭니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "손패 타일을 빈칸에 놓아 가로, 세로, 대각선 라인을 만듭니다.",
+      "maxWidth": 88,
+      "breaks": [
+        6,
+        13,
+        21,
+        29
+      ],
+      "lines": [
+        "손패 타일을",
+        "빈칸에 놓아",
+        "가로, 세로,",
+        "대각선 라인을",
+        "만듭니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "현재 선택으로 확정될 라인과 점수 변화를 확인합니다.",
+      "maxWidth": 145,
+      "breaks": [
+        7,
+        18
+      ],
+      "lines": [
+        "현재 선택으로",
+        "확정될 라인과 점수",
+        "변화를 확인합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "현재 선택으로 확정될 라인과 점수 변화를 확인합니다.",
+      "maxWidth": 97,
+      "breaks": [
+        7,
+        15,
+        22
+      ],
+      "lines": [
+        "현재 선택으로",
+        "확정될 라인과",
+        "점수 변화를",
+        "확인합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "현재 선택으로 확정될 라인과 점수 변화를 확인합니다.",
+      "maxWidth": 73,
+      "breaks": [
+        7,
+        15,
+        22
+      ],
+      "lines": [
+        "현재 선택으로",
+        "확정될 라인과",
+        "점수 변화를",
+        "확인합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "확정, 선택 해제, 이동, 버림은 라인을 만들 때만 사용합니다.",
+      "maxWidth": 175,
+      "breaks": [
+        10,
+        22
+      ],
+      "lines": [
+        "확정, 선택 해제,",
+        "이동, 버림은 라인을",
+        "만들 때만 사용합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "확정, 선택 해제, 이동, 버림은 라인을 만들 때만 사용합니다.",
+      "maxWidth": 117,
+      "breaks": [
+        10,
+        22,
+        28
+      ],
+      "lines": [
+        "확정, 선택 해제,",
+        "이동, 버림은 라인을",
+        "만들 때만",
+        "사용합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "확정, 선택 해제, 이동, 버림은 라인을 만들 때만 사용합니다.",
+      "maxWidth": 88,
+      "breaks": [
+        6,
+        14,
+        22,
+        28
+      ],
+      "lines": [
+        "확정, 선택",
+        "해제, 이동,",
+        "버림은 라인을",
+        "만들 때만",
+        "사용합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "타일을 사고 Jester를 채운 다음 다음 Station으로 넘어갑니다.",
+      "maxWidth": 200,
+      "breaks": [
+        20
+      ],
+      "lines": [
+        "타일을 사고 Jester를 채운 다음",
+        "다음 Station으로 넘어갑니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "타일을 사고 Jester를 채운 다음 다음 Station으로 넘어갑니다.",
+      "maxWidth": 133,
+      "breaks": [
+        6,
+        20,
+        33
+      ],
+      "lines": [
+        "타일을 사고",
+        "Jester를 채운 다음",
+        "다음 Station으로",
+        "넘어갑니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "타일을 사고 Jester를 채운 다음 다음 Station으로 넘어갑니다.",
+      "maxWidth": 100,
+      "breaks": [
+        6,
+        14,
+        23,
+        33
+      ],
+      "lines": [
+        "타일을 사고",
+        "Jester를",
+        "채운 다음 다음",
+        "Station으로",
+        "넘어갑니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "게임을 저장하지 않고 타이틀 화면으로 돌아갑니다.",
+      "maxWidth": 135,
+      "breaks": [
+        11,
+        20
+      ],
+      "lines": [
+        "게임을 저장하지 않고",
+        "타이틀 화면으로",
+        "돌아갑니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "게임을 저장하지 않고 타이틀 화면으로 돌아갑니다.",
+      "maxWidth": 90,
+      "breaks": [
+        3,
+        11,
+        20
+      ],
+      "lines": [
+        "게임을",
+        "저장하지 않고",
+        "타이틀 화면으로",
+        "돌아갑니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "게임을 저장하지 않고 타이틀 화면으로 돌아갑니다.",
+      "maxWidth": 68,
+      "breaks": [
+        3,
+        8,
+        15,
+        20
+      ],
+      "lines": [
+        "게임을",
+        "저장하지",
+        "않고 타이틀",
+        "화면으로",
+        "돌아갑니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "현재 진행 중인 런을 포기하고 처음부터 다시 시작합니다.",
+      "maxWidth": 155,
+      "breaks": [
+        11,
+        21
+      ],
+      "lines": [
+        "현재 진행 중인 런을",
+        "포기하고 처음부터",
+        "다시 시작합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "현재 진행 중인 런을 포기하고 처음부터 다시 시작합니다.",
+      "maxWidth": 103,
+      "breaks": [
+        8,
+        16,
+        21
+      ],
+      "lines": [
+        "현재 진행 중인",
+        "런을 포기하고",
+        "처음부터",
+        "다시 시작합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "현재 진행 중인 런을 포기하고 처음부터 다시 시작합니다.",
+      "maxWidth": 78,
+      "breaks": [
+        5,
+        11,
+        16,
+        24
+      ],
+      "lines": [
+        "현재 진행",
+        "중인 런을",
+        "포기하고",
+        "처음부터 다시",
+        "시작합니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "선택한 타일을 버리고 새 타일을 손패로 가져옵니다.",
+      "maxWidth": 140,
+      "breaks": [
+        13
+      ],
+      "lines": [
+        "선택한 타일을 버리고 새",
+        "타일을 손패로 가져옵니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "선택한 타일을 버리고 새 타일을 손패로 가져옵니다.",
+      "maxWidth": 93,
+      "breaks": [
+        7,
+        13,
+        21
+      ],
+      "lines": [
+        "선택한 타일을",
+        "버리고 새",
+        "타일을 손패로",
+        "가져옵니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "선택한 타일을 버리고 새 타일을 손패로 가져옵니다.",
+      "maxWidth": 70,
+      "breaks": [
+        7,
+        13,
+        21
+      ],
+      "lines": [
+        "선택한 타일을",
+        "버리고 새",
+        "타일을 손패로",
+        "가져옵니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "아직 사용하지 않은 아이템이 보관함에 남아 있습니다.",
+      "maxWidth": 145,
+      "breaks": [
+        10,
+        20
+      ],
+      "lines": [
+        "아직 사용하지 않은",
+        "아이템이 보관함에",
+        "남아 있습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "아직 사용하지 않은 아이템이 보관함에 남아 있습니다.",
+      "maxWidth": 97,
+      "breaks": [
+        7,
+        15,
+        20
+      ],
+      "lines": [
+        "아직 사용하지",
+        "않은 아이템이",
+        "보관함에",
+        "남아 있습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "아직 사용하지 않은 아이템이 보관함에 남아 있습니다.",
+      "maxWidth": 73,
+      "breaks": [
+        7,
+        15,
+        23
+      ],
+      "lines": [
+        "아직 사용하지",
+        "않은 아이템이",
+        "보관함에 남아",
+        "있습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이 설정은 다음 런부터 적용되며 지금 진행 중인 런에는 영향을 주지 않습니다.",
+      "maxWidth": 215,
+      "breaks": [
+        17,
+        30
+      ],
+      "lines": [
+        "이 설정은 다음 런부터 적용되며",
+        "지금 진행 중인 런에는",
+        "영향을 주지 않습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이 설정은 다음 런부터 적용되며 지금 진행 중인 런에는 영향을 주지 않습니다.",
+      "maxWidth": 143,
+      "breaks": [
+        8,
+        17,
+        30
+      ],
+      "lines": [
+        "이 설정은 다음",
+        "런부터 적용되며",
+        "지금 진행 중인 런에는",
+        "영향을 주지 않습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "이 설정은 다음 런부터 적용되며 지금 진행 중인 런에는 영향을 주지 않습니다.",
+      "maxWidth": 108,
+      "breaks": [
+        8,
+        17,
+        26,
+        34
+      ],
+      "lines": [
+        "이 설정은 다음",
+        "런부터 적용되며",
+        "지금 진행 중인",
+        "런에는 영향을",
+        "주지 않습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "화면 흔들림과 진동 세기는 설정에서 따로 조절할 수 있습니다.",
+      "maxWidth": 170,
+      "breaks": [
+        10,
+        19
+      ],
+      "lines": [
+        "화면 흔들림과 진동",
+        "세기는 설정에서",
+        "따로 조절할 수 있습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "화면 흔들림과 진동 세기는 설정에서 따로 조절할 수 있습니다.",
+      "maxWidth": 113,
+      "breaks": [
+        10,
+        22
+      ],
+      "lines": [
+        "화면 흔들림과 진동",
+        "세기는 설정에서 따로",
+        "조절할 수 있습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    },
+    {
+      "text": "화면 흔들림과 진동 세기는 설정에서 따로 조절할 수 있습니다.",
+      "maxWidth": 85,
+      "breaks": [
+        7,
+        14,
+        19,
+        26
+      ],
+      "lines": [
+        "화면 흔들림과",
+        "진동 세기는",
+        "설정에서",
+        "따로 조절할",
+        "수 있습니다."
+      ],
+      "applied": true,
+      "overflow": false
+    }
+  ]
+}

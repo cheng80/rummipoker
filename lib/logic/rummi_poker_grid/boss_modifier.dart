@@ -2,6 +2,57 @@ import 'hand_rank.dart';
 import 'line_ref.dart';
 import 'models/tile.dart';
 
+/// Stable display keys for a known Boss ID; null preserves custom saved text.
+///
+/// UI resolves these keys at build time. For null, display the original title,
+/// ruleText and markerText verbatim. These keys never enter saved JSON.
+/// All current rules are fixed catalog sentences and need no named arguments.
+typedef RummiBossDisplayKeys = ({
+  String titleKey,
+  String ruleTextKey,
+  String markerTextKey,
+});
+
+RummiBossDisplayKeys? rummiBossDisplayKeys(String id) {
+  final prefix = switch (id) {
+    'red_dampener_v1' => 'coreBossRedDampener',
+    'row_line_dampener_v1' => 'coreBossRowDampener',
+    'blue_dampener_v1' => 'coreBossBlueDampener',
+    'black_dampener_v1' => 'coreBossBlackDampener',
+    'yellow_dampener_v1' => 'coreBossYellowDampener',
+    'column_line_dampener_v1' => 'coreBossColumnDampener',
+    'diagonal_line_dampener_v1' => 'coreBossDiagonalDampener',
+    'face_tile_dampener_v1' => 'coreBossFaceDampener',
+    'all_score_dampener_v1' => 'coreBossAllScoreDampener',
+    'first_confirm_tax_v1' => 'coreBossFirstConfirmTax',
+    'board_block_right_column_v1' => 'coreBossBlockRightColumn',
+    'board_block_top_row_v1' => 'coreBossBlockTopRow',
+    'board_block_left_column_v1' => 'coreBossBlockLeftColumn',
+    'board_block_bottom_row_v1' => 'coreBossBlockBottomRow',
+    'board_block_corners_center_v1' => 'coreBossBlockCornersCenter',
+    'board_block_inner_x_v1' => 'coreBossBlockInnerX',
+    'board_block_four_corners_v1' => 'coreBossBlockFourCorners',
+    'board_block_center_column_v1' => 'coreBossBlockCenterColumn',
+    'board_block_center_row_v1' => 'coreBossBlockCenterRow',
+    'board_block_main_diagonal_v1' => 'coreBossBlockMainDiagonal',
+    'board_block_anti_diagonal_v1' => 'coreBossBlockAntiDiagonal',
+    'board_block_center_cross_v1' => 'coreBossBlockCenterCross',
+    'board_block_checker_a_v1' => 'coreBossBlockCheckerA',
+    'board_block_checker_b_v1' => 'coreBossBlockCheckerB',
+    'confirm_count_tax_v2' => 'coreBossConfirmCountTax',
+    'confirm_limit_tax_v1' => 'coreBossConfirmLimitTax',
+    'repeat_rank_pressure_v4' => 'coreBossRepeatRankPressure',
+    'single_rank_pressure' => 'coreBossSingleRankPressure',
+    _ => null,
+  };
+  if (prefix == null) return null;
+  return (
+    titleKey: '${prefix}Title',
+    ruleTextKey: '${prefix}Rule',
+    markerTextKey: '${prefix}Marker',
+  );
+}
+
 enum RummiBossModifierCategory {
   tileColorWeaken,
   lineKindWeaken,
@@ -344,6 +395,9 @@ class RummiBossModifier {
     scoreMultiplier: 0.7,
   );
 
+  /// Null for custom IDs: UI must keep the original display fields as fallback.
+  RummiBossDisplayKeys? get displayKeys => rummiBossDisplayKeys(id);
+
   final String id;
   final RummiBossModifierCategory category;
   final String title;
@@ -455,6 +509,9 @@ class RummiConstraintPenaltyBreakdown {
     this.affectedTileColors = const [],
     this.affectedLineKinds = const [],
   });
+
+  /// Uses modifierId without replacing the original penalty display fields.
+  RummiBossDisplayKeys? get displayKeys => rummiBossDisplayKeys(modifierId);
 
   final String modifierId;
   final String title;

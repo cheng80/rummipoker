@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -244,6 +245,43 @@ void main() {
           before.id,
         );
         expect(selectedBoss.session.blind.bossModifier?.id, before.id);
+      },
+    );
+
+    test(
+      '키 전환 이전 저장 파일의 한국어 boss 문구도 그대로 복원되고 다시 저장된다',
+      () async {
+        final legacy =
+            (jsonDecode(
+                      File(
+                        'test/logic/fixtures/boss_modifier_legacy_json.json',
+                      ).readAsStringSync(),
+                    )
+                    as List)
+                .cast<Map<String, dynamic>>();
+        final runtime = buildInitialRunRuntime(const GameSessionArgs(runSeed: 5));
+
+        for (final savedBoss in [legacy.first, legacy.last]) {
+          final decoded =
+              jsonDecode(ActiveRunSaveService.runtimeStateToJson(runtime))
+                  as Map<String, dynamic>;
+          decoded['blindSelectBossModifier'] = savedBoss;
+
+          final restored = await ActiveRunSaveService.runtimeStateFromJson(
+            jsonEncode(decoded),
+          );
+          final boss = restored.blindSelectBossModifier!;
+
+          expect(boss.id, savedBoss['id'], reason: savedBoss['id'] as String);
+          expect(boss.title, savedBoss['title']);
+          expect(boss.ruleText, savedBoss['ruleText']);
+          expect(boss.markerText, savedBoss['markerText']);
+
+          final resaved =
+              jsonDecode(ActiveRunSaveService.runtimeStateToJson(restored))
+                  as Map<String, dynamic>;
+          expect(resaved['blindSelectBossModifier'], savedBoss);
+        }
       },
     );
 

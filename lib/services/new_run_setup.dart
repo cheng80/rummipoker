@@ -1,4 +1,14 @@
-enum NewRunDifficulty { standard, relaxed, challenge }
+enum NewRunDifficulty {
+  standard,
+  relaxed,
+  challenge;
+
+  String get labelKey => switch (this) {
+    standard => 'menuStandard',
+    relaxed => 'menuLegacyRules',
+    challenge => 'menuChallenge',
+  };
+}
 
 enum NewRunModifier {
   basic(
@@ -23,6 +33,11 @@ enum NewRunModifier {
     required this.rewardMultiplier,
     required this.unlockCostInsight,
   });
+
+  String get labelKey => switch (this) {
+    basic => 'menuBasicRun',
+    highStakes => 'menuHighStakes',
+  };
 
   final String id;
   final String label;

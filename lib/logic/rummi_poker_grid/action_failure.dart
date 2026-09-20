@@ -1,0 +1,93 @@
+/// Transient failure metadata. Never serialized into run saves.
+enum ActionFailureReason {
+  selectScoringLine,
+  selectRitualTarget,
+  emptyPeekDeck,
+  selectDeckDiscard,
+  unsupportedEffect,
+  notLineItem,
+  notRitualItem,
+  notDeckPeekItem,
+  deckDiscardTargetMissing,
+  confirmBonusPending,
+  boardDiscardCap,
+  itemOfferCap,
+  jesterOfferCap,
+  expiryNotRecoverable,
+  expiryAlreadyUsed,
+  handDiscardCap,
+  boardMoveCap,
+  noAvailableBoardMove,
+  moveBonusPending,
+  handMustBeEmpty,
+  drawFailed,
+  noMoveHistory,
+  undoSourceOccupied,
+  undoTileMissing,
+  handSizeCap,
+  rankMissing,
+  rankCannotGrow,
+  scoringLineMissing,
+  boardLineEmpty,
+  noRankToGrow,
+  rankNeedsThree,
+  fateNeedsTile,
+  fateSetUnavailable,
+  noRankForBonus,
+  matchingTileMissing,
+  noOtherColor,
+  matchingNumberMissing,
+  sacrificeNeedsTwo,
+  unknownRitual,
+  selectedTileMissing,
+  noTileTarget,
+  invalidAmount,
+  hookRequired,
+  notBattleItem,
+  itemNotReady,
+  itemNotOwned,
+  notMarketItem,
+  goldAboveThreshold,
+  noSession,
+  bossCellBlocked,
+  invalidPlacement,
+  emptyDeck,
+  handFull,
+  noBoardDiscards,
+  noHandDiscards,
+  cellEmpty,
+  handTileMissing,
+  selectBoardDiscard,
+  selectHandDiscard,
+  noBoardMoves,
+  moveSourceEmpty,
+  moveDestinationOccupied,
+  bossMoveBlocked,
+  selectBoardMove,
+  noMarket,
+  rerollGold,
+  offerMissing,
+  jesterSlotsFull,
+  insufficientGold,
+  purchaseFailed,
+  itemOwnershipCap,
+  itemPurchaseFailed,
+  tileOfferMissing,
+}
+
+class ActionFailure {
+  const ActionFailure(this.reason, this.legacyMessage, {this.args = const {}});
+
+  final ActionFailureReason? reason;
+  final String legacyMessage;
+  final Map<String, String> args;
+
+  String get analyticsCode => switch (reason) {
+    ActionFailureReason.insufficientGold ||
+    ActionFailureReason.rerollGold => 'not_enough_gold',
+    ActionFailureReason.jesterSlotsFull ||
+    ActionFailureReason.itemOfferCap ||
+    ActionFailureReason.jesterOfferCap => 'no_space',
+    _ => 'denied',
+  };
+}

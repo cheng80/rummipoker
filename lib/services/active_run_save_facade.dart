@@ -74,6 +74,8 @@ class RummiActiveRunSaveFacade {
     required this.schemaVersion,
     required this.activeScene,
     required this.sceneAlias,
+    this.difficulty,
+    this.runModifier,
     this.difficultyLabel = '표준',
     this.runModifierLabel,
     required this.currentStageIndex,
@@ -92,6 +94,8 @@ class RummiActiveRunSaveFacade {
       schemaVersion: save.schemaVersion,
       activeScene: save.activeScene,
       sceneAlias: _sceneAliasFromName(save.activeScene),
+      difficulty: NewRunSetup.parseDifficulty(save.difficulty),
+      runModifier: NewRunModifier.parse(save.runModifier),
       difficultyLabel: NewRunSetup(
         difficulty: NewRunSetup.parseDifficulty(save.difficulty),
       ).difficultyLabel,
@@ -122,6 +126,8 @@ class RummiActiveRunSaveFacade {
       schemaVersion: ActiveRunSaveService.schemaVersion,
       activeScene: runtime.activeScene.name,
       sceneAlias: _sceneAliasFromScene(runtime.activeScene),
+      difficulty: runtime.difficulty,
+      runModifier: runtime.runModifier,
       difficultyLabel: NewRunSetup(
         difficulty: runtime.difficulty,
       ).difficultyLabel,
@@ -141,6 +147,8 @@ class RummiActiveRunSaveFacade {
   final int schemaVersion;
   final String activeScene;
   final RummiSaveSceneAlias sceneAlias;
+  final NewRunDifficulty? difficulty;
+  final NewRunModifier? runModifier;
   final String difficultyLabel;
   final String? runModifierLabel;
   final int currentStageIndex;

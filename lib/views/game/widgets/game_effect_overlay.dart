@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/app_translation.dart';
+import '../../../logic/rummi_poker_grid/boss_modifier.dart';
+
 import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
@@ -49,7 +52,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
   List<Offset> _lineSweepCenters = const [];
   List<Offset> _constraintImpactCenters = const [];
   Offset? _constraintImpactCenter;
-  String? _constraintImpactLabel;
+  RummiConstraintPenaltyBreakdown? _constraintImpactPenalty;
   int _scoreMoteTick = 0;
 
   @override
@@ -82,11 +85,11 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
                     tick: _scoreMoteTick,
                   ),
                 if (_constraintImpactCenter != null &&
-                    _constraintImpactLabel != null)
+                    _constraintImpactPenalty != null)
                   _ConstraintImpactBadgeLayer(
                     centers: _constraintImpactCenters,
                     center: _constraintImpactCenter!,
-                    label: _constraintImpactLabel!,
+                    label: _constraintPenaltyLabel(_constraintImpactPenalty!),
                     tick: _scoreMoteTick,
                   ),
               ],
@@ -147,9 +150,9 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           effectKind == _BoardEffectKind.constraintImpact
           ? centers
           : const <Offset>[];
-      final constraintImpactLabel =
+      final constraintImpactPenalty =
           effectKind == _BoardEffectKind.constraintImpact
-          ? _constraintPenaltyLabel(line)
+          ? line.constraintPenalties.first
           : null;
       if (scoreMoteCenters.isNotEmpty ||
           _scoreMoteCenters.isNotEmpty ||
@@ -163,7 +166,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _lineSweepCenters = scoreMoteCenters;
           _constraintImpactCenters = constraintImpactCenters;
           _constraintImpactCenter = constraintImpactCenter;
-          _constraintImpactLabel = constraintImpactLabel;
+          _constraintImpactPenalty = constraintImpactPenalty;
           _scoreMoteTick = widget.settlementSequenceTick;
         });
       }
@@ -189,7 +192,7 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
           _lineSweepCenters = const [];
           _constraintImpactCenters = const [];
           _constraintImpactCenter = null;
-          _constraintImpactLabel = null;
+          _constraintImpactPenalty = null;
         });
       });
     });
@@ -241,9 +244,11 @@ class _GameBoardEffectOverlayState extends State<GameBoardEffectOverlay> {
     return Offset(dx / centers.length, dy / centers.length);
   }
 
-  String _constraintPenaltyLabel(ConfirmedLineBreakdown line) {
-    final penalty = line.constraintPenalties.first;
-    if (penalty.markerText.isNotEmpty) return penalty.markerText;
+  String _constraintPenaltyLabel(RummiConstraintPenaltyBreakdown penalty) {
+    final marker = penalty.displayKeys == null
+        ? penalty.markerText
+        : context.translate(penalty.displayKeys!.markerTextKey);
+    if (marker.isNotEmpty) return marker;
     return '${penalty.scoreDelta}';
   }
 }

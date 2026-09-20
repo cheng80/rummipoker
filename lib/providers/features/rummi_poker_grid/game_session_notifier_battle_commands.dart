@@ -10,17 +10,32 @@ mixin GameSessionNotifierBattleCommands
   BattleBoardTapResult tapBoardCell(int row, int col) {
     final session = state.session;
     if (session == null) {
-      return const BattleBoardTapResult.fail('세션이 없습니다.');
+      return const BattleBoardTapResult.fail(
+        '세션이 없습니다.',
+        failure: ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.'),
+      );
     }
 
     final selectedHand = state.selectedHandTile;
     if (selectedHand != null) {
       if (session.blind.bossModifier?.blocksBoardCell(row, col) ?? false) {
-        return const BattleBoardTapResult.fail('Boss 제약 칸에는 놓을 수 없습니다.');
+        return const BattleBoardTapResult.fail(
+          'Boss 제약 칸에는 놓을 수 없습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.bossCellBlocked,
+            'Boss 제약 칸에는 놓을 수 없습니다.',
+          ),
+        );
       }
       final placed = tryPlaceTile(selectedHand, row, col);
       if (!placed) {
-        return const BattleBoardTapResult.fail('이 칸에 둘 수 없습니다.');
+        return const BattleBoardTapResult.fail(
+          '이 칸에 둘 수 없습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.invalidPlacement,
+            '이 칸에 둘 수 없습니다.',
+          ),
+        );
       }
       return const BattleBoardTapResult.placed();
     }
@@ -159,31 +174,60 @@ mixin GameSessionNotifierBattleCommands
   }
 
   /// 덱에서 손패로 드로우. 실패 사유를 문자열로 반환 (성공 시 null).
-  String? drawTile() {
+  String? drawTile() => drawTileFailure()?.legacyMessage;
+
+  ActionFailure? drawTileFailure() {
     final session = state.session;
-    if (session == null) return '세션이 없습니다.';
+    if (session == null) {
+      return ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.');
+    }
     if (!session.canDrawFromDeck) {
-      if (session.deck.isEmpty) return '덱이 비었습니다.';
-      return '손패는 최대 ${session.maxHandSize}장입니다.';
+      if (session.deck.isEmpty) {
+        return ActionFailure(ActionFailureReason.emptyDeck, '덱이 비었습니다.');
+      }
+      return ActionFailure(
+        ActionFailureReason.handFull,
+        '손패는 최대 ${session.maxHandSize}장입니다.',
+        args: {'count': '${session.maxHandSize}'},
+      );
     }
     final drawn = session.drawToHand();
-    if (drawn == null) return '드로우에 실패했습니다.';
+    if (drawn == null) {
+      return ActionFailure(ActionFailureReason.drawFailed, '드로우에 실패했습니다.');
+    }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }
 
   /// 보드 타일 버림. 실패 사유를 문자열로 반환 (성공 시 null).
-  String? discardBoardTile(int row, int col) {
+  String? discardBoardTile(int row, int col) =>
+      discardBoardTileFailure(row, col)?.legacyMessage;
+
+  ActionFailure? discardBoardTileFailure(int row, int col) {
     final session = state.session;
     final runProgress = state.runProgress;
-    if (session == null || runProgress == null) return '세션이 없습니다.';
+    if (session == null || runProgress == null) {
+      return ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.');
+    }
     final result = session.tryDiscardFromBoard(row, col);
     if (result.fail != null) {
       return switch (result.fail!) {
-        DiscardFailReason.noBoardDiscardsLeft => '보드패 버림 횟수가 없습니다.',
-        DiscardFailReason.noHandDiscardsLeft => '손패 버림 횟수가 없습니다.',
-        DiscardFailReason.cellEmpty => '해당 칸이 비어 있습니다.',
-        DiscardFailReason.tileNotInHand => '손패에서 버릴 카드를 찾지 못했습니다.',
+        DiscardFailReason.noBoardDiscardsLeft => ActionFailure(
+          ActionFailureReason.noBoardDiscards,
+          '보드패 버림 횟수가 없습니다.',
+        ),
+        DiscardFailReason.noHandDiscardsLeft => ActionFailure(
+          ActionFailureReason.noHandDiscards,
+          '손패 버림 횟수가 없습니다.',
+        ),
+        DiscardFailReason.cellEmpty => ActionFailure(
+          ActionFailureReason.cellEmpty,
+          '해당 칸이 비어 있습니다.',
+        ),
+        DiscardFailReason.tileNotInHand => ActionFailure(
+          ActionFailureReason.handTileMissing,
+          '손패에서 버릴 카드를 찾지 못했습니다.',
+        ),
       };
     }
     runProgress.onDiscardUsed();
@@ -198,27 +242,50 @@ mixin GameSessionNotifierBattleCommands
     return null;
   }
 
-  String? discardSelectedBoardTileFromState() {
+  String? discardSelectedBoardTileFromState() =>
+      discardSelectedBoardTileFromStateFailure()?.legacyMessage;
+
+  ActionFailure? discardSelectedBoardTileFromStateFailure() {
     final row = state.selectedBoardRow;
     final col = state.selectedBoardCol;
     if (row == null || col == null) {
-      return '보드에서 버릴 타일을 먼저 선택하세요.';
+      return ActionFailure(
+        ActionFailureReason.selectBoardDiscard,
+        '보드에서 버릴 타일을 먼저 선택하세요.',
+      );
     }
-    return discardBoardTile(row, col);
+    return discardBoardTileFailure(row, col);
   }
 
   /// 손패 타일 버림. 실패 사유를 문자열로 반환 (성공 시 null).
-  String? discardHandTile(Tile tile) {
+  String? discardHandTile(Tile tile) =>
+      discardHandTileFailure(tile)?.legacyMessage;
+
+  ActionFailure? discardHandTileFailure(Tile tile) {
     final session = state.session;
     final runProgress = state.runProgress;
-    if (session == null || runProgress == null) return '세션이 없습니다.';
+    if (session == null || runProgress == null) {
+      return ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.');
+    }
     final result = session.tryDiscardFromHand(tile);
     if (result.fail != null) {
       return switch (result.fail!) {
-        DiscardFailReason.noBoardDiscardsLeft => '보드패 버림 횟수가 없습니다.',
-        DiscardFailReason.noHandDiscardsLeft => '손패 버림 횟수가 없습니다.',
-        DiscardFailReason.cellEmpty => '해당 칸이 비어 있습니다.',
-        DiscardFailReason.tileNotInHand => '손패에서 버릴 카드를 찾지 못했습니다.',
+        DiscardFailReason.noBoardDiscardsLeft => ActionFailure(
+          ActionFailureReason.noBoardDiscards,
+          '보드패 버림 횟수가 없습니다.',
+        ),
+        DiscardFailReason.noHandDiscardsLeft => ActionFailure(
+          ActionFailureReason.noHandDiscards,
+          '손패 버림 횟수가 없습니다.',
+        ),
+        DiscardFailReason.cellEmpty => ActionFailure(
+          ActionFailureReason.cellEmpty,
+          '해당 칸이 비어 있습니다.',
+        ),
+        DiscardFailReason.tileNotInHand => ActionFailure(
+          ActionFailureReason.handTileMissing,
+          '손패에서 버릴 카드를 찾지 못했습니다.',
+        ),
       };
     }
     runProgress.onDiscardUsed();
@@ -233,12 +300,18 @@ mixin GameSessionNotifierBattleCommands
     return null;
   }
 
-  String? discardSelectedHandTileFromState() {
+  String? discardSelectedHandTileFromState() =>
+      discardSelectedHandTileFromStateFailure()?.legacyMessage;
+
+  ActionFailure? discardSelectedHandTileFromStateFailure() {
     final tile = state.selectedHandTile;
     if (tile == null) {
-      return '손패에서 버릴 카드를 먼저 선택하세요.';
+      return ActionFailure(
+        ActionFailureReason.selectHandDiscard,
+        '손패에서 버릴 카드를 먼저 선택하세요.',
+      );
     }
-    return discardHandTile(tile);
+    return discardHandTileFailure(tile);
   }
 
   String? moveBoardTile({
@@ -246,9 +319,23 @@ mixin GameSessionNotifierBattleCommands
     required int fromCol,
     required int toRow,
     required int toCol,
+  }) => moveBoardTileFailure(
+    fromRow: fromRow,
+    fromCol: fromCol,
+    toRow: toRow,
+    toCol: toCol,
+  )?.legacyMessage;
+
+  ActionFailure? moveBoardTileFailure({
+    required int fromRow,
+    required int fromCol,
+    required int toRow,
+    required int toCol,
   }) {
     final session = state.session;
-    if (session == null) return '세션이 없습니다.';
+    if (session == null) {
+      return ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.');
+    }
     final fail = session.tryMoveBoardTile(
       fromRow: fromRow,
       fromCol: fromCol,
@@ -257,11 +344,22 @@ mixin GameSessionNotifierBattleCommands
     );
     if (fail != null) {
       return switch (fail) {
-        BoardMoveFailReason.noBoardMovesLeft => '보드 이동 횟수가 없습니다.',
-        BoardMoveFailReason.sourceCellEmpty => '이동할 타일이 없습니다.',
-        BoardMoveFailReason.destinationOccupied => '이동할 칸이 비어 있지 않습니다.',
-        BoardMoveFailReason.destinationBlockedByBoss =>
+        BoardMoveFailReason.noBoardMovesLeft => ActionFailure(
+          ActionFailureReason.noBoardMoves,
+          '보드 이동 횟수가 없습니다.',
+        ),
+        BoardMoveFailReason.sourceCellEmpty => ActionFailure(
+          ActionFailureReason.moveSourceEmpty,
+          '이동할 타일이 없습니다.',
+        ),
+        BoardMoveFailReason.destinationOccupied => ActionFailure(
+          ActionFailureReason.moveDestinationOccupied,
+          '이동할 칸이 비어 있지 않습니다.',
+        ),
+        BoardMoveFailReason.destinationBlockedByBoss => ActionFailure(
+          ActionFailureReason.bossMoveBlocked,
           'Boss 제약 칸에는 이동할 수 없습니다.',
+        ),
       };
     }
     _replaceState(
@@ -278,13 +376,24 @@ mixin GameSessionNotifierBattleCommands
   String? moveSelectedBoardTileToFromState({
     required int toRow,
     required int toCol,
+  }) => moveSelectedBoardTileToFromStateFailure(
+    toRow: toRow,
+    toCol: toCol,
+  )?.legacyMessage;
+
+  ActionFailure? moveSelectedBoardTileToFromStateFailure({
+    required int toRow,
+    required int toCol,
   }) {
     final fromRow = state.selectedBoardRow;
     final fromCol = state.selectedBoardCol;
     if (fromRow == null || fromCol == null) {
-      return '이동할 보드 타일을 먼저 선택하세요.';
+      return ActionFailure(
+        ActionFailureReason.selectBoardMove,
+        '이동할 보드 타일을 먼저 선택하세요.',
+      );
     }
-    return moveBoardTile(
+    return moveBoardTileFailure(
       fromRow: fromRow,
       fromCol: fromCol,
       toRow: toRow,
@@ -292,27 +401,45 @@ mixin GameSessionNotifierBattleCommands
     );
   }
 
-  String? useBattleItem(ItemDefinition item) {
+  String? useBattleItem(ItemDefinition item) =>
+      useBattleItemFailure(item)?.legacyMessage;
+
+  ActionFailure? useBattleItemFailure(ItemDefinition item) {
     final session = state.session;
     final runProgress = state.runProgress;
-    if (session == null || runProgress == null) return '세션이 없습니다.';
+    if (session == null || runProgress == null) {
+      return ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.');
+    }
 
     final result = ItemEffectRuntime.useBattleItem(
       item: item,
       session: session,
       runProgress: runProgress,
     );
-    if (!result.isSuccess) return result.failMessage;
+    if (!result.isSuccess) {
+      return result.failure ??
+          (result.failMessage == null
+              ? null
+              : ActionFailure(null, result.failMessage!));
+    }
     _replaceState(
       withValidSelections(state).copyWith(revision: state.revision + 1),
     );
     return null;
   }
 
-  String? useBattleItemOnLine(ItemDefinition item, LineRef lineRef) {
+  String? useBattleItemOnLine(ItemDefinition item, LineRef lineRef) =>
+      useBattleItemOnLineFailure(item, lineRef)?.legacyMessage;
+
+  ActionFailure? useBattleItemOnLineFailure(
+    ItemDefinition item,
+    LineRef lineRef,
+  ) {
     final session = state.session;
     final runProgress = state.runProgress;
-    if (session == null || runProgress == null) return '세션이 없습니다.';
+    if (session == null || runProgress == null) {
+      return ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.');
+    }
 
     final result = ItemEffectRuntime.useBattleItemOnLine(
       item: item,
@@ -320,7 +447,12 @@ mixin GameSessionNotifierBattleCommands
       runProgress: runProgress,
       lineRef: lineRef,
     );
-    if (!result.isSuccess) return result.failMessage;
+    if (!result.isSuccess) {
+      return result.failure ??
+          (result.failMessage == null
+              ? null
+              : ActionFailure(null, result.failMessage!));
+    }
     _replaceState(
       withValidSelections(state).copyWith(revision: state.revision + 1),
     );
@@ -331,13 +463,28 @@ mixin GameSessionNotifierBattleCommands
     ItemDefinition item,
     LineRef lineRef, {
     int? tileIndex,
+  }) => useBattleItemOnRitualTargetFailure(
+    item,
+    lineRef,
+    tileIndex: tileIndex,
+  )?.legacyMessage;
+
+  ActionFailure? useBattleItemOnRitualTargetFailure(
+    ItemDefinition item,
+    LineRef lineRef, {
+    int? tileIndex,
   }) {
     final result = useBattleItemOnRitualTargetResult(
       item,
       lineRef,
       tileIndex: tileIndex,
     );
-    return result.isSuccess ? null : result.failMessage;
+    return result.isSuccess
+        ? null
+        : result.failure ??
+              (result.failMessage == null
+                  ? null
+                  : ActionFailure(null, result.failMessage!));
   }
 
   ItemUseResult useBattleItemOnRitualTargetResult(
@@ -348,7 +495,11 @@ mixin GameSessionNotifierBattleCommands
     final session = state.session;
     final runProgress = state.runProgress;
     if (session == null || runProgress == null) {
-      return ItemUseResult.failure(itemId: item.id, message: '세션이 없습니다.');
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '세션이 없습니다.',
+        failure: ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.'),
+      );
     }
 
     final result = ItemEffectRuntime.useBattleItemOnRitualTarget(
@@ -369,7 +520,10 @@ mixin GameSessionNotifierBattleCommands
     final session = state.session;
     final runProgress = state.runProgress;
     if (session == null || runProgress == null) {
-      return const DeckPeekBattleUseResult.failure('세션이 없습니다.');
+      return const DeckPeekBattleUseResult.failure(
+        '세션이 없습니다.',
+        failure: ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.'),
+      );
     }
     final result = ItemEffectRuntime.consumeBattleDeckPeekItem(
       item: item,
@@ -379,6 +533,7 @@ mixin GameSessionNotifierBattleCommands
     if (!result.isSuccess) {
       return DeckPeekBattleUseResult.failure(
         result.failMessage ?? '아이템을 사용할 수 없습니다.',
+        failure: result.failure,
       );
     }
     final count =
@@ -390,16 +545,29 @@ mixin GameSessionNotifierBattleCommands
     return DeckPeekBattleUseResult.success(candidates);
   }
 
-  String? useBattleDeckPeekDiscardItem(ItemDefinition item, int topIndex) {
+  String? useBattleDeckPeekDiscardItem(ItemDefinition item, int topIndex) =>
+      useBattleDeckPeekDiscardItemFailure(item, topIndex)?.legacyMessage;
+
+  ActionFailure? useBattleDeckPeekDiscardItemFailure(
+    ItemDefinition item,
+    int topIndex,
+  ) {
     final session = state.session;
-    if (session == null) return '세션이 없습니다.';
+    if (session == null) {
+      return ActionFailure(ActionFailureReason.noSession, '세션이 없습니다.');
+    }
 
     final result = ItemEffectRuntime.useBattleDeckPeekDiscardItem(
       item: item,
       session: session,
       topIndex: topIndex,
     );
-    if (!result.isSuccess) return result.failMessage;
+    if (!result.isSuccess) {
+      return result.failure ??
+          (result.failMessage == null
+              ? null
+              : ActionFailure(null, result.failMessage!));
+    }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }

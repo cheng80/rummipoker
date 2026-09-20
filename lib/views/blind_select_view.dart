@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,11 +13,14 @@ import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/game_analytics_service.dart';
 import '../services/new_run_setup.dart';
+import '../utils/active_run_translation.dart';
+import '../utils/app_translation.dart';
 import '../utils/common_ui.dart';
-import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/fx/entrance_in.dart';
 import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/motion_policy.dart';
+import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/semantic_text.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_ui_palette.dart';
@@ -154,24 +156,34 @@ class _BlindSelectViewState extends State<BlindSelectView>
       widget.restoredRun?.runProgress.currentStationBlindTierIndex ?? -1;
 
   String get _stationSubtitle {
-    final difficultyLabel = NewRunSetup(
-      difficulty: _effectiveDifficulty,
-    ).difficultyLabel;
+    final difficultyLabel = context.translate(_effectiveDifficulty.labelKey);
     final modeLabel = BlindSelectionSetup.isEndlessStation(_stationIndex)
-        ? '무한 도전'
-        : '난이도 $difficultyLabel';
+        ? context.translate('menuEndless')
+        : context.translate(
+            'menuDifficultyLabel',
+            namedArgs: {'difficulty': difficultyLabel},
+          );
     if (widget.restoredRun == null) {
       return modeLabel;
     }
     if (BlindSelectionSetup.isEndlessStation(_stationIndex)) {
-      return '$modeLabel · 난이도 $difficultyLabel · 점수가 계속 상승합니다.';
+      return context.translate(
+        'menuEndlessSubtitle',
+        namedArgs: {'mode': modeLabel, 'difficulty': difficultyLabel},
+      );
     }
-    return '$modeLabel · 다음 전투를 선택하세요.';
+    return context.translate(
+      'menuSelectNextBattle',
+      namedArgs: {'mode': modeLabel},
+    );
   }
 
   String get _stationTitle =>
       BlindSelectionSetup.isEndlessStation(_stationIndex)
-      ? '무한 도전 S$_stationIndex'
+      ? context.translate(
+          'menuEndlessStation',
+          namedArgs: {'station': '$_stationIndex'},
+        )
       : 'Station $_stationIndex';
 
   Future<void> _startBlind(BlindSelectionSpec selected) async {
@@ -307,7 +319,7 @@ class _BlindSelectViewState extends State<BlindSelectView>
                 scaleFrom: 0.92,
                 offset: const Offset(0, -0.2),
                 curve: Curves.easeOutBack,
-                child: const _EndlessWarningBanner(),
+                child: _EndlessWarningBanner(),
               ),
               const SizedBox(height: 12),
             ],
@@ -398,12 +410,12 @@ class _EndlessWarningBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '무한 도전',
+                  context.translate('menuEndless'),
                   style: TextStyle(
                     color: GameUiPalette.specialEndlessTextMuted,
                     fontSize: 17,
@@ -412,8 +424,8 @@ class _EndlessWarningBanner extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 3),
-                Text(
-                  '목표 점수가 계속 상승합니다. 여기부터는 기록 경쟁 구간입니다.',
+                SemanticText(
+                  context.translate('menuEndlessDesc'),
                   softWrap: true,
                   style: TextStyle(
                     color: GameUiPalette.specialEndlessText,
@@ -446,6 +458,8 @@ class _BlindOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final modifier = spec.bossModifier;
+    final displayKeys = modifier?.displayKeys;
     final status = _statusStyleFor(spec);
     final badgeStatus = displayAvailability == null
         ? status
@@ -491,14 +505,23 @@ class _BlindOptionCard extends StatelessWidget {
                 const SizedBox(height: 9),
                 Row(
                   children: [
-                    _BlindMetric(label: '목표', value: '${spec.targetScore}'),
-                    _BlindMetric(label: '보상', value: '+${spec.rewardPreview}'),
-                    _BlindMetric(label: '손패', value: '${spec.maxHandSize}'),
+                    _BlindMetric(
+                      label: context.translate('menuTarget'),
+                      value: '${spec.targetScore}',
+                    ),
+                    _BlindMetric(
+                      label: context.translate('menuReward'),
+                      value: '+${spec.rewardPreview}',
+                    ),
+                    _BlindMetric(
+                      label: context.translate('menuHand'),
+                      value: '${spec.maxHandSize}',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 7),
-                Text(
-                  _conditionSummary(spec),
+                SemanticText(
+                  _conditionSummary(context, spec),
                   maxLines: 2,
                   style: TextStyle(
                     color: status.stateColor.withValues(
@@ -509,11 +532,15 @@ class _BlindOptionCard extends StatelessWidget {
                     height: 1.25,
                   ),
                 ),
-                if (spec.bossModifier != null) ...[
+                if (modifier != null) ...[
                   const SizedBox(height: 7),
                   _BlindConstraintChip(
-                    title: spec.bossModifier!.title,
-                    markerText: spec.bossModifier!.markerText,
+                    title: displayKeys == null
+                        ? modifier.title
+                        : context.translate(displayKeys.titleKey),
+                    markerText: displayKeys == null
+                        ? modifier.markerText
+                        : context.translate(displayKeys.markerTextKey),
                     enabled: isInteractive,
                     pulse: isInteractive,
                   ),
@@ -684,11 +711,11 @@ class _BlindPlayButton extends StatelessWidget {
       haptic: null,
       builder: (context, onTap) => Material(
         color: GameUiPalette.transparent,
-        shape: const CircleBorder(),
+        shape: CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          customBorder: const CircleBorder(),
+          customBorder: CircleBorder(),
           child: Ink(
             width: 46,
             height: 46,
@@ -760,10 +787,18 @@ class _BlindMetric extends StatelessWidget {
   }
 }
 
-String _conditionSummary(BlindSelectionSpec spec) {
-  if (spec.isCleared) return '클리어 완료';
-  if (spec.isLocked) return spec.lockReason ?? '아직 선택할 수 없습니다';
-  return '보드 버림 ${spec.boardDiscards} · 손패 버림 ${spec.handDiscards}';
+String _conditionSummary(BuildContext context, BlindSelectionSpec spec) {
+  if (spec.isCleared) return context.translate('menuClearComplete');
+  if (spec.isLocked) {
+    return context.blindLockReason(spec);
+  }
+  return context.translate(
+    'menuDiscardSummary',
+    namedArgs: {
+      'board': '${spec.boardDiscards}',
+      'hand': '${spec.handDiscards}',
+    },
+  );
 }
 
 _BlindStatusStyle _statusStyleFor(
@@ -772,7 +807,7 @@ _BlindStatusStyle _statusStyleFor(
 }) {
   final shown = availability ?? spec.availability;
   if (shown == BlindSelectionAvailability.cleared) {
-    return const _BlindStatusStyle(
+    return _BlindStatusStyle(
       fillColor: GameUiPalette.blindBasicFill,
       borderColor: GameUiPalette.blindBasicBorder,
       badgeColor: GameUiPalette.blindBasicBadge,
@@ -783,7 +818,7 @@ _BlindStatusStyle _statusStyleFor(
     );
   }
   if (shown == BlindSelectionAvailability.locked) {
-    return const _BlindStatusStyle(
+    return _BlindStatusStyle(
       fillColor: GameUiPalette.blindChallengeFill,
       borderColor: GameUiPalette.blindChallengeBorder,
       badgeColor: GameUiPalette.blindChallengeBadge,
@@ -794,7 +829,7 @@ _BlindStatusStyle _statusStyleFor(
     );
   }
   if (spec.isEndless) {
-    return const _BlindStatusStyle(
+    return _BlindStatusStyle(
       fillColor: GameUiPalette.blindEndlessFill,
       borderColor: GameUiPalette.specialDanger,
       badgeColor: GameUiPalette.blindEndlessBadge,
@@ -804,7 +839,7 @@ _BlindStatusStyle _statusStyleFor(
       trailingIcon: Icons.local_fire_department_rounded,
     );
   }
-  return const _BlindStatusStyle(
+  return _BlindStatusStyle(
     fillColor: GameUiPalette.blindCustomFill,
     borderColor: GameUiPalette.blindCustomBorder,
     badgeColor: GameUiPalette.blindCustomBadge,
@@ -859,7 +894,12 @@ class _BlindStatusBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
-          status.badgeLabel,
+          context.translate(switch (status.badgeLabel) {
+            'CLEAR' => 'menuBlindClear',
+            'LOCKED' => 'menuBlindLocked',
+            'DANGER' => 'menuBlindDanger',
+            _ => 'menuBlindOpen',
+          }),
           style: TextStyle(
             color: status.badgeTextColor,
             fontSize: 11,
@@ -949,7 +989,8 @@ class _HighStakesChip extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'flowHighStakesChip'.tr(
+              context.translate(
+                'flowHighStakesChip',
                 args: [
                   '${modifier.targetScoreMultiplier}',
                   '${modifier.rewardMultiplier}',
@@ -995,8 +1036,11 @@ class _RunProgressBand extends StatelessWidget {
     final current = endless ? null : stationIndex.clamp(1, _finalStation);
     return Semantics(
       label: endless
-          ? 'flowRunProgressEndless'.tr(args: ['$stationIndex'])
-          : 'flowRunProgressLabel'.tr(args: ['$current', '$_finalStation']),
+          ? context.translate('flowRunProgressEndless', args: ['$stationIndex'])
+          : context.translate(
+              'flowRunProgressLabel',
+              args: ['$current', '$_finalStation'],
+            ),
       child: ExcludeSemantics(
         child: SizedBox(
           key: const ValueKey('run-progress-band'),
@@ -1052,7 +1096,7 @@ class _RunProgressBand extends StatelessWidget {
                                 top: -4,
                                 width: _dot + 8,
                                 height: _dot + 8,
-                                child: const IgnorePointer(
+                                child: IgnorePointer(
                                   child: DecoratedBox(
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,

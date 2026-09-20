@@ -7,9 +7,13 @@ class _ItemEffectFeedback {
     this.sourceLabel,
     required this.passive,
     this.fateTransform = false,
+    this.titleBuilder,
+    this.detailBuilder,
   });
 
   final String title;
+  final String Function(BuildContext)? titleBuilder;
+  final String Function(BuildContext)? detailBuilder;
   final String detail;
   final String? sourceLabel;
   final bool passive;
@@ -115,7 +119,8 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                                   const SizedBox(height: 4),
                                 ],
                                 Text(
-                                  feedback.title,
+                                  feedback.titleBuilder?.call(context) ??
+                                      feedback.title,
                                   maxLines: 1,
                                   style: const TextStyle(
                                     color: GameUiPalette.textPrimary,
@@ -125,8 +130,11 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 5),
+                                // maxLines: 1 makes SemanticText a no-op, so
+                                // this stays a plain Text.
                                 Text(
-                                  feedback.detail,
+                                  feedback.detailBuilder?.call(context) ??
+                                      feedback.detail,
                                   key: const ValueKey(
                                     'item-effect-result-label',
                                   ),
@@ -156,7 +164,7 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                                   vertical: 5,
                                 ),
                                 child: Text(
-                                  '패시브',
+                                  context.translate('battlePassive'),
                                   style: TextStyle(
                                     color: accent,
                                     fontSize: 11,
@@ -470,7 +478,10 @@ class _RitualDeckTileFlightPayload extends StatelessWidget {
               const SizedBox(width: 4),
             ],
             Text(
-              '덱 +${tiles.length}',
+              context.translate(
+                'battleDeckAdded',
+                namedArgs: {'count': '${tiles.length}'},
+              ),
               style: const TextStyle(
                 color: GameUiPalette.textPrimary,
                 fontSize: 13,

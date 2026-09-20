@@ -12,18 +12,35 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     GameFeedback.play(GameCue.newReveal);
   }
 
-  void _startMarketDenyFeedback(String target, String reason) {
+  ActionFailure? _invokeMarketFailure(
+    ActionFailure? Function()? typed,
+    String? Function() legacy,
+  ) {
+    if (typed != null) return typed();
+    final message = legacy();
+    return message == null ? null : ActionFailure(null, message);
+  }
+
+  void _startMarketDenyFeedback(
+    String target,
+    String reason, {
+    ActionFailure? failure,
+  }) {
     final tick = _marketDenyTick + 1;
     _mutate(() {
       _marketDenyTick = tick;
       _marketDenyTarget = target;
       _marketDenyReason = reason;
+      _marketDenyReasonBuilder = failure == null
+          ? null
+          : (context) => actionFailureLabel(context, failure);
     });
     Future<void>.delayed(GamePresentationTimings.marketDenyFeedbackHold, () {
       if (!mounted || _marketDenyTick != tick) return;
       _mutate(() {
         _marketDenyTarget = null;
         _marketDenyReason = null;
+        _marketDenyReasonBuilder = null;
       });
     });
     GameFeedback.play(GameCue.deny);
@@ -85,15 +102,25 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       itemId: item.id,
       sourceKind: _presentationSourceKind(source.placement),
       sourceLabel: localizedItemSlotName(context, source),
+      sourceItemIds: [item.id],
+      consumed: item.effect.consume,
+      activated: true,
+      operation: market.rerollCost <= 0
+          ? 'free_next_reroll'
+          : 'discount_next_reroll',
       target: ItemPresentationTarget(
         kind: ItemPresentationTargetKind.marketReroll,
         label: _offerLaneLabel(lane),
       ),
-      resultLabel: item.effect.consume
-          ? '${market.rerollCost <= 0 ? '발동: 리롤 무료' : '발동: 리롤 비용 할인'} · 소모됨'
-          : market.rerollCost <= 0
-          ? '발동: 리롤 무료'
-          : '발동: 리롤 비용 할인',
+      resultLabel: context.translate(
+        market.rerollCost <= 0
+            ? (item.effect.consume
+                  ? 'marketRerollFreeConsumed'
+                  : 'marketRerollFreeTriggered')
+            : (item.effect.consume
+                  ? 'marketRerollDiscountConsumed'
+                  : 'marketRerollDiscountTriggered'),
+      ),
     );
   }
 
@@ -101,7 +128,9 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     required RummiMarketRuntimeFacade market,
     required String category,
     required String targetLabel,
+    String? targetId,
     required String? discountSourceLabel,
+    required bool isCompassDiscounted,
   }) {
     final purchaseSource = _activeItemSlotWhere(
       (item) =>
@@ -110,7 +139,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
               (item.effect.timing == 'market_buy_if_category' &&
                   item.effect.value('category') == category)),
     );
-    final compassSource = discountSourceLabel == '나침반'
+    final compassSource = isCompassDiscounted
         ? _activeItemSlotWhere((item) => item.id == 'market_compass')
         : null;
     final source = purchaseSource ?? compassSource;
@@ -118,18 +147,35 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     if (source == null || item == null) {
       if (discountSourceLabel == null) return null;
       return ItemPresentationEvent(
-        itemId: discountSourceLabel == '나침반'
-            ? 'market_compass'
-            : discountSourceLabel,
+        itemId: isCompassDiscounted ? 'market_compass' : 'market_discount',
         sourceKind: ItemPresentationSourceKind.passive,
-        sourceLabel: discountSourceLabel,
+        sourceLabel: isCompassDiscounted
+            ? ItemTranslationScope.of(
+                context,
+              ).resolveDisplayName('market_compass', discountSourceLabel)
+            : discountSourceLabel,
         target: ItemPresentationTarget(
           kind: category == 'jester'
               ? ItemPresentationTargetKind.marketOffer
               : ItemPresentationTargetKind.itemOffer,
           label: targetLabel,
+          itemId: category == 'item' ? targetId : null,
+          jesterId: category == 'jester' ? targetId : null,
         ),
-        resultLabel: '발동: 구매가 -1G',
+        sourceItemIds: isCompassDiscounted ? const ['market_compass'] : null,
+        consumed: false,
+        activated: true,
+        operation: 'discount_next_purchase',
+        effectEvent: ItemEffectEvent(
+          kind: ItemEffectEventKind.marketModifierQueued,
+          itemId: isCompassDiscounted ? 'market_compass' : 'market_discount',
+          amount: 1,
+          detail: 'discount_next_purchase',
+        ),
+        resultLabel: context.translate(
+          'marketPurchaseDiscountTriggered',
+          namedArgs: {'amount': '1'},
+        ),
       );
     }
     final labels = <String>[
@@ -145,11 +191,27 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       itemId: item.id,
       sourceKind: _presentationSourceKind(source.placement),
       sourceLabel: labels.join(' + '),
+      sourceItemIds: [
+        item.id,
+        if (purchaseSource != null && compassSource != null)
+          compassSource.item!.id,
+      ],
+      consumed: purchaseSource?.item?.effect.consume ?? false,
+      activated: true,
+      operation: 'discount_next_purchase',
+      effectEvent: ItemEffectEvent(
+        kind: ItemEffectEventKind.marketModifierQueued,
+        itemId: item.id,
+        amount: discount,
+        detail: 'discount_next_purchase',
+      ),
       target: ItemPresentationTarget(
         kind: category == 'jester'
             ? ItemPresentationTargetKind.marketOffer
             : ItemPresentationTargetKind.itemOffer,
         label: targetLabel,
+        itemId: category == 'item' ? targetId : null,
+        jesterId: category == 'jester' ? targetId : null,
       ),
       resultLabel: _marketPurchaseResultLabel(
         discount: discount,
@@ -162,8 +224,17 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     required int discount,
     required bool consumed,
   }) {
-    final effectLabel = discount > 0 ? '구매가 -${discount}G' : '할인 적용';
-    return consumed ? '발동: $effectLabel · 소모됨' : '발동: $effectLabel';
+    if (discount > 0) {
+      return context.translate(
+        consumed
+            ? 'marketPurchaseDiscountConsumed'
+            : 'marketPurchaseDiscountTriggered',
+        namedArgs: {'amount': '$discount'},
+      );
+    }
+    return context.translate(
+      consumed ? 'marketDiscountConsumed' : 'marketDiscountTriggered',
+    );
   }
 
   int _marketPurchaseDiscountAmount({
@@ -204,10 +275,21 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final item = slot.item;
     if (item == null) return;
     final startOffset = _flightCenterForKey(_itemSlotKey(slot.slotLabel));
-    final failMessage = widget.onUseMarketItem(item);
+    final failure = _invokeMarketFailure(
+      widget.onUseMarketItemFailure == null
+          ? null
+          : () => widget.onUseMarketItemFailure!(item),
+      () => widget.onUseMarketItem(item),
+    );
+    final failMessage = failure?.legacyMessage;
     if (failMessage != null) {
-      _startMarketDenyFeedback('item-use', failMessage);
-      showBottomNotice(context, failMessage, cue: null);
+      _startMarketDenyFeedback('item-use', failMessage, failure: failure);
+      showBottomNotice(
+        context,
+        failMessage,
+        cue: null,
+        messageBuilder: (context) => actionFailureLabel(context, failure!),
+      );
       return;
     }
     final feedbackTick = _marketUseFeedbackTick + 1;
@@ -222,7 +304,8 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       }
       _marketUseFeedbackTick = feedbackTick;
       _marketUseFeedbackLabel = localizedItemSlotName(context, slot);
-      _marketUseFeedbackDelta = _marketUseFeedbackDeltaLabel(item);
+      _marketUseFeedbackItem = item;
+      _marketUseFeedbackDelta = _marketUseFeedbackDeltaLabel(context, item);
       _startMarketItemUseFlight(
         slot: slot,
         item: item,
@@ -239,6 +322,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       if (!mounted || _marketUseFeedbackTick != feedbackTick) return;
       _mutate(() {
         _marketUseFeedbackLabel = null;
+        _marketUseFeedbackItem = null;
         _marketUseFeedbackDelta = null;
       });
     });
@@ -246,39 +330,69 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     GameFeedback.play(GameCue.itemUse);
   }
 
-  String? _marketUseFeedbackDeltaLabel(ItemDefinition item) {
+  String? _marketUseFeedbackDeltaLabel(
+    BuildContext context,
+    ItemDefinition item,
+  ) {
     final amount = _marketUseGoldGain(item);
     return switch (item.effect.op) {
       'gain_gold' when amount != null => '+${amount}G',
-      'add_hand_rank_progress' => _marketUseRankGrowthLabel(item),
-      'reroll_item_offers_only' => 'Item 후보 교체',
+      'add_hand_rank_progress' => _marketUseRankGrowthLabel(context, item),
+      'reroll_item_offers_only' => context.translate(
+        'marketItemOffersReplaced',
+      ),
       _ => null,
     };
   }
 
-  String? _marketUseRankGrowthLabel(ItemDefinition item) {
+  String? _marketUseRankGrowthLabel(BuildContext context, ItemDefinition item) {
     final rank = item.effect.value('rank');
     final amount = item.effect.amount?.toInt();
     if (rank is! String || amount == null || amount <= 0) return null;
     final label = switch (rank) {
-      'twoPair' => '투페어',
-      'threeOfAKind' => '트리플',
-      'straight' => '스트레이트',
-      'flush' => '플러시',
-      'fullHouse' => '풀하우스',
-      'fourOfAKind' => '포카드',
-      'straightFlush' => '스티플',
-      'prismStraight' => '프리즘 스트레이트',
-      'crownFourOfAKind' => '크라운 포카드',
-      'lowStraightFlush' => '로우 스티플',
-      'royalStraightFlush' => '로열 스티플',
-      'fiveOfAKind' => '파이브 카드',
-      'flushHouse' => '플러시 하우스',
-      'flushFive' => '플러시 파이브',
+      'twoPair' => context.translate(rummiHandRankKey(RummiHandRank.twoPair)),
+      'threeOfAKind' => context.translate(
+        rummiHandRankKey(RummiHandRank.threeOfAKind),
+      ),
+      'straight' => context.translate(rummiHandRankKey(RummiHandRank.straight)),
+      'flush' => context.translate(rummiHandRankKey(RummiHandRank.flush)),
+      'fullHouse' => context.translate(
+        rummiHandRankKey(RummiHandRank.fullHouse),
+      ),
+      'fourOfAKind' => context.translate(
+        rummiHandRankKey(RummiHandRank.fourOfAKind),
+      ),
+      'straightFlush' => context.translate(
+        rummiHandRankKey(RummiHandRank.straightFlush),
+      ),
+      'prismStraight' => context.translate(
+        rummiHandRankKey(RummiHandRank.prismStraight),
+      ),
+      'crownFourOfAKind' => context.translate(
+        rummiHandRankKey(RummiHandRank.crownFourOfAKind),
+      ),
+      'lowStraightFlush' => context.translate(
+        rummiHandRankKey(RummiHandRank.lowStraightFlush),
+      ),
+      'royalStraightFlush' => context.translate(
+        rummiHandRankKey(RummiHandRank.royalStraightFlush),
+      ),
+      'fiveOfAKind' => context.translate(
+        rummiHandRankKey(RummiHandRank.fiveOfAKind),
+      ),
+      'flushHouse' => context.translate(
+        rummiHandRankKey(RummiHandRank.flushHouse),
+      ),
+      'flushFive' => context.translate(
+        rummiHandRankKey(RummiHandRank.flushFive),
+      ),
       _ => null,
     };
     if (label == null) return null;
-    return '$label 성장 +$amount';
+    return context.translate(
+      'marketRankGrowth',
+      namedArgs: {'rank': label, 'amount': '$amount'},
+    );
   }
 
   ItemPresentationEvent? _marketUsePresentation(
@@ -290,11 +404,15 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
       itemId: item.id,
       sourceKind: _presentationSourceKind(slot.placement),
       sourceLabel: localizedItemSlotName(context, slot),
-      target: const ItemPresentationTarget(
+      sourceItemIds: [item.id],
+      consumed: item.effect.consume,
+      operation: item.effect.op,
+      target: ItemPresentationTarget(
+        translateKind: true,
         kind: ItemPresentationTargetKind.itemOffer,
-        label: 'Item 후보 영역',
+        label: context.translate('marketItemOfferArea'),
       ),
-      resultLabel: '후보 교체 완료',
+      resultLabel: context.translate('marketOffersReplaced'),
     );
   }
 
@@ -312,7 +430,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     if (item == null) return null;
     final sellAction = _MarketActionPane(
       priceLabel: '+${item.sellPrice}',
-      buttonLabel: '판매',
+      buttonLabel: context.translate('marketSell'),
       buttonColor: GameUiPalette.actionDanger,
       onPressed: () => _sellMarketItem(slot),
     );
@@ -325,7 +443,8 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
         onSell: () => _sellMarketItem(slot),
         denyActive: _marketDenyTarget == 'item-use',
         denyTick: _marketDenyTick,
-        denyReason: _marketDenyReason,
+        denyReason:
+            _marketDenyReasonBuilder?.call(context) ?? _marketDenyReason,
       );
     }
     if (item.effect.timing == 'market_buy' ||
@@ -343,7 +462,12 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellOwnedJester(index);
     if (!ok) return;
-    showBottomNotice(context, '제스터를 판매했습니다.', cue: null);
+    showBottomNotice(
+      context,
+      context.translate('marketJesterSold'),
+      cue: null,
+      messageBuilder: (context) => context.translate('marketJesterSold'),
+    );
     _mutate(() {
       _pinnedItemOffers = marketBeforeSell.itemOffers;
       _startJesterSaleFlight(
@@ -371,7 +495,12 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellMarketItem(item);
     if (!ok) return;
-    showBottomNotice(context, '아이템을 판매했습니다.', cue: null);
+    showBottomNotice(
+      context,
+      context.translate('marketItemSold'),
+      cue: null,
+      messageBuilder: (context) => context.translate('marketItemSold'),
+    );
     _mutate(() {
       _pinnedItemOffers = marketBeforeSell.itemOffers;
       _startSaleFlight(

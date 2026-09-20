@@ -9,6 +9,7 @@ import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/title_view.dart';
 import 'package:rummipoker/widgets/fx/entrance_in.dart';
+import '../../support/test_translations.dart';
 
 /// 로고 등장 위젯이 움직이는 중이면 안쪽에 FadeTransition을 둔다.
 Finder _logoEntranceMotion() => find.descendant(
@@ -44,6 +45,7 @@ void main() {
     });
 
     Widget app() => EasyLocalization(
+      assetLoader: const TestTranslationAssetLoader(),
       supportedLocales: const [Locale('ko')],
       path: 'assets/translations',
       fallbackLocale: const Locale('ko'),

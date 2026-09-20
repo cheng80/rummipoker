@@ -97,7 +97,7 @@ class _MarketActionPane extends StatelessWidget {
                 right: 0,
                 child: MarketDenyBadge(
                   label: denyReason == null || denyReason!.isEmpty
-                      ? '불가'
+                      ? context.translate('marketUnavailable')
                       : denyReason!,
                 ),
               ),
@@ -150,7 +150,7 @@ class _MarketUseSellActionPane extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               GameActionButton(
-                label: '사용',
+                label: context.translate('marketUse'),
                 background: GameUiPalette.primaryButtonBlue,
                 compact: true,
                 onPressed: onUse,
@@ -169,7 +169,7 @@ class _MarketUseSellActionPane extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               GameActionButton(
-                label: '판매',
+                label: context.translate('marketSell'),
                 background: GameUiPalette.actionDanger,
                 compact: true,
                 onPressed: onSell,
@@ -183,7 +183,7 @@ class _MarketUseSellActionPane extends StatelessWidget {
               right: 0,
               child: MarketDenyBadge(
                 label: denyReason == null || denyReason!.isEmpty
-                    ? '불가'
+                    ? context.translate('marketUnavailable')
                     : denyReason!,
               ),
             ),
@@ -208,7 +208,7 @@ class _MarketDescriptionText extends StatelessWidget {
       key: const ValueKey('market-description-box'),
       constraints: const BoxConstraints(minHeight: kMarketDescriptionMinHeight),
       child: SingleChildScrollView(
-        child: Text(
+        child: SemanticText(
           text,
           key: const ValueKey('market-description-text'),
           maxLines: null,
@@ -270,13 +270,14 @@ class _OwnedMarketItemBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effect = localizedItemSlotEffect(context, slot);
-    final notice = _ownedItemSlotNotice(slot);
+    final notice = _ownedItemSlotNotice(context, slot);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _MarketDescriptionText(effect),
         if (notice != null) ...[
           const SizedBox(height: 4),
+          // maxLines: 1 makes SemanticText a no-op, so this stays a plain Text.
           Text(
             notice,
             maxLines: 1,

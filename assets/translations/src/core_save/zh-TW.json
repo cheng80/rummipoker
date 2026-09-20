@@ -1,0 +1,17 @@
+{
+  "coreSaveBlindUnlock": "通關 {required} 後解鎖 {blind}",
+  "coreSaveBlindUnselected": "尚未選擇",
+  "coreSaveBookmark": "{station} · {mode} · {blind}",
+  "coreSaveCheckpoint": "檢查點 Station {station}",
+  "coreSaveContinue": "恢復已儲存的目前遊戲。\n{summary}\n請選擇刪除或繼續遊戲。",
+  "coreSaveEmpty": "空白",
+  "coreSaveLocation": "目前 Station {station} · {scene} · Gold {gold}",
+  "coreSaveModeModifier": "{difficulty} · {modifier}",
+  "coreSaveSceneBattle": "戰鬥",
+  "coreSaveSceneBlindSelect": "選擇 Station",
+  "coreSaveSceneMarket": "Market",
+  "coreSaveSlotSemantic": "{slot}: {summary}",
+  "coreSaveSlotTitle": "存檔欄 {slot}",
+  "coreSaveSnapshot": "{location}\n{checkpoint}",
+  "coreSaveStationMode": "{station} · {mode}"
+}

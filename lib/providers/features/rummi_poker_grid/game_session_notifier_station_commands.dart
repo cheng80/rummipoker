@@ -156,6 +156,14 @@ mixin GameSessionNotifierStationCommands
           target: itemPresentationTargetForEvent(item, effectEvent),
           resultLabel: '발동: ${itemUseResultPresentationLabel(result)}',
           effectEvent: effectEvent,
+          sourceItemIds: [item.id],
+          // Owned trigger hooks consume inventory after producing effect events.
+          consumed:
+              item.effect.consume ||
+              result.events.any(
+                (event) => event.kind == ItemEffectEventKind.itemConsumed,
+              ),
+          activated: true,
         ),
       );
     }

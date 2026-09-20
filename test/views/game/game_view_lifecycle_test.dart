@@ -16,6 +16,7 @@ import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/services/tutorial_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
+import '../../support/test_translations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +34,7 @@ void main() {
   testWidgets('lifecycle 옵션은 실제 계속하기 전까지 BGM 복귀를 막는다', (tester) async {
     await tester.pumpWidget(
       EasyLocalization(
+        assetLoader: const TestTranslationAssetLoader(),
         supportedLocales: const [Locale('ko'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),

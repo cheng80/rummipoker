@@ -23,6 +23,7 @@ import 'package:rummipoker/views/game/game_presentation_timings.dart';
 import 'package:rummipoker/views/game/widgets/game_boss_intro_widgets.dart';
 import 'package:rummipoker/views/game_view.dart';
 import 'package:rummipoker/widgets/fx/motion_policy.dart';
+import '../../../support/test_translations.dart';
 
 ActiveRunRuntimeState _bossRun() {
   final session = RummiPokerGridSession(
@@ -53,6 +54,7 @@ ActiveRunRuntimeState _bossRun() {
 
 Widget _app(Widget home) {
   return EasyLocalization(
+    assetLoader: const TestTranslationAssetLoader(),
     supportedLocales: const [Locale('ko'), Locale('en')],
     path: 'assets/translations',
     fallbackLocale: const Locale('ko'),

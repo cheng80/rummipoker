@@ -1,0 +1,17 @@
+{
+  "coreSaveBlindUnlock": "Clear {required} to unlock {blind}",
+  "coreSaveBlindUnselected": "Not selected",
+  "coreSaveBookmark": "{station} · {mode} · {blind}",
+  "coreSaveCheckpoint": "Checkpoint Station {station}",
+  "coreSaveContinue": "Restore your saved run.\n{summary}\nChoose to delete it or continue playing.",
+  "coreSaveEmpty": "Empty",
+  "coreSaveLocation": "Current Station {station} · {scene} · Gold {gold}",
+  "coreSaveModeModifier": "{difficulty} · {modifier}",
+  "coreSaveSceneBattle": "Battle",
+  "coreSaveSceneBlindSelect": "Station Select",
+  "coreSaveSceneMarket": "Market",
+  "coreSaveSlotSemantic": "{slot}: {summary}",
+  "coreSaveSlotTitle": "Slot {slot}",
+  "coreSaveSnapshot": "{location}\n{checkpoint}",
+  "coreSaveStationMode": "{station} · {mode}"
+}

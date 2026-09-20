@@ -11,6 +11,7 @@ import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/services/run_unlock_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/new_run_view.dart';
+import '../support/test_translations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +47,7 @@ void main() {
     });
     await tester.pumpWidget(
       EasyLocalization(
+        assetLoader: const TestTranslationAssetLoader(),
         supportedLocales: const [Locale('ko'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),

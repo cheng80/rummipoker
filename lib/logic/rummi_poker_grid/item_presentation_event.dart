@@ -32,11 +32,17 @@ class ItemPresentationTarget {
     required this.kind,
     required this.label,
     this.key,
+    this.translateKind = false,
+    this.itemId,
+    this.jesterId,
   });
 
   final ItemPresentationTargetKind kind;
   final String label;
   final String? key;
+  final bool translateKind;
+  final String? itemId;
+  final String? jesterId;
 }
 
 class ItemPresentationEvent {
@@ -47,6 +53,11 @@ class ItemPresentationEvent {
     required this.target,
     required this.resultLabel,
     this.effectEvent,
+    this.consumed,
+    this.activated = false,
+    this.activationTiming,
+    this.sourceItemIds,
+    this.operation,
   });
 
   final String itemId;
@@ -55,6 +66,13 @@ class ItemPresentationEvent {
   final ItemPresentationTarget target;
   final String resultLabel;
   final ItemEffectEvent? effectEvent;
+
+  /// Null preserves labels from manual/custom presentation producers.
+  final bool? consumed;
+  final bool activated;
+  final String? activationTiming;
+  final List<String>? sourceItemIds;
+  final String? operation;
 }
 
 bool isDelayedItemActivation(ItemDefinition item) {
@@ -168,29 +186,35 @@ ItemPresentationTarget itemPresentationTargetForEvent(
     ItemEffectEventKind.handDiscardRemoved ||
     ItemEffectEventKind.boardMoveSlideBonusQueued ||
     ItemEffectEventKind.boardMoveUndone => const ItemPresentationTarget(
+      translateKind: true,
       kind: ItemPresentationTargetKind.boardResource,
       label: '전투 행동',
     ),
     ItemEffectEventKind.maxHandSizeIncreased ||
     ItemEffectEventKind.tileDrawn => const ItemPresentationTarget(
+      translateKind: true,
       kind: ItemPresentationTargetKind.hand,
       label: '손패',
     ),
     ItemEffectEventKind.deckTileAdded ||
     ItemEffectEventKind.deckTileDiscarded => const ItemPresentationTarget(
+      translateKind: true,
       kind: ItemPresentationTargetKind.deck,
       label: '덱',
     ),
     ItemEffectEventKind.goldGained => const ItemPresentationTarget(
+      translateKind: true,
       kind: ItemPresentationTargetKind.gold,
       label: 'Gold',
     ),
     ItemEffectEventKind.nextConfirmModifierQueued =>
       const ItemPresentationTarget(
+        translateKind: true,
         kind: ItemPresentationTargetKind.confirm,
         label: '다음 확정',
       ),
     ItemEffectEventKind.marketModifierQueued => ItemPresentationTarget(
+      translateKind: true,
       kind: item.effect.timing == 'market_reroll'
           ? ItemPresentationTargetKind.marketReroll
           : ItemPresentationTargetKind.marketOffer,
@@ -198,14 +222,17 @@ ItemPresentationTarget itemPresentationTargetForEvent(
     ),
     ItemEffectEventKind.settlementModifierQueued =>
       const ItemPresentationTarget(
+        translateKind: true,
         kind: ItemPresentationTargetKind.settlement,
         label: '정산',
       ),
     ItemEffectEventKind.bossModifierQueued => const ItemPresentationTarget(
+      translateKind: true,
       kind: ItemPresentationTargetKind.bossReward,
       label: '보스 보상',
     ),
     _ => ItemPresentationTarget(
+      translateKind: true,
       kind: ItemPresentationTargetKind.confirm,
       label: delayedItemActivationTimingLabel(item).replaceAll('합니다.', ''),
     ),

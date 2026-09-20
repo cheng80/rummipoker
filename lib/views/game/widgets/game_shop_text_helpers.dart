@@ -40,42 +40,49 @@ String localizedItemSlotEffect(
   ).resolveEffectText(slot.contentId ?? '', slot.effectText ?? '');
 }
 
-String _ownedItemSlotSubtitle(RummiMarketItemSlotView slot) {
+String _ownedItemSlotSubtitle(
+  BuildContext context,
+  RummiMarketItemSlotView slot,
+) {
   return switch (slot.placement) {
-    ItemPlacement.quickSlot => 'Q-Slot 보유',
-    ItemPlacement.passiveRack => 'Passive 보유',
-    ItemPlacement.inventory => 'Tool 보유',
-    ItemPlacement.equipped => 'Gear 보유',
+    ItemPlacement.quickSlot => context.translate('marketOwnedQuick'),
+    ItemPlacement.passiveRack => context.translate('marketOwnedPassive'),
+    ItemPlacement.inventory => context.translate('marketOwnedTool'),
+    ItemPlacement.equipped => context.translate('marketOwnedGear'),
   };
 }
 
-String? _ownedItemSlotNotice(RummiMarketItemSlotView slot) {
+String? _ownedItemSlotNotice(
+  BuildContext context,
+  RummiMarketItemSlotView slot,
+) {
   final item = slot.item;
   if (item == null) return null;
   return switch (item.effect.timing) {
-    'use_market' || 'use_market_if_gold_lte' => '상점에서 수동 사용',
-    'market_buy' => '다음 구매 시 자동 적용',
+    'use_market' ||
+    'use_market_if_gold_lte' => context.translate('marketUseMarketManual'),
+    'market_buy' => context.translate('marketNextPurchaseAuto'),
     'market_buy_if_category' => switch (item.effect.value('category')) {
-      'jester' => '다음 Jester 구매 시 자동 적용',
-      'item' => '다음 Item 구매 시 자동 적용',
-      _ => '다음 구매 시 자동 적용',
+      'jester' => context.translate('marketNextJesterPurchaseAuto'),
+      'item' => context.translate('marketNextItemPurchaseAuto'),
+      _ => context.translate('marketNextPurchaseAuto'),
     },
-    'market_reroll' => '리롤 버튼 사용 시 자동 적용',
-    'enter_market' => '다음 Market 진입 시 자동 적용',
+    'market_reroll' => context.translate('marketRerollAuto'),
+    'enter_market' => context.translate('marketNextMarketAuto'),
     _ =>
       slot.placement == ItemPlacement.equipped ||
               slot.placement == ItemPlacement.passiveRack
-          ? '조건 충족 시 자동 발동'
+          ? context.translate('marketConditionAuto')
           : null,
   };
 }
 
-List<String> _jesterSynergyTags(RummiJesterCard card) {
+List<String> _jesterSynergyTags(BuildContext context, RummiJesterCard card) {
   final tags = <String>[
     _jesterRarityTag(card.rarity),
-    jesterCategoryLabel(card),
-    _jesterConditionTag(card),
-    _jesterEffectTag(card),
+    jesterCategoryLabel(card, context: context),
+    _jesterConditionTag(context, card),
+    _jesterEffectTag(context, card),
   ].where((tag) => tag.isNotEmpty).toList(growable: false);
 
   if (tags.isNotEmpty) return tags;
@@ -91,63 +98,72 @@ String _jesterRarityTag(RummiJesterRarity rarity) {
   };
 }
 
-String _jesterConditionTag(RummiJesterCard card) {
+String _jesterConditionTag(BuildContext context, RummiJesterCard card) {
   if (card.id == 'scholar') return 'Ace';
-  if (card.id == 'supernova') return '반복 족보';
-  if (card.id == 'popcorn' || card.id == 'ice_cream') return '줄어듦';
-  if (card.id == 'green_jester' || card.id == 'ride_the_bus') return '성장형';
+  if (card.id == 'supernova') return context.translate('marketRepeatedHand');
+  if (card.id == 'popcorn' || card.id == 'ice_cream') {
+    return context.translate('marketDecreasing');
+  }
+  if (card.id == 'green_jester' || card.id == 'ride_the_bus') {
+    return context.translate('marketGrowing');
+  }
 
   return switch (card.conditionType) {
-    'none' => '상시',
+    'none' => context.translate('marketAlways'),
     'pair' => 'Pair',
     'two_pair' => 'Two Pair',
     'three_of_a_kind' => 'Triple',
     'straight' => 'Run',
     'flush' => 'Color',
-    'tile_color_scored' => card.mappedTileColors.isEmpty ? '색상' : '색상 타일',
-    'rank_scored' => '숫자 타일',
+    'tile_color_scored' =>
+      card.mappedTileColors.isEmpty
+          ? context.translate('marketColor')
+          : context.translate('marketColorTiles'),
+    'rank_scored' => context.translate('marketNumberTiles'),
     'face_card' => 'Face',
-    'other' => _otherJesterConditionTag(card.conditionValue),
+    'other' => _otherJesterConditionTag(context, card.conditionValue),
     _ => '',
   };
 }
 
-String _otherJesterConditionTag(Object? value) {
+String _otherJesterConditionTag(BuildContext context, Object? value) {
   return switch (value) {
-    'empty_jester_slots' => '빈 슬롯',
-    'unused_discards' => '미사용 버림',
-    'held_hand_size' => '손패',
-    _ => '조건부',
+    'empty_jester_slots' => context.translate('marketEmptySlots'),
+    'unused_discards' => context.translate('marketUnusedDiscards'),
+    'held_hand_size' => context.translate('marketHand'),
+    _ => context.translate('marketConditional'),
   };
 }
 
-String _jesterEffectTag(RummiJesterCard card) {
-  if (card.id == 'scholar') return '+칩/+점수%';
-  if (card.id == 'ice_cream') return '+칩';
-  if (card.effectType == 'stateful_growth') return '+점수%';
+String _jesterEffectTag(BuildContext context, RummiJesterCard card) {
+  if (card.id == 'scholar') return context.translate('marketChipsScoreTag');
+  if (card.id == 'ice_cream') return context.translate('marketChipsTag');
+  if (card.effectType == 'stateful_growth') {
+    return context.translate('marketScorePercentTag');
+  }
 
   return switch (card.effectType) {
-    'chips_bonus' => '+칩',
-    'mult_bonus' => '+점수%',
-    'xmult_bonus' => '점수 x',
+    'chips_bonus' => context.translate('marketChipsTag'),
+    'mult_bonus' => context.translate('marketScorePercentTag'),
+    'xmult_bonus' => context.translate('marketScoreMultiplierTag'),
     'economy' => '+Gold',
     'rule_modifier' => 'Rule',
     _ => '',
   };
 }
 
-List<String> _itemSynergyTags(ItemDefinition item) {
+List<String> _itemSynergyTags(BuildContext context, ItemDefinition item) {
   final tags = <String>[
     _itemRarityTag(item.rarity),
-    _itemTimingTag(item.effect.timing),
-    _itemEffectTag(item.effect.op),
+    _itemTimingTag(context, item.effect.timing),
+    _itemEffectTag(context, item.effect.op),
   ].where((tag) => tag.isNotEmpty).toList();
 
   for (final tag in item.tags) {
     if (tags.length >= 4) break;
-    final label = _catalogItemTagLabel(tag);
+    final label = _catalogItemTagLabel(context, tag);
     if (label.isNotEmpty &&
-        !_itemTypeTagLabels.contains(label) &&
+        !_itemTypeCatalogTags.contains(tag) &&
         !tags.contains(label)) {
       tags.add(label);
     }
@@ -157,7 +173,12 @@ List<String> _itemSynergyTags(ItemDefinition item) {
   return [_itemPlacementTag(item.placement)];
 }
 
-const Set<String> _itemTypeTagLabels = {'Q-Slot', 'Tool', 'Gear', 'Relic'};
+const Set<String> _itemTypeCatalogTags = {
+  'consumable',
+  'utility',
+  'equipment',
+  'relic',
+};
 
 String _itemRarityTag(ItemRarity rarity) {
   return switch (rarity) {
@@ -168,48 +189,55 @@ String _itemRarityTag(ItemRarity rarity) {
   };
 }
 
-String _itemTimingTag(String timing) {
+String _itemTimingTag(BuildContext context, String timing) {
   return switch (timing) {
     'next_confirm' ||
     'next_confirm_if_rank' ||
     'next_confirm_if_rank_at_least' ||
     'next_confirm_per_tile_color' ||
-    'next_confirm_per_repeated_rank_tile' => '다음 확정',
-    'first_confirm_each_station' => '첫 확정',
-    'second_confirm_each_station' => '두번째 확정',
-    'first_scored_tile_each_station' => '첫 타일',
-    'use_battle' => '전투 사용',
-    'use_market' || 'use_market_if_gold_lte' => '상점 사용',
-    'market_buy' || 'market_buy_if_category' => '구매 연계',
-    'market_reroll' => '리롤',
+    'next_confirm_per_repeated_rank_tile' => context.translate(
+      'marketNextConfirm',
+    ),
+    'first_confirm_each_station' => context.translate('marketFirstConfirm'),
+    'second_confirm_each_station' => context.translate('marketSecondConfirm'),
+    'first_scored_tile_each_station' => context.translate('marketFirstTile'),
+    'use_battle' => context.translate('marketBattleUse'),
+    'use_market' ||
+    'use_market_if_gold_lte' => context.translate('marketMarketUse'),
+    'market_buy' ||
+    'market_buy_if_category' => context.translate('marketPurchaseLink'),
+    'market_reroll' => context.translate('marketReroll'),
     'enter_market' || 'market_build_offers' => 'Market',
-    'station_start' => 'Station 시작',
-    'settlement' => '정산',
-    'boss_blind_clear_reward' || 'boss_blind_clear_market' => 'Boss 보상',
-    'inventory_capacity' => '슬롯',
-    'expiry_guard' => '보호',
-    'sell_jester' => '판매',
+    'station_start' => context.translate('marketStationStart'),
+    'settlement' => context.translate('marketCashout'),
+    'boss_blind_clear_reward' ||
+    'boss_blind_clear_market' => context.translate('marketBossReward'),
+    'inventory_capacity' => context.translate('marketSlot'),
+    'expiry_guard' => context.translate('marketProtection'),
+    'sell_jester' => context.translate('marketSell'),
     _ => '',
   };
 }
 
-String _itemEffectTag(String op) {
+String _itemEffectTag(BuildContext context, String op) {
   return switch (op) {
-    'chips_bonus' => '+칩',
-    'mult_bonus' => '+점수%',
-    'xmult_bonus' => '점수 x',
+    'chips_bonus' => context.translate('marketChipsTag'),
+    'mult_bonus' => context.translate('marketScorePercentTag'),
+    'xmult_bonus' => context.translate('marketScoreMultiplierTag'),
     'temporary_overlap_cap_bonus' => 'Overlap',
     'gain_gold' ||
     'add_hand_rank_progress' ||
     'board_discard_reward_bonus' ||
     'hand_discard_reward_bonus' =>
-      op == 'add_hand_rank_progress' ? '족보 성장' : '+Gold',
+      op == 'add_hand_rank_progress'
+          ? context.translate('marketHandGrowth')
+          : '+Gold',
     'discount_next_purchase' ||
     'free_next_reroll' ||
     'discount_first_reroll' => 'Discount',
     'add_board_discard' || 'add_hand_discard' => '+Discard',
     'extra_item_offer_slot' || 'extra_jester_offer_next_market' => 'Offer',
-    'sell_price_bonus' => '판매 보너스',
+    'sell_price_bonus' => context.translate('marketSellBonus'),
     'rescue_first_expiry_each_station' => 'Rescue',
     'add_percent_of_first_confirm_score' => 'Echo',
     'draw_if_hand_empty' => 'Create',
@@ -219,18 +247,18 @@ String _itemEffectTag(String op) {
   };
 }
 
-String _catalogItemTagLabel(String tag) {
+String _catalogItemTagLabel(BuildContext context, String tag) {
   return switch (tag) {
     'market' => 'Market',
     'economy' || 'gold' => '+Gold',
     'discount' => 'Discount',
-    'battle' => '전투',
+    'battle' => context.translate('marketBattle'),
     'score' => 'Score',
-    'chips' => '+칩',
-    'mult' => '+점수%',
-    'xmult' => '점수 x',
-    'rank' => '족보',
-    'rank_growth' || 'planet_like' => '족보 성장',
+    'chips' => context.translate('marketChipsTag'),
+    'mult' => context.translate('marketScorePercentTag'),
+    'xmult' => context.translate('marketScoreMultiplierTag'),
+    'rank' => context.translate('marketHandRank'),
+    'rank_growth' || 'planet_like' => context.translate('marketHandGrowth'),
     'straight' => 'Run',
     'flush' => 'Color',
     'two_pair' => 'Two Pair',
@@ -252,10 +280,10 @@ String _catalogItemTagLabel(String tag) {
     'item' => 'Item',
     'comeback' => 'Comeback',
     'reroll' => 'Reroll',
-    'tile_color' => '색상',
+    'tile_color' => context.translate('marketColor'),
     'deck' => 'Deck',
-    'selection' => '선택',
-    'small_hand' => '작은 손패',
+    'selection' => context.translate('marketSelect'),
+    'small_hand' => context.translate('marketSmallHand'),
     'legendary' => 'Legendary',
     _ => '',
   };

@@ -43,11 +43,11 @@ class _MarketItemGhostChip extends StatelessWidget {
           );
     final previewCard = displayName == null || slot.item == null
         ? null
-        : SizedBox(
+        : (BuildContext context) => SizedBox(
             width: kMarketOfferCardWidth,
             height: kMarketOfferCardHeight,
             child: _MarketItemCardFace(
-              label: displayName,
+              label: localizedItemSlotName(context, slot),
               placement: slot.placement,
               rarity: slot.item!.rarity,
               selected: false,
@@ -98,12 +98,13 @@ class _MarketItemGhostChip extends StatelessWidget {
               : () => _showMarketCardPreview(
                   context,
                   previewCard!,
-                  title: displayName!,
-                  effectText: localizedItemSlotEffect(context, slot),
-                  tags: [
+                  title: (context) => localizedItemSlotName(context, slot),
+                  effectText: (context) =>
+                      localizedItemSlotEffect(context, slot),
+                  tags: (context) => [
                     slot.slotLabel,
                     'x${slot.count}',
-                    ..._itemSynergyTags(slot.item!),
+                    ..._itemSynergyTags(context, slot.item!),
                   ],
                 ),
           child: MarketSlotPulse(

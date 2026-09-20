@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,12 +10,15 @@ import '../logic/rummi_poker_grid/item_definition.dart';
 import '../logic/rummi_poker_grid/jester_catalog_loader.dart';
 import '../logic/rummi_poker_grid/jester_meta.dart';
 import '../resources/asset_paths.dart';
+import '../resources/item_translation_scope.dart';
 import '../services/archive_seen_service.dart';
 import '../services/run_unlock_state_service.dart';
+import '../utils/app_translation.dart';
 import '../utils/common_ui.dart';
 import '../widgets/fx/entrance_in.dart';
 import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/semantic_text.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_card_name_text.dart';
@@ -107,7 +109,7 @@ class _ArchiveViewState extends State<ArchiveView> {
             ),
             const SizedBox(height: 6),
             Text(
-              '도감',
+              context.translate('archiveTitle'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -117,8 +119,8 @@ class _ArchiveViewState extends State<ArchiveView> {
               ),
             ),
             const SizedBox(height: 10),
-            Text(
-              '런에서 만난 기억 카드, Jester, 아이템, 보스 규칙을 확인합니다.',
+            SemanticText(
+              context.translate('menuArchiveIntro'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
@@ -142,26 +144,32 @@ class _ArchiveViewState extends State<ArchiveView> {
                 bool isNew(String prefixedId) =>
                     !acknowledged.contains(prefixedId);
                 return HomeSection(
-                  title: '내 기록',
-                  subtitle: '이번 기기에서 런을 이어가며 남은 수집 기록',
+                  title: context.translate('menuRecords'),
+                  subtitle: context.translate('menuRecordsDesc'),
                   child: Column(
                     children: [
                       HomeSnapshotCard(
-                        title: '기억 카드',
-                        summary:
-                            '보유 ${state.insight}장 · 수집 ${collectedMemoryCardIds.length}/${_archiveMemoryCards.length}',
+                        title: context.translate('menuMemoryCards'),
+                        summary: context.translate(
+                          'menuMemorySummary',
+                          namedArgs: {
+                            'owned': '${state.insight}',
+                            'collected': '${collectedMemoryCardIds.length}',
+                            'total': '${_archiveMemoryCards.length}',
+                          },
+                        ),
                       ),
                       const SizedBox(height: 10),
                       HomeSnapshotCard(
-                        title: '마켓 기록',
+                        title: context.translate('menuMarketRecords'),
                         summary: data == null
-                            ? '도감 항목을 불러오고 있습니다.'
+                            ? context.translate('menuArchiveLoading')
                             : 'Jester ${collectedJesterIds.length}/${data.jesterCatalog.all.length} · Item ${collectedItemIds.length}/${data.itemCatalog.all.length}',
                       ),
                       if (data != null) ...[
                         const SizedBox(height: 10),
                         _ArchiveCollectionSection(
-                          title: '기억 카드 수집',
+                          title: context.translate('menuMemoryCollection'),
                           collectedCount: collectedMemoryCardIds.length,
                           totalCount: _archiveMemoryCards.length,
                           child: _ArchiveMemoryCardGrid(
@@ -175,7 +183,7 @@ class _ArchiveViewState extends State<ArchiveView> {
                         ),
                         const SizedBox(height: 12),
                         _ArchiveCollectionSection(
-                          title: 'Jester 수집',
+                          title: context.translate('menuJesterCollection'),
                           collectedCount: collectedJesterIds.length,
                           totalCount: data.jesterCatalog.all.length,
                           child: _ArchiveJesterGrid(
@@ -190,7 +198,7 @@ class _ArchiveViewState extends State<ArchiveView> {
                         ),
                         const SizedBox(height: 12),
                         _ArchiveCollectionSection(
-                          title: 'Item 수집',
+                          title: context.translate('menuItemCollection'),
                           collectedCount: collectedItemIds.length,
                           totalCount: data.itemCatalog.all.length,
                           child: _ArchiveItemGrid(
@@ -205,18 +213,18 @@ class _ArchiveViewState extends State<ArchiveView> {
                         ),
                       ] else ...[
                         const SizedBox(height: 10),
-                        const HomeSnapshotCard(
-                          title: '카드 로딩 중',
-                          summary: '도감 항목을 불러오고 있습니다.',
+                        HomeSnapshotCard(
+                          title: context.translate('menuCardsLoading'),
+                          summary: context.translate('menuArchiveLoading'),
                         ),
                       ],
                       if (data != null &&
                           collectedJesterIds.isEmpty &&
                           collectedItemIds.isEmpty) ...[
                         const SizedBox(height: 10),
-                        const HomeSnapshotCard(
-                          title: '아직 기록 없음',
-                          summary: '마켓에서 만난 카드와 아이템이 여기에 남습니다.',
+                        HomeSnapshotCard(
+                          title: context.translate('menuNoRecords'),
+                          summary: context.translate('menuNoRecordsDesc'),
                         ),
                       ],
                     ],
@@ -225,54 +233,50 @@ class _ArchiveViewState extends State<ArchiveView> {
               },
             ),
             const SizedBox(height: 18),
-            const HomeSection(
-              title: '보상 카드',
-              subtitle: '게임오버와 런 완료 후 받는 기억 카드',
+            HomeSection(
+              title: context.translate('menuRewardCards'),
+              subtitle: context.translate('menuRewardCardsDesc'),
               child: Column(
                 children: [
                   HomeSnapshotCard(
-                    title: '기억 카드',
-                    summary:
-                        '다음 런 준비에서 새 규칙을 여는 전용 보상 카드입니다. 전투 중 아이템이나 Jester를 자동 지급하지 않습니다.',
+                    title: context.translate('menuMemoryCards'),
+                    summary: context.translate('menuMemoryPurpose'),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 18),
-            const HomeSection(
-              title: '런 규칙',
-              subtitle: '기억 카드로 열 수 있는 다음 런 규칙',
+            HomeSection(
+              title: context.translate('menuRunRules'),
+              subtitle: context.translate('menuRunRulesDesc'),
               child: Column(
                 children: [
                   HomeSnapshotCard(
-                    title: '하이 스테이크',
-                    summary:
-                        '목표 점수와 보상이 함께 올라가는 선택형 규칙입니다. 선택하지 않으면 기본 런으로 시작합니다.',
+                    title: context.translate('menuHighStakes'),
+                    summary: context.translate('menuHighStakesDesc'),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 18),
-            const HomeSection(
-              title: '수집 항목',
-              subtitle: '공모전 빌드에서 확인해야 할 주요 도감 분류',
+            HomeSection(
+              title: context.translate('menuCollectionEntries'),
+              subtitle: context.translate('menuCollectionEntriesDesc'),
               child: Column(
                 children: [
                   HomeSnapshotCard(
                     title: 'Jester',
-                    summary:
-                        '상점에서 구매해 빌드를 바꾸는 카드입니다. 전투 점수, 타일 색, 족보 조건처럼 발동 기준을 확인합니다.',
+                    summary: context.translate('menuJesterDesc'),
                   ),
                   SizedBox(height: 10),
                   HomeSnapshotCard(
                     title: 'Item',
-                    summary:
-                        'Q-Slot, Passive, Tool, Gear에 들어가는 장비입니다. 사용 시점과 지속 범위를 확인합니다.',
+                    summary: context.translate('menuItemDesc'),
                   ),
                   SizedBox(height: 10),
                   HomeSnapshotCard(
                     title: 'Boss',
-                    summary: '스테이션마다 전투 규칙을 바꾸는 제약입니다. 어떤 줄이나 타일이 약해지는지 확인합니다.',
+                    summary: context.translate('menuBossDesc'),
                   ),
                 ],
               ),

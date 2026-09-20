@@ -17,11 +17,13 @@ import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
 import 'package:rummipoker/widgets/fx/motion_policy.dart';
 
 import 'market_feedback_test_support.dart';
+import '../../../support/test_translations.dart';
 
 class _Translations extends AssetLoader {
   const _Translations();
   @override
   Future<Map<String, dynamic>> load(String path, Locale locale) async => {
+    ...await const TestTranslationAssetLoader().load(path, locale),
     't3MarketNew': 'NEW',
     't3MarketLockedSlot': '잠긴 슬롯입니다.',
     'tutorialMarketReplayTooltip': '상점 튜토리얼',

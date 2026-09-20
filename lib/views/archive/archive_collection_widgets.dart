@@ -1,14 +1,14 @@
 part of '../archive_view.dart';
 
 enum _ArchiveCollectionStatus {
-  undiscovered('미발견', GameUiPalette.archiveUndiscovered),
-  discovered('발견', GameUiPalette.archiveDiscovered),
-  acquired('획득', GameUiPalette.gameOverRewardAccent),
-  cleared('클리어', GameUiPalette.archiveCleared);
+  undiscovered('menuUndiscovered', GameUiPalette.archiveUndiscovered),
+  discovered('menuDiscovered', GameUiPalette.archiveDiscovered),
+  acquired('menuAcquired', GameUiPalette.gameOverRewardAccent),
+  cleared('menuCleared', GameUiPalette.archiveCleared);
 
-  const _ArchiveCollectionStatus(this.label, this.color);
+  const _ArchiveCollectionStatus(this.labelKey, this.color);
 
-  final String label;
+  final String labelKey;
   final Color color;
 }
 
@@ -125,6 +125,7 @@ class _ArchiveJesterGridState extends State<_ArchiveJesterGrid>
           children: [
             for (final card in widget.cards)
               _ArchiveSelectableCard(
+                key: ValueKey('archive-jester-${card.id}'),
                 width: kJesterCardWidth,
                 height: kJesterCardHeight,
                 status: _jesterStatus(
@@ -208,6 +209,7 @@ class _ArchiveItemGridState extends State<_ArchiveItemGrid>
           children: [
             for (final item in widget.items)
               _ArchiveSelectableCard(
+                key: ValueKey('archive-item-${item.id}'),
                 width: kBattleItemSlotWidth,
                 height: kBattleItemSlotHeight,
                 status: _itemStatus(
@@ -283,6 +285,7 @@ class _ArchiveMemoryCardGridState extends State<_ArchiveMemoryCardGrid>
           children: [
             for (final card in widget.cards)
               _ArchiveSelectableCard(
+                key: ValueKey('archive-memory-${card.id}'),
                 width: kBattleItemSlotWidth,
                 height: kBattleItemSlotHeight,
                 status: _memoryCardStatus(
@@ -299,7 +302,7 @@ class _ArchiveMemoryCardGridState extends State<_ArchiveMemoryCardGrid>
                 }),
                 child: widget.collectedIds.contains(card.id)
                     ? _ArchiveMemoryCardFace(card: card)
-                    : const _ArchiveEmptyCard(label: '기억'),
+                    : _ArchiveEmptyCard(label: context.translate('menuMemory')),
               ),
           ],
         ),

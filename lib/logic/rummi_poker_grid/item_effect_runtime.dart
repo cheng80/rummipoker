@@ -1,3 +1,5 @@
+import 'action_failure.dart';
+export 'action_failure.dart';
 import 'item_definition.dart';
 import 'hand_rank.dart';
 import 'jester_meta.dart';
@@ -56,6 +58,7 @@ class ItemUseResult {
     required this.status,
     required this.events,
     this.failMessage,
+    this.failure,
   });
 
   factory ItemUseResult.success({
@@ -72,6 +75,7 @@ class ItemUseResult {
   factory ItemUseResult.pendingHook({
     required String itemId,
     required String message,
+    ActionFailure? failure,
     List<ItemEffectEvent> events = const [],
   }) {
     return ItemUseResult._(
@@ -79,18 +83,21 @@ class ItemUseResult {
       status: ItemEffectApplicationStatus.pendingHook,
       events: List<ItemEffectEvent>.unmodifiable(events),
       failMessage: message,
+      failure: failure,
     );
   }
 
   factory ItemUseResult.failure({
     required String itemId,
     required String message,
+    ActionFailure? failure,
   }) {
     return ItemUseResult._(
       itemId: itemId,
       status: ItemEffectApplicationStatus.rejected,
       events: const [],
       failMessage: message,
+      failure: failure,
     );
   }
 
@@ -98,6 +105,7 @@ class ItemUseResult {
   final ItemEffectApplicationStatus status;
   final List<ItemEffectEvent> events;
   final String? failMessage;
+  final ActionFailure? failure;
 
   bool get isSuccess => status == ItemEffectApplicationStatus.applied;
   bool get isPending => status == ItemEffectApplicationStatus.pendingHook;
@@ -141,7 +149,11 @@ class ItemEffectRuntime {
   }) {
     final validationMessage = _validateBattleUse(item, runProgress);
     if (validationMessage != null) {
-      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: validationMessage.legacyMessage,
+        failure: validationMessage,
+      );
     }
 
     final events = <ItemEffectEvent>[];
@@ -185,6 +197,10 @@ class ItemEffectRuntime {
         return ItemUseResult.pendingHook(
           itemId: item.id,
           message: '성장시킬 완성 줄 선택이 필요합니다.',
+          failure: ActionFailure(
+            ActionFailureReason.selectScoringLine,
+            '성장시킬 완성 줄 선택이 필요합니다.',
+          ),
           events: [
             ItemEffectEvent(
               kind: ItemEffectEventKind.interactionRequired,
@@ -198,6 +214,10 @@ class ItemEffectRuntime {
         return ItemUseResult.pendingHook(
           itemId: item.id,
           message: '의식 대상 선택이 필요합니다.',
+          failure: ActionFailure(
+            ActionFailureReason.selectRitualTarget,
+            '의식 대상 선택이 필요합니다.',
+          ),
           events: [
             ItemEffectEvent(
               kind: ItemEffectEventKind.interactionRequired,
@@ -229,11 +249,19 @@ class ItemEffectRuntime {
           return ItemUseResult.failure(
             itemId: item.id,
             message: '덱에 확인할 타일이 없습니다.',
+            failure: ActionFailure(
+              ActionFailureReason.emptyPeekDeck,
+              '덱에 확인할 타일이 없습니다.',
+            ),
           );
         }
         return ItemUseResult.pendingHook(
           itemId: item.id,
           message: '버릴 덱 타일 선택이 필요합니다.',
+          failure: ActionFailure(
+            ActionFailureReason.selectDeckDiscard,
+            '버릴 덱 타일 선택이 필요합니다.',
+          ),
           events: [
             ItemEffectEvent(
               kind: ItemEffectEventKind.interactionRequired,
@@ -247,6 +275,10 @@ class ItemEffectRuntime {
         return ItemUseResult.pendingHook(
           itemId: item.id,
           message: '아직 연결되지 않은 아이템 효과입니다.',
+          failure: ActionFailure(
+            ActionFailureReason.unsupportedEffect,
+            '아직 연결되지 않은 아이템 효과입니다.',
+          ),
         );
     }
 
@@ -262,11 +294,22 @@ class ItemEffectRuntime {
   }) {
     final validationMessage = _validateBattleUse(item, runProgress);
     if (validationMessage != null) {
-      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: validationMessage.legacyMessage,
+        failure: validationMessage,
+      );
     }
     if (item.effect.op != 'add_hand_rank_progress_from_selected_line' &&
         item.effect.op != 'ritual_line_effect') {
-      return ItemUseResult.failure(itemId: item.id, message: '줄 선택 아이템이 아닙니다.');
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '줄 선택 아이템이 아닙니다.',
+        failure: ActionFailure(
+          ActionFailureReason.notLineItem,
+          '줄 선택 아이템이 아닙니다.',
+        ),
+      );
     }
     final applied =
         item.effect.op == 'add_hand_rank_progress_from_selected_line'
@@ -292,11 +335,22 @@ class ItemEffectRuntime {
   }) {
     final validationMessage = _validateBattleUse(item, runProgress);
     if (validationMessage != null) {
-      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: validationMessage.legacyMessage,
+        failure: validationMessage,
+      );
     }
     if (item.effect.op != 'ritual_line_effect' &&
         item.effect.op != 'add_hand_rank_progress_from_selected_line') {
-      return ItemUseResult.failure(itemId: item.id, message: '의식 아이템이 아닙니다.');
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '의식 아이템이 아닙니다.',
+        failure: ActionFailure(
+          ActionFailureReason.notRitualItem,
+          '의식 아이템이 아닙니다.',
+        ),
+      );
     }
     final applied =
         item.effect.op == 'add_hand_rank_progress_from_selected_line'
@@ -325,7 +379,11 @@ class ItemEffectRuntime {
   }) {
     final validationMessage = _validateMarketUse(item, runProgress);
     if (validationMessage != null) {
-      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: validationMessage.legacyMessage,
+        failure: validationMessage,
+      );
     }
     final result = switch (item.effect.op) {
       'gain_gold' => _applyGainGold(item, runProgress),
@@ -348,7 +406,14 @@ class ItemEffectRuntime {
     required int topIndex,
   }) {
     if (item.effect.op != 'peek_deck_discard_one') {
-      return ItemUseResult.failure(itemId: item.id, message: '덱 확인 아이템이 아닙니다.');
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '덱 확인 아이템이 아닙니다.',
+        failure: ActionFailure(
+          ActionFailureReason.notDeckPeekItem,
+          '덱 확인 아이템이 아닙니다.',
+        ),
+      );
     }
     final windowSize =
         _positiveIntValue(item, 'lookAt') ??
@@ -362,6 +427,10 @@ class ItemEffectRuntime {
       return ItemUseResult.failure(
         itemId: item.id,
         message: '버릴 덱 타일을 찾지 못했습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.deckDiscardTargetMissing,
+          '버릴 덱 타일을 찾지 못했습니다.',
+        ),
       );
     }
     final events = <ItemEffectEvent>[
@@ -382,10 +451,21 @@ class ItemEffectRuntime {
   }) {
     final validationMessage = _validateBattleUse(item, runProgress);
     if (validationMessage != null) {
-      return ItemUseResult.failure(itemId: item.id, message: validationMessage);
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: validationMessage.legacyMessage,
+        failure: validationMessage,
+      );
     }
     if (item.effect.op != 'peek_deck_discard_one') {
-      return ItemUseResult.failure(itemId: item.id, message: '덱 확인 아이템이 아닙니다.');
+      return ItemUseResult.failure(
+        itemId: item.id,
+        message: '덱 확인 아이템이 아닙니다.',
+        failure: ActionFailure(
+          ActionFailureReason.notDeckPeekItem,
+          '덱 확인 아이템이 아닙니다.',
+        ),
+      );
     }
     final windowSize =
         _positiveIntValue(item, 'lookAt') ??
@@ -395,6 +475,10 @@ class ItemEffectRuntime {
       return ItemUseResult.failure(
         itemId: item.id,
         message: '덱에 확인할 타일이 없습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.emptyPeekDeck,
+          '덱에 확인할 타일이 없습니다.',
+        ),
       );
     }
     final events = <ItemEffectEvent>[
@@ -497,6 +581,10 @@ class ItemEffectRuntime {
       return ItemUseResult.failure(
         itemId: item.id,
         message: '이미 다음 확정 보너스가 준비되어 있습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.confirmBonusPending,
+          '이미 다음 확정 보너스가 준비되어 있습니다.',
+        ),
       );
     }
     session.addConfirmModifier(modifier);

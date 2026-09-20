@@ -72,31 +72,51 @@ class _BoardScoringCallout extends StatelessWidget {
     final isFinal = step == ScoringPresentationStep.finalScore;
     final (title, value, detail) = switch (step) {
       ScoringPresentationStep.boardLine => (
-        '${gameLineRefShortLabel(line.ref)} 라인',
-        '확정',
-        '하이라이트된 타일이 점수 라인입니다',
+        context.translate(
+          'battleScoringLine',
+          namedArgs: {
+            'line': gameLineRefShortLabel(line.ref, context: context),
+          },
+        ),
+        context.translate('battleConfirm'),
+        context.translate('battleScoringTilesHint'),
       ),
       ScoringPresentationStep.handRank => (
-        gameHandRankLabel(line.rank),
-        '칩 +${line.rankBaseScore ?? line.baseScore}',
-        '족보 기본 칩',
+        context.translate(rummiHandRankKey(line.rank)),
+        context.translate(
+          'battleChipsAdded',
+          namedArgs: {'chips': '${line.rankBaseScore ?? line.baseScore}'},
+        ),
+        context.translate('battleBaseChips'),
       ),
       ScoringPresentationStep.overlap => (
-        'overlap',
+        context.translate('coreSettlementOverlap'),
         '+${line.overlapBonus}',
-        '겹친 타일 보너스',
+        context.translate('battleOverlapBonus'),
       ),
       ScoringPresentationStep.constraint => (
-        line.constraintPenalties.first.title,
-        line.constraintPenalties.first.markerText,
-        line.constraintPenalties.first.ruleText,
+        line.constraintPenalties.first.displayKeys == null
+            ? line.constraintPenalties.first.title
+            : context.translate(
+                line.constraintPenalties.first.displayKeys!.titleKey,
+              ),
+        line.constraintPenalties.first.displayKeys == null
+            ? line.constraintPenalties.first.markerText
+            : context.translate(
+                line.constraintPenalties.first.displayKeys!.markerTextKey,
+              ),
+        line.constraintPenalties.first.displayKeys == null
+            ? line.constraintPenalties.first.ruleText
+            : context.translate(
+                line.constraintPenalties.first.displayKeys!.ruleTextKey,
+              ),
       ),
       ScoringPresentationStep.finalScore => (
-        context.tr('settlementGrade${grade.clamp(0, 3)}'),
+        context.translate('settlementGrade${grade.clamp(0, 3)}'),
         '+${line.finalScore}',
         '',
       ),
-      _ => ('점수', '+0', ''),
+      _ => (context.translate('battleScore'), '+0', ''),
     };
     final valueColor = isConstraint
         ? GameUiPalette.specialDangerBright
@@ -161,7 +181,7 @@ class _BoardScoringCallout extends StatelessWidget {
                           height: 1,
                         ),
                       );
-                      final detailText = Text(
+                      final detailText = SemanticText(
                         detail,
                         softWrap: true,
                         textAlign: TextAlign.center,
@@ -271,8 +291,8 @@ class _BattleActionBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _BattleRailButton(
-                tooltip: '런 정보',
-                label: '런\n정보',
+                tooltip: context.translate('runInfoTitle'),
+                label: context.translate('battleRunInfoCompact'),
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: GameUiPalette.battleActionHand,
@@ -281,8 +301,8 @@ class _BattleActionBar extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               _BattleRailButton(
-                tooltip: '선택 해제',
-                label: '선택\n해제',
+                tooltip: context.translate('battleDeselect'),
+                label: context.translate('battleDeselectCompact'),
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: GameUiPalette.passiveSlotAccent,
@@ -291,8 +311,8 @@ class _BattleActionBar extends StatelessWidget {
               ),
               const SizedBox(width: gap),
               _BattleRailButton(
-                tooltip: '이동',
-                label: '타일\n이동',
+                tooltip: context.translate('battleMove'),
+                label: context.translate('battleMoveCompact'),
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: GameUiPalette.battleActionTool,
@@ -301,8 +321,8 @@ class _BattleActionBar extends StatelessWidget {
               ),
               const SizedBox(width: gap),
               _BattleRailButton(
-                tooltip: '보드 버림',
-                label: '보드\n버림',
+                tooltip: context.translate('battleDiscardBoard'),
+                label: context.translate('battleDiscardBoardCompact'),
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: GameUiPalette.battleActionPassive,
@@ -310,8 +330,8 @@ class _BattleActionBar extends StatelessWidget {
               ),
               const SizedBox(width: gap),
               _BattleRailButton(
-                tooltip: '손패 버림',
-                label: '손패\n버림',
+                tooltip: context.translate('battleDiscardHand'),
+                label: context.translate('battleDiscardHandCompact'),
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: GameUiPalette.battleActionDeck,
@@ -319,8 +339,8 @@ class _BattleActionBar extends StatelessWidget {
               ),
               const SizedBox(width: confirmGap),
               _BattleRailButton(
-                tooltip: '확정',
-                label: '확정\n하기',
+                tooltip: context.translate('battleConfirm'),
+                label: context.translate('battleConfirmCompact'),
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: confirmReady
@@ -378,13 +398,24 @@ class _ScoringPreviewChipState extends State<_ScoringPreviewChip> {
         : GameUiPalette.actionGold;
     final rankLabel = preview == null
         ? ''
-        : gameHandRankLabel(preview.representativeRank);
+        : context.translate(rummiHandRankKey(preview.representativeRank));
     final label = preview == null
-        ? '확정 가능 줄 없음'
+        ? context.translate('battleNoConfirmLines')
         : preview.lineCount == 1
-        ? '1줄 확정 · $rankLabel · 예상 +${preview.expectedScore}'
-        : '${preview.lineCount}줄 확정 · 최고 $rankLabel · 예상 +${preview.expectedScore}';
+        ? context.translate(
+            'battlePreviewOneLine',
+            namedArgs: {'rank': rankLabel, 'score': '${preview.expectedScore}'},
+          )
+        : context.translate(
+            'battlePreviewLines',
+            namedArgs: {
+              'count': '${preview.lineCount}',
+              'rank': rankLabel,
+              'score': '${preview.expectedScore}',
+            },
+          );
     final detail = _previewDetail(
+      context,
       preview,
       hasConstraint: hasConstraint,
       pendingConfirmItemCount: pendingConfirmItemCount,
@@ -491,30 +522,57 @@ class _ScoringPreviewChipState extends State<_ScoringPreviewChip> {
 }
 
 String _previewDetail(
+  BuildContext context,
   RummiScoringPreview? preview, {
   required bool hasConstraint,
   required int pendingConfirmItemCount,
 }) {
   if (preview == null) {
     return pendingConfirmItemCount > 0
-        ? '아이템 대기 $pendingConfirmItemCount'
-        : '빌드 효과 표시';
+        ? context.translate(
+            'battlePendingItems',
+            namedArgs: {'count': '$pendingConfirmItemCount'},
+          )
+        : context.translate('battleBuildEffects');
   }
   if (hasConstraint) {
-    return '약화 -${preview.constraintPenaltyPercent}%';
+    return context.translate(
+      'battlePenaltyPercent',
+      namedArgs: {'percent': '${preview.constraintPenaltyPercent}'},
+    );
   }
   if (pendingConfirmItemCount > 0) {
     final applied = preview.expectedItemEffectCount;
     return applied > 0
-        ? '아이템 적용 $applied/$pendingConfirmItemCount'
-        : '아이템 조건 미충족 0/$pendingConfirmItemCount';
+        ? context.translate(
+            'battleAppliedItems',
+            namedArgs: {
+              'applied': '$applied',
+              'total': '$pendingConfirmItemCount',
+            },
+          )
+        : context.translate(
+            'battleUnmetItems',
+            namedArgs: {'total': '$pendingConfirmItemCount'},
+          );
   }
   if (preview.expectedTileModifierEffectCount > 0) {
-    return '타일 효과 ${preview.expectedTileModifierEffectCount}';
+    return context.translate(
+      'battleTileEffects',
+      namedArgs: {'count': '${preview.expectedTileModifierEffectCount}'},
+    );
   }
-  return '칩 ${preview.baseScore}'
-      '${preview.overlapBonus > 0 ? ' · overlap +${preview.overlapBonus}' : ''}'
-      ' · J${preview.expectedJesterEffectCount}/I${preview.expectedItemEffectCount}';
+  return context.translate(
+    preview.overlapBonus > 0
+        ? 'battlePreviewEffectsOverlap'
+        : 'battlePreviewEffects',
+    namedArgs: {
+      'chips': '${preview.baseScore}',
+      'overlap': '${preview.overlapBonus}',
+      'jesters': '${preview.expectedJesterEffectCount}',
+      'items': '${preview.expectedItemEffectCount}',
+    },
+  );
 }
 
 /// 전투 액션 버튼. 누르는 동안 찌그러지고 떼면 juice로 튕긴다.

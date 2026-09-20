@@ -20,6 +20,7 @@ import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/blind_select_view.dart';
 import 'package:rummipoker/views/home_entry_widgets.dart';
 import 'package:rummipoker/views/new_run_view.dart';
+import '../support/test_translations.dart';
 
 class _MemoryDeviceKeyStore implements DeviceKeyStore {
   String? value;
@@ -120,6 +121,7 @@ void main() {
 
     await tester.pumpWidget(
       EasyLocalization(
+        assetLoader: const TestTranslationAssetLoader(),
         supportedLocales: const [Locale('ko'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),

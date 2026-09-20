@@ -1,0 +1,9 @@
+{
+  "commonUiConfirmLabel": "Game confirmation",
+  "commonUiDialogLabel": "Game dialog",
+  "commonUiTrialCardTitle": "About this mode",
+  "commonUiTrialDebug": "Development test entries are available only in the debug menu.",
+  "commonUiTrialPolicy": "Rules, rewards and record policies have not been decided yet.",
+  "commonUiTrialStructure": "Only the entry point is currently in place.",
+  "commonUiTrialSummary": "A separate mode with additional rules."
+}

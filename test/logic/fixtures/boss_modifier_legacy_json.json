@@ -1,0 +1,656 @@
+[
+  {
+    "id": "red_dampener_v1",
+    "category": "tileColorWeaken",
+    "title": "빨간 타일 약화",
+    "ruleText": "빨간 타일이 포함된 점수 라인은 35% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [
+      "red"
+    ],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.65,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "blue_dampener_v1",
+    "category": "tileColorWeaken",
+    "title": "파란 타일 약화",
+    "ruleText": "파란 타일이 포함된 점수 라인은 40% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [
+      "blue"
+    ],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.6,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "black_dampener_v1",
+    "category": "tileColorWeaken",
+    "title": "검은 타일 약화",
+    "ruleText": "검은 타일이 포함된 점수 라인은 40% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [
+      "black"
+    ],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.6,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "yellow_dampener_v1",
+    "category": "tileColorWeaken",
+    "title": "노란 타일 약화",
+    "ruleText": "노란 타일이 포함된 점수 라인은 40% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [
+      "yellow"
+    ],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.6,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "row_line_dampener_v1",
+    "category": "lineKindWeaken",
+    "title": "가로줄 약화",
+    "ruleText": "가로줄 점수가 25% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [],
+    "affectedLineKinds": [
+      "row"
+    ],
+    "blockedCells": [],
+    "scoreMultiplier": 0.75,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "column_line_dampener_v1",
+    "category": "lineKindWeaken",
+    "title": "세로줄 약화",
+    "ruleText": "세로줄 점수가 25% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [],
+    "affectedLineKinds": [
+      "col"
+    ],
+    "blockedCells": [],
+    "scoreMultiplier": 0.75,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "diagonal_line_dampener_v1",
+    "category": "lineKindWeaken",
+    "title": "대각선 약화",
+    "ruleText": "대각선 점수가 25% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [],
+    "affectedLineKinds": [
+      "diagMain",
+      "diagAnti"
+    ],
+    "blockedCells": [],
+    "scoreMultiplier": 0.75,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "face_tile_dampener_v1",
+    "category": "faceTileWeaken",
+    "title": "그림 타일 약화",
+    "ruleText": "11~13 타일이 포함된 점수 라인은 35% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.65,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "all_score_dampener_v1",
+    "category": "allScoreWeaken",
+    "title": "전체 점수 약화",
+    "ruleText": "모든 점수 라인이 20% 감소합니다.",
+    "markerText": "약화",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.8,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "first_confirm_tax_v1",
+    "category": "firstConfirmWeaken",
+    "title": "첫 확정 약화",
+    "ruleText": "첫 확정 점수 라인은 30% 감소합니다.",
+    "markerText": "첫확정",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.7,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "confirm_count_tax_v2",
+    "category": "confirmCountWeaken",
+    "title": "누적 확정 약화",
+    "ruleText": "세 번째 확정부터 점수 라인이 25% 감소합니다.",
+    "markerText": "3+",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.75,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "confirm_limit_tax_v1",
+    "category": "confirmCountWeaken",
+    "title": "연속 확정 제한",
+    "ruleText": "두 번째 확정부터 점수 라인이 30% 감소합니다.",
+    "markerText": "2+",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.7,
+    "firstAffectedConfirmOrdinal": 2
+  },
+  {
+    "id": "repeat_rank_pressure_v4",
+    "category": "repeatHandRankWeaken",
+    "title": "반복 족보 약화",
+    "ruleText": "이전 확정에서 사용한 족보를 다시 확정하면 점수 라인이 20% 감소합니다.",
+    "markerText": "반복",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.8,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "single_rank_pressure",
+    "category": "singleHandRankPressure",
+    "title": "첫 족보 제한",
+    "ruleText": "첫 확정 족보를 다시 확정하면 점수 라인이 30% 감소합니다.",
+    "markerText": "첫족보",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [],
+    "scoreMultiplier": 0.7,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_right_column_v1",
+    "category": "boardCellBlock",
+    "title": "오른쪽 열 금지",
+    "ruleText": "오른쪽 끝 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 4
+      },
+      {
+        "row": 1,
+        "col": 4
+      },
+      {
+        "row": 2,
+        "col": 4
+      },
+      {
+        "row": 3,
+        "col": 4
+      },
+      {
+        "row": 4,
+        "col": 4
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_top_row_v1",
+    "category": "boardCellBlock",
+    "title": "위쪽 행 금지",
+    "ruleText": "맨 위 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 0
+      },
+      {
+        "row": 0,
+        "col": 1
+      },
+      {
+        "row": 0,
+        "col": 2
+      },
+      {
+        "row": 0,
+        "col": 3
+      },
+      {
+        "row": 0,
+        "col": 4
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_left_column_v1",
+    "category": "boardCellBlock",
+    "title": "왼쪽 열 금지",
+    "ruleText": "왼쪽 끝 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 0
+      },
+      {
+        "row": 1,
+        "col": 0
+      },
+      {
+        "row": 2,
+        "col": 0
+      },
+      {
+        "row": 3,
+        "col": 0
+      },
+      {
+        "row": 4,
+        "col": 0
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_bottom_row_v1",
+    "category": "boardCellBlock",
+    "title": "아래쪽 행 금지",
+    "ruleText": "맨 아래 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 4,
+        "col": 0
+      },
+      {
+        "row": 4,
+        "col": 1
+      },
+      {
+        "row": 4,
+        "col": 2
+      },
+      {
+        "row": 4,
+        "col": 3
+      },
+      {
+        "row": 4,
+        "col": 4
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_corners_center_v1",
+    "category": "boardCellBlock",
+    "title": "모서리와 중심 금지",
+    "ruleText": "네 모서리와 중앙 칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 0
+      },
+      {
+        "row": 0,
+        "col": 4
+      },
+      {
+        "row": 2,
+        "col": 2
+      },
+      {
+        "row": 4,
+        "col": 0
+      },
+      {
+        "row": 4,
+        "col": 4
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_inner_x_v1",
+    "category": "boardCellBlock",
+    "title": "내부 X 금지",
+    "ruleText": "안쪽 X 형태 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 1,
+        "col": 1
+      },
+      {
+        "row": 1,
+        "col": 3
+      },
+      {
+        "row": 2,
+        "col": 2
+      },
+      {
+        "row": 3,
+        "col": 1
+      },
+      {
+        "row": 3,
+        "col": 3
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_four_corners_v1",
+    "category": "boardCellBlock",
+    "title": "네 모서리 금지",
+    "ruleText": "네 모서리 칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 0
+      },
+      {
+        "row": 0,
+        "col": 4
+      },
+      {
+        "row": 4,
+        "col": 0
+      },
+      {
+        "row": 4,
+        "col": 4
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_center_column_v1",
+    "category": "boardCellBlock",
+    "title": "가운데 열 금지",
+    "ruleText": "가운데 세로 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 2
+      },
+      {
+        "row": 1,
+        "col": 2
+      },
+      {
+        "row": 2,
+        "col": 2
+      },
+      {
+        "row": 3,
+        "col": 2
+      },
+      {
+        "row": 4,
+        "col": 2
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_center_row_v1",
+    "category": "boardCellBlock",
+    "title": "가운데 행 금지",
+    "ruleText": "가운데 가로 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 2,
+        "col": 0
+      },
+      {
+        "row": 2,
+        "col": 1
+      },
+      {
+        "row": 2,
+        "col": 2
+      },
+      {
+        "row": 2,
+        "col": 3
+      },
+      {
+        "row": 2,
+        "col": 4
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_main_diagonal_v1",
+    "category": "boardCellBlock",
+    "title": "주대각선 금지",
+    "ruleText": "왼쪽 위에서 오른쪽 아래로 이어지는 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 0
+      },
+      {
+        "row": 1,
+        "col": 1
+      },
+      {
+        "row": 2,
+        "col": 2
+      },
+      {
+        "row": 3,
+        "col": 3
+      },
+      {
+        "row": 4,
+        "col": 4
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_anti_diagonal_v1",
+    "category": "boardCellBlock",
+    "title": "역대각선 금지",
+    "ruleText": "오른쪽 위에서 왼쪽 아래로 이어지는 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 4
+      },
+      {
+        "row": 1,
+        "col": 3
+      },
+      {
+        "row": 2,
+        "col": 2
+      },
+      {
+        "row": 3,
+        "col": 1
+      },
+      {
+        "row": 4,
+        "col": 0
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_center_cross_v1",
+    "category": "boardCellBlock",
+    "title": "중앙 십자 금지",
+    "ruleText": "중앙을 가르는 십자 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 1,
+        "col": 2
+      },
+      {
+        "row": 2,
+        "col": 1
+      },
+      {
+        "row": 2,
+        "col": 2
+      },
+      {
+        "row": 2,
+        "col": 3
+      },
+      {
+        "row": 3,
+        "col": 2
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_checker_a_v1",
+    "category": "boardCellBlock",
+    "title": "체커 A 금지",
+    "ruleText": "흩어진 5칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 0,
+        "col": 0
+      },
+      {
+        "row": 0,
+        "col": 4
+      },
+      {
+        "row": 2,
+        "col": 1
+      },
+      {
+        "row": 2,
+        "col": 3
+      },
+      {
+        "row": 4,
+        "col": 2
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "board_block_checker_b_v1",
+    "category": "boardCellBlock",
+    "title": "체커 B 금지",
+    "ruleText": "안쪽으로 흩어진 4칸에는 타일을 놓을 수 없습니다.",
+    "markerText": "금지",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 1,
+        "col": 1
+      },
+      {
+        "row": 1,
+        "col": 3
+      },
+      {
+        "row": 3,
+        "col": 1
+      },
+      {
+        "row": 3,
+        "col": 3
+      }
+    ],
+    "scoreMultiplier": 1.0,
+    "firstAffectedConfirmOrdinal": 3
+  },
+  {
+    "id": "custom_saved_boss",
+    "category": "allScoreWeaken",
+    "title": "사용자 Boss",
+    "ruleText": "사용자 규칙 17%",
+    "markerText": "사용자",
+    "affectedTileColors": [],
+    "affectedLineKinds": [],
+    "blockedCells": [
+      {
+        "row": 1,
+        "col": 2
+      }
+    ],
+    "scoreMultiplier": 0.83,
+    "firstAffectedConfirmOrdinal": 4
+  }
+]

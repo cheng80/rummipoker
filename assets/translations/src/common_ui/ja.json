@@ -1,0 +1,9 @@
+{
+  "commonUiConfirmLabel": "ゲームの確認",
+  "commonUiDialogLabel": "ゲームダイアログ",
+  "commonUiTrialCardTitle": "ご案内",
+  "commonUiTrialDebug": "開発テスト用の入口はデバッグメニューにのみ表示します。",
+  "commonUiTrialPolicy": "ルール、報酬、記録の扱いはまだ決まっていません。",
+  "commonUiTrialStructure": "現在は入口だけを用意しています。",
+  "commonUiTrialSummary": "追加ルールのある別モードです。"
+}

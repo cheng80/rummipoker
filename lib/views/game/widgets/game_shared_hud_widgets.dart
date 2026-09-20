@@ -77,7 +77,7 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
                 ),
                 if (widget.onTutorialTap != null)
                   Tooltip(
-                    message: context.tr('tutorialBattleReplayTitle'),
+                    message: context.translate('tutorialBattleReplayTitle'),
                     child: GestureDetector(
                       onTap: widget.onTutorialTap,
                       behavior: HitTestBehavior.opaque,
@@ -235,7 +235,7 @@ class _BossModifierHudLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compactLabel = _bossModifierCompactHudLabel(modifier);
+    final compactLabel = _bossModifierCompactHudLabel(context, modifier);
     return SizedBox(
       height: 13,
       child: Row(
@@ -257,7 +257,9 @@ class _BossModifierHudLabel extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                modifier.markerText,
+                modifier.displayKeys == null
+                    ? modifier.markerText
+                    : context.translate(modifier.displayKeys!.markerTextKey),
                 maxLines: 1,
                 style: const TextStyle(
                   color: GameUiPalette.textOnWarm,
@@ -290,17 +292,38 @@ class _BossModifierHudLabel extends StatelessWidget {
   }
 }
 
-String _bossModifierCompactHudLabel(RummiBossModifier modifier) {
+String _bossModifierCompactHudLabel(
+  BuildContext context,
+  RummiBossModifier modifier,
+) {
   return switch (modifier.category) {
-    RummiBossModifierCategory.tileColorWeaken => '타일',
-    RummiBossModifierCategory.lineKindWeaken => '라인',
-    RummiBossModifierCategory.faceTileWeaken => '그림',
-    RummiBossModifierCategory.allScoreWeaken => '전체',
-    RummiBossModifierCategory.firstConfirmWeaken => '첫 확정',
-    RummiBossModifierCategory.confirmCountWeaken => '확정',
-    RummiBossModifierCategory.repeatHandRankWeaken => '반복',
-    RummiBossModifierCategory.singleHandRankPressure => '첫 족보',
-    RummiBossModifierCategory.boardCellBlock => '칸 금지',
+    RummiBossModifierCategory.tileColorWeaken => context.translate(
+      'battleWidgetsBossTile',
+    ),
+    RummiBossModifierCategory.lineKindWeaken => context.translate(
+      'battleWidgetsBossLine',
+    ),
+    RummiBossModifierCategory.faceTileWeaken => context.translate(
+      'battleWidgetsBossFace',
+    ),
+    RummiBossModifierCategory.allScoreWeaken => context.translate(
+      'battleWidgetsBossAll',
+    ),
+    RummiBossModifierCategory.firstConfirmWeaken => context.translate(
+      'battleWidgetsBossFirstConfirm',
+    ),
+    RummiBossModifierCategory.confirmCountWeaken => context.translate(
+      'battleWidgetsBossConfirm',
+    ),
+    RummiBossModifierCategory.repeatHandRankWeaken => context.translate(
+      'battleWidgetsBossRepeat',
+    ),
+    RummiBossModifierCategory.singleHandRankPressure => context.translate(
+      'battleWidgetsBossFirstHand',
+    ),
+    RummiBossModifierCategory.boardCellBlock => context.translate(
+      'battleWidgetsBossBlocked',
+    ),
   };
 }
 

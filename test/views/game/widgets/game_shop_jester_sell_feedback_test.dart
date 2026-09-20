@@ -10,6 +10,7 @@ import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/services/active_run_save_facade.dart';
 import 'package:rummipoker/views/game/widgets/game_jester_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
+import '../../../support/test_translations.dart';
 
 void main() {
   setUpMarketFeedback();
@@ -67,6 +68,7 @@ void main() {
 
     await tester.pumpWidget(
       EasyLocalization(
+        assetLoader: const TestTranslationAssetLoader(),
         supportedLocales: const [Locale('ko'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),

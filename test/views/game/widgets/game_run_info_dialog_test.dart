@@ -6,6 +6,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game/widgets/game_run_info_dialog.dart';
+import '../../../support/test_translations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       EasyLocalization(
+        assetLoader: const TestTranslationAssetLoader(),
         supportedLocales: const [Locale('ko'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),

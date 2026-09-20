@@ -7,6 +7,7 @@ import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game/game_presentation_timings.dart';
 import 'package:rummipoker/views/game/widgets/game_run_victory_widgets.dart';
+import '../../../support/test_translations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ void main() {
     });
     var done = 0;
     Widget overlay() => EasyLocalization(
+      assetLoader: const TestTranslationAssetLoader(),
       supportedLocales: const [Locale('ko')],
       path: 'assets/translations',
       fallbackLocale: const Locale('ko'),

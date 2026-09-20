@@ -1,0 +1,17 @@
+{
+  "coreSaveBlindUnlock": "通关 {required} 后解锁 {blind}",
+  "coreSaveBlindUnselected": "未选择",
+  "coreSaveBookmark": "{station} · {mode} · {blind}",
+  "coreSaveCheckpoint": "检查点 Station {station}",
+  "coreSaveContinue": "恢复已保存的当前游戏。\n{summary}\n请选择删除或继续游戏。",
+  "coreSaveEmpty": "空",
+  "coreSaveLocation": "当前 Station {station} · {scene} · Gold {gold}",
+  "coreSaveModeModifier": "{difficulty} · {modifier}",
+  "coreSaveSceneBattle": "战斗",
+  "coreSaveSceneBlindSelect": "选择 Station",
+  "coreSaveSceneMarket": "Market",
+  "coreSaveSlotSemantic": "{slot}: {summary}",
+  "coreSaveSlotTitle": "存档位 {slot}",
+  "coreSaveSnapshot": "{location}\n{checkpoint}",
+  "coreSaveStationMode": "{station} · {mode}"
+}

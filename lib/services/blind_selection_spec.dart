@@ -31,6 +31,7 @@ class BlindSelectionSpec {
     required this.isEndless,
     this.bossModifier,
     this.lockReason,
+    this.requiredClearedTier,
   });
 
   final BlindTier tier;
@@ -46,6 +47,7 @@ class BlindSelectionSpec {
   final bool isEndless;
   final RummiBossModifier? bossModifier;
   final String? lockReason;
+  final BlindTier? requiredClearedTier;
 
   bool get isSelectable =>
       availability == BlindSelectionAvailability.selectable;
@@ -108,6 +110,10 @@ class BlindSelectionSpecBuilder {
         lockReason: normalizedClearedBlindTierIndex >= BlindTier.small.index
             ? null
             : 'Scout 클리어 후 Clash 열림',
+        requiredClearedTier:
+            normalizedClearedBlindTierIndex >= BlindTier.small.index
+            ? null
+            : BlindTier.small,
       ),
       _buildSpec(
         tier: BlindTier.boss,
@@ -125,6 +131,10 @@ class BlindSelectionSpecBuilder {
         lockReason: normalizedClearedBlindTierIndex >= BlindTier.big.index
             ? null
             : 'Clash 클리어 후 Boss 열림',
+        requiredClearedTier:
+            normalizedClearedBlindTierIndex >= BlindTier.big.index
+            ? null
+            : BlindTier.big,
       ),
     ];
   }
@@ -160,6 +170,7 @@ class BlindSelectionSpecBuilder {
     RummiBossModifier? bossModifierOverride,
     required BlindSelectionAvailability availability,
     String? lockReason,
+    BlindTier? requiredClearedTier,
   }) {
     final baseBoardDiscards = switch (difficulty) {
       NewRunDifficulty.standard => ruleset.defaultBoardDiscards,
@@ -238,6 +249,7 @@ class BlindSelectionSpecBuilder {
                 )
           : null,
       lockReason: lockReason,
+      requiredClearedTier: requiredClearedTier,
     );
   }
 

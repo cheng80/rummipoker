@@ -200,18 +200,16 @@ extension _GameViewStageFlow on _GameViewState {
     );
   }
 
-  String? _loggableFailReason(String? failMessage) {
-    if (failMessage == null) return null;
-    if (failMessage.contains('골드')) return 'not_enough_gold';
-    if (failMessage.contains('공간') || failMessage.contains('슬롯')) {
-      return 'no_space';
-    }
-    return 'denied';
-  }
+  String? _loggableFailReason(ActionFailure? failure) => failure?.analyticsCode;
 
-  String? _rerollMarketForAnalytics() {
+  String? _rerollMarketForAnalytics() =>
+      _rerollMarketForAnalyticsFailure()?.legacyMessage;
+
+  ActionFailure? _rerollMarketForAnalyticsFailure() {
     final before = _marketView;
-    final fail = _gameNotifier.rerollShopFromState(itemCatalog: _itemCatalog);
+    final fail = _gameNotifier.rerollShopFromStateFailure(
+      itemCatalog: _itemCatalog,
+    );
     final reason = _loggableFailReason(fail);
     if (reason != null) {
       _logMarketActionFailed('reroll', category: 'jester', reason: reason);
@@ -225,9 +223,12 @@ extension _GameViewStageFlow on _GameViewState {
     return null;
   }
 
-  String? _rerollItemOffersForAnalytics(ItemPlacement placement) {
+  String? _rerollItemOffersForAnalytics(ItemPlacement placement) =>
+      _rerollItemOffersForAnalyticsFailure(placement)?.legacyMessage;
+
+  ActionFailure? _rerollItemOffersForAnalyticsFailure(ItemPlacement placement) {
     final before = _marketView;
-    final fail = _gameNotifier.rerollItemOffersFromState(
+    final fail = _gameNotifier.rerollItemOffersFromStateFailure(
       itemCatalog: _itemCatalog,
       placement: placement,
     );
@@ -245,9 +246,12 @@ extension _GameViewStageFlow on _GameViewState {
     return null;
   }
 
-  String? _rerollTileOffersForAnalytics() {
+  String? _rerollTileOffersForAnalytics() =>
+      _rerollTileOffersForAnalyticsFailure()?.legacyMessage;
+
+  ActionFailure? _rerollTileOffersForAnalyticsFailure() {
     final before = _marketView;
-    final fail = _gameNotifier.rerollTileOffersFromState(
+    final fail = _gameNotifier.rerollTileOffersFromStateFailure(
       itemCatalog: _itemCatalog,
     );
     final reason = _loggableFailReason(fail);
@@ -263,8 +267,13 @@ extension _GameViewStageFlow on _GameViewState {
     return null;
   }
 
-  String? _buyJesterOfferForAnalytics(RummiMarketOfferView offer) {
-    final fail = _gameNotifier.buyShopOfferView(
+  String? _buyJesterOfferForAnalytics(RummiMarketOfferView offer) =>
+      _buyJesterOfferForAnalyticsFailure(offer)?.legacyMessage;
+
+  ActionFailure? _buyJesterOfferForAnalyticsFailure(
+    RummiMarketOfferView offer,
+  ) {
+    final fail = _gameNotifier.buyShopOfferViewFailure(
       offer,
       itemCatalog: _itemCatalog,
     );
@@ -287,8 +296,16 @@ extension _GameViewStageFlow on _GameViewState {
     return null;
   }
 
-  String? _buyItemOfferForAnalytics(RummiMarketItemOfferView offer) {
-    final fail = _gameNotifier.buyItemOffer(offer, itemCatalog: _itemCatalog);
+  String? _buyItemOfferForAnalytics(RummiMarketItemOfferView offer) =>
+      _buyItemOfferForAnalyticsFailure(offer)?.legacyMessage;
+
+  ActionFailure? _buyItemOfferForAnalyticsFailure(
+    RummiMarketItemOfferView offer,
+  ) {
+    final fail = _gameNotifier.buyItemOfferFailure(
+      offer,
+      itemCatalog: _itemCatalog,
+    );
     final reason = _loggableFailReason(fail);
     if (reason != null) {
       _logMarketActionFailed(
@@ -310,11 +327,14 @@ extension _GameViewStageFlow on _GameViewState {
     return null;
   }
 
-  String? _buyTileOfferForAnalytics(int offerIndex) {
+  String? _buyTileOfferForAnalytics(int offerIndex) =>
+      _buyTileOfferForAnalyticsFailure(offerIndex)?.legacyMessage;
+
+  ActionFailure? _buyTileOfferForAnalyticsFailure(int offerIndex) {
     final offer = _marketView.tileOffers
         .where((candidate) => candidate.slotIndex == offerIndex)
         .firstOrNull;
-    final fail = _gameNotifier.buyTileOffer(offerIndex);
+    final fail = _gameNotifier.buyTileOfferFailure(offerIndex);
     final reason = _loggableFailReason(fail);
     if (reason != null) {
       _logMarketActionFailed('buy', category: 'tile', reason: reason);
@@ -329,8 +349,11 @@ extension _GameViewStageFlow on _GameViewState {
     return null;
   }
 
-  String? _useMarketItemForAnalytics(ItemDefinition item) {
-    final fail = _gameNotifier.useMarketItem(item);
+  String? _useMarketItemForAnalytics(ItemDefinition item) =>
+      _useMarketItemForAnalyticsFailure(item)?.legacyMessage;
+
+  ActionFailure? _useMarketItemForAnalyticsFailure(ItemDefinition item) {
+    final fail = _gameNotifier.useMarketItemFailure(item);
     final reason = _loggableFailReason(fail);
     if (reason != null) {
       _logMarketActionFailed(
@@ -773,10 +796,10 @@ extension _GameViewStageFlow on _GameViewState {
         completesRun && widget.difficulty == NewRunDifficulty.standard;
     return showGeneralDialog<GameCashOutAction>(
       context: context,
-      barrierLabel: '정산 결과',
+      barrierLabel: context.translate('battleSettlementResult'),
       barrierDismissible: false,
       barrierColor: kGameModalBarrierColor,
-      routeSettings: const RouteSettings(name: '정산 결과'),
+      routeSettings: const RouteSettings(name: 'settlement-result'),
       transitionDuration: MotionPolicy.reduceMotion
           ? Duration.zero
           : GamePresentationTimings.cashOutSheetIn,
@@ -805,7 +828,7 @@ extension _GameViewStageFlow on _GameViewState {
               scopesRoute: true,
               namesRoute: true,
               explicitChildNodes: true,
-              label: '정산 결과',
+              label: context.translate('battleSettlementResult'),
               child: GameCashOutSheet(
                 settlement: settlementView,
                 autoEnterMarketOnLoad:
@@ -970,11 +993,17 @@ extension _GameViewStageFlow on _GameViewState {
           runSeed: widget.runSeed,
           readMarketView: _readMarketViewWithItemOffers,
           onReroll: _rerollMarketForAnalytics,
+          onRerollFailure: _rerollMarketForAnalyticsFailure,
           onRerollItemOffers: _rerollItemOffersForAnalytics,
+          onRerollItemOffersFailure: _rerollItemOffersForAnalyticsFailure,
           onRerollTileOffers: _rerollTileOffersForAnalytics,
+          onRerollTileOffersFailure: _rerollTileOffersForAnalyticsFailure,
           onBuyOffer: _buyJesterOfferForAnalytics,
+          onBuyOfferFailure: _buyJesterOfferForAnalyticsFailure,
           onBuyItemOffer: _buyItemOfferForAnalytics,
+          onBuyItemOfferFailure: _buyItemOfferForAnalyticsFailure,
           onBuyTileOffer: _buyTileOfferForAnalytics,
+          onBuyTileOfferFailure: _buyTileOfferForAnalyticsFailure,
           isFirstAcquisition: (category, contentId) => switch (category) {
             'jester' => !_runProgressCollection.boughtJesterIds.contains(
               contentId,
@@ -983,6 +1012,7 @@ extension _GameViewStageFlow on _GameViewState {
             _ => false,
           },
           onUseMarketItem: _useMarketItemForAnalytics,
+          onUseMarketItemFailure: _useMarketItemForAnalyticsFailure,
           onSellOwnedJester: _sellOwnedJesterForAnalytics,
           onSellMarketItem: _sellMarketItemForAnalytics,
           autoStartTutorials: _shouldAutoStartTutorials,

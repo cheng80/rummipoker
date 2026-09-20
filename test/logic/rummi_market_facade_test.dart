@@ -36,6 +36,33 @@ RummiJesterCard _jester({
 
 void main() {
   group('RummiMarketRuntimeFacade', () {
+    test('manual compass label fallback yields to explicit stable source', () {
+      final offer = RummiShopOffer(
+        slotIndex: 0,
+        card: _jester(id: 'custom'),
+        price: 3,
+      );
+      RummiMarketOfferView view(
+        String label, [
+        RummiMarketDiscountSource? source,
+      ]) => RummiMarketOfferView.fromShopOffer(
+        offer,
+        currentGold: 10,
+        discountSourceLabel: label,
+        discountSource: source,
+      );
+      expect(view('나침반').isCompassDiscounted, isTrue);
+      expect(view('Custom').isCompassDiscounted, isFalse);
+      expect(
+        view('Custom', RummiMarketDiscountSource.compass).isCompassDiscounted,
+        isTrue,
+      );
+      expect(
+        view('나침반', RummiMarketDiscountSource.none).isCompassDiscounted,
+        isFalse,
+      );
+    });
+
     test('maps current shop offers into market offers', () {
       final progress = RummiRunProgress()
         ..gold = 19
@@ -486,6 +513,11 @@ void main() {
       expect(facade.itemOffers.single.originalPrice, 2);
       expect(facade.itemOffers.single.price, 1);
       expect(facade.itemOffers.single.discountSourceLabel, '나침반');
+      expect(
+        facade.itemOffers.single.discountSource,
+        RummiMarketDiscountSource.compass,
+      );
+      expect(facade.itemOffers.single.isCompassDiscounted, isTrue);
     });
 
     test('market compass skips zero price item offers', () {
@@ -1581,6 +1613,9 @@ void main() {
 
       expect(facade.offers.length, 4);
       expect(facade.jesterOfferSlotBonusLabel, '트로피 +1');
+      expect(facade.jesterOfferBonusSlots, 1);
+      expect(facade.withItemOffers([]).jesterOfferBonusSlots, 1);
+      expect(facade.itemOfferBonusSlots, 0);
       expect(facade.itemOfferSlotBonusLabel, isNull);
     });
 

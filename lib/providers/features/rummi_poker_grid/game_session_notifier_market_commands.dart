@@ -60,15 +60,18 @@ mixin GameSessionNotifierMarketCommands
     _replaceState(state.copyWith(revision: state.revision + 1));
   }
 
-  String? rerollShopFromState({ItemCatalog? itemCatalog}) {
+  String? rerollShopFromState({ItemCatalog? itemCatalog}) =>
+      rerollShopFromStateFailure(itemCatalog: itemCatalog)?.legacyMessage;
+
+  ActionFailure? rerollShopFromStateFailure({ItemCatalog? itemCatalog}) {
     final session = state.session;
     final runProgress = state.runProgress;
     if (session == null || runProgress == null) {
-      return '상점 진행 정보가 없습니다.';
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
     }
     final catalog =
         state.jesterCatalog?.shopCatalog ?? const <RummiJesterCard>[];
-    return rerollShop(
+    return rerollShopFailure(
       catalog: catalog,
       rng: session.runRandom,
       itemCatalog: itemCatalog,
@@ -78,9 +81,19 @@ mixin GameSessionNotifierMarketCommands
   String? rerollItemOffersFromState({
     ItemCatalog? itemCatalog,
     ItemPlacement placement = ItemPlacement.inventory,
+  }) => rerollItemOffersFromStateFailure(
+    itemCatalog: itemCatalog,
+    placement: placement,
+  )?.legacyMessage;
+
+  ActionFailure? rerollItemOffersFromStateFailure({
+    ItemCatalog? itemCatalog,
+    ItemPlacement placement = ItemPlacement.inventory,
   }) {
     final runProgress = state.runProgress;
-    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress == null) {
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
+    }
     final rerollItem = _nextOwnedMarketRerollItem(
       catalog: itemCatalog,
       runProgress: runProgress,
@@ -92,27 +105,35 @@ mixin GameSessionNotifierMarketCommands
         runProgress: runProgress,
         itemRerollPlacement: placement,
       )) {
-        return '리롤 골드가 부족합니다.';
+        return ActionFailure(ActionFailureReason.rerollGold, '리롤 골드가 부족합니다.');
       }
       final result = ItemEffectRuntime.applyMarketRerollItem(
         item: rerollItem,
         runProgress: runProgress,
       );
-      if (!result.isSuccess) return result.failMessage;
+      if (!result.isSuccess) {
+        return result.failure ??
+            (result.failMessage == null
+                ? null
+                : ActionFailure(null, result.failMessage!));
+      }
     }
     final ok = runProgress.rerollItemOffers(placement: placement);
     if (!ok) {
-      return '리롤 골드가 부족합니다.';
+      return ActionFailure(ActionFailureReason.rerollGold, '리롤 골드가 부족합니다.');
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }
 
-  String? rerollTileOffersFromState({ItemCatalog? itemCatalog}) {
+  String? rerollTileOffersFromState({ItemCatalog? itemCatalog}) =>
+      rerollTileOffersFromStateFailure(itemCatalog: itemCatalog)?.legacyMessage;
+
+  ActionFailure? rerollTileOffersFromStateFailure({ItemCatalog? itemCatalog}) {
     final session = state.session;
     final runProgress = state.runProgress;
     if (session == null || runProgress == null) {
-      return '상점 진행 정보가 없습니다.';
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
     }
     final rerollItem = _nextOwnedMarketRerollItem(
       catalog: itemCatalog,
@@ -124,17 +145,22 @@ mixin GameSessionNotifierMarketCommands
         runProgress: runProgress,
         currentCostOverride: runProgress.effectiveTileRerollCost(),
       )) {
-        return '리롤 골드가 부족합니다.';
+        return ActionFailure(ActionFailureReason.rerollGold, '리롤 골드가 부족합니다.');
       }
       final result = ItemEffectRuntime.applyMarketRerollItem(
         item: rerollItem,
         runProgress: runProgress,
       );
-      if (!result.isSuccess) return result.failMessage;
+      if (!result.isSuccess) {
+        return result.failure ??
+            (result.failMessage == null
+                ? null
+                : ActionFailure(null, result.failMessage!));
+      }
     }
     final ok = runProgress.rerollTileOffers(rng: session.runRandom);
     if (!ok) {
-      return '리롤 골드가 부족합니다.';
+      return ActionFailure(ActionFailureReason.rerollGold, '리롤 골드가 부족합니다.');
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
@@ -144,9 +170,21 @@ mixin GameSessionNotifierMarketCommands
     required List<RummiJesterCard> catalog,
     required Random rng,
     ItemCatalog? itemCatalog,
+  }) => rerollShopFailure(
+    catalog: catalog,
+    rng: rng,
+    itemCatalog: itemCatalog,
+  )?.legacyMessage;
+
+  ActionFailure? rerollShopFailure({
+    required List<RummiJesterCard> catalog,
+    required Random rng,
+    ItemCatalog? itemCatalog,
   }) {
     final runProgress = state.runProgress;
-    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress == null) {
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
+    }
     final rerollItem = _nextOwnedMarketRerollItem(
       catalog: itemCatalog,
       runProgress: runProgress,
@@ -156,13 +194,18 @@ mixin GameSessionNotifierMarketCommands
         item: rerollItem,
         runProgress: runProgress,
       )) {
-        return '리롤 골드가 부족합니다.';
+        return ActionFailure(ActionFailureReason.rerollGold, '리롤 골드가 부족합니다.');
       }
       final result = ItemEffectRuntime.applyMarketRerollItem(
         item: rerollItem,
         runProgress: runProgress,
       );
-      if (!result.isSuccess) return result.failMessage;
+      if (!result.isSuccess) {
+        return result.failure ??
+            (result.failMessage == null
+                ? null
+                : ActionFailure(null, result.failMessage!));
+      }
     }
     final ok = runProgress.rerollShop(
       catalog: catalog,
@@ -170,7 +213,7 @@ mixin GameSessionNotifierMarketCommands
       pressureProfile: _marketPressureProfileFor(state.runModifier),
     );
     if (!ok) {
-      return '리롤 골드가 부족합니다.';
+      return ActionFailure(ActionFailureReason.rerollGold, '리롤 골드가 부족합니다.');
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
@@ -251,6 +294,14 @@ mixin GameSessionNotifierMarketCommands
           target: itemPresentationTargetForEvent(item, effectEvent),
           resultLabel: '발동: ${itemUseResultPresentationLabel(result)}',
           effectEvent: effectEvent,
+          sourceItemIds: [item.id],
+          // Owned trigger hooks consume inventory after producing effect events.
+          consumed:
+              item.effect.consume ||
+              result.events.any(
+                (event) => event.kind == ItemEffectEventKind.itemConsumed,
+              ),
+          activated: true,
         ),
       );
     }
@@ -261,20 +312,34 @@ mixin GameSessionNotifierMarketCommands
   ///
   /// 가격과 나침반 할인 대상을 여기서 다시 계산하면 라벨과 청구 금액이
   /// 어긋나므로, 표시용 facade가 만든 offer를 [buyShopOfferView]에 넘긴다.
-  String? buyShopOffer(int offerIndex, {ItemCatalog? itemCatalog}) {
+  String? buyShopOffer(int offerIndex, {ItemCatalog? itemCatalog}) =>
+      buyShopOfferFailure(offerIndex, itemCatalog: itemCatalog)?.legacyMessage;
+
+  ActionFailure? buyShopOfferFailure(
+    int offerIndex, {
+    ItemCatalog? itemCatalog,
+  }) {
     final runProgress = state.runProgress;
-    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress == null) {
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
+    }
     if (offerIndex < 0 || offerIndex >= runProgress.shopOffers.length) {
-      return '구매할 오퍼를 찾지 못했습니다.';
+      return ActionFailure(
+        ActionFailureReason.offerMissing,
+        '구매할 오퍼를 찾지 못했습니다.',
+      );
     }
     final market = RummiMarketRuntimeFacade.fromRunProgress(
       runProgress,
       itemCatalog: itemCatalog,
     );
     if (offerIndex >= market.offers.length) {
-      return '구매할 오퍼를 찾지 못했습니다.';
+      return ActionFailure(
+        ActionFailureReason.offerMissing,
+        '구매할 오퍼를 찾지 못했습니다.',
+      );
     }
-    return buyShopOfferView(
+    return buyShopOfferViewFailure(
       market.offers[offerIndex],
       itemCatalog: itemCatalog,
     );
@@ -283,17 +348,30 @@ mixin GameSessionNotifierMarketCommands
   String? buyShopOfferView(
     RummiMarketOfferView offer, {
     ItemCatalog? itemCatalog,
+  }) => buyShopOfferViewFailure(offer, itemCatalog: itemCatalog)?.legacyMessage;
+
+  ActionFailure? buyShopOfferViewFailure(
+    RummiMarketOfferView offer, {
+    ItemCatalog? itemCatalog,
   }) {
     final runProgress = state.runProgress;
-    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress == null) {
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
+    }
     final offerIndex = runProgress.shopOffers.indexWhere(
       (entry) => entry.card.id == offer.contentId,
     );
     if (offerIndex < 0) {
-      return '구매할 오퍼를 찾지 못했습니다.';
+      return ActionFailure(
+        ActionFailureReason.offerMissing,
+        '구매할 오퍼를 찾지 못했습니다.',
+      );
     }
     if (runProgress.ownedJesters.length >= runProgress.jesterSlotCapacity()) {
-      return '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.';
+      return ActionFailure(
+        ActionFailureReason.jesterSlotsFull,
+        '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.',
+      );
     }
     final marketBuyItem = _nextOwnedMarketBuyItem(
       catalog: itemCatalog,
@@ -307,14 +385,19 @@ mixin GameSessionNotifierMarketCommands
         item: marketBuyItem,
         runProgress: runProgress,
       );
-      if (!result.isSuccess) return result.failMessage;
+      if (!result.isSuccess) {
+        return result.failure ??
+            (result.failMessage == null
+                ? null
+                : ActionFailure(null, result.failMessage!));
+      }
       price = runProgress.effectiveJesterOfferPrice(
         offerIndex,
         isCheapestFirstOfferDiscountTarget: isCompassTarget,
       );
     }
     if (runProgress.gold < price) {
-      return '골드가 부족합니다.';
+      return ActionFailure(ActionFailureReason.insufficientGold, '골드가 부족합니다.');
     }
     final ok = runProgress.buyOffer(
       offerIndex,
@@ -322,7 +405,10 @@ mixin GameSessionNotifierMarketCommands
       consumeCheapestFirstOfferDiscount: isCompassTarget,
     );
     if (!ok) {
-      return '구매 처리에 실패했습니다.';
+      return ActionFailure(
+        ActionFailureReason.purchaseFailed,
+        '구매 처리에 실패했습니다.',
+      );
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
@@ -331,9 +417,16 @@ mixin GameSessionNotifierMarketCommands
   String? buyItemOffer(
     RummiMarketItemOfferView offer, {
     ItemCatalog? itemCatalog,
+  }) => buyItemOfferFailure(offer, itemCatalog: itemCatalog)?.legacyMessage;
+
+  ActionFailure? buyItemOfferFailure(
+    RummiMarketItemOfferView offer, {
+    ItemCatalog? itemCatalog,
   }) {
     final runProgress = state.runProgress;
-    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress == null) {
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
+    }
     final quickSlotCapacity = runProgress.quickSlotCapacity(
       itemCatalog: itemCatalog,
     );
@@ -344,7 +437,10 @@ mixin GameSessionNotifierMarketCommands
         itemCatalog: itemCatalog,
       ),
     )) {
-      return '이미 보유 한도에 도달한 아이템입니다.';
+      return ActionFailure(
+        ActionFailureReason.itemOwnershipCap,
+        '이미 보유 한도에 도달한 아이템입니다.',
+      );
     }
     final marketBuyItem = _nextOwnedMarketBuyItem(
       catalog: itemCatalog,
@@ -358,14 +454,19 @@ mixin GameSessionNotifierMarketCommands
         item: marketBuyItem,
         runProgress: runProgress,
       );
-      if (!result.isSuccess) return result.failMessage;
+      if (!result.isSuccess) {
+        return result.failure ??
+            (result.failMessage == null
+                ? null
+                : ActionFailure(null, result.failMessage!));
+      }
       price = runProgress.effectiveItemPrice(
         offer.item,
         isCheapestFirstOfferDiscountTarget: isCompassTarget,
       );
     }
     if (runProgress.gold < price) {
-      return '골드가 부족합니다.';
+      return ActionFailure(ActionFailureReason.insufficientGold, '골드가 부족합니다.');
     }
     final ok = runProgress.buyItem(
       offer.item,
@@ -374,22 +475,33 @@ mixin GameSessionNotifierMarketCommands
       consumeCheapestFirstOfferDiscount: isCompassTarget,
     );
     if (!ok) {
-      return '아이템 구매 처리에 실패했습니다.';
+      return ActionFailure(
+        ActionFailureReason.itemPurchaseFailed,
+        '아이템 구매 처리에 실패했습니다.',
+      );
     }
     runProgress.markItemOfferConsumed(offer.contentId);
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }
 
-  String? buyTileOffer(int offerIndex) {
+  String? buyTileOffer(int offerIndex) =>
+      buyTileOfferFailure(offerIndex)?.legacyMessage;
+
+  ActionFailure? buyTileOfferFailure(int offerIndex) {
     final runProgress = state.runProgress;
-    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress == null) {
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
+    }
     if (offerIndex < 0 || offerIndex >= runProgress.tileOffers.length) {
-      return '구매할 타일을 찾지 못했습니다.';
+      return ActionFailure(
+        ActionFailureReason.tileOfferMissing,
+        '구매할 타일을 찾지 못했습니다.',
+      );
     }
     final ok = runProgress.buyTileOffer(offerIndex);
     if (!ok) {
-      return '골드가 부족합니다.';
+      return ActionFailure(ActionFailureReason.insufficientGold, '골드가 부족합니다.');
     }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
@@ -418,15 +530,25 @@ mixin GameSessionNotifierMarketCommands
     return null;
   }
 
-  String? useMarketItem(ItemDefinition item) {
+  String? useMarketItem(ItemDefinition item) =>
+      useMarketItemFailure(item)?.legacyMessage;
+
+  ActionFailure? useMarketItemFailure(ItemDefinition item) {
     final runProgress = state.runProgress;
-    if (runProgress == null) return '상점 진행 정보가 없습니다.';
+    if (runProgress == null) {
+      return ActionFailure(ActionFailureReason.noMarket, '상점 진행 정보가 없습니다.');
+    }
 
     final result = ItemEffectRuntime.applyMarketUseItem(
       item: item,
       runProgress: runProgress,
     );
-    if (!result.isSuccess) return result.failMessage;
+    if (!result.isSuccess) {
+      return result.failure ??
+          (result.failMessage == null
+              ? null
+              : ActionFailure(null, result.failMessage!));
+    }
     _replaceState(state.copyWith(revision: state.revision + 1));
     return null;
   }

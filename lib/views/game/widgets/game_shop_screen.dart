@@ -1,3 +1,4 @@
+import '../../../utils/action_failure_translation.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
@@ -9,6 +10,8 @@ import 'package:flutter/services.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../../../logic/rummi_poker_grid/item_definition.dart';
+import '../../../logic/rummi_poker_grid/hand_rank.dart';
+import '../../../logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import '../../../logic/rummi_poker_grid/item_presentation_event.dart';
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
@@ -20,6 +23,10 @@ import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../services/tutorial_state_service.dart';
 import '../../../utils/common_ui.dart';
+import '../../../utils/item_presentation_translation.dart';
+import '../../../logic/rummi_poker_grid/item_effect_runtime.dart';
+import '../../../utils/app_translation.dart';
+import '../../../widgets/semantic_text.dart';
 import '../../../widgets/fx/fx_sprites.dart';
 import '../../../widgets/fx/juice.dart';
 import '../../../widgets/fx/motion_policy.dart';
@@ -36,6 +43,7 @@ import 'game_shared_widgets.dart';
 import 'game_surface_metrics.dart';
 import 'game_tutorial_overlay.dart';
 import 'game_ui_palette.dart';
+import '../../../utils/active_run_translation.dart';
 
 part 'game_shop_screen_models.dart';
 part 'game_shop_detail_widgets.dart';
@@ -61,13 +69,20 @@ class GameShopScreen extends StatefulWidget {
     required this.runSeed,
     required this.readMarketView,
     required this.onReroll,
+    this.onRerollFailure,
     this.onRerollItemOffers,
+    this.onRerollItemOffersFailure,
     this.onRerollTileOffers,
+    this.onRerollTileOffersFailure,
     required this.onBuyOffer,
+    this.onBuyOfferFailure,
     required this.onBuyItemOffer,
+    this.onBuyItemOfferFailure,
     required this.onBuyTileOffer,
+    this.onBuyTileOfferFailure,
     this.isFirstAcquisition,
     required this.onUseMarketItem,
+    this.onUseMarketItemFailure,
     required this.onSellOwnedJester,
     required this.onSellMarketItem,
     this.autoStartTutorials = true,
@@ -89,13 +104,22 @@ class GameShopScreen extends StatefulWidget {
   final int runSeed;
   final RummiMarketRuntimeFacade Function() readMarketView;
   final String? Function() onReroll;
+  final ActionFailure? Function()? onRerollFailure;
   final String? Function(ItemPlacement placement)? onRerollItemOffers;
+  final ActionFailure? Function(ItemPlacement placement)?
+  onRerollItemOffersFailure;
   final String? Function()? onRerollTileOffers;
+  final ActionFailure? Function()? onRerollTileOffersFailure;
   final String? Function(RummiMarketOfferView offer) onBuyOffer;
+  final ActionFailure? Function(RummiMarketOfferView offer)? onBuyOfferFailure;
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
+  final ActionFailure? Function(RummiMarketItemOfferView offer)?
+  onBuyItemOfferFailure;
   final String? Function(int offerIndex) onBuyTileOffer;
+  final ActionFailure? Function(int offerIndex)? onBuyTileOfferFailure;
   final bool Function(String category, String contentId)? isFirstAcquisition;
   final String? Function(ItemDefinition item) onUseMarketItem;
+  final ActionFailure? Function(ItemDefinition item)? onUseMarketItemFailure;
   final bool Function(int ownedIndex) onSellOwnedJester;
   final bool Function(ItemDefinition item) onSellMarketItem;
   final bool autoStartTutorials;
@@ -157,8 +181,10 @@ class _GameShopScreenState extends State<GameShopScreen>
   int _marketDenyTick = 0;
   String? _marketDenyTarget;
   String? _marketDenyReason;
+  String Function(BuildContext)? _marketDenyReasonBuilder;
   int _marketUseFeedbackTick = 0;
   String? _marketUseFeedbackLabel;
+  ItemDefinition? _marketUseFeedbackItem;
   String? _marketUseFeedbackDelta;
   int _marketRerollFeedbackTick = 0;
   // Tutorial targets change with the tab; preserve the outgoing offer row.
@@ -207,7 +233,7 @@ class _GameShopScreenState extends State<GameShopScreen>
         widget.onItemPresentationEventsShown?.call();
         _startEffectPresentationSummary(
           widget.initialItemPresentationEvents,
-          title: 'Market 진입 아이템 발동',
+          title: context.translate('marketEntryItemsTriggered'),
         );
       }
       _queueStateSave();

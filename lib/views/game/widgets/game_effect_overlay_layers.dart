@@ -238,13 +238,19 @@ class _ConstraintImpactBadge extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: _fade(GameUiPalette.specialDangerWarm, fade),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: _fade(GameUiPalette.specialDangerWarm, fade),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
                       ),
                     ),
                   ],

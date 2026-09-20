@@ -3,6 +3,8 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
+import '../../../utils/app_translation.dart';
+
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
@@ -299,7 +301,9 @@ class _GameHandZoneState extends State<GameHandZone>
                                       _incomingTile == null)
                                     Center(
                                       child: Text(
-                                        '손패 비어 있음',
+                                        context.translate(
+                                          'battleWidgetsHandEmpty',
+                                        ),
                                         style: TextStyle(
                                           color: GameUiPalette.textPrimary
                                               .withValues(alpha: 0.38),
@@ -539,7 +543,7 @@ class _HandDrawIncomingBadge extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               child: Text(
-                '드로우 +1',
+                context.translate('battleWidgetsDrawGain'),
                 maxLines: 1,
                 style: TextStyle(
                   color: GameUiPalette.specialSoftMint.withValues(
@@ -623,7 +627,7 @@ class _DrawHandButton extends StatelessWidget {
                 spacing: 2,
                 children: [
                   Text(
-                    '드로우',
+                    context.translate('battleWidgetsDraw'),
                     maxLines: 1,
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(
@@ -634,7 +638,12 @@ class _DrawHandButton extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    slotsRemaining > 0 ? '$slotsRemaining칸 남음' : '가득 참',
+                    slotsRemaining > 0
+                        ? context.translate(
+                            'battleWidgetsHandSpace',
+                            namedArgs: {'count': '$slotsRemaining'},
+                          )
+                        : context.translate('battleWidgetsHandFull'),
                     maxLines: 1,
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(
@@ -683,7 +692,10 @@ class _HandCapacityGainBadge extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Text(
-                '손패 +$amount',
+                context.translate(
+                  'battleWidgetsHandGain',
+                  namedArgs: {'count': '$amount'},
+                ),
                 style: TextStyle(
                   color: fade(GameUiPalette.specialSuccessText),
                   fontSize: 11,

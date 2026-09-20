@@ -61,6 +61,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: onClose,
+                        tooltip: context.translate('battleWidgetsClose'),
                         icon: const Icon(Icons.close_rounded),
                         color: GameUiPalette.textPrimary,
                         visualDensity: VisualDensity.compact,
@@ -88,7 +89,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
+                  SemanticText(
                     localizedJesterEffect(context, card),
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
@@ -120,7 +121,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
                   ],
                   if (notes != null && notes.trim().isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Text(
+                    SemanticText(
                       notes,
                       style: TextStyle(
                         color: GameUiPalette.textPrimary.withValues(
@@ -136,7 +137,10 @@ class GameJesterInfoOverlay extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: GameActionButton(
-                      label: '판매 +$sellGold 골드',
+                      label: context.translate(
+                        'battleWidgetsSellGold',
+                        namedArgs: {'gold': '$sellGold'},
+                      ),
                       background: GameUiPalette.actionDanger,
                       onPressed: onSell,
                     ),

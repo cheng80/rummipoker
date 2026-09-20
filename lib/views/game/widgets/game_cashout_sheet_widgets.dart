@@ -18,7 +18,7 @@ class _GameCashOutEndlessNotice extends StatelessWidget {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
           Icon(
             Icons.local_fire_department_rounded,
@@ -27,8 +27,8 @@ class _GameCashOutEndlessNotice extends StatelessWidget {
           ),
           SizedBox(width: 8),
           Expanded(
-            child: Text(
-              'S8 이후는 무한 도전입니다. 보상은 받고, 다음 Station부터 목표 점수가 계속 상승합니다.',
+            child: SemanticText(
+              context.translate('marketEndlessNotice'),
               softWrap: true,
               style: TextStyle(
                 color: GameUiPalette.specialEndlessText,
@@ -59,7 +59,7 @@ class _GameCashOutChallengeCarryoverNotice extends StatelessWidget {
           width: 1.2,
         ),
       ),
-      child: const Row(
+      child: Row(
         children: [
           Icon(
             Icons.upgrade_rounded,
@@ -68,8 +68,8 @@ class _GameCashOutChallengeCarryoverNotice extends StatelessWidget {
           ),
           SizedBox(width: 8),
           Expanded(
-            child: Text(
-              '도전 모드는 족보 레벨과 추가 덱 카드만 계승합니다. 골드, Jester, 아이템, 마켓 상태는 새 런에서 초기화됩니다.',
+            child: SemanticText(
+              context.translate('marketCarryoverNotice'),
               softWrap: true,
               style: TextStyle(
                 color: GameUiPalette.actionInfoBluePale,
@@ -110,7 +110,7 @@ class _GameCashOutGoldSummary extends StatelessWidget {
         children: [
           Expanded(
             child: _GameCashOutGoldMetric(
-              label: '보유 골드',
+              label: context.translate('marketCurrentGold'),
               beginValue: (currentGold - totalGold).clamp(0, currentGold),
               endValue: currentGold,
               valueKey: const ValueKey('cashout-current-gold-value'),
@@ -124,7 +124,7 @@ class _GameCashOutGoldSummary extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           _GameCashOutGoldMetric(
-            label: '총 획득',
+            label: context.translate('marketTotalEarned'),
             beginValue: 0,
             endValue: totalGold,
             valueKey: const ValueKey('cashout-total-gold-value'),
@@ -221,7 +221,7 @@ class _GameCashOutGrowthRewardSection extends StatelessWidget {
               ),
               SizedBox(width: 6),
               Text(
-                context.tr('t3CashoutGrowthReward'),
+                context.translate('t3CashoutGrowthReward'),
                 style: TextStyle(
                   color: GameUiPalette.actionInfoBluePale,
                   fontSize: 13,
@@ -232,8 +232,8 @@ class _GameCashOutGrowthRewardSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           for (final entry in entries) ...[
-            Text(
-              entry.description,
+            SemanticText(
+              localizedSettlementDescription(context, entry),
               softWrap: true,
               style: const TextStyle(
                 color: GameUiPalette.textPrimary,
@@ -302,8 +302,8 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '덱 타일 보상',
+                  Text(
+                    context.translate('marketDeckReward'),
                     style: TextStyle(
                       color: GameUiPalette.textPrimary,
                       fontSize: 13,
@@ -311,8 +311,8 @@ class _GameCashOutTileRewardLine extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    entry.description,
+                  SemanticText(
+                    localizedSettlementDescription(context, entry),
                     style: const TextStyle(
                       color: GameUiPalette.textSecondary,
                       fontSize: 12,
@@ -336,13 +336,27 @@ String _bonusEntryDescription(
   final displayName = entry.displayName ?? '';
   final jesterId = entry.jesterId;
   if (jesterId != null) {
-    return '${JesterTranslationScope.of(context).resolveDisplayName(jesterId, displayName)} 보너스';
+    return context.translate(
+      'marketNamedBonus',
+      namedArgs: {
+        'name': JesterTranslationScope.of(
+          context,
+        ).resolveDisplayName(jesterId, displayName),
+      },
+    );
   }
   final itemId = entry.itemId;
   if (itemId != null) {
-    return '${ItemTranslationScope.of(context).resolveDisplayName(itemId, displayName)} 보너스';
+    return context.translate(
+      'marketNamedBonus',
+      namedArgs: {
+        'name': ItemTranslationScope.of(
+          context,
+        ).resolveDisplayName(itemId, displayName),
+      },
+    );
   }
-  return entry.description;
+  return localizedSettlementDescription(context, entry);
 }
 
 class _GameCashOutReveal extends StatelessWidget {
@@ -371,6 +385,7 @@ class _GameCashOutLine extends StatelessWidget {
     required this.text,
     required this.gold,
     this.isEndless = false,
+    this.entry,
   });
 
   factory _GameCashOutLine.fromSettlementEntry(
@@ -380,6 +395,7 @@ class _GameCashOutLine extends StatelessWidget {
     return _GameCashOutLine(
       leading: entry.leadingLabel,
       text: entry.description,
+      entry: entry,
       gold: entry.gold,
       isEndless: isEndless,
     );
@@ -389,6 +405,7 @@ class _GameCashOutLine extends StatelessWidget {
   final String text;
   final int gold;
   final bool isEndless;
+  final RummiSettlementEntryView? entry;
 
   @override
   Widget build(BuildContext context) {
@@ -430,7 +447,9 @@ class _GameCashOutLine extends StatelessWidget {
                     : null,
               ),
               child: Text(
-                leading,
+                entry == null
+                    ? leading
+                    : localizedSettlementLeading(context, entry!),
                 style: TextStyle(
                   color: isEndless
                       ? GameUiPalette.specialEndlessText
@@ -443,7 +462,9 @@ class _GameCashOutLine extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                text,
+                entry == null
+                    ? text
+                    : localizedSettlementDescription(context, entry!),
                 style: TextStyle(
                   color: isEndless
                       ? GameUiPalette.specialEndlessTextMuted

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,11 +12,13 @@ import '../services/active_run_save_service.dart';
 import '../services/game_analytics_service.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_unlock_state_service.dart';
+import '../utils/app_translation.dart';
 import '../utils/common_ui.dart';
-import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/fx_layer.dart';
 import '../widgets/fx/juice.dart';
+import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/semantic_text.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_ui_palette.dart';
@@ -97,7 +98,7 @@ class _NewRunViewState extends State<NewRunView> {
     _seedInputController.clear();
     final action = await showGameChoiceDialog<String>(
       context,
-      title: context.tr('seedDialogTitle'),
+      title: context.translate('seedDialogTitle'),
       content: DecoratedBox(
         decoration: BoxDecoration(
           color: MenuSurface.panelFill(alpha: 0.6),
@@ -120,7 +121,7 @@ class _NewRunViewState extends State<NewRunView> {
               letterSpacing: 1.2,
             ),
             decoration: InputDecoration(
-              hintText: context.tr('seedHint'),
+              hintText: context.translate('seedHint'),
               hintStyle: TextStyle(
                 color: GameUiPalette.textPrimary.withValues(alpha: 0.34),
                 fontWeight: FontWeight.w700,
@@ -134,12 +135,12 @@ class _NewRunViewState extends State<NewRunView> {
       ),
       actions: [
         GameDialogAction<String>(
-          label: context.tr('cancel'),
+          label: context.translate('cancel'),
           value: 'cancel',
           accent: GameUiPalette.disabledControl,
         ),
         GameDialogAction<String>(
-          label: context.tr('ok'),
+          label: context.translate('ok'),
           value: 'submit',
           accent: GameUiPalette.actionGold,
           textColor: GameUiPalette.textOnGold,
@@ -153,7 +154,7 @@ class _NewRunViewState extends State<NewRunView> {
   Future<void> _trySubmitSeed() async {
     final value = int.tryParse(_seedInputController.text.trim());
     if (value == null) {
-      showTopNotice(context, context.tr('seedInvalid'));
+      showTopNotice(context, context.translate('seedInvalid'));
       return;
     }
     WidgetsBinding.instance.scheduleFrame();
@@ -209,7 +210,7 @@ class _NewRunViewState extends State<NewRunView> {
       return runtime;
     } catch (_) {
       if (mounted) {
-        showTopNotice(context, '저장에 실패했습니다. 다시 시도해 주세요.');
+        showTopNotice(context, context.translate('menuSaveFailed'));
       }
       return null;
     }
@@ -261,7 +262,12 @@ class _NewRunViewState extends State<NewRunView> {
     if (unlocked) GameFeedback.play(GameCue.unlock);
     showTopNotice(
       context,
-      unlocked ? '${modifier.label} 해금' : '기억 카드가 부족합니다.',
+      unlocked
+          ? context.translate(
+              'menuUnlocked',
+              namedArgs: {'modifier': context.translate(modifier.labelKey)},
+            )
+          : context.translate('menuInsufficientMemory'),
       cue: null,
     );
   }
@@ -283,7 +289,7 @@ class _NewRunViewState extends State<NewRunView> {
                 ),
                 Expanded(
                   child: Text(
-                    '새 게임 시작',
+                    context.translate('homeNewRunTitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -300,8 +306,8 @@ class _NewRunViewState extends State<NewRunView> {
             const SizedBox(height: 18),
             if (_availableDifficulties.length > 1) ...[
               HomeSection(
-                title: '난이도',
-                subtitle: '이번 런의 시작 조건을 고릅니다.',
+                title: context.translate('menuDifficulty'),
+                subtitle: context.translate('menuDifficultyDesc'),
                 child: _DifficultyPicker(
                   difficulties: _availableDifficulties,
                   selectedDifficulty: _selectedDifficulty,
@@ -320,8 +326,10 @@ class _NewRunViewState extends State<NewRunView> {
               const SizedBox(height: 18),
             ],
             HomeSection(
-              title: '런 규칙',
-              subtitle: _unlockState.insight > 0 ? '기억 카드 보유' : '기억 카드 없음',
+              title: context.translate('menuRunRules'),
+              subtitle: _unlockState.insight > 0
+                  ? context.translate('menuHasMemory')
+                  : context.translate('menuNoMemory'),
               child: _RunModifierPicker(
                 selectedRunModifier: _selectedRunModifier,
                 unlockState: _unlockState,
@@ -332,15 +340,15 @@ class _NewRunViewState extends State<NewRunView> {
             ),
             const SizedBox(height: 18),
             HomeSection(
-              title: '시작 방식',
+              title: context.translate('menuStartMethod'),
               subtitle: _availableDifficulties.length > 1
-                  ? '선택한 난이도로 시작합니다.'
-                  : '표준 난이도로 시작합니다.',
+                  ? context.translate('menuStartSelected')
+                  : context.translate('menuStartStandard'),
               child: Column(
                 children: [
                   HomeEntryCard(
-                    title: context.tr('entryRandomSeed'),
-                    description: '무작위 시드로 바로 시작',
+                    title: context.translate('entryRandomSeed'),
+                    description: context.translate('menuRandomDesc'),
                     primary: true,
                     cue: GameCue.runStart,
                     decision: true,
@@ -348,8 +356,8 @@ class _NewRunViewState extends State<NewRunView> {
                   ),
                   const SizedBox(height: 8),
                   HomeEntryCard(
-                    title: context.tr('entryInputSeed'),
-                    description: '시드를 직접 입력해 시작',
+                    title: context.translate('entryInputSeed'),
+                    description: context.translate('menuSeedDesc'),
                     onTap: _openSeedInputDialog,
                   ),
                 ],
@@ -373,8 +381,11 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
     final addedDeckCount = carryover?.addedDeckTiles.length ?? 0;
     final hasCarryover = carryover?.hasContent ?? false;
     final summary = hasCarryover
-        ? '계승: 성장 족보 $grownRankCount개 · 추가 덱 $addedDeckCount장'
-        : '계승 정보 없음 · 표준 S8 Boss 클리어 후 갱신됩니다.';
+        ? context.translate(
+            'menuCarryoverSummary',
+            namedArgs: {'ranks': '$grownRankCount', 'tiles': '$addedDeckCount'},
+          )
+        : context.translate('menuNoCarryover');
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -399,8 +410,8 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '도전 계승',
+                Text(
+                  context.translate('menuCarryover'),
                   style: TextStyle(
                     color: GameUiPalette.textPrimary,
                     fontSize: 14,
@@ -408,7 +419,7 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                SemanticText(
                   summary,
                   style: const TextStyle(
                     color: GameUiPalette.actionInfoBluePale,
@@ -418,8 +429,8 @@ class _ChallengeCarryoverNotice extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  '족보 레벨과 추가 덱 카드만 유지됩니다. 골드, Jester, 아이템, 마켓 상태는 새 런에서 초기화됩니다.',
+                SemanticText(
+                  context.translate('menuCarryoverDesc'),
                   style: TextStyle(
                     color: GameUiPalette.actionInfoBlueMutedText,
                     fontSize: 11,
@@ -502,8 +513,12 @@ class _RunModifierCard extends StatelessWidget {
         ? MenuSurface.gold.withValues(alpha: 0.18)
         : MenuSurface.panelFill(alpha: unlocked ? 0.56 : 0.34);
     final status = unlocked
-        ? (selected ? '선택됨' : '선택 가능')
-        : (canUnlock ? '기억 카드로 해금' : '기억 카드 필요');
+        ? (selected
+              ? context.translate('menuSelected')
+              : context.translate('menuSelectable'))
+        : (canUnlock
+              ? context.translate('menuUnlockMemory')
+              : context.translate('menuNeedMemory'));
     return _UnlockBurst(
       trigger: unlockTrigger,
       color: accent,
@@ -548,7 +563,7 @@ class _RunModifierCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          modifier.label,
+                          context.translate(modifier.labelKey),
                           style: TextStyle(
                             color: GameUiPalette.textPrimary.withValues(
                               alpha: 0.94,
@@ -558,8 +573,8 @@ class _RunModifierCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          _modifierEffectText(modifier),
+                        SemanticText(
+                          _modifierEffectText(context, modifier),
                           style: TextStyle(
                             color: GameUiPalette.textPrimary.withValues(
                               alpha: 0.68,
@@ -593,13 +608,16 @@ class _RunModifierCard extends StatelessWidget {
     );
   }
 
-  String _modifierEffectText(NewRunModifier modifier) {
-    if (modifier == NewRunModifier.basic) {
-      return '목표 점수 x1.00 · 보상 x1.00';
-    }
-    return '목표 점수 x${modifier.targetScoreMultiplier.toStringAsFixed(2)}'
-        ' · 보상 x${modifier.rewardMultiplier.toStringAsFixed(2)}'
-        '\n상점 후보 +1';
+  String _modifierEffectText(BuildContext context, NewRunModifier modifier) {
+    return context.translate(
+      modifier == NewRunModifier.basic
+          ? 'menuModifierEffect'
+          : 'menuModifierHighEffect',
+      namedArgs: {
+        'target': modifier.targetScoreMultiplier.toStringAsFixed(2),
+        'reward': modifier.rewardMultiplier.toStringAsFixed(2),
+      },
+    );
   }
 }
 
@@ -646,7 +664,6 @@ class _DifficultyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final setup = NewRunSetup(difficulty: difficulty);
     final borderColor = selected
         ? MenuSurface.goldBright
         : MenuSurface.border(alpha: 0.26);
@@ -682,7 +699,7 @@ class _DifficultyButton extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                setup.difficultyLabel,
+                context.translate(difficulty.labelKey),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
