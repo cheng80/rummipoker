@@ -683,6 +683,16 @@ Future<T?> showGameChoiceDialog<T>(
   bool barrierDismissible = true,
   bool useRootNavigator = true,
 }) {
+  // The builders replaced the required title and actions, so the defaults let
+  // a dialog with no heading and no way out compile.
+  assert(
+    title.isNotEmpty || titleBuilder != null,
+    'showGameChoiceDialog needs a title or a titleBuilder.',
+  );
+  assert(
+    actions.isNotEmpty || actionsBuilder != null,
+    'showGameChoiceDialog needs actions or an actionsBuilder.',
+  );
   return showAppDialog<T>(
     context,
     barrierDismissible: barrierDismissible,
@@ -745,6 +755,10 @@ Future<bool> showConfirmDialog(
   bool barrierDismissible = true,
   bool useRootNavigator = true,
 }) async {
+  assert(
+    title.isNotEmpty || titleBuilder != null,
+    'showConfirmDialog needs a title or a titleBuilder.',
+  );
   final result = await showGameChoiceDialog<bool>(
     context,
     title: title,

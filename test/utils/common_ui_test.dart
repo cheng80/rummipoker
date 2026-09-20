@@ -130,4 +130,39 @@ void main() {
     expect(find.text('닫기'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('a dialog with no title or no actions trips an assert', (
+    tester,
+  ) async {
+    late BuildContext dialogContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            dialogContext = context;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(
+      () => showGameChoiceDialog<String>(
+        dialogContext,
+        actions: const [GameDialogAction<String>(label: 'close', value: 'x')],
+      ),
+      throwsAssertionError,
+      reason: 'a dialog with no heading must not compile away silently',
+    );
+    expect(
+      () => showGameChoiceDialog<String>(dialogContext, title: 'title'),
+      throwsAssertionError,
+      reason: 'a dialog with no button leaves no way out',
+    );
+    expect(
+      () => showConfirmDialog(dialogContext, message: 'body'),
+      throwsAssertionError,
+      reason: 'a confirmation with no heading must not compile away silently',
+    );
+  });
 }
