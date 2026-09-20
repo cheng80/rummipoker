@@ -2,6 +2,8 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
@@ -2427,11 +2429,32 @@ class _FullRunBot {
   /// 파일로 확인할 수 있다. 실패는 무시한다. 관측 장치가 본 실행을 막으면 안 된다.
   void _sendProgressBeacon(String entry) {
     if (!config.progressBeaconEnabled) return;
+    final heap = _jsHeapUsedMb();
+    final body = heap == null
+        ? entry
+        : '$entry | heap_mb=${heap.toStringAsFixed(1)}';
     unawaited(
       http
-          .post(Uri.parse(config.progressUrl), body: entry)
+          .post(Uri.parse(config.progressUrl), body: body)
           .catchError((Object _) => http.Response('', 599)),
     );
+  }
+
+  /// 봇이 도는 페이지의 JS heap 사용량(MB). 실행 중에 진행 줄과 함께 남겨 두면
+  /// WebDriver를 건드리지 않고도 하네스에서의 증가율을 파일로 읽을 수 있다.
+  /// `performance.memory`는 Chromium 계열에만 있으므로 없으면 null이다.
+  double? _jsHeapUsedMb() {
+    try {
+      final performance = globalContext.getProperty<JSObject?>(
+        'performance'.toJS,
+      );
+      final memory = performance?.getProperty<JSObject?>('memory'.toJS);
+      final used = memory?.getProperty<JSNumber?>('usedJSHeapSize'.toJS);
+      final bytes = used?.toDartDouble;
+      return bytes == null ? null : bytes / (1024 * 1024);
+    } catch (_) {
+      return null;
+    }
   }
 
   GameSessionState _readGameState() {
