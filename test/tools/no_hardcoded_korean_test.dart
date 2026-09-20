@@ -163,4 +163,36 @@ void main() {
           '_allowList in this file.',
     );
   });
+
+  // The Korean check above cannot see an English literal. The settlement
+  // callout once shipped the bare word 'overlap' as the step title, and it
+  // showed in all five languages. Every arm of that switch has to read its
+  // title from a translation key or from the line it describes.
+  test('the settlement step titles never hold a bare literal', () {
+    const path = 'lib/views/game/game_view_battle_widgets.dart';
+    final source = File(path).readAsStringSync();
+    const header = 'final (title, value, detail) = switch (step) {';
+    final start = source.indexOf(header);
+    expect(start, isNot(-1), reason: '$path: the step switch moved');
+    final end = source.indexOf('\n    };', start);
+    expect(end, isNot(-1), reason: '$path: the step switch has no end');
+    final body = source.substring(start + header.length, end);
+
+    // A tuple arm opens with `=> (`, and its first element is the title.
+    final titles = RegExp(r'=>\s*\(\s*\n(\s*.+)')
+        .allMatches(body)
+        .map((match) => match.group(1)!.trim())
+        .toList();
+    expect(titles, isNotEmpty, reason: '$path: no step arms found');
+    final literals = titles.where(
+      (title) => title.startsWith("'") || title.startsWith('"'),
+    );
+    expect(
+      literals,
+      isEmpty,
+      reason:
+          'A settlement step title must come from context.translate or from '
+          'the line, never from a literal. See docs/core/I18N.md.',
+    );
+  });
 }

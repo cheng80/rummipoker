@@ -90,7 +90,7 @@ class _BoardScoringCallout extends StatelessWidget {
         context.translate('battleBaseChips'),
       ),
       ScoringPresentationStep.overlap => (
-        'overlap',
+        context.translate('coreSettlementOverlap'),
         '+${line.overlapBonus}',
         context.translate('battleOverlapBonus'),
       ),
