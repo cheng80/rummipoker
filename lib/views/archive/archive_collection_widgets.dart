@@ -493,7 +493,7 @@ mixin _ArchiveNewRevealState<T extends StatefulWidget> on State<T> {
     if (!newIds.remove(id)) return;
     _flipId = id;
     _flipTick++;
-    GameFeedback.play(GameCue.unlock);
+    GameFeedback.play(GameCue.newReveal);
     unawaited(ArchiveSeenService.acknowledge(prefixedId));
   }
 }

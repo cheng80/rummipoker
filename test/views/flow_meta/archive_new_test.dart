@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:rummipoker/app_config.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/game_haptics.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
+import 'package:rummipoker/services/archive_seen_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/run_unlock_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
@@ -21,11 +26,79 @@ Future<void> _openArchive(WidgetTester tester) async {
 
 void main() {
   setUp(() async {
+    // 이전 테스트의 FakeAsync에 연결된 asset Future를 재사용하지 않는다.
+    rootBundle.evict(AssetPaths.jestersCommon);
+    rootBundle.evict(AssetPaths.itemsCommon);
     StorageHelper.resetForTest();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await StorageHelper.init();
     GameSettings.sfxMuted = true;
   });
+
+  for (final (key, update) in const [
+    (
+      'archive-jester-jester',
+      RunCollectionUpdate(seenMarketJesterIds: {'jester'}),
+    ),
+    (
+      'archive-item-reroll_token',
+      RunCollectionUpdate(seenMarketItemIds: {'reroll_token'}),
+    ),
+    (
+      'archive-memory-memory_card_expired_standard_s2',
+      RunCollectionUpdate(
+        earnedMemoryCardIds: {'memory_card_expired_standard_s2'},
+      ),
+    ),
+  ]) {
+    testWidgets('Archive NEW 첫 클릭과 재클릭은 원음 1회: $key', (tester) async {
+      tester.view.physicalSize = const Size(390, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+        SoundManager.debugResetForTest();
+        GameHaptics.debugSink = null;
+      });
+
+      // 기존 항목 확인 기준을 만든 뒤 새 발견을 추가한다.
+      await ArchiveSeenService.ensureInitialized();
+      await RunUnlockStateService.recordRunCollection(update);
+      await _openArchive(tester);
+      final card = find.byKey(ValueKey(key));
+      final newTag = find.descendant(
+        of: card,
+        matching: find.byKey(const ValueKey('archive-new-tag')),
+      );
+      await tester.ensureVisible(card);
+      await tester.pumpAndSettle();
+      expect(newTag, findsOneWidget);
+
+      final sounds = <(String, double)>[];
+      final haptics = <HapticGrade>[];
+      GameSettings.sfxMuted = false;
+      GameSettings.hapticsEnabled = true;
+      SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+      GameHaptics.debugSink = haptics.add;
+      SoundManager.rampGlobalPitch(0.5, Duration.zero);
+
+      for (var click = 0; click < 2; click++) {
+        sounds.clear();
+        haptics.clear();
+        await tester.tap(card);
+        await tester.pumpAndSettle();
+        expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)], reason: 'click=$click');
+        expect(
+          haptics,
+          click == 0
+              ? [HapticGrade.select, HapticGrade.impact]
+              : [HapticGrade.select],
+        );
+        expect(newTag, findsNothing);
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
   testWidgets('Archive NEW는 기존 사용자에게 뜨지 않고 새 발견에만 뜨며, 처음 열 때 한 번 뒤집힌다', (
     tester,
