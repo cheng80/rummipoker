@@ -752,8 +752,11 @@ class _GameLayout extends StatelessWidget {
             ),
             if (boardMoveMode) ...[
               const SizedBox(height: 4),
-              SemanticText(
+              // One-line slot in the board/hand/HUD stack. maxLines: 1 makes
+              // SemanticText a no-op, so this stays a plain Text.
+              Text(
                 context.translate('battleMovePrompt'),
+                maxLines: 1,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: GameUiPalette.textPrimary.withValues(alpha: 0.74),

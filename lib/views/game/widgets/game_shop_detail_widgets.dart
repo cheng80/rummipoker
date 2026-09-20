@@ -277,8 +277,10 @@ class _OwnedMarketItemBody extends StatelessWidget {
         _MarketDescriptionText(effect),
         if (notice != null) ...[
           const SizedBox(height: 4),
-          SemanticText(
+          // maxLines: 1 makes SemanticText a no-op, so this stays a plain Text.
+          Text(
             notice,
+            maxLines: 1,
             style: const TextStyle(
               color: GameUiPalette.actionGoldBright,
               fontSize: 11,

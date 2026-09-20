@@ -272,6 +272,7 @@ class _TileChoiceButton extends StatelessWidget {
                 'battleWidgetsTileCandidate',
                 namedArgs: {'index': '${index + 1}'},
               ),
+              maxLines: 1,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: GameUiPalette.textSecondary,

@@ -121,6 +121,7 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                                 Text(
                                   feedback.titleBuilder?.call(context) ??
                                       feedback.title,
+                                  maxLines: 1,
                                   style: const TextStyle(
                                     color: GameUiPalette.textPrimary,
                                     fontSize: 15,
@@ -129,12 +130,15 @@ class _ItemEffectFeedbackToast extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 5),
-                                SemanticText(
+                                // maxLines: 1 makes SemanticText a no-op, so
+                                // this stays a plain Text.
+                                Text(
                                   feedback.detailBuilder?.call(context) ??
                                       feedback.detail,
                                   key: const ValueKey(
                                     'item-effect-result-label',
                                   ),
+                                  maxLines: 1,
                                   style: TextStyle(
                                     color: accent,
                                     fontSize: 18,

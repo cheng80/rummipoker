@@ -75,4 +75,50 @@ void main() {
       reason: 'These files no longer need their _allowList line. Remove it.',
     );
   });
+
+  // Swapping a Text for a SemanticText once dropped the maxLines and overflow
+  // that held these slots to a fixed number of lines. The text is short in
+  // Korean and long in English and Japanese, so the panel around it grew and
+  // pushed the buttons below it out of place. Each entry names a snippet that
+  // must keep its constraint.
+  test('one-line and two-line text slots keep their line constraint', () {
+    const guarded = <String, List<String>>{
+      'lib/views/game/game_view_fate_selection_widgets.dart': [
+        'selection.displayName(context)',
+        'targetText',
+        'previewText',
+      ],
+      'lib/views/game/game_view_item_effect_widgets.dart': [
+        'feedback.titleBuilder',
+        'feedback.detailBuilder',
+      ],
+      'lib/views/game/game_view_layout_widgets.dart': ["'battleMovePrompt'"],
+      'lib/views/game/widgets/game_shop_detail_widgets.dart': ['notice,'],
+      'lib/views/game/widgets/game_tile_choice_dialog.dart': [
+        "'battleWidgetsTileCandidate',",
+      ],
+    };
+
+    final missing = <String>[];
+    for (final entry in guarded.entries) {
+      final source = File(entry.key).readAsStringSync();
+      for (final snippet in entry.value) {
+        final at = source.indexOf(snippet);
+        expect(at, isNot(-1), reason: '${entry.key}: "$snippet" moved');
+        // The named arguments of one widget, from the snippet to the style.
+        final styleAt = source.indexOf('style:', at);
+        final window = source.substring(at, styleAt == -1 ? at : styleAt);
+        if (!window.contains('maxLines:')) {
+          missing.add('${entry.key}: "$snippet"');
+        }
+      }
+    }
+    expect(
+      missing,
+      isEmpty,
+      reason:
+          'These slots hold a fixed number of lines. Keep maxLines when the '
+          'widget changes, or the panel grows in English and Japanese.',
+    );
+  });
 }

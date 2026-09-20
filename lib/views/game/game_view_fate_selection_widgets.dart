@@ -144,7 +144,8 @@ class _FateLineSelectionPanel extends StatelessWidget {
                 Expanded(
                   child: Text(
                     selection.displayName(context),
-
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: GameUiPalette.textPrimary,
                       fontSize: 15,
@@ -165,7 +166,8 @@ class _FateLineSelectionPanel extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               targetText,
-
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: GameUiPalette.userSelection,
                 fontSize: 12,
@@ -175,6 +177,8 @@ class _FateLineSelectionPanel extends StatelessWidget {
             const SizedBox(height: 3),
             SemanticText(
               previewText,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: GameUiPalette.textPrimary,
                 fontSize: 11.5,
