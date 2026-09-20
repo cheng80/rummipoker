@@ -121,5 +121,5 @@
   "menuTestCrashDesc": "用于确认 Firebase Console 接收情况。",
   "menuUndiscovered": "未发现",
   "menuUnlockMemory": "用记忆卡解锁",
-  "menuUnlocked": "已解锁 {modifier}"
+  "menuUnlocked": "已解锁{modifier}"
 }

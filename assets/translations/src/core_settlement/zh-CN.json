@@ -12,7 +12,7 @@
   "coreSettlementFirstBlind": "首次通关盲注奖励",
   "coreSettlementFirstLabel": "首次通关",
   "coreSettlementGoal": "Station 目标",
-  "coreSettlementGrowth": "超额达成：{rank} 成长 +{amount}",
+  "coreSettlementGrowth": "超额达成：{rank}成长 +{amount}",
   "coreSettlementGrowthLabel": "成长",
   "coreSettlementHandDiscard": "剩余手牌弃牌 {count}次 × {gold}",
   "coreSettlementOverkillGold": "超额分数奖励",

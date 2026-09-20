@@ -99,6 +99,24 @@ void main() {
       return out;
     }
 
+    // A placeholder is not Latin by itself, so what decides the spacing is the
+    // value the code passes. These names always carry a translated Chinese
+    // term, read off the namedArgs call sites in lib/, so they sit tight
+    // against a Han character. Every other name holds a number or an English
+    // proper noun, or can hold either, and keeps its space.
+    const chineseValue = <String>{
+      'rank',
+      'line',
+      'color',
+      'mode',
+      'difficulty',
+      'modifier',
+      'action',
+      'effect',
+      'status',
+      'summary',
+    };
+
     test('Chinese keeps a space between a Han character and Latin', () {
       // A measure word or a percent sign stays against its number, and the
       // decision left `run` in the subtitle as it was.
@@ -110,7 +128,13 @@ void main() {
       final offenders = <String>[];
       for (final locale in ['zh-CN', 'zh-TW']) {
         for (final row in valuesFor(locale)) {
-          for (final match in tight.allMatches(row.value)) {
+          // Blank out the placeholders whose value is a Chinese term, so the
+          // Han characters around them read as one run.
+          var text = row.value;
+          for (final name in chineseValue) {
+            text = text.replaceAll('{$name}', '');
+          }
+          for (final match in tight.allMatches(text)) {
             if (allowed.hasMatch(match.group(0)!)) continue;
             offenders.add('$locale ${row.key}: ...${match.group(0)}...');
           }
@@ -122,6 +146,27 @@ void main() {
         reason:
             'Chinese puts a half-width space between a Han character and a '
             'Latin letter or digit. See docs/tools/I18N_GLOSSARY.md.',
+      );
+    });
+
+    test('Chinese keeps a term placeholder tight against a Han character', () {
+      final offenders = <String>[];
+      for (final locale in ['zh-CN', 'zh-TW']) {
+        for (final row in valuesFor(locale)) {
+          for (final name in chineseValue) {
+            final loose = RegExp('([㐀-䶿一-鿿] \\{$name\\})|(\\{$name\\} [㐀-䶿一-鿿])');
+            for (final match in loose.allMatches(row.value)) {
+              offenders.add('$locale ${row.key}: ...${match.group(0)}...');
+            }
+          }
+        }
+      }
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'These placeholders always hold a Chinese term, so no space sits '
+            'between them and a Han character. See docs/tools/I18N_GLOSSARY.md.',
       );
     });
 
