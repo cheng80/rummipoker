@@ -1,0 +1,10 @@
+{
+  "runInfoAddedTileEntry": "{tile}(Chips {chips})",
+  "runInfoDeckSummaryBase": "Base deck {count} tiles",
+  "runInfoDeckSummaryExtended": "Deck {total} tiles · {added} added",
+  "runInfoHandGrowthProgress": "Completed {count} · Growth {progress}/{required}",
+  "runInfoNoAddedTiles": "No added tiles",
+  "runInfoTileChipDescription": "Shown by tile number, regardless of color. The current confirm score is calculated from the hand base chips.",
+  "runInfoTileChipEntry": "{number}=Chips {chips}",
+  "runInfoTileChipTitle": "Chips by tile"
+}

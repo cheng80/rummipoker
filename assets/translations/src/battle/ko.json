@@ -1,0 +1,10 @@
+{
+  "runInfoAddedTileEntry": "{tile}(칩 {chips})",
+  "runInfoDeckSummaryBase": "기본 덱 {count}장",
+  "runInfoDeckSummaryExtended": "덱 {total}장 · 추가 {added}장",
+  "runInfoHandGrowthProgress": "완성 {count}회 · 성장 {progress}/{required}",
+  "runInfoNoAddedTiles": "추가 타일 없음",
+  "runInfoTileChipDescription": "색상과 관계없이 타일 숫자값으로 표시합니다. 현재 확정 점수는 족보 기본 칩을 기준으로 계산됩니다.",
+  "runInfoTileChipEntry": "{number}=칩 {chips}",
+  "runInfoTileChipTitle": "타일 기준 칩"
+}

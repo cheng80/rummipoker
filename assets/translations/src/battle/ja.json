@@ -1,0 +1,10 @@
+{
+  "runInfoAddedTileEntry": "{tile}(Chips {chips})",
+  "runInfoDeckSummaryBase": "基本デッキ {count}枚",
+  "runInfoDeckSummaryExtended": "デッキ {total}枚 · 追加 {added}枚",
+  "runInfoHandGrowthProgress": "完成 {count}回 · 成長 {progress}/{required}",
+  "runInfoNoAddedTiles": "追加タイルなし",
+  "runInfoTileChipDescription": "色にかかわらずタイルの数字で表示します。現在の確定スコアは役の基本 Chips を基準に計算されます。",
+  "runInfoTileChipEntry": "{number}=Chips {chips}",
+  "runInfoTileChipTitle": "タイル基準 Chips"
+}

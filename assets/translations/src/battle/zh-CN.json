@@ -1,0 +1,10 @@
+{
+  "runInfoAddedTileEntry": "{tile}(Chips {chips})",
+  "runInfoDeckSummaryBase": "基础牌堆 {count}张",
+  "runInfoDeckSummaryExtended": "牌堆 {total}张 · 追加 {added}张",
+  "runInfoHandGrowthProgress": "完成 {count}次 · 成长 {progress}/{required}",
+  "runInfoNoAddedTiles": "没有追加牌块",
+  "runInfoTileChipDescription": "不分颜色，按牌块数字显示。当前确定分数以牌型基础 Chips 计算。",
+  "runInfoTileChipEntry": "{number}=Chips {chips}",
+  "runInfoTileChipTitle": "牌块基准 Chips"
+}
