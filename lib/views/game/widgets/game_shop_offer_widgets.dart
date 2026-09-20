@@ -17,18 +17,21 @@ class _MarketOfferRow extends StatelessWidget {
         kMarketOfferRowGap * (kMarketOfferRowPageSlots - 1);
     return Align(
       alignment: Alignment.topCenter,
-      child: SizedBox(
-        width: pageWidth,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < children.length; i++) ...[
-              children[i],
-              if (i < children.length - 1)
-                const SizedBox(width: kMarketOfferRowGap),
+      child: Padding(
+        padding: const EdgeInsets.only(top: kMarketOfferTopClearance),
+        child: SizedBox(
+          width: pageWidth,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                children[i],
+                if (i < children.length - 1)
+                  const SizedBox(width: kMarketOfferRowGap),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -166,7 +169,7 @@ class _MarketOfferAmbientMotion extends StatelessWidget {
       builder: (context, value, child) {
         final phase = math.sin(value * math.pi);
         return SpringFollow(
-          offset: Offset(0, -1.6 * phase),
+          offset: Offset(0, -kMarketOfferAmbientLift * phase),
           rotation: 0.004 * phase,
           positionRate: 24,
           rotationRate: 20,
@@ -250,8 +253,10 @@ class _GameShopOfferCard extends StatelessWidget {
                   strength: 1.05,
                   child: _MarketOfferAmbientMotion(
                     child: SpringFollow(
-                      offset: selected ? const Offset(0, -4) : Offset.zero,
-                      scale: selected ? 1.05 : 1,
+                      offset: selected
+                          ? const Offset(0, -kMarketOfferSelectionLift)
+                          : Offset.zero,
+                      scale: selected ? kMarketOfferSelectionScale : 1,
                       child: card,
                     ),
                   ),
@@ -484,8 +489,10 @@ class _MarketItemOfferCard extends StatelessWidget {
                   strength: 1.05,
                   child: _MarketOfferAmbientMotion(
                     child: SpringFollow(
-                      offset: selected ? const Offset(0, -4) : Offset.zero,
-                      scale: selected ? 1.05 : 1,
+                      offset: selected
+                          ? const Offset(0, -kMarketOfferSelectionLift)
+                          : Offset.zero,
+                      scale: selected ? kMarketOfferSelectionScale : 1,
                       child: card,
                     ),
                   ),
@@ -678,8 +685,10 @@ class _MarketTileOfferCard extends StatelessWidget {
                     strength: 1.05,
                     child: _MarketOfferAmbientMotion(
                       child: SpringFollow(
-                        offset: selected ? const Offset(0, -4) : Offset.zero,
-                        scale: selected ? 1.05 : 1,
+                        offset: selected
+                            ? const Offset(0, -kMarketOfferSelectionLift)
+                            : Offset.zero,
+                        scale: selected ? kMarketOfferSelectionScale : 1,
                         child: _MarketTileFace(
                           tile: offer.tile,
                           selected: selected,

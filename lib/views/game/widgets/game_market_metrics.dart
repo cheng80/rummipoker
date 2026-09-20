@@ -13,6 +13,18 @@ const double kMarketOfferCardDisplayWidth =
 const double kMarketOfferCardDisplayHeight =
     (kMarketOfferCardHeight + (kMarketCardSelectionInset * 2)) *
     kMarketOfferCardDisplayScale;
+// All offer lanes reserve the same space inside the transition clip.
+const double kMarketOfferSelectionLift = 4.0;
+const double kMarketOfferSelectionScale = 1.05;
+const double kMarketOfferAmbientLift = 1.6;
+const double kMarketOfferTopClearance =
+    kMarketOfferCardDisplayScale *
+    (kMarketOfferSelectionLift +
+        kMarketOfferAmbientLift +
+        (kMarketOfferCardHeight + kMarketCardSelectionInset * 2) *
+            (kMarketOfferSelectionScale - 1) /
+            2 +
+        kJesterSelectionBorderWidth);
 const double kMarketShopCellWidth = 84.0;
 const double kMarketShopCellHeight = kMarketOfferCardDisplayHeight + 22.0;
 const double kMarketOwnedSlotRowHeight =
@@ -21,7 +33,7 @@ const double kMarketOwnedTabSectionHeight = 108.0;
 const double kMarketOwnedTabSectionGap = 6.0;
 const double kMarketOwnedTabAreaHeight =
     (kMarketOwnedTabSectionHeight * 2) + kMarketOwnedTabSectionGap;
-const double kMarketShopPanelHeight = 168.0;
+const double kMarketShopPanelHeight = 168.0 + kMarketOfferTopClearance;
 const double kMarketSpeechPanelHeight = 132.0;
 const double kMarketDescriptionFontSize = 12.0;
 const double kMarketDescriptionLineHeight = 1.18;
