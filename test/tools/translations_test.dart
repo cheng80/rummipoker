@@ -7,6 +7,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../tools/merge_translations.dart' as merge;
+
 const _sourceRoot = 'assets/translations/src';
 const _outputRoot = 'assets/translations';
 
@@ -76,6 +78,62 @@ void main() {
         );
       }
     }
+  });
+
+  group('the merge tool refuses a fragment it cannot trust', () {
+    late Directory root;
+
+    setUp(() => root = Directory.systemTemp.createTempSync('translations'));
+    tearDown(() => root.deleteSync(recursive: true));
+
+    void writeFragment(
+      String area,
+      String locale,
+      Map<String, String> entries,
+    ) {
+      final file = File('${root.path}/$area/$locale.json')
+        ..parent.createSync(recursive: true);
+      file.writeAsStringSync(jsonEncode(entries));
+    }
+
+    Map<String, String> build() =>
+        merge.buildMergedTranslations(sourceRoot: root.path, outputRoot: 'out');
+
+    test('an empty value is an error, not a placeholder', () {
+      writeFragment('_base', 'ko', {'greeting': '안녕'});
+      writeFragment('_base', 'en', {'greeting': '   '});
+      expect(
+        build,
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains('is empty'),
+          ),
+        ),
+      );
+    });
+
+    test('two areas cannot define the same key', () {
+      writeFragment('_base', 'ko', {'greeting': '안녕'});
+      writeFragment('battle', 'ko', {'greeting': '반가워'});
+      expect(
+        build,
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains('Duplicate translation key'),
+          ),
+        ),
+      );
+    });
+
+    test('a healthy fragment set merges', () {
+      writeFragment('_base', 'ko', {'greeting': '안녕'});
+      writeFragment('_base', 'en', {'greeting': 'Hi'});
+      expect(build().keys, containsAll(['out/ko.json', 'out/en.json']));
+    });
   });
 
   test('the fragment sources are not declared as bundled assets', () {

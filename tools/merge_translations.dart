@@ -74,20 +74,23 @@ void main(List<String> args) {
 /// Throws a [FormatException] when two areas define the same key, when an area
 /// is missing a locale, or when the locales of one area disagree about which
 /// keys exist.
-Map<String, String> buildMergedTranslations() {
-  final areas = _areaNames();
+Map<String, String> buildMergedTranslations({
+  String sourceRoot = _sourceRoot,
+  String outputRoot = _outputRoot,
+}) {
+  final areas = _areaNames(sourceRoot);
   if (areas.isEmpty) {
     throw const FormatException(
       'No translation areas found under $_sourceRoot',
     );
   }
-  final locales = _localeNames(areas.first);
+  final locales = _localeNames(sourceRoot, areas.first);
 
   final owners = <String, String>{};
   final merged = {for (final locale in locales) locale: <String, String>{}};
 
   for (final area in areas) {
-    final areaLocales = _localeNames(area);
+    final areaLocales = _localeNames(sourceRoot, area);
     if (!_sameItems(areaLocales, locales)) {
       throw FormatException(
         'Area "$area" has locales $areaLocales but area "${areas.first}" has $locales',
@@ -95,7 +98,7 @@ Map<String, String> buildMergedTranslations() {
     }
     Set<String>? areaKeys;
     for (final locale in locales) {
-      final entries = _readFragment(area, locale);
+      final entries = _readFragment(sourceRoot, area, locale);
       areaKeys ??= entries.keys.toSet();
       if (!_sameItems(
         entries.keys.toList()..sort(),
@@ -122,13 +125,13 @@ Map<String, String> buildMergedTranslations() {
   const encoder = JsonEncoder.withIndent('  ');
   return {
     for (final locale in locales)
-      '$_outputRoot/$locale.json':
+      '$outputRoot/$locale.json':
           '${encoder.convert({for (final key in merged[locale]!.keys.toList()..sort()) key: merged[locale]![key]})}\n',
   };
 }
 
-List<String> _areaNames() =>
-    Directory(_sourceRoot)
+List<String> _areaNames(String sourceRoot) =>
+    Directory(sourceRoot)
         .listSync()
         .whereType<Directory>()
         .map(
@@ -138,8 +141,8 @@ List<String> _areaNames() =>
         .toList()
       ..sort();
 
-List<String> _localeNames(String area) =>
-    Directory('$_sourceRoot/$area')
+List<String> _localeNames(String sourceRoot, String area) =>
+    Directory('$sourceRoot/$area')
         .listSync()
         .whereType<File>()
         .where((file) => file.path.endsWith('.json'))
@@ -147,8 +150,12 @@ List<String> _localeNames(String area) =>
         .toList()
       ..sort();
 
-Map<String, String> _readFragment(String area, String locale) {
-  final path = '$_sourceRoot/$area/$locale.json';
+Map<String, String> _readFragment(
+  String sourceRoot,
+  String area,
+  String locale,
+) {
+  final path = '$sourceRoot/$area/$locale.json';
   final decoded = jsonDecode(File(path).readAsStringSync());
   if (decoded is! Map) {
     throw FormatException('$path must contain a JSON object');
@@ -157,6 +164,12 @@ Map<String, String> _readFragment(String area, String locale) {
   decoded.forEach((key, value) {
     if (value is! String) {
       throw FormatException('$path key "$key" must map to a string');
+    }
+    if (value.trim().isEmpty) {
+      throw FormatException(
+        '$path key "$key" is empty. Every locale needs a real value, so an '
+        'untranslated key is a mistake rather than a placeholder.',
+      );
     }
     entries['$key'] = value;
   });
