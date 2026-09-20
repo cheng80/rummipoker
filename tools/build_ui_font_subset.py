@@ -20,6 +20,10 @@ lib/ 에는 화면에 그리는 한자·가나 문자열이 없다(주석 제외
 예시:
   /tmp/fontvenv/bin/python tools/build_ui_font_subset.py /tmp/NotoSansCJKjp-Regular.otf
   /tmp/fontvenv/bin/python tools/build_ui_font_subset.py /tmp/NotoSansCJKjp-Regular.otf --check-only
+
+번역 파일에 글자가 늘었지만 그 글자가 전부 번들 폰트에 있으면 서브셋은 그대로 두고 글자 목록만
+갱신하면 된다. 이때는 원본 폰트를 내려받을 필요가 없다.
+  /tmp/fontvenv/bin/python tools/build_ui_font_subset.py --refresh-coverage
 """
 
 from __future__ import annotations
@@ -138,15 +142,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("source", nargs="?", type=Path, help="원본 Noto Sans CJK 폰트 경로")
     parser.add_argument("--check-only", action="store_true", help="이미 만들어진 서브셋의 글자 포함 여부만 검사한다")
+    parser.add_argument(
+        "--refresh-coverage",
+        action="store_true",
+        help="서브셋을 다시 만들지 않고 글자 목록만 갱신한다. 새 글자가 모두 번들 폰트에 있을 때 쓴다.",
+    )
     args = parser.parse_args()
 
     bundled, subset_chars = split_chars()
     print(f"번역 파일의 글자 {len(bundled) + len(subset_chars)}개 중 서브셋이 덮어야 하는 글자 {len(subset_chars)}개")
 
-    if args.check_only:
+    if args.check_only or args.refresh_coverage:
         if not OUTPUT_PATH.exists():
             raise SystemExit(f"서브셋이 없다: {OUTPUT_PATH}")
         verify(OUTPUT_PATH, subset_chars)
+        if args.refresh_coverage:
+            write_coverage(bundled, subset_chars)
         return 0
 
     if args.source is None:
