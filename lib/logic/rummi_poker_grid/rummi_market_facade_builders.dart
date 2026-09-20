@@ -62,10 +62,7 @@ List<RummiMarketItemOfferView> _buildItemOffers(
               item,
               slotIndex: offers.length,
               currentGold: progress.gold,
-              price: progress.effectiveItemPrice(
-                item,
-                includeCheapestFirstOfferDiscount: false,
-              ),
+              price: progress.effectiveItemPrice(item),
               originalPrice: progress.effectiveItemBasePrice(item),
             ),
           );
@@ -98,10 +95,7 @@ List<RummiMarketItemOfferView> _buildItemOffers(
           item,
           slotIndex: offers.length,
           currentGold: progress.gold,
-          price: progress.effectiveItemPrice(
-            item,
-            includeCheapestFirstOfferDiscount: false,
-          ),
+          price: progress.effectiveItemPrice(item),
           originalPrice: progress.effectiveItemBasePrice(item),
         ),
       );
@@ -170,34 +164,21 @@ _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(
     );
   }
 
-  var bestCategory = '';
-  var bestIndex = -1;
-  var bestPrice = 1 << 30;
-  for (var i = 0; i < jesterOffers.length; i++) {
-    final price = jesterOffers[i].price;
-    if (price > 0 && price < bestPrice) {
-      bestCategory = 'jester';
-      bestIndex = i;
-      bestPrice = price;
-    }
-  }
-  for (var i = 0; i < itemOffers.length; i++) {
-    final price = itemOffers[i].price;
-    if (price > 0 && price < bestPrice) {
-      bestCategory = 'item';
-      bestIndex = i;
-      bestPrice = price;
-    }
-  }
-  if (bestIndex < 0) {
+  // 대상 선정은 구매 경로와 공유한다. 여기서 다시 계산하면 표시와 청구가 갈라진다.
+  final target = RummiRunProgress.cheapestFirstOfferDiscountTarget(
+    jesterPrices: [for (final offer in jesterOffers) offer.price],
+    itemPrices: [for (final offer in itemOffers) offer.price],
+  );
+  if (target == null) {
     return _CompassDiscountedOffers(
       jesterOffers: jesterOffers,
       itemOffers: itemOffers,
     );
   }
 
-  final appliedDiscount = bestPrice < discount ? bestPrice : discount;
-  if (bestCategory == 'jester') {
+  final bestIndex = target.index;
+  final appliedDiscount = target.price < discount ? target.price : discount;
+  if (!target.isItem) {
     final nextJesters = List<RummiMarketOfferView>.of(jesterOffers);
     final offer = nextJesters[bestIndex];
     nextJesters[bestIndex] = RummiMarketOfferView.fromShopOffer(
@@ -205,7 +186,7 @@ _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(
       currentGold: progress.gold,
       price: offer.price - appliedDiscount,
       originalPrice: offer.originalPrice,
-      discountSourceLabel: '나침반',
+      discountSourceLabel: rummiMarketCompassDiscountLabel,
     );
     return _CompassDiscountedOffers(
       jesterOffers: List<RummiMarketOfferView>.unmodifiable(nextJesters),
@@ -221,7 +202,7 @@ _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(
     currentGold: progress.gold,
     price: offer.price - appliedDiscount,
     originalPrice: offer.originalPrice,
-    discountSourceLabel: '나침반',
+    discountSourceLabel: rummiMarketCompassDiscountLabel,
   );
   return _CompassDiscountedOffers(
     jesterOffers: jesterOffers,

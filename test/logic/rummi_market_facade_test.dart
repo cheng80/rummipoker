@@ -480,10 +480,7 @@ void main() {
         itemCatalog: catalog,
       );
 
-      final expectedJesterPrice = progress.effectiveJesterOfferPrice(
-        0,
-        includeCheapestFirstOfferDiscount: false,
-      );
+      final expectedJesterPrice = progress.effectiveJesterOfferPrice(0);
       expect(facade.offers.single.discountSourceLabel, isNull);
       expect(facade.offers.single.price, expectedJesterPrice);
       expect(facade.itemOffers.single.originalPrice, 2);
