@@ -267,7 +267,11 @@ fi
 # private process group, including descendants left behind by Flutter/Chrome.
 PROCESS_HELPER="$ROOT_DIR/tools/full_run_bot_process.py"
 PROFILE_OWNER="$$:$RANDOM:$RANDOM"
-BROWSER_PROFILE_DIR="$(python3 "$PROCESS_HELPER" acquire "$BROWSER_PROFILE_DIR" "$PROFILE_OWNER")"
+# A fresh run wipes the profile's chrome/ directory anyway, so a Chrome lock left
+# by a crash must not refuse it. A resume keeps that directory, so it still must.
+LEASE_MODE=fresh
+[[ "$RESUME_ACTIVE_RUN" != "true" ]] || LEASE_MODE=resume
+BROWSER_PROFILE_DIR="$(python3 "$PROCESS_HELPER" acquire "$BROWSER_PROFILE_DIR" "$PROFILE_OWNER" "$LEASE_MODE")"
 
 kill_pids() {
   local pid
@@ -407,6 +411,9 @@ install_chromedriver() {
   awk '/^chromedriver@/ {print $NF; exit}' "$install_log"
 }
 
+# The `tee` in `> >(tee ...)` is a process substitution, not a shell job, so it is
+# outside the owned set that `jobs -pr` drives. It ends by itself when the pipe
+# reaches EOF, so it is left as is rather than killed by name.
 run_and_capture() {
   local log_file="$1"
   shift

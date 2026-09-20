@@ -21,7 +21,44 @@ def profile_path(raw):
     return path
 
 
-def acquire_profile(raw, owner):
+def process_started_at(pid):
+    """Wall-clock start time of a live PID, or None when it cannot be read."""
+    started = subprocess.run(['ps', '-o', 'lstart=', '-p', str(pid)],
+                             capture_output=True, text=True,
+                             env=dict(os.environ, LC_ALL='C')).stdout
+    try:
+        return time.mktime(time.strptime(' '.join(started.split()),
+                                         '%a %b %d %H:%M:%S %Y'))
+    except ValueError:
+        return None
+
+
+def lease_is_stale(lock):
+    """A lease outlives its owner when SIGKILL, a closed terminal, or a reboot
+    skips the runner's EXIT trap. Reclaim it only when the recorded PID is gone,
+    or when the PID is alive but started after the lease was taken, which means
+    the number was recycled onto an unrelated process."""
+    owner_file = lock / 'owner'
+    if not owner_file.exists():
+        # Nothing records the owner, so nothing can ever release this lease.
+        return True
+    try:
+        pid = int(owner_file.read_text().split(':')[0])
+        leased_at = owner_file.stat().st_mtime
+    except (OSError, ValueError):
+        # An owner we cannot check may still be alive: refuse instead of stealing.
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        return False
+    started = process_started_at(pid)
+    return started is not None and started > leased_at + 2
+
+
+def acquire_profile(raw, owner, fresh=False):
     path = profile_path(raw)
     # ps is used only to refuse an occupied profile, never to select kill targets.
     commands = subprocess.check_output(['ps', '-axww', '-o', 'command='], text=True)
@@ -31,15 +68,29 @@ def acquire_profile(raw, owner):
         pattern = r'--user-data-dir(?:=|\s+)[\"\']?' + re.escape(target) + r'(?:[\"\']?(?:\s|$))'
         if re.search(pattern, commands):
             raise ValueError(f'Browser profile already in use: {path}')
-    if any((path / 'chrome' / name).is_symlink() or (path / 'chrome' / name).exists()
-           for name in ('SingletonLock', 'SingletonSocket')):
+    # A Chrome that died without cleaning up leaves this lock behind, so it only
+    # proves the profile is unusable as is. A fresh run deletes the whole chrome/
+    # directory later and must not be refused here; a resume keeps it and must be.
+    # Either way the lock itself is never removed at lease time. The --user-data-dir
+    # scan above is what refuses a profile a live Chrome is actually holding.
+    if not fresh and any((path / 'chrome' / name).is_symlink() or (path / 'chrome' / name).exists()
+                         for name in ('SingletonLock', 'SingletonSocket')):
         raise ValueError(f'Browser profile has a Chrome lock: {path}')
     path.mkdir(parents=True, exist_ok=True)
     lock = path / '.full-run-bot.lock'
     try:
         lock.mkdir()
     except FileExistsError:
-        raise ValueError(f'Browser profile already leased: {path}') from None
+        if not lease_is_stale(lock):
+            raise ValueError(f'Browser profile already leased: {path} (remove {lock} '
+                             'only after checking its owner file)') from None
+        # Remove only what acquire itself creates, never an unexpected tree.
+        (lock / 'owner').unlink(missing_ok=True)
+        lock.rmdir()
+        try:
+            lock.mkdir()
+        except FileExistsError:
+            raise ValueError(f'Browser profile already leased: {path} ({lock})') from None
     try:
         (lock / 'owner').write_text(owner)
     except BaseException:
@@ -81,6 +132,25 @@ def reset_signals():
         signal.signal(sig, signal.SIG_DFL)
 
 
+def cleanup_own_group():
+    """Tear down the group this keeper created with setsid, itself included."""
+    group = os.getpgid(0)
+    os.killpg(group, signal.SIGTERM)
+    time.sleep(0.3)
+    os.killpg(group, signal.SIGKILL)
+    os._exit(0)  # Unreachable, but the keeper must never fall into parent code.
+
+
+def wait_until_orphaned():
+    """Keeper backstop. The keeper normally waits for its parent to tear the group
+    down, but SIGKILL on the parent skips that. Poll instead of blocking forever:
+    once the parent is gone, clean up this keeper's group and exit, so no
+    chromedriver or Chrome is left holding a port."""
+    while os.getppid() != 1:
+        time.sleep(0.1)
+    cleanup_own_group()
+
+
 def run_owned(command):
     """Keep a live group leader until cleanup, so a reused PID is never targeted.
 
@@ -101,15 +171,23 @@ def run_owned(command):
         try:
             os.write(write_fd, b'ready\n')
             child = subprocess.Popen(command, preexec_fn=reset_signals)
-            status = child.wait()
-            os.write(write_fd, f'exit {status}\n'.encode())
-            while True:
-                signal.pause()
+            # Poll rather than block in wait(): the parent can be SIGKILLed while
+            # the command is still running, and nothing would wake a blocked wait.
+            while child.poll() is None:
+                if os.getppid() == 1:
+                    cleanup_own_group()
+                time.sleep(0.1)
+            os.write(write_fd, f'exit {child.returncode}\n'.encode())
+            wait_until_orphaned()
+        except BrokenPipeError:
+            cleanup_own_group()
         except BaseException as error:
             print(f'Owned command failed: {error}', file=sys.stderr, flush=True)
-            os.write(write_fd, b'exit 127\n')
-            while True:
-                signal.pause()
+            try:
+                os.write(write_fd, b'exit 127\n')
+            except OSError:
+                pass
+            wait_until_orphaned()
     os.close(write_fd)
     status = 127
     ready = False
@@ -118,6 +196,9 @@ def run_owned(command):
         while True:
             if ready and interrupted:
                 status = 128 + interrupted[0]
+                break
+            # A SIGKILLed runner cannot signal us, so notice it ourselves.
+            if os.getppid() == 1:
                 break
             readable, _, _ = select.select([read_fd], [], [], 0.1)
             if not readable:
@@ -160,7 +241,8 @@ def run_owned(command):
 if __name__ == '__main__':
     try:
         if sys.argv[1] == 'acquire':
-            print(acquire_profile(sys.argv[2], sys.argv[3]))
+            print(acquire_profile(sys.argv[2], sys.argv[3],
+                                  fresh=sys.argv[4:5] == ['fresh']))
         elif sys.argv[1] == 'release':
             release_profile(sys.argv[2], sys.argv[3])
         elif sys.argv[1] == 'owns-port':

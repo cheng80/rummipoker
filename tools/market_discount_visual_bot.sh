@@ -14,6 +14,9 @@ CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${MARKET_DISCOUNT_BOT_WEB_PORT:-7371}"
 PUB_GET=1
 CHROMEDRIVER_PID=""
+DRIVE_PID=""
+TAIL_PID=""
+PUB_GET_PID=""
 
 usage() {
   cat <<'EOF'
@@ -96,27 +99,59 @@ port_is_open() {
   nc -z 127.0.0.1 "$CHROMEDRIVER_PORT" >/dev/null 2>&1
 }
 
+for required_command in nc; do
+  command -v "$required_command" >/dev/null 2>&1 || {
+    echo "$required_command is required for bot port ownership checks." >&2
+    exit 1
+  }
+done
+if [[ "$WEB_PORT" == "$CHROMEDRIVER_PORT" ]]; then
+  echo "Bot ports must be distinct: $WEB_PORT" >&2
+  exit 1
+fi
+
+# This bot shares the machine, the WebDriver port and the Chrome build with the
+# full run bot, so it owns its processes the same way: a private process group per
+# command and signals only to live jobs this shell started. No process-name,
+# profile-substring, or port-based killing.
+PROCESS_HELPER="$ROOT_DIR/tools/full_run_bot_process.py"
+
+kill_pids() {
+  local pid
+  for pid in "$@"; do
+    if jobs -pr | grep -qx "$pid"; then
+      kill -TERM "$pid" 2>/dev/null || true
+    fi
+    wait "$pid" 2>/dev/null || true
+  done
+}
+
 cleanup_bot_processes() {
-  [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill "$CHROMEDRIVER_PID" 2>/dev/null || true
-  pkill -f 'flutter drive.*integration_test/market_discount_visual_bot_test.dart' \
-    2>/dev/null || true
-  pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
-  pkill -f 'chromedriver.*--port='"$CHROMEDRIVER_PORT" 2>/dev/null || true
-  local web_pids
-  web_pids="$(lsof -ti tcp:"$WEB_PORT" 2>/dev/null || true)"
-  [[ -n "$web_pids" ]] && kill $web_pids 2>/dev/null || true
-  local webdriver_pids
-  webdriver_pids="$(ps -axo pid,command | awk \
-    '/--test-type=webdriver/ && /Google Chrome/ && !/awk/ {print $1}')"
-  if [[ -n "$webdriver_pids" ]]; then
-    kill $webdriver_pids 2>/dev/null || true
-    sleep 1
-    webdriver_pids="$(ps -axo pid,command | awk \
-      '/--test-type=webdriver/ && /Google Chrome/ && !/awk/ {print $1}')"
-    [[ -n "$webdriver_pids" ]] && kill -9 $webdriver_pids 2>/dev/null || true
-  fi
+  local pid
+  for pid in "${DRIVE_PID:-}" "${TAIL_PID:-}" "${CHROMEDRIVER_PID:-}" "${PUB_GET_PID:-}"; do
+    [[ -z "$pid" ]] || kill_pids "$pid"
+  done
+  DRIVE_PID=""
+  TAIL_PID=""
+  CHROMEDRIVER_PID=""
+  PUB_GET_PID=""
 }
 trap cleanup_bot_processes EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+# Reject external listeners; a port number never establishes ownership.
+for port in "$WEB_PORT" "$CHROMEDRIVER_PORT"; do
+  if [[ ! "$port" =~ ^[1-9][0-9]{0,4}$ ]] || (( 10#$port > 65535 )); then
+    echo "Invalid bot port: $port" >&2
+    exit 1
+  fi
+  if nc -z 127.0.0.1 "$port" >/dev/null 2>&1 || nc -z ::1 "$port" >/dev/null 2>&1; then
+    echo "Bot port already in use: $port" >&2
+    exit 1
+  fi
+done
 
 install_chromedriver() {
   if ! command -v npx >/dev/null 2>&1; then
@@ -140,9 +175,14 @@ install_chromedriver() {
 }
 
 start_chromedriver() {
+  # Wait only for a port this run just released; never reuse an external server.
+  for _ in {1..30}; do
+    port_is_open || break
+    sleep 1
+  done
   if port_is_open; then
-    echo "Using existing chromedriver on port $CHROMEDRIVER_PORT"
-    return
+    echo "WebDriver port already in use: $CHROMEDRIVER_PORT" >&2
+    exit 1
   fi
 
   local cmd=()
@@ -155,7 +195,7 @@ start_chromedriver() {
   fi
 
   echo "Starting chromedriver on port $CHROMEDRIVER_PORT"
-  "${cmd[@]}" --port="$CHROMEDRIVER_PORT" \
+  python3 "$PROCESS_HELPER" run "${cmd[@]}" --port="$CHROMEDRIVER_PORT" \
     >"$OUTPUT_DIR/chromedriver.log" 2>&1 &
   CHROMEDRIVER_PID=$!
 
@@ -170,11 +210,17 @@ start_chromedriver() {
   exit 1
 }
 
+# The `tee` in `> >(tee ...)` is a process substitution, not a shell job, so it is
+# outside the owned set that `jobs -pr` drives. It ends by itself when the pipe
+# reaches EOF, so it is left as is rather than killed by name.
 run_and_capture() {
   local log_file="$1"
   shift
   echo "Running: $*"
-  "$@" 2>&1 | tee "$log_file"
+  python3 "$PROCESS_HELPER" run "$@" > >(tee "$log_file") 2>&1 &
+  PUB_GET_PID=$!
+  wait "$PUB_GET_PID"
+  PUB_GET_PID=""
 }
 
 run_drive_and_capture() {
@@ -182,26 +228,22 @@ run_drive_and_capture() {
   shift
   echo "Running: $*"
   : >"$log_file"
-  "$@" >"$log_file" 2>&1 &
-  local drive_pid=$!
+  python3 "$PROCESS_HELPER" run "$@" >"$log_file" 2>&1 &
+  DRIVE_PID=$!
   tail -f "$log_file" &
-  local tail_pid=$!
+  TAIL_PID=$!
   local passed=0
 
-  while kill -0 "$drive_pid" 2>/dev/null; do
+  while kill -0 "$DRIVE_PID" 2>/dev/null; do
     if grep -q 'MARKET_DISCOUNT_VISUAL_BOT_PASS' "$log_file" &&
       grep -q 'All tests passed!' "$log_file"; then
       passed=1
       sleep 2
-      kill "$drive_pid" 2>/dev/null || true
       break
     fi
     sleep 1
   done
-
-  wait "$drive_pid" 2>/dev/null || true
-  kill "$tail_pid" 2>/dev/null || true
-  wait "$tail_pid" 2>/dev/null || true
+  cleanup_bot_processes
 
   if [[ "$passed" -eq 1 ]]; then
     return 0
@@ -214,8 +256,6 @@ run_drive_and_capture() {
 }
 
 echo "Output: $OUTPUT_DIR"
-cleanup_bot_processes
-start_chromedriver
 
 if [[ "$PUB_GET" -eq 1 ]]; then
   run_and_capture "$OUTPUT_DIR/00_pub_get.log" flutter pub get
@@ -235,7 +275,7 @@ for scenario in "${SCENARIO_LIST[@]}"; do
     start_chromedriver
     ITERATION_LOG="$OUTPUT_DIR/10_market_discount_visual_bot_${expected_passes}_${scenario}.log"
     run_drive_and_capture "$ITERATION_LOG" \
-      flutter drive \
+      "${FLUTTER_BIN:-flutter}" drive \
         --driver=test_driver/integration_test.dart \
         --target=integration_test/market_discount_visual_bot_test.dart \
         -d chrome \
