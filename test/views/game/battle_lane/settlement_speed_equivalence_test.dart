@@ -11,6 +11,8 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/game_analytics_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
@@ -26,6 +28,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   tearDown(() {
+    SoundManager.debugResetForTest();
     MotionPolicy.debugReduceMotionOverride = null;
     GameAnalyticsService.debugResetForTest();
   });
@@ -42,7 +45,9 @@ void main() {
     await StorageHelper.init();
     await TutorialStateService.markBattleIntroSeen();
     GameSettings.bgmMuted = true;
-    GameSettings.sfxMuted = true;
+    GameSettings.sfxMuted = false;
+    final sounds = <String>[];
+    SoundManager.debugSfxSink = (path, _, _) => sounds.add(path);
     GameSettings.settlementSpeed = speed;
     MotionPolicy.debugReduceMotionOverride = reduceMotion;
     GameAnalyticsService.debugSetInstanceForTest(
@@ -68,7 +73,14 @@ void main() {
         find.byKey(const ValueKey('settlement-skip-area')),
         findsOneWidget,
       );
+      final beforeClicks = sounds
+          .where((s) => s == AssetPaths.sfxBtnSnd)
+          .length;
       await tester.tap(find.byKey(const ValueKey('settlement-skip-area')));
+      expect(
+        sounds.where((s) => s == AssetPaths.sfxBtnSnd).length,
+        beforeClicks + 1,
+      );
     }
     for (
       var i = 0;
@@ -84,6 +96,7 @@ void main() {
     expect(find.byKey(const ValueKey('settlement-skip-area')), findsNothing);
     await tester.pump(const Duration(seconds: 2));
 
+    expect(sounds, isNot(contains(AssetPaths.sfxClear)));
     final saved = await ActiveRunSaveService.loadActiveRun();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

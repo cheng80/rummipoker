@@ -525,6 +525,7 @@ class _GameViewState extends ConsumerState<GameView>
     if (!mounted || _gameState.activeRunScene != ActiveRunScene.battle) return;
     final modifier = _gameState.session?.blind.bossModifier;
     if (modifier == null) return;
+    playButtonSound();
     await _showBossConstraintInfo(
       modifier: modifier,
       buttonLabelKey: 'battleClose',
@@ -870,7 +871,9 @@ class _GameViewState extends ConsumerState<GameView>
                 onOptionsTap: _openGameOptions,
                 onTutorialTap: () => _startBattleTutorial(markSeen: false),
                 onRunInfoTap: _openRunInfo,
-                onBlindInfoTap: _openBossConstraintInfo,
+                onBlindInfoTap: _battleView.bossModifier == null
+                    ? null
+                    : _openBossConstraintInfo,
                 onDebugTap: () => _openDebugBottomSheet(context),
                 onJesterTap: _openJesterOverlay,
                 onHandTileTap: _toggleHandTile,

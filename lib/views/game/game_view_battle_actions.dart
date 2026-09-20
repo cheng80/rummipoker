@@ -121,6 +121,7 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _openJesterOverlay(int index) {
     if (_isBattleInputLocked) return;
+    playButtonSound();
     _mutate(() {
       _selectedBattleItemSlot = null;
       _selectedHandInfoTile = null;
@@ -136,7 +137,10 @@ extension _GameViewBattleActions on _GameViewState {
   void _sellOwnedJesterFromOverlay() {
     final slotIndex = _selectedJesterOverlayIndex;
     final ok = _gameNotifier.sellSelectedJesterOverlayFromState();
-    if (!ok) return;
+    if (!ok) {
+      GameFeedback.play(GameCue.deny);
+      return;
+    }
     GameFeedback.play(GameCue.sell);
     if (slotIndex != null) _emitJesterSaleBurst(slotIndex);
     _showSnack(context.translate('battleJesterSold'), silent: true);
@@ -185,6 +189,7 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _openBattleItemOverlay(RummiBattleItemSlotView slot) {
     if (_isBattleInputLocked) return;
+    playButtonSound();
     _gameNotifier.setSelectedJesterOverlayIndex(null);
     _mutate(() {
       _selectedBattleItemSlot = slot;
@@ -206,6 +211,7 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _openHandTileInfoOverlay(Tile tile) {
     if (_isBattleInputLocked) return;
+    playButtonSound();
     _gameNotifier.setSelectedJesterOverlayIndex(null);
     _mutate(() {
       _selectedBattleItemSlot = null;
@@ -246,6 +252,9 @@ extension _GameViewBattleActions on _GameViewState {
         target: _BattleDenyTarget.board,
       );
       return;
+    }
+    if (result.didChangeSelection) {
+      playButtonSound();
     }
     if (result.didPlaceTile) {
       _logBattleAction('board_place', parameters: {'row': row, 'col': col});
@@ -381,7 +390,10 @@ extension _GameViewBattleActions on _GameViewState {
   Future<void> _useScoringLineTargetItem(RummiBattleItemSlotView slot) async {
     final session = _gameState.session;
     if (session == null) {
-      _showSnack(context.translate('battleNoSession'));
+      _denyBattleAction(
+        context.translate('battleNoSession'),
+        target: _BattleDenyTarget.slots,
+      );
       return;
     }
     final isRitual = slot.item.effect.op == 'ritual_line_effect';
@@ -473,14 +485,16 @@ extension _GameViewBattleActions on _GameViewState {
                               namedArgs: {'count': '${line.occupiedCount}'},
                             ),
                     ),
-                    onTap: () => Navigator.of(context).pop(line),
+                    onTap: withButtonSound(
+                      () => Navigator.of(context).pop(line),
+                    ),
                   ),
               ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: withButtonSound(() => Navigator.of(context).pop()),
               child: Text(context.translate('cancel')),
             ),
           ],
@@ -498,6 +512,7 @@ extension _GameViewBattleActions on _GameViewState {
         barrierDismissible: true,
         routeSettings: const RouteSettings(name: 'ritual-tile-choice'),
         builder: (context) => GameTileChoiceDialog(
+          resultOwnsSound: true,
           title: context.translate(
             'battleChooseItemTile',
             namedArgs: {'item': itemName},
@@ -566,6 +581,7 @@ extension _GameViewBattleActions on _GameViewState {
     required RummiBattleItemSlotView slot,
     required List<RummiScoringLineSummary> lines,
   }) {
+    playButtonSound();
     _clearSelections();
     _mutate(() {
       _selectedBattleItemSlot = null;
@@ -575,12 +591,14 @@ extension _GameViewBattleActions on _GameViewState {
       slot.item.effect.value('target') == 'tile'
           ? context.translate('battleSelectBoardTile')
           : context.translate('battleSelectBoardLine'),
+      silent: true,
     );
   }
 
   void _selectFateLine(RummiScoringLineSummary line) {
     final current = _fateLineSelection;
     if (current == null) return;
+    playButtonSound();
     _mutate(
       () => _fateLineSelection = current.copyWith(
         selectedLine: line,
@@ -592,6 +610,7 @@ extension _GameViewBattleActions on _GameViewState {
   void _selectFateTile(GameBoardTileSelectionTarget target) {
     final current = _fateLineSelection;
     if (current == null) return;
+    playButtonSound();
     _mutate(
       () => _fateLineSelection = current.copyWith(
         selectedLine: target.line,
@@ -875,12 +894,15 @@ extension _GameViewBattleActions on _GameViewState {
     await _saveActiveRun();
     if (!mounted) return;
 
+    playButtonSound();
     final selectedIndex = await showDialog<int>(
       context: context,
       barrierDismissible: false,
       barrierLabel: context.translate('battlePeekDeck'),
       routeSettings: const RouteSettings(name: 'deck-peek'),
       builder: (context) => GameTileChoiceDialog(
+        resultOwnsSound: true,
+        closeResultOwnsSound: true,
         title: context.translate('battlePeekDeck'),
         message: context.translate('battlePeekDeckPrompt'),
         tiles: useResult.candidates,
@@ -1047,11 +1069,7 @@ extension _GameViewBattleActions on _GameViewState {
     return tile == null
         ? context.translate(
             'battleTargetRitualNoTile',
-            namedArgs: {
-              'line': lineLabel,
-              'rank': rankLabel,
-              'action': action,
-            },
+            namedArgs: {'line': lineLabel, 'rank': rankLabel, 'action': action},
           )
         : context.translate(
             'battleTargetRitual',
@@ -1220,10 +1238,12 @@ extension _GameViewBattleActions on _GameViewState {
     final fromRow = _pendingBoardMoveSourceRow;
     final fromCol = _pendingBoardMoveSourceCol;
     if (fromRow == null || fromCol == null) {
+      playButtonSound();
       _cancelBoardMoveMode();
       return;
     }
     if (row == fromRow && col == fromCol) {
+      playButtonSound();
       _cancelBoardMoveMode();
       return;
     }
@@ -1380,6 +1400,7 @@ class _RitualBoardLineChoiceDialogState
   RummiScoringLineSummary? _selectedLine;
 
   void _selectLine(RummiScoringLineSummary line) {
+    playButtonSound();
     setState(() => _selectedLine = line);
   }
 
@@ -1468,14 +1489,16 @@ class _RitualBoardLineChoiceDialogState
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: withButtonSound(
+                        () => Navigator.of(context).pop(),
+                      ),
                       child: Text(context.translate('cancel')),
                     ),
                     const SizedBox(width: 8),
                     TextButton(
                       onPressed: _selectedLine == null
                           ? null
-                          : _confirmSelection,
+                          : withButtonSound(_confirmSelection),
                       child: Text(context.translate('ok')),
                     ),
                   ],

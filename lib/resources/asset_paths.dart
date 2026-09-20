@@ -12,6 +12,28 @@ class AssetPaths {
   static const String sfxClear = 'sfx/Clear.mp3';
   static const String sfxTimeUp = 'sfx/TimeUp.wav';
 
+  static const String sfxTilePick = 'sfx/TilePick.wav';
+  static const String sfxTilePlace = 'sfx/TilePlace.wav';
+  static const String sfxCardToss = 'sfx/CardToss.mp3';
+  static const String sfxDeny = 'sfx/Deny.mp3';
+  static const String sfxReward = 'sfx/Reward.mp3';
+
+  /// 웹·네이티브가 함께 미리 로드하는 효과음 등록 목록.
+  static const List<String> sfxAssets = [
+    sfxTimeTic,
+    sfxStart,
+    sfxCollect,
+    sfxFail,
+    sfxBtnSnd,
+    sfxClear,
+    sfxTimeUp,
+    sfxTilePick,
+    sfxTilePlace,
+    sfxCardToss,
+    sfxDeny,
+    sfxReward,
+  ];
+
   /// BGM 경로. FlameAudio.bgm에는 assets/audio/ 이후 상대 경로를 전달한다.
   static const String bgmMenu = 'music/Menu_BGM.mp3';
   static const String bgmMain = 'music/Main_BGM.mp3';

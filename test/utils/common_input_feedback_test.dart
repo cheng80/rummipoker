@@ -1,3 +1,4 @@
+import 'package:rummipoker/views/game/game_feedback_cues.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ import 'package:rummipoker/widgets/fx/motion_policy.dart';
 void main() {
   final sfx = <String>[];
   final haptics = <HapticGrade>[];
+  final rates = <double>[];
 
   setUp(() async {
     StorageHelper.resetForTest();
@@ -22,12 +24,27 @@ void main() {
     await StorageHelper.init();
     GameSettings.sfxMuted = false;
     sfx.clear();
+    rates.clear();
     haptics.clear();
-    SoundManager.debugSfxSink = (path, _, _) => sfx.add(path);
+    SoundManager.debugSfxSink = (path, _, rate) {
+      sfx.add(path);
+      rates.add(rate);
+    };
     GameHaptics.debugSink = haptics.add;
   });
 
+  test('raw button wrapper keeps original rate during global slowdown', () {
+    SoundManager.rampGlobalPitch(0.5, Duration.zero);
+    var calls = 0;
+    withButtonSound(() => calls++)!();
+    expect(sfx, [AssetPaths.sfxBtnSnd]);
+    expect(rates, [1]);
+    expect(calls, 1);
+    SoundManager.rampGlobalPitch(1, Duration.zero);
+  });
+
   tearDown(() {
+    SoundManager.rampGlobalPitch(1, Duration.zero);
     SoundManager.debugSfxSink = null;
     GameHaptics.debugSink = null;
     MotionPolicy.debugReduceMotionOverride = null;
@@ -61,18 +78,162 @@ void main() {
       .map((t) => t.transform.getTranslation().x)
       .reduce((a, b) => a.abs() >= b.abs() ? a : b);
 
-  testWidgets('enabled press runs the action with a select haptic', (
+  testWidgets(
+    'enabled press runs the action with one button sound and haptic',
+    (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(pressTarget(onTap: () => taps++));
+      await tester.tap(find.byKey(const ValueKey('press-target')));
+      await tester.pumpAndSettle();
+
+      expect(taps, 1);
+      expect(haptics, [HapticGrade.select]);
+      expect(sfx, [AssetPaths.sfxBtnSnd]);
+      expect(rates.last, 1);
+    },
+  );
+
+  testWidgets('common button icon and menu emit one click each', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              GameChromeButton(
+                label: 'button',
+                backgroundColor: Colors.blue,
+                onPressed: () {},
+              ),
+              GameIconButtonChip(
+                icon: Icons.close,
+                tooltip: 'icon',
+                onPressed: () {},
+              ),
+              GameMenuActionTile(
+                title: 'menu',
+                icon: Icons.settings,
+                accentColor: Colors.blue,
+                onTap: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    for (final target in [
+      find.text('button'),
+      find.byTooltip('icon'),
+      find.text('menu'),
+    ]) {
+      sfx.clear();
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+      expect(sfx, [AssetPaths.sfxBtnSnd]);
+      expect(rates.last, 1);
+    }
+  });
+
+  testWidgets(
+    'semantic button owner emits one sound per tap without debouncing',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GameChromeButton(
+              label: 'owned',
+              backgroundColor: Colors.blue,
+              playSound: false,
+              onPressed: () => GameFeedback.play(GameCue.runStart),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('owned'));
+      await tester.tap(find.text('owned'));
+      await tester.pumpAndSettle();
+      expect(sfx, [AssetPaths.sfxBtnSnd, AssetPaths.sfxBtnSnd]);
+      expect(rates, [1, 1]);
+    },
+  );
+
+  testWidgets('button audio failure does not prevent its action', (
     tester,
   ) async {
     var taps = 0;
+    SoundManager.debugSfxSink = (_, _, _) => throw StateError('audio failed');
     await tester.pumpWidget(pressTarget(onTap: () => taps++));
     await tester.tap(find.byKey(const ValueKey('press-target')));
     await tester.pumpAndSettle();
-
     expect(taps, 1);
-    expect(haptics, [HapticGrade.select]);
-    expect(sfx, isEmpty);
+    expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'plain close controls sound only on click and preserve disabled state',
+    (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                IconButton(
+                  key: const ValueKey('close'),
+                  onPressed: withButtonSound(() => taps++),
+                  icon: const Icon(Icons.close),
+                ),
+                TextButton(
+                  onPressed: withButtonSound(null),
+                  child: const Text('disabled'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      expect(sfx, isEmpty);
+      await tester.tap(find.text('disabled'));
+      expect(sfx, isEmpty);
+      await tester.tap(find.byKey(const ValueKey('close')));
+      await tester.pumpAndSettle();
+      expect(taps, 1);
+      expect(sfx, [AssetPaths.sfxBtnSnd]);
+      expect(rates, [1]);
+    },
+  );
+
+  testWidgets(
+    'dialog confirmation owns its semantic click without duplicate audio',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showConfirmDialog(
+                context,
+                title: 'restore',
+                confirmLabel: 'restore now',
+                confirmCue: GameCue.runRestore,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      sfx.clear();
+      rates.clear();
+      haptics.clear();
+      await tester.tap(find.text('restore now'));
+      await tester.pumpAndSettle();
+      expect(sfx, [AssetPaths.sfxBtnSnd]);
+      expect(rates, [1]);
+      expect(haptics, contains(HapticGrade.impact));
+    },
+  );
 
   testWidgets('disabled deny press shakes with error sound and haptic', (
     tester,
@@ -82,7 +243,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 40));
 
-    expect(sfx, [AssetPaths.sfxFail]);
+    expect(sfx, [AssetPaths.sfxDeny]);
     expect(haptics, [HapticGrade.error]);
     expect(denyOffsetX(tester), isNot(0));
 
@@ -99,7 +260,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 40));
 
-    expect(sfx, [AssetPaths.sfxFail]);
+    expect(sfx, [AssetPaths.sfxDeny]);
     expect(denyOffsetX(tester), 0);
   });
 
@@ -124,7 +285,7 @@ void main() {
     await tester.pumpWidget(build(1));
     await tester.pump(const Duration(milliseconds: 40));
 
-    expect(sfx, [AssetPaths.sfxFail]);
+    expect(sfx, [AssetPaths.sfxDeny]);
     expect(denyOffsetX(tester), isNot(0));
     await tester.pumpAndSettle();
     expect(denyOffsetX(tester), 0);
@@ -200,7 +361,7 @@ void main() {
     showTopNotice(ctx, 'top');
     showBottomNotice(ctx, 'bottom');
     showTopNotice(ctx, 'silent', cue: null);
-    expect(sfx, [AssetPaths.sfxTimeTic, AssetPaths.sfxTimeTic]);
+    expect(sfx, isEmpty);
     await tester.pump(const Duration(seconds: 3));
   });
 

@@ -1,3 +1,6 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rummipoker/utils/storage_helper.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
 import 'dart:math';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -75,6 +78,7 @@ Future<void> mount(
   VoidCallback? saved,
   ItemCatalog? catalog,
   bool tools = false,
+  bool failJesterSale = false,
 }) async {
   addTearDown(() async {
     await tester.pumpWidget(const SizedBox.shrink());
@@ -138,7 +142,9 @@ Future<void> mount(
             onBuyTileOffer: (_) => null,
             onUseMarketItem: (_) => null,
             onSellMarketItem: (_) => false,
-            onSellOwnedJester: progress.sellOwnedJester,
+            onSellOwnedJester: failJesterSale
+                ? (_) => false
+                : progress.sellOwnedJester,
             onStateChanged: () async {
               saved?.call();
             },
@@ -164,6 +170,31 @@ Future<void> tapKey(
   if (settle) await tester.pumpAndSettle();
 }
 
+ItemCatalog feedbackItemCatalog() => ItemCatalog.fromJson({
+  'items': [
+    {
+      'id': 'reroll_token',
+      'displayName': 'Token',
+      'type': 'utility',
+      'rarity': 'common',
+      'basePrice': 3,
+      'sellPrice': 1,
+      'stackable': true,
+      'maxStack': 3,
+      'sellable': true,
+      'usableInBattle': false,
+      'placement': 'inventory',
+      'effectText': '',
+      'effect': {
+        'timing': 'use_market',
+        'op': 'gain_gold',
+        'amount': 1,
+        'consume': true,
+      },
+    },
+  ],
+});
+
 void main() {
   setUpMarketFeedback();
   setUp(() {
@@ -173,6 +204,168 @@ void main() {
   tearDown(() {
     GameSettings.fxIntensity = FxIntensity.normal;
   });
+
+  testWidgets(
+    'market card long press and preview close each emit one original button',
+    (tester) async {
+      await mount(tester, run(count: 1));
+      final sounds = <(String, double)>[];
+      SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+      SoundManager.rampGlobalPitch(0.5, Duration.zero);
+      await tester.longPress(
+        find.byKey(const ValueKey('market-jester-offer-offer_0')),
+      );
+      await tester.pumpAndSettle();
+      expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+      sounds.clear();
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+      expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+      SoundManager.rampGlobalPitch(1, Duration.zero);
+    },
+  );
+
+  for (final item in [false, true]) {
+    testWidgets(
+      'rejected ${item ? 'item' : 'jester'} sale is audible while unavailable reroll stays disabled',
+      (tester) async {
+        final progress = run(count: item ? 0 : 1);
+        final catalog = item ? feedbackItemCatalog() : null;
+        await mount(
+          tester,
+          progress,
+          catalog: catalog,
+          tools: item,
+          failJesterSale: true,
+        );
+        if (item) {
+          final offer = RummiMarketRuntimeFacade.fromRunProgress(
+            progress,
+            itemCatalog: catalog!,
+          ).itemOffers.single;
+          await tapKey(
+            tester,
+            'market-item-offer-inventory-reroll_token-${offer.price}',
+          );
+        } else {
+          await tapKey(tester, 'market-jester-offer-offer_0');
+        }
+        await tapKey(tester, 'market-detail-action');
+        final sounds = <(String, double)>[];
+        SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+        final before = snapshot(progress);
+        await tester.tap(find.text('판매'));
+        await tester.pumpAndSettle();
+        expect(sounds, [(AssetPaths.sfxDeny, 1.0)]);
+        expect(snapshot(progress), before);
+        if (item) {
+          sounds.clear();
+          await tapKey(tester, 'market-reroll');
+          expect(
+            find.byKey(const ValueKey('market-reroll-confirm')),
+            findsNothing,
+          );
+          expect(
+            sounds,
+            isEmpty,
+            reason: 'reroll without a handler is disabled',
+          );
+        }
+        await tester.pump(const Duration(seconds: 3));
+      },
+    );
+  }
+
+  testWidgets('market selection and deselection each play one button sound', (
+    tester,
+  ) async {
+    StorageHelper.resetForTest();
+    SharedPreferences.setMockInitialValues({});
+    await StorageHelper.init();
+    GameSettings.sfxMuted = false;
+    final sounds = <String>[];
+    await mount(tester, run());
+    SoundManager.debugSfxSink = (path, _, _) => sounds.add(path);
+    for (var i = 0; i < 3; i++) {
+      sounds.clear();
+      await tapKey(tester, 'market-jester-offer-offer_0');
+      expect(sounds, [AssetPaths.sfxBtnSnd]);
+    }
+  });
+
+  testWidgets(
+    'every market category and repeated category click emits one original button sound',
+    (tester) async {
+      StorageHelper.resetForTest();
+      SharedPreferences.setMockInitialValues({});
+      await StorageHelper.init();
+      GameSettings.sfxMuted = false;
+      final sounds = <(String, double)>[];
+      await mount(tester, run(count: 4));
+      SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+      for (final key in [
+        'market-tab-main',
+        'market-lane-jester',
+        'market-lane-tile',
+        'market-lane-quickSlot',
+        'market-lane-passive',
+        'market-tab-tools',
+        'market-lane-tool',
+        'market-lane-gear',
+        'market-tab-main',
+        'market-lane-jester',
+        'market-page-next',
+        'market-page-prev',
+      ]) {
+        for (
+          var repeat = 0;
+          repeat < (key.contains('page-') ? 1 : 2);
+          repeat++
+        ) {
+          sounds.clear();
+          await tapKey(tester, key);
+          expect(sounds, [
+            (AssetPaths.sfxBtnSnd, 1.0),
+          ], reason: '$key repeat=$repeat');
+        }
+      }
+    },
+  );
+
+  testWidgets(
+    'owned Jester and item offer/slot selection use one original click',
+    (tester) async {
+      StorageHelper.resetForTest();
+      SharedPreferences.setMockInitialValues({});
+      await StorageHelper.init();
+      GameSettings.sfxMuted = false;
+      final progress = run()..ownedJesters.add(card('owned'));
+      final catalog = feedbackItemCatalog();
+      final sounds = <(String, double)>[];
+      await mount(tester, progress, catalog: catalog);
+      SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+      Future<void> click(String key) async {
+        sounds.clear();
+        await tapKey(tester, key);
+        expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)], reason: key);
+      }
+
+      await click('market-owned-jester-0');
+      await click('market-owned-jester-0');
+      await click('market-tab-tools');
+      final offer = RummiMarketRuntimeFacade.fromRunProgress(
+        progress,
+        itemCatalog: catalog,
+      ).itemOffers.single;
+      final key = 'market-item-offer-inventory-reroll_token-${offer.price}';
+      await click(key);
+      await click(key);
+      await click(key);
+      await tapKey(tester, 'market-detail-action');
+      await click('market-item-slot-T1');
+      await click('market-item-slot-T1');
+    },
+  );
 
   testWidgets(
     'buy sell reroll have identical gold slots offers across motion settings',
@@ -190,13 +383,20 @@ void main() {
         final bought = snapshot(progress);
         expect(progress.ownedJesters.length, 1);
         expect(progress.gold, lessThan(40));
+        final sounds = <String>[];
+        SoundManager.debugSfxSink = (path, _, _) => sounds.add(path);
         // Successful purchase selects the acquired slot and exposes its sale action.
         await tapKey(tester, 'market-detail-action');
+        expect(sounds, [AssetPaths.sfxBtnSnd]);
         final sold = snapshot(progress);
         expect(progress.ownedJesters, isEmpty);
         expect(progress.gold, greaterThan(bought['gold'] as int));
+        sounds.clear();
         await tapKey(tester, 'market-reroll');
+        expect(sounds, [AssetPaths.sfxBtnSnd]);
+        sounds.clear();
         await tapKey(tester, 'market-reroll-confirm');
+        expect(sounds, [AssetPaths.sfxBtnSnd]);
         expect(
           progress.shopOffers.map((o) => o.card.id),
           everyElement(startsWith('reroll_')),
@@ -211,44 +411,48 @@ void main() {
     },
   );
 
-  testWidgets('first purchase reveals NEW and cue; repeat id emits only buy', (
-    tester,
-  ) async {
-    final progress = run(duplicate: true);
-    await mount(tester, progress);
-    final sounds = <(String, double)>[];
-    final haptics = <HapticGrade>[];
-    SoundManager.debugSfxSink = (path, volume, rate) =>
-        sounds.add((path, rate));
-    GameHaptics.debugSink = haptics.add;
-    for (var purchase = 0; purchase < 2; purchase++) {
-      await tester.tap(
-        find.byKey(const ValueKey('market-jester-offer-same')).first,
-      );
-      await tester.pumpAndSettle();
-      sounds.clear();
-      haptics.clear();
-      await tapKey(tester, 'market-detail-action', settle: false);
-      await tester.pump(const Duration(milliseconds: 16));
-      final reveal = gameFeedbackCues[GameCue.newReveal]!;
-      final revealSounds = sounds.where(
-        (s) => s.$1 == reveal.sfx && (s.$2 - reveal.pitch).abs() < .05,
-      );
-      expect(
-        find.byKey(const ValueKey('market-new-acquisition-reveal')),
-        purchase == 0 ? findsOneWidget : findsNothing,
-      );
-      expect(revealSounds.length, purchase == 0 ? 1 : 0);
-      expect(
-        haptics.where((h) => h != HapticGrade.select).toList(),
-        purchase == 0
-            ? [gameFeedbackCues[GameCue.buy]!.haptic, reveal.haptic]
-            : [gameFeedbackCues[GameCue.buy]!.haptic],
-      );
-      await tester.pumpAndSettle();
-    }
-    expect(progress.ownedJesters.map((c) => c.id), ['same', 'same']);
-  });
+  testWidgets(
+    'first and repeat jester purchases emit one button sound; NEW keeps its haptic',
+    (tester) async {
+      final progress = run(duplicate: true);
+      await mount(tester, progress);
+      final sounds = <(String, double)>[];
+      final haptics = <HapticGrade>[];
+      SoundManager.debugSfxSink = (path, volume, rate) =>
+          sounds.add((path, rate));
+      GameHaptics.debugSink = haptics.add;
+      for (var purchase = 0; purchase < 2; purchase++) {
+        await tester.tap(
+          find.byKey(const ValueKey('market-jester-offer-same')).first,
+        );
+        await tester.pumpAndSettle();
+        sounds.clear();
+        haptics.clear();
+        await tapKey(tester, 'market-detail-action', settle: false);
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(sounds.where((s) => s.$1 == AssetPaths.sfxStart), isEmpty);
+        expect(sounds.where((s) => s.$1 == AssetPaths.sfxBtnSnd), hasLength(1));
+        final reveal = gameFeedbackCues[GameCue.newReveal]!;
+        final revealSounds = sounds.where(
+          (s) => s.$1 == reveal.sfx && (s.$2 - reveal.pitch).abs() < .05,
+        );
+        expect(
+          find.byKey(const ValueKey('market-new-acquisition-reveal')),
+          purchase == 0 ? findsOneWidget : findsNothing,
+        );
+        expect(revealSounds, isEmpty);
+        expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+        expect(
+          haptics.where((h) => h != HapticGrade.select).toList(),
+          purchase == 0
+              ? [gameFeedbackCues[GameCue.buy]!.haptic, reveal.haptic]
+              : [gameFeedbackCues[GameCue.buy]!.haptic],
+        );
+        await tester.pumpAndSettle();
+      }
+      expect(progress.ownedJesters.map((c) => c.id), ['same', 'same']);
+    },
+  );
 
   testWidgets(
     'back tab and previous page enter from left after forward navigation',
@@ -324,6 +528,40 @@ void main() {
     },
   );
 
+  for (final item in [false, true]) {
+    testWidgets(
+      'unaffordable ${item ? 'item' : 'jester'} purchase emits one original Deny',
+      (tester) async {
+        final progress = run(count: item ? 0 : 1)..gold = 0;
+        final catalog = item ? feedbackItemCatalog() : null;
+        await mount(tester, progress, catalog: catalog, tools: item);
+        final sounds = <(String, double)>[];
+        SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+        if (item) {
+          final offer = RummiMarketRuntimeFacade.fromRunProgress(
+            progress,
+            itemCatalog: catalog!,
+          ).itemOffers.single;
+          await tapKey(
+            tester,
+            'market-item-offer-inventory-reroll_token-${offer.price}',
+          );
+        } else {
+          await tapKey(tester, 'market-jester-offer-offer_0');
+        }
+        sounds.clear();
+        final before = snapshot(progress);
+        await tapKey(tester, 'market-detail-action');
+        expect(sounds, [(AssetPaths.sfxDeny, 1.0)]);
+        expect(snapshot(progress), before);
+        expect(progress.boughtItemIds, isEmpty);
+        expect(progress.boughtJesterIds, isEmpty);
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+      },
+    );
+  }
+
   testWidgets(
     'locked slot and insufficient reroll preserve state and emit deny only',
     (tester) async {
@@ -331,9 +569,7 @@ void main() {
       await mount(tester, progress);
       final sounds = <String>[];
       final haptics = <HapticGrade>[];
-      SoundManager.debugSfxSink = (path, _, _) {
-        if (path != gameFeedbackCues[GameCue.buttonTap]!.sfx) sounds.add(path);
-      };
+      SoundManager.debugSfxSink = (path, _, _) => sounds.add(path);
       GameHaptics.debugSink = haptics.add;
       final before = snapshot(progress);
       final locked = find.byKey(const ValueKey('market-item-slot-Q3'));
@@ -397,32 +633,9 @@ void main() {
   );
 
   testWidgets(
-    'item NEW badge and sound haptic occur only on first id acquisition',
+    'first and repeat item purchases emit one button sound; NEW keeps its haptic',
     (tester) async {
-      final catalog = ItemCatalog.fromJson({
-        'items': [
-          {
-            'id': 'reroll_token',
-            'displayName': 'Token',
-            'type': 'utility',
-            'rarity': 'common',
-            'basePrice': 3,
-            'sellPrice': 1,
-            'stackable': true,
-            'maxStack': 3,
-            'sellable': true,
-            'usableInBattle': false,
-            'placement': 'inventory',
-            'effectText': '',
-            'effect': {
-              'timing': 'use_market',
-              'op': 'gain_gold',
-              'amount': 1,
-              'consume': true,
-            },
-          },
-        ],
-      });
+      final catalog = feedbackItemCatalog();
       final progress = run(count: 0);
       final sounds = <(String, double)>[];
       final haptics = <HapticGrade>[];
@@ -448,12 +661,15 @@ void main() {
           find.byKey(const ValueKey('market-new-acquisition-reveal')),
           purchase == 0 ? findsOneWidget : findsNothing,
         );
+        expect(sounds.where((s) => s.$1 == AssetPaths.sfxStart), isEmpty);
+        expect(sounds.where((s) => s.$1 == AssetPaths.sfxBtnSnd), hasLength(1));
+        expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
         final cue = gameFeedbackCues[GameCue.newReveal]!;
         expect(
           sounds
               .where((s) => s.$1 == cue.sfx && (s.$2 - cue.pitch).abs() < .05)
               .length,
-          purchase == 0 ? 1 : 0,
+          0,
         );
         expect(
           haptics.where((h) => h == HapticGrade.impact).length,

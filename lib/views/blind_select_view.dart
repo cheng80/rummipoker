@@ -282,7 +282,7 @@ class _BlindSelectViewState extends State<BlindSelectView>
             Row(
               children: [
                 IconButton(
-                  onPressed: _goBack,
+                  onPressed: withButtonSound(_goBack),
                   icon: const Icon(Icons.arrow_back_rounded),
                   color: GameUiPalette.textPrimary,
                 ),
@@ -709,6 +709,7 @@ class _BlindPlayButton extends StatelessWidget {
       deny: true,
       decision: true,
       haptic: null,
+      playSound: false,
       builder: (context, onTap) => Material(
         color: GameUiPalette.transparent,
         shape: CircleBorder(),

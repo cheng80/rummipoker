@@ -105,6 +105,10 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      GameFeedback.play(GameCue.cashOutOpen);
+    });
     _runSteps();
   }
 
@@ -145,10 +149,6 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
     if (!mounted) return;
     setState(() => _step = step);
     GameFeedback.play(GameCue.cashOutCollect, pitch: 1 + (0.04 * (step - 1)));
-  }
-
-  void _closeWithFeedback(GameCashOutAction action) {
-    if (_closeWith(action)) GameFeedback.play(GameCue.buttonTap);
   }
 
   bool _closeWith(GameCashOutAction action) {
@@ -349,7 +349,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                             fontWeight: FontWeight.w900,
                             onPressed: _step < 3
                                 ? null
-                                : () => _closeWithFeedback(
+                                : () => _closeWith(
                                     GameCashOutAction.continueEndless,
                                   ),
                           ),
@@ -364,9 +364,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                             fontWeight: FontWeight.w900,
                             onPressed: _step < 3
                                 ? null
-                                : () => _closeWithFeedback(
-                                    GameCashOutAction.completeRun,
-                                  ),
+                                : () =>
+                                      _closeWith(GameCashOutAction.completeRun),
                           ),
                         ] else
                           GameChromeButton(
@@ -379,9 +378,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                             fontWeight: FontWeight.w900,
                             onPressed: _step < 3
                                 ? null
-                                : () => _closeWithFeedback(
-                                    GameCashOutAction.enterMarket,
-                                  ),
+                                : () =>
+                                      _closeWith(GameCashOutAction.enterMarket),
                           ),
                       ],
                     ),

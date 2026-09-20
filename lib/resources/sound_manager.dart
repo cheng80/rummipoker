@@ -8,6 +8,8 @@ import '../services/game_settings.dart';
 import '../utils/storage_helper.dart';
 import 'asset_paths.dart';
 import 'web_sfx_bridge.dart';
+import 'native_sfx_bridge.dart';
+import 'native_sfx_player.dart';
 
 /// 앱 전역 사운드 관리. BGM·효과음 재생, 볼륨·음소거 적용.
 /// 웹: 사용자 상호작용 전까지 자동재생 차단. 첫 탭 시 unlock.
@@ -15,14 +17,6 @@ class SoundManager {
   SoundManager._();
 
   static const Duration _resumeStateSettleDelay = Duration(milliseconds: 120);
-  static const int _sfxPoolMaxPlayers = 3;
-  static const Set<String> _pooledSfxPaths = <String>{
-    AssetPaths.sfxBtnSnd,
-    AssetPaths.sfxCollect,
-    AssetPaths.sfxClear,
-    AssetPaths.sfxTimeUp,
-  };
-
   static String? _currentBgm;
   static bool _webUnlocked = false;
   static String? _pendingBgm;
@@ -34,21 +28,16 @@ class SoundManager {
   static bool _webPendingResumeTried = false;
   static int _debugUserGestureBgmResumeCount = 0;
   static AudioPlayer? _webBgmPlayer;
-  static final Map<String, Future<AudioPool>> _sfxPools =
-      <String, Future<AudioPool>>{};
+  static final NativeSfxPlayer? _nativeSfx = createNativeSfxPlayer();
+  @visibleForTesting
+  static NativeSfxPlayer? debugNativeSfxPlayer;
+  static NativeSfxPlayer? get _nativePlayer =>
+      debugNativeSfxPlayer ?? _nativeSfx;
   static final math.Random _pitchRandom = math.Random();
   static double _globalPitch = 1;
   static Timer? _globalPitchRamp;
 
-  static const List<String> _sfxPaths = <String>[
-    AssetPaths.sfxTimeTic,
-    AssetPaths.sfxStart,
-    AssetPaths.sfxCollect,
-    AssetPaths.sfxFail,
-    AssetPaths.sfxBtnSnd,
-    AssetPaths.sfxClear,
-    AssetPaths.sfxTimeUp,
-  ];
+  static const List<String> _sfxPaths = AssetPaths.sfxAssets;
 
   /// 테스트에서 실제 재생 대신 (path, volume, rate)를 받는다.
   @visibleForTesting
@@ -77,20 +66,11 @@ class SoundManager {
     _webPendingResumeTried = false;
     _debugUserGestureBgmResumeCount = 0;
     _webBgmPlayer = null;
-    _sfxPools.clear();
+    debugNativeSfxPlayer = null;
     _globalPitchRamp?.cancel();
     _globalPitchRamp = null;
     _globalPitch = 1;
     debugSfxSink = null;
-  }
-
-  @visibleForTesting
-  static bool debugShouldUseSfxPool(String path, {required bool isWeb}) {
-    return _shouldUseSfxPool(path, isWeb: isWeb);
-  }
-
-  static bool _shouldUseSfxPool(String path, {required bool isWeb}) {
-    return !isWeb && _pooledSfxPaths.contains(path);
   }
 
   @visibleForTesting
@@ -421,7 +401,7 @@ class SoundManager {
     await Future.wait([
       FlameAudio.audioCache.load(AssetPaths.bgmMenu),
       FlameAudio.audioCache.load(AssetPaths.bgmMain),
-      for (final path in _sfxPaths) FlameAudio.audioCache.load(path),
+      _nativePlayer!.initialize(_sfxPaths),
     ]);
   }
 
@@ -611,29 +591,33 @@ class SoundManager {
   /// 웹: unlock 전이면 무시 (카운트다운 등 자동 재생 방지).
   ///
   /// [pitch]는 재생 배율(1 = 원음)이고 [pitchVariance]는 ±비율의 무작위 변주다.
-  /// 여기에 전역 배율 [globalPitch]를 곱한다.
+  /// 여기에 전역 배율 [globalPitch]를 곱한다. 단어 음성 및
+  /// [preserveOriginalPitch]가 지정된 UI 입력은 최종 rate 1을 유지한다.
   ///
   /// **웹(kIsWeb):** Web Audio `playbackRate`로 음높이를 바꾼다.
   /// [FlameAudio.playLongAudio]와 [AssetSource]는 [AudioCache.loadPath]를 거쳐
   /// `dart:io` 파일 체크를 호출할 수 있어 브라우저에서는 JS 브리지를 쓴다.
   ///
-  /// **네이티브:** pitch를 무시하고 원음으로 재생한다. iOS audioplayers는
-  /// `timeDomain` 알고리즘으로 음높이를 유지한 채 속도만 바꾸고, [AudioPool]은
-  /// 재생별 rate를 받지 않기 때문이다.
+  /// 네이티브: SoLoud의 paused voice에 같은 rate를 설정한 뒤 재생한다.
   static void playSfx(
     String path, {
     double pitch = 1,
     double pitchVariance = 0,
+    bool preserveOriginalPitch = false,
   }) {
     // 설정 저장소가 준비되기 전(앱 부팅 전, 저장소 없는 위젯 테스트)에는 재생하지 않는다.
     if (!StorageHelper.isInitialized || GameSettings.sfxMuted) return;
     final vol = GameSettings.sfxVolume;
-    final rate = resolveSfxRate(
-      pitch: pitch,
-      pitchVariance: pitchVariance,
-      globalPitch: _globalPitch,
-      random: _pitchRandom.nextDouble(),
-    );
+    // 단어 음성은 전역 감속이나 호출부의 변주와 무관하게 원음으로 재생한다.
+    final spoken = path == AssetPaths.sfxStart || path == AssetPaths.sfxClear;
+    final rate = spoken || preserveOriginalPitch
+        ? 1.0
+        : resolveSfxRate(
+            pitch: pitch,
+            pitchVariance: pitchVariance,
+            globalPitch: _globalPitch,
+            random: _pitchRandom.nextDouble(),
+          );
     final sink = debugSfxSink;
     if (sink != null) {
       sink(path, vol, rate);
@@ -644,13 +628,30 @@ class SoundManager {
       playWebSfx(path, vol, rate);
       return;
     }
-    if (_shouldUseSfxPool(path, isWeb: false)) {
-      unawaited(_playSfxFromPool(path, vol));
-      return;
-    }
-    try {
-      FlameAudio.play(path, volume: vol);
-    } catch (_) {}
+    _nativePlayer?.play(path, volume: vol, rate: rate);
+  }
+
+  static void applySfxVolume() {
+    if (kIsWeb || !StorageHelper.isInitialized) return;
+    _nativePlayer?.configure(
+      muted: GameSettings.sfxMuted,
+      volume: GameSettings.sfxVolume,
+    );
+  }
+
+  static void suspendSfx() {
+    if (!kIsWeb) _nativePlayer?.suspend();
+  }
+
+  static void resumeSfx() {
+    if (kIsWeb) return;
+    _nativePlayer?.resume();
+    applySfxVolume();
+    unawaited(_nativePlayer?.initialize(_sfxPaths));
+  }
+
+  static Future<void> disposeSfx() async {
+    if (!kIsWeb) await _nativePlayer?.dispose();
   }
 
   /// [random]은 0..1 값이다. 결과는 0.25..4로 제한한다.
@@ -700,28 +701,5 @@ class SoundManager {
     final player = kIsWeb ? _webBgmPlayer : FlameAudio.bgm.audioPlayer;
     if (player == null) return;
     unawaited(player.setPlaybackRate(_globalPitch).catchError((Object _) {}));
-  }
-
-  static Future<void> _playSfxFromPool(String path, double volume) async {
-    final poolFuture = _sfxPools.putIfAbsent(path, () => _createSfxPool(path));
-    try {
-      final pool = await poolFuture;
-      await pool.start(volume: volume);
-    } catch (_) {
-      if (identical(_sfxPools[path], poolFuture)) {
-        _sfxPools.remove(path);
-      }
-      try {
-        await FlameAudio.play(path, volume: volume);
-      } catch (_) {}
-    }
-  }
-
-  static Future<AudioPool> _createSfxPool(String path) {
-    return FlameAudio.createPool(
-      path,
-      minPlayers: 1,
-      maxPlayers: _sfxPoolMaxPlayers,
-    );
   }
 }

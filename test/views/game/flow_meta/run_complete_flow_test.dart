@@ -153,7 +153,7 @@ void main() {
           find.byKey(const ValueKey('run-victory-overlay')),
           findsOneWidget,
         );
-        expect(sfx, contains(AssetPaths.sfxClear), reason: 'victory cue');
+        expect(sfx, contains(AssetPaths.sfxReward), reason: 'victory cue');
         // 장면이 떠 있는 동안 이미 기록과 save 정리가 끝나 있다.
         expect(activeRunCleared, isTrue);
         await tester.pump(const Duration(milliseconds: 1000));

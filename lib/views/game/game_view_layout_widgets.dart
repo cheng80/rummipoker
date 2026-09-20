@@ -121,7 +121,7 @@ class _GameSurface extends StatelessWidget {
   final VoidCallback onOptionsTap;
   final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
-  final VoidCallback onBlindInfoTap;
+  final VoidCallback? onBlindInfoTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;
@@ -247,7 +247,7 @@ class _GameSurface extends StatelessWidget {
                 child: GestureDetector(
                   key: const ValueKey('settlement-skip-area'),
                   behavior: HitTestBehavior.opaque,
-                  onTap: onSettlementSkip,
+                  onTap: withButtonSound(onSettlementSkip),
                 ),
               ),
             if (fateLineSelection != null)
@@ -484,7 +484,7 @@ class _GameLayout extends StatelessWidget {
   final VoidCallback onOptionsTap;
   final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
-  final VoidCallback onBlindInfoTap;
+  final VoidCallback? onBlindInfoTap;
   final VoidCallback onDebugTap;
   final ValueChanged<int> onJesterTap;
   final ValueChanged<Tile> onHandTileTap;

@@ -437,7 +437,6 @@ extension _GameViewStageFlow on _GameViewState {
         settlementBoardSnapshot: const {},
       );
       if (shouldClearAfter) {
-        SoundManager.playSfx(AssetPaths.sfxClear);
         await _runStageClearFlow(totalScore);
       } else {
         await _saveActiveRun(scene: ActiveRunScene.battle);

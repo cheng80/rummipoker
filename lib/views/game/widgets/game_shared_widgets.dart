@@ -403,7 +403,7 @@ class GameDebugShopHandCluster extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: [
                 GestureDetector(
-                  onTap: onShopTap,
+                  onTap: withButtonSound(onShopTap),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -471,7 +471,7 @@ class GameDebugHandSizeSegment extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 6),
               child: GestureDetector(
-                onTap: () => onChanged(option),
+                onTap: withButtonSound(() => onChanged(option)),
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
                   duration: GamePresentationTimings.handCountToggle,
@@ -535,6 +535,7 @@ class GameActionButton extends StatelessWidget {
     required this.onPressed,
     this.foreground = GameUiPalette.textPrimary,
     this.compact = false,
+    this.playSound = true,
   });
 
   final String label;
@@ -542,11 +543,13 @@ class GameActionButton extends StatelessWidget {
   final Color foreground;
   final VoidCallback? onPressed;
   final bool compact;
+  final bool playSound;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       child: GameChromeButton(
+        playSound: playSound,
         label: label,
         backgroundColor: background,
         foregroundColor: foreground,

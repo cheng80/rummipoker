@@ -22,6 +22,12 @@ git diff --check
 | Market UI | 관련 `test/views/game/widgets/game_shop_*_test.dart` |
 | generated docs | `test/tools/generate_docs_test.dart`, generator `--check` |
 
+## 네이티브 효과음 피치
+
+`test/resources/native_sfx_player_test.dart`는 초기화 중복·실패·timeout·dispose 후 재시도, 음원 캐시, 음성별 배율, 동시 재생 상한, 완료 handle 정리, 음소거·볼륨·백그라운드를 확인한다. `debugSfxSink` 통과만으로 실제 엔진의 피치 적용을 판정하지 않는다.
+
+기기에서는 `flutter test integration_test/native_sfx_pitch_test.dart -d <device-id>`를 실행한다. 독립 테스트가 440Hz PCM을 생성하고 실제 SoLoud mixer 출력을 FFT로 분석한다. 0.5·1·1.5·2배는 각각 220·440·660·880Hz(오차 ±5Hz)여야 한다. 0.5배와 2배를 겹쳐도 두 피크가 독립적으로 남아야 한다. 공용 등록 목록의 실제 효과음 12개 로드·연속 재생, BGM 공존, BGM pause 뒤 SFX 단독 재생, 복귀·음소거도 확인한다. 저장소는 mock으로 격리하고 기존 기기 저장 데이터는 초기화하지 않는다. PCM 캡처는 엔진 출력의 검증이며 스피커·블루투스 경로의 실제 청취 검증과 구분한다.
+
 ## 게임 핵심 흐름이 지켜졌는지 확인
 
 - dead line은 확정 후보가 아니고 부분 족보는 contributor만 제거한다.

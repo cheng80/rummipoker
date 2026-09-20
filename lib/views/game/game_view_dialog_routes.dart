@@ -61,7 +61,6 @@ extension _GameViewDialogRoutes on _GameViewState {
         case GameOptionsCloseAction.openSettings:
           SoundManager.beginBgmAutoResumeBlock();
           try {
-            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             await WidgetsBinding.instance.endOfFrame;
             if (!mounted) return;
             await context.push(RoutePaths.setting);

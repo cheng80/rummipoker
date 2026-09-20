@@ -2,6 +2,7 @@ part of 'game_shop_screen.dart';
 
 extension _GameShopSelectionFlow on _GameShopScreenState {
   void _selectOwned(int index) {
+    GameFeedback.play(GameCue.buttonTap);
     _mutate(() {
       if (_selectedOwnedIndex == index) {
         _clearMarketSelection();
@@ -16,6 +17,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   }
 
   void _selectOffer(int index) {
+    GameFeedback.play(GameCue.buttonTap);
     _mutate(() {
       if (_selectedOfferIndex == index) {
         _clearMarketSelection();
@@ -32,6 +34,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   }
 
   void _selectItemOffer(int index) {
+    GameFeedback.play(GameCue.buttonTap);
     _mutate(() {
       if (_selectedItemOfferIndex == index) {
         _clearMarketSelection();
@@ -46,6 +49,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
   }
 
   void _selectTileOffer(int index) {
+    GameFeedback.play(GameCue.buttonTap);
     _mutate(() {
       if (_selectedTileOfferIndex == index) {
         _clearMarketSelection();
@@ -69,6 +73,7 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
       return;
     }
     if (slot.item == null) return;
+    GameFeedback.play(GameCue.buttonTap);
     _mutate(() {
       if (_selectedItemSlotIndex == slot.slotIndex) {
         _clearMarketSelection();
@@ -98,7 +103,6 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
       _shopTab = tab;
       _clearMarketSelection();
     });
-    if (changed) GameFeedback.play(GameCue.marketTab);
   }
 
   void _selectOfferLane(_MarketOfferLane lane) {
@@ -116,7 +120,6 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
       }
       _clearMarketSelection();
     });
-    if (changed) GameFeedback.play(GameCue.marketTab);
   }
 
   void _clearMarketSelection() {
@@ -135,7 +138,6 @@ extension _GameShopSelectionFlow on _GameShopScreenState {
     if (nextPage == _offerPageFor(lane)) return;
     _marketTransitionDirection = delta > 0 ? 1 : -1;
     _mutate(() => _offerPages[lane] = nextPage);
-    GameFeedback.play(GameCue.marketPage, pitch: delta > 0 ? 1.04 : 0.94);
   }
 
   _MarketOfferLane get _currentOfferLane =>

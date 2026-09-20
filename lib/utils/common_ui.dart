@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'app_translation.dart';
 import '../resources/asset_paths.dart';
 import '../resources/game_haptics.dart';
+import '../resources/sound_manager.dart';
 import '../views/game/game_feedback_cues.dart';
 import '../views/game/game_presentation_timings.dart';
 import '../views/game/widgets/game_ui_palette.dart';
@@ -16,23 +17,41 @@ import '../widgets/semantic_text.dart';
 
 enum _NoticeStyle { topBanner, bottomToast }
 
+/// 기본 Flutter 버튼·닫기·뒤로 클릭도 공통 원음을 한 번 낸다.
+VoidCallback? withButtonSound(VoidCallback? action) => action == null
+    ? null
+    : () {
+        playButtonSound();
+        action();
+      };
+
+void playButtonSound() {
+  try {
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd, preserveOriginalPitch: true);
+  } catch (error) {
+    debugPrint('Button sound failed: $error');
+  }
+}
+
 class GameDialogAction<T> {
   const GameDialogAction({
     required this.label,
     required this.value,
     this.accent = GameUiPalette.dialogDefaultAccent,
     this.textColor = GameUiPalette.textPrimary,
+    this.cue,
   });
 
   final String label;
   final T value;
   final Color accent;
   final Color textColor;
+  final GameCue? cue;
 }
 
 /// 공용 버튼. pointer-down에 살짝 찌그러지고, 뗄 때 juice와 가벼운 햅틱을 낸다.
 ///
-/// 소리는 기존처럼 [onPressed] 안에서 호출한다. 햅틱은 그 직전, 같은 tap 시점에 낸다.
+/// 클릭음은 공통 입력이 한 번 재생한다. 호출부가 직접 클릭 cue를 내면 playSound를 끈다.
 class GameChromeButton extends StatefulWidget {
   const GameChromeButton({
     super.key,
@@ -46,6 +65,7 @@ class GameChromeButton extends StatefulWidget {
     this.padding,
     this.fontSize = 15,
     this.fontWeight,
+    this.playSound = true,
   });
 
   final String label;
@@ -58,6 +78,7 @@ class GameChromeButton extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final double fontSize;
   final FontWeight? fontWeight;
+  final bool playSound;
 
   @override
   State<GameChromeButton> createState() => _GameChromeButtonState();
@@ -80,6 +101,7 @@ class _GameChromeButtonState extends State<GameChromeButton> {
 
     return PressFeedback(
       onTap: onPressed,
+      playSound: widget.playSound,
       builder: (context, onTap) => _buildSurface(
         onTap: onTap,
         baseColor: baseColor,
@@ -172,6 +194,7 @@ class PressFeedback extends StatefulWidget {
     this.deny = false,
     this.denyTrigger,
     this.haptic = HapticGrade.select,
+    this.playSound = true,
   });
 
   final VoidCallback? onTap;
@@ -182,6 +205,9 @@ class PressFeedback extends StatefulWidget {
 
   /// 호출부가 햅틱을 포함한 [GameFeedback] cue를 직접 내면 null로 둔다.
   final HapticGrade? haptic;
+
+  /// 전용 클릭 cue를 호출부가 소유할 때만 false로 둔다.
+  final bool playSound;
 
   @override
   State<PressFeedback> createState() => _PressFeedbackState();
@@ -222,6 +248,7 @@ class _PressFeedbackState extends State<PressFeedback>
     final onTap = widget.onTap;
     if (onTap == null) return;
     setState(() => _releaseTick++);
+    if (widget.playSound) playButtonSound();
     final haptic = widget.haptic;
     if (haptic != null) GameHaptics.play(haptic);
     onTap();
@@ -752,6 +779,7 @@ Future<bool> showConfirmDialog(
   String? confirmLabel,
   String Function(BuildContext)? cancelLabelBuilder,
   String Function(BuildContext)? confirmLabelBuilder,
+  GameCue? confirmCue,
   bool barrierDismissible = true,
   bool useRootNavigator = true,
 }) async {
@@ -782,6 +810,7 @@ Future<bool> showConfirmDialog(
             confirmLabel ??
             dialogContext.translate('ok'),
         value: true,
+        cue: confirmCue,
         accent: GameUiPalette.actionGold,
         textColor: GameUiPalette.ink,
       ),
@@ -860,10 +889,17 @@ class _GameDialogActionButton<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return GameChromeButton(
       label: action.label,
+      playSound: action.cue == null,
       backgroundColor: action.accent,
       foregroundColor: action.textColor,
       height: _buttonHeight,
-      onPressed: () => Navigator.of(context).pop(action.value),
+      onPressed: () {
+        try {
+          if (action.cue case final cue?) GameFeedback.play(cue);
+        } finally {
+          Navigator.of(context).pop(action.value);
+        }
+      },
     );
   }
 }

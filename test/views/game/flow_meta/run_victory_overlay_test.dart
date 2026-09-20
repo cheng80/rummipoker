@@ -1,3 +1,5 @@
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +28,10 @@ void main() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
+    GameSettings.sfxMuted = false;
+    final sounds = <(String, double)>[];
+    SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+    addTearDown(SoundManager.debugResetForTest);
     var done = 0;
     Widget overlay() => EasyLocalization(
       assetLoader: const TestTranslationAssetLoader(),
@@ -53,6 +59,7 @@ void main() {
     await tester.pumpWidget(overlay());
     await tester.pumpAndSettle(const Duration(milliseconds: 50));
     expect(done, 1, reason: '탭 없이도 제한 시간 안에 끝난다');
+    expect(sounds.where((e) => e.$1 == AssetPaths.sfxBtnSnd), isEmpty);
     expect(
       GamePresentationTimings.runVictoryHold,
       lessThanOrEqualTo(const Duration(milliseconds: 2500)),
@@ -68,7 +75,12 @@ void main() {
     await tester.pumpWidget(overlay());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
+    sounds.clear();
+    SoundManager.rampGlobalPitch(0.5, Duration.zero);
     await tester.tap(find.byKey(const ValueKey('run-victory-overlay')));
+    expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+    await tester.tap(find.byKey(const ValueKey('run-victory-overlay')));
+    expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
     await tester.pump();
     expect(done, 2, reason: '탭하면 바로 끝난다');
     await tester.pump(GamePresentationTimings.runVictoryHold);

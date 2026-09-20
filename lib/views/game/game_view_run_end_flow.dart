@@ -121,7 +121,6 @@ extension _GameViewRunEndFlow on _GameViewState {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return false;
 
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await _restartFromStakeSnapshot();
     return true;
   }
@@ -157,7 +156,6 @@ extension _GameViewRunEndFlow on _GameViewState {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return false;
 
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await _restartFromStageSnapshot();
     return true;
   }
@@ -176,7 +174,6 @@ extension _GameViewRunEndFlow on _GameViewState {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return false;
 
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     await _goToTitleAfterStoppingBgm();
     return true;
   }

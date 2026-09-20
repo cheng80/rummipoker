@@ -354,6 +354,7 @@ void _showMarketCardPreview(
   required String Function(BuildContext) effectText,
   required List<String> Function(BuildContext) tags,
 }) {
+  playButtonSound();
   showGameFramedDialog<void>(
     context: context,
     semanticLabel: context.translate('marketCardInfo'),
@@ -384,7 +385,9 @@ void _showMarketCardPreview(
                     ),
                     IconButton(
                       key: const ValueKey('market-card-preview-close'),
-                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      onPressed: withButtonSound(
+                        () => Navigator.of(dialogContext).pop(),
+                      ),
                       icon: const Icon(Icons.close_rounded),
                       color: GameUiPalette.textPrimary,
                       visualDensity: VisualDensity.compact,

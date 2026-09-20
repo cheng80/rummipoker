@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rummipoker/resources/asset_paths.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/app_translation.dart';
@@ -79,12 +78,12 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Run Info'), findsOneWidget);
         expect(find.text('런 정보'), findsNothing);
-        expect(sounds, [AssetPaths.sfxTimeTic]);
+        expect(sounds, isEmpty);
         final elapsed = tester.binding.clock.now().difference(start);
         await tester.pump(const Duration(milliseconds: 2261) - elapsed);
         await tester.pump();
         expect(find.text('Run Info'), findsNothing);
-        expect(sounds, [AssetPaths.sfxTimeTic]);
+        expect(sounds, isEmpty);
 
         // Legacy/custom strings remain literal even when they resemble a key.
         show(screen, 'runInfoTitle', cue: null);
@@ -92,7 +91,7 @@ void main() {
         await screen.setLocale(const Locale('ko'));
         await tester.pumpAndSettle();
         expect(find.text('runInfoTitle'), findsOneWidget);
-        expect(sounds, [AssetPaths.sfxTimeTic]);
+        expect(sounds, isEmpty);
         await tester.pump(const Duration(seconds: 3));
         await tester.pump();
         expect(find.text('runInfoTitle'), findsNothing);

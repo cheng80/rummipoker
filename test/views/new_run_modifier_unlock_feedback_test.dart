@@ -97,7 +97,7 @@ void main() {
     await pumpNewRun(tester);
     await tapHighStakes(tester);
 
-    expect(sfx, [AssetPaths.sfxFail]);
+    expect(sfx, [AssetPaths.sfxDeny]);
     expect(haptics, [HapticGrade.error]);
     var state = await tester.runAsync(RunUnlockStateService.load);
     expect(state!.isRunModifierUnlocked(NewRunModifier.highStakes), isFalse);
@@ -106,7 +106,7 @@ void main() {
     await tester.runAsync(() => RunUnlockStateService.addInsight(20));
     await tapHighStakes(tester);
 
-    expect(sfx, [AssetPaths.sfxClear]);
+    expect(sfx, [AssetPaths.sfxBtnSnd]);
     expect(haptics, [HapticGrade.impact]);
     state = await tester.runAsync(RunUnlockStateService.load);
     expect(state!.isRunModifierUnlocked(NewRunModifier.highStakes), isTrue);

@@ -143,7 +143,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byKey(const ValueKey('game-over-fade-veil')), findsOneWidget);
-      expect(sfx, contains(AssetPaths.sfxTimeUp), reason: 'gameOver cue');
+      expect(sfx, contains(AssetPaths.sfxDeny), reason: 'gameOver cue');
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
       expect(

@@ -79,7 +79,8 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
                   Tooltip(
                     message: context.translate('tutorialBattleReplayTitle'),
                     child: GestureDetector(
-                      onTap: widget.onTutorialTap,
+                      key: const ValueKey('battle-tutorial-button'),
+                      onTap: withButtonSound(widget.onTutorialTap),
                       behavior: HitTestBehavior.opaque,
                       child: SizedBox(
                         width: 20,
@@ -137,7 +138,8 @@ class _GameGoldHudChipState extends State<_GameGoldHudChip> {
                     ),
                     const SizedBox(width: 2),
                     GestureDetector(
-                      onTap: widget.onOptionsTap,
+                      key: const ValueKey('battle-options-button'),
+                      onTap: withButtonSound(widget.onOptionsTap),
                       behavior: HitTestBehavior.opaque,
                       child: SizedBox(
                         width: 18,

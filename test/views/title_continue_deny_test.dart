@@ -78,7 +78,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('home-entry-continue')));
     await tester.pumpAndSettle();
 
-    expect(sfx, [AssetPaths.sfxFail]);
+    expect(sfx, [AssetPaths.sfxDeny]);
     expect(haptics, [HapticGrade.error]);
     expect(find.byType(Dialog), findsNothing);
 

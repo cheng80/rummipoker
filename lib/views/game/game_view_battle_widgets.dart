@@ -306,7 +306,7 @@ class _BattleActionBar extends StatelessWidget {
                 size: buttonSide,
                 borderRadius: 7,
                 backgroundColor: GameUiPalette.passiveSlotAccent,
-                pressCue: GameCue.tileSelect,
+                pressCue: GameCue.buttonTap,
                 onPressed: utilityEnabled ? onClearSelection : null,
               ),
               const SizedBox(width: gap),

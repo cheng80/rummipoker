@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../utils/app_translation.dart';
+import '../../../utils/common_ui.dart';
 import '../../../widgets/semantic_text.dart';
 
 import '../../../logic/rummi_poker_grid/models/tile.dart';
@@ -16,6 +17,8 @@ class GameTileChoiceDialog extends StatefulWidget {
     this.message,
     this.closeLabel,
     this.onTileSelected,
+    this.resultOwnsSound = false,
+    this.closeResultOwnsSound = false,
     this.onClose,
     this.tileSize = 58,
     this.tileSpacing = 8,
@@ -26,6 +29,10 @@ class GameTileChoiceDialog extends StatefulWidget {
   final List<Tile> tiles;
   final String? closeLabel;
   final ValueChanged<int>? onTileSelected;
+
+  /// 선택 후 호출부가 결과음을 내는 경우 기본 클릭음을 생략한다.
+  final bool resultOwnsSound;
+  final bool closeResultOwnsSound;
   final VoidCallback? onClose;
   final double tileSize;
   final double tileSpacing;
@@ -39,6 +46,7 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
 
   Future<void> _selectTile(int index) async {
     if (_selectedIndex != null) return;
+    if (!widget.resultOwnsSound) playButtonSound();
     setState(() => _selectedIndex = index);
     widget.onTileSelected?.call(index);
     await Future<void>.delayed(
@@ -125,6 +133,7 @@ class _GameTileChoiceDialogState extends State<GameTileChoiceDialog> {
                 if (widget.closeLabel != null) ...[
                   const SizedBox(height: 12),
                   GameActionButton(
+                    playSound: !widget.closeResultOwnsSound,
                     label: widget.closeLabel!,
                     background: GameUiPalette.passiveSlotAccent,
                     onPressed: _selectedIndex == null

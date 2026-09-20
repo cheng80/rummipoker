@@ -1,3 +1,6 @@
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
+import 'package:rummipoker/services/game_settings.dart';
 import 'market_feedback_test_support.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +17,93 @@ import 'package:rummipoker/views/game/widgets/game_options_dialog.dart';
 
 void main() {
   setUpMarketFeedback();
+  for (final auto in [false, true]) {
+    for (final finalRun in [false, true]) {
+      testWidgets(
+        'cash-out Clear once across rebuilds: auto=$auto final=$finalRun',
+        (tester) async {
+          final previousMuted = GameSettings.sfxMuted;
+          GameSettings.sfxMuted = false;
+          addTearDown(() => GameSettings.sfxMuted = previousMuted);
+          final sounds = <String>[];
+          SoundManager.debugSfxSink = (path, _, _) => sounds.add(path);
+          final revision = ValueNotifier<int>(0);
+          addTearDown(revision.dispose);
+          final settlement = RummiSettlementRuntimeFacade(
+            stageIndex: finalRun ? 8 : 2,
+            targetScore: 400,
+            currentGold: 11,
+            totalGold: 5,
+            entries: const [
+              RummiSettlementEntryView(
+                kind: RummiSettlementEntryKind.stationReward,
+                leadingLabel: 'Station',
+                description: 'Reward',
+                gold: 5,
+              ),
+              RummiSettlementEntryView(
+                kind: RummiSettlementEntryKind.boardDiscardReward,
+                leadingLabel: '0',
+                description: 'Board',
+                gold: 0,
+              ),
+              RummiSettlementEntryView(
+                kind: RummiSettlementEntryKind.handDiscardReward,
+                leadingLabel: '0',
+                description: 'Hand',
+                gold: 0,
+              ),
+            ],
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Builder(
+                builder: (context) {
+                  return Scaffold(
+                    body: TextButton(
+                      onPressed: () {
+                        showDialog<GameCashOutAction>(
+                          context: context,
+                          builder: (_) => ValueListenableBuilder<int>(
+                            valueListenable: revision,
+                            builder: (_, value, _) => GameCashOutSheet(
+                              settlement: settlement,
+                              autoEnterMarketOnLoad: auto,
+                              completesRun: finalRun,
+                              insightReward: value,
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('open'),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+          expect(sounds, isEmpty);
+          await tester.tap(find.text('open'));
+          await tester.pump();
+          expect(sounds.where((s) => s == AssetPaths.sfxClear), hasLength(1));
+          revision.value++;
+          await tester.pump();
+          for (var i = 0; i < 20; i++) {
+            await tester.pump(const Duration(milliseconds: 250));
+          }
+          expect(sounds.where((s) => s == AssetPaths.sfxClear), hasLength(1));
+          expect(sounds, contains(AssetPaths.sfxCollect));
+          expect(
+            find.byType(GameCashOutSheet),
+            auto && !finalRun ? findsNothing : findsOneWidget,
+          );
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pumpAndSettle();
+        },
+      );
+    }
+  }
+
   testWidgets('GameFloatingSettlementBurst shows item effect callout', (
     tester,
   ) async {

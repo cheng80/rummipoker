@@ -1,3 +1,5 @@
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,5 +51,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('평점 남기기'), findsNothing);
+    final sounds = <String>[];
+    final rates = <double>[];
+    SoundManager.debugSfxSink = (path, _, rate) {
+      sounds.add(path);
+      rates.add(rate);
+    };
+    addTearDown(() => SoundManager.debugSfxSink = null);
+    final sfxToggle = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics &&
+          widget.properties.toggled != null &&
+          widget.properties.label == '효과음',
+    );
+    await tester.ensureVisible(sfxToggle);
+    await tester.tap(sfxToggle);
+    await tester.pumpAndSettle();
+    expect(GameSettings.sfxMuted, isFalse);
+    expect(sounds, [AssetPaths.sfxBtnSnd]);
+    expect(rates, [1]);
+    sounds.clear();
+    await tester.tap(sfxToggle);
+    await tester.pumpAndSettle();
+    expect(GameSettings.sfxMuted, isTrue);
+    expect(sounds, isEmpty);
   });
 }

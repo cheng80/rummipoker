@@ -55,10 +55,22 @@ void main() {
     // 점수 줄 없는 확정: 알림 문구는 그대로, 흔들림·오류음·error 햅틱.
     await reset();
     await _pumpBattle(tester, _run());
+    expect(
+      tester
+          .widget<GestureDetector>(
+            find.byKey(const ValueKey('battle-blind-info-chip')),
+          )
+          .onTap,
+      isNull,
+    );
+    sfx.clear();
+    await tester.tap(find.byTooltip('선택 해제'));
+    expect(sfx, [AssetPaths.sfxBtnSnd]);
+    sfx.clear();
     await tester.tap(find.byTooltip('확정'));
     await tester.pump();
     expect(find.text('확정할 족보 줄이 없습니다.'), findsOneWidget);
-    expect(sfx, contains(AssetPaths.sfxFail));
+    expect(sfx, contains(AssetPaths.sfxDeny));
     expect(
       sfx,
       isNot(contains(AssetPaths.sfxTimeTic)),
@@ -76,7 +88,7 @@ void main() {
     );
     await tester.pump();
     expect(find.text('잠긴 슬롯입니다.'), findsOneWidget);
-    expect(sfx, contains(AssetPaths.sfxFail));
+    expect(sfx, contains(AssetPaths.sfxDeny));
     await _dispose(tester);
 
     // 가득 찬 손패의 드로우: 막힌 버튼이어도 거절 피드백.
@@ -85,7 +97,7 @@ void main() {
     await tester.tap(find.text('드로우'));
     await tester.pump();
     expect(find.textContaining('손패는 최대'), findsOneWidget);
-    expect(sfx, contains(AssetPaths.sfxFail));
+    expect(sfx, contains(AssetPaths.sfxDeny));
     await _dispose(tester);
 
     // 점수 줄이 있으면 확정 장전 + 줄 예고.
@@ -93,6 +105,28 @@ void main() {
     await _pumpBattle(tester, _run(scoringRow: true));
     expect(find.byKey(const ValueKey('battle-confirm-armed')), findsOneWidget);
     expect(find.byKey(const ValueKey('board-line-hint')), findsOneWidget);
+    Future<void> expectButtonTap(Finder target) async {
+      sfx.clear();
+      await tester.tap(target);
+      await tester.pump();
+      expect(sfx, [AssetPaths.sfxBtnSnd]);
+    }
+
+    final occupied = find.byKey(const ValueKey('board-cell-2-0'));
+    await expectButtonTap(occupied);
+    await expectButtonTap(occupied);
+    await expectButtonTap(occupied);
+    await expectButtonTap(find.byTooltip('이동'));
+    await expectButtonTap(occupied);
+    sfx.clear();
+    await tester.tap(find.byKey(const ValueKey('board-cell-0-0')));
+    await tester.pump();
+    expect(
+      sfx,
+      isEmpty,
+      reason: 'empty cell without a selected hand tile is ignored',
+    );
+
     await _dispose(tester);
 
     // 마지막 손패 버림과 덱 0은 경고 상태.
@@ -118,7 +152,7 @@ void main() {
     await tester.tap(find.byTooltip('확정'));
     await tester.pump();
     expect(find.text('확정할 족보 줄이 없습니다.'), findsOneWidget);
-    expect(sfx, contains(AssetPaths.sfxFail));
+    expect(sfx, contains(AssetPaths.sfxDeny));
     expect(find.byKey(const ValueKey('game-deny-shake-1')), findsNothing);
     await _dispose(tester);
   });

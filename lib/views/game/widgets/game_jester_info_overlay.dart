@@ -60,7 +60,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        onPressed: onClose,
+                        onPressed: withButtonSound(onClose),
                         tooltip: context.translate('battleWidgetsClose'),
                         icon: const Icon(Icons.close_rounded),
                         color: GameUiPalette.textPrimary,
@@ -137,6 +137,7 @@ class GameJesterInfoOverlay extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: GameActionButton(
+                      playSound: false,
                       label: context.translate(
                         'battleWidgetsSellGold',
                         namedArgs: {'gold': '$sellGold'},

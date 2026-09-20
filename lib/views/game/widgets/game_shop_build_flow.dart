@@ -304,6 +304,9 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                           card == null || locked
                                                           ? child
                                                           : GestureDetector(
+                                                              key: ValueKey(
+                                                                'market-owned-jester-$index',
+                                                              ),
                                                               onTap: () =>
                                                                   _selectOwned(
                                                                     index,
@@ -592,6 +595,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                             ),
                                       trailing: selectedOwned != null
                                           ? _MarketActionPane(
+                                              playSound: false,
                                               priceLabel:
                                                   '+${selectedOwned.sellPrice}',
                                               buttonLabel: context.translate(
@@ -605,6 +609,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                             )
                                           : selectedOffer != null
                                           ? _MarketActionPane(
+                                              playSound: false,
                                               priceLabel:
                                                   '${selectedOffer.price}',
                                               buttonLabel: context.translate(
@@ -652,6 +657,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                             )
                                           : selectedItemOffer != null
                                           ? _MarketActionPane(
+                                              playSound: false,
                                               priceLabel:
                                                   '${selectedItemOffer.price}',
                                               buttonLabel: context.translate(
@@ -699,6 +705,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                             )
                                           : selectedTileOffer != null
                                           ? _MarketActionPane(
+                                              playSound: false,
                                               priceLabel:
                                                   selectedTileOffer.isFreeReward
                                                   ? context.translate(
@@ -960,7 +967,6 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                               label: context.translate('marketMainMenu'),
                               background: GameUiPalette.disabledControl,
                               onPressed: () async {
-                                GameFeedback.play(GameCue.menuNavigate);
                                 try {
                                   await _flushStateSave();
                                   if (!context.mounted) return;
@@ -980,6 +986,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                           const SizedBox(width: 10),
                           Expanded(
                             child: GameActionButton(
+                              playSound: false,
                               label: context.translate('marketNextStation'),
                               background: GameUiPalette.marketPositive,
                               onPressed: () async {

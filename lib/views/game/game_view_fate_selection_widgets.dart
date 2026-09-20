@@ -98,8 +98,7 @@ class _FateLineSelectionPanel extends StatelessWidget {
             namedArgs: {
               'line': _lineLabel(context, selectedLine.ref),
               'tile':
-                  selectedTile?.code ??
-                  context.translate('battleTileRequired'),
+                  selectedTile?.code ?? context.translate('battleTileRequired'),
             },
           )
         : context.translate(
@@ -199,7 +198,7 @@ class _FateLineSelectionPanel extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: onCancel,
+                  onPressed: withButtonSound(onCancel),
                   child: Text(context.translate('cancel')),
                 ),
                 const SizedBox(width: 6),

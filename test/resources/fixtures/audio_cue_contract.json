@@ -1,0 +1,442 @@
+[
+  {
+    "cue": "buttonTap",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "tileSelect",
+    "current_asset": "sfx/TilePick.wav",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "tilePlace",
+    "current_asset": "sfx/TilePlace.wav",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "place",
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "tileDraw",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "discard",
+    "current_asset": "sfx/CardToss.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "place",
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "itemUse",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "buy",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "sell",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "place",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "reroll",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "deny",
+    "current_asset": "sfx/Deny.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "error",
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "scoreTick",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "select",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "overlapHit",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1.3,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "jesterFire",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1,
+    "pitch_variance": 0.05,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "penalty",
+    "current_asset": "sfx/Fail.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "heavy",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "bigScore1",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 0.9,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "bigScore2",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "bigScore3",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1.12,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "heavy",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "bigScore4",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1.25,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "heavy",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "unlock",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "marketEntry",
+    "current_asset": null,
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "marketTab",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "marketPage",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "stationAdvance",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "menuNavigate",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "cashOutOpen",
+    "current_asset": "sfx/Clear.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "cashOutCollect",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1.06,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "newReveal",
+    "current_asset": null,
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "bossIntro",
+    "current_asset": null,
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "heavy",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "victory",
+    "current_asset": "sfx/Reward.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "heavy",
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "gameOver",
+    "current_asset": "sfx/Deny.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "heavy",
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "runStart",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "battleStart",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "heavy",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "runRestore",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "choiceSelect",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "panelOpen",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "select",
+    "protected_settlement": false,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "noticeTop",
+    "current_asset": null,
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": null,
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "noticeBottom",
+    "current_asset": null,
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": null,
+    "protected_settlement": false,
+    "basis": "jev_bilingual_gate_pass"
+  },
+  {
+    "cue": "countTick",
+    "current_asset": "sfx/TimeTic.mp3",
+    "pitch": 1.35,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": null,
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "tileModifierFire",
+    "current_asset": "sfx/TimeTic.mp3",
+    "pitch": 1.5,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "select",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "itemFire",
+    "current_asset": "sfx/Collect.mp3",
+    "pitch": 1.3,
+    "pitch_variance": 0,
+    "preserve_original_pitch": false,
+    "haptic": "impact",
+    "protected_settlement": true,
+    "basis": "preserved baseline"
+  },
+  {
+    "cue": "tileMove",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "place",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "lineTransform",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "previewChange",
+    "current_asset": null,
+    "pitch": 1.0,
+    "pitch_variance": 0.0,
+    "preserve_original_pitch": true,
+    "haptic": null,
+    "protected_settlement": false,
+    "basis": "orchestrator_policy_fallback_not_model_selection"
+  },
+  {
+    "cue": "confirmPress",
+    "current_asset": "sfx/BtnSnd.mp3",
+    "pitch": 1,
+    "pitch_variance": 0,
+    "preserve_original_pitch": true,
+    "haptic": "impact",
+    "protected_settlement": false,
+    "basis": "User button feedback policy; this is the press before settlement, not the settlement sequence."
+  }
+]

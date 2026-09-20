@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rummipoker/resources/asset_paths.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/action_failure_translation.dart';
@@ -117,12 +116,12 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Hand limit: 5 tiles.'), findsOneWidget);
         expect(find.text('손패는 최대 5장입니다.'), findsNothing);
-        expect(sounds, [AssetPaths.sfxTimeTic]);
+        expect(sounds, isEmpty);
         final elapsed = tester.binding.clock.now().difference(start);
         await tester.pump(const Duration(milliseconds: 2261) - elapsed);
         await tester.pump();
         expect(find.text('Hand limit: 5 tiles.'), findsNothing);
-        expect(sounds, [AssetPaths.sfxTimeTic]);
+        expect(sounds, isEmpty);
 
         for (final locale in [
           const Locale('ja'),
@@ -177,7 +176,7 @@ void main() {
         await screen.setLocale(const Locale('ko'));
         await tester.pumpAndSettle();
         expect(find.text('runInfoTitle'), findsOneWidget);
-        expect(sounds, [AssetPaths.sfxTimeTic]);
+        expect(sounds, isEmpty);
         await tester.pump(const Duration(seconds: 3));
         await tester.pump();
         expect(find.text('runInfoTitle'), findsNothing);

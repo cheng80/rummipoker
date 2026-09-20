@@ -1,3 +1,4 @@
+import '../utils/common_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -81,7 +82,7 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             IconButton(
-              onPressed: () => context.pop(),
+              onPressed: withButtonSound(() => context.pop()),
               icon: const Icon(Icons.arrow_back_rounded),
               color: GameUiPalette.textPrimary,
             ),

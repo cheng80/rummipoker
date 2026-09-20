@@ -51,7 +51,7 @@ class _ArchiveDetailCard extends StatelessWidget {
           Expanded(child: child),
           IconButton(
             visualDensity: VisualDensity.compact,
-            onPressed: onClose,
+            onPressed: withButtonSound(onClose),
             icon: const Icon(Icons.keyboard_arrow_up_rounded),
             color: GameUiPalette.textPrimary.withValues(alpha: 0.66),
             tooltip: context.translate('menuCollapse'),
@@ -234,6 +234,7 @@ class _ArchiveSelectableCard extends StatelessWidget {
           PressFeedback(
             onTap: _handleTap,
             haptic: null,
+            playSound: false,
             builder: (context, onTap) => GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: onTap,
