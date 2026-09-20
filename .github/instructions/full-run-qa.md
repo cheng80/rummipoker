@@ -1,6 +1,6 @@
 ---
 description: 풀런봇, 시뮬레이션, 브라우저 실기 QA와 증거 수집 규칙
-globs: ["tools/full_run_bot.sh", "tools/sub_run_bot.sh", "tools/full_run_*.py", "tools/sim/**/*", "integration_test/**/*", "test_driver/**/*", "test/tools/**/*", "data/full_run_bot/**/*", "lib/services/debug_run_fixture*.dart", "test/services/debug_run_fixture*.dart", "docs/planning/verification/**/*"]
+globs: ["tools/full_run_bot.sh", "tools/sub_run_bot.sh", "tools/market_discount_visual_bot.sh", "tools/full_run_*.py", "tools/sim/**/*", "integration_test/**/*", "test_driver/**/*", "test/tools/**/*", "data/full_run_bot/**/*", "lib/services/debug_run_fixture*.dart", "test/services/debug_run_fixture*.dart", "docs/planning/verification/**/*"]
 alwaysApply: false
 ---
 
@@ -32,5 +32,7 @@ alwaysApply: false
 - game over뿐 아니라 overflow, 잘림, tutorial target, 다국어, sound, save/restore 결함도 같은 locale gate의 실패다. 수정 뒤 해당 gate를 다시 실행한다.
 - 수동 QA는 기존 Chrome/Simulator를 재사용한다. 자동 runner는 실행 전에 안전한 프로필 경로·프로필 잠금·포트 점유를 검사하고 외부 점유가 있으면 종료한다. 포트 PID나 프로필 부분 문자열만으로 프로세스를 종료하지 않는다.
 - 자동 runner는 자신이 생성한 프로세스 그룹과 자식만 정리한다. 성공, 실패, 중단, timeout마다 Chrome Helper, WebDriver, ChromeDriver, Flutter web server 잔류를 확인한다. PID 재사용을 막는 소유권을 유지하고, runner 변경은 `python3 test/tools/full_run_bot_process_test.py`로 외부 프로세스 보호와 종료 경로를 검증한다.
+- 브라우저를 띄우는 runner는 풀런봇, sub 봇, market 봇을 가리지 않고 모두 `tools/full_run_bot_process.py`의 같은 소유권 경로를 쓴다. 한 runner라도 이름 패턴이나 포트로 정리하면 같은 기계에서 병렬로 도는 다른 runner의 Chrome과 ChromeDriver를 죽이므로, 새 runner를 추가할 때도 이 helper를 통해 실행한다.
+- 비정상 종료가 남긴 흔적으로 다음 실행을 영구히 막지 않는다. 프로필 lease는 기록된 PID가 죽었거나 PID가 재사용된 것이 확인되면 회수하고, Chrome의 `SingletonLock`은 프로필을 그대로 쓰는 resume에서만 거부한다. fresh 실행은 어차피 `chrome/`을 지우므로 통과시킨다.
 - run마다 seed, locale, difficulty/modifier, checkpoint 여부, action trace, console, screenshot/video와 정산 결과를 남긴다. debug chrome이 보이는 캡처를 release evidence로 쓰지 않는다.
 - 테스트·검증 실패 보고는 `failure-reporting.md` 형식을 따르고 원인, 해결책, 재검증 명령을 포함한다.
