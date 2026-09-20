@@ -120,9 +120,13 @@ class BlindSelectionSetup {
   /// blind select 진입 직전 runtime을 station/blind 진행도 기준으로 정규화한다.
   static ActiveRunRuntimeState prepareRuntimeForBlindSelect({
     required ActiveRunRuntimeState runtime,
+    bool restartCurrentStation = false,
   }) {
     final session = runtime.session.copySnapshot();
     final runProgress = runtime.runProgress.copySnapshot();
+    if (restartCurrentStation) {
+      runProgress.currentStationBlindTierIndex = -1;
+    }
     if (runProgress.currentStationBlindTierIndex >= BlindTier.boss.index) {
       runProgress.stageIndex += 1;
       runProgress.currentStationBlindTierIndex = -1;

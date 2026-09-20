@@ -74,6 +74,11 @@ GoRouter _router(Widget game) => GoRouter(
   initialLocation: RoutePaths.game,
   routes: [
     GoRoute(
+      path: RoutePaths.blindSelect,
+      builder: (context, state) =>
+          const SizedBox(key: ValueKey('blind-select-stub')),
+    ),
+    GoRoute(
       path: RoutePaths.game,
       builder: (context, state) => JesterTranslationScope(child: game),
     ),
@@ -160,6 +165,16 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
       expect(SoundManager.globalPitch, 1, reason: exitKey);
+      if (exitKey == 'game-over-retry-station') {
+        expect(
+          router.routerDelegate.currentConfiguration.uri.path,
+          RoutePaths.blindSelect,
+        );
+        final saved = await ActiveRunSaveService.loadActiveRun();
+        expect(saved?.activeScene, ActiveRunScene.blindSelect);
+        expect(saved?.runProgress.stageIndex, 1);
+        expect(saved?.runProgress.currentStationBlindTierIndex, -1);
+      }
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();

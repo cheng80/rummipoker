@@ -78,9 +78,11 @@ mixin GameSessionNotifierStationCommands
   /// Market 종료 뒤 blind select route로 넘길 runtime을 station-loop 경계에서 만든다.
   ActiveRunRuntimeState prepareNextStationBlindSelectRuntime({
     required NewRunDifficulty difficulty,
+    bool restartCurrentStation = false,
   }) {
     beginNextStationTransition();
     return BlindSelectionSetup.prepareRuntimeForBlindSelect(
+      restartCurrentStation: restartCurrentStation,
       runtime: buildSaveRuntimeState(
         scene: ActiveRunScene.blindSelect,
         difficulty: difficulty,

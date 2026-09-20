@@ -184,7 +184,21 @@ extension _GameViewRunEndFlow on _GameViewState {
     _persistRetrySnapshotOnSave = false;
     _gameNotifier.restartCurrentStage();
     FxAmbient.setMood(_battleAmbientMood);
-    await _saveActiveRun(scene: ActiveRunScene.battle);
+    if (_isDebugFixtureRun) return;
+    final blindSelectRuntime = _gameNotifier
+        .prepareNextStationBlindSelectRuntime(
+          difficulty: widget.difficulty,
+          restartCurrentStation: true,
+        );
+    await ActiveRunSaveService.saveRuntimeState(blindSelectRuntime);
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.go(
+        '${RoutePaths.blindSelect}?difficulty=${widget.difficulty.name}',
+        extra: blindSelectRuntime,
+      );
+    });
   }
 
   Future<void> _restartFromStageSnapshotAfterGameOver() async {
