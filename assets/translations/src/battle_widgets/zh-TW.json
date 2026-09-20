@@ -29,7 +29,7 @@
   "battleWidgetsPassive": "被動",
   "battleWidgetsAutomatic": "自動觸發",
   "battleWidgetsUse": "使用",
-  "battleWidgetsToolNotice": "商店工具 · 滿足條件時在Market使用",
+  "battleWidgetsToolNotice": "Market 工具 · 滿足條件時在Market使用",
   "battleWidgetsPassiveNotice": "被動效果 · 滿足條件時自動觸發",
   "battleWidgetsTileBaseInfo": "{color} {number} · 基礎Chips {chips}",
   "battleWidgetsTileBaseExplanation": "{info}\n確定分數根據完成牌型的基礎Chips計算。",
