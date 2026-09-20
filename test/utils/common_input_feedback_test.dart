@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:rummipoker/views/game/game_feedback_cues.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
 import 'package:rummipoker/resources/game_haptics.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/router.dart';
@@ -82,7 +82,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 40));
 
-    expect(sfx, [gameFeedbackCues[GameCue.deny]!.sfx]);
+    expect(sfx, [AssetPaths.sfxFail]);
     expect(haptics, [HapticGrade.error]);
     expect(denyOffsetX(tester), isNot(0));
 
@@ -99,7 +99,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 40));
 
-    expect(sfx, [gameFeedbackCues[GameCue.deny]!.sfx]);
+    expect(sfx, [AssetPaths.sfxFail]);
     expect(denyOffsetX(tester), 0);
   });
 
@@ -124,7 +124,7 @@ void main() {
     await tester.pumpWidget(build(1));
     await tester.pump(const Duration(milliseconds: 40));
 
-    expect(sfx, [gameFeedbackCues[GameCue.deny]!.sfx]);
+    expect(sfx, [AssetPaths.sfxFail]);
     expect(denyOffsetX(tester), isNot(0));
     await tester.pumpAndSettle();
     expect(denyOffsetX(tester), 0);
@@ -200,7 +200,7 @@ void main() {
     showTopNotice(ctx, 'top');
     showBottomNotice(ctx, 'bottom');
     showTopNotice(ctx, 'silent', cue: null);
-    expect(sfx, [gameFeedbackCues[GameCue.noticeTop]!.sfx, gameFeedbackCues[GameCue.noticeBottom]!.sfx]);
+    expect(sfx, [AssetPaths.sfxTimeTic, AssetPaths.sfxTimeTic]);
     await tester.pump(const Duration(seconds: 3));
   });
 

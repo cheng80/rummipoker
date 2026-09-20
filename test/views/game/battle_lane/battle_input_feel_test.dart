@@ -9,7 +9,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
-import 'package:rummipoker/views/game/game_feedback_cues.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
 import 'package:rummipoker/resources/game_haptics.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
@@ -57,10 +57,10 @@ void main() {
     await tester.tap(find.byTooltip('확정'));
     await tester.pump();
     expect(find.text('확정할 족보 줄이 없습니다.'), findsOneWidget);
-    expect(sfx, contains(gameFeedbackCues[GameCue.deny]!.sfx));
+    expect(sfx, contains(AssetPaths.sfxFail));
     expect(
       sfx,
-      isNot(contains(gameFeedbackCues[GameCue.noticeTop]!.sfx)),
+      isNot(contains(AssetPaths.sfxTimeTic)),
       reason: '거절 때 notice 소리가 겹치면 안 된다',
     );
     expect(haptics, contains(HapticGrade.error));
@@ -75,7 +75,7 @@ void main() {
     );
     await tester.pump();
     expect(find.text('잠긴 슬롯입니다.'), findsOneWidget);
-    expect(sfx, contains(gameFeedbackCues[GameCue.deny]!.sfx));
+    expect(sfx, contains(AssetPaths.sfxFail));
     await _dispose(tester);
 
     // 가득 찬 손패의 드로우: 막힌 버튼이어도 거절 피드백.
@@ -84,7 +84,7 @@ void main() {
     await tester.tap(find.text('드로우'));
     await tester.pump();
     expect(find.textContaining('손패는 최대'), findsOneWidget);
-    expect(sfx, contains(gameFeedbackCues[GameCue.deny]!.sfx));
+    expect(sfx, contains(AssetPaths.sfxFail));
     await _dispose(tester);
 
     // 점수 줄이 있으면 확정 장전 + 줄 예고.
@@ -117,7 +117,7 @@ void main() {
     await tester.tap(find.byTooltip('확정'));
     await tester.pump();
     expect(find.text('확정할 족보 줄이 없습니다.'), findsOneWidget);
-    expect(sfx, contains(gameFeedbackCues[GameCue.deny]!.sfx));
+    expect(sfx, contains(AssetPaths.sfxFail));
     expect(find.byKey(const ValueKey('game-deny-shake-1')), findsNothing);
     await _dispose(tester);
   });
